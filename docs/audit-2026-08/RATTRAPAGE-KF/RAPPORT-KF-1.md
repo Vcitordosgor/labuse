@@ -56,3 +56,70 @@ dirigeants 46,8 %) le disent à l'écran — ils ne présentent pas l'absence co
   `diffusible` (84 % oui, 16 % non) : un filtre par âge devrait au minimum exclure les non-diffusibles.
   Rien n'est servi tant que Vic/l'avocat n'ouvrent pas le drapeau ; l'endpoint refuse la clé `age_*`
   quand le drapeau est fermé.
+
+### Livré (K1)
+- Backend : `FiltreCriteres` + `_q_v2_where` étendus (`pm_denom`, `pm_siren`, `pm_forme`, `pm_ape`,
+  `pm_dirig_min/max`) ; endpoints `GET /proprietaires/facettes` (formes + APE réels avec comptes,
+  couverture, millésime, état du drapeau âge) et `GET /proprietaires/autocomplete` (noms réels).
+  Config `filtre_age_dirigeant=false`. Un filtre PM ⊆ PM (jamais un zéro muet).
+- Front : section repliable « Propriétaire » dans le panneau de recherche (oui/indifférent — le back
+  n'exprime que `personne_morale=true`, « non » non exprimable proprement, noté ; dénomination avec
+  autocomplétion, SIREN, forme juridique, code APE, nb dirigeants), listes alimentées par les facettes
+  réelles, millésime affiché, « non couvert » si couverture nulle, mauve absent.
+- Tests : `tests/test_filtres_proprietaire.py` (facettes réelles, autocomplétion, WHERE, non-couvert, drapeau fermé).
+
+---
+
+## K2 — CONTACTS DES 24 MAIRIES DANS LA FICHE COMMUNE
+
+Source : **Annuaire de l'administration** (service-public.fr, données ouvertes). Les 24 INSEE sont lus
+en base (`commune_insee_logement`), jamais devinés. `ingestion/mairies.py` + CLI **`labuse ingest-mairies`**
+créent la table `mairies` (INSEE PK) et upsertent adresse, code postal, téléphone, e-mail, site officiel,
+lien annuaire, avec la **date de relevé**. Un champ absent reste NULL → affiché « Absent » (jamais inventé).
+
+**Exécuté** : 24/24 communes. Remplissage réel : adresse 24, code postal 24, téléphone 24, site 24,
+lien annuaire 24, **e-mail 23/24** (une commune sans e-mail dans l'annuaire → « Absent »).
+
+Affichage : `/communes/{c}/contexte` sert un bloc `mairie` ; `ContextePanel` l'affiche (adresse, tél
+cliquable, e-mail, site, fiche annuaire) avec la fraîcheur (« Annuaire de l'administration · relevé le … »).
+Rafraîchissement déclaré dans `EXPLOITATION-CRON.md` (à la main, non automatisé — les coordonnées changent
+rarement). Tests : `tests/test_mairies.py` (parsing annuaire, `mairie_de`, ABSENT, affichage contexte).
+
+---
+
+## K3 — CALCULETTE DE TAXE D'AMÉNAGEMENT (nouvel outil)
+
+Formule publique (code de l'urbanisme). Valeurs forfaitaires de l'**année en cours (2026)** dans une
+config **datée et SOURCÉE** `config/taxe_amenagement.yaml` (source service-public.gouv.fr, relevé le
+27/08/2026) : valeur au m² **hors Île-de-France 892 €** (La Réunion), piscine 251 €/m², PV au sol 10 €/m²,
+éolienne 3 000 €/mât, stationnement extérieur 2 928 €/place (jusqu'à 5 857 sur délibération) ; abattement
+**50 %** sur les 100 premiers m² d'une résidence principale et sur les logements aidés.
+
+**Taux — aucun taux inventé** :
+- **Part communale** : issue des délibérations, ni en base ni devinable → **saisie obligatoire**. Sans
+  elle, `total_eur=null` et l'outil dit « Taux communal non renseigné pour cette commune » (il ne calcule
+  jamais avec un défaut silencieux).
+- **Part départementale** : plafond légal **2,5 %** servi par défaut, **étiqueté « à confirmer »**
+  (`part_departementale_confirmee_974=false`) — le taux exact 974 n'a pas été trouvé dans une source
+  officielle (il vient d'une délibération du conseil départemental) ; on sert le plafond documenté,
+  modifiable, jamais présenté comme confirmé.
+
+`src/labuse/taxe_amenagement.py` : calcul pur, **détail LIGNE PAR LIGNE** (surface, forfaits, assiette,
+part communale, part départementale, total). Endpoints `GET /outils/taxe-amenagement` (calcul),
+`…/config` (valeurs datées) et `…/prefill?idu=` (zone PLU + surface du TERRAIN en référence — la surface
+TAXABLE reste saisie, jamais devinée). Outil dans le menu Outils (aplati, DA LABUSE, mauve absent).
+Mention à l'écran : estimation indicative, montant officiel notifié après dépôt du permis (clause boussole).
+Tests : `tests/test_taxe_amenagement.py` (config sourcée, abattement, détail, forfaits, sans-taux-communal, départemental non confirmé).
+
+---
+
+## FINDINGS
+- **KF-001** (K1) — Âge du dirigeant : donnée présente (`age_max_dirigeant`, INPI RNE) mais RGPD sensible
+  → drapeau `filtre_age_dirigeant` FERMÉ par défaut, NON activé. Question ouverte avocat (diffusibilité).
+- **KF-002** (K1) — Filtre « propriétaire PM » restreint à oui/indifférent : le back n'exprime que la
+  présence d'une PM ; « non » (exclusion) non exprimé proprement. À compléter si Vic veut le « non ».
+- **KF-003** (K1) — APE (39,7 %) et nb dirigeants (46,8 %) ont une couverture PARTIELLE (jointure SIREN) :
+  l'UI le dit ; l'absence n'est jamais présentée comme un « non ».
+- **KF-004** (K2) — 1 commune sans e-mail dans l'annuaire (affiché « Absent »).
+- **KF-005** (K3) — Taux départemental 974 non confirmé par source officielle : plafond légal 2,5 % servi
+  et étiqueté « à confirmer ». Taux communaux non ingérés → saisie utilisateur (jamais de défaut).

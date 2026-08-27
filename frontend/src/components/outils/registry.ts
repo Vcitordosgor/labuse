@@ -63,6 +63,10 @@ export const MODULES: ModuleDef[] = [
     label: 'Étudier un bien', desc: 'Une adresse ou une parcelle — le constat (verdict + charge calibrée), puis vos hypothèses' },
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,
     label: 'Faisabilité', desc: 'Ce qu’une parcelle peut accueillir, ou par critères où poser un programme' },
+  // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement » : assiette, part communale, part
+  // départementale, détail ligne par ligne. Barème et taux servis par le backend (jamais en dur).
+  { key: 'taxe-amenagement', num: 'K3', group: 'instruire',
+    label: 'Taxe d\'aménagement', desc: 'Estimez la taxe d\'aménagement d\'un projet — assiette, part communale, part départementale, détaillé ligne par ligne' },
   // M137-T — « Contrôle avant achat » (M10) + « Servitudes invisibles » (O5) fusionnés en UN outil
   // « Risques », deux entrées (une parcelle en détail / un lot au crible). Le nom ne promet pas
   // l'exhaustivité (l'outil dit ce que la base ne couvre pas) — ni « contrôle complet » ni « due diligence ».

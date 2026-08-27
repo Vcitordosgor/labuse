@@ -36,6 +36,7 @@ import { Plu } from './Plu'
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
 import { RenouvellementModule } from './Renouvellement'
 import { ProspectionSolaire } from './ProspectionSolaire'
+import { TaxeAmenagement } from './TaxeAmenagement'
 import { TierBadge } from './TierBadge'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -1172,6 +1173,9 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // Retiré du produit le 21/08/2026 (DORMANT) : 'o10-bascules' (Quoi de neuf) — plus monté. Composant
   // O10Bascules conservé au dépôt (exporté) ; son endpoint /events reste vivant (cloche de notifications).
   'calculette-fonciere': EtudierBien,
+  // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement ». Marche à vide ; s'ouvre aussi
+  // depuis une parcelle sélectionnée (getTaxePrefill : commune + zone en référence, surface saisie).
+  'taxe-amenagement': TaxeAmenagement,
 }
 
 export function ModulePanel() {

@@ -2252,6 +2252,49 @@ def proprietaires_autocomplete(q: str, commune: str | None = None,
     return {"suggestions": autocomplete(db, q, commune)}
 
 
+# ── K3 — calculette de taxe d'aménagement (formule publique, config datée, aucun taux inventé) ──
+
+@app.get("/outils/taxe-amenagement/config")
+def taxe_amenagement_config() -> dict:
+    """Valeurs forfaitaires + plafonds + source/année (config datée) — pour l'écran de la calculette."""
+    from ..taxe_amenagement import config
+    c = config()
+    return {"meta": c["meta"], "valeur_forfaitaire_m2": c["valeur_forfaitaire_m2"],
+            "abattement": c["abattement"], "forfaits": c["forfaits"], "taux": c["taux"]}
+
+
+@app.get("/outils/taxe-amenagement/prefill")
+def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Contexte d'une parcelle pour pré-remplir : zone PLU + surface du TERRAIN (référence — la
+    surface TAXABLE est la surface de plancher projetée, saisie par l'utilisateur, jamais devinée)."""
+    _check_idu(idu)
+    row = db.execute(text(
+        "SELECT p.commune, round(p.surface_m2) AS surface_terrain_m2, z.zone_libelle, z.zone_fam"
+        " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu WHERE p.idu = :i"),
+        {"i": idu}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Parcelle inconnue")
+    return {"idu": idu, "commune": row["commune"],
+            "surface_terrain_m2": row["surface_terrain_m2"],
+            "zone_plu": row["zone_libelle"] or row["zone_fam"]}
+
+
+@app.get("/outils/taxe-amenagement")
+def taxe_amenagement(
+    surface_taxable_m2: float = 0.0, residence_principale: bool = False, logement_aide: bool = False,
+    piscine_m2: float = 0.0, pv_sol_m2: float = 0.0, stationnement_ext_places: int = 0,
+    eoliennes_mats: int = 0, taux_communal_pct: float | None = None,
+    taux_departemental_pct: float | None = None) -> dict:
+    """Estimation INDICATIVE, détaillée ligne par ligne. Sans taux communal, le total n'est pas
+    calculé (l'écran demande le taux — l'outil n'invente aucun taux communal)."""
+    from ..taxe_amenagement import calculer
+    return calculer(
+        surface_taxable_m2=surface_taxable_m2, residence_principale=residence_principale,
+        logement_aide=logement_aide, piscine_m2=piscine_m2, pv_sol_m2=pv_sol_m2,
+        stationnement_ext_places=stationnement_ext_places, eoliennes_mats=eoliennes_mats,
+        taux_communal_pct=taux_communal_pct, taux_departemental_pct=taux_departemental_pct)
+
+
 @app.get("/map/parcels.geojson")
 def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000),
                     source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> dict:

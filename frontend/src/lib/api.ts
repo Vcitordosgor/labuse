@@ -319,6 +319,67 @@ export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, i
     body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur, idu: idu ?? null, with_constat: withConstat }),
   })
 
+// K3 (rattrapage KelFoncier) · calculette « Taxe d'aménagement ». Backend maître : aucun montant/taux
+// écrit en dur côté front — la config (valeurs forfaitaires, abattement, forfaits, taux plafonds/défauts)
+// et le calcul viennent des endpoints. Le taux communal N'A JAMAIS de défaut (l'outil ne l'invente pas).
+export interface TaxeConfig {
+  meta: { annee: number; source: string; url: string; releve_le: string; note: string }
+  valeur_forfaitaire_m2: { hors_idf: number; idf: number }
+  abattement: { taux_pct: number; plafond_m2_residence_principale: number }
+  forfaits: {
+    piscine_m2: number; panneau_pv_sol_m2: number; eolienne_mat: number
+    stationnement_ext_place: number; stationnement_ext_place_max_delib: number
+  }
+  taux: {
+    part_communale_plafond_pct: number; part_communale_defaut: number | null
+    part_departementale_plafond_pct: number; part_departementale_defaut: number
+    part_departementale_confirmee_974: boolean
+  }
+}
+export const getTaxeConfig = () => j<TaxeConfig>('/outils/taxe-amenagement/config')
+
+export interface TaxeLigne { poste: string; detail: string; assiette_eur: number }
+export interface TaxeResult {
+  annee: number; source: string; url: string; note: string
+  valeur_forfaitaire_m2: number
+  lignes: TaxeLigne[]
+  assiette_eur: number
+  taux_communal_pct: number | null
+  taux_departemental_pct: number
+  part_departementale_confirmee: boolean
+  part_communale_eur: number | null
+  part_departementale_eur: number | null
+  total_eur: number | null
+  taux_communal_manquant: boolean
+  message_taux_communal: string | null
+}
+export interface TaxeParams {
+  surface_taxable_m2: number
+  residence_principale?: boolean
+  logement_aide?: boolean
+  piscine_m2?: number
+  pv_sol_m2?: number
+  stationnement_ext_places?: number
+  eoliennes_mats?: number
+  taux_communal_pct?: number | null
+  taux_departemental_pct?: number | null
+}
+export const getTaxeAmenagement = (p: TaxeParams) => {
+  const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
+  if (p.residence_principale) params.set('residence_principale', 'true')
+  if (p.logement_aide) params.set('logement_aide', 'true')
+  if (p.piscine_m2) params.set('piscine_m2', String(p.piscine_m2))
+  if (p.pv_sol_m2) params.set('pv_sol_m2', String(p.pv_sol_m2))
+  if (p.stationnement_ext_places) params.set('stationnement_ext_places', String(p.stationnement_ext_places))
+  if (p.eoliennes_mats) params.set('eoliennes_mats', String(p.eoliennes_mats))
+  if (p.taux_communal_pct != null) params.set('taux_communal_pct', String(p.taux_communal_pct))
+  if (p.taux_departemental_pct != null) params.set('taux_departemental_pct', String(p.taux_departemental_pct))
+  return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
+}
+
+export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null }
+export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
+
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN
 // rattachée aux parcelles à ~99,99 %) via l'endpoint /adresses/autocomplete — plus fiable que
 // l'appel navigateur vers l'API BAN externe (qui pouvait échouer/être bloqué) et aligné sur
