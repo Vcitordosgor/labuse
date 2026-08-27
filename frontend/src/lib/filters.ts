@@ -91,18 +91,22 @@ export interface Chip { token: string; label: string }
 // M55-D (phase 2) : le badge « Filtres (N) » du header compte TOUS les critères actifs, où qu'ils
 // aient été posés (rapides du header OU panneau). Le MODE (analyseLabuse) n'est PAS un filtre → exclu.
 const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes', 'zonagePlu',
-  'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux', 'droitsResiduels']
+  'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux', 'droitsResiduels',
+  'pmForme', 'pmApe']   // KF1 (rattrapage KelFoncier) — facettes propriétaire
 const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
-  'prixMarcheMin', 'prixMarcheMax', 'caMin']
+  'prixMarcheMin', 'prixMarcheMax', 'caMin', 'pmDirigMin', 'pmDirigMax']
 const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
   'sousDensite', 'renouvellement', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
+// KF1 — champs texte libres (dénomination, SIREN) : comptés/persistés comme les autres.
+const F_STRS: (keyof Filters)[] = ['pmDenom', 'pmSiren']
 
 export function countActiveFilters(f: Filters): number {
   let n = 0
   for (const k of F_ARRAYS) if ((f[k] as unknown[]).length) n++
   for (const k of F_NUMS) if (f[k] != null) n++
   for (const k of F_BOOLS) if (f[k]) n++
+  for (const k of F_STRS) if (f[k]) n++
   return n
 }
 
@@ -111,7 +115,8 @@ export function countActiveFilters(f: Filters): number {
 // ALLUME l'interrupteur (biunivoque) ; le défaut est ÉTEINT (analyse coupée, tri factuel).
 const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zonagePlu', 'zonePlu',
   'etatSol', 'flags', 'flagsExclus', 'communes',
-  'signaux'])   // M55-D stage 6 : les Signaux de vie = ÉVÉNEMENTS SOURCÉS, filtrables sans analyse
+  'signaux',   // M55-D stage 6 : les Signaux de vie = ÉVÉNEMENTS SOURCÉS, filtrables sans analyse
+  'pmForme', 'pmApe', 'pmDirigMin', 'pmDirigMax'])   // KF1 — critères propriétaire = faits (DGFiP), pas une opinion LABUSE
 export function hasOpinion(f: Filters): boolean {
   for (const k of F_ARRAYS) if (!TERRAIN_FIELDS.has(k) && (f[k] as unknown[]).length) return true
   for (const k of F_NUMS) if (!TERRAIN_FIELDS.has(k) && f[k] != null) return true
@@ -178,6 +183,7 @@ const NUM_KEYS: [keyof Filters, string][] = [
   ['sdpMax', 'sdpx'], ['capaciteMin', 'cap'], ['multMin', 'mm'], ['rangMax', 'rm'],
   ['budgetMax', 'bud'], ['chargeMin', 'chmin'], ['chargeMax', 'chmax'],
   ['prixMarcheMin', 'pmin'], ['prixMarcheMax', 'pmax'], ['caMin', 'ca'],
+  ['pmDirigMin', 'pdmin'], ['pmDirigMax', 'pdmax'],   // KF1 — nombre de dirigeants
 ]
 const BOOL_KEYS: [keyof Filters, string][] = [
   ['evenement', 'ev'], ['veille', 'vs2'], ['horsCopro', 'hc'], ['personneMorale', 'pm'],
@@ -192,7 +198,10 @@ const CSV_KEYS: [keyof Filters, string][] = [
   ['signaux', 'sv'],
   ['constructibilite', 'cst'], ['etatSol', 'es'], ['zonePlu', 'zpx'],
   ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'], ['droitsResiduels', 'drr'],
+  ['pmForme', 'pmf'], ['pmApe', 'pma'],   // KF1 — forme juridique / code APE (codes réels des facettes)
 ]
+// KF1 — clés texte (dénomination, SIREN) : persistées telles quelles dans le hash.
+const STR_KEYS: [keyof Filters, string][] = [['pmDenom', 'pmd'], ['pmSiren', 'pms']]
 
 export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   const p = new URLSearchParams()
@@ -200,6 +209,7 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   for (const [k, key] of NUM_KEYS) { const v = f[k] as number | null; if (v != null) p.set(key, String(v)) }
   for (const [k, key] of BOOL_KEYS) { if (f[k]) p.set(key, '1') }
   for (const [k, key] of CSV_KEYS) { const a = f[k] as string[]; if (a.length) p.set(key, a.join(',')) }
+  for (const [k, key] of STR_KEYS) { const v = f[k] as string | null; if (v) p.set(key, v) }   // KF1
   // M55-D stage 4 : l'interrupteur « analyse » est ÉTEINT par défaut — on écrit l'exception (allumé).
   if (f.analyseLabuse) p.set('al', '1')
   if (zone) p.set('z', zone.map(([x, y]) => `${x.toFixed(5)}_${y.toFixed(5)}`).join('~'))
@@ -227,6 +237,7 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
   for (const [k, key] of NUM_KEYS) f[k] = num(key)
   for (const [k, key] of BOOL_KEYS) f[k] = p.get(key) === '1'
   for (const [k, key] of CSV_KEYS) f[k] = p.get(key)?.split(',').filter(Boolean) ?? []
+  for (const [k, key] of STR_KEYS) f[k] = p.get(key) || null   // KF1 — dénomination / SIREN
   // M55-G suite point 4 : seules les clés de signaux SERVIES par l'UI passent — un vieux lien
   // portant `sv=nu_pm` ou `sv=cession` (signaux supprimés) s'ouvre sans erreur, la clé est
   // ignorée (jamais un filtre actif invisible ; le backend, lui, reste intact).

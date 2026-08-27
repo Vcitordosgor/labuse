@@ -105,6 +105,14 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.marcheFiable ? { marche_fiable: 'true' } : {}),
   // M55-D stage 6 — Signaux de vie (OU dans le groupe, ET avec le reste)
   ...(f.signaux.length ? { signaux: f.signaux.join(',') } : {}),
+  // KF1 (rattrapage KelFoncier) — section « Propriétaire » (facettes DGFiP, millésime 2025).
+  // personne_morale est déjà envoyé plus haut (f.personneMorale). Les critères fins :
+  ...(f.pmDenom ? { pm_denom: f.pmDenom } : {}),
+  ...(f.pmSiren ? { pm_siren: f.pmSiren } : {}),
+  ...(f.pmForme?.length ? { pm_forme: f.pmForme.join(',') } : {}),
+  ...(f.pmApe?.length ? { pm_ape: f.pmApe.join(',') } : {}),
+  ...(f.pmDirigMin != null ? { pm_dirig_min: f.pmDirigMin } : {}),
+  ...(f.pmDirigMax != null ? { pm_dirig_max: f.pmDirigMax } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {
@@ -839,6 +847,29 @@ export interface AdminLicences {
 export interface Offre { cle: string; label: string; eur_mois?: number; eur?: number; engagement?: boolean; periodicite: string; validite_lien_jours?: number }
 export interface Offres { integral: Offre; flash: Offre }
 export const getOffres = () => j<Offres>('/api/offres')
+
+// KF1 (rattrapage KelFoncier) — FACETTES PROPRIÉTAIRE (DGFiP, non-nominatif au niveau PM).
+// Valeurs RÉELLES avec comptes : formes juridiques, codes APE, couverture, drapeau âge dirigeant
+// (RGPD, fermé par défaut). Le front n'écrit AUCUNE forme/APE en dur — tout vient d'ici.
+export interface ProprietairesFacettes {
+  millesime: string
+  source: string
+  formes: { code: string; label: string; n: number }[]
+  apes: { code: string; label: string; n: number }[]
+  couverture: { pm: number; total: number; couvert: boolean }
+  age_dirigeant_actif: boolean
+}
+export const getProprietairesFacettes = (commune?: string | null) =>
+  j<ProprietairesFacettes>(`/proprietaires/facettes${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)
+
+// Autocomplétion de dénomination (2 caractères min). Renvoie les entités PM et leur volume parcellaire.
+export interface ProprietairesAutocomplete {
+  suggestions: { denomination: string; siren: string; n: number }[]
+}
+export const getProprietairesAutocomplete = (qy: string, commune?: string | null) => {
+  const params = new URLSearchParams({ q: qy, ...(commune ? { commune } : {}) })
+  return j<ProprietairesAutocomplete>(`/proprietaires/autocomplete?${params.toString()}`)
+}
 
 export const getAdminLicences = () => j<AdminLicences>('/admin/licences')
 export const postAdminLicenceCreer = (body: { email: string; nom?: string }) =>

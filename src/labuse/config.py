@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     # distinctes actives simultanément au-delà duquel un compte est signalé (jamais bloqué).
     # 1 licence = 1 accès ; 3 postes simultanés = partage probable. Purement informatif.
     sessions_signal_seuil: int = 3
+    # K1 (rattrapage KelFoncier) — DRAPEAU RGPD : le filtre par ÂGE du dirigeant (INPI RNE) reste
+    # FERMÉ par défaut. L'âge est une donnée personnelle sensible, question ouverte pour l'avocat
+    # (diffusibilité INPI). Tant que ce drapeau est false, l'endpoint refuse toute clé `age_*` et
+    # l'UI ne montre pas le contrôle. Ne PAS activer sans arbitrage juridique.
+    filtre_age_dirigeant: bool = False
     # Origine publique (https://…) autorisée en CORS hors local ; vide = même origine seulement.
     public_url: str | None = None
 

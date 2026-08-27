@@ -1227,7 +1227,10 @@ def _q_v2_where(run_label: str,
                 modeb_travaux_m2: float | None = None, modeb_loyer_m2: float | None = None,
                 modeb_rendement_pct: float | None = None,
                 signaux: str | None = None,
-                droits_residuels: str | None = None) -> tuple[str, dict]:
+                droits_residuels: str | None = None,
+                pm_denom: str | None = None, pm_siren: str | None = None,
+                pm_forme: str | None = None, pm_ape: str | None = None,
+                pm_dirig_min: int | None = None, pm_dirig_max: int | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -1491,6 +1494,41 @@ def _q_v2_where(run_label: str,
                        " WHERE pp2.idu = p.idu AND bp.famille = 'pcl')")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
+    # K1 — filtres propriétaire PERSONNE MORALE (DGFiP 2025 + INPI RNE). Chaque filtre = un EXISTS
+    # sur parcelle_personne_morale (jointure idu), + jointures SIREN pour APE (owner_enrichment) et
+    # dirigeants (v_pm_propension_vendre). Un filtre PM implique la présence d'une PM (pas de faux zéro).
+    if pm_denom and pm_denom.strip():
+        conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmd WHERE pmd.idu = p.idu"
+                     " AND pmd.denomination ILIKE :pm_denom)")
+        params["pm_denom"] = f"%{pm_denom.strip()}%"
+    if pm_siren and pm_siren.strip():
+        sirens = [x.strip() for x in pm_siren.replace(" ", ",").split(",") if x.strip().isdigit()]
+        if sirens:
+            conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pms WHERE pms.idu = p.idu"
+                         " AND pms.siren = ANY(:pm_siren))")
+            params["pm_siren"] = sirens
+    if pm_forme and pm_forme.strip():
+        formes = [x.strip().upper() for x in pm_forme.split(",") if x.strip()]
+        if formes:
+            conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmf WHERE pmf.idu = p.idu"
+                         " AND pmf.forme_juridique = ANY(:pm_forme))")
+            params["pm_forme"] = formes
+    if pm_ape and pm_ape.strip():
+        apes = [x.strip().upper() for x in pm_ape.split(",") if x.strip()]
+        if apes:
+            conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pma"
+                         " JOIN owner_enrichment oea ON oea.siren = pma.siren"
+                         " WHERE pma.idu = p.idu AND oea.payload->>'activite_principale' = ANY(:pm_ape))")
+            params["pm_ape"] = apes
+    if pm_dirig_min is not None or pm_dirig_max is not None:
+        cond = ("EXISTS (SELECT 1 FROM parcelle_personne_morale pmg"
+                " JOIN v_pm_propension_vendre vpg ON vpg.siren = pmg.siren"
+                " WHERE pmg.idu = p.idu")
+        if pm_dirig_min is not None:
+            cond += " AND vpg.nb_dirigeants >= :pm_dirig_min"; params["pm_dirig_min"] = pm_dirig_min
+        if pm_dirig_max is not None:
+            cond += " AND vpg.nb_dirigeants <= :pm_dirig_max"; params["pm_dirig_max"] = pm_dirig_max
+        conds.append(cond + ")")
     if copro:   # propriété : copropriété RNIC (avec / sans) — s2.copro
         cp = [x.strip() for x in copro.split(",") if x.strip()]
         if "avec" in cp and "sans" not in cp:
@@ -1609,6 +1647,15 @@ class FiltreCriteres:
     # M55-D stage 6 — SIGNAUX DE VIE (CSV parmi : procedure, permis_actif, permis_caduc,
     # defisc, nu_pm, friche, cession, assemblage). OU dans le groupe, ET avec le reste.
     signaux: str | None = None
+    # K1 (rattrapage KelFoncier) — FILTRES PROPRIÉTAIRE PERSONNE MORALE (données DGFiP millésime
+    # 2025 + INPI RNE, déjà en base). denomination (autocomplétion), siren (CSV), forme juridique
+    # (CSV de codes réels), APE (CSV de codes NAF réels via owner_enrichment), nb dirigeants (min/max).
+    pm_denom: str | None = None
+    pm_siren: str | None = None
+    pm_forme: str | None = None
+    pm_ape: str | None = None
+    pm_dirig_min: int | None = None
+    pm_dirig_max: int | None = None
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.surface_min, self.surface_max,
@@ -1623,7 +1670,9 @@ class FiltreCriteres:
                            self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
                            self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
                            signaux=self.signaux,
-                           droits_residuels=self.droits_residuels)
+                           droits_residuels=self.droits_residuels,
+                           pm_denom=self.pm_denom, pm_siren=self.pm_siren, pm_forme=self.pm_forme,
+                           pm_ape=self.pm_ape, pm_dirig_min=self.pm_dirig_min, pm_dirig_max=self.pm_dirig_max)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.surface_min,
@@ -1636,7 +1685,9 @@ class FiltreCriteres:
                 self.budget_max, self.charge_min, self.charge_max, self.prix_marche_min,
                 self.prix_marche_max, self.marche_fiable, self.ca_min, self.mode_b_rentable,
                 self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
-                self.signaux, self.droits_residuels)
+                self.signaux, self.droits_residuels,
+                self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
+                self.pm_dirig_min, self.pm_dirig_max)
 
 
 @app.get("/parcels")
@@ -2176,6 +2227,25 @@ def _owner_famille(groupe, forme, denom) -> str:
         return "inconnu"
     from ..proprietaire_type import classify_dgfip
     return classify_dgfip(groupe, forme, denom)["famille"]
+
+
+# ── K1 — facettes des filtres PROPRIÉTAIRE (valeurs réelles, comptes, millésime) ──
+
+@app.get("/proprietaires/facettes")
+def proprietaires_facettes(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Listes réelles pour les filtres propriétaire PM : formes juridiques et codes APE avec leurs
+    comptes, couverture PM (pour « non couvert »), millésime de la source, et l'état du drapeau RGPD
+    « âge du dirigeant » (l'UI ne montre le contrôle âge que s'il est ouvert)."""
+    from ..proprietaire_facettes import facettes
+    return facettes(db, commune)
+
+
+@app.get("/proprietaires/autocomplete")
+def proprietaires_autocomplete(q: str, commune: str | None = None,
+                               db: Session = Depends(get_db)) -> dict:
+    """Autocomplétion de la dénomination sur les noms RÉELS en base (jamais inventés)."""
+    from ..proprietaire_facettes import autocomplete
+    return {"suggestions": autocomplete(db, q, commune)}
 
 
 @app.get("/map/parcels.geojson")
