@@ -100,3 +100,48 @@ installés : `avis-echeance`, `evaluer-secteurs`. **Manquants** :
 - **RV-003 🟡 — purge des sessions expirées** : `sessions_auth` n'est jamais nettoyée (dette AC-011).
   → commande `purge-sessions` créée en **R9**.
 - **RV-004 🟡 — webhook Stripe absent** : paiements asynchrones non captés → détaillé en **R6**.
+
+---
+## R3 — MOTEUR UNIQUE REJOUÉ (q_v11_m137)
+
+Protocole LOT AP rejoué sur le run servi actuel (`qa/revue/r3_moteur_unique.py`). Le run servi est
+lu du point de vérité unique `config/served_run.txt` (`Q_A_RUN_LABEL`) = `q_v11_m137` ; la carte
+(`mvt_meta.run_label`) = `q_v11_m137` (rebâtie ce midi). **130 parcelles** (120 tirées au sort tous
+tiers + 10 cas canari) rejouées par tous les chemins servis.
+
+### Concordance — AUCUNE DIVERGENCE
+
+Pour chaque parcelle, les grandeurs servies concordent **exactement** entre les trois chemins :
+
+| Grandeur | SQL (couche servie) | Fiche `/parcels/{idu}` | `/v2/score/{idu}` | Écart |
+|----------|--------------------|-----------------------|-------------------|-------|
+| tier (classement) | ✓ | ✓ | ✓ | **0** |
+| mult_base (score) | ✓ | ✓ | ✓ | **0** |
+| rang | ✓ | ✓ | ✓ | **0** |
+| surface | ✓ | ✓ | — | **0** |
+
+**130/130 concordantes, 0 divergence 🔴.** La bascule vers `q_v11_m137` est propre : aucun chemin
+ne sert un vestige de l'ancien run. Moteur unique confirmé.
+
+### Canari (score élevé → a_creuser) — POURQUOI LISIBLE ✅
+
+Les 10 parcelles à `mult_base` élevé (13–22) classées `a_creuser` : **le pourquoi de non-opportunité
+est visible et lisible sur chaque fiche** via le détail sourcé négatif. Exemple `97416000DN0012`
+(mult 22,12, a_creuser) — 6 contraintes explicites servies au client :
+
+- `[-15] risques` : Aléa inondation — niveau fort.
+- `[-10] risques` : Aléa mouvement de terrain — niveau moyen.
+- `[-5] icpe` : Installation classée à proximité (CBO TERRITORIA, 273 m).
+- `[-5] risques` : Zone bleue PPR inondation/mouvement — constructible sous prescriptions (DEAL).
+- `[-5] sol_pollue` : Site pollué recensé (CASIAS) à proximité — étude de sol (Central Téléphonique, 64 m).
+- `[-5] bruit_route` : Classement sonore cat. 3 — isolement acoustique obligatoire (R.571-32 CE).
+
+Chaque contrainte est **nommée, chiffrée, sourcée**. Le client comprend qu'une parcelle au fort
+signal foncier est reléguée à cause d'un empilement de contraintes réglementaires/risques.
+
+- **RV-005 ✅ — Canari satisfait.** Le motif de non-opportunité est lisible sur la fiche (lignes de
+  détail sourcé négatives). Le champ de synthèse `score_v2.motif` reste `None` pour ces `a_creuser`
+  (le motif de synthèse est réservé aux déclassements `declasse_*`), mais le détail par couche est
+  complet et explicite. **Aucune modification** de l'affichage ni du classement nécessaire (conforme
+  « sans changer le classement »). Arbitrage : le pourquoi étant déjà servi ligne à ligne, ajouter un
+  badge de synthèse serait cosmétique et hors périmètre « aucun chiffre ne change ».
