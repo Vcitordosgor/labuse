@@ -72,6 +72,22 @@ if [ "$(date +%u)" = "7" ]; then
     ((${#OLDH[@]})) && rm -f -- "${OLDH[@]}"
 fi
 
+# --- RADAR (pige) — captures PRIVÉES incluses au backup (mandat RADAR V0 §2) ---
+# Documents de travail internes (JAMAIS servis par le web) mais à sauvegarder : la métadonnée est
+# dans le dump DB, les fichiers sont archivés ici (tar, guardé par l'existence du répertoire), même
+# rotation que les dumps quotidiens (KEEP).
+PIGE_CAPTURES_DIR="${LABUSE_PIGE_CAPTURES_DIR:-/srv/labuse/pige/captures}"
+if [ -d "$PIGE_CAPTURES_DIR" ]; then
+    PIGE_OUT="$BACKUP_DIR/labuse-pige-captures-${TS}.tar.gz"
+    if tar -czf "$PIGE_OUT" -C "$(dirname "$PIGE_CAPTURES_DIR")" "$(basename "$PIGE_CAPTURES_DIR")"; then
+        echo "✓ captures Radar archivées → $PIGE_OUT ($(du -h "$PIGE_OUT" | cut -f1))"
+        mapfile -t OLDP < <(ls -1t "$BACKUP_DIR"/labuse-pige-captures-*.tar.gz 2>/dev/null | tail -n +"$((KEEP + 1))")
+        ((${#OLDP[@]})) && rm -f -- "${OLDP[@]}"
+    else
+        echo "✗ archivage captures Radar a échoué (non bloquant pour le dump DB)" >&2
+    fi
+fi
+
 # --- Offload Object Storage (À ACTIVER quand le bucket OVH est prêt) ---
 # Décommenter après avoir configuré rclone (remote "ovh") ou s3cmd :
 #   rclone copy "$OUT" ovh:labuse-backups/ && echo "  ↑ copié vers OVH Object Storage"
