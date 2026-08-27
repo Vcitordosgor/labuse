@@ -1948,9 +1948,13 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     _insee_c = _cd.get("insee") if _cd else None
     rnu = ({"libelle": rnu_mod.LIBELLE_RNU, "detail": rnu_mod.DETAIL_RNU}
            if rnu_mod.is_rnu_insee(_insee_c) else None)
+    # K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
+    from ..ingestion.mairies import mairie_de
+    mairie = mairie_de(db, commune)
     return {"commune": commune, "epci": epci,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
+            "mairie": mairie,                           # K2 — adresse/tél/e-mail/site + fraîcheur
             "foncier": _foncier_commune(db, commune),   # M83 C1 — le foncier de la commune, EN TÊTE
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE

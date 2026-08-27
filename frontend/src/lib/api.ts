@@ -189,6 +189,12 @@ export interface ContexteCommune {
   commune: string; epci: string | null; epci_nom: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
   rnu: { libelle: string; detail: string } | null
+  // K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
+  mairie: {
+    commune: string; nom: string | null; adresse: string | null; code_postal: string | null
+    telephone: string | null; email: string | null; site_officiel: string | null
+    url_annuaire: string | null; source: string; date_import: string | null
+  } | null
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
   foncier: {
     n_parcelles: number; surface_ha: number | null

@@ -2741,6 +2741,19 @@ def ingest_bodacc_cmd() -> None:
         typer.echo(f"✓ BODACC : {r['sirens']} SIREN, dernière annonce {r['derniere_annonce']}")
 
 
+@app.command("ingest-mairies")
+def ingest_mairies_cmd() -> None:
+    """K2 — coordonnées des 24 mairies depuis l'Annuaire de l'administration (service-public.fr).
+    Upsert par INSEE, champ absent = NULL (jamais inventé), date de récupération stockée. À relancer
+    quand les coordonnées changent (les mairies déménagent, changent de téléphone)."""
+    from .ingestion import mairies
+
+    with session_scope() as s:
+        r = mairies.ingest(s)
+    typer.echo(f"✓ Mairies : {r['trouvees']}/{r['communes']} ingérées"
+               + (f" — absentes de l'annuaire : {', '.join(r['absentes'])}" if r["absentes"] else ""))
+
+
 @app.command("refresh-dvf")
 def refresh_dvf_cmd() -> None:
     """J+2 — DVF : détecte une nouvelle livraison Etalab (Last-Modified) et recharge SEULEMENT
