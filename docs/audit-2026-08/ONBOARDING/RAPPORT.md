@@ -207,3 +207,23 @@ Gelé par `tests/test_parcours_css.py` (aucun raccourci `font:…inherit`, champ
 famille valide). Le Checkout Stripe et le téléchargement PDF iOS sont hébergés/gérés par Stripe et
 le navigateur ; le retour de paiement (`/onboarding/retour`, `/flash/retour`) est recetté ci-dessus
 et son JS de polling est CSP-safe depuis E3.
+
+---
+
+## E8 — TEXTES ET DA
+
+**Textes** (relus sur captures + rendu) : français correct, **vouvoiement** partout, ton LABUSE
+sobre et précis (« Aucun souci. Reprenez quand vous voulez », « rien n'a été débité »), aucun jargon
+technique exposé, **aucune clé de traduction brute, aucun lorem, aucun TODO/placeholder**. Aucun nom
+d'offre mort n'est servi à l'utilisateur (les seules occurrences « founding »/« Pro » restantes
+étaient une **docstring** et un **commentaire** internes — la docstring périmée a été réécrite).
+
+**Liens légaux** : `/cgv`, `/mentions-legales`, `/confidentialite` répondent 200 (E4) et sont
+référencés dans le pied des pages du tunnel client. La CGV présente **les deux offres** (Intégral
+349 €/mois engagement 12 mois · Flash 79 € unique) et la clause Chatel.
+
+**DA** : le parcours utilise le **menthe** (`--mint`, vert) pour les CTA — le **mauve** (`--violet`,
+réservé à l'IA) n'est **utilisé nulle part** dans le parcours (0 `var(--violet)`). Identité LABUSE
+(oiseau SVG, Space Grotesk pour les titres — enfin appliqué depuis PE-008) respectée.
+
+Rien à corriger côté texte hormis la docstring interne ; DA conforme.

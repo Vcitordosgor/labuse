@@ -1,9 +1,10 @@
-"""PREMIER EURO · E3/E4 — pages serveur : onboarding founding + légales + webhook Stripe.
+"""Pages serveur du PARCOURS D'ENTRÉE : invitation/activation, légales, Flash, webhook Stripe.
 
-Parcours (décisions Vic) : invitation (lien signé, email pré-rempli) → mot de passe sur la
-façade Coffre → acceptation CGV (checkbox HORODATÉE + version, loggée) → Stripe Checkout
-(founding appliqué, montant visible côté Stripe) → retour → compte actif au webhook.
-Pages rendues serveur dans la nuit Coffre — la façade React n'est pas touchée.
+Parcours CLIENT (décisions Vic) : invitation (lien signé, email pré-rempli) → mot de passe →
+acceptation CGV (checkbox HORODATÉE + version, loggée) → Stripe Checkout (Intégral 349 €/mois,
+montant visible côté Stripe) → retour → compte actif au webhook. Parcours ADMIN (E2) : écran
+d'activation dédié, sans paiement. Deux offres, source unique `offres.py` (plus de « founding »).
+Pages rendues serveur (façade React non touchée) ; leur JS est servi same-origin (E3, CSP-safe).
 """
 from __future__ import annotations
 
