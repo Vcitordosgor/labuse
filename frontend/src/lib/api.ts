@@ -105,6 +105,14 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.marcheFiable ? { marche_fiable: 'true' } : {}),
   // M55-D stage 6 — Signaux de vie (OU dans le groupe, ET avec le reste)
   ...(f.signaux.length ? { signaux: f.signaux.join(',') } : {}),
+  // KF1 (rattrapage KelFoncier) — section « Propriétaire » (facettes DGFiP, millésime 2025).
+  // personne_morale est déjà envoyé plus haut (f.personneMorale). Les critères fins :
+  ...(f.pmDenom ? { pm_denom: f.pmDenom } : {}),
+  ...(f.pmSiren ? { pm_siren: f.pmSiren } : {}),
+  ...(f.pmForme?.length ? { pm_forme: f.pmForme.join(',') } : {}),
+  ...(f.pmApe?.length ? { pm_ape: f.pmApe.join(',') } : {}),
+  ...(f.pmDirigMin != null ? { pm_dirig_min: f.pmDirigMin } : {}),
+  ...(f.pmDirigMax != null ? { pm_dirig_max: f.pmDirigMax } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {
@@ -181,6 +189,12 @@ export interface ContexteCommune {
   commune: string; epci: string | null; epci_nom: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
   rnu: { libelle: string; detail: string } | null
+  // K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
+  mairie: {
+    commune: string; nom: string | null; adresse: string | null; code_postal: string | null
+    telephone: string | null; email: string | null; site_officiel: string | null
+    url_annuaire: string | null; source: string; date_import: string | null
+  } | null
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
   foncier: {
     n_parcelles: number; surface_ha: number | null
@@ -304,6 +318,67 @@ export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, i
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur, idu: idu ?? null, with_constat: withConstat }),
   })
+
+// K3 (rattrapage KelFoncier) · calculette « Taxe d'aménagement ». Backend maître : aucun montant/taux
+// écrit en dur côté front — la config (valeurs forfaitaires, abattement, forfaits, taux plafonds/défauts)
+// et le calcul viennent des endpoints. Le taux communal N'A JAMAIS de défaut (l'outil ne l'invente pas).
+export interface TaxeConfig {
+  meta: { annee: number; source: string; url: string; releve_le: string; note: string }
+  valeur_forfaitaire_m2: { hors_idf: number; idf: number }
+  abattement: { taux_pct: number; plafond_m2_residence_principale: number }
+  forfaits: {
+    piscine_m2: number; panneau_pv_sol_m2: number; eolienne_mat: number
+    stationnement_ext_place: number; stationnement_ext_place_max_delib: number
+  }
+  taux: {
+    part_communale_plafond_pct: number; part_communale_defaut: number | null
+    part_departementale_plafond_pct: number; part_departementale_defaut: number
+    part_departementale_confirmee_974: boolean
+  }
+}
+export const getTaxeConfig = () => j<TaxeConfig>('/outils/taxe-amenagement/config')
+
+export interface TaxeLigne { poste: string; detail: string; assiette_eur: number }
+export interface TaxeResult {
+  annee: number; source: string; url: string; note: string
+  valeur_forfaitaire_m2: number
+  lignes: TaxeLigne[]
+  assiette_eur: number
+  taux_communal_pct: number | null
+  taux_departemental_pct: number
+  part_departementale_confirmee: boolean
+  part_communale_eur: number | null
+  part_departementale_eur: number | null
+  total_eur: number | null
+  taux_communal_manquant: boolean
+  message_taux_communal: string | null
+}
+export interface TaxeParams {
+  surface_taxable_m2: number
+  residence_principale?: boolean
+  logement_aide?: boolean
+  piscine_m2?: number
+  pv_sol_m2?: number
+  stationnement_ext_places?: number
+  eoliennes_mats?: number
+  taux_communal_pct?: number | null
+  taux_departemental_pct?: number | null
+}
+export const getTaxeAmenagement = (p: TaxeParams) => {
+  const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
+  if (p.residence_principale) params.set('residence_principale', 'true')
+  if (p.logement_aide) params.set('logement_aide', 'true')
+  if (p.piscine_m2) params.set('piscine_m2', String(p.piscine_m2))
+  if (p.pv_sol_m2) params.set('pv_sol_m2', String(p.pv_sol_m2))
+  if (p.stationnement_ext_places) params.set('stationnement_ext_places', String(p.stationnement_ext_places))
+  if (p.eoliennes_mats) params.set('eoliennes_mats', String(p.eoliennes_mats))
+  if (p.taux_communal_pct != null) params.set('taux_communal_pct', String(p.taux_communal_pct))
+  if (p.taux_departemental_pct != null) params.set('taux_departemental_pct', String(p.taux_departemental_pct))
+  return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
+}
+
+export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null }
+export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN
 // rattachée aux parcelles à ~99,99 %) via l'endpoint /adresses/autocomplete — plus fiable que
@@ -839,6 +914,29 @@ export interface AdminLicences {
 export interface Offre { cle: string; label: string; eur_mois?: number; eur?: number; engagement?: boolean; periodicite: string; validite_lien_jours?: number }
 export interface Offres { integral: Offre; flash: Offre }
 export const getOffres = () => j<Offres>('/api/offres')
+
+// KF1 (rattrapage KelFoncier) — FACETTES PROPRIÉTAIRE (DGFiP, non-nominatif au niveau PM).
+// Valeurs RÉELLES avec comptes : formes juridiques, codes APE, couverture, drapeau âge dirigeant
+// (RGPD, fermé par défaut). Le front n'écrit AUCUNE forme/APE en dur — tout vient d'ici.
+export interface ProprietairesFacettes {
+  millesime: string
+  source: string
+  formes: { code: string; label: string; n: number }[]
+  apes: { code: string; label: string; n: number }[]
+  couverture: { pm: number; total: number; couvert: boolean }
+  age_dirigeant_actif: boolean
+}
+export const getProprietairesFacettes = (commune?: string | null) =>
+  j<ProprietairesFacettes>(`/proprietaires/facettes${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)
+
+// Autocomplétion de dénomination (2 caractères min). Renvoie les entités PM et leur volume parcellaire.
+export interface ProprietairesAutocomplete {
+  suggestions: { denomination: string; siren: string; n: number }[]
+}
+export const getProprietairesAutocomplete = (qy: string, commune?: string | null) => {
+  const params = new URLSearchParams({ q: qy, ...(commune ? { commune } : {}) })
+  return j<ProprietairesAutocomplete>(`/proprietaires/autocomplete?${params.toString()}`)
+}
 
 export const getAdminLicences = () => j<AdminLicences>('/admin/licences')
 export const postAdminLicenceCreer = (body: { email: string; nom?: string }) =>

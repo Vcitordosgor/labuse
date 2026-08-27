@@ -90,6 +90,14 @@ export interface Filters {
   // OU entre signaux du groupe, ET avec le reste. Clés : procedure, permis_actif, permis_caduc,
   // defisc, nu_pm, friche, cession, assemblage.
   signaux: string[]
+  // KF1 (rattrapage KelFoncier) — section « Propriétaire », branchée sur les facettes DGFiP
+  // (millésime 2025). personneMorale (booléen ci-dessus) porte déjà « oui ». Les critères fins :
+  pmDenom: string | null        // dénomination exacte (autocomplétée) → pm_denom
+  pmSiren: string | null         // un ou plusieurs SIREN, séparés par virgule → pm_siren
+  pmForme: string[]              // formes juridiques (codes réels des facettes) → pm_forme
+  pmApe: string[]                // codes APE / activités (codes réels des facettes) → pm_ape
+  pmDirigMin: number | null      // nombre de dirigeants (min) → pm_dirig_min
+  pmDirigMax: number | null      // nombre de dirigeants (max) → pm_dirig_max
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -104,6 +112,7 @@ export const EMPTY_FILTERS: Filters = {
   budgetMax: null, chargeMin: null, chargeMax: null, prixMarcheMin: null, prixMarcheMax: null,
   marcheFiable: false, caMin: null, modeBRentable: false,
   signaux: [],
+  pmDenom: null, pmSiren: null, pmForme: [], pmApe: [], pmDirigMin: null, pmDirigMax: null,
 }
 
 // M45-B (Lot 2) — curseur mode B PARTAGÉ (session unique, rien persisté) : travaux + loyer +

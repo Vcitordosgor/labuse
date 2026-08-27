@@ -55,6 +55,28 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+// K2 — une ligne de coordonnée mairie : valeur, lien optionnel, ou « Absent » (jamais inventé).
+function MairieLigne({ label, val, href }: { label: string; val: string | null; href?: string }) {
+  return (
+    <div className="flex gap-2">
+      <dt className="w-[74px] shrink-0 text-txt-dim">{label}</dt>
+      <dd className="min-w-0 flex-1 break-words text-txt">
+        {val == null
+          ? <span className="text-txt-dim italic">Absent</span>
+          : href
+            ? <a href={href} target="_blank" rel="noreferrer" className="text-mint hover:underline">{val}</a>
+            : val}
+      </dd>
+    </div>
+  )
+}
+
+function fmtDateFr(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(iso))
+  } catch { return iso }
+}
+
 /** VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU · ANRU · PLH · marché INSEE · QPV.
  *  Contexte SOURCÉ (échelle commune) — aucune de ces données n'entre dans le scoring. */
 export function ContextePanel() {
@@ -159,6 +181,20 @@ export function ContextePanel() {
                   <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.permis_12m.n)}</p><p className="text-[11px] text-txt-dim">permis (12 mois, Sitadel)</p></div>
                 </div>
                 <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">Prix terrain nu, mutations et permis : point de calcul Marché (M79) — DVF (actes) + Sitadel (autorisations, {d.foncier.permis_12m.reserve}).</p>
+              </Section>
+            )}
+            {/* K2 — COORDONNÉES DE LA MAIRIE (Annuaire de l'administration). Un champ absent affiche
+                « Absent » (jamais inventé) ; la fraîcheur = date de relevé de l'annuaire. */}
+            {d.mairie && (
+              <Section title="MAIRIE">
+                <dl className="space-y-1.5 text-[12px]">
+                  <MairieLigne label="Adresse" val={[d.mairie.adresse, [d.mairie.code_postal, d.mairie.commune].filter(Boolean).join(' ')].filter(Boolean).join(', ') || null} />
+                  <MairieLigne label="Téléphone" val={d.mairie.telephone} href={d.mairie.telephone ? `tel:${d.mairie.telephone.replace(/\s/g, '')}` : undefined} />
+                  <MairieLigne label="E-mail" val={d.mairie.email} href={d.mairie.email ? `mailto:${d.mairie.email}` : undefined} />
+                  <MairieLigne label="Site officiel" val={d.mairie.site_officiel} href={d.mairie.site_officiel ?? undefined} />
+                  <MairieLigne label="Annuaire" val={d.mairie.url_annuaire ? 'Fiche service-public' : null} href={d.mairie.url_annuaire ?? undefined} />
+                </dl>
+                <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
               </Section>
             )}
             {/* M55-B point 4a (décision Vic) : le bloc « CLASSEMENT LABUSE » (compteurs de

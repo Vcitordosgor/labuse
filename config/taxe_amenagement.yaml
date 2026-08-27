@@ -1,0 +1,44 @@
+# K3 (rattrapage KelFoncier) — TAXE D'AMÉNAGEMENT : valeurs forfaitaires et taux de l'ANNÉE EN COURS.
+# Config DATÉE et SOURCÉE (aucun chiffre inventé). La formule est publique (code de l'urbanisme,
+# art. L.331-1 s. / L.331-11 s.). Les valeurs forfaitaires au m² sont actualisées chaque année par
+# arrêté (indexation ICC INSEE) — À METTRE À JOUR au changement de millésime.
+meta:
+  annee: 2026
+  source: "service-public.gouv.fr — Taxe d'aménagement : quels montants en 2026 (arrêté annuel, indexation ICC INSEE)"
+  url: "https://www.service-public.gouv.fr/particuliers/actualites/A15416"
+  releve_le: "2026-08-27"
+  note: >-
+    Estimation INDICATIVE. Le montant officiel est notifié par l'administration après dépôt du permis.
+    La Réunion est HORS Île-de-France (valeur forfaitaire hors IdF).
+
+# Valeur forfaitaire de la surface de construction (€/m² de surface taxable), millésime 2026.
+valeur_forfaitaire_m2:
+  hors_idf: 892        # La Réunion — valeur applicable
+  idf: 1011            # documenté pour mémoire, non applicable au 974
+
+# Abattement de 50 % sur la valeur forfaitaire (art. L.331-12) :
+# - 100 premiers m² d'un local d'habitation principale ;
+# - locaux d'habitation aidés (prêts aidés de l'État) et leurs annexes.
+abattement:
+  taux_pct: 50
+  plafond_m2_residence_principale: 100
+
+# Valeurs forfaitaires SPÉCIFIQUES (installations et aménagements), millésime 2026 (€/unité).
+forfaits:
+  piscine_m2: 251
+  panneau_pv_sol_m2: 10
+  eolienne_mat: 3000              # par mât de plus de 12 m de hauteur
+  stationnement_ext_place: 2928   # par emplacement (aire extérieure)
+  stationnement_ext_place_max_delib: 5857   # plafond porté sur délibération de la collectivité
+
+# TAUX. La part communale n'est PAS uniforme et vient des DÉLIBÉRATIONS communales : elle n'est ni en
+# base ni devinable → l'outil la fait SAISIR (jamais de défaut silencieux). La part départementale est
+# plafonnée à 2,5 % ; le taux exact 974 n'a pas été confirmé par une source officielle (le taux réel
+# vient d'une délibération du conseil départemental) → on sert le PLAFOND légal, clairement étiqueté et
+# modifiable, jamais présenté comme un taux confirmé.
+taux:
+  part_communale_plafond_pct: 5        # 1 à 5 % (jusqu'à 20 % en secteur à équiper — délibération)
+  part_communale_defaut: null          # AUCUN défaut : saisie obligatoire par commune
+  part_departementale_plafond_pct: 2.5
+  part_departementale_defaut: 2.5      # PLAFOND légal servi par défaut, étiqueté « à confirmer », modifiable
+  part_departementale_confirmee_974: false
