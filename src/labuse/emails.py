@@ -1,20 +1,11 @@
 """Textes des e-mails LABUSE (M21) — CENTRALISÉS ici pour que Vic les réécrive sans toucher au code.
 
 C'est la voix de LABUSE vers ses clients. Chaque fonction retourne `(sujet, corps_texte)`.
-Le corps est en texte brut (sobre, français). L'avis Chatel a une VALEUR LÉGALE : formulation
-précise, sans ambiguïté.
+Le corps est en texte brut (sobre, français).
 """
 from __future__ import annotations
 
-from datetime import date, timedelta
-
 _SIGNATURE = "\n\n— LABUSE\ncontact@labuse.immo"
-
-
-def _fr(d: date) -> str:
-    mois = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août",
-            "septembre", "octobre", "novembre", "décembre"]
-    return f"{d.day} {mois[d.month]} {d.year}"
 
 
 # ── B1 · réinitialisation de mot de passe ────────────────────────────────────
@@ -33,28 +24,8 @@ def reset_password(lien: str) -> tuple[str, str]:
     return sujet, corps
 
 
-# ── B2 · avis d'échéance loi Chatel (VALEUR LÉGALE) ──────────────────────────
-def avis_echeance(echeance_iso: str, lien_espace: str) -> tuple[str, str]:
-    ech = date.fromisoformat(echeance_iso)
-    limite = ech - timedelta(days=30)  # dénonciation au plus tard 1 mois avant l'échéance
-    sujet = f"LABUSE — votre abonnement se reconduit le {_fr(ech)}"
-    corps = (
-        "Bonjour,\n\n"
-        "Conformément à l'article L. 215-1 du code de la consommation (loi Chatel), nous vous "
-        "informons que votre abonnement LABUSE arrive à échéance le "
-        f"{_fr(ech)}.\n\n"
-        "Sauf dénonciation de votre part, il sera reconduit tacitement pour une nouvelle période "
-        "de douze (12) mois, aux conditions en vigueur.\n\n"
-        "Vous pouvez choisir de NE PAS reconduire cet abonnement. Pour cela, informez-nous de votre "
-        "décision au plus tard UN (1) MOIS avant l'échéance, soit avant le "
-        f"{_fr(limite)}, par e-mail à contact@labuse.immo ou depuis votre espace :\n\n"
-        f"{lien_espace}\n\n"
-        "Si vous ne nous avez pas informés de votre faculté de non-reconduction dans ce délai, vous "
-        "pourrez mettre gratuitement un terme à la reconduction et, le cas échéant, être remboursé "
-        "des sommes versées d'avance après la date de reconduction (art. L. 215-1, al. 3)."
-        + _SIGNATURE
-    )
-    return sujet, corps
+# ── B2 · avis d'échéance loi Chatel : RETIRÉ le 27/08/2026 — Intégral est mensuel SANS
+#        engagement, la loi Chatel (contrats à durée déterminée reconductibles) est sans objet. ──
 
 
 # ── B3 · digest de notifications ─────────────────────────────────────────────

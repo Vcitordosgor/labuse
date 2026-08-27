@@ -3,29 +3,29 @@
 Il existe DEUX offres, aucune autre — ni « Illimité », ni 499 €, ni Indé/Pro, ni sièges
 multiples, ni founding (décision Vic 27/08/2026) :
 
-  · INTÉGRAL — abonnement mensuel récurrent (engagement 12 mois), 1 licence = 1 accès ;
+  · INTÉGRAL — abonnement mensuel SANS engagement, 1 licence = 1 accès ;
   · FLASH    — paiement unique, un rapport PDF sur une parcelle (page publique /flash).
 
 Les PRIX viennent de la config (`integral_prix_eur_mois`, `flash_price_eur`) : un seul
-endroit à changer. Label, périodicité et engagement vivent ici. Tout écran (serveur ou
-front, via l'endpoint /api/offres) lit CES valeurs — jamais un chiffre en dur dupliqué.
+endroit à changer. Label et périodicité vivent ici. Tout écran (serveur ou front, via
+l'endpoint /api/offres) lit CES valeurs — jamais un chiffre en dur dupliqué.
+
+Décision Vic 27/08/2026 : Intégral passe en mensuel SANS ENGAGEMENT (plus de durée ferme de
+12 mois, plus de reconduction annuelle, plus de loi Chatel) — voir CGV art. 5.
 """
 from __future__ import annotations
 
 from .config import get_settings
 
-#: engagement ferme de l'offre Intégral, en mois (décision Vic).
-INTEGRAL_ENGAGEMENT_MOIS = 12
-
 
 def offre_integral() -> dict:
-    """L'offre Intégral, prix lu en config. `eur_mois` int, `engagement_mois` 12."""
+    """L'offre Intégral, prix lu en config. Mensuel, `engagement=False` (sans engagement)."""
     s = get_settings()
     return {
         "cle": "integral",
         "label": "Intégral",
         "eur_mois": int(s.integral_prix_eur_mois),
-        "engagement_mois": INTEGRAL_ENGAGEMENT_MOIS,
+        "engagement": False,
         "periodicite": "mois",
     }
 

@@ -107,14 +107,14 @@ def suggestions_cmd(nouvelles: bool = typer.Option(False, "--nouvelles", help="S
 
 @app.command("avis-echeance")
 def avis_echeance_cmd() -> None:
-    """M18-C (loi Chatel) : déclenche les avis d'échéance dus (fenêtre 3→1 mois avant reconduction).
-    M21-B2 : l'e-mail est réellement envoyé via le transport SMTP (ou journalisé si SMTP non configuré).
-    Dédup par terme. Cronable (quotidien conseillé)."""
-    from .comptes import declencher_avis_echeance
+    """NEUTRALISÉE (décision Vic 27/08/2026 — abonnement mensuel SANS engagement).
 
-    with session_scope() as s:
-        n = declencher_avis_echeance(s)
-    typer.echo(f"✓ Avis d'échéance Chatel déclenchés : {n} (e-mail envoyé si SMTP configuré, sinon journalisé).")
+    L'avis d'échéance de la loi Chatel (art. L. 215-1) encadre les contrats à DURÉE DÉTERMINÉE
+    reconductibles ; Intégral étant désormais mensuel sans engagement, il est SANS OBJET. La
+    commande ne déclenche plus rien et son cron a été retiré (deploy/cron.d/avis-echeance).
+    Conservée en no-op explicite pour ne pas casser un appel historique."""
+    typer.echo("↷ avis-echeance : SANS OBJET (abonnement mensuel sans engagement — loi Chatel non "
+               "applicable). Rien à déclencher, aucun e-mail envoyé.")
 
 
 @app.command("mail-test")

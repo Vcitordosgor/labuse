@@ -168,7 +168,7 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
     p = offre_integral()
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · engagement {p['engagement_mois']} mois</p>
+<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · sans engagement</p>
 <p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est déjà validé par l'invitation. Choisissez un mot de passe et vous entrez dans le radar foncier de La Réunion.</p>
 <form method="post" action="/invitation">
 <input type="hidden" name="token" value="{html.escape(token)}">
@@ -261,11 +261,11 @@ def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
     return HTMLResponse(_page("votre abonnement", f"""
 <h1>Votre abonnement</h1><p class="sub">dernière étape avant votre espace</p>
 <div class="recap"><div class="prix">{p['eur_mois']} € <span style="font-size:14px;color:var(--mut);font-weight:400">/ mois</span></div>
-<div class="quoi">Licence {p['label']} — accès complet. <b style="color:var(--txt)">Engagement {p['engagement_mois']} mois</b>, facturé mensuellement.</div></div>
+<div class="quoi">Licence {p['label']} — accès complet. <b style="color:var(--txt)">Sans engagement</b>, facturé au mois.</div></div>
 <div class="trust" role="list">
   <div role="listitem">{coffre_ui.LOCK_SVG} Paiement <b style="color:var(--txt)">sécurisé par Stripe</b> — page hébergée, chiffrée.</div>
   <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M10 2l6 3v5c0 4-3 6.5-6 8-3-1.5-6-4-6-8V5z"/><path d="M7.5 10l1.8 1.8L13 8"/></svg> <b style="color:var(--txt)">Aucune donnée bancaire</b> ne transite par LABUSE.</div>
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant {p['engagement_mois']} mois, puis reconduction par périodes de {p['engagement_mois']} mois — dénonçable avant chaque échéance (vous êtes prévenu à l'avance). Facture émise automatiquement.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois, <b style="color:var(--txt)">sans engagement</b> — reconduit au mois, résiliable à tout moment (un e-mail à LABUSE suffit). Facture émise automatiquement.</div>
 </div>
 <form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
 <button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} €</button></form>
@@ -457,19 +457,32 @@ def cgv_page():
     s = get_settings()
     oi, of = offre_integral(), offre_flash()
     return HTMLResponse(_page("conditions générales", f"""
-<div class="legal">
+<div class="legal" id="haut">
 <h1>Conditions générales de vente et d'utilisation</h1>
 <p class="sous">version {s.cgv_version} — service LABUSE</p>
 <p class="maj">Contrat B2B entre professionnels. L'acceptation est recueillie à la création du
 compte (case à cocher horodatée, version consignée).</p>
+<nav class="toc" aria-label="Sommaire"><b>Sommaire</b><ol>
+<li><a href="#a1">Objet</a></li>
+<li><a href="#a2">Nature des analyses</a></li>
+<li><a href="#a3">Comptes et accès</a></li>
+<li><a href="#a4">Prix et paiement</a></li>
+<li><a href="#a4bis">Le rapport Flash</a></li>
+<li><a href="#a5">Durée et résiliation</a></li>
+<li><a href="#a6">Disponibilité</a></li>
+<li><a href="#a7">Données et données publiques</a></li>
+<li><a href="#a8">Données personnelles (RGPD)</a></li>
+<li><a href="#a9">Responsabilité</a></li>
+<li><a href="#a10">Droit applicable</a></li>
+</ol></nav>
 
-<h2>1. Objet</h2>
+<h2 id="a1">1. Objet</h2>
 <p>LABUSE est un service en ligne d'aide à la prospection foncière à La Réunion :
 agrégation, croisement et lecture de <b>données publiques</b> (cadastre, urbanisme, risques,
 marchés, publications légales), assortis d'indicateurs et d'analyses produits par des
 traitements automatisés.</p>
 
-<h2>2. Nature des analyses — la clause boussole</h2>
+<h2 id="a2">2. Nature des analyses — la clause boussole</h2>
 <p>Les scores, verdicts, badges, estimations et synthèses fournis par LABUSE constituent une
 <b>pré-analyse indicative fondée exclusivement sur des données publiques</b>, dont la
 fraîcheur et la complétude sont affichées dans le service (mentions « Sourcé » / « Estimé »).
@@ -479,14 +492,14 @@ Ils ne remplacent <b>ni un certificat d'urbanisme, ni l'instruction d'une autori
 l'intervention d'un notaire</b> ou de tout professionnel réglementé. Le Client demeure seul
 responsable de ses décisions et de leurs vérifications préalables.</p>
 
-<h2>3. Comptes et accès</h2>
+<h2 id="a3">3. Comptes et accès</h2>
 <p>La création de compte se fait sur invitation. Une licence Intégral ouvre <b>un accès
 nominatif unique</b> (1 licence = 1 utilisateur) ; les identifiants sont personnels et
 incessibles. LABUSE peut suspendre un compte en cas d'impayé (après les relances du
 prestataire de paiement) ou d'usage abusif (extraction massive, revente de données,
 partage d'accès, contournement technique).</p>
 
-<h2>4. Prix et paiement</h2>
+<h2 id="a4">4. Prix et paiement</h2>
 <p><b>Intégral</b> : abonnement mensuel de {oi['eur_mois']} € par licence, accès complet au service.
 <b>Flash</b> : {of['eur']} € par rapport — paiement unique donnant droit à UN rapport PDF portant
 sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (article 4 bis). Prix hors taxes le cas
@@ -494,7 +507,7 @@ sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (ar
 <b>Stripe</b> (paiement hébergé : aucune donnée de carte ne transite par LABUSE), factures
 et reçus émis par Stripe.</p>
 
-<h2>4 bis. Le rapport Flash</h2>
+<h2 id="a4bis">4 bis. Le rapport Flash</h2>
 <p>Le rapport Flash est un document numérique généré et livré immédiatement après paiement.
 <b>L'exécution commence dès le paiement, à la demande expresse de l'acheteur, qui renonce
 le cas échéant à son droit de rétractation</b> (contenu numérique fourni immédiatement).
@@ -502,37 +515,29 @@ Le rapport porte exclusivement sur la parcelle confirmée par l'acheteur avant p
 l'article 2 (nature des analyses) s'y applique intégralement. En cas d'échec technique de
 génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.</p>
 
-<h2>5. Durée, reconduction et résiliation</h2>
-<p>L'abonnement est souscrit pour une <b>durée ferme de {oi['engagement_mois']} mois</b> à compter de son activation, facturé
-mensuellement. À l'échéance, il est <b>reconduit tacitement pour des périodes successives de {oi['engagement_mois']} mois</b>,
-sauf dénonciation par le client au plus tard <b>un mois avant la date anniversaire</b> (depuis son espace
-ou par e-mail à son contact LABUSE).</p>
-<!-- M-P (point 5) — À SIGNALER À L'AVOCAT : L. 215-1 est un article du code de la CONSOMMATION,
-     invoqué ici dans un contrat annoncé « B2B entre professionnels ». L'offrir contractuellement
-     n'est pas faux (protection Chatel accordée au client), mais à valider en relecture juridique. -->
-<p>Conformément à l'article L. 215-1 du code de la consommation (loi Chatel), LABUSE <b>informe le client,
-au plus tôt trois mois et au plus tard un mois avant le terme de chaque période, de sa faculté de ne pas
-reconduire</b> l'abonnement. À défaut d'information dans ce délai, le client peut mettre fin gratuitement à
-la reconduction à tout moment à compter de la date de reconduction, les sommes correspondant à la période
-postérieure lui étant remboursées.</p>
-<p>Pendant la période d'engagement de {oi['engagement_mois']} mois, l'abonnement n'est pas résiliable par anticipation, sauf
-motif légitime (cessation d'activité dûment justifiée, manquement de LABUSE à ses obligations). LABUSE peut
-résilier avec un préavis de 30 jours ; en cas d'arrêt du service, les sommes de la période non servie sont
-remboursées.</p>
+<h2 id="a5">5. Durée et résiliation</h2>
+<p>L'abonnement Intégral est <b>mensuel et sans engagement de durée</b> : il se reconduit tacitement
+de mois en mois par prélèvement automatique, tant que le Client ne l'a pas résilié.</p>
+<p>Le Client peut résilier <b>à tout moment</b> par <b>demande écrite adressée à LABUSE</b>
+(e-mail à kampusreunion@gmail.com). La résiliation prend effet <b>à la fin de la période mensuelle
+en cours</b> : le mois entamé reste dû et l'accès est maintenu jusqu'au terme de la période déjà payée.
+Aucun engagement au-delà du mois en cours n'est requis.</p>
+<p>LABUSE peut de son côté résilier l'abonnement avec un <b>préavis de 30 jours</b> ; en cas d'arrêt
+du service, les sommes correspondant à la période payée non servie sont remboursées.</p>
 
-<h2>6. Disponibilité</h2>
+<h2 id="a6">6. Disponibilité</h2>
 <p>LABUSE est fourni « en l'état », avec un engagement de <b>meilleurs efforts</b> sur la
 disponibilité et la correction des incidents — sans niveau de service (SLA) chiffré ni
 pénalités. Les interruptions de maintenance sont, autant que possible, programmées hors
 heures ouvrées de La Réunion.</p>
 
-<h2>7. Données du Client et données publiques</h2>
+<h2 id="a7">7. Données du Client et données publiques</h2>
 <p>Les projets, tris, annotations et paramètres créés par le Client lui appartiennent ; il
 peut en demander l'export puis l'effacement. Les données publiques agrégées restent régies
 par leurs licences d'origine (Licence Ouverte, etc.). Le Client s'interdit la revente ou la
 rediffusion systématique des contenus du service.</p>
 
-<h2>8. Données personnelles (RGPD)</h2>
+<h2 id="a8">8. Données personnelles (RGPD)</h2>
 <p>Données traitées : email, nom du compte, journal technique de connexion, données de
 facturation (chez Stripe). Aucune donnée de carte chez LABUSE. Finalités : fourniture du
 service, facturation, sécurité. Durée : la vie du compte, puis effacement sous 30 jours de
@@ -540,22 +545,22 @@ la demande (droit d'accès, de rectification et d'effacement : kampusreunion@gma
 Sous-traitants : Stripe (paiement), hébergeur du serveur (UE), service d'acheminement des
 e-mails (SMTP).</p>
 <p><b>E-mails envoyés.</b> LABUSE adresse des e-mails <b>transactionnels</b>, nécessaires au service
-et sans consentement requis : réinitialisation de mot de passe (à votre demande) et avis d'échéance
-avant reconduction (art. L. 215-1). LABUSE peut aussi adresser une <b>lettre récapitulative
-périodique</b> (« le point de la semaine ») liée à votre usage : chaque envoi porte un lien de
-<b>désinscription en un clic</b> (en-tête <i>List-Unsubscribe</i>) et vous pouvez vous y opposer à
-tout moment. <b>Aucune prospection commerciale, aucune revente de données.</b></p>
+et sans consentement requis : réinitialisation de mot de passe (à votre demande). LABUSE peut aussi
+adresser une <b>lettre récapitulative périodique</b> (« le point de la semaine ») liée à votre usage :
+chaque envoi porte un lien de <b>désinscription en un clic</b> (en-tête <i>List-Unsubscribe</i>) et
+vous pouvez vous y opposer à tout moment. <b>Aucune prospection commerciale, aucune revente de données.</b></p>
 
-<h2>9. Responsabilité</h2>
+<h2 id="a9">9. Responsabilité</h2>
 <p>Dans les limites permises par la loi entre professionnels, la responsabilité totale de
 LABUSE, toutes causes confondues, est plafonnée aux <b>sommes effectivement payées par le
 Client au cours des douze (12) derniers mois</b>. Les dommages indirects (perte de chance,
 d'exploitation, décision d'investissement) sont exclus — dans le prolongement de l'article 2.</p>
 
-<h2>10. Droit applicable</h2>
+<h2 id="a10">10. Droit applicable</h2>
 <p>Droit français. Compétence : les tribunaux dans le ressort de Saint-Denis de La Réunion,
 après tentative de résolution amiable (30 jours).</p>
-</div>"""), status_code=200)
+<p><a class="haut" href="#haut">↑ Haut de page</a></p>
+</div>""", large=True), status_code=200)
 
 
 @router.get("/mentions-legales", include_in_schema=False)
@@ -566,11 +571,11 @@ def mentions_page():
 <h2>Hébergement</h2><p>Serveur dédié dans l'Union européenne (OVHcloud). Paiements :
 Stripe Payments Europe Ltd.</p>
 <h2>E-mails</h2><p>LABUSE envoie des e-mails <b>transactionnels</b> (réinitialisation de mot de
-passe à votre demande, avis d'échéance avant reconduction) et, le cas échéant, une <b>lettre
-récapitulative périodique opt-out</b> (désinscription en un clic, en-tête <i>List-Unsubscribe</i>).
-Détail à l'<a href="/cgv">article 8 des CGV</a>. Aucune prospection commerciale, aucune revente.</p>
+passe à votre demande) et, le cas échéant, une <b>lettre récapitulative périodique opt-out</b>
+(désinscription en un clic, en-tête <i>List-Unsubscribe</i>). Détail à l'<a href="/cgv">article 8
+des CGV</a>. Aucune prospection commerciale, aucune revente.</p>
 <h2>Propriété</h2><p>Marque, interface et traitements LABUSE — tous droits réservés. Les
-données publiques agrégées restent soumises à leurs licences d'origine.</p></div>"""))
+données publiques agrégées restent soumises à leurs licences d'origine.</p></div>""", large=True))
 
 
 @router.get("/confidentialite", include_in_schema=False)
@@ -584,7 +589,7 @@ d'audience tierce — c'est pourquoi <b>aucun bandeau de consentement n'est requ
 <h2>Données</h2><p>Voir l'article 8 des <a href="/cgv">CGV</a> (RGPD) : données minimales,
 finalités limitées, droit d'accès et d'effacement sur simple email.</p>
 <h2>Journalisation</h2><p>Les journaux techniques (connexions, erreurs) ne contiennent ni
-mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du service.</p></div>"""))
+mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du service.</p></div>""", large=True))
 
 
 # ── /moi — l'app lit qui je suis + l'état d'abonnement (bandeau « paiement requis ») ──

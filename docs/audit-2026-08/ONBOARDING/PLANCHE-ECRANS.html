@@ -1,0 +1,149 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LABUSE — planche d'écrans du parcours d'entrée</title>
+<style>
+ :root{--bg:#060A08;--s1:#0C120E;--s2:#111813;--line:#1E2A23;--txt:#C9DCD1;--hi:#ECF5EF;--mut:#8FA69A;--mint:#5CE6A1}
+ *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.6 -apple-system,'Inter',system-ui,sans-serif}
+ header{padding:32px 40px;border-bottom:1px solid var(--line)}
+ h1{font:700 22px 'Space Grotesk',system-ui,sans-serif;color:var(--hi);margin:0 0 6px;letter-spacing:.02em}
+ .intro{color:var(--mut);font-size:13px;max-width:70ch}
+ .som{columns:2;max-width:900px;margin:18px 0 0;padding:0;list-style:none;font-size:13px}
+ .som a{color:var(--mint);text-decoration:none} .som li{margin:3px 0}
+ main{padding:24px 40px 80px}
+ .ecran{border:1px solid var(--line);border-radius:12px;background:var(--s1);margin:22px 0;padding:18px 20px;scroll-margin-top:20px}
+ .tete{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+ .tete h2{font:600 17px 'Space Grotesk',system-ui,sans-serif;color:var(--hi);margin:0}
+ .tete code{background:var(--s2);border:1px solid var(--line);border-radius:6px;padding:3px 9px;font:12px ui-monospace,monospace;color:var(--mint)}
+ .da{font-size:11.5px;padding:3px 9px;border-radius:20px;margin-left:auto}
+ .da.ok{background:rgba(92,230,161,.10);color:var(--mint);border:1px solid rgba(92,230,161,.25)}
+ .da.warn{background:rgba(230,180,80,.10);color:#E6B450;border:1px solid rgba(230,180,80,.3)}
+ .vues{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+ figure{margin:0} figcaption{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+ .desk{flex:1 1 680px} .mob{flex:0 0 240px}
+ img{width:100%;border:1px solid var(--line);border-radius:8px;display:block;background:#000}
+ .mob img{max-width:240px}
+ @media(max-width:820px){.som{columns:1} main,header{padding-left:16px;padding-right:16px}}
+</style></head><body>
+<header>
+ <h1>Planche d'écrans — parcours d'entrée LABUSE</h1>
+ <p class="intro">Tous les écrans du parcours (connexion, souscription Intégral <b>sans engagement</b>, activation admin,
+ Flash, mot de passe oublié, essai, régularisation, pages légales), après le lot S1. Desktop 1440 et mobile 390 côte à côte.
+ Verdict DA par écran : la pastille dit si l'écran applique la DA actuelle (Coffre : sombre, vert menthe, Space Grotesk,
+ oiseau — mauve réservé à l'IA, absent ici) ou présente un écart. La DA n'est pas corrigée dans ce mandat (constat).</p>
+ <ul class="som"><li><a href="#01-connexion">Connexion</a></li><li><a href="#02-invitation-client">Invitation client (souscription Intégral)</a></li><li><a href="#03-activation-admin">Activation admin (sans paiement)</a></li><li><a href="#04-souscription-recap">Récapitulatif d'abonnement (avant Stripe)</a></li><li><a href="#05-bienvenue">Bienvenue (retour de paiement OK)</a></li><li><a href="#06-paiement-interrompu">Paiement interrompu</a></li><li><a href="#07-flash-accueil">Flash — saisie IDU</a></li><li><a href="#08-flash-confirmation">Flash — confirmation parcelle (79 €)</a></li><li><a href="#09-flash-attente">Flash — attente de génération / lien PDF</a></li><li><a href="#10-mdp-oublie-demande">Mot de passe oublié — demande</a></li><li><a href="#11-mdp-oublie-reinit">Mot de passe oublié — réinitialisation</a></li><li><a href="#12-essai-ouvert">Essai 48 h ouvert</a></li><li><a href="#13-regularisation">Abonnement à régulariser (compte suspendu)</a></li><li><a href="#14-cgv">CGV</a></li><li><a href="#15-mentions-legales">Mentions légales</a></li><li><a href="#16-confidentialite">Confidentialité & cookies</a></li></ul>
+</header>
+<main>
+
+  <section class="ecran" id="01-connexion">
+    <div class="tete"><h2>Connexion</h2><code>GET /login</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/01-connexion-desktop.png" alt="Connexion desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/01-connexion-mobile.png" alt="Connexion mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="02-invitation-client">
+    <div class="tete"><h2>Invitation client (souscription Intégral)</h2><code>GET /invitation?token=… (client)</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/02-invitation-client-desktop.png" alt="Invitation client (souscription Intégral) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/02-invitation-client-mobile.png" alt="Invitation client (souscription Intégral) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="03-activation-admin">
+    <div class="tete"><h2>Activation admin (sans paiement)</h2><code>GET /invitation?token=… (interne)</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/03-activation-admin-desktop.png" alt="Activation admin (sans paiement) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/03-activation-admin-mobile.png" alt="Activation admin (sans paiement) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="04-souscription-recap">
+    <div class="tete"><h2>Récapitulatif d'abonnement (avant Stripe)</h2><code>GET /onboarding/paiement?t=…</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/04-souscription-recap-desktop.png" alt="Récapitulatif d'abonnement (avant Stripe) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/04-souscription-recap-mobile.png" alt="Récapitulatif d'abonnement (avant Stripe) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="05-bienvenue">
+    <div class="tete"><h2>Bienvenue (retour de paiement OK)</h2><code>GET /onboarding/retour?ok=1</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/05-bienvenue-desktop.png" alt="Bienvenue (retour de paiement OK) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/05-bienvenue-mobile.png" alt="Bienvenue (retour de paiement OK) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="06-paiement-interrompu">
+    <div class="tete"><h2>Paiement interrompu</h2><code>GET /onboarding/retour?ok=0</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/06-paiement-interrompu-desktop.png" alt="Paiement interrompu desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/06-paiement-interrompu-mobile.png" alt="Paiement interrompu mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="07-flash-accueil">
+    <div class="tete"><h2>Flash — saisie IDU</h2><code>GET /flash</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/07-flash-accueil-desktop.png" alt="Flash — saisie IDU desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/07-flash-accueil-mobile.png" alt="Flash — saisie IDU mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="08-flash-confirmation">
+    <div class="tete"><h2>Flash — confirmation parcelle (79 €)</h2><code>GET /flash?idu=…</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/08-flash-confirmation-desktop.png" alt="Flash — confirmation parcelle (79 €) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/08-flash-confirmation-mobile.png" alt="Flash — confirmation parcelle (79 €) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="09-flash-attente">
+    <div class="tete"><h2>Flash — attente de génération / lien PDF</h2><code>GET /flash/retour?session_id=…</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/09-flash-attente-desktop.png" alt="Flash — attente de génération / lien PDF desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/09-flash-attente-mobile.png" alt="Flash — attente de génération / lien PDF mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="10-mdp-oublie-demande">
+    <div class="tete"><h2>Mot de passe oublié — demande</h2><code>GET /reset</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/10-mdp-oublie-demande-desktop.png" alt="Mot de passe oublié — demande desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/10-mdp-oublie-demande-mobile.png" alt="Mot de passe oublié — demande mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="11-mdp-oublie-reinit">
+    <div class="tete"><h2>Mot de passe oublié — réinitialisation</h2><code>GET /reset?token=…</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/11-mdp-oublie-reinit-desktop.png" alt="Mot de passe oublié — réinitialisation desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/11-mdp-oublie-reinit-mobile.png" alt="Mot de passe oublié — réinitialisation mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="12-essai-ouvert">
+    <div class="tete"><h2>Essai 48 h ouvert</h2><code>POST /invitation (compte d'essai)</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/12-essai-ouvert-desktop.png" alt="Essai 48 h ouvert desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/12-essai-ouvert-mobile.png" alt="Essai 48 h ouvert mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="13-regularisation">
+    <div class="tete"><h2>Abonnement à régulariser (compte suspendu)</h2><code>POST /login (compte suspendu)</code><span class="da ok">DA Coffre ✓ (sombre · vert menthe · Space Grotesk · oiseau) — cohérente, mauve absent</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/13-regularisation-desktop.png" alt="Abonnement à régulariser (compte suspendu) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/13-regularisation-mobile.png" alt="Abonnement à régulariser (compte suspendu) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="14-cgv">
+    <div class="tete"><h2>CGV</h2><code>GET /cgv</code><span class="da ok">DA Coffre ✓ · LISIBILITÉ refondue (S3) : sommaire, colonne ~68ch, articles séparés</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/14-cgv-desktop.png" alt="CGV desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/14-cgv-mobile.png" alt="CGV mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="15-mentions-legales">
+    <div class="tete"><h2>Mentions légales</h2><code>GET /mentions-legales</code><span class="da ok">DA Coffre ✓ · LISIBILITÉ refondue (S3) : sommaire, colonne ~68ch, articles séparés</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/15-mentions-legales-desktop.png" alt="Mentions légales desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/15-mentions-legales-mobile.png" alt="Mentions légales mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="16-confidentialite">
+    <div class="tete"><h2>Confidentialité & cookies</h2><code>GET /confidentialite</code><span class="da ok">DA Coffre ✓ · LISIBILITÉ refondue (S3) : sommaire, colonne ~68ch, articles séparés</span></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche/16-confidentialite-desktop.png" alt="Confidentialité & cookies desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche/16-confidentialite-mobile.png" alt="Confidentialité & cookies mobile"></figure>
+    </div>
+  </section>
+</main></body></html>

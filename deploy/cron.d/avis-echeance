@@ -1,9 +1,0 @@
-# MANDAT VPS (27/08/2026) — HORAIRES EN HEURE RÉUNION (fuseau système Indian/Reunion).
-# LA BUSE — avis d'échéance loi Chatel (M18-C) : prévenir chaque titulaire AVANT la
-# reconduction tacite de son abonnement (obligation légale). Quotidien, le matin Réunion,
-# APRÈS la chaîne notifications de 07:00 (même logique d'idempotence : un avis déjà envoyé
-# ne repart pas). Verrou flock (-E 200 = tour sauté, jamais confondu avec un échec).
-#
-# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/avis-echeance /etc/cron.d/avis-echeance
-SHELL=/bin/sh
-30 8 * * * labuse flock -n -E 200 /run/lock/labuse-avis-echeance.lock -c "set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse avis-echeance >> /var/log/labuse/avis_echeance.log 2>&1"; test $? -eq 200 && echo "$(date +\%FT\%T\%z) avis-echeance : passage sauté : exécution précédente en cours" >> /var/log/labuse/avis_echeance.log

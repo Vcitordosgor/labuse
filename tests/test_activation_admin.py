@@ -49,7 +49,7 @@ def test_ecran_admin_sans_offre_ni_paiement(client):
 
 def test_ecran_client_garde_son_tunnel(client):
     html = client.get(f"/invitation?token={_token_client()}").text
-    assert "349 €/mois" in html and "engagement 12 mois" in html
+    assert "349 €/mois" in html and "sans engagement" in html
     assert 'name="cgv"' in html                          # la case CGV existe (client)
     assert "Continuer vers le paiement" in html
 
