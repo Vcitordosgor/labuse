@@ -224,3 +224,39 @@ def test_a5_signal_partage_sessions_multiples(app_client):
         _purge(email2)
     finally:
         _purge(email)
+
+
+# ─────────────────── A7 : concurrence modérée — aucun croisement de données ───────────────────
+def test_a7_concurrence_pas_de_croisement(app_client):
+    """Plusieurs comptes lisent/écrivent EN PARALLÈLE : chacun ne voit QUE son marqueur, jamais
+    celui d'un autre (le vrai risque : ContextVar/cache partagé). Aucune écriture partielle."""
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    emails = [f"cc{i}-{uuid.uuid4().hex[:6]}@x.test" for i in range(6)]
+    for e in emails:
+        _compte_actif(e)
+    clients = {}
+    for e in emails:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, e)
+        clients[e] = c
+    marque = {}
+    try:
+        def creer(e):
+            m = f"MARK-{uuid.uuid4().hex[:10]}"; marque[e] = m
+            return clients[e].post("/projets", json={"nom": m, "cadrage": {"communes": ["Saint-Denis"]}}).status_code == 200
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            assert all(ex.map(creer, emails))
+        fuites, lock = [], threading.Lock()
+        def hammer(e):
+            autres = {marque[o] for o in emails if o != e}
+            for _ in range(10):
+                noms = {p.get("nom") for p in clients[e].get("/projets").json()}
+                if marque[e] not in noms or (noms & autres):
+                    with lock:
+                        fuites.append(e)
+                    return
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            list(ex.map(hammer, emails))
+        assert not fuites, f"croisement de données sous concurrence: {fuites}"
+    finally:
+        _purge(*emails)

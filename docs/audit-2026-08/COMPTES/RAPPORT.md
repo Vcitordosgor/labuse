@@ -270,3 +270,43 @@ suspension (`suspendu`/`paiement_requis`, réversible, données intactes) et la 
 avec grâce 30 j → `EFFACÉ`), purge complète (FK cascade), rétention ciblée (anonymiser `ia_log`
 et l'audit ; laisser les factures chez Stripe ; trancher le sort des courriers postés), parcours
 client + cron d'effacement. **Décision de Vic.**
+
+---
+
+## A7 — MONTÉE EN CHARGE MODÉRÉE
+
+**Méthode** (`qa/comptes/audit_a7.py` + volet IA). 15 comptes `[AUDIT-TEST]`, chacun porteur d'un
+**marqueur unique** dans ses objets. Le vrai risque cherché : un **cache ou une variable partagée**
+(ContextVar mal isolé) qui, sous concurrence, renverrait les données du mauvais compte. Pas de test
+à 500 comptes (mono-worker de la machine, GB-040 — prévu après le VPS).
+
+**Charges concurrentes exécutées :**
+1. **Lectures** : 15 comptes × 20 GET `/projets` en parallèle (300 lectures concurrentes) — chacun
+   doit voir SON marqueur, JAMAIS celui d'un autre.
+2. **Écritures** : 15 entrées CRM créées simultanément sur la MÊME parcelle — chacune doit produire
+   **exactement 1** entrée par compte (pas de collision, pas d'écriture partielle).
+3. **Attribution IA** (le point le plus pointu) : 12 comptes × 3 questions Copilote en parallèle
+   (36 appels) — chaque ligne `ia_log` doit porter le `compte_id` du **bon** compte (le coût IA est
+   attribué via un `ContextVar` posé par le middleware, lu par `_log_cost` — c'est LA variable
+   partagée à risque).
+
+**Résultat : AUCUN croisement, AUCUNE écriture partielle, AUCUNE attribution croisée.**
+
+| Charge | Mesure | Verdict |
+|--------|--------|---------|
+| 300 lectures `/projets` concurrentes | 0 marqueur d'autrui vu, chacun voit le sien | ✅ |
+| 15 écritures CRM simultanées (même parcelle) | exactement 1 entrée/compte, 0 collision | ✅ |
+| 36 appels IA concurrents (12 comptes) | 36 lignes `ia_log`, 12 comptes distincts, **0 étranger, 0 orphelin** | ✅ |
+
+Le `ContextVar` d'attribution du coût IA (`ai.core._COMPTE_COURANT`) est **correctement isolé par
+requête** même sous 12 threads concurrents — pas de fuite d'attribution. La cloison `compte_id` tient
+sous concurrence.
+
+### Finding A7
+
+- **AC-007 — Concurrence saine.** ✅ Aucun croisement de données entre comptes, aucune écriture
+  partielle, attribution IA correcte. → **Régression gelée** :
+  `tests/test_audit_comptes.py::test_a7_concurrence_pas_de_croisement` (6 comptes, lectures/écritures
+  parallèles). Réserve de méthode : mesuré sur mono-worker in-process ; la charge réelle (VPS
+  multi-worker) reste à valider après déploiement — mais le risque cherché ici (état partagé en
+  mémoire) est **indépendant du nombre de workers** et concluant.
