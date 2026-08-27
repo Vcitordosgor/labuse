@@ -260,6 +260,12 @@ export interface Fiche {
       libelle: string; note: string
     } | null
   } | null
+  // L1 (KF-2) — historique du propriétaire PM par millésime + diff CONSTATÉ (hors scoring, PM only)
+  proprietaire_historique?: {
+    source: string; note: string; n_millesimes: number; n_changements: number
+    millesimes: { millesime: number; situation: string; siren: string | null; denomination: string | null; forme_juridique: string | null; groupe: string | null }[]
+    changements: { de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
+  } | null
   surface_m2: number | null
   statut?: Statut   // M48 (F4) : retiré du payload (matrice morte) — le tier vient de score_v2 ; repli legacy seulement
   mode_b?: ModeB

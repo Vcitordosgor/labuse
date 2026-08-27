@@ -1951,10 +1951,17 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     # K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
     from ..ingestion.mairies import mairie_de
     mairie = mairie_de(db, commune)
+    # L1 (KF-2) — acquisitions PM récentes de la commune (changement de propriétaire moral d'un
+    # millésime au suivant, depuis 2022). Aperçu borné ; maille = COMMUNE ; constat, hors scoring.
+    acquisitions_pm = None
+    if _insee_c:
+        from ..proprietaire_historique import acquisitions_recentes
+        acquisitions_pm = acquisitions_recentes(db, _insee_c, depuis_millesime=2022, limit=8)
     return {"commune": commune, "epci": epci,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
             "mairie": mairie,                           # K2 — adresse/tél/e-mail/site + fraîcheur
+            "acquisitions_pm": acquisitions_pm,         # L1 KF-2 — acquisitions PM récentes (constat)
             "foncier": _foncier_commune(db, commune),   # M83 C1 — le foncier de la commune, EN TÊTE
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
@@ -2250,6 +2257,29 @@ def proprietaires_autocomplete(q: str, commune: str | None = None,
     """Autocomplétion de la dénomination sur les noms RÉELS en base (jamais inventés)."""
     from ..proprietaire_facettes import autocomplete
     return {"suggestions": autocomplete(db, q, commune)}
+
+
+# ── L1 (KF-2) — historique propriétaire PM par millésime + acquisitions récentes (CONSTAT, hors scoring) ──
+
+@app.get("/proprietaires/{idu}/historique")
+def proprietaires_historique(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Timeline du propriétaire personne morale d'une parcelle (millésimes DGFiP 2019→2025) + les
+    changements CONSTATÉS. `{}` si la parcelle n'a jamais eu de propriétaire moral connu. PM seulement."""
+    from ..proprietaire_historique import historique
+    return historique(db, idu) or {}
+
+
+@app.get("/proprietaires/acquisitions")
+def proprietaires_acquisitions(commune: str, depuis: int = 2022, limit: int = 200,
+                               db: Session = Depends(get_db)) -> dict:
+    """« Acquisitions récentes par secteur » : changements de propriétaire moral dans une commune,
+    du plus récent au plus ancien. `commune` = nom de commune (résolu en INSEE). Constat, hors scoring."""
+    from ..proprietaire_historique import acquisitions_recentes
+    insee = db.execute(text("SELECT insee FROM commune_insee_logement WHERE commune = :c LIMIT 1"),
+                       {"c": commune}).scalar()
+    if not insee:
+        return {"commune": commune, "n": 0, "acquisitions": [], "non_couvert": True}
+    return {"commune": commune, **acquisitions_recentes(db, insee, depuis, limit)}
 
 
 # ── K3 — calculette de taxe d'aménagement (formule publique, config datée, aucun taux inventé) ──
@@ -3024,6 +3054,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     pm = dict(pm) if pm else None
     if pm and pm.get("siren"):
         pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
+    # L1 (KF-2) — historique propriétaire PM par millésime + diff annuel CONSTATÉ (hors scoring,
+    # PM uniquement). None si la parcelle n'a jamais eu de propriétaire moral connu.
+    from ..proprietaire_historique import historique as _pm_historique
+    pm_historique = _pm_historique(db, idu)
     # LOT 1 (data-gap) : dernière mutation DVF de LA parcelle + médianes du secteur cadastral.
     dvf_last = db.execute(text(
         "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles "
@@ -3126,6 +3160,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # géométrie contrainte — signaux de fiche, étiquetés, jamais un déclassement ici.
         **(_m28_badges(db, idu) if os.environ.get("LABUSE_M28_BADGES") == "1" else {}),
         "proprietaire_moral": pm,   # M43 : + etat_societe (fait public PM, si présent)
+        "proprietaire_historique": pm_historique,   # L1 KF-2 : timeline millésimes + diff (constat)
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,

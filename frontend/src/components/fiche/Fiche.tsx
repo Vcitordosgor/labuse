@@ -19,6 +19,7 @@ import { BlocIndisponible } from './BlocIndisponible'
 import { DepotsBlock } from './DepotsBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import { CoproprietesBlock } from './CoproprietesBlock'
+import { ProprietaireHistorique } from './ProprietaireHistorique'
 import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
@@ -2445,6 +2446,8 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
+                {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors scoring) */}
+                <ProprietaireHistorique h={f.proprietaire_historique} />
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
                 {/* FIX-FICHE F2 — bloc « DPE connu » RETIRÉ : la fiche premium (_q_v2_fiche, celle que
