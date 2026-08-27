@@ -112,9 +112,26 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .big .mark{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px}
 .mark.ok{background:rgba(92,230,161,.12);color:var(--mint);border:1px solid rgba(92,230,161,.4)}
 .mark.soft{background:rgba(232,180,76,.1);color:var(--warn);border:1px solid rgba(232,180,76,.35)}
-.legal h2{color:var(--hi);font-size:14px;margin:24px 0 6px}
-.legal p{font-size:13px;color:var(--txt)}
-.legal .maj{color:var(--dim);font-size:11.5px}
+/* S3 — LISIBILITÉ des pages légales : longue lecture, pas un bloc centré étroit.
+   Le corps se lit du haut (legalpage), dans une colonne ~68ch, aérée. */
+body.legalpage{align-items:flex-start}
+.legalpage .bloc{max-width:760px}
+.legal{max-width:68ch;margin:0 auto;text-align:left}
+.legal h1{text-align:left;font-size:19px;letter-spacing:.06em;margin:4px 0 4px}
+.legal .sous{text-align:left;letter-spacing:.06em;font-size:12px;margin:0 0 6px}
+.legal .maj{color:var(--mut);font-size:12.5px;line-height:1.6;margin:0 0 8px}
+/* sommaire cliquable (CGV) */
+.toc{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:16px 20px;margin:18px 0 6px}
+.toc b{display:block;font:600 11px 'Space Grotesk',system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
+.toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+.toc li{margin:4px 0;font-size:13.5px;break-inside:avoid}
+.toc a{color:var(--txt)} .toc a:hover{color:var(--mint)}
+/* articles : titre net, filet de séparation, interligne aéré */
+.legal h2{color:var(--hi);font:600 16px 'Space Grotesk',system-ui,sans-serif;letter-spacing:.01em;
+  margin:34px 0 10px;padding-top:20px;border-top:1px solid var(--line);scroll-margin-top:16px}
+.legal p{font-size:14.5px;line-height:1.75;color:var(--txt);margin:0 0 13px}
+.legal .haut{display:inline-block;font-size:12px;color:var(--mut);margin:6px 0 0}
+.legal .haut:hover{color:var(--mint)}
 .card{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:22px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:480px){body{padding:16px;align-items:flex-start}.recap .prix{font-size:22px}}
@@ -137,6 +154,9 @@ LOCK_SVG = ('<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke=
 def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, head: str = "") -> str:
     wvar = f"--w:{w}px;" if w else ""
     cls = "legal" if legal else ""
+    # S3 — les pages légales sont de LONGS documents : le corps se lit du HAUT (pas centré
+    # verticalement) et dans une colonne de lecture confortable (voir CSS `.legalpage`/`.legal`).
+    body_cls = ' class="legalpage"' if legal else ""
     return (f"<!doctype html><html lang=\"fr\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             f"<meta name=\"robots\" content=\"noindex\">"
@@ -153,4 +173,4 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, h
             f"<link href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&"
             f"family=Inter:wght@400;500;600&display=swap\" rel=\"stylesheet\">"
             f"<style>{CSS}</style>{head}</head>"
-            f"<body style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">{corps}</main></body></html>")
+            f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">{corps}</main></body></html>")
