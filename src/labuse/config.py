@@ -173,6 +173,10 @@ class Settings(BaseSettings):
     smtp_from: str = "LABUSE <contact@labuse.immo>"   # rétro-compat (déprécié — utiliser mail_from)
     # Alertes exploitation (génération en échec après paiement, etc.).
     admin_email: str | None = None
+    # O4 — adresse de contact HUMAINE affichée aux prospects (écran « paiement interrompu » :
+    # « Écrivez à … — je réponds moi-même »). Adresse personnelle assumée, distincte de l'expéditeur
+    # transactionnel `mail_from`. À CONFIRMER par Vic (défaut = valeur de la maquette validée).
+    contact_email: str = "victor@labuse.immo"
 
     # ── PREMIER EURO (commerce/premier-euro) — auth réelle + abonnements ──
     # Base publique des liens signés (invitation, reset, retour Checkout).

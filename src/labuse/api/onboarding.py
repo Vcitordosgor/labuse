@@ -238,16 +238,17 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     # par `labuse creer-admin`) : rien à payer, la porte est /login (avec 2FA pour un admin).
     if row and row["statut"] == "actif" and row["essai_expire_at"] is None:
         return HTMLResponse(_page("accès ouvert", """
-<h1>Votre accès est ouvert</h1>
-<p>Mot de passe enregistré — votre compte est actif, rien à régler.</p>
-<p style="margin-top:26px;text-align:center"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Entrer dans LABUSE →</a></p>"""))
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
+<h1>Votre accès est ouvert</h1><p class="sub">votre compte est actif</p>
+<p class="lede">Mot de passe enregistré — rien à régler.</p>
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>"""))
     if row and row["statut"] == "actif" and row["essai_expire_at"] is not None:
         return HTMLResponse(_page("essai", """
-<h1>Votre accès d'essai est ouvert</h1>
-<p>Compte activé — vous disposez de l'accès complet à LABUSE pendant la durée de l'essai.
-À l'échéance, l'accès se met en pause (vos données restent intactes) et un abonnement
-vous sera proposé.</p>
-<p style="margin-top:26px;text-align:center"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Entrer dans LABUSE →</a></p>"""))
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
+<h1>Votre accès d'essai est ouvert</h1><p class="sub">accès complet pendant l'essai</p>
+<p class="lede">À l'échéance, l'accès se met en pause — vos données restent intactes — et un
+abonnement vous est proposé.</p>
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>"""))
     # → ÉCRAN DE BASCULE Checkout (partie E) : le moment d'anxiété est adressé par une page
     # de confiance AVANT Stripe. La mécanique de paiement (creer_checkout/webhook) est
     # inchangée — seul un écran présentational + un jeton signé s'ajoutent.
@@ -308,18 +309,23 @@ au règlement.</p><p style="text-align:center"><a href="/login">retour à la por
 def onboarding_retour(ok: int = 1):
     if ok:
         return HTMLResponse(_page("bienvenue", """
-<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
 <h1>Bienvenue chez LABUSE</h1><p class="sub">votre abonnement Intégral est actif</p>
-<p style="font-size:13.5px;line-height:1.6;color:var(--txt)">Vous avez désormais accès à tout le radar
-foncier de La Réunion — le scoring des parcelles, les fiches sourcées, les outils d'analyse et le dossier
-banquier. Un guide de prise en main en 5 gestes vous attend dès votre première connexion.</p>
-<p style="margin-top:26px"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none;box-shadow:0 8px 24px rgba(92,230,161,.30)">Entrer dans LABUSE →</a></p>
-<p class="note" style="margin-top:16px">Connectez-vous avec votre e-mail et le mot de passe que vous venez de choisir.</p></div>"""))
-    return HTMLResponse(_page("paiement interrompu", """
-<div class="big"><div class="mark soft" aria-hidden="true">↺</div>
+<p class="lede">Vous avez accès à tout le radar foncier de La Réunion — le scoring des parcelles, les
+fiches sourcées, les outils d'analyse et le dossier banquier. Un guide de prise en main vous attend
+à votre première connexion.</p>
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>
+<p class="note">Connectez-vous avec votre e-mail et le mot de passe que vous venez de choisir.</p>"""))
+    # O4 — paiement interrompu DEVIENT utile : un bouton d'action + une porte de sortie humaine
+    # (l'e-mail de contact et l'essai 48 h, proposés au moment précis où le prospect hésite).
+    contact = get_settings().contact_email
+    return HTMLResponse(_page("paiement interrompu", f"""
+<div class="icon" aria-hidden="true">↺</div>
 <h1>Paiement interrompu</h1><p class="sub">rien n'a été débité</p>
-<p style="font-size:13px">Aucun souci. Reprenez quand vous voulez : connectez-vous sur
-<a href="/login">la porte</a> avec votre email et votre mot de passe, le paiement se relancera.</p></div>"""))
+<p class="lede">Votre compte existe déjà. Connectez-vous et le paiement reprendra là où vous l'aviez laissé.</p>
+<a href="/login" class="btn">Reprendre le paiement <span class="arr" aria-hidden="true">→</span></a>
+<div class="why"><p><b>Un doute avant de payer ?</b> Écrivez à <a href="mailto:{contact}">{contact}</a> —
+je réponds moi-même, et je peux vous ouvrir un accès d'essai de 48 h.</p></div>"""))
 
 
 # ── E1 · reset mot de passe ──
@@ -335,7 +341,8 @@ def reset_page(token: str = ""):
 <div class="field"><input id="email" name="email" type="email" required autofocus
   autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false"
   placeholder="prenom.nom@cabinet.re" aria-required="true"></div>
-<button type="submit">Recevoir le lien →</button></form>
+<button type="submit">Recevoir le lien <span class="arr" aria-hidden="true">→</span></button>
+<p class="note">Le lien est valable une heure et ne sert qu'une fois.</p></form>
 <p class="linkrow"><a href="/login">← Retour à la connexion</a></p>"""))
     return HTMLResponse(_page("nouveau mot de passe", f"""
 <h1>Nouveau mot de passe</h1><p class="sub">choisissez-le soigneusement</p>

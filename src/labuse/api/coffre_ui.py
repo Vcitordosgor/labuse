@@ -72,7 +72,8 @@ body{background:radial-gradient(130% 90% at 50% -8%, rgba(74,222,128,.05), trans
 .oiseau{display:block;margin:0 auto 20px;height:30px;width:auto;filter:drop-shadow(0 0 16px rgba(74,222,128,.30))}
 /* O3 — hiérarchie à TROIS niveaux lisibles : titre (Space Grotesk espacé) / sous-titre d'offre en
    une ligne / phrase d'accueil en corps gris clair / mentions en petit et gris foncé. */
-h1{font:700 17px/1.35 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px}
+h1{font:700 17px/1.35 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px;text-wrap:balance}
+.lede,.sub{text-wrap:balance}
 .sub,.sous{text-align:center;font:500 12.5px 'Space Grotesk',system-ui,sans-serif;color:var(--mut);letter-spacing:.08em;margin:9px 0 0}
 .sub .free{color:var(--mint)}                 /* « sans engagement » = accent vert (argument commercial) */
 .lede{text-align:center;font-size:14px;line-height:1.65;color:var(--mut);margin:18px 0 0}
