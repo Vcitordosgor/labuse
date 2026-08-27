@@ -1,0 +1,202 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LABUSE — planche d'écrans V2 (parcours d'entrée)</title>
+<style>
+ :root{--bg:#060A08;--s1:#0C120E;--s2:#111813;--line:#1E2A23;--txt:#C9DCD1;--hi:#ECF5EF;--mut:#8FA69A;--mint:#4ADE80}
+ *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.6 -apple-system,'Inter',system-ui,sans-serif}
+ header{padding:32px 40px;border-bottom:1px solid var(--line)}
+ h1{font:700 22px 'Space Grotesk',system-ui,sans-serif;color:var(--hi);margin:0 0 6px;letter-spacing:.02em}
+ .intro{color:var(--mut);font-size:13px;max-width:78ch}
+ .meta{color:var(--mint);font-size:12.5px;margin-top:10px;font-family:'Space Grotesk',system-ui,sans-serif;letter-spacing:.04em}
+ .som{columns:3;max-width:1100px;margin:16px 0 0;padding:0;list-style:none;font-size:12.5px}
+ .som a{color:var(--mint);text-decoration:none} .som li{margin:3px 0;break-inside:avoid}
+ main{padding:24px 40px 80px}
+ .ecran{border:1px solid var(--line);border-radius:12px;background:var(--s1);margin:22px 0;padding:18px 20px;scroll-margin-top:16px}
+ .tete{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+ .tete h2{font:600 17px 'Space Grotesk',system-ui,sans-serif;color:var(--hi);margin:0}
+ .tete code{background:var(--s2);border:1px solid var(--line);border-radius:6px;padding:3px 9px;font:12px ui-monospace,monospace;color:var(--mint)}
+ .vues{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+ figure{margin:0} figcaption{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+ .desk{flex:1 1 620px} .mob{flex:0 0 240px}
+ img{width:100%;border:1px solid var(--line);border-radius:8px;display:block;background:#000}
+ .mob img{max-width:240px}
+ @media(max-width:900px){.som{columns:1} main,header{padding-left:16px;padding-right:16px}}
+</style></head><body>
+<header>
+ <h1>Planche d'écrans V2 — parcours d'entrée LABUSE</h1>
+ <p class="intro">Tous les écrans du parcours après O1–O4 (contenu centré dans la hauteur, boutons qui
+ disent leur état, respiration/hiérarchie, vert redevenu accent, textes retravaillés). Chaque écran en
+ <b>desktop 1440</b> et <b>mobile 390</b> côte à côte. Conforme à la maquette validée (maquette-onboarding-v1.html).</p>
+ <p class="meta">24 écrans · 48 captures (2 largeurs chacun).</p>
+ <ul class="som"><li><a href="#01-connexion">Connexion</a></li><li><a href="#02-connexion-erreur">Connexion — identifiants incorrects</a></li><li><a href="#03-invitation-client">Invitation client — souscription Intégral</a></li><li><a href="#03b-invitation-cochee">Invitation — case CGV cochée (bouton allumé)</a></li><li><a href="#04-invitation-conditions">Conditions requises (CGV non cochée forcée)</a></li><li><a href="#05-activation-admin">Activation admin (sans paiement)</a></li><li><a href="#06-invitation-introuvable">Invitation introuvable</a></li><li><a href="#07-souscription-recap">Récapitulatif d'abonnement</a></li><li><a href="#08-bienvenue">Bienvenue (retour paiement OK)</a></li><li><a href="#09-paiement-interrompu">Paiement interrompu</a></li><li><a href="#10-flash-accueil">Flash — saisie IDU</a></li><li><a href="#11-flash-confirmation">Flash — confirmation parcelle</a></li><li><a href="#12-flash-attente">Flash — attente de génération / lien PDF</a></li><li><a href="#13-mdp-oublie">Mot de passe oublié — demande</a></li><li><a href="#14-mdp-nouveau">Mot de passe oublié — réinitialisation</a></li><li><a href="#15-2fa-enrolement">2FA — enrôlement (QR + secret)</a></li><li><a href="#16-2fa-code">2FA — saisie du code</a></li><li><a href="#17-2fa-secours">2FA — codes de secours</a></li><li><a href="#18-cgv">CGV</a></li><li><a href="#19-mentions">Mentions légales</a></li><li><a href="#20-confidentialite">Confidentialité & cookies</a></li><li><a href="#21-essai-ouvert">Essai 48 h ouvert</a></li><li><a href="#22-mdp-demande">Demande de réinitialisation enregistrée</a></li><li><a href="#23-regularisation">Abonnement à régulariser (compte suspendu)</a></li></ul>
+</header>
+<main>
+  <section class="ecran" id="01-connexion">
+    <div class="tete"><h2>Connexion</h2><code>GET /login</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/01-connexion-d.png" alt="Connexion desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/01-connexion-m.png" alt="Connexion mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="02-connexion-erreur">
+    <div class="tete"><h2>Connexion — identifiants incorrects</h2><code>POST /login (erreur)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/02-connexion-erreur-d.png" alt="Connexion — identifiants incorrects desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/02-connexion-erreur-m.png" alt="Connexion — identifiants incorrects mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="03-invitation-client">
+    <div class="tete"><h2>Invitation client — souscription Intégral</h2><code>GET /invitation (client)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/03-invitation-client-d.png" alt="Invitation client — souscription Intégral desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/03-invitation-client-m.png" alt="Invitation client — souscription Intégral mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="03b-invitation-cochee">
+    <div class="tete"><h2>Invitation — case CGV cochée (bouton allumé)</h2><code>état O2 : le bouton s'allume</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/03b-invitation-cochee-d.png" alt="Invitation — case CGV cochée (bouton allumé) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/03b-invitation-cochee-m.png" alt="Invitation — case CGV cochée (bouton allumé) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="04-invitation-conditions">
+    <div class="tete"><h2>Conditions requises (CGV non cochée forcée)</h2><code>POST /invitation sans CGV</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/04-invitation-conditions-d.png" alt="Conditions requises (CGV non cochée forcée) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/04-invitation-conditions-m.png" alt="Conditions requises (CGV non cochée forcée) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="05-activation-admin">
+    <div class="tete"><h2>Activation admin (sans paiement)</h2><code>GET /invitation (interne)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/05-activation-admin-d.png" alt="Activation admin (sans paiement) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/05-activation-admin-m.png" alt="Activation admin (sans paiement) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="06-invitation-introuvable">
+    <div class="tete"><h2>Invitation introuvable</h2><code>GET /invitation (lien mort)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/06-invitation-introuvable-d.png" alt="Invitation introuvable desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/06-invitation-introuvable-m.png" alt="Invitation introuvable mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="07-souscription-recap">
+    <div class="tete"><h2>Récapitulatif d'abonnement</h2><code>GET /onboarding/paiement</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/07-souscription-recap-d.png" alt="Récapitulatif d'abonnement desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/07-souscription-recap-m.png" alt="Récapitulatif d'abonnement mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="08-bienvenue">
+    <div class="tete"><h2>Bienvenue (retour paiement OK)</h2><code>GET /onboarding/retour?ok=1</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/08-bienvenue-d.png" alt="Bienvenue (retour paiement OK) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/08-bienvenue-m.png" alt="Bienvenue (retour paiement OK) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="09-paiement-interrompu">
+    <div class="tete"><h2>Paiement interrompu</h2><code>GET /onboarding/retour?ok=0</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/09-paiement-interrompu-d.png" alt="Paiement interrompu desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/09-paiement-interrompu-m.png" alt="Paiement interrompu mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="10-flash-accueil">
+    <div class="tete"><h2>Flash — saisie IDU</h2><code>GET /flash</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/10-flash-accueil-d.png" alt="Flash — saisie IDU desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/10-flash-accueil-m.png" alt="Flash — saisie IDU mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="11-flash-confirmation">
+    <div class="tete"><h2>Flash — confirmation parcelle</h2><code>GET /flash?idu=…</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/11-flash-confirmation-d.png" alt="Flash — confirmation parcelle desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/11-flash-confirmation-m.png" alt="Flash — confirmation parcelle mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="12-flash-attente">
+    <div class="tete"><h2>Flash — attente de génération / lien PDF</h2><code>GET /flash/retour</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/12-flash-attente-d.png" alt="Flash — attente de génération / lien PDF desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/12-flash-attente-m.png" alt="Flash — attente de génération / lien PDF mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="13-mdp-oublie">
+    <div class="tete"><h2>Mot de passe oublié — demande</h2><code>GET /reset</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/13-mdp-oublie-d.png" alt="Mot de passe oublié — demande desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/13-mdp-oublie-m.png" alt="Mot de passe oublié — demande mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="14-mdp-nouveau">
+    <div class="tete"><h2>Mot de passe oublié — réinitialisation</h2><code>GET /reset?token=…</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/14-mdp-nouveau-d.png" alt="Mot de passe oublié — réinitialisation desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/14-mdp-nouveau-m.png" alt="Mot de passe oublié — réinitialisation mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="15-2fa-enrolement">
+    <div class="tete"><h2>2FA — enrôlement (QR + secret)</h2><code>GET /login/2fa (1er login admin)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/15-2fa-enrolement-d.png" alt="2FA — enrôlement (QR + secret) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/15-2fa-enrolement-m.png" alt="2FA — enrôlement (QR + secret) mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="16-2fa-code">
+    <div class="tete"><h2>2FA — saisie du code</h2><code>GET /login/2fa</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/16-2fa-code-d.png" alt="2FA — saisie du code desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/16-2fa-code-m.png" alt="2FA — saisie du code mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="17-2fa-secours">
+    <div class="tete"><h2>2FA — codes de secours</h2><code>POST /login/2fa (1re activation)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/17-2fa-secours-d.png" alt="2FA — codes de secours desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/17-2fa-secours-m.png" alt="2FA — codes de secours mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="18-cgv">
+    <div class="tete"><h2>CGV</h2><code>GET /cgv</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/18-cgv-d.png" alt="CGV desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/18-cgv-m.png" alt="CGV mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="19-mentions">
+    <div class="tete"><h2>Mentions légales</h2><code>GET /mentions-legales</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/19-mentions-d.png" alt="Mentions légales desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/19-mentions-m.png" alt="Mentions légales mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="20-confidentialite">
+    <div class="tete"><h2>Confidentialité & cookies</h2><code>GET /confidentialite</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/20-confidentialite-d.png" alt="Confidentialité & cookies desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/20-confidentialite-m.png" alt="Confidentialité & cookies mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="21-essai-ouvert">
+    <div class="tete"><h2>Essai 48 h ouvert</h2><code>POST /invitation (essai)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/21-essai-ouvert-d.png" alt="Essai 48 h ouvert desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/21-essai-ouvert-m.png" alt="Essai 48 h ouvert mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="22-mdp-demande">
+    <div class="tete"><h2>Demande de réinitialisation enregistrée</h2><code>POST /reset-demande</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/22-mdp-demande-d.png" alt="Demande de réinitialisation enregistrée desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/22-mdp-demande-m.png" alt="Demande de réinitialisation enregistrée mobile"></figure>
+    </div>
+  </section>
+  <section class="ecran" id="23-regularisation">
+    <div class="tete"><h2>Abonnement à régulariser (compte suspendu)</h2><code>POST /login (suspendu)</code></div>
+    <div class="vues">
+      <figure class="desk"><figcaption>Desktop · 1440</figcaption><img loading="lazy" src="planche-v2/23-regularisation-d.png" alt="Abonnement à régulariser (compte suspendu) desktop"></figure>
+      <figure class="mob"><figcaption>Mobile · 390</figcaption><img loading="lazy" src="planche-v2/23-regularisation-m.png" alt="Abonnement à régulariser (compte suspendu) mobile"></figure>
+    </div>
+  </section>
+</main></body></html>

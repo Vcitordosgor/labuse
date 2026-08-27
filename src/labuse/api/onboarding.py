@@ -53,11 +53,20 @@ _PARCOURS_JS = """
   document.addEventListener('DOMContentLoaded', function(){
     var pw=document.querySelector('[data-strength]');
     if(pw){ pw.addEventListener('input', function(){ strength(pw.value); }); }
-    // Case CGV \\u2192 retour visuel (le bouton reste TOUJOURS cliquable : la validation native
-    // `required` + le serveur bloquent une soumission sans CGV \\u2014 jamais de cul-de-sac).
-    var cgv=document.getElementById('cgv'), err=document.getElementById('cgverr');
-    if(cgv&&err){ var sync=function(){ err.style.display=cgv.checked?'none':'block'; };
-      cgv.addEventListener('change', sync); sync(); }
+    // O2 \\u2014 la case CGV pilote l'\\u00c9TAT VISUEL du bouton : \\u00e9teint (.off) tant qu'elle n'est pas
+    // coch\\u00e9e, allum\\u00e9 d\\u00e8s qu'elle l'est. Le bouton n'est JAMAIS `disabled` (submit natif pr\\u00e9serv\\u00e9 :
+    // la validation `required` + le serveur restent le filet \\u2014 jamais de cul-de-sac si le JS \\u00e9choue).
+    // Le message n'appara\\u00eet QUE si l'utilisateur force l'action sur un bouton \\u00e9teint.
+    var cgv=document.getElementById('cgv'), cta=document.getElementById('cta'), err=document.getElementById('cgverr');
+    if(cgv&&cta){
+      var sync=function(){ var on=cgv.checked;
+        cta.classList.toggle('off', !on); cta.setAttribute('aria-disabled', String(!on));
+        if(err&&on) err.style.display='none'; };
+      cgv.addEventListener('change', sync); sync();
+      cta.addEventListener('click', function(e){
+        if(!cgv.checked){ e.preventDefault(); if(err) err.style.display='block'; cgv.focus(); }
+      });
+    }
   });
 })();
 """
@@ -123,11 +132,10 @@ def flash_retour_js():
 # ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
 def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True) -> str:
-    footer = ('<p class="note">Radar foncier · La Réunion — <a href="/cgv">CGV</a> · '
-              '<a href="/mentions-legales">mentions légales</a> · '
-              '<a href="/confidentialite">confidentialité</a></p>') if pied else ""
-    return coffre_ui.page(titre, coffre_ui.OISEAU + corps + footer,
-                          w=760 if large else None, legal=large, head=head)
+    # O1 — le pied légal passe par `foot=` (collé en bas), plus empilé dans le corps.
+    return coffre_ui.page(titre, coffre_ui.OISEAU + corps,
+                          w=760 if large else None, legal=large, head=head,
+                          foot=coffre_ui.FOOTER_LEGAL if pied else "")
 
 
 # ── E4 · invitation → mot de passe + CGV → Checkout ──
@@ -168,8 +176,8 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
     p = offre_integral()
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · sans engagement</p>
-<p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est déjà validé par l'invitation. Choisissez un mot de passe et vous entrez dans le radar foncier de La Réunion.</p>
+<p class="sub">{p['label']} · {p['eur_mois']} €/mois · <span class="free">sans engagement</span></p>
+<p class="lede">Votre e-mail est validé. Choisissez un mot de passe, et vous entrez dans le radar foncier de La Réunion.</p>
 <form method="post" action="/invitation">
 <input type="hidden" name="token" value="{html.escape(token)}">
 <label for="email">E-mail</label>
@@ -182,8 +190,8 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
 <div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true">
 <label for="cgv">J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a>.</label></div>
-<button type="submit" id="cta">Continuer vers le paiement →</button>
-<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px">Cochez les conditions générales pour continuer.</p>
+<button type="submit" id="cta" class="off" aria-disabled="true">Continuer vers le paiement <span class="arr" aria-hidden="true">→</span></button>
+<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px;color:var(--warn)">Cochez les conditions générales pour continuer.</p>
 </form>
 <p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
 <script src="/parcours.js" defer></script>""", pied=True))
@@ -230,16 +238,17 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     # par `labuse creer-admin`) : rien à payer, la porte est /login (avec 2FA pour un admin).
     if row and row["statut"] == "actif" and row["essai_expire_at"] is None:
         return HTMLResponse(_page("accès ouvert", """
-<h1>Votre accès est ouvert</h1>
-<p>Mot de passe enregistré — votre compte est actif, rien à régler.</p>
-<p style="margin-top:26px;text-align:center"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Entrer dans LABUSE →</a></p>"""))
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
+<h1>Votre accès est ouvert</h1><p class="sub">votre compte est actif</p>
+<p class="lede">Mot de passe enregistré — rien à régler.</p>
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>"""))
     if row and row["statut"] == "actif" and row["essai_expire_at"] is not None:
         return HTMLResponse(_page("essai", """
-<h1>Votre accès d'essai est ouvert</h1>
-<p>Compte activé — vous disposez de l'accès complet à LABUSE pendant la durée de l'essai.
-À l'échéance, l'accès se met en pause (vos données restent intactes) et un abonnement
-vous sera proposé.</p>
-<p style="margin-top:26px;text-align:center"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Entrer dans LABUSE →</a></p>"""))
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
+<h1>Votre accès d'essai est ouvert</h1><p class="sub">accès complet pendant l'essai</p>
+<p class="lede">À l'échéance, l'accès se met en pause — vos données restent intactes — et un
+abonnement vous est proposé.</p>
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>"""))
     # → ÉCRAN DE BASCULE Checkout (partie E) : le moment d'anxiété est adressé par une page
     # de confiance AVANT Stripe. La mécanique de paiement (creer_checkout/webhook) est
     # inchangée — seul un écran présentational + un jeton signé s'ajoutent.
@@ -269,8 +278,7 @@ def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
 </div>
 <form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
 <button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} €</button></form>
-<p class="note">Vous serez redirigé vers Stripe. Rien n'est débité tant que vous n'avez pas confirmé.</p>""",
-                        pied=False))
+<p class="note">Vous serez redirigé vers Stripe. Rien n'est débité tant que vous n'avez pas confirmé.</p>"""))
 
 
 @router.post("/onboarding/paiement", include_in_schema=False)
@@ -301,19 +309,23 @@ au règlement.</p><p style="text-align:center"><a href="/login">retour à la por
 def onboarding_retour(ok: int = 1):
     if ok:
         return HTMLResponse(_page("bienvenue", """
-<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
 <h1>Bienvenue chez LABUSE</h1><p class="sub">votre abonnement Intégral est actif</p>
-<p style="font-size:13.5px;line-height:1.6;color:var(--txt)">Vous avez désormais accès à tout le radar
-foncier de La Réunion — le scoring des parcelles, les fiches sourcées, les outils d'analyse et le dossier
-banquier. Un guide de prise en main en 5 gestes vous attend dès votre première connexion.</p>
-<p style="margin-top:26px"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none;box-shadow:0 8px 24px rgba(92,230,161,.30)">Entrer dans LABUSE →</a></p>
-<p class="note" style="margin-top:16px">Connectez-vous avec votre e-mail et le mot de passe que vous venez de choisir.</p></div>""", pied=False))
-    return HTMLResponse(_page("paiement interrompu", """
-<div class="big"><div class="mark soft" aria-hidden="true">↺</div>
+<p class="lede">Vous avez accès à tout le radar foncier de La Réunion — le scoring des parcelles, les
+fiches sourcées, les outils d'analyse et le dossier banquier. Un guide de prise en main vous attend
+à votre première connexion.</p>
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>
+<p class="note">Connectez-vous avec votre e-mail et le mot de passe que vous venez de choisir.</p>"""))
+    # O4 — paiement interrompu DEVIENT utile : un bouton d'action + une porte de sortie humaine
+    # (l'e-mail de contact et l'essai 48 h, proposés au moment précis où le prospect hésite).
+    contact = get_settings().contact_email
+    return HTMLResponse(_page("paiement interrompu", f"""
+<div class="icon" aria-hidden="true">↺</div>
 <h1>Paiement interrompu</h1><p class="sub">rien n'a été débité</p>
-<p style="font-size:13px">Aucun souci. Reprenez quand vous voulez : connectez-vous sur
-<a href="/login">la porte</a> avec votre email et votre mot de passe, le paiement se relancera.</p></div>""",
-                        pied=False))
+<p class="lede">Votre compte existe déjà. Connectez-vous et le paiement reprendra là où vous l'aviez laissé.</p>
+<a href="/login" class="btn">Reprendre le paiement <span class="arr" aria-hidden="true">→</span></a>
+<div class="why"><p><b>Un doute avant de payer ?</b> Écrivez à <a href="mailto:{contact}">{contact}</a> —
+je réponds moi-même, et je peux vous ouvrir un accès d'essai de 48 h.</p></div>"""))
 
 
 # ── E1 · reset mot de passe ──
@@ -329,7 +341,8 @@ def reset_page(token: str = ""):
 <div class="field"><input id="email" name="email" type="email" required autofocus
   autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false"
   placeholder="prenom.nom@cabinet.re" aria-required="true"></div>
-<button type="submit">Recevoir le lien →</button></form>
+<button type="submit">Recevoir le lien <span class="arr" aria-hidden="true">→</span></button>
+<p class="note">Le lien est valable une heure et ne sert qu'une fois.</p></form>
 <p class="linkrow"><a href="/login">← Retour à la connexion</a></p>"""))
     return HTMLResponse(_page("nouveau mot de passe", f"""
 <h1>Nouveau mot de passe</h1><p class="sub">choisissez-le soigneusement</p>
@@ -393,7 +406,7 @@ réinitialisation vient de lui être envoyé. Pensez à vérifier vos indésirab
 réinitialisation lui est destiné. <b style="color:var(--warn)">L'envoi automatique par e-mail n'est pas
 actif sur cet environnement</b> — votre contact LABUSE peut vous le transmettre.</p>
 <p style="margin-top:18px"><a class="pill" href="/login">← Retour à la connexion</a></p></div>"""
-    return HTMLResponse(_page("demande enregistrée", corps, pied=False))
+    return HTMLResponse(_page("demande enregistrée", corps))
 
 
 @router.post("/reset", include_in_schema=False)
@@ -692,27 +705,28 @@ Estimé) et son millésime.</div></div>
 <button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
 <p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
 <p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
-conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>""", pied=False))
+conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>"""))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF · {of['eur']} €</p>
+<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF</p>
+<div class="pricewrap"><div class="price"><b>{of['eur']} €</b><span>paiement unique</span></div></div>
 {note_annule}{introuvable}
-<div class="recap" style="margin-bottom:16px">
-<div style="font-size:12.5px;color:var(--txt);line-height:1.65"><b style="color:var(--hi)">Ce que vous
-obtenez :</b> zonage et règles d'urbanisme calibrées (hauteur, emprise, ce qu'on peut y construire),
-risques (Géorisques, PPR, littoral), marché DVF du secteur, permis voisins et potentiel de transformation.
-Chaque donnée <b style="color:var(--txt)">avec sa source et sa fraîcheur</b>.</div>
-<div style="font-size:12px;color:var(--mint);margin-top:11px;line-height:1.55">→ Ce que vous n'auriez pas
-trouvé seul : les règles du PLU traduites en clair, le potentiel constructible chiffré, et les signaux
-croisés que LABUSE agrège — pas une simple fiche cadastrale.</div></div>
+<div class="list">
+<div><i>▸</i><span>Zonage et règles d'urbanisme calibrées — hauteur, emprise, ce qu'on peut y construire</span></div>
+<div><i>▸</i><span>Risques : Géorisques, PPR, littoral</span></div>
+<div><i>▸</i><span>Marché DVF du secteur et permis voisins</span></div>
+<div><i>▸</i><span>Potentiel de transformation chiffré</span></div>
+<div><i>▸</i><span>Chaque donnée avec sa source et sa fraîcheur</span></div>
+</div>
 <form method="get" action="/flash">
 <label for="idu">Identifiant de parcelle (IDU)</label>
 <div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14" required
   autofocus inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
-<button type="submit">Voir ma parcelle →</button></form>
-<p class="meterlbl" id="iduhint">14 caractères — figure sur cadastre.gouv.fr, ou demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))
+<p class="hint" id="iduhint">14 caractères — il figure sur cadastre.gouv.fr.</p>
+<button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
+<p class="note">Vous vérifiez la parcelle avant de payer.</p>"""))
 
 
 @router.post("/flash", include_in_schema=False)

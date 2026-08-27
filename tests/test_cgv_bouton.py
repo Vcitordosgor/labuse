@@ -57,14 +57,24 @@ def test_pages_parcours_sans_js_inline(client, page):
     assert not _INLINE_SCRIPT.search(html), f"<script> inline (bloqué par CSP) dans {page}"
 
 
-def test_bouton_cgv_toujours_cliquable(client):
-    """Le bouton n'est plus 'disabled' (plus de cul-de-sac si le JS ne charge pas) ; la case CGV
-    existe et est 'required' (validation native), le JS externe est référencé."""
+def test_bouton_cgv_jamais_html_disabled_mais_etat_visuel(client):
+    """O2 — le bouton porte l'ÉTAT (class 'off' + aria-disabled) mais n'est JAMAIS HTML-`disabled`
+    (submit natif préservé, plus de cul-de-sac). La case CGV est 'required', le JS externe référencé."""
     html = client.get(f"/invitation?token={_token_client()}").text
     bouton = re.search(r'<button[^>]*id="cta"[^>]*>', html).group(0)
-    assert "disabled" not in bouton
+    # état visuel présent…
+    assert 'class="off"' in bouton and 'aria-disabled="true"' in bouton
+    # …mais PAS l'attribut HTML `disabled` (qui bloquerait la soumission)
+    assert not re.search(r'\sdisabled(\s|=|>)', bouton)
     assert 'id="cgv"' in html and "required" in html
     assert 'src="/parcours.js"' in html
+
+
+def test_parcours_js_bascule_etat_bouton(client):
+    """Le JS bascule la classe 'off' + aria-disabled selon la case, sans jamais désactiver le submit."""
+    js = client.get("/parcours.js").text
+    assert "classList.toggle('off'" in js and "aria-disabled" in js
+    assert "preventDefault" in js          # message seulement si l'utilisateur force l'action
 
 
 def test_parcours_js_servi_et_gere_la_case(client):

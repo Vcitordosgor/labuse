@@ -49,44 +49,69 @@ def pay_cid(token: str) -> int | None:
 CSS = """
 :root{
   --bg:#050706; --s1:#0B100D; --s2:#0D120F; --s3:#111814; --line:#1B2620; --line2:#1E2A23;
-  --mint:#5CE6A1; --mint-ink:#06130C; --violet:#B497F0; --or:#C9A961;
-  --hi:#ECF5EF; --txt:#C9DCD1; --mut:#8FA69A; --dim:#5C7268; --err:#E8695A; --warn:#E8B44C;
-  --r:10px; --ease:cubic-bezier(.2,.7,.2,1);
+  /* O3 — le vert du parcours s'aligne sur la maquette validée (et sur l'oiseau, déjà #4ADE80).
+     --mint = accent/CTA ; --mint-dim = liens & puces (vert plus sobre, ne porte pas de texte). */
+  --mint:#4ADE80; --mint-dim:#2E9E5B; --mint-ink:#04150A; --violet:#B497F0; --or:#C9A961;
+  --hi:#ECF5EF; --txt:#C9DCD1; --mut:#8FA69A; --dim:#55605A; --err:#E8695A; --warn:#D6A64A;
+  --r:12px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
-body{background:radial-gradient(120% 120% at 50% -10%, #0A100C 0%, var(--bg) 60%);
-  color:var(--txt);font:15px/1.6 -apple-system,'Inter',system-ui,sans-serif;
-  display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-.bloc{width:100%;max-width:var(--w,400px)}
-.oiseau{display:block;margin:0 auto 14px;height:28px;width:auto;filter:drop-shadow(0 0 14px rgba(201,169,97,.25))}
-h1{font:600 15px/1.3 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px}
-.sub,.sous{text-align:center;font-size:11.5px;color:var(--dim);letter-spacing:.1em;margin:0 0 28px}
+html,body{margin:0;min-height:100%}
+/* O1 — le contenu se CENTRE dans la hauteur, le pied reste en bas, plus jamais de grand vide.
+   `.bloc` remplit la fenêtre (flex colonne) : `.top` (flex:1) centre le contenu, `.foot` colle en
+   bas. Contenu plus grand que l'écran → la page défile naturellement (min-height, pas height). */
+body{background:radial-gradient(130% 90% at 50% -8%, rgba(74,222,128,.05), transparent 55%),
+  radial-gradient(120% 120% at 50% -10%, #0A100C 0%, var(--bg) 60%);
+  color:var(--txt);font:15px/1.6 -apple-system,'Inter',system-ui,sans-serif;min-height:100vh;padding:0}
+.bloc{width:100%;max-width:var(--w,412px);min-height:100vh;margin:0 auto;
+  display:flex;flex-direction:column;padding:36px 26px 20px}
+.top{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.foot{padding-top:20px;text-align:center;font-size:11px;color:var(--dim);letter-spacing:.02em;
+  font-family:'Space Grotesk',system-ui,sans-serif}
+.foot a{color:var(--mint-dim)}
+.oiseau{display:block;margin:0 auto 20px;height:30px;width:auto;filter:drop-shadow(0 0 16px rgba(74,222,128,.30))}
+/* O3 — hiérarchie à TROIS niveaux lisibles : titre (Space Grotesk espacé) / sous-titre d'offre en
+   une ligne / phrase d'accueil en corps gris clair / mentions en petit et gris foncé. */
+h1{font:700 17px/1.35 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px;text-wrap:balance}
+.lede,.sub{text-wrap:balance}
+.sub,.sous{text-align:center;font:500 12.5px 'Space Grotesk',system-ui,sans-serif;color:var(--mut);letter-spacing:.08em;margin:9px 0 0}
+.sub .free{color:var(--mint)}                 /* « sans engagement » = accent vert (argument commercial) */
+.lede{text-align:center;font-size:14px;line-height:1.65;color:var(--mut);margin:18px 0 0}
+.hint{font-size:12px;color:var(--dim);margin-top:9px;line-height:1.5}
 .cgvbox{display:flex;gap:11px;align-items:flex-start;margin-top:22px;background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:13px;font-size:12.5px;color:var(--txt)}
 .cgvbox input{margin-top:2px;width:17px;height:17px;accent-color:var(--mint);flex-shrink:0}
-label{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 7px}
+label{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:24px 0 8px}
 .field{position:relative}
 /* E7 mobile — font-size 16px en LONGHAND sur les champs : SOUS 16px, iOS Safari zoome au focus
    (le parcours « saute » sur iPhone). ⚠ l'ancien raccourci `font:15px inherit` était INVALIDE
    (`inherit` n'est pas une font-family de shorthand) → IGNORÉ : l'input tombait au défaut UA
    ~13px, PIRE. En longhand la règle s'applique vraiment. */
-input[type=email],input[type=password],input[type=text]{width:100%;background:var(--s2);border:1px solid var(--line2);
-  border-radius:var(--r);color:var(--hi);font-size:16px;font-family:inherit;padding:11px 12px;outline:none;
+input[type=email],input[type=password],input[type=text]{width:100%;min-height:54px;background:var(--s2);border:1px solid var(--line2);
+  border-radius:13px;color:var(--hi);font-size:16px;font-family:inherit;padding:0 16px;outline:none;
   transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
 input:disabled{color:var(--mut)}
 input::placeholder{color:var(--dim)}
 input:focus-visible{border-color:var(--mint);box-shadow:0 0 0 3px rgba(92,230,161,.16)}
-button,.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;margin-top:26px;
-  background:var(--mint);color:var(--mint-ink);border:0;border-radius:var(--r);font:600 14px -apple-system,'Inter',system-ui,sans-serif;
-  padding:12px;cursor:pointer;transition:filter .15s var(--ease);text-decoration:none}
-button:hover,.btn:hover{filter:brightness(1.08)}
-button:disabled,.btn:disabled{background:var(--s2);color:var(--mut);cursor:not-allowed;filter:none}
+/* O2 — le bouton d'action ALLUMÉ (par défaut) : vert menthe, texte sombre, ombre portée. */
+button,.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:9px;margin-top:24px;
+  min-height:56px;background:var(--mint);color:var(--mint-ink);border:0;border-radius:14px;
+  font:700 15.5px 'Space Grotesk',system-ui,sans-serif;letter-spacing:.02em;cursor:pointer;
+  box-shadow:0 12px 30px -12px rgba(74,222,128,.55);
+  transition:filter .15s var(--ease),background .15s,box-shadow .15s,color .15s;text-decoration:none}
+button:hover,.btn:hover{filter:brightness(1.06)}
+/* O2 — ÉTEINT : un bouton qui ne peut pas agir n'est JAMAIS peint comme un bouton actif.
+   Fond sombre, texte gris LISIBLE (contraste ~4:1), bordure discrète, aucune ombre. */
+button.off,.btn.off,button[aria-disabled=true]{background:#141A17;color:#7A857E;
+  border:1px solid var(--line2);box-shadow:none;filter:none}
+button.off:hover,.btn.off:hover,button[aria-disabled=true]:hover{filter:none}
+button:disabled,.btn:disabled{background:#141A17;color:#7A857E;cursor:not-allowed;box-shadow:none;filter:none}
 button:focus-visible,.btn:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.off .arr{display:none}
 .ghost{background:none;border:1px solid var(--line2);color:var(--txt)}
 .linkrow{margin-top:18px;text-align:center;font-size:12.5px}
 a{color:var(--mint);text-decoration:none} a:hover{text-decoration:underline}
 a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3px}
-.note{font-size:11px;color:var(--dim);text-align:center;margin-top:22px;line-height:1.6}
+.note{font-size:12px;color:var(--dim);text-align:center;margin-top:14px;line-height:1.55}
 .err{color:var(--err);font-size:12.5px;margin-top:10px;min-height:18px;display:flex;gap:6px;align-items:flex-start}
 .spin{width:15px;height:15px;border:2px solid rgba(6,19,12,.35);border-top-color:var(--mint-ink);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -96,10 +121,25 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .meter.moyen i:nth-child(-n+2){background:var(--warn)}
 .meter.fort i{background:var(--mint)}
 .meterlbl{font-size:11px;color:var(--mut);margin-top:6px}
-.consent{display:flex;gap:11px;align-items:flex-start;margin-top:22px;background:var(--s2);
-  border:1px solid var(--line);border-radius:var(--r);padding:13px}
-.consent input{margin-top:2px;width:17px;height:17px;accent-color:var(--mint);flex-shrink:0}
-.consent label{all:unset;font-size:12.5px;color:var(--txt);line-height:1.5;cursor:pointer}
+.consent{display:flex;gap:13px;align-items:flex-start;margin-top:26px;background:var(--s2);
+  border:1px solid var(--line);border-radius:13px;padding:15px}
+.consent input{margin-top:1px;width:21px;height:21px;accent-color:var(--mint);flex-shrink:0}
+.consent label{all:unset;font-size:13.5px;color:var(--mut);line-height:1.5;cursor:pointer}
+.consent a{color:var(--mint)}
+/* O3/O4 — Flash : prix en GRAND, puis 5 lignes scannables à puces vertes (le vert ne porte plus
+   le texte, il souligne). --- interrompu : icône ambre + encadré « un doute avant de payer ». */
+.price{display:inline-flex;align-items:baseline;gap:8px;font-family:'Space Grotesk',system-ui,sans-serif}
+.price b{font-size:34px;font-weight:700;letter-spacing:-.01em;color:var(--hi)}
+.price span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.pricewrap{display:flex;justify-content:center;margin-top:16px}
+.list{margin-top:22px;border-top:1px solid var(--line)}
+.list div{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--mut);line-height:1.45}
+.list i{color:var(--mint-dim);font-style:normal;flex:0 0 auto;margin-top:2px}
+.icon{width:60px;height:60px;border-radius:50%;margin:0 auto 20px;border:1px solid rgba(214,166,74,.4);
+  background:rgba(214,166,74,.08);display:flex;align-items:center;justify-content:center;color:var(--warn);font-size:24px}
+.why{margin-top:24px;border:1px solid var(--line);border-radius:13px;background:var(--s2);padding:16px}
+.why p{font-size:13px;color:var(--mut);line-height:1.6;margin:0}
+.why b{color:var(--txt);font-weight:600}
 .recap{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:6px}
 .recap .prix{font:700 26px 'Space Grotesk',system-ui,sans-serif;color:var(--hi);font-variant-numeric:tabular-nums}
 .recap .quoi{font-size:12.5px;color:var(--mut);margin-top:2px}
@@ -113,8 +153,8 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .mark.ok{background:rgba(92,230,161,.12);color:var(--mint);border:1px solid rgba(92,230,161,.4)}
 .mark.soft{background:rgba(232,180,76,.1);color:var(--warn);border:1px solid rgba(232,180,76,.35)}
 /* S3 — LISIBILITÉ des pages légales : longue lecture, pas un bloc centré étroit.
-   Le corps se lit du haut (legalpage), dans une colonne ~68ch, aérée. */
-body.legalpage{align-items:flex-start}
+   Le corps se lit du HAUT (pas centré verticalement comme les écrans courts), colonne ~68ch. */
+.legalpage .top{justify-content:flex-start;padding-top:4px}
 .legalpage .bloc{max-width:760px}
 .legal{max-width:68ch;margin:0 auto;text-align:left}
 .legal h1{text-align:left;font-size:19px;letter-spacing:.06em;margin:4px 0 4px}
@@ -134,7 +174,7 @@ body.legalpage{align-items:flex-start}
 .legal .haut:hover{color:var(--mint)}
 .card{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:22px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:480px){body{padding:16px;align-items:flex-start}.recap .prix{font-size:22px}}
+@media (max-width:480px){.bloc{padding:28px 18px 16px}.recap .prix{font-size:22px}}
 """
 
 # M83 D — logo LABUSE #4ADE80 (nouvelle marque). Constante UNIQUE réutilisée par tout le tunnel auth
@@ -151,12 +191,21 @@ LOCK_SVG = ('<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke=
             '<path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>')
 
 
-def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, head: str = "") -> str:
+# Pied de page légal PARTAGÉ (tous les écrans du parcours l'affichent en bas — O1).
+FOOTER_LEGAL = ('Radar foncier · La Réunion — <a href="/cgv">CGV</a> · '
+                '<a href="/mentions-legales">mentions légales</a> · '
+                '<a href="/confidentialite">confidentialité</a>')
+
+
+def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
+         head: str = "", foot: str = "") -> str:
     wvar = f"--w:{w}px;" if w else ""
     cls = "legal" if legal else ""
     # S3 — les pages légales sont de LONGS documents : le corps se lit du HAUT (pas centré
     # verticalement) et dans une colonne de lecture confortable (voir CSS `.legalpage`/`.legal`).
     body_cls = ' class="legalpage"' if legal else ""
+    # O1 — le contenu vit dans `.top` (centré verticalement), le pied `foot` colle en bas.
+    foot_html = f'<div class="foot">{foot}</div>' if foot else ""
     return (f"<!doctype html><html lang=\"fr\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             f"<meta name=\"robots\" content=\"noindex\">"
@@ -173,4 +222,5 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, h
             f"<link href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&"
             f"family=Inter:wght@400;500;600&display=swap\" rel=\"stylesheet\">"
             f"<style>{CSS}</style>{head}</head>"
-            f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">{corps}</main></body></html>")
+            f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">"
+            f"<div class=\"top\">{corps}</div>{foot_html}</main></body></html>")
