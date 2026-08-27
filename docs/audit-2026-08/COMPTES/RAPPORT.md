@@ -149,3 +149,57 @@ donnée publique (parcelles, scores, prix, sources, run) est **partagée**, l'in
   `copilote_conversations` ne l'a pas.
   → **NON corrigé dans ce mandat** (A6 = « constat + proposition, n'implémente pas »). Traité en
   détail et proposé dans `SUPPRESSION-SPEC.md`.
+
+---
+
+## A4 — RÔLES ET ACCÈS ADMIN
+
+**Le 403 tient (vérifié après merges).** Balayage des **22 routes `/admin/*`** (`qa/comptes/audit_a4.py`)
+depuis un compte **client** et un **non-connecté** :
+
+- Client (rôle `titulaire`) → **403 sur les 22 routes** (16 immédiatement ; 6 POST renvoyaient
+  d'abord 422 sur payload vide — **rejouées avec un payload valide, elles renvoient bien 403**).
+- Non-connecté → **401 partout** (jamais 200). La garde `exiger_admin` (`auth.py:168`) tient sur
+  toutes les surfaces admin, y compris celles ajoutées par le dashboard.
+- **Régression gelée** : `tests/test_audit_comptes.py::test_a4_403_admin_sur_toutes_les_routes`
+  (client 403 + anonyme non-200 sur les 22 routes, payloads valides).
+
+### Durcissement (audité — findings)
+
+- **AC-020 🟠 — Login PILOTE (mot de passe admin partagé) sans verrou ni rate-limit.** Le login
+  utilisateur a le verrou 5 échecs / 15 min (`verifier_login`). Le login **pilote** (`identifiant`
+  vide, mot de passe partagé `LABUSE_AUTH_PASSWORD` = **admin de fait**) n'a **que** `slow_failure()`
+  (sleep 0,4 s) : **aucun verrou de compteur**, et `/login` **n'est pas** dans `PREFIXES_PROTEGES`
+  → **pas de rate-limit applicatif** non plus. Brute-force du mot de passe admin partagé ralenti
+  mais non borné (un reverse-proxy amont peut aider, hors app). **Recommandation** (non implémentée) :
+  soit rate-limit/verrou par IP sur `/login`, soit **migrer Vic vers un compte `role='admin'`
+  nominatif** (déjà couvert par le verrou 5/15 min) et retirer le mode pilote avant la vente.
+- **AC-021 🟡 — 6 routes admin valident le corps AVANT la garde.** `/admin/degeler`,
+  `/admin/licences/creer`, `/creer-essai`, `/{id}/mail`, `/admin/retours/{id}/statut`,
+  `/courrier/admin/demandes/{id}/statut` : Pydantic répond 422 sur corps invalide **avant**
+  `exiger_admin`. **Non exploitable** (403 avec payload valide, aucun accès), mais un non-admin
+  peut inférer la forme du payload. Fix propre : `Depends(exiger_admin)` en dépendance de route
+  (s'exécute avant la validation du corps).
+- **AC-022 🟡 — Session pilote non révocable.** La session pilote est un **token HMAC signé sans
+  état en base** (12 h) : `/logout` ne peut pas la révoquer côté serveur (contrairement à une
+  session `role='admin'`, ligne en base supprimable). Un cookie pilote volé reste valide jusqu'à
+  expiration. Autre raison de migrer l'admin vers un compte nominatif.
+- **AC-023 🟡 — Journalisation admin partielle.** Les actions admin d'**écriture** sont tracées
+  (notifications `event_log` : dégel, transition courrier, suspension). Les **consultations** admin
+  (`GET /admin/pilotage|licences|stripe|ia|produit`) **ne sont pas** journalisées, et le login
+  pilote n'écrit que dans le log fichier (`auth.log_event`), pas dans `event_log`. Recommandation :
+  un **journal d'accès admin** (qui, quand, quelle route) — d'autant plus utile que le mot de passe
+  pilote est partagé (aujourd'hui, impossible de dire *qui* s'est connecté en admin).
+- **AC-024 🟡 — Rôle exposé au front.** `GET /moi` renvoie `role` au client ; le front s'en sert
+  pour afficher/cacher l'entrée « Tour de contrôle ». **Sain** : la vraie garde est backend
+  (`exiger_admin` re-vérifie à chaque route, prouvé ci-dessus) — le front ne fait que cacher l'UI.
+  Aucune action admin n'est atteignable en forçant l'affichage côté client.
+
+### Proposition — double authentification (demandée par le mandat)
+
+Avant mise en ligne, **AC-025 🟠 (proposition, non implémentée)** : ajouter une **2FA TOTP sur le
+seul compte admin**. Le plus propre : (1) retirer le mode pilote partagé, (2) créer un compte
+`role='admin'` **nominatif** pour Vic (verrou d'échecs + session révocable déjà acquis), (3) exiger
+un code TOTP (RFC 6238, ex. `pyotp`) à la connexion de ce compte. Surface minimale (un seul
+compte), gain majeur : le point d'entrée le plus sensible (accès à tout le pilotage, aux licences,
+à la suspension de comptes) passe de « un secret » à « un secret + un appareil ». À trancher par Vic.

@@ -150,3 +150,43 @@ def test_idor_courrier_demande_cloison_et_admin_403(app_client):
         _purge(ea, eb)
         with session_scope() as s:
             s.execute(text("DELETE FROM courrier_demandes WHERE parcelles::text LIKE '%974AUDCOUR001%'")); s.commit()
+
+
+# ─────────────────── A4 : le 403 admin tient sur TOUTES les routes /admin/* ───────────────────
+_ADMIN_ROUTES = [
+    ("GET", "/admin/pilotage"), ("GET", "/admin/licences"), ("GET", "/admin/ia"),
+    ("GET", "/admin/sources"), ("GET", "/admin/produit"), ("GET", "/admin/stripe"),
+    ("GET", "/courrier/admin/demandes"), ("GET", "/protection/admin"),
+    ("POST", "/admin/degeler"), ("POST", "/admin/licences/creer"),
+    ("POST", "/admin/licences/creer-essai"), ("POST", "/admin/licences/1/convertir"),
+    ("POST", "/admin/licences/1/mail"), ("POST", "/admin/licences/1/quota"),
+    ("POST", "/admin/licences/1/retablir"), ("POST", "/admin/licences/1/suspendre"),
+    ("POST", "/admin/retours/1/statut"), ("POST", "/admin/sources/1/cadence"),
+    ("POST", "/admin/sources/1/relancer"), ("POST", "/courrier/admin/demandes/1/statut"),
+    ("POST", "/protection/admin/degel/x"), ("POST", "/protection/admin/gel/x"),
+]
+# payloads VALIDES (sinon Pydantic répond 422 AVANT la garde — cf. AC-021) : pour prouver le 403
+# de la GARDE, on envoie un corps qui passe la validation.
+_VALID = {
+    "/admin/degeler": {"sujet": "x"}, "/admin/licences/creer": {"email": "z@z.re"},
+    "/admin/licences/creer-essai": {"email": "z@z.re"}, "/admin/licences/1/mail": {"key": "onboarding1"},
+    "/admin/retours/1/statut": {"statut": "traite"}, "/courrier/admin/demandes/1/statut": {"statut": "imprime"},
+}
+
+
+def test_a4_403_admin_sur_toutes_les_routes(app_client):
+    """Un compte CLIENT reçoit 403 sur les 22 routes /admin/* (avec payload valide) ;
+    un NON-CONNECTÉ ne reçoit jamais 200 (401/403/redirect). Régression post-merges."""
+    email = f"cli-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(email)
+    try:
+        client = TestClient(app_client.app, base_url="https://testserver"); _login(client, email)
+        anon = TestClient(app_client.app, base_url="https://testserver")
+        for method, path in _ADMIN_ROUTES:
+            body = _VALID.get(path, {})
+            rc = client.request(method, path, json=body) if method == "POST" else client.request(method, path)
+            assert rc.status_code == 403, f"CLIENT {method} {path} → {rc.status_code} (attendu 403)"
+            ra = anon.request(method, path, json=body) if method == "POST" else anon.request(method, path)
+            assert ra.status_code in (401, 403, 302, 303, 307), f"ANON {method} {path} → {ra.status_code}"
+    finally:
+        _purge(email)
