@@ -82,6 +82,10 @@ def ensure_tables(db: Session) -> None:
             created_at timestamptz NOT NULL DEFAULT now(),
             expire_at timestamptz NOT NULL
         )"""))
+    # AUDIT COMPTES · A5 — empreinte HACHÉE de la session (jamais l'IP/UA en clair : RGPD) pour
+    # OBSERVER le partage de compte (plusieurs postes simultanés). Signal seulement, aucun blocage.
+    db.execute(text("ALTER TABLE sessions_auth ADD COLUMN IF NOT EXISTS ip_hash text"))
+    db.execute(text("ALTER TABLE sessions_auth ADD COLUMN IF NOT EXISTS ua_hash text"))
     # audit MINIMAL (jamais de secret, jamais de données de carte — il n'y en a nulle part)
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS evenements_compte (
@@ -227,13 +231,43 @@ def verifier_login(db: Session, email: str, password: str) -> dict | None:
 
 # ── sessions (cookie httpOnly ; en base : le hash du token) ──
 
-def creer_session(db: Session, utilisateur_id: int, heures: float | None = None) -> str:
+def creer_session(db: Session, utilisateur_id: int, heures: float | None = None,
+                  ip_hash: str | None = None, ua_hash: str | None = None) -> str:
+    """A5 : `ip_hash`/`ua_hash` (empreinte HACHÉE, jamais en clair) sont OPTIONNELS — posés par
+    /login pour observer le partage de compte. Absents (repli/test) : session normale."""
     tok = _token()
     exp = datetime.now(timezone.utc) + timedelta(hours=heures or get_settings().session_hours)
-    db.execute(text("INSERT INTO sessions_auth (token_hash, utilisateur_id, expire_at)"
-                    " VALUES (:h, :u, :x)"), {"h": _sha(tok), "u": utilisateur_id, "x": exp})
+    db.execute(text("INSERT INTO sessions_auth (token_hash, utilisateur_id, expire_at, ip_hash, ua_hash)"
+                    " VALUES (:h, :u, :x, :ip, :ua)"),
+               {"h": _sha(tok), "u": utilisateur_id, "x": exp, "ip": ip_hash, "ua": ua_hash})
     db.commit()
     return tok
+
+
+def sessions_actives_par_compte(db: Session, seuil: int | None = None) -> list[dict]:
+    """A5 — partage de compte OBSERVÉ (jamais bloqué) : par compte, le nombre de sessions
+    actives (non expirées) et surtout le nombre d'EMPREINTES IP DISTINCTES simultanées. Plusieurs
+    IP actives sur la fenêtre de session (12 h) = plusieurs postes = partage probable et DURABLE
+    (par construction : une session dure 12 h, ce n'est pas un pic). Le seuil (config
+    `sessions_signal_seuil`) borne le signal servi au dashboard. RGPD : on ne lit que des hash."""
+    s = seuil if seuil is not None else int(get_settings().sessions_signal_seuil)
+    rows = db.execute(text(
+        "SELECT u.compte_id,"
+        "       COUNT(*) AS sessions,"
+        "       COUNT(DISTINCT s.ip_hash) FILTER (WHERE s.ip_hash IS NOT NULL) AS ips,"
+        "       COUNT(DISTINCT s.ua_hash) FILTER (WHERE s.ua_hash IS NOT NULL) AS uas,"
+        "       MIN(s.created_at) AS depuis"
+        " FROM sessions_auth s JOIN utilisateurs u ON u.id = s.utilisateur_id"
+        " WHERE s.expire_at > now() AND u.compte_id IS NOT NULL"
+        " GROUP BY u.compte_id"), {}).mappings().all()
+    out = []
+    for r in rows:
+        d = dict(r)
+        # signal = IP distinctes ≥ seuil (repli sur le nb de sessions si l'empreinte manque encore)
+        d["partage_probable"] = (int(d["ips"] or 0) >= s) or (int(d["ips"] or 0) == 0 and int(d["sessions"]) >= s)
+        d["depuis"] = d["depuis"].isoformat() if d["depuis"] else None
+        out.append(d)
+    return out
 
 
 def basculer_essai_expire(db: Session, compte_id: int) -> None:

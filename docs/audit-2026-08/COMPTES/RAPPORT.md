@@ -203,3 +203,45 @@ seul compte admin**. Le plus propre : (1) retirer le mode pilote partagé, (2) c
 un code TOTP (RFC 6238, ex. `pyotp`) à la connexion de ce compte. Surface minimale (un seul
 compte), gain majeur : le point d'entrée le plus sensible (accès à tout le pilotage, aux licences,
 à la suspension de comptes) passe de « un secret » à « un secret + un appareil ». À trancher par Vic.
+
+---
+
+## A5 — PARTAGE DE COMPTE
+
+**Observable AVANT ce mandat.** `sessions_auth` = `(token_hash, utilisateur_id, created_at,
+expire_at)` — **ni IP ni empreinte**. Aucun moyen de repérer qu'un compte est utilisé depuis
+plusieurs postes. Les sessions concurrentes étaient comptables (une ligne par session) mais
+indistinctes.
+
+**Rate-limit par compte sur routes coûteuses : DÉJÀ EN PLACE** (constat, rien ajouté). Les quotas
+JOURNALIERS sont épinglés au compte (`sujet_quota → c:<compte_id>`) : exports 30/j (Intégral) ou
+200/j (Illimité) via `PLAFONDS_JOUR` ; Copilote runs 10/j (`copilote_quota_jour`) ; Copilote v2
+40/j/compte (`copilote_v2_missions_jour`) ; dossiers 20/mois ; questions NL 80/j/licence. L'ingestion
+est admin-only (pas de surface client). Le rate-limit par compte demandé « si absent » n'était pas
+absent.
+
+### Implémenté — mesure PROPORTIONNÉE et NON BLOQUANTE
+
+- **Empreinte hachée de session** (`comptes.py` + `app.py` `/login`) : `ip_hash`, `ua_hash`
+  (SHA-256 tronqué — **jamais l'IP/UA en clair**, RGPD) posés à la création de session.
+- **Agrégat** `comptes.sessions_actives_par_compte()` : par compte, nombre de sessions actives
+  (non expirées) et surtout **nombre d'IP distinctes simultanées**. Plusieurs IP actives sur la
+  fenêtre de session (12 h) = plusieurs postes = **partage probable ET durable** (par construction :
+  une session dure 12 h, ce n'est pas un pic instantané).
+- **Seuil config** `sessions_signal_seuil = 3` (1 licence = 1 accès ; 3 postes = partage probable).
+- **Endpoint** `GET /admin/partage` (admin) + **signal** dans `GET /admin/licences` (`partage`) :
+  chip ambre « ⚠ Partage probable · N postes actifs » sur la fiche client du dashboard.
+- **NON bloquant, prouvé** : aucune session n'est coupée, aucune connexion refusée. Vic voit,
+  Vic décide. RGPD : seuls des **nombres** sont servis (les empreintes restent hachées en base).
+- **Régression gelée** : `tests/test_audit_comptes.py::test_a5_signal_partage_sessions_multiples`
+  (3 IP → signal ; 1 IP → pas de signal ; les sessions survivent).
+
+### Finding A5
+
+- **AC-004 — Partage de compte observable, mesure livrée.** ✅ Signal de partage (sessions/IP
+  distinctes) posé et exposé au dashboard admin, non bloquant. Rate-limit par compte déjà en place
+  sur toutes les routes coûteuses. Limite honnête : l'`ip_hash` distingue des **réseaux**, pas des
+  personnes (3 collègues derrière un même NAT d'entreprise = 1 IP → non signalés ; c'est un choix
+  conservateur qui évite les faux positifs, au prix de rater le partage intra-réseau — acceptable
+  pour un signal informatif). Le `ua_hash` est collecté en complément (V2 : signal affiné
+  navigateurs distincts). Historisation fine (time-series) laissée en V2.

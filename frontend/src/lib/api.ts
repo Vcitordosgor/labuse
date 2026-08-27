@@ -825,6 +825,7 @@ export interface AdminLicence {
   stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
   mails: Record<string, { statut: string; sent_at: string | null }>
   rappels: string[]
+  partage: { sessions: number; ips: number; probable: boolean } | null   // A5 — sessions simultanées (informatif)
   kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number }
 }
 export interface AdminLicences {
@@ -832,6 +833,7 @@ export interface AdminLicences {
   stripe_configure: boolean
   rapprochement?: StripeApercu['rapprochement']
   brevo: { api: boolean; templates: Record<string, boolean> }
+  partage_seuil: number
 }
 export const getAdminLicences = () => j<AdminLicences>('/admin/licences')
 export const postAdminLicenceCreer = (body: { email: string; nom?: string }) =>

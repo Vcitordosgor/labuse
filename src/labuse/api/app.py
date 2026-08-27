@@ -453,6 +453,12 @@ async def login_submit(request: Request):
     if identifiant:
         from ..comptes import creer_session, verifier_login
         from ..db import session_scope
+        # A5 — empreinte HACHÉE (jamais l'IP/UA en clair) posée sur la session, pour observer le
+        # partage de compte (plusieurs postes). HMAC via la clé de protection (même recette que sujet_de).
+        import hashlib
+        from .protection import ip_reelle
+        _iph = hashlib.sha256(ip_reelle(request).encode()).hexdigest()[:32]
+        _uah = hashlib.sha256(request.headers.get("user-agent", "").encode()).hexdigest()[:32]
         with session_scope() as db:
             u = verifier_login(db, identifiant, password)
             if not u:
@@ -469,7 +475,7 @@ async def login_submit(request: Request):
                 # un Checkout (double paiement). « A payé ⇒ a accès ».
                 from ..facturation import reconcile_abonnement
                 if reconcile_abonnement(db, u["compte_id"], identifiant):
-                    tok = creer_session(db, u["utilisateur_id"])
+                    tok = creer_session(db, u["utilisateur_id"], ip_hash=_iph, ua_hash=_uah)
                     resp = RedirectResponse("/", status_code=303)
                     resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
                     return resp
@@ -494,7 +500,7 @@ réglages vous attendent tels quels.</p>
 <p>Régularisez votre abonnement pour reprendre exactement où vous en étiez&nbsp;:</p>
 <p style="margin-top:26px"><a href="{lien}" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Régulariser l'abonnement →</a></p>
 <p style="margin-top:18px;color:var(--mut);font-size:13px">Une question&nbsp;? Écrivez-nous&nbsp;: contact@labuse.immo</p>"""))
-            tok = creer_session(db, u["utilisateur_id"])
+            tok = creer_session(db, u["utilisateur_id"], ip_hash=_iph, ua_hash=_uah)
         auth.log_event("login_ok", request)
         resp = RedirectResponse("/", status_code=303)
         resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())

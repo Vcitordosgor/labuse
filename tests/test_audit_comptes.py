@@ -190,3 +190,37 @@ def test_a4_403_admin_sur_toutes_les_routes(app_client):
             assert ra.status_code in (401, 403, 302, 303, 307), f"ANON {method} {path} → {ra.status_code}"
     finally:
         _purge(email)
+
+
+# ─────────────────── A5 : observation du partage de compte (non bloquant) ───────────────────
+def test_a5_signal_partage_sessions_multiples(app_client):
+    """Plusieurs sessions de plusieurs IP simultanées sur un compte → partage_probable=True,
+    exposé au dashboard (/admin/partage). Aucune session n'est coupée (non bloquant)."""
+    email = f"share-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        with session_scope() as s:
+            uid = s.execute(text("SELECT id FROM utilisateurs WHERE email=:e"), {"e": email}).scalar()
+            # 3 sessions actives de 3 empreintes IP distinctes (= 3 postes)
+            for i in range(3):
+                comptes.creer_session(s, uid, ip_hash=f"ip{i}", ua_hash=f"ua{i}")
+            lignes = {p["compte_id"]: p for p in comptes.sessions_actives_par_compte(s)}
+        assert cid in lignes
+        assert lignes[cid]["sessions"] >= 3 and lignes[cid]["ips"] >= 3
+        assert lignes[cid]["partage_probable"] is True
+        # les sessions ne sont PAS coupées (non bloquant) : elles restent en base
+        with session_scope() as s:
+            n = s.execute(text("SELECT count(*) FROM sessions_auth WHERE utilisateur_id=:u AND expire_at>now()"),
+                          {"u": uid}).scalar()
+        assert n >= 3
+        # un seul poste (1 IP) → pas de signal
+        email2 = f"solo-{uuid.uuid4().hex[:8]}@x.test"
+        cid2 = _compte_actif(email2)
+        with session_scope() as s:
+            uid2 = s.execute(text("SELECT id FROM utilisateurs WHERE email=:e"), {"e": email2}).scalar()
+            comptes.creer_session(s, uid2, ip_hash="ipA", ua_hash="uaA")
+            solo = {p["compte_id"]: p for p in comptes.sessions_actives_par_compte(s)}
+        assert solo[cid2]["partage_probable"] is False
+        _purge(email2)
+    finally:
+        _purge(email)

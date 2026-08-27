@@ -294,9 +294,15 @@ def admin_licences(request: Request) -> dict:
             "statut": m["statut"], "sent_at": m["sent_at"].isoformat() if m["sent_at"] else None}
     hb = {u["compte_id"]: int(u["hb"]) for u in usage_rows}
     nl = {s["sujet"]: int(s["n"]) for s in nl_rows}
+    # A5 — signal de partage de compte (sessions actives + IP distinctes), par compte
+    from ..comptes import sessions_actives_par_compte
+    from ..db import session_scope
+    with session_scope() as _s:
+        partage = {p["compte_id"]: p for p in sessions_actives_par_compte(_s)}
     out = []
     for k in comptes:
         mails = mails_par_compte.get(k["id"], {})
+        pg = partage.get(k["id"])
         out.append({
             "id": k["id"], "nom": k["nom"], "email": k["email"], "plan": k["plan"],
             "statut": k["statut"], "created_at": k["created_at"].isoformat() if k["created_at"] else None,
@@ -304,6 +310,9 @@ def admin_licences(request: Request) -> dict:
             "stripe": abos_par_cust.get(k["stripe_customer_id"]),
             "mails": mails,
             "rappels": _rappels_onboarding(k["created_at"], mails),
+            # A5 — sessions simultanées : purement informatif (jamais de blocage/déconnexion)
+            "partage": {"sessions": int(pg["sessions"]), "ips": int(pg["ips"] or 0),
+                        "probable": bool(pg["partage_probable"])} if pg else None,
             "kpi": {
                 # heartbeat = 1 balise / 5 min onglet visible → temps d'usage ESTIMÉ (dit au front)
                 "usage_7j_min": hb.get(k["id"], 0) * 5,
@@ -313,7 +322,35 @@ def admin_licences(request: Request) -> dict:
             },
         })
     return {"licences": out, "stripe_configure": bool(stripe.get("configure")),
-            "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration()}
+            "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration(),
+            "partage_seuil": int(config.get_settings().sessions_signal_seuil)}
+
+
+@router.get("/admin/partage")
+def admin_partage(request: Request) -> dict:
+    """A5 — partage de compte OBSERVÉ : par compte, sessions actives + IP distinctes simultanées,
+    et le drapeau `partage_probable` (≥ seuil). Purement informatif : Vic décide, l'app informe —
+    AUCUNE déconnexion, AUCUN blocage. RGPD : n'expose que des comptes et des NOMBRES (les
+    empreintes sont hachées en base, jamais servies)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import config
+    from ..comptes import sessions_actives_par_compte
+    from ..db import engine, session_scope
+    with session_scope() as s:
+        lignes = sessions_actives_par_compte(s)
+    noms = {}
+    if lignes:
+        with engine().begin() as c:
+            noms = {r["id"]: r["nom"] for r in c.execute(text(
+                "SELECT id, nom FROM comptes WHERE id = ANY(:ids)"),
+                {"ids": [x["compte_id"] for x in lignes]}).mappings()}
+    for x in lignes:
+        x["nom"] = noms.get(x["compte_id"])
+    signales = [x for x in lignes if x["partage_probable"]]
+    return {"seuil": int(config.get_settings().sessions_signal_seuil),
+            "comptes": sorted(lignes, key=lambda x: (-int(x["ips"] or 0), -int(x["sessions"]))),
+            "n_signales": len(signales)}
 
 
 class NouveauClientIn(BaseModel):
