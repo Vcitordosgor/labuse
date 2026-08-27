@@ -176,8 +176,8 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
     p = offre_integral()
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · sans engagement</p>
-<p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est déjà validé par l'invitation. Choisissez un mot de passe et vous entrez dans le radar foncier de La Réunion.</p>
+<p class="sub">{p['label']} · {p['eur_mois']} €/mois · <span class="free">sans engagement</span></p>
+<p class="lede">Votre e-mail est validé. Choisissez un mot de passe, et vous entrez dans le radar foncier de La Réunion.</p>
 <form method="post" action="/invitation">
 <input type="hidden" name="token" value="{html.escape(token)}">
 <label for="email">E-mail</label>
@@ -702,23 +702,24 @@ conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF · {of['eur']} €</p>
+<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF</p>
+<div class="pricewrap"><div class="price"><b>{of['eur']} €</b><span>paiement unique</span></div></div>
 {note_annule}{introuvable}
-<div class="recap" style="margin-bottom:16px">
-<div style="font-size:12.5px;color:var(--txt);line-height:1.65"><b style="color:var(--hi)">Ce que vous
-obtenez :</b> zonage et règles d'urbanisme calibrées (hauteur, emprise, ce qu'on peut y construire),
-risques (Géorisques, PPR, littoral), marché DVF du secteur, permis voisins et potentiel de transformation.
-Chaque donnée <b style="color:var(--txt)">avec sa source et sa fraîcheur</b>.</div>
-<div style="font-size:12px;color:var(--mint);margin-top:11px;line-height:1.55">→ Ce que vous n'auriez pas
-trouvé seul : les règles du PLU traduites en clair, le potentiel constructible chiffré, et les signaux
-croisés que LABUSE agrège — pas une simple fiche cadastrale.</div></div>
+<div class="list">
+<div><i>▸</i><span>Zonage et règles d'urbanisme calibrées — hauteur, emprise, ce qu'on peut y construire</span></div>
+<div><i>▸</i><span>Risques : Géorisques, PPR, littoral</span></div>
+<div><i>▸</i><span>Marché DVF du secteur et permis voisins</span></div>
+<div><i>▸</i><span>Potentiel de transformation chiffré</span></div>
+<div><i>▸</i><span>Chaque donnée avec sa source et sa fraîcheur</span></div>
+</div>
 <form method="get" action="/flash">
 <label for="idu">Identifiant de parcelle (IDU)</label>
 <div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14" required
   autofocus inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
-<button type="submit">Voir ma parcelle →</button></form>
-<p class="meterlbl" id="iduhint">14 caractères — figure sur cadastre.gouv.fr, ou demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))
+<p class="hint" id="iduhint">14 caractères — il figure sur cadastre.gouv.fr.</p>
+<button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
+<p class="note">Vous vérifiez la parcelle avant de payer.</p>"""))
 
 
 @router.post("/flash", include_in_schema=False)

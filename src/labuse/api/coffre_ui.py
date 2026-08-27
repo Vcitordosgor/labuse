@@ -70,18 +70,23 @@ body{background:radial-gradient(130% 90% at 50% -8%, rgba(74,222,128,.05), trans
   font-family:'Space Grotesk',system-ui,sans-serif}
 .foot a{color:var(--mint-dim)}
 .oiseau{display:block;margin:0 auto 20px;height:30px;width:auto;filter:drop-shadow(0 0 16px rgba(74,222,128,.30))}
-h1{font:600 15px/1.3 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px}
-.sub,.sous{text-align:center;font-size:11.5px;color:var(--dim);letter-spacing:.1em;margin:0 0 28px}
+/* O3 — hiérarchie à TROIS niveaux lisibles : titre (Space Grotesk espacé) / sous-titre d'offre en
+   une ligne / phrase d'accueil en corps gris clair / mentions en petit et gris foncé. */
+h1{font:700 17px/1.35 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px}
+.sub,.sous{text-align:center;font:500 12.5px 'Space Grotesk',system-ui,sans-serif;color:var(--mut);letter-spacing:.08em;margin:9px 0 0}
+.sub .free{color:var(--mint)}                 /* « sans engagement » = accent vert (argument commercial) */
+.lede{text-align:center;font-size:14px;line-height:1.65;color:var(--mut);margin:18px 0 0}
+.hint{font-size:12px;color:var(--dim);margin-top:9px;line-height:1.5}
 .cgvbox{display:flex;gap:11px;align-items:flex-start;margin-top:22px;background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:13px;font-size:12.5px;color:var(--txt)}
 .cgvbox input{margin-top:2px;width:17px;height:17px;accent-color:var(--mint);flex-shrink:0}
-label{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 7px}
+label{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:24px 0 8px}
 .field{position:relative}
 /* E7 mobile — font-size 16px en LONGHAND sur les champs : SOUS 16px, iOS Safari zoome au focus
    (le parcours « saute » sur iPhone). ⚠ l'ancien raccourci `font:15px inherit` était INVALIDE
    (`inherit` n'est pas une font-family de shorthand) → IGNORÉ : l'input tombait au défaut UA
    ~13px, PIRE. En longhand la règle s'applique vraiment. */
-input[type=email],input[type=password],input[type=text]{width:100%;background:var(--s2);border:1px solid var(--line2);
-  border-radius:var(--r);color:var(--hi);font-size:16px;font-family:inherit;padding:11px 12px;outline:none;
+input[type=email],input[type=password],input[type=text]{width:100%;min-height:54px;background:var(--s2);border:1px solid var(--line2);
+  border-radius:13px;color:var(--hi);font-size:16px;font-family:inherit;padding:0 16px;outline:none;
   transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
 input:disabled{color:var(--mut)}
 input::placeholder{color:var(--dim)}
@@ -105,7 +110,7 @@ button:focus-visible,.btn:focus-visible{outline:2px solid var(--mint);outline-of
 .linkrow{margin-top:18px;text-align:center;font-size:12.5px}
 a{color:var(--mint);text-decoration:none} a:hover{text-decoration:underline}
 a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3px}
-.note{font-size:11px;color:var(--dim);text-align:center;margin-top:22px;line-height:1.6}
+.note{font-size:12px;color:var(--dim);text-align:center;margin-top:14px;line-height:1.55}
 .err{color:var(--err);font-size:12.5px;margin-top:10px;min-height:18px;display:flex;gap:6px;align-items:flex-start}
 .spin{width:15px;height:15px;border:2px solid rgba(6,19,12,.35);border-top-color:var(--mint-ink);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -115,10 +120,25 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .meter.moyen i:nth-child(-n+2){background:var(--warn)}
 .meter.fort i{background:var(--mint)}
 .meterlbl{font-size:11px;color:var(--mut);margin-top:6px}
-.consent{display:flex;gap:11px;align-items:flex-start;margin-top:22px;background:var(--s2);
-  border:1px solid var(--line);border-radius:var(--r);padding:13px}
-.consent input{margin-top:2px;width:17px;height:17px;accent-color:var(--mint);flex-shrink:0}
-.consent label{all:unset;font-size:12.5px;color:var(--txt);line-height:1.5;cursor:pointer}
+.consent{display:flex;gap:13px;align-items:flex-start;margin-top:26px;background:var(--s2);
+  border:1px solid var(--line);border-radius:13px;padding:15px}
+.consent input{margin-top:1px;width:21px;height:21px;accent-color:var(--mint);flex-shrink:0}
+.consent label{all:unset;font-size:13.5px;color:var(--mut);line-height:1.5;cursor:pointer}
+.consent a{color:var(--mint)}
+/* O3/O4 — Flash : prix en GRAND, puis 5 lignes scannables à puces vertes (le vert ne porte plus
+   le texte, il souligne). --- interrompu : icône ambre + encadré « un doute avant de payer ». */
+.price{display:inline-flex;align-items:baseline;gap:8px;font-family:'Space Grotesk',system-ui,sans-serif}
+.price b{font-size:34px;font-weight:700;letter-spacing:-.01em;color:var(--hi)}
+.price span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.pricewrap{display:flex;justify-content:center;margin-top:16px}
+.list{margin-top:22px;border-top:1px solid var(--line)}
+.list div{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--mut);line-height:1.45}
+.list i{color:var(--mint-dim);font-style:normal;flex:0 0 auto;margin-top:2px}
+.icon{width:60px;height:60px;border-radius:50%;margin:0 auto 20px;border:1px solid rgba(214,166,74,.4);
+  background:rgba(214,166,74,.08);display:flex;align-items:center;justify-content:center;color:var(--warn);font-size:24px}
+.why{margin-top:24px;border:1px solid var(--line);border-radius:13px;background:var(--s2);padding:16px}
+.why p{font-size:13px;color:var(--mut);line-height:1.6;margin:0}
+.why b{color:var(--txt);font-weight:600}
 .recap{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:6px}
 .recap .prix{font:700 26px 'Space Grotesk',system-ui,sans-serif;color:var(--hi);font-variant-numeric:tabular-nums}
 .recap .quoi{font-size:12.5px;color:var(--mut);margin-top:2px}
