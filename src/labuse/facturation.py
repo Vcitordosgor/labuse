@@ -70,6 +70,57 @@ def provisionner() -> dict:
     return out
 
 
+def _garde_coherence_prix(stripe, price_id: str, attendu_cents: int, label: str) -> None:
+    """E5 — l'app AFFICHE le prix d'offres.py mais FACTURE le Prix Stripe pointé par .env : si les
+    deux divergent, on REFUSE de facturer (jamais un montant différent de l'affiché) avec un
+    message clair. Tolérant à une lecture Stripe qui échoue (réseau) : on ne bloque pas un paiement
+    sur un incident transitoire — seule une divergence CONFIRMÉE lève."""
+    try:
+        p = stripe.Price.retrieve(price_id)
+    except Exception as e:  # noqa: BLE001 — incident de lecture ≠ divergence prouvée
+        log.warning("prix Stripe %s non vérifiable (%s) — checkout poursuivi sur l'ID configuré", price_id, e)
+        return
+    montant = getattr(p, "unit_amount", None)
+    if montant is not None and montant != attendu_cents:
+        raise ConfigError(
+            f"INCOHÉRENCE PRIX {label} : l'app affiche {attendu_cents // 100} € mais le prix Stripe "
+            f"{price_id} facturerait {montant / 100:.2f} €. Corrigez STRIPE_PRICE en .env (ou "
+            f"re-provisionnez) — refus de facturer un montant différent de l'affiché.")
+
+
+def verifier_prix_stripe() -> list[dict]:
+    """E5 — compare les Prix Stripe configurés (.env) aux offres (offres.py). LECTURE SEULE (aucune
+    écriture Stripe). Une ligne par offre : {offre, attendu_eur, stripe_eur, devise, recurrence, ok, detail}.
+    À lancer contre le mode TEST **et** le mode LIVE (une clé à la fois)."""
+    stripe = _stripe()
+    s = get_settings()
+    oi, of = offre_integral(), offre_flash()
+    out: list[dict] = []
+
+    def _check(cle: str, price_id: str | None, attendu_cents: int, interval_attendu: str | None) -> dict:
+        if not price_id:
+            return {"offre": cle, "ok": False, "detail": "aucun price_id en .env"}
+        try:
+            p = stripe.Price.retrieve(price_id)
+        except Exception as e:  # noqa: BLE001
+            return {"offre": cle, "ok": False, "detail": f"lecture Stripe impossible : {e}"}
+        montant = getattr(p, "unit_amount", None)
+        devise = getattr(p, "currency", None)
+        rec = getattr(p, "recurring", None) or {}
+        interval = rec.get("interval") if isinstance(rec, dict) else getattr(rec, "interval", None)
+        ok = montant == attendu_cents and devise == "eur" and interval == interval_attendu
+        return {"offre": cle, "attendu_eur": attendu_cents // 100,
+                "stripe_eur": (montant / 100 if montant is not None else None),
+                "devise": devise, "recurrence": interval or "unique", "ok": ok,
+                "detail": "" if ok else (f"attendu {attendu_cents // 100} € "
+                                         f"{interval_attendu or 'unique'}/eur, stripe "
+                                         f"{montant and montant / 100} € {interval or 'unique'}/{devise}")}
+
+    out.append(_check("integral", s.stripe_price_integral, oi["eur_mois"] * 100, "month"))
+    out.append(_check("flash", s.stripe_price_flash, of["eur"] * 100, None))
+    return out
+
+
 def creer_checkout(db: Session, compte_id: int, email: str) -> str:
     """Session Checkout ABONNEMENT (Intégral) pour un compte invité — le client n'entre
     JAMAIS sa carte chez nous."""
@@ -80,6 +131,7 @@ def creer_checkout(db: Session, compte_id: int, email: str) -> str:
         raise ValueError(f"compte {compte_id} inconnu")
     if not s.stripe_price_integral:
         raise ConfigError("STRIPE_PRICE_INTEGRAL absent — lancer `labuse stripe-provisionne` puis poser l'ID en .env")
+    _garde_coherence_prix(stripe, s.stripe_price_integral, offre_integral()["eur_mois"] * 100, "Intégral")
     session = stripe.checkout.Session.create(
         mode="subscription",
         line_items=[{"price": s.stripe_price_integral, "quantity": 1}],
@@ -119,6 +171,7 @@ def creer_checkout_flash(db: Session, idu: str) -> str:
     s = get_settings()
     if not s.stripe_price_flash:
         raise ConfigError("STRIPE_PRICE_FLASH absent — lancer `labuse stripe-provisionne` puis poser l'ID en .env")
+    _garde_coherence_prix(stripe, s.stripe_price_flash, offre_flash()["eur"] * 100, "Flash")
     ensure_flash_table(db)
     session = stripe.checkout.Session.create(
         mode="payment",

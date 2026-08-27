@@ -111,3 +111,42 @@ l'envoi est journalisé (file d'attente dev) sans jamais rien prétendre.
 - **PE-003** (TRANCHÉ E4.5) — reset : e-mail automatique conservé (SMTP transactionnel).
 - **PE-004** (mineur, ouvert) — `/flash` ne distingue pas « IDU hors des 24 communes couvertes »
   d'« IDU introuvable » (même message). Amélioration UX possible ; faible priorité.
+
+---
+
+## E5 — COHÉRENCE STRIPE ⇄ APP
+
+Pas de clés Stripe en local, et interdiction de toucher au LIVE → E5 = durcir le CODE pour que
+l'app ne puisse jamais afficher un prix différent de celui facturé, + outiller Vic pour vérifier.
+
+**Risque identifié** : l'app AFFICHE le prix d'`offres.py` (349/79) mais FACTURE le **Prix Stripe**
+pointé par `.env` (`STRIPE_PRICE_INTEGRAL`/`_FLASH`). Rien ne garantissait qu'ils coïncident — un
+price_id périmé (ancien 499, ancien montant) ferait afficher 349 et facturer autre chose.
+
+**Corrections** :
+- `provisionner()` (création des produits) lit désormais les montants d'`offres.py` (349/79) — E1.
+- **Garde-fou** `_garde_coherence_prix` dans `creer_checkout` ET `creer_checkout_flash` : avant de
+  créer la session Checkout, lit le Prix Stripe et, s'il diffère du prix affiché, **REFUSE** avec un
+  message clair (« l'app affiche 349 € mais Stripe facturerait X € »). Tolérant à une lecture
+  réseau qui échoue (ne bloque pas un paiement sur un incident transitoire ; seule une divergence
+  confirmée lève). → l'app ne facture jamais un montant différent de l'affiché.
+- **Commande `labuse stripe-verifie`** (lecture seule) : compare les Prix Stripe configurés aux
+  offres et sort non-zéro en cas d'écart. **Vic doit la lancer contre le mode TEST puis le mode
+  LIVE** (une clé à la fois) avant l'ouverture des paiements.
+- Docstring de `stripe-provisionne` corrigée (mentionnait encore « Indé 290 €/Pro 490 € + founding »,
+  offres mortes).
+
+Tests : `tests/test_stripe_coherence.py` (Stripe mocké : divergence → refus ; concordance → OK).
+
+**À VÉRIFIER PAR VIC dans le dashboard Stripe** (LIVE et TEST) :
+1. `labuse stripe-verifie` → tout vert (les price_id de `.env` = 349 €/mois + 79 € unique).
+2. **Aucun produit/prix fantôme** actif (anciens 499/290/490, offres Indé/Pro/Illimité/founding) —
+   les archiver côté Stripe s'ils traînent.
+3. Le produit Intégral est bien **récurrent mensuel**, le Flash bien **paiement unique**.
+
+### Finding E5/E6
+- **PE-005** (à arbitrer par Vic) — **l'engagement 12 mois est CONTRACTUEL (CGV) mais PAS enforced
+  techniquement** : `creer_checkout` crée un abonnement Stripe mensuel simple, sans
+  `subscription_schedule` de 12 mois ni verrou d'annulation. Si le portail client Stripe est activé,
+  un client pourrait résilier avant 12 mois. Enforcement technique = changement côté Stripe LIVE →
+  laissé à Vic (option : phase d'engagement via subscription_schedule, ou gestion à la résiliation).
