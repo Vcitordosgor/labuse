@@ -46,8 +46,9 @@ sudo -u $RUN_AS git -C $APP pull --ff-only origin "$BRANCHE"
 APRES="$(sudo -u $RUN_AS git -C $APP rev-parse HEAD)"
 if [ "$AVANT" = "$APRES" ]; then echo "  (code déjà à jour — on continue quand même : venv/front/restart)"; fi
 
-# --- 2. dépendances Python ---
-sudo -u $RUN_AS "$VENV/bin/pip" install -q -e "$APP"
+# --- 2. dépendances Python (extra [ai] = anthropic : le Copilote en prod appelle le LLM ;
+# sans lui, LABUSE_AI_PROVIDER=anthropic tombe en ModuleNotFoundError au 1er /ask) ---
+sudo -u $RUN_AS "$VENV/bin/pip" install -q -e "$APP[ai]"
 
 # --- 3. migrations (schéma additif idempotent) ---
 sudo -u $RUN_AS --preserve-env=LABUSE_DATABASE_URL "$VENV/bin/labuse" init-db

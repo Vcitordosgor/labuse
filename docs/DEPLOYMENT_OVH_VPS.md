@@ -1,31 +1,57 @@
-# Déploiement LA BUSE — OVH VPS-2 (Ubuntu 24.04)
+# Déploiement LA BUSE — OVH VPS-3 (Ubuntu 24.04) — état réel au 27/08/2026
 
-> **Cible** : OVH VPS-2 — 4 vCores / 8 Go RAM / 75 Go SSD, Ubuntu 24.04 LTS.
-> **Stack** : PostgreSQL 16 + PostGIS 3.4 · Python 3.12 · FastAPI/Uvicorn · Nginx · Let's Encrypt.
+> **Machine** : OVH **VPS-3** — 6 vCores / 12 Go RAM / 100 Go disque, Ubuntu 24.04 LTS,
+> hostname `vps-5563949c`, datacentre Gravelines. Accès : `ssh labuse-vps`.
+> **Fuseau SYSTÈME : `Indian/Reunion`** (posé au mandat VPS du 27/08/2026 — les crons
+> sont écrits en heure Réunion, plus en UTC).
+> **Stack** : PostgreSQL **18.4** (PGDG) + PostGIS (+ `postgis_raster`, `pg_freespacemap`)
+> · Python 3.12 · FastAPI/Uvicorn (systemd, 5 workers) · **Caddy v2.11** (reverse proxy,
+> HTTPS automatique) · ufw + fail2ban.
 > **Principe** : la base et l'app tournent sur la **même** machine ; PostgreSQL n'écoute que
-> `localhost` ; l'app n'est jamais exposée en direct (toujours derrière Nginx + HTTPS).
+> `localhost` ; l'app n'est jamais exposée en direct (toujours derrière Caddy + HTTPS).
 >
-> ⚠️ Ce document **prépare** le déploiement. Rien n'est appliqué automatiquement — chaque commande
-> est à lancer **manuellement** sur le VPS, dans l'ordre, après avoir lu la section correspondante.
+> ⚠️ **Nginx et certbot ne sont PLUS utilisés** : le reverse proxy est Caddy depuis la mise à
+> niveau du 27/08/2026 (les fichiers `deploy/nginx/` sont un vestige). Le code n'est plus
+> synchronisé par rsync depuis le Mac : `/opt/labuse/app` est un **clone git**.
 
-Convention de chemins utilisée partout ci-dessous :
+Ce document sert à **reconstruire le VPS depuis zéro** s'il brûle, en cohérence avec l'état
+actuel. Pour le geste de déploiement courant, voir `docs/DEPLOY_RUNBOOK.md` ; pour les gestes
+du quotidien, voir `docs/EXPLOITATION.md`.
+
+Convention de chemins (tout le reste du document s'y réfère) :
 
 | Rôle | Chemin |
 |---|---|
-| Code applicatif (clone git) | `/opt/labuse/app` |
-| Environnement Python (venv) | `/opt/labuse/venv` |
-| Variables d'environnement (secrets) | `/etc/labuse/labuse.env` |
+| Code applicatif (**clone git** de `https://github.com/Vcitordosgor/labuse.git`) | `/opt/labuse/app` |
+| Environnement Python (venv, Python 3.12) | `/opt/labuse/venv` |
+| Script de déploiement (source : `deploy/scripts/deploy_vps.sh`) | `/opt/labuse/deploy.sh` |
+| Variables d'environnement (secrets) | `/etc/labuse/labuse.env` (640 root:labuse) |
+| Reverse proxy (source : `deploy/Caddyfile.prod`) | `/etc/caddy/Caddyfile` |
+| Front React compilé (servi statiquement par Caddy) | `/opt/labuse/app/frontend/dist` |
 | Sauvegardes PostgreSQL | `/var/backups/labuse` (hors dossier applicatif) |
+| Logs applicatifs | journald (`journalctl -u labuse`) |
+| Logs des crons | `/var/log/labuse/*.log` |
+| Journal d'accès HTTP (JSON, matière de fail2ban) | `/var/log/caddy/access.log` |
 | Utilisateur système dédié | `labuse` (sans shell de login) |
+
+**Doctrine secrets — inchangée et non négociable** : aucun secret dans git, jamais. Les clés
+(DB, session, Anthropic, Stripe, Brevo, SMTP) vivent **uniquement** dans
+`/etc/labuse/labuse.env`, hors dépôt, en 640 root:labuse. Le dépôt ne contient que des
+gabarits (`deploy/env/labuse.env.example`) avec des valeurs `CHANGE_MOI`.
 
 ---
 
-## 0. Pré-requis
+## 0. État de transition (à purger — notes du 27/08/2026)
 
-- Un VPS-2 OVH fraîchement installé en **Ubuntu 24.04**, accès `root` (ou un sudoer).
-- Le **dump PostgreSQL** de la base actuelle, produit sur la machine source avec
-  `labuse backup-db` (format `pg_dump -Fc`, ~240 Mo). À transférer par `scp` (étape 5).
-- Les DNS de `labuse.immo` gérés (on y touche à l'étape 9 / go-live).
+- **`labuse_old`** : l'ancienne base de juillet, conservée le temps de valider le nouveau
+  monde. **À supprimer après le 03/09/2026** (`sudo -u postgres psql -c "DROP DATABASE labuse_old;"`).
+- **`/opt/labuse/app-juillet` et `/opt/labuse/venv-juillet`** : ancienne copie rsync + venv.
+  À purger une fois le nouveau monde stabilisé.
+- **Filet pré-migration** : `/var/backups/labuse/pre-maj-20260827/` contient le dump de
+  l'ancien monde + `config.tgz` + `app-copie-juillet.tgz`. Ne pas y toucher tant que la
+  période de validation court.
+- **Branche du clone** : `feat/vps-golive` tant qu'elle n'est pas mergée, puis `main`.
+  `deploy.sh` déploie toujours la **branche courante** du clone.
 
 ---
 
@@ -34,21 +60,25 @@ Convention de chemins utilisée partout ci-dessous :
 ```bash
 # En root
 apt update && apt -y upgrade
-timedatectl set-timezone Indian/Reunion        # fuseau Réunion (UTC+4)
+hostnamectl set-hostname vps-5563949c            # (déjà le cas sur la machine OVH)
+timedatectl set-timezone Indian/Reunion          # fuseau Réunion (UTC+4) — SYSTÈME, crons compris
 
-# Pare-feu : on n'ouvre que SSH + HTTP + HTTPS (PostgreSQL reste fermé au monde)
-apt -y install ufw
-ufw allow OpenSSH
+# Pare-feu : SSH en LIMIT (anti brute-force), HTTP + HTTPS ouverts, tout le reste fermé
+apt -y install ufw fail2ban
+ufw limit 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
+ufw status verbose        # attendu : 22 LIMIT, 80 ALLOW, 443 ALLOW
 
 # Utilisateur système dédié (pas de mot de passe, pas de shell interactif)
 adduser --system --group --home /opt/labuse --shell /usr/sbin/nologin labuse
-mkdir -p /opt/labuse /etc/labuse /var/backups/labuse
-chown -R labuse:labuse /opt/labuse /var/backups/labuse
+mkdir -p /opt/labuse /etc/labuse /var/backups/labuse /var/log/labuse
+chown -R labuse:labuse /opt/labuse /var/backups/labuse /var/log/labuse
 chmod 750 /etc/labuse /var/backups/labuse
 ```
+
+Côté poste local, l'alias `ssh labuse-vps` vit dans `~/.ssh/config` (IP du VPS + clé).
 
 ## 2. Dépendances système
 
@@ -56,88 +86,93 @@ chmod 750 /etc/labuse /var/backups/labuse
 apt -y install git curl ca-certificates \
     python3 python3-venv python3-pip \
     postgresql-common gnupg \
-    nginx \
-    certbot python3-certbot-nginx
+    nodejs npm                     # build du front React (npm ci + vite build)
 
-# (Optionnel — uniquement si une roue Python devait se compiler depuis les sources :
-#  les wheels de shapely/pyproj/psycopg[binary] embarquent déjà GEOS/PROJ/libpq.)
-# apt -y install build-essential libgeos-dev libproj-dev
+# Caddy v2 (dépôt officiel cloudsmith)
+apt -y install debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+  | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+  > /etc/apt/sources.list.d/caddy-stable.list
+apt update && apt -y install caddy
+caddy version                      # v2.11.x en prod au 27/08/2026
 ```
 
-## 3. PostgreSQL 16 + PostGIS 3.4
+## 3. PostgreSQL 18 + PostGIS
 
-On installe depuis le dépôt **PGDG** pour garantir exactement PostgreSQL 16 + PostGIS 3.4
-(versions de la base source : 16.13 / 3.4.2).
+On installe depuis le dépôt **PGDG** (version de prod : **PostgreSQL 18.4**).
 
 ```bash
-# Dépôt officiel PostgreSQL (PGDG)
 /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y   # ajoute le repo PGDG
 apt update
-apt -y install postgresql-16 postgresql-16-postgis-3 postgresql-client-16
+apt -y install postgresql-18 postgresql-18-postgis-3 postgresql-client-18
 
 systemctl enable --now postgresql
-sudo -u postgres psql -c "SELECT version();"                 # doit afficher PostgreSQL 16.x
+sudo -u postgres psql -c "SELECT version();"                 # doit afficher PostgreSQL 18.x
 ```
 
-### 3bis. Configuration PostgreSQL pour 8 Go (NE PAS sauter)
+PostgreSQL n'écoute que `localhost` (défaut Debian/Ubuntu — ne pas l'ouvrir). Le fuseau de la
+base est aussi `Indian/Reunion` (posé au mandat ; vérifier : `SHOW timezone;`).
 
-Le fichier `deploy/postgresql/postgresql.vps2.conf` du repo est un **include** prêt à poser
-(voir aussi la section 2 du présent pack). Copie-le dans `conf.d` (il ne remplace pas le
-`postgresql.conf` principal, il le surcharge) :
+Configuration mémoire : poser l'include du repo dans `conf.d` (il surcharge le
+`postgresql.conf` principal sans le remplacer) :
 
 ```bash
 install -o postgres -g postgres -m 644 \
   /opt/labuse/app/deploy/postgresql/postgresql.vps2.conf \
-  /etc/postgresql/16/main/conf.d/zz-labuse-vps2.conf
-
+  /etc/postgresql/18/main/conf.d/zz-labuse.conf
 systemctl restart postgresql
-sudo -u postgres psql -c "SHOW shared_buffers; SHOW random_page_cost;"   # 2GB / 1.1
 ```
 
 ## 4. Création de la base LA BUSE
 
 ```bash
-# Rôle applicatif + base + extension PostGIS. Choisis un MOT DE PASSE FORT (≠ 'labuse').
+# Rôle applicatif + base + extensions. Choisis un MOT DE PASSE FORT (≠ 'labuse').
 sudo -u postgres psql <<'SQL'
 CREATE ROLE labuse LOGIN PASSWORD 'CHANGE_MOI_MOT_DE_PASSE_FORT';
 CREATE DATABASE labuse OWNER labuse;
 \connect labuse
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS postgis_raster;
+CREATE EXTENSION IF NOT EXISTS pg_freespacemap;
 SQL
 ```
 
-> La base de **test** (`labuse_test`) n'est utile que pour exécuter `pytest` ; inutile en prod.
+Ordres de grandeur de la base en prod (27/08/2026) : **~19→24 Go**, 431 663 parcelles.
+Le run de scoring servi est lu dans **`config/served_run.txt`** du repo (valeur actuelle
+`q_v11_m137`) — **la variable d'environnement `LABUSE_SERVED_RUN` n'est plus utilisée**.
 
 ## 5. Restauration du dump PostgreSQL
 
-Transférer le dump depuis la machine source, puis le restaurer. Le dump est au format
-`pg_dump -Fc --no-owner`.
+Les dumps quotidiens sont **LEAN** (VP-002) : la **data** des tables reconstructibles
+(dryrun/entraînement, ~16 Go, jamais saisies par l'utilisateur) est exclue — le schéma y est,
+les données se rebâtissent par ingestion/scoring. La liste des tables exclues est
+`_BACKUP_RECONSTRUCTIBLES` dans `src/labuse/cli.py` (GB-054) : script de backup et liste
+évoluent **ensemble**.
 
 ```bash
-# Sur la machine SOURCE (si pas déjà fait) : produire un dump frais
-#   labuse backup-db --dir /tmp
-#   scp /tmp/labuse-labuse-*.dump  root@VPS:/var/backups/labuse/
+# Récupérer le dump le plus récent (depuis le poste local qui tire les backups, ou
+# depuis /var/backups/labuse s'il a survécu), puis :
+sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; \
+  /opt/labuse/venv/bin/labuse restore-db --file /var/backups/labuse/labuse-labuse-XXXXXXXX-XXXXXX.dump'
 
-# Sur le VPS : restaurer dans la base 'labuse'
-sudo -u postgres pg_restore --no-owner --role=labuse \
-  -d labuse /var/backups/labuse/labuse-labuse-XXXXXXXX-XXXXXX.dump
+# Équivalent bas niveau : pg_restore --clean --no-owner -d labuse <dump>
 
 # Vérification rapide
 sudo -u postgres psql -d labuse -c \
-  "SELECT count(*) AS parcelles FROM parcels;  SELECT postgis_full_version();"
+  "SELECT count(*) AS parcelles FROM parcels; SELECT postgis_full_version();"
 ```
 
-> **Alternative sans dump** (repartir de zéro) : après les étapes 6–7, lancer
-> `sudo -u labuse /opt/labuse/venv/bin/labuse ingest-island` pour reconstruire les 24 communes
-> depuis les sources publiques (long ; à faire hors fenêtre de démo).
+> **VP-001** : `labuse backup-db` **refuse** de tourner si le `pg_dump` du PATH n'est pas de
+> la même majeure que le serveur (message explicite). Si besoin, `LABUSE_PG_BIN_DIR` pointe le
+> dossier des bons binaires (ex. `/usr/lib/postgresql/18/bin`). Même logique pour `restore-db`.
 
-## 6. Installation de l'application
+## 6. Installation de l'application (clone git)
 
 ```bash
-# Cloner le code (branche de prod — voir « Merge vers main » en fin de doc)
-sudo -u labuse git clone https://github.com/vcitordosgor/labuse.git /opt/labuse/app
-cd /opt/labuse/app
-sudo -u labuse git checkout main        # ou le tag de release retenu
+# Cloner le code — branche de prod : main (ou feat/vps-golive tant que non mergée)
+sudo -u labuse git clone https://github.com/Vcitordosgor/labuse.git /opt/labuse/app
+sudo -u labuse git -C /opt/labuse/app checkout main    # ou feat/vps-golive
 
 # venv + installation ÉDITABLE (l'app lit config/, data/, web/ depuis l'arbre du repo)
 # ⚠ M26-A : l'extra [ai] est OBLIGATOIRE — sans lui, l'interpréteur du Copilote tombe
@@ -148,36 +183,60 @@ sudo -u labuse /opt/labuse/venv/bin/pip install -e "/opt/labuse/app[ai]"
 
 # Sanity : la commande 'labuse' répond
 sudo -u labuse /opt/labuse/venv/bin/labuse --help | head
+
+# Poser le script de déploiement courant
+install -o root -g root -m 755 /opt/labuse/app/deploy/scripts/deploy_vps.sh /opt/labuse/deploy.sh
 ```
 
-## 7. Variables d'environnement
+## 7. Variables d'environnement — `/etc/labuse/labuse.env`
 
-Copier le gabarit de PRODUCTION du repo vers `/etc/labuse/labuse.env` et le remplir (secrets
-**jamais** dans git ; `/etc/labuse/labuse.env` est hors dépôt, en 640 root:labuse) :
+Copier le gabarit du repo puis le remplir (secrets **jamais** dans git) :
 
 ```bash
 install -o root -g labuse -m 640 /opt/labuse/app/deploy/env/labuse.env.example /etc/labuse/labuse.env
-# Éditer /etc/labuse/labuse.env :
-#   - LABUSE_DATABASE_URL    → mot de passe choisi à l'étape 4
-#   - LABUSE_ENV=production
-#   - LABUSE_AUTH_PASSWORD   → mot de passe pilote (obligatoire hors 'local', sinon 503 fail-closed)
-#   - LABUSE_SECRET_KEY      → openssl rand -hex 32
-#   - LABUSE_PUBLIC_URL=https://app.labuse.immo
-#   - ANTHROPIC_API_KEY      → VIDE = mode synthèse règles ; renseigner = active l'IA (voir §11)
-#   - LABUSE_ASSISTANT_MODEL=claude-sonnet-4-6
-openssl rand -hex 32         # à coller dans LABUSE_SECRET_KEY
+${EDITOR:-nano} /etc/labuse/labuse.env
 ```
 
-Appliquer (idempotent) le schéma / migrations légères avant le premier démarrage :
+> ⚠ **RÈGLE D'ÉCRITURE** : les crons **sourcent ce fichier en shell** (`. /etc/labuse/labuse.env`).
+> Toute valeur contenant des espaces ou des chevrons DOIT être **entre guillemets** :
+> `LABUSE_MAIL_FROM="LABUSE <contact@labuse.immo>"`. Sans guillemets, tous les crons cassent.
+
+Contenu réel (les valeurs sont sur le VPS, jamais ici) :
+
+| Bloc | Variables | Note |
+|---|---|---|
+| Cœur | `LABUSE_DATABASE_URL`, `LABUSE_ENV=production`, `LABUSE_SECRET_KEY` (openssl rand -hex 32), `LABUSE_AUTH_PASSWORD`, `LABUSE_PUBLIC_URL` / `LABUSE_PUBLIC_BASE_URL=https://app.labuse.immo` | fail-closed : sans mot de passe, routes métier en 503 |
+| Login pilote | `LABUSE_LOGIN_PILOTE_ACTIF=0` | **AC-020 : le login pilote partagé est MORT** — l'auth passe par les comptes nominatifs |
+| IA | `ANTHROPIC_API_KEY`, `LABUSE_AI_PROVIDER=anthropic` | jamais dans un log ; retrait de la clé = retour au mode règles |
+| Stripe (**placeholders — Vic pose les clés LIVE**) | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_RESTRICTED_KEY`, `STRIPE_PRICE_*` | voir §12 (webhook) |
+| Brevo | `BREVO_API_KEY`, `LABUSE_BREVO_TPL_*` (8 templates transactionnels) | e-mails transactionnels (digest, invitations…) |
+| SMTP | `LABUSE_SMTP_HOST/PORT/USER/PASSWORD`, `LABUSE_MAIL_FROM` | relais Brevo ; `MAIL_FROM` **entre guillemets** (cf. règle) |
+
+Appliquer le schéma (idempotent) avant le premier démarrage :
 
 ```bash
 sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; \
   /opt/labuse/venv/bin/labuse init-db && /opt/labuse/venv/bin/labuse doctor --json | head'
 ```
 
-## 8. Lancement via systemd
+## 8. Build du front React
 
-Poser l'unité (fournie : `deploy/systemd/labuse.service`) :
+Caddy sert le front **statiquement** depuis `/opt/labuse/app/frontend/dist` :
+
+```bash
+cd /opt/labuse/app/frontend
+sudo -u labuse npm ci
+sudo -u labuse npx vite build --base=/
+```
+
+(`deploy.sh` refait ce build automatiquement quand `frontend/` a bougé.)
+
+## 9. Lancement via systemd
+
+Unité fournie : `deploy/systemd/labuse.service` — Uvicorn **5 workers** sur
+`127.0.0.1:8000`, `Restart=always`, `MemoryMax=6G` (garde-fou : systemd redémarre l'app
+plutôt que de laisser l'OOM killer toucher PostgreSQL),
+`EnvironmentFile=/etc/labuse/labuse.env`.
 
 ```bash
 install -o root -g root -m 644 /opt/labuse/app/deploy/systemd/labuse.service \
@@ -185,272 +244,158 @@ install -o root -g root -m 644 /opt/labuse/app/deploy/systemd/labuse.service \
 systemctl daemon-reload
 systemctl enable --now labuse
 systemctl status labuse --no-pager
-journalctl -u labuse -n 30 --no-pager           # logs via journald (pas de nohup)
+journalctl -u labuse -n 30 --no-pager           # logs via journald (jamais de nohup)
 
 # L'app écoute en LOCAL uniquement (127.0.0.1:8000) — vérif :
 curl -s http://127.0.0.1:8000/healthz           # {"status":"ok"}
 ```
 
-## 9. Configuration Nginx (reverse proxy)
+## 10. Reverse proxy — Caddy (HTTPS automatique)
 
-Poser le vhost (fourni : `deploy/nginx/labuse.conf`) puis l'activer **d'abord en HTTP** (le temps
-d'obtenir le certificat) :
+Source dans le repo : **`deploy/Caddyfile.prod`** (aucun secret dedans). Caddy obtient et
+renouvelle le certificat Let's Encrypt **tout seul** — pas de certbot, pas de cron de
+renouvellement.
 
 ```bash
-install -o root -g root -m 644 /opt/labuse/app/deploy/nginx/labuse.conf \
-  /etc/nginx/sites-available/labuse.conf
-ln -sf /etc/nginx/sites-available/labuse.conf /etc/nginx/sites-enabled/labuse.conf
-rm -f /etc/nginx/sites-enabled/default
-mkdir -p /var/www/certbot
-nginx -t && systemctl reload nginx
+install -o root -g root -m 644 /opt/labuse/app/deploy/Caddyfile.prod /etc/caddy/Caddyfile
+# Le domaine servi est injecté par variable d'env (fichier 600, pas un secret mais isolé) :
+printf 'LABUSE_DOMAIN=app.labuse.immo\n' > /etc/caddy/labuse.env
+chmod 600 /etc/caddy/labuse.env
+# Selon la pose, l'unité caddy lit ce fichier (drop-in systemd EnvironmentFile=/etc/caddy/labuse.env).
+
+caddy validate --config /etc/caddy/Caddyfile
+systemctl enable --now caddy
+systemctl reload caddy
 ```
 
-> Le vhost proxie `app.labuse.immo` → `127.0.0.1:8000`, redirige `labuse.immo` → `app.labuse.immo`,
-> pose les en-têtes de sécurité et le support WebSocket (précaution). Les blocs `443 ssl` y figurent
-> déjà : ils deviennent valides une fois le certificat émis (étape 10).
+Ce que fait ce Caddyfile (voir ses commentaires pour le détail) :
 
-## 10. HTTPS avec Let's Encrypt
+- **HTTPS auto** + redirection HTTP→HTTPS ; **HSTS** 6 mois (sous-domaine seul) ;
+- **le rideau basic auth est TOMBÉ au go-live** (mandat VPS V5) : la porte est l'auth
+  **applicative** (comptes argon2id + sessions en base + **2FA TOTP admin**, §11) ;
+- **journal d'accès JSON** → `/var/log/caddy/access.log`, matière du jail fail2ban
+  `labuse-login` (§ ci-dessous) et des autopsies ;
+- front React servi statiquement à la racine (`frontend/dist`), assets `/assets/*` immuables,
+  `index.html` en `no-cache` ; `/app` et `/app/*` jamais exposés (301 → `/`) ; navigation `/`
+  sans cookie de session → 302 `/login` ; tout le reste (API, tuiles, PDF, webhook Stripe) →
+  `127.0.0.1:8000`.
 
-Pré-requis : les DNS de `labuse.immo`, `www.labuse.immo` et `app.labuse.immo` pointent déjà sur
-l'IP du VPS (enregistrements A/AAAA). Puis :
+**fail2ban** (2e couche — l'app verrouille déjà le compte après 5 échecs) :
 
 ```bash
-certbot --nginx -d app.labuse.immo -d labuse.immo -d www.labuse.immo \
-  --redirect --agree-tos -m admin@labuse.immo --no-eff-email
-
-# Renouvellement auto déjà installé par le paquet ; tester à blanc :
-certbot renew --dry-run
-systemctl reload nginx
+install -m 644 /opt/labuse/app/deploy/fail2ban/labuse-login.conf /etc/fail2ban/filter.d/labuse-login.conf
+install -m 644 /opt/labuse/app/deploy/fail2ban/jail-labuse.conf  /etc/fail2ban/jail.d/labuse.conf
+systemctl reload fail2ban
+fail2ban-client status labuse-login     # jail actif, lit /var/log/caddy/access.log
 ```
 
-> Après confirmation que tout passe en HTTPS, décommenter la ligne `Strict-Transport-Security`
-> (HSTS) dans `deploy/nginx/labuse.conf` puis `nginx -t && systemctl reload nginx`.
+Pré-requis DNS : `app.labuse.immo` (A/AAAA) pointe sur l'IP du VPS **avant** de démarrer
+Caddy (sinon l'émission du certificat échoue et retente).
 
-## 11. Assistant IA — activation de la clé (optionnel)
+## 11. Comptes, 2FA admin (AC-025) et création d'un admin
 
-L'assistant « Expliquer cette parcelle » fonctionne **sans clé** (synthèse règles déterministe, déjà
-premium). Pour activer l'**IA enrichie**, poser une clé Anthropic — **uniquement** côté serveur, jamais
-dans git. Détails et garde-fous : `docs/AI_ASSISTANT_SAFETY_AND_DEMO.md`, checklist : `docs/AI_DEMO_CHECKLIST.md`.
-
-**Copilote M26-A** : l'interpréteur de besoin EXIGE la clé **et** l'extra `[ai]` installé (§6).
-Sans clé → chaque run échoue honnêtement (`run_failed`, code `ia_indisponible`) ; sans l'extra
-→ même échec, avec `ModuleNotFoundError: anthropic` dans les logs serveur.
-
-**1) Où placer la clé.** Dans le fichier d'environnement systemd, **hors dépôt** : `/etc/labuse/labuse.env`
-(640 root:labuse). Jamais dans le code, un fichier suivi, un commit ou un log.
-
-**2) Ajouter la clé.** Éditer la ligne `ANTHROPIC_API_KEY=` :
+- Le login pilote partagé est **mort** (`LABUSE_LOGIN_PILOTE_ACTIF=0`, AC-020). Chaque
+  utilisateur a un compte nominatif.
+- **Tout compte de rôle admin passe par `/login/2fa`** (TOTP) : au **premier login**,
+  enrôlement par QR code (application d'authentification) + **8 codes de secours affichés
+  une seule fois** (à ranger dans le gestionnaire de mots de passe). Tables `totp_2fa` /
+  `totp_secours` ; anti-rejeu ; **5 tentatives max par défi de 5 minutes**.
+- Créer un admin (**geste réservé à Vic**) — la sortie est un **lien d'invitation** pour
+  poser le mot de passe :
 
 ```bash
-# Éditer le fichier (jamais via l'historique shell : préférer l'éditeur)
-sudo ${EDITOR:-nano} /etc/labuse/labuse.env
-#   ANTHROPIC_API_KEY=sk-ant-…              # la VRAIE clé
-#   LABUSE_ASSISTANT_MODEL=claude-sonnet-4-6
-# Vérifier les permissions (jamais lisible par tous) :
-sudo chown root:labuse /etc/labuse/labuse.env && sudo chmod 640 /etc/labuse/labuse.env
-```
-
-**3) Redémarrer le service** (systemd relit `EnvironmentFile`) :
-
-```bash
-sudo systemctl restart labuse
-sudo systemctl is-active labuse        # → active
-```
-
-**4) Vérifier `/assistant/status`** — doit passer à `configured:true` (ne renvoie qu'un booléen,
-jamais la clé) :
-
-```bash
-curl -fsS https://app.labuse.immo/assistant/status        # {"configured":true}
-# en local sur le VPS, derrière le proxy :
-curl -fsS http://127.0.0.1:8000/assistant/status
-```
-
-**5) Tester 2–3 fiches contrastées** (recette anti-hallucination) — une opportunité, une
-micro-opportunité (≤ 500 m²), une parcelle écartée :
-
-```bash
-for IDU in 97415000DE1325 97415000HI0126 <IDU_ECARTEE>; do
-  curl -fsS "http://127.0.0.1:8000/parcels/$IDU/explain" \
-    | python3 -c 'import sys,json;r=json.load(sys.stdin);print(r.get("available"),"|",(r.get("explanation") or r.get("rules_summary") or "")[:200])'
-done
-```
-Dans l'UI : ouvrir la fiche → le bouton **« Enrichir avec l'IA »** apparaît ; la prose doit citer la
-**fiabilité** et les **données manquantes**, marquer la capacité **ESTIMÉE** et le bilan **INDICATIF**,
-et ne contenir **aucun** chiffre/fait absent de la fiche.
-
-**6) Si l'IA répond mal ou si l'API échoue.**
-- **Dégradation automatique** : clé invalide / quota / réseau / timeout → l'app renvoie HTTP 200 avec
-  la **synthèse règles** + un message clair (jamais de 500, jamais de fiche cassée). La démo continue.
-- **Hallucination constatée** (chiffre/fait absent du JSON) : **retirer la clé** (`ANTHROPIC_API_KEY=`,
-  `systemctl restart labuse`) → retour au mode règles, fiable. Re-tester avant de réactiver.
-- **Diagnostic** : `journalctl -u labuse -n 50` (aucune clé n'y apparaît) ; vérifier le quota/état de la
-  clé côté console Anthropic ; tester l'appel sortant depuis le VPS.
-- **Rollback express** : `ANTHROPIC_API_KEY=` (vide) + restart → l'assistant reste premium en mode règles.
-
-## 12. Tests de santé après déploiement
-
-```bash
-# Smoke test fourni (process, /healthz, /readyz, DB, PostGIS, 1 parcelle, statut démo)
 sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; \
-  /opt/labuse/app/deploy/scripts/smoke_test.sh'
-
-# Depuis l'extérieur (HTTPS public)
-curl -sS https://app.labuse.immo/healthz
-curl -sS https://app.labuse.immo/readyz          # 200 = schéma + données critiques OK
+  /opt/labuse/venv/bin/labuse creer-admin EMAIL --nom "Prénom Nom"'
 ```
 
-Maintenance et sauvegardes : **UN SEUL MÉCANISME (M98)** — tout passe par les fichiers versionnés
-`deploy/cron.d/` posés dans `/etc/cron.d/` (voir le Train J+1 ci-dessous, qui les installe TOUS,
-backup et maintenance compris). Le crontab utilisateur (`crontab -u labuse`) reste **VIDE** : deux
-mécanismes, c'est un cron oublié à la prochaine pose. La sauvegarde quotidienne (05:30 UTC) et la
-maintenance hebdo (VACUUM ANALYZE, dimanche 04:00 UTC) vivent dans `deploy/cron.d/backup`.
+## 12. Stripe — webhook de production (geste Vic, dashboard)
 
-> `labuse` n'ayant pas de shell, exécuter ces scripts via `sudo -u labuse bash -lc '...'` lors des
-> tests manuels. Le mot de passe DB est lu depuis `~labuse/.pgpass` (voir `backup_postgres.sh`)
-> ou depuis `LABUSE_DATABASE_URL`.
+Dans le dashboard Stripe (**Développeurs → Webhooks**), créer l'endpoint **LIVE**
+`https://app.labuse.immo/stripe/webhook` avec les événements :
+`checkout.session.completed`, `customer.subscription.updated`,
+`customer.subscription.deleted`, `invoice.payment_failed`. Copier le secret `whsec_…` dans
+`STRIPE_WEBHOOK_SECRET` de `/etc/labuse/labuse.env`, puis `sudo systemctl restart labuse`.
+(Un webhook non signé est refusé par l'app.)
 
-### Les crons d'ingestion — le « Train J+1 » (OBLIGATOIRE, sinon les sources décrochent)
+## 13. Les crons — 13 fichiers `/etc/cron.d/labuse-*`, en HEURE RÉUNION
 
-Les blocs ci-dessus n'installent QUE la maintenance et les sauvegardes. **Le rafraîchissement des
-données (permis, BODACC, DPE, DVF, adresses) est un ensemble de crons séparés, versionnés dans
-`deploy/cron.d/`, qu'il faut installer explicitement.** Sans eux, une source cesse d'être ingérée et
-**décroche en silence** — c'est le défaut mesuré en M84 (permis figés au 30/06 faute d'ingestion
-relancée). Un cron J+1 idempotent (recouvrement, no-op tant que l'amont n'a pas publié) supprime ce
-risque : le jour de la livraison amont, l'ingestion part le jour même.
+Le VPS est en fuseau `Indian/Reunion` : **les horaires des crons sont des heures locales
+Réunion** (fini les horaires UTC des anciens docs). Chaque ligne est sous
+`flock -n -E 200` (code 200 = tour sauté car le précédent tourne encore — journalisé, jamais
+confondu avec un échec). Chaque job écrit son log dans `/var/log/labuse/`.
 
 ```bash
-# 1) Le répertoire de logs que tous les crons d'ingestion écrivent
 install -d -o labuse -g labuse /var/log/labuse
-
-# 2) Installer les DIX crons (fichiers /etc/cron.d, exécutés par l'utilisateur `labuse`) —
-#    ingestions, notifications, backup+maintenance, abuse et la sentinelle de fraîcheur.
-#    M98 : la sentinelle et le backup sont des fichiers cron.d comme les autres — le crontab
-#    utilisateur reste VIDE (un seul mécanisme).
 cd /opt/labuse/app
-for c in radar sitadel bodacc notifications ban dvf dpe backup abuse fraicheur; do
-  install -o root -g root -m 644 deploy/cron.d/$c /etc/cron.d/$c
+for c in radar sitadel bodacc notifications ban sessions avis-echeance dvf dpe backup abuse fraicheur; do
+  install -o root -g root -m 644 deploy/cron.d/$c /etc/cron.d/labuse-$c
 done
-systemctl reload cron    # relit /etc/cron.d
-
-# 3) La rotation des logs (hebdo, 8 semaines compressées — M98 Phase 3)
+systemctl reload cron
 install -o root -g root -m 644 deploy/logrotate.d/labuse /etc/logrotate.d/labuse
 ```
 
-**Ce que chaque cron rejoue, à quelle fréquence, et ce qu'il coûte en temps machine :**
+Le crontab utilisateur (`crontab -u labuse`) reste **VIDE** — un seul mécanisme (M98).
 
-L'ordonnancement M98 : les ingestions quotidiennes passent AVANT les notifications de 03:00 —
-le digest de 7h Réunion parle de la nuit, pas de l'avant-veille. Le backup passe APRÈS toutes
-les écritures de la nuit. Chaque ligne est sous verrou `flock -n` (code 200 = tour sauté,
-journalisé — jamais d'empilement, jamais de saut silencieux).
-
-| Cron (fichier) | Quand (UTC ; Réunion = UTC+4) | Ce qu'il fait | Coût machine (mesuré/estimé) |
+| Cron | Quand (heure Réunion) | Ce qu'il fait | Log |
 |---|---|---|---|
-| `radar` | hebdo lundi 02:00 | `radar-sources` (sondes HEAD/métadonnées, zéro téléchargement) — l'amont AVANT tout | ~1 min |
-| `sitadel` | quotidien 02:15 (+ dérivés hebdo lundi 03:45) | `permits_sdes --refresh` (delta, recouvrement 3 mois) + dérivés | ~30-60 s (no-op tant que SDES n'a pas publié ; jour de livraison ~1-2 min) |
-| `bodacc` | quotidien 02:30 | `ingest-bodacc` (12,6k SIREN propriétaires, throttlé) + dérivés | ~3-8 min |
-| `notifications` | quotidien **03:00 = 07:00 Réunion** | suivis → veilles → fraîcheur → purge 90 j → **digest e-mail** | ~10-30 s |
-| `ban` | mensuel le 5 à 03:30 | `ingest-ban --download` (remplacement complet idempotent) | ~5-15 min |
-| `backup` | quotidien 05:30 (+ maintenance dimanche 04:00) | dump -Fc + rotation ; VACUUM ANALYZE hebdo | ~2-5 min |
-| `dvf` | hebdo mercredi 05:00 | `refresh-dvf` (HEAD Last-Modified ; reload si livraison Etalab avril/oct.) | ~5-10 s en no-op ; ~5-10 min le jour d'une livraison semestrielle |
-| `dpe` | hebdo mardi 05:20 | `ingest-dpe` (24 communes, API ADEME throttlée) + dérivés | ~10-20 min |
-| `abuse` | quotidien 06:00 | `abuse-scan` (patterns de scraping de la veille) | ~1 min |
-| `fraicheur` | quotidien 06:30 | `check-fraicheur` (sentinelle : code 1 si une source dépasse 2× sa cadence → cron mail) — juge la nuit COMPLÈTE | ~5 s |
+| `labuse-radar` | lundi 06:00 | `radar-sources` (sondes amont, zéro téléchargement) | `radar.log` |
+| `labuse-sitadel` | quotidien 06:15 (+ dérivés hebdo lundi 07:45) | permis SDES delta + dérivés | `sitadel_refresh.log` |
+| `labuse-bodacc` | quotidien 06:30 | procédures collectives SIREN + dérivés | `bodacc.log` |
+| `labuse-notifications` | quotidien 07:00 | `evaluer-suivis` → `evaluer-veilles` → `notifier-fraicheur` → `purge-notifications` → **digest e-mail** | `notifications.log` |
+| `labuse-ban` | le 5 du mois, 07:30 | BAN 974 (remplacement complet idempotent) | `ban_refresh.log` |
+| `labuse-sessions` | quotidien 08:00 | `purge-sessions` (sessions expirées) | `purge_sessions.log` |
+| `labuse-backup` (2e ligne) | dimanche 08:00 | maintenance `VACUUM ANALYZE` (`db_maintenance.sh`) | `maintenance.log` |
+| `labuse-avis-echeance` | quotidien 08:30 | avis d'échéance loi Chatel | `avis_echeance.log` |
+| `labuse-catnat` | le 5 du mois, 09:00 | arrêtés CatNat | `catnat.log` |
+| `labuse-dvf` | mercredi 09:00 | DVF (Last-Modified ; reload si livraison Etalab) | `dvf.log` |
+| `labuse-dpe` | mardi 09:20 | DPE ADEME 24 communes + dérivés | `dpe.log` |
+| `labuse-backup` | quotidien 09:30 | `backup_postgres.sh` (dump lean + vérif + rotation) | `backup.log` |
+| `labuse-abuse` | quotidien 10:00 | `abuse-scan` (patterns de scraping, aucun blocage auto) | `abuse_scan.log` |
+| `labuse-fraicheur` | quotidien 10:30 | `check-fraicheur` (sentinelle : code 1 si une source dépasse 2× sa cadence) | `check_fraicheur.log` |
 
-### L'e-mail transactionnel — Brevo (M85)
+Ordonnancement : les ingestions passent **avant** les notifications de 07:00 (le digest parle
+de la nuit), le backup de 09:30 passe **après** toutes les écritures.
 
-Le digest e-mail part par **Brevo** (relais SMTP, offre gratuite 300/j, EU/RGPD). Le transport
-(`mail.py`) est agnostique : il suffit des 5 variables dans `/etc/labuse/labuse.env` :
-
-```
-LABUSE_SMTP_HOST=smtp-relay.brevo.com
-LABUSE_SMTP_PORT=587
-LABUSE_SMTP_USER=<login SMTP Brevo>
-LABUSE_SMTP_PASSWORD=<clé SMTP Brevo>          # jamais en dur dans le code / git
-LABUSE_MAIL_FROM=LABUSE <contact@labuse.immo>
-```
-
-**DNS (Cloudflare, zone `labuse.immo`)** — Brevo « Authentifier le domaine » génère les valeurs
-exactes ; poser : le **SPF** (`v=spf1 include:spf.brevo.com ~all`, fusionné avec l'existant), les **2
-DKIM** (`brevo1._domainkey`, `brevo2._domainkey`) fournis, et un **DMARC** (`_dmarc` →
-`v=DMARC1; p=none; rua=mailto:contact@labuse.immo`) pour démarrer en observation. Vérifier l'envoi :
-`sudo -u labuse /opt/labuse/venv/bin/labuse mail-test <votre-email>` puis `labuse digest --force`.
-
-> **Fuseau** : le digest est calé sur **7h00 heure Réunion**. Le VPS étant en UTC, le cron tire à
-> **03:00 UTC** ; le code borne la fenêtre quotidienne avec `events.REUNION_TZ` (UTC+4 explicite) —
-> ni l'un ni l'autre n'hérite du fuseau de la machine (doctrine M85).
-
-**Délivrabilité — rester en boîte Principale, pas Promotions (M85)** : le digest est un mail
-**TRANSACTIONNEL**, pas une campagne. Deux points côté Brevo :
-- Utiliser le **canal transactionnel** = le **SMTP relay** (`smtp-relay.brevo.com`, ce que fait
-  `mail.py`), JAMAIS l'outil « Campagnes » de Brevo. Si le compte a une IP dédiée transactionnelle,
-  s'y rattacher. Le SMTP relay pose des en-têtes transactionnels ; les Campagnes posent des en-têtes
-  marketing (List-ID de campagne, Feedback-ID marketing) que Gmail classe en Promotions.
-- Côté code : objet **factuel** (« LABUSE — N changements sur vos suivis »), gabarit **sobre** (texte
-  dense, une colonne, sans carte ni bouton ni image), `List-Unsubscribe` en **One-Click (RFC 8058)** et
-  **aucun** en-tête de campagne. C'est déjà en place — ne rien rajouter qui « fasse newsletter ».
-
-Charge quotidienne cumulée : ~10 min ; pics (ban le 5 du mois, dpe le mardi) : ~30 min. Négligeable
-sur le VPS ; les fenêtres sont décalées la nuit pour ne pas se chevaucher.
-
-**Vérifier que le Train tourne (le jour J et à chaque revue) :**
+**Vérifier que le Train tourne** (le jour J et à chaque revue) :
 
 ```bash
-# état de tous les crons + verdict de fraîcheur par source (retards = [] attendu)
+curl -sS https://app.labuse.immo/healthz/crons | python3 -m json.tool   # retards = [] attendu
+sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/venv/bin/labuse check-fraicheur'
+```
+
+## 14. Sauvegardes et restauration
+
+- **Quotidien 09:30 Réunion** : `deploy/scripts/backup_postgres.sh` → `pg_dump -Fc` **LEAN**
+  (VP-002, cf. §5), **vérifié par `pg_restore --list` dans le job** (un dump vide ou
+  illisible est supprimé et le job échoue bruyamment).
+- **Rotation** : 7 dumps quotidiens + **4 hebdomadaires** (les dumps du dimanche sont
+  hardlinkés avec le préfixe `hebdo-`), dans `/var/backups/labuse`.
+- **Avant chaque déploiement** : `deploy.sh` refait un dump automatiquement (étape 0).
+- **Restauration** : `labuse restore-db --file <dump>` (ou
+  `pg_restore --clean --no-owner -d labuse <dump>`).
+- **VP-001** : refus si la majeure de `pg_dump`/`pg_restore` ne colle pas au serveur ;
+  corriger via `LABUSE_PG_BIN_DIR`.
+
+## 15. Tests de santé après (re)construction
+
+```bash
+# En local sur le VPS
+curl -s http://127.0.0.1:8000/healthz
+curl -s http://127.0.0.1:8000/readyz            # "ready": true = schéma + données critiques OK
+
+# Depuis l'extérieur (HTTPS public, certificat Caddy)
+curl -sS https://app.labuse.immo/healthz
+curl -sS https://app.labuse.immo/readyz
 curl -sS https://app.labuse.immo/healthz/crons | python3 -m json.tool
-# sentinelle en direct (code de sortie 1 s'il y a un décrochage)
-sudo -u labuse /opt/labuse/venv/bin/labuse check-fraicheur
+
+# Smoke test complet fourni
+sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; \
+  /opt/labuse/app/deploy/scripts/smoke_test.sh'
 ```
 
-`/healthz/crons` expose `crons` (dernier passage OK par tâche), `sources` (dates + statut de
-fraîcheur) et `retards` (les sources au-delà de 2× leur cadence). `ok: false` = au moins un cron mort
-ou une source décrochée — la sentinelle de supervision VPS lit ce champ.
+## 16. Rollback
 
----
-
-## 13. Procédure de ROLLBACK
-
-Le rollback repose sur deux invariants : **le code est versionné (git)** et **chaque mise en
-production est précédée d'un dump** (étape 5 / sauvegarde). Pour revenir à l'état antérieur :
-
-```bash
-# 1) Repli applicatif : revenir au commit/tag précédent
-cd /opt/labuse/app
-sudo -u labuse git fetch --tags
-sudo -u labuse git checkout <tag_ou_commit_precedent>
-sudo -u labuse /opt/labuse/venv/bin/pip install -e "/opt/labuse/app[ai]"   # si deps modifiées ([ai] requis — Copilote M26-A)
-
-# 2) Repli base (UNIQUEMENT si la migration a touché la donnée) :
-#    restaurer le dump pris JUSTE AVANT la migration. pg_restore --clean ÉCRASE l'existant.
-systemctl stop labuse
-sudo -u postgres pg_restore --clean --if-exists --no-owner --role=labuse \
-  -d labuse /var/backups/labuse/labuse-labuse-<AVANT_MIGRATION>.dump
-
-# 3) Redémarrer + revérifier
-systemctl start labuse
-sudo -u labuse bash -lc '/opt/labuse/app/deploy/scripts/smoke_test.sh'
-```
-
-> **Avant toute mise à jour** : `labuse backup-db --dir /var/backups/labuse` (ou attendre la
-> sauvegarde cron) → on a toujours un point de retour daté. Le rollback ne supprime jamais les
-> backups ; il restaure par-dessus.
-
----
-
-## Annexe — Merge de la branche vers `main` avant déploiement
-
-La branche de travail `claude/brave-davinci-NaRd4` est **en avance sur `main`** : elle doit être
-fusionnée avant de déployer (le déploiement clone `main`). Procédure propre :
-
-```bash
-git checkout main
-git pull --ff-only origin main
-git merge --no-ff claude/brave-davinci-NaRd4 -m "Release: pack déploiement + LOT 1-4 + finitions"
-# Vérifs avant de pousser :
-pytest -q && ruff check src/labuse tests
-git tag -a v1.0.0-pilot -m "Pilote Saint-Paul — première mise en production"
-git push origin main --tags
-```
-
-> Si tu préfères une revue : ouvrir une **Pull Request** `claude/brave-davinci-NaRd4 → main`,
-> faire tourner la CI, puis merger. Ne jamais déployer une branche de travail directement.
+Voir `docs/DEPLOY_RUNBOOK.md` (le rollback est aussi documenté **en tête de
+`/opt/labuse/deploy.sh`**, avec le commit d'avant affiché au début de chaque run). En bref :
+`git reset --hard <commit_avant>` + `pip install -e` + restart ; la base se restaure depuis le
+dump pris automatiquement à l'étape 0 du déploiement.

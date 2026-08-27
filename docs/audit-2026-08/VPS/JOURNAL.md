@@ -132,3 +132,79 @@ Script `/tmp/bascule.sh` (journalisé /tmp/bascule.log sur le VPS) :
   `customer.subscription.deleted`, `invoice.payment_failed` (la liste que lit
   `facturation.traiter_webhook`) → créer, puis copier le « Signing secret » (whsec_…) dans
   `/etc/labuse/labuse.env` (STRIPE_WEBHOOK_SECRET=) et `sudo systemctl restart labuse`.
+
+## V6 — CRONS (installés, HEURE RÉUNION)
+
+- Fuseau SYSTÈME posé : `timedatectl set-timezone Indian/Reunion` (+04). Les crontab lisent
+  désormais l'heure locale → tous les horaires des fichiers `deploy/cron.d/*` ont été convertis
+  UTC→Réunion (+4 h) AVANT la pose. 13 jobs posés `/etc/cron.d/labuse-*`, `systemctl restart cron`.
+- 2 nouveaux : `labuse-sessions` (purge-sessions 08:00) et `labuse-avis-echeance` (08:30).
+- Cron `labuse-catnat` RETIRÉ : sa commande `ingest-catnat` est morte depuis M12 (le fichier
+  VPS était orphelin du dépôt ; il est archivé dans le filet config.tgz). Vérifié : la CLI ne
+  connaît plus `ingest-catnat`.
+- Tests manuels AVANT de compter dessus : `purge-sessions` (0 supprimée, OK), `avis-echeance`
+  (0 avis, OK), et surtout **le BACKUP joué à la main comme le cron** (flock + source env +
+  backup_postgres.sh) → **dump LEAN 4,1 Go, "Sauvegarde OK", `pg_restore --list` passé DANS le
+  job, rotation → 7 conservés**. Le backup a donc tourné avec succès au moins une fois. ✓
+- VP-002 : le backup nocturne est passé en LEAN (exclusion de la data des tables
+  reconstructibles, comme `labuse backup-db` sans --full) — sinon 7 dumps FULL de 6 Go saturaient
+  les 45 Go. Rétention hebdo ajoutée (hardlink du dump du dimanche, 4 semaines).
+
+## V5 — SÉCURITÉ D'EXPOSITION
+
+- **2FA TOTP admin (AC-025)** : implémentée et testée (15 tests `tests/test_2fa.py`, vecteurs
+  RFC 6238 + flux web complet). Tables `totp_2fa`/`totp_secours` posées par `init-db` à la
+  bascule. Tout login rôle admin passe par `/login/2fa` ; 1er passage = enrôlement QR + 8 codes
+  de secours ; anti-rejeu ; 5 tentatives/défi de 5 min. Machinerie vérifiée en prod
+  (GET /login/2fa sans défi → 302 /login).
+- **Rideau basic auth TOMBÉ** (go-live) : nouveau `/etc/caddy/Caddyfile` (source
+  `deploy/Caddyfile.prod`) SANS `basic_auth` — l'auth comptes applicative est la porte
+  (vérifié : API sans session → 401 JSON applicatif, plus de `www-authenticate: Basic`).
+  Ancien Caddyfile sauvegardé `/etc/caddy/Caddyfile.rideau-<ts>` ; `CADDY_BASIC_HASH` neutralisé
+  dans `/etc/caddy/labuse.env`. `caddy validate` (env chargé) OK AVANT reload.
+- **HSTS** activé (`Strict-Transport-Security: max-age=15552000`, vérifié depuis l'extérieur).
+- **fail2ban jail `labuse-login`** : filtre sur le journal d'accès JSON de Caddy
+  (`/var/log/caddy/access.log`, activé au Caddyfile) — POST /login|/login/2fa répondu 401 → ban
+  IP (10 échecs/5 min → 1 h). `fail2ban-client status labuse-login` : jail active. Défense en
+  profondeur (l'app garde SON verrou de compte : 5 échecs → 15 min).
+- **Login pilote partagé MORT** : `LABUSE_LOGIN_PILOTE_ACTIF=0` (le mot de passe partagé répond
+  401 neutre). Jamais réactivé pendant la recette (script initial refusé à raison par la garde
+  de permissions — recette refaite sur un compte réel).
+- **Admin nominatif Vic (AC-020)** — mécanisme prêt et testé (`labuse creer-admin`), MAIS la
+  création du compte réel de Vic est laissée À VIC : elle produit un lien d'invitation qu'il doit
+  ouvrir pour poser SON mot de passe, et son 1er login enrôle la 2FA sur SON téléphone — rien
+  qu'un tiers puisse faire à sa place. Commande exacte au rapport. Personne n'est enfermé dehors :
+  le compte existant de Vic (`kampusreunion@gmail.com`, titulaire actif) entre dans l'app ;
+  `creer-admin` le promeut admin quand il le veut.
+
+## V7 — RECETTE
+
+### Derrière le rideau (via 127.0.0.1, sans toucher à la sécurité)
+readyz ready=true ✓ · healthz 200 ✓ · route protégée sans session → 401 ✓ · page /login rendue
+par l'app ✓ · /login/2fa sans défi → 302 ✓.
+
+### Recette authentifiée réelle (compte titulaire éphémère `recette-vps@labuse.local`, créé actif
+puis SUPPRIMÉ RGPD après — le pilote n'a JAMAIS été rallumé)
+login utilisateur réel (303 + cookie) ✓ · **fiche 97416000ES2071 200, tier servi, run
+q_v11_m137** ✓ · tiles/meta `run_label=q_v11_m137` ✓ · tuile z12 200 (0 o = zone vide, meta
+prouve le run) · export JSON 200 ✓ · export.csv 200 (1002 lignes) ✓ · **export.pdf 186 Ko
+(WeasyPrint OK sur le VPS)** ✓ · courrier SPF 200 (texte, par conception — PlainTextResponse) ✓ ·
+copilote `/api/copilote-v2/ask` 200, quota+ia_log comptés ✓.
+
+### Recette extérieure (depuis l'internet, rideau tombé, sans tunnel)
+racine sans session → 302 /login ✓ · page login LABUSE publique ✓ · certificat valide (HTTP 200) ✓
+· API protégée → 401 JSON ✓ · shell + favicon 200 ✓ · HSTS présent, plus de www-authenticate ✓ ·
+webhook Stripe joignable (503 « non configuré » tant que whsec_ absent — honnête) ✓.
+
+### FINDINGS de recette (pour Vic — secrets/config, PAS des défauts de code)
+- **VP-003 — clé Anthropic invalide sur le VPS** : `ANTHROPIC_API_KEY` (posée en juillet) renvoie
+  401 `authentication_error`. Le Copilote se dégrade PROPREMENT (« service d'analyse
+  indisponible », `degraded:true`, jamais un crash — comportement correct). À renouveler par Vic
+  dans `/etc/labuse/labuse.env` puis `systemctl restart labuse`. La partie déterministe de l'app
+  n'en dépend pas.
+- **VP-004 — extra `[ai]` manquait au venv** : `anthropic` est une dépendance OPTIONNELLE
+  (`pyproject [ai]`) ; le venv de base ne l'avait pas → 1er `/ask` en ModuleNotFoundError.
+  CORRIGÉ : installé dans le venv, et `deploy_vps.sh` installe désormais `-e "$APP[ai]"` pour que
+  chaque déploiement le garde.
+- Stripe/Brevo/SMTP : non configurés (placeholders) — l'app le dit honnêtement (webhook 503,
+  mails journalisés). Clés LIVE à poser par Vic.
