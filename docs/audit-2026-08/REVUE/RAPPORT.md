@@ -185,3 +185,53 @@ durcissements appliqués.
 - **RV-008 🟡 — `/login` sans rate-limit IP** (déjà consigné AC-020 à l'audit comptes) : `slow_failure`
   0,4 s seul, `/login` hors `PREFIXES_PROTEGES`. Documenté, non implémenté ici (durcissement admin =
   mandat VPS, migrer vers compte `role='admin'` + 2FA).
+
+---
+## R5 — VITESSE
+
+Baseline p50/p95 (patron LOT AM, `qa/revue/r5_baseline.py`, 12 mesures/route, run q_v11_m137) :
+
+| Route | p50 ms | p95 ms | Nature |
+|-------|-------:|-------:|--------|
+| `/parcels/{idu}/explain` | 16 538 | **17 513** | **appel LLM Anthropic** (latence externe) |
+| `/readyz` | 2 455 | 2 505 | health check TEMPS RÉEL (schéma+data) |
+| `/parcels/{idu}` (fiche) | 2 003 | 2 035 | calcul 0,23 s (profilé) + transport |
+| `/map/parcels.geojson?commune=` | 1 164 | 1 171 | ST_AsGeoJSON sur 51 k parcelles (Saint-Paul) |
+| `/modules/faisabilite/{idu}` | 63 | 103 | sain |
+| `/sources` | 48 | 51 | sain |
+| `/map/tiles/meta` | 27 | **35** | ✅ (était 3,9 s — index posé) |
+| `/v2/score/{idu}` | 2,5 | 2,6 | sain |
+| `/stats/entonnoir` | 1,7 | **2,0** | ✅ (était 9,8 s — cache 30 s posé) |
+| `/communes`, `/accueil/chiffres`, `/filtre` | ~2 | ~2 | sains |
+
+### Les 2 cibles connues (LOT AM) : DÉJÀ RÉGLÉES
+
+- **`/stats/entonnoir`** : le mandat le donnait à p95 9,8 s (cache manquant). **Déjà corrigé**
+  (FIX-C6 GB-058 : mémorisé 30 s) → **p95 2,0 ms**. Confirmé.
+- **`/map/tiles/meta`** : donné à p95 3,9 s (index `(run_id, computed_at)` manquant). L'index
+  **`ix_p_v2_run_computed` existe** → **p95 35 ms** ; EXPLAIN confirme l'Index Scan Backward. Confirmé.
+
+### Les pires restants — structurels, aucune optimisation sûre
+
+- **`/parcels/{idu}/explain` (17,5 s)** : c'est un **appel à l'API Anthropic** (`explain_parcel` →
+  LLM), pas une requête DB. Latence externe attendue (LOT AM le classait « LLM/payload/froid
+  attendus »). **Hors périmètre** « optimiser sans changer les chiffres » — rien à faire côté app.
+- **`/readyz` (2,5 s)** : vérifie le schéma et les données EN TEMPS RÉEL (contrat health check). Le
+  cacher irait contre son but (le monitoring VPS doit voir l'état réel). Appelé rarement, pas client.
+- **`/map/parcels.geojson` (1,17 s)** : EXPLAIN **propre, aucun index manquant** — le Seq Scan
+  parallèle sur `parcels` est le choix optimal du planner (Saint-Paul = 51 k parcelles, grosse
+  fraction de table), le coût est le `ST_AsGeoJSON(ST_SimplifyPreserveTopology(...))` géométrique,
+  **incompressible** sans changer la donnée servie. **Cache HTTP 600 s** déjà en place.
+- **`/parcels/{idu}` (fiche)** : profilée à **0,23 s de calcul** (session directe) — saine. Le 2 s
+  HTTP est du transport/middleware ; la fiche fait ~59 requêtes rapides (0,003 s chacune), pas de
+  goulot DB. Aucun index manquant.
+
+### Verdict R5
+
+- **RV-009 ✅ — Système déjà optimisé.** Les 2 optimisations actionnables du mandat sont **déjà en
+  place** (cache entonnoir, index tiles/meta). L'EXPLAIN des routes lentes restantes est propre
+  (aucun index manquant, aucun N+1 à ROI positif). Les pires restants sont **structurels et
+  attendus** : LLM (explain), health check temps réel (readyz), calcul géométrique caché (geojson).
+  **Aucune optimisation supplémentaire n'est sûre ni nécessaire** — arbitrage conservateur : à la
+  veille d'une mise en ligne, ne pas refactorer un chemin sain (fiche/middleware) au risque de
+  déplacer un chiffre. Baseline gelée dans `qa/revue/r5_baseline.json` pour comparaison post-VPS.
