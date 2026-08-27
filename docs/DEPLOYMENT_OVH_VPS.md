@@ -327,7 +327,7 @@ confondu avec un échec). Chaque job écrit son log dans `/var/log/labuse/`.
 ```bash
 install -d -o labuse -g labuse /var/log/labuse
 cd /opt/labuse/app
-for c in radar sitadel bodacc notifications ban sessions avis-echeance dvf dpe backup abuse fraicheur; do
+for c in radar sitadel bodacc notifications ban sessions dvf dpe backup abuse fraicheur; do
   install -o root -g root -m 644 deploy/cron.d/$c /etc/cron.d/labuse-$c
 done
 systemctl reload cron
@@ -345,7 +345,6 @@ Le crontab utilisateur (`crontab -u labuse`) reste **VIDE** — un seul mécanis
 | `labuse-ban` | le 5 du mois, 07:30 | BAN 974 (remplacement complet idempotent) | `ban_refresh.log` |
 | `labuse-sessions` | quotidien 08:00 | `purge-sessions` (sessions expirées) | `purge_sessions.log` |
 | `labuse-backup` (2e ligne) | dimanche 08:00 | maintenance `VACUUM ANALYZE` (`db_maintenance.sh`) | `maintenance.log` |
-| `labuse-avis-echeance` | quotidien 08:30 | avis d'échéance loi Chatel | `avis_echeance.log` |
 | `labuse-catnat` | le 5 du mois, 09:00 | arrêtés CatNat | `catnat.log` |
 | `labuse-dvf` | mercredi 09:00 | DVF (Last-Modified ; reload si livraison Etalab) | `dvf.log` |
 | `labuse-dpe` | mardi 09:20 | DPE ADEME 24 communes + dérivés | `dpe.log` |

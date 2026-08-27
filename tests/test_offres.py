@@ -1,6 +1,6 @@
 """E1 (parcours d'entrée) — source de vérité UNIQUE des offres + anti-régression.
 
-Deux offres seulement : Intégral 349 €/mois (engagement 12 mois), Flash 79 € paiement unique.
+Deux offres seulement : Intégral 349 €/mois (mensuel sans engagement), Flash 79 € paiement unique.
 L'ancienne offre fantôme « Illimité 499 € » n'existe plus. Aucun prix d'offre en dur dans le front.
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ def test_offre_integral_valeurs():
     o = offre_integral()
     assert o["label"] == "Intégral"
     assert o["eur_mois"] == 349
-    assert o["engagement_mois"] == 12
+    assert o["engagement"] is False        # S1 — mensuel sans engagement
     assert o["periodicite"] == "mois"
 
 

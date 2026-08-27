@@ -35,8 +35,11 @@ def test_cgv_et_mentions_declarent_les_emails():
         assert "Aucun email automatique" not in html
         assert "Aucun envoi d'email automatique" not in html      # déclaration RGPD inexacte retirée
         assert "transactionnels" in html and "List-Unsubscribe" in html
-    # article 5 : le point L.215-1-consommation-en-B2B est signalé pour l'avocat (commentaire source)
-    assert "SIGNALER À L'AVOCAT" in inspect.getsource(onboarding.cgv_page)
+    # S1 (27/08) : l'article 5 ne parle plus de loi Chatel (mensuel sans engagement) — la note
+    # « avocat L.215-1 » a été retirée ; on vérifie que le nouvel article 5 dit la résiliation par écrit.
+    html_cgv = onboarding.cgv_page().body.decode()
+    assert "sans engagement" in html_cgv.lower() and "demande écrite adressée à labuse" in html_cgv.lower()
+    assert "215-1" not in html_cgv and "Chatel" not in html_cgv
 
 
 # ── P2-68 — flash : sources par NOM (stables après reconstruction du seed) ──
