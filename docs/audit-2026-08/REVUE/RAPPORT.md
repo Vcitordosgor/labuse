@@ -278,3 +278,38 @@ production configuré (en local, `stripe listen` le fournit).
   pour **toute** exception, y compris une erreur de **traitement** (masquant les vrais bugs de handler
   et empêchant le rejeu utile). Corrigé : `SignatureVerificationError`/`ValueError` → 400 (signature) ;
   toute autre exception → **500** (Stripe rejoue, idempotent). Découvert en testant R6.
+
+---
+## R7 — MAILS (Brevo)
+
+Config `.env` : `BREVO_API_KEY=xkeysib-…` + 8 IDs de templates (`BREVO_TPL_ESSAI=4` … `RETABLISSEMENT=11`)
++ SMTP Brevo. Adresse de Vic : `kampusreunion@gmail.com`.
+
+### RV-013 🔴→corrigé — Brevo « non configuré » à tort (bug de préfixe)
+
+Les variables Brevo du `.env` sont sous **`BREVO_*`** (sans préfixe), mais le code (config pydantic,
+`env_prefix="LABUSE_"`) attendait **`LABUSE_BREVO_*`** → `s.brevo_api_key` et les templates étaient
+lus **`None`**. Conséquence : **AUCUN mail ne serait parti en production**, le dashboard aurait affiché
+« Brevo non configuré » alors que les clés étaient bien présentes. **Corrigé** : `brevo.py` lit
+désormais le setting préfixé **OU** le repli sans préfixe (`_api_key()` / `_setting_ou_env()`, même
+pattern que `STRIPE_RESTRICTED_KEY`). Après correction : `api=True`, **8/8 templates branchés**
+(essai=4, souscription=5, onboarding 1/2/3=6/7/8, relance=9, suspension=10, rétablissement=11). Test
+« non configuré » ajusté (retire aussi le repli).
+
+### RV-014 ✅ — 8 templates envoyés RÉELLEMENT vers Vic
+
+Chaque template envoyé à `kampusreunion@gmail.com` avec variables réalistes (`nom`, `montant`,
+`lien`, `jours`…) — **Brevo a accepté les 8** (HTTP 2xx). Réception + rendu des variables à confirmer
+par Vic dans sa boîte (non vérifiable côté serveur).
+
+| Template | ID | Envoi |
+|----------|----|-------|
+| Essai 48 h · Lien de souscription · Onboarding 1/2/3 · Relance carte · Suspension · Rétablissement | 4–11 | ✅ 8/8 |
+
+### RV-015 ✅ — Rappels J+3 / J+10
+
+Vérifiés sur comptes `[REVUE-TEST]` à dates forcées (purgés) : compte J-4 sans Mail 2 → « Mail 2 à
+envoyer (J+3 atteint) » ; J-11 avec Mail 2 fait → « Mail 3 à envoyer (J+10 atteint) » ; J-1 → aucun
+rappel. `_rappels_onboarding` correct. Suite dashboard 15/15.
+
+**Aucun envoi automatique** en V1 (mandat) : l'app rappelle, Vic déclenche.

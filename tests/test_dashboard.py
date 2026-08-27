@@ -127,6 +127,7 @@ def test_licences_liste_et_suspension(client, engine, compte_test):
 def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
     """D4/MAILS — Brevo absent : bouton répond {envoye:false, raison explicite}, rien de silencieux."""
     monkeypatch.delenv("LABUSE_BREVO_API_KEY", raising=False)
+    monkeypatch.delenv("BREVO_API_KEY", raising=False)   # REVUE · R7 — repli sans préfixe aussi retiré
     from labuse import config
     config.get_settings.cache_clear()
     r = client.post(f"/admin/licences/{compte_test}/mail", json={"key": "onboarding1"}).json()
