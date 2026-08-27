@@ -57,12 +57,15 @@ def test_flash_sources_noms_resolvent_et_attribuent_la_bonne_date(db_session):
     noms_base = {n for (n,) in s.execute(text("SELECT name FROM data_sources"))}
     for _sec, label, src_name, _st in _SECTION_SOURCES:
         assert src_name is None or src_name in noms_base, f"nom introuvable (typo) : {src_name!r}"
-    # une source avec last_sync_at → sa date remonte bien via le nom
-    row = s.execute(text("SELECT name, last_sync_at FROM data_sources "
-                         "WHERE last_sync_at IS NOT NULL LIMIT 1")).first()
+    # REVUE · R9 — MISE À JOUR : le millésime servi est le millésime AMONT (source_millesime),
+    # JAMAIS la date d'ingestion (last_sync_at) — la doctrine M73 E interdit de servir la date de
+    # synchro comme millésime. L'intention du test reste : l'attribution PAR NOM est stable
+    # (indépendante de l'id serial). On sonde une source au millésime amont NON NULL et on vérifie
+    # qu'il remonte tel quel via le nom.
+    row = s.execute(text("SELECT name, source_millesime FROM data_sources "
+                         "WHERE source_millesime IS NOT NULL LIMIT 1")).first()
     if row:
-        nom, dt = row
-        # injecte une entrée de section pointant ce nom et vérifie l'attribution
+        nom, mill = row
         import labuse.flash.data as D
         D._SECTION_SOURCES.append(("identite", "SONDE MP", nom, None))
         try:
@@ -70,7 +73,7 @@ def test_flash_sources_noms_resolvent_et_attribuent_la_bonne_date(db_session):
         finally:
             D._SECTION_SOURCES.pop()
         sonde = next((o for o in out if o["source"] == "SONDE MP"), None)
-        assert sonde and dt.date().isoformat() in sonde["millesime"]
+        assert sonde and sonde["millesime"] == mill        # le millésime AMONT remonte PAR NOM
 
 
 # ── P2-66 — flash : le bloc marché porte une étiquette de MÉTHODE (PUR) ──

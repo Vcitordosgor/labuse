@@ -69,7 +69,7 @@ def _seed(s):
 
 def test_simulplu_ne_leve_pas_et_dit_son_total(db_session):
     _seed(db_session)
-    out = moteurs.simulplu(zone="AUc", commune="Testville", db=db_session)   # ne lève pas
+    out = moteurs.simulplu(zone="AUc", commune="Testville", offset=0, db=db_session)   # ne lève pas
     assert out["zone"] == "AUc"
     assert out["n_total"] == 2 and out["n_parcelles"] == 2
     assert out["cap"] >= 2 and out["tronquee"] is False        # tout tient sous le plafond
@@ -83,7 +83,7 @@ def test_simulplu_ne_leve_pas_et_dit_son_total(db_session):
 def test_simulplu_dit_la_troncature_quand_plafonnee(db_session, monkeypatch):
     _seed(db_session)
     monkeypatch.setattr(moteurs, "_moteurs_cap", lambda name, defaut: 1)   # plafond forcé à 1
-    out = moteurs.simulplu(zone="AUc", commune="Testville", db=db_session)
+    out = moteurs.simulplu(zone="AUc", commune="Testville", offset=0, db=db_session)
     assert out["n_total"] == 2 and out["n_parcelles"] == 1 and out["cap"] == 1
     assert out["tronquee"] is True                             # l'écran DIT « les 1 premières sur 2 »
 

@@ -36,6 +36,9 @@ def build_tva_primo(session: Session) -> int:
     """Buffer 500 m autour des QPV, MOINS les QPV eux-mêmes (la couronne). Un item par commune
     portant un QPV (filtrable), géométrie dérivée en 2975 (mètres) puis reprojetée en 4326."""
     session.execute(text("DELETE FROM spatial_layers WHERE kind = 'tva_primo'"))
+    # REVUE · R9 (traçabilité) — data_source_id de la source AMONT (QPV 2024 ANCT), dont ce dispositif
+    # dérive. Résolu par nom (pas d'id figé). None si la source n'est pas au catalogue (best-effort).
+    qpv_src = session.execute(text("SELECT id FROM data_sources WHERE name ILIKE 'QPV 2024%' LIMIT 1")).scalar()
     # par commune : union des QPV, buffer 500 m, différence = la bande des 500 m
     rows = session.execute(text(
         """WITH q AS (
@@ -51,9 +54,9 @@ def build_tva_primo(session: Session) -> int:
         if not r["ring"]:
             continue
         session.execute(text(
-            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs) VALUES "
-            "('tva_primo', 'derive', :nom, :c, ST_GeomFromText(:g, 4326), CAST(:a AS jsonb))"),
-            {"nom": f"Bande 500 m — {r['commune']}", "c": r["commune"], "g": r["ring"],
+            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs, data_source_id) VALUES "
+            "('tva_primo', 'derive', :nom, :c, ST_GeomFromText(:g, 4326), CAST(:a AS jsonb), :src)"),
+            {"nom": f"Bande 500 m — {r['commune']}", "c": r["commune"], "g": r["ring"], "src": qpv_src,
              "a": json.dumps({"derive": True, "buffer_m": QPV_BUFFER_M, "source": "LABUSE (dérivé des QPV)"})})
         n += 1
     return n

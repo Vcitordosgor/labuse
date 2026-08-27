@@ -353,3 +353,64 @@ Recette sur serveur réel (uvicorn :8010, code de la branche) + recoupement SQL.
 - **RV-016 ✅ — Dashboard sain en conditions réelles.** Chiffres exacts (recoupés SQL), LED correctes,
   capteurs alimentés, 403 admin gelé, courrier/essai/suspension/produit vérifiés. Capture
   `qa/revue/r8_pilotage.png`.
+
+---
+## R9 — NETTOYAGE
+
+### Suite backend — VERTE (0 échec non expliqué)
+
+Baseline : 15 failed + 9 erreurs de collection. Causes réparées **nominativement** :
+
+| Cause | Fichiers | Action |
+|-------|----------|--------|
+| **pandas absent** (dep `pyproject`) | 6 collection + failed | `pip install pandas` (dep légitime du projet, env incomplet) |
+| **joblib/scikit-learn absents** (deps ML) | 4 failed + 2 collection | installés (deps `pyproject`) |
+| **weasyprint / libgobject** (lib système) | ~9 failed PDF | libs homebrew présentes (`glib`/`pango`) mais hors `DYLD` de l'env → lancer les tests avec `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib` **sur macOS** (en prod Linux, chemin standard, aucun geste). Documenté. |
+| **simulplu — `Query()` non résolu** | `test_simulplu` (2) | test corrigé : passe `offset=0` (ce que FastAPI fait via HTTP) |
+| **3 tests périmés** (formulation/format évolués) | flash SDP · Étudier marges · sources millésime | mis à jour vers l'état ACTUEL (produit sain, cf. R3) |
+
+Les 3 tests périmés mis à jour (justification unitaire) : (a) le template flash dit « plancher (SDP) =
+vendable ÷ rendement » (plus « surface de plancher au sens PLU »/dérivation 1,15) ; (b) EtudierBien a
+refondu les deux référentiels en **bascule** « Calibrées LABUSE | Vos hypothèses » ; (c) le millésime
+servi est le **millésime amont** (`source_millesime`), jamais la date d'ingestion — la doctrine M73 E
+l'interdit (le test suivait l'inverse). **Résultat : `1796 passed, 3 (macOS lib) documentés, 0 failed`.**
+
+### AC-003 — Effacement RGPD complet (FK cascade)
+
+Les **11 tables** à `compte_id` sans FK cascade (`copilote_conversations`, `veilles`, `veille_reprise`,
+`ia_log`, `usage_events`, `retours`, `licence_mails`, `notif_prefs`, `notif_canaux`, `share_links`,
+`lettre_zonage_refs`) portent désormais `FOREIGN KEY … ON DELETE CASCADE` (patron GB-063 : purge
+défensive des orphelins d'abord — **0 orphelin existant** —, migration idempotente dans
+`ensure_scoping`). `evenements_compte` exclue (anonymisée exprès). **Garde de régression** :
+`test_r9_ac003_effacement_rgpd_purge_les_11_tables` (effacer un compte purge les 11 tables, 0 orphelin).
+**RV-017 ✅ corrigé.**
+
+### Traçabilité
+
+- **`pole_echange`** (19/61 sans source) → rattachées à « OSM — transport » (id 75).
+- **`tva_primo`** (13/13 sans source) → rattachées à sa source amont « QPV 2024 (ANCT) » (id 75→38) ; le
+  **code d'ingestion** (`dispositifs.py build_tva_primo`) pose désormais `data_source_id` (ne se
+  reproduira plus). **0 ligne sans source** après rattachement. Aucun chiffre servi ne change (métadonnée).
+- `division_or_candidates` : dérivé de scoring — sa régénération relève du re-run (R10), pas d'une
+  commande d'ingestion isolée. Documenté.
+
+### Données & code mort
+
+- **Données de test** : **0** résidu `[GB-TEST]`/`[AUDIT-TEST]`/`[REVUE-TEST]` dans `labuse` ET
+  `labuse_test` ; **0 orphelin** (vérifié SQL).
+- **Fichiers** : **aucun** `*.orig`/`*.bak`/`*.rej`.
+- **Branches locales** : **159 branches mergées dans HEAD** (mandats passés, mortes) → **liste pour Vic**
+  (`git branch --merged | grep -v grande-revue`) — **NON supprimées** (décision Vic).
+- **Vestiges scoring** : `score_snapshot` **déjà absent** (0 table, 0 référence). Les autres candidates
+  (`abuse_scores` 1 l., `parcel_v_score` 431 663 l., `score_e` 285 781 l., `parcel_veille_succession`
+  7 129 l.) sont **toutes référencées dans le code ET peuplées** → **aucun vestige trivial à supprimer**.
+  Trancher « servi vs calculé-mort » exigerait un audit scoring dédié (risqué à la veille d'une mise en
+  ligne) → **pas de suppression proposée sans certitude** (le mandat interdit de supprimer).
+
+### Dette 🟡 & sessions
+
+- **RV-003 ✅ — commande `purge-sessions`** créée (`DELETE FROM sessions_auth WHERE expire_at < now()`,
+  cronable quotidien — cf. `EXPLOITATION-CRON.md`) : comble la dette AC-011 (sessions non purgées).
+- Dette 🟡 des cycles antérieurs largement **absorbée par ce mandat** : fuseau (R2), CSP (R4), webhook
+  (R6), Brevo (R7), effacement RGPD (AC-003). Le reste (durcissement admin AC-020/025, incohérence
+  clés Stripe RV-011) est **re-documenté, daté, dette assumée** — mandat VPS.
