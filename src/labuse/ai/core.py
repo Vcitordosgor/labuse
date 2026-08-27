@@ -34,9 +34,14 @@ from sqlalchemy.orm import Session
 # ── Modèles (routeur par TÂCHE, jamais codé en dur chez l'appelant) ───────────────────────────
 MODEL_FACTUAL = "claude-haiku-4-5-20251001"    # extraction, factuel, acronymes, filtres NL
 MODEL_REASONING = "claude-sonnet-4-6"          # raisonnement explicite (faisabilité expliquée, synthèse)
+MODEL_VISION = "claude-haiku-4-5-20251001"     # RADAR P1 — lecture d'image (extraction de capture), Haiku 4.5 voit
 #: €/Mtoken (approx, log indicatif — pas la tarification officielle live)
-PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0)}
+PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0), MODEL_VISION: (1.0, 5.0)}
 ENV_KEY = "ANTHROPIC_API_KEY"
+
+# ── Vision (RADAR P1) : formats acceptés par l'API Messages + garde-fou taille (limite Anthropic ~5 Mo/image) ──
+SUPPORTED_IMAGE_TYPES = frozenset({"image/jpeg", "image/png", "image/gif", "image/webp"})
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 # Défauts centralisés (un seul endroit — plus de valeurs dispersées dans chaque appelant)
 DEFAULT_TIMEOUT = 25.0
@@ -383,14 +388,41 @@ class IAResult:
     tokens_out: int = 0
 
 
+@dataclass
+class ImagePart:
+    """Une image à envoyer au modèle (RADAR P1). `data` = octets bruts ; `media_type` ∈ SUPPORTED."""
+    data: bytes
+    media_type: str
+
+
+def _bloc_image(img: ImagePart) -> dict:
+    """Construit le bloc image base64 de l'API Messages, en VALIDANT format + taille. Lève
+    ValueError (message honnête) si non supporté / trop lourd / vide — jamais d'envoi douteux."""
+    import base64
+    mt = (img.media_type or "").lower()
+    if mt not in SUPPORTED_IMAGE_TYPES:
+        raise ValueError(f"format d'image non supporté : {img.media_type!r} "
+                         f"(acceptés : {', '.join(sorted(SUPPORTED_IMAGE_TYPES))})")
+    if not img.data:
+        raise ValueError("image vide (0 octet)")
+    if len(img.data) > MAX_IMAGE_BYTES:
+        raise ValueError(f"image trop lourde ({len(img.data) // 1024} Ko > "
+                         f"{MAX_IMAGE_BYTES // 1024} Ko) — recompressez la capture")
+    return {"type": "image", "source": {"type": "base64", "media_type": mt,
+                                        "data": base64.standard_b64encode(img.data).decode("ascii")}}
+
+
 def complete(db: Session | None, *, kind: str, system: str, context: dict[str, Any] | str,
              model: str = MODEL_FACTUAL, max_tokens: int = 700,
              temperature: float = DEFAULT_TEMPERATURE, timeout: float = DEFAULT_TIMEOUT,
-             history: list[dict] | None = None,
+             history: list[dict] | None = None, images: list[ImagePart] | None = None,
              validate: bool = False, require_sources: bool = True,
              strict_numbers: bool = False) -> IAResult:
-    """Appel modèle UNIQUE (routeur haiku/sonnet via `model`). Sérialisation SÛRE (`default=str`) →
+    """Appel modèle UNIQUE (routeur haiku/sonnet/vision via `model`). Sérialisation SÛRE (`default=str`) →
     plus jamais de 500 Decimal. Repli `degraded` flaggé si pas de clé. Log de coût centralisé.
+
+    `images` (RADAR P1) : liste d'`ImagePart` jointe au message utilisateur (blocs base64 AVANT le texte,
+    recommandation Anthropic). Sans `images`, le chemin texte est INCHANGÉ (aucun appel existant impacté).
 
     Si `validate=True` : la sortie passe la validation hybride 1+3 avant d'être renvoyée ; en cas de
     rejet, `rejected=True` et `text` porte un message honnête (jamais l'affirmation douteuse)."""
@@ -398,9 +430,21 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
     if not has_key():
         return IAResult(text="", model=model, degraded=True, reason="no_key")
 
+    # RADAR P1 — vision : le contenu utilisateur devient une LISTE de blocs (images puis texte). La
+    # validation (format/taille) est faite AVANT tout travail client → un échec image ne consomme RIEN
+    # (ni client, ni réseau, ni coût), et rend un motif honnête.
+    if images:
+        try:
+            contenu: list[dict] | str = [_bloc_image(im) for im in images]
+            contenu.append({"type": "text", "text": user_content})
+        except ValueError as exc:
+            return IAResult(text="", model=model, degraded=True, reason=f"image: {exc}")
+    else:
+        contenu = user_content
+
     import anthropic
     client = anthropic.Anthropic(timeout=timeout, max_retries=DEFAULT_RETRIES)
-    msgs = list(history or []) + [{"role": "user", "content": user_content}]
+    msgs = list(history or []) + [{"role": "user", "content": contenu}]
     try:
         msg = client.messages.create(model=model, max_tokens=max_tokens, temperature=temperature,
                                      system=system, messages=msgs)
