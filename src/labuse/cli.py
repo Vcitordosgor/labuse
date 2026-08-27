@@ -2831,8 +2831,15 @@ def creer_admin_cmd(
     if r["lien"]:
         typer.echo(f"LIEN D'INVITATION (pose le mot de passe ; expire {r['expire_at'][:10]}) :")
         typer.echo(f"  {r['lien']}")
+        typer.echo("  → l'écran d'activation admin (sans paiement) demande un mot de passe ;")
+        typer.echo("    la double authentification (2FA) s'enrôle à la première connexion sur /login.")
     else:
-        typer.echo("mot de passe déjà posé — rien à envoyer (reset : `labuse compte-reset-lien` au besoin)")
+        # E2 — cas « déjà promu, mot de passe posé » (Vic ce soir) : rien à (re)poser, la porte
+        # est /login et la 2FA s'enrôle au premier passage admin. Le reset reste un filet.
+        typer.echo("mot de passe déjà posé — ce compte est prêt.")
+        typer.echo("  → connectez-vous sur /login : la double authentification (2FA) s'enrôle")
+        typer.echo("    automatiquement au premier passage administrateur (QR + codes de secours).")
+        typer.echo("  (mot de passe oublié ? `labuse compte-reset-lien " + email + "`)")
 
 
 @app.command("compte-suspend")

@@ -48,7 +48,7 @@ def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: boo
 
 @router.get("/invitation", include_in_schema=False)
 def invitation_page(token: str = "", db: Session = Depends(get_db)):
-    from ..comptes import valider_invitation
+    from ..comptes import PLAN_INTERNE, valider_invitation
     from ..offres import offre_integral
     inv = valider_invitation(db, token) if token else None
     if not inv:
@@ -56,8 +56,27 @@ def invitation_page(token: str = "", db: Session = Depends(get_db)):
 <h1>Invitation introuvable</h1><p class="sous">lien expiré ou déjà utilisé</p>
 <p style="text-align:center;font-size:12.5px">Demandez un nouveau lien à votre contact LABUSE —
 les invitations expirent après 7 jours.</p>"""), status_code=404)
-    # Le tunnel client sert TOUJOURS l'offre Intégral (source de vérité offres.py). Un compte
-    # interne (admin) n'atterrit jamais ici — il a son écran d'activation dédié (E2).
+    # E2 — un compte INTERNE (admin nominatif, `labuse creer-admin`) ne passe JAMAIS par le
+    # tunnel client (offre, prix, CGV commerciales, Stripe) : écran d'activation dédié.
+    if inv["plan"] == PLAN_INTERNE:
+        return HTMLResponse(_page("activer votre accès administrateur", f"""
+<h1>Activer votre accès administrateur</h1>
+<p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est validé par l'invitation.
+Choisissez un mot de passe : à votre première connexion, LABUSE vous fera activer la double authentification (QR + codes de secours).</p>
+<form method="post" action="/invitation" novalidate>
+<input type="hidden" name="token" value="{html.escape(token)}">
+<input type="hidden" name="interne" value="1">
+<label for="email">E-mail</label>
+<div class="field"><input id="email" type="email" autocomplete="email" value="{html.escape(inv['email'])}" disabled
+  aria-label="Votre e-mail (fixé par l'invitation)"></div>
+<label for="password">Choisissez un mot de passe</label>
+<div class="field"><input id="password" name="password" type="password" minlength="10" required
+  autocomplete="new-password" autofocus aria-describedby="rules"></div>
+<div class="meterlbl" id="rules">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
+<button type="submit" id="cta">Créer mon accès administrateur →</button>
+</form>
+<p class="note">Accès interne LABUSE — aucun paiement, aucun abonnement.</p>""", pied=False))
+    # Le tunnel client sert TOUJOURS l'offre Intégral (source de vérité offres.py).
     p = offre_integral()
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
@@ -91,12 +110,17 @@ labCgv();
 async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     from urllib.parse import parse_qs
 
-    from ..comptes import activer_par_invitation, audit
+    from ..comptes import PLAN_INTERNE, activer_par_invitation, audit, valider_invitation
     q = parse_qs((await request.body()).decode("utf-8", "replace"))
     token = (q.get("token") or [""])[0]
     password = (q.get("password") or [""])[0]
     cgv = (q.get("cgv") or [""])[0] == "oui"
-    if not cgv:
+    # E2 — un compte interne (admin) n'a pas de CGV commerciales : la case n'existe pas sur son
+    # écran. On confirme via le PLAN de l'invitation (source serveur), jamais via le champ caché
+    # 'interne' seul (non falsifiable : un client ne peut pas se faire passer pour un interne).
+    inv0 = valider_invitation(db, token) if token else None
+    est_interne = bool(inv0 and inv0["plan"] == PLAN_INTERNE)
+    if not cgv and not est_interne:
         # M18-A2 : plus de cul-de-sac — un retour vers le formulaire existe toujours.
         return HTMLResponse(_page("conditions", f"<h1>Conditions requises</h1>"
                                   f"<p class='sous'>vous devez d'abord accepter les conditions générales pour continuer</p>"
