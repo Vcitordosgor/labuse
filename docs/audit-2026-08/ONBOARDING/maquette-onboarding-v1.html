@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LABUSE — onboarding, propositions v1</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mint:#4ADE80;
+    --mint-dim:#2E9E5B;
+    --ink:#050706;
+    --ink-2:#0C100E;
+    --line:#1B211E;
+    --text:#E8EDEA;
+    --text-2:#8A968F;
+    --text-3:#55605A;
+    --amber:#D6A64A;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0A0C0B;color:var(--text);font-family:var(--body);padding:40px 20px 80px}
+
+  .page-head{max-width:1100px;margin:0 auto 40px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+  .page-head h1{font-family:var(--disp);font-size:22px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+  .page-head p{color:var(--text-2);font-size:14px;margin-top:10px;max-width:60ch;line-height:1.6}
+
+  .grid{max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;gap:44px;justify-content:center}
+  .item{width:390px}
+  .item > .cap{margin-bottom:12px}
+  .cap b{font-family:var(--disp);font-size:13px;letter-spacing:.1em;text-transform:uppercase;display:block}
+  .cap span{color:var(--text-3);font-size:12px;font-family:var(--disp)}
+  .frame{width:390px;height:720px;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--ink)}
+
+  /* ---------- écran ---------- */
+  .screen{
+    height:100%;
+    display:flex;flex-direction:column;
+    padding:32px 26px 22px;
+    background:
+      radial-gradient(120% 60% at 50% -8%, rgba(74,222,128,.09), transparent 60%),
+      var(--ink);
+  }
+  .screen .top{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+  .foot{padding-top:18px;text-align:center;font-size:11px;color:var(--text-3);font-family:var(--disp);letter-spacing:.04em}
+  .foot a{color:var(--mint-dim);text-decoration:none}
+
+  .bird{width:52px;height:auto;display:block;margin:0 auto 22px;filter:drop-shadow(0 0 18px rgba(74,222,128,.35))}
+
+  h2.t{font-family:var(--disp);font-size:17px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;text-align:center;line-height:1.35}
+  .sub{text-align:center;font-family:var(--disp);font-size:12.5px;letter-spacing:.08em;color:var(--text-2);margin-top:9px}
+  .sub .free{color:var(--mint)}
+  .lede{text-align:center;font-size:14px;line-height:1.65;color:var(--text-2);margin-top:18px}
+
+  label.f{display:block;font-family:var(--disp);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px}
+  .in{
+    width:100%;height:54px;border:1px solid var(--line);border-radius:13px;
+    background:var(--ink-2);color:var(--text);font-size:16px;font-family:var(--body);
+    padding:0 16px;display:flex;align-items:center;
+  }
+  .in.mono{font-family:var(--disp);letter-spacing:.1em}
+  .in.readonly{color:var(--text-2)}
+  .in.focus{border-color:var(--mint-dim);box-shadow:0 0 0 3px rgba(74,222,128,.10)}
+  .field{margin-top:24px}
+  .meter{display:flex;gap:6px;margin-top:9px}
+  .meter i{flex:1;height:3px;border-radius:2px;background:#1A201D}
+  .hint{font-size:12px;color:var(--text-3);margin-top:9px;line-height:1.5}
+
+  .cgv{
+    margin-top:26px;display:flex;gap:13px;align-items:flex-start;
+    border:1px solid var(--line);border-radius:13px;padding:15px 15px;background:var(--ink-2);
+  }
+  .box{width:21px;height:21px;border-radius:6px;border:1.5px solid #333C37;flex:0 0 auto;margin-top:1px}
+  .box.on{background:var(--mint);border-color:var(--mint);position:relative}
+  .box.on::after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #04150A;border-width:0 2px 2px 0;transform:rotate(42deg)}
+  .cgv p{font-size:13.5px;line-height:1.5;color:var(--text-2)}
+  .cgv a{color:var(--mint);text-decoration:none}
+
+  .btn{
+    margin-top:26px;width:100%;height:56px;border-radius:14px;border:0;
+    font-family:var(--disp);font-size:15.5px;font-weight:700;letter-spacing:.02em;
+    display:flex;align-items:center;justify-content:center;gap:9px;
+  }
+  .btn.on{background:var(--mint);color:#04150A;box-shadow:0 10px 30px -12px rgba(74,222,128,.6)}
+  .btn.off{background:#141A17;color:#4C564F;border:1px solid var(--line)}
+  .note{margin-top:14px;text-align:center;font-size:12px;color:var(--text-3);line-height:1.55}
+  .note.warn{color:#6B6152}
+
+  .link{display:block;text-align:center;margin-top:20px;color:var(--mint);font-size:14px;text-decoration:none}
+
+  /* flash */
+  .price{
+    display:inline-flex;align-items:baseline;gap:7px;margin:0 auto;
+    font-family:var(--disp);
+  }
+  .price b{font-size:34px;font-weight:700;letter-spacing:-.01em}
+  .price span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+  .center{display:flex;justify-content:center;margin-top:16px}
+  .list{margin-top:22px;border-top:1px solid var(--line)}
+  .list div{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--text-2);line-height:1.45}
+  .list div i{color:var(--mint-dim);font-style:normal;flex:0 0 auto;font-size:11px;margin-top:3px}
+
+  /* interrompu */
+  .icon{
+    width:60px;height:60px;border-radius:50%;margin:0 auto 22px;
+    border:1px solid rgba(214,166,74,.4);background:rgba(214,166,74,.08);
+    display:flex;align-items:center;justify-content:center;color:var(--amber);font-size:24px;
+  }
+  .why{margin-top:24px;border:1px solid var(--line);border-radius:13px;background:var(--ink-2);padding:16px}
+  .why p{font-size:13px;color:var(--text-2);line-height:1.6}
+  .why b{color:var(--text);font-weight:600}
+
+  .changes{max-width:1100px;margin:56px auto 0;border-top:1px solid var(--line);padding-top:28px}
+  .changes h3{font-family:var(--disp);font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px}
+  .changes ul{list-style:none;display:grid;gap:11px;max-width:76ch}
+  .changes li{font-size:14px;color:var(--text-2);line-height:1.6;padding-left:18px;position:relative}
+  .changes li::before{content:"—";position:absolute;left:0;color:var(--mint-dim)}
+  .changes li b{color:var(--text);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Onboarding — propositions v1</h1>
+  <p>Quatre écrans retravaillés, format téléphone (390 px). Même identité, mêmes textes pour l'essentiel : ce qui change est la mise en page — contenu centré dans la hauteur, respiration, hiérarchie, et un bouton qui dit la vérité sur son état.</p>
+</div>
+
+<div class="grid">
+
+  <!-- 1. INVITATION CLIENT -->
+  <div class="item">
+    <div class="cap"><b>Invitation client</b><span>/invitation — souscription Intégral</span></div>
+    <div class="frame"><div class="screen">
+      <div class="top">
+        <svg class="bird" viewBox="0 0 100 34"><path d="M2 4 C24 6 40 16 50 26 C60 16 76 6 98 4 C78 12 62 22 50 33 C38 22 22 12 2 4 Z" fill="#4ADE80"/></svg>
+        <h2 class="t">Créer votre accès</h2>
+        <div class="sub">Intégral · 349 €/mois · <span class="free">sans engagement</span></div>
+        <p class="lede">Votre e-mail est validé. Choisissez un mot de passe, et vous entrez dans le radar foncier de La Réunion.</p>
+
+        <div class="field">
+          <label class="f">E-mail</label>
+          <div class="in readonly">victor@cabinet.re</div>
+        </div>
+
+        <div class="field">
+          <label class="f">Choisissez un mot de passe</label>
+          <div class="in focus">&nbsp;</div>
+          <div class="meter"><i></i><i></i><i></i></div>
+          <p class="hint">10 caractères minimum — mélangez lettres, chiffres et symboles.</p>
+        </div>
+
+        <div class="cgv">
+          <div class="box"></div>
+          <p>J'ai lu et j'accepte les <a href="#">conditions générales</a>.</p>
+        </div>
+
+        <button class="btn off">Continuer vers le paiement</button>
+        <p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
+      </div>
+      <div class="foot">Radar foncier · La Réunion — <a href="#">CGV</a> · <a href="#">mentions légales</a> · <a href="#">confidentialité</a></div>
+    </div></div>
+  </div>
+
+  <!-- 2. INVITATION — état actif -->
+  <div class="item">
+    <div class="cap"><b>Invitation — case cochée</b><span>le bouton s'allume, le message disparaît</span></div>
+    <div class="frame"><div class="screen">
+      <div class="top">
+        <svg class="bird" viewBox="0 0 100 34"><path d="M2 4 C24 6 40 16 50 26 C60 16 76 6 98 4 C78 12 62 22 50 33 C38 22 22 12 2 4 Z" fill="#4ADE80"/></svg>
+        <h2 class="t">Créer votre accès</h2>
+        <div class="sub">Intégral · 349 €/mois · <span class="free">sans engagement</span></div>
+        <p class="lede">Votre e-mail est validé. Choisissez un mot de passe, et vous entrez dans le radar foncier de La Réunion.</p>
+
+        <div class="field">
+          <label class="f">E-mail</label>
+          <div class="in readonly">victor@cabinet.re</div>
+        </div>
+
+        <div class="field">
+          <label class="f">Choisissez un mot de passe</label>
+          <div class="in mono">••••••••••••</div>
+          <div class="meter"><i style="background:#4ADE80"></i><i style="background:#4ADE80"></i><i style="background:#2E9E5B"></i></div>
+          <p class="hint">Bon mot de passe.</p>
+        </div>
+
+        <div class="cgv">
+          <div class="box on"></div>
+          <p>J'ai lu et j'accepte les <a href="#">conditions générales</a>.</p>
+        </div>
+
+        <button class="btn on">Continuer vers le paiement →</button>
+        <p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
+      </div>
+      <div class="foot">Radar foncier · La Réunion — <a href="#">CGV</a> · <a href="#">mentions légales</a> · <a href="#">confidentialité</a></div>
+    </div></div>
+  </div>
+
+  <!-- 3. PAIEMENT INTERROMPU -->
+  <div class="item">
+    <div class="cap"><b>Paiement interrompu</b><span>/paiement/echec</span></div>
+    <div class="frame"><div class="screen">
+      <div class="top">
+        <svg class="bird" viewBox="0 0 100 34"><path d="M2 4 C24 6 40 16 50 26 C60 16 76 6 98 4 C78 12 62 22 50 33 C38 22 22 12 2 4 Z" fill="#4ADE80"/></svg>
+        <div class="icon">↺</div>
+        <h2 class="t">Paiement interrompu</h2>
+        <div class="sub">rien n'a été débité</div>
+        <p class="lede">Votre compte existe déjà. Connectez-vous et le paiement reprendra là où vous l'aviez laissé.</p>
+        <a href="#"><button class="btn on">Reprendre le paiement →</button></a>
+        <div class="why">
+          <p><b>Un doute avant de payer ?</b> Écrivez à victor@labuse.immo — je réponds moi-même, et je peux vous ouvrir un accès d'essai de 48 h.</p>
+        </div>
+      </div>
+      <div class="foot">Radar foncier · La Réunion — <a href="#">CGV</a> · <a href="#">mentions légales</a> · <a href="#">confidentialité</a></div>
+    </div></div>
+  </div>
+
+  <!-- 4. MOT DE PASSE OUBLIÉ -->
+  <div class="item">
+    <div class="cap"><b>Mot de passe oublié</b><span>/reset — le patron des écrans simples</span></div>
+    <div class="frame"><div class="screen">
+      <div class="top">
+        <svg class="bird" viewBox="0 0 100 34"><path d="M2 4 C24 6 40 16 50 26 C60 16 76 6 98 4 C78 12 62 22 50 33 C38 22 22 12 2 4 Z" fill="#4ADE80"/></svg>
+        <h2 class="t">Mot de passe oublié</h2>
+        <div class="sub">on vous envoie un lien de réinitialisation</div>
+
+        <div class="field" style="margin-top:30px">
+          <label class="f">Votre e-mail</label>
+          <div class="in readonly" style="color:var(--text-3)">prenom.nom@cabinet.re</div>
+        </div>
+
+        <button class="btn on">Recevoir le lien →</button>
+        <p class="note">Le lien est valable une heure et ne sert qu'une fois.</p>
+        <a class="link" href="#">← Retour à la connexion</a>
+      </div>
+      <div class="foot">Radar foncier · La Réunion — <a href="#">CGV</a> · <a href="#">mentions légales</a> · <a href="#">confidentialité</a></div>
+    </div></div>
+  </div>
+
+  <!-- 5. FLASH -->
+  <div class="item">
+    <div class="cap"><b>Rapport Flash</b><span>/flash — public, sans compte</span></div>
+    <div class="frame"><div class="screen">
+      <div class="top">
+        <svg class="bird" viewBox="0 0 100 34"><path d="M2 4 C24 6 40 16 50 26 C60 16 76 6 98 4 C78 12 62 22 50 33 C38 22 22 12 2 4 Z" fill="#4ADE80"/></svg>
+        <h2 class="t">Rapport Flash</h2>
+        <div class="sub">le dossier complet d'une parcelle, en PDF</div>
+        <div class="center"><div class="price"><b>79 €</b><span>paiement unique</span></div></div>
+
+        <div class="list">
+          <div><i>▸</i><span>Zonage et règles d'urbanisme calibrées — hauteur, emprise, ce qu'on peut y construire</span></div>
+          <div><i>▸</i><span>Risques : Géorisques, PPR, littoral</span></div>
+          <div><i>▸</i><span>Marché DVF du secteur et permis voisins</span></div>
+          <div><i>▸</i><span>Potentiel de transformation chiffré</span></div>
+          <div><i>▸</i><span>Chaque donnée avec sa source et sa fraîcheur</span></div>
+        </div>
+
+        <div class="field">
+          <label class="f">Identifiant de parcelle (IDU)</label>
+          <div class="in mono" style="color:var(--text-3)">97415000CW0658</div>
+          <p class="hint">14 caractères — il figure sur cadastre.gouv.fr.</p>
+        </div>
+
+        <button class="btn on">Voir ma parcelle →</button>
+        <p class="note">Vous vérifiez la parcelle avant de payer.</p>
+      </div>
+      <div class="foot">Radar foncier · La Réunion — <a href="#">CGV</a> · <a href="#">mentions légales</a> · <a href="#">confidentialité</a></div>
+    </div></div>
+  </div>
+
+</div>
+
+<div class="changes">
+  <h3>Ce qui change, et pourquoi</h3>
+  <ul>
+    <li><b>Le contenu est centré dans la hauteur.</b> Fini le bloc collé en haut avec 1 200 px de noir en dessous. L'écran se remplit, le pied de page reste en bas.</li>
+    <li><b>Le bouton dit la vérité.</b> Tant que la case CGV n'est pas cochée il est gris et éteint ; coché, il s'allume en vert. Plus besoin du message d'erreur sous le bouton — l'état se voit.</li>
+    <li><b>Le vert redevient un accent.</b> Sur Flash, le paragraphe entièrement vert est remplacé par une liste sobre à puces vertes : le vert souligne, il ne porte plus le texte.</li>
+    <li><b>« sans engagement » est mis en valeur</b> — c'est un argument de vente face à un concurrent installé, pas une mention de bas de page.</li>
+    <li><b>Paiement interrompu devient utile.</b> Un bouton d'action au lieu d'un lien noyé dans une phrase, et une porte de sortie humaine : votre e-mail, et l'essai 48 h proposé au moment précis où le prospect hésite.</li>
+    <li><b>Flash respire.</b> Le pavé dense devient un prix affiché en grand et cinq lignes scannables — on comprend l'offre en trois secondes.</li>
+    <li><b>Les champs restent à 16 px</b> (pas de zoom iOS), les zones tactiles font 54-56 px de haut, et les marges latérales laissent le texte respirer.</li>
+  </ul>
+</div>
+
+</body>
+</html>
