@@ -53,11 +53,20 @@ _PARCOURS_JS = """
   document.addEventListener('DOMContentLoaded', function(){
     var pw=document.querySelector('[data-strength]');
     if(pw){ pw.addEventListener('input', function(){ strength(pw.value); }); }
-    // Case CGV \\u2192 retour visuel (le bouton reste TOUJOURS cliquable : la validation native
-    // `required` + le serveur bloquent une soumission sans CGV \\u2014 jamais de cul-de-sac).
-    var cgv=document.getElementById('cgv'), err=document.getElementById('cgverr');
-    if(cgv&&err){ var sync=function(){ err.style.display=cgv.checked?'none':'block'; };
-      cgv.addEventListener('change', sync); sync(); }
+    // O2 \\u2014 la case CGV pilote l'\\u00c9TAT VISUEL du bouton : \\u00e9teint (.off) tant qu'elle n'est pas
+    // coch\\u00e9e, allum\\u00e9 d\\u00e8s qu'elle l'est. Le bouton n'est JAMAIS `disabled` (submit natif pr\\u00e9serv\\u00e9 :
+    // la validation `required` + le serveur restent le filet \\u2014 jamais de cul-de-sac si le JS \\u00e9choue).
+    // Le message n'appara\\u00eet QUE si l'utilisateur force l'action sur un bouton \\u00e9teint.
+    var cgv=document.getElementById('cgv'), cta=document.getElementById('cta'), err=document.getElementById('cgverr');
+    if(cgv&&cta){
+      var sync=function(){ var on=cgv.checked;
+        cta.classList.toggle('off', !on); cta.setAttribute('aria-disabled', String(!on));
+        if(err&&on) err.style.display='none'; };
+      cgv.addEventListener('change', sync); sync();
+      cta.addEventListener('click', function(e){
+        if(!cgv.checked){ e.preventDefault(); if(err) err.style.display='block'; cgv.focus(); }
+      });
+    }
   });
 })();
 """
@@ -181,8 +190,8 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
 <div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true">
 <label for="cgv">J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a>.</label></div>
-<button type="submit" id="cta">Continuer vers le paiement →</button>
-<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px">Cochez les conditions générales pour continuer.</p>
+<button type="submit" id="cta" class="off" aria-disabled="true">Continuer vers le paiement <span class="arr" aria-hidden="true">→</span></button>
+<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px;color:var(--warn)">Cochez les conditions générales pour continuer.</p>
 </form>
 <p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
 <script src="/parcours.js" defer></script>""", pied=True))

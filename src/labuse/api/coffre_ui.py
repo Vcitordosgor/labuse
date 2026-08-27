@@ -86,12 +86,21 @@ input[type=email],input[type=password],input[type=text]{width:100%;background:va
 input:disabled{color:var(--mut)}
 input::placeholder{color:var(--dim)}
 input:focus-visible{border-color:var(--mint);box-shadow:0 0 0 3px rgba(92,230,161,.16)}
-button,.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;margin-top:26px;
-  background:var(--mint);color:var(--mint-ink);border:0;border-radius:var(--r);font:600 14px -apple-system,'Inter',system-ui,sans-serif;
-  padding:12px;cursor:pointer;transition:filter .15s var(--ease);text-decoration:none}
-button:hover,.btn:hover{filter:brightness(1.08)}
-button:disabled,.btn:disabled{background:var(--s2);color:var(--mut);cursor:not-allowed;filter:none}
+/* O2 — le bouton d'action ALLUMÉ (par défaut) : vert menthe, texte sombre, ombre portée. */
+button,.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:9px;margin-top:24px;
+  min-height:56px;background:var(--mint);color:var(--mint-ink);border:0;border-radius:14px;
+  font:700 15.5px 'Space Grotesk',system-ui,sans-serif;letter-spacing:.02em;cursor:pointer;
+  box-shadow:0 12px 30px -12px rgba(74,222,128,.55);
+  transition:filter .15s var(--ease),background .15s,box-shadow .15s,color .15s;text-decoration:none}
+button:hover,.btn:hover{filter:brightness(1.06)}
+/* O2 — ÉTEINT : un bouton qui ne peut pas agir n'est JAMAIS peint comme un bouton actif.
+   Fond sombre, texte gris LISIBLE (contraste ~4:1), bordure discrète, aucune ombre. */
+button.off,.btn.off,button[aria-disabled=true]{background:#141A17;color:#7A857E;
+  border:1px solid var(--line2);box-shadow:none;filter:none}
+button.off:hover,.btn.off:hover,button[aria-disabled=true]:hover{filter:none}
+button:disabled,.btn:disabled{background:#141A17;color:#7A857E;cursor:not-allowed;box-shadow:none;filter:none}
 button:focus-visible,.btn:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.off .arr{display:none}
 .ghost{background:none;border:1px solid var(--line2);color:var(--txt)}
 .linkrow{margin-top:18px;text-align:center;font-size:12.5px}
 a{color:var(--mint);text-decoration:none} a:hover{text-decoration:underline}
