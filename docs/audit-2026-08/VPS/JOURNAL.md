@@ -80,3 +80,55 @@ en deux temps, aucun état git unique. Non versionnés trouvés (diff arbre VPS 
   relancé PROPREMENT détaché (`setsid`, log /tmp/restore.log) après DROP/CREATE de labuse_new.
   Au passage : un script poussé par heredoc portait `$$` (PID bash) dans le quoting psql → fuseau
   refusé ; script re-poussé par scp, fuseau posé correctement.
+- INCIDENT 2 : `--role=labuse` ne peut pas créer `postgis_raster` (non « trusted ») ni
+  `pg_freespacemap` → la table raster `rgealti_pente_5m` (pente RGE ALTI, servie par le solaire)
+  aurait SAUTÉ. Restore arrêté, extensions pré-créées en superuser, relancé. Vérifié ensuite.
+- INCIDENT 3 — DISQUE PLEIN pendant le restore (96G/96G, 645 Mo restants) : le restore s'est
+  terminé avec 11 erreurs = 3 bénignes (COMMENT ON EXTENSION), 1 bénigne (COPY spatial_ref_sys,
+  peuplée par l'extension), et 3 INDEX tombés sur ENOSPC (2× dryrun_cascade_results,
+  1× score_snapshot_parcelles). Espace rendu en supprimant LA COPIE transférée du dump
+  (l'original md5-vérifié reste sur le Mac — aucun artefact de reprise unique détruit ;
+  la suppression des vieux dumps quotidiens a été REFUSÉE par la garde de permissions et
+  n'a pas été faite). Les 3 index recréés à la main à l'identique — restore COMPLET.
+- VÉRIFICATIONS labuse_new : parcelles **431 663** ✓ · `parcel_p_score_v2` porte
+  **q_v11_m137 sur 431 663 lignes** ✓ · q_v11_m137 dans `p_score_v2_runs` (7 runs) ✓ ·
+  tables dashboard `ia_log`/`usage_compteurs` ✓ · comptes 21 / utilisateurs 17 ✓ ·
+  fuseau base `Indian/Reunion` ✓ · spatial_ref_sys 8 500 ✓.
+
+### Bascule V2+V3 exécutée (14h29-14h32 UTC, service arrêté ~3 min, rideau Caddy INCHANGÉ)
+
+Script `/tmp/bascule.sh` (journalisé /tmp/bascule.log sur le VPS) :
+1. `git pull` sur app-new → `e79bd483` ; 2. `systemctl stop labuse` ;
+3. sessions PG terminées puis `ALTER DATABASE labuse RENAME TO labuse_old` et
+   `labuse_new RENAME TO labuse` ; 4. `mv app → app-juillet`, `mv app-new → app` ;
+5. venv RECRÉÉ à son chemin final /opt/labuse/venv (piège shebangs : un venv renommé
+   pointe vers l'ancien chemin), ancien → venv-juillet ; 6. unit systemd (workers 5,
+   Restart=always, MemoryMax=6G) + `/opt/labuse/deploy.sh` posés ; 7. `labuse init-db`
+   (schéma additif : tables 2FA…) ; 8. start + healthcheck.
+- INCIDENT 4 : `LABUSE_MAIL_FROM=LABUSE <contact@labuse.immo>` SANS guillemets casse tout
+  sourcing shell du fichier env (`set -a; . labuse.env` — le même geste que TOUS les crons).
+  systemd, lui, le lisait sans broncher. Corrigé (valeur entre guillemets), init-db rejoué.
+- RÉSULTAT : service `active`, **/readyz {"ready":true}**, 5 workers uvicorn (~130 Mo chacun),
+  RAM totale 1,3 Go. `labuse_old` reste jusqu'au **03/09/2026** (note : suppression =
+  `sudo -u postgres psql -c "DROP DATABASE labuse_old;"` après vérification).
+- Rollback documenté : stop → renommer les bases en sens inverse → `mv` inverses des dossiers
+  app/venv → ancien unit depuis config.tgz → start. Filet V1 intact.
+
+## V4 — SERVICE À NIVEAU (fait avec la bascule)
+
+- Unit systemd : **workers 5** (6 vCores), **Restart=always** (le dashboard avait tué l'uvicorn
+  local 2 fois — plus jamais de service mort silencieux), **MemoryMax=6G** (l'OOM systemd
+  redémarre le service plutôt que de laisser le noyau viser PostgreSQL), commentaires Nginx→Caddy.
+- `/etc/labuse/labuse.env` RÉÉCRIT (sauvegarde `.avant-v4-20260827`, mode 640 root:labuse) :
+  secrets existants préservés ; `LABUSE_SERVED_RUN=q_v7_defisc` RETIRÉ → `config/served_run.txt`
+  versionné gouverne (**q_v11_m137**) ; ajouts : `LABUSE_PUBLIC_BASE_URL`,
+  `LABUSE_LOGIN_PILOTE_ACTIF=0` (V5), `LABUSE_AI_PROVIDER=anthropic`, `LABUSE_ADMIN_EMAIL`,
+  placeholders commentés pour les clés LIVE À POSER PAR VIC : `STRIPE_SECRET_KEY` (sk_live_…),
+  `STRIPE_WEBHOOK_SECRET` (whsec_…), `STRIPE_RESTRICTED_KEY` (rk_live_…), `STRIPE_PRICE_*`,
+  `BREVO_API_KEY` + 8 IDs de templates, SMTP. RV-011 : clés LIVE partout en prod, jamais de test.
+- **MANIP STRIPE POUR VIC (webhook prod)** : dashboard Stripe (mode LIVE) → Développeurs →
+  Webhooks → « Ajouter un endpoint » → URL `https://app.labuse.immo/stripe/webhook` →
+  événements : `checkout.session.completed`, `customer.subscription.updated`,
+  `customer.subscription.deleted`, `invoice.payment_failed` (la liste que lit
+  `facturation.traiter_webhook`) → créer, puis copier le « Signing secret » (whsec_…) dans
+  `/etc/labuse/labuse.env` (STRIPE_WEBHOOK_SECRET=) et `sudo systemctl restart labuse`.
