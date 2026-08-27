@@ -123,11 +123,10 @@ def flash_retour_js():
 # ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
 def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True) -> str:
-    footer = ('<p class="note">Radar foncier · La Réunion — <a href="/cgv">CGV</a> · '
-              '<a href="/mentions-legales">mentions légales</a> · '
-              '<a href="/confidentialite">confidentialité</a></p>') if pied else ""
-    return coffre_ui.page(titre, coffre_ui.OISEAU + corps + footer,
-                          w=760 if large else None, legal=large, head=head)
+    # O1 — le pied légal passe par `foot=` (collé en bas), plus empilé dans le corps.
+    return coffre_ui.page(titre, coffre_ui.OISEAU + corps,
+                          w=760 if large else None, legal=large, head=head,
+                          foot=coffre_ui.FOOTER_LEGAL if pied else "")
 
 
 # ── E4 · invitation → mot de passe + CGV → Checkout ──
@@ -269,8 +268,7 @@ def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
 </div>
 <form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
 <button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} €</button></form>
-<p class="note">Vous serez redirigé vers Stripe. Rien n'est débité tant que vous n'avez pas confirmé.</p>""",
-                        pied=False))
+<p class="note">Vous serez redirigé vers Stripe. Rien n'est débité tant que vous n'avez pas confirmé.</p>"""))
 
 
 @router.post("/onboarding/paiement", include_in_schema=False)
@@ -307,13 +305,12 @@ def onboarding_retour(ok: int = 1):
 foncier de La Réunion — le scoring des parcelles, les fiches sourcées, les outils d'analyse et le dossier
 banquier. Un guide de prise en main en 5 gestes vous attend dès votre première connexion.</p>
 <p style="margin-top:26px"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none;box-shadow:0 8px 24px rgba(92,230,161,.30)">Entrer dans LABUSE →</a></p>
-<p class="note" style="margin-top:16px">Connectez-vous avec votre e-mail et le mot de passe que vous venez de choisir.</p></div>""", pied=False))
+<p class="note" style="margin-top:16px">Connectez-vous avec votre e-mail et le mot de passe que vous venez de choisir.</p></div>"""))
     return HTMLResponse(_page("paiement interrompu", """
 <div class="big"><div class="mark soft" aria-hidden="true">↺</div>
 <h1>Paiement interrompu</h1><p class="sub">rien n'a été débité</p>
 <p style="font-size:13px">Aucun souci. Reprenez quand vous voulez : connectez-vous sur
-<a href="/login">la porte</a> avec votre email et votre mot de passe, le paiement se relancera.</p></div>""",
-                        pied=False))
+<a href="/login">la porte</a> avec votre email et votre mot de passe, le paiement se relancera.</p></div>"""))
 
 
 # ── E1 · reset mot de passe ──
@@ -393,7 +390,7 @@ réinitialisation vient de lui être envoyé. Pensez à vérifier vos indésirab
 réinitialisation lui est destiné. <b style="color:var(--warn)">L'envoi automatique par e-mail n'est pas
 actif sur cet environnement</b> — votre contact LABUSE peut vous le transmettre.</p>
 <p style="margin-top:18px"><a class="pill" href="/login">← Retour à la connexion</a></p></div>"""
-    return HTMLResponse(_page("demande enregistrée", corps, pied=False))
+    return HTMLResponse(_page("demande enregistrée", corps))
 
 
 @router.post("/reset", include_in_schema=False)
@@ -692,7 +689,7 @@ Estimé) et son millésime.</div></div>
 <button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
 <p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
 <p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
-conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>""", pied=False))
+conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>"""))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""

@@ -44,4 +44,5 @@ def test_css_colonne_de_lecture_confortable():
     """La CSS légale impose une colonne ~68ch (ni bloc 400px étroit, ni pleine largeur)."""
     from labuse.api import coffre_ui
     assert ".legal{max-width:68ch" in coffre_ui.CSS.replace("\n", "")
-    assert "body.legalpage{align-items:flex-start}" in coffre_ui.CSS
+    # O1 — le body n'est plus flex ; le mode lecture top-aligne via `.legalpage .top`.
+    assert ".legalpage .top{justify-content:flex-start" in coffre_ui.CSS

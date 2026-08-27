@@ -262,7 +262,7 @@ def _page_2fa(titre: str, sous: str, corps: str, error: str | None = None) -> st
     err = (f'<p class="err" role="alert"><span aria-hidden="true">▲</span> {error}</p>'
            if error else "")
     return coffre_ui.page(titre, coffre_ui.OISEAU + f"""
-<h1>LABUSE</h1><p class="sub">{sous}</p>{corps}{err}""")
+<h1>LABUSE</h1><p class="sub">{sous}</p>{corps}{err}""", foot=coffre_ui.FOOTER_LEGAL)
 
 
 def page_2fa_code(error: str | None = None) -> str:
@@ -325,7 +325,6 @@ def login_page(error: bool = False) -> str:
             "body[data-state=chargement] .spin{display:inline-block!important}"
             "body[data-state=chargement] [data-hideon=chargement]{display:none}"
             "body[data-state=chargement] input{opacity:.55;pointer-events:none}"
-            ".foot{font-size:11px;color:var(--dim);text-align:center;margin-top:22px;line-height:1.6}"
             "</style>")
     corps = coffre_ui.OISEAU + f"""
 <h1>LABUSE</h1><p class="sub">Radar foncier · La Réunion</p>
@@ -343,7 +342,7 @@ def login_page(error: bool = False) -> str:
     <span data-hideon="chargement">Entrer</span></button>
 </form>
 <p class="linkrow"><a href="/reset">Mot de passe oublié ?</a></p>
-<p class="foot">Accès réservé aux abonnés. Pré-analyse sur données publiques —
+<p class="note">Accès réservé aux abonnés. Pré-analyse sur données publiques —
 constructibilité, propriété, rentabilité jamais garanties.</p>
 <script>
   var porte = document.getElementById('porte');
@@ -354,7 +353,7 @@ constructibilité, propriété, rentabilité jamais garanties.</p>
     }});
   }});
 </script>"""
-    html_doc = coffre_ui.page("Connexion", corps, head=head)
+    html_doc = coffre_ui.page("Connexion", corps, head=head, foot=coffre_ui.FOOTER_LEGAL)
     return html_doc.replace('<body style="', f'<body data-state="{etat}" style="', 1)
 
 

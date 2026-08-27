@@ -49,17 +49,27 @@ def pay_cid(token: str) -> int | None:
 CSS = """
 :root{
   --bg:#050706; --s1:#0B100D; --s2:#0D120F; --s3:#111814; --line:#1B2620; --line2:#1E2A23;
-  --mint:#5CE6A1; --mint-ink:#06130C; --violet:#B497F0; --or:#C9A961;
-  --hi:#ECF5EF; --txt:#C9DCD1; --mut:#8FA69A; --dim:#5C7268; --err:#E8695A; --warn:#E8B44C;
-  --r:10px; --ease:cubic-bezier(.2,.7,.2,1);
+  /* O3 — le vert du parcours s'aligne sur la maquette validée (et sur l'oiseau, déjà #4ADE80).
+     --mint = accent/CTA ; --mint-dim = liens & puces (vert plus sobre, ne porte pas de texte). */
+  --mint:#4ADE80; --mint-dim:#2E9E5B; --mint-ink:#04150A; --violet:#B497F0; --or:#C9A961;
+  --hi:#ECF5EF; --txt:#C9DCD1; --mut:#8FA69A; --dim:#55605A; --err:#E8695A; --warn:#D6A64A;
+  --r:12px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
-body{background:radial-gradient(120% 120% at 50% -10%, #0A100C 0%, var(--bg) 60%);
-  color:var(--txt);font:15px/1.6 -apple-system,'Inter',system-ui,sans-serif;
-  display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-.bloc{width:100%;max-width:var(--w,400px)}
-.oiseau{display:block;margin:0 auto 14px;height:28px;width:auto;filter:drop-shadow(0 0 14px rgba(201,169,97,.25))}
+html,body{margin:0;min-height:100%}
+/* O1 — le contenu se CENTRE dans la hauteur, le pied reste en bas, plus jamais de grand vide.
+   `.bloc` remplit la fenêtre (flex colonne) : `.top` (flex:1) centre le contenu, `.foot` colle en
+   bas. Contenu plus grand que l'écran → la page défile naturellement (min-height, pas height). */
+body{background:radial-gradient(130% 90% at 50% -8%, rgba(74,222,128,.05), transparent 55%),
+  radial-gradient(120% 120% at 50% -10%, #0A100C 0%, var(--bg) 60%);
+  color:var(--txt);font:15px/1.6 -apple-system,'Inter',system-ui,sans-serif;min-height:100vh;padding:0}
+.bloc{width:100%;max-width:var(--w,412px);min-height:100vh;margin:0 auto;
+  display:flex;flex-direction:column;padding:36px 26px 20px}
+.top{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.foot{padding-top:20px;text-align:center;font-size:11px;color:var(--dim);letter-spacing:.02em;
+  font-family:'Space Grotesk',system-ui,sans-serif}
+.foot a{color:var(--mint-dim)}
+.oiseau{display:block;margin:0 auto 20px;height:30px;width:auto;filter:drop-shadow(0 0 16px rgba(74,222,128,.30))}
 h1{font:600 15px/1.3 'Space Grotesk',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--hi);text-align:center;margin:0 0 4px}
 .sub,.sous{text-align:center;font-size:11.5px;color:var(--dim);letter-spacing:.1em;margin:0 0 28px}
 .cgvbox{display:flex;gap:11px;align-items:flex-start;margin-top:22px;background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:13px;font-size:12.5px;color:var(--txt)}
@@ -113,8 +123,8 @@ a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3
 .mark.ok{background:rgba(92,230,161,.12);color:var(--mint);border:1px solid rgba(92,230,161,.4)}
 .mark.soft{background:rgba(232,180,76,.1);color:var(--warn);border:1px solid rgba(232,180,76,.35)}
 /* S3 — LISIBILITÉ des pages légales : longue lecture, pas un bloc centré étroit.
-   Le corps se lit du haut (legalpage), dans une colonne ~68ch, aérée. */
-body.legalpage{align-items:flex-start}
+   Le corps se lit du HAUT (pas centré verticalement comme les écrans courts), colonne ~68ch. */
+.legalpage .top{justify-content:flex-start;padding-top:4px}
 .legalpage .bloc{max-width:760px}
 .legal{max-width:68ch;margin:0 auto;text-align:left}
 .legal h1{text-align:left;font-size:19px;letter-spacing:.06em;margin:4px 0 4px}
@@ -134,7 +144,7 @@ body.legalpage{align-items:flex-start}
 .legal .haut:hover{color:var(--mint)}
 .card{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:22px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:480px){body{padding:16px;align-items:flex-start}.recap .prix{font-size:22px}}
+@media (max-width:480px){.bloc{padding:28px 18px 16px}.recap .prix{font-size:22px}}
 """
 
 # M83 D — logo LABUSE #4ADE80 (nouvelle marque). Constante UNIQUE réutilisée par tout le tunnel auth
@@ -151,12 +161,21 @@ LOCK_SVG = ('<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke=
             '<path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>')
 
 
-def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, head: str = "") -> str:
+# Pied de page légal PARTAGÉ (tous les écrans du parcours l'affichent en bas — O1).
+FOOTER_LEGAL = ('Radar foncier · La Réunion — <a href="/cgv">CGV</a> · '
+                '<a href="/mentions-legales">mentions légales</a> · '
+                '<a href="/confidentialite">confidentialité</a>')
+
+
+def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
+         head: str = "", foot: str = "") -> str:
     wvar = f"--w:{w}px;" if w else ""
     cls = "legal" if legal else ""
     # S3 — les pages légales sont de LONGS documents : le corps se lit du HAUT (pas centré
     # verticalement) et dans une colonne de lecture confortable (voir CSS `.legalpage`/`.legal`).
     body_cls = ' class="legalpage"' if legal else ""
+    # O1 — le contenu vit dans `.top` (centré verticalement), le pied `foot` colle en bas.
+    foot_html = f'<div class="foot">{foot}</div>' if foot else ""
     return (f"<!doctype html><html lang=\"fr\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             f"<meta name=\"robots\" content=\"noindex\">"
@@ -173,4 +192,5 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, h
             f"<link href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&"
             f"family=Inter:wght@400;500;600&display=swap\" rel=\"stylesheet\">"
             f"<style>{CSS}</style>{head}</head>"
-            f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">{corps}</main></body></html>")
+            f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">"
+            f"<div class=\"top\">{corps}</div>{foot_html}</main></body></html>")
