@@ -195,6 +195,12 @@ export interface ContexteCommune {
     telephone: string | null; email: string | null; site_officiel: string | null
     url_annuaire: string | null; source: string; date_import: string | null
   } | null
+  // L1 (KF-2) — acquisitions PM récentes de la commune (changement de propriétaire moral d'un
+  // millésime au suivant, DGFiP). Constat, hors scoring. Maille = commune. null si commune sans INSEE.
+  acquisitions_pm: {
+    source: string; note: string; depuis_millesime: number; n: number; n_total: number; tronquee: boolean
+    acquisitions: { idu: string; de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
+  } | null
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
   foncier: {
     n_parcelles: number; surface_ha: number | null

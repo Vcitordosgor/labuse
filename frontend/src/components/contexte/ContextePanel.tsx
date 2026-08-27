@@ -197,6 +197,27 @@ export function ContextePanel() {
                 <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
               </Section>
             )}
+            {/* L1 (KF-2) — ACQUISITIONS PM RÉCENTES : changements de propriétaire moral d'un millésime
+                au suivant (DGFiP). CONSTAT sourcé, hors scoring, maille COMMUNE. Rien si aucun. */}
+            {d.acquisitions_pm && d.acquisitions_pm.n_total > 0 && (
+              <Section title="ACQUISITIONS PM RÉCENTES">
+                <p className="text-[11px] text-txt-mut">
+                  {d.acquisitions_pm.n} affichée{d.acquisitions_pm.n > 1 ? 's' : ''} sur {d.acquisitions_pm.n_total} changement{d.acquisitions_pm.n_total > 1 ? 's' : ''} de propriétaire moral depuis {d.acquisitions_pm.depuis_millesime} (maille commune).
+                </p>
+                <div className="mt-2 space-y-1.5">
+                  {d.acquisitions_pm.acquisitions.map((a) => (
+                    <div key={a.idu} className="text-[11px] leading-snug text-txt">
+                      <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
+                      <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
+                      <span className="mx-1 text-txt-dim">→</span>
+                      <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
+                      <div className="font-mono text-[9.5px] text-txt-dim">parcelle {a.idu}</div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] leading-snug text-txt-dim italic">{d.acquisitions_pm.note}</p>
+              </Section>
+            )}
             {/* M55-B point 4a (décision Vic) : le bloc « CLASSEMENT LABUSE » (compteurs de
                 production — parcelles brûlantes/chaudes, propriétaires PM) est RETIRÉ de la fiche
                 de CONTEXTE commune. Le client n'a pas à y voir nos compteurs internes ; cette fiche

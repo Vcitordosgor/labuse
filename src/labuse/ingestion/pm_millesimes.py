@@ -37,6 +37,11 @@ MILLESIME_ATTACHMENTS = {
     2022: "fichier_des_parcelles_situation_2022_dept_62_a_976_zip",
     2023: "fichier_des_parcelles_situation_2023_dept_62_a_976_zip",
     2024: "fichiers_des_parcelles_situation_2024_dpts_61_a_976_zip",
+    # KF-2 L0/L3 : le 2025 est désormais publié en amont (graphie « fichier_ » singulier, « dpts »,
+    # tranche 57→976 pour le 974). Non ré-ingéré par défaut — le millésime 2025 est déjà servi par la
+    # table de prod `parcelle_personne_morale`, uni à la volée par proprietaire_historique. Présent ici
+    # pour que la commande de rafraîchissement puisse le charger dans la table versionnée si voulu.
+    2025: "fichier_des_parcelles_situation_2025_dpts_57_a_976_zip",
 }
 
 #: positions attendues (mêmes 24 colonnes que la situation 2025 — vérifié par _sniff_header,
@@ -162,3 +167,18 @@ def ingest_millesime(session: Session, annee: int, csv_path: str | Path,
     session.commit()
     log(f"millésime {annee} : {n_lignes} lignes 974 → {len(seen)} parcelles distinctes")
     return {"annee": annee, "lignes_csv": n_lignes, "parcelles": len(seen), "entete": header}
+
+
+def enregistrer_fraicheur(session: Session) -> str | None:
+    """KF-2 L3 — pose `data_sources.last_sync_at` du catalogue à la DATE RÉELLE d'ingestion du panel
+    (max(date_import) de `pm_proprietaires_millesimes`) → le dashboard admin affiche la fraîcheur et le
+    badge « à mettre à jour » (cadence annuelle). Aucune date inventée : on lit la vraie date d'import.
+    Renvoie la date posée (ISO) ou None si le panel est vide."""
+    d = session.execute(text("SELECT max(date_import) FROM pm_proprietaires_millesimes")).scalar()
+    if d is None:
+        return None
+    session.execute(text(
+        "UPDATE data_sources SET last_sync_at = :d "
+        "WHERE name = 'DGFiP — parcelles des personnes morales'"), {"d": d})
+    session.commit()
+    return d.isoformat()

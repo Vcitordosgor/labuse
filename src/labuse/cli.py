@@ -2755,6 +2755,34 @@ def ingest_mairies_cmd() -> None:
                + (f" — absentes de l'annuaire : {', '.join(r['absentes'])}" if r["absentes"] else ""))
 
 
+@app.command("ingest-pm-millesimes")
+def ingest_pm_millesimes_cmd(
+    annees: str = typer.Option("2019-2024", help="millésimes à (ré)ingérer, ex. « 2019-2024 » ou « 2025 »"),
+    fraicheur_seule: bool = typer.Option(False, "--fraicheur-seule",
+                                         help="ne rien télécharger, poser seulement la fraîcheur du catalogue"),
+) -> None:
+    """KF-2 L1/L3 — panel millésimes DGFiP « parcelles des personnes morales » (Licence Ouverte v2,
+    situation au 1ᵉʳ janvier) → table VERSIONNÉE pm_proprietaires_millesimes (jamais la table servie).
+    Cadence ANNUELLE. Idempotent (DELETE+réinsertion par millésime). Pose ensuite la fraîcheur du
+    catalogue (dashboard admin). Le 2025 est servi par la table de prod ; l'ingérer ici est optionnel."""
+    from .ingestion import pm_millesimes as pmm
+
+    if not fraicheur_seule:
+        a, _, b = annees.partition("-")
+        bornes = range(int(a), int(b) + 1) if b else [int(a)]
+        for annee in bornes:
+            if annee not in pmm.MILLESIME_ATTACHMENTS:
+                typer.echo(f"· millésime {annee} : aucun attachment connu — ignoré")
+                continue
+            csv_path = pmm.fetch_974_csv(annee)
+            with session_scope() as s:
+                r = pmm.ingest_millesime(s, annee, csv_path, log=lambda m: typer.echo(f"  {m}"))
+            typer.echo(f"✓ millésime {annee} : {r['parcelles']} parcelles PM")
+    with session_scope() as s:
+        pose = pmm.enregistrer_fraicheur(s)
+    typer.echo(f"✓ fraîcheur catalogue posée : {pose or 'panel vide'}")
+
+
 @app.command("refresh-dvf")
 def refresh_dvf_cmd() -> None:
     """J+2 — DVF : détecte une nouvelle livraison Etalab (Last-Modified) et recharge SEULEMENT

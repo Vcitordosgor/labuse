@@ -12,6 +12,8 @@ de la cascade (cascade/layers/*.py) et par le jeu de démo — NE PAS renommer.
 """
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -346,17 +348,21 @@ SOURCES: list[dict] = [
     # parcelle↔PM lus par la fiche (bloc Propriétaire) — à ne pas confondre avec « Fichiers fonciers
     # (Cerema) » (conventionné, non branché, 100 % UNKNOWN). Ingérée par ingestion/personnes_morales.py.
     dict(name="DGFiP — parcelles des personnes morales", category="proprietaire", provider="DGFiP",
-         source_millesime="Parcelles des PM — situation 2025 (DGFiP)",   # M125-1bis : endpoint ..._situation_2025_...
+         source_millesime="Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)",   # KF-2 L1/L3
+         source_cadence="annuelle", source_horizon_at=date(2025, 1, 1),   # KF-2 L3 : cadence + dernière situation
          access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://data.economie.gouv.fr/explore/dataset/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/",
          endpoint_url="https://data.economie.gouv.fr/api/v2/catalog/datasets/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/attachments/fichier_des_parcelles_situation_2025_dpts_57_a_976_zip",
          legal_notes="Licence Ouverte v2 — attribution : « Source : DGFiP — parcelles des personnes morales ». "
                      "RGPD-safe : personnes MORALES uniquement (commune/État/SEM/bailleur/SCI), aucune personne physique.",
-         technical_notes="M74 A : source AJOUTÉE au catalogue (elle alimentait le produit sans y figurer — audit "
-                         "M74 C bis). Fichier DGFiP annuel (ZIP départemental, CSV PM_25_NB_974.csv), millésime 2025 : "
-                         "82 701 parcelles de personnes morales → parcelle_personne_morale (owner_type/owner_name), lu "
-                         "par la fiche (bloc Propriétaire) + recoupé avec BODACC/INPI. C'est la source réelle du "
-                         "propriétaire moral, distincte des Fichiers fonciers Cerema conventionnés."),
+         technical_notes="M74 A : source AJOUTÉE au catalogue (elle alimentait le produit sans y figurer). KF-2 L1 : "
+                         "PANEL MILLÉSIMES exploité — pm_proprietaires_millesimes (461 570 lignes 2019→2024, 24/24 "
+                         "communes, siren+dénom 100 %, ingestion/pm_millesimes.py) UNI au millésime 2025 servi "
+                         "(parcelle_personne_morale, 82 701, JAMAIS écrasé). Fiche : timeline propriétaire PM + DIFF "
+                         "annuel CONSTATÉ (proprietaire_historique.py, hors scoring). Cadence ANNUELLE (situation au "
+                         "1ᵉʳ janvier) ; rafraîchissement : `labuse ingest-pm-millesimes` (cf. EXPLOITATION-CRON.md). "
+                         "⚠ 2025 versionné disponible en amont, non ré-ingéré (servi via l'union) ; pic 2019→2020 = "
+                         "discontinuité de complétude SIREN, pas des ventes (KF-102). Distincte des Fichiers fonciers Cerema."),
     dict(name="Fichiers fonciers (Cerema)", category="proprietaire", provider="DGFiP / Cerema",
          access_type="import", status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
          documentation_url="https://datafoncier.cerema.fr", endpoint_url=None,
