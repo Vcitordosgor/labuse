@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     # redémarrage — acceptable en local, à définir en pilote).
     secret_key: str | None = None
     session_hours: float = 12.0
+    # AUDIT COMPTES · A5 — seuil du SIGNAL de partage de compte (dashboard admin) : nombre d'IP
+    # distinctes actives simultanément au-delà duquel un compte est signalé (jamais bloqué).
+    # 1 licence = 1 accès ; 3 postes simultanés = partage probable. Purement informatif.
+    sessions_signal_seuil: int = 3
     # Origine publique (https://…) autorisée en CORS hors local ; vide = même origine seulement.
     public_url: str | None = None
 

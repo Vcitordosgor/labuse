@@ -79,6 +79,10 @@ function ClientRow({ l, stripeConfigure }: { l: AdminLicence; stripeConfigure: b
           {l.essai_expire_at && l.statut === 'actif' && (
             <Chip tone="warn">Essai · expire dans {Math.max(0, Math.round((new Date(l.essai_expire_at).getTime() - Date.now()) / 3_600_000))} h</Chip>
           )}
+          {/* A5 — signal de partage de compte : informatif, jamais bloquant (Vic décide) */}
+          {l.partage?.probable && (
+            <Chip tone="warn" onClick={undefined}>⚠ Partage probable · {l.partage.ips} postes actifs</Chip>
+          )}
         </div>
       </div>
       {suspendu ? (
