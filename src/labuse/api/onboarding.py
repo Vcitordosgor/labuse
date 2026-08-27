@@ -167,7 +167,7 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
     p = offre_integral()
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · engagement 12 mois</p>
+<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · engagement {p['engagement_mois']} mois</p>
 <p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est déjà validé par l'invitation. Choisissez un mot de passe et vous entrez dans le radar foncier de La Réunion.</p>
 <form method="post" action="/invitation">
 <input type="hidden" name="token" value="{html.escape(token)}">
@@ -260,11 +260,11 @@ def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
     return HTMLResponse(_page("votre abonnement", f"""
 <h1>Votre abonnement</h1><p class="sub">dernière étape avant votre espace</p>
 <div class="recap"><div class="prix">{p['eur_mois']} € <span style="font-size:14px;color:var(--mut);font-weight:400">/ mois</span></div>
-<div class="quoi">Licence {p['label']} — accès complet. <b style="color:var(--txt)">Engagement 12 mois</b>, facturé mensuellement.</div></div>
+<div class="quoi">Licence {p['label']} — accès complet. <b style="color:var(--txt)">Engagement {p['engagement_mois']} mois</b>, facturé mensuellement.</div></div>
 <div class="trust" role="list">
   <div role="listitem">{coffre_ui.LOCK_SVG} Paiement <b style="color:var(--txt)">sécurisé par Stripe</b> — page hébergée, chiffrée.</div>
   <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M10 2l6 3v5c0 4-3 6.5-6 8-3-1.5-6-4-6-8V5z"/><path d="M7.5 10l1.8 1.8L13 8"/></svg> <b style="color:var(--txt)">Aucune donnée bancaire</b> ne transite par LABUSE.</div>
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant 12 mois, puis reconduction par périodes de 12 mois — dénonçable avant chaque échéance (vous êtes prévenu à l'avance). Facture émise automatiquement.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant {p['engagement_mois']} mois, puis reconduction par périodes de {p['engagement_mois']} mois — dénonçable avant chaque échéance (vous êtes prévenu à l'avance). Facture émise automatiquement.</div>
 </div>
 <form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
 <button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} €</button></form>
@@ -591,13 +591,14 @@ mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du servi
 @router.get("/moi", include_in_schema=False)
 def moi(request: Request, db: Session = Depends(get_db)):
     from .auth import COOKIE
+    from ..offres import offre_integral
     from ..plans import plan_courant
     # M16-C : le plan RÉEL courant (stub env-driven aujourd'hui — plan_par_compte=False tant que le
     # mandat Auth & Plans n'a pas branché le palier par compte en base ; on ne fabrique aucun « Pro »).
     plan = plan_courant()
-    plan_bloc = {"plan": plan,
-                 "plan_label": {"essentiel": "Essentiel", "integral": "Intégral"}.get(plan, plan.capitalize()),
-                 "plan_par_compte": False}
+    # E1/E6 — libellé depuis la source unique (offres.py). 'interne' = admin/système (hors offre).
+    plan_label = {"integral": offre_integral()["label"], "interne": "Interne"}.get(plan, plan.capitalize())
+    plan_bloc = {"plan": plan, "plan_label": plan_label, "plan_par_compte": False}
     tok = request.cookies.get(COOKIE) or ""
     if not tok.startswith("u."):
         return {"mode": "pilote", **plan_bloc}   # session pilote (pré-bascule) — pas de compte

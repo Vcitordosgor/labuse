@@ -150,3 +150,32 @@ Tests : `tests/test_stripe_coherence.py` (Stripe mocké : divergence → refus ;
   `subscription_schedule` de 12 mois ni verrou d'annulation. Si le portail client Stripe est activé,
   un client pourrait résilier avant 12 mois. Enforcement technique = changement côté Stripe LIVE →
   laissé à Vic (option : phase d'engagement via subscription_schedule, ou gestion à la résiliation).
+
+---
+
+## E6 — L'ENGAGEMENT 12 MOIS EST-IL TENU PARTOUT ?
+
+| Surface | État |
+|---|---|
+| Écran d'invitation client | « engagement {12} mois » — interpolé depuis `offres.py` ✓ |
+| Écran de souscription (`/onboarding/paiement`) | « Engagement 12 mois », « 349 €/mois pendant 12 mois, puis reconduction… » — interpolés ✓ |
+| CGV (§5 Durée/reconduction) | durée ferme 12 mois + reconduction tacite 12 mois + clause Chatel — interpolé ✓ |
+| Mail d'avis d'échéance (`emails.avis_echeance`) | texte à valeur légale L.215-1 (loi Chatel), dénonciation 1 mois avant ✓ |
+| Facture/reçu | émis par Stripe (identité EI + mention fiscale via `facture_mention`) — engagement non requis sur la facture |
+| Menu « Mon compte » (front) | montre le plan (libellé depuis `offres.py`, plus de fantôme) — **mais pas la date d'échéance** (PE-006) |
+
+**Correction** : toutes les mentions « 12 mois » des écrans de souscription, jusque-là **en dur**,
+sont désormais interpolées depuis `offres.py` (`engagement_mois`) — une seule source. Le libellé de
+plan du menu « Mon compte » lit aussi `offres.py` (fin du « Essentiel » vestigial ; `interne`→« Interne »).
+
+**Mécanique avis d'échéance (Chatel)** : `avis_echeance_dus` s'ancre sur la **date d'activation**
+de l'abonnement (pas la création), calcule les **anniversaires annuels** (activation + k×12 mois),
+déclenche dans la fenêtre Chatel [≈1 mois, ≈3 mois] avant l'échéance, avec **dédup par terme** —
+cohérent avec un engagement annuel. La commande `labuse avis-echeance` est **cronée** (VPS,
+`labuse-avis-echeance`, quotidien 08:30 heure Réunion). Gelé par `tests/test_engagement.py`.
+
+### Finding E6
+- **PE-006** (mineur, ouvert) — le menu « Mon compte » du front ne montre pas la **date d'échéance /
+  de reconduction** au client. À surfacer (le mécanisme d'échéance annuelle existe déjà côté serveur) ;
+  dépend du branchement du palier par compte (`plan_par_compte`, aujourd'hui stubbé) → mandat « Auth
+  & Plans ». Noté pour Vic.
