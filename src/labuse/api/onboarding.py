@@ -102,6 +102,19 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/invitation", status_code=303)
     audit(db, "cgv_acceptees", inv["compte_id"], inv["id"], f"version={s.cgv_version}")
     db.commit()
+    # DASHBOARD-V1 · D9 — compte d'ESSAI (déjà ACTIF, échéance posée par l'admin) : pas de
+    # Checkout — l'accès est ouvert tout de suite, la porte est /login. À l'échéance, la
+    # bascule automatique (suspension) proposera l'abonnement.
+    from sqlalchemy import text as _text
+    row = db.execute(_text("SELECT statut, essai_expire_at FROM comptes WHERE id = :c"),
+                     {"c": inv["compte_id"]}).mappings().first()
+    if row and row["statut"] == "actif" and row["essai_expire_at"] is not None:
+        return HTMLResponse(_page("essai", """
+<h1>Votre accès d'essai est ouvert</h1>
+<p>Compte activé — vous disposez de l'accès complet à LABUSE pendant la durée de l'essai.
+À l'échéance, l'accès se met en pause (vos données restent intactes) et un abonnement
+vous sera proposé.</p>
+<p style="margin-top:26px;text-align:center"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Entrer dans LABUSE →</a></p>"""))
     # → ÉCRAN DE BASCULE Checkout (partie E) : le moment d'anxiété est adressé par une page
     # de confiance AVANT Stripe. La mécanique de paiement (creer_checkout/webhook) est
     # inchangée — seul un écran présentational + un jeton signé s'ajoutent.

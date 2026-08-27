@@ -151,6 +151,8 @@ async def _lifespan(app: FastAPI):
         from ..comptes import ensure_tables as _comptes_ens
         from .tenant import ensure_scoping as _scoping_ens
         from ..copilote.tables import ensure_tables as _copilote_ens
+        # DASHBOARD-V1 · D1 — capteurs de la Tour de contrôle
+        from .dashboard import ensure_tables as _dashboard_ens
 
         def _heal_comptes_scoping():
             with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
@@ -180,13 +182,18 @@ async def _lifespan(app: FastAPI):
             ("veilles", lambda: _veilles_ens(_engine())),
             ("copilote", lambda: _copilote_ens(_engine())),
             ("copilote_v2", lambda: (_copv2_hist_ens(_engine()), _copv2_tel_ens(_engine()))),
+            # DASHBOARD-V1 · D1 — capteurs (usage_events, retours, ia_log.compte_id, quota
+            # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
+            ("dashboard", lambda: _dashboard_ens(_engine())),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
             _journaliser_heal_echec(_mod, _mexc)
 
         _heal_failures = _run_heal_steps(_heal_steps, on_echec=_on_echec)
-        app.state.schema_heal = {"ok": not _heal_failures, "failures": _heal_failures}
+        # `total` (DASHBOARD-V1 · D3) — la tuile « santé serveur » affiche N/N modules OK.
+        app.state.schema_heal = {"ok": not _heal_failures, "failures": _heal_failures,
+                                 "total": len(_heal_steps)}
     except Exception as exc:  # noqa: BLE001 — verrou/ensure_schema KO : l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = {"ok": False, "failures": [
             {"module": "verrou/ensure_schema", "error": f"{type(exc).__name__}: {exc}"}]}
@@ -313,6 +320,10 @@ async def _auth_guard(request, call_next):
     cookie = request.cookies.get(auth.COOKIE)
     info = auth.session_info(cookie)
     request.state.compte_id = info["compte_id"] if info else None
+    # DASHBOARD-V1 · D1 — attribue le coût IA de la requête au compte (ledger ia_log) : le socle
+    # IA lit ce ContextVar, jamais le cookie (direction de dépendance propre).
+    from ..ai import core as _ia_core
+    _ia_core.poser_compte(request.state.compte_id)
     if not auth.enabled() or auth.is_public(path):
         return await call_next(request)
     if info is not None or auth.token_ok(cookie):
@@ -467,6 +478,22 @@ async def login_submit(request: Request):
                 from .coffre_ui import pay_token
                 return RedirectResponse(f"/onboarding/paiement?t={pay_token(u['compte_id'])}",
                                         status_code=303)
+            # DASHBOARD-V1 · D4/D9 — compte SUSPENDU (suspension manuelle ou essai expiré) :
+            # identifiants corrects → écran « abonnement à régulariser » + LIEN DE PAIEMENT
+            # (Checkout officiel). Données intactes, réversible ; la session n'est PAS créée
+            # (session_utilisateur la refuserait de toute façon — sécurité durcie inchangée).
+            if u["statut_compte"] == "suspendu":
+                auth.log_event("login_ok_suspendu", request)
+                from .coffre_ui import pay_token
+                from .onboarding import _page
+                lien = f"/onboarding/paiement?t={pay_token(u['compte_id'])}"
+                return HTMLResponse(_page("abonnement", f"""
+<h1>Abonnement à régulariser</h1>
+<p>Votre accès LABUSE est suspendu. <b>Vos données sont intactes</b> — projets, suivis et
+réglages vous attendent tels quels.</p>
+<p>Régularisez votre abonnement pour reprendre exactement où vous en étiez&nbsp;:</p>
+<p style="margin-top:26px"><a href="{lien}" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none">Régulariser l'abonnement →</a></p>
+<p style="margin-top:18px;color:var(--mut);font-size:13px">Une question&nbsp;? Écrivez-nous&nbsp;: contact@labuse.immo</p>"""))
             tok = creer_session(db, u["utilisateur_id"])
         auth.log_event("login_ok", request)
         resp = RedirectResponse("/", status_code=303)
@@ -5052,7 +5079,9 @@ from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H
 from .copilote import router as _copilote_router  # noqa: E402  (M26-A — Copilote, socle agentique)
 from .copilote_v2 import router as _copilote_v2_router  # noqa: E402  (M78 — Copilote v2 : routeur + outils)
 from .accueil import router as _accueil_router  # noqa: E402  (M55-D stage 9 — chiffres de l'accueil)
+from .dashboard import router as _dashboard_router  # noqa: E402  (DASHBOARD-V1 — Tour de contrôle)
 
+app.include_router(_dashboard_router)
 app.include_router(_crm_columns_router)
 app.include_router(_copilote_router)
 app.include_router(_copilote_v2_router)

@@ -54,6 +54,9 @@ def ensure_tables(db: Session) -> None:
         )"""))
     # refonte 22/07 : le CHECK historique (inde/pro) tombe — plan libre ('integral')
     db.execute(text("ALTER TABLE comptes DROP CONSTRAINT IF EXISTS comptes_plan_check"))
+    # DASHBOARD-V1 · D9 — compte d'ESSAI 48 h : une date d'échéance (NULL = compte normal).
+    # À l'échéance : bascule automatique sur le mécanisme de suspension (session_utilisateur).
+    db.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS essai_expire_at timestamptz"))
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS utilisateurs (
             id serial PRIMARY KEY,
@@ -187,7 +190,7 @@ def verifier_login(db: Session, email: str, password: str) -> dict | None:
     email = _norm_email(email)
     u = db.execute(text(
         "SELECT u.id, u.hash, u.statut, u.echecs_login, u.verrouille_jusqu_a, u.compte_id,"
-        "       c.statut AS statut_compte"
+        "       c.statut AS statut_compte, c.essai_expire_at"
         " FROM utilisateurs u JOIN comptes c ON c.id = u.compte_id WHERE u.email = :e"),
         {"e": email}).mappings().first()
     if not u or not u["hash"] or u["statut"] in ("supprime", "suspendu", "invite"):
@@ -212,8 +215,14 @@ def verifier_login(db: Session, email: str, password: str) -> dict | None:
     db.execute(text("UPDATE utilisateurs SET echecs_login = 0, verrouille_jusqu_a = NULL,"
                     " dernier_login_at = now(), updated_at = now() WHERE id = :i"), {"i": u["id"]})
     audit(db, "login_ok", u["compte_id"], u["id"]); db.commit()
+    # D9 — essai échu constaté AU LOGIN : bascule immédiate → l'appelant (/login) montre
+    # l'écran « abonnement à régulariser » (même mécanisme que la suspension manuelle).
+    statut_compte = u["statut_compte"]
+    if _essai_echu(u):
+        basculer_essai_expire(db, u["compte_id"])
+        statut_compte = "suspendu"
     return {"utilisateur_id": int(u["id"]), "compte_id": int(u["compte_id"]),
-            "statut_compte": u["statut_compte"]}
+            "statut_compte": statut_compte}
 
 
 # ── sessions (cookie httpOnly ; en base : le hash du token) ──
@@ -227,21 +236,40 @@ def creer_session(db: Session, utilisateur_id: int, heures: float | None = None)
     return tok
 
 
+def basculer_essai_expire(db: Session, compte_id: int) -> None:
+    """DASHBOARD-V1 · D9 — l'essai 48 h a expiré : bascule AUTOMATIQUE sur le mécanisme de
+    suspension EXISTANT (mandat : seul le déclencheur change — une date au lieu du bouton).
+    Données conservées, réversible ; le client voit « abonnement à régulariser » au login."""
+    suspendre_compte(db, compte_id, motif="essai_expire")
+
+
+def _essai_echu(r) -> bool:
+    """Compte ACTIF porteur d'une échéance d'essai passée (colonne essai_expire_at, D9)."""
+    return (r["statut_compte"] == "actif" and r.get("essai_expire_at") is not None
+            and r["essai_expire_at"] <= datetime.now(timezone.utc))
+
+
 def session_utilisateur(db: Session, token: str) -> dict | None:
     """Session valide → {utilisateur_id, compte_id, role, statut_compte} (sinon None)."""
     r = db.execute(text(
-        "SELECT s.utilisateur_id, u.compte_id, u.role, u.statut, c.statut AS statut_compte"
+        "SELECT s.utilisateur_id, u.compte_id, u.role, u.statut, c.statut AS statut_compte,"
+        "       c.essai_expire_at"
         " FROM sessions_auth s JOIN utilisateurs u ON u.id = s.utilisateur_id"
         " JOIN comptes c ON c.id = u.compte_id"
         " WHERE s.token_hash = :h AND s.expire_at > now()"), {"h": _sha(token)}).mappings().first()
     if not r or r["statut"] in ("supprime", "suspendu"):
+        return None
+    # D9 — essai échu : la bascule se fait ICI, à la requête (aucun cron à attendre) ; la
+    # session meurt comme pour toute suspension — la sécurité durcie ne change pas.
+    if _essai_echu(r):
+        basculer_essai_expire(db, r["compte_id"])
         return None
     # défense en profondeur (durcie aux tests Vic) : le statut du COMPTE se vérifie à
     # chaque requête — suspendu/résilié = coupé ; `invite` (jamais payé) = pas d'accès
     # non plus : l'app ne s'ouvre qu'à un abonnement réellement activé par Stripe.
     if r["statut_compte"] in ("suspendu", "resilie", "invite"):
         return None
-    return dict(r)
+    return {k: v for k, v in dict(r).items() if k != "essai_expire_at"}
 
 
 def detruire_session(db: Session, token: str) -> None:

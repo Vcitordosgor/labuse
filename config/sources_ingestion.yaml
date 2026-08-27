@@ -1,0 +1,22 @@
+# DASHBOARD-V1 · D6 — « Relancer l'ingestion » (Tour de contrôle → Sources).
+# UNE entrée = une source dont la commande de (ré)ingestion est CONNUE, idempotente et déjà
+# celle des crons du VPS (deploy/cron.d/* — même geste, déclenché à la main). Une source
+# ABSENTE d'ici n'affiche PAS le bouton (mandat : « quand une commande d'ingestion existe
+# pour la source, sinon absent »). Les argv s'exécutent depuis la racine du repo, détachés,
+# journal event_log + log fichier /tmp/labuse-relance-<label>.log.
+commandes:
+  - motif: "SITADEL%"
+    label: sitadel
+    argv: ["python", "-m", "labuse.ingestion.permits_sdes", "--refresh"]
+  - motif: "BODACC%"
+    label: bodacc
+    argv: ["labuse", "ingest-bodacc"]
+  - motif: "DVF / valeurs%"
+    label: dvf
+    argv: ["labuse", "refresh-dvf"]
+  - motif: "DPE ADEME%"
+    label: dpe
+    argv: ["labuse", "ingest-dpe"]
+  - motif: "Base Adresse Nationale%"
+    label: ban
+    argv: ["labuse", "ingest-ban", "--download"]

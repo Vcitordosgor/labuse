@@ -95,6 +95,10 @@ class Settings(BaseSettings):
     qa_allowlist: str = ""                # LABUSE_QA_ALLOWLIST=ip1,ip2
     abuse_alert_seuil: int = 60           # score abuse_scores déclenchant l'alerte
     nl_quota_jour: int = 30               # requêtes de recherche NL / jour / sujet (Lot 6)
+    # DASHBOARD-V1 · D1 — quota Copilote PAR LICENCE (comptes connectés) : défaut 80/jour,
+    # surchargeable par compte (comptes.copilote_quota_jour, éditable au dashboard). Le quota
+    # historique nl_quota_jour reste celui des sujets SANS compte (pilote/anonyme).
+    copilote_questions_jour_defaut: int = 80
     dossier_quota_mois: int = 20          # Dossiers parcelle / mois (plan Essentiel, Lot 4)
     plan_defaut: str = "integral"         # stub : essentiel | integral (pilote = intégral)
     raison_sociale: str = "Pilote LABUSE"  # mention « Généré via LABUSE pour … » (Lot 4)
@@ -124,6 +128,27 @@ class Settings(BaseSettings):
     stripe_secret_key: str | None = None
     stripe_webhook_secret: str | None = None
     stripe_price_id: str | None = None
+    # DASHBOARD-V1 · D2 — clé RESTREINTE lecture seule (Tour de contrôle) : jamais la clé
+    # complète, jamais en dur. Absente → le dashboard affiche « non configuré » proprement.
+    # Posée LABUSE_STRIPE_RESTRICTED_KEY (ou STRIPE_RESTRICTED_KEY nu, lu en repli au module).
+    stripe_restricted_key: str | None = None
+    # DASHBOARD-V1 · D3 — répertoire des dumps de backup (GB-054) : la tuile « dernier backup »
+    # lit le mtime du .dump le plus récent (ambre ≥ 2 j, rouge ≥ 7 j, « absent » honnête sinon).
+    backup_dir: str = "/var/backups/labuse"
+    # DASHBOARD-V1 · MAILS (Brevo) — templates du cycle de vie client, référencés PAR ID en .env
+    # (mandat). Absents → mode « non configuré » propre (bouton visible, raison servie, zéro
+    # envoi silencieux). Aucun envoi automatique en V1 : l'app rappelle, Vic déclenche.
+    # DASHBOARD-V1 · D9 — durée par défaut d'un compte d'essai (paramétrable, mandat : 48 h).
+    essai_duree_heures: int = 48
+    brevo_api_key: str | None = None
+    brevo_tpl_essai: str | None = None
+    brevo_tpl_souscription: str | None = None
+    brevo_tpl_onboarding_1: str | None = None
+    brevo_tpl_onboarding_2: str | None = None
+    brevo_tpl_onboarding_3: str | None = None
+    brevo_tpl_relance_carte: str | None = None
+    brevo_tpl_suspension: str | None = None
+    brevo_tpl_retablissement: str | None = None
     # SMTP (M21 — transport e-mail unique) — env LABUSE_SMTP_* + LABUSE_MAIL_FROM.
     # Sans hôte configuré : le mail est JOURNALISÉ et marqué non-envoyé (jamais « envoyé »).
     # Le mot de passe (mot de passe d'application Gmail) vit dans le .env, JAMAIS dans le code.

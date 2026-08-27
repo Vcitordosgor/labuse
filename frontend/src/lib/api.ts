@@ -785,6 +785,118 @@ export interface Moi { mode: 'pilote' | 'compte'; plan: string; plan_label: stri
 export const getMoi = () => j<Moi>('/moi')
 export const postSuggestion = (body: { categorie: string; texte: string; contexte?: string }) =>
   j<{ ok: boolean }>('/suggestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// DASHBOARD-V1 · D1 — bouton « Signaler » (en-tête) : bug/idée/question → table retours
+// (statuts suivis au dashboard admin). Distinct de postSuggestion (menu compte, texte libre).
+export const postRetour = (body: { type: 'bug' | 'idee' | 'question'; message: string }) =>
+  j<{ ok: boolean; id: number }>('/retours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
+// ── DASHBOARD-V1 — Tour de contrôle (admin) ──
+export interface StripeApercu {
+  configure: boolean
+  raison?: string
+  erreur?: string
+  mrr_eur?: number
+  abonnements_actifs?: number
+  paiements_en_echec?: number
+  abonnements?: Array<{ subscription_id: string; customer_id: string; email: string | null; nom_stripe: string | null; statut: string; montant_eur_mois: number; depuis: number | null; periode_fin: number | null; prochaine_retentative: number | null }>
+  ca_mois?: Record<string, number>
+  rapprochement?: { comptes_sans_abo: Array<{ compte_id: number; nom: string; statut: string }>; abos_sans_compte: Array<{ customer_id: string; email: string | null; statut: string }>; indisponible?: boolean }
+  maj?: string
+}
+export interface AdminPilotage {
+  stripe: StripeApercu
+  licences_actives: number
+  actifs_24h: number
+  ia_mois: { cout_eur: number; appels: number }
+  backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent'; chemin: string; age_jours: number | null; mtime?: string }
+  sante: { ok: boolean | null; total: number | null; en_echec: string[] }
+  run: { label: string | null; carte_le: string | null }
+  fil: Array<{ id: number; ts: string | null; kind: string; source: string | null; titre: string; detail: string | null; lien: string | null }>
+  gels: Array<{ sujet: string; motif: string | null; ts: string | null }>
+}
+export const getAdminPilotage = () => j<AdminPilotage>('/admin/pilotage')
+export const getAdminStripe = () => j<StripeApercu>('/admin/stripe')
+export const postAdminDegeler = (sujet: string) =>
+  j<{ ok: boolean; degele: boolean }>('/admin/degeler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sujet }) })
+// D4 — Licences
+export interface AdminLicence {
+  id: number; nom: string; email: string | null; plan: string; statut: string; created_at: string | null
+  essai_expire_at: string | null
+  stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
+  mails: Record<string, { statut: string; sent_at: string | null }>
+  rappels: string[]
+  kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number }
+}
+export interface AdminLicences {
+  licences: AdminLicence[]
+  stripe_configure: boolean
+  rapprochement?: StripeApercu['rapprochement']
+  brevo: { api: boolean; templates: Record<string, boolean> }
+}
+export const getAdminLicences = () => j<AdminLicences>('/admin/licences')
+export const postAdminLicenceCreer = (body: { email: string; nom?: string }) =>
+  j<{ ok: boolean; lien: string; compte_id: number; expire_at: string }>('/admin/licences/creer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// D9 — essai 48 h
+export const postAdminLicenceCreerEssai = (body: { email: string; nom?: string; heures?: number }) =>
+  j<{ ok: boolean; lien: string; compte_id: number; heures: number; essai_expire_at: string }>('/admin/licences/creer-essai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const postAdminLicenceConvertir = (compteId: number) =>
+  j<{ ok: boolean; detail: string }>(`/admin/licences/${compteId}/convertir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminSuspendre = (compteId: number) =>
+  j<{ ok: boolean }>(`/admin/licences/${compteId}/suspendre`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminRetablir = (compteId: number) =>
+  j<{ ok: boolean }>(`/admin/licences/${compteId}/retablir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminLicenceMail = (compteId: number, key: string) =>
+  j<{ ok: boolean; envoye: boolean; raison?: string }>(`/admin/licences/${compteId}/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) })
+// D5 — IA
+export interface AdminIa {
+  mois: { cout_eur: number; appels: number; cout_moyen_question: number | null }
+  projection_fin_mois_eur: number
+  jours: Array<{ jour: string; cout: number; appels: number }>
+  par_licence: Array<{ compte_id: number | null; nom: string; cout: number; appels: number }>
+  quota_defaut: number
+  quotas: Array<{ id: number; nom: string; copilote_quota_jour: number | null }>
+  note: string
+}
+export const getAdminIa = () => j<AdminIa>('/admin/ia')
+export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
+  j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quota }) })
+// D6 — Sources
+export interface AdminSource {
+  id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
+  ingere_le: string | null; cadence: string | null; a_jour: boolean | null; relance: string | null
+}
+export interface AdminSources {
+  sources: AdminSource[]
+  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number }
+  cadences: string[]
+  runs: Array<{ started_at: string | null; finished_at: string | null; status: string | null; parcels_count: number | null; name: string | null }>
+}
+export const getAdminSources = () => j<AdminSources>('/admin/sources')
+export const postAdminSourceCadence = (id: number, cadence: string | null) =>
+  j<{ ok: boolean }>(`/admin/sources/${id}/cadence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadence }) })
+export const postAdminSourceRelancer = (id: number) =>
+  j<{ ok: boolean; label: string; log: string }>(`/admin/sources/${id}/relancer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const getHealthzCrons = () =>
+  j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
+// D7 — Produit
+export interface AdminProduit {
+  usage: Array<{ outil: string; n: number }>
+  retours: Array<{ id: number; ts: string | null; type: string; message: string; statut: string; compte: string | null }>
+}
+export const getAdminProduit = () => j<AdminProduit>('/admin/produit')
+export const postAdminRetourStatut = (id: number, statut: 'nouveau' | 'traite' | 'repondu') =>
+  j<{ ok: boolean }>(`/admin/retours/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+// D8 — Courrier (endpoints /courrier/admin/* EXISTANTS, consommés par la Tour de contrôle)
+export interface AdminDemandeCourrier {
+  id: number; ts: string | null; compte_id: number | null; n: number; communes: string | null
+  modele: string | null; corps: string | null; statut: string; updated_at: string | null
+  parcelles: string[] | null; client: string | null
+}
+export const getAdminCourrierDemandes = () =>
+  j<{ demandes: AdminDemandeCourrier[]; statuts: string[] }>('/courrier/admin/demandes')
+export const postAdminCourrierStatut = (id: number, statut: string) =>
+  j<{ ok: boolean }>(`/courrier/admin/demandes/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+export const urlCourrierPdf = '/courrier/pdf'
 
 // ── Moteurs (Vague 4) ──
 // M137-Q — le périmètre du simulateur PLU est désormais un choix EXPLICITE dans l'outil (plus

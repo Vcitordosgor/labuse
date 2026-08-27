@@ -24,6 +24,8 @@ import { CopiloteView } from './components/copilote/CopiloteView'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { MODULES } from './components/outils/registry'   // GB-059 : valider #m= contre le registre
 import { EMPTY_FILTERS, useApp } from './store/useApp'
+import { signalOutil, startHeartbeat } from './lib/usage'   // DASHBOARD-V1 · D1 — capteurs
+import { AdminView } from './components/admin/AdminView'    // DASHBOARD-V1 — Tour de contrôle
 
 // M-V V3 — code-splitting maplibre : MapView et TimeMachine chargent maplibre-gl (~800 kB), inutile
 // au premier écran (login, fiche directe, outils). On les charge à la DEMANDE (import dynamique),
@@ -264,6 +266,13 @@ export default function App() {
     ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution }
   }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution])
 
+  // DASHBOARD-V1 · D1 — capteurs d'usage (Tour de contrôle) : heartbeat de session au boot,
+  // ouverture d'outil (module) et changement de vue. Fire-and-forget, dédoublonné dans usage.ts —
+  // aucun poids perceptible, aucune erreur possible côté client.
+  useEffect(() => { startHeartbeat() }, [])
+  useEffect(() => { if (module) signalOutil(module) }, [module])
+  useEffect(() => { signalOutil(`vue:${view}`) }, [view])
+
   // URL partageable : filtres + zone + commune sérialisés dans le hash (#f=…&c=…). Lecture au
   // chargement, écriture à chaque changement (replaceState : pas de pollution de l'historique).
   useEffect(() => {
@@ -316,6 +325,8 @@ export default function App() {
     // ouvre la section unifiée sur le bon volet (aucun lien mort).
     const sv = p.get('surveillance')
     if (sv) useApp.getState().openSurveillance(sv === 'parcelles' || sv === 'criteres' ? sv : 'secteurs')
+    // DASHBOARD-V1 — deep-link de la Tour de contrôle (#admin=1) ; la garde reste au backend.
+    if (p.get('admin') === '1') setView('admin')
     // (Alias d'URL #pg=vues / pg=segments retiré avec le spin-off « Vues » — M12 Lot C-bis.)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -326,9 +337,21 @@ export default function App() {
     if (verdict) add('v=1')
     if (module) add(`m=${module}`)
     if (selectedIdu) add(`idu=${selectedIdu}`)   // GB-032 — fiche partageable/réhydratable
+    if (view === 'admin') add('admin=1')         // DASHBOARD-V1 — la Tour de contrôle survit au reload
     window.history.replaceState(null, '', h || window.location.pathname + window.location.search)
   }, [filters, zone, module, commune, verdict, view, selectedIdu])
 
+
+  // DASHBOARD-V1 — la Tour de contrôle est PLEIN ÉCRAN (maquette : son propre rail + sections),
+  // elle remplace tout le shell client ; « Ouvrir l'app cliente → » (pied de rail admin) revient.
+  if (view === 'admin') {
+    return (
+      <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
+        <AdminView />
+        <Toast />
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
