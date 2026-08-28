@@ -1975,6 +1975,24 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
                       "Données de CONTEXTE : aucune n'entre dans le scoring."]}
 
 
+@app.get("/communes/{commune}/acquisitions-pm")
+def commune_acquisitions_pm(commune: str, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-1 R3 (Vic) — LISTING des changements de propriétaire PM récents d'une commune
+    (outil Communes › « Acquisitions récentes »). MÊME point de calcul que l'ex-bloc de la fiche
+    contexte (acquisitions_recentes, KF-2 L1), borne élargie pour un listing. CONSTAT sourcé
+    (« changement de millésime, n'affirme pas une vente »), hors scoring."""
+    _cd = next((c for c in _communes_data(db, Q_A_RUN_LABEL) if c["commune"] == commune), None)
+    insee = _cd.get("insee") if _cd else None
+    if not insee:
+        return {"commune": commune, "commune_insee": None, "depuis_millesime": 2022,
+                "n": 0, "n_total": 0, "tronquee": False, "acquisitions": [],
+                "source": None, "note": "Commune inconnue du référentiel — aucun constat servi."}
+    from ..proprietaire_historique import acquisitions_recentes
+    out = acquisitions_recentes(db, insee, depuis_millesime=2022, limit=50)
+    out["commune"] = commune
+    return out
+
+
 @app.get("/parcels/at")
 def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     """Résolution point → parcelle (C7, décision produit Vic : clic UNIVERSEL — n'importe

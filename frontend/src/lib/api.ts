@@ -185,6 +185,16 @@ export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
+// RETOURS-1 R3 — acquisitions PM d'une commune : constat DGFiP (changement de propriétaire moral
+// d'un millésime au suivant), hors scoring. Servi par le bloc contexte ET le listing dédié.
+export interface AcquisitionsPm {
+  commune?: string; source: string | null; note: string; depuis_millesime: number
+  n: number; n_total: number; tronquee: boolean
+  acquisitions: { idu: string; de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
+}
+export const getCommuneAcquisitions = (commune: string) =>
+  j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm`)
+
 export interface ContexteCommune {
   commune: string; epci: string | null; epci_nom: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
@@ -197,10 +207,9 @@ export interface ContexteCommune {
   } | null
   // L1 (KF-2) — acquisitions PM récentes de la commune (changement de propriétaire moral d'un
   // millésime au suivant, DGFiP). Constat, hors scoring. Maille = commune. null si commune sans INSEE.
-  acquisitions_pm: {
-    source: string; note: string; depuis_millesime: number; n: number; n_total: number; tronquee: boolean
-    acquisitions: { idu: string; de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
-  } | null
+  // RETOURS-1 R3 : le bloc a QUITTÉ la fiche contexte (il vit dans Communes › Acquisitions récentes,
+  // via getCommuneAcquisitions) — le payload back reste servi (réversible), le front ne le rend plus.
+  acquisitions_pm: AcquisitionsPm | null
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
   foncier: {
     n_parcelles: number; surface_ha: number | null

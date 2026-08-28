@@ -2274,12 +2274,13 @@ export function Fiche({ idu }: { idu: string }) {
                   indicateurs COMMUNAUX (9 lignes) vivent dans l'outil ; la fiche garde le parcelle/section.
                   `setCommune` = le point d'entrée unique de l'app (le tool lit useApp.commune au montage) ;
                   le nom est SERVI (`f.commune`), jamais en dur. */}
-              {/* M137-Z — l'outil « Marché » a fusionné dans « Communes » : la porte ouvre directement la
-                  fiche commune (via communePrefill), qui porte le bloc marché complet + rareté + vélocité. */}
+              {/* RETOURS-1 R4 (Vic) — la fiche commune de l'outil a disparu : la porte ouvre la fiche
+                  commune de CONTEXTE (panneau droit, z-30 au-dessus de la fiche), qui porte désormais
+                  marché local + rareté/ZAN + vélocité en plus de son contexte officiel. */}
               {f.commune && (
                 <PorteOutil ico="↗" data="marche" titre={`Voir le marché de ${f.commune}`}
                   sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
-                  onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunePrefill(f.commune!); setModule('communes') }} />
+                  onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) }} />
               )}
               {/* fiche-secteur (ex-carnet) — le COMPTE d'opportunités de la section cadastrale. « opportunités »
                   = parcelles Priorité + À suivre du run servi (rien de plus). CLIC → carte sur la commune,
