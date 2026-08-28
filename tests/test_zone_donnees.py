@@ -67,3 +67,26 @@ def test_lot1_sirene_jointure_diffusion_position(tmp_path):
     assert b["denomination"] is None and b["adresse"] is None, "non diffusible : ni nom ni adresse"
     assert b["naf"] == "1071C", "le NAF reste (l'établissement compte dans la zone)"
     assert r["n"] == 2 and r["n_diffusion_partielle"] == 1
+
+
+def test_lot2_emplois_zone_fourchette_et_sans_tranche():
+    """LOT 2 — postes salariés = FOURCHETTE (somme des bornes de tranches), NN comptés à part."""
+    from labuse import zone as Z
+    _LON, _LAT = 55.65, -20.96
+    zone = {"type": "Polygon", "coordinates": [[[_LON - 0.02, _LAT - 0.02], [_LON + 0.02, _LAT - 0.02],
+            [_LON + 0.02, _LAT + 0.02], [_LON - 0.02, _LAT + 0.02], [_LON - 0.02, _LAT - 0.02]]]}
+    with session_scope() as s:
+        from labuse.ingestion.sirene_etablissements import ensure_tables as se_ens
+        se_ens(s)
+        s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9100000000%'"))
+        for siret, tr in [("91000000000011", "01"), ("91000000000022", "12"), ("91000000000033", "NN")]:
+            s.execute(text(
+                "INSERT INTO sirene_etablissements (siret, siren, naf, actif, diffusible, tranche_effectif, geom) "
+                "VALUES (:s, :si, '4711D', true, true, :tr, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
+                {"s": siret, "si": siret[:9], "tr": tr, "lon": _LON, "lat": _LAT})
+        e = Z.emplois_zone(s, zone)
+        s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9100000000%'"))
+    # 01 = 1–2, 12 = 20–49 → min 1+20=21, max 2+49=51 ; NN compté à part (1)
+    assert e["postes_min"] == 21 and e["postes_max"] == 51
+    assert e["n_sans_tranche"] == 1 and e["n_avec_tranche"] == 2
+    assert e["libelle"] == "postes salariés déclarés dans la zone"

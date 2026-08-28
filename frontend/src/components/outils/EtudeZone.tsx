@@ -273,18 +273,27 @@ export function EtudeZone() {
   )
 }
 
-// « actifs y travaillent » — MOBPRO : non couvert (source vide) dit tel quel, jamais un « — » muet.
+// LOT 2 — « postes salariés déclarés dans la zone » : FOURCHETTE (tranches d'effectif SIRENE), jamais
+// un point ni « actifs y travaillent » (qui décrit autre chose). Les établissements sans tranche
+// renseignée sont dits à part. Non couvert (SIRENE vide) dit tel quel, jamais un « — » muet.
 function ActifsStat({ res }: { res: EtudeZoneResult }) {
   if (res.emplois_couverture === 'non_couverte') {
     return (
       <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
         <div className="text-[11px] font-medium text-txt-mut">non couvert</div>
-        <div className="mt-0.5 text-[10px] text-txt-mut">actifs y travaillent <span className="text-txt-dim">· pas encore servi sur LABUSE</span></div>
+        <div className="mt-0.5 text-[10px] text-txt-mut">postes salariés <span className="text-txt-dim">· pas encore servi sur LABUSE</span></div>
       </div>
     )
   }
-  const total = (res.emplois ?? []).reduce((a, e) => a + e.actifs_lieu_travail, 0)
-  return <Stat v={res.emplois && res.emplois.length ? nb(total) : '—'} k="actifs y travaillent" />
+  const e = res.emplois
+  const fourchette = e ? `${nb(e.postes_min)}–${nb(e.postes_max)}${e.postes_max_ouvert ? '+' : ''}` : '—'
+  return (
+    <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+      <div className="text-[13px] font-semibold text-txt-hi">{fourchette}</div>
+      <div className="mt-0.5 text-[10px] text-txt-mut">postes salariés déclarés dans la zone
+        {e && e.n_sans_tranche > 0 && <span className="text-txt-dim"> · {nb(e.n_sans_tranche)} étab. sans effectif renseigné</span>}</div>
+    </div>
+  )
 }
 
 function Concurrents({ res }: { res: EtudeZoneResult }) {

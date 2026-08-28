@@ -461,7 +461,7 @@ export interface EtudeZoneResult {
   origine?: { lon: number; lat: number }
   naf_label?: string | null
   population?: ZonePopulation
-  emplois?: { commune: string; actifs_lieu_travail: number; millesime: string }[]
+  emplois?: { postes_min: number; postes_max: number; postes_max_ouvert: boolean; n_etablissements: number; n_avec_tranche: number; n_sans_tranche: number; libelle: string }
   emplois_couverture?: ZoneCouverture
   equipements?: ZoneEquipement[]
   generateurs_flux?: ZoneGenerateur[]

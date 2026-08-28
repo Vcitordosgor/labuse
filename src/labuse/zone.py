@@ -198,6 +198,46 @@ def emplois_communes(session: Session, geom_geojson: dict) -> list[dict]:
     return out
 
 
+#: tranches d'effectif SIRENE (code INSEE → bornes de la fourchette de salariés). 53 = « 10 000+ »
+#: (borne haute ouverte). 'NN' / null = non renseigné (compté à part, jamais additionné).
+TRANCHE_BORNES = {
+    "00": (0, 0), "01": (1, 2), "02": (3, 5), "03": (6, 9), "11": (10, 19), "12": (20, 49),
+    "21": (50, 99), "22": (100, 199), "31": (200, 249), "32": (250, 499), "41": (500, 999),
+    "42": (1000, 1999), "51": (2000, 4999), "52": (5000, 9999), "53": (10000, None),
+}
+
+
+def emplois_zone(session: Session, geom_geojson: dict) -> dict:
+    """LOT 2 — « postes salariés déclarés dans la zone » (remplace MOBPRO, ABANDONNÉ : l'INSEE ne traite
+    pas l'emploi au lieu de travail à une maille infracommunale — un nombre d'actifs sur 86 ha serait une
+    invention). On somme les TRANCHES d'effectif SIRENE des établissements de la zone → une FOURCHETTE
+    (jamais un point). Les établissements SANS tranche renseignée sont comptés à part et dits."""
+    rows = session.execute(text(
+        f"""SELECT tranche_effectif, count(*) n
+            FROM sirene_etablissements
+            WHERE actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
+            GROUP BY tranche_effectif"""),
+        {"zone": json.dumps(geom_geojson)}).all()
+    lo = hi = 0
+    hi_ouvert = False
+    n_avec = n_sans = n_etab = 0
+    for tranche, n in rows:
+        n_etab += n
+        bornes = TRANCHE_BORNES.get(tranche or "")
+        if bornes is None:                       # 'NN' / null : non renseigné → compté à part
+            n_sans += n
+            continue
+        n_avec += n
+        lo += bornes[0] * n
+        if bornes[1] is None:
+            hi_ouvert = True
+        else:
+            hi += bornes[1] * n
+    return {"postes_min": lo, "postes_max": hi, "postes_max_ouvert": hi_ouvert,
+            "n_etablissements": n_etab, "n_avec_tranche": n_avec, "n_sans_tranche": n_sans,
+            "libelle": "postes salariés déclarés dans la zone"}
+
+
 def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: dict[int, dict],
                      maxi: int = 40) -> dict:
     """Établissements SIRENE du NAF dans la zone (concurrents). Nom masqué si non diffusible. Chaque
@@ -330,9 +370,9 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         # anneaux concentriques pour la carte (isochrones intermédiaires) — vide en mode polygone
         "bandes": [{"minutes": mn, "geom": g} for mn, g in sorted(bandes.items())],
         "population": population_zone(session, zone),
-        "emplois": emplois_communes(session, zone),
-        # LOT A — couverture MOBPRO : source servie (peuplée) ou NON couverte (jamais un « — » muet)
-        "emplois_couverture": "servie" if _source_peuplee(session, "mobpro_commune") else "non_couverte",
+        # LOT 2 — emplois = tranches d'effectif SIRENE (fourchette), non MOBPRO. Couverture = SIRENE servie.
+        "emplois": emplois_zone(session, zone),
+        "emplois_couverture": "servie" if _source_peuplee(session, "sirene_etablissements") else "non_couverte",
         "equipements": equipements_proches(session, lon, lat, zone, bandes=bandes),
         "generateurs_flux": generateurs_flux(session, zone),
         "marche": marche_zone(session, zone),
