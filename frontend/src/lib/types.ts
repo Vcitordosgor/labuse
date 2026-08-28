@@ -415,6 +415,56 @@ export interface MarcheSecteur {
   } | null
 }
 
+// ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle ». Un seul moteur ; ici en mode fiche
+// (isochrone auto depuis le centroïde). Le REVENU reste la valeur au centroïde servie par la fiche
+// (source unique). Dégradé honnête si l'isochrone IGN est indisponible (`disponible=false`).
+export interface ZonePopulation {
+  inhabitee: boolean
+  habitants?: number; menages?: number
+  revenu_median_eur?: number | null; revenu_estime?: boolean; revenu_source?: string
+  pct_moins_25?: number | null; taux_pauvrete_pct?: number | null
+  n_carreaux?: number; millesime: string
+}
+export interface ZoneEquipement { domaine: string; nom: string; temps_min: number | null }
+export interface ParcelleZone {
+  disponible: boolean
+  statut: string        // 'ign' | 'cache' | 'indisponible' | 'polygone'
+  mode: 'pied' | 'voiture'
+  minutes: number
+  hors_trafic: boolean
+  renvoi: string
+  note: string
+  detail?: string       // présent si disponible=false (échec nommé)
+  geom?: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }
+  population?: ZonePopulation
+  equipements?: ZoneEquipement[]
+}
+
+// ÉTUDE DE ZONE Z4 — l'outil de chalandise. Faits sourcés, aucune prévision de CA.
+export interface NafOption { code: string; label: string }
+export interface ZoneConcurrent { siret: string; naf: string; nom: string; diffusible: boolean; lon: number; lat: number; temps_min: number | null }
+export interface ZoneGenerateur { label: string; source: string }
+export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }
+export interface EtudeZoneResult {
+  statut: string
+  zone_disponible: boolean
+  detail?: string
+  minutes: number
+  mode: 'pied' | 'voiture'
+  geom?: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }
+  bandes?: { minutes: number; geom: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] } }[]
+  origine?: { lon: number; lat: number }
+  naf_label?: string | null
+  population?: ZonePopulation
+  emplois?: { commune: string; actifs_lieu_travail: number; millesime: string }[]
+  equipements?: ZoneEquipement[]
+  generateurs_flux?: ZoneGenerateur[]
+  marche?: ZoneMarche
+  concurrents?: { n: number; naf: string; items: ZoneConcurrent[] }
+  habitants_par_concurrent?: number | null
+  note?: string
+}
+
 export interface Renouvellement {
   libelle: string
   // M47 : étiquette source · millésime (run servi + date de matérialisation).

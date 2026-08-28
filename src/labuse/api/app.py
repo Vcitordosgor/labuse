@@ -155,6 +155,13 @@ async def _lifespan(app: FastAPI):
         from .dashboard import ensure_tables as _dashboard_ens
         # RADAR (pige) · P0 — schéma isolé pige_* (domaine transactionnel, hors runs)
         from ..pige.tables import ensure_tables as _pige_ens
+        # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
+        def _zone_ens():
+            with session_scope() as _s:
+                from ..ingestion.sirene_etablissements import ensure_tables as _se_ens
+                from ..ingestion.mobpro import ensure_tables as _mo_ens
+                from ..zone import ensure_tables as _iso_ens   # Z2 — cache d'isochrones
+                _se_ens(_s); _mo_ens(_s); _iso_ens(_s)
 
         def _heal_comptes_scoping():
             with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
@@ -188,6 +195,9 @@ async def _lifespan(app: FastAPI):
             # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
             ("dashboard", lambda: _dashboard_ens(_engine())),
             ("pige", lambda: _pige_ens(_engine())),
+            # ÉTUDE DE ZONE Z1 — tables SIRENE établissements + MOBPRO (interrogées par le moteur de
+            # zone même vides ; l'ingestion réelle vient des CLI ingest-sirene-etab / ingest-mobpro).
+            ("zone", lambda: _zone_ens()),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
@@ -3789,6 +3799,135 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
     run = source if (source and source.startswith("q_v")) else Q_A_RUN_LABEL
     return _q_v2_fiche(db, idu, run_label=run)
+
+
+@app.get("/parcels/{idu}/zone")
+def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=60),
+                db: Session = Depends(get_db)) -> dict:
+    """ÉTUDE DE ZONE · Z3 — le tiroir « Autour de cette parcelle » (maquette, écran 1).
+
+    Zone atteignable depuis le centroïde de la parcelle (isochrone IGN, mode/minutes ; défaut « à pied
+    15 min »). Qui vit dans la zone (Filosofi, population_zone — l'UNIQUE agrégateur) + équipements les
+    plus proches AVEC leur temps. Le REVENU reste la valeur au centroïde DÉJÀ servie par la fiche
+    (`marche_secteur.filosofi_200m`) — source unique, JAMAIS deux revenus divergents. Ventes/transports/
+    réseaux ne sont pas dupliqués (renvoi). Échec isochrone → dégradé honnête et nommé, jamais un cercle."""
+    from ..zone import isochrone, population_zone, equipements_proches, bandes_isochrones
+    idu = _check_idu(idu)
+    if mode not in ("pied", "voiture"):
+        mode = "pied"
+    pt = db.execute(text(
+        "SELECT ST_X(ST_Centroid(centroid)) AS lon, ST_Y(ST_Centroid(centroid)) AS lat "
+        "FROM parcels WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    if not pt or pt["lon"] is None:
+        raise HTTPException(status_code=404, detail="parcelle introuvable ou sans géométrie")
+    lon, lat = float(pt["lon"]), float(pt["lat"])
+    res = isochrone(db, lon, lat, minutes, mode)
+    base = {"mode": mode, "minutes": minutes, "hors_trafic": True,
+            "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs "
+                      "Marché et Réseaux — rien n'est dupliqué.",
+            "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic."}
+    if res["geom_geojson"] is None:
+        # dégradé honnête et nommé — aucune couche comptée sur un cercle inventé
+        return {**base, "disponible": False, "statut": res["statut"],
+                "detail": res.get("detail", "zone atteignable indisponible")}
+    zone = res["geom_geojson"]
+    bandes = bandes_isochrones(db, lon, lat, minutes, mode)
+    pop = population_zone(db, zone)
+    if not pop.get("inhabitee"):
+        # REVENU = source unique (centroïde, comme la fiche) — jamais un 2ᵉ revenu Filosofi divergent
+        revenu = db.execute(text(
+            """SELECT round((f.ind_snv / NULLIF(f.ind, 0))::numeric) AS r
+               FROM filosofi_carreaux_200m f JOIN parcels p ON p.idu = :idu
+               WHERE ST_Contains(f.geom, ST_Transform(p.centroid, 2975)) LIMIT 1"""),
+            {"idu": idu}).scalar()
+        pop["revenu_median_eur"] = int(revenu) if revenu is not None else None
+        pop["revenu_source"] = "carreau Filosofi au centroïde (source unique de la fiche)"
+    return {**base, "disponible": True, "statut": res["statut"], "geom": zone,
+            "population": pop,
+            "equipements": equipements_proches(db, lon, lat, zone, bandes=bandes)}
+
+
+# ═══════════ ÉTUDE DE ZONE · Z4 — l'outil « Étude de zone » (maquette, écran 2) ═══════════
+
+@app.get("/outils/etude-zone/naf")
+def etude_zone_naf(q: str = Query("", max_length=80)) -> dict:
+    """Recherche d'activité par libellé français (« boulangerie » → 1071C) ou par code. Table curée
+    et extensible (commerces/services de proximité), pas la nomenclature complète."""
+    from ..naf_labels import chercher
+    return {"resultats": chercher(q)}
+
+
+class EtudeZoneIn(BaseModel):
+    idu: str | None = None          # entrée 1 : une parcelle (centre sur son centroïde)
+    lon: float | None = None        # entrée 2 : un point (adresse BAN résolue côté client)
+    lat: float | None = None
+    geom: dict | None = None        # entrée 3 : un polygone dessiné (court-circuite l'isochrone)
+    naf: str | None = None          # activité étudiée (concurrents SIRENE)
+    minutes: int = 10               # 5 / 10 / 15
+    mode: str = "voiture"           # voiture / pied
+    titre: str | None = None        # libellé d'entrée (adresse) pour le titre du PDF
+
+
+@app.post("/outils/etude-zone")
+def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
+    """L'outil de chalandise : une zone (isochrone OU polygone), qui y vit, qui y travaille, quels
+    concurrents (SIRENE par NAF, pins ambre), quels générateurs de flux, quel marché immobilier.
+    Faits sourcés et datés — AUCUNE prévision de chiffre d'affaires, aucun score d'attractivité.
+
+    Trois entrées : `idu` (centroïde de la parcelle), `lon/lat` (point/adresse), ou `geom` (polygone).
+    Échec isochrone → dégradé honnête et nommé, jamais un cercle."""
+    from ..zone import etude_de_zone
+    from ..naf_labels import label as naf_label
+    minutes = inp.minutes if inp.minutes in (5, 10, 15) else 10
+    mode = inp.mode if inp.mode in ("voiture", "pied") else "voiture"
+    naf = (inp.naf or "").replace(".", "").upper() or None
+    geom = inp.geom
+    lon, lat = inp.lon, inp.lat
+    if inp.idu:
+        idu = _check_idu(inp.idu)
+        pt = db.execute(text(
+            "SELECT ST_X(ST_Centroid(centroid)) AS lon, ST_Y(ST_Centroid(centroid)) AS lat "
+            "FROM parcels WHERE idu = :idu"), {"idu": idu}).mappings().first()
+        if not pt or pt["lon"] is None:
+            raise HTTPException(404, "parcelle introuvable ou sans géométrie")
+        lon, lat = float(pt["lon"]), float(pt["lat"])
+    if geom is not None and (lon is None or lat is None):
+        # point d'origine pour ordonner les « plus proches » = centroïde du polygone dessiné
+        c = db.execute(text(
+            "SELECT ST_X(ST_Centroid(ST_SetSRID(ST_GeomFromGeoJSON(:g),4326))) AS lon, "
+            "       ST_Y(ST_Centroid(ST_SetSRID(ST_GeomFromGeoJSON(:g),4326))) AS lat"),
+            {"g": json.dumps(geom)}).mappings().first()
+        lon, lat = float(c["lon"]), float(c["lat"])
+    if lon is None or lat is None:
+        raise HTTPException(400, "fournir une parcelle (idu), un point (lon/lat) ou un polygone (geom)")
+
+    out = etude_de_zone(db, lon, lat, minutes, mode, geom_geojson=geom, naf=naf)
+    out["origine"] = {"lon": lon, "lat": lat}
+    out["naf_label"] = naf_label(naf) if naf else None
+    if out.get("zone_disponible"):
+        out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
+        # « N habitants par concurrent » (maquette) — un ratio de faits, jamais une projection de CA
+        pop = out.get("population") or {}
+        conc = out.get("concurrents") or {}
+        hab, n = pop.get("habitants"), conc.get("n")
+        out["habitants_par_concurrent"] = round(hab / n) if (hab and n) else None
+        out["note"] = ("INSEE Filosofi 2021 · SIRENE (établissements actifs) · BPE 2025 · MOBPRO · "
+                       "DVF · Radar LABUSE · isochrones IGN — temps hors trafic. Des faits sourcés, "
+                       "aucune prévision de chiffre d'affaires.")
+    return out
+
+
+@app.post("/outils/etude-zone/export.pdf")
+def etude_zone_pdf(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> Response:
+    """Rapport PDF de l'étude de zone (maquette écran 3). Rejoue l'agrégat puis rend la page A4.
+    Zone indisponible → 422 (pas de rapport sur une zone qu'on n'a pas su tracer)."""
+    data = etude_zone(inp, db=db)
+    if not data.get("zone_disponible"):
+        raise HTTPException(422, "zone atteignable indisponible — aucun rapport à exporter")
+    from .pdf_zone import render_zone_pdf
+    pdf = render_zone_pdf(data, titre=inp.titre)
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": "inline; filename=etude-zone.pdf"})
 
 
 @app.get("/parcels/{idu}/export.pdf")

@@ -1,4 +1,4 @@
-import type { CrmColumn, Fiche, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
+import type { CrmColumn, EtudeZoneResult, Fiche, NafOption, ParcelleZone, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
 
 export interface ParcelFeatureCollection {
   type: 'FeatureCollection'
@@ -262,6 +262,21 @@ export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
+// ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle » (isochrone IGN + Filosofi/BPE).
+export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: number) =>
+  j<ParcelleZone>(`/parcels/${idu}/zone?${q({ mode, minutes })}`)
+// ÉTUDE DE ZONE Z4 — l'outil de chalandise (recherche NAF + agrégat de zone).
+export const nafSearch = (query: string) =>
+  j<{ resultats: NafOption[] }>(`/outils/etude-zone/naf?${q({ q: query })}`)
+export interface EtudeZoneInput {
+  idu?: string | null; lon?: number | null; lat?: number | null
+  geom?: unknown | null; naf?: string | null; minutes: number; mode: 'pied' | 'voiture'
+  titre?: string | null
+}
+export const etudeZone = (body: EtudeZoneInput) =>
+  j<EtudeZoneResult>('/outils/etude-zone', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const etudeZonePdfUrl = '/outils/etude-zone/export.pdf'
 
 // M41 (Phase 2.6) — outil « Vérif procédure » : un IDU → procédure PLU en cours OUI/NON + conséquences.
 // L'outil LIT le radar (point de calcul unique), il ne calcule rien. L'absence est datée elle aussi.

@@ -36,6 +36,7 @@ import { Plu } from './Plu'
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
 import { RenouvellementModule } from './Renouvellement'
 import { ProspectionSolaire } from './ProspectionSolaire'
+import { EtudeZone } from './EtudeZone'
 import { TaxeAmenagement } from './TaxeAmenagement'
 import { TierBadge } from './TierBadge'
 
@@ -1163,6 +1164,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
   'prospection-solaire': ProspectionSolaire,
+  // ÉTUDE DE ZONE Z4 — l'outil de chalandise (isochrones IGN + INSEE/SIRENE/BPE).
+  'etude-zone': EtudeZone,
   // FUSION « Étudier un bien » (Vic 21/08/2026) : les DEUX clés résolvent le MÊME composant fusionné
   // — 'scoreur-adresse' (créneau phare O2, carte au menu) ET 'calculette-fonciere' (M23 aliasée, hidden :
   // ouverte par la porte fiche/copilote via calcPrefill, jamais un 404). Anciens composants

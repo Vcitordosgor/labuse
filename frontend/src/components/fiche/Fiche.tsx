@@ -21,6 +21,7 @@ import { GestionnairesBlock } from './GestionnairesBlock'
 import { CoproprietesBlock } from './CoproprietesBlock'
 import { ProprietaireHistorique } from './ProprietaireHistorique'
 import { MarcheSecteurBlock } from './MarcheSecteurBlock'
+import { AutourZoneBlock } from './AutourZoneBlock'
 import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
@@ -2374,6 +2375,15 @@ export function Fiche({ idu }: { idu: string }) {
                 <PermitsProximityBlock idu={idu} />
                 {f.depots && <DepotsBlock d={f.depots} />}
               </div>
+            </RefDrawer>
+
+            {/* ÉTUDE DE ZONE Z3 — « Autour de cette parcelle » : un tiroir de plus, sous Réseaux ;
+                l'isochrone se dessine sur la carte (module-extra). Ne s'active (et n'appelle l'API
+                d'isochrones) qu'à l'OUVERTURE — RefDrawer ne monte les enfants que si le tiroir est ouvert. */}
+            <RefDrawer id="autour-zone" icon={IC.contexte} name="Autour de cette parcelle"
+              context="Qui vit et quels équipements dans la zone atteignable"
+              value={<span className="pill-mint">isochrone</span>}>
+              <AutourZoneBlock idu={idu} />
             </RefDrawer>
 
             {/* M106 P3 — DISPOSITIFS TERRITORIAUX (ZFANG / FRR ex-ZRR) : attribut de COMMUNE,

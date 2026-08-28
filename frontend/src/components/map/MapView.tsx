@@ -839,11 +839,21 @@ export function MapView() {
       m.addLayer({ id: 'module-lot', type: 'line', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'lot'],
         paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
+      // ÉTUDE DE ZONE Z3/Z4 — l'isochrone (zone atteignable) : remplissage discret + liseré de marque,
+      // SOUS les points (le point d'origine et les concurrents restent au-dessus). kind='zone-iso'.
+      m.addLayer({ id: 'module-zone-fill', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'zone-iso'],
+        paint: { 'fill-color': '#4ADE80', 'fill-opacity': 0.08 } })
+      m.addLayer({ id: 'module-zone-line', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'zone-iso'],
+        paint: { 'line-color': '#4ADE80', 'line-opacity': 0.6, 'line-width': 2 } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
         // LOT8b — la même couche de points sert les permis (radar) ET les piscines (« 💧 Voir sur la
         // carte » : toutes les piscines de l'île en marqueurs). Les deux ne coexistent jamais (outils
         // distincts alimentent module-extra), le clic route selon la propriété présente (permit_id/idu).
-        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine', 'radar']]],
+        // ÉTUDE DE ZONE Z4 — 'zone-concurrent' (SIRENE, ambre) et 'zone-origin' (le point étudié, mint)
+        // partagent cette couche (outils distincts alimentent module-extra, jamais en même temps).
+        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine', 'radar', 'zone-concurrent', 'zone-origin']]],
         // radar-permis (agrandissement) : rayon ZOOM-ADAPTATIF — modéré en vue île (limite le
         // chevauchement des permis groupés en centre-ville), NETTEMENT plus gros en zoom rue où
         // l'on clique un permis précis (cible large, prime sur la parcelle). Opacité < 1 + contour
@@ -851,7 +861,10 @@ export function MapView() {
         // RADAR P3 — les pins Radar (kind='radar') sont différenciés par STATUT (jamais le mauve, réservé
         // IA) ; permis/piscine gardent le vert de marque.
         paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 13, 9, 15, 12, 18, 17],
-                 'circle-color': ['case', ['==', ['get', 'kind'], 'radar'],
+                 'circle-color': ['case',
+                   ['==', ['get', 'kind'], 'zone-concurrent'], '#E0A94F',
+                   ['==', ['get', 'kind'], 'zone-origin'], '#4ADE80',
+                   ['==', ['get', 'kind'], 'radar'],
                    ['match', ['get', 'statut'],
                      'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#8FB4F0',
                      'vendue', '#E2726A', '#8FB4F0'],

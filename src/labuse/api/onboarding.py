@@ -690,13 +690,33 @@ lit en trois minutes.</p>
 # → lien de téléchargement signé (30 jours). Sans compte, sans abonnement, sans email maison.
 
 @router.get("/flash", include_in_schema=False)
-def flash_page(idu: str = "", annule: int = 0, db: Session = Depends(get_db)):
+def flash_page(idu: str = "", q: str = "", annule: int = 0, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+
     from ..offres import offre_flash
     of = offre_flash()
     note_annule = ('<p class="err">Paiement interrompu — rien n\'a été débité.</p>' if annule else "")
+    # ÉTUDE DE ZONE Z5 — un commerçant a une ADRESSE, pas un IDU. La recherche par adresse (BAN) trouve
+    # la parcelle qui contient le point ; échec/point sans parcelle → message honnête, jamais un 500.
+    adresse_msg = ""
+    if q.strip() and not idu:
+        from .scoreur import _geocode
+        try:
+            geo = _geocode(q)
+            row = db.execute(text(
+                "SELECT idu FROM parcels WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(:lon,:lat),4326)) "
+                "LIMIT 1"), {"lon": geo["lon"], "lat": geo["lat"]}).scalar()
+            if row:
+                idu = row
+            else:
+                adresse_msg = ('<p class="err">Adresse trouvée, mais aucune parcelle cadastrale à ce '
+                               'point. Essayez l\'IDU.</p>')
+        except Exception as exc:  # noqa: BLE001 — géocodage indisponible/introuvable → dit honnêtement
+            from fastapi import HTTPException as _HX
+            detail = exc.detail if isinstance(exc, _HX) else "service d'adresses momentanément indisponible"
+            adresse_msg = f'<p class="err">{html.escape(str(detail))}</p>'
     parcelle = None
     if idu and len(idu) == 14:
-        from sqlalchemy import text
         parcelle = db.execute(text(
             "SELECT idu, commune, round(surface_m2) AS m2 FROM parcels WHERE idu = :i"),
             {"i": idu.upper()}).mappings().first()
@@ -725,7 +745,7 @@ conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours
     return HTMLResponse(_page("rapport Flash", f"""
 <h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF</p>
 <div class="pricewrap"><div class="price"><b>{of['eur']} €</b><span>paiement unique</span></div></div>
-{note_annule}{introuvable}
+{note_annule}{adresse_msg}{introuvable}
 <div class="list">
 <div><i>▸</i><span>Zonage et règles d'urbanisme calibrées — hauteur, emprise, ce qu'on peut y construire</span></div>
 <div><i>▸</i><span>Risques : Géorisques, PPR, littoral</span></div>
@@ -734,13 +754,21 @@ conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours
 <div><i>▸</i><span>Chaque donnée avec sa source et sa fraîcheur</span></div>
 </div>
 <form method="get" action="/flash">
+<label for="q">Adresse du bien</label>
+<div class="field"><input id="q" name="q" type="text" inputmode="text" autofocus
+  placeholder="12 rue de la Gare, Saint-André" aria-describedby="qhint"></div>
+<p class="hint" id="qhint">Un commerçant a une adresse — on retrouve la parcelle pour vous.</p>
+<button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
+</form>
+<p class="note" style="margin:14px 0 6px">— ou —</p>
+<form method="get" action="/flash">
 <label for="idu">Identifiant de parcelle (IDU)</label>
-<div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14" required
-  autofocus inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
+<div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14"
+  inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
 <p class="hint" id="iduhint">14 caractères — il figure sur cadastre.gouv.fr.</p>
 <button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
-<p class="note">Vous vérifiez la parcelle avant de payer.</p>"""))
+<p class="note">Vous vérifiez la parcelle avant de payer.</p></form>"""))
 
 
 @router.post("/flash", include_in_schema=False)

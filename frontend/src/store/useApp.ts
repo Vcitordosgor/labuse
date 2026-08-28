@@ -370,6 +370,9 @@ interface AppState {
   // ce que le module affiche sur la carte : parcelles surlignées (idus) + géométries propres (lots, permis)
   moduleMap: { idus: string[]; extra: unknown | null }
   setModuleMap: (m: { idus: string[]; extra: unknown | null }) => void
+  // ÉTUDE DE ZONE Z3 — segment du tiroir « Autour de cette parcelle » : 0 = à pied 15 min, 1 = voiture 5 min
+  zoneSeg: number
+  setZoneSeg: (i: number) => void
   // bloc module en tête de fiche : idu → lignes [libellé, valeur]
   moduleFiche: Record<string, { module: string; lines: [string, string][] }>
   setModuleFiche: (f: Record<string, { module: string; lines: [string, string][] }>) => void
@@ -705,6 +708,8 @@ export const useApp = create<AppState>((set) => ({
   setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
+  zoneSeg: 0,
+  setZoneSeg: (zoneSeg) => set({ zoneSeg }),
   cmpLeft: 'bm-ortho-1950',
   cmpRight: 'bm-ortho-now',
   setCmpLeft: (cmpLeft) => set({ cmpLeft }),

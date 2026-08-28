@@ -295,6 +295,22 @@ SOURCES: list[dict] = [
          documentation_url="https://recherche-entreprises.api.gouv.fr/docs", endpoint_url="https://recherche-entreprises.api.gouv.fr/search",
          legal_notes="Licence Ouverte — attribution : « Source : Insee, Sirene, via recherche-entreprises (DINUM) ».",
          technical_notes="✓ live : confirme une personne morale propriétaire en attendant les Fichiers fonciers."),
+    # ÉTUDE DE ZONE Z1 — SIRENE établissements ADRESSÉS/GÉOCODÉS (annuaire pour la chalandise). DISTINCT
+    # de « SIRENE » ci-dessus (qui enrichit le propriétaire par SIREN). Fichier géolocalisé volumineux →
+    # ingestion par CLI (labuse ingest-sirene-etab --file …). Statut de diffusion INSEE respecté.
+    dict(name="SIRENE établissements géolocalisés", category="economie", provider="INSEE / data.gouv (GéoSIRENE)",
+         source_millesime="SIRENE géolocalisé — état courant (non versionné)",
+         access_type="import CSV", status=S.MANUEL, reliability_level=R.VERIFIE,
+         documentation_url="https://www.data.gouv.fr/fr/datasets/geolocalisation-des-etablissements-du-repertoire-sirene-pour-les-etudes-statistiques/",
+         legal_notes="Licence Ouverte 2.0 — attribution : « Source : Insee, Sirene ». Statut de diffusion respecté : les établissements en diffusion partielle (personnes physiques opposées) n'ont ni nom ni adresse stockés/affichés (obligation légale).",
+         technical_notes="Table dédiée `sirene_etablissements` (siret, siren, naf, dénomination/enseigne/adresse si diffusibles, geom, commune). Interrogée par NAF dans une zone (Étude de zone — concurrents). Filtre INSEE 974, établissements ACTIFS géolocalisés. last_sync_at à l'ingestion."),
+    # ÉTUDE DE ZONE Z1 — MOBPRO (mobilités domicile-travail) : emplois au lieu de travail par commune.
+    dict(name="MOBPRO (mobilités domicile-travail, INSEE)", category="economie", provider="INSEE (RP)",
+         source_millesime="MOBPRO INSEE — fichier détail (millésime RP)",
+         access_type="import CSV", status=S.MANUEL, reliability_level=R.VERIFIE,
+         documentation_url="https://www.insee.fr/fr/statistiques/7630376",
+         legal_notes="Licence Ouverte — attribution : « Source : Insee, MOBPRO ».",
+         technical_notes="Table `mobpro_commune` (emplois au lieu de travail agrégés par commune, pondérés IPONDI). Filtre DCLT 974. Sert « N actifs y travaillent » de l'Étude de zone (maille commune). last_sync_at à l'ingestion."),
     dict(name="IGN BD CARTO V5 — occupation du sol", category="occupation_sol", provider="IGN / Géoplateforme",
          source_millesime="BD CARTO® V5 — occupation du sol (IGN, proxy)",   # M125-1bis : attrs.src=BDCARTO_V5 (1 643 objets)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,

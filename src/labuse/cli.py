@@ -237,6 +237,35 @@ def bpe_build_cmd() -> None:
     typer.echo(f"✓ BPE 974 : {counts} (total {sum(counts.values())})")
 
 
+@app.command("ingest-sirene-etab")
+def ingest_sirene_etab_cmd(file: str = typer.Option(..., "--file", help="CSV géolocalisé SIRENE (INSEE)")) -> None:
+    """ÉTUDE DE ZONE Z1 — ingère les établissements SIRENE actifs géolocalisés (974) → table
+    `sirene_etablissements`. Statut de diffusion respecté (les 'P' n'ont ni nom ni adresse en clair)."""
+    from . import models
+    from .db import engine
+    from .ingestion import seed_sources
+    from .ingestion.sirene_etablissements import build_sirene_etablissements
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        r = build_sirene_etablissements(s, file=file, log=typer.echo)
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ SIRENE établissements 974 : {r['n']} ({r['n_diffusion_partielle']} en diffusion partielle)")
+
+
+@app.command("ingest-mobpro")
+def ingest_mobpro_cmd(file: str = typer.Option(..., "--file", help="CSV MOBPRO (INSEE)"),
+                      millesime: str = typer.Option("MOBPRO INSEE", "--millesime")) -> None:
+    """ÉTUDE DE ZONE Z1 — ingère MOBPRO (emplois au lieu de travail, maille commune 974)."""
+    from .ingestion import seed_sources
+    from .ingestion.mobpro import build_mobpro
+
+    with session_scope() as s:
+        seed_sources.seed(s)
+        r = build_mobpro(s, file=file, millesime=millesime, log=typer.echo)
+    typer.echo(f"✓ MOBPRO 974 : {r['n_communes']} communes")
+
+
 @app.command("entites-acronymes")
 def entites_acronymes_cmd() -> None:
     """M110 — (re)charge le référentiel des acronymes de personnes morales (SIDR, SHLMR…) depuis
