@@ -82,6 +82,29 @@ def test_pas_de_lien_portail_dans_le_mail(seed):
     assert "leboncoin" not in item["url_fiche"] and "url_sortante" not in item
 
 
+def test_alerte_veille_part_vers_email_du_compte(seed, monkeypatch):
+    """RV2-V3 — PREUVE : l'alerte de veille (et le digest) partent vers l'E-MAIL DU COMPTE (titulaire
+    de la licence), jamais vers une adresse d'ailleurs. On capture le destinataire réel passé à Brevo."""
+    captures: list[tuple[str, str]] = []
+    monkeypatch.setattr(digests.brevo, "envoyer_template",
+                        lambda to, key, params: (captures.append((to, key)), {"envoye": True})[1])
+    with session_scope() as db:
+        email_match = db.execute(text(
+            "SELECT email FROM utilisateurs WHERE compte_id=:c AND role='titulaire'"),
+            {"c": seed["match"]}).scalar()
+        digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=False)
+    tos = [to for to, _ in captures]
+    # le compte dont la veille matche a bien reçu ses envois à SON e-mail de titulaire
+    assert email_match in tos, tos
+    # AUCUN envoi ne part vers une adresse qui n'est pas l'e-mail titulaire d'un compte ACTIF
+    with session_scope() as db:
+        emails_actifs = set(db.execute(text(
+            "SELECT u.email FROM utilisateurs u JOIN comptes c ON c.id=u.compte_id "
+            "WHERE c.statut='actif' AND u.role='titulaire'")).scalars())
+    hors = set(tos) - emails_actifs
+    assert not hors, f"une alerte/digest est partie vers une adresse HORS compte actif : {hors}"
+
+
 def test_echec_envoi_bruyant(seed):
     # sans clé/template Brevo (env de test), l'envoi RÉEL échoue → compté + event système visible.
     with session_scope() as db:

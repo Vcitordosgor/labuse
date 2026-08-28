@@ -208,6 +208,21 @@ async def _lifespan(app: FastAPI):
             except Exception:  # noqa: BLE001 — le verrou tombe de toute façon à la fermeture de session
                 pass
             _lock_conn.close()
+    # RV2-V1 — vérif AU DÉMARRAGE du répertoire de captures Radar (écriture). Pas un crash (l'app
+    # doit démarrer) : log.error BRUYANT + état exposé à l'admin (radar_check) pour que le défaut se
+    # sache AVANT le premier dépôt. En prod le répertoire vit hors de l'app ; s'il manque et que
+    # l'utilisateur `labuse` ne peut pas le créer, la procédure serveur est dans docs/PIGE/EXPLOITATION.md.
+    try:
+        from ..pige.tables import captures_dir_writable as _cap_w
+        _cap_ok, _cap_detail = _cap_w()
+    except Exception as _cap_exc:  # noqa: BLE001 — la vérif ne doit jamais empêcher le démarrage
+        _cap_ok, _cap_detail = False, f"vérif impossible ({_cap_exc})"
+    app.state.pige_captures = {"ok": _cap_ok, "detail": _cap_detail}
+    if not _cap_ok:
+        log.error("RADAR — répertoire de captures INACCESSIBLE EN ÉCRITURE : %s. Le dépôt de captures "
+                  "ÉCHOUERA en ligne — créer/chown le répertoire (voir docs/PIGE/EXPLOITATION.md § captures).",
+                  _cap_detail)
+
     from . import auth
     s = config.get_settings()
     _heal = app.state.schema_heal
@@ -2311,7 +2326,8 @@ def taxe_amenagement_config() -> dict:
     from ..taxe_amenagement import config
     c = config()
     return {"meta": c["meta"], "valeur_forfaitaire_m2": c["valeur_forfaitaire_m2"],
-            "abattement": c["abattement"], "forfaits": c["forfaits"], "taux": c["taux"]}
+            "abattement": c["abattement"], "forfaits": c["forfaits"], "taux": c["taux"],
+            "exoneration_surface_min_m2": c.get("exoneration_surface_min_m2")}  # RV2-V2 — CGI 1635 quater D
 
 
 @app.get("/outils/taxe-amenagement/prefill")

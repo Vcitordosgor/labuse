@@ -154,7 +154,8 @@ export function TaxeAmenagement() {
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface} onChange={setSurface}
           placeholder="ex. 120"
-          hint={`Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France).`} />
+          hint={`Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
+            c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
 
         <div className="flex flex-col gap-1.5">
           <CheckField dataAttr="residence" label="Résidence principale"
@@ -188,6 +189,13 @@ export function TaxeAmenagement() {
           <NumField dataAttr="taux-departemental" label="Taux départemental" unit="%" value={tauxDepEffectif} onChange={setTauxDepartemental}
             placeholder={depDefaut != null ? String(depDefaut) : undefined}
             hint={`Plafond légal ${depDefaut != null ? depDefaut : '—'} % — à confirmer auprès du département.`} />
+        </div>
+        {/* RV2-V2 — aide CONCRÈTE pour trouver le taux communal (pas d'open data exploitable). */}
+        <div data-taux-aide className="rounded-md border border-line-2 bg-surface-3/50 px-2.5 py-2 text-[10.5px] leading-snug text-txt-mut">
+          <b className="text-txt">Où trouver le taux communal ?</b> Dans la <b>délibération du conseil municipal
+          fixant le taux de la part communale de la taxe d’aménagement</b> (adoptée avant le 1<sup>er</sup> juillet
+          pour l’année suivante). À demander au <b>service urbanisme de la mairie</b>, ou sur le site de la commune
+          (recueil des actes administratifs). À défaut de délibération, le taux légal minimal est de 1 %.
         </div>
       </div>
 

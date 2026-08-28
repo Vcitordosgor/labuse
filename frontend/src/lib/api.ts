@@ -350,6 +350,7 @@ export interface TaxeConfig {
     part_departementale_plafond_pct: number; part_departementale_defaut: number
     part_departementale_confirmee_974: boolean
   }
+  exoneration_surface_min_m2: number | null   // RV2-V2 — exonération petites surfaces (CGI 1635 quater D)
 }
 export const getTaxeConfig = () => j<TaxeConfig>('/outils/taxe-amenagement/config')
 
@@ -1219,6 +1220,8 @@ export interface RadarCheck {
   cible_minutes: number; file_extraction: number; reverif_du_jour: number; signalements_en_attente: number
   compteurs: { nouveautes: number; en_vente_longue: number; baisses: number }
   intake_vide_48h: boolean; derniere_saisie: string | null
+  // RV2-V1 — état du répertoire de captures (écriture) : le défaut prod se voit AVANT le 1er dépôt.
+  captures_dir_ok: boolean; captures_dir: string
 }
 export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
   j<RadarProposition>('/admin/radar/deposer', {

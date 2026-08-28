@@ -1,29 +1,39 @@
 # K3 (rattrapage KelFoncier) — TAXE D'AMÉNAGEMENT : valeurs forfaitaires et taux de l'ANNÉE EN COURS.
-# Config DATÉE et SOURCÉE (aucun chiffre inventé). La formule est publique (code de l'urbanisme,
-# art. L.331-1 s. / L.331-11 s.). Les valeurs forfaitaires au m² sont actualisées chaque année par
-# arrêté (indexation ICC INSEE) — À METTRE À JOUR au changement de millésime.
+# Config DATÉE et SOURCÉE (aucun chiffre inventé). RV2-V2 (28/08/2026) — RÉFÉRENCE LÉGALE CORRIGÉE :
+# depuis la réforme (transfert à la DGFiP, ord. 2022-883), la taxe d'aménagement est régie par le CODE
+# GÉNÉRAL DES IMPÔTS, art. 1635 quater A à 1635 quater V (le code de l'urbanisme L.331-* est abrogé).
+# Assiette = surface taxable × valeur forfaitaire (art. 1635 quater I) + forfaits (art. 1635 quater J) ;
+# abattement 50 % (art. 1635 quater H) ; exonération des petites surfaces < 5 m² (art. 1635 quater D).
+# Valeurs au m² actualisées chaque année (indexation ICC INSEE) — À METTRE À JOUR au millésime.
 meta:
   annee: 2026
-  source: "service-public.gouv.fr — Taxe d'aménagement : quels montants en 2026 (arrêté annuel, indexation ICC INSEE)"
+  source: "service-public.gouv.fr — Taxe d'aménagement : quels montants en 2026 (indexation ICC INSEE) ; base légale CGI art. 1635 quater A s."
   url: "https://www.service-public.gouv.fr/particuliers/actualites/A15416"
-  releve_le: "2026-08-27"
+  releve_le: "2026-08-28"
   note: >-
     Estimation INDICATIVE. Le montant officiel est notifié par l'administration après dépôt du permis.
-    La Réunion est HORS Île-de-France (valeur forfaitaire hors IdF).
+    La Réunion (DOM) est HORS Île-de-France : la valeur forfaitaire hors-IdF s'applique (aucune valeur
+    forfaitaire spécifique aux DOM n'existe). Base légale : CGI art. 1635 quater A et suivants.
 
-# Valeur forfaitaire de la surface de construction (€/m² de surface taxable), millésime 2026.
+# Valeur forfaitaire de la surface de construction (€/m² de surface taxable), millésime 2026
+# (CGI art. 1635 quater I). Vérifié le 28/08/2026 contre service-public A15416.
 valeur_forfaitaire_m2:
-  hors_idf: 892        # La Réunion — valeur applicable
+  hors_idf: 892        # La Réunion (DOM) — valeur applicable
   idf: 1011            # documenté pour mémoire, non applicable au 974
 
-# Abattement de 50 % sur la valeur forfaitaire (art. L.331-12) :
-# - 100 premiers m² d'un local d'habitation principale ;
+# Exonération de PLEIN DROIT des petites surfaces : une construction dont la surface taxable est
+# < 5 m² n'est pas soumise à la part surface (CGI art. 1635 quater D, 1°). Cadré et incontestable.
+exoneration_surface_min_m2: 5
+
+# Abattement de 50 % sur la valeur forfaitaire (CGI art. 1635 quater H) :
+# - 100 premiers m² d'un local d'habitation à usage de résidence principale ;
 # - locaux d'habitation aidés (prêts aidés de l'État) et leurs annexes.
 abattement:
   taux_pct: 50
   plafond_m2_residence_principale: 100
 
-# Valeurs forfaitaires SPÉCIFIQUES (installations et aménagements), millésime 2026 (€/unité).
+# Valeurs forfaitaires SPÉCIFIQUES (installations et aménagements), millésime 2026 (€/unité)
+# (CGI art. 1635 quater J). Vérifiées le 28/08/2026 contre service-public A15416.
 forfaits:
   piscine_m2: 251
   panneau_pv_sol_m2: 10

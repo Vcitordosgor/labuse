@@ -7,7 +7,8 @@ import { MODULES } from './outils/registry'
 // rendaient mal). Cohérence : contour simple, pas de remplissage sauf CRM (barres).
 // DASHBOARD-V1 — 'admin' (Tour de contrôle) n'est pas une zone du rail-icônes : son entrée vit
 // au pied de rail, visible seulement pour l'admin (cf. AdminRailEntry).
-type Zone = Exclude<View, 'sources' | 'admin'> | 'outils'
+// RV2-V3 — 'veille' est rendue à part (pied de rail, comme sources/admin), pas dans ZONES.
+type Zone = Exclude<View, 'sources' | 'admin' | 'veille'> | 'outils'
 
 const ICONS: Record<Zone, JSX.Element> = {
   // M62-P1 (a/b) : l'entrée « IA » du rail = le Copilote (view 'copilote') → ÉTINCELLES.
@@ -127,7 +128,7 @@ function AdminRailEntry() {
 }
 
 export function Rail() {
-  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, surveillanceOpen, toggleSurveillance } = useApp()
+  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, toggleSurveillance } = useApp()
   // M104 — UNE seule entrée « Surveillance » (fusion Suivis + Secteurs + Critères, arbitrage
   // 17/08). Les notifications restent à la CLOCHE (chrome global) : la section configure et
   // liste ce qu'on surveille, la cloche affiche ce qui en sort.
@@ -175,13 +176,14 @@ export function Rail() {
           {/* M104 — une seule entrée : parcelles suivies + secteurs dessinés + critères
               enregistrés. M137-C (Vic) — le libellé SERVI devient « Veille » (les clés internes
               `surveillance*` ne bougent pas). */}
+          {/* RV2-V3 — la Veille est une CATÉGORIE (view 'veille'), plein écran comme le Radar. */}
           <button data-rail-surveillance onClick={() => toggleSurveillance()} className="group flex w-full flex-col items-center gap-1"
-            title="Veille — parcelles suivies, secteurs dessinés et critères enregistrés">
+            title="Veille — le foncier (parcelles, critères) et les annonces (Radar)">
             <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
-              surveillanceOpen ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
+              view === 'veille' ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
               <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
             </span>
-            <span className={`text-[10.5px] ${surveillanceOpen ? 'text-mint' : 'text-txt-mut'}`}>Veille</span>
+            <span className={`text-[10.5px] ${view === 'veille' ? 'text-mint' : 'text-txt-mut'}`}>Veille</span>
           </button>
           {/* P5 (revue Vic n°3) — l'ancien badge cryptique « J-2 » devient une entrée « Sources »
               claire : même fonction (fraîcheur des données → page Sources), libellé explicite. */}
