@@ -271,6 +271,7 @@ export const nafSearch = (query: string) =>
 export interface EtudeZoneInput {
   idu?: string | null; lon?: number | null; lat?: number | null
   geom?: unknown | null; naf?: string | null; minutes: number; mode: 'pied' | 'voiture'
+  titre?: string | null
 }
 export const etudeZone = (body: EtudeZoneInput) =>
   j<EtudeZoneResult>('/outils/etude-zone', {

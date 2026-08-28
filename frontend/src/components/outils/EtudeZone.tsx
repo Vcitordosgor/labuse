@@ -81,7 +81,7 @@ export function EtudeZone() {
   const pretA = !!(geomFromDrawn || cible)
   const exportPdf = () => {
     if (!res?.zone_disponible) return
-    const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null }
+    const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null, titre: cible?.label ?? (geomFromDrawn ? 'Zone dessinée' : null) }
     if (geomFromDrawn) body.geom = geomFromDrawn
     else if (cible?.idu) body.idu = cible.idu
     else if (cible?.lon != null) { body.lon = cible.lon; body.lat = cible.lat }

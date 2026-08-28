@@ -3865,6 +3865,7 @@ class EtudeZoneIn(BaseModel):
     naf: str | None = None          # activité étudiée (concurrents SIRENE)
     minutes: int = 10               # 5 / 10 / 15
     mode: str = "voiture"           # voiture / pied
+    titre: str | None = None        # libellé d'entrée (adresse) pour le titre du PDF
 
 
 @app.post("/outils/etude-zone")
@@ -3914,6 +3915,19 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
                        "DVF · Radar LABUSE · isochrones IGN — temps hors trafic. Des faits sourcés, "
                        "aucune prévision de chiffre d'affaires.")
     return out
+
+
+@app.post("/outils/etude-zone/export.pdf")
+def etude_zone_pdf(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> Response:
+    """Rapport PDF de l'étude de zone (maquette écran 3). Rejoue l'agrégat puis rend la page A4.
+    Zone indisponible → 422 (pas de rapport sur une zone qu'on n'a pas su tracer)."""
+    data = etude_zone(inp, db=db)
+    if not data.get("zone_disponible"):
+        raise HTTPException(422, "zone atteignable indisponible — aucun rapport à exporter")
+    from .pdf_zone import render_zone_pdf
+    pdf = render_zone_pdf(data, titre=inp.titre)
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": "inline; filename=etude-zone.pdf"})
 
 
 @app.get("/parcels/{idu}/export.pdf")
