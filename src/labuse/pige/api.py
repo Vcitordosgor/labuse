@@ -149,7 +149,9 @@ def radar_retiree(body: BienIn, request: Request) -> dict:
     from ..api.auth import exiger_admin
     exiger_admin(request)
     with session_scope() as db:
-        db.execute(text("UPDATE pige_biens SET statut = 'retiree' WHERE bien_id = :b"), {"b": body.bien_id})
+        # retiree_le horodate le retrait (base de retiree_sans_vente D2 — jamais déduit d'un lien mort).
+        db.execute(text("UPDATE pige_biens SET statut = 'retiree', retiree_le = now() WHERE bien_id = :b"),
+                   {"b": body.bien_id})
         journaliser(db, EV_STATUT_CHANGE, f"Bien retiré — #{body.bien_id}",
                     detail="marqué retiré (file de re-vérif)", dedup=f"pige:retiree:{body.bien_id}")
         db.commit()
@@ -255,3 +257,54 @@ def radar_signaler(body: SignalerIn, request: Request) -> dict:
         ev = client.signaler(db, compte_id=current_compte(request), bien_id=body.bien_id, motif=body.motif)
         db.commit()
     return {"ok": True, "event_id": ev}
+
+
+# ══════════════ RADAR P4 · D1 — veille Radar (critères client) ══════════════
+
+class VeilleIn(BaseModel):
+    commune: str | None = None
+    type_bien: str | None = None
+    surface_terrain_min: float | None = None
+    surface_hab_min: float | None = None
+    particulier_only: bool = False
+    evenements: list[str] = []
+
+
+@router.post("/radar/veille")
+def radar_veille_creer(body: VeilleIn, request: Request) -> dict:
+    """Le client crée une veille Radar (ses critères). Alimente l'ALERTE veille de fin de journée."""
+    from ..api.tenant import current_compte
+    from . import veille
+    crit = {k: v for k, v in body.model_dump().items() if v not in (None, [], False)}
+    with session_scope() as db:
+        vid = veille.creer(db, compte_id=current_compte(request), criteria=crit)
+        db.commit()
+    return {"ok": True, "veille_id": vid}
+
+
+@router.get("/radar/veille")
+def radar_veille_lister(request: Request) -> dict:
+    from ..api.tenant import current_compte
+    from . import veille
+    with session_scope() as db:
+        return {"veilles": veille.lister(db, current_compte(request))}
+
+
+@router.delete("/radar/veille/{veille_id}")
+def radar_veille_supprimer(veille_id: int, request: Request) -> dict:
+    from ..api.tenant import current_compte
+    from . import veille
+    with session_scope() as db:
+        ok = veille.supprimer(db, current_compte(request), veille_id)
+        db.commit()
+    return {"ok": ok}
+
+
+# ══════════════ RADAR P6 · D3 — onglet Marché (stats par commune, honnêteté statistique) ══════════════
+
+@router.get("/radar/marche")
+def radar_marche(request: Request) -> dict:
+    """Statistiques Radar par commune (24 + total île). Chaque mesure porte son n ; < 5 = insuffisant."""
+    from . import marche
+    with session_scope() as db:
+        return marche.stats(db)

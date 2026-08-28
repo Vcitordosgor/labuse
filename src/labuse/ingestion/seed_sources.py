@@ -347,6 +347,19 @@ SOURCES: list[dict] = [
     # DGFiP « parcelles des personnes morales » (open data Licence Ouverte v2) porte les 82 701 liens
     # parcelle↔PM lus par la fiche (bloc Propriétaire) — à ne pas confondre avec « Fichiers fonciers
     # (Cerema) » (conventionné, non branché, 100 % UNKNOWN). Ingérée par ingestion/personnes_morales.py.
+    # RADAR (pige) · P456 D4 — la collecte HUMAINE d'annonces au registre. Fraîcheur = date de dernière
+    # COLLECTE (max(date_saisie) de pige_annonces), JAMAIS une date de run. Cadence quotidienne (rituel Vic).
+    dict(name="Radar (pige d'annonces)", category="marche", provider="LABUSE — collecte humaine",
+         source_millesime="Collecte manuelle — biens en vente (faits + lien)",
+         source_cadence="quotidien", access_type="saisie admin (100% humaine)",
+         status=S.MANUEL, reliability_level=R.A_CONFIRMER,
+         documentation_url=None, endpoint_url=None,
+         legal_notes="Faits extraits d'annonces PUBLIQUES + lien de redirection vers la source ; captures "
+                     "conservées en interne, aucune coordonnée vendeur, aucune republication (doctrine RADAR §2). "
+                     "Collecte 100 % HUMAINE : aucun code ne requête un portail.",
+         technical_notes="Fraîcheur = max(date_saisie) de pige_annonces (dernière collecte), posée par "
+                         "`pige.enregistrer_fraicheur()`. Hors scoring. Tables pige_* isolées. Le rituel quotidien "
+                         "de Vic est décrit dans docs/EXPLOITATION.md."),
     dict(name="DGFiP — parcelles des personnes morales", category="proprietaire", provider="DGFiP",
          source_millesime="Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)",   # KF-2 L1/L3
          source_cadence="annuelle", source_horizon_at=date(2025, 1, 1),   # KF-2 L3 : cadence + dernière situation

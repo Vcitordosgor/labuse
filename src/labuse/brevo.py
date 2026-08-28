@@ -28,13 +28,14 @@ TEMPLATES: dict[str, str] = {
     "relance_carte": "brevo_tpl_relance_carte",      # carte refusée → lien de paiement
     "suspension": "brevo_tpl_suspension",
     "retablissement": "brevo_tpl_retablissement",
+    "radar": "brevo_tpl_radar",                      # RADAR P4 — digest/alerte (template Brevo ID 12)
 }
 #: libellés servis au dashboard (boutons/chips)
 LIBELLES: dict[str, str] = {
     "essai": "Essai 48 h", "souscription": "Lien de souscription",
     "onboarding1": "Mail 1", "onboarding2": "Mail 2", "onboarding3": "Mail 3",
     "relance_carte": "Relance carte refusée", "suspension": "Suspension",
-    "retablissement": "Rétablissement",
+    "retablissement": "Rétablissement", "radar": "Radar (digest/alerte)",
 }
 
 
