@@ -69,8 +69,10 @@ export function TaxeAmenagement() {
   const [tauxCommunal, setTauxCommunal] = useState<number | null>(null)   // OBLIGATOIRE — jamais de défaut
   const [tauxDepartemental, setTauxDepartemental] = useState<number | null>(null)
 
-  // contexte parcelle (référence : commune + zone + terrain), chargé à la demande.
-  const [prefillIdu, setPrefillIdu] = useState<string | null>(null)
+  // contexte parcelle (référence : commune + zone + terrain). RETOURS-1 R5 (Vic) : ouvert depuis
+  // la fiche parcelle (porte « Taxe d'aménagement »), le contexte se charge D'EMBLÉE — commune
+  // pré-remplie, surface du terrain en référence (la surface TAXABLE reste saisie à la main).
+  const [prefillIdu, setPrefillIdu] = useState<string | null>(selectedIdu)
   const prefill = useQuery({
     queryKey: ['taxe-prefill', prefillIdu], queryFn: () => getTaxePrefill(prefillIdu!),
     enabled: !!prefillIdu, retry: false,

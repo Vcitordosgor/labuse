@@ -57,6 +57,14 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // GB-003 : '/alertes' (Veille › Secteurs — GET /alertes, POST /alertes/refresh, /alertes/ack)
   // MANQUAIT → 404 en `npm run dev` (la feed « Nouveautés » restait muette). Backend OK, prod OK.
   '/alertes',
+  // RETOURS-1 R5 (Vic) : '/outils' MANQUAIT → /outils/taxe-amenagement/config tombait sur vite en
+  // dev → « Barème indisponible — réessayez plus tard » alors que l'endpoint répond 200 à :8000.
+  // MÊME famille que /bilan (M58), /anti-fiche (M55-N), M82. Prod OK (FastAPI même origine).
+  // ⚠ TRAIN 8 Caddy : à router aussi si la prod passe par Caddy.
+  '/outils',
+  // RETOURS-1 R9 (Vic) : '/radar' MANQUAIT → tout le Radar client (biens, fiche, Marché) 404 en
+  // dev → onglet Marché bloqué sur « Chargement… » (le front avalait l'erreur — corrigé aussi).
+  '/radar',
   // DASHBOARD-V1 — capteurs (usage/retours) + Tour de contrôle admin
   '/usage', '/retours', '/admin',
   '/api']   // M26-B : /api/copilote (runs + SSE)

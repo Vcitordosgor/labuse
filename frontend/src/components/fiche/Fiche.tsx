@@ -2282,6 +2282,12 @@ export function Fiche({ idu }: { idu: string }) {
                   sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
                   onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) }} />
               )}
+              {/* RETOURS-1 R5 (Vic) — porte vers la calculette Taxe d'aménagement : la parcelle reste
+                  sélectionnée (M60), l'outil charge d'emblée son contexte (commune pré-remplie,
+                  surface du terrain en référence — la surface TAXABLE reste saisie à la main). */}
+              <PorteOutil ico="€" data="taxe-amenagement" titre="Taxe d'aménagement"
+                sous={`Estimation détaillée pour un projet ici${f.commune ? ` (${f.commune})` : ''} — barème officiel daté, taux jamais inventés`}
+                onClick={() => setModule('taxe-amenagement')} />
               {/* fiche-secteur (ex-carnet) — le COMPTE d'opportunités de la section cadastrale. « opportunités »
                   = parcelles Priorité + À suivre du run servi (rien de plus). CLIC → carte sur la commune,
                   zoomée sur la section, filtrée sur ces deux tiers (jamais un chiffre mort). */}
