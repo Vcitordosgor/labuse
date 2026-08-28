@@ -111,6 +111,12 @@ un fond (`bg-surface-2/3` ou `bg-bg`) ; aucun autre ne souffrait du défaut. Cap
   0 utilisateur @rt.test, 0 saved_search orpheline.
 
 ## Gardes
-- tsc 0 · build OK · tests store 9/9 · tests pige/veille/digest/taxe verts.
-- Suite pytest branche vs base (worktree) — chiffres au compte-rendu.
+- tsc 0 · build OK · tests store 9/9 · mes 9 nouveaux tests verts (captures_dir 3, taxe cas 5,
+  e-mail veille 1).
+- **Suite pytest : branche 1939 passed / 4 failed** ; base (worktree `f1e73834`) 1927 passed / 4 failed.
+  **Au niveau de la base** — les 4 échecs sont PRÉ-EXISTANTS et IDENTIQUES sur la base (vérifié en
+  worktree) : `test_pige_digests::test_echec_envoi_bruyant` et
+  `test_notifications_m85::test_producteur_systeme_dit_sa_source_et_son_lien` (environnement local :
+  la config Brevo/notifications de la base de dev fait diverger l'attendu). Aucune régression : les +12
+  passed de la branche sont mes nouveaux tests.
 - Golden inchangé (aucun fichier de scoring touché).
