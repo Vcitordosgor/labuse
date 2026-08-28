@@ -39,8 +39,19 @@ function Ligne({ l, max, fort = false }: { l: RadarMarcheLigne; max: number; for
 }
 
 export function RadarMarche() {
-  const { data, isLoading } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche })
-  if (isLoading || !data) return <div className="p-4 text-[12px] text-txt-dim">Chargement…</div>
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche })
+  if (isLoading) return <div className="p-4 text-[12px] text-txt-dim">Chargement…</div>
+  // RETOURS-1 R9 (Vic) — CAUSE du « Chargement… » infini : `isError` n'était pas lu — une erreur
+  // (ici : '/radar' absent du proxy vite dev → 404 HTML) laissait isLoading=false et data=undefined,
+  // et l'écran restait sur « Chargement… » pour toujours. Désormais : erreur DITE + réessayer.
+  if (isError || !data) return (
+    <div className="flex flex-col items-start gap-2 p-4 text-[12px] text-txt-mut">
+      <p>Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu.</p>
+      <button onClick={() => refetch()} className="rounded-md border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint hover:bg-mint/20">
+        Réessayer
+      </button>
+    </div>
+  )
   const max = Math.max(1, ...data.communes.map((c) => c.actives))
   const jeune = data.corpus_total < 40
 
