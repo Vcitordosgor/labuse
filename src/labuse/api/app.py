@@ -155,6 +155,12 @@ async def _lifespan(app: FastAPI):
         from .dashboard import ensure_tables as _dashboard_ens
         # RADAR (pige) · P0 — schéma isolé pige_* (domaine transactionnel, hors runs)
         from ..pige.tables import ensure_tables as _pige_ens
+        # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
+        def _zone_ens():
+            with session_scope() as _s:
+                from ..ingestion.sirene_etablissements import ensure_tables as _se_ens
+                from ..ingestion.mobpro import ensure_tables as _mo_ens
+                _se_ens(_s); _mo_ens(_s)
 
         def _heal_comptes_scoping():
             with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
@@ -188,6 +194,9 @@ async def _lifespan(app: FastAPI):
             # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
             ("dashboard", lambda: _dashboard_ens(_engine())),
             ("pige", lambda: _pige_ens(_engine())),
+            # ÉTUDE DE ZONE Z1 — tables SIRENE établissements + MOBPRO (interrogées par le moteur de
+            # zone même vides ; l'ingestion réelle vient des CLI ingest-sirene-etab / ingest-mobpro).
+            ("zone", lambda: _zone_ens()),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
