@@ -109,3 +109,26 @@ def test_lot3_filosofi_imputation_pilotee_par_i_est_200():
         s.execute(text("DELETE FROM filosofi_carreaux_200m WHERE men_prop = 5 AND ind IN (100,80,60)"))
     assert pop["revenu_impute_n"] == 2 and pop["revenu_carreaux_n"] == 3
     assert pop["revenu_majorite_imputee"] is True, "2/3 imputés → majorité, « valeur approchée »"
+
+
+def test_lot8_zone_demain_logements_et_au():
+    """LOT 8 — logements autorisés 36 mois (Sitadel raw.nb_lgt) + zones AU intersectantes, signal daté."""
+    from labuse import zone as Z
+    _LON, _LAT = 55.65, -20.96
+    zone = {"type": "Polygon", "coordinates": [[[_LON - 0.02, _LAT - 0.02], [_LON + 0.02, _LAT - 0.02],
+            [_LON + 0.02, _LAT + 0.02], [_LON - 0.02, _LAT + 0.02], [_LON - 0.02, _LAT - 0.02]]]}
+    wkt_au = f"POLYGON(({_LON-0.001} {_LAT-0.001},{_LON+0.001} {_LAT-0.001},{_LON+0.001} {_LAT+0.001},{_LON-0.001} {_LAT+0.001},{_LON-0.001} {_LAT-0.001}))"
+    with session_scope() as s:
+        s.execute(text(
+            "INSERT INTO sitadel_permits (permit_id, type, date, commune, geom, raw) VALUES "
+            "('ZDTEST01','PC', now()-interval '6 months','Saint-André', "
+            " ST_SetSRID(ST_MakePoint(:lon,:lat),4326), '{\"nb_lgt\": 12}'::jsonb)"),
+            {"lon": _LON, "lat": _LAT})
+        s.execute(text(
+            "INSERT INTO spatial_layers (kind, subtype, name, geom) VALUES "
+            "('plu_gpu_zone','AUc','AU test', ST_GeomFromText(:w,4326))"), {"w": wkt_au})
+        d = Z.zone_demain(s, zone)
+        s.execute(text("DELETE FROM sitadel_permits WHERE permit_id='ZDTEST01'"))
+        s.execute(text("DELETE FROM spatial_layers WHERE name='AU test'"))
+    assert d["logements_autorises_36m"] == 12 and d["permis_36m"] == 1
+    assert d["au_zones_n"] == 1 and d["au_zones_ha"] >= 0

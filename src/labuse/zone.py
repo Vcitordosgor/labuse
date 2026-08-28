@@ -356,6 +356,37 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
             "permis_36m": int(permis or 0)}
 
 
+def zone_demain(session: Session, geom_geojson: dict) -> dict:
+    """LOT 8 — « la zone de demain » (données déjà en base, signal DATÉ, jamais une projection) :
+    logements autorisés sur 36 mois glissants (Sitadel `raw.nb_lgt`) = population à venir ; zones AU
+    ouvertes intersectant la zone = urbanisation programmée. Chaque métrique se garde sur table absente."""
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson)}
+
+    def _existe(t: str) -> bool:
+        return session.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar() is not None
+
+    logements = permis = None
+    if _existe("sitadel_permits"):
+        r = session.execute(text(
+            f"""SELECT count(*) n, coalesce(sum((s.raw->>'nb_lgt')::int), 0) lgt
+                FROM sitadel_permits s
+                WHERE s.geom IS NOT NULL AND s.date >= (now() - interval '36 months')
+                  AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).mappings().first()
+        permis, logements = int(r["n"] or 0), int(r["lgt"] or 0)
+    au_n = au_ha = None
+    if _existe("spatial_layers"):
+        r = session.execute(text(
+            f"""SELECT count(*) n, round((coalesce(sum(ST_Area(ST_Transform(geom,2975))),0)/10000)::numeric) ha
+                FROM spatial_layers
+                WHERE kind='plu_gpu_zone' AND subtype LIKE 'AU%'
+                  AND ST_Intersects({z}, ST_Transform(geom, 2975))"""), p).mappings().first()
+        au_n, au_ha = int(r["n"] or 0), int(r["ha"] or 0)
+    return {"logements_autorises_36m": logements, "permis_36m": permis,
+            "au_zones_n": au_n, "au_zones_ha": au_ha,
+            "source": "Sitadel (autorisations) · PLU/GPU (zones AU) — signal daté, pas une projection"}
+
+
 def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
                   geom_geojson: dict | None = None, naf: str | None = None,
                   client: httpx.Client | None = None, fetch=None) -> dict:
@@ -392,6 +423,7 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         "equipements": equipements_proches(session, lon, lat, zone, bandes=bandes),
         "generateurs_flux": generateurs_flux(session, zone),
         "marche": marche_zone(session, zone),
+        "zone_demain": zone_demain(session, zone),   # LOT 8 — signal daté (logements autorisés + AU)
     }
     # LOT A — concurrents : trois états distincts (servie+0 / non ingérée / erreur), jamais un faux zéro
     if naf:

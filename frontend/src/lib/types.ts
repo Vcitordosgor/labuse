@@ -468,6 +468,7 @@ export interface EtudeZoneResult {
   generateurs_flux?: ZoneGenerateur[]
   marche?: ZoneMarche
   concurrents?: { n: number; naf: string; items: ZoneConcurrent[]; couverture?: ZoneCouverture; millesime?: string }
+  zone_demain?: { logements_autorises_36m: number | null; permis_36m: number | null; au_zones_n: number | null; au_zones_ha: number | null; source: string }
   habitants_par_concurrent?: number | null
   note?: string
 }

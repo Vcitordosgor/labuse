@@ -266,8 +266,19 @@ export function EtudeZone() {
             </div>
           )}
 
-          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré (l'étude au PDF Flash reste au
-              programme, mais pas par ce bouton-là). L'endpoint back n'est pas touché. */}
+          {/* LOT 8 — La zone de demain : signal DATÉ (logements autorisés 36 mois + zones AU), jamais une projection */}
+          {res.zone_demain && ((res.zone_demain.logements_autorises_36m ?? 0) > 0 || (res.zone_demain.au_zones_n ?? 0) > 0) && (
+            <div>
+              <SectionTitle>La zone de demain</SectionTitle>
+              <div className="grid grid-cols-2 gap-2">
+                <Stat v={nb(res.zone_demain.logements_autorises_36m)} k="logements autorisés / 36 mois" />
+                <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="zones AU (à urbaniser)" />
+              </div>
+              <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Signal daté (Sitadel · PLU) — une urbanisation programmée, jamais une projection de population.</p>
+            </div>
+          )}
+
+          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré. */}
           <button onClick={nouvelleEtude} className="w-full rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
