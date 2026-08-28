@@ -52,7 +52,11 @@ dependencies = [
 
 [project.optional-dependencies]
 # Provider IA réel (sinon provider "stub" hors-ligne par défaut).
-ai = ["anthropic>=0.40"]
+# HYGIÈNE H1 (27/08) — version FIGÉE : le VPS a porté anthropic==1.1.0 (refuse le paramètre
+# `temperature` → Copilote en mode dégradé SILENCIEUX, 1 h de debug). Le code exige la lignée
+# 0.116.0. Pin EXACT : `pip install -e .[ai]` (deploy_vps.sh) installe toujours cette version, jamais
+# une au hasard. Garde-fou : tests/test_anthropic_pin.py + vérification post-install dans deploy_vps.sh.
+ai = ["anthropic==0.116.0"]
 # ML / hors-ligne (entraînement P-model, détection ortho, backtests d'arène) — JAMAIS sur le serveur
 # de prod (il sert des scores pré-calculés). Sur le Mac/GPU : `pip install -e .[ml]`.
 ml = [
