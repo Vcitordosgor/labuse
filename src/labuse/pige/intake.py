@@ -128,9 +128,12 @@ def deposer(db: Session, image: bytes, media_type: str, lien: str, *, geocode=No
     try:
         chemin, h = _stocker_capture(image, media_type)
     except OSError as exc:
+        # RV2-V1 — le motif NOMME le chemin fautif (plus de « répertoire privé inaccessible » générique) :
+        # un admin doit lire QUEL répertoire créer/chown, pas deviner.
         return {"statut": "echec_stockage",
-                "motif": "capture non stockée (répertoire privé inaccessible) — rien enregistré",
-                "detail": str(exc)[:120], "portail": ex["portail"]}
+                "motif": f"capture non stockée : le répertoire privé {captures_dir()} est inaccessible "
+                         "en écriture — rien enregistré (créer le répertoire + droits, voir EXPLOITATION)",
+                "detail": str(exc)[:160], "portail": ex["portail"]}
 
     est_copro = faits.get("type") == "appartement"
     ratt = rattachement.rattacher(

@@ -31,10 +31,26 @@ TYPES_BIEN = ("maison", "terrain", "immeuble", "appartement")
 
 def captures_dir() -> Path:
     """Répertoire PRIVÉ des captures — hors racine publique, JAMAIS servi par le web (doctrine §2).
-    Défaut prod `/srv/labuse/pige/captures` ; surchargé par LABUSE_PIGE_CAPTURES_DIR (dev/tests)."""
+    Défaut prod `/srv/labuse/pige/captures` (HORS /opt/labuse/app : un déploiement ne l'efface pas) ;
+    surchargé par LABUSE_PIGE_CAPTURES_DIR (dev/tests)."""
     from ..config import get_settings
     d = os.environ.get("LABUSE_PIGE_CAPTURES_DIR") or get_settings().pige_captures_dir
     return Path(d)
+
+
+def captures_dir_writable() -> tuple[bool, str]:
+    """RV2-V1 — le répertoire des captures est-il créable ET accessible en ÉCRITURE ? Retourne
+    (ok, detail) ; `detail` NOMME toujours le chemin (jamais un message générique). Ne lève jamais.
+    Tente la création (mkdir -p) puis écrit/supprime un fichier témoin — le seul test fiable des droits."""
+    d = captures_dir()
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        probe = d / ".probe_ecriture"
+        probe.write_bytes(b"ok")
+        probe.unlink()
+        return True, str(d)
+    except OSError as exc:
+        return False, f"{d} — inaccessible en écriture ({type(exc).__name__}: {exc})"
 
 
 DDL = """

@@ -215,6 +215,21 @@ function Check() {
   )
 }
 
+// RV2-V1 — bandeau d'alerte EN TÊTE : si le répertoire de captures n'est pas accessible en écriture,
+// le dépôt échouera. On le dit AVANT le premier dépôt, avec le chemin fautif nommé (pas de crash).
+function CapturesAlerte() {
+  const { data } = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
+  if (data == null || data.captures_dir_ok) return null
+  return (
+    <div data-radar-captures-alerte className="rounded-xl border border-st-ecartee/50 bg-st-ecartee/10 px-4 py-3 text-[12px] leading-relaxed text-st-ecartee">
+      <b>Dépôt de captures indisponible</b> — le répertoire privé n’est pas accessible en écriture :
+      <div className="mt-1 break-all font-mono text-[11px] text-txt">{data.captures_dir}</div>
+      <div className="mt-1 text-txt-mut">Un dépôt échouera tant que ce n’est pas corrigé. Créer le
+        répertoire et donner les droits à l’utilisateur de l’app (procédure : docs/PIGE/EXPLOITATION.md § captures).</div>
+    </div>
+  )
+}
+
 export function RadarSection() {
   const qc = useQueryClient()
   const refresh = () => { qc.invalidateQueries({ queryKey: ['radar-extraction'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
@@ -224,6 +239,7 @@ export function RadarSection() {
         Faits extraits d’annonces publiques + lien vers la source. Aucune photo ni texte d’annonce n’est
         stocké ni affiché — les captures restent des documents de travail privés.
       </p>
+      <CapturesAlerte />
       <Saisie onDepose={refresh} />
       <Extraction />
       <Reverif />

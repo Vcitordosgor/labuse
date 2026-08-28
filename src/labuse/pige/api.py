@@ -178,6 +178,10 @@ def radar_check(request: Request) -> dict:
         derniere = c.execute(text("SELECT max(date_saisie) FROM pige_annonces")).scalar()
     from datetime import datetime, timedelta, timezone
     vide_48h = derniere is None or derniere < datetime.now(tz=timezone.utc) - timedelta(hours=48)
+    # RV2-V1 — état du répertoire de captures (écriture) exposé à l'admin : le défaut prod se voit
+    # AVANT le premier dépôt, avec le chemin fautif nommé.
+    from .tables import captures_dir_writable
+    cap_ok, cap_detail = captures_dir_writable()
     return {
         "cible_minutes": 15,
         "file_extraction": file_extraction,
@@ -186,6 +190,8 @@ def radar_check(request: Request) -> dict:
         "compteurs": {"nouveautes": nouveautes, "en_vente_longue": en_vente_longue, "baisses": baisses},
         "intake_vide_48h": bool(vide_48h),
         "derniere_saisie": derniere.isoformat() if derniere else None,
+        "captures_dir_ok": cap_ok,
+        "captures_dir": cap_detail,
     }
 
 # ══════════════ RADAR P3 · C1 — endpoints CLIENT (lecture : faits + lien, jamais le contenu) ══════════════

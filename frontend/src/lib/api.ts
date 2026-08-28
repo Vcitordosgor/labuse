@@ -1219,6 +1219,8 @@ export interface RadarCheck {
   cible_minutes: number; file_extraction: number; reverif_du_jour: number; signalements_en_attente: number
   compteurs: { nouveautes: number; en_vente_longue: number; baisses: number }
   intake_vide_48h: boolean; derniere_saisie: string | null
+  // RV2-V1 — état du répertoire de captures (écriture) : le défaut prod se voit AVANT le 1er dépôt.
+  captures_dir_ok: boolean; captures_dir: string
 }
 export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
   j<RadarProposition>('/admin/radar/deposer', {
