@@ -132,3 +132,25 @@ def test_lot8_zone_demain_logements_et_au():
         s.execute(text("DELETE FROM spatial_layers WHERE name='AU test'"))
     assert d["logements_autorises_36m"] == 12 and d["permis_36m"] == 1
     assert d["au_zones_n"] == 1 and d["au_zones_ha"] >= 0
+
+
+def test_lot7_contraintes_plu_tableau_zones():
+    """LOT 7 — les zones PLU recouvertes (tableau ZONE / PART / DOCUMENT), part de surface."""
+    from labuse import zone as Z
+    _LON, _LAT = 55.65, -20.96
+    zone = {"type": "Polygon", "coordinates": [[[_LON - 0.01, _LAT - 0.01], [_LON + 0.01, _LAT - 0.01],
+            [_LON + 0.01, _LAT + 0.01], [_LON - 0.01, _LAT + 0.01], [_LON - 0.01, _LAT - 0.01]]]}
+    # une zone PLU 'UA' qui couvre la moitié EST de la zone d'étude
+    wkt = f"POLYGON(({_LON} {_LAT-0.01},{_LON+0.01} {_LAT-0.01},{_LON+0.01} {_LAT+0.01},{_LON} {_LAT+0.01},{_LON} {_LAT-0.01}))"
+    with session_scope() as s:
+        s.execute(text(
+            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs) VALUES "
+            "('plu_gpu_zone','UA','PLU test','Saint-André', ST_GeomFromText(:w,4326), '{\"idurba\":\"97409_PLU\"}'::jsonb)"),
+            {"w": wkt})
+        c = Z.contraintes_plu(s, zone)
+        s.execute(text("DELETE FROM spatial_layers WHERE name='PLU test'"))
+    assert len(c["zones"]) == 1
+    zz = c["zones"][0]
+    assert zz["zone"] == "UA" and zz["document"] == "97409_PLU"
+    assert 40 <= zz["part_pct"] <= 60, "la zone UA couvre ~50 % de l'emprise"
+    assert "CDAC" in c["cdac_vigilance"]

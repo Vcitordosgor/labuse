@@ -266,6 +266,22 @@ export function EtudeZone() {
             </div>
           )}
 
+          {/* LOT 7 — contraintes commerciales : les zones PLU recouvertes (tableau ZONE / PART / DOCUMENT) */}
+          {res.contraintes_plu && res.contraintes_plu.zones.length > 0 && (
+            <div>
+              <SectionTitle>Zones PLU de la zone</SectionTitle>
+              <div className="flex flex-col gap-1">
+                {res.contraintes_plu.zones.slice(0, 6).map((z, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
+                    <span className="truncate text-txt">{z.zone} <span className="text-txt-mut">· {z.commune ?? ''}</span></span>
+                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>
+                  </div>
+                ))}
+              </div>
+              {res.contraintes_plu.cdac_vigilance && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{res.contraintes_plu.cdac_vigilance}</p>}
+            </div>
+          )}
+
           {/* LOT 8 — La zone de demain : signal DATÉ (logements autorisés 36 mois + zones AU), jamais une projection */}
           {res.zone_demain && ((res.zone_demain.logements_autorises_36m ?? 0) > 0 || (res.zone_demain.au_zones_n ?? 0) > 0) && (
             <div>

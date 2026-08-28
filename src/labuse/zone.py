@@ -356,6 +356,46 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
             "permis_36m": int(permis or 0)}
 
 
+def contraintes_plu(session: Session, geom_geojson: dict) -> dict:
+    """LOT 7 — les zones PLU que la zone d'étude recouvre (tableau ZONE / PART / DOCUMENT, comme le
+    dossier banquier). Un polygone peut couvrir PLUSIEURS zones PLU — on les sert TOUTES avec leur part,
+    jamais une zone unique choisie arbitrairement. Le libellé de zone (UA commerçante, A agricole…) dit
+    déjà où le commerce est admis ou non. Verbatim géré à l'échelle du document (idurba).
+
+    Portée assumée (compte-rendu) : les destinations autorisées/conditionnelles/interdites FINES par
+    activité ne sont calibrées que dans 2 des 24 communes (les autres en texte libre ou RNU) — les
+    mapper NAF→destination partout serait un faux positif. On sert donc le FAIT géométrique (zones +
+    part + document), qui est toujours vrai, et on marque « non calibré » l'absence, jamais un silence."""
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson)}
+    if session.execute(text("SELECT to_regclass('spatial_layers')"), {}).scalar() is None:
+        return {"zones": [], "note": "PLU non disponible."}
+    aire = session.execute(text(f"SELECT ST_Area({z})"), p).scalar() or 0
+    if not aire:
+        return {"zones": [], "note": "PLU non disponible."}
+    p["aire"] = float(aire)
+    rows = session.execute(text(
+        f"""SELECT coalesce(l.subtype, l.attrs->>'libelle', '?') AS zone,
+                   l.commune, l.attrs->>'idurba' AS document,
+                   round(100 * sum(ST_Area(ST_Intersection(ST_Transform(l.geom,2975), {z})))
+                         / :aire) AS part_pct
+            FROM spatial_layers l
+            WHERE l.kind='plu_gpu_zone' AND ST_Intersects(ST_Transform(l.geom,2975), {z})
+            GROUP BY 1,2,3
+            HAVING round(100 * sum(ST_Area(ST_Intersection(ST_Transform(l.geom,2975), {z}))) / :aire) > 0
+            ORDER BY part_pct DESC LIMIT 12"""), p).mappings().all()
+    zones = [{"zone": r["zone"], "part_pct": int(r["part_pct"] or 0), "commune": r["commune"],
+              "document": r["document"]} for r in rows]
+    return {
+        "zones": zones,
+        "cdac_vigilance": ("Au-delà de 1 000 m² de surface de vente, une autorisation d'exploitation "
+                           "commerciale (CDAC) peut être requise — point de vigilance à instruire, non instruit ici."),
+        "note": ("Zones PLU recouvertes par la zone (part de surface). Le libellé de zone indique où le "
+                 "commerce est admis ; la règle fine par activité se lit au règlement du document. "
+                 "Commune en RNU ou non calibrée : « non calibré », jamais une absence de contrainte."),
+    }
+
+
 def zone_demain(session: Session, geom_geojson: dict) -> dict:
     """LOT 8 — « la zone de demain » (données déjà en base, signal DATÉ, jamais une projection) :
     logements autorisés sur 36 mois glissants (Sitadel `raw.nb_lgt`) = population à venir ; zones AU
@@ -424,6 +464,7 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         "generateurs_flux": generateurs_flux(session, zone),
         "marche": marche_zone(session, zone),
         "zone_demain": zone_demain(session, zone),   # LOT 8 — signal daté (logements autorisés + AU)
+        "contraintes_plu": contraintes_plu(session, zone),   # LOT 7 — zones PLU recouvertes (tableau)
     }
     # LOT A — concurrents : trois états distincts (servie+0 / non ingérée / erreur), jamais un faux zéro
     if naf:
