@@ -4,10 +4,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  getRadarBienDetail, getRadarBiens, radarClic, radarSignaler,
+  creerRadarVeille, getRadarBienDetail, getRadarBiens, radarClic, radarSignaler,
   type RadarBienClient, type RadarFiltres,
 } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { RadarMarche } from './RadarMarche'
 
 const TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
 const TRIS = [['recentes', 'Plus récentes'], ['prix_asc', 'Prix ↑'], ['prix_desc', 'Prix ↓'], ['anciennete', 'Ancienneté'], ['baisses', 'Baisses']] as const
@@ -120,6 +121,8 @@ export function RadarClient() {
   const [f, setF] = useState<RadarFiltres>({})
   const [tri, setTri] = useState('recentes')
   const [bienOuvert, setBienOuvert] = useState<number | null>(null)
+  const [onglet, setOnglet] = useState<'annonces' | 'marche'>('annonces')
+  const [veilleOk, setVeilleOk] = useState(false)
   const setModuleMap = useApp((s) => s.setModuleMap)
   const setFlyTo = useApp((s) => s.setFlyTo)
   const select = useApp((s) => s.select)
@@ -160,8 +163,23 @@ export function RadarClient() {
 
   if (bienOuvert != null) return <BienFiche bienId={bienOuvert} onBack={() => setBienOuvert(null)} />
 
+  // onglets Annonces / Marché (l'onglet Marché n'a pas besoin des pins)
+  const Onglets = (
+    <div className="flex gap-1 px-3 pt-3">
+      {(['annonces', 'marche'] as const).map((o) => (
+        <button key={o} onClick={() => setOnglet(o)}
+          className={`rounded-md px-3 py-1 text-[12px] ${onglet === o ? 'bg-mint/12 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+          {o === 'annonces' ? 'Annonces' : 'Marché'}
+        </button>
+      ))}
+    </div>
+  )
+  if (onglet === 'marche') return <div className="flex flex-col">{Onglets}<RadarMarche /></div>
+
   return (
-    <div className="flex flex-col gap-3 p-3">
+    <div className="flex flex-col">
+      {Onglets}
+      <div className="flex flex-col gap-3 p-3">
       <p className="text-[11.5px] text-txt-mut">Les biens en vente vus par Victor — des faits et un lien vers la source. Aucune photo ni texte d’annonce.</p>
 
       {/* filtres */}
@@ -194,6 +212,12 @@ export function RadarClient() {
           ))}
         </div>
       </div>
+
+      {/* veille : suivre ces critères → alerte de fin de journée (P4) */}
+      <button onClick={() => creerRadarVeille({ ...f, evenements: ['nouvelle', 'baisse', 'retour'] }).then(() => setVeilleOk(true))}
+        className="self-start text-[11px] text-mint underline decoration-dotted hover:opacity-80">
+        {veilleOk ? '✓ Veille créée — vous serez alerté en fin de journée' : '＋ Être alerté sur ces critères (veille)'}
+      </button>
 
       {/* compteur + tri */}
       <div className="flex items-center gap-2 text-[11.5px]">
@@ -229,6 +253,7 @@ export function RadarClient() {
             </div>
           </button>
         ))}
+      </div>
       </div>
     </div>
   )

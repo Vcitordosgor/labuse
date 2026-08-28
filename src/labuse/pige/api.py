@@ -298,3 +298,13 @@ def radar_veille_supprimer(veille_id: int, request: Request) -> dict:
         ok = veille.supprimer(db, current_compte(request), veille_id)
         db.commit()
     return {"ok": ok}
+
+
+# ══════════════ RADAR P6 · D3 — onglet Marché (stats par commune, honnêteté statistique) ══════════════
+
+@router.get("/radar/marche")
+def radar_marche(request: Request) -> dict:
+    """Statistiques Radar par commune (24 + total île). Chaque mesure porte son n ; < 5 = insuffisant."""
+    from . import marche
+    with session_scope() as db:
+        return marche.stats(db)

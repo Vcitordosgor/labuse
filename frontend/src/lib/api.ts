@@ -1267,3 +1267,21 @@ export const radarClic = (bien_id: number, annonce_id?: number | null) =>
   j<{ ok: boolean; clic_id: number }>('/radar/clic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, annonce_id: annonce_id ?? null }) })
 export const radarSignaler = (bien_id: number, motif = '') =>
   j<{ ok: boolean; event_id: number }>('/radar/signaler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, motif }) })
+
+// ── RADAR (pige) · P6 D3 — onglet Marché (stats par commune, honnêteté statistique) ──
+export interface RadarMesure { valeur: number | null; n: number; insuffisant: boolean }
+export interface RadarMarcheLigne {
+  commune: string; actives: number; nouvelles_30j: number; retirees_30j: number; vendues_90j: number
+  prix_m2_terrain: RadarMesure; prix_m2_bati: RadarMesure; delai_median_j: RadarMesure
+  taux_echec_pct: RadarMesure; part_particuliers_pct: RadarMesure
+}
+export interface RadarMarche { communes: RadarMarcheLigne[]; ile: RadarMarcheLigne; seuil_n: number; corpus_total: number; corpus_actif: number }
+export const getRadarMarche = () => j<RadarMarche>('/radar/marche')
+
+// veille Radar (P4)
+export interface RadarVeille { id: number; commune: string | null; criteria: Record<string, unknown>; created_at: string | null }
+export const getRadarVeilles = () => j<{ veilles: RadarVeille[] }>('/radar/veille')
+export const creerRadarVeille = (criteria: Record<string, unknown>) =>
+  j<{ ok: boolean; veille_id: number }>('/radar/veille', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(criteria) })
+export const supprimerRadarVeille = (id: number) =>
+  j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'DELETE' })
