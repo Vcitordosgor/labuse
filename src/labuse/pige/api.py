@@ -182,3 +182,76 @@ def radar_check(request: Request) -> dict:
         "intake_vide_48h": bool(vide_48h),
         "derniere_saisie": derniere.isoformat() if derniere else None,
     }
+
+# ══════════════ RADAR P3 · C1 — endpoints CLIENT (lecture : faits + lien, jamais le contenu) ══════════════
+# Un client authentifié (pas admin) voit les biens VALIDÉS. La carte n'affiche que les rattachés ;
+# le listing montre tout avec une pastille. Chaque clic SORTANT est logué dans pige_clics.
+
+class ClicIn(BaseModel):
+    bien_id: int
+    annonce_id: int | None = None
+
+
+class SignalerIn(BaseModel):
+    bien_id: int
+    motif: str = ""
+
+
+@router.get("/radar/biens")
+def radar_biens(request: Request,
+                commune: str | None = None, type_bien: str | None = None,
+                prix_min: int | None = None, prix_max: int | None = None,
+                surface_hab_min: float | None = None, surface_hab_max: float | None = None,
+                surface_terrain_min: float | None = None, surface_terrain_max: float | None = None,
+                particulier_pro: str | None = None, statuts: str | None = None,
+                periode_debut: str | None = None, periode_fin: str | None = None,
+                rattache: str | None = None, tri: str = "recentes",
+                page: int = 1, taille: int = 50) -> dict:
+    """Liste filtrée des biens VALIDÉS pour un client. `statuts` = CSV (défaut active+en_vente_longue).
+    `rattache` = oui|non|indifférent. Renvoie n_total (compteur du filtre) + n_rattaches (pins carte)."""
+    from . import client
+    filtres = {
+        "commune": commune, "type_bien": type_bien, "prix_min": prix_min, "prix_max": prix_max,
+        "surface_hab_min": surface_hab_min, "surface_hab_max": surface_hab_max,
+        "surface_terrain_min": surface_terrain_min, "surface_terrain_max": surface_terrain_max,
+        "particulier_pro": particulier_pro,
+        "statuts": [s for s in (statuts or "").split(",") if s] or None,
+        "periode_debut": periode_debut, "periode_fin": periode_fin,
+        "rattache": rattache if rattache in ("oui", "non") else None,
+    }
+    with session_scope() as db:
+        return client.lister(db, filtres=filtres, tri=tri, page=page, taille=taille)
+
+
+@router.get("/radar/biens/{bien_id}")
+def radar_bien_detail(bien_id: int, request: Request) -> dict:
+    from . import client
+    with session_scope() as db:
+        d = client.detail(db, bien_id)
+    if d is None:
+        return {}
+    return d
+
+
+@router.post("/radar/clic")
+def radar_clic(body: ClicIn, request: Request) -> dict:
+    """Loggue un clic SORTANT (vers le portail source). Le front ouvre le portail (nouvel onglet,
+    rel=noopener) ; on n'ouvre RIEN côté serveur — on trace l'usage."""
+    from ..api.tenant import current_compte
+    from . import client
+    with session_scope() as db:
+        cid = client.enregistrer_clic(db, compte_id=current_compte(request),
+                                      bien_id=body.bien_id, annonce_id=body.annonce_id)
+        db.commit()
+    return {"ok": True, "clic_id": cid}
+
+
+@router.post("/radar/signaler")
+def radar_signaler(body: SignalerIn, request: Request) -> dict:
+    """Signalement client (annonce retirée / erreur) → alerte Vic, JAMAIS un changement de statut."""
+    from ..api.tenant import current_compte
+    from . import client
+    with session_scope() as db:
+        ev = client.signaler(db, compte_id=current_compte(request), bien_id=body.bien_id, motif=body.motif)
+        db.commit()
+    return {"ok": True, "event_id": ev}
