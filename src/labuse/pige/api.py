@@ -149,7 +149,9 @@ def radar_retiree(body: BienIn, request: Request) -> dict:
     from ..api.auth import exiger_admin
     exiger_admin(request)
     with session_scope() as db:
-        db.execute(text("UPDATE pige_biens SET statut = 'retiree' WHERE bien_id = :b"), {"b": body.bien_id})
+        # retiree_le horodate le retrait (base de retiree_sans_vente D2 — jamais déduit d'un lien mort).
+        db.execute(text("UPDATE pige_biens SET statut = 'retiree', retiree_le = now() WHERE bien_id = :b"),
+                   {"b": body.bien_id})
         journaliser(db, EV_STATUT_CHANGE, f"Bien retiré — #{body.bien_id}",
                     detail="marqué retiré (file de re-vérif)", dedup=f"pige:retiree:{body.bien_id}")
         db.commit()

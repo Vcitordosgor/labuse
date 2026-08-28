@@ -125,6 +125,14 @@ CREATE INDEX IF NOT EXISTS ix_pige_clics_bien ON pige_clics (bien_id);
 -- RADAR P1 (V3) : champs extraits sous le seuil de confiance → surlignés « à vérifier » à la
 -- validation (mauve, réservé IA). Idempotent (ADD COLUMN IF NOT EXISTS), heal-safe.
 ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS a_verifier jsonb DEFAULT '[]'::jsonb;
+-- RADAR P5 (D2) : cycle de vie automatisé. `retiree_le` = quand le bien a été marqué retiré (base de
+-- la qualification retiree_sans_vente, JAMAIS déduite d'un lien mort). Rapprochement DVF (vendue) :
+-- date/valeur/délai/écart de prix — l'écart n'est SERVI que sur un rattachement Sourcé.
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS retiree_le timestamptz;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_le date;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_valeur integer;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_delai_j integer;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_ecart_prix integer;
 """
 
 

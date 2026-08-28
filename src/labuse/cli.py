@@ -2755,6 +2755,36 @@ def ingest_mairies_cmd() -> None:
                + (f" — absentes de l'annuaire : {', '.join(r['absentes'])}" if r["absentes"] else ""))
 
 
+@app.command("radar-cycle-quotidien")
+def radar_cycle_quotidien_cmd() -> None:
+    """RADAR P5 — cycle de vie QUOTIDIEN (heure Réunion) : en_vente_longue (> 90 j publication) +
+    a_reverifier (> 60 j sans confirmation). Idempotent. À poser au crontab (voir EXPLOITATION-CRON.md)."""
+    from .pige import cycle
+    with session_scope() as s:
+        r = cycle.run_quotidien(s)
+    typer.echo(f"✓ Radar quotidien : {r['en_vente_longue']} → en vente longue, {r['a_reverifier']} → à revérifier")
+
+
+@app.command("radar-cycle-dvf")
+def radar_cycle_dvf_cmd() -> None:
+    """RADAR P5 — rapprochement DVF (vendue) : à lancer APRÈS chaque ingestion DVF. Rattachement SOURCÉ
+    uniquement + mutation DVF « Vente » dans [3;18] mois après publication → vendue + écart de prix."""
+    from .pige import cycle
+    with session_scope() as s:
+        r = cycle.run_dvf(s)
+    typer.echo(f"✓ Radar DVF : {r['vendue']} bien(s) rapproché(s) → vendue")
+
+
+@app.command("radar-cycle-mensuel")
+def radar_cycle_mensuel_cmd() -> None:
+    """RADAR P5 — qualification MENSUELLE retiree_sans_vente (cible Courrier) : retirée + rattachée +
+    > 12 mois + AUCUNE vente DVF. JAMAIS déduit d'un lien mort."""
+    from .pige import cycle
+    with session_scope() as s:
+        r = cycle.run_mensuel(s)
+    typer.echo(f"✓ Radar mensuel : {r['retiree_sans_vente']} → retirée sans vente")
+
+
 @app.command("ingest-pm-millesimes")
 def ingest_pm_millesimes_cmd(
     annees: str = typer.Option("2019-2024", help="millésimes à (ré)ingérer, ex. « 2019-2024 » ou « 2025 »"),
