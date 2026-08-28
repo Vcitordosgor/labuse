@@ -11,13 +11,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getProprietairesAutocomplete, getProprietairesFacettes, getZonageZones, saveSearch } from '../../lib/api'
+import { getFiltre, getFiltreCount, getZonageZones, saveSearch } from '../../lib/api'
 import { countActiveFilters, filtersToHash, resumeCriteres } from '../../lib/filters'
 import { tierChipLabel } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Tip } from '../Tip'
-import { ChevronSection } from './ChevronSection'
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
 // M137 — le tooltip d'un palier de la bande de résumé s'ouvre sur SON CHIP (le mot visible dans
@@ -290,193 +289,11 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // contenu de l'état allumé (0-caller ici ; le curseur mode B de SESSION reste porté par le
 // store — la fiche continue de le lire).
 
-// ═══════ KF1 (rattrapage KelFoncier) — SECTION « PROPRIÉTAIRE » ═══════
-// Une section repliable (patron ChevronSection) branchée sur les facettes DGFiP RÉELLES
-// (millésime 2025, source unique, comptes vivants — jamais de valeur écrite en dur). La commune
-// de portée = la commune active du filtre quand une SEULE est cochée (les facettes sont scopées
-// à une commune ; sinon portée par défaut du back). L'âge du dirigeant n'apparaît QUE si le back
-// le déclare actif (drapeau RGPD, fermé par défaut). DA : vert #4ADE80 (mint), jamais de mauve.
-
-// Un débounce court sur la dénomination : on interroge l'autocomplétion au fil de la frappe (250 ms).
-function useDebounced<T>(value: T, ms: number): T {
-  const [v, setV] = useState(value)
-  useEffect(() => {
-    const t = window.setTimeout(() => setV(value), ms)
-    return () => window.clearTimeout(t)
-  }, [value, ms])
-  return v
-}
-
-// Puce multi-sélection alimentée par les facettes (label + compte n) ; la valeur portée = le code.
-function FacetteChip({ code, label, n, on, onToggle, disabled }:
-  { code: string; label: string; n: number; on: boolean; onToggle: (code: string) => void; disabled?: boolean }) {
-  return (
-    <button type="button" disabled={disabled} onClick={() => onToggle(code)}
-      className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick disabled:opacity-40 ${
-        on ? 'border-mint bg-mint/20 font-medium text-txt-hi'
-          : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-      <span>{label}</span>
-      <span className="tabular-nums text-txt-dim">{nf.format(n)}</span>
-    </button>
-  )
-}
-
-export function SectionProprietaire() {
-  const { filters, setFilter } = useFiltre()
-  const [open, setOpen] = useState(false)
-  // Portée facettes : une commune SEULE cochée → cette commune ; sinon portée par défaut du back.
-  const commune = filters.communes.length === 1 ? filters.communes[0] : undefined
-  const fq = useQuery({
-    queryKey: ['prop-facettes', commune ?? '__ile__'],
-    queryFn: () => getProprietairesFacettes(commune),
-    staleTime: 300_000,
-  })
-  const fac = fq.data
-  const couvert = fac ? fac.couverture.couvert : true   // avant chargement : on ne grise pas
-  const dis = !couvert
-
-  // ── Dénomination + autocomplétion (débounce 250 ms) ──
-  const [denomInput, setDenomInput] = useState(filters.pmDenom ?? '')
-  const [showSug, setShowSug] = useState(false)
-  const debDenom = useDebounced(denomInput.trim(), 250)
-  const aq = useQuery({
-    queryKey: ['prop-autocomplete', debDenom, commune ?? '__ile__'],
-    queryFn: () => getProprietairesAutocomplete(debDenom, commune),
-    enabled: !dis && debDenom.length >= 2,
-    staleTime: 60_000,
-  })
-
-  // ── multi-sélections (formes / apes) ──
-  const toggleForme = (code: string) => setFilter('pmForme',
-    filters.pmForme.includes(code) ? filters.pmForme.filter((x) => x !== code) : [...filters.pmForme, code])
-  const toggleApe = (code: string) => setFilter('pmApe',
-    filters.pmApe.includes(code) ? filters.pmApe.filter((x) => x !== code) : [...filters.pmApe, code])
-
-  // ── tri-état personne morale (oui / non / indifférent). Le back n'exprime QUE personne_morale=true
-  //    (« oui ») → « non » n'est pas exprimable proprement. On n'expose donc QUE oui / indifférent. ──
-  const pmOui = filters.personneMorale === true
-
-  const nActifsProp = (filters.personneMorale ? 1 : 0) + (filters.pmDenom ? 1 : 0)
-    + (filters.pmSiren ? 1 : 0) + filters.pmForme.length + filters.pmApe.length
-    + (filters.pmDirigMin != null ? 1 : 0) + (filters.pmDirigMax != null ? 1 : 0)
-
-  return (
-    <div data-section-proprietaire className="mt-4">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        className="group flex w-full items-center gap-2 text-left">
-        <span className="label-caps text-txt-mut">Propriétaire</span>
-        {nActifsProp > 0 && (
-          <span className="rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] font-medium text-mint tabular-nums">{nActifsProp}</span>
-        )}
-        <span className="ml-auto"><ChevronSection open={open} /></span>
-      </button>
-
-      {open && (
-        <div className="gcard mt-2 flex flex-col gap-3 p-3">
-          {/* En-tête : source + millésime, et l'état de couverture (jamais un zéro muet). */}
-          <p className="text-[10.5px] leading-snug text-txt-dim">
-            {fq.isLoading ? 'Chargement…'
-              : fac ? <>Source DGFiP · millésime {fac.millesime}</> : 'Données propriétaire indisponibles.'}
-          </p>
-          {fac && !couvert && (
-            <p data-prop-non-couvert className="rounded-md bg-surface-2/80 px-2 py-1 text-[10.5px] text-st-creuser">
-              Non couvert pour cette commune — les critères propriétaire sont indisponibles ici.
-            </p>
-          )}
-
-          <fieldset disabled={dis} className={dis ? 'pointer-events-none opacity-50' : ''}>
-          <div className="flex flex-col gap-3">
-            {/* ── Personne morale : tri-état RESTREINT à oui / indifférent (le back n'exprime que
-                personne_morale=true ; « non » = exclusion de PM n'est pas exprimable proprement). ── */}
-            <div>
-              <p className="label-caps text-txt-dim">Personne morale</p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                <Chip on={pmOui} onClick={() => setFilter('personneMorale', true)}>Oui</Chip>
-                <Chip on={!pmOui} onClick={() => setFilter('personneMorale', false)}>Indifférent</Chip>
-              </div>
-              <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Oui » ne garde que les biens détenus par une société (SCI, SA…).</p>
-            </div>
-
-            {/* ── Dénomination + autocomplétion ── */}
-            <div className="relative">
-              <p className="label-caps text-txt-dim">Dénomination</p>
-              <input type="text" value={denomInput} placeholder="Ex. SCI du Littoral"
-                onChange={(e) => { setDenomInput(e.target.value); setShowSug(true); if (e.target.value.trim() === '') setFilter('pmDenom', null) }}
-                onFocus={() => setShowSug(true)}
-                onBlur={() => window.setTimeout(() => setShowSug(false), 150)}
-                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-              {showSug && debDenom.length >= 2 && aq.data && aq.data.suggestions.length > 0 && (
-                <ul data-prop-suggestions className="absolute z-20 mt-1 max-h-44 w-full overflow-y-auto rounded-md border border-line-2 bg-surface-2 py-1 shadow-lg">
-                  {aq.data.suggestions.map((s) => (
-                    <li key={s.siren || s.denomination}>
-                      <button type="button"
-                        onMouseDown={(e) => { e.preventDefault(); setDenomInput(s.denomination); setFilter('pmDenom', s.denomination); setShowSug(false) }}
-                        className="flex w-full items-center gap-2 px-2 py-1 text-left text-[11px] text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">
-                        <span className="flex-1 truncate">{s.denomination}</span>
-                        <span className="shrink-0 tabular-nums text-[10px] text-txt-dim">{nf.format(s.n)} parc.</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* ── SIREN (un ou plusieurs, séparés par virgule) ── */}
-            <div>
-              <p className="label-caps text-txt-dim">SIREN</p>
-              <input type="text" value={filters.pmSiren ?? ''} placeholder="Un ou plusieurs, séparés par une virgule"
-                onChange={(e) => setFilter('pmSiren', e.target.value.trim() === '' ? null : e.target.value)}
-                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-            </div>
-
-            {/* ── Forme juridique (facettes réelles : label + compte, valeur = code) ── */}
-            <div>
-              <p className="label-caps text-txt-dim">Forme juridique</p>
-              {fac && fac.formes.length > 0 ? (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {fac.formes.map((o) => (
-                    <FacetteChip key={o.code} code={o.code} label={o.label} n={o.n}
-                      on={filters.pmForme.includes(o.code)} onToggle={toggleForme} disabled={dis} />
-                  ))}
-                </div>
-              ) : <p className="mt-1 text-[10px] text-txt-dim">{fq.isLoading ? '…' : 'Aucune forme dans la portée courante.'}</p>}
-            </div>
-
-            {/* ── Code APE / activité (facettes réelles) ── */}
-            <div>
-              <p className="label-caps text-txt-dim">Code APE / activité</p>
-              {fac && fac.apes.length > 0 ? (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {fac.apes.map((o) => (
-                    <FacetteChip key={o.code} code={o.code} label={o.label} n={o.n}
-                      on={filters.pmApe.includes(o.code)} onToggle={toggleApe} disabled={dis} />
-                  ))}
-                </div>
-              ) : <p className="mt-1 text-[10px] text-txt-dim">{fq.isLoading ? '…' : 'Aucune activité dans la portée courante.'}</p>}
-            </div>
-
-            {/* ── Nombre de dirigeants (min / max) ── */}
-            <div>
-              <p className="label-caps text-txt-dim">Nombre de dirigeants</p>
-              <div className="mt-1 flex items-center gap-1.5">
-                <NumField field="pmDirigMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="pmDirigMax" ph="max" />
-              </div>
-            </div>
-
-            {/* ── Âge du dirigeant : affiché UNIQUEMENT si le back le déclare actif (RGPD, fermé par défaut). ── */}
-            {fac?.age_dirigeant_actif && (
-              <div data-prop-age-dirigeant>
-                <p className="label-caps text-txt-dim">Âge du dirigeant</p>
-                <p className="mt-1 text-[10px] text-txt-dim">Contrôle disponible pour cette portée.</p>
-              </div>
-            )}
-          </div>
-          </fieldset>
-        </div>
-      )}
-    </div>
-  )
-}
+// ═══════ KF1 — SECTION « PROPRIÉTAIRE » : RETIRÉE DU FRONT (RETOURS-1 R2, Vic 28/08/2026) ═══════
+// SectionProprietaire (personne morale, dénomination+autocomplétion, SIREN, forme juridique, APE,
+// dirigeants) ne s'affiche plus. FRONT SEULEMENT : les endpoints /proprietaires/*, les filtres pm_*
+// du store/back (_q_v2_where) et leurs tests restent intacts — réversible en remontant le composant
+// (historique git : commit KF1, fichier à ce chemin).
 
 export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
   const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap,
@@ -728,8 +545,9 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         </div>
       </div>
 
-      {/* ═══════ KF1 (rattrapage KelFoncier) — SECTION « PROPRIÉTAIRE » (facettes DGFiP 2025) ═══════ */}
-      <SectionProprietaire />
+      {/* ═══════ SECTION « PROPRIÉTAIRE » (KF1) RETIRÉE DU PANNEAU (RETOURS-1 R2, Vic 28/08/2026) ═══════
+          FRONT SEULEMENT : les endpoints /proprietaires/facettes + /proprietaires/autocomplete, les
+          filtres pm_* du back et leurs tests restent en place — réversible. */}
 
       {/* ═══════ SECTION « LE BIEN » RETIRÉE DU PANNEAU (FILTRE, Vic 23/08/2026) ═══════
           Les 4 facettes M137 (« On peut encore construire » / « Construite au maximum » = droitsResiduels ;

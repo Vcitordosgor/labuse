@@ -29,9 +29,11 @@ function grouperEvents(items: LabuseEvent[]): Bloc[] {
 }
 import { useApp } from '../../store/useApp'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
+import { CP_COMMUNES } from '../panel/FiltreLabuse'
 
-// M65 P7 — le CP n'est plus affiché dans le sélecteur de communes ; le lookup CP_PAR_COMMUNE
-// (et l'import CP_COMMUNES qui ne servait qu'à lui) sont retirés.
+// RETOURS-1 R2 (Vic) — le retrait du CP par M65 P7 est ANNULÉ : le sélecteur de communes
+// ré-affiche le code postal (source unique CP_COMMUNES, table mesurée du panneau).
+const CP_PAR_COMMUNE: Record<string, string> = Object.fromEntries(CP_COMMUNES.map(([cp, nom]) => [nom, cp]))
 
 function Omnibox() {
   const { select, setView, setCommune, commune, setToast } = useApp()
@@ -175,12 +177,11 @@ function CommuneSelect() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          {/* M55-H point 7 : menu ÉLARGI (320 px) — nom + code postal + « voir la fiche → »
-              tiennent sur UNE ligne pour les 24 communes (La Plaine-des-Palmistes comprise :
-              nom en nowrap, lien shrink-0). Le CP affiché vient de la table mesurée du
-              panneau (CP_COMMUNES, source unique) — l'INSEE ressemblait à un CP sans l'être. */}
-          {/* M62-P1 (k) : largeur resserrée au minimum nécessaire (nom + CP + « voir la fiche → » fixe). */}
-          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[272px] flex-col overflow-y-auto p-1.5">
+          {/* M55-H point 7, RESTAURÉ par RETOURS-1 R2 (Vic) : le retrait du CP (M65 P7, commit
+              61dde68b) est ANNULÉ — menu 320 px, nom + code postal (CP_COMMUNES, source unique
+              mesurée du panneau — l'INSEE ressemblait à un CP sans l'être) + « voir la fiche → »
+              sur UNE ligne, et le NOM ENTIER de la commune au survol (title). */}
+          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
             <button onClick={() => pick(null)}
               className={`rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${n === 0 ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
               Toute l’île
@@ -192,11 +193,9 @@ function CommuneSelect() {
                 changer le périmètre (stopPropagation). */}
             {(communes.data ?? []).map((c) => (
               <div key={c.insee} className="group flex items-center rounded-md hover:bg-surface-3">
-                <button onClick={() => pick(c.commune)}
-                  className={`min-w-0 flex-1 whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
-                  {/* M65 P7 — code postal retiré de l'affichage. Identité inchangée : clé = c.insee,
-                      sélection = c.commune (le CP n'était qu'une décoration). */}
-                  {c.commune}
+                <button onClick={() => pick(c.commune)} title={c.commune}
+                  className={`min-w-0 flex-1 truncate whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
+                  {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
                 {/* M62-P1 (k) : « voir la fiche → » FIXE et VERT sur chaque ligne (plus au survol seul). */}
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
