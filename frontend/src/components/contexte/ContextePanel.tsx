@@ -1,11 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { getContexteCommune } from '../../lib/api'
+import { getContexteCommune, modVelocite, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
+import { MarcheCommune } from '../outils/moteurs'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
+
+// R4 — helpers transférés de l'ex-fiche-outil Communes (ligne libellé/valeur + format suffixé).
+const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
+function RowT({ lbl, val, strong }: { lbl: string; val: string; strong?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="min-w-0 text-txt-mut">{lbl}</span>
+      <span className={`tnum shrink-0 ${strong ? 'font-semibold text-mint' : 'text-txt'}`}>{val}</span>
+    </div>
+  )
+}
 
 //: statut SRU → couleur + lecture métier (une phrase sobre — le ciblage de la promotrice)
 const SRU_META: Record<string, { color: string; label: string; lecture: string }> = {
@@ -77,15 +89,22 @@ function fmtDateFr(iso: string): string {
   } catch { return iso }
 }
 
-/** VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU · ANRU · PLH · marché INSEE · QPV.
- *  Contexte SOURCÉ (échelle commune) — aucune de ces données n'entre dans le scoring. */
+/** FICHE COMMUNE UNIQUE (RETOURS-1 R4, Vic) — l'ex-fiche de l'outil Communes a fusionné ICI :
+ *  en plus du contexte officiel (SRU · ANRU · PLH · marché INSEE · QPV), le panneau porte les
+ *  blocs transférés — MARCHÉ local (MarcheCommune, 9 lignes sourcées + signal), RARETÉ & ZAN,
+ *  VÉLOCITÉ — et « Voir ses parcelles → ». Aucune de ces données n'entre dans le scoring. */
 export function ContextePanel() {
-  const { contexteCommune, setContexteCommune } = useApp()
+  const { contexteCommune, setContexteCommune, setCommune } = useApp()
   const q = useQuery({
     queryKey: ['contexte', contexteCommune],
     queryFn: () => getContexteCommune(contexteCommune!),
     enabled: !!contexteCommune,
   })
+  // R4 — blocs transférés de l'ex-fiche-outil. Mêmes clés React Query que l'ex-CommuneFiche
+  // (dédoublonnage, 0 fetch en plus quand l'outil a déjà chargé).
+  const rar = useQuery({ queryKey: ['communes-rarete'], queryFn: motRarete, enabled: !!contexteCommune })
+  const vel = useQuery({ queryKey: ['communes-velocite'], queryFn: () => modVelocite(), enabled: !!contexteCommune })
+  const mar = useQuery({ queryKey: ['mu-marche', contexteCommune], queryFn: () => motMarcheCommune(contexteCommune!), enabled: !!contexteCommune })
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === 'Escape' && setContexteCommune(null)
     window.addEventListener('keydown', h)
@@ -93,16 +112,37 @@ export function ContextePanel() {
   }, [setContexteCommune])
   if (!contexteCommune) return null
   const d = q.data
+  const r = (rar.data?.communes ?? []).find((c) => (c as Record<string, unknown>)['commune'] === contexteCommune) as Record<string, any> | undefined
+  const v = (vel.data?.communes ?? []).find((c) => (c as Record<string, unknown>)['commune'] === contexteCommune) as Record<string, any> | undefined
+  const homogene = vel.data?.['communes_homogenes'] as boolean | undefined
+  const sig = mar.data?.['market_signal'] as Record<string, any> | undefined
+  const sigLabel = sig?.['disponible'] ? String(sig['label']) : null
+  const sigCol = sigLabel === 'favorable' ? TOKENS.mint : sigLabel === 'prudence' ? TOKENS.stEcartee : TOKENS.stCreuser
 
   return (
     <aside data-contexte-panel className="absolute right-0 top-0 z-30 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-elev-3">
       <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
         <div>
-          <p className="label-caps text-txt-mut">Contexte commune</p>
-          <h2 className="font-display text-lg font-bold text-txt-hi">{contexteCommune}</h2>
+          <p className="label-caps text-txt-mut">Fiche commune</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-display text-lg font-bold text-txt-hi">{contexteCommune}</h2>
+            {sigLabel && (
+              <span data-fiche-signal className="rounded-full border px-2 py-0.5 text-[10.5px] font-medium"
+                style={{ color: sigCol, borderColor: `${sigCol}55`, background: `${sigCol}22` }}>
+                signal : {sigLabel}
+              </span>
+            )}
+          </div>
           {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
         </div>
-        <button onClick={() => setContexteCommune(null)} className="text-txt-dim hover:text-txt-hi" title="Fermer (Échap)" aria-label="Fermer">✕</button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button data-communes-parcelles onClick={() => setCommune(contexteCommune)}
+            title="Zoomer la carte sur la commune et pré-cocher son filtre"
+            className="rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
+            Voir ses parcelles →
+          </button>
+          <button onClick={() => setContexteCommune(null)} className="text-txt-dim hover:text-txt-hi" title="Fermer (Échap)" aria-label="Fermer">✕</button>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -183,6 +223,56 @@ export function ContextePanel() {
                 <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">Prix terrain nu, mutations et permis : point de calcul Marché (M79) — DVF (actes) + Sitadel (autorisations, {d.foncier.permis_12m.reserve}).</p>
               </Section>
             )}
+            {/* R4 — MARCHÉ local (transféré de l'ex-fiche-outil Communes, M137-Z) : les 9 lignes
+                sourcées Prix / Dynamique / Offre / Loyer via MarcheCommune (mode embarqué). */}
+            <Section title="MARCHÉ">
+              {/* Réconciliation € ancien : ICI = prix LOCAL (secteur autour de la parcelle centrale,
+                  appartements priorisés) ; le tableau des 24 communes = médiane COMMUNE ENTIÈRE.
+                  Deux séries légitimes → un écart est normal, pas une erreur. */}
+              <p className="mb-1 text-[10px] leading-snug text-txt-dim">
+                Prix ancien = médiane <b>locale</b> (secteur autour de la parcelle centrale). Le tableau des
+                24 communes affiche la médiane <b>commune entière</b> — les deux diffèrent normalement.
+              </p>
+              <MarcheCommune communeProp={contexteCommune} />
+            </Section>
+
+            {/* R4 — RARETÉ & ZAN (transféré, M137-Z) : le STOCK porte « foncier » ; « reste ZAN » =
+                un droit à artificialiser, ESTIMÉ, jamais un droit à construire. */}
+            <Section title="RARETÉ &amp; ZAN">
+              {r ? (
+                <div className="flex flex-col gap-0.5 text-[11px]">
+                  <RowT lbl="Foncier repéré — stock de parcelles promues" val={fmtV(r['stock_opportunites_ha'], ' ha')} strong />
+                  {r['pct_budget_consomme'] != null && (
+                    <div className="mt-0.5 rounded-md bg-surface-3 px-2 py-1">
+                      <div className="flex items-baseline gap-1.5">
+                        <b className={`tnum text-[14px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-st-creuser'}`}>{r['pct_budget_consomme']} %</b>
+                        <span className="text-[10px] text-txt-mut">du budget ZAN consommé</span>
+                        <span className={`ml-auto tnum text-[11px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-txt'}`}>{r['pct_budget_restant']} % restant</span>
+                      </div>
+                      <p className="mt-0.5 text-[9px] leading-snug text-st-creuser"><b>Estimé</b> (règle -50 %, SAR non territorialisé) — <b>pas un droit à construire</b>.</p>
+                    </div>
+                  )}
+                  <RowT lbl="Droit à artificialiser restant (ZAN, estimé)" val={fmtV(r['reste_zan_ha'], ' ha')} />
+                  <RowT lbl="Budget ZAN 2021-31 (estimé)" val={fmtV(r['budget_zan_ha'], ' ha')} />
+                  <RowT lbl="Rythme de consommation" val={fmtV(r['rythme_conso_ha_an'], ' ha/an')} />
+                  <RowT lbl="Horizon d'épuisement de l'enveloppe ZAN" val={r['horizon_epuisement_ans'] == null ? 'non projetable' : `${r['horizon_epuisement_ans']} ans`} />
+                  <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{rar.data?.caveat}</p>
+                </div>
+              ) : <p className="text-[11px] text-txt-dim">Donnée ENAF/ZAN indisponible pour cette commune.</p>}
+            </Section>
+
+            {/* R4 — VÉLOCITÉ administrative (transféré, M137-Z) : tranche p25-p75, homogénéité dite. */}
+            <Section title="VÉLOCITÉ ADMINISTRATIVE">
+              {v ? (
+                <div className="text-[11px] text-txt">
+                  <p>Délai d'instruction (dépôt → autorisation) :{' '}
+                    <b className="tnum">{fmtV(v['delai_p25_mois'])} à {fmtV(v['delai_p75_mois'])} mois</b>{' '}
+                    <span className="text-txt-dim">(tranche p25–p75, {fmtV(v['n_valide'])} dossiers)</span></p>
+                  {homogene && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{vel.data?.['note_homogeneite'] as string}</p>}
+                </div>
+              ) : <p className="text-[11px] text-txt-dim">Donnée délais indisponible pour cette commune.</p>}
+            </Section>
+
             {/* K2 — COORDONNÉES DE LA MAIRIE (Annuaire de l'administration). Un champ absent affiche
                 « Absent » (jamais inventé) ; la fraîcheur = date de relevé de l'annuaire. */}
             {d.mairie && (
@@ -197,27 +287,9 @@ export function ContextePanel() {
                 <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
               </Section>
             )}
-            {/* L1 (KF-2) — ACQUISITIONS PM RÉCENTES : changements de propriétaire moral d'un millésime
-                au suivant (DGFiP). CONSTAT sourcé, hors scoring, maille COMMUNE. Rien si aucun. */}
-            {d.acquisitions_pm && d.acquisitions_pm.n_total > 0 && (
-              <Section title="ACQUISITIONS PM RÉCENTES">
-                <p className="text-[11px] text-txt-mut">
-                  {d.acquisitions_pm.n} affichée{d.acquisitions_pm.n > 1 ? 's' : ''} sur {d.acquisitions_pm.n_total} changement{d.acquisitions_pm.n_total > 1 ? 's' : ''} de propriétaire moral depuis {d.acquisitions_pm.depuis_millesime} (maille commune).
-                </p>
-                <div className="mt-2 space-y-1.5">
-                  {d.acquisitions_pm.acquisitions.map((a) => (
-                    <div key={a.idu} className="text-[11px] leading-snug text-txt">
-                      <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
-                      <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
-                      <span className="mx-1 text-txt-dim">→</span>
-                      <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
-                      <div className="font-mono text-[9.5px] text-txt-dim">parcelle {a.idu}</div>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2 text-[10px] leading-snug text-txt-dim italic">{d.acquisitions_pm.note}</p>
-              </Section>
-            )}
+            {/* L1 (KF-2) — ACQUISITIONS PM RÉCENTES : le bloc a QUITTÉ cette fiche (RETOURS-1 R3,
+                Vic) — il vit désormais dans l'outil Communes › « Acquisitions récentes », uniquement.
+                Le payload `acquisitions_pm` reste servi par le back (réversible), non rendu ici. */}
             {/* M55-B point 4a (décision Vic) : le bloc « CLASSEMENT LABUSE » (compteurs de
                 production — parcelles brûlantes/chaudes, propriétaires PM) est RETIRÉ de la fiche
                 de CONTEXTE commune. Le client n'a pas à y voir nos compteurs internes ; cette fiche
