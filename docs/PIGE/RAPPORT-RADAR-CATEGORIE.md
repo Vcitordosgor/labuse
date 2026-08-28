@@ -107,4 +107,7 @@ veille 2 portes (+ externe / interne), Évolution + section Radar, état de dém
 - Golden : 120 FAIL PRÉ-EXISTANTS (ancre `q_v10_m129` vs run servi `q_v11_m137`, branch-indépendant ;
   le diff ne touche AUCUN fichier de scoring — pige/* et front only) ; GARDE-RUN OK.
 - Aucune donnée de test résiduelle (seed + veilles de test purgés, vérifié SQL).
-- Suite pytest branche vs base (worktree) — chiffres au compte-rendu.
+- **Suite pytest : branche 1932 passed / 31 skipped / 0 failed** ; base (worktree `f3f75d24`)
+  1931 passed / 32 skipped / 0 failed. Au niveau de la base — l'écart d'1 skip vient des skips
+  conditionnels sur la disponibilité de la base réelle (variables entre runs), aucun échec des deux
+  côtés.
