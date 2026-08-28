@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
+import { RadarMarche } from './RadarMarche'   // RADAR-CATÉGORIE (T5) — le Marché des annonces déménage ici
 import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
@@ -484,6 +485,18 @@ export function M18() {
       {d && <SerieTrim titre="Permis autorisés (Sitadel)" pct={d.tendance_permis_pct}
         tip="Nombre de permis autorisés par trimestre (Sitadel régional, toutes destinations)."
         rows={d.permis_trimestres ?? []} volKey="permis" />}
+
+      {/* RADAR-CATÉGORIE (T5) — le « Marché des annonces (Radar) » a QUITTÉ le Radar : ses agrégats
+          par commune (pige/marche.py, réutilisé — socle R9) vivent ICI, sous les stats de marché.
+          Chaque mesure porte son n ; sous 5 = « échantillon insuffisant » ; état de démarrage digne. */}
+      <div className="mt-3 border-t border-line-2 pt-3">
+        <p className="label-caps text-[9.5px]">Marché des annonces (Radar)</p>
+        <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">
+          Les biens en vente repérés par le Radar, agrégés par commune. Faits bruts (compteurs) exacts
+          dès le premier ; une médiane ou un taux n’est servi qu’à partir de 5 biens — jamais de fausse précision.
+        </p>
+        <RadarMarche />
+      </div>
     </div>
   )
 }

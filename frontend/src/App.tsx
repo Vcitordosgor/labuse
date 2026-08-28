@@ -32,6 +32,8 @@ import { AdminView } from './components/admin/AdminView'    // DASHBOARD-V1 — 
 // derrière un <Suspense> avec un état de chargement propre (jamais d'écran blanc). Le chunk
 // maplibre sort ainsi du graphe initial (cf. manualChunks conservé dans vite.config).
 const MapView = lazy(() => import('./components/map/MapView').then((m) => ({ default: m.MapView })))
+// RADAR-CATÉGORIE (T1) — la catégorie Radar plein écran (panneau listing 434px + carte).
+const RadarView = lazy(() => import('./components/outils/RadarView').then((m) => ({ default: m.RadarView })))
 const TimeMachine = lazy(() => import('./components/outils/TimeMachine').then((m) => ({ default: m.TimeMachine })))
 
 // État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
@@ -316,6 +318,9 @@ export default function App() {
     // truthy alors que ModulePanel `MODULES.find` renvoyait undefined → LeftPanel démonté ET
     // panneau vide = colonne gauche blanche muette. Clé invalide → on ignore (état d'accueil).
     if (m && MODULES.some((mod) => mod.key === m)) setModule(m)
+    // RADAR-CATÉGORIE (T1) — Radar n'est plus un module d'outil : #radar=1 (ou l'ancien #m=radar,
+    // rétro-compat des liens) ouvre la catégorie plein écran.
+    if (p.get('radar') === '1' || m === 'radar') useApp.getState().openRadar()
     // GB-032 — FICHE PARTAGEABLE : l'idu sélectionné est sérialisé dans le hash (#idu=…) et réhydraté
     // au boot → une URL de fiche partagée rouvre la MÊME fiche (les deep-links outil/filtres l'étaient
     // déjà, la fiche non). `select` déclenche le fetch parcelle ; la vue par défaut « cartes » l'affiche.
@@ -338,6 +343,7 @@ export default function App() {
     if (module) add(`m=${module}`)
     if (selectedIdu) add(`idu=${selectedIdu}`)   // GB-032 — fiche partageable/réhydratable
     if (view === 'admin') add('admin=1')         // DASHBOARD-V1 — la Tour de contrôle survit au reload
+    if (view === 'radar') add('radar=1')         // RADAR-CATÉGORIE (T1) — la catégorie survit au reload
     window.history.replaceState(null, '', h || window.location.pathname + window.location.search)
   }, [filters, zone, module, commune, verdict, view, selectedIdu])
 
@@ -386,11 +392,22 @@ export default function App() {
               <DensifierTablePanel />
             </>
           )}
+          {/* RADAR-CATÉGORIE (T1/T6) — plein écran : RadarView monte lui-même la carte (MapView
+              réutilisé, pins radar via moduleMap) pour piloter le layout responsive (mobile : une
+              vue à la fois — listing OU carte OU fiche, plein écran). */}
+          {view === 'radar' && (
+            <Suspense fallback={<MapLoading />}>
+              <RadarView />
+            </Suspense>
+          )}
           {view === 'crm' && <Kanban />}
           {view === 'sources' && <SourcesPage />}
           {view === 'projets' && <ProjetsPanel />}
           {view === 'copilote' && <CopiloteView />}
-          {selectedIdu && view !== 'sources' && <Fiche idu={selectedIdu} />}
+          {/* RADAR-CATÉGORIE (T3) — en vue Radar, la fiche du BIEN (overlay RadarView) est maître ;
+              le clic-pin surligne la parcelle mais n'ouvre PAS la fiche parcelle. « Ouvrir la fiche
+              parcelle → » bascule d'abord sur 'cartes', où la fiche s'affiche normalement. */}
+          {selectedIdu && view !== 'sources' && view !== 'radar' && <Fiche idu={selectedIdu} />}
           <ContextePanel />
           <SourceDrawer />
           <Toast />

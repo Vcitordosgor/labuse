@@ -51,8 +51,16 @@ function EcarteesFooter({ hidden, nHidden, onToggle }: { hidden: boolean; nHidde
 
 export function ProspectionSolaire() {
   const [mode, setMode] = useState<'piscines' | 'ensoleillement' | null>(null)
+  // RADAR-CATÉGORIE (T3) — la tuile « Solaire » de la fiche d'un bien pré-remplit l'IDU de la
+  // parcelle rattachée : on ouvre DIRECTEMENT le mode ensoleillement sur cette parcelle (fiche soleil).
+  const solairePrefill = useApp((s) => s.solairePrefill)
+  const setSolairePrefill = useApp((s) => s.setSolairePrefill)
+  const [prefillIdu, setPrefillIdu] = useState<string | null>(null)
+  useEffect(() => {
+    if (solairePrefill) { setPrefillIdu(solairePrefill); setMode('ensoleillement'); setSolairePrefill(null) }
+  }, [solairePrefill, setSolairePrefill])
   if (mode === 'piscines') return <ModePiscines onBack={() => setMode(null)} />
-  if (mode === 'ensoleillement') return <ModeEnsoleillement onBack={() => setMode(null)} />
+  if (mode === 'ensoleillement') return <ModeEnsoleillement onBack={() => setMode(null)} prefillIdu={prefillIdu} />
   return <EntreeSolaire onChoose={setMode} />
 }
 
@@ -188,12 +196,12 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
 }
 
 // ── MODE ENSOLEILLEMENT — critères + barre unique → fiche soleil + listing ──
-function ModeEnsoleillement({ onBack }: { onBack: () => void }) {
+function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefillIdu?: string | null }) {
   const select = useApp((s) => s.select)
   const [commune, setCommune] = useState<string | null>(null)
   const [potMin, setPotMin] = useState(0)
   const [inclure, setInclure] = useState(false)
-  const [ficheIdu, setFicheIdu] = useState<string | null>(null)
+  const [ficheIdu, setFicheIdu] = useState<string | null>(prefillIdu ?? null)
 
   const filtres: SolaireFiltres = { commune, potentielMin: potMin, sort: 'potentiel' }
   const list = useQuery({ queryKey: ['ens-list', commune, potMin], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })

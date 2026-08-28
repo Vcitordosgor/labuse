@@ -5,9 +5,10 @@
 // permettaient les deux anciens panneaux (et l'encart cloche des recherches) reste possible ici.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { ackAlerte, createWatchZone, deleteSearch, deleteWatchZone, getAlertes, getSavedSearches, getSuivis, getWatchZones, refreshAlertes, renameWatchZone, saveSearch, veilleNL } from '../../lib/api'
+import { ackAlerte, createWatchZone, creerRadarVeille, deleteSearch, deleteWatchZone, getAlertes, getRadarVeilles, getSavedSearches, getSuivis, getWatchZones, refreshAlertes, renameWatchZone, saveSearch, supprimerRadarVeille, veilleNL, type RadarVeille } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { fmtInt } from '../../lib/format'
+import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 const VOLETS = [
@@ -16,15 +17,55 @@ const VOLETS = [
   { key: 'criteres', label: 'Critères' },
 ] as const
 
+// RADAR-CATÉGORIE (T4) — la Veille s'ouvre sur un écran d'entrée à DEUX PORTES (patron de l'outil
+// Communes restructuré par RETOURS-1) : Veille interne (le foncier — l'écran existant, INCHANGÉ) et
+// Veille externe (les annonces Radar — son interface propre, back type 'radar' réutilisé).
 export function SurveillancePanel() {
-  const { setSurveillanceOpen, surveillanceVolet, openSurveillance, tool, setTool } = useApp()
+  const { setSurveillanceOpen, tool, setTool, surveillancePorte, setSurveillancePorte } = useApp()
   const drawing = tool === 'zone'
+  const fermer = () => { setSurveillanceOpen(false); if (drawing) setTool(null); setSurveillancePorte('accueil') }
   return (
     <aside data-surveillance-panel className="absolute right-0 top-0 z-30 flex h-full w-[360px] flex-col overflow-hidden border-l border-line bg-bg">
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-        <p className="label-caps">Veille</p>
-        <button onClick={() => { setSurveillanceOpen(false); if (drawing) setTool(null) }} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+        <div className="flex items-center gap-2">
+          {surveillancePorte !== 'accueil' && (
+            <button data-veille-retour onClick={() => setSurveillancePorte('accueil')} className="text-[11px] text-mint hover:underline">‹</button>
+          )}
+          <p className="label-caps">{surveillancePorte === 'externe' ? 'Veille · annonces' : surveillancePorte === 'interne' ? 'Veille · foncier' : 'Veille'}</p>
+        </div>
+        <button onClick={fermer} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
       </div>
+      {surveillancePorte === 'accueil' && <DeuxPortes onChoisir={setSurveillancePorte} />}
+      {surveillancePorte === 'interne' && <VeilleInterne />}
+      {surveillancePorte === 'externe' && <VeilleExterne />}
+    </aside>
+  )
+}
+
+// ── L'écran d'entrée : deux gros boutons (gabarit door-hot, patron Communes R3) ──
+function DeuxPortes({ onChoisir }: { onChoisir: (p: 'interne' | 'externe') => void }) {
+  return (
+    <div className="flex flex-col gap-2.5 p-4">
+      <p className="text-[12px] leading-snug text-txt-mut">Deux veilles, deux mondes — choisissez ce que vous voulez surveiller.</p>
+      <button data-veille-porte="interne" onClick={() => onChoisir('interne')}
+        className="door door-hot w-full text-left transition-colors duration-quick hover:border-line-3">
+        <div className="text-[13px] font-medium text-txt">Le foncier</div>
+        <div className="mt-0.5 text-[11px] leading-snug text-txt-dim">Parcelles suivies, secteurs dessinés et critères enregistrés — vente, permis, procédure, zonage, classement.</div>
+      </button>
+      <button data-veille-porte="externe" onClick={() => onChoisir('externe')}
+        className="door door-hot w-full text-left transition-colors duration-quick hover:border-line-3">
+        <div className="text-[13px] font-medium text-txt">Les annonces</div>
+        <div className="mt-0.5 text-[11px] leading-snug text-txt-dim">Vos veilles Radar — soyez alerté sur une nouvelle annonce, une baisse de prix ou un retour, selon vos critères.</div>
+      </button>
+    </div>
+  )
+}
+
+// ── Veille interne — le foncier : l'écran existant, INCHANGÉ (boucle + trois volets). ──
+function VeilleInterne() {
+  const { surveillanceVolet, openSurveillance } = useApp()
+  return (
+    <>
       {/* LA BOUCLE, dite — pas devinée : surveiller → alertes → cloche + brief. */}
       <p data-surveillance-boucle className="border-b border-line bg-surface-2 px-4 py-2 text-[10.5px] leading-snug text-txt-mut">
         Ce que vous surveillez ici produit des alertes — elles arrivent <b className="text-txt">à la cloche</b> et
@@ -44,7 +85,7 @@ export function SurveillancePanel() {
         {surveillanceVolet === 'secteurs' && <VoletSecteurs />}
         {surveillanceVolet === 'criteres' && <VoletCriteres />}
       </div>
-    </aside>
+    </>
   )
 }
 
@@ -253,6 +294,105 @@ function VoletCriteres() {
           className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
         <button onClick={() => nomCritere.trim() && add.mutate()} disabled={!nomCritere.trim()}
           className="rounded bg-mint px-2 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+ Critère</button>
+      </div>
+    </div>
+  )
+}
+
+// ── Veille externe — les annonces Radar : créer + gérer ses veilles (back type 'radar' réutilisé). ──
+const V_COMMUNES = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
+const V_TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
+const V_EVENTS = [['nouvelle', 'Nouvelle annonce'], ['baisse', 'Baisse de prix'], ['retour', 'Retour en ligne']] as const
+
+function resumeVeille(v: RadarVeille): string {
+  const c = v.criteria as Record<string, unknown>
+  const bouts: string[] = []
+  if (v.commune) bouts.push(String(v.commune))
+  if (c.type_bien) bouts.push(String(c.type_bien))
+  if (c.prix_min || c.prix_max) bouts.push(`${c.prix_min ? Number(c.prix_min).toLocaleString('fr-FR') : '0'}–${c.prix_max ? Number(c.prix_max).toLocaleString('fr-FR') + ' €' : '∞'}`)
+  if (c.surface_terrain_min) bouts.push(`terrain ≥ ${c.surface_terrain_min} m²`)
+  if (c.particulier_only) bouts.push('particulier')
+  return bouts.length ? bouts.join(' · ') : 'Tous les biens'
+}
+
+function VeilleExterne() {
+  const qc = useQueryClient()
+  const q = useQuery({ queryKey: ['radar-veilles'], queryFn: getRadarVeilles })
+  const veilles = q.data?.veilles ?? []
+  const [commune, setCommune] = useState('')
+  const [type, setType] = useState('')
+  const [prixMin, setPrixMin] = useState('')
+  const [prixMax, setPrixMax] = useState('')
+  const [surfMin, setSurfMin] = useState('')
+  const [particulier, setParticulier] = useState(false)
+  const [events, setEvents] = useState<string[]>(['nouvelle', 'baisse', 'retour'])
+  const inval = () => qc.invalidateQueries({ queryKey: ['radar-veilles'] })
+  const creer = useMutation({
+    mutationFn: () => creerRadarVeille({
+      commune: commune || undefined, type_bien: type || undefined,
+      prix_min: prixMin ? Number(prixMin) : undefined, prix_max: prixMax ? Number(prixMax) : undefined,
+      surface_terrain_min: surfMin ? Number(surfMin) : undefined,
+      particulier_only: particulier || undefined, evenements: events,
+    }),
+    onSuccess: () => { inval(); setCommune(''); setType(''); setPrixMin(''); setPrixMax(''); setSurfMin(''); setParticulier(false) },
+  })
+  const suppr = useMutation({ mutationFn: (id: number) => supprimerRadarVeille(id), onSuccess: inval })
+  const toggleEvent = (e: string) => setEvents((p) => p.includes(e) ? p.filter((x) => x !== e) : [...p, e])
+  const sel = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt'
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 text-[12px]">
+      <p className="text-[10.5px] leading-snug text-txt-mut">
+        Une veille sur les annonces produit une <b className="text-txt">alerte de fin de journée</b> quand un bien
+        neuf, une baisse ou un retour correspond à vos critères. Des faits et un lien — jamais le contenu de l’annonce.
+      </p>
+
+      {/* création */}
+      <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-2.5">
+        <p className="label-caps">Nouvelle veille</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          <select data-veille-ext-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
+            <option value="">Toute l’île</option>
+            {V_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={type} onChange={(e) => setType(e.target.value)} className={sel}>
+            {V_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <input type="number" min={0} placeholder="prix min" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} className={`min-w-0 ${sel}`} />
+          <input type="number" min={0} placeholder="prix max" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} className={`min-w-0 ${sel}`} />
+          <input type="number" min={0} placeholder="surface terrain min" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`col-span-2 min-w-0 ${sel}`} />
+        </div>
+        <label className="flex items-center gap-2 text-[11.5px] text-txt-mut">
+          <input type="checkbox" checked={particulier} onChange={(e) => setParticulier(e.target.checked)} className="h-3.5 w-3.5 accent-mint" />
+          Particuliers seulement
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {V_EVENTS.map(([v, l]) => (
+            <button key={v} data-veille-ext-event={v} onClick={() => toggleEvent(v)}
+              className={`rounded-full border px-2 py-1 text-[11px] ${events.includes(v) ? 'border-mint/50 text-mint' : 'border-line-2 text-txt-mut'}`}>{l}</button>
+          ))}
+        </div>
+        <button data-veille-ext-creer disabled={creer.isPending || events.length === 0} onClick={() => creer.mutate()}
+          className="rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          {creer.isPending ? 'Création…' : creer.isSuccess ? '✓ Veille créée' : 'Créer la veille'}
+        </button>
+        {events.length === 0 && <p className="text-[10px] text-st-ecartee">Cochez au moins un événement.</p>}
+      </div>
+
+      {/* liste */}
+      <div className="flex flex-col gap-1.5">
+        <p className="label-caps">Mes veilles annonces <span className="text-txt-dim">· {veilles.length}</span></p>
+        {q.isLoading && <p className="text-[11px] text-txt-dim">Chargement…</p>}
+        {!q.isLoading && veilles.length === 0 && <p className="text-[11px] leading-snug text-txt-dim">Aucune veille annonce. Créez-en une ci-dessus.</p>}
+        {veilles.map((v) => (
+          <div key={v.id} data-veille-ext-item className="flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[12px] text-txt">{resumeVeille(v)}</div>
+              <div className="mt-0.5 text-[10px] text-txt-dim">{((v.criteria as Record<string, unknown>).evenements as string[] ?? []).map((e) => V_EVENTS.find(([k]) => k === e)?.[1] ?? e).join(' · ')}</div>
+            </div>
+            <button onClick={() => suppr.mutate(v.id)} className="shrink-0 text-[11px] text-txt-mut hover:text-st-ecartee">supprimer</button>
+          </div>
+        ))}
       </div>
     </div>
   )

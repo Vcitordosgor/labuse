@@ -7,7 +7,9 @@ import type { FilterTier } from '../lib/status'
 // M65 P4 : la vue 'ia' (IAStub « Recherche ») est retirée du rail et de l'app — la recherche NL
 // vit dans l'omnibox du header, le montage de projet dans le Copilote.
 // DASHBOARD-V1 — 'admin' = Tour de contrôle (accès réservé ; les endpoints /admin/* portent la garde).
-export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin'
+// RADAR-CATÉGORIE (T1) — 'radar' devient une VUE de premier niveau (plein écran, comme crm/projets),
+// plus un module du panneau Outils. Layout : rail · panneau listing (434px) · carte.
+export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin' | 'radar'
 
 // FIX-FILTRES F6 (choix assumé, non un bug) : ces couches sont du CONTEXTE — elles s'affichent
 // ENTIÈRES, DÉCOUPLÉES des filtres du panneau (qui, eux, ne pilotent que la couche Parcelles).
@@ -242,6 +244,10 @@ interface AppState {
   setOpenProjet: (p: { id: number; nom: string } | null) => void
   view: View
   setView: (v: View) => void
+  // RADAR-CATÉGORIE (T1) — ouvrir la catégorie Radar (plein écran) : même nettoyage exclusif que
+  // les autres vues de premier niveau. Ferme la Veille et les overlays (bug « deux catégories
+  // ouvertes » de RETOURS-1 R8 : une seule catégorie du rail à la fois).
+  openRadar: () => void
   // F2 (M12) : « + Décrire un projet » ouvre l'entretien « Votre projet » DIRECTEMENT (pas l'écran
   // à deux portes). La valeur = amorce de l'entretien ; consommée (remise à null) par le copilote
   // à l'ouverture de l'entretien. null = accès normal au copilote (deux portes).
@@ -290,6 +296,10 @@ interface AppState {
   // une entrée, trois volets. En surimpression de la carte (l'outil de dessin reste dispo).
   surveillanceOpen: boolean
   surveillanceVolet: 'parcelles' | 'secteurs' | 'criteres'
+  // RADAR-CATÉGORIE (T4) — la porte de la Veille : 'accueil' (deux portes) · 'interne' (le foncier) ·
+  // 'externe' (les annonces Radar).
+  surveillancePorte: 'accueil' | 'interne' | 'externe'
+  setSurveillancePorte: (p: 'accueil' | 'interne' | 'externe') => void
   openSurveillance: (volet?: 'parcelles' | 'secteurs' | 'criteres') => void
   setSurveillanceOpen: (v: boolean) => void
   toggleSurveillance: () => void
@@ -389,6 +399,12 @@ interface AppState {
   // M60 P1a — fiche → outil Calculette foncière (M23) : IDU pré-rempli (saute le ParcelPicker).
   calcPrefill: string | null
   setCalcPrefill: (s: string | null) => void
+  // RADAR-CATÉGORIE (T3) — fiche d'un bien Radar → tuile « Solaire » : IDU de la parcelle rattachée,
+  // consommé-puis-reset par ProspectionSolaire au montage (mode ensoleillement). Même idiome que
+  // calcPrefill/parcelPrefill ; l'outil solaire n'avait aucune entrée directe par parcelle (finding
+  // RC : les 5 autres tuiles réutilisent un prefill existant, seule Solaire en manquait).
+  solairePrefill: string | null
+  setSolairePrefill: (s: string | null) => void
   // Assemblage → Courrier : une parcelle de l'assiette ouvre l'outil Courrier prérempli sur SON IDU
   // (consommé-puis-reset au montage). Le « N particuliers » devient un geste, plus un cul-de-sac.
   courrierPrefill: string | null
@@ -592,20 +608,31 @@ export const useApp = create<AppState>((set) => ({
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
     parcours: null, openProjet: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
+  // RADAR-CATÉGORIE (T1) — ouvrir la catégorie Radar : nettoyage exclusif identique. La fiche du bien
+  // vit dans le panneau Radar (état local), pas dans selectedIdu — mais on repart propre (null).
+  openRadar: () => set({ view: 'radar', outilsOpen: false, selectedIdu: null, module: null,
+    contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
+    surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   // M104 — Surveillance : une entrée, trois volets (parcelles / secteurs / critères).
   // RETOURS-1 R8 (Vic) : ouvrir la Veille ferme le tiroir Outils (réciproque de toggleOutils).
   surveillanceOpen: false,
   surveillanceVolet: 'parcelles',
-  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes',
+  // RADAR-CATÉGORIE (T4) — la Veille s'ouvre sur un écran d'entrée à DEUX portes (patron Communes R3) :
+  // 'interne' (le foncier, écran existant) · 'externe' (les annonces Radar). Le clic rail ouvre
+  // l'accueil ; les deep-links de notif (openSurveillance/toggleVeilles/toggleSuivis) ciblent un
+  // volet interne → ils vont DIRECTEMENT à la porte interne (aucun lien de notif cassé).
+  surveillancePorte: 'accueil',
+  setSurveillancePorte: (p) => set({ surveillancePorte: p }),
+  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes', surveillancePorte: 'interne',
     outilsOpen: false, surveillanceVolet: volet ?? s.surveillanceVolet, ...CLOSE_OVERLAYS })),
   setSurveillanceOpen: (v) => set({ surveillanceOpen: v }),
   toggleSurveillance: () => set((s) => ({ surveillanceOpen: !s.surveillanceOpen, view: 'cartes',
-    outilsOpen: false, ...CLOSE_OVERLAYS })),
-  // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant.
+    surveillancePorte: 'accueil', outilsOpen: false, ...CLOSE_OVERLAYS })),
+  // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant (porte interne).
   toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'secteurs', view: 'cartes',
-    outilsOpen: false, ...CLOSE_OVERLAYS }),
+    surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'cartes',
-    outilsOpen: false, ...CLOSE_OVERLAYS }),
+    surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
   compareTouchedAt: null,
@@ -698,6 +725,8 @@ export const useApp = create<AppState>((set) => ({
   setPluVue: (pluVue) => set({ pluVue }),
   calcPrefill: null,
   setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
+  solairePrefill: null,
+  setSolairePrefill: (solairePrefill) => set({ solairePrefill }),
   courrierPrefill: null,
   setCourrierPrefill: (courrierPrefill) => set({ courrierPrefill }),
   courrierPrefillIdus: null,

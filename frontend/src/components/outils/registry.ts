@@ -67,10 +67,8 @@ export const MODULES: ModuleDef[] = [
   // départementale, détail ligne par ligne. Barème et taux servis par le backend (jamais en dur).
   { key: 'taxe-amenagement', num: 'K3', group: 'instruire',
     label: 'Taxe d\'aménagement', desc: 'Estimez la taxe d\'aménagement d\'un projet — assiette, part communale, part départementale, détaillé ligne par ligne' },
-  // RADAR P3 — l'écran client du Radar (pige d'annonces de Vic) : biens en vente rattachés à la
-  // parcelle, filtres + carte (rattachés seuls) + listing (tout). Des faits + un lien, jamais l'annonce.
-  { key: 'radar', num: 'R1', group: 'marche',
-    label: 'Radar', desc: 'Les biens en vente repérés sur les portails, rattachés à leur parcelle — filtres, carte, et le lien vers l\'annonce source' },
+  // RADAR-CATÉGORIE (T1, Vic) — le Radar a QUITTÉ le menu Outils : c'est une CATÉGORIE de premier
+  // niveau (rail, plein écran, view 'radar'). Plus d'entrée 'radar' ici. Back pige/* réutilisé tel quel.
   // M137-T — « Contrôle avant achat » (M10) + « Servitudes invisibles » (O5) fusionnés en UN outil
   // « Risques », deux entrées (une parcelle en détail / un lot au crible). Le nom ne promet pas
   // l'exhaustivité (l'outil dit ce que la base ne couvre pas) — ni « contrôle complet » ni « due diligence ».

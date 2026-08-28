@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Maquette Radar v2</title>
+<style>
+  :root{
+    --bg:#0A0E0C; --bg2:#0D1210; --panel:#101512; --card:#131A16; --card-sel:#152219;
+    --line:#1E2823; --line-soft:#182019;
+    --mint:#4ADE80; --mint-soft:#86EFAC; --mint-dim:rgba(74,222,128,.13); --mint-line:rgba(74,222,128,.3);
+    --amber:#F5B94A; --amber-dim:rgba(245,185,74,.13);
+    --txt:#EAF0EB; --txt2:#96A39C; --muted:#5E6B64;
+    --mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,monospace;
+    --sans:-apple-system,'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#060908;color:var(--txt);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+  /* ————— planche ————— */
+  .board{max-width:1480px;margin:0 auto;padding:48px 20px 80px}
+  .board-head .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--mint);text-transform:uppercase}
+  .board-head h1{font-size:26px;font-weight:650;margin-top:8px}
+  .board-head p{color:var(--txt2);font-size:14px;margin-top:6px;max-width:70ch;line-height:1.55}
+  .caption{display:flex;gap:12px;align-items:baseline;margin:44px 0 12px}
+  .caption .num{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--mint);border:1px solid var(--mint-line);border-radius:999px;padding:4px 10px;white-space:nowrap}
+  .caption h2{font-size:16px;font-weight:600}
+  .caption span{color:var(--txt2);font-size:13px}
+  .plate{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+
+  /* ————— cadre app ————— */
+  .app{display:grid;grid-template-columns:78px 434px 1fr;height:880px}
+  .app.short{height:620px}
+
+  /* rail */
+  .rail{background:var(--bg2);border-right:1px solid var(--line-soft);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px}
+  .logo{font-family:var(--mono);font-weight:700;color:var(--mint);font-size:13px;letter-spacing:.08em;margin-bottom:14px}
+  .nav-it{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0 6px;width:64px}
+  .nav-it .ico{width:40px;height:40px;border-radius:11px;background:#111813;border:1px solid var(--line-soft);display:grid;place-items:center;color:var(--txt2)}
+  .nav-it .lbl{font-size:10.5px;color:var(--txt2)}
+  .nav-it.on .ico{background:var(--mint-dim);border-color:var(--mint-line);color:var(--mint)}
+  .nav-it.on .lbl{color:var(--mint)}
+  .rail .spacer{flex:1}
+  .avatar{width:38px;height:38px;border-radius:50%;background:#14251B;border:1px solid var(--mint-line);display:grid;place-items:center;color:var(--mint);font-size:12px;font-weight:600}
+
+  /* panneau listing */
+  .panel{background:var(--panel);border-right:1px solid var(--line-soft);display:grid;grid-template-rows:auto auto auto 1fr;overflow:hidden}
+  .panel.no-filters{grid-template-rows:auto auto 1fr}
+  .panel-head{padding:20px 20px 15px;border-bottom:1px solid var(--line-soft);background:linear-gradient(180deg,#101A13,var(--panel))}
+  .crumb{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--txt2)}
+  .panel-head h3{font-size:20px;font-weight:650;margin-top:6px}
+  .panel-head .sub{color:var(--txt2);font-size:12.5px;margin-top:5px;line-height:1.5}
+
+  .filters{padding:14px 20px 13px;border-bottom:1px solid var(--line-soft);display:grid;gap:9px}
+  .frow{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+  .sel,.inp{background:#0D1310;border:1px solid var(--line);border-radius:9px;font-size:12.5px;padding:8px 11px;height:35px;display:flex;align-items:center;justify-content:space-between;white-space:nowrap;overflow:hidden}
+  .sel .v{color:var(--txt)} .sel .ph,.inp{color:var(--muted)} .sel .car{color:var(--muted);font-size:10px;margin-left:6px}
+  .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:#0D1310;border:1px solid var(--line);border-radius:9px;overflow:hidden;height:35px}
+  .seg b{display:flex;align-items:center;justify-content:center;font-weight:500;font-size:12px;color:var(--txt2);white-space:nowrap;padding:0 6px}
+  .seg b.on{background:var(--mint-dim);color:var(--mint-soft)}
+  .seg b + b{border-left:1px solid var(--line)}
+
+  .count-row{display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--line-soft)}
+  .count{font-size:12.5px;color:var(--txt2)}
+  .count b{color:var(--txt);font-weight:650;font-size:14px}
+  .count .oncarte{color:var(--mint-soft)}
+  .sortsel{border:1px solid var(--line);border-radius:8px;color:var(--txt2);font-size:12px;padding:6px 10px;white-space:nowrap}
+
+  .listing{overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;align-content:start;gap:9px}
+
+  /* ————— carte de bien : structure verrouillée ————— */
+  .bien{flex:0 0 auto;position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"titre prix" "specs specs" "pied pied";row-gap:0;column-gap:12px}
+  .bien.sel{background:var(--card-sel);border-color:var(--mint-line)}
+  .bien.sel::before{content:'';position:absolute;left:-1px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--mint)}
+  .b-titre{grid-area:titre;align-self:center;font-family:var(--mono);font-size:11px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .b-titre .t{color:var(--mint);font-weight:700}
+  .b-titre .c{color:var(--txt2)}
+  .b-prix{grid-area:prix;align-self:center;font-size:16.5px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .b-specs{grid-area:specs;color:var(--txt2);font-size:12.5px;line-height:1.45;margin-top:6px}
+  .b-pied{grid-area:pied;display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow:hidden;margin-top:10px}
+  .past{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;border-radius:999px;padding:3.5px 10px;white-space:nowrap}
+  .past.carte{color:var(--mint-soft);background:var(--mint-dim)}
+  .past.carte::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--mint)}
+  .past.nonloc{color:var(--txt2);border:1px dashed #2C3832}
+  .past.nonloc::after{content:'↗';font-size:10px;color:var(--muted)}
+  .badge{flex:0 0 auto;font-size:10.5px;font-family:var(--mono);border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .badge.baisse{background:var(--mint-dim);color:var(--mint-soft)}
+  .badge.longue{background:var(--amber-dim);color:var(--amber)}
+  .b-meta{flex:1 1 auto;min-width:0;text-align:right;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ————— carte ————— */
+  .mapzone{position:relative;background:#080C0A;overflow:hidden;min-width:0}
+  .mapzone svg.fond{position:absolute;inset:0;width:100%;height:100%}
+  .pin{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 3px rgba(74,222,128,.22),0 4px 12px rgba(0,0,0,.6);transform:translate(-50%,-50%)}
+  .pin.amber{background:var(--amber);box-shadow:0 0 0 3px rgba(245,185,74,.2),0 4px 12px rgba(0,0,0,.6)}
+  .pin.big{width:30px;height:30px;box-shadow:0 0 0 6px rgba(74,222,128,.26),0 6px 16px rgba(0,0,0,.7)}
+  .pin i{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:10px;color:#07130C;font-weight:700}
+  .maplegend{position:absolute;left:18px;bottom:16px;background:rgba(10,14,12,.92);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:11.5px;color:var(--txt2);display:flex;gap:14px;white-space:nowrap}
+  .maplegend b{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+  .dot{width:8px;height:8px;border-radius:50%}
+  .maphint{position:absolute;top:16px;left:18px;right:auto;max-width:70%;background:rgba(10,14,12,.88);border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-size:11.5px;color:var(--txt2)}
+  .maphint b{color:var(--mint-soft);font-weight:500}
+
+  /* ————— fiche bien ————— */
+  .fiche{position:absolute;top:14px;right:14px;bottom:14px;width:398px;background:rgba(13,18,15,.97);border:1px solid var(--line);border-radius:14px;display:grid;grid-template-rows:auto 1fr;box-shadow:-20px 0 60px rgba(0,0,0,.55);overflow:hidden}
+  .f-head{padding:15px 18px 13px;border-bottom:1px solid var(--line-soft);background:linear-gradient(180deg,#101A13,transparent)}
+  .f-crumb{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--txt2)}
+  .f-crumb .x{color:var(--muted);letter-spacing:0}
+  .f-head h4{font-size:17px;font-weight:650;margin-top:7px;display:flex;align-items:center;gap:9px;white-space:nowrap}
+  .st{font-size:10px;font-family:var(--mono);border-radius:6px;padding:3px 8px;background:var(--mint-dim);color:var(--mint-soft);letter-spacing:.04em}
+  .f-body{padding:14px 18px 14px;display:grid;grid-auto-rows:min-content;gap:13px;overflow:hidden}
+  .f-prix-row{display:grid;grid-template-columns:1fr auto;column-gap:12px;align-items:end}
+  .f-prix{font-size:25px;font-weight:700;font-variant-numeric:tabular-nums}
+  .f-prix small{display:block;font-size:11.5px;font-weight:400;color:var(--txt2);margin-top:4px;line-height:1.4}
+  .spark{width:112px;height:36px}
+  .btn-portail{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--mint);color:#07130C;font-weight:650;font-size:13.5px;border-radius:11px;padding:12px;white-space:nowrap}
+  .f-h{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--txt2);margin-bottom:7px}
+  .facts{border:1px solid var(--line-soft);border-radius:10px;overflow:hidden}
+  .fact{display:grid;grid-template-columns:1fr auto auto;align-items:center;column-gap:9px;padding:8px 12px;font-size:12.5px}
+  .fact + .fact{border-top:1px solid var(--line-soft)}
+  .fact .k{color:var(--txt2);white-space:nowrap}
+  .fact .v{white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tag{font-family:var(--mono);font-size:9px;letter-spacing:.06em;border-radius:5px;padding:2.5px 6px;white-space:nowrap}
+  .tag.src{background:var(--mint-dim);color:var(--mint-soft)}
+  .tag.abs{background:#161C18;color:var(--muted)}
+  .rattach{border:1px solid var(--mint-line);background:#0F1B14;border-radius:10px;padding:10px 13px;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:10px}
+  .rattach .idu{font-family:var(--mono);font-size:12.5px;color:var(--mint-soft);white-space:nowrap}
+  .rattach .go{font-size:11.5px;color:var(--txt2);border:1px solid var(--line);border-radius:8px;padding:5px 10px;white-space:nowrap}
+  .toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .tool{display:flex;align-items:center;gap:8px;background:#111814;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:11.5px;color:var(--txt);white-space:nowrap;overflow:hidden}
+  .tool svg{flex:0 0 auto;color:var(--mint)}
+  .f-foot{display:grid;gap:7px;padding-top:2px}
+  .signaler{text-align:center;font-size:11.5px;color:var(--txt2);text-decoration:underline dotted}
+  .f-note{font-size:10px;color:var(--muted);text-align:center;line-height:1.5}
+  .dimmed .bien:not(.sel){opacity:.42}
+
+  /* ————— vide ————— */
+  .vide{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:30px;text-align:center}
+  .vide .halo{width:74px;height:74px;border-radius:50%;border:1px solid var(--mint-line);display:grid;place-items:center;color:var(--mint);background:var(--mint-dim)}
+  .vide h5{font-size:15.5px;font-weight:600}
+  .vide p{font-size:12.5px;color:var(--txt2);line-height:1.6;max-width:34ch}
+
+  /* ————— décisions ————— */
+  .decisions{margin-top:52px;border:1px solid var(--line);border-radius:14px;background:var(--bg2);padding:26px 30px}
+  .decisions .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--mint)}
+  .decisions h3{font-size:17px;margin:8px 0 16px}
+  .dec{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:11px 0;border-top:1px solid var(--line-soft);font-size:13.5px;line-height:1.6}
+  .dec .n{font-family:var(--mono);color:var(--mint);font-size:12px;padding-top:2px}
+  .dec p{color:var(--txt2)} .dec b{color:var(--txt);font-weight:600}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <div class="board-head">
+    <div class="kicker">LABUSE · maquette · v2</div>
+    <h1>Radar — la catégorie</h1>
+    <p>Version 2 après tes retours : les cartes du listing sont redessinées avec une structure qui ne peut plus se déformer, le bouton « Voir l'annonce » remonte juste sous le prix, et la fiche gagne sa section d'outils.</p>
+  </div>
+
+  <!-- ═══════════ ÉCRAN 1 ═══════════ -->
+  <div class="caption"><span class="num">ÉCRAN 1</span><h2>La catégorie Radar</h2><span>— listing filtrable + carte. La carte ne porte que les biens rattachés.</span></div>
+  <div class="plate"><div class="app">
+
+    <div class="rail">
+      <div class="logo">LB</div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><div class="lbl">Recherche</div></div>
+      <div class="nav-it on"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/><path d="M12 3v3M21 12h-3"/></svg></div><div class="lbl">Radar</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 4v2.5M12 17.5V20M4 12h2.5M17.5 12H20"/></svg></div><div class="lbl">Veille</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div class="lbl">CRM</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><div class="lbl">Outils</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div><div class="lbl">Sources</div></div>
+      <div class="spacer"></div>
+      <div class="avatar">VL</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="crumb">RADAR</div>
+        <h3>Les biens en vente</h3>
+        <div class="sub">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l'annonce.</div>
+      </div>
+      <div class="filters">
+        <div class="frow" style="grid-template-columns:1.25fr 1fr">
+          <div class="sel"><span class="v">Saint-Paul</span><span class="car">▾</span></div>
+          <div class="sel"><span class="ph">Tous types</span><span class="car">▾</span></div>
+        </div>
+        <div class="frow">
+          <div class="inp">Prix min</div><div class="inp">Prix max</div><div class="inp">Surface min</div>
+        </div>
+        <div class="frow" style="grid-template-columns:1fr 1.2fr">
+          <div class="seg"><b class="on">Tous</b><b>Rattachés</b></div>
+          <div class="seg"><b class="on">Tous</b><b>Particulier</b><b>Pro</b></div>
+        </div>
+      </div>
+      <div class="count-row">
+        <div class="count"><b>34</b> biens · <span class="oncarte">26 sur la carte</span></div>
+        <div class="sortsel">Plus récentes ▾</div>
+      </div>
+      <div class="listing">
+
+        <div class="bien sel">
+          <div class="b-titre"><span class="t">TERRAIN</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">295 000 €</div>
+          <div class="b-specs">620 m² de terrain</div>
+          <div class="b-pied"><span class="past carte">Sur la carte</span><span class="badge baisse">−8 %</span><span class="b-meta">LeBonCoin · 2 j</span></div>
+        </div>
+
+        <div class="bien">
+          <div class="b-titre"><span class="t">MAISON</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">415 000 €</div>
+          <div class="b-specs">4 pièces · 96 m² hab · 410 m² de terrain</div>
+          <div class="b-pied"><span class="past carte">Sur la carte</span><span class="b-meta">Particulier · 5 j</span></div>
+        </div>
+
+        <div class="bien">
+          <div class="b-titre"><span class="t">APPARTEMENT</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">189 000 €</div>
+          <div class="b-specs">3 pièces · 64 m² hab · DPE C</div>
+          <div class="b-pied"><span class="past nonloc">Non localisé — voir l'annonce</span><span class="b-meta">Pro · 1 j</span></div>
+        </div>
+
+        <div class="bien">
+          <div class="b-titre"><span class="t">TERRAIN</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">138 000 €</div>
+          <div class="b-specs">1 240 m² de terrain</div>
+          <div class="b-pied"><span class="past carte">Sur la carte</span><span class="badge longue">Vente longue</span><span class="b-meta">97 j</span></div>
+        </div>
+
+        <div class="bien">
+          <div class="b-titre"><span class="t">IMMEUBLE</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">780 000 €</div>
+          <div class="b-specs">512 m² hab · 6 lots</div>
+          <div class="b-pied"><span class="past nonloc">Non localisé — voir l'annonce</span><span class="b-meta">Pro · 12 j</span></div>
+        </div>
+
+        <div class="bien">
+          <div class="b-titre"><span class="t">MAISON</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">342 000 €</div>
+          <div class="b-specs">5 pièces · 118 m² hab · 520 m² de terrain</div>
+          <div class="b-pied"><span class="past carte">Sur la carte</span><span class="b-meta">Particulier · 8 j</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="mapzone">
+      <svg class="fond" viewBox="0 0 900 880" preserveAspectRatio="xMidYMid slice">
+        <rect width="900" height="880" fill="#080C0A"/>
+        <path d="M-40 240 C 160 190, 300 260, 420 420 S 640 700, 940 780" stroke="#12251A" stroke-width="90" fill="none"/>
+        <path d="M-40 240 C 160 190, 300 260, 420 420 S 640 700, 940 780" stroke="#4ADE80" stroke-opacity=".33" stroke-width="2.5" fill="none"/>
+        <path d="M120 -20 C 180 160, 240 300, 400 430 M 250 -20 C 300 140, 380 320, 520 470 M 60 460 C 220 480, 380 520, 560 640 M 480 200 C 560 320, 640 460, 700 620" stroke="#1A2A20" stroke-width="2" fill="none"/>
+        <path d="M330 300 l90 -40 60 70 -80 60z M 500 480 l110 -30 50 90 -120 40z M 610 620 l90 -20 40 70 -100 30z" fill="none" stroke="#233B2C" stroke-width="1.5"/>
+        <text x="150" y="120" fill="#39463F" font-size="13" font-family="ui-monospace,monospace" letter-spacing="3">SAINT-PAUL</text>
+      </svg>
+      <div class="pin big" style="left:44%;top:38%"><i>€</i></div>
+      <div class="pin" style="left:58%;top:52%"></div>
+      <div class="pin" style="left:36%;top:60%"></div>
+      <div class="pin amber" style="left:66%;top:70%"></div>
+      <div class="pin" style="left:52%;top:24%"></div>
+      <div class="maphint">Bien <b>rattaché</b> : la carte vole à sa parcelle · bien <b>non localisé</b> : l'annonce s'ouvre sur le portail</div>
+      <div class="maplegend">
+        <b><span class="dot" style="background:var(--mint)"></span> En vente</b>
+        <b><span class="dot" style="background:var(--amber)"></span> En vente longue</b>
+      </div>
+    </div>
+
+  </div></div>
+
+  <!-- ═══════════ ÉCRAN 2 ═══════════ -->
+  <div class="caption"><span class="num">ÉCRAN 2</span><h2>La fiche d'un bien</h2><span>— le prix, l'annonce à un geste, les faits étiquetés, et les outils de l'étape.</span></div>
+  <div class="plate"><div class="app">
+
+    <div class="rail">
+      <div class="logo">LB</div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><div class="lbl">Recherche</div></div>
+      <div class="nav-it on"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/><path d="M12 3v3M21 12h-3"/></svg></div><div class="lbl">Radar</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 4v2.5M12 17.5V20M4 12h2.5M17.5 12H20"/></svg></div><div class="lbl">Veille</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div class="lbl">CRM</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><div class="lbl">Outils</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div><div class="lbl">Sources</div></div>
+      <div class="spacer"></div>
+      <div class="avatar">VL</div>
+    </div>
+
+    <div class="panel no-filters dimmed">
+      <div class="panel-head">
+        <div class="crumb">RADAR</div>
+        <h3>Les biens en vente</h3>
+        <div class="sub">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l'annonce.</div>
+      </div>
+      <div class="count-row">
+        <div class="count"><b>34</b> biens · <span class="oncarte">26 sur la carte</span></div>
+        <div class="sortsel">Plus récentes ▾</div>
+      </div>
+      <div class="listing">
+        <div class="bien sel">
+          <div class="b-titre"><span class="t">TERRAIN</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">295 000 €</div>
+          <div class="b-specs">620 m² de terrain</div>
+          <div class="b-pied"><span class="past carte">Sur la carte</span><span class="badge baisse">−8 %</span><span class="b-meta">LeBonCoin · 2 j</span></div>
+        </div>
+        <div class="bien">
+          <div class="b-titre"><span class="t">MAISON</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">415 000 €</div>
+          <div class="b-specs">4 pièces · 96 m² hab · 410 m² de terrain</div>
+          <div class="b-pied"><span class="past carte">Sur la carte</span><span class="b-meta">Particulier · 5 j</span></div>
+        </div>
+        <div class="bien">
+          <div class="b-titre"><span class="t">APPARTEMENT</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">189 000 €</div>
+          <div class="b-specs">3 pièces · 64 m² hab · DPE C</div>
+          <div class="b-pied"><span class="past nonloc">Non localisé — voir l'annonce</span><span class="b-meta">Pro · 1 j</span></div>
+        </div>
+        <div class="bien">
+          <div class="b-titre"><span class="t">TERRAIN</span><span class="c"> · Saint-Paul</span></div>
+          <div class="b-prix">138 000 €</div>
+          <div class="b-specs">1 240 m² de terrain</div>
+          <div class="b-pied"><span class="past carte">Sur la carte</span><span class="badge longue">Vente longue</span><span class="b-meta">97 j</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mapzone">
+      <svg class="fond" viewBox="0 0 900 880" preserveAspectRatio="xMidYMid slice">
+        <rect width="900" height="880" fill="#080C0A"/>
+        <path d="M-40 240 C 160 190, 300 260, 420 420 S 640 700, 940 780" stroke="#12251A" stroke-width="90" fill="none"/>
+        <path d="M-40 240 C 160 190, 300 260, 420 420 S 640 700, 940 780" stroke="#4ADE80" stroke-opacity=".33" stroke-width="2.5" fill="none"/>
+        <path d="M120 -20 C 180 160, 240 300, 400 430 M 250 -20 C 300 140, 380 320, 520 470 M 60 460 C 220 480, 380 520, 560 640" stroke="#1A2A20" stroke-width="2" fill="none"/>
+        <path d="M300 330 l80 -36 54 63 -72 54z" fill="rgba(74,222,128,.08)" stroke="#4ADE80" stroke-opacity=".6" stroke-width="2"/>
+        <text x="308" y="300" fill="#86EFAC" font-size="12" font-family="ui-monospace,monospace">97415000AB0722</text>
+      </svg>
+      <div class="pin big" style="left:33%;top:42%"><i>€</i></div>
+      <div class="pin" style="left:20%;top:62%"></div>
+      <div class="pin amber" style="left:27%;top:76%"></div>
+
+      <div class="fiche">
+        <div class="f-head">
+          <div class="f-crumb"><span>RADAR › BIEN</span><span class="x">✕</span></div>
+          <h4>Terrain · Saint-Paul <span class="st">EN VENTE</span></h4>
+        </div>
+        <div class="f-body">
+          <div class="f-prix-row">
+            <div class="f-prix">295 000 €<small>Baisse du 14/08 — affiché 320 000 € à la parution</small></div>
+            <svg class="spark" viewBox="0 0 112 36"><polyline points="4,9 54,9 58,25 108,25" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round"/><circle cx="108" cy="25" r="3.5" fill="#4ADE80"/></svg>
+          </div>
+          <div class="btn-portail">Voir l'annonce sur LeBonCoin ↗</div>
+          <div>
+            <div class="f-h">LES FAITS</div>
+            <div class="facts">
+              <div class="fact"><span class="k">Surface terrain</span><span class="v">620 m²</span><span class="tag src">SOURCÉ</span></div>
+              <div class="fact"><span class="k">Surface habitable</span><span class="v">—</span><span class="tag abs">ABSENT</span></div>
+              <div class="fact"><span class="k">Vendeur</span><span class="v">Particulier</span><span class="tag src">SOURCÉ</span></div>
+              <div class="fact"><span class="k">Parution</span><span class="v">20/06/2026</span><span class="tag src">SOURCÉ</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="f-h">PARCELLE RATTACHÉE</div>
+            <div class="rattach"><span class="idu">97415000AB0722</span><span class="go">Ouvrir la fiche parcelle →</span></div>
+          </div>
+          <div>
+            <div class="f-h">ÉTUDIER CE BIEN</div>
+            <div class="toolgrid">
+              <div class="tool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20v14H2z"/><path d="M8 21h8M12 17v4"/></svg>Étudier le bien</div>
+              <div class="tool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Remonter le temps</div>
+              <div class="tool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M14 10h2M8 14h2M14 14h2M8 18h2M14 18h2"/></svg>Calculette foncière</div>
+              <div class="tool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Taxe d'aménagement</div>
+              <div class="tool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Pièges &amp; risques</div>
+              <div class="tool"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Solaire</div>
+            </div>
+          </div>
+          <div class="f-foot">
+            <div class="signaler">Signaler — annonce retirée ou erreur</div>
+            <div class="f-note">Faits extraits de l'annonce publique. Aucune photo ni texte d'annonce n'est conservé ou affiché.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+
+  <!-- ═══════════ ÉCRAN 3 ═══════════ -->
+  <div class="caption"><span class="num">ÉCRAN 3</span><h2>Le démarrage</h2><span>— l'état que verront les premiers comptes : honnête, jamais un écran blanc.</span></div>
+  <div class="plate"><div class="app short">
+
+    <div class="rail">
+      <div class="logo">LB</div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div><div class="lbl">Recherche</div></div>
+      <div class="nav-it on"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/><path d="M12 3v3M21 12h-3"/></svg></div><div class="lbl">Radar</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 4v2.5M12 17.5V20M4 12h2.5M17.5 12H20"/></svg></div><div class="lbl">Veille</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div class="lbl">CRM</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><div class="lbl">Outils</div></div>
+      <div class="nav-it"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div><div class="lbl">Sources</div></div>
+      <div class="spacer"></div>
+      <div class="avatar">VL</div>
+    </div>
+
+    <div class="panel" style="grid-template-rows:auto 1fr">
+      <div class="panel-head">
+        <div class="crumb">RADAR</div>
+        <h3>Les biens en vente</h3>
+        <div class="sub">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l'annonce.</div>
+      </div>
+      <div class="vide">
+        <div class="halo"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/><path d="M12 3v3M21 12h-3"/></svg></div>
+        <h5>Le Radar démarre</h5>
+        <p>Les biens en vente arrivent au fil de la collecte, chaque jour. Le premier digest part dès qu'il y a du neuf à montrer.</p>
+      </div>
+    </div>
+
+    <div class="mapzone">
+      <svg class="fond" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid slice">
+        <rect width="900" height="620" fill="#080C0A"/>
+        <path d="M-40 200 C 160 150, 300 220, 420 360 S 640 560, 940 620" stroke="#12251A" stroke-width="80" fill="none"/>
+        <path d="M-40 200 C 160 150, 300 220, 420 360 S 640 560, 940 620" stroke="#4ADE80" stroke-opacity=".3" stroke-width="2" fill="none"/>
+      </svg>
+    </div>
+
+  </div></div>
+
+  <!-- ═══════════ DÉCISIONS ═══════════ -->
+  <div class="decisions">
+    <div class="kicker">CE QUE CETTE MAQUETTE TRANCHE</div>
+    <h3>À valider ou amender</h3>
+    <div class="dec"><span class="n">01</span><p><b>Radar = catégorie de premier niveau</b>, entre Recherche et Veille dans le rail. Plein écran, plus jamais dans le panneau Outils.</p></div>
+    <div class="dec"><span class="n">02</span><p><b>La veille n'apparaît plus dans le Radar.</b> Elle a sa catégorie, avec deux portes : veille interne (le foncier) et veille externe (les annonces).</p></div>
+    <div class="dec"><span class="n">03</span><p><b>L'onglet Marché quitte le Radar.</b> Les statistiques de marché des annonces iront dans l'outil Communes → Évolution du marché.</p></div>
+    <div class="dec"><span class="n">04</span><p><b>Filtre de rattachement à deux positions</b> — Tous / Rattachés. Les non-localisés restent dans le listing, avec leur pastille et la sortie directe vers le portail.</p></div>
+    <div class="dec"><span class="n">05</span><p><b>« Voir l'annonce » vit juste sous le prix</b> — le geste principal de la fiche, visible sans scroller.</p></div>
+    <div class="dec"><span class="n">06</span><p><b>« Étudier ce bien »</b> : les outils de l'étape, pré-remplis avec la parcelle rattachée — Étudier le bien, Remonter le temps, Calculette foncière, Taxe d'aménagement, Pièges &amp; risques, et <b>Solaire</b> (mon ajout, dis-moi s'il dégage). Un bien non rattaché n'a pas cette section — pas de parcelle, pas d'outils.</p></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -27,6 +27,16 @@ const ICONS: Record<Zone, JSX.Element> = {
       <line x1="12" y1="6.5" x2="12" y2="15.5" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
     </>
   ),
+  // RADAR-CATÉGORIE (T1) — icône radar de la maquette (cercles concentriques + point + balayage),
+  // adaptée au viewBox 20 du rail.
+  radar: (
+    <>
+      <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="3.8" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="10" cy="10" r="1" fill="currentColor" />
+      <path d="M10 2.5v2.4M17.5 10h-2.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </>
+  ),
   outils: (
     <>
       <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -57,6 +67,9 @@ const ZONES: { key: Zone; label: string }[] = [
   // montage (entretienDirect) et la recherche NL reste dans l'omnibox du header. Rail → 7 entrées.
   { key: 'copilote', label: 'IA' },
   { key: 'cartes', label: 'Cartes' },
+  // RADAR-CATÉGORIE (T1) — Radar est un pilier de l'app (au niveau du CRM) : il entre dans le rail
+  // principal, tôt (proche de la maquette : juste après la recherche/carte, avant la Veille du bas).
+  { key: 'radar', label: 'Radar' },
   { key: 'outils', label: 'Outils' },
   { key: 'projets', label: 'Projets' },
   { key: 'crm', label: 'CRM' },

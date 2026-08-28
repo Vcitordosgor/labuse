@@ -464,7 +464,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
@@ -1611,6 +1611,19 @@ export function MapView() {
       <div className="absolute bottom-2 right-3 font-sans text-[11px] text-st-none">
         {attribution}
       </div>
+      {/* RADAR-CATÉGORIE (T2) — dans la catégorie Radar, la carte porte le HINT et la LÉGENDE de la
+          maquette. Les pins (rattachés seuls, couleur par statut) sont peints par la couche radar. */}
+      {view === 'radar' && (
+        <>
+          <div data-radar-maphint className="pointer-events-none absolute left-4 top-4 z-10 max-w-[70%] rounded-full border border-line-2 bg-surface-2/90 px-4 py-1.5 text-[11.5px] text-txt-mut">
+            Bien <b className="font-medium text-mint">rattaché</b> : la carte vole à sa parcelle · bien <b className="font-medium text-mint">non localisé</b> : l'annonce s'ouvre sur le portail
+          </div>
+          <div data-radar-maplegend className="pointer-events-none absolute bottom-4 left-4 z-10 flex gap-4 whitespace-nowrap rounded-lg border border-line-2 bg-surface-2/92 px-3 py-2.5 text-[11.5px] text-txt-mut">
+            <b className="flex items-center gap-1.5 font-medium"><span className="h-2 w-2 rounded-full bg-mint" /> En vente</b>
+            <b className="flex items-center gap-1.5 font-medium"><span className="h-2 w-2 rounded-full bg-amber" /> En vente longue</b>
+          </div>
+        </>
+      )}
       {/* FIX-FONDS B4 — légende « zones noires » réutilisée du mandat TEMPS (même markup data-temps-legende),
           affichée dans la carte principale quand un fond ortho ANCIEN est actif. */}
       {orthoAncienActif && (
