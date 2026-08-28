@@ -22,12 +22,12 @@ def seed(engine):
     tag = uuid.uuid4().hex[:5]
     st = {}
     with session_scope() as s:
-        # base de test parfois créée sans la colonne prenoms (schéma minimal) — défensif, sans effet en prod.
-        s.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS prenoms varchar"))
+        # RD-503 (chasse) : ne plus créer de colonne `prenoms` — elle n'existe PAS en prod ; le digest
+        # sert `comptes.nom` (colonne réelle). L'ancien ALTER masquait le bug du cron.
         # compte actif + titulaire (matching veille) ; compte actif sans veille (digest seul)
         for k, mail in (("match", f"m-{tag}@rt.test"), ("plain", f"p-{tag}@rt.test")):
-            cid = s.execute(text("INSERT INTO comptes (nom, prenoms, plan, founding, statut, sieges) "
-                                 "VALUES (:n,'Vic','integral',false,'actif',1) RETURNING id"),
+            cid = s.execute(text("INSERT INTO comptes (nom, plan, founding, statut, sieges) "
+                                 "VALUES (:n,'integral',false,'actif',1) RETURNING id"),
                             {"n": f"RT {tag} {k}"}).scalar()
             s.execute(text("INSERT INTO utilisateurs (compte_id, email, role, statut, echecs_login) "
                            "VALUES (:c,:e,'titulaire','actif',0)"), {"c": cid, "e": mail})

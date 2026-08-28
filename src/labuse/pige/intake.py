@@ -68,15 +68,41 @@ def _stocker_capture(image: bytes, media_type: str) -> tuple[str, str]:
     return str(chemin), h
 
 
+def _lien_valide(lien: str) -> bool:
+    """RD-504 (chasse) — le lien sortant doit être une URL http(s) propre : il devient le bouton
+    « Voir l'annonce » servi aux CLIENTS (rendu en <a href>). On refuse vide/malformé/`javascript:`/
+    `data:` (vecteur XSS) et les URLs déraisonnablement longues."""
+    u = (lien or "").strip()
+    return (u[:7] == "http://" or u[:8] == "https://") and " " not in u and "\n" not in u and len(u) <= 2000
+
+
+def _clamp_date_publication(faits: dict) -> None:
+    """RD-506 (chasse) — une date de publication dans le FUTUR est une lecture impossible (anti-invention) :
+    on la remet à null plutôt que d'écrire une date fausse en base."""
+    from datetime import date
+    from ..tz import today_reunion
+    dp = faits.get("date_publication")
+    if isinstance(dp, str) and dp:
+        try:
+            if date.fromisoformat(dp[:10]) > today_reunion():
+                faits["date_publication"] = None
+        except ValueError:
+            faits["date_publication"] = None   # date illisible → null, jamais devinée
+
+
 def deposer(db: Session, image: bytes, media_type: str, lien: str, *, geocode=None) -> dict:
     """Extraction → contrôle commune → dédoublonnage → brouillon + capture + rattachement (P2).
-    Retourne un PROPOSITION (jamais validée). `statut` ∈ echec_extraction | rejet_commune | doublon_url
-    | a_valider (avec fusion_proposee éventuelle)."""
+    Retourne un PROPOSITION (jamais validée). `statut` ∈ echec_extraction | rejet_lien | rejet_commune |
+    doublon_url | echec_stockage | a_valider (avec fusion_proposee éventuelle)."""
+    lien = (lien or "").strip()
+    if not _lien_valide(lien):
+        return {"statut": "rejet_lien", "motif": "lien invalide — une URL http(s) est requise", "portail": "autre"}
     ex = extraction.extraire(db, image, media_type, lien)
     if not ex["ok"]:
         return {"statut": "echec_extraction", "motif": ex["motif"], "portail": ex["portail"]}
 
     faits = ex["faits"]
+    _clamp_date_publication(faits)
     resolu = resoudre_commune(faits.get("commune"))
     if not resolu:
         # hors des 24 communes → rejet à l'intake, RIEN n'entre en base.
@@ -95,6 +121,16 @@ def deposer(db: Session, image: bytes, media_type: str, lien: str, *, geocode=No
 
     jumeau = _bien_jumeau(db, commune, faits.get("prix"), faits.get("surface_hab"),
                           faits.get("surface_terrain"))
+
+    # RD-501 (chasse) — la capture est stockée AVANT toute écriture en base : si le répertoire privé est
+    # inaccessible (droits, disque plein, montage read-only), on refuse PROPREMENT et RIEN n'entre en base
+    # (l'ancien ordre laissait un bien SANS capture committé par le session_scope de l'endpoint).
+    try:
+        chemin, h = _stocker_capture(image, media_type)
+    except OSError as exc:
+        return {"statut": "echec_stockage",
+                "motif": "capture non stockée (répertoire privé inaccessible) — rien enregistré",
+                "detail": str(exc)[:120], "portail": ex["portail"]}
 
     est_copro = faits.get("type") == "appartement"
     ratt = rattachement.rattacher(
@@ -126,7 +162,6 @@ def deposer(db: Session, image: bytes, media_type: str, lien: str, *, geocode=No
          "dc": faits.get("dpe_classe"), "dco": faits.get("dpe_conso"), "dg": faits.get("dpe_ges"),
          "pp": faits.get("particulier_pro"), "fr": fraicheur,
          "et": _json.dumps(etiquettes), "av": _json.dumps(ex["champs_a_verifier"])})
-    chemin, h = _stocker_capture(image, media_type)
     db.execute(text(
         "INSERT INTO pige_captures (bien_id, chemin_prive, hash) VALUES (:b, :c, :h)"),
         {"b": bien_id, "c": chemin, "h": h})
@@ -138,9 +173,63 @@ def deposer(db: Session, image: bytes, media_type: str, lien: str, *, geocode=No
             "fusion_proposee": jumeau}
 
 
+_TYPES_BIEN_OK = {"maison", "terrain", "appartement", "immeuble"}
+
+
+def valider_corrections(corr: dict) -> dict:
+    """RD-502 (chasse) — VALIDE les corrections manuelles avant écriture. Un champ hors bornes/type est
+    REFUSÉ proprement (ValueError, message honnête) plutôt qu'écrit faux en base OU crashé en 500 par le
+    type SQL. Retourne un dict nettoyé (None = champ effacé). Anti-invention : on ne devine rien."""
+    out: dict = {}
+
+    def entier(k, v, lo, hi):
+        if v is None:
+            return None
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or (isinstance(v, float) and v != int(v)):
+            raise ValueError(f"{k} : entier attendu")
+        iv = int(v)
+        if not (lo <= iv <= hi):
+            raise ValueError(f"{k} : hors bornes ({lo}–{hi})")
+        return iv
+
+    def nombre(k, v, lo, hi):
+        if v is None:
+            return None
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            raise ValueError(f"{k} : nombre attendu")
+        if not (lo <= v <= hi):
+            raise ValueError(f"{k} : hors bornes ({lo}–{hi})")
+        return v
+
+    for k in corr:
+        v = corr[k]
+        if k == "prix":
+            out[k] = entier("prix", v, 1, 100_000_000)
+        elif k == "pieces":
+            out[k] = entier("pieces", v, 0, 100)
+        elif k in ("dpe_conso", "dpe_ges"):
+            out[k] = entier(k, v, 0, 100_000)
+        elif k in ("surface_hab", "surface_terrain"):
+            out[k] = nombre(k, v, 0, 10_000_000)
+        elif k == "dpe_classe":
+            out[k] = None if v in (None, "") else (v.upper() if isinstance(v, str) and v.upper() in set("ABCDEFG") else _raise(f"dpe_classe : lettre A–G attendue"))
+        elif k == "particulier_pro":
+            out[k] = None if v in (None, "") else (v if v in ("particulier", "pro") else _raise("particulier_pro : « particulier » ou « pro »"))
+        elif k == "type":
+            out[k] = None if v in (None, "") else (v if v in _TYPES_BIEN_OK else _raise(f"type : un de {sorted(_TYPES_BIEN_OK)}"))
+        else:
+            out[k] = v   # champs non gérés (ex. date_publication) passent tels quels
+    return out
+
+
+def _raise(msg: str):
+    raise ValueError(msg)
+
+
 def valider(db: Session, bien_id: int, faits_corriges: dict, *, valide_par: int | None = None) -> dict:
-    """Clic « Valider » de Vic : applique les corrections, promeut le brouillon (valide_at), statut
-    active, journalise `pige.nouvelle`. Un prix plus bas qu'un historique → `pige.baisse_prix`."""
+    """Clic « Valider » de Vic : applique les corrections (VALIDÉES, RD-502), promeut le brouillon
+    (valide_at), statut active, journalise `pige.nouvelle`. Un prix plus bas → `pige.baisse_prix`."""
+    faits_corriges = valider_corrections(faits_corriges or {})
     ancien = db.execute(text("SELECT prix FROM pige_faits WHERE bien_id = :b"), {"b": bien_id}).scalar()
     cols = {k: faits_corriges[k] for k in
             ("prix", "pieces", "surface_hab", "surface_terrain", "dpe_classe", "dpe_conso",

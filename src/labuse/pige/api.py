@@ -61,7 +61,10 @@ def radar_valider(body: ValiderIn, request: Request) -> dict:
     from ..api.auth import exiger_admin
     exiger_admin(request)
     with session_scope() as db:
-        return intake.valider(db, body.bien_id, body.faits, valide_par=None)
+        try:
+            return intake.valider(db, body.bien_id, body.faits, valide_par=None)
+        except ValueError as exc:   # RD-502 — correction hostile refusée proprement (jamais un 500)
+            return {"ok": False, "valide": False, "motif": f"correction refusée : {exc}"}
 
 
 @router.get("/admin/radar/extraction")
