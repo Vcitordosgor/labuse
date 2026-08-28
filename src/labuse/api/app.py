@@ -3801,6 +3801,52 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     return _q_v2_fiche(db, idu, run_label=run)
 
 
+@app.get("/parcels/{idu}/zone")
+def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=60),
+                db: Session = Depends(get_db)) -> dict:
+    """ÉTUDE DE ZONE · Z3 — le tiroir « Autour de cette parcelle » (maquette, écran 1).
+
+    Zone atteignable depuis le centroïde de la parcelle (isochrone IGN, mode/minutes ; défaut « à pied
+    15 min »). Qui vit dans la zone (Filosofi, population_zone — l'UNIQUE agrégateur) + équipements les
+    plus proches AVEC leur temps. Le REVENU reste la valeur au centroïde DÉJÀ servie par la fiche
+    (`marche_secteur.filosofi_200m`) — source unique, JAMAIS deux revenus divergents. Ventes/transports/
+    réseaux ne sont pas dupliqués (renvoi). Échec isochrone → dégradé honnête et nommé, jamais un cercle."""
+    from ..zone import isochrone, population_zone, equipements_proches, bandes_isochrones
+    idu = _check_idu(idu)
+    if mode not in ("pied", "voiture"):
+        mode = "pied"
+    pt = db.execute(text(
+        "SELECT ST_X(ST_Centroid(centroid)) AS lon, ST_Y(ST_Centroid(centroid)) AS lat "
+        "FROM parcels WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    if not pt or pt["lon"] is None:
+        raise HTTPException(status_code=404, detail="parcelle introuvable ou sans géométrie")
+    lon, lat = float(pt["lon"]), float(pt["lat"])
+    res = isochrone(db, lon, lat, minutes, mode)
+    base = {"mode": mode, "minutes": minutes, "hors_trafic": True,
+            "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs "
+                      "Marché et Réseaux — rien n'est dupliqué.",
+            "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic."}
+    if res["geom_geojson"] is None:
+        # dégradé honnête et nommé — aucune couche comptée sur un cercle inventé
+        return {**base, "disponible": False, "statut": res["statut"],
+                "detail": res.get("detail", "zone atteignable indisponible")}
+    zone = res["geom_geojson"]
+    bandes = bandes_isochrones(db, lon, lat, minutes, mode)
+    pop = population_zone(db, zone)
+    if not pop.get("inhabitee"):
+        # REVENU = source unique (centroïde, comme la fiche) — jamais un 2ᵉ revenu Filosofi divergent
+        revenu = db.execute(text(
+            """SELECT round((f.ind_snv / NULLIF(f.ind, 0))::numeric) AS r
+               FROM filosofi_carreaux_200m f JOIN parcels p ON p.idu = :idu
+               WHERE ST_Contains(f.geom, ST_Transform(p.centroid, 2975)) LIMIT 1"""),
+            {"idu": idu}).scalar()
+        pop["revenu_median_eur"] = int(revenu) if revenu is not None else None
+        pop["revenu_source"] = "carreau Filosofi au centroïde (source unique de la fiche)"
+    return {**base, "disponible": True, "statut": res["statut"], "geom": zone,
+            "population": pop,
+            "equipements": equipements_proches(db, lon, lat, zone, bandes=bandes)}
+
+
 @app.get("/parcels/{idu}/export.pdf")
 def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
                       cout_construction_m2: float | None = Query(None, ge=500, le=8000),

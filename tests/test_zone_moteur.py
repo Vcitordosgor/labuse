@@ -126,3 +126,56 @@ def test_concurrents_portent_leur_temps_pas_des_metres():
     assert par_siret["93333333333333"]["nom"] == "Établissement (nom non diffusé)", "non diffusible : masqué"
     # tri : les temps connus d'abord, croissants
     assert [i["temps_min"] for i in res["items"]] == [2, 6, None]
+
+
+def _seed_parcel(s, idu, lon, lat):
+    s.execute(text(
+        "INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, centroid, bbox) VALUES "
+        "(:i,'Saint-André','S','1', ST_Buffer(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),0.0005), 1000, "
+        " ST_SetSRID(ST_MakePoint(:lon,:lat),4326), "
+        " ST_Envelope(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),0.0005)))"),
+        {"i": idu, "lon": lon, "lat": lat})
+
+
+def test_endpoint_parcelle_zone_revenu_source_unique(monkeypatch):
+    from labuse.api.app import parcel_zone
+    monkeypatch.setattr(Z, "fetch_isochrone", lambda lon, lat, minutes, mode, *, client: _carre(0.03))
+    idu = "ZONETEST000001"
+    with session_scope() as s:
+        for c in ["ind_0_3", "ind_4_5", "ind_6_10", "ind_11_17", "ind_18_24"]:
+            s.execute(text(f"ALTER TABLE filosofi_carreaux_200m ADD COLUMN IF NOT EXISTS {c} double precision"))
+        s.execute(text("ALTER TABLE commune_insee_logement ADD COLUMN IF NOT EXISTS insee varchar"))
+        _seed_parcel(s, idu, _LON, _LAT)
+        # un carreau AU CENTROÏDE : sert la population de zone ET le revenu unique (nivvie = snv/ind)
+        s.execute(text(
+            "INSERT INTO filosofi_carreaux_200m (geom, ind, men, men_pauv, men_prop, ind_snv, "
+            " ind_0_3, ind_4_5, ind_6_10, ind_11_17, ind_18_24) VALUES ("
+            " ST_Transform(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),0.001),2975), "
+            " 200, 80, 8, 40, 3800000, 10, 10, 10, 10, 10)"), {"lon": _LON, "lat": _LAT})
+        out = parcel_zone(idu, mode="pied", minutes=15, db=s)
+        s.execute(text("DELETE FROM filosofi_carreaux_200m WHERE ind = 200 AND men_prop = 40"))
+        s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+        s.execute(text("DELETE FROM zone_isochrone_cache WHERE cache_key LIKE 'pied|%'"))
+    assert out["disponible"] is True
+    assert out["hors_trafic"] is True
+    assert out["population"]["habitants"] == 200
+    # REVENU = valeur au centroïde (snv/ind = 3 800 000 / 200 = 19 000), source unique dite
+    assert out["population"]["revenu_median_eur"] == 19000
+    assert "centroïde" in out["population"]["revenu_source"]
+    assert out["population"]["revenu_estime"] is True
+
+
+def test_endpoint_parcelle_zone_degrade_honnete(monkeypatch):
+    from labuse.api.app import parcel_zone
+    def _boom(lon, lat, minutes, mode, *, client):
+        raise RuntimeError("timeout IGN")
+    monkeypatch.setattr(Z, "fetch_isochrone", _boom)
+    idu = "ZONETEST000002"
+    with session_scope() as s:
+        _seed_parcel(s, idu, _LON, _LAT)
+        out = parcel_zone(idu, mode="pied", minutes=15, db=s)
+        s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+    assert out["disponible"] is False
+    assert out["statut"] == "indisponible"
+    assert "geom" not in out, "aucune géométrie — jamais un cercle substitué"
+    assert "population" not in out

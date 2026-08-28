@@ -1,4 +1,4 @@
-import type { CrmColumn, Fiche, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
+import type { CrmColumn, Fiche, ParcelleZone, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
 
 export interface ParcelFeatureCollection {
   type: 'FeatureCollection'
@@ -262,6 +262,9 @@ export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
+// ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle » (isochrone IGN + Filosofi/BPE).
+export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: number) =>
+  j<ParcelleZone>(`/parcels/${idu}/zone?${q({ mode, minutes })}`)
 
 // M41 (Phase 2.6) — outil « Vérif procédure » : un IDU → procédure PLU en cours OUI/NON + conséquences.
 // L'outil LIT le radar (point de calcul unique), il ne calcule rien. L'absence est datée elle aussi.

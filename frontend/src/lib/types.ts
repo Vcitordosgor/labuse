@@ -415,6 +415,31 @@ export interface MarcheSecteur {
   } | null
 }
 
+// ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle ». Un seul moteur ; ici en mode fiche
+// (isochrone auto depuis le centroïde). Le REVENU reste la valeur au centroïde servie par la fiche
+// (source unique). Dégradé honnête si l'isochrone IGN est indisponible (`disponible=false`).
+export interface ZonePopulation {
+  inhabitee: boolean
+  habitants?: number; menages?: number
+  revenu_median_eur?: number | null; revenu_estime?: boolean; revenu_source?: string
+  pct_moins_25?: number | null; taux_pauvrete_pct?: number | null
+  n_carreaux?: number; millesime: string
+}
+export interface ZoneEquipement { domaine: string; nom: string; temps_min: number | null }
+export interface ParcelleZone {
+  disponible: boolean
+  statut: string        // 'ign' | 'cache' | 'indisponible' | 'polygone'
+  mode: 'pied' | 'voiture'
+  minutes: number
+  hors_trafic: boolean
+  renvoi: string
+  note: string
+  detail?: string       // présent si disponible=false (échec nommé)
+  geom?: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }
+  population?: ZonePopulation
+  equipements?: ZoneEquipement[]
+}
+
 export interface Renouvellement {
   libelle: string
   // M47 : étiquette source · millésime (run servi + date de matérialisation).

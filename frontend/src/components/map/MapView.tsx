@@ -839,6 +839,14 @@ export function MapView() {
       m.addLayer({ id: 'module-lot', type: 'line', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'lot'],
         paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
+      // ÉTUDE DE ZONE Z3/Z4 — l'isochrone (zone atteignable) : remplissage discret + liseré de marque,
+      // SOUS les points (le point d'origine et les concurrents restent au-dessus). kind='zone-iso'.
+      m.addLayer({ id: 'module-zone-fill', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'zone-iso'],
+        paint: { 'fill-color': '#4ADE80', 'fill-opacity': 0.08 } })
+      m.addLayer({ id: 'module-zone-line', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'zone-iso'],
+        paint: { 'line-color': '#4ADE80', 'line-opacity': 0.6, 'line-width': 2 } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
         // LOT8b — la même couche de points sert les permis (radar) ET les piscines (« 💧 Voir sur la
         // carte » : toutes les piscines de l'île en marqueurs). Les deux ne coexistent jamais (outils

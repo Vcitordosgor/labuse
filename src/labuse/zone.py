@@ -62,11 +62,13 @@ def _cle(lon: float, lat: float, minutes: int, mode: str) -> str:
 
 
 def isochrone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
-              client: httpx.Client | None = None, fetch=fetch_isochrone) -> dict:
+              client: httpx.Client | None = None, fetch=None) -> dict:
     """Zone atteignable en `minutes` depuis (lon, lat) en `mode`. CACHE d'abord, puis IGN.
 
     Retour : {"statut": 'cache'|'ign'|'indisponible', "geom_geojson": dict|None, "minutes", "mode"}.
-    Échec API → statut 'indisponible', geom None (JAMAIS un cercle en silence). Ne lève pas."""
+    Échec API → statut 'indisponible', geom None (JAMAIS un cercle en silence). Ne lève pas.
+    `fetch` non fourni → `fetch_isochrone` (résolu comme global du module, donc monkeypatchable)."""
+    fetch = fetch or fetch_isochrone
     ensure_tables(session)
     cle = _cle(lon, lat, minutes, mode)
     row = session.execute(text("SELECT ST_AsGeoJSON(geom) AS gj FROM zone_isochrone_cache WHERE cache_key = :k"),
@@ -93,7 +95,7 @@ def isochrone(session: Session, lon: float, lat: float, minutes: int, mode: str,
 
 
 def bandes_isochrones(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
-                      client: httpx.Client | None = None, fetch=fetch_isochrone) -> dict[int, dict]:
+                      client: httpx.Client | None = None, fetch=None) -> dict[int, dict]:
     """Isochrones concentriques (sous-multiples de `minutes`) pour dater les POI. Chacune passe par le
     cache. Retourne {minutes_bande: geom_geojson} pour les bandes disponibles (peut être vide si l'API
     est indisponible et le cache froid)."""
@@ -259,7 +261,7 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
 
 def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
                   geom_geojson: dict | None = None, naf: str | None = None,
-                  client: httpx.Client | None = None, fetch=fetch_isochrone) -> dict:
+                  client: httpx.Client | None = None, fetch=None) -> dict:
     """Agrégat complet d'une zone : isochrone (+ bandes pour dater les POI) → population, emplois,
     équipements, concurrents (si NAF), générateurs de flux, marché. `geom_geojson` force la géométrie
     (polygone dessiné) et court-circuite l'isochrone. Dégradé honnête si l'isochrone est indisponible."""
