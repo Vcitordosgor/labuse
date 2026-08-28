@@ -1229,3 +1229,41 @@ export const radarPrix = (bien_id: number, prix: number) =>
   j<{ ok: boolean }>('/admin/radar/prix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, prix }) })
 export const radarRetiree = (bien_id: number) =>
   j<{ ok: boolean }>('/admin/radar/retiree', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
+
+// ── RADAR (pige) · P3 C1 — écran CLIENT (faits + lien, jamais le contenu de l'annonce) ──
+export interface RadarBienClient {
+  bien_id: number; commune: string; type_bien: string | null; est_copro: boolean; statut: string
+  rattachement: { niveau: 'source' | 'estime' | 'absent'; idu: string | null; confiance: number | null }
+  coords: [number, number] | null
+  faits: { prix: number | null; pieces: number | null; surface_hab: number | null; surface_terrain: number | null; dpe_classe: string | null; dpe_conso: number | null; dpe_ges: number | null; particulier_pro: string | null }
+  etiquettes: Record<string, string>; fraicheur_source: string | null
+  date_publication: string | null; date_saisie: string | null; date_derniere_confirmation: string | null
+  portail: string; url_sortante: string; annonce_id: number | null; baisse: boolean
+}
+export interface RadarBienDetail extends RadarBienClient {
+  historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
+}
+export interface RadarBiensRep { biens: RadarBienClient[]; n_total: number; n_rattaches: number; page: number; taille: number; tri: string }
+export interface RadarFiltres {
+  commune?: string; type_bien?: string; prix_min?: number; prix_max?: number
+  surface_hab_min?: number; surface_hab_max?: number; surface_terrain_min?: number; surface_terrain_max?: number
+  particulier_pro?: string; statuts?: string[]; periode_debut?: string; periode_fin?: string
+  rattache?: 'oui' | 'non'
+}
+export const getRadarBiens = (f: RadarFiltres, tri = 'recentes', page = 1, taille = 60) => {
+  const p = new URLSearchParams()
+  const set = (k: string, v: unknown) => { if (v !== undefined && v !== null && v !== '') p.set(k, String(v)) }
+  set('commune', f.commune); set('type_bien', f.type_bien); set('prix_min', f.prix_min); set('prix_max', f.prix_max)
+  set('surface_hab_min', f.surface_hab_min); set('surface_hab_max', f.surface_hab_max)
+  set('surface_terrain_min', f.surface_terrain_min); set('surface_terrain_max', f.surface_terrain_max)
+  set('particulier_pro', f.particulier_pro); set('rattache', f.rattache)
+  set('periode_debut', f.periode_debut); set('periode_fin', f.periode_fin)
+  if (f.statuts?.length) set('statuts', f.statuts.join(','))
+  set('tri', tri); set('page', page); set('taille', taille)
+  return j<RadarBiensRep>(`/radar/biens?${p.toString()}`)
+}
+export const getRadarBienDetail = (bienId: number) => j<RadarBienDetail>(`/radar/biens/${bienId}`)
+export const radarClic = (bien_id: number, annonce_id?: number | null) =>
+  j<{ ok: boolean; clic_id: number }>('/radar/clic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, annonce_id: annonce_id ?? null }) })
+export const radarSignaler = (bien_id: number, motif = '') =>
+  j<{ ok: boolean; event_id: number }>('/radar/signaler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, motif }) })

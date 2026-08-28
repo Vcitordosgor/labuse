@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { createContext, isValidElement, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { fmtDistance as fmtDistanceM } from '../../lib/geo'
@@ -2450,6 +2450,24 @@ export function Fiche({ idu }: { idu: string }) {
                 <ProprietaireHistorique h={f.proprietaire_historique} />
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
+                {/* RADAR P3 (C3) — un bien du Radar en vente sur cette parcelle : discret, fait + lien. */}
+                {f.radar_bien && (
+                  <div data-radar-bien className="card-elev px-3 py-2.5">
+                    <p className="label-caps">Radar — bien en vente</p>
+                    <div className="mt-1 flex items-center gap-2 text-xs">
+                      <b className="text-txt-hi">{f.radar_bien.prix != null ? f.radar_bien.prix.toLocaleString('fr-FR') + ' €' : '—'}</b>
+                      {f.radar_bien.type_bien && <span className="text-txt-mut">{f.radar_bien.type_bien}</span>}
+                      <span className="rounded-full bg-surface-3 px-1.5 text-[10px] text-txt-mut">
+                        {f.radar_bien.statut === 'en_vente_longue' ? 'en vente longue' : 'en vente'}
+                      </span>
+                    </div>
+                    <a href={f.radar_bien.url_sortante} target="_blank" rel="noopener noreferrer"
+                      onClick={() => { radarClic(f.radar_bien!.bien_id).catch(() => {}) }}
+                      className="mt-1.5 inline-block text-[11px] text-mint underline decoration-dotted">
+                      Voir l’annonce sur {f.radar_bien.portail} ↗
+                    </a>
+                  </div>
+                )}
                 {/* FIX-FICHE F2 — bloc « DPE connu » RETIRÉ : la fiche premium (_q_v2_fiche, celle que
                     l'UI reçoit) ne sert JAMAIS `dpe_connu` (construit seulement par le builder legacy
                     `_build_fiche`), et la table `parcel_dpe` n'existe plus en base → le bloc ne pouvait
