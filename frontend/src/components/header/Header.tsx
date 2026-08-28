@@ -335,8 +335,9 @@ function NotifBell() {
                 Notifications{unread > 0 ? ` · ${unread}` : ''}
               </h2>
               <div className="ml-auto flex items-center gap-3 whitespace-nowrap">
-                {/* M16-B2 : « Digest » (jargon) → le point du jour */}
-                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Aperçu du résumé e-mail (ce qui a bougé + les priorités)">Le point du jour →</a>
+                {/* RECETTE-2 LOT D2 — l'entrée « Le point du jour » est RETIRÉE de l'en-tête Notifications.
+                    Retrait de surface : la page /events/digest.html (aperçu du digest) et les envois Brevo
+                    restent INTACTS (atteignables par e-mail / URL directe) — plus aucun lien in-app n'y mène. */}
                 {/* M85 — préférences par type et par canal (l'écran minimal in-app) */}
                 <button data-notif-prefs-toggle onClick={() => setPrefsOpen((o) => !o)} className="text-[11px] text-txt-mut hover:text-txt" title="Préférences de notification">{prefsOpen ? 'fermer' : 'préférences'}</button>
                 {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}

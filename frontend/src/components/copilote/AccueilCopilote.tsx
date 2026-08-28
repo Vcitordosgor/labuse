@@ -171,19 +171,10 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
 
       {reponse && <div data-accueil-reponse className="mb-8">{reponse}</div>}
 
-      {/* M117 — LE BRIEF sous le point d'entrée (ce n'est pas une action de Copilote). Reste en MINT :
-           la veille n'est pas de l'IA (seule exception mint sur cette surface). */}
-      {!reponse && brief && (
-        <button data-brief-btn onClick={() => setBriefOpen(true)}
-          className="mb-7 flex w-full items-center gap-3 rounded-[10px] bg-cp-card px-4 py-3 transition-colors duration-quick hover:bg-cp-card2">
-          <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-mint" />
-          <span className="text-[14px] text-cp-txt">Votre brief du matin</span>
-          <span className="ml-auto font-mono text-[12px] uppercase tracking-[.06em] text-cp-muted">
-            {briefN > 0 ? `${briefN} événement${briefN > 1 ? 's' : ''} depuis hier` : 'Rien de neuf depuis hier'}
-          </span>
-          <span className="text-cp-muted">→</span>
-        </button>
-      )}
+      {/* RECETTE-2 LOT D1 — la carte « Votre brief du matin » est RETIRÉE de la section IA. Retrait de
+          SURFACE : event_log, crons et envois Brevo sont INTACTS. Devient code mort (non supprimé,
+          décision de démontage = geste de Vic) : le hook getBrief + l'endpoint /events/brief + le
+          tiroir latéral du brief (briefOpen/panelRef, plus jamais ouvert). Voir compte-rendu. */}
 
       {/* REPRENDRE — conversations passées, dédoublonnées, datées en relatif, 4 max puis « voir tout ». */}
       {!reponse && questions.length > 0 && (
