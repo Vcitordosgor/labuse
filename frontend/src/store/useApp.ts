@@ -296,6 +296,10 @@ interface AppState {
   // une entrée, trois volets. En surimpression de la carte (l'outil de dessin reste dispo).
   surveillanceOpen: boolean
   surveillanceVolet: 'parcelles' | 'secteurs' | 'criteres'
+  // RADAR-CATÉGORIE (T4) — la porte de la Veille : 'accueil' (deux portes) · 'interne' (le foncier) ·
+  // 'externe' (les annonces Radar).
+  surveillancePorte: 'accueil' | 'interne' | 'externe'
+  setSurveillancePorte: (p: 'accueil' | 'interne' | 'externe') => void
   openSurveillance: (volet?: 'parcelles' | 'secteurs' | 'criteres') => void
   setSurveillanceOpen: (v: boolean) => void
   toggleSurveillance: () => void
@@ -613,16 +617,22 @@ export const useApp = create<AppState>((set) => ({
   // RETOURS-1 R8 (Vic) : ouvrir la Veille ferme le tiroir Outils (réciproque de toggleOutils).
   surveillanceOpen: false,
   surveillanceVolet: 'parcelles',
-  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes',
+  // RADAR-CATÉGORIE (T4) — la Veille s'ouvre sur un écran d'entrée à DEUX portes (patron Communes R3) :
+  // 'interne' (le foncier, écran existant) · 'externe' (les annonces Radar). Le clic rail ouvre
+  // l'accueil ; les deep-links de notif (openSurveillance/toggleVeilles/toggleSuivis) ciblent un
+  // volet interne → ils vont DIRECTEMENT à la porte interne (aucun lien de notif cassé).
+  surveillancePorte: 'accueil',
+  setSurveillancePorte: (p) => set({ surveillancePorte: p }),
+  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes', surveillancePorte: 'interne',
     outilsOpen: false, surveillanceVolet: volet ?? s.surveillanceVolet, ...CLOSE_OVERLAYS })),
   setSurveillanceOpen: (v) => set({ surveillanceOpen: v }),
   toggleSurveillance: () => set((s) => ({ surveillanceOpen: !s.surveillanceOpen, view: 'cartes',
-    outilsOpen: false, ...CLOSE_OVERLAYS })),
-  // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant.
+    surveillancePorte: 'accueil', outilsOpen: false, ...CLOSE_OVERLAYS })),
+  // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant (porte interne).
   toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'secteurs', view: 'cartes',
-    outilsOpen: false, ...CLOSE_OVERLAYS }),
+    surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'cartes',
-    outilsOpen: false, ...CLOSE_OVERLAYS }),
+    surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
   compareTouchedAt: null,

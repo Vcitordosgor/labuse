@@ -267,6 +267,8 @@ def radar_signaler(body: SignalerIn, request: Request) -> dict:
 class VeilleIn(BaseModel):
     commune: str | None = None
     type_bien: str | None = None
+    prix_min: int | None = None          # RADAR-CATÉGORIE (T4) — le prix rejoint les critères de veille
+    prix_max: int | None = None
     surface_terrain_min: float | None = None
     surface_hab_min: float | None = None
     particulier_only: bool = False

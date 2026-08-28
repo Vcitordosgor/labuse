@@ -54,6 +54,14 @@ def matche(criteria: dict, bien: dict) -> bool:
     if criteria.get("type_bien") and bien.get("type_bien") != criteria["type_bien"]:
         return False
     faits = bien.get("faits", {})
+    # RADAR-CATÉGORIE (T4) — le prix rejoint les critères de veille (demandé par le mandat ; les
+    # veilles existantes sans prix restent valides, un critère absent n'exclut pas).
+    prix = faits.get("prix")
+    pmin, pmax = criteria.get("prix_min"), criteria.get("prix_max")
+    if pmin is not None and (prix is None or prix < pmin):
+        return False
+    if pmax is not None and (prix is None or prix > pmax):
+        return False
     st_min = criteria.get("surface_terrain_min")
     if st_min is not None and (faits.get("surface_terrain") is None or faits["surface_terrain"] < st_min):
         return False
