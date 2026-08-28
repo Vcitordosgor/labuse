@@ -269,7 +269,7 @@ export function AdminView() {
   const setView = useApp((s) => s.setView)
   const [section, setSection] = useState<AdminSection>('pilotage')
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
-  const admin = moi.data == null || moi.data.mode === 'pilote' || moi.data.role === 'admin'
+  const admin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
   const pilotage = useQuery({ queryKey: ['admin-pilotage'], queryFn: getAdminPilotage, refetchInterval: 60_000, enabled: admin })
   if (!admin) {
     return (

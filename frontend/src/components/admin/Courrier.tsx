@@ -83,7 +83,7 @@ export function CourrierSection() {
             {demandes.map((d) => (
               <tr key={d.id} className="border-b border-line last:border-b-0 hover:bg-surface-3" data-demande={d.id}>
                 <td className="px-4 py-2.5 font-mono text-xs text-txt-dim">{d.id}</td>
-                <td className="px-4 py-2.5"><b>{d.client ?? 'pilote/admin'}</b></td>
+                <td className="px-4 py-2.5"><b>{d.client ?? 'interne'}</b></td>
                 <td className="px-4 py-2.5 font-mono text-xs text-txt-mut">{d.n}{d.communes ? ` · ${d.communes}` : ''}</td>
                 <td className="px-4 py-2.5 font-mono text-xs text-txt-dim">{fmtReu(d.ts)}</td>
                 <td className="px-4 py-2.5">

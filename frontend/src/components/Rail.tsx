@@ -89,12 +89,12 @@ function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string)
 }
 
 // DASHBOARD-V1 — entrée « Tour de contrôle » au pied de rail : VISIBLE seulement pour l'admin
-// (role 'admin' ou session pilote). La visibilité est du confort d'UI — la vraie garde est
+// (role 'admin' ou session locale dev). La visibilité est du confort d'UI — la vraie garde est
 // côté backend (exiger_admin sur chaque /admin/*, 403 client).
 function AdminRailEntry() {
   const { view, setView } = useApp()
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
-  const admin = moi.data?.mode === 'pilote' || moi.data?.role === 'admin'
+  const admin = (moi.data != null && moi.data.mode !== 'compte') || moi.data?.role === 'admin'
   if (!admin) return null
   return (
     <button data-rail-admin onClick={() => setView('admin')} className="group flex w-full flex-col items-center gap-1"

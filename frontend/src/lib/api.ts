@@ -861,13 +861,14 @@ export const veilleNL = (text: string) =>
   j<{ ok: boolean; refus?: string; indeclenchable?: boolean; filters?: Record<string, unknown>; resume?: string; ignores?: string[] }>(
     '/events/veille-nl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
 
-// ── M16-C : menu compte (identité + palier RÉEL) + « proposer une amélioration » ──
-export interface Moi { mode: 'pilote' | 'compte'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string }
+// ── M16-C : menu compte (identité + statut réel). RETOURS-1 R1 : `mode` = 'compte' (session
+// compte) ou 'local' (session dev sans compte, fail-open) ; email + plan réel du compte connecté,
+// plan_eur_mois depuis offres.py (null pour 'interne' — jamais un prix sur un compte interne).
+// postSuggestion (« Proposer une amélioration ») retiré : doublon du bouton Signaler (postRetour).
+export interface Moi { mode: 'compte' | 'local'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string; email?: string | null; plan_eur_mois?: number | null }
 export const getMoi = () => j<Moi>('/moi')
-export const postSuggestion = (body: { categorie: string; texte: string; contexte?: string }) =>
-  j<{ ok: boolean }>('/suggestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // DASHBOARD-V1 · D1 — bouton « Signaler » (en-tête) : bug/idée/question → table retours
-// (statuts suivis au dashboard admin). Distinct de postSuggestion (menu compte, texte libre).
+// (statuts suivis au dashboard admin).
 export const postRetour = (body: { type: 'bug' | 'idee' | 'question'; message: string }) =>
   j<{ ok: boolean; id: number }>('/retours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 

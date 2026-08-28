@@ -610,23 +610,36 @@ mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du servi
 
 @router.get("/moi", include_in_schema=False)
 def moi(request: Request, db: Session = Depends(get_db)):
+    from sqlalchemy import text
     from .auth import COOKIE
+    from ..comptes import PLAN_INTERNE
     from ..offres import offre_integral
     from ..plans import plan_courant
-    # M16-C : le plan RÉEL courant (stub env-driven aujourd'hui — plan_par_compte=False tant que le
-    # mandat Auth & Plans n'a pas branché le palier par compte en base ; on ne fabrique aucun « Pro »).
-    plan = plan_courant()
-    # E1/E6 — libellé depuis la source unique (offres.py). 'interne' = admin/système (hors offre).
-    plan_label = {"integral": offre_integral()["label"], "interne": "Interne"}.get(plan, plan.capitalize())
-    plan_bloc = {"plan": plan, "plan_label": plan_label, "plan_par_compte": False}
     tok = request.cookies.get(COOKIE) or ""
     if not tok.startswith("u."):
-        return {"mode": "pilote", **plan_bloc}   # session pilote (pré-bascule) — pas de compte
+        # RETOURS-1 R1 : plus d'« ère pilote » — une session sans compte (dev/local, fail-open)
+        # est dite `mode='local'`. En prod le rideau d'auth interdit ce chemin.
+        plan = plan_courant()
+        plan_label = {"integral": offre_integral()["label"], PLAN_INTERNE: "Interne"}.get(plan, plan.capitalize())
+        return {"mode": "local", "plan": plan, "plan_label": plan_label, "plan_par_compte": False}
     from ..comptes import session_utilisateur
     u = session_utilisateur(db, tok[2:])
     if not u:
         return JSONResponse({"detail": "session expirée"}, status_code=401)
-    return {"mode": "compte", "role": u["role"], "statut_compte": u["statut_compte"], **plan_bloc}
+    # RETOURS-1 R1 (Vic) : le menu affiche le VRAI statut — plan réel du compte connecté (colonne
+    # comptes.plan, libellé/prix depuis la source unique offres.py) + e-mail du compte. Un compte
+    # interne (admin/système) n'affiche jamais un prix.
+    row = db.execute(text(
+        "SELECT u.email, c.plan FROM utilisateurs u JOIN comptes c ON c.id = u.compte_id"
+        " WHERE u.id = :i"), {"i": u["utilisateur_id"]}).mappings().first()
+    plan = (row["plan"] if row else None) or "integral"
+    o = offre_integral()
+    plan_label = {"integral": o["label"], PLAN_INTERNE: "Interne"}.get(plan, plan.capitalize())
+    return {"mode": "compte", "role": u["role"], "statut_compte": u["statut_compte"],
+            "email": row["email"] if row else None,
+            "plan": plan, "plan_label": plan_label,
+            "plan_eur_mois": o["eur_mois"] if plan == "integral" else None,
+            "plan_par_compte": True}
 
 
 # ── M16-C : « Proposer une amélioration » (menu compte) → table `suggestions` consultable ──
@@ -643,7 +656,7 @@ def suggestion_create(body: dict, request: Request, db: Session = Depends(get_db
     if cat not in ("bug", "idee", "autre"):
         cat = "autre"
     contexte = (body.get("contexte") or "")[:160]
-    mode = "compte" if (request.cookies.get(COOKIE) or "").startswith("u.") else "pilote"
+    mode = "compte" if (request.cookies.get(COOKIE) or "").startswith("u.") else "local"
     db.execute(text("INSERT INTO suggestions (categorie, texte, contexte, compte_mode)"
                     " VALUES (:c, :t, :x, :m)"),
                {"c": cat, "t": texte[:4000], "x": contexte, "m": mode})

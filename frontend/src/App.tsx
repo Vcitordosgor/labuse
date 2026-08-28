@@ -404,7 +404,7 @@ export default function App() {
 
 /** PREMIER EURO · E2 — l'état d'abonnement AFFICHÉ, jamais un 500 : « paiement requis »
  *  en bandeau st-creuser (l'accès continue pendant les relances Stripe) ; suspension =
- *  la session meurt côté serveur, ce bandeau n'a donc jamais à la dire. Mode pilote : rien. */
+ *  la session meurt côté serveur, ce bandeau n'a donc jamais à la dire. Session locale (dev) : rien. */
 function CompteBandeau() {
   const moi = useQuery({
     queryKey: ['moi'],
