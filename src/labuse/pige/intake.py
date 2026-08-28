@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from .. import communes
 from . import extraction, portails, rattachement
-from .tables import EV_BAISSE_PRIX, EV_NOUVELLE, captures_dir, journaliser
+from .tables import EV_BAISSE_PRIX, EV_NOUVELLE, captures_dir, enregistrer_fraicheur, journaliser
 
 # tolérances de dédoublonnage inter-portails (mandat V0 §3).
 TOL_PRIX = 0.02          # ± 2 %
@@ -130,6 +130,7 @@ def deposer(db: Session, image: bytes, media_type: str, lien: str, *, geocode=No
     db.execute(text(
         "INSERT INTO pige_captures (bien_id, chemin_prive, hash) VALUES (:b, :c, :h)"),
         {"b": bien_id, "c": chemin, "h": h})
+    enregistrer_fraicheur(db)   # D4 — la collecte met à jour la fraîcheur du Radar au registre
     db.commit()
     return {"statut": "a_valider", "bien_id": bien_id, "faits": faits,
             "confiances": ex["confiances"], "champs_a_verifier": ex["champs_a_verifier"],

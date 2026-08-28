@@ -157,3 +157,14 @@ def journaliser(db: Session, kind: str, titre: str, *, detail: str | None = None
         "VALUES (:k, :t, :d, :i, :l, :c, 'Radar', :dd) RETURNING id"),
         {"k": kind, "t": titre, "d": detail, "i": idu, "l": lien, "c": compte_id, "dd": dedup}
     ).scalar() or 0
+
+
+def enregistrer_fraicheur(db: Session) -> str | None:
+    """RADAR D4 — pose la fraîcheur du Radar au registre des sources = date de DERNIÈRE COLLECTE
+    (`max(date_saisie)` de pige_annonces), JAMAIS une date de run. No-op si la source n'est pas au
+    catalogue. Retourne la date posée (ISO) ou None si aucune collecte."""
+    d = db.execute(text("SELECT max(date_saisie) FROM pige_annonces")).scalar()
+    if d is not None:
+        db.execute(text("UPDATE data_sources SET last_sync_at = :d "
+                        "WHERE name = 'Radar (pige d''annonces)'"), {"d": d})
+    return d.isoformat() if d is not None else None
