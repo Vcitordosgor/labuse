@@ -350,6 +350,7 @@ export interface TaxeConfig {
     part_departementale_plafond_pct: number; part_departementale_defaut: number
     part_departementale_confirmee_974: boolean
   }
+  exoneration_surface_min_m2: number | null   // RV2-V2 — exonération petites surfaces (CGI 1635 quater D)
 }
 export const getTaxeConfig = () => j<TaxeConfig>('/outils/taxe-amenagement/config')
 

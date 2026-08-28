@@ -2326,7 +2326,8 @@ def taxe_amenagement_config() -> dict:
     from ..taxe_amenagement import config
     c = config()
     return {"meta": c["meta"], "valeur_forfaitaire_m2": c["valeur_forfaitaire_m2"],
-            "abattement": c["abattement"], "forfaits": c["forfaits"], "taux": c["taux"]}
+            "abattement": c["abattement"], "forfaits": c["forfaits"], "taux": c["taux"],
+            "exoneration_surface_min_m2": c.get("exoneration_surface_min_m2")}  # RV2-V2 — CGI 1635 quater D
 
 
 @app.get("/outils/taxe-amenagement/prefill")
