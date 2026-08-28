@@ -422,6 +422,7 @@ export interface ZonePopulation {
   inhabitee: boolean
   habitants?: number; menages?: number
   revenu_median_eur?: number | null; revenu_estime?: boolean; revenu_source?: string
+  revenu_impute_n?: number | null; revenu_carreaux_n?: number | null; revenu_majorite_imputee?: boolean
   pct_moins_25?: number | null; taux_pauvrete_pct?: number | null
   n_carreaux?: number; millesime: string
 }

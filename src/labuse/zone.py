@@ -163,12 +163,28 @@ def population_zone(session: Session, geom_geojson: dict) -> dict:
     millesime = "Filosofi 2021 (INSEE, carreaux 200 m)"
     if not r or (r["n_carreaux"] or 0) == 0 or (r["habitants"] or 0) == 0:
         return {"inhabitee": True, "millesime": millesime}
+    # LOT 3 — imputation PILOTÉE PAR LA DONNÉE (i_est_200 : '1' = carreau imputé depuis la maille 1 km).
+    # Défensif : la colonne peut manquer en base de test → on n'invente pas, on laisse None (garde).
+    n_imp = n_car_rev = None
+    has_iest = session.execute(text("SELECT 1 FROM information_schema.columns "
+                                    "WHERE table_name='filosofi_carreaux_200m' AND column_name='i_est_200'")).first()
+    if has_iest:
+        imp = session.execute(text(
+            f"""SELECT count(*) FILTER (WHERE f.i_est_200 = '1') n_imp, count(*) n_tot
+                FROM filosofi_carreaux_200m f
+                WHERE f.ind > 0 AND ST_Contains({_zone2975()}, ST_Centroid(f.geom))"""),
+            {"zone": json.dumps(geom_geojson)}).mappings().first()
+        n_imp, n_car_rev = int(imp["n_imp"]), int(imp["n_tot"])
+    majorite_imputee = bool(n_imp is not None and n_car_rev and n_imp > n_car_rev / 2)
     return {
         "inhabitee": False,
         "habitants": int(r["habitants"]),
         "menages": int(r["menages"]),
         "revenu_median_eur": int(r["revenu_median_eur"]) if r["revenu_median_eur"] is not None else None,
-        "revenu_estime": True,   # INSEE lissé → toujours ESTIMÉ, jamais présenté comme mesuré
+        "revenu_estime": True,   # Filosofi winsorisé → toujours ESTIMÉ (jamais présenté comme mesuré)
+        "revenu_impute_n": n_imp,             # carreaux (à revenu) imputés · None si non mesurable
+        "revenu_carreaux_n": n_car_rev,       # carreaux (à revenu) total
+        "revenu_majorite_imputee": majorite_imputee,   # → « valeur approchée sur N carreaux sur M »
         "pct_moins_25": int(r["pct_moins_25"]) if r["pct_moins_25"] is not None else None,
         "taux_pauvrete_pct": int(r["taux_pauvrete_pct"]) if r["taux_pauvrete_pct"] is not None else None,
         "n_carreaux": int(r["n_carreaux"]),

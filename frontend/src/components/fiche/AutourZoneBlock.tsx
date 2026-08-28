@@ -91,7 +91,9 @@ export function AutourZoneBlock({ idu }: { idu: string }) {
                 <Stat v={nombre(data.population?.habitants)} k="habitants" />
                 <Stat v={nombre(data.population?.menages)} k="ménages" />
                 <Stat v={data.population?.revenu_median_eur != null ? `${nombre(data.population.revenu_median_eur)} €` : '—'}
-                  k="revenu médian / an" est />
+                  k={data.population?.revenu_majorite_imputee
+                    ? `revenu médian / an · valeur approchée (${nombre(data.population.revenu_impute_n)}/${nombre(data.population.revenu_carreaux_n)} carreaux)`
+                    : 'revenu médian / an'} est />
                 <Stat v={data.population?.pct_moins_25 != null ? `${data.population.pct_moins_25} %` : '—'} k="moins de 25 ans" />
               </div>
             )}

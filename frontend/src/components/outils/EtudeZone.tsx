@@ -230,7 +230,10 @@ export function EtudeZone() {
             <div className="grid grid-cols-2 gap-2">
               <Stat v={nb(res.population?.habitants)} k="habitants" />
               <Stat v={nb(res.population?.menages)} k="ménages" />
-              <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'} k="revenu médian / an" est />
+              <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'}
+                k={res.population?.revenu_majorite_imputee
+                  ? `revenu médian / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
+                  : 'revenu médian / an'} est />
               <ActifsStat res={res} />
             </div>
           )}

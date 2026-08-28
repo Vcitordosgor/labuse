@@ -90,3 +90,22 @@ def test_lot2_emplois_zone_fourchette_et_sans_tranche():
     assert e["postes_min"] == 21 and e["postes_max"] == 51
     assert e["n_sans_tranche"] == 1 and e["n_avec_tranche"] == 2
     assert e["libelle"] == "postes salariés déclarés dans la zone"
+
+
+def test_lot3_filosofi_imputation_pilotee_par_i_est_200():
+    """LOT 3 — le « valeur approchée sur N/M » est piloté par i_est_200 (2 imputés / 3 → majorité)."""
+    from labuse import zone as Z
+    _LON, _LAT = 55.65, -20.96
+    zone = {"type": "Polygon", "coordinates": [[[_LON - 0.02, _LAT - 0.02], [_LON + 0.02, _LAT - 0.02],
+            [_LON + 0.02, _LAT + 0.02], [_LON - 0.02, _LAT + 0.02], [_LON - 0.02, _LAT - 0.02]]]}
+    with session_scope() as s:
+        s.execute(text("ALTER TABLE filosofi_carreaux_200m ADD COLUMN IF NOT EXISTS i_est_200 varchar(1)"))
+        for i, (iest, ind) in enumerate([("1", 100.0), ("1", 80.0), ("0", 60.0)]):
+            s.execute(text(
+                "INSERT INTO filosofi_carreaux_200m (geom, ind, men, men_pauv, men_prop, ind_snv, i_est_200) "
+                "VALUES (ST_Transform(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),2975), :ind, :men, 1, 5, :snv, :ie)"),
+                {"lon": _LON + i * 0.0003, "lat": _LAT, "ind": ind, "men": ind / 2, "snv": ind * 20000, "ie": iest})
+        pop = Z.population_zone(s, zone)
+        s.execute(text("DELETE FROM filosofi_carreaux_200m WHERE men_prop = 5 AND ind IN (100,80,60)"))
+    assert pop["revenu_impute_n"] == 2 and pop["revenu_carreaux_n"] == 3
+    assert pop["revenu_majorite_imputee"] is True, "2/3 imputés → majorité, « valeur approchée »"
