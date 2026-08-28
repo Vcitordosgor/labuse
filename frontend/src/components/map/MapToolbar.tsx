@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useApp, type Basemap, type MapTool } from '../../store/useApp'
 import { ORTHO_YEARS } from './basemaps'   // FIX-FONDS B5 — millésimes partagés avec l'outil TEMPS
 import { Tip } from '../Tip'   // M62-P1 (c) : infobulles à 150 ms (survol) / immédiat (focus/clic)
@@ -25,32 +25,18 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] 
     key: 'alti', label: 'Altitude', hint: 'Clic = altitude au point (RGE ALTI)',
     icon: <path d="M3 16 L8 7 L11 12 L13.5 8.5 L17 16 Z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" />,
   },
-  {
-    key: 'zone', label: 'Zone', hint: 'Dessinez un polygone : les résultats sont filtrés à la zone',
-    icon: (
-      <>
-        <path d="M4.5 5.5 L15 4 L16 14.5 L6 16 Z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeDasharray="2.6 2" strokeLinejoin="round" />
-        <circle cx="10" cy="10" r="1.6" fill="currentColor" />
-      </>
-    ),
-  },
+  // RETOURS-1 R8 (Vic) : le bouton « Zone — Dessinez un polygone » quitte la barre. Le filtre de
+  // zone reste dans le store/back (réversible) ; la pastille « Zone active × » reste le seul
+  // affordance de sortie si un état zone existe encore en session.
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune, selectedIdu, view } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, selectedIdu, view } = useApp()
   // M58-P1 (point carte) : quand la fiche (aside 400px, à droite) est ouverte, elle recouvrait ces
   // contrôles. On les décale vers la gauche de la largeur de la fiche (+16px de marge), transition
   // 180ms, retour à la fermeture. Aucun contrôle inaccessible.
   const ficheOuverte = selectedIdu != null && view !== 'sources'
   const [bmOpen, setBmOpen] = useState(false)
-  const ile = commune == null
-  // R5 : hint ancré à l'outil (pas un toast lointain), auto-éteint
-  const [zoneHint, setZoneHint] = useState(false)
-  useEffect(() => {
-    if (!zoneHint) return
-    const t = setTimeout(() => setZoneHint(false), 2500)
-    return () => clearTimeout(t)
-  }, [zoneHint])
 
   return (
     <div className="absolute top-4 flex flex-col items-end gap-2"
@@ -116,37 +102,22 @@ export function MapToolbar() {
 
       {/* outils de mesure */}
       <div className="flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-2 shadow-elev-1">
-        {TOOLS.map((t) => {
-          // le filtre de zone compte côté client sur les features de la commune chargée —
-          // en mode « Toute l'île » il serait menteur : désactivé avec la marche à suivre
-          const off = t.key === 'zone' && ile
-          return (
-            <div key={t.key} className="relative">
-              {/* M62-P1 (c) : infobulle DA (Tip) à ~150 ms au survol, IMMÉDIATE au focus/clic —
-                  remplace le `title` natif (délai navigateur ~500 ms, jugé trop long). */}
-              <Tip side="top" hoverDelayMs={150}
-                tip={off ? 'Zone — disponible après avoir choisi une commune (sélecteur en haut)' : `${t.label} — ${t.hint}`}>
+        {TOOLS.map((t) => (
+          <div key={t.key} className="relative">
+            {/* M62-P1 (c) : infobulle DA (Tip) à ~150 ms au survol, IMMÉDIATE au focus/clic —
+                remplace le `title` natif (délai navigateur ~500 ms, jugé trop long). */}
+            <Tip side="top" hoverDelayMs={150} tip={`${t.label} — ${t.hint}`}>
               <button
-                onClick={() => (off ? setZoneHint(true) : setTool(tool === t.key ? null : t.key))}
+                onClick={() => setTool(tool === t.key ? null : t.key)}
                 className={`relative flex h-9 w-9 items-center justify-center border-b border-line-2 transition-colors duration-quick last:border-0 ${
-                  off ? 'cursor-help text-st-none/60 hover:text-st-creuser'
-                    : tool === t.key ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:text-txt'}`}
-                aria-label={off ? `${t.label} (disponible après avoir choisi une commune)` : t.label}
+                  tool === t.key ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:text-txt'}`}
+                aria-label={t.label}
               >
                 <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">{t.icon}</svg>
-                {off && (
-                  <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-surface-1 text-[7px] leading-none text-st-creuser ring-1 ring-line-2">🔒</span>
-                )}
               </button>
-              </Tip>
-              {off && zoneHint && (
-                <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-surface-2 px-2 py-1 text-[11px] text-st-creuser shadow-elev-2">
-                  Choisissez d'abord une commune (sélecteur en haut) pour dessiner une zone
-                </span>
-              )}
-            </div>
-          )
-        })}
+            </Tip>
+          </div>
+        ))}
       </div>
 
       {zone && (

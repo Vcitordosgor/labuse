@@ -25,53 +25,74 @@ async function fileToB64(f: File): Promise<string> {
 }
 
 // ── Zone 1 — Saisie du jour : dropzone + un lien par capture ──
+// RETOURS-1 R7 (Vic) — le dépôt doit marcher POUR DE VRAI : label visible au-dessus du champ lien
+// (plus un placeholder gris seul), focus automatique dès qu'une capture est ajoutée, bordure
+// d'erreur + message clair si Déposer sans lien, bouton qui réagit (« Dépôt… »), et un échec
+// réseau/serveur qui S'AFFICHE (l'ancien code ne catchait pas → validation muette).
 function Saisie({ onDepose }: { onDepose: () => void }) {
-  const [lignes, setLignes] = useState<{ file: File; lien: string; retour?: string }[]>([])
-  const [busy, setBusy] = useState(false)
+  const [lignes, setLignes] = useState<{ file: File; lien: string; retour?: string; erreur?: boolean }[]>([])
+  const [busyIdx, setBusyIdx] = useState<number | null>(null)
   const ajouter = (files: FileList | null) => {
     if (!files) return
     setLignes((l) => [...l, ...Array.from(files).map((file) => ({ file, lien: '' }))])
   }
   const deposer = async (i: number) => {
     const ln = lignes[i]
-    if (!ln.lien.trim()) { maj(i, { retour: 'colle le lien de l’annonce' }); return }
-    setBusy(true)
+    if (!ln.lien.trim()) {
+      maj(i, { retour: 'Collez le lien de l’annonce — il est obligatoire pour déposer.', erreur: true })
+      return
+    }
+    setBusyIdx(i)
     try {
       const b64 = await fileToB64(ln.file)
       const r = await radarDeposer(ln.lien.trim(), b64, ln.file.type || 'image/jpeg')
-      const retour = r.statut === 'a_valider' ? '✓ en file d’extraction'
+      const ok = r.statut === 'a_valider'
+      const retour = ok ? '✓ en file d’extraction'
         : r.statut === 'doublon_url' ? `déjà connue (bien #${r.bien_id}) — mise à jour du prix proposée`
         : r.statut === 'rejet_commune' ? `rejet : ${r.motif}`
         : `échec : ${r.motif ?? 'extraction'}`
-      maj(i, { retour })
+      maj(i, { retour, erreur: !ok && r.statut !== 'doublon_url' })
       onDepose()
-    } finally { setBusy(false) }
+    } catch {
+      // échec réseau/serveur : il DOIT se voir (avant : promesse rejetée en silence)
+      maj(i, { retour: 'Échec réseau ou serveur — rien n’a été déposé, réessayez.', erreur: true })
+    } finally { setBusyIdx(null) }
   }
-  const maj = (i: number, patch: Partial<{ lien: string; retour: string }>) =>
+  const maj = (i: number, patch: Partial<{ lien: string; retour: string; erreur: boolean }>) =>
     setLignes((l) => l.map((x, k) => (k === i ? { ...x, ...patch } : x)))
 
   return (
     <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
       <Lbl>1 · Saisie du jour</Lbl>
       <label className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-line-3 px-4 py-6 text-sm text-txt-mut hover:border-mint/40">
-        <input type="file" accept="image/*" multiple className="hidden"
+        <input data-radar-fichier type="file" accept="image/*" multiple className="hidden"
           onChange={(e) => ajouter(e.target.files)} />
         + Ajouter des captures (galerie)
       </label>
       <div className="mt-3 flex flex-col gap-2">
         {lignes.map((ln, i) => (
-          <div key={i} className="rounded-lg border border-line-2 bg-surface-1 p-2.5">
+          <div key={i} data-radar-ligne className="rounded-lg border border-line-2 bg-surface-1 p-2.5">
             <div className="mb-1 truncate font-mono text-[11px] text-txt-dim">{ln.file.name}</div>
+            <label className="label-caps mb-1 block text-[9.5px] text-txt-mut">Lien de l’annonce *</label>
             <div className="flex flex-col gap-1.5 sm:flex-row">
-              <input value={ln.lien} onChange={(e) => maj(i, { lien: e.target.value })}
-                placeholder="lien de l’annonce (leboncoin.fr/…)"
-                className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-[12px] text-txt" />
-              <button disabled={busy} onClick={() => deposer(i)}
-                className="rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-on disabled:opacity-50">
-                Déposer
+              <input data-radar-lien value={ln.lien}
+                autoFocus={i === lignes.length - 1}
+                onChange={(e) => maj(i, { lien: e.target.value, erreur: false })}
+                placeholder="https://www.leboncoin.fr/…"
+                aria-invalid={ln.erreur || undefined}
+                className={`min-w-0 flex-1 rounded-md border bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:outline-none ${
+                  ln.erreur ? 'border-st-ecartee' : 'border-line-2 focus:border-mint'}`} />
+              <button data-radar-deposer disabled={busyIdx != null} onClick={() => deposer(i)}
+                className="rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-50">
+                {busyIdx === i ? 'Dépôt…' : 'Déposer'}
               </button>
             </div>
-            {ln.retour && <div className="mt-1 text-[11px] text-txt-mut">{ln.retour}</div>}
+            {ln.retour && (
+              <div data-radar-retour className={`mt-1 text-[11px] ${
+                ln.erreur ? 'text-st-ecartee' : ln.retour.startsWith('✓') ? 'text-mint' : 'text-txt-mut'}`}>
+                {ln.retour}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -516,18 +516,18 @@ export const useApp = create<AppState>((set) => ({
   entretienDirect: null,
   ouvrirEntretien: (amorce = '') => set({ entretienDirect: amorce, view: 'copilote', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
-    parcours: null, openProjet: null, ...CLOSE_OVERLAYS }),
+    parcours: null, openProjet: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   clearEntretienDirect: () => set({ entretienDirect: null }),
   parcours: null,
   setParcours: (parcours) => set({ parcours }),
   openParcours: (parcours) => set({ parcours, view: 'cartes', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
-    ...CLOSE_OVERLAYS }),
+    surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   // Ouvrir un projet = la vue kanban unifiée (nav exclusive) ; retour du tri via cette même action.
   openProjet: null,
   setOpenProjet: (openProjet) => set({ openProjet, view: 'projets', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null,
-    iaRestitution: null, parcours: null, ...CLOSE_OVERLAYS }),
+    iaRestitution: null, parcours: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   outilsOpen: false,
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
   // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.
@@ -539,11 +539,13 @@ export const useApp = create<AppState>((set) => ({
   // SOCLE : n'ajouter CLOSE_OVERLAYS QU'À la branche d'OUVERTURE. La branche de fermeture est aussi
   // celle empruntée juste après openCompare() (Rail : setCompareOpen ouvre, puis toggleOutils ferme le
   // tiroir) — y fermer les overlays refermerait la comparaison qu'on vient d'ouvrir.
+  // RETOURS-1 R8 (Vic) : `surveillanceOpen:false` sur la branche d'OUVERTURE — le panneau Veille
+  // restait ouvert derrière le tiroir Outils (une seule catégorie du rail ouverte à la fois).
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
     : { outilsOpen: true, view: 'cartes', module: null,
         contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
-        ...CLOSE_OVERLAYS }),
+        surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   selectedIdu: null,
   // G1 (M12) : filet de sécurité global — un idu vide ou la chaîne « undefined » (issue d'un
   // `String(undefined)` sur une feature sans propriété idu) n'ouvre JAMAIS la fiche. Elle
@@ -584,23 +586,26 @@ export const useApp = create<AppState>((set) => ({
   modeB: MODE_B_DEFAUT,
   setModeB: (p) => set((s) => ({ modeB: { ...s.modeB, ...p } })),
   sourcesFocus: null,
-  // B2 : ouvrir Sources est un changement de vue principale → même nettoyage exclusif
+  // B2 : ouvrir Sources est un changement de vue principale → même nettoyage exclusif.
+  // RETOURS-1 R8 (Vic) : `surveillanceOpen:false` manquait ICI — bug repro « Veille restée
+  // ouverte derrière Sources ». Une seule catégorie du rail ouverte à la fois.
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
-    parcours: null, openProjet: null, ...CLOSE_OVERLAYS }),
+    parcours: null, openProjet: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   // M104 — Surveillance : une entrée, trois volets (parcelles / secteurs / critères).
+  // RETOURS-1 R8 (Vic) : ouvrir la Veille ferme le tiroir Outils (réciproque de toggleOutils).
   surveillanceOpen: false,
   surveillanceVolet: 'parcelles',
   openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes',
-    surveillanceVolet: volet ?? s.surveillanceVolet, ...CLOSE_OVERLAYS })),
+    outilsOpen: false, surveillanceVolet: volet ?? s.surveillanceVolet, ...CLOSE_OVERLAYS })),
   setSurveillanceOpen: (v) => set({ surveillanceOpen: v }),
   toggleSurveillance: () => set((s) => ({ surveillanceOpen: !s.surveillanceOpen, view: 'cartes',
-    ...CLOSE_OVERLAYS })),
+    outilsOpen: false, ...CLOSE_OVERLAYS })),
   // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant.
   toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'secteurs', view: 'cartes',
-    ...CLOSE_OVERLAYS }),
+    outilsOpen: false, ...CLOSE_OVERLAYS }),
   toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'cartes',
-    ...CLOSE_OVERLAYS }),
+    outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
   compareTouchedAt: null,
@@ -628,7 +633,7 @@ export const useApp = create<AppState>((set) => ({
     return {
       module: 'comparer', view: 'cartes', outilsOpen: false, selectedIdu: null,
       moduleMap: { idus: [], extra: null }, moduleFiche: {},
-      parcours: null, openProjet: null, iaRestitution: null,
+      parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false,
       ...CLOSE_OVERLAYS,                    // table Communes/Densifier fermées, compareOpen=false
       comparePicking: true,                 // le panneau est là → clic-carte ajoute
       compareIdus: ids,
@@ -661,7 +666,8 @@ export const useApp = create<AppState>((set) => ({
   // §1b — « une seule recherche vivante » : ouvrir un autre outil FERME le bandeau Comparer
   // (compareOpen/comparePicking), qui sinon persistait. `comparer` s'ouvre par setCompareOpen
   // (Rail, cas spécial), jamais par setModule → aucune course.
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, ...CLOSE_OVERLAYS }),
+  // RETOURS-1 R8 : ouvrir un outil ferme aussi le panneau Veille (une seule catégorie ouverte).
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   cmpLeft: 'bm-ortho-1950',

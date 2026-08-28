@@ -9,10 +9,22 @@ import type { Fiche } from '../../lib/types'
 
 type Histo = NonNullable<Fiche['proprietaire_historique']>
 
-export function ProprietaireHistorique({ h }: { h: Histo | null | undefined }) {
+export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined; pm: boolean }) {
   const [ouvert, setOuvert] = useState(false)
-  // Rien à montrer si moins de deux millésimes suivis (le propriétaire courant est déjà au-dessus).
-  if (!h || h.n_millesimes < 2) return null
+  // RETOURS-1 R6 (Vic) — enquête : le composant était monté et fonctionnel, mais MUET hors
+  // couverture (fichier PM = ~19 % des parcelles ; < 2 millésimes = rien) → sur la plupart des
+  // parcelles testées, aucune trace, aucune explication. Désormais : parcelle PM sans timeline =
+  // une ligne d'absence honnête ; parcelle PP = rien (le bloc au-dessus explique déjà le workflow
+  // SPF, le fichier DGFiP ne couvre que les personnes morales).
+  if (!h || h.n_millesimes < 2) {
+    if (!pm) return null
+    return (
+      <p data-proprietaire-historique-absent className="text-[10.5px] leading-snug text-txt-dim">
+        Anciens propriétaires : historique par millésime non disponible pour cette parcelle
+        (millésimes DGFiP 2019–2025, personnes morales).
+      </p>
+    )
+  }
   const premier = h.millesimes[0]
   const dernier = h.millesimes[h.millesimes.length - 1]
 
@@ -44,9 +56,13 @@ export function ProprietaireHistorique({ h }: { h: Histo | null | undefined }) {
         </div>
       )}
 
-      <button type="button" onClick={() => setOuvert((o) => !o)}
-        className="mt-2 text-[10.5px] text-txt-mut underline decoration-dotted underline-offset-2 hover:text-txt">
-        {ouvert ? 'Masquer' : `Voir les ${h.n_millesimes} millésimes suivis (${premier.millesime}–${dernier.millesime})`}
+      {/* R6 — un VRAI bouton (l'ex-lien gris 10,5 px souligné pointillé passait inaperçu — cause
+          n° 2 de l'invisibilité). Libellé de Vic retenu, borne des millésimes en contexte. */}
+      <button type="button" data-histo-toggle onClick={() => setOuvert((o) => !o)}
+        className="mt-2 w-full rounded-md border border-mint/40 bg-mint/[0.07] px-2.5 py-1.5 text-left text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
+        {ouvert
+          ? 'Masquer les anciens propriétaires'
+          : `Voir les anciens propriétaires — ${h.n_millesimes} millésimes (${premier.millesime}–${dernier.millesime})`}
       </button>
       {ouvert && (
         <div className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5">

@@ -1597,19 +1597,15 @@ export function MapView() {
           {ile && lowZoom ? 'Zoomez ou cliquez une commune pour voir ses parcelles' : 'Cliquez une parcelle pour ouvrir sa fiche'}
         </div>
       )}
-      {/* FIX-CARTE T1 — la carte ANNONCE la date de ce qu'elle peint (doctrine fraîcheur). Si les
-          tuiles sont en retard sur le dernier re-score/résiduel du run servi (`perime`), on le DIT
-          au runtime — plus de chiffres plus vieux que le run servi affichés en silence. */}
-      {tilesMeta.data?.carte_le && (
+      {/* RETOURS-1 R8 (Vic) : la pastille « Carte à jour au JJ/MM/AAAA » est RETIRÉE. Seul
+          l'avertissement de retard subsiste (doctrine fraîcheur, FIX-CARTE T1 : des tuiles plus
+          vieilles que le run servi ne s'affichent jamais en silence). */}
+      {tilesMeta.data?.carte_le && tilesMeta.data.perime && (
         <div data-carte-fraicheur
           className="pointer-events-none absolute bottom-2 left-3 rounded-full border bg-surface-2/90 px-2.5 py-1 text-[10.5px] shadow-elev-1"
-          style={tilesMeta.data.perime ? { color: '#E8B44C', borderColor: '#E8B44C' } : undefined}
-          title={tilesMeta.data.perime
-            ? 'Les données de la carte (SDP, densité…) sont plus anciennes que le dernier calcul du run servi. Un rebuild des tuiles (labuse build-mvt) est en attente.'
-            : 'Date de la donnée peinte par la carte (dernier build des tuiles).'}>
-          {tilesMeta.data.perime ? '⚠ ' : ''}
-          {(tilesMeta.data.perime ? 'Carte au ' : 'Carte à jour au ') + tilesMeta.data.carte_le.slice(0, 10).split('-').reverse().join('/')}
-          {tilesMeta.data.perime ? ' — mise à jour en attente' : ''}
+          style={{ color: '#E8B44C', borderColor: '#E8B44C' }}
+          title="Les données de la carte (SDP, densité…) sont plus anciennes que le dernier calcul du run servi. Un rebuild des tuiles (labuse build-mvt) est en attente.">
+          {'⚠ Carte au ' + tilesMeta.data.carte_le.slice(0, 10).split('-').reverse().join('/') + ' — mise à jour en attente'}
         </div>
       )}
       <div className="absolute bottom-2 right-3 font-sans text-[11px] text-st-none">

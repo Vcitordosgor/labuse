@@ -185,6 +185,16 @@ export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
+// RETOURS-1 R3 — acquisitions PM d'une commune : constat DGFiP (changement de propriétaire moral
+// d'un millésime au suivant), hors scoring. Servi par le bloc contexte ET le listing dédié.
+export interface AcquisitionsPm {
+  commune?: string; source: string | null; note: string; depuis_millesime: number
+  n: number; n_total: number; tronquee: boolean
+  acquisitions: { idu: string; de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
+}
+export const getCommuneAcquisitions = (commune: string) =>
+  j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm`)
+
 export interface ContexteCommune {
   commune: string; epci: string | null; epci_nom: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
@@ -197,10 +207,9 @@ export interface ContexteCommune {
   } | null
   // L1 (KF-2) — acquisitions PM récentes de la commune (changement de propriétaire moral d'un
   // millésime au suivant, DGFiP). Constat, hors scoring. Maille = commune. null si commune sans INSEE.
-  acquisitions_pm: {
-    source: string; note: string; depuis_millesime: number; n: number; n_total: number; tronquee: boolean
-    acquisitions: { idu: string; de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
-  } | null
+  // RETOURS-1 R3 : le bloc a QUITTÉ la fiche contexte (il vit dans Communes › Acquisitions récentes,
+  // via getCommuneAcquisitions) — le payload back reste servi (réversible), le front ne le rend plus.
+  acquisitions_pm: AcquisitionsPm | null
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
   foncier: {
     n_parcelles: number; surface_ha: number | null
@@ -861,13 +870,14 @@ export const veilleNL = (text: string) =>
   j<{ ok: boolean; refus?: string; indeclenchable?: boolean; filters?: Record<string, unknown>; resume?: string; ignores?: string[] }>(
     '/events/veille-nl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
 
-// ── M16-C : menu compte (identité + palier RÉEL) + « proposer une amélioration » ──
-export interface Moi { mode: 'pilote' | 'compte'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string }
+// ── M16-C : menu compte (identité + statut réel). RETOURS-1 R1 : `mode` = 'compte' (session
+// compte) ou 'local' (session dev sans compte, fail-open) ; email + plan réel du compte connecté,
+// plan_eur_mois depuis offres.py (null pour 'interne' — jamais un prix sur un compte interne).
+// postSuggestion (« Proposer une amélioration ») retiré : doublon du bouton Signaler (postRetour).
+export interface Moi { mode: 'compte' | 'local'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string; email?: string | null; plan_eur_mois?: number | null }
 export const getMoi = () => j<Moi>('/moi')
-export const postSuggestion = (body: { categorie: string; texte: string; contexte?: string }) =>
-  j<{ ok: boolean }>('/suggestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // DASHBOARD-V1 · D1 — bouton « Signaler » (en-tête) : bug/idée/question → table retours
-// (statuts suivis au dashboard admin). Distinct de postSuggestion (menu compte, texte libre).
+// (statuts suivis au dashboard admin).
 export const postRetour = (body: { type: 'bug' | 'idee' | 'question'; message: string }) =>
   j<{ ok: boolean; id: number }>('/retours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 

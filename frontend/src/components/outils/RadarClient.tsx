@@ -36,8 +36,15 @@ function ouvrirPortail(b: { bien_id: number; url_sortante: string; annonce_id: n
 
 // ── C3 — fiche d'un bien ──
 function BienFiche({ bienId, onBack }: { bienId: number; onBack: () => void }) {
-  const { data: b } = useQuery({ queryKey: ['radar-bien', bienId], queryFn: () => getRadarBienDetail(bienId) })
+  const { data: b, isError } = useQuery({ queryKey: ['radar-bien', bienId], queryFn: () => getRadarBienDetail(bienId) })
   const [signale, setSignale] = useState(false)
+  // RETOURS-1 R9 — même défaut que l'onglet Marché : une erreur non lue = « Chargement… » éternel.
+  if (isError) return (
+    <div className="p-4 text-[12px] text-txt-mut">
+      Fiche indisponible — le serveur n’a pas répondu.{' '}
+      <button onClick={onBack} className="text-mint hover:underline">‹ retour</button>
+    </div>
+  )
   if (!b || !b.bien_id) return <div className="p-4 text-[12px] text-txt-mut">Chargement…</div>
   const ratt = b.rattachement.niveau !== 'absent'
   const faits: [string, string][] = [

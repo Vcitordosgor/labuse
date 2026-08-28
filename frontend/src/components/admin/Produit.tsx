@@ -87,7 +87,7 @@ export function ProduitSection() {
             {retours.map((r) => (
               <tr key={r.id} className="border-b border-line last:border-b-0 hover:bg-surface-3">
                 <td className="px-4 py-2.5 font-mono text-xs text-txt-dim">{fmtReu(r.ts)}</td>
-                <td className="px-4 py-2.5">{r.compte ?? <span className="text-txt-dim">pilote/admin</span>}</td>
+                <td className="px-4 py-2.5">{r.compte ?? <span className="text-txt-dim">interne</span>}</td>
                 <td className="px-4 py-2.5"><Chip tone={TYPE_META[r.type]?.tone ?? 'off'}>{TYPE_META[r.type]?.label ?? r.type}</Chip></td>
                 <td className="max-w-[420px] px-4 py-2.5 text-txt-mut">« {r.message} »</td>
                 <td className="px-4 py-2.5 text-right">

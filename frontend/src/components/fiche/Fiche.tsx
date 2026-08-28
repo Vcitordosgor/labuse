@@ -2274,13 +2274,20 @@ export function Fiche({ idu }: { idu: string }) {
                   indicateurs COMMUNAUX (9 lignes) vivent dans l'outil ; la fiche garde le parcelle/section.
                   `setCommune` = le point d'entrée unique de l'app (le tool lit useApp.commune au montage) ;
                   le nom est SERVI (`f.commune`), jamais en dur. */}
-              {/* M137-Z — l'outil « Marché » a fusionné dans « Communes » : la porte ouvre directement la
-                  fiche commune (via communePrefill), qui porte le bloc marché complet + rareté + vélocité. */}
+              {/* RETOURS-1 R4 (Vic) — la fiche commune de l'outil a disparu : la porte ouvre la fiche
+                  commune de CONTEXTE (panneau droit, z-30 au-dessus de la fiche), qui porte désormais
+                  marché local + rareté/ZAN + vélocité en plus de son contexte officiel. */}
               {f.commune && (
                 <PorteOutil ico="↗" data="marche" titre={`Voir le marché de ${f.commune}`}
                   sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
-                  onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunePrefill(f.commune!); setModule('communes') }} />
+                  onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) }} />
               )}
+              {/* RETOURS-1 R5 (Vic) — porte vers la calculette Taxe d'aménagement : la parcelle reste
+                  sélectionnée (M60), l'outil charge d'emblée son contexte (commune pré-remplie,
+                  surface du terrain en référence — la surface TAXABLE reste saisie à la main). */}
+              <PorteOutil ico="€" data="taxe-amenagement" titre="Taxe d'aménagement"
+                sous={`Estimation détaillée pour un projet ici${f.commune ? ` (${f.commune})` : ''} — barème officiel daté, taux jamais inventés`}
+                onClick={() => setModule('taxe-amenagement')} />
               {/* fiche-secteur (ex-carnet) — le COMPTE d'opportunités de la section cadastrale. « opportunités »
                   = parcelles Priorité + À suivre du run servi (rien de plus). CLIC → carte sur la commune,
                   zoomée sur la section, filtrée sur ces deux tiers (jamais un chiffre mort). */}
@@ -2446,8 +2453,10 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
-                {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors scoring) */}
-                <ProprietaireHistorique h={f.proprietaire_historique} />
+                {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors
+                    scoring). R6 : `pm` dit au composant si la parcelle a un propriétaire moral —
+                    absence de timeline = ligne honnête (PM) ou silence justifié (PP). */}
+                <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
                 {/* RADAR P3 (C3) — un bien du Radar en vente sur cette parcelle : discret, fait + lien. */}
