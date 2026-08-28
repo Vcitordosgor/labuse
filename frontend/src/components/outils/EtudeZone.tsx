@@ -89,7 +89,11 @@ export function EtudeZone() {
     setModuleMap({ idus: [], extra: { type: 'FeatureCollection', features: feats } })
     if (res.origine) setFlyTo({ center: [res.origine.lon, res.origine.lat], zoom: 13 })
   }, [res, setModuleMap, setFlyTo])
-  useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
+  // LOT F — au DÉMONTAGE de l'outil (← Outils, changement d'outil, de catégorie ou de route), on efface
+  // l'emprise de travail : la carte redevient nette, le pointillé ne survit pas. Couvre TOUTES les
+  // sorties (toggleOutils comme setModule). Les veilles enregistrées (serveur) ne sont pas touchées.
+  useEffect(() => () => { setModuleMap({ idus: [], extra: null }); setZone(null); setTool(null) },
+    [setModuleMap, setZone, setTool])
 
   const pretA = entree === 'polygone' ? !!geomFromDrawn : !!cible
 
