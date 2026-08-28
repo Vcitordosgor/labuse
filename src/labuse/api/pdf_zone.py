@@ -69,9 +69,10 @@ def render_zone_pdf(data: dict, *, titre: str | None = None) -> bytes:
     pop = data.get("population") or {}
     conc = data.get("concurrents") or {}
     marche = data.get("marche") or {}
-    emplois = data.get("emplois") or []
+    emp = data.get("emplois") or {}              # LOT 2 : fourchette de postes salariés (SIRENE)
     gen = data.get("generateurs_flux") or []
-    actifs = sum(e.get("actifs_lieu_travail", 0) for e in emplois) if emplois else None
+    postes = (f"{emp['postes_min']}–{emp['postes_max']}{'+' if emp.get('postes_max_ouvert') else ''}"
+              if data.get("emplois_couverture") == "servie" and (emp.get("postes_max") or 0) > 0 else None)
     ecoles = sum(1 for g in gen if "enseignement" in (g.get("label", "").lower()))
     hab_conc = data.get("habitants_par_concurrent")
     minutes, mode = data.get("minutes"), data.get("mode")
@@ -135,7 +136,7 @@ def render_zone_pdf(data: dict, *, titre: str | None = None) -> bytes:
         _minis(pdf, [
             (_nb(conc.get("n")), "concurrents"),
             (_nb(hab_conc), "hab. / concurrent"),
-            (_nb(actifs), "actifs sur zone"),
+            (postes or "—", "postes salariés"),
             (_nb(ecoles), "écoles & collèges"),
         ])
 

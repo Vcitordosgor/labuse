@@ -505,8 +505,8 @@
       <td class="num-cell">{% if z.population.pct_moins_25 is not none %}{{ z.population.pct_moins_25 }} %{% else %}—{% endif %}</td>
     </tr>
   </table>
-  {% if z.actifs %}<p class="note">{{ "{:,}".format(z.actifs).replace(",", " ") }} actifs travaillent
-     dans la ou les communes de la zone (INSEE MOBPRO, maille commune).</p>{% endif %}
+  {% if z.postes_salaries %}<p class="note">{{ z.postes_salaries }} postes salariés déclarés dans la zone
+     (fourchette, tranches d'effectif SIRENE — établissements actifs).</p>{% endif %}
   {% endif %}
 
   {% if z.equipements %}
