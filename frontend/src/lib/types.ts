@@ -470,6 +470,7 @@ export interface EtudeZoneResult {
   concurrents?: { n: number; naf: string; items: ZoneConcurrent[]; couverture?: ZoneCouverture; millesime?: string }
   zone_demain?: { logements_autorises_36m: number | null; permis_36m: number | null; au_zones_n: number | null; au_zones_ha: number | null; source: string }
   contraintes_plu?: { zones: { zone: string; part_pct: number; commune: string | null; document: string | null }[]; cdac_vigilance?: string; note?: string }
+  trafic?: { couverte: boolean; axes: { route: string; tmja: number; annee: number }[]; libelle?: string; vide?: boolean }
   habitants_par_concurrent?: number | null
   note?: string
 }

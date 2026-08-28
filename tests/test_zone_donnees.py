@@ -154,3 +154,26 @@ def test_lot7_contraintes_plu_tableau_zones():
     assert zz["zone"] == "UA" and zz["document"] == "97409_PLU"
     assert 40 <= zz["part_pct"] <= 60, "la zone UA couvre ~50 % de l'emprise"
     assert "CDAC" in c["cdac_vigilance"]
+
+
+def test_lot5_trafic_rn_dernier_millesime_et_vide():
+    """LOT 5 — trafic RN traversant la zone : dernier comptage par route ; « vide » si aucune RN."""
+    from labuse import zone as Z
+    from labuse.ingestion.trafic_rn import ensure_tables as tr_ens
+    _LON, _LAT = 55.65, -20.96
+    zone = {"type": "Polygon", "coordinates": [[[_LON - 0.01, _LAT - 0.01], [_LON + 0.01, _LAT - 0.01],
+            [_LON + 0.01, _LAT + 0.01], [_LON - 0.01, _LAT + 0.01], [_LON - 0.01, _LAT - 0.01]]]}
+    loin = {"type": "Polygon", "coordinates": [[[50.0, 0.0], [50.01, 0.0], [50.01, 0.01], [50.0, 0.01], [50.0, 0.0]]]}
+    ls = f"LINESTRING({_LON-0.005} {_LAT}, {_LON+0.005} {_LAT})"
+    with session_scope() as s:
+        tr_ens(s)
+        s.execute(text("DELETE FROM trafic_rn WHERE route='NTEST'"))
+        for annee, tmja in [(2010, 8000), (2023, 12000)]:      # deux millésimes du même tronçon
+            s.execute(text("INSERT INTO trafic_rn (route, annee, tmja, geom) VALUES "
+                           "('NTEST', :a, :t, ST_GeomFromText(:w,4326))"), {"a": annee, "t": tmja, "w": ls})
+        t = Z.trafic_zone(s, zone)
+        vide = Z.trafic_zone(s, loin)
+        s.execute(text("DELETE FROM trafic_rn WHERE route='NTEST'"))
+    assert t["couverte"] is True and len(t["axes"]) == 1
+    assert t["axes"][0]["annee"] == 2023 and t["axes"][0]["tmja"] == 12000, "le comptage le plus récent"
+    assert vide["vide"] is True, "hors de toute RN → aucun axe national"

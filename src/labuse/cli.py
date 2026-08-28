@@ -237,6 +237,18 @@ def bpe_build_cmd() -> None:
     typer.echo(f"✓ BPE 974 : {counts} (total {sum(counts.values())})")
 
 
+@app.command("ingest-trafic-rn")
+def ingest_trafic_rn_cmd() -> None:
+    """ZONE-DONNÉES LOT 5 — ingère le trafic moyen journalier annuel des routes nationales (Région
+    Réunion, open data ODS) → table `trafic_rn`. Trafic VÉHICULES sur RN (pas de flux piéton)."""
+    from .ingestion import seed_sources
+    from .ingestion.trafic_rn import build_trafic_rn
+    with session_scope() as s:
+        seed_sources.seed(s)
+        r = build_trafic_rn(s, log=typer.echo)
+    typer.echo(f"✓ Trafic RN : {r['n']} tronçons ({r['annees'][0] if r['annees'] else '—'}–{r['annees'][-1] if r['annees'] else '—'})")
+
+
 @app.command("ingest-sirene-etab")
 def ingest_sirene_etab_cmd(
     geo_url: str = typer.Option(None, "--geo-url", help="parquet géo INSEE (défaut : dernier data.gouv)"),

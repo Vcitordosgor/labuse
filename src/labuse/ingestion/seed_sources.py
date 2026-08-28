@@ -310,7 +310,14 @@ SOURCES: list[dict] = [
          access_type="import CSV", status=S.MANUEL, reliability_level=R.VERIFIE,
          documentation_url="https://www.insee.fr/fr/statistiques/7630376",
          legal_notes="Licence Ouverte — attribution : « Source : Insee, MOBPRO ».",
-         technical_notes="Table `mobpro_commune` (emplois au lieu de travail agrégés par commune, pondérés IPONDI). Filtre DCLT 974. Sert « N actifs y travaillent » de l'Étude de zone (maille commune). last_sync_at à l'ingestion."),
+         technical_notes="Table `mobpro_commune` (emplois au lieu de travail agrégés par commune, pondérés IPONDI). ABANDONNÉ pour l'Étude de zone (ZONE-DONNÉES LOT 2 : l'emploi au lieu de travail n'est pas traité à une maille infracommunale — les emplois de zone viennent des tranches d'effectif SIRENE). Table conservée, non supprimée."),
+    # ZONE-DONNÉES LOT 5 — trafic moyen journalier annuel sur les routes nationales (Région Réunion).
+    dict(name="Trafic RN (Région Réunion — SIR)", category="economie", provider="Région Réunion (Système d'Information Routier)",
+         source_millesime="Trafic RN Région — comptages (millésime porté par tronçon)",
+         access_type="ODS (open data)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://data.regionreunion.com/explore/dataset/trafic-mja-rn-lareunion/",
+         legal_notes="Licence Ouverte — attribution : « Source : Région Réunion ».",
+         technical_notes="Table `trafic_rn` (tronçons LineString, route/annee/tmja véhicules-jour). CLI ingest-trafic-rn. Sert le trafic VÉHICULES des ROUTES NATIONALES traversant/bordant la zone (Étude de zone) — jamais un flux piéton, jamais le réseau départemental/communal (non ouvert)."),
     dict(name="IGN BD CARTO V5 — occupation du sol", category="occupation_sol", provider="IGN / Géoplateforme",
          source_millesime="BD CARTO® V5 — occupation du sol (IGN, proxy)",   # M125-1bis : attrs.src=BDCARTO_V5 (1 643 objets)
          access_type="WFS", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,

@@ -356,6 +356,26 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
             "permis_36m": int(permis or 0)}
 
 
+def trafic_zone(session: Session, geom_geojson: dict) -> dict:
+    """LOT 5 — trafic VÉHICULES sur ROUTES NATIONALES traversant ou bordant la zone (Région Réunion,
+    TMJA véhicules/jour). Par route, le comptage le plus RÉCENT (millésime porté). Aucune RN dans la
+    zone → « aucun axe national dans la zone », jamais un zéro. Pas de flux piéton, pas de départemental."""
+    if session.execute(text("SELECT to_regclass('trafic_rn')"), {}).scalar() is None:
+        return {"couverte": False, "axes": []}
+    rows = session.execute(text(
+        f"""SELECT DISTINCT ON (route) route, annee, tmja
+            FROM trafic_rn
+            WHERE tmja IS NOT NULL
+              AND ST_DWithin(ST_Transform(geom, 2975), {_zone2975()}, 30)
+            ORDER BY route, annee DESC, tmja DESC"""),
+        {"zone": json.dumps(geom_geojson)}).mappings().all()
+    axes = [{"route": r["route"], "tmja": int(r["tmja"]), "annee": r["annee"]} for r in rows]
+    axes.sort(key=lambda x: -x["tmja"])
+    return {"couverte": True, "axes": axes,
+            "libelle": "trafic véhicules sur routes nationales (véhicules/jour)",
+            "vide": len(axes) == 0}
+
+
 def contraintes_plu(session: Session, geom_geojson: dict) -> dict:
     """LOT 7 — les zones PLU que la zone d'étude recouvre (tableau ZONE / PART / DOCUMENT, comme le
     dossier banquier). Un polygone peut couvrir PLUSIEURS zones PLU — on les sert TOUTES avec leur part,
@@ -465,6 +485,7 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         "marche": marche_zone(session, zone),
         "zone_demain": zone_demain(session, zone),   # LOT 8 — signal daté (logements autorisés + AU)
         "contraintes_plu": contraintes_plu(session, zone),   # LOT 7 — zones PLU recouvertes (tableau)
+        "trafic": trafic_zone(session, zone),        # LOT 5 — trafic RN traversant/bordant la zone
     }
     # LOT A — concurrents : trois états distincts (servie+0 / non ingérée / erreur), jamais un faux zéro
     if naf:

@@ -266,6 +266,26 @@ export function EtudeZone() {
             </div>
           )}
 
+          {/* LOT 5 — trafic RN traversant/bordant la zone (véhicules/jour, dernier comptage par route) */}
+          {res.trafic?.couverte && (
+            <div>
+              <SectionTitle>Trafic routes nationales</SectionTitle>
+              {res.trafic.axes.length === 0 ? (
+                <p className="text-[11px] text-txt-mut">Aucun axe national dans la zone.</p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {res.trafic.axes.slice(0, 5).map((a, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
+                      <span className="text-txt">{a.route} <span className="text-txt-dim">· {a.annee}</span></span>
+                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(a.tmja)} véh./j</span>
+                    </div>
+                  ))}
+                  <span className="text-[9.5px] text-txt-dim">Trafic véhicules sur routes nationales (Région Réunion) — pas un flux piéton.</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* LOT 7 — contraintes commerciales : les zones PLU recouvertes (tableau ZONE / PART / DOCUMENT) */}
           {res.contraintes_plu && res.contraintes_plu.zones.length > 0 && (
             <div>
