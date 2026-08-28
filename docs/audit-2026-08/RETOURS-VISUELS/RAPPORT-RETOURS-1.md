@@ -148,5 +148,9 @@ Captures : `r9_radar_marche_{avant,apres}.png`.
 - Golden : 120 FAIL PRÉ-EXISTANTS, identiques à l'état documenté avant mandat (ancre `q_v10_m129` vs
   run servi `q_v11_m137` + libellé zonage M128-2-J) — branch-indépendant, le diff ne touche AUCUN
   fichier de scoring ; GARDE-RUN OK (431 663/431 663 évaluées).
-- Suite pytest : branche vs base (worktree `8270b4fc`) — chiffres au compte-rendu.
+- Suite pytest : **branche 1932 passed / 31 skipped / 0 failed** ; base (worktree `8270b4fc`)
+  1931 passed / 32 skipped / 0 failed. Au niveau de la base — l'écart d'1 skip vient des skips
+  conditionnels sur la disponibilité de la base réelle (variables entre runs), aucun échec des deux
+  côtés. (Dépendance `qrcode` du 2FA absente du venv local — installée avant le run, sans lien avec
+  le mandat.)
 - Aucune donnée de test résiduelle (dépôts R7 interceptés côté navigateur, jamais en base).
