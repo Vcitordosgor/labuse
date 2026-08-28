@@ -1184,3 +1184,48 @@ export const projetsPourParcelle = (idu: string) =>
 // (Moteur de segments « Vues » retiré avec le spin-off — M12 Lot C-bis. Client, types et
 //  routes /segments + /ia/segments-search partis avec la page. La recherche NL partagée de
 //  la fiche reste `iaSearch` → /ia/search ci-dessus.)
+
+// ── RADAR (pige) · P1 V3 — endpoints admin de la page Radar ──
+export interface RadarProposition {
+  statut: 'a_valider' | 'doublon_url' | 'rejet_commune' | 'echec_extraction'
+  motif?: string; bien_id?: number; portail?: string; portail_inconnu?: boolean
+  faits?: Record<string, unknown>; confiances?: Record<string, number>
+  champs_a_verifier?: string[]; rattachement?: { niveau: string; idu: string | null; confiance: number | null; candidates: { idu: string; confiance: number }[] }
+  fusion_proposee?: number | null; propose?: string; prix_ancien?: number | null; prix_nouveau?: number | null
+}
+export interface RadarBrouillon {
+  bien_id: number; commune: string; type_bien: string | null; rattachement_niveau: string
+  prix: number | null; surface_hab: number | null; surface_terrain: number | null
+  dpe_classe: string | null; pieces: number | null; particulier_pro: string | null
+  etiquettes: Record<string, string>; a_verifier: string[]
+  portail: string; url_sortante: string; created_at: string | null
+}
+export interface RadarReverif {
+  bien_id: number; commune: string; type_bien: string | null; statut: string; prix: number | null
+  portail: string; url_sortante: string; date_derniere_confirmation: string | null
+  date_publication: string | null; suivi_client: boolean; proche_longue: boolean
+}
+export interface RadarCheck {
+  cible_minutes: number; file_extraction: number; reverif_du_jour: number; signalements_en_attente: number
+  compteurs: { nouveautes: number; en_vente_longue: number; baisses: number }
+  intake_vide_48h: boolean; derniere_saisie: string | null
+}
+export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
+  j<RadarProposition>('/admin/radar/deposer', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lien, image_b64, media_type }),
+  })
+export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
+  j<{ bien_id: number; statut: string; valide: boolean }>('/admin/radar/valider', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bien_id, faits }),
+  })
+export const getRadarExtraction = () => j<{ file: RadarBrouillon[]; n: number }>('/admin/radar/extraction')
+export const getRadarReverif = () => j<{ file: RadarReverif[]; n: number }>('/admin/radar/reverif')
+export const getRadarCheck = () => j<RadarCheck>('/admin/radar/check')
+export const radarToujoursEnLigne = (bien_id: number) =>
+  j<{ ok: boolean }>('/admin/radar/toujours-en-ligne', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
+export const radarPrix = (bien_id: number, prix: number) =>
+  j<{ ok: boolean }>('/admin/radar/prix', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, prix }) })
+export const radarRetiree = (bien_id: number) =>
+  j<{ ok: boolean }>('/admin/radar/retiree', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })

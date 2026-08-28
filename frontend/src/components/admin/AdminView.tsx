@@ -12,8 +12,9 @@ import { IaSection } from './Ia'
 import { SourcesSection } from './Sources'
 import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
+import { RadarSection } from './Radar'
 
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier'
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar'
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -242,6 +243,7 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'sources', label: 'Sources', ic: '☰' },
   { key: 'produit', label: 'Produit', ic: '◫' },
   { key: 'courrier', label: 'Courrier', ic: '✉' },
+  { key: 'radar', label: 'Radar', ic: '◎' },
 ]
 const SOUS_TITRES: Record<AdminSection, string> = {
   pilotage: "l'état de LABUSE en cinq secondes",
@@ -250,6 +252,7 @@ const SOUS_TITRES: Record<AdminSection, string> = {
   sources: 'les 59, leur fraîcheur, leur cadence',
   produit: 'ce qui est utilisé · ce que les clients demandent',
   courrier: 'les demandes d’envoi — la page qui manquait',
+  radar: 'la pige d’annonces — saisie, extraction, re-vérif, rituel',
 }
 
 function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: string; value: string }) {
@@ -331,6 +334,7 @@ export function AdminView() {
           {section === 'sources' && <SourcesSection />}
           {section === 'produit' && <ProduitSection />}
           {section === 'courrier' && <CourrierSection />}
+          {section === 'radar' && <RadarSection />}
         </div>
       </div>
     </div>
