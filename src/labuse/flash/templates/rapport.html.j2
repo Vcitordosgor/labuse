@@ -477,9 +477,89 @@
 </section>
 {% endif %}
 
+{# ══ Autour de cette parcelle (étude de zone) — FLASH-ZONE F2 ══ #}
+{% set z = data.zone %}
+{% if z %}
+<section class="saut">
+  <h2><span class="num">09</span>Autour de cette parcelle</h2>
+  {% if not z.disponible %}
+  {# Le rapport se génère QUAND MÊME : la section dit honnêtement ce qui manque, jamais une page
+     blanche ni une valeur approximative substituée. #}
+  <p>L'étude de la zone atteignable n'a pas pu être établie pour ce rapport
+     ({{ z.raison }}). Les autres sections restent complètes ; aucune valeur approchée n'est
+     affichée à la place.</p>
+  {% else %}
+  <p class="note">Zone atteignable en {{ z.minutes }} min {{ z.mode_lib }} depuis la parcelle
+     — isochrone IGN, temps « hors trafic ».</p>
+
+  <h3>Qui vit dans la zone</h3>
+  {% if z.inhabitee %}
+  <p>Zone peu ou pas habitée — aucun carreau INSEE peuplé dans ce périmètre.</p>
+  {% else %}
+  <table class="donnees">
+    <tr><th>Habitants</th><th>Ménages</th><th>Revenu médian / an</th><th>Moins de 25 ans</th></tr>
+    <tr>
+      <td class="num-cell">{{ "{:,}".format(z.population.habitants).replace(",", " ") }}</td>
+      <td class="num-cell">{{ "{:,}".format(z.population.menages).replace(",", " ") }}</td>
+      <td class="num-cell">{% if z.population.revenu_median_eur %}{{ "{:,}".format(z.population.revenu_median_eur).replace(",", " ") }} €*{% else %}—{% endif %}</td>
+      <td class="num-cell">{% if z.population.pct_moins_25 is not none %}{{ z.population.pct_moins_25 }} %{% else %}—{% endif %}</td>
+    </tr>
+  </table>
+  {% if z.actifs %}<p class="note">{{ "{:,}".format(z.actifs).replace(",", " ") }} actifs travaillent
+     dans la ou les communes de la zone (INSEE MOBPRO, maille commune).</p>{% endif %}
+  {% endif %}
+
+  {% if z.equipements %}
+  <h3>Équipements &amp; commerces les plus proches</h3>
+  <ul>
+    {% for e in z.equipements %}
+    <li>{{ e.domaine }} — {{ e.nom }} :
+      {% if e.temps_min is not none %}{{ e.temps_min }} min {{ z.mode_lib }}{% else %}dans la zone{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if z.concurrence_absente %}
+  {# FZ-001 : le parcours Flash ne transmet pas l'activité (NAF) → pas de volet concurrence, jamais
+     un défaut bricolé. L'outil « Étude de zone » fournit ce volet sur demande. #}
+  <p class="note">Analyse de la concurrence (par activité) non incluse : le parcours Flash ne précise
+     pas encore l'activité étudiée. L'outil « Étude de zone » la fournit sur demande.</p>
+  {% endif %}
+
+  {% if carte_zone %}
+  <h3>Carte de la zone</h3>
+  <div class="carte" style="width:{{ carte_zone.width }}px; height:{{ carte_zone.height }}px;">
+    {% for t in carte_zone.tiles %}<img src="{{ t.data_uri }}" style="left:{{ t.left }}px; top:{{ t.top }}px;">{% endfor %}
+    <svg width="{{ carte_zone.width }}" height="{{ carte_zone.height }}">
+      {% for poly in carte_zone.polygons %}<polygon points="{{ poly }}" fill="rgba(11,138,95,0.10)" stroke="#1E9E58" stroke-width="2"/>{% endfor %}
+      {% for poly in carte_zone.extra_polygons %}<polygon points="{{ poly }}" fill="rgba(11,138,95,0.32)" stroke="#0B8A5F" stroke-width="2"/>{% endfor %}
+    </svg>
+  </div>
+  <div class="carte-attribution">{{ carte_zone.attribution }} · isochrone © IGN Géoplateforme</div>
+  {% endif %}
+
+  <h3>Marché immobilier de la zone</h3>
+  <table class="donnees">
+    <tr><th>Ventes / 12 mois</th><th>Médian €/m² bâti</th><th>Annonces actives</th><th>Permis / 36 mois</th></tr>
+    <tr>
+      <td class="num-cell">{{ z.marche.ventes_12m }}</td>
+      <td class="num-cell">{% if z.marche.prix_m2_median_bati %}{{ "{:,}".format(z.marche.prix_m2_median_bati).replace(",", " ") }} €{% else %}—{% endif %}</td>
+      <td class="num-cell">{{ z.marche.annonces_actives }}</td>
+      <td class="num-cell">{{ z.marche.permis_36m }}</td>
+    </tr>
+  </table>
+
+  <p class="note">* Revenu estimé — carreaux INSEE Filosofi 2021, valeurs lissées pour la
+     confidentialité. Temps de trajet « hors trafic ». Sources : INSEE (Filosofi, MOBPRO), SIRENE,
+     BPE 2025, DVF, IGN (isochrones), Radar LABUSE — détail en section Sources. Aucune prévision de
+     chiffre d'affaires ni note d'attractivité : des faits sourcés et datés.</p>
+  {% endif %}
+</section>
+{% endif %}
+
 {# ══ Sources & millésimes ══ #}
 <section class="saut">
-  <h2><span class="num">09</span>Sources &amp; millésimes</h2>
+  <h2><span class="num">10</span>Sources &amp; millésimes</h2>
   <p>Chaque donnée de ce rapport provient d'une source publique identifiée. Le tableau
      ci-dessous les cite avec leur état de synchronisation dans la base LABUSE.</p>
   <table class="donnees">
@@ -504,7 +584,7 @@
 
   {# ══ M73 §5 — Ce que ce document ne peut pas dire ══ #}
   {% if limites %}
-  <h2 style="margin-top:7mm"><span class="num">10</span>{{ limites_titre }}</h2>
+  <h2 style="margin-top:7mm"><span class="num">11</span>{{ limites_titre }}</h2>
   <table class="donnees">
     <tr><th>Ce que le dossier n'établit pas</th><th>Où le vérifier</th></tr>
     {% for absence, ou in limites %}

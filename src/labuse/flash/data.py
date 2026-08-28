@@ -672,6 +672,12 @@ _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
     ("contexte_commune", "Inventaire SRU / LLS (DHUP)", None, "inventaire 2024 · périmètre 2025"),
     ("contexte_commune", "QPV (ANCT)", "QPV 2024 (ANCT)", "génération 2024"),
     ("contexte_commune", "Consommation d'espace ENAF (Cerema)", None, "2009-2024 · publié 05/2025"),
+    # FLASH-ZONE F2 — la section « Autour de cette parcelle » (étude de zone)
+    ("zone", "INSEE Filosofi (carreaux 200 m)", "Filosofi INSEE (carreaux 200 m)", "millésime 2021"),
+    ("zone", "INSEE MOBPRO (mobilités domicile-travail)", "MOBPRO (mobilités domicile-travail, INSEE)", None),
+    ("zone", "SIRENE — établissements géolocalisés (INSEE)", "SIRENE établissements géolocalisés", None),
+    ("zone", "BPE — base permanente des équipements (INSEE)", "BPE INSEE", "millésime 2025"),
+    ("zone", "Isochrones IGN (Géoplateforme) — temps hors trafic", None, "service navigation/isochrone"),
 ]
 
 
@@ -775,7 +781,8 @@ _SECTION_LABELS = {"identite": "Identité parcellaire", "constructibilite": "Con
                    "risques": "Risques", "patrimoine": "Patrimoine & environnement",
                    "marche": "Marché", "dynamique": "Dynamique locale",
                    "terrain": "Terrain & réseaux", "carte": "Carte de situation",
-                   "adresse": "Adresse", "contexte_commune": "Contexte commune & leviers"}
+                   "adresse": "Adresse", "contexte_commune": "Contexte commune & leviers",
+                   "zone": "Autour de cette parcelle (étude de zone)"}
 
 
 # ── Point d'entrée ───────────────────────────────────────────────────────────────────────
@@ -790,6 +797,48 @@ def _marche_via_service(db: Session, idu: str, avail: set[str]) -> dict | None:
     à `_marche` (calcul inchangé). `avail` est passé pour éviter une seconde résolution des tables."""
     from .. import marche_service
     return marche_service.marche_dvf(db, idu, profil=marche_service.DVF_SECTEUR_DOSSIER, avail=avail)
+
+
+def _zone(db: Session, parcelle: dict) -> dict:
+    """Section « Autour de cette parcelle » — CONSOMME `zone.etude_de_zone` (calcul à un seul endroit,
+    aucune recopie). Zone atteignable depuis le centroïde (10 min en voiture, isochrone IGN).
+
+    Renvoie TOUJOURS un dict rendable : si l'isochrone IGN est injoignable, la zone inhabitée, ou une
+    erreur survient, `disponible=False` + une `raison` honnête — le rapport se génère quand même
+    (jamais une page blanche, jamais une section muette, jamais un rapport qui échoue en entier).
+
+    Pas de NAF transmis par le parcours Flash → aucun volet concurrence (finding FZ-001) : on ne
+    bricole pas une activité par défaut."""
+    base = {"disponible": False, "minutes": 10, "mode_lib": "en voiture"}
+    lon, lat = parcelle.get("lon"), parcelle.get("lat")
+    if lon is None or lat is None:
+        return {**base, "raison": "parcelle sans centroïde géographique"}
+    from ..zone import etude_de_zone
+    try:
+        z = etude_de_zone(db, float(lon), float(lat), 10, "voiture", naf=None)
+    except Exception as exc:  # noqa: BLE001 — la zone ne fait JAMAIS échouer le rapport entier
+        log.warning("section zone indisponible (%s: %s) — rapport sans étude de zone",
+                    type(exc).__name__, exc)
+        return {**base, "raison": "service d'isochrones (IGN) momentanément indisponible"}
+    if not z.get("zone_disponible"):
+        # raison CLIENT (le détail technique — classe d'exception — reste dans les logs, pas dans le PDF)
+        log.info("section zone non tracée pour le rapport : %s", z.get("detail") or z.get("statut"))
+        return {**base, "raison": "le service d'isochrones (IGN) n'a pas répondu — zone atteignable non tracée"}
+    pop = z.get("population") or {}
+    emplois = z.get("emplois") or []
+    return {
+        "disponible": True,
+        "minutes": z.get("minutes", 10),
+        "mode_lib": "en voiture" if z.get("mode") == "voiture" else "à pied",
+        "inhabitee": bool(pop.get("inhabitee")),
+        "population": None if pop.get("inhabitee") else pop,
+        "actifs": (sum(e.get("actifs_lieu_travail", 0) for e in emplois) or None),
+        "equipements": z.get("equipements") or [],
+        "generateurs": z.get("generateurs_flux") or [],
+        "marche": z.get("marche") or {},
+        "concurrence_absente": True,   # FZ-001 : le parcours Flash ne propose pas encore d'activité
+        "geom": z.get("geom"),
+    }
 
 
 def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> dict:
@@ -824,6 +873,9 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         # M75 — obligation APER (grand parking) : MÊME libellé que la fiche (point de calcul unique).
         "aper": _aper(db, idu, avail),
         "date_generation": date.today().isoformat(),
+        # FLASH-ZONE F2 — section « Autour de cette parcelle » (isochrone IGN + INSEE/BPE/SIRENE).
+        # Consomme zone.etude_de_zone (calcul unique) ; toujours rendable (dégradé honnête).
+        "zone": _zone(db, parcelle),
         # MANDAT RNU : flag top-level — le template remplace les règles de capacité par
         # « non applicable — RNU » (jamais un tableau vide qui laisserait croire à une
         # absence de contrainte — ajout Vic 26/07/2026).
@@ -833,6 +885,8 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
                            "marche", "dynamique", "terrain", "contexte_commune") if data.get(k)}
     if adresse:
         rendues.add("adresse")
+    if (data.get("zone") or {}).get("disponible"):
+        rendues.add("zone")   # crédite INSEE/SIRENE/BPE/IGN dans la section Sources
     data["sources"] = _sources(db, avail, rendues | {"carte"})
     data["section_labels"] = _SECTION_LABELS
     return data
