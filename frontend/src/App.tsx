@@ -392,12 +392,12 @@ export default function App() {
               <DensifierTablePanel />
             </>
           )}
-          {/* RADAR-CATÉGORIE (T1) — plein écran : panneau listing (RadarView) + carte (MapView réutilisé,
-              pins radar via moduleMap). La fiche d'un bien est un overlay rendu par RadarView. */}
+          {/* RADAR-CATÉGORIE (T1/T6) — plein écran : RadarView monte lui-même la carte (MapView
+              réutilisé, pins radar via moduleMap) pour piloter le layout responsive (mobile : une
+              vue à la fois — listing OU carte OU fiche, plein écran). */}
           {view === 'radar' && (
             <Suspense fallback={<MapLoading />}>
               <RadarView />
-              <MapView />
             </Suspense>
           )}
           {view === 'crm' && <Kanban />}

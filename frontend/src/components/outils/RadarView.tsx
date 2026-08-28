@@ -4,11 +4,26 @@
 // mauve est réservé à l'IA — il n'apparaît nulle part ici. Couleurs = source unique (mint/amber tokens).
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { getRadarBienDetail, getRadarBiens, radarClic, radarSignaler,
   type RadarBienClient, type RadarFiltres } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { useApp } from '../../store/useApp'
+
+// T6 — la carte est montée par RadarView (pour piloter le responsive) ; lazy comme dans App.
+const MapView = lazy(() => import('../map/MapView').then((m) => ({ default: m.MapView })))
+
+// T6 — mobile ≤ 767px : une seule vue à la fois (listing / carte / fiche, plein écran).
+function useIsMobile(): boolean {
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const on = () => setM(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return m
+}
 
 const COMMUNES_24 = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
 const TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
@@ -85,17 +100,21 @@ function Tuile({ label, onClick, children }: { label: string; onClick: () => voi
 }
 
 // ════════════ la fiche d'un bien — overlay flottant sur la carte (maquette écran 2) ════════════
-function RadarFiche({ bienId, onClose }: { bienId: number; onClose: () => void }) {
+// T6 — desktop : overlay 398px à droite. mobile : plein écran (inset-0).
+function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () => void; mobile?: boolean }) {
   const { data: b, isError } = useQuery({ queryKey: ['radar-bien', bienId], queryFn: () => getRadarBienDetail(bienId) })
   const [signale, setSignale] = useState(false)
   const st = useApp.getState
+  const cadre = mobile
+    ? 'absolute inset-0 z-40 flex flex-col overflow-hidden border-line-2 bg-surface-1'
+    : 'absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1/97 shadow-elev-3'
   if (isError) return (
-    <div className="absolute bottom-3.5 right-3.5 top-3.5 z-30 w-[398px] rounded-2xl border border-line-2 bg-surface-1/95 p-4 text-[12px] text-txt-mut shadow-elev-3">
+    <div className={`${cadre} p-4 text-[12px] text-txt-mut`}>
       Fiche indisponible — le serveur n’a pas répondu. <button onClick={onClose} className="text-mint hover:underline">fermer</button>
     </div>
   )
   if (!b || !b.bien_id) return (
-    <div className="absolute bottom-3.5 right-3.5 top-3.5 z-30 w-[398px] rounded-2xl border border-line-2 bg-surface-1/95 p-4 text-[12px] text-txt-dim shadow-elev-3">Chargement…</div>
+    <div className={`${cadre} p-4 text-[12px] text-txt-dim`}>Chargement…</div>
   )
   const ratt = b.rattachement.niveau !== 'absent' && b.rattachement.idu != null
   const idu = b.rattachement.idu
@@ -135,7 +154,7 @@ function RadarFiche({ bienId, onClose }: { bienId: number; onClose: () => void }
   ] : []
 
   return (
-    <div data-radar-fiche className="absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1/97 shadow-elev-3">
+    <div data-radar-fiche className={cadre}>
       <div className="shrink-0 border-b border-line-2 px-4 py-3">
         <div className="flex items-center justify-between font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">
           <span>RADAR › BIEN</span>
@@ -226,6 +245,8 @@ export function RadarView() {
   const [f, setF] = useState<RadarFiltres>({})
   const [tri, setTri] = useState('recentes')
   const [bienOuvert, setBienOuvert] = useState<number | null>(null)
+  const isMobile = useIsMobile()
+  const [mobileVue, setMobileVue] = useState<'liste' | 'carte'>('liste')
   const setModuleMap = useApp((s) => s.setModuleMap)
   const setFlyTo = useApp((s) => s.setFlyTo)
   const radarToOpen = useApp((s) => s.radarToOpen)
@@ -250,9 +271,12 @@ export function RadarView() {
     if (radarToOpen != null) { setBienOuvert(radarToOpen); setRadarToOpen(null) }
   }, [radarToOpen, setRadarToOpen])
 
+  // Clic d'une carte du listing → sa FICHE (T3). Rattaché : la carte vole à la parcelle + fiche
+  // complète. Non localisé : fiche qui s'arrête aux faits, avec le bouton portail (le seul chemin
+  // sortant, logué) — T2 « non localisé → portail » est honoré par ce bouton, pas de carte.
   const ouvrir = (b: RadarBienClient) => {
-    if (b.rattachement.idu && b.coords) { setFlyTo({ center: b.coords as [number, number], zoom: 17 }); setBienOuvert(b.bien_id) }
-    else { radarClic(b.bien_id, b.annonce_id).catch(() => {}); window.open(b.url_sortante, '_blank', 'noopener,noreferrer') }
+    if (b.rattachement.idu && b.coords) setFlyTo({ center: b.coords as [number, number], zoom: 17 })
+    ouvrirBien(b.bien_id)
   }
   const setNum = (k: keyof RadarFiltres, v: string) => setF((p) => ({ ...p, [k]: v === '' ? undefined : Number(v) }))
 
@@ -262,9 +286,13 @@ export function RadarView() {
 
   const selInput = 'h-[35px] rounded-lg border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:border-mint focus:outline-none'
 
+  // T6 — ouvrir un bien sur mobile : la fiche prend le plein écran (on repart en vue liste dessous).
+  const ouvrirBien = (id: number | null) => { setBienOuvert(id); if (isMobile) setMobileVue('liste') }
+  const carteVisible = !isMobile || mobileVue === 'carte'
+
   return (
     <>
-      <aside data-radar-panel className="flex w-[434px] shrink-0 flex-col border-r border-line bg-surface-1">
+      <aside data-radar-panel className={`flex-col border-r border-line bg-surface-1 md:flex md:w-[434px] md:shrink-0 ${isMobile && mobileVue === 'carte' ? 'hidden' : 'flex w-full'}`}>
         {/* en-tête (wording maquette) */}
         <div className="shrink-0 border-b border-line-2 px-5 pb-4 pt-5">
           <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR</div>
@@ -323,7 +351,23 @@ export function RadarView() {
         </div>
       </aside>
 
-      {bienOuvert != null && <RadarFiche bienId={bienOuvert} onClose={() => setBienOuvert(null)} />}
+      {/* CARTE — desktop toujours ; mobile seulement en vue carte (montée/démontée pour éviter un
+          canvas maplibre 0×0). Les pins radar sont repoussés par l'effet au remontage. */}
+      {carteVisible && (
+        <div className="relative flex min-w-0 flex-1">
+          <Suspense fallback={<div className="flex-1 bg-bg" />}><MapView /></Suspense>
+        </div>
+      )}
+
+      {/* T6 — bascule mobile listing ↔ carte (patron tiroir P3). Masquée quand une fiche est ouverte. */}
+      {isMobile && bienOuvert == null && (
+        <button data-radar-mobile-bascule onClick={() => setMobileVue((v) => (v === 'liste' ? 'carte' : 'liste'))}
+          className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-mint px-5 py-2.5 text-[12.5px] font-semibold text-mint-on shadow-elev-3">
+          {mobileVue === 'liste' ? 'Voir la carte' : 'Voir la liste'}
+        </button>
+      )}
+
+      {bienOuvert != null && <RadarFiche bienId={bienOuvert} onClose={() => ouvrirBien(null)} mobile={isMobile} />}
     </>
   )
 }
