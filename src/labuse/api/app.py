@@ -160,7 +160,8 @@ async def _lifespan(app: FastAPI):
             with session_scope() as _s:
                 from ..ingestion.sirene_etablissements import ensure_tables as _se_ens
                 from ..ingestion.mobpro import ensure_tables as _mo_ens
-                _se_ens(_s); _mo_ens(_s)
+                from ..zone import ensure_tables as _iso_ens   # Z2 — cache d'isochrones
+                _se_ens(_s); _mo_ens(_s); _iso_ens(_s)
 
         def _heal_comptes_scoping():
             with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
