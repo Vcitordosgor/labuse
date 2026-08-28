@@ -33,7 +33,9 @@ log = logging.getLogger("labuse.flash")
 #: 1.3 (M145) — la SÉMANTIQUE des chiffres change : Flash cesse d'être un générateur parallèle,
 #: chaque valeur vient du moteur commun (faisabilité post-M144 : vendable au sol, rendement 0,80,
 #: deux dates). Les rapports 1.2 archivés restent des instantanés de l'ancien modèle.
-TEMPLATE_VERSION = "1.3"
+#: 1.4 (FLASH-ZONE) — nouvelle section « Autour de cette parcelle » (étude de zone : population,
+#: équipements, marché de la zone) alimentée par le moteur zone commun ; Sources→10, Limites→11.
+TEMPLATE_VERSION = "1.4"
 
 _TEMPLATES = Path(__file__).resolve().parent / "templates"
 #: Fonts du design system (OFL) — déjà embarquées pour les exports PDF existants.
@@ -83,6 +85,16 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
         carte = build_situation_map(data["parcelle"]["geojson"],
                                     cache_dir=storage_dir() / "tiles",
                                     timeout_s=get_settings().http_timeout_s)
+    # FLASH-ZONE F2 — carte de la ZONE (isochrone tracée, parcelle en repère). Réutilise le MÊME builder ;
+    # optionnelle et résiliente (réseau indisponible → None → la section s'affiche sans carte).
+    carte_zone = None
+    _z = data.get("zone") or {}
+    if with_map and _z.get("disponible") and _z.get("geom"):
+        import json as _json
+        carte_zone = build_situation_map(_json.dumps(_z["geom"]),
+                                         cache_dir=storage_dir() / "tiles",
+                                         timeout_s=get_settings().http_timeout_s,
+                                         extra_geojson=data["parcelle"]["geojson"])
     from ..api.export_commun import SOURCES_ATTRIBUTION  # source unique (M6 2a)
     css = _env.get_template("rapport.css").render(
         fonts_dir=_FONTS.as_uri(), order_ref=order_ref, produit=produit,
@@ -95,7 +107,7 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
     from ..api.blocs_documents import anc_bloc_html, rehab_bloc_html
     _terr = data.get("terrain") or {}                    # anc + mode_b sont collectés dans _terrain
     return _env.get_template("rapport.html.j2").render(
-        data=data, carte=carte, css=Markup(css), order_ref=order_ref,
+        data=data, carte=carte, carte_zone=carte_zone, css=Markup(css), order_ref=order_ref,
         produit=produit, produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
         logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION,
