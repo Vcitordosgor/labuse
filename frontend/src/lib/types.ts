@@ -445,22 +445,27 @@ export interface NafOption { code: string; label: string }
 export interface ZoneConcurrent { siret: string; naf: string; nom: string; diffusible: boolean; lon: number; lat: number; temps_min: number | null }
 export interface ZoneGenerateur { label: string; source: string }
 export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }
+export type ZoneCouverture = 'servie' | 'non_couverte' | 'erreur'
 export interface EtudeZoneResult {
   statut: string
   zone_disponible: boolean
   detail?: string
   minutes: number
   mode: 'pied' | 'voiture'
+  entree?: 'point' | 'polygone'
+  surface_ha?: number | null
+  adresse?: string | null
   geom?: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }
   bandes?: { minutes: number; geom: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] } }[]
   origine?: { lon: number; lat: number }
   naf_label?: string | null
   population?: ZonePopulation
   emplois?: { commune: string; actifs_lieu_travail: number; millesime: string }[]
+  emplois_couverture?: ZoneCouverture
   equipements?: ZoneEquipement[]
   generateurs_flux?: ZoneGenerateur[]
   marche?: ZoneMarche
-  concurrents?: { n: number; naf: string; items: ZoneConcurrent[] }
+  concurrents?: { n: number; naf: string; items: ZoneConcurrent[]; couverture?: ZoneCouverture; millesime?: string }
   habitants_par_concurrent?: number | null
   note?: string
 }
