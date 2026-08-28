@@ -327,7 +327,10 @@ export function RadarView() {
         {/* compteur + tri */}
         <div className="flex shrink-0 items-center justify-between border-b border-line-2 px-5 py-3">
           <div className="text-[12.5px] text-txt-mut"><b className="text-[14px] font-semibold text-txt-hi">{nTotal}</b> bien{nTotal > 1 ? 's' : ''} · <span className="text-mint">{nRatt} sur la carte</span></div>
-          <select value={tri} onChange={(e) => setTri(e.target.value)} className="rounded-lg border border-line-2 px-2.5 py-1.5 text-[12px] text-txt-mut">
+          {/* RV2-V4 — le sélecteur de tri avait un fond BLANC (hors DA, pas de bg-surface) : aligné sur
+              les autres contrôles de l'écran (fond sombre, bordure, texte). */}
+          <select value={tri} onChange={(e) => setTri(e.target.value)}
+            className="rounded-lg border border-line-2 bg-surface-1 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
             {TRIS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
