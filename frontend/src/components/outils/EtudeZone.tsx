@@ -14,8 +14,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
-import { etudeZone, etudeZonePdfUrl, nafSearch, type EtudeZoneInput } from '../../lib/api'
-import type { EtudeZoneResult, NafOption } from '../../lib/types'
+import { etudeZone, nafFamilles, nafSearch, type EtudeZoneInput } from '../../lib/api'
+import type { EtudeZoneResult, NafFamille, NafOption } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 
@@ -50,6 +50,14 @@ export function EtudeZone() {
     const t = setTimeout(() => { nafSearch(nafQuery).then((r) => alive && setNafOpts(r.resultats)).catch(() => {}) }, 220)
     return () => { alive = false; clearTimeout(t) }
   }, [nafQuery, naf])
+  // C4 — déroulé PARCOURABLE par familles (chargé à la 1re ouverture), pour choisir sans savoir quoi taper
+  const [parcourir, setParcourir] = useState(false)
+  const [familles, setFamilles] = useState<NafFamille[] | null>(null)
+  const [famOuverte, setFamOuverte] = useState<string | null>(null)
+  useEffect(() => {
+    if (parcourir && familles == null) nafFamilles().then((r) => setFamilles(r.familles)).catch(() => {})
+  }, [parcourir, familles])
+  const choisirNaf = (o: NafOption) => { setNaf(o); setNafOpts([]); setNafQuery(''); setParcourir(false) }
 
   const geomFromDrawn = useMemo(() => {
     if (!drawnZone || drawnZone.length < 3) return null
@@ -102,16 +110,6 @@ export function EtudeZone() {
     setModuleMap({ idus: [], extra: null }); mut.reset()
   }
 
-  const exportPdf = () => {
-    if (!res?.zone_disponible) return
-    const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null }
-    if (entree === 'polygone' && geomFromDrawn) { body.geom = geomFromDrawn; body.titre = 'Zone dessinée' }
-    else if (cible) { body.idu = cible.idu; body.titre = cible.label }
-    fetch(etudeZonePdfUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-      .then(async (r) => { if (!r.ok) return; const b = await r.blob(); const u = URL.createObjectURL(b); window.open(u, '_blank'); setTimeout(() => URL.revokeObjectURL(u), 60_000) })
-      .catch(() => {})
-  }
-
   const enTete = res?.zone_disponible
     ? (res.entree === 'polygone'
         ? `La zone dessinée — ${nb(res.surface_ha)} ha`
@@ -159,20 +157,52 @@ export function EtudeZone() {
         </>
       )}
 
-      {/* ACTIVITÉ (NAF) — commun aux deux entrées */}
-      <div className="relative">
-        <input value={naf ? naf.label : nafQuery}
-          onChange={(e) => { setNaf(null); setNafQuery(e.target.value) }}
-          placeholder="Activité étudiée (ex. « boulangerie »)"
-          className="w-full rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[12px] text-txt outline-none focus:border-mint/60" />
-        {naf && <button onClick={() => { setNaf(null); setNafQuery('') }} className="absolute right-2 top-1.5 text-[11px] text-txt-dim hover:text-txt">×</button>}
-        {nafOpts.length > 0 && (
-          <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-line-2 bg-surface-1 shadow-lg">
-            {nafOpts.map((o) => (
-              <button key={o.code} onClick={() => { setNaf(o); setNafOpts([]) }}
-                className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] text-txt hover:bg-mint/10">
-                <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[10px] text-txt-dim">{o.code}</span>
-              </button>
+      {/* ACTIVITÉ (NAF) — deux entrées : frappe libre avec propositions, OU déroulé par familles.
+          Référentiel = nomenclature NAF complète (« notaire », « pharmacie », « garage »… résolvent). */}
+      <div>
+        <div className="relative">
+          <input value={naf ? naf.label : nafQuery}
+            onChange={(e) => { setNaf(null); setNafQuery(e.target.value) }}
+            placeholder="Activité étudiée (ex. « notaire », « pharmacie »)"
+            className="w-full rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[12px] text-txt outline-none focus:border-mint/60" />
+          {naf && <button onClick={() => { setNaf(null); setNafQuery('') }} className="absolute right-2 top-1.5 text-[11px] text-txt-dim hover:text-txt">×</button>}
+          {nafOpts.length > 0 && (
+            <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-line-2 bg-surface-1 shadow-lg">
+              {nafOpts.map((o) => (
+                <button key={o.code} onClick={() => choisirNaf(o)}
+                  className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] text-txt hover:bg-mint/10">
+                  <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[10px] text-txt-dim">{o.code}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button onClick={() => setParcourir((v) => !v)}
+          className="mt-1 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
+          {parcourir ? 'masquer les familles' : 'parcourir par famille d’activité'}
+        </button>
+        {parcourir && (
+          <div className="mt-1 max-h-64 overflow-y-auto rounded-lg border border-line-2 bg-surface-1">
+            {familles == null ? (
+              <p className="px-2.5 py-2 text-[11px] text-txt-dim">Chargement…</p>
+            ) : familles.map((f) => (
+              <div key={f.section} className="border-b border-line-2 last:border-b-0">
+                <button onClick={() => setFamOuverte((s) => (s === f.section ? null : f.section))}
+                  className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] font-medium text-txt hover:bg-mint/10">
+                  <span className="truncate">{f.nom}</span>
+                  <span className="shrink-0 text-[10px] text-txt-dim">{f.activites.length}</span>
+                </button>
+                {famOuverte === f.section && (
+                  <div className="bg-surface-2/40">
+                    {f.activites.map((o) => (
+                      <button key={o.code} onClick={() => choisirNaf(o)}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-1 text-left text-[11px] text-txt-mut hover:bg-mint/10 hover:text-txt">
+                        <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{o.code}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -233,10 +263,9 @@ export function EtudeZone() {
             </div>
           )}
 
-          <div className="flex gap-2">
-            <button onClick={exportPdf} className="flex-1 rounded-lg border border-mint/40 px-3 py-1.5 text-[11.5px] font-medium text-mint hover:bg-mint/10">Exporter le PDF ↓</button>
-            <button onClick={nouvelleEtude} className="flex-1 rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
-          </div>
+          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré (l'étude au PDF Flash reste au
+              programme, mais pas par ce bouton-là). L'endpoint back n'est pas touché. */}
+          <button onClick={nouvelleEtude} className="w-full rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
       )}
@@ -250,7 +279,7 @@ function ActifsStat({ res }: { res: EtudeZoneResult }) {
     return (
       <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
         <div className="text-[11px] font-medium text-txt-mut">non couvert</div>
-        <div className="mt-0.5 text-[10px] text-txt-mut">actifs y travaillent <span className="text-txt-dim">(MOBPRO non ingéré)</span></div>
+        <div className="mt-0.5 text-[10px] text-txt-mut">actifs y travaillent <span className="text-txt-dim">· pas encore servi sur LABUSE</span></div>
       </div>
     )
   }
@@ -265,7 +294,8 @@ function Concurrents({ res }: { res: EtudeZoneResult }) {
     <div>
       <SectionTitle>{`Concurrents dans la zone${cov === 'servie' ? ` — ${c!.n}` : ''}`}{cov === 'servie' && res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
       {cov === 'non_couverte' && (
-        <p className="text-[11px] text-txt-mut">Non couvert par la base — le répertoire SIRENE des établissements n’est pas encore ingéré.</p>
+        // RECETTE-2 LOT C2 : vocabulaire client — pas de « répertoire SIRENE / ingéré » (tuyauterie).
+        <p className="text-[11px] text-txt-mut">Non couvert · le registre des établissements n’est pas encore servi sur LABUSE.</p>
       )}
       {cov === 'erreur' && (
         <p className="text-[11px] text-txt-mut">Indisponible — la requête concurrents n’a pas abouti.</p>

@@ -442,6 +442,7 @@ export interface ParcelleZone {
 
 // ÉTUDE DE ZONE Z4 — l'outil de chalandise. Faits sourcés, aucune prévision de CA.
 export interface NafOption { code: string; label: string }
+export interface NafFamille { section: string; nom: string; activites: NafOption[] }
 export interface ZoneConcurrent { siret: string; naf: string; nom: string; diffusible: boolean; lon: number; lat: number; temps_min: number | null }
 export interface ZoneGenerateur { label: string; source: string }
 export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }

@@ -1,4 +1,4 @@
-import type { CrmColumn, EtudeZoneResult, Fiche, NafOption, ParcelleZone, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
+import type { CrmColumn, EtudeZoneResult, Fiche, NafFamille, NafOption, ParcelleZone, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
 
 export interface ParcelFeatureCollection {
   type: 'FeatureCollection'
@@ -268,6 +268,9 @@ export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: 
 // ÉTUDE DE ZONE Z4 — l'outil de chalandise (recherche NAF + agrégat de zone).
 export const nafSearch = (query: string) =>
   j<{ resultats: NafOption[] }>(`/outils/etude-zone/naf?${q({ q: query })}`)
+// RECETTE-2 C4 — la nomenclature groupée par famille, pour le déroulé parcourable.
+export const nafFamilles = () =>
+  j<{ familles: NafFamille[] }>('/outils/etude-zone/naf/familles')
 export interface EtudeZoneInput {
   idu?: string | null; lon?: number | null; lat?: number | null
   geom?: unknown | null; naf?: string | null; minutes: number; mode: 'pied' | 'voiture'

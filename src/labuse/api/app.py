@@ -3851,10 +3851,17 @@ def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=
 
 @app.get("/outils/etude-zone/naf")
 def etude_zone_naf(q: str = Query("", max_length=80)) -> dict:
-    """Recherche d'activité par libellé français (« boulangerie » → 1071C) ou par code. Table curée
-    et extensible (commerces/services de proximité), pas la nomenclature complète."""
+    """Recherche d'activité sur la NOMENCLATURE NAF COMPLÈTE (rév. 2) — par libellé, mot usuel
+    (« notaire » → activités juridiques) ou code. RECETTE-2 C4."""
     from ..naf_labels import chercher
     return {"resultats": chercher(q)}
+
+
+@app.get("/outils/etude-zone/naf/familles")
+def etude_zone_naf_familles() -> dict:
+    """La nomenclature groupée par FAMILLE (21 sections) — pour le déroulé parcourable de l'activité."""
+    from ..naf_labels import familles
+    return {"familles": familles()}
 
 
 class EtudeZoneIn(BaseModel):
@@ -3917,8 +3924,15 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
         conc = out.get("concurrents") or {}
         hab, n = pop.get("habitants"), conc.get("n")
         out["habitants_par_concurrent"] = round(hab / n) if (hab and n) else None
-        out["note"] = ("INSEE Filosofi 2021 · SIRENE (établissements actifs) · BPE 2025 · MOBPRO · "
-                       "DVF · Radar LABUSE · isochrones IGN — temps hors trafic. Des faits sourcés, "
+        # LOT C3 — une source NON servie ne figure PAS dans la liste des sources du calcul : SIRENE et
+        # MOBPRO n'y apparaissent que si leur couverture est « servie » (sinon leur non-couverture est
+        # déjà dite, honnêtement, dans leur propre bloc).
+        srcs = ["INSEE Filosofi 2021", "BPE 2025", "DVF", "Radar LABUSE", "isochrones IGN"]
+        if conc.get("couverture") == "servie":
+            srcs.insert(1, "SIRENE (établissements actifs)")
+        if out.get("emplois_couverture") == "servie":
+            srcs.insert(-1, "MOBPRO")
+        out["note"] = (" · ".join(srcs) + " — temps hors trafic. Des faits sourcés, "
                        "aucune prévision de chiffre d'affaires.")
     return out
 

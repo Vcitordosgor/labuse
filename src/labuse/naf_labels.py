@@ -1,80 +1,129 @@
-"""ÉTUDE DE ZONE · Z4 — correspondance NAF (activité) ↔ libellé français, pour l'outil « Étude de zone ».
+"""ÉTUDE DE ZONE — recherche d'activité (NAF) pour l'outil « Étude de zone ».
 
-L'utilisateur cherche « boulangerie » → on propose le code 1071C. Table CURÉE et EXTENSIBLE (commerces
-et services de proximité utiles au démarcheur foncier) — ce n'est pas la nomenclature complète (~732
-sous-classes), mais les activités qu'on étudie en chalandise. Les codes sont NORMALISÉS sans point
-(comme `sirene_etablissements.naf` : 10.71C → 1071C), pour se comparer directement.
+RECETTE-2 C4 : le référentiel n'est plus une liste curée de 34 commerces mais la NOMENCLATURE NAF
+COMPLÈTE (rév. 2, 732 sous-classes, cf. `naf_nomenclature.py`). Deux façons de trouver une activité :
+  · recherche libre (`chercher`) sur le LIBELLÉ officiel ET des MOTS USUELS (« notaire » atteint le
+    code des activités juridiques même si le libellé ne contient pas le mot) ET le code ;
+  · déroulé parcourable par FAMILLES d'activité (`familles`) — 21 sections, pour choisir sans savoir
+    quoi taper.
 
-Ajouter une activité = une ligne ici. Aucune dépendance externe.
+Codes normalisés sans point (ex. 10.71C -> 1071C), comparables à `sirene_etablissements.naf`.
 """
 from __future__ import annotations
 
 import unicodedata
 
-# code NAF normalisé → libellé français court (celui qu'on montre et qu'on cherche).
-NAF_LABELS: dict[str, str] = {
-    "1071C": "Boulangerie et boulangerie-pâtisserie",
-    "1071D": "Pâtisserie",
-    "4711B": "Alimentation générale (épicerie)",
-    "4711C": "Supérette",
-    "4711D": "Supermarché",
-    "4711F": "Hypermarché",
-    "4721Z": "Primeur (fruits et légumes)",
-    "4722Z": "Boucherie-charcuterie",
-    "4723Z": "Poissonnerie",
-    "4724Z": "Commerce de pain et pâtisserie (revente)",
-    "4725Z": "Cave (vins et boissons)",
-    "4726Z": "Tabac",
-    "4730Z": "Station-service (carburants)",
-    "4776Z": "Fleuriste / jardinerie",
-    "4777Z": "Bijouterie",
-    "4778C": "Commerce de détail spécialisé",
-    "4791B": "Vente à distance / e-commerce",
-    "5610A": "Restaurant (restauration traditionnelle)",
-    "5610C": "Restauration rapide",
-    "5630Z": "Bar / débit de boissons",
-    "9602A": "Coiffure",
-    "9602B": "Soins de beauté (esthétique)",
-    "4773Z": "Pharmacie",
-    "8621Z": "Médecin généraliste",
-    "8622A": "Médecin spécialiste",
-    "8623Z": "Chirurgien-dentiste",
-    "8690D": "Cabinet d'infirmiers / paramédical",
-    "5510Z": "Hôtel",
-    "5520Z": "Hébergement touristique (meublé, gîte)",
-    "8891A": "Crèche / garde d'enfants",
-    "9313Z": "Salle de sport",
-    "6419Z": "Banque (activité bancaire)",
-    "6820A": "Location de logements",
-    "6831Z": "Agence immobilière",
+from .naf_nomenclature import NAF_SOUS_CLASSES, SECTIONS
+
+# Mots USUELS (métier/enseigne) -> code NAF, pour les cas où le libellé officiel n'emploie pas le mot
+# courant (« notaire » -> 6910Z « Activités juridiques »). Extensible ; complète le libellé, ne le
+# remplace pas. Plusieurs mots peuvent viser le même code.
+SYNONYMES: dict[str, str] = {
+    "notaire": "6910Z", "notariat": "6910Z", "avocat": "6910Z", "huissier": "6910Z",
+    "juriste": "6910Z", "juridique": "6910Z",
+    "pharmacie": "4773Z", "pharmacien": "4773Z", "parapharmacie": "4773Z",
+    "medecin": "8621Z", "docteur": "8621Z", "generaliste": "8621Z", "cabinet medical": "8621Z",
+    "dentiste": "8623Z", "chirurgien-dentiste": "8623Z",
+    "infirmier": "8690D", "infirmiere": "8690D", "sage-femme": "8690D",
+    "veterinaire": "7500Z",
+    "garage": "4520A", "garagiste": "4520A", "mecanicien": "4520A", "carrosserie": "4520B",
+    "station-service": "4730Z", "carburant": "4730Z", "essence": "4730Z",
+    "boulangerie": "1071C", "boulanger": "1071C",
+    "patisserie": "1071D", "patissier": "1071D",
+    "boucherie": "4722Z", "boucher": "4722Z", "charcuterie": "4722Z",
+    "poissonnerie": "4723Z", "poissonnier": "4723Z",
+    "primeur": "4721Z", "fruits et legumes": "4721Z",
+    "epicerie": "4711B", "alimentation generale": "4711B", "superette": "4711B",
+    "supermarche": "4711D", "hypermarche": "4711F",
+    "coiffeur": "9602A", "coiffure": "9602A", "salon de coiffure": "9602A",
+    "esthetique": "9602B", "institut de beaute": "9602B", "onglerie": "9602B",
+    "restaurant": "5610A", "restauration": "5610A", "brasserie": "5610A",
+    "snack": "5610C", "fast-food": "5610C", "restauration rapide": "5610C",
+    "bar": "5630Z", "cafe": "5630Z", "debit de boissons": "5630Z", "pub": "5630Z",
+    "tabac": "4726Z", "buraliste": "4726Z", "cigarette": "4726Z",
+    "banque": "6419Z", "etablissement bancaire": "6419Z",
+    "assurance": "6512Z", "assureur": "6512Z", "mutuelle": "6512Z",
+    "agence immobiliere": "6831Z", "immobilier": "6831Z", "agent immobilier": "6831Z",
+    "opticien": "4778A", "optique": "4778A", "lunettes": "4778A",
+    "fleuriste": "4776Z", "fleurs": "4776Z", "jardinerie": "4776Z",
+    "bijouterie": "4777Z", "bijoutier": "4777Z", "horlogerie": "4777Z",
+    "librairie": "4761Z", "livres": "4761Z",
+    "presse": "4762Z", "journaux": "4762Z", "papeterie": "4762Z", "maison de la presse": "4762Z",
+    "habillement": "4771Z", "pret-a-porter": "4771Z", "vetements": "4771Z", "boutique de mode": "4771Z",
+    "hotel": "5510Z", "hotellerie": "5510Z",
+    "gite": "5520Z", "meuble de tourisme": "5520Z", "chambre d'hotes": "5520Z",
+    "creche": "8891A", "garde d'enfants": "8891A", "assistante maternelle": "8891A",
+    "salle de sport": "9313Z", "fitness": "9313Z", "musculation": "9313Z",
+    "auto-ecole": "8553Z", "ecole de conduite": "8553Z",
+    "pressing": "9601B", "blanchisserie": "9601B", "laverie": "9601B",
+    "comptable": "6920Z", "expert-comptable": "6920Z", "comptabilite": "6920Z",
+    "agence de voyage": "7911Z", "voyagiste": "7911Z",
+    "pompes funebres": "9603Z", "funeraire": "9603Z", "marbrier": "9603Z",
+    "electricien": "4321A", "plombier": "4322A", "chauffagiste": "4322B",
+    "macon": "4399C", "maconnerie": "4399C", "menuisier": "4332A", "menuiserie": "4332A",
+    "peintre en batiment": "4334Z", "carreleur": "4333Z", "couvreur": "4391B",
+    "banque alimentaire": "4711B", "grande surface": "4711D",
 }
 
 
 def _norme(s: str) -> str:
-    """Minuscule, sans accents — pour une recherche tolérante (« pâtisserie » ≡ « patisserie »)."""
+    """Minuscule, sans accents — recherche tolérante (« pâtisserie » ≡ « patisserie »)."""
     s = unicodedata.normalize("NFD", s or "")
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
     return s.lower().strip()
 
 
-def chercher(q: str, *, maxi: int = 20) -> list[dict]:
-    """Cherche une activité par libellé français OU par code. Retourne [{"code","label"}] triés
-    (préfixe d'abord, puis sous-chaîne)."""
+def chercher(q: str, *, maxi: int = 25) -> list[dict]:
+    """Cherche une activité par LIBELLÉ officiel, MOT USUEL (synonyme) ou CODE. Retour [{"code","label"}]
+    trié (préfixes d'abord, puis sous-chaînes), dédupliqué, sur toute la nomenclature."""
     ql = _norme(q)
     if not ql:
         return []
-    prefixes, contient = [], []
-    for code, label in NAF_LABELS.items():
-        nl = _norme(label)
-        if ql == _norme(code) or _norme(code).startswith(ql):
-            prefixes.append({"code": code, "label": label})
-        elif nl.startswith(ql):
-            prefixes.append({"code": code, "label": label})
+    prefixes: list[dict] = []
+    contient: list[dict] = []
+    seen: set[str] = set()
+
+    def add(bucket: list[dict], code: str) -> None:
+        if code in seen or code not in NAF_SOUS_CLASSES:
+            return
+        seen.add(code)
+        bucket.append({"code": code, "label": NAF_SOUS_CLASSES[code][0]})
+
+    # 1) code exact / préfixe de code
+    for code in NAF_SOUS_CLASSES:
+        if _norme(code) == ql or _norme(code).startswith(ql):
+            add(prefixes, code)
+    # 2) mots usuels (synonymes) — « notaire » -> code juridique
+    for mot, code in SYNONYMES.items():
+        nm = _norme(mot)
+        if nm.startswith(ql):
+            add(prefixes, code)
+        elif ql in nm:
+            add(contient, code)
+    # 3) libellé officiel (sous-chaîne accent-insensible)
+    for code, (lab, _sec) in NAF_SOUS_CLASSES.items():
+        nl = _norme(lab)
+        if nl.startswith(ql):
+            add(prefixes, code)
         elif ql in nl:
-            contient.append({"code": code, "label": label})
+            add(contient, code)
     return (prefixes + contient)[:maxi]
 
 
+def familles() -> list[dict]:
+    """Nomenclature groupée par FAMILLE (section A-U) pour le déroulé parcourable :
+    [{"section","nom","activites":[{"code","label"}]}], triée par code."""
+    out: list[dict] = []
+    for lt, nom in SECTIONS.items():
+        acts = sorted(
+            ({"code": c, "label": lab} for c, (lab, sec) in NAF_SOUS_CLASSES.items() if sec == lt),
+            key=lambda x: x["code"])
+        if acts:
+            out.append({"section": lt, "nom": nom, "activites": acts})
+    return out
+
+
 def label(code: str) -> str | None:
-    """Libellé d'un code NAF normalisé (None si hors table curée)."""
-    return NAF_LABELS.get((code or "").replace(".", "").upper())
+    """Libellé d'un code NAF normalisé (None si hors nomenclature)."""
+    entry = NAF_SOUS_CLASSES.get((code or "").replace(".", "").upper())
+    return entry[0] if entry else None
