@@ -9,7 +9,9 @@ import type { FilterTier } from '../lib/status'
 // DASHBOARD-V1 — 'admin' = Tour de contrôle (accès réservé ; les endpoints /admin/* portent la garde).
 // RADAR-CATÉGORIE (T1) — 'radar' devient une VUE de premier niveau (plein écran, comme crm/projets),
 // plus un module du panneau Outils. Layout : rail · panneau listing (434px) · carte.
-export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin' | 'radar'
+// RV2-V3 — 'veille' rejoint les vues plein écran : la Veille quitte le panneau à DROITE pour une
+// catégorie plein écran à GAUCHE (patron Radar), avec ses deux portes (Le foncier / Les annonces).
+export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin' | 'radar' | 'veille'
 
 // FIX-FILTRES F6 (choix assumé, non un bug) : ces couches sont du CONTEXTE — elles s'affichent
 // ENTIÈRES, DÉCOUPLÉES des filtres du panneau (qui, eux, ne pilotent que la couche Parcelles).
@@ -623,15 +625,21 @@ export const useApp = create<AppState>((set) => ({
   // volet interne → ils vont DIRECTEMENT à la porte interne (aucun lien de notif cassé).
   surveillancePorte: 'accueil',
   setSurveillancePorte: (p) => set({ surveillancePorte: p }),
-  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'cartes', surveillancePorte: 'interne',
-    outilsOpen: false, surveillanceVolet: volet ?? s.surveillanceVolet, ...CLOSE_OVERLAYS })),
-  setSurveillanceOpen: (v) => set({ surveillanceOpen: v }),
-  toggleSurveillance: () => set((s) => ({ surveillanceOpen: !s.surveillanceOpen, view: 'cartes',
-    surveillancePorte: 'accueil', outilsOpen: false, ...CLOSE_OVERLAYS })),
-  // anciennes entrées : elles REDIRIGENT vers la section unifiée, volet correspondant (porte interne).
-  toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'secteurs', view: 'cartes',
-    surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
-  toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'cartes',
+  // RV2-V3 — la Veille est désormais une VUE plein écran (view:'veille'), plus un overlay. Le volet
+  // 'secteurs' a été RETIRÉ (l'outil secteur n'existe plus) : toute demande 'secteurs' retombe sur
+  // 'parcelles'. `surveillanceOpen` reste true tant que la vue est ouverte (compat des consommateurs).
+  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'veille', surveillancePorte: 'interne',
+    outilsOpen: false, surveillanceVolet: (volet === 'secteurs' ? 'parcelles' : volet) ?? (s.surveillanceVolet === 'secteurs' ? 'parcelles' : s.surveillanceVolet),
+    selectedIdu: null, module: null, ...CLOSE_OVERLAYS })),
+  setSurveillanceOpen: (v) => set(v ? { surveillanceOpen: true, view: 'veille' } : { surveillanceOpen: false, view: 'cartes' }),
+  toggleSurveillance: () => set((s) => (s.view === 'veille'
+    ? { surveillanceOpen: false, view: 'cartes', module: null, selectedIdu: null, ...CLOSE_OVERLAYS }
+    : { surveillanceOpen: true, view: 'veille', surveillancePorte: 'accueil', outilsOpen: false,
+        selectedIdu: null, module: null, ...CLOSE_OVERLAYS })),
+  // anciennes entrées : elles REDIRIGENT vers la Veille, porte interne, volet correspondant.
+  toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'veille',
+    surveillancePorte: 'interne', outilsOpen: false, selectedIdu: null, module: null, ...CLOSE_OVERLAYS }),
+  toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'veille',
     surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,

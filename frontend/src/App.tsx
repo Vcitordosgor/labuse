@@ -261,7 +261,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, surveillanceOpen, compareOpen } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -378,8 +378,8 @@ export default function App() {
                 {module === 'temps' ? <TimeMachine center={flyTo?.center ?? null} /> : <MapView />}
               </Suspense>
               {parcours && <ParcoursTinder />}
-              {/* M104 — la section Surveillance unifiée (Parcelles / Secteurs / Critères) */}
-              {surveillanceOpen && <SurveillancePanel />}
+              {/* RV2-V3 — la Veille a QUITTÉ l'overlay de droite : c'est désormais une catégorie plein
+                  écran (view === 'veille', montée plus bas), au patron Radar. */}
               {/* M55-L point 9 : le comparateur s'ouvre aussi depuis l'outil « Comparer » (Outils),
                   donc SANS parcelle pré-sélectionnée → on rend le panneau dès `compareOpen`
                   (ComparePanel gère l'état vide). */}
@@ -398,6 +398,12 @@ export default function App() {
           {view === 'radar' && (
             <Suspense fallback={<MapLoading />}>
               <RadarView />
+            </Suspense>
+          )}
+          {/* RV2-V3 — la Veille, catégorie plein écran (panneau gauche + carte, patron Radar). */}
+          {view === 'veille' && (
+            <Suspense fallback={<MapLoading />}>
+              <SurveillancePanel />
             </Suspense>
           )}
           {view === 'crm' && <Kanban />}
