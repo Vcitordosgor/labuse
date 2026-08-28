@@ -27,11 +27,14 @@ NIV_LABEL = {"source": "Sourcé", "estime": "Estimé", "absent": "Non rattachée
 
 def _clients_actifs(db: Session) -> list[dict]:
     """Comptes ACTIFS avec l'e-mail + prénom du titulaire (patron du digest existant)."""
+    # RD-503 (chasse) : `comptes.prenoms` N'EXISTE PAS dans le schéma réel (un test P456 l'avait créée,
+    # masquant le bug — le cron radar-digests aurait crashé en prod). On sert `c.nom` (colonne réelle,
+    # NOT NULL) pour la salutation.
     return [dict(r) for r in db.execute(text(
-        "SELECT c.id AS compte_id, c.prenoms AS prenom, "
+        "SELECT c.id AS compte_id, c.nom AS prenom, "
         " min(u.email) FILTER (WHERE u.role='titulaire') AS email "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
-        "WHERE c.statut = 'actif' GROUP BY c.id, c.prenoms ORDER BY c.id")).mappings()]
+        "WHERE c.statut = 'actif' GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
 
 
 def _biens_du_jour(db: Session) -> list[dict]:
