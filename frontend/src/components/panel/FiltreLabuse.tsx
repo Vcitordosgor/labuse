@@ -295,7 +295,7 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // du store/back (_q_v2_where) et leurs tests restent intacts — réversible en remontant le composant
 // (historique git : commit KF1, fichier à ce chemin).
 
-export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
+export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; enVeille?: boolean } = {}) {
   const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap,
           zone, setToast, openSurveillance } = useApp()
   const qc = useQueryClient()
@@ -478,13 +478,15 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
         <div className="gcard mt-2 p-3">
         <div className="flex flex-wrap gap-1">
           {CP_COMMUNES.map(([cp, nom]) => (
-            <Tip key={cp} side="top" tip={`${nom} · ${cp}`}>
+            // RECETTE-2 LOT A : la liste ne montre QUE le code postal ; la bulle au survol dit UNIQUEMENT
+            // le nom de commune (répéter le CP déjà à l'écran = bruit). La valeur filtrée reste le `nom`.
+            <Tip key={cp} side="top" tip={nom}>
               <button onClick={() => setCommunesFilter(
                   filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])}
-                className={`rounded-full border px-2 py-0.5 text-[10.5px] transition-colors duration-quick ${
+                className={`rounded-full border px-2 py-0.5 text-[10.5px] tabular-nums transition-colors duration-quick ${
                   filters.communes.includes(nom) ? 'border-mint bg-mint/20 font-medium text-txt-hi'
                     : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-                {nom} <span className="text-txt-dim tabular-nums">({cp})</span>{/* GB-008 : nom de commune + code postal (le nom était déjà dispo) */}
+                {cp}
               </button>
             </Tip>
           ))}
@@ -584,7 +586,11 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
       {/* ═══════ ÉTAGE ② — LE REGARD LABUSE (stage 5 : LA RÉVÉLATION — appel, décompte, phrase) ═══════
           M55-K point 3 : le CADRE vert n'entoure QUE le rituel (décompte/révélation). À l'état
           post-analyse (analyseOn + idle : Relancer/Désactiver) le cadre DISPARAÎT — les deux
-          boutons vivent seuls, sans conteneur encadré. L'appel garde son groupe sobre. */}
+          boutons vivent seuls, sans conteneur encadré. L'appel garde son groupe sobre.
+          RECETTE-2 LOT B : en VEILLE (critères), ce bloc est RETIRÉ — « Voir les parcelles » et
+          « Demander une analyse LABUSE » n'y ont pas leur place (on y déclare ce qu'on surveille ;
+          explorer/analyser se fait ailleurs). Retrait de surface : aucun endpoint touché. */}
+      {!enVeille && (
       <div className={`mt-4 transition-colors duration-soft ${
         phase === 'counting' || phase === 'revealed' ? 'rounded-xl border border-mint/60 bg-mint/[0.07] p-3'
           : analyseOn ? '' : 'rounded-xl border border-line-2 bg-surface-2/40 p-3'}`}>
@@ -732,6 +738,7 @@ export function FiltreLabuse({ onRetract }: { onRetract?: () => void } = {}) {
           </div>
         )}
       </div>
+      )}
 
       {/* M55-D stage 7 (décision Vic) : plus AUCUNE section pédagogique dans le panneau —
           « Puis-je construire ? » retirée (les repères droit du sol vivent en fiche). */}

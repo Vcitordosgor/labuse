@@ -232,6 +232,23 @@ def test_naf_recherche_par_libelle_francais():
     assert label("10.71C") == "Boulangerie et boulangerie-pâtisserie", "le point est normalisé"
 
 
+def test_c4_nomenclature_complete_et_synonymes():
+    """RECETTE-2 C4 : la nomenclature NAF COMPLÈTE (732 sous-classes) + mots usuels résolvent au-delà
+    des commerces — « notaire », « pharmacie », « agence immobilière », « garage » atteignent tous un code."""
+    from labuse.naf_labels import chercher, familles
+    from labuse.naf_nomenclature import NAF_SOUS_CLASSES
+    assert len(NAF_SOUS_CLASSES) == 732, "nomenclature complète (pas 34 commerces curés)"
+    # mots usuels → code, même si le libellé officiel n'emploie pas le mot
+    assert chercher("notaire")[0]["code"] == "6910Z", "« notaire » → activités juridiques"
+    assert any(r["code"] == "4773Z" for r in chercher("pharmacie"))
+    assert any(r["code"] == "6831Z" for r in chercher("agence immobilière"))
+    assert any(r["code"] == "4520A" for r in chercher("garage"))
+    # déroulé parcourable : 21 familles couvrant toute la nomenclature
+    fam = familles()
+    assert len(fam) == 21
+    assert sum(len(f["activites"]) for f in fam) == 732
+
+
 def test_endpoint_etude_zone_concurrents_et_ratio(monkeypatch):
     from labuse.api.app import etude_zone, EtudeZoneIn
     from labuse.ingestion.sirene_etablissements import ensure_tables as se_ens

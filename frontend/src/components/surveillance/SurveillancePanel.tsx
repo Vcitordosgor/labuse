@@ -8,6 +8,7 @@ import { creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getS
 import { CP_COMMUNES, FiltreLabuse } from '../panel/FiltreLabuse'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
+import { iduCourt } from '../../lib/format'
 
 // RV2-V3 — la carte est montée par la vue Veille (patron Radar) ; lazy comme dans App.
 const MapView = lazy(() => import('../map/MapView').then((m) => ({ default: m.MapView })))
@@ -118,8 +119,10 @@ function VoletParcelles() {
       {suivis.map((s) => (
         <div key={s.idu} data-suivi className="flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
           <button onClick={() => { setView('cartes'); select(s.idu) }} className="min-w-0 flex-1 text-left transition-colors duration-quick hover:text-txt-hi">
+            {/* RECETTE-2 LOT E : l'IDU (identifiant de ce qu'on suit) prend le style de TITRE ; la
+                commune passe en secondaire. Échange de CONTENUS — chaque position garde sa typo. */}
             <span className="text-xs font-medium text-txt">
-              {s.commune ?? 'Parcelle'} <span className="font-mono text-[10px] text-txt-dim">{s.idu.slice(8)}</span>
+              {iduCourt(s.idu)} <span className="font-mono text-[10px] text-txt-dim">{s.commune ?? 'Parcelle'}</span>
             </span>
             <span className="mt-0.5 block text-[10.5px] text-txt-dim">
               {s.dernier_changement
@@ -144,7 +147,7 @@ function VoletCriteres() {
       <p className="text-[10.5px] leading-snug text-txt-dim">Réglez les filtres ci-dessous (les mêmes que la recherche carte), puis « Créer une veille » — on vous alerte dès qu'une parcelle bascule et correspond à vos critères.</p>
       {/* RV2-V3 — le VRAI panneau de filtres de la carte (pas un jeu réduit) ; son bouton
           « Créer une veille » enregistre la recherche. L'entrée IA (traduction NL) est RETIRÉE. */}
-      <FiltreLabuse />
+      <FiltreLabuse enVeille />
       <div>
         <p className="label-caps mb-1">Vos critères enregistrés</p>
         {(criteres.data ?? []).length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun critère enregistré pour l'instant.</p>}
