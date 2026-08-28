@@ -382,6 +382,8 @@ export interface Fiche {
   } | null
   // M125-2 — copropriété(s) RNIC rattachées (cible bailleur/copro) ; [] hors couverture.
   coproprietes?: Copropriete[]
+  // RADAR P3 (C3) — un bien du Radar en vente rattaché à cette parcelle (fait + statut + lien), hors scoring.
+  radar_bien?: { bien_id: number; statut: string; rattachement_niveau: string; prix: number | null; type_bien: string | null; portail: string; url_sortante: string } | null
   // M125-2 — contexte socio-éco du secteur (Filosofi 200 m + parc social RPLS), hors scoring.
   marche_secteur?: MarcheSecteur | null
   // fiche-secteur — compte d'opportunités de la SECTION cadastrale (ex-carnet) : parcelles des tiers

@@ -3098,6 +3098,16 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "       periode_construction, syndic_type, syndic_nom, rattachement "
         "FROM rnic_coproprietes WHERE parcelle_idu = :idu ORDER BY nb_lots_total DESC NULLS LAST"),
         {"idu": idu}).mappings().all()]
+    # RADAR P3 (C3) — un bien du Radar RATTACHÉ à cette parcelle s'y voit : le fait, le statut, le lien.
+    # VALIDÉ seulement, statuts vivants (active/en_vente_longue). Discret, faits + lien, jamais l'annonce.
+    _radar = db.execute(text(
+        "SELECT b.bien_id, b.statut, b.rattachement_niveau, f.prix, f.type_bien, "
+        "       a.portail, a.url_sortante FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "LEFT JOIN LATERAL (SELECT portail, url_sortante FROM pige_annonces WHERE bien_id = b.bien_id "
+        "                   ORDER BY date_saisie DESC LIMIT 1) a ON true "
+        "WHERE b.idu = :idu AND f.valide_at IS NOT NULL AND b.statut IN ('active','en_vente_longue') "
+        "ORDER BY b.date_derniere_confirmation DESC LIMIT 1"), {"idu": idu}).mappings().first()
+    radar_bien = dict(_radar) if _radar else None
     # LOT 11 (data-gap) : contexte marché du secteur — carreau Filosofi 2021 (200 m, INSEE)
     # au centroïde + parc social RPLS de la commune. Contexte fiche, hors scoring.
     carreau = db.execute(text(
@@ -3189,6 +3199,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "dvf_parcelle": dvf_parcelle,
         "terrain": dict(terrain) if terrain else None,
         "coproprietes": copros,
+        "radar_bien": radar_bien,   # RADAR P3 (C3) — bien en vente rattaché (fait + statut + lien)
         "marche_secteur": marche_secteur,
         # fiche-secteur — le compte d'opportunités de la section (ex-carnet), cliquable côté front.
         "secteur_opportunites": _secteur_opportunites(db, idu),

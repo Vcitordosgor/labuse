@@ -117,6 +117,22 @@ def test_clic_sortant_logue(cl, seed):
         assert row["portail"] == "leboncoin"
 
 
+def test_bien_rattache_apparait_sur_la_fiche_parcelle(seed):
+    """C3 — la requête radar_bien de la fiche parcelle trouve un bien VALIDÉ rattaché (fait+statut+lien).
+    On éprouve la requête servie par `_q_v2_fiche` directement (le path complet exige un run de scoring)."""
+    with session_scope() as db:
+        idu = db.execute(text("SELECT idu FROM parcels WHERE commune='Saint-Paul' AND section='ZZ' LIMIT 1")).scalar()
+        rb = db.execute(text(
+            "SELECT b.bien_id, b.statut, a.portail, a.url_sortante FROM pige_biens b "
+            "JOIN pige_faits f ON f.bien_id=b.bien_id "
+            "LEFT JOIN LATERAL (SELECT portail, url_sortante FROM pige_annonces WHERE bien_id=b.bien_id "
+            "                   ORDER BY date_saisie DESC LIMIT 1) a ON true "
+            "WHERE b.idu=:idu AND f.valide_at IS NOT NULL AND b.statut IN ('active','en_vente_longue') "
+            "ORDER BY b.date_derniere_confirmation DESC LIMIT 1"), {"idu": idu}).mappings().first()
+    assert rb is not None and rb["statut"] in ("active", "en_vente_longue")
+    assert rb["url_sortante"].startswith("https://") and rb["portail"] == "leboncoin"
+
+
 def test_signalement_ne_change_pas_le_statut(cl, seed):
     with session_scope() as db:
         avant = db.execute(text("SELECT statut FROM pige_biens WHERE bien_id=:b"), {"b": seed["source"]}).scalar()

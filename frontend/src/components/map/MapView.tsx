@@ -843,13 +843,20 @@ export function MapView() {
         // LOT8b — la même couche de points sert les permis (radar) ET les piscines (« 💧 Voir sur la
         // carte » : toutes les piscines de l'île en marqueurs). Les deux ne coexistent jamais (outils
         // distincts alimentent module-extra), le clic route selon la propriété présente (permit_id/idu).
-        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine']]],
+        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine', 'radar']]],
         // radar-permis (agrandissement) : rayon ZOOM-ADAPTATIF — modéré en vue île (limite le
         // chevauchement des permis groupés en centre-ville), NETTEMENT plus gros en zoom rue où
         // l'on clique un permis précis (cible large, prime sur la parcelle). Opacité < 1 + contour
         // sombre : les points qui se recouvrent restent lisibles (densité visible, bords séparés).
+        // RADAR P3 — les pins Radar (kind='radar') sont différenciés par STATUT (jamais le mauve, réservé
+        // IA) ; permis/piscine gardent le vert de marque.
         paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 13, 9, 15, 12, 18, 17],
-                 'circle-color': '#4ADE80', 'circle-opacity': 0.8,
+                 'circle-color': ['case', ['==', ['get', 'kind'], 'radar'],
+                   ['match', ['get', 'statut'],
+                     'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#8FB4F0',
+                     'vendue', '#E2726A', '#8FB4F0'],
+                   '#4ADE80'],
+                 'circle-opacity': 0.8,
                  'circle-stroke-color': '#0b0f14', 'circle-stroke-width': 1.5 } })
       // PERMIS (refonte) — anneau de SURVOL : le point du permis survolé dans la liste « s'allume »
       // (source dédiée à UN point → aucun re-render des 8 000 points de la couche radar).
@@ -867,7 +874,12 @@ export function MapView() {
       m.on('click', 'module-pts', (e) => {
         const props = e.features?.[0]?.properties
         const pid = props?.permit_id
-        if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
+        if (props?.kind === 'radar' && props?.bien_id != null) {
+          // RADAR P3 — clic sur un pin Radar → sélectionne la parcelle ET ouvre la fiche du bien.
+          if (props?.idu) select(String(props.idu))
+          useApp.getState().setRadarToOpen(Number(props.bien_id))
+          ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
+        } else if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle
       })
       m.on('mouseenter', 'module-pts', () => { m.getCanvas().style.cursor = 'pointer' })

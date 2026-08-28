@@ -367,6 +367,10 @@ interface AppState {
   // Consommé-puis-reset par M03 (même idiome que parcelPrefill) : MapView écrit, M03 lit et remet à null.
   permitToOpen: string | null
   setPermitToOpen: (id: string | null) => void
+  // RADAR P3 — clic sur un PIN Radar (bien rattaché) de la carte → ouvre la fiche du bien dans l'outil
+  // Radar. Même idiome consommé-puis-reset : MapView écrit le bien_id, RadarClient lit et remet à null.
+  radarToOpen: number | null
+  setRadarToOpen: (id: number | null) => void
   // PERMIS (refonte) — SURVOL d'une ligne de la liste = le point s'allume sur la carte. La liste écrit
   // la géométrie du permis survolé ; MapView la rend en anneau surligné (source dédiée, léger).
   permitHover: unknown | null
@@ -672,6 +676,8 @@ export const useApp = create<AppState>((set) => ({
   setFlyTo: (flyTo) => set({ flyTo }),
   permitToOpen: null,
   setPermitToOpen: (permitToOpen) => set({ permitToOpen }),
+  radarToOpen: null,
+  setRadarToOpen: (radarToOpen) => set({ radarToOpen }),
   permitHover: null,
   setPermitHover: (permitHover) => set({ permitHover }),
   msel: [],

@@ -37,6 +37,7 @@ import { Plu } from './Plu'
 import { RenouvellementModule } from './Renouvellement'
 import { ProspectionSolaire } from './ProspectionSolaire'
 import { TaxeAmenagement } from './TaxeAmenagement'
+import { RadarClient } from './RadarClient'
 import { TierBadge } from './TierBadge'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -1176,6 +1177,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement ». Marche à vide ; s'ouvre aussi
   // depuis une parcelle sélectionnée (getTaxePrefill : commune + zone en référence, surface saisie).
   'taxe-amenagement': TaxeAmenagement,
+  'radar': RadarClient,
 }
 
 export function ModulePanel() {
