@@ -705,7 +705,11 @@ export const useApp = create<AppState>((set) => ({
   // (compareOpen/comparePicking), qui sinon persistait. `comparer` s'ouvre par setCompareOpen
   // (Rail, cas spécial), jamais par setModule → aucune course.
   // RETOURS-1 R8 : ouvrir un outil ferme aussi le panneau Veille (une seule catégorie ouverte).
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
+  // ZONE-RECETTE LOT F : le polygone de travail (`zone`) est une emprise ÉPHÉMÈRE de l'outil — comme
+  // les overlays plein écran, il est effacé au changement d'outil (il ne doit pas survivre à la sortie
+  // d'Étude de zone : le pointillé restait sur la carte). Les veilles enregistrées vivent au serveur,
+  // pas ici — elles ne sont pas touchées.
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, ...CLOSE_OVERLAYS }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   zoneSeg: 0,

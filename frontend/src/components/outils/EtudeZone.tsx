@@ -1,19 +1,22 @@
 /**
- * ÉTUDE DE ZONE · Z4 — l'outil de chalandise (maquette, écran 2).
+ * ÉTUDE DE ZONE · Z4 + ZONE-RECETTE — l'outil de chalandise (maquette, écran 2).
  *
- * Trois entrées : une adresse (BAN → point), un IDU (→ centroïde de la parcelle), ou un polygone dessiné
- * sur la carte (bouton « Dessiner »). Une activité (NAF, recherche par libellé français). Un temps
- * (5/10/15) et un mode (voiture / à pied). La zone se dessine (isochrones concentriques), les concurrents
- * SIRENE en pins ambre, et l'on chiffre : population, actifs, concurrents avec leur temps, générateurs de
- * flux, marché immobilier. Faits sourcés et datés — AUCUNE prévision de chiffre d'affaires.
+ * DEUX entrées EXCLUSIVES (segmenté en tête) :
+ *  · « Autour d'un point » → ParcelInput (SOCLE : adresse OU IDU) + temps de trajet + mode.
+ *  · « Zone dessinée » → « Dessiner la zone » (polygone) ; temps/mode disparaissent (ils n'ont aucun
+ *    sens sur un polygone). Basculer d'un onglet à l'autre efface le périmètre de l'autre.
+ *
+ * L'en-tête de résultat DÉSIGNE le périmètre réellement mesuré (jamais « à 10 min » sur un polygone).
+ * Concurrents / actifs : trois états honnêtes (servie+0 / non couvert / indisponible), jamais un faux zéro.
+ * Faits sourcés et datés — AUCUNE prévision de chiffre d'affaires.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
-import { AddressAutocomplete } from '../AddressAutocomplete'
+import { ParcelInput } from '../ParcelInput'
 import { etudeZone, etudeZonePdfUrl, nafSearch, type EtudeZoneInput } from '../../lib/api'
 import type { EtudeZoneResult, NafOption } from '../../lib/types'
-import { estIdu } from '../../lib/format'
+import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 
 const TEMPS = [5, 10, 15]
@@ -23,7 +26,7 @@ function nb(n: number | null | undefined): string {
 }
 function tempsTxt(min: number | null, mode: 'pied' | 'voiture'): string {
   if (min == null) return 'dans la zone'
-  return `${min} min ${mode === 'pied' ? 'à pied' : ''}`.trim()
+  return `${min} min${mode === 'pied' ? ' à pied' : ''}`
 }
 
 export function EtudeZone() {
@@ -33,12 +36,11 @@ export function EtudeZone() {
   const setZone = useApp((s) => s.setZone)
   const setFlyTo = useApp((s) => s.setFlyTo)
 
-  // cible : soit un point (adresse/idu), soit le polygone dessiné
-  const [cible, setCible] = useState<{ idu?: string; lon?: number; lat?: number; label: string } | null>(null)
+  const [entree, setEntree] = useState<'point' | 'polygone'>('point')
+  const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [mode, setMode] = useState<'voiture' | 'pied'>('voiture')
   const [minutes, setMinutes] = useState(10)
 
-  // recherche NAF (libellé français → code)
   const [nafQuery, setNafQuery] = useState('')
   const [naf, setNaf] = useState<NafOption | null>(null)
   const [nafOpts, setNafOpts] = useState<NafOption[]>([])
@@ -57,13 +59,24 @@ export function EtudeZone() {
   const mut = useMutation<EtudeZoneResult, Error, void>({
     mutationFn: () => {
       const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null }
-      if (geomFromDrawn) body.geom = geomFromDrawn
-      else if (cible?.idu) body.idu = cible.idu
-      else if (cible?.lon != null) { body.lon = cible.lon; body.lat = cible.lat }
+      if (entree === 'polygone' && geomFromDrawn) { body.geom = geomFromDrawn; body.titre = 'Zone dessinée' }
+      else if (cible) { body.idu = cible.idu; body.titre = cible.label }
       return etudeZone(body)
     },
   })
   const res = mut.data
+
+  // RELANCER — toute modification d'entrée réarme « Analyser » : on efface le résultat périmé.
+  useEffect(() => { mut.reset() /* eslint-disable-next-line react-hooks/exhaustive-deps */ },
+    [entree, cible, naf, minutes, mode, geomFromDrawn])
+
+  // basculer d'onglet efface le périmètre de l'AUTRE entrée
+  const choisirEntree = (e: 'point' | 'polygone') => {
+    if (e === entree) return
+    if (e === 'point') { setZone(null); setTool(null) }        // on quitte le polygone
+    else { setCible(null) }                                    // on quitte le point
+    setEntree(e)
+  }
 
   // pousse la zone sur la carte : anneaux d'isochrone + point d'origine + concurrents (ambre). Nettoie en sortie.
   useEffect(() => {
@@ -71,45 +84,83 @@ export function EtudeZone() {
     const feats: unknown[] = []
     for (const b of res.bandes ?? []) feats.push({ type: 'Feature', geometry: b.geom, properties: { kind: 'zone-iso' } })
     if ((!res.bandes || res.bandes.length === 0) && res.geom) feats.push({ type: 'Feature', geometry: res.geom, properties: { kind: 'zone-iso' } })
-    if (res.origine) feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [res.origine.lon, res.origine.lat] }, properties: { kind: 'zone-origin' } })
+    if (res.origine && res.entree === 'point') feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [res.origine.lon, res.origine.lat] }, properties: { kind: 'zone-origin' } })
     for (const c of res.concurrents?.items ?? []) feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lon, c.lat] }, properties: { kind: 'zone-concurrent', siret: c.siret } })
     setModuleMap({ idus: [], extra: { type: 'FeatureCollection', features: feats } })
     if (res.origine) setFlyTo({ center: [res.origine.lon, res.origine.lat], zoom: 13 })
   }, [res, setModuleMap, setFlyTo])
-  useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
+  // LOT F — au DÉMONTAGE de l'outil (← Outils, changement d'outil, de catégorie ou de route), on efface
+  // l'emprise de travail : la carte redevient nette, le pointillé ne survit pas. Couvre TOUTES les
+  // sorties (toggleOutils comme setModule). Les veilles enregistrées (serveur) ne sont pas touchées.
+  useEffect(() => () => { setModuleMap({ idus: [], extra: null }); setZone(null); setTool(null) },
+    [setModuleMap, setZone, setTool])
 
-  const pretA = !!(geomFromDrawn || cible)
+  const pretA = entree === 'polygone' ? !!geomFromDrawn : !!cible
+
+  const nouvelleEtude = () => {
+    setCible(null); setNaf(null); setNafQuery(''); setZone(null); setTool(null)
+    setModuleMap({ idus: [], extra: null }); mut.reset()
+  }
+
   const exportPdf = () => {
     if (!res?.zone_disponible) return
-    const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null, titre: cible?.label ?? (geomFromDrawn ? 'Zone dessinée' : null) }
-    if (geomFromDrawn) body.geom = geomFromDrawn
-    else if (cible?.idu) body.idu = cible.idu
-    else if (cible?.lon != null) { body.lon = cible.lon; body.lat = cible.lat }
+    const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null }
+    if (entree === 'polygone' && geomFromDrawn) { body.geom = geomFromDrawn; body.titre = 'Zone dessinée' }
+    else if (cible) { body.idu = cible.idu; body.titre = cible.label }
     fetch(etudeZonePdfUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then(async (r) => { if (!r.ok) return; const b = await r.blob(); const u = URL.createObjectURL(b); window.open(u, '_blank'); setTimeout(() => URL.revokeObjectURL(u), 60_000) })
       .catch(() => {})
   }
 
-  const nafRef = useRef<HTMLDivElement>(null)
+  const enTete = res?.zone_disponible
+    ? (res.entree === 'polygone'
+        ? `La zone dessinée — ${nb(res.surface_ha)} ha`
+        : `La zone à ${res.minutes} min ${res.mode === 'voiture' ? 'en voiture' : 'à pied'}${res.adresse ? ` — depuis ${res.adresse}` : ''}`)
+    : ''
 
   return (
-    <div data-etude-zone className="flex flex-col gap-3 px-3 py-2">
-      {/* ENTRÉE : adresse / IDU */}
-      <div>
-        <AddressAutocomplete placeholder="Adresse ou IDU (ex. 12 rue…, ou 97415…)"
-          onSelect={(sel) => { setZone(null); setCible(sel.idu ? { idu: sel.idu, label: sel.label } : { lon: sel.lon, lat: sel.lat, label: sel.label }) }}
-          onEnterRaw={(raw) => { if (estIdu(raw)) { setZone(null); setCible({ idu: raw.replace(/\s+/g, '').toUpperCase(), label: raw }) } }} />
-        <div className="mt-1 flex items-center gap-2 text-[10.5px]">
-          <button onClick={() => setTool('zone')} className="rounded border border-line-2 px-2 py-0.5 text-txt-mut hover:border-mint/60 hover:text-txt">
-            ✏️ Dessiner une zone
-          </button>
-          {geomFromDrawn && <span className="text-mint">polygone dessiné ({drawnZone!.length} sommets)</span>}
-          {!geomFromDrawn && cible && <span className="truncate text-txt-mut">{cible.label}</span>}
-        </div>
+    <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      {/* SEGMENTÉ — deux entrées exclusives */}
+      <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+        {([['point', 'Autour d’un point'], ['polygone', 'Zone dessinée']] as const).map(([e, lbl]) => (
+          <button key={e} onClick={() => choisirEntree(e)}
+            className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors duration-quick ${entree === e ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{lbl}</button>
+        ))}
       </div>
 
-      {/* ACTIVITÉ (NAF) */}
-      <div ref={nafRef} className="relative">
+      {entree === 'point' ? (
+        <>
+          <ParcelInput dataAttr="zone-point" placeholder="Adresse ou IDU (ex. 12 rue…, ou 97415…)"
+            withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
+          {cible && <div className="text-[10.5px] text-txt-mut">Point : {cible.label}</div>}
+          {/* TEMPS + MODE (n'ont de sens QUE sur un point) */}
+          <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+            {TEMPS.map((t) => (
+              <button key={t} onClick={() => setMinutes(t)}
+                className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${minutes === t ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{t} min</button>
+            ))}
+          </div>
+          <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+            {(['voiture', 'pied'] as const).map((mo) => (
+              <button key={mo} onClick={() => setMode(mo)}
+                className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${mode === mo ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{mo === 'voiture' ? 'Voiture' : 'À pied'}</button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <button onClick={() => setTool('zone')}
+            className="w-full rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-[12px] font-medium text-mint hover:bg-mint/15">
+            ✏️ Dessiner la zone
+          </button>
+          <div className="text-[10.5px] text-txt-mut">
+            {geomFromDrawn ? `Polygone dessiné (${drawnZone!.length} sommets)` : 'Aucune zone tracée — cliquez « Dessiner la zone », posez les sommets, Entrée pour valider.'}
+          </div>
+        </>
+      )}
+
+      {/* ACTIVITÉ (NAF) — commun aux deux entrées */}
+      <div className="relative">
         <input value={naf ? naf.label : nafQuery}
           onChange={(e) => { setNaf(null); setNafQuery(e.target.value) }}
           placeholder="Activité étudiée (ex. « boulangerie »)"
@@ -127,20 +178,6 @@ export function EtudeZone() {
         )}
       </div>
 
-      {/* TEMPS + MODE */}
-      <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-        {TEMPS.map((t) => (
-          <button key={t} onClick={() => setMinutes(t)}
-            className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${minutes === t ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{t} min</button>
-        ))}
-      </div>
-      <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-        {(['voiture', 'pied'] as const).map((mo) => (
-          <button key={mo} onClick={() => setMode(mo)}
-            className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${mode === mo ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{mo === 'voiture' ? 'Voiture' : 'À pied'}</button>
-        ))}
-      </div>
-
       <button onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}
         className={`rounded-lg px-3 py-2 text-[12px] font-medium ${pretA && !mut.isPending ? 'bg-mint/20 text-txt-hi hover:bg-mint/30' : 'bg-surface-2 text-txt-dim'}`}>
         {mut.isPending ? 'Calcul de la zone…' : 'Analyser la zone'}
@@ -156,7 +193,7 @@ export function EtudeZone() {
 
       {res?.zone_disponible && (
         <div className="flex flex-col gap-3">
-          <SectionTitle>{`La zone à ${res.minutes} min ${res.mode === 'voiture' ? 'en voiture' : 'à pied'}`}</SectionTitle>
+          <SectionTitle>{enTete}</SectionTitle>
           {res.population?.inhabitee ? (
             <p className="text-[11px] text-txt-mut">Zone peu ou pas habitée (aucun carreau INSEE peuplé).</p>
           ) : (
@@ -164,28 +201,12 @@ export function EtudeZone() {
               <Stat v={nb(res.population?.habitants)} k="habitants" />
               <Stat v={nb(res.population?.menages)} k="ménages" />
               <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'} k="revenu médian / an" est />
-              <Stat v={res.emplois && res.emplois.length ? nb(res.emplois.reduce((a, e) => a + e.actifs_lieu_travail, 0)) : '—'} k="actifs y travaillent" />
+              <ActifsStat res={res} />
             </div>
           )}
 
-          {res.concurrents && (
-            <div>
-              <SectionTitle>{`Concurrents dans la zone — ${res.concurrents.n}`}{res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
-              {res.concurrents.items.length === 0 ? (
-                <p className="text-[11px] text-txt-mut">Aucun établissement de cette activité dans la zone.</p>
-              ) : (
-                <div className="flex flex-col gap-1">
-                  {res.concurrents.items.slice(0, 8).map((c) => (
-                    <div key={c.siret} className="flex items-center justify-between gap-2 text-[11.5px]">
-                      <span className="truncate text-txt">{c.nom} <span className="font-mono text-[10px] text-txt-dim">{c.naf}</span></span>
-                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{tempsTxt(c.temps_min, res.mode)}</span>
-                    </div>
-                  ))}
-                  {res.concurrents.items.length > 8 && <span className="text-[10.5px] text-txt-dim">+ {res.concurrents.items.length - 8} autres…</span>}
-                </div>
-              )}
-            </div>
-          )}
+          {/* CONCURRENTS — trois états honnêtes, jamais un faux zéro */}
+          {naf && <Concurrents res={res} />}
 
           {res.generateurs_flux && res.generateurs_flux.length > 0 && (
             <div>
@@ -212,10 +233,56 @@ export function EtudeZone() {
             </div>
           )}
 
-          <button onClick={exportPdf} className="rounded-lg border border-mint/40 px-3 py-1.5 text-[11.5px] font-medium text-mint hover:bg-mint/10">Exporter le rapport PDF ↓</button>
+          <div className="flex gap-2">
+            <button onClick={exportPdf} className="flex-1 rounded-lg border border-mint/40 px-3 py-1.5 text-[11.5px] font-medium text-mint hover:bg-mint/10">Exporter le PDF ↓</button>
+            <button onClick={nouvelleEtude} className="flex-1 rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
+          </div>
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
       )}
+    </div>
+  )
+}
+
+// « actifs y travaillent » — MOBPRO : non couvert (source vide) dit tel quel, jamais un « — » muet.
+function ActifsStat({ res }: { res: EtudeZoneResult }) {
+  if (res.emplois_couverture === 'non_couverte') {
+    return (
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+        <div className="text-[11px] font-medium text-txt-mut">non couvert</div>
+        <div className="mt-0.5 text-[10px] text-txt-mut">actifs y travaillent <span className="text-txt-dim">(MOBPRO non ingéré)</span></div>
+      </div>
+    )
+  }
+  const total = (res.emplois ?? []).reduce((a, e) => a + e.actifs_lieu_travail, 0)
+  return <Stat v={res.emplois && res.emplois.length ? nb(total) : '—'} k="actifs y travaillent" />
+}
+
+function Concurrents({ res }: { res: EtudeZoneResult }) {
+  const c = res.concurrents
+  const cov = c?.couverture
+  return (
+    <div>
+      <SectionTitle>{`Concurrents dans la zone${cov === 'servie' ? ` — ${c!.n}` : ''}`}{cov === 'servie' && res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
+      {cov === 'non_couverte' && (
+        <p className="text-[11px] text-txt-mut">Non couvert par la base — le répertoire SIRENE des établissements n’est pas encore ingéré.</p>
+      )}
+      {cov === 'erreur' && (
+        <p className="text-[11px] text-txt-mut">Indisponible — la requête concurrents n’a pas abouti.</p>
+      )}
+      {cov === 'servie' && (c!.items.length === 0 ? (
+        <p className="text-[11px] text-txt-mut">Aucun établissement de cette activité dans la zone <span className="text-txt-dim">(source SIRENE{c!.millesime ? ` · ${c!.millesime}` : ''})</span>.</p>
+      ) : (
+        <div className="flex flex-col gap-1">
+          {c!.items.slice(0, 8).map((x) => (
+            <div key={x.siret} className="flex items-center justify-between gap-2 text-[11.5px]">
+              <span className="truncate text-txt">{x.nom} <span className="font-mono text-[10px] text-txt-dim">{x.naf}</span></span>
+              <span className="shrink-0 font-mono text-[11px] text-txt-hi">{tempsTxt(x.temps_min, res.mode)}</span>
+            </div>
+          ))}
+          {c!.items.length > 8 && <span className="text-[10.5px] text-txt-dim">+ {c!.items.length - 8} autres…</span>}
+        </div>
+      ))}
     </div>
   )
 }

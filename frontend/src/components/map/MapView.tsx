@@ -1521,21 +1521,28 @@ export function MapView() {
         } catch { /* réseau : silencieux, le point reste sans étiquette */ }
         return
       }
-      setMeasure((s) => ({ ...s, pts: [...s.pts, p] }))
+      // ZONE-RECETTE LOT E : on IGNORE un sommet dupliqué (les deux clics d'un double-clic tombent au
+      // même endroit) — plus de spike parasite en bout de tracé.
+      setMeasure((s) => {
+        const last = s.pts[s.pts.length - 1]
+        if (last && Math.abs(last[0] - p[0]) < 1e-6 && Math.abs(last[1] - p[1]) < 1e-6) return s
+        return { ...s, pts: [...s.pts, p] }
+      })
     }
     const onDbl = (e: maplibregl.MapMouseEvent) => {
+      // ZONE-RECETTE LOT E : le double-clic est NEUTRALISÉ (preventDefault sur le zoom) — en mode 'zone'
+      // la fermeture passe UNIQUEMENT par Entrée (une seule voie de validation, pas deux en concurrence).
       e.preventDefault()
-      const pts = measureRef.current.pts
-      if (tool === 'zone' && pts.length >= 3) {
-        setZone(pts)
-        setTool(null)
-        setMeasure({ pts: [], alti: null })
-      }
       // distance/surface : le double-clic fige la mesure (l'outil reste actif pour recommencer)
       if (tool === 'distance' || tool === 'surface') setMeasure((s) => ({ ...s, pts: s.pts }))
     }
     const onKey = (ev: KeyboardEvent) => {
-      if (ev.key === 'Escape') { setMeasure({ pts: [], alti: null }); setTool(null) }
+      if (ev.key === 'Escape') { setMeasure({ pts: [], alti: null }); setTool(null); return }
+      // Entrée ferme le polygone de zone et lance le filtrage (≥ 3 sommets).
+      if (ev.key === 'Enter' && tool === 'zone') {
+        const pts = measureRef.current.pts
+        if (pts.length >= 3) { setZone(pts); setTool(null); setMeasure({ pts: [], alti: null }) }
+      }
     }
     m.on('click', onClick)
     m.on('dblclick', onDbl)
@@ -1601,7 +1608,7 @@ export function MapView() {
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
-            : tool === 'zone' ? 'Dessinez la zone — double-clic pour fermer et filtrer'
+            : tool === 'zone' ? 'Cliquez pour poser les sommets — Entrée pour valider, Échap pour annuler'
             : 'Cliquez pour mesurer — Échap pour quitter')}
         </div>
       )}

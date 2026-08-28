@@ -3883,6 +3883,7 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     naf = (inp.naf or "").replace(".", "").upper() or None
     geom = inp.geom
     lon, lat = inp.lon, inp.lat
+    adresse = inp.titre    # LOT D — libellé d'entrée (adresse) pour l'en-tête qui ne ment pas
     if inp.idu:
         idu = _check_idu(inp.idu)
         pt = db.execute(text(
@@ -3891,6 +3892,9 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
         if not pt or pt["lon"] is None:
             raise HTTPException(404, "parcelle introuvable ou sans géométrie")
         lon, lat = float(pt["lon"]), float(pt["lat"])
+        # l'adresse RÉSOLUE de la parcelle (BAN) — pour « depuis {adresse} » dans l'en-tête
+        from .export_commun import adresse_ban_texte
+        adresse = adresse_ban_texte(db, idu) or adresse or f"parcelle {idu}"
     if geom is not None and (lon is None or lat is None):
         # point d'origine pour ordonner les « plus proches » = centroïde du polygone dessiné
         c = db.execute(text(
@@ -3903,6 +3907,8 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
 
     out = etude_de_zone(db, lon, lat, minutes, mode, geom_geojson=geom, naf=naf)
     out["origine"] = {"lon": lon, "lat": lat}
+    out["adresse"] = adresse            # LOT D — periment réellement mesuré (point) : « depuis {adresse} »
+    out["entree"] = "polygone" if geom is not None else "point"
     out["naf_label"] = naf_label(naf) if naf else None
     if out.get("zone_disponible"):
         out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
