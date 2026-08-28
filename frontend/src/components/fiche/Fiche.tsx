@@ -2453,8 +2453,10 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
-                {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors scoring) */}
-                <ProprietaireHistorique h={f.proprietaire_historique} />
+                {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors
+                    scoring). R6 : `pm` dit au composant si la parcelle a un propriétaire moral —
+                    absence de timeline = ligne honnête (PM) ou silence justifié (PP). */}
+                <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
                 {/* RADAR P3 (C3) — un bien du Radar en vente sur cette parcelle : discret, fait + lien. */}
