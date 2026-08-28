@@ -237,10 +237,26 @@ def bpe_build_cmd() -> None:
     typer.echo(f"✓ BPE 974 : {counts} (total {sum(counts.values())})")
 
 
+@app.command("ingest-trafic-rn")
+def ingest_trafic_rn_cmd() -> None:
+    """ZONE-DONNÉES LOT 5 — ingère le trafic moyen journalier annuel des routes nationales (Région
+    Réunion, open data ODS) → table `trafic_rn`. Trafic VÉHICULES sur RN (pas de flux piéton)."""
+    from .ingestion import seed_sources
+    from .ingestion.trafic_rn import build_trafic_rn
+    with session_scope() as s:
+        seed_sources.seed(s)
+        r = build_trafic_rn(s, log=typer.echo)
+    typer.echo(f"✓ Trafic RN : {r['n']} tronçons ({r['annees'][0] if r['annees'] else '—'}–{r['annees'][-1] if r['annees'] else '—'})")
+
+
 @app.command("ingest-sirene-etab")
-def ingest_sirene_etab_cmd(file: str = typer.Option(..., "--file", help="CSV géolocalisé SIRENE (INSEE)")) -> None:
-    """ÉTUDE DE ZONE Z1 — ingère les établissements SIRENE actifs géolocalisés (974) → table
-    `sirene_etablissements`. Statut de diffusion respecté (les 'P' n'ont ni nom ni adresse en clair)."""
+def ingest_sirene_etab_cmd(
+    geo_url: str = typer.Option(None, "--geo-url", help="parquet géo INSEE (défaut : dernier data.gouv)"),
+    stock_url: str = typer.Option(None, "--stock-url", help="parquet StockEtablissement (défaut : dernier)"),
+) -> None:
+    """ZONE-DONNÉES LOT 1 — ingère les établissements SIRENE actifs géolocalisés (974) via DuckDB
+    (fichier géo INSEE × StockEtablissement, parquet distant, jointure sur SIRET). Cron MENSUEL Réunion.
+    Statut de diffusion respecté (les non-'O' n'ont ni nom ni adresse en clair)."""
     from . import models
     from .db import engine
     from .ingestion import seed_sources
@@ -248,9 +264,10 @@ def ingest_sirene_etab_cmd(file: str = typer.Option(..., "--file", help="CSV gé
 
     with session_scope() as s:
         seed_sources.seed(s)
-        r = build_sirene_etablissements(s, file=file, log=typer.echo)
+        r = build_sirene_etablissements(s, geo_url=geo_url, stock_url=stock_url, log=typer.echo)
     models.ensure_geom_2975(engine())
-    typer.echo(f"✓ SIRENE établissements 974 : {r['n']} ({r['n_diffusion_partielle']} en diffusion partielle)")
+    typer.echo(f"✓ SIRENE établissements 974 : {r['n']} ({r['n_diffusion_partielle']} en diffusion "
+               f"partielle) · millésime {r['millesime']}")
 
 
 @app.command("ingest-mobpro")

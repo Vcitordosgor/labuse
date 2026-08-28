@@ -230,7 +230,10 @@ export function EtudeZone() {
             <div className="grid grid-cols-2 gap-2">
               <Stat v={nb(res.population?.habitants)} k="habitants" />
               <Stat v={nb(res.population?.menages)} k="ménages" />
-              <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'} k="revenu médian / an" est />
+              <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'}
+                k={res.population?.revenu_majorite_imputee
+                  ? `revenu médian / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
+                  : 'revenu médian / an'} est />
               <ActifsStat res={res} />
             </div>
           )}
@@ -263,8 +266,55 @@ export function EtudeZone() {
             </div>
           )}
 
-          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré (l'étude au PDF Flash reste au
-              programme, mais pas par ce bouton-là). L'endpoint back n'est pas touché. */}
+          {/* LOT 5 — trafic RN traversant/bordant la zone (véhicules/jour, dernier comptage par route) */}
+          {res.trafic?.couverte && (
+            <div>
+              <SectionTitle>Trafic routes nationales</SectionTitle>
+              {res.trafic.axes.length === 0 ? (
+                <p className="text-[11px] text-txt-mut">Aucun axe national dans la zone.</p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {res.trafic.axes.slice(0, 5).map((a, i) => (
+                    <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
+                      <span className="text-txt">{a.route} <span className="text-txt-dim">· {a.annee}</span></span>
+                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(a.tmja)} véh./j</span>
+                    </div>
+                  ))}
+                  <span className="text-[9.5px] text-txt-dim">Trafic véhicules sur routes nationales (Région Réunion) — pas un flux piéton.</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* LOT 7 — contraintes commerciales : les zones PLU recouvertes (tableau ZONE / PART / DOCUMENT) */}
+          {res.contraintes_plu && res.contraintes_plu.zones.length > 0 && (
+            <div>
+              <SectionTitle>Zones PLU de la zone</SectionTitle>
+              <div className="flex flex-col gap-1">
+                {res.contraintes_plu.zones.slice(0, 6).map((z, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
+                    <span className="truncate text-txt">{z.zone} <span className="text-txt-mut">· {z.commune ?? ''}</span></span>
+                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>
+                  </div>
+                ))}
+              </div>
+              {res.contraintes_plu.cdac_vigilance && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{res.contraintes_plu.cdac_vigilance}</p>}
+            </div>
+          )}
+
+          {/* LOT 8 — La zone de demain : signal DATÉ (logements autorisés 36 mois + zones AU), jamais une projection */}
+          {res.zone_demain && ((res.zone_demain.logements_autorises_36m ?? 0) > 0 || (res.zone_demain.au_zones_n ?? 0) > 0) && (
+            <div>
+              <SectionTitle>La zone de demain</SectionTitle>
+              <div className="grid grid-cols-2 gap-2">
+                <Stat v={nb(res.zone_demain.logements_autorises_36m)} k="logements autorisés / 36 mois" />
+                <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="zones AU (à urbaniser)" />
+              </div>
+              <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Signal daté (Sitadel · PLU) — une urbanisation programmée, jamais une projection de population.</p>
+            </div>
+          )}
+
+          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré. */}
           <button onClick={nouvelleEtude} className="w-full rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
@@ -273,18 +323,27 @@ export function EtudeZone() {
   )
 }
 
-// « actifs y travaillent » — MOBPRO : non couvert (source vide) dit tel quel, jamais un « — » muet.
+// LOT 2 — « postes salariés déclarés dans la zone » : FOURCHETTE (tranches d'effectif SIRENE), jamais
+// un point ni « actifs y travaillent » (qui décrit autre chose). Les établissements sans tranche
+// renseignée sont dits à part. Non couvert (SIRENE vide) dit tel quel, jamais un « — » muet.
 function ActifsStat({ res }: { res: EtudeZoneResult }) {
   if (res.emplois_couverture === 'non_couverte') {
     return (
       <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
         <div className="text-[11px] font-medium text-txt-mut">non couvert</div>
-        <div className="mt-0.5 text-[10px] text-txt-mut">actifs y travaillent <span className="text-txt-dim">· pas encore servi sur LABUSE</span></div>
+        <div className="mt-0.5 text-[10px] text-txt-mut">postes salariés <span className="text-txt-dim">· pas encore servi sur LABUSE</span></div>
       </div>
     )
   }
-  const total = (res.emplois ?? []).reduce((a, e) => a + e.actifs_lieu_travail, 0)
-  return <Stat v={res.emplois && res.emplois.length ? nb(total) : '—'} k="actifs y travaillent" />
+  const e = res.emplois
+  const fourchette = e ? `${nb(e.postes_min)}–${nb(e.postes_max)}${e.postes_max_ouvert ? '+' : ''}` : '—'
+  return (
+    <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+      <div className="text-[13px] font-semibold text-txt-hi">{fourchette}</div>
+      <div className="mt-0.5 text-[10px] text-txt-mut">postes salariés déclarés dans la zone
+        {e && e.n_sans_tranche > 0 && <span className="text-txt-dim"> · {nb(e.n_sans_tranche)} étab. sans effectif renseigné</span>}</div>
+    </div>
+  )
 }
 
 function Concurrents({ res }: { res: EtudeZoneResult }) {

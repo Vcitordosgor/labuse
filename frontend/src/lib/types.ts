@@ -422,6 +422,7 @@ export interface ZonePopulation {
   inhabitee: boolean
   habitants?: number; menages?: number
   revenu_median_eur?: number | null; revenu_estime?: boolean; revenu_source?: string
+  revenu_impute_n?: number | null; revenu_carreaux_n?: number | null; revenu_majorite_imputee?: boolean
   pct_moins_25?: number | null; taux_pauvrete_pct?: number | null
   n_carreaux?: number; millesime: string
 }
@@ -461,12 +462,15 @@ export interface EtudeZoneResult {
   origine?: { lon: number; lat: number }
   naf_label?: string | null
   population?: ZonePopulation
-  emplois?: { commune: string; actifs_lieu_travail: number; millesime: string }[]
+  emplois?: { postes_min: number; postes_max: number; postes_max_ouvert: boolean; n_etablissements: number; n_avec_tranche: number; n_sans_tranche: number; libelle: string }
   emplois_couverture?: ZoneCouverture
   equipements?: ZoneEquipement[]
   generateurs_flux?: ZoneGenerateur[]
   marche?: ZoneMarche
   concurrents?: { n: number; naf: string; items: ZoneConcurrent[]; couverture?: ZoneCouverture; millesime?: string }
+  zone_demain?: { logements_autorises_36m: number | null; permis_36m: number | null; au_zones_n: number | null; au_zones_ha: number | null; source: string }
+  contraintes_plu?: { zones: { zone: string; part_pct: number; commune: string | null; document: string | null }[]; cdac_vigilance?: string; note?: string }
+  trafic?: { couverte: boolean; axes: { route: string; tmja: number; annee: number }[]; libelle?: string; vide?: boolean }
   habitants_par_concurrent?: number | null
   note?: string
 }

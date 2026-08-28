@@ -163,12 +163,28 @@ def population_zone(session: Session, geom_geojson: dict) -> dict:
     millesime = "Filosofi 2021 (INSEE, carreaux 200 m)"
     if not r or (r["n_carreaux"] or 0) == 0 or (r["habitants"] or 0) == 0:
         return {"inhabitee": True, "millesime": millesime}
+    # LOT 3 — imputation PILOTÉE PAR LA DONNÉE (i_est_200 : '1' = carreau imputé depuis la maille 1 km).
+    # Défensif : la colonne peut manquer en base de test → on n'invente pas, on laisse None (garde).
+    n_imp = n_car_rev = None
+    has_iest = session.execute(text("SELECT 1 FROM information_schema.columns "
+                                    "WHERE table_name='filosofi_carreaux_200m' AND column_name='i_est_200'")).first()
+    if has_iest:
+        imp = session.execute(text(
+            f"""SELECT count(*) FILTER (WHERE f.i_est_200 = '1') n_imp, count(*) n_tot
+                FROM filosofi_carreaux_200m f
+                WHERE f.ind > 0 AND ST_Contains({_zone2975()}, ST_Centroid(f.geom))"""),
+            {"zone": json.dumps(geom_geojson)}).mappings().first()
+        n_imp, n_car_rev = int(imp["n_imp"]), int(imp["n_tot"])
+    majorite_imputee = bool(n_imp is not None and n_car_rev and n_imp > n_car_rev / 2)
     return {
         "inhabitee": False,
         "habitants": int(r["habitants"]),
         "menages": int(r["menages"]),
         "revenu_median_eur": int(r["revenu_median_eur"]) if r["revenu_median_eur"] is not None else None,
-        "revenu_estime": True,   # INSEE lissé → toujours ESTIMÉ, jamais présenté comme mesuré
+        "revenu_estime": True,   # Filosofi winsorisé → toujours ESTIMÉ (jamais présenté comme mesuré)
+        "revenu_impute_n": n_imp,             # carreaux (à revenu) imputés · None si non mesurable
+        "revenu_carreaux_n": n_car_rev,       # carreaux (à revenu) total
+        "revenu_majorite_imputee": majorite_imputee,   # → « valeur approchée sur N carreaux sur M »
         "pct_moins_25": int(r["pct_moins_25"]) if r["pct_moins_25"] is not None else None,
         "taux_pauvrete_pct": int(r["taux_pauvrete_pct"]) if r["taux_pauvrete_pct"] is not None else None,
         "n_carreaux": int(r["n_carreaux"]),
@@ -196,6 +212,46 @@ def emplois_communes(session: Session, geom_geojson: dict) -> list[dict]:
                         "millesime": r["millesime"] or "MOBPRO (INSEE)"})
     out.sort(key=lambda x: -x["actifs_lieu_travail"])
     return out
+
+
+#: tranches d'effectif SIRENE (code INSEE → bornes de la fourchette de salariés). 53 = « 10 000+ »
+#: (borne haute ouverte). 'NN' / null = non renseigné (compté à part, jamais additionné).
+TRANCHE_BORNES = {
+    "00": (0, 0), "01": (1, 2), "02": (3, 5), "03": (6, 9), "11": (10, 19), "12": (20, 49),
+    "21": (50, 99), "22": (100, 199), "31": (200, 249), "32": (250, 499), "41": (500, 999),
+    "42": (1000, 1999), "51": (2000, 4999), "52": (5000, 9999), "53": (10000, None),
+}
+
+
+def emplois_zone(session: Session, geom_geojson: dict) -> dict:
+    """LOT 2 — « postes salariés déclarés dans la zone » (remplace MOBPRO, ABANDONNÉ : l'INSEE ne traite
+    pas l'emploi au lieu de travail à une maille infracommunale — un nombre d'actifs sur 86 ha serait une
+    invention). On somme les TRANCHES d'effectif SIRENE des établissements de la zone → une FOURCHETTE
+    (jamais un point). Les établissements SANS tranche renseignée sont comptés à part et dits."""
+    rows = session.execute(text(
+        f"""SELECT tranche_effectif, count(*) n
+            FROM sirene_etablissements
+            WHERE actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
+            GROUP BY tranche_effectif"""),
+        {"zone": json.dumps(geom_geojson)}).all()
+    lo = hi = 0
+    hi_ouvert = False
+    n_avec = n_sans = n_etab = 0
+    for tranche, n in rows:
+        n_etab += n
+        bornes = TRANCHE_BORNES.get(tranche or "")
+        if bornes is None:                       # 'NN' / null : non renseigné → compté à part
+            n_sans += n
+            continue
+        n_avec += n
+        lo += bornes[0] * n
+        if bornes[1] is None:
+            hi_ouvert = True
+        else:
+            hi += bornes[1] * n
+    return {"postes_min": lo, "postes_max": hi, "postes_max_ouvert": hi_ouvert,
+            "n_etablissements": n_etab, "n_avec_tranche": n_avec, "n_sans_tranche": n_sans,
+            "libelle": "postes salariés déclarés dans la zone"}
 
 
 def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: dict[int, dict],
@@ -300,6 +356,97 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
             "permis_36m": int(permis or 0)}
 
 
+def trafic_zone(session: Session, geom_geojson: dict) -> dict:
+    """LOT 5 — trafic VÉHICULES sur ROUTES NATIONALES traversant ou bordant la zone (Région Réunion,
+    TMJA véhicules/jour). Par route, le comptage le plus RÉCENT (millésime porté). Aucune RN dans la
+    zone → « aucun axe national dans la zone », jamais un zéro. Pas de flux piéton, pas de départemental."""
+    if session.execute(text("SELECT to_regclass('trafic_rn')"), {}).scalar() is None:
+        return {"couverte": False, "axes": []}
+    rows = session.execute(text(
+        f"""SELECT DISTINCT ON (route) route, annee, tmja
+            FROM trafic_rn
+            WHERE tmja IS NOT NULL
+              AND ST_DWithin(ST_Transform(geom, 2975), {_zone2975()}, 30)
+            ORDER BY route, annee DESC, tmja DESC"""),
+        {"zone": json.dumps(geom_geojson)}).mappings().all()
+    axes = [{"route": r["route"], "tmja": int(r["tmja"]), "annee": r["annee"]} for r in rows]
+    axes.sort(key=lambda x: -x["tmja"])
+    return {"couverte": True, "axes": axes,
+            "libelle": "trafic véhicules sur routes nationales (véhicules/jour)",
+            "vide": len(axes) == 0}
+
+
+def contraintes_plu(session: Session, geom_geojson: dict) -> dict:
+    """LOT 7 — les zones PLU que la zone d'étude recouvre (tableau ZONE / PART / DOCUMENT, comme le
+    dossier banquier). Un polygone peut couvrir PLUSIEURS zones PLU — on les sert TOUTES avec leur part,
+    jamais une zone unique choisie arbitrairement. Le libellé de zone (UA commerçante, A agricole…) dit
+    déjà où le commerce est admis ou non. Verbatim géré à l'échelle du document (idurba).
+
+    Portée assumée (compte-rendu) : les destinations autorisées/conditionnelles/interdites FINES par
+    activité ne sont calibrées que dans 2 des 24 communes (les autres en texte libre ou RNU) — les
+    mapper NAF→destination partout serait un faux positif. On sert donc le FAIT géométrique (zones +
+    part + document), qui est toujours vrai, et on marque « non calibré » l'absence, jamais un silence."""
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson)}
+    if session.execute(text("SELECT to_regclass('spatial_layers')"), {}).scalar() is None:
+        return {"zones": [], "note": "PLU non disponible."}
+    aire = session.execute(text(f"SELECT ST_Area({z})"), p).scalar() or 0
+    if not aire:
+        return {"zones": [], "note": "PLU non disponible."}
+    p["aire"] = float(aire)
+    rows = session.execute(text(
+        f"""SELECT coalesce(l.subtype, l.attrs->>'libelle', '?') AS zone,
+                   l.commune, l.attrs->>'idurba' AS document,
+                   round(100 * sum(ST_Area(ST_Intersection(ST_Transform(l.geom,2975), {z})))
+                         / :aire) AS part_pct
+            FROM spatial_layers l
+            WHERE l.kind='plu_gpu_zone' AND ST_Intersects(ST_Transform(l.geom,2975), {z})
+            GROUP BY 1,2,3
+            HAVING round(100 * sum(ST_Area(ST_Intersection(ST_Transform(l.geom,2975), {z}))) / :aire) > 0
+            ORDER BY part_pct DESC LIMIT 12"""), p).mappings().all()
+    zones = [{"zone": r["zone"], "part_pct": int(r["part_pct"] or 0), "commune": r["commune"],
+              "document": r["document"]} for r in rows]
+    return {
+        "zones": zones,
+        "cdac_vigilance": ("Au-delà de 1 000 m² de surface de vente, une autorisation d'exploitation "
+                           "commerciale (CDAC) peut être requise — point de vigilance à instruire, non instruit ici."),
+        "note": ("Zones PLU recouvertes par la zone (part de surface). Le libellé de zone indique où le "
+                 "commerce est admis ; la règle fine par activité se lit au règlement du document. "
+                 "Commune en RNU ou non calibrée : « non calibré », jamais une absence de contrainte."),
+    }
+
+
+def zone_demain(session: Session, geom_geojson: dict) -> dict:
+    """LOT 8 — « la zone de demain » (données déjà en base, signal DATÉ, jamais une projection) :
+    logements autorisés sur 36 mois glissants (Sitadel `raw.nb_lgt`) = population à venir ; zones AU
+    ouvertes intersectant la zone = urbanisation programmée. Chaque métrique se garde sur table absente."""
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson)}
+
+    def _existe(t: str) -> bool:
+        return session.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar() is not None
+
+    logements = permis = None
+    if _existe("sitadel_permits"):
+        r = session.execute(text(
+            f"""SELECT count(*) n, coalesce(sum((s.raw->>'nb_lgt')::int), 0) lgt
+                FROM sitadel_permits s
+                WHERE s.geom IS NOT NULL AND s.date >= (now() - interval '36 months')
+                  AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).mappings().first()
+        permis, logements = int(r["n"] or 0), int(r["lgt"] or 0)
+    au_n = au_ha = None
+    if _existe("spatial_layers"):
+        r = session.execute(text(
+            f"""SELECT count(*) n, round((coalesce(sum(ST_Area(ST_Transform(geom,2975))),0)/10000)::numeric) ha
+                FROM spatial_layers
+                WHERE kind='plu_gpu_zone' AND subtype LIKE 'AU%'
+                  AND ST_Intersects({z}, ST_Transform(geom, 2975))"""), p).mappings().first()
+        au_n, au_ha = int(r["n"] or 0), int(r["ha"] or 0)
+    return {"logements_autorises_36m": logements, "permis_36m": permis,
+            "au_zones_n": au_n, "au_zones_ha": au_ha,
+            "source": "Sitadel (autorisations) · PLU/GPU (zones AU) — signal daté, pas une projection"}
+
+
 def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
                   geom_geojson: dict | None = None, naf: str | None = None,
                   client: httpx.Client | None = None, fetch=None) -> dict:
@@ -330,12 +477,15 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         # anneaux concentriques pour la carte (isochrones intermédiaires) — vide en mode polygone
         "bandes": [{"minutes": mn, "geom": g} for mn, g in sorted(bandes.items())],
         "population": population_zone(session, zone),
-        "emplois": emplois_communes(session, zone),
-        # LOT A — couverture MOBPRO : source servie (peuplée) ou NON couverte (jamais un « — » muet)
-        "emplois_couverture": "servie" if _source_peuplee(session, "mobpro_commune") else "non_couverte",
+        # LOT 2 — emplois = tranches d'effectif SIRENE (fourchette), non MOBPRO. Couverture = SIRENE servie.
+        "emplois": emplois_zone(session, zone),
+        "emplois_couverture": "servie" if _source_peuplee(session, "sirene_etablissements") else "non_couverte",
         "equipements": equipements_proches(session, lon, lat, zone, bandes=bandes),
         "generateurs_flux": generateurs_flux(session, zone),
         "marche": marche_zone(session, zone),
+        "zone_demain": zone_demain(session, zone),   # LOT 8 — signal daté (logements autorisés + AU)
+        "contraintes_plu": contraintes_plu(session, zone),   # LOT 7 — zones PLU recouvertes (tableau)
+        "trafic": trafic_zone(session, zone),        # LOT 5 — trafic RN traversant/bordant la zone
     }
     # LOT A — concurrents : trois états distincts (servie+0 / non ingérée / erreur), jamais un faux zéro
     if naf:

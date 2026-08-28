@@ -674,7 +674,6 @@ _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
     ("contexte_commune", "Consommation d'espace ENAF (Cerema)", None, "2009-2024 · publié 05/2025"),
     # FLASH-ZONE F2 — la section « Autour de cette parcelle » (étude de zone)
     ("zone", "INSEE Filosofi (carreaux 200 m)", "Filosofi INSEE (carreaux 200 m)", "millésime 2021"),
-    ("zone", "INSEE MOBPRO (mobilités domicile-travail)", "MOBPRO (mobilités domicile-travail, INSEE)", None),
     ("zone", "SIRENE — établissements géolocalisés (INSEE)", "SIRENE établissements géolocalisés", None),
     ("zone", "BPE — base permanente des équipements (INSEE)", "BPE INSEE", "millésime 2025"),
     ("zone", "Isochrones IGN (Géoplateforme) — temps hors trafic", None, "service navigation/isochrone"),
@@ -825,14 +824,17 @@ def _zone(db: Session, parcelle: dict) -> dict:
         log.info("section zone non tracée pour le rapport : %s", z.get("detail") or z.get("statut"))
         return {**base, "raison": "le service d'isochrones (IGN) n'a pas répondu — zone atteignable non tracée"}
     pop = z.get("population") or {}
-    emplois = z.get("emplois") or []
+    emp = z.get("emplois") or {}                     # LOT 2 : fourchette de postes salariés (SIRENE)
+    postes = None
+    if z.get("emplois_couverture") == "servie" and (emp.get("postes_max") or 0) > 0:
+        postes = f"{emp['postes_min']}–{emp['postes_max']}{'+' if emp.get('postes_max_ouvert') else ''}"
     return {
         "disponible": True,
         "minutes": z.get("minutes", 10),
         "mode_lib": "en voiture" if z.get("mode") == "voiture" else "à pied",
         "inhabitee": bool(pop.get("inhabitee")),
         "population": None if pop.get("inhabitee") else pop,
-        "actifs": (sum(e.get("actifs_lieu_travail", 0) for e in emplois) or None),
+        "postes_salaries": postes,                   # « postes salariés déclarés dans la zone » (fourchette)
         "equipements": z.get("equipements") or [],
         "generateurs": z.get("generateurs_flux") or [],
         "marche": z.get("marche") or {},

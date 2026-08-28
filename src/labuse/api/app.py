@@ -3924,14 +3924,11 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
         conc = out.get("concurrents") or {}
         hab, n = pop.get("habitants"), conc.get("n")
         out["habitants_par_concurrent"] = round(hab / n) if (hab and n) else None
-        # LOT C3 — une source NON servie ne figure PAS dans la liste des sources du calcul : SIRENE et
-        # MOBPRO n'y apparaissent que si leur couverture est « servie » (sinon leur non-couverture est
-        # déjà dite, honnêtement, dans leur propre bloc).
+        # LOT C3 — une source NON servie ne figure PAS dans la liste. MOBPRO est ABANDONNÉ (LOT 2) :
+        # les emplois viennent des tranches d'effectif SIRENE. SIRENE couvre alors concurrents ET emplois.
         srcs = ["INSEE Filosofi 2021", "BPE 2025", "DVF", "Radar LABUSE", "isochrones IGN"]
-        if conc.get("couverture") == "servie":
+        if conc.get("couverture") == "servie" or out.get("emplois_couverture") == "servie":
             srcs.insert(1, "SIRENE (établissements actifs)")
-        if out.get("emplois_couverture") == "servie":
-            srcs.insert(-1, "MOBPRO")
         out["note"] = (" · ".join(srcs) + " — temps hors trafic. Des faits sourcés, "
                        "aucune prévision de chiffre d'affaires.")
     return out
