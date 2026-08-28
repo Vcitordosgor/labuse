@@ -181,6 +181,46 @@ def test_endpoint_parcelle_zone_degrade_honnete(monkeypatch):
     assert "population" not in out
 
 
+def test_lot_a_couverture_non_couverte_pas_de_faux_zero(monkeypatch):
+    """LOT A — SIRENE/MOBPRO non ingérés (tables vides) → « non couvert », JAMAIS un faux zéro."""
+    from labuse.ingestion.sirene_etablissements import ensure_tables as se_ens
+    from labuse.ingestion.mobpro import ensure_tables as mo_ens
+    monkeypatch.setattr(Z, "fetch_isochrone", lambda lon, lat, minutes, mode, *, client: _carre(0.02))
+    with session_scope() as s:
+        Z.ensure_tables(s); se_ens(s); mo_ens(s)
+        s.execute(text("DELETE FROM sirene_etablissements WHERE true"))
+        s.execute(text("DELETE FROM mobpro_commune WHERE true"))
+        out = Z.etude_de_zone(s, _LON, _LAT, 10, "voiture", naf="1071C")
+        s.execute(text("DELETE FROM zone_isochrone_cache"))
+    assert out["concurrents"]["couverture"] == "non_couverte", "source non ingérée ≠ 0 résultat"
+    assert out["concurrents"]["n"] == 0
+    assert out["emplois_couverture"] == "non_couverte", "MOBPRO vide → non couvert, pas un « — » muet"
+
+
+def test_lot_a_couverture_servie_quand_peuplee(monkeypatch):
+    from labuse.ingestion.sirene_etablissements import ensure_tables as se_ens
+    monkeypatch.setattr(Z, "fetch_isochrone", lambda lon, lat, minutes, mode, *, client: _carre(0.03))
+    with session_scope() as s:
+        Z.ensure_tables(s); se_ens(s)
+        s.execute(text(
+            "INSERT INTO sirene_etablissements (siret, siren, naf, denomination, diffusible, actif, geom) "
+            "VALUES ('96666666666666','966666666','1071C','BOULANGE',true,true, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
+            {"lon": _LON, "lat": _LAT})
+        out = Z.etude_de_zone(s, _LON, _LAT, 10, "voiture", naf="1071C")
+        s.execute(text("DELETE FROM sirene_etablissements WHERE siret='96666666666666'"))
+        s.execute(text("DELETE FROM zone_isochrone_cache"))
+    assert out["concurrents"]["couverture"] == "servie"
+    assert out["concurrents"]["n"] == 1
+
+
+def test_lot_d_polygone_porte_sa_surface_ha():
+    with session_scope() as s:
+        Z.ensure_tables(s)
+        out = Z.etude_de_zone(s, 0, 0, 10, "voiture", geom_geojson=_carre(0.02))
+    assert out["statut"] == "polygone"
+    assert isinstance(out["surface_ha"], int) and out["surface_ha"] > 0, "le polygone porte sa surface (ha)"
+
+
 def test_naf_recherche_par_libelle_francais():
     from labuse.naf_labels import chercher, label
     codes = {r["code"] for r in chercher("boulangerie")}

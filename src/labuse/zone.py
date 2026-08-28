@@ -36,6 +36,21 @@ _DOMAINES_EQUIP = [
     ("A", "Services aux particuliers"), ("F", "Sports, loisirs et culture"),
 ]
 
+def _source_peuplee(session: Session, table: str) -> bool:
+    """LOT A — la source est-elle réellement SERVIE (table présente ET ≥ 1 ligne) ? Une table vide
+    (créée par le heal mais jamais ingérée : SIRENE, MOBPRO) est « non couverte », pas « 0 résultat »."""
+    if session.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is None:
+        return False
+    return bool(session.execute(text(f"SELECT EXISTS(SELECT 1 FROM {table} LIMIT 1)")).scalar())
+
+
+def _millesime(source_name: str, session: Session) -> str:
+    """Millésime amont d'une source (data_sources.source_millesime), sinon un libellé honnête."""
+    m = session.execute(text("SELECT source_millesime FROM data_sources WHERE name = :n"),
+                        {"n": source_name}).scalar()
+    return m or "millésime non renseigné"
+
+
 DDL = """
 CREATE TABLE IF NOT EXISTS zone_isochrone_cache (
   cache_key  text PRIMARY KEY,          -- mode|minutes|lon|lat (arrondis) : une zone = une clé
@@ -292,9 +307,13 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
     équipements, concurrents (si NAF), générateurs de flux, marché. `geom_geojson` force la géométrie
     (polygone dessiné) et court-circuite l'isochrone. Dégradé honnête si l'isochrone est indisponible."""
     bandes: dict[int, dict] = {}
+    surface_ha = None
     if geom_geojson is not None:
         zone = geom_geojson
         statut = "polygone"
+        surface_ha = session.execute(text(
+            "SELECT round((ST_Area(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:g),4326),2975))/10000)::numeric)"),
+            {"g": json.dumps(geom_geojson)}).scalar()
     else:
         res = isochrone(session, lon, lat, minutes, mode, client=client, fetch=fetch)
         statut = res["statut"]
@@ -306,15 +325,29 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         bandes = bandes_isochrones(session, lon, lat, minutes, mode, client=client, fetch=fetch)
     out = {
         "statut": statut, "zone_disponible": True, "minutes": minutes, "mode": mode,
+        "surface_ha": int(surface_ha) if surface_ha is not None else None,
         "geom": zone,
         # anneaux concentriques pour la carte (isochrones intermédiaires) — vide en mode polygone
         "bandes": [{"minutes": mn, "geom": g} for mn, g in sorted(bandes.items())],
         "population": population_zone(session, zone),
         "emplois": emplois_communes(session, zone),
+        # LOT A — couverture MOBPRO : source servie (peuplée) ou NON couverte (jamais un « — » muet)
+        "emplois_couverture": "servie" if _source_peuplee(session, "mobpro_commune") else "non_couverte",
         "equipements": equipements_proches(session, lon, lat, zone, bandes=bandes),
         "generateurs_flux": generateurs_flux(session, zone),
         "marche": marche_zone(session, zone),
     }
+    # LOT A — concurrents : trois états distincts (servie+0 / non ingérée / erreur), jamais un faux zéro
     if naf:
-        out["concurrents"] = concurrents_zone(session, zone, naf, bandes=bandes)
+        if not _source_peuplee(session, "sirene_etablissements"):
+            out["concurrents"] = {"couverture": "non_couverte", "naf": naf, "n": 0, "items": []}
+        else:
+            try:
+                c = concurrents_zone(session, zone, naf, bandes=bandes)
+                c["couverture"] = "servie"
+                c["millesime"] = _millesime("SIRENE établissements géolocalisés", session)
+                out["concurrents"] = c
+            except Exception as exc:  # noqa: BLE001 — requête en erreur ≠ « 0 résultat »
+                out["concurrents"] = {"couverture": "erreur", "naf": naf, "n": 0, "items": [],
+                                      "detail": type(exc).__name__}
     return out
