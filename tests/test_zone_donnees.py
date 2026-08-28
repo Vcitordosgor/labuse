@@ -1,0 +1,69 @@
+"""ZONE-DONNÉES · LOT 1 — ingestion SIRENE établissements (géo INSEE × StockEtablissement, DuckDB).
+
+On gèle : jointure sur SIRET ; 974 ACTIFS seuls ; masquage de diffusion (non-'O' → nom/adresse NULL,
+NAF conservé) ; NAF normalisé sans point ; position = lon/lat GPS direct ; tranche/qualité/IRIS conservés.
+Parquets de test créés localement (DuckDB), pas de réseau. Données purgées.
+"""
+from __future__ import annotations
+
+import pytest
+from sqlalchemy import text
+
+from labuse.db import session_scope
+from labuse.ingestion import seed_sources
+from labuse.ingestion.sirene_etablissements import build_sirene_etablissements, ensure_tables
+
+pytestmark = pytest.mark.db
+
+
+def _fixtures(tmp_path):
+    import duckdb
+    con = duckdb.connect()
+    stock = tmp_path / "stock.parquet"
+    geo = tmp_path / "geo.parquet"
+    # 4 établissements : A diffusible 974 actif · B non-diffusible ('P') 974 actif · C fermé · D hors-974
+    con.execute(f"""COPY (SELECT * FROM (VALUES
+      ('90000000000011','10.71C','O','BOULANGE A','', '97415','01','12','RUE','DE LA GARE','A'),
+      ('90000000000022','10.71C','P','MONSIEUR X','', '97415','NN','5','RUE','DES FLEURS','A'),
+      ('90000000000033','10.71C','O','FERMEE','',      '97415','01','1','RUE','X','F'),
+      ('90000000000044','10.71C','O','HORS 974','',    '75056','01','1','RUE','Y','A')
+     ) AS t(siret, activitePrincipaleEtablissement, statutDiffusionEtablissement,
+            denominationUsuelleEtablissement, enseigne1Etablissement, codeCommuneEtablissement,
+            trancheEffectifsEtablissement, numeroVoieEtablissement, typeVoieEtablissement,
+            libelleVoieEtablissement, etatAdministratifEtablissement)) TO '{stock}' (FORMAT parquet)""")
+    con.execute(f"""COPY (SELECT * FROM (VALUES
+      ('90000000000011', 55.2707, -21.0096, '11', '0101', '97415', 'HZ'),
+      ('90000000000022', 55.2710, -21.0090, '11', '0101', '97415', 'HZ'),
+      ('90000000000033', 55.2700, -21.0100, '11', '0101', '97415', 'HZ'),
+      ('90000000000044', 2.3500,  48.8500,  '11', '0101', '75056', 'HZ')
+     ) AS t(siret, x_longitude, y_latitude, qualite_xy, plg_iris, plg_code_commune, plg_qp24))
+     TO '{geo}' (FORMAT parquet)""")
+    return f"file://{geo}", f"file://{stock}"
+
+
+def test_lot1_sirene_jointure_diffusion_position(tmp_path):
+    geo_url, stock_url = _fixtures(tmp_path)
+    with session_scope() as s:
+        seed_sources.seed(s)
+        ensure_tables(s)
+        s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9000000000%'"))
+        r = build_sirene_etablissements(s, geo_url=geo_url, stock_url=stock_url)
+        rows = {x["siret"]: dict(x) for x in s.execute(text(
+            "SELECT siret, naf, denomination, adresse, diffusible, tranche_effectif, qualite_xy, iris, "
+            " round(ST_X(geom)::numeric,4) lon, round(ST_Y(geom)::numeric,4) lat "
+            "FROM sirene_etablissements WHERE siret LIKE '9000000000%'")).mappings()}
+        s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9000000000%'"))
+    # 974 ACTIFS seuls : le fermé (F) et le hors-974 sont écartés
+    assert set(rows) == {"90000000000011", "90000000000022"}
+    a = rows["90000000000011"]
+    assert a["naf"] == "1071C", "NAF normalisé sans point (10.71C → 1071C)"
+    assert a["denomination"] == "BOULANGE A" and a["diffusible"] is True
+    assert a["tranche_effectif"] == "01" and a["qualite_xy"] == "11"
+    assert a["iris"] == "974150101", "IRIS = plg_code_commune + plg_iris"
+    assert float(a["lon"]) == 55.2707 and float(a["lat"]) == -21.0096, "position = lon/lat GPS direct"
+    # diffusion partielle ('P') : nom ET adresse NULL, NAF conservé
+    b = rows["90000000000022"]
+    assert b["diffusible"] is False
+    assert b["denomination"] is None and b["adresse"] is None, "non diffusible : ni nom ni adresse"
+    assert b["naf"] == "1071C", "le NAF reste (l'établissement compte dans la zone)"
+    assert r["n"] == 2 and r["n_diffusion_partielle"] == 1

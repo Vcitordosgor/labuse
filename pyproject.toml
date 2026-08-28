@@ -48,6 +48,7 @@ dependencies = [
   "requests>=2.31",                 # tuiles IGN (plan de situation) + ingestion PLU (plu_ingest/plu_corpus)
   "urllib3>=2.0",                   # importé en dur (retries HTTP) dans la chaîne d'ingestion PLU
   "qrcode>=7.4",                    # 2FA admin (VPS · AC-025) — QR d'enrôlement TOTP en SVG pur (jamais PIL)
+  "duckdb>=1.0",                    # ZONE-DONNÉES — ingestion SIRENE : jointure parquet distant (géo INSEE × Stock), filtre 974
 ]
 
 [project.optional-dependencies]
