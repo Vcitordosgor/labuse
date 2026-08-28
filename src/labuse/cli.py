@@ -2833,19 +2833,21 @@ def radar_cycle_mensuel_cmd() -> None:
 
 @app.command("radar-digests")
 def radar_digests_cmd(
-    dry_run: bool = typer.Option(False, "--dry-run", help="ne rien envoyer, montrer ce qui partirait"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="ne rien envoyer, écrire le HTML produit dans --dry-dir"),
+    dry_dir: str = typer.Option("outputs/radar-digests", "--dry-dir", help="dossier où écrire le HTML (dry-run)"),
 ) -> None:
-    """RADAR P4 — les DEUX digests de fin de journée (heure Réunion) : (a) digest quotidien à tous les
-    clients actifs + (b) alerte veille aux critères correspondants. Jamais un mail vide, échec bruyant."""
+    """RADAR-DIGESTS — les DEUX envois de fin de journée (heure Réunion) : (a) digest quotidien
+    (template Brevo 12) à tous les clients actifs + (b) alerte de veille (template 13), un mail par
+    veille déclenchée. Jamais un mail vide, idempotent sur la journée, échec bruyant."""
     from .pige import digests
     base = get_settings().public_url or ""
     with session_scope() as s:
-        r = digests.envoyer(s, base_url=base, dry_run=dry_run)
+        r = digests.envoyer(s, base_url=base, dry_run=dry_run, dry_dir=(dry_dir if dry_run else None))
     typer.echo(f"✓ Radar digests : {r['n_biens_du_jour']} nouveauté(s) du jour · "
-               f"{r['envoyes']} envoyé(s), {r['echecs']} échec(s), {r['simules']} simulé(s)"
-               + (" [dry-run]" if dry_run else ""))
+               f"{r['envoyes']} envoyé(s), {r['echecs']} échec(s), {r['simules']} simulé(s), "
+               f"{r['deja']} déjà envoyé(s)" + (f" [dry-run → {dry_dir}]" if dry_run else ""))
     if r["echecs"]:
-        typer.echo(f"⚠ {r['echecs']} échec(s) d'envoi — voir la cloche système du dashboard (template Brevo 12 monté ?)")
+        typer.echo(f"⚠ {r['echecs']} échec(s) d'envoi — voir la cloche système du dashboard (templates Brevo 12 et 13 montés ?)")
 
 
 @app.command("ingest-pm-millesimes")

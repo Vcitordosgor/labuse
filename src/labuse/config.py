@@ -169,6 +169,9 @@ class Settings(BaseSettings):
     brevo_tpl_relance_carte: str | None = None
     brevo_tpl_suspension: str | None = None
     brevo_tpl_retablissement: str | None = None
+    brevo_tpl_radar: str | None = None                 # RADAR (legacy) — ID 12
+    brevo_tpl_radar_digest: str | None = None          # RADAR-DIGESTS — digest quotidien (ID 12)
+    brevo_tpl_radar_alerte: str | None = None          # RADAR-DIGESTS — alerte de veille (ID 13)
     # SMTP (M21 — transport e-mail unique) — env LABUSE_SMTP_* + LABUSE_MAIL_FROM.
     # Sans hôte configuré : le mail est JOURNALISÉ et marqué non-envoyé (jamais « envoyé »).
     # Le mot de passe (mot de passe d'application Gmail) vit dans le .env, JAMAIS dans le code.
