@@ -30,12 +30,18 @@ EVALUABLES = {"permis"}   # invariant : TYPES.keys() == EVALUABLES (plus de type
 # écrites (le seul écrivain, l'ancien preparer_veille/_executer_veille, est retiré). On ne les
 # DÉCLARE plus (déploiement neuf sans elles) ; on ne les DROP PAS sur l'existant (pas de migration
 # destructive) — elles resteront inertes dans les tables déjà créées, ignorées par tout le code.
+# RADAR P4 — le type « radar » vit dans CETTE table (branché sur le mécanisme de veille), mais il est
+# évalué par le DIGEST Radar (pige/digests.py), PAS par `evaluer_toutes` (qui ne traite que EVALUABLES)
+# → aucun double-envoi. Ses critères riches vivent dans la colonne `criteria` (jsonb).
+TYPE_RADAR = "radar"
+
 DDL = """
 CREATE TABLE IF NOT EXISTS veilles (
   id serial PRIMARY KEY, compte_id int, type varchar(24), commune varchar(64),
   actif boolean DEFAULT true, last_evaluated_at timestamptz, created_at timestamptz DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ix_veilles_compte ON veilles (compte_id, actif);
+ALTER TABLE veilles ADD COLUMN IF NOT EXISTS criteria jsonb DEFAULT '{}'::jsonb;
 """
 
 
@@ -46,8 +52,10 @@ def ensure_tables(engine) -> None:
         # id=2 du bucket démo) : jamais évaluées, elles ne doivent plus apparaître comme actives.
         # Idempotent et NON destructif (actif=false réversible ; aucune ligne supprimée ; les 7 veilles
         # `permis` — type évaluable — ne sont pas touchées).
-        c.execute(text("UPDATE veilles SET actif = false WHERE actif AND NOT (type = ANY(:t))"),
-                  {"t": list(EVALUABLES)})
+        # RADAR P4 : `radar` est un type LÉGITIME géré hors evaluer_toutes → épargné du désactivage.
+        c.execute(text("UPDATE veilles SET actif = false WHERE actif AND type <> :radar "
+                       "AND NOT (type = ANY(:t))"),
+                  {"t": list(EVALUABLES), "radar": TYPE_RADAR})
 
 
 def creer(db: Session, *, compte_id: int | None, type_: str, commune: str | None) -> dict:
