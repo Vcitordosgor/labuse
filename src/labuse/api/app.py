@@ -3847,6 +3847,75 @@ def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=
             "equipements": equipements_proches(db, lon, lat, zone, bandes=bandes)}
 
 
+# ═══════════ ÉTUDE DE ZONE · Z4 — l'outil « Étude de zone » (maquette, écran 2) ═══════════
+
+@app.get("/outils/etude-zone/naf")
+def etude_zone_naf(q: str = Query("", max_length=80)) -> dict:
+    """Recherche d'activité par libellé français (« boulangerie » → 1071C) ou par code. Table curée
+    et extensible (commerces/services de proximité), pas la nomenclature complète."""
+    from ..naf_labels import chercher
+    return {"resultats": chercher(q)}
+
+
+class EtudeZoneIn(BaseModel):
+    idu: str | None = None          # entrée 1 : une parcelle (centre sur son centroïde)
+    lon: float | None = None        # entrée 2 : un point (adresse BAN résolue côté client)
+    lat: float | None = None
+    geom: dict | None = None        # entrée 3 : un polygone dessiné (court-circuite l'isochrone)
+    naf: str | None = None          # activité étudiée (concurrents SIRENE)
+    minutes: int = 10               # 5 / 10 / 15
+    mode: str = "voiture"           # voiture / pied
+
+
+@app.post("/outils/etude-zone")
+def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
+    """L'outil de chalandise : une zone (isochrone OU polygone), qui y vit, qui y travaille, quels
+    concurrents (SIRENE par NAF, pins ambre), quels générateurs de flux, quel marché immobilier.
+    Faits sourcés et datés — AUCUNE prévision de chiffre d'affaires, aucun score d'attractivité.
+
+    Trois entrées : `idu` (centroïde de la parcelle), `lon/lat` (point/adresse), ou `geom` (polygone).
+    Échec isochrone → dégradé honnête et nommé, jamais un cercle."""
+    from ..zone import etude_de_zone
+    from ..naf_labels import label as naf_label
+    minutes = inp.minutes if inp.minutes in (5, 10, 15) else 10
+    mode = inp.mode if inp.mode in ("voiture", "pied") else "voiture"
+    naf = (inp.naf or "").replace(".", "").upper() or None
+    geom = inp.geom
+    lon, lat = inp.lon, inp.lat
+    if inp.idu:
+        idu = _check_idu(inp.idu)
+        pt = db.execute(text(
+            "SELECT ST_X(ST_Centroid(centroid)) AS lon, ST_Y(ST_Centroid(centroid)) AS lat "
+            "FROM parcels WHERE idu = :idu"), {"idu": idu}).mappings().first()
+        if not pt or pt["lon"] is None:
+            raise HTTPException(404, "parcelle introuvable ou sans géométrie")
+        lon, lat = float(pt["lon"]), float(pt["lat"])
+    if geom is not None and (lon is None or lat is None):
+        # point d'origine pour ordonner les « plus proches » = centroïde du polygone dessiné
+        c = db.execute(text(
+            "SELECT ST_X(ST_Centroid(ST_SetSRID(ST_GeomFromGeoJSON(:g),4326))) AS lon, "
+            "       ST_Y(ST_Centroid(ST_SetSRID(ST_GeomFromGeoJSON(:g),4326))) AS lat"),
+            {"g": json.dumps(geom)}).mappings().first()
+        lon, lat = float(c["lon"]), float(c["lat"])
+    if lon is None or lat is None:
+        raise HTTPException(400, "fournir une parcelle (idu), un point (lon/lat) ou un polygone (geom)")
+
+    out = etude_de_zone(db, lon, lat, minutes, mode, geom_geojson=geom, naf=naf)
+    out["origine"] = {"lon": lon, "lat": lat}
+    out["naf_label"] = naf_label(naf) if naf else None
+    if out.get("zone_disponible"):
+        out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
+        # « N habitants par concurrent » (maquette) — un ratio de faits, jamais une projection de CA
+        pop = out.get("population") or {}
+        conc = out.get("concurrents") or {}
+        hab, n = pop.get("habitants"), conc.get("n")
+        out["habitants_par_concurrent"] = round(hab / n) if (hab and n) else None
+        out["note"] = ("INSEE Filosofi 2021 · SIRENE (établissements actifs) · BPE 2025 · MOBPRO · "
+                       "DVF · Radar LABUSE · isochrones IGN — temps hors trafic. Des faits sourcés, "
+                       "aucune prévision de chiffre d'affaires.")
+    return out
+
+
 @app.get("/parcels/{idu}/export.pdf")
 def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
                       cout_construction_m2: float | None = Query(None, ge=500, le=8000),

@@ -179,3 +179,48 @@ def test_endpoint_parcelle_zone_degrade_honnete(monkeypatch):
     assert out["statut"] == "indisponible"
     assert "geom" not in out, "aucune géométrie — jamais un cercle substitué"
     assert "population" not in out
+
+
+def test_naf_recherche_par_libelle_francais():
+    from labuse.naf_labels import chercher, label
+    codes = {r["code"] for r in chercher("boulangerie")}
+    assert "1071C" in codes, "« boulangerie » trouve le code 1071C"
+    # accent-insensible : « patisserie » ≡ « pâtisserie »
+    assert any(r["code"] == "1071D" for r in chercher("patisserie"))
+    # recherche par code aussi
+    assert any(r["code"] == "4773Z" for r in chercher("4773"))
+    assert label("10.71C") == "Boulangerie et boulangerie-pâtisserie", "le point est normalisé"
+
+
+def test_endpoint_etude_zone_concurrents_et_ratio(monkeypatch):
+    from labuse.api.app import etude_zone, EtudeZoneIn
+    from labuse.ingestion.sirene_etablissements import ensure_tables as se_ens
+    monkeypatch.setattr(Z, "fetch_isochrone", lambda lon, lat, minutes, mode, *, client: _carre(0.03))
+    idu = "ZONETEST000004"
+    with session_scope() as s:
+        Z.ensure_tables(s); se_ens(s)
+        for c in ["ind_0_3", "ind_4_5", "ind_6_10", "ind_11_17", "ind_18_24"]:
+            s.execute(text(f"ALTER TABLE filosofi_carreaux_200m ADD COLUMN IF NOT EXISTS {c} double precision"))
+        _seed_parcel(s, idu, _LON, _LAT)
+        s.execute(text(
+            "INSERT INTO filosofi_carreaux_200m (geom, ind, men, men_pauv, men_prop, ind_snv, "
+            " ind_0_3, ind_4_5, ind_6_10, ind_11_17, ind_18_24) VALUES ("
+            " ST_Transform(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),0.001),2975), "
+            " 600, 200, 20, 100, 12000000, 30, 30, 30, 30, 30)"), {"lon": _LON, "lat": _LAT})
+        for siret, lon in [("94444444444444", _LON), ("95555555555555", _LON + 0.002)]:
+            s.execute(text(
+                "INSERT INTO sirene_etablissements (siret, siren, naf, denomination, diffusible, actif, geom) "
+                "VALUES (:s, :si, '1071C', 'BOULANGERIE', true, true, ST_SetSRID(ST_MakePoint(:lon,:lat),4326))"),
+                {"s": siret, "si": siret[:9], "lon": lon, "lat": _LAT})
+        out = etude_zone(EtudeZoneIn(idu=idu, naf="10.71C", minutes=10, mode="voiture"), db=s)
+        s.execute(text("DELETE FROM filosofi_carreaux_200m WHERE ind = 600 AND men_prop = 100"))
+        s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9%' AND naf='1071C'"))
+        s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+        s.execute(text("DELETE FROM zone_isochrone_cache WHERE cache_key LIKE 'voiture|%'"))
+    assert out["zone_disponible"] is True
+    assert out["naf_label"] == "Boulangerie et boulangerie-pâtisserie"
+    assert out["concurrents"]["n"] == 2, "les 2 boulangeries de la zone sont comptées"
+    assert all(c["temps_min"] is not None for c in out["concurrents"]["items"]), "chaque concurrent porte son temps"
+    # habitants / concurrents = 600 / 2 = 300
+    assert out["habitants_par_concurrent"] == 300
+    assert set(out["marche"]) == {"ventes_12m", "prix_m2_median_bati", "annonces_actives", "permis_36m"}

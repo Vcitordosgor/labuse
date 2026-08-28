@@ -246,17 +246,43 @@ def generateurs_flux(session: Session, geom_geojson: dict) -> list[dict]:
 
 
 def marche_zone(session: Session, geom_geojson: dict) -> dict:
-    """Marché immobilier de la zone : ventes DVF 12 mois, annonces Radar actives. Faits sourcés."""
-    r = session.execute(text(
-        f"""SELECT
-              (SELECT count(*) FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.idu
-                 WHERE d.date_mutation >= (now() - interval '12 months')
-                   AND ST_Contains({_zone2975()}, ST_Transform(p.centroid, 2975)))          AS ventes_12m,
-              (SELECT count(*) FROM pige_biens b JOIN parcels p ON p.idu = b.idu
-                 WHERE b.statut IN ('active','en_vente_longue')
-                   AND ST_Contains({_zone2975()}, ST_Transform(p.centroid, 2975)))           AS annonces_actives
-        """), {"zone": json.dumps(geom_geojson)}).mappings().first()
-    return {"ventes_12m": int(r["ventes_12m"] or 0), "annonces_actives": int(r["annonces_actives"] or 0)}
+    """Marché immobilier de la zone (maquette écran 3) : ventes DVF 12 mois, médian €/m² bâti (36 mois,
+    ventes bâties), annonces Radar actives, permis 36 mois (SITADEL géolocalisé). Faits sourcés, jamais
+    une prévision. DVF est clé par `id_parcelle` (≡ parcels.idu) — join documenté. Chaque métrique se
+    garde sur table absente (contrat data-gap : 0/None, jamais un 500)."""
+    z = _zone2975()
+    p = {"zone": json.dumps(geom_geojson)}
+
+    def _existe(table: str) -> bool:
+        return session.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is not None
+
+    ventes = prix = annonces = permis = None
+    if _existe("dvf_mutations_parcelle") and _existe("parcels"):
+        ventes = session.execute(text(
+            f"""SELECT count(*) FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.id_parcelle
+                WHERE d.date_mutation >= (now() - interval '12 months')
+                  AND ST_Contains({z}, ST_Transform(p.centroid, 2975))"""), p).scalar()
+        prix = session.execute(text(
+            f"""SELECT round(percentile_cont(0.5) WITHIN GROUP (
+                      ORDER BY d.valeur_fonciere / NULLIF(d.surface_reelle_bati, 0))::numeric)
+                FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.id_parcelle
+                WHERE d.date_mutation >= (now() - interval '36 months')
+                  AND d.valeur_fonciere > 0 AND coalesce(d.surface_reelle_bati, 0) > 0
+                  AND ST_Contains({z}, ST_Transform(p.centroid, 2975))"""), p).scalar()
+    if _existe("pige_biens") and _existe("parcels"):
+        annonces = session.execute(text(
+            f"""SELECT count(*) FROM pige_biens b JOIN parcels p ON p.idu = b.idu
+                WHERE b.statut IN ('active','en_vente_longue')
+                  AND ST_Contains({z}, ST_Transform(p.centroid, 2975))"""), p).scalar()
+    if _existe("sitadel_permits"):
+        permis = session.execute(text(
+            f"""SELECT count(*) FROM sitadel_permits s
+                WHERE s.geom IS NOT NULL AND s.date >= (now() - interval '36 months')
+                  AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).scalar()
+    return {"ventes_12m": int(ventes or 0),
+            "prix_m2_median_bati": int(prix) if prix is not None else None,
+            "annonces_actives": int(annonces or 0),
+            "permis_36m": int(permis or 0)}
 
 
 def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
@@ -281,6 +307,8 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
     out = {
         "statut": statut, "zone_disponible": True, "minutes": minutes, "mode": mode,
         "geom": zone,
+        # anneaux concentriques pour la carte (isochrones intermédiaires) — vide en mode polygone
+        "bandes": [{"minutes": mn, "geom": g} for mn, g in sorted(bandes.items())],
         "population": population_zone(session, zone),
         "emplois": emplois_communes(session, zone),
         "equipements": equipements_proches(session, lon, lat, zone, bandes=bandes),

@@ -440,6 +440,31 @@ export interface ParcelleZone {
   equipements?: ZoneEquipement[]
 }
 
+// ÉTUDE DE ZONE Z4 — l'outil de chalandise. Faits sourcés, aucune prévision de CA.
+export interface NafOption { code: string; label: string }
+export interface ZoneConcurrent { siret: string; naf: string; nom: string; diffusible: boolean; lon: number; lat: number; temps_min: number | null }
+export interface ZoneGenerateur { label: string; source: string }
+export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }
+export interface EtudeZoneResult {
+  statut: string
+  zone_disponible: boolean
+  detail?: string
+  minutes: number
+  mode: 'pied' | 'voiture'
+  geom?: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }
+  bandes?: { minutes: number; geom: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] } }[]
+  origine?: { lon: number; lat: number }
+  naf_label?: string | null
+  population?: ZonePopulation
+  emplois?: { commune: string; actifs_lieu_travail: number; millesime: string }[]
+  equipements?: ZoneEquipement[]
+  generateurs_flux?: ZoneGenerateur[]
+  marche?: ZoneMarche
+  concurrents?: { n: number; naf: string; items: ZoneConcurrent[] }
+  habitants_par_concurrent?: number | null
+  note?: string
+}
+
 export interface Renouvellement {
   libelle: string
   // M47 : étiquette source · millésime (run servi + date de matérialisation).

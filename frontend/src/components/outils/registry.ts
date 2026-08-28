@@ -120,6 +120,10 @@ export const MODULES: ModuleDef[] = [
   // (URL, QA, tests, endpoint, table). Même patron que Promesses mortes → Permis au point mort.
   { key: 'renouvellement', num: 'MR1', group: 'marche',
     label: 'Densifier l’existant', desc: 'Le bâti qui peut porter davantage — extensions, surélévations : parcelles déjà occupées en zone constructible à capacité résiduelle réelle' },
+  // ÉTUDE DE ZONE Z4 — la chalandise : une zone atteignable (isochrone IGN), qui y vit, qui y travaille,
+  // quels concurrents (SIRENE) ; le même moteur alimente le tiroir « Autour de cette parcelle » (fiche).
+  { key: 'etude-zone', num: 'M27', group: 'marche',
+    label: 'Étude de zone', desc: 'La zone atteignable (à pied / en voiture), qui y vit, qui y travaille et quels concurrents vous y attendent déjà — INSEE, SIRENE, BPE, isochrones IGN' },
 
   // ── 4. Analyse ponctuelle (usage rare) ──
   { key: 'temps', num: 'M08', group: 'temps',
