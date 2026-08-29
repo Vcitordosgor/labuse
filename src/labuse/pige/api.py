@@ -75,6 +75,11 @@ def radar_deposer_html(body: DeposerHtmlIn, request: Request) -> dict:
         except html_next.NextDataError as exc:
             # échec bruyant, mais rendu proprement à l'écran admin (pas un 500 muet) — RIEN en base.
             return {"ok": False, "erreur": "next_data", "motif": str(exc)}
+        except html_ingest.DepotStockageError as exc:
+            # RADAR-RECETTE-1 D4 — échec d'ÉCRITURE disque : le message nomme le chemin (jamais « réseau »).
+            return {"ok": False, "erreur": "stockage",
+                    "motif": f"archivage impossible : {exc} — créer le répertoire ou donner les droits "
+                             "(ou définir LABUSE_PIGE_DEPOTS_DIR). Rien n'a été enregistré."}
 
 
 @router.post("/admin/radar/valider")
@@ -236,23 +241,33 @@ def radar_biens(request: Request,
                 surface_hab_min: float | None = None, surface_hab_max: float | None = None,
                 surface_terrain_min: float | None = None, surface_terrain_max: float | None = None,
                 particulier_pro: str | None = None, statuts: str | None = None,
+                statut: str | None = None, a_qualifier: str | None = None,
                 periode_debut: str | None = None, periode_fin: str | None = None,
                 rattache: str | None = None, tri: str = "recentes",
-                page: int = 1, taille: int = 50) -> dict:
-    """Liste filtrée des biens VALIDÉS pour un client. `statuts` = CSV (défaut active+en_vente_longue).
-    `rattache` = oui|non|indifférent. Renvoie n_total (compteur du filtre) + n_rattaches (pins carte)."""
+                page: int = 1, taille: int | None = None, limit: int | None = None) -> dict:
+    """Liste filtrée des biens VALIDÉS pour un client.
+
+    RADAR-RECETTE-1 D2 — les paramètres sont HONORÉS et la troncature est explicite :
+      · `statut` (singulier) ET `statuts` (CSV) acceptés (défaut active+en_vente_longue) ;
+      · `limit` alias de `taille` (défaut 50, borné au plafond serveur) ;
+      · `a_qualifier` = oui|non ; `rattache` = oui|non ;
+      · réponse : n_total (filtre) · n_servi · plafond · tronquee · n_rattaches (pins carte)."""
     from . import client
+    # `statut` singulier fusionné dans la liste ; `limit` alias de `taille` (le 1er non-None gagne).
+    statuts_liste = [s for s in ((statuts or "") + "," + (statut or "")).split(",") if s] or None
+    taille_eff = taille if taille is not None else (limit if limit is not None else 50)
     filtres = {
         "commune": commune, "type_bien": type_bien, "prix_min": prix_min, "prix_max": prix_max,
         "surface_hab_min": surface_hab_min, "surface_hab_max": surface_hab_max,
         "surface_terrain_min": surface_terrain_min, "surface_terrain_max": surface_terrain_max,
         "particulier_pro": particulier_pro,
-        "statuts": [s for s in (statuts or "").split(",") if s] or None,
+        "statuts": statuts_liste,
+        "a_qualifier": a_qualifier if a_qualifier in ("oui", "non") else None,
         "periode_debut": periode_debut, "periode_fin": periode_fin,
         "rattache": rattache if rattache in ("oui", "non") else None,
     }
     with session_scope() as db:
-        return client.lister(db, filtres=filtres, tri=tri, page=page, taille=taille)
+        return client.lister(db, filtres=filtres, tri=tri, page=page, taille=taille_eff)
 
 
 @router.get("/radar/biens/{bien_id}")

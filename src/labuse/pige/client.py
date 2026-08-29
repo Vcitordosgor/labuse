@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from .tables import EV_SIGNALEMENT, journaliser
 
 STATUTS_DEFAUT = ("active", "en_vente_longue")
+PLAFOND_PAGE = 200          # RADAR-RECETTE-1 D2 — plafond DUR par page (borne `taille`/`limit`), explicite
 TRIS = {
     "recentes": "b.date_premiere_saisie DESC",
     "prix_asc": "f.prix ASC NULLS LAST",
@@ -58,12 +59,20 @@ def _where(filtres: dict) -> tuple[str, dict]:
         conds.append("b.idu IS NOT NULL")
     elif ratt == "non":
         conds.append("b.idu IS NULL")
+    # RADAR-RECETTE-1 D2/D1c — filtre à-qualifier ('oui'|'non') : permet de lister les biens marqués
+    # (ou de les exclure). Ils restent VISIBLES par défaut dans le flux, mais avec leur mention.
+    aq = filtres.get("a_qualifier")
+    if aq == "oui":
+        conds.append("b.a_qualifier = true")
+    elif aq == "non":
+        conds.append("b.a_qualifier = false")
     return " AND ".join(conds), p
 
 
 _SELECT = """
 SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        b.rattachement_niveau, b.rattachement_confiance, b.rattachement_etat, b.rattachement_pistes,
+       b.a_qualifier, b.a_qualifier_motifs,
        b.date_publication, b.date_premiere_saisie, b.date_derniere_confirmation,
        f.prix, f.pieces, f.surface_hab, f.surface_terrain, f.dpe_classe, f.dpe_conso, f.dpe_ges,
        f.particulier_pro, f.fraicheur_source, f.etiquettes,
@@ -85,6 +94,9 @@ def _bien_row(r: dict) -> dict:
     return {
         "bien_id": r["bien_id"], "commune": r["commune"], "type_bien": r["type_bien"],
         "est_copro": r["est_copro"], "statut": r["statut"],
+        # RADAR-RECETTE-1 D1c — un bien incohérent reste VISIBLE dans le flux mais MARQUÉ (mention +
+        # motifs consultables) ; il n'est jamais rattaché (idu NULL, cf. html_ingest).
+        "a_qualifier": bool(r["a_qualifier"]), "a_qualifier_motifs": r["a_qualifier_motifs"] or [],
         "rattachement": ({"niveau": r["rattachement_niveau"], "idu": r["idu"],
                           "confiance": float(r["rattachement_confiance"]) if r["rattachement_confiance"] is not None else None}
                          if rattache else {"niveau": "absent", "idu": None, "confiance": None}),
@@ -116,12 +128,17 @@ def lister(db: Session, *, filtres: dict, tri: str = "recentes", page: int = 1, 
     n_rattaches = db.execute(text(
         f"SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id "
         f"WHERE {where} AND b.idu IS NOT NULL"), p).scalar() or 0
-    taille = max(1, min(200, taille))
+    # RADAR-RECETTE-1 D2 — le plafond par page est EXPLICITE (jamais un « 50 » muet) : `taille` demandée
+    # est bornée à PLAFOND_PAGE, et la réponse dit combien de biens existent (n_total) vs combien sont
+    # servis (n_servi), plus un drapeau `tronquee` pour qu'un appelant SACHE qu'il n'a pas tout.
+    taille = max(1, min(PLAFOND_PAGE, taille))
     offset = max(0, (page - 1) * taille)
     rows = db.execute(text(f"{_SELECT} WHERE {where} ORDER BY {order} LIMIT :lim OFFSET :off"),
                       {**p, "lim": taille, "off": offset}).mappings().all()
+    n_servi = len(rows)
     return {"biens": [_bien_row(dict(r)) for r in rows], "n_total": n_total,
-            "n_rattaches": n_rattaches, "page": page, "taille": taille, "tri": tri}
+            "n_servi": n_servi, "n_rattaches": n_rattaches, "page": page, "taille": taille,
+            "plafond": PLAFOND_PAGE, "tronquee": (offset + n_servi) < n_total, "tri": tri}
 
 
 def detail(db: Session, bien_id: int) -> dict | None:

@@ -18,7 +18,12 @@ from sqlalchemy.orm import Session
 from . import coherence, html_next, portails, rattachement_html
 from .intake import resoudre_commune
 from .tables import (EV_A_QUALIFIER, EV_BAISSE_PRIX, EV_DEPOT_HTML, EV_NOUVELLE, depots_dir,
-                     enregistrer_fraicheur, journaliser)
+                     depots_dir_writable, enregistrer_fraicheur, journaliser)
+
+
+class DepotStockageError(RuntimeError):
+    """RADAR-RECETTE-1 D4 — l'archivage du dépôt a échoué à l'ÉCRITURE DISQUE. Le message NOMME le
+    chemin fautif (jamais « réseau ou serveur ») : un échec d'écriture se cherche sur le disque."""
 
 # colonnes de pige_faits alimentées depuis un enregistrement aplati (clé faits ← clé rec).
 _FAITS_MAP = {
@@ -54,12 +59,16 @@ def _maj_prix(db: Session, bien_id: int, ancien, nouveau) -> None:
                     detail=f"{ancien} € → {nouveau} €", dedup=f"pige:baisse:{bien_id}:{nouveau}")
 
 
-def _ecrire_faits(db: Session, bien_id: int, rec: dict, motifs: list[str], *, insert: bool) -> None:
+def _ecrire_faits(db: Session, bien_id: int, rec: dict, *, insert: bool) -> None:
+    # RADAR-RECETTE-1 D1a/D1b — `a_verifier` (champs IA « à vérifier », concept du chemin VISION) reste
+    # NULL pour le chemin HTML : la donnée est structurée, aucun champ n'est incertain, et un champ
+    # ABSENT n'est pas « à vérifier » (il se dit via `etiquettes`, il ne disqualifie pas). L'INCOHÉRENCE
+    # (elle) part dans `a_qualifier` / `a_qualifier_motifs` (écrit par `_ecrire_bien`). Ne plus remplir
+    # a_verifier pour tout le monde : c'était l'« initialisation qui remplit la colonne » (69/69 faux).
     cols = {c: rec.get(src) for c, src in _FAITS_MAP.items()}
     etiquettes = {c: ("source" if cols[c] not in (None, "") else "absent") for c in _FAITS_MAP}
     params = {**cols, "b": bien_id, "et": json.dumps(etiquettes),
-              "brut": json.dumps(rec.get("brut") or {}),
-              "av": json.dumps(motifs)}   # motifs à-qualifier = champs « à vérifier » côté admin
+              "brut": json.dumps(rec.get("brut") or {})}
     champs = list(_FAITS_MAP)
     if insert:
         colnames = ", ".join(champs)
@@ -67,12 +76,12 @@ def _ecrire_faits(db: Session, bien_id: int, rec: dict, motifs: list[str], *, in
         db.execute(text(
             f"INSERT INTO pige_faits (bien_id, {colnames}, fraicheur_source, etiquettes, source_brute, "
             f" a_verifier, valide_at) VALUES (:b, {placeholders}, 'publication', CAST(:et AS jsonb), "
-            f" CAST(:brut AS jsonb), CAST(:av AS jsonb), now())"), params)
+            f" CAST(:brut AS jsonb), NULL, now())"), params)   # a_verifier NULL (structuré, cf. D1)
     else:
         sets = ", ".join(f"{c} = :{c}" for c in champs)
         db.execute(text(
             f"UPDATE pige_faits SET {sets}, etiquettes = CAST(:et AS jsonb), "
-            f" source_brute = CAST(:brut AS jsonb), a_verifier = CAST(:av AS jsonb), "
+            f" source_brute = CAST(:brut AS jsonb), a_verifier = NULL, "
             f" updated_at = now() WHERE bien_id = :b"), params)
 
 
@@ -103,7 +112,14 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
     rec = {**rec, "commune": commune}               # nom officiel pour matcher parcels.commune
 
     motifs = coherence.evaluer(rec, db)
-    ratt = rattachement_html.rattacher(db, rec)
+    # RADAR-RECETTE-1 D1c — un bien INCOHÉRENT ne peut pas être rattaché : le rattachement repose sur la
+    # surface de terrain, qui est justement la valeur suspecte (cas 5086 : « terrain » 377 m² = surface
+    # habitable, rattaché par cette surface). On suspend le rattachement plutôt que de pinner un faux.
+    if motifs:
+        ratt = {"etat": "non_rattachee", "niveau": "absent", "idu": None, "confiance": None,
+                "pistes": [], "motif": "bien à qualifier — rattachement suspendu (surface suspecte)"}
+    else:
+        ratt = rattachement_html.rattacher(db, rec)
     list_id = rec.get("list_id")
 
     existing = db.execute(text(
@@ -123,7 +139,7 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
              "u": rec.get("url"), "l": list_id, "fpd": rec.get("first_publication_date"),
              "idx": rec.get("index_date"), "exp": rec.get("expiration_date"),
              "sp": rec.get("statut_portail")})
-        _ecrire_faits(db, bien_id, rec, motifs, insert=True)
+        _ecrire_faits(db, bien_id, rec, insert=True)
         _ecrire_bien(db, bien_id, rec, ratt, motifs)
         if not motifs:
             journaliser(db, EV_NOUVELLE, f"Nouveau bien Radar — {commune}",
@@ -145,7 +161,7 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
         " date_saisie = now() WHERE list_id = :l"),
         {"idx": rec.get("index_date"), "exp": rec.get("expiration_date"),
          "sp": rec.get("statut_portail"), "l": list_id})
-    _ecrire_faits(db, bien_id, rec, motifs, insert=False)
+    _ecrire_faits(db, bien_id, rec, insert=False)
     _ecrire_bien(db, bien_id, rec, ratt, motifs)
     # republication = confirmation « toujours en vente » : repousse a_reverifier, statut redevient active
     # (jamais retiree/vendue — celles-ci ne se déduisent pas d'une republication).
@@ -160,6 +176,13 @@ def ingester(db: Session, html: str, nom_fichier: str | None = None, *, archiver
     """Ingestion complète d'un dépôt HTML. Lève html_next.NextDataError si le bloc __NEXT_DATA__ est
     absent/altéré (échec bruyant — jamais un « 0 annonce » silencieux). Retourne un compte-rendu."""
     annonces = html_next.extraire_annonces(html)      # ← échoue BRUYAMMENT si structure absente/changée
+    # RADAR-RECETTE-1 D4 — vérifier l'accès EN ÉCRITURE du répertoire d'archivage AVANT toute écriture
+    # base (comme le chemin captures stocke avant la base) : un échec disque se dit AVEC le chemin, et
+    # rien n'entre en base. `depots_dir_writable()` ne lève jamais et NOMME le chemin.
+    if archiver:
+        ok, detail = depots_dir_writable()
+        if not ok:
+            raise DepotStockageError(detail)
     chemin, h = _archiver(html, nom_fichier) if archiver else ("(non archivé)", "")
 
     compte = {"nouvelle": 0, "maj": 0, "hors_perimetre": 0}

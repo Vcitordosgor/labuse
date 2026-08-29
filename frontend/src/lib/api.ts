@@ -1275,6 +1275,8 @@ export const radarRetiree = (bien_id: number) =>
 // ── RADAR (pige) · P3 C1 — écran CLIENT (faits + lien, jamais le contenu de l'annonce) ──
 export interface RadarBienClient {
   bien_id: number; commune: string; type_bien: string | null; est_copro: boolean; statut: string
+  // RADAR-RECETTE-1 D1c — bien incohérent : visible mais marqué, motifs consultables, jamais rattaché.
+  a_qualifier: boolean; a_qualifier_motifs: string[]
   rattachement: { niveau: 'source' | 'estime' | 'absent'; idu: string | null; confiance: number | null }
   coords: [number, number] | null
   faits: { prix: number | null; pieces: number | null; surface_hab: number | null; surface_terrain: number | null; dpe_classe: string | null; dpe_conso: number | null; dpe_ges: number | null; particulier_pro: string | null }
@@ -1288,7 +1290,7 @@ export interface RadarBienDetail extends RadarBienClient {
   rattachement_etat?: 'rattachee' | 'piste' | 'non_rattachee'
   pistes?: RadarPiste[]
 }
-export interface RadarBiensRep { biens: RadarBienClient[]; n_total: number; n_rattaches: number; page: number; taille: number; tri: string }
+export interface RadarBiensRep { biens: RadarBienClient[]; n_total: number; n_servi: number; n_rattaches: number; page: number; taille: number; plafond: number; tronquee: boolean; tri: string }
 export interface RadarFiltres {
   commune?: string; type_bien?: string; prix_min?: number; prix_max?: number
   surface_hab_min?: number; surface_hab_max?: number; surface_terrain_min?: number; surface_terrain_max?: number
