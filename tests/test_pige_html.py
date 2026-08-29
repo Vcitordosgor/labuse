@@ -164,3 +164,84 @@ def test_rattachement_etats_valides_et_apparts_non_rattaches(html, depots_prive,
     assert rows and all(r["rattachement_etat"] in ("rattachee", "piste", "non_rattachee") for r in rows)
     apparts = [r for r in rows if r["type_bien"] == "appartement"]
     assert apparts and all(r["rattachement_etat"] == "non_rattachee" and r["est_copro"] for r in apparts)
+
+
+# ════════ RADAR-RECETTE-1 — les 4 défauts de recette ════════
+
+def test_d1a_a_verifier_ne_remplit_pas_tout_le_monde(html, depots_prive, nettoyer):
+    """D1a — `a_verifier` (concept IA vision) reste NULL sur le chemin HTML : une donnée structurée n'a
+    aucun champ « à vérifier ». `count(*) WHERE a_verifier IS NOT NULL` ne doit PLUS valoir 100 %."""
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+    ids = _list_ids(html)
+    with session_scope() as db:
+        non_null = db.execute(text(
+            "SELECT count(*) FROM pige_faits f JOIN pige_annonces a ON a.bien_id = f.bien_id "
+            "WHERE a.list_id = ANY(:i) AND f.a_verifier IS NOT NULL"), {"i": ids}).scalar()
+    assert non_null == 0                                     # plus d'« initialisation qui remplit »
+
+
+def test_d1c_bien_incoherent_non_rattache(html, depots_prive, nettoyer):
+    """D1c — le « terrain » 1942 (list_id 3241231179) est incohérent → JAMAIS rattaché (la surface, base
+    du rattachement, est la valeur suspecte) : à_qualifier, idu NULL, état non_rattachee."""
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+    with session_scope() as db:
+        r = db.execute(text(
+            "SELECT b.a_qualifier, b.idu, b.rattachement_etat, b.rattachement_niveau FROM pige_biens b "
+            "JOIN pige_annonces a ON a.bien_id = b.bien_id WHERE a.list_id = 3241231179")).mappings().first()
+    assert r["a_qualifier"] is True and r["idu"] is None
+    assert r["rattachement_etat"] == "non_rattachee" and r["rattachement_niveau"] == "absent"
+
+
+def test_d1c_a_qualifier_visible_mais_marque(html, depots_prive, nettoyer):
+    """D1c — un bien à_qualifier reste VISIBLE dans le flux client, avec sa mention + motifs consultables."""
+    from labuse.pige import client
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+        rep = client.lister(db, filtres={"a_qualifier": "oui"}, taille=200)
+    assert rep["n_total"] >= 1
+    b = next(x for x in rep["biens"] if x["a_qualifier"])
+    assert b["a_qualifier"] is True and b["a_qualifier_motifs"] and b["rattachement"]["idu"] is None
+
+
+def test_d2_pagination_et_troncature_explicite(html, depots_prive, nettoyer):
+    """D2 — le plafond par page est explicite : taille=1 → tronquee=True + n_total > n_servi ; une
+    grande taille sert tout, bornée au plafond."""
+    from labuse.pige import client
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+        page1 = client.lister(db, filtres={}, taille=1)
+        tout = client.lister(db, filtres={}, taille=1000)
+    assert page1["tronquee"] is True and page1["n_servi"] == 1 and page1["n_total"] > 1
+    assert tout["taille"] == client.PLAFOND_PAGE and tout["tronquee"] is False
+
+
+def test_d2_filtre_statut_honore(html, depots_prive, nettoyer):
+    """D2 — le filtre statut est HONORÉ (ne renvoie pas des biens d'un autre statut)."""
+    from labuse.pige import client
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+        rep = client.lister(db, filtres={"statuts": ["a_reverifier"]}, taille=200)
+    assert all(b["statut"] == "a_reverifier" for b in rep["biens"])
+
+
+def test_d3_depots_dir_defaut_dev_local(monkeypatch):
+    """D3 — en LABUSE_DEV_MODE=1 et sans LABUSE_PIGE_DEPOTS_DIR, depots_dir() est un chemin LOCAL
+    (jamais /srv, lecture seule sur macOS)."""
+    from labuse import config
+    from labuse.pige.tables import depots_dir
+    monkeypatch.delenv("LABUSE_PIGE_DEPOTS_DIR", raising=False)
+    monkeypatch.setenv("LABUSE_DEV_MODE", "1")
+    config.get_settings.cache_clear()
+    d = str(depots_dir())
+    config.get_settings.cache_clear()
+    assert "/srv" not in d and ".local" in d
+
+
+def test_d4_writable_nomme_le_chemin(monkeypatch):
+    """D4 — un répertoire non inscriptible produit (False, detail) où `detail` NOMME le chemin fautif."""
+    from labuse.pige.tables import depots_dir_writable
+    monkeypatch.setenv("LABUSE_PIGE_DEPOTS_DIR", "/proc/nonexistent-radar/x")
+    ok, detail = depots_dir_writable()
+    assert ok is False and "/proc/nonexistent-radar/x" in detail

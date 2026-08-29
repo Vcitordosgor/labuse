@@ -44,10 +44,35 @@ def captures_dir() -> Path:
 
 def depots_dir() -> Path:
     """RADAR-HTML — répertoire PRIVÉ d'ARCHIVAGE des pages HTML déposées (traçabilité de la source).
-    Comme les captures, hors racine publique, jamais servi par le web. Sous-dossier `depots_html` du
-    répertoire des captures (même volume, mêmes droits) ; surchargé par LABUSE_PIGE_DEPOTS_DIR."""
+    Hors racine publique, jamais servi par le web. Ordre de résolution :
+      1. LABUSE_PIGE_DEPOTS_DIR (surcharge explicite, dev comme prod) ;
+      2. RADAR-RECETTE-1 D3 — en LABUSE_DEV_MODE=1, un défaut LOCAL INSCRIPTIBLE (`<repo>/.local/
+         pige-archives`) : sur macOS, `/srv` (défaut prod des captures) est en lecture seule, tout
+         dépôt échouait sans passer la variable à la main. Le chemin de PROD ne bouge pas ;
+      3. prod : sous-dossier `depots_html` du répertoire des captures (même volume, mêmes droits)."""
     d = os.environ.get("LABUSE_PIGE_DEPOTS_DIR")
-    return Path(d) if d else captures_dir() / "depots_html"
+    if d:
+        return Path(d)
+    from ..config import get_settings
+    if get_settings().dev_mode:
+        # racine du dépôt = src/labuse/pige/tables.py → remonter de 3.
+        return Path(__file__).resolve().parents[3] / ".local" / "pige-archives"
+    return captures_dir() / "depots_html"
+
+
+def depots_dir_writable() -> tuple[bool, str]:
+    """RADAR-RECETTE-1 D4 — le répertoire d'archivage est-il créable ET inscriptible ? Retourne
+    (ok, detail) ; `detail` NOMME toujours le chemin (jamais un message générique). Ne lève jamais.
+    Même sonde que captures : mkdir -p puis écriture/suppression d'un témoin (seul test fiable)."""
+    d = depots_dir()
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        probe = d / ".probe_ecriture"
+        probe.write_bytes(b"ok")
+        probe.unlink()
+        return True, str(d)
+    except OSError as exc:
+        return False, f"{d} — inaccessible en écriture ({type(exc).__name__}: {exc})"
 
 
 def captures_dir_writable() -> tuple[bool, str]:

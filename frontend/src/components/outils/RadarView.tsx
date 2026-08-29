@@ -82,6 +82,8 @@ function CarteBien({ b, sel, onClick }: { b: RadarBienClient; sel: boolean; onCl
         )}
         {b.baisse && <span className="shrink-0 rounded-md bg-mint/12 px-2 py-0.5 font-mono text-[10.5px] text-mint">baisse</span>}
         {b.statut === 'en_vente_longue' && <span className="shrink-0 rounded-md bg-amber/12 px-2 py-0.5 font-mono text-[10.5px] text-amber">Vente longue</span>}
+        {/* RADAR-RECETTE-1 D1c — un bien incohérent est MARQUÉ dans le flux (hors stats/veilles, non rattaché). */}
+        {b.a_qualifier && <span className="shrink-0 rounded-md bg-st-ecartee/15 px-2 py-0.5 font-mono text-[10.5px] text-st-ecartee">à qualifier</span>}
         <span className="ml-auto min-w-0 truncate text-right text-[11px] text-txt-dim">{meta}</span>
       </div>
     </button>
@@ -186,6 +188,20 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
           data-radar-portail className="flex items-center justify-center gap-2 rounded-xl bg-mint py-3 text-[13.5px] font-semibold text-mint-on hover:brightness-110">
           Voir l’annonce sur {b.portail} ↗
         </a>
+        {/* RADAR-RECETTE-1 D1c — bien À QUALIFIER : champs contradictoires. Visible mais marqué, motifs
+            consultables ; hors statistiques, hors veilles, jamais rattaché (surface suspecte). */}
+        {b.a_qualifier && (
+          <div data-radar-aqualifier className="rounded-xl border border-st-ecartee/40 bg-st-ecartee/[0.06] px-3 py-2.5">
+            <div className="mb-1 font-mono text-[10px] tracking-[0.2em] text-st-ecartee">À QUALIFIER — INCOHÉRENCE</div>
+            <p className="mb-1.5 text-[11px] leading-snug text-txt-mut">
+              Les champs de cette annonce se contredisent. Elle est écartée des statistiques, des veilles
+              et du rattachement tant qu’elle n’est pas vérifiée.
+            </p>
+            <ul className="list-disc pl-4 text-[11px] leading-snug text-txt">
+              {b.a_qualifier_motifs.map((m, i) => <li key={i}>{m}</li>)}
+            </ul>
+          </div>
+        )}
         {/* 4. LES FAITS */}
         <div>
           <div className="mb-1.5 font-mono text-[10px] tracking-[0.2em] text-txt-mut">LES FAITS</div>

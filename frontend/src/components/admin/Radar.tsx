@@ -60,8 +60,11 @@ function DepotHtml({ onDepose }: { onDepose: () => void }) {
       </label>
       {rap && !rap.ok && (
         <div data-radar-depot-erreur className="mt-3 rounded-lg border border-st-ecartee/50 bg-st-ecartee/10 px-3 py-2 text-[11.5px] leading-relaxed text-st-ecartee">
-          <b>Dépôt refusé</b> — {rap.motif || 'structure inattendue'}. La page doit être enregistrée en
-          « page web complète » ; rien n’a été enregistré.
+          {/* RADAR-RECETTE-1 D4 — un échec d'ÉCRITURE disque se dit comme tel (chemin nommé par le
+              serveur), jamais « réseau ou serveur ». Le conseil « page web complète » ne vaut que pour
+              une structure illisible (next_data). */}
+          <b>{rap.erreur === 'stockage' ? 'Archivage impossible' : 'Dépôt refusé'}</b> — {rap.motif || 'structure inattendue'}.
+          {rap.erreur !== 'stockage' && <> La page doit être enregistrée en « page web complète » ;</>} rien n’a été enregistré.
         </div>
       )}
       {rap && rap.ok && (

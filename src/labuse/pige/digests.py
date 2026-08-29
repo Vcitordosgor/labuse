@@ -72,6 +72,9 @@ def _biens_du_jour(db: Session) -> list[dict]:
                               WHERE bien_id = b.bien_id AND nouveau_prix < ancien_prix
                               ORDER BY date_constat DESC LIMIT 1) ph ON true
            WHERE f.valide_at IS NOT NULL AND b.statut IN ('active','en_vente_longue')
+             -- RADAR-RECETTE-1 D1c — un bien À QUALIFIER (incohérent) n'entre NI dans les digests NI
+             -- dans les veilles (matche() est appelé sur cette même liste). Jamais un fait faux notifié.
+             AND b.a_qualifier = false
              AND b.date_premiere_saisie AT TIME ZONE 'Indian/Reunion'
                  >= (now() AT TIME ZONE 'Indian/Reunion')::date
            ORDER BY b.bien_id DESC""")).mappings().all()
