@@ -11,6 +11,14 @@ Jobs (heure Indian/Reunion — les seuils comparent à la date Réunion, pas au 
 GARDE CRITIQUE : `retiree_sans_vente` ne se déduit JAMAIS d'un lien mort. Un lien mort = `retiree`
 (posé ailleurs, à la main). SEULE l'absence de mutation DVF sous 12 mois, sur un bien RATTACHÉ, qualifie.
 Chaque changement de statut émet `pige.statut_change` ; une vente émet en plus `pige.vendue_dvf`.
+
+RADAR-HTML (Lot 5) — deux corrections tirées de la mesure :
+  · une REPUBLICATION (index_date qui bouge, list_id inchangé) est une CONFIRMATION « toujours en
+    vente » : elle repousse le passage en `a_reverifier` et ramène le statut à `active`. C'est traité
+    à l'INGESTION (`html_ingest`), pas ici — le cycle ne fait que poser les seuils d'inactivité ;
+  · une republication à prix INFÉRIEUR est une BAISSE (signal le plus actionnable), historisée à
+    l'ingestion. « vendue » et « retiree_sans_vente » n'exigent que l'état RATTACHÉE (`rattachee`),
+    JAMAIS une PISTE : une piste ne déclenche aucun automatisme (ni vendue, ni courrier).
 """
 from __future__ import annotations
 
@@ -59,7 +67,10 @@ def matcher_dvf(db: Session) -> int:
     cands = db.execute(text(
         "SELECT b.bien_id, b.idu, b.commune, b.date_publication, f.prix "
         "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
-        "WHERE b.rattachement_niveau = 'source' AND b.idu IS NOT NULL AND b.statut <> 'vendue' "
+        # RATTACHÉE seulement (jamais une PISTE) : etat='rattachee' (chemin HTML) OU niveau='source'
+        # (chemin vision historique — mêmes biens, colonne rattachement_etat non rétro-remplie).
+        "WHERE (b.rattachement_etat = 'rattachee' OR b.rattachement_niveau = 'source') "
+        "AND b.idu IS NOT NULL AND b.statut <> 'vendue' "
         "AND b.date_publication IS NOT NULL AND f.valide_at IS NOT NULL")).mappings().all()
     n = 0
     for c in cands:
@@ -95,6 +106,8 @@ def qualifier_retiree_sans_vente(db: Session) -> int:
     donne `retiree` (ailleurs), et sans idu on ne peut pas prouver l'absence de vente → on ne qualifie pas."""
     rows = db.execute(text(
         "SELECT bien_id, commune FROM pige_biens b WHERE b.statut = 'retiree' AND b.idu IS NOT NULL "
+        # RATTACHÉE exigée (une PISTE ne qualifie jamais — pas de courrier sur une position incertaine).
+        "AND (b.rattachement_etat = 'rattachee' OR b.rattachement_niveau = 'source') "
         "AND b.retiree_le IS NOT NULL AND b.retiree_le <= now() - interval '12 months' "
         "AND NOT EXISTS (SELECT 1 FROM dvf_mutations_parcelle m WHERE m.id_parcelle = b.idu "
         "                AND m.nature_mutation ILIKE 'Vente%' "
