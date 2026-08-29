@@ -2,8 +2,53 @@
 // HONNÊTETÉ STATISTIQUE : chaque mesure porte son n ; sous le seuil (n<5) → « échantillon insuffisant »,
 // AUCUN chiffre. Les comptes (actives, nouvelles…) sont des faits bruts. État de démarrage = digne :
 // on explique que le corpus se constitue, pas un tableau de tirets qui fait peur. Couleurs source unique.
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
+import { getRadarMarche, getRadarSignaux, type RadarEcart, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
+
+// RADAR-HTML (Lot 4) — « écart demandé/acté » d'une commune : médiane Radar (demandé) vs médiane DVF
+// (acté). C'est la marge de négociation du moment. Écart CONSTATÉ entre deux sources datées, aucun verdict.
+function EcartLigne({ label, e }: { label: string; e: RadarEcart }) {
+  if (!e.calculable) {
+    return <div className="flex items-center justify-between py-1 text-[11px] text-txt-dim"><span>{label}</span><span title={e.motif}>— (échantillon insuffisant)</span></div>
+  }
+  const baisse = (e.ecart_pct ?? 0) > 0
+  return (
+    <div className="flex items-center justify-between py-1 text-[11.5px]">
+      <span className="text-txt-mut">{label}</span>
+      <span className="tabular-nums text-txt">
+        {e.demande_eur_m2!.toLocaleString('fr-FR')}<span className="text-[9px] text-txt-dim"> €/m² dem. · n{e.n_demande}</span>
+        {' → '}{e.acte_eur_m2!.toLocaleString('fr-FR')}<span className="text-[9px] text-txt-dim"> acté · n{e.n_acte}</span>
+        <span className={`ml-1.5 rounded px-1 py-0.5 text-[10px] ${baisse ? 'bg-amber/12 text-amber' : 'bg-mint/12 text-mint'}`}>{(e.ecart_pct! > 0 ? '+' : '')}{e.ecart_pct}%</span>
+      </span>
+    </div>
+  )
+}
+
+function SignauxCommune({ communes }: { communes: string[] }) {
+  const [commune, setCommune] = useState('')
+  const { data } = useQuery({ queryKey: ['radar-signaux', commune], queryFn: () => getRadarSignaux(commune), enabled: !!commune })
+  return (
+    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-txt-dim">Marge de négociation — écart demandé / acté</span>
+        <select value={commune} onChange={(e) => setCommune(e.target.value)}
+          className="ml-auto rounded border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[11px] text-txt">
+          <option value="">choisir une commune…</option>
+          {communes.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      {commune && data && (
+        <div className="flex flex-col divide-y divide-line-2">
+          <EcartLigne label="Terrain" e={data.ecart_demande_acte.terrain} />
+          <EcartLigne label="Bâti" e={data.ecart_demande_acte.bati} />
+          <p className="pt-1.5 text-[10px] text-txt-dim">Prix affiché du Radar (Sourcé portail) contre médiane DVF actée. Écart constaté, jamais une estimation ni une prévision.</p>
+        </div>
+      )}
+      {!commune && <p className="text-[11px] text-txt-dim">Choisir une commune pour voir l’écart entre prix demandés (annonces) et prix actés (DVF).</p>}
+    </div>
+  )
+}
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
 
@@ -81,6 +126,7 @@ export function RadarMarche() {
           </tbody>
         </table>
       </div>
+      <SignauxCommune communes={data.communes.map((c) => c.commune)} />
       <p className="text-[10px] text-txt-dim">« — » = échantillon insuffisant (moins de {data.seuil_n} biens). Hors scoring. Données issues de la collecte manuelle.</p>
     </div>
   )

@@ -5,8 +5,8 @@
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { getRadarBienDetail, getRadarBiens, radarClic, radarSignaler,
-  type RadarBienClient, type RadarFiltres } from '../../lib/api'
+import { getRadarBienDetail, getRadarBiens, radarClic, radarInstruire, radarSignaler,
+  type RadarBienClient, type RadarFiltres, type RadarPiste } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { useApp } from '../../store/useApp'
 
@@ -104,6 +104,8 @@ function Tuile({ label, onClick, children }: { label: string; onClick: () => voi
 function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () => void; mobile?: boolean }) {
   const { data: b, isError } = useQuery({ queryKey: ['radar-bien', bienId], queryFn: () => getRadarBienDetail(bienId) })
   const [signale, setSignale] = useState(false)
+  // RADAR-HTML (Lot 3) — « Instruire cette annonce » : relance la cascade À LA DEMANDE sur une PISTE.
+  const [instr, setInstr] = useState<{ busy: boolean; etat?: string; cands?: RadarPiste[]; motif?: string | null }>({ busy: false })
   const st = useApp.getState
   const cadre = mobile
     ? 'absolute inset-0 z-40 flex flex-col overflow-hidden border-line-2 bg-surface-1'
@@ -216,8 +218,37 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             </div>
           </>
         )}
-        {!ratt && (
-          <p className="text-[11px] leading-snug text-txt-dim">Bien non rattaché à une parcelle — seul le lien vers la source est disponible.</p>
+        {/* PISTE (Lot 3) — plusieurs candidates possibles : à instruire À LA DEMANDE. Aucun automatisme
+            n'en part (ni courrier, ni « vendue »). Geste client explicite. */}
+        {!ratt && b.rattachement_etat === 'piste' && (
+          <div className="rounded-xl border border-amber/30 bg-amber/[0.05] px-3 py-2.5">
+            <div className="mb-1 font-mono text-[10px] tracking-[0.2em] text-amber">PISTE — À INSTRUIRE{b.pistes?.length ? ` · ${b.pistes.length} candidate${b.pistes.length > 1 ? 's' : ''}` : ''}</div>
+            <p className="mb-2 text-[11px] leading-snug text-txt-mut">
+              Plusieurs parcelles peuvent correspondre. Aucune n’est retenue par défaut : rien ne part
+              d’une piste tant qu’elle n’est pas confirmée.
+            </p>
+            <button data-radar-instruire disabled={instr.busy}
+              onClick={() => { setInstr({ busy: true }); radarInstruire(b.bien_id)
+                .then((r) => setInstr({ busy: false, etat: r.etat, cands: r.candidates, motif: r.motif }))
+                .catch(() => setInstr({ busy: false, motif: 'échec — réessayer' })) }}
+              className="rounded-lg border border-amber/50 bg-amber/10 px-2.5 py-1.5 text-[11.5px] font-medium text-amber hover:bg-amber/20 disabled:opacity-60">
+              {instr.busy ? 'Instruction…' : 'Instruire cette annonce'}
+            </button>
+            {instr.cands && (
+              <div className="mt-2 flex flex-col gap-1">
+                {instr.cands.length === 0 && <span className="text-[11px] text-txt-dim">{instr.motif || 'aucune candidate'}</span>}
+                {instr.cands.map((c) => (
+                  <div key={c.idu} className="flex items-center justify-between rounded-md border border-line-2 px-2 py-1 text-[11px]">
+                    <span className="font-mono text-txt">{c.idu}</span>
+                    <span className="text-txt-dim">{c.distance_m != null ? `${Math.round(c.distance_m)} m` : ''}{c.surface_ecart_pct != null ? ` · surf ${c.surface_ecart_pct}%` : ''}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {!ratt && b.rattachement_etat !== 'piste' && (
+          <p className="text-[11px] leading-snug text-txt-dim">Bien non rattaché à une parcelle — la position servie est le quartier ; seul le lien vers la source est disponible.</p>
         )}
         {/* 7. Signaler + note de doctrine */}
         <div className="flex flex-col gap-2 pt-0.5">

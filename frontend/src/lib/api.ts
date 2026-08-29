@@ -1246,6 +1246,17 @@ export const radarDeposer = (lien: string, image_b64: string, media_type: string
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ lien, image_b64, media_type }),
   })
+// RADAR-HTML (Lot 1) — dépôt d'une page de résultats HTML (remplace la capture d'écran + vision).
+export interface RadarDepotHtml {
+  ok: boolean; erreur?: string; motif?: string
+  depot_id?: number; nb_annonces?: number; nb_nouvelles?: number; nb_maj?: number
+  nb_a_qualifier?: number; nb_hors_perimetre?: number; etats?: Record<string, number>; archive?: string
+}
+export const radarDeposerHtml = (html: string, nom_fichier: string | null) =>
+  j<RadarDepotHtml>('/admin/radar/deposer-html', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html, nom_fichier }),
+  })
 export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
   j<{ bien_id: number; statut: string; valide: boolean }>('/admin/radar/valider', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1273,6 +1284,9 @@ export interface RadarBienClient {
 }
 export interface RadarBienDetail extends RadarBienClient {
   historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
+  // RADAR-HTML (Lot 3) — état de rattachement + candidates de PISTE (servis au détail seulement).
+  rattachement_etat?: 'rattachee' | 'piste' | 'non_rattachee'
+  pistes?: RadarPiste[]
 }
 export interface RadarBiensRep { biens: RadarBienClient[]; n_total: number; n_rattaches: number; page: number; taille: number; tri: string }
 export interface RadarFiltres {
@@ -1298,6 +1312,11 @@ export const radarClic = (bien_id: number, annonce_id?: number | null) =>
   j<{ ok: boolean; clic_id: number }>('/radar/clic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, annonce_id: annonce_id ?? null }) })
 export const radarSignaler = (bien_id: number, motif = '') =>
   j<{ ok: boolean; event_id: number }>('/radar/signaler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, motif }) })
+// RADAR-HTML (Lot 3) — « Instruire cette annonce » : relance la cascade À LA DEMANDE sur une PISTE.
+export interface RadarPiste { idu: string; distance_m?: number; surface_m2?: number; surface_ecart_pct?: number | null; bati_m2?: number; confiance?: number }
+export const radarInstruire = (bien_id: number) =>
+  j<{ ok: boolean; bien_id: number; etat: string; candidates: RadarPiste[]; motif?: string | null }>(
+    '/radar/instruire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
 
 // ── RADAR (pige) · P6 D3 — onglet Marché (stats par commune, honnêteté statistique) ──
 export interface RadarMesure { valeur: number | null; n: number; insuffisant: boolean }
@@ -1308,6 +1327,18 @@ export interface RadarMarcheLigne {
 }
 export interface RadarMarche { communes: RadarMarcheLigne[]; ile: RadarMarcheLigne; seuil_n: number; corpus_total: number; corpus_actif: number }
 export const getRadarMarche = () => j<RadarMarche>('/radar/marche')
+// RADAR-HTML (Lot 4) — signaux croisés d'une commune (écart demandé/acté + annonces actives).
+export interface RadarEcart {
+  calculable: boolean; demande_eur_m2: number | null; n_demande: number
+  acte_eur_m2: number | null; n_acte: number; millesime_dvf: string | null
+  ecart_pct?: number; sens?: string; motif?: string
+}
+export interface RadarSignaux {
+  commune: string; actives: number
+  prix_m2_terrain: RadarMesure; prix_m2_bati: RadarMesure
+  ecart_demande_acte: { commune: string; terrain: RadarEcart; bati: RadarEcart }
+}
+export const getRadarSignaux = (commune: string) => j<RadarSignaux>(`/radar/signaux/${encodeURIComponent(commune)}`)
 
 // veille Radar (P4)
 export interface RadarVeille { id: number; commune: string | null; criteria: Record<string, unknown>; created_at: string | null }

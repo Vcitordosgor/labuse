@@ -5,8 +5,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getRadarCheck, getRadarExtraction, getRadarReverif, radarDeposer, radarPrix, radarRetiree,
-  radarToujoursEnLigne, radarValider, type RadarBrouillon,
+  getRadarCheck, getRadarExtraction, getRadarReverif, radarDeposer, radarDeposerHtml, radarPrix,
+  radarRetiree, radarToujoursEnLigne, radarValider, type RadarBrouillon, type RadarDepotHtml,
 } from '../../lib/api'
 import { Lbl, Chip } from './AdminView'
 
@@ -24,7 +24,67 @@ async function fileToB64(f: File): Promise<string> {
   return btoa(s)
 }
 
-// ── Zone 1 — Saisie du jour : dropzone + un lien par capture ──
+// ── Zone 0 — RADAR-HTML (Lot 1) : DÉPÔT D'UNE PAGE DE RÉSULTATS (remplace la capture + vision) ──
+// Vic enregistre la page de résultats du portail (Cmd+S, « page web complète ») et la dépose ici. Le
+// serveur parse le bloc structuré __NEXT_DATA__ : idempotent par annonce (re-dépôt = MAJ, jamais
+// doublon), échec BRUYANT si la structure a changé. Aucune requête portail — on lit un fichier déposé.
+function DepotHtml({ onDepose }: { onDepose: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [rap, setRap] = useState<RadarDepotHtml | null>(null)
+  const deposer = async (files: FileList | null) => {
+    const f = files?.[0]
+    if (!f) return
+    setBusy(true); setRap(null)
+    try {
+      const html = await f.text()
+      setRap(await radarDeposerHtml(html, f.name))
+      onDepose()
+    } catch {
+      setRap({ ok: false, motif: 'le dépôt a échoué (réseau ou serveur) — réessayer' })
+    } finally { setBusy(false) }
+  }
+  return (
+    <section className="rounded-xl border border-mint/40 bg-mint/5 p-4">
+      <div className="mb-1 flex items-center gap-2">
+        <Lbl>Dépôt du jour — page de résultats (HTML)</Lbl>
+        <Chip tone="ok">nouveau</Chip>
+      </div>
+      <p className="mb-3 text-[11.5px] leading-relaxed text-txt-mut">
+        Enregistrer la page de résultats du portail (<b>⌘S → « page web complète »</b>), puis la déposer.
+        Toutes les annonces de la page sont lues d’un coup ; re-déposer la même page ne crée aucun doublon.
+      </p>
+      <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-mint/50 bg-mint/10 px-3 py-2 text-[12px] font-medium text-mint hover:bg-mint/20 ${busy ? 'pointer-events-none opacity-60' : ''}`}>
+        <input data-radar-depot-html type="file" accept=".html,.htm,text/html" className="hidden"
+               onChange={(e) => deposer(e.target.files)} />
+        {busy ? 'Lecture de la page…' : '+ Déposer une page de résultats (.html)'}
+      </label>
+      {rap && !rap.ok && (
+        <div data-radar-depot-erreur className="mt-3 rounded-lg border border-st-ecartee/50 bg-st-ecartee/10 px-3 py-2 text-[11.5px] leading-relaxed text-st-ecartee">
+          <b>Dépôt refusé</b> — {rap.motif || 'structure inattendue'}. La page doit être enregistrée en
+          « page web complète » ; rien n’a été enregistré.
+        </div>
+      )}
+      {rap && rap.ok && (
+        <div data-radar-depot-ok className="mt-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11.5px] text-txt">
+          <b>{rap.nb_annonces} annonces lues</b> — {rap.nb_nouvelles} nouvelle{(rap.nb_nouvelles ?? 0) > 1 ? 's' : ''},
+          {' '}{rap.nb_maj} mise{(rap.nb_maj ?? 0) > 1 ? 's' : ''} à jour
+          {(rap.nb_a_qualifier ?? 0) > 0 && <>, <span className="text-st-attention">{rap.nb_a_qualifier} à qualifier</span></>}
+          {(rap.nb_hors_perimetre ?? 0) > 0 && <>, {rap.nb_hors_perimetre} hors périmètre</>}.
+          {rap.etats && (
+            <div className="mt-1 flex flex-wrap gap-1.5 text-[10.5px] text-txt-mut">
+              <span>rattachement :</span>
+              {Object.entries(rap.etats).map(([k, v]) => (
+                <span key={k} className="rounded bg-surface-3 px-1.5 py-0.5">{k.replace('_', ' ')} {v}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ── Zone 1 — Saisie du jour : dropzone + un lien par capture (chemin HISTORIQUE, remplacé par le HTML) ──
 // RETOURS-1 R7 (Vic) — le dépôt doit marcher POUR DE VRAI : label visible au-dessus du champ lien
 // (plus un placeholder gris seul), focus automatique dès qu'une capture est ajoutée, bordure
 // d'erreur + message clair si Déposer sans lien, bouton qui réagit (« Dépôt… »), et un échec
@@ -237,10 +297,18 @@ export function RadarSection() {
     <div className="flex flex-col gap-4">
       <p className="text-[12.5px] text-txt-mut">
         Faits extraits d’annonces publiques + lien vers la source. Aucune photo ni texte d’annonce n’est
-        stocké ni affiché — les captures restent des documents de travail privés.
+        stocké ni affiché — les pages déposées restent des documents de travail privés.
       </p>
-      <CapturesAlerte />
-      <Saisie onDepose={refresh} />
+      <DepotHtml onDepose={refresh} />
+      <details className="rounded-xl border border-line-2 bg-surface-2/50">
+        <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-txt-dim">
+          Saisie par capture d’écran (chemin historique — remplacé par le dépôt HTML)
+        </summary>
+        <div className="p-3 pt-0">
+          <CapturesAlerte />
+          <Saisie onDepose={refresh} />
+        </div>
+      </details>
       <Extraction />
       <Reverif />
       <Check />
