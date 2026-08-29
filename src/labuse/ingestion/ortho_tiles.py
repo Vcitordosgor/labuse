@@ -44,6 +44,32 @@ def _cfg() -> dict[str, Any]:
     return load_yaml_config("detection_ortho")["tuiles"]
 
 
+def ortho_png_parcelle(session: Session, idu: str, *, taille_px: int = 384, marge_m: int = 25) -> bytes | None:
+    """RATTACHEMENT-V2 (Lot 2) — vignette PNG ortho (BD ORTHO 20 cm IGN, EPSG:2975) cadrée sur la
+    parcelle `idu`, pour l'écran « Instruire » du Radar. Le paquet pige/ reste sans réseau (doctrine) :
+    la requête WMS vit ICI, dans l'ingestion imagerie qui utilise déjà la Géoplateforme. Ne lève jamais."""
+    r = session.execute(text(
+        "SELECT ST_XMin(g) x0, ST_YMin(g) y0, ST_XMax(g) x1, ST_YMax(g) y1 "
+        "FROM (SELECT ST_Envelope(ST_Buffer(geom_2975, :m)) g FROM parcels WHERE idu = :i) q"),
+        {"i": idu, "m": marge_m}).mappings().first()
+    if not r or r["x0"] is None:
+        return None
+    cfg = _cfg()
+    params = {
+        "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap", "LAYERS": cfg["wms_layer"],
+        "STYLES": "", "CRS": "EPSG:2975", "BBOX": f"{r['x0']},{r['y0']},{r['x1']},{r['y1']}",
+        "WIDTH": str(taille_px), "HEIGHT": str(taille_px), "FORMAT": "image/png",
+    }
+    try:
+        with httpx.Client(headers={"User-Agent": "labuse/radar-ortho"}) as cl:
+            resp = cl.get(cfg["wms_url"] + "/wms", params=params, timeout=30)
+        if resp.status_code == 200 and resp.headers.get("content-type", "").startswith("image"):
+            return resp.content
+    except httpx.HTTPError:
+        return None
+    return None
+
+
 def cache_dir() -> Path:
     p = Path(_cfg()["cache_dir"])
     p = p if p.is_absolute() else _repo_root() / p

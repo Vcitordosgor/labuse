@@ -86,21 +86,26 @@ def _ecrire_faits(db: Session, bien_id: int, rec: dict, *, insert: bool) -> None
 
 
 def _ecrire_bien(db: Session, bien_id: int, rec: dict, ratt: dict, motifs: list[str]) -> None:
-    """Met à jour la face BIEN (position + précision, état de rattachement, à-qualifier)."""
+    """Met à jour la face BIEN. Position + à-qualifier : toujours. RATTACHEMENT : seulement si le
+    client ne l'a PAS déjà tranché à la main (rattachement_humain) — son choix fait foi (Lot 2), une
+    republication ne l'écrase jamais."""
     db.execute(text(
-        """UPDATE pige_biens SET
-             type_bien = :t, est_copro = :copro, idu = :idu,
-             rattachement_niveau = :niv, rattachement_confiance = :conf,
-             rattachement_etat = :etat, rattachement_pistes = CAST(:pistes AS jsonb),
+        """UPDATE pige_biens SET type_bien = :t, est_copro = :copro,
              source_position = :srcpos, lat = :lat, lng = :lng, zipcode = :zip, district = :district,
              a_qualifier = :aq, a_qualifier_motifs = CAST(:motifs AS jsonb)
            WHERE bien_id = :b"""),
         {"b": bien_id, "t": rec.get("type"), "copro": rec.get("type") == "appartement",
-         "idu": ratt.get("idu"), "niv": ratt.get("niveau"), "conf": ratt.get("confiance"),
-         "etat": ratt.get("etat"), "pistes": json.dumps(ratt.get("pistes") or []),
          "srcpos": rec.get("source_position"), "lat": rec.get("lat"), "lng": rec.get("lng"),
          "zip": rec.get("zipcode"), "district": (rec.get("district") or None),
          "aq": bool(motifs), "motifs": json.dumps(motifs)})
+    db.execute(text(
+        """UPDATE pige_biens SET idu = :idu, rattachement_niveau = :niv, rattachement_confiance = :conf,
+             rattachement_etat = :etat, rattachement_pistes = CAST(:pistes AS jsonb),
+             rattachement_criteres = CAST(:crit AS jsonb)
+           WHERE bien_id = :b AND rattachement_humain = false"""),
+        {"b": bien_id, "idu": ratt.get("idu"), "niv": ratt.get("niveau"), "conf": ratt.get("confiance"),
+         "etat": ratt.get("etat"), "pistes": json.dumps(ratt.get("pistes") or []),
+         "crit": json.dumps(ratt.get("criteres") or [])})
 
 
 def _ingester_annonce(db: Session, rec: dict) -> str:
