@@ -36,7 +36,10 @@ _AGG = """
   count(*) FILTER (WHERE f.particulier_pro = 'particulier')                           AS particuliers,
   count(*) FILTER (WHERE f.particulier_pro IS NOT NULL)                               AS n_pp
 """
-_FROM = "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE f.valide_at IS NOT NULL"
+# RADAR-HTML (Lot 2/4) : les annonces À QUALIFIER (champs contradictoires) N'ENTRENT PAS dans les
+# statistiques — jamais un fait faux dans une médiane.
+_FROM = ("FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+         "WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false")
 _SQL_COMMUNE = f"SELECT b.commune, {_AGG} {_FROM} GROUP BY b.commune"
 _SQL_ILE = f"SELECT {_AGG} {_FROM}"
 

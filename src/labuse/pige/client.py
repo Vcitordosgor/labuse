@@ -63,7 +63,7 @@ def _where(filtres: dict) -> tuple[str, dict]:
 
 _SELECT = """
 SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
-       b.rattachement_niveau, b.rattachement_confiance,
+       b.rattachement_niveau, b.rattachement_confiance, b.rattachement_etat, b.rattachement_pistes,
        b.date_publication, b.date_premiere_saisie, b.date_derniere_confirmation,
        f.prix, f.pieces, f.surface_hab, f.surface_terrain, f.dpe_classe, f.dpe_conso, f.dpe_ges,
        f.particulier_pro, f.fraicheur_source, f.etiquettes,
@@ -137,8 +137,11 @@ def detail(db: Session, bien_id: int) -> dict | None:
         for h in db.execute(text(
             "SELECT date_constat, ancien_prix, nouveau_prix FROM pige_prix_historique "
             "WHERE bien_id = :b ORDER BY date_constat, id"), {"b": bien_id}).mappings()]
-    # Estimé : les candidates ne sont pas persistées (rattachement = décision au dépôt). On sert le
-    # niveau + la confiance servis ; si Estimé sans candidate stockée, l'UI le dit honnêtement.
+    # RADAR-HTML (Lot 3) — l'état de rattachement (rattachee|piste|non_rattachee) et les candidates
+    # de PISTE sont servis au DÉTAIL (la carte, elle, ne pinne que les rattachés — cf. _bien_row).
+    # C'est ce qui allume le bouton « Instruire cette annonce » sur une piste, sans automatisme.
+    bien["rattachement_etat"] = r["rattachement_etat"] or ("rattachee" if r["idu"] else "non_rattachee")
+    bien["pistes"] = r["rattachement_pistes"] or []
     return bien
 
 

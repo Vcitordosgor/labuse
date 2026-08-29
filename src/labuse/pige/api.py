@@ -28,6 +28,11 @@ class DeposerIn(BaseModel):
     media_type: str = "image/jpeg"
 
 
+class DeposerHtmlIn(BaseModel):
+    html: str
+    nom_fichier: str | None = None
+
+
 class ValiderIn(BaseModel):
     bien_id: int
     faits: dict = {}
@@ -54,6 +59,22 @@ def radar_deposer(body: DeposerIn, request: Request) -> dict:
         return {"statut": "echec_extraction", "motif": "image base64 illisible"}
     with session_scope() as db:
         return intake.deposer(db, image, body.media_type, body.lien.strip())
+
+
+@router.post("/admin/radar/deposer-html")
+def radar_deposer_html(body: DeposerHtmlIn, request: Request) -> dict:
+    """RADAR-HTML (Lot 1) — dépôt d'une PAGE DE RÉSULTATS HTML enregistrée par Vic (Cmd+S). Remplace la
+    capture d'écran + l'agent vision : la page porte les données structurées __NEXT_DATA__. Idempotent
+    par list_id (re-déposer ne duplique rien). Échoue BRUYAMMENT si __NEXT_DATA__ est absent/altéré."""
+    from ..api.auth import exiger_admin
+    from . import html_ingest, html_next
+    exiger_admin(request)
+    with session_scope() as db:
+        try:
+            return {"ok": True, **html_ingest.ingester(db, body.html, body.nom_fichier)}
+        except html_next.NextDataError as exc:
+            # échec bruyant, mais rendu proprement à l'écran admin (pas un 500 muet) — RIEN en base.
+            return {"ok": False, "erreur": "next_data", "motif": str(exc)}
 
 
 @router.post("/admin/radar/valider")
@@ -255,6 +276,46 @@ def radar_clic(body: ClicIn, request: Request) -> dict:
                                       bien_id=body.bien_id, annonce_id=body.annonce_id)
         db.commit()
     return {"ok": True, "clic_id": cid}
+
+
+@router.post("/radar/instruire")
+def radar_instruire(body: BienIn, request: Request) -> dict:
+    """RADAR-HTML (Lot 3) — « Instruire cette annonce » : relance la cascade de rattachement À LA
+    DEMANDE sur une annonce en PISTE et rend les candidates. GESTE client, jamais un automatisme —
+    une piste ne déclenche par elle-même ni courrier, ni « vendue », ni stat parcellaire."""
+    import json as _json
+
+    from sqlalchemy import text as _t
+
+    from . import rattachement_html
+    with session_scope() as db:
+        rec = db.execute(_t(
+            "SELECT b.bien_id, b.commune, b.type_bien AS type, b.est_copro, b.lat, b.lng, "
+            "       b.source_position, f.surface_terrain, f.surface_hab "
+            "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE b.bien_id = :b"),
+            {"b": body.bien_id}).mappings().first()
+        if not rec:
+            return {"ok": False, "motif": "bien inconnu"}
+        ratt = rattachement_html.rattacher(db, dict(rec))
+        # on ré-écrit UNIQUEMENT l'état/pistes de rattachement (jamais la position ni le statut : une
+        # piste ne déclenche aucun automatisme).
+        db.execute(_t(
+            "UPDATE pige_biens SET rattachement_etat = :e, rattachement_niveau = :n, idu = :idu, "
+            " rattachement_confiance = :c, rattachement_pistes = CAST(:p AS jsonb) WHERE bien_id = :b"),
+            {"e": ratt["etat"], "n": ratt["niveau"], "idu": ratt.get("idu"),
+             "c": ratt.get("confiance"), "p": _json.dumps(ratt.get("pistes") or []), "b": body.bien_id})
+        db.commit()
+    return {"ok": True, "bien_id": body.bien_id, "etat": ratt["etat"],
+            "candidates": ratt.get("pistes", []), "motif": ratt.get("motif")}
+
+
+@router.get("/radar/signaux/{commune}")
+def radar_signaux(commune: str, request: Request) -> dict:
+    """RADAR-HTML (Lot 4) — signaux croisés d'UNE commune : écart demandé/acté (terrain + bâti) et
+    annonces actives. Écarts CONSTATÉS entre deux sources datées, aucun verdict de valeur."""
+    from . import signaux
+    with session_scope() as db:
+        return signaux.annonces_actives_zone(db, commune)
 
 
 @router.post("/radar/signaler")

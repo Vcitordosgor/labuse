@@ -20,12 +20,16 @@ EV_VENDUE_DVF = "pige.vendue_dvf"
 EV_SIGNALEMENT = "pige.signalement_client"
 EV_DIGEST = "pige.digest_envoye"
 EV_INTAKE_VIDE_48H = "pige.intake_vide_48h"
+EV_DEPOT_HTML = "pige.depot_html"            # RADAR-HTML — un fichier de résultats déposé + ingéré
+EV_A_QUALIFIER = "pige.a_qualifier"          # RADAR-HTML — annonce incohérente écartée des stats/veilles
 EVENEMENTS = (EV_NOUVELLE, EV_BAISSE_PRIX, EV_STATUT_CHANGE, EV_VENDUE_DVF,
-              EV_SIGNALEMENT, EV_DIGEST, EV_INTAKE_VIDE_48H)
+              EV_SIGNALEMENT, EV_DIGEST, EV_INTAKE_VIDE_48H, EV_DEPOT_HTML, EV_A_QUALIFIER)
 
 # ── Vocabulaire fermé (jamais deviné) ──
 STATUTS = ("active", "en_vente_longue", "a_reverifier", "retiree", "vendue", "retiree_sans_vente")
 NIVEAUX_RATTACHEMENT = ("source", "estime", "absent")   # Sourcé / Estimé / Absent
+# RADAR-HTML (Lot 3) — les TROIS états de rattachement, orthogonaux au niveau Sourcé/Estimé/Absent.
+ETATS_RATTACHEMENT = ("rattachee", "piste", "non_rattachee")
 TYPES_BIEN = ("maison", "terrain", "immeuble", "appartement")
 
 
@@ -36,6 +40,14 @@ def captures_dir() -> Path:
     from ..config import get_settings
     d = os.environ.get("LABUSE_PIGE_CAPTURES_DIR") or get_settings().pige_captures_dir
     return Path(d)
+
+
+def depots_dir() -> Path:
+    """RADAR-HTML — répertoire PRIVÉ d'ARCHIVAGE des pages HTML déposées (traçabilité de la source).
+    Comme les captures, hors racine publique, jamais servi par le web. Sous-dossier `depots_html` du
+    répertoire des captures (même volume, mêmes droits) ; surchargé par LABUSE_PIGE_DEPOTS_DIR."""
+    d = os.environ.get("LABUSE_PIGE_DEPOTS_DIR")
+    return Path(d) if d else captures_dir() / "depots_html"
 
 
 def captures_dir_writable() -> tuple[bool, str]:
@@ -149,6 +161,60 @@ ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_le date;
 ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_valeur integer;
 ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_delai_j integer;
 ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS vendue_ecart_prix integer;
+
+-- ═══ RADAR-HTML — le chemin d'entrée devient le DÉPÔT d'une page de résultats HTML (Cmd+S) ═══
+-- Remplace la collecte par captures d'écran + agent vision. Voir docs/PIGE/MANDAT-PIGE-V0.md pour
+-- l'arbitrage (mesures du Lot 0 : rattachement fiable rare, 0/35 vraie nouveauté, 34/35 republications).
+
+-- Identité stable de l'annonce portail + dates de vérité (Lot 1/Lot 5).
+ALTER TABLE pige_annonces ADD COLUMN IF NOT EXISTS list_id bigint;                 -- clé d'idempotence
+ALTER TABLE pige_annonces ADD COLUMN IF NOT EXISTS first_publication_date timestamptz; -- FAIT FOI (nouveauté)
+ALTER TABLE pige_annonces ADD COLUMN IF NOT EXISTS index_date timestamptz;          -- republication SEULEMENT
+ALTER TABLE pige_annonces ADD COLUMN IF NOT EXISTS expiration_date timestamptz;
+ALTER TABLE pige_annonces ADD COLUMN IF NOT EXISTS statut_portail varchar(16);      -- active|... (portail)
+-- un list_id = une annonce (re-déposer le même fichier ne duplique jamais).
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pige_annonces_list_id ON pige_annonces (list_id) WHERE list_id IS NOT NULL;
+
+-- Position SERVIE + sa précision. location.source qualifie la précision : lisible PARTOUT où la
+-- position est utilisée (address = point HERE street-level, city = quartier flouté par-annonce).
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS source_position varchar(8);         -- address | city
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS lat double precision;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS lng double precision;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS zipcode varchar(5);
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS district varchar(160);              -- quartier servi
+-- Les TROIS états (Lot 3), orthogonaux au niveau Sourcé/Estimé/Absent. `rattachement_pistes` = les
+-- candidates quand l'état = piste (jamais un automatisme ne part d'une piste).
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS rattachement_etat varchar(14);      -- rattachee|piste|non_rattachee
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS rattachement_pistes jsonb NOT NULL DEFAULT '[]'::jsonb;
+-- À QUALIFIER (Lot 2) — champs qui se contredisent → hors stats ET hors veilles. Jamais un fait faux servi.
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS a_qualifier boolean NOT NULL DEFAULT false;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS a_qualifier_motifs jsonb NOT NULL DEFAULT '[]'::jsonb;
+CREATE INDEX IF NOT EXISTS ix_pige_biens_a_qualifier ON pige_biens (a_qualifier);
+
+-- Champs enrichis conservés MÊME inutilisés : ils ne coûtent rien à stocker et coûteraient une
+-- recollecte à récupérer (mandat Lot 1). `source_brute` = payload aplati intégral (traçabilité).
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS annee_construction integer;
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS etat_bien varchar(16);
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS taxe_fonciere integer;
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS prix_m2 integer;                    -- price_per_square_meter portail
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS chauffage varchar(20);
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS owner_siren varchar(14);
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS ges_classe varchar(2);   -- lettre GES (dpe_ges reste l'entier)
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS source_brute jsonb;
+
+-- pige_depots : chaque fichier HTML déposé, ARCHIVÉ tel quel (hash) + date de dépôt (traçabilité source).
+CREATE TABLE IF NOT EXISTS pige_depots (
+  id serial PRIMARY KEY,
+  nom_fichier text,
+  hash varchar(64) NOT NULL,                     -- sha256 du fichier (idempotence de l'archivage)
+  chemin_archive text NOT NULL,                  -- répertoire PRIVÉ, jamais servi par le web
+  nb_annonces integer,
+  nb_nouvelles integer,
+  nb_maj integer,
+  nb_a_qualifier integer,
+  date_depot timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ix_pige_depots_date ON pige_depots (date_depot);
 """
 
 

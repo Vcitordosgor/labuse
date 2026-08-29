@@ -8,6 +8,63 @@
 
 ---
 
+## AVENANT RADAR-HTML (29/08/2026) — la collecte passe de la CAPTURE au DÉPÔT DE PAGE HTML
+
+> Cet avenant **remplace** les étapes 2→4 du §1 (« Vic capture les vignettes → agent vision ») et le
+> §5 « File d'extraction ». Le reste (doctrines §2, cycle de vie, veilles, digests) tient. Il est écrit
+> pour qu'un futur lecteur **comprenne l'arbitrage sans le refaire**.
+
+**Pourquoi.** Une vérification du 29/08 a montré que la capture d'écran jette l'essentiel. Quand Vic
+enregistre une page de RÉSULTATS Leboncoin en « page web complète » (Cmd+S), le fichier porte un bloc
+`__NEXT_DATA__` où CHAQUE annonce est en JSON : prix, surfaces, `land_plot_surface`, type, DPE,
+`first_publication_date` / `index_date`, `location` (city/zip/district/lat/lng + **`source`**), owner
+(pro/private, siren)… La doctrine « collecte 100 % humaine » NE BOUGE PAS : le code ne requête jamais un
+portail — il parse un **fichier déposé par un humain**. L'agent vision quitte ce chemin.
+
+**Mesure du Lot 0 (échantillon `qa/radar-html/ECH-1.html`, Saint-Denis, 35 annonces) — ce qui a tranché :**
+
+| Mesure | Résultat | Conséquence produit |
+|---|---|---|
+| M1 rattachables | 17/35 (14 maisons, 3 terrains ; 18 apparts sans objet) | le rattachement ne concerne que la moitié du flux |
+| M2 `source=address` | **3/35**, et c'est du **street-level HERE**, pas rooftop (le point tombe dans *une* parcelle, pas toujours la bonne) | address ≠ parcelle exacte → on exige la cohérence de surface |
+| M2 `source=city` | 32/32 coords **distinctes** (jitter par annonce), mais > 150 m souvent | floutage local exploitable au rayon serré seulement |
+| M3 cascade 150 m + surface ±5 % | **5/17 candidate unique** ; au-delà de 150 m l'unicité s'effondre | rayon = 150 m |
+| M4 sincérité | sur 3 « uniques » vérifiés : 1 juste, 1 sur annonce à jeter, 1 **faux** (parcelle vide) | « unique ≠ juste » → corroboration bâti obligatoire |
+| M5 nouveautés | **0/35** `first_publication_date` = jour du dépôt ; **34/35 republications** | la date de vérité est `first_publication_date`, pas le tri « plus récentes » |
+
+**Arbitrage Vic (29/08) : « les deux à parts égales ».** Radar = flux de marché filtrable + veilles +
+digests + signaux croisés commune/zone (qui NE dépendent PAS du rattachement) **ET** rattachement
+automatique dès l'ingestion — mais l'automatisme reste soumis à la doctrine « jamais un fait faux
+servi » : RATTACHÉE seulement sur candidate unique **corroborée** (bâti présent pour un bâti), sinon
+PISTE. Rattachement fiable mesuré ≈ 2 sur 35 : le produit ne repose donc pas dessus, il repose sur les
+signaux de marché — c'est là qu'est le différenciateur (personne d'autre ne croise annonces × DVF ×
+référentiel terrain nu calibré à La Réunion).
+
+**Chemin d'entrée (remplace §1.2→4 et §5).**
+1. Vic enregistre la page de résultats (Cmd+S, « page web complète ») et la dépose (page admin Radar).
+2. `pige/html_next.py` parse `__NEXT_DATA__` — **échec BRUYANT** si absent/altéré/0 annonce (un parseur
+   qui renvoie zéro en silence est le pire des cas ; Leboncoin peut changer la structure sans prévenir).
+3. `pige/html_ingest.py` ingère : idempotent par `list_id` (re-dépôt = MAJ, jamais doublon), historise
+   chaque baisse de prix, conserve TOUS les champs (même inutilisés — recollecte coûteuse sinon),
+   ARCHIVE le fichier déposé + sa date (`pige_depots`, répertoire privé jamais servi).
+4. `pige/coherence.py` (Lot 2) : une annonce dont les champs se contredisent (un « terrain » à 12 pièces
+   de 1942, `habitable==terrain`, prix/m² > 4× le terrain nu de zone) part **À QUALIFIER** — hors stats,
+   hors veilles. Jamais un fait faux servi.
+5. `pige/rattachement_html.py` (Lot 3) : trois états — **RATTACHÉE** (unique corroborée / address dans
+   parcelle cohérente) · **PISTE** (plusieurs candidates, aucun automatisme, bouton « Instruire ») ·
+   **NON RATTACHÉE** (copro / sans critère, position = quartier, et c'est DIT).
+6. `pige/signaux.py` (Lot 4) : « prix affiché vs référentiel de zone » et « écart demandé/acté » par
+   commune (médiane Radar vs médiane DVF), alimentant l'Étude de zone et Communes. ÉCARTS constatés
+   entre deux sources datées, jamais une estimation ni une prévision, aucun verdict.
+7. Cycle de vie (Lot 5) inchangé SAUF : une republication (`index_date` bouge, `list_id` inchangé) est
+   une CONFIRMATION (repousse `a_reverifier`) ; à prix inférieur, une BAISSE. `vendue`/`retiree_sans_vente`
+   n'existent que sur une annonce RATTACHÉE, jamais une PISTE, jamais déduites d'un lien mort.
+
+> Le fichier historique du mandat s'appelle `MANDAT-RADAR-V0.md` (le mandat RADAR-HTML citait
+> `MANDAT-PIGE-V0.md` — même document ; corrigé ici).
+
+---
+
 ## 1. Vision produit (le contrat, en 8 étapes)
 
 1. Vic regarde les nouvelles annonces du jour sur les portails (Leboncoin, SeLoger, PAP, sites d'agences…) — en humain, avec ses recherches sauvegardées et alertes email de particulier.

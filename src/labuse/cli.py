@@ -2801,6 +2801,27 @@ def ingest_mairies_cmd() -> None:
                + (f" — absentes de l'annuaire : {', '.join(r['absentes'])}" if r["absentes"] else ""))
 
 
+@app.command("radar-depot-html")
+def radar_depot_html_cmd(
+    fichier: str = typer.Argument(..., help="page de résultats HTML enregistrée (Cmd+S, « page web complète »)"),
+) -> None:
+    """RADAR-HTML (Lot 1) — ingère une page de résultats HTML déposée (remplace capture/vision). Idempotent
+    par list_id. Échoue BRUYAMMENT si __NEXT_DATA__ est absent/altéré (jamais un « 0 annonce » silencieux)."""
+    from pathlib import Path
+
+    from .pige import html_ingest, html_next
+    html = Path(fichier).read_text(encoding="utf-8")
+    try:
+        with session_scope() as s:
+            r = html_ingest.ingester(s, html, Path(fichier).name)
+    except html_next.NextDataError as exc:
+        typer.echo(f"✗ ÉCHEC BRUYANT : {exc}")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"✓ Radar HTML : {r['nb_annonces']} annonces — {r['nb_nouvelles']} nouvelles, "
+               f"{r['nb_maj']} MAJ, {r['nb_a_qualifier']} à qualifier "
+               f"(rattachement : {r['etats']}) · archive {r['archive']}")
+
+
 @app.command("radar-cycle-quotidien")
 def radar_cycle_quotidien_cmd() -> None:
     """RADAR P5 — cycle de vie QUOTIDIEN (heure Réunion) : en_vente_longue (> 90 j publication) +
