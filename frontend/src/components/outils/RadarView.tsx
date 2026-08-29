@@ -3,10 +3,10 @@
 // LIGNE ROUGE (doctrine §2) : des FAITS et un LIEN, jamais le titre/texte/photo de l'annonce. Le
 // mauve est réservé à l'IA — il n'apparaît nulle part ici. Couleurs = source unique (mint/amber tokens).
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { getRadarBienDetail, getRadarBiens, radarClic, radarInstruire, radarSignaler,
-  type RadarBienClient, type RadarFiltres, type RadarPiste } from '../../lib/api'
+import { getRadarBienDetail, getRadarBiens, radarClic, radarInstruire, radarRattacherHumain, radarSignaler,
+  type RadarBienClient, type RadarCritere, type RadarFiltres, type RadarPiste } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { useApp } from '../../store/useApp'
 
@@ -104,10 +104,13 @@ function Tuile({ label, onClick, children }: { label: string; onClick: () => voi
 // ════════════ la fiche d'un bien — overlay flottant sur la carte (maquette écran 2) ════════════
 // T6 — desktop : overlay 398px à droite. mobile : plein écran (inset-0).
 function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () => void; mobile?: boolean }) {
+  const qc = useQueryClient()
   const { data: b, isError } = useQuery({ queryKey: ['radar-bien', bienId], queryFn: () => getRadarBienDetail(bienId) })
   const [signale, setSignale] = useState(false)
-  // RADAR-HTML (Lot 3) — « Instruire cette annonce » : relance la cascade À LA DEMANDE sur une PISTE.
-  const [instr, setInstr] = useState<{ busy: boolean; etat?: string; cands?: RadarPiste[]; motif?: string | null }>({ busy: false })
+  // RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire » : candidates enrichies (ortho + critères) ; le
+  // client tranche via l'ortho (rattachement humain, fait foi).
+  const [instr, setInstr] = useState<{ busy: boolean; cands?: RadarPiste[]; motif?: string | null }>({ busy: false })
+  const [choix, setChoix] = useState<{ busy: boolean; idu?: string }>({ busy: false })
   const st = useApp.getState
   const cadre = mobile
     ? 'absolute inset-0 z-40 flex flex-col overflow-hidden border-line-2 bg-surface-1'
@@ -219,12 +222,23 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
         {ratt && idu && (
           <>
             <div>
-              <div className="mb-1.5 font-mono text-[10px] tracking-[0.2em] text-txt-mut">PARCELLE RATTACHÉE</div>
+              <div className="mb-1.5 flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-txt-mut">
+                PARCELLE RATTACHÉE
+                {b.rattachement_humain && <span className="rounded bg-mint/15 px-1.5 py-0.5 tracking-normal text-mint">tranché à la main</span>}
+              </div>
               <div className="grid grid-cols-[1fr_auto] items-center gap-x-2.5 rounded-xl border border-mint/30 bg-mint/[0.05] px-3 py-2.5">
                 <span className="font-mono text-[12.5px] text-mint">{idu}</span>
                 <button data-radar-parcelle onClick={() => { const s = st(); if (b.coords) s.setFlyTo({ center: b.coords as [number, number], zoom: 17 }); s.setView('cartes'); s.select(idu) }}
                   className="whitespace-nowrap rounded-lg border border-line-2 px-2.5 py-1.5 text-[11.5px] text-txt-mut hover:text-txt">Ouvrir la fiche parcelle →</button>
               </div>
+              {/* RATTACHEMENT-V2 — POURQUOI cette parcelle tient : les critères indépendants qui ont convergé. */}
+              {b.rattachement_criteres && b.rattachement_criteres.length > 0 && (
+                <ul className="mt-1.5 flex flex-col gap-0.5 text-[10.5px] leading-snug text-txt-dim">
+                  {b.rattachement_criteres.map((c: RadarCritere, i: number) => (
+                    <li key={i}>✓ <span className="text-txt-mut">{c.critere}</span> — {c.valeur}</li>
+                  ))}
+                </ul>
+              )}
             </div>
             <div>
               <div className="mb-1.5 font-mono text-[10px] tracking-[0.2em] text-txt-mut">ÉTUDIER CE BIEN</div>
@@ -245,18 +259,43 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             </p>
             <button data-radar-instruire disabled={instr.busy}
               onClick={() => { setInstr({ busy: true }); radarInstruire(b.bien_id)
-                .then((r) => setInstr({ busy: false, etat: r.etat, cands: r.candidates, motif: r.motif }))
+                .then((r) => setInstr({ busy: false, cands: r.candidates, motif: r.motif }))
                 .catch(() => setInstr({ busy: false, motif: 'échec — réessayer' })) }}
               className="rounded-lg border border-amber/50 bg-amber/10 px-2.5 py-1.5 text-[11.5px] font-medium text-amber hover:bg-amber/20 disabled:opacity-60">
               {instr.busy ? 'Instruction…' : 'Instruire cette annonce'}
             </button>
             {instr.cands && (
-              <div className="mt-2 flex flex-col gap-1">
-                {instr.cands.length === 0 && <span className="text-[11px] text-txt-dim">{instr.motif || 'aucune candidate'}</span>}
+              <div className="mt-2.5 flex flex-col gap-2">
+                {instr.cands.length === 0 && <span className="text-[11px] text-txt-dim">{instr.motif || 'aucune candidate exploitable'}</span>}
+                {/* RATTACHEMENT-V2 (Lot 2) — chaque candidate : sa VUE ORTHO + ses critères (✓ convergent /
+                    ✗ divergent). Le client compare les toits avec les photos de l'annonce et tranche. */}
                 {instr.cands.map((c) => (
-                  <div key={c.idu} className="flex items-center justify-between rounded-md border border-line-2 px-2 py-1 text-[11px]">
-                    <span className="font-mono text-txt">{c.idu}</span>
-                    <span className="text-txt-dim">{c.distance_m != null ? `${Math.round(c.distance_m)} m` : ''}{c.surface_ecart_pct != null ? ` · surf ${c.surface_ecart_pct}%` : ''}</span>
+                  <div key={c.idu} data-radar-candidate className="overflow-hidden rounded-xl border border-line-2 bg-surface-2">
+                    <div className="grid grid-cols-[96px_1fr]">
+                      {c.ortho_url
+                        ? <img src={c.ortho_url} alt={`ortho ${c.idu}`} className="h-24 w-24 object-cover" loading="lazy" />
+                        : <div className="flex h-24 w-24 items-center justify-center bg-surface-3 text-[9px] text-txt-dim">ortho indispo.</div>}
+                      <div className="min-w-0 px-2.5 py-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-[11px] text-txt">{c.idu}</span>
+                          <span className="text-[10px] text-txt-dim">{c.distance_m != null ? `${Math.round(c.distance_m)} m` : ''}</span>
+                        </div>
+                        <ul className="mt-1 flex flex-col gap-0.5 text-[10px] leading-snug">
+                          {(c.criteres_detail ?? []).map((x: RadarCritere, i: number) => (
+                            <li key={i} className={x.converge ? 'text-mint' : 'text-txt-dim'}>
+                              {x.converge ? '✓' : '✗'} <span className="text-txt-mut">{x.critere}</span> {x.valeur}
+                            </li>
+                          ))}
+                        </ul>
+                        <button data-radar-choisir disabled={choix.busy}
+                          onClick={() => { setChoix({ busy: true, idu: c.idu }); radarRattacherHumain(b.bien_id, c.idu)
+                            .then(() => { setChoix({ busy: false }); qc.invalidateQueries({ queryKey: ['radar-bien', bienId] }); qc.invalidateQueries({ queryKey: ['radar-biens'] }) })
+                            .catch(() => setChoix({ busy: false })) }}
+                          className="mt-1.5 rounded-md border border-mint/50 bg-mint/10 px-2 py-1 text-[10.5px] font-medium text-mint hover:bg-mint/20 disabled:opacity-60">
+                          {choix.busy && choix.idu === c.idu ? 'Enregistrement…' : "C'est cette parcelle"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
