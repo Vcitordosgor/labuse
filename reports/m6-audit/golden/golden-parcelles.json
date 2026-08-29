@@ -1,15 +1,15 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8000",
-  "genere_le": "2026-08-20T15:52:33",
+  "genere_le": "2026-08-29T00:59:36",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 119,
-  "run_cascade": "q_v10_m129",
-  "run_v2_servi": "q_v10_m129",
+  "run_cascade": "q_v11_m137",
+  "run_v2_servi": "q_v11_m137",
   "tiers_effectifs": {
-   "a_creuser": 136763,
-   "brulante": 82,
-   "chaude": 1525,
+   "a_creuser": 136841,
+   "brulante": 111,
+   "chaude": 1367,
    "declasse_au_fermee": 245,
    "declasse_au_statut_inconnu": 900,
    "declasse_bati_revele": 5475,
@@ -17,7 +17,7 @@
    "declasse_non_constructible": 6178,
    "declasse_zone_fermee": 2809,
    "ecartee": 145882,
-   "reserve_fonciere": 8738
+   "reserve_fonciere": 8789
   },
   "tolerances": {
    "canopee_pct": 2.0,
@@ -123,7 +123,7 @@
      "mult_base": 0.52,
      "percentile": 7.81,
      "rang": 394795,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -301,7 +301,7 @@
      "mult_base": 0.52,
      "percentile": 7.57,
      "rang": 395807,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -474,7 +474,7 @@
      "mult_base": 0.67,
      "percentile": 23.16,
      "rang": 329077,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_zone_fermee"
     }
    },
@@ -638,7 +638,7 @@
       }
      },
      "surface_m2": 113,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -646,7 +646,7 @@
      "mult_base": 1.17,
      "percentile": 72.88,
      "rang": 116122,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -710,7 +710,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -806,7 +806,7 @@
       }
      },
      "surface_m2": 435,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -814,7 +814,7 @@
      "mult_base": 1.32,
      "percentile": 86.36,
      "rang": 58433,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -882,7 +882,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -978,7 +978,7 @@
       }
      },
      "surface_m2": 735,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -986,7 +986,7 @@
      "mult_base": 1.0,
      "percentile": 59.71,
      "rang": 172549,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -1050,7 +1050,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -1146,7 +1146,7 @@
       }
      },
      "surface_m2": 178,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -1154,7 +1154,7 @@
      "mult_base": 1.83,
      "percentile": 94.56,
      "rang": 23300,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -1221,7 +1221,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -1317,7 +1317,7 @@
       }
      },
      "surface_m2": 71,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -1325,7 +1325,7 @@
      "mult_base": 1.66,
      "percentile": 91.88,
      "rang": 34771,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -1392,7 +1392,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -1489,7 +1489,7 @@
       }
      },
      "surface_m2": 411,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -1497,7 +1497,7 @@
      "mult_base": 1.32,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -1565,7 +1565,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -1654,7 +1654,7 @@
       }
      },
      "surface_m2": 1317,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -1662,7 +1662,7 @@
      "mult_base": 0.85,
      "percentile": 37.19,
      "rang": 268958,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_revele"
     }
    },
@@ -1726,7 +1726,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -1822,7 +1822,7 @@
       }
      },
      "surface_m2": 380,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -1830,7 +1830,7 @@
      "mult_base": 0.93,
      "percentile": 52.33,
      "rang": 204153,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -1898,7 +1898,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -1994,7 +1994,7 @@
       }
      },
      "surface_m2": 375,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -2002,7 +2002,7 @@
      "mult_base": 0.81,
      "percentile": 31.55,
      "rang": 293110,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -2070,7 +2070,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -2160,7 +2160,7 @@
       }
      },
      "surface_m2": 4804,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -2168,7 +2168,7 @@
      "mult_base": 7.13,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_sature"
     }
    },
@@ -2246,7 +2246,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -2343,7 +2343,7 @@
      "mult_base": 0.85,
      "percentile": 42.95,
      "rang": 244323,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -2513,7 +2513,7 @@
      "mult_base": 0.93,
      "percentile": 58.42,
      "rang": 178058,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -2683,7 +2683,7 @@
      "mult_base": 0.42,
      "percentile": 0.64,
      "rang": 425500,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -2852,7 +2852,7 @@
      "mult_base": 0.43,
      "percentile": 3.44,
      "rang": 413527,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -3020,7 +3020,7 @@
       }
      },
      "surface_m2": 10985,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": true,
@@ -3028,7 +3028,7 @@
      "mult_base": 0.93,
      "percentile": 48.1,
      "rang": 222246,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -3106,7 +3106,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -3195,7 +3195,7 @@
       }
      },
      "surface_m2": 735,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -3203,7 +3203,7 @@
      "mult_base": 1.32,
      "percentile": 86.93,
      "rang": 55951,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_sature"
     }
    },
@@ -3278,7 +3278,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -3375,7 +3375,7 @@
      "mult_base": 0.54,
      "percentile": 18.46,
      "rang": 349166,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -3544,7 +3544,7 @@
      "mult_base": 0.67,
      "percentile": 24.22,
      "rang": 324532,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -3709,7 +3709,7 @@
       }
      },
      "surface_m2": 298,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -3717,7 +3717,7 @@
      "mult_base": 7.13,
      "percentile": 99.97,
      "rang": 134,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "brulante"
     }
    },
@@ -3784,7 +3784,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -3873,7 +3873,7 @@
       }
      },
      "surface_m2": 140,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -3881,7 +3881,7 @@
      "mult_base": 7.13,
      "percentile": 99.96,
      "rang": 182,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_non_constructible"
     }
    },
@@ -3948,7 +3948,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -4045,7 +4045,7 @@
      "mult_base": 0.43,
      "percentile": 3.93,
      "rang": 411394,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -4213,7 +4213,7 @@
       }
      },
      "surface_m2": 2825,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -4221,7 +4221,7 @@
      "mult_base": 0.85,
      "percentile": 36.83,
      "rang": 270532,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -4285,7 +4285,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -4374,7 +4374,7 @@
       }
      },
      "surface_m2": 1439,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -4382,7 +4382,7 @@
      "mult_base": 0.92,
      "percentile": 45.72,
      "rang": 232452,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -4455,7 +4455,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -4552,7 +4552,7 @@
      "mult_base": 1.0,
      "percentile": 65.38,
      "rang": 148273,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -4728,7 +4728,7 @@
      "mult_base": 0.7,
      "percentile": 25.77,
      "rang": 317898,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -4896,7 +4896,7 @@
      "mult_base": 0.83,
      "percentile": 35.66,
      "rang": 275520,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -5061,7 +5061,7 @@
       }
      },
      "surface_m2": 344,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -5069,7 +5069,7 @@
      "mult_base": 13.15,
      "percentile": 99.98,
      "rang": 84,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "chaude"
     }
    },
@@ -5140,7 +5140,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -5237,7 +5237,7 @@
      "mult_base": 0.52,
      "percentile": 5.79,
      "rang": 403425,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -5409,7 +5409,7 @@
       }
      },
      "surface_m2": 69,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": true,
@@ -5417,7 +5417,7 @@
      "mult_base": 1.32,
      "percentile": 87.38,
      "rang": 54040,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -5490,7 +5490,7 @@
     },
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -5579,7 +5579,7 @@
       }
      },
      "surface_m2": 152,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -5587,7 +5587,7 @@
      "mult_base": 5.88,
      "percentile": 99.85,
      "rang": 649,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_non_constructible"
     }
    },
@@ -5655,7 +5655,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -5751,7 +5751,7 @@
       }
      },
      "surface_m2": 1706,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -5759,7 +5759,7 @@
      "mult_base": 1.66,
      "percentile": 91.37,
      "rang": 36939,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -5837,7 +5837,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -5926,7 +5926,7 @@
       }
      },
      "surface_m2": 405,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -5934,7 +5934,7 @@
      "mult_base": 1.32,
      "percentile": 88.06,
      "rang": 51135,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -6008,7 +6008,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -6097,7 +6097,7 @@
       }
      },
      "surface_m2": 4923,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -6105,7 +6105,7 @@
      "mult_base": 0.84,
      "percentile": 36.54,
      "rang": 271741,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_zone_fermee"
     }
    },
@@ -6184,7 +6184,7 @@
      "vue": "partielle"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -6273,7 +6273,7 @@
       }
      },
      "surface_m2": 683,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": true,
@@ -6281,7 +6281,7 @@
      "mult_base": 5.88,
      "percentile": 99.83,
      "rang": 749,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_non_constructible"
     }
    },
@@ -6354,7 +6354,7 @@
     },
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -6451,7 +6451,7 @@
      "mult_base": 0.54,
      "percentile": 13.32,
      "rang": 371194,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -6621,7 +6621,7 @@
      "mult_base": 1.2,
      "percentile": 78.87,
      "rang": 90504,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -6790,7 +6790,7 @@
       }
      },
      "surface_m2": 3462,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -6798,7 +6798,7 @@
      "mult_base": 0.92,
      "percentile": 45.46,
      "rang": 233566,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "reserve_fonciere"
     }
    },
@@ -6866,7 +6866,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -6962,7 +6962,7 @@
       }
      },
      "surface_m2": 426,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -6970,7 +6970,7 @@
      "mult_base": 64.36,
      "percentile": 100.0,
      "rang": 3,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "chaude"
     }
    },
@@ -7044,7 +7044,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -7076,7 +7076,7 @@
       "declasse": false,
       "exception_registre": false,
       "fraction": "1/2",
-      "label": "À suivre",
+      "label": "Priorité",
       "motif": null,
       "mult_base": 64.36,
       "percentile": 100.0,
@@ -7124,7 +7124,7 @@
       ],
       "rang": 1,
       "rang_total": 428239,
-      "tier": "chaude",
+      "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
        "frequence": {
@@ -7132,7 +7132,7 @@
         "fenetre": "2 ans",
         "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
         "sous_moyenne": false,
-        "sur_100": 9
+        "sur_100": 20
        },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
@@ -7140,7 +7140,7 @@
       }
      },
      "surface_m2": 382,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -7148,8 +7148,8 @@
      "mult_base": 64.36,
      "percentile": 100.0,
      "rang": 1,
-     "run_id": "q_v10_m129",
-     "tier": "chaude"
+     "run_id": "q_v11_m137",
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -7204,7 +7204,7 @@
      "mult_base": 64.36,
      "percentile": 100.0,
      "rang": 1,
-     "tier": "chaude"
+     "tier": "brulante"
     },
     "section": "AP",
     "solaire": {
@@ -7219,7 +7219,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -7316,7 +7316,7 @@
      "mult_base": 0.42,
      "percentile": 1.32,
      "rang": 422597,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -7492,7 +7492,7 @@
       }
      },
      "surface_m2": 36,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -7500,7 +7500,7 @@
      "mult_base": 1.0,
      "percentile": 66.18,
      "rang": 144825,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -7579,7 +7579,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -7675,7 +7675,7 @@
       }
      },
      "surface_m2": 438,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -7683,7 +7683,7 @@
      "mult_base": 13.15,
      "percentile": 100.0,
      "rang": 19,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "brulante"
     }
    },
@@ -7760,7 +7760,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -7856,7 +7856,7 @@
       }
      },
      "surface_m2": 2599,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -7864,7 +7864,7 @@
      "mult_base": 0.85,
      "percentile": 38.02,
      "rang": 265430,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "reserve_fonciere"
     }
    },
@@ -7941,7 +7941,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -8038,7 +8038,7 @@
      "mult_base": 0.52,
      "percentile": 8.32,
      "rang": 392600,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -8208,7 +8208,7 @@
       }
      },
      "surface_m2": 368,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -8216,7 +8216,7 @@
      "mult_base": 0.93,
      "percentile": 53.26,
      "rang": 200140,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -8286,7 +8286,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -8375,7 +8375,7 @@
       }
      },
      "surface_m2": 300,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": true,
@@ -8383,7 +8383,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 10,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_au_statut_inconnu"
     }
    },
@@ -8396,7 +8396,7 @@
      "numero": "20",
      "voie": "Rue des Eaux Vives"
     },
-    "cascade_status": "opportunite",
+    "cascade_status": "a_creuser",
     "commune": "Saint-Benoît",
     "completeness_score": 92,
     "copro_rnic": {
@@ -8464,7 +8464,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -8553,7 +8553,7 @@
       }
      },
      "surface_m2": 477,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": true,
@@ -8561,7 +8561,7 @@
      "mult_base": 13.15,
      "percentile": 99.98,
      "rang": 73,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_au_statut_inconnu"
     }
    },
@@ -8574,7 +8574,7 @@
      "numero": "2",
      "voie": "Rue des Eaux Vives"
     },
-    "cascade_status": "opportunite",
+    "cascade_status": "a_creuser",
     "commune": "Saint-Benoît",
     "completeness_score": 92,
     "copro_rnic": {
@@ -8642,7 +8642,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -8731,7 +8731,7 @@
       }
      },
      "surface_m2": 334,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -8739,7 +8739,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 6,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_au_statut_inconnu"
     }
    },
@@ -8810,7 +8810,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -8899,7 +8899,7 @@
       }
      },
      "surface_m2": 499,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -8907,7 +8907,7 @@
      "mult_base": 3.43,
      "percentile": 99.22,
      "rang": 3355,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_au_statut_inconnu"
     }
    },
@@ -8978,7 +8978,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -9067,7 +9067,7 @@
       }
      },
      "surface_m2": 14856,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -9075,7 +9075,7 @@
      "mult_base": 0.54,
      "percentile": 17.6,
      "rang": 352860,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -9154,7 +9154,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -9243,7 +9243,7 @@
       }
      },
      "surface_m2": 4039,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -9251,7 +9251,7 @@
      "mult_base": 0.54,
      "percentile": 16.76,
      "rang": 356483,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -9325,7 +9325,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -9415,7 +9415,7 @@
       }
      },
      "surface_m2": 439,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -9423,7 +9423,7 @@
      "mult_base": 1.66,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_sature"
     }
    },
@@ -9497,7 +9497,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -9586,7 +9586,7 @@
       }
      },
      "surface_m2": 7483,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -9594,7 +9594,7 @@
      "mult_base": 0.85,
      "percentile": 39.87,
      "rang": 257511,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -9667,7 +9667,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -9763,7 +9763,7 @@
       }
      },
      "surface_m2": 3214,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -9771,7 +9771,7 @@
      "mult_base": 0.85,
      "percentile": 42.04,
      "rang": 248187,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "reserve_fonciere"
     }
    },
@@ -9838,7 +9838,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -9934,7 +9934,7 @@
       }
      },
      "surface_m2": 300,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -9942,7 +9942,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 5,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "brulante"
     }
    },
@@ -10013,7 +10013,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -10110,7 +10110,7 @@
      "mult_base": 0.54,
      "percentile": 11.85,
      "rang": 377492,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -10289,7 +10289,7 @@
      "mult_base": 0.43,
      "percentile": 2.3,
      "rang": 418389,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -10469,7 +10469,7 @@
      "mult_base": 13.15,
      "percentile": 99.99,
      "rang": 29,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "brulante"
     }
    },
@@ -10625,7 +10625,7 @@
       }
      },
      "surface_m2": 265,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -10633,7 +10633,7 @@
      "mult_base": 1.3,
      "percentile": 83.69,
      "rang": 69843,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -10702,7 +10702,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -10799,7 +10799,7 @@
      "mult_base": 0.71,
      "percentile": 27.34,
      "rang": 311161,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -10965,7 +10965,7 @@
       }
      },
      "surface_m2": 337,
-     "zonage_detail": "Zone PLU « AU » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AU » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -10973,7 +10973,7 @@
      "mult_base": 7.13,
      "percentile": 99.97,
      "rang": 133,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "brulante"
     }
    },
@@ -11047,7 +11047,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « AU » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AU » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AU"
     }
@@ -11136,7 +11136,7 @@
       }
      },
      "surface_m2": 147,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -11144,7 +11144,7 @@
      "mult_base": 7.13,
      "percentile": 99.96,
      "rang": 174,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_non_constructible"
     }
    },
@@ -11211,7 +11211,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -11307,7 +11307,7 @@
       }
      },
      "surface_m2": 581,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -11315,7 +11315,7 @@
      "mult_base": 2.65,
      "percentile": 98.84,
      "rang": 4955,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -11390,7 +11390,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -11489,7 +11489,7 @@
       }
      },
      "surface_m2": 687,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -11497,7 +11497,7 @@
      "mult_base": 1.32,
      "percentile": 87.37,
      "rang": 54097,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -11569,7 +11569,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -11665,7 +11665,7 @@
       }
      },
      "surface_m2": 5035,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -11673,7 +11673,7 @@
      "mult_base": 1.83,
      "percentile": 94.11,
      "rang": 25228,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -11748,7 +11748,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -11837,7 +11837,7 @@
       }
      },
      "surface_m2": 162,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -11845,7 +11845,7 @@
      "mult_base": 0.93,
      "percentile": 52.48,
      "rang": 203484,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -11914,7 +11914,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -12011,7 +12011,7 @@
      "mult_base": 13.15,
      "percentile": 99.98,
      "rang": 89,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_revele"
     }
    },
@@ -12169,7 +12169,7 @@
       }
      },
      "surface_m2": 194,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -12177,7 +12177,7 @@
      "mult_base": 0.93,
      "percentile": 47.64,
      "rang": 224240,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_non_constructible"
     }
    },
@@ -12248,7 +12248,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -12344,7 +12344,7 @@
       }
      },
      "surface_m2": 1815,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -12352,7 +12352,7 @@
      "mult_base": 5.05,
      "percentile": 99.65,
      "rang": 1517,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "chaude"
     }
    },
@@ -12361,7 +12361,7 @@
     "a_completude": null,
     "a_score": null,
     "adresse_ban": null,
-    "cascade_status": "opportunite",
+    "cascade_status": "a_creuser",
     "commune": "Saint-Paul",
     "completeness_score": 92,
     "copro_rnic": {
@@ -12426,7 +12426,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -12523,7 +12523,7 @@
      "mult_base": 0.7,
      "percentile": 24.92,
      "rang": 321540,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -12693,7 +12693,7 @@
      "mult_base": 0.43,
      "percentile": 4.72,
      "rang": 408035,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -12861,7 +12861,7 @@
       }
      },
      "surface_m2": 2750,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -12869,7 +12869,7 @@
      "mult_base": 0.92,
      "percentile": 45.54,
      "rang": 233215,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "reserve_fonciere"
     }
    },
@@ -12933,7 +12933,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -13030,7 +13030,7 @@
      "mult_base": 15.54,
      "percentile": 100.0,
      "rang": 17,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_non_constructible"
     }
    },
@@ -13133,7 +13133,7 @@
       "declasse": false,
       "exception_registre": false,
       "fraction": "1/5",
-      "label": "À suivre",
+      "label": "Priorité",
       "motif": null,
       "mult_base": 13.15,
       "percentile": 99.99,
@@ -13181,7 +13181,7 @@
       ],
       "rang": 57,
       "rang_total": 428239,
-      "tier": "chaude",
+      "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
        "frequence": {
@@ -13189,7 +13189,7 @@
         "fenetre": "2 ans",
         "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
         "sous_moyenne": false,
-        "sur_100": 9
+        "sur_100": 20
        },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
@@ -13197,7 +13197,7 @@
       }
      },
      "surface_m2": 608,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -13205,8 +13205,8 @@
      "mult_base": 13.15,
      "percentile": 99.99,
      "rang": 57,
-     "run_id": "q_v10_m129",
-     "tier": "chaude"
+     "run_id": "q_v11_m137",
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -13261,7 +13261,7 @@
      "mult_base": 13.15,
      "percentile": 100.0,
      "rang": 57,
-     "tier": "chaude"
+     "tier": "brulante"
     },
     "section": "CX",
     "solaire": {
@@ -13276,7 +13276,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -13365,7 +13365,7 @@
       }
      },
      "surface_m2": 943,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -13373,7 +13373,7 @@
      "mult_base": 3.25,
      "percentile": 99.14,
      "rang": 3693,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_sature"
     }
    },
@@ -13451,7 +13451,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -13547,7 +13547,7 @@
       }
      },
      "surface_m2": 1352,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -13555,7 +13555,7 @@
      "mult_base": 0.92,
      "percentile": 45.93,
      "rang": 231570,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "reserve_fonciere"
     }
    },
@@ -13630,7 +13630,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -13727,7 +13727,7 @@
      "mult_base": 0.54,
      "percentile": 17.41,
      "rang": 353682,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -13890,7 +13890,7 @@
      "mult_base": 0.54,
      "percentile": 17.42,
      "rang": 353657,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -14050,7 +14050,7 @@
       }
      },
      "surface_m2": 95,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -14058,7 +14058,7 @@
      "mult_base": 1.17,
      "percentile": 73.14,
      "rang": 115024,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_sature"
     }
    },
@@ -14122,7 +14122,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -14211,7 +14211,7 @@
       }
      },
      "surface_m2": 3562,
-     "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUs » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -14219,7 +14219,7 @@
      "mult_base": 0.81,
      "percentile": 34.39,
      "rang": 280955,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_revele"
     }
    },
@@ -14290,7 +14290,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUs » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUs"
     }
@@ -14379,7 +14379,7 @@
       }
      },
      "surface_m2": 345,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -14387,7 +14387,7 @@
      "mult_base": 13.15,
      "percentile": 100.0,
      "rang": 20,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_revele"
     }
    },
@@ -14454,7 +14454,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -14551,7 +14551,7 @@
      "mult_base": 0.52,
      "percentile": 5.51,
      "rang": 404628,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -14724,7 +14724,7 @@
      "mult_base": 0.52,
      "percentile": 5.51,
      "rang": 404663,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -14902,7 +14902,7 @@
      "mult_base": 5.88,
      "percentile": 99.79,
      "rang": 882,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -15073,7 +15073,7 @@
       }
      },
      "surface_m2": 628,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -15081,7 +15081,7 @@
      "mult_base": 1.17,
      "percentile": 74.67,
      "rang": 108463,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -15156,7 +15156,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -15260,7 +15260,7 @@
      "mult_base": 2.65,
      "percentile": 98.95,
      "rang": 4518,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -15436,7 +15436,7 @@
       }
      },
      "surface_m2": 253,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -15444,7 +15444,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 7,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "brulante"
     }
    },
@@ -15457,7 +15457,7 @@
      "numero": "228",
      "voie": "Chemin Belle Vue sur Mer"
     },
-    "cascade_status": "opportunite",
+    "cascade_status": "a_creuser",
     "commune": "Sainte-Marie",
     "completeness_score": 92,
     "copro_rnic": {
@@ -15518,7 +15518,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -15614,7 +15614,7 @@
       }
      },
      "surface_m2": 314,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -15622,7 +15622,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 14,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "chaude"
     }
    },
@@ -15693,7 +15693,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -15782,7 +15782,7 @@
       }
      },
      "surface_m2": 110,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -15790,7 +15790,7 @@
      "mult_base": 1.17,
      "percentile": 70.64,
      "rang": 125717,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -15863,7 +15863,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -15952,7 +15952,7 @@
       }
      },
      "surface_m2": 43,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -15960,7 +15960,7 @@
      "mult_base": 0.81,
      "percentile": 31.23,
      "rang": 294507,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -16030,7 +16030,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -16127,7 +16127,7 @@
      "mult_base": 0.54,
      "percentile": 17.29,
      "rang": 354185,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -16297,7 +16297,7 @@
       }
      },
      "surface_m2": 1452,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -16305,7 +16305,7 @@
      "mult_base": 0.93,
      "percentile": 47.84,
      "rang": 223384,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -16377,7 +16377,7 @@
      "vue": "non"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -16466,7 +16466,7 @@
       }
      },
      "surface_m2": 23577,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -16474,7 +16474,7 @@
      "mult_base": 0.81,
      "percentile": 29.84,
      "rang": 300447,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -16554,7 +16554,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -16651,7 +16651,7 @@
      "mult_base": 0.52,
      "percentile": 9.67,
      "rang": 386821,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -16750,7 +16750,7 @@
       "declasse": false,
       "exception_registre": false,
       "fraction": "1/5",
-      "label": "À suivre",
+      "label": "Priorité",
       "motif": null,
       "mult_base": 13.15,
       "percentile": 99.99,
@@ -16798,7 +16798,7 @@
       ],
       "rang": 59,
       "rang_total": 428239,
-      "tier": "chaude",
+      "tier": "brulante",
       "verbal": {
        "cle": "tres_forte",
        "frequence": {
@@ -16806,7 +16806,7 @@
         "fenetre": "2 ans",
         "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
         "sous_moyenne": false,
-        "sur_100": 9
+        "sur_100": 20
        },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "très forte probabilité relative",
@@ -16814,7 +16814,7 @@
       }
      },
      "surface_m2": 366,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -16822,8 +16822,8 @@
      "mult_base": 13.15,
      "percentile": 99.99,
      "rang": 59,
-     "run_id": "q_v10_m129",
-     "tier": "chaude"
+     "run_id": "q_v11_m137",
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -16835,7 +16835,7 @@
      "numero": "11",
      "voie": "Rue RAPHAEL HAGEN"
     },
-    "cascade_status": "opportunite",
+    "cascade_status": "a_creuser",
     "commune": "Sainte-Suzanne",
     "completeness_score": 92,
     "copro_rnic": {
@@ -16881,7 +16881,7 @@
      "mult_base": 13.15,
      "percentile": 100.0,
      "rang": 59,
-     "tier": "chaude"
+     "tier": "brulante"
     },
     "section": "AO",
     "solaire": {
@@ -16900,7 +16900,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -16996,7 +16996,7 @@
       }
      },
      "surface_m2": 438,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -17004,7 +17004,7 @@
      "mult_base": 7.13,
      "percentile": 99.96,
      "rang": 181,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "chaude"
     }
    },
@@ -17075,7 +17075,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -17172,7 +17172,7 @@
      "mult_base": 0.43,
      "percentile": 3.35,
      "rang": 413887,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -17347,7 +17347,7 @@
      "mult_base": 0.43,
      "percentile": 2.6,
      "rang": 417106,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -17528,7 +17528,7 @@
      "mult_base": 0.52,
      "percentile": 11.43,
      "rang": 379308,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -17633,7 +17633,7 @@
       "declasse": false,
       "exception_registre": false,
       "fraction": "1/10",
-      "label": "À suivre",
+      "label": "Priorité",
       "motif": null,
       "mult_base": 7.13,
       "percentile": 99.97,
@@ -17681,7 +17681,7 @@
       ],
       "rang": 148,
       "rang_total": 428239,
-      "tier": "chaude",
+      "tier": "brulante",
       "verbal": {
        "cle": "forte",
        "frequence": {
@@ -17689,7 +17689,7 @@
         "fenetre": "2 ans",
         "source_dite": "Fréquence mesurée sur backtest (ventes déjà publiées) — les ventes de l'année en cours ne sont pas encore toutes publiées.",
         "sous_moyenne": false,
-        "sur_100": 9
+        "sur_100": 20
        },
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "forte probabilité relative",
@@ -17705,8 +17705,8 @@
      "mult_base": 7.13,
      "percentile": 99.97,
      "rang": 148,
-     "run_id": "q_v10_m129",
-     "tier": "chaude"
+     "run_id": "q_v11_m137",
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -17757,7 +17757,7 @@
      "mult_base": 7.13,
      "percentile": 100.0,
      "rang": 148,
-     "tier": "chaude"
+     "tier": "brulante"
     },
     "section": "AV",
     "solaire": {
@@ -17869,7 +17869,7 @@
      "mult_base": 0.52,
      "percentile": 8.8,
      "rang": 390554,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -18054,7 +18054,7 @@
      "mult_base": 0.52,
      "percentile": 7.58,
      "rang": 395785,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -18220,7 +18220,7 @@
       }
      },
      "surface_m2": 599,
-     "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUs » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -18228,7 +18228,7 @@
      "mult_base": 22.12,
      "percentile": 100.0,
      "rang": 4,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_zone_fermee"
     }
    },
@@ -18299,7 +18299,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUs » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUs"
     }
@@ -18388,7 +18388,7 @@
       }
      },
      "surface_m2": 296,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -18396,7 +18396,7 @@
      "mult_base": 5.88,
      "percentile": 99.85,
      "rang": 623,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_non_constructible"
     }
    },
@@ -18463,7 +18463,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -18552,7 +18552,7 @@
       }
      },
      "surface_m2": 27084,
-     "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUs » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -18560,7 +18560,7 @@
      "mult_base": 13.15,
      "percentile": 99.98,
      "rang": 107,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_zone_fermee"
     }
    },
@@ -18631,7 +18631,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUs » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUs"
     }
@@ -18727,7 +18727,7 @@
       }
      },
      "surface_m2": 481,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -18735,7 +18735,7 @@
      "mult_base": 2.13,
      "percentile": 98.14,
      "rang": 7966,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -18805,7 +18805,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -18902,7 +18902,7 @@
      "mult_base": 0.85,
      "percentile": 40.53,
      "rang": 254660,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -19073,7 +19073,7 @@
      "mult_base": 0.54,
      "percentile": 13.58,
      "rang": 370078,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -19252,7 +19252,7 @@
      "mult_base": 2.8,
      "percentile": 99.04,
      "rang": 4129,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -19424,7 +19424,7 @@
       }
      },
      "surface_m2": 313,
-     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « AUc » (à urbaniser — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -19432,7 +19432,7 @@
      "mult_base": 4.16,
      "percentile": 99.51,
      "rang": 2079,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_revele"
     }
    },
@@ -19508,7 +19508,7 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « AUc » (à urbaniser — constructible).",
      "recouvrement_pct": null,
      "zone": "AUc"
     }
@@ -19604,7 +19604,7 @@
       }
      },
      "surface_m2": 1873,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -19612,7 +19612,7 @@
      "mult_base": 0.93,
      "percentile": 48.58,
      "rang": 220208,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -19681,7 +19681,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -19778,7 +19778,7 @@
      "mult_base": 0.51,
      "percentile": 5.44,
      "rang": 404923,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -19943,7 +19943,7 @@
      "mult_base": 0.52,
      "percentile": 10.96,
      "rang": 381315,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -20111,7 +20111,7 @@
      "mult_base": 1.17,
      "percentile": 73.95,
      "rang": 111563,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "ecartee"
     }
    },
@@ -20269,7 +20269,7 @@
       }
      },
      "surface_m2": 243,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -20277,7 +20277,7 @@
      "mult_base": 5.05,
      "percentile": 99.72,
      "rang": 1203,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "declasse_bati_revele"
     }
    },
@@ -20344,7 +20344,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
@@ -20440,7 +20440,7 @@
       }
      },
      "surface_m2": 679,
-     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+     "zonage_detail": "Zone PLU « U » (urbaine — constructible)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -20448,7 +20448,7 @@
      "mult_base": 1.06,
      "percentile": 66.83,
      "rang": 142042,
-     "run_id": "q_v10_m129",
+     "run_id": "q_v11_m137",
      "tier": "a_creuser"
     }
    },
@@ -20516,7 +20516,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "detail": "Zone PLU « U » (urbaine — constructible).",
      "recouvrement_pct": null,
      "zone": "U"
     }
