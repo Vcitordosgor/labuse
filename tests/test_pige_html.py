@@ -245,3 +245,46 @@ def test_d4_writable_nomme_le_chemin(monkeypatch):
     monkeypatch.setenv("LABUSE_PIGE_DEPOTS_DIR", "/proc/nonexistent-radar/x")
     ok, detail = depots_dir_writable()
     assert ok is False and "/proc/nonexistent-radar/x" in detail
+
+
+# ════════ RATTACHEMENT-V2 — convergence + rattachement humain ════════
+
+def test_v2_rattachement_humain_preserve_a_l_ingestion(html, depots_prive, nettoyer):
+    """Un rattachement tranché À LA MAIN (rattachement_humain=true) n'est JAMAIS écrasé par une
+    republication : son idu/état survit au re-dépôt (le choix du client fait foi, Lot 2)."""
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+    with session_scope() as db:
+        bid = db.execute(text("SELECT bien_id FROM pige_annonces WHERE list_id = 3143092379")).scalar()
+        db.execute(text(
+            "UPDATE pige_biens SET idu = 'TEST0000000001', rattachement_etat = 'rattachee', "
+            "rattachement_niveau = 'source', rattachement_humain = true WHERE bien_id = :b"), {"b": bid})
+        db.commit()
+    # re-dépôt (MAJ) : le rattachement humain doit rester intact.
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+    with session_scope() as db:
+        r = db.execute(text("SELECT idu, rattachement_etat, rattachement_humain FROM pige_biens "
+                            "WHERE bien_id = :b"), {"b": bid}).mappings().first()
+    assert r["idu"] == "TEST0000000001" and r["rattachement_humain"] is True
+    assert r["rattachement_etat"] == "rattachee"
+
+
+def test_v2_criteres_stockes_sur_rattachee(html, depots_prive, nettoyer):
+    """Le schéma porte les critères de convergence (auditabilité) : la colonne existe et est une liste."""
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+        rows = db.execute(text(
+            "SELECT jsonb_typeof(rattachement_criteres) t FROM pige_biens LIMIT 1")).mappings().all()
+    assert rows and rows[0]["t"] == "array"
+
+
+def test_v2_criteres_pour_idu_parcelle_inconnue():
+    """`criteres_pour_idu` ne lève jamais et renvoie [] pour une parcelle inconnue (base de test sans
+    parcellaire) — l'écran Instruire reste robuste."""
+    from labuse.pige import rattachement_html
+    with session_scope() as db:
+        out = rattachement_html.criteres_pour_idu(
+            db, {"commune": "Saint-Denis", "type": "maison", "surface_hab": 120,
+                 "surface_terrain": 400}, "IDU_INEXISTANT_00")
+    assert out == []

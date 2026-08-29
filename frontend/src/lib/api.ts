@@ -1289,6 +1289,9 @@ export interface RadarBienDetail extends RadarBienClient {
   // RADAR-HTML (Lot 3) — état de rattachement + candidates de PISTE (servis au détail seulement).
   rattachement_etat?: 'rattachee' | 'piste' | 'non_rattachee'
   pistes?: RadarPiste[]
+  // RATTACHEMENT-V2 — critères convergents (pourquoi RATTACHÉE) + rattachement tranché à la main.
+  rattachement_criteres?: RadarCritere[]
+  rattachement_humain?: boolean
 }
 export interface RadarBiensRep { biens: RadarBienClient[]; n_total: number; n_servi: number; n_rattaches: number; page: number; taille: number; plafond: number; tronquee: boolean; tri: string }
 export interface RadarFiltres {
@@ -1314,11 +1317,21 @@ export const radarClic = (bien_id: number, annonce_id?: number | null) =>
   j<{ ok: boolean; clic_id: number }>('/radar/clic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, annonce_id: annonce_id ?? null }) })
 export const radarSignaler = (bien_id: number, motif = '') =>
   j<{ ok: boolean; event_id: number }>('/radar/signaler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, motif }) })
-// RADAR-HTML (Lot 3) — « Instruire cette annonce » : relance la cascade À LA DEMANDE sur une PISTE.
-export interface RadarPiste { idu: string; distance_m?: number; surface_m2?: number; surface_ecart_pct?: number | null; bati_m2?: number; confiance?: number }
+// RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire » : candidates ENRICHIES (ortho + critères par candidate).
+export interface RadarCritere { critere: string; valeur: string; converge?: boolean }
+export interface RadarPiste {
+  idu: string; distance_m?: number | null; n_criteres?: number
+  criteres?: RadarCritere[]                 // critères convergents (cascade)
+  criteres_detail?: RadarCritere[]          // chaque critère applicable : converge (✓) ou diverge (✗)
+  ortho_url?: string | null                 // vignette BD ORTHO 20 cm de la candidate
+}
 export const radarInstruire = (bien_id: number) =>
-  j<{ ok: boolean; bien_id: number; etat: string; candidates: RadarPiste[]; motif?: string | null }>(
+  j<{ ok: boolean; bien_id: number; etat: string; humain?: boolean; candidates: RadarPiste[]; criteres?: RadarCritere[]; motif?: string | null }>(
     '/radar/instruire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
+// RATTACHEMENT-V2 (Lot 2) — le client tranche via l'ortho : rattachement HUMAIN, fait foi.
+export const radarRattacherHumain = (bien_id: number, idu: string) =>
+  j<{ ok: boolean; bien_id: number; idu: string; etat: string; humain: boolean; motif?: string }>(
+    '/radar/rattacher-humain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, idu }) })
 
 // ── RADAR (pige) · P6 D3 — onglet Marché (stats par commune, honnêteté statistique) ──
 export interface RadarMesure { valeur: number | null; n: number; insuffisant: boolean }

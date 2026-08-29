@@ -72,6 +72,7 @@ def _where(filtres: dict) -> tuple[str, dict]:
 _SELECT = """
 SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        b.rattachement_niveau, b.rattachement_confiance, b.rattachement_etat, b.rattachement_pistes,
+       b.rattachement_criteres, b.rattachement_humain,
        b.a_qualifier, b.a_qualifier_motifs,
        b.date_publication, b.date_premiere_saisie, b.date_derniere_confirmation,
        f.prix, f.pieces, f.surface_hab, f.surface_terrain, f.dpe_classe, f.dpe_conso, f.dpe_ges,
@@ -159,6 +160,9 @@ def detail(db: Session, bien_id: int) -> dict | None:
     # C'est ce qui allume le bouton « Instruire cette annonce » sur une piste, sans automatisme.
     bien["rattachement_etat"] = r["rattachement_etat"] or ("rattachee" if r["idu"] else "non_rattachee")
     bien["pistes"] = r["rattachement_pistes"] or []
+    # RATTACHEMENT-V2 — les critères convergents (pourquoi RATTACHÉE) + le drapeau « rattaché à la main ».
+    bien["rattachement_criteres"] = r["rattachement_criteres"] or []
+    bien["rattachement_humain"] = bool(r["rattachement_humain"])
     return bien
 
 

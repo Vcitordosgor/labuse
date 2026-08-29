@@ -295,9 +295,11 @@ def radar_clic(body: ClicIn, request: Request) -> dict:
 
 @router.post("/radar/instruire")
 def radar_instruire(body: BienIn, request: Request) -> dict:
-    """RADAR-HTML (Lot 3) — « Instruire cette annonce » : relance la cascade de rattachement À LA
-    DEMANDE sur une annonce en PISTE et rend les candidates. GESTE client, jamais un automatisme —
-    une piste ne déclenche par elle-même ni courrier, ni « vendue », ni stat parcellaire."""
+    """RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire cette annonce » : relance la cascade À LA DEMANDE
+    et rend les candidates ENRICHIES — pour chacune, sa VUE ORTHO (`ortho_url`) et l'état de CHAQUE
+    critère (convergent/divergent). Le client compare les toits et tranche. GESTE client, jamais un
+    automatisme — une piste ne déclenche par elle-même ni courrier, ni « vendue », ni stat parcellaire.
+    Un bien déjà rattaché À LA MAIN n'est pas ré-instruit (le choix humain fait foi)."""
     import json as _json
 
     from sqlalchemy import text as _t
@@ -306,22 +308,81 @@ def radar_instruire(body: BienIn, request: Request) -> dict:
     with session_scope() as db:
         rec = db.execute(_t(
             "SELECT b.bien_id, b.commune, b.type_bien AS type, b.est_copro, b.lat, b.lng, "
-            "       b.source_position, f.surface_terrain, f.surface_hab "
+            "       b.source_position, b.rattachement_humain, f.surface_terrain, f.surface_hab, "
+            "       f.annee_construction, f.dpe_classe "
             "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE b.bien_id = :b"),
             {"b": body.bien_id}).mappings().first()
         if not rec:
             return {"ok": False, "motif": "bien inconnu"}
+        if rec["rattachement_humain"]:
+            return {"ok": True, "bien_id": body.bien_id, "etat": "rattachee", "humain": True,
+                    "candidates": [], "motif": "rattachement tranché à la main — fait foi"}
         ratt = rattachement_html.rattacher(db, dict(rec))
-        # on ré-écrit UNIQUEMENT l'état/pistes de rattachement (jamais la position ni le statut : une
-        # piste ne déclenche aucun automatisme).
+        # enrichit chaque candidate : critères convergents/divergents + URL ortho.
+        candidates = []
+        for p in ratt.get("pistes", []):
+            idu = p.get("idu")
+            candidates.append({**p, "ortho_url": f"/radar/ortho/{idu}" if idu else None,
+                               "criteres_detail": rattachement_html.criteres_pour_idu(db, dict(rec), idu) if idu else []})
+        # ré-écrit UNIQUEMENT l'état/pistes/critères (jamais la position ni le statut).
         db.execute(_t(
             "UPDATE pige_biens SET rattachement_etat = :e, rattachement_niveau = :n, idu = :idu, "
-            " rattachement_confiance = :c, rattachement_pistes = CAST(:p AS jsonb) WHERE bien_id = :b"),
+            " rattachement_confiance = :c, rattachement_pistes = CAST(:p AS jsonb), "
+            " rattachement_criteres = CAST(:cr AS jsonb) "
+            "WHERE bien_id = :b AND rattachement_humain = false"),
             {"e": ratt["etat"], "n": ratt["niveau"], "idu": ratt.get("idu"),
-             "c": ratt.get("confiance"), "p": _json.dumps(ratt.get("pistes") or []), "b": body.bien_id})
+             "c": ratt.get("confiance"), "p": _json.dumps(ratt.get("pistes") or []),
+             "cr": _json.dumps(ratt.get("criteres") or []), "b": body.bien_id})
         db.commit()
-    return {"ok": True, "bien_id": body.bien_id, "etat": ratt["etat"],
-            "candidates": ratt.get("pistes", []), "motif": ratt.get("motif")}
+    return {"ok": True, "bien_id": body.bien_id, "etat": ratt["etat"], "humain": False,
+            "candidates": candidates, "criteres": ratt.get("criteres", []), "motif": ratt.get("motif")}
+
+
+@router.get("/radar/ortho/{idu}")
+def radar_ortho(idu: str, request: Request):
+    """RATTACHEMENT-V2 (Lot 2) — vignette ORTHO (BD ORTHO 20 cm IGN) d'une parcelle candidate, servie à
+    l'écran Instruire. PNG ou 204 si indisponible (parcelle inconnue / WMS injoignable) — jamais un 500."""
+    from fastapi import Response
+
+    from ..ingestion.ortho_tiles import ortho_png_parcelle
+    with session_scope() as db:
+        png = ortho_png_parcelle(db, idu)
+    if not png:
+        return Response(status_code=204)
+    return Response(content=png, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
+class RattacherHumainIn(BaseModel):
+    bien_id: int
+    idu: str
+
+
+@router.post("/radar/rattacher-humain")
+def radar_rattacher_humain(body: RattacherHumainIn, request: Request) -> dict:
+    """RATTACHEMENT-V2 (Lot 2) — le client a tranché via l'ortho : le bien passe RATTACHÉE, rattachement
+    HUMAIN (fait foi, jamais écrasé par une republication). On vérifie que l'idu est une parcelle réelle
+    de la commune du bien (pas d'idu arbitraire injecté)."""
+    from sqlalchemy import text as _t
+    with session_scope() as db:
+        b = db.execute(_t("SELECT commune, a_qualifier FROM pige_biens WHERE bien_id = :b"),
+                       {"b": body.bien_id}).mappings().first()
+        if not b:
+            return {"ok": False, "motif": "bien inconnu"}
+        if b["a_qualifier"]:
+            return {"ok": False, "motif": "bien à qualifier — rattachement interdit (acquis mandat précédent)"}
+        ok = db.execute(_t("SELECT 1 FROM parcels WHERE idu = :i AND commune = :c"),
+                        {"i": body.idu, "c": b["commune"]}).scalar()
+        if not ok:
+            return {"ok": False, "motif": f"parcelle {body.idu} hors de la commune {b['commune']}"}
+        db.execute(_t(
+            "UPDATE pige_biens SET idu = :i, rattachement_etat = 'rattachee', rattachement_niveau = 'source', "
+            " rattachement_confiance = 1.0, rattachement_humain = true, "
+            " rattachement_criteres = CAST(:cr AS jsonb) WHERE bien_id = :b"),
+            {"i": body.idu, "b": body.bien_id,
+             "cr": __import__("json").dumps([{"critere": "humain", "valeur": "tranché par le client via l'ortho"}])})
+        db.commit()
+    return {"ok": True, "bien_id": body.bien_id, "idu": body.idu, "etat": "rattachee", "humain": True}
 
 
 @router.get("/radar/signaux/{commune}")

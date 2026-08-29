@@ -211,6 +211,11 @@ ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS district varchar(160);          
 -- candidates quand l'état = piste (jamais un automatisme ne part d'une piste).
 ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS rattachement_etat varchar(14);      -- rattachee|piste|non_rattachee
 ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS rattachement_pistes jsonb NOT NULL DEFAULT '[]'::jsonb;
+-- RATTACHEMENT-V2 — les critères INDÉPENDANTS qui ont convergé sur la parcelle RATTACHÉE, avec leurs
+-- valeurs (auditabilité : « un rattachement dont on ne peut pas dire pourquoi il tient n'en est pas un »).
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS rattachement_criteres jsonb NOT NULL DEFAULT '[]'::jsonb;
+-- RATTACHEMENT-V2 (Lot 2) — rattachement HUMAIN : le client a tranché via l'ortho (fait foi sur le calcul).
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS rattachement_humain boolean NOT NULL DEFAULT false;
 -- À QUALIFIER (Lot 2) — champs qui se contredisent → hors stats ET hors veilles. Jamais un fait faux servi.
 ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS a_qualifier boolean NOT NULL DEFAULT false;
 ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS a_qualifier_motifs jsonb NOT NULL DEFAULT '[]'::jsonb;

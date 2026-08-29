@@ -25,6 +25,9 @@ _ATTRS = (
     "global_condition", "energy_rate", "ges", "price_per_square_meter", "property_tax",
     "estimated_notary_fees", "immo_sell_type", "street_view_url", "heating_mode",
     "real_estate_type_specificities", "orientation",
+    # RATTACHEMENT-V2 — le nombre d'étages sert l'estimation d'emprise au sol (critère C2 : emprise ≈
+    # surface habitable / étages). Rarement renseigné, mais gratuit à conserver.
+    "nb_floors_house", "is_single_storey",
 )
 
 _SCRIPT_RE = re.compile(r'<script[^>]*\bid="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)
@@ -95,10 +98,14 @@ def aplatir(ad: dict) -> dict:
     if isinstance(prix, list):
         prix = prix[0] if prix else None
     brut = {k: at.get(k) for k in _ATTRS if at.get(k) not in (None, "")}
+    subject = ad.get("subject") or ""
     return {
         "list_id": ad.get("list_id"),
         "url": ad.get("url"),
         "subject": ad.get("subject"),
+        # RATTACHEMENT-V2 (C6) — piscine : signal binaire très discriminant QUAND il s'applique. Le
+        # portail ne porte pas d'attribut piscine dédié → on lit le mot dans le titre (rare, mesuré 0/38).
+        "piscine": ("piscine" in subject.lower()),
         "prix": _num(prix),
         "prix_m2": _num(at.get("price_per_square_meter")),
         "type_code": ret or None,
@@ -107,6 +114,7 @@ def aplatir(ad: dict) -> dict:
         "surface_terrain": _num(at.get("land_plot_surface")),
         "pieces": _num(at.get("rooms")),
         "chambres": _num(at.get("bedrooms")),
+        "etages": _num(at.get("nb_floors_house")) or (1 if str(at.get("is_single_storey")) == "1" else None),
         "annee_construction": _num(at.get("building_year")),
         "etat_bien": (str(at.get("global_condition")) if at.get("global_condition") not in (None, "") else None),
         "dpe_classe": _classe(at.get("energy_rate")),
