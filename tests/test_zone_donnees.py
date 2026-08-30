@@ -23,14 +23,15 @@ def _fixtures(tmp_path):
     geo = tmp_path / "geo.parquet"
     # 4 établissements : A diffusible 974 actif · B non-diffusible ('P') 974 actif · C fermé · D hors-974
     con.execute(f"""COPY (SELECT * FROM (VALUES
-      ('90000000000011','10.71C','O','BOULANGE A','', '97415','01','12','RUE','DE LA GARE','A'),
-      ('90000000000022','10.71C','P','MONSIEUR X','', '97415','NN','5','RUE','DES FLEURS','A'),
-      ('90000000000033','10.71C','O','FERMEE','',      '97415','01','1','RUE','X','F'),
-      ('90000000000044','10.71C','O','HORS 974','',    '75056','01','1','RUE','Y','A')
+      ('90000000000011','10.71C','O','BOULANGE A','', '97415','01','12','RUE','DE LA GARE','A', DATE '2016-05-04'),
+      ('90000000000022','10.71C','P','MONSIEUR X','', '97415','NN','5','RUE','DES FLEURS','A', DATE '2001-09-21'),
+      ('90000000000033','10.71C','O','FERMEE','',      '97415','01','1','RUE','X','F', DATE '1990-01-01'),
+      ('90000000000044','10.71C','O','HORS 974','',    '75056','01','1','RUE','Y','A', DATE '2010-06-30')
      ) AS t(siret, activitePrincipaleEtablissement, statutDiffusionEtablissement,
             denominationUsuelleEtablissement, enseigne1Etablissement, codeCommuneEtablissement,
             trancheEffectifsEtablissement, numeroVoieEtablissement, typeVoieEtablissement,
-            libelleVoieEtablissement, etatAdministratifEtablissement)) TO '{stock}' (FORMAT parquet)""")
+            libelleVoieEtablissement, etatAdministratifEtablissement,
+            dateCreationEtablissement)) TO '{stock}' (FORMAT parquet)""")
     con.execute(f"""COPY (SELECT * FROM (VALUES
       ('90000000000011', 55.2707, -21.0096, '11', '0101', '97415', 'HZ'),
       ('90000000000022', 55.2710, -21.0090, '11', '0101', '97415', 'HZ'),
@@ -50,7 +51,7 @@ def test_lot1_sirene_jointure_diffusion_position(tmp_path):
         r = build_sirene_etablissements(s, geo_url=geo_url, stock_url=stock_url)
         rows = {x["siret"]: dict(x) for x in s.execute(text(
             "SELECT siret, naf, denomination, adresse, diffusible, tranche_effectif, qualite_xy, iris, "
-            " round(ST_X(geom)::numeric,4) lon, round(ST_Y(geom)::numeric,4) lat "
+            " date_creation, round(ST_X(geom)::numeric,4) lon, round(ST_Y(geom)::numeric,4) lat "
             "FROM sirene_etablissements WHERE siret LIKE '9000000000%'")).mappings()}
         s.execute(text("DELETE FROM sirene_etablissements WHERE siret LIKE '9000000000%'"))
     # 974 ACTIFS seuls : le fermé (F) et le hors-974 sont écartés
@@ -61,6 +62,8 @@ def test_lot1_sirene_jointure_diffusion_position(tmp_path):
     assert a["tranche_effectif"] == "01" and a["qualite_xy"] == "11"
     assert a["iris"] == "974150101", "IRIS = plg_code_commune + plg_iris"
     assert float(a["lon"]) == 55.2707 and float(a["lat"]) == -21.0096, "position = lon/lat GPS direct"
+    # A3-bis (OUTILS-2) — date de création de l'établissement ingérée (StockEtablissement)
+    assert str(a["date_creation"]) == "2016-05-04", "date_creation = dateCreationEtablissement"
     # diffusion partielle ('P') : nom ET adresse NULL, NAF conservé
     b = rows["90000000000022"]
     assert b["diffusible"] is False

@@ -261,6 +261,10 @@ export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
 }
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
+// OUTILS-2 (O2-4) — géométrie d'UNE parcelle (Feature + centroïde) pour tracer son contour sur l'écran
+// « Remonter le temps » sans charger tout le GeoJSON commune.
+export const getParcelGeojson = (idu: string) =>
+  j<{ type: 'Feature'; geometry: unknown; properties: { idu: string }; centroid: [number, number] }>(`/parcels/${encodeURIComponent(idu)}/geojson`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
 // ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle » (isochrone IGN + Filosofi/BPE).
 export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: number) =>

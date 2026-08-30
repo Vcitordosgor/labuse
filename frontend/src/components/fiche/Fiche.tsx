@@ -4,6 +4,7 @@ import { createContext, isValidElement, useContext, useEffect, useMemo, useState
 import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
+import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
 import { fmtDistance as fmtDistanceM } from '../../lib/geo'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -347,7 +348,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       <div className="mt-1.5 flex flex-col gap-0.5 text-[11px]">
         {pt.pct_consomme != null && <PtRow k="SDP consommée / autorisée" v={`${pt.pct_consomme} %`} />}
-        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k="SDP résiduelle estimée" v={`~${fmtInt(pt.sdp_residuelle_m2)} m²`} />}
+        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} v={`~${fmtInt(pt.sdp_residuelle_m2)} m²`} />}
         {pt.surelevation_possible != null && <PtRow k="Surélévation" v={pt.surelevation_possible ? `possible${pt.hauteur_marge_m != null ? ` (marge ~${pt.hauteur_marge_m} m)` : ''}` : 'non'} />}
       </div>
       <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{pt.source}</p>
@@ -767,7 +768,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                 secteur avec repli) : à distinguer du « marché ancien commune » affiché sur le Kanban. */}
             {!hideSource && (
               <p className="text-[11px] text-txt-dim">
-                LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
+                LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> ·
                 <span title="Prix de commercialisation du NEUF, à l'échelle du secteur (avec repli commune/île) — pas le prix du bâti ancien de la commune"> prix de sortie neuf</span> <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
                 terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
               </p>
@@ -1049,7 +1050,7 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
                 <div>Gabarit : <b className="text-txt">{fo.niveaux && fo.hauteur_m != null ? `${fo.niveaux} (${fo.hauteur_m} m)` : '—'}</b></div>
                 <div>SDP : <b className="text-txt">{fo.surface_plancher_m2 ? fmtM2(fo.surface_plancher_m2) : '—'}</b></div>
                 <div>Logements : <b className="text-txt">{`${logAuSol![0]}–${logAuSol![1]}`}</b></div>
-                <div>SHAB vendable : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
+                <div>SHAB vendable <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
               </div>
               {/* FAISABILITE (mandat) : dire pourquoi la SHAB vendable (~123) < SHAB brute — c'est le
                   nombre de logements RETENUS reconverti en surface, pas un plafond sur la brute (théorique). */}

@@ -864,6 +864,9 @@ export function MapView() {
                  'circle-color': ['case',
                    ['==', ['get', 'kind'], 'zone-concurrent'], '#E0A94F',
                    ['==', ['get', 'kind'], 'zone-origin'], '#4ADE80',
+                   // O2-1 (OUTILS-2) — permis au POINT MORT en ROUGE, en cours en VERT : l'œil sépare la
+                   // veille concurrentielle des opportunités dormantes sans changer d'écran.
+                   ['all', ['==', ['get', 'kind'], 'permis'], ['==', ['get', 'point_mort'], true]], '#E2726A',
                    ['==', ['get', 'kind'], 'radar'],
                    ['match', ['get', 'statut'],
                      'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#8FB4F0',

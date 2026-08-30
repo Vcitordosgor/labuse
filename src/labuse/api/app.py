@@ -2029,6 +2029,20 @@ def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     return {"idu": row[0] if row else None}
 
 
+@app.get("/parcels/{idu}/geojson")
+def parcel_geojson(idu: str, db: Session = Depends(get_db)) -> dict:
+    """OUTILS-2 (O2-4) — géométrie cadastrale d'UNE parcelle (Feature GeoJSON), pour tracer son contour
+    sur un écran secondaire (« Remonter le temps ») sans charger tout le GeoJSON d'une commune. Lecture
+    seule ; même trame `parcels.geom` (4326) que la carte principale + centroïde pour recentrer."""
+    row = db.execute(text(
+        """SELECT ST_AsGeoJSON(p.geom) AS g, ST_X(ST_Centroid(p.geom)) AS lon,
+                  ST_Y(ST_Centroid(p.geom)) AS lat
+           FROM parcels p WHERE p.idu = :idu LIMIT 1"""), {"idu": idu}).mappings().first()
+    if not row or not row["g"]:
+        raise HTTPException(404, "parcelle introuvable")
+    import json as _json
+    return {"type": "Feature", "geometry": _json.loads(row["g"]),
+            "properties": {"idu": idu}, "centroid": [row["lon"], row["lat"]]}
 
 
 @app.get("/adresses/autocomplete")

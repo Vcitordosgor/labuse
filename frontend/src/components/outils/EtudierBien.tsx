@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getFiche, scoreurAdresse, type ScoreurResult } from '../../lib/api'
 import { fmtEur, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
+import { PERIM_POTENTIEL, PERIM_RESIDUEL } from '../../lib/perimetres'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Calculette, type CalcResult } from '../fiche/Fiche'
@@ -135,8 +136,9 @@ export function EtudierBien() {
               <div data-etudier-constat className="mt-2 border-t border-line pt-2">
                 {c?.sourced && (
                   <p className="text-[11px] text-txt-dim">
-                    {/* mandat point 3 : 123 m² est une SHAB, pas une SDP — libellé corrigé. */}
+                    {/* mandat point 3 : 123 m² est une SHAB, pas une SDP — libellé corrigé. O2-5 : périmètre. */}
                     LA BUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(c.sourced.shab_vendable_m2)} m²</b>
+                    <span className="text-txt-dim"> ({PERIM_POTENTIEL})</span>
                     {c.sourced.prix_sortie_median != null && <> · prix de sortie bâti <b className="tnum text-txt">{fmtInt(c.sourced.prix_sortie_median)} €/m²</b></>}
                     {c.sourced.terrain_m2 != null && <> · terrain <b className="tnum text-txt">{fmtInt(c.sourced.terrain_m2)} m²</b></>}
                   </p>
@@ -145,8 +147,8 @@ export function EtudierBien() {
                 {/* ALERTE DE COHÉRENCE — résiduel net du bâti vs SHAB vendue (relié à Pièges & risques). */}
                 {alerteResiduel && (
                   <div data-etudier-residuel className="mt-1.5 rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-2.5 py-1.5 text-[10.5px] leading-snug text-st-creuser">
-                    <b>⚠ Bâti existant.</b> Résiduel net du bâti : <b className="tnum">{fmtInt(residuel)} m²</b> (Pièges &amp; risques) —
-                    la SHAB vendable ci-dessus suppose un terrain libéré.{' '}
+                    <b>⚠ Bâti existant.</b> {PERIM_RESIDUEL} : <b className="tnum">{fmtInt(residuel)} m²</b> (Pièges &amp; risques) —
+                    la SHAB vendable ci-dessus est un {PERIM_POTENTIEL}.{' '}
                     <button data-etudier-residuel-lien onClick={() => setModule('risques')}
                       className="font-medium text-mint hover:underline">voir Pièges &amp; risques →</button>
                   </div>

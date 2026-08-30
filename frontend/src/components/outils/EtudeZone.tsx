@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
-import { etudeZone, nafFamilles, nafSearch, type EtudeZoneInput } from '../../lib/api'
+import { etudeZone, nafFamilles, nafSearch, parcelAt, type EtudeZoneInput } from '../../lib/api'
 import type { EtudeZoneResult, NafFamille, NafOption } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
@@ -349,6 +349,15 @@ function ActifsStat({ res }: { res: EtudeZoneResult }) {
 function Concurrents({ res }: { res: EtudeZoneResult }) {
   const c = res.concurrents
   const cov = c?.couverture
+  const { setView, select } = useApp()
+  // A3-bis (OUTILS-2) — cliquable vers la parcelle : le concurrent porte sa position (lon/lat) ;
+  // on résout la parcelle à ce point (parcelAt) et on ouvre sa fiche sur la carte. Rien si hors parcelle.
+  const ouvrirParcelle = async (lon: number, lat: number) => {
+    try {
+      const { idu } = await parcelAt(lon, lat)
+      if (idu) { setView('cartes'); select(idu) }
+    } catch { /* pas de parcelle à ce point — on ne fait rien */ }
+  }
   return (
     <div>
       <SectionTitle>{`Concurrents dans la zone${cov === 'servie' ? ` — ${c!.n}` : ''}`}{cov === 'servie' && res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
@@ -364,10 +373,15 @@ function Concurrents({ res }: { res: EtudeZoneResult }) {
       ) : (
         <div className="flex flex-col gap-1">
           {c!.items.slice(0, 8).map((x) => (
-            <div key={x.siret} className="flex items-center justify-between gap-2 text-[11.5px]">
-              <span className="truncate text-txt">{x.nom} <span className="font-mono text-[10px] text-txt-dim">{x.naf}</span></span>
+            // A3-bis — « enseigne · distance · depuis AAAA », cliquable vers la parcelle du concurrent.
+            <button key={x.siret} type="button" onClick={() => ouvrirParcelle(x.lon, x.lat)}
+              className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-left text-[11.5px] transition-colors duration-quick hover:bg-surface-3">
+              <span className="min-w-0 truncate text-txt">
+                {x.nom} <span className="font-mono text-[10px] text-txt-dim">{x.naf}</span>
+                {x.annee_creation != null && <span className="text-txt-dim"> · depuis {x.annee_creation}</span>}
+              </span>
               <span className="shrink-0 font-mono text-[11px] text-txt-hi">{tempsTxt(x.temps_min, res.mode)}</span>
-            </div>
+            </button>
           ))}
           {c!.items.length > 8 && <span className="text-[10.5px] text-txt-dim">+ {c!.items.length - 8} autres…</span>}
         </div>

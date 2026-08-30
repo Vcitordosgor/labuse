@@ -259,16 +259,23 @@ def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: 
     """Établissements SIRENE du NAF dans la zone (concurrents). Nom masqué si non diffusible. Chaque
     « plus proche » porte son TEMPS (plus petite bande le contenant), jamais une distance en mètres."""
     rows = session.execute(text(
-        f"""SELECT siret, naf, denomination, diffusible, ST_X(geom) AS lon, ST_Y(geom) AS lat
+        f"""SELECT siret, naf, denomination, enseigne, diffusible,
+                   extract(year FROM date_creation)::int AS annee_creation,
+                   ST_X(geom) AS lon, ST_Y(geom) AS lat
             FROM sirene_etablissements
             WHERE naf = :naf AND actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
             LIMIT :maxi"""),
         {"zone": json.dumps(geom_geojson), "naf": naf, "maxi": maxi}).mappings().all()
     items = []
     for r in rows:
+        # A3-bis (OUTILS-2) — enseigne PUIS dénomination (masqué si non diffusible) ; `annee_creation`
+        # (SIRENE dateCreationEtablissement) sert le « depuis AAAA » de la fiche. Jamais inventée : null
+        # possible (établissement sans date renseignée à la source).
+        nom = (r["enseigne"] or r["denomination"]) if r["diffusible"] else None
         items.append({
             "siret": r["siret"], "naf": r["naf"],
-            "nom": r["denomination"] if r["diffusible"] and r["denomination"] else "Établissement (nom non diffusé)",
+            "nom": nom or "Établissement (nom non diffusé)",
+            "annee_creation": r["annee_creation"],
             "diffusible": r["diffusible"], "lon": r["lon"], "lat": r["lat"],
             "temps_min": _bande_min(session, r["lon"], r["lat"], bandes),
         })
