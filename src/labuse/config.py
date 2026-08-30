@@ -157,6 +157,11 @@ class Settings(BaseSettings):
     # DASHBOARD-V1 · D3 — répertoire des dumps de backup (GB-054) : la tuile « dernier backup »
     # lit le mtime du .dump le plus récent (ambre ≥ 2 j, rouge ≥ 7 j, « absent » honnête sinon).
     backup_dir: str = "/var/backups/labuse"
+    # CRON-1 (K1) — exploitation planifiée : dossier des fichiers d'ÉTAT des jobs (un JSON par job)
+    # + dossier des LOGS. Défauts DEV (repo-local) ; le VPS pointe /opt/labuse/state et /var/log/labuse.
+    jobs_state_dir: str = ".local/state/jobs"        # LABUSE_JOBS_STATE_DIR
+    jobs_log_dir: str = ".local/log/labuse"          # LABUSE_JOBS_LOG_DIR
+    disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
     # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
     # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
     # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).
