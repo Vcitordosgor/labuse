@@ -271,6 +271,8 @@ def _cadrage_page_idus(db: Session, cadrage: dict, limit: int, offset: int,
     ensuite en batch sur la seule page). Évite l'enrichissement d'affichage lourd de `_q_v2_list`
     (BAN latéral, propriétaire, cluster…) : ~2,2 s → quelques ms. Même population que `_cadrage_total`
     (plancher sliver, hors étage 0 sauf filtre tiers), même ordre que le figeage (`s2.rang ASC`)."""
+    if (cadrage or {}).get("__de_zero__"):
+        return []                                   # OUTILS-5 (P3) — projet « de zéro » : vivier VIDE
     from .app import _ETAGE0_SQL, MIN_DISPLAY_SURFACE_M2, _score_v2_run_id
     fc = _cadrage_to_filtre(cadrage)
     where, params = fc.where()
@@ -323,6 +325,8 @@ def _cadrage_total(db: Session, cadrage: dict) -> dict:
     `_run_cadrage` / `_q_v2_list` sans la limite : sliver < 2 m², base étage 0 sauf filtre `tiers`
     explicite, cadrage) ET sa part à l'étage 0. `{total, etage0}` ; `total=None` sur échec réel
     (exception) — un 0 légitime n'est pas un échec ; jamais `_vivier_figeable` (autre population)."""
+    if (cadrage or {}).get("__de_zero__"):
+        return {"total": 0, "etage0": 0}            # OUTILS-5 (P3) — projet « de zéro » : vivier VIDE
     try:
         from .app import _ETAGE0_SQL, MIN_DISPLAY_SURFACE_M2, _score_v2_run_id
         fc = _cadrage_to_filtre(cadrage)
@@ -547,6 +551,7 @@ class ProjetIn(BaseModel):
     identite: dict = {}                # M120 : infos (budget_eur / type_logement)
     nom: str | None = None            # éditable ; repli déterministe sinon
     limit: int | None = None           # M120-B : None → cap de config (config/projets.yaml), plus de 60 en dur
+    de_zero: bool = False              # OUTILS-5 (P3) : projet « de zéro » — naît VIDE (aucun vivier figé)
 
 
 class ProjetPatchIn(BaseModel):
@@ -732,10 +737,14 @@ def projet_create(body: ProjetIn, request: Request, db: Session = Depends(get_db
     dup = _find_doublon(db, nom, cadrage, cid)
     if dup is not None:
         return {"ok": True, "existing": True, "projet": _projet_dict(dup)}
+    # OUTILS-5 (P3) — « projet de zéro » : cadrage sentinelle `__de_zero__` (vivier VIDE, jamais figé) ;
+    # on y ajoute des parcelles UNE À UNE depuis leurs fiches (→ Retenues).
+    if body.de_zero:
+        cadrage = {"__de_zero__": True}
     p = models.Projet(nom=nom, filtres=cadrage, identite=identite, compte_id=cid)
     db.add(p)
     db.flush()
-    diff = _figer_shortlist(db, p, body.limit)     # LE RUN, une fois → shortlist figée + datée (EXPORT)
+    diff = None if body.de_zero else _figer_shortlist(db, p, body.limit)   # LE RUN, une fois (sauf « de zéro »)
     _refresh_cadrage_total(db, p)                   # FIX-PROJETS — amorce le cache du total VIF (compteur liste)
     return {"ok": True, "existing": False, "projet": _projet_dict(p), "shortlist": diff}
 
@@ -974,7 +983,7 @@ def projet_proposer(pid: int, body: ProposerIn, request: Request, db: Session = 
 
 @router.get("/{pid}/parcelles")
 def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
-                     offset: int = 0, limit: int = 60) -> dict:
+                     offset: int = 0, limit: int = 60, tier: str | None = None) -> dict:
     """M140 Lot A — l'ÉTAT du parcours, la LISTE ENTIÈRE sans la stocker. Les DÉCIDÉES
     (retenue/écartée/à analyser) sont stockées (petites — toujours toutes servies) ; les PROPOSÉES
     sont la liste COMPLÈTE des retenues du cadrage, servie EN DIRECT et PAGINÉE (`offset`/`limit`),
@@ -983,9 +992,13 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
     reprise : rouvrir = relire cet état."""
     p = _projet_or_404(db, pid, current_compte(request))
     from .app import _ETAT_BIEN_SQL, _score_v2_run_id
+    from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dominante
     v2 = _score_v2_run_id(db)
     limit = max(1, min(limit, 200))          # borne de page — on ne charge JAMAIS tout
-    cadrage = p.filtres or {}
+    # OUTILS-5 (P1) — FILTRE DE NAVIGATION « classement » : on RESSERRE le vivier à trier sur un tier
+    # (Priorité/À suivre…) via la MÊME facette `tiers` que la carte — jamais un moteur parallèle. Le
+    # cadrage du projet est préservé ; on ne fait que naviguer dedans.
+    cadrage = {**(p.filtres or {}), **({"tiers": [tier]} if tier else {})}
     # 1) DÉCIDÉES stockées (statut != proposee) — petites, servies en entier (ordre de proposition).
     decided = db.execute(text(
         "SELECT pp.statut, pp.rang, pp.hors_criteres, par.idu FROM projet_parcelles pp "
@@ -1014,6 +1027,7 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
     # 5) enrichissement BATCH — sur la PAGE + les décidées SEULEMENT (jamais toute la population).
     rows = db.execute(text(
         f"""SELECT par.idu, par.commune, par.surface_m2, s2.tier, {_ETAT_BIEN_SQL} AS etat_bien,
+                  s2.top5_contributions AS top5,   -- OUTILS-5 (P1) : le signal qui a classé la parcelle
                   ST_X(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lng,
                   ST_Y(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lat
            FROM parcels par
@@ -1064,6 +1078,9 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
             "adresse": adrs.get(r["idu"]), "evenement": evt,
             "marche_eur_m2": marche.get(r["commune"]),
             "pourquoi": _pourquoi_court(r["tier"], r["commune"] in carencees, evt, r["surface_m2"]),
+            # OUTILS-5 (P1) — le SIGNAL dominant (succession, permis jamais lancé…), MÊME source que la
+            # carte (`raison_dominante` sur les contributions du score). Jamais inventé : None possible.
+            "raison": _raison_dominante(r["top5"]),
             "hors_criteres": hors,
             "defisc": r["idu"] in defisc_set, "caduc": r["idu"] in caduc_set,
             "center": [round(r["lng"], 6), round(r["lat"], 6)] if r["lng"] is not None else None,
@@ -1191,15 +1208,23 @@ class AjouterIn(BaseModel):
 
 @router.post("/{pid}/ajouter")
 def projet_ajouter(pid: int, body: AjouterIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Ajoute UNE parcelle précise (par IDU, ou clic-carte côté front) en `proposee`. Dédupliqué :
-    `already=true` si elle est déjà dans le projet (quel que soit son statut)."""
+    """OUTILS-5 (P3) — ajoute UNE parcelle précise (par IDU, depuis sa fiche) en **RETENUE** : la choisir
+    depuis sa fiche EST une décision, pas une proposition à trier. Alimente la colonne Retenues, y compris
+    d'un projet « de zéro » (vide). Dédupliqué : `already=true` si déjà retenue. Crée la piste CRM."""
     _projet_or_404(db, pid, current_compte(request))
     pc = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": body.idu}).scalar()
     if not pc:
         raise HTTPException(404, f"Parcelle {body.idu} inconnue")
-    maxr = db.execute(text("SELECT COALESCE(MAX(rang), -1) FROM projet_parcelles WHERE projet_id = :p"),
-                      {"p": pid}).scalar() or -1
-    added = _upsert_proposee(db, pid, pc, maxr + 1, datetime.now(timezone.utc))
+    now = datetime.now(timezone.utc)
+    res = db.execute(text(
+        "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, created_at, updated_at) "
+        "VALUES (:pj, :pc, 'retenue', :now, :now) "
+        "ON CONFLICT (projet_id, parcel_id) DO UPDATE SET statut = 'retenue', updated_at = :now "
+        "WHERE projet_parcelles.statut <> 'retenue'"),
+        {"pj": pid, "pc": pc, "now": now})
+    added = res.rowcount == 1
+    if added:
+        _sync_crm_retenue(db, pid, pc, "retenue", now, current_compte(request))
     db.flush()
     return {"ok": True, "added": added, "already": not added, "idu": body.idu, **_counts(db, pid)}
 

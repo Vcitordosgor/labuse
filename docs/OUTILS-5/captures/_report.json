@@ -1,0 +1,22 @@
+{
+  "accueil": {
+    "retenues_counter": true,
+    "vivier": true,
+    "no_dots": true
+  },
+  "kanban": {
+    "vivier_classees": true,
+    "pourquoi": true,
+    "nav_filters": 3,
+    "courrier": false,
+    "no_rejouer": true,
+    "no_csv": true,
+    "no_trier": true,
+    "no_peutetre": true,
+    "signal": true
+  },
+  "modale": true,
+  "wizard_portes": 0,
+  "wizard_5steps": false,
+  "errors": []
+}

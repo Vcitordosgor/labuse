@@ -39,7 +39,7 @@ function Modale({ id, titre, onClose, children }: { id: string; titre: string; o
 
 // « Comprendre le classement » — la MÉTHODE (ce qui est mesuré, le ×N, l'entraînement). Contenu
 // centralisé dans strings.ts (CLIENT.algo.corps), validé par Vic. M55-H p11 : plus de ligne de date.
-function AlgoExplainer({ onClose }: { onClose: () => void }) {
+export function AlgoExplainer({ onClose }: { onClose: () => void }) {
   return (
     <Modale id="classement" titre={CLIENT.algo.titre} onClose={onClose}>
       <div className="mt-3 flex flex-col gap-3">
@@ -67,7 +67,7 @@ const SCORING_PALIERS: { key: string; color: string }[] = [
   { key: 'declassees', color: TIER_DECLASSE_META.declasse_bati_sature.color },
   { key: 'ecartee', color: TIER_V2_META.ecartee.color },
 ]
-function ScoringExplainer({ onClose }: { onClose: () => void }) {
+export function ScoringExplainer({ onClose }: { onClose: () => void }) {
   return (
     <Modale id="scoring" titre={CLIENT.algo.scoringTitre} onClose={onClose}>
       <p className="mt-2 text-[12px] leading-relaxed text-txt-mut">{CLIENT.algo.scoringIntro}</p>

@@ -52,9 +52,8 @@ function ProjetRow({ p }: { p: Projet }) {
   })
   const c = p.counts ?? { proposee: 0, retenue: 0, ecartee: 0, a_analyser: 0 }
   const todo = c.proposee > 0
-  const total = c.proposee + c.retenue
-  const pct = total > 0 ? Math.round((c.retenue / total) * 100) : 0
-  const archived = p.statut === 'archive'
+  // OUTILS-5 (P5) — le VIVIER entier = à explorer + décidées (retenues + écartées + à analyser).
+  const vivier = c.proposee + c.retenue + c.ecartee + (c.a_analyser ?? 0)
   const ouvrir = () => setOpenProjet({ id: p.id, nom: p.nom })
   const stop = (e: MouseEvent) => e.stopPropagation()
 
@@ -80,36 +79,24 @@ function ProjetRow({ p }: { p: Projet }) {
             )}
             <span data-projet-commune style={{ fontFamily: MONO, fontSize: 11, color: todo ? '#5F7267' : '#4A5C52', letterSpacing: '.06em', flexShrink: 0 }}>{communeMono(p)}</span>
           </div>
-          <div style={{ fontSize: 12, color: todo ? '#A8BDB0' : '#8FA69A', marginBottom: todo ? 11 : 0 }}>{ctxLine(p)}</div>
-          {todo && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 140, height: 3, background: '#12291D', borderRadius: 2, overflow: 'hidden' }}>
-                {c.retenue > 0 && <div style={{ width: `${pct}%`, height: '100%', background: '#4ADE80', borderRadius: 2 }} />}
-              </div>
-              <span data-projet-barre style={{ fontFamily: MONO, fontSize: 11, color: '#8FA69A' }}>
-                {c.retenue > 0 ? `${c.retenue} / ${total} RETENUES` : 'AUCUNE RETENUE'}</span>
+          {/* OUTILS-5 (P5) — « vivier N classé · valeurs au JJ/MM · contexte » — jamais un stock global anxiogène. */}
+          <div data-projet-vivier style={{ fontSize: 12, color: todo ? '#A8BDB0' : '#8FA69A', marginBottom: 11 }}>
+            vivier {vivier.toLocaleString('fr-FR')} classé{p.proposee_at ? ` · valeurs au ${new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : ''}{ctxLine(p) ? ` · ${ctxLine(p)}` : ''}
+          </div>
+          {/* jauge de progression + détail : retenues / écartées / à explorer (classées). */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 200, height: 5, background: '#060A08', borderRadius: 3, overflow: 'hidden' }}>
+              {vivier > 0 && <div style={{ width: `${Math.round(((c.retenue + c.ecartee) / vivier) * 100)}%`, height: '100%', background: '#4ADE80', borderRadius: 3 }} />}
             </div>
-          )}
+            <span data-projet-barre style={{ fontFamily: MONO, fontSize: 11, color: '#8FA69A' }}>
+              {c.retenue} retenue{c.retenue > 1 ? 's' : ''} · {c.ecartee} écartée{c.ecartee > 1 ? 's' : ''} · {c.proposee.toLocaleString('fr-FR')} à explorer, classées</span>
+          </div>
         </div>
-        <div style={{ textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 14 }}>
-          {todo ? (
-            <div data-projet-atrier title="Total VIF du cadrage à trier (hors décidées) — le même nombre qu'à l'ouverture ; mis en cache, actualisé à l'ouverture du projet">
-              <div style={{ fontSize: 28, color: '#4ADE80', fontWeight: 500, lineHeight: 1 }}>{c.proposee}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: '#8FA69A', marginTop: 4, letterSpacing: '.06em' }}>À TRIER</div>
-              {p.proposee_at && <div data-projet-atrier-maj style={{ fontFamily: MONO, fontSize: 8.5, color: '#5F7267', marginTop: 2, letterSpacing: '.04em' }}>au {new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</div>}
-            </div>
-          ) : (
-            <span data-projet-rien style={{ fontFamily: MONO, fontSize: 11, color: '#4A5C52', letterSpacing: '.06em' }}>RIEN À TRIER</span>
-          )}
-          <details data-projet-menu className="relative shrink-0 opacity-0 transition-opacity duration-quick group-hover:opacity-100" onClick={stop}>
-            <summary className="cursor-pointer list-none px-1 text-txt-ghost transition-colors duration-quick hover:text-txt" title="Plus d’actions">⋯</summary>
-            <div className="absolute right-0 z-20 mt-1 flex flex-col gap-0.5 rounded-lg border border-line-3 bg-bg-3 p-1 shadow-flottante" style={{ minWidth: 128 }}>
-              <button data-projet-editer onClick={(e) => { stop(e); setEditing(true) }}
-                className="rounded px-2 py-1 text-left text-[12px] text-txt transition-colors duration-quick hover:bg-bg-2">Renommer</button>
-              <button data-projet-archiver onClick={(e) => { stop(e); patch.mutate({ statut: archived ? 'actif' : 'archive' }) }}
-                className="rounded px-2 py-1 text-left text-[12px] text-txt transition-colors duration-quick hover:bg-bg-2">{archived ? 'Réactiver' : 'Archiver'}</button>
-            </div>
-          </details>
+        {/* OUTILS-5 (P5) — à droite, le compteur RETENUES (l'avancement RÉEL, pas la taille du stock) ;
+            le menu ⋯ (Renommer/Archiver) DISPARAÎT de l'accueil (ces actions vivent dans le projet ouvert). */}
+        <div data-projet-retenues style={{ textAlign: 'right', whiteSpace: 'nowrap' }} title="Parcelles retenues — l'avancement réel du projet">
+          <div style={{ fontFamily: MONO, fontSize: 24, color: '#4ADE80', fontWeight: 700, lineHeight: 1 }}>{c.retenue}</div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: '#8FA69A', marginTop: 4, letterSpacing: '.16em' }}>RETENUES</div>
         </div>
       </div>
     </div>

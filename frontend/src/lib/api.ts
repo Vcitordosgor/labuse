@@ -1153,7 +1153,7 @@ export const getProjets = () => j<Projet[]>('/projets')
 export const getProjet = (id: number) => j<Projet>(`/projets/${id}`)
 export interface ProjetDerive { nom: string; cadrage: Cadrage; identite: Identite; sdp_besoin_m2: number | null }
 // M120 — créer = FIGER la shortlist en une fois (le run part une fois ; plus de run à l'ouverture).
-export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string; limit?: number }) =>
+export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string; limit?: number; de_zero?: boolean }) =>
   // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
   j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; pourquoi: string[] }  // M139 bricole : q_score retiré (toujours None, non rendu)
@@ -1180,6 +1180,7 @@ export interface ParcoursItem {
   adresse?: string | null; pourquoi?: string[]; evenement?: boolean; marche_eur_m2?: number | null
   proprietaire_public?: ProprietairePublic | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean
   etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
+  raison?: string | null      // OUTILS-5 (P1) : le signal dominant qui a classé la parcelle
 }
 // M2 — fusion des doublons : union parcelles + statuts (statut le plus avancé gagne), conflits signalés.
 export interface FusionResult { ok: boolean; cible: number; sources_archivees: number[]; n_parcelles: number; conflits: { parcel_id: number; statuts: string[]; retenu: string }[]; counts: ProjetCounts }
@@ -1201,8 +1202,8 @@ export interface CarteDecision {
   forces: { titre: string; detail: string }[]; attentions: { titre: string; detail: string }[]
 }
 // M140 Lot A — paginé : on feuillette la liste complète des retenues (offset/limit), jamais tout chargé.
-export const getParcoursEtat = (id: number, offset = 0, limit = 60) =>
-  j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}`)
+export const getParcoursEtat = (id: number, offset = 0, limit = 60, tier?: string | null) =>
+  j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}${tier ? `&tier=${tier}` : ''}`)
 // M140 Lot B — export CSV de la liste COMPLÈTE des retenues (streamé, non stocké, zéro rang/score).
 export const projetCsvUrl = (id: number) => `/projets/${id}/export.csv`
 export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/projets/${id}/carte/${idu}`)

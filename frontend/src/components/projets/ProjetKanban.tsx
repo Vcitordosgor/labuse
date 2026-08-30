@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getParcoursEtat, getProjet, patchProjet, projetCsvUrl, projetPdfUrl, rejouerProjet, setStatutParcelle,
+  getParcoursEtat, getProjet, patchProjet, projetPdfUrl, setStatutParcelle,
   type Cadrage, type Identite, type ParcoursEtat, type ParcoursItem, type ProprietairePublic,
-  type ShortlistDiff, type StatutParcelle,
+  type StatutParcelle,
 } from '../../lib/api'
+import { AlgoExplainer, ScoringExplainer } from '../panel/LeftPanel'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduComplet, iduCourt } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
 import { etatBienMeta } from '../../lib/status'
@@ -96,34 +97,25 @@ function ProprioLine({ p }: { p?: ProprietairePublic | null }) {
  *  boutons de repli (accessibilité/mobile) appellent la MÊME mutation de statut que le Tinder. */
 export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const qc = useQueryClient()
-  const { setOpenProjet, openParcours, select } = useApp()
+  const { setOpenProjet, select, algoModale, setAlgoModale } = useApp()
   const [drag, setDrag] = useState<{ idu: string; from: StatutParcelle } | null>(null)
   const [overCol, setOverCol] = useState<StatutParcelle | null>(null)
   const [expandCol, setExpandCol] = useState<StatutParcelle | null>(null)
   const [editing, setEditing] = useState(false)
   const [nomInput, setNomInput] = useState(nom)
   const [filtreAnalyse, setFiltreAnalyse] = useState(false)   // M2 : filtre rapide « à analyser » (colonne proposées)
-  const [dernierDiff, setDernierDiff] = useState<ShortlistDiff | null>(null)   // M120 : diff du dernier rejeu
   const [propLimit, setPropLimit] = useState(60)   // M140 Lot A : fenêtre des proposées (feuilleter la liste complète)
+  const [navTier, setNavTier] = useState<string | null>(null)   // OUTILS-5 (P1) : filtre de navigation « classement »
 
   const projetQ = useQuery({ queryKey: ['projet', pid], queryFn: () => getProjet(pid), enabled: pid > 0 })
   // M140 Lot A — la fenêtre des proposées grandit à la demande (« Charger plus ») : on ne charge
   // JAMAIS tout. `placeholderData` garde la fenêtre précédente affichée pendant l'agrandissement.
-  const parcoursKey = ['parcours', pid, propLimit]
-  const etatQ = useQuery({ queryKey: parcoursKey, queryFn: () => getParcoursEtat(pid, 0, propLimit),
+  const parcoursKey = ['parcours', pid, propLimit, navTier]
+  const etatQ = useQuery({ queryKey: parcoursKey, queryFn: () => getParcoursEtat(pid, 0, propLimit, navTier),
     enabled: pid > 0, placeholderData: (prev) => prev })
 
-  // M120 — PLUS DE RUN À L'OUVERTURE : la shortlist est FIGÉE au cadrage. On lit son état, on ne
-  // relance rien. Le seul rafraîchissement est le bouton « Rejouer » explicite ci-dessous.
-  const rejouer = useMutation({
-    mutationFn: () => rejouerProjet(pid),
-    onSuccess: (d) => {
-      setDernierDiff(d.shortlist)
-      qc.invalidateQueries({ queryKey: ['parcours', pid] })
-      qc.invalidateQueries({ queryKey: ['projet', pid] })
-      qc.invalidateQueries({ queryKey: ['projets'] })
-    },
-  })
+  // OUTILS-5 (P1) — le projet est un INSTANTANÉ daté : plus de run à l'ouverture, plus de « Rejouer ».
+  // On lit l'état (vivier vif paginé + décidées), on ne relance rien.
 
   // LE geste de statut — UNE seule logique (drag, boutons, Tinder l'appellent tous). Optimiste +
   // resync CRM (retenue↔pipeline) + compteurs des fiches.
@@ -193,8 +185,12 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   ))}
                 </span>
               )}
-              {projet?.derniere_execution_at && (
-                <span data-kanban-cadrage-date className="whitespace-nowrap text-[10.5px] text-txt-dim">· cadrage du {fmtDate(projet.derniere_execution_at)}</span>
+              {/* OUTILS-5 (P1/P4) — le VIVIER : N parcelles, classées par probabilité de mutation. Rien
+                  n'est plafonné ; l'ordre change, pas le contenu. « pourquoi ? » ouvre LE composant
+                  d'explication de l'analyse LABUSE (le même que la carte/fiche) — jamais une prose parallèle. */}
+              {etatQ.data?.total_retenues != null && (
+                <span data-kanban-vivier className="whitespace-nowrap text-[10.5px] text-txt-dim">· <b className="text-txt-mut">Vivier : {etatQ.data.total_retenues.toLocaleString('fr-FR')} parcelles, classées par probabilité de mutation</b>
+                  {' '}<button data-kanban-pourquoi onClick={() => useApp.getState().setAlgoModale('scoring')} className="text-mint hover:underline">pourquoi ?</button></span>
               )}
               {/* M139 Lot 2 (F2) — la SECONDE date : les valeurs (SDP/zone) sont relues live au run
                   résiduel servi. On la DIT au lieu de la taire — l'avertissement devient une donnée. */}
@@ -204,33 +200,20 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
-            <button data-kanban-rejouer disabled={rejouer.isPending} onClick={() => rejouer.mutate()}
-              className={`min-h-7 rounded-md px-2.5 py-1 text-[11px] transition-colors duration-quick ${projet?.shortlist_perimee ? 'border border-mint bg-mint/15 font-semibold text-mint hover:brightness-110' : 'border border-line-2 text-txt-mut hover:border-mint hover:text-txt-hi'}`}
-              title="Rejouer le cadrage sur les données du jour — vos tris sont conservés">
-              {rejouer.isPending ? 'Rejeu…' : projet?.shortlist_perimee ? '↻ Rejouer (cadrage modifié)' : '↻ Rejouer'}</button>
+            {/* OUTILS-5 (P4) — RETIRÉS : « Rejouer » (le projet est un instantané daté, assumé — qui veut
+                du frais crée un projet) et « CSV complet » (même politique que Densifier/Scan :
+                consultation illimitée, extraction non ; le PDF reste). */}
             <a data-kanban-pdf href={projetPdfUrl(pid)} target="_blank" rel="noreferrer"
               className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi"
               title="Dossier PDF — extrait figé de présentation">PDF</a>
-            {/* M140 Lot B — la liste COMPLÈTE des retenues (toutes, streamée, non stockée, zéro rang/score). */}
-            <a data-kanban-csv href={projetCsvUrl(pid)}
-              className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi"
-              title="Exporter la liste COMPLÈTE des retenues en CSV (toutes les parcelles, ordre géographique)">CSV complet</a>
             <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Renommer</button>
             <button data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }}
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Archiver</button>
           </div>
         </div>
-        {/* M120 — bandeau « cadrage modifié » (périmée) et diff du dernier rejeu (jamais un run muet). */}
-        {projet?.shortlist_perimee && !dernierDiff && (
-          <p data-kanban-perimee className="mt-1.5 rounded-md bg-mint/10 px-2 py-1 text-[10.5px] text-mint">
-            Le cadrage a changé — rejouez pour rafraîchir la shortlist (vos tris seront conservés).</p>
-        )}
-        {dernierDiff && (
-          <p data-kanban-diff className="mt-1.5 text-[10.5px] text-txt-dim">
-            Rejeu : <b className="text-mint">+{dernierDiff.ajoutees}</b> nouvelle{dernierDiff.ajoutees > 1 ? 's' : ''}{(dernierDiff.ajoutees_refonte ?? 0) > 0 ? ` (dont ${dernierDiff.ajoutees_refonte} entrée${(dernierDiff.ajoutees_refonte ?? 0) > 1 ? 's' : ''} par refonte cascade — nouveau vivier, pas un mouvement de marché)` : ''} · <b>{dernierDiff.sorties}</b> sortie{dernierDiff.sorties > 1 ? 's' : ''} du cadrage · {dernierDiff.tris_conserves} tri{dernierDiff.tris_conserves > 1 ? 's' : ''} conservé{dernierDiff.tris_conserves > 1 ? 's' : ''}.
-            {dernierDiff.tronquee && <> Vous triez les <b>{dernierDiff.n_shortlist}</b> meilleures sur <b>{dernierDiff.vivier.toLocaleString('fr-FR')}</b> du vivier.</>}</p>
-        )}
+        {/* OUTILS-5 (P1) — bandeau « cadrage modifié / rejeu » RETIRÉ avec le bouton Rejouer : le projet
+            est un instantané daté, jamais rejoué en place (« valeurs au JJ/MM » l'assume). */}
         <p data-kanban-ajouter className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.ajouterDepuisFiche}</p>
       </div>
 
@@ -257,15 +240,14 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: col.accent }} />
                 <span className="text-[12px] font-medium text-txt-hi">{col.label}</span>
                 <span data-kanban-count={col.key} className="font-mono text-[11px] text-txt-dim">{count(col.key)}</span>
+                {/* OUTILS-5 (P1) — « À trier » sert le vivier ENTIER, par pages, les mieux classées d'abord :
+                    le compteur le dit en toutes lettres. Le bouton « Trier » (parcours carte) est retiré :
+                    le flux est déjà ordonné. */}
+                {isProp && <span data-kanban-mieux className="text-[10px] text-txt-dim">· les mieux classées d'abord</span>}
                 {isProp && aAnalyser.length > 0 && (
                   <button data-kanban-filtre-analyse onClick={() => setFiltreAnalyse((v) => !v)}
                     className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors duration-quick ${filtreAnalyse ? 'bg-st-creuser text-mint-ink' : 'border border-st-creuser/60 text-st-creuser'}`}
                     title="Filtrer sur les parcelles marquées « à analyser »">◑ à analyser {aAnalyser.length}</button>
-                )}
-                {isProp && count('proposee') > 0 && (
-                  <button data-kanban-trier onClick={() => openParcours({ id: pid, nom: projet?.nom ?? nom })}
-                    className="ml-auto rounded-md bg-mint px-2.5 py-1 text-[11px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110"
-                    title="Parcourir les parcelles à trier une par une (carte)">Trier</button>
                 )}
                 {col.key === 'retenue' && (
                   <Tip tip="Chaque retenue crée une piste CRM (contact à préparer)" className="ml-auto">
@@ -278,6 +260,16 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   </Tip>
                 )}
               </div>
+              {/* OUTILS-5 (P1) — FILTRES DE NAVIGATION du vivier « à trier » : classement (même facette
+                  `tiers` que la carte, jamais un tri parallèle). On NAVIGUE le vivier, on ne le plafonne pas. */}
+              {isProp && (
+                <div data-kanban-nav className="flex shrink-0 flex-wrap gap-1.5 border-b border-line-2 px-3 py-2">
+                  {([['', 'Tous'], ['brulante', 'Priorité'], ['chaude', 'À suivre']] as const).map(([v, l]) => (
+                    <button key={v || 'tous'} data-kanban-nav-tier={v || 'tous'} onClick={() => setNavTier(v || null)}
+                      className={`rounded-full border px-2.5 py-0.5 text-[10.5px] transition-colors duration-quick ${(navTier ?? '') === v ? 'border-mint bg-mint/15 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>{l}</button>
+                  ))}
+                </div>
+              )}
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5">
                 {list.length === 0 && (
                   <div className="rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
@@ -314,11 +306,29 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   <button onClick={() => setExpandCol(null)}
                     className="min-h-7 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt-mut">réduire</button>
                 )}
+                {/* OUTILS-5 (P4) — colonne Retenues : « → CRM » + « ✉ Courrier (N) » (ouvre l'outil
+                    Courrier propriétaire pré-rempli des retenues, étape 1 remplie). */}
+                {col.key === 'retenue' && count('retenue') > 0 && (
+                  <div data-kanban-retenues-actions className="mt-1 flex gap-2 border-t border-line-2 pt-2">
+                    <button data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
+                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">→ CRM</button>
+                    <button data-kanban-courrier onClick={() => {
+                      const idus = (etat?.retenues ?? []).map((r) => r.idu)
+                      const s = useApp.getState(); s.setCourrierPrefillIdus(idus); s.setOpenProjet(null); s.setView('cartes'); s.setModule('courriers')
+                    }}
+                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">✉ Courrier ({count('retenue')})</button>
+                  </div>
+                )}
               </div>
             </div>
           )
         })}
       </div>
+      {/* OUTILS-5 (P2) — « pourquoi ? » ouvre LE MÊME composant d'explication que la carte/fiche
+          (AlgoExplainer/ScoringExplainer, pilotés par le store `algoModale`) — une seule explication,
+          servie partout ; jamais une prose parallèle pour Projets. */}
+      {algoModale === 'classement' && <AlgoExplainer onClose={() => setAlgoModale(null)} />}
+      {algoModale === 'scoring' && <ScoringExplainer onClose={() => setAlgoModale(null)} />}
     </div>
   )
 }
@@ -341,7 +351,7 @@ function Badges({ it }: { it: ParcoursItem }) {
 
 /** M120 · Phase 4 — LA CARTE DE TRI, une SEULE anatomie, DEUX densités (patron liste M114) :
  *  · dense (« À trier ») garde TOUT — adresse, tier, le POURQUOI (forces sourcées), le signal
- *    marché/événement, et les 3 gestes (✓ Retenir · ◑ Peut-être · ✕ Écarter) ;
+ *    marché/événement, et les DEUX gestes (✓ Retenir · ✕ Écarter — OUTILS-5 : « Peut-être » retiré) ;
  *  · light (Retenues/Écartées) s'allège — adresse, IDU, tier, l'action de retour. Le pourquoi et le
  *    signal marché n'y servent plus (la décision est prise). Le q_score interne n'est PLUS servi. */
 function TriCard({ it, col, dense, onDragStart, onAction, onFiche }: {
@@ -376,6 +386,9 @@ function TriCard({ it, col, dense, onDragStart, onAction, onFiche }: {
           </span>
         )}
         <Badges it={it} />
+        {/* OUTILS-5 (P1) — le SIGNAL qui a classé la parcelle (« succession », « permis jamais lancé »…),
+            servi par le même moteur que la carte (raison dominante des contributions du score). */}
+        {it.raison && <span data-card-signal className="rounded-full bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{it.raison}</span>}
       </div>
 
       {/* dense uniquement — le POURQUOI (sourcé) + le signal marché/événement */}
@@ -408,10 +421,8 @@ function TriCard({ it, col, dense, onDragStart, onAction, onFiche }: {
           <button data-card-retenir onClick={() => onAction('retenue')}
             className="min-h-7 flex-1 rounded-md border border-mint/60 py-1 text-[10.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">✓ Retenir</button>
         )}
-        {dense && !analyse && (
-          <button data-card-analyser onClick={() => onAction('a_analyser')}
-            className="min-h-7 flex-1 rounded-md border border-st-creuser/50 py-1 text-[10.5px] text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10">◑ Peut-être</button>
-        )}
+        {/* OUTILS-5 (P4) — « ◑ Peut-être » RETIRÉ : les projets repartant de zéro, deux gestes suffisent
+            (✓ Retenir / ✕ Écarter). Aucune colonne « à analyser » à alimenter. */}
         {col !== 'ecartee' && (
           <button data-card-ecarter onClick={() => onAction('ecartee')}
             className="min-h-7 flex-1 rounded-md border border-st-ecartee/50 py-1 text-[10.5px] font-medium text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕ Écarter</button>
