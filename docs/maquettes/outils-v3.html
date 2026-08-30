@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquettes par outil · v3 validée · LABUSE</title>
+<style>
+  :root{
+    --fond:#0c0a09; --carte:#161412; --carte2:#1c1917; --bord:#2b2724;
+    --texte:#e7e5e4; --gris:#a8a29e; --gris2:#78716c;
+    --vert:#16A34A; --vert-clair:#4ade80; --vert-fond:rgba(22,163,74,.10);
+    --orange:#d97706; --orange-clair:#fbbf24; --orange-fond:rgba(217,119,6,.10);
+    --rouge:#ef4444; --rouge-clair:#f87171; --rouge-fond:rgba(239,68,68,.10);
+    --violet:#8b5cf6;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fond);color:var(--texte);font-family:var(--sans);line-height:1.55;padding-bottom:120px}
+  .page{max-width:1180px;margin:0 auto;padding:0 28px}
+  header{padding:50px 0 24px;border-bottom:1px solid var(--bord)}
+  .surtitre{font-family:var(--mono);font-size:11px;letter-spacing:.35em;color:var(--vert-clair);text-transform:uppercase}
+  h1{font-size:38px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+  .sous{color:var(--gris);max-width:800px}
+  nav{position:sticky;top:0;background:rgba(12,10,9,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--bord);z-index:50}
+  nav .page{display:flex;gap:20px;padding:13px 28px;overflow-x:auto;white-space:nowrap}
+  nav a{color:var(--gris);text-decoration:none;font-size:12.5px;font-family:var(--mono);letter-spacing:.05em}
+  nav a:hover{color:var(--vert-clair)}
+  h2{font-size:24px;font-weight:700;margin:56px 0 6px}
+  .num{font-family:var(--mono);font-size:12px;color:var(--vert-clair);letter-spacing:.25em}
+  .chapeau{color:var(--gris);max-width:840px;margin-bottom:20px;font-size:14.5px}
+  .chapeau b{color:var(--texte)}
+
+  /* panneau latéral étroit — le format réel des outils */
+  .panneau-outil{max-width:400px;border:1px solid var(--bord);border-radius:14px;background:var(--carte);margin:20px 0;overflow:hidden}
+  .po-tete{padding:12px 16px;border-bottom:1px solid var(--bord);background:var(--carte2)}
+  .po-tete .fil{font-family:var(--mono);font-size:10px;color:var(--gris2);letter-spacing:.16em;text-transform:uppercase}
+  .po-tete b{display:block;font-size:17px;margin-top:3px}
+  .po-corps{padding:15px 16px}
+  .note-ecran{font-size:12px;color:var(--gris2);padding:10px 16px;border-top:1px solid var(--bord)}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:3px 9px;border-radius:16px;border:1px solid;text-transform:uppercase;white-space:nowrap}
+  .b-vert{color:var(--vert-clair);border-color:rgba(74,222,128,.35);background:var(--vert-fond)}
+  .b-rouge{color:var(--rouge-clair);border-color:rgba(248,113,113,.35);background:var(--rouge-fond)}
+  .b-gris{color:var(--gris);border-color:var(--bord)}
+  .pastille{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .champ{background:var(--fond);border:1px solid var(--bord);border-radius:8px;padding:8px 12px;font-size:12.5px;color:var(--gris2)}
+  .champ.plein{display:block;width:100%;border-color:rgba(74,222,128,.35)}
+  .segment{display:inline-flex;border:1px solid var(--bord);border-radius:8px;overflow:hidden}
+  .segment.plein{display:flex}
+  .segment.plein span{flex:1;text-align:center}
+  .segment span{padding:6px 10px;font-size:11.5px;color:var(--gris2);border-right:1px solid var(--bord)}
+  .segment span:last-child{border-right:none}
+  .segment .on-vert{background:var(--vert-fond);color:var(--vert-clair)}
+  .segment .on-rouge{background:var(--rouge-fond);color:var(--rouge-clair)}
+  .empile{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+
+  /* accueil */
+  .panneau-etroit{max-width:400px;border:1px solid var(--bord);border-radius:14px;background:var(--carte);padding:20px;margin:20px 0}
+  .pe-titre{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .pe-titre b{font-size:20px;font-weight:700}
+  .pe-x{color:var(--gris2);border:1px solid var(--bord);border-radius:8px;padding:3px 9px}
+  .pe-ligne{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bord);font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--gris)}
+  .hero-p{font-size:22px;font-weight:800;line-height:1.25;margin:20px 0 4px}
+  .hero-p i{font-style:normal;color:var(--vert-clair)}
+  .stats-p{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--carte2);border:1px solid var(--bord);border-radius:11px;margin:14px 0 18px}
+  .stats-p div{text-align:center;padding:13px 6px;border-right:1px solid var(--bord)}
+  .stats-p div:last-child{border-right:none}
+  .stats-p b{font-size:20px;font-weight:800;display:block}
+  .stats-p span{font-size:11.5px;color:var(--gris)}
+  .pe-lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;color:var(--gris2);text-transform:uppercase;margin:16px 0 9px}
+  .action{display:flex;gap:12px;align-items:center;background:var(--carte2);border:1px solid var(--bord);border-left:3px solid var(--gris2);border-radius:10px;padding:12px 13px;margin-bottom:9px}
+  .action.verte{border-left-color:var(--vert)}
+  .action.violette{border-left-color:var(--violet)}
+  .action .ico{width:36px;height:36px;border-radius:9px;background:var(--fond);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;color:var(--vert-clair)}
+  .action.violette .ico{color:var(--violet)}
+  .action .tx{min-width:0}
+  .action b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .action span{font-size:11.5px;color:var(--gris2)}
+  .action .fleche{margin-left:auto;color:var(--vert-clair)}
+  .pied-p{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;color:var(--gris);border-top:1px solid var(--bord);padding-top:13px;margin-top:14px}
+  .pied-p .ok{width:6px;height:6px;border-radius:50%;background:var(--vert-clair);display:inline-block;margin-right:7px}
+  .pied-p a{color:var(--vert-clair);text-decoration:none;white-space:nowrap}
+
+  /* items permis 2 lignes */
+  .lp2{background:var(--carte2);border:1px solid var(--bord);border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:12.5px}
+  .lp2 .l1{display:flex;gap:8px;align-items:center}
+  .lp2 .pc{font-family:var(--mono);font-size:10px;border:1px solid var(--bord);border-radius:5px;padding:1px 6px;color:var(--gris)}
+  .lp2 .d{color:var(--gris2);font-family:var(--mono);font-size:11px}
+  .lp2 .l2{display:flex;justify-content:space-between;align-items:center;margin-top:5px;color:var(--gris2);font-size:11.5px}
+
+  .carte-stat{background:var(--carte2);border:1px solid var(--bord);border-radius:10px;padding:12px 14px}
+  .carte-stat b{font-size:16.5px;display:block}
+  .carte-stat span{font-size:11.5px;color:var(--gris2)}
+  .etapes{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--gris2);letter-spacing:.04em;margin-bottom:12px;flex-wrap:wrap}
+  .etapes .fait{color:var(--vert-clair)}
+
+  /* postes TA verticaux */
+  .poste{padding:10px 0;border-bottom:1px solid var(--bord)}
+  .poste:last-child{border-bottom:none}
+  .poste .l1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .poste .l1 b{font-size:13.5px;font-weight:600}
+  .poste .m{font-variant-numeric:tabular-nums;font-size:14px;white-space:nowrap}
+  .poste .detail{font-family:var(--mono);font-size:10.5px;color:var(--gris2);margin-top:3px}
+  .m-vert{color:var(--vert-clair);font-weight:700}
+
+  /* écrans larges conservés (communes, temps) */
+  .ecran{border:1px solid var(--bord);border-radius:14px;overflow:hidden;background:var(--carte);margin:20px 0}
+  .barre-app{display:flex;align-items:center;gap:14px;padding:11px 16px;border-bottom:1px solid var(--bord);background:var(--carte2)}
+  .logo{font-family:var(--mono);font-weight:700;letter-spacing:.2em;font-size:12.5px}
+  .fil{font-family:var(--mono);font-size:10.5px;color:var(--gris2);letter-spacing:.18em;text-transform:uppercase}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris2);text-align:right;padding:8px 10px;border-bottom:1px solid var(--bord)}
+  th:first-child{text-align:left}
+  td{padding:8px 10px;border-bottom:1px solid var(--bord);color:var(--gris);text-align:right;font-variant-numeric:tabular-nums}
+  td:first-child{color:var(--texte);text-align:left}
+  .btn-fiche{font-size:11px;color:var(--vert-clair);border:1px solid rgba(74,222,128,.3);border-radius:7px;padding:3px 10px;white-space:nowrap}
+  .vert-val{color:var(--vert-clair);font-weight:600}
+  .split{position:relative;height:300px;display:grid;grid-template-columns:1fr 1fr;border-radius:11px;overflow:hidden;border:1px solid var(--bord)}
+  .split .avant{background:repeating-linear-gradient(23deg,#3a3835 0 14px,#44423e 14px 15px),#3f3d39}
+  .split .apres{background:repeating-linear-gradient(-31deg,#17301f 0 12px,#1b3a25 12px 13px),#183322}
+  .split .poignee{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--vert-clair)}
+  .split .parc{position:absolute;top:36%;left:41%;width:18%;height:30%;border:2.5px solid var(--vert-clair);box-shadow:0 0 0 3px rgba(74,222,128,.25),0 0 18px rgba(74,222,128,.35);border-radius:3px}
+  .split .etq{position:absolute;top:29%;left:41%;font-family:var(--mono);font-size:10px;color:var(--vert-clair);background:rgba(12,10,9,.8);padding:2px 7px;border-radius:5px;letter-spacing:.08em}
+  .split .an{position:absolute;bottom:12px;font-family:var(--mono);font-size:10.5px;color:var(--texte);background:rgba(12,10,9,.75);padding:3px 9px;border-radius:6px}
+  .fiche{background:var(--carte);border:1px solid var(--bord);border-radius:13px;padding:18px 21px;margin:14px 0}
+  .fiche h4{font-size:15px;font-weight:700;margin-bottom:8px}
+  .fiche p{font-size:13.5px;color:var(--gris);margin-bottom:6px}
+  .fiche p:last-child{margin-bottom:0}
+  .fiche b{color:var(--texte)}
+  .ok-l{display:flex;gap:9px;font-size:13px;color:var(--gris);align-items:baseline;margin-bottom:6px}
+  .ok-l::before{content:"✓";color:var(--vert-clair);flex-shrink:0}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="page">
+    <div class="surtitre">LABUSE · maquettes par outil · v3 — corrections intégrées</div>
+    <h1>Les outils, retouchés un à un</h1>
+    <p class="sous">Tout au format réel : les outils vivent dans l'onglet latéral gauche (~400 px). Le panneau d'accueil garde sa structure, les états d'avancement du courrier disparaissent côté client, les badges d'annotation sont retirés.</p>
+  </div>
+</header>
+
+<nav><div class="page">
+  <a href="#panneau">Panneau</a>
+  <a href="#permis">Permis</a>
+  <a href="#solaire">Solaire</a>
+  <a href="#communes">Communes</a>
+  <a href="#temps">Remonter le temps</a>
+  <a href="#courrier">Courrier</a>
+  <a href="#zone">Étude de zone</a>
+  <a href="#ta">Taxe d'aménagement</a>
+  <a href="#libelles">Libellés</a>
+  <a href="#intacts">Au niveau</a>
+</div></nav>
+
+<div class="page">
+
+<!-- 01 PANNEAU -->
+<h2 id="panneau"><span class="num">01</span> · Le panneau d'accueil</h2>
+<p class="chapeau">Ta structure, intacte. Le Radar entre dans « Par où commencer » avec une icône dans le ton des autres et un titre qui tient sur sa ligne. En pied : une phrase simple, et le lien vers les données.</p>
+
+<div class="panneau-etroit">
+  <div class="pe-titre"><b>Cartes</b><span class="pe-x">✕</span></div>
+  <div class="pe-ligne"><span>COUCHES</span><span class="badge b-vert" style="text-transform:none">3 actives</span></div>
+  <div class="pe-ligne"><span>FILTRES</span><span style="color:var(--gris2)">‹</span></div>
+  <div class="hero-p">Tout le foncier de La Réunion.<br><i>Au même endroit.</i></div>
+  <div class="stats-p">
+    <div><b>431 663</b><span>parcelles</span></div>
+    <div><b>24</b><span>communes</span></div>
+    <div><b>59</b><span>sources</span></div>
+  </div>
+  <div class="pe-lbl">Par où commencer</div>
+  <div class="action verte"><span class="ico">◎</span><span class="tx"><b>Explorer la carte</b><span>activez une couche, cliquez une parcelle</span></span><span class="fleche">→</span></div>
+  <div class="action verte"><span class="ico">◉</span><span class="tx"><b>Suivre le marché — Radar</b><span>les biens en vente, croisés au foncier</span></span><span class="fleche">→</span></div>
+  <div class="action violette"><span class="ico">✦</span><span class="tx"><b>Demander au Copilote</b><span>« terrain 1 000 m² à Saint-Paul »</span></span><span class="fleche">→</span></div>
+  <div class="action"><span class="ico" style="color:var(--gris)">⚙</span><span class="tx"><b>Ouvrir un outil</b><span>17 outils — trouver, instruire, agir, comprendre, suivre</span></span><span class="fleche">→</span></div>
+  <div class="pied-p"><span><span class="ok"></span>Toutes les données sont à jour.</span><a href="#">voir les données →</a></div>
+</div>
+
+<!-- 02 PERMIS -->
+<h2 id="permis"><span class="num">02</span> · Permis — une interface, deux couleurs, au format panneau</h2>
+<p class="chapeau">La refonte validée, dans sa vraie largeur. La recherche en tête sur toute la largeur, l'état en segment plein (vert / rouge), les filtres empilés, les items sur deux lignes. La carte à droite prend les mêmes couleurs.</p>
+
+<div class="panneau-outil">
+  <div class="po-tete"><span class="fil">← Outils · Permis</span><b>Permis</b></div>
+  <div class="po-corps">
+    <div class="empile">
+      <span class="champ plein">◎ Adresse, commune ou n° de permis…</span>
+      <span class="segment plein"><span class="on-vert">● En cours 5 575</span><span class="on-rouge">● Point mort 15 475</span><span>Tous</span></span>
+      <span class="segment plein"><span>12 m</span><span class="on-vert">24 m</span><span>48 m</span><span>72 m</span></span>
+      <span class="segment plein"><span class="on-vert">Tout</span><span>PC</span><span>DP</span><span>PA</span><span>PD</span></span>
+    </div>
+    <div class="lp2"><div class="l1"><span class="pastille" style="background:var(--vert-clair)"></span><span class="pc">PC</span><span class="d">2026-07-30</span><b>30 lgts</b></div><div class="l2"><span>Saint-Paul</span><span class="badge b-vert">Autorisé</span></div></div>
+    <div class="lp2"><div class="l1"><span class="pastille" style="background:var(--vert-clair)"></span><span class="pc">PA</span><span class="d">2026-07-30</span><b>43 lgts</b></div><div class="l2"><span>Saint-Denis</span><span class="badge b-vert">Autorisé</span></div></div>
+    <div class="lp2"><div class="l1"><span class="pastille" style="background:var(--rouge-clair)"></span><span class="pc">PC</span><span class="d">2013-01-04</span><b>3 lgts · 590 m²</b></div><div class="l2"><span>Saint-Paul</span><span class="badge b-rouge">Sans DAACT · 13 ans</span></div></div>
+    <div class="lp2"><div class="l1"><span class="pastille" style="background:var(--rouge-clair)"></span><span class="pc">PC</span><span class="d">2013-01-07</span><b>5 312 m²</b></div><div class="l2"><span>Le Port</span><span class="badge b-rouge">Sans DAACT · 13 ans</span></div></div>
+  </div>
+  <div class="note-ecran">« 15 475 au point mort · les 1 000 plus anciens chargés — zoomez pour affiner » · géocodage 90 % · Sitadel jusqu'au 2026-07-31.</div>
+</div>
+
+<!-- 03 SOLAIRE -->
+<h2 id="solaire"><span class="num">03</span> · Ensoleillement — deux onglets, au format panneau</h2>
+<p class="chapeau">« Ma parcelle » et « Top parcelles » séparés, cartes empilées dans la largeur du panneau. Tri du listing : potentiel puis toiture. Fil d'Ariane : « ‹ Prospection solaire ».</p>
+
+<div class="panneau-outil">
+  <div class="po-tete"><span class="fil">← Prospection solaire · Ensoleillement</span><b>Ensoleillement</b></div>
+  <div class="po-corps">
+    <div class="empile">
+      <span class="segment plein"><span class="on-vert">Ma parcelle</span><span>Top parcelles</span></span>
+      <span class="champ plein">◎ 3 Chemin de la Citerne, Saint-Denis (97417)</span>
+    </div>
+    <div class="empile">
+      <div class="carte-stat"><b>1 548 kWh/kWc/an</b><span>potentiel · maille PVGIS ~400 m — commun aux parcelles voisines</span></div>
+      <div class="carte-stat"><b>197 m²</b><span>toiture (emprise) · orientation 65° · pente 13,8°</span></div>
+    </div>
+    <div style="font-size:11.5px;color:var(--gris2)">Ombrage bâti/arbres non modélisé · panneaux existants non détectés — vérif photo aérienne avant démarchage. PVGIS v5.3 · SARAH3 · relevé 2026-08-23.</div>
+  </div>
+  <div class="note-ecran">« Top parcelles » : TOITURE M² en 2ᵉ colonne et 2ᵉ critère de tri — à potentiel égal (maille commune), c'est la toiture qui départage.</div>
+</div>
+
+<!-- 04 COMMUNES -->
+<h2 id="communes"><span class="num">04</span> · Communes — validé</h2>
+<p class="chapeau">« Fiche → » permanent sur chaque ligne du grand tableau ; le bloc Radar replié en une phrase tant qu'aucune commune n'atteint 5 biens. Le bug de la fiche part au mandat.</p>
+
+<div class="ecran">
+  <div class="barre-app"><span class="logo">LABUSE</span><span class="fil">Outils · Communes · Comparaison</span></div>
+  <div style="padding:14px 18px">
+    <table>
+      <tr><th>Commune</th><th>Stock foncier ↓</th><th>Instruction (mois)</th><th>Permis 5 ans</th><th>€/m² ancien</th><th></th></tr>
+      <tr><td>Saint-Paul</td><td class="vert-val">285</td><td>9</td><td>1 989</td><td>4 278</td><td><span class="btn-fiche">Fiche →</span></td></tr>
+      <tr><td>Le Tampon</td><td>144</td><td>9</td><td>1 340</td><td>2 259</td><td><span class="btn-fiche">Fiche →</span></td></tr>
+      <tr><td>La Possession</td><td>139</td><td>9</td><td>601</td><td>2 843</td><td><span class="btn-fiche">Fiche →</span></td></tr>
+    </table>
+    <div style="background:var(--carte2);border:1px solid var(--bord);border-radius:10px;padding:11px 14px;margin-top:14px;font-size:12.5px;color:var(--gris)">
+      <b style="font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--gris2)">MARCHÉ DES ANNONCES (RADAR)</b> — en constitution · <b style="color:var(--texte)">35 biens collectés</b> · affichage par commune à partir de 5 biens. <span style="color:var(--vert-clair)">Suivre la collecte →</span>
+    </div>
+  </div>
+</div>
+
+<!-- 05 TEMPS -->
+<h2 id="temps"><span class="num">05</span> · Remonter le temps — validé</h2>
+<p class="chapeau">Contour vert + étiquette IDU sur les deux volets, vue centrée. Même trait cadastral que la carte principale.</p>
+
+<div class="ecran">
+  <div class="barre-app"><span class="logo">LABUSE</span><span class="fil">Outils · Remonter le temps · 97411000BZ1065</span></div>
+  <div style="padding:16px">
+    <div class="split">
+      <div class="avant"></div><div class="apres"></div><div class="poignee"></div>
+      <div class="etq">BZ 1065</div><div class="parc"></div>
+      <div class="an" style="left:14px">1950-1965</div><div class="an" style="right:14px">Actuelle</div>
+    </div>
+  </div>
+</div>
+
+<!-- 06 COURRIER -->
+<h2 id="courrier"><span class="num">06</span> · Courrier — la confirmation, au format panneau</h2>
+<p class="chapeau">Un numéro de demande, la promesse des 24 h, le renvoi vers le suivi — et rien de plus. Les états internes (impression, poste) restent chez LABUSE : moins de surface, moins de bugs, et le client a exactement ce qu'il lui faut.</p>
+
+<div class="panneau-outil">
+  <div class="po-tete"><span class="fil">← Outils · Courrier propriétaire</span><b>Courrier propriétaire</b></div>
+  <div class="po-corps">
+    <div class="etapes"><span class="fait">✓ 1 · Destinataires</span> › <span class="fait">✓ 2 · Rédaction</span> › <span class="fait">✓ 3 · Envoi</span></div>
+    <div style="background:var(--vert-fond);border:1px solid rgba(74,222,128,.3);border-radius:11px;padding:14px 15px;margin-bottom:12px">
+      <b style="color:var(--vert-clair)">✓ Demande n° 47 transmise.</b>
+      <p style="font-size:12.5px;color:var(--gris);margin-top:4px">LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.</p>
+    </div>
+    <div style="font-size:12px;color:var(--gris2)">1 courrier · Saint-Denis ×1 · adressage générique (SPF/CERFA)<br>Retrouvez vos demandes dans <b style="color:var(--gris)">Projets → Mes courriers</b>.</div>
+  </div>
+  <div class="note-ecran">Côté admin : file « Demandes de courrier » (n°, client, parcelles, date) + mail à chaque demande — le mandat s'appuiera sur ce que révèle ton test psql.</div>
+</div>
+
+<!-- 07 ZONE -->
+<h2 id="zone"><span class="num">07</span> · Étude de zone — l'état cible, SIRENE servie</h2>
+<p class="chapeau">Les deux cases « non couvert », remplies le jour où l'ingestion tourne en prod. Rien d'autre ne bouge.</p>
+
+<div class="panneau-outil">
+  <div class="po-tete"><span class="fil">← Outils · Étude de zone</span><b>La zone à 5 min en voiture</b></div>
+  <div class="po-corps">
+    <div class="g2">
+      <div class="carte-stat"><b>1 657</b><span>habitants</span></div>
+      <div class="carte-stat"><b>624</b><span>ménages</span></div>
+      <div class="carte-stat"><b>≈ 350–420</b><span>postes salariés · fourchette SIRENE</span></div>
+      <div class="carte-stat"><b>4 concurrents</b><span>boulangerie · SIRENE juil. 2026</span></div>
+    </div>
+    <div style="font-size:12px;color:var(--gris)">La plus proche à <b style="color:var(--texte)">~200 m</b> · les 4 listées avec enseigne et date de création — cliquables vers leur parcelle.</div>
+  </div>
+</div>
+
+<!-- 08 TA -->
+<h2 id="ta"><span class="num">08</span> · Taxe d'aménagement — les postes, au format panneau</h2>
+<p class="chapeau">Le tableau devient une liste verticale qui tient dans le panneau : chaque poste porte son produit exact en dessous — l'écran s'auto-vérifie, par toi comme par un notaire. La ligne piscine calcule enfin ce qu'elle affiche.</p>
+
+<div class="panneau-outil">
+  <div class="po-tete"><span class="fil">← Outils · Taxe d'aménagement</span><b>Poste &amp; assiette</b></div>
+  <div class="po-corps">
+    <div class="poste"><div class="l1"><b>Surface de construction</b><span class="m">178 400 €</span></div><div class="detail">250 m² × 892 € − abatt. 50 % × 100 m²</div></div>
+    <div class="poste"><div class="l1"><b>Piscine</b><span class="m m-vert">5 020 €</span></div><div class="detail">20 m² × 251 €</div></div>
+    <div class="poste"><div class="l1"><b>Assiette imposable</b><span class="m" style="font-weight:700">183 420 €</span></div></div>
+    <div class="poste"><div class="l1"><b>Part départementale</b><span class="m">4 586 €</span></div><div class="detail">2,5 % — à confirmer auprès du département</div></div>
+  </div>
+</div>
+
+<!-- 09 LIBELLES -->
+<h2 id="libelles"><span class="num">09</span> · Deux libellés à redresser</h2>
+<div class="fiche">
+  <h4>PLU — le bandeau des procédures</h4>
+  <p>« 3 communes en procédure PLU » compte le RNU de Saint-Philippe comme une procédure — le RNU est une <b>absence</b> de PLU. Le bandeau devient : <b>« 2 communes en révision · 1 au RNU »</b>.</p>
+</div>
+<div class="fiche">
+  <h4>Pièges &amp; risques ↔ Faisabilité — le périmètre en un mot</h4>
+  <p>Sur BZ1065, « rien à construire — résiduel 26 m² » (bâti conservé) côtoie la Faisabilité qui annonce 123 m² (terrain libéré). Chaque chiffre porte son périmètre : <b>« résiduel, bâti conservé : 26 m² »</b> · <b>« potentiel, terrain libéré : 123 m² »</b>.</p>
+</div>
+
+<!-- 10 INTACTS -->
+<h2 id="intacts"><span class="num">10</span> · Au niveau — on ne touche pas</h2>
+<div class="fiche">
+  <div class="ok-l"><b>Étudier un bien</b> — la bascule calibrées/vos hypothèses est le bon geste ; tous les chiffres se recoupent.</div>
+  <div class="ok-l"><b>Faisabilité</b> — le calcul en 12 étapes sourcées est un argument de vente à lui seul.</div>
+  <div class="ok-l"><b>Comparaison &amp; Assemblage</b> — denses, exacts, lisibles.</div>
+  <div class="ok-l"><b>PLU — recherche verbatim</b> — article, page, lien : le meilleur écran du produit.</div>
+  <div class="ok-l"><b>Pièges &amp; risques</b> — le « non couvert par la base » assumé est la signature LABUSE.</div>
+  <div class="ok-l"><b>Scan patrimoine</b> — structure saine ; seule décision en attente : le sort du CSV.</div>
+  <div class="ok-l"><b>Densifier</b> — rien à changer visuellement ; le retrait du CSV part au mandat.</div>
+  <div class="ok-l"><b>Veille</b> — les deux mondes (foncier / annonces) sont l'architecture décidée.</div>
+</div>
+
+</div>
+</body>
+</html>
