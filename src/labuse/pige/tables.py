@@ -232,6 +232,15 @@ ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS owner_siren varchar(14);
 ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS ges_classe varchar(2);   -- lettre GES (dpe_ges reste l'entier)
 ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS source_brute jsonb;
 
+-- RADAR-DEPOT-2 (D1) — PROVENANCE des faits : `json_riche` (searchData / page d'annonce, tout le JSON
+-- structuré) vs `dom_degrade` (variante B, vignettes DOM seules). Règle de fusion : le riche l'emporte,
+-- le dégradé ne fait que combler les trous (un passage en variante B n'efface jamais une donnée riche).
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS provenance varchar(12);   -- json_riche | dom_degrade
+-- RADAR-DEPOT-2 (D2) — FAITS DÉCLARÉS par le vendeur (page d'annonce) : zone(s) PLU, COS/CES, emprise au
+-- sol %, drapeaux (à rénover / à démolir / succession / lotissement / viabilisé). DÉCLARATIF vendeur,
+-- pas du calibré LABUSE — affiché « déclaré dans l'annonce ». Le TEXTE de l'annonce n'est jamais stocké.
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS declaratif jsonb;
+
 -- pige_depots : chaque fichier HTML déposé, ARCHIVÉ tel quel (hash) + date de dépôt (traçabilité source).
 CREATE TABLE IF NOT EXISTS pige_depots (
   id serial PRIMARY KEY,

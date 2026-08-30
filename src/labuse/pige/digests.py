@@ -75,6 +75,9 @@ def _biens_du_jour(db: Session) -> list[dict]:
              -- RADAR-RECETTE-1 D1c — un bien À QUALIFIER (incohérent) n'entre NI dans les digests NI
              -- dans les veilles (matche() est appelé sur cette même liste). Jamais un fait faux notifié.
              AND b.a_qualifier = false
+             -- RADAR-DEPOT-2 D5 — les copropriétés (appartements) sont embasées mais JAMAIS servies comme
+             -- annonces : absentes des digests ET des alertes de veille (matche() lit cette même liste).
+             AND b.est_copro = false
              AND b.date_premiere_saisie AT TIME ZONE 'Indian/Reunion'
                  >= (now() AT TIME ZONE 'Indian/Reunion')::date
            ORDER BY b.bien_id DESC""")).mappings().all()
@@ -87,6 +90,17 @@ def _biens_du_jour(db: Session) -> list[dict]:
                       "surface_terrain": float(r["surface_terrain"]) if r["surface_terrain"] is not None else None,
                       "particulier_pro": r["particulier_pro"]}
         out.append(d)
+    # RADAR-DEPOT-2 D4 — badge « sous le marché » attaché à chaque bien (référentiel une fois par
+    # commune×famille). Il apparaît sur la carte mail QUAND le bien le porte — jamais un mail dédié.
+    from . import signaux
+    badges = signaux.badges_pour_biens(db, [
+        {"bien_id": d["bien_id"], "commune": d["commune"], "type_bien": d["type_bien"],
+         "a_qualifier": False, "prix": d["prix"],
+         "surface_hab": d["faits"]["surface_hab"], "surface_terrain": d["faits"]["surface_terrain"]}
+        for d in out])
+    for d in out:
+        bd = badges.get(d["bien_id"])
+        d["sous_le_marche"] = bd if (bd and bd.get("calculable") and bd.get("sous_le_marche")) else None
     return out
 
 
@@ -104,11 +118,20 @@ def _carte_item(base_url: str, r: dict) -> dict:
     baisse = (_fmt_prix(r["ancien_prix"] - r["nouveau_prix"]) if r.get("ancien_prix") and r.get("nouveau_prix")
               and r["ancien_prix"] > r["nouveau_prix"] else None)
     d = r.get("date_releve")
+    slm = r.get("sous_le_marche")
+    sous_marche = None
+    if slm and slm.get("sous_le_marche"):
+        # « Sous le marché · −X % » + la référence de zone utilisée (avec son millésime + périmètre).
+        ref = f"réf. {slm['perimetre']} {slm['referentiel_eur_m2']} €/m²"
+        if slm.get("millesime_dvf"):
+            ref += f" ({slm['millesime_dvf']})"
+        sous_marche = {"pct": abs(slm["ecart_pct"]), "ref": ref}
     return {
         "titre": f"{type_label} — {r['commune']}",
         "prix": _fmt_prix(r.get("prix")) or "—",
         "prix_m2": prix_m2, "surface": surface,
         "baisse": ("−" + baisse) if baisse else None,
+        "sous_marche": sous_marche,
         "parcelle": (f"Parcelle {r['idu']}" if r.get("idu") else "Non rattaché à une parcelle"),
         "date_releve": _fmt_date_fr(d.date() if hasattr(d, "date") else d) if d else "—",
         "portail": portails.nom(r["portail"]) if r.get("portail") else "le portail",
@@ -127,12 +150,19 @@ def carte_html(it: dict) -> str:
         prix_bits.append(f'<span style="color:{GREY}">{_esc(it["surface"])}</span>')
     baisse = (f'<div style="font-size:13px;color:{GREEN};margin-top:2px">Baisse de prix — '
               f'{_esc(it["baisse"])}</div>') if it.get("baisse") else ""
+    # RADAR-DEPOT-2 D4 — la ligne du badge « sous le marché » n'apparaît QUE quand l'annonce le porte
+    # (attribut, pas un canal de notification). Écart constaté daté, avec la référence de zone utilisée.
+    sm = it.get("sous_marche")
+    sous_marche = (f'<div style="font-size:13px;color:{GREEN};margin-top:2px">'
+                   f'Sous le marché · −{_esc(sm["pct"])} % <span style="color:{GREY}">'
+                   f'· {_esc(sm["ref"])}</span></div>') if sm else ""
     return (
         f'<div style="border:1px solid #e7e5e4;border-radius:8px;padding:12px 14px;margin-bottom:10px;'
         f'font-family:Arial,Helvetica,sans-serif">'
         f'<div style="font-weight:bold;font-size:15px;color:{INK}">{_esc(it["titre"])}</div>'
         f'<div style="font-size:13px;margin-top:3px">{" · ".join(prix_bits)}</div>'
         f'{baisse}'
+        f'{sous_marche}'
         f'<div style="font-size:12px;color:{GREY};margin-top:4px">{_esc(it["parcelle"])} · '
         f'Repéré le {_esc(it["date_releve"])} sur {_esc(it["portail"])}</div>'
         f'<div style="margin-top:6px"><a href="{_esc(it["url"])}" '

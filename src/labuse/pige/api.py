@@ -243,7 +243,7 @@ def radar_biens(request: Request,
                 particulier_pro: str | None = None, statuts: str | None = None,
                 statut: str | None = None, a_qualifier: str | None = None,
                 periode_debut: str | None = None, periode_fin: str | None = None,
-                rattache: str | None = None, tri: str = "recentes",
+                rattache: str | None = None, sous_marche: str | None = None, tri: str = "recentes",
                 page: int = 1, taille: int | None = None, limit: int | None = None) -> dict:
     """Liste filtrée des biens VALIDÉS pour un client.
 
@@ -265,6 +265,8 @@ def radar_biens(request: Request,
         "a_qualifier": a_qualifier if a_qualifier in ("oui", "non") else None,
         "periode_debut": periode_debut, "periode_fin": periode_fin,
         "rattache": rattache if rattache in ("oui", "non") else None,
+        # RADAR-DEPOT-2 D4 — badge « sous le marché » filtrable (paramètre API + bouton front).
+        "sous_marche": sous_marche if sous_marche in ("oui", "non") else None,
     }
     with session_scope() as db:
         return client.lister(db, filtres=filtres, tri=tri, page=page, taille=taille_eff)
@@ -293,18 +295,20 @@ def radar_clic(body: ClicIn, request: Request) -> dict:
     return {"ok": True, "clic_id": cid}
 
 
-@router.post("/radar/instruire")
+@router.post("/admin/radar/instruire")
 def radar_instruire(body: BienIn, request: Request) -> dict:
-    """RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire cette annonce » : relance la cascade À LA DEMANDE
-    et rend les candidates ENRICHIES — pour chacune, sa VUE ORTHO (`ortho_url`) et l'état de CHAQUE
-    critère (convergent/divergent). Le client compare les toits et tranche. GESTE client, jamais un
-    automatisme — une piste ne déclenche par elle-même ni courrier, ni « vendue », ni stat parcellaire.
-    Un bien déjà rattaché À LA MAIN n'est pas ré-instruit (le choix humain fait foi)."""
+    """RADAR-DEPOT-2 (D3) — « Instruire cette annonce » est désormais un geste ADMIN SEULEMENT : un
+    rattachement client erroné serait un faux fait servi à tous. Relance la cascade À LA DEMANDE et rend
+    les candidates ENRICHIES — pour chacune, sa VUE ORTHO (`ortho_url`) et l'état de CHAQUE critère
+    (convergent/divergent). L'admin compare les toits et tranche. Aucun automatisme n'en part (ni
+    courrier, ni « vendue », ni stat parcellaire). Un bien déjà rattaché À LA MAIN n'est pas ré-instruit."""
     import json as _json
 
     from sqlalchemy import text as _t
 
+    from ..api.auth import exiger_admin
     from . import rattachement_html
+    exiger_admin(request)
     with session_scope() as db:
         rec = db.execute(_t(
             "SELECT b.bien_id, b.commune, b.type_bien AS type, b.est_copro, b.lat, b.lng, "
@@ -338,13 +342,15 @@ def radar_instruire(body: BienIn, request: Request) -> dict:
             "candidates": candidates, "criteres": ratt.get("criteres", []), "motif": ratt.get("motif")}
 
 
-@router.get("/radar/ortho/{idu}")
+@router.get("/admin/radar/ortho/{idu}")
 def radar_ortho(idu: str, request: Request):
     """RATTACHEMENT-V2 (Lot 2) — vignette ORTHO (BD ORTHO 20 cm IGN) d'une parcelle candidate, servie à
-    l'écran Instruire. PNG ou 204 si indisponible (parcelle inconnue / WMS injoignable) — jamais un 500."""
+    l'écran d'instruction ADMIN (D3). PNG ou 204 si indisponible (parcelle inconnue / WMS injoignable)."""
     from fastapi import Response
 
+    from ..api.auth import exiger_admin
     from ..ingestion.ortho_tiles import ortho_png_parcelle
+    exiger_admin(request)
     with session_scope() as db:
         png = ortho_png_parcelle(db, idu)
     if not png:
@@ -358,12 +364,16 @@ class RattacherHumainIn(BaseModel):
     idu: str
 
 
-@router.post("/radar/rattacher-humain")
+@router.post("/admin/radar/rattacher-humain")
 def radar_rattacher_humain(body: RattacherHumainIn, request: Request) -> dict:
-    """RATTACHEMENT-V2 (Lot 2) — le client a tranché via l'ortho : le bien passe RATTACHÉE, rattachement
-    HUMAIN (fait foi, jamais écrasé par une republication). On vérifie que l'idu est une parcelle réelle
-    de la commune du bien (pas d'idu arbitraire injecté)."""
+    """RADAR-DEPOT-2 (D3) — l'ADMIN a tranché via l'ortho : le bien passe RATTACHÉE, rattachement HUMAIN
+    (fait foi, jamais écrasé par une republication — acquis du mandat V2). On vérifie que l'idu est une
+    parcelle réelle de la commune du bien (pas d'idu arbitraire injecté). RÉSERVÉ ADMIN : un rattachement
+    client erroné serait un faux fait servi à tous."""
     from sqlalchemy import text as _t
+
+    from ..api.auth import exiger_admin
+    exiger_admin(request)
     with session_scope() as db:
         b = db.execute(_t("SELECT commune, a_qualifier FROM pige_biens WHERE bien_id = :b"),
                        {"b": body.bien_id}).mappings().first()

@@ -18,6 +18,17 @@ from sqlalchemy.orm import Session
 
 SEUIL_N = 5   # même honnêteté statistique que l'onglet Marché : sous 5, pas de médiane servie
 
+# RADAR-DEPOT-2 (D4) — SEUIL du badge « sous le marché ». JUSTIFICATION (mandat : « ne le sors pas du
+# chapeau ») : le référentiel est la MÉDIANE DVF actée de la zone. Par construction, la moitié des
+# ventes réelles sont sous leur médiane → un simple « sous la médiane » flaguerait ~50 % (inutile). Or,
+# dans ce corpus, le PRIX DEMANDÉ dépasse presque toujours l'ACTÉ (mesure du Lot 4 : St-Denis bâti
+# +31,9 % demandé / acté). Un prix AFFICHÉ qui tombe SOUS l'acté est donc déjà notable. La marge de
+# négociation ordinaire (~5–10 %) plus la dispersion intra-zone (qualité variable) forment un bruit
+# qu'il faut dépasser : on retient −15 %. L'ÉCART EXACT reste affiché quel que soit le seuil (le seuil
+# filtre, il ne juge pas) ; `distribution_ecarts()` permet de le retuner sur base peuplée.
+SEUIL_SOUS_MARCHE_PCT = -15.0
+PERIMETRE_BATI = "maisons + appartements"   # D5 — le bâti servi aux signaux inclut les copros embasées
+
 
 def _radar_medianes(db: Session, commune: str) -> dict:
     """Médianes des prix AFFICHÉS du Radar (demandé) pour une commune : terrain €/m² et bâti €/m².
@@ -90,6 +101,10 @@ def ecart_demande_acte(db: Session, commune: str) -> dict:
     radar = _radar_medianes(db, commune)
     return {
         "commune": commune,
+        # D5 — chaque famille DIT son périmètre : un chiffre sans périmètre n'est pas un fait. Le bâti
+        # recouvre maisons + appartements (les copros sont embasées et comptent ici, même si elles ne
+        # sont jamais servies comme annonces individuelles).
+        "perimetre_terrain": "terrain nu", "perimetre_bati": PERIMETRE_BATI,
         "terrain": _ecart(radar.get("med_terrain"), int(radar.get("n_terrain") or 0), _dvf_terrain(db, commune)),
         "bati": _ecart(radar.get("med_bati"), int(radar.get("n_bati") or 0), _dvf_bati(db, commune)),
     }
@@ -119,6 +134,95 @@ def annonce_vs_referentiel(db: Session, bien_id: int) -> dict | None:
             "sens": "au-dessus du terrain nu" if ecart_pct > 0 else "sous le terrain nu"}
 
 
+# ════════════════════════ D4 — badge « SOUS LE MARCHÉ » (par annonce, terrain ET bâti) ════════════════════════
+
+def _referentiel(db: Session, commune: str, type_bien: str | None) -> dict:
+    """Le référentiel DVF acté à opposer à une annonce : terrain nu pour un TERRAIN, bâti pour le BÂTI.
+    Porte son périmètre (D5) — un bâti = maisons + appartements."""
+    if type_bien == "terrain":
+        r = _dvf_terrain(db, commune)
+        r["perimetre"] = "terrain nu"
+    else:
+        r = _dvf_bati(db, commune)
+        r["perimetre"] = PERIMETRE_BATI
+    return r
+
+
+def _badge(prix, surface, ref: dict) -> dict | None:
+    """Le badge d'UNE annonce à partir de son prix, de sa surface pertinente et du référentiel de zone.
+    None si non applicable (surface manquante → pas de €/m²). Le badge `sous_le_marche` n'est vrai que
+    sous le SEUIL ; l'écart exact est TOUJOURS porté (le seuil filtre, il ne juge pas). Écart CONSTATÉ
+    entre deux sources datées — jamais une estimation de valeur."""
+    if not prix or not surface or float(surface) <= 0:
+        return None                                             # pas de €/m² → pas de badge (mandat D4)
+    affiche = float(prix) / float(surface)
+    ref_v, n = ref.get("eur_m2"), int(ref.get("n") or 0)
+    if not ref_v or n < SEUIL_N:
+        return {"calculable": False, "affiche_eur_m2": round(affiche),
+                "perimetre": ref.get("perimetre"),
+                "motif": "pas de référentiel de zone calculable (échantillon < 5)"}
+    ecart_pct = round(100.0 * (affiche - ref_v) / ref_v, 1)
+    return {"calculable": True, "affiche_eur_m2": round(affiche), "referentiel_eur_m2": round(ref_v),
+            "n_referentiel": n, "millesime_dvf": ref.get("millesime"), "zone": ref.get("zone"),
+            "perimetre": ref.get("perimetre"), "ecart_pct": ecart_pct,
+            "sous_le_marche": ecart_pct <= SEUIL_SOUS_MARCHE_PCT,
+            "sens": "au-dessus du marché acté" if ecart_pct > 0 else "sous le marché acté"}
+
+
+def badges_pour_biens(db: Session, biens: list[dict]) -> dict[int, dict | None]:
+    """D4 — badge « sous le marché » pour un LOT de biens (référentiel calculé une fois par commune×famille).
+    `biens` : dicts portant bien_id, commune, type_bien, a_qualifier, prix, surface_hab, surface_terrain.
+    Un bien À QUALIFIER (prix suspect par définition) ne porte JAMAIS de badge."""
+    cache: dict[tuple, dict] = {}
+
+    def ref(commune, type_bien):
+        cle = (commune, "terrain" if type_bien == "terrain" else "bati")
+        if cle not in cache:
+            cache[cle] = _referentiel(db, commune, type_bien)
+        return cache[cle]
+
+    out: dict[int, dict | None] = {}
+    for b in biens:
+        if b.get("a_qualifier"):
+            out[b["bien_id"]] = None
+            continue
+        surface = b.get("surface_terrain") if b.get("type_bien") == "terrain" else b.get("surface_hab")
+        out[b["bien_id"]] = _badge(b.get("prix"), surface, ref(b.get("commune"), b.get("type_bien")))
+    return out
+
+
+def badge_bien(db: Session, bien_id: int) -> dict | None:
+    """D4 — le badge « sous le marché » d'UN bien (fiche). None si à qualifier / surface manquante."""
+    row = db.execute(text(
+        "SELECT b.bien_id, b.commune, b.type_bien, b.a_qualifier, f.prix, f.surface_hab, f.surface_terrain "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE b.bien_id = :b"),
+        {"b": bien_id}).mappings().first()
+    if not row:
+        return None
+    return badges_pour_biens(db, [dict(row)]).get(bien_id)
+
+
+def distribution_ecarts(db: Session) -> dict:
+    """D4 — DISTRIBUTION des écarts prix affiché / référentiel de zone sur les biens en base (pour
+    justifier / retuner le seuil). Renvoie n + percentiles (p10..p90) de l'écart %, terrain et bâti
+    confondus. Purement descriptif — ne sert aucun verdict."""
+    biens = [dict(r) for r in db.execute(text(
+        "SELECT b.bien_id, b.commune, b.type_bien, b.a_qualifier, f.prix, f.surface_hab, f.surface_terrain "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false").mappings())]
+    ecarts = sorted(x["ecart_pct"] for x in badges_pour_biens(db, biens).values()
+                    if x and x.get("calculable"))
+    def _pct(q):
+        if not ecarts:
+            return None
+        i = min(len(ecarts) - 1, int(q * (len(ecarts) - 1)))
+        return ecarts[i]
+    return {"n": len(ecarts), "seuil_retenu_pct": SEUIL_SOUS_MARCHE_PCT,
+            "p10": _pct(0.10), "p25": _pct(0.25), "median": _pct(0.50),
+            "p75": _pct(0.75), "p90": _pct(0.90),
+            "n_sous_le_marche": sum(1 for e in ecarts if e <= SEUIL_SOUS_MARCHE_PCT)}
+
+
 def annonces_actives_zone(db: Session, commune: str) -> dict:
     """SIGNAL #3 — alimente l'Étude de zone (case « annonces actives ») et Communes (onglet Marché) :
     nombre d'annonces Radar actives + médiane affichée. À qualifier et non validées exclues."""
@@ -128,9 +232,11 @@ def annonces_actives_zone(db: Session, commune: str) -> dict:
     return {
         "commune": commune,
         "actives": int(r.get("actives") or 0),
+        # D5 — le périmètre est DIT à côté de chaque chiffre (bâti = maisons + appartements).
+        "perimetre_terrain": "terrain nu", "perimetre_bati": PERIMETRE_BATI,
         "prix_m2_terrain": {"valeur": round(float(r["med_terrain"])) if r.get("med_terrain") and n_terr >= SEUIL_N else None,
-                            "n": n_terr, "insuffisant": n_terr < SEUIL_N},
+                            "n": n_terr, "insuffisant": n_terr < SEUIL_N, "perimetre": "terrain nu"},
         "prix_m2_bati": {"valeur": round(float(r["med_bati"])) if r.get("med_bati") and n_bati >= SEUIL_N else None,
-                        "n": n_bati, "insuffisant": n_bati < SEUIL_N},
+                        "n": n_bati, "insuffisant": n_bati < SEUIL_N, "perimetre": PERIMETRE_BATI},
         "ecart_demande_acte": ecart_demande_acte(db, commune),
     }
