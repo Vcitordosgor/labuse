@@ -10,8 +10,8 @@ annonce EN SILENCE est le pire des cas ; on préfère un plantage visible à un 
 
 RADAR-DEPOT-2 (D1/D2) — TROIS structures reconnues, un seul point d'entrée `analyser()` :
   · VARIANTE A (résultats) — `props.pageProps.searchData.ads` : données RICHES (chemin historique) ;
-  · VARIANTE B (résultats) — Leboncoin sert des pages A/B (`libertyData.config.groupName = "b"`) où
-    `searchData` est ABSENT : les annonces ne vivent plus que dans le DOM des vignettes. On en tire ce
+  · VARIANTE B (résultats) — le portail sert des pages par tests A/B (`libertyData.config.groupName`)
+    où `searchData` est ABSENT : les annonces ne vivent plus que dans le DOM des vignettes. On en tire ce
     qui y est (url/list_id/titre/prix/commune/badges) et RIEN DE PLUS — l'enregistrement entre DÉGRADÉ
     (`provenance = dom_degrade`), sans position (donc jamais rattaché), et la date de vignette est une
     date de REMONTÉE (jamais « repéré le », jamais la nouveauté) ;

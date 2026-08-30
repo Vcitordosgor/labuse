@@ -1263,6 +1263,14 @@ export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
     body: JSON.stringify({ bien_id, faits }),
   })
 export const getRadarExtraction = () => j<{ file: RadarBrouillon[]; n: number }>('/admin/radar/extraction')
+// RADAR-DEPOT-2 (D3) — file d'instruction ADMIN : biens en PISTE, non tranchés à la main.
+export interface RadarAInstruire {
+  bien_id: number; commune: string; type_bien: string | null; prix: number | null
+  surface_terrain: number | null; surface_hab: number | null
+  declaratif: RadarDeclaratif | null
+  portail: string | null; url_sortante: string | null; n_candidates: number
+}
+export const getRadarAInstruire = () => j<{ file: RadarAInstruire[]; n: number }>('/admin/radar/a-instruire')
 export const getRadarReverif = () => j<{ file: RadarReverif[]; n: number }>('/admin/radar/reverif')
 export const getRadarCheck = () => j<RadarCheck>('/admin/radar/check')
 export const radarToujoursEnLigne = (bien_id: number) =>
@@ -1283,6 +1291,21 @@ export interface RadarBienClient {
   etiquettes: Record<string, string>; fraicheur_source: string | null
   date_publication: string | null; date_saisie: string | null; date_derniere_confirmation: string | null
   portail: string; url_sortante: string; annonce_id: number | null; baisse: boolean
+  // RADAR-DEPOT-2 D2 — faits DÉCLARÉS par le vendeur (zone PLU, drapeaux), « déclaré dans l'annonce ».
+  declaratif: RadarDeclaratif | null; provenance: string | null
+  // RADAR-DEPOT-2 D4 — badge « sous le marché » (null si non applicable/au-dessus du seuil).
+  sous_le_marche: RadarSousMarche | null
+}
+export interface RadarDeclaratif {
+  zone_plu: string[]
+  cos_ces: { type: string; valeur: string } | null
+  emprise_sol_pct: number | null
+  drapeaux: { a_renover: boolean; a_demolir: boolean; succession: boolean; lotissement: boolean; lotissement_nom: string | null; viabilise: boolean }
+}
+export interface RadarSousMarche {
+  calculable: boolean; affiche_eur_m2: number; referentiel_eur_m2?: number; n_referentiel?: number
+  millesime_dvf?: string | null; zone?: string | null; perimetre?: string | null
+  ecart_pct?: number; sous_le_marche?: boolean; sens?: string
 }
 export interface RadarBienDetail extends RadarBienClient {
   historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
@@ -1298,7 +1321,7 @@ export interface RadarFiltres {
   commune?: string; type_bien?: string; prix_min?: number; prix_max?: number
   surface_hab_min?: number; surface_hab_max?: number; surface_terrain_min?: number; surface_terrain_max?: number
   particulier_pro?: string; statuts?: string[]; periode_debut?: string; periode_fin?: string
-  rattache?: 'oui' | 'non'
+  rattache?: 'oui' | 'non'; sous_marche?: 'oui' | 'non'
 }
 export const getRadarBiens = (f: RadarFiltres, tri = 'recentes', page = 1, taille = 60) => {
   const p = new URLSearchParams()
@@ -1306,7 +1329,7 @@ export const getRadarBiens = (f: RadarFiltres, tri = 'recentes', page = 1, taill
   set('commune', f.commune); set('type_bien', f.type_bien); set('prix_min', f.prix_min); set('prix_max', f.prix_max)
   set('surface_hab_min', f.surface_hab_min); set('surface_hab_max', f.surface_hab_max)
   set('surface_terrain_min', f.surface_terrain_min); set('surface_terrain_max', f.surface_terrain_max)
-  set('particulier_pro', f.particulier_pro); set('rattache', f.rattache)
+  set('particulier_pro', f.particulier_pro); set('rattache', f.rattache); set('sous_marche', f.sous_marche)
   set('periode_debut', f.periode_debut); set('periode_fin', f.periode_fin)
   if (f.statuts?.length) set('statuts', f.statuts.join(','))
   set('tri', tri); set('page', page); set('taille', taille)
@@ -1325,13 +1348,13 @@ export interface RadarPiste {
   criteres_detail?: RadarCritere[]          // chaque critère applicable : converge (✓) ou diverge (✗)
   ortho_url?: string | null                 // vignette BD ORTHO 20 cm de la candidate
 }
+// RADAR-DEPOT-2 (D3) — l'Instruire et le rattachement humain sont ADMIN SEULEMENT (endpoints /admin/…).
 export const radarInstruire = (bien_id: number) =>
   j<{ ok: boolean; bien_id: number; etat: string; humain?: boolean; candidates: RadarPiste[]; criteres?: RadarCritere[]; motif?: string | null }>(
-    '/radar/instruire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
-// RATTACHEMENT-V2 (Lot 2) — le client tranche via l'ortho : rattachement HUMAIN, fait foi.
+    '/admin/radar/instruire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
 export const radarRattacherHumain = (bien_id: number, idu: string) =>
   j<{ ok: boolean; bien_id: number; idu: string; etat: string; humain: boolean; motif?: string }>(
-    '/radar/rattacher-humain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, idu }) })
+    '/admin/radar/rattacher-humain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, idu }) })
 
 // ── RADAR (pige) · P6 D3 — onglet Marché (stats par commune, honnêteté statistique) ──
 export interface RadarMesure { valeur: number | null; n: number; insuffisant: boolean }
@@ -1350,8 +1373,10 @@ export interface RadarEcart {
 }
 export interface RadarSignaux {
   commune: string; actives: number
-  prix_m2_terrain: RadarMesure; prix_m2_bati: RadarMesure
-  ecart_demande_acte: { commune: string; terrain: RadarEcart; bati: RadarEcart }
+  // RADAR-DEPOT-2 D5 — chaque famille DIT son périmètre (bâti = maisons + appartements).
+  perimetre_terrain?: string; perimetre_bati?: string
+  prix_m2_terrain: RadarMesure & { perimetre?: string }; prix_m2_bati: RadarMesure & { perimetre?: string }
+  ecart_demande_acte: { commune: string; perimetre_terrain?: string; perimetre_bati?: string; terrain: RadarEcart; bati: RadarEcart }
 }
 export const getRadarSignaux = (commune: string) => j<RadarSignaux>(`/radar/signaux/${encodeURIComponent(commune)}`)
 

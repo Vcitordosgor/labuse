@@ -40,8 +40,10 @@ function SignauxCommune({ communes }: { communes: string[] }) {
       </div>
       {commune && data && (
         <div className="flex flex-col divide-y divide-line-2">
-          <EcartLigne label="Terrain" e={data.ecart_demande_acte.terrain} />
-          <EcartLigne label="Bâti" e={data.ecart_demande_acte.bati} />
+          {/* RADAR-DEPOT-2 D5 — chaque famille DIT son périmètre : un chiffre sans périmètre n'est pas
+              un fait. Le bâti recouvre maisons + appartements (copros embasées, comptées ici). */}
+          <EcartLigne label={`Terrain${data.ecart_demande_acte.perimetre_terrain ? ` (${data.ecart_demande_acte.perimetre_terrain})` : ''}`} e={data.ecart_demande_acte.terrain} />
+          <EcartLigne label={`Bâti${data.ecart_demande_acte.perimetre_bati ? ` (${data.ecart_demande_acte.perimetre_bati})` : ''}`} e={data.ecart_demande_acte.bati} />
           <p className="pt-1.5 text-[10px] text-txt-dim">Prix affiché du Radar (Sourcé portail) contre médiane DVF actée. Écart constaté, jamais une estimation ni une prévision.</p>
         </div>
       )}

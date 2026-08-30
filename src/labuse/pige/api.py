@@ -295,6 +295,26 @@ def radar_clic(body: ClicIn, request: Request) -> dict:
     return {"ok": True, "clic_id": cid}
 
 
+@router.get("/admin/radar/a-instruire")
+def radar_a_instruire(request: Request) -> dict:
+    """RADAR-DEPOT-2 (D3) — file d'INSTRUCTION admin : les biens en PISTE (plusieurs candidates possibles),
+    non encore tranchés à la main. C'est là que l'admin rattache — jamais le client. Priorise les biens
+    suivis par un client (watched_parcels) puis les plus récents."""
+    from ..api.auth import exiger_admin
+    exiger_admin(request)
+    with engine().begin() as c:
+        rows = [dict(r) for r in c.execute(text(
+            """SELECT b.bien_id, b.commune, b.type_bien, f.prix, f.surface_terrain, f.surface_hab,
+                      f.declaratif, a.portail, a.url_sortante,
+                      COALESCE(jsonb_array_length(b.rattachement_pistes), 0) AS n_candidates
+               FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+               LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id
+               WHERE f.valide_at IS NOT NULL AND b.rattachement_etat = 'piste'
+                 AND b.rattachement_humain = false AND b.a_qualifier = false
+               ORDER BY b.date_premiere_saisie DESC LIMIT 100""")).mappings()]
+    return {"file": rows, "n": len(rows)}
+
+
 @router.post("/admin/radar/instruire")
 def radar_instruire(body: BienIn, request: Request) -> dict:
     """RADAR-DEPOT-2 (D3) — « Instruire cette annonce » est désormais un geste ADMIN SEULEMENT : un
@@ -326,7 +346,7 @@ def radar_instruire(body: BienIn, request: Request) -> dict:
         candidates = []
         for p in ratt.get("pistes", []):
             idu = p.get("idu")
-            candidates.append({**p, "ortho_url": f"/radar/ortho/{idu}" if idu else None,
+            candidates.append({**p, "ortho_url": f"/admin/radar/ortho/{idu}" if idu else None,
                                "criteres_detail": rattachement_html.criteres_pour_idu(db, dict(rec), idu) if idu else []})
         # ré-écrit UNIQUEMENT l'état/pistes/critères (jamais la position ni le statut).
         db.execute(_t(

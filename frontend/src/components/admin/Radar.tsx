@@ -5,9 +5,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getRadarCheck, getRadarExtraction, getRadarReverif, radarDeposer, radarDeposerHtml, radarPrix,
-  radarRetiree, radarToujoursEnLigne, radarValider, type RadarBrouillon, type RadarDepotHtml,
+  getRadarAInstruire, getRadarCheck, getRadarExtraction, getRadarReverif, radarDeposer, radarDeposerHtml,
+  radarInstruire, radarPrix, radarRattacherHumain, radarRetiree, radarToujoursEnLigne, radarValider,
+  type RadarAInstruire, type RadarBrouillon, type RadarCritere, type RadarDepotHtml, type RadarPiste,
 } from '../../lib/api'
+import { Declaratif } from '../outils/RadarDeclaratif'
 import { Lbl, Chip } from './AdminView'
 
 const NIV: Record<string, { label: string; tone: 'ok' | 'warn' | 'off' }> = {
@@ -250,6 +252,96 @@ function Reverif() {
   )
 }
 
+// ── Zone 3bis — INSTRUCTION (D3, ADMIN SEULEMENT) : rattacher un bien en piste via l'ortho ──
+// RADAR-DEPOT-2 D3 — le rattachement humain est un geste ADMIN (un rattachement client erroné serait
+// servi à tous). On relance la cascade à la demande, on compare les toits (ortho BD ORTHO 20 cm) avec
+// les critères ✓/✗, la zone DÉCLARÉE aide à trancher, puis « C'est cette parcelle » (fait foi).
+function InstructionCard({ b, onTranche }: { b: RadarAInstruire; onTranche: () => void }) {
+  const [instr, setInstr] = useState<{ busy: boolean; ouvert: boolean; cands?: RadarPiste[]; motif?: string | null }>({ busy: false, ouvert: false })
+  const [choix, setChoix] = useState<{ busy: boolean; idu?: string }>({ busy: false })
+  const specs = b.type_bien === 'terrain'
+    ? (b.surface_terrain ? `${b.surface_terrain} m² terrain` : '')
+    : (b.surface_hab ? `${b.surface_hab} m² hab` : '')
+  const instruire = () => {
+    if (instr.ouvert) { setInstr((s) => ({ ...s, ouvert: false })); return }
+    setInstr({ busy: true, ouvert: true })
+    radarInstruire(b.bien_id)
+      .then((r) => setInstr({ busy: false, ouvert: true, cands: r.candidates, motif: r.motif }))
+      .catch(() => setInstr({ busy: false, ouvert: true, motif: 'échec — réessayer' }))
+  }
+  return (
+    <div data-radar-instruction className="rounded-lg border border-line-2 bg-surface-1 p-3">
+      <div className="flex flex-wrap items-center gap-2 text-[12px]">
+        <span className="font-medium text-txt-hi">{b.commune}</span>
+        <span className="text-txt-mut">{(b.type_bien ?? '—')}{specs ? ` · ${specs}` : ''}</span>
+        <span className="text-txt-mut">{fmtEur(b.prix)}</span>
+        <Chip tone="warn">{b.n_candidates} candidate{b.n_candidates > 1 ? 's' : ''}</Chip>
+        {b.url_sortante && <a href={b.url_sortante} target="_blank" rel="noopener noreferrer"
+          className="font-mono text-[10px] text-txt-dim underline decoration-dotted">source ↗</a>}
+        <button data-radar-instruire onClick={instruire}
+          className="ml-auto rounded-md border border-amber/50 bg-amber/10 px-2.5 py-1 text-[11.5px] font-medium text-amber hover:bg-amber/20">
+          {instr.busy ? 'Instruction…' : instr.ouvert ? 'Fermer' : 'Instruire'}
+        </button>
+      </div>
+      {/* la zone DÉCLARÉE (page d'annonce) aide à trier les candidates — déclaratif vendeur. */}
+      {b.declaratif && <div className="mt-2"><Declaratif d={b.declaratif} /></div>}
+      {instr.ouvert && instr.cands && (
+        <div className="mt-2.5 flex flex-col gap-2">
+          {instr.cands.length === 0 && <span className="text-[11px] text-txt-dim">{instr.motif || 'aucune candidate exploitable'}</span>}
+          {instr.cands.map((c) => (
+            <div key={c.idu} data-radar-candidate className="overflow-hidden rounded-xl border border-line-2 bg-surface-2">
+              <div className="grid grid-cols-[96px_1fr]">
+                {c.ortho_url
+                  ? <img src={c.ortho_url} alt={`ortho ${c.idu}`} className="h-24 w-24 object-cover" loading="lazy" />
+                  : <div className="flex h-24 w-24 items-center justify-center bg-surface-3 text-[9px] text-txt-dim">ortho indispo.</div>}
+                <div className="min-w-0 px-2.5 py-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[11px] text-txt">{c.idu}</span>
+                    <span className="text-[10px] text-txt-dim">{c.distance_m != null ? `${Math.round(c.distance_m)} m` : ''}</span>
+                  </div>
+                  <ul className="mt-1 flex flex-col gap-0.5 text-[10px] leading-snug">
+                    {(c.criteres_detail ?? []).map((x: RadarCritere, i: number) => (
+                      <li key={i} className={x.converge ? 'text-mint' : 'text-txt-dim'}>
+                        {x.converge ? '✓' : '✗'} <span className="text-txt-mut">{x.critere}</span> {x.valeur}
+                      </li>
+                    ))}
+                  </ul>
+                  <button data-radar-choisir disabled={choix.busy}
+                    onClick={() => { setChoix({ busy: true, idu: c.idu }); radarRattacherHumain(b.bien_id, c.idu)
+                      .then(() => { setChoix({ busy: false }); onTranche() })
+                      .catch(() => setChoix({ busy: false })) }}
+                    className="mt-1.5 rounded-md border border-mint/50 bg-mint/10 px-2 py-1 text-[10.5px] font-medium text-mint hover:bg-mint/20 disabled:opacity-60">
+                    {choix.busy && choix.idu === c.idu ? 'Enregistrement…' : "C'est cette parcelle"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Instruction() {
+  const qc = useQueryClient()
+  const { data } = useQuery({ queryKey: ['radar-a-instruire'], queryFn: getRadarAInstruire })
+  const inval = () => { qc.invalidateQueries({ queryKey: ['radar-a-instruire'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
+  return (
+    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
+      <Lbl>3bis · Instruction <span className="text-txt-dim">— {data?.n ?? 0} en piste · admin</span></Lbl>
+      <p className="mb-2 text-[11px] leading-relaxed text-txt-mut">
+        Le rattachement d’une parcelle est un geste d’admin : le client ne rattache jamais. Comparez les
+        toits (ortho) avec les critères, puis tranchez — ce choix fait foi.
+      </p>
+      {data?.n === 0 && <div className="py-4 text-center text-[12px] text-txt-dim">aucun bien en piste ✓</div>}
+      <div className="flex flex-col gap-2">
+        {data?.file.map((b) => <InstructionCard key={b.bien_id} b={b} onTranche={inval} />)}
+      </div>
+    </section>
+  )
+}
+
 // ── Zone 4 — Arbre de check quotidien (le rituel ≤ 15 min) ──
 function Check() {
   const { data } = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
@@ -314,6 +406,7 @@ export function RadarSection() {
       </details>
       <Extraction />
       <Reverif />
+      <Instruction />
       <Check />
     </div>
   )
