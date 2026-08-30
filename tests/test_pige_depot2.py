@@ -243,6 +243,20 @@ def test_d4_badge_seuil():
     assert faible["calculable"] is False
 
 
+def test_d4_distribution_ecarts_ne_leve_pas(depots_prive):
+    """D4 — `distribution_ecarts` (justification / retune du seuil) tourne sans lever et rend les clés
+    attendues (percentiles + seuil retenu + n sous le marché)."""
+    from labuse.pige import signaux
+    html = _ECH_A.read_text(encoding="utf-8")
+    _purger(html)
+    with session_scope() as db:
+        html_ingest.ingester(db, html, "ECH-1.html")
+        d = signaux.distribution_ecarts(db)
+    assert set(d) >= {"n", "seuil_retenu_pct", "p10", "median", "p90", "n_sous_le_marche"}
+    assert d["seuil_retenu_pct"] == signaux.SEUIL_SOUS_MARCHE_PCT
+    _purger(html)
+
+
 def test_d4_jamais_de_badge_sur_a_qualifier(depots_prive):
     """D4 — un bien À QUALIFIER (prix suspect par définition) ne porte JAMAIS de badge « sous le marché »."""
     from labuse.pige import client

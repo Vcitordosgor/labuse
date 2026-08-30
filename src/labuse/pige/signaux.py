@@ -209,7 +209,7 @@ def distribution_ecarts(db: Session) -> dict:
     biens = [dict(r) for r in db.execute(text(
         "SELECT b.bien_id, b.commune, b.type_bien, b.a_qualifier, f.prix, f.surface_hab, f.surface_terrain "
         "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
-        "WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false").mappings())]
+        "WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false")).mappings()]
     ecarts = sorted(x["ecart_pct"] for x in badges_pour_biens(db, biens).values()
                     if x and x.get("calculable"))
     def _pct(q):
