@@ -198,8 +198,9 @@ def lister(db: Session, *, filtres: dict, tri: str = "recentes", page: int = 1, 
 
 def detail(db: Session, bien_id: int) -> dict | None:
     """Détail d'un bien VALIDÉ : faits + historique de prix + candidates (si Estimé). None sinon."""
-    r = db.execute(text(f"{_SELECT} WHERE b.bien_id = :b AND f.valide_at IS NOT NULL"),
-                   {"b": bien_id}).mappings().first()
+    # RADAR-DEPOT-2 D5 — une copro n'est jamais servie au client, même par accès direct à son id.
+    r = db.execute(text(f"{_SELECT} WHERE b.bien_id = :b AND f.valide_at IS NOT NULL "
+                        "AND b.est_copro = false"), {"b": bien_id}).mappings().first()
     if not r:
         return None
     row = dict(r)
