@@ -245,6 +245,10 @@ export function ProjetsPanel() {
             {showCourriers ? (
               /* OUTILS-1 A4/B6 — MES COURRIERS : n°, date, communes, volume. Aucun état interne. */
               <div data-mes-courriers>
+                {/* F5 (OUTILS-3) — accès à l'outil Courrier propriétaire (étape 1) depuis Projets. */}
+                <button data-mes-courriers-nouveau
+                  onClick={() => { const s = useApp.getState(); s.setView('cartes'); s.setModule('courriers') }}
+                  style={{ ...btnPlein, display: 'inline-block', marginBottom: 16 }}>Nouveau courrier →</button>
                 {courriers.length === 0 && (
                   <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>Aucune demande de courrier pour l'instant.</p>
                 )}

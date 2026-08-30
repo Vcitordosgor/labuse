@@ -280,7 +280,10 @@ def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: 
             "temps_min": _bande_min(session, r["lon"], r["lat"], bandes),
         })
     items.sort(key=lambda x: (x["temps_min"] is None, x["temps_min"] or 999))
-    return {"n": len(items), "naf": naf, "items": items}
+    # F1 (OUTILS-3) — libellé NAF LISIBLE (« Boulangerie et boulangerie-pâtisserie ») servi à côté du
+    # code brut « 1071C » : le code reste, mais l'humain lit l'activité. Source unique : naf_labels.
+    from .naf_labels import label as _naf_label
+    return {"n": len(items), "naf": naf, "naf_label": _naf_label(naf), "items": items}
 
 
 def equipements_proches(session: Session, lon0: float, lat0: float, geom_geojson: dict, *,
@@ -502,7 +505,13 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
             try:
                 c = concurrents_zone(session, zone, naf, bandes=bandes)
                 c["couverture"] = "servie"
-                c["millesime"] = _millesime("SIRENE établissements géolocalisés", session)
+                # F1 (OUTILS-3) — millésime RÉEL des lignes servies (pas un libellé générique de
+                # data_sources, que seed_sources peut clobberer) : le client doit connaître la fraîcheur
+                # de ce qu'il lit (une fermeture très récente peut ne pas encore être dans SIRENE).
+                c["millesime"] = session.execute(text(
+                    "SELECT millesime FROM sirene_etablissements WHERE millesime IS NOT NULL "
+                    "ORDER BY ingested_at DESC LIMIT 1")).scalar() or _millesime(
+                    "SIRENE établissements géolocalisés", session)
                 out["concurrents"] = c
             except Exception as exc:  # noqa: BLE001 — requête en erreur ≠ « 0 résultat »
                 out["concurrents"] = {"couverture": "erreur", "naf": naf, "n": 0, "items": [],

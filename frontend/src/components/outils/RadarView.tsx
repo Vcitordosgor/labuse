@@ -29,7 +29,8 @@ function useIsMobile(): boolean {
 const COMMUNES_24 = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
 // RADAR-DEPOT-2 D5 — pas d'« Appartement » : les copros sont collectées mais jamais servies comme
 // annonces au client (elles n'existent que dans les signaux). Le tri se fait par est_copro, pas par type.
-const TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
+// OUTILS-3 (ajout Vic) — « Immeuble » retiré des filtres Radar (hors périmètre de la pige).
+const TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['terrain', 'Terrain']] as const
 const TRIS = [['recentes', 'Plus récentes'], ['prix_asc', 'Prix croissant'], ['prix_desc', 'Prix décroissant'], ['anciennete', 'Ancienneté'], ['baisses', 'Baisses']] as const
 const STATUT_LABEL: Record<string, string> = {
   active: 'EN VENTE', en_vente_longue: 'EN VENTE LONGUE', a_reverifier: 'À REVÉRIFIER',
@@ -87,7 +88,10 @@ function CarteBien({ b, sel, onClick }: { b: RadarBienClient; sel: boolean; onCl
         {/* RADAR-DEPOT-2 D4 — badge « sous le marché » : écart affiché/référentiel de zone, avec la
             référence utilisée. Attribut de l'annonce, jamais un verdict de valeur. */}
         {b.sous_le_marche?.sous_le_marche && (
-          <span className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 font-mono text-[10.5px] font-medium text-mint">Sous le marché · −{Math.abs(b.sous_le_marche.ecart_pct ?? 0)} %</span>
+          // F9 (OUTILS-3) — l'écart porte TOUJOURS sa référence (perimetre + €/m² + millésime DVF), au
+          // survol de la pastille compacte comme en clair dans le détail. Jamais un « −19 % » orphelin.
+          <span title={`réf. ${b.sous_le_marche.perimetre ?? 'zone'} ${b.sous_le_marche.referentiel_eur_m2} €/m²${b.sous_le_marche.millesime_dvf ? ` · ${b.sous_le_marche.millesime_dvf}` : ''} · annonce vs DVF`}
+            className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 font-mono text-[10.5px] font-medium text-mint">Sous le marché · −{Math.abs(b.sous_le_marche.ecart_pct ?? 0)} %</span>
         )}
         {b.statut === 'en_vente_longue' && <span className="shrink-0 rounded-md bg-amber/12 px-2 py-0.5 font-mono text-[10.5px] text-amber">Vente longue</span>}
         {/* RADAR-RECETTE-1 D1c — un bien incohérent est MARQUÉ dans le flux (hors stats/veilles, non rattaché). */}

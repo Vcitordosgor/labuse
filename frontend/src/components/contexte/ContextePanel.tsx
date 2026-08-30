@@ -94,7 +94,7 @@ function fmtDateFr(iso: string): string {
  *  blocs transférés — MARCHÉ local (MarcheCommune, 9 lignes sourcées + signal), RARETÉ & ZAN,
  *  VÉLOCITÉ — et « Voir ses parcelles → ». Aucune de ces données n'entre dans le scoring. */
 export function ContextePanel() {
-  const { contexteCommune, setContexteCommune, setCommune } = useApp()
+  const { contexteCommune, setContexteCommune } = useApp()
   const q = useQuery({
     queryKey: ['contexte', contexteCommune],
     queryFn: () => getContexteCommune(contexteCommune!),
@@ -136,8 +136,11 @@ export function ContextePanel() {
           {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button data-communes-parcelles onClick={() => setCommune(contexteCommune)}
-            title="Zoomer la carte sur la commune et pré-cocher son filtre"
+          {/* F6 (OUTILS-3) — on QUITTE l'analyse (Outils) pour l'EXPLORATION : bascule sur l'onglet
+              CARTES (Couches + Filtres), commune posée comme périmètre actif. setView('cartes') ferme
+              l'outil et la fiche ; `commune` (posée AVANT) survit à setView. */}
+          <button data-communes-parcelles onClick={() => { const s = useApp.getState(); s.setCommune(contexteCommune); s.setView('cartes') }}
+            title="Basculer sur la carte, filtrée sur cette commune"
             className="rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
             Voir ses parcelles →
           </button>

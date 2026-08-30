@@ -317,6 +317,9 @@ export function M03() {
   // concurrentielle des opportunités dormantes SANS changer d'écran (demande centrale Vic).
   const [seg, setSeg] = useState<'cours' | 'mort' | 'tous'>(moduleKey === 'promesses' ? 'mort' : 'cours')
   const pointMort = seg === 'mort'
+  // F2 (OUTILS-3) — « Tous » = en cours (radar, VERT) ∪ point mort (ROUGE) SUPERPOSÉS sur la carte :
+  // les deux jeux coexistent, chacun sa couleur (avant, seuls les en cours s'affichaient).
+  const tous = seg === 'tous'
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
   const [nature, setNature] = useState('')
   const [open, setOpen] = useState<string | null>(null)
@@ -346,27 +349,35 @@ export function M03() {
     enabled: !pointMort,
   })
   const PM_PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
+  // F2 — le `months` du point mort mesure la DORMANCE (« PC plus vieux que N mois ») : sémantique
+  // INVERSE du radar (« derniers N mois »). En « Tous », le radar élargit à 240 (tout), mais le point
+  // mort DOIT garder sa fenêtre de caducité (36 mois) — sinon « plus vieux que 240 mois » = 0 résultat
+  // (le bug F2 : aucun point mort en « Tous »). Décoré ici, une seule source de vérité.
+  const pmMonths = pointMort ? months : 36
   const qPm = useInfiniteQuery({
-    queryKey: ['m04', months, commune],
-    queryFn: ({ pageParam }) => modPromesses(months, PM_PAGE, pageParam as number),
+    queryKey: ['m04', pmMonths, commune],
+    queryFn: ({ pageParam }) => modPromesses(pmMonths, PM_PAGE, pageParam as number),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * PM_PAGE : undefined,
-    enabled: pointMort,
+    enabled: pointMort || tous,   // F2 — le point mort alimente aussi la carte en mode « Tous »
   })
   // total point mort (COUNT ~4 s) DÉCOUPLÉ : arrive en parallèle, ne bloque pas la 1re page
-  const qPmCount = useQuery({ queryKey: ['m04-count', months, commune], queryFn: () => modPromessesCount(months), staleTime: 60_000, enabled: pointMort })
+  const qPmCount = useQuery({ queryKey: ['m04-count', pmMonths, commune], queryFn: () => modPromessesCount(pmMonths), staleTime: 60_000, enabled: pointMort || tous })
 
   // PERMIS (refonte) — les DEUX entrées affichent un compteur RÉEL : radar = total de la page 0
   // (cache react-query, chargée à l'arrivée = entrée par défaut) ; point mort = count fixe (caducité
   // 36 mois), toujours servi, indépendant de la fenêtre active.
   const qPmEntry = useQuery({ queryKey: ['pm-entry', commune], queryFn: () => modPromessesCount(36), staleTime: 60_000 })
+  // F2 — compteur « En cours » STABLE (fenêtre 24 m fixe), indépendant du segment actif : sinon le
+  // libellé du segment changeait quand « Tous » élargissait la fenêtre radar.
+  const qRadarEntry = useQuery({ queryKey: ['radar-entry', commune], queryFn: () => modPermis(24, null, 1, 0), staleTime: 60_000 })
+  const radarEntryTotal = (qRadarEntry.data as Record<string, any> | undefined)?.['total'] as number | undefined
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
   const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
   const head = pages[0]  // radar : carte (tous géocodés) + compteurs viennent de la page 0
-  const radarTotal = (qRadar.data?.pages?.[0] as Record<string, any> | undefined)?.['total'] as number | undefined
   const pmEntryTotal = qPmEntry.data?.total
   const inZone = (i: Record<string, any>) => {
     if (!zone || !i['geom']) return true   // non géocodé → toujours listé
@@ -374,17 +385,23 @@ export function M03() {
   }
   // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre les géocodés
   const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone)
-  // CARTE = points cliquables. Radar : TOUS les géocodés (page 0, plafond 8 000). Point mort : les items
-  // géocodés EUX-MÊMES (chaque PC au point mort est un point, exactement comme le radar).
-  const carte = (pointMort
-    ? items.filter((i) => i['geom'])
-    : ((head?.['carte'] ?? []) as Record<string, any>[])
-  ).filter((i) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone))
+  const geomInZone = (i: Record<string, any>) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
+  // CARTE = points cliquables. F2 : trois cas —
+  //   • en cours → radar (carte page 0, plafond 8 000), VERT ;
+  //   • point mort → les PC dormants géocodés, ROUGE ;
+  //   • Tous → les DEUX superposés (le rouge par-dessus le vert : un PC au point mort reste rouge).
+  const carteRadar = (pointMort ? [] : ((head?.['carte'] ?? []) as Record<string, any>[])).filter(geomInZone)
+  const cartePm = (pointMort || tous
+    ? (qPm.data?.pages ?? []).flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => i['geom'])
+    : []).filter(geomInZone)
+  const carte = [...carteRadar, ...cartePm]
+  const _feat = (i: Record<string, any>, pm: boolean) => ({ type: 'Feature' as const, geometry: i['geom'],
+    properties: { kind: 'permis', point_mort: pm, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } })
   useModuleMap([],
     // O2-1 — `point_mort` voyage dans les properties : la carte colore VERT (en cours) / ROUGE (point
-    // mort), même code que la liste. Une seule couche, un seul geste de l'œil.
-    featureCollection(carte.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', point_mort: pointMort, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } }))),
-    [pointMort, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone])
+    // mort). En « Tous », le rouge est posé APRÈS le vert → il prime visuellement.
+    featureCollection([...carteRadar.map((i) => _feat(i, false)), ...cartePm.map((i) => _feat(i, true))]),
+    [pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone])
   const total = pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
   const sansLoc = pointMort ? 0 : ((head?.['sans_localisation'] as number) ?? 0)
   const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
@@ -394,18 +411,22 @@ export function M03() {
       {/* O2-1 — UN champ de recherche INTELLIGENT en tête, PLEINE LARGEUR : adresse | commune (autocomplete
           → recadre la carte) OU n° de permis (Entrée sur une saisie sans suggestion → ouvre la fiche).
           Un n° Sitadel est une chaîne alphanumérique compacte (ex. 97441116A0361) ; une adresse a des
-          espaces/mots → on distingue sur le motif. */}
-      <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune ou n° de permis…"
-        onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
-        onEnterRaw={(t) => { const v = t.replace(/\s/g, ''); if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v) }} />
+          espaces/mots → on distingue sur le motif. F3 : enveloppe NON-flex — le wrapper interne
+          `flex-1` d'AddressAutocomplete grandissait VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
+      <div>
+        <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune ou n° de permis…"
+          onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
+          onEnterRaw={(t) => { const v = t.replace(/\s/g, ''); if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v) }} />
+      </div>
 
       {/* SEGMENT PLEIN — En cours (VERT) · Point mort (ROUGE) · Tous. Compteurs live ; la couleur du
           point suit la liste et la carte. */}
       <div data-permis-segment className="flex overflow-hidden rounded-lg border border-line-2">
         {([
-          ['cours', 'En cours', '#4ADE80', radarTotal],
+          ['cours', 'En cours', '#4ADE80', radarEntryTotal],
           ['mort', 'Point mort', '#E2726A', pmEntryTotal],
-          ['tous', 'Tous', null, null],
+          // F2 — « Tous » = en cours + point mort (le compteur est la somme des deux jeux).
+          ['tous', 'Tous', null, (radarEntryTotal != null && pmEntryTotal != null) ? radarEntryTotal + pmEntryTotal : null],
         ] as const).map(([k, label, dot, n], i) => (
           <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)}
             className={`flex flex-1 items-center justify-center gap-1.5 px-2 py-1.5 text-[11.5px] transition-colors duration-quick ${i > 0 ? 'border-l border-line-2' : ''} ${
@@ -735,7 +756,7 @@ export function M08() {
         </div>
         <p className="mt-2 text-[11px] text-txt">
           <span className="text-mint">{TEMPS_MILLESIMES.find((m) => m.key === cmpLeft)?.label ?? '—'}</span>
-          <span className="text-txt-dim"> vs </span>Aujourd'hui <span className="text-[9px] text-txt-dim">🔒 après fixe</span>
+          <span className="text-txt-dim"> vs </span>Aujourd'hui{/* F7 (OUTILS-3) — mention « 🔒 après fixe » retirée : sans sens pour le client. */}
         </p>
         <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
         <button onClick={() => { setTempsPinIdu(null); setModule(null) }}

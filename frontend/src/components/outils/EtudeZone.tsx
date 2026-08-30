@@ -93,7 +93,10 @@ export function EtudeZone() {
     for (const b of res.bandes ?? []) feats.push({ type: 'Feature', geometry: b.geom, properties: { kind: 'zone-iso' } })
     if ((!res.bandes || res.bandes.length === 0) && res.geom) feats.push({ type: 'Feature', geometry: res.geom, properties: { kind: 'zone-iso' } })
     if (res.origine && res.entree === 'point') feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [res.origine.lon, res.origine.lat] }, properties: { kind: 'zone-origin' } })
-    for (const c of res.concurrents?.items ?? []) feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lon, c.lat] }, properties: { kind: 'zone-concurrent', siret: c.siret } })
+    // F8 (OUTILS-3) — la pastille concurrent porte de quoi se rendre CLIQUABLE (popup : nom, activité,
+    // date de création, lien parcelle). L'activité lisible (naf_label) est portée par le bloc concurrents.
+    for (const c of res.concurrents?.items ?? []) feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lon, c.lat] },
+      properties: { kind: 'zone-concurrent', siret: c.siret, nom: c.nom, annee: c.annee_creation ?? '', activite: res.concurrents?.naf_label ?? res.concurrents?.naf ?? '', lon: c.lon, lat: c.lat } })
     setModuleMap({ idus: [], extra: { type: 'FeatureCollection', features: feats } })
     if (res.origine) setFlyTo({ center: [res.origine.lon, res.origine.lat], zoom: 13 })
   }, [res, setModuleMap, setFlyTo])
@@ -368,8 +371,26 @@ function Concurrents({ res }: { res: EtudeZoneResult }) {
       {cov === 'erreur' && (
         <p className="text-[11px] text-txt-mut">Indisponible — la requête concurrents n’a pas abouti.</p>
       )}
+      {/* F1 (OUTILS-3) — activité LISIBLE (le code NAF passe en second plan / survol). */}
+      {cov === 'servie' && (c!.naf_label || c!.naf) && (
+        <p className="mt-0.5 text-[10.5px] text-txt-mut" title={`code NAF ${c!.naf}`}>{c!.naf_label ?? c!.naf} <span className="font-mono text-[9px] text-txt-dim">{c!.naf}</span></p>
+      )}
+      {/* F8 — légende courte des pastilles carte (cliquables). */}
+      {cov === 'servie' && c!.items.length > 0 && (
+        <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-txt-dim">
+          <span className="h-[8px] w-[8px] shrink-0 rounded-full" style={{ background: '#E0A94F' }} />
+          pastilles orange sur la carte — cliquez pour le détail et la parcelle.
+        </p>
+      )}
+      {cov === 'non_couverte' && (
+        // RECETTE-2 LOT C2 : vocabulaire client — pas de « répertoire SIRENE / ingéré » (tuyauterie).
+        <p className="text-[11px] text-txt-mut">Non couvert · le registre des établissements n’est pas encore servi sur LABUSE.</p>
+      )}
+      {cov === 'erreur' && (
+        <p className="text-[11px] text-txt-mut">Indisponible — la requête concurrents n’a pas abouti.</p>
+      )}
       {cov === 'servie' && (c!.items.length === 0 ? (
-        <p className="text-[11px] text-txt-mut">Aucun établissement de cette activité dans la zone <span className="text-txt-dim">(source SIRENE{c!.millesime ? ` · ${c!.millesime}` : ''})</span>.</p>
+        <p className="text-[11px] text-txt-mut">Aucun établissement de cette activité dans la zone.</p>
       ) : (
         <div className="flex flex-col gap-1">
           {c!.items.slice(0, 8).map((x) => (
@@ -377,7 +398,7 @@ function Concurrents({ res }: { res: EtudeZoneResult }) {
             <button key={x.siret} type="button" onClick={() => ouvrirParcelle(x.lon, x.lat)}
               className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-left text-[11.5px] transition-colors duration-quick hover:bg-surface-3">
               <span className="min-w-0 truncate text-txt">
-                {x.nom} <span className="font-mono text-[10px] text-txt-dim">{x.naf}</span>
+                {x.nom}
                 {x.annee_creation != null && <span className="text-txt-dim"> · depuis {x.annee_creation}</span>}
               </span>
               <span className="shrink-0 font-mono text-[11px] text-txt-hi">{tempsTxt(x.temps_min, res.mode)}</span>
@@ -386,6 +407,13 @@ function Concurrents({ res }: { res: EtudeZoneResult }) {
           {c!.items.length > 8 && <span className="text-[10.5px] text-txt-dim">+ {c!.items.length - 8} autres…</span>}
         </div>
       ))}
+      {/* F1 — MILLÉSIME toujours affiché (fraîcheur de la source) + pourquoi certains noms manquent. */}
+      {cov === 'servie' && (
+        <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
+          Source {c!.millesime || 'SIRENE (INSEE)'}. Une fermeture très récente peut ne pas encore y figurer.
+          {c!.items.some((x) => !x.diffusible) && ' Certains noms sont masqués à la demande de l’établissement (diffusion INSEE restreinte).'}
+        </p>
+      )}
     </div>
   )
 }
