@@ -111,12 +111,26 @@ def _normalize(rows: list[dict], poids: dict) -> list[dict]:
     return rows
 
 
+def raw_rows(db: Session) -> dict[str, dict]:
+    """SOURCE UNIQUE des indicateurs bruts PAR COMMUNE (avant normalisation) — le comparateur ET la
+    fiche commune (OUTILS-6 C2) la lisent : ancien/neuf/permis/vélocité/stock viennent du MÊME run et
+    des MÊMES requêtes des deux côtés, donc chaque chiffre commun est identique. Mémoïsé (crons
+    quotidiens ; single-flight anti-stampede). Clé = nom de commune."""
+    from .app import _mem_cached
+
+    def _c():
+        rows = [dict(r) for r in db.execute(text(_SQL), {"run": Q_A_RUN_LABEL}).mappings().all()]
+        pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
+        for r in rows:
+            r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")
+            r["prix_ancien_n"] = (pa.get(r["commune"]) or {}).get("n")
+        return {r["commune"]: r for r in rows}
+    return _mem_cached(("o6-raw",), 3600.0, _c)
+
+
 def _compute(db: Session, poids: dict) -> dict:
     """Cœur testable : assemble les indicateurs par commune, normalise, compose. `poids` = dict d'axes→poids."""
-    rows = [dict(r) for r in db.execute(text(_SQL), {"run": Q_A_RUN_LABEL}).mappings().all()]
-    pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
-    for r in rows:
-        r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")
+    rows = [dict(r) for r in raw_rows(db).values()]
     for r in rows:   # arrondis lisibles (les valeurs brutes restent la vérité)
         if r.get("velocite") is not None:
             r["velocite"] = round(float(r["velocite"]), 1)

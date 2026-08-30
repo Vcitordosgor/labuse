@@ -1897,14 +1897,23 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     surface_ha = db.execute(text(
         "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
         {"c": commune}).scalar()
-    zon = {(r["fam"] or "").upper(): r["n"] for r in db.execute(text(
-        "SELECT z.zone_fam AS fam, count(*) n FROM parcels p JOIN parcel_zone_plu z ON z.idu = p.idu "
-        "WHERE p.commune = :c AND z.zone_fam IS NOT NULL GROUP BY 1"), {"c": commune}).mappings()}
-    au = sum(v for k, v in zon.items() if k.startswith("AU"))
-    a = sum(v for k, v in zon.items() if k.startswith("A") and not k.startswith("AU"))
-    u = sum(v for k, v in zon.items() if k.startswith("U"))
-    nz = sum(v for k, v in zon.items() if k.startswith("N"))
-    total_zone = u + au + a + nz
+    # OUTILS-6 C1 — RÉPARTITION DU ZONAGE EN PARTS DE SURFACE (somme = 100 %). Les parts de PARCELLES
+    # (un compte) ne représentent pas le territoire : à La Réunion U domine en nombre mais A+N couvrent
+    # l'essentiel de l'aire. On agrège la surface cadastrée par famille (parcel_zone_plu porte UNE zone
+    # par parcelle, PK idu — donc jamais de double comptage), les parts somment à 100 % et le total en
+    # ha égale la surface communale servie ailleurs. On garde aussi le compte (n) par famille.
+    zon = {(r["fam"] or "").upper(): {"n": r["n"], "m2": float(r["m2"] or 0)} for r in db.execute(text(
+        "SELECT z.zone_fam AS fam, count(*) n, sum(p.surface_m2) m2 FROM parcels p JOIN parcel_zone_plu z "
+        "ON z.idu = p.idu WHERE p.commune = :c AND z.zone_fam IS NOT NULL GROUP BY 1"), {"c": commune}).mappings()}
+
+    def _bucket(pred):
+        return (sum(v["m2"] for k, v in zon.items() if pred(k)),
+                sum(v["n"] for k, v in zon.items() if pred(k)))
+    au_m2, au_n = _bucket(lambda k: k.startswith("AU"))
+    a_m2, a_n = _bucket(lambda k: k.startswith("A") and not k.startswith("AU"))
+    u_m2, u_n = _bucket(lambda k: k.startswith("U"))
+    n_m2, n_n = _bucket(lambda k: k.startswith("N"))
+    total_zone_m2 = u_m2 + au_m2 + a_m2 + n_m2
     evaluees = scal("SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu "
                     "WHERE p.commune = :c AND s.run_id = :r") or 0
     sans_zonage = scal("SELECT count(*) FROM parcels p WHERE p.commune = :c AND NOT EXISTS "
@@ -1919,10 +1928,25 @@ def _foncier_commune(db: Session, commune: str) -> dict:
         {"c": commune}).scalar() or 0
     terrain = ligne2_terrain_zone(db, commune)     # point de calcul M79 (réutilisé, pas recréé)
     offre = ligne6_offre_engagee(db, commune)      # permis 12 mois (Sitadel), réutilisé
+    # OUTILS-6 C2 — STOCK FONCIER : parcelles brûlantes + chaudes du run servi, EN PARCELLES ET EN HA
+    # (même définition et même run que la colonne « stock » du comparateur → le compte est identique
+    # des deux côtés, la maquette demandant d'afficher LES DEUX unités depuis la même requête).
+    stock = db.execute(text(
+        "SELECT count(*) n, coalesce(sum(p.surface_m2), 0) m2 FROM parcel_p_score_v2 s "
+        "JOIN parcels p ON p.idu = s.parcelle_id WHERE p.commune = :c AND s.run_id = :r "
+        "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": Q_A_RUN_LABEL}).mappings().first()
+    zonage = None
+    if total_zone_m2:
+        def _fam(m2, nn):
+            return {"ha": round(m2 / 10000), "pct": round(100 * m2 / total_zone_m2, 1), "n": int(nn)}
+        zonage = {"base": "surface", "total_ha": round(total_zone_m2 / 10000),
+                  "familles": {"U": _fam(u_m2, u_n), "AU": _fam(au_m2, au_n),
+                               "A": _fam(a_m2, a_n), "N": _fam(n_m2, n_n)}}
     return {
         "n_parcelles": int(n_parcelles),
         "surface_ha": int(surface_ha) if surface_ha is not None else None,
-        "repartition_zonage": ({"U": u, "AU": au, "A": a, "N": nz, "total": total_zone} if total_zone else None),
+        "repartition_zonage": zonage,
+        "stock_opportunites": {"n": int(stock["n"]), "ha": round(float(stock["m2"]) / 10000)},
         "classement": {"evaluees": int(evaluees), "sans_zonage": int(sans_zonage),
                        "raison_sans_zonage": "zonage non publié au GPU"},
         "prix_terrain_nu": {"par_zone": (terrain.get("valeurs") or {}).get("par_zone"),
@@ -1985,12 +2009,25 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     if _insee_c:
         from ..proprietaire_historique import acquisitions_recentes
         acquisitions_pm = acquisitions_recentes(db, _insee_c, depuis_millesime=2022, limit=8)
-    return {"commune": commune, "epci": epci,
+    # OUTILS-6 (C2/C5/C6) — les blocs AJOUTÉS + les compteurs des passerelles, chacun servi depuis le
+    # moteur de son outil d'origine (aucun recalcul, cf. fiche_commune). Le front les range en accordéons.
+    from . import fiche_commune as _fc
+    blocs = _fc.build(db, commune, _insee_c)
+    return {"commune": commune, "insee": _insee_c, "epci": epci,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
             "mairie": mairie,                           # K2 — adresse/tél/e-mail/site + fraîcheur
             "acquisitions_pm": acquisitions_pm,         # L1 KF-2 — acquisitions PM récentes (constat)
             "foncier": _foncier_commune(db, commune),   # M83 C1 — le foncier de la commune, EN TÊTE
+            "comparable": blocs["comparable"],          # C2 — chiffres communs (identiques au comparateur)
+            "marche_annonces": blocs["marche_annonces"],# C5 — Radar (annonces + écart demandé/acté)
+            "risques": blocs["risques"],                # C5 — PPR / mouvement / CatNat / Parc National
+            "population": blocs["population"],           # C5 — habitants / ménages / niveau de vie
+            "plu_statut": blocs["plu_statut"],          # C5 — statut PLU calculé + recherche verbatim
+            "permis_bloc": blocs["permis"],             # C5 — construire ici + permis au point mort
+            "densifiables": blocs["densifiables"],      # C5 — gisement de densification
+            "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
+            "outils": blocs["outils"],                  # C6 — compteurs des passerelles
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
             "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,

@@ -1,20 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getContexteCommune, modVelocite, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
-import { MarcheCommune } from '../outils/moteurs'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
-
-// R4 — helpers transférés de l'ex-fiche-outil Communes (ligne libellé/valeur + format suffixé).
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
+const fmtDec = (n: number | null | undefined, s = '') => (n == null ? '—' : `${Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}${s}`)
+
 function RowT({ lbl, val, strong }: { lbl: string; val: string; strong?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between gap-2">
+    <div className="flex items-baseline justify-between gap-2 py-0.5">
       <span className="min-w-0 text-txt-mut">{lbl}</span>
-      <span className={`tnum shrink-0 ${strong ? 'font-semibold text-mint' : 'text-txt'}`}>{val}</span>
+      <span className={`tnum shrink-0 text-right ${strong ? 'font-semibold text-mint' : 'text-txt'}`}>{val}</span>
     </div>
   )
 }
@@ -34,7 +33,7 @@ const SRU_META: Record<string, { color: string; label: string; lecture: string }
 function Source({ nom, url }: { nom?: string | null; url?: string | null }) {
   if (!nom) return null
   return (
-    <p className="mt-1.5 text-[11px] leading-snug text-txt-dim">
+    <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">
       Source :{' '}
       {url ? <a href={url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{nom} ↗</a> : nom}
     </p>
@@ -58,12 +57,33 @@ function Bar({ parts }: { parts: { label: string; pct: number; color: string }[]
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+// OUTILS-6 C4 — l'accordéon. Son état ouvert/fermé est MÉMORISÉ d'une fiche à l'autre (localStorage,
+// par identifiant de section) : un client retrouve ses sections de prédilection. `dot` = pastille de
+// signal (couleur), `cle` = le chiffre-clé porté SUR LA LIGNE FERMÉE (on lit l'essentiel sans ouvrir).
+const ACC_LS = 'labuse.fiche.acc'
+function readAcc(id: string, def: boolean): boolean {
+  try { const o = JSON.parse(localStorage.getItem(ACC_LS) || '{}'); return typeof o[id] === 'boolean' ? o[id] : def }
+  catch { return def }
+}
+function writeAcc(id: string, v: boolean) {
+  try { const o = JSON.parse(localStorage.getItem(ACC_LS) || '{}'); o[id] = v; localStorage.setItem(ACC_LS, JSON.stringify(o)) }
+  catch { /* localStorage indisponible — l'accordéon reste fonctionnel, sans mémoire */ }
+}
+function Acc({ id, title, cle, dot, defaultOpen, children }: {
+  id: string; title: string; cle?: string; dot?: string; defaultOpen?: boolean; children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(() => readAcc(id, !!defaultOpen))
   return (
-    <section className="border-b border-line px-5 py-4">
-      <p className="label-caps mb-2">{title}</p>
-      {children}
-    </section>
+    <details data-acc={id} open={open} className="border-b border-line"
+      onToggle={(e) => { const o = (e.currentTarget as HTMLDetailsElement).open; setOpen(o); writeAcc(id, o) }}>
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-3 text-[13.5px] font-semibold text-txt-hi [&::-webkit-details-marker]:hidden">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: dot || TOKENS.mint }} />
+        {title}
+        {cle && <span data-acc-cle className="ml-auto pr-1 font-mono text-[11px] font-normal text-txt-mut">{cle}</span>}
+        <span className={`text-txt-dim transition-transform ${cle ? '' : 'ml-auto'}`} aria-hidden>›</span>
+      </summary>
+      <div className="px-5 pb-4 pt-1">{children}</div>
+    </details>
   )
 }
 
@@ -73,35 +93,61 @@ function MairieLigne({ label, val, href }: { label: string; val: string | null; 
     <div className="flex gap-2">
       <dt className="w-[74px] shrink-0 text-txt-dim">{label}</dt>
       <dd className="min-w-0 flex-1 break-words text-txt">
-        {val == null
-          ? <span className="text-txt-dim italic">Absent</span>
-          : href
-            ? <a href={href} target="_blank" rel="noreferrer" className="text-mint hover:underline">{val}</a>
-            : val}
+        {val == null ? <span className="italic text-txt-dim">Absent</span>
+          : href ? <a href={href} target="_blank" rel="noreferrer" className="text-mint hover:underline">{val}</a> : val}
       </dd>
     </div>
   )
 }
 
 function fmtDateFr(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(iso))
-  } catch { return iso }
+  try { return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(iso)) }
+  catch { return iso }
 }
 
-/** FICHE COMMUNE UNIQUE (RETOURS-1 R4, Vic) — l'ex-fiche de l'outil Communes a fusionné ICI :
- *  en plus du contexte officiel (SRU · ANRU · PLH · marché INSEE · QPV), le panneau porte les
- *  blocs transférés — MARCHÉ local (MarcheCommune, 9 lignes sourcées + signal), RARETÉ & ZAN,
- *  VÉLOCITÉ — et « Voir ses parcelles → ». Aucune de ces données n'entre dans le scoring. */
+// OUTILS-6 C6 — ouvrir un outil AVEC LA COMMUNE DÉJÀ SÉLECTIONNÉE (jamais un formulaire vide). On pose la
+// commune (filtre global lu par la plupart des outils) puis on ouvre le module et on ferme la fiche.
+function ouvrirOutil(commune: string, insee: string | null, quoi: string) {
+  const s = useApp.getState()
+  s.setCommune(commune)
+  s.setCommunesFilter([commune])
+  if (quoi === 'plu') { if (insee) s.setPluPrefill({ insee, zone: null }); s.setModule('plu') }
+  else if (quoi === 'radar') { s.openRadar() }
+  else if (quoi === 'communes') { s.setModule('communes'); s.setCommunesTableOpen(true) }
+  else { s.setModule(quoi) }
+  s.setContexteCommune(null)
+}
+
+function OutilLigne({ ic, nom, sous, onClick }: { ic: string; nom: string; sous: string; onClick: () => void }) {
+  return (
+    <button data-passerelle onClick={onClick}
+      className="flex w-full items-center gap-3 border-b border-line py-2.5 text-left last:border-b-0 hover:bg-surface-2">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-[13px] text-mint">{ic}</span>
+      <span className="min-w-0 flex-1">
+        <b className="block text-[13px] font-semibold text-txt-hi">{nom}</b>
+        <span className="block text-[11.5px] text-txt-mut">{sous}</span>
+      </span>
+      <span className="text-mint">→</span>
+    </button>
+  )
+}
+
+function Shortcut({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button data-passerelle onClick={onClick}
+      className="mt-3 inline-block rounded-lg border border-mint/30 px-2.5 py-1 text-[11.5px] text-mint hover:bg-mint/10">
+      {label} →
+    </button>
+  )
+}
+
+/** FICHE COMMUNE (OUTILS-6) — un en-tête qui décide + des accordéons ordonnés selon la question d'un
+ *  promoteur (constat → action → contexte). Chaque section porte son chiffre-clé sur la ligne fermée, sa
+ *  ligne de sources datées, et — quand c'est utile — une passerelle vers l'outil pré-rempli sur la commune.
+ *  Un seul moteur, une seule donnée : tout vient du payload `getContexteCommune` (aucun chiffre en dur). */
 export function ContextePanel() {
   const { contexteCommune, setContexteCommune } = useApp()
-  const q = useQuery({
-    queryKey: ['contexte', contexteCommune],
-    queryFn: () => getContexteCommune(contexteCommune!),
-    enabled: !!contexteCommune,
-  })
-  // R4 — blocs transférés de l'ex-fiche-outil. Mêmes clés React Query que l'ex-CommuneFiche
-  // (dédoublonnage, 0 fetch en plus quand l'outil a déjà chargé).
+  const q = useQuery({ queryKey: ['contexte', contexteCommune], queryFn: () => getContexteCommune(contexteCommune!), enabled: !!contexteCommune })
   const rar = useQuery({ queryKey: ['communes-rarete'], queryFn: motRarete, enabled: !!contexteCommune })
   const vel = useQuery({ queryKey: ['communes-velocite'], queryFn: () => modVelocite(), enabled: !!contexteCommune })
   const mar = useQuery({ queryKey: ['mu-marche', contexteCommune], queryFn: () => motMarcheCommune(contexteCommune!), enabled: !!contexteCommune })
@@ -114,181 +160,269 @@ export function ContextePanel() {
   const d = q.data
   const r = (rar.data?.communes ?? []).find((c) => (c as Record<string, unknown>)['commune'] === contexteCommune) as Record<string, any> | undefined
   const v = (vel.data?.communes ?? []).find((c) => (c as Record<string, unknown>)['commune'] === contexteCommune) as Record<string, any> | undefined
-  const homogene = vel.data?.['communes_homogenes'] as boolean | undefined
   const sig = mar.data?.['market_signal'] as Record<string, any> | undefined
   const sigLabel = sig?.['disponible'] ? String(sig['label']) : null
   const sigCol = sigLabel === 'favorable' ? TOKENS.mint : sigLabel === 'prudence' ? TOKENS.stEcartee : TOKENS.stCreuser
+  // tendance / liquidité : lues sur les lignes du MÊME moteur Marché commune (build_marche_commune)
+  const marLignes = (mar.data?.['lignes'] ?? []) as Record<string, any>[]
+  const ligneMar = (cle: string) => marLignes.find((l) => l['cle'] === cle)?.['valeurs'] as Record<string, any> | undefined
+  const tend = ligneMar('tendance_12m')
+  const commune = contexteCommune
+  const insee = d?.insee ?? null
 
   return (
     <aside data-contexte-panel className="absolute right-0 top-0 z-30 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-elev-3">
-      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
-        <div>
+      <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-3">
+        <div className="min-w-0">
           <p className="label-caps text-txt-mut">Fiche commune</p>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-lg font-bold text-txt-hi">{contexteCommune}</h2>
+            <h2 className="font-display text-lg font-bold text-txt-hi">{commune}</h2>
             {sigLabel && (
               <span data-fiche-signal className="rounded-full border px-2 py-0.5 text-[10.5px] font-medium"
-                style={{ color: sigCol, borderColor: `${sigCol}55`, background: `${sigCol}22` }}>
-                signal : {sigLabel}
-              </span>
+                style={{ color: sigCol, borderColor: `${sigCol}55`, background: `${sigCol}22` }}>signal : {sigLabel}</span>
             )}
           </div>
           {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
+          {d?.foncier && (
+            <p className="mt-0.5 text-[10.5px] text-txt-dim">{fmt(d.foncier.surface_ha)} ha · {fmt(d.foncier.n_parcelles)} parcelles</p>
+          )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {/* F1 (OUTILS-4) — « voir ses parcelles » = voir LA LISTE, pas seulement le territoire : on
-              bascule sur l'onglet CARTES, on FILTRE le listing sur la commune (`setCommunesFilter`) et on
-              OUVRE le regard LABUSE (`analyseLabuse` + verdict) → le client atterrit sur la liste des
-              parcelles de la commune, carte à côté. setView('cartes') (posé d'abord) ferme l'outil/la
-              fiche ; filtres, commune et verdict lui survivent. */}
-          <button data-communes-parcelles onClick={() => {
-            const s = useApp.getState()
-            s.setView('cartes')
-            s.setCommune(contexteCommune)
-            s.setCommunesFilter([contexteCommune])
-            s.setFilter('analyseLabuse', true)
-            s.setVerdict(true)
-          }}
-            title="Basculer sur la carte et lister les parcelles de cette commune"
-            className="rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
-            Voir ses parcelles →
-          </button>
-          <button onClick={() => setContexteCommune(null)} className="text-txt-dim hover:text-txt-hi" title="Fermer (Échap)" aria-label="Fermer">✕</button>
-        </div>
+        <button onClick={() => setContexteCommune(null)} className="shrink-0 text-txt-dim hover:text-txt-hi" title="Fermer (Échap)" aria-label="Fermer">✕</button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {q.isLoading && <div className="p-5"><Loading label="Chargement du contexte commune" className="text-xs" /></div>}
+        {q.isLoading && <div className="p-5"><Loading label="Chargement de la fiche commune" className="text-xs" /></div>}
         {q.isError && <p className="p-5 text-xs text-st-ecartee">Erreur de chargement — réessayez.</p>}
         {d && (
           <>
-            {/* M55-C point 1 (arbitrage Vic) : bandeau RNU générique en TÊTE de fiche — pour toute
-                commune sans PLU opposable (source config/rnu_communes.yaml). Dit franchement pourquoi
-                l'écran n'a pas de zonage : constructibilité au cas par cas (règles nationales). */}
+            {/* EN-TÊTE PERMANENT — les quatre chiffres qui décident d'y aller ou non + les deux gestes. */}
+            <div className="border-b border-line bg-surface-2/40 px-5 py-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                <div><p className="font-display text-[17px] font-bold text-txt-hi">{fmt(d.foncier?.prix_terrain_nu?.par_zone?.['U']?.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone U</p></div>
+                <div><p className="font-display text-[17px] font-bold text-txt-hi">{fmt(d.comparable?.ancien_median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">ancien médian (commune)</p></div>
+                <div><p className={`font-display text-[17px] font-bold ${(r?.['horizon_epuisement_ans'] ?? 99) < 6 ? 'text-st-ecartee' : 'text-txt-hi'}`}>{r?.['horizon_epuisement_ans'] == null ? '—' : `${fmtDec(r['horizon_epuisement_ans'])} ans`}</p><p className="text-[10.5px] text-txt-dim">avant épuisement du ZAN</p></div>
+                <div><p className="font-display text-[17px] font-bold text-txt-hi">{v ? `${fmtV(v['delai_p25_mois'])}–${fmtV(v['delai_p75_mois'])} mois` : (d.comparable?.delai_median_mois != null ? `${fmtDec(d.comparable.delai_median_mois)} mois` : '—')}</p><p className="text-[10.5px] text-txt-dim">délai d'instruction</p></div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                {/* « Voir ses parcelles » — comportement OUTILS-4 inchangé (liste filtrée + regard LABUSE). */}
+                <button data-communes-parcelles onClick={() => {
+                  const s = useApp.getState()
+                  s.setView('cartes'); s.setCommune(commune); s.setCommunesFilter([commune])
+                  s.setFilter('analyseLabuse', true); s.setVerdict(true)
+                }} className="flex-1 rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1.5 text-[12px] font-medium text-mint hover:bg-mint/25">Voir ses parcelles →</button>
+                <button data-communes-comparer onClick={() => ouvrirOutil(commune, insee, 'communes')}
+                  className="flex-1 rounded-md border border-line px-2.5 py-1.5 text-[12px] font-medium text-txt hover:bg-surface-2">Comparer</button>
+              </div>
+            </div>
+
             {d.rnu && (
-              <div data-rnu-bandeau className="border-b border-line px-5 py-4">
+              <div data-rnu-bandeau className="border-b border-line px-5 py-3">
                 <div className="rounded-lg border border-st-creuser/40 bg-st-creuser/[0.10] px-3 py-2.5">
-                  <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-st-creuser">
-                    <span aria-hidden="true">⚑</span>{d.rnu.libelle}
-                  </p>
+                  <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-st-creuser"><span aria-hidden>⚑</span>{d.rnu.libelle}</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-txt">{d.rnu.detail}</p>
                 </div>
               </div>
             )}
-            {/* M83 C1 — LE FONCIER DE LA COMMUNE, EN TÊTE (c'est le produit). Points de calcul EXISTANTS
-                réutilisés (M79 prix terrain nu / permis, agrégats bruts pour parcelles/surface/zonage/
-                mutations) — aucun recalcul local. */}
+
+            {/* 1 · LE FONCIER (ouvert) — qu'y a-t-il ici ? */}
             {d.foncier && (
-              <Section title="LE FONCIER DE LA COMMUNE">
+              <Acc id="foncier" title="Le foncier" defaultOpen cle={`${fmt(d.foncier.stock_opportunites.ha)} ha repérés`}>
                 <div className="mb-3 flex gap-5">
-                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.n_parcelles)}</p><p className="text-[11px] text-txt-dim">parcelles cadastrées</p></div>
-                  {d.foncier.surface_ha != null && (
-                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.surface_ha)} ha</p><p className="text-[11px] text-txt-dim">surface cadastrée</p></div>
-                  )}
+                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.n_parcelles)}</p><p className="text-[11px] text-txt-dim">parcelles<i className="block not-italic text-[10px]">{fmt(d.foncier.surface_ha)} ha</i></p></div>
+                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.stock_opportunites.n)}</p><p className="text-[11px] text-txt-dim">stock foncier repéré<i className="block not-italic text-[10px]">{fmt(d.foncier.stock_opportunites.ha)} ha promus</i></p></div>
                 </div>
+                {d.densifiables?.parcelles != null && (
+                  <div className="mb-3 flex gap-5">
+                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.densifiables.parcelles)}</p><p className="text-[11px] text-txt-dim">densifiables<i className="block not-italic text-[10px]">capacité résiduelle</i></p></div>
+                    {d.densifiables.sdp_residuelle_m2 != null && <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(Math.round(d.densifiables.sdp_residuelle_m2 / 1e6 * 10) / 10)} M m²</p><p className="text-[11px] text-txt-dim">SDP résiduelle théorique</p></div>}
+                  </div>
+                )}
                 {d.foncier.repartition_zonage && (() => {
-                  const z = d.foncier.repartition_zonage; const t = z.total || 1
-                  const pc = (n: number) => Math.round(1000 * n / t) / 10
+                  const f = d.foncier!.repartition_zonage!.familles
                   return (
-                    <div className="mb-3">
-                      <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Répartition par famille de zonage
-                        <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">Sourcé · zonage calibré</span></p>
+                    <div className="mb-2">
+                      <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Répartition du zonage <span className="text-txt-mut">(parts de surface)</span>
+                        <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">{d.foncier!.repartition_zonage!.total_ha.toLocaleString('fr-FR')} ha</span></p>
                       <Bar parts={[
-                        { label: 'U', pct: pc(z.U), color: TOKENS.mint },
-                        { label: 'AU', pct: pc(z.AU), color: TOKENS.vizCyan },
-                        { label: 'A', pct: pc(z.A), color: TOKENS.stCreuser },
-                        { label: 'N', pct: pc(z.N), color: TOKENS.vizGreenDeep },
+                        { label: 'U', pct: f.U.pct, color: TOKENS.mint },
+                        { label: 'AU', pct: f.AU.pct, color: TOKENS.vizCyan },
+                        { label: 'A', pct: f.A.pct, color: TOKENS.stCreuser },
+                        { label: 'N', pct: f.N.pct, color: TOKENS.vizGreenDeep },
                       ]} />
                     </div>
                   )
                 })()}
-                <div className="mb-3 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
-                  <p className="text-[11.5px] text-txt"><b>{fmt(d.foncier.classement.evaluees)}</b> parcelles évaluées au classement servi</p>
-                  {d.foncier.classement.sans_zonage > 0 && (
-                    <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">dont <b className="text-st-creuser">{fmt(d.foncier.classement.sans_zonage)}</b> sans zonage publié — non classables ({d.foncier.classement.raison_sans_zonage}).</p>
-                  )}
-                </div>
                 {d.foncier.prix_terrain_nu.par_zone && (
-                  <div className="mb-3">
-                    <p className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px] text-txt-dim">Prix médian du terrain nu, par zone
-                      {d.foncier.prix_terrain_nu.etiquette && <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">{d.foncier.prix_terrain_nu.etiquette}</span>}</p>
-                    <div className="flex gap-5">
-                      {(['U', 'AU'] as const).map((fam) => {
-                        const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
-                        if (!pz || !pz.calculable) return (
-                          <div key={fam}><p className="font-display text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">échantillon insuffisant (&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes)</p></div>
-                        )
-                        return (
-                          <div key={fam}>
-                            <p className="font-display text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p>
-                            <p className="text-[10.5px] text-txt-dim">zone {fam} · {fmt(pz.n)} ventes{(pz.n ?? 0) < 5 ? ' (fragile)' : ''}</p>
-                          </div>
-                        )
-                      })}
-                    </div>
+                  <div className="mt-3 flex gap-5">
+                    {(['U', 'AU'] as const).map((fam) => {
+                      const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
+                      return pz?.calculable
+                        ? <div key={fam}><p className="font-display text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
+                        : <div key={fam}><p className="font-display text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
+                    })}
                   </div>
                 )}
-                <div className="flex gap-5">
-                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.mutations_12m)}</p><p className="text-[11px] text-txt-dim">mutations (12 mois, DVF)</p></div>
-                  <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.permis_12m.n)}</p><p className="text-[11px] text-txt-dim">permis (12 mois, Sitadel)</p></div>
-                </div>
-                <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">Prix terrain nu, mutations et permis : point de calcul Marché (M79) — DVF (actes) + Sitadel (autorisations, {d.foncier.permis_12m.reserve}).</p>
-              </Section>
+                <Shortcut label="Densifier l'existant — cette commune" onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
+                <Source nom={`Cadastre DGFiP · zonage PLU · ${d.densifiables?.source ?? 'analyse LABUSE'}`} />
+              </Acc>
             )}
-            {/* R4 — MARCHÉ local (transféré de l'ex-fiche-outil Communes, M137-Z) : les 9 lignes
-                sourcées Prix / Dynamique / Offre / Loyer via MarcheCommune (mode embarqué). */}
-            <Section title="MARCHÉ">
-              {/* Réconciliation € ancien : ICI = prix LOCAL (secteur autour de la parcelle centrale,
-                  appartements priorisés) ; le tableau des 24 communes = médiane COMMUNE ENTIÈRE.
-                  Deux séries légitimes → un écart est normal, pas une erreur. */}
-              <p className="mb-1 text-[10px] leading-snug text-txt-dim">
-                Prix ancien = médiane <b>locale</b> (secteur autour de la parcelle centrale). Le tableau des
-                24 communes affiche la médiane <b>commune entière</b> — les deux diffèrent normalement.
-              </p>
-              <MarcheCommune communeProp={contexteCommune} />
-            </Section>
 
-            {/* R4 — RARETÉ & ZAN (transféré, M137-Z) : le STOCK porte « foncier » ; « reste ZAN » =
-                un droit à artificialiser, ESTIMÉ, jamais un droit à construire. */}
-            <Section title="RARETÉ &amp; ZAN">
-              {r ? (
-                <div className="flex flex-col gap-0.5 text-[11px]">
-                  <RowT lbl="Foncier repéré — stock de parcelles promues" val={fmtV(r['stock_opportunites_ha'], ' ha')} strong />
-                  {r['pct_budget_consomme'] != null && (
-                    <div className="mt-0.5 rounded-md bg-surface-3 px-2 py-1">
-                      <div className="flex items-baseline gap-1.5">
-                        <b className={`tnum text-[14px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-st-creuser'}`}>{r['pct_budget_consomme']} %</b>
-                        <span className="text-[10px] text-txt-mut">du budget ZAN consommé</span>
-                        <span className={`ml-auto tnum text-[11px] ${(r['pct_budget_restant'] as number) < 0 ? 'text-st-ecartee' : 'text-txt'}`}>{r['pct_budget_restant']} % restant</span>
-                      </div>
-                      <p className="mt-0.5 text-[9px] leading-snug text-st-creuser"><b>Estimé</b> (règle -50 %, SAR non territorialisé) — <b>pas un droit à construire</b>.</p>
+            {/* 2 · LE MARCHÉ (ouvert) — ça vaut combien, ça bouge ? */}
+            <Acc id="marche" title="Le marché" defaultOpen dot={sigCol}
+              cle={tend?.['pct'] != null ? `${Number(tend['pct']) > 0 ? '+' : ''}${fmtDec(tend['pct'])} % / 12 mois` : undefined}>
+              <div className="flex flex-col gap-0.5 text-[12px]">
+                <RowT lbl="Ancien médian (commune entière)" val={`${fmt(d.comparable?.ancien_median_eur_m2)} €/m²`} strong />
+                <RowT lbl="Neuf (prix de sortie)" val={`${fmt(d.comparable?.neuf_eur_m2)} €/m²`} />
+                {d.foncier?.prix_terrain_nu.par_zone && (
+                  <RowT lbl="Terrain nu (U / AU)" val={`${fmt(d.foncier.prix_terrain_nu.par_zone['U']?.median_eur_m2)} · ${fmt(d.foncier.prix_terrain_nu.par_zone['AU']?.median_eur_m2)} €/m²`} />
+                )}
+                {d.loyer && <RowT lbl={`Loyer médian${d.loyer.type ? ` (${d.loyer.type})` : ''}`} val={`${fmtDec(d.loyer.median_eur_m2)} €/m²`} />}
+                {tend?.['pct'] != null && <RowT lbl="Tendance 12 mois" val={`${Number(tend['pct']) > 0 ? '+' : ''}${fmtDec(tend['pct'])} %`} />}
+                <RowT lbl="Mutations (12 mois, DVF)" val={fmt(d.foncier?.mutations_12m)} />
+              </div>
+              <Source nom={`DVF — médiane commune entière (même moteur que le comparateur)${d.loyer ? ` · ${d.loyer.source}` : ''}`} />
+            </Acc>
+
+            {/* 3 · LE MARCHÉ DES ANNONCES (Radar) — qu'est-ce qui est en vente maintenant ? */}
+            {d.marche_annonces && (
+              <Acc id="annonces" title="Le marché des annonces" dot={TOKENS.stSurveiller}
+                cle={d.marche_annonces.sous_seuil ? `${d.marche_annonces.biens} bien(s)` : `${d.marche_annonces.biens} biens${d.marche_annonces.ecart_demande_acte_pct != null ? ` · ${d.marche_annonces.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(d.marche_annonces.ecart_demande_acte_pct)} %` : ''}`}>
+                {d.marche_annonces.sous_seuil ? (
+                  <p className="text-[12px] text-txt-mut">Trop peu d'annonces relevées pour un signal fiable ({d.marche_annonces.biens} bien(s), seuil {d.marche_annonces.seuil_n}). Le Radar affine la couverture au fil des relevés.</p>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-0.5 text-[12px]">
+                      <RowT lbl="Biens en vente" val={fmt(d.marche_annonces.biens)} />
+                      <RowT lbl="Prix demandé médian" val={`${fmt(d.marche_annonces.prix_demande_median_eur_m2)} €/m²`} />
+                      {d.marche_annonces.ecart_demande_acte_pct != null && (
+                        <RowT lbl="Écart demandé / acté" strong
+                          val={`${d.marche_annonces.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(d.marche_annonces.ecart_demande_acte_pct)} %`} />
+                      )}
                     </div>
-                  )}
-                  <RowT lbl="Droit à artificialiser restant (ZAN, estimé)" val={fmtV(r['reste_zan_ha'], ' ha')} />
-                  <RowT lbl="Budget ZAN 2021-31 (estimé)" val={fmtV(r['budget_zan_ha'], ' ha')} />
+                    <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">L'écart demandé/acté est la marge de négociation du moment — le signal exclusif LABUSE.</p>
+                    <Shortcut label="Voir les annonces dans le Radar" onClick={() => ouvrirOutil(commune, insee, 'radar')} />
+                  </>
+                )}
+                <Source nom={d.marche_annonces.source} />
+              </Acc>
+            )}
+
+            {/* 4 · CONSTRUIRE ICI — combien de temps, combien de permis passent ? */}
+            <Acc id="construire" title="Construire ici" cle={`${fmt(d.permis_bloc.permis_12m)} permis / 12 mois`}>
+              <div className="flex flex-col gap-0.5 text-[12px]">
+                <RowT lbl="Permis autorisés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
+                {d.permis_bloc.delai_median_mois != null && <RowT lbl="Délai d'instruction médian" val={`${fmtDec(d.permis_bloc.delai_median_mois)} mois`} />}
+                {d.permis_bloc.logements_12m != null && <RowT lbl="Offre engagée" val={`${fmt(d.permis_bloc.logements_12m)} logts / 12 mois`} />}
+                <RowT lbl="Permis au point mort" val={fmt(d.permis_bloc.point_mort)} />
+              </div>
+              <Shortcut label="Ouvrir Permis — cette commune" onClick={() => ouvrirOutil(commune, insee, 'permis')} />
+              <Source nom={d.permis_bloc.source} />
+            </Acc>
+
+            {/* 5 · LA RÈGLE & LES CONTRAINTES — qu'est-ce qui m'en empêche ? */}
+            <Acc id="regle" title="La règle & les contraintes" dot={TOKENS.stEcartee}
+              cle={`ZAN ${r?.['horizon_epuisement_ans'] == null ? '—' : `${fmtDec(r['horizon_epuisement_ans'])} ans`} · SRU ${d.sru ? (SRU_META[d.sru.statut]?.label ?? d.sru.statut).toLowerCase() : '—'}`}>
+              {/* PLU — le document d'urbanisme enfin nommé (statut CALCULÉ, jamais en dur) */}
+              <div className="mb-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-[12px] text-txt-mut">PLU</span>
+                  <span className="text-[12.5px] font-semibold" style={{ color: d.plu_statut.statut === 'RNU' ? TOKENS.stCreuser : TOKENS.mint }}>
+                    {d.plu_statut.statut}{d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}
+                  </span>
+                </div>
+                {d.plu_statut.libelle && <p className="mt-0.5 text-[10.5px] text-txt-dim">{d.plu_statut.libelle}</p>}
+                {d.plu_statut.recherche_verbatim && (
+                  <button data-passerelle onClick={() => ouvrirOutil(commune, insee, 'plu')} className="mt-1 text-[11px] text-mint hover:underline">Chercher dans le règlement →</button>
+                )}
+              </div>
+              {r && (
+                <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
+                  <RowT lbl="Budget ZAN restant (estimé)" val={fmtV(r['reste_zan_ha'], ' ha')} />
                   <RowT lbl="Rythme de consommation" val={fmtV(r['rythme_conso_ha_an'], ' ha/an')} />
-                  <RowT lbl="Horizon d'épuisement de l'enveloppe ZAN" val={r['horizon_epuisement_ans'] == null ? 'non projetable' : `${r['horizon_epuisement_ans']} ans`} />
-                  <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{rar.data?.caveat}</p>
                 </div>
-              ) : <p className="text-[11px] text-txt-dim">Donnée ENAF/ZAN indisponible pour cette commune.</p>}
-            </Section>
-
-            {/* R4 — VÉLOCITÉ administrative (transféré, M137-Z) : tranche p25-p75, homogénéité dite. */}
-            <Section title="VÉLOCITÉ ADMINISTRATIVE">
-              {v ? (
-                <div className="text-[11px] text-txt">
-                  <p>Délai d'instruction (dépôt → autorisation) :{' '}
-                    <b className="tnum">{fmtV(v['delai_p25_mois'])} à {fmtV(v['delai_p75_mois'])} mois</b>{' '}
-                    <span className="text-txt-dim">(tranche p25–p75, {fmtV(v['n_valide'])} dossiers)</span></p>
-                  {homogene && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{vel.data?.['note_homogeneite'] as string}</p>}
+              )}
+              {d.sru && (() => {
+                const m = SRU_META[d.sru.statut] ?? SRU_META.conforme
+                return (
+                  <div className="mb-2 rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
+                    <span className="font-display text-[14px] font-bold" style={{ color: m.color }}>SRU {Number(d.sru.taux_lls).toLocaleString('fr-FR')} %</span>
+                    <span className="ml-2 text-[11px] text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %</span>
+                    <span className="ml-2 rounded-full px-2 py-0.5 text-[10.5px] font-semibold" style={{ color: m.color, background: `${m.color}22` }}>{m.label}</span>
+                    <p className="mt-1 text-[11px] leading-relaxed text-txt">{m.lecture}</p>
+                  </div>
+                )
+              })()}
+              {d.plh && (
+                <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
+                  <RowT lbl={`PLH ${d.epci ?? ''} — objectif`} val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : '—'} />
+                  {d.plh.part_sociale_pct != null && <RowT lbl="Part sociale visée" val={`${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} %`} />}
                 </div>
-              ) : <p className="text-[11px] text-txt-dim">Donnée délais indisponible pour cette commune.</p>}
-            </Section>
+              )}
+              <div className="flex flex-col gap-0.5 text-[12px]">
+                <RowT lbl="NPNRU" val={d.anru.length > 0 ? `${d.anru.length} périmètre(s)` : 'aucun'} />
+                <RowT lbl="QPV" val={d.qpv.length > 0 ? `${d.qpv.length} quartier(s)` : 'aucun'} />
+              </div>
+              {d.qpv.length > 0 && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.qpv.map((x) => x.nom).join(' · ')}</p>}
+              <Source nom={`${d.plu_statut.source ?? 'GPU'} · inventaire SRU · PLH · ANCT`} />
+            </Acc>
 
-            {/* K2 — COORDONNÉES DE LA MAIRIE (Annuaire de l'administration). Un champ absent affiche
-                « Absent » (jamais inventé) ; la fraîcheur = date de relevé de l'annuaire. */}
+            {/* 6 · LES RISQUES — qu'est-ce qui peut faire échouer ? */}
+            <Acc id="risques" title="Les risques" dot={TOKENS.stEcartee}
+              cle={d.risques.ppr_pct != null ? `PPR sur ${fmtDec(d.risques.ppr_pct)} %` : (d.risques.parc_national ? 'Parc National' : undefined)}>
+              <div className="flex flex-col gap-0.5 text-[12px]">
+                <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
+                <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
+                <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
+                <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national ? 'oui' : 'non'} />
+              </div>
+              <Source nom={d.risques.source} />
+            </Acc>
+
+            {/* 7 · POPULATION & LOGEMENT — pour qui je construis ? */}
+            <Acc id="population" title="Population & logement"
+              cle={d.population.logements != null ? `${fmt(d.population.logements)} logts${d.population.vacance_pct != null ? ` · ${fmtDec(d.population.vacance_pct)} % vacants` : ''}` : undefined}>
+              <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
+                {d.population.habitants != null && <RowT lbl="Habitants · ménages" val={`${fmt(d.population.habitants)} · ${fmt(d.population.menages)}`} />}
+                {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
+                {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
+              </div>
+              {d.marche && (
+                <div className="flex flex-col gap-2.5">
+                  {(() => {
+                    const loc = Number(d.marche.locataires_pct); const prop = Number(d.marche.proprietaires_pct)
+                    const autres = Math.max(0, Math.round((100 - loc - prop) * 10) / 10)
+                    return <Bar parts={[
+                      { label: 'locataires', pct: loc, color: TOKENS.vizCyan },
+                      { label: 'propriétaires', pct: prop, color: TOKENS.mint },
+                      ...(autres >= 1 ? [{ label: 'logés gratuitement', pct: autres, color: TOKENS.txtMut }] : []),
+                    ]} />
+                  })()}
+                  <Bar parts={[
+                    { label: 'maisons', pct: Number(d.marche.maisons_pct), color: TOKENS.stSurveiller },
+                    { label: 'appartements', pct: Number(d.marche.apparts_pct), color: TOKENS.vizCyan },
+                  ]} />
+                </div>
+              )}
+              <Shortcut label="Étude de zone — analyser un point ici" onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
+              <Source nom={d.population.source} />
+            </Acc>
+
+            {/* 8 · CONTINUER AVEC UN OUTIL (ouvert) — la fiche n'est plus un cul-de-sac. */}
+            <Acc id="outils" title="Continuer avec un outil" defaultOpen cle="pré-remplis sur la commune">
+              <OutilLigne ic="§" nom="PLU" sous={`règlement${d.plu_statut.date_reglement ? ` ${d.plu_statut.date_reglement}` : ''} · recherche verbatim`} onClick={() => ouvrirOutil(commune, insee, 'plu')} />
+              <OutilLigne ic="◎" nom="Étude de zone" sous="qui vit, qui travaille, qui concurrence — depuis un point" onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
+              <OutilLigne ic="⊞" nom="Comparer aux 24 communes" sous={`${commune} mise en regard, ligne surlignée`} onClick={() => ouvrirOutil(commune, insee, 'communes')} />
+              {d.outils.permis_en_cours > 0 && <OutilLigne ic="⌂" nom="Permis" sous={`${fmt(d.outils.permis_en_cours)} en cours · ${fmt(d.outils.permis_point_mort)} au point mort`} onClick={() => ouvrirOutil(commune, insee, 'permis')} />}
+              {d.outils.densifiables > 0 && <OutilLigne ic="▦" nom="Densifier l'existant" sous={`${fmt(d.outils.densifiables)} parcelles à capacité résiduelle`} onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />}
+              {d.outils.radar_biens > 0 && <OutilLigne ic="◉" nom="Radar" sous={`${fmt(d.outils.radar_biens)} biens en vente dans la commune`} onClick={() => ouvrirOutil(commune, insee, 'radar')} />}
+              {d.outils.scan_pm > 0 && <OutilLigne ic="☰" nom="Scan patrimoine" sous={`${fmt(d.outils.scan_pm)} parcelles détenues par une personne morale`} onClick={() => ouvrirOutil(commune, insee, 'patrimoine')} />}
+              {d.outils.solaire_piscines > 0 && <OutilLigne ic="☀" nom="Prospection solaire" sous={`${fmt(d.outils.solaire_piscines)} piscines détectées · potentiel PV`} onClick={() => ouvrirOutil(commune, insee, 'prospection-solaire')} />}
+              <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">Chaque outil s'ouvre avec {commune} déjà sélectionnée — jamais un formulaire vide à re-remplir.</p>
+            </Acc>
+
+            {/* 9 · CONTACTS & DÉMARCHES */}
             {d.mairie && (
-              <Section title="MAIRIE">
+              <Acc id="contacts" title="Contacts & démarches" cle="mairie · urbanisme">
                 <dl className="space-y-1.5 text-[12px]">
                   <MairieLigne label="Adresse" val={[d.mairie.adresse, [d.mairie.code_postal, d.mairie.commune].filter(Boolean).join(' ')].filter(Boolean).join(', ') || null} />
                   <MairieLigne label="Téléphone" val={d.mairie.telephone} href={d.mairie.telephone ? `tel:${d.mairie.telephone.replace(/\s/g, '')}` : undefined} />
@@ -297,135 +431,8 @@ export function ContextePanel() {
                   <MairieLigne label="Annuaire" val={d.mairie.url_annuaire ? 'Fiche service-public' : null} href={d.mairie.url_annuaire ?? undefined} />
                 </dl>
                 <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
-              </Section>
+              </Acc>
             )}
-            {/* L1 (KF-2) — ACQUISITIONS PM RÉCENTES : le bloc a QUITTÉ cette fiche (RETOURS-1 R3,
-                Vic) — il vit désormais dans l'outil Communes › « Acquisitions récentes », uniquement.
-                Le payload `acquisitions_pm` reste servi par le back (réversible), non rendu ici. */}
-            {/* M55-B point 4a (décision Vic) : le bloc « CLASSEMENT LABUSE » (compteurs de
-                production — parcelles brûlantes/chaudes, propriétaires PM) est RETIRÉ de la fiche
-                de CONTEXTE commune. Le client n'a pas à y voir nos compteurs internes ; cette fiche
-                ne sert que du contexte officiel sourcé (SRU / NPNRU / PLH / marché INSEE / QPV). */}
-            <Section title="SRU — LOGEMENT SOCIAL">
-              {d.sru ? (() => {
-                const m = SRU_META[d.sru.statut] ?? SRU_META.conforme
-                return (
-                  <>
-                    <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
-                      <span className="font-display text-[15px] font-bold" style={{ color: m.color }}>
-                        SRU {Number(d.sru.taux_lls).toLocaleString('fr-FR')} %
-                      </span>
-                      <span className="ml-2 text-xs text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %</span>
-                      <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ color: m.color, background: `${m.color}22` }}>{m.label}</span>
-                      {Number(d.sru.prelevement_eur) > 0 && (
-                        <p className="mt-1 text-[10.5px] text-txt-mut">Prélèvement 2025 : {fmt(d.sru.prelevement_eur)} €</p>
-                      )}
-                    </div>
-                    <p className="mt-2 text-[11px] leading-relaxed text-txt">{m.lecture}</p>
-                    <p className="mt-1 text-[11px] text-txt-dim">{fmt(d.sru.detail?.nb_lls)} LLS à l’inventaire · {d.sru.millesime}</p>
-                    <Source nom={d.sru.source_nom} url={d.sru.source_url} />
-                  </>
-                )
-              })() : <p className="text-xs text-txt-mut">Non disponible pour cette commune (source SRU DHUP).</p>}
-            </Section>
-
-            <Section title="RENOUVELLEMENT URBAIN — NPNRU">
-              {d.anru.length > 0 ? (
-                <>
-                  {d.anru.map((a) => (
-                    <div key={a.nom} className="mb-1.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
-                      <span className="text-xs font-medium text-txt-hi">{a.nom}</span>
-                      <span className="ml-2 rounded-full border border-line-2 bg-surface-3 px-2 py-0.5 text-[11px] font-medium text-txt-mut">intérêt {a.interet}</span>
-                      <p className="mt-0.5 text-[11px] text-txt-dim">{a.code_qpv} · activer la couche « ANRU » sur la carte</p>
-                    </div>
-                  ))}
-                  <Source nom={d.anru[0].source_nom} url={d.anru[0].source_url} />
-                </>
-              ) : <p className="text-xs text-txt-mut">Aucun périmètre NPNRU sur cette commune (8 quartiers d’intérêt national à La Réunion, aucun régional).</p>}
-              <p className="mt-2 text-[11px] leading-snug text-txt-dim">{d.notes[0]}</p>
-            </Section>
-
-            <Section title={`PLH ${d.epci ?? ''} — PROGRAMME LOCAL DE L'HABITAT`}>
-              {d.plh ? (
-                <>
-                  <div className="flex gap-4">
-                    {d.plh.obj_logements_an != null && (
-                      <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.plh.obj_logements_an)}</p>
-                        <p className="text-[11px] text-txt-dim">logements / an (objectif)</p></div>
-                    )}
-                    {d.plh.part_sociale_pct != null && (
-                      <div><p className="font-display text-lg font-bold text-txt-hi">{Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} %</p>
-                        <p className="text-[11px] text-txt-dim">part sociale visée</p></div>
-                    )}
-                  </div>
-                  <p className="mt-1 text-[10.5px] text-txt-mut">{d.plh.periode} · {d.plh.statut}</p>
-                  {(d.plh.refs ?? []).map((r: { doc: string; url?: string; page?: string | number }, i: number) => (
-                    <p key={i} className="mt-0.5 text-[11px] text-txt-dim">
-                      Réf. : {r.url ? <a className="text-mint hover:underline" href={r.url} target="_blank" rel="noreferrer">{r.doc} ↗</a> : r.doc}{r.page ? ` — p. ${r.page}` : ''}
-                    </p>
-                  ))}
-                </>
-              ) : (
-                <p className="text-xs text-txt-mut">
-                  Non disponible — PLH {d.epci ?? ''} non retrouvé en source publique vérifiable
-                  (extraction documentaire : aucun chiffre n’est affiché sans sa référence).
-                </p>
-              )}
-            </Section>
-
-            <Section title="MARCHÉ LOGEMENT — INSEE RP 2023">
-              {d.marche ? (
-                <>
-                  <div className="mb-2 flex gap-4">
-                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.marche.logements)}</p><p className="text-[11px] text-txt-dim">logements</p></div>
-                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.marche.vacants)}</p><p className="text-[11px] text-txt-dim">vacants ({d.marche.typologie?.vacance_pct?.toLocaleString?.('fr-FR') ?? d.marche.typologie?.vacance_pct} %)</p></div>
-                  </div>
-                  <div className="flex flex-col gap-2.5">
-                    {/* M55-B point 4b : INSEE distingue 3 statuts d'occupation (propriétaire /
-                        locataire / logé gratuitement). N'afficher que loc+prop laissait un reste
-                        muet (~4 %) ; on nomme ce reste « logés gratuitement » (résiduel dérivé,
-                        arrondi) pour que la barre somme à 100 et ne mente pas par omission. */}
-                    {(() => {
-                      const loc = Number(d.marche.locataires_pct)
-                      const prop = Number(d.marche.proprietaires_pct)
-                      const autres = Math.max(0, Math.round((100 - loc - prop) * 10) / 10)
-                      return (
-                        <Bar parts={[
-                          { label: 'locataires', pct: loc, color: TOKENS.vizCyan },
-                          { label: 'propriétaires', pct: prop, color: TOKENS.mint },
-                          ...(autres >= 1 ? [{ label: 'logés gratuitement', pct: autres, color: TOKENS.txtMut }] : []),
-                        ]} />
-                      )
-                    })()}
-                    <Bar parts={[
-                      { label: 'maisons', pct: Number(d.marche.maisons_pct), color: TOKENS.stSurveiller },
-                      { label: 'appartements', pct: Number(d.marche.apparts_pct), color: TOKENS.vizCyan },
-                    ]} />
-                  </div>
-                  {d.marche.typologie && (
-                    <div className="mt-3">
-                      <p className="mb-1 text-[11px] text-txt-dim" title={d.marche.typologie.libelle}>
-                        Résidences principales par nombre de pièces (1 à 5+ pièces — approche la typologie)
-                      </p>
-                      <Bar parts={(['p1', 'p2', 'p3', 'p4', 'p5p'] as const).map((k, i) => {
-                        const total = ['p1', 'p2', 'p3', 'p4', 'p5p'].reduce((s, kk) => s + (d.marche!.typologie[kk] ?? 0), 0) || 1
-                        return { label: k === 'p5p' ? '5p+' : k.replace('p', '') + 'p',
-                                 pct: Math.round(1000 * (d.marche!.typologie[k] ?? 0) / total) / 10,
-                                 color: [TOKENS.vizGreenDeep, TOKENS.stSurveiller, TOKENS.mint, TOKENS.vizCyan, TOKENS.txtMut][i] }
-                      })} />
-                    </div>
-                  )}
-                  <Source nom={d.marche.source_nom} url={d.marche.source_url} />
-                </>
-              ) : <p className="text-xs text-txt-mut">Non disponible (INSEE RP).</p>}
-            </Section>
-
-            <Section title="QUARTIERS PRIORITAIRES — QPV (rappel)">
-              {d.qpv.length > 0 ? (
-                <p className="text-xs text-txt">{d.qpv.length} QPV (génération 2024) : {d.qpv.map((x) => x.nom).join(' · ')}</p>
-              ) : <p className="text-xs text-txt-mut">Aucun QPV sur cette commune.</p>}
-              <p className="mt-2 text-[11px] leading-snug text-txt-dim">{d.notes[1]}</p>
-            </Section>
           </>
         )}
       </div>

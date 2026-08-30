@@ -196,7 +196,7 @@ export const getCommuneAcquisitions = (commune: string) =>
   j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm`)
 
 export interface ContexteCommune {
-  commune: string; epci: string | null; epci_nom: string | null
+  commune: string; insee: string | null; epci: string | null; epci_nom: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
   rnu: { libelle: string; detail: string } | null
   // K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
@@ -211,14 +211,50 @@ export interface ContexteCommune {
   // via getCommuneAcquisitions) — le payload back reste servi (réversible), le front ne le rend plus.
   acquisitions_pm: AcquisitionsPm | null
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
+  // OUTILS-6 C1 : repartition_zonage passe en parts de SURFACE (somme = 100 %, ha par famille) ;
+  // stock_opportunites porte le stock foncier EN PARCELLES ET EN HA (même compte que le comparateur).
   foncier: {
     n_parcelles: number; surface_ha: number | null
-    repartition_zonage: { U: number; AU: number; A: number; N: number; total: number } | null
+    repartition_zonage: {
+      base: 'surface'; total_ha: number
+      familles: Record<'U' | 'AU' | 'A' | 'N', { ha: number; pct: number; n: number }>
+    } | null
+    stock_opportunites: { n: number; ha: number }
     classement: { evaluees: number; sans_zonage: number; raison_sans_zonage: string }
     prix_terrain_nu: { par_zone: Record<string, { median_eur_m2: number | null; n: number | null; calculable: boolean }> | null; calculable: boolean; motif: string | null; seuil_n: number; etiquette: string | null }
     mutations_12m: number
     permis_12m: { n: number; reserve: string }
   } | null
+  // OUTILS-6 C2 — les chiffres COMMUNS au comparateur des 24 communes (même moteur, même run)
+  comparable: {
+    ancien_median_eur_m2: number | null; ancien_n: number | null; neuf_eur_m2: number | null
+    permis_5a: number | null; delai_median_mois: number | null; stock_opportunites_n: number | null; source: string
+  } | null
+  // OUTILS-6 C5 — les blocs ajoutés, chacun depuis le moteur de son outil d'origine
+  marche_annonces: {
+    biens: number; seuil_n: number; sous_seuil: boolean
+    prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
+    ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; source: string
+  } | null
+  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; parc_national: boolean; source: string }
+  population: {
+    habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
+    logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
+  }
+  plu_statut: {
+    statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
+    confiance?: string | null; recherche_verbatim: boolean; source: string | null
+  }
+  permis_bloc: {
+    permis_12m: number; permis_5a: number | null; logements_12m: number | null
+    delai_median_mois: number | null; point_mort: number; source: string
+  }
+  densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
+  loyer: { median_eur_m2: number; type: string | null; source: string } | null
+  outils: {
+    permis_en_cours: number; permis_point_mort: number; densifiables: number
+    radar_biens: number; scan_pm: number; solaire_piscines: number
+  }
   // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
   classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null
   sru: { taux_lls: number; objectif_pct: number; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
