@@ -1,0 +1,16 @@
+{
+  "f1": {
+    "view": "autre",
+    "body": "IA\nCartes\nRadar\nOutils\nProjets\nCRM\nVeille\nSources\nAdmin\nLABUSE\nSaint-Paul\nⓘ Contexte\nSignaler\n99+\nVL\nCartes\n✕\nCOUCHES\n3 actives\n\nLE FOND\n\nParcelles\ni\nLimites parcelles\ni\nLimites communes\ni\n\nLES ZONAGES\n\nZonage PLU par parcelle (calibré)\ni\nZones du PLU officiel"
+  },
+  "f2": {
+    "registre": true,
+    "maj": true,
+    "declare": true
+  },
+  "f3": {
+    "n_familles": 17,
+    "bouton": true
+  },
+  "errors": []
+}

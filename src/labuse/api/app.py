@@ -3948,6 +3948,34 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     return out
 
 
+@app.post("/outils/etude-zone/entreprises")
+def etude_zone_entreprises(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
+    """F3 (OUTILS-4) — TOUTES les entreprises actives de la zone, groupées par famille d'activité. Même
+    emprise que l'étude (polygone dessiné ou isochrone IGN cachée) ; appelé à la demande (le bouton
+    « Toutes les entreprises de la zone »). Comptes exacts par famille, établissements détaillés plafonnés."""
+    from ..zone import entreprises_zone, isochrone
+    minutes = inp.minutes if inp.minutes in (5, 10, 15) else 10
+    mode = inp.mode if inp.mode in ("voiture", "pied") else "voiture"
+    geom = inp.geom
+    lon, lat = inp.lon, inp.lat
+    if inp.idu:
+        idu = _check_idu(inp.idu)
+        pt = db.execute(text("SELECT ST_X(ST_Centroid(centroid)) AS lon, ST_Y(ST_Centroid(centroid)) AS lat "
+                             "FROM parcels WHERE idu = :idu"), {"idu": idu}).mappings().first()
+        if not pt or pt["lon"] is None:
+            raise HTTPException(404, "parcelle introuvable ou sans géométrie")
+        lon, lat = float(pt["lon"]), float(pt["lat"])
+    # emprise = polygone dessiné, sinon isochrone (cachée : pas de recalcul si l'étude vient de tourner)
+    if geom is None:
+        if lon is None or lat is None:
+            raise HTTPException(400, "fournir une parcelle (idu), un point (lon/lat) ou un polygone (geom)")
+        res = isochrone(db, lon, lat, minutes, mode)
+        geom = res.get("geom_geojson")
+        if geom is None:
+            raise HTTPException(503, "zone atteignable indisponible (service isochrone IGN).")
+    return entreprises_zone(db, geom)
+
+
 @app.post("/outils/etude-zone/export.pdf")
 def etude_zone_pdf(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> Response:
     """Rapport PDF de l'étude de zone (maquette écran 3). Rejoue l'agrégat puis rend la page A4.

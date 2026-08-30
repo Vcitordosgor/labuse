@@ -283,6 +283,10 @@ export interface EtudeZoneInput {
 export const etudeZone = (body: EtudeZoneInput) =>
   j<EtudeZoneResult>('/outils/etude-zone', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// F3 (OUTILS-4) — toutes les entreprises de la zone, groupées par famille (appelé à la demande).
+export const etudeZoneEntreprises = (body: EtudeZoneInput) =>
+  j<import('./types').ZoneEntreprises>('/outils/etude-zone/entreprises', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const etudeZonePdfUrl = '/outils/etude-zone/export.pdf'
 
 // M41 (Phase 2.6) — outil « Vérif procédure » : un IDU → procédure PLU en cours OUI/NON + conséquences.

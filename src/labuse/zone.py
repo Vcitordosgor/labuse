@@ -254,6 +254,14 @@ def emplois_zone(session: Session, geom_geojson: dict) -> dict:
             "libelle": "postes salariés déclarés dans la zone"}
 
 
+#: F2 (OUTILS-4) — SEUIL d'ancienneté du dernier traitement SIRENE au-delà duquel on invite à vérifier
+#: sur place. JUSTIFICATION : l'INSEE retraite un établissement à chaque changement déclaré (création,
+#: adresse, activité, CESSATION) ; un enregistrement non retouché depuis 24 mois n'a plus vu passer de
+#: déclaration récente — c'est précisément le cas où une fermeture réelle non signalée (ex. CHANTECLAIR)
+#: peut se cacher. En-deçà, le registre a été confirmé récemment. 24 mois = 2 cycles annuels déclaratifs.
+SEUIL_FRAICHEUR_MOIS = 24
+
+
 def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: dict[int, dict],
                      maxi: int = 40) -> dict:
     """Établissements SIRENE du NAF dans la zone (concurrents). Nom masqué si non diffusible. Chaque
@@ -261,21 +269,25 @@ def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: 
     rows = session.execute(text(
         f"""SELECT siret, naf, denomination, enseigne, diffusible,
                    extract(year FROM date_creation)::int AS annee_creation,
+                   to_char(date_dernier_traitement, 'YYYY-MM-DD') AS date_maj,
+                   (date_dernier_traitement < (now() - make_interval(months => :seuil)))::bool AS maj_ancienne,
                    ST_X(geom) AS lon, ST_Y(geom) AS lat
             FROM sirene_etablissements
             WHERE naf = :naf AND actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
             LIMIT :maxi"""),
-        {"zone": json.dumps(geom_geojson), "naf": naf, "maxi": maxi}).mappings().all()
+        {"zone": json.dumps(geom_geojson), "naf": naf, "maxi": maxi, "seuil": SEUIL_FRAICHEUR_MOIS}).mappings().all()
     items = []
     for r in rows:
         # A3-bis (OUTILS-2) — enseigne PUIS dénomination (masqué si non diffusible) ; `annee_creation`
         # (SIRENE dateCreationEtablissement) sert le « depuis AAAA » de la fiche. Jamais inventée : null
         # possible (établissement sans date renseignée à la source).
+        # F2 (OUTILS-4) — `date_maj` = dateDernierTraitementEtablissement : la fraîcheur DÉCLARATIVE de
+        # l'établissement au registre (« mis à jour MM/YYYY »). Le front la rend et alerte au-delà du seuil.
         nom = (r["enseigne"] or r["denomination"]) if r["diffusible"] else None
         items.append({
             "siret": r["siret"], "naf": r["naf"],
             "nom": nom or "Établissement (nom non diffusé)",
-            "annee_creation": r["annee_creation"],
+            "annee_creation": r["annee_creation"], "date_maj": r["date_maj"], "maj_ancienne": bool(r["maj_ancienne"]),
             "diffusible": r["diffusible"], "lon": r["lon"], "lat": r["lat"],
             "temps_min": _bande_min(session, r["lon"], r["lat"], bandes),
         })
@@ -283,7 +295,67 @@ def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: 
     # F1 (OUTILS-3) — libellé NAF LISIBLE (« Boulangerie et boulangerie-pâtisserie ») servi à côté du
     # code brut « 1071C » : le code reste, mais l'humain lit l'activité. Source unique : naf_labels.
     from .naf_labels import label as _naf_label
-    return {"n": len(items), "naf": naf, "naf_label": _naf_label(naf), "items": items}
+    return {"n": len(items), "naf": naf, "naf_label": _naf_label(naf),
+            "seuil_fraicheur_mois": SEUIL_FRAICHEUR_MOIS, "items": items}
+
+
+#: F3 (OUTILS-4) — au-delà de ce nombre d'établissements chargés, on plafonne l'aperçu par famille (les
+#: COMPTES restent exacts : ils viennent d'un GROUP BY sur toute l'emprise, pas de l'échantillon chargé).
+ENTREPRISES_CAP_CARTE = 1000   # établissements détaillés (listes dépliables + pastilles carte)
+ENTREPRISES_CAP_LISTE = 40     # par famille, dans le déplié
+
+
+def entreprises_zone(session: Session, geom_geojson: dict, *, cap_carte: int = ENTREPRISES_CAP_CARTE,
+                     cap_liste: int = ENTREPRISES_CAP_LISTE) -> dict:
+    """F3 — TOUTES les entreprises ACTIVES de la zone, GROUPÉES PAR FAMILLE d'activité (section NAF A-U).
+    Une zone dense dépasse le millier : on lit d'abord la STRUCTURE (comptes exacts par famille via un
+    GROUP BY sur toute l'emprise), puis on creuse (établissements détaillés plafonnés, jamais le count).
+    Mêmes règles que les concurrents : actifs seuls, nom ou « non diffusé », activité en clair, date de
+    création, date de dernier traitement (fraîcheur), lien parcelle (lon/lat pour la carte). Familles et
+    libellés viennent de la source UNIQUE `naf_nomenclature` (jamais en dur au front)."""
+    from .naf_labels import label as _naf_label
+    from .naf_nomenclature import NAF_SOUS_CLASSES, SECTIONS
+    zone = {"zone": json.dumps(geom_geojson)}
+    _sec = lambda naf: (NAF_SOUS_CLASSES.get((naf or "").upper()) or (None, None))[1] or "?"
+
+    # COMPTES EXACTS par NAF → agrégés par famille (section) sur TOUTE l'emprise. La somme = le total.
+    fam_n: dict[str, int] = {}
+    total = 0
+    for naf, n in session.execute(text(
+            f"""SELECT naf, count(*) AS n FROM sirene_etablissements
+                WHERE actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
+                GROUP BY naf"""), zone).all():
+        total += int(n)
+        fam_n[_sec(naf)] = fam_n.get(_sec(naf), 0) + int(n)
+
+    # ÉTABLISSEMENTS DÉTAILLÉS (plafonnés) — pour les listes dépliables et les pastilles carte.
+    ets = session.execute(text(
+        f"""SELECT siret, naf, denomination, enseigne, diffusible,
+                   extract(year FROM date_creation)::int AS annee_creation,
+                   to_char(date_dernier_traitement, 'YYYY-MM-DD') AS date_maj,
+                   ST_X(geom) AS lon, ST_Y(geom) AS lat
+            FROM sirene_etablissements
+            WHERE actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
+            ORDER BY date_creation DESC NULLS LAST
+            LIMIT :cap"""), {**zone, "cap": cap_carte}).mappings().all()
+    par_fam: dict[str, list] = {}
+    for r in ets:
+        nom = (r["enseigne"] or r["denomination"]) if r["diffusible"] else None
+        par_fam.setdefault(_sec(r["naf"]), []).append({
+            "siret": r["siret"], "naf": r["naf"], "naf_label": _naf_label(r["naf"]),
+            "nom": nom or "Établissement (nom non diffusé)",
+            "annee_creation": r["annee_creation"], "date_maj": r["date_maj"],
+            "diffusible": r["diffusible"], "lon": r["lon"], "lat": r["lat"]})
+
+    familles = []
+    for sec, n in sorted(fam_n.items(), key=lambda x: (-x[1], x[0])):
+        charges = par_fam.get(sec, [])
+        familles.append({"section": sec, "nom": SECTIONS.get(sec, "Activité non classée"), "n": n,
+                         "etablissements": charges[:cap_liste], "charges": min(len(charges), cap_liste)})
+    return {"total": total, "familles": familles, "n_charges": len(ets), "cap_carte": cap_carte,
+            "millesime": session.execute(text(
+                "SELECT millesime FROM sirene_etablissements WHERE millesime IS NOT NULL "
+                "ORDER BY ingested_at DESC LIMIT 1")).scalar()}
 
 
 def equipements_proches(session: Session, lon0: float, lat0: float, geom_geojson: dict, *,

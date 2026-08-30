@@ -136,11 +136,20 @@ export function ContextePanel() {
           {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* F6 (OUTILS-3) — on QUITTE l'analyse (Outils) pour l'EXPLORATION : bascule sur l'onglet
-              CARTES (Couches + Filtres), commune posée comme périmètre actif. setView('cartes') ferme
-              l'outil et la fiche ; `commune` (posée AVANT) survit à setView. */}
-          <button data-communes-parcelles onClick={() => { const s = useApp.getState(); s.setCommune(contexteCommune); s.setView('cartes') }}
-            title="Basculer sur la carte, filtrée sur cette commune"
+          {/* F1 (OUTILS-4) — « voir ses parcelles » = voir LA LISTE, pas seulement le territoire : on
+              bascule sur l'onglet CARTES, on FILTRE le listing sur la commune (`setCommunesFilter`) et on
+              OUVRE le regard LABUSE (`analyseLabuse` + verdict) → le client atterrit sur la liste des
+              parcelles de la commune, carte à côté. setView('cartes') (posé d'abord) ferme l'outil/la
+              fiche ; filtres, commune et verdict lui survivent. */}
+          <button data-communes-parcelles onClick={() => {
+            const s = useApp.getState()
+            s.setView('cartes')
+            s.setCommune(contexteCommune)
+            s.setCommunesFilter([contexteCommune])
+            s.setFilter('analyseLabuse', true)
+            s.setVerdict(true)
+          }}
+            title="Basculer sur la carte et lister les parcelles de cette commune"
             className="rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25">
             Voir ses parcelles →
           </button>
