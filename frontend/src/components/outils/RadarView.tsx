@@ -5,7 +5,7 @@
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { getRadarBienDetail, getRadarBiens, radarClic, radarSignaler,
+import { getRadarBienDetail, getRadarBiens, radarClic, radarInteresse, radarSignaler,
   type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
@@ -118,10 +118,11 @@ function Tuile({ label, onClick, children }: { label: string; onClick: () => voi
 function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () => void; mobile?: boolean }) {
   const { data: b, isError } = useQuery({ queryKey: ['radar-bien', bienId], queryFn: () => getRadarBienDetail(bienId) })
   const [signale, setSignale] = useState(false)
+  const [interesse, setInteresse] = useState(false)
   const st = useApp.getState
   const cadre = mobile
     ? 'absolute inset-0 z-40 flex flex-col overflow-hidden border-line-2 bg-surface-1'
-    : 'absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1/97 shadow-elev-3'
+    : 'absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1 shadow-elev-3'
   if (isError) return (
     <div className={`${cadre} p-4 text-[12px] text-txt-mut`}>
       Fiche indisponible — le serveur n’a pas répondu. <button onClick={onClose} className="text-mint hover:underline">fermer</button>
@@ -196,11 +197,23 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
         {/* RADAR-DEPOT-2 D4 — écart au marché : constaté entre deux sources datées (prix affiché vs
             référentiel DVF de zone), jamais une estimation de valeur. Le badge « sous le marché » n'est
             que le cas où l'écart passe le seuil ; la référence utilisée est toujours nommée. */}
-        {b.sous_le_marche?.calculable && (
+        {b.sous_le_marche && b.sous_le_marche.calculable !== null && (
           <div data-radar-sous-marche className={`rounded-xl border px-3 py-2 text-[11.5px] leading-snug ${
             b.sous_le_marche.sous_le_marche ? 'border-mint/30 bg-mint/[0.05] text-mint' : 'border-line-2 bg-surface-2 text-txt-mut'}`}>
-            <b>{b.sous_le_marche.affiche_eur_m2} €/m²</b> affiché · {b.sous_le_marche.sous_le_marche ? 'sous le marché' : b.sous_le_marche.sens} ({b.sous_le_marche.ecart_pct} %)
-            <div className="mt-0.5 text-[10.5px] text-txt-dim">réf. {b.sous_le_marche.perimetre} {b.sous_le_marche.referentiel_eur_m2} €/m²{b.sous_le_marche.millesime_dvf ? ` · ${b.sous_le_marche.millesime_dvf}` : ''} (n={b.sous_le_marche.n_referentiel})</div>
+            {b.sous_le_marche.calculable ? (
+              <>
+                {/* R2c — formulation non ambiguë : signe explicite (« +104,4 % » / « 2,04× »), jamais « (104,4 %) ». */}
+                <b>{b.sous_le_marche.affiche_eur_m2} €/m²</b> affiché · {b.sous_le_marche.sous_le_marche ? 'sous le marché' : b.sous_le_marche.sens} · <span className="font-medium">{b.sous_le_marche.ecart_libelle}</span>
+                <div className="mt-0.5 text-[10.5px] text-txt-dim">réf. {b.sous_le_marche.perimetre} {b.sous_le_marche.referentiel_eur_m2} €/m²{b.sous_le_marche.millesime_dvf ? ` · ${b.sous_le_marche.millesime_dvf}` : ''} (n={b.sous_le_marche.n_referentiel}){b.sous_le_marche.meme_type_reference === false ? ' · référence mixte (à défaut du même type)' : ''}</div>
+              </>
+            ) : (
+              /* R2b — biais terrain : valeur majoritairement foncière → le €/m² habitable est affiché,
+                 mais AUCUN verdict « sous/au-dessus » (jamais un faux positif structurel). */
+              <>
+                <b>{b.sous_le_marche.affiche_eur_m2} €/m²</b> affiché · <span className="text-txt-mut">pas de comparaison</span>
+                <div className="mt-0.5 text-[10.5px] text-txt-dim">{b.sous_le_marche.motif}</div>
+              </>
+            )}
           </div>
         )}
         {/* 3. Voir l'annonce — juste sous le prix, visible sans scroller */}
@@ -208,6 +221,21 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
           data-radar-portail className="flex items-center justify-center gap-2 rounded-xl bg-mint py-3 text-[13.5px] font-semibold text-mint-on hover:brightness-110">
           Voir l’annonce sur {b.portail} ↗
         </a>
+        {/* RADAR-VEILLE-1 (R3) — annonce DÉPOSÉE par l'agence : contenu confié (adresse abonnés-seuls,
+            texte, photos) AFFICHÉ, et le bouton « Intéressé » qui transmet les coordonnées à l'agence
+            (LABUSE ne s'interpose pas). Rien de tout ceci n'existe pour le collecté. */}
+        {b.depose_par_agence && (
+          <div data-radar-depose className="rounded-xl border border-viz-cyan/30 bg-viz-cyan/[0.05] px-3 py-2.5">
+            <div className="mb-1 font-mono text-[10px] tracking-[0.2em] text-viz-cyan">DÉPOSÉE PAR L’AGENCE{b.agence_nom ? ` · ${b.agence_nom}` : ''}</div>
+            {b.adresse_exacte && <p className="text-[11.5px] text-txt"><span className="text-txt-mut">Adresse (abonnés)</span> · {b.adresse_exacte}</p>}
+            {b.description && <p className="mt-1 text-[11px] leading-snug text-txt-mut">{b.description}</p>}
+            {b.photos.length > 0 && <p className="mt-1 text-[10.5px] text-txt-dim">{b.photos.length} photo(s) confiée(s) par l’agence</p>}
+            <button data-radar-interesse disabled={interesse} onClick={() => radarInteresse(b.bien_id).then(() => setInteresse(true)).catch(() => {})}
+              className="mt-2 w-full rounded-lg bg-mint py-2 text-[12.5px] font-semibold text-mint-on hover:brightness-110 disabled:opacity-60">
+              {interesse ? '✓ L’agence a vos coordonnées' : 'Intéressé — être mis en relation'}
+            </button>
+          </div>
+        )}
         {/* RADAR-RECETTE-1 D1c — bien À QUALIFIER : champs contradictoires. Visible mais marqué, motifs
             consultables ; hors statistiques, hors veilles, jamais rattaché (surface suspecte). */}
         {b.a_qualifier && (
@@ -290,7 +318,9 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             className="text-center text-[11.5px] text-txt-mut underline decoration-dotted hover:text-txt disabled:opacity-60">
             {signale ? 'Signalé — merci, Victor va vérifier' : 'Signaler — annonce retirée ou erreur'}
           </button>
-          <p className="text-center text-[10px] leading-relaxed text-txt-dim">Faits extraits de l’annonce publique. Aucune photo ni texte d’annonce n’est conservé ou affiché.</p>
+          <p className="text-center text-[10px] leading-relaxed text-txt-dim">{b.depose_par_agence
+            ? 'Annonce déposée par l’agence — elle en confie l’affichage (photos, texte, adresse aux abonnés).'
+            : 'Faits extraits de l’annonce publique. Aucune photo ni texte d’annonce n’est conservé ou affiché.'}</p>
         </div>
       </div>
     </div>

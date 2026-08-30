@@ -29,6 +29,21 @@ SEUIL_N = 5   # même honnêteté statistique que l'onglet Marché : sous 5, pas
 SEUIL_SOUS_MARCHE_PCT = -15.0
 PERIMETRE_BATI = "maisons + appartements"   # D5 — le bâti servi aux signaux inclut les copros embasées
 
+# RADAR-VEILLE-1 (R2a) — RÉFÉRENCE DU MÊME TYPE DE BIEN. Comparer une maison à une médiane « maisons +
+# appartements » mélange deux marchés au €/m² différent (mesuré : la référence mixte, tirée vers le bas
+# par les appartements sans terrain, sur-évalue les maisons — écart médian +34,8 % vs +5,4 % en médiane
+# maisons seule, corpus RADAR-VEILLE-1). On sert la médiane DVF du MÊME type dès qu'elle tient ce seuil ;
+# sinon repli sur la référence mixte, dont le périmètre est alors écrit tel quel.
+SEUIL_REF_TYPE = 30
+
+# RADAR-VEILLE-1 (R2b) — LE BIAIS DU TERRAIN. Le €/m² d'une maison est calculé sur l'habitable seul, mais
+# le prix inclut le terrain : une maison à grand terrain est mécaniquement « au-dessus du marché ». Mesuré
+# sur le corpus : la part foncière (surface_terrain × réf. terrain nu / prix) est MAJORITAIRE pour 16 des
+# 25 maisons connues (médiane 0,54). Au-delà de ce seuil, le prix au m² habitable n'est PAS comparable au
+# bâti — on ne rend alors AUCUN verdict « sous/au-dessus » (le €/m² reste affiché, avec la mention du
+# motif). Choix mesuré, pas arbitraire : « la valeur est majoritairement foncière » est le point de bascule.
+SEUIL_PART_FONCIERE = 0.5
+
 
 def _radar_medianes(db: Session, commune: str) -> dict:
     """Médianes des prix AFFICHÉS du Radar (demandé) pour une commune : terrain €/m² et bâti €/m².
@@ -136,37 +151,88 @@ def annonce_vs_referentiel(db: Session, bien_id: int) -> dict | None:
 
 # ════════════════════════ D4 — badge « SOUS LE MARCHÉ » (par annonce, terrain ET bâti) ════════════════════════
 
+def _dvf_bati_type(db: Session, commune: str, type_bien: str | None) -> dict:
+    """R2a — référence DVF actée du MÊME TYPE (maison → médiane maisons, appartement → médiane appts),
+    servie dès `SEUIL_REF_TYPE` ventes ; sinon repli sur la médiane bâti MIXTE (périmètre écrit tel quel).
+    Même filtre de retenue que le baromètre `prix_ancien` — un seul moteur de prix acté."""
+    from ..api.moteurs import _BAROMETRE_RETENUE
+    tl = {"maison": "Maison", "appartement": "Appartement", "immeuble": "Maison"}.get(type_bien or "")
+    if tl:
+        r = db.execute(text(
+            f"SELECT count(*) n, "
+            f"  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m, "
+            f"  to_char(max(date_mutation), 'YYYY') AS millesime "
+            f"FROM dvf_mutations WHERE commune = :c AND type_local = :t AND {_BAROMETRE_RETENUE}"),
+            {"c": commune, "t": tl}).mappings().first()
+        if r and r["m"] and int(r["n"]) >= SEUIL_REF_TYPE:
+            return {"eur_m2": float(r["m"]), "n": int(r["n"]), "millesime": r["millesime"],
+                    "perimetre": "maisons" if tl == "Maison" else "appartements", "meme_type": True}
+    r2 = db.execute(text(
+        f"SELECT count(*) n, "
+        f"  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m, "
+        f"  to_char(max(date_mutation), 'YYYY') AS millesime "
+        f"FROM dvf_mutations WHERE commune = :c AND type_local IN ('Maison','Appartement') AND {_BAROMETRE_RETENUE}"),
+        {"c": commune}).mappings().first()
+    return {"eur_m2": float(r2["m"]) if r2 and r2["m"] else None, "n": int(r2["n"]) if r2 else 0,
+            "millesime": (r2 or {}).get("millesime"), "perimetre": PERIMETRE_BATI, "meme_type": False}
+
+
 def _referentiel(db: Session, commune: str, type_bien: str | None) -> dict:
-    """Le référentiel DVF acté à opposer à une annonce : terrain nu pour un TERRAIN, bâti pour le BÂTI.
-    Porte son périmètre (D5) — un bâti = maisons + appartements."""
+    """Le référentiel DVF acté à opposer à une annonce : terrain nu pour un TERRAIN, bâti du MÊME TYPE
+    pour le BÂTI (R2a, repli mixte à défaut). Porte son périmètre — un chiffre sans périmètre n'est pas
+    un fait."""
     if type_bien == "terrain":
         r = _dvf_terrain(db, commune)
         r["perimetre"] = "terrain nu"
     else:
-        r = _dvf_bati(db, commune)
-        r["perimetre"] = PERIMETRE_BATI
+        r = _dvf_bati_type(db, commune, type_bien)
     return r
 
 
-def _badge(prix, surface, ref: dict) -> dict | None:
-    """Le badge d'UNE annonce à partir de son prix, de sa surface pertinente et du référentiel de zone.
-    None si non applicable (surface manquante → pas de €/m²). Le badge `sous_le_marche` n'est vrai que
-    sous le SEUIL ; l'écart exact est TOUJOURS porté (le seuil filtre, il ne juge pas). Écart CONSTATÉ
-    entre deux sources datées — jamais une estimation de valeur."""
+def _libelle_ecart(ecart_pct: float) -> str:
+    """R2c — formulation NON ambiguë. « au-dessus du marché acté (104,4 %) » se lit aussi « à 104,4 % du
+    marché » (à peine au-dessus) : faux. On écrit le signe explicite, et le multiple au-delà de +100 %."""
+    signe = "+" if ecart_pct > 0 else "−"
+    base = f"{signe}{abs(ecart_pct):.1f} %".replace(".", ",")
+    if ecart_pct >= 100.0:
+        return f"{base} ({1 + ecart_pct / 100:.2f}× le marché acté)".replace(".", ",")
+    return base
+
+
+def _badge(prix, type_bien, surface_hab, surface_terrain, ref: dict,
+           terrain_ref_eur_m2: float | None) -> dict | None:
+    """Le badge « sous le marché » d'UNE annonce (écart CONSTATÉ entre deux sources datées, jamais une
+    estimation). None si pas de €/m² calculable. R2b : pour une maison dont la valeur est MAJORITAIREMENT
+    foncière (`part_fonciere ≥ SEUIL`), le €/m² habitable n'est pas comparable au bâti → on rend le €/m²
+    et le motif, mais AUCUN verdict « sous/au-dessus » (jamais un faux positif structurel)."""
+    surface = surface_terrain if type_bien == "terrain" else surface_hab
     if not prix or not surface or float(surface) <= 0:
         return None                                             # pas de €/m² → pas de badge (mandat D4)
     affiche = float(prix) / float(surface)
+    base = {"calculable": None, "affiche_eur_m2": round(affiche), "perimetre": ref.get("perimetre")}
+
+    # R2b — garde-fou du biais terrain (maisons seulement : l'appartement n'a pas de terrain).
+    part_fonciere = None
+    if type_bien in ("maison", "immeuble") and surface_terrain and terrain_ref_eur_m2 and float(prix) > 0:
+        part_fonciere = round(float(surface_terrain) * float(terrain_ref_eur_m2) / float(prix), 2)
+    if part_fonciere is not None and part_fonciere >= SEUIL_PART_FONCIERE:
+        return {**base, "calculable": False, "part_fonciere": part_fonciere, "sous_le_marche": False,
+                "motif": "valeur surtout foncière — le prix au m² habitable n'est pas comparable au bâti"}
+
     ref_v, n = ref.get("eur_m2"), int(ref.get("n") or 0)
     if not ref_v or n < SEUIL_N:
-        return {"calculable": False, "affiche_eur_m2": round(affiche),
-                "perimetre": ref.get("perimetre"),
+        return {**base, "calculable": False, "part_fonciere": part_fonciere,
                 "motif": "pas de référentiel de zone calculable (échantillon < 5)"}
     ecart_pct = round(100.0 * (affiche - ref_v) / ref_v, 1)
-    return {"calculable": True, "affiche_eur_m2": round(affiche), "referentiel_eur_m2": round(ref_v),
-            "n_referentiel": n, "millesime_dvf": ref.get("millesime"), "zone": ref.get("zone"),
-            "perimetre": ref.get("perimetre"), "ecart_pct": ecart_pct,
+    return {**base, "calculable": True, "referentiel_eur_m2": round(ref_v), "n_referentiel": n,
+            "millesime_dvf": ref.get("millesime"), "zone": ref.get("zone"),
+            "meme_type_reference": bool(ref.get("meme_type")), "part_fonciere": part_fonciere,
+            "ecart_pct": ecart_pct, "ecart_libelle": _libelle_ecart(ecart_pct),
             "sous_le_marche": ecart_pct <= SEUIL_SOUS_MARCHE_PCT,
-            "sens": "au-dessus du marché acté" if ecart_pct > 0 else "sous le marché acté"}
+            # R2c — le sens n'est plus une phrase ambiguë : signe explicite + multiple.
+            "sens": ("sous le marché acté" if ecart_pct <= SEUIL_SOUS_MARCHE_PCT
+                     else "au niveau du marché" if abs(ecart_pct) < 15
+                     else "au-dessus du marché acté")}
 
 
 def badges_pour_biens(db: Session, biens: list[dict]) -> dict[int, dict | None]:
@@ -174,20 +240,29 @@ def badges_pour_biens(db: Session, biens: list[dict]) -> dict[int, dict | None]:
     `biens` : dicts portant bien_id, commune, type_bien, a_qualifier, prix, surface_hab, surface_terrain.
     Un bien À QUALIFIER (prix suspect par définition) ne porte JAMAIS de badge."""
     cache: dict[tuple, dict] = {}
+    terrain_cache: dict[str, float | None] = {}
 
     def ref(commune, type_bien):
-        cle = (commune, "terrain" if type_bien == "terrain" else "bati")
+        # clé PAR TYPE (R2a : maison et appartement ont chacun leur médiane) ; terrain à part.
+        fam = "terrain" if type_bien == "terrain" else (type_bien or "bati")
+        cle = (commune, fam)
         if cle not in cache:
             cache[cle] = _referentiel(db, commune, type_bien)
         return cache[cle]
+
+    def terrain_ref(commune):
+        if commune not in terrain_cache:
+            terrain_cache[commune] = _dvf_terrain(db, commune).get("eur_m2")
+        return terrain_cache[commune]
 
     out: dict[int, dict | None] = {}
     for b in biens:
         if b.get("a_qualifier"):
             out[b["bien_id"]] = None
             continue
-        surface = b.get("surface_terrain") if b.get("type_bien") == "terrain" else b.get("surface_hab")
-        out[b["bien_id"]] = _badge(b.get("prix"), surface, ref(b.get("commune"), b.get("type_bien")))
+        out[b["bien_id"]] = _badge(
+            b.get("prix"), b.get("type_bien"), b.get("surface_hab"), b.get("surface_terrain"),
+            ref(b.get("commune"), b.get("type_bien")), terrain_ref(b.get("commune")))
     return out
 
 

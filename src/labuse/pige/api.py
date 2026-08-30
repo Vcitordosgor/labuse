@@ -445,7 +445,8 @@ class VeilleIn(BaseModel):
     surface_terrain_min: float | None = None
     surface_hab_min: float | None = None
     particulier_only: bool = False
-    evenements: list[str] = []
+    # RADAR-VEILLE-1 (V3) — plus de filtre d'événement : une veille notifie sur TOUT événement d'un bien
+    # correspondant (nouvelle annonce, baisse, retour). Le mail (template 13) dit lequel a déclenché.
 
 
 @router.post("/radar/veille")
@@ -486,3 +487,87 @@ def radar_marche(request: Request) -> dict:
     from . import marche
     with session_scope() as db:
         return marche.stats(db)
+
+
+# ══════════════ RADAR-VEILLE-1 (R3) — DÉPÔT AGENCE « Publier une annonce » (derrière drapeau) ══════════════
+# Tout le parcours est FERMÉ par défaut (config.radar_depot_agence_actif) : question Hoguet en attente chez
+# l'avocat de Vic. Drapeau OFF → 404 partout, rien ne s'ouvre. Admin seulement pour le dépôt.
+
+def _porte_depot_agence() -> None:
+    from ..config import get_settings
+    if not get_settings().radar_depot_agence_actif:
+        from fastapi import HTTPException
+        raise HTTPException(404, "dépôt agence désactivé (question Hoguet en attente)")
+
+
+class DepotAnalyserIn(BaseModel):
+    html: str
+
+
+class DepotPublierIn(BaseModel):
+    rec: dict
+    idu: str
+    lon: float | None = None
+    lat: float | None = None
+    adresse_exacte: str
+    agence_nom: str
+
+
+class InteresseIn(BaseModel):
+    bien_id: int
+
+
+@router.get("/admin/radar/depot-agence/etat")
+def radar_depot_agence_etat(request: Request) -> dict:
+    """État du drapeau, pour que l'UI admin ne montre le parcours QUE s'il est ouvert (admin seulement)."""
+    from ..api.auth import exiger_admin
+    from ..config import get_settings
+    exiger_admin(request)
+    return {"actif": bool(get_settings().radar_depot_agence_actif)}
+
+
+@router.post("/admin/radar/depot-agence/analyser")
+def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict:
+    """ÉTAPE 1-2 — l'agence colle sa page ; le parseur RADAR-DEPOT-2 reconstruit les champs pré-remplis."""
+    from ..api.auth import exiger_admin
+    from . import depot_agence, html_next
+    exiger_admin(request)
+    _porte_depot_agence()
+    try:
+        return {"ok": True, "records": depot_agence.analyser(body.html)}
+    except html_next.NextDataError as exc:
+        return {"ok": False, "erreur": "next_data", "motif": str(exc)}
+
+
+@router.post("/admin/radar/depot-agence/publier")
+def radar_depot_agence_publier(body: DepotPublierIn, request: Request) -> dict:
+    """ÉTAPE 3-4 — publier l'annonce déposée : rattachement CERTAIN depuis l'adresse, contenu confié."""
+    from ..api.auth import exiger_admin
+    from . import depot_agence
+    exiger_admin(request)
+    _porte_depot_agence()
+    with session_scope() as db:
+        try:
+            out = depot_agence.publier(
+                db, rec=body.rec, idu=body.idu, lon=body.lon, lat=body.lat,
+                adresse_exacte=body.adresse_exacte, agence_nom=body.agence_nom)
+            db.commit()
+            return {"ok": True, **out}
+        except ValueError as exc:
+            return {"ok": False, "motif": str(exc)}
+
+
+@router.post("/radar/interesse")
+def radar_interesse(body: InteresseIn, request: Request) -> dict:
+    """L'abonné clique « Intéressé » : ses coordonnées sont transmises à l'agence (LABUSE ne s'interpose
+    pas). Gardé derrière le drapeau — rien ne s'ouvre au client tant qu'il est fermé."""
+    from ..api.tenant import current_compte
+    from . import depot_agence
+    _porte_depot_agence()
+    with session_scope() as db:
+        try:
+            out = depot_agence.enregistrer_interet(db, bien_id=body.bien_id, compte_id=current_compte(request))
+            db.commit()
+            return out
+        except ValueError as exc:
+            return {"ok": False, "motif": str(exc)}

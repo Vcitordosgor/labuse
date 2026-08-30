@@ -27,9 +27,13 @@ export function SurveillancePanel() {
         <div className="flex items-center justify-between border-b border-line-2 px-5 pb-3 pt-5">
           <div>
             <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">VEILLE</div>
-            <h3 className="mt-1.5 text-[18px] font-semibold text-txt-hi">
-              {surveillancePorte === 'externe' ? 'Les annonces' : surveillancePorte === 'interne' ? 'Le foncier' : 'Deux veilles'}
-            </h3>
+            {/* V1 — sur l'écran d'entrée, plus de titre « Deux veilles » : le contenu (les deux portes) se
+                suffit. Le titre n'apparaît qu'une fois une porte choisie. */}
+            {surveillancePorte !== 'accueil' && (
+              <h3 className="mt-1.5 text-[18px] font-semibold text-txt-hi">
+                {surveillancePorte === 'externe' ? 'Les annonces' : 'Le foncier'}
+              </h3>
+            )}
           </div>
           {surveillancePorte !== 'accueil' && (
             <button data-veille-retour onClick={() => setSurveillancePorte('accueil')} className="text-[11px] text-mint hover:underline">‹ retour</button>
@@ -48,7 +52,7 @@ export function SurveillancePanel() {
 function DeuxPortes({ onChoisir }: { onChoisir: (p: 'interne' | 'externe') => void }) {
   return (
     <div className="flex flex-col gap-2.5 p-4">
-      <p className="text-[12px] leading-snug text-txt-mut">Deux veilles, deux mondes — choisissez ce que vous voulez surveiller.</p>
+      <p className="text-[12px] leading-snug text-txt-mut">Choisissez ce que vous voulez surveiller.</p>
       <button data-veille-porte="interne" onClick={() => onChoisir('interne')}
         className="door door-hot w-full text-left transition-colors duration-quick hover:border-line-3">
         <div className="text-[13px] font-medium text-txt">Le foncier</div>
@@ -166,7 +170,6 @@ function VoletCriteres() {
 // ── Veille externe — les annonces Radar : créer + gérer ses veilles (back type 'radar' réutilisé). ──
 const V_COMMUNES = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
 const V_TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
-const V_EVENTS = [['nouvelle', 'Nouvelle annonce'], ['baisse', 'Baisse de prix'], ['retour', 'Retour en ligne']] as const
 
 function resumeVeille(v: RadarVeille): string {
   const c = v.criteria as Record<string, unknown>
@@ -183,81 +186,90 @@ function VeilleExterne() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['radar-veilles'], queryFn: getRadarVeilles })
   const veilles = q.data?.veilles ?? []
+  // V2 — même ergonomie que la veille parcelle : on ouvre sur ce que le client a DÉJÀ créé ; les filtres
+  // n'apparaissent qu'après « Créer une veille ».
+  const [creating, setCreating] = useState(false)
   const [commune, setCommune] = useState('')
   const [type, setType] = useState('')
   const [prixMin, setPrixMin] = useState('')
   const [prixMax, setPrixMax] = useState('')
   const [surfMin, setSurfMin] = useState('')
   const [particulier, setParticulier] = useState(false)
-  const [events, setEvents] = useState<string[]>(['nouvelle', 'baisse', 'retour'])
   const inval = () => qc.invalidateQueries({ queryKey: ['radar-veilles'] })
+  const reset = () => { setCommune(''); setType(''); setPrixMin(''); setPrixMax(''); setSurfMin(''); setParticulier(false) }
   const creer = useMutation({
+    // V3 — plus de filtres d'événement : une veille notifie sur TOUT événement d'un bien correspondant.
     mutationFn: () => creerRadarVeille({
       commune: commune || undefined, type_bien: type || undefined,
       prix_min: prixMin ? Number(prixMin) : undefined, prix_max: prixMax ? Number(prixMax) : undefined,
       surface_terrain_min: surfMin ? Number(surfMin) : undefined,
-      particulier_only: particulier || undefined, evenements: events,
+      particulier_only: particulier || undefined,
     }),
-    onSuccess: () => { inval(); setCommune(''); setType(''); setPrixMin(''); setPrixMax(''); setSurfMin(''); setParticulier(false) },
+    onSuccess: () => { inval(); reset(); setCreating(false) },
   })
   const suppr = useMutation({ mutationFn: (id: number) => supprimerRadarVeille(id), onSuccess: inval })
-  const toggleEvent = (e: string) => setEvents((p) => p.includes(e) ? p.filter((x) => x !== e) : [...p, e])
   const sel = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt'
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 text-[12px]">
-      <p className="text-[10.5px] leading-snug text-txt-mut">
-        Une veille sur les annonces produit une <b className="text-txt">alerte de fin de journée</b> quand un bien
-        neuf, une baisse ou un retour correspond à vos critères. Des faits et un lien — jamais le contenu de l’annonce.
-      </p>
-
-      {/* création */}
-      <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-2.5">
-        <p className="label-caps">Nouvelle veille</p>
-        <div className="grid grid-cols-2 gap-1.5">
-          <select data-veille-ext-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
-            <option value="">Toute l’île</option>
-            {V_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={type} onChange={(e) => setType(e.target.value)} className={sel}>
-            {V_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
-          <input type="number" min={0} placeholder="prix min" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} className={`min-w-0 ${sel}`} />
-          <input type="number" min={0} placeholder="prix max" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} className={`min-w-0 ${sel}`} />
-          <input type="number" min={0} placeholder="surface terrain min" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`col-span-2 min-w-0 ${sel}`} />
-        </div>
-        <label className="flex items-center gap-2 text-[11.5px] text-txt-mut">
-          <input type="checkbox" checked={particulier} onChange={(e) => setParticulier(e.target.checked)} className="h-3.5 w-3.5 accent-mint" />
-          Particuliers seulement
-        </label>
-        <div className="flex flex-wrap gap-1.5">
-          {V_EVENTS.map(([v, l]) => (
-            <button key={v} data-veille-ext-event={v} onClick={() => toggleEvent(v)}
-              className={`rounded-full border px-2 py-1 text-[11px] ${events.includes(v) ? 'border-mint/50 text-mint' : 'border-line-2 text-txt-mut'}`}>{l}</button>
-          ))}
-        </div>
-        <button data-veille-ext-creer disabled={creer.isPending || events.length === 0} onClick={() => creer.mutate()}
-          className="rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-          {creer.isPending ? 'Création…' : creer.isSuccess ? '✓ Veille créée' : 'Créer la veille'}
-        </button>
-        {events.length === 0 && <p className="text-[10px] text-st-ecartee">Cochez au moins un événement.</p>}
-      </div>
-
-      {/* liste */}
-      <div className="flex flex-col gap-1.5">
-        <p className="label-caps">Mes veilles annonces <span className="text-txt-dim">· {veilles.length}</span></p>
-        {q.isLoading && <p className="text-[11px] text-txt-dim">Chargement…</p>}
-        {!q.isLoading && veilles.length === 0 && <p className="text-[11px] leading-snug text-txt-dim">Aucune veille annonce. Créez-en une ci-dessus.</p>}
-        {veilles.map((v) => (
-          <div key={v.id} data-veille-ext-item className="flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[12px] text-txt">{resumeVeille(v)}</div>
-              <div className="mt-0.5 text-[10px] text-txt-dim">{((v.criteria as Record<string, unknown>).evenements as string[] ?? []).map((e) => V_EVENTS.find(([k]) => k === e)?.[1] ?? e).join(' · ')}</div>
-            </div>
-            <button onClick={() => suppr.mutate(v.id)} className="shrink-0 text-[11px] text-txt-mut hover:text-st-ecartee">supprimer</button>
+      {!creating ? (
+        <>
+          {/* V2 — en tête, le bouton de création ; en dessous, les critères déjà enregistrés. */}
+          <button data-veille-ext-creer-ouvrir onClick={() => setCreating(true)}
+            className="rounded-md bg-mint py-2 text-[12.5px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+            + Créer une veille
+          </button>
+          <p className="text-[10.5px] leading-snug text-txt-mut">
+            Une veille sur les annonces produit une <b className="text-txt">alerte de fin de journée</b> dès qu'un bien
+            correspond à vos critères — nouvelle mise en vente, baisse de prix ou retour en ligne. Des faits et un lien,
+            jamais le contenu de l'annonce.
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <p className="label-caps">Vos critères enregistrés <span className="text-txt-dim">· {veilles.length}</span></p>
+            {q.isLoading && <p className="text-[11px] text-txt-dim">Chargement…</p>}
+            {!q.isLoading && veilles.length === 0 && <p className="text-[11px] leading-snug text-txt-dim">Aucune veille annonce. Créez-en une avec le bouton ci-dessus.</p>}
+            {veilles.map((v) => (
+              <div key={v.id} data-veille-ext-item className="flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12px] text-txt">{resumeVeille(v)}</div>
+                  {/* V3 — plus d'événements affichés : la veille suit tout événement du bien. */}
+                  <div className="mt-0.5 text-[10px] text-txt-dim">Tous les événements</div>
+                </div>
+                <button onClick={() => suppr.mutate(v.id)} className="shrink-0 text-[11px] text-txt-mut hover:text-st-ecartee">supprimer</button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      ) : (
+        // V2 — le formulaire de création : les filtres n'apparaissent qu'ICI.
+        <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-2.5">
+          <div className="flex items-center justify-between">
+            <p className="label-caps">Nouvelle veille</p>
+            <button data-veille-ext-annuler onClick={() => setCreating(false)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <select data-veille-ext-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
+              <option value="">Toute l’île</option>
+              {V_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={type} onChange={(e) => setType(e.target.value)} className={sel}>
+              {V_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+            <input type="number" min={0} placeholder="prix min" value={prixMin} onChange={(e) => setPrixMin(e.target.value)} className={`min-w-0 ${sel}`} />
+            <input type="number" min={0} placeholder="prix max" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} className={`min-w-0 ${sel}`} />
+            <input type="number" min={0} placeholder="surface terrain min" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`col-span-2 min-w-0 ${sel}`} />
+          </div>
+          <label className="flex items-center gap-2 text-[11.5px] text-txt-mut">
+            <input type="checkbox" checked={particulier} onChange={(e) => setParticulier(e.target.checked)} className="h-3.5 w-3.5 accent-mint" />
+            Particuliers seulement
+          </label>
+          <p className="text-[10px] leading-snug text-txt-dim">Cette veille vous alertera sur <b className="text-txt-mut">tout événement</b> d'un bien correspondant — le mail dit lequel (nouvelle annonce, baisse, retour).</p>
+          <button data-veille-ext-creer disabled={creer.isPending} onClick={() => creer.mutate()}
+            className="rounded-md bg-mint py-1.5 text-[12px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+            {creer.isPending ? 'Création…' : 'Créer la veille'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

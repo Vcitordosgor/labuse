@@ -230,16 +230,20 @@ def test_d4_badge_seuil():
     de badge ; échantillon de référence < 5 → non calculable (jamais un badge sur une base fragile)."""
     from labuse.pige import signaux
     ref = {"eur_m2": 455.0, "n": 10, "perimetre": "terrain nu", "millesime": 2023}
+    # RADAR-VEILLE-1 — nouvelle signature _badge(prix, type_bien, surface_hab, surface_terrain, ref,
+    # terrain_ref). Ici un TERRAIN : la garde « biais terrain » (maisons) ne s'applique pas → seuil inchangé.
+    def _b(prix, st, terrain_ref=None):
+        return signaux._badge(prix, "terrain", None, st, ref, terrain_ref)
     # −20 % → sous le marché ; l'écart exact est présent quel que soit le verdict.
-    sous = signaux._badge(prix=364_000, surface=1000, ref=ref)   # 364 €/m² vs 455 → −20 %
+    sous = _b(364_000, 1000)   # 364 €/m² vs 455 → −20 %
     assert sous["calculable"] and sous["sous_le_marche"] is True and sous["ecart_pct"] == -20.0
     # −10 % → au-dessus du seuil (−15 %) : PAS le badge, mais l'écart reste affiché.
-    limite = signaux._badge(prix=410_000, surface=1000, ref=ref)  # 410 €/m² vs 455 → −9.9 %
+    limite = _b(410_000, 1000)  # 410 €/m² vs 455 → −9.9 %
     assert limite["calculable"] and limite["sous_le_marche"] is False and limite["ecart_pct"] < 0
     # surface manquante → pas de €/m² → pas de badge du tout.
-    assert signaux._badge(prix=364_000, surface=None, ref=ref) is None
+    assert _b(364_000, None) is None
     # référentiel sous le seuil statistique → non calculable (jamais un badge sur < 5).
-    faible = signaux._badge(prix=364_000, surface=1000, ref={"eur_m2": 455.0, "n": 3})
+    faible = signaux._badge(364_000, "terrain", None, 1000, {"eur_m2": 455.0, "n": 3}, None)
     assert faible["calculable"] is False
 
 

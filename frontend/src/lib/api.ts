@@ -1307,6 +1307,21 @@ export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ bien_id, faits }),
   })
+// RADAR-VEILLE-1 (R3) — parcours DÉPÔT AGENCE (derrière drapeau, admin seulement)
+export interface DepotRec { list_id?: number; url?: string; type?: string; prix?: number; surface_hab?: number; surface_terrain?: number; pieces?: number; commune?: string; description?: string; photos?: string[] }
+export const getRadarDepotAgenceEtat = () => j<{ actif: boolean }>('/admin/radar/depot-agence/etat')
+export const radarDepotAgenceAnalyser = (html: string) =>
+  j<{ ok: boolean; records?: DepotRec[]; motif?: string }>('/admin/radar/depot-agence/analyser', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }),
+  })
+export const radarDepotAgencePublier = (p: { rec: DepotRec; idu: string; lon?: number; lat?: number; adresse_exacte: string; agence_nom: string }) =>
+  j<{ ok: boolean; bien_id?: number; commune?: string; idu?: string; motif?: string }>('/admin/radar/depot-agence/publier', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p),
+  })
+export const radarInteresse = (bien_id: number) =>
+  j<{ ok?: boolean; agence?: string; motif?: string }>('/radar/interesse', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }),
+  })
 export const getRadarExtraction = () => j<{ file: RadarBrouillon[]; n: number }>('/admin/radar/extraction')
 // RADAR-DEPOT-2 (D3) — file d'instruction ADMIN : biens en PISTE, non tranchés à la main.
 export interface RadarAInstruire {
@@ -1340,6 +1355,10 @@ export interface RadarBienClient {
   declaratif: RadarDeclaratif | null; provenance: string | null
   // RADAR-DEPOT-2 D4 — badge « sous le marché » (null si non applicable/au-dessus du seuil).
   sous_le_marche: RadarSousMarche | null
+  // RADAR-VEILLE-1 (R3) — annonce DÉPOSÉE par une agence : contenu confié affiché (photos/texte/adresse
+  // abonnés-seuls). Le collecté a photos=[] / description=null (doctrine « faits + lien » intacte).
+  depose_par_agence: boolean; agence_nom: string | null; adresse_exacte: string | null
+  photos: string[]; description: string | null
 }
 export interface RadarDeclaratif {
   zone_plu: string[]
@@ -1348,9 +1367,12 @@ export interface RadarDeclaratif {
   drapeaux: { a_renover: boolean; a_demolir: boolean; succession: boolean; lotissement: boolean; lotissement_nom: string | null; viabilise: boolean }
 }
 export interface RadarSousMarche {
-  calculable: boolean; affiche_eur_m2: number; referentiel_eur_m2?: number; n_referentiel?: number
+  // calculable: true = verdict rendu ; false = €/m² affiché mais pas de verdict (motif porté) ; null jamais servi
+  calculable: boolean | null; affiche_eur_m2: number; referentiel_eur_m2?: number; n_referentiel?: number
   millesime_dvf?: string | null; zone?: string | null; perimetre?: string | null
   ecart_pct?: number; sous_le_marche?: boolean; sens?: string
+  // RADAR-VEILLE-1 (R2) — référence du même type, garde biais terrain, formulation non ambiguë
+  ecart_libelle?: string; meme_type_reference?: boolean; part_fonciere?: number | null; motif?: string
 }
 export interface RadarBienDetail extends RadarBienClient {
   historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]

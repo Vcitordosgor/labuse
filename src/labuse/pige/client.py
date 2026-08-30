@@ -86,9 +86,10 @@ SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        b.rattachement_niveau, b.rattachement_confiance, b.rattachement_etat, b.rattachement_pistes,
        b.rattachement_criteres, b.rattachement_humain,
        b.a_qualifier, b.a_qualifier_motifs,
+       b.depose_par_agence, b.agence_nom, b.adresse_exacte,
        b.date_publication, b.date_premiere_saisie, b.date_derniere_confirmation,
        f.prix, f.pieces, f.surface_hab, f.surface_terrain, f.dpe_classe, f.dpe_conso, f.dpe_ges,
-       f.particulier_pro, f.fraicheur_source, f.etiquettes, f.declaratif, f.provenance,
+       f.particulier_pro, f.fraicheur_source, f.etiquettes, f.declaratif, f.provenance, f.photos, f.description,
        a.portail, a.url_sortante, a.annonce_id,
        EXISTS (SELECT 1 FROM pige_prix_historique h
                WHERE h.bien_id = b.bien_id AND h.nouveau_prix < h.ancien_prix) AS baisse,
@@ -129,6 +130,14 @@ def _bien_row(r: dict) -> dict:
         "date_derniere_confirmation": r["date_derniere_confirmation"].isoformat() if r["date_derniere_confirmation"] else None,
         "portail": r["portail"], "url_sortante": r["url_sortante"], "annonce_id": r["annonce_id"],
         "baisse": bool(r["baisse"]),
+        # RADAR-VEILLE-1 (R3) — annonce DÉPOSÉE par une agence : contenu confié (photos + texte + adresse
+        # abonnés-seuls) AFFICHÉ ; le collecté a photos=[] / description=NULL (jamais peuplés) → rien à
+        # montrer, la doctrine « faits + lien » reste entière pour lui.
+        "depose_par_agence": bool(r["depose_par_agence"]),
+        "agence_nom": r["agence_nom"],
+        "adresse_exacte": r["adresse_exacte"],          # servie aux abonnés (endpoint sous auth), jamais publique
+        "photos": (r["photos"] or []) if r["depose_par_agence"] else [],
+        "description": r["description"] if r["depose_par_agence"] else None,
     }
 
 
@@ -149,7 +158,10 @@ def _attacher_badges(db: Session, rows: list[dict]) -> dict:
 
 def _bien_avec_badge(r: dict, badge: dict | None) -> dict:
     b = _bien_row(r)
-    b["sous_le_marche"] = badge if (badge and badge.get("calculable")) else None
+    # R2 — on sert le badge calculable (verdict) ET la garde « biais terrain » (mention « valeur surtout
+    # foncière », €/m² sans verdict). Les autres non-calculables (pas de référentiel) restent muets.
+    montrer = badge and (badge.get("calculable") or str(badge.get("motif") or "").startswith("valeur surtout"))
+    b["sous_le_marche"] = badge if montrer else None
     return b
 
 

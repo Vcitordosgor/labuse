@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     # (diffusibilité INPI). Tant que ce drapeau est false, l'endpoint refuse toute clé `age_*` et
     # l'UI ne montre pas le contrôle. Ne PAS activer sans arbitrage juridique.
     filtre_age_dirigeant: bool = False
+    # RADAR-VEILLE-1 (R3) — DRAPEAU « dépôt agence » (parcours « Publier une annonce »). FERMÉ par défaut :
+    # une question juridique (loi Hoguet, modèle d'abonnement sans commission) est en attente chez l'avocat
+    # de Vic. Tant que ce drapeau est false, les endpoints de dépôt refusent (404) et l'UI admin ne montre
+    # pas le parcours ; rien ne s'ouvre aux clients. Ne PAS activer sans la réponse de l'avocat.
+    # LABUSE_RADAR_DEPOT_AGENCE_ACTIF=1 pour ouvrir (admin uniquement).
+    radar_depot_agence_actif: bool = False
     # Origine publique (https://…) autorisée en CORS hors local ; vide = même origine seulement.
     public_url: str | None = None
 
