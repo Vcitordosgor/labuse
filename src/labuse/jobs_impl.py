@@ -21,7 +21,9 @@ log = logging.getLogger("labuse.jobs.impl")
 
 # taille minimale d'un dump sain : un dump anormalement petit = échec (base vide, coupure). Constante.
 BACKUP_MIN_MO = 1.0
-BACKUP_ROTATION_J = 14
+# CRON-2 — rotation en CONSTANTE : on garde les N dumps les plus récents (7 par défaut). Le pull-mac de
+# Vic archive plus loin (disque externe) ; le VPS ne conserve qu'une fenêtre courte.
+BACKUP_ROTATION_N = 7
 
 
 def _libpq_url(url: str) -> str:
@@ -52,14 +54,14 @@ def backup_postgres(ctx: JobContext) -> None:
     if taille_mo < BACKUP_MIN_MO:
         out.unlink(missing_ok=True)
         raise RuntimeError(f"dump anormalement petit ({taille_mo} Mo < {BACKUP_MIN_MO}) — suspect, rejeté")
-    # rotation 14 j
-    coupe = datetime.now(timezone.utc).timestamp() - BACKUP_ROTATION_J * 86400
+    # rotation : garder les BACKUP_ROTATION_N dumps les plus récents, supprimer les plus anciens.
+    tous = sorted(dst.glob("labuse-*.sql.gz"), key=lambda f: f.stat().st_mtime, reverse=True)
     supprimes = 0
-    for f in dst.glob("labuse-*.sql.gz"):
-        if f.stat().st_mtime < coupe:
-            f.unlink(missing_ok=True)
-            supprimes += 1
-    ctx.compte(dump=out.name, taille_mo=taille_mo, rotation_supprimes=supprimes)
+    for f in tous[BACKUP_ROTATION_N:]:
+        f.unlink(missing_ok=True)
+        supprimes += 1
+    ctx.compte(dump=out.name, taille_mo=taille_mo, gardes=min(len(tous), BACKUP_ROTATION_N),
+               rotation_supprimes=supprimes)
 
 
 def sources_fraicheur(ctx: JobContext) -> None:
@@ -73,10 +75,15 @@ def sources_fraicheur(ctx: JobContext) -> None:
     # cadences → seuil en jours (au-delà = en_retard ; au-delà de 2× = en_panne). Depuis la table, pas le code.
     seuils = {"hebdomadaire": 10, "mensuelle": 40, "trimestrielle": 100, "semestrielle": 200,
               "annuelle": 400, "continue": 10}
-    rows = db.execute(text(
-        "SELECT id, name, source_cadence, "
+    # CRON-2 — les AFFICHÉES seulement, avec le MÊME prédicat que /sources (est_affichee, ceinture Python
+    # canonique) : 59 sources annoncées = 59 statuts calculés. C'est ce qui réconcilie le compte (le 67
+    # comptait des sources non affichées ; le prédicat retire doublons/retirées/dormantes/masquées).
+    from .sources_catalog import est_affichee
+    tous = db.execute(text(
+        "SELECT id, name, technical_notes, status, source_cadence, "
         "  GREATEST(COALESCE(source_horizon_at, last_sync_at), last_sync_at) AS reference "
-        "FROM data_sources WHERE lower(coalesce(status,'')) IN ('connecte','manuel')")).mappings().all()
+        "FROM data_sources")).mappings().all()
+    rows = [r for r in tous if est_affichee(r["name"], r["technical_notes"], r["status"])]
     now = datetime.now(timezone.utc)
     compteurs = {"a_jour": 0, "en_retard": 0, "en_panne": 0, "sans_echeance": 0, "total": 0}
     for r in rows:
@@ -178,8 +185,14 @@ def rapport_admin(ctx: JobContext) -> None:
     veilles actives, dépôts traités, digests envoyés, date du dernier restore-test réussi."""
     db = ctx.db
     s = get_settings()
-    usage = shutil.disk_usage(s.backup_dir if Path(s.backup_dir).exists() else ".")
+    chemin_disque = s.backup_dir if os.access(s.backup_dir, os.R_OK) else "."
+    usage = shutil.disk_usage(chemin_disque)
     disque = f"{round(100*usage.used/usage.total,1)}% ({round(usage.free/1e9,1)} Go libres)"
+    # CRON-2 — taille du dernier dump (un dump qui rétrécit = signal ; absent = backup jamais passé).
+    dumps = sorted(Path(s.backup_dir).glob("labuse-*.sql.gz"), key=lambda f: f.stat().st_mtime,
+                   reverse=True) if Path(s.backup_dir).exists() else []
+    dernier_dump = (f"{dumps[0].name} · {round(dumps[0].stat().st_size/1e6,1)} Mo" if dumps
+                    else "aucun dump présent")
     tables = db.execute(text(
         "SELECT relname, pg_size_pretty(pg_total_relation_size(relid)) taille "
         "FROM pg_stat_user_tables ORDER BY pg_total_relation_size(relid) DESC LIMIT 5")).all()
@@ -194,7 +207,8 @@ def rapport_admin(ctx: JobContext) -> None:
     rt = lire_etat("restore-test") or {}
     corps = (
         "RAPPORT HEBDOMADAIRE D'EXPLOITATION — LABUSE\n\n"
-        f"Disque : {disque}\n\n"
+        f"Disque : {disque}\n"
+        f"Dernier dump : {dernier_dump}\n\n"
         "5 plus grosses tables :\n" + "".join(f"  {r[0]:32s} {r[1]}\n" for r in tables) + "\n"
         "Jobs (dernier passage) :\n" + "\n".join(lignes_jobs) + "\n\n"
         f"Sources en retard/panne : {retard}\n"
@@ -202,7 +216,7 @@ def rapport_admin(ctx: JobContext) -> None:
         f"Dernier restore-test : {rt.get('statut','jamais')} le {rt.get('fin','—')}\n\n"
         "— LABUSE, exploitation planifiée")
     _envoyer_alerte(corps, sujet="[LABUSE] rapport hebdomadaire d'exploitation", ctx=ctx)
-    ctx.compte(sources_en_retard=retard, veilles_actives=veilles)
+    ctx.compte(sources_en_retard=retard, veilles_actives=veilles, dernier_dump=dernier_dump)
 
 
 def _ingest_via_cli(ctx: JobContext, *args: str) -> None:
@@ -229,8 +243,10 @@ def ingest_sitadel(ctx: JobContext) -> None:
     from .copilote_v2 import veilles as veilles_mod
     r = veilles_mod.evaluer_toutes(ctx.db)
     ctx.compte(veille_fonciere=r)
-    # K5 — golden candidat (non servi). Marqueur d'état ; la comparaison/bascule est un geste séparé.
-    ctx.compte(golden_candidat="à calculer via `labuse golden candidat` (bascule manuelle, jamais auto)")
+    # CRON-2 (K5) — en fin d'ingestion réussie : run candidat + rapport mail de comparaison (dry-run
+    # aware). La bascule reste manuelle (`labuse golden promote`). Ne touche JAMAIS le run servi.
+    from . import golden_ops
+    ctx.compte(candidat=golden_ops.rapport_candidat(dry_run=ctx.dry_run))
 
 
 def ingest_dpe(ctx: JobContext) -> None:

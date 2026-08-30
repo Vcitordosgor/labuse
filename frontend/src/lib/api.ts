@@ -1454,3 +1454,15 @@ export const creerRadarVeille = (criteria: Record<string, unknown>) =>
   j<{ ok: boolean; veille_id: number }>('/radar/veille', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(criteria) })
 export const supprimerRadarVeille = (id: number) =>
   j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'DELETE' })
+
+// CRON-2 (K7) — la page CRON de l'admin (état des jobs planifiés)
+export interface CronJob {
+  nom: string; titre: string; cadence: string; cron_utc: string; heure_reunion: string
+  timeout_s: number; envoie_mail: boolean
+  prochaine_utc: string | null; prochaine_reunion: string | null
+  dernier: { statut: string | null; fin: string | null; duree_s: number | null; dry_run: boolean | null; compteurs: Record<string, unknown> | null; erreur: string | null }
+}
+export const getAdminCron = () => j<{ jobs: CronJob[]; note: string }>('/admin/cron')
+export const getAdminCronLog = (nom: string) => j<{ nom: string; lignes: string[]; note?: string }>(`/admin/cron/${encodeURIComponent(nom)}/log`)
+export const postAdminCronRun = (nom: string) =>
+  j<{ ok: boolean; nom?: string; note?: string; motif?: string }>(`/admin/cron/${encodeURIComponent(nom)}/run`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })

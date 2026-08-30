@@ -36,7 +36,9 @@ const sondable = (s: SourceInfo) => s.radar?.statut === 'a_jour' || s.radar?.sta
 // M123 — état HONNÊTE d'une source sans sonde auto fiable : suivie À LA MAIN (cadence dite), ni
 // « à jour » automatique ni « cassé ». Distinct de `sondable` (radar auto).
 const suiviManuel = (s: SourceInfo) => s.radar?.statut === 'verification_manuelle'
-const enRetard = (s: SourceInfo) => s.fraicheur_statut === 'en_retard'
+// CRON-2 — le statut vient désormais du job `sources-fraicheur` (calculé sur les 59/64 affichées, même
+// prédicat que /sources, persisté). « en_panne » = au-delà de 2× la cadence : surfacé comme un retard fort.
+const enRetard = (s: SourceInfo) => s.fraicheur_statut === 'en_retard' || s.fraicheur_statut === 'en_panne'
 // M105 P2 — le verdict AMONT EN AVANCE (M96) : le radar a vu une publication plus récente que
 // ce que nous avons intégré. Distinct de « publication ancienne » (là, c'est le producteur).
 // NUANCE mesurée : `nouvelle_publication` = « changé depuis le DERNIER PASSAGE radar », pas

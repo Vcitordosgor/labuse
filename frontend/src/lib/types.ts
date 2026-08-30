@@ -164,7 +164,9 @@ export interface SourceInfo {
   source_millesime?: string | null   // M86 : millésime amont centralisé (lu ici, plus jamais en dur au front)
   // M84 : verdict de fraîcheur live (seuil = 2× cadence). « en_retard » = décrochage à VOIR ;
   // « cadence_libre »/« sans_donnee » ne sont jamais une alerte (anti-faux-positif).
-  fraicheur_statut?: 'en_retard' | 'a_jour' | 'cadence_libre' | 'sans_donnee' | null
+  // CRON-2 — vocabulaire du job sources-fraicheur (persisté) : en_panne / sans_echeance, en plus des
+  // valeurs du calcul live historique (cadence_libre / sans_donnee).
+  fraicheur_statut?: 'en_retard' | 'en_panne' | 'a_jour' | 'sans_echeance' | 'cadence_libre' | 'sans_donnee' | null
   fraicheur_seuil_jours?: number | null
   fraicheur_delta_jours?: number | null
   ingestion_runs: number

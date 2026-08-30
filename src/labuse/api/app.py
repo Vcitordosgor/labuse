@@ -962,6 +962,18 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     # lecture seule, [] tant que `labuse radar-sources` n'a jamais tourné.
     from ..radar import etat_radar
     radar = {r["source_name"]: r for r in etat_radar(db)}
+    # CRON-2 — le statut de fraîcheur SERVI aux badges vient du JOB `sources-fraicheur` (calculé sur les 59
+    # affichées, persisté dans data_sources.fraicheur_statut) : plus estimé à la volée, un seul chiffre.
+    # Repli sur le calcul live (M84, 11 sources bornables) tant que le job n'a jamais tourné.
+    persistes: dict[str, str] = {}
+    # garde par EXISTENCE de colonne (information_schema) — ne jamais lancer une requête qui AVORTE la
+    # transaction si la colonne n'existe pas encore (job jamais posé, base de test) : le repli live suffit.
+    col_ok = db.execute(text(
+        "SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' "
+        "AND column_name='fraicheur_statut'")).first()
+    if col_ok:
+        persistes = {r[0]: r[1] for r in db.execute(text(
+            "SELECT name, fraicheur_statut FROM data_sources WHERE fraicheur_statut IS NOT NULL")).all()}
     # M74 C bis / M87 P0 / FIX-SOURCES S1 — la sélection SQL ci-dessus a déjà appliqué la définition
     # canonique ; ce filtre Python (même règle, statut compris) reste en CEINTURE — rows == served.
     served = [s for s in rows if _srccat.est_affichee(s.name, s.technical_notes,
@@ -993,7 +1005,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "radar": radar.get(s.name),
             # M84 — statut de fraîcheur (en_retard / a_jour / cadence_libre / sans_donnee) : un
             # décrochage est VISIBLE sur la page Sources, distinct du radar amont (≠ millésime).
-            "fraicheur_statut": statuts.get(s.name, {}).get("statut"),
+            "fraicheur_statut": persistes.get(s.name) or statuts.get(s.name, {}).get("statut"),
             "fraicheur_seuil_jours": statuts.get(s.name, {}).get("seuil_jours"),
             "fraicheur_delta_jours": statuts.get(s.name, {}).get("delta_jours"),
         }

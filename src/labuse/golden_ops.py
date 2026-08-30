@@ -51,7 +51,7 @@ def candidat() -> str:
     """Rapport texte : le run le plus récent (par computed_at) comparé au servi. Informatif — jamais servi."""
     with session_scope() as db:
         recent = db.execute(text(
-            "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar()
+            "SELECT run_id FROM parcel_p_score_v2 GROUP BY run_id ORDER BY max(computed_at) DESC LIMIT 1")).scalar()
     if not recent:
         return "Aucun run en base."
     if recent == Q_A_RUN_LABEL:
@@ -66,6 +66,42 @@ def candidat() -> str:
             f"Tiers candidat : {c['tiers_candidat']}\n"
             f"Tiers servi    : {c['tiers_servi']}\n\n"
             f"Bascule (geste de Vic) : labuse golden promote {c['candidat']}")
+
+
+def rapport_candidat(dry_run: bool = True) -> dict:
+    """CRON-2 (K5) — DÉCLENCHÉ EN FIN D'INGESTION SCORING (sitadel) : compare le run candidat (le plus
+    récent, non servi) au run servi et envoie un RAPPORT mail (parcelles promues, tiers, dérive %). La
+    promotion reste MANUELLE (`golden promote`). Respecte dry-run : sans SMTP, le rapport est logué, rien
+    n'est envoyé. Retourne un dict de compteurs pour l'état du job."""
+    import logging
+    from .config import get_settings
+    from .mail import send_email
+    with session_scope() as db:
+        recent = db.execute(text(
+            "SELECT run_id FROM parcel_p_score_v2 GROUP BY run_id ORDER BY max(computed_at) DESC LIMIT 1")).scalar()
+    if not recent or recent == Q_A_RUN_LABEL:
+        return {"candidat": None, "note": "aucun run candidat (le plus récent est déjà le servi)"}
+    c = comparer(recent)
+    if not c.get("ok"):
+        return {"candidat": recent, "note": c.get("motif")}
+    corps = (
+        "RUN CANDIDAT — calculé en fin d'ingestion. La bascule reste un geste de Vic (jamais automatique).\n\n"
+        f"Candidat : {c['candidat']}   ·   Servi : {c['servi']}\n"
+        f"Parcelles promues : {c['promues_candidat']} (candidat) vs {c['promues_servi']} (servi) "
+        f"→ dérive {c['derive_promues_pct']:+.1f}%\n"
+        f"Tiers candidat : {c['tiers_candidat']}\n"
+        f"Tiers servi    : {c['tiers_servi']}\n\n"
+        f"Pour servir ce run aux clients : labuse golden promote {c['candidat']}\n\n— LABUSE")
+    s = get_settings()
+    dest = s.admin_email or s.contact_email
+    r = send_email(dest, f"[LABUSE] run candidat {c['candidat']} — comparaison", corps, settings=s) if dest else None
+    logging.getLogger("labuse.golden").info("rapport candidat %s — dérive %.1f%% — mail=%s",
+                                            c["candidat"], c["derive_promues_pct"],
+                                            (r.detail if r else "pas de destinataire"))
+    return {"candidat": c["candidat"], "derive_promues_pct": c["derive_promues_pct"],
+            "promues_candidat": c["promues_candidat"], "promues_servi": c["promues_servi"],
+            "mail": (r.detail if r else "pas de destinataire"),
+            "dry_run": bool(r and not r.sent) or dry_run}
 
 
 def promote(run: str) -> dict:

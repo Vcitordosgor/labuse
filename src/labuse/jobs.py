@@ -172,15 +172,46 @@ def exec_one(nom: str) -> int:
     return 0 if ok else 1
 
 
+def _champ_match(val: int, champ: str) -> bool:
+    """Un champ cron (minute/heure/jour/mois/jour-semaine) matche-t-il une valeur ? Gère `*`, `*/N`, entier."""
+    if champ == "*":
+        return True
+    if champ.startswith("*/"):
+        return val % int(champ[2:]) == 0
+    return val == int(champ)
+
+
+def prochaine(cron_utc: str, *, horizon_jours: int = 40) -> datetime | None:
+    """CRON-2 (K7) — prochaine exécution (UTC) d'une expression cron « m h dom mon dow ». Pas de
+    dépendance : on avance minute par minute jusqu'au premier match (crons simples). None si aucun match
+    sous l'horizon. dow cron : 0 = dimanche (Python weekday : lundi=0 → conversion)."""
+    m, h, dom, mon, dow = cron_utc.split()
+    from datetime import timedelta
+    t = datetime.now(timezone.utc).replace(second=0, microsecond=0) + timedelta(minutes=1)
+    fin = t + timedelta(days=horizon_jours)
+    while t < fin:
+        cron_dow = (t.weekday() + 1) % 7   # lundi=0 (py) → dimanche=0 (cron)
+        if (_champ_match(t.minute, m) and _champ_match(t.hour, h) and _champ_match(t.day, dom)
+                and _champ_match(t.month, mon) and _champ_match(cron_dow, dow)):
+            return t
+        t += timedelta(minutes=1)
+    return None
+
+
 def liste() -> list[dict]:
-    """Pour `labuse jobs list` + la page admin : chaque job avec sa planif et son dernier état."""
+    """Pour `labuse jobs list` + la page admin : chaque job avec sa planif, sa prochaine exécution et son
+    dernier état."""
+    from .tz import REUNION_TZ
     out = []
     for j in JOBS.values():
         e = lire_etat(j.nom) or {}
+        p = prochaine(j.cron_utc)
         out.append({
             "nom": j.nom, "titre": j.titre, "cadence": j.cadence,
             "cron_utc": j.cron_utc, "heure_reunion": j.heure_reunion,
             "timeout_s": j.timeout_s, "envoie_mail": j.envoie_mail,
+            "prochaine_utc": p.isoformat() if p else None,
+            "prochaine_reunion": p.astimezone(REUNION_TZ).strftime("%d/%m %H:%M") if p else None,
             "dernier": {"statut": e.get("statut"), "fin": e.get("fin"),
                         "duree_s": e.get("duree_s"), "dry_run": e.get("dry_run"),
                         "compteurs": e.get("compteurs"), "erreur": e.get("erreur")},
