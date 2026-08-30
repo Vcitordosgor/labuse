@@ -13,7 +13,7 @@
  */
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getFiche, getRenouvListe, type RenouvItem } from '../../lib/api'
+import { getFiche, getRenouvListe } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { verdictMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
@@ -136,24 +136,8 @@ export function RenouvellementModule() {
 }
 
 // ── OVERLAY plein écran — le GRAND tableau (patron Comparaison/Communes, cycle de vie SOCLE) ──
-function csvEscape(v: unknown): string {
-  const s = v == null ? '' : String(v)
-  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-}
-function exporterCsv(items: RenouvItem[]) {
-  const head = ['Parcelle', 'Classement', 'Score', 'SDP résiduelle (m²)', 'Surface (m²)', 'Occupation', 'Zone', 'Rang commune']
-  const lignes = items.map((it) => [
-    it.idu, verdictMeta(null, it.tier_v2, it.etage0).label, it.renouv_score,
-    it.sdp_residuelle_m2 ?? '', it.surface_m2 ?? '', CODE_LABEL[it.code_bati_origine] ?? it.code_bati_origine,
-    it.zone_plu ?? '', it.rang_commune,
-  ])
-  const csv = [head, ...lignes].map((r) => r.map(csvEscape).join(';')).join('\n')
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })   // BOM = accents OK sous Excel
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = 'densifier-existant.csv'; a.click()
-  URL.revokeObjectURL(url)
-}
+// OUTILS-1 B7 — l'export CSV (csvEscape/exporterCsv + bouton) est RETIRÉ : consultation illimitée,
+// extraction de la base non.
 
 export function DensifierTablePanel() {
   const module = useApp((s) => s.module)
@@ -278,11 +262,7 @@ export function DensifierTablePanel() {
             allLabel={`Tout charger (${fmtInt(total)})`}
           >
             {q.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
-            <button data-densifier-csv onClick={() => exporterCsv(visibles)}
-              className="ml-auto rounded-md border px-2 py-1 text-[11px] font-medium transition-colors duration-quick hover:brightness-110"
-              style={{ borderColor: `${TOKENS.renouv}66`, color: TOKENS.renouv, background: `${TOKENS.renouv}12` }}>
-              ⬇ Exporter CSV ({fmtInt(visibles.length)})
-            </button>
+            {/* OUTILS-1 B7 — export CSV RETIRÉ (la consultation reste illimitée, l'extraction de la base non). */}
           </ListPaginationFooter>
         </div>
       </div>

@@ -5,7 +5,7 @@
 // (3) plus de chips qui répètent le titre — une ligne de contexte + la commune en mono suffisent.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type MouseEvent } from 'react'
-import { fusionnerProjets, getProjets, patchProjet, type Cadrage, type Projet } from '../../lib/api'
+import { fusionnerProjets, getCourrierDemandes, getProjets, patchProjet, type Cadrage, type Projet } from '../../lib/api'
 import { fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
@@ -171,10 +171,15 @@ const btnPlein = { padding: '9px 18px', background: '#4ADE80', color: '#05140B',
 export function ProjetsPanel() {
   const { openProjet, setOpenProjet } = useApp()
   const [showArchived, setShowArchived] = useState(false)
+  const [showCourriers, setShowCourriers] = useState(false)   // OUTILS-1 A4 — onglet « Mes courriers »
   const [formOuvert, setFormOuvert] = useState(false)
   const [toutMontre, setToutMontre] = useState(false)
   const qc = useQueryClient()
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets })
+  // OUTILS-1 A4/B6 — le client retrouve ici ses demandes de courrier (n°, date, communes, volume),
+  // SANS état interne d'exécution (qui reste à la Tour de contrôle admin). Vue minimale, lecture seule.
+  const courriersQ = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes })
+  const courriers = courriersQ.data?.demandes ?? []
 
   if (openProjet) return <ProjetKanban pid={openProjet.id} nom={openProjet.nom} />
 
@@ -221,7 +226,7 @@ export function ProjetsPanel() {
 
         {projetsQ.isLoading && (<><Skeleton className="mb-2 h-20 rounded-xl" /><Skeleton className="h-16 rounded-xl" /></>)}
 
-        {!projetsQ.isLoading && all.length === 0 ? (
+        {!projetsQ.isLoading && all.length === 0 && courriers.length === 0 ? (
           /* 3 · ÉTAT VIDE — il doit inviter, pas constater. */
           <div data-projets-vide style={{ marginTop: 8, padding: 32, border: '.5px dashed #1E2A23', borderRadius: 12, textAlign: 'center' }}>
             <h3 style={{ fontSize: 15, color: '#8FA69A', fontWeight: 400, margin: '0 0 6px' }}>Aucun projet pour l'instant</h3>
@@ -232,27 +237,53 @@ export function ProjetsPanel() {
           <>
             {/* 2 · ONGLETS — deux seulement. */}
             <div style={{ display: 'inline-flex', gap: 4, background: '#0C1410', borderRadius: 9, padding: 4, marginBottom: 20 }}>
-              <button data-tab-actifs onClick={() => { setShowArchived(false); setToutMontre(false) }} style={tab(!showArchived)}>Actifs {actifs.length}</button>
-              <button data-tab-archives onClick={() => { setShowArchived(true); setToutMontre(false) }} style={tab(showArchived)}>Archivés {archives.length}</button>
+              <button data-tab-actifs onClick={() => { setShowArchived(false); setShowCourriers(false); setToutMontre(false) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
+              <button data-tab-archives onClick={() => { setShowArchived(true); setShowCourriers(false); setToutMontre(false) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
+              <button data-tab-courriers onClick={() => { setShowCourriers(true); setToutMontre(false) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
             </div>
 
-            {!showArchived && groupesDoublons(actifs).map((g) => <DedupBanner key={g[0].id} groupe={g} />)}
-
-            <div data-projets-liste>
-              {visibles.length === 0 && (
-                <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>
-                  {showArchived ? 'Aucun projet archivé.' : 'Aucun projet actif.'}
+            {showCourriers ? (
+              /* OUTILS-1 A4/B6 — MES COURRIERS : n°, date, communes, volume. Aucun état interne. */
+              <div data-mes-courriers>
+                {courriers.length === 0 && (
+                  <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>Aucune demande de courrier pour l'instant.</p>
+                )}
+                {courriers.map((d) => (
+                  <div key={d.id} data-courrier-ligne={d.id}
+                    style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14,
+                      padding: '11px 4px', borderBottom: '.5px solid #16211B' }}>
+                    <span style={{ minWidth: 0, color: '#ECF5EF', fontSize: 13 }}>
+                      <b style={{ fontFamily: MONO, fontSize: 12, color: '#8FA69A' }}>n° {d.id}</b>
+                      {' — '}{d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}
+                    </span>
+                    <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 11, color: '#5F7267' }}>{String(d.ts).slice(0, 10)}</span>
+                  </div>
+                ))}
+                <p style={{ fontSize: 11.5, color: '#5F7267', marginTop: 12 }}>
+                  LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.
                 </p>
-              )}
-              {affichees.map((p) => <ProjetRow key={p.id} p={p} />)}
-            </div>
-
-            {/* 7 · VOIR LES N AUTRES — ne pas dérouler 9 lignes d'un coup. */}
-            {reste > 0 && (
-              <div data-projets-plus onClick={() => setToutMontre(true)}
-                style={{ textAlign: 'center', padding: '16px 0 4px', fontFamily: MONO, fontSize: 12, color: '#8FA69A', letterSpacing: '.06em', cursor: 'pointer' }}>
-                VOIR LES {reste} AUTRES
               </div>
+            ) : (
+              <>
+                {!showArchived && groupesDoublons(actifs).map((g) => <DedupBanner key={g[0].id} groupe={g} />)}
+
+                <div data-projets-liste>
+                  {visibles.length === 0 && (
+                    <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>
+                      {showArchived ? 'Aucun projet archivé.' : 'Aucun projet actif.'}
+                    </p>
+                  )}
+                  {affichees.map((p) => <ProjetRow key={p.id} p={p} />)}
+                </div>
+
+                {/* 7 · VOIR LES N AUTRES — ne pas dérouler 9 lignes d'un coup. */}
+                {reste > 0 && (
+                  <div data-projets-plus onClick={() => setToutMontre(true)}
+                    style={{ textAlign: 'center', padding: '16px 0 4px', fontFamily: MONO, fontSize: 12, color: '#8FA69A', letterSpacing: '.06em', cursor: 'pointer' }}>
+                    VOIR LES {reste} AUTRES
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

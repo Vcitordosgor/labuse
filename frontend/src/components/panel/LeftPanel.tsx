@@ -417,7 +417,7 @@ function Porte({ ton, icone, titre, sous, onClick }: {
       className={`flex w-full items-center gap-3 rounded-r-[9px] border-l-2 ${bord} bg-[#101612] px-3.5 py-3 text-left transition-colors duration-quick hover:brightness-110`}>
       <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] text-[15px] ${icoBg}`}>{icone}</span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[13px] font-medium text-txt">{titre}</span>
+        <span className="block truncate text-[13px] font-medium text-txt">{titre}</span>
         <span className="block text-[10.5px] leading-snug text-txt-dim">{sous}</span>
       </span>
       <span className={`text-[14px] ${fleche}`}>→</span>
@@ -450,6 +450,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       <div className="mb-5 flex flex-col gap-1.5">
         <Porte ton="verte" icone="⌕" titre="Explorer la carte" sous="activez une couche, cliquez une parcelle"
           onClick={onCommencer} />
+        {/* OUTILS-1 B1 — le Radar entre dans « Par où commencer ». Vue de premier niveau (setView('radar')),
+            consomme l'accueil comme les autres portes. Titre sur une ligne (truncate sur le titre de Porte). */}
+        <Porte ton="verte" icone="◉" titre="Suivre le marché — Radar" sous="les biens en vente, croisés au foncier"
+          onClick={() => { setAccueilVu(); setView('radar') }} />
         <Porte ton="ia" icone="✦" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
           onClick={() => { setAccueilVu(); setView('copilote') }} />{/* FIX-ACCUEIL A2 : consomme l'accueil comme les 2 autres portes (plus de ré-affichage au retour) */}
         <Porte ton="neutre" icone="⚙" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils — trouver, instruire, agir, comprendre, suivre`}
@@ -458,13 +462,13 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
 
       {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}
 
-      {/* B5 — la ligne de fraîcheur */}
+      {/* B5 — la ligne de fraîcheur. OUTILS-1 B1 : phrase courte + lien vers la page Sources (le détail
+          daté par source vit là-bas, jamais promis faussement ici). */}
       <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">
         <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-mint" />
-        {/* FIX-ACCUEIL A1 : les 3 chiffres n'affichent pas de date (« i » par chiffre retiré en M87) —
-            on n'en re-promet donc plus une ICI. La phrase reste honnête à l'échelle de l'app : chaque
-            donnée est datée à sa source (fiche : statut Sourcé/Estimé + date ; page Sources : millésime). */}
-        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Données à jour — cadastre, PLU, permis, ventes, risques. Chaque donnée est datée à sa source.</span>
+        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Toutes les données sont à jour.</span>
+        <button data-accueil-sources onClick={() => { setAccueilVu(); setView('sources') }}
+          className="ml-auto shrink-0 whitespace-nowrap text-[10.5px] text-mint hover:underline">voir les données →</button>
       </div>
     </div>
   )

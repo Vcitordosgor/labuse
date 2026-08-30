@@ -217,7 +217,9 @@ export function TaxeAmenagement() {
               <div key={i} data-taxe-ligne className="grid grid-cols-[1fr_auto] gap-x-3 border-b border-line py-1.5 text-[11px]">
                 <span className="min-w-0">
                   <span className="text-txt">{l.poste}</span>
-                  {l.detail && <span className="mt-0.5 block text-[10px] leading-snug text-txt-dim">{l.detail}</span>}
+                  {/* OUTILS-1 A1/B8 — le produit exact sous chaque poste, en petit mono : l'écran
+                      s'auto-vérifie (assiette = somme des postes affichés), par le client comme par un notaire. */}
+                  {l.detail && <span className="mt-0.5 block font-mono text-[10px] leading-snug text-txt-dim">{l.detail}</span>}
                 </span>
                 <span className="text-right font-mono tabular-nums text-txt-mut">{fmtEur(l.assiette_eur)}</span>
               </div>

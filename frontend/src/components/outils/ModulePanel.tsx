@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
-  modDueDiligence, modFantome, modPatrimoine, modPatrimoineCsvUrl, modPatrimoineSearch, modPermis, modPermisFiche,
+  modDueDiligence, modFantome, modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
@@ -179,15 +179,14 @@ export function M02() {
               <span>SDP résiduelle <V>{fmt(d['sdp_residuelle_m2'] as number)}</V> m²</span>
             </div>
             {/* GB-018 — la liste est paginée côté serveur : on dit HONNÊTEMENT combien sont affichées sur
-                le total, et on offre l'export CSV complet (raison sociale entière). */}
-            <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
+                le total. OUTILS-1 B7 : l'export CSV est RETIRÉ (la consultation reste illimitée,
+                l'extraction de la base non). */}
+            <div className="mt-1.5 flex items-center gap-2 text-[11px]">
               <span className="text-txt-dim">
                 {d['tronquee'] === true
                   ? <>{fmt(items.length)} affichées sur <V>{d['n_parcelles'] as number}</V></>
                   : <>{fmt(items.length)} affichée{items.length > 1 ? 's' : ''}</>}
               </span>
-              <a href={modPatrimoineCsvUrl(String(d['siren']))} download
-                className="text-txt-mut hover:text-mint" title="Exporter tout le portefeuille en CSV">⬇ CSV</a>
             </div>
             {/* #3 valorisation indicative du foncier nu (zones U/AU) au référentiel unique prix de zone */}
             {d['valorisation_nu_eur'] != null && (
@@ -768,10 +767,9 @@ const TEMPLATES: { key: string; label: string; corps: string }[] = [
   { key: 'libre', label: 'Libre', corps: '' },
 ]
 type Dest = { idu: string; commune: string; surface: number | null }
-// statuts visibles côté client — l'ordre EST la timeline. DASHBOARD-V1 · D8 : le flux servi
-// devient Demandé → Imprimé → Posté (les transitions se font à la Tour de contrôle, journalisées).
-// Les statuts hérités (tarif_confirme/envoye) restent LISIBLES via le fallback `?? d.statut`.
-const COURRIER_STATUTS: [string, string][] = [['demande', 'Demandé'], ['imprime', 'Imprimé'], ['poste', 'Posté']]
+// OUTILS-1 A4/B6 — les états internes (Demandé → Imprimé → Posté) ne sont PLUS exposés côté client
+// (décision Vic : le suivi d'exécution reste chez LABUSE). La timeline client a été retirée ; l'admin
+// (Tour de contrôle) garde le cycle complet.
 
 /** COURRIER-SERVICE (refonte 13 outils) — l'outil devient un SERVICE : le client prépare
  *  (① destinataires ② rédaction), puis ③ DEMANDE l'envoi à LABUSE. Trois étapes, variables par
@@ -847,7 +845,6 @@ export function M09() {
   }
 
   const STEPS: [1 | 2 | 3, string][] = [[1, 'Destinataires'], [2, 'Rédaction'], [3, 'Envoi']]
-  const statutRang = (s: string) => COURRIER_STATUTS.findIndex(([k]) => k === s)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -926,23 +923,16 @@ export function M09() {
               className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
               {envoyer.isPending ? 'Envoi de la demande…' : "Demander l'envoi à LABUSE"}</button>
           ) : (
+            // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base, identique côté admin)
+            // et renvoie vers le suivi. AUCUN état interne (imprimé/posté) côté client : décision Vic —
+            // moins de surface, moins de bugs. Le suivi vit dans « Projets → Mes courriers ».
             <div data-courrier-confirm className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
+              <b className="text-mint">✓ Demande n° {demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
               impression, mise sous pli, affranchissement et suivi compris.
+              <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
             </div>
           )}
           {envoyer.isError && <p className="text-[10.5px] text-st-ecartee">La demande n'a pas pu être transmise — réessayez.</p>}
-
-          {/* timeline de statut */}
-          {demande && (
-            <div className="flex items-center gap-1 text-[10px]">
-              {COURRIER_STATUTS.map(([k, l], i) => (
-                <div key={k} className={`flex items-center gap-1 ${statutRang(demande.statut) >= i ? 'text-mint' : 'text-txt-dim'}`}>
-                  <span>{statutRang(demande.statut) >= i ? '●' : '○'}</span>{l}{i < 2 && <span className="text-txt-dim">›</span>}
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* aperçu PDF de RELECTURE (secondaire) — corps rempli pour le 1er destinataire */}
           <button data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0}
@@ -950,14 +940,15 @@ export function M09() {
             {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</button>
           {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
 
-          {/* demandes récentes (leur statut suit ce que Vic passe) */}
+          {/* OUTILS-1 A4 — récap des demandes du client : N° + volume + communes, SANS état interne
+              (le suivi d'exécution reste chez LABUSE). La vue complète est « Projets → Mes courriers ». */}
           {(demandes.data?.demandes.length ?? 0) > 0 && (
             <div className="mt-1 flex flex-col gap-1">
               <p className="label-caps text-[9px]">Vos demandes</p>
               {demandes.data!.demandes.slice(0, 5).map((d) => (
                 <div key={d.id} className="flex items-baseline justify-between gap-2 text-[10.5px]">
-                  <span className="min-w-0 truncate text-txt-mut">{d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
-                  <span className="shrink-0 text-mint">{COURRIER_STATUTS.find(([k]) => k === d.statut)?.[1] ?? d.statut}</span>
+                  <span className="min-w-0 truncate text-txt-mut">n° {d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
+                  <span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{String(d.ts).slice(0, 10)}</span>
                 </div>
               ))}
             </div>

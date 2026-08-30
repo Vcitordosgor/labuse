@@ -1755,8 +1755,18 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
             out.append({"insee": insee, "commune": c["commune"], "statut": "non_ingere",
                         "idurba": c.get("idurba"), "extraits": 0,
                         "message": "Règlement non ingéré pour cette commune."})
+    # OUTILS-1 A5 — le décompte par statut est CALCULÉ ici (source unique = statut réel de l'annuaire),
+    # jamais dérivé par soustraction ni figé au front : le RNU (ABSENCE de PLU) n'est pas une procédure et
+    # ne doit jamais être compté « en révision ». Si une commune passe en révision demain, le bandeau suit
+    # seul. `n_revision` = procédure de révision non réconciliée ; `n_rnu` = RNU ; `n_non_ingere` = corpus
+    # manquant. Somme des quatre = n_communes (invariant vérifié par test).
     servables = sum(1 for c in out if c["statut"] == "servable")
-    return {"n_communes": len(out), "servables": servables, "communes": out}
+    n_revision = sum(1 for c in out if c["statut"] == "revision")
+    n_rnu = sum(1 for c in out if c["statut"] == "rnu")
+    n_non_ingere = sum(1 for c in out if c["statut"] == "non_ingere")
+    return {"n_communes": len(out), "servables": servables,
+            "n_revision": n_revision, "n_rnu": n_rnu, "n_non_ingere": n_non_ingere,
+            "communes": out}
 
 
 @router.get("/plu-annuaire/search")
