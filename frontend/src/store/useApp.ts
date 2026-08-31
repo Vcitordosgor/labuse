@@ -44,6 +44,7 @@ export interface LayerToggles {
   tva_primo: boolean   // bande TVA réduite primo-accédant (QPV + 500 m, dérivé LABUSE)
   zfang: boolean       // zone franche d'activité (aplat commune, régime renforcé/standard)
   frr: boolean         // france ruralités revitalisation (aplat commune)
+  vefa_neuf: boolean   // SECTEUR-2 (T4) : prix du logement neuf (VEFA acté DVF), aplat commune choropleth
 }
 
 // Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs, et
@@ -246,6 +247,11 @@ interface AppState {
   setOpenProjet: (p: { id: number; nom: string } | null) => void
   view: View
   setView: (v: View) => void
+  // SECTEUR-2 (T3) — section admin à ouvrir au montage (deep-link depuis le bouton « Publier une
+  // annonce » de l'en-tête Radar). null = comportement normal (AdminView démarre sur Pilotage).
+  adminSection: string | null
+  goAdminSection: (s: string) => void
+  clearAdminSection: () => void
   // RADAR-CATÉGORIE (T1) — ouvrir la catégorie Radar (plein écran) : même nettoyage exclusif que
   // les autres vues de premier niveau. Ferme la Veille et les overlays (bug « deux catégories
   // ouvertes » de RETOURS-1 R8 : une seule catégorie du rail à la fois).
@@ -531,6 +537,12 @@ export const useApp = create<AppState>((set) => ({
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
     entretienDirect: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
+  // SECTEUR-2 (T3) — ouvre la Tour de contrôle DIRECTEMENT sur une section (Radar pour le dépôt).
+  adminSection: null,
+  goAdminSection: (s) => set({ view: 'admin', adminSection: s, outilsOpen: false, selectedIdu: null,
+    module: null, contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
+    entretienDirect: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
+  clearAdminSection: () => set({ adminSection: null }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).
@@ -580,7 +592,7 @@ export const useApp = create<AppState>((set) => ({
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false, vefa_neuf: false },
   // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
   // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
   // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».

@@ -187,6 +187,18 @@ def dispositifs_build_cmd() -> None:
         build_all(s, log=typer.echo)
 
 
+@app.command("vefa-neuf-build")
+def vefa_neuf_build_cmd() -> None:
+    """SECTEUR-2 (T4) — (re)matérialise la couche « Prix du logement neuf (VEFA) » dans spatial_layers :
+    médiane €/m² bâti des ventes VEFA actées (geo-DVF), aplat COMMUNE, seuil 10 ventes (sinon absente).
+    ECLN écartée (métropole seule, N/A DOM) → aucun stock. Idempotent."""
+    from .ingestion.vefa_neuf import build_vefa_neuf
+
+    with session_scope() as s:
+        r = build_vefa_neuf(s, log=typer.echo)
+        typer.echo(f"vefa_neuf : {r['communes']} communes peintes, {r['absentes']} sous le seuil.")
+
+
 @app.command("ingest-cosia")
 def ingest_cosia_cmd(extract_dir: str = typer.Option(None, help="Dossier des tuiles .gpkg CoSIA "
                      "(défaut : data/cosia/extract/COSIA_*)")) -> None:

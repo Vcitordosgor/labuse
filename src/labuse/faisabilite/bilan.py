@@ -99,27 +99,56 @@ def _marche_dynamique(kept: list[dict], q1: float, med: float, q3: float, min_n:
     return out
 
 
-def _trim_aberrants(sales: list[dict]) -> tuple[list[dict], int]:
-    """Exclut les €/m² aberrants : Tukey (Q1−1,5·IQR ; Q3+1,5·IQR) borné au bon sens
-    réunionnais [1000 ; 12000] €/m² — sous 1 000 €/m² bâti, c'est quasi toujours un
-    artefact DVF (lot annexe, vente familiale), qui entamait la confiance d'un
-    promoteur dans un échantillon dit « fiable » (audit J6). Retourne (gardées, exclues).
+# ─── SECTEUR-2 (T1) — méthode DVF secteur « état de l'art », PARTAGÉE (fiche, Mon secteur, Radar) ───
+# UN SEUL moteur : `sector_price` (bâti, ici) et `_ref_local` (référence Radar, pige/signaux) tirent
+# la MÊME robustification. Trois principes : (1) exclusion des 5 % extrêmes ; (2) segments homogènes
+# type × période (années récentes préférées) ; (3) rayon adaptatif jusqu'à n minimum (constante), le
+# rayon effectif AFFICHÉ. La distribution avant/après est rendue (transparence de la méthode).
+MIN_N_SECTEUR = 8                 # n minimum que le rayon adaptatif cherche à atteindre (= dvf_min_ventes)
+RAYONS_SECTEUR_M = (500.0, 1000.0, 1500.0)
+PERIODE_SECTEUR_ANS = 5           # segment de période homogène (années récentes) ; élargi si n insuffisant
+TRIM_EXTREMES_FRAC = 0.05         # 5 % extrêmes exclus (2,5 % de chaque queue)
 
-    P2-48 — ÉCART ASSUMÉ avec le Baromètre (`api/moteurs._BAROMETRE_RETENUE`) : là, le €/m²
-    est borné [100 ; 12000] (garde-fou anti-ratio-aberrant seulement) + un filtre ABSOLU
-    `valeur_fonciere > 1000 €` pour les prix symboliques. Deux intentions différentes sur la
-    MÊME donnée : ici on construit un ÉCHANTILLON DE COMPARABLES robuste pour un bilan financier
-    (plancher €/m² serré à 1000) ; le Baromètre OBSERVE tout le marché (plancher €/m² lâche à 100,
-    nettoyage des symboliques par le prix absolu). Ne pas aligner l'un sur l'autre sans arbitrage
-    produit — les deux planchers sont voulus."""
-    prices = [s["prix"] for s in sales]
-    if len(prices) < 4:
-        return sales, 0
-    q1, _m, q3 = _quartiles(prices)
-    iqr = q3 - q1
-    lo = max(q1 - 1.5 * iqr, 1000.0)
-    hi = min(q3 + 1.5 * iqr, 12000.0)
-    kept = [s for s in sales if lo <= s["prix"] <= hi]
+
+def trim_extremes_5pct(prices: list[float]) -> tuple[list[float], float | None, float | None]:
+    """Exclut les 5 % de valeurs les plus extrêmes (2,5 % à chaque queue) — robustification d'une
+    médiane sectorielle. Sous ~20 ventes, floor(n·2,5 %) = 0 → rien n'est retiré (on ne trime pas
+    un petit échantillon). Retourne (gardées, borne_basse, borne_haute) ; bornes None si n trop
+    petit pour trimer."""
+    xs = sorted(prices)
+    n = len(xs)
+    k = int(n * (TRIM_EXTREMES_FRAC / 2))
+    if k == 0:
+        return xs, None, None
+    lo, hi = xs[k], xs[n - 1 - k]
+    return [x for x in xs if lo <= x <= hi], lo, hi
+
+
+def distribution_secteur(prices: list[float]) -> dict:
+    """Distribution compacte (n + 5 repères) pour rendre l'AVANT / APRÈS d'un échantillon secteur."""
+    if not prices:
+        return {"n": 0, "min": None, "p25": None, "median": None, "p75": None, "max": None}
+    q1, med, q3 = _quartiles(prices)
+    return {"n": len(prices), "min": round(min(prices)), "p25": round(q1),
+            "median": round(med), "p75": round(q3), "max": round(max(prices))}
+
+
+def _trim_aberrants(sales: list[dict]) -> tuple[list[dict], int]:
+    """Garde-fou de domaine [1000 ; 12000] €/m² (bon sens réunionnais — sous 1 000 €/m² bâti, c'est
+    quasi toujours un artefact DVF : lot annexe, vente familiale) PUIS exclusion des 5 % extrêmes
+    (SECTEUR-2 T1, `trim_extremes_5pct` — remplace l'ancien Tukey IQR pour aligner la méthode sur
+    l'état de l'art, partagée avec la référence Radar). Retourne (gardées, exclues).
+
+    P2-48 — ÉCART ASSUMÉ avec le Baromètre (`api/moteurs._BAROMETRE_RETENUE`) : là, le €/m² est borné
+    [100 ; 12000] (garde-fou anti-ratio-aberrant seulement). Ici on construit un ÉCHANTILLON DE
+    COMPARABLES robuste (plancher €/m² serré à 1000). Les deux planchers sont voulus."""
+    dom = [s for s in sales if 1000.0 <= s["prix"] <= 12000.0]
+    if len(dom) < 4:
+        return dom, len(sales) - len(dom)
+    _kept, lo, hi = trim_extremes_5pct([s["prix"] for s in dom])
+    if lo is None:
+        return dom, len(sales) - len(dom)
+    kept = [s for s in dom if lo <= s["prix"] <= hi]
     return kept, len(sales) - len(kept)
 
 
@@ -204,29 +233,41 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
         seen[key] = d
         sales.append(d)
     n_dup = len(rows) - len(sales)
-    min_n = hyp.dvf_min_ventes
+    min_n = MIN_N_SECTEUR   # n minimum visé (constante SECTEUR-2 T1 ; = hyp.dvf_min_ventes = 8)
 
-    # Priorité : appartement (rayon croissant) → mixte (rayon croissant) → commune.
-    plans = ([("appartement", {"appartement"}, r, False) for r in (500.0, 1000.0, 1500.0)]
-             + [("mixte (appart+maison)", {"appartement", "maison"}, r, False) for r in (500.0, 1000.0, 1500.0)]
-             + [("appartement", {"appartement"}, 1500.0, True),
-                ("mixte (appart+maison)", {"appartement", "maison"}, 1500.0, True)])
+    # SECTEUR-2 (T1) — segments HOMOGÈNES période × type, rayon adaptatif jusqu'à n min.
+    # Période RÉCENTE (5 ans) préférée ; élargie seulement si l'échantillon récent ne tient pas.
+    # Type : appartement (comparable d'un collectif neuf) → mixte appart+maison → commune entière.
+    an_recent = ANNEE_REF - PERIODE_SECTEUR_ANS + 1
+    base_plans = ([("appartement", {"appartement"}, r, False) for r in RAYONS_SECTEUR_M]
+                  + [("mixte (appart+maison)", {"appartement", "maison"}, r, False) for r in RAYONS_SECTEUR_M]
+                  + [("appartement", {"appartement"}, 1500.0, True),
+                     ("mixte (appart+maison)", {"appartement", "maison"}, 1500.0, True)])
     chosen = None
-    for label, cats, r, commune in plans:
-        sub = [s for s in sales if s["cat"] in cats and (commune or s["dist"] <= r)]
-        kept, nex = _trim_aberrants(sub)
-        if len(kept) >= min_n:
-            chosen = (label, kept, nex, r, commune)
+    for periode_label, an_min in (("récente", an_recent), ("élargie", 0)):
+        for label, cats, r, commune in base_plans:
+            sub = [s for s in sales if s["cat"] in cats and s["annee"] >= an_min and (commune or s["dist"] <= r)]
+            kept, nex = _trim_aberrants(sub)
+            if len(kept) >= min_n:
+                chosen = (label, kept, nex, r, commune, len(sub), periode_label)
+                break
+        if chosen:
             break
     if chosen is None:
-        kept, nex = _trim_aberrants(sales)
-        chosen = ("mixte (appart+maison)", kept, nex, 1500.0, True)
+        sub = sales
+        kept, nex = _trim_aberrants(sub)
+        chosen = ("mixte (appart+maison)", kept, nex, 1500.0, True, len(sub), "élargie")
 
-    label, kept, nex, radius, commune = chosen
+    label, kept, nex, radius, commune, n_avant, periode_seg = chosen
     niveau, raisons = _fiabilite(kept, label, commune, min_n)
+    # Distribution AVANT / APRÈS l'exclusion des 5 % extrêmes (transparence de la méthode T1).
+    distribution = {"avant": distribution_secteur([s["prix"] for s in sub]),
+                    "apres": distribution_secteur([s["prix"] for s in kept]),
+                    "n_exclus_extremes": nex, "n_min_vise": min_n,
+                    "periode_segment": periode_seg}
     base = {"type_prix": label, "n": len(kept), "n_exclus": nex, "n_doublons": n_dup,
             "radius_m": radius, "commune_fallback": commune,
-            "fiabilite": niveau, "fiabilite_raisons": raisons}
+            "fiabilite": niveau, "fiabilite_raisons": raisons, "distribution": distribution}
     if not kept:
         return {**base, "fiable": False, "fiabilite": "insuffisant"}
     prices = [s["prix"] for s in kept]

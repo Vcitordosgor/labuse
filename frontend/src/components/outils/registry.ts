@@ -108,7 +108,7 @@ export const MODULES: ModuleDef[] = [
   // SECTEUR-1 (S3) — « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM + leurs
   // acquisitions foncières (Scan patrimoine, même SIREN). Comptes SQL, millésime Sitadel affiché.
   { key: 'veille-promoteurs', num: 'S3', group: 'marche',
-    label: 'Veille promoteurs', desc: 'Les permis déposés par promoteurs, bailleurs sociaux et SEM — dénomination, SIREN, logements, commune, état, parcelle — filtrables ; et pour chacun ses acquisitions foncières récentes' },
+    label: 'Veille promoteurs', desc: 'Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis contigus, même propriétaire moral, même période) — un point sur la carte, logements, dates, état, filtrables ; et pour chacun sa frise par année + son Scan patrimoine' },
   // L'outil « Baromètre foncier » a QUITTÉ le menu : l'évolution du marché (île, 8 trimestres) + le
   // Rapport PDF vivent désormais dans l'onglet « Évolution » de Communes. Clé ALIASÉE (hidden) →
   // Communes, aucun lien mort (deep-link/copilote historique). Composant M18 réutilisé par l'onglet.

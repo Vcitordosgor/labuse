@@ -5,7 +5,7 @@
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { getRadarBienDetail, getRadarBiens, radarClic, radarInteresse, radarSignaler,
+import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotAgenceEtat, radarClic, radarInteresse, radarSignaler,
   type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
@@ -346,6 +346,17 @@ export function RadarView() {
   const setFlyTo = useApp((s) => s.setFlyTo)
   const radarToOpen = useApp((s) => s.radarToOpen)
   const setRadarToOpen = useApp((s) => s.setRadarToOpen)
+  const goAdminSection = useApp((s) => s.goAdminSection)
+
+  // SECTEUR-2 (T3) — le bouton « Publier une annonce » de l'en-tête : ADMIN SEUL. Détection via /moi
+  // (rôle admin) ; l'état du drapeau (/admin/radar/depot-agence/etat) donne la mention « drapeau fermé ».
+  // Le client ne voit RIEN (les requêtes admin échouent silencieusement → estAdmin=false).
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
+  // même convention qu'AdminView : un CLIENT connecté (mode 'compte', rôle ≠ admin) ne voit rien ;
+  // l'admin (ou l'absence de rideau en local) voit le bouton. La garde réelle reste au backend.
+  const estAdmin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
+  const depotEtat = useQuery({ queryKey: ['radar-depot-agence-etat'], queryFn: getRadarDepotAgenceEtat, enabled: estAdmin })
+  const drapeauFerme = estAdmin && depotEtat.data?.admin === true && depotEtat.data.actif === false
 
   const { data, isLoading } = useQuery({ queryKey: ['radar-biens', f, tri], queryFn: () => getRadarBiens(f, tri) })
   const biens = useMemo(() => data?.biens ?? [], [data])
@@ -390,9 +401,26 @@ export function RadarView() {
       <aside data-radar-panel className={`flex-col border-r border-line bg-surface-1 md:flex md:w-[434px] md:shrink-0 ${isMobile && mobileVue === 'carte' ? 'hidden' : 'flex w-full'}`}>
         {/* en-tête (wording maquette) */}
         <div className="shrink-0 border-b border-line-2 px-5 pb-4 pt-5">
-          <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR</div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR</div>
+            {/* SECTEUR-2 (T3) — « Publier une annonce » : un VRAI bouton dans l'en-tête, ADMIN SEUL
+                (invisible du client). La mention « drapeau fermé » dit que le dépôt n'est pas encore
+                exposé aux clients. Ouvre la Tour de contrôle sur la section Radar (flux de dépôt). */}
+            {estAdmin && (
+              <button data-radar-publier onClick={() => goAdminSection('radar')}
+                className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint transition-colors hover:bg-mint/20"
+                title="Déposer une page d'annonces (réservé à l'administrateur)">
+                + Publier une annonce
+              </button>
+            )}
+          </div>
           <h3 className="mt-1.5 text-[20px] font-semibold text-txt-hi">Les biens en vente</h3>
           <p className="mt-1.5 text-[12.5px] leading-snug text-txt-mut">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l’annonce.</p>
+          {drapeauFerme && (
+            <span data-radar-publier-drapeau className="mt-2 inline-block rounded bg-amber/12 px-1.5 py-0.5 text-[10px] font-medium text-amber">
+              drapeau fermé — le dépôt reste invisible des clients
+            </span>
+          )}
         </div>
 
         {/* filtres (maquette) : commune · type · prix min/max · surface min · 2 segments */}

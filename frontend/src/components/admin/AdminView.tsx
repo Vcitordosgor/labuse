@@ -4,7 +4,7 @@
 // endpoint /admin/* porte la garde exiger_admin (403 client). Horodatages À L'HEURE RÉUNION
 // (Indian/Reunion), jamais l'heure serveur brute (dette fuseau connue, mandat D3).
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
@@ -273,7 +273,14 @@ function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: s
 
 export function AdminView() {
   const setView = useApp((s) => s.setView)
-  const [section, setSection] = useState<AdminSection>('pilotage')
+  const adminSection = useApp((s) => s.adminSection)
+  const clearAdminSection = useApp((s) => s.clearAdminSection)
+  const [section, setSection] = useState<AdminSection>((adminSection as AdminSection) || 'pilotage')
+  // SECTEUR-2 (T3) — deep-link depuis « Publier une annonce » (en-tête Radar) : ouvre la section
+  // demandée puis consomme l'intention (le retour manuel sur une autre section n'est pas réécrasé).
+  useEffect(() => {
+    if (adminSection) { setSection(adminSection as AdminSection); clearAdminSection() }
+  }, [adminSection, clearAdminSection])
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
   const admin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
   const pilotage = useQuery({ queryKey: ['admin-pilotage'], queryFn: getAdminPilotage, refetchInterval: 60_000, enabled: admin })

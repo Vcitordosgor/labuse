@@ -66,9 +66,11 @@ def test_r2_trois_decisions_presentes():
 
 def test_r2_couleurs_colonnes_kanban():
     # une décision = la couleur de sa colonne d'arrivée (M2) — revue UI/UX S13/S14 :
-    # les hex locaux sont devenus les tokens de palette (mêmes couleurs, source unique)
+    # les hex locaux sont devenus les tokens de palette (mêmes couleurs, source unique).
+    # SECTEUR-2 (mise à jour) : la colonne « à analyser » (st-creuser) a été retirée du KANBAN
+    # (cf. test_trois_colonnes_pas_de_colonne_a_analyser) ; le token reste porté par le parcours Tinder.
     assert "st-ecartee" in TINDER and "st-ecartee" in KANBAN   # écartée (#E8695A token)
-    assert "st-creuser" in TINDER and "st-creuser" in KANBAN   # à analyser (#E8B44C token)
+    assert "st-creuser" in TINDER                              # à analyser (#E8B44C token) — parcours Tinder
     assert "bg-mint" in TINDER                                  # retenue (mint plein = la plus forte)
 
 

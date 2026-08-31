@@ -24,22 +24,29 @@ def get_db():
 
 def _terrain_local(db: Session, idu: str) -> dict | None:
     """Médiane locale du TERRAIN NU autour de la parcelle (ventes DVF sans bâti), rayon adaptatif
-    500→1500 m. Miroir de `_ref_local` (bâti) pour le terrain. None sous le seuil (jamais inventé)."""
-    for rayon in (500.0, 1000.0, 1500.0):
-        r = db.execute(text(
-            "SELECT count(*) AS n, "
-            "  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_terrain,0)) AS m, "
-            "  to_char(max(date_mutation), 'YYYY') AS millesime "
+    500→1500 m. Miroir de `_ref_local` (bâti) : MÊME méthode SECTEUR-2 T1 (exclusion des 5 %
+    extrêmes, rayon effectif affiché, distribution avant/après). None sous le seuil (jamais inventé)."""
+    import statistics
+    from ..faisabilite.bilan import RAYONS_SECTEUR_M, trim_extremes_5pct, distribution_secteur
+    for rayon in RAYONS_SECTEUR_M:
+        rows = db.execute(text(
+            "SELECT valeur_fonciere / NULLIF(surface_terrain,0) AS pm, "
+            "  to_char(max(date_mutation) OVER (), 'YYYY') AS millesime "
             "FROM dvf_mutations "
             "WHERE (surface_reelle_bati IS NULL OR surface_reelle_bati = 0) AND surface_terrain > 0 "
             "  AND valeur_fonciere > 0 AND valeur_fonciere / surface_terrain BETWEEN 20 AND 3000 "
             "  AND nature_mutation ILIKE '%vente%' "
             "  AND ST_DWithin(geom::geography, "
             "      (SELECT centroid::geography FROM parcels WHERE idu = :idu), :rad)"),
-            {"idu": idu, "rad": rayon}).mappings().first()
-        if r and r["m"] and int(r["n"]) >= SEUIL_N:
-            return {"eur_m2": round(float(r["m"])), "n": int(r["n"]), "millesime": r["millesime"],
-                    "rayon_m": int(rayon), "perimetre": f"terrain nu · {int(rayon)} m autour de la parcelle"}
+            {"idu": idu, "rad": rayon}).mappings().all()
+        prices = [float(r["pm"]) for r in rows if r["pm"] is not None]
+        kept, _lo, _hi = trim_extremes_5pct(prices)
+        if len(kept) >= SEUIL_N and kept:
+            return {"eur_m2": round(statistics.median(kept)), "n": len(kept),
+                    "millesime": rows[0]["millesime"] if rows else None, "rayon_m": int(rayon),
+                    "perimetre": f"terrain nu · {int(rayon)} m autour de la parcelle",
+                    "distribution": {"avant": distribution_secteur(prices), "apres": distribution_secteur(kept),
+                                     "n_exclus_extremes": len(prices) - len(kept), "n_min_vise": SEUIL_N}}
     return None
 
 
@@ -47,7 +54,8 @@ def _clean_local(r: dict | None) -> dict | None:
     if not r or not r.get("eur_m2"):
         return None
     return {"eur_m2": round(float(r["eur_m2"])), "n": r.get("n"), "millesime": r.get("millesime"),
-            "rayon_m": r.get("rayon_m"), "perimetre": r.get("perimetre")}
+            "rayon_m": r.get("rayon_m"), "perimetre": r.get("perimetre"),
+            "distribution": r.get("distribution")}
 
 
 @router.get("/mon-secteur")
@@ -71,12 +79,27 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
     sp = sector_price(db, pid, Hypotheses.charger(commune))
     secteur_bati = None
     if sp.get("fiable") and sp.get("n") and int(sp["n"]) >= SEUIL_N:
+        # Écart avec la médiane bâti de la COMMUNE ENTIÈRE (référentiel unique `_dvf_bati`) — une
+        # ligne d'explication : le secteur (rayon serré) n'est pas la commune (SECTEUR-2 T1).
+        from ..pige.signaux import _dvf_bati
+        com = _dvf_bati(db, commune)
+        ecart_commune = None
+        if com.get("eur_m2") and sp.get("median"):
+            cv = round(float(com["eur_m2"]))
+            ep = round(100.0 * (sp["median"] - cv) / cv) if cv else None
+            ecart_commune = {
+                "secteur_eur_m2": sp.get("median"), "rayon_m": int(sp.get("radius_m") or 0),
+                "commune_eur_m2": cv, "n_commune": com.get("n"), "ecart_pct": ep,
+                "phrase": f"secteur {int(sp.get('radius_m') or 0)} m · commune entière {cv} €/m²"
+                          + (f" ({ep:+d} %)" if ep is not None else ""),
+            }
         secteur_bati = {
             "median_eur_m2": sp.get("median"), "q1": sp.get("q1"), "q3": sp.get("q3"),
             "n": sp.get("n"), "rayon_m": sp.get("radius_m"), "type_prix": sp.get("type_prix"),
             "fiabilite": sp.get("fiabilite"), "commune_seule": sp.get("commune_fallback"),
             "periode": sp.get("periode"),
             "tendance_pct": sp.get("tendance_pct"), "tendance": sp.get("tendance"),
+            "distribution": sp.get("distribution"), "ecart_commune": ecart_commune,
         }
 
     # PAR TYPE — la médiane locale du même type (FICHE-COMMUNE-2 C5), rayon adaptatif, seuil interne.

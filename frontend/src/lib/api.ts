@@ -461,13 +461,17 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
 
 // SECTEUR-1 (S1) — outil « Mon secteur » : prix du secteur autour d'une parcelle (médiane locale par
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.
-export interface LocalMed { eur_m2: number; n: number | null; millesime: string | null; rayon_m: number | null; perimetre: string | null }
+export interface DistribRepere { n: number; min: number | null; p25: number | null; median: number | null; p75: number | null; max: number | null }
+export interface Distribution { avant: DistribRepere; apres: DistribRepere; n_exclus_extremes: number; n_min_vise: number; periode_segment?: string }
+export interface EcartCommune { secteur_eur_m2: number | null; rayon_m: number; commune_eur_m2: number; n_commune: number | null; ecart_pct: number | null; phrase: string }
+export interface LocalMed { eur_m2: number; n: number | null; millesime: string | null; rayon_m: number | null; perimetre: string | null; distribution?: Distribution | null }
 export interface MonSecteurData {
   idu: string; commune: string; adresse: string | null
   secteur_bati: {
     median_eur_m2: number | null; q1: number | null; q3: number | null; n: number | null
     rayon_m: number | null; type_prix: string | null; fiabilite: string | null
     commune_seule: boolean | null; periode: number[] | null; tendance_pct: number | null; tendance: string | null
+    distribution?: Distribution | null; ecart_commune?: EcartCommune | null
   } | null
   par_type: { maison: LocalMed | null; appartement: LocalMed | null; terrain_nu: LocalMed | null }
   annonces_radar: { commune: string; type_bien: string; prix: number | null; distance_m: number | null; prix_m2_affiche: number | null; ecart_pct: number | null; reference_locale: boolean }[]
@@ -476,15 +480,18 @@ export interface MonSecteurData {
 export const getMonSecteur = (idu: string) => j<MonSecteurData>(`/outils/mon-secteur?idu=${encodeURIComponent(idu)}`)
 
 // SECTEUR-1 (S3) — outil « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM.
-export interface PermisPromoteur {
-  permit_id: string; commune: string; date_depot: string | null; nb_lgt: number | null
-  etat: string | null; destination: string | null; idu: string
-  denomination: string | null; siren: string | null; categorie: string
+// SECTEUR-2 (T2) — une OPÉRATION (groupe de permis contigus, même propriétaire moral, même période).
+export interface OperationPromoteur {
+  siren: string; denomination: string | null; categorie: string; commune: string
+  nb_logements: number; n_permis: number; date_min: string | null; date_max: string | null
+  annee: number | null; etat: string | null; lon: number | null; lat: number | null
+  idus: string[]; libelle: string; radar_bien_id: number | null; radar_cite: boolean
 }
 export interface VeillePromoteurs {
-  n_total: number; n_servi: number; tronquee: boolean; plafond: number
+  n_total: number; n_servi: number; tronquee: boolean; plafond: number; n_logements_total: number
   categories: { cle: string; label: string }[]; millesime: string | null
-  permis: PermisPromoteur[]; note: string
+  regle: { contiguite_m: number; periode_mois: number; phrase: string }
+  operations: OperationPromoteur[]; note: string
 }
 export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; depuis?: string; limit?: number } = {}) => {
   const q = new URLSearchParams()
@@ -494,7 +501,13 @@ export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; d
   if (p.limit) q.set('limit', String(p.limit))
   return j<VeillePromoteurs>(`/outils/veille-promoteurs${q.toString() ? `?${q}` : ''}`)
 }
-export interface PromoteurAcquisitions { siren: string; denomination: string | null; n_parcelles: number; par_commune: { commune: string; n: number }[]; exemples: { idu: string; commune: string }[]; note: string }
+export interface PromoteurFrise {
+  siren: string; denomination: string | null; n_operations: number; n_logements: number
+  frise: { annee: number; n_operations: number; n_logements: number }[]
+  scan_patrimoine: { n_parcelles: number; endpoint: string }; note: string
+}
+export const getPromoteurFrise = (siren: string) => j<PromoteurFrise>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/frise`)
+export interface PromoteurAcquisitions { siren: string; denomination: string | null; n_parcelles: number; par_commune: { commune: string; n: number }[]; note: string }
 export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitions>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/acquisitions`)
 
 export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null }

@@ -4248,7 +4248,10 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     "qpv", "tva_primo", "zfang", "frr",
                     # M137-U — ZNIEFF (contrainte environnementale, subtype type I/II) + BPE INSEE
                     # (équipements géolocalisés, couche DISTINCTE d'OSM 'amenite' — deux items par source).
-                    "znieff", "amenite_bpe"}
+                    "znieff", "amenite_bpe",
+                    # SECTEUR-2 (T4) — prix du logement NEUF (VEFA acté DVF) en aplat COMMUNE ; subtype =
+                    # tranche de prix (choropleth). ECLN écartée (métropole seule, N/A DOM) → jamais de stock.
+                    "vefa_neuf"}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
