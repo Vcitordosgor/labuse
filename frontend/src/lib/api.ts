@@ -1308,6 +1308,9 @@ export interface ParcoursEtat {
   // PROJETS-V5 (E2) — le bandeau d'analyse : total du cadrage (= compteurs des filtres) + signalées par
   // tier (priorité = brûlante, à suivre = chaude). `signalees` = priorite + a_suivre.
   analyse?: { total: number; priorite: number; a_suivre: number; signalees: number } | null
+  // RETOURS-3 R8 — le RESTANT à trier par tier (chips Tous/Priorité/À suivre) = total du cadrage par tier
+  // moins les décidées du même tier. Le bandeau garde `analyse` (total) ; les chips lisent `restant`.
+  restant?: { priorite: number; a_suivre: number; signalees: number } | null
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
 }
 export interface CarteDecision {

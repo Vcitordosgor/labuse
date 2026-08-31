@@ -123,3 +123,56 @@ def test_cadrage_vide_legitime_rend_zero_des_deux_cotes(db_session):
     cad = {"communes": ["Alpha"], "surfaceMin": 900}
     assert _wizard(db_session, cad) == 0
     assert _a_trier(db_session, cad) == 0
+
+
+@pytest.mark.db
+def test_r8_chips_comptent_le_restant_a_trier(db_session):
+    """RETOURS-3 R8 — les chips (Tous/Priorité/À suivre) comptent ce qui RESTE à trier : total du cadrage
+    par tier MOINS les décidées du même tier (cohérent avec le compteur « à trier » du haut). Le bandeau,
+    lui, garde le total du cadrage. Le chip « Priorité 34 » affichait le total alors que 9 étaient triées."""
+    import json
+
+    from labuse.api.app import _score_v2_run_id
+    from labuse.api.projets import _analyse_cadrage, _restant_a_trier
+
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params, n_parcelles) "
+        "VALUES (:r, 'r8-test', 'abc', '{}', 3) ON CONFLICT (run_id) DO NOTHING"), {"r": RUN})
+    # 2 brûlantes (Priorité) + 1 chaude (À suivre) en commune « Zeta ». Le tier vit dans parcel_p_score_v2 ;
+    # le dryrun reste 'a_creuser' (non-étage0), comme le seed du vivier — sinon la parcelle serait exclue.
+    ids: dict[str, int] = {}
+    rang = 100
+    for k, tier in enumerate(["brulante", "brulante", "chaude"]):
+        idu = f"97998ZA{k:04d}00"[:14].ljust(14, "0")
+        pid = _parcel(db_session, idu, "Zeta", 800)
+        ids[f"{tier}{k}"] = pid
+        db_session.execute(text(
+            "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
+            "opportunity_score, status, q_score, a_score, matrice_statut) "
+            "VALUES (:r, :p, 70, 10, 'a_creuser', 60, 40, 'a_creuser')"), {"r": RUN, "p": pid})
+        rang += 1
+        db_session.execute(text(
+            "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
+            "contrib_z, contrib_d, top5_contributions, copro, tier, model_version) "
+            "VALUES (:r, :i, 0.5, 10, 90, :rg, 0.2, 1.5, '[]', false, :t, 'r8-test')"),
+            {"r": RUN, "i": idu, "rg": rang, "t": tier})
+    db_session.flush()
+
+    cadrage = {"communes": ["Zeta"]}
+    analyse = _analyse_cadrage(db_session, cadrage)
+    assert analyse["priorite"] == 2 and analyse["a_suivre"] == 1   # le BANDEAU = total du cadrage
+
+    projet_id = db_session.execute(text(
+        "INSERT INTO projets (nom, filtres) VALUES ('R8', :f) RETURNING id"),
+        {"f": json.dumps(cadrage)}).scalar()
+    # on TRIE une brûlante (retenue) et la chaude (écartée)
+    for key, statut in [("brulante0", "retenue"), ("chaude2", "ecartee")]:
+        db_session.execute(text(
+            "INSERT INTO projet_parcelles (projet_id, parcel_id, statut) VALUES (:pj, :p, :s)"),
+            {"pj": projet_id, "p": ids[key], "s": statut})
+    db_session.flush()
+
+    restant = _restant_a_trier(db_session, projet_id, _score_v2_run_id(db_session), analyse)
+    assert restant["priorite"] == 1     # 2 brûlantes − 1 retenue = 1 restante à trier
+    assert restant["a_suivre"] == 0     # 1 chaude − 1 écartée = 0 restante
+    assert restant["signalees"] == 1

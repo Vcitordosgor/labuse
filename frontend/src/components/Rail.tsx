@@ -5,10 +5,10 @@ import { MODULES } from './outils/registry'
 
 // Icônes 20×20, trait 1.6, arrondi — redessinées pour être nettes à 20 px (les précédentes
 // rendaient mal). Cohérence : contour simple, pas de remplissage sauf CRM (barres).
-// DASHBOARD-V1 — 'admin' (Tour de contrôle) n'est pas une zone du rail-icônes : son entrée vit
-// au pied de rail, visible seulement pour l'admin (cf. AdminRailEntry).
-// RV2-V3 — 'veille' est rendue à part (pied de rail, comme sources/admin), pas dans ZONES.
-type Zone = Exclude<View, 'sources' | 'admin' | 'veille'> | 'outils'
+// RETOURS-3 R2 — le rail suit UN ordre imposé, unique, de haut en bas (Carte · Outils · Copilote ·
+// Radar · Veille · Projets · CRM · Sources), puis Admin APRÈS Sources (hors liste du mandat, signalé).
+// 'veille'/'sources' sont désormais DANS la liste (plus au pied) ; 'admin' reste gated à la fin.
+type Zone = Exclude<View, 'admin'> | 'outils'
 
 const ICONS: Record<Zone, JSX.Element> = {
   // M62-P1 (a/b) : l'entrée « IA » du rail = le Copilote (view 'copilote') → ÉTINCELLES.
@@ -60,30 +60,43 @@ const ICONS: Record<Zone, JSX.Element> = {
         fill="currentColor" stroke="none" />
     </>
   ),
+  // RV2-V3 — Veille : cercles concentriques + repères cardinaux (radar de veille).
+  veille: (
+    <>
+      <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 1v2M10 17v2M1 10h2M17 10h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </>
+  ),
+  // « base de données / fraîcheur » : stack de disques (remplace l'ancien badge « J-2 »)
+  sources: (
+    <>
+      <ellipse cx="10" cy="5.5" rx="5.5" ry="2.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M4.5 5.5 V10 c0 1.2 2.5 2.2 5.5 2.2 s5.5 -1 5.5 -2.2 V5.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M4.5 10 v4.5 c0 1.2 2.5 2.2 5.5 2.2 s5.5 -1 5.5 -2.2 V10" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    </>
+  ),
 }
 
-const ZONES: { key: Zone; label: string }[] = [
-  // M62-P1 (a/b) : « Copilote » → « IA » (étincelles), en tête.
-  // M65 P4 : l'entrée « Recherche » (IAStub) est retirée — le Copilote absorbe l'entretien de
-  // montage (entretienDirect) et la recherche NL reste dans l'omnibox du header. Rail → 7 entrées.
-  { key: 'copilote', label: 'IA' },
-  { key: 'cartes', label: 'Cartes' },
-  // RADAR-CATÉGORIE (T1) — Radar est un pilier de l'app (au niveau du CRM) : il entre dans le rail
-  // principal, tôt (proche de la maquette : juste après la recherche/carte, avant la Veille du bas).
-  { key: 'radar', label: 'Radar' },
+// RETOURS-3 R2.1 — l'ORDRE IMPOSÉ, de haut en bas (référence unique, aucun autre tri). `ia` marque la
+// seule surface IA (Copilote → survol/actif mauve). Admin n'est PAS dans cette liste : il est rendu
+// APRÈS Sources (gated), cf. compte-rendu.
+type RailKey = Zone
+const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
+  { key: 'cartes', label: 'Carte' },
   { key: 'outils', label: 'Outils' },
+  { key: 'copilote', label: 'Copilote', ia: true },
+  { key: 'radar', label: 'Radar' },
+  { key: 'veille', label: 'Veille' },
   { key: 'projets', label: 'Projets' },
   { key: 'crm', label: 'CRM' },
+  { key: 'sources', label: 'Sources' },
 ]
-
-// ── icône « base de données / fraîcheur » : stack de disques (remplace l'ancien badge « J-2 »)
-const SOURCES_ICON = (
-  <>
-    <ellipse cx="10" cy="5.5" rx="5.5" ry="2.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-    <path d="M4.5 5.5 V10 c0 1.2 2.5 2.2 5.5 2.2 s5.5 -1 5.5 -2.2 V5.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
-    <path d="M4.5 10 v4.5 c0 1.2 2.5 2.2 5.5 2.2 s5.5 -1 5.5 -2.2 V10" fill="none" stroke="currentColor" strokeWidth="1.4" />
-  </>
-)
+// titres NON redondants seulement (R2.3 : le tooltip qui répète le libellé sous l'icône est retiré).
+const RAIL_TITLE: Partial<Record<RailKey, string>> = {
+  veille: 'Veille — le foncier (parcelles, critères) et les annonces (Radar)',
+  sources: 'Fraîcheur des données — sources et mises à jour',
+}
 
 // §2 (23/08/2026) — une carte OUTIL au GABARIT UNIQUE : plus de distinction « phare » (ni étoile,
 // ni graisse renforcée). Chaque carte porte la BARRE VERTICALE GAUCHE (door-hot = border-left mint).
@@ -106,23 +119,21 @@ function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string)
 // (role 'admin' ou session locale dev). La visibilité est du confort d'UI — la vraie garde est
 // côté backend (exiger_admin sur chaque /admin/*, 403 client).
 function AdminRailEntry() {
-  const { view, setView } = useApp()
+  const { view, setView, outilsOpen } = useApp()
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
   const admin = (moi.data != null && moi.data.mode !== 'compte') || moi.data?.role === 'admin'
   if (!admin) return null
+  const on = view === 'admin' && !outilsOpen
   return (
-    <button data-rail-admin onClick={() => setView('admin')} className="group flex w-full flex-col items-center gap-1"
-      title="Tour de contrôle — pilotage de LABUSE (admin)">
-      <span className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
-        view === 'admin' ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
-        {/* jauge/compteur — le pilotage */}
-        <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M3.5 13.5 a6.5 6.5 0 1 1 13 0" strokeLinecap="round" />
-          <path d="M10 13.5 L13.2 8.6" strokeLinecap="round" />
-          <circle cx="10" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
-        </svg>
-      </span>
-      <span className={`text-[10.5px] ${view === 'admin' ? 'text-mint' : 'text-txt-mut'}`}>Admin</span>
+    <button data-rail-admin data-rail="admin" onClick={() => setView('admin')} aria-current={on ? 'page' : undefined}
+      className={`rail-item ${on ? 'active' : ''}`} title="Tour de contrôle — pilotage de LABUSE (admin)">
+      {/* jauge/compteur — le pilotage */}
+      <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M3.5 13.5 a6.5 6.5 0 1 1 13 0" strokeLinecap="round" />
+        <path d="M10 13.5 L13.2 8.6" strokeLinecap="round" />
+        <circle cx="10" cy="13.5" r="1.2" fill="currentColor" stroke="none" />
+      </svg>
+      <span className="rail-label">Admin</span>
     </button>
   )
 }
@@ -146,66 +157,31 @@ export function Rail() {
 
   return (
     <>
-      <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1 py-5">
-        {/* P4 (revue Vic n°3) — UN SEUL oiseau : le combo oiseau + « LABUSE » vit dans le header.
-            Le rail est PUR icônes de navigation, sans logomark redondant (l'oiseau du rail et
-            celui du header se retrouvaient côte à côte en haut-gauche → doublon vu par Vic). */}
-        {ZONES.map(({ key, label }) => {
+      <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-1.5 overflow-y-auto border-r border-line bg-surface-1 py-5">
+        {/* P4 (revue Vic n°3) — le rail est PUR icônes de navigation (l'oiseau + « LABUSE » vit au header).
+            RETOURS-3 R2 — ordre imposé unique (RAIL), survol plein + sélection route-dérivée (classe .rail-item).
+            L'entrée active dérive de `view`/`outilsOpen` : AUCUNE classe .active posée en JS en plus (source
+            unique = la route), et le survol (@media hover) ne s'applique jamais à l'active → plus de double état. */}
+        {RAIL.map(({ key, label, ia }) => {
           const on = key === 'outils' ? outilsOpen : view === key && !outilsOpen
+          const act = () => {
+            if (key === 'outils') return toggleOutils()
+            if (key === 'veille') return toggleSurveillance()
+            if (key === 'sources') return openSources()
+            setView(key as View)
+          }
           return (
-            <button
-              key={key}
-              onClick={() => (key === 'outils' ? toggleOutils() : setView(key))}
-              className="group mb-4 flex w-full flex-col items-center gap-1"
-              title={label}
-              aria-current={on ? 'page' : undefined}
-            >
-              <span
-                className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
-                  on ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
-                }`}
-              >
-                <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS[key]}</svg>
-              </span>
-              <span className={`text-[10.5px] ${on ? 'text-mint' : 'text-txt-mut'}`}>{label}</span>
+            <button key={key} data-rail={key} {...(key === 'veille' ? { 'data-rail-surveillance': true } : {})}
+              onClick={act} aria-current={on ? 'page' : undefined}
+              className={`rail-item ${on ? 'active' : ''} ${ia ? 'ia' : ''}`}
+              {...(RAIL_TITLE[key] ? { title: RAIL_TITLE[key] } : {})}>
+              <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS[key]}</svg>
+              <span className="rail-label">{label}</span>
             </button>
           )
         })}
-
-        <div className="mt-auto flex flex-col items-center gap-2">
-          {/* M104 — une seule entrée : parcelles suivies + secteurs dessinés + critères
-              enregistrés. M137-C (Vic) — le libellé SERVI devient « Veille » (les clés internes
-              `surveillance*` ne bougent pas). */}
-          {/* RV2-V3 — la Veille est une CATÉGORIE (view 'veille'), plein écran comme le Radar. */}
-          <button data-rail-surveillance onClick={() => toggleSurveillance()} className="group flex w-full flex-col items-center gap-1"
-            title="Veille — le foncier (parcelles, critères) et les annonces (Radar)">
-            <span className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
-              view === 'veille' ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'}`}>
-              <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="6.5" /><circle cx="10" cy="10" r="2" /><path d="M10 1v2M10 17v2M1 10h2M17 10h2" strokeLinecap="round" /></svg>
-            </span>
-            <span className={`text-[10.5px] ${view === 'veille' ? 'text-mint' : 'text-txt-mut'}`}>Veille</span>
-          </button>
-          {/* P5 (revue Vic n°3) — l'ancien badge cryptique « J-2 » devient une entrée « Sources »
-              claire : même fonction (fraîcheur des données → page Sources), libellé explicite. */}
-          <button
-            onClick={() => openSources()}
-            className="group flex w-full flex-col items-center gap-1"
-            title="Fraîcheur des données — sources et mises à jour"
-          >
-            <span
-              className={`flex h-10 w-10 items-center justify-center rounded-lg transition-colors duration-quick ${
-                view === 'sources' ? 'bg-mint-bg text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
-              }`}
-            >
-              <svg viewBox="0 0 20 20" className="h-5 w-5">{SOURCES_ICON}</svg>
-            </span>
-            <span className={`text-[10.5px] ${view === 'sources' ? 'text-mint' : 'text-txt-mut'}`}>Sources</span>
-          </button>
-          {/* B7 (mandat calculette) : la pastille « VL » du rail DOUBLAIT l'avatar déjà présent
-              dans le header — retirée pour libérer de l'espace vertical (au profit des filtres).
-              Aucune fonction unique n'y était attachée (statique) ; l'identité reste au header. */}
-          <AdminRailEntry />
-        </div>
+        {/* R2.1 — Admin ne figure PAS dans l'ordre imposé : rendu APRÈS Sources, visible admin seulement (signalé). */}
+        <AdminRailEntry />
       </nav>
 
       {/* §2 (23/08/2026) — Tiroir Outils EN LISTE PLATE : plus de catégories, plus d'étoile « phare ».

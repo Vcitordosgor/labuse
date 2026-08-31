@@ -1005,6 +1005,24 @@ def _analyse_cadrage(db: Session, cadrage: dict) -> dict:
     return {"total": int(r["total"] or 0), "priorite": p, "a_suivre": s, "signalees": p + s}
 
 
+def _restant_a_trier(db: Session, pid: int, v2run: str, analyse: dict) -> dict:
+    """RETOURS-3 R8 (Vic 31/08) — pour les CHIPS de tri (Tous / Priorité / À suivre) : ce qui reste
+    À TRIER par tier = total du cadrage par tier MOINS les DÉCIDÉES (retenues + écartées) du même
+    tier. Cohérent avec le compteur « à trier » du haut (total − décidées) : le chip « Priorité 34 »
+    affichait le total du cadrage alors que 9 parcelles étaient déjà triées. Le BANDEAU, lui, garde le
+    total du cadrage (R10 — il décrit ce que l'analyse a trouvé, pas ce qu'il reste à faire)."""
+    rows = db.execute(text(
+        "SELECT s2.tier AS tier, count(*) AS n FROM projet_parcelles pp "
+        "JOIN parcels p ON p.id = pp.parcel_id "
+        "JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
+        "WHERE pp.projet_id = :pid AND pp.statut IN ('retenue', 'ecartee') GROUP BY s2.tier"),
+        {"pid": pid, "v2run": v2run}).mappings().all()
+    decid = {r["tier"]: int(r["n"] or 0) for r in rows}
+    prio = max(0, int(analyse.get("priorite", 0)) - decid.get("brulante", 0))
+    suiv = max(0, int(analyse.get("a_suivre", 0)) - decid.get("chaude", 0))
+    return {"priorite": prio, "a_suivre": suiv, "signalees": prio + suiv}
+
+
 #: PROJETS-V5 (E4) — les signaux de vie AFFICHÉS sur une ligne (jusqu'à 2) : code interne →
 #: (libellé client, « fort »). Fort (rouge) = ce qui pèse le plus sur la mutation. L'ordre EST la
 #: priorité d'affichage (forts d'abord). Chaque signal a sa table SOURCÉE (jamais inventé).
@@ -1187,13 +1205,18 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
     from .app import _proprietaire_public
     for it in groups["retenue"]:
         it["proprietaire_public"] = _proprietaire_public(db, it["idu"])
+    # PROJETS-V5 (E2) / RETOURS-3 R8 — le bandeau garde le total du cadrage ; les chips comptent le RESTANT.
+    analyse_val = _analyse_cadrage(db, p.filtres or {}) if offset == 0 else None
+    restant = _restant_a_trier(db, pid, v2, analyse_val) if analyse_val else None
     return {"nom": p.nom, "sdp_besoin_m2": _sdp_besoin(cadrage),
             # M139 Lot 2 (F2) — les deux dates à l'écran : figeage du cadrage + run résiduel servi.
             "figee_le": p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else None,
             "valeurs_run": _residuel_run_servi(db),
             # PROJETS-V5 (E2) — le bandeau d'analyse : total du cadrage du PROJET (pas le sous-filtré) +
             # signalées par tier. Calculé à la 1re page seulement (offset 0) ; les pages suivantes le gardent.
-            "analyse": _analyse_cadrage(db, p.filtres or {}) if offset == 0 else None,
+            "analyse": analyse_val,
+            # RETOURS-3 R8 — restant À TRIER par tier (chips) ; None hors 1re page (le front le mémorise).
+            "restant": restant,
             "proposees": groups["proposee"], "retenues": groups["retenue"],
             "ecartees": groups["ecartee"], "a_analyser": groups["a_analyser"],
             # M140 Lot A — `counts.proposee` = total VIF restant (liste complète), PAS la taille de page.

@@ -935,8 +935,47 @@ export function MapView() {
           useApp.getState().setRadarToOpen(Number(props.bien_id))
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (props?.kind === 'operation') {
-          // SECTEUR-2 (T2) — clic sur une opération → ouvre la fiche de sa parcelle (une des parcelles).
-          if (props?.idu) select(String(props.idu))
+          // RETOURS-3 R4.1 — clic sur une opération → POPUP des faits : propriétaire moral, nb de permis,
+          // période, et le PROGRAMME rattaché (nom + lien) quand il existe. Puis deux chemins : la fiche
+          // parcelle, et « voir son patrimoine » (Scan patrimoine, même SIREN). DOM textContent (anti-injection).
+          const catLbl: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
+          const box = document.createElement('div'); box.style.cssText = 'font:12px system-ui;color:#e7e5e4;max-width:250px'
+          const nom = document.createElement('b'); nom.textContent = String(props.denomination || '(propriétaire non nommé)'); box.appendChild(nom)
+          const sub = document.createElement('div'); sub.style.cssText = 'color:#a8a29e;font-size:11px;margin-top:2px'
+          const cat = catLbl[String(props.categorie)] || String(props.categorie || '')
+          const np = Number(props.n_permis) || 0
+          const per = (() => {
+            const fmtD = (s: string) => { const t = new Date(s); return Number.isNaN(t.getTime()) ? '' : t.toLocaleDateString('fr-FR') }
+            const a = props.date_min ? fmtD(String(props.date_min)) : '', b = props.date_max ? fmtD(String(props.date_max)) : ''
+            return a && b && a !== b ? `${a} → ${b}` : (b || a)
+          })()
+          sub.textContent = `${cat}${cat ? ' · ' : ''}${np} permis${per ? ` · ${per}` : ''}${props.nb_logements ? ` · ${props.nb_logements} lgt` : ''}`
+          box.appendChild(sub)
+          if (props.libelle) { const lib = document.createElement('div'); lib.style.cssText = 'color:#a8a29e;font-size:11px;margin-top:2px'; lib.textContent = String(props.libelle); box.appendChild(lib) }
+          // le PROGRAMME rattaché (nom + lien externe) — un FAIT + un LIEN, jamais un visuel d'annonce.
+          if (props.prog_nom) {
+            const pg = document.createElement('div'); pg.style.cssText = 'margin-top:6px;padding:5px 7px;border:1px solid rgba(74,222,128,.25);background:rgba(74,222,128,.05);border-radius:6px'
+            const pn = document.createElement('b'); pn.textContent = String(props.prog_nom); pn.style.color = '#e7e5e4'; pg.appendChild(pn)
+            if (props.prog_url) {
+              const a = document.createElement('a'); a.href = String(props.prog_url); a.target = '_blank'; a.rel = 'noreferrer noopener'
+              a.textContent = ` · site de ${String(props.prog_promoteur || 'ce promoteur')} ↗`
+              a.style.cssText = 'color:#4ADE80;font-size:11px;text-decoration:none'; pg.appendChild(a)
+            }
+            box.appendChild(pg)
+          }
+          const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:12px;margin-top:7px'
+          if (props.idu) {
+            const bp = document.createElement('button'); bp.textContent = 'voir la parcelle →'
+            bp.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0'
+            bp.addEventListener('click', () => { select(String(props.idu)); popup.remove() }); row.appendChild(bp)
+          }
+          if (props.siren) {
+            const bs = document.createElement('button'); bs.textContent = 'voir son patrimoine →'
+            bs.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0'
+            bs.addEventListener('click', () => { const s = useApp.getState(); s.setM02Prefill(String(props.siren)); s.setModule('patrimoine'); popup.remove() }); row.appendChild(bs)
+          }
+          box.appendChild(row)
+          const popup = new maplibregl.Popup({ offset: 12 }).setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (props?.kind === 'zone-concurrent') {
           // F8 (OUTILS-3) — pastille concurrent CLIQUABLE : popup (nom, activité, date de création) +

@@ -10,6 +10,7 @@ import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { iduComplet } from '../../lib/format'
+import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
 
@@ -62,10 +63,23 @@ function Frise({ siren }: { siren: string }) {
 export function VeillePromoteurs() {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
+  const setFlyTo = useApp((s) => s.setFlyTo)
+  // RETOURS-3 R4.3 — pont Scan patrimoine → « Voir son patrimoine » (même SIREN, module M02).
+  const setM02Prefill = useApp((s) => s.setM02Prefill)
+  const setModule = useApp((s) => s.setModule)
+  // RETOURS-3 R4.3 — pont Scan patrimoine → Veille : si un SIREN est ciblé, on ouvre sa frise d'emblée.
+  const veilleFocusSiren = useApp((s) => s.veilleFocusSiren)
+  const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
   const [commune, setCommune] = useState('')
   const [categorie, setCategorie] = useState('')
   const [depuis, setDepuis] = useState('')
   const [openSiren, setOpenSiren] = useState<string | null>(null)
+  // pont entrant (Scan patrimoine) : ouvrir la frise du SIREN ciblé, puis consommer le focus.
+  useEffect(() => {
+    if (veilleFocusSiren) { setOpenSiren(veilleFocusSiren); setVeilleFocusSiren(null) }
+  }, [veilleFocusSiren, setVeilleFocusSiren])
+  // pont sortant : ouvrir Scan patrimoine (M02) pré-rempli sur le propriétaire moral de l'opération.
+  const voirPatrimoine = (siren: string) => { setM02Prefill(siren); setModule('patrimoine') }
   const q = useQuery({ queryKey: ['veille-promoteurs', commune, categorie, depuis], queryFn: () => getVeillePromoteurs({ commune: commune || undefined, categorie: categorie || undefined, depuis: depuis || undefined, limit: 200 }) })
   const d = q.data
   const sel = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt'
@@ -76,8 +90,14 @@ export function VeillePromoteurs() {
     type: 'FeatureCollection' as const,
     features: (d?.operations ?? []).filter((o) => o.lon != null && o.lat != null).map((o) => ({
       type: 'Feature' as const, geometry: { type: 'Point' as const, coordinates: [o.lon, o.lat] },
+      // RETOURS-3 R4.1 — le popup carte a besoin des FAITS de l'opération (propriétaire moral, permis,
+      // période, programme rattaché + lien). Props plates (strings/nums) pour la couche vectorielle.
       properties: { kind: 'operation', siren: o.siren, idu: o.idus[0] ?? null, radar_cite: o.radar_cite,
-                    nb_logements: o.nb_logements },
+                    nb_logements: o.nb_logements, denomination: o.denomination ?? '', categorie: o.categorie ?? '',
+                    n_permis: o.n_permis, commune: o.commune ?? '', libelle: o.libelle ?? '',
+                    date_min: o.date_min ?? '', date_max: o.date_max ?? '',
+                    prog_nom: o.programme?.nom ?? '', prog_url: o.programme?.url ?? '',
+                    prog_promoteur: o.programme?.promoteur_nom ?? '' },
     })),
   }), [d])
   useEffect(() => { setModuleMap({ idus: [], extra }); return () => setModuleMap({ idus: [], extra: null }) }, [extra, setModuleMap])
@@ -88,6 +108,12 @@ export function VeillePromoteurs() {
         <h2 className="font-display text-base font-bold text-txt-hi">Veille promoteurs</h2>
         <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis d'un même propriétaire moral, sur des parcelles contiguës et une même période).{d?.millesime ? ` Données Sitadel au ${new Date(d.millesime).toLocaleDateString('fr-FR')}.` : ''}</p>
       </div>
+
+      {/* RETOURS-3 R4.2 — barre de recherche adresse/IDU en tête d'outil (composant commun) : se
+          positionner sur une parcelle ou une adresse (la carte vole au point choisi). */}
+      <AddressAutocomplete placeholder="Adresse, IDU… (se positionner sur la carte)"
+        className="h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
+        onSelect={(s2) => { if (s2.lon != null && s2.lat != null) setFlyTo({ center: [s2.lon, s2.lat], zoom: 16 }); if (s2.idu) select(s2.idu) }} />
 
       <div className="flex flex-wrap gap-2">
         <select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
@@ -136,6 +162,8 @@ export function VeillePromoteurs() {
                 <div className="mt-1.5 flex items-center gap-2 text-[10.5px]">
                   <span className="text-txt-dim">{o.commune}{o.date_min && o.date_max && o.date_min !== o.date_max ? ` · ${new Date(o.date_min).toLocaleDateString('fr-FR')} → ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : ''}</span>
                   {o.idus[0] && <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))} className="font-mono text-mint hover:underline" title="Ouvrir la fiche parcelle">{o.idus[0]} →</button>}
+                  {/* RETOURS-3 R4.3 — pont vers Scan patrimoine (même propriétaire moral). */}
+                  {o.siren && <button data-vp-patrimoine onClick={() => voirPatrimoine(o.siren!)} className="text-mint hover:underline" title="Tout son foncier — Scan patrimoine">voir son patrimoine →</button>}
                   {o.siren && <button data-vp-frise onClick={() => setOpenSiren((s) => (s === o.siren ? null : o.siren))} className="ml-auto text-mint hover:underline">{openSiren === o.siren ? 'masquer' : 'sa frise ▾'}</button>}
                 </div>
                 {openSiren === o.siren && o.siren && <Frise siren={o.siren} />}

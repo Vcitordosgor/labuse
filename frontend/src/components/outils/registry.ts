@@ -57,42 +57,43 @@ export const MODULES: ModuleDef[] = [
   // FUSION (Vic 21/08/2026) — scoreur d'adresse (O2) + calculette foncière (M23) = « Étudier un bien »,
   // deux entrées (adresse OU parcelle), un moteur. La clé M23 est ALIASÉE (hidden : résout la porte
   // fiche/copilote sans carte en double, jamais un 404).
+  // RETOURS-3 R11 — descriptions réécrites au mot (une phrase, droit au but). Vic 31/08.
   { key: 'scoreur-adresse', num: 'O2', group: 'instruire', phare: true,
-    label: 'Étudier un bien', desc: 'Une adresse ou une parcelle — le constat (verdict + charge calibrée), puis vos hypothèses' },
+    label: 'Étudier un bien', desc: 'Une parcelle → tout ce que LABUSE en sait.' },
   { key: 'calculette-fonciere', num: 'M23', group: 'instruire', hidden: true,
-    label: 'Étudier un bien', desc: 'Une adresse ou une parcelle — le constat (verdict + charge calibrée), puis vos hypothèses' },
+    label: 'Étudier un bien', desc: 'Une parcelle → tout ce que LABUSE en sait.' },
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,
-    label: 'Faisabilité', desc: 'Ce qu’une parcelle peut accueillir, ou par critères où poser un programme' },
+    label: 'Faisabilité', desc: 'Ce que le PLU laisse construire sur la parcelle.' },
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement » : assiette, part communale, part
   // départementale, détail ligne par ligne. Barème et taux servis par le backend (jamais en dur).
   { key: 'taxe-amenagement', num: 'K3', group: 'instruire',
-    label: 'Taxe d\'aménagement', desc: 'Estimez la taxe d\'aménagement d\'un projet — assiette, part communale, part départementale, détaillé ligne par ligne' },
+    label: 'Taxe d\'aménagement', desc: 'La taxe du projet, calculée d\'avance.' },
   // RADAR-CATÉGORIE (T1, Vic) — le Radar a QUITTÉ le menu Outils : c'est une CATÉGORIE de premier
   // niveau (rail, plein écran, view 'radar'). Plus d'entrée 'radar' ici. Back pige/* réutilisé tel quel.
   // M137-T — « Contrôle avant achat » (M10) + « Servitudes invisibles » (O5) fusionnés en UN outil
   // « Risques », deux entrées (une parcelle en détail / un lot au crible). Le nom ne promet pas
   // l'exhaustivité (l'outil dit ce que la base ne couvre pas) — ni « contrôle complet » ni « due diligence ».
   { key: 'risques', num: 'M10', group: 'instruire', phare: true,
-    label: 'Pièges et risques', desc: 'Ce qui cloche sur une parcelle — servitudes dormantes, risques, propriétaire ; une parcelle en détail ou un lot au crible. Dit aussi ce que la base ne couvre pas' },
+    label: 'Pièges et risques', desc: 'Ce qui peut bloquer le projet, avant d\'acheter.' },
   // M137-P/Q — outil PLU UNIFIÉ : Annuaire PLU (O13) + « Procédure & changement » (M137-Q : Vérif
   // procédure O11 + Changement PLU M15 fusionnés, communes en procédure reliées à leur simulation).
   // Le hub (Plu.tsx) monte 2 voies ; les composants existants sont réutilisés inchangés.
   { key: 'plu', num: 'O13', group: 'instruire', phare: true,
-    label: 'PLU', desc: 'Le PLU des 24 communes : consulter le règlement, vérifier une procédure en cours, simuler une bascule de zone' },
+    label: 'PLU', desc: 'Chaque zone, son règlement, articles cités.' },
   { key: 'comparer', num: 'A8', group: 'instruire',
-    label: 'Comparer des parcelles', desc: 'Mettez 2 à 3 parcelles côte à côte — verdict, contraintes, capacité, charge foncière, marché' },
+    label: 'Comparer des parcelles', desc: 'Des parcelles côte à côte, critère par critère.' },
   { key: 'assemblage', num: 'M16', group: 'instruire', phare: true,
-    label: 'Assemblage', desc: 'Fusionnez des parcelles contiguës en une assiette de projet' },
+    label: 'Assemblage', desc: 'Des parcelles voisines réunies : le potentiel du tout.' },
 
   // ── 2. Sourcer un propriétaire, puis l'approcher ──
   { key: 'patrimoine', num: 'M02', group: 'agir', phare: true,
-    label: 'Scan patrimoine', desc: 'Un nom de propriétaire, et TOUT son foncier ressort d’un coup — repérez les gros détenteurs à approcher' },
+    label: 'Scan patrimoine', desc: 'Tout ce qu\'un propriétaire possède sur l\'île.' },
   { key: 'courriers', num: 'M09', group: 'agir',
-    label: 'Courrier propriétaire', desc: 'Générez vos courriers d’approche, prêts à télécharger et envoyer' },
+    label: 'Courrier propriétaire', desc: 'Écrivez au propriétaire — LABUSE se charge de l\'envoi.' },
   // Prospection solaire (V1 restitution) — sert la donnée solaire DÉJÀ en base (parcel_solar/PVGIS,
   // pente RGE ALTI, piscine ortho, proba occupant), gelée au 11/07/2026 ; export CSV de démarchage.
   { key: 'prospection-solaire', num: 'M26', group: 'agir',
-    label: 'Prospection solaire', desc: 'Les parcelles au meilleur potentiel solaire (productible, orientation, toiture) — pour démarcher l’installation photovoltaïque ; export CSV' },
+    label: 'Prospection solaire', desc: 'Les toits bien exposés, les piscines à équiper.' },
 
   // ── 3. Lire le marché et le territoire ──
   // M137-Z — outil « Communes » : fusion de Marché (MU1) · Comparateur (O6) · Vélocité (M05) ·
@@ -100,15 +101,15 @@ export const MODULES: ModuleDef[] = [
   // « Voir ses parcelles → ». Les 4 clés absorbées sont retirées du registre (composants au dépôt,
   // endpoints /comparateur-communes, /moteurs/marche, /modules/velocite, /pipeline-rarete servis).
   { key: 'communes', num: 'O6', group: 'marche', phare: true,
-    label: 'Communes', desc: 'Les 24 communes comparées, puis la fiche de chacune : marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction — et un saut vers ses parcelles' },
+    label: 'Communes', desc: 'Les 24 communes en chiffres : marché, rareté, rythme.' },
   // SECTEUR-1 (S1) — « Mon secteur » : les prix DU SECTEUR autour d'une parcelle. Même moteur que
   // « Marché et secteur » de la fiche + la médiane locale de FICHE-COMMUNE-2 C5.
   { key: 'mon-secteur', num: 'S1', group: 'marche',
-    label: 'Mon secteur', desc: 'Une adresse ou un IDU → les prix du secteur : médiane locale DVF par type (maison / appartement / terrain nu) avec n et millésime, tendance 12 mois, et les annonces Radar actives dans le rayon' },
+    label: 'Mon secteur', desc: 'Une adresse → les prix réels du secteur.' },
   // SECTEUR-1 (S3) — « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM + leurs
   // acquisitions foncières (Scan patrimoine, même SIREN). Comptes SQL, millésime Sitadel affiché.
   { key: 'veille-promoteurs', num: 'S3', group: 'marche',
-    label: 'Veille promoteurs', desc: 'Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis contigus, même propriétaire moral, même période) — un point sur la carte, logements, dates, état, filtrables ; et pour chacun sa frise par année + son Scan patrimoine' },
+    label: 'Veille promoteurs', desc: 'Ce que les promoteurs construisent, opération par opération.' },
   // L'outil « Baromètre foncier » a QUITTÉ le menu : l'évolution du marché (île, 8 trimestres) + le
   // Rapport PDF vivent désormais dans l'onglet « Évolution » de Communes. Clé ALIASÉE (hidden) →
   // Communes, aucun lien mort (deep-link/copilote historique). Composant M18 réutilisé par l'onglet.
@@ -121,21 +122,21 @@ export const MODULES: ModuleDef[] = [
   // (URL/QA/concept-route inchangés) mais ALIASÉE (hidden) → pas de 2ᵉ carte au menu ; elle ouvre le
   // filtre pré-actif.
   { key: 'permis', num: 'M03', group: 'marche',
-    label: 'Permis', desc: 'Qui construit quoi, commune par commune (Sitadel) — la carte des permis, cliquables ; filtre « Au point mort » pour les PC accordés jamais réalisés' },
+    label: 'Permis', desc: 'Qui construit quoi, commune par commune — et les permis au point mort.' },
   { key: 'promesses', num: 'M04', group: 'marche', hidden: true,
     label: 'Permis', desc: 'Le « point mort » (PC accordés jamais réalisés) est un filtre de l’outil Permis' },
   // §5 — renommé « Densifier l'existant » côté client ; clé interne `renouvellement` INCHANGÉE
   // (URL, QA, tests, endpoint, table). Même patron que Promesses mortes → Permis au point mort.
   { key: 'renouvellement', num: 'MR1', group: 'marche',
-    label: 'Densifier l’existant', desc: 'Le bâti qui peut porter davantage — extensions, surélévations : parcelles déjà occupées en zone constructible à capacité résiduelle réelle' },
+    label: 'Densifier l’existant', desc: 'Le bâti en zone U qui peut porter davantage.' },
   // ÉTUDE DE ZONE Z4 — la chalandise : une zone atteignable (isochrone IGN), qui y vit, qui y travaille,
   // quels concurrents (SIRENE) ; le même moteur alimente le tiroir « Autour de cette parcelle » (fiche).
   { key: 'etude-zone', num: 'M27', group: 'marche',
-    label: 'Étude de zone', desc: 'La zone atteignable (à pied / en voiture), qui y vit, qui y travaille et quels concurrents vous y attendent déjà — INSEE, SIRENE, BPE, isochrones IGN' },
+    label: 'Étude de zone', desc: 'Habitants, emplois, concurrents : la zone autour d\'un point.' },
 
   // ── 4. Analyse ponctuelle (usage rare) ──
   { key: 'temps', num: 'M08', group: 'temps',
-    label: 'Remonter le temps', desc: 'Comparez une année ancienne et aujourd’hui pour lire la mutation d’un terrain' },
+    label: 'Remonter le temps', desc: 'La parcelle vue du ciel, année après année.' },
 
   // ── RETIRÉS DU PRODUIT (dormants — composants, endpoints et tests conservés au dépôt) ──
   // M137-K : « Radar des ventes » (M25 — recouvre l'Analyse LABUSE). · M137-N : « Foncier fantôme » (M07,

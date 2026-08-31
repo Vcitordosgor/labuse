@@ -212,15 +212,18 @@ function CommuneSelect() {
   )
 }
 
-// bouton CONTEXTE — visible quand une commune est active : le volet SRU/ANRU/PLH/marché
+// bouton FICHE COMMUNE — visible quand une commune est active : le volet SRU/ANRU/PLH/marché.
+// RETOURS-3 R7 (Vic 31/08) : « Contexte » ne disait rien à l'utilisateur → « Fiche commune » (ce que
+// le clic ouvre). Couleur passée du mauve (réservé IA) à l'AMBRE des chips d'information (ex. « drapeau
+// fermé ») — ce n'est pas une surface IA.
 function ContexteButton() {
   const { commune, focusCommune } = useApp()
   if (!commune) return null
   return (
     <button onClick={() => focusCommune(commune)} data-contexte-btn
-      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-violet/40 bg-violet/[0.08] px-2.5 text-[11px] text-violet transition-colors duration-quick hover:border-violet"
-      title="Contexte commune — SRU, ANRU, PLH, marché logement (sources officielles)">
-      ⓘ Contexte
+      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-amber/40 bg-amber/[0.08] px-2.5 text-[11px] text-amber transition-colors duration-quick hover:border-amber"
+      title="Fiche commune — SRU, ANRU, PLH, marché logement (sources officielles)">
+      ⓘ Fiche commune
     </button>
   )
 }

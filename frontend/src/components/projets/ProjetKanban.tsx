@@ -199,7 +199,6 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const [page, setPage] = useState(0)
   const [sousFiltre, setSousFiltre] = useState<Cadrage | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [search, setSearch] = useState('')
   const [totalProp, setTotalProp] = useState(0)
 
   const sfKey = JSON.stringify(sousFiltre ?? {})
@@ -235,6 +234,12 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   // `analyse` (bandeau + chips) n'est servi qu'à la page 0 : on le mémorise pour qu'il reste en paginant.
   const [analyse, setAnalyse] = useState<ParcoursEtat['analyse'] | null>(null)
   useEffect(() => { if (etat?.analyse) setAnalyse(etat.analyse) }, [etat?.analyse])
+  // RETOURS-3 R8 — le RESTANT à trier par tier (chips) est servi à la page 0 : on le mémorise comme `analyse`.
+  const [restant, setRestant] = useState<ParcoursEtat['restant'] | null>(null)
+  useEffect(() => { if (etat?.restant) setRestant(etat.restant) }, [etat?.restant])
+  // RETOURS-3 R10 — le bandeau d'analyse est REPLIÉ par défaut (une ligne) ; « Voir pourquoi » déplie
+  // le contenu complet (phrase gravée entière, signaux, valeurs, run). Fond vert et formulation inchangés.
+  const [analyseOuvert, setAnalyseOuvert] = useState(false)
   useEffect(() => { if (etat?.total_retenues != null) setTotalProp(etat.counts.proposee) }, [etat?.total_retenues, etat?.counts?.proposee])
   const deZero = Boolean((projet?.cadrage as Record<string, unknown> | undefined)?.__de_zero__)
   const ouvrirCarte = () => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('cartes') }
@@ -243,8 +248,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const vivier = analyse?.total ?? (c.proposee + c.retenue + c.ecartee + (c.a_analyser ?? 0))
   const pages = Math.max(1, Math.ceil(totalProp / PAGE))
   // recherche client sur la page chargée (adresse / IDU) — la pagination porte le vivier complet.
-  const proposeesVues = (etat?.proposees ?? []).filter((it) =>
-    !search.trim() || (it.adresse ?? '').toLowerCase().includes(search.toLowerCase()) || it.idu.toLowerCase().includes(search.toLowerCase()))
+  const proposeesVues = etat?.proposees ?? []
   const cadrageEffectif = sousFiltre ?? (projet?.cadrage ?? {})
   const puces = facetteLabels(cadrageEffectif)
   const retirerFacette = (k: keyof Filters) => {
@@ -291,28 +295,43 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
         </div>
       </div>
 
-      {/* ÉTAGE 2 — ANALYSE (le classement est le moteur STATISTIQUE de LABUSE → vert, jamais mauve/IA). */}
+      {/* ÉTAGE 2 — ANALYSE (le classement est le moteur STATISTIQUE de LABUSE → vert, jamais mauve/IA).
+          RETOURS-3 R10 — REPLIÉ par défaut sur une ligne ; « Voir pourquoi » déplie le contenu complet. */}
       {!deZero && analyse && analyse.total > 0 && (
-        <div data-kanban-analyse className={`shrink-0 grid grid-cols-[38px_1fr_auto] items-center gap-3.5 rounded-xl border border-mint/25 bg-mint/[0.06] px-4 py-3`}>
-          <span className="flex h-[38px] w-[38px] items-center justify-center rounded-lg bg-mint/15 text-[18px] text-mint" aria-hidden>✦</span>
-          <div>
-            <p className="text-[13.5px] leading-relaxed text-txt-2">
-              LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
-              {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ont plus de chances que les autres d'être vendues
-              {' '}— {analyse.priorite.toLocaleString('fr-FR')} en Priorité, {analyse.a_suivre.toLocaleString('fr-FR')} À suivre.
-              {' '}Elles arrivent en tête de votre tri ; les {(analyse.total - analyse.signalees).toLocaleString('fr-FR')} autres suivent, sans jugement.
+        <div data-kanban-analyse className="shrink-0 rounded-xl border border-mint/25 bg-mint/[0.06] px-4 py-3">
+          <div className="grid grid-cols-[38px_1fr_auto] items-center gap-3.5">
+            <span className="flex h-[38px] w-[38px] items-center justify-center rounded-lg bg-mint/15 text-[18px] text-mint" aria-hidden>✦</span>
+            {/* la LIGNE repliée : le résumé (formulation gravée, chiffres du cadrage) */}
+            <p className="text-[13px] leading-snug text-txt-2">
+              LABUSE a analysé <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> :
+              {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ressortent
+              {' '}— {analyse.priorite.toLocaleString('fr-FR')} Priorité, {analyse.a_suivre.toLocaleString('fr-FR')} À suivre.
             </p>
-            <p data-kanban-analyse-sub className="mt-0.5 text-[11px] text-txt-dim">
-              {(() => {
-                const distinct = Array.from(new Set((etat?.proposees ?? []).flatMap((it) => (it.signaux ?? []).map((s) => s.label)))).slice(0, 4)
-                return distinct.length ? `Signaux détectés : ${distinct.join(', ')} · ` : ''
-              })()}
-              {etat?.valeurs_run?.date ? `valeurs au ${fmtDate(etat.valeurs_run.date)} · run ${etat.valeurs_run.label}` : ''}
-              {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtInt(m)} €/m²` : '' })()}
-            </p>
+            <button data-kanban-pourquoi aria-expanded={analyseOuvert} onClick={() => setAnalyseOuvert((o) => !o)}
+              className="shrink-0 rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">
+              {analyseOuvert ? 'Voir moins ▴' : 'Voir pourquoi ▾'}</button>
           </div>
-          <button data-kanban-pourquoi onClick={() => setAlgoModale('scoring')}
-            className="rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">Voir pourquoi</button>
+          {/* le CONTENU complet déplié : phrase gravée entière + signaux + valeurs/run */}
+          {analyseOuvert && (
+            <div data-kanban-analyse-detail className="mt-2.5 border-t border-mint/15 pl-[50px] pt-2.5">
+              <p className="text-[13.5px] leading-relaxed text-txt-2">
+                LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
+                {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ont plus de chances que les autres d'être vendues
+                {' '}— {analyse.priorite.toLocaleString('fr-FR')} en Priorité, {analyse.a_suivre.toLocaleString('fr-FR')} À suivre.
+                {' '}Elles arrivent en tête de votre tri ; les {(analyse.total - analyse.signalees).toLocaleString('fr-FR')} autres suivent, sans jugement.
+              </p>
+              <p data-kanban-analyse-sub className="mt-1 text-[11px] text-txt-dim">
+                {(() => {
+                  const distinct = Array.from(new Set((etat?.proposees ?? []).flatMap((it) => (it.signaux ?? []).map((s) => s.label)))).slice(0, 4)
+                  return distinct.length ? `Signaux détectés : ${distinct.join(', ')} · ` : ''
+                })()}
+                {etat?.valeurs_run?.date ? `valeurs au ${fmtDate(etat.valeurs_run.date)} · run ${etat.valeurs_run.label}` : ''}
+                {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtInt(m)} €/m²` : '' })()}
+              </p>
+              <button data-kanban-scoring onClick={() => setAlgoModale('scoring')}
+                className="mt-1.5 text-[11px] text-mint transition-colors duration-quick hover:underline">Comprendre le classement →</button>
+            </div>
+          )}
         </div>
       )}
 
@@ -348,7 +367,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   <span className="h-[7px] w-[7px] rounded-full" style={{ background: col.accent }} />
                   <span className="font-mono text-[9.5px] uppercase tracking-wider text-txt-mut">{col.label}</span>
                   <span data-kanban-count={col.key} className="font-mono text-[12.5px] text-mint">{count.toLocaleString('fr-FR')}</span>
-                  {isProp && analyse && analyse.signalees > 0 && <span className="text-[10.5px] text-txt-dim">· les {analyse.signalees.toLocaleString('fr-FR')} signalées d'abord</span>}
+                  {/* RETOURS-3 R8 — même logique que les chips : les signalées RESTANT à trier (restant), pas le total. */}
+                  {isProp && restant && restant.signalees > 0 && <span className="text-[10.5px] text-txt-dim">· les {restant.signalees.toLocaleString('fr-FR')} signalées d'abord</span>}
                   {col.key === 'ecartee' && <span className="ml-auto text-[10px] text-txt-dim">réversible</span>}
                 </div>
 
@@ -358,7 +378,10 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                     <div className="flex shrink-0 items-center gap-1.5 border-b border-line-2 px-3.5 py-2">
                       {([['', 'Tous', null], ['brulante', 'Priorité', TOKENS.stEcartee], ['chaude', 'À suivre', TOKENS.stCreuser]] as const).map(([v, l, dot]) => {
                         const on = (navTier ?? '') === v
-                        const n = v === 'brulante' ? analyse?.priorite : v === 'chaude' ? analyse?.a_suivre : null
+                        // RETOURS-3 R8 — les chips comptent ce qui reste À TRIER (retenues/écartées en sortent),
+                        // cohérent avec le compteur « à trier » du haut. Tous = total à trier ; Priorité/À suivre
+                        // = restant par tier (servi `restant`). Le bandeau, lui, garde le total du cadrage.
+                        const n = v === 'brulante' ? restant?.priorite : v === 'chaude' ? restant?.a_suivre : totalProp
                         return (
                           <button key={v || 'tous'} data-kanban-nav-tier={v || 'tous'} onClick={() => setNavTier(v || null)}
                             className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${on ? 'border-mint/45 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
@@ -366,9 +389,9 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                           </button>
                         )
                       })}
+                      {/* RETOURS-3 R9 (Vic 31/08) — barre de recherche « adresse, IDU… » RETIRÉE de la
+                          colonne À trier (le tri se fait par chips + tiroir Filtrer, pas par recherche libre). */}
                       <span className="flex-1" />
-                      <input data-kanban-search value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 adresse, IDU…"
-                        className="w-[150px] rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11.5px] text-txt outline-none placeholder:text-txt-dim focus:border-mint" />
                       <button data-kanban-filtrer onClick={() => setDrawerOpen((o) => !o)}
                         className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11.5px] transition-colors duration-quick ${drawerOpen ? 'border-mint text-mint' : 'border-line-2 text-txt hover:border-mint'}`}>
                         ⚙ Filtrer{puces.length > 0 && <span className="rounded-full bg-mint px-1.5 text-[9.5px] font-bold text-mint-ink">{puces.length}</span>}</button>
@@ -397,7 +420,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                   {list.length === 0 && (
                     <div className="m-3 rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
-                      {isProp ? (deZero ? 'Projet de zéro — ajoutez des parcelles depuis leurs fiches.' : (search || puces.length ? 'Aucune parcelle ne correspond à ce filtre.' : 'Rien à trier pour l’instant.'))
+                      {isProp ? (deZero ? 'Projet de zéro — ajoutez des parcelles depuis leurs fiches.' : (puces.length ? 'Aucune parcelle ne correspond à ce filtre.' : 'Rien à trier pour l’instant.'))
                         : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
                     </div>
                   )}

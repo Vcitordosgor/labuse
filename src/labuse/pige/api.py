@@ -522,6 +522,40 @@ class DepotAnalyserIn(BaseModel):
     html: str
 
 
+# RETOURS-3 R3 (Vic 31/08) — l'agence colle SON URL d'annonce. Le champ détecte une URL http(s) et
+# bascule sur une lecture serveur ONE-SHOT (une seule requête, headers navigateur, timeout court, AUCUN
+# retry, aucune boucle). Si le portail refuse (Datadome/403/timeout/page sans __NEXT_DATA__), on rend un
+# message HONNÊTE + le repli guidé Cmd+S — jamais l'erreur __NEXT_DATA__ brute face à une URL.
+import re as _re
+
+_URL_RE = _re.compile(r"^\s*https?://", _re.I)
+_BROWSER_HEADERS = {
+    "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
+}
+_DEPOT_REPLI = ("Enregistrez la page de l'annonce en « page web complète » (Cmd+S / Ctrl+S), "
+                "puis collez ici le HTML.")
+
+
+def _fetch_page_oneshot(url: str) -> str:
+    """Lecture ONE-SHOT d'une URL d'annonce : une seule requête, headers navigateur, timeout court,
+    AUCUN retry. Lève RuntimeError (message court) si le portail refuse — l'appelant en fait un motif
+    honnête. Ne suit qu'un nombre borné de redirections (requests par défaut)."""
+    import requests
+    try:
+        r = requests.get(url, headers=_BROWSER_HEADERS, timeout=8, allow_redirects=True)
+    except requests.RequestException as exc:  # DNS, timeout, connexion refusée…
+        raise RuntimeError(f"le portail n'a pas répondu ({type(exc).__name__})") from exc
+    corps = r.text or ""
+    if r.status_code in (401, 403, 429) or "datadome" in corps[:8000].lower():
+        raise RuntimeError(f"le portail bloque la lecture automatique (HTTP {r.status_code})")
+    if r.status_code >= 400 or len(corps) < 500:
+        raise RuntimeError(f"page illisible (HTTP {r.status_code})")
+    return corps
+
+
 class DepotPublierIn(BaseModel):
     rec: dict
     idu: str
@@ -558,9 +592,26 @@ def radar_depot_agence_ouvert() -> dict:
 
 @router.post("/admin/radar/depot-agence/analyser")
 def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict:
-    """ÉTAPE 1-2 — l'agence colle sa page ; le parseur RADAR-DEPOT-2 reconstruit les champs pré-remplis."""
+    """ÉTAPE 1-2 — l'agence colle sa page (HTML) OU l'URL de son annonce ; le parseur RADAR-DEPOT-2
+    reconstruit les champs pré-remplis. RETOURS-3 R3 — une URL bascule sur une lecture serveur one-shot."""
     from . import depot_agence, html_next
     _depot_admin_ou_ouvert(request)   # SECTEUR-2b (U2) — admin toujours, client si drapeau ouvert
+    src = body.html or ""
+    if _URL_RE.match(src):
+        # chemin URL : fetch one-shot, puis parseur existant. Toute panne → message honnête + repli Cmd+S.
+        try:
+            page = _fetch_page_oneshot(src.strip())
+        except RuntimeError as exc:
+            return {"ok": False, "erreur": "url_bloquee",
+                    "motif": f"Le portail refuse la lecture automatique de cette adresse — {exc}. {_DEPOT_REPLI}"}
+        try:
+            return {"ok": True, "records": depot_agence.analyser(page)}
+        except html_next.NextDataError:
+            # jamais l'erreur __NEXT_DATA__ brute face à une URL : la page est récupérée mais illisible.
+            return {"ok": False, "erreur": "url_illisible",
+                    "motif": ("La page a bien été récupérée, mais son contenu n'est pas exploitable "
+                              f"automatiquement (protégé ou format inattendu). {_DEPOT_REPLI}")}
+    # chemin HTML collé — inchangé (le motif __NEXT_DATA__ y reste pertinent : page incomplète/tronquée).
     try:
         return {"ok": True, "records": depot_agence.analyser(body.html)}
     except html_next.NextDataError as exc:
