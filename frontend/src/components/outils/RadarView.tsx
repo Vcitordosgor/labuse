@@ -434,12 +434,9 @@ export function RadarView() {
           </div>
           <h3 className="mt-1.5 text-[20px] font-semibold text-txt-hi">Les biens en vente</h3>
           <p className="mt-1.5 text-[12.5px] leading-snug text-txt-mut">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l’annonce.</p>
-          {drapeauFerme && (
-            <span data-radar-publier-drapeau className="mt-2 inline-block rounded bg-amber/12 px-1.5 py-0.5 text-[10px] font-medium text-amber">
-              drapeau fermé — le dépôt reste invisible des clients
-            </span>
-          )}
-          {/* le parcours 4 étapes, déroulé dans l'app sous l'en-tête */}
+          {/* RETOURS-5 T7 — la mention « drapeau fermé » du BANDEAU est retirée (elle apparaissait deux fois) ;
+              elle reste dans l'encart de dépôt, là où elle est utile. */}
+          {/* le parcours de dépôt, déroulé dans l'app sous l'en-tête */}
           {boutonVisible && depotPanneau && (
             <div className="mt-3"><DepotAgence drapeauFerme={drapeauFerme} onClose={() => setDepotPanneau(false)} /></div>
           )}

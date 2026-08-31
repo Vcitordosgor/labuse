@@ -104,9 +104,11 @@ export function EtudierBien() {
         <b> vos hypothèses</b>.
       </div>
 
-      {/* ENTRÉE UNIFIÉE (patron omnibox M137) — UN SEUL champ : adresse OU IDU + clic carte */}
+      {/* ENTRÉE UNIFIÉE (patron omnibox M137) — UN SEUL champ : adresse OU IDU + clic carte.
+          RETOURS-5 T6 — plus d'autoFocus : le champ ouvre en bord NEUTRE, vert seulement au focus réel
+          (le contour vert « déjà focalisé » à l'ouverture trompait sur l'état). */}
       <div data-etudier-form className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <ParcelInput dataAttr="etudier-adresse" autoFocus
+        <ParcelInput dataAttr="etudier-adresse"
           placeholder="Adresse ou IDU (ex. 12 rue du Général de Gaulle, ou 97415000DK1044)"
           onPick={(idu) => lancer(idu, idu)}
           onAddress={(label) => lancer(label, null)} />
