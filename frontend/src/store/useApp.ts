@@ -244,11 +244,6 @@ interface AppState {
   // projets ». setView/nav principale le remet à null (retour à la liste). setOpenProjet(null) aussi.
   openProjet: { id: number; nom: string } | null
   setOpenProjet: (p: { id: number; nom: string } | null) => void
-  // PROJETS-FIX F4 — le PROJET CIBLE d'un ajout depuis la carte : posé par « Ajouter des parcelles →
-  // carte » (état vide d'un projet de zéro), il fait que le bouton « Projet » d'une fiche RATTACHE
-  // DIRECTEMENT à ce projet (au lieu d'ouvrir le menu). null = comportement normal (menu multi-projet).
-  projetCible: { id: number; nom: string } | null
-  setProjetCible: (p: { id: number; nom: string } | null) => void
   view: View
   setView: (v: View) => void
   // RADAR-CATÉGORIE (T1) — ouvrir la catégorie Radar (plein écran) : même nettoyage exclusif que
@@ -554,9 +549,6 @@ export const useApp = create<AppState>((set) => ({
   setOpenProjet: (openProjet) => set({ openProjet, view: 'projets', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null,
     iaRestitution: null, parcours: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
-  // PROJETS-FIX F4 — projet cible d'ajout depuis la carte (fiche « Projet » → rattachement direct).
-  projetCible: null,
-  setProjetCible: (projetCible) => set({ projetCible }),
   outilsOpen: false,
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
   // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.

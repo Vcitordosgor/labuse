@@ -2,19 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   getParcoursEtat, getProjet, patchProjet, projetPdfUrl, setStatutParcelle,
-  type Cadrage, type ParcoursEtat, type ParcoursItem, type ProprietairePublic,
+  type Cadrage, type ParcoursEtat, type ParcoursItem,
   type StatutParcelle,
 } from '../../lib/api'
 import { AlgoExplainer, ScoringExplainer } from '../panel/LeftPanel'
 import { FiltreFacettes } from '../panel/FiltreFacettes'
 import { FiltreProvider } from '../panel/filtreContext'
-import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduComplet, iduCourt } from '../../lib/format'
-import { CLIENT } from '../../lib/strings'
+import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduCourt } from '../../lib/format'
 import { etatBienMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Loading } from '../Loading'
-import { TierBadge } from '../outils/TierBadge'
 import { Tip } from '../Tip'
 
 /** PROJETS-FIX F2 (maquette §03) — le PÉRIMÈTRE, en étiquette de titre (une seule fois). */
@@ -61,17 +59,6 @@ function moveItem(etat: ParcoursEtat, idu: string, statut: StatutParcelle): Parc
     counts[statut] = (counts[statut] ?? 0) + 1
   }
   return { ...etat, proposees, retenues, ecartees, a_analyser, counts }
-}
-
-/** Contact proprio — PRIVACY : personne morale nommée (public) ; particulier JAMAIS nommé. */
-function ProprioLine({ p }: { p?: ProprietairePublic | null }) {
-  if (!p) return null
-  if (p.type === 'personne_morale') return (
-    <div className="truncate text-[10px] text-txt-mut" title={`Personne morale (registre public DGFiP) · SIREN ${p.siren ?? '—'}`}>
-      <span className="text-txt">{p.denomination}</span>{p.siren ? <span className="text-txt-dim"> · SIREN {p.siren}</span> : null}
-    </div>
-  )
-  return <div className="truncate text-[10px] italic text-txt-dim" title="Propriétaire personne physique — jamais nommé (privacy)">Propriétaire particulier — non communiqué</div>
 }
 
 /** VUE PROJET UNIFIÉE (PJ3) — kanban 3 colonnes (À trier / Retenues / Écartées) branché sur les
@@ -128,11 +115,10 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const [editCadrage, setEditCadrage] = useState(false)
   const deZero = Boolean((projet?.cadrage as Record<string, unknown> | undefined)?.__de_zero__)
   const vivierVide = etat != null && (etat.total_retenues ?? 0) === 0 && !deZero
-  const ajouterDepuisCarte = () => {
-    const s = useApp.getState()
-    s.setProjetCible({ id: pid, nom: projet?.nom ?? nom })   // la fiche « Projet » rattachera DIRECTEMENT ici
-    s.setView('cartes')
-  }
+  // PROJETS-V4 (V5) — « + Ajouter des parcelles » OUVRE SIMPLEMENT LA CARTE, sans verrouiller aucun état
+  // (le mode collant `projetCible` est supprimé). On y ajoute depuis le bouton « Projet » d'une fiche, qui
+  // liste TOUS les projets à chaque fois.
+  const ouvrirCarte = () => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('cartes') }
   const items = (k: StatutParcelle): ParcoursItem[] =>
     k === 'proposee' ? etat?.proposees ?? [] : k === 'retenue' ? etat?.retenues ?? [] : etat?.ecartees ?? []
   const count = (k: StatutParcelle) => etat?.counts?.[k] ?? 0
@@ -192,17 +178,19 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Renommer</button>
             <button data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }}
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Archiver</button>
+            {/* PROJETS-V4 (V3/V5) — « + Ajouter des parcelles » vit dans l'en-tête (à côté de PDF), plus
+                seulement dans l'état vide. Il ouvre la carte, sans verrouiller (fin du mode collant). */}
+            <button data-kanban-ajouter-header onClick={ouvrirCarte}
+              className="min-h-7 rounded-md border border-mint/50 bg-mint/15 px-2.5 py-1 text-[11px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/25">+ Ajouter des parcelles</button>
           </div>
         </div>
-        {/* OUTILS-5 (P1) — bandeau « cadrage modifié / rejeu » RETIRÉ avec le bouton Rejouer : le projet
-            est un instantané daté, jamais rejoué en place (« valeurs au JJ/MM » l'assume). */}
-        <p data-kanban-ajouter className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.ajouterDepuisFiche}</p>
+        {/* PROJETS-V4 (V3) — la phrase « Une parcelle en tête ailleurs ? … » est RETIRÉE : le bouton
+            « + Ajouter des parcelles » de l'en-tête la remplace. L'en-tête tient sur deux lignes. */}
       </div>
 
-      {/* 3 COLONNES — PROJETS-FIX F2 (maquette §03) : GRILLE pleine largeur (À trier 1.35 / Retenues 1 /
-          Écartées 0.8) qui remplit tout l'espace alloué — fini les colonnes à largeur fixe qui laissaient
-          un grand vide. Sous 980px, on empile (une colonne). */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 md:grid-cols-[1.35fr_1fr_0.8fr] sm:p-6">
+      {/* 3 COLONNES — PROJETS-V4 (V2) : grille pleine largeur À trier 2,2 / Retenues 1 / Écartées 1.
+          À trier a besoin de place (lignes compactes) ; Retenues/Écartées servent des mini-lignes. */}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 md:grid-cols-[2.2fr_1fr_1fr] sm:p-6">
         {etatQ.isLoading && <Loading label="Chargement du projet…" className="col-span-full mx-auto self-center" />}
         {COLS.map((col) => {
           const aAnalyser = etat?.a_analyser ?? []
@@ -254,22 +242,27 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   ))}
                 </div>
               )}
-              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5">
-                {/* PROJETS-FIX F4 — jamais un « 0 » nu : selon le cas, on invite à ajouter (projet de
-                    zéro) ou à modifier un cadrage sans résultat (cas légitime). */}
+              {/* PROJETS-V4 (V1) — l'EN-TÊTE de colonnes en mono, au-dessus de la liste « À trier ». */}
+              {isProp && !filtreAnalyse && (etat?.proposees?.length ?? 0) > 0 && (
+                <div data-kanban-lhead className="grid shrink-0 grid-cols-[16px_1fr_96px_74px_150px_68px] gap-3 border-b border-line-2 px-3 py-1.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-txt-dim">
+                  <span></span><span>Parcelle</span><span>Signal</span><span className="text-right">Surface</span><span className="text-right">Marché commune</span><span className="text-right">Trier</span>
+                </div>
+              )}
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                {/* PROJETS-FIX F4 — jamais un « 0 » nu : projet de zéro → ajouter ; cadrage sans résultat → modifier. */}
                 {list.length === 0 && isProp && !filtreAnalyse && editCadrage && (
-                  <CadrageEditor pid={pid} cadrage={projet?.cadrage ?? {}} onDone={() => setEditCadrage(false)} />
+                  <div className="m-2.5"><CadrageEditor pid={pid} cadrage={projet?.cadrage ?? {}} onDone={() => setEditCadrage(false)} /></div>
                 )}
                 {list.length === 0 && isProp && !filtreAnalyse && !editCadrage && deZero && (
-                  <div data-empty-de-zero className="rounded-lg border border-mint/25 bg-mint/[.06] p-4 text-center">
+                  <div data-empty-de-zero className="m-2.5 rounded-lg border border-mint/25 bg-mint/[.06] p-4 text-center">
                     <p className="text-[12px] text-txt-2">Projet de zéro — aucune parcelle pour l’instant.</p>
-                    <p className="mt-1 text-[11px] text-txt-mut">Choisissez vos cibles depuis la carte : le bouton « Projet » d’une fiche les rattachera directement ici.</p>
-                    <button data-empty-ajouter onClick={ajouterDepuisCarte}
+                    <p className="mt-1 text-[11px] text-txt-mut">Choisissez vos cibles depuis la carte : le bouton « Projet » d’une fiche liste tous vos projets et les ajoute à celui que vous choisissez.</p>
+                    <button data-empty-ajouter onClick={ouvrirCarte}
                       className="mt-3 rounded-md border border-mint/60 px-3 py-1.5 text-[11.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">Ajouter des parcelles → carte</button>
                   </div>
                 )}
                 {list.length === 0 && isProp && !filtreAnalyse && !editCadrage && vivierVide && (
-                  <div data-empty-cadrage-vide className="rounded-lg border border-line-2 bg-surface-2/60 p-4 text-center">
+                  <div data-empty-cadrage-vide className="m-2.5 rounded-lg border border-line-2 bg-surface-2/60 p-4 text-center">
                     <p className="text-[12px] text-txt-2">Aucune parcelle ne correspond à ce cadrage.</p>
                     <p className="mt-1 text-[11px] text-txt-mut">Le cadrage est peut-être trop resserré (ou porte une zone absente du périmètre).</p>
                     <button data-empty-modifier onClick={() => setEditCadrage(true)}
@@ -277,53 +270,55 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   </div>
                 )}
                 {list.length === 0 && !(isProp && !filtreAnalyse && !editCadrage && (deZero || vivierVide)) && !(isProp && editCadrage) && (
-                  <div className="rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
+                  <div className="m-2.5 rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
                     {isProp ? (filtreAnalyse ? 'Rien à analyser' : 'Rien à trier pour l’instant') : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
                   </div>
                 )}
-                {/* M120 · Phase 4 — MÊME anatomie de carte, DEUX densités : « À trier » garde tout
-                    (pourquoi + signaux, c'est là qu'on décide) ; Retenues/Écartées s'allègent. */}
-                {apercu.map((it) => (
-                  <TriCard key={it.idu} it={it} col={col.key} dense={isProp}
-                    onDragStart={() => setDrag({ idu: it.idu, from: isProp ? 'proposee' : col.key })}
-                    onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
+                {/* PROJETS-V4 (V1/V2) — « À trier » = LIGNES compactes (gestes ✓/✕) ; Retenues/Écartées = MINI-LIGNES. */}
+                {apercu.map((it) => (isProp ? (
+                  <LigneParcelle key={it.idu} it={it}
+                    onDragStart={() => setDrag({ idu: it.idu, from: 'proposee' })}
+                    onRetenir={() => decide.mutate({ idu: it.idu, statut: 'retenue' })}
+                    onEcarter={() => decide.mutate({ idu: it.idu, statut: 'ecartee' })}
                     onFiche={() => select(it.idu)} />
-                ))}
-                {/* FIX-PROJETS (P2) — le compteur de colonne (en-tête) = TOTAL VIF ; ce pied est un CAP
-                    d'AFFICHAGE explicite (« les N premières sur M »), jamais un compteur. « Charger plus »
-                    agrandit la fenêtre serveur (offset/limit) de 60, jamais tout chargé. */}
-                {isProp && !filtreAnalyse && etat?.page?.has_more && (
-                  <button data-kanban-charger-plus disabled={etatQ.isFetching}
-                    onClick={() => setPropLimit((l) => l + 60)}
-                    className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi disabled:opacity-50"
-                    title="La colonne « À trier » compte le TOTAL vif ; ici on n'en affiche que les premières (60 par palier) — cliquez pour en charger plus.">
-                    {etatQ.isFetching ? 'Chargement…'
-                      : `Charger plus  ·  les ${etat?.proposees?.length ?? 0} premières sur ${etat?.total_retenues ?? '…'}`}
-                  </button>
-                )}
-                {!isProp && reste > 0 && (
-                  <button data-kanban-plus={col.key} onClick={() => setExpandCol(col.key)}
-                    className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
-                    + {reste} autre{reste > 1 ? 's' : ''}
-                  </button>
-                )}
-                {!isProp && expandCol === col.key && list.length > APERCU && (
-                  <button onClick={() => setExpandCol(null)}
-                    className="min-h-7 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt-mut">réduire</button>
-                )}
-                {/* OUTILS-5 (P4) — colonne Retenues : « → CRM » + « ✉ Courrier (N) » (ouvre l'outil
-                    Courrier propriétaire pré-rempli des retenues, étape 1 remplie). */}
-                {col.key === 'retenue' && count('retenue') > 0 && (
-                  <div data-kanban-retenues-actions className="mt-1 flex gap-2 border-t border-line-2 pt-2">
-                    <button data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
-                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">→ CRM</button>
-                    <button data-kanban-courrier onClick={() => {
-                      const idus = (etat?.retenues ?? []).map((r) => r.idu)
-                      const s = useApp.getState(); s.setCourrierPrefillIdus(idus); s.setOpenProjet(null); s.setView('cartes'); s.setModule('courriers')
-                    }}
-                      className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">✉ Courrier ({count('retenue')})</button>
-                  </div>
-                )}
+                ) : (
+                  <MiniLigne key={it.idu} it={it} col={col.key}
+                    onDragStart={() => setDrag({ idu: it.idu, from: col.key })}
+                    onRetour={() => decide.mutate({ idu: it.idu, statut: 'proposee' })}
+                    onFiche={() => select(it.idu)} />
+                )))}
+                {/* pieds : charger plus / + N autres / réduire / actions Retenues (poussés en bas) */}
+                <div className="mt-auto p-2.5 pt-1.5">
+                  {isProp && !filtreAnalyse && etat?.page?.has_more && (
+                    <button data-kanban-charger-plus disabled={etatQ.isFetching} onClick={() => setPropLimit((l) => l + 60)}
+                      className="w-full rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi disabled:opacity-50"
+                      title="La colonne « À trier » compte le TOTAL vif ; ici on n'en affiche que les premières (60 par palier) — cliquez pour en charger plus.">
+                      {etatQ.isFetching ? 'Chargement…'
+                        : `Charger plus  ·  les ${etat?.proposees?.length ?? 0} premières sur ${etat?.total_retenues ?? '…'}`}
+                    </button>
+                  )}
+                  {!isProp && reste > 0 && (
+                    <button data-kanban-plus={col.key} onClick={() => setExpandCol(col.key)}
+                      className="w-full rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
+                      + {reste} autre{reste > 1 ? 's' : ''}
+                    </button>
+                  )}
+                  {!isProp && expandCol === col.key && list.length > APERCU && (
+                    <button onClick={() => setExpandCol(null)}
+                      className="mt-1 min-h-7 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt-mut">réduire</button>
+                  )}
+                  {col.key === 'retenue' && count('retenue') > 0 && (
+                    <div data-kanban-retenues-actions className="mt-1 flex gap-2 border-t border-line-2 pt-2">
+                      <button data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
+                        className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">→ CRM</button>
+                      <button data-kanban-courrier onClick={() => {
+                        const idus = (etat?.retenues ?? []).map((r) => r.idu)
+                        const s = useApp.getState(); s.setCourrierPrefillIdus(idus); s.setOpenProjet(null); s.setView('cartes'); s.setModule('courriers')
+                      }}
+                        className="flex-1 rounded-md border border-mint/40 py-1.5 text-center text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/10">✉ Courrier ({count('retenue')})</button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )
@@ -378,106 +373,59 @@ function CadrageEditor({ pid, cadrage, onDone }: { pid: number; cadrage: Cadrage
   )
 }
 
-/** M2 — badges parcelle (défisc / PC caduc / hors critères). */
-function Badges({ it }: { it: ParcoursItem }) {
-  if (!it.hors_criteres && !it.defisc && !it.caduc) return null
+/** PROJETS-V4 (V1) — la pastille de tier : Priorité (rouge) · À suivre (orange) · autres (gris). */
+const TIER_DOT: Record<string, string> = { brulante: TOKENS.stEcartee, chaude: TOKENS.stCreuser }
+function tierDot(tier: string | null): string { return (tier && TIER_DOT[tier]) || '#555' }
+
+/** PROJETS-V4 (V1) — LA LIGNE remplace la carte dans « À trier » : ~42 px, grille alignée (pastille ·
+ *  adresse [IDU + nu/bâti en sous-ligne mono] · signal · surface → · marché commune → · deux gestes ✓/✕
+ *  de 26 px). Survol = fond éclairci. Clic = fiche ; glisser = décider (même mutation que les gestes). */
+function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche }: {
+  it: ParcoursItem; onDragStart: () => void; onRetenir: () => void; onEcarter: () => void; onFiche: () => void
+}) {
+  const titre = it.adresse || it.commune
+  const eb = etatBienMeta(it.etat_bien)
+  const nb = eb?.short ?? (it.etat_bien === 'nu' ? 'Nu' : '')
   return (
-    <span className="inline-flex flex-wrap gap-1 align-middle">
-      {it.hors_criteres && (
-        <Tip tip="Décidée avant, hors des critères actuels — conservée (jamais évincée)">
-          <span data-badge-hors className="rounded-full border border-st-creuser px-1.5 text-[8.5px] font-semibold text-st-creuser">hors critères actuels</span>
-        </Tip>
-      )}
-      {it.defisc && <span className="rounded-full border border-violet px-1.5 text-[8.5px] font-semibold text-violet">défisc</span>}
-      {it.caduc && <span className="rounded-full border border-st-creuser px-1.5 text-[8.5px] font-semibold text-st-creuser">PC caduc</span>}
-    </span>
+    <div draggable onDragStart={onDragStart} data-tri-ligne={it.idu}
+      onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
+      className="grid cursor-pointer grid-cols-[16px_1fr_96px_74px_150px_68px] items-center gap-3 border-b border-line/50 px-3 py-2 transition-colors duration-quick hover:bg-surface-2"
+      title="Ouvrir la fiche · glisser pour décider">
+      <span className="h-[7px] w-[7px] rounded-full" style={{ background: tierDot(it.tier) }} />
+      <div className="min-w-0">
+        <b className="block truncate text-[13px] font-medium text-txt-hi">{titre}</b>
+        <span className="block truncate font-mono text-[10.5px] text-txt-dim">{iduCourt(it.idu)}{nb ? ` · ${nb}` : ''}</span>
+      </div>
+      <span className="truncate text-[11px] text-txt-mut" title={it.raison ?? undefined}>{it.raison ?? ''}</span>
+      <span className="text-right font-mono text-[11.5px] text-txt-mut">{it.surface_m2 != null ? fmtM2(it.surface_m2) : '—'}</span>
+      <span className="text-right text-[11.5px] text-txt-dim">{it.marche_eur_m2 != null ? `~${fmtInt(it.marche_eur_m2)} €/m²` : '—'}</span>
+      <div className="flex justify-end gap-1.5">
+        <button data-tri-retenir onClick={onRetenir} title="Retenir"
+          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-mint/40 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">✓</button>
+        <button data-tri-ecarter onClick={onEcarter} title="Écarter"
+          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-st-ecartee/40 text-[12px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕</button>
+      </div>
+    </div>
   )
 }
 
-/** M120 · Phase 4 — LA CARTE DE TRI, une SEULE anatomie, DEUX densités (patron liste M114) :
- *  · dense (« À trier ») garde TOUT — adresse, tier, le POURQUOI (forces sourcées), le signal
- *    marché/événement, et les DEUX gestes (✓ Retenir · ✕ Écarter — OUTILS-5 : « Peut-être » retiré) ;
- *  · light (Retenues/Écartées) s'allège — adresse, IDU, tier, l'action de retour. Le pourquoi et le
- *    signal marché n'y servent plus (la décision est prise). Le q_score interne n'est PLUS servi. */
-function TriCard({ it, col, dense, onDragStart, onAction, onFiche }: {
-  it: ParcoursItem; col: StatutParcelle; dense: boolean
-  onDragStart: () => void; onAction: (s: StatutParcelle) => void; onFiche: () => void
+/** PROJETS-V4 (V2) — la MINI-LIGNE des colonnes étroites (Retenues / Écartées) : pastille, adresse
+ *  tronquée, bouton retour (↩ → à trier). Pas une carte. Écartées en retrait (opacité). */
+function MiniLigne({ it, col, onDragStart, onRetour, onFiche }: {
+  it: ParcoursItem; col: StatutParcelle; onDragStart: () => void; onRetour: () => void; onFiche: () => void
 }) {
-  const analyse = it.statut === 'a_analyser'
   const titre = it.adresse || it.commune
+  const ecartee = col === 'ecartee'
   return (
-    <div draggable onDragStart={onDragStart} data-tri-card={it.idu} data-tri-dense={dense ? '1' : '0'}
+    <div draggable onDragStart={onDragStart} data-mini-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className={`group cursor-pointer rounded-lg border p-2.5 transition-colors duration-quick active:cursor-grabbing hover:border-mint/30 ${analyse ? 'border-st-creuser/50 bg-st-creuser/5' : 'border-line-2 bg-surface-3'}`}
-      title="Ouvrir la fiche · glisser pour décider">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            {analyse && <span className="text-[10px] text-st-creuser" title="à analyser">◑</span>}
-            <span className="truncate text-[12px] text-txt-hi">{titre}</span>
-          </div>
-          <span title={iduComplet(it.idu)} className="font-mono text-[9.5px] text-txt-dim">{it.adresse ? iduCourt(it.idu) : iduComplet(it.idu)}</span>
-        </div>
-        <TierBadge tier={it.tier} etage0={null} statut={null} />
-      </div>
-      <div className="tnum mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 truncate text-[10.5px] text-txt-mut">
-        <span>{it.commune}{it.surface_m2 != null ? ` · ${fmtM2(it.surface_m2)}` : ''}</span>
-        {/* M131 P3 — badge d'état du bien (affichage pur du fait M125/M129-D) */}
-        {etatBienMeta(it.etat_bien) && (
-          <span data-etat-bien={it.etat_bien} title={etatBienMeta(it.etat_bien)!.label}
-            className="rounded-full border px-1.5 py-0.5 text-[9px] font-medium"
-            style={{ borderColor: `${etatBienMeta(it.etat_bien)!.color}55`, color: etatBienMeta(it.etat_bien)!.color }}>
-            {etatBienMeta(it.etat_bien)!.short}
-          </span>
-        )}
-        <Badges it={it} />
-        {/* OUTILS-5 (P1) — le SIGNAL qui a classé la parcelle (« succession », « permis jamais lancé »…),
-            servi par le même moteur que la carte (raison dominante des contributions du score). */}
-        {it.raison && <span data-card-signal className="rounded-full bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{it.raison}</span>}
-      </div>
-
-      {/* dense uniquement — le POURQUOI (sourcé) + le signal marché/événement */}
-      {dense && it.pourquoi && it.pourquoi.length > 0 && (
-        <div className="mt-1.5 flex flex-col gap-0.5">
-          {it.pourquoi.map((l, i) => (
-            <p key={i} className="flex gap-1.5 text-[10.5px] leading-snug text-txt-2"><span className="shrink-0 text-mint">▲</span>{l}</p>
-          ))}
-        </div>
-      )}
-      {dense && (it.marche_eur_m2 != null || it.evenement) && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {it.marche_eur_m2 != null && (
-            <span className="rounded-full border border-line-2 px-2 py-0.5 text-[9.5px] text-txt-mut" title="Prix médian DVF du bâti ANCIEN de la commune (€/m² habitable) — repère de revente à l'échelle commune. À NE PAS confondre avec le « prix de sortie neuf » de secteur (fiche/Étudier). Pas une estimation par parcelle.">marché ancien commune ~{fmtInt(it.marche_eur_m2)} €/m²</span>
-          )}
-          {it.evenement && <span className="rounded-full border border-st-ecartee/50 px-2 py-0.5 text-[9.5px] text-st-ecartee" title="Événement foncier rouge (run servi) — mutation probable">événement</span>}
-        </div>
-      )}
-
-      {col === 'retenue' && (
-        <div className="mt-1.5 border-t border-line-2/60 pt-1.5">
-          <div className="text-[10px] text-mint" title="Piste créée automatiquement dans le CRM — remettre à trier l'en retire">▸ dans le CRM · contact à préparer</div>
-          <ProprioLine p={it.proprietaire_public} />
-        </div>
-      )}
-
-      {/* gestes — dense : 3 décisions ; light : décision inverse + retour */}
-      <div className="mt-2 flex gap-1.5">
-        {col !== 'retenue' && (
-          <button data-card-retenir onClick={() => onAction('retenue')}
-            className="min-h-7 flex-1 rounded-md border border-mint/60 py-1 text-[10.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">✓ Retenir</button>
-        )}
-        {/* OUTILS-5 (P4) — « ◑ Peut-être » RETIRÉ : les projets repartant de zéro, deux gestes suffisent
-            (✓ Retenir / ✕ Écarter). Aucune colonne « à analyser » à alimenter. */}
-        {col !== 'ecartee' && (
-          <button data-card-ecarter onClick={() => onAction('ecartee')}
-            className="min-h-7 flex-1 rounded-md border border-st-ecartee/50 py-1 text-[10.5px] font-medium text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕ Écarter</button>
-        )}
-        {col !== 'proposee' && !dense && (
-          <button data-card-retrier onClick={() => onAction('proposee')}
-            className="min-h-7 flex-1 rounded-md border border-line-2 py-1 text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt"
-            title={col === 'ecartee' ? 'Récupérer (repasse à trier)' : 'Remettre à trier (retire du CRM)'}>↩ {col === 'ecartee' ? 'Récupérer' : 'À trier'}</button>
-        )}
-      </div>
+      className={`flex cursor-pointer items-center gap-2 border-b border-line/50 px-3 py-2 transition-colors duration-quick hover:bg-surface-2 ${ecartee ? 'opacity-60' : ''}`}
+      title="Ouvrir la fiche">
+      <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: tierDot(it.tier) }} />
+      <b className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-txt">{titre}</b>
+      <button data-mini-retour onClick={onRetour}
+        title={ecartee ? 'Récupérer (→ à trier)' : 'Remettre à trier'}
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[12px] transition-colors duration-quick ${ecartee ? 'border-mint/40 text-mint hover:bg-mint/15' : 'border-line-2 text-txt-mut hover:border-mint hover:text-mint'}`}>↩</button>
     </div>
   )
 }

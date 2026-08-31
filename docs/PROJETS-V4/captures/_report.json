@@ -1,0 +1,20 @@
+{
+  "lignesVisibles": 60,
+  "lheadOk": 1,
+  "ajouterHeader": 1,
+  "rowsAccueil": 4,
+  "vivierZero": 0,
+  "ficheA": {
+    "menu": 1,
+    "items": 6,
+    "nouveau": 1,
+    "confirm": "✓ Ajoutée à « tyty »"
+  },
+  "ficheB": {
+    "menu": 1,
+    "items": 6,
+    "nouveau": 1,
+    "confirm": "✓ Ajoutée à « tyty »"
+  },
+  "errors": []
+}

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { createContext, isValidElement, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
@@ -533,101 +533,91 @@ function PipelineButton({ idu }: { idu: string }) {
  *  quand Pipeline est en MENTHE (CRM prospection). La parcelle atterrit dans « À trier » (proposee).
  *  MULTI-PROJET AUTORISÉ : une parcelle peut nourrir plusieurs projets (dédup par projet côté
  *  serveur). Déjà rattachée → bouton actif (violet plein) + nom du/des projet(s) ; clic = ouvrir. */
+// PROJETS-V4 (V5) — FIN DU MODE COLLANT. Le bouton ouvre TOUJOURS un menu listant tous les projets
+// actifs (nom + taille du vivier) + « Nouveau projet avec cette parcelle ». Le choix ajoute la parcelle
+// aux Retenues du projet et affiche une confirmation brève. RIEN n'est mémorisé (le state `projetCible`
+// est supprimé) : la fiche suivante rouvre le même menu complet.
 function ProjetButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
   const setOpenProjet = useApp((s) => s.setOpenProjet)
-  // PROJETS-FIX F4 — projet cible posé par « Ajouter des parcelles → carte » : le bouton rattache
-  // DIRECTEMENT à ce projet (pas de menu), tant que la parcelle n'y est pas déjà.
-  const projetCible = useApp((s) => s.projetCible)
   const [open, setOpen] = useState(false)
+  const [confirmMsg, setConfirmMsg] = useState<string | null>(null)
   const attache = useQuery({ queryKey: ['projets-parcelle', idu], queryFn: () => projetsPourParcelle(idu) })
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets, enabled: open })
+  const flash = (nom: string) => { setOpen(false); setConfirmMsg(nom); window.setTimeout(() => setConfirmMsg((m) => (m === nom ? null : m)), 2800) }
+  const invalider = () => {
+    qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })
+    qc.invalidateQueries({ queryKey: ['projets'] })
+    qc.invalidateQueries({ queryKey: ['parcours'] })   // les kanbans concernés se rafraîchissent
+  }
   const add = useMutation({
     mutationFn: (pid: number) => ajouterParcelle(pid, idu),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })
-      qc.invalidateQueries({ queryKey: ['projets'] })
-      qc.invalidateQueries({ queryKey: ['parcours'] })   // le kanban du projet cible se rafraîchit
-      setOpen(false)
+    onSuccess: (_r, pid) => { invalider(); flash((projetsQ.data ?? []).find((x) => x.id === pid)?.nom ?? 'projet') },
+  })
+  // « Nouveau projet avec cette parcelle » : crée un projet DE ZÉRO puis y ajoute la parcelle (Retenues).
+  const nouveau = useMutation({
+    mutationFn: async () => {
+      const r = await createProjet({ cadrage: {}, de_zero: true })
+      await ajouterParcelle(r.projet.id, idu)
+      return r.projet
     },
+    onSuccess: (p) => { invalider(); flash(p.nom) },
   })
   const attaches = attache.data?.projets ?? []
   const dejaIds = new Set(attaches.map((p) => p.id))
   const inProjet = attaches.length > 0
-  // liste des projets ACTIFS non archivés (candidats à l'ajout)
   const candidats = (projetsQ.data ?? []).filter((p) => p.statut === 'actif')
-  // M15 C3 : le HAUT du menu ne montre QUE les projets où la parcelle PEUT être ajoutée
-  // (elle n'y est pas encore) — tous cliquables, aucun grisé. Les projets où elle est déjà
-  // rangée vivent UNIQUEMENT dans la section « Déjà dans » du bas (fin du doublon M14).
-  const ajoutables = candidats.filter((p) => !dejaIds.has(p.id))
-  // F4 — cible active = un projet présélectionné où la parcelle n'est pas encore rangée.
-  const cibleActive = projetCible && !dejaIds.has(projetCible.id) ? projetCible : null
+  const vivier = (p: { counts?: { proposee?: number; retenue?: number; ecartee?: number; a_analyser?: number } }) => {
+    const c = p.counts ?? {}
+    return (c.proposee ?? 0) + (c.retenue ?? 0) + (c.ecartee ?? 0) + (c.a_analyser ?? 0)
+  }
 
   return (
     <div className="relative flex-1">
       <button
-        data-projet-fiche
-        data-projet-cible-actif={cibleActive ? '1' : undefined}
-        onClick={() => { if (cibleActive) add.mutate(cibleActive.id); else setOpen((o) => !o) }}
-        aria-expanded={open}
+        data-projet-fiche onClick={() => setOpen((o) => !o)} aria-expanded={open}
         className="act act-proj w-full whitespace-nowrap"
-        style={cibleActive || inProjet ? { background: 'var(--iris)', color: 'var(--bg-0)', borderColor: 'transparent' } : undefined}
-        title={cibleActive
-          ? `Rattacher directement à « ${cibleActive.nom} » (projet présélectionné depuis la carte)`
-          : inProjet
-            ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — ouvrir / rattacher à un autre`
-            : 'Rattacher cette parcelle à un projet (elle arrive dans « À trier »)'}
-      >
-        {cibleActive
-          ? `+ Ajouter à « ${cibleActive.nom} »`
-          : inProjet
-            ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`)
-            : '+ Projet'}
+        style={inProjet ? { background: 'var(--iris)', color: 'var(--bg-0)', borderColor: 'transparent' } : undefined}
+        title={inProjet
+          ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — rattacher à un autre`
+          : 'Ajouter cette parcelle à un projet'}>
+        {inProjet ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`) : '+ Projet'}
       </button>
 
+      {confirmMsg && (
+        <div data-projet-confirm className="absolute bottom-10 left-0 z-30 whitespace-nowrap rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1.5 text-[11px] text-mint">
+          ✓ Ajoutée à « {confirmMsg} »
+        </div>
+      )}
+
       {open && (
-        <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-64 p-2 text-[11px]">
-          {/* M-C/merge : le bloc « Ouvrir » de M13-E3 (en tête) est RETIRÉ — main (QA-59) sert déjà
-              les projets rattachés en bas (« Déjà dans — ouvrir »), l'auto-merge les avait dupliqués. */}
-          <p className="label-caps px-1 pb-1">Rattacher à un projet</p>
+        <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-72 p-2 text-[11px]">
+          <p className="label-caps px-1 pb-1 text-txt-dim">Ajouter cette parcelle à…</p>
           {projetsQ.isLoading && <div className="px-1 py-2 text-txt-dim">Chargement…</div>}
-          {!projetsQ.isLoading && ajoutables.length === 0 && (
-            <p className="px-1 py-2 leading-snug text-txt-dim">
-              {candidats.length === 0
-                ? 'Aucun projet actif. Créez-en un depuis « Mes projets ».'
-                : 'Cette parcelle est déjà dans tous vos projets actifs.'}
-            </p>
+          {!projetsQ.isLoading && candidats.length === 0 && (
+            <p className="px-1 py-2 leading-snug text-txt-dim">Aucun projet actif — créez-en un ci-dessous.</p>
           )}
-          {/* M15 C3 : uniquement les projets où l'ajout est POSSIBLE — tous cliquables, aucun grisé
-              (les projets déjà rattachés ne sont plus répétés ici, ils sont en bas). Le doublon
-              interdit dans un même projet reste garanti côté backend (ON CONFLICT). */}
           <div className="max-h-56 space-y-0.5 overflow-y-auto">
-            {ajoutables.map((p) => (
-              <button key={p.id} data-projet-fiche-cible disabled={add.isPending}
-                onClick={() => add.mutate(p.id)}
-                className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-violet/10 hover:text-txt-hi"
-                title={`Ajouter à « ${p.nom} » (→ À trier)`}>
-                <span className="min-w-0 flex-1 truncate">{p.nom}</span>
-                <span className="shrink-0 text-violet">+</span>
-              </button>
-            ))}
-          </div>
-          {/* Ouvrir un projet où la parcelle est déjà rangée (l'action « ouvrir » n'est plus sur le
-              bouton principal, qui ouvre désormais toujours ce menu). */}
-          {attaches.length > 0 && (
-            <div className="mt-1 border-t border-line/40 pt-1">
-              <p className="label-caps px-1 pb-0.5 text-txt-dim">Déjà dans — ouvrir</p>
-              {attaches.map((p) => (
-                <button key={`open-${p.id}`} data-projet-fiche-ouvrir
-                  onClick={() => { setOpenProjet({ id: p.id, nom: p.nom }); setOpen(false) }}
-                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-violet transition-colors duration-quick hover:bg-violet/10"
-                  title={`Ouvrir « ${p.nom} »`}>
+            {candidats.map((p) => {
+              const deja = dejaIds.has(p.id)
+              return (
+                <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
+                  onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-violet/10 hover:text-txt-hi"
+                  title={deja ? `Déjà dans « ${p.nom} » — ouvrir` : `Ajouter à « ${p.nom} » (→ Retenues)`}>
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
                   <span className="min-w-0 flex-1 truncate">{p.nom}</span>
-                  <span className="shrink-0">→</span>
+                  <span className="shrink-0 font-mono text-[10px] text-txt-dim">{deja ? 'déjà ↗' : vivier(p).toLocaleString('fr-FR')}</span>
                 </button>
-              ))}
-            </div>
-          )}
+              )
+            })}
+          </div>
+          <div className="my-1.5 h-px bg-line/40" />
+          <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-50"
+            title="Créer un projet et y ajouter cette parcelle">
+            <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
+          </button>
         </div>
       )}
     </div>
