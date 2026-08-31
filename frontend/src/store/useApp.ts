@@ -405,6 +405,9 @@ interface AppState {
   setM22Prefill: (p: Record<string, unknown> | null) => void
   m02Prefill: string | null // fiche → scan patrimoine du propriétaire (SIREN)
   setM02Prefill: (s: string | null) => void
+  // RETOURS-3 R4 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
+  veilleFocusSiren: string | null
+  setVeilleFocusSiren: (s: string | null) => void
   pluPrefill: { insee: string; zone: string | null } | null // fiche → annuaire PLU (O13) : commune + zone
   setPluPrefill: (p: { insee: string; zone: string | null } | null) => void
   // M137-P — l'outil PLU unifié ouvre directement une de ses 3 vues (consommé-puis-remis-à-null par le hub).
@@ -753,6 +756,8 @@ export const useApp = create<AppState>((set) => ({
   setM22Prefill: (m22Prefill) => set({ m22Prefill }),
   m02Prefill: null,
   setM02Prefill: (m02Prefill) => set({ m02Prefill }),
+  veilleFocusSiren: null,
+  setVeilleFocusSiren: (veilleFocusSiren) => set({ veilleFocusSiren }),
   pluPrefill: null,
   setPluPrefill: (pluPrefill) => set({ pluPrefill }),
   pluVue: null,

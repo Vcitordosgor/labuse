@@ -123,6 +123,9 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
 // Exporté pour test (SCAN — le retrait de l'action courrier est le cœur du mandat).
 export function M02() {
   const { m02Prefill, setM02Prefill } = useApp()
+  // RETOURS-3 R4.3 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
+  const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
+  const setModule = useApp((s) => s.setModule)
   const [q, setQ] = useState('')
   const [siren, setSiren] = useState<string | null>(null)
   useEffect(() => {
@@ -193,6 +196,13 @@ export function M02() {
             {/* #3 valorisation indicative du foncier nu (zones U/AU) au référentiel unique prix de zone */}
             {d['valorisation_nu_eur'] != null && (
               <div className="mt-1 text-[11px] text-txt-dim">Valorisation indicative du foncier nu <span className="text-txt-dim">(zones U/AU, DVF terrains)</span> : <b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></div>
+            )}
+            {/* RETOURS-3 R4.3 — pont vers Veille promoteurs : CE QUE ce propriétaire CONSTRUIT (mêmes SIREN,
+                ses opérations + programmes). Le Scan dit ce qu'il DÉTIENT ; la Veille ce qu'il BÂTIT. */}
+            {d['siren'] != null && (
+              <button data-m02-operations onClick={() => { setVeilleFocusSiren(String(d['siren'])); setModule('veille-promoteurs') }}
+                className="mt-2 text-[11px] text-mint hover:underline" title="Ses opérations de construction — Veille promoteurs">
+                Voir ses opérations →</button>
             )}
           </div>
           {/* LOT6 (OUTILS-FINALE) — le bloc « N parcelles contiguës — Analyser en assiette → » est RETIRÉ :

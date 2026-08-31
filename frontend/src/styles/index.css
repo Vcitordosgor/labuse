@@ -18,6 +18,8 @@
   --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44; --lab:#7C8A82;
   /* sémantique */
   --mint:#4ADE80; --mint-bg:#12291D; --mint-on:#06301A; --mint-sub:#0B4526;
+  /* mauve = surface IA (Copilote) — miroir du token Tailwind `violet`/`cp-ia` #B497F0 (RETOURS-3 R1). */
+  --violet:#B497F0; --violet-bg:rgba(180,151,240,.14);
   --amber:#E0A94F; --amber-bg:#2A2113;
   --coral:#E2726A; --coral-bg:#2B1715;
   --blue:#8FB4F0; --iris:#8B7BD8; --iris-2:#C4B5FD; --iris-bg:#16121F; --iris-line:#2E2545;
@@ -75,6 +77,58 @@
   .gr-t { font-size:var(--fs-row); color:var(--txt-hi); }
   .gr-s { font-size:var(--fs-sub); color:var(--txt-mut); margin-top:2px; }
   .gr-v { font-size:13.5px; color:var(--txt); }
+
+  /* RETOURS-3 R1 — cartes d'entrée de l'accueil (maquette-accueil-v2, validée Vic). Au REPOS : tuile
+     franchement teintée (fond ~20 % + contour ~45 %) — vert pour les 3 entrées, mauve pour le Copilote
+     (IA). Au SURVOL : la carte entière se remplit (vert opaque `--mint`, mauve `--violet` sur l'IA), le
+     contenu s'inverse en sombre (#08110b sur vert, #150f24 sur mauve), la tuile devient une pastille
+     sombre au glyphe RESTÉ coloré (il ressort davantage, ne se fond jamais). */
+  .acc-entry { display:flex; align-items:center; gap:16px; width:100%; text-align:left; cursor:pointer;
+    background:var(--bg-2); border-radius:12px; border-left:3px solid var(--line-2); padding:14px 16px;
+    color:var(--txt); transition:background .12s, border-color .12s, color .12s; }
+  .acc-entry .acc-tile { width:44px; height:44px; flex:none; border-radius:11px; display:flex;
+    align-items:center; justify-content:center; border:1px solid transparent;
+    transition:background .12s, color .12s, border-color .12s; }
+  .acc-entry .acc-tile svg { width:23px; height:23px; }
+  .acc-entry .acc-desc { transition:color .12s; }
+  .acc-entry .acc-arrow { flex:none; font-size:16px; color:var(--txt-dim); transition:color .12s, transform .12s; }
+  /* — vert (Explorer / Radar / Outils) — */
+  .acc-entry.mint { border-left-color:var(--mint); }
+  .acc-entry.mint .acc-tile { background:rgba(74,222,128,.20); border-color:rgba(74,222,128,.45); color:var(--mint); }
+  .acc-entry.mint .acc-arrow { color:var(--mint); }
+  /* — mauve (Copilote, seule surface IA) — */
+  .acc-entry.mauve { border-left-color:var(--violet); }
+  .acc-entry.mauve .acc-tile { background:rgba(180,151,240,.22); border-color:rgba(180,151,240,.48); color:var(--violet); }
+  .acc-entry.mauve .acc-arrow { color:var(--violet); }
+  @media (hover:hover) and (pointer:fine) {
+    .acc-entry.mint:hover { background:var(--mint); border-left-color:var(--mint); color:#08110b; }
+    .acc-entry.mint:hover .acc-tile { background:#08110b; border-color:#08110b; color:var(--mint); }
+    .acc-entry.mint:hover .acc-desc { color:rgba(8,17,11,.72); }
+    .acc-entry.mint:hover .acc-arrow { color:#08110b; transform:translateX(3px); }
+    .acc-entry.mauve:hover { background:var(--violet); border-left-color:var(--violet); color:#150f24; }
+    .acc-entry.mauve:hover .acc-tile { background:#150f24; border-color:#150f24; color:var(--violet); }
+    .acc-entry.mauve:hover .acc-desc { color:rgba(21,15,36,.72); }
+    .acc-entry.mauve:hover .acc-arrow { color:#150f24; transform:translateX(3px); }
+  }
+
+  /* RETOURS-3 R2/R14 — entrée du MENU LATÉRAL (rail). SÉLECTION = fond teinté léger + libellé coloré
+     (dérivée de la ROUTE, source unique — aucune classe .active posée en JS en plus). SURVOL = la case
+     entière se remplit (vert opaque, mauve `--violet` sur l'IA), contenu + icône inversés en sombre.
+     Les deux ne se cumulent JAMAIS : l'entrée active n'a pas de style de survol (`:not(.active):hover`),
+     et le survol est borné à un vrai pointeur (`@media hover`) pour qu'un curseur sorti de la fenêtre
+     ne laisse pas l'état allumé. Focus décoratif en :focus-visible seulement (clavier), jamais au clic. */
+  .rail-item { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%;
+    padding:8px 4px; border-radius:10px; color:var(--txt-mut); cursor:pointer; border:none; background:none;
+    transition:background .12s, color .12s; }
+  .rail-item .rail-label { font-size:10.5px; }
+  .rail-item.active { background:var(--mint-bg); color:var(--mint); }
+  .rail-item.ia.active { background:var(--violet-bg); color:var(--violet); }
+  .rail-item:focus { outline:none; }
+  .rail-item:focus-visible { outline:2px solid rgba(74,222,128,.55); outline-offset:2px; }
+  @media (hover:hover) and (pointer:fine) {
+    .rail-item:not(.active):hover { background:var(--mint); color:#08110b; }
+    .rail-item.ia:not(.active):hover { background:var(--violet); color:#150f24; }
+  }
 
   /* la porte — point d'entrée cliquable */
   .door { background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-g); padding:13px 14px; margin-bottom:8px; }

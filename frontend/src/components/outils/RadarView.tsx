@@ -8,6 +8,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotOuvert, radarClic, radarInteresse, radarSignaler,
   type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
 import { DepotAgence } from '../radar/DepotAgence'
+import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R13 — recherche adresse/IDU commune
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
 import { useApp } from '../../store/useApp'
@@ -358,6 +359,9 @@ export function RadarView() {
   const boutonVisible = estAdmin || ouvert            // client : seulement drapeau ouvert
   const drapeauFerme = estAdmin && !ouvert            // mention « invisible des clients » (admin, drapeau fermé)
   const [depotPanneau, setDepotPanneau] = useState(false)
+  // RETOURS-3 R13 — la barre de filtres passe sur DEUX étages : une ligne visible (recherche · commune ·
+  // type · bouton « Filtrer » compteur) + un TIROIR pour le reste, avec des pastilles d'actifs retirables.
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const { data, isLoading } = useQuery({ queryKey: ['radar-biens', f, tri], queryFn: () => getRadarBiens(f, tri) })
   const biens = useMemo(() => data?.biens ?? [], [data])
@@ -392,6 +396,19 @@ export function RadarView() {
   const aucunFiltre = !f.commune && !f.type_bien && f.prix_min == null && f.prix_max == null && f.surface_terrain_min == null && !f.rattache && !f.particulier_pro && !f.sous_marche
 
   const selInput = 'h-[35px] rounded-lg border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:border-mint focus:outline-none'
+
+  // RETOURS-3 R13 — les filtres du TIROIR (hors commune/type restés visibles) : pastilles + compteur du bouton.
+  const actifs: { key: keyof RadarFiltres; label: string }[] = []
+  if (f.prix_min != null) actifs.push({ key: 'prix_min', label: `Prix ≥ ${f.prix_min.toLocaleString('fr-FR')} €` })
+  if (f.prix_max != null) actifs.push({ key: 'prix_max', label: `Prix ≤ ${f.prix_max.toLocaleString('fr-FR')} €` })
+  if (f.surface_terrain_min != null) actifs.push({ key: 'surface_terrain_min', label: `Surface ≥ ${f.surface_terrain_min} m²` })
+  if (f.rattache) actifs.push({ key: 'rattache', label: 'Rattachés' })
+  if (f.particulier_pro) actifs.push({ key: 'particulier_pro', label: f.particulier_pro === 'pro' ? 'Pro' : 'Particulier' })
+  if (f.sous_marche) actifs.push({ key: 'sous_marche', label: 'Sous le marché' })
+  const nActifs = actifs.length
+  const retirer = (k: keyof RadarFiltres) => setF((p) => { const n = { ...p }; delete n[k]; return n })
+  // « Tout effacer » du tiroir : n'efface QUE les filtres du tiroir (commune/type restent dans la barre visible).
+  const effacerFiltres = () => setF((p) => ({ commune: p.commune, type_bien: p.type_bien }))
 
   // T6 — ouvrir un bien sur mobile : la fiche prend le plein écran (on repart en vue liste dessous).
   const ouvrirBien = (id: number | null) => { setBienOuvert(id); if (isMobile) setMobileVue('liste') }
@@ -428,9 +445,14 @@ export function RadarView() {
           )}
         </div>
 
-        {/* filtres (maquette) : commune · type · prix min/max · surface min · 2 segments */}
+        {/* RETOURS-3 R13 — barre VISIBLE, une seule ligne : recherche (composant commun) · commune · type ·
+            bouton « Filtrer » portant le nombre de filtres actifs du tiroir. */}
         <div className="grid shrink-0 gap-2 border-b border-line-2 px-5 py-3.5">
-          <div className="grid grid-cols-[1.25fr_1fr] gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* recherche adresse/commune/IDU — positionne la carte sur l'adresse choisie (BAN + IDU) */}
+            <AddressAutocomplete placeholder="Adresse, commune, IDU…"
+              className="h-[35px] w-full min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
+              onSelect={(sel) => { if (sel.lon != null && sel.lat != null) setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }} />
             <select data-radar-commune value={f.commune ?? ''} onChange={(e) => setF((p) => ({ ...p, commune: e.target.value || undefined }))} className={selInput}>
               <option value="">Toute l’île</option>
               {COMMUNES_24.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -438,21 +460,60 @@ export function RadarView() {
             <select value={f.type_bien ?? ''} onChange={(e) => setF((p) => ({ ...p, type_bien: e.target.value || undefined }))} className={selInput}>
               {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
+            <button data-radar-filtrer onClick={() => setDrawerOpen((o) => !o)}
+              className={`flex h-[35px] shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[12.5px] transition-colors duration-quick ${drawerOpen ? 'border-mint text-mint' : 'border-line-2 text-txt hover:border-mint/50'}`}>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round"><path d="M3.5 6h17M6.5 12h11M10 18h4" /></svg>
+              Filtrer{nActifs > 0 && <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-mint px-1 text-[10.5px] font-bold text-mint-on">{nActifs}</span>}
+            </button>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <input type="number" min={0} placeholder="Prix min" value={f.prix_min ?? ''} onChange={(e) => setNum('prix_min', e.target.value)} className={`min-w-0 ${selInput}`} />
-            <input type="number" min={0} placeholder="Prix max" value={f.prix_max ?? ''} onChange={(e) => setNum('prix_max', e.target.value)} className={`min-w-0 ${selInput}`} />
-            <input type="number" min={0} placeholder="Surface min" value={f.surface_terrain_min ?? ''} onChange={(e) => setNum('surface_terrain_min', e.target.value)} className={`min-w-0 ${selInput}`} />
-          </div>
-          <div className="grid grid-cols-[1fr_1.2fr] gap-2">
-            <Segment value={f.rattache ?? ''} onChange={(v) => setF((p) => ({ ...p, rattache: (v || undefined) as RadarFiltres['rattache'] }))}
-              options={[['', 'Tous'], ['oui', 'Rattachés']]} data="radar-seg-ratt" />
-            <Segment value={f.particulier_pro ?? ''} onChange={(v) => setF((p) => ({ ...p, particulier_pro: (v || undefined) as RadarFiltres['particulier_pro'] }))}
-              options={[['', 'Tous'], ['particulier', 'Particulier'], ['pro', 'Pro']]} data="radar-seg-pp" />
-          </div>
-          {/* RADAR-DEPOT-2 D4 — bouton filtre « sous le marché » (attribut de l'annonce, pas un canal). */}
-          <Segment value={f.sous_marche ?? ''} onChange={(v) => setF((p) => ({ ...p, sous_marche: (v || undefined) as RadarFiltres['sous_marche'] }))}
-            options={[['', 'Tous les prix'], ['oui', 'Sous le marché']]} data="radar-seg-sm" />
+
+          {/* pastilles de filtres actifs (tiroir), chacune retirable + « tout effacer » */}
+          {nActifs > 0 && (
+            <div data-radar-actifs className="flex flex-wrap items-center gap-1.5">
+              {actifs.map((a) => (
+                <button key={a.key} onClick={() => retirer(a.key)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-mint/40 bg-mint/[0.10] px-2.5 py-0.5 text-[11.5px] text-mint transition-colors duration-quick hover:bg-mint/20">
+                  {a.label}<span className="text-mint/70">✕</span></button>
+              ))}
+              <button onClick={effacerFiltres} className="ml-0.5 text-[11.5px] text-txt-dim underline hover:text-txt">tout effacer</button>
+            </div>
+          )}
+
+          {/* le TIROIR « Filtrer » : le reste des filtres, groupés par intitulé. R13.5 — le segment
+              Tous/Rattachés RESTE (ce n'est PAS le filtre « non rattaché » retiré le 28/08 : il n'offre
+              aucune option « non rattachés seuls », seulement Tous vs Rattachés). */}
+          {drawerOpen && (
+            <div data-radar-drawer className="mt-1 flex flex-col gap-3 rounded-xl border border-line-2 bg-surface-2 p-3">
+              <div>
+                <div className="mb-1.5 text-[11px] text-txt-mut">Prix et surface</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="number" min={0} placeholder="Prix min" value={f.prix_min ?? ''} onChange={(e) => setNum('prix_min', e.target.value)} className={`min-w-0 ${selInput}`} />
+                  <input type="number" min={0} placeholder="Prix max" value={f.prix_max ?? ''} onChange={(e) => setNum('prix_max', e.target.value)} className={`min-w-0 ${selInput}`} />
+                  <input type="number" min={0} placeholder="Surface min" value={f.surface_terrain_min ?? ''} onChange={(e) => setNum('surface_terrain_min', e.target.value)} className={`min-w-0 ${selInput}`} />
+                </div>
+              </div>
+              <div>
+                <div className="mb-1.5 text-[11px] text-txt-mut">Rattachement à la parcelle</div>
+                <Segment value={f.rattache ?? ''} onChange={(v) => setF((p) => ({ ...p, rattache: (v || undefined) as RadarFiltres['rattache'] }))}
+                  options={[['', 'Tous'], ['oui', 'Rattachés']]} data="radar-seg-ratt" />
+              </div>
+              <div>
+                <div className="mb-1.5 text-[11px] text-txt-mut">Vendeur</div>
+                <Segment value={f.particulier_pro ?? ''} onChange={(v) => setF((p) => ({ ...p, particulier_pro: (v || undefined) as RadarFiltres['particulier_pro'] }))}
+                  options={[['', 'Tous'], ['particulier', 'Particulier'], ['pro', 'Pro']]} data="radar-seg-pp" />
+              </div>
+              <div>
+                <div className="mb-1.5 text-[11px] text-txt-mut">Prix face au marché</div>
+                {/* RADAR-DEPOT-2 D4 — attribut de l'annonce, pas un canal. */}
+                <Segment value={f.sous_marche ?? ''} onChange={(v) => setF((p) => ({ ...p, sous_marche: (v || undefined) as RadarFiltres['sous_marche'] }))}
+                  options={[['', 'Tous les prix'], ['oui', 'Sous le marché']]} data="radar-seg-sm" />
+              </div>
+              <div className="flex justify-end gap-2 border-t border-line-2 pt-2.5">
+                <button onClick={effacerFiltres} className="rounded-lg border border-line-2 px-3 py-1.5 text-[12px] text-txt-mut hover:text-txt">Tout effacer</button>
+                <button onClick={() => setDrawerOpen(false)} className="rounded-lg bg-mint px-3.5 py-1.5 text-[12px] font-semibold text-mint-on hover:brightness-110">Voir les biens</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* compteur + tri */}

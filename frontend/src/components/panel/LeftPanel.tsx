@@ -424,36 +424,47 @@ function Compteur({ value }: { value: number }) {
   return <>{nfFr(n)}</>
 }
 
-// M65 P2a — une CASE du bandeau : chiffre (servi) au-dessus, libellé court en dessous. Masquée
-// (cellule vide) si le chiffre est null — jamais inventé.
-function CaseChiffre({ n, label, anime }: { n: number | null | undefined; label: string; anime?: boolean }) {
-  if (n == null) return <div className="bg-[#121815]" />
+// M65 P2a — une CASE du bandeau : chiffre (servi) au-dessus, libellé court en dessous.
+// RETOURS-3 R1.1 — l'endpoint /accueil/chiffres est VIVANT (parcelles/communes/sources servis) ; les
+// « 3 cases vides » de la capture venaient du rendu PENDING (n == null pendant tout le fetch, définitif
+// si le retry unique échoue) sans aucun squelette pour distinguer « en cours » de « disparu ». On sert
+// donc un SQUELETTE tant que le fetch tourne ; une valeur réellement null (jamais attendu ici) reste
+// masquée — jamais inventée.
+function CaseChiffre({ n, label, anime, loading }: { n: number | null | undefined; label: string; anime?: boolean; loading?: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center bg-[#121815] py-3">
-      <span className="text-[19px] font-medium tabular-nums text-[#F4F6F5]">
-        {anime ? <Compteur value={n} /> : nfFr(n)}
-      </span>
+      {n != null
+        ? <span className="text-[19px] font-medium tabular-nums text-[#F4F6F5]">{anime ? <Compteur value={n} /> : nfFr(n)}</span>
+        : loading
+          ? <span className="h-[19px] w-12 animate-pulse rounded bg-[#232C27]" aria-hidden />
+          : <span className="text-[19px] font-medium text-[#3E4A44]">—</span>}
       <span className="mt-1 text-[11px] text-[#7C8A83]">{label}</span>
     </div>
   )
 }
 
-// M83 B — une PORTE du bloc « PAR OÙ COMMENCER » (gabarit .porte-outil). Tranche mint / mauve / neutre.
-function Porte({ ton, icone, titre, sous, onClick }: {
-  ton: 'verte' | 'ia' | 'neutre'; icone: string; titre: string; sous: string; onClick: () => void
+// RETOURS-3 R1 (maquette-accueil-v2) — une CARTE d'entrée du bloc « PAR OÙ COMMENCER ». Tuile 44 px
+// unique, glyphe SVG 23 px trait 2.1, teinte franche au repos (vert, mauve pour l'IA), survol plein
+// (classes .acc-entry, cf. index.css). Les 4 cartes sont VERTES sauf le Copilote (mauve, seule surface IA).
+const ACC_ICONS: Record<string, JSX.Element> = {
+  carte: <><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></>,
+  radar: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" /></>,
+  copilote: <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />,
+  outil: <><circle cx="12" cy="12" r="3" /><path d="M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V20a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 18.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></>,
+}
+function AccEntry({ ton, icone, titre, sous, onClick }: {
+  ton: 'mint' | 'mauve'; icone: keyof typeof ACC_ICONS; titre: string; sous: string; onClick: () => void
 }) {
-  const bord = ton === 'verte' ? 'border-l-mint' : ton === 'ia' ? 'border-l-[#7F77DD]' : 'border-l-[#2A362F]'
-  const icoBg = ton === 'verte' ? 'bg-[#12291D] text-mint' : ton === 'ia' ? 'bg-[#1A1730] text-[#AFA9EC]' : 'bg-[#141B17] text-[#8B9990]'
-  const fleche = ton === 'verte' ? 'text-mint' : ton === 'ia' ? 'text-[#AFA9EC]' : 'text-[#8B9990]'
   return (
-    <button data-accueil-porte={ton} onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-r-[9px] border-l-2 ${bord} bg-[#101612] px-3.5 py-3 text-left transition-colors duration-quick hover:brightness-110`}>
-      <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[7px] text-[15px] ${icoBg}`}>{icone}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium text-txt">{titre}</span>
-        <span className="block text-[10.5px] leading-snug text-txt-dim">{sous}</span>
+    <button data-accueil-porte={ton} onClick={onClick} className={`acc-entry ${ton}`}>
+      <span className="acc-tile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{ACC_ICONS[icone]}</svg>
       </span>
-      <span className={`text-[14px] ${fleche}`}>→</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-medium">{titre}</span>
+        <span className="acc-desc mt-0.5 block whitespace-nowrap text-[11.5px] text-txt-dim">{sous}</span>
+      </span>
+      <span className="acc-arrow">→</span>
     </button>
   )
 }
@@ -471,26 +482,26 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
       <p className="mb-4 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
 
-      {/* B2 — les chiffres descendent d'un cran (compacts, dynamiques) */}
+      {/* B2 — les 3 données SERVIES (RETOURS-3 R1.1 : restaurées ; squelette tant que le fetch tourne) */}
       <div className="mb-5 grid grid-cols-3 gap-px overflow-hidden rounded-[9px] bg-[#1E2622]">
-        <CaseChiffre n={d?.parcelles} label={A.labelParcelles} anime />
-        <CaseChiffre n={d?.communes} label={A.labelCommunes} />
-        <CaseChiffre n={d?.sources} label={A.labelSources} />
+        <CaseChiffre n={d?.parcelles} label={A.labelParcelles} anime loading={q.isLoading} />
+        <CaseChiffre n={d?.communes} label={A.labelCommunes} loading={q.isLoading} />
+        <CaseChiffre n={d?.sources} label={A.labelSources} loading={q.isLoading} />
       </div>
 
-      {/* B3 — trois portes */}
+      {/* B3 — quatre cartes d'entrée (RETOURS-3 R1, maquette-v2). Toutes VERTES sauf le Copilote (mauve/IA). */}
       <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#5C6A63]">Par où commencer</p>
-      <div className="mb-5 flex flex-col gap-1.5">
-        <Porte ton="verte" icone="⌕" titre="Explorer la carte" sous="activez une couche, cliquez une parcelle"
+      <div className="mb-5 flex flex-col gap-2.5">
+        <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, clic parcelle"
           onClick={onCommencer} />
-        {/* OUTILS-1 B1 — le Radar entre dans « Par où commencer ». Vue de premier niveau (setView('radar')),
-            consomme l'accueil comme les autres portes. Titre sur une ligne (truncate sur le titre de Porte). */}
-        <Porte ton="verte" icone="◉" titre="Suivre le marché — Radar" sous="les biens en vente, croisés au foncier"
+        {/* OUTILS-1 B1 — le Radar est une porte : vue de premier niveau, consomme l'accueil comme les autres. */}
+        <AccEntry ton="mint" icone="radar" titre="Suivre le marché — Radar" sous="les biens en vente, croisés au foncier"
           onClick={() => { setAccueilVu(); setView('radar') }} />
-        <Porte ton="ia" icone="✦" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
-          onClick={() => { setAccueilVu(); setView('copilote') }} />{/* FIX-ACCUEIL A2 : consomme l'accueil comme les 2 autres portes (plus de ré-affichage au retour) */}
-        <Porte ton="neutre" icone="⚙" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils — trouver, instruire, agir, comprendre, suivre`}
-          onClick={() => { setAccueilVu(); toggleOutils() }} />{/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), plus de « 16 » qui incluait 3 alias hidden */}
+        <AccEntry ton="mauve" icone="copilote" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
+          onClick={() => { setAccueilVu(); setView('copilote') }} />{/* seule surface IA → mauve */}
+        {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail) — 17 aujourd'hui, dynamique si le menu bouge. */}
+        <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils, du repérage au courrier`}
+          onClick={() => { setAccueilVu(); toggleOutils() }} />
       </div>
 
       {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}

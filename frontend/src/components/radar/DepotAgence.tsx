@@ -24,6 +24,9 @@ export function DepotAgence({ drapeauFerme = false, onClose }: { drapeauFerme?: 
     mutationFn: () => radarDepotAgencePublier({ rec: rec as DepotRec, idu, adresse_exacte: adresse, agence_nom: agence }),
     onSuccess: (r) => { if (r.ok) { setPublie({ bien_id: r.bien_id as number, idu: r.idu }); setStep(4); setMsg(null) } else setMsg(r.motif ?? 'Publication refusée.') },
   })
+  // RETOURS-3 R3 — le champ accepte l'URL de l'annonce OU le HTML collé. On détecte l'URL pour adapter
+  // le libellé (le backend bascule sur une lecture serveur one-shot ; en cas de blocage, message honnête).
+  const estUrl = /^\s*https?:\/\//i.test(html)
   const setF = (k: keyof DepotRec, v: unknown) => setRec((p) => (p ? { ...p, [k]: v } : p))
   const inp = 'h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[12px] text-txt'
   const reset = () => { setStep(1); setHtml(''); setRec(null); setAdresse(''); setIdu(''); setAgence(''); setPublie(null); setMsg(null) }
@@ -40,12 +43,12 @@ export function DepotAgence({ drapeauFerme = false, onClose }: { drapeauFerme?: 
 
       {step === 1 && (
         <div data-depot-etape="1" className="flex flex-col gap-2">
-          <p className="text-[11px] leading-snug text-txt-mut">L'agence colle SA page d'annonce (Cmd+S → « page web complète », puis colle le HTML). Le parseur reconstruit tout — rien à ressaisir.</p>
+          <p className="text-[11px] leading-snug text-txt-mut">L'agence colle l'URL de SON annonce (https://…). Si le portail en bloque la lecture, enregistrez la page en « page web complète » (Cmd+S) et collez le HTML. Le parseur reconstruit tout — rien à ressaisir.</p>
           <textarea data-depot-html value={html} onChange={(e) => setHtml(e.target.value)} rows={4}
-            placeholder="Collez ici le HTML de la page de l'annonce…" className="w-full rounded-md border border-line-2 bg-surface-1 p-2 font-mono text-[11px] text-txt" />
+            placeholder="Collez l'URL de l'annonce (https://…) ou le HTML de la page…" className="w-full rounded-md border border-line-2 bg-surface-1 p-2 font-mono text-[11px] text-txt" />
           <button data-depot-analyser disabled={!html || analyser.isPending} onClick={() => analyser.mutate()}
             className="self-start rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink disabled:opacity-40">
-            {analyser.isPending ? 'Analyse…' : 'Analyser la page →'}
+            {analyser.isPending ? (estUrl ? 'Lecture de l’annonce…' : 'Analyse…') : (estUrl ? 'Récupérer l’annonce →' : 'Analyser la page →')}
           </button>
         </div>
       )}

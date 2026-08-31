@@ -298,3 +298,43 @@ def test_d5_copros_embasees_mais_non_servies(depots_prive):
     assert all(not b["est_copro"] for b in rep["biens"])      # aucune copro dans le flux
     assert eda["perimetre_bati"] == "maisons + appartements"  # le chiffre DIT son périmètre
     _purger(html)
+
+
+# ════════════════════════ RETOURS-3 R3 — dépôt : détection d'URL ════════════════════════
+
+def test_r3_url_bloquee_message_honnete(client_http, monkeypatch):
+    """RETOURS-3 R3 — l'agence colle l'URL de son annonce ; si le portail bloque la lecture automatique
+    (Datadome / 403), on rend un message HONNÊTE + le repli guidé Cmd+S, JAMAIS l'erreur __NEXT_DATA__
+    brute face à une URL."""
+    monkeypatch.setattr("labuse.api.auth.exiger_admin", lambda request: None)   # admin passe
+
+    class _Resp:
+        status_code = 403
+        text = "<html>datadome challenge</html>"
+    monkeypatch.setattr("requests.get", lambda *a, **k: _Resp())
+
+    r = client_http.post("/admin/radar/depot-agence/analyser",
+                         json={"html": "https://www.leboncoin.fr/ad/ventes_immobilieres/123"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is False and body["erreur"] == "url_bloquee"
+    assert "__NEXT_DATA__" not in body["motif"]          # jamais l'erreur brute face à une URL
+    assert "page web complète" in body["motif"]          # repli guidé présent
+
+
+def test_r3_url_lue_mais_illisible(client_http, monkeypatch):
+    """RETOURS-3 R3 — une URL LUE avec succès mais sans contenu exploitable (pas de __NEXT_DATA__) →
+    message honnête « page récupérée mais illisible » + repli Cmd+S, jamais l'erreur brute."""
+    monkeypatch.setattr("labuse.api.auth.exiger_admin", lambda request: None)
+
+    class _Resp:
+        status_code = 200
+        text = "<html><body>" + ("x" * 2000) + "</body></html>"   # assez long, mais aucun __NEXT_DATA__
+    monkeypatch.setattr("requests.get", lambda *a, **k: _Resp())
+
+    r = client_http.post("/admin/radar/depot-agence/analyser",
+                         json={"html": "https://www.leboncoin.fr/ad/ventes_immobilieres/999"})
+    body = r.json()
+    assert body["ok"] is False and body["erreur"] == "url_illisible"
+    assert "__NEXT_DATA__" not in body["motif"]
+    assert "page web complète" in body["motif"]
