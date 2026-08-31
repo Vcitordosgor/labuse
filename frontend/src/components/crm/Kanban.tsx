@@ -66,7 +66,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEnt
         </div>
         {newEvents > 0 && (
           <Tip tip="Événements non lus sur cette parcelle (cloche)">
-            <span className="shrink-0 rounded-full bg-violet/15 px-1.5 py-0.5 text-[9px] font-medium text-violet">
+            <span className="shrink-0 rounded-full bg-mint/15 px-1.5 py-0.5 text-[9px] font-medium text-mint">
               {newEvents} nouveau{newEvents > 1 ? 'x' : ''}
             </span>
           </Tip>
@@ -85,7 +85,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEnt
       </div>
       {/* Phase 2 : d'où vient la piste (projet) */}
       {e.projet && (
-        <div className="mt-1 truncate text-[10.5px] text-violet" title={`Piste du projet « ${e.projet.nom} »`}>
+        <div className="mt-1 truncate text-[10.5px] text-mint" title={`Piste du projet « ${e.projet.nom} »`}>
           ▸ {e.projet.nom}
         </div>
       )}

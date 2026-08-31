@@ -38,31 +38,26 @@ function typeCell(titre: string, m: LocalMed | null) {
     sub={m ? `${m.n} vente${(m.n ?? 0) > 1 ? 's' : ''}${m.millesime ? ` · ${m.millesime}` : ''}` : 'échantillon < 5'} />
 }
 
-export function MonSecteur() {
-  const [idu, setIdu] = useState<string | null>(null)
-  const q = useQuery({ queryKey: ['mon-secteur', idu], queryFn: () => getMonSecteur(idu!), enabled: !!idu })
+// RETOURS-3 R5 — le CŒUR « prix du secteur » extrait en composant réutilisable : « Mon secteur » l'enveloppe
+// avec sa barre de saisie ; « Étudier un bien » (fusion) l'embarque au-dessus de l'étude. `embedded` masque
+// la carte d'adresse (l'hôte porte déjà son en-tête) et resserre le titre.
+export function SecteurResultats({ idu, embedded }: { idu: string; embedded?: boolean }) {
+  const q = useQuery({ queryKey: ['mon-secteur', idu], queryFn: () => getMonSecteur(idu), enabled: !!idu })
   const d = q.data
   const sb = d?.secteur_bati
-
+  if (q.isLoading) return <Loading label="Analyse du secteur…" className="mx-auto mt-2 text-xs" />
+  if (q.isError) return <p className="text-[12px] text-st-ecartee">Secteur indisponible — réessayez.</p>
+  if (!d || !d.idu) return null   // payload vide/partiel → rien à montrer (jamais un crash sur un champ absent)
   return (
-    <div data-mon-secteur className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
-      <div>
-        <h2 className="font-display text-base font-bold text-txt-hi">Mon secteur</h2>
-        <p className="mt-0.5 text-[11.5px] text-txt-mut">Les prix DU SECTEUR autour d'une parcelle — médiane locale DVF par type (5 % extrêmes exclus, rayon adaptatif), tendance 12 mois, annonces Radar dans le rayon. La même méthode que « Marché et secteur » de la fiche.</p>
-      </div>
-      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse ou IDU…" dataAttr="mon-secteur-input" />
+    <div className="flex flex-col gap-3 text-[12.5px]">
+      {!embedded && (
+        <div className="rounded-lg border border-line-2 bg-surface-1 px-3 py-2">
+          <p className="text-[13px] font-medium text-txt-hi">{d.adresse ?? <span className="italic text-txt-dim">sans adresse — {d.commune}</span>}</p>
+          <p className="font-mono text-[10.5px] text-txt-dim">{d.idu} · {d.commune}</p>
+        </div>
+      )}
 
-      {q.isLoading && <Loading label="Analyse du secteur…" className="mx-auto mt-4 text-xs" />}
-      {q.isError && <p className="text-[12px] text-st-ecartee">Parcelle inconnue ou erreur — réessayez.</p>}
-
-      {d && (
-        <>
-          <div className="rounded-lg border border-line-2 bg-surface-1 px-3 py-2">
-            <p className="text-[13px] font-medium text-txt-hi">{d.adresse ?? <span className="italic text-txt-dim">sans adresse — {d.commune}</span>}</p>
-            <p className="font-mono text-[10.5px] text-txt-dim">{d.idu} · {d.commune}</p>
-          </div>
-
-          {/* BÂTI — bandeau à 4 chiffres (grammaire de l'en-tête de fiche) : les nombres ne se coupent jamais */}
+      {/* BÂTI — bandeau à 4 chiffres (grammaire de l'en-tête de fiche) : les nombres ne se coupent jamais */}
           <div data-secteur-bati className="rounded-lg border border-mint/25 bg-mint/[0.05] p-2.5">
             <p className="label-caps mb-1.5 text-txt-dim">Prix du secteur — bâti</p>
             {sb ? (
@@ -93,20 +88,20 @@ export function MonSecteur() {
           <div>
             <p className="label-caps mb-1 text-txt-dim">Médiane locale par type</p>
             <div className="stats" data-secteur-par-type>
-              {typeCell('Maison', d.par_type.maison)}
-              {typeCell('Appartement', d.par_type.appartement)}
-              {typeCell('Terrain nu', d.par_type.terrain_nu)}
+              {typeCell('Maison', d.par_type?.maison ?? null)}
+              {typeCell('Appartement', d.par_type?.appartement ?? null)}
+              {typeCell('Terrain nu', d.par_type?.terrain_nu ?? null)}
             </div>
           </div>
 
           {/* RADAR — annonces actives dans le rayon */}
           <div data-secteur-radar>
-            <p className="label-caps mb-1 text-txt-dim">Annonces Radar dans le rayon · {d.annonces_radar.length}</p>
-            {d.annonces_radar.length === 0 ? (
+            <p className="label-caps mb-1 text-txt-dim">Annonces Radar dans le rayon · {(d.annonces_radar ?? []).length}</p>
+            {(d.annonces_radar ?? []).length === 0 ? (
               <p className="text-[11.5px] text-txt-dim">Aucune annonce Radar rattachée dans un rayon de 1,5 km pour l'instant — l'outil s'enrichit à chaque dépôt.</p>
             ) : (
               <div className="flex flex-col gap-1">
-                {d.annonces_radar.map((a, i) => (
+                {(d.annonces_radar ?? []).map((a, i) => (
                   <div key={i} className="flex items-center gap-2 rounded-md border border-line-2 bg-surface-2 px-2.5 py-1.5">
                     <span className="flex-1 text-[12px] text-txt">{a.type_bien} · {a.commune}{a.distance_m != null ? ` · ${a.distance_m} m` : ''}</span>
                     <span className="whitespace-nowrap font-mono text-[11.5px] text-txt-mut">{a.prix != null ? `${fmtInt(a.prix)} €` : '—'}{a.prix_m2_affiche != null ? ` · ${fmtInt(a.prix_m2_affiche)} €/m²` : ''}</span>
@@ -117,9 +112,24 @@ export function MonSecteur() {
             )}
           </div>
 
-          <p className="text-[10.5px] leading-snug text-txt-dim">{d.sources.join(' · ')}. {d.note}</p>
-        </>
-      )}
+      <p className="text-[10.5px] leading-snug text-txt-dim">{(d.sources ?? []).join(' · ')}. {d.note}</p>
+    </div>
+  )
+}
+
+// « Mon secteur » — RETOURS-3 R5 : retiré du MENU (clé hidden), mais la clé reste RÉSOLVANTE (redirection
+// interne conservée : deep-link/copilote historique ouvrent toujours l'outil autonome). Le cœur « prix du
+// secteur » vit aussi dans « Étudier un bien » via SecteurResultats.
+export function MonSecteur() {
+  const [idu, setIdu] = useState<string | null>(null)
+  return (
+    <div data-mon-secteur className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
+      <div>
+        <h2 className="font-display text-base font-bold text-txt-hi">Mon secteur</h2>
+        <p className="mt-0.5 text-[11.5px] text-txt-mut">Les prix DU SECTEUR autour d'une parcelle — médiane locale DVF par type (5 % extrêmes exclus, rayon adaptatif), tendance 12 mois, annonces Radar dans le rayon. La même méthode que « Marché et secteur » de la fiche.</p>
+      </div>
+      <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse ou IDU…" dataAttr="mon-secteur-input" />
+      {idu && <SecteurResultats idu={idu} />}
     </div>
   )
 }

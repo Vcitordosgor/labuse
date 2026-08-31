@@ -7,6 +7,7 @@ import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Calculette, type CalcResult } from '../fiche/Fiche'
 import { TierBadge } from './TierBadge'
+import { SecteurResultats } from './MonSecteur'   // RETOURS-3 R5 — fusion : le bloc « prix du secteur »
 
 // FUSION (Vic 21/08/2026) — « Étudier un bien » = scoreur d'adresse + calculette foncière en UN outil,
 // deux entrées (adresse OU parcelle), un moteur (compute_bilan). Parcours : le CONSTAT d'abord (le
@@ -98,8 +99,9 @@ export function EtudierBien() {
   return (
     <div data-etudier-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-        Seconde opinion avant d’offrir. Collez une <b>adresse</b> (ou une référence cadastrale) — LA BUSE
-        rend le <b>constat</b> (verdict + charge calibrée) ; réglez ensuite <b>vos hypothèses</b>.
+        Seconde opinion avant d’offrir. Une <b>adresse</b> → les <b>prix du secteur</b> (médiane locale,
+        rayon effectif) ; une <b>parcelle</b> → l’<b>étude complète</b> (verdict + charge calibrée), puis
+        <b> vos hypothèses</b>.
       </div>
 
       {/* ENTRÉE UNIFIÉE (patron omnibox M137) — UN SEUL champ : adresse OU IDU + clic carte */}
@@ -112,6 +114,15 @@ export function EtudierBien() {
 
       {m.isPending && <p className="text-[11px] text-txt-mut">Analyse…</p>}
       {m.isError && <p className="text-[11px] text-st-ecartee">Erreur — vérifiez l’adresse et réessayez.</p>}
+
+      {/* RETOURS-3 R5 (fusion « Mon secteur ») — dès qu'une adresse/parcelle est résolue, le BLOC SECTEUR
+          (prix du secteur, rayon effectif ; moteur sector_price) s'affiche au-dessus de l'étude complète. */}
+      {resultIdu && d?.ok && (
+        <div data-etudier-secteur className="rounded-lg border border-line-2 bg-surface-1 p-3">
+          <p className="label-caps mb-2 text-txt-dim">Prix du secteur</p>
+          <SecteurResultats idu={resultIdu} embedded />
+        </div>
+      )}
 
       {d && !m.isPending && (
         <div data-etudier-resultat className="rounded-lg border border-line-2 bg-surface-1 p-3">
