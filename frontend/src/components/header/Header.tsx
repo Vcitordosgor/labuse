@@ -620,12 +620,13 @@ export function Header() {
   // M12-D4 : « Scorer une adresse » a quitté l'en-tête pour le tiroir Outils (registry).
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
-      {/* identité — la buse + wordmark. M83 D : logo servi depuis le FICHIER SOURCE unique
-          (frontend/public/marque, servi sous /socle) — plus de SVG inline dupliqué. */}
-      <div className="flex shrink-0 items-center gap-2 pr-1" title="LABUSE — Radar foncier premium, La Réunion">
-        <img src="/socle/marque/labuseicone4ADE80.svg" alt="LABUSE" data-logo className="h-4 w-auto"
-          style={{ filter: 'drop-shadow(0 0 6px rgba(74,222,128,0.35))' }} />
-        <span className="hidden font-display text-sm font-bold tracking-wide text-txt-hi min-[1350px]:inline">LABUSE</span>
+      {/* RETOURS-4 S6 — l'OISEAU part au sommet du rail ; le MOT-SYMBOLE reste ici, seul, AGRANDI (~29 px,
+          gras) pour occuper l'espace libéré, et BICOLORE : « LA » blanc, « BUSE » vert. Un seul bloc de
+          texte, aucun espace entre les deux moitiés. */}
+      <div className="flex shrink-0 items-center pr-1" title="LABUSE — Radar foncier premium, La Réunion">
+        <span data-logo className="font-display text-[29px] font-extrabold leading-none tracking-[.04em]">
+          <span className="text-white">LA</span><span className="text-mint">BUSE</span>
+        </span>
       </div>
       <Omnibox />
       <FilterChips />

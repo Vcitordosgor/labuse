@@ -430,15 +430,20 @@ function Compteur({ value }: { value: number }) {
 // si le retry unique échoue) sans aucun squelette pour distinguer « en cours » de « disparu ». On sert
 // donc un SQUELETTE tant que le fetch tourne ; une valeur réellement null (jamais attendu ici) reste
 // masquée — jamais inventée.
+// RETOURS-4 S1.2 — les 3 chiffres DISPARAISSAIENT à 100 % de zoom : le nombre (19 px) débordait sa
+// cellule (1/3 du panneau ~340 px) et l'`overflow-hidden` de la grille le ROGNAIT (à 80 % tout rétrécit,
+// donc « visible seulement vers 80 % »). Ce n'était PAS un état de chargement. Bande COMPACTE : nombre
+// 15 px + `whitespace-nowrap`, libellé 10 px + ellipse, cellule `min-w-0` — jamais de règle de largeur
+// qui masque le bloc. Lisible à 100/110/125 % et à 320 px.
 function CaseChiffre({ n, label, anime, loading }: { n: number | null | undefined; label: string; anime?: boolean; loading?: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center bg-[#121815] py-3">
+    <div className="flex min-w-0 flex-col items-center justify-center bg-[#121815] px-1.5 py-2.5">
       {n != null
-        ? <span className="text-[19px] font-medium tabular-nums text-[#F4F6F5]">{anime ? <Compteur value={n} /> : nfFr(n)}</span>
+        ? <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums leading-none text-[#F4F6F5]">{anime ? <Compteur value={n} /> : nfFr(n)}</span>
         : loading
-          ? <span className="h-[19px] w-12 animate-pulse rounded bg-[#232C27]" aria-hidden />
-          : <span className="text-[19px] font-medium text-[#3E4A44]">—</span>}
-      <span className="mt-1 text-[11px] text-[#7C8A83]">{label}</span>
+          ? <span className="h-[15px] w-10 animate-pulse rounded bg-[#232C27]" aria-hidden />
+          : <span className="text-[15px] font-semibold leading-none text-[#3E4A44]">—</span>}
+      <span className="mt-1 w-full truncate text-center text-[10px] text-[#7C8A83]">{label}</span>
     </div>
   )
 }
@@ -456,13 +461,14 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
   ton: 'mint' | 'mauve'; icone: keyof typeof ACC_ICONS; titre: string; sous: string; onClick: () => void
 }) {
   return (
-    <button data-accueil-porte={ton} onClick={onClick} className={`acc-entry ${ton}`}>
+    <button data-accueil-porte={ton} onClick={onClick} className={`acc-entry ${ton}`} title={titre}>
       <span className="acc-tile">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{ACC_ICONS[icone]}</svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">{ACC_ICONS[icone]}</svg>
       </span>
+      {/* RETOURS-4 S1.3 — titres ET descriptions sur UNE ligne (truncate = nowrap + ellipse) : tiennent à 360 px. */}
       <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-medium">{titre}</span>
-        <span className="acc-desc mt-0.5 block whitespace-nowrap text-[11.5px] text-txt-dim">{sous}</span>
+        <span className="block truncate text-[14px] font-medium">{titre}</span>
+        <span className="acc-desc mt-0.5 block truncate text-[11.5px] text-txt-dim">{sous}</span>
       </span>
       <span className="acc-arrow">→</span>
     </button>
@@ -489,18 +495,19 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         <CaseChiffre n={d?.sources} label={A.labelSources} loading={q.isLoading} />
       </div>
 
-      {/* B3 — quatre cartes d'entrée (RETOURS-3 R1, maquette-v2). Toutes VERTES sauf le Copilote (mauve/IA). */}
+      {/* B3 — quatre cartes d'entrée (maquette-v4). Toutes VERTES sauf le Copilote (mauve/IA).
+          RETOURS-4 S1.3 — descriptions raccourcies pour tenir sur UNE ligne à 360 px. */}
       <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#5C6A63]">Par où commencer</p>
-      <div className="mb-5 flex flex-col gap-2.5">
-        <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, clic parcelle"
+      <div className="mb-5 flex flex-col gap-2">
+        <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, parcelles"
           onClick={onCommencer} />
         {/* OUTILS-1 B1 — le Radar est une porte : vue de premier niveau, consomme l'accueil comme les autres. */}
-        <AccEntry ton="mint" icone="radar" titre="Suivre le marché — Radar" sous="les biens en vente, croisés au foncier"
+        <AccEntry ton="mint" icone="radar" titre="Suivre le marché — Radar" sous="les biens en vente"
           onClick={() => { setAccueilVu(); setView('radar') }} />
         <AccEntry ton="mauve" icone="copilote" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
           onClick={() => { setAccueilVu(); setView('copilote') }} />{/* seule surface IA → mauve */}
-        {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail) — 17 aujourd'hui, dynamique si le menu bouge. */}
-        <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils, du repérage au courrier`}
+        {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), dynamique — S7 : 15 après la fusion Veille→Scan. */}
+        <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils fonciers`}
           onClick={() => { setAccueilVu(); toggleOutils() }} />
       </div>
 

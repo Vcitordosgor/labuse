@@ -112,7 +112,9 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
       {/* M56-B6 · DA-FICHE-v6 — le tiroir est une CARTE AUTONOME : pastille d'icône 32×32 à
           gauche, corps (titre + sous-titre une ligne), valeur/pastille + chevron à droite.
           Ouvert : la carte s'ouvre (coins bas carrés) et .t-open prolonge la carte. */}
-      <button className={`tiroir${open ? ' is-open' : ''}`} onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
+      {/* RETOURS-4 S3 — `is-lien` marque un tiroir CLIQUABLE (id + children) → survol plein (index.css) ;
+          un tiroir sans contenu (valeur seule) ne prend pas le survol. */}
+      <button className={`tiroir${open ? ' is-open' : ''}${id && children ? ' is-lien' : ''}`} onClick={() => id && children && acc.toggle(id)} aria-expanded={open}
         style={children ? undefined : { cursor: 'default' }}>
         <div className="t-ico">{icon}</div>
         <div className="t-body">

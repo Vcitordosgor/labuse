@@ -79,36 +79,37 @@
   .gr-v { font-size:13.5px; color:var(--txt); }
 
   /* RETOURS-3 R1 — cartes d'entrée de l'accueil (maquette-accueil-v2, validée Vic). Au REPOS : tuile
-     franchement teintée (fond ~20 % + contour ~45 %) — vert pour les 3 entrées, mauve pour le Copilote
-     (IA). Au SURVOL : la carte entière se remplit (vert opaque `--mint`, mauve `--violet` sur l'IA), le
-     contenu s'inverse en sombre (#08110b sur vert, #150f24 sur mauve), la tuile devient une pastille
-     sombre au glyphe RESTÉ coloré (il ressort davantage, ne se fond jamais). */
-  .acc-entry { display:flex; align-items:center; gap:16px; width:100%; text-align:left; cursor:pointer;
-    background:var(--bg-2); border-radius:12px; border-left:3px solid var(--line-2); padding:14px 16px;
+     franchement teintée (fond ~16 % + contour ~40 %) — vert pour les 3 entrées, mauve pour le Copilote
+     (IA). RETOURS-4 S1 — proportions v4 : tuile 34 px, glyphe 17 px, coin 9 px. Au SURVOL : la carte se
+     remplit (vert `--mint`, mauve `--violet` sur l'IA), le contenu s'inverse en encre sombre, et la TUILE
+     passe en FOND TRANSPARENT avec CONTOUR SOMBRE (plus de pastille foncée qui fait tache — le glyphe
+     inversé suffit à la faire ressortir), exactement comme les catégories du rail. */
+  .acc-entry { display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
+    background:var(--bg-2); border-radius:10px; border-left:3px solid var(--line-2); padding:11px 12px;
     color:var(--txt); transition:background .12s, border-color .12s, color .12s; }
-  .acc-entry .acc-tile { width:44px; height:44px; flex:none; border-radius:11px; display:flex;
+  .acc-entry .acc-tile { width:34px; height:34px; flex:none; border-radius:9px; display:flex;
     align-items:center; justify-content:center; border:1px solid transparent;
     transition:background .12s, color .12s, border-color .12s; }
-  .acc-entry .acc-tile svg { width:23px; height:23px; }
+  .acc-entry .acc-tile svg { width:17px; height:17px; }
   .acc-entry .acc-desc { transition:color .12s; }
-  .acc-entry .acc-arrow { flex:none; font-size:16px; color:var(--txt-dim); transition:color .12s, transform .12s; }
+  .acc-entry .acc-arrow { flex:none; font-size:14px; color:var(--txt-dim); transition:color .12s, transform .12s; }
   /* — vert (Explorer / Radar / Outils) — */
   .acc-entry.mint { border-left-color:var(--mint); }
-  .acc-entry.mint .acc-tile { background:rgba(74,222,128,.20); border-color:rgba(74,222,128,.45); color:var(--mint); }
+  .acc-entry.mint .acc-tile { background:rgba(74,222,128,.16); border-color:rgba(74,222,128,.40); color:var(--mint); }
   .acc-entry.mint .acc-arrow { color:var(--mint); }
   /* — mauve (Copilote, seule surface IA) — */
   .acc-entry.mauve { border-left-color:var(--violet); }
-  .acc-entry.mauve .acc-tile { background:rgba(180,151,240,.22); border-color:rgba(180,151,240,.48); color:var(--violet); }
+  .acc-entry.mauve .acc-tile { background:rgba(180,151,240,.18); border-color:rgba(180,151,240,.44); color:var(--violet); }
   .acc-entry.mauve .acc-arrow { color:var(--violet); }
   @media (hover:hover) and (pointer:fine) {
     .acc-entry.mint:hover { background:var(--mint); border-left-color:var(--mint); color:#08110b; }
-    .acc-entry.mint:hover .acc-tile { background:#08110b; border-color:#08110b; color:var(--mint); }
-    .acc-entry.mint:hover .acc-desc { color:rgba(8,17,11,.72); }
-    .acc-entry.mint:hover .acc-arrow { color:#08110b; transform:translateX(3px); }
+    .acc-entry.mint:hover .acc-tile { background:transparent; border-color:rgba(8,17,11,.30); color:#08110b; }
+    .acc-entry.mint:hover .acc-desc { color:rgba(8,17,11,.70); }
+    .acc-entry.mint:hover .acc-arrow { color:#08110b; transform:translateX(2px); }
     .acc-entry.mauve:hover { background:var(--violet); border-left-color:var(--violet); color:#150f24; }
-    .acc-entry.mauve:hover .acc-tile { background:#150f24; border-color:#150f24; color:var(--violet); }
-    .acc-entry.mauve:hover .acc-desc { color:rgba(21,15,36,.72); }
-    .acc-entry.mauve:hover .acc-arrow { color:#150f24; transform:translateX(3px); }
+    .acc-entry.mauve:hover .acc-tile { background:transparent; border-color:rgba(21,15,36,.30); color:#150f24; }
+    .acc-entry.mauve:hover .acc-desc { color:rgba(21,15,36,.70); }
+    .acc-entry.mauve:hover .acc-arrow { color:#150f24; transform:translateX(2px); }
   }
 
   /* RETOURS-3 R2/R14 — entrée du MENU LATÉRAL (rail). SÉLECTION = fond teinté léger + libellé coloré
@@ -128,6 +129,20 @@
   @media (hover:hover) and (pointer:fine) {
     .rail-item:not(.active):hover { background:var(--mint); color:#08110b; }
     .rail-item.ia:not(.active):hover { background:var(--violet); color:#150f24; }
+  }
+
+  /* RETOURS-4 S3 — survol PLEIN sur des surfaces à STYLES INLINE (Projets : lignes de « Vos projets » et
+     onglets Actifs/Archivés/Mes courriers). L'aplat mint et l'inversion du contenu passent par !important
+     pour battre les couleurs inline des enfants. Borné à un vrai pointeur (@media hover), jamais sur l'onglet
+     déjà actif (`.proj-tab-on`). */
+  @media (hover:hover) and (pointer:fine) {
+    [data-projet-row] { transition:background .12s; }
+    [data-projet-row]:hover { background:var(--mint) !important; }
+    [data-projet-row]:hover * { color:#08110b !important; }
+    [data-projet-row]:hover [data-projet-barre] { background:rgba(8,17,11,.20) !important; }
+    [data-projet-row]:hover [data-projet-barre] > div { background:#08110b !important; }
+    .proj-tab { transition:background .12s, color .12s; }
+    .proj-tab:not(.proj-tab-on):hover { background:var(--mint) !important; color:#08110b !important; }
   }
 
   /* la porte — point d'entrée cliquable */
@@ -327,6 +342,17 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    s'ouvre (coins bas carrés) et son corps (.t-open) prolonge la carte. */
 .fiche-v6 .tiroir { width:100%; text-align:left; background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:12px; padding:12px 13px; display:flex; align-items:center; gap:12px; margin-bottom:9px; cursor:pointer; transition:background var(--dur-fast) var(--ease); }
 .fiche-v6 .tiroir.is-open { margin-bottom:0; border-bottom:none; border-bottom-left-radius:0; border-bottom-right-radius:0; }
+/* RETOURS-4 S3 — survol PLEIN sur les cartes de SECTION cliquables (Urbanisme, Constructibilité, Risques…) :
+   aplat mint, contenu inversé en encre sombre, tuile d'icône en fond transparent + contour sombre (jamais
+   sur un tiroir ouvert, ni sur un tiroir non cliquable). !important bat les couleurs inline (valueColor/accent). */
+@media (hover:hover) and (pointer:fine) {
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover { background:var(--mint); border-color:var(--mint); }
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:transparent; border:1px solid rgba(8,17,11,.30); color:#08110b; }
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-title,
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-sub,
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev { color:#08110b !important; }
+}
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; }
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:9px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
 .fiche-v6 .t-body { flex:1; min-width:0; }

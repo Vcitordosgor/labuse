@@ -56,12 +56,12 @@ function ProjetRow({ p }: { p: Projet }) {
     : decidees === 0 ? 'aucune parcelle triée pour l’instant'
     : `${c.retenue} retenue${c.retenue > 1 ? 's' : ''} · ${c.ecartee} écartée${c.ecartee > 1 ? 's' : ''} · ${c.proposee.toLocaleString('fr-FR')} à explorer`
 
+  // RETOURS-4 S3 — survol PLEIN (aplat mint, contenu inversé) piloté par CSS `[data-projet-row]:hover`
+  // (index.css) ; l'ancien survol JS gris est retiré.
   return (
     <div data-projet-row data-intensite={c.proposee > 0 ? 'todo' : 'ajour'} onClick={ouvrir}
       style={{ display: 'grid', gridTemplateColumns: '1fr 260px 130px', gap: 18, alignItems: 'center',
-        padding: '13px 16px', borderBottom: '1px solid #161C18', cursor: 'pointer' }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = '#0C1410')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+        padding: '13px 16px', borderBottom: '1px solid #161C18', cursor: 'pointer' }}>
       {/* gauche : titre + périmètre mono + ligne de contexte */}
       <div style={{ minWidth: 0 }}>
         <h4 style={{ display: 'flex', alignItems: 'baseline', gap: 9, fontSize: 15, fontWeight: 600, color: '#ECF5EF', margin: 0 }}>
@@ -214,10 +214,12 @@ export function ProjetsPanel() {
         ) : !projetsQ.isLoading && (
           <>
             {/* 2 · ONGLETS — deux seulement. */}
+            {/* RETOURS-4 S3 — onglets : survol PLEIN (mint + encre sombre) sur l'onglet INACTIF, via .proj-tab
+                (index.css) ; l'onglet actif (.proj-tab-on) reste plein et ne re-survole pas. */}
             <div style={{ display: 'inline-flex', gap: 4, background: '#0C1410', borderRadius: 9, padding: 4, marginBottom: 20 }}>
-              <button data-tab-actifs onClick={() => { setShowArchived(false); setShowCourriers(false); setToutMontre(false) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
-              <button data-tab-archives onClick={() => { setShowArchived(true); setShowCourriers(false); setToutMontre(false) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
-              <button data-tab-courriers onClick={() => { setShowCourriers(true); setToutMontre(false) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
+              <button data-tab-actifs className={`proj-tab${!showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(false); setShowCourriers(false); setToutMontre(false) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
+              <button data-tab-archives className={`proj-tab${showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(true); setShowCourriers(false); setToutMontre(false) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
+              <button data-tab-courriers className={`proj-tab${showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowCourriers(true); setToutMontre(false) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
             </div>
 
             {showCourriers ? (

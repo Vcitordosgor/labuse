@@ -60,7 +60,10 @@ function Frise({ siren }: { siren: string }) {
   )
 }
 
-export function VeillePromoteurs() {
+// RETOURS-4 S7 — « Ce qu'ils CONSTRUISENT », onglet 2 de la fusion Scan patrimoine. En mode `embedded`, le
+// focus SIREN vient de `focusSiren` (partagé par la fusion) et le pont « voir son patrimoine » devient une
+// BASCULE D'ONGLET (`onVoirPatrimoine`) au lieu de rouvrir un module.
+export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { embedded?: boolean; focusSiren?: string | null; onVoirPatrimoine?: (siren: string) => void } = {}) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
   const setFlyTo = useApp((s) => s.setFlyTo)
@@ -68,18 +71,19 @@ export function VeillePromoteurs() {
   const setM02Prefill = useApp((s) => s.setM02Prefill)
   const setModule = useApp((s) => s.setModule)
   // RETOURS-3 R4.3 — pont Scan patrimoine → Veille : si un SIREN est ciblé, on ouvre sa frise d'emblée.
-  const veilleFocusSiren = useApp((s) => s.veilleFocusSiren)
+  const storeFocus = useApp((s) => s.veilleFocusSiren)
   const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
   const [commune, setCommune] = useState('')
   const [categorie, setCategorie] = useState('')
   const [depuis, setDepuis] = useState('')
   const [openSiren, setOpenSiren] = useState<string | null>(null)
-  // pont entrant (Scan patrimoine) : ouvrir la frise du SIREN ciblé, puis consommer le focus.
+  // pont entrant : ouvrir la frise du SIREN ciblé. Embarqué → `focusSiren` (fusion) ; autonome → store (consommé).
+  const effFocus = embedded ? (focusSiren ?? null) : storeFocus
   useEffect(() => {
-    if (veilleFocusSiren) { setOpenSiren(veilleFocusSiren); setVeilleFocusSiren(null) }
-  }, [veilleFocusSiren, setVeilleFocusSiren])
-  // pont sortant : ouvrir Scan patrimoine (M02) pré-rempli sur le propriétaire moral de l'opération.
-  const voirPatrimoine = (siren: string) => { setM02Prefill(siren); setModule('patrimoine') }
+    if (effFocus) { setOpenSiren(effFocus); if (!embedded) setVeilleFocusSiren(null) }
+  }, [effFocus, embedded, setVeilleFocusSiren])
+  // pont sortant : embarqué → bascule d'onglet ; autonome → ouvre le module Scan patrimoine pré-rempli.
+  const voirPatrimoine = (siren: string) => { if (embedded && onVoirPatrimoine) onVoirPatrimoine(siren); else { setM02Prefill(siren); setModule('patrimoine') } }
   const q = useQuery({ queryKey: ['veille-promoteurs', commune, categorie, depuis], queryFn: () => getVeillePromoteurs({ commune: commune || undefined, categorie: categorie || undefined, depuis: depuis || undefined, limit: 200 }) })
   const d = q.data
   const sel = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt'
@@ -134,38 +138,36 @@ export function VeillePromoteurs() {
           <p className="text-[10px] leading-snug text-txt-dim">{d.regle.phrase}.</p>
           <div className="flex flex-col gap-1.5">
             {d.operations.length === 0 && <p className="text-[11.5px] text-txt-dim">Aucune opération pour ce filtre.</p>}
+            {/* RETOURS-4 S5 — carte REMISE À PLAT : chaque valeur sur SA ligne, aucune ne se chevauche.
+                Nom (ellipse, title complet) · faits (Type · permis · logements) · Commune · période ·
+                IDU sur sa propre ligne monospace ellipse · SIREN discret · actions alignées en bas. */}
             {d.operations.map((o: OperationPromoteur, i) => (
-              <div key={i} data-vp-operation className="rounded-lg border border-line-2 bg-surface-2 p-2.5">
-                <div className="flex items-start gap-2">
-                  <span className="flex-1 min-w-0">
-                    <b className="block truncate text-[12.5px] text-txt-hi">{o.denomination ?? '(propriétaire non nommé)'}</b>
-                    <span className="text-[11px] text-txt-mut">{CAT_LABEL[o.categorie] ?? o.categorie}{o.siren ? ` · SIREN ${o.siren}` : ''}</span>
-                  </span>
-                  <span className="shrink-0 text-right text-[11px] text-txt-mut">
-                    <b className="text-txt">{o.nb_logements}</b> logement{o.nb_logements > 1 ? 's' : ''}
-                    <span className="block text-[10px] text-txt-dim">{o.n_permis} permis{o.date_max ? ` · ${new Date(o.date_max).getFullYear()}` : ''}{o.etat ? ` · ${o.etat}` : ''}</span>
-                  </span>
-                </div>
-                {/* PROMO-1 (P4) — une opération RATTACHÉE affiche le NOM du programme + le lien externe
-                    « voir sur le site de {promoteur} → ». Aucun visuel externe, jamais : un FAIT + un LIEN. */}
+              <div key={i} data-vp-operation className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
+                <b className="truncate text-[12.5px] text-txt-hi" title={o.denomination ?? undefined}>{o.denomination ?? '(propriétaire non nommé)'}</b>
+                <span className="text-[11px] text-txt-mut">{CAT_LABEL[o.categorie] ?? o.categorie} · <b className="text-txt">{o.n_permis}</b> permis · <b className="text-txt">{o.nb_logements}</b> logement{o.nb_logements > 1 ? 's' : ''}</span>
+                <span className="text-[10.5px] text-txt-dim">{o.commune}{o.date_min && o.date_max && o.date_min !== o.date_max ? ` · ${new Date(o.date_min).toLocaleDateString('fr-FR')} → ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : (o.date_max ? ` · ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : '')}{o.etat ? ` · ${o.etat}` : ''}</span>
+                {o.idus[0] && (
+                  <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))} title="Ouvrir la fiche parcelle"
+                    className="block truncate text-left font-mono text-[10.5px] text-mint hover:underline">{o.idus[0]} →</button>
+                )}
+                {o.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN {o.siren}</span>}
+                {o.radar_cite && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
+
+                {/* PROMO-1 (P4) — programme rattaché : un FAIT (nom) + un LIEN, jamais un visuel externe. */}
                 {o.programme && (
-                  <div data-vp-programme className="mt-1 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
-                    <b className="text-txt-hi">{o.programme.nom}</b>
-                    {o.programme.url && <> · <a data-vp-programme-lien href={o.programme.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {o.programme.promoteur_nom ?? 'ce promoteur'} →</a></>}
+                  <div data-vp-programme className="mt-0.5 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
+                    <b className="block truncate text-txt-hi" title={o.programme.nom}>{o.programme.nom}</b>
+                    {o.programme.url && <a data-vp-programme-lien href={o.programme.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {o.programme.promoteur_nom ?? 'ce promoteur'} →</a>}
                   </div>
                 )}
-                {/* libellé factuel de l'opération ; « nom » = citée par une annonce neuve du Radar */}
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px]">
-                  <span className="text-txt">{o.libelle}</span>
-                  {o.radar_cite && <span data-vp-radar-cite className="rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
-                </div>
-                <div className="mt-1.5 flex items-center gap-2 text-[10.5px]">
-                  <span className="text-txt-dim">{o.commune}{o.date_min && o.date_max && o.date_min !== o.date_max ? ` · ${new Date(o.date_min).toLocaleDateString('fr-FR')} → ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : ''}</span>
-                  {o.idus[0] && <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))} className="font-mono text-mint hover:underline" title="Ouvrir la fiche parcelle">{o.idus[0]} →</button>}
-                  {/* RETOURS-3 R4.3 — pont vers Scan patrimoine (même propriétaire moral). */}
-                  {o.siren && <button data-vp-patrimoine onClick={() => voirPatrimoine(o.siren!)} className="text-mint hover:underline" title="Tout son foncier — Scan patrimoine">voir son patrimoine →</button>}
-                  {o.siren && <button data-vp-frise onClick={() => setOpenSiren((s) => (s === o.siren ? null : o.siren))} className="ml-auto text-mint hover:underline">{openSiren === o.siren ? 'masquer' : 'sa frise ▾'}</button>}
-                </div>
+
+                {/* RETOURS-4 S5.2 — ACTIONS alignées en bas, chacune insécable (jamais de retour au milieu d'un libellé). */}
+                {o.siren && (
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line/60 pt-1.5 text-[10.5px]">
+                    <button data-vp-patrimoine onClick={() => voirPatrimoine(o.siren!)} className="whitespace-nowrap text-mint hover:underline" title="Tout son foncier — Scan patrimoine">voir son patrimoine →</button>
+                    <button data-vp-frise onClick={() => setOpenSiren((s) => (s === o.siren ? null : o.siren))} className="whitespace-nowrap text-mint hover:underline">{openSiren === o.siren ? 'masquer sa frise' : 'sa frise ▾'}</button>
+                  </div>
+                )}
                 {openSiren === o.siren && o.siren && <Frise siren={o.siren} />}
               </div>
             ))}

@@ -78,9 +78,9 @@ const ICONS: Record<Zone, JSX.Element> = {
   ),
 }
 
-// RETOURS-3 R2.1 — l'ORDRE IMPOSÉ, de haut en bas (référence unique, aucun autre tri). `ia` marque la
-// seule surface IA (Copilote → survol/actif mauve). Admin n'est PAS dans cette liste : il est rendu
-// APRÈS Sources (gated), cf. compte-rendu.
+// RETOURS-3 R2.1 / RETOURS-4 S2 — l'ORDRE IMPOSÉ, de haut en bas. `ia` marque la seule surface IA
+// (Copilote → survol/actif mauve). RETOURS-4 S2 : Sources et Admin quittent la liste HAUTE pour la ZONE
+// BASSE (épinglée au pied, séparateur au-dessus) — Sources tout en bas, Admin juste au-dessus.
 type RailKey = Zone
 const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
   { key: 'cartes', label: 'Carte' },
@@ -90,7 +90,6 @@ const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
   { key: 'veille', label: 'Veille' },
   { key: 'projets', label: 'Projets' },
   { key: 'crm', label: 'CRM' },
-  { key: 'sources', label: 'Sources' },
 ]
 // titres NON redondants seulement (R2.3 : le tooltip qui répète le libellé sous l'icône est retiré).
 const RAIL_TITLE: Partial<Record<RailKey, string>> = {
@@ -107,10 +106,11 @@ function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string)
       key={m.key}
       data-outil={m.key}
       onClick={() => open(m.key)}
-      className="door door-hot mb-0 w-full text-left transition-colors duration-quick hover:border-line-3"
+      /* RETOURS-4 S3 — survol PLEIN (aplat mint, contenu inversé en encre sombre) sur les cartes du tiroir Outils. */
+      className="door door-hot group mb-0 w-full text-left transition-colors duration-quick hover:border-mint hover:bg-mint"
     >
-      <div className="text-xs font-medium text-txt">{m.label}</div>
-      <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{m.desc}</div>
+      <div className="text-xs font-medium text-txt group-hover:text-mint-on">{m.label}</div>
+      <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim group-hover:text-mint-on/80">{m.desc}</div>
     </button>
   )
 }
@@ -157,31 +157,49 @@ export function Rail() {
 
   return (
     <>
-      <nav className="flex h-full w-16 shrink-0 flex-col items-center gap-1.5 overflow-y-auto border-r border-line bg-surface-1 py-5">
-        {/* P4 (revue Vic n°3) — le rail est PUR icônes de navigation (l'oiseau + « LABUSE » vit au header).
-            RETOURS-3 R2 — ordre imposé unique (RAIL), survol plein + sélection route-dérivée (classe .rail-item).
-            L'entrée active dérive de `view`/`outilsOpen` : AUCUNE classe .active posée en JS en plus (source
-            unique = la route), et le survol (@media hover) ne s'applique jamais à l'active → plus de double état. */}
-        {RAIL.map(({ key, label, ia }) => {
-          const on = key === 'outils' ? outilsOpen : view === key && !outilsOpen
-          const act = () => {
-            if (key === 'outils') return toggleOutils()
-            if (key === 'veille') return toggleSurveillance()
-            if (key === 'sources') return openSources()
-            setView(key as View)
-          }
-          return (
-            <button key={key} data-rail={key} {...(key === 'veille' ? { 'data-rail-surveillance': true } : {})}
-              onClick={act} aria-current={on ? 'page' : undefined}
-              className={`rail-item ${on ? 'active' : ''} ${ia ? 'ia' : ''}`}
-              {...(RAIL_TITLE[key] ? { title: RAIL_TITLE[key] } : {})}>
-              <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS[key]}</svg>
-              <span className="rail-label">{label}</span>
+      <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1">
+        {/* RETOURS-4 S6 — ZONE SIGNATURE : l'oiseau vert EXISTANT (asset à l'identique) au sommet du rail,
+            juste au-dessus de « Carte », centré, hauteur du bandeau, séparateur dessous. Non cliquable,
+            non survolable, non focusable, jamais d'état actif (un simple visuel, hors flux d'interaction). */}
+        <div className="flex h-14 w-full shrink-0 items-center justify-center border-b border-line" aria-hidden>
+          <img src="/socle/marque/labuseicone4ADE80.svg" alt="" className="h-6 w-auto"
+            style={{ filter: 'drop-shadow(0 0 6px rgba(74,222,128,0.35))' }} />
+        </div>
+
+        <div className="flex w-full flex-1 flex-col items-center gap-1.5 overflow-y-auto px-1.5 py-4">
+          {/* RETOURS-3 R2 — ordre imposé unique (RAIL), survol plein + sélection route-dérivée (.rail-item).
+              L'entrée active dérive de `view`/`outilsOpen` : AUCUNE classe .active posée en JS en plus. */}
+          {RAIL.map(({ key, label, ia }) => {
+            const on = key === 'outils' ? outilsOpen : view === key && !outilsOpen
+            const act = () => {
+              if (key === 'outils') return toggleOutils()
+              if (key === 'veille') return toggleSurveillance()
+              setView(key as View)
+            }
+            return (
+              <button key={key} data-rail={key} {...(key === 'veille' ? { 'data-rail-surveillance': true } : {})}
+                onClick={act} aria-current={on ? 'page' : undefined}
+                className={`rail-item ${on ? 'active' : ''} ${ia ? 'ia' : ''}`}
+                {...(RAIL_TITLE[key] ? { title: RAIL_TITLE[key] } : {})}>
+                <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS[key]}</svg>
+                <span className="rail-label">{label}</span>
+              </button>
+            )
+          })}
+
+          {/* RETOURS-4 S2 — ZONE BASSE épinglée (mt-auto + séparateur) : Admin juste au-dessus de Sources,
+              Sources tout en bas. Pour un client (sans Admin), Sources se retrouve seul en bas. */}
+          <div className="mt-auto flex w-full flex-col items-center gap-1.5 border-t border-line pt-3">
+            <AdminRailEntry />
+            <button data-rail="sources" onClick={() => openSources()}
+              aria-current={view === 'sources' && !outilsOpen ? 'page' : undefined}
+              className={`rail-item ${view === 'sources' && !outilsOpen ? 'active' : ''}`}
+              title={RAIL_TITLE.sources}>
+              <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS.sources}</svg>
+              <span className="rail-label">Sources</span>
             </button>
-          )
-        })}
-        {/* R2.1 — Admin ne figure PAS dans l'ordre imposé : rendu APRÈS Sources, visible admin seulement (signalé). */}
-        <AdminRailEntry />
+          </div>
+        </div>
       </nav>
 
       {/* §2 (23/08/2026) — Tiroir Outils EN LISTE PLATE : plus de catégories, plus d'étoile « phare ».

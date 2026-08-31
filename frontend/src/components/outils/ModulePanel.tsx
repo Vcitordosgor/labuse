@@ -39,7 +39,7 @@ import { ProspectionSolaire } from './ProspectionSolaire'
 import { EtudeZone } from './EtudeZone'
 import { TaxeAmenagement } from './TaxeAmenagement'
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
-import { VeillePromoteurs } from './VeillePromoteurs'   // SECTEUR-1 (S3)
+import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
 import { TierBadge } from './TierBadge'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -121,17 +121,22 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
 /* ───────────────────────────── M02 — PATRIMOINE ───────────────────────────── */
 
 // Exporté pour test (SCAN — le retrait de l'action courrier est le cœur du mandat).
-export function M02() {
+// RETOURS-4 S7 — « Ce qu'ils POSSÈDENT », onglet 1 de la fusion Scan patrimoine. En mode `embedded`, la
+// barre de recherche interne DISPARAÎT (la fusion en fournit une seule, partagée) et le propriétaire vient
+// de `sirenProp` ; le pont « Voir ses opérations » devient une BASCULE D'ONGLET (`onVoirOperations`).
+export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: boolean; sirenProp?: string | null; onVoirOperations?: (siren: string) => void } = {}) {
   const { m02Prefill, setM02Prefill } = useApp()
   // RETOURS-3 R4.3 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
   const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
   const setModule = useApp((s) => s.setModule)
   const [q, setQ] = useState('')
-  const [siren, setSiren] = useState<string | null>(null)
+  const [sirenState, setSiren] = useState<string | null>(null)
+  const siren = embedded ? (sirenProp ?? null) : sirenState
   useEffect(() => {
-    if (m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
+    // en mode embarqué, le SIREN vient de la fusion (sirenProp) — on ne consomme pas m02Prefill (pas de course).
+    if (!embedded && m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [m02Prefill])
+  }, [m02Prefill, embedded])
   const sug = useQuery({ queryKey: ['m02s', q], queryFn: () => modPatrimoineSearch(q), enabled: q.length >= 2 && !siren })
   const pat = useQuery({ queryKey: ['m02', siren], queryFn: () => modPatrimoine(siren!), enabled: !!siren })
   const d = pat.data as Record<string, any> | undefined
@@ -139,28 +144,30 @@ export function M02() {
   useModuleMap(items.map((i) => i['idu'] as string), null, [pat.dataUpdatedAt])
   return (
     <>
-      <input value={q} onChange={(e) => { setQ(e.target.value); setSiren(null) }}
+      {/* RETOURS-4 S7 — la barre de recherche interne n'existe QUE hors fusion (embedded → recherche unique en tête). */}
+      {!embedded && <input value={q} onChange={(e) => { setQ(e.target.value); setSiren(null) }}
         placeholder="SIREN ou nom (ex. CBO, SCI…)"
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-xs text-txt focus:border-mint focus:outline-none" />
-      {!siren && (sug.data ?? []).map((s) => (
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-xs text-txt focus:border-mint focus:outline-none" />}
+      {!embedded && !siren && (sug.data ?? []).map((s) => (
         <button key={s.siren} onClick={() => setSiren(s.siren)}
           className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt transition-colors duration-quick hover:border-mint/50">
           <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
         </button>
       ))}
       {/* garde : le typeahead plafonne à 12 — on le DIT (jamais une coupe muette). */}
-      {!siren && (sug.data?.length ?? 0) >= 12 && (
+      {!embedded && !siren && (sug.data?.length ?? 0) >= 12 && (
         <p className="text-[10.5px] text-txt-dim">12 premiers résultats — affinez le nom ou le SIREN.</p>
       )}
       {/* Fix pré-lancement : distinguer un « 0 résultat LÉGITIME » d'une panne — sans ça, une boîte
           absente des fichiers fonciers (ex. VISHOR MATERIAUX) donne un écran muet lu comme « cassé ». */}
-      {!siren && q.length >= 2 && !sug.isFetching && (sug.data?.length ?? 0) === 0 && (
+      {!embedded && !siren && q.length >= 2 && !sug.isFetching && (sug.data?.length ?? 0) === 0 && (
         <div data-m02-vide className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
           « <b className="text-txt">{q}</b> » n'a pas de foncier connu dans les fichiers fonciers (DGFiP),
           ou n'y figure pas. Ces fichiers ne recensent que les <b>personnes morales</b> détentrices de
           foncier à La Réunion — une personne physique ou une société sans bien détecté n'apparaît pas.
         </div>
       )}
+      {embedded && !siren && <p className="text-[11px] leading-snug text-txt-dim">Cherchez un propriétaire (nom, SIREN/SIRET, IDU ou adresse) dans la barre du haut pour voir ce qu'il possède.</p>}
       {d && (
         <>
           {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
@@ -200,8 +207,9 @@ export function M02() {
             {/* RETOURS-3 R4.3 — pont vers Veille promoteurs : CE QUE ce propriétaire CONSTRUIT (mêmes SIREN,
                 ses opérations + programmes). Le Scan dit ce qu'il DÉTIENT ; la Veille ce qu'il BÂTIT. */}
             {d['siren'] != null && (
-              <button data-m02-operations onClick={() => { setVeilleFocusSiren(String(d['siren'])); setModule('veille-promoteurs') }}
-                className="mt-2 text-[11px] text-mint hover:underline" title="Ses opérations de construction — Veille promoteurs">
+              <button data-m02-operations
+                onClick={() => { const s = String(d['siren']); if (embedded && onVoirOperations) onVoirOperations(s); else { setVeilleFocusSiren(s); setModule('veille-promoteurs') } }}
+                className="mt-2 text-[11px] text-mint hover:underline" title="Ce qu'il construit — ses opérations">
                 Voir ses opérations →</button>
             )}
           </div>
@@ -1172,7 +1180,10 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // §3 — outil « Permis » unifié : `permis` (radar, carte au menu) ET `promesses` (filtre « Au point
   // mort », clé ALIASÉE hidden) résolvent le MÊME composant M03. `promesses` ouvre le filtre pré-actif
   // (deep-link/copilote/QA inchangés). Composant M04 autonome supprimé (absorbé).
-  patrimoine: M02, permis: M03, promesses: M03,
+  // RETOURS-4 S7 — « patrimoine » ouvre l'outil FUSIONNÉ (onglets possède/construit) ; « veille-promoteurs »
+  // (hidden au menu) redirige vers le MÊME outil, onglet « Ce qu'ils construisent » (redirection conservée).
+  patrimoine: ScanPatrimoine, permis: M03, promesses: M03,
+  'veille-promoteurs': () => <ScanPatrimoine defaultTab="construit" />,
   // M137-N (Vic 20/08/2026) : 'bailleur' (M06) et 'fantome' (M07) retirés du produit (DORMANT) —
   // plus câblés au menu. Composants M06/M07 conservés au dépôt (exportés, cf. leur en-tête).
   // M137-T — 'duediligence' (M10) et 'o5-servitudes' (O5) fusionnés dans l'outil « risques ».
@@ -1214,7 +1225,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // RETOURS-3 R5 — « Mon secteur » est hidden au menu (fusionné dans « Étudier un bien »), mais la clé
   // reste RÉSOLVANTE ici : deep-link/copilote historique ouvrent toujours l'outil autonome (redirection conservée).
   'mon-secteur': MonSecteur,   // SECTEUR-1 (S1)
-  'veille-promoteurs': VeillePromoteurs,   // SECTEUR-1 (S3)
+  // 'veille-promoteurs' est mappé plus haut (→ ScanPatrimoine, onglet construit) — RETOURS-4 S7.
   // RADAR-CATÉGORIE (T1) — 'radar' n'est plus un module du panneau Outils : c'est la view 'radar'
   // (catégorie plein écran, RadarView). Ancien composant RadarClient supprimé.
 }

@@ -88,8 +88,9 @@ export const MODULES: ModuleDef[] = [
     label: 'Assemblage', desc: 'Des parcelles voisines réunies : le potentiel du tout.' },
 
   // ── 2. Sourcer un propriétaire, puis l'approcher ──
+  // RETOURS-4 S7 — Scan patrimoine ABSORBE Veille promoteurs (2 onglets : possède / construit).
   { key: 'patrimoine', num: 'M02', group: 'agir', phare: true,
-    label: 'Scan patrimoine', desc: 'Tout ce qu\'un propriétaire possède sur l\'île.' },
+    label: 'Scan patrimoine', desc: 'Ce qu\'un propriétaire possède, et ce qu\'il construit.' },
   { key: 'courriers', num: 'M09', group: 'agir',
     label: 'Courrier propriétaire', desc: 'Écrivez au propriétaire — LABUSE se charge de l\'envoi.' },
   // Prospection solaire (V1 restitution) — sert la donnée solaire DÉJÀ en base (parcel_solar/PVGIS,
@@ -112,8 +113,10 @@ export const MODULES: ModuleDef[] = [
     label: 'Mon secteur', desc: 'Les prix du secteur sont désormais dans « Étudier un bien » (dès l’adresse).' },
   // SECTEUR-1 (S3) — « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM + leurs
   // acquisitions foncières (Scan patrimoine, même SIREN). Comptes SQL, millésime Sitadel affiché.
-  { key: 'veille-promoteurs', num: 'S3', group: 'marche',
-    label: 'Veille promoteurs', desc: 'Ce que les promoteurs construisent, opération par opération.' },
+  // RETOURS-4 S7 — RETIRÉ du menu (hidden) : fusionné dans « Scan patrimoine » (onglet « Ce qu'ils
+  // construisent »). Clé résolvante conservée (redirection interne → ScanPatrimoine defaultTab construit).
+  { key: 'veille-promoteurs', num: 'S3', group: 'marche', hidden: true,
+    label: 'Veille promoteurs', desc: 'Les opérations sont désormais dans « Scan patrimoine » (onglet « Ce qu\'ils construisent »).' },
   // L'outil « Baromètre foncier » a QUITTÉ le menu : l'évolution du marché (île, 8 trimestres) + le
   // Rapport PDF vivent désormais dans l'onglet « Évolution » de Communes. Clé ALIASÉE (hidden) →
   // Communes, aucun lien mort (deep-link/copilote historique). Composant M18 réutilisé par l'onglet.
