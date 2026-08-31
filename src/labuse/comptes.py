@@ -205,7 +205,15 @@ def creer_invitation(db: Session, email: str, nom: str | None = None,
 
 
 def valider_invitation(db: Session, token: str) -> dict | None:
-    """Token d'invitation → utilisateur (ou None : inconnu/expiré/déjà consommé)."""
+    """Token d'invitation → utilisateur (ou None : inconnu/expiré/déjà consommé).
+
+    ONBOARDING-1 (O2) — le token est TRIMMÉ : un lien collé depuis un e-mail arrive souvent avec un
+    espace ou un retour-ligne collé en fin d'URL (le client mail coupe/enveloppe la ligne). Sans ce
+    strip, `%20`/`%0A` en queue → hash différent → « Invitation introuvable » AU PREMIER CLIC (le
+    « tunnel bugué » signalé). On ne touche jamais au token lui-même (token_urlsafe = sans espace)."""
+    token = (token or "").strip()
+    if not token:
+        return None
     r = db.execute(text(
         "SELECT u.id, u.email, u.compte_id, c.plan FROM utilisateurs u"
         " JOIN comptes c ON c.id = u.compte_id"
