@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { BPE_DOM, CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { getMapLayer } from '../../lib/api'
@@ -8,8 +8,7 @@ import { useApp } from '../../store/useApp'
 import { Tip } from '../Tip'
 import { ChevronSection } from '../panel/ChevronSection'
 
-// Correctif M5 : quand un run scoring v2 existe, la carte colore par le tier v2 — la légende
-// suit (mêmes couleurs que le verdict d'en-tête). Sans run (404/503), légende matrice legacy.
+// Correctif M5 : quand un run scoring v2 existe, la carte colore par le tier v2 — la légende suit.
 export function useV2Actif(): boolean {
   const q = useQuery({
     queryKey: ['v2-actif'],
@@ -19,14 +18,40 @@ export function useV2Actif(): boolean {
   return q.data === true
 }
 
-/** `inline` : rendu dans un flux (tiroir mobile) au lieu du coin de carte. Sous 640 px la
- *  légende flottante recouvrait le hero (item 1 UX V1) → elle vit dans le tiroir « Couches ».
- *
- *  M12 C6/C7 — UN SEUL panneau, plusieurs sections EMPILÉES (jamais superposées) :
- *   • Verdict (C7) : REPLIÉ PAR DÉFAUT, dépliable au clic (jamais supprimé — décision Vic) ;
- *   • Zonage PLU : visible dès qu'une des deux couches de colorisation est active ;
- *   • 50 pas géométriques ; Équipements (rapatriés de leur bloc flottant qui masquait le verdict).
- *  Le panneau est borné en hauteur et défile : les sections cohabitent sans déborder l'écran. */
+// SECTEUR-1 (S4) — état repli/déplié + groupes ouverts MÉMORISÉS (localStorage).
+const LEG_LS = 'labuse.legende'
+function readLeg(): { open: boolean; groupes: Record<string, boolean> } {
+  try { return { open: false, groupes: {}, ...JSON.parse(localStorage.getItem(LEG_LS) || '{}') } }
+  catch { return { open: false, groupes: {} } }
+}
+function writeLeg(v: { open: boolean; groupes: Record<string, boolean> }) {
+  try { localStorage.setItem(LEG_LS, JSON.stringify(v)) } catch { /* indisponible : la légende reste fonctionnelle */ }
+}
+
+/** SECTEUR-1 (S4) — chaque groupe de la légende est un accordéon. La note de SOURCE passe dans le « i »
+ *  du groupe (« DEAL Réunion… »), jamais dans le corps de la légende. */
+function Groupe({ titre, note, open, onToggle, children }: {
+  titre: ReactNode; note?: string; open: boolean; onToggle: () => void; children: ReactNode
+}) {
+  return (
+    <div data-legend-groupe className="border-t border-line py-1.5 first:border-t-0 first:pt-0">
+      <button onClick={onToggle} aria-expanded={open}
+        className="flex w-full items-center gap-1.5 text-left" title={open ? 'Replier' : 'Déplier'}>
+        <span className="label-caps flex-1">{titre}</span>
+        {note && (
+          <Tip side="top" tip={note}>
+            <span role="button" tabIndex={0} aria-label="Source"
+              className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold text-txt-dim hover:border-mint hover:text-mint">i</span>
+          </Tip>
+        )}
+        <ChevronSection open={open} />
+      </button>
+      {open && <div className="mt-1.5">{children}</div>}
+    </div>
+  )
+}
+
+/** `inline` : rendu dans le tiroir mobile « Couches » au lieu du coin de carte. */
 export function Legend({ inline = false }: { inline?: boolean }) {
   const layers = useApp((s) => s.layers)
   const verdict = useApp((s) => s.verdict)
@@ -34,327 +59,175 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const peint = useApp((s) => s.mapPeint)
   const commune = useApp((s) => s.commune)
   const basemap = useApp((s) => s.basemap)
-  const bpeDomains = useApp((s) => s.bpeDomains)           // M137-V — filtre par domaine BPE
+  const bpeDomains = useApp((s) => s.bpeDomains)
   const toggleBpeDomain = useApp((s) => s.toggleBpeDomain)
   const v2 = useV2Actif()
-  // M106 : la légende des aléas dit le MILLÉSIME SERVI (jamais en dur) — même clé de requête
-  // que la carte (React Query dédoublonne, aucun fetch supplémentaire) ; swatches à la teinte
-  // du THÈME courant (mapTheme) pour que la légende corresponde à ce qui est peint.
   const aleaActifHook = layers.alea_inondation || layers.alea_mvt
   const aleaQ = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: aleaActifHook })
   const transQ = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
-  const polesQ = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })   // M137-X — pôles sur Axes
-  // le CRITÈRE du pôle dérivé voyage avec la donnée (config/transport.yaml) — jamais en dur ici
+  const polesQ = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
   const critereDerive = (polesQ.data?.features.find((f) => (f.properties as { subtype?: string; critere?: string }).critere)
     ?.properties as { critere?: string } | undefined)?.critere ?? 'arrêt desservi par de nombreuses lignes (dérivé GTFS)'
   const htQ = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
-  // M134 — dispositifs : millésime servi (React Query dédoublonne avec la carte, aucun fetch en plus)
   const qpvQ = useQuery({ queryKey: ['layer', 'qpv', commune], queryFn: () => getMapLayer('qpv'), enabled: layers.qpv })
   const anruQ = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
   const tTheme = MAP_THEME[basemap === 'clair' ? 'clair' : 'sombre']
   const mill = (q: { data?: unknown }) => (q.data as { millesime_integration?: string } | undefined)?.millesime_integration
   const srcMill = (q: { data?: unknown }) => (q.data as { source_millesime?: string } | undefined)?.source_millesime
-  // FIX-COUCHES P3 — fraîcheur : le MILLÉSIME AMONT (data_sources.source_millesime) est la fraîcheur
-  // RÉELLE, affichée en premier ; la date d'INGESTION passe en mention secondaire « ingéré le ».
-  // Sans millésime amont (couche dérivée), l'ingestion reste mais reste libellée « ingéré le » —
-  // jamais présentée comme la date de la donnée.
   const dISO = (m?: string) => (m ? m.split('-').reverse().join('/') : '')
   const fmtFraich = (q: { data?: unknown }) => {
     const sm = srcMill(q); const ing = mill(q)
     if (sm) return ` · millésime ${sm}${ing ? ` (ingéré le ${dISO(ing)})` : ''}`
     return ing ? ` · ingéré le ${dISO(ing)}` : ''
   }
-  // C7 : verdict REPLIÉ par défaut (libère la carte) — l'utilisateur le déplie s'il en a besoin.
-  const [verdictOpen, setVerdictOpen] = useState(false)
+  const [leg, setLeg] = useState(readLeg)
+  const set = (v: typeof leg) => { setLeg(v); writeLeg(v) }
 
-  // M55-G point 10 — une légende n'existe que si ses couleurs sont À L'ÉCRAN (mapPeint, écrit
-  // par la carte). Verdict : mode OPINION (analyse active ou couche « Verdict » cochée) ET
-  // parcelles effectivement peintes ET pas recouvertes par le zonage. Mode factuel (P8) :
-  // jamais. Carte île sans parcelles peintes (« Zoomez ou cliquez une commune… ») : jamais.
   const opinion = (verdict && analyse) || layers.couleurs_verdict
   const verdictPeint = opinion && peint.parcelles && !peint.zonage
   const zonagePeint = peint.zonage
   const equipPeint = peint.equipements
-  // 50 pas / Renouvellement / aléas : GeoJSON sans minzoom — peints dès que la couche est active
-  const aleaActif = aleaActifHook
-  const dispoActif = layers.qpv || layers.tva_primo || layers.anru || layers.zfang || layers.frr   // M134
-  const rien = !verdictPeint && !zonagePeint && !equipPeint && !layers.cinquante_pas && !layers.renouv
-    && !aleaActif && !layers.transport && !layers.lignes_ht && !dispoActif
-    && !layers.znieff && !layers.equipements_bpe   // M137-U
-    && !layers.axes   // M137-X — la couche Axes (+ pôles d'échange) a sa propre entrée de légende
-  if (rien) return null
+  const dispoActif = layers.qpv || layers.tva_primo || layers.anru || layers.zfang || layers.frr
 
-  return (
-    <div className={`${inline
-      ? 'rounded-xl bg-surface-2 px-4 py-3'
-      : 'floating absolute bottom-4 right-4 hidden max-h-[60vh] overflow-y-auto px-4 py-3 sm:block'}`}>
-      {/* ── Verdict (repliable, replié par défaut — discret) ── */}
-      {verdictPeint && (
-        <>
-          <button
-            data-legend-verdict-toggle
-            onClick={() => setVerdictOpen((o) => !o)}
-            className="group flex w-full items-center justify-between gap-3 text-left"
-            aria-expanded={verdictOpen}
-            title={verdictOpen ? 'Replier la légende du verdict' : 'Déplier la légende du verdict'}
-          >
-            {/* M36 Lot A : étiquette de source VRAIE, sans jargon interne. Cas nominal = classement
-                servi (tiers) ; le repli n'apparaît que si le classement servi est INJOIGNABLE
-                (avant M36 il s'affichait aussi en dev à cause du proxy /v2 manquant). */}
-            {v2 ? (
-              <Tip block side="top" tip="Couleurs du classement servi (tiers Priorité → Écartée).">
-                <span className="label-caps">Verdict · Classement servi</span>
-              </Tip>
-            ) : (
-              <Tip block side="top" tip="Classement historique (repli) — le classement servi n'est pas joignable sur cette vue.">
-                <span className="label-caps">Verdict · Classement historique</span>
-              </Tip>
-            )}
-            <ChevronSection open={verdictOpen} />
-          </button>
-          {verdictOpen && (
-            <div className="mt-2 flex flex-col gap-1.5">
-              {v2
-                ? LEGEND_V2_ORDER.map((t) => (
-                    <div key={t} className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full" style={{ background: TIER_V2_META[t].color }} />
-                      <span className="text-[11px] text-txt">{TIER_V2_META[t].label}</span>
-                    </div>
-                  ))
-                : LEGEND_ORDER.map((s) => (
-                    <div key={s} className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full" style={{ background: STATUT_META[s].color }} />
-                      <span className="text-[11px] text-txt">{STATUT_META[s].label}</span>
-                    </div>
-                  ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── Zonage PLU par famille (C5) — seulement si le remplissage par famille est PEINT ── */}
-      {zonagePeint && (
-        <div data-legend-zonage className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <p className="label-caps mb-2">Zonage PLU (par type)</p>
-          <div className="flex flex-col gap-1.5">
-            {ZONE_FAM_ORDER.map((f) => (
-              <div key={f} className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full" style={{ background: ZONE_FAM_META[f].color }} />
-                <span className="text-[11px] text-txt">{ZONE_FAM_META[f].label}</span>
-              </div>
-            ))}
+  // SECTEUR-1 (S4) — les GROUPES actifs, dans l'ordre. Seuls ceux des couches actives apparaissent.
+  const groupes: { id: string; titre: ReactNode; note?: string; body: ReactNode }[] = []
+  if (verdictPeint) groupes.push({
+    id: 'verdict',
+    titre: v2 ? 'Verdict · Classement servi' : 'Verdict · Classement historique',
+    note: v2 ? 'Couleurs du classement servi (tiers Priorité → Écartée).' : 'Classement historique (repli) — le classement servi n\'est pas joignable sur cette vue.',
+    body: (
+      <div className="flex flex-col gap-1.5">
+        {(v2 ? LEGEND_V2_ORDER : LEGEND_ORDER).map((t) => (
+          <div key={t} className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full" style={{ background: v2 ? TIER_V2_META[t as keyof typeof TIER_V2_META].color : STATUT_META[t as keyof typeof STATUT_META].color }} />
+            <span className="text-[11px] text-txt">{v2 ? TIER_V2_META[t as keyof typeof TIER_V2_META].label : STATUT_META[t as keyof typeof STATUT_META].label}</span>
           </div>
-        </div>
-      )}
-
-      {/* ── 50 pas géométriques ── */}
-      {layers.cinquante_pas && (
-        <div className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Réserve des 50 pas géométriques — bande de 81,20 m depuis le rivage (spécifique outre-mer)">
-            <div data-legend-50pas className="flex items-center gap-2">
-              <span className="h-0.5 w-4 rounded" style={{ background: CINQUANTE_PAS_COLOR }} />
-              <span className="text-[11px] text-txt">50 pas géométriques</span>
-            </div>
-          </Tip>
-        </div>
-      )}
-
-      {/* ── M137-U : ZNIEFF (contrainte) — type I / type II distingués (ils ne pèsent pas pareil) ── */}
-      {layers.znieff && (
-        <div data-legend-znieff className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Inventaire du patrimoine naturel (INPN/MNHN, 2025). Type I : secteur à fort intérêt, plus sensible ; type II : grand ensemble naturel. Contrainte (étude d'impact, risque de recours), pas une interdiction. N'entre pas dans le classement.">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-4 rounded-sm border" style={{ background: tTheme.znieff, opacity: tTheme.znieffOpacity + 0.35, borderColor: tTheme.znieff }} />
-              <span className="text-[11px] text-txt">ZNIEFF — type I &amp; type II</span>
-            </div>
-          </Tip>
-        </div>
-      )}
-
-      {/* ── M137-U/V : équipements INSEE BPE — cercles colorés PAR DOMAINE (A..G) ; la légende EST
-             le filtre (cliquer un domaine l'affiche/le masque). Distincts des icônes OSM. ── */}
-      {layers.equipements_bpe && (
-        <div data-legend-bpe className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Base Permanente des Équipements (INSEE, 2025), par domaine. Source distincte d'OpenStreetMap — jamais fusionnée. Cliquez un domaine pour l'afficher ou le masquer. Le modèle de LABUSE continue de lire OSM.">
-            <p className="label-caps mb-1.5">Équipements (INSEE BPE) — par domaine</p>
-          </Tip>
-          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-            {BPE_DOM.map((d) => {
-              const on = bpeDomains.includes(d.code)
-              return (
-                <button key={d.code} data-legend-bpe-dom={d.code} onClick={() => toggleBpeDomain(d.code)}
-                  className={`flex items-center gap-1.5 rounded px-1 py-0.5 text-left transition-opacity duration-quick ${on ? '' : 'opacity-35'}`}
-                  title={on ? 'Masquer ce domaine' : 'Afficher ce domaine'}>
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
-                  <span className="truncate text-[10.5px] text-txt">{d.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── M106 : aléas DEAL séparés — gradation par niveau, source et millésime SERVIS ── */}
-      {(['alea_inondation', 'alea_mvt'] as const).map((k) => layers[k] && (
-        <div key={k} data-legend-alea={k} className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <p className="label-caps mb-2">{k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain'}</p>
-          <div className="flex items-center gap-2">
-            {(['faible', 'moyen', 'fort'] as const).map((n) => (
-              <span key={n} className="flex items-center gap-1">
-                <span className="h-2.5 w-4 rounded-sm border" style={{
-                  background: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt,
-                  opacity: Math.min(1, tTheme.aleaOpacity[n] + 0.25),
-                  borderColor: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt,
-                }} />
-                <span className="text-[10.5px] text-txt-dim">{n}</span>
-              </span>
-            ))}
-          </div>
-          <p className="mt-1 text-[10px] text-txt-dim">
-            DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)
-            {fmtFraich(aleaQ)}
-          </p>
-        </div>
+        ))}
+      </div>
+    ),
+  })
+  if (zonagePeint) groupes.push({
+    id: 'zonage', titre: 'Zonage PLU (par type)',
+    body: <div className="flex flex-col gap-1.5">{ZONE_FAM_ORDER.map((f) => (
+      <div key={f} className="flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: ZONE_FAM_META[f].color }} /><span className="text-[11px] text-txt">{ZONE_FAM_META[f].label}</span></div>
+    ))}</div>,
+  })
+  if (layers.cinquante_pas) groupes.push({
+    id: '50pas', titre: '50 pas géométriques',
+    note: 'Réserve des 50 pas géométriques — bande de 81,20 m depuis le rivage (spécifique outre-mer).',
+    body: <div data-legend-50pas className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: CINQUANTE_PAS_COLOR }} /><span className="text-[11px] text-txt">50 pas géométriques</span></div>,
+  })
+  if (layers.znieff) groupes.push({
+    id: 'znieff', titre: 'ZNIEFF — type I & II',
+    note: 'Inventaire du patrimoine naturel (INPN/MNHN, 2025). Type I : secteur à fort intérêt, plus sensible ; type II : grand ensemble naturel. Contrainte (étude d\'impact, risque de recours), pas une interdiction. N\'entre pas dans le classement.',
+    body: <div data-legend-znieff className="flex items-center gap-2"><span className="h-2.5 w-4 rounded-sm border" style={{ background: tTheme.znieff, opacity: tTheme.znieffOpacity + 0.35, borderColor: tTheme.znieff }} /><span className="text-[11px] text-txt">ZNIEFF — type I &amp; type II</span></div>,
+  })
+  if (layers.equipements_bpe) groupes.push({
+    id: 'bpe', titre: 'Équipements (INSEE BPE)',
+    note: 'Base Permanente des Équipements (INSEE, 2025), par domaine. Source distincte d\'OpenStreetMap — jamais fusionnée. Cliquez un domaine pour l\'afficher ou le masquer.',
+    body: <div data-legend-bpe className="grid grid-cols-2 gap-x-2 gap-y-0.5">{BPE_DOM.map((d) => {
+      const on = bpeDomains.includes(d.code)
+      return (
+        <button key={d.code} data-legend-bpe-dom={d.code} onClick={() => toggleBpeDomain(d.code)}
+          className={`flex items-center gap-1.5 rounded px-1 py-0.5 text-left transition-opacity duration-quick ${on ? '' : 'opacity-35'}`}
+          title={on ? 'Masquer ce domaine' : 'Afficher ce domaine'}>
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: d.color }} /><span className="truncate text-[10.5px] text-txt">{d.label}</span>
+        </button>
+      )
+    })}</div>,
+  })
+  ;(['alea_inondation', 'alea_mvt'] as const).forEach((k) => { if (layers[k]) groupes.push({
+    id: k, titre: k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain',
+    note: `DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)${fmtFraich(aleaQ)}`,
+    body: <div data-legend-alea={k} className="flex items-center gap-2">{(['faible', 'moyen', 'fort'] as const).map((n) => (
+      <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt, opacity: Math.min(1, tTheme.aleaOpacity[n] + 0.25), borderColor: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt }} /><span className="text-[10.5px] text-txt-dim">{n}</span></span>
+    ))}</div>,
+  }) })
+  if (layers.transport) groupes.push({
+    id: 'transport', titre: 'Transport public',
+    note: `GTFS : réseaux officiels de La Réunion (Licence Ouverte) · Papang : © les contributeurs d'OpenStreetMap (ODbL)${fmtFraich(transQ)}. Les pôles d'échange sont dans « Axes structurants ».`,
+    body: <div data-legend-transport className="flex flex-col gap-1 text-[11px] text-txt">
+      {([['Car Jaune', 'cars interurbains (Région)'], ['Citalis', 'bus du Nord (CINOR) — et le téléphérique Papang, en tireté'], ["Kar'Ouest", 'bus de l’Ouest (TCO)'], ['Alternéo', 'bus du Sud-Ouest (CIVIS)'], ['Estival', 'bus de l’Est (CIREST)'], ['Carsud', 'bus du Sud (CASUD)']] as const).map(([r, d]) => (
+        <span key={r} className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded" style={{ background: tTheme.transportReseaux[r] }} /><span><b>{r}</b> — {d}</span></span>
       ))}
+      <span className="mt-1 flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-txt-mut" />arrêt (visible en zoomant)</span>
+    </div>,
+  })
+  if (layers.axes) groupes.push({
+    id: 'axes', titre: 'Axes structurants',
+    note: 'Double face : accessibilité ET nuisances (bruit, pollution, recul le long des axes classés). Axes : BD TOPO IGN, importance 1-2 (Licence Ouverte) · pôles : © OpenStreetMap (ODbL).',
+    body: <div data-legend-axes className="flex flex-col gap-1 text-[11px] text-txt">
+      <span className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.axe }} />Axes structurants (route des Tamarins, nationales…)</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tTheme.pole }} />pôle d’échange relevé (OSM — Sourcé)</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.pole }} />pôle estimé — {critereDerive}</span>
+    </div>,
+  })
+  if (layers.lignes_ht) groupes.push({
+    id: 'ht', titre: 'Lignes haute tension',
+    note: `Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI). BD TOPO IGN (Licence Ouverte)${fmtFraich(htQ)}`,
+    body: <div data-legend-ht className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} /><span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span></div>,
+  })
+  if (dispoActif) groupes.push({
+    id: 'dispositifs', titre: 'Dispositifs et périmètres',
+    note: 'ZFANG / FRR : maille COMMUNE entière (pas un périmètre fin). Bande TVA : périmètre dérivé des QPV (Estimé).',
+    body: <div data-legend-dispositifs className="flex flex-col gap-1.5 text-[11px] text-txt">
+      {layers.qpv && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.qpv, opacity: tTheme.qpvOpacity + 0.35, borderColor: tTheme.qpv }} />QPV — quartier prioritaire{fmtFraich(qpvQ)}</span>}
+      {layers.tva_primo && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tvaPrimo, opacity: tTheme.tvaPrimoOpacity + 0.35, borderColor: tTheme.tvaPrimo }} /><span>TVA réduite primo-accédant (QPV + 500 m) — <i className="text-txt-dim">dérivé</i></span></span>}
+      {layers.anru && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.anru, opacity: tTheme.anruOpacity + 0.35, borderColor: tTheme.anru }} />NPNRU / ANRU{fmtFraich(anruQ)}</span>}
+      {layers.zfang && <><span data-legend-zfang-renforce className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zfangRenforce, borderColor: tTheme.zfangRenforce }} />ZFANG renforcée — 6 communes de l’Est</span><span data-legend-zfang-standard className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.zfangStandard, borderColor: tTheme.zfangStandard, backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />ZFANG standard — 18 communes</span></>}
+      {layers.frr && <><span data-legend-frr-totalite className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.frrTotalite, borderColor: tTheme.frrTotalite }} />FRR totalité — 3 communes</span><span data-legend-frr-partie className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.frrPartie, borderColor: tTheme.frrPartie, backgroundImage: 'repeating-linear-gradient(-45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />FRR en partie — 20 communes</span></>}
+    </div>,
+  })
+  // SECTEUR-2b (U1) — prix du logement neuf (VEFA acté DVF), aplat commune, choropleth par tranche.
+  // Rampe DISTINCTE (jaune → orange → magenta), hors du vert des statuts ; sous le seuil = hachure grise.
+  if (layers.vefa_neuf) groupes.push({
+    id: 'vefa_neuf', titre: 'Prix du logement neuf (VEFA)',
+    note: 'Médiane du prix au m² bâti des ventes VEFA (« état futur d’achèvement ») réellement actées — geo-DVF (DGFiP), fenêtre 36 mois glissants, maille COMMUNE. Peinte là où au moins 10 ventes soutiennent la médiane ; sous ce seuil : hachure grise (« moins de 10 ventes »), jamais vide. CLIC sur une commune → détail (médiane, tendance 12 mois, répartition, offre engagée Sitadel). Le STOCK du neuf relève de l’ECLN (SDES, métropole seule) — hors champ La Réunion, jamais extrapolé.',
+    body: <div data-legend-vefa className="flex flex-col gap-1 text-[11px] text-txt">
+      {[['moins_4000', '#FDE047', '< 4 000 €/m²'], ['4000_4500', '#FB923C', '4 000–4 500 €/m²'],
+        ['4500_5000', '#EA6D2A', '4 500–5 000 €/m²'], ['5000_5500', '#D6337A', '5 000–5 500 €/m²'],
+        ['5500_plus', '#A21CAF', '≥ 5 500 €/m²']].map(([k, c, lab]) => (
+        <span key={k} className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: c, borderColor: c }} />{lab}</span>
+      ))}
+      <span data-legend-vefa-hachure className="flex items-center gap-2 text-txt-dim">
+        <span className="h-2.5 w-4 shrink-0 rounded-sm border border-line-2" style={{ backgroundColor: '#3B4046', backgroundImage: 'repeating-linear-gradient(-45deg, #9AA0A6 0 1px, transparent 1px 4px)' }} />
+        moins de 10 ventes (hachuré)</span>
+    </div>,
+  })
+  if (layers.renouv) groupes.push({
+    id: 'renouv', titre: 'Densifier l’existant',
+    note: 'Parcelles occupées (bâties) en zone U/AU avec capacité résiduelle — potentiel de densification, pas une opportunité qualifiée.',
+    body: <div data-legend-renouv className="flex items-center gap-2"><span className="h-2.5 w-4 rounded-sm" style={{ background: TOKENS.renouv, opacity: 0.7 }} /><span className="text-[11px] text-txt">Occupées, capacité résiduelle</span></div>,
+  })
+  if (equipPeint) groupes.push({
+    id: 'equip', titre: 'Équipements (OSM)',
+    body: <div data-legend-equip className="flex flex-col gap-0.5 text-[11px]">{EQUIP_META.map((e) => (
+      <span key={e.key} className="flex items-center gap-1.5 text-txt-mut"><span className="text-[13px] leading-none">{e.emoji}</span>{e.label}</span>
+    ))}</div>,
+  })
 
-      {/* ── M106-B : transport public — LA COULEUR DIT LE RÉSEAU, LA FORME DIT LE TYPE.
-          Légende lisible seule : les réseaux sont NOMMÉS, jamais un code interne. ── */}
-      {layers.transport && (
-        <div data-legend-transport className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <p className="label-caps mb-2">Transport public — un réseau, une couleur</p>
-          <div className="flex flex-col gap-1 text-[11px] text-txt">
-            {([['Car Jaune', 'cars interurbains (Région)'], ['Citalis', 'bus du Nord (CINOR) — et le téléphérique Papang, en tireté'],
-               ["Kar'Ouest", 'bus de l’Ouest (TCO)'], ['Alternéo', 'bus du Sud-Ouest (CIVIS)'],
-               ['Estival', 'bus de l’Est (CIREST)'], ['Carsud', 'bus du Sud (CASUD)']] as const).map(([r, d]) => (
-              <span key={r} className="flex items-center gap-2">
-                <span className="h-0.5 w-4 shrink-0 rounded" style={{ background: tTheme.transportReseaux[r] }} />
-                <span><b>{r}</b> — {d}</span>
-              </span>
-            ))}
-          </div>
-          <p className="label-caps mb-1.5 mt-2.5">La forme dit le type</p>
-          <div className="flex flex-col gap-1 text-[11px] text-txt">
-            <span className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded bg-txt-mut" />tracé de ligne (couleur du réseau)</span>
-            <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-txt-mut" />arrêt (visible en zoomant)</span>
-          </div>
-          <p className="mt-1.5 text-[10px] text-txt-dim">
-            GTFS : réseaux officiels de La Réunion (Licence Ouverte) · Papang : © les
-            contributeurs d’OpenStreetMap (ODbL){fmtFraich(transQ)}. Les pôles d’échange sont
-            désormais dans « Axes structurants ».
-          </p>
-        </div>
-      )}
+  if (!groupes.length) return null
 
-      {/* ── M106-B P3 / M137-X : axes structurants (BD TOPO) + PÔLES d'échange (leurs nœuds) ── */}
-      {layers.axes && (
-        <div data-legend-axes className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Double face : accessibilité ET nuisances (bruit, pollution, recul le long des axes classés). La fiche d'une parcelle donne la distance à l'axe le plus proche.">
-            <div className="flex items-center gap-2">
-              <span className="h-1 w-4 rounded" style={{ background: tTheme.axe }} />
-              <span className="text-[11px] text-txt">Axes structurants (route des Tamarins, nationales…)</span>
-            </div>
-          </Tip>
-          {/* M137-X — les pôles d'échange (nœuds du réseau structurant) ressortent en magenta. */}
-          <div className="mt-1.5 flex flex-col gap-1 text-[11px] text-txt">
-            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: tTheme.pole }} />pôle d’échange relevé sur le terrain (OSM — Sourcé)</span>
-            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.pole }} />pôle estimé — {critereDerive}</span>
-          </div>
-          <p className="mt-1 text-[10px] text-txt-dim">Axes : BD TOPO IGN, importance 1-2 (Licence Ouverte) · pôles : © les contributeurs d’OpenStreetMap (ODbL)</p>
-        </div>
-      )}
+  // SECTEUR-1 (S4) — repliée par défaut, une seule ligne « Légende · N couches ▾ » ; le PREMIER groupe
+  // s'ouvre par défaut, les autres repliés (état mémorisé).
+  const grpOpen = (id: string, i: number) => leg.groupes[id] ?? (i === 0)
+  const toggleGrp = (id: string) => set({ ...leg, groupes: { ...leg.groupes, [id]: !grpOpen(id, groupes.findIndex((g) => g.id === id)) } })
 
-      {/* ── M106 P4 : lignes haute tension — une CONTRAINTE, tireté anthracite ── */}
-      {layers.lignes_ht && (
-        <div data-legend-ht className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI).">
-            <div className="flex items-center gap-2">
-              <span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} />
-              <span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span>
-            </div>
-          </Tip>
-          <p className="mt-1 text-[10px] text-txt-dim">BD TOPO IGN (Licence Ouverte){fmtFraich(htQ)}</p>
-        </div>
-      )}
-
-      {/* ── M134 / M137-Y : Dispositifs et périmètres — deux familles (opérationnel chaud / fiscal
-          froid). ZFANG/FRR : l'état se lit à la COULEUR (une par état) ; hachures = second signal sur
-          l'état moindre (standard / en partie). L'état avantageux (renforcée / totalité) = aplat plein. ── */}
-      {dispoActif && (
-        <div data-legend-dispositifs className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <p className="label-caps mb-2">Dispositifs et périmètres</p>
-          <div className="flex flex-col gap-1.5 text-[11px] text-txt">
-            {layers.qpv && (
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.qpv, opacity: tTheme.qpvOpacity + 0.35, borderColor: tTheme.qpv }} />
-                QPV — quartier prioritaire{fmtFraich(qpvQ)}
-              </span>
-            )}
-            {layers.tva_primo && (
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tvaPrimo, opacity: tTheme.tvaPrimoOpacity + 0.35, borderColor: tTheme.tvaPrimo }} />
-                <span>TVA réduite primo-accédant (QPV + 500 m) — <i className="text-txt-dim">dérivé LABUSE</i></span>
-              </span>
-            )}
-            {layers.anru && (
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.anru, opacity: tTheme.anruOpacity + 0.35, borderColor: tTheme.anru }} />
-                NPNRU / ANRU — renouvellement urbain{fmtFraich(anruQ)}
-              </span>
-            )}
-            {/* M137-X — 4 ENTRÉES distinctes : l'état se lit à la TEXTURE (aplat vs hachures),
-                plus à l'opacité. ZFANG renforcée = hachures / ; FRR en partie = hachures \. */}
-            {layers.zfang && (
-              <>
-                <span data-legend-zfang-renforce className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zfangRenforce, borderColor: tTheme.zfangRenforce }} />
-                  ZFANG renforcée — 6 communes de l’Est
-                </span>
-                <span data-legend-zfang-standard className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.zfangStandard, borderColor: tTheme.zfangStandard, backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />
-                  ZFANG standard — 18 communes
-                </span>
-              </>
-            )}
-            {layers.frr && (
-              <>
-                <span data-legend-frr-totalite className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.frrTotalite, borderColor: tTheme.frrTotalite }} />
-                  FRR totalité — 3 communes
-                </span>
-                <span data-legend-frr-partie className="flex items-center gap-2">
-                  <span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.frrPartie, borderColor: tTheme.frrPartie, backgroundImage: 'repeating-linear-gradient(-45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />
-                  FRR en partie — 20 communes
-                </span>
-              </>
-            )}
-          </div>
-          <p className="mt-1.5 text-[10px] text-txt-dim">ZFANG / FRR : maille COMMUNE entière (pas un périmètre fin). Bande TVA : périmètre dérivé des QPV (Estimé).</p>
-        </div>
-      )}
-
-      {/* ── M-RENOUV : segment Renouvellement (cuivre) ── */}
-      {layers.renouv && (
-        <div className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <Tip block side="top" tip="Parcelles occupées (bâties) en zone U/AU avec capacité résiduelle — potentiel de densification, pas une opportunité qualifiée.">
-            <div data-legend-renouv className="flex items-center gap-2">
-              <span className="h-2.5 w-4 rounded-sm" style={{ background: TOKENS.renouv, opacity: 0.7 }} />
-              <span className="text-[11px] text-txt">Densifier l’existant — occupées, capacité résiduelle</span>
-            </div>
-          </Tip>
-        </div>
-      )}
-
-      {/* ── Équipements (C6 : rapatriée dans le panneau unique, ne recouvre plus le verdict) ── */}
-      {equipPeint && (
-        <div data-legend-equip className="mt-3 border-t border-line pt-2.5 first:mt-0 first:border-t-0 first:pt-0">
-          <p className="label-caps mb-2">Équipements</p>
-          <div className="flex flex-col gap-0.5 text-[11px]">
-            {EQUIP_META.map((e) => (
-              <span key={e.key} className="flex items-center gap-1.5 text-txt-mut">
-                <span className="text-[13px] leading-none">{e.emoji}</span>{e.label}
-              </span>
-            ))}
-          </div>
+  // « N couches » = les couches ACTIVES à l'écran (ce que Vic voit cocher), pas le nombre de groupes.
+  const nCouches = Object.values(layers).filter(Boolean).length
+  const shell = inline ? 'rounded-xl bg-surface-2' : 'floating absolute bottom-4 right-4 hidden sm:block'
+  return (
+    <div data-legend className={`${shell} w-[240px]`}>
+      <button data-legend-toggle onClick={() => set({ ...leg, open: !leg.open })} aria-expanded={leg.open}
+        className="flex w-full items-center gap-2 px-3.5 py-2 text-left" title={leg.open ? 'Replier la légende' : 'Déplier la légende'}>
+        <span className="label-caps flex-1">Légende <span className="text-txt-dim">· {nCouches} {nCouches > 1 ? 'couches' : 'couche'}</span></span>
+        <ChevronSection open={leg.open} />
+      </button>
+      {leg.open && (
+        <div data-legend-corps className="max-h-[35vh] overflow-y-auto border-t border-line px-3.5 py-2">
+          {groupes.map((g, i) => (
+            <Groupe key={g.id} titre={g.titre} note={g.note} open={grpOpen(g.id, i)} onToggle={() => toggleGrp(g.id)}>{g.body}</Groupe>
+          ))}
         </div>
       )}
     </div>

@@ -500,6 +500,24 @@ def _porte_depot_agence() -> None:
         raise HTTPException(404, "dépôt agence désactivé (question Hoguet en attente)")
 
 
+def _est_admin(request: Request) -> bool:
+    from ..api.auth import exiger_admin
+    try:
+        exiger_admin(request)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _depot_admin_ou_ouvert(request: Request) -> None:
+    """SECTEUR-2b (U2) — le parcours de dépôt est accessible à l'ADMIN (toujours, drapeau fermé compris,
+    pour tester) OU à N'IMPORTE QUEL client quand le DRAPEAU EST OUVERT. Drapeau fermé + non-admin → 404
+    (le client ne voit rien tant que le drapeau est fermé)."""
+    if _est_admin(request):
+        return
+    _porte_depot_agence()   # non-admin : 404 si le drapeau est fermé
+
+
 class DepotAnalyserIn(BaseModel):
     html: str
 
@@ -519,20 +537,30 @@ class InteresseIn(BaseModel):
 
 @router.get("/admin/radar/depot-agence/etat")
 def radar_depot_agence_etat(request: Request) -> dict:
-    """État du drapeau, pour que l'UI admin ne montre le parcours QUE s'il est ouvert (admin seulement)."""
+    """SECTEUR-1 (S5) — l'endpoint est ADMIN (`exiger_admin`) : s'il répond, l'appelant EST admin →
+    `admin: true`. Le parcours « Publier une annonce » est TOUJOURS montré à l'admin (pour tester sans
+    toucher la config), avec la mention « drapeau fermé » quand `actif` est false ; les CLIENTS, eux, ne
+    voient rien tant que le drapeau est fermé (leur propre porte `radar_interesse`)."""
     from ..api.auth import exiger_admin
     from ..config import get_settings
     exiger_admin(request)
-    return {"actif": bool(get_settings().radar_depot_agence_actif)}
+    return {"actif": bool(get_settings().radar_depot_agence_actif), "admin": True}
+
+
+@router.get("/radar/depot-agence/ouvert")
+def radar_depot_agence_ouvert() -> dict:
+    """SECTEUR-2b (U2) — état PUBLIC du drapeau, lisible par TOUS (sans garde admin) : l'écran Radar de
+    l'app décide d'afficher ou non le bouton « Publier une annonce » aux CLIENTS. Ne révèle QUE le
+    booléen d'ouverture (aucune donnée)."""
+    from ..config import get_settings
+    return {"ouvert": bool(get_settings().radar_depot_agence_actif)}
 
 
 @router.post("/admin/radar/depot-agence/analyser")
 def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict:
     """ÉTAPE 1-2 — l'agence colle sa page ; le parseur RADAR-DEPOT-2 reconstruit les champs pré-remplis."""
-    from ..api.auth import exiger_admin
     from . import depot_agence, html_next
-    exiger_admin(request)
-    _porte_depot_agence()
+    _depot_admin_ou_ouvert(request)   # SECTEUR-2b (U2) — admin toujours, client si drapeau ouvert
     try:
         return {"ok": True, "records": depot_agence.analyser(body.html)}
     except html_next.NextDataError as exc:
@@ -542,10 +570,8 @@ def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict
 @router.post("/admin/radar/depot-agence/publier")
 def radar_depot_agence_publier(body: DepotPublierIn, request: Request) -> dict:
     """ÉTAPE 3-4 — publier l'annonce déposée : rattachement CERTAIN depuis l'adresse, contenu confié."""
-    from ..api.auth import exiger_admin
     from . import depot_agence
-    exiger_admin(request)
-    _porte_depot_agence()
+    _depot_admin_ou_ouvert(request)   # SECTEUR-2b (U2) — admin toujours, client si drapeau ouvert
     with session_scope() as db:
         try:
             out = depot_agence.publier(

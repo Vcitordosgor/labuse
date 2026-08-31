@@ -4,7 +4,7 @@
 // endpoint /admin/* porte la garde exiger_admin (403 client). Horodatages À L'HEURE RÉUNION
 // (Indian/Reunion), jamais l'heure serveur brute (dette fuseau connue, mandat D3).
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
@@ -14,8 +14,10 @@ import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { CronSection } from './Cron'
+import { ContactsSection } from './Contacts'
+import { ProgrammesSection } from './Programmes'
 
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar' | 'cron'
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -246,6 +248,8 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'courrier', label: 'Courrier', ic: '✉' },
   { key: 'radar', label: 'Radar', ic: '◎' },
   { key: 'cron', label: 'Cron', ic: '⧗' },
+  { key: 'contacts', label: 'Contacts', ic: '☎' },
+  { key: 'programmes', label: 'Programmes', ic: '◳' },
 ]
 const SOUS_TITRES: Record<AdminSection, string> = {
   pilotage: "l'état de LABUSE en cinq secondes",
@@ -256,6 +260,8 @@ const SOUS_TITRES: Record<AdminSection, string> = {
   courrier: 'les demandes d’envoi — la page qui manquait',
   radar: 'la pige d’annonces — saisie, extraction, re-vérif, rituel',
   cron: 'les jobs planifiés — état, prochaine exécution, lancer, logs',
+  contacts: 'mairies, EPCI, DEAL, ADIL — réunis et triables',
+  programmes: 'coller une URL de portfolio → l’IA propose, vous validez ligne à ligne',
 }
 
 function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: string; value: string }) {
@@ -270,7 +276,14 @@ function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: s
 
 export function AdminView() {
   const setView = useApp((s) => s.setView)
-  const [section, setSection] = useState<AdminSection>('pilotage')
+  const adminSection = useApp((s) => s.adminSection)
+  const clearAdminSection = useApp((s) => s.clearAdminSection)
+  const [section, setSection] = useState<AdminSection>((adminSection as AdminSection) || 'pilotage')
+  // SECTEUR-2 (T3) — deep-link depuis « Publier une annonce » (en-tête Radar) : ouvre la section
+  // demandée puis consomme l'intention (le retour manuel sur une autre section n'est pas réécrasé).
+  useEffect(() => {
+    if (adminSection) { setSection(adminSection as AdminSection); clearAdminSection() }
+  }, [adminSection, clearAdminSection])
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
   const admin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
   const pilotage = useQuery({ queryKey: ['admin-pilotage'], queryFn: getAdminPilotage, refetchInterval: 60_000, enabled: admin })
@@ -339,6 +352,8 @@ export function AdminView() {
           {section === 'courrier' && <CourrierSection />}
           {section === 'radar' && <RadarSection />}
           {section === 'cron' && <CronSection />}
+          {section === 'contacts' && <ContactsSection />}
+          {section === 'programmes' && <ProgrammesSection />}
         </div>
       </div>
     </div>

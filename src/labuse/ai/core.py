@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 from contextvars import ContextVar
@@ -31,10 +32,11 @@ from typing import Any, Literal
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+log = logging.getLogger("labuse.ai")   # SECTEUR-1 (S6) — une erreur d'appel modèle est TOUJOURS journalisée
+
 # ── Modèles (routeur par TÂCHE, jamais codé en dur chez l'appelant) ───────────────────────────
-MODEL_FACTUAL = "claude-haiku-4-5-20251001"    # extraction, factuel, acronymes, filtres NL
-MODEL_REASONING = "claude-sonnet-4-6"          # raisonnement explicite (faisabilité expliquée, synthèse)
-MODEL_VISION = "claude-haiku-4-5-20251001"     # RADAR P1 — lecture d'image (extraction de capture), Haiku 4.5 voit
+# SECTEUR-1 (S6) — les NOMS vivent dans labuse/ai_models.py (UN seul endroit + garde des modèles retirés).
+from ..ai_models import MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, check_model  # noqa: E402,F401
 #: €/Mtoken (approx, log indicatif — pas la tarification officielle live)
 PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0), MODEL_VISION: (1.0, 5.0)}
 ENV_KEY = "ANTHROPIC_API_KEY"
@@ -61,13 +63,18 @@ def has_key() -> bool:
     return bool(os.environ.get(ENV_KEY, "").strip())
 
 
-def _note_error(exc: Exception) -> None:
+def _note_error(exc: Exception, model: str | None = None) -> None:
     global _LAST_ERROR
     name = type(exc).__name__
-    if "Authentication" in name or "401" in str(exc):
+    s = str(exc)
+    if "Authentication" in name or "401" in s:
         _LAST_ERROR = "clé invalide (authentification refusée par l'API Anthropic)"
-    elif "Permission" in name or "403" in str(exc):
+    elif "Permission" in name or "403" in s:
         _LAST_ERROR = "clé refusée (permissions insuffisantes)"
+    elif "NotFound" in name or "not_found" in s or "404" in s:
+        # SECTEUR-1 (S6) — modèle retiré / inconnu : on NOMME la piste (jamais un « erreur générique »
+        # qui masque un modèle mort, comme le claude-3-5-haiku de la prod).
+        _LAST_ERROR = f"modèle inconnu ou retiré ({model or '?'}) — l'API Anthropic ne le sert plus"
     else:
         _LAST_ERROR = f"erreur API Anthropic ({name})"
 
@@ -449,7 +456,11 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
         msg = client.messages.create(model=model, max_tokens=max_tokens, temperature=temperature,
                                      system=system, messages=msgs)
     except Exception as exc:  # noqa: BLE001
-        _note_error(exc)
+        # SECTEUR-1 (S6) — CAUSE PROFONDE : un échec d'appel modèle ne doit JAMAIS être silencieux (le
+        # not_found_error d'un modèle retiré échouait depuis février dans un mode dégradé invisible). On
+        # JOURNALISE explicitement (modèle + erreur) EN PLUS du bandeau ; un « not_found » nomme la piste.
+        log.error("appel modèle %s échoué (kind=%s) : %s: %s", model, kind, type(exc).__name__, exc)
+        _note_error(exc, model)
         return IAResult(text="", model=model, degraded=True, reason=last_error())
     _note_success()
     prose = "".join(getattr(b, "text", "") for b in msg.content).strip()

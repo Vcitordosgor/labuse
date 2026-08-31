@@ -10,6 +10,7 @@ import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
+import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
 import { Loading } from '../Loading'
 
@@ -179,7 +180,23 @@ const darken = (hex: string, f: number): string => {
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`
 }
 const T_SOMBRE = MAP_THEME.sombre
+// SECTEUR-2b (U1) — choropleth du prix du neuf VEFA : rampe séquentielle DISTINCTE (jaune → orange →
+// magenta), tranchée franchement sur le fond sombre VERT, hors du vert des statuts. Communes sous le
+// seuil (subtype 'sous_seuil') : gris muet + HACHURE grise (couche -trame dédiée), jamais vides.
+const VEFA_RAMP: Record<string, string> = {
+  moins_4000: '#FDE047', '4000_4500': '#FB923C', '4500_5000': '#EA6D2A',
+  '5000_5500': '#D6337A', '5500_plus': '#A21CAF', sous_seuil: '#3B4046',
+}
+const vefaColorExpr = ['match', ['get', 'subtype'],
+  'moins_4000', VEFA_RAMP.moins_4000, '4000_4500', VEFA_RAMP['4000_4500'],
+  '4500_5000', VEFA_RAMP['4500_5000'], '5000_5500', VEFA_RAMP['5000_5500'],
+  '5500_plus', VEFA_RAMP['5500_plus'], 'sous_seuil', VEFA_RAMP.sous_seuil,
+  '#3B4046'] as unknown as maplibregl.ExpressionSpecification
+// opacité : aplat lisible pour les tranches peintes, plus discret pour le gris sous-seuil (la hachure porte).
+const vefaOpacityExpr = ['match', ['get', 'subtype'], 'sous_seuil', 0.28, 0.55] as unknown as maplibregl.ExpressionSpecification
 const OVERLAYS = {
+  // SECTEUR-2b (U1) — prix du neuf VEFA (aplat commune) : teinte par tranche + gris pour sous_seuil.
+  vefa_neuf: { paint: { 'fill-color': vefaColorExpr, 'fill-outline-color': '#0b0f14', 'fill-opacity': vefaOpacityExpr } },
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
@@ -516,6 +533,8 @@ export function MapView() {
   const tvaPrimo = useQuery({ queryKey: ['layer', 'tva_primo', commune], queryFn: () => getMapLayer('tva_primo'), enabled: layers.tva_primo })
   const zfang = useQuery({ queryKey: ['layer', 'zfang', commune], queryFn: () => getMapLayer('zfang'), enabled: layers.zfang })
   const frr = useQuery({ queryKey: ['layer', 'frr', commune], queryFn: () => getMapLayer('frr'), enabled: layers.frr })
+  // SECTEUR-2 (T4) — prix du neuf VEFA (aplat commune), choropleth par tranche.
+  const vefaNeuf = useQuery({ queryKey: ['layer', 'vefa_neuf', commune], queryFn: () => getMapLayer('vefa_neuf'), enabled: layers.vefa_neuf })
   // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
@@ -660,6 +679,22 @@ export function MapView() {
       makeTrameAnru(m)
       m.addLayer({ id: 'ov-anru-trame', type: 'fill', source: 'ov-anru', layout: { visibility: 'none' },
         paint: { 'fill-pattern': 'trame-anru', 'fill-opacity': T_SOMBRE.anruTrameOpacity } })
+      // SECTEUR-2b (U1) — HACHURE GRISE des communes VEFA sous le seuil (subtype 'sous_seuil') : jamais
+      // vides. Motif gris posé sur l'aplat gris muet ; « moins de 10 ventes » se lit dans le « i ».
+      makeTrame(m, 'trame-vefa-sous', '#9AA0A6', 'backslash')
+      m.addLayer({ id: 'ov-vefa_neuf-trame', type: 'fill', source: 'ov-vefa_neuf',
+        filter: ['==', ['get', 'subtype'], 'sous_seuil'] as unknown as maplibregl.FilterSpecification,
+        layout: { visibility: 'none' },
+        paint: { 'fill-pattern': 'trame-vefa-sous', 'fill-opacity': 0.55 } })
+      // SECTEUR-2b (U1) — CLIC sur une commune de la couche VEFA → panneau de détail. Le `name` porte
+      // « Commune · … » : on en tire le nom, le panneau résout l'INSEE et lit les moteurs existants.
+      m.on('click', 'ov-vefa_neuf', (e) => {
+        if (!useApp.getState().layers.vefa_neuf) return
+        const nom = String(e.features?.[0]?.properties?.name ?? '').split(' · ')[0].trim()
+        if (nom) { useApp.getState().setVefaCommune(nom); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
+      })
+      m.on('mouseenter', 'ov-vefa_neuf', () => { if (useApp.getState().layers.vefa_neuf) m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', 'ov-vefa_neuf', () => { m.getCanvas().style.cursor = '' })
       // P10 : liseré marron du Parc national (borne nette)
       m.addLayer({ id: 'ov-parc-line', type: 'line', source: 'ov-parc', layout: { visibility: 'none' },
         paint: { 'line-color': PARC_LINE, 'line-width': 1.2, 'line-opacity': 0.7 } })
@@ -853,7 +888,7 @@ export function MapView() {
         // distincts alimentent module-extra), le clic route selon la propriété présente (permit_id/idu).
         // ÉTUDE DE ZONE Z4 — 'zone-concurrent' (SIRENE, ambre) et 'zone-origin' (le point étudié, mint)
         // partagent cette couche (outils distincts alimentent module-extra, jamais en même temps).
-        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine', 'radar', 'zone-concurrent', 'zone-origin']]],
+        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine', 'radar', 'zone-concurrent', 'zone-origin', 'operation']]],
         // radar-permis (agrandissement) : rayon ZOOM-ADAPTATIF — modéré en vue île (limite le
         // chevauchement des permis groupés en centre-ville), NETTEMENT plus gros en zoom rue où
         // l'on clique un permis précis (cible large, prime sur la parcelle). Opacité < 1 + contour
@@ -863,6 +898,10 @@ export function MapView() {
         paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 13, 9, 15, 12, 18, 17],
                  'circle-color': ['case',
                    ['==', ['get', 'kind'], 'zone-concurrent'], '#E0A94F',
+                   // SECTEUR-2 (T2) — opérations de promoteurs (veille) en AMBRE ; cité par une annonce
+                   // neuve du Radar → menthe (l'œil repère les opérations déjà commercialisées).
+                   ['all', ['==', ['get', 'kind'], 'operation'], ['==', ['get', 'radar_cite'], true]], '#4ADE80',
+                   ['==', ['get', 'kind'], 'operation'], '#E0A94F',
                    ['==', ['get', 'kind'], 'zone-origin'], '#4ADE80',
                    // O2-1 (OUTILS-2) — permis au POINT MORT en ROUGE, en cours en VERT : l'œil sépare la
                    // veille concurrentielle des opportunités dormantes sans changer d'écran.
@@ -894,6 +933,10 @@ export function MapView() {
           // RADAR P3 — clic sur un pin Radar → sélectionne la parcelle ET ouvre la fiche du bien.
           if (props?.idu) select(String(props.idu))
           useApp.getState().setRadarToOpen(Number(props.bien_id))
+          ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
+        } else if (props?.kind === 'operation') {
+          // SECTEUR-2 (T2) — clic sur une opération → ouvre la fiche de sa parcelle (une des parcelles).
+          if (props?.idu) select(String(props.idu))
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (props?.kind === 'zone-concurrent') {
           // F8 (OUTILS-3) — pastille concurrent CLIQUABLE : popup (nom, activité, date de création) +
@@ -1050,7 +1093,7 @@ export function MapView() {
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
       ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt],
-      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr]]   // M134 dispositifs · M137-U znieff
+      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf]]   // M134 dispositifs · M137-U znieff · T4 vefa
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
     if (equipBpe.data) {
@@ -1108,7 +1151,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1210,6 +1253,8 @@ export function MapView() {
     m.setLayoutProperty('ov-zfang-trame', 'visibility', vis(layers.zfang))   // M137-Y — hachure ZFANG standard (moindre)
     m.setLayoutProperty('ov-frr', 'visibility', vis(layers.frr))
     m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-Y — hachure FRR en partie (moindre)
+    m.setLayoutProperty('ov-vefa_neuf', 'visibility', vis(layers.vefa_neuf)) // SECTEUR-2 (T4) — prix du neuf VEFA
+    m.setLayoutProperty('ov-vefa_neuf-trame', 'visibility', vis(layers.vefa_neuf)) // U1 — hachure sous-seuil
     // M106 P1 : les deux couches d'aléa (aplat + trame + contour suivent leur toggle)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))
@@ -1609,6 +1654,7 @@ export function MapView() {
           équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son
           bloc flottant (qui masquait le verdict) pour rejoindre ce panneau. */}
       <Legend />
+      <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading) && (
         <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">

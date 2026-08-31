@@ -101,6 +101,14 @@ export const MODULES: ModuleDef[] = [
   // endpoints /comparateur-communes, /moteurs/marche, /modules/velocite, /pipeline-rarete servis).
   { key: 'communes', num: 'O6', group: 'marche', phare: true,
     label: 'Communes', desc: 'Les 24 communes comparées, puis la fiche de chacune : marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction — et un saut vers ses parcelles' },
+  // SECTEUR-1 (S1) — « Mon secteur » : les prix DU SECTEUR autour d'une parcelle. Même moteur que
+  // « Marché et secteur » de la fiche + la médiane locale de FICHE-COMMUNE-2 C5.
+  { key: 'mon-secteur', num: 'S1', group: 'marche',
+    label: 'Mon secteur', desc: 'Une adresse ou un IDU → les prix du secteur : médiane locale DVF par type (maison / appartement / terrain nu) avec n et millésime, tendance 12 mois, et les annonces Radar actives dans le rayon' },
+  // SECTEUR-1 (S3) — « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM + leurs
+  // acquisitions foncières (Scan patrimoine, même SIREN). Comptes SQL, millésime Sitadel affiché.
+  { key: 'veille-promoteurs', num: 'S3', group: 'marche',
+    label: 'Veille promoteurs', desc: 'Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis contigus, même propriétaire moral, même période) — un point sur la carte, logements, dates, état, filtrables ; et pour chacun sa frise par année + son Scan patrimoine' },
   // L'outil « Baromètre foncier » a QUITTÉ le menu : l'évolution du marché (île, 8 trimestres) + le
   // Rapport PDF vivent désormais dans l'onglet « Évolution » de Communes. Clé ALIASÉE (hidden) →
   // Communes, aucun lien mort (deep-link/copilote historique). Composant M18 réutilisé par l'onglet.

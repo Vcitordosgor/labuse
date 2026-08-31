@@ -5,8 +5,9 @@
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { getRadarBienDetail, getRadarBiens, radarClic, radarInteresse, radarSignaler,
+import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotOuvert, radarClic, radarInteresse, radarSignaler,
   type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
+import { DepotAgence } from '../radar/DepotAgence'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
 import { useApp } from '../../store/useApp'
@@ -347,6 +348,17 @@ export function RadarView() {
   const radarToOpen = useApp((s) => s.radarToOpen)
   const setRadarToOpen = useApp((s) => s.setRadarToOpen)
 
+  // SECTEUR-2b (U2) — le bouton « Publier une annonce » de l'en-tête ET le parcours 4 étapes vivent ICI,
+  // dans l'écran Radar de l'app (plus dans la Tour de contrôle). Visibilité : ADMIN toujours (drapeau
+  // fermé compris, avec la mention) ; CLIENTS seulement quand le DRAPEAU EST OUVERT (état public /ouvert).
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
+  const estAdmin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
+  const depotOuvert = useQuery({ queryKey: ['radar-depot-ouvert'], queryFn: getRadarDepotOuvert })
+  const ouvert = depotOuvert.data?.ouvert === true
+  const boutonVisible = estAdmin || ouvert            // client : seulement drapeau ouvert
+  const drapeauFerme = estAdmin && !ouvert            // mention « invisible des clients » (admin, drapeau fermé)
+  const [depotPanneau, setDepotPanneau] = useState(false)
+
   const { data, isLoading } = useQuery({ queryKey: ['radar-biens', f, tri], queryFn: () => getRadarBiens(f, tri) })
   const biens = useMemo(() => data?.biens ?? [], [data])
 
@@ -390,9 +402,30 @@ export function RadarView() {
       <aside data-radar-panel className={`flex-col border-r border-line bg-surface-1 md:flex md:w-[434px] md:shrink-0 ${isMobile && mobileVue === 'carte' ? 'hidden' : 'flex w-full'}`}>
         {/* en-tête (wording maquette) */}
         <div className="shrink-0 border-b border-line-2 px-5 pb-4 pt-5">
-          <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR</div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR</div>
+            {/* SECTEUR-2b (U2) — « Publier une annonce » : le bouton ET le parcours vivent ICI (écran Radar
+                de l'app). Admin toujours ; clients seulement drapeau ouvert. Le clic déroule les 4 étapes
+                DANS l'app (plus de saut vers la Tour de contrôle). */}
+            {boutonVisible && (
+              <button data-radar-publier onClick={() => setDepotPanneau((v) => !v)}
+                className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint transition-colors hover:bg-mint/20"
+                title={estAdmin ? "Déposer une page d'annonces" : 'Publier votre annonce'}>
+                {depotPanneau ? '× Fermer le dépôt' : '+ Publier une annonce'}
+              </button>
+            )}
+          </div>
           <h3 className="mt-1.5 text-[20px] font-semibold text-txt-hi">Les biens en vente</h3>
           <p className="mt-1.5 text-[12.5px] leading-snug text-txt-mut">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l’annonce.</p>
+          {drapeauFerme && (
+            <span data-radar-publier-drapeau className="mt-2 inline-block rounded bg-amber/12 px-1.5 py-0.5 text-[10px] font-medium text-amber">
+              drapeau fermé — le dépôt reste invisible des clients
+            </span>
+          )}
+          {/* le parcours 4 étapes, déroulé dans l'app sous l'en-tête */}
+          {boutonVisible && depotPanneau && (
+            <div className="mt-3"><DepotAgence drapeauFerme={drapeauFerme} onClose={() => setDepotPanneau(false)} /></div>
+          )}
         </div>
 
         {/* filtres (maquette) : commune · type · prix min/max · surface min · 2 segments */}

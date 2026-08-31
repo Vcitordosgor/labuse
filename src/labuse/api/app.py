@@ -155,6 +155,8 @@ async def _lifespan(app: FastAPI):
         from .dashboard import ensure_tables as _dashboard_ens
         # RADAR (pige) · P0 — schéma isolé pige_* (domaine transactionnel, hors runs)
         from ..pige.tables import ensure_tables as _pige_ens
+        # PROMO-1 · P1 — référentiel des programmes publiés par les promoteurs (table `programmes`)
+        from ..promo.tables import ensure_tables as _promo_ens
         # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
         def _zone_ens():
             with session_scope() as _s:
@@ -195,6 +197,7 @@ async def _lifespan(app: FastAPI):
             # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
             ("dashboard", lambda: _dashboard_ens(_engine())),
             ("pige", lambda: _pige_ens(_engine())),
+            ("promo", lambda: _promo_ens(_engine())),   # PROMO-1 P1 — table programmes
             # ÉTUDE DE ZONE Z1 — tables SIRENE établissements + MOBPRO (interrogées par le moteur de
             # zone même vides ; l'ingestion réelle vient des CLI ingest-sirene-etab / ingest-mobpro).
             ("zone", lambda: _zone_ens()),
@@ -4248,7 +4251,10 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     "qpv", "tva_primo", "zfang", "frr",
                     # M137-U — ZNIEFF (contrainte environnementale, subtype type I/II) + BPE INSEE
                     # (équipements géolocalisés, couche DISTINCTE d'OSM 'amenite' — deux items par source).
-                    "znieff", "amenite_bpe"}
+                    "znieff", "amenite_bpe",
+                    # SECTEUR-2 (T4) — prix du logement NEUF (VEFA acté DVF) en aplat COMMUNE ; subtype =
+                    # tranche de prix (choropleth). ECLN écartée (métropole seule, N/A DOM) → jamais de stock.
+                    "vefa_neuf"}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
@@ -5796,6 +5802,14 @@ app.include_router(_accueil_router)
 app.include_router(_fiche_ask_router)
 app.include_router(_score_v2_router)
 app.include_router(_modules_router)
+from .mon_secteur import router as _mon_secteur_router   # SECTEUR-1 (S1) — outil « Mon secteur »
+app.include_router(_mon_secteur_router)
+from .veille_promoteurs import router as _veille_promoteurs_router   # SECTEUR-1 (S3)
+app.include_router(_veille_promoteurs_router)
+from .promo import router as _promo_router   # PROMO-1 — collecte + rattachement des programmes
+app.include_router(_promo_router)
+from .vefa import router as _vefa_router   # SECTEUR-2b (U1) — panneau de détail VEFA d'une commune
+app.include_router(_vefa_router)
 app.include_router(_courrier_router)
 app.include_router(_dossier_router)
 app.include_router(_pre_dossier_router)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
@@ -111,9 +111,12 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   // M55-A (fusion A) : couche PARCELLAIRE UNIQUE — colore d'emblée toutes les parcelles par famille
   // ET révèle le code exact au zoom / au clic (l'ancienne case « Colorisation » est fusionnée ici).
   { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },
-  // M55-A : zones OFFICIELLES du GPU (polygones bruts du document opposable) — distinctes du
-  // rattachement calibré à la parcelle ; couvrent aussi l'espace non parcellaire (voirie, domaine public).
-  { key: 'zonage', label: 'Zones du PLU officiel (brut)' },
+  // SECTEUR-2 (T5) : la couche « Zones du PLU officiel (brut) » (`zonage`) a QUITTÉ le menu — 9,9 %
+  // des parcelles sont réellement à cheval sur ≥ 2 zones (mesure : 42 648 / 431 663, 2 zones ≥ 10 %
+  // chacune ; 26,3 % en comptant les contacts de bord). Les aplats bruts, non rattachés au cadastre,
+  // se lisaient mal contre la couche calibrée. Elle devient une SOUS-OPTION « afficher les limites
+  // officielles » de la couche par parcelle (désactivée par défaut, cf. rendu plus bas). La clé de
+  // store `zonage` est conservée (MapView/Legend inchangés) ; seul son point d'entrée déménage.
   { key: 'ppr', label: 'PPR multirisque' },
   // M106 P1 : les aléas DEAL séparés — la séparation inondation/mouvement de terrain n'existe
   // PAS dans le zonage réglementaire PPR (document multirisque) ; elle vit dans la carte d'aléas.
@@ -138,6 +141,8 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'anru', label: 'NPNRU / ANRU — renouvellement urbain' },
   { key: 'zfang', label: 'ZFANG — zone franche d’activité' },
   { key: 'frr', label: 'FRR — France Ruralités Revitalisation' },
+  // SECTEUR-2 (T4) — prix du logement neuf (VEFA acté), aplat commune choropleth.
+  { key: 'vefa_neuf', label: 'Prix du logement neuf (VEFA)' },
 ]
 
 // M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
@@ -146,13 +151,15 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 // renouv) est retirée ; les 10 clés restantes sont couvertes une et une seule fois.
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
-  { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
+  { famille: 'Les zonages', keys: ['zonage_parcelle'] },   // SECTEUR-2 (T5) : `zonage` → sous-option de `zonage_parcelle`
   { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'equipements_bpe', 'parc', 'znieff', 'cinquante_pas'] },
   // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
   { famille: 'Accès et réseaux', keys: ['transport', 'axes', 'lignes_ht'] },
   // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
   // fiscaux à la maille COMMUNE (ZFANG, FRR). L'ANRU quitte « Risques » pour ici (un seul endroit).
   { famille: 'Dispositifs et périmètres', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr'] },
+  // SECTEUR-2 (T4) — le marché (prix du neuf VEFA, aplat commune).
+  { famille: 'Le marché', keys: ['vefa_neuf'] },
 ]
 const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 
@@ -226,10 +233,13 @@ function LayersSection({ open, onToggle, fill, closable }: {
                     const info = LAYER_INFO[key] ?? ''
                     const label = LAYER_LABEL[key] ?? key
                     return (
-                      <div key={key} className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">
+                      <Fragment key={key}>
+                      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">
                         <button
                           data-layer={key}
-                          onClick={() => toggleLayer(key)}
+                          // SECTEUR-2 (T5) — couper la couche par parcelle éteint aussi sa sous-option
+                          // « limites officielles » (jamais un aplat brut orphelin sans case pour l'ôter).
+                          onClick={() => { if (key === 'zonage_parcelle' && layers.zonage_parcelle && layers.zonage) toggleLayer('zonage'); toggleLayer(key) }}
                           className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
                         >
                           <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-3'}`}>
@@ -243,6 +253,29 @@ function LayersSection({ open, onToggle, fill, closable }: {
                         </button>
                         <LayerInfoPill info={info} />
                       </div>
+                      {/* SECTEUR-2 (T5) — sous-option de la couche par parcelle : afficher EN PLUS les
+                          limites officielles brutes du GPU (couche `zonage`). Visible seulement quand la
+                          couche calibrée est active ; DÉSACTIVÉE par défaut. */}
+                      {key === 'zonage_parcelle' && on && (
+                        <div className="border-b border-line px-3 py-2 pl-9 last:border-b-0">
+                          <button
+                            data-layer-sub="zonage"
+                            onClick={() => toggleLayer('zonage')}
+                            className="flex min-h-[22px] w-full items-center gap-2.5 text-left transition-colors duration-quick"
+                            title="Superposer les polygones bruts du document opposable (GPU) — non rattachés au cadastre"
+                          >
+                            <span className={`flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-[3px] ${layers.zonage ? 'bg-mint' : 'border border-line-3'}`}>
+                              {layers.zonage && (
+                                <svg viewBox="0 0 10 10" className="h-2 w-2">
+                                  <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06301A" strokeWidth="1.8" />
+                                </svg>
+                              )}
+                            </span>
+                            <span className={`text-[11px] ${layers.zonage ? 'text-txt-hi' : 'text-[#97A39B]'}`}>Afficher les limites officielles (GPU brut)</span>
+                          </button>
+                        </div>
+                      )}
+                      </Fragment>
                     )
                   })}
                 </div>
