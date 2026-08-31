@@ -4,6 +4,7 @@ import { getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
+import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille partagée
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
@@ -138,19 +139,14 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, childre
   )
 }
 
+// PROJETS-V5 (E11) — aligné sur le libellé de groupe de la FICHE PARCELLE (`.sec` DA-FICHE-v6) :
+// mono 10px UPPERCASE tracking .13em + filet horizontal — pour que les deux fiches sentent la même main.
 function GroupeLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 mt-5 px-1 font-mono text-[10px] uppercase tracking-[0.22em] text-txt-dim">{children}</p>
-}
-
-// C2 — la grille d'outils : comme la grille d'exports de la fiche parcelle (icône, nom, chiffre).
-function OutilCase({ ic, nom, chiffre, onClick }: { ic: string; nom: string; chiffre: string; onClick: () => void }) {
   return (
-    <button data-outil-case={nom} onClick={onClick}
-      className="flex flex-col items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-1 py-2.5 text-center transition-colors hover:border-mint">
-      <span className="text-[15px] text-txt-mut" aria-hidden>{ic}</span>
-      <b className="text-[11px] font-medium leading-tight text-txt-hi">{nom}</b>
-      <small className="font-mono text-[9.5px] text-mint">{chiffre}</small>
-    </button>
+    <div className="mb-2 mt-5 flex items-center gap-2 px-1">
+      <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.13em] text-txt-dim">{children}</span>
+      <span className="h-px flex-1 bg-line-2" />
+    </div>
   )
 }
 
@@ -217,17 +213,21 @@ export function ContextePanel() {
               </div>
               {/* FICHE-COMMUNE-2 (C2, maquette V2) — l'action verte pleine largeur, puis DEUX actions
                   violettes (Comparer · Étude de zone). */}
+              {/* PROJETS-V5 (E8) — DA : vert PLEIN = action principale. « Voir ses parcelles » devient
+                  opaque (le même que « Demander à LABUSE d'analyser » sur la fiche parcelle). */}
               <button data-communes-parcelles onClick={() => {
                 const s = useApp.getState()
                 s.setView('cartes'); s.setCommune(commune); s.setCommunesFilter([commune])
                 s.setFilter('analyseLabuse', true); s.setVerdict(true)
                 s.openListing()   // C3 — Couches replié, le listing prend la place
-              }} className="mt-3 w-full rounded-md border border-mint/50 bg-mint/15 px-2.5 py-2 text-[12.5px] font-semibold text-mint hover:bg-mint/25">Voir ses parcelles →</button>
+              }} className="mt-3 w-full rounded-md border border-mint bg-mint px-2.5 py-2 text-[12.5px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110">Voir ses parcelles →</button>
+              {/* PROJETS-V5 (E8) — DA : le MAUVE est RÉSERVÉ au Copilote IA. « Comparer » et « Étude de zone »
+                  ne sont pas des fonctions IA → boutons NEUTRES (contour gris, comme PDF / Renommer). */}
               <div className="mt-2 flex gap-2">
                 <button data-communes-comparer onClick={() => ouvrirOutil(commune, insee, 'communes')}
-                  className="flex-1 rounded-md border border-violet/40 bg-violet/[0.08] px-2.5 py-1.5 text-[12px] font-medium text-violet hover:bg-violet/15">⊞ Comparer aux 24</button>
+                  className="flex-1 rounded-md border border-line-2 px-2.5 py-1.5 text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">⊞ Comparer aux 24</button>
                 <button data-communes-etude-zone onClick={() => ouvrirOutil(commune, insee, 'etude-zone')}
-                  className="flex-1 rounded-md border border-violet/40 bg-violet/[0.08] px-2.5 py-1.5 text-[12px] font-medium text-violet hover:bg-violet/15">◎ Étude de zone</button>
+                  className="flex-1 rounded-md border border-line-2 px-2.5 py-1.5 text-[12px] font-medium text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">◎ Étude de zone</button>
               </div>
               {/* FICHE-COMMUNE-2 (C2) — SIGNAUX NOMMÉS en puces (règle en constante ; n'apparaissent que si
                   vrais). Remplacent « signal : prudence ». Ton rouge = obligation/baisse, orange = contrainte. */}
@@ -268,10 +268,14 @@ export function ContextePanel() {
               <LigneCarte id="regle-plu" ic="§" titre="Règles d'urbanisme"
                 sous={`PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}`}
                 val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
-                {d.plu_statut.libelle && <p className="text-[12px] leading-relaxed text-txt">{d.plu_statut.libelle}</p>}
-                {d.plu_statut.recherche_verbatim && (
-                  <button data-passerelle onClick={() => ouvrirOutil(commune, insee, 'plu')} className="mt-2 text-[11.5px] text-mint hover:underline">Chercher dans le règlement →</button>
-                )}
+                {/* PROJETS-V5 (E10) — le statut RÉEL, jamais le stade technique brut (`libelle`, ex. « aucune »
+                    = aucune procédure en cours, lu à tort « pas de PLU »). Une phrase claire + « Voir le PLU → ». */}
+                <p className="text-[12px] leading-relaxed text-txt">
+                  {d.plu_statut.statut === 'RNU' ? "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique."
+                    : d.plu_statut.statut === 'à jour' ? `Le PLU est opposable${d.plu_statut.date_reglement ? ` (approuvé le ${d.plu_statut.date_reglement})` : ''}.`
+                      : `Document local — ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}.`}
+                </p>
+                <button data-voir-plu onClick={() => ouvrirOutil(commune, insee, 'plu')} className="mt-2 text-[11.5px] text-mint hover:underline">Voir le PLU →</button>
                 <Source nom={d.plu_statut.source ?? 'GPU'} />
               </LigneCarte>
 
@@ -503,9 +507,10 @@ export function ContextePanel() {
                 </LigneCarte>
               )}
 
-              {/* ── OUTILS — la grille de 8 cases, comme les exports de la fiche parcelle (icône, nom, chiffre). ── */}
+              {/* ── OUTILS — PROJETS-V5 (E9) : le composant PARTAGÉ GrilleOutils (même rendu que les exports
+                  de la fiche parcelle). Sous la grille, « Voir plus d'outils → » ouvre la catégorie Outils. ── */}
               <GroupeLabel>Outils — pré-remplis sur {commune}</GroupeLabel>
-              <div data-outils-grille className="grid grid-cols-4 gap-1.5">
+              <GrilleOutils>
                 <OutilCase ic="§" nom="PLU" chiffre="règlement" onClick={() => ouvrirOutil(commune, insee, 'plu')} />
                 <OutilCase ic="▤" nom="Permis" chiffre={d.outils.permis_en_cours > 0 ? fmt(d.outils.permis_en_cours) : '—'} onClick={() => ouvrirOutil(commune, insee, 'permis')} />
                 <OutilCase ic="◫" nom="Densifier" chiffre={d.outils.densifiables > 0 ? fmt(d.outils.densifiables) : '—'} onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
@@ -514,7 +519,9 @@ export function ContextePanel() {
                 <OutilCase ic="☀" nom="Solaire" chiffre={d.outils.solaire_piscines > 0 ? fmt(d.outils.solaire_piscines) : '—'} onClick={() => ouvrirOutil(commune, insee, 'prospection-solaire')} />
                 <OutilCase ic="◎" nom="Étude de zone" chiffre="un point" onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
                 <OutilCase ic="⊞" nom="Comparer" chiffre="24 communes" onClick={() => ouvrirOutil(commune, insee, 'communes')} />
-              </div>
+              </GrilleOutils>
+              <button data-voir-plus-outils onClick={() => { const s = useApp.getState(); s.setContexteCommune(null); s.toggleOutils() }}
+                className="mt-2 text-[11.5px] text-mint transition-colors duration-quick hover:underline">Voir plus d'outils →</button>
             </div>
 
             {/* FICHE-COMMUNE-2 (C1) — pied : les compteurs sont PRÉCALCULÉS chaque nuit et servis tels quels

@@ -1221,6 +1221,7 @@ export interface ParcoursItem {
   proprietaire_public?: ProprietairePublic | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean
   etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
   raison?: string | null      // OUTILS-5 (P1) : le signal dominant qui a classé la parcelle
+  signaux?: { label: string; fort: boolean }[]   // PROJETS-V5 (E4) : ≤ 2 signaux de vie, fort = rouge
 }
 // M2 — fusion des doublons : union parcelles + statuts (statut le plus avancé gagne), conflits signalés.
 export interface FusionResult { ok: boolean; cible: number; sources_archivees: number[]; n_parcelles: number; conflits: { parcel_id: number; statuts: string[]; retenu: string }[]; counts: ProjetCounts }
@@ -1233,6 +1234,9 @@ export interface ParcoursEtat {
   // `total_retenues` = N (dénominateur « X sur N »), `page` = la fenêtre courante. Décidées = complètes.
   total_retenues?: number | null
   page?: { offset: number; limit: number; returned: number; has_more: boolean }
+  // PROJETS-V5 (E2) — le bandeau d'analyse : total du cadrage (= compteurs des filtres) + signalées par
+  // tier (priorité = brûlante, à suivre = chaude). `signalees` = priorite + a_suivre.
+  analyse?: { total: number; priorite: number; a_suivre: number; signalees: number } | null
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
 }
 export interface CarteDecision {
@@ -1242,8 +1246,10 @@ export interface CarteDecision {
   forces: { titre: string; detail: string }[]; attentions: { titre: string; detail: string }[]
 }
 // M140 Lot A — paginé : on feuillette la liste complète des retenues (offset/limit), jamais tout chargé.
-export const getParcoursEtat = (id: number, offset = 0, limit = 60, tier?: string | null) =>
-  j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}${tier ? `&tier=${tier}` : ''}`)
+// PROJETS-V5 (E5) — `sf` = sous-filtre du tiroir (JSON camelCase, mêmes clés que le wizard), fusionné
+// côté serveur avec le cadrage du projet (une seule requête, aucun moteur parallèle).
+export const getParcoursEtat = (id: number, offset = 0, limit = 60, tier?: string | null, sf?: Cadrage | null) =>
+  j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}${tier ? `&tier=${tier}` : ''}${sf && Object.keys(sf).length ? `&sf=${encodeURIComponent(JSON.stringify(sf))}` : ''}`)
 // M140 Lot B — export CSV de la liste COMPLÈTE des retenues (streamé, non stocké, zéro rang/score).
 export const projetCsvUrl = (id: number) => `/projets/${id}/export.csv`
 export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/projets/${id}/carte/${idu}`)
