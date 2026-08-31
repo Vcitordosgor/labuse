@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Accueil · maquette v2 (retours 31/08)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;
+    --panel:#101411;
+    --card:#151a16;
+    --card-hov:#1a221c;
+    --line:#242b26;
+    --txt:#e9edeb;
+    --dim:#98a39d;
+    --mint:#4ADE80;
+    --mint-soft:rgba(74,222,128,.10);
+    --mauve:#A78BFA;
+    --mauve-soft:rgba(167,139,250,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:32px 16px 64px;
+  }
+  .note{
+    font-size:12px;color:var(--dim);margin-bottom:24px;text-align:center;line-height:1.6;
+  }
+  .note b{color:var(--mint);font-weight:600}
+  .note .m{color:var(--mauve);font-weight:600}
+
+  .stage{display:flex;gap:20px;align-items:stretch}
+
+  /* ── Démo menu latéral ─────────────────────────── */
+  .sidebar{
+    width:76px;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:14px 8px;display:flex;flex-direction:column;gap:4px;align-items:stretch;
+  }
+  .side-item{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    padding:9px 4px;border-radius:10px;cursor:pointer;
+    color:var(--dim);transition:background .12s,color .12s;
+    user-select:none;
+  }
+  .side-item svg{width:22px;height:22px}
+  .side-item span{font-size:10.5px;letter-spacing:.02em}
+  .side-item:hover{background:var(--mint-soft);color:var(--mint)}
+  .side-item.active{background:var(--mint-soft);color:var(--mint)}
+  .side-item.ia:hover{background:var(--mauve-soft);color:var(--mauve)}
+  .side-item.ia.active{background:var(--mauve-soft);color:var(--mauve)}
+  .side-cap{margin-top:auto;font-size:9.5px;color:var(--dim);text-align:center;line-height:1.5;padding-top:10px;border-top:1px solid var(--line)}
+
+  /* ── Panneau d'accueil ─────────────────────────── */
+  .panel{
+    width:640px;max-width:calc(100vw - 140px);
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:36px 32px 24px;
+  }
+  h1{font-size:31px;font-weight:650;letter-spacing:-.01em;line-height:1.22}
+  h1 .accent{color:var(--mint)}
+
+  /* les 3 données — restaurées */
+  .stats{
+    display:grid;grid-template-columns:1fr 1fr 1fr;
+    margin:22px 0 26px;background:var(--card);border:1px solid var(--line);border-radius:10px;
+    overflow:hidden;
+  }
+  .stat{padding:12px 16px}
+  .stat + .stat{border-left:1px solid var(--line)}
+  .stat .n{font-size:19px;font-weight:650;letter-spacing:-.01em}
+  .stat .l{font-size:11.5px;color:var(--dim);margin-top:1px}
+
+  .kicker{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:11.5px;letter-spacing:.28em;color:var(--dim);margin-bottom:14px;
+  }
+
+  /* cartes d'entrée */
+  .entry{
+    display:flex;align-items:center;gap:16px;
+    background:var(--card);border-radius:12px;
+    border-left:3px solid var(--line);
+    padding:16px 18px;margin-bottom:10px;cursor:pointer;
+    transition:background .12s,border-color .12s;
+  }
+  .entry .tile{
+    width:44px;height:44px;flex:none;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.04);color:var(--dim);
+    transition:background .12s,color .12s;
+  }
+  .entry .tile svg{width:22px;height:22px}
+  .entry .txt{flex:1;min-width:0}
+  .entry .t{font-size:16.5px;font-weight:600;letter-spacing:-.005em}
+  .entry .d{font-size:13px;color:var(--dim);margin-top:2px;white-space:nowrap}
+  .entry .arrow{flex:none;color:var(--dim);font-size:17px;transition:color .12s,transform .12s}
+
+  .entry.mint{border-left-color:var(--mint)}
+  .entry.mint .tile{background:var(--mint-soft);color:var(--mint)}
+  .entry.mauve{border-left-color:var(--mauve)}
+  .entry.mauve .tile{background:var(--mauve-soft);color:var(--mauve)}
+
+  .entry:hover{background:var(--card-hov);border-left-color:var(--mint)}
+  .entry:hover .arrow{color:var(--mint);transform:translateX(3px)}
+  .entry.mauve:hover{border-left-color:var(--mauve)}
+  .entry.mauve:hover .arrow{color:var(--mauve)}
+
+  .foot{
+    display:flex;justify-content:space-between;align-items:center;
+    border-top:1px solid var(--line);margin-top:20px;padding-top:16px;
+    font-size:13.5px;
+  }
+  .foot .ok{color:var(--dim);display:flex;align-items:center;gap:8px}
+  .foot .dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+  .foot a{color:var(--mint);text-decoration:none;font-weight:550}
+  .foot a:hover{text-decoration:underline}
+
+  @media (max-width:820px){
+    .stage{flex-direction:column}
+    .sidebar{width:100%;flex-direction:row;justify-content:center}
+    .side-cap{display:none}
+    .panel{max-width:100%}
+    .entry .d{white-space:normal}
+  }
+</style>
+</head>
+<body>
+
+<p class="note">
+  Maquette v2 — survol des cartes et du menu : <b>vert</b> · surfaces IA : <span class="m">mauve</span> (survol <em>et</em> clic)<br>
+  Icônes : tuile 44&nbsp;px unique, trait 1.8 · descriptions sur une seule ligne · les 3 données restaurées
+</p>
+
+<div class="stage">
+
+  <!-- Démo menu latéral : survoler / cliquer -->
+  <nav class="sidebar" id="sb">
+    <div class="side-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5 3 5.5v15l6-2 6 2 6-2v-15l-6 2-6-2Z"/><path d="M9 3.5v15M15 5.5v15"/></svg>
+      <span>Cartes</span>
+    </div>
+    <div class="side-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>
+      <span>Radar</span>
+    </div>
+    <div class="side-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.9 8.1-2 5.8-5.8 2 2-5.8 5.8-2Z"/></svg>
+      <span>Outils</span>
+    </div>
+    <div class="side-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 19.5a1.5 1.5 0 0 0 1.5-1.5V8A1.5 1.5 0 0 0 20 6.5h-7.6a1.5 1.5 0 0 1-1.2-.6l-1-1.3a1.5 1.5 0 0 0-1.2-.6H4A1.5 1.5 0 0 0 2.5 5.5V18A1.5 1.5 0 0 0 4 19.5Z"/></svg>
+      <span>Projets</span>
+    </div>
+    <div class="side-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8 2.5 8h-17S6 15 6 8.5"/><path d="M10.4 20.5a1.9 1.9 0 0 0 3.2 0"/></svg>
+      <span>Veille</span>
+    </div>
+    <div class="side-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20.5v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="6.5" r="3.5"/><path d="M22 20.5v-2a4 4 0 0 0-3-3.85"/><path d="M15.5 3.15a3.5 3.5 0 0 1 0 6.7"/></svg>
+      <span>CRM</span>
+    </div>
+    <div class="side-item ia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z"/></svg>
+      <span>Copilote</span>
+    </div>
+    <div class="side-cap">survol&nbsp;: vert<br>IA&nbsp;: mauve<br><em>(cliquer pour l'état actif)</em></div>
+  </nav>
+
+  <!-- Panneau d'accueil -->
+  <section class="panel">
+    <h1>Tout le foncier de La Réunion.<br><span class="accent">Au même endroit.</span></h1>
+
+    <div class="stats">
+      <div class="stat"><div class="n">431&nbsp;663</div><div class="l">parcelles</div></div>
+      <div class="stat"><div class="n">24</div><div class="l">communes</div></div>
+      <div class="stat"><div class="n">64</div><div class="l">sources de données</div></div>
+    </div>
+
+    <div class="kicker">PAR OÙ COMMENCER</div>
+
+    <div class="entry mint">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m16.2 16.2 4.3 4.3"/></svg></div>
+      <div class="txt"><div class="t">Explorer la carte</div><div class="d">couches, filtres, clic parcelle</div></div>
+      <div class="arrow">→</div>
+    </div>
+
+    <div class="entry mint">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg></div>
+      <div class="txt"><div class="t">Suivre le marché — Radar</div><div class="d">les biens en vente, croisés au foncier</div></div>
+      <div class="arrow">→</div>
+    </div>
+
+    <div class="entry mauve">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z"/></svg></div>
+      <div class="txt"><div class="t">Demander au Copilote</div><div class="d">«&nbsp;terrain 1&nbsp;000&nbsp;m² à Saint-Paul&nbsp;»</div></div>
+      <div class="arrow">→</div>
+    </div>
+
+    <div class="entry">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.2 2.2h-.4a1.8 1.8 0 0 0-1.8 1.8v.16a1.8 1.8 0 0 1-.9 1.56l-.39.22a1.8 1.8 0 0 1-1.8 0l-.13-.07a1.8 1.8 0 0 0-2.46.66l-.2.34a1.8 1.8 0 0 0 .66 2.46l.13.09a1.8 1.8 0 0 1 .9 1.55v.46a1.8 1.8 0 0 1-.9 1.56l-.13.08a1.8 1.8 0 0 0-.66 2.46l.2.34a1.8 1.8 0 0 0 2.46.66l.13-.07a1.8 1.8 0 0 1 1.8 0l.39.22a1.8 1.8 0 0 1 .9 1.56v.16a1.8 1.8 0 0 0 1.8 1.8h.4a1.8 1.8 0 0 0 1.8-1.8v-.16a1.8 1.8 0 0 1 .9-1.56l.39-.22a1.8 1.8 0 0 1 1.8 0l.13.07a1.8 1.8 0 0 0 2.46-.66l.2-.35a1.8 1.8 0 0 0-.66-2.46l-.13-.07a1.8 1.8 0 0 1-.9-1.57v-.45a1.8 1.8 0 0 1 .9-1.57l.13-.08a1.8 1.8 0 0 0 .66-2.46l-.2-.34a1.8 1.8 0 0 0-2.46-.66l-.13.07a1.8 1.8 0 0 1-1.8 0l-.39-.22a1.8 1.8 0 0 1-.9-1.56V4a1.8 1.8 0 0 0-1.8-1.8Z"/><circle cx="12" cy="12" r="2.8"/></svg></div>
+      <div class="txt"><div class="t">Ouvrir un outil</div><div class="d">17 outils, du repérage au courrier</div></div>
+      <div class="arrow">→</div>
+    </div>
+
+    <div class="foot">
+      <div class="ok"><span class="dot"></span>Toutes les données sont à jour.</div>
+      <a href="#">voir les données →</a>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Démo : clic = état actif (vert, mauve pour l'IA)
+  document.querySelectorAll('#sb .side-item').forEach(function(it){
+    it.addEventListener('click',function(){
+      document.querySelectorAll('#sb .side-item').forEach(function(o){o.classList.remove('active')});
+      it.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
