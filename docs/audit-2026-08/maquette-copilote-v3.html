@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Copilote · maquette v3</title>
+<style>
+  :root{
+    --bg:#0a0d0b;
+    --panel:#101411;
+    --card:#151a16;
+    --line:#242b26;
+    --txt:#e9edeb;
+    --dim:#98a39d;
+    --mauve:#A78BFA;
+    --mauve-ink:#150f24;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:32px 16px 64px;
+  }
+  .note{font-size:12px;color:var(--dim);margin-bottom:26px;text-align:center;line-height:1.6}
+  .note .m{color:var(--mauve);font-weight:600}
+
+  .page{width:660px;max-width:100%}
+
+  .kicker{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:11.5px;letter-spacing:.3em;color:var(--mauve);
+    text-align:center;margin-bottom:12px;
+  }
+  h1{font-size:34px;font-weight:650;letter-spacing:-.01em;text-align:center}
+  .sub{font-size:14.5px;color:var(--dim);text-align:center;margin-top:8px}
+
+  /* champ */
+  .ask{
+    display:flex;gap:10px;margin:26px 0 8px;
+    background:var(--panel);border:1px solid rgba(167,139,250,.30);border-radius:14px;
+    padding:8px;transition:border-color .12s, box-shadow .12s;
+  }
+  .ask:focus-within{border-color:var(--mauve);box-shadow:0 0 0 3px rgba(167,139,250,.16)}
+  .ask input{
+    flex:1;background:none;border:none;outline:none;color:var(--txt);
+    font-size:15.5px;padding:10px 12px;font-family:inherit;
+  }
+  .ask input::placeholder{color:var(--dim)}
+  .ask button{
+    background:var(--mauve);color:var(--mauve-ink);border:none;border-radius:10px;
+    font-size:14.5px;font-weight:650;padding:0 22px;cursor:pointer;font-family:inherit;
+    transition:filter .12s;
+  }
+  .ask button:hover{filter:brightness(1.1)}
+  .hint{font-size:12.5px;color:var(--dim);text-align:center;margin-bottom:34px}
+
+  .section{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:11px;letter-spacing:.26em;color:var(--dim);margin:0 0 14px;
+  }
+
+  /* capacités — non cliquables, mais icônes bien visibles */
+  .caps{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin-bottom:36px}
+  .cap{display:flex;gap:13px;align-items:flex-start;cursor:default}
+  .cap .tile{
+    width:38px;height:38px;flex:none;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(167,139,250,.22);border:1px solid rgba(167,139,250,.48);
+    color:var(--mauve);
+  }
+  .cap .tile svg{width:20px;height:20px;stroke-width:2.1}
+  .cap .t{font-size:14.5px;font-weight:600}
+  .cap .e{font-size:12.5px;color:var(--dim);margin-top:2px;line-height:1.45}
+
+  /* reprendre — survol plein mauve, comme les cartes d'accueil */
+  .row{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:11px 12px;border-radius:10px;cursor:pointer;
+    border-bottom:1px solid var(--line);
+    transition:background .12s,color .12s;
+  }
+  .row:hover{background:var(--mauve);color:var(--mauve-ink);border-bottom-color:transparent}
+  .row:hover .when{color:rgba(21,15,36,.72)}
+  .row .q{font-size:14.5px}
+  .row .when{
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:11.5px;color:var(--dim);white-space:nowrap;flex:none;
+  }
+  .all{
+    display:inline-block;margin-top:14px;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:11.5px;letter-spacing:.2em;color:var(--mauve);text-decoration:none;
+  }
+  .all:hover{text-decoration:underline}
+
+  @media (max-width:560px){.caps{grid-template-columns:1fr}h1{font-size:28px}}
+</style>
+</head>
+<body>
+
+<p class="note">
+  Copilote v3 — aligné sur l'accueil : <span class="m">mauve assumé</span>, tuiles d'icônes contrastées (fond 22&nbsp;% + contour 48&nbsp;%),<br>
+  survol plein mauve sur « Reprendre » · capacités toujours non cliquables · colonne resserrée
+</p>
+
+<div class="page">
+  <div class="kicker">COPILOTE</div>
+  <h1>Posez votre question.</h1>
+  <p class="sub">Réponse courte, sourcée, datée — La Réunion uniquement.</p>
+
+  <div class="ask">
+    <input type="text" placeholder="Ex. combien de parcelles en procédure à Saint-Denis ?">
+    <button>Envoyer</button>
+  </div>
+  <p class="hint">Le Copilote comprend ce que vous demandez — rien à choisir.</p>
+
+  <div class="section">CE QU'IL SAIT FAIRE</div>
+  <div class="caps">
+    <div class="cap">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m16.2 16.2 4.3 4.3"/></svg></div>
+      <div><div class="t">Trouver une donnée</div><div class="e">« Combien de parcelles en procédure à Saint-Denis ? »</div></div>
+    </div>
+    <div class="cap">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5a13 13 0 0 1 0 17 13 13 0 0 1 0-17Z"/></svg></div>
+      <div><div class="t">Renseigner par le web</div><div class="e">« Qui est le maire de Saint-Benoît ? »</div></div>
+    </div>
+    <div class="cap">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 17.5h5"/><path d="M10.5 20.5h3"/><path d="M12 3a6 6 0 0 1 3.4 10.9c-.5.4-.9 1-.9 1.6H9.5c0-.6-.4-1.2-.9-1.6A6 6 0 0 1 12 3Z"/></svg></div>
+      <div><div class="t">Expliquer une notion</div><div class="e">« C'est quoi une zone AU stricte ? »</div></div>
+    </div>
+    <div class="cap">
+      <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h8.5L19 7v14.5H6z"/><path d="M14 2.5V7h5"/><path d="M9 12h7M9 16h5"/></svg></div>
+      <div><div class="t">Préparer un script</div><div class="e">« Un argumentaire pour convaincre un propriétaire »</div></div>
+    </div>
+  </div>
+
+  <div class="section">REPRENDRE</div>
+  <div class="row"><span class="q">compare Saint-Paul et Saint-Leu sur les permis</span><span class="when">il y a 3 j</span></div>
+  <div class="row"><span class="q">compare Petite-Île et La Possession sur les permis</span><span class="when">il y a 5 j</span></div>
+  <div class="row"><span class="q">compare Saint-Joseph et Saint-Philippe sur les permis</span><span class="when">il y a 5 j</span></div>
+  <div class="row"><span class="q">compare La Possession et Saint-Philippe sur les permis</span><span class="when">il y a 5 j</span></div>
+  <a class="all" href="#">VOIR TOUT · 38</a>
+</div>
+
+</body>
+</html>

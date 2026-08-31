@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Radar · filtres v4</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#101411;--card:#151a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--mint:#4ADE80;--ink:#08110b;--amber:#F0B429;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;
+    padding:32px 16px 72px;display:flex;flex-direction:column;align-items:center;
+  }
+  .note{font-size:12px;color:var(--dim);text-align:center;line-height:1.65;margin-bottom:24px;max-width:640px}
+  .note b{color:var(--mint);font-weight:600}
+  .col{width:700px;max-width:100%}
+
+  .head{padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.3em;color:var(--dim)}
+  .titlerow{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-top:8px}
+  h1{font-size:27px;font-weight:650;letter-spacing:-.01em}
+  .lede{font-size:14px;color:var(--dim);margin-top:6px;line-height:1.5;max-width:60ch}
+  .publish{
+    flex:none;background:none;color:var(--mint);border:1px solid rgba(74,222,128,.45);
+    border-radius:9px;padding:9px 15px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;
+    transition:background .12s,color .12s;
+  }
+  .publish:hover{background:var(--mint);color:var(--ink)}
+  .flag{
+    display:inline-flex;align-items:center;gap:7px;margin-top:12px;
+    font-size:12.5px;color:var(--amber);
+    background:rgba(240,180,41,.10);border:1px solid rgba(240,180,41,.30);
+    border-radius:7px;padding:5px 10px;
+  }
+
+  /* ── barre de filtres : une seule ligne ── */
+  .bar{display:flex;gap:8px;align-items:center;padding:16px 0 0;flex-wrap:wrap}
+  .search{
+    flex:1;min-width:190px;display:flex;align-items:center;gap:9px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 13px;
+  }
+  .search svg{width:16px;height:16px;stroke:var(--dim);stroke-width:2.1;fill:none}
+  .search input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:14px;font-family:inherit}
+  .search input::placeholder{color:var(--dim)}
+
+  select.pill{
+    appearance:none;background:var(--card);color:var(--txt);
+    border:1px solid var(--line);border-radius:10px;
+    padding:10px 32px 10px 13px;font-size:14px;font-family:inherit;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+    background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+  }
+
+  .more{
+    display:flex;align-items:center;gap:8px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;font-size:14px;color:var(--txt);cursor:pointer;font-family:inherit;
+    transition:border-color .12s;
+  }
+  .more:hover{border-color:rgba(74,222,128,.5)}
+  .more svg{width:15px;height:15px;stroke:currentColor;stroke-width:2.1;fill:none}
+  .more .count{
+    background:var(--mint);color:var(--ink);border-radius:20px;
+    font-size:11.5px;font-weight:700;min-width:18px;height:18px;
+    display:inline-flex;align-items:center;justify-content:center;padding:0 5px;
+  }
+
+  /* chips filtres actifs */
+  .active{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:11px;font-size:12.5px;color:var(--dim)}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.38);
+    color:var(--mint);border-radius:20px;padding:4px 10px;font-size:12.5px;cursor:pointer;
+  }
+  .chip b{font-weight:600}
+  .clear{color:var(--dim);text-decoration:underline;cursor:pointer;font-size:12.5px;background:none;border:none;font-family:inherit}
+
+  /* ── tiroir ── */
+  .drawer{
+    margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:18px 18px 6px;display:none;
+  }
+  .drawer.open{display:block}
+  .grp{margin-bottom:16px}
+  .grp .lab{font-size:12.5px;color:var(--dim);margin-bottom:8px}
+  .seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg span{padding:8px 16px;font-size:13.5px;color:var(--dim);cursor:pointer;transition:color .12s,background .12s}
+  .seg span + span{border-left:1px solid var(--line)}
+  .seg span.on{color:var(--ink);background:var(--mint);font-weight:600}
+  .nums{display:flex;gap:8px;flex-wrap:wrap}
+  .nums input{
+    width:130px;background:var(--card);border:1px solid var(--line);border-radius:9px;
+    padding:9px 12px;color:var(--txt);font-size:13.5px;outline:none;font-family:inherit;
+  }
+  .nums input::placeholder{color:var(--dim)}
+  .drawer .foot{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line);padding:12px 0;margin-top:4px}
+  .btn-ghost{background:none;border:1px solid var(--line);color:var(--dim);border-radius:9px;padding:8px 15px;font-size:13.5px;cursor:pointer;font-family:inherit}
+  .btn-main{background:var(--mint);border:none;color:var(--ink);border-radius:9px;padding:8px 18px;font-size:13.5px;font-weight:650;cursor:pointer;font-family:inherit}
+
+  /* résultats */
+  .results{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--line);margin-top:18px;padding-top:16px;flex-wrap:wrap}
+  .results .n{font-size:14.5px}
+  .results .n b{font-size:19px;font-weight:650}
+  .results .n .map{color:var(--mint)}
+</style>
+</head>
+<body>
+
+<p class="note">
+  Radar v4 — même contenu, deux étages : <b>ce qu'on change tout le temps</b> reste visible (recherche, commune, type),
+  le reste passe dans « Filtrer » avec un compteur. Ce qui est actif revient en pastilles sous la barre : rien n'est caché,
+  mais on ne voit que ce qui sert.
+</p>
+
+<div class="col">
+
+  <header class="head">
+    <div class="eyebrow">RADAR</div>
+    <div class="titlerow">
+      <div>
+        <h1>Les biens en vente</h1>
+        <p class="lede">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l'annonce.</p>
+      </div>
+      <button class="publish">+ Publier une annonce</button>
+    </div>
+    <div class="flag">drapeau fermé — le dépôt reste invisible des clients</div>
+  </header>
+
+  <!-- barre principale -->
+  <div class="bar">
+    <label class="search">
+      <svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m16.2 16.2 4.3 4.3"/></svg>
+      <input type="text" placeholder="Adresse, commune, IDU…">
+    </label>
+    <select class="pill">
+      <option>Toute l'île</option><option>Saint-Denis</option><option>Saint-Paul</option>
+    </select>
+    <select class="pill">
+      <option>Tous types</option><option>Maison</option><option>Terrain</option>
+    </select>
+    <button class="more" id="more">
+      <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M3.5 6h17M6.5 12h11M10 18h4"/></svg>
+      Filtrer <span class="count" id="cnt">2</span>
+    </button>
+  </div>
+
+  <!-- filtres actifs -->
+  <div class="active" id="chips">
+    <span class="chip">Rattachés <b>×</b></span>
+    <span class="chip">Sous le marché <b>×</b></span>
+    <button class="clear">tout effacer</button>
+  </div>
+
+  <!-- tiroir -->
+  <div class="drawer" id="drawer">
+    <div class="grp">
+      <div class="lab">Prix et surface</div>
+      <div class="nums">
+        <input placeholder="Prix min"><input placeholder="Prix max"><input placeholder="Surface min">
+      </div>
+    </div>
+    <div class="grp">
+      <div class="lab">Rattachement à la parcelle</div>
+      <div class="seg"><span>Tous</span><span class="on">Rattachés</span></div>
+    </div>
+    <div class="grp">
+      <div class="lab">Vendeur</div>
+      <div class="seg"><span class="on">Tous</span><span>Particulier</span><span>Pro</span></div>
+    </div>
+    <div class="grp">
+      <div class="lab">Prix face au marché</div>
+      <div class="seg"><span>Tous les prix</span><span class="on">Sous le marché</span></div>
+    </div>
+    <div class="foot">
+      <button class="btn-ghost" id="reset">Tout effacer</button>
+      <button class="btn-main" id="apply">Voir les biens</button>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="n"><b>0</b> bien · <span class="map">0 sur la carte</span></div>
+    <select class="pill"><option>Plus récentes</option><option>Prix croissant</option><option>Écart au marché</option></select>
+  </div>
+
+</div>
+
+<script>
+  var d=document.getElementById('drawer');
+  document.getElementById('more').onclick=function(){d.classList.toggle('open')};
+  document.getElementById('apply').onclick=function(){d.classList.remove('open')};
+  document.querySelectorAll('.seg').forEach(function(s){
+    s.querySelectorAll('span').forEach(function(o){
+      o.onclick=function(){s.querySelectorAll('span').forEach(function(x){x.classList.remove('on')});o.classList.add('on')};
+    });
+  });
+</script>
+</body>
+</html>

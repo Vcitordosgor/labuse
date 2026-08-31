@@ -44,12 +44,16 @@
     color:var(--dim);transition:background .12s,color .12s;
     user-select:none;
   }
-  .side-item svg{width:22px;height:22px}
+  .side-item svg{width:23px;height:23px;stroke-width:2.1}
   .side-item span{font-size:10.5px;letter-spacing:.02em}
-  .side-item:hover{background:var(--mint-soft);color:var(--mint)}
   .side-item.active{background:var(--mint-soft);color:var(--mint)}
-  .side-item.ia:hover{background:var(--mauve-soft);color:var(--mauve)}
   .side-item.ia.active{background:var(--mauve-soft);color:var(--mauve)}
+  .side-item:focus{outline:none}
+  .side-item:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+  @media (hover:hover) and (pointer:fine){
+    .side-item:not(.active):hover{background:var(--mint);color:#08110b}
+    .side-item.ia:not(.active):hover{background:var(--mauve);color:#150f24}
+  }
   .side-cap{margin-top:auto;font-size:9.5px;color:var(--dim);text-align:center;line-height:1.5;padding-top:10px;border-top:1px solid var(--line)}
 
   /* ── Panneau d'accueil ─────────────────────────── */
@@ -89,23 +93,30 @@
     width:44px;height:44px;flex:none;border-radius:11px;
     display:flex;align-items:center;justify-content:center;
     background:rgba(255,255,255,.04);color:var(--dim);
-    transition:background .12s,color .12s;
+    border:1px solid transparent;
+    transition:background .12s,color .12s,border-color .12s;
   }
-  .entry .tile svg{width:22px;height:22px}
+  .entry .tile svg{width:23px;height:23px;stroke-width:2.1}
   .entry .txt{flex:1;min-width:0}
   .entry .t{font-size:16.5px;font-weight:600;letter-spacing:-.005em}
   .entry .d{font-size:13px;color:var(--dim);margin-top:2px;white-space:nowrap}
   .entry .arrow{flex:none;color:var(--dim);font-size:17px;transition:color .12s,transform .12s}
 
   .entry.mint{border-left-color:var(--mint)}
-  .entry.mint .tile{background:var(--mint-soft);color:var(--mint)}
+  .entry.mint .tile{background:rgba(74,222,128,.20);border-color:rgba(74,222,128,.45);color:var(--mint)}
   .entry.mauve{border-left-color:var(--mauve)}
-  .entry.mauve .tile{background:var(--mauve-soft);color:var(--mauve)}
+  .entry.mauve .tile{background:rgba(167,139,250,.22);border-color:rgba(167,139,250,.48);color:var(--mauve)}
 
-  .entry:hover{background:var(--card-hov);border-left-color:var(--mint)}
-  .entry:hover .arrow{color:var(--mint);transform:translateX(3px)}
-  .entry.mauve:hover{border-left-color:var(--mauve)}
-  .entry.mauve:hover .arrow{color:var(--mauve)}
+  /* Survol : la case entière se remplit — contenu inversé en sombre */
+  .entry:hover{background:var(--mint);border-left-color:var(--mint);color:#08110b}
+  .entry:hover .tile{background:#08110b;border-color:#08110b;color:var(--mint)}
+  .entry:hover .d{color:rgba(8,17,11,.72)}
+  .entry:hover .arrow{color:#08110b;transform:translateX(3px)}
+
+  .entry.mauve:hover{background:var(--mauve);border-left-color:var(--mauve);color:#150f24}
+  .entry.mauve:hover .tile{background:#150f24;border-color:#150f24;color:var(--mauve)}
+  .entry.mauve:hover .d{color:rgba(21,15,36,.72)}
+  .entry.mauve:hover .arrow{color:#150f24}
 
   .foot{
     display:flex;justify-content:space-between;align-items:center;
@@ -129,7 +140,7 @@
 <body>
 
 <p class="note">
-  Maquette v2 — survol des cartes et du menu : <b>vert</b> · surfaces IA : <span class="m">mauve</span> (survol <em>et</em> clic)<br>
+  Maquette v2 — survol : la case entière se remplit en <b>vert opaque</b>, texte et icône en sombre · Copilote : <span class="m">mauve plein</span><br>
   Icônes : tuile 44&nbsp;px unique, trait 1.8 · descriptions sur une seule ligne · les 3 données restaurées
 </p>
 
@@ -139,31 +150,35 @@
   <nav class="sidebar" id="sb">
     <div class="side-item active">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5 3 5.5v15l6-2 6 2 6-2v-15l-6 2-6-2Z"/><path d="M9 3.5v15M15 5.5v15"/></svg>
-      <span>Cartes</span>
+      <span>Carte</span>
+    </div>
+    <div class="side-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.9 8.1-2 5.8-5.8 2 2-5.8 5.8-2Z"/></svg>
+      <span>Outils</span>
+    </div>
+    <div class="side-item ia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z"/></svg>
+      <span>Copilote</span>
     </div>
     <div class="side-item">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>
       <span>Radar</span>
     </div>
     <div class="side-item">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.9 8.1-2 5.8-5.8 2 2-5.8 5.8-2Z"/></svg>
-      <span>Outils</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8 2.5 8h-17S6 15 6 8.5"/><path d="M10.4 20.5a1.9 1.9 0 0 0 3.2 0"/></svg>
+      <span>Veille</span>
     </div>
     <div class="side-item">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 19.5a1.5 1.5 0 0 0 1.5-1.5V8A1.5 1.5 0 0 0 20 6.5h-7.6a1.5 1.5 0 0 1-1.2-.6l-1-1.3a1.5 1.5 0 0 0-1.2-.6H4A1.5 1.5 0 0 0 2.5 5.5V18A1.5 1.5 0 0 0 4 19.5Z"/></svg>
       <span>Projets</span>
     </div>
     <div class="side-item">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6 6 0 0 1 12 0c0 6.5 2.5 8 2.5 8h-17S6 15 6 8.5"/><path d="M10.4 20.5a1.9 1.9 0 0 0 3.2 0"/></svg>
-      <span>Veille</span>
-    </div>
-    <div class="side-item">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20.5v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="6.5" r="3.5"/><path d="M22 20.5v-2a4 4 0 0 0-3-3.85"/><path d="M15.5 3.15a3.5 3.5 0 0 1 0 6.7"/></svg>
       <span>CRM</span>
     </div>
-    <div class="side-item ia">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z"/></svg>
-      <span>Copilote</span>
+    <div class="side-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.8" rx="7.5" ry="3.3"/><path d="M4.5 5.8v6.4c0 1.82 3.36 3.3 7.5 3.3s7.5-1.48 7.5-3.3V5.8"/><path d="M4.5 12.2v6c0 1.82 3.36 3.3 7.5 3.3s7.5-1.48 7.5-3.3v-6"/></svg>
+      <span>Sources</span>
     </div>
     <div class="side-cap">survol&nbsp;: vert<br>IA&nbsp;: mauve<br><em>(cliquer pour l'état actif)</em></div>
   </nav>
@@ -198,7 +213,7 @@
       <div class="arrow">→</div>
     </div>
 
-    <div class="entry">
+    <div class="entry mint">
       <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.2 2.2h-.4a1.8 1.8 0 0 0-1.8 1.8v.16a1.8 1.8 0 0 1-.9 1.56l-.39.22a1.8 1.8 0 0 1-1.8 0l-.13-.07a1.8 1.8 0 0 0-2.46.66l-.2.34a1.8 1.8 0 0 0 .66 2.46l.13.09a1.8 1.8 0 0 1 .9 1.55v.46a1.8 1.8 0 0 1-.9 1.56l-.13.08a1.8 1.8 0 0 0-.66 2.46l.2.34a1.8 1.8 0 0 0 2.46.66l.13-.07a1.8 1.8 0 0 1 1.8 0l.39.22a1.8 1.8 0 0 1 .9 1.56v.16a1.8 1.8 0 0 0 1.8 1.8h.4a1.8 1.8 0 0 0 1.8-1.8v-.16a1.8 1.8 0 0 1 .9-1.56l.39-.22a1.8 1.8 0 0 1 1.8 0l.13.07a1.8 1.8 0 0 0 2.46-.66l.2-.35a1.8 1.8 0 0 0-.66-2.46l-.13-.07a1.8 1.8 0 0 1-.9-1.57v-.45a1.8 1.8 0 0 1 .9-1.57l.13-.08a1.8 1.8 0 0 0 .66-2.46l-.2-.34a1.8 1.8 0 0 0-2.46-.66l-.13.07a1.8 1.8 0 0 1-1.8 0l-.39-.22a1.8 1.8 0 0 1-.9-1.56V4a1.8 1.8 0 0 0-1.8-1.8Z"/><circle cx="12" cy="12" r="2.8"/></svg></div>
       <div class="txt"><div class="t">Ouvrir un outil</div><div class="d">17 outils, du repérage au courrier</div></div>
       <div class="arrow">→</div>
