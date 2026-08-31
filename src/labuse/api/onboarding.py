@@ -68,6 +68,18 @@ _PARCOURS_JS = """
         if(!cgv.checked){ e.preventDefault(); if(err) err.style.display='block'; cgv.focus(); }
       });
     }
+    // ONBOARDING-1 (O2) \\u2014 la PORTE de connexion : \\u00e9tat de chargement au submit + effacement de
+    // l'erreur \\u00e0 la saisie. Rapatri\\u00e9 ICI (fichier externe) car un <script> INLINE sur /login \\u00e9tait
+    // BLOQU\\u00c9 par la CSP (script-src 'self') \\u2014 finding ON-002. M\\u00eame porte, m\\u00eame JS, CSP-safe.
+    var porte=document.getElementById('porte');
+    if(porte){
+      porte.addEventListener('submit', function(){ document.body.dataset.state='chargement'; });
+      porte.querySelectorAll('input').forEach(function(i){
+        i.addEventListener('input', function(){
+          if(document.body.dataset.state==='erreur') document.body.dataset.state='defaut';
+        });
+      });
+    }
   });
 })();
 """
@@ -147,10 +159,16 @@ def invitation_page(token: str = "", db: Session = Depends(get_db)):
     from ..offres import offre_integral
     inv = valider_invitation(db, token) if token else None
     if not inv:
+        # ONBOARDING-1 (O2/O4) — refus PROPRE, jamais un cul-de-sac : un lien expiré, déjà utilisé ou
+        # mal collé menait à une impasse (aucun /login). Le cas le plus fréquent = l'utilisateur a DÉJÀ
+        # créé son accès (il reclique son lien) → on lui offre la connexion ; sinon, un nouveau lien.
         return HTMLResponse(_page("invitation", """
-<h1>Invitation introuvable</h1><p class="sous">lien expiré ou déjà utilisé</p>
-<p style="text-align:center;font-size:12.5px">Demandez un nouveau lien à votre contact LABUSE —
-les invitations expirent après 7 jours.</p>"""), status_code=404)
+<h1>Ce lien n'est plus valide</h1><p class="sous">expiré, déjà utilisé, ou incomplet</p>
+<p style="text-align:center;font-size:12.5px">Si vous avez <b>déjà créé votre accès</b>, connectez-vous —
+c'est peut-être que ce lien a déjà servi.</p>
+<p style="text-align:center;margin-top:16px"><a class="btn" href="/login">Se connecter <span class="arr" aria-hidden="true">→</span></a></p>
+<p class="note">Sinon, demandez un nouveau lien à votre contact LABUSE — les invitations expirent après 7 jours.</p>"""),
+                            status_code=404)
     # E2 — un compte INTERNE (admin nominatif, `labuse creer-admin`) ne passe JAMAIS par le
     # tunnel client (offre, prix, CGV commerciales, Stripe) : écran d'activation dédié.
     if inv["plan"] == PLAN_INTERNE:

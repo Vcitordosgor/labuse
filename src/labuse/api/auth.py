@@ -344,15 +344,9 @@ def login_page(error: bool = False) -> str:
 <p class="linkrow"><a href="/reset">Mot de passe oublié ?</a></p>
 <p class="note">Accès réservé aux abonnés. Pré-analyse sur données publiques —
 constructibilité, propriété, rentabilité jamais garanties.</p>
-<script>
-  var porte = document.getElementById('porte');
-  porte.addEventListener('submit', function () {{ document.body.dataset.state = 'chargement'; }});
-  porte.querySelectorAll('input').forEach(function (i) {{
-    i.addEventListener('input', function () {{
-      if (document.body.dataset.state === 'erreur') document.body.dataset.state = 'defaut';
-    }});
-  }});
-</script>"""
+<!-- ONBOARDING-1 (O2) : le JS de la porte vit dans /parcours.js (externe, CSP-safe) — un <script>
+     inline ici était bloqué par la CSP `script-src 'self'` (finding ON-002). -->
+<script src="/parcours.js" defer></script>"""
     html_doc = coffre_ui.page("Connexion", corps, head=head, foot=coffre_ui.FOOTER_LEGAL)
     return html_doc.replace('<body style="', f'<body data-state="{etat}" style="', 1)
 

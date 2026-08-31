@@ -1,0 +1,10 @@
+{
+  "h1_form": "CRÉER VOTRE ACCÈS",
+  "cta_actif": true,
+  "h1_ouvert": "VOTRE ACCÈS D'ESSAI EST OUVERT",
+  "h1_login": "LABUSE",
+  "url_app": "http://127.0.0.1:8000/socle/",
+  "reuse_h1": "CE LIEN N'EST PLUS VALIDE",
+  "reuse_a_login": 1,
+  "errors": []
+}
