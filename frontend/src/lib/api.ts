@@ -197,6 +197,10 @@ export const getCommuneAcquisitions = (commune: string) =>
 
 export interface ContexteCommune {
   commune: string; insee: string | null; epci: string | null; epci_nom: string | null
+  // FICHE-COMMUNE-2 (C2) — signaux nommés (règle en constante ; n'apparaissent que si vrais) qui
+  // remplacent « signal : prudence ». (C1) `cache_calcule_le` = date du précalcul (pied de fiche ; null = calcul direct).
+  signaux?: { code: string; ton: 'rouge' | 'orange'; libelle: string }[]
+  cache_calcule_le?: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
   rnu: { libelle: string; detail: string } | null
   // K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».

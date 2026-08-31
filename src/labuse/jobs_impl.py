@@ -102,6 +102,31 @@ def sources_fraicheur(ctx: JobContext) -> None:
     ctx.compte(**compteurs)
 
 
+def fiche_commune_cache(ctx: JobContext) -> None:
+    """FICHE-COMMUNE-2 (C1) — précalcule le CONTEXTE de chaque commune (le payload ENTIER de
+    /communes/{c}/contexte, ~20 s/commune) dans `commune_contexte_cache`, pour une ouverture < 500 ms.
+    Chaque commune est ISOLÉE : un échec la marque et n'arrête pas le lot (rollback ciblé) ; le job DIT
+    combien d'OK/échecs. Point d'écriture unique du cache (aussi « lançable à la main » : jobs run)."""
+    db = ctx.db
+    from .api.app import rafraichir_contexte_cache
+    communes = [r[0] for r in db.execute(text(
+        "SELECT DISTINCT commune FROM parcels WHERE commune IS NOT NULL ORDER BY commune")).all()]
+    ok, echecs, noms_echecs = 0, 0, []
+    for c in communes:
+        try:
+            rafraichir_contexte_cache(db, c)
+            db.commit()                              # durabilité par commune
+            ok += 1
+        except Exception as e:  # noqa: BLE001 — une commune ratée ne tue pas le lot
+            db.rollback()
+            echecs += 1
+            noms_echecs.append(f"{c}: {e}"[:120])
+    ctx.compte(communes_ok=ok, communes_echecs=echecs, total=len(communes),
+               echecs=noms_echecs[:5] or None)
+    if echecs and ok == 0:                           # tout a raté → échec BRUYANT (jamais un cache vide muet)
+        raise RuntimeError(f"fiche-commune-cache : {echecs} échecs sur {len(communes)}, 0 succès")
+
+
 def radar_cycle(ctx: JobContext) -> None:
     """Traite les dépôts de la veille DÉJÀ ingérés (la collecte reste manuelle — ce job ne fetch RIEN) :
     cycle de vie des annonces (en_vente_longue / a_reverifier), et prépare les événements de veille. Les

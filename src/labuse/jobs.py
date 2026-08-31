@@ -245,6 +245,8 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "quotidien", "30 2 * * *", "06:30", timeout_s=1800),
     _j("radar-digests", "Digests & alertes de veille — un mail par client (Brevo)", "quotidien",
        "0 14 * * *", "18:00", timeout_s=1200, envoie_mail=True),
+    _j("fiche-commune-cache", "Fiche commune — précalcule le contexte des communes (ouverture < 500 ms)",
+       "quotidien", "0 23 * * *", "03:00", timeout_s=1800),
     _j("healthcheck", "Sonde /health locale + espace disque (2 échecs → alerte)", "15 min",
        "*/15 * * * *", "toutes les 15 min", timeout_s=120, besoin_db=False),
     # K4 — hebdo & mensuels

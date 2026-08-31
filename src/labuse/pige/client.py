@@ -151,7 +151,7 @@ def _attacher_badges(db: Session, rows: list[dict]) -> dict:
     from . import signaux
     return signaux.badges_pour_biens(db, [
         {"bien_id": r["bien_id"], "commune": r["commune"], "type_bien": r["type_bien"],
-         "a_qualifier": r["a_qualifier"], "prix": r["prix"],
+         "a_qualifier": r["a_qualifier"], "prix": r["prix"], "idu": r.get("idu"),   # C5 — médiane locale si rattaché
          "surface_hab": _num(r["surface_hab"]), "surface_terrain": _num(r["surface_terrain"])}
         for r in rows])
 

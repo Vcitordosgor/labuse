@@ -23,6 +23,8 @@ MAILTO=root
 30 2 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run radar-cycle'
 # 18:00 Réunion — digests & alertes de veille : un mail par client (annonces ET foncier). Idempotent.
 0 14 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run radar-digests'
+# 03:00 Réunion (= 23:00 UTC) — fiche-commune-cache : précalcule le contexte des communes (ouverture < 500 ms).
+0 23 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run fiche-commune-cache'
 # toutes les 15 min — sonde /health locale + espace disque (2 échecs → alerte ; disque 1 alerte/jour).
 */15 * * * * labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run healthcheck'
 

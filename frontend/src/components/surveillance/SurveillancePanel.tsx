@@ -3,7 +3,7 @@
 // (parcelles suivies + critères) et « Les annonces » (veilles Radar). L'outil « Secteur » a été retiré
 // (l'entrée n'a plus d'objet) ; l'entrée IA de la création de veille aussi (décision Vic). Back intact.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getSuivis, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
 import { CP_COMMUNES, FiltreLabuse } from '../panel/FiltreLabuse'
 import { useApp } from '../../store/useApp'
@@ -146,23 +146,52 @@ function VoletCriteres() {
   const qc = useQueryClient()
   const criteres = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches })
   const del = useMutation({ mutationFn: deleteSearch, onSuccess: () => qc.invalidateQueries({ queryKey: ['searches'] }) })
+  // FICHE-COMMUNE-2 (C4) — même modèle que la veille annonces (RADAR-VEILLE-1) : à l'ouverture, le
+  // bouton « Créer une veille » + « Vos critères enregistrés » ; les filtres n'apparaissent qu'APRÈS
+  // clic (avant, ils étaient dépliés d'emblée). Après une création réussie (la liste grandit), on
+  // revient à la liste.
+  const [creating, setCreating] = useState(false)
+  const liste = criteres.data ?? []
+  const prevN = useRef(liste.length)
+  useEffect(() => {
+    if (creating && liste.length > prevN.current) setCreating(false)
+    prevN.current = liste.length
+  }, [liste.length, creating])
   return (
     <div data-volet-criteres className="flex flex-col gap-3">
-      <p className="text-[10.5px] leading-snug text-txt-dim">Réglez les filtres ci-dessous (les mêmes que la recherche carte), puis « Créer une veille » — on vous alerte dès qu'une parcelle bascule et correspond à vos critères.</p>
-      {/* RV2-V3 — le VRAI panneau de filtres de la carte (pas un jeu réduit) ; son bouton
-          « Créer une veille » enregistre la recherche. L'entrée IA (traduction NL) est RETIRÉE. */}
-      <FiltreLabuse enVeille />
-      <div>
-        <p className="label-caps mb-1">Vos critères enregistrés</p>
-        {(criteres.data ?? []).length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun critère enregistré pour l'instant.</p>}
-        {(criteres.data ?? []).map((v) => (
-          <div key={v.id} data-critere className="mt-1 flex items-center gap-2 text-[11px]">
-            <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>
-            <button onClick={() => del.mutate(v.id)} aria-label="Supprimer le critère"
-              className="flex h-5 w-5 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">×</button>
+      {!creating ? (
+        <>
+          <button data-veille-fonc-creer-ouvrir onClick={() => setCreating(true)}
+            className="rounded-md bg-mint py-2 text-[12.5px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110">
+            + Créer une veille
+          </button>
+          <p className="text-[10.5px] leading-snug text-txt-mut">Une veille foncière vous <b className="text-txt">alerte dès qu'une parcelle bascule</b> et correspond à vos critères (les mêmes que la recherche carte).</p>
+          <div className="flex flex-col gap-1.5">
+            <p className="label-caps">Vos critères enregistrés <span className="text-txt-dim">· {liste.length}</span></p>
+            {criteres.isLoading && <p className="text-[10.5px] text-txt-dim">Chargement…</p>}
+            {!criteres.isLoading && liste.length === 0 && <p className="text-[10.5px] leading-snug text-txt-dim">Aucun critère enregistré. Créez-en un avec le bouton ci-dessus.</p>}
+            {liste.map((v) => (
+              <div key={v.id} data-critere className="flex items-center gap-2 rounded-lg border border-line-2 px-3 py-2 text-[11px]">
+                <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>
+                <button onClick={() => del.mutate(v.id)} aria-label="Supprimer le critère"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">×</button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      ) : (
+        // C4 — le formulaire de création : les filtres (FiltreLabuse) n'apparaissent qu'ICI, après clic.
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <p className="label-caps">Nouvelle veille</p>
+            <button data-veille-fonc-annuler onClick={() => setCreating(false)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
+          </div>
+          <p className="text-[10.5px] leading-snug text-txt-dim">Réglez les filtres (les mêmes que la recherche carte), puis « Créer une veille » en bas.</p>
+          {/* RV2-V3 — le VRAI panneau de filtres de la carte (pas un jeu réduit) ; son bouton
+              « Créer une veille » enregistre la recherche. L'entrée IA (traduction NL) est RETIRÉE. */}
+          <FiltreLabuse enVeille />
+        </div>
+      )}
     </div>
   )
 }

@@ -1970,12 +1970,126 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     }
 
 
+# FICHE-COMMUNE-2 (C1) — CACHE de la fiche commune. L'assemblage (`_compute_commune_contexte`)
+# coûte 20–27 s (mesuré) : comparateur 6-joins, Radar, Filosofi spatial, densifiables, 8 requêtes
+# foncier, PPR spatial… Le job nocturne `fiche-commune-cache` (registre CRON) précalcule le payload
+# ENTIER par commune et l'écrit ici ; l'endpoint le SERT tel quel (lecture jsonb = quelques ms). La
+# date du calcul (`computed_at`) part au front pour le pied « compteurs précalculés le … ». Cache
+# MANQUANT → calcul en direct (honnête, lent) en attendant le prochain job — jamais un faux zéro.
+_CONTEXTE_CACHE_DDL = """
+CREATE TABLE IF NOT EXISTS commune_contexte_cache (
+  commune varchar(160) PRIMARY KEY,
+  insee varchar(5),
+  payload jsonb NOT NULL,
+  computed_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+
+
+def _ensure_contexte_cache(db: Session) -> None:
+    db.execute(text(_CONTEXTE_CACHE_DDL))
+
+
+def _contexte_cache_json(payload: dict) -> str:
+    """Sérialise le payload contexte en JSON tolérant (Decimal/date/datetime → primitives)."""
+    import json as _json
+    from datetime import date as _date, datetime as _dt
+    from decimal import Decimal as _Dec
+
+    def _default(o):
+        if isinstance(o, _Dec):
+            return float(o)
+        if isinstance(o, (_date, _dt)):
+            return o.isoformat()
+        raise TypeError(f"non sérialisable : {type(o)}")
+    return _json.dumps(payload, ensure_ascii=False, default=_default)
+
+
+def rafraichir_contexte_cache(db: Session, commune: str) -> None:
+    """FICHE-COMMUNE-2 (C1) — (re)calcule et STOCKE le payload contexte d'une commune. Point d'écriture
+    UNIQUE (job nocturne + « lançable à la main »). Idempotent (upsert), non destructif ailleurs."""
+    _ensure_contexte_cache(db)
+    payload = _compute_commune_contexte(db, commune)
+    db.execute(text(
+        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at) "
+        "VALUES (:c, :i, CAST(:p AS jsonb), now()) "
+        "ON CONFLICT (commune) DO UPDATE SET insee = EXCLUDED.insee, "
+        "payload = EXCLUDED.payload, computed_at = now()"),
+        {"c": commune, "i": payload.get("insee"), "p": _contexte_cache_json(payload)})
+
+
 @app.get("/communes/{commune}/contexte")
 def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
-    """VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU + ANRU + PLH + marché logement INSEE
-    + rappel QPV. Donnée de CONTEXTE sourcée (échelle commune), hors scoring. Chaque bloc
-    porte sa source + millésime ; introuvable = null (le front affiche « non disponible »
-    sourcé, jamais un zéro menteur)."""
+    """VOLET CONTEXTE COMMUNE — servi depuis le CACHE `commune_contexte_cache` (précalculé chaque nuit
+    par le job `fiche-commune-cache`) : ouverture < 500 ms. `cache_calcule_le` = date du calcul (pied
+    de fiche). Cache absent (base neuve, avant 1er job) → calcul EN DIRECT, lent mais jamais un faux
+    zéro (`cache_calcule_le` = null → le front dit « calcul en direct »)."""
+    _ensure_contexte_cache(db)
+    hit = db.execute(text(
+        "SELECT payload, computed_at FROM commune_contexte_cache WHERE commune = :c"),
+        {"c": commune}).mappings().first()
+    if hit:
+        return {**hit["payload"], "cache_calcule_le": hit["computed_at"].isoformat()}
+    return {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+
+
+# FICHE-COMMUNE-2 (C2) — SIGNAUX NOMMÉS. Le badge « signal : prudence » (retiré) venait de
+# `marche_commune.market_signal` (score < 40 = liquidité DVF faible + offre Sitadel forte) : une boîte
+# noire sans règle lisible, qu'un client ne peut ni contester ni adopter. On le remplace par des signaux
+# dont CHACUN porte sa RÈGLE en constante nommée, et qui n'apparaissent QUE si vrais.
+ZAN_SEUIL_ANS = 5              # ZAN — épuisé sous 5 ans → signal
+SEUIL_PPR_PART_PCT = 30.0      # PPR — au-delà de 30 % des parcelles → signal
+# (SRU : taux LLS < objectif · tendance : évolution 12 mois < 0 — seuils intrinsèques, la règle EST la comparaison)
+
+
+def _zan_horizon_ans(db: Session, insee: str | None) -> float | None:
+    """Années avant épuisement de l'enveloppe ZAN (même formule que rarete.py : reste / rythme). None si
+    non projetable (rythme nul / données absentes) ; 0.0 si déjà dépassé."""
+    if not insee:
+        return None
+    r = db.execute(text(
+        "SELECT (conso_2011_2021_m2 * 0.5 - conso_2021_2024_m2) / 10000.0 AS reste_ha, "
+        "       conso_2021_2024_m2 / 3.0 / 10000.0 AS rythme_ha_an "
+        "FROM commune_conso_enaf WHERE insee = :i"), {"i": insee}).mappings().first()
+    if not r or r["rythme_ha_an"] is None or float(r["rythme_ha_an"]) <= 0 or r["reste_ha"] is None:
+        return None
+    reste = float(r["reste_ha"])
+    return 0.0 if reste <= 0 else round(reste / float(r["rythme_ha_an"]), 1)
+
+
+def _signaux_commune(db: Session, commune: str, insee: str | None,
+                     sru: dict | None, risques: dict | None) -> list[dict]:
+    """C2 — les signaux nommés de la commune (règle en constante, n'apparaissent que si VRAIS)."""
+    out: list[dict] = []
+    if sru and sru.get("taux_lls") is not None and sru.get("objectif_pct"):
+        taux, obj = float(sru["taux_lls"]), float(sru["objectif_pct"])
+        if taux < obj:                                   # SRU < objectif
+            out.append({"code": "sru", "ton": "rouge",
+                        "libelle": f"SRU déficitaire ({taux:.1f} % / {obj:.0f} %)".replace(".", ",")})
+    h = _zan_horizon_ans(db, insee)
+    if h is not None and h < ZAN_SEUIL_ANS:              # ZAN < 5 ans
+        out.append({"code": "zan", "ton": "orange",
+                    "libelle": (f"ZAN épuisé dans {h:.1f} ans".replace(".", ",") if h > 0
+                                else "enveloppe ZAN déjà dépassée")})
+    ppr = (risques or {}).get("ppr_pct")
+    if ppr is not None and float(ppr) > SEUIL_PPR_PART_PCT:   # PPR > 30 % des parcelles
+        out.append({"code": "ppr", "ton": "orange",
+                    "libelle": f"PPR sur {round(float(ppr))} % des parcelles"})
+    try:
+        from ..faisabilite.marche_commune import ligne4_tendance
+        d = (ligne4_tendance(db, commune).get("valeurs") or {}).get("delta_pct")
+        if d is not None and float(d) < 0:                # tendance 12 mois < 0
+            out.append({"code": "marche", "ton": "rouge",
+                        "libelle": f"marché {d:.1f} % / 12 mois".replace(".", ",")})
+    except Exception:  # noqa: BLE001 — signal optionnel, jamais bloquant
+        pass
+    return out
+
+
+def _compute_commune_contexte(db: Session, commune: str) -> dict:
+    """L'ASSEMBLAGE réel (coûteux) du contexte commune — appelé par le CACHE (job nocturne), pas
+    directement par l'endpoint. SRU + ANRU + PLH + marché INSEE + blocs OUTILS-6. Donnée de CONTEXTE
+    sourcée (échelle commune), hors scoring. Chaque bloc porte sa source ; introuvable = null."""
     def _one(sql: str, p: dict) -> dict | None:
         r = db.execute(text(sql), p).mappings().first()
         return dict(r) if r else None
@@ -2025,7 +2139,10 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     # moteur de son outil d'origine (aucun recalcul, cf. fiche_commune). Le front les range en accordéons.
     from . import fiche_commune as _fc
     blocs = _fc.build(db, commune, _insee_c)
+    # FICHE-COMMUNE-2 (C2) — signaux nommés (remplacent « signal : prudence »), calculés une fois et cachés.
+    signaux = _signaux_commune(db, commune, _insee_c, sru, blocs["risques"])
     return {"commune": commune, "insee": _insee_c, "epci": epci,
+            "signaux": signaux,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
             "mairie": mairie,                           # K2 — adresse/tél/e-mail/site + fraîcheur

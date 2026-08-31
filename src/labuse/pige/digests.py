@@ -95,7 +95,7 @@ def _biens_du_jour(db: Session) -> list[dict]:
     from . import signaux
     badges = signaux.badges_pour_biens(db, [
         {"bien_id": d["bien_id"], "commune": d["commune"], "type_bien": d["type_bien"],
-         "a_qualifier": False, "prix": d["prix"],
+         "a_qualifier": False, "prix": d["prix"], "idu": d.get("idu"),   # C5 — médiane locale si rattaché (mails)
          "surface_hab": d["faits"]["surface_hab"], "surface_terrain": d["faits"]["surface_terrain"]}
         for d in out])
     for d in out:
