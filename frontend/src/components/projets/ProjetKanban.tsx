@@ -2,43 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   getParcoursEtat, getProjet, patchProjet, projetPdfUrl, setStatutParcelle,
-  type Cadrage, type Identite, type ParcoursEtat, type ParcoursItem, type ProprietairePublic,
+  type Cadrage, type ParcoursEtat, type ParcoursItem, type ProprietairePublic,
   type StatutParcelle,
 } from '../../lib/api'
 import { AlgoExplainer, ScoringExplainer } from '../panel/LeftPanel'
+import { FiltreFacettes } from '../panel/FiltreFacettes'
+import { FiltreProvider } from '../panel/filtreContext'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduComplet, iduCourt } from '../../lib/format'
 import { CLIENT } from '../../lib/strings'
 import { etatBienMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
-import { useApp } from '../../store/useApp'
+import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { TierBadge } from '../outils/TierBadge'
 import { Tip } from '../Tip'
 
-const TYPE_LABEL: Record<string, string> = {
-  libre: 'Logement libre', social: 'Logement social', etudiant: 'Logement étudiant',
-  bureaux: 'Bureaux', autre: 'Projet', logements: 'Logements',
-}
-
-/** M120 · Phase 4 — les critères qui FILTRENT (périmètre + facettes du cadrage). Ils font le tri. */
-function criteresFiltrants(c: Cadrage): string[] {
-  const out: string[] = []
+/** PROJETS-FIX F2 (maquette §03) — le PÉRIMÈTRE, en étiquette de titre (une seule fois). */
+function perimetreLabel(c: Cadrage): string {
   const cs = c.communes ?? []
-  out.push(!cs.length ? "toute l'île" : cs.length === 1 ? cs[0] : `${cs.length} communes`)
-  if (c.surfaceMin != null || c.surfaceMax != null) out.push(`surface ${c.surfaceMin ?? 0}–${c.surfaceMax ?? '∞'} m²`)
-  if (c.zonagePlu?.length) out.push(`zonage ${c.zonagePlu.join('/')}`)
-  if (c.etatSol?.length) out.push(c.etatSol.map((e) => (e === 'nu' ? 'terrain nu' : 'terrain bâti')).join(' · '))
-  if (c.signaux?.length) out.push(`${c.signaux.length} signal${c.signaux.length > 1 ? 'aux' : ''} de vie`)
-  return out
-}
-
-/** M120 · Phase 4 — les infos INDICATIVES (type / budget / livraison). Elles ne filtrent PAS —
- *  rendues en retrait pour ne pas les confondre avec les critères qui font le tri. */
-function criteresInformatifs(id: Identite): string[] {
-  const out: string[] = []
-  if (id.type_logement) out.push(TYPE_LABEL[id.type_logement] ?? id.type_logement)
-  if (id.budget_eur) out.push(fmtEurCompact(id.budget_eur))
-  return out
+  return !cs.length ? "toute l'île" : cs.length === 1 ? cs[0] : `${cs.length} communes`
 }
 
 /** Les 3 colonnes du projet unifié — UNE seule source de vérité : les statuts `projet_parcelles`.
@@ -141,6 +123,16 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
 
   const etat = etatQ.data
   const projet = projetQ.data
+  // PROJETS-FIX F4 — les DEUX états vides à distinguer : un projet « de zéro » (aucun cadrage, on ajoute
+  // depuis les fiches) vs un projet vivier dont le cadrage ne rend RIEN (cas légitime, ex. zone absente).
+  const [editCadrage, setEditCadrage] = useState(false)
+  const deZero = Boolean((projet?.cadrage as Record<string, unknown> | undefined)?.__de_zero__)
+  const vivierVide = etat != null && (etat.total_retenues ?? 0) === 0 && !deZero
+  const ajouterDepuisCarte = () => {
+    const s = useApp.getState()
+    s.setProjetCible({ id: pid, nom: projet?.nom ?? nom })   // la fiche « Projet » rattachera DIRECTEMENT ici
+    s.setView('cartes')
+  }
   const items = (k: StatutParcelle): ParcoursItem[] =>
     k === 'proposee' ? etat?.proposees ?? [] : k === 'retenue' ? etat?.retenues ?? [] : etat?.ecartees ?? []
   const count = (k: StatutParcelle) => etat?.counts?.[k] ?? 0
@@ -169,34 +161,24 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 onBlur={() => { if (nomInput.trim() && nomInput !== nom) patch.mutate({ nom: nomInput.trim() }); setEditing(false) }}
                 className="rounded-md border border-mint/40 bg-surface-3 px-2 py-1 font-display text-lg font-bold text-txt-hi outline-none focus:border-mint" />
             ) : (
-              <h1 data-kanban-nom className="truncate font-display text-lg font-bold text-txt-hi" title={projet?.nom ?? nom}>{projet?.nom ?? nom}</h1>
+              <div className="flex items-baseline gap-2.5">
+                <h1 data-kanban-nom className="truncate font-display text-lg font-bold text-txt-hi" title={projet?.nom ?? nom}>{projet?.nom ?? nom}</h1>
+                {/* PROJETS-FIX F2 (maquette §03) — le périmètre, en étiquette, UNE fois. */}
+                {projet && <span data-kanban-perimetre className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-txt-dim">{perimetreLabel(projet.cadrage)}</span>}
+              </div>
             )}
-            <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              {/* critères qui FILTRENT — chips pleines */}
-              {projet && criteresFiltrants(projet.cadrage).map((c, i) => (
-                <span key={`f${i}`} data-crit-filtrant className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{c}</span>
-              ))}
-              {/* infos INDICATIVES — en retrait, séparées, jamais confondues avec le tri */}
-              {projet && criteresInformatifs(projet.identite).length > 0 && (
-                <span className="ml-0.5 flex flex-wrap items-center gap-1.5 border-l border-line-2 pl-2">
-                  <span className="text-[9px] uppercase tracking-wide text-txt-dim">indic.</span>
-                  {criteresInformatifs(projet.identite).map((c, i) => (
-                    <span key={`i${i}`} data-crit-indic className="rounded-full border border-line-2/60 px-2 py-0.5 text-[10px] text-txt-dim">{c}</span>
-                  ))}
-                </span>
-              )}
-              {/* OUTILS-5 (P1/P4) — le VIVIER : N parcelles, classées par probabilité de mutation. Rien
-                  n'est plafonné ; l'ordre change, pas le contenu. « pourquoi ? » ouvre LE composant
-                  d'explication de l'analyse LABUSE (le même que la carte/fiche) — jamais une prose parallèle. */}
-              {etatQ.data?.total_retenues != null && (
-                <span data-kanban-vivier className="whitespace-nowrap text-[10.5px] text-txt-dim">· <b className="text-txt-mut">Vivier : {etatQ.data.total_retenues.toLocaleString('fr-FR')} parcelles, classées par probabilité de mutation</b>
+            {/* PROJETS-FIX F2 — la ligne vivier · valeurs · budget (une seule ligne, comme la maquette).
+                « pourquoi ? » ouvre LE composant d'explication de l'analyse LABUSE (jamais une prose parallèle). */}
+            <div data-kanban-meta className="mt-1.5 text-[11.5px] leading-relaxed text-txt-mut">
+              {/* un projet « de zéro » n'a pas de vivier : on n'affiche pas un « Vivier : 0 » qui n'a pas de sens. */}
+              {!deZero && etatQ.data?.total_retenues != null && (
+                <span data-kanban-vivier><b className="text-txt-2">Vivier : {etatQ.data.total_retenues.toLocaleString('fr-FR')} parcelles, classées par probabilité de mutation</b>
                   {' '}<button data-kanban-pourquoi onClick={() => useApp.getState().setAlgoModale('scoring')} className="text-mint hover:underline">pourquoi ?</button></span>
               )}
-              {/* M139 Lot 2 (F2) — la SECONDE date : les valeurs (SDP/zone) sont relues live au run
-                  résiduel servi. On la DIT au lieu de la taire — l'avertissement devient une donnée. */}
               {etatQ.data?.valeurs_run?.date && (
-                <span data-kanban-valeurs-date className="whitespace-nowrap text-[10.5px] text-txt-dim" title="Les valeurs (SDP, zone) sont lues sur le run résiduel servi ; elles peuvent évoluer si le run bascule.">· valeurs au {fmtDate(etatQ.data.valeurs_run.date)} (run {etatQ.data.valeurs_run.label})</span>
+                <span data-kanban-valeurs-date title="Les valeurs (SDP, zone) sont lues sur le run résiduel servi ; elles peuvent évoluer si le run bascule."> · valeurs au {fmtDate(etatQ.data.valeurs_run.date)} (run {etatQ.data.valeurs_run.label})</span>
               )}
+              {projet?.identite?.budget_eur ? <span data-kanban-budget> · budget {fmtEurCompact(projet.identite.budget_eur)} <span className="text-txt-dim">indic.</span></span> : null}
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
@@ -217,9 +199,11 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
         <p data-kanban-ajouter className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.ajouterDepuisFiche}</p>
       </div>
 
-      {/* 3 COLONNES */}
-      <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto p-4 sm:p-6">
-        {etatQ.isLoading && <Loading label="Chargement du projet…" className="mx-auto self-center" />}
+      {/* 3 COLONNES — PROJETS-FIX F2 (maquette §03) : GRILLE pleine largeur (À trier 1.35 / Retenues 1 /
+          Écartées 0.8) qui remplit tout l'espace alloué — fini les colonnes à largeur fixe qui laissaient
+          un grand vide. Sous 980px, on empile (une colonne). */}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4 md:grid-cols-[1.35fr_1fr_0.8fr] sm:p-6">
+        {etatQ.isLoading && <Loading label="Chargement du projet…" className="col-span-full mx-auto self-center" />}
         {COLS.map((col) => {
           const aAnalyser = etat?.a_analyser ?? []
           // M2 — HYBRIDE : « proposées » = file de travail (liste dense triée par rang) où « à analyser »
@@ -234,7 +218,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               onDragOver={(e) => { e.preventDefault(); setOverCol(col.key) }}
               onDragLeave={() => setOverCol((o) => (o === col.key ? null : o))}
               onDrop={(e) => { e.preventDefault(); onDrop(col.key) }}
-              className={`flex ${isProp ? 'w-[340px]' : 'w-[300px]'} max-w-[85vw] shrink-0 flex-col rounded-xl border bg-surface-1 shadow-elev-1 transition-colors duration-quick sm:max-w-[34vw] ${overCol === col.key && drag && drag.from !== col.key ? 'border-mint ring-1 ring-mint/40' : 'border-transparent'}`}>
+              className={`flex min-h-0 min-w-0 flex-col rounded-xl border bg-surface-1 shadow-elev-1 transition-colors duration-quick ${overCol === col.key && drag && drag.from !== col.key ? 'border-mint ring-1 ring-mint/40' : 'border-transparent'}`}>
               {/* tête de colonne : compteur + action de tête */}
               <div className="flex shrink-0 items-center gap-2 border-b border-line-2 px-3 py-2.5">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: col.accent }} />
@@ -271,7 +255,28 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 </div>
               )}
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5">
-                {list.length === 0 && (
+                {/* PROJETS-FIX F4 — jamais un « 0 » nu : selon le cas, on invite à ajouter (projet de
+                    zéro) ou à modifier un cadrage sans résultat (cas légitime). */}
+                {list.length === 0 && isProp && !filtreAnalyse && editCadrage && (
+                  <CadrageEditor pid={pid} cadrage={projet?.cadrage ?? {}} onDone={() => setEditCadrage(false)} />
+                )}
+                {list.length === 0 && isProp && !filtreAnalyse && !editCadrage && deZero && (
+                  <div data-empty-de-zero className="rounded-lg border border-mint/25 bg-mint/[.06] p-4 text-center">
+                    <p className="text-[12px] text-txt-2">Projet de zéro — aucune parcelle pour l’instant.</p>
+                    <p className="mt-1 text-[11px] text-txt-mut">Choisissez vos cibles depuis la carte : le bouton « Projet » d’une fiche les rattachera directement ici.</p>
+                    <button data-empty-ajouter onClick={ajouterDepuisCarte}
+                      className="mt-3 rounded-md border border-mint/60 px-3 py-1.5 text-[11.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">Ajouter des parcelles → carte</button>
+                  </div>
+                )}
+                {list.length === 0 && isProp && !filtreAnalyse && !editCadrage && vivierVide && (
+                  <div data-empty-cadrage-vide className="rounded-lg border border-line-2 bg-surface-2/60 p-4 text-center">
+                    <p className="text-[12px] text-txt-2">Aucune parcelle ne correspond à ce cadrage.</p>
+                    <p className="mt-1 text-[11px] text-txt-mut">Le cadrage est peut-être trop resserré (ou porte une zone absente du périmètre).</p>
+                    <button data-empty-modifier onClick={() => setEditCadrage(true)}
+                      className="mt-2 text-[11.5px] text-mint transition-colors duration-quick hover:underline">Modifier le cadrage</button>
+                  </div>
+                )}
+                {list.length === 0 && !(isProp && !filtreAnalyse && !editCadrage && (deZero || vivierVide)) && !(isProp && editCadrage) && (
                   <div className="rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
                     {isProp ? (filtreAnalyse ? 'Rien à analyser' : 'Rien à trier pour l’instant') : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
                   </div>
@@ -329,6 +334,46 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
           servie partout ; jamais une prose parallèle pour Projets. */}
       {algoModale === 'classement' && <AlgoExplainer onClose={() => setAlgoModale(null)} />}
       {algoModale === 'scoring' && <ScoringExplainer onClose={() => setAlgoModale(null)} />}
+    </div>
+  )
+}
+
+/** PROJETS-FIX F4 — éditeur de cadrage inline (état vide « aucune parcelle ne correspond »). Réutilise
+ *  EXACTEMENT les facettes du wizard (FiltreFacettes) branchées sur le cadrage courant du projet ; le
+ *  périmètre (communes) est conservé et passé au compteur (`compteurScope`). Enregistrer patche le
+ *  cadrage (le back marque la shortlist périmée) et rafraîchit la vue — jamais un moteur parallèle. */
+function CadrageEditor({ pid, cadrage, onDone }: { pid: number; cadrage: Cadrage; onDone: () => void }) {
+  const qc = useQueryClient()
+  const communes = cadrage.communes ?? []
+  const [facettes, setFacettes] = useState<Filters>(() => ({ ...EMPTY_FILTERS, ...cadrage }))
+  const binding = { filters: facettes, setFilter: <K extends keyof Filters>(k: K, v: Filters[K]) => setFacettes((c) => ({ ...c, [k]: v })) }
+  const cadrageOut = (): Cadrage => {
+    const out: Cadrage = {}
+    for (const [k, v] of Object.entries(facettes) as [keyof Filters, unknown][]) {
+      const empty = v === null || v === false || (Array.isArray(v) && v.length === 0)
+      if (!empty && k !== 'analyseLabuse') (out as Record<string, unknown>)[k] = v
+    }
+    if (communes.length) out.communes = communes
+    return out
+  }
+  const save = useMutation({
+    mutationFn: () => patchProjet(pid, { cadrage: cadrageOut() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projet', pid] })
+      qc.invalidateQueries({ queryKey: ['parcours', pid] })
+      qc.invalidateQueries({ queryKey: ['projets'] })
+      onDone()
+    },
+  })
+  return (
+    <div data-cadrage-editor className="rounded-lg border border-line-2 bg-surface-2/50 p-3">
+      <p className="mb-2 text-[11px] text-txt-mut">Périmètre : <b className="text-txt-2">{communes.length ? communes.join(', ') : "toute l'île"}</b></p>
+      <FiltreProvider value={binding}><FiltreFacettes compteurScope={{ communes }} /></FiltreProvider>
+      <div className="mt-3 flex items-center gap-2">
+        <button data-cadrage-save disabled={save.isPending} onClick={() => save.mutate()}
+          className="rounded-md border border-mint/60 px-3 py-1.5 text-[11.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15 disabled:opacity-50">{save.isPending ? 'Enregistrement…' : 'Enregistrer le cadrage'}</button>
+        <button data-cadrage-annuler onClick={onDone} className="text-[11px] text-txt-dim hover:text-txt-mut">Annuler</button>
+      </div>
     </div>
   )
 }

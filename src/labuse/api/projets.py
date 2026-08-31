@@ -487,26 +487,25 @@ def _compteur_cle(cadrage: dict) -> str:
 
 @router.post("/compteur")
 def projet_compteur(body: CadrageIn, db: Session = Depends(get_db)) -> dict:
-    """M120-B — le compteur du CADRAGE, ALIGNÉ sur ce qui est réellement figeable. `vivier` = les
-    parcelles triables (hors exclusions dures : non constructibles / faux positifs) ; `total` = le
-    compte carte brut (qui inclut ~79 % d'exclusions dures qui ne peuvent JAMAIS entrer dans la
-    shortlist — mesuré). Le front affiche `vivier` (l'univers réel), jamais `total` seul. `cap` = la
-    taille max de la shortlist figée (config).
+    """PROJETS-FIX F1 — le compteur du CADRAGE, sorti de LA MÊME requête que le compteur « À trier »
+    du projet ouvert : `_cadrage_total(...)["total"]`. C'est, PAR CONSTRUCTION, le nombre que le
+    projet servira (`/{pid}/parcelles` appelle `_cadrage_total` sur le même cadrage) — le wizard ne
+    peut plus annoncer un nombre que le projet dément.
 
-    GB-024b — le cadrage ÎLE (vide) coûtait ~11 s (agrégation full-run). On MÉMORISE le résultat par
-    (run, cadrage) avec un TTL et on sert sa fraîcheur `calcule_le` : le 1er appel paie, les suivants
-    sont instantanés. La VALEUR est identique (même requête), seul le chemin change."""
+    Le champ `total` (compte carte GONFLÉ par ~79 % d'exclusions dures — mesuré) est RETIRÉ : il était
+    la source du mirage « le wizard annonce 30 000, le projet montre 0 » (le récap lisait `r.total`).
+    On ne sert plus qu'UN nombre — le vivier réel, triable. `cap` = taille max de la shortlist figée.
+
+    GB-024b — le cadrage ÎLE coûte ~1 s. On MÉMORISE le résultat par (run, cadrage) avec un TTL et on
+    sert sa fraîcheur `calcule_le` : le 1er appel paie, les suivants sont instantanés. La VALEUR est
+    identique (même requête), seul le chemin change."""
     cadrage = clean_cadrage(body.cadrage)
     cle = _compteur_cle(cadrage)
     hit = _COMPTEUR_CACHE.get(cle)
     if hit and (_time.time() - hit[0]) < _COMPTEUR_TTL_S:
         return {**hit[1], "cache": True}
-    from .app import _q_v2_stats
-    fc = _cadrage_to_filtre(cadrage)
-    where, params = fc.where()
-    total = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)["total"]
-    vivier = _vivier_figeable(db, cadrage)
-    res = {"vivier": vivier, "total": total, "cap": _shortlist_max(), "cache": False,
+    vivier = _cadrage_total(db, cadrage)["total"] or 0   # F1 — LA source unique du « vivier à trier »
+    res = {"vivier": vivier, "cap": _shortlist_max(), "cache": False,
            "calcule_le": datetime.now(_REUNION_TZ).isoformat(timespec="minutes")}
     _COMPTEUR_CACHE[cle] = (_time.time(), res)
     return res

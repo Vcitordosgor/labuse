@@ -81,7 +81,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
     if (porte !== 'vivier' || etape !== N - 1) return
     const ac = new AbortController()
     setVivierN(null)
-    getCadrageCompteur(cadrage, ac.signal).then((r) => setVivierN(r.total ?? null)).catch(() => {})
+    getCadrageCompteur(cadrage, ac.signal).then((r) => setVivierN(r.vivier ?? null)).catch(() => {})
     return () => ac.abort()
   }, [porte, etape, cadrage])
 
@@ -252,7 +252,9 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
       {etape === 3 && (
         <div data-projet-cadrage style={{ marginBottom: 28, maxHeight: '52vh', overflowY: 'auto' }}>
           <p style={{ fontSize: 12, color: '#6F8578', margin: '0 0 14px' }}>Périmètre : <b style={{ color: '#ECF5EF' }}>{perimetreLabel}</b> · modifiable à l’étape précédente.</p>
-          <FiltreProvider value={binding}><FiltreFacettes /></FiltreProvider>
+          {/* PROJETS-FIX F1 — le compteur vivant reçoit le PÉRIMÈTRE (étape séparée) → il compte ce que
+              le projet servira, pas l'île entière. Wizard et « À trier » : même nombre par construction. */}
+          <FiltreProvider value={binding}><FiltreFacettes compteurScope={{ communes: ile ? [] : communes }} /></FiltreProvider>
         </div>
       )}
       {etape === 4 && (

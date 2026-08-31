@@ -1176,9 +1176,9 @@ export interface ShortlistDiff {
   ajoutees: number; ajoutees_refonte?: number; sorties: number; tris_conserves: number; n_shortlist: number
   vivier: number; cap: number; tronquee: boolean
 }
-// M120-B — le compteur du cadrage, ALIGNÉ sur le figeable : `vivier` (triable, hors exclusions
-// dures) est ce qu'on affiche ; `total` (compte carte brut) est gardé pour transparence ; `cap`.
-export interface CadrageCompteur { vivier: number; total: number; cap: number }
+// PROJETS-FIX F1 — le compteur du cadrage sort de LA MÊME requête que « À trier » du projet ouvert :
+// `vivier` = le nombre EXACT que le projet servira (plus de `total` carte gonflé, source du mirage).
+export interface CadrageCompteur { vivier: number; cap: number }
 export const getCadrageCompteur = (cadrage: Cadrage, signal?: AbortSignal) =>
   j<CadrageCompteur>('/projets/compteur', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage }), signal })
 // M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par

@@ -21,14 +21,11 @@ function perimetreLabel(c: Cadrage): string {
   return cs.length === 1 ? cs[0] : `${cs.length} communes`
 }
 
-/** La ligne de contexte SOUS le titre — périmètre + budget indicatif. M120 : le cadrage porte les
- *  facettes ; le budget est INFORMATIF (dit « indic. »). */
-function ctxLine(p: Projet): string {
-  const nFacettes = Object.keys(p.cadrage).filter((k) => k !== 'communes').length
-  const parts = [perimetreLabel(p.cadrage)]
-  if (nFacettes) parts.push(`${nFacettes} facette${nFacettes > 1 ? 's' : ''}`)
-  if (p.identite.budget_eur) parts.push(`budget ${fmtEurCompact(p.identite.budget_eur)} indic.`)
-  return parts.join(' · ')
+/** PROJETS-FIX F3 (maquette §04) — la ligne vivier ne porte QUE le budget indicatif : le périmètre
+ *  vit UNE seule fois, dans l'étiquette du titre (`communeMono`) ; le décompte de facettes (bruit)
+ *  est retiré. Vide si pas de budget. */
+function budgetLine(p: Projet): string {
+  return p.identite.budget_eur ? `budget ${fmtEurCompact(p.identite.budget_eur)} indic.` : ''
 }
 
 /** La commune en MONO à côté du titre — repère de lecture, pas un chip. M120-B : depuis le cadrage. */
@@ -79,9 +76,10 @@ function ProjetRow({ p }: { p: Projet }) {
             )}
             <span data-projet-commune style={{ fontFamily: MONO, fontSize: 11, color: todo ? '#5F7267' : '#4A5C52', letterSpacing: '.06em', flexShrink: 0 }}>{communeMono(p)}</span>
           </div>
-          {/* OUTILS-5 (P5) — « vivier N classé · valeurs au JJ/MM · contexte » — jamais un stock global anxiogène. */}
+          {/* PROJETS-FIX F3 (maquette §04) — « vivier N classé · valeurs au JJ/MM · budget » : le périmètre
+              n'y est PLUS répété (il est dans l'étiquette du titre) ; plus de « N facettes ». */}
           <div data-projet-vivier style={{ fontSize: 12, color: todo ? '#A8BDB0' : '#8FA69A', marginBottom: 11 }}>
-            vivier {vivier.toLocaleString('fr-FR')} classé{p.proposee_at ? ` · valeurs au ${new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : ''}{ctxLine(p) ? ` · ${ctxLine(p)}` : ''}
+            vivier {vivier.toLocaleString('fr-FR')} classé{p.proposee_at ? ` · valeurs au ${new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : ''}{budgetLine(p) ? ` · ${budgetLine(p)}` : ''}
           </div>
           {/* jauge de progression + détail : retenues / écartées / à explorer (classées). */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

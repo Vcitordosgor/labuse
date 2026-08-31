@@ -536,6 +536,9 @@ function PipelineButton({ idu }: { idu: string }) {
 function ProjetButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
   const setOpenProjet = useApp((s) => s.setOpenProjet)
+  // PROJETS-FIX F4 — projet cible posé par « Ajouter des parcelles → carte » : le bouton rattache
+  // DIRECTEMENT à ce projet (pas de menu), tant que la parcelle n'y est pas déjà.
+  const projetCible = useApp((s) => s.projetCible)
   const [open, setOpen] = useState(false)
   const attache = useQuery({ queryKey: ['projets-parcelle', idu], queryFn: () => projetsPourParcelle(idu) })
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets, enabled: open })
@@ -544,6 +547,7 @@ function ProjetButton({ idu }: { idu: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })
       qc.invalidateQueries({ queryKey: ['projets'] })
+      qc.invalidateQueries({ queryKey: ['parcours'] })   // le kanban du projet cible se rafraîchit
       setOpen(false)
     },
   })
@@ -556,22 +560,29 @@ function ProjetButton({ idu }: { idu: string }) {
   // (elle n'y est pas encore) — tous cliquables, aucun grisé. Les projets où elle est déjà
   // rangée vivent UNIQUEMENT dans la section « Déjà dans » du bas (fin du doublon M14).
   const ajoutables = candidats.filter((p) => !dejaIds.has(p.id))
+  // F4 — cible active = un projet présélectionné où la parcelle n'est pas encore rangée.
+  const cibleActive = projetCible && !dejaIds.has(projetCible.id) ? projetCible : null
 
   return (
     <div className="relative flex-1">
       <button
         data-projet-fiche
-        onClick={() => setOpen((o) => !o)}   // QA-59 : TOUJOURS le menu (multi-projet) — jamais de saut direct
+        data-projet-cible-actif={cibleActive ? '1' : undefined}
+        onClick={() => { if (cibleActive) add.mutate(cibleActive.id); else setOpen((o) => !o) }}
         aria-expanded={open}
         className="act act-proj w-full whitespace-nowrap"
-        style={inProjet ? { background: 'var(--iris)', color: 'var(--bg-0)', borderColor: 'transparent' } : undefined}
-        title={inProjet
-          ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — ouvrir / rattacher à un autre`
-          : 'Rattacher cette parcelle à un projet (elle arrive dans « À trier »)'}
+        style={cibleActive || inProjet ? { background: 'var(--iris)', color: 'var(--bg-0)', borderColor: 'transparent' } : undefined}
+        title={cibleActive
+          ? `Rattacher directement à « ${cibleActive.nom} » (projet présélectionné depuis la carte)`
+          : inProjet
+            ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — ouvrir / rattacher à un autre`
+            : 'Rattacher cette parcelle à un projet (elle arrive dans « À trier »)'}
       >
-        {inProjet
-          ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`)
-          : '+ Projet'}
+        {cibleActive
+          ? `+ Ajouter à « ${cibleActive.nom} »`
+          : inProjet
+            ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`)
+            : '+ Projet'}
       </button>
 
       {open && (
