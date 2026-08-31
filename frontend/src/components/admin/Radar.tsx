@@ -408,16 +408,22 @@ function DepotAgence() {
     mutationFn: () => radarDepotAgencePublier({ rec: rec as DepotRec, idu, adresse_exacte: adresse, agence_nom: agence }),
     onSuccess: (r) => { if (r.ok) { setPublie({ bien_id: r.bien_id as number, idu: r.idu }); setStep(4); setMsg(null) } else setMsg(r.motif ?? 'Publication refusée.') },
   })
-  if (etat.isLoading || !etat.data?.actif) return null   // drapeau fermé → le parcours n'apparaît pas
+  // SECTEUR-1 (S5) — le parcours est TOUJOURS montré à l'ADMIN (l'endpoint /etat est admin-only → `admin`),
+  // même drapeau fermé, pour que Vic teste sans toucher la config. Les CLIENTS, eux, ne voient rien tant
+  // que le drapeau est fermé (leur propre porte). On n'occulte que pendant le chargement / hors admin.
+  if (etat.isLoading || !etat.data?.admin) return null
+  const drapeauFerme = !etat.data.actif
   const setF = (k: keyof DepotRec, v: unknown) => setRec((p) => (p ? { ...p, [k]: v } : p))
   const inp = 'h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[12px] text-txt'
   const reset = () => { setStep(1); setHtml(''); setRec(null); setAdresse(''); setIdu(''); setAgence(''); setPublie(null); setMsg(null) }
 
   return (
     <div data-depot-agence className="rounded-xl border border-viz-cyan/30 bg-viz-cyan/[0.04] p-3">
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="rounded bg-viz-cyan/15 px-1.5 py-0.5 font-mono text-[9px] tracking-wide text-viz-cyan">DÉPÔT AGENCE · BÊTA</span>
         <span className="font-mono text-[10px] text-txt-mut">ÉTAPE {step}/4</span>
+        {/* SECTEUR-1 (S5) — la mention quand le drapeau est fermé : visible de l'admin seul. */}
+        {drapeauFerme && <span data-depot-drapeau-ferme className="rounded border border-st-creuser/40 bg-st-creuser/10 px-1.5 py-0.5 font-mono text-[9px] text-st-creuser">drapeau fermé — invisible des clients</span>}
       </div>
       {msg && <p className="mb-2 text-[11px] text-st-ecartee">{msg}</p>}
 

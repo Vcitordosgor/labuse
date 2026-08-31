@@ -459,6 +459,44 @@ export const getTaxeAmenagement = (p: TaxeParams) => {
   return j<TaxeResult>(`/outils/taxe-amenagement?${params.toString()}`)
 }
 
+// SECTEUR-1 (S1) — outil « Mon secteur » : prix du secteur autour d'une parcelle (médiane locale par
+// type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.
+export interface LocalMed { eur_m2: number; n: number | null; millesime: string | null; rayon_m: number | null; perimetre: string | null }
+export interface MonSecteurData {
+  idu: string; commune: string; adresse: string | null
+  secteur_bati: {
+    median_eur_m2: number | null; q1: number | null; q3: number | null; n: number | null
+    rayon_m: number | null; type_prix: string | null; fiabilite: string | null
+    commune_seule: boolean | null; periode: number[] | null; tendance_pct: number | null; tendance: string | null
+  } | null
+  par_type: { maison: LocalMed | null; appartement: LocalMed | null; terrain_nu: LocalMed | null }
+  annonces_radar: { commune: string; type_bien: string; prix: number | null; distance_m: number | null; prix_m2_affiche: number | null; ecart_pct: number | null; reference_locale: boolean }[]
+  sources: string[]; note: string
+}
+export const getMonSecteur = (idu: string) => j<MonSecteurData>(`/outils/mon-secteur?idu=${encodeURIComponent(idu)}`)
+
+// SECTEUR-1 (S3) — outil « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM.
+export interface PermisPromoteur {
+  permit_id: string; commune: string; date_depot: string | null; nb_lgt: number | null
+  etat: string | null; destination: string | null; idu: string
+  denomination: string | null; siren: string | null; categorie: string
+}
+export interface VeillePromoteurs {
+  n_total: number; n_servi: number; tronquee: boolean; plafond: number
+  categories: { cle: string; label: string }[]; millesime: string | null
+  permis: PermisPromoteur[]; note: string
+}
+export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; depuis?: string; limit?: number } = {}) => {
+  const q = new URLSearchParams()
+  if (p.commune) q.set('commune', p.commune)
+  if (p.categorie) q.set('categorie', p.categorie)
+  if (p.depuis) q.set('depuis', p.depuis)
+  if (p.limit) q.set('limit', String(p.limit))
+  return j<VeillePromoteurs>(`/outils/veille-promoteurs${q.toString() ? `?${q}` : ''}`)
+}
+export interface PromoteurAcquisitions { siren: string; denomination: string | null; n_parcelles: number; par_commune: { commune: string; n: number }[]; exemples: { idu: string; commune: string }[]; note: string }
+export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitions>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/acquisitions`)
+
 export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null }
 export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 
@@ -1319,7 +1357,7 @@ export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
   })
 // RADAR-VEILLE-1 (R3) — parcours DÉPÔT AGENCE (derrière drapeau, admin seulement)
 export interface DepotRec { list_id?: number; url?: string; type?: string; prix?: number; surface_hab?: number; surface_terrain?: number; pieces?: number; commune?: string; description?: string; photos?: string[] }
-export const getRadarDepotAgenceEtat = () => j<{ actif: boolean }>('/admin/radar/depot-agence/etat')
+export const getRadarDepotAgenceEtat = () => j<{ actif: boolean; admin?: boolean }>('/admin/radar/depot-agence/etat')
 export const radarDepotAgenceAnalyser = (html: string) =>
   j<{ ok: boolean; records?: DepotRec[]; motif?: string }>('/admin/radar/depot-agence/analyser', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }),
@@ -1472,6 +1510,12 @@ export interface CronJob {
   prochaine_utc: string | null; prochaine_reunion: string | null
   dernier: { statut: string | null; fin: string | null; duree_s: number | null; dry_run: boolean | null; compteurs: Record<string, unknown> | null; erreur: string | null }
 }
+export interface Mairie { commune: string; nom: string | null; adresse: string | null; code_postal: string | null; telephone: string | null; email: string | null; site_officiel: string | null; url_annuaire: string | null; source: string; date_import: string | null }
+export interface Epci { code: string; nom: string | null; communes: string[] }
+export interface AutreContact { type: string; nom: string; adresse: string; telephone: string; site: string }
+export interface ContactsInstitutionnels { mairies: Mairie[]; epci: Epci[]; autres: AutreContact[]; note: string }
+export const getContactsInstitutionnels = () => j<ContactsInstitutionnels>('/admin/contacts-institutionnels')
+
 export const getAdminCron = () => j<{ jobs: CronJob[]; note: string }>('/admin/cron')
 export const getAdminCronLog = (nom: string) => j<{ nom: string; lignes: string[]; note?: string }>(`/admin/cron/${encodeURIComponent(nom)}/log`)
 export const postAdminCronRun = (nom: string) =>

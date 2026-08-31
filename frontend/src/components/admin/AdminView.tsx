@@ -14,8 +14,9 @@ import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { CronSection } from './Cron'
+import { ContactsSection } from './Contacts'
 
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar' | 'cron'
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts'
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -246,6 +247,7 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'courrier', label: 'Courrier', ic: '✉' },
   { key: 'radar', label: 'Radar', ic: '◎' },
   { key: 'cron', label: 'Cron', ic: '⧗' },
+  { key: 'contacts', label: 'Contacts', ic: '☎' },
 ]
 const SOUS_TITRES: Record<AdminSection, string> = {
   pilotage: "l'état de LABUSE en cinq secondes",
@@ -256,6 +258,7 @@ const SOUS_TITRES: Record<AdminSection, string> = {
   courrier: 'les demandes d’envoi — la page qui manquait',
   radar: 'la pige d’annonces — saisie, extraction, re-vérif, rituel',
   cron: 'les jobs planifiés — état, prochaine exécution, lancer, logs',
+  contacts: 'mairies, EPCI, DEAL, ADIL — réunis et triables',
 }
 
 function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: string; value: string }) {
@@ -339,6 +342,7 @@ export function AdminView() {
           {section === 'courrier' && <CourrierSection />}
           {section === 'radar' && <RadarSection />}
           {section === 'cron' && <CronSection />}
+          {section === 'contacts' && <ContactsSection />}
         </div>
       </div>
     </div>

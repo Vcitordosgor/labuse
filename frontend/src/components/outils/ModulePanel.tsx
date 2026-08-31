@@ -38,6 +38,8 @@ import { RenouvellementModule } from './Renouvellement'
 import { ProspectionSolaire } from './ProspectionSolaire'
 import { EtudeZone } from './EtudeZone'
 import { TaxeAmenagement } from './TaxeAmenagement'
+import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
+import { VeillePromoteurs } from './VeillePromoteurs'   // SECTEUR-1 (S3)
 import { TierBadge } from './TierBadge'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -1199,6 +1201,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement ». Marche à vide ; s'ouvre aussi
   // depuis une parcelle sélectionnée (getTaxePrefill : commune + zone en référence, surface saisie).
   'taxe-amenagement': TaxeAmenagement,
+  'mon-secteur': MonSecteur,   // SECTEUR-1 (S1)
+  'veille-promoteurs': VeillePromoteurs,   // SECTEUR-1 (S3)
   // RADAR-CATÉGORIE (T1) — 'radar' n'est plus un module du panneau Outils : c'est la view 'radar'
   // (catégorie plein écran, RadarView). Ancien composant RadarClient supprimé.
 }

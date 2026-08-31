@@ -16,6 +16,10 @@ from dotenv import load_dotenv
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# SECTEUR-1 (S6) — source UNIQUE des noms de modèles + garde des modèles retirés. Module au niveau
+# `labuse` (PAS dans le package `ai`, dont l'__init__ importe l'agent → config : cycle évité).
+from .ai_models import DEFAULT_AGENT_MODEL as _DEFAULT_AGENT_MODEL, RETIRED_MODELS as _RETIRED_MODELS
+
 
 def _repo_root() -> Path:
     # src/labuse/config.py -> remonter à la racine du dépôt
@@ -78,9 +82,11 @@ class Settings(BaseSettings):
     # inclus au backup (mandat RADAR V0 §2). Surchargé par LABUSE_PIGE_CAPTURES_DIR en dev/tests.
     pige_captures_dir: str = "/srv/labuse/pige/captures"
 
-    # Agent IA (post-cœur) — provider "stub" par défaut (aucun appel réseau).
+    # Agent IA (post-cœur) — provider "stub" par défaut (aucun appel réseau). SECTEUR-1 (S6) : le nom du
+    # modèle vient de ai/models.py (source unique) ; un env `LABUSE_AI_MODEL` retiré est REFUSÉ au démarrage
+    # (validateur plus bas) — plus jamais un appel prod qui échoue en silence sur un modèle mort.
     ai_provider: str = "stub"
-    ai_model: str = "claude-sonnet-4-6"
+    ai_model: str = _DEFAULT_AGENT_MODEL
 
     # ── Wave adresses/courrier/IA : protection & plans (Phase 0 : PAS de système de
     # comptes — quotas au niveau session/IP, gating par plan STUBBÉ ; le « mandat
@@ -266,6 +272,17 @@ class Settings(BaseSettings):
         if not self.public_base_url:
             self.public_base_url = ("http://127.0.0.1:8000" if self.env == "local"
                                     else "https://app.labuse.immo")
+        return self
+
+    @model_validator(mode="after")
+    def _ai_model_non_retire(self) -> "Settings":
+        # SECTEUR-1 (S6) — fail-closed au DÉMARRAGE : un `LABUSE_AI_MODEL` resté sur un modèle RETIRÉ
+        # (ex. le claude-3-5-haiku de la prod) fait échouer le boot avec un message clair, au lieu de
+        # planter en silence à chaque appel (not_found_error). Un modèle mort ne doit jamais passer.
+        if self.ai_model in _RETIRED_MODELS:
+            raise ValueError(
+                f"LABUSE_AI_MODEL = « {self.ai_model} » est un modèle RETIRÉ de l'API Anthropic — "
+                f"le remplacer (défaut : {_DEFAULT_AGENT_MODEL}).")
         return self
 
     @property

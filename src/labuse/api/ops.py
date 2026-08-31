@@ -135,6 +135,44 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
             "dpe_reveil": dpe_reveil, "radar": radar, "stripe_webhook": stripe_webhook}
 
 
+# ═══════════════════════════ SECTEUR-1 (S2) — Contacts institutionnels (admin) ═══════════════════════════
+
+@router.get("/admin/contacts-institutionnels")
+def admin_contacts(request: Request):
+    """Les contacts institutionnels réunis et triables : les 24 mairies (la MÊME donnée que la fiche
+    commune, `mairie_de`), les EPCI (config BANATIC), la DEAL et l'ADIL. Pas de notes de relation — le
+    CRM de Vic reste dans Notion."""
+    from ..api.auth import exiger_admin
+    from ..config import load_yaml_config
+    from ..db import session_scope
+    from sqlalchemy import text
+    exiger_admin(request)
+    with session_scope() as db:
+        mairies = [dict(r) for r in db.execute(text(
+            "SELECT commune, nom, adresse, code_postal, telephone, email, site_officiel, url_annuaire, "
+            "       source, date_import "
+            "FROM mairies ORDER BY commune")).mappings()]
+    for m in mairies:
+        m["date_import"] = m["date_import"].isoformat() if m.get("date_import") else None
+    try:
+        epci_cfg = load_yaml_config("epci_974")["epci"]
+        epci = [{"code": k, "nom": v.get("nom"), "communes": v.get("communes", [])} for k, v in epci_cfg.items()]
+    except Exception:  # noqa: BLE001
+        epci = []
+    # DEAL / ADIL — contacts institutionnels publics de La Réunion (une institution unique chacun).
+    autres = [
+        {"type": "DEAL", "nom": "DEAL La Réunion (Direction de l'Environnement, de l'Aménagement et du Logement)",
+         "adresse": "2 rue Juliette Dodu, 97706 Saint-Denis Cedex 9", "telephone": "02 62 40 26 00",
+         "site": "https://www.reunion.developpement-durable.gouv.fr"},
+        {"type": "ADIL", "nom": "ADIL de La Réunion (Agence Départementale d'Information sur le Logement)",
+         "adresse": "12 rue Colbert, 97400 Saint-Denis", "telephone": "02 62 41 14 24",
+         "site": "https://www.adil974.re"},
+    ]
+    return {"mairies": mairies, "epci": epci, "autres": autres,
+            "note": "Même donnée que la fiche commune, réunie et triable. Pas de notes de relation "
+                    "(le CRM reste dans Notion)."}
+
+
 # ═══════════════════════════ CRON-1 (K7) — la page CRON de l'admin (état des jobs) ═══════════════════════════
 
 @router.get("/admin/cron")

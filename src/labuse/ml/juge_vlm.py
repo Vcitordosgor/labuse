@@ -21,10 +21,11 @@ import cv2
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..ai_models import MODEL_VISION
 from ..ingestion.ortho_tiles import tile_path
 from .probe import ml_dir
 
-MODELE = "claude-haiku-4-5-20251001"
+MODELE = MODEL_VISION  # source unique des noms de modèles (S6) — jamais un littéral dispersé
 CROP_VLM_PX = 400
 MARGE_M = 10.0
 M_PER_PX = 0.2

@@ -519,11 +519,14 @@ class InteresseIn(BaseModel):
 
 @router.get("/admin/radar/depot-agence/etat")
 def radar_depot_agence_etat(request: Request) -> dict:
-    """État du drapeau, pour que l'UI admin ne montre le parcours QUE s'il est ouvert (admin seulement)."""
+    """SECTEUR-1 (S5) — l'endpoint est ADMIN (`exiger_admin`) : s'il répond, l'appelant EST admin →
+    `admin: true`. Le parcours « Publier une annonce » est TOUJOURS montré à l'admin (pour tester sans
+    toucher la config), avec la mention « drapeau fermé » quand `actif` est false ; les CLIENTS, eux, ne
+    voient rien tant que le drapeau est fermé (leur propre porte `radar_interesse`)."""
     from ..api.auth import exiger_admin
     from ..config import get_settings
     exiger_admin(request)
-    return {"actif": bool(get_settings().radar_depot_agence_actif)}
+    return {"actif": bool(get_settings().radar_depot_agence_actif), "admin": True}
 
 
 @router.post("/admin/radar/depot-agence/analyser")
@@ -532,7 +535,7 @@ def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict
     from ..api.auth import exiger_admin
     from . import depot_agence, html_next
     exiger_admin(request)
-    _porte_depot_agence()
+    # SECTEUR-1 (S5) — plus de gate drapeau ici : endpoint ADMIN, Vic doit pouvoir tester le parcours.
     try:
         return {"ok": True, "records": depot_agence.analyser(body.html)}
     except html_next.NextDataError as exc:
@@ -545,7 +548,7 @@ def radar_depot_agence_publier(body: DepotPublierIn, request: Request) -> dict:
     from ..api.auth import exiger_admin
     from . import depot_agence
     exiger_admin(request)
-    _porte_depot_agence()
+    # SECTEUR-1 (S5) — plus de gate drapeau ici (endpoint ADMIN) : Vic teste la publication sans config.
     with session_scope() as db:
         try:
             out = depot_agence.publier(
