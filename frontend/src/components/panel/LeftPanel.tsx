@@ -424,29 +424,9 @@ function Compteur({ value }: { value: number }) {
   return <>{nfFr(n)}</>
 }
 
-// M65 P2a — une CASE du bandeau : chiffre (servi) au-dessus, libellé court en dessous.
-// RETOURS-3 R1.1 — l'endpoint /accueil/chiffres est VIVANT (parcelles/communes/sources servis) ; les
-// « 3 cases vides » de la capture venaient du rendu PENDING (n == null pendant tout le fetch, définitif
-// si le retry unique échoue) sans aucun squelette pour distinguer « en cours » de « disparu ». On sert
-// donc un SQUELETTE tant que le fetch tourne ; une valeur réellement null (jamais attendu ici) reste
-// masquée — jamais inventée.
-// RETOURS-4 S1.2 — les 3 chiffres DISPARAISSAIENT à 100 % de zoom : le nombre (19 px) débordait sa
-// cellule (1/3 du panneau ~340 px) et l'`overflow-hidden` de la grille le ROGNAIT (à 80 % tout rétrécit,
-// donc « visible seulement vers 80 % »). Ce n'était PAS un état de chargement. Bande COMPACTE : nombre
-// 15 px + `whitespace-nowrap`, libellé 10 px + ellipse, cellule `min-w-0` — jamais de règle de largeur
-// qui masque le bloc. Lisible à 100/110/125 % et à 320 px.
-function CaseChiffre({ n, label, anime, loading }: { n: number | null | undefined; label: string; anime?: boolean; loading?: boolean }) {
-  return (
-    <div className="flex min-w-0 flex-col items-center justify-center bg-[#121815] px-1.5 py-2.5">
-      {n != null
-        ? <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums leading-none text-[#F4F6F5]">{anime ? <Compteur value={n} /> : nfFr(n)}</span>
-        : loading
-          ? <span className="h-[15px] w-10 animate-pulse rounded bg-[#232C27]" aria-hidden />
-          : <span className="text-[15px] font-semibold leading-none text-[#3E4A44]">—</span>}
-      <span className="mt-1 w-full truncate text-center text-[10px] text-[#7C8A83]">{label}</span>
-    </div>
-  )
-}
+// RETOURS-4 S8 — les 3 chiffres SERVIS sont désormais une LIGNE sous le titre (statline dans
+// AccueilPreuves) ; le composant CaseChiffre (grille v2/v4) est retiré. La ligne ne peut plus être rognée
+// à aucun zoom (fin définitive du bug S1.2) et reste servie par /accueil/chiffres (jamais en dur).
 
 // RETOURS-3 R1 (maquette-accueil-v2) — une CARTE d'entrée du bloc « PAR OÙ COMMENCER ». Tuile 44 px
 // unique, glyphe SVG 23 px trait 2.1, teinte franche au repos (vert, mauve pour l'IA), survol plein
@@ -460,10 +440,11 @@ const ACC_ICONS: Record<string, JSX.Element> = {
 function AccEntry({ ton, icone, titre, sous, onClick }: {
   ton: 'mint' | 'mauve'; icone: keyof typeof ACC_ICONS; titre: string; sous: string; onClick: () => void
 }) {
+  // RETOURS-4 S8 — AUCUN tooltip sur les cartes (le libellé est déjà écrit dessus).
   return (
-    <button data-accueil-porte={ton} onClick={onClick} className={`acc-entry ${ton}`} title={titre}>
+    <button data-accueil-porte={ton} onClick={onClick} className={`acc-entry ${ton}`}>
       <span className="acc-tile">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">{ACC_ICONS[icone]}</svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{ACC_ICONS[icone]}</svg>
       </span>
       {/* RETOURS-4 S1.3 — titres ET descriptions sur UNE ligne (truncate = nowrap + ellipse) : tiennent à 360 px. */}
       <span className="min-w-0 flex-1">
@@ -488,11 +469,14 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
       <p className="mb-4 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
 
-      {/* B2 — les 3 données SERVIES (RETOURS-3 R1.1 : restaurées ; squelette tant que le fetch tourne) */}
-      <div className="mb-5 grid grid-cols-3 gap-px overflow-hidden rounded-[9px] bg-[#1E2622]">
-        <CaseChiffre n={d?.parcelles} label={A.labelParcelles} anime loading={q.isLoading} />
-        <CaseChiffre n={d?.communes} label={A.labelCommunes} loading={q.isLoading} />
-        <CaseChiffre n={d?.sources} label={A.labelSources} loading={q.isLoading} />
+      {/* RETOURS-4 S8 (maquette v5) — les 3 chiffres SERVIS quittent leur boîte en grille et deviennent une
+          LIGNE sous le titre : rien à masquer, rien qui déborde, à aucun zoom (fin définitive du bug S1.2). */}
+      <div data-accueil-stats className="mb-5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12.5px] text-[#98a39d]">
+        <span><b className="font-semibold tabular-nums text-txt">{d?.parcelles != null ? <Compteur value={d.parcelles} /> : (q.isLoading ? '…' : '—')}</b> {A.labelParcelles}</span>
+        <span className="text-[#3a453e]">·</span>
+        <span><b className="font-semibold tabular-nums text-txt">{d?.communes != null ? nfFr(d.communes) : (q.isLoading ? '…' : '—')}</b> {A.labelCommunes}</span>
+        <span className="text-[#3a453e]">·</span>
+        <span><b className="font-semibold tabular-nums text-txt">{d?.sources != null ? nfFr(d.sources) : (q.isLoading ? '…' : '—')}</b> {A.labelSources}</span>
       </div>
 
       {/* B3 — quatre cartes d'entrée (maquette-v4). Toutes VERTES sauf le Copilote (mauve/IA).

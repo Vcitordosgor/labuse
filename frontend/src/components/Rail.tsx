@@ -106,11 +106,11 @@ function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string)
       key={m.key}
       data-outil={m.key}
       onClick={() => open(m.key)}
-      /* RETOURS-4 S3 — survol PLEIN (aplat mint, contenu inversé en encre sombre) sur les cartes du tiroir Outils. */
-      className="door door-hot group mb-0 w-full text-left transition-colors duration-quick hover:border-mint hover:bg-mint"
+      /* RETOURS-4 S3/S8 — survol PLEIN (dégradé vert profond, contenu inversé en encre sombre) via .hover-fill. */
+      className="door door-hot hover-fill mb-0 w-full text-left"
     >
-      <div className="text-xs font-medium text-txt group-hover:text-mint-on">{m.label}</div>
-      <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim group-hover:text-mint-on/80">{m.desc}</div>
+      <div className="text-xs font-medium text-txt">{m.label}</div>
+      <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{m.desc}</div>
     </button>
   )
 }
@@ -161,8 +161,11 @@ export function Rail() {
         {/* RETOURS-4 S6 — ZONE SIGNATURE : l'oiseau vert EXISTANT (asset à l'identique) au sommet du rail,
             juste au-dessus de « Carte », centré, hauteur du bandeau, séparateur dessous. Non cliquable,
             non survolable, non focusable, jamais d'état actif (un simple visuel, hors flux d'interaction). */}
-        <div className="flex h-14 w-full shrink-0 items-center justify-center border-b border-line" aria-hidden>
-          <img src="/socle/marque/labuseicone4ADE80.svg" alt="" className="h-6 w-auto"
+        {/* RETOURS-4 S9 — l'oiseau (asset large, ratio ~2,9) débordait le rail (78 px) et touchait les
+            bords : on le CONTRAINT à 36 px de large, hauteur auto, centré (≥ 12 px de marge de chaque côté
+            dans un rail de 64 px), et borné en hauteur pour ne pas dépasser sa zone signature (h-14). */}
+        <div className="flex h-14 w-full shrink-0 items-center justify-center border-b border-line px-3" aria-hidden>
+          <img src="/socle/marque/labuseicone4ADE80.svg" alt="" className="h-auto max-h-8 w-9 max-w-[36px]"
             style={{ filter: 'drop-shadow(0 0 6px rgba(74,222,128,0.35))' }} />
         </div>
 

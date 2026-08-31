@@ -6,15 +6,16 @@ import type { ReactNode } from 'react'
 // RETOURS-4 S3 — survol PLEIN (aplat `--mint`, contenu inversé en encre sombre) sur les cases cliquables
 // (tuiles d'export de la fiche parcelle + passerelles de la fiche commune). `group` + group-hover inversent
 // icône, nom et chiffre. Les cases DÉSACTIVÉES gardent le gabarit sans le survol (CASE_BASE).
-const CASE_BASE = 'group flex flex-col items-center justify-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-1 py-2.5 text-center transition-colors duration-quick'
-const CASE = `${CASE_BASE} hover:border-mint hover:bg-mint`
+// RETOURS-4 S8 — survol plein via .hover-fill (dégradé vert profond, enfants inversés en encre sombre).
+const CASE_BASE = 'flex flex-col items-center justify-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-1 py-2.5 text-center'
+const CASE = `${CASE_BASE} hover-fill`
 
 function Inner({ ic, nom, chiffre }: { ic: ReactNode; nom: string; chiffre?: ReactNode }) {
   return (
     <>
-      <span className="text-[15px] text-txt-mut group-hover:text-mint-on" aria-hidden>{ic}</span>
-      <b className="text-[11px] font-medium leading-tight text-txt-hi group-hover:text-mint-on">{nom}</b>
-      {chiffre != null && chiffre !== '' && <small className="font-mono text-[9.5px] text-mint group-hover:text-mint-on">{chiffre}</small>}
+      <span className="text-[15px] text-txt-mut" aria-hidden>{ic}</span>
+      <b className="text-[11px] font-medium leading-tight text-txt-hi">{nom}</b>
+      {chiffre != null && chiffre !== '' && <small className="font-mono text-[9.5px] text-mint">{chiffre}</small>}
     </>
   )
 }

@@ -20,6 +20,10 @@
   --mint:#4ADE80; --mint-bg:#12291D; --mint-on:#06301A; --mint-sub:#0B4526;
   /* mauve = surface IA (Copilote) — miroir du token Tailwind `violet`/`cp-ia` #B497F0 (RETOURS-3 R1). */
   --violet:#B497F0; --violet-bg:rgba(180,151,240,.14);
+  /* RETOURS-4 S8 — teinte UNIQUE du SURVOL PLEIN, partout : dégradé vert profond (encre presque noire),
+     mauve profond sur les surfaces IA. Remplace l'aplat pastel délavé. */
+  --fill-mint:linear-gradient(135deg,#52E68C 0%,#2FBE66 100%); --ink:#071009;
+  --fill-mauve:linear-gradient(135deg,#B79CFC 0%,#8B6CF2 100%); --mauve-ink:#140e22;
   --amber:#E0A94F; --amber-bg:#2A2113;
   --coral:#E2726A; --coral-bg:#2B1715;
   --blue:#8FB4F0; --iris:#8B7BD8; --iris-2:#C4B5FD; --iris-bg:#16121F; --iris-line:#2E2545;
@@ -84,32 +88,31 @@
      remplit (vert `--mint`, mauve `--violet` sur l'IA), le contenu s'inverse en encre sombre, et la TUILE
      passe en FOND TRANSPARENT avec CONTOUR SOMBRE (plus de pastille foncée qui fait tache — le glyphe
      inversé suffit à la faire ressortir), exactement comme les catégories du rail. */
-  .acc-entry { display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
-    background:var(--bg-2); border-radius:10px; border-left:3px solid var(--line-2); padding:11px 12px;
-    color:var(--txt); transition:background .12s, border-color .12s, color .12s; }
+  /* RETOURS-4 S8 (maquette v5) — cartes SANS liseré gauche : bord fin complet. Survol = dégradé profond. */
+  .acc-entry { position:relative; display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
+    background:var(--bg-2); border:1px solid var(--line-2); border-radius:12px; padding:12px;
+    color:var(--txt); transition:background .15s, border-color .15s, color .15s; }
   .acc-entry .acc-tile { width:34px; height:34px; flex:none; border-radius:9px; display:flex;
     align-items:center; justify-content:center; border:1px solid transparent;
-    transition:background .12s, color .12s, border-color .12s; }
+    transition:background .15s, color .15s, border-color .15s; }
   .acc-entry .acc-tile svg { width:17px; height:17px; }
-  .acc-entry .acc-desc { transition:color .12s; }
-  .acc-entry .acc-arrow { flex:none; font-size:14px; color:var(--txt-dim); transition:color .12s, transform .12s; }
+  .acc-entry .acc-desc { transition:color .15s; }
+  .acc-entry .acc-arrow { flex:none; font-size:14px; color:var(--txt-dim); transition:color .15s, transform .15s; }
   /* — vert (Explorer / Radar / Outils) — */
-  .acc-entry.mint { border-left-color:var(--mint); }
-  .acc-entry.mint .acc-tile { background:rgba(74,222,128,.16); border-color:rgba(74,222,128,.40); color:var(--mint); }
+  .acc-entry.mint .acc-tile { background:rgba(74,222,128,.14); border-color:rgba(74,222,128,.38); color:var(--mint); }
   .acc-entry.mint .acc-arrow { color:var(--mint); }
   /* — mauve (Copilote, seule surface IA) — */
-  .acc-entry.mauve { border-left-color:var(--violet); }
-  .acc-entry.mauve .acc-tile { background:rgba(180,151,240,.18); border-color:rgba(180,151,240,.44); color:var(--violet); }
+  .acc-entry.mauve .acc-tile { background:rgba(180,151,240,.16); border-color:rgba(180,151,240,.42); color:var(--violet); }
   .acc-entry.mauve .acc-arrow { color:var(--violet); }
   @media (hover:hover) and (pointer:fine) {
-    .acc-entry.mint:hover { background:var(--mint); border-left-color:var(--mint); color:#08110b; }
-    .acc-entry.mint:hover .acc-tile { background:transparent; border-color:rgba(8,17,11,.30); color:#08110b; }
-    .acc-entry.mint:hover .acc-desc { color:rgba(8,17,11,.70); }
-    .acc-entry.mint:hover .acc-arrow { color:#08110b; transform:translateX(2px); }
-    .acc-entry.mauve:hover { background:var(--violet); border-left-color:var(--violet); color:#150f24; }
-    .acc-entry.mauve:hover .acc-tile { background:transparent; border-color:rgba(21,15,36,.30); color:#150f24; }
-    .acc-entry.mauve:hover .acc-desc { color:rgba(21,15,36,.70); }
-    .acc-entry.mauve:hover .acc-arrow { color:#150f24; transform:translateX(2px); }
+    .acc-entry.mint:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
+    .acc-entry.mint:hover .acc-tile { background:rgba(7,16,9,.10); border-color:rgba(7,16,9,.38); color:var(--ink); }
+    .acc-entry.mint:hover .acc-desc { color:rgba(7,16,9,.72); }
+    .acc-entry.mint:hover .acc-arrow { color:var(--ink); transform:translateX(3px); }
+    .acc-entry.mauve:hover { background:var(--fill-mauve); border-color:#8B6CF2; color:var(--mauve-ink); }
+    .acc-entry.mauve:hover .acc-tile { background:rgba(20,14,34,.10); border-color:rgba(20,14,34,.38); color:var(--mauve-ink); }
+    .acc-entry.mauve:hover .acc-desc { color:rgba(20,14,34,.72); }
+    .acc-entry.mauve:hover .acc-arrow { color:var(--mauve-ink); transform:translateX(3px); }
   }
 
   /* RETOURS-3 R2/R14 — entrée du MENU LATÉRAL (rail). SÉLECTION = fond teinté léger + libellé coloré
@@ -127,8 +130,23 @@
   .rail-item:focus { outline:none; }
   .rail-item:focus-visible { outline:2px solid rgba(74,222,128,.55); outline-offset:2px; }
   @media (hover:hover) and (pointer:fine) {
-    .rail-item:not(.active):hover { background:var(--mint); color:#08110b; }
-    .rail-item.ia:not(.active):hover { background:var(--violet); color:#150f24; }
+    /* RETOURS-4 S8 — même teinte de survol partout : dégradé vert profond (mauve sur l'IA), encre presque noire. */
+    .rail-item:not(.active):hover { background:var(--fill-mint); color:var(--ink); }
+    .rail-item.ia:not(.active):hover { background:var(--fill-mauve); color:var(--mauve-ink); }
+  }
+
+  /* RETOURS-4 S8 — classe de SURVOL PLEIN réutilisable (surfaces en Tailwind : cartes du tiroir Outils,
+     tuiles d'export/passerelles). Dégradé vert profond + inversion des enfants en encre presque noire. */
+  .hover-fill { transition:background .15s, color .15s, border-color .15s; }
+  @media (hover:hover) and (pointer:fine) {
+    .hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
+    .hover-fill:hover * { color:var(--ink) !important; }
+  }
+  /* variante IA (mauve profond) — surfaces IA à aplat plein (ex. « Reprendre » du Copilote). */
+  .hover-fill-ia { transition:background .15s, color .15s; }
+  @media (hover:hover) and (pointer:fine) {
+    .hover-fill-ia:hover { background:var(--fill-mauve); color:var(--mauve-ink); }
+    .hover-fill-ia:hover * { color:var(--mauve-ink) !important; }
   }
 
   /* RETOURS-4 S3 — survol PLEIN sur des surfaces à STYLES INLINE (Projets : lignes de « Vos projets » et
@@ -136,13 +154,13 @@
      pour battre les couleurs inline des enfants. Borné à un vrai pointeur (@media hover), jamais sur l'onglet
      déjà actif (`.proj-tab-on`). */
   @media (hover:hover) and (pointer:fine) {
-    [data-projet-row] { transition:background .12s; }
-    [data-projet-row]:hover { background:var(--mint) !important; }
-    [data-projet-row]:hover * { color:#08110b !important; }
-    [data-projet-row]:hover [data-projet-barre] { background:rgba(8,17,11,.20) !important; }
-    [data-projet-row]:hover [data-projet-barre] > div { background:#08110b !important; }
-    .proj-tab { transition:background .12s, color .12s; }
-    .proj-tab:not(.proj-tab-on):hover { background:var(--mint) !important; color:#08110b !important; }
+    [data-projet-row] { transition:background .15s; }
+    [data-projet-row]:hover { background:var(--fill-mint) !important; }
+    [data-projet-row]:hover * { color:var(--ink) !important; }
+    [data-projet-row]:hover [data-projet-barre] { background:rgba(7,16,9,.20) !important; }
+    [data-projet-row]:hover [data-projet-barre] > div { background:var(--ink) !important; }
+    .proj-tab { transition:background .15s, color .15s; }
+    .proj-tab:not(.proj-tab-on):hover { background:var(--fill-mint) !important; color:var(--ink) !important; }
   }
 
   /* la porte — point d'entrée cliquable */
@@ -346,12 +364,12 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    aplat mint, contenu inversé en encre sombre, tuile d'icône en fond transparent + contour sombre (jamais
    sur un tiroir ouvert, ni sur un tiroir non cliquable). !important bat les couleurs inline (valueColor/accent). */
 @media (hover:hover) and (pointer:fine) {
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover { background:var(--mint); border-color:var(--mint); }
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:transparent; border:1px solid rgba(8,17,11,.30); color:#08110b; }
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover { background:var(--fill-mint); border-color:#2FBE66; }
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:rgba(7,16,9,.10); border:1px solid rgba(7,16,9,.38); color:var(--ink); }
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-title,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-sub,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev { color:#08110b !important; }
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev { color:var(--ink) !important; }
 }
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; }
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:9px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
