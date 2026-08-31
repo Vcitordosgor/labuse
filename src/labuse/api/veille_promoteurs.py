@@ -143,6 +143,17 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
         cite = next((radar_par_idu[i] for i in op["idus"] if i in radar_par_idu), None)
         op["radar_bien_id"] = cite
         op["radar_cite"] = cite is not None
+    # PROMO-1 (P4) — attache le PROGRAMME publié rattaché (par les coordonnées stables SIREN + commune +
+    # année). On ne sert que des FAITS + le LIEN (nom du programme, URL) — jamais un texte/visuel.
+    prog_par_op: dict[tuple, dict] = {}
+    for r in db.execute(text(
+        "SELECT nom, url, promoteur_nom, op_siren, op_commune, op_annee FROM programmes "
+        "WHERE rattachement_mode IS NOT NULL")).mappings():
+        prog_par_op[(r["op_siren"], r["op_commune"], r["op_annee"])] = dict(r)
+    for op in operations:
+        prog = prog_par_op.get((op["siren"], op["commune"], op["annee"]))
+        op["programme"] = ({"nom": prog["nom"], "url": prog["url"], "promoteur_nom": prog["promoteur_nom"]}
+                           if prog else None)
     return operations
 
 
@@ -191,10 +202,20 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
     frise = sorted(par_annee.values(), key=lambda a: a["annee"])
     n_patrimoine = db.execute(text("SELECT count(*) FROM parcelle_personne_morale WHERE siren = :s"),
                               {"s": siren}).scalar() or 0
+    # PROMO-1 (P4) — les opérations avec le NOM de programme rattaché (la frise porte les noms) + les
+    # programmes NON rattachés (« publiés sur leur site »). Faits + lien seulement, jamais un visuel.
+    ops_nommees = [{"annee": o["annee"], "commune": o["commune"], "nb_logements": o["nb_logements"],
+                    "libelle": o["libelle"], "programme": o.get("programme")}
+                   for o in sorted(ops, key=lambda o: (o["annee"] or 0), reverse=True)]
+    non_rattaches = [dict(r) for r in db.execute(text(
+        "SELECT id, nom, commune, url, annee FROM programmes "
+        "WHERE (promoteur_siren = :s OR (:s IS NULL AND promoteur_nom = :n)) AND rattachement_mode IS NULL "
+        "ORDER BY commune NULLS LAST, nom"), {"s": siren, "n": denom}).mappings()]
     return {
         "siren": siren, "denomination": denom,
         "n_operations": len(ops), "n_logements": sum(o["nb_logements"] for o in ops),
-        "frise": frise,
+        "frise": frise, "operations": ops_nommees,
+        "programmes_publies": non_rattaches,   # « publiés sur leur site » (non rattachés à une opération)
         # renvoi vers Scan patrimoine (pas de duplication : le détail parcellaire vit là-bas).
         "scan_patrimoine": {"n_parcelles": int(n_patrimoine),
                             "endpoint": f"/outils/veille-promoteurs/{siren}/acquisitions"},

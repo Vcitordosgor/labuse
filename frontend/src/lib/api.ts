@@ -480,12 +480,15 @@ export interface MonSecteurData {
 export const getMonSecteur = (idu: string) => j<MonSecteurData>(`/outils/mon-secteur?idu=${encodeURIComponent(idu)}`)
 
 // SECTEUR-1 (S3) — outil « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM.
+// PROMO-1 (P4) — le programme publié rattaché (FAITS + LIEN seulement, jamais un visuel).
+export interface ProgrammeLie { nom: string; url: string | null; promoteur_nom: string | null }
 // SECTEUR-2 (T2) — une OPÉRATION (groupe de permis contigus, même propriétaire moral, même période).
 export interface OperationPromoteur {
   siren: string; denomination: string | null; categorie: string; commune: string
   nb_logements: number; n_permis: number; date_min: string | null; date_max: string | null
   annee: number | null; etat: string | null; lon: number | null; lat: number | null
   idus: string[]; libelle: string; radar_bien_id: number | null; radar_cite: boolean
+  programme?: ProgrammeLie | null
 }
 export interface VeillePromoteurs {
   n_total: number; n_servi: number; tronquee: boolean; plafond: number; n_logements_total: number
@@ -501,11 +504,28 @@ export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; d
   if (p.limit) q.set('limit', String(p.limit))
   return j<VeillePromoteurs>(`/outils/veille-promoteurs${q.toString() ? `?${q}` : ''}`)
 }
+export interface ProgrammePublie { id: number; nom: string; commune: string | null; url: string | null; annee: number | null }
 export interface PromoteurFrise {
   siren: string; denomination: string | null; n_operations: number; n_logements: number
   frise: { annee: number; n_operations: number; n_logements: number }[]
+  operations: { annee: number | null; commune: string; nb_logements: number; libelle: string; programme?: ProgrammeLie | null }[]
+  programmes_publies: ProgrammePublie[]
   scan_patrimoine: { n_parcelles: number; endpoint: string }; note: string
 }
+// PROMO-1 (P2/P3) — collecte assistée + rattachement (admin).
+export interface ProgrammeCandidat { nom: string; commune: string | null; url: string | null; annee: number | null }
+export interface CollecteResult { ok: boolean; motif?: string; promoteur_siren: string | null; promoteur_nom: string; url_portfolio?: string; programmes?: ProgrammeCandidat[]; n?: number; note?: string }
+export const collecterProgrammes = (body: { url: string; promoteur_siren?: string; promoteur_nom?: string }) =>
+  j<CollecteResult>('/admin/programmes/collecter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const validerProgrammes = (body: { promoteur_siren?: string; promoteur_nom?: string; url_portfolio: string; programmes: ProgrammeCandidat[] }) =>
+  j<{ ok: boolean; insere: number; ignore_doublon: number; rattache_auto: number; lignes: { id: number; nom: string; rattache: boolean }[]; note: string }>('/admin/programmes/valider', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export interface ProgrammeAdmin { id: number; promoteur_siren: string | null; promoteur_nom: string; nom: string; commune: string | null; url: string | null; url_portfolio: string; source: string; annee: number | null; date_releve: string | null; op_siren: string | null; op_commune: string | null; op_annee: number | null; rattachement_mode: string | null; rattachement_confiance: number | null }
+export const getProgrammes = (promoteur_siren?: string) =>
+  j<{ n: number; programmes: ProgrammeAdmin[] }>(`/admin/programmes${promoteur_siren ? `?promoteur_siren=${encodeURIComponent(promoteur_siren)}` : ''}`)
+export const supprimerProgramme = (id: number) =>
+  j<{ ok: boolean }>(`/admin/programmes/${id}`, { method: 'DELETE' })
+export const delierProgramme = (id: number) =>
+  j<{ ok: boolean }>(`/admin/programmes/${id}/delier`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
 export const getPromoteurFrise = (siren: string) => j<PromoteurFrise>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/frise`)
 export interface PromoteurAcquisitions { siren: string; denomination: string | null; n_parcelles: number; par_commune: { commune: string; n: number }[]; note: string }
 export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitions>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/acquisitions`)

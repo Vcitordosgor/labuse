@@ -32,6 +32,27 @@ function Frise({ siren }: { siren: string }) {
           </div>
         ))}
       </div>
+      {/* PROMO-1 (P4) — les opérations qui portent un NOM de programme rattaché */}
+      {f.operations.some((o) => o.programme) && (
+        <div className="mt-2">
+          <p className="text-[10px] font-medium text-txt-mut">Opérations nommées</p>
+          {f.operations.filter((o) => o.programme).slice(0, 8).map((o, i) => (
+            <p key={i} className="text-[10.5px] text-txt-dim">{o.annee ?? '—'} · <b className="text-txt">{o.programme!.nom}</b>{o.programme!.url && <> · <a href={o.programme!.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">site →</a></>} <span className="text-txt-dim">({o.libelle})</span></p>
+          ))}
+        </div>
+      )}
+      {/* PROMO-1 (P3) — les programmes NON rattachés restent visibles ici : « publiés sur leur site » */}
+      {f.programmes_publies.length > 0 && (
+        <div className="mt-2 border-t border-line-2 pt-1.5">
+          <p className="text-[10px] font-medium text-txt-mut">Publiés sur leur site <span className="text-txt-dim">(non rattachés à une opération)</span></p>
+          {f.programmes_publies.slice(0, 12).map((p) => (
+            <p key={p.id} className="text-[10.5px] text-txt-dim">
+              <b className="text-txt">{p.nom}</b>{p.commune ? ` · ${p.commune}` : ''}{p.annee ? ` · ${p.annee}` : ''}
+              {p.url && <> · <a href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">site →</a></>}
+            </p>
+          ))}
+        </div>
+      )}
       {/* renvoi vers Scan patrimoine (pas de duplication) */}
       <p className="mt-1.5 text-[10px] text-txt-dim">Patrimoine foncier détenu : <b className="text-txt-mut">{f.scan_patrimoine.n_parcelles.toLocaleString('fr-FR')}</b> parcelles (Scan patrimoine, même SIREN). {f.note}</p>
     </div>
@@ -99,6 +120,14 @@ export function VeillePromoteurs() {
                     <span className="block text-[10px] text-txt-dim">{o.n_permis} permis{o.date_max ? ` · ${new Date(o.date_max).getFullYear()}` : ''}{o.etat ? ` · ${o.etat}` : ''}</span>
                   </span>
                 </div>
+                {/* PROMO-1 (P4) — une opération RATTACHÉE affiche le NOM du programme + le lien externe
+                    « voir sur le site de {promoteur} → ». Aucun visuel externe, jamais : un FAIT + un LIEN. */}
+                {o.programme && (
+                  <div data-vp-programme className="mt-1 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
+                    <b className="text-txt-hi">{o.programme.nom}</b>
+                    {o.programme.url && <> · <a data-vp-programme-lien href={o.programme.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {o.programme.promoteur_nom ?? 'ce promoteur'} →</a></>}
+                  </div>
+                )}
                 {/* libellé factuel de l'opération ; « nom » = citée par une annonce neuve du Radar */}
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[10.5px]">
                   <span className="text-txt">{o.libelle}</span>

@@ -15,8 +15,9 @@ import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { CronSection } from './Cron'
 import { ContactsSection } from './Contacts'
+import { ProgrammesSection } from './Programmes'
 
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts'
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -248,6 +249,7 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'radar', label: 'Radar', ic: '◎' },
   { key: 'cron', label: 'Cron', ic: '⧗' },
   { key: 'contacts', label: 'Contacts', ic: '☎' },
+  { key: 'programmes', label: 'Programmes', ic: '◳' },
 ]
 const SOUS_TITRES: Record<AdminSection, string> = {
   pilotage: "l'état de LABUSE en cinq secondes",
@@ -259,6 +261,7 @@ const SOUS_TITRES: Record<AdminSection, string> = {
   radar: 'la pige d’annonces — saisie, extraction, re-vérif, rituel',
   cron: 'les jobs planifiés — état, prochaine exécution, lancer, logs',
   contacts: 'mairies, EPCI, DEAL, ADIL — réunis et triables',
+  programmes: 'coller une URL de portfolio → l’IA propose, vous validez ligne à ligne',
 }
 
 function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: string; value: string }) {
@@ -350,6 +353,7 @@ export function AdminView() {
           {section === 'radar' && <RadarSection />}
           {section === 'cron' && <CronSection />}
           {section === 'contacts' && <ContactsSection />}
+          {section === 'programmes' && <ProgrammesSection />}
         </div>
       </div>
     </div>
