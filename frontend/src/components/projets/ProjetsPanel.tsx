@@ -109,7 +109,7 @@ function DedupBanner({ groupe }: { groupe: Projet[] }) {
     },
   })
   return (
-    <div data-dedup-banner className="mb-2 rounded-xl bg-violet/[0.07] p-4 shadow-elev-1 ring-1 ring-violet/25">
+    <div data-dedup-banner className="mb-2 rounded-xl bg-mint/[0.07] p-4 shadow-elev-1 ring-1 ring-mint/25">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <b className="text-txt-hi">{groupe.length} doublons</b>
@@ -117,7 +117,7 @@ function DedupBanner({ groupe }: { groupe: Projet[] }) {
         </div>
         {!res && (
           <button data-dedup-fusionner onClick={() => fusion.mutate()} disabled={fusion.isPending}
-            className="min-h-7 shrink-0 rounded-lg border border-violet px-3 py-1.5 text-[11px] font-semibold text-violet transition-colors duration-quick hover:bg-violet/10 disabled:opacity-50">
+            className="min-h-7 shrink-0 rounded-lg border border-mint px-3 py-1.5 text-[11px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-50">
             {fusion.isPending ? 'Fusion…' : `Fusionner les ${groupe.length} →`}</button>
         )}
       </div>

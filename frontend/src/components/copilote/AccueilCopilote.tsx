@@ -9,6 +9,17 @@ import { ilYA } from '../../lib/format'
 import { getAccueilCopilote, getBrief, type AccueilCopiloteMeta, type BriefMatin,
   type CopiloteMission } from '../../lib/api'
 
+// RETOURS-3 R12 (maquette-copilote-v3) — une TUILE d'icône contrastée par capacité (fond mauve ~22 %,
+// contour ~48 %, glyphe 20 px stroke 2.1). Mappée sur la `cle` servie (donnees/web/expliquer/preparer) ;
+// une clé inconnue tombe sur l'étincelle générique (jamais de tuile vide).
+const CAP_ICONS: Record<string, JSX.Element> = {
+  donnees: <><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></>,
+  web: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17" /><path d="M12 3.5a13 13 0 0 1 0 17 13 13 0 0 1 0-17Z" /></>,
+  expliquer: <><path d="M9.5 17.5h5" /><path d="M10.5 20.5h3" /><path d="M12 3a6 6 0 0 1 3.4 10.9c-.5.4-.9 1-.9 1.6H9.5c0-.6-.4-1.2-.9-1.6A6 6 0 0 1 12 3Z" /></>,
+  preparer: <><path d="M6 2.5h8.5L19 7v14.5H6z" /><path d="M14 2.5V7h5" /><path d="M9 12h7M9 16h5" /></>,
+}
+const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
+
 export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
   missions, onReprendre }: {
   value: string
@@ -75,8 +86,8 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
     <div data-accueil className="mx-auto max-w-[620px] px-2 pt-6">
       {/* HERO — titre + sous-titre SERVIS (M133). Kicker mauve. La promesse suit le produit (les 4
           missions) — l'ancienne promesse d'instruction est morte en M118. */}
-      <div className="mb-8 text-center">
-        <div className="mb-3.5 font-mono text-[11px] tracking-[.16em] text-cp-ia">COPILOTE</div>
+      <div className="mb-6 text-center">
+        <div className="mb-3 font-mono text-[11px] tracking-[.16em] text-cp-ia">COPILOTE</div>
         <h1 data-accueil-titre className="mb-2.5 font-display text-[30px] font-medium leading-[1.25] tracking-[-.5px] text-cp-txt">
           {meta?.titre ?? 'Posez votre question.'}
         </h1>
@@ -137,7 +148,8 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {/* M133 — LE CHAMP EN PREMIER (l'action principale), sous le hero. Placeholder = un exemple
           d'une VRAIE mission (donnée), servi ; jouer le placeholder tel quel aboutit à la mission 1,
           jamais à un refus. FOCUS sans contour vert (M87 P2). */}
-      <div data-accueil-barre className="mb-3 flex items-center gap-3 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[18px] pr-2 transition-colors duration-quick focus-within:border-cp-ia-border-on focus-within:bg-[#12170F]">
+      {/* RETOURS-3 R12 — mauve ASSUMÉ au focus du champ (bordure mauve + halo doux), comme la maquette v3. */}
+      <div data-accueil-barre className="mb-3 flex items-center gap-3 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[18px] pr-2 transition-[border-color,box-shadow] duration-quick focus-within:border-cp-ia focus-within:shadow-[0_0_0_3px_rgba(180,151,240,0.16)]">
         <textarea ref={ref} data-brief rows={1} value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (value.trim()) onSubmit() } }}
@@ -158,11 +170,18 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {!reponse && meta && meta.capacites.length > 0 && (
         <div data-accueil-capacites className="mb-9">
           <p className="mb-3.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">CE QU'IL SAIT FAIRE</p>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-3 min-[520px]:grid-cols-2">
+          {/* RETOURS-3 R12 — chaque capacité porte une TUILE d'icône contrastée (mauve 22 %/48 %) ; le
+              bloc reste NON cliquable (curseur défaut, aucun état). */}
+          <div className="grid grid-cols-1 gap-x-6 gap-y-3.5 min-[520px]:grid-cols-2">
             {meta.capacites.map((c) => (
-              <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle}>
-                <div className="mb-[3px] text-[14px] text-cp-txt">{c.libelle}</div>
-                <div className="text-[12px] leading-[1.45] text-cp-muted">« {c.exemple} »</div>
+              <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle} className="flex cursor-default items-start gap-3">
+                <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border border-cp-ia/[0.48] bg-cp-ia/[0.22] text-cp-ia">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{CAP_ICONS[c.cle] ?? CAP_ICON_FALLBACK}</svg>
+                </span>
+                <div className="min-w-0">
+                  <div className="mb-[3px] text-[14px] font-medium text-cp-txt">{c.libelle}</div>
+                  <div className="text-[12px] leading-[1.45] text-cp-muted">« {c.exemple} »</div>
+                </div>
               </div>
             ))}
           </div>
@@ -181,12 +200,14 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
         <div data-accueil-historique className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">REPRENDRE</p>
           <div className="flex flex-col">
+            {/* RETOURS-3 R12 — survol PLEIN mauve (texte inversé sombre), comme les cartes d'accueil ;
+                la date « il y a N j » ne se tronque jamais (shrink-0 + whitespace-nowrap). */}
             {questionsVisibles.map((m) => (
               <button key={m.id} data-mission-reprendre onClick={() => onReprendre?.(m)}
-                className="flex items-center gap-3 border-b border-cp-line/60 py-2.5 text-left transition-colors duration-quick last:border-b-0 hover:text-cp-txt">
-                <span className="min-w-0 flex-1 truncate text-[14px] text-cp-txt">{m.titre}</span>
-                {m.run_id && <span className="shrink-0 rounded border border-cp-ia/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-cp-ia">recherche</span>}
-                <span className="shrink-0 font-mono text-[11px] text-cp-faint">{ilYA(m.updated_at)}</span>
+                className="group flex items-center gap-3 rounded-[10px] border-b border-cp-line/60 px-3 py-2.5 text-left transition-colors duration-quick last:border-b-0 hover:border-transparent hover:bg-cp-ia">
+                <span className="min-w-0 flex-1 truncate text-[14px] text-cp-txt group-hover:text-cp-ia-on">{m.titre}</span>
+                {m.run_id && <span className="shrink-0 rounded border border-cp-ia/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-cp-ia group-hover:border-cp-ia-on/40 group-hover:text-cp-ia-on">recherche</span>}
+                <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-cp-faint group-hover:text-cp-ia-on/70">{ilYA(m.updated_at)}</span>
               </button>
             ))}
           </div>

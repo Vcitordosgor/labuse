@@ -58,10 +58,12 @@ export const MODULES: ModuleDef[] = [
   // deux entrées (adresse OU parcelle), un moteur. La clé M23 est ALIASÉE (hidden : résout la porte
   // fiche/copilote sans carte en double, jamais un 404).
   // RETOURS-3 R11 — descriptions réécrites au mot (une phrase, droit au but). Vic 31/08.
+  // RETOURS-3 R5 — FUSION « Étudier un bien » × « Mon secteur » : la desc prend la formule R5 (adresse →
+  // secteur ; parcelle → étude complète). « Mon secteur » passe hidden (redirection interne conservée).
   { key: 'scoreur-adresse', num: 'O2', group: 'instruire', phare: true,
-    label: 'Étudier un bien', desc: 'Une parcelle → tout ce que LABUSE en sait.' },
+    label: 'Étudier un bien', desc: 'Une adresse → les prix du secteur ; une parcelle → l’étude complète.' },
   { key: 'calculette-fonciere', num: 'M23', group: 'instruire', hidden: true,
-    label: 'Étudier un bien', desc: 'Une parcelle → tout ce que LABUSE en sait.' },
+    label: 'Étudier un bien', desc: 'Une adresse → les prix du secteur ; une parcelle → l’étude complète.' },
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,
     label: 'Faisabilité', desc: 'Ce que le PLU laisse construire sur la parcelle.' },
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement » : assiette, part communale, part
@@ -104,8 +106,10 @@ export const MODULES: ModuleDef[] = [
     label: 'Communes', desc: 'Les 24 communes en chiffres : marché, rareté, rythme.' },
   // SECTEUR-1 (S1) — « Mon secteur » : les prix DU SECTEUR autour d'une parcelle. Même moteur que
   // « Marché et secteur » de la fiche + la médiane locale de FICHE-COMMUNE-2 C5.
-  { key: 'mon-secteur', num: 'S1', group: 'marche',
-    label: 'Mon secteur', desc: 'Une adresse → les prix réels du secteur.' },
+  // RETOURS-3 R5 — « Mon secteur » RETIRÉ du menu (hidden) : fusionné dans « Étudier un bien » (bloc secteur
+  // dès l'adresse). La clé reste résolvante (redirection interne conservée : deep-link/copilote historique).
+  { key: 'mon-secteur', num: 'S1', group: 'marche', hidden: true,
+    label: 'Mon secteur', desc: 'Les prix du secteur sont désormais dans « Étudier un bien » (dès l’adresse).' },
   // SECTEUR-1 (S3) — « Veille promoteurs » : permis déposés par promoteurs / bailleurs / SEM + leurs
   // acquisitions foncières (Scan patrimoine, même SIREN). Comptes SQL, millésime Sitadel affiché.
   { key: 'veille-promoteurs', num: 'S3', group: 'marche',

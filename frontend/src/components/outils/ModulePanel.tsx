@@ -1211,6 +1211,8 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement ». Marche à vide ; s'ouvre aussi
   // depuis une parcelle sélectionnée (getTaxePrefill : commune + zone en référence, surface saisie).
   'taxe-amenagement': TaxeAmenagement,
+  // RETOURS-3 R5 — « Mon secteur » est hidden au menu (fusionné dans « Étudier un bien »), mais la clé
+  // reste RÉSOLVANTE ici : deep-link/copilote historique ouvrent toujours l'outil autonome (redirection conservée).
   'mon-secteur': MonSecteur,   // SECTEUR-1 (S1)
   'veille-promoteurs': VeillePromoteurs,   // SECTEUR-1 (S3)
   // RADAR-CATÉGORIE (T1) — 'radar' n'est plus un module du panneau Outils : c'est la view 'radar'
