@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projets — maquette v5 · LABUSE</title>
+<style>
+  :root{
+    --fond:#0b0b0b; --panneau:#101010; --carte:#161616; --carte2:#1d1d1d; --bord:#262626; --bord2:#333;
+    --texte:#ececec; --gris:#9a9a9a; --gris2:#666;
+    --vert:#22c55e; --mint:#4ADE80; --mint-fond:rgba(74,222,128,.10);
+    --mauve:#a78bfa; --mauve-fond:rgba(167,139,250,.09);
+    --rouge:#f87171; --orange:#f59e0b;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fond);color:var(--texte);font-family:var(--sans);font-size:13px;padding:24px 28px 90px}
+  .k{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--mint);text-transform:uppercase}
+  h1.t{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:4px 0 4px}
+  .lead{color:var(--gris);font-size:13.5px;max-width:960px;margin-bottom:20px}
+  .lead b{color:var(--texte)}
+  h2{font-size:15px;font-weight:700;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--bord)}
+  .note{color:var(--gris);font-size:13px;max-width:980px;margin-bottom:10px;line-height:1.55}
+  .note b{color:var(--texte)}
+
+  .app{border:1px solid var(--bord);border-radius:12px;background:var(--panneau);padding:16px 18px}
+  .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--gris2);text-transform:uppercase;margin-bottom:8px}
+
+  /* en-tête */
+  .back{font-size:12px;color:var(--gris2);margin-bottom:8px}
+  .tete{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .tete h3{font-size:20px;font-weight:800}
+  .chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--gris);border:1px solid var(--bord2);border-radius:5px;padding:2px 8px}
+  .tete .act{margin-left:auto;display:flex;gap:7px}
+  .b{border:1px solid var(--bord2);border-radius:7px;padding:6px 12px;font-size:12px;color:var(--gris);background:transparent}
+  .b.v{border-color:rgba(74,222,128,.45);color:var(--mint)}
+  .b.m{border-color:rgba(167,139,250,.45);color:var(--mauve);background:var(--mauve-fond)}
+
+  /* bandeau analyse */
+  .ana{display:grid;grid-template-columns:38px 1fr auto;gap:14px;align-items:center;background:var(--mauve-fond);border:1px solid rgba(167,139,250,.28);border-radius:11px;padding:14px 16px;margin-bottom:12px}
+  .ana .ic{width:38px;height:38px;border-radius:9px;background:rgba(167,139,250,.14);display:flex;align-items:center;justify-content:center;color:var(--mauve);font-size:18px}
+  .ana p{font-size:14px;line-height:1.5}
+  .ana p b{color:var(--mauve)}
+  .ana .m{font-size:11.5px;color:var(--gris2);margin-top:3px}
+
+  /* bandeau progression */
+  .prog{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:10px 14px;margin-bottom:16px}
+  .prog .nums{display:flex;gap:18px}
+  .prog .n{font-family:var(--mono);font-size:12px;color:var(--gris)}
+  .prog .n b{color:var(--texte);font-size:15px;margin-right:4px}
+  .prog .n.v b{color:var(--mint)} .prog .n.r b{color:var(--rouge)}
+  .bar{height:6px;background:#1c1c1c;border-radius:3px;overflow:hidden;display:flex}
+  .bar i{display:block;height:100%}
+
+  /* colonnes */
+  .cols{display:grid;grid-template-columns:2.3fr 1fr 1fr;gap:14px}
+  .col{background:var(--carte);border:1px solid var(--bord);border-radius:11px;display:flex;flex-direction:column;overflow:hidden;min-height:560px}
+  .ch{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--bord);background:var(--carte2)}
+  .ch .lbl{margin:0}
+  .ch .n{font-family:var(--mono);font-size:12.5px;color:var(--mint)}
+  .ch .hint{font-size:11px;color:var(--gris2);margin-left:auto}
+
+  .tb{display:flex;gap:6px;padding:9px 14px;border-bottom:1px solid var(--bord);align-items:center}
+  .f{border:1px solid var(--bord2);border-radius:14px;padding:3px 11px;font-size:11.5px;color:var(--gris);white-space:nowrap}
+  .f.on{border-color:rgba(74,222,128,.45);color:var(--mint);background:var(--mint-fond)}
+  .f.p{color:var(--rouge)} .f.s{color:var(--orange)}
+  .tb .sp{flex:1}
+  .tb .srch{border:1px solid var(--bord2);border-radius:7px;padding:4px 10px;font-size:11.5px;color:var(--gris2);min-width:150px}
+  .tb .filt{border:1px solid var(--bord2);border-radius:7px;padding:4px 11px;font-size:11.5px;color:var(--texte);display:flex;gap:6px;align-items:center}
+  .tb .filt i{font-style:normal;background:var(--mint);color:#052e12;border-radius:9px;font-size:9.5px;padding:0 6px;font-weight:700}
+  .actifs{display:flex;gap:6px;padding:7px 14px;border-bottom:1px solid var(--bord);flex-wrap:wrap;align-items:center;font-size:11px;color:var(--gris2)}
+  .actifs span{border:1px solid rgba(74,222,128,.35);color:var(--mint);border-radius:5px;padding:1px 8px;font-size:11px}
+
+  .lhead{display:grid;grid-template-columns:14px 1fr 170px 76px 66px;gap:12px;padding:7px 14px;border-bottom:1px solid var(--bord);font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--gris2);text-transform:uppercase}
+  .r{text-align:right}
+  .l{display:grid;grid-template-columns:14px 1fr 170px 76px 66px;gap:12px;align-items:center;padding:8px 14px;border-bottom:1px solid #1c1c1c}
+  .l:hover{background:var(--carte2)}
+  .dot{width:7px;height:7px;border-radius:50%}
+  .d-p{background:var(--rouge)} .d-s{background:var(--orange)} .d-f{background:#4a4a4a}
+  .adr{min-width:0}
+  .adr b{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .adr b.sa{color:var(--gris2);font-style:italic;font-weight:400}
+  .adr span{font-family:var(--mono);font-size:10.5px;color:var(--gris2)}
+  .sig{display:flex;gap:4px;flex-wrap:wrap}
+  .sg{font-size:10.5px;padding:1px 7px;border-radius:5px;border:1px solid var(--bord2);color:var(--gris)}
+  .sg.h{border-color:rgba(248,113,113,.3);color:var(--rouge)}
+  .sf{font-family:var(--mono);font-size:11.5px;color:var(--gris);text-align:right}
+  .ges{display:flex;gap:5px;justify-content:flex-end}
+  .g{width:26px;height:24px;border:1px solid var(--bord2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--gris)}
+  .g.v{border-color:rgba(74,222,128,.4);color:var(--mint)} .g.x{border-color:rgba(248,113,113,.35);color:var(--rouge)}
+  .cpage{padding:10px;text-align:center;font-size:11.5px;color:var(--gris2);border-top:1px solid var(--bord);margin-top:auto}
+
+  .liste{flex:1;overflow:auto}
+  .mini{display:grid;grid-template-columns:14px 1fr 26px;gap:9px;align-items:center;padding:8px 14px;border-bottom:1px solid #1c1c1c}
+  .mini b{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .mini span{font-family:var(--mono);font-size:10px;color:var(--gris2)}
+  .cfoot{padding:10px 14px;border-top:1px solid var(--bord);display:flex;gap:7px;background:var(--carte2)}
+
+  /* tiroir filtres */
+  .tiroir{max-width:360px;border:1px solid var(--bord);border-radius:12px;background:var(--panneau);padding:14px 16px}
+  .tiroir h4{font-size:14px;font-weight:700;display:flex;justify-content:space-between;margin-bottom:12px}
+  .tiroir h4 span{font-size:12px;color:var(--gris2);font-weight:400}
+  .tiroir .lbl{margin:12px 0 6px}
+  .champ{background:var(--fond);border:1px solid var(--bord2);border-radius:7px;padding:6px 10px;font-size:12px;color:var(--gris2);display:inline-block}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .cp{border:1px solid var(--bord2);border-radius:14px;padding:3px 10px;font-size:11.5px;color:var(--gris)}
+  .cp.on{border-color:rgba(74,222,128,.45);color:var(--mint);background:var(--mint-fond)}
+  .tiroir .pied{display:flex;gap:8px;margin-top:16px}
+  .tiroir .pied .b{flex:1;text-align:center}
+  .tiroir .pied .b.plein{background:var(--vert);border-color:var(--vert);color:#052e12;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="k">LABUSE · Projets · maquette v5</div>
+<h1 class="t">Le projet, lisible d'un coup d'œil</h1>
+<p class="lead">Quatre étages, du plus important au plus détaillé : <b>qui est ce projet</b> → <b>ce que LABUSE en dit</b> → <b>où j'en suis</b> → <b>je trie</b>. Chaque étage est une carte séparée. Les listes sont complètes, jamais tronquées. Les filtres du cadrage sont à portée de main, dans un tiroir.</p>
+
+<div class="app">
+  <div class="back">← Mes projets</div>
+  <div class="tete">
+    <h3>hhhh</h3><span class="chip">SAINT-DENIS</span><span class="chip" style="color:var(--gris2)">500 K€ INDIC.</span>
+    <div class="act"><span class="b">PDF</span><span class="b">Renommer</span><span class="b">Archiver</span><span class="b v">+ Ajouter des parcelles</span></div>
+  </div>
+
+  <div class="ana">
+    <div class="ic">✦</div>
+    <div>
+      <p>LABUSE a analysé les <b>28 845 parcelles</b> de votre cadrage : <b>2 106</b> ont plus de chances que les autres d'être vendues — 214 en Priorité, 1 892 À suivre. Elles arrivent en tête de votre tri ; les 26 739 autres suivent, sans jugement.</p>
+      <div class="m">Signaux détectés : successions, sociétés en procédure, permis abandonnés, dormance · valeurs au 22 août 2026 · run m135 · marché ancien Saint-Denis ~2 500 €/m²</div>
+    </div>
+    <span class="b m">Voir pourquoi</span>
+  </div>
+
+  <div class="prog">
+    <div class="nums">
+      <span class="n v"><b>23</b>retenues</span>
+      <span class="n r"><b>6</b>écartées</span>
+      <span class="n"><b>28 816</b>à trier</span>
+    </div>
+    <div class="bar"><i style="width:9%;background:var(--mint)"></i><i style="width:2%;background:var(--rouge)"></i></div>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+      <div class="ch"><span class="lbl">À trier</span><span class="n">28 816</span><span class="hint">les 2 106 signalées d'abord</span></div>
+      <div class="tb">
+        <span class="f on">Tous</span><span class="f p">● Priorité 214</span><span class="f s">● À suivre 1 892</span>
+        <span class="sp"></span>
+        <span class="srch">🔍 adresse, IDU…</span>
+        <span class="filt">⚙ Filtrer <i>2</i></span>
+      </div>
+      <div class="actifs">filtres actifs : <span>terrain nu ×</span><span>surface ≥ 300 m² ×</span><span style="border-color:var(--bord2);color:var(--gris2)">tout effacer</span></div>
+      <div class="lhead"><span></span><span>Parcelle</span><span>Signaux</span><span class="r">Surface</span><span class="r">Trier</span></div>
+
+      <div class="l"><span class="dot d-p"></span><div class="adr"><b>219 Rue François de Mahy, Saint-Denis</b><span>DS 0840 · Nu</span></div><div class="sig"><span class="sg h">succession</span><span class="sg">permis récent</span></div><span class="sf">141 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="l"><span class="dot d-p"></span><div class="adr"><b>115 Rue François de Mahy, Saint-Denis</b><span>DS 0673 · Nu</span></div><div class="sig"><span class="sg h">société en procédure</span></div><span class="sf">128 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="l"><span class="dot d-p"></span><div class="adr"><b class="sa">sans adresse — Saint-Denis</b><span>ER 0095 · Bâti · encore constructible</span></div><div class="sig"><span class="sg h">permis abandonné</span></div><span class="sf">511 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="l"><span class="dot d-s"></span><div class="adr"><b>1 bis Chemin Andréa Hoarau, Saint-Denis</b><span>KE 0436 · Bâti · encore constructible</span></div><div class="sig"><span class="sg">dormance 12 ans</span></div><span class="sf">286 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="l"><span class="dot d-s"></span><div class="adr"><b class="sa">sans adresse — Saint-Denis</b><span>AL 0496 · Nu</span></div><div class="sig"><span class="sg">friche recensée</span></div><span class="sf">306 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="l"><span class="dot d-s"></span><div class="adr"><b>77 Chemin des Brumes, Saint-Denis</b><span>CR 0463 · Bâti · au max</span></div><div class="sig"><span class="sg">sortie de défisc</span></div><span class="sf">489 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="l"><span class="dot d-s"></span><div class="adr"><b>9 Allée du Poitou, Saint-Denis</b><span>DS 0839 · Nu</span></div><div class="sig"><span class="sg">même proprio ×31</span></div><span class="sf">163 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="l"><span class="dot d-f"></span><div class="adr"><b>28 Rue Juliette Dodu, Saint-Denis</b><span>AH 0208 · Bâti</span></div><div class="sig"><span class="sg" style="color:var(--gris2)">aucun signal</span></div><span class="sf">340 m²</span><div class="ges"><span class="g v">✓</span><span class="g x">✕</span></div></div>
+      <div class="cpage">50 par page · page 1 / 577 · suivante →</div>
+    </div>
+
+    <div class="col">
+      <div class="ch"><span class="lbl">Retenues</span><span class="n">23</span></div>
+      <div class="liste">
+        <div class="mini"><span class="dot d-p"></span><div><b>124 Rue Jean Chatel, Saint-Denis</b><span>AB 0142</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-p"></span><div><b class="sa" style="color:var(--gris2);font-style:italic;font-weight:400">sans adresse — Saint-Denis</b><span>BE 1170</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-s"></span><div><b>22 Rue Blanche Pierson, Saint-Denis</b><span>BE 1171</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-s"></span><div><b>3 Chemin Bertin, Saint-Denis</b><span>DK 1169</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-p"></span><div><b>91 Rue Sainte-Anne, Saint-Denis</b><span>BZ 1065</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-s"></span><div><b>5 Impasse des Manguiers, Saint-Denis</b><span>CB 0733</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-f"></span><div><b>12 Rue de la Compagnie, Saint-Denis</b><span>AP 1609</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-p"></span><div><b>8 Allée des Flamboyants, Saint-Denis</b><span>CR 0912</span></div><span class="g">↩</span></div>
+        <div class="mini"><span class="dot d-s"></span><div><b>17 Rue du Moulin à Vent, Saint-Denis</b><span>AX 0441</span></div><span class="g">↩</span></div>
+        <div class="mini" style="color:var(--gris2);justify-content:center;display:flex;font-size:11px">… 14 de plus (défilement)</div>
+      </div>
+      <div class="cfoot"><span class="b v" style="flex:1;text-align:center">→ CRM</span><span class="b v" style="flex:1;text-align:center">✉ Courrier (23)</span></div>
+    </div>
+
+    <div class="col">
+      <div class="ch"><span class="lbl">Écartées</span><span class="n" style="color:var(--gris2)">6</span><span class="hint">réversible</span></div>
+      <div class="liste" style="opacity:.6">
+        <div class="mini"><span class="dot d-f"></span><div><b>89 Rue François de Mahy</b><span>DS 0811</span></div><span class="g v">↩</span></div>
+        <div class="mini"><span class="dot d-s"></span><div><b>71 Chemin du Bois de Natte</b><span>KC 0233</span></div><span class="g v">↩</span></div>
+        <div class="mini"><span class="dot d-f"></span><div><b>53 Allée du Golf</b><span>AH 0567</span></div><span class="g v">↩</span></div>
+        <div class="mini"><span class="dot d-f"></span><div><b>4 Rue des Lataniers</b><span>BK 0021</span></div><span class="g v">↩</span></div>
+        <div class="mini"><span class="dot d-s"></span><div><b>16 Chemin Finette</b><span>CL 0908</span></div><span class="g v">↩</span></div>
+        <div class="mini"><span class="dot d-f"></span><div><b>2 Impasse Tamarins</b><span>ER 0310</span></div><span class="g v">↩</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Le tiroir « Filtrer » — les mêmes critères que le cadrage</h2>
+<div class="tiroir">
+  <h4>Filtrer les parcelles à trier <span>✕</span></h4>
+  <div class="lbl">Surface parcelle</div>
+  <span class="champ">min 300</span> <span style="color:var(--gris2)">—</span> <span class="champ">max</span> <span style="color:var(--gris2);font-size:12px">m²</span>
+  <div class="lbl">Zonage</div>
+  <div class="chips"><span class="cp on">U</span><span class="cp">AU</span><span class="cp">A</span><span class="cp">N</span></div>
+  <div class="lbl">État du sol</div>
+  <div class="chips"><span class="cp on">Terrain nu</span><span class="cp">Bâti</span><span class="cp">Bâti encore constructible</span></div>
+  <div class="lbl">Signaux de vie</div>
+  <div class="chips"><span class="cp">Succession</span><span class="cp">Société en procédure</span><span class="cp">Permis abandonné</span><span class="cp">Friche</span><span class="cp">Sortie de défisc</span><span class="cp">Dormance</span></div>
+  <div class="lbl">Classement</div>
+  <div class="chips"><span class="cp on">Tous</span><span class="cp">Priorité</span><span class="cp">À suivre</span><span class="cp">Sans signal</span></div>
+  <div class="pied"><span class="b">Tout effacer</span><span class="b plein">Voir 4 318 parcelles</span></div>
+</div>
+<p class="note" style="margin-top:10px">Le tiroir s'ouvre à droite de la colonne, sans quitter la page. <b>Le bouton du bas annonce le résultat</b> avant de valider (« Voir 4 318 parcelles ») ; les filtres actifs restent visibles en puces sous la barre, chacune retirable d'un clic. Ce sont les critères du wizard, servis par la même requête — un filtre ici ne réinvente rien.</p>
+
+<h2>Ce qui change, et pourquoi</h2>
+<p class="note">
+<b>Le bandeau d'analyse dit la vérité du classement.</b> « 28 845 classées » laissait croire que toutes étaient jugées ; en réalité LABUSE en signale 2 106, le reste suit sans jugement. Le bandeau le dit en une phrase, en mauve (la couleur des surfaces IA de ta charte), avec « Voir pourquoi » qui ouvre l'explication de la carte.<br><br>
+<b>Quatre étages séparés</b> — identité, analyse, progression, tri — chacun sa carte, comme les fiches. Fini « des infos partout ».<br><br>
+<b>Les listes sont complètes.</b> Retenues et Écartées défilent ; plus de « + 20 autres ». Le compteur est dans l'en-tête de colonne.<br><br>
+<b>Les signaux remplacent la colonne « marché commune »</b>, qui répétait ~2 500 €/m² sur chaque ligne d'un projet mono-commune : le chiffre monte dans le bandeau. À la place, jusqu'à deux signaux par ligne, le fort en rouge — c'est ce qui aide à trier.<br><br>
+<b>« Sans adresse » est dit</b> en italique gris avec l'IDU en clair, au lieu de répéter le nom de la commune comme si c'était une adresse.<br><br>
+<b>Recherche + Filtrer</b> dans la barre de la colonne : la recherche pour retrouver une parcelle, le tiroir pour resserrer avec les critères du cadrage.
+</p>
+
+</body>
+</html>
