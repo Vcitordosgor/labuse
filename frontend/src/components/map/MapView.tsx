@@ -939,7 +939,7 @@ export function MapView() {
           // période, et le PROGRAMME rattaché (nom + lien) quand il existe. Puis deux chemins : la fiche
           // parcelle, et « voir son patrimoine » (Scan patrimoine, même SIREN). DOM textContent (anti-injection).
           const catLbl: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
-          const box = document.createElement('div'); box.style.cssText = 'font:12px system-ui;color:#e7e5e4;max-width:250px'
+          const box = document.createElement('div'); box.style.cssText = 'font:12px system-ui;color:#e7e5e4;min-width:220px;max-width:270px'
           const nom = document.createElement('b'); nom.textContent = String(props.denomination || '(propriétaire non nommé)'); box.appendChild(nom)
           const sub = document.createElement('div'); sub.style.cssText = 'color:#a8a29e;font-size:11px;margin-top:2px'
           const cat = catLbl[String(props.categorie)] || String(props.categorie || '')
@@ -963,15 +963,16 @@ export function MapView() {
             }
             box.appendChild(pg)
           }
-          const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:12px;margin-top:7px'
+          // RETOURS-4 S5.3 — les deux actions tiennent CÔTE À CÔTE sur une ligne (nowrap + min-width du box).
+          const row = document.createElement('div'); row.style.cssText = 'display:flex;flex-wrap:nowrap;gap:14px;margin-top:8px'
           if (props.idu) {
             const bp = document.createElement('button'); bp.textContent = 'voir la parcelle →'
-            bp.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0'
+            bp.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0;white-space:nowrap'
             bp.addEventListener('click', () => { select(String(props.idu)); popup.remove() }); row.appendChild(bp)
           }
           if (props.siren) {
             const bs = document.createElement('button'); bs.textContent = 'voir son patrimoine →'
-            bs.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0'
+            bs.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0;white-space:nowrap'
             bs.addEventListener('click', () => { const s = useApp.getState(); s.setM02Prefill(String(props.siren)); s.setModule('patrimoine'); popup.remove() }); row.appendChild(bs)
           }
           box.appendChild(row)

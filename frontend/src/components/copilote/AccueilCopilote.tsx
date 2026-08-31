@@ -200,14 +200,14 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
         <div data-accueil-historique className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">REPRENDRE</p>
           <div className="flex flex-col">
-            {/* RETOURS-3 R12 — survol PLEIN mauve (texte inversé sombre), comme les cartes d'accueil ;
-                la date « il y a N j » ne se tronque jamais (shrink-0 + whitespace-nowrap). */}
+            {/* RETOURS-3 R12 / RETOURS-4 S8 — survol PLEIN mauve PROFOND (dégradé, texte inversé sombre) via
+                .hover-fill-ia, comme partout ; la date « il y a N j » ne se tronque jamais (whitespace-nowrap). */}
             {questionsVisibles.map((m) => (
               <button key={m.id} data-mission-reprendre onClick={() => onReprendre?.(m)}
-                className="group flex items-center gap-3 rounded-[10px] border-b border-cp-line/60 px-3 py-2.5 text-left transition-colors duration-quick last:border-b-0 hover:border-transparent hover:bg-cp-ia">
-                <span className="min-w-0 flex-1 truncate text-[14px] text-cp-txt group-hover:text-cp-ia-on">{m.titre}</span>
-                {m.run_id && <span className="shrink-0 rounded border border-cp-ia/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-cp-ia group-hover:border-cp-ia-on/40 group-hover:text-cp-ia-on">recherche</span>}
-                <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-cp-faint group-hover:text-cp-ia-on/70">{ilYA(m.updated_at)}</span>
+                className="hover-fill-ia flex items-center gap-3 rounded-[10px] border-b border-cp-line/60 px-3 py-2.5 text-left last:border-b-0 hover:border-transparent">
+                <span className="min-w-0 flex-1 truncate text-[14px] text-cp-txt">{m.titre}</span>
+                {m.run_id && <span className="shrink-0 rounded border border-cp-ia/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-cp-ia">recherche</span>}
+                <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-cp-faint">{ilYA(m.updated_at)}</span>
               </button>
             ))}
           </div>
