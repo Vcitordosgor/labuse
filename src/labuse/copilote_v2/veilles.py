@@ -56,6 +56,13 @@ def ensure_tables(engine) -> None:
         c.execute(text("UPDATE veilles SET actif = false WHERE actif AND type <> :radar "
                        "AND NOT (type = ANY(:t))"),
                   {"t": list(EVALUABLES), "radar": TYPE_RADAR})
+        # RADAR-VEILLE-1 (V3) — retrait des filtres d'événement. Une veille annonces notifie désormais sur
+        # TOUT événement d'un bien correspondant (le filtre `evenements` n'a jamais été appliqué par
+        # `pige.veille.matche` — il était inerte). On retire la clé des critères stockés → aucune veille
+        # orpheline : celles qui n'avaient qu'un type coché passent à « tous les événements ». Idempotent
+        # (ne touche que les radar portant encore la clé) et non destructif (le reste des critères intact).
+        c.execute(text("UPDATE veilles SET criteria = criteria - 'evenements' "
+                       "WHERE type = :radar AND criteria ? 'evenements'"), {"radar": TYPE_RADAR})
 
 
 def creer(db: Session, *, compte_id: int | None, type_: str, commune: str | None) -> dict:

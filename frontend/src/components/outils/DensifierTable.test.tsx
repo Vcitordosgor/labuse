@@ -73,11 +73,10 @@ describe('DENSIFIER — DensifierTablePanel (grand tableau)', () => {
     expect(document.querySelector('[data-pagination-more]')).toBeNull()   // épuisé : plus de bouton
   })
 
-  it('export CSV présent, compte les lignes chargées', async () => {
+  it('OUTILS-1 B7 — export CSV RETIRÉ (consultation illimitée, extraction non)', async () => {
     renderPanel()
     await screen.findByText('9740400000AZ0000')
-    const csv = document.querySelector('[data-densifier-csv]') as HTMLElement
-    expect(csv).toBeTruthy()
-    expect(csv.textContent).toContain('3')   // « Exporter CSV (3) »
+    // Le bouton d'export CSV n'existe plus ; la liste reste consultable en entier.
+    expect(document.querySelector('[data-densifier-csv]')).toBeNull()
   })
 })

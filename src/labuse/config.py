@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     # (diffusibilité INPI). Tant que ce drapeau est false, l'endpoint refuse toute clé `age_*` et
     # l'UI ne montre pas le contrôle. Ne PAS activer sans arbitrage juridique.
     filtre_age_dirigeant: bool = False
+    # RADAR-VEILLE-1 (R3) — DRAPEAU « dépôt agence » (parcours « Publier une annonce »). FERMÉ par défaut :
+    # une question juridique (loi Hoguet, modèle d'abonnement sans commission) est en attente chez l'avocat
+    # de Vic. Tant que ce drapeau est false, les endpoints de dépôt refusent (404) et l'UI admin ne montre
+    # pas le parcours ; rien ne s'ouvre aux clients. Ne PAS activer sans la réponse de l'avocat.
+    # LABUSE_RADAR_DEPOT_AGENCE_ACTIF=1 pour ouvrir (admin uniquement).
+    radar_depot_agence_actif: bool = False
     # Origine publique (https://…) autorisée en CORS hors local ; vide = même origine seulement.
     public_url: str | None = None
 
@@ -151,6 +157,11 @@ class Settings(BaseSettings):
     # DASHBOARD-V1 · D3 — répertoire des dumps de backup (GB-054) : la tuile « dernier backup »
     # lit le mtime du .dump le plus récent (ambre ≥ 2 j, rouge ≥ 7 j, « absent » honnête sinon).
     backup_dir: str = "/var/backups/labuse"
+    # CRON-1 (K1) — exploitation planifiée : dossier des fichiers d'ÉTAT des jobs (un JSON par job)
+    # + dossier des LOGS. Défauts DEV (repo-local) ; le VPS pointe /opt/labuse/state et /var/log/labuse.
+    jobs_state_dir: str = ".local/state/jobs"        # LABUSE_JOBS_STATE_DIR
+    jobs_log_dir: str = ".local/log/labuse"          # LABUSE_JOBS_LOG_DIR
+    disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
     # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
     # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
     # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).

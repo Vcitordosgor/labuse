@@ -1,0 +1,13 @@
+{
+  "permis_segment": 1,
+  "permis_seg_labels": "En cours 5 613\nPoint mort 15 475\nTous",
+  "permis_badge_mort": "Sans DAACT · 13 ans",
+  "permis_plafond": "les 1 000 plus anciens chargés — zoomez pour affiner",
+  "solaire_onglets": 2,
+  "solaire_fil": "‹ Prospection solaire",
+  "communes_radar": "MARCHÉ DES ANNONCES (RADAR)\nOuvrir le Radar →\nSaint-Denis\n65 en vente\n2 957 €/m² bâti\nSainte-Marie\n12 en vente\n2 788 €/m² bâti\nLa Possession\n7 en vente\n3 749 €/m² bâti\nSaint-André\n5 en vente\n2 246 €/m² bâti\nSaint-Paul\n5 en vente\n2 949 €/m² bâti\n\nSeules les communes atteignant 5 biens en vente s'affichent (106 collectés en tout) ; prix médian quand n ≥ 5.",
+  "etudier_txt": "",
+  "errors": [
+    "console: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+  ]
+}

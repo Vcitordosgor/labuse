@@ -67,11 +67,13 @@ describe('ETUDIER — « Étudier un bien » (BZ 1065)', () => {
     expect(document.querySelectorAll('[data-etudier-verdict]')).toHaveLength(1)
   })
 
-  it('alerte de cohérence résiduel (26 m²) reliée à Pièges & risques', async () => {
+  it('alerte de cohérence résiduel (26 m²) reliée à Pièges & risques — périmètre étiqueté (O2-5)', async () => {
     renderEtudier()
-    const alerte = await screen.findByText(/Résiduel net du bâti/)
+    // OUTILS-2 O2-5 : vocabulaire unique des périmètres — « résiduel, bâti conservé » (source lib/perimetres).
+    const alerte = await screen.findByText(/bâti conservé/)
     const box = alerte.closest('[data-etudier-residuel]') as HTMLElement
     expect(norm(box.textContent ?? '')).toContain(`${fmtInt(26)} m²`)
+    expect(norm(box.textContent ?? '')).toContain('terrain libéré')   // la SHAB vendable = potentiel
     expect(box.querySelector('[data-etudier-residuel-lien]')).toBeTruthy()
   })
 })

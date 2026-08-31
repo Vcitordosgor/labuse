@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projets — maquette v4 · LABUSE</title>
+<style>
+  :root{
+    --fond:#0b0b0b; --panneau:#101010; --carte:#171717; --carte2:#1e1e1e; --bord:#272727;
+    --texte:#ececec; --gris:#9a9a9a; --gris2:#6b6b6b;
+    --vert:#22c55e; --vert-clair:#4ade80; --vert-fond:rgba(34,197,94,.12);
+    --rouge:#f87171; --rouge-fond:rgba(248,113,113,.10);
+    --orange:#f59e0b; --orange-fond:rgba(245,158,11,.10);
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fond);color:var(--texte);font-family:var(--sans);font-size:13px;padding:26px 30px 90px}
+  h1.t{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+  .lead{color:var(--gris);font-size:13.5px;max-width:900px;margin-bottom:22px}
+  .lead b{color:var(--texte)}
+  .k{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--vert-clair);text-transform:uppercase}
+  h2{font-size:15px;font-weight:700;margin:34px 0 10px;padding-top:18px;border-top:1px solid var(--bord)}
+  .note{color:var(--gris);font-size:13px;margin-bottom:12px;max-width:980px}
+  .note b{color:var(--texte)}
+
+  .app{border:1px solid var(--bord);border-radius:12px;overflow:hidden;background:var(--panneau)}
+
+  /* en-tête projet */
+  .ph{padding:14px 18px;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .ph .back{font-size:12px;color:var(--gris2)}
+  .ph h3{font-size:19px;font-weight:800}
+  .ph .peri{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--gris2)}
+  .ph .meta{font-size:12px;color:var(--gris);width:100%;margin-top:-4px}
+  .ph .meta a{color:var(--vert-clair);text-decoration:underline dotted}
+  .ph .act{margin-left:auto;display:flex;gap:7px}
+  .b{border:1px solid var(--bord);border-radius:7px;padding:5px 12px;font-size:12px;color:var(--gris)}
+  .b.v{border-color:rgba(74,222,128,.4);color:var(--vert-clair)}
+  .b.plein{background:var(--vert);color:#052e12;border-color:var(--vert);font-weight:600}
+
+  /* 3 colonnes */
+  .cols{display:grid;grid-template-columns:2.2fr 1fr 1fr;gap:14px;padding:14px 18px}
+  .col{background:var(--fond);border:1px solid var(--bord);border-radius:10px;display:flex;flex-direction:column;min-height:520px}
+  .ch{display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid var(--bord)}
+  .ch b{font-size:13.5px}
+  .ch .n{font-family:var(--mono);font-size:12px;color:var(--vert-clair)}
+  .ch .hint{font-size:11px;color:var(--gris2);margin-left:auto}
+  .cf{display:flex;gap:6px;padding:9px 13px;border-bottom:1px solid var(--bord);flex-wrap:wrap;align-items:center}
+  .f{border:1px solid var(--bord);border-radius:14px;padding:3px 11px;font-size:11.5px;color:var(--gris)}
+  .f.on{border-color:rgba(74,222,128,.4);color:var(--vert-clair);background:var(--vert-fond)}
+  .f.champ{border-radius:7px;color:var(--gris2)}
+
+  /* LIGNE COMPACTE — le coeur du changement */
+  .l{display:grid;grid-template-columns:16px 1fr 96px 74px 150px 68px;gap:12px;align-items:center;padding:9px 13px;border-bottom:1px solid #1c1c1c}
+  .l:hover{background:var(--carte)}
+  .l .tier{width:7px;height:7px;border-radius:50%}
+  .t-p{background:var(--rouge)} .t-s{background:var(--orange)} .t-f{background:#555}
+  .l .adr{min-width:0}
+  .l .adr b{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .l .adr span{font-family:var(--mono);font-size:10.5px;color:var(--gris2)}
+  .l .sig{font-size:11px;color:var(--gris)}
+  .l .sf{font-family:var(--mono);font-size:11.5px;color:var(--gris);text-align:right}
+  .l .px{font-size:11.5px;color:var(--gris2);text-align:right}
+  .l .ges{display:flex;gap:5px;justify-content:flex-end}
+  .g{width:26px;height:24px;border:1px solid var(--bord);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px}
+  .g.v{border-color:rgba(74,222,128,.35);color:var(--vert-clair)}
+  .g.r{border-color:rgba(248,113,113,.3);color:var(--rouge)}
+  .lhead{display:grid;grid-template-columns:16px 1fr 96px 74px 150px 68px;gap:12px;padding:7px 13px;border-bottom:1px solid var(--bord);font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--gris2);text-transform:uppercase}
+  .lhead .r{text-align:right}
+  .cpage{padding:10px 13px;text-align:center;font-size:11.5px;color:var(--gris2)}
+
+  .vide{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:var(--gris2);font-size:12.5px;padding:20px}
+  .mini{padding:9px 13px;border-bottom:1px solid #1c1c1c;display:flex;align-items:center;gap:9px}
+  .mini b{font-size:12.5px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cfoot{margin-top:auto;padding:11px 13px;border-top:1px solid var(--bord);display:flex;gap:7px}
+
+  /* accueil */
+  .pl{display:grid;grid-template-columns:1fr 260px 130px;gap:18px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--bord)}
+  .pl:last-child{border-bottom:none}
+  .pl h4{font-size:15px;font-weight:700;display:flex;align-items:baseline;gap:9px}
+  .pl h4 span{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--gris2)}
+  .pl .sub{font-size:12px;color:var(--gris2);margin-top:2px}
+  .bar{height:6px;background:#1c1c1c;border-radius:3px;overflow:hidden;margin-bottom:5px}
+  .bar i{display:block;height:100%;background:var(--vert-clair)}
+  .barl{font-size:11.5px;color:var(--gris2)}
+  .pl .rt{text-align:right}
+  .pl .rt b{font-family:var(--mono);font-size:22px;color:var(--vert-clair);display:block;line-height:1}
+  .pl .rt span{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--gris2)}
+
+  /* menu projet */
+  .fp{max-width:330px;border:1px solid var(--bord);border-radius:11px;background:var(--panneau);padding:13px;margin-top:6px}
+  .mi{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:12.5px}
+  .mi:hover{background:var(--carte)}
+  .mi .nm{flex:1}
+  .mi .ct{font-family:var(--mono);font-size:10.5px;color:var(--gris2)}
+  .sep{height:1px;background:var(--bord);margin:6px 0}
+</style>
+</head>
+<body>
+
+<div class="k">LABUSE · Projets · maquette v4</div>
+<h1 class="t">Pleine largeur, lignes compactes</h1>
+<p class="lead">La v3 était dessinée en panneau étroit : étalée sur 27 pouces, elle donne des cartes de 150 px pour trois infos et deux colonnes vides. Ici la <b>ligne remplace la carte</b> — 14 parcelles visibles au lieu de 2,5 — les colonnes Retenues et Écartées sont étroites tant qu'elles sont vides, et le tri se fait à la souris sans jamais quitter la liste.</p>
+
+<div class="app">
+  <div class="ph">
+    <span class="back">← Mes projets</span>
+    <h3>tyty</h3><span class="peri">SAINT-DENIS</span>
+    <div class="act">
+      <span class="b">PDF</span><span class="b">Renommer</span><span class="b">Archiver</span>
+      <span class="b v">+ Ajouter des parcelles</span>
+    </div>
+    <div class="meta">Vivier : <b style="color:var(--texte)">6 830 parcelles</b>, classées par probabilité de mutation <a>pourquoi ?</a> · valeurs au 22 août 2026 (run m135)</div>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+      <div class="ch"><span class="tier t-p"></span><b>À trier</b><span class="n">6 830</span><span class="hint">les mieux classées d'abord · page 1 / 137</span></div>
+      <div class="cf">
+        <span class="f on">Tous</span><span class="f">Priorité 214</span><span class="f">À suivre 1 892</span>
+        <span class="f champ">Commune ▾</span><span class="f champ">Surface ▾</span><span class="f champ">Nu / bâti ▾</span>
+      </div>
+      <div class="lhead"><span></span><span>Parcelle</span><span>Signal</span><span class="r">Surface</span><span class="r">Marché commune</span><span class="r">Trier</span></div>
+
+      <div class="l"><span class="tier t-p"></span><div class="adr"><b>145 bis Chemin Lory Lebreton, Saint-Denis</b><span>KA 0296 · Nu</span></div><span class="sig">permis récent</span><span class="sf">300 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-p"></span><div class="adr"><b>22 Rue Blanche Pierson, Saint-Denis</b><span>BE 1170 · Nu</span></div><span class="sig">succession</span><span class="sf">412 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-p"></span><div class="adr"><b>8 Allée des Flamboyants, Saint-Denis</b><span>CR 0912 · Bâti</span></div><span class="sig">société en procédure</span><span class="sf">1 204 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-s"></span><div class="adr"><b>17 Rue du Moulin à Vent, Saint-Denis</b><span>AX 0441 · Nu</span></div><span class="sig">permis abandonné</span><span class="sf">688 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-s"></span><div class="adr"><b>3 Chemin Bertin, Saint-Denis</b><span>DK 1169 · Bâti</span></div><span class="sig">même proprio ×31</span><span class="sf">2 041 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-s"></span><div class="adr"><b>91 Rue Sainte-Anne, Saint-Denis</b><span>BZ 1065 · Nu</span></div><span class="sig">friche recensée</span><span class="sf">515 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-s"></span><div class="adr"><b>Saint-Denis (adresse non normalisée)</b><span>97411000CR0648 · Nu</span></div><span class="sig">permis récent</span><span class="sf">101 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-f"></span><div class="adr"><b>28 Rue Juliette Dodu, Saint-Denis</b><span>AH 0208 · Bâti</span></div><span class="sig">sortie de défisc</span><span class="sf">340 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-f"></span><div class="adr"><b>5 Impasse des Manguiers, Saint-Denis</b><span>CB 0733 · Nu</span></div><span class="sig">dormance 14 ans</span><span class="sf">877 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="l"><span class="tier t-f"></span><div class="adr"><b>12 Rue de la Compagnie, Saint-Denis</b><span>AP 1609 · Bâti</span></div><span class="sig">succession</span><span class="sf">1 351 m²</span><span class="px">~2 500 €/m²</span><div class="ges"><span class="g v">✓</span><span class="g r">✕</span></div></div>
+      <div class="cpage">10 sur 50 affichées · charger la suite ↓</div>
+    </div>
+
+    <div class="col">
+      <div class="ch"><span class="tier" style="background:var(--vert-clair)"></span><b>Retenues</b><span class="n">3</span></div>
+      <div class="mini"><span class="tier t-p"></span><b>145 bis Ch. Lory Lebreton</b><span class="g">↩</span></div>
+      <div class="mini"><span class="tier t-p"></span><b>22 Rue Blanche Pierson</b><span class="g">↩</span></div>
+      <div class="mini"><span class="tier t-s"></span><b>3 Chemin Bertin</b><span class="g">↩</span></div>
+      <div class="cfoot"><span class="b v" style="flex:1;text-align:center">→ CRM</span><span class="b v" style="flex:1;text-align:center">✉ Courrier (3)</span></div>
+    </div>
+
+    <div class="col">
+      <div class="ch"><span class="tier t-f"></span><b>Écartées</b><span class="n" style="color:var(--gris2)">1</span><span class="hint">réversible</span></div>
+      <div class="mini" style="opacity:.55"><span class="tier t-f"></span><b>28 Rue Juliette Dodu</b><span class="g v">↩</span></div>
+    </div>
+  </div>
+</div>
+
+<h2>Ce qui change concrètement</h2>
+<p class="note">
+<b>La ligne remplace la carte.</b> 42 px au lieu de 150 : dix parcelles à l'écran au lieu de deux et demie, et l'œil compare des colonnes alignées (signal, surface, marché) au lieu de relire trois pavés.<br>
+<b>Les gestes sont deux icônes</b> ✓ et ✕ à droite de la ligne — plus de boutons pleine largeur qui hurlent. Un survol les éclaire.<br>
+<b>Les colonnes latérales sont étroites</b> (2,2 / 1 / 1) : le tri a besoin de place, pas les listes de résultat.<br>
+<b>« + Ajouter des parcelles » vit dans l'en-tête du projet</b>, à côté de PDF — pas seulement dans l'état vide.<br>
+<b>L'en-tête tient sur deux lignes</b> : titre + actions, puis la ligne vivier/valeurs. La phrase « Une parcelle en tête ailleurs ? » disparaît (le bouton la remplace).
+</p>
+
+<h2>L'accueil — une ligne par projet</h2>
+<div class="app">
+  <div class="pl">
+    <div><h4>LABUSE TEST 2 <span>TOUTE L'ÎLE</span></h4><div class="sub">21 273 parcelles · valeurs au 31/08 · budget 500 k€</div></div>
+    <div><div class="bar"><i style="width:2%"></i></div><div class="barl">2 retenues · 1 écartée · 21 270 à explorer</div></div>
+    <div class="rt"><b>2</b><span>RETENUES</span></div>
+  </div>
+  <div class="pl">
+    <div><h4>tyty <span>SAINT-DENIS</span></h4><div class="sub">6 830 parcelles · valeurs au 31/08</div></div>
+    <div><div class="bar"><i style="width:0%"></i></div><div class="barl">aucune parcelle triée pour l'instant</div></div>
+    <div class="rt"><b>0</b><span>RETENUES</span></div>
+  </div>
+  <div class="pl">
+    <div><h4>LABUSE TEST <span>TOUTE L'ÎLE</span></h4><div class="sub">aucune parcelle ne correspond à ce cadrage · <span style="color:var(--vert-clair)">modifier →</span></div></div>
+    <div><div class="bar"></div><div class="barl">—</div></div>
+    <div class="rt"><b>0</b><span>RETENUES</span></div>
+  </div>
+</div>
+<p class="note" style="margin-top:10px">Une ligne par projet au lieu d'un pavé : titre, périmètre, une ligne de contexte, la barre avec son libellé, le compteur. Un vivier à 0 dit pourquoi et propose de corriger.</p>
+
+<h2>Le bouton « Projet » d'une fiche parcelle</h2>
+<div class="fp">
+  <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--gris2);padding:0 10px 6px">AJOUTER CETTE PARCELLE À…</div>
+  <div class="mi"><span class="tier t-p"></span><span class="nm">LABUSE TEST 2</span><span class="ct">21 273</span></div>
+  <div class="mi"><span class="tier t-s"></span><span class="nm">tyty</span><span class="ct">6 830</span></div>
+  <div class="mi"><span class="tier t-f"></span><span class="nm">LABUSTRE TEST 3</span><span class="ct">862</span></div>
+  <div class="sep"></div>
+  <div class="mi" style="color:var(--vert-clair)"><span>＋</span><span class="nm">Nouveau projet avec cette parcelle</span></div>
+</div>
+<p class="note" style="margin-top:10px"><b>Plus de mode collant.</b> Le bouton ouvre un menu listant TOUS les projets actifs, à chaque fois. On choisit, la parcelle part dans les Retenues de ce projet, une confirmation brève s'affiche — et rien n'est mémorisé : la fiche suivante rouvre le même menu complet. Le bouton « + Ajouter des parcelles » du projet ouvre simplement la carte ; il ne verrouille aucun état.</p>
+
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiche commune — maquette v1 · LABUSE</title>
+<style>
+  :root{
+    --fond:#0c0a09; --carte:#161412; --carte2:#1c1917; --bord:#2b2724;
+    --texte:#e7e5e4; --gris:#a8a29e; --gris2:#78716c;
+    --vert:#16A34A; --vert-clair:#4ade80; --vert-fond:rgba(22,163,74,.10);
+    --orange:#d97706; --orange-clair:#fbbf24; --orange-fond:rgba(217,119,6,.10);
+    --rouge:#ef4444; --rouge-clair:#f87171; --rouge-fond:rgba(239,68,68,.10);
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fond);color:var(--texte);font-family:var(--sans);line-height:1.55;padding-bottom:120px}
+  .page{max-width:1180px;margin:0 auto;padding:0 28px}
+  header{padding:50px 0 24px;border-bottom:1px solid var(--bord)}
+  .surtitre{font-family:var(--mono);font-size:11px;letter-spacing:.35em;color:var(--vert-clair);text-transform:uppercase}
+  h1{font-size:38px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+  .sous{color:var(--gris);max-width:840px}
+  h2{font-size:24px;font-weight:700;margin:54px 0 6px}
+  .num{font-family:var(--mono);font-size:12px;color:var(--vert-clair);letter-spacing:.25em}
+  .chapeau{color:var(--gris);max-width:880px;margin-bottom:20px;font-size:14.5px}
+  .chapeau b{color:var(--texte)}
+
+  /* fiche */
+  .fiche-c{max-width:440px;border:1px solid var(--bord);border-radius:14px;background:var(--carte);overflow:hidden;margin:20px 0}
+  .fc-tete{padding:16px 18px;border-bottom:1px solid var(--bord);background:var(--carte2)}
+  .fc-fil{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--gris2);text-transform:uppercase}
+  .fc-nom{display:flex;align-items:baseline;gap:9px;margin-top:5px;flex-wrap:wrap}
+  .fc-nom b{font-size:24px;font-weight:800}
+  .fc-epci{font-size:12px;color:var(--gris2)}
+  .badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:2px 9px;border-radius:14px;border:1px solid;white-space:nowrap}
+  .b-vert{color:var(--vert-clair);border-color:rgba(74,222,128,.35);background:var(--vert-fond)}
+  .b-orange{color:var(--orange-clair);border-color:rgba(251,191,36,.35);background:var(--orange-fond)}
+  .b-rouge{color:var(--rouge-clair);border-color:rgba(248,113,113,.35);background:var(--rouge-fond)}
+  .b-gris{color:var(--gris);border-color:var(--bord)}
+
+  .cles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bord);border-top:1px solid var(--bord)}
+  .cles div{background:var(--carte);padding:12px 14px}
+  .cles b{font-size:18px;font-weight:700;display:block;line-height:1.2}
+  .cles span{font-size:11px;color:var(--gris2)}
+  .cles .up{color:var(--vert-clair)}
+  .cles .down{color:var(--rouge-clair)}
+  .fc-actions{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--bord)}
+  .btn{flex:1;text-align:center;border:1px solid var(--bord);border-radius:8px;padding:7px 10px;font-size:12.5px;color:var(--gris)}
+  .btn.vert{border-color:rgba(74,222,128,.4);color:var(--vert-clair)}
+
+  details{border-top:1px solid var(--bord)}
+  summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"›";margin-left:auto;color:var(--gris2);transform:rotate(90deg);font-size:17px;line-height:1}
+  details[open] summary::after{transform:rotate(-90deg)}
+  summary .r{font-family:var(--mono);font-size:11px;color:var(--gris2);font-weight:400;margin-left:auto;margin-right:6px}
+  summary .pt{width:6px;height:6px;border-radius:50%;background:var(--vert-clair);flex-shrink:0}
+  .det{padding:2px 16px 16px}
+  .lg{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--bord);font-size:13px}
+  .lg:last-child{border-bottom:none}
+  .lg .k{color:var(--gris)}
+  .lg .v{font-weight:600;text-align:right;white-space:nowrap}
+  .lg .v i{font-style:normal;font-weight:400;color:var(--gris2);font-size:11.5px;display:block}
+  .src{font-family:var(--mono);font-size:10px;color:var(--gris2);margin-top:9px;letter-spacing:.03em}
+  .nouv{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:var(--vert-clair);border:1px solid rgba(74,222,128,.35);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:2px}
+  .outil-l{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--bord);font-size:13px}
+  .outil-l:last-child{border-bottom:none}
+  .outil-l .ic{width:28px;height:28px;border-radius:8px;background:var(--carte2);border:1px solid var(--bord);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--vert-clair);flex-shrink:0}
+  .outil-l b{font-weight:600;display:block;font-size:13px}
+  .outil-l span{font-size:11.5px;color:var(--gris2)}
+  .outil-l .fl{margin-left:auto;color:var(--vert-clair)}
+  .inline-outil{display:inline-block;font-size:11.5px;color:var(--vert-clair);border:1px solid rgba(74,222,128,.3);border-radius:7px;padding:3px 10px;margin-top:10px}
+  .barre-z{display:flex;height:7px;border-radius:4px;overflow:hidden;margin:8px 0 5px}
+  .barre-z i{display:block;height:100%}
+  .lg-z{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--gris2)}
+  .lg-z b{color:var(--texte)}
+
+  /* audit */
+  .a{border-left:3px solid;border-radius:0 10px 10px 0;padding:13px 17px;margin:12px 0;font-size:13.5px}
+  .a-rouge{border-color:var(--rouge);background:var(--rouge-fond)}
+  .a-orange{border-color:var(--orange);background:var(--orange-fond)}
+  .a-vert{border-color:var(--vert);background:var(--vert-fond)}
+  .a b{display:block;margin-bottom:3px}
+  .a-rouge b{color:var(--rouge-clair)}
+  .a-orange b{color:var(--orange-clair)}
+  .a-vert b{color:var(--vert-clair)}
+  .a p{color:var(--gris)}
+  .a code{font-family:var(--mono);font-size:12px;color:var(--texte)}
+  .fiche{background:var(--carte);border:1px solid var(--bord);border-radius:13px;padding:18px 21px;margin:14px 0}
+  .fiche h4{font-size:15px;font-weight:700;margin-bottom:8px}
+  .fiche p{font-size:13.5px;color:var(--gris);margin-bottom:6px}
+  .fiche p:last-child{margin-bottom:0}
+  .fiche b{color:var(--texte)}
+  ul{margin:6px 0 0 18px}
+  li{font-size:13.5px;color:var(--gris);margin-bottom:5px}
+  li b{color:var(--texte)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="page">
+    <div class="surtitre">LABUSE · maquette fiche commune · v1</div>
+    <h1>La fiche commune, en accordéons</h1>
+    <p class="sous">Aujourd'hui : un rouleau de dix sections au même poids, où l'on scrolle six écrans pour trouver une donnée. Ici : un en-tête qui décide, huit sections repliées, deux ouvertes par défaut — et quatre blocs de données qui manquaient.</p>
+  </div>
+</header>
+
+<div class="page">
+
+<h2><span class="num">01</span> · La fiche</h2>
+<p class="chapeau">Les accordéons sont cliquables — dépliez-les. Ordre voulu : on descend du <b>constat</b> (foncier, marché) vers <b>l'action</b> (construire, la règle), puis le <b>contexte</b> (population, risques, contacts). Chaque section porte un résumé sur sa ligne fermée : on lit l'essentiel sans ouvrir.</p>
+
+<div class="fiche-c">
+  <div class="fc-tete">
+    <div class="fc-fil">← Communes · Fiche</div>
+    <div class="fc-nom"><b>Saint-Paul</b><span class="badge b-orange">Signal · prudence</span></div>
+    <div class="fc-epci">TCO — Territoire de la Côte Ouest · 22 916 ha · 51 129 parcelles</div>
+  </div>
+  <div class="cles">
+    <div><b>479 €/m²</b><span>terrain nu zone U · DVF</span></div>
+    <div><b>4 278 €/m²</b><span>ancien médian commune</span></div>
+    <div><b class="down">4,2 ans</b><span>avant épuisement du ZAN</span></div>
+    <div><b>8–12 mois</b><span>délai d'instruction</span></div>
+  </div>
+  <div class="fc-actions">
+    <span class="btn vert">Voir ses parcelles →</span>
+    <span class="btn">Comparer</span>
+  </div>
+
+  <details open>
+    <summary><span class="pt"></span>Le foncier<span class="r">48,7 ha repérés</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">Parcelles cadastrales</span><span class="v">51 129<i>22 916 ha</i></span></div>
+      <div class="lg"><span class="k">Stock foncier repéré</span><span class="v">285 parcelles<i>48,7 ha promues</i></span></div>
+      <div class="lg"><span class="k">Densifiables <span class="nouv">AJOUT</span></span><span class="v">3 412<i>bâties, capacité résiduelle</i></span></div>
+      <div class="lg"><span class="k">Gisement constructible</span><span class="v">11,4 M m²<i>SDP théorique</i></span></div>
+      <div style="margin-top:12px">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--gris2)">RÉPARTITION DU ZONAGE</div>
+        <div class="barre-z"><i style="width:19%;background:var(--vert-clair)"></i><i style="width:46%;background:#a3a380"></i><i style="width:32%;background:#4b7f52"></i><i style="width:3%;background:var(--orange-clair)"></i></div>
+        <div class="lg-z"><span><b>U</b> 19 %</span><span><b>A</b> 46 %</span><span><b>N</b> 32 %</span><span><b>AU</b> 3 %</span></div>
+      </div>
+      <span class="inline-outil">Densifier l'existant — Saint-Paul →</span>
+      <div class="src">Cadastre DGFiP · PLU 2024-12 · analyse LABUSE run m135</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary><span class="pt"></span>Le marché<span class="r">−4,3 % / 12 mois</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">Ancien médian</span><span class="v">4 278 €/m²<i>q1 2 705 – q3 3 799 · n=61</i></span></div>
+      <div class="lg"><span class="k">Neuf (prix de sortie)</span><span class="v">4 730 €/m²</span></div>
+      <div class="lg"><span class="k">Terrain nu</span><span class="v">U 479 · AU 328 €/m²<i>2 511 ventes</i></span></div>
+      <div class="lg"><span class="k">Loyer médian</span><span class="v">18,86 €/m²</span></div>
+      <div class="lg"><span class="k">Tendance 12 mois</span><span class="v" style="color:var(--rouge-clair)">−4,3 %</span></div>
+      <div class="lg"><span class="k">Liquidité</span><span class="v">136 mut./trim.<i>−15 % sur un an</i></span></div>
+      <div class="src">DVF avr. 2026 · médiane commune entière (même moteur que le comparateur)</div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="pt" style="background:var(--orange-clair)"></span>Le marché des annonces <span class="nouv">AJOUT</span><span class="r">65 biens · +31,9 %</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">Biens en vente</span><span class="v">65<i>dont 12 terrains</i></span></div>
+      <div class="lg"><span class="k">Prix demandé médian</span><span class="v">3 069 €/m²</span></div>
+      <div class="lg"><span class="k">Écart demandé / acté</span><span class="v" style="color:var(--orange-clair)">+31,9 %<i>la marge de négociation</i></span></div>
+      <div class="lg"><span class="k">Sous le marché</span><span class="v">8 biens</span></div>
+      <div style="margin-top:10px"><span class="btn vert" style="display:inline-block">Voir les annonces dans le Radar →</span></div>
+      <div class="src">Radar LABUSE · affiché à partir de 5 biens par commune</div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="pt"></span>Construire ici<span class="r">314 permis / 12 mois</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">Permis autorisés</span><span class="v">314<i>12 mois · 1 989 sur 5 ans</i></span></div>
+      <div class="lg"><span class="k">Délai d'instruction</span><span class="v">8 à 12 mois<i>p25–p75 · 5 433 dossiers</i></span></div>
+      <div class="lg"><span class="k">Offre engagée</span><span class="v">428 lgts<i>autorisés / 12 mois</i></span></div>
+      <div class="lg"><span class="k">Permis au point mort <span class="nouv">AJOUT</span></span><span class="v">1 843<i>accordés sans DAACT</i></span></div>
+      <span class="inline-outil">Ouvrir Permis — Saint-Paul →</span>
+      <div class="src">Sitadel juil. 2026</div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="pt" style="background:var(--rouge-clair)"></span>La règle &amp; les contraintes<span class="r">ZAN 4,2 ans · SRU déficitaire</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">PLU <span class="nouv">AJOUT</span></span><span class="v" style="color:var(--vert-clair)">à jour · 2024-12-06<i style="color:var(--gris2)">chercher dans le règlement →</i></span></div>
+      <div class="lg"><span class="k">Budget ZAN restant</span><span class="v">127,5 ha<i>59 % · 30 ha/an → 4,2 ans</i></span></div>
+      <div class="lg"><span class="k">SRU</span><span class="v" style="color:var(--rouge-clair)">18,33 % — déficitaire<i>objectif 25 % · 7 489 LLS</i></span></div>
+      <div class="lg"><span class="k">PLH (TCO)</span><span class="v">1 800 lgts/an<i>47 % de part sociale visée</i></span></div>
+      <div class="lg"><span class="k">NPNRU</span><span class="v">aucun périmètre</span></div>
+      <div class="lg"><span class="k">QPV</span><span class="v">11 quartiers<i>génération 2024 · voir la liste</i></span></div>
+      <div class="src">GPU · inventaire SRU 01/01/2024 · PLH 2023-2029 · ANCT 2024</div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="pt" style="background:var(--rouge-clair)"></span>Les risques <span class="nouv">AJOUT</span><span class="r">PPR sur 38 % du bâti</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">PPR inondation</span><span class="v">38 % des parcelles<i>zone bleue ou rouge</i></span></div>
+      <div class="lg"><span class="k">PPR mouvement de terrain</span><span class="v">22 %</span></div>
+      <div class="lg"><span class="k">Arrêtés CatNat</span><span class="v">14 depuis 1990</span></div>
+      <div class="lg"><span class="k">Aire d'adhésion Parc National</span><span class="v">oui · partiel</span></div>
+      <div class="src">GPU · Géorisques · BD TOPO</div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="pt"></span>Population &amp; logement<span class="r">51 317 logts · 9,4 % vacants</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">Habitants · ménages <span class="nouv">AJOUT</span></span><span class="v">106 400 · 40 900</span></div>
+      <div class="lg"><span class="k">Revenu médian <span class="nouv">AJOUT</span></span><span class="v">21 340 €/an</span></div>
+      <div class="lg"><span class="k">Logements</span><span class="v">51 317<i>4 840 vacants — 9,4 %</i></span></div>
+      <div class="lg"><span class="k">Statut d'occupation</span><span class="v">61 % propriétaires<i>35 % locataires · 4 % gratuit</i></span></div>
+      <div class="lg"><span class="k">Typologie</span><span class="v">71,6 % maisons<i>27,4 % appartements</i></span></div>
+      <span class="inline-outil">Étude de zone — analyser un point ici →</span>
+      <div class="src">INSEE RP 2023 · Filosofi 2021</div>
+    </div>
+  </details>
+
+  <details open>
+    <summary><span class="pt"></span>Continuer avec un outil <span class="nouv">AJOUT</span><span class="r">pré-remplis sur Saint-Paul</span></summary>
+    <div class="det">
+      <div class="outil-l"><span class="ic">§</span><span><b>PLU</b><span>règlement 2024-12-06 · recherche verbatim sourcée</span></span><span class="fl">→</span></div>
+      <div class="outil-l"><span class="ic">◎</span><span><b>Étude de zone</b><span>qui vit, qui travaille, qui concurrence — depuis un point</span></span><span class="fl">→</span></div>
+      <div class="outil-l"><span class="ic">⊞</span><span><b>Comparer aux 24 communes</b><span>Saint-Paul mise en regard, ligne surlignée</span></span><span class="fl">→</span></div>
+      <div class="outil-l"><span class="ic">⌂</span><span><b>Permis</b><span>314 en cours · 1 843 au point mort</span></span><span class="fl">→</span></div>
+      <div class="outil-l"><span class="ic">▦</span><span><b>Densifier l'existant</b><span>3 412 parcelles à capacité résiduelle</span></span><span class="fl">→</span></div>
+      <div class="outil-l"><span class="ic">◉</span><span><b>Radar</b><span>65 biens en vente dans la commune</span></span><span class="fl">→</span></div>
+      <div class="outil-l"><span class="ic">☰</span><span><b>Scan patrimoine</b><span>773 changements de propriétaire moral depuis 2022</span></span><span class="fl">→</span></div>
+      <div class="outil-l"><span class="ic">☀</span><span><b>Prospection solaire</b><span>1 616 piscines détectées · potentiel PV</span></span><span class="fl">→</span></div>
+      <div class="src">Chaque outil s'ouvre avec Saint-Paul déjà sélectionné — jamais un formulaire vide à re-remplir.</div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="pt"></span>Contacts &amp; démarches<span class="r">mairie · service urbanisme</span></summary>
+    <div class="det">
+      <div class="lg"><span class="k">Adresse</span><span class="v" style="white-space:normal">Place du Général-de-Gaulle<i>97460 Saint-Paul</i></span></div>
+      <div class="lg"><span class="k">Téléphone</span><span class="v">02 62 45 43 45</span></div>
+      <div class="lg"><span class="k">Courriel</span><span class="v" style="font-size:12px">mairie@mairie-saintpaul.re</span></div>
+      <div class="lg"><span class="k">Site · annuaire</span><span class="v" style="color:var(--vert-clair);font-size:12px">ouvrir →</span></div>
+      <div class="src">Annuaire de l'administration · relevé 27 août 2026</div>
+    </div>
+  </details>
+</div>
+
+<h2><span class="num">02</span> · Le classement retenu, et pourquoi</h2>
+<div class="fiche">
+  <p>L'ordre suit la question d'un promoteur, pas l'ordre des sources. <b>1 · Le foncier</b> — qu'y a-t-il ici ? <b>2 · Le marché</b> — ça vaut combien, ça bouge ? <b>3 · Les annonces</b> — qu'est-ce qui est en vente maintenant ? <b>4 · Construire ici</b> — combien de temps, combien de permis passent ? <b>5 · La règle</b> — qu'est-ce qui m'en empêche (ZAN, SRU, PLU, QPV) ? <b>6 · Les risques</b> — qu'est-ce qui peut faire échouer ? <b>7 · Population</b> — pour qui je construis ? <b>8 · Contacts</b> — à qui je parle ?</p>
+  <p>Foncier et Marché sont <b>ouverts par défaut</b> ; les six autres sont repliés mais portent leur chiffre-clé sur la ligne fermée. L'en-tête retient quatre nombres qui décident d'y aller ou non : prix du terrain nu, prix de l'ancien, horizon ZAN, délai d'instruction.</p>
+</div>
+
+<h2><span class="num">03</span> · Audit des données affichées</h2>
+
+<div class="a a-rouge"><b>1 · Le zonage totalise 208 %</b>
+<p>L'écran affiche <code>U 71,3 % · A 62,7 % · N 67,8 % · AU 6,6 %</code> — somme 208,4 %. Ce ne sont donc pas des parts du territoire. Soit ce sont des parts de parcelles qui <i>intersectent</i> chaque famille de zone (une parcelle peut en croiser plusieurs — alors il faut l'écrire), soit c'est un défaut de calcul. En l'état, un client lit une répartition impossible. À trancher en base : si l'intersection est la cause, afficher des parts de <b>surface</b> qui totalisent 100 % (comme dans la maquette).</p></div>
+
+<div class="a a-rouge"><b>2 · Deux prix de l'ancien pour la même commune</b>
+<p>La fiche affiche <code>3 322 €/m²</code>, le comparateur des 24 communes <code>4 278 €/m²</code>. La note explique l'écart par une « médiane locale, secteur autour de la parcelle centrale » — mais sur une <b>fiche de commune</b>, une médiane centrée sur une parcelle n'a pas de sens : le périmètre, c'est la commune. C'est un cas de deux moteurs pour un même chiffre, exactement ce que la règle transversale interdit. La fiche doit servir la médiane commune entière, identique au comparateur.</p></div>
+
+<div class="a a-orange"><b>3 · « 11 QPV » et quinze noms listés</b>
+<p>Le compteur annonce 11 quartiers prioritaires, la liste en énumère quinze. Soit le compteur est faux, soit certains noms sont des libellés composés mal découpés. À vérifier contre la source ANCT.</p></div>
+
+<div class="a a-vert"><b>4 · Ce qui est juste — vérifié au calcul</b>
+<p>ZAN cohérent de bout en bout : 217,5 ha de budget − 127,5 restants = 90 consommés = 41 % ✓, et 127,5 ÷ 30 ha/an = <b>4,25 ans</b> ✓ exactement l'horizon affiché. Vacance 4 840 ÷ 51 317 = <b>9,43 %</b> ✓. Statuts d'occupation 61 + 35 + 4 = 100 % ✓. Délai d'instruction 8–12 mois cohérent avec la médiane 9 du comparateur ✓. Terrain nu 479 €/m² identique à celui servi dans Comparaison de parcelles ✓ — même moteur, bon signe. Et « Pression DPE non calculable — échantillon insuffisant (2 connus) » est la bonne manière de ne pas mentir.</p></div>
+
+<h2><span class="num">04</span> · Ce qui manque (les ajouts de la maquette)</h2>
+<div class="fiche">
+  <ul>
+    <li><b>Le marché des annonces</b> — 65 biens en vente, prix demandé médian, <b>écart demandé/acté +31,9 %</b> (la marge de négociation du moment) et le nombre de biens sous le marché, avec un lien vers le Radar filtré. C'est la donnée que personne d'autre n'a ; elle manque là où la décision se prend. Règle du seuil : affiché à partir de 5 biens.</li>
+    <li><b>Les risques</b> — la commune est notée « prudence » mais la fiche ne dit jamais pourquoi. Part des parcelles en PPR inondation et mouvement de terrain, arrêtés CatNat, Parc National : la donnée existe déjà dans Pièges &amp; risques.</li>
+    <li><b>Population et revenu</b> — habitants, ménages, revenu médian. Absents ici alors que l'Étude de zone les sert déjà : un promoteur qui décide « pour qui je construis » ne devrait pas changer d'outil.</li>
+    <li><b>Le PLU</b> — statut (à jour / en révision / RNU), date, lien vers le règlement. La fiche parle de ZAN, SRU et PLH sans jamais nommer le document d'urbanisme.</li>
+    <li><b>Permis au point mort et parcelles densifiables</b> — les deux gisements dormants de la commune, déjà calculés par les outils du même nom.</li>
+    <li><b>Sourcer le loyer médian</b> — 18,86 €/m² apparaît sans source ni millésime, seul chiffre de la fiche dans ce cas.</li>
+    <li><b>Les passerelles vers les outils</b> — la fiche est aujourd'hui un cul-de-sac : on lit, puis on retourne au menu re-saisir la commune. Huit outils s'ouvrent désormais <b>pré-remplis sur Saint-Paul</b> (PLU, Étude de zone, comparateur, Permis, Densifier, Radar, Scan patrimoine, Solaire), plus des raccourcis contextuels au fil des sections. Règle : un outil n'apparaît que s'il a quelque chose à dire sur cette commune, et son libellé porte le chiffre (« 65 biens en vente ») — un lien qui annonce ce qu'il contient se clique, un lien nu ne se clique pas.</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>

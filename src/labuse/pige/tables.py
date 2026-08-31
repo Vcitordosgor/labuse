@@ -232,6 +232,35 @@ ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS owner_siren varchar(14);
 ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS ges_classe varchar(2);   -- lettre GES (dpe_ges reste l'entier)
 ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS source_brute jsonb;
 
+-- RADAR-DEPOT-2 (D1) — PROVENANCE des faits : `json_riche` (searchData / page d'annonce, tout le JSON
+-- structuré) vs `dom_degrade` (variante B, vignettes DOM seules). Règle de fusion : le riche l'emporte,
+-- le dégradé ne fait que combler les trous (un passage en variante B n'efface jamais une donnée riche).
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS provenance varchar(12);   -- json_riche | dom_degrade
+-- RADAR-DEPOT-2 (D2) — FAITS DÉCLARÉS par le vendeur (page d'annonce) : zone(s) PLU, COS/CES, emprise au
+-- sol %, drapeaux (à rénover / à démolir / succession / lotissement / viabilisé). DÉCLARATIF vendeur,
+-- pas du calibré LABUSE — affiché « déclaré dans l'annonce ». Le TEXTE de l'annonce n'est jamais stocké.
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS declaratif jsonb;
+
+-- RADAR-VEILLE-1 (R3) — DÉPÔT AGENCE. Une annonce DÉPOSÉE (l'agence colle son propre lien + donne
+-- l'adresse exacte) diffère du COLLECTÉ : rattachement CERTAIN à la source, adresse exacte visible des
+-- SEULS abonnés (jamais publique), et — contenu confié ≠ contenu collecté — photos et description
+-- s'affichent (l'agence nous en confie l'affichage). Le collecté reste « faits + lien seulement ».
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS depose_par_agence boolean NOT NULL DEFAULT false;
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS agence_nom text;             -- l'agence déposante (badge)
+ALTER TABLE pige_biens ADD COLUMN IF NOT EXISTS adresse_exacte text;         -- ABONNÉS SEULEMENT (jamais public)
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS photos jsonb NOT NULL DEFAULT '[]'::jsonb;  -- déposé : URLs confiées
+ALTER TABLE pige_faits ADD COLUMN IF NOT EXISTS description text;            -- déposé : texte confié par l'agence
+
+-- pige_interets_agence : un abonné a cliqué « Intéressé » → ses coordonnées sont transmises à l'agence
+-- (LABUSE ne s'interpose pas). On garde la trace du geste (qui, quel bien, quand) ; l'envoi est prod.
+CREATE TABLE IF NOT EXISTS pige_interets_agence (
+  id serial PRIMARY KEY,
+  bien_id integer NOT NULL REFERENCES pige_biens(bien_id) ON DELETE CASCADE,
+  compte_id integer,                             -- l'abonné intéressé (ses coordonnées → l'agence)
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ix_pige_interets_bien ON pige_interets_agence (bien_id);
+
 -- pige_depots : chaque fichier HTML déposé, ARCHIVÉ tel quel (hash) + date de dépôt (traçabilité source).
 CREATE TABLE IF NOT EXISTS pige_depots (
   id serial PRIMARY KEY,

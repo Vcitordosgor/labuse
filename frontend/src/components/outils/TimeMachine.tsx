@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
-import { getParcelsGeojson, parcelAt } from '../../lib/api'
+import { getParcelGeojson, getParcelsGeojson, parcelAt } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
 
@@ -60,9 +60,14 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const pinIdu = useApp((s) => s.tempsPinIdu)
   const dragging = useRef(false)
   const commune = useApp((s) => s.commune)
+  const labelMarkers = useRef<maplibregl.Marker[]>([])
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
+  // O2-4 (OUTILS-2) — géométrie de LA parcelle désignée, chargée SEULE (indépendante de la commune) :
+  // c'est elle qui garantit le contour sur les deux volets même en mode île (l'ancienne épingle
+  // dépendait du GeoJSON commune, jamais chargé sans commune → parcelle invisible, tout l'objet raté).
+  const cible = useQuery({ queryKey: ['temps-cible', pinIdu], queryFn: () => getParcelGeojson(pinIdu!), enabled: !!pinIdu, retry: false })
 
   useEffect(() => {
     if (!leftRef.current || !rightRef.current || maps.current) return
@@ -92,13 +97,14 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       m.addLayer({ id: 'p', type: 'line', source: 'p',
         filter: ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]],
         paint: { 'line-color': '#5CE6A1', 'line-width': 1 } })
-      // Contour ÉPINGLÉ de la parcelle désignée : casing sombre (lisibilité sur l'ortho claire de 1950)
-      // + trait mint appuyé, PAR-DESSUS 'p', SANS le filtre de statut (la cible reste visible même écartée).
-      const pin: maplibregl.ExpressionSpecification = ['==', ['get', 'idu'], useApp.getState().tempsPinIdu ?? '']
-      m.addLayer({ id: 'pin-casing', type: 'line', source: 'p', filter: pin,
-        paint: { 'line-color': '#06110B', 'line-width': 4, 'line-opacity': 0.9 } })
-      m.addLayer({ id: 'pin', type: 'line', source: 'p', filter: pin,
-        paint: { 'line-color': '#4ADE80', 'line-width': 2.25 } })
+      // O2-4 — CONTOUR de la parcelle désignée : source DÉDIÉE `cible` (une seule feature, chargée par
+      // IDU), indépendante du GeoJSON commune. Casing sombre (halo léger, lisible sur l'ortho claire de
+      // 1950) + trait mint appuyé — MÊME code couleur (#4ADE80) que la carte principale.
+      m.addSource('cible', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
+      m.addLayer({ id: 'cible-casing', type: 'line', source: 'cible',
+        paint: { 'line-color': '#06110B', 'line-width': 5, 'line-opacity': 0.85, 'line-blur': 0.5 } })
+      m.addLayer({ id: 'cible', type: 'line', source: 'cible',
+        paint: { 'line-color': '#4ADE80', 'line-width': 2.5 } })
     })
     addParcels(past); addParcels(now)
     if (center) { past.jumpTo({ center, zoom: 17 }) }
@@ -130,14 +136,32 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     }
   }, [geo.data])
 
-  // Épingle : rejoue le filtre des couches 'pin' des deux cartes quand la parcelle désignée change.
+  // O2-4 — pose la géométrie de la parcelle désignée sur les DEUX volets (source `cible`), recentre la
+  // vue dessus, et place une étiquette IDU (Marker HTML) qui traverse la poignée du comparateur. Vidée
+  // proprement quand la parcelle change ou disparaît.
   useEffect(() => {
-    const f: maplibregl.ExpressionSpecification = ['==', ['get', 'idu'], pinIdu ?? '']
+    const feat = cible.data
+    const fc = { type: 'FeatureCollection', features: feat ? [feat] : [] }
     for (const m of maps.current ?? []) {
-      const set = () => { if (m.getLayer('pin')) { m.setFilter('pin', f); m.setFilter('pin-casing', f) } }
+      const set = () => (m.getSource('cible') as maplibregl.GeoJSONSource | undefined)?.setData(fc as never)
       if (m.isStyleLoaded()) set(); else m.once('load', set)
     }
-  }, [pinIdu])
+    // étiquette IDU — un seul Marker (sur le volet gauche, plein écran) : les deux cartes partageant la
+    // même caméra, sa position écran vaut pour les deux. Le contour, lui, est tracé sur chaque volet.
+    labelMarkers.current.forEach((mk) => mk.remove())
+    labelMarkers.current = []
+    const past = maps.current?.[0]
+    if (feat && past) {
+      const el = document.createElement('div')
+      el.setAttribute('data-temps-idu', pinIdu ?? '')
+      el.textContent = pinIdu ?? ''
+      el.style.cssText = 'font:600 10px ui-monospace,Menlo,monospace;color:#4ADE80;background:rgba(6,17,11,.82);'
+        + 'padding:2px 7px;border-radius:5px;letter-spacing:.06em;white-space:nowrap;pointer-events:none;transform:translateY(-18px)'
+      const mk = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(feat.centroid as [number, number]).addTo(past)
+      labelMarkers.current.push(mk)
+    }
+    if (feat) for (const m of maps.current ?? []) m.jumpTo({ center: feat.centroid as [number, number], zoom: 17 })
+  }, [cible.data, pinIdu])
 
   useEffect(() => {
     const t = setTimeout(() => maps.current?.forEach((m) => m.resize()), 60)

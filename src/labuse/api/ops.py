@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -133,3 +133,53 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
         pass
     return {"ok": not degrade, "crons": out, "sources": sources, "retards": retards,
             "dpe_reveil": dpe_reveil, "radar": radar, "stripe_webhook": stripe_webhook}
+
+
+# ═══════════════════════════ CRON-1 (K7) — la page CRON de l'admin (état des jobs) ═══════════════════════════
+
+@router.get("/admin/cron")
+def admin_cron(request: Request):
+    """Un rang par job : nom, description, planification (heure Réunion), dernier passage (statut, durée,
+    compteurs), état dry-run. Servi par les fichiers d'état de K1 (labuse.jobs.liste)."""
+    from ..api.auth import exiger_admin
+    from .. import jobs as jobs_mod
+    exiger_admin(request)
+    return {"jobs": jobs_mod.liste(),
+            "note": "Heures affichées en Réunion (UTC+4). « Lancer maintenant » passe par la CLI "
+                    "(même verrou flock que le cron). L'état dry-run reste visible tant que Brevo/SMTP "
+                    "n'est pas branché."}
+
+
+@router.get("/admin/cron/{nom}/log")
+def admin_cron_log(nom: str, request: Request, lignes: int = 40):
+    """Les dernières lignes du log d'un job (consultation depuis l'admin)."""
+    from pathlib import Path
+    from ..api.auth import exiger_admin
+    from ..config import get_settings
+    exiger_admin(request)
+    p = Path(get_settings().jobs_log_dir) / f"{nom}.log"
+    if not p.exists():
+        return {"nom": nom, "lignes": [], "note": "aucun log encore (job jamais lancé sur ce serveur)."}
+    txt = p.read_text(encoding="utf-8", errors="replace").splitlines()
+    return {"nom": nom, "lignes": txt[-max(1, min(lignes, 200)):]}
+
+
+@router.post("/admin/cron/{nom}/run")
+def admin_cron_run(nom: str, request: Request):
+    """« Lancer maintenant » (admin) — passe par la CLI, donc le MÊME verrou : un job en cours refuse le
+    double lancement (code 200) et le dit. Ne bloque pas la requête (lancement détaché)."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    from ..api.auth import exiger_admin
+    from .. import jobs as jobs_mod
+    exiger_admin(request)
+    if nom not in jobs_mod.JOBS:
+        return {"ok": False, "motif": f"job inconnu : {nom}"}
+    labuse_bin = str(Path(sys.executable).parent / "labuse")
+    bin_cmd = labuse_bin if Path(labuse_bin).exists() else "labuse"
+    # détaché : l'admin voit « en cours » à la prochaine lecture d'état ; le verrou gère le double-clic.
+    subprocess.Popen([bin_cmd, "jobs", "run", nom],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return {"ok": True, "nom": nom, "note": "lancé (détaché) — l'état se met à jour à la fin ; "
+            "un job déjà en cours refuse ce lancement (verrou)."}

@@ -962,6 +962,18 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     # lecture seule, [] tant que `labuse radar-sources` n'a jamais tourné.
     from ..radar import etat_radar
     radar = {r["source_name"]: r for r in etat_radar(db)}
+    # CRON-2 — le statut de fraîcheur SERVI aux badges vient du JOB `sources-fraicheur` (calculé sur les 59
+    # affichées, persisté dans data_sources.fraicheur_statut) : plus estimé à la volée, un seul chiffre.
+    # Repli sur le calcul live (M84, 11 sources bornables) tant que le job n'a jamais tourné.
+    persistes: dict[str, str] = {}
+    # garde par EXISTENCE de colonne (information_schema) — ne jamais lancer une requête qui AVORTE la
+    # transaction si la colonne n'existe pas encore (job jamais posé, base de test) : le repli live suffit.
+    col_ok = db.execute(text(
+        "SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' "
+        "AND column_name='fraicheur_statut'")).first()
+    if col_ok:
+        persistes = {r[0]: r[1] for r in db.execute(text(
+            "SELECT name, fraicheur_statut FROM data_sources WHERE fraicheur_statut IS NOT NULL")).all()}
     # M74 C bis / M87 P0 / FIX-SOURCES S1 — la sélection SQL ci-dessus a déjà appliqué la définition
     # canonique ; ce filtre Python (même règle, statut compris) reste en CEINTURE — rows == served.
     served = [s for s in rows if _srccat.est_affichee(s.name, s.technical_notes,
@@ -993,7 +1005,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "radar": radar.get(s.name),
             # M84 — statut de fraîcheur (en_retard / a_jour / cadence_libre / sans_donnee) : un
             # décrochage est VISIBLE sur la page Sources, distinct du radar amont (≠ millésime).
-            "fraicheur_statut": statuts.get(s.name, {}).get("statut"),
+            "fraicheur_statut": persistes.get(s.name) or statuts.get(s.name, {}).get("statut"),
             "fraicheur_seuil_jours": statuts.get(s.name, {}).get("seuil_jours"),
             "fraicheur_delta_jours": statuts.get(s.name, {}).get("delta_jours"),
         }
@@ -1897,14 +1909,23 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     surface_ha = db.execute(text(
         "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
         {"c": commune}).scalar()
-    zon = {(r["fam"] or "").upper(): r["n"] for r in db.execute(text(
-        "SELECT z.zone_fam AS fam, count(*) n FROM parcels p JOIN parcel_zone_plu z ON z.idu = p.idu "
-        "WHERE p.commune = :c AND z.zone_fam IS NOT NULL GROUP BY 1"), {"c": commune}).mappings()}
-    au = sum(v for k, v in zon.items() if k.startswith("AU"))
-    a = sum(v for k, v in zon.items() if k.startswith("A") and not k.startswith("AU"))
-    u = sum(v for k, v in zon.items() if k.startswith("U"))
-    nz = sum(v for k, v in zon.items() if k.startswith("N"))
-    total_zone = u + au + a + nz
+    # OUTILS-6 C1 — RÉPARTITION DU ZONAGE EN PARTS DE SURFACE (somme = 100 %). Les parts de PARCELLES
+    # (un compte) ne représentent pas le territoire : à La Réunion U domine en nombre mais A+N couvrent
+    # l'essentiel de l'aire. On agrège la surface cadastrée par famille (parcel_zone_plu porte UNE zone
+    # par parcelle, PK idu — donc jamais de double comptage), les parts somment à 100 % et le total en
+    # ha égale la surface communale servie ailleurs. On garde aussi le compte (n) par famille.
+    zon = {(r["fam"] or "").upper(): {"n": r["n"], "m2": float(r["m2"] or 0)} for r in db.execute(text(
+        "SELECT z.zone_fam AS fam, count(*) n, sum(p.surface_m2) m2 FROM parcels p JOIN parcel_zone_plu z "
+        "ON z.idu = p.idu WHERE p.commune = :c AND z.zone_fam IS NOT NULL GROUP BY 1"), {"c": commune}).mappings()}
+
+    def _bucket(pred):
+        return (sum(v["m2"] for k, v in zon.items() if pred(k)),
+                sum(v["n"] for k, v in zon.items() if pred(k)))
+    au_m2, au_n = _bucket(lambda k: k.startswith("AU"))
+    a_m2, a_n = _bucket(lambda k: k.startswith("A") and not k.startswith("AU"))
+    u_m2, u_n = _bucket(lambda k: k.startswith("U"))
+    n_m2, n_n = _bucket(lambda k: k.startswith("N"))
+    total_zone_m2 = u_m2 + au_m2 + a_m2 + n_m2
     evaluees = scal("SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu "
                     "WHERE p.commune = :c AND s.run_id = :r") or 0
     sans_zonage = scal("SELECT count(*) FROM parcels p WHERE p.commune = :c AND NOT EXISTS "
@@ -1919,10 +1940,25 @@ def _foncier_commune(db: Session, commune: str) -> dict:
         {"c": commune}).scalar() or 0
     terrain = ligne2_terrain_zone(db, commune)     # point de calcul M79 (réutilisé, pas recréé)
     offre = ligne6_offre_engagee(db, commune)      # permis 12 mois (Sitadel), réutilisé
+    # OUTILS-6 C2 — STOCK FONCIER : parcelles brûlantes + chaudes du run servi, EN PARCELLES ET EN HA
+    # (même définition et même run que la colonne « stock » du comparateur → le compte est identique
+    # des deux côtés, la maquette demandant d'afficher LES DEUX unités depuis la même requête).
+    stock = db.execute(text(
+        "SELECT count(*) n, coalesce(sum(p.surface_m2), 0) m2 FROM parcel_p_score_v2 s "
+        "JOIN parcels p ON p.idu = s.parcelle_id WHERE p.commune = :c AND s.run_id = :r "
+        "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": Q_A_RUN_LABEL}).mappings().first()
+    zonage = None
+    if total_zone_m2:
+        def _fam(m2, nn):
+            return {"ha": round(m2 / 10000), "pct": round(100 * m2 / total_zone_m2, 1), "n": int(nn)}
+        zonage = {"base": "surface", "total_ha": round(total_zone_m2 / 10000),
+                  "familles": {"U": _fam(u_m2, u_n), "AU": _fam(au_m2, au_n),
+                               "A": _fam(a_m2, a_n), "N": _fam(n_m2, n_n)}}
     return {
         "n_parcelles": int(n_parcelles),
         "surface_ha": int(surface_ha) if surface_ha is not None else None,
-        "repartition_zonage": ({"U": u, "AU": au, "A": a, "N": nz, "total": total_zone} if total_zone else None),
+        "repartition_zonage": zonage,
+        "stock_opportunites": {"n": int(stock["n"]), "ha": round(float(stock["m2"]) / 10000)},
         "classement": {"evaluees": int(evaluees), "sans_zonage": int(sans_zonage),
                        "raison_sans_zonage": "zonage non publié au GPU"},
         "prix_terrain_nu": {"par_zone": (terrain.get("valeurs") or {}).get("par_zone"),
@@ -1934,12 +1970,126 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     }
 
 
+# FICHE-COMMUNE-2 (C1) — CACHE de la fiche commune. L'assemblage (`_compute_commune_contexte`)
+# coûte 20–27 s (mesuré) : comparateur 6-joins, Radar, Filosofi spatial, densifiables, 8 requêtes
+# foncier, PPR spatial… Le job nocturne `fiche-commune-cache` (registre CRON) précalcule le payload
+# ENTIER par commune et l'écrit ici ; l'endpoint le SERT tel quel (lecture jsonb = quelques ms). La
+# date du calcul (`computed_at`) part au front pour le pied « compteurs précalculés le … ». Cache
+# MANQUANT → calcul en direct (honnête, lent) en attendant le prochain job — jamais un faux zéro.
+_CONTEXTE_CACHE_DDL = """
+CREATE TABLE IF NOT EXISTS commune_contexte_cache (
+  commune varchar(160) PRIMARY KEY,
+  insee varchar(5),
+  payload jsonb NOT NULL,
+  computed_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+
+
+def _ensure_contexte_cache(db: Session) -> None:
+    db.execute(text(_CONTEXTE_CACHE_DDL))
+
+
+def _contexte_cache_json(payload: dict) -> str:
+    """Sérialise le payload contexte en JSON tolérant (Decimal/date/datetime → primitives)."""
+    import json as _json
+    from datetime import date as _date, datetime as _dt
+    from decimal import Decimal as _Dec
+
+    def _default(o):
+        if isinstance(o, _Dec):
+            return float(o)
+        if isinstance(o, (_date, _dt)):
+            return o.isoformat()
+        raise TypeError(f"non sérialisable : {type(o)}")
+    return _json.dumps(payload, ensure_ascii=False, default=_default)
+
+
+def rafraichir_contexte_cache(db: Session, commune: str) -> None:
+    """FICHE-COMMUNE-2 (C1) — (re)calcule et STOCKE le payload contexte d'une commune. Point d'écriture
+    UNIQUE (job nocturne + « lançable à la main »). Idempotent (upsert), non destructif ailleurs."""
+    _ensure_contexte_cache(db)
+    payload = _compute_commune_contexte(db, commune)
+    db.execute(text(
+        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at) "
+        "VALUES (:c, :i, CAST(:p AS jsonb), now()) "
+        "ON CONFLICT (commune) DO UPDATE SET insee = EXCLUDED.insee, "
+        "payload = EXCLUDED.payload, computed_at = now()"),
+        {"c": commune, "i": payload.get("insee"), "p": _contexte_cache_json(payload)})
+
+
 @app.get("/communes/{commune}/contexte")
 def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
-    """VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU + ANRU + PLH + marché logement INSEE
-    + rappel QPV. Donnée de CONTEXTE sourcée (échelle commune), hors scoring. Chaque bloc
-    porte sa source + millésime ; introuvable = null (le front affiche « non disponible »
-    sourcé, jamais un zéro menteur)."""
+    """VOLET CONTEXTE COMMUNE — servi depuis le CACHE `commune_contexte_cache` (précalculé chaque nuit
+    par le job `fiche-commune-cache`) : ouverture < 500 ms. `cache_calcule_le` = date du calcul (pied
+    de fiche). Cache absent (base neuve, avant 1er job) → calcul EN DIRECT, lent mais jamais un faux
+    zéro (`cache_calcule_le` = null → le front dit « calcul en direct »)."""
+    _ensure_contexte_cache(db)
+    hit = db.execute(text(
+        "SELECT payload, computed_at FROM commune_contexte_cache WHERE commune = :c"),
+        {"c": commune}).mappings().first()
+    if hit:
+        return {**hit["payload"], "cache_calcule_le": hit["computed_at"].isoformat()}
+    return {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+
+
+# FICHE-COMMUNE-2 (C2) — SIGNAUX NOMMÉS. Le badge « signal : prudence » (retiré) venait de
+# `marche_commune.market_signal` (score < 40 = liquidité DVF faible + offre Sitadel forte) : une boîte
+# noire sans règle lisible, qu'un client ne peut ni contester ni adopter. On le remplace par des signaux
+# dont CHACUN porte sa RÈGLE en constante nommée, et qui n'apparaissent QUE si vrais.
+ZAN_SEUIL_ANS = 5              # ZAN — épuisé sous 5 ans → signal
+SEUIL_PPR_PART_PCT = 30.0      # PPR — au-delà de 30 % des parcelles → signal
+# (SRU : taux LLS < objectif · tendance : évolution 12 mois < 0 — seuils intrinsèques, la règle EST la comparaison)
+
+
+def _zan_horizon_ans(db: Session, insee: str | None) -> float | None:
+    """Années avant épuisement de l'enveloppe ZAN (même formule que rarete.py : reste / rythme). None si
+    non projetable (rythme nul / données absentes) ; 0.0 si déjà dépassé."""
+    if not insee:
+        return None
+    r = db.execute(text(
+        "SELECT (conso_2011_2021_m2 * 0.5 - conso_2021_2024_m2) / 10000.0 AS reste_ha, "
+        "       conso_2021_2024_m2 / 3.0 / 10000.0 AS rythme_ha_an "
+        "FROM commune_conso_enaf WHERE insee = :i"), {"i": insee}).mappings().first()
+    if not r or r["rythme_ha_an"] is None or float(r["rythme_ha_an"]) <= 0 or r["reste_ha"] is None:
+        return None
+    reste = float(r["reste_ha"])
+    return 0.0 if reste <= 0 else round(reste / float(r["rythme_ha_an"]), 1)
+
+
+def _signaux_commune(db: Session, commune: str, insee: str | None,
+                     sru: dict | None, risques: dict | None) -> list[dict]:
+    """C2 — les signaux nommés de la commune (règle en constante, n'apparaissent que si VRAIS)."""
+    out: list[dict] = []
+    if sru and sru.get("taux_lls") is not None and sru.get("objectif_pct"):
+        taux, obj = float(sru["taux_lls"]), float(sru["objectif_pct"])
+        if taux < obj:                                   # SRU < objectif
+            out.append({"code": "sru", "ton": "rouge",
+                        "libelle": f"SRU déficitaire ({taux:.1f} % / {obj:.0f} %)".replace(".", ",")})
+    h = _zan_horizon_ans(db, insee)
+    if h is not None and h < ZAN_SEUIL_ANS:              # ZAN < 5 ans
+        out.append({"code": "zan", "ton": "orange",
+                    "libelle": (f"ZAN épuisé dans {h:.1f} ans".replace(".", ",") if h > 0
+                                else "enveloppe ZAN déjà dépassée")})
+    ppr = (risques or {}).get("ppr_pct")
+    if ppr is not None and float(ppr) > SEUIL_PPR_PART_PCT:   # PPR > 30 % des parcelles
+        out.append({"code": "ppr", "ton": "orange",
+                    "libelle": f"PPR sur {round(float(ppr))} % des parcelles"})
+    try:
+        from ..faisabilite.marche_commune import ligne4_tendance
+        d = (ligne4_tendance(db, commune).get("valeurs") or {}).get("delta_pct")
+        if d is not None and float(d) < 0:                # tendance 12 mois < 0
+            out.append({"code": "marche", "ton": "rouge",
+                        "libelle": f"marché {d:.1f} % / 12 mois".replace(".", ",")})
+    except Exception:  # noqa: BLE001 — signal optionnel, jamais bloquant
+        pass
+    return out
+
+
+def _compute_commune_contexte(db: Session, commune: str) -> dict:
+    """L'ASSEMBLAGE réel (coûteux) du contexte commune — appelé par le CACHE (job nocturne), pas
+    directement par l'endpoint. SRU + ANRU + PLH + marché INSEE + blocs OUTILS-6. Donnée de CONTEXTE
+    sourcée (échelle commune), hors scoring. Chaque bloc porte sa source ; introuvable = null."""
     def _one(sql: str, p: dict) -> dict | None:
         r = db.execute(text(sql), p).mappings().first()
         return dict(r) if r else None
@@ -1985,12 +2135,28 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
     if _insee_c:
         from ..proprietaire_historique import acquisitions_recentes
         acquisitions_pm = acquisitions_recentes(db, _insee_c, depuis_millesime=2022, limit=8)
-    return {"commune": commune, "epci": epci,
+    # OUTILS-6 (C2/C5/C6) — les blocs AJOUTÉS + les compteurs des passerelles, chacun servi depuis le
+    # moteur de son outil d'origine (aucun recalcul, cf. fiche_commune). Le front les range en accordéons.
+    from . import fiche_commune as _fc
+    blocs = _fc.build(db, commune, _insee_c)
+    # FICHE-COMMUNE-2 (C2) — signaux nommés (remplacent « signal : prudence »), calculés une fois et cachés.
+    signaux = _signaux_commune(db, commune, _insee_c, sru, blocs["risques"])
+    return {"commune": commune, "insee": _insee_c, "epci": epci,
+            "signaux": signaux,
             "epci_nom": epci_cfg[epci]["nom"] if epci else None,
             "rnu": rnu,
             "mairie": mairie,                           # K2 — adresse/tél/e-mail/site + fraîcheur
             "acquisitions_pm": acquisitions_pm,         # L1 KF-2 — acquisitions PM récentes (constat)
             "foncier": _foncier_commune(db, commune),   # M83 C1 — le foncier de la commune, EN TÊTE
+            "comparable": blocs["comparable"],          # C2 — chiffres communs (identiques au comparateur)
+            "marche_annonces": blocs["marche_annonces"],# C5 — Radar (annonces + écart demandé/acté)
+            "risques": blocs["risques"],                # C5 — PPR / mouvement / CatNat / Parc National
+            "population": blocs["population"],           # C5 — habitants / ménages / niveau de vie
+            "plu_statut": blocs["plu_statut"],          # C5 — statut PLU calculé + recherche verbatim
+            "permis_bloc": blocs["permis"],             # C5 — construire ici + permis au point mort
+            "densifiables": blocs["densifiables"],      # C5 — gisement de densification
+            "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
+            "outils": blocs["outils"],                  # C6 — compteurs des passerelles
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
             "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
@@ -2029,6 +2195,20 @@ def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     return {"idu": row[0] if row else None}
 
 
+@app.get("/parcels/{idu}/geojson")
+def parcel_geojson(idu: str, db: Session = Depends(get_db)) -> dict:
+    """OUTILS-2 (O2-4) — géométrie cadastrale d'UNE parcelle (Feature GeoJSON), pour tracer son contour
+    sur un écran secondaire (« Remonter le temps ») sans charger tout le GeoJSON d'une commune. Lecture
+    seule ; même trame `parcels.geom` (4326) que la carte principale + centroïde pour recentrer."""
+    row = db.execute(text(
+        """SELECT ST_AsGeoJSON(p.geom) AS g, ST_X(ST_Centroid(p.geom)) AS lon,
+                  ST_Y(ST_Centroid(p.geom)) AS lat
+           FROM parcels p WHERE p.idu = :idu LIMIT 1"""), {"idu": idu}).mappings().first()
+    if not row or not row["g"]:
+        raise HTTPException(404, "parcelle introuvable")
+    import json as _json
+    return {"type": "Feature", "geometry": _json.loads(row["g"]),
+            "properties": {"idu": idu}, "centroid": [row["lon"], row["lat"]]}
 
 
 @app.get("/adresses/autocomplete")
@@ -3932,6 +4112,34 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
         out["note"] = (" · ".join(srcs) + " — temps hors trafic. Des faits sourcés, "
                        "aucune prévision de chiffre d'affaires.")
     return out
+
+
+@app.post("/outils/etude-zone/entreprises")
+def etude_zone_entreprises(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
+    """F3 (OUTILS-4) — TOUTES les entreprises actives de la zone, groupées par famille d'activité. Même
+    emprise que l'étude (polygone dessiné ou isochrone IGN cachée) ; appelé à la demande (le bouton
+    « Toutes les entreprises de la zone »). Comptes exacts par famille, établissements détaillés plafonnés."""
+    from ..zone import entreprises_zone, isochrone
+    minutes = inp.minutes if inp.minutes in (5, 10, 15) else 10
+    mode = inp.mode if inp.mode in ("voiture", "pied") else "voiture"
+    geom = inp.geom
+    lon, lat = inp.lon, inp.lat
+    if inp.idu:
+        idu = _check_idu(inp.idu)
+        pt = db.execute(text("SELECT ST_X(ST_Centroid(centroid)) AS lon, ST_Y(ST_Centroid(centroid)) AS lat "
+                             "FROM parcels WHERE idu = :idu"), {"idu": idu}).mappings().first()
+        if not pt or pt["lon"] is None:
+            raise HTTPException(404, "parcelle introuvable ou sans géométrie")
+        lon, lat = float(pt["lon"]), float(pt["lat"])
+    # emprise = polygone dessiné, sinon isochrone (cachée : pas de recalcul si l'étude vient de tourner)
+    if geom is None:
+        if lon is None or lat is None:
+            raise HTTPException(400, "fournir une parcelle (idu), un point (lon/lat) ou un polygone (geom)")
+        res = isochrone(db, lon, lat, minutes, mode)
+        geom = res.get("geom_geojson")
+        if geom is None:
+            raise HTTPException(503, "zone atteignable indisponible (service isochrone IGN).")
+    return entreprises_zone(db, geom)
 
 
 @app.post("/outils/etude-zone/export.pdf")

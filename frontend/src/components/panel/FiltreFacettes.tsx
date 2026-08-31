@@ -11,24 +11,31 @@ import {
   ChipGroup, ETAT_SOL, NumField, SignalChip, SIGNAUX_KEYS, TitreSection, ZoneSelector,
 } from './FiltreLabuse'
 import { useFiltre } from './filtreContext'
+import { type Filters } from '../../store/useApp'
 
 const nf = new Intl.NumberFormat('fr-FR')
 
-export function FiltreFacettes() {
+// PROJETS-FIX F1 — `compteurScope` : le PÉRIMÈTRE (communes) que le compteur vivant doit appliquer,
+// mais qui vit HORS des facettes éditables (cas du wizard projet, où la commune est une étape à part).
+// Sans lui, le compteur comptait l'ÎLE ENTIÈRE pendant qu'on cadrait une commune → le wizard annonçait
+// un vivier île que le projet, commune-scopé, démentait. Le fournir aligne le compteur sur la création.
+export function FiltreFacettes({ compteurScope }: { compteurScope?: Partial<Filters> } = {}) {
   const { filters } = useFiltre()
   const nActifs = countActiveFilters(filters)
   const [live, setLive] = useState<CadrageCompteur | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
+  const scopeKey = JSON.stringify(compteurScope ?? {})
   useEffect(() => {
     const ctrl = new AbortController()
     setLiveLoading(true)
     const tmr = window.setTimeout(() => {
-      getCadrageCompteur(filters, ctrl.signal)
+      // le compteur sort de la MÊME requête que « À trier » : facettes + périmètre, comme à la création.
+      getCadrageCompteur({ ...filters, ...(compteurScope ?? {}) }, ctrl.signal)
         .then((r) => { setLive(r); setLiveLoading(false) })
         .catch(() => { /* abort/réseau : on garde le dernier nombre */ })
     }, 400)
     return () => { window.clearTimeout(tmr); ctrl.abort() }
-  }, [filters])
+  }, [filters, scopeKey])
 
   return (
     <div data-cadrage-facettes className="flex flex-col gap-4">

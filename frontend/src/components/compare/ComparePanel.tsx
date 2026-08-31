@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
+import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
 import { verdictMeta, type TierV2 } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 
@@ -19,9 +20,10 @@ const ROWS: { label: string; val: (r: CompareRow) => string }[] = [
   { label: 'Surface', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—' },
   { label: 'Zone PLU', val: (r) => r.zone || '—' },
   { label: 'Constructible', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
-  { label: 'SDP max estimée', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—' },
-  // ajoutés — déjà dans le payload, non affichés jusqu'ici : le résiduel dit le POTENTIEL restant.
-  { label: 'SDP résiduelle', val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—' },
+  // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
+  // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
+  { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—' },
+  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—' },
   { label: 'Sous-densité', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non' },
   { label: 'Charge foncière /m²', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—' },
   { label: 'Prix terrain nu zone', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—' },

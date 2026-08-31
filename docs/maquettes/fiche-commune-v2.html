@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiche commune — maquette v2 · LABUSE</title>
+<style>
+  :root{
+    --fond:#0b0b0b; --panneau:#111; --carte:#181818; --carte2:#1f1f1f; --bord:#262626;
+    --texte:#ececec; --gris:#9a9a9a; --gris2:#6b6b6b;
+    --vert:#22c55e; --vert-clair:#4ade80; --vert-fond:rgba(34,197,94,.12);
+    --violet:#a78bfa; --violet-fond:rgba(167,139,250,.08);
+    --orange:#f59e0b; --orange-fond:rgba(245,158,11,.12);
+    --rouge:#f87171; --rouge-fond:rgba(248,113,113,.12);
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fond);color:var(--texte);font-family:var(--sans);line-height:1.45;padding:40px 20px 120px}
+  .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:420px 1fr;gap:40px;align-items:start}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+
+  /* panneau */
+  .p{background:var(--panneau);border:1px solid var(--bord);border-radius:14px;overflow:hidden;font-size:13px}
+  .tete{padding:16px 16px 12px}
+  .crumb{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--gris2);text-transform:uppercase;display:flex;justify-content:space-between}
+  .nom{font-size:22px;font-weight:800;margin-top:4px;display:flex;align-items:center;gap:10px}
+  .sub{color:var(--gris);font-size:12px;margin-top:2px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bord);border:1px solid var(--bord);border-radius:10px;overflow:hidden;margin-top:12px}
+  .stats div{background:var(--carte);padding:9px 10px}
+  .stats small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--gris2);text-transform:uppercase}
+  .stats b{font-size:15px;font-weight:700;display:block;margin-top:2px}
+  .stats b.r{color:var(--rouge)} .stats b.o{color:var(--orange)}
+  .cta{margin:12px 16px 0;background:var(--vert);color:#052e12;text-align:center;border-radius:9px;padding:11px;font-weight:700;font-size:13.5px}
+  .sec2{display:flex;gap:8px;margin:8px 16px 0}
+  .sec2 span{flex:1;text-align:center;border:1px solid rgba(167,139,250,.35);color:var(--violet);border-radius:8px;padding:8px;font-size:12.5px;background:var(--violet-fond)}
+
+  .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--gris2);text-transform:uppercase;padding:16px 16px 6px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px}
+  .chip{font-size:11.5px;padding:3px 9px;border-radius:6px;border:1px solid}
+  .c-r{color:var(--rouge);border-color:rgba(248,113,113,.35);background:var(--rouge-fond)}
+  .c-o{color:var(--orange);border-color:rgba(245,158,11,.35);background:var(--orange-fond)}
+  .c-v{color:var(--vert-clair);border-color:rgba(74,222,128,.35);background:var(--vert-fond)}
+
+  .row{display:flex;align-items:center;gap:11px;margin:0 16px 8px;background:var(--carte);border:1px solid var(--bord);border-radius:10px;padding:10px 12px;cursor:pointer}
+  .row:hover{border-color:#3a3a3a}
+  .ic{width:30px;height:30px;border-radius:8px;background:var(--carte2);border:1px solid var(--bord);display:flex;align-items:center;justify-content:center;color:var(--gris);font-size:13px;flex-shrink:0}
+  .tx{flex:1;min-width:0}
+  .tx b{display:block;font-size:13.5px;font-weight:600}
+  .tx span{display:block;font-size:11.5px;color:var(--gris);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .val{font-weight:600;font-size:12.5px;white-space:nowrap;text-align:right}
+  .val.badge{font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid}
+  .chev{color:var(--gris2);font-size:16px;margin-left:2px}
+
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bord);margin:6px 16px 16px;border:1px solid var(--bord);border-radius:10px;overflow:hidden}
+  .grid div{background:var(--carte);padding:11px 6px;text-align:center;font-size:11px;color:var(--gris)}
+  .grid div i{display:block;font-style:normal;font-size:15px;color:var(--gris);margin-bottom:3px}
+  .grid div b{display:block;font-weight:600;color:var(--texte);font-size:11px}
+  .grid div small{font-family:var(--mono);font-size:9.5px;color:var(--vert-clair)}
+  .foot{font-size:10.5px;color:var(--gris2);padding:0 16px 16px;line-height:1.4}
+
+  /* notes */
+  .notes h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .notes .k{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--vert-clair);text-transform:uppercase;margin-bottom:8px}
+  .notes p{color:var(--gris);font-size:14px;margin:12px 0}
+  .notes b{color:var(--texte)}
+  .bloc{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:14px 18px;margin:12px 0}
+  .bloc h3{font-size:14px;margin-bottom:6px}
+  .bloc li{color:var(--gris);font-size:13.5px;margin:4px 0 4px 18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="p">
+  <div class="tete">
+    <div class="crumb"><span>Commune · TCO</span><span>✕</span></div>
+    <div class="nom">Saint-Paul</div>
+    <div class="sub">Territoire de la Côte Ouest · 22 916 ha · 51 129 parcelles</div>
+    <div class="stats">
+      <div><small>Terrain nu U</small><b>479 €/m²</b></div>
+      <div><small>Neuf</small><b>4 730 €/m²</b></div>
+      <div><small>SRU</small><b class="r">18,3 %</b></div>
+      <div><small>ZAN</small><b class="o">4,2 ans</b></div>
+    </div>
+  </div>
+  <div class="cta">Voir ses parcelles →</div>
+  <div class="sec2"><span>⊞ Comparer aux 24 communes</span><span>◎ Étude de zone</span></div>
+
+  <div class="lbl">Signaux</div>
+  <div class="chips">
+    <span class="chip c-r">SRU déficitaire (18,3 % / 25 %)</span>
+    <span class="chip c-o">ZAN épuisé dans 4,2 ans</span>
+    <span class="chip c-o">PPR sur 34 % des parcelles</span>
+    <span class="chip c-r">marché −4,3 % / 12 mois</span>
+  </div>
+
+  <div class="lbl">Construire ici</div>
+  <div class="row"><span class="ic">§</span><div class="tx"><b>Règles d'urbanisme</b><span>PLU à jour · 06/12/2024 · 131 zones U</span></div><span class="val badge c-v">à jour</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">◐</span><div class="tx"><b>Enveloppe ZAN</b><span>127,5 ha restants · 30 ha consommés / an</span></div><span class="val" style="color:var(--orange)">4,2 ans</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">⌂</span><div class="tx"><b>Logement social — SRU</b><span>7 489 LLS · objectif 25 % · inventaire 01/2024</span></div><span class="val badge c-r">déficitaire</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">▤</span><div class="tx"><b>Permis &amp; délais</b><span>314 permis / 12 mois · 428 logements autorisés</span></div><span class="val">6–12 mois</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">≡</span><div class="tx"><b>Programme local — PLH</b><span>TCO 2023-2029 · 47 % de part sociale visée</span></div><span class="val">1 800 lgts/an</span><span class="chev">›</span></div>
+
+  <div class="lbl">Le marché</div>
+  <div class="row"><span class="ic">↗</span><div class="tx"><b>Prix &amp; tendance</b><span>ancien 4 278 · neuf 4 730 €/m² · 228 mutations / 12 mois</span></div><span class="val" style="color:var(--rouge)">−4,3 %</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">▦</span><div class="tx"><b>Terrain nu</b><span>zone U 1 531 ventes · zone AU 132 ventes</span></div><span class="val">479 · 328 €/m²</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">◉</span><div class="tx"><b>Annonces en cours — Radar</b><span>5 biens en vente · écart demandé / acté</span></div><span class="val" style="color:var(--vert-clair)">−31,1 %</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">€</span><div class="tx"><b>Loyers</b><span>appartement · DHUP 2025</span></div><span class="val">18,9 €/m²</span><span class="chev">›</span></div>
+
+  <div class="lbl">Le territoire</div>
+  <div class="row"><span class="ic">◫</span><div class="tx"><b>Foncier repéré</b><span>285 parcelles promues · 21 527 densifiables</span></div><span class="val">49 ha</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">▥</span><div class="tx"><b>Zonage</b><span>U 13,5 · AU 3,5 · A 35,8 · N 47,2 % de la surface</span></div><span class="val">4 familles</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">⚠</span><div class="tx"><b>Risques</b><span>PPR inondation et mouvement de terrain · CatNat</span></div><span class="val badge c-o">34 % en PPR</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">⚇</span><div class="tx"><b>Population &amp; logement</b><span>51 317 logements · 9,4 % vacants · INSEE 2023</span></div><span class="val">106 400 hab.</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">◈</span><div class="tx"><b>Quartiers prioritaires</b><span>génération 2024 · ANCT</span></div><span class="val">11 QPV</span><span class="chev">›</span></div>
+  <div class="row"><span class="ic">☎</span><div class="tx"><b>Mairie &amp; service urbanisme</b><span>Place du Général-de-Gaulle · 02 62 45 43 45</span></div><span class="val" style="color:var(--violet)">contacter</span><span class="chev">›</span></div>
+
+  <div class="lbl">Outils — pré-remplis sur Saint-Paul</div>
+  <div class="grid">
+    <div><i>§</i><b>PLU</b><small>règlement</small></div>
+    <div><i>▤</i><b>Permis</b><small>314</small></div>
+    <div><i>◫</i><b>Densifier</b><small>21 527</small></div>
+    <div><i>◉</i><b>Radar</b><small>5 biens</small></div>
+    <div><i>☰</i><b>Scan patrimoine</b><small>12 539</small></div>
+    <div><i>☀</i><b>Solaire</b><small>1 616</small></div>
+    <div><i>◎</i><b>Étude de zone</b><small>depuis un point</small></div>
+    <div><i>⊞</i><b>Comparer</b><small>24 communes</small></div>
+  </div>
+  <div class="foot">Cadastre DGFiP · DVF avr. 2026 · Sitadel juil. 2026 · INSEE RP 2023 · DHUP 2025 · ANCT 2024 · GPU · Géorisques · analyse LABUSE run q_v11_m137. Compteurs précalculés chaque nuit.</div>
+</div>
+
+<div class="notes">
+  <div class="k">LABUSE · fiche commune · v2</div>
+  <h1>Même grammaire que la fiche parcelle</h1>
+  <p>En-tête à quatre chiffres, action verte, deux actions violettes, <b>signaux</b> en puces, puis des <b>lignes-cartes</b> distinctes — icône, titre, sous-titre, valeur à droite, chevron. Chaque ligne s'ouvre sur son détail ; fermée, elle dit déjà l'essentiel.</p>
+
+  <div class="bloc"><h3>L'ordre — celui d'un professionnel</h3>
+    <li><b>Construire ici</b> d'abord : PLU, ZAN, SRU, permis, PLH — ce qui autorise ou interdit. Une commune SRU déficitaire doit produire du social : c'est un débouché VEFA pour un promoteur, donc un signal fort, pas une note de bas de page.</li>
+    <li><b>Le marché</b> ensuite : prix, tendance, terrain nu, annonces en cours (l'écart demandé/acté du Radar), loyers.</li>
+    <li><b>Le territoire</b> : foncier repéré, zonage, risques, population, QPV, mairie.</li>
+    <li><b>Outils</b> en grille, comme les exports de la fiche parcelle — chaque case porte son chiffre.</li>
+  </div>
+
+  <div class="bloc"><h3>Les quatre chiffres de l'en-tête</h3>
+    <li><b>Terrain nu U</b> — ce que coûte le sol.</li>
+    <li><b>Neuf</b> — ce que rapporte la sortie.</li>
+    <li><b>SRU</b> — l'obligation, donc l'opportunité.</li>
+    <li><b>ZAN</b> — combien de temps il reste pour construire.</li>
+    L'ancien médian et le délai d'instruction restent visibles sur leurs lignes.
+  </div>
+
+  <div class="bloc"><h3>« Signal : prudence » disparaît</h3>
+    <p style="margin:0">Un badge sans règle lisible ne vaut rien. À la place, des <b>signaux nommés</b>, chacun avec son seuil : SRU déficitaire, ZAN sous 5 ans, PPR au-delà de 30 % des parcelles, marché en baisse sur 12 mois. Un client peut les contester ; « prudence », non.</p>
+  </div>
+
+  <div class="bloc"><h3>Vitesse</h3>
+    <p style="margin:0">Tous les compteurs (Radar, densifiables, permis, PPR, scan, solaire…) sont <b>précalculés la nuit</b> par un job cron et servis tels quels. La fiche s'ouvre instantanément ; la date du calcul figure en pied.</p>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

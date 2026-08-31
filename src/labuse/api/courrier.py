@@ -199,12 +199,17 @@ def courrier_pdf(body: PdfIn) -> Response:
     """M82 : rend le courrier généré en PDF TÉLÉCHARGEABLE — le client l'imprime/l'envoie lui-même
     (utile même sans traitement automatique). Adressage générique, aucune identité de propriétaire."""
     from fpdf import FPDF
+    from fpdf.enums import XPos, YPos
     pdf = FPDF(format="A4")
     pdf.set_auto_page_break(True, margin=20)
     pdf.set_margins(20, 20, 20)
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 15)
-    pdf.cell(0, 9, "LABUSE", ln=1)
+    # F4 (OUTILS-3) — positionnement de ligne EXPLICITE (new_x/new_y) : le défaut de `multi_cell` varie
+    # selon la version de fpdf2 (`new_x=RIGHT, new_y=TOP` sur certaines) → le curseur ne descend pas, les
+    # lignes s'écrasent et le PDF ne montre que l'en-tête + l'objet. En forçant LMARGIN/NEXT, CHAQUE ligne
+    # descend, quelle que soit la version : le corps s'imprime toujours.
+    pdf.cell(0, 9, "LABUSE", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font("Helvetica", "", 11)
     pdf.ln(4)
     for ligne in body.texte.split("\n"):
@@ -212,11 +217,9 @@ def courrier_pdf(body: PdfIn) -> Response:
         # « ? ». On la ramène à ses équivalents latin-1 AVANT l'encodage → le PDF reste FIDÈLE au
         # courrier affiché (apostrophes, tirets), jamais un « ? » à la place.
         safe = ligne.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
-        # LARGEUR EXPLICITE (epw = largeur utile) et JAMAIS w=0 : sous fpdf2 2.8.7, un
-        # multi_cell(w=0, "") sur une ligne VIDE (les \n\n entre paragraphes) laisse le curseur
-        # à la marge droite → le multi_cell suivant a 0 largeur → FPDFException « Not enough
-        # horizontal space ». Avec epw, la ligne vide avance proprement d'une ligne.
-        pdf.multi_cell(pdf.epw, 6, safe)
+        # LARGEUR EXPLICITE (epw) et new_x/new_y explicites : la ligne vide (les \n\n entre paragraphes)
+        # comme la ligne pleine descendent proprement d'une ligne (jamais d'écrasement, jamais un w=0).
+        pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     data = bytes(pdf.output())
     nom = (body.idu or "parcelle").replace("/", "-")
     return Response(content=data, media_type="application/pdf",

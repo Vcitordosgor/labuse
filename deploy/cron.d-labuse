@@ -1,0 +1,49 @@
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+# LABUSE — EXPLOITATION PLANIFIÉE (CRON-1). Fichier VERSIONNÉ, source unique. Posé par deploy.sh dans
+# /etc/cron.d/labuse APRÈS vérification `timedatectl` (le serveur DOIT être en UTC).
+#
+# HEURE SERVEUR = UTC (pas d'heure d'été). La Réunion = UTC+4 (constant). Chaque ligne annonce en
+# commentaire son heure RÉUNION. Le crontab ne fait QUE lancer `labuse jobs run <nom>` : zéro logique
+# ici (le verrou flock, le timeout, le log, l'état JSON, l'alerte, le dry-run, le ping vivent dans le
+# wrapper scripts/jobs/run-job.sh et labuse.jobs). Un job en cours refuse un second lancement (flock).
+#
+# Installation :  deploy.sh  (install -m 644 deploy/cron.d-labuse /etc/cron.d/labuse)
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+SHELL=/bin/sh
+MAILTO=root
+# `J` = lance un job dans l'environnement de l'app (env chargé, venv). Aucune logique de job ici.
+# (cron.d exécute en tant qu'utilisateur `labuse` ; l'env applicatif vient de /etc/labuse/labuse.env.)
+
+# ── K3 · QUOTIDIENS ──────────────────────────────────────────────────────────────────────────────
+# 05:45 Réunion — sauvegarde PostgreSQL (dump + rotation 14 j), APRÈS les écritures de la nuit.
+45 1 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run backup-postgres'
+# 06:00 Réunion — fraîcheur des 59 sources (badges à_jour / en_retard / en_panne).
+0 2 * * *    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sources-fraicheur'
+# 06:30 Réunion — Radar : traite les dépôts de la veille (parse/rattache/événements/badges). Ne fetch rien.
+30 2 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run radar-cycle'
+# 18:00 Réunion — digests & alertes de veille : un mail par client (annonces ET foncier). Idempotent.
+0 14 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run radar-digests'
+# 03:00 Réunion (= 23:00 UTC) — fiche-commune-cache : précalcule le contexte des communes (ouverture < 500 ms).
+0 23 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run fiche-commune-cache'
+# toutes les 15 min — sonde /health locale + espace disque (2 échecs → alerte ; disque 1 alerte/jour).
+*/15 * * * * labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run healthcheck'
+
+# ── K4 · HEBDO & MENSUELS ────────────────────────────────────────────────────────────────────────
+# dim 04:00 Réunion — VACUUM ANALYZE des tables chaudes.
+0 0 * * 0    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run pg-maintenance'
+# lun 06:15 Réunion — rapport hebdomadaire d'exploitation (mail admin).
+15 2 * * 1   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run rapport-admin'
+# le 7 à 04:00 Réunion — SIRENE mensuel (date_creation/date_dernier_traitement, refresh concurrents).
+0 0 7 * *    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run ingest-sirene'
+# le 10 à 04:30 Réunion — permis SITADEL → événements de veille foncière + golden candidat.
+30 0 10 * *  labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run ingest-sitadel'
+# le 12 à 04:00 Réunion — DPE ADEME mensuel.
+0 0 12 * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run ingest-dpe'
+# le 15 à 04:00 Réunion — diff PLU des 24 communes → événements de veille foncière + bandeau PLU.
+0 0 15 * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sync-gpu'
+# le 20 à 04:00 Réunion — sentinelle DVF/cadastre : vérifie un nouveau millésime et alerte (n'ingère pas).
+0 0 20 * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sentinelle-dvf-cadastre'
+
+# ── K9 · ROBUSTESSE ──────────────────────────────────────────────────────────────────────────────
+# le 1er à 05:00 Réunion — restore-test : restaure le dernier dump dans une base jetable, vérifie, DROP.
+0 1 1 * *    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run restore-test'

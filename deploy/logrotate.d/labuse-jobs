@@ -1,0 +1,12 @@
+# CRON-1 (K1) — rotation des logs de jobs (un fichier par job dans /var/log/labuse).
+# 30 jours d'historique, compressés. Posé par deploy.sh.
+/var/log/labuse/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    su labuse labuse
+    copytruncate
+}

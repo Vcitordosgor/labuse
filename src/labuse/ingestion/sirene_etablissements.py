@@ -44,6 +44,10 @@ CREATE TABLE IF NOT EXISTS sirene_etablissements (
   actif          boolean NOT NULL DEFAULT true,
   diffusible     boolean NOT NULL DEFAULT true,
   tranche_effectif varchar(2),               -- LOT 2 : code tranche INSEE ('NN' = non renseigné)
+  date_creation  date,                       -- A3-bis (OUTILS-2) : date de création de l'établissement
+                                              -- (StockEtablissement.dateCreationEtablissement) → « depuis AAAA »
+  date_dernier_traitement date,              -- F2 (OUTILS-4) : dateDernierTraitementEtablissement — la
+                                              -- FRAÎCHEUR déclarative par établissement (« mis à jour MM/YYYY »)
   qualite_xy     varchar(2),                 -- qualité de position (doc INSEE : 11/12/21/22/33)
   iris           varchar(9),                 -- rattachement IRIS (LOT 4) ; NULL si commune sans IRIS
   qp24           varchar(12),                -- rattachement QPV 2024
@@ -58,6 +62,8 @@ CREATE INDEX IF NOT EXISTS ix_sirene_etab_insee ON sirene_etablissements (insee)
 #: colonnes ajoutées après coup (table pré-existante d'un mandat antérieur) — migration douce.
 _ALTERS = [
     "ALTER TABLE sirene_etablissements ADD COLUMN IF NOT EXISTS tranche_effectif varchar(2)",
+    "ALTER TABLE sirene_etablissements ADD COLUMN IF NOT EXISTS date_creation date",   # A3-bis (OUTILS-2)
+    "ALTER TABLE sirene_etablissements ADD COLUMN IF NOT EXISTS date_dernier_traitement date",   # F2 (OUTILS-4)
     "ALTER TABLE sirene_etablissements ADD COLUMN IF NOT EXISTS qualite_xy varchar(2)",
     "ALTER TABLE sirene_etablissements ADD COLUMN IF NOT EXISTS iris varchar(9)",
     "ALTER TABLE sirene_etablissements ADD COLUMN IF NOT EXISTS qp24 varchar(12)",
@@ -118,6 +124,8 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
                s.statutDiffusionEtablissement AS diff, s.denominationUsuelleEtablissement AS denom,
                s.enseigne1Etablissement AS enseigne, s.codeCommuneEtablissement AS insee,
                s.trancheEffectifsEtablissement AS tranche,
+               s.dateCreationEtablissement AS date_creation,   -- A3-bis (OUTILS-2)
+               s.dateDernierTraitementEtablissement AS date_dernier_traitement,   -- F2 (OUTILS-4)
                trim(concat_ws(' ', s.numeroVoieEtablissement, s.typeVoieEtablissement,
                               s.libelleVoieEtablissement)) AS adresse,
                g.x_longitude AS lon, g.y_latitude AS lat, g.qualite_xy AS qualite,
@@ -136,11 +144,11 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
     raw = session.connection().connection            # DBAPI (psycopg) pour un executemany rapide
     cur = raw.cursor()
     sql = ("INSERT INTO sirene_etablissements (siret, siren, naf, denomination, enseigne, adresse, "
-           "commune, insee, geom, actif, diffusible, tranche_effectif, qualite_xy, iris, qp24, "
+           "commune, insee, geom, actif, diffusible, tranche_effectif, date_creation, date_dernier_traitement, qualite_xy, iris, qp24, "
            "millesime, data_source_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, "
-           "ST_SetSRID(ST_MakePoint(%s,%s),4326), true, %s,%s,%s,%s,%s,%s,%s) ON CONFLICT (siret) DO NOTHING")
+           "ST_SetSRID(ST_MakePoint(%s,%s),4326), true, %s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (siret) DO NOTHING")
     batch, n, n_masq = [], 0, 0
-    for (siret, naf, diff, denom, enseigne, insee, tranche, adresse, lon, lat, qualite, iris, qp24) in rows:
+    for (siret, naf, diff, denom, enseigne, insee, tranche, date_creation, date_dernier_traitement, adresse, lon, lat, qualite, iris, qp24) in rows:
         if not siret or len(siret) != 14:
             continue
         diffusible = (diff == "O")
@@ -153,8 +161,8 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
             n_masq += 1
         naf_n = (naf or "").replace(".", "").strip().upper()[:6] or None
         batch.append((siret, siret[:9], naf_n, den, ens, adr, insee2nom.get(insee), insee,
-                      float(lon), float(lat), diffusible, (tranche or None), (qualite or None),
-                      iris, (qp24 or None), f"SIRENE géolocalisé {mill} (INSEE)", sid))
+                      float(lon), float(lat), diffusible, (tranche or None), date_creation, date_dernier_traitement,
+                      (qualite or None), iris, (qp24 or None), f"SIRENE géolocalisé {mill} (INSEE)", sid))
         n += 1
         if len(batch) >= 5000:
             cur.executemany(sql, batch); batch.clear(); log(f"  … {n}")

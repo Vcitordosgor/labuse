@@ -54,9 +54,15 @@ export function PluAnnuaire() {
           </p>
           {communes.data && (
             <div data-plu-biblio>
+              {/* OUTILS-1 A5 — le RNU n'est PAS une procédure (c'est l'ABSENCE de PLU) : le bandeau
+                  distingue explicitement « en révision » (procédure) et « au RNU », chaque compte servi
+                  par le backend depuis le statut réel de l'annuaire (jamais dérivé/figé au front). */}
               <p className="mb-1.5 px-0.5 font-mono text-[9px] uppercase tracking-[.14em] text-txt-dim">
-                {communes.data.servables} PLU disponibles · les {communes.data.n_communes - communes.data.servables} autres
-                (RNU, révision) sont dits, jamais masqués
+                {communes.data.servables} PLU disponibles
+                {communes.data.n_revision > 0 && <> · {communes.data.n_revision} en révision</>}
+                {communes.data.n_rnu > 0 && <> · {communes.data.n_rnu} au RNU</>}
+                {communes.data.n_non_ingere > 0 && <> · {communes.data.n_non_ingere} non ingéré{communes.data.n_non_ingere > 1 ? 's' : ''}</>}
+                {' '}— dits, jamais masqués
               </p>
               <div className="grid grid-cols-2 gap-1.5">
                 {communes.data.communes.map((c) => {

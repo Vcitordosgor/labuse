@@ -3,11 +3,12 @@
 // LIGNE ROUGE (doctrine §2) : des FAITS et un LIEN, jamais le titre/texte/photo de l'annonce. Le
 // mauve est réservé à l'IA — il n'apparaît nulle part ici. Couleurs = source unique (mint/amber tokens).
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { getRadarBienDetail, getRadarBiens, radarClic, radarInstruire, radarRattacherHumain, radarSignaler,
-  type RadarBienClient, type RadarCritere, type RadarFiltres, type RadarPiste } from '../../lib/api'
+import { getRadarBienDetail, getRadarBiens, radarClic, radarInteresse, radarSignaler,
+  type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
+import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
 import { useApp } from '../../store/useApp'
 
 // T6 — la carte est montée par RadarView (pour piloter le responsive) ; lazy comme dans App.
@@ -26,7 +27,10 @@ function useIsMobile(): boolean {
 }
 
 const COMMUNES_24 = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
-const TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
+// RADAR-DEPOT-2 D5 — pas d'« Appartement » : les copros sont collectées mais jamais servies comme
+// annonces au client (elles n'existent que dans les signaux). Le tri se fait par est_copro, pas par type.
+// OUTILS-3 (ajout Vic) — « Immeuble » retiré des filtres Radar (hors périmètre de la pige).
+const TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['terrain', 'Terrain']] as const
 const TRIS = [['recentes', 'Plus récentes'], ['prix_asc', 'Prix croissant'], ['prix_desc', 'Prix décroissant'], ['anciennete', 'Ancienneté'], ['baisses', 'Baisses']] as const
 const STATUT_LABEL: Record<string, string> = {
   active: 'EN VENTE', en_vente_longue: 'EN VENTE LONGUE', a_reverifier: 'À REVÉRIFIER',
@@ -81,6 +85,14 @@ function CarteBien({ b, sel, onClick }: { b: RadarBienClient; sel: boolean; onCl
           <span className="shrink-0 rounded-full border border-dashed border-line-3 px-2.5 py-1 text-[11px] text-txt-mut">Non localisé — voir l'annonce ↗</span>
         )}
         {b.baisse && <span className="shrink-0 rounded-md bg-mint/12 px-2 py-0.5 font-mono text-[10.5px] text-mint">baisse</span>}
+        {/* RADAR-DEPOT-2 D4 — badge « sous le marché » : écart affiché/référentiel de zone, avec la
+            référence utilisée. Attribut de l'annonce, jamais un verdict de valeur. */}
+        {b.sous_le_marche?.sous_le_marche && (
+          // F9 (OUTILS-3) — l'écart porte TOUJOURS sa référence (perimetre + €/m² + millésime DVF), au
+          // survol de la pastille compacte comme en clair dans le détail. Jamais un « −19 % » orphelin.
+          <span title={`réf. ${b.sous_le_marche.perimetre ?? 'zone'} ${b.sous_le_marche.referentiel_eur_m2} €/m²${b.sous_le_marche.millesime_dvf ? ` · ${b.sous_le_marche.millesime_dvf}` : ''} · annonce vs DVF`}
+            className="shrink-0 rounded-md bg-mint/15 px-2 py-0.5 font-mono text-[10.5px] font-medium text-mint">Sous le marché · −{Math.abs(b.sous_le_marche.ecart_pct ?? 0)} %</span>
+        )}
         {b.statut === 'en_vente_longue' && <span className="shrink-0 rounded-md bg-amber/12 px-2 py-0.5 font-mono text-[10.5px] text-amber">Vente longue</span>}
         {/* RADAR-RECETTE-1 D1c — un bien incohérent est MARQUÉ dans le flux (hors stats/veilles, non rattaché). */}
         {b.a_qualifier && <span className="shrink-0 rounded-md bg-st-ecartee/15 px-2 py-0.5 font-mono text-[10.5px] text-st-ecartee">à qualifier</span>}
@@ -104,17 +116,13 @@ function Tuile({ label, onClick, children }: { label: string; onClick: () => voi
 // ════════════ la fiche d'un bien — overlay flottant sur la carte (maquette écran 2) ════════════
 // T6 — desktop : overlay 398px à droite. mobile : plein écran (inset-0).
 function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () => void; mobile?: boolean }) {
-  const qc = useQueryClient()
   const { data: b, isError } = useQuery({ queryKey: ['radar-bien', bienId], queryFn: () => getRadarBienDetail(bienId) })
   const [signale, setSignale] = useState(false)
-  // RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire » : candidates enrichies (ortho + critères) ; le
-  // client tranche via l'ortho (rattachement humain, fait foi).
-  const [instr, setInstr] = useState<{ busy: boolean; cands?: RadarPiste[]; motif?: string | null }>({ busy: false })
-  const [choix, setChoix] = useState<{ busy: boolean; idu?: string }>({ busy: false })
+  const [interesse, setInteresse] = useState(false)
   const st = useApp.getState
   const cadre = mobile
     ? 'absolute inset-0 z-40 flex flex-col overflow-hidden border-line-2 bg-surface-1'
-    : 'absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1/97 shadow-elev-3'
+    : 'absolute bottom-3.5 right-3.5 top-3.5 z-30 flex w-[398px] flex-col overflow-hidden rounded-2xl border border-line-2 bg-surface-1 shadow-elev-3'
   if (isError) return (
     <div className={`${cadre} p-4 text-[12px] text-txt-mut`}>
       Fiche indisponible — le serveur n’a pas répondu. <button onClick={onClose} className="text-mint hover:underline">fermer</button>
@@ -186,11 +194,48 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             <svg viewBox="0 0 112 36" className="h-9 w-28"><polyline points={spark} fill="none" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           )}
         </div>
+        {/* RADAR-DEPOT-2 D4 — écart au marché : constaté entre deux sources datées (prix affiché vs
+            référentiel DVF de zone), jamais une estimation de valeur. Le badge « sous le marché » n'est
+            que le cas où l'écart passe le seuil ; la référence utilisée est toujours nommée. */}
+        {b.sous_le_marche && b.sous_le_marche.calculable !== null && (
+          <div data-radar-sous-marche className={`rounded-xl border px-3 py-2 text-[11.5px] leading-snug ${
+            b.sous_le_marche.sous_le_marche ? 'border-mint/30 bg-mint/[0.05] text-mint' : 'border-line-2 bg-surface-2 text-txt-mut'}`}>
+            {b.sous_le_marche.calculable ? (
+              <>
+                {/* R2c — formulation non ambiguë : signe explicite (« +104,4 % » / « 2,04× »), jamais « (104,4 %) ». */}
+                <b>{b.sous_le_marche.affiche_eur_m2} €/m²</b> affiché · {b.sous_le_marche.sous_le_marche ? 'sous le marché' : b.sous_le_marche.sens} · <span className="font-medium">{b.sous_le_marche.ecart_libelle}</span>
+                <div className="mt-0.5 text-[10.5px] text-txt-dim">réf. {b.sous_le_marche.perimetre} {b.sous_le_marche.referentiel_eur_m2} €/m²{b.sous_le_marche.millesime_dvf ? ` · ${b.sous_le_marche.millesime_dvf}` : ''} (n={b.sous_le_marche.n_referentiel}){b.sous_le_marche.meme_type_reference === false ? ' · référence mixte (à défaut du même type)' : ''}</div>
+              </>
+            ) : (
+              /* R2b — biais terrain : valeur majoritairement foncière → le €/m² habitable est affiché,
+                 mais AUCUN verdict « sous/au-dessus » (jamais un faux positif structurel). */
+              <>
+                <b>{b.sous_le_marche.affiche_eur_m2} €/m²</b> affiché · <span className="text-txt-mut">pas de comparaison</span>
+                <div className="mt-0.5 text-[10.5px] text-txt-dim">{b.sous_le_marche.motif}</div>
+              </>
+            )}
+          </div>
+        )}
         {/* 3. Voir l'annonce — juste sous le prix, visible sans scroller */}
         <a onClick={(e) => { e.preventDefault(); ouvrirPortail() }} href={b.url_sortante} target="_blank" rel="noopener noreferrer"
           data-radar-portail className="flex items-center justify-center gap-2 rounded-xl bg-mint py-3 text-[13.5px] font-semibold text-mint-on hover:brightness-110">
           Voir l’annonce sur {b.portail} ↗
         </a>
+        {/* RADAR-VEILLE-1 (R3) — annonce DÉPOSÉE par l'agence : contenu confié (adresse abonnés-seuls,
+            texte, photos) AFFICHÉ, et le bouton « Intéressé » qui transmet les coordonnées à l'agence
+            (LABUSE ne s'interpose pas). Rien de tout ceci n'existe pour le collecté. */}
+        {b.depose_par_agence && (
+          <div data-radar-depose className="rounded-xl border border-viz-cyan/30 bg-viz-cyan/[0.05] px-3 py-2.5">
+            <div className="mb-1 font-mono text-[10px] tracking-[0.2em] text-viz-cyan">DÉPOSÉE PAR L’AGENCE{b.agence_nom ? ` · ${b.agence_nom}` : ''}</div>
+            {b.adresse_exacte && <p className="text-[11.5px] text-txt"><span className="text-txt-mut">Adresse (abonnés)</span> · {b.adresse_exacte}</p>}
+            {b.description && <p className="mt-1 text-[11px] leading-snug text-txt-mut">{b.description}</p>}
+            {b.photos.length > 0 && <p className="mt-1 text-[10.5px] text-txt-dim">{b.photos.length} photo(s) confiée(s) par l’agence</p>}
+            <button data-radar-interesse disabled={interesse} onClick={() => radarInteresse(b.bien_id).then(() => setInteresse(true)).catch(() => {})}
+              className="mt-2 w-full rounded-lg bg-mint py-2 text-[12.5px] font-semibold text-mint-on hover:brightness-110 disabled:opacity-60">
+              {interesse ? '✓ L’agence a vos coordonnées' : 'Intéressé — être mis en relation'}
+            </button>
+          </div>
+        )}
         {/* RADAR-RECETTE-1 D1c — bien À QUALIFIER : champs contradictoires. Visible mais marqué, motifs
             consultables ; hors statistiques, hors veilles, jamais rattaché (surface suspecte). */}
         {b.a_qualifier && (
@@ -218,6 +263,10 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             ))}
           </div>
         </div>
+        {/* RADAR-DEPOT-2 D2 — FAITS DÉCLARÉS dans l'annonce (page d'annonce individuelle) : zone PLU,
+            drapeaux. Déclaratif VENDEUR, pas du calibré LABUSE — étiqueté comme tel, jamais confondu
+            avec les faits sourcés. Aucun texte d'annonce n'est affiché, seulement des faits. */}
+        {b.declaratif && <Declaratif d={b.declaratif} />}
         {/* 5 + 6 : réservés aux biens RATTACHÉS (pas de parcelle → pas d'outils) */}
         {ratt && idu && (
           <>
@@ -248,58 +297,16 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             </div>
           </>
         )}
-        {/* PISTE (Lot 3) — plusieurs candidates possibles : à instruire À LA DEMANDE. Aucun automatisme
-            n'en part (ni courrier, ni « vendue »). Geste client explicite. */}
+        {/* RADAR-DEPOT-2 D3 — le client ne rattache JAMAIS (un rattachement erroné serait servi à tous).
+            Sur une piste, le bloc est SOBRE : ni bouton, ni compte de candidates. Le rattachement est un
+            geste ADMIN (écran d'instruction). */}
         {!ratt && b.rattachement_etat === 'piste' && (
-          <div className="rounded-xl border border-amber/30 bg-amber/[0.05] px-3 py-2.5">
-            <div className="mb-1 font-mono text-[10px] tracking-[0.2em] text-amber">PISTE — À INSTRUIRE{b.pistes?.length ? ` · ${b.pistes.length} candidate${b.pistes.length > 1 ? 's' : ''}` : ''}</div>
-            <p className="mb-2 text-[11px] leading-snug text-txt-mut">
-              Plusieurs parcelles peuvent correspondre. Aucune n’est retenue par défaut : rien ne part
-              d’une piste tant qu’elle n’est pas confirmée.
+          <div className="rounded-xl border border-line-2 bg-surface-2 px-3 py-2.5">
+            <div className="mb-1 font-mono text-[10px] tracking-[0.2em] text-txt-mut">POSITION AU QUARTIER</div>
+            <p className="text-[11px] leading-snug text-txt-mut">
+              Plusieurs parcelles peuvent correspondre — la position servie est le quartier. Seul le lien
+              vers la source est disponible.
             </p>
-            <button data-radar-instruire disabled={instr.busy}
-              onClick={() => { setInstr({ busy: true }); radarInstruire(b.bien_id)
-                .then((r) => setInstr({ busy: false, cands: r.candidates, motif: r.motif }))
-                .catch(() => setInstr({ busy: false, motif: 'échec — réessayer' })) }}
-              className="rounded-lg border border-amber/50 bg-amber/10 px-2.5 py-1.5 text-[11.5px] font-medium text-amber hover:bg-amber/20 disabled:opacity-60">
-              {instr.busy ? 'Instruction…' : 'Instruire cette annonce'}
-            </button>
-            {instr.cands && (
-              <div className="mt-2.5 flex flex-col gap-2">
-                {instr.cands.length === 0 && <span className="text-[11px] text-txt-dim">{instr.motif || 'aucune candidate exploitable'}</span>}
-                {/* RATTACHEMENT-V2 (Lot 2) — chaque candidate : sa VUE ORTHO + ses critères (✓ convergent /
-                    ✗ divergent). Le client compare les toits avec les photos de l'annonce et tranche. */}
-                {instr.cands.map((c) => (
-                  <div key={c.idu} data-radar-candidate className="overflow-hidden rounded-xl border border-line-2 bg-surface-2">
-                    <div className="grid grid-cols-[96px_1fr]">
-                      {c.ortho_url
-                        ? <img src={c.ortho_url} alt={`ortho ${c.idu}`} className="h-24 w-24 object-cover" loading="lazy" />
-                        : <div className="flex h-24 w-24 items-center justify-center bg-surface-3 text-[9px] text-txt-dim">ortho indispo.</div>}
-                      <div className="min-w-0 px-2.5 py-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-[11px] text-txt">{c.idu}</span>
-                          <span className="text-[10px] text-txt-dim">{c.distance_m != null ? `${Math.round(c.distance_m)} m` : ''}</span>
-                        </div>
-                        <ul className="mt-1 flex flex-col gap-0.5 text-[10px] leading-snug">
-                          {(c.criteres_detail ?? []).map((x: RadarCritere, i: number) => (
-                            <li key={i} className={x.converge ? 'text-mint' : 'text-txt-dim'}>
-                              {x.converge ? '✓' : '✗'} <span className="text-txt-mut">{x.critere}</span> {x.valeur}
-                            </li>
-                          ))}
-                        </ul>
-                        <button data-radar-choisir disabled={choix.busy}
-                          onClick={() => { setChoix({ busy: true, idu: c.idu }); radarRattacherHumain(b.bien_id, c.idu)
-                            .then(() => { setChoix({ busy: false }); qc.invalidateQueries({ queryKey: ['radar-bien', bienId] }); qc.invalidateQueries({ queryKey: ['radar-biens'] }) })
-                            .catch(() => setChoix({ busy: false })) }}
-                          className="mt-1.5 rounded-md border border-mint/50 bg-mint/10 px-2 py-1 text-[10.5px] font-medium text-mint hover:bg-mint/20 disabled:opacity-60">
-                          {choix.busy && choix.idu === c.idu ? 'Enregistrement…' : "C'est cette parcelle"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
         {!ratt && b.rattachement_etat !== 'piste' && (
@@ -311,7 +318,9 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
             className="text-center text-[11.5px] text-txt-mut underline decoration-dotted hover:text-txt disabled:opacity-60">
             {signale ? 'Signalé — merci, Victor va vérifier' : 'Signaler — annonce retirée ou erreur'}
           </button>
-          <p className="text-center text-[10px] leading-relaxed text-txt-dim">Faits extraits de l’annonce publique. Aucune photo ni texte d’annonce n’est conservé ou affiché.</p>
+          <p className="text-center text-[10px] leading-relaxed text-txt-dim">{b.depose_par_agence
+            ? 'Annonce déposée par l’agence — elle en confie l’affichage (photos, texte, adresse aux abonnés).'
+            : 'Faits extraits de l’annonce publique. Aucune photo ni texte d’annonce n’est conservé ou affiché.'}</p>
         </div>
       </div>
     </div>
@@ -368,7 +377,7 @@ export function RadarView() {
 
   const nTotal = data?.n_total ?? 0
   const nRatt = data?.n_rattaches ?? 0
-  const aucunFiltre = !f.commune && !f.type_bien && f.prix_min == null && f.prix_max == null && f.surface_terrain_min == null && !f.rattache && !f.particulier_pro
+  const aucunFiltre = !f.commune && !f.type_bien && f.prix_min == null && f.prix_max == null && f.surface_terrain_min == null && !f.rattache && !f.particulier_pro && !f.sous_marche
 
   const selInput = 'h-[35px] rounded-lg border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:border-mint focus:outline-none'
 
@@ -408,6 +417,9 @@ export function RadarView() {
             <Segment value={f.particulier_pro ?? ''} onChange={(v) => setF((p) => ({ ...p, particulier_pro: (v || undefined) as RadarFiltres['particulier_pro'] }))}
               options={[['', 'Tous'], ['particulier', 'Particulier'], ['pro', 'Pro']]} data="radar-seg-pp" />
           </div>
+          {/* RADAR-DEPOT-2 D4 — bouton filtre « sous le marché » (attribut de l'annonce, pas un canal). */}
+          <Segment value={f.sous_marche ?? ''} onChange={(v) => setF((p) => ({ ...p, sous_marche: (v || undefined) as RadarFiltres['sous_marche'] }))}
+            options={[['', 'Tous les prix'], ['oui', 'Sous le marché']]} data="radar-seg-sm" />
         </div>
 
         {/* compteur + tri */}

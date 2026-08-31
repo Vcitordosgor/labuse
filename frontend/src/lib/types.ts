@@ -164,7 +164,9 @@ export interface SourceInfo {
   source_millesime?: string | null   // M86 : millésime amont centralisé (lu ici, plus jamais en dur au front)
   // M84 : verdict de fraîcheur live (seuil = 2× cadence). « en_retard » = décrochage à VOIR ;
   // « cadence_libre »/« sans_donnee » ne sont jamais une alerte (anti-faux-positif).
-  fraicheur_statut?: 'en_retard' | 'a_jour' | 'cadence_libre' | 'sans_donnee' | null
+  // CRON-2 — vocabulaire du job sources-fraicheur (persisté) : en_panne / sans_echeance, en plus des
+  // valeurs du calcul live historique (cadence_libre / sans_donnee).
+  fraicheur_statut?: 'en_retard' | 'en_panne' | 'a_jour' | 'sans_echeance' | 'cadence_libre' | 'sans_donnee' | null
   fraicheur_seuil_jours?: number | null
   fraicheur_delta_jours?: number | null
   ingestion_runs: number
@@ -444,7 +446,11 @@ export interface ParcelleZone {
 // ÉTUDE DE ZONE Z4 — l'outil de chalandise. Faits sourcés, aucune prévision de CA.
 export interface NafOption { code: string; label: string }
 export interface NafFamille { section: string; nom: string; activites: NafOption[] }
-export interface ZoneConcurrent { siret: string; naf: string; nom: string; diffusible: boolean; lon: number; lat: number; temps_min: number | null }
+export interface ZoneConcurrent { siret: string; naf: string; nom: string; diffusible: boolean; lon: number; lat: number; temps_min: number | null; annee_creation: number | null; date_maj: string | null; maj_ancienne?: boolean }
+// F3 (OUTILS-4) — toutes les entreprises de la zone, groupées par famille d'activité (section NAF).
+export interface ZoneEntreprise { siret: string; naf: string; naf_label: string | null; nom: string; diffusible: boolean; lon: number; lat: number; annee_creation: number | null; date_maj: string | null }
+export interface ZoneFamille { section: string; nom: string; n: number; etablissements: ZoneEntreprise[]; charges: number }
+export interface ZoneEntreprises { total: number; familles: ZoneFamille[]; n_charges: number; cap_carte: number; millesime: string | null }
 export interface ZoneGenerateur { label: string; source: string }
 export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }
 export type ZoneCouverture = 'servie' | 'non_couverte' | 'erreur'
@@ -467,7 +473,7 @@ export interface EtudeZoneResult {
   equipements?: ZoneEquipement[]
   generateurs_flux?: ZoneGenerateur[]
   marche?: ZoneMarche
-  concurrents?: { n: number; naf: string; items: ZoneConcurrent[]; couverture?: ZoneCouverture; millesime?: string }
+  concurrents?: { n: number; naf: string; naf_label?: string | null; seuil_fraicheur_mois?: number; items: ZoneConcurrent[]; couverture?: ZoneCouverture; millesime?: string }
   zone_demain?: { logements_autorises_36m: number | null; permis_36m: number | null; au_zones_n: number | null; au_zones_ha: number | null; source: string }
   contraintes_plu?: { zones: { zone: string; part_pct: number; commune: string | null; document: string | null }[]; cdac_vigilance?: string; note?: string }
   trafic?: { couverte: boolean; axes: { route: string; tmja: number; annee: number }[]; libelle?: string; vide?: boolean }

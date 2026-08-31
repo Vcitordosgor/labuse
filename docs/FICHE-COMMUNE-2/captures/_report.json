@@ -1,0 +1,10 @@
+{
+  "moduleCommunes": 1,
+  "tableRows": 3,
+  "panel": 0,
+  "signaux": [],
+  "pied": "",
+  "errors": [
+    "row2 TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('tr').filter({ hasText: 'Saint-Paul' }).first().locator('td,button,span').first()\u001b[22m\n"
+  ]
+}

@@ -5,7 +5,8 @@ import { useApp } from '../../store/useApp'
 import { M09 } from './ModulePanel'
 
 // Mandat COURRIER — service d'envoi en 3 étapes : destinataires → rédaction → DEMANDER l'envoi à
-// LABUSE (confirmation + timeline de statut). Import Assemblage via le prefill multi-parcelles.
+// LABUSE. OUTILS-1 A4/B6 : la confirmation porte le N° de demande + renvoi « Mes courriers », SANS
+// état interne d'exécution (le cycle imprimé/posté reste à la Tour de contrôle admin).
 const FICHE = { commune: 'Saint-Denis', surface_m2: 1625 }
 const DEMANDE = { ok: true, id: 42, ts: 't', n: 1, communes: 'Saint-Denis ×1', statut: 'demande' }
 
@@ -37,7 +38,7 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     expect(screen.getByText('BZ 1065')).toBeTruthy()   // idu court dans la chip
   })
 
-  it('parcours complet → « Demander l\'envoi » → confirmation + timeline', async () => {
+  it('parcours complet → « Demander l\'envoi » → confirmation avec n° (SANS état interne)', async () => {
     renderTool()
     await waitFor(() => expect(document.querySelectorAll('[data-courrier-dest]').length).toBe(1))
     // ① → ②
@@ -50,8 +51,12 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     // ③ demander l'envoi
     fireEvent.click(document.querySelector('[data-courrier-demander]')!)
     await waitFor(() => expect(document.querySelector('[data-courrier-confirm]')).toBeTruthy())
-    expect(screen.getByText(/Demande transmise/)).toBeTruthy()
-    expect(screen.getByText('Demandé')).toBeTruthy()   // timeline, 1er statut actif
+    // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base) et renvoie vers le suivi.
+    expect(screen.getByText(/Demande n° 42 transmise/)).toBeTruthy()
+    expect(screen.getByText(/Mes courriers/)).toBeTruthy()
+    // AUCUN état interne (imprimé/posté) ni timeline côté client.
+    expect(screen.queryByText('Imprimé')).toBeNull()
+    expect(screen.queryByText('Posté')).toBeNull()
   })
 
   it('③ aperçu PDF de relecture disponible (secondaire)', async () => {

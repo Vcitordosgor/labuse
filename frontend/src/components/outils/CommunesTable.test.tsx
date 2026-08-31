@@ -47,10 +47,10 @@ describe('COMMUNES — O6Comparateur (table des 24 communes)', () => {
     expect(leg.textContent).toContain('commune entière')          // distingue du prix LOCAL de la fiche
   })
 
-  it('affordance de clic : « Ouvrir la fiche → » sur chaque ligne', async () => {
+  it('OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne (plus au survol)', async () => {
     renderO6()
     await screen.findByText('Saint-Paul')
-    expect(screen.getAllByText('Ouvrir la fiche →')).toHaveLength(3)
+    expect(screen.getAllByText('Fiche →')).toHaveLength(3)
   })
 
   it('meilleure valeur en vert : stock MAX (318) et instruction MIN (8)', async () => {

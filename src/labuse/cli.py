@@ -3418,3 +3418,82 @@ def purge_sessions_cmd() -> None:
     with engine().begin() as c:
         n = c.execute(_t("DELETE FROM sessions_auth WHERE expire_at < now()")).rowcount
     typer.echo(f"✓ Purge : {n} session(s) expirée(s) supprimée(s).")
+
+
+# ═══════════════════════════ CRON-1 — labuse jobs (exploitation planifiée) ═══════════════════════════
+jobs_app = typer.Typer(add_completion=False, help="Exploitation planifiée : lister, lancer, consulter les jobs.")
+app.add_typer(jobs_app, name="jobs")
+
+
+@jobs_app.command("list")
+def jobs_list_cmd() -> None:
+    """Les jobs, leur planification (heure Réunion) et leur dernier statut."""
+    from .jobs import liste
+    typer.echo(f"{'JOB':26s} {'CADENCE':14s} {'HEURE RÉUNION':18s} DERNIER")
+    for j in liste():
+        d = j["dernier"]
+        typer.echo(f"{j['nom']:26s} {j['cadence']:14s} {j['heure_reunion']:18s} "
+                   f"{d.get('statut') or '—'} {d.get('fin') or ''}")
+
+
+@jobs_app.command("run")
+def jobs_run_cmd(nom: str = typer.Argument(..., help="Nom du job (cf. jobs list)")) -> None:
+    """Lance un job via le WRAPPER (même verrou flock que le cron). C'est ce que lance le crontab."""
+    import os
+    import subprocess as _sp
+    import sys as _sys
+    from pathlib import Path as _P
+    script = _P(__file__).resolve().parents[2] / "scripts" / "jobs" / "run-job.sh"
+    env = dict(os.environ)
+    # binaire labuse installé (sibling du python courant) — l'entrée console charge TOUT le module,
+    # contrairement à `python -m labuse.cli` (garde __main__ en milieu de fichier → commandes tardives
+    # invisibles). Fallback : `labuse` sur le PATH.
+    _cand = _P(_sys.executable).parent / "labuse"
+    env.setdefault("LABUSE_BIN", str(_cand) if _cand.exists() else "labuse")
+    r = _sp.run(["sh", str(script), nom], env=env)
+    raise typer.Exit(r.returncode)
+
+
+@jobs_app.command("exec")
+def jobs_exec_cmd(nom: str = typer.Argument(...)) -> None:
+    """INTERNE — exécute le job (appelé par le wrapper ; ne pose PAS le verrou)."""
+    from .jobs import exec_one
+    raise typer.Exit(exec_one(nom))
+
+
+@jobs_app.command("status")
+def jobs_status_cmd() -> None:
+    """Tableau des états (dernier passage de chaque job)."""
+    from .jobs import liste
+    typer.echo(f"{'JOB':26s} {'STATUT':10s} {'DRY':4s} {'DURÉE':9s} DERNIER")
+    for j in liste():
+        d = j["dernier"]
+        typer.echo(f"{j['nom']:26s} {(d.get('statut') or '—'):10s} "
+                   f"{('oui' if d.get('dry_run') else 'non'):4s} "
+                   f"{str(d.get('duree_s') or '—'):9s} {d.get('fin') or 'jamais'}")
+
+
+# ═══════════════════════════ CRON-1 (K5) — golden : candidat auto, bascule MANUELLE ═══════════════════════════
+golden_app = typer.Typer(add_completion=False, help="Golden : run candidat (jamais servi) + bascule manuelle (Vic).")
+app.add_typer(golden_app, name="golden")
+
+
+@golden_app.command("promote")
+def golden_promote_cmd(run: str = typer.Argument(..., help="Label du run candidat à servir")) -> None:
+    """LA BASCULE — un geste de Vic. Fait du run candidat le run SERVI aux clients. Aucune bascule
+    automatique n'existe : le classement ne change que par cette commande (ou le bouton admin équivalent)."""
+    from .golden_ops import promote
+    r = promote(run)
+    if r.get("ok"):
+        typer.echo(f"✓ Run servi = {run} (ancien : {r.get('ancien')}). Golden re-gravé sur le servi.")
+    else:
+        typer.echo(f"✗ Bascule refusée : {r.get('motif')}")
+        raise typer.Exit(1)
+
+
+@golden_app.command("candidat")
+def golden_candidat_cmd() -> None:
+    """Calcule/compare un run CANDIDAT au run servi (promues, tiers, dérive %) et rend le rapport. Jamais
+    servi : sortie informative seule (la bascule reste `golden promote`)."""
+    from .golden_ops import candidat
+    typer.echo(candidat())

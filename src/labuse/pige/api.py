@@ -243,7 +243,7 @@ def radar_biens(request: Request,
                 particulier_pro: str | None = None, statuts: str | None = None,
                 statut: str | None = None, a_qualifier: str | None = None,
                 periode_debut: str | None = None, periode_fin: str | None = None,
-                rattache: str | None = None, tri: str = "recentes",
+                rattache: str | None = None, sous_marche: str | None = None, tri: str = "recentes",
                 page: int = 1, taille: int | None = None, limit: int | None = None) -> dict:
     """Liste filtrée des biens VALIDÉS pour un client.
 
@@ -265,6 +265,8 @@ def radar_biens(request: Request,
         "a_qualifier": a_qualifier if a_qualifier in ("oui", "non") else None,
         "periode_debut": periode_debut, "periode_fin": periode_fin,
         "rattache": rattache if rattache in ("oui", "non") else None,
+        # RADAR-DEPOT-2 D4 — badge « sous le marché » filtrable (paramètre API + bouton front).
+        "sous_marche": sous_marche if sous_marche in ("oui", "non") else None,
     }
     with session_scope() as db:
         return client.lister(db, filtres=filtres, tri=tri, page=page, taille=taille_eff)
@@ -293,18 +295,40 @@ def radar_clic(body: ClicIn, request: Request) -> dict:
     return {"ok": True, "clic_id": cid}
 
 
-@router.post("/radar/instruire")
+@router.get("/admin/radar/a-instruire")
+def radar_a_instruire(request: Request) -> dict:
+    """RADAR-DEPOT-2 (D3) — file d'INSTRUCTION admin : les biens en PISTE (plusieurs candidates possibles),
+    non encore tranchés à la main. C'est là que l'admin rattache — jamais le client. Priorise les biens
+    suivis par un client (watched_parcels) puis les plus récents."""
+    from ..api.auth import exiger_admin
+    exiger_admin(request)
+    with engine().begin() as c:
+        rows = [dict(r) for r in c.execute(text(
+            """SELECT b.bien_id, b.commune, b.type_bien, f.prix, f.surface_terrain, f.surface_hab,
+                      f.declaratif, a.portail, a.url_sortante,
+                      COALESCE(jsonb_array_length(b.rattachement_pistes), 0) AS n_candidates
+               FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+               LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id
+               WHERE f.valide_at IS NOT NULL AND b.rattachement_etat = 'piste'
+                 AND b.rattachement_humain = false AND b.a_qualifier = false
+               ORDER BY b.date_premiere_saisie DESC LIMIT 100""")).mappings()]
+    return {"file": rows, "n": len(rows)}
+
+
+@router.post("/admin/radar/instruire")
 def radar_instruire(body: BienIn, request: Request) -> dict:
-    """RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire cette annonce » : relance la cascade À LA DEMANDE
-    et rend les candidates ENRICHIES — pour chacune, sa VUE ORTHO (`ortho_url`) et l'état de CHAQUE
-    critère (convergent/divergent). Le client compare les toits et tranche. GESTE client, jamais un
-    automatisme — une piste ne déclenche par elle-même ni courrier, ni « vendue », ni stat parcellaire.
-    Un bien déjà rattaché À LA MAIN n'est pas ré-instruit (le choix humain fait foi)."""
+    """RADAR-DEPOT-2 (D3) — « Instruire cette annonce » est désormais un geste ADMIN SEULEMENT : un
+    rattachement client erroné serait un faux fait servi à tous. Relance la cascade À LA DEMANDE et rend
+    les candidates ENRICHIES — pour chacune, sa VUE ORTHO (`ortho_url`) et l'état de CHAQUE critère
+    (convergent/divergent). L'admin compare les toits et tranche. Aucun automatisme n'en part (ni
+    courrier, ni « vendue », ni stat parcellaire). Un bien déjà rattaché À LA MAIN n'est pas ré-instruit."""
     import json as _json
 
     from sqlalchemy import text as _t
 
+    from ..api.auth import exiger_admin
     from . import rattachement_html
+    exiger_admin(request)
     with session_scope() as db:
         rec = db.execute(_t(
             "SELECT b.bien_id, b.commune, b.type_bien AS type, b.est_copro, b.lat, b.lng, "
@@ -322,7 +346,7 @@ def radar_instruire(body: BienIn, request: Request) -> dict:
         candidates = []
         for p in ratt.get("pistes", []):
             idu = p.get("idu")
-            candidates.append({**p, "ortho_url": f"/radar/ortho/{idu}" if idu else None,
+            candidates.append({**p, "ortho_url": f"/admin/radar/ortho/{idu}" if idu else None,
                                "criteres_detail": rattachement_html.criteres_pour_idu(db, dict(rec), idu) if idu else []})
         # ré-écrit UNIQUEMENT l'état/pistes/critères (jamais la position ni le statut).
         db.execute(_t(
@@ -338,13 +362,15 @@ def radar_instruire(body: BienIn, request: Request) -> dict:
             "candidates": candidates, "criteres": ratt.get("criteres", []), "motif": ratt.get("motif")}
 
 
-@router.get("/radar/ortho/{idu}")
+@router.get("/admin/radar/ortho/{idu}")
 def radar_ortho(idu: str, request: Request):
     """RATTACHEMENT-V2 (Lot 2) — vignette ORTHO (BD ORTHO 20 cm IGN) d'une parcelle candidate, servie à
-    l'écran Instruire. PNG ou 204 si indisponible (parcelle inconnue / WMS injoignable) — jamais un 500."""
+    l'écran d'instruction ADMIN (D3). PNG ou 204 si indisponible (parcelle inconnue / WMS injoignable)."""
     from fastapi import Response
 
+    from ..api.auth import exiger_admin
     from ..ingestion.ortho_tiles import ortho_png_parcelle
+    exiger_admin(request)
     with session_scope() as db:
         png = ortho_png_parcelle(db, idu)
     if not png:
@@ -358,12 +384,16 @@ class RattacherHumainIn(BaseModel):
     idu: str
 
 
-@router.post("/radar/rattacher-humain")
+@router.post("/admin/radar/rattacher-humain")
 def radar_rattacher_humain(body: RattacherHumainIn, request: Request) -> dict:
-    """RATTACHEMENT-V2 (Lot 2) — le client a tranché via l'ortho : le bien passe RATTACHÉE, rattachement
-    HUMAIN (fait foi, jamais écrasé par une republication). On vérifie que l'idu est une parcelle réelle
-    de la commune du bien (pas d'idu arbitraire injecté)."""
+    """RADAR-DEPOT-2 (D3) — l'ADMIN a tranché via l'ortho : le bien passe RATTACHÉE, rattachement HUMAIN
+    (fait foi, jamais écrasé par une republication — acquis du mandat V2). On vérifie que l'idu est une
+    parcelle réelle de la commune du bien (pas d'idu arbitraire injecté). RÉSERVÉ ADMIN : un rattachement
+    client erroné serait un faux fait servi à tous."""
     from sqlalchemy import text as _t
+
+    from ..api.auth import exiger_admin
+    exiger_admin(request)
     with session_scope() as db:
         b = db.execute(_t("SELECT commune, a_qualifier FROM pige_biens WHERE bien_id = :b"),
                        {"b": body.bien_id}).mappings().first()
@@ -415,7 +445,8 @@ class VeilleIn(BaseModel):
     surface_terrain_min: float | None = None
     surface_hab_min: float | None = None
     particulier_only: bool = False
-    evenements: list[str] = []
+    # RADAR-VEILLE-1 (V3) — plus de filtre d'événement : une veille notifie sur TOUT événement d'un bien
+    # correspondant (nouvelle annonce, baisse, retour). Le mail (template 13) dit lequel a déclenché.
 
 
 @router.post("/radar/veille")
@@ -456,3 +487,87 @@ def radar_marche(request: Request) -> dict:
     from . import marche
     with session_scope() as db:
         return marche.stats(db)
+
+
+# ══════════════ RADAR-VEILLE-1 (R3) — DÉPÔT AGENCE « Publier une annonce » (derrière drapeau) ══════════════
+# Tout le parcours est FERMÉ par défaut (config.radar_depot_agence_actif) : question Hoguet en attente chez
+# l'avocat de Vic. Drapeau OFF → 404 partout, rien ne s'ouvre. Admin seulement pour le dépôt.
+
+def _porte_depot_agence() -> None:
+    from ..config import get_settings
+    if not get_settings().radar_depot_agence_actif:
+        from fastapi import HTTPException
+        raise HTTPException(404, "dépôt agence désactivé (question Hoguet en attente)")
+
+
+class DepotAnalyserIn(BaseModel):
+    html: str
+
+
+class DepotPublierIn(BaseModel):
+    rec: dict
+    idu: str
+    lon: float | None = None
+    lat: float | None = None
+    adresse_exacte: str
+    agence_nom: str
+
+
+class InteresseIn(BaseModel):
+    bien_id: int
+
+
+@router.get("/admin/radar/depot-agence/etat")
+def radar_depot_agence_etat(request: Request) -> dict:
+    """État du drapeau, pour que l'UI admin ne montre le parcours QUE s'il est ouvert (admin seulement)."""
+    from ..api.auth import exiger_admin
+    from ..config import get_settings
+    exiger_admin(request)
+    return {"actif": bool(get_settings().radar_depot_agence_actif)}
+
+
+@router.post("/admin/radar/depot-agence/analyser")
+def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict:
+    """ÉTAPE 1-2 — l'agence colle sa page ; le parseur RADAR-DEPOT-2 reconstruit les champs pré-remplis."""
+    from ..api.auth import exiger_admin
+    from . import depot_agence, html_next
+    exiger_admin(request)
+    _porte_depot_agence()
+    try:
+        return {"ok": True, "records": depot_agence.analyser(body.html)}
+    except html_next.NextDataError as exc:
+        return {"ok": False, "erreur": "next_data", "motif": str(exc)}
+
+
+@router.post("/admin/radar/depot-agence/publier")
+def radar_depot_agence_publier(body: DepotPublierIn, request: Request) -> dict:
+    """ÉTAPE 3-4 — publier l'annonce déposée : rattachement CERTAIN depuis l'adresse, contenu confié."""
+    from ..api.auth import exiger_admin
+    from . import depot_agence
+    exiger_admin(request)
+    _porte_depot_agence()
+    with session_scope() as db:
+        try:
+            out = depot_agence.publier(
+                db, rec=body.rec, idu=body.idu, lon=body.lon, lat=body.lat,
+                adresse_exacte=body.adresse_exacte, agence_nom=body.agence_nom)
+            db.commit()
+            return {"ok": True, **out}
+        except ValueError as exc:
+            return {"ok": False, "motif": str(exc)}
+
+
+@router.post("/radar/interesse")
+def radar_interesse(body: InteresseIn, request: Request) -> dict:
+    """L'abonné clique « Intéressé » : ses coordonnées sont transmises à l'agence (LABUSE ne s'interpose
+    pas). Gardé derrière le drapeau — rien ne s'ouvre au client tant qu'il est fermé."""
+    from ..api.tenant import current_compte
+    from . import depot_agence
+    _porte_depot_agence()
+    with session_scope() as db:
+        try:
+            out = depot_agence.enregistrer_interet(db, bien_id=body.bien_id, compte_id=current_compte(request))
+            db.commit()
+            return out
+        except ValueError as exc:
+            return {"ok": False, "motif": str(exc)}

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projets — maquette v3 · LABUSE</title>
+<style>
+  :root{
+    --fond:#0c0a09; --carte:#161412; --carte2:#1c1917; --bord:#2b2724;
+    --texte:#e7e5e4; --gris:#a8a29e; --gris2:#78716c;
+    --vert:#16A34A; --vert-clair:#4ade80; --vert-fond:rgba(22,163,74,.10);
+    --orange:#d97706; --orange-clair:#fbbf24; --orange-fond:rgba(217,119,6,.10);
+    --rouge:#ef4444; --rouge-clair:#f87171; --rouge-fond:rgba(239,68,68,.10);
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fond);color:var(--texte);font-family:var(--sans);line-height:1.55;padding-bottom:120px}
+  .page{max-width:1220px;margin:0 auto;padding:0 28px}
+  header{padding:50px 0 24px;border-bottom:1px solid var(--bord)}
+  .surtitre{font-family:var(--mono);font-size:11px;letter-spacing:.35em;color:var(--vert-clair);text-transform:uppercase}
+  h1{font-size:38px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+  .sous{color:var(--gris);max-width:840px}
+  h2{font-size:24px;font-weight:700;margin:56px 0 6px}
+  .num{font-family:var(--mono);font-size:12px;color:var(--vert-clair);letter-spacing:.25em}
+  .chapeau{color:var(--gris);max-width:880px;margin-bottom:20px;font-size:14.5px}
+  .chapeau b{color:var(--texte)}
+
+  .ecran{border:1px solid var(--bord);border-radius:14px;overflow:hidden;background:var(--carte);margin:20px 0}
+  .barre-app{display:flex;align-items:center;gap:14px;padding:11px 16px;border-bottom:1px solid var(--bord);background:var(--carte2)}
+  .logo{font-family:var(--mono);font-weight:700;letter-spacing:.2em;font-size:12.5px}
+  .fil{font-family:var(--mono);font-size:10.5px;color:var(--gris2);letter-spacing:.18em;text-transform:uppercase}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:2px 8px;border-radius:14px;border:1px solid;white-space:nowrap}
+  .b-vert{color:var(--vert-clair);border-color:rgba(74,222,128,.35);background:var(--vert-fond)}
+  .b-orange{color:var(--orange-clair);border-color:rgba(251,191,36,.35);background:var(--orange-fond)}
+  .b-rouge{color:var(--rouge-clair);border-color:rgba(248,113,113,.35);background:var(--rouge-fond)}
+  .b-gris{color:var(--gris);border-color:var(--bord)}
+  .b-bleu{color:#7dd3fc;border-color:rgba(125,211,252,.3);background:rgba(125,211,252,.07)}
+
+  /* pipeline explicatif */
+  .pipe{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:0;align-items:stretch;margin:18px 0}
+  @media(max-width:860px){.pipe{grid-template-columns:1fr}}
+  .pipe .et{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:15px 17px}
+  .pipe .fl{display:flex;align-items:center;padding:0 10px;color:var(--vert);font-size:18px}
+  @media(max-width:860px){.pipe .fl{display:none}}
+  .pipe b{font-family:var(--mono);font-size:20px;color:var(--vert-clair);display:block}
+  .pipe .t{font-size:13px;font-weight:700;margin:2px 0}
+  .pipe p{font-size:12px;color:var(--gris2)}
+
+  /* wizard */
+  .wiz{max-width:640px;border:1px solid var(--bord);border-radius:14px;background:var(--carte);margin:18px 0;overflow:hidden}
+  .wiz-t{display:flex;justify-content:space-between;padding:13px 18px 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--gris2)}
+  .wiz-t b{color:var(--vert-clair)}
+  .wiz-prog{display:flex;gap:5px;padding:0 18px 13px}
+  .wiz-prog i{flex:1;height:3px;border-radius:2px;background:var(--bord)}
+  .wiz-prog i.on{background:var(--vert-clair)}
+  .wiz-c{padding:6px 18px 16px}
+  .wiz-c h5{font-size:19px;font-weight:800;margin-bottom:3px}
+  .wiz-c .st{font-size:12.5px;color:var(--gris2);margin-bottom:12px}
+  .champ{background:var(--fond);border:1px solid var(--bord);border-radius:9px;padding:9px 13px;font-size:13.5px;color:var(--gris)}
+  .champ.plein{display:block;width:100%}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}
+  .chip{border:1px solid var(--bord);border-radius:18px;padding:5px 13px;font-size:12px;color:var(--gris)}
+  .chip.on{border-color:rgba(74,222,128,.4);color:var(--vert-clair);background:var(--vert-fond)}
+  .wiz-pied{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--bord);padding:11px 18px;font-size:12.5px;color:var(--gris2)}
+  .cta{display:inline-block;background:var(--vert);color:#fff;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:600}
+  .compteur-live{background:var(--fond);border:1px solid var(--bord);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--gris);margin-top:10px}
+  .compteur-live b{color:var(--vert-clair);font-family:var(--mono)}
+  .compteur-live .warn{color:var(--orange-clair)}
+  .recap-l{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bord);font-size:13px}
+  .recap-l:last-child{border-bottom:none}
+  .recap-l span{color:var(--gris2)}
+  .recap-l b{font-weight:600}
+
+  /* kanban */
+  .p-tete{padding:18px 20px;border-bottom:1px solid var(--bord)}
+  .p-tete .l1{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .p-tete h3{font-size:22px;font-weight:800}
+  .peri{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--gris2);text-transform:uppercase}
+  .actions{display:flex;gap:8px}
+  .btn{border:1px solid var(--bord);border-radius:8px;padding:6px 13px;font-size:12.5px;color:var(--gris)}
+  .btn.vert{border-color:rgba(74,222,128,.35);color:var(--vert-clair)}
+  .p-tete .meta{font-size:12.5px;color:var(--gris2);margin-top:6px}
+  .p-tete .meta b{color:var(--gris)}
+  .kanban{display:grid;grid-template-columns:1.35fr 1fr .8fr;gap:14px;padding:18px 20px}
+  @media(max-width:980px){.kanban{grid-template-columns:1fr}}
+  .col{background:var(--fond);border:1px solid var(--bord);border-radius:12px;padding:13px}
+  .col-t{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .col-t b{font-size:14px}
+  .col-t .n{font-family:var(--mono);font-size:12px;color:var(--vert-clair)}
+  .col-note{font-size:11px;color:var(--gris2);margin-bottom:10px}
+  .filtres-flux{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}
+  .mini-champ{background:var(--carte2);border:1px solid var(--bord);border-radius:7px;padding:4px 9px;font-size:11px;color:var(--gris2)}
+  .mini-champ.on{border-color:rgba(74,222,128,.35);color:var(--vert-clair)}
+  .pc{background:var(--carte2);border:1px solid var(--bord);border-radius:11px;padding:12px 13px;margin-bottom:10px}
+  .pc .l1{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .pc .adr{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pc .l2{display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--gris2);margin:4px 0 7px;font-family:var(--mono)}
+  .pc .boutons{display:flex;gap:7px}
+  .pb{flex:1;text-align:center;border:1px solid;border-radius:8px;padding:6px 4px;font-size:12px}
+  .pb-vert{border-color:rgba(74,222,128,.4);color:var(--vert-clair)}
+  .pb-gris{border-color:var(--bord);color:var(--gris)}
+  .pb-rouge{border-color:rgba(248,113,113,.35);color:var(--rouge-clair)}
+  .fiche{background:var(--carte);border:1px solid var(--bord);border-radius:13px;padding:18px 21px;margin:14px 0}
+  .fiche h4{font-size:15px;font-weight:700;margin-bottom:8px}
+  .fiche p{font-size:13.5px;color:var(--gris);margin-bottom:6px}
+  .fiche p:last-child{margin-bottom:0}
+  .fiche b{color:var(--texte)}
+  .q{border-left:3px solid var(--orange);background:var(--orange-fond);border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;font-size:13.5px}
+  .q b{color:var(--orange-clair)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="page">
+    <div class="surtitre">LABUSE · maquette Projets · v3</div>
+    <h1>Rien n'est caché, tout est ordonné</h1>
+    <p class="sous">Objection de Vic, retenue : un promoteur ne veut pas qu'on lui cache des parcelles. La shortlist-limite disparaît — le projet donne le vivier ENTIER, classé par probabilité de mutation, les mieux classées d'abord. Et la création s'ouvre sur deux portes : partir du vivier LABUSE, ou un projet de zéro.</p>
+  </div>
+</header>
+
+<div class="page">
+
+<!-- 01 LOGIQUE -->
+<h2><span class="num">01</span> · La logique, en trois nombres</h2>
+<p class="chapeau">Ce que « vivier » et « classement » veulent dire — et la règle qui gouverne tout : <b>le classement ordonne, il ne filtre jamais.</b></p>
+
+<div class="pipe">
+  <div class="et"><b>306 630</b><div class="t">L'univers du périmètre</div><p>Toutes les parcelles de Saint-Denis en zone U. Personne ne trie ça — c'est la matière brute.</p></div>
+  <div class="fl">→</div>
+  <div class="et"><b>11 329</b><div class="t">Le vivier figeable</div><p>Après TON cadrage (surface, zonage, nu/bâti, signaux de vie) et les exclusions automatiques du moteur (non-constructibles, faux positifs).</p></div>
+  <div class="fl">→</div>
+  <div class="et"><b>11 329</b><div class="t">Le même vivier, ORDONNÉ</div><p>Classé par probabilité de mutation — le score LABUSE, nourri des signaux de vie. Rien n'est retiré : l'ordre change, pas le contenu. Instantané daté au run.</p></div>
+</div>
+
+<div class="fiche">
+  <h4>Pourquoi pas de shortlist-limite — et d'où vient le classement</h4>
+  <p>Un promoteur ne délègue pas son tri : lui dire « sur 33 000, on t'en donne 200 » — même les meilleures — c'est lui cacher 32 800 parcelles. <b>Règle v3 : le kanban sert le vivier entier, par pages, dans l'ordre du classement.</b> Le client descend aussi loin qu'il veut ; c'est lui qui décide où s'arrêter.</p>
+  <p>Le classement, lui, est explicable : la probabilité de mutation combine les signaux de vie — succession, société en procédure, permis abandonné, friche, sortie de défisc, dormance. Chaque carte AFFICHE le signal qui l'a classée : un classement qui montre ses raisons se conteste ou s'adopte ; une boîte noire, jamais. (Sa validité réelle est mesurable contre DVF — mandat de mesure noté, hors périmètre ici.)</p>
+</div>
+
+<!-- 02 WIZARD -->
+<h2><span class="num">02</span> · La création — deux portes, puis 5 étapes</h2>
+<p class="chapeau">L'écran 0 demandé par Vic : <b>« Partir du vivier LABUSE »</b> (le moteur cadre et verse, classé) ou <b>« Projet de zéro »</b> (un dossier vide — on y ajoute ses parcelles depuis leurs fiches, pour le client qui a déjà ses cibles). Ensuite : budget et type fusionnent en « Contexte », et le récapitulatif annonce le vrai résultat — le vivier, classé.</p>
+
+<div class="wiz">
+  <div class="wiz-t"><b>NOUVEAU PROJET</b><span>COMMENT DÉMARRER ?</span></div>
+  <div class="wiz-c" style="padding-top:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="border:1px solid rgba(74,222,128,.4);background:var(--vert-fond);border-radius:12px;padding:16px">
+        <b style="font-size:15px">Partir du vivier LABUSE</b>
+        <p style="font-size:12.5px;color:var(--gris);margin-top:4px">Vous cadrez (périmètre, critères, signaux de vie) — le moteur verse toutes les parcelles correspondantes, classées par probabilité de mutation.</p>
+      </div>
+      <div style="border:1px solid var(--bord);border-radius:12px;padding:16px">
+        <b style="font-size:15px">Projet de zéro</b>
+        <p style="font-size:12.5px;color:var(--gris2);margin-top:4px">Un dossier vide. Vous y ajoutez vos parcelles une à une, depuis leurs fiches (bouton « Projet ») ou depuis les outils. Pour qui a déjà ses cibles.</p>
+      </div>
+    </div>
+  </div>
+  <div class="wiz-pied"><span>✕ Annuler</span><span></span></div>
+</div>
+
+<div class="wiz">
+  <div class="wiz-t"><b>NOUVEAU PROJET</b><span>1 / 5 · NOM</span></div>
+  <div class="wiz-prog"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="wiz-c">
+    <h5>Quel nom pour ce projet ?</h5>
+    <div class="st">Facultatif — un nom vous aide à le retrouver.</div>
+    <span class="champ plein">BALIM</span>
+  </div>
+  <div class="wiz-pied"><span>✕ Annuler</span><span class="cta">Continuer →</span></div>
+</div>
+
+<div class="wiz">
+  <div class="wiz-t"><b>NOUVEAU PROJET</b><span>2 / 5 · PÉRIMÈTRE</span></div>
+  <div class="wiz-prog"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="wiz-c">
+    <h5>Sur quel périmètre ?</h5>
+    <div class="st">Une ou plusieurs communes, ou toute l'île.</div>
+    <div class="chips"><span class="chip">Toute l'île</span><span class="chip on">Communes précises</span></div>
+    <div class="chips"><span class="chip on">Saint-Denis</span><span class="chip">Saint-Paul</span><span class="chip">Sainte-Marie</span><span class="chip">Le Tampon</span><span class="chip">…</span></div>
+  </div>
+  <div class="wiz-pied"><span>← Retour</span><span class="cta">Continuer →</span></div>
+</div>
+
+<div class="wiz">
+  <div class="wiz-t"><b>NOUVEAU PROJET</b><span>3 / 5 · CONTEXTE <span style="color:var(--gris2)">(fusion budget + type)</span></span></div>
+  <div class="wiz-prog"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  <div class="wiz-c">
+    <h5>Le contexte du projet</h5>
+    <div class="st">Indicatif — figure sur le projet et le PDF, sans effet sur la sélection.</div>
+    <span class="champ plein">Budget foncier : 2 000 000 €</span>
+    <div class="chips" style="margin-top:10px"><span class="chip on">Logement libre</span><span class="chip">Social</span><span class="chip">Étudiant</span><span class="chip">Bureaux</span><span class="chip">Autre</span></div>
+  </div>
+  <div class="wiz-pied"><span>← Retour</span><span class="cta">Continuer →</span></div>
+</div>
+
+<div class="wiz">
+  <div class="wiz-t"><b>NOUVEAU PROJET</b><span>4 / 5 · CADRAGE</span></div>
+  <div class="wiz-prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+  <div class="wiz-c">
+    <h5>Affinez le cadrage.</h5>
+    <div class="st">Chaque critère resserre le vivier — le compteur suit en direct.</div>
+    <div class="chips"><span class="chip">Surface min–max</span><span class="chip on">Zone U</span><span class="chip">A</span><span class="chip">N</span><span class="chip on">AU</span><span class="chip on">Terrain nu</span><span class="chip">Bâti</span></div>
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--gris2);margin:10px 0 4px">SIGNAUX DE VIE — ils nourrissent la probabilité de mutation</div>
+    <div class="chips"><span class="chip on">Succession</span><span class="chip on">Permis abandonné</span><span class="chip">Procédure collective</span><span class="chip">Détenu par une société</span><span class="chip">Friche recensée</span><span class="chip">Sortie de défisc</span></div>
+    <div class="compteur-live"><b>11 329</b> parcelles dans le vivier (hors non-constructibles et faux positifs — exclusions automatiques) · <span class="warn">resserrez pour cibler</span></div>
+  </div>
+  <div class="wiz-pied"><span>← Retour</span><span class="cta">Continuer →</span></div>
+</div>
+
+<div class="wiz">
+  <div class="wiz-t"><b>NOUVEAU PROJET</b><span>5 / 5 · RÉCAPITULATIF</span></div>
+  <div class="wiz-prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <div class="wiz-c">
+    <h5>On récapitule.</h5>
+    <div class="st">Le vivier entier entre dans le projet, classé — rien n'est retiré, tout est ordonné.</div>
+    <div class="recap-l"><span>Périmètre</span><b>Saint-Denis</b></div>
+    <div class="recap-l"><span>Vivier</span><b style="color:var(--vert-clair)">11 329 parcelles · classées par probabilité de mutation</b></div>
+    <div class="recap-l"><span>Valeurs</span><b>au 22/08 (run m135) — instantané daté</b></div>
+    <div class="recap-l"><span>Contexte (indic.)</span><b>2 000 000 € · logement libre</b></div>
+  </div>
+  <div class="wiz-pied"><span>← Retour</span><span class="cta">Créer le projet →</span></div>
+</div>
+
+<!-- 03 KANBAN -->
+<h2><span class="num">03</span> · Le projet ouvert — tout le vivier, dans l'ordre</h2>
+<p class="chapeau">« À trier » sert les 11 329, par pages de 50, les mieux classées d'abord — le compteur le dit en toutes lettres. Filtres pour naviguer (classement, commune, nu/bâti), et chaque carte affiche son signal. Actions : PDF · Renommer · Archiver — Rejouer, CSV et Trier retirés.</p>
+
+<div class="ecran">
+  <div class="barre-app"><span class="logo">LABUSE</span><span class="fil">Projets · BALIM</span></div>
+  <div class="p-tete">
+    <div class="l1">
+      <h3>BALIM <span class="peri" style="font-size:11px">SAINT-DENIS</span></h3>
+      <div class="actions"><span class="btn">PDF</span><span class="btn">Renommer</span><span class="btn">Archiver</span></div>
+    </div>
+    <div class="meta"><b>Vivier : 11 329 parcelles, classées par probabilité de mutation</b> · valeurs au <b>22 août 2026</b> (run m135) · budget 2 M€ indic. · Une parcelle en tête ailleurs ? Ajoutez-la depuis sa fiche.</div>
+  </div>
+  <div class="kanban">
+    <div class="col">
+      <div class="col-t"><b>À trier</b><span class="n">11 316 · les mieux classées d'abord</span></div>
+      <div class="filtres-flux">
+        <span class="mini-champ on">Priorité 214</span>
+        <span class="mini-champ">À suivre 1 892</span>
+        <span class="mini-champ">Tous</span>
+        <span class="mini-champ">Nu</span>
+        <span class="mini-champ">Commune ▾</span>
+      </div>
+      <div class="pc">
+        <div class="l1"><span class="adr">34 Rue Françoise Dolto, La Possession</span><span class="badge b-rouge">Priorité</span></div>
+        <div class="l2"><span>AP 1609</span><span>·</span><span>365 m²</span><span class="badge b-bleu" style="font-size:9px">Nu</span><span>·</span><span>succession</span></div>
+        <div class="boutons"><span class="pb pb-vert">✓ Retenir</span><span class="pb pb-gris">↓ Plus tard</span><span class="pb pb-rouge">✕ Écarter</span></div>
+      </div>
+      <div class="pc">
+        <div class="l1"><span class="adr">36 Rue Françoise Dolto, La Possession</span><span class="badge b-orange">À suivre</span></div>
+        <div class="l2"><span>AP 1610</span><span>·</span><span>426 m²</span><span class="badge b-bleu" style="font-size:9px">Nu</span><span>·</span><span>permis abandonné</span></div>
+        <div class="boutons"><span class="pb pb-vert">✓ Retenir</span><span class="pb pb-gris">↓ Plus tard</span><span class="pb pb-rouge">✕ Écarter</span></div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--gris2);padding:4px 0 2px">page 1 / 227 · charger la suite — le signal qui a classé chaque parcelle est affiché sur sa carte</div>
+    </div>
+    <div class="col">
+      <div class="col-t"><b>Retenues</b><span class="n">9</span></div>
+      <div class="col-note">Vos parcelles de travail.</div>
+      <div class="pc">
+        <div class="l1"><span class="adr">1 Impasse Marie Curie, La Possession</span><span class="badge b-rouge">Priorité</span></div>
+        <div class="l2"><span>AP 1647</span><span>·</span><span>382 m²</span></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <span class="btn vert" style="flex:1;text-align:center">→ CRM</span>
+        <span class="btn vert" style="flex:1;text-align:center">✉ Courrier (9)</span>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-t"><b>Écartées</b><span class="n" style="color:var(--gris2)">4 · réversible</span></div>
+      <div class="pc" style="opacity:.6">
+        <div class="l1"><span class="adr">11c Imp. Techer Alberti, Le Tampon</span><span class="badge b-gris">Faible</span></div>
+        <div class="boutons" style="margin-top:7px"><span class="pb pb-vert">↩ Récupérer</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 04 ACCUEIL -->
+<h2><span class="num">04</span> · L'accueil ajusté</h2>
+<p class="chapeau">Les gros compteurs changent de sens : plus de « 285 780 à trier » anxiogène — la carte projet dit la shortlist et la progression. Les trois points sont retirés.</p>
+
+<div class="ecran">
+  <div class="barre-app"><span class="logo">LABUSE</span><span class="fil">Projets</span></div>
+  <div style="padding:18px 20px">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:16px;background:var(--carte2);border:1px solid var(--bord);border-left:3px solid var(--vert);border-radius:12px;padding:15px 17px;align-items:center">
+      <div>
+        <span style="font-size:16.5px;font-weight:700">BALIM</span><span class="peri" style="margin-left:10px">SAINT-DENIS</span>
+        <div style="font-size:12.5px;color:var(--gris2);margin-top:2px">vivier 11 329 classé · valeurs au 22/08 · budget 2 M€ indic.</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:9px">
+          <div style="width:220px;height:5px;background:var(--fond);border-radius:3px;overflow:hidden"><i style="display:block;height:100%;width:13%;background:var(--vert-clair)"></i></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--gris)">9 retenues · 4 écartées · 11 316 à explorer, classées</span>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:var(--vert-clair)">9</div>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--gris2)">RETENUES</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 05 QUESTIONS -->
+<h2><span class="num">05</span> · Décisions à prendre</h2>
+
+<div class="q"><b>1 · Les projets existants.</b> Tes 17 projets gardent tout leur contenu — le seul changement est l'ORDRE : « À trier » se met à servir les mieux classées d'abord, par pages, au lieu d'une pile brute. Retenues et écartées inchangées. Migration douce, rien à re-créer.</div>
+
+<div class="q"><b>2 · « Peut-être » → « Plus tard ».</b> Le bouton existe, aucune colonne ne l'accueille. « Plus tard » renvoie la carte en fin de shortlist — resservie quand le reste est trié. Zéro colonne en plus. Valide ?</div>
+
+<div class="q"><b>3 · Le sort de « Rejouer ».</b> Il servait à recalculer la shortlist sur un run plus frais. Retiré comme demandé — le projet devient un instantané daté, assumé (« valeurs au 22/08 » toujours visible). Un client qui veut du frais crée un projet. Simple, honnête. Confirme que c'est bien l'intention.</div>
+
+</div>
+</body>
+</html>

@@ -864,6 +864,9 @@ export function MapView() {
                  'circle-color': ['case',
                    ['==', ['get', 'kind'], 'zone-concurrent'], '#E0A94F',
                    ['==', ['get', 'kind'], 'zone-origin'], '#4ADE80',
+                   // O2-1 (OUTILS-2) — permis au POINT MORT en ROUGE, en cours en VERT : l'œil sépare la
+                   // veille concurrentielle des opportunités dormantes sans changer d'écran.
+                   ['all', ['==', ['get', 'kind'], 'permis'], ['==', ['get', 'point_mort'], true]], '#E2726A',
                    ['==', ['get', 'kind'], 'radar'],
                    ['match', ['get', 'statut'],
                      'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#8FB4F0',
@@ -891,6 +894,20 @@ export function MapView() {
           // RADAR P3 — clic sur un pin Radar → sélectionne la parcelle ET ouvre la fiche du bien.
           if (props?.idu) select(String(props.idu))
           useApp.getState().setRadarToOpen(Number(props.bien_id))
+          ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
+        } else if (props?.kind === 'zone-concurrent') {
+          // F8 (OUTILS-3) — pastille concurrent CLIQUABLE : popup (nom, activité, date de création) +
+          // lien vers la parcelle. Contenu construit en DOM (textContent) → aucun risque d'injection.
+          const lon = Number(props.lon), lat = Number(props.lat)
+          const box = document.createElement('div'); box.style.cssText = 'font:12px system-ui;color:#e7e5e4;max-width:220px'
+          const nom = document.createElement('b'); nom.textContent = String(props.nom || 'Établissement (nom non diffusé)'); box.appendChild(nom)
+          const sub = document.createElement('div'); sub.style.cssText = 'color:#a8a29e;font-size:11px;margin-top:2px'
+          sub.textContent = String(props.activite || '') + (props.annee ? ` · depuis ${props.annee}` : ''); box.appendChild(sub)
+          const btn = document.createElement('button'); btn.textContent = 'voir la parcelle →'
+          btn.style.cssText = 'margin-top:6px;color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0'
+          box.appendChild(btn)
+          const popup = new maplibregl.Popup({ offset: 12 }).setLngLat([lon, lat]).setDOMContent(box).addTo(m)
+          btn.addEventListener('click', () => { parcelAt(lon, lat).then((r) => { if (r.idu) select(String(r.idu)) }).catch(() => {}); popup.remove() })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle

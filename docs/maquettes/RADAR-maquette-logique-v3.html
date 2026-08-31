@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RADAR — maquette, logique, référence · LABUSE</title>
+<style>
+  :root{
+    --fond:#0c0a09; --carte:#161412; --carte2:#1c1917; --bord:#2b2724;
+    --texte:#e7e5e4; --gris:#a8a29e; --gris2:#78716c;
+    --vert:#16A34A; --vert-clair:#4ade80; --vert-fond:rgba(22,163,74,.10);
+    --orange:#d97706; --orange-clair:#fbbf24; --orange-fond:rgba(217,119,6,.10);
+    --rouge:#dc2626; --rouge-fond:rgba(220,38,38,.10);
+    --bleu:#38bdf8;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--fond);color:var(--texte);font-family:var(--sans);line-height:1.55;padding-bottom:120px}
+  .page{max-width:1200px;margin:0 auto;padding:0 28px}
+
+  /* ===== entête ===== */
+  header{padding:56px 0 28px;border-bottom:1px solid var(--bord)}
+  .surtitre{font-family:var(--mono);font-size:11px;letter-spacing:.35em;color:var(--vert-clair);text-transform:uppercase}
+  h1{font-size:44px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+  .sous{color:var(--gris);max-width:760px}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--gris2);margin-top:14px}
+
+  /* ===== navigation ===== */
+  nav{position:sticky;top:0;background:rgba(12,10,9,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--bord);z-index:50}
+  nav .page{display:flex;gap:26px;padding-top:14px;padding-bottom:14px}
+  nav a{color:var(--gris);text-decoration:none;font-size:13px;font-family:var(--mono);letter-spacing:.06em}
+  nav a:hover{color:var(--vert-clair)}
+
+  h2{font-size:26px;font-weight:700;margin:64px 0 6px;letter-spacing:-.01em}
+  h3{font-size:16px;font-weight:700;margin:30px 0 10px;color:var(--texte)}
+  .chapeau{color:var(--gris);max-width:820px;margin-bottom:26px}
+  .num{font-family:var(--mono);font-size:12px;color:var(--vert-clair);letter-spacing:.25em}
+
+  /* ===== badges ===== */
+  .badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;padding:3px 9px;border-radius:20px;border:1px solid;text-transform:uppercase;white-space:nowrap}
+  .b-vert{color:var(--vert-clair);border-color:rgba(74,222,128,.35);background:var(--vert-fond)}
+  .b-orange{color:var(--orange-clair);border-color:rgba(251,191,36,.35);background:var(--orange-fond)}
+  .b-rouge{color:#f87171;border-color:rgba(248,113,113,.35);background:var(--rouge-fond)}
+  .b-gris{color:var(--gris);border-color:var(--bord);background:transparent}
+  .b-bleu{color:var(--bleu);border-color:rgba(56,189,248,.35);background:rgba(56,189,248,.08)}
+  .pastille{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+  /* ===== maquette écran ===== */
+  .ecran{border:1px solid var(--bord);border-radius:14px;overflow:hidden;background:var(--carte);margin:26px 0}
+  .barre-app{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--bord);background:var(--carte2)}
+  .logo{font-family:var(--mono);font-weight:700;letter-spacing:.2em;font-size:13px}
+  .recherche{flex:1;max-width:420px;background:var(--fond);border:1px solid var(--bord);border-radius:8px;padding:7px 12px;color:var(--gris2);font-size:13px}
+  .corps{display:grid;grid-template-columns:400px 1fr;min-height:640px}
+  @media(max-width:900px){.corps{grid-template-columns:1fr}}
+
+  .colonne{border-right:1px solid var(--bord);padding:18px;overflow:hidden}
+  .titre-vue{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--gris2);text-transform:uppercase}
+  .titre-vue+h4{font-size:22px;font-weight:800;margin:4px 0 2px}
+  .note-vue{font-size:12.5px;color:var(--gris2);margin-bottom:14px}
+
+  .filtres{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
+  .champ{background:var(--fond);border:1px solid var(--bord);border-radius:8px;padding:7px 11px;font-size:12.5px;color:var(--gris)}
+  .segment{display:inline-flex;border:1px solid var(--bord);border-radius:8px;overflow:hidden}
+  .segment span{padding:6px 11px;font-size:12px;color:var(--gris2)}
+  .segment .actif{background:var(--vert-fond);color:var(--vert-clair)}
+
+  .rang-filtres-badges{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 16px}
+
+  .compteur{display:flex;justify-content:space-between;align-items:center;margin:8px 0 12px;font-size:13px}
+  .compteur b{font-size:17px}
+  .compteur .carte-n{color:var(--vert-clair)}
+
+  .annonce{background:var(--carte2);border:1px solid var(--bord);border-radius:12px;padding:14px;margin-bottom:12px}
+  .annonce .l1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .type{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--vert-clair);text-transform:uppercase}
+  .type.t-app{color:var(--gris)}
+  .commune{color:var(--gris);font-size:12.5px;font-family:var(--mono)}
+  .prix{font-size:19px;font-weight:800;white-space:nowrap}
+  .l2{font-size:13px;color:var(--gris);margin:4px 0 8px}
+  .l3{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .l4{display:flex;justify-content:space-between;margin-top:9px;font-size:12px;color:var(--gris2)}
+  .lien-annonce{color:var(--vert-clair);text-decoration:none}
+
+  .carte-ile{position:relative;background:
+    radial-gradient(ellipse 60% 45% at 52% 46%, rgba(74,222,128,.06), transparent 70%),
+    var(--carte)}
+  .ile{position:absolute;inset:8% 10%;border:1.5px solid rgba(74,222,128,.4);border-radius:48% 52% 55% 45% / 52% 48% 52% 48%;
+    background:
+      repeating-linear-gradient(37deg, transparent 0 9px, rgba(120,113,108,.06) 9px 10px),
+      repeating-linear-gradient(-21deg, transparent 0 13px, rgba(120,113,108,.05) 13px 14px)}
+  .legende-carte{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--carte2);border:1px solid var(--bord);border-radius:8px;padding:7px 14px;font-size:12px;color:var(--gris);white-space:nowrap}
+  .legende-carte b{color:var(--vert-clair);font-weight:600}
+  .legende-carte i{color:var(--gris);font-style:normal}
+  .point{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--vert-clair);box-shadow:0 0 0 4px rgba(74,222,128,.18)}
+  .pied-carte{position:absolute;bottom:14px;left:18px;display:flex;gap:16px;font-size:12px;color:var(--gris)}
+  .pied-carte .pastille{margin-right:5px}
+  .hint-carte{position:absolute;bottom:14px;right:18px;background:var(--carte2);border:1px solid var(--bord);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--gris2)}
+
+  /* ===== panneau veilles ===== */
+  .deux-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:26px 0}
+  @media(max-width:900px){.deux-col{grid-template-columns:1fr}}
+  .panneau{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:20px}
+  .panneau h4{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gris2);margin-bottom:14px}
+  .canal{display:flex;gap:13px;padding:13px 0;border-top:1px solid var(--bord)}
+  .canal:first-of-type{border-top:none}
+  .canal .ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .ico-vert{background:var(--vert-fond);border:1px solid rgba(74,222,128,.3)}
+  .ico-bleu{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3)}
+  .ico-gris{background:transparent;border:1px solid var(--bord)}
+  .canal b{font-size:14px}
+  .canal p{font-size:12.5px;color:var(--gris);margin-top:2px}
+  .canal .qui{font-family:var(--mono);font-size:10.5px;color:var(--gris2);margin-top:5px}
+
+  /* ===== schéma logique ===== */
+  .flux{margin:26px 0}
+  .etape{display:grid;grid-template-columns:56px 1fr;gap:0;position:relative}
+  .rail{position:relative;display:flex;justify-content:center}
+  .rail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--bord)}
+  .etape:first-child .rail::before{top:22px}
+  .etape:last-child .rail::before{bottom:calc(100% - 22px)}
+  .noeud{width:34px;height:34px;border-radius:50%;background:var(--carte2);border:2px solid var(--vert);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--vert-clair);position:relative;z-index:2;margin-top:6px}
+  .noeud.n-orange{border-color:var(--orange);color:var(--orange-clair)}
+  .noeud.n-gris{border-color:var(--gris2);color:var(--gris)}
+  .bloc-etape{background:var(--carte);border:1px solid var(--bord);border-radius:13px;padding:17px 20px;margin:0 0 18px 8px}
+  .bloc-etape h4{font-size:15px;font-weight:700;margin-bottom:3px}
+  .bloc-etape .qui-fait{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--gris2);text-transform:uppercase;margin-bottom:8px}
+  .bloc-etape p{font-size:13.5px;color:var(--gris)}
+  .bloc-etape .regles{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .regle{display:flex;gap:9px;font-size:13px;color:var(--gris);align-items:baseline}
+  .regle::before{content:"—";color:var(--vert);flex-shrink:0}
+  .regle.r-interdit::before{content:"✕";color:#f87171}
+  .embranchement{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  @media(max-width:760px){.embranchement{grid-template-columns:1fr}}
+  .sortie{border-radius:10px;padding:12px 14px;border:1px solid}
+  .s-vert{border-color:rgba(74,222,128,.35);background:var(--vert-fond)}
+  .s-orange{border-color:rgba(251,191,36,.3);background:var(--orange-fond)}
+  .s-gris{border-color:var(--bord);background:transparent}
+  .sortie b{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px}
+  .s-vert b{color:var(--vert-clair)}.s-orange b{color:var(--orange-clair)}.s-gris b{color:var(--gris)}
+  .sortie p{font-size:12.5px;color:var(--gris)}
+
+  /* ===== doc référence ===== */
+  .fiche{background:var(--carte);border:1px solid var(--bord);border-radius:13px;padding:20px 22px;margin:16px 0}
+  .fiche h4{font-size:15px;font-weight:700;margin-bottom:9px}
+  .fiche p{font-size:13.5px;color:var(--gris);margin-bottom:8px}
+  .fiche p:last-child{margin-bottom:0}
+  .fiche .verdict{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:2px 8px;border-radius:5px;margin-left:8px}
+  .v-oui{color:var(--vert-clair);background:var(--vert-fond)}
+  .v-non{color:#f87171;background:var(--rouge-fond)}
+  .v-plus-tard{color:var(--orange-clair);background:var(--orange-fond)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gris2);text-align:left;padding:8px 12px;border-bottom:1px solid var(--bord)}
+  td{padding:9px 12px;border-bottom:1px solid var(--bord);color:var(--gris);vertical-align:top}
+  td:first-child{color:var(--texte)}
+  .avert{border-left:3px solid var(--orange);background:var(--orange-fond);border-radius:0 10px 10px 0;padding:13px 17px;margin:16px 0;font-size:13.5px;color:var(--texte)}
+  .avert b{color:var(--orange-clair)}
+  code{font-family:var(--mono);font-size:12px;background:var(--fond);border:1px solid var(--bord);border-radius:5px;padding:1px 6px;color:var(--vert-clair)}
+
+  /* ===== parcours dépôt agence ===== */
+  .stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:22px 0 6px}
+  @media(max-width:760px){.stepper{grid-template-columns:1fr 1fr}}
+  .pas{background:var(--carte);border:1px solid var(--bord);border-radius:12px;padding:14px}
+  .pas .n{font-family:var(--mono);font-size:11px;color:var(--gris2);letter-spacing:.2em}
+  .pas b{display:block;font-size:13.5px;margin:6px 0 4px}
+  .pas p{font-size:12px;color:var(--gris2)}
+  .pas.actif{border-color:rgba(74,222,128,.4)}
+  .pas.actif .n{color:var(--vert-clair)}
+  .form-ligne{display:grid;grid-template-columns:170px 1fr auto;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--bord);font-size:13.5px}
+  .form-ligne:last-child{border-bottom:none}
+  .form-ligne label{color:var(--gris2);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+  .form-ligne .val{color:var(--texte)}
+  .prefill{font-family:var(--mono);font-size:10px;color:var(--vert-clair);letter-spacing:.06em;white-space:nowrap}
+  .a-saisir{font-family:var(--mono);font-size:10px;color:var(--orange-clair);letter-spacing:.06em;white-space:nowrap}
+  .cta{display:inline-block;background:var(--vert);color:#fff;border-radius:9px;padding:9px 18px;font-size:13.5px;font-weight:600}
+  .cta-ghost{display:inline-block;border:1px solid var(--bord);color:var(--gris);border-radius:9px;padding:8px 16px;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="page">
+    <div class="surtitre">LABUSE · document produit</div>
+    <h1>Radar</h1>
+    <p class="sous">Le flux du marché immobilier réunionnais, croisé chaque soir avec le foncier que personne d'autre n'a. Maquette de l'écran, logique du pipeline, et tout ce qu'il faut savoir — décisions du 30/08/2026 intégrées.</p>
+    <div class="meta">v3 · remplace maquette-v1 et v2 · Instruire client retiré · badge « sous le marché » · mémoire foncière et délai de vente validés</div>
+  </div>
+</header>
+
+<nav><div class="page">
+  <a href="#ecran">01 · L'écran</a>
+  <a href="#veilles">02 · Notifications</a>
+  <a href="#logique">03 · La logique</a>
+  <a href="#reference">04 · Référence</a>
+  <a href="#depot">05 · Dépôt agence</a>
+  <a href="#roadmap">06 · Roadmap</a>
+</div></nav>
+
+<div class="page">
+
+<!-- ================= 01 ECRAN ================= -->
+<h2 id="ecran"><span class="num">01</span> · L'écran Radar, version consolidée</h2>
+<p class="chapeau">Ce que voit un client. Deux nouveautés par rapport à l'existant : le badge <b>Sous le marché</b> (filtrable, calculé contre le référentiel LABUSE de la zone) et la disparition du bouton Instruire. La liste et la carte ne changent pas de structure.</p>
+
+<div class="ecran">
+  <div class="barre-app">
+    <span class="logo">LABUSE</span>
+    <span class="recherche">Rechercher : IDU, adresse exacte…</span>
+  </div>
+  <div class="corps">
+    <div class="colonne">
+      <div class="titre-vue">Radar</div>
+      <h4>Les biens en vente</h4>
+      <p class="note-vue">Repérés sur les portails. Des faits et un lien — jamais le contenu de l'annonce.</p>
+
+      <div class="filtres">
+        <span class="champ">Toute l'île ▾</span>
+        <span class="champ">Tous types ▾</span>
+        <span class="champ">Prix min</span>
+        <span class="champ">Prix max</span>
+        <span class="champ">Surface min</span>
+      </div>
+      <div class="filtres">
+        <span class="segment"><span class="actif">Tous</span><span>Rattachés</span></span>
+        <span class="segment"><span class="actif">Tous</span><span>Particulier</span><span>Pro</span></span>
+      </div>
+      <div class="rang-filtres-badges">
+        <span class="badge b-vert">▼ Sous le marché</span>
+        <span class="badge b-vert">Baisse de prix</span>
+        <span class="badge b-orange">En vente longue</span>
+      </div>
+
+      <div class="compteur"><span><b>35</b> biens · <span class="carte-n">3 sur la carte</span></span><span class="champ">Plus récentes ▾</span></div>
+
+      <div class="annonce">
+        <div class="l1"><span><span class="type">Terrain</span> · <span class="commune">Saint-Denis</span></span><span class="prix">149 800 €</span></div>
+        <div class="l2">516 m² de terrain · 290 €/m²</div>
+        <div class="l3">
+          <span class="badge b-vert">▼ Sous le marché · −36 %</span>
+          <span class="badge b-gris">réf. zone 455 €/m²</span>
+        </div>
+        <div class="l4"><span class="lien-annonce">Voir l'annonce sur Leboncoin →</span><span>Pro · 2 j</span></div>
+      </div>
+
+      <div class="annonce">
+        <div class="l1"><span><span class="type">Maison</span> · <span class="commune">Sainte-Marie</span></span><span class="prix">375 000 €</span></div>
+        <div class="l2">132 m² hab · 480 m² de terrain</div>
+        <div class="l3">
+          <span class="badge b-vert"><span class="pastille" style="background:var(--vert-clair)"></span> Rattachée · sur la carte</span>
+          <span class="badge b-vert">Baisse — 30 000 €</span>
+        </div>
+        <div class="l4"><span class="lien-annonce">Voir l'annonce sur Leboncoin →</span><span>Particulier · 12 j</span></div>
+      </div>
+
+      <div class="annonce">
+        <div class="l1"><span><span class="type">Terrain</span> · <span class="commune">Saint-Denis</span></span><span class="prix">367 500 €</span></div>
+        <div class="l2">1 108 m² de terrain · 332 €/m²</div>
+        <div class="l3">
+          <span class="badge b-orange">En vente longue · 352 j</span>
+        </div>
+        <div class="l4"><span class="lien-annonce">Voir l'annonce sur Leboncoin →</span><span>Pro · 352 j</span></div>
+      </div>
+
+      <div class="annonce" style="opacity:.65">
+        <div class="l1"><span><span class="type">Terrain</span> · <span class="commune">Saint-Denis</span></span><span class="prix">2 491 000 €</span></div>
+        <div class="l2">377 m² hab · 377 m² de terrain · 12 pièces</div>
+        <div class="l3">
+          <span class="badge b-rouge">À qualifier · données incohérentes</span>
+        </div>
+        <div class="l4"><span class="lien-annonce">Voir l'annonce sur Leboncoin →</span><span>Pro · 31 j</span></div>
+      </div>
+
+      <div class="annonce">
+        <div class="l1"><span><span class="type t-app">Appartement</span> · <span class="commune">Saint-Denis</span></span><span class="prix">336 000 €</span></div>
+        <div class="l2">3 pièces · 72 m² hab · 4 667 €/m²</div>
+        <div class="l3">
+          <span class="badge b-gris">Non localisé — position au quartier</span>
+        </div>
+        <div class="l4"><span class="lien-annonce">Voir l'annonce sur Leboncoin →</span><span>Pro · 10 j</span></div>
+      </div>
+    </div>
+
+    <div class="carte-ile">
+      <div class="legende-carte">Bien <b>rattaché</b> : la carte vole à sa parcelle · <i>non localisé</i> : l'annonce s'ouvre sur le portail</div>
+      <div class="ile"></div>
+      <span class="point" style="top:22%;left:44%"></span>
+      <span class="point" style="top:26%;left:52%"></span>
+      <span class="point" style="top:24%;left:78%"></span>
+      <div class="pied-carte">
+        <span><span class="pastille" style="background:var(--vert-clair)"></span>En vente</span>
+        <span><span class="pastille" style="background:var(--orange-clair)"></span>En vente longue</span>
+      </div>
+      <div class="hint-carte">Cliquez une parcelle pour ouvrir sa fiche</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 02 NOTIFICATIONS ================= -->
+<h2 id="veilles"><span class="num">02</span> · Notifications : deux canaux, un badge</h2>
+<p class="chapeau">Décision du 30/08 : « sous le marché » n'est <b>pas</b> un canal de notification — sinon un client recevrait deux mails pour la même annonce. C'est un attribut de l'annonce : badge dans la liste, filtre, et visible dans les cartes du digest quand l'annonce y figure.</p>
+
+<div class="deux-col">
+  <div class="panneau">
+    <h4>Ce que le client configure</h4>
+    <div class="canal">
+      <div class="ico ico-vert">✉</div>
+      <div><b>Veille annonces — par critères</b>
+        <p>« Terrain · Saint-Benoît · plus de 2 000 m² · moins de 350 000 € ». Un mail par veille déclenchée, critères rappelés dans le mail.</p>
+        <div class="qui">Template 13 · à 18 h · construit et testé</div>
+      </div>
+    </div>
+    <div class="canal">
+      <div class="ico ico-bleu">🔔</div>
+      <div><b>Cloche parcelle — suivi d'une parcelle précise</b>
+        <p>Le client suit une parcelle (IDU). Tout événement la concernant le notifie — y compris, demain, une mise en vente détectée par le Radar (mémoire foncière).</p>
+        <div class="qui">Existant · inchangé</div>
+      </div>
+    </div>
+    <div class="canal">
+      <div class="ico ico-gris">◎</div>
+      <div><b>Digest quotidien — tout le marché du jour</b>
+        <p>Les biens du jour, baisses d'abord, plafond 10 + « et N autres ». Jamais de mail vide.</p>
+        <div class="qui">Template 12 · à 18 h · construit et testé</div>
+      </div>
+    </div>
+  </div>
+  <div class="panneau">
+    <h4>Ce qui n'est pas un canal</h4>
+    <div class="canal">
+      <div class="ico ico-vert">▼</div>
+      <div><b>Sous le marché — un badge, jamais un mail dédié</b>
+        <p>Prix demandé comparé au référentiel LABUSE de la zone (terrain nu ou bâti, selon le type). L'écart est affiché, sourcé des deux côtés, avec les millésimes. Filtrable dans la liste ; présent sur la carte de l'annonce dans le digest et l'alerte de veille.</p>
+        <div class="qui">Doctrine : écart constaté entre deux sources datées — jamais une estimation de valeur, jamais un verdict</div>
+      </div>
+    </div>
+    <div class="canal">
+      <div class="ico ico-gris">✕</div>
+      <div><b>Instruire — retiré de l'interface client</b>
+        <p>Le client ne rattache pas de parcelle. Un rattachement client erroné serait un faux fait servi à tous — le péché cardinal. Le rattachement est machine (deux critères convergents) ou n'est pas.</p>
+        <div class="qui">L'écran d'instruction (ortho + critères) survit côté admin, pour Vic seul — décision du 30/08</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 03 LOGIQUE ================= -->
+<h2 id="logique"><span class="num">03</span> · La logique, du geste au mail</h2>
+<p class="chapeau">Le pipeline complet. Une seule entrée manuelle — le dépôt d'une page enregistrée — puis tout est automatique jusqu'aux mails de 18 h.</p>
+
+<div class="flux">
+
+  <div class="etape">
+    <div class="rail"><div class="noeud">1</div></div>
+    <div class="bloc-etape">
+      <h4>Collecte — le rituel de 5 minutes</h4>
+      <div class="qui-fait">Vic · chaque jour à heure fixe, avant 18 h</div>
+      <p>Recherche Leboncoin sauvegardée, tri « plus récentes ». <code>⌘S</code> → « page web complète » sur chaque page de résultats (≈ 35 annonces par page, 4-6 pages). Dépôt des fichiers dans l'admin.</p>
+      <div class="regles">
+        <div class="regle">Vider le cache (ou navigation privée) avant la session — Chrome peut resservir la page précédente</div>
+        <div class="regle">Barrière horaire : on collecte jusqu'à dépasser l'heure de la session d'hier — règle qui survit aux suppressions et aux remontées</div>
+        <div class="regle r-interdit">Jamais d'agent automatisé qui navigue — c'est le scraping, jurisprudence Jinka (question posée à l'avocat pour la ligne exacte)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="etape">
+    <div class="rail"><div class="noeud">2</div></div>
+    <div class="bloc-etape">
+      <h4>Parseur — deux variantes de page, un enrichissement</h4>
+      <div class="qui-fait">Machine · au dépôt</div>
+      <p>Leboncoin fait des tests A/B. Le parseur reconnaît la page et s'adapte :</p>
+      <div class="embranchement">
+        <div class="sortie s-vert"><b>Variante A — riche</b><p>JSON complet (<code>searchData</code>) : position, surface terrain, dates réelles, pro/particulier, tout. Le cas d'hier.</p></div>
+        <div class="sortie s-orange"><b>Variante B — dégradée</b><p>Le JSON a disparu (constaté le 30/08, <code>groupName: b</code>). On lit le DOM des vignettes : titre, prix, commune, lien, badges. Pas de position, pas de date de 1ʳᵉ publication — l'annonce entre étiquetée « dégradée » et sera enrichie si elle repasse en A un autre jour.</p></div>
+        <div class="sortie s-gris"><b>Page d'annonce seule</b><p>Déposée à l'unité, elle n'entre pas au flux : elle <b>enrichit</b> le bien déjà connu (description → zone PLU, lotissement) pour l'écran d'instruction admin.</p></div>
+      </div>
+      <div class="regles" style="margin-top:12px">
+        <div class="regle">Échec bruyant si aucune des trois structures n'est reconnue — le message nomme la variante attendue, jamais « réseau ou serveur »</div>
+        <div class="regle">Idempotence par <code>list_id</code> : redéposer un fichier ne crée aucun doublon ; un prix qui a bougé est historisé</div>
+        <div class="regle"><code>first_publication_date</code> fait foi pour la nouveauté — le tri « plus récentes » du portail est saturé de republications (34/35 mesuré)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="etape">
+    <div class="rail"><div class="noeud n-orange">3</div></div>
+    <div class="bloc-etape">
+      <h4>Cohérence — le tri des annonces douteuses</h4>
+      <div class="qui-fait">Machine · après extraction</div>
+      <p>Les vendeurs catégorisent mal. Un « terrain » à 12 pièces, piscine et année 1942, au prix du m² à 4× le terrain nu de la commune : les champs se contredisent.</p>
+      <div class="regles">
+        <div class="regle">Contradiction → statut <b>À qualifier</b> : hors statistiques, hors veilles, hors rattachement, mais visible dans le flux avec ses motifs</div>
+        <div class="regle">Le référentiel de prix LABUSE sert de garde-fou : un écart de deux ordres de grandeur est un signal de mauvaise catégorie</div>
+        <div class="regle r-interdit">Jamais un fait faux servi — mieux vaut « à qualifier » qu'une valeur fausse dans une moyenne</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="etape">
+    <div class="rail"><div class="noeud">4</div></div>
+    <div class="bloc-etape">
+      <h4>Rattachement — machine seulement, exigeant</h4>
+      <div class="qui-fait">Machine · cascade V2 · mesuré sur 3 mandats</div>
+      <p><b>Rattachée</b> exige au moins deux critères indépendants qui convergent sur la même parcelle — position serrée <b>et</b> surface terrain <b>et</b> emprise bâtie cohérente. Les critères retenus sont stockés avec le rattachement : on peut toujours dire pourquoi il tient.</p>
+      <div class="embranchement">
+        <div class="sortie s-vert"><b>Rattachée</b><p>≈ 3 sur 35 par page. Point sur la carte, rapprochement DVF possible, mémoire foncière écrite sur la fiche parcelle.</p></div>
+        <div class="sortie s-orange"><b>Piste</b><p>Des candidates existent, personne ne tranche. Aucun automatisme n'en part. L'admin peut instruire (ortho + critères) ; le client, non.</p></div>
+        <div class="sortie s-gris"><b>Non rattachée</b><p>Appartements (par nature) et biens sans critère. Position au quartier, et c'est dit.</p></div>
+      </div>
+      <div class="regles" style="margin-top:12px">
+        <div class="regle r-interdit">Le client ne rattache jamais — un rattachement erroné servi comme fait est le pire faux positif (décision du 30/08)</div>
+        <div class="regle">Pourquoi ce plafond : mesuré, pas supposé. Surface seule → 40 % de faux (parcelles vides). DVF, DPE, piscine → zéro signal. Zone PLU → discrimine, mais les terrains sont floutés jusqu'à 2 km. Le plafond est dans ce que les vendeurs publient.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="etape">
+    <div class="rail"><div class="noeud">5</div></div>
+    <div class="bloc-etape">
+      <h4>Signaux croisés — ce que personne d'autre ne peut produire</h4>
+      <div class="qui-fait">Machine · au niveau commune et zone, sans rattachement</div>
+      <div class="regles">
+        <div class="regle"><b>Sous le marché</b> : prix demandé vs référentiel LABUSE de la zone → le badge de l'écran 01</div>
+        <div class="regle"><b>Écart demandé / acté</b> par commune : médiane Radar vs médiane DVF (+31,9 % mesuré sur le bâti à Saint-Denis) — la marge de négociation du moment, servie dans Communes et l'Étude de zone</div>
+        <div class="regle"><b>Délai de vente</b> par commune et type (validé 30/08) : temps médian entre 1ʳᵉ publication et disparition — mesurable après quelques semaines de collecte</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="etape">
+    <div class="rail"><div class="noeud">6</div></div>
+    <div class="bloc-etape">
+      <h4>Mémoire foncière — la valeur qui s'accumule</h4>
+      <div class="qui-fait">Machine · sur les seules annonces rattachées · validé 30/08</div>
+      <p>Chaque annonce rattachée écrit son histoire sur la fiche parcelle : « mise en vente 03/2026 à 250 k€ · baissée à 230 k€ en 06 · retirée en 08 sans vente DVF ». Dans deux ans, les fiches LABUSE porteront un historique de mise en vente qu'aucun concurrent ne peut reconstituer — et le signal « propriétaire vendeur » nourrit le Courrier.</p>
+      <div class="regles">
+        <div class="regle">« Vendue via DVF » et « retirée sans vente » : réservées aux rattachées, jamais déduites d'un lien mort</div>
+        <div class="regle">Une republication est une confirmation de vente en cours — elle repousse la re-vérification</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="etape">
+    <div class="rail"><div class="noeud">7</div></div>
+    <div class="bloc-etape">
+      <h4>18 h — les mails partent</h4>
+      <div class="qui-fait">Machine · cron quotidien (à poser — passe CRON)</div>
+      <p>Digest (template 12) à tous les clients actifs ; une alerte (template 13) par veille déclenchée, critères rappelés. Un client concerné reçoit les deux — voulu, pas de déduplication. Les cartes portent leurs badges, dont « sous le marché ». Jamais de mail vide. Lien vers le portail : on ne republie pas, on ramène du trafic.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= 04 REFERENCE ================= -->
+<h2 id="reference"><span class="num">04</span> · Les décisions, et pourquoi</h2>
+
+<div class="fiche">
+  <h4>Instruire côté client <span class="verdict v-non">Retiré</span></h4>
+  <p>« Et s'ils disaient faux ? » — exactement. Un rattachement client erroné devient un fait servi à tous les autres clients, écrit dans la mémoire foncière, et un jour un courrier au mauvais propriétaire. La doctrine LABUSE (jamais un faux fait servi) s'applique aussi aux clients.</p>
+  <p>L'écran d'instruction (candidates + ortho + critères ✓/✗) survit <b>côté admin uniquement</b> : Vic peut trancher une piste quand il en a besoin, avec la mention « rattachement humain ». La mémoire foncière ne s'écrit donc que sur les rattachées machine et les rattachées admin — moins de volume, zéro pollution.</p>
+</div>
+
+<div class="fiche">
+  <h4>Se brancher au fichier AMEPI <span class="verdict v-non">Impossible — mais la leçon vaut mieux</span></h4>
+  <p>L'AMEPI est un fichier fermé : réservé aux agences titulaires de la carte professionnelle, adhérentes d'une association locale, accessible via leurs logiciels métier. LABUSE n'est pas une agence — pas d'accès, et rien n'indique qu'un fichier local actif existe au 974.</p>
+  <p>La vraie leçon est ailleurs : 4 000 agences françaises partagent déjà leurs mandats exclusifs, <b>adresse comprise</b>, entre professionnels, depuis 2009. La culture « entre pros, on partage le précis » existe. LABUSE ne se branche pas à l'AMEPI — LABUSE peut devenir l'équivalent réunionnais pour la vente aux acheteurs professionnels (étage dépôt agences, roadmap). Précédent côté promoteurs : City&You (Vinci) fait l'intermédiation propriétaires → promoteurs en métropole. Personne ne le fait au 974.</p>
+</div>
+
+<div class="fiche">
+  <h4>Le plafond du rattachement automatique <span class="verdict v-oui">Mesuré, assumé, affiché</span></h4>
+  <table>
+    <tr><th>Piste testée</th><th>Résultat de mesure</th><th>Conclusion</th></tr>
+    <tr><td>Surface terrain seule</td><td>7 uniques / 33, dont 4 parcelles vides</td><td>≈ 40 % de faux — insuffisant seul</td></tr>
+    <tr><td>+ emprise bâtie (BD TOPO)</td><td>3 uniques, tous plausibles à l'ortho</td><td>Le duo qui fonde « Rattachée »</td></tr>
+    <tr><td>DVF à l'envers</td><td>Jamais convergent (mutations à des km)</td><td>Piste morte</td></tr>
+    <tr><td>DPE · piscine</td><td>0 signal sur le corpus</td><td>Pistes mortes (annonces 974 sans DPE)</td></tr>
+    <tr><td>Zone PLU (description)</td><td>Discrimine 75-100 % du rayon — mais terrains floutés jusqu'à 2 km</td><td>Excellent critère d'instruction admin, pas de rattachement machine</td></tr>
+  </table>
+  <p>Le plafond n'est pas dans le code : il est dans ce que les vendeurs publient (adresse masquée 6 fois sur 6). Le produit le dit au lieu de le maquiller.</p>
+</div>
+
+<div class="fiche">
+  <h4>Collecte — portails et périmètre <span class="verdict v-oui">Leboncoin d'abord</span></h4>
+  <p>Leboncoin : 70,6 % du marché français des annonces de particuliers, et une domination plus forte encore au 974 (~5 000 annonces de vente contre 2 924 tout confondu sur SeLoger). Les notaires (Immonot) y republient. Les appartements restent collectés — coût nul, ils nourrissent le prix du bâti en temps réel là où DVF a six mois de retard.</p>
+  <p><b>Mesure avant d'élargir</b> : pendant deux semaines, une passe hebdomadaire SeLoger + Bienici pour compter les annonces absentes de LBC. Sous ~10-15 % d'exclusivités, LBC-only assumé et affiché (« couverture : Leboncoin »). Au-dessus, on ajoute un portail au rituel.</p>
+</div>
+
+<div class="avert"><b>Risque de collecte identifié le 30/08 :</b> Leboncoin sert des variantes de page par tests A/B (<code>groupName: b</code> constaté). La variante B ne porte plus le JSON riche — sans le correctif parseur, tout dépôt échoue. Parade immédiate : navigation privée (nouveau tirage de variante). Parade durable : le parseur double chemin de l'étape 2, à mandater en priorité.</div>
+
+<!-- ================= 05 DEPOT AGENCE ================= -->
+<h2 id="depot"><span class="num">05</span> · Déposer une annonce — le parcours agence</h2>
+<p class="chapeau">Le renversement du problème : au lieu de deviner l'adresse depuis les portails, faire venir ceux qui l'ont. L'agence ne ressaisit <b>rien</b> — elle colle le lien de son annonce, l'IA reconstruit tout, elle n'ajoute que l'adresse exacte. Trente secondes, et son annonce devient la plus riche de La Réunion.</p>
+
+<div class="stepper">
+  <div class="pas actif"><span class="n">ÉTAPE 1</span><b>Coller le lien</b><p>L'URL Leboncoin de sa propre annonce — ou la page enregistrée</p></div>
+  <div class="pas actif"><span class="n">ÉTAPE 2</span><b>L'IA reconstruit</b><p>Tout est pré-rempli depuis l'annonce. L'agence vérifie, corrige si besoin</p></div>
+  <div class="pas actif"><span class="n">ÉTAPE 3</span><b>L'adresse exacte</b><p>Le seul champ ajouté. La parcelle est identifiée instantanément</p></div>
+  <div class="pas actif"><span class="n">ÉTAPE 4</span><b>Publication</b><p>Notification aux abonnés, bouton « Intéressé », contact direct</p></div>
+</div>
+
+<div class="ecran">
+  <div class="barre-app"><span class="logo">LABUSE</span><span style="font-family:var(--mono);font-size:11px;color:var(--gris2);letter-spacing:.2em">RADAR · DÉPOSER UNE ANNONCE · ÉTAPE 2/4</span></div>
+  <div style="padding:22px;max-width:720px">
+    <p class="note-vue" style="margin-bottom:14px">Annonce reconstruite depuis <code>leboncoin.fr/ad/ventes_immobilieres/3253364472</code> — vérifiez, corrigez si besoin. Rien à ressaisir.</p>
+    <div class="form-ligne"><label>Type de bien</label><span class="val">Terrain</span><span class="prefill">✓ pré-rempli</span></div>
+    <div class="form-ligne"><label>Prix</label><span class="val">252 350 € · 350 €/m²</span><span class="prefill">✓ pré-rempli</span></div>
+    <div class="form-ligne"><label>Surface terrain</label><span class="val">721 m²</span><span class="prefill">✓ pré-rempli</span></div>
+    <div class="form-ligne"><label>Commune · quartier</label><span class="val">Saint-Denis · La Bretagne</span><span class="prefill">✓ pré-rempli</span></div>
+    <div class="form-ligne"><label>Description</label><span class="val" style="color:var(--gris)">« Terrain constructible de 721 m², expositions optimales… » — reprise de votre annonce</span><span class="prefill">✓ pré-rempli</span></div>
+    <div class="form-ligne"><label>Photos</label><span class="val" style="color:var(--gris)">4 photos reprises de votre annonce</span><span class="prefill">✓ pré-rempli</span></div>
+    <div class="form-ligne"><label>Référence · mandat</label><span class="val">1968457</span><span class="prefill">✓ pré-rempli</span></div>
+    <div style="margin-top:18px;display:flex;gap:10px"><span class="cta">Continuer → l'adresse</span><span class="cta-ghost">Corriger un champ</span></div>
+  </div>
+</div>
+
+<div class="ecran">
+  <div class="barre-app"><span class="logo">LABUSE</span><span style="font-family:var(--mono);font-size:11px;color:var(--gris2);letter-spacing:.2em">RADAR · DÉPOSER UNE ANNONCE · ÉTAPE 3/4</span></div>
+  <div style="padding:22px;max-width:720px">
+    <div class="form-ligne"><label>Adresse exacte</label><span class="val">27 chemin Vidot, La Bretagne, 97490 Saint-Denis</span><span class="a-saisir">à saisir — visible des seuls abonnés</span></div>
+    <div class="form-ligne"><label>Parcelle identifiée</label><span class="val" style="font-family:var(--mono)">97411000AB0123 <span class="badge b-vert" style="margin-left:8px"><span class="pastille" style="background:var(--vert-clair)"></span> Rattachée — certaine</span></span><span></span></div>
+    <div style="background:var(--carte2);border:1px solid var(--bord);border-radius:11px;padding:15px 17px;margin-top:16px">
+      <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--gris2);text-transform:uppercase;margin-bottom:10px">Ce que LABUSE ajoute à votre annonce — automatiquement</div>
+      <div class="regles">
+        <div class="regle">Zone PLU calibrée (UD — urbaine), servitudes et prescriptions</div>
+        <div class="regle">Risques : aléa inondation, mouvement de terrain, CatNat de la commune</div>
+        <div class="regle">Marché du secteur : DVF, prix demandés, écart demandé/acté</div>
+        <div class="regle">Potentiel : emprise constructible, contexte foncier autour de la parcelle</div>
+      </div>
+      <p style="font-size:12.5px;color:var(--gris2);margin-top:10px">Votre annonce ici est plus riche que partout ailleurs — c'est l'argument du dépôt.</p>
+    </div>
+    <div style="margin-top:18px"><span class="cta">Continuer → publication</span></div>
+  </div>
+</div>
+
+<div class="ecran">
+  <div class="barre-app"><span class="logo">LABUSE</span><span style="font-family:var(--mono);font-size:11px;color:var(--gris2);letter-spacing:.2em">RADAR · ANNONCE PUBLIÉE · CÔTÉ ABONNÉ</span></div>
+  <div style="padding:22px;max-width:720px">
+    <div class="annonce" style="border-color:rgba(74,222,128,.35)">
+      <div class="l1"><span><span class="type">Terrain</span> · <span class="commune">Saint-Denis · La Bretagne</span></span><span class="prix">252 350 €</span></div>
+      <div class="l2">721 m² de terrain · 350 €/m² · zone UD</div>
+      <div class="l3">
+        <span class="badge b-vert"><span class="pastille" style="background:var(--vert-clair)"></span> Rattachée — déposée par l'agence</span>
+        <span class="badge b-bleu">Agence Immo Transac · exclusivité</span>
+      </div>
+      <div class="l4"><span style="display:flex;gap:10px"><span class="cta" style="padding:7px 14px;font-size:12.5px">Intéressé — être mis en relation</span><span class="cta-ghost" style="padding:6px 12px;font-size:12px">Ouvrir la fiche parcelle</span></span><span>Déposée aujourd'hui</span></div>
+    </div>
+    <div class="regles" style="margin-top:14px">
+      <div class="regle">« Intéressé » transmet les coordonnées de l'abonné à l'agence — contact direct, LABUSE ne s'interpose pas</div>
+      <div class="regle">Tant que le volume de dépôts est faible : notification à tous les abonnés (l'argument commercial de l'agence). Si le volume monte : bascule vers les veilles correspondantes, pour ne jamais devenir du spam</div>
+      <div class="regle">L'annonce déposée apparaît en tête du digest de 18 h avec son badge</div>
+    </div>
+  </div>
+</div>
+
+<div class="fiche">
+  <h4>Les règles du dépôt — ce qui change par rapport au collecté</h4>
+  <table>
+    <tr><th></th><th>Annonce collectée (portails)</th><th>Annonce déposée (agence)</th></tr>
+    <tr><td>Contenu affiché</td><td>Faits + lien seulement — jamais photo ni texte</td><td>Photos, texte, tout : l'agence dépose <b>sa</b> propre annonce et nous en confie l'affichage</td></tr>
+    <tr><td>Rattachement</td><td>Rare, deux critères convergents exigés</td><td><b>Certain à la source</b> — l'adresse est donnée</td></tr>
+    <tr><td>Adresse</td><td>Masquée par le vendeur 6 fois sur 6</td><td>Visible des seuls abonnés — jamais publique, c'est ce qui rassure l'agence</td></tr>
+    <tr><td>Mémoire foncière</td><td>Sur les seules rattachées</td><td>Toujours — chaque dépôt enrichit la fiche parcelle</td></tr>
+    <tr><td>Modèle</td><td>—</td><td>Abonnement agence. Aucune commission sur la vente — question Hoguet posée à l'avocat avant ouverture</td></tr>
+  </table>
+  <p>Précédents qui valident le concept : le fichier AMEPI (4 000 agences partagent leurs mandats exclusifs, adresse comprise, entre pros depuis 2009) et City&You (Vinci — intermédiation propriétaires → promoteurs en métropole). Personne ne le fait au 974. Lancement : après les premiers clients acheteurs — amorçage possible avec deux ou trois agences pilotes gratuites, en échange de l'accès à l'audience naissante.</p>
+</div>
+
+<!-- ================= 06 ROADMAP ================= -->
+<h2 id="roadmap"><span class="num">06</span> · Ce qui existe, ce qui vient</h2>
+<div class="fiche">
+  <table>
+    <tr><th>Brique</th><th>État</th><th>Note</th></tr>
+    <tr><td>Flux + filtres + carte + cycle de vie</td><td><span class="badge b-vert">En prod ce soir</span></td><td>Déploiement 98779bc5 en cours</td></tr>
+    <tr><td>Digest 12 + alertes 13</td><td><span class="badge b-orange">Construits, muets</span></td><td>Partiront quand la passe CRON posera les jobs</td></tr>
+    <tr><td>Parseur double variante A/B + enrichissement page annonce</td><td><span class="badge b-rouge">À mandater — bloquant collecte</span></td><td>Mandat RADAR-DEPOT-2</td></tr>
+    <tr><td>Badge « sous le marché » filtrable + dans les cartes mail</td><td><span class="badge b-orange">Signal calculé, badge à brancher</span></td><td>Petit mandat, forte valeur</td></tr>
+    <tr><td>Retrait Instruire client (conservé admin)</td><td><span class="badge b-rouge">À mandater</span></td><td>Avec RADAR-DEPOT-2</td></tr>
+    <tr><td>Mémoire foncière sur fiche parcelle</td><td><span class="badge b-gris">Validée 30/08</span></td><td>Après quelques semaines de collecte</td></tr>
+    <tr><td>Délai de vente par commune/type</td><td><span class="badge b-gris">Validé 30/08</span></td><td>Besoin d'historique — même horizon</td></tr>
+    <tr><td>Étage dépôt agences (annonces rattachées à la source, mise en relation)</td><td><span class="badge b-gris">V2 — après premiers clients</span></td><td>Précédents : AMEPI, City&You · question Hoguet au brief avocat</td></tr>
+  </table>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "table_rows": 24,
+  "fiche_ouverte": 1,
+  "chiffres_cles": [
+    "49 ha repérés",
+    "5 biens · -31,1 %",
+    "314 permis / 12 mois",
+    "ZAN 4,2 ans · SRU déficitaire",
+    "PPR sur 34,4 %",
+    "51 317 logts · 9,4 % vacants",
+    "pré-remplis sur la commune",
+    "mairie · urbanisme"
+  ],
+  "header": "FICHE COMMUNE\n\nSaint-Paul\nsignal : prudence\n\nTCO — Territoire de la Côte Ouest\n\n22 916 ha · 51 129 parcelles\n\n✕\n\n479 €/m²\n\nterrain nu zone U\n\n4 278 €/m²\n\nancien médian (commune)\n\n4,2 ans\n\navant épuisement du ZAN\n\n6–12 mois\n\ndélai d'instruct",
+  "zonage": {
+    "parts": [
+      [
+        "U",
+        13.5
+      ],
+      [
+        "AU",
+        3.5
+      ],
+      [
+        "A",
+        35.8
+      ],
+      [
+        "N",
+        47.2
+      ]
+    ],
+    "somme": 100
+  },
+  "passerelles": [
+    "§\nPLU\nrèglement · recherche verbatim\n→",
+    "◎\nÉtude de zone\nqui vit, qui travaille, qui concurrence — depuis un point\n→",
+    "⊞\nComparer aux 24 communes\nSaint-Paul mise en regard, ligne surlignée\n→",
+    "⌂\nPermis\n314 en cours · 330 au point mort\n→",
+    "▦\nDensifier l'existant\n21 527 parcelles à capacité résiduelle\n→",
+    "◉\nRadar\n5 biens en vente dans la commune\n→",
+    "☰\nScan patrimoine\n12 539 parcelles détenues par une personne morale\n→",
+    "☀\nProspection solaire\n1 616 piscines détectées · potentiel PV\n→"
+  ],
+  "densifier_ouvre_commune": true,
+  "fiche_fermee": true,
+  "errors": []
+}

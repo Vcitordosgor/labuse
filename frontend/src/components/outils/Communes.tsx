@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getCommuneAcquisitions, getCommunes } from '../../lib/api'
+import { getCommuneAcquisitions, getCommunes, getRadarMarche } from '../../lib/api'
+import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
@@ -78,6 +79,54 @@ function AcquisitionsRecentes() {
   )
 }
 
+// ── O2-3 (OUTILS-2) — Bloc « Marché des annonces (Radar) » sous la table comparative ──
+// Règle : tant qu'AUCUNE commune n'atteint SEUIL_N biens en vente, le bloc se replie en UNE ligne
+// « en constitution · N biens collectés · à partir de 5 biens » — 24 lignes de zéros dilueraient les
+// vrais chiffres et donneraient l'impression d'un produit vide. Au-delà, SEULES les communes au seuil
+// s'affichent (les autres restent absentes, jamais un zéro). SEUIL_N vient du backend (pige/marche.py),
+// jamais écrit en dur ici.
+function MarcheAnnoncesRadar() {
+  const setView = useApp((s) => s.setView)
+  const { data: d } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche, staleTime: 60_000 })
+  if (!d) return null   // bloc non critique : silencieux si la donnée n'est pas là
+  const auSeuil = d.communes
+    .filter((c) => (c.actives ?? 0) >= d.seuil_n)
+    .sort((a, b) => (b.actives ?? 0) - (a.actives ?? 0))
+  return (
+    <div data-communes-marche-radar className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[12px]">
+      <div className="flex items-center justify-between gap-2">
+        <b className="label-caps text-[10px] tracking-[0.14em] text-txt-dim">Marché des annonces (Radar)</b>
+        <button data-marche-radar-lien onClick={() => setView('radar')} className="shrink-0 text-[11px] text-mint hover:underline">
+          {auSeuil.length ? 'Ouvrir le Radar →' : 'Suivre la collecte →'}
+        </button>
+      </div>
+      {auSeuil.length === 0 ? (
+        <p className="mt-1 leading-snug text-txt-mut">
+          <span className="text-txt-dim">en constitution</span> · <b className="text-txt">{fmtInt(d.corpus_actif)} biens collectés</b> ·
+          affichage par commune à partir de {d.seuil_n} biens.
+        </p>
+      ) : (
+        <div className="mt-1.5 flex flex-col gap-1">
+          {auSeuil.map((c) => (
+            <div key={c.commune} className="flex items-baseline justify-between gap-2">
+              <span className="text-txt">{c.commune}</span>
+              <span className="flex items-baseline gap-2 font-mono text-[11px]">
+                <span className="text-txt-hi">{c.actives} en vente</span>
+                {!c.prix_m2_bati.insuffisant && c.prix_m2_bati.valeur != null && (
+                  <span className="text-txt-mut">{fmtInt(c.prix_m2_bati.valeur)} €/m² bâti</span>
+                )}
+              </span>
+            </div>
+          ))}
+          <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">
+            Seules les communes atteignant {d.seuil_n} biens en vente s'affichent ({fmtInt(d.corpus_actif)} collectés en tout) ; prix médian quand n ≥ {d.seuil_n}.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Porte de l'écran d'entrée (gabarit door-hot du tiroir Outils) ──
 function Porte({ dataAttr, titre, sous, onClick }: { dataAttr: string; titre: string; sous: string; onClick: () => void }) {
   return (
@@ -142,6 +191,8 @@ export function CommunesTablePanel() {
             Pas d'overflow ICI (sinon double scroll + légende poussée hors écran). */}
         <div className="flex min-h-0 flex-1 flex-col p-3">
           <O6Comparateur onSelect={(c) => { setContexteCommune(c); setCommunesTableOpen(false) }} />
+          {/* O2-3 — le marché des annonces (Radar) sous la table, seuil géré côté backend. */}
+          <MarcheAnnoncesRadar />
         </div>
       </div>
     </div>

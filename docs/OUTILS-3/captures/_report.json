@@ -1,0 +1,12 @@
+{
+  "gap_recherche_segment": 8,
+  "seg_tous_label": "Tous 21 088",
+  "fiche_txt": {
+    "bati_conserve": false,
+    "terrain_libere": false,
+    "residuelle": false,
+    "shab": false
+  },
+  "zone_dom": "Autour d’un point\nZone dessinée\n5 min\n10 min\n15 min\nVoiture\nÀ pied\nparcourir par famille d’activité\nAnalyser la zone",
+  "errors": []
+}

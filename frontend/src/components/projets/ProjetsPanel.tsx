@@ -4,8 +4,8 @@
 // dessous) ; (2) deux intensités de ligne (à trier / à jour) au lieu de cartes indistinguables ;
 // (3) plus de chips qui répètent le titre — une ligne de contexte + la commune en mono suffisent.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState, type MouseEvent } from 'react'
-import { fusionnerProjets, getProjets, patchProjet, type Cadrage, type Projet } from '../../lib/api'
+import { useState } from 'react'
+import { fusionnerProjets, getCourrierDemandes, getProjets, type Cadrage, type Projet } from '../../lib/api'
 import { fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
@@ -21,14 +21,11 @@ function perimetreLabel(c: Cadrage): string {
   return cs.length === 1 ? cs[0] : `${cs.length} communes`
 }
 
-/** La ligne de contexte SOUS le titre — périmètre + budget indicatif. M120 : le cadrage porte les
- *  facettes ; le budget est INFORMATIF (dit « indic. »). */
-function ctxLine(p: Projet): string {
-  const nFacettes = Object.keys(p.cadrage).filter((k) => k !== 'communes').length
-  const parts = [perimetreLabel(p.cadrage)]
-  if (nFacettes) parts.push(`${nFacettes} facette${nFacettes > 1 ? 's' : ''}`)
-  if (p.identite.budget_eur) parts.push(`budget ${fmtEurCompact(p.identite.budget_eur)} indic.`)
-  return parts.join(' · ')
+/** PROJETS-FIX F3 (maquette §04) — la ligne vivier ne porte QUE le budget indicatif : le périmètre
+ *  vit UNE seule fois, dans l'étiquette du titre (`communeMono`) ; le décompte de facettes (bruit)
+ *  est retiré. Vide si pas de budget. */
+function budgetLine(p: Projet): string {
+  return p.identite.budget_eur ? `budget ${fmtEurCompact(p.identite.budget_eur)} indic.` : ''
 }
 
 /** La commune en MONO à côté du titre — repère de lecture, pas un chip. M120-B : depuis le cadrage. */
@@ -41,76 +38,57 @@ function communeMono(p: Projet): string {
 /** Une LIGNE de projet, deux intensités : `à trier` (bande mint, barre, compteur mint) ou `à jour`
  *  (bande grise, mention discrète). M120-B : plus de vignette d'emprise. Toute la ligne est cliquable ;
  *  le menu ⋯ (Renommer / Archiver) apparaît au survol et ne déclenche pas l'ouverture. */
+// PROJETS-V4 (V4) — L'ACCUEIL : UNE LIGNE par projet, grille 1fr / 260px / 130px. À gauche titre +
+// périmètre mono + une ligne de contexte ; au centre la barre de progression + son libellé sous elle ;
+// à droite le compteur RETENUES. Un vivier à 0 dit pourquoi et propose de corriger.
 function ProjetRow({ p }: { p: Projet }) {
-  const qc = useQueryClient()
   const setOpenProjet = useApp((s) => s.setOpenProjet)
-  const [editing, setEditing] = useState(false)
-  const [nom, setNom] = useState(p.nom)
-  const patch = useMutation({
-    mutationFn: (body: { nom?: string; statut?: string }) => patchProjet(p.id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['projets'] }),
-  })
   const c = p.counts ?? { proposee: 0, retenue: 0, ecartee: 0, a_analyser: 0 }
-  const todo = c.proposee > 0
-  const total = c.proposee + c.retenue
-  const pct = total > 0 ? Math.round((c.retenue / total) * 100) : 0
-  const archived = p.statut === 'archive'
+  const decidees = c.retenue + c.ecartee + (c.a_analyser ?? 0)
+  const vivier = c.proposee + decidees          // le VIVIER entier = à explorer + décidées
+  const deZero = Boolean((p.cadrage as Record<string, unknown> | undefined)?.__de_zero__)
+  const vivierZero = vivier === 0 && !deZero    // cadrage sans résultat (cas légitime)
   const ouvrir = () => setOpenProjet({ id: p.id, nom: p.nom })
-  const stop = (e: MouseEvent) => e.stopPropagation()
+  const valeurs = p.proposee_at ? `valeurs au ${new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : null
+  const pct = vivier > 0 ? Math.round((decidees / vivier) * 100) : 0
+  const barLabel = vivierZero ? '—'
+    : deZero && vivier === 0 ? 'aucune parcelle pour l’instant'
+    : decidees === 0 ? 'aucune parcelle triée pour l’instant'
+    : `${c.retenue} retenue${c.retenue > 1 ? 's' : ''} · ${c.ecartee} écartée${c.ecartee > 1 ? 's' : ''} · ${c.proposee.toLocaleString('fr-FR')} à explorer`
 
   return (
-    <div data-projet-row data-intensite={todo ? 'todo' : 'ajour'} onClick={ouvrir}
-      className="group" style={{ display: 'flex', background: '#0C1410', borderRadius: 10, overflow: 'hidden', marginBottom: 8, cursor: 'pointer' }}>
-      {/* M120-B — bande d'état conservée ; la vignette d'emprise (M114) est retirée (rien à la place). */}
-      <div style={{ width: 3, flexShrink: 0, background: todo ? '#4ADE80' : '#1A241E' }} />
-      <div style={{ flex: 1, minWidth: 0, padding: todo ? '16px 18px' : '14px 18px', display: 'flex', alignItems: 'center', gap: 20 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: todo ? 5 : 4 }}>
-            {editing ? (
-              <input data-projet-nom-input autoFocus value={nom} onClick={stop}
-                onChange={(e) => setNom(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && nom.trim()) { patch.mutate({ nom: nom.trim() }); setEditing(false) }
-                  if (e.key === 'Escape') { setNom(p.nom); setEditing(false) }
-                }}
-                onBlur={() => { if (nom.trim() && nom !== p.nom) patch.mutate({ nom: nom.trim() }); setEditing(false) }}
-                style={{ minWidth: 0, flex: 1, borderRadius: 6, border: '.5px solid #4ADE80', background: '#060A08', padding: '4px 8px', fontSize: todo ? 17 : 16, color: '#ECF5EF', outline: 'none' }} />
-            ) : (
-              <span data-projet-titre style={{ fontSize: todo ? 17 : 16, color: todo ? '#ECF5EF' : '#C9DCD1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nom}</span>
-            )}
-            <span data-projet-commune style={{ fontFamily: MONO, fontSize: 11, color: todo ? '#5F7267' : '#4A5C52', letterSpacing: '.06em', flexShrink: 0 }}>{communeMono(p)}</span>
+    <div data-projet-row data-intensite={c.proposee > 0 ? 'todo' : 'ajour'} onClick={ouvrir}
+      style={{ display: 'grid', gridTemplateColumns: '1fr 260px 130px', gap: 18, alignItems: 'center',
+        padding: '13px 16px', borderBottom: '1px solid #161C18', cursor: 'pointer' }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = '#0C1410')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+      {/* gauche : titre + périmètre mono + ligne de contexte */}
+      <div style={{ minWidth: 0 }}>
+        <h4 style={{ display: 'flex', alignItems: 'baseline', gap: 9, fontSize: 15, fontWeight: 600, color: '#ECF5EF', margin: 0 }}>
+          <span data-projet-titre style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nom}</span>
+          <span data-projet-commune style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.16em', color: '#5F7267', flexShrink: 0 }}>{communeMono(p)}</span>
+        </h4>
+        {vivierZero ? (
+          <div data-projet-sub style={{ fontSize: 12, color: '#8FA69A', marginTop: 2 }}>
+            aucune parcelle ne correspond à ce cadrage · <span style={{ color: '#4ADE80' }}>modifier →</span>
           </div>
-          <div style={{ fontSize: 12, color: todo ? '#A8BDB0' : '#8FA69A', marginBottom: todo ? 11 : 0 }}>{ctxLine(p)}</div>
-          {todo && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 140, height: 3, background: '#12291D', borderRadius: 2, overflow: 'hidden' }}>
-                {c.retenue > 0 && <div style={{ width: `${pct}%`, height: '100%', background: '#4ADE80', borderRadius: 2 }} />}
-              </div>
-              <span data-projet-barre style={{ fontFamily: MONO, fontSize: 11, color: '#8FA69A' }}>
-                {c.retenue > 0 ? `${c.retenue} / ${total} RETENUES` : 'AUCUNE RETENUE'}</span>
-            </div>
-          )}
+        ) : (
+          <div data-projet-sub style={{ fontSize: 12, color: '#8FA69A', marginTop: 2 }}>
+            {deZero ? 'projet de zéro' : `${vivier.toLocaleString('fr-FR')} parcelles`}{valeurs ? ` · ${valeurs}` : ''}{budgetLine(p) ? ` · ${budgetLine(p)}` : ''}
+          </div>
+        )}
+      </div>
+      {/* centre : la barre + son libellé sous elle */}
+      <div>
+        <div data-projet-barre style={{ height: 6, background: '#161C18', borderRadius: 3, overflow: 'hidden', marginBottom: 5 }}>
+          {pct > 0 && <div style={{ height: '100%', width: `${pct}%`, background: '#4ADE80' }} />}
         </div>
-        <div style={{ textAlign: 'right', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 14 }}>
-          {todo ? (
-            <div data-projet-atrier title="Total VIF du cadrage à trier (hors décidées) — le même nombre qu'à l'ouverture ; mis en cache, actualisé à l'ouverture du projet">
-              <div style={{ fontSize: 28, color: '#4ADE80', fontWeight: 500, lineHeight: 1 }}>{c.proposee}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: '#8FA69A', marginTop: 4, letterSpacing: '.06em' }}>À TRIER</div>
-              {p.proposee_at && <div data-projet-atrier-maj style={{ fontFamily: MONO, fontSize: 8.5, color: '#5F7267', marginTop: 2, letterSpacing: '.04em' }}>au {new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</div>}
-            </div>
-          ) : (
-            <span data-projet-rien style={{ fontFamily: MONO, fontSize: 11, color: '#4A5C52', letterSpacing: '.06em' }}>RIEN À TRIER</span>
-          )}
-          <details data-projet-menu className="relative shrink-0 opacity-0 transition-opacity duration-quick group-hover:opacity-100" onClick={stop}>
-            <summary className="cursor-pointer list-none px-1 text-txt-ghost transition-colors duration-quick hover:text-txt" title="Plus d’actions">⋯</summary>
-            <div className="absolute right-0 z-20 mt-1 flex flex-col gap-0.5 rounded-lg border border-line-3 bg-bg-3 p-1 shadow-flottante" style={{ minWidth: 128 }}>
-              <button data-projet-editer onClick={(e) => { stop(e); setEditing(true) }}
-                className="rounded px-2 py-1 text-left text-[12px] text-txt transition-colors duration-quick hover:bg-bg-2">Renommer</button>
-              <button data-projet-archiver onClick={(e) => { stop(e); patch.mutate({ statut: archived ? 'actif' : 'archive' }) }}
-                className="rounded px-2 py-1 text-left text-[12px] text-txt transition-colors duration-quick hover:bg-bg-2">{archived ? 'Réactiver' : 'Archiver'}</button>
-            </div>
-          </details>
-        </div>
+        <div style={{ fontSize: 11.5, color: '#6F8578' }}>{barLabel}</div>
+      </div>
+      {/* droite : le compteur RETENUES */}
+      <div data-projet-retenues style={{ textAlign: 'right', whiteSpace: 'nowrap' }} title="Parcelles retenues — l'avancement réel du projet">
+        <div style={{ fontFamily: MONO, fontSize: 22, color: '#4ADE80', fontWeight: 700, lineHeight: 1 }}>{c.retenue}</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, color: '#6F8578', marginTop: 3, letterSpacing: '.16em' }}>RETENUES</div>
       </div>
     </div>
   )
@@ -171,10 +149,15 @@ const btnPlein = { padding: '9px 18px', background: '#4ADE80', color: '#05140B',
 export function ProjetsPanel() {
   const { openProjet, setOpenProjet } = useApp()
   const [showArchived, setShowArchived] = useState(false)
+  const [showCourriers, setShowCourriers] = useState(false)   // OUTILS-1 A4 — onglet « Mes courriers »
   const [formOuvert, setFormOuvert] = useState(false)
   const [toutMontre, setToutMontre] = useState(false)
   const qc = useQueryClient()
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets })
+  // OUTILS-1 A4/B6 — le client retrouve ici ses demandes de courrier (n°, date, communes, volume),
+  // SANS état interne d'exécution (qui reste à la Tour de contrôle admin). Vue minimale, lecture seule.
+  const courriersQ = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes })
+  const courriers = courriersQ.data?.demandes ?? []
 
   if (openProjet) return <ProjetKanban pid={openProjet.id} nom={openProjet.nom} />
 
@@ -221,7 +204,7 @@ export function ProjetsPanel() {
 
         {projetsQ.isLoading && (<><Skeleton className="mb-2 h-20 rounded-xl" /><Skeleton className="h-16 rounded-xl" /></>)}
 
-        {!projetsQ.isLoading && all.length === 0 ? (
+        {!projetsQ.isLoading && all.length === 0 && courriers.length === 0 ? (
           /* 3 · ÉTAT VIDE — il doit inviter, pas constater. */
           <div data-projets-vide style={{ marginTop: 8, padding: 32, border: '.5px dashed #1E2A23', borderRadius: 12, textAlign: 'center' }}>
             <h3 style={{ fontSize: 15, color: '#8FA69A', fontWeight: 400, margin: '0 0 6px' }}>Aucun projet pour l'instant</h3>
@@ -232,27 +215,62 @@ export function ProjetsPanel() {
           <>
             {/* 2 · ONGLETS — deux seulement. */}
             <div style={{ display: 'inline-flex', gap: 4, background: '#0C1410', borderRadius: 9, padding: 4, marginBottom: 20 }}>
-              <button data-tab-actifs onClick={() => { setShowArchived(false); setToutMontre(false) }} style={tab(!showArchived)}>Actifs {actifs.length}</button>
-              <button data-tab-archives onClick={() => { setShowArchived(true); setToutMontre(false) }} style={tab(showArchived)}>Archivés {archives.length}</button>
+              <button data-tab-actifs onClick={() => { setShowArchived(false); setShowCourriers(false); setToutMontre(false) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
+              <button data-tab-archives onClick={() => { setShowArchived(true); setShowCourriers(false); setToutMontre(false) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
+              <button data-tab-courriers onClick={() => { setShowCourriers(true); setToutMontre(false) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
             </div>
 
-            {!showArchived && groupesDoublons(actifs).map((g) => <DedupBanner key={g[0].id} groupe={g} />)}
-
-            <div data-projets-liste>
-              {visibles.length === 0 && (
-                <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>
-                  {showArchived ? 'Aucun projet archivé.' : 'Aucun projet actif.'}
+            {showCourriers ? (
+              /* OUTILS-1 A4/B6 — MES COURRIERS : n°, date, communes, volume. Aucun état interne. */
+              <div data-mes-courriers>
+                {/* F5 (OUTILS-3) — accès à l'outil Courrier propriétaire (étape 1) depuis Projets. */}
+                <button data-mes-courriers-nouveau
+                  onClick={() => { const s = useApp.getState(); s.setView('cartes'); s.setModule('courriers') }}
+                  style={{ ...btnPlein, display: 'inline-block', marginBottom: 16 }}>Nouveau courrier →</button>
+                {courriers.length === 0 && (
+                  <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>Aucune demande de courrier pour l'instant.</p>
+                )}
+                {courriers.map((d) => (
+                  <div key={d.id} data-courrier-ligne={d.id}
+                    style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14,
+                      padding: '11px 4px', borderBottom: '.5px solid #16211B' }}>
+                    <span style={{ minWidth: 0, color: '#ECF5EF', fontSize: 13 }}>
+                      <b style={{ fontFamily: MONO, fontSize: 12, color: '#8FA69A' }}>n° {d.id}</b>
+                      {' — '}{d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}
+                    </span>
+                    <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 11, color: '#5F7267' }}>{String(d.ts).slice(0, 10)}</span>
+                  </div>
+                ))}
+                <p style={{ fontSize: 11.5, color: '#5F7267', marginTop: 12 }}>
+                  LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.
                 </p>
-              )}
-              {affichees.map((p) => <ProjetRow key={p.id} p={p} />)}
-            </div>
-
-            {/* 7 · VOIR LES N AUTRES — ne pas dérouler 9 lignes d'un coup. */}
-            {reste > 0 && (
-              <div data-projets-plus onClick={() => setToutMontre(true)}
-                style={{ textAlign: 'center', padding: '16px 0 4px', fontFamily: MONO, fontSize: 12, color: '#8FA69A', letterSpacing: '.06em', cursor: 'pointer' }}>
-                VOIR LES {reste} AUTRES
               </div>
+            ) : (
+              <>
+                {!showArchived && groupesDoublons(actifs).map((g) => <DedupBanner key={g[0].id} groupe={g} />)}
+
+                <div data-projets-liste>
+                  {visibles.length === 0 && (
+                    <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>
+                      {showArchived ? 'Aucun projet archivé.' : 'Aucun projet actif.'}
+                    </p>
+                  )}
+                  {/* PROJETS-V4 (V4) — les projets en LIGNES dans un cadre unique. */}
+                  {affichees.length > 0 && (
+                    <div data-projets-cadre style={{ border: '1px solid #1E2A23', borderRadius: 12, overflow: 'hidden', background: '#0A0F0C' }}>
+                      {affichees.map((p) => <ProjetRow key={p.id} p={p} />)}
+                    </div>
+                  )}
+                </div>
+
+                {/* 7 · VOIR LES N AUTRES — ne pas dérouler 9 lignes d'un coup. */}
+                {reste > 0 && (
+                  <div data-projets-plus onClick={() => setToutMontre(true)}
+                    style={{ textAlign: 'center', padding: '16px 0 4px', fontFamily: MONO, fontSize: 12, color: '#8FA69A', letterSpacing: '.06em', cursor: 'pointer' }}>
+                    VOIR LES {reste} AUTRES
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

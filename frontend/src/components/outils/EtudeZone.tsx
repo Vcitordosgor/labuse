@@ -11,11 +11,11 @@
  * Faits sourcés et datés — AUCUNE prévision de chiffre d'affaires.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
-import { etudeZone, nafFamilles, nafSearch, type EtudeZoneInput } from '../../lib/api'
-import type { EtudeZoneResult, NafFamille, NafOption } from '../../lib/types'
+import { etudeZone, etudeZoneEntreprises, nafFamilles, nafSearch, parcelAt, type EtudeZoneInput } from '../../lib/api'
+import type { EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 
@@ -24,6 +24,9 @@ const TEMPS = [5, 10, 15]
 function nb(n: number | null | undefined): string {
   return n == null ? '—' : n.toLocaleString('fr-FR')
 }
+// F2 (OUTILS-4) — date de dernier traitement SIRENE (YYYY-MM-DD) → « MM/YYYY » lisible.
+const majFr = (d: string | null | undefined): string | null => (d && d.length >= 7 ? `${d.slice(5, 7)}/${d.slice(0, 4)}` : null)
+
 function tempsTxt(min: number | null, mode: 'pied' | 'voiture'): string {
   if (min == null) return 'dans la zone'
   return `${min} min${mode === 'pied' ? ' à pied' : ''}`
@@ -74,8 +77,22 @@ export function EtudeZone() {
   })
   const res = mut.data
 
+  // F3 (OUTILS-4) — « Toutes les entreprises de la zone » : ouvert à la demande, MÊME emprise que
+  // l'étude (sans NAF). Chargé une fois par zone ; réinitialisé quand l'entrée change.
+  const [entOpen, setEntOpen] = useState(false)
+  const entBody = (): EtudeZoneInput => {
+    const b: EtudeZoneInput = { minutes, mode }
+    if (entree === 'polygone' && geomFromDrawn) b.geom = geomFromDrawn
+    else if (cible) b.idu = cible.idu
+    return b
+  }
+  const entQ = useQuery({
+    queryKey: ['zone-entreprises', entree, cible?.idu, minutes, mode, !!geomFromDrawn],
+    queryFn: () => etudeZoneEntreprises(entBody()), enabled: entOpen && !!res?.zone_disponible,
+  })
+
   // RELANCER — toute modification d'entrée réarme « Analyser » : on efface le résultat périmé.
-  useEffect(() => { mut.reset() /* eslint-disable-next-line react-hooks/exhaustive-deps */ },
+  useEffect(() => { mut.reset(); setEntOpen(false) /* eslint-disable-next-line react-hooks/exhaustive-deps */ },
     [entree, cible, naf, minutes, mode, geomFromDrawn])
 
   // basculer d'onglet efface le périmètre de l'AUTRE entrée
@@ -93,10 +110,20 @@ export function EtudeZone() {
     for (const b of res.bandes ?? []) feats.push({ type: 'Feature', geometry: b.geom, properties: { kind: 'zone-iso' } })
     if ((!res.bandes || res.bandes.length === 0) && res.geom) feats.push({ type: 'Feature', geometry: res.geom, properties: { kind: 'zone-iso' } })
     if (res.origine && res.entree === 'point') feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [res.origine.lon, res.origine.lat] }, properties: { kind: 'zone-origin' } })
-    for (const c of res.concurrents?.items ?? []) feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lon, c.lat] }, properties: { kind: 'zone-concurrent', siret: c.siret } })
+    // F8 (OUTILS-3) — la pastille concurrent porte de quoi se rendre CLIQUABLE (popup : nom, activité,
+    // date de création, lien parcelle). L'activité lisible (naf_label) est portée par le bloc concurrents.
+    for (const c of res.concurrents?.items ?? []) feats.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lon, c.lat] },
+      properties: { kind: 'zone-concurrent', siret: c.siret, nom: c.nom, annee: c.annee_creation ?? '', activite: res.concurrents?.naf_label ?? res.concurrents?.naf ?? '', lon: c.lon, lat: c.lat } })
+    // F3 — quand « Toutes les entreprises » est ouvert, ses établissements deviennent des pastilles
+    // cliquables (même popup que les concurrents). Comptes exacts en liste, pastilles plafonnées.
+    if (entOpen && entQ.data) {
+      for (const f of entQ.data.familles) for (const e of f.etablissements) feats.push({ type: 'Feature',
+        geometry: { type: 'Point', coordinates: [e.lon, e.lat] },
+        properties: { kind: 'zone-concurrent', siret: e.siret, nom: e.nom, annee: e.annee_creation ?? '', activite: e.naf_label ?? e.naf ?? '', lon: e.lon, lat: e.lat } })
+    }
     setModuleMap({ idus: [], extra: { type: 'FeatureCollection', features: feats } })
     if (res.origine) setFlyTo({ center: [res.origine.lon, res.origine.lat], zoom: 13 })
-  }, [res, setModuleMap, setFlyTo])
+  }, [res, entOpen, entQ.data, setModuleMap, setFlyTo])
   // LOT F — au DÉMONTAGE de l'outil (← Outils, changement d'outil, de catégorie ou de route), on efface
   // l'emprise de travail : la carte redevient nette, le pointillé ne survit pas. Couvre TOUTES les
   // sorties (toggleOutils comme setModule). Les veilles enregistrées (serveur) ne sont pas touchées.
@@ -241,6 +268,12 @@ export function EtudeZone() {
           {/* CONCURRENTS — trois états honnêtes, jamais un faux zéro */}
           {naf && <Concurrents res={res} />}
 
+          {/* F3 (OUTILS-4) — TOUTES les entreprises de la zone, groupées par famille (à la demande). */}
+          {res.emplois_couverture === 'servie' && (res.emplois?.n_etablissements ?? 0) > 0 && (
+            <ToutesEntreprises total={res.emplois!.n_etablissements} open={entOpen} setOpen={setEntOpen}
+              data={entQ.data} loading={entQ.isFetching} error={entQ.isError} />
+          )}
+
           {res.generateurs_flux && res.generateurs_flux.length > 0 && (
             <div>
               <SectionTitle>Générateurs de flux</SectionTitle>
@@ -349,9 +382,31 @@ function ActifsStat({ res }: { res: EtudeZoneResult }) {
 function Concurrents({ res }: { res: EtudeZoneResult }) {
   const c = res.concurrents
   const cov = c?.couverture
+  const { setView, select } = useApp()
+  // A3-bis (OUTILS-2) — cliquable vers la parcelle : le concurrent porte sa position (lon/lat) ;
+  // on résout la parcelle à ce point (parcelAt) et on ouvre sa fiche sur la carte. Rien si hors parcelle.
+  const ouvrirParcelle = async (lon: number, lat: number) => {
+    try {
+      const { idu } = await parcelAt(lon, lat)
+      if (idu) { setView('cartes'); select(idu) }
+    } catch { /* pas de parcelle à ce point — on ne fait rien */ }
+  }
   return (
     <div>
-      <SectionTitle>{`Concurrents dans la zone${cov === 'servie' ? ` — ${c!.n}` : ''}`}{cov === 'servie' && res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
+      {/* F2 (OUTILS-4) — « déclarés au registre » : on ne dit jamais que ce sont les concurrents RÉELS,
+          seulement ceux déclarés actifs au registre SIRENE (une fermeture non signalée peut y traîner). */}
+      <SectionTitle>{`Concurrents déclarés au registre${cov === 'servie' ? ` — ${c!.n}` : ''}`}{cov === 'servie' && res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
+      {/* F1 (OUTILS-3) — activité LISIBLE (le code NAF passe en second plan / survol). */}
+      {cov === 'servie' && (c!.naf_label || c!.naf) && (
+        <p className="mt-0.5 text-[10.5px] text-txt-mut" title={`code NAF ${c!.naf}`}>{c!.naf_label ?? c!.naf} <span className="font-mono text-[9px] text-txt-dim">{c!.naf}</span></p>
+      )}
+      {/* F8 — légende courte des pastilles carte (cliquables). */}
+      {cov === 'servie' && c!.items.length > 0 && (
+        <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-txt-dim">
+          <span className="h-[8px] w-[8px] shrink-0 rounded-full" style={{ background: '#E0A94F' }} />
+          pastilles orange sur la carte — cliquez pour le détail et la parcelle.
+        </p>
+      )}
       {cov === 'non_couverte' && (
         // RECETTE-2 LOT C2 : vocabulaire client — pas de « répertoire SIRENE / ingéré » (tuyauterie).
         <p className="text-[11px] text-txt-mut">Non couvert · le registre des établissements n’est pas encore servi sur LABUSE.</p>
@@ -360,18 +415,89 @@ function Concurrents({ res }: { res: EtudeZoneResult }) {
         <p className="text-[11px] text-txt-mut">Indisponible — la requête concurrents n’a pas abouti.</p>
       )}
       {cov === 'servie' && (c!.items.length === 0 ? (
-        <p className="text-[11px] text-txt-mut">Aucun établissement de cette activité dans la zone <span className="text-txt-dim">(source SIRENE{c!.millesime ? ` · ${c!.millesime}` : ''})</span>.</p>
+        <p className="text-[11px] text-txt-mut">Aucun établissement de cette activité dans la zone.</p>
       ) : (
         <div className="flex flex-col gap-1">
           {c!.items.slice(0, 8).map((x) => (
-            <div key={x.siret} className="flex items-center justify-between gap-2 text-[11.5px]">
-              <span className="truncate text-txt">{x.nom} <span className="font-mono text-[10px] text-txt-dim">{x.naf}</span></span>
+            // A3-bis + F2 — « enseigne · depuis AAAA · déclaré actif · mis à jour MM/YYYY », cliquable.
+            <button key={x.siret} type="button" onClick={() => ouvrirParcelle(x.lon, x.lat)}
+              className="flex items-start justify-between gap-2 rounded-md px-1 py-0.5 text-left text-[11.5px] transition-colors duration-quick hover:bg-surface-3">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-txt">{x.nom}
+                  {x.annee_creation != null && <span className="text-txt-dim"> · depuis {x.annee_creation}</span>}</span>
+                {/* F2 — fraîcheur DÉCLARATIVE par établissement + alerte au-delà du seuil (backend). */}
+                <span className="block text-[9.5px] text-txt-dim">
+                  déclaré actif{majFr(x.date_maj) ? ` · mis à jour ${majFr(x.date_maj)}` : ''}
+                  {x.maj_ancienne && <span className="text-cp-amber"> · registre ancien — vérifier sur place</span>}
+                </span>
+              </span>
               <span className="shrink-0 font-mono text-[11px] text-txt-hi">{tempsTxt(x.temps_min, res.mode)}</span>
-            </div>
+            </button>
           ))}
           {c!.items.length > 8 && <span className="text-[10.5px] text-txt-dim">+ {c!.items.length - 8} autres…</span>}
         </div>
       ))}
+      {/* F1 — MILLÉSIME toujours affiché (fraîcheur de la source) + pourquoi certains noms manquent. */}
+      {cov === 'servie' && (
+        <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
+          Source {c!.millesime || 'SIRENE (INSEE)'}. Une fermeture très récente peut ne pas encore y figurer.
+          {c!.items.some((x) => !x.diffusible) && ' Certains noms sont masqués à la demande de l’établissement (diffusion INSEE restreinte).'}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// F3 (OUTILS-4) — « Toutes les entreprises de la zone » : structure économique lisible d'un coup d'œil
+// (familles + comptes exacts), dépliable pour creuser. Familles/comptes servis par le backend (source
+// unique naf_nomenclature) — rien en dur ici.
+function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
+  total: number; open: boolean; setOpen: (v: boolean) => void
+  data?: ZoneEntreprises; loading: boolean; error: boolean
+}) {
+  const { setView, select } = useApp()
+  const [ouvertes, setOuvertes] = useState<Set<string>>(new Set())
+  const ouvrirParcelle = async (lon: number, lat: number) => {
+    try { const { idu } = await parcelAt(lon, lat); if (idu) { setView('cartes'); select(idu) } } catch { /* rien */ }
+  }
+  const toggleFam = (s: string) => setOuvertes((prev) => { const n = new Set(prev); if (n.has(s)) n.delete(s); else n.add(s); return n })
+  return (
+    <div>
+      <button data-zone-entreprises-toggle onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left text-[12px] transition-colors duration-quick hover:border-mint/40">
+        <span className="text-txt">Toutes les entreprises de la zone <b className="text-txt-hi">({nb(total)})</b></span>
+        <span className="text-mint">{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+        <div className="mt-1.5 flex flex-col gap-1">
+          {loading && <p className="text-[11px] text-txt-mut">Chargement des entreprises…</p>}
+          {error && <p className="text-[11px] text-st-ecartee">Indisponible — réessayez.</p>}
+          {data?.familles.map((f) => (
+            <div key={f.section} className="overflow-hidden rounded-md border border-line-2 bg-surface-1">
+              <button data-zone-famille={f.section} onClick={() => toggleFam(f.section)}
+                className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] hover:bg-surface-2">
+                <span className="min-w-0 truncate text-txt">{f.nom}</span>
+                <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(f.n)} <span className="text-txt-dim">{ouvertes.has(f.section) ? '▾' : '▸'}</span></span>
+              </button>
+              {ouvertes.has(f.section) && (
+                <div className="flex flex-col gap-0.5 border-t border-line-2 px-2 py-1">
+                  {f.etablissements.map((e) => (
+                    <button key={e.siret} onClick={() => ouvrirParcelle(e.lon, e.lat)}
+                      className="flex items-start rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-txt">{e.nom}{e.annee_creation != null && <span className="text-txt-dim"> · depuis {e.annee_creation}</span>}</span>
+                        <span className="block truncate text-[9px] text-txt-dim">{e.naf_label ?? e.naf}{majFr(e.date_maj) ? ` · maj ${majFr(e.date_maj)}` : ''}</span>
+                      </span>
+                    </button>
+                  ))}
+                  {f.n > f.charges && <p className="px-1 text-[9.5px] text-txt-dim">+ {nb(f.n - f.charges)} autres — aperçu plafonné</p>}
+                </div>
+              )}
+            </div>
+          ))}
+          {data && <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">Établissements actifs au registre · Source {data.millesime ?? 'SIRENE (INSEE)'} · pastilles cliquables sur la carte.</p>}
+        </div>
+      )}
     </div>
   )
 }

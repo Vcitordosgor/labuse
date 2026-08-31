@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
-  modDueDiligence, modFantome, modPatrimoine, modPatrimoineCsvUrl, modPatrimoineSearch, modPermis, modPermisFiche,
+  modDueDiligence, modFantome, modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
@@ -179,15 +179,14 @@ export function M02() {
               <span>SDP résiduelle <V>{fmt(d['sdp_residuelle_m2'] as number)}</V> m²</span>
             </div>
             {/* GB-018 — la liste est paginée côté serveur : on dit HONNÊTEMENT combien sont affichées sur
-                le total, et on offre l'export CSV complet (raison sociale entière). */}
-            <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]">
+                le total. OUTILS-1 B7 : l'export CSV est RETIRÉ (la consultation reste illimitée,
+                l'extraction de la base non). */}
+            <div className="mt-1.5 flex items-center gap-2 text-[11px]">
               <span className="text-txt-dim">
                 {d['tronquee'] === true
                   ? <>{fmt(items.length)} affichées sur <V>{d['n_parcelles'] as number}</V></>
                   : <>{fmt(items.length)} affichée{items.length > 1 ? 's' : ''}</>}
               </span>
-              <a href={modPatrimoineCsvUrl(String(d['siren']))} download
-                className="text-txt-mut hover:text-mint" title="Exporter tout le portefeuille en CSV">⬇ CSV</a>
             </div>
             {/* #3 valorisation indicative du foncier nu (zones U/AU) au référentiel unique prix de zone */}
             {d['valorisation_nu_eur'] != null && (
@@ -312,11 +311,18 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
 // Exporté pour test (double entrée + lignes enrichies + survol = cœur du mandat PERMIS).
 export function M03() {
   const moduleKey = useApp((s) => s.module)
-  const [pointMort, setPointMort] = useState(moduleKey === 'promesses')
+  // O2-1 (OUTILS-2) — SEGMENT à 3 états : « En cours » (radar récent, VERT) · « Point mort » (PC sans
+  // DAACT, ROUGE) · « Tous » (toute la profondeur Sitadel servie). `pointMort` en est DÉRIVÉ (source
+  // unique) — c'est lui qui pilote couleur, endpoint et badges. La couleur sépare la veille
+  // concurrentielle des opportunités dormantes SANS changer d'écran (demande centrale Vic).
+  const [seg, setSeg] = useState<'cours' | 'mort' | 'tous'>(moduleKey === 'promesses' ? 'mort' : 'cours')
+  const pointMort = seg === 'mort'
+  // F2 (OUTILS-3) — « Tous » = en cours (radar, VERT) ∪ point mort (ROUGE) SUPERPOSÉS sur la carte :
+  // les deux jeux coexistent, chacun sa couleur (avant, seuls les en cours s'affichaient).
+  const tous = seg === 'tous'
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
   const [nature, setNature] = useState('')
   const [open, setOpen] = useState<string | null>(null)
-  const [permSearch, setPermSearch] = useState('')
   const zone = useApp((s) => s.zone)
   const commune = useApp((s) => s.commune)
   // radar-permis #2a — un clic sur un point permis de la carte (MapView) demande l'ouverture du drawer
@@ -327,11 +333,11 @@ export function M03() {
   useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
-  useEffect(() => { setPointMort(moduleKey === 'promesses'); setMonths(moduleKey === 'promesses' ? 36 : 24) }, [moduleKey])
+  useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'cours'; setSeg(s); setMonths(s === 'mort' ? 36 : 24) }, [moduleKey])
 
   const MONTHS_RADAR = [12, 24, 48, 72, 240]   // 240 = « Tout » (≈ toute la profondeur Sitadel servie)
   const MONTHS_PM = [24, 36, 48, 60]   // point mort : 36 = caducité légale du PC (défaut à l'ouverture)
-  const togglePm = (on: boolean) => { setPointMort(on); setMonths(on ? 36 : 24) }
+  const choisirSeg = (s: 'cours' | 'mort' | 'tous') => { setSeg(s); setMonths(s === 'mort' ? 36 : s === 'tous' ? 240 : 24) }
 
   // deux sources, une seule active à la fois (enabled) : RADAR = tous les permis ; POINT MORT = PC
   // anciens sans achèvement (l'endpoint /promesses renvoie désormais aussi la géom → des points).
@@ -343,27 +349,35 @@ export function M03() {
     enabled: !pointMort,
   })
   const PM_PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
+  // F2 — le `months` du point mort mesure la DORMANCE (« PC plus vieux que N mois ») : sémantique
+  // INVERSE du radar (« derniers N mois »). En « Tous », le radar élargit à 240 (tout), mais le point
+  // mort DOIT garder sa fenêtre de caducité (36 mois) — sinon « plus vieux que 240 mois » = 0 résultat
+  // (le bug F2 : aucun point mort en « Tous »). Décoré ici, une seule source de vérité.
+  const pmMonths = pointMort ? months : 36
   const qPm = useInfiniteQuery({
-    queryKey: ['m04', months, commune],
-    queryFn: ({ pageParam }) => modPromesses(months, PM_PAGE, pageParam as number),
+    queryKey: ['m04', pmMonths, commune],
+    queryFn: ({ pageParam }) => modPromesses(pmMonths, PM_PAGE, pageParam as number),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * PM_PAGE : undefined,
-    enabled: pointMort,
+    enabled: pointMort || tous,   // F2 — le point mort alimente aussi la carte en mode « Tous »
   })
   // total point mort (COUNT ~4 s) DÉCOUPLÉ : arrive en parallèle, ne bloque pas la 1re page
-  const qPmCount = useQuery({ queryKey: ['m04-count', months, commune], queryFn: () => modPromessesCount(months), staleTime: 60_000, enabled: pointMort })
+  const qPmCount = useQuery({ queryKey: ['m04-count', pmMonths, commune], queryFn: () => modPromessesCount(pmMonths), staleTime: 60_000, enabled: pointMort || tous })
 
   // PERMIS (refonte) — les DEUX entrées affichent un compteur RÉEL : radar = total de la page 0
   // (cache react-query, chargée à l'arrivée = entrée par défaut) ; point mort = count fixe (caducité
   // 36 mois), toujours servi, indépendant de la fenêtre active.
   const qPmEntry = useQuery({ queryKey: ['pm-entry', commune], queryFn: () => modPromessesCount(36), staleTime: 60_000 })
+  // F2 — compteur « En cours » STABLE (fenêtre 24 m fixe), indépendant du segment actif : sinon le
+  // libellé du segment changeait quand « Tous » élargissait la fenêtre radar.
+  const qRadarEntry = useQuery({ queryKey: ['radar-entry', commune], queryFn: () => modPermis(24, null, 1, 0), staleTime: 60_000 })
+  const radarEntryTotal = (qRadarEntry.data as Record<string, any> | undefined)?.['total'] as number | undefined
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
   const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
   const head = pages[0]  // radar : carte (tous géocodés) + compteurs viennent de la page 0
-  const radarTotal = (qRadar.data?.pages?.[0] as Record<string, any> | undefined)?.['total'] as number | undefined
   const pmEntryTotal = qPmEntry.data?.total
   const inZone = (i: Record<string, any>) => {
     if (!zone || !i['geom']) return true   // non géocodé → toujours listé
@@ -371,82 +385,83 @@ export function M03() {
   }
   // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre les géocodés
   const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone)
-  // CARTE = points cliquables. Radar : TOUS les géocodés (page 0, plafond 8 000). Point mort : les items
-  // géocodés EUX-MÊMES (chaque PC au point mort est un point, exactement comme le radar).
-  const carte = (pointMort
-    ? items.filter((i) => i['geom'])
-    : ((head?.['carte'] ?? []) as Record<string, any>[])
-  ).filter((i) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone))
+  const geomInZone = (i: Record<string, any>) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
+  // CARTE = points cliquables. F2 : trois cas —
+  //   • en cours → radar (carte page 0, plafond 8 000), VERT ;
+  //   • point mort → les PC dormants géocodés, ROUGE ;
+  //   • Tous → les DEUX superposés (le rouge par-dessus le vert : un PC au point mort reste rouge).
+  const carteRadar = (pointMort ? [] : ((head?.['carte'] ?? []) as Record<string, any>[])).filter(geomInZone)
+  const cartePm = (pointMort || tous
+    ? (qPm.data?.pages ?? []).flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => i['geom'])
+    : []).filter(geomInZone)
+  const carte = [...carteRadar, ...cartePm]
+  const _feat = (i: Record<string, any>, pm: boolean) => ({ type: 'Feature' as const, geometry: i['geom'],
+    properties: { kind: 'permis', point_mort: pm, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } })
   useModuleMap([],
-    featureCollection(carte.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } }))),
-    [pointMort, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone])
+    // O2-1 — `point_mort` voyage dans les properties : la carte colore VERT (en cours) / ROUGE (point
+    // mort). En « Tous », le rouge est posé APRÈS le vert → il prime visuellement.
+    featureCollection([...carteRadar.map((i) => _feat(i, false)), ...cartePm.map((i) => _feat(i, true))]),
+    [pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone])
   const total = pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
   const sansLoc = pointMort ? 0 : ((head?.['sans_localisation'] as number) ?? 0)
   const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <p className="text-[11px] text-txt-mut">Qui construit quoi — et ce qui a été autorisé sans jamais sortir de terre.</p>
+      {/* O2-1 — UN champ de recherche INTELLIGENT en tête, PLEINE LARGEUR : adresse | commune (autocomplete
+          → recadre la carte) OU n° de permis (Entrée sur une saisie sans suggestion → ouvre la fiche).
+          Un n° Sitadel est une chaîne alphanumérique compacte (ex. 97441116A0361) ; une adresse a des
+          espaces/mots → on distingue sur le motif. F3 : enveloppe NON-flex — le wrapper interne
+          `flex-1` d'AddressAutocomplete grandissait VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
+      <div>
+        <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune ou n° de permis…"
+          onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
+          onEnterRaw={(t) => { const v = t.replace(/\s/g, ''); if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v) }} />
+      </div>
 
-      {/* DEUX ENTRÉES FRANCHES (le point mort n'est plus une case noyée) — chacune son compteur réel. */}
-      <div className="flex flex-col gap-1.5">
+      {/* SEGMENT PLEIN — En cours (VERT) · Point mort (ROUGE) · Tous. Compteurs live ; la couleur du
+          point suit la liste et la carte. */}
+      <div data-permis-segment className="flex overflow-hidden rounded-lg border border-line-2">
         {([
-          ['cours', 'En cours & récents', 'chantiers, DP, PC — veille concurrentielle', radarTotal, false],
-          // LOT11 — libellé HONNÊTE : le compteur = PC accordés SANS déclaration d'achèvement (DAACT).
-          // C'est un MAJORANT (Sitadel ne trace pas fiablement les commencements DOC/DAACT), pas une
-          // preuve de « jamais commencé » — à creuser, pas du gisement acquis.
-          ['mort', 'Accordés, achèvement non déclaré', 'PC accordés sans DAACT au fichier Sitadel — majorant à vérifier (le commencement n’est pas tracé), pas « jamais réalisé »', pmEntryTotal, true],
-        ] as const).map(([k, titre, sous, n, pm]) => (
-          <button key={k} data-permis-entree={k} onClick={() => togglePm(pm)}
-            className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition-colors duration-quick ${
-              pointMort === pm ? 'border-mint/60 bg-mint/[0.08]' : 'border-line-2 hover:border-mint/40'}`}>
-            <span className="min-w-0">
-              <b className={`text-[12.5px] ${pointMort === pm ? 'text-mint' : 'text-txt'}`}>{titre}</b>
-              <span className="mt-0.5 block text-[10px] leading-snug text-txt-dim">{sous}</span>
-            </span>
-            <span className="shrink-0 tnum text-[12px] font-medium text-txt-mut">{n != null ? fmt(n) : '…'} →</span>
+          ['cours', 'En cours', '#4ADE80', radarEntryTotal],
+          ['mort', 'Point mort', '#E2726A', pmEntryTotal],
+          // F2 — « Tous » = en cours + point mort (le compteur est la somme des deux jeux).
+          ['tous', 'Tous', null, (radarEntryTotal != null && pmEntryTotal != null) ? radarEntryTotal + pmEntryTotal : null],
+        ] as const).map(([k, label, dot, n], i) => (
+          <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)}
+            className={`flex flex-1 items-center justify-center gap-1.5 px-2 py-1.5 text-[11.5px] transition-colors duration-quick ${i > 0 ? 'border-l border-line-2' : ''} ${
+              seg === k ? 'bg-mint/[0.10] font-medium text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>
+            {dot && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: dot }} />}
+            <span className="truncate">{label}{n != null ? ` ${fmt(n)}` : ''}</span>
           </button>
         ))}
       </div>
 
-      {/* FILTRES COMPACTS — période (12/24/48/72/Tout radar ; 24/36/48/60 point mort) + types (radar). */}
-      <div className="flex flex-wrap gap-1.5">
-        {(pointMort ? MONTHS_PM : MONTHS_RADAR).map((m) => (
+      {/* PÉRIODE puis TYPE — empilés, pleine largeur (segments pleins). */}
+      <div className="flex overflow-hidden rounded-lg border border-line-2">
+        {(pointMort ? MONTHS_PM : MONTHS_RADAR).map((m, i) => (
           <button key={m} onClick={() => setMonths(m)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${months === m ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
-            {!pointMort && m >= 240 ? 'Tout' : `${m} mois${pointMort ? '+' : ''}`}
+            className={`flex-1 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${months === m ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+            {!pointMort && m >= 240 ? 'Tout' : `${m} m${pointMort ? '+' : ''}`}
           </button>
         ))}
-        {!pointMort && (
-          <>
-            <span className="mx-1 self-center text-line-2">|</span>
-            {NATURES.map(([v, l]) => (
-              <button key={v} onClick={() => setNature(v)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-mint text-mint' : 'border-line-2 text-txt-mut'}`}>
-                {l}
-              </button>
-            ))}
-          </>
-        )}
       </div>
-
-      {/* recherches compactes (aller à un lieu · numéro de permis → fiche) — sur une ligne, pas de vide. */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <div className="min-w-0 flex-1"><AddressAutocomplete placeholder="Aller à une rue, une commune…"
-          onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })} /></div>
-        <form onSubmit={(e) => { e.preventDefault(); const v = permSearch.trim(); if (v) setOpen(v) }} className="flex items-center gap-1">
-          <input data-permis-num data-promesses-num value={permSearch} onChange={(e) => setPermSearch(e.target.value.trim())}
-            placeholder="N° permis → fiche"
-            className="w-[140px] rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
-          <button type="submit" disabled={!permSearch.trim()}
-            className="shrink-0 rounded-lg border border-mint/50 bg-mint/15 px-2 py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/25 disabled:opacity-40">→</button>
-        </form>
-      </div>
+      {!pointMort && (
+        <div className="flex overflow-hidden rounded-lg border border-line-2">
+          {NATURES.map(([v, l], i) => (
+            <button key={v || 'tout'} onClick={() => setNature(v)}
+              className={`flex-1 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${nature === v ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* LIGNE DE STATS — puis la liste commence immédiatement (plus de vide noir). */}
       <p className="text-[11px] text-txt-dim">
         {pointMort
-          ? <>{total != null ? fmt(total) : '…'} permis au point mort · {fmt(carte.length)} sur la carte{total != null && loaded < total ? ` · ${fmt(loaded)} chargés` : ''}</>
+          ? <>{total != null ? fmt(total) : '…'} au point mort · {fmt(carte.length)} sur la carte{total != null && loaded < total
+              ? <> · <span data-permis-plafond title="Le point mort peut compter des milliers de PC : on charge d'abord les plus anciens (les plus dormants) ; affinez en zoomant/filtrant.">les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
           : <>{zone ? `${items.length} permis dans la zone dessinée` : `${fmt(total ?? 0)} permis`} · {fmt(carte.length)} sur la carte
               {!zone && sansLoc > 0 && <span data-permis-sansloc className="text-mint/70"
                 title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte, mais listé."> · {fmt(sansLoc)} sans localisation → liste</span>}
@@ -459,29 +474,42 @@ export function M03() {
       {pointMort && qPm.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
 
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-        {items.map((i, k) => (
-          // survol = le point s'allume sur la carte (permitHover) ; clic = fiche permis (drawer).
-          // LOT11 — UNE seule ligne (type · date · commune · logements · [délai] · état/badges), densité
-          // reprise. L'état affiche le LIBELLÉ servi (etat_label), plus jamais le code Sitadel brut « 2 ».
-          <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} onClick={() => setOpen(i['permit_id'] as string)}
+        {items.map((i, k) => {
+          // O2-1 — items sur DEUX lignes : (pastille · type · date · logements/surface) / (commune · badge).
+          // Pastille VERTE (en cours) / ROUGE (point mort) = même code que la carte. Le badge point mort
+          // porte l'ANCIENNETÉ CALCULÉE (« Sans DAACT · X ans ») : c'est elle qui mesure la dormance,
+          // donc l'intérêt. Année depuis la date d'autorisation (AAAA-…).
+          const an = Number(String(i['date'] ?? '').slice(0, 4))
+          const ans = an ? new Date().getFullYear() - an : null
+          return (
+          <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'}
+            onClick={() => setOpen(i['permit_id'] as string)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
-            className={`flex w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
-            <span className="rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
-            <span className="text-txt-mut">{i['date'] as string}</span>
-            {i['commune'] && <span className="text-txt-mut">{i['commune'] as string}</span>}
-            {i['nb_lgt'] != null && <span className="tnum text-txt-dim">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</span>}
-            {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
-            {pointMort && i['surface_m2'] != null && <span className="tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
-            <span className="ml-auto flex items-center gap-1.5">
-              {pointMort
-                ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
-                    title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas traçé, ce n'est PAS une preuve de non-réalisation.">sans DAACT déclarée</span>
-                : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
-              {!i['geom'] && <span data-permis-badge-nongeo className="rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
-                title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
+            className={`flex w-full flex-col gap-0.5 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
+            {/* ligne 1 */}
+            <span className="flex w-full items-center gap-2">
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: pointMort ? '#E2726A' : '#4ADE80' }} />
+              <span className="rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
+              <span className="font-mono text-txt-mut">{i['date'] as string}</span>
+              {i['nb_lgt'] != null && <b className="tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
+              {pointMort && i['surface_m2'] != null && <span className="tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
+              {!pointMort && i['delai_mois'] != null && <span className="ml-auto" style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
+            </span>
+            {/* ligne 2 */}
+            <span className="flex w-full items-center gap-2 pl-[15px]">
+              <span className="text-txt-mut">{(i['commune'] as string) || '—'}</span>
+              <span className="ml-auto flex items-center gap-1.5">
+                {pointMort
+                  ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
+                      title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
+                  : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
+                {!i['geom'] && <span data-permis-badge-nongeo className="rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
+                  title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
+              </span>
             </span>
           </button>
-        ))}
+          )
+        })}
         <MoreButton q={q} loaded={loaded} total={total ?? undefined} />
       </div>
       {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
@@ -728,7 +756,7 @@ export function M08() {
         </div>
         <p className="mt-2 text-[11px] text-txt">
           <span className="text-mint">{TEMPS_MILLESIMES.find((m) => m.key === cmpLeft)?.label ?? '—'}</span>
-          <span className="text-txt-dim"> vs </span>Aujourd'hui <span className="text-[9px] text-txt-dim">🔒 après fixe</span>
+          <span className="text-txt-dim"> vs </span>Aujourd'hui{/* F7 (OUTILS-3) — mention « 🔒 après fixe » retirée : sans sens pour le client. */}
         </p>
         <p className="mt-2 text-[10.5px] text-txt-dim">Glissez la poignée au centre de la carte pour révéler l'un ou l'autre.</p>
         <button onClick={() => { setTempsPinIdu(null); setModule(null) }}
@@ -768,10 +796,9 @@ const TEMPLATES: { key: string; label: string; corps: string }[] = [
   { key: 'libre', label: 'Libre', corps: '' },
 ]
 type Dest = { idu: string; commune: string; surface: number | null }
-// statuts visibles côté client — l'ordre EST la timeline. DASHBOARD-V1 · D8 : le flux servi
-// devient Demandé → Imprimé → Posté (les transitions se font à la Tour de contrôle, journalisées).
-// Les statuts hérités (tarif_confirme/envoye) restent LISIBLES via le fallback `?? d.statut`.
-const COURRIER_STATUTS: [string, string][] = [['demande', 'Demandé'], ['imprime', 'Imprimé'], ['poste', 'Posté']]
+// OUTILS-1 A4/B6 — les états internes (Demandé → Imprimé → Posté) ne sont PLUS exposés côté client
+// (décision Vic : le suivi d'exécution reste chez LABUSE). La timeline client a été retirée ; l'admin
+// (Tour de contrôle) garde le cycle complet.
 
 /** COURRIER-SERVICE (refonte 13 outils) — l'outil devient un SERVICE : le client prépare
  *  (① destinataires ② rédaction), puis ③ DEMANDE l'envoi à LABUSE. Trois étapes, variables par
@@ -847,7 +874,6 @@ export function M09() {
   }
 
   const STEPS: [1 | 2 | 3, string][] = [[1, 'Destinataires'], [2, 'Rédaction'], [3, 'Envoi']]
-  const statutRang = (s: string) => COURRIER_STATUTS.findIndex(([k]) => k === s)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -926,23 +952,16 @@ export function M09() {
               className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
               {envoyer.isPending ? 'Envoi de la demande…' : "Demander l'envoi à LABUSE"}</button>
           ) : (
+            // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base, identique côté admin)
+            // et renvoie vers le suivi. AUCUN état interne (imprimé/posté) côté client : décision Vic —
+            // moins de surface, moins de bugs. Le suivi vit dans « Projets → Mes courriers ».
             <div data-courrier-confirm className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
+              <b className="text-mint">✓ Demande n° {demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
               impression, mise sous pli, affranchissement et suivi compris.
+              <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
             </div>
           )}
           {envoyer.isError && <p className="text-[10.5px] text-st-ecartee">La demande n'a pas pu être transmise — réessayez.</p>}
-
-          {/* timeline de statut */}
-          {demande && (
-            <div className="flex items-center gap-1 text-[10px]">
-              {COURRIER_STATUTS.map(([k, l], i) => (
-                <div key={k} className={`flex items-center gap-1 ${statutRang(demande.statut) >= i ? 'text-mint' : 'text-txt-dim'}`}>
-                  <span>{statutRang(demande.statut) >= i ? '●' : '○'}</span>{l}{i < 2 && <span className="text-txt-dim">›</span>}
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* aperçu PDF de RELECTURE (secondaire) — corps rempli pour le 1er destinataire */}
           <button data-courrier-pdf onClick={apercuPdf} disabled={pdfBusy || dest.length === 0}
@@ -950,14 +969,15 @@ export function M09() {
             {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</button>
           {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
 
-          {/* demandes récentes (leur statut suit ce que Vic passe) */}
+          {/* OUTILS-1 A4 — récap des demandes du client : N° + volume + communes, SANS état interne
+              (le suivi d'exécution reste chez LABUSE). La vue complète est « Projets → Mes courriers ». */}
           {(demandes.data?.demandes.length ?? 0) > 0 && (
             <div className="mt-1 flex flex-col gap-1">
               <p className="label-caps text-[9px]">Vos demandes</p>
               {demandes.data!.demandes.slice(0, 5).map((d) => (
                 <div key={d.id} className="flex items-baseline justify-between gap-2 text-[10.5px]">
-                  <span className="min-w-0 truncate text-txt-mut">{d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
-                  <span className="shrink-0 text-mint">{COURRIER_STATUTS.find(([k]) => k === d.statut)?.[1] ?? d.statut}</span>
+                  <span className="min-w-0 truncate text-txt-mut">n° {d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
+                  <span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{String(d.ts).slice(0, 10)}</span>
                 </div>
               ))}
             </div>

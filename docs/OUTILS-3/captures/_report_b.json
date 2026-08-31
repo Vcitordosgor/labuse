@@ -1,0 +1,11 @@
+{
+  "seg_tous": "Tous 21 088",
+  "pm_rouge_features": "map-hook",
+  "etudier": {
+    "bati_conserve": true,
+    "terrain_libere": true,
+    "m26": true,
+    "m123": true
+  },
+  "errors": []
+}

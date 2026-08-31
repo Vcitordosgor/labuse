@@ -620,8 +620,15 @@ def prospection_solaire(commune: str | None = None,
     if not db.execute(text("SELECT to_regclass('parcel_solar') IS NOT NULL")).scalar():
         raise HTTPException(503, "données solaires indisponibles (table absente).")
     cap = _prospection_solaire_cap()
-    orders = {"potentiel": "ps.prod_spec_kwh_kwc DESC NULLS LAST, ps.idu",
-              "toiture": "b.emprise_bati_m2 DESC NULLS LAST, ps.idu",
+    # OUTILS-2 (O2-2) — « Top parcelles » : potentiel DESC PUIS toiture DESC. À la maille PVGIS (~400 m),
+    # des parcelles voisines partagent le MÊME potentiel : trier là-dessus seul ne classe rien — c'est la
+    # toiture (emprise bâtie, proxy) qui départage et qui intéresse l'installateur. `ps.idu` reste en
+    # dernier pour un ordre STABLE.
+    # Le potentiel est trié à la MAILLE AFFICHÉE (round kWh/kWc) : à pleine précision, deux parcelles
+    # voisines de la même maille PVGIS diffèrent d'un millième et la toiture ne départagerait jamais.
+    # En arrondissant comme l'écran, les « 51 lignes à 1 597 » forment un vrai palier que la toiture classe.
+    orders = {"potentiel": "round(ps.prod_spec_kwh_kwc) DESC NULLS LAST, b.emprise_bati_m2 DESC NULLS LAST, ps.idu",
+              "toiture": "b.emprise_bati_m2 DESC NULLS LAST, round(ps.prod_spec_kwh_kwc) DESC NULLS LAST, ps.idu",
               "proba": "ps.proba_proprio_occupant DESC NULLS LAST, ps.idu"}
     order = orders.get(sort, orders["potentiel"])
     # piscine : « oui » = détectée ; « non » = non détectée (⚠ l'absence n'est pas VÉRIFIÉE hors des
@@ -1755,8 +1762,18 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
             out.append({"insee": insee, "commune": c["commune"], "statut": "non_ingere",
                         "idurba": c.get("idurba"), "extraits": 0,
                         "message": "Règlement non ingéré pour cette commune."})
+    # OUTILS-1 A5 — le décompte par statut est CALCULÉ ici (source unique = statut réel de l'annuaire),
+    # jamais dérivé par soustraction ni figé au front : le RNU (ABSENCE de PLU) n'est pas une procédure et
+    # ne doit jamais être compté « en révision ». Si une commune passe en révision demain, le bandeau suit
+    # seul. `n_revision` = procédure de révision non réconciliée ; `n_rnu` = RNU ; `n_non_ingere` = corpus
+    # manquant. Somme des quatre = n_communes (invariant vérifié par test).
     servables = sum(1 for c in out if c["statut"] == "servable")
-    return {"n_communes": len(out), "servables": servables, "communes": out}
+    n_revision = sum(1 for c in out if c["statut"] == "revision")
+    n_rnu = sum(1 for c in out if c["statut"] == "rnu")
+    n_non_ingere = sum(1 for c in out if c["statut"] == "non_ingere")
+    return {"n_communes": len(out), "servables": servables,
+            "n_revision": n_revision, "n_rnu": n_rnu, "n_non_ingere": n_non_ingere,
+            "communes": out}
 
 
 @router.get("/plu-annuaire/search")

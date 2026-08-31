@@ -90,7 +90,8 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
 function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <button data-solaire-retour onClick={onBack} className="text-[11px] text-mint hover:underline">‹ Deux métiers</button>
+      {/* OUTILS-2 (O2-2) — fil d'Ariane vers l'OUTIL (« Prospection solaire »), pas un concept interne. */}
+      <button data-solaire-retour onClick={onBack} className="text-[11px] text-mint hover:underline">‹ Prospection solaire</button>
       <span className="text-[12px] font-medium text-txt-hi">{titre}</span>
     </div>
   )
@@ -202,58 +203,81 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
   const [potMin, setPotMin] = useState(0)
   const [inclure, setInclure] = useState(false)
   const [ficheIdu, setFicheIdu] = useState<string | null>(prefillIdu ?? null)
+  // OUTILS-2 (O2-2) — deux gestes SÉPARÉS en onglets : « Ma parcelle » (la fiche soleil d'une parcelle
+  // désignée) et « Top parcelles » (le classement). Ouverte sur une parcelle pré-remplie → « Ma parcelle ».
+  const [onglet, setOnglet] = useState<'ma-parcelle' | 'top'>(prefillIdu ? 'ma-parcelle' : 'top')
 
   const filtres: SolaireFiltres = { commune, potentielMin: potMin, sort: 'potentiel' }
-  const list = useQuery({ queryKey: ['ens-list', commune, potMin], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
+  const list = useQuery({ queryKey: ['ens-list', commune, potMin], queryFn: () => getProspectionSolaire(filtres),
+    staleTime: 60_000, enabled: onglet === 'top' })
   const fiche = useQuery({ queryKey: ['solaire-fiche', ficheIdu], queryFn: () => getSolaireFiche(ficheIdu!), enabled: !!ficheIdu, retry: false })
 
   const items = list.data?.items ?? []
   const visibles = inclure ? items : items.filter((it) => !isEcartee(it))
   const nHidden = items.length - items.filter((it) => !isEcartee(it)).length
 
+  const Onglet = ({ k, label }: { k: 'ma-parcelle' | 'top'; label: string }) => (
+    <button data-solaire-onglet={k} onClick={() => setOnglet(k)}
+      className={`flex-1 rounded-md px-2 py-1 text-center text-[11px] font-medium transition-colors duration-quick ${
+        onglet === k ? 'bg-mint/15 text-mint' : 'text-txt-mut hover:text-txt'}`}>{label}</button>
+  )
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="☀️ Ensoleillement" />
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <CommuneScope commune={commune} onChange={setCommune} />
-        <Select label="Potentiel" value={potMin} onChange={setPotMin} options={POTENTIELS} />
+      <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+        <Onglet k="ma-parcelle" label="Ma parcelle" />
+        <Onglet k="top" label="Top parcelles" />
       </div>
 
-      {/* BARRE UNIQUE (SOCLE) → FICHE SOLEIL */}
-      <ParcelInput dataAttr="solaire-idu" placeholder="Adresse ou IDU — la fiche soleil de la parcelle" onPick={setFicheIdu} />
-      {ficheIdu && fiche.isLoading && <p className="text-[11px] text-txt-mut">Fiche soleil…</p>}
-      {ficheIdu && fiche.isError && <p className="text-[11px] text-st-ecartee">Parcelle introuvable — vérifiez l’IDU.</p>}
-      {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
-
-      {/* LISTING ensoleillement */}
-      {list.isLoading && <Loading label="Prospection solaire…" />}
-      {list.isError && <ErrorState message="Données solaires momentanément indisponibles." />}
-      {list.data && (
+      {onglet === 'ma-parcelle' && (
         <>
-          <a data-solaire-csv href={prospectionSolaireCsvUrl(filtres)} download className="self-start text-[11px] font-medium text-mint hover:underline">↓ Exporter (CSV)</a>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <table className="w-full text-[11px]">
-              <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
-                <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Classement</th>
-                  <th className="px-2 py-1.5 text-right">Potentiel</th><th className="px-2 py-1.5 text-right">Pente</th>
-                  <th className="px-2 py-1.5 text-right">Orient.</th><th className="px-2 py-1.5 text-right">Toiture</th></tr>
-              </thead>
-              <tbody>
-                {visibles.map((it) => (
-                  <tr key={it.idu} data-ens-row className="cursor-pointer border-t border-line hover:bg-surface-2" onClick={() => setFicheIdu(it.idu)}>
-                    <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
-                    <td className="px-2 py-1.5"><Verdict it={it} /></td>
-                    <td className="px-2 py-1.5 text-right font-medium" style={{ color: TOKENS.mint }}>{num(it.productible)}</td>
-                    <td className="px-2 py-1.5 text-right text-txt-mut">{it.pente == null ? '—' : `${it.pente}°`}</td>
-                    <td className="px-2 py-1.5 text-right text-txt-mut">{it.azimut == null ? '—' : `${it.azimut}°`}</td>
-                    <td className="px-2 py-1.5 text-right text-txt-mut">{num(it.toit_m2, ' m²')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* BARRE UNIQUE (SOCLE) → FICHE SOLEIL */}
+          <ParcelInput dataAttr="solaire-idu" placeholder="Adresse ou IDU — la fiche soleil de la parcelle" onPick={setFicheIdu} />
+          {ficheIdu && fiche.isLoading && <p className="text-[11px] text-txt-mut">Fiche soleil…</p>}
+          {ficheIdu && fiche.isError && <p className="text-[11px] text-st-ecartee">Parcelle introuvable — vérifiez l’IDU.</p>}
+          {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
+          {!ficheIdu && <p className="text-[11px] text-txt-mut">Saisissez une parcelle pour sa fiche soleil (potentiel, toiture, profil mensuel).</p>}
+        </>
+      )}
+
+      {onglet === 'top' && (
+        <>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <CommuneScope commune={commune} onChange={setCommune} />
+            <Select label="Potentiel" value={potMin} onChange={setPotMin} options={POTENTIELS} />
           </div>
-          <p className="-mt-1 text-[9px] text-txt-dim">Potentiel en <b>kWh/kWc/an</b> (productible spécifique PVGIS). Cliquez une ligne pour sa fiche soleil.</p>
-          <EcarteesFooter hidden={!inclure} nHidden={nHidden} onToggle={() => setInclure((v) => !v)} />
+          {list.isLoading && <Loading label="Prospection solaire…" />}
+          {list.isError && <ErrorState message="Données solaires momentanément indisponibles." />}
+          {list.data && (
+            <>
+              <a data-solaire-csv href={prospectionSolaireCsvUrl(filtres)} download className="self-start text-[11px] font-medium text-mint hover:underline">↓ Exporter (CSV)</a>
+              {/* O2-2 — TOITURE M² en 2ᵉ colonne (2ᵉ critère de tri : à potentiel égal, la toiture départage). */}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <table className="w-full text-[11px]">
+                  <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
+                    <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5 text-right">Toiture m²</th>
+                      <th className="px-2 py-1.5">Classement</th><th className="px-2 py-1.5 text-right">Potentiel</th>
+                      <th className="px-2 py-1.5 text-right">Pente</th><th className="px-2 py-1.5 text-right">Orient.</th></tr>
+                  </thead>
+                  <tbody>
+                    {visibles.map((it) => (
+                      <tr key={it.idu} data-ens-row className="cursor-pointer border-t border-line hover:bg-surface-2" onClick={() => { setFicheIdu(it.idu); setOnglet('ma-parcelle') }}>
+                        <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
+                        <td className="px-2 py-1.5 text-right font-medium text-txt">{num(it.toit_m2, ' m²')}</td>
+                        <td className="px-2 py-1.5"><Verdict it={it} /></td>
+                        <td className="px-2 py-1.5 text-right font-medium" style={{ color: TOKENS.mint }}>{num(it.productible)}</td>
+                        <td className="px-2 py-1.5 text-right text-txt-mut">{it.pente == null ? '—' : `${it.pente}°`}</td>
+                        <td className="px-2 py-1.5 text-right text-txt-mut">{it.azimut == null ? '—' : `${it.azimut}°`}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="-mt-1 text-[9px] text-txt-dim">Tri : potentiel (kWh/kWc/an PVGIS) puis toiture. À potentiel égal (maille ~400 m), la toiture départage. Cliquez une ligne pour sa fiche soleil.</p>
+              <EcarteesFooter hidden={!inclure} nHidden={nHidden} onToggle={() => setInclure((v) => !v)} />
+            </>
+          )}
         </>
       )}
       <p className="text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>

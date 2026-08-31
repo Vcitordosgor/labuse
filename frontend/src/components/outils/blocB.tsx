@@ -192,12 +192,10 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
                     {fmtFr(c[col.k])}</span>
                 )
               })}
-              {/* affordance : chevron discret, remplacé par « Ouvrir la fiche → » au survol de la ligne */}
+              {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne (plus au survol) : l'affordance est
+                  visible d'emblée, pas seulement quand la souris passe (et sur tactile, jamais de survol). */}
               {onSelect && (
-                <span className="text-right text-[11px] text-txt-dim">
-                  <span className="group-hover:hidden">›</span>
-                  <span className="hidden whitespace-nowrap text-mint group-hover:inline">Ouvrir la fiche →</span>
-                </span>
+                <span className="whitespace-nowrap text-right text-[11px] font-medium text-mint">Fiche →</span>
               )}
             </Cell>
           )

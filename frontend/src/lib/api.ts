@@ -196,7 +196,11 @@ export const getCommuneAcquisitions = (commune: string) =>
   j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm`)
 
 export interface ContexteCommune {
-  commune: string; epci: string | null; epci_nom: string | null
+  commune: string; insee: string | null; epci: string | null; epci_nom: string | null
+  // FICHE-COMMUNE-2 (C2) — signaux nommés (règle en constante ; n'apparaissent que si vrais) qui
+  // remplacent « signal : prudence ». (C1) `cache_calcule_le` = date du précalcul (pied de fiche ; null = calcul direct).
+  signaux?: { code: string; ton: 'rouge' | 'orange'; libelle: string }[]
+  cache_calcule_le?: string | null
   // M55-C : bandeau RNU générique (null hors commune au règlement national d'urbanisme)
   rnu: { libelle: string; detail: string } | null
   // K2 — coordonnées de la mairie (Annuaire de l'administration). Champs absents = null → « Absent ».
@@ -211,14 +215,50 @@ export interface ContexteCommune {
   // via getCommuneAcquisitions) — le payload back reste servi (réversible), le front ne le rend plus.
   acquisitions_pm: AcquisitionsPm | null
   // M83 C1 — le foncier de la commune (points de calcul existants réutilisés)
+  // OUTILS-6 C1 : repartition_zonage passe en parts de SURFACE (somme = 100 %, ha par famille) ;
+  // stock_opportunites porte le stock foncier EN PARCELLES ET EN HA (même compte que le comparateur).
   foncier: {
     n_parcelles: number; surface_ha: number | null
-    repartition_zonage: { U: number; AU: number; A: number; N: number; total: number } | null
+    repartition_zonage: {
+      base: 'surface'; total_ha: number
+      familles: Record<'U' | 'AU' | 'A' | 'N', { ha: number; pct: number; n: number }>
+    } | null
+    stock_opportunites: { n: number; ha: number }
     classement: { evaluees: number; sans_zonage: number; raison_sans_zonage: string }
     prix_terrain_nu: { par_zone: Record<string, { median_eur_m2: number | null; n: number | null; calculable: boolean }> | null; calculable: boolean; motif: string | null; seuil_n: number; etiquette: string | null }
     mutations_12m: number
     permis_12m: { n: number; reserve: string }
   } | null
+  // OUTILS-6 C2 — les chiffres COMMUNS au comparateur des 24 communes (même moteur, même run)
+  comparable: {
+    ancien_median_eur_m2: number | null; ancien_n: number | null; neuf_eur_m2: number | null
+    permis_5a: number | null; delai_median_mois: number | null; stock_opportunites_n: number | null; source: string
+  } | null
+  // OUTILS-6 C5 — les blocs ajoutés, chacun depuis le moteur de son outil d'origine
+  marche_annonces: {
+    biens: number; seuil_n: number; sous_seuil: boolean
+    prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
+    ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; source: string
+  } | null
+  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; parc_national: boolean; source: string }
+  population: {
+    habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
+    logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
+  }
+  plu_statut: {
+    statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
+    confiance?: string | null; recherche_verbatim: boolean; source: string | null
+  }
+  permis_bloc: {
+    permis_12m: number; permis_5a: number | null; logements_12m: number | null
+    delai_median_mois: number | null; point_mort: number; source: string
+  }
+  densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
+  loyer: { median_eur_m2: number; type: string | null; source: string } | null
+  outils: {
+    permis_en_cours: number; permis_point_mort: number; densifiables: number
+    radar_biens: number; scan_pm: number; solaire_piscines: number
+  }
   // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
   classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null
   sru: { taux_lls: number; objectif_pct: number; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
@@ -261,6 +301,10 @@ export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
 }
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
+// OUTILS-2 (O2-4) — géométrie d'UNE parcelle (Feature + centroïde) pour tracer son contour sur l'écran
+// « Remonter le temps » sans charger tout le GeoJSON commune.
+export const getParcelGeojson = (idu: string) =>
+  j<{ type: 'Feature'; geometry: unknown; properties: { idu: string }; centroid: [number, number] }>(`/parcels/${encodeURIComponent(idu)}/geojson`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
 // ÉTUDE DE ZONE Z3 — le tiroir « Autour de cette parcelle » (isochrone IGN + Filosofi/BPE).
 export const getParcelleZone = (idu: string, mode: 'pied' | 'voiture', minutes: number) =>
@@ -278,6 +322,10 @@ export interface EtudeZoneInput {
 }
 export const etudeZone = (body: EtudeZoneInput) =>
   j<EtudeZoneResult>('/outils/etude-zone', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+// F3 (OUTILS-4) — toutes les entreprises de la zone, groupées par famille (appelé à la demande).
+export const etudeZoneEntreprises = (body: EtudeZoneInput) =>
+  j<import('./types').ZoneEntreprises>('/outils/etude-zone/entreprises', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const etudeZonePdfUrl = '/outils/etude-zone/export.pdf'
 
@@ -312,7 +360,7 @@ export interface PluCommune {
 export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
   j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
 export const pluAnnuaireCommunes = () =>
-  j<{ n_communes: number; servables: number; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
+  j<{ n_communes: number; servables: number; n_revision: number; n_rnu: number; n_non_ingere: number; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
 
 // M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
 export const getModeB = (idu: string, travauxM2?: number) =>
@@ -1132,9 +1180,9 @@ export interface ShortlistDiff {
   ajoutees: number; ajoutees_refonte?: number; sorties: number; tris_conserves: number; n_shortlist: number
   vivier: number; cap: number; tronquee: boolean
 }
-// M120-B — le compteur du cadrage, ALIGNÉ sur le figeable : `vivier` (triable, hors exclusions
-// dures) est ce qu'on affiche ; `total` (compte carte brut) est gardé pour transparence ; `cap`.
-export interface CadrageCompteur { vivier: number; total: number; cap: number }
+// PROJETS-FIX F1 — le compteur du cadrage sort de LA MÊME requête que « À trier » du projet ouvert :
+// `vivier` = le nombre EXACT que le projet servira (plus de `total` carte gonflé, source du mirage).
+export interface CadrageCompteur { vivier: number; cap: number }
 export const getCadrageCompteur = (cadrage: Cadrage, signal?: AbortSignal) =>
   j<CadrageCompteur>('/projets/compteur', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage }), signal })
 // M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par
@@ -1145,7 +1193,7 @@ export const getProjets = () => j<Projet[]>('/projets')
 export const getProjet = (id: number) => j<Projet>(`/projets/${id}`)
 export interface ProjetDerive { nom: string; cadrage: Cadrage; identite: Identite; sdp_besoin_m2: number | null }
 // M120 — créer = FIGER la shortlist en une fois (le run part une fois ; plus de run à l'ouverture).
-export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string; limit?: number }) =>
+export const createProjet = (body: { cadrage: Cadrage; identite?: Identite; nom?: string; limit?: number; de_zero?: boolean }) =>
   // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
   j<{ ok: boolean; existing?: boolean; projet: Projet; shortlist?: ShortlistDiff }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; pourquoi: string[] }  // M139 bricole : q_score retiré (toujours None, non rendu)
@@ -1172,6 +1220,8 @@ export interface ParcoursItem {
   adresse?: string | null; pourquoi?: string[]; evenement?: boolean; marche_eur_m2?: number | null
   proprietaire_public?: ProprietairePublic | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean
   etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
+  raison?: string | null      // OUTILS-5 (P1) : le signal dominant qui a classé la parcelle
+  signaux?: { label: string; fort: boolean }[]   // PROJETS-V5 (E4) : ≤ 2 signaux de vie, fort = rouge
 }
 // M2 — fusion des doublons : union parcelles + statuts (statut le plus avancé gagne), conflits signalés.
 export interface FusionResult { ok: boolean; cible: number; sources_archivees: number[]; n_parcelles: number; conflits: { parcel_id: number; statuts: string[]; retenu: string }[]; counts: ProjetCounts }
@@ -1184,6 +1234,9 @@ export interface ParcoursEtat {
   // `total_retenues` = N (dénominateur « X sur N »), `page` = la fenêtre courante. Décidées = complètes.
   total_retenues?: number | null
   page?: { offset: number; limit: number; returned: number; has_more: boolean }
+  // PROJETS-V5 (E2) — le bandeau d'analyse : total du cadrage (= compteurs des filtres) + signalées par
+  // tier (priorité = brûlante, à suivre = chaude). `signalees` = priorite + a_suivre.
+  analyse?: { total: number; priorite: number; a_suivre: number; signalees: number } | null
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
 }
 export interface CarteDecision {
@@ -1193,8 +1246,10 @@ export interface CarteDecision {
   forces: { titre: string; detail: string }[]; attentions: { titre: string; detail: string }[]
 }
 // M140 Lot A — paginé : on feuillette la liste complète des retenues (offset/limit), jamais tout chargé.
-export const getParcoursEtat = (id: number, offset = 0, limit = 60) =>
-  j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}`)
+// PROJETS-V5 (E5) — `sf` = sous-filtre du tiroir (JSON camelCase, mêmes clés que le wizard), fusionné
+// côté serveur avec le cadrage du projet (une seule requête, aucun moteur parallèle).
+export const getParcoursEtat = (id: number, offset = 0, limit = 60, tier?: string | null, sf?: Cadrage | null) =>
+  j<ParcoursEtat>(`/projets/${id}/parcelles?offset=${offset}&limit=${limit}${tier ? `&tier=${tier}` : ''}${sf && Object.keys(sf).length ? `&sf=${encodeURIComponent(JSON.stringify(sf))}` : ''}`)
 // M140 Lot B — export CSV de la liste COMPLÈTE des retenues (streamé, non stocké, zéro rang/score).
 export const projetCsvUrl = (id: number) => `/projets/${id}/export.csv`
 export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/projets/${id}/carte/${idu}`)
@@ -1262,7 +1317,30 @@ export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ bien_id, faits }),
   })
+// RADAR-VEILLE-1 (R3) — parcours DÉPÔT AGENCE (derrière drapeau, admin seulement)
+export interface DepotRec { list_id?: number; url?: string; type?: string; prix?: number; surface_hab?: number; surface_terrain?: number; pieces?: number; commune?: string; description?: string; photos?: string[] }
+export const getRadarDepotAgenceEtat = () => j<{ actif: boolean }>('/admin/radar/depot-agence/etat')
+export const radarDepotAgenceAnalyser = (html: string) =>
+  j<{ ok: boolean; records?: DepotRec[]; motif?: string }>('/admin/radar/depot-agence/analyser', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }),
+  })
+export const radarDepotAgencePublier = (p: { rec: DepotRec; idu: string; lon?: number; lat?: number; adresse_exacte: string; agence_nom: string }) =>
+  j<{ ok: boolean; bien_id?: number; commune?: string; idu?: string; motif?: string }>('/admin/radar/depot-agence/publier', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p),
+  })
+export const radarInteresse = (bien_id: number) =>
+  j<{ ok?: boolean; agence?: string; motif?: string }>('/radar/interesse', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }),
+  })
 export const getRadarExtraction = () => j<{ file: RadarBrouillon[]; n: number }>('/admin/radar/extraction')
+// RADAR-DEPOT-2 (D3) — file d'instruction ADMIN : biens en PISTE, non tranchés à la main.
+export interface RadarAInstruire {
+  bien_id: number; commune: string; type_bien: string | null; prix: number | null
+  surface_terrain: number | null; surface_hab: number | null
+  declaratif: RadarDeclaratif | null
+  portail: string | null; url_sortante: string | null; n_candidates: number
+}
+export const getRadarAInstruire = () => j<{ file: RadarAInstruire[]; n: number }>('/admin/radar/a-instruire')
 export const getRadarReverif = () => j<{ file: RadarReverif[]; n: number }>('/admin/radar/reverif')
 export const getRadarCheck = () => j<RadarCheck>('/admin/radar/check')
 export const radarToujoursEnLigne = (bien_id: number) =>
@@ -1283,6 +1361,28 @@ export interface RadarBienClient {
   etiquettes: Record<string, string>; fraicheur_source: string | null
   date_publication: string | null; date_saisie: string | null; date_derniere_confirmation: string | null
   portail: string; url_sortante: string; annonce_id: number | null; baisse: boolean
+  // RADAR-DEPOT-2 D2 — faits DÉCLARÉS par le vendeur (zone PLU, drapeaux), « déclaré dans l'annonce ».
+  declaratif: RadarDeclaratif | null; provenance: string | null
+  // RADAR-DEPOT-2 D4 — badge « sous le marché » (null si non applicable/au-dessus du seuil).
+  sous_le_marche: RadarSousMarche | null
+  // RADAR-VEILLE-1 (R3) — annonce DÉPOSÉE par une agence : contenu confié affiché (photos/texte/adresse
+  // abonnés-seuls). Le collecté a photos=[] / description=null (doctrine « faits + lien » intacte).
+  depose_par_agence: boolean; agence_nom: string | null; adresse_exacte: string | null
+  photos: string[]; description: string | null
+}
+export interface RadarDeclaratif {
+  zone_plu: string[]
+  cos_ces: { type: string; valeur: string } | null
+  emprise_sol_pct: number | null
+  drapeaux: { a_renover: boolean; a_demolir: boolean; succession: boolean; lotissement: boolean; lotissement_nom: string | null; viabilise: boolean }
+}
+export interface RadarSousMarche {
+  // calculable: true = verdict rendu ; false = €/m² affiché mais pas de verdict (motif porté) ; null jamais servi
+  calculable: boolean | null; affiche_eur_m2: number; referentiel_eur_m2?: number; n_referentiel?: number
+  millesime_dvf?: string | null; zone?: string | null; perimetre?: string | null
+  ecart_pct?: number; sous_le_marche?: boolean; sens?: string
+  // RADAR-VEILLE-1 (R2) — référence du même type, garde biais terrain, formulation non ambiguë
+  ecart_libelle?: string; meme_type_reference?: boolean; part_fonciere?: number | null; motif?: string
 }
 export interface RadarBienDetail extends RadarBienClient {
   historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
@@ -1298,7 +1398,7 @@ export interface RadarFiltres {
   commune?: string; type_bien?: string; prix_min?: number; prix_max?: number
   surface_hab_min?: number; surface_hab_max?: number; surface_terrain_min?: number; surface_terrain_max?: number
   particulier_pro?: string; statuts?: string[]; periode_debut?: string; periode_fin?: string
-  rattache?: 'oui' | 'non'
+  rattache?: 'oui' | 'non'; sous_marche?: 'oui' | 'non'
 }
 export const getRadarBiens = (f: RadarFiltres, tri = 'recentes', page = 1, taille = 60) => {
   const p = new URLSearchParams()
@@ -1306,7 +1406,7 @@ export const getRadarBiens = (f: RadarFiltres, tri = 'recentes', page = 1, taill
   set('commune', f.commune); set('type_bien', f.type_bien); set('prix_min', f.prix_min); set('prix_max', f.prix_max)
   set('surface_hab_min', f.surface_hab_min); set('surface_hab_max', f.surface_hab_max)
   set('surface_terrain_min', f.surface_terrain_min); set('surface_terrain_max', f.surface_terrain_max)
-  set('particulier_pro', f.particulier_pro); set('rattache', f.rattache)
+  set('particulier_pro', f.particulier_pro); set('rattache', f.rattache); set('sous_marche', f.sous_marche)
   set('periode_debut', f.periode_debut); set('periode_fin', f.periode_fin)
   if (f.statuts?.length) set('statuts', f.statuts.join(','))
   set('tri', tri); set('page', page); set('taille', taille)
@@ -1325,13 +1425,13 @@ export interface RadarPiste {
   criteres_detail?: RadarCritere[]          // chaque critère applicable : converge (✓) ou diverge (✗)
   ortho_url?: string | null                 // vignette BD ORTHO 20 cm de la candidate
 }
+// RADAR-DEPOT-2 (D3) — l'Instruire et le rattachement humain sont ADMIN SEULEMENT (endpoints /admin/…).
 export const radarInstruire = (bien_id: number) =>
   j<{ ok: boolean; bien_id: number; etat: string; humain?: boolean; candidates: RadarPiste[]; criteres?: RadarCritere[]; motif?: string | null }>(
-    '/radar/instruire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
-// RATTACHEMENT-V2 (Lot 2) — le client tranche via l'ortho : rattachement HUMAIN, fait foi.
+    '/admin/radar/instruire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
 export const radarRattacherHumain = (bien_id: number, idu: string) =>
   j<{ ok: boolean; bien_id: number; idu: string; etat: string; humain: boolean; motif?: string }>(
-    '/radar/rattacher-humain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, idu }) })
+    '/admin/radar/rattacher-humain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, idu }) })
 
 // ── RADAR (pige) · P6 D3 — onglet Marché (stats par commune, honnêteté statistique) ──
 export interface RadarMesure { valeur: number | null; n: number; insuffisant: boolean }
@@ -1350,8 +1450,10 @@ export interface RadarEcart {
 }
 export interface RadarSignaux {
   commune: string; actives: number
-  prix_m2_terrain: RadarMesure; prix_m2_bati: RadarMesure
-  ecart_demande_acte: { commune: string; terrain: RadarEcart; bati: RadarEcart }
+  // RADAR-DEPOT-2 D5 — chaque famille DIT son périmètre (bâti = maisons + appartements).
+  perimetre_terrain?: string; perimetre_bati?: string
+  prix_m2_terrain: RadarMesure & { perimetre?: string }; prix_m2_bati: RadarMesure & { perimetre?: string }
+  ecart_demande_acte: { commune: string; perimetre_terrain?: string; perimetre_bati?: string; terrain: RadarEcart; bati: RadarEcart }
 }
 export const getRadarSignaux = (commune: string) => j<RadarSignaux>(`/radar/signaux/${encodeURIComponent(commune)}`)
 
@@ -1362,3 +1464,15 @@ export const creerRadarVeille = (criteria: Record<string, unknown>) =>
   j<{ ok: boolean; veille_id: number }>('/radar/veille', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(criteria) })
 export const supprimerRadarVeille = (id: number) =>
   j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'DELETE' })
+
+// CRON-2 (K7) — la page CRON de l'admin (état des jobs planifiés)
+export interface CronJob {
+  nom: string; titre: string; cadence: string; cron_utc: string; heure_reunion: string
+  timeout_s: number; envoie_mail: boolean
+  prochaine_utc: string | null; prochaine_reunion: string | null
+  dernier: { statut: string | null; fin: string | null; duree_s: number | null; dry_run: boolean | null; compteurs: Record<string, unknown> | null; erreur: string | null }
+}
+export const getAdminCron = () => j<{ jobs: CronJob[]; note: string }>('/admin/cron')
+export const getAdminCronLog = (nom: string) => j<{ nom: string; lignes: string[]; note?: string }>(`/admin/cron/${encodeURIComponent(nom)}/log`)
+export const postAdminCronRun = (nom: string) =>
+  j<{ ok: boolean; nom?: string; note?: string; motif?: string }>(`/admin/cron/${encodeURIComponent(nom)}/run`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })

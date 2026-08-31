@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { M03 } from './ModulePanel'
 
-// Mandat PERMIS — deux entrées franches (compteurs réels), lignes enrichies (commune + badges),
-// survol d'une ligne = le point s'allume sur la carte (permitHover).
+// Mandat PERMIS (OUTILS-2 O2-1) — segment [En cours N | Point mort N | Tous] (compteurs réels),
+// lignes sur deux lignes (commune + badges), survol = le point s'allume sur la carte (permitHover).
 const GEOM = { type: 'Point', coordinates: [55.4, -20.9] }
 const RADAR = {
   total: 5613, geocodes: 5037, sans_localisation: 576, pct_geocode: 90, donnees_jusqu_au: '2026-06-30',
@@ -38,10 +38,10 @@ describe('PERMIS — double entrée + densité', () => {
   beforeEach(() => { mockFetch(); useApp.setState({ module: 'permis', commune: null, zone: null, permitHover: null, permitToOpen: null }) })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ module: null, permitHover: null }) })
 
-  it('deux entrées avec compteurs RÉELS (radar 5 613 / point mort 412)', async () => {
+  it('segment avec compteurs RÉELS (en cours 5 613 / point mort 412)', async () => {
     renderM03()
-    await waitFor(() => expect(document.querySelector('[data-permis-entree="cours"]')?.textContent).toContain('613'))
-    expect(document.querySelector('[data-permis-entree="mort"]')?.textContent).toContain('412')
+    await waitFor(() => expect(document.querySelector('[data-permis-seg="cours"]')?.textContent).toContain('613'))
+    expect(document.querySelector('[data-permis-seg="mort"]')?.textContent).toContain('412')
   })
 
   it('lignes enrichies : commune + badge « non géocodé »', async () => {
@@ -62,10 +62,12 @@ describe('PERMIS — double entrée + densité', () => {
     expect(useApp.getState().permitHover).toBeNull()
   })
 
-  it('basculer sur « Accordés jamais réalisés » → liste point mort (badge)', async () => {
+  it('segment « Point mort » → liste point mort (badge « Sans DAACT · X ans »)', async () => {
     renderM03()
     await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
-    fireEvent.click(document.querySelector('[data-permis-entree="mort"]')!)
+    fireEvent.click(document.querySelector('[data-permis-seg="mort"]')!)
     await waitFor(() => expect(document.querySelector('[data-permis-badge-mort]')).toBeTruthy())
+    // ancienneté calculée depuis la date d'autorisation (2023 → « · N ans »)
+    expect(document.querySelector('[data-permis-badge-mort]')?.textContent).toContain('Sans DAACT')
   })
 })

@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { createContext, isValidElement, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
+import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
 import { fmtDistance as fmtDistanceM } from '../../lib/geo'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
@@ -24,6 +25,7 @@ import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
 import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
 
@@ -347,7 +349,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       <div className="mt-1.5 flex flex-col gap-0.5 text-[11px]">
         {pt.pct_consomme != null && <PtRow k="SDP consommée / autorisée" v={`${pt.pct_consomme} %`} />}
-        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k="SDP résiduelle estimée" v={`~${fmtInt(pt.sdp_residuelle_m2)} m²`} />}
+        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} v={`~${fmtInt(pt.sdp_residuelle_m2)} m²`} />}
         {pt.surelevation_possible != null && <PtRow k="Surélévation" v={pt.surelevation_possible ? `possible${pt.hauteur_marge_m != null ? ` (marge ~${pt.hauteur_marge_m} m)` : ''}` : 'non'} />}
       </div>
       <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{pt.source}</p>
@@ -532,90 +534,91 @@ function PipelineButton({ idu }: { idu: string }) {
  *  quand Pipeline est en MENTHE (CRM prospection). La parcelle atterrit dans « À trier » (proposee).
  *  MULTI-PROJET AUTORISÉ : une parcelle peut nourrir plusieurs projets (dédup par projet côté
  *  serveur). Déjà rattachée → bouton actif (violet plein) + nom du/des projet(s) ; clic = ouvrir. */
+// PROJETS-V4 (V5) — FIN DU MODE COLLANT. Le bouton ouvre TOUJOURS un menu listant tous les projets
+// actifs (nom + taille du vivier) + « Nouveau projet avec cette parcelle ». Le choix ajoute la parcelle
+// aux Retenues du projet et affiche une confirmation brève. RIEN n'est mémorisé (le state `projetCible`
+// est supprimé) : la fiche suivante rouvre le même menu complet.
 function ProjetButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
   const setOpenProjet = useApp((s) => s.setOpenProjet)
   const [open, setOpen] = useState(false)
+  const [confirmMsg, setConfirmMsg] = useState<string | null>(null)
   const attache = useQuery({ queryKey: ['projets-parcelle', idu], queryFn: () => projetsPourParcelle(idu) })
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets, enabled: open })
+  const flash = (nom: string) => { setOpen(false); setConfirmMsg(nom); window.setTimeout(() => setConfirmMsg((m) => (m === nom ? null : m)), 2800) }
+  const invalider = () => {
+    qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })
+    qc.invalidateQueries({ queryKey: ['projets'] })
+    qc.invalidateQueries({ queryKey: ['parcours'] })   // les kanbans concernés se rafraîchissent
+  }
   const add = useMutation({
     mutationFn: (pid: number) => ajouterParcelle(pid, idu),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })
-      qc.invalidateQueries({ queryKey: ['projets'] })
-      setOpen(false)
+    onSuccess: (_r, pid) => { invalider(); flash((projetsQ.data ?? []).find((x) => x.id === pid)?.nom ?? 'projet') },
+  })
+  // « Nouveau projet avec cette parcelle » : crée un projet DE ZÉRO puis y ajoute la parcelle (Retenues).
+  const nouveau = useMutation({
+    mutationFn: async () => {
+      const r = await createProjet({ cadrage: {}, de_zero: true })
+      await ajouterParcelle(r.projet.id, idu)
+      return r.projet
     },
+    onSuccess: (p) => { invalider(); flash(p.nom) },
   })
   const attaches = attache.data?.projets ?? []
   const dejaIds = new Set(attaches.map((p) => p.id))
   const inProjet = attaches.length > 0
-  // liste des projets ACTIFS non archivés (candidats à l'ajout)
   const candidats = (projetsQ.data ?? []).filter((p) => p.statut === 'actif')
-  // M15 C3 : le HAUT du menu ne montre QUE les projets où la parcelle PEUT être ajoutée
-  // (elle n'y est pas encore) — tous cliquables, aucun grisé. Les projets où elle est déjà
-  // rangée vivent UNIQUEMENT dans la section « Déjà dans » du bas (fin du doublon M14).
-  const ajoutables = candidats.filter((p) => !dejaIds.has(p.id))
+  const vivier = (p: { counts?: { proposee?: number; retenue?: number; ecartee?: number; a_analyser?: number } }) => {
+    const c = p.counts ?? {}
+    return (c.proposee ?? 0) + (c.retenue ?? 0) + (c.ecartee ?? 0) + (c.a_analyser ?? 0)
+  }
 
   return (
     <div className="relative flex-1">
       <button
-        data-projet-fiche
-        onClick={() => setOpen((o) => !o)}   // QA-59 : TOUJOURS le menu (multi-projet) — jamais de saut direct
-        aria-expanded={open}
+        data-projet-fiche onClick={() => setOpen((o) => !o)} aria-expanded={open}
         className="act act-proj w-full whitespace-nowrap"
         style={inProjet ? { background: 'var(--iris)', color: 'var(--bg-0)', borderColor: 'transparent' } : undefined}
         title={inProjet
-          ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — ouvrir / rattacher à un autre`
-          : 'Rattacher cette parcelle à un projet (elle arrive dans « À trier »)'}
-      >
-        {inProjet
-          ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`)
-          : '+ Projet'}
+          ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — rattacher à un autre`
+          : 'Ajouter cette parcelle à un projet'}>
+        {inProjet ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`) : '+ Projet'}
       </button>
 
+      {confirmMsg && (
+        <div data-projet-confirm className="absolute bottom-10 left-0 z-30 whitespace-nowrap rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1.5 text-[11px] text-mint">
+          ✓ Ajoutée à « {confirmMsg} »
+        </div>
+      )}
+
       {open && (
-        <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-64 p-2 text-[11px]">
-          {/* M-C/merge : le bloc « Ouvrir » de M13-E3 (en tête) est RETIRÉ — main (QA-59) sert déjà
-              les projets rattachés en bas (« Déjà dans — ouvrir »), l'auto-merge les avait dupliqués. */}
-          <p className="label-caps px-1 pb-1">Rattacher à un projet</p>
+        <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-72 p-2 text-[11px]">
+          <p className="label-caps px-1 pb-1 text-txt-dim">Ajouter cette parcelle à…</p>
           {projetsQ.isLoading && <div className="px-1 py-2 text-txt-dim">Chargement…</div>}
-          {!projetsQ.isLoading && ajoutables.length === 0 && (
-            <p className="px-1 py-2 leading-snug text-txt-dim">
-              {candidats.length === 0
-                ? 'Aucun projet actif. Créez-en un depuis « Mes projets ».'
-                : 'Cette parcelle est déjà dans tous vos projets actifs.'}
-            </p>
+          {!projetsQ.isLoading && candidats.length === 0 && (
+            <p className="px-1 py-2 leading-snug text-txt-dim">Aucun projet actif — créez-en un ci-dessous.</p>
           )}
-          {/* M15 C3 : uniquement les projets où l'ajout est POSSIBLE — tous cliquables, aucun grisé
-              (les projets déjà rattachés ne sont plus répétés ici, ils sont en bas). Le doublon
-              interdit dans un même projet reste garanti côté backend (ON CONFLICT). */}
           <div className="max-h-56 space-y-0.5 overflow-y-auto">
-            {ajoutables.map((p) => (
-              <button key={p.id} data-projet-fiche-cible disabled={add.isPending}
-                onClick={() => add.mutate(p.id)}
-                className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-violet/10 hover:text-txt-hi"
-                title={`Ajouter à « ${p.nom} » (→ À trier)`}>
-                <span className="min-w-0 flex-1 truncate">{p.nom}</span>
-                <span className="shrink-0 text-violet">+</span>
-              </button>
-            ))}
-          </div>
-          {/* Ouvrir un projet où la parcelle est déjà rangée (l'action « ouvrir » n'est plus sur le
-              bouton principal, qui ouvre désormais toujours ce menu). */}
-          {attaches.length > 0 && (
-            <div className="mt-1 border-t border-line/40 pt-1">
-              <p className="label-caps px-1 pb-0.5 text-txt-dim">Déjà dans — ouvrir</p>
-              {attaches.map((p) => (
-                <button key={`open-${p.id}`} data-projet-fiche-ouvrir
-                  onClick={() => { setOpenProjet({ id: p.id, nom: p.nom }); setOpen(false) }}
-                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-violet transition-colors duration-quick hover:bg-violet/10"
-                  title={`Ouvrir « ${p.nom} »`}>
+            {candidats.map((p) => {
+              const deja = dejaIds.has(p.id)
+              return (
+                <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
+                  onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-violet/10 hover:text-txt-hi"
+                  title={deja ? `Déjà dans « ${p.nom} » — ouvrir` : `Ajouter à « ${p.nom} » (→ Retenues)`}>
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
                   <span className="min-w-0 flex-1 truncate">{p.nom}</span>
-                  <span className="shrink-0">→</span>
+                  <span className="shrink-0 font-mono text-[10px] text-txt-dim">{deja ? 'déjà ↗' : vivier(p).toLocaleString('fr-FR')}</span>
                 </button>
-              ))}
-            </div>
-          )}
+              )
+            })}
+          </div>
+          <div className="my-1.5 h-px bg-line/40" />
+          <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-50"
+            title="Créer un projet et y ajouter cette parcelle">
+            <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
+          </button>
         </div>
       )}
     </div>
@@ -767,7 +770,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                 secteur avec repli) : à distinguer du « marché ancien commune » affiché sur le Kanban. */}
             {!hideSource && (
               <p className="text-[11px] text-txt-dim">
-                LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
+                LABUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> ·
                 <span title="Prix de commercialisation du NEUF, à l'échelle du secteur (avec repli commune/île) — pas le prix du bâti ancien de la commune"> prix de sortie neuf</span> <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
                 terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
               </p>
@@ -1049,7 +1052,7 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
                 <div>Gabarit : <b className="text-txt">{fo.niveaux && fo.hauteur_m != null ? `${fo.niveaux} (${fo.hauteur_m} m)` : '—'}</b></div>
                 <div>SDP : <b className="text-txt">{fo.surface_plancher_m2 ? fmtM2(fo.surface_plancher_m2) : '—'}</b></div>
                 <div>Logements : <b className="text-txt">{`${logAuSol![0]}–${logAuSol![1]}`}</b></div>
-                <div>SHAB vendable : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
+                <div>SHAB vendable <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
               </div>
               {/* FAISABILITE (mandat) : dire pourquoi la SHAB vendable (~123) < SHAB brute — c'est le
                   nombre de logements RETENUS reconverti en surface, pas un plafond sur la brute (théorique). */}
@@ -2628,43 +2631,32 @@ export function Fiche({ idu }: { idu: string }) {
                   Les tuiles Cadastre / 1950 / Maps restent conditionnées à f.coords. */}
               {/* M60 P1d — « EXPORTS ET OUTILS » SCINDÉ en deux groupes : EXPORTS (documents,
                   inchangés) puis « OUTILS SUR CETTE PARCELLE » (portes compactes, plus bas). */}
+              {/* PROJETS-V5 (E9) — les EXPORTS passent sur le composant PARTAGÉ GrilleOutils (même rendu +
+                  survol que la grille d'outils de la fiche commune). Les icônes SVG et la logique des tuiles
+                  (PDF, Dossier, Financier, Pré-dossier…) sont conservées. */}
               <div className="sec"><span>EXPORTS</span><i /></div>
-              <div className="exports">
-                <div className="exp-grid">
-                  <a className="exp" href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
-                    <span>PDF</span>
-                  </a>
-                  <DossierTile idu={idu} />
-                  <BanquierButton idu={idu} />
-                  {f.coords && (
-                    <a className="exp" data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" title={CLIENT.fiche.export.cadastreTip}>
-                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
-                      <span>Cadastre</span>
-                    </a>
-                  )}
-                  {/* fix/fiche-argumentaire — « 1950 » (simple lanceur du module temporel, DOUBLON de la
-                      porte « Remonter le temps » du tiroir Marché, ligne ~2263) remplacé par
-                      « Argumentaire » : PDF de négociation avec les hypothèses de la calculette (mêmes que
-                      le bouton retiré en M143 lot 2) + VRD saisie (M144). Le module temporel reste
-                      atteignable par la porte Marché — rien perdu. */}
-                  <a className="exp" data-argumentaire href={`/argumentaire/${idu}.pdf${calculette ? `?cout_construction_m2=${calculette.cout_construction_m2}&marge_frais_pct=${calculette.marge_frais_pct}${calculette.vrd_m2 != null ? `&vrd_m2=${calculette.vrd_m2}` : ''}${calculette.prix_demande_eur ? `&prix_demande_eur=${calculette.prix_demande_eur}` : ''}` : ''}`} target="_blank" rel="noreferrer" title="Argumentaire de négociation (PDF) — avec les hypothèses de la calculette">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>
-                    <span>Argumentaire</span>
-                  </a>
-                  {f.coords && (
-                    <a className="exp" data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" title="Ouvrir dans Google Maps (épingle sur la parcelle)">
-                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>
-                      <span>Maps</span>
-                    </a>
-                  )}
-                  <button className="exp" data-courrier-tile onClick={() => setModule('courriers')} title={CLIENT.fiche.export.courrierTip}>
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
-                    <span>{CLIENT.fiche.export.courrier}</span>
-                  </button>
-                  <PreDossierTile idu={idu} />
-                </div>
-              </div>
+              <GrilleOutils>
+                <OutilCase nom="PDF" href={pdfUrl(idu, calculette)} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>} />
+                <DossierTile idu={idu} />
+                <BanquierButton idu={idu} />
+                {f.coords && (
+                  <OutilCase nom="Cadastre" data-cadastre-link title={CLIENT.fiche.export.cadastreTip}
+                    href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
+                    ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>} />
+                )}
+                <OutilCase nom="Argumentaire" data-argumentaire title="Argumentaire de négociation (PDF) — avec les hypothèses de la calculette"
+                  href={`/argumentaire/${idu}.pdf${calculette ? `?cout_construction_m2=${calculette.cout_construction_m2}&marge_frais_pct=${calculette.marge_frais_pct}${calculette.vrd_m2 != null ? `&vrd_m2=${calculette.vrd_m2}` : ''}${calculette.prix_demande_eur ? `&prix_demande_eur=${calculette.prix_demande_eur}` : ''}` : ''}`}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>} />
+                {f.coords && (
+                  <OutilCase nom="Maps" data-maps-link title="Ouvrir dans Google Maps (épingle sur la parcelle)"
+                    href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
+                    ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>} />
+                )}
+                <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => setModule('courriers')} title={CLIENT.fiche.export.courrierTip}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
+                <PreDossierTile idu={idu} />
+              </GrilleOutils>
               {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
                   (elle recréait une page Outils bis). Chaque outil est désormais une PORTE
                   contextuelle en pied du tiroir où il a un rapport étroit avec les données :
@@ -2744,17 +2736,13 @@ function DossierTile({ idu }: { idu: string }) {
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
   const d = st.data
   if (d && !d.disponible) return (
-    <span className="exp" data-dossier-indispo aria-disabled style={{ opacity: 0.4, cursor: 'not-allowed' }} title={d.raison ?? 'Générateur de dossier indisponible'}>
-      {icon}<span>Dossier</span>
-    </span>
+    <OutilCase nom="Dossier" ic={icon} disabled data-dossier-indispo title={d.raison ?? 'Générateur de dossier indisponible'} />
   )
   const compteur = d && !d.illimite && d.restants != null
   const tip = d ? (d.illimite ? 'Dossier parcelle PDF brandé (illimité — Intégral)' : `Dossier parcelle PDF brandé — ${d.restants}/${d.quota_mois} restants ce mois`) : 'Dossier parcelle PDF brandé'
   return (
-    <a className="exp" data-dossier-tile href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" title={tip}>
-      {/* M62-P1 (l) : vert d'action aligné sur le token unique `--mint` (#4ADE80), plus de `#7de3ab` en dur. */}
-      {icon}<span>Dossier{compteur ? <span data-dossier-quota style={{ color: d!.restants === 0 ? '#E8695A' : 'var(--mint)' }}> · {d!.restants}</span> : ''}</span>
-    </a>
+    <OutilCase nom="Dossier" ic={icon} href={`/dossier/${idu}.pdf`} title={tip} data-dossier-tile
+      chiffre={compteur ? `· ${d!.restants}` : undefined} />
   )
 }
 
@@ -2767,14 +2755,11 @@ function PreDossierTile({ idu }: { idu: string }) {
   const integral = moi.data?.plan === 'integral'
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
   if (!integral) return (
-    <span className="exp" data-predossier-gate aria-disabled style={{ opacity: 0.4, cursor: 'not-allowed', color: 'var(--txt)' }} title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`}>
-      {icon}<span>{CLIENT.fiche.export.preDossier}</span>
-    </span>
+    <OutilCase nom={CLIENT.fiche.export.preDossier} ic={icon} disabled data-predossier-gate
+      title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`} />
   )
   return (
-    <a className="exp" data-predossier href={preDossierUrl(idu)} target="_blank" rel="noreferrer" title={CLIENT.fiche.export.preDossierTip}>
-      {icon}<span>{CLIENT.fiche.export.preDossier}</span>
-    </a>
+    <OutilCase nom={CLIENT.fiche.export.preDossier} ic={icon} href={preDossierUrl(idu)} title={CLIENT.fiche.export.preDossierTip} data-predossier />
   )
 }
 
@@ -2809,20 +2794,14 @@ function BanquierButton({ idu }: { idu: string }) {
   // C6 · « Financier » (ex-Banquier) — rendu en tuile .exp (DA-FICHE-v6).
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /></svg>
   if (etat === 'pret') return (
-    <a className="exp" href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--mint)' }} title="Note de financement prête — ouvrir le PDF">
-      {icon}<span style={{ color: 'var(--mint)' }}>{CLIENT.fiche.export.banquierPret}</span>
-    </a>
+    <OutilCase nom={CLIENT.fiche.export.banquierPret} ic={icon} href={url} title="Note de financement prête — ouvrir le PDF" />
   )
   if (etat === 'encours') return (
-    <span className="exp">
-      {icon}<span>{CLIENT.fiche.export.banquierEnCours}</span>
-    </span>
+    <OutilCase nom={CLIENT.fiche.export.banquierEnCours} ic={icon} disabled title="Préparation en cours…" />
   )
   return (
-    <button className="exp" onClick={lancer} data-banquier-btn
-      title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip}>
-      {icon}<span>{etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.finance}</span>
-    </button>
+    <OutilCase nom={etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.finance} ic={icon}
+      onClick={lancer} data-banquier-btn title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip} />
   )
 }
 
