@@ -132,7 +132,8 @@ export function PluAnnuaire() {
                 className="shrink-0 text-[10px] text-mint hover:underline">‹ voies</button>
             </div>
             <div className="flex gap-2">
-              <input data-plu-q value={q} onChange={(e) => setQ(e.target.value)} autoFocus
+              {/* RETOURS-5 T6 — plus d'autoFocus (même correction que « Étudier un bien ») : bord neutre au repos. */}
+              <input data-plu-q value={q} onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') run() }}
                 placeholder={`dans ${nomInsee(insee)} — ex. hauteur de clôture`}
                 className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none" />

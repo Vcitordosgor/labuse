@@ -33,6 +33,9 @@ const STYLE: maplibregl.StyleSpecification = {
 // cf. lib/status.ts). M48 (F4) : le repli `status` (matrice v1 morte) est RETIRÉ — le MVT ne bake
 // plus matrice_statut et le GeoJSON l'avait déjà supprimé (M37) ; sans tier v2 → défaut neutre.
 // `etage0` est bool en GeoJSON et int (0/1) en MVT → to-number.
+// RETOURS-5 T3 — carrosserie SOMBRE commune des popups carte (opérations, concurrents) : jamais de fond
+// blanc illisible. Fond quasi opaque, bord --card-line, ombre portée pour détacher de la carte.
+const POPUP_BOX_CSS = 'font:12px system-ui;color:#e9edeb;min-width:220px;max-width:280px;background:rgba(14,18,16,.97);border:1px solid #232a26;border-radius:11px;padding:13px;box-shadow:0 12px 32px rgba(0,0,0,.55)'
 const LEGACY_COLOR = '#39463F'
 const LEGACY_OPACITY = 0.03
 const ETAGE0: maplibregl.ExpressionSpecification = ['>=', ['to-number', ['coalesce', ['get', 'etage0'], 0]], 1]
@@ -939,9 +942,12 @@ export function MapView() {
           // période, et le PROGRAMME rattaché (nom + lien) quand il existe. Puis deux chemins : la fiche
           // parcelle, et « voir son patrimoine » (Scan patrimoine, même SIREN). DOM textContent (anti-injection).
           const catLbl: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
-          const box = document.createElement('div'); box.style.cssText = 'font:12px system-ui;color:#e7e5e4;min-width:220px;max-width:270px'
-          const nom = document.createElement('b'); nom.textContent = String(props.denomination || '(propriétaire non nommé)'); box.appendChild(nom)
-          const sub = document.createElement('div'); sub.style.cssText = 'color:#a8a29e;font-size:11px;margin-top:2px'
+          // RETOURS-5 T3 — popup SOMBRE à la DA (jamais de fond blanc illisible) : le box porte la carte
+          // (fond rgba(14,18,16,.97), bord --card-line, ombre) ; className 'labuse-popup' neutralise le
+          // conteneur MapLibre blanc par défaut (contenu transparent, tip sombre).
+          const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
+          const nom = document.createElement('b'); nom.textContent = String(props.denomination || '(propriétaire non nommé)')
+          nom.style.cssText = 'display:block;font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'; box.appendChild(nom)
           const cat = catLbl[String(props.categorie)] || String(props.categorie || '')
           const np = Number(props.n_permis) || 0
           const per = (() => {
@@ -949,9 +955,12 @@ export function MapView() {
             const a = props.date_min ? fmtD(String(props.date_min)) : '', b = props.date_max ? fmtD(String(props.date_max)) : ''
             return a && b && a !== b ? `${a} → ${b}` : (b || a)
           })()
-          sub.textContent = `${cat}${cat ? ' · ' : ''}${np} permis${per ? ` · ${per}` : ''}${props.nb_logements ? ` · ${props.nb_logements} lgt` : ''}`
-          box.appendChild(sub)
-          if (props.libelle) { const lib = document.createElement('div'); lib.style.cssText = 'color:#a8a29e;font-size:11px;margin-top:2px'; lib.textContent = String(props.libelle); box.appendChild(lib) }
+          // RETOURS-5 T3 — les faits sur DEUX lignes lisibles ; jamais deux dates collées bout à bout.
+          const fx = document.createElement('div'); fx.style.cssText = 'color:#98a39d;font-size:12px;margin-top:5px;line-height:1.55'
+          const l1 = `${cat}${cat ? ' · ' : ''}${np} permis${props.nb_logements ? ` · ${props.nb_logements} logement${Number(props.nb_logements) > 1 ? 's' : ''}` : ''}`
+          const l2 = `${props.commune ? String(props.commune) : ''}${per ? `${props.commune ? ' · ' : ''}${per}` : ''}`
+          fx.textContent = l1; if (l2) { const br = document.createElement('br'); fx.appendChild(br); fx.appendChild(document.createTextNode(l2)) }
+          box.appendChild(fx)
           // le PROGRAMME rattaché (nom + lien externe) — un FAIT + un LIEN, jamais un visuel d'annonce.
           if (props.prog_nom) {
             const pg = document.createElement('div'); pg.style.cssText = 'margin-top:6px;padding:5px 7px;border:1px solid rgba(74,222,128,.25);background:rgba(74,222,128,.05);border-radius:6px'
@@ -963,33 +972,35 @@ export function MapView() {
             }
             box.appendChild(pg)
           }
-          // RETOURS-4 S5.3 — les deux actions tiennent CÔTE À CÔTE sur une ligne (nowrap + min-width du box).
-          const row = document.createElement('div'); row.style.cssText = 'display:flex;flex-wrap:nowrap;gap:14px;margin-top:8px'
+          // RETOURS-4 S5.3 / T3 — les deux actions CÔTE À CÔTE sur une ligne, chacune dans un cadre discret.
+          const row = document.createElement('div'); row.style.cssText = 'display:flex;flex-wrap:nowrap;gap:7px;margin-top:11px'
+          const actCss = 'flex:1;text-align:center;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 6px;white-space:nowrap'
           if (props.idu) {
             const bp = document.createElement('button'); bp.textContent = 'voir la parcelle →'
-            bp.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0;white-space:nowrap'
+            bp.style.cssText = actCss
             bp.addEventListener('click', () => { select(String(props.idu)); popup.remove() }); row.appendChild(bp)
           }
           if (props.siren) {
-            const bs = document.createElement('button'); bs.textContent = 'voir son patrimoine →'
-            bs.style.cssText = 'color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0;white-space:nowrap'
+            const bs = document.createElement('button'); bs.textContent = 'son patrimoine →'
+            bs.style.cssText = actCss
             bs.addEventListener('click', () => { const s = useApp.getState(); s.setM02Prefill(String(props.siren)); s.setModule('patrimoine'); popup.remove() }); row.appendChild(bs)
           }
           box.appendChild(row)
-          const popup = new maplibregl.Popup({ offset: 12 }).setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
+          const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup' }).setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (props?.kind === 'zone-concurrent') {
           // F8 (OUTILS-3) — pastille concurrent CLIQUABLE : popup (nom, activité, date de création) +
           // lien vers la parcelle. Contenu construit en DOM (textContent) → aucun risque d'injection.
           const lon = Number(props.lon), lat = Number(props.lat)
-          const box = document.createElement('div'); box.style.cssText = 'font:12px system-ui;color:#e7e5e4;max-width:220px'
-          const nom = document.createElement('b'); nom.textContent = String(props.nom || 'Établissement (nom non diffusé)'); box.appendChild(nom)
-          const sub = document.createElement('div'); sub.style.cssText = 'color:#a8a29e;font-size:11px;margin-top:2px'
+          // RETOURS-5 T3 — popup SOMBRE (jamais de fond blanc).
+          const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
+          const nom = document.createElement('b'); nom.textContent = String(props.nom || 'Établissement (nom non diffusé)'); nom.style.cssText = 'display:block;font-size:14px;font-weight:650'; box.appendChild(nom)
+          const sub = document.createElement('div'); sub.style.cssText = 'color:#98a39d;font-size:12px;margin-top:5px'
           sub.textContent = String(props.activite || '') + (props.annee ? ` · depuis ${props.annee}` : ''); box.appendChild(sub)
           const btn = document.createElement('button'); btn.textContent = 'voir la parcelle →'
-          btn.style.cssText = 'margin-top:6px;color:#4ADE80;background:none;border:0;cursor:pointer;font:11px system-ui;padding:0'
+          btn.style.cssText = 'margin-top:9px;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
           box.appendChild(btn)
-          const popup = new maplibregl.Popup({ offset: 12 }).setLngLat([lon, lat]).setDOMContent(box).addTo(m)
+          const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup' }).setLngLat([lon, lat]).setDOMContent(box).addTo(m)
           btn.addEventListener('click', () => { parcelAt(lon, lat).then((r) => { if (r.idu) select(String(r.idu)) }).catch(() => {}); popup.remove() })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }

@@ -52,7 +52,9 @@ function Banner({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Row({ idu, right, sub, fiche }: { idu: string; right: React.ReactNode; sub?: string; fiche?: [string, string][] }) {
+// RETOURS-5 T4.5 — `hoverFull` : survol PLEIN (dégradé vert, encre sombre) sur les lignes de parcelles du
+// Scan patrimoine, sans changer le survol léger des autres outils qui réutilisent Row.
+function Row({ idu, right, sub, fiche, hoverFull }: { idu: string; right: React.ReactNode; sub?: string; fiche?: [string, string][]; hoverFull?: boolean }) {
   const { select, moduleFiche, setModuleFiche, module } = useApp()
   return (
     <button
@@ -60,7 +62,7 @@ function Row({ idu, right, sub, fiche }: { idu: string; right: React.ReactNode; 
         if (fiche && module) setModuleFiche({ ...moduleFiche, [idu]: { module, lines: fiche } })
         select(idu)
       }}
-      className="flex w-full shrink-0 items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-mint/50"
+      className={`flex w-full shrink-0 items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left ${hoverFull ? 'hover-fill' : 'transition-colors duration-quick hover:border-mint/50'}`}
     >
       <div className="min-w-0 flex-1">
         <div className="font-mono text-xs text-txt-hi">{idu.slice(8, 10)} {idu.slice(10)}</div>
@@ -70,10 +72,6 @@ function Row({ idu, right, sub, fiche }: { idu: string; right: React.ReactNode; 
     </button>
   )
 }
-
-const V = ({ children }: { children: React.ReactNode }) => (
-  <span className="num-key text-sm text-mint">{children}</span>
-)
 
 const fmt = fmtInt
 
@@ -182,54 +180,52 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
               ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
             </div>
           )}
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-xs">
-            <div className="truncate font-medium text-txt-hi">{d['nom'] as string}</div>
-            {/* #2 l'agrégat dit l'ACTIONNABLE (hors écartées) + SDP RÉSIDUELLE (c'en est) */}
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-txt-mut">
-              <span><V>{d['n_parcelles'] as number}</V> parcelles</span>
-              <span><V>{d['n_actionnables'] as number}</V> actionnables <span className="text-txt-dim">(hors écartées)</span></span>
-              <span>SDP résiduelle <V>{fmt(d['sdp_residuelle_m2'] as number)}</V> m²</span>
-            </div>
-            {/* GB-018 — la liste est paginée côté serveur : on dit HONNÊTEMENT combien sont affichées sur
-                le total. OUTILS-1 B7 : l'export CSV est RETIRÉ (la consultation reste illimitée,
-                l'extraction de la base non). */}
-            <div className="mt-1.5 flex items-center gap-2 text-[11px]">
-              <span className="text-txt-dim">
-                {d['tronquee'] === true
-                  ? <>{fmt(items.length)} affichées sur <V>{d['n_parcelles'] as number}</V></>
-                  : <>{fmt(items.length)} affichée{items.length > 1 ? 's' : ''}</>}
-              </span>
-            </div>
-            {/* #3 valorisation indicative du foncier nu (zones U/AU) au référentiel unique prix de zone */}
-            {d['valorisation_nu_eur'] != null && (
-              <div className="mt-1 text-[11px] text-txt-dim">Valorisation indicative du foncier nu <span className="text-txt-dim">(zones U/AU, DVF terrains)</span> : <b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></div>
-            )}
-            {/* RETOURS-3 R4.3 — pont vers Veille promoteurs : CE QUE ce propriétaire CONSTRUIT (mêmes SIREN,
-                ses opérations + programmes). Le Scan dit ce qu'il DÉTIENT ; la Veille ce qu'il BÂTIT. */}
-            {d['siren'] != null && (
-              <button data-m02-operations
-                onClick={() => { const s = String(d['siren']); if (embedded && onVoirOperations) onVoirOperations(s); else { setVeilleFocusSiren(s); setModule('veille-promoteurs') } }}
-                className="mt-2 text-[11px] text-mint hover:underline" title="Ce qu'il construit — ses opérations">
-                Voir ses opérations →</button>
-            )}
+          <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
+          {/* RETOURS-5 T4.1 — TROIS chiffres qui comptent, en grille de 3 cartes. Rien d'autre au 1er niveau. */}
+          <div className="grid grid-cols-3 gap-2">
+            {([['n_parcelles', 'parcelles'], ['n_actionnables', 'actionnables'], ['sdp_residuelle_m2', 'm² SDP résiduelle']] as const).map(([k, lbl]) => (
+              <div key={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+                <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{fmt(d[k] as number)}</div>
+                <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{lbl}</div>
+              </div>
+            ))}
           </div>
-          {/* LOT6 (OUTILS-FINALE) — le bloc « N parcelles contiguës — Analyser en assiette → » est RETIRÉ :
-              l'outil OBSERVE, il ne pousse plus vers Assemblage (ni n'amorce msel, ce qui polluait Courrier).
-              L'agrégation d'assiette reste une démarche volontaire depuis Assemblage (clic-carte). */}
+          {/* RETOURS-5 T4.2 — tout le reste REPLIÉ : détail des actionnables, valorisation, périmètre, nature. */}
+          <details className="text-xs">
+            <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
+            <div className="flex flex-col">
+              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b> hors écartées</span></div>
+              {d['valorisation_nu_eur'] != null && (
+                <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
+              )}
+              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
+              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
+            </div>
+          </details>
+          {/* RETOURS-5 T4.4 — « Voir ses opérations → » : bouton PLEINE LARGEUR (survol plein) entre l'encart et la liste. */}
+          {d['siren'] != null && (
+            <button data-m02-operations
+              onClick={() => { const s = String(d['siren']); if (embedded && onVoirOperations) onVoirOperations(s); else { setVeilleFocusSiren(s); setModule('veille-promoteurs') } }}
+              className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Ce qu'il construit — ses opérations">
+              Voir ses opérations →</button>
+          )}
+          {/* liste — RETOURS-5 T4.5 : lignes en survol plein (hoverFull). */}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-            {/* SCAN (refonte) — l'outil OBSERVE, il ne démarche pas : le bouton « ✉ courrier » PAR
-                parcelle est RETIRÉ. Le courrier est désormais une démarche volontaire depuis l'outil
-                Courrier (ou le pont Assemblage). Chaque ligne porte le classement CANONIQUE (TierBadge,
-                identique au reste de l'app) — pas de badge « priorité » distinct. */}
             {items.map((i) => (
               <div key={i['idu'] as string} className="min-w-0">
-                <Row idu={i['idu'] as string}
+                <Row idu={i['idu'] as string} hoverFull
                   sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
                   right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={null} />}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
               </div>
             ))}
+          </div>
+          {/* RETOURS-5 T4.3 — le « N affichées sur M » QUITTE l'encart : ligne discrète SOUS la liste, avec le tri. */}
+          <div className="shrink-0 text-center text-[11px] text-txt-off">
+            {d['tronquee'] === true
+              ? <>{fmt(items.length)} affichées sur {fmt(d['n_parcelles'] as number)} · triées par probabilité</>
+              : <>{fmt(items.length)} affichée{items.length > 1 ? 's' : ''} · triées par probabilité</>}
           </div>
         </>
       )}

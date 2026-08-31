@@ -182,17 +182,19 @@ function CommuneSelect() {
               mesurée du panneau — l'INSEE ressemblait à un CP sans l'être) + « voir la fiche → »
               sur UNE ligne, et le NOM ENTIER de la commune au survol (title). */}
           <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
+            {/* RETOURS-5 T8 — survol PLEIN (dégradé vert, encre sombre) sur chaque ligne, comme partout. */}
             <button onClick={() => pick(null)}
-              className={`rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${n === 0 ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
+              className={`hover-fill rounded-md px-3 py-2 text-left text-xs ${n === 0 ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
               Toute l’île
             </button>
             <div className="mx-3 my-1 border-t border-line" />
             {/* M55-D stage 9 ter point 2 (correction Vic) : le LIEN TEXTE d'origine (pattern
                 M55-C) — « voir la fiche → » à droite du nom. Le NOM sélectionne (zoom +
                 pré-coche, bloc 3 inchangé) ; le lien ouvre la fiche de CETTE commune SANS
-                changer le périmètre (stopPropagation). */}
+                changer le périmètre (stopPropagation). RETOURS-5 T8 — la LIGNE ENTIÈRE reçoit
+                l'aplat plein vert (nom + code postal + « voir la fiche → » inversés en encre sombre). */}
             {(communes.data ?? []).map((c) => (
-              <div key={c.insee} className="group flex items-center rounded-md hover:bg-surface-3">
+              <div key={c.insee} className="hover-fill flex items-center rounded-md">
                 <button onClick={() => pick(c.commune)} title={c.commune}
                   className={`min-w-0 flex-1 truncate whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
                   {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>

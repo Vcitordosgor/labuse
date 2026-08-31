@@ -1,11 +1,9 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
-import { getAccueilChiffres } from '../../lib/api'
 import { MODULES } from '../outils/registry'
-import { useQuery } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
@@ -397,32 +395,8 @@ function VerdictHero() {
 // « Commencer → » en pièce maîtresse : proportions généreuses, texte centré, FLÈCHE
 // DESSINÉE (le caractère → flottait), hover (halo + glissement de flèche) et active
 // (enfoncement) soignés. Tokens LABUSE inchangés (mint / surfaces / display).
-const nfFr = (n: number) => n.toLocaleString('fr-FR')   // séparateur = espace fine (U+202F)
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
-// M65 P2c — COMPTEUR : la valeur monte de 0 à sa cible en 1,2 s (sortie cubique) AU MONTAGE, une
-// seule fois par session (drapeau sessionStorage). Sous prefers-reduced-motion → valeur directe.
-function Compteur({ value }: { value: number }) {
-  const CLE = 'labuse.accueil.compteur'
-  const dejaVu = () => { try { return sessionStorage.getItem(CLE) === '1' } catch { return false } }
-  const [n, setN] = useState(() => (dejaVu() || prefersReducedMotion() ? value : 0))
-  useEffect(() => {
-    if (dejaVu() || prefersReducedMotion()) { setN(value); return }
-    try { sessionStorage.setItem(CLE, '1') } catch { /* mode privé : on anime quand même */ }
-    let raf = 0
-    const t0 = performance.now(), dur = 1200
-    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - t0) / dur)
-      setN(Math.round(easeOutCubic(p) * value))
-      if (p < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [value])
-  return <>{nfFr(n)}</>
-}
+// RETOURS-5 T1 — le COMPTEUR animé et les helpers de format (nfFr/prefersReducedMotion) servaient la
+// ligne de chiffres, retirée : supprimés avec elle.
 
 // RETOURS-4 S8 — les 3 chiffres SERVIS sont désormais une LIGNE sous le titre (statline dans
 // AccueilPreuves) ; le composant CaseChiffre (grille v2/v4) est retiré. La ligne ne peut plus être rognée
@@ -457,9 +431,6 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
 }
 
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
-  const q = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 3_600_000, retry: 1 })
-  const d = q.data
-  const A = CLIENT.accueil
   const { setView, setAccueilVu, toggleOutils } = useApp()
   // M87 P1 — le bloc « Cette semaine » (M83) est RETIRÉ (composant + appel /accueil/cette-semaine + calcul
   // d'activité). Le claim et la ligne de fraîcheur restent : le foncier vit sans compteur 7 jours en tête.
@@ -467,20 +438,11 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
     <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
       {/* B1 — la promesse (2e ligne en --mint) */}
       <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
-      <p className="mb-4 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
+      <p className="mb-5 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
 
-      {/* RETOURS-4 S8 (maquette v5) — les 3 chiffres SERVIS quittent leur boîte en grille et deviennent une
-          LIGNE sous le titre : rien à masquer, rien qui déborde, à aucun zoom (fin définitive du bug S1.2). */}
-      <div data-accueil-stats className="mb-5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12.5px] text-[#98a39d]">
-        <span><b className="font-semibold tabular-nums text-txt">{d?.parcelles != null ? <Compteur value={d.parcelles} /> : (q.isLoading ? '…' : '—')}</b> {A.labelParcelles}</span>
-        <span className="text-[#3a453e]">·</span>
-        <span><b className="font-semibold tabular-nums text-txt">{d?.communes != null ? nfFr(d.communes) : (q.isLoading ? '…' : '—')}</b> {A.labelCommunes}</span>
-        <span className="text-[#3a453e]">·</span>
-        <span><b className="font-semibold tabular-nums text-txt">{d?.sources != null ? nfFr(d.sources) : (q.isLoading ? '…' : '—')}</b> {A.labelSources}</span>
-      </div>
-
-      {/* B3 — quatre cartes d'entrée (maquette-v4). Toutes VERTES sauf le Copilote (mauve/IA).
-          RETOURS-4 S1.3 — descriptions raccourcies pour tenir sur UNE ligne à 360 px. */}
+      {/* RETOURS-5 T1 — la LIGNE de chiffres est RETIRÉE (« 64 sources » passait à la ligne, et une donnée
+          coupée est pire qu'absente). Le titre est suivi directement de « PAR OÙ COMMENCER ». L'appel
+          /accueil/chiffres est supprimé du front (endpoint utilisé UNIQUEMENT ici — cf. compte-rendu). */}
       <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#5C6A63]">Par où commencer</p>
       <div className="mb-5 flex flex-col gap-2">
         <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, parcelles"

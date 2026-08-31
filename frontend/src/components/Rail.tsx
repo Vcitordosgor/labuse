@@ -157,7 +157,8 @@ export function Rail() {
 
   return (
     <>
-      <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1">
+      {/* RETOURS-5 T2 — rail +10 % (64 → 70 px) : moins serré, libellés au large. */}
+      <nav className="flex h-full w-[70px] shrink-0 flex-col items-center border-r border-line bg-surface-1">
         {/* RETOURS-4 S6 — ZONE SIGNATURE : l'oiseau vert EXISTANT (asset à l'identique) au sommet du rail,
             juste au-dessus de « Carte », centré, hauteur du bandeau, séparateur dessous. Non cliquable,
             non survolable, non focusable, jamais d'état actif (un simple visuel, hors flux d'interaction). */}
@@ -165,7 +166,8 @@ export function Rail() {
             bords : on le CONTRAINT à 36 px de large, hauteur auto, centré (≥ 12 px de marge de chaque côté
             dans un rail de 64 px), et borné en hauteur pour ne pas dépasser sa zone signature (h-14). */}
         <div className="flex h-14 w-full shrink-0 items-center justify-center border-b border-line px-3" aria-hidden>
-          <img src="/socle/marque/labuseicone4ADE80.svg" alt="" className="h-auto max-h-8 w-9 max-w-[36px]"
+          {/* RETOURS-5 T2 — l'oiseau suit la proportion du rail : max-width 40 px, marges ≥ 12 px (rail 70 px). */}
+          <img src="/socle/marque/labuseicone4ADE80.svg" alt="" className="h-auto max-h-8 w-10 max-w-[40px]"
             style={{ filter: 'drop-shadow(0 0 6px rgba(74,222,128,0.35))' }} />
         </div>
 
