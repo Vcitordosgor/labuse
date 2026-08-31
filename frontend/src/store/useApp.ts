@@ -252,6 +252,9 @@ interface AppState {
   adminSection: string | null
   goAdminSection: (s: string) => void
   clearAdminSection: () => void
+  // SECTEUR-2b (U1) — commune sélectionnée sur la couche VEFA (clic carte) → panneau de détail. null = fermé.
+  vefaCommune: string | null
+  setVefaCommune: (c: string | null) => void
   // RADAR-CATÉGORIE (T1) — ouvrir la catégorie Radar (plein écran) : même nettoyage exclusif que
   // les autres vues de premier niveau. Ferme la Veille et les overlays (bug « deux catégories
   // ouvertes » de RETOURS-1 R8 : une seule catégorie du rail à la fois).
@@ -543,6 +546,8 @@ export const useApp = create<AppState>((set) => ({
     module: null, contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
     entretienDirect: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   clearAdminSection: () => set({ adminSection: null }),
+  vefaCommune: null,
+  setVefaCommune: (vefaCommune) => set({ vefaCommune }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage
   // exclusif que setView). L'IAStub (view 'ia') est retiré ; CopiloteView lit `entretienDirect`
   // au montage et l'amorce prend place dans le brief (la recherche NL reste dans l'omnibox header).

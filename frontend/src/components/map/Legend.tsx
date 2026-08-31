@@ -178,16 +178,20 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       {layers.frr && <><span data-legend-frr-totalite className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.frrTotalite, borderColor: tTheme.frrTotalite }} />FRR totalité — 3 communes</span><span data-legend-frr-partie className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.frrPartie, borderColor: tTheme.frrPartie, backgroundImage: 'repeating-linear-gradient(-45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />FRR en partie — 20 communes</span></>}
     </div>,
   })
-  // SECTEUR-2 (T4) — prix du logement neuf (VEFA acté DVF), aplat commune, choropleth par tranche.
+  // SECTEUR-2b (U1) — prix du logement neuf (VEFA acté DVF), aplat commune, choropleth par tranche.
+  // Rampe DISTINCTE (jaune → orange → magenta), hors du vert des statuts ; sous le seuil = hachure grise.
   if (layers.vefa_neuf) groupes.push({
     id: 'vefa_neuf', titre: 'Prix du logement neuf (VEFA)',
-    note: 'Médiane du prix au m² bâti des ventes VEFA (« état futur d’achèvement ») réellement actées — geo-DVF (DGFiP), 3 dernières années, maille COMMUNE. Peinte seulement là où au moins 10 ventes soutiennent la médiane (ailleurs : non couvert). Le STOCK du neuf relève de l’ECLN (SDES, métropole seule) — hors champ La Réunion, jamais extrapolé.',
+    note: 'Médiane du prix au m² bâti des ventes VEFA (« état futur d’achèvement ») réellement actées — geo-DVF (DGFiP), fenêtre 36 mois glissants, maille COMMUNE. Peinte là où au moins 10 ventes soutiennent la médiane ; sous ce seuil : hachure grise (« moins de 10 ventes »), jamais vide. CLIC sur une commune → détail (médiane, tendance 12 mois, répartition, offre engagée Sitadel). Le STOCK du neuf relève de l’ECLN (SDES, métropole seule) — hors champ La Réunion, jamais extrapolé.',
     body: <div data-legend-vefa className="flex flex-col gap-1 text-[11px] text-txt">
-      {[['moins_4000', '#BBF7D0', '< 4 000 €/m²'], ['4000_4500', '#86EFAC', '4 000–4 500 €/m²'],
-        ['4500_5000', '#4ADE80', '4 500–5 000 €/m²'], ['5000_5500', '#22C55E', '5 000–5 500 €/m²'],
-        ['5500_plus', '#15803D', '≥ 5 500 €/m²']].map(([k, c, lab]) => (
+      {[['moins_4000', '#FDE047', '< 4 000 €/m²'], ['4000_4500', '#FB923C', '4 000–4 500 €/m²'],
+        ['4500_5000', '#EA6D2A', '4 500–5 000 €/m²'], ['5000_5500', '#D6337A', '5 000–5 500 €/m²'],
+        ['5500_plus', '#A21CAF', '≥ 5 500 €/m²']].map(([k, c, lab]) => (
         <span key={k} className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: c, borderColor: c }} />{lab}</span>
       ))}
+      <span data-legend-vefa-hachure className="flex items-center gap-2 text-txt-dim">
+        <span className="h-2.5 w-4 shrink-0 rounded-sm border border-line-2" style={{ backgroundColor: '#3B4046', backgroundImage: 'repeating-linear-gradient(-45deg, #9AA0A6 0 1px, transparent 1px 4px)' }} />
+        moins de 10 ventes (hachuré)</span>
     </div>,
   })
   if (layers.renouv) groupes.push({

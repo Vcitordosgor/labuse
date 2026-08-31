@@ -5,8 +5,9 @@
 // Le back (pige/client.py) est réutilisé tel quel — aucune requête portail côté code (collecte 100 % humaine).
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotAgenceEtat, radarClic, radarInteresse, radarSignaler,
+import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotOuvert, radarClic, radarInteresse, radarSignaler,
   type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
+import { DepotAgence } from '../radar/DepotAgence'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
 import { useApp } from '../../store/useApp'
@@ -346,17 +347,17 @@ export function RadarView() {
   const setFlyTo = useApp((s) => s.setFlyTo)
   const radarToOpen = useApp((s) => s.radarToOpen)
   const setRadarToOpen = useApp((s) => s.setRadarToOpen)
-  const goAdminSection = useApp((s) => s.goAdminSection)
 
-  // SECTEUR-2 (T3) — le bouton « Publier une annonce » de l'en-tête : ADMIN SEUL. Détection via /moi
-  // (rôle admin) ; l'état du drapeau (/admin/radar/depot-agence/etat) donne la mention « drapeau fermé ».
-  // Le client ne voit RIEN (les requêtes admin échouent silencieusement → estAdmin=false).
+  // SECTEUR-2b (U2) — le bouton « Publier une annonce » de l'en-tête ET le parcours 4 étapes vivent ICI,
+  // dans l'écran Radar de l'app (plus dans la Tour de contrôle). Visibilité : ADMIN toujours (drapeau
+  // fermé compris, avec la mention) ; CLIENTS seulement quand le DRAPEAU EST OUVERT (état public /ouvert).
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
-  // même convention qu'AdminView : un CLIENT connecté (mode 'compte', rôle ≠ admin) ne voit rien ;
-  // l'admin (ou l'absence de rideau en local) voit le bouton. La garde réelle reste au backend.
   const estAdmin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
-  const depotEtat = useQuery({ queryKey: ['radar-depot-agence-etat'], queryFn: getRadarDepotAgenceEtat, enabled: estAdmin })
-  const drapeauFerme = estAdmin && depotEtat.data?.admin === true && depotEtat.data.actif === false
+  const depotOuvert = useQuery({ queryKey: ['radar-depot-ouvert'], queryFn: getRadarDepotOuvert })
+  const ouvert = depotOuvert.data?.ouvert === true
+  const boutonVisible = estAdmin || ouvert            // client : seulement drapeau ouvert
+  const drapeauFerme = estAdmin && !ouvert            // mention « invisible des clients » (admin, drapeau fermé)
+  const [depotPanneau, setDepotPanneau] = useState(false)
 
   const { data, isLoading } = useQuery({ queryKey: ['radar-biens', f, tri], queryFn: () => getRadarBiens(f, tri) })
   const biens = useMemo(() => data?.biens ?? [], [data])
@@ -403,14 +404,14 @@ export function RadarView() {
         <div className="shrink-0 border-b border-line-2 px-5 pb-4 pt-5">
           <div className="flex items-start justify-between gap-2">
             <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR</div>
-            {/* SECTEUR-2 (T3) — « Publier une annonce » : un VRAI bouton dans l'en-tête, ADMIN SEUL
-                (invisible du client). La mention « drapeau fermé » dit que le dépôt n'est pas encore
-                exposé aux clients. Ouvre la Tour de contrôle sur la section Radar (flux de dépôt). */}
-            {estAdmin && (
-              <button data-radar-publier onClick={() => goAdminSection('radar')}
+            {/* SECTEUR-2b (U2) — « Publier une annonce » : le bouton ET le parcours vivent ICI (écran Radar
+                de l'app). Admin toujours ; clients seulement drapeau ouvert. Le clic déroule les 4 étapes
+                DANS l'app (plus de saut vers la Tour de contrôle). */}
+            {boutonVisible && (
+              <button data-radar-publier onClick={() => setDepotPanneau((v) => !v)}
                 className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint transition-colors hover:bg-mint/20"
-                title="Déposer une page d'annonces (réservé à l'administrateur)">
-                + Publier une annonce
+                title={estAdmin ? "Déposer une page d'annonces" : 'Publier votre annonce'}>
+                {depotPanneau ? '× Fermer le dépôt' : '+ Publier une annonce'}
               </button>
             )}
           </div>
@@ -420,6 +421,10 @@ export function RadarView() {
             <span data-radar-publier-drapeau className="mt-2 inline-block rounded bg-amber/12 px-1.5 py-0.5 text-[10px] font-medium text-amber">
               drapeau fermé — le dépôt reste invisible des clients
             </span>
+          )}
+          {/* le parcours 4 étapes, déroulé dans l'app sous l'en-tête */}
+          {boutonVisible && depotPanneau && (
+            <div className="mt-3"><DepotAgence drapeauFerme={drapeauFerme} onClose={() => setDepotPanneau(false)} /></div>
           )}
         </div>
 

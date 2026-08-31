@@ -10,6 +10,7 @@ import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
+import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
 import { Loading } from '../Loading'
 
@@ -179,19 +180,23 @@ const darken = (hex: string, f: number): string => {
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`
 }
 const T_SOMBRE = MAP_THEME.sombre
-// SECTEUR-2 (T4) — choropleth du prix du neuf VEFA : rampe séquentielle menthe (clair = moins cher,
-// foncé = plus cher) sur les tranches portées par `subtype`. Communes sous le seuil = non peintes.
+// SECTEUR-2b (U1) — choropleth du prix du neuf VEFA : rampe séquentielle DISTINCTE (jaune → orange →
+// magenta), tranchée franchement sur le fond sombre VERT, hors du vert des statuts. Communes sous le
+// seuil (subtype 'sous_seuil') : gris muet + HACHURE grise (couche -trame dédiée), jamais vides.
 const VEFA_RAMP: Record<string, string> = {
-  moins_4000: '#BBF7D0', '4000_4500': '#86EFAC', '4500_5000': '#4ADE80',
-  '5000_5500': '#22C55E', '5500_plus': '#15803D',
+  moins_4000: '#FDE047', '4000_4500': '#FB923C', '4500_5000': '#EA6D2A',
+  '5000_5500': '#D6337A', '5500_plus': '#A21CAF', sous_seuil: '#3B4046',
 }
 const vefaColorExpr = ['match', ['get', 'subtype'],
   'moins_4000', VEFA_RAMP.moins_4000, '4000_4500', VEFA_RAMP['4000_4500'],
   '4500_5000', VEFA_RAMP['4500_5000'], '5000_5500', VEFA_RAMP['5000_5500'],
-  '5500_plus', VEFA_RAMP['5500_plus'], '#4ADE80'] as unknown as maplibregl.ExpressionSpecification
+  '5500_plus', VEFA_RAMP['5500_plus'], 'sous_seuil', VEFA_RAMP.sous_seuil,
+  '#3B4046'] as unknown as maplibregl.ExpressionSpecification
+// opacité : aplat lisible pour les tranches peintes, plus discret pour le gris sous-seuil (la hachure porte).
+const vefaOpacityExpr = ['match', ['get', 'subtype'], 'sous_seuil', 0.28, 0.55] as unknown as maplibregl.ExpressionSpecification
 const OVERLAYS = {
-  // SECTEUR-2 (T4) — prix du neuf VEFA (aplat commune) : teinte data-driven par tranche de prix.
-  vefa_neuf: { paint: { 'fill-color': vefaColorExpr, 'fill-outline-color': vefaColorExpr, 'fill-opacity': 0.45 } },
+  // SECTEUR-2b (U1) — prix du neuf VEFA (aplat commune) : teinte par tranche + gris pour sous_seuil.
+  vefa_neuf: { paint: { 'fill-color': vefaColorExpr, 'fill-outline-color': '#0b0f14', 'fill-opacity': vefaOpacityExpr } },
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
@@ -674,6 +679,22 @@ export function MapView() {
       makeTrameAnru(m)
       m.addLayer({ id: 'ov-anru-trame', type: 'fill', source: 'ov-anru', layout: { visibility: 'none' },
         paint: { 'fill-pattern': 'trame-anru', 'fill-opacity': T_SOMBRE.anruTrameOpacity } })
+      // SECTEUR-2b (U1) — HACHURE GRISE des communes VEFA sous le seuil (subtype 'sous_seuil') : jamais
+      // vides. Motif gris posé sur l'aplat gris muet ; « moins de 10 ventes » se lit dans le « i ».
+      makeTrame(m, 'trame-vefa-sous', '#9AA0A6', 'backslash')
+      m.addLayer({ id: 'ov-vefa_neuf-trame', type: 'fill', source: 'ov-vefa_neuf',
+        filter: ['==', ['get', 'subtype'], 'sous_seuil'] as unknown as maplibregl.FilterSpecification,
+        layout: { visibility: 'none' },
+        paint: { 'fill-pattern': 'trame-vefa-sous', 'fill-opacity': 0.55 } })
+      // SECTEUR-2b (U1) — CLIC sur une commune de la couche VEFA → panneau de détail. Le `name` porte
+      // « Commune · … » : on en tire le nom, le panneau résout l'INSEE et lit les moteurs existants.
+      m.on('click', 'ov-vefa_neuf', (e) => {
+        if (!useApp.getState().layers.vefa_neuf) return
+        const nom = String(e.features?.[0]?.properties?.name ?? '').split(' · ')[0].trim()
+        if (nom) { useApp.getState().setVefaCommune(nom); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
+      })
+      m.on('mouseenter', 'ov-vefa_neuf', () => { if (useApp.getState().layers.vefa_neuf) m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', 'ov-vefa_neuf', () => { m.getCanvas().style.cursor = '' })
       // P10 : liseré marron du Parc national (borne nette)
       m.addLayer({ id: 'ov-parc-line', type: 'line', source: 'ov-parc', layout: { visibility: 'none' },
         paint: { 'line-color': PARC_LINE, 'line-width': 1.2, 'line-opacity': 0.7 } })
@@ -1233,6 +1254,7 @@ export function MapView() {
     m.setLayoutProperty('ov-frr', 'visibility', vis(layers.frr))
     m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-Y — hachure FRR en partie (moindre)
     m.setLayoutProperty('ov-vefa_neuf', 'visibility', vis(layers.vefa_neuf)) // SECTEUR-2 (T4) — prix du neuf VEFA
+    m.setLayoutProperty('ov-vefa_neuf-trame', 'visibility', vis(layers.vefa_neuf)) // U1 — hachure sous-seuil
     // M106 P1 : les deux couches d'aléa (aplat + trame + contour suivent leur toggle)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))
@@ -1632,6 +1654,7 @@ export function MapView() {
           équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son
           bloc flottant (qui masquait le verdict) pour rejoindre ce panneau. */}
       <Legend />
+      <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading) && (
         <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">

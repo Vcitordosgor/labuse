@@ -1391,6 +1391,9 @@ export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
 // RADAR-VEILLE-1 (R3) — parcours DÉPÔT AGENCE (derrière drapeau, admin seulement)
 export interface DepotRec { list_id?: number; url?: string; type?: string; prix?: number; surface_hab?: number; surface_terrain?: number; pieces?: number; commune?: string; description?: string; photos?: string[] }
 export const getRadarDepotAgenceEtat = () => j<{ actif: boolean; admin?: boolean }>('/admin/radar/depot-agence/etat')
+// SECTEUR-2b (U2) — état PUBLIC du drapeau (lisible par tous) : l'écran Radar de l'app décide d'afficher
+// le bouton « Publier une annonce » aux clients quand le drapeau est ouvert.
+export const getRadarDepotOuvert = () => j<{ ouvert: boolean }>('/radar/depot-agence/ouvert')
 export const radarDepotAgenceAnalyser = (html: string) =>
   j<{ ok: boolean; records?: DepotRec[]; motif?: string }>('/admin/radar/depot-agence/analyser', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }),
@@ -1548,6 +1551,18 @@ export interface Epci { code: string; nom: string | null; communes: string[] }
 export interface AutreContact { type: string; nom: string; adresse: string; telephone: string; site: string }
 export interface ContactsInstitutionnels { mairies: Mairie[]; epci: Epci[]; autres: AutreContact[]; note: string }
 export const getContactsInstitutionnels = () => j<ContactsInstitutionnels>('/admin/contacts-institutionnels')
+
+// SECTEUR-2b (U1) — panneau de détail d'une commune de la couche VEFA (clic carte).
+export interface VefaDetail {
+  insee: string; commune: string | null; peinte: boolean
+  mediane_eur_m2: number | null; n_ventes: number; fenetre_mois: number; seuil: number
+  tendance_12m: { pct: number; n_12m: number; sens: string } | null
+  repartition: { appartements: number; maisons: number }
+  par_taille: { disponible: boolean; motif: string }
+  offre_engagee: { logements: number | null; permis: number | null; mois: number; libelle: string }
+  millesime: string; source: string
+}
+export const getVefaDetail = (ref: string) => j<VefaDetail>(`/outils/vefa-neuf/${encodeURIComponent(ref)}`)
 
 export const getAdminCron = () => j<{ jobs: CronJob[]; note: string }>('/admin/cron')
 export const getAdminCronLog = (nom: string) => j<{ nom: string; lignes: string[]; note?: string }>(`/admin/cron/${encodeURIComponent(nom)}/log`)
