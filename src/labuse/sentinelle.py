@@ -194,23 +194,35 @@ def _lignes_a_sonder(db, *, source_ids=None, forcer: bool) -> list[dict]:
         where.append("(v.dernier_passage_at IS NULL OR "
                      "v.dernier_passage_at <= now() - make_interval(hours => v.cadence_heures))")
     sql = ("SELECT v.id, v.source_id, v.url_version, v.methode, v.selecteur, v.cadence_heures,"
-           "       v.dernier_entete, v.dernier_vu, d.name AS source_nom, d.source_millesime AS servi"
+           "       v.dernier_entete, v.dernier_vu, v.dernier_notifie_vu, v.echecs_consecutifs,"
+           "       d.name AS source_nom, d.source_millesime AS servi"
            " FROM source_veille v JOIN data_sources d ON d.id = v.source_id"
            " WHERE " + " AND ".join(where) + " ORDER BY d.name")
     return [dict(r) for r in db.execute(text(sql), params).mappings()]
 
 
+#: X5.2 — nombre de sondes en échec CONSÉCUTIVES avant de prévenir Vic (un serveur public tombe, ça se
+#: relève ; on ne notifie ni au 1er ni au 2e échec, seulement quand le 3e le confirme).
+SEUIL_ECHECS_NOTIF = 3
+
+
 def passer(db, *, source_ids=None, forcer: bool = False, http=None, notifier: bool = True,
            delai_s: float | None = None) -> dict:
     """UN passage de la sentinelle (W3). Parcourt les lignes échues, sonde SÉQUENTIELLEMENT avec un
-    délai, écrit le résultat dans `source_veille` (JAMAIS dans `data_sources`), et — à la PREMIÈRE
-    détection d'une nouvelle version — dépose UNE notification admin dédupliquée par (source, millésime).
+    délai, écrit le résultat dans `source_veille` (JAMAIS dans `data_sources`). À la fin du passage,
+    dépose AU PLUS UNE notification admin — le RÉSUMÉ du jour (X5.1) — agrégeant :
+      · les sources dont l'amont a une nouvelle version JAMAIS encore annoncée (dédup par
+        `dernier_notifie_vu` : on ne ré-annonce pas un millésime déjà vu par Vic → pas de rappel quotidien) ;
+      · les sondes qui viennent d'atteindre 3 échecs consécutifs (X5.2 : ni au 1er ni au 2e passage).
+    Une seule cloche « N sources ont du nouveau », dépliable — jamais N notifications (X5.1).
 
-    Retourne un récap {sondees, nouvelles, injoignables, illisibles, notifs, details:[…]}. `http`/`delai_s`
-    sont des points d'injection pour les tests (réseau stubé, délai nul)."""
+    Retourne {sondees, nouvelles, injoignables, illisibles, notifs, details:[…]}. `notifs` ∈ {0,1} =
+    le digest a-t-il été émis. `http`/`delai_s` sont des points d'injection pour les tests."""
     lignes = _lignes_a_sonder(db, source_ids=source_ids, forcer=forcer)
     delai = DELAI_ENTRE_SOURCES_S if delai_s is None else delai_s
     recap = {"sondees": 0, "nouvelles": 0, "injoignables": 0, "illisibles": 0, "notifs": 0, "details": []}
+    digest_neuf: list[dict] = []   # sources à annoncer (nouvelle version jamais vue)
+    digest_echec: list[dict] = []  # sondes qui atteignent le seuil d'échecs consécutifs À CE PASSAGE
     for i, row in enumerate(lignes):
         if i and delai:
             time.sleep(delai)   # on n'enchaîne pas les appels sans respirer (serveur public)
@@ -218,21 +230,32 @@ def passer(db, *, source_ids=None, forcer: bool = False, http=None, notifier: bo
         recap["sondees"] += 1
         # entete : on ne mémorise l'en-tête que quand on en a un (baseline ou changement).
         nouvel_entete = s.entete if s.entete is not None else row.get("dernier_entete")
+        echoue = s.statut in ("injoignable", "illisible")
+        echecs = (int(row.get("echecs_consecutifs") or 0) + 1) if echoue else 0
+        # dernier_notifie_vu : conservé tel quel, mis à jour SEULEMENT quand on annonce (plus bas).
         db.execute(text(
             "UPDATE source_veille SET dernier_passage_at = now(), dernier_vu = :vu,"
-            "  dernier_statut = :st, dernier_message = :msg, dernier_entete = :ent, updated_at = now()"
-            " WHERE id = :id"),
-            {"vu": s.vu, "st": s.statut, "msg": s.message, "ent": nouvel_entete, "id": row["id"]})
+            "  dernier_statut = :st, dernier_message = :msg, dernier_entete = :ent,"
+            "  echecs_consecutifs = :ec, updated_at = now() WHERE id = :id"),
+            {"vu": s.vu, "st": s.statut, "msg": s.message, "ent": nouvel_entete,
+             "ec": echecs, "id": row["id"]})
         if s.statut == "nouvelle_version":
             recap["nouvelles"] += 1
-            if notifier and _notifier_nouvelle(db, row, s):
-                recap["notifs"] += 1
+            deja = row.get("dernier_notifie_vu")
+            if s.vu and s.vu != deja:      # jamais encore annoncé ce millésime → au digest
+                digest_neuf.append({"row": row, "sonde": s})
+                db.execute(text("UPDATE source_veille SET dernier_notifie_vu = :v WHERE id = :id"),
+                           {"v": s.vu, "id": row["id"]})
         elif s.statut == "injoignable":
             recap["injoignables"] += 1
         elif s.statut == "illisible":
             recap["illisibles"] += 1
-        recap["details"].append({"source": row["source_nom"], "statut": s.statut,
-                                 "vu": s.vu, "servi": row.get("servi"), "message": s.message})
+        if echoue and echecs == SEUIL_ECHECS_NOTIF:   # PILE au 3e (une seule fois par épisode)
+            digest_echec.append({"row": row, "sonde": s})
+        recap["details"].append({"source": row["source_nom"], "statut": s.statut, "vu": s.vu,
+                                 "servi": row.get("servi"), "message": s.message, "echecs": echecs})
+    if notifier and (digest_neuf or digest_echec) and _emettre_digest(db, digest_neuf, digest_echec):
+        recap["notifs"] = 1
     return recap
 
 
@@ -242,31 +265,158 @@ def passer(db, *, source_ids=None, forcer: bool = False, http=None, notifier: bo
 # pire qu'une absence). On privilégie `entete` (aucun sélecteur à deviner) pour les fichiers versionnés,
 # `page` pour l'index DVF (cas phare du mandat), `api` seulement quand le champ de date est un contrat
 # documenté et stable. Les sources absentes d'ici restent NON surveillées (état normal) — cf. compte-rendu.
+#: SENTINELLE-2 (X1-X3) — chaque entrée a été APPELÉE POUR DE VRAI et sa réponse LUE avant d'être
+#: inscrite (règle qui commande le mandat : jamais une URL supposée ; une sonde `illisible`/`injoignable`
+#: au semis n'est pas inscrite). Verdict de vérification = `ok` sur les 35 (probe réel 2026-09-01, via la
+#: couche `_http` de production, UA LABUSE). Familles débloquées d'un coup :
+#:   · data.gouv.fr `/api/1/datasets/{slug}` → `last_update` (le mandat l'endosse explicitement pour
+#:     « toute la famille ») : couvre les produits IGN servis en WFS (BD TOPO, BD ORTHO, RGE ALTI, BD
+#:     CARTO, LiDAR MNH, RPG, PCI, Contours IRIS), les jeux INSEE (BPE, Filosofi, RP2022), et d'autres.
+#:   · Opendatasoft v2.1 `/catalog/datasets/{ds}` → `metas.default.modified` (Région Réunion + DILA).
+#:   · `entete` (ETag/Last-Modified) pour les téléchargements directs stables (cadastre, DGFiP-PM, érosion).
+#:   · cas isolés : DPE ADEME (data-fair `dataUpdatedAt`), SITADEL (Dido `last_update`), classement
+#:     sonore Cerema (FeatureServer ArcGIS, compteur témoin `count` — requête sans notion de version, X2).
+#: Les DOUBLONS amont (Cadastre Etalab bulk ≡ PCI, RGE ALTI 5 m ≡ RGE ALTI) ne sont PAS re-semés : ils
+#: sont couverts par la veille de leur canonique (l'alerte vaut pour les deux). Cf. SENTINELLE-INVENTAIRE.md.
 SEED: list[dict] = [
-    # DVF — cas phare (« DVF : 2026-S1 publié — vous servez 2025-S2 »). L'index géo-DVF liste les
-    # millésimes annuels ; on garde le plus récent (max). Reprise de sentinelle-dvf-cadastre (moitié DVF).
+    # ── Famille IGN Géoplateforme : jeu data.gouv officiel du produit → `last_update` (même amont IGN
+    #    que les couches servies en WFS). Débloque 8 sources d'un coup (X2, gisement principal). ──
+    {"name": "Cadastre (API Carto PCI)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/parcellaire-express-pci/", "selecteur": "last_update"},
+    {"name": "BD TOPO IGN", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/bd-topo-r/", "selecteur": "last_update"},
+    {"name": "Forêts publiques (ONF)", "methode": "api",   # BDTOPO_V3:foret_publique → même jeu bd-topo-r
+     "url": "https://www.data.gouv.fr/api/1/datasets/bd-topo-r/", "selecteur": "last_update"},
+    {"name": "BD ORTHO 20 cm (IGN)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/bd-ortho-r/", "selecteur": "last_update"},
+    {"name": "BD ORTHO IRC (IGN)", "methode": "api",       # dérivée IRC de la BD ORTHO → même jeu bd-ortho-r
+     "url": "https://www.data.gouv.fr/api/1/datasets/bd-ortho-r/", "selecteur": "last_update"},
+    {"name": "RGE ALTI (altimétrie)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/rge-alti-r/", "selecteur": "last_update"},
+    {"name": "IGN BD CARTO V5 — occupation du sol", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/bd-carto-r-1/", "selecteur": "last_update"},
+    {"name": "LiDAR HD — MNH 50 cm (IGN)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/mnh-lidar-hd/", "selecteur": "last_update"},
+    {"name": "Contours IRIS (IGN/INSEE)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/contours-iris/", "selecteur": "last_update"},
+    {"name": "RPG — déclarations agricoles (IGN/ASP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/rpg/", "selecteur": "last_update"},
+    # ── Famille INSEE (jeu national data.gouv → `last_update` ; l'URL fichier .zip INSEE n'expose ni
+    #    ETag ni Last-Modified sur HEAD — vérifié, `entete` y renvoie illisible, donc écarté). ──
+    {"name": "BPE INSEE", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/base-permanente-des-equipements-3/", "selecteur": "last_update"},
+    {"name": "Filosofi INSEE (carreaux 200 m)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/donnees-carroyees-a-200-m-sur-la-population/", "selecteur": "last_update"},
+    {"name": "INSEE RP2022 — fichier détail Logements (EGOUL)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/recensement-de-la-population-fichiers-detail-logements-ordinaires/", "selecteur": "last_update"},
+    # ── Autres jeux data.gouv (last_update) ──
+    # DVF — cas phare : on GARDE `page` (l'index géo-DVF liste les millésimes annuels, on garde le plus
+    # récent, motif lisible « 2025 » comparable au servi ; supérieur à un last_update opaque). Reprise
+    # de sentinelle-dvf-cadastre (moitié DVF).
     {"name": "DVF / valeurs foncières", "methode": "page",
      "url": "https://files.data.gouv.fr/geo-dvf/latest/csv/", "selecteur": r"20\d{2}"},
-    # Cadastre Etalab — moitié « cadastre » de la reprise. Le fichier /latest/ change de Last-Modified
-    # à chaque nouveau millésime DGFiP : `entete` le capte sans nommer de version (doctrine W2.3).
-    {"name": "Cadastre Etalab (bulk DGFiP/Etalab)", "methode": "entete",
-     "url": "https://cadastre.data.gouv.fr/data/etalab-cadastre/latest/geojson/communes/974/97415/cadastre-97415-parcelles.json.gz",
+    {"name": "QPV 2024 (ANCT)", "methode": "api",   # SENTINELLE-1 sondait le .zip horodaté (périt à chaque
+     # génération → deviendrait injoignable) ; le jeu data.gouv `last_update` est stable et suit les gén.
+     "url": "https://www.data.gouv.fr/api/1/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/", "selecteur": "last_update"},
+    {"name": "Cartofriches (Cerema)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/cartofriches/", "selecteur": "last_update"},
+    {"name": "ZNIEFF (INPN/MNHN)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/inventaire-des-zones-naturelles-dinteret-ecologique-faunistique-et-floristique-znieff/", "selecteur": "last_update"},
+    {"name": "ABF / Monuments historiques", "methode": "api",   # remplace l'endpoint ODS culture décommissionné
+     "url": "https://www.data.gouv.fr/api/1/datasets/immeubles-proteges-au-titre-des-monuments-historiques-2/", "selecteur": "last_update"},
+    {"name": "Géorisques", "methode": "api",   # base gaspar (amont de l'API Géorisques live)
+     "url": "https://www.data.gouv.fr/api/1/datasets/base-nationale-de-gestion-assistee-des-procedures-administratives-relatives-aux-risques-gaspar/", "selecteur": "last_update"},
+    {"name": "Géorisques — ICPE", "methode": "api",   # base ICPE BRGM (amont de /installations_classees)
+     "url": "https://www.data.gouv.fr/api/1/datasets/installations-classees-pour-la-protection-de-lenvironnement-icpe-france-metropolitaine-et-drom-3/", "selecteur": "last_update"},
+    {"name": "Base Adresse Nationale", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/base-adresse-nationale/", "selecteur": "last_update"},
+    {"name": "SIRENE", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/", "selecteur": "last_update"},
+    {"name": "SIRENE établissements géolocalisés", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/geolocalisation-des-etablissements-du-repertoire-sirene-pour-les-etudes-statistiques/", "selecteur": "last_update"},
+    {"name": "Transport public — GTFS (PAN, 7 réseaux)", "methode": "api",   # canari Citalis (PAN, cf. seed)
+     "url": "https://www.data.gouv.fr/api/1/datasets/horaire-du-reseau-citalis/", "selecteur": "last_update"},
+    {"name": "CoSIA (couverture du sol IA, IGN)", "methode": "api",   # le .7z Géoplateforme n'a pas d'en-tête
+     "url": "https://www.data.gouv.fr/api/1/datasets/cosia/", "selecteur": "last_update"},
+    # ── Famille Opendatasoft v2.1 → `metas.default.modified` (Région Réunion + DILA). ──
+    {"name": "BODACC (procédures collectives)", "methode": "api",   # CORRIGE le chemin JSON de SENTINELLE-1
+     "url": "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales",
+     "selecteur": "metas.default.modified"},
+    {"name": "Parc National de La Réunion (INPN)", "methode": "api",
+     "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/pnrun_2021", "selecteur": "metas.default.modified"},
+    {"name": "data.regionreunion.com — Potentiel foncier", "methode": "api",
+     "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/potentiel-foncier", "selecteur": "metas.default.modified"},
+    {"name": "Potentiel foncier Région (Région ODS)", "methode": "api",   # même jeu ODS potentiel-foncier (SAR proxy)
+     "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/potentiel-foncier", "selecteur": "metas.default.modified"},
+    {"name": "Trafic RN (Région Réunion — SIR)", "methode": "api",
+     "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/trafic-mja-rn-lareunion", "selecteur": "metas.default.modified"},
+    # ── Téléchargements directs stables → `entete` (détection GENUINE du changement d'octets, sans servi). ──
+    {"name": "DGFiP — parcelles des personnes morales", "methode": "entete",
+     "url": "https://data.economie.gouv.fr/api/v2/catalog/datasets/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/attachments/fichier_des_parcelles_situation_2025_dpts_57_a_976_zip",
      "selecteur": None},
-    # Fichiers ZIP horodatés : Last-Modified avance à la publication d'un nouveau millésime.
-    {"name": "BPE INSEE", "methode": "entete",
-     "url": "https://www.insee.fr/fr/statistiques/fichier/8217525/BPE25.zip", "selecteur": None},
-    {"name": "QPV 2024 (ANCT)", "methode": "entete",
-     "url": "https://static.data.gouv.fr/resources/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/20260115-204323/qpv-2024-geojson.zip",
+    {"name": "Cerema / GéoLittoral — indicateur d'érosion côtière", "methode": "entete",
+     "url": "https://geolittoral.din.developpement-durable.gouv.fr/telechargement/couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip",
      "selecteur": None},
-    # DPE ADEME — flux continu : la sentinelle vérifie que le flux RÉPOND et remonte sa date de MAJ.
-    # `dataUpdatedAt` est un champ documenté et stable de l'API data-fair (métadonnées du dataset).
+    # ── Cas isolés vérifiés ──
+    # DPE ADEME — data-fair `dataUpdatedAt` (métadonnée documentée stable du dataset).
     {"name": "DPE ADEME (logements existants)", "methode": "api",
      "url": "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant", "selecteur": "dataUpdatedAt"},
-    # BODACC — Opendatasoft v2.1 : `dataset.metas.default.modified` (date de dernière modif du jeu).
-    {"name": "BODACC (procédures collectives)", "methode": "api",
-     "url": "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales",
-     "selecteur": "dataset.metas.default.modified"},
+    # SITADEL — Dido (SDES) : métadonnée `last_update` du dataset national.
+    {"name": "SITADEL (autorisations d'urbanisme)", "methode": "api",
+     "url": "https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datasets/6513f0189d7d312c80ec5b5b",
+     "selecteur": "last_update"},
+    # Classement sonore ITT — endpoint de REQUÊTE ArcGIS sans notion de version : requête témoin
+    # `returnCountOnly` → compteur stable `count` (X2, cas particulier assumé ; un changement du nombre
+    # de tronçons signale une republication).
+    {"name": "Classement sonore ITT (Cerema)", "methode": "api",
+     "url": "https://cartagene.cerema.fr/server/rest/services/Hosted/Routes_classement_sonore_La_Reunion_V2/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json",
+     "selecteur": "count"},
 ]
+
+#: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
+#: (« non surveillée » + raison en infobulle), jamais un blanc ni une fausse erreur. Raison par nom
+#: EXACT ; défaut générique sinon. Ce que chaque famille a coûté est détaillé dans SENTINELLE-INVENTAIRE.md.
+RAISONS_NON_SURVEILLEES: dict[str, str] = {
+    # Endpoints de REQUÊTE sans notion de version (API interrogée à la demande, aucun millésime lisible)
+    "Urbanisme PLU/GPU (API Carto)": "API Carto GPU interrogée à la demande (idurba par commune) — aucun millésime global lisible.",
+    "GPU — zonages d'assainissement": "API Carto GPU interrogée à la demande — aucun millésime global lisible.",
+    "GPU — zonages d'assainissement (info-surf typeinf 19)": "Doublon du GPU assainissement (canal info-surf) — même amont, non re-surveillé.",
+    "SUP — assiettes GPU (API Carto)": "API Carto GPU interrogée à la demande — aucun millésime global lisible.",
+    "Géorisques — sites et sols pollués": "Bases BRGM (BASIAS/BASOL/SIS) servies par l'API Géorisques live ; pas de jeu data.gouv national à millésime trouvé.",
+    "Géorisques — cavités souterraines": "Base BRGM cavités servie par l'API Géorisques live ; pas de jeu data.gouv national à millésime trouvé.",
+    "Géorisques — mouvements de terrain": "Base BRGM BDMvt servie par l'API Géorisques live ; pas de jeu data.gouv national à millésime trouvé.",
+    "Recherche d'entreprises (DINUM)": "API de recherche live (agrégat Sirene/RNE) — pas de millésime ingéré à comparer.",
+    "INPI RNE (dirigeants)": "API authentifiée interrogée par SIREN — pas de millésime global.",
+    "OpenStreetMap / Overpass": "OSM en flux continu (planet) — pas de version ; requête live.",
+    "Parkings OSM (loi APER)": "OSM en flux continu — pas de version ; requête live.",
+    "OSM — transport (pôles d'échange & téléphérique)": "OSM en flux continu — pas de version ; requête live.",
+    "INPN / patrinat — espaces protégés": "Couches patrinat servies en WFS Géoplateforme ; pas de jeu data.gouv national espaces protégés à millésime trouvé.",
+    # Portails / proxys injoignables ou hubs (pas un jeu unique)
+    "PEIGEO (hub régional)": "Hub AGORAH injoignable depuis l'infra (HTTP 000) — pas de jeu unique à sonder.",
+    "DEAL Réunion (WMS/WFS)": "Hôte carto DEAL injoignable (servi par proxys) — aucune URL amont stable.",
+    "DEAL Réunion — PPR / aléas": "WFS Lizmap DEAL (requête) — pas de millésime lisible ; hôte souvent indisponible.",
+    "50 pas géométriques — limite haute (DEAL)": "WFS Lizmap DEAL (requête) — pas de millésime lisible.",
+    "Région Réunion Open Data (Opendatasoft)": "Hub/catalogue ODS (275 jeux) — pas un jeu unique ; les jeux servis sont surveillés individuellement.",
+    "Géoplateforme IGN": "Hub IGN (WFS/WMS) — pas un jeu unique ; les produits IGN servis sont surveillés individuellement.",
+    # Réglementaire Légifrance : pages SPA sans millésime lisible, texte à identifiant figé
+    "ZFANG — zone franche d'activité nouvelle génération (Légifrance)": "Page Légifrance rendue en JS (aucun millésime lisible côté serveur) ; un texte modifié reçoit un nouvel identifiant.",
+    "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)": "Page Légifrance rendue en JS (aucun millésime lisible côté serveur) ; un texte modifié reçoit un nouvel identifiant.",
+    # Alimentées à la main / hors automatisation (non surveillables PAR NATURE — réponse valable, X2)
+    "Radar (pige d'annonces)": "Collecte 100 % humaine — non surveillable par nature.",
+    "VRD / assainissement (SPANC)": "Champ manuel EPCI — aucune donnée ouverte fine, pas d'URL.",
+    "Fichiers fonciers (Cerema)": "Sous convention, non ingérée — aucune URL amont publique.",
+    "MOBPRO (mobilités domicile-travail, INSEE)": "Import CSV manuel (abandonné pour l'étude de zone) — pas d'URL de version stable.",
+    "Office de l'eau Réunion — Chroniques de l'eau": "Seed CSV extrait à la main d'un PDF (chronique numérotée) — chaque édition = nouvelle URL, non surveillable proprement.",
+    # Autre
+    "PVGIS (Commission européenne)": "API de calcul (v5.3 dans l'URL) — pas de jeu à millésime ; le service ne versionne pas de données à comparer.",
+}
+
+
+def raison_non_surveillee(name: str) -> str:
+    """X3.3 — raison affichable pour une source non surveillée (infobulle admin). Défaut honnête si le
+    nom n'est pas au dictionnaire (ne jamais laisser un blanc)."""
+    return RAISONS_NON_SURVEILLEES.get(
+        name, "Pas d'URL amont à millésime stable identifiée (endpoint de requête, import manuel ou hub).")
 
 
 def ensemencer(db) -> int:
@@ -292,21 +442,41 @@ def ensemencer(db) -> int:
     return crees
 
 
-def _notifier_nouvelle(db, row: dict, s: Sonde) -> bool:
-    """Notification admin (cloche, feed systeme compte_id NULL), DÉDUPLIQUÉE par (source, millésime) —
-    UNE notif par source et par millésime constaté, jamais un rappel quotidien (W4.1). `permanent=True`
-    → NOT EXISTS toutes dates. Formulation : « DVF : 2026-S1 est publié — vous servez 2025-S2 »."""
+def _ligne_neuf(row: dict, s: Sonde) -> str:
+    """Une ligne du détail du digest pour une NOUVELLE version (formulation SENTINELLE-1 conservée)."""
+    nom, servi, vu = row["source_nom"], row.get("servi"), (s.vu or "?")
+    if row.get("methode") == "entete":     # pas de millésime lisible : « le fichier a changé »
+        return f"• {nom} : le fichier amont a changé — à vérifier."
+    return f"• {nom} : {vu} est publié" + (f" — vous servez {servi}." if servi else ".")
+
+
+def _emettre_digest(db, neuf: list[dict], echec: list[dict]) -> bool:
+    """X5.1 — dépose UN SEUL résumé quotidien en cloche admin (feed systeme, compte_id NULL) agrégeant
+    toutes les sources qui ont du nouveau (nouvelles versions) et toutes les sondes qui viennent
+    d'atteindre 3 échecs consécutifs. Dédup PERMANENTE sur le contenu (les sources annoncées) → un rejeu
+    du même passage n'empile rien ; `dernier_notifie_vu` empêche déjà de ré-annoncer un millésime connu.
+    Formulation dépliable : titre = compte, detail = liste à puces. Retourne True si une notif est créée."""
     from .api.events import creer_notification
-    nom = row["source_nom"]
-    servi = row.get("servi")
-    vu = s.vu or "?"
-    if row.get("methode") == "entete":     # pas de millésime lisible : on dit « le fichier a changé »
-        titre = f"{nom} : le fichier amont a changé — à vérifier"
-        detail = s.message or "ETag/Last-Modified différent du dernier passage."
-    else:
-        titre = f"{nom} : {vu} est publié" + (f" — vous servez {servi}" if servi else "")
-        detail = (s.message or "") + " — geste supervisé : Vic déclenche l'ingestion (rien n'entre sans validation)."
+    n_neuf, n_echec = len(neuf), len(echec)
+    parts_titre = []
+    if n_neuf:
+        parts_titre.append("1 source a une nouvelle version" if n_neuf == 1
+                           else f"{n_neuf} sources ont une nouvelle version")
+    if n_echec:
+        parts_titre.append("1 sonde échoue depuis 3 passages" if n_echec == 1
+                           else f"{n_echec} sondes échouent depuis 3 passages")
+    titre = " · ".join(parts_titre)
+    lignes = [_ligne_neuf(d["row"], d["sonde"]) for d in neuf]
+    if n_echec:
+        lignes.append("Sondes en échec persistant (la sentinelle a échoué, PAS la donnée) :")
+        lignes += [f"• {d['row']['source_nom']} : {d['sonde'].message or d['sonde'].statut}" for d in echec]
+    if n_neuf:
+        lignes.append("Geste supervisé : ouvrez la page Sources et cliquez « Injecter cette version » sur "
+                      "la source voulue — rien n'entre sans ce clic (la sentinelle n'ingère jamais).")
+    # clé de dédup = l'ensemble ANNONCÉ (sids neufs + sids en échec) → stable, un même passage ne double pas.
+    sig = "n:" + ",".join(str(d["row"]["source_id"]) + ":" + str(d["sonde"].vu) for d in neuf) \
+        + "|e:" + ",".join(str(d["row"]["source_id"]) for d in echec)
     return bool(creer_notification(
         db, kind="systeme", compte_id=None, source="Veille sources",
-        titre=titre, detail=detail.strip(), lien="/sources",
-        dedup=f"sentinelle:{row['source_id']}:{vu}", permanent=True))
+        titre=titre, detail="\n".join(lignes), lien="/sources",
+        dedup="sentinelle-digest:" + sig, permanent=True))

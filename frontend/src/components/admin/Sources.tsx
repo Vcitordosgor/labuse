@@ -5,7 +5,7 @@
 // « Agent de veille » (V2 — spec : docs/audit-2026-08/DASHBOARD/AGENT-VEILLE-SPEC.md).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getAdminSources, getHealthzCrons, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceVeilleActive, postAdminSourceVeilleVerifier, type AdminSource } from '../../lib/api'
+import { getAdminSources, getHealthzCrons, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceVeilleActive, postAdminSourceVeilleInjecter, postAdminSourceVeilleVerifier, type AdminSource } from '../../lib/api'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
 
 const fmtReu = (iso?: string | null) => {
@@ -75,6 +75,16 @@ function SourceRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
 const VEILLE_TONE: Record<string, 'ok' | 'warn' | 'off'> = {
   ok: 'ok', nouvelle_version: 'warn', injoignable: 'off', illisible: 'off',
 }
+// SENTINELLE-2 (X4.1) — tri par défaut UTILE à 30+ lignes : nouvelles versions d'abord, puis sondes en
+// échec confirmé, puis à jour, puis non surveillées ; à rang égal, par fournisseur puis nom.
+function rangVeille(s: AdminSource): number {
+  const v = s.veille
+  if (v.nouvelle_version) return 0
+  if (v.echec_confirme) return 1
+  if (v.surveillee) return 2
+  return 3   // non surveillée
+}
+
 function VeilleRow({ s }: { s: AdminSource }) {
   const qc = useQueryClient()
   const [msg, setMsg] = useState<string | null>(null)
@@ -88,17 +98,58 @@ function VeilleRow({ s }: { s: AdminSource }) {
     mutationFn: (actif: boolean) => postAdminSourceVeilleActive(s.id, actif),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-sources'] }),
   })
+  // SENTINELLE-2 (X6) — « Injecter cette version » : sur clic humain confirmé, lance le job d'ingestion
+  // EXISTANT (rien n'entre sans ce clic). Le suivi est visible (message + trace injection_lancee_at +
+  // panneau CRON / ingestion_runs).
+  const injecter = useMutation({
+    mutationFn: () => postAdminSourceVeilleInjecter(s.id),
+    onSuccess: (r) => { setMsg(`Injection lancée (${r.label})${r.millesime ? ` → ${r.millesime}` : ''} — suivi dans « CRON nocturne / ingestion_runs ».`); qc.invalidateQueries({ queryKey: ['admin-sources'] }) },
+    onError: () => setMsg("Injection impossible (aucune commande d'ingestion connue ?)."),
+  })
+  // SENTINELLE-2 (X3.3) — une source SANS ligne de veille : état EXPLICITE « non surveillée » + raison
+  // en infobulle (jamais un blanc, jamais une fausse erreur), pas d'action.
+  if (!v.surveillee) {
+    return (
+      <tr className="border-b border-line last:border-b-0 opacity-70 hover:bg-surface-3">
+        <td className="px-3 py-2"><b className="text-txt-mut">{s.name}</b></td>
+        <td className="px-3 py-2 text-[11px] text-txt-dim">{s.fournisseur ?? '—'}</td>
+        <td className="px-3 py-2 font-mono text-[11px] text-txt-dim">{s.millesime ?? '—'}</td>
+        <td className="px-3 py-2 text-txt-dim">—</td>
+        <td className="px-3 py-2 text-txt-dim">—</td>
+        <td className="px-3 py-2"><span title={v.raison ?? undefined} className="cursor-help"><Chip>non surveillée</Chip></span></td>
+        <td className="px-3 py-2" />
+      </tr>
+    )
+  }
+  const echecInfo = v.echec_confirme ? ` · échoue depuis ${v.echecs} passages` : ''
   return (
     <tr className={`border-b border-line last:border-b-0 hover:bg-surface-3 ${v.actif === false ? 'opacity-55' : ''}`}>
       <td className="px-3 py-2"><b className="text-txt">{s.name}</b>
         <span className="ml-1.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">{v.methode ?? '—'}</span>
         {msg && <div className="mt-0.5 text-[10.5px] text-mint">{msg}</div>}
       </td>
+      <td className="px-3 py-2 text-[11px] text-txt-dim">{s.fournisseur ?? '—'}</td>
       <td className="px-3 py-2 font-mono text-[11px] text-txt-mut">{s.millesime ?? '—'}</td>
       <td className={`px-3 py-2 font-mono text-[11px] ${v.nouvelle_version ? 'font-bold text-amber' : 'text-txt-mut'}`}>{v.millesime_amont ?? '—'}</td>
       <td className="px-3 py-2 font-mono text-[11px] text-txt-dim">{fmtReu(v.passage_at)}</td>
-      <td className="px-3 py-2">{v.statut ? <Chip tone={VEILLE_TONE[v.statut] ?? 'off'}>{v.statut.replace(/_/g, ' ')}</Chip> : <Chip>jamais sondée</Chip>}</td>
+      <td className="px-3 py-2">
+        {v.statut
+          ? <span title={(v.echec_confirme && v.message) ? v.message : undefined} className={v.echec_confirme ? 'cursor-help' : ''}><Chip tone={VEILLE_TONE[v.statut] ?? 'off'}>{v.statut.replace(/_/g, ' ')}{echecInfo}</Chip></span>
+          : <Chip>jamais sondée</Chip>}
+      </td>
       <td className="px-3 py-2 text-right">
+        {/* SENTINELLE-2 (X6) — le pont supervisé : n'apparaît QUE sur une nouvelle version ET si une
+            commande d'ingestion existe. Confirmation explicite nommant source + millésime ; le clic
+            lance le job EXISTANT. Sans commande : mention « injection manuelle », pas de bouton. */}
+        {v.nouvelle_version && v.injectable && (
+          <ActBtn tone="mint" disabled={injecter.isPending} data-injecter={s.id}
+            onClick={() => { if (window.confirm(`Injecter « ${v.millesime_amont ?? 'la nouvelle version'} » pour « ${s.name} » ?\n\nLance le job d'ingestion EXISTANT (même commande que le cron, détachée — peut durer plusieurs minutes). Rien n'entre sans ce clic ; la sentinelle, elle, n'ingère jamais.`)) injecter.mutate() }}>
+            {injecter.isPending ? 'Lancement…' : 'Injecter cette version'}
+          </ActBtn>
+        )}
+        {v.nouvelle_version && !v.injectable && (
+          <span className="mr-1 text-[10.5px] text-txt-dim" title="Aucune commande d'ingestion mappée pour cette source : injection manuelle.">injection manuelle</span>
+        )}
         <ActBtn tone="ghost" disabled={verifier.isPending} onClick={() => verifier.mutate()}>
           {verifier.isPending ? 'Sonde…' : 'Vérifier maintenant'}
         </ActBtn>
@@ -106,13 +157,36 @@ function VeilleRow({ s }: { s: AdminSource }) {
           onClick={() => active.mutate(!(v.actif ?? true))}>
           {v.actif === false ? 'Réactiver la veille' : 'Suspendre la veille'}
         </ActBtn>
+        {v.injection_lancee_at && (
+          <div className="mt-0.5 text-[10px] text-txt-dim">injection lancée le {fmtReu(v.injection_lancee_at)}{v.injection_vu ? ` (${v.injection_vu})` : ''}</div>
+        )}
       </td>
     </tr>
   )
 }
 
+// SENTINELLE-2 (X4.2) — le filtre du tableau de veille (tout / nouvelle version / sonde en échec / non
+// surveillée). Prédicat par onglet ; le compteur montre combien de lignes chacun regroupe.
+type VeilleFiltre = 'tout' | 'neuf' | 'echec' | 'non'
+const VEILLE_PRED: Record<VeilleFiltre, (s: AdminSource) => boolean> = {
+  tout: () => true,
+  neuf: (s) => s.veille.nouvelle_version,
+  echec: (s) => s.veille.echec_confirme,
+  non: (s) => !s.veille.surveillee,
+}
+
 export function VeillePanel({ sources }: { sources: AdminSource[] }) {
-  const surveillees = sources.filter((s) => s.veille.surveillee)
+  const [filtre, setFiltre] = useState<VeilleFiltre>('tout')
+  // X4.1 — tri par défaut : rang (neuf → échec → à jour → non surveillée), puis fournisseur, puis nom.
+  const triees = [...sources].sort((a, b) =>
+    rangVeille(a) - rangVeille(b)
+    || (a.fournisseur ?? '').localeCompare(b.fournisseur ?? '')
+    || a.name.localeCompare(b.name))
+  const visibles = triees.filter(VEILLE_PRED[filtre])
+  const n = (f: VeilleFiltre) => sources.filter(VEILLE_PRED[f]).length
+  const onglets: Array<[VeilleFiltre, string]> = [
+    ['tout', 'Tout'], ['neuf', 'Nouvelle version'], ['echec', 'Sonde en échec'], ['non', 'Non surveillée'],
+  ]
   return (
     <Panel className="mb-0">
       <PHead>Agent de veille des sources</PHead>
@@ -120,22 +194,30 @@ export function VeillePanel({ sources }: { sources: AdminSource[] }) {
         Surveille le millésime AMONT de chaque source (data.gouv, IGN, DGFiP, ADEME…) et prévient quand
         une nouvelle version est publiée. Il n'ingère RIEN — Vic déclenche chaque mise à jour.
       </div>
-      {surveillees.length ? (
+      <div className="flex flex-wrap gap-1.5 px-4 pb-2">
+        {onglets.map(([f, lbl]) => (
+          <button key={f} onClick={() => setFiltre(f)} data-veille-filtre={f}
+            className={`rounded-md border px-2 py-1 text-[11px] transition ${filtre === f ? 'border-mint bg-surface-3 text-txt' : 'border-line bg-surface-1 text-txt-dim hover:text-txt-mut'}`}>
+            {lbl} <span className="font-mono text-[10px] text-txt-dim">{n(f)}</span>
+          </button>
+        ))}
+      </div>
+      {visibles.length ? (
         <table className="w-full text-[12.5px]">
           <thead>
             <tr>
-              {['Source', 'Servi', 'Amont', 'Dernier passage', 'Statut', ''].map((h) => (
+              {['Source', 'Fournisseur', 'Servi', 'Amont', 'Dernier passage', 'Statut', ''].map((h) => (
                 <th key={h} className="border-b border-line px-3 py-2 text-left font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-txt-dim">{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody>{surveillees.map((s) => <VeilleRow key={s.id} s={s} />)}</tbody>
+          <tbody>{visibles.map((s) => <VeilleRow key={s.id} s={s} />)}</tbody>
         </table>
       ) : (
-        <div className="px-4 py-6 text-center text-xs text-txt-mut">Aucune source surveillée pour l'instant.</div>
+        <div className="px-4 py-6 text-center text-xs text-txt-mut">Aucune source dans ce filtre.</div>
       )}
       <div className="border-t border-line bg-surface-1 px-4 py-2 text-[11px] text-txt-mut">
-        Une source injoignable ou illisible signale que la <b className="text-txt">sentinelle</b> a échoué, jamais que la donnée est en erreur — les deux états restent distincts.
+        Une source injoignable ou illisible signale que la <b className="text-txt">sentinelle</b> a échoué, jamais que la donnée est en erreur — les deux états restent distincts. Une sonde n'alerte qu'après <b className="text-txt">3 échecs</b> d'affilée.
       </div>
     </Panel>
   )

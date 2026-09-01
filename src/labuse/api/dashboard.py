@@ -705,6 +705,7 @@ def admin_sources(request: Request) -> dict:
     exiger_admin(request)
     from ..db import engine
     from ..sources_catalog import est_affichee
+    from .. import sentinelle
     now = datetime.now(tz=timezone.utc)
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
@@ -713,7 +714,9 @@ def admin_sources(request: Request) -> dict:
             "       COALESCE(d.affichage_desactive, false) AS affichage_desactive,"
             # SENTINELLE-1 (W4) — état de veille amont (LEFT JOIN : une source non surveillée = état normal).
             "       v.actif AS veille_actif, v.methode AS veille_methode, v.dernier_statut AS veille_statut,"
-            "       v.dernier_vu AS veille_vu, v.dernier_passage_at AS veille_passage, v.dernier_message AS veille_message"
+            "       v.dernier_vu AS veille_vu, v.dernier_passage_at AS veille_passage, v.dernier_message AS veille_message,"
+            "       v.echecs_consecutifs AS veille_echecs,"
+            "       v.injection_lancee_at AS veille_inj_at, v.injection_vu AS veille_inj_vu"
             " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id ORDER BY d.name")).mappings()]
         runs = [dict(r) for r in c.execute(text(
             "SELECT r.started_at, r.finished_at, r.status, r.parcels_count, d.name"
@@ -742,6 +745,9 @@ def admin_sources(request: Request) -> dict:
             "affichage_desactive": bool(r.get("affichage_desactive")),
             # SENTINELLE-1 (W4) — bloc veille amont. `surveillee` = une ligne source_veille existe.
             # `nouvelle_version` = la sonde a constaté un millésime amont postérieur au servi (statut ambre).
+            # SENTINELLE-2 (X4) — `fournisseur` pour la colonne/regroupement du tableau de veille ;
+            # `raison` (X3.3) = pourquoi une source N'EST PAS surveillée (infobulle, jamais un blanc).
+            "fournisseur": r.get("provider"),
             "veille": {
                 "surveillee": r.get("veille_actif") is not None,
                 "actif": bool(r.get("veille_actif")) if r.get("veille_actif") is not None else None,
@@ -751,6 +757,16 @@ def admin_sources(request: Request) -> dict:
                 "nouvelle_version": r.get("veille_statut") == "nouvelle_version",
                 "passage_at": r["veille_passage"].isoformat() if r.get("veille_passage") else None,
                 "message": r.get("veille_message"),
+                "echecs": int(r.get("veille_echecs") or 0),
+                # sonde en échec CONFIRMÉ (≥3 passages ratés) : distinct d'un aléa transitoire (X5.2).
+                "echec_confirme": (r.get("veille_statut") in ("injoignable", "illisible")
+                                   and int(r.get("veille_echecs") or 0) >= sentinelle.SEUIL_ECHECS_NOTIF),
+                "raison": None if r.get("veille_actif") is not None else sentinelle.raison_non_surveillee(r["name"]),
+                # SENTINELLE-2 (X6) — `injectable` = une commande d'ingestion existe (sinon injection
+                # manuelle, pas de bouton). Trace de la dernière injection déclenchée à la main par Vic.
+                "injectable": relance is not None,
+                "injection_lancee_at": r["veille_inj_at"].isoformat() if r.get("veille_inj_at") else None,
+                "injection_vu": r.get("veille_inj_vu"),
             },
         })
     # « à mettre à jour » d'abord (mandat), puis nom
@@ -764,7 +780,11 @@ def admin_sources(request: Request) -> dict:
                          "sans_echeance": sum(1 for s in sources if s["a_jour"] is None),
                          # SENTINELLE-1 (W4.2) — nombre de sources avec une nouvelle version disponible.
                          "nouvelle_version": sum(1 for s in sources if s["veille"]["nouvelle_version"]),
-                         "surveillees": sum(1 for s in sources if s["veille"]["surveillee"])},
+                         "surveillees": sum(1 for s in sources if s["veille"]["surveillee"]),
+                         # SENTINELLE-2 (X4) — pour le tableau à 30+ lignes : sondes en échec confirmé,
+                         # et sources non surveillées (état explicite, pas un blanc).
+                         "sonde_echec": sum(1 for s in sources if s["veille"]["echec_confirme"]),
+                         "non_surveillees": sum(1 for s in sources if not s["veille"]["surveillee"])},
             "cadences": list(CADENCES.keys()),
             "runs": runs}
 
@@ -857,21 +877,16 @@ def admin_source_affichage(source_id: int, body: AffichageIn, request: Request) 
     return {"ok": True, "actif": body.actif, "affichage_desactive": not body.actif}
 
 
-@router.post("/admin/sources/{source_id}/relancer")
-def admin_source_relancer(source_id: int, request: Request) -> dict:
-    """Relance l'ingestion d'une source dont la commande est CONNUE (même geste que le cron,
-    détaché) — journalisée. Sans mapping : 404, le front n'affiche pas le bouton."""
+def _lancer_ingestion(nom: str) -> dict:
+    """Lance — détaché, depuis la racine du repo — la commande d'ingestion EXISTANTE d'une source (la
+    MÊME que le cron), journalisée dans un log fichier. Point de sortie UNIQUE du lancement d'ingestion
+    (réutilisé par « Relancer » et par « Injecter cette version », X6). Lève HTTPException si aucune
+    commande n'est connue (404) ou si le lancement échoue (500). NE fait AUCUNE ingestion en propre :
+    il délègue au job existant."""
     import subprocess
     import sys
     from pathlib import Path
     from fastapi import HTTPException
-    from .auth import exiger_admin
-    exiger_admin(request)
-    from ..db import engine, session_scope
-    with engine().begin() as c:
-        nom = c.execute(text("SELECT name FROM data_sources WHERE id = :i"), {"i": source_id}).scalar()
-    if not nom:
-        raise HTTPException(404, "Source introuvable.")
     cmd = _relance_pour(nom)
     if not cmd:
         raise HTTPException(404, "Aucune commande d'ingestion connue pour cette source.")
@@ -882,20 +897,77 @@ def admin_source_relancer(source_id: int, request: Request) -> dict:
     log_path = f"/tmp/labuse-relance-{cmd['label']}.log"
     try:
         with open(log_path, "ab") as fh:
-            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh,
-                             start_new_session=True)
+            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    return {"label": cmd["label"], "log": log_path}
+
+
+@router.post("/admin/sources/{source_id}/relancer")
+def admin_source_relancer(source_id: int, request: Request) -> dict:
+    """Relance l'ingestion d'une source dont la commande est CONNUE (même geste que le cron,
+    détaché) — journalisée. Sans mapping : 404, le front n'affiche pas le bouton."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine, session_scope
+    with engine().begin() as c:
+        nom = c.execute(text("SELECT name FROM data_sources WHERE id = :i"), {"i": source_id}).scalar()
+    if not nom:
+        raise HTTPException(404, "Source introuvable.")
+    r = _lancer_ingestion(nom)
     try:
         from .events import creer_notification
         with session_scope() as s:
             creer_notification(s, kind="systeme", compte_id=None, source="Sources",
-                               titre=f"Ingestion relancée à la main : {cmd['label']}",
-                               detail=f"{nom} — commande du cron, détachée (log {log_path}).",
-                               dedup=f"relance:{cmd['label']}:{datetime.now(tz=timezone.utc):%Y%m%d%H%M}")
+                               titre=f"Ingestion relancée à la main : {r['label']}",
+                               detail=f"{nom} — commande du cron, détachée (log {r['log']}).",
+                               dedup=f"relance:{r['label']}:{datetime.now(tz=timezone.utc):%Y%m%d%H%M}")
     except Exception:  # noqa: BLE001
         pass
-    return {"ok": True, "label": cmd["label"], "log": log_path}
+    return {"ok": True, "label": r["label"], "log": r["log"]}
+
+
+@router.post("/admin/sources/{source_id}/veille/injecter")
+def admin_source_veille_injecter(source_id: int, request: Request) -> dict:
+    """SENTINELLE-2 (X6) — « Injecter cette version » : le pont SUPERVISÉ entre « une nouvelle version
+    est disponible » et l'ingestion. Sur CLIC HUMAIN de Vic (exiger_admin), lance le job d'ingestion
+    EXISTANT de la source (`_lancer_ingestion`, même commande que le cron), et TRACE le geste dans
+    source_veille (injection_lancee_at + le millésime amont injecté) pour un suivi VISIBLE au tableau.
+
+    DOCTRINE INTACTE : la sentinelle n'ingère RIEN d'elle-même — aucune ingestion ne part sans ce clic.
+    404 si la source n'est pas surveillée ou si aucune commande d'ingestion n'est connue (injection
+    manuelle). Le suivi de l'exécution reste sur ingestion_runs / /healthz/crons (panneau CRON)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine, session_scope
+    with engine().begin() as c:
+        r = c.execute(text(
+            "SELECT d.name, v.dernier_vu, v.dernier_statut FROM source_veille v"
+            " JOIN data_sources d ON d.id = v.source_id WHERE v.source_id = :i"),
+            {"i": source_id}).mappings().first()
+    if not r:
+        raise HTTPException(404, "Cette source n'est pas surveillée (aucune ligne de veille).")
+    nom, millesime = r["name"], r.get("dernier_vu")
+    lance = _lancer_ingestion(nom)   # 404 si pas de commande connue → le front n'affiche pas le bouton
+    with engine().begin() as c:      # trace du geste (suivi visible, X6)
+        c.execute(text("UPDATE source_veille SET injection_lancee_at = now(), injection_vu = :v,"
+                       " updated_at = now() WHERE source_id = :i"), {"v": millesime, "i": source_id})
+    try:
+        from .events import creer_notification
+        with session_scope() as s:
+            creer_notification(s, kind="systeme", compte_id=None, source="Veille sources",
+                               titre=f"Injection lancée à la main : {nom}"
+                                     + (f" → {millesime}" if millesime else ""),
+                               detail=f"Job d'ingestion « {lance['label']} » lancé (même commande que le cron, "
+                                      f"détachée). Suivi : panneau CRON / ingestion_runs. Log {lance['log']}.",
+                               lien="/sources",
+                               dedup=f"injection:{source_id}:{millesime or ''}:"
+                                     f"{datetime.now(tz=timezone.utc):%Y%m%d%H%M}")
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "label": lance["label"], "log": lance["log"], "millesime": millesime}
 
 
 # ───────────────────────── D7 — PRODUIT ─────────────────────────

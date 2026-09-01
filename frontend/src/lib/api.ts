@@ -1166,17 +1166,28 @@ export interface AdminSourceVeille {
   nouvelle_version: boolean
   passage_at: string | null
   message: string | null
+  // SENTINELLE-2 (X5.2) — sondes en échec consécutives ; `echec_confirme` = ≥3 (à distinguer d'un aléa).
+  // `raison` (X3.3) = pourquoi une source N'EST PAS surveillée (infobulle), null si surveillée.
+  echecs: number
+  echec_confirme: boolean
+  raison: string | null
+  // SENTINELLE-2 (X6) — `injectable` = une commande d'ingestion existe → bouton « Injecter cette version ».
+  // Trace de la dernière injection déclenchée À LA MAIN par Vic (jamais la sentinelle) : suivi visible.
+  injectable: boolean
+  injection_lancee_at: string | null
+  injection_vu: string | null
 }
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
   ingere_le: string | null; cadence: string | null; a_jour: boolean | null; relance: string | null
   // CONNEXIONS-2 Lot 6.3 (M2) — désactivée au dashboard ⇒ hors vitrine + consommateurs coupés.
   affichage_desactive: boolean
+  fournisseur: string | null    // SENTINELLE-2 (X4) — colonne/regroupement fournisseur du tableau de veille
   veille: AdminSourceVeille
 }
 export interface AdminSources {
   sources: AdminSource[]
-  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number }
+  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number; sonde_echec: number; non_surveillees: number }
   cadences: string[]
   runs: Array<{ started_at: string | null; finished_at: string | null; status: string | null; parcels_count: number | null; name: string | null }>
 }
@@ -1193,6 +1204,9 @@ export const postAdminSourceVeilleVerifier = (id: number) =>
   j<{ ok: boolean; statut: string | null; millesime_amont: string | null; servi: string | null; message: string | null; notifs: number }>(`/admin/sources/${id}/veille/verifier`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminSourceVeilleActive = (id: number, actif: boolean) =>
   j<{ ok: boolean; actif: boolean }>(`/admin/sources/${id}/veille/active`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
+// SENTINELLE-2 (X6) — « Injecter cette version » : sur clic humain, lance le job d'ingestion EXISTANT.
+export const postAdminSourceVeilleInjecter = (id: number) =>
+  j<{ ok: boolean; label: string; log: string; millesime: string | null }>(`/admin/sources/${id}/veille/injecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const getHealthzCrons = () =>
   j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
 // D7 — Produit

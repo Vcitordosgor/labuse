@@ -338,13 +338,12 @@ def sync_gpu(ctx: JobContext) -> None:
 
 
 def sentinelle_sources(ctx: JobContext) -> None:
-    """SENTINELLE-1 (W3) — UN passage quotidien de la veille des sources : parcourt les lignes
+    """SENTINELLE-1/2 (W3/X5) — UN passage quotidien de la veille des sources : parcourt les lignes
     `source_veille` actives dont la cadence est échue, sonde l'amont (api/page/entete) SÉQUENTIELLEMENT
-    avec un délai, écrit le résultat DANS source_veille (JAMAIS dans data_sources), et notifie l'admin
-    (cloche, dédup par source+millésime) à la première détection d'une nouvelle version.
-
-    Généralise l'ancien `sentinelle-dvf-cadastre` : DVF et cadastre sont désormais deux lignes de
-    source_veille, pas un job à part. Aucune ingestion, aucune donnée touchée — surveille et prévient."""
+    avec un délai, écrit le résultat DANS source_veille (JAMAIS dans data_sources), et dépose AU PLUS UNE
+    notification — le RÉSUMÉ du jour (X5.1) : « N sources ont une nouvelle version », dépliable, dédup par
+    (source, millésime) via `dernier_notifie_vu`. Une sonde en échec n'alerte qu'après 3 passages ratés
+    d'affilée (X5.2). Généralise l'ancien `sentinelle-dvf-cadastre`. Surveille et prévient — n'ingère rien."""
     from . import sentinelle
     recap = sentinelle.passer(ctx.db, notifier=True)
     ctx.compte(sondees=recap["sondees"], nouvelles=recap["nouvelles"],

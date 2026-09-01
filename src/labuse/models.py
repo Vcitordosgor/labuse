@@ -152,6 +152,17 @@ class SourceVeille(Base, TimestampMixin):
     dernier_statut: Mapped[str | None] = mapped_column(String(16))  # ok|nouvelle_version|injoignable|illisible
     dernier_message: Mapped[str | None] = mapped_column(Text)
     dernier_entete: Mapped[str | None] = mapped_column(Text)        # methode entete : ETag/Last-Modified mémorisé
+    # SENTINELLE-2 (X5) — mémoire de notification. `dernier_notifie_vu` : le millésime amont déjà ANNONCÉ
+    # à Vic (dédup du digest : on ne ré-annonce pas ce qu'il a déjà vu). `echecs_consecutifs` : compteur
+    # de sondes en échec d'affilée (X5.2 : on ne prévient qu'à partir de 3 — un serveur public tombe,
+    # ça se relève ; remis à 0 dès qu'une sonde repasse ok).
+    dernier_notifie_vu: Mapped[str | None] = mapped_column(String(64))
+    echecs_consecutifs: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    # SENTINELLE-2 (X6) — trace de l'INJECTION supervisée : quand Vic a cliqué « Injecter cette version »
+    # (jamais la sentinelle : elle n'ingère rien), et pour quel millésime amont. Le job d'ingestion
+    # EXISTANT est lancé ; ces colonnes rendent le geste visible au tableau (« injection lancée le … »).
+    injection_lancee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    injection_vu: Mapped[str | None] = mapped_column(String(64))
     actif: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
 
     source: Mapped[DataSource] = relationship()
@@ -1795,6 +1806,14 @@ def ensure_source_veille(engine) -> None:
                 updated_at         timestamptz NOT NULL DEFAULT now()
             )"""))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_source_veille_source ON source_veille (source_id)"))
+        # SENTINELLE-2 (X5) — colonnes de mémoire de notification, ajoutées idempotemment aux bases
+        # SENTINELLE-1 existantes (ADD COLUMN IF NOT EXISTS ; jamais destructif).
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS dernier_notifie_vu varchar(64)"))
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS "
+                       "echecs_consecutifs integer NOT NULL DEFAULT 0"))
+        # SENTINELLE-2 (X6) — trace de l'injection supervisée (déclenchée à la main par Vic).
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS injection_lancee_at timestamptz"))
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS injection_vu varchar(64)"))
     # peuplement : dans une session (rattachement par nom aux sources en base), idempotent.
     from .db import session_scope
     from . import sentinelle
