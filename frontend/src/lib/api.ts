@@ -1166,17 +1166,23 @@ export interface AdminSourceVeille {
   nouvelle_version: boolean
   passage_at: string | null
   message: string | null
+  // SENTINELLE-2 (X5.2) — sondes en échec consécutives ; `echec_confirme` = ≥3 (à distinguer d'un aléa).
+  // `raison` (X3.3) = pourquoi une source N'EST PAS surveillée (infobulle), null si surveillée.
+  echecs: number
+  echec_confirme: boolean
+  raison: string | null
 }
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
   ingere_le: string | null; cadence: string | null; a_jour: boolean | null; relance: string | null
   // CONNEXIONS-2 Lot 6.3 (M2) — désactivée au dashboard ⇒ hors vitrine + consommateurs coupés.
   affichage_desactive: boolean
+  fournisseur: string | null    // SENTINELLE-2 (X4) — colonne/regroupement fournisseur du tableau de veille
   veille: AdminSourceVeille
 }
 export interface AdminSources {
   sources: AdminSource[]
-  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number }
+  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number; sonde_echec: number; non_surveillees: number }
   cadences: string[]
   runs: Array<{ started_at: string | null; finished_at: string | null; status: string | null; parcels_count: number | null; name: string | null }>
 }

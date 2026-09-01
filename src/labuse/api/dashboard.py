@@ -705,6 +705,7 @@ def admin_sources(request: Request) -> dict:
     exiger_admin(request)
     from ..db import engine
     from ..sources_catalog import est_affichee
+    from .. import sentinelle
     now = datetime.now(tz=timezone.utc)
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
@@ -713,7 +714,8 @@ def admin_sources(request: Request) -> dict:
             "       COALESCE(d.affichage_desactive, false) AS affichage_desactive,"
             # SENTINELLE-1 (W4) — état de veille amont (LEFT JOIN : une source non surveillée = état normal).
             "       v.actif AS veille_actif, v.methode AS veille_methode, v.dernier_statut AS veille_statut,"
-            "       v.dernier_vu AS veille_vu, v.dernier_passage_at AS veille_passage, v.dernier_message AS veille_message"
+            "       v.dernier_vu AS veille_vu, v.dernier_passage_at AS veille_passage, v.dernier_message AS veille_message,"
+            "       v.echecs_consecutifs AS veille_echecs"
             " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id ORDER BY d.name")).mappings()]
         runs = [dict(r) for r in c.execute(text(
             "SELECT r.started_at, r.finished_at, r.status, r.parcels_count, d.name"
@@ -742,6 +744,9 @@ def admin_sources(request: Request) -> dict:
             "affichage_desactive": bool(r.get("affichage_desactive")),
             # SENTINELLE-1 (W4) — bloc veille amont. `surveillee` = une ligne source_veille existe.
             # `nouvelle_version` = la sonde a constaté un millésime amont postérieur au servi (statut ambre).
+            # SENTINELLE-2 (X4) — `fournisseur` pour la colonne/regroupement du tableau de veille ;
+            # `raison` (X3.3) = pourquoi une source N'EST PAS surveillée (infobulle, jamais un blanc).
+            "fournisseur": r.get("provider"),
             "veille": {
                 "surveillee": r.get("veille_actif") is not None,
                 "actif": bool(r.get("veille_actif")) if r.get("veille_actif") is not None else None,
@@ -751,6 +756,11 @@ def admin_sources(request: Request) -> dict:
                 "nouvelle_version": r.get("veille_statut") == "nouvelle_version",
                 "passage_at": r["veille_passage"].isoformat() if r.get("veille_passage") else None,
                 "message": r.get("veille_message"),
+                "echecs": int(r.get("veille_echecs") or 0),
+                # sonde en échec CONFIRMÉ (≥3 passages ratés) : distinct d'un aléa transitoire (X5.2).
+                "echec_confirme": (r.get("veille_statut") in ("injoignable", "illisible")
+                                   and int(r.get("veille_echecs") or 0) >= sentinelle.SEUIL_ECHECS_NOTIF),
+                "raison": None if r.get("veille_actif") is not None else sentinelle.raison_non_surveillee(r["name"]),
             },
         })
     # « à mettre à jour » d'abord (mandat), puis nom
@@ -764,7 +774,11 @@ def admin_sources(request: Request) -> dict:
                          "sans_echeance": sum(1 for s in sources if s["a_jour"] is None),
                          # SENTINELLE-1 (W4.2) — nombre de sources avec une nouvelle version disponible.
                          "nouvelle_version": sum(1 for s in sources if s["veille"]["nouvelle_version"]),
-                         "surveillees": sum(1 for s in sources if s["veille"]["surveillee"])},
+                         "surveillees": sum(1 for s in sources if s["veille"]["surveillee"]),
+                         # SENTINELLE-2 (X4) — pour le tableau à 30+ lignes : sondes en échec confirmé,
+                         # et sources non surveillées (état explicite, pas un blanc).
+                         "sonde_echec": sum(1 for s in sources if s["veille"]["echec_confirme"]),
+                         "non_surveillees": sum(1 for s in sources if not s["veille"]["surveillee"])},
             "cadences": list(CADENCES.keys()),
             "runs": runs}
 
