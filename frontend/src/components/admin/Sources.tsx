@@ -75,6 +75,19 @@ function SourceRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
 const VEILLE_TONE: Record<string, 'ok' | 'warn' | 'off'> = {
   ok: 'ok', nouvelle_version: 'warn', injoignable: 'off', illisible: 'off',
 }
+// SENTINELLE-3 (Y5.4) — les QUATRE natures, distinguées visuellement : version détectable (api/page),
+// changement détectable (entete/temoin), rappel manuel (Y4), non surveillable. Le libellé et le ton
+// disent d'un coup d'œil CE QUE la sentinelle sait faire pour cette source.
+const NATURE_META: Record<string, { label: string; tone: 'ok' | 'warn' | 'off' | undefined; aide: string }> = {
+  version: { label: 'version détectable', tone: 'ok', aide: 'On lit un millésime comparable (api/page) — l’alerte le nomme.' },
+  changement: { label: 'changement détectable', tone: 'ok', aide: 'Pas de version lisible (en-tête de fichier ou requête témoin) — l’alerte dit « la donnée amont a changé ».' },
+  rappel: { label: 'rappel manuel', tone: 'warn', aide: 'Source saisie à la main, aucun amont public : simple rappel de rafraîchissement, pas une sonde.' },
+  non_surveillable: { label: 'non surveillable', tone: undefined, aide: 'Aucune sonde possible — la raison précise ce qui a été essayé.' },
+}
+function NatureBadge({ nature }: { nature: string }) {
+  const m = NATURE_META[nature] ?? NATURE_META.non_surveillable
+  return <span title={m.aide} className="cursor-help"><Chip tone={m.tone}>{m.label}</Chip></span>
+}
 // SENTINELLE-2 (X4.1) — tri par défaut UTILE à 30+ lignes : nouvelles versions d'abord, puis sondes en
 // échec confirmé, puis à jour, puis non surveillées ; à rang égal, par fournisseur puis nom.
 function rangVeille(s: AdminSource): number {
@@ -106,17 +119,33 @@ function VeilleRow({ s }: { s: AdminSource }) {
     onSuccess: (r) => { setMsg(`Injection lancée (${r.label})${r.millesime ? ` → ${r.millesime}` : ''} — suivi dans « CRON nocturne / ingestion_runs ».`); qc.invalidateQueries({ queryKey: ['admin-sources'] }) },
     onError: () => setMsg("Injection impossible (aucune commande d'ingestion connue ?)."),
   })
-  // SENTINELLE-2 (X3.3) — une source SANS ligne de veille : état EXPLICITE « non surveillée » + raison
-  // en infobulle (jamais un blanc, jamais une fausse erreur), pas d'action.
+  // SENTINELLE-2 (X3.3) / SENTINELLE-3 (Y4/Y5.4) — une source SANS vraie sonde : état EXPLICITE + raison
+  // en infobulle (jamais un blanc, jamais une fausse erreur). Deux natures ici : « rappel manuel » (Y4 —
+  // donnée saisie à la main, avec cadence attendue et éventuel retard) et « non surveillable ».
   if (!v.surveillee) {
+    const isRappel = v.nature === 'rappel'
     return (
-      <tr className="border-b border-line last:border-b-0 opacity-70 hover:bg-surface-3">
-        <td className="px-3 py-2"><b className="text-txt-mut">{s.name}</b></td>
+      <tr className={`border-b border-line last:border-b-0 hover:bg-surface-3 ${isRappel ? '' : 'opacity-70'}`}>
+        <td className="px-3 py-2"><b className="text-txt-mut">{s.name}</b>
+          {isRappel && v.convention_echeance && (
+            <div className="mt-0.5 text-[10px] text-txt-dim">échéance convention : {fmtReu(v.convention_echeance)}</div>
+          )}
+        </td>
         <td className="px-3 py-2 text-[11px] text-txt-dim">{s.fournisseur ?? '—'}</td>
         <td className="px-3 py-2 font-mono text-[11px] text-txt-dim">{s.millesime ?? '—'}</td>
-        <td className="px-3 py-2 text-txt-dim">—</td>
-        <td className="px-3 py-2 text-txt-dim">—</td>
-        <td className="px-3 py-2"><span title={v.raison ?? undefined} className="cursor-help"><Chip>non surveillée</Chip></span></td>
+        <td className="px-3 py-2" colSpan={2}>
+          {isRappel ? (
+            <span className="text-[11px] text-txt-dim">
+              cadence attendue {v.cadence_attendue_jours} j{v.jours_depuis_maj != null ? ` · ingérée il y a ${v.jours_depuis_maj} j` : ' · pas de date d’ingestion'}
+            </span>
+          ) : <span className="text-txt-dim">—</span>}
+        </td>
+        <td className="px-3 py-2">
+          <span title={v.raison ?? undefined} className="cursor-help"><NatureBadge nature={v.nature} /></span>
+          {isRappel && v.rappel_retard && (
+            <span className="ml-1" title="Donnée manuelle non rafraîchie dans la cadence attendue."><Chip tone="warn">non rafraîchie</Chip></span>
+          )}
+        </td>
         <td className="px-3 py-2" />
       </tr>
     )
@@ -126,6 +155,7 @@ function VeilleRow({ s }: { s: AdminSource }) {
     <tr className={`border-b border-line last:border-b-0 hover:bg-surface-3 ${v.actif === false ? 'opacity-55' : ''}`}>
       <td className="px-3 py-2"><b className="text-txt">{s.name}</b>
         <span className="ml-1.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">{v.methode ?? '—'}</span>
+        <span className="ml-1"><NatureBadge nature={v.nature} /></span>
         {msg && <div className="mt-0.5 text-[10.5px] text-mint">{msg}</div>}
       </td>
       <td className="px-3 py-2 text-[11px] text-txt-dim">{s.fournisseur ?? '—'}</td>
@@ -191,8 +221,10 @@ export function VeillePanel({ sources }: { sources: AdminSource[] }) {
     <Panel className="mb-0">
       <PHead>Agent de veille des sources</PHead>
       <div className="px-4 pt-2 pb-1 text-[11px] leading-relaxed text-txt-mut">
-        Surveille le millésime AMONT de chaque source (data.gouv, IGN, DGFiP, ADEME…) et prévient quand
-        une nouvelle version est publiée. Il n'ingère RIEN — Vic déclenche chaque mise à jour.
+        Surveille l'amont de chaque source et prévient quand elle change. Quatre natures : <b className="text-txt">version détectable</b> (millésime lisible),
+        {' '}<b className="text-txt">changement détectable</b> (en-tête de fichier ou requête témoin — « la donnée amont a changé »),
+        {' '}<b className="text-txt">rappel manuel</b> (donnée saisie à la main : rappel de rafraîchissement, pas une sonde) et <b className="text-txt">non surveillable</b> (raison précise).
+        Il n'ingère RIEN — Vic déclenche chaque mise à jour.
       </div>
       <div className="flex flex-wrap gap-1.5 px-4 pb-2">
         {onglets.map(([f, lbl]) => (
@@ -235,6 +267,7 @@ export function SourcesSection() {
       <div className="mb-3.5 flex flex-wrap items-center gap-2">
         {/* SENTINELLE-1 (W4.2) — tuile Sources : nombre de sources avec une nouvelle version disponible. */}
         {d.synthese.nouvelle_version > 0 && <Chip tone="warn">{d.synthese.nouvelle_version} nouvelle version disponible</Chip>}
+        {d.synthese.rappels_en_retard > 0 && <Chip tone="warn">{d.synthese.rappels_en_retard} donnée manuelle non rafraîchie</Chip>}
         {d.synthese.a_mettre_a_jour > 0 && <Chip tone="warn">{d.synthese.a_mettre_a_jour} à mettre à jour</Chip>}
         <Chip tone="ok">{d.synthese.ok} OK</Chip>
         {d.synthese.sans_echeance > 0 && <Chip>{d.synthese.sans_echeance} sans échéance (cadence à régler)</Chip>}

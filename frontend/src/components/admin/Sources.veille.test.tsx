@@ -12,15 +12,17 @@ import type { AdminSource } from '../../lib/api'
 const src = (over: Partial<AdminSource> & { id: number; name: string }): AdminSource => ({
   category: null, millesime: '2025-S2', horizon: null, ingere_le: null, cadence: null,
   a_jour: true, relance: null, affichage_desactive: false, fournisseur: 'IGN',
-  veille: { surveillee: false, actif: null, methode: null, statut: null, millesime_amont: null,
+  veille: { nature: 'non_surveillable', surveillee: false, actif: null, methode: null, statut: null, millesime_amont: null,
     nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false,
-    raison: 'Import manuel — pas d\'URL de version.', injectable: false, injection_lancee_at: null, injection_vu: null },
+    raison: 'Import manuel — pas d\'URL de version.', injectable: false, injection_lancee_at: null, injection_vu: null,
+    cadence_attendue_jours: null, convention_echeance: null, jours_depuis_maj: null, rappel_retard: false },
   ...over,
 })
 const surv = (o: Partial<AdminSource['veille']>): AdminSource['veille'] => ({
-  surveillee: true, actif: true, methode: 'page', statut: 'ok', millesime_amont: null,
+  nature: 'version', surveillee: true, actif: true, methode: 'page', statut: 'ok', millesime_amont: null,
   nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false, raison: null,
-  injectable: false, injection_lancee_at: null, injection_vu: null, ...o,
+  injectable: false, injection_lancee_at: null, injection_vu: null,
+  cadence_attendue_jours: null, convention_echeance: null, jours_depuis_maj: null, rappel_retard: false, ...o,
 })
 
 const renderPanel = (sources: AdminSource[]) => {
@@ -38,7 +40,25 @@ describe('SENTINELLE-2 — panneau de veille des sources', () => {
     expect(getByText('DVF surveillée')).toBeTruthy()
     expect(getByText('2026-S1')).toBeTruthy()                 // millésime amont mis en avant
     expect(getByText('Source non surveillée')).toBeTruthy()   // NON masquée : état explicite
-    expect(getAllByText('non surveillée').length).toBeGreaterThan(0)
+    expect(getAllByText('non surveillable').length).toBeGreaterThan(0)   // SENTINELLE-3 — nature explicite
+  })
+
+  // SENTINELLE-3 (Y4/Y5.4) — un rappel manuel : nature « rappel manuel », cadence attendue, et « non
+  // rafraîchie » quand le délai est dépassé. Ce n'est PAS une sonde (pas d'action Vérifier/Suspendre).
+  it('affiche un rappel manuel avec sa cadence et l\'état « non rafraîchie » en retard', () => {
+    const rappel = src({ id: 1, name: 'Radar pige' })
+    rappel.veille = { ...rappel.veille, nature: 'rappel', methode: 'rappel', cadence_attendue_jours: 7, jours_depuis_maj: 40, rappel_retard: true }
+    const { getByText, getAllByText } = renderPanel([rappel])
+    expect(getAllByText('rappel manuel').length).toBeGreaterThan(0)
+    expect(getByText(/cadence attendue 7 j/)).toBeTruthy()
+    expect(getByText('non rafraîchie')).toBeTruthy()
+  })
+
+  // SENTINELLE-3 (Y5.4) — une source à requête témoin est « changement détectable ».
+  it('marque une sonde témoin « changement détectable »', () => {
+    const t = src({ id: 1, name: 'Géorisques cavités', veille: surv({ nature: 'changement', methode: 'temoin' }) })
+    const { getAllByText } = renderPanel([t])
+    expect(getAllByText('changement détectable').length).toBeGreaterThan(0)
   })
 
   it('propose les deux actions par source surveillée', () => {

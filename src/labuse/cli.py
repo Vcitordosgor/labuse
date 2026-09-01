@@ -2790,6 +2790,31 @@ def check_fraicheur_cmd() -> None:
     typer.echo(f"✓ fraîcheur : aucune source en retard ({len(etats)} évaluées).")
 
 
+@app.command("sentinelle-inventaire")
+def sentinelle_inventaire_cmd(
+    sortie: str = typer.Option("docs/audit-2026-09/SENTINELLE-INVENTAIRE.md", help="fichier Markdown à (ré)écrire"),
+) -> None:
+    """SENTINELLE-3 (Y5.2) — RÉGÉNÈRE l'inventaire des 64 sources DEPUIS LE CATALOGUE (jamais à la main) :
+    croise `seed_sources.SOURCES` avec SEED / RAPPELS / RAISONS / DOUBLONS, enrichit le millésime servi
+    depuis `data_sources` si la base est joignable, écrit le fichier. Le contenu EST l'état du code."""
+    from pathlib import Path
+
+    from . import sentinelle
+    millesimes: dict[str, str] = {}
+    try:
+        from sqlalchemy import text as _t
+        with session_scope() as s:
+            for r in s.execute(_t("SELECT name, source_millesime FROM data_sources "
+                                  "WHERE source_millesime IS NOT NULL")).mappings():
+                millesimes[r["name"]] = r["source_millesime"]
+    except Exception:  # noqa: BLE001 — base absente = on génère depuis le catalogue seul (millésime catalogue)
+        pass
+    md = sentinelle.inventaire_markdown(millesimes or None)
+    Path(sortie).write_text(md, encoding="utf-8")
+    typer.echo(f"✓ Inventaire régénéré : {sortie} ({md.count(chr(10)) + 1} lignes, "
+               f"{len(millesimes)} millésimes lus en base)")
+
+
 @app.command("ingest-bodacc")
 def ingest_bodacc_cmd() -> None:
     """J+2 — BODACC quotidien : ré-interroge (batché) les SIREN propriétaires, upsert idempotent."""

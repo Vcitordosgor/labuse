@@ -1158,9 +1158,12 @@ export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
 // D6 — Sources
 // SENTINELLE-1 (W4) — état de veille amont d'une source (null si non surveillée = état normal).
 export interface AdminSourceVeille {
+  // SENTINELLE-3 (Y5.4) — nature de surveillance : version détectable (api/page) · changement détectable
+  // (entete/temoin) · rappel manuel (Y4) · non surveillable (rien). `surveillee` = VRAIE sonde amont.
+  nature: 'version' | 'changement' | 'rappel' | 'non_surveillable'
   surveillee: boolean
   actif: boolean | null
-  methode: string | null            // api | page | entete
+  methode: string | null            // api | page | entete | temoin | rappel
   statut: string | null             // ok | nouvelle_version | injoignable | illisible
   millesime_amont: string | null    // millésime constaté amont
   nouvelle_version: boolean
@@ -1176,6 +1179,12 @@ export interface AdminSourceVeille {
   injectable: boolean
   injection_lancee_at: string | null
   injection_vu: string | null
+  // SENTINELLE-3 (Y4) — rappel de rafraîchissement des sources MANUELLES : cadence attendue, âge de la
+  // dernière ingestion, échéance de convention si connue, et `rappel_retard` = donnée non rafraîchie à temps.
+  cadence_attendue_jours: number | null
+  convention_echeance: string | null
+  jours_depuis_maj: number | null
+  rappel_retard: boolean
 }
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
@@ -1187,7 +1196,7 @@ export interface AdminSource {
 }
 export interface AdminSources {
   sources: AdminSource[]
-  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number; sonde_echec: number; non_surveillees: number }
+  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number; sonde_echec: number; non_surveillees: number; version: number; changement: number; rappels: number; rappels_en_retard: number }
   cadences: string[]
   runs: Array<{ started_at: string | null; finished_at: string | null; status: string | null; parcels_count: number | null; name: string | null }>
 }

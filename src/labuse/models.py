@@ -163,6 +163,11 @@ class SourceVeille(Base, TimestampMixin):
     # EXISTANT est lancé ; ces colonnes rendent le geste visible au tableau (« injection lancée le … »).
     injection_lancee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     injection_vu: Mapped[str | None] = mapped_column(String(64))
+    # SENTINELLE-3 (Y4) — rappel de rafraîchissement des sources MANUELLES (methode='rappel', jamais sondée) :
+    # au-delà de `cadence_attendue_jours` sans nouvelle ingestion, on rappelle « donnée non rafraîchie » ;
+    # `convention_echeance` = échéance de convention (fichiers fonciers) si connue (jamais inventée).
+    cadence_attendue_jours: Mapped[int | None] = mapped_column(Integer)
+    convention_echeance: Mapped[date | None] = mapped_column(Date)
     actif: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
 
     source: Mapped[DataSource] = relationship()
@@ -1814,12 +1819,16 @@ def ensure_source_veille(engine) -> None:
         # SENTINELLE-2 (X6) — trace de l'injection supervisée (déclenchée à la main par Vic).
         c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS injection_lancee_at timestamptz"))
         c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS injection_vu varchar(64)"))
+        # SENTINELLE-3 (Y4) — rappel de rafraîchissement des sources manuelles (idempotent, non destructif).
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS cadence_attendue_jours integer"))
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS convention_echeance date"))
     # peuplement : dans une session (rattachement par nom aux sources en base), idempotent.
     from .db import session_scope
     from . import sentinelle
     try:
         with session_scope() as s:
             sentinelle.ensemencer(s)
+            sentinelle.ensemencer_rappels(s)   # Y4 — pose les lignes 'rappel' des sources manuelles
             s.commit()
     except Exception:  # noqa: BLE001 — un souci de seed ne doit JAMAIS bloquer le boot (table déjà créée)
         pass
