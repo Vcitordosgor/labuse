@@ -381,6 +381,17 @@ export function RadarView() {
     if (radarToOpen != null) { setBienOuvert(radarToOpen); setRadarToOpen(null) }
   }, [radarToOpen, setRadarToOpen])
 
+  // CONNEXIONS-2 Lot 3 (KO-9) — le Radar s'ouvre FILTRÉ sur la commune posée par la passerelle
+  // « Voir les annonces dans le Radar » de la fiche commune (ContextePanel → setCommunesFilter).
+  // Au montage, si UNE seule commune est active dans le filtre partagé, on l'applique au Radar : le
+  // compteur « N biens en vente » de la fiche commune et la liste Radar portent alors la même commune.
+  useEffect(() => {
+    const c = useApp.getState().filters.communes
+    if (c && c.length === 1) setF((p) => (p.commune ? p : { ...p, commune: c[0] }))
+    // montage seul : la passerelle pose la commune juste avant d'ouvrir le Radar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Clic d'une carte du listing → sa FICHE (T3). Rattaché : la carte vole à la parcelle + fiche
   // complète. Non localisé : fiche qui s'arrête aux faits, avec le bouton portail (le seul chemin
   // sortant, logué) — T2 « non localisé → portail » est honoré par ce bouton, pas de carte.

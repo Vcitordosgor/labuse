@@ -5,11 +5,13 @@ GET  /api/copilote-v2/scenarios → les chips de contexte (M113) servis par le s
 GET  /api/copilote-v2/telemetrie → la feuille de route mesurée (§1e), triée par fréquence.
 
 Routeur sur haiku (M113·Ph0), sélection + formulation sur sonnet. Chaque appel modèle est déjà
-journalisé dans `ia_log`. PLAFOND par compte sur `/ask` (FIX-COPILOTE F3) : quota journalier
-`copilote_v2_missions_jour` compté dans `usage_compteurs` (kind='copilote_v2_ask') — MÊME mécanique
-et MÊME stockage que le run lourd (`/copilote/runs`), scope `c:<compte_id>` (bucket pilote : session/IP
-via `protection.sujet_de`). Aucun canal parallèle. Dépassement → 429 honnête (repart à minuit) AVANT
-tout appel modèle. `LABUSE_DEV_MODE=1` désactive (comme partout).
+journalisé dans `ia_log`. PLAFOND PAR COMPTE sur `/ask` (CONNEXIONS-2 Lot 2, KO-3) : quota journalier
+UNIFIÉ `quota_du_compte` (comptes.copilote_quota_jour édité au dashboard, défaut config 80/jour),
+compté dans `usage_compteurs` sous le kind UNIQUE `QUOTA_COPILOTE_KIND` — le MÊME compteur et le MÊME
+plafond que la recherche NL `/ia`. Scope `c:<compte_id>` (bucket pilote : session/IP via
+`protection.sujet_de`). Fini l'ancien plafond GLOBAL `copilote_v2_missions_jour`, que l'override
+dashboard ne touchait pas. Dépassement → 429 honnête (repart à minuit) AVANT tout appel modèle.
+`LABUSE_DEV_MODE=1` désactive (comme partout).
 """
 from __future__ import annotations
 
@@ -66,18 +68,21 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     par un outil aval — mesuré : 404 « absente du run q_v9_m81 » servi BRUT à l'écran) ne sort
     de cet endpoint. Message honnête au client, TRACE COMPLÈTE côté serveur — un garde qui
     échoue doit le dire, jamais un 500 (ni un identifiant technique) au visage de l'utilisateur."""
-    # FIX-COPILOTE F3 — plafond par compte AVANT tout appel modèle (même mécanique/stockage que le
-    # run lourd : usage_compteurs, kind distinct). Dépassement → 429 honnête, jamais un appel modèle
-    # dépensé pour rien. `LABUSE_DEV_MODE=1` désactive.
+    # CONNEXIONS-2 Lot 2 (KO-3) — plafond PAR COMPTE, la MÊME source que /ia : `quota_du_compte`
+    # (comptes.copilote_quota_jour édité au dashboard, sinon défaut config 80/jour), et le MÊME
+    # compteur (kind `QUOTA_COPILOTE_KIND`). Fini le plafond GLOBAL `copilote_v2_missions_jour` que
+    # l'override dashboard ne touchait pas. Compte AVANT tout appel modèle. `LABUSE_DEV_MODE=1` désactive.
     s = config.get_settings()
     if not s.dev_mode:
         from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
-        n = compteur_incr_et_lire(today_reunion().isoformat(), _sujet_quota(request), "copilote_v2_ask")
-        if n > s.copilote_v2_missions_jour:
+        from .dashboard import quota_du_compte, QUOTA_COPILOTE_KIND
+        quota = quota_du_compte(current_compte(request)) or s.nl_quota_jour
+        n = compteur_incr_et_lire(today_reunion().isoformat(), _sujet_quota(request), QUOTA_COPILOTE_KIND)
+        if n > quota:
             return JSONResponse(status_code=429, content={
                 "detail": f"Vous avez atteint la limite quotidienne du Copilote "
-                          f"({s.copilote_v2_missions_jour} échanges par jour). Elle repart à minuit.",
-                "quota": s.copilote_v2_missions_jour, "gel_jusqua": "minuit"})
+                          f"({quota} échanges par jour). Elle repart à minuit.",
+                "quota": quota, "gel_jusqua": "minuit"})
     import logging
     log = logging.getLogger("labuse.copilote_v2")
     payload_tour = None

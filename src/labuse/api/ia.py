@@ -334,13 +334,15 @@ def _porte_nl(request) -> None:
     s = config.get_settings()
     if s.dev_mode:
         return
-    # DASHBOARD-V1 · D1 — quota PAR LICENCE : un compte connecté lit SON quota
-    # (comptes.copilote_quota_jour, sinon défaut config 80/jour, modifiable au dashboard) ;
-    # sans compte (pilote/anonyme), le quota historique nl_quota_jour reste inchangé.
-    from .dashboard import quota_nl_du_compte
-    quota = quota_nl_du_compte(getattr(request.state, "compte_id", None)) or s.nl_quota_jour
+    # DASHBOARD-V1 · D1 / CONNEXIONS-2 Lot 2 (KO-3) — quota PAR LICENCE UNIFIÉ : un compte connecté
+    # lit SON quota (comptes.copilote_quota_jour, sinon défaut config 80/jour, modifiable au dashboard) ;
+    # sans compte (pilote/anonyme), le quota historique nl_quota_jour reste inchangé. Le compteur est
+    # le kind UNIQUE `QUOTA_COPILOTE_KIND` — le MÊME que /api/copilote-v2/ask (un seul compteur, un
+    # seul plafond pour les deux surfaces Copilote).
+    from .dashboard import quota_du_compte, QUOTA_COPILOTE_KIND
+    quota = quota_du_compte(getattr(request.state, "compte_id", None)) or s.nl_quota_jour
     from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
-    n = compteur_incr_et_lire(today_reunion().isoformat(), sujet_quota(request), "nl")
+    n = compteur_incr_et_lire(today_reunion().isoformat(), sujet_quota(request), QUOTA_COPILOTE_KIND)
     if n > quota:
         raise HTTPException(429, detail={
             "detail": f"Quota d'analyses IA atteint ({quota}/jour). Reprend à minuit.",

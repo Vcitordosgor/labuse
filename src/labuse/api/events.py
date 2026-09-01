@@ -545,7 +545,12 @@ def traiter_reprises(db: Session) -> int:
 
 
 def _parse_hash_filters(h: str) -> dict:
-    """Filtres d'une veille depuis son hash (#f=1&st=…&vm=1…) — même sérialisation que le front."""
+    """OBSOLÈTE (CONNEXIONS-2 Lot 5, KO-7) — ancien parseur À 5 DIMENSIONS de la veille (sur-alertait :
+    les 30 autres dimensions du filtre étaient ignorées en silence). Remplacé par le moteur PARTAGÉ
+    `app.filtre_from_hash` + `app.parcelles_matchant_hash` (parité carte↔veille). Conservé (aucun
+    appelant) le temps d'un mandat d'hygiène — ne plus l'utiliser pour évaluer une veille.
+
+    Filtres d'une veille depuis son hash (#f=1&st=…&vm=1…) — même sérialisation que le front."""
     from urllib.parse import parse_qs
     q = parse_qs(h.lstrip("#"))
     g = lambda k: q.get(k, [None])[0]  # noqa: E731
@@ -580,22 +585,28 @@ def _veilles_match(db: Session, run_to: str, demo: bool, rattrapage: bool = Fals
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE e.kind = 'bascule' AND e.run_to = :to AND e.titre LIKE '▲%'"""),
         {"to": run_to}).mappings().all()
+    # CONNEXIONS-2 Lot 5 (KO-7) — parité filtre ↔ veille : on évalue TOUTES les dimensions du filtre
+    # avec le MÊME moteur que la carte (`parcelles_matchant_hash` → `_q_v2_list`), plus les 5 dimensions
+    # hard-codées d'avant. Le TIER reste évalué au run_to (run-sensible) depuis `rows` ; le reste (commune,
+    # zonage, signaux, état-sol, propriétaire, marché, charge, événement…) passe par le moteur partagé.
+    from .app import filtre_from_hash, parcelles_matchant_hash
+    by_idu = {r["idu"]: r for r in rows}
+    tier_by_idu = {r["idu"]: r["tier"] for r in rows}
     n = 0
     for v in veilles:
-        f = _parse_hash_filters(v["hash"])
-        for r in rows:
-            if f["st"] and r["tier"] not in f["st"]:
-                continue
-            if f["cm"] and r["commune"] not in f["cm"]:   # M17-B : commune honorée
-                continue
-            if f["ev"] and not r["a_evenement"]:
-                continue
-            if f["smin"] is not None and (r["surface_m2"] or 0) < f["smin"]:
-                continue
-            if f["smax"] is not None and (r["surface_m2"] or 0) > f["smax"]:
-                continue
-            if f["sdp"] is not None and (r["sdp_residuelle_m2"] or 0) < f["sdp"]:
-                continue
+        c = filtre_from_hash(v["hash"])
+        # tier au run_to (les candidats `rows` portent le tier du run en cours de bascule)
+        tset = [t.strip() for t in (c.tiers or "").split(",") if t.strip()]
+        cand = [idu for idu, tier in tier_by_idu.items() if (not tset or tier in tset)]
+        # les AUTRES dimensions, via le moteur partagé (carte == veille). Si la veille n'a QUE le tier
+        # (aucune autre dimension), on évite l'appel (et sa dépendance à dryrun_parcel_evaluations).
+        c_reste = filtre_from_hash(v["hash"])
+        c_reste.tiers = None
+        where_reste, _ = c_reste.where()
+        matched = set(cand) if not where_reste.strip() \
+            else parcelles_matchant_hash(db, v["hash"], run_to, cand, sans_tiers=True)
+        for idu in matched:
+            r = by_idu[idu]
             n += db.execute(text("""
                 INSERT INTO event_log (kind, idu, titre, detail, run_to, demo, compte_id, envoi_statut)
                 SELECT 'veille', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text),
@@ -865,6 +876,36 @@ def searches_add(body: SearchSaveIn, request: Request, db: Session = Depends(get
     db.execute(text("INSERT INTO saved_searches (nom, hash, compte_id) VALUES (:n, :h, :cid)"),
                {"n": body.nom[:80], "h": body.hash, "cid": current_compte(request)})
     return {"ok": True}
+
+
+# CONNEXIONS-2 Lot 5 (KO-7, point 2) — libellés humains des dimensions surveillées par une veille de
+# recherche. La veille évalue désormais TOUTES ces dimensions (moteur partagé avec la carte).
+_DIM_LABELS = {
+    "tv": "tiers", "cs": "communes", "zf": "zonage (familles)", "zpx": "zone PLU exacte",
+    "sv": "signaux", "es": "état du sol", "cst": "constructibilité",
+    "smin": "surface min", "smax": "surface max", "sdp": "SDP résiduelle min", "sdpx": "SDP max",
+    "cap": "capacité min", "mm": "multiplicateur min", "rm": "rang max", "ev": "événement rouge",
+    "vs2": "veille succession", "hc": "hors copropriété", "pm": "personne morale",
+    "sd": "sous-densité", "rnv": "renouvellement urbain", "np": "NPNRU", "aa": "adresse absente",
+    "bud": "budget max", "chmin": "charge min", "chmax": "charge max", "pmin": "prix marché min",
+    "pmax": "prix marché max", "ca": "CA min", "mf": "marché fiable", "mb": "mode B rentable",
+    "pt": "type de propriétaire", "soc": "état de la société", "cp": "copropriété",
+    "drr": "droits résiduels", "pmf": "forme juridique", "pma": "code APE",
+    "pmd": "dénomination", "pms": "SIREN", "pdmin": "dirigeants min", "pdmax": "dirigeants max",
+}
+
+
+@router.get("/searches/apercu")
+def searches_apercu(hash: str) -> dict:   # noqa: A002 — nom d'API (le hash de filtres)
+    """Ce qu'une veille de recherche VA surveiller, à partir de son hash : la liste EXACTE des
+    dimensions retenues (moteur partagé carte↔veille) + celles qui ne peuvent PAS être évaluées
+    (rien de surveillé en silence). Consommé à la création (« cette veille surveille : … »)."""
+    from urllib.parse import parse_qs
+    from .app import dimensions_hash_non_evaluees
+    q = parse_qs((hash or "").lstrip("#"))
+    surveille = [_DIM_LABELS.get(k, k) for k in q if k in _DIM_LABELS]
+    non_retenu = dimensions_hash_non_evaluees(hash)
+    return {"surveille": sorted(set(surveille)), "non_retenu": non_retenu}
 
 
 # ── M17-B : veille en langage naturel — RÉUTILISE la brique NL (ia_search, validée par schéma) ;

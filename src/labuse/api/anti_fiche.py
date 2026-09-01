@@ -1,8 +1,10 @@
 """O3 — ANTI-FICHE (« pourquoi PAS »): les motifs d'écartement d'une parcelle, hiérarchisés et sourcés.
 
 La fiche dit pourquoi une parcelle est intéressante ; l'anti-fiche dit **pourquoi elle ne l'est pas**
-(ou pas assez). On lit la cascade déjà calculée (`cascade_results`) et le tier du run servi — aucune
-donnée nouvelle, aucun recalcul. Deux niveaux :
+(ou pas assez). CONNEXIONS-2 Lot 1 (KO-2) : on lit la cascade SERVIE run-scopée
+(`served_cascade_lines` → `dryrun_cascade_results` du run épinglé, dédupliquée + arbitrée) — la MÊME
+que la fiche écran — et le tier du run servi. Fini la lecture de la table LIVE `cascade_results`
+(non run-scopée, dernier calcul par parcelle) qui pouvait contredire la fiche. Aucun recalcul. Deux niveaux :
   · **RÉDHIBITOIRE** (HARD_EXCLUDE) : motifs bloquants — la parcelle est écartée (étage 0).
   · **VIGILANCE** (SOFT_FLAG) : contraintes non bloquantes qui pèsent.
 Chaque motif porte son libellé (déjà rédigé, ex. « Exclue : PPR zone rouge »), sa couche et sa source.
@@ -43,18 +45,16 @@ def anti_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
     p = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
-    pid = p["id"]
 
     tier = db.execute(text(
         "SELECT tier FROM parcel_p_score_v2 WHERE parcelle_id = :i AND run_id = :r"),
         {"i": idu, "r": Q_A_RUN_LABEL}).scalar()
 
-    rows = db.execute(text(
-        """SELECT cr.layer_name, cr.result, cr.detail, ds.name AS source
-           FROM cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
-           WHERE cr.parcel_id = :pid AND cr.result IN ('HARD_EXCLUDE', 'SOFT_FLAG')
-           ORDER BY (cr.result = 'HARD_EXCLUDE') DESC, cr.layer_name"""),
-        {"pid": pid}).mappings().all()
+    # KO-2 : cascade SERVIE du run épinglé (dédup + arbitrée), pas la table LIVE `cascade_results`.
+    from .served_cascade import served_cascade_lines
+    lignes = [l for l in served_cascade_lines(db, idu, Q_A_RUN_LABEL)
+              if l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    rows = sorted(lignes, key=lambda l: (l["result"] != "HARD_EXCLUDE", l["layer_name"]))
 
     def _motif(r) -> dict:
         # source réelle si la couche en porte une ; sinon motif dérivé de la cascade (géométrie/règle)

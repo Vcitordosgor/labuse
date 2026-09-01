@@ -5,7 +5,7 @@
 // (3) plus de chips qui répètent le titre — une ligne de contexte + la commune en mono suffisent.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { fusionnerProjets, getCourrierDemandes, getProjets, type Cadrage, type Projet } from '../../lib/api'
+import { fusionnerProjets, getCourrierDemandes, getProjets, postCourrierClientStatut, type Cadrage, type Projet } from '../../lib/api'
 import { fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Skeleton } from '../Loading'
@@ -158,6 +158,16 @@ export function ProjetsPanel() {
   // SANS état interne d'exécution (qui reste à la Tour de contrôle admin). Vue minimale, lecture seule.
   const courriersQ = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes })
   const courriers = courriersQ.data?.demandes ?? []
+  // CONNEXIONS-2 Lot 4 (KO-6) — le statut est RELU ici (vocabulaire unique) ; la cliente saisit le
+  // RETOUR (répondu / sans réponse) → la boucle se ferme et remonte au dashboard/Kanban.
+  const retour = useMutation({
+    mutationFn: ({ id, statut }: { id: number; statut: 'repondu' | 'sans_reponse' }) => postCourrierClientStatut(id, statut),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['courrier-demandes'] }); qc.invalidateQueries({ queryKey: ['pipeline'] }) },
+  })
+  const STATUT_COURRIER: Record<string, string> = {
+    demande: 'Demandé', depose: 'Déposé', envoye: 'Envoyé', repondu: 'Répondu', sans_reponse: 'Sans réponse',
+    tarif_confirme: 'Demandé', imprime: 'Déposé', poste: 'Envoyé',
+  }
 
   if (openProjet) return <ProjetKanban pid={openProjet.id} nom={openProjet.nom} />
 
@@ -232,17 +242,37 @@ export function ProjetsPanel() {
                 {courriers.length === 0 && (
                   <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>Aucune demande de courrier pour l'instant.</p>
                 )}
-                {courriers.map((d) => (
+                {courriers.map((d) => {
+                  const clos = d.statut === 'repondu' || d.statut === 'sans_reponse'
+                  const envoye = d.statut === 'envoye' || d.statut === 'poste'
+                  return (
                   <div key={d.id} data-courrier-ligne={d.id}
-                    style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14,
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
                       padding: '11px 4px', borderBottom: '.5px solid #16211B' }}>
                     <span style={{ minWidth: 0, color: '#ECF5EF', fontSize: 13 }}>
                       <b style={{ fontFamily: MONO, fontSize: 12, color: '#8FA69A' }}>n° {d.id}</b>
                       {' — '}{d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}
+                      {/* KO-6 — le statut est relu ici (source unique, même vocabulaire que le dashboard) */}
+                      <span data-courrier-statut style={{ marginLeft: 8, fontSize: 11, padding: '2px 7px', borderRadius: 6,
+                        background: clos ? '#12251A' : '#1B1207', color: clos ? '#7FD6A6' : '#E3B341',
+                        border: `1px solid ${clos ? '#1E4D33' : '#3D2C0E'}` }}>{STATUT_COURRIER[d.statut] ?? d.statut}</span>
                     </span>
-                    <span style={{ flexShrink: 0, fontFamily: MONO, fontSize: 11, color: '#5F7267' }}>{String(d.ts).slice(0, 10)}</span>
+                    <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {/* la cliente saisit son RETOUR une fois le courrier envoyé (répondu / sans réponse) */}
+                      {envoye && (
+                        <>
+                          <button data-courrier-repondu={d.id} onClick={() => retour.mutate({ id: d.id, statut: 'repondu' })}
+                            disabled={retour.isPending}
+                            style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid #1E4D33', background: '#12251A', color: '#7FD6A6', cursor: 'pointer' }}>Répondu</button>
+                          <button data-courrier-sansreponse={d.id} onClick={() => retour.mutate({ id: d.id, statut: 'sans_reponse' })}
+                            disabled={retour.isPending}
+                            style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '.5px solid #263A30', background: 'transparent', color: '#5F7267', cursor: 'pointer' }}>Sans réponse</button>
+                        </>
+                      )}
+                      <span style={{ fontFamily: MONO, fontSize: 11, color: '#5F7267' }}>{String(d.ts).slice(0, 10)}</span>
+                    </span>
                   </div>
-                ))}
+                )})}
                 <p style={{ fontSize: 11.5, color: '#5F7267', marginTop: 12 }}>
                   LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.
                 </p>

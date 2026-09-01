@@ -199,8 +199,9 @@ def radar_check(request: Request) -> dict:
         en_vente_longue = q("SELECT count(*) FROM pige_biens WHERE statut = 'en_vente_longue'")
         baisses = q("SELECT count(*) FROM event_log WHERE kind = 'pige.baisse_prix' "
                     "AND ts::date = current_date")
-        signalements = q("SELECT count(*) FROM event_log WHERE kind = 'pige.signalement_client' "
-                         "AND ts::date = current_date")
+        # CONNEXIONS-2 Lot 3 (KO-4) : le compteur lit la table UNIQUE `signalements` (fiche + annonce),
+        # non traités — plus l'event_log du jour seul. L'admin les voit et les traite au dashboard.
+        signalements = q("SELECT count(*) FROM signalements WHERE statut = 'nouveau'")
         derniere = c.execute(text("SELECT max(date_saisie) FROM pige_annonces")).scalar()
     from datetime import datetime, timedelta, timezone
     vide_48h = derniere is None or derniere < datetime.now(tz=timezone.utc) - timedelta(hours=48)

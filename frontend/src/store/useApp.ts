@@ -431,6 +431,11 @@ interface AppState {
   // prioritaire sur le prefill mono. Le pont Assemblage (mandat ASSEMBLAGE) pose ce champ + module.
   courrierPrefillIdus: string[] | null
   setCourrierPrefillIdus: (s: string[] | null) => void
+  // CONNEXIONS-2 Lot 4 (KO-6) — piste CRM → Courrier SANS RESSAISIE : la carte Kanban pose l'IDU + le
+  // pipeline_entry_id (+ projet_id) ; l'outil Courrier amorce le destinataire ET rattache la demande à
+  // la piste d'origine (le statut remonte alors dans le Kanban / Mes courriers / dashboard).
+  courrierPrefillPiste: { idu: string; pipeline_entry_id: number; projet_id: number | null } | null
+  setCourrierPrefillPiste: (p: { idu: string; pipeline_entry_id: number; projet_id: number | null } | null) => void
   // M-ENTREE — amorçage parcelle PARTAGÉ (un seul motif, plusieurs consommateurs) : Faisabilité
   // (M22, mode « par parcelle ») et Assemblage (M16, 1ʳᵉ du lot). Consommation-puis-reset : la porte
   // fait setParcelPrefill(idu)+setModule(clé) ; l'outil lit parcelPrefill AU MONTAGE, l'amorce à sa
@@ -770,6 +775,8 @@ export const useApp = create<AppState>((set) => ({
   setCourrierPrefill: (courrierPrefill) => set({ courrierPrefill }),
   courrierPrefillIdus: null,
   setCourrierPrefillIdus: (courrierPrefillIdus) => set({ courrierPrefillIdus }),
+  courrierPrefillPiste: null,
+  setCourrierPrefillPiste: (courrierPrefillPiste) => set({ courrierPrefillPiste }),
   parcelPrefill: null,
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
   communePrefill: null,

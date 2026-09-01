@@ -18,7 +18,15 @@ const TONE_ACCENT: Record<string, string> = {
 }
 
 function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number; onArchive: () => void; onEdit: () => void }) {
-  const { select, setView } = useApp()
+  const { select, setView, setCourrierPrefillPiste, setModule } = useApp()
+  // CONNEXIONS-2 Lot 4 (KO-6) — « Courrier » depuis la piste, SANS RESSAISIE : on pose l'IDU + la
+  // piste (pipeline_entry_id/projet) et on ouvre l'outil, qui amorce le destinataire et rattache la
+  // demande. Le statut du courrier remonte ensuite ICI (chip), dans « Mes courriers » et au dashboard.
+  const ouvrirCourrier = () => {
+    setCourrierPrefillPiste({ idu: e.idu, pipeline_entry_id: e.id, projet_id: e.projet?.id ?? null })
+    setView('cartes'); setModule('courriers')
+  }
+  const clos = e.courrier?.statut === 'repondu' || e.courrier?.statut === 'sans_reponse'
   // M137 — indicateur de relance CONDITIONNEL : visible seulement si la relance est
   // échue OU due aujourd'hui (reminder_date <= aujourd'hui). Sinon rien. Pas un badge
   // permanent de coin — un point ambre discret + l'échéance, à gauche du titre.
@@ -102,10 +110,22 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEnt
           </div>
         )
       )}
-      {/* M136 P1 — infos de coin bas RETIRÉES (affichage seul) : coin bas-gauche (verdict
-          `meta.label` + rang `#rang_v2`) et coin bas-droite (priorité `e.priority`). Aucune
-          logique/endpoint/donnée touchés. Les champs restent au payload /pipeline
-          (premium.rang_v2, verdict.rang, priority) — purge = décision de Vic (cf. audit). */}
+      {/* CONNEXIONS-2 Lot 4 (KO-6) — le courrier de la piste : statut relu (chip) OU action « Courrier »
+          si aucun courrier encore. Un seul geste, aucune ressaisie d'IDU. */}
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        {e.courrier ? (
+          <span data-piste-courrier-statut
+            className={`rounded-[5px] border px-1.5 py-px text-[10px] ${clos ? 'border-mint/40 text-mint' : 'border-amber/40 text-amber'}`}
+            title={`Courrier n°${e.courrier.demande_id} · ${e.courrier.libelle}`}>
+            ✉ {e.courrier.libelle}
+          </span>
+        ) : <span />}
+        <button data-piste-courrier onClick={ouvrirCourrier}
+          className="rounded-md border border-line-2 px-1.5 py-px text-[10px] text-txt-mut opacity-0 transition-opacity duration-quick hover:border-mint hover:text-mint group-hover:opacity-100"
+          title="Préparer un courrier pour cette piste (pré-rempli)">
+          {e.courrier ? 'Relancer' : '✉ Courrier'}
+        </button>
+      </div>
     </div>
   )
 }

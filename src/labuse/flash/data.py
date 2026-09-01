@@ -147,7 +147,7 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
     # libellé de zone (A/U/RNU…) et la part de recouvrement restent lus en direct dans spatial_layers
     # (détail d'affichage non porté par le servi).
     from ..api.served_cascade import served_cascade_lines, served_group
-    zline = next((l for l in served_group(served_cascade_lines(db, idu), "regles")
+    zline = next((l for l in served_group(served_cascade_lines(db, idu, Q_A_RUN_LABEL), "regles")
                   if l["layer_name"] == "zonage_plu_gpu"), None)
     if zline:
         _zdet = nettoyer_libelle_client(zline["layer_name"], zline["detail"])
@@ -364,7 +364,7 @@ def _risques(db: Session, idu: str, avail: set[str]) -> dict | None:
     # PPR réglementaire sans « intersection marginale < 10 % », libellés FR propres. Fini les
     # 3 niveaux d'aléa côte à côte lus en direct dans spatial_layers.
     from ..api.served_cascade import served_cascade_lines, served_group
-    lines = served_group(served_cascade_lines(db, idu), "risques")
+    lines = served_group(served_cascade_lines(db, idu, Q_A_RUN_LABEL), "risques")
     items = []
     for l in lines:
         if l["layer_name"] not in _RISQUE_LAYERS:
@@ -407,7 +407,7 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
     # ST_Distance à un tampon 500 m → fini le « 0 m » (distance-à-tampon). La couche ABF = tampons
     # + endpoint décommissionné M74 : on ne re-source pas, on cesse d'afficher une distance-à-tampon.
     from ..api.served_cascade import served_cascade_lines, served_group
-    abf_raw = next((l["detail"] for l in served_group(served_cascade_lines(db, idu), "risques")
+    abf_raw = next((l["detail"] for l in served_group(served_cascade_lines(db, idu, Q_A_RUN_LABEL), "risques")
                     if l["layer_name"] == "abf" and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG",
                                                                      "UNKNOWN")), None)
     abf_note = nettoyer_libelle_client("abf", abf_raw) if abf_raw else None

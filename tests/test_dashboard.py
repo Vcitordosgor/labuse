@@ -34,6 +34,38 @@ def test_usage_event_compte_et_agregat(client, engine):
     assert client.post("/usage/event", json={"kind": "n_importe_quoi"}).status_code == 422
 
 
+def test_signalements_unifies_fiche_et_annonce(client, engine):
+    """CONNEXIONS-2 Lot 3 (KO-4) — le « Signaler » de la fiche (type='fiche') ET celui du Radar
+    (type='annonce') écrivent dans la MÊME table `signalements` ; l'admin les VOIT et les TRAITE au
+    dashboard (plus de revue CLI-only) ; le compteur lit cette table. Échoue sur l'ancien code (deux
+    tables disjointes, revue fiche CLI-only)."""
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM signalements"))
+    # 1) signalement FICHE (client → /signalements)
+    r = client.post("/signalements", json={"idu": "97411000AB0001", "type_erreur": "zonage",
+                                           "commentaire": "zone fausse"})
+    assert r.status_code == 200
+    # 2) signalement ANNONCE (Radar → pige.client.signaler) écrit dans la MÊME table
+    from labuse.db import session_scope
+    from labuse.pige.client import signaler
+    with session_scope() as s:
+        signaler(s, compte_id=None, bien_id=4242, motif="annonce retirée")
+    # 3) l'admin VOIT les deux au dashboard, dans la file unique
+    d = client.get("/admin/signalements").json()
+    assert {x["type"] for x in d["signalements"]} == {"fiche", "annonce"}
+    assert d["n_ouverts"] == 2
+    annonce = next(x for x in d["signalements"] if x["type"] == "annonce")
+    assert annonce["bien_id"] == 4242 and annonce["parcelle_id"] is None
+    # 4) l'admin TRAITE un signalement → il quitte la file « à traiter », le compteur baisse
+    sid = d["signalements"][0]["id"]
+    assert client.post(f"/admin/signalements/{sid}/statut", json={"statut": "traite"}).status_code == 200
+    d2 = client.get("/admin/signalements", params={"statut": "nouveau"}).json()
+    assert d2["n_ouverts"] == 1 and all(x["statut"] == "nouveau" for x in d2["signalements"])
+    # rouvrir est possible (réversible)
+    assert client.post(f"/admin/signalements/{sid}/statut", json={"statut": "nouveau"}).status_code == 200
+    assert client.get("/admin/signalements").json()["n_ouverts"] == 2
+
+
 def test_retour_signaler(client, engine):
     """D1 — bouton « Signaler » : le retour s'enregistre statut 'nouveau' ; type invalide → 422."""
     r = client.post("/retours", json={"type": "bug", "message": "L'export CSV est lent."})
@@ -137,17 +169,22 @@ def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
 
 
 def test_ia_conso_et_quota_editable(client, engine, compte_test):
-    """D5 — /admin/ia sert la conso lue du ledger + le quota par licence est ÉDITABLE
-    (et le /ask le lit via quota_nl_du_compte)."""
-    from labuse.api.dashboard import quota_nl_du_compte
+    """D5 / CONNEXIONS-2 Lot 2 — /admin/ia sert la conso lue du ledger + le quota par licence est
+    ÉDITABLE, RELU à la requête suivante par la fonction UNIQUE `quota_du_compte` (partagée /ia + /ask),
+    et le dashboard expose consommé/plafond par compte."""
+    from labuse.api.dashboard import quota_du_compte, quota_nl_du_compte
+    assert quota_nl_du_compte is quota_du_compte           # l'alias pointe la fonction unifiée
     d = client.get("/admin/ia").json()
     assert d["quota_defaut"] == 80 and "mois" in d and "jours" in d and "par_licence" in d
-    assert any(k["id"] == compte_test for k in d["quotas"])
+    ligne = next(k for k in d["quotas"] if k["id"] == compte_test)
+    assert "plafond_effectif" in ligne and "consomme_aujourdhui" in ligne   # tuile consommé/plafond
     r = client.post(f"/admin/licences/{compte_test}/quota", json={"quota": 120})
     assert r.status_code == 200
-    assert quota_nl_du_compte(compte_test) == 120          # le /ask lira 120
+    assert quota_du_compte(compte_test) == 120             # /ia ET /ask liront 120 à la requête suivante
+    assert next(k for k in client.get("/admin/ia").json()["quotas"]
+                if k["id"] == compte_test)["plafond_effectif"] == 120
     client.post(f"/admin/licences/{compte_test}/quota", json={"quota": None})
-    assert quota_nl_du_compte(compte_test) == 80
+    assert quota_du_compte(compte_test) == 80
 
 
 def test_sources_cadence_et_badge(client, engine):
@@ -193,10 +230,10 @@ def test_produit_usage_et_statut_retour(client, engine):
 
 
 def test_courrier_transitions_journalisees(client, engine, compte_test):
-    """D8 — Demandé → Imprimé → Posté : transitions valides, journalisées (event_log admin +
-    notification client), statut illégal → 422."""
+    """D8 / CONNEXIONS-2 Lot 4 (KO-6) — vocabulaire UNIQUE : Demandé → Déposé → Envoyé, transitions
+    journalisées (event_log admin + client), statut illégal → 422. Les statuts LEGACY (imprime/poste)
+    sont ACCEPTÉS mais NORMALISÉS (imprime→depose)."""
     from labuse import courrier
-    from labuse.db import session_scope
     courrier.ensure_tables(engine)
     with engine.begin() as c:
         did = c.execute(text(
@@ -204,10 +241,13 @@ def test_courrier_transitions_journalisees(client, engine, compte_test):
             " VALUES (:c, '[\"97415000AB0001\"]'::jsonb, 1, 'Saint-Paul', 'standard', 'Corps de test D8', 'demande')"
             " RETURNING id"), {"c": compte_test}).scalar_one()
     try:
+        r = client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "depose"})
+        assert r.status_code == 200 and r.json()["statut"] == "depose"
+        # alias legacy encore accepté, normalisé → depose (aucune régression sur d'anciens clients)
         r = client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "imprime"})
-        assert r.status_code == 200 and r.json()["statut"] == "imprime"
-        r = client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "poste"})
-        assert r.status_code == 200 and r.json()["statut"] == "poste"
+        assert r.status_code == 200 and r.json()["statut"] == "depose"
+        r = client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "envoye"})
+        assert r.status_code == 200 and r.json()["statut"] == "envoye"
         assert client.post(f"/courrier/admin/demandes/{did}/statut", json={"statut": "brule"}).status_code == 422
         with engine.begin() as c:
             # journalisée côté admin (compte NULL) ET côté client (compte de la demande)
@@ -216,11 +256,12 @@ def test_courrier_transitions_journalisees(client, engine, compte_test):
             n_client = c.execute(text(
                 "SELECT COUNT(*) FROM event_log WHERE dedup LIKE :d AND compte_id = :c"),
                 {"d": f"courrier:statut-client:{did}:%", "c": compte_test}).scalar()
+        # 3 clics mais 2 statuts distincts (depose dédupliqué) → 2 traces admin + 2 client
         assert n_admin == 2 and n_client == 2
         # la liste admin porte le nom du client (jointure comptes)
         d = client.get("/courrier/admin/demandes").json()
         row = next(x for x in d["demandes"] if x["id"] == did)
-        assert row["client"] == "Client D4" and row["statut"] == "poste"
+        assert row["client"] == "Client D4" and row["statut"] == "envoye"
     finally:
         with engine.begin() as c:
             c.execute(text("DELETE FROM event_log WHERE dedup LIKE :d"), {"d": f"courrier:statut%:{did}:%"})

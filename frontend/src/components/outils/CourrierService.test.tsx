@@ -66,4 +66,13 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     fireEvent.click(document.querySelector('[data-courrier-next]')!)   // → ③
     expect(document.querySelector('[data-courrier-pdf]')).toBeTruthy()
   })
+
+  it('CONNEXIONS-2 Lot 3 (KO-5) — prefill MONO parcelle (fiche → Courrier) amorce un destinataire', async () => {
+    // La tuile/porte « Courrier » de la fiche pose `courrierPrefill` (IDU seul) avant d'ouvrir l'outil.
+    // Avant le fix, l'outil s'ouvrait VIDE. Échoue si le canal mono n'amorce pas de destinataire.
+    useApp.setState({ courrierPrefillIdus: null, courrierPrefill: '97411000BZ1065', selectedIdu: null, msel: [] })
+    renderTool()
+    await waitFor(() => expect(document.querySelectorAll('[data-courrier-dest]').length).toBe(1))
+    expect(screen.getByText('BZ 1065')).toBeTruthy()
+  })
 })

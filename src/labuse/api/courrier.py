@@ -52,6 +52,10 @@ class EnvoiIn(BaseModel):
 
 @router.post("/envois")
 def courrier_envoyer(body: EnvoiIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    # OBSOLÈTE (CONNEXIONS-2 Lot 4, KO-6) — chemin d'envoi DIRECT `courrier_envois`, scopé session/IP,
+    # DORMANT (provider stub → bouton masqué, aucun front ne l'appelle). Le système Courrier SERVI est
+    # `courrier_demandes` (le client prépare, LABUSE dépose). On garde ce chemin (Merci Facteur futur)
+    # mais il devra être RE-SCOPÉ au compte et rattaché à la demande avant activation (mandat d'hygiène).
     from .protection import sujet_de
     mal_formes = [d for d in body.destinataires if not (d.get("adresse") or "").strip()]
     if mal_formes:
@@ -76,11 +80,25 @@ def _client_label(db: Session, cid: int | None) -> str:
     return nom or f"Compte #{cid}"
 
 
+def _valider_pipeline_entry(db: Session, cid: int | None, pe_id: int | None) -> int | None:
+    """KO-6 — n'accepte un pipeline_entry_id QUE s'il appartient au compte courant (SEC-IDOR). Sinon None."""
+    if pe_id is None:
+        return None
+    from sqlalchemy import text as _t
+    ok = db.execute(_t(
+        "SELECT 1 FROM pipeline_entries WHERE id = :id AND compte_id IS NOT DISTINCT FROM :c"),
+        {"id": pe_id, "c": cid}).scalar()
+    return pe_id if ok else None
+
+
 class DemandeIn(BaseModel):
     parcelles: list[str] = Field(min_length=1, max_length=500)
     modele: str | None = None
     corps: str = Field(min_length=10, max_length=8000)
     communes: str | None = None               # récap lisible « Saint-Denis ×1 · Saint-Paul ×2 »
+    # CONNEXIONS-2 Lot 4 (KO-6) — rattachement à la piste/projet d'origine (courrier depuis le CRM).
+    pipeline_entry_id: int | None = None
+    projet_id: int | None = None
 
 
 @router.post("/demande")
@@ -93,8 +111,12 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
     parcelles = [p.strip() for p in body.parcelles if p.strip()]
     if not parcelles:
         raise HTTPException(422, "aucune parcelle valide dans la demande.")
+    # KO-6 — si la demande vient d'une piste, on ne rattache QU'À une piste DU compte (sinon on ignore
+    # le lien, jamais un rattachement croisé). Idem projet.
+    pe_id = _valider_pipeline_entry(db, cid, body.pipeline_entry_id)
     d = courrier.creer_demande(db, compte_id=cid, parcelles=parcelles,
-                               communes=body.communes, modele=body.modele, corps=body.corps)
+                               communes=body.communes, modele=body.modele, corps=body.corps,
+                               pipeline_entry_id=pe_id, projet_id=body.projet_id)
     db.commit()
     # FIX-GB-013 — demande identique récente déjà enregistrée (double-submit / retry / 2 onglets) : on
     # renvoie l'existante SANS re-notifier Vic ni renvoyer un 2ᵉ e-mail (la 1ʳᵉ l'a déjà fait).
@@ -150,9 +172,35 @@ class StatutIn(BaseModel):
     statut: str
 
 
-#: libellés client des statuts (D8) — servis dans la notification de transition.
-_STATUT_LIBELLES = {"demande": "Demandé", "tarif_confirme": "Tarif confirmé",
-                    "imprime": "Imprimé", "poste": "Posté", "envoye": "Envoyé"}
+#: libellés client des statuts — SOURCE UNIQUE (CONNEXIONS-2 Lot 4) : courrier.STATUT_LIBELLES.
+_STATUT_LIBELLES = courrier.STATUT_LIBELLES
+
+
+@router.post("/demandes/{demande_id}/statut")
+def courrier_client_statut(demande_id: int, body: StatutIn, request: Request,
+                           db: Session = Depends(get_db)) -> dict:
+    """CONNEXIONS-2 Lot 4 (KO-6) — la CLIENTE saisit le RETOUR de SA demande : « répondu » ou « sans
+    réponse » (les seuls statuts qu'elle contrôle ; le reste du cycle est côté LABUSE). Scopé compte
+    (elle ne touche que SES demandes). Ferme la boucle : le retour est relu au dashboard et au Kanban."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    try:
+        d = courrier.set_statut_demande(db, demande_id, body.statut, compte_id=cid, reserve_retour=True)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    db.commit()
+    lib = _STATUT_LIBELLES.get(courrier.normaliser_statut(body.statut), body.statut)
+    # trace admin : le retour du client remonte au fil Pilotage (Vic voit que la boucle est bouclée)
+    try:
+        from .events import creer_notification
+        creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
+                           titre=f"Retour client sur la demande n°{demande_id} : « {lib} »",
+                           detail=f"{d['n']} courrier(s){' · ' + d['communes'] if d.get('communes') else ''}",
+                           dedup=f"courrier:retour:{demande_id}:{d['statut']}")
+        db.commit()
+    except Exception:  # noqa: BLE001 — best-effort
+        db.rollback()
+    return {"ok": True, **d}
 
 
 @router.post("/admin/demandes/{demande_id}/statut")
@@ -168,20 +216,20 @@ def courrier_admin_statut(demande_id: int, body: StatutIn, request: Request,
     except ValueError as exc:
         raise HTTPException(422, str(exc))
     db.commit()
-    lib = _STATUT_LIBELLES.get(body.statut, body.statut)
+    lib = _STATUT_LIBELLES.get(d["statut"], d["statut"])   # d['statut'] = canonique (legacy normalisé)
     try:
         from .events import creer_notification
         # trace admin (fil Pilotage) — dédup par (demande, statut) : jamais deux traces d'un même clic
         creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
                            titre=f"Demande n°{demande_id} passée à « {lib} »",
                            detail=f"{d['n']} courrier(s){' · ' + d['communes'] if d.get('communes') else ''}",
-                           dedup=f"courrier:statut:{demande_id}:{body.statut}")
+                           dedup=f"courrier:statut:{demande_id}:{d['statut']}")
         # notification CLIENT (cloche) — il voit le même statut de son côté
         if d.get("compte_id") is not None:
             creer_notification(db, kind="systeme", compte_id=d["compte_id"], source="Courrier",
                                titre=f"Votre demande de courrier est passée à « {lib} »",
                                detail=f"{d['n']} courrier(s){' · ' + d['communes'] if d.get('communes') else ''}",
-                               dedup=f"courrier:statut-client:{demande_id}:{body.statut}")
+                               dedup=f"courrier:statut-client:{demande_id}:{d['statut']}")
         db.commit()
     except Exception:  # noqa: BLE001 — la trace est best-effort, la transition est déjà faite
         db.rollback()

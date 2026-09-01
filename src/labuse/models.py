@@ -149,7 +149,12 @@ class ParcelSourceResult(Base):
 # ───────────────────── cascade_results (explicabilité) ─────────────────────
 
 class CascadeResult(Base):
-    """La couche d'explicabilité — la traçabilité EST le produit (brief §2/§5)."""
+    """La couche d'explicabilité — la traçabilité EST le produit (brief §2/§5).
+
+    OBSOLÈTE (CONNEXIONS-2, 2026-09-01) : table LIVE non run-scopée (DELETE+INSERT par parcelle,
+    cascade/pipeline.py). Plus AUCUN chemin servi ne la lit (anti_fiche + shortlist basculés sur
+    `dryrun_cascade_results` run-scopé, KO-2). Encore écrite par le pipeline et lue par Copilote v1
+    (à trancher Lot 10). Conservée — la suppression viendra dans un mandat d'hygiène (cf rapport)."""
 
     __tablename__ = "cascade_results"
     __table_args__ = (
@@ -1000,7 +1005,12 @@ def ensure_icd_columns(engine) -> None:
 def ensure_signalements(engine) -> None:
     """Table `signalements` (M9 lot 3) — file de QA humaine. Aucune action
     automatique sur les données : un signalement est un ticket horodaté.
-    Idempotent (CREATE TABLE IF NOT EXISTS) ; durable au rebuild."""
+    Idempotent (CREATE TABLE IF NOT EXISTS) ; durable au rebuild.
+
+    CONNEXIONS-2 Lot 3 (KO-4) : c'est LA table UNIQUE de signalement. Le « Signaler » de la fiche
+    (type='fiche', parcelle_id) ET le « Signaler » du Radar (type='annonce', bien_id) écrivent ici.
+    L'admin les voit et les traite au dashboard (plus de revue CLI-only) : colonnes `type`, `bien_id`,
+    `parcelle_id` nullable pour l'annonce."""
     from sqlalchemy import text as _t
 
     with engine.begin() as c:
@@ -1015,6 +1025,12 @@ def ensure_signalements(engine) -> None:
                 statut       varchar(24) NOT NULL DEFAULT 'nouveau',
                 created_at   timestamptz NOT NULL DEFAULT now()
             )"""))
+        # KO-4 — colonnes d'unification (idempotent). type='fiche' par défaut = comportement legacy.
+        c.execute(_t("ALTER TABLE signalements ADD COLUMN IF NOT EXISTS type varchar(16) NOT NULL DEFAULT 'fiche'"))
+        c.execute(_t("ALTER TABLE signalements ADD COLUMN IF NOT EXISTS bien_id bigint"))
+        c.execute(_t("ALTER TABLE signalements ADD COLUMN IF NOT EXISTS traite_at timestamptz"))
+        # un signalement d'annonce n'a pas de parcelle_id → la contrainte NOT NULL doit sauter.
+        c.execute(_t("ALTER TABLE signalements ALTER COLUMN parcelle_id DROP NOT NULL"))
         c.execute(_t("CREATE INDEX IF NOT EXISTS ix_signalements_parcelle "
                      "ON signalements (parcelle_id)"))
         c.execute(_t("CREATE INDEX IF NOT EXISTS ix_signalements_statut "

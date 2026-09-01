@@ -231,7 +231,7 @@ _TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
 @router.get("/patrimoine")
 def patrimoine(siren: str, fmt: str = "json",
                limit: int = Query(200, ge=1, le=2000), offset: int = Query(0, ge=0),
-               db: Session = Depends(get_db)):
+               request: Request = None, db: Session = Depends(get_db)):
     """Inventaire du foncier d'une PERSONNE MORALE (SIREN) : ses parcelles, le TIER v2 servi de
     chacune (étage 0 du run prime), le résiduel, les signaux d'approche (BODACC procédure + INPI
     dirigeants), la valorisation indicative du foncier nu, et — si des parcelles sont contiguës —
@@ -270,8 +270,33 @@ def patrimoine(siren: str, fmt: str = "json",
     # dirigeants = signal d'approche fort (succession / société en sommeil). Libellé FACTUEL.
     inpi_sans_dirigeant = bool(siren) and not db.execute(text(
         "SELECT EXISTS (SELECT 1 FROM pm_dirigeants WHERE siren = :s)"), {"s": siren}).scalar()
-    # #2 l'agrégat dit l'ACTIONNABLE (hors écartées / étage 0), et « SDP RÉSIDUELLE » (c'en est).
-    n_actionnables = sum(1 for r in rows if r["tier_v2"] in _TIERS_ACTIONNABLES and not r["etage0"])
+    # #2 l'agrégat dit l'ACTIONNABLE. « Écartées » de base = étage 0 cascade (exclues/faux positif).
+    # CONNEXIONS-2 Lot 4 (KO-10) : si le COMPTE courant a explicitement ÉCARTÉ des parcelles dans un
+    # de SES projets (projet_parcelles.statut='ecartee') ou archivé une piste (pipeline_entries), on
+    # les retire AUSSI de l'actionnable — le libellé dit alors « hors écartées par vous ». Sans compte
+    # ou sans décision, on ne retire rien et le libellé reste « N actionnables » (pas de faux ami).
+    from .tenant import current_compte
+    cid = current_compte(request) if request is not None else None
+    ecartees_par_vous: set[str] = set()
+    if cid is not None:
+        idus_scan = [r["idu"] for r in rows]
+        if idus_scan:
+            ecartees_par_vous = {row[0] for row in db.execute(text(
+                """SELECT DISTINCT par.idu
+                   FROM projet_parcelles pp
+                   JOIN parcels par ON par.id = pp.parcel_id
+                   JOIN projets pj ON pj.id = pp.projet_id
+                   WHERE pj.compte_id IS NOT DISTINCT FROM :cid
+                     AND pp.statut = 'ecartee' AND par.idu = ANY(:idus)
+                   UNION
+                   SELECT DISTINCT par2.idu
+                   FROM pipeline_entries pe
+                   JOIN parcels par2 ON par2.id = pe.parcel_id
+                   WHERE pe.compte_id IS NOT DISTINCT FROM :cid
+                     AND pe.archived_at IS NOT NULL AND par2.idu = ANY(:idus)"""),
+                {"cid": cid, "idus": idus_scan}).all()}
+    n_actionnables = sum(1 for r in rows if r["tier_v2"] in _TIERS_ACTIONNABLES
+                         and not r["etage0"] and r["idu"] not in ecartees_par_vous)
     sdp_residuelle = round(sum(r["sdp_residuelle_m2"] or 0 for r in rows))
     # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
     # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
@@ -350,6 +375,9 @@ def patrimoine(siren: str, fmt: str = "json",
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
         "n_actionnables": n_actionnables,
+        # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
+        "hors_ecartees_par_vous": bool(ecartees_par_vous),
+        "n_ecartees_par_vous": len(ecartees_par_vous),
         "sdp_residuelle_m2": sdp_residuelle,
         "valorisation_nu_eur": round(val_nu) if n_valorisables else None,
         "n_valorisables": n_valorisables,

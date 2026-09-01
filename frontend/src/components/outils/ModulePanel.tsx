@@ -194,7 +194,9 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
           <details className="text-xs">
             <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
             <div className="flex flex-col">
-              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b> hors écartées</span></div>
+              {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
+                  des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
+              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
               {d['valorisation_nu_eur'] != null && (
                 <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
               )}
@@ -826,9 +828,13 @@ export function M09() {
   const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)
   const courrierPrefillIdus = useApp((s) => s.courrierPrefillIdus)
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
+  const courrierPrefillPiste = useApp((s) => s.courrierPrefillPiste)
+  const setCourrierPrefillPiste = useApp((s) => s.setCourrierPrefillPiste)
 
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [dest, setDest] = useState<Dest[]>([])
+  // CONNEXIONS-2 Lot 4 (KO-6) — rattachement de la demande à la piste d'origine (courrier depuis le CRM).
+  const [rattach, setRattach] = useState<{ pipeline_entry_id: number; projet_id: number | null } | null>(null)
   const [modele, setModele] = useState('standard')
   const [corps, setCorps] = useState(TEMPLATES[0].corps)
   const [demande, setDemande] = useState<{ id: number; statut: string; n: number; communes: string | null } | null>(null)
@@ -852,8 +858,15 @@ export function M09() {
   // On NE lit plus `selectedIdu` (la parcelle sélectionnée sur la carte n'est PAS un import demandé —
   // c'est elle qui pré-remplissait un chip fantôme « ET 2164 » à l'ouverture, sans geste utilisateur).
   useEffect(() => {
-    const seed = courrierPrefillIdus?.length ? courrierPrefillIdus
+    // KO-6 — la piste (courrierPrefillPiste) est prioritaire : elle amorce le destinataire ET rattache
+    // la demande à la piste d'origine (statut relu ensuite dans le Kanban / Mes courriers / dashboard).
+    const seed = courrierPrefillPiste ? [courrierPrefillPiste.idu]
+      : courrierPrefillIdus?.length ? courrierPrefillIdus
       : courrierPrefill ? [courrierPrefill] : []
+    if (courrierPrefillPiste) {
+      setRattach({ pipeline_entry_id: courrierPrefillPiste.pipeline_entry_id, projet_id: courrierPrefillPiste.projet_id })
+      setCourrierPrefillPiste(null)
+    }
     if (courrierPrefillIdus) setCourrierPrefillIdus(null)
     if (courrierPrefill) setCourrierPrefill(null)
     seed.forEach(ajouter)
@@ -878,8 +891,8 @@ export function M09() {
 
   const demandes = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes, enabled: step === 3 })
   const envoyer = useMutation({
-    mutationFn: () => postCourrierDemande(dest.map((d) => d.idu), corps, modele, recapCommunes()),
-    onSuccess: (d) => { setDemande(d); qc.invalidateQueries({ queryKey: ['courrier-demandes'] }) },
+    mutationFn: () => postCourrierDemande(dest.map((d) => d.idu), corps, modele, recapCommunes(), rattach ?? undefined),
+    onSuccess: (d) => { setDemande(d); qc.invalidateQueries({ queryKey: ['courrier-demandes'] }); qc.invalidateQueries({ queryKey: ['pipeline'] }) },
   })
   const apercuPdf = async () => {
     const first = dest[0]; if (!first) return
