@@ -10,6 +10,7 @@ import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
 import { IaSection } from './Ia'
 import { SourcesSection } from './Sources'
+import { FluxSection } from './Flux'
 import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
@@ -17,7 +18,7 @@ import { CronSection } from './Cron'
 import { ContactsSection } from './Contacts'
 import { ProgrammesSection } from './Programmes'
 
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -222,6 +223,19 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
             {(data.courrier?.en_cours ?? 0)} en cours · <span className="text-mint hover:underline">traiter →</span>
           </div>
         </div>
+        {/* FLUX-1 F3.5 — la donnée qui s'accumule (Radar) : paires annonce ↔ vente DVF (mesure de finesse). */}
+        {data.radar && (
+          <div className="cursor-pointer rounded-xl border border-line bg-surface-2 px-4 py-4 hover:border-line-2" onClick={() => go('flux')}>
+            <Lbl>Radar · paires DVF</Lbl>
+            <div className="font-display text-2xl font-semibold text-mint">
+              {data.radar.compteurs.paires.toLocaleString('fr-FR')}
+              {data.radar.compteurs.paires_semaine > 0 && <span className="ml-1 text-sm font-normal text-mint">+{data.radar.compteurs.paires_semaine}</span>}
+            </div>
+            <div className="mt-1 text-[11.5px] text-txt-mut">
+              {data.radar.compteurs.annonces.toLocaleString('fr-FR')} annonces · <span className="text-mint hover:underline">le flux →</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* fil : activité récente (event_log admin) + gels actifs avec Dégeler */}
@@ -262,6 +276,7 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'licences', label: 'Licences', ic: '▣' },
   { key: 'ia', label: 'IA', ic: '✦', ia: true },
   { key: 'sources', label: 'Sources', ic: '☰' },
+  { key: 'flux', label: 'Flux', ic: '≈' },
   { key: 'produit', label: 'Produit', ic: '◫' },
   { key: 'courrier', label: 'Courrier', ic: '✉' },
   { key: 'radar', label: 'Radar', ic: '◎' },
@@ -274,6 +289,7 @@ const SOUS_TITRES: Record<AdminSection, string> = {
   licences: 'un client, une ligne — abonnement · onboarding · usage',
   ia: 'consommation, quotas, crédit',
   sources: 'les 59, leur fraîcheur, leur cadence',
+  flux: 'la donnée, de la source à l’écran — injecter · calculer · basculer',
   produit: 'ce qui est utilisé · ce que les clients demandent',
   courrier: 'les demandes d’envoi — la page qui manquait',
   radar: 'la pige d’annonces — saisie, extraction, re-vérif, rituel',
@@ -366,6 +382,7 @@ export function AdminView() {
           {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <IaSection />}
           {section === 'sources' && <SourcesSection />}
+          {section === 'flux' && <FluxSection />}
           {section === 'produit' && <ProduitSection />}
           {section === 'courrier' && <CourrierSection />}
           {section === 'radar' && <RadarSection />}

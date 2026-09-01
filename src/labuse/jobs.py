@@ -270,6 +270,14 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # la notification passe par la cloche admin (event_log systeme), pas par un mail (bruit quotidien évité).
     _j("sentinelle-sources", "Veille des sources amont : détecte un nouveau millésime et alerte (n'ingère pas)",
        "quotidien", "0 3 * * *", "07:00", timeout_s=900),
+    # FLUX-1 (F3.2) — relevé quotidien des compteurs Radar (fin de journée Réunion) : la courbe
+    # d'accumulation se lit de radar_releves. Après le cycle Radar, avant les digests.
+    _j("radar-releves", "Radar — relevé quotidien des compteurs (annonces, rattachées, paires DVF)",
+       "quotidien", "0 13 * * *", "17:00", timeout_s=300),
+    # FLUX-1 (F4) — garde de cohérence quotidienne : personne ne lit une ancienne donnée. Après la
+    # sentinelle (07:00), avant l'ouverture. Notifie l'admin à la divergence.
+    _j("coherence-run", "Garde de cohérence : chaque surface lit le run courant (tier/date identiques)",
+       "quotidien", "15 3 * * *", "07:15", timeout_s=600),
     # K9 — robustesse
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", timeout_s=3600, envoie_mail=True, besoin_db=False),
