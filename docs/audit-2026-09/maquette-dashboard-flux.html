@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Dashboard · Flux (maquette)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#0e1210;--card:#141a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--faint:#5f6b65;
+    --mint:#4ADE80;--mint-deep:#2FBE66;--mint-soft:rgba(74,222,128,.10);--ink:#071009;
+    --amber:#F0B429;--amber-soft:rgba(240,180,41,.12);
+    --red:#F87171;--red-soft:rgba(248,113,113,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050706;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;padding:22px 16px 60px;display:flex;flex-direction:column;align-items:center}
+  .note{font-size:12px;color:var(--dim);text-align:center;line-height:1.6;max-width:900px;margin-bottom:16px}
+  .note b{color:var(--mint);font-weight:600}
+  .page{width:1360px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .kicker{font-size:10.5px;letter-spacing:.26em;color:var(--dim)}
+  h1{font-size:22px;font-weight:650;margin-top:6px}
+  .sub{font-size:13px;color:var(--dim);margin-top:4px}
+
+  /* ── bandeau 3 étapes ── */
+  .steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:20px 0 18px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative}
+  .step .n{font-size:10.5px;letter-spacing:.22em;color:var(--dim)}
+  .step .t{font-size:15px;font-weight:650;margin-top:4px}
+  .step .v{font-size:13px;color:var(--dim);margin-top:8px;line-height:1.55}
+  .step .v b{color:var(--txt);font-weight:600}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;border-radius:20px;padding:3px 9px;margin-top:8px}
+  .pill.ok{background:var(--mint-soft);color:var(--mint)}
+  .pill.warn{background:var(--amber-soft);color:var(--amber)}
+  .btn{margin-top:12px;display:inline-block;background:var(--mint);color:var(--ink);border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:650;cursor:pointer;font-family:inherit}
+  .btn.ghost{background:none;color:var(--dim);border:1px solid var(--line)}
+  .step::after{content:"→";position:absolute;right:-16px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:18px}
+  .step:last-child::after{content:""}
+
+  /* ── fourmilière ── */
+  .flow{display:grid;grid-template-columns:1.15fr 1fr 1.15fr;gap:22px;margin-top:8px}
+  .col h3{font-size:10.5px;letter-spacing:.24em;color:var(--dim);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .col h3 span{font-weight:400;letter-spacing:0;color:var(--faint)}
+  .grp{font-size:11px;color:var(--faint);margin:10px 0 5px;letter-spacing:.06em}
+  .node{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+  .node .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .dot.ok{background:var(--mint)}.dot.warn{background:var(--amber)}.dot.err{background:var(--red)}.dot.off{background:#3a453e}
+  .node .nm{font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .node .mv{font-size:11px;color:var(--dim);white-space:nowrap}
+  .node.hi{border-color:var(--mint);background:rgba(74,222,128,.07)}
+  @media (hover:hover){.node:hover{background:linear-gradient(135deg,#52E68C,var(--mint-deep));color:var(--ink);border-color:var(--mint-deep)}.node:hover .mv{color:rgba(7,16,9,.7)}}
+  .engine{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px}
+  .engine .en{font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .engine .run{font-size:11px;color:var(--mint)}
+  .engine .ed{font-size:11.5px;color:var(--dim);margin-top:3px}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--dim);margin-top:14px;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:6px}
+
+  /* ── bas : radar + cohérence ── */
+  .bottom{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:22px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .box h3{font-size:10.5px;letter-spacing:.24em;color:var(--dim);margin-bottom:12px}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 11px;min-width:0}
+  .kpi .n{font-size:19px;font-weight:700;color:var(--mint);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:10.5px;color:var(--dim);margin-top:2px;line-height:1.3}
+  .kpi .d{font-size:10.5px;color:var(--mint);margin-top:3px}
+  .kpi.key{border-color:rgba(74,222,128,.45)}
+  .chart{margin-top:12px;height:96px;background:var(--panel);border:1px solid var(--line);border-radius:9px;position:relative;overflow:hidden}
+  .chart svg{width:100%;height:100%}
+  .chart .cap{position:absolute;left:10px;top:8px;font-size:10.5px;color:var(--dim)}
+  .ecart{display:flex;gap:8px;margin-top:10px}
+  .ecart div{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12px;color:var(--dim)}
+  .ecart b{color:var(--txt);display:block;font-size:14px}
+  .ecart i{font-style:normal;color:var(--faint);font-size:10.5px}
+  .checks .row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .checks .row:last-child{border-bottom:none}
+  .checks .ok{color:var(--mint)}
+  .glossary{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--dim)}
+  .glossary summary{cursor:pointer;color:var(--txt);font-weight:600;font-size:13px;list-style:none}
+  .glossary summary::-webkit-details-marker{display:none}
+  .glossary p{margin-top:8px;line-height:1.6}
+  .glossary b{color:var(--txt)}
+</style>
+</head>
+<body>
+
+<p class="note">
+  Dashboard › <b>Flux</b> — admin seulement. En haut : les trois gestes de mise à jour. Au milieu : la fourmilière, dessinée depuis les vraies métadonnées
+  (cliquer une source surligne ce qu'elle alimente). En bas : la donnée qui s'accumule, et la garde qui vérifie chaque jour que tout le monde lit le même run.
+</p>
+
+<div class="page">
+  <div class="kicker mono">DASHBOARD · FLUX</div>
+  <h1>La donnée, de la source à l'écran.</h1>
+  <div class="sub">Run courant <span class="mono" style="color:var(--mint)">q_v11_m137</span> · calculé le 22 août · 17 surfaces vérifiées ce matin, toutes sur ce run.</div>
+
+  <!-- bandeau -->
+  <div class="steps">
+    <div class="step">
+      <div class="n mono">1 · SOURCES</div>
+      <div class="t">Injecter</div>
+      <div class="v"><b>40</b> surveillées sur 64 · <b>2</b> ont une nouvelle version</div>
+      <div class="pill warn">● DVF 2026-S1 · BPE 2026 — plus récentes que le run</div><br>
+      <button class="btn">Injecter les 2 →</button>
+    </div>
+    <div class="step">
+      <div class="n mono">2 · RUN</div>
+      <div class="t">Calculer</div>
+      <div class="v">Le run courant a utilisé <b>DVF 2025-S2</b>, <b>BPE 2025</b> et 62 autres millésimes.</div>
+      <div class="pill warn">● 2 sources plus récentes que ce run</div><br>
+      <button class="btn">Lancer un run →</button> <button class="btn ghost">~3 h estimées</button>
+    </div>
+    <div class="step">
+      <div class="n mono">3 · BASCULE</div>
+      <div class="t">Basculer</div>
+      <div class="v">Aucun run plus récent n'est prêt. Dernière bascule : <b>22 août</b>, q_v10 → q_v11.</div>
+      <div class="pill ok">● tous les écrans sur q_v11_m137</div><br>
+      <button class="btn ghost">Basculer — rien à basculer</button>
+    </div>
+  </div>
+
+  <!-- fourmilière -->
+  <div class="flow">
+    <div class="col">
+      <h3>SOURCES <span>64 · 40 surveillées</span></h3>
+      <div class="grp">DGFiP · Etalab</div>
+      <div class="node hi"><span class="dot warn"></span><span class="nm">DVF — ventes</span><span class="mv mono">2025-S2 → 2026-S1 dispo</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Cadastre PCI</span><span class="mv mono">2026-07</span></div>
+      <div class="grp">IGN · Géoplateforme</div>
+      <div class="node"><span class="dot ok"></span><span class="nm">BD TOPO</span><span class="mv mono">2026-06</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">BD ORTHO</span><span class="mv mono">2025</span></div>
+      <div class="grp">INSEE</div>
+      <div class="node"><span class="dot warn"></span><span class="nm">BPE — équipements</span><span class="mv mono">2025 → 2026 dispo</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Filosofi · RP</span><span class="mv mono">2022</span></div>
+      <div class="grp">Géorisques · DEAL</div>
+      <div class="node"><span class="dot ok"></span><span class="nm">PPR (témoin Saint-Denis)</span><span class="mv mono">changement</span></div>
+      <div class="node"><span class="dot off"></span><span class="nm">50 pas géométriques</span><span class="mv mono">non surveillée</span></div>
+      <div class="grp">Vivantes · manuelles</div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Radar — annonces</span><span class="mv mono">aujourd'hui</span></div>
+      <div class="node"><span class="dot off"></span><span class="nm">SPANC</span><span class="mv mono">rappel 365 j</span></div>
+      <div class="node" style="justify-content:center;color:var(--faint);font-size:12px">… 52 autres</div>
+    </div>
+
+    <div class="col">
+      <h3>MOTEURS <span>run q_v11_m137</span></h3>
+      <div class="engine hi" style="border-color:rgba(74,222,128,.45)"><div class="en">sector_price <span class="run mono">q_v11</span></div><div class="ed">← DVF · Radar · cadastre</div></div>
+      <div class="engine" style="border-color:rgba(74,222,128,.45)"><div class="en">scoring · tiers <span class="run mono">q_v11</span></div><div class="ed">← DVF · permis · succession · PLU · BD TOPO</div></div>
+      <div class="engine"><div class="en">cascade · risques <span class="run mono">q_v11</span></div><div class="ed">← PPR · SUP · ABF · Géorisques</div></div>
+      <div class="engine"><div class="en">capacité · SDP <span class="run mono">q_v11</span></div><div class="ed">← PLU · cadastre · BD TOPO</div></div>
+      <div class="engine"><div class="en">rattachement adresse → IDU <span class="run mono">vivant</span></div><div class="ed">← BAN · cadastre</div></div>
+      <div class="engine"><div class="en">signaux <span class="run mono">q_v11</span></div><div class="ed">← permis · DVF · BODACC</div></div>
+      <div class="legend">
+        <span><i class="dot ok" style="display:inline-block;width:8px;height:8px;border-radius:50%"></i> à jour</span>
+        <span><i class="dot warn" style="display:inline-block;width:8px;height:8px;border-radius:50%"></i> plus récent que le run</span>
+        <span><i class="dot err" style="display:inline-block;width:8px;height:8px;border-radius:50%"></i> erreur</span>
+        <span><i class="dot off" style="display:inline-block;width:8px;height:8px;border-radius:50%"></i> non surveillé</span>
+      </div>
+    </div>
+
+    <div class="col">
+      <h3>SURFACES <span>17 · toutes sur q_v11_m137</span></h3>
+      <div class="grp">Outils</div>
+      <div class="node hi"><span class="dot ok"></span><span class="nm">Étudier un bien</span><span class="mv mono">q_v11</span></div>
+      <div class="node hi"><span class="dot ok"></span><span class="nm">Communes</span><span class="mv mono">q_v11</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Faisabilité</span><span class="mv mono">q_v11</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Scan patrimoine</span><span class="mv mono">q_v11</span></div>
+      <div class="node" style="justify-content:center;color:var(--faint);font-size:12px">… 11 autres outils</div>
+      <div class="grp">Écrans</div>
+      <div class="node hi"><span class="dot ok"></span><span class="nm">Fiche parcelle</span><span class="mv mono">q_v11</span></div>
+      <div class="node hi"><span class="dot ok"></span><span class="nm">Radar</span><span class="mv mono">q_v11</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Projets</span><span class="mv mono">q_v11</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Carte · couches</span><span class="mv mono">q_v11</span></div>
+      <div class="grp">Exports · IA</div>
+      <div class="node hi"><span class="dot ok"></span><span class="nm">Exports experts (5)</span><span class="mv mono">q_v11</span></div>
+      <div class="node"><span class="dot ok"></span><span class="nm">Copilote</span><span class="mv mono">q_v11</span></div>
+    </div>
+  </div>
+
+  <!-- bas -->
+  <div class="bottom">
+    <div class="box">
+      <h3>LA DONNÉE QUI S'ACCUMULE · RADAR</h3>
+      <div class="kpis">
+        <div class="kpi"><div class="n">2 418</div><div class="l">annonces collectées</div><div class="d">+63 cette semaine</div></div>
+        <div class="kpi"><div class="n">2 107</div><div class="l">rattachées à une parcelle</div><div class="d">87 %</div></div>
+        <div class="kpi key"><div class="n">184</div><div class="l">paires annonce ↔ vente DVF</div><div class="d">+9 cette semaine</div></div>
+        <div class="kpi"><div class="n">24</div><div class="l">communes couvertes</div><div class="d">sur 24</div></div>
+        <div class="kpi"><div class="n">3</div><div class="l">types couverts</div><div class="d">maison · appart · terrain</div></div>
+      </div>
+      <div class="chart">
+        <span class="cap">paires annonce ↔ vente, cumul depuis le déploiement</span>
+        <svg viewBox="0 0 600 96" preserveAspectRatio="none">
+          <path d="M0 90 L60 86 L120 82 L180 79 L240 72 L300 66 L360 58 L420 47 L480 36 L540 24 L600 12" fill="none" stroke="#4ADE80" stroke-width="2"/>
+          <path d="M0 90 L60 86 L120 82 L180 79 L240 72 L300 66 L360 58 L420 47 L480 36 L540 24 L600 12 L600 96 L0 96Z" fill="rgba(74,222,128,.08)"/>
+        </svg>
+      </div>
+      <div class="ecart">
+        <div><b>−8,4 %</b>écart demandé / acté · maison <i>· 112 paires</i></div>
+        <div><b>−6,1 %</b>appartement <i>· 51 paires</i></div>
+        <div><b>−14,9 %</b>terrain <i>· 21 paires · encore fragile</i></div>
+      </div>
+    </div>
+
+    <div class="box checks">
+      <h3>GARDE DE COHÉRENCE · CE MATIN 07:12</h3>
+      <div class="row"><span>17 surfaces lisent le run courant</span><span class="ok">✓</span></div>
+      <div class="row"><span>Tier identique fiche / Projets / Scan (3 parcelles témoins)</span><span class="ok">✓</span></div>
+      <div class="row"><span>Date de valeur identique partout</span><span class="ok">✓</span></div>
+      <div class="row"><span>Exports = écran (5 exports, 3 parcelles)</span><span class="ok">✓</span></div>
+      <div class="row"><span>Aucune lecture de table obsolète</span><span class="ok">✓</span></div>
+      <div class="row"><span>Caches purgés à la dernière bascule</span><span class="ok">✓ 22 août</span></div>
+      <details class="glossary">
+        <summary>Comment ça marche ▾</summary>
+        <p><b>Source</b> : une donnée brute, avec son <b>millésime</b> (la version chargée). <b>Run</b> : le calcul global qui produit scores et cascade pour toutes les parcelles ; il est figé une fois terminé. <b>Bascule</b> : l'interrupteur qui désigne le run que tout le monde lit. Mettre à jour = injecter, calculer, basculer. Rien n'est automatique.</p>
+      </details>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
