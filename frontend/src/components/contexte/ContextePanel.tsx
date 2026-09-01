@@ -500,7 +500,7 @@ export function ContextePanel() {
               {d.mairie && (
                 <LigneCarte id="contacts" ic="☎" titre="Mairie &amp; service urbanisme"
                   sous={[d.mairie.adresse, d.mairie.telephone].filter(Boolean).join(' · ') || 'coordonnées'}
-                  val="contacter" ton="violet">
+                  val="contacter" ton="vert">
                   <dl className="space-y-1.5 text-[12px]">
                     <MairieLigne label="Adresse" val={[d.mairie.adresse, [d.mairie.code_postal, d.mairie.commune].filter(Boolean).join(' ')].filter(Boolean).join(', ') || null} />
                     <MairieLigne label="Téléphone" val={d.mairie.telephone} href={d.mairie.telephone ? `tel:${d.mairie.telephone.replace(/\s/g, '')}` : undefined} />

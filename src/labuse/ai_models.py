@@ -14,6 +14,8 @@ Module SANS dépendance (import par `config` et `core` sans cycle).
 """
 from __future__ import annotations
 
+import os
+
 # ── Routeur par TÂCHE (jamais codé en dur chez l'appelant) ──────────────────────────────────────
 MODEL_FACTUAL = "claude-haiku-4-5-20251001"     # extraction, factuel, acronymes, filtres NL (ex-3-5-haiku)
 MODEL_REASONING = "claude-sonnet-4-6"           # raisonnement explicite (faisabilité expliquée, synthèse)
@@ -44,3 +46,58 @@ def check_model(model: str) -> str:
             f"modèle RETIRÉ appelé : « {model} » — l'API Anthropic ne le sert plus "
             f"(mettre à jour ai/models.py ou l'env LABUSE_AI_MODEL). Retenus : {sorted(ACTIVE_MODELS)}")
     return model
+
+
+# ── RETOURS-7 Z7 — LE MODÈLE PAR USAGE (surface), en UN seul endroit ─────────────────────────────
+# Vic veut savoir quel modèle sert CHAQUE surface IA — et pouvoir le régler sans chasser un littéral
+# dans le code. Chaque surface est identifiée par son `kind` (celui journalisé dans `ia_log`, donc la
+# facturation et ce registre parlent le même langage). Elle porte ici SON modèle par défaut (une des
+# 3 familles ci-dessus, jamais un littéral neuf) et un libellé lisible. Le défaut par usage vit DONC
+# à cet unique endroit ; un override par surface reste possible via l'env
+# `LABUSE_IA_MODELE_<KIND>` (tirets → underscores, majuscules), validé comme le reste.
+# Ce tableau est lu par le dashboard admin (section IA, « surface → modèle ») ET par chaque appelant
+# (`model_for(kind)`), de sorte que le tableau du dashboard EST la vérité servie, pas une doc à part.
+SURFACES: dict[str, dict] = {
+    # kind (ia_log)      : {libellé client,                              modèle par défaut}
+    "search":            {"label": "Recherche en langage naturel",       "model": MODEL_FACTUAL},
+    "ia-aggregate":      {"label": "Recherche NL — agrégat/classement",  "model": MODEL_FACTUAL},
+    "entretien":         {"label": "Entretien (dialogue guidé)",         "model": MODEL_FACTUAL},
+    "synthese":          {"label": "Synthèse IA de la fiche",            "model": MODEL_REASONING},
+    "pourquoi":          {"label": "Explication du score (fiche)",       "model": MODEL_REASONING},
+    "fiche-ask":         {"label": "Question sur la fiche (routée)",     "model": MODEL_REASONING},
+    "explain":           {"label": "Assistant — expliquer",             "model": MODEL_REASONING},
+    "explain-faisa":     {"label": "Faisabilité — expliquer",           "model": MODEL_REASONING},
+    "agent-brief":       {"label": "Copilote v1 (missions lourdes)",     "model": MODEL_REASONING},
+    "copilote-route":    {"label": "Copilote v2 — routage",              "model": MODEL_FACTUAL},
+    "copilote-select":   {"label": "Copilote v2 — sélection d'outil",    "model": MODEL_REASONING},
+    "copilote-formule":  {"label": "Copilote v2 — formulation",          "model": MODEL_REASONING},
+    "copilote-general":  {"label": "Copilote v2 — réponse générale",     "model": MODEL_REASONING},
+    "copilote-prepare":  {"label": "Copilote v2 — préparer un script",   "model": MODEL_REASONING},
+    "copilote-web":      {"label": "Copilote v2 — renseigner par le web","model": MODEL_REASONING},
+    "copilote-heros":    {"label": "Copilote v2 — accroche du jour",     "model": MODEL_REASONING},
+    "traducteur-plu":    {"label": "Traducteur PLU (règlement)",         "model": MODEL_REASONING},
+    "synthese-banquier": {"label": "Synthèse banquier",                  "model": MODEL_REASONING},
+    "promo_collecte":    {"label": "Parseur programmes promoteur",       "model": MODEL_FACTUAL},
+    "vision_pige":       {"label": "Radar — lecture d'image (PIGE)",     "model": MODEL_VISION},
+    "juge_vlm":          {"label": "Juge VLM (ML, hors service)",        "model": MODEL_VISION},
+}
+
+
+def _surface_env_key(kind: str) -> str:
+    """`copilote-select` → `LABUSE_IA_MODELE_COPILOTE_SELECT` (override par surface)."""
+    return "LABUSE_IA_MODELE_" + kind.upper().replace("-", "_")
+
+
+def model_for(kind: str) -> str:
+    """Le modèle SERVI par la surface `kind` : défaut du registre `SURFACES`, sauf override env par
+    surface (`LABUSE_IA_MODELE_<KIND>`). Toujours passé par `check_model` — un modèle retiré (dans le
+    registre OU dans l'env) lève au lieu d'échouer en silence en prod. `kind` inconnu → défaut agent."""
+    entry = SURFACES.get(kind)
+    default = entry["model"] if entry else DEFAULT_AGENT_MODEL
+    return check_model(os.environ.get(_surface_env_key(kind), "").strip() or default)
+
+
+def surfaces_table() -> list[dict]:
+    """Le tableau « surface → modèle » servi tel quel (dashboard admin + compte-rendu), modèle LU
+    depuis la config (défaut registre + override env résolu par `model_for`), jamais un nom en dur."""
+    return [{"kind": k, "label": v["label"], "model": model_for(k)} for k, v in SURFACES.items()]

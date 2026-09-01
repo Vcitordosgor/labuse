@@ -1508,7 +1508,7 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
         return {"disponible": False,
                 "message": "Capacité constructible non résolue pour cette parcelle — rien à expliquer."}
     ctx = core.build_context(facts, allowed_fields=set(facts))
-    res = core.complete(db, kind="explain-faisa", model=core.MODEL_REASONING, max_tokens=800,
+    res = core.complete(db, kind="explain-faisa", model=core.model_for("explain-faisa"), max_tokens=800,
                         system=_EXPLAIN_FAISA_SYSTEM, context=ctx, validate=True, require_sources=True)
     if res.degraded:
         return {"disponible": True, "degraded": True,

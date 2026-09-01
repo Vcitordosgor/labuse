@@ -256,7 +256,7 @@ def classify(db: Session | None, message: str, *, history: list[dict] | None = N
     if prior_params:
         payload["parametres_connus"] = {k: v for k, v in prior_params.items() if v is not None}
 
-    res = core.complete(db, kind="copilote-route", model=core.MODEL_FACTUAL, max_tokens=400,
+    res = core.complete(db, kind="copilote-route", model=core.model_for("copilote-route"), max_tokens=400,
                         system=ROUTER_SYSTEM, history=hist, context=payload)
     if res.degraded:
         return Route(intent="", degraded=True, error=res.reason or "no_key")
@@ -264,7 +264,7 @@ def classify(db: Session | None, message: str, *, history: list[dict] | None = N
     route = _normalise(data, prior_params) if data else None
     if route is None:
         # une re-demande, plus explicite — puis erreur honnête
-        res2 = core.complete(db, kind="copilote-route-retry", model=core.MODEL_FACTUAL, max_tokens=400,
+        res2 = core.complete(db, kind="copilote-route-retry", model=core.model_for("copilote-route"), max_tokens=400,
                              system=ROUTER_SYSTEM + "\n\nRÉPONDS UNIQUEMENT L'OBJET JSON, sans aucun autre texte.",
                              history=hist, context=payload)
         data2 = _extract_json(res2.text)

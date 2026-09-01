@@ -98,7 +98,7 @@ def extraire(db: Session | None, image: bytes, media_type: str, lien: str, *,
     r = core.complete(db, kind="vision_pige", system=_PROMPT,
                       context={"lien": lien, "portail": portails.nom(portail)},
                       images=[core.ImagePart(image, media_type)],
-                      model=core.MODEL_VISION, max_tokens=max_tokens)
+                      model=core.model_for("vision_pige"), max_tokens=max_tokens)
     if r.degraded:
         return {"ok": False, "motif": r.reason or "IA indisponible",
                 "portail": portail, "portail_inconnu": portail_inconnu}

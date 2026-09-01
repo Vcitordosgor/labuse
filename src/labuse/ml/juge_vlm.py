@@ -21,11 +21,11 @@ import cv2
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..ai_models import MODEL_VISION
+from ..ai_models import model_for
 from ..ingestion.ortho_tiles import tile_path
 from .probe import ml_dir
 
-MODELE = MODEL_VISION  # source unique des noms de modèles (S6) — jamais un littéral dispersé
+MODELE = model_for("juge_vlm")  # RETOURS-7 Z7 — modèle PAR USAGE (registre unique ai_models.SURFACES)
 CROP_VLM_PX = 400
 MARGE_M = 10.0
 M_PER_PX = 0.2

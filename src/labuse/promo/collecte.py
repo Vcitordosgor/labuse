@@ -124,9 +124,10 @@ def extraire_programmes(db: Session | None, texte: str, liens: list[str]) -> dic
     L'appel modèle est journalisé explicitement (leçon S6, EN PLUS du ledger de core.complete)."""
     contexte = "LIENS DE LA PAGE (libellé → URL) :\n" + "\n".join(liens[:MAX_LIENS]) + \
                "\n\nTEXTE VISIBLE DE LA PAGE :\n" + (texte or "")
-    log.info("collecte programmes — appel modèle %s (%d liens, %d car.)", core.MODEL_FACTUAL, len(liens), len(texte or ""))
+    _pc_model = core.model_for("promo_collecte")   # RETOURS-7 Z7 — modèle par usage (registre unique)
+    log.info("collecte programmes — appel modèle %s (%d liens, %d car.)", _pc_model, len(liens), len(texte or ""))
     r = core.complete(db, kind="promo_collecte", system=_PROMPT, context=contexte,
-                      model=core.MODEL_FACTUAL, max_tokens=1500)
+                      model=_pc_model, max_tokens=1500)
     if r.degraded:
         log.error("collecte programmes — appel modèle DÉGRADÉ : %s", r.reason)
         return {"ok": False, "motif": r.reason or "IA indisponible"}

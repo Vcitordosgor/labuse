@@ -488,9 +488,10 @@ def recherche_web(db: Session, *, question: str, history: list[dict] | None = No
     client = anthropic.Anthropic(timeout=45, max_retries=1)
     msgs = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
             for m in (history or [])[-4:] if m.get("content")] + [{"role": "user", "content": question}]
+    web_model = core.model_for("copilote-web")   # RETOURS-7 Z7 — modèle par usage (registre unique)
     try:
         msg = client.messages.create(
-            model=core.MODEL_REASONING, max_tokens=300, system=WEB_SYSTEM,
+            model=web_model, max_tokens=300, system=WEB_SYSTEM,
             tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}],
             messages=msgs)
     except Exception:
@@ -506,7 +507,7 @@ def recherche_web(db: Session, *, question: str, history: list[dict] | None = No
                     if d and d not in domaines:
                         domaines.append(d)
     try:
-        core._log_cost(db, "copilote-web", core.MODEL_REASONING, False,
+        core._log_cost(db, "copilote-web", web_model, False,
                        msg.usage.input_tokens, msg.usage.output_tokens)
     except Exception:
         pass

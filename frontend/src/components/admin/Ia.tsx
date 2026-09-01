@@ -130,6 +130,27 @@ export function IaSection() {
           Vide = défaut ({d.quota_defaut}/jour). Un seul compteur pour la recherche NL et le Copilote : la modification prend effet à la prochaine question du client.
         </div>
       </Panel>
+
+      {/* RETOURS-7 Z7 — QUEL MODÈLE SERT CHAQUE SURFACE IA. Lu depuis la config (registre unique
+          ai_models.SURFACES + override env), jamais un nom en dur : ce tableau EST la vérité servie. */}
+      <Panel className="mt-3.5">
+        <PHead>Modèle par surface IA <Chip tone="ia">config — ai_models.SURFACES</Chip></PHead>
+        <table className="w-full text-[13px]">
+          <tbody>
+            {d.modeles_par_surface.map((s) => (
+              <tr key={s.kind} data-ia-surface={s.kind} className="border-b border-line last:border-b-0 hover:bg-surface-3">
+                <td className="px-4 py-2.5 text-txt">{s.label}</td>
+                <td className="px-4 py-2.5 text-right font-mono text-xs text-cp-ia">{s.model}</td>
+                <td className="px-4 py-2.5 text-right font-mono text-[10.5px] text-txt-dim">{s.kind}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
+          Un seul point de configuration du modèle par usage (défaut au registre, override
+          <span className="font-mono"> LABUSE_IA_MODELE_&lt;KIND&gt;</span>). Aucun nom de modèle codé en dur ailleurs.
+        </div>
+      </Panel>
     </>
   )
 }

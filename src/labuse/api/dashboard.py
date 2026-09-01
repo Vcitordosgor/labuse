@@ -623,6 +623,11 @@ def admin_ia(request: Request) -> dict:
         r["cout"] = float(r["cout"])
     for r in par_licence:
         r["cout"] = float(r["cout"])
+    # RETOURS-7 Z7 — TABLEAU « surface → modèle » : quel modèle sert chaque usage IA, LU depuis la
+    # config (registre ai_models.SURFACES + override env résolu), jamais un nom en dur. C'est la même
+    # source que celle réellement appelée (model_for), donc ce tableau EST la vérité servie.
+    from .. import ai_models
+    surfaces = ai_models.surfaces_table()
     return {
         "mois": {"cout_eur": float(mois["cout"]), "appels": appels,
                  "cout_moyen_question": (float(mois["cout"]) / appels) if appels else None},
@@ -631,6 +636,7 @@ def admin_ia(request: Request) -> dict:
         "par_licence": par_licence,
         "quota_defaut": int(config.get_settings().copilote_questions_jour_defaut),
         "quotas": quotas,
+        "modeles_par_surface": surfaces,
         "note": "Solde Anthropic non exposé par l'API — consommation trackée localement (ledger ia_log).",
     }
 

@@ -58,7 +58,7 @@ def phrase(db: Session | None, parcelle: dict, budget_max_eur: float | None = No
     autor = _valeurs(parcelle, budget_max_eur)
     payload = {"parcelle": parcelle, "budget_max_eur": budget_max_eur}
     for _ in range(2):
-        r = core.complete(db, kind="copilote-heros", model=core.MODEL_REASONING, max_tokens=120,
+        r = core.complete(db, kind="copilote-heros", model=core.model_for("copilote-heros"), max_tokens=120,
                           system=SYSTEM, context=payload)
         if r.degraded:
             break

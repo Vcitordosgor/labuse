@@ -575,9 +575,11 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             : <><b className="text-txt">{nf.format(live)}</b> parcelles correspondent à vos critères</>}
         </p>
       )}
-      {/* #1 — « Créer une veille sur cette recherche » : le geste manquant, offert dès qu'un critère
-          est posé. On alerte à la bascule d'une parcelle qui matche (Veille › Critères). */}
-      {nActifs > 0 && (
+      {/* RETOURS-7 Z10 — la CRÉATION de veille de recherche NE VIT PLUS dans le panneau Filtres
+          (décision Vic) : elle se crée depuis l'écran Veille › Critères, qui monte ce même FiltreLabuse
+          avec `enVeille`. Le bloc (aperçu « cette veille surveille : … » + bouton) ne s'affiche donc
+          QU'EN mode veille — il se DÉPLACE, il ne se perd pas. */}
+      {enVeille && nActifs > 0 && (
         <>
           {/* CONNEXIONS-2 Lot 5 (KO-7) — TRANSPARENCE : « cette veille surveille : … » (dimensions
               réellement évaluées, moteur partagé avec la carte) + ce qui n'est PAS retenu, s'il y a lieu. */}

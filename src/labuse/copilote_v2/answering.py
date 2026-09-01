@@ -222,7 +222,7 @@ def _anti_invention(prose: str, res, valeurs_fil: set[float] | None = None) -> b
 
 def _select_tool(db: Session, message: str, params: dict) -> dict:
     cat = "\n".join(f"- {t['nom']} : {t['desc']} params={t['params']}" for t in CATALOGUE)
-    res = core.complete(db, kind="copilote-select", model=core.MODEL_REASONING, max_tokens=300,
+    res = core.complete(db, kind="copilote-select", model=core.model_for("copilote-select"), max_tokens=300,
                         system=SELECT_SYSTEM.format(catalogue=cat),
                         context={"question": message, "params_extraits": params})
     if res.degraded:
@@ -345,7 +345,7 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
         # M102-B3 — les faits du fil (chiffres déjà servis, avec outil/source/millésime) : le
         # formuler ne peut reprendre QUE ceux-là, le verrou le vérifie contre le registre.
         payload["faits_du_fil"] = registre_faits.contexte_formuler(faits_fil)
-    out = core.complete(db, kind="copilote-formule", model=core.MODEL_REASONING, max_tokens=350,
+    out = core.complete(db, kind="copilote-formule", model=core.model_for("copilote-formule"), max_tokens=350,
                         system=FORMULE_SYSTEM, context=payload)
     prose = (out.text or "").strip()
     if out.degraded or not prose or not _anti_invention(prose, res, registre_faits.valeurs(faits_fil or [])):
@@ -381,7 +381,8 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
 SCENARIOS: dict[str, dict] = {
     "donnees": {"libelle": "Trouver une donnée", "intent": "QUESTION", "sub": "Compter, filtrer, croiser",
                 "placeholder": "Combien de parcelles, quel prix, quel délai… à quelle commune ?",
-                "exemple": "Combien de parcelles en procédure à Saint-Denis ?"},
+                # RETOURS-7 Z2 — exemple raccourci pour tenir sur UNE ligne dans la tuile d'accueil.
+                "exemple": "Parcelles en procédure à Saint-Denis ?"},
     "web": {"libelle": "Renseigner par le web", "intent": "QUESTION", "sub": "Court, sourcé, daté",
             "placeholder": "Ex. qui est le maire de Saint-Denis ?",
             "exemple": "Qui est le maire de Saint-Benoît ?"},
@@ -390,7 +391,8 @@ SCENARIOS: dict[str, dict] = {
                   "exemple": "C'est quoi une zone AU stricte ?"},
     "preparer": {"libelle": "Préparer un script", "intent": "PREPARER", "sub": "Appel ou argumentaire",
                  "placeholder": "Ex. prépare un argumentaire pour aborder le propriétaire",
-                 "exemple": "Un argumentaire pour convaincre un propriétaire"},
+                 # RETOURS-7 Z2 — exemple raccourci pour tenir sur UNE ligne dans la tuile d'accueil.
+                 "exemple": "Un argumentaire pour un propriétaire"},
 }
 
 # M133 · Accueil Copilote v3 — le HERO servi, jamais en dur au front (la promesse suit le produit :
@@ -715,7 +717,7 @@ def _general(db: Session, message: str, history: list[dict] | None = None) -> di
     Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé."""
     hist = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
             for m in (history or [])[-4:]]
-    out = core.complete(db, kind="copilote-general", model=core.MODEL_REASONING, max_tokens=300,
+    out = core.complete(db, kind="copilote-general", model=core.model_for("copilote-general"), max_tokens=300,
                         system=GENERAL_SYSTEM, history=hist, context={"question": message})
     if out.degraded:
         return _reply(ERREUR_INFRA, "EXPLIQUER", degraded=True)
@@ -1107,7 +1109,7 @@ def _preparer(db: Session, message: str, params: dict, contexte: dict | None) ->
     ctx = {"demande": message}
     if faits:
         ctx["faits_sources"] = f"Sur la parcelle {idu} : {faits}"
-    out = core.complete(db, kind="copilote-prepare", model=core.MODEL_REASONING, max_tokens=420,
+    out = core.complete(db, kind="copilote-prepare", model=core.model_for("copilote-prepare"), max_tokens=420,
                         system=PREPARE_SYSTEM, context=ctx)
     if out.degraded or not (out.text or "").strip():
         return _reply(ERREUR_INFRA, "PREPARER", degraded=True)

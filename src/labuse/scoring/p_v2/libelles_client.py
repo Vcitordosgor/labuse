@@ -152,6 +152,14 @@ def phrase_client(feature: str, bin_: str, libelle: str) -> str:
     b = (bin_ or "").strip()
     if feature in _INTERACTIONS:
         return _INTERACTIONS[feature]
+    # RETOURS-7 Z12.3 — la SDP résiduelle n'est JAMAIS « donnée non disponible ». La feature du modèle
+    # joint parcel_residuel avec `cause IS NULL` : les parcelles CONTRAINTES (terrain exigu, zone non
+    # constructible…) — dont la SDP résiduelle vaut 0 — y tombent en « manquant ». Or la vigilance lit
+    # parcel_residuel DIRECTEMENT (cascade `residuel_socle`) et affiche « SDP résiduelle 0 m² — rien à
+    # construire » : c'est ELLE qui est juste (la donnée EST connue, elle vaut 0). « donnée non
+    # disponible » la contredisait. On aligne le sens sur la source : nulle ou non retenue, jamais absente.
+    if feature == "sdp_residuelle_m2" and b.lower() in ("manquant", "inconnu", ""):
+        return "SDP résiduelle nulle ou non retenue (parcelle contrainte)"
     if b.lower() in ("manquant", "inconnu", "") and feature not in _CATEGORIELS:
         if b.lower() == "manquant" or not b:
             return f"{libelle} : donnée non disponible"
