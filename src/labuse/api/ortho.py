@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..ingestion.ortho_tiles import MILLESIME
+from ..ingestion.ortho_tiles import millesime_servi
 
 router = APIRouter(prefix="/ortho", tags=["ortho"])
 
@@ -40,7 +40,15 @@ def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
     """), {"idu": idu}).mappings().first()
     if row is None:
         raise HTTPException(404)
-    return {**dict(row), "millesime": MILLESIME,
-            "source": f"Détection automatique sur orthophotographie IGN {MILLESIME} — "
+    # CONNEXIONS-2 Lot 6.3 (propagation M2) — si la source ORTHO est DÉSACTIVÉE au dashboard, cet outil
+    # sert « source désactivée » plutôt qu'un chiffre périmé (jamais un chiffre muet d'une source coupée).
+    from ..sources_catalog import source_active
+    if not source_active(db, "%ortho%"):
+        return {"desactivee": True, "millesime": None,
+                "source": "Source ortho désactivée au dashboard — badges non servis."}
+    # CONNEXIONS-2 Lot 6.4 — millésime LU dans data_sources (centralisé), plus en dur.
+    mil = millesime_servi(db)
+    return {**dict(row), "millesime": mil,
+            "source": f"Détection automatique sur orthophotographie IGN {mil} — "
                       "précision 90,7 % mesurée sur échantillon indépendant interne ; "
                       "fiabilité statistique, non contractuelle. © IGN (Licence Ouverte)."}

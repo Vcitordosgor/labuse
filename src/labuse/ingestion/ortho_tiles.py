@@ -25,7 +25,25 @@ from sqlalchemy.orm import Session
 
 from ..config import _repo_root, load_yaml_config
 
-MILLESIME = "2025"  # BD ORTHO 974 (fiche IGN dates de prises de vues, juil. 2026)
+#: CONNEXIONS-2 Lot 6.4 — repli SEUL. Le millésime servi n'est plus figé ici : il est LU dans
+#: `data_sources.source_millesime` (table de millésimes CENTRALE, comme toutes les autres sources —
+#: fini le « millésime ortho en dur » du rapport). Cette constante ne sert plus que d'amorce quand la
+#: table n'a pas encore de ligne BD ORTHO (base neuve / test), jamais comme vérité concurrente.
+MILLESIME = "2025"  # repli — BD ORTHO 974 (fiche IGN dates de prises de vues, juil. 2026)
+
+
+def millesime_servi(db: Session) -> str:
+    """Millésime ortho SERVI = `data_sources.source_millesime` de la source BD ORTHO (centralisé,
+    même point que /sources, fiche et couches). Repli sur MILLESIME si la ligne n'existe pas encore."""
+    try:
+        v = db.execute(text(
+            "SELECT source_millesime FROM data_sources "
+            "WHERE (name ILIKE '%ortho%' OR name ILIKE '%BD ORTHO%') "
+            "  AND source_millesime IS NOT NULL "
+            "ORDER BY (name ILIKE '%BD ORTHO%') DESC LIMIT 1")).scalar()
+    except Exception:  # noqa: BLE001 — un souci de lecture ne casse pas les badges ortho
+        v = None
+    return str(v) if v else MILLESIME
 
 DDL = """
 CREATE TABLE IF NOT EXISTS ortho_tiles (
@@ -99,7 +117,7 @@ def build_grid(session: Session) -> int:
                ST_SetSRID(cell, 2975), :mil
         FROM utiles
         ON CONFLICT (tile_id) DO NOTHING
-    """), {"taille": taille, "mil": MILLESIME}).rowcount
+    """), {"taille": taille, "mil": millesime_servi(session)}).rowcount
 
 
 def tile_path(tile_id: str) -> Path:

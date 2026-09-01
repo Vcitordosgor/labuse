@@ -15,7 +15,6 @@ d'évaluation trompeuse. Le contrôle se fait AVANT tout appel réseau quand l'I
 """
 from __future__ import annotations
 
-import httpx
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -23,7 +22,9 @@ from . import config, models
 from .connectors.cadastre import CadastreConnector, parse_parcelles
 from .ingestion.cadastre_ingest import ingest_parcels
 
-BAN_URL = "https://api-adresse.data.gouv.fr/search/"
+# CONNEXIONS-2 Lot 9.2 (KO-13) — le géocodage BAN vit dans `geocode` (une fonction, un BAN_URL,
+# appelée par audit ET scoreur ; fini les deux implémentations divergentes). `BAN_URL` ré-exporté.
+from .geocode import BAN_URL  # noqa: F401 — ré-export de compat
 
 
 class AuditResult(dict):
@@ -162,27 +163,18 @@ def audit_by_reference(session: Session, section: str, numero: str,
 def audit_by_address(session: Session, q: str) -> AuditResult:
     insee, name = _pilot()
     q = (q or "").strip()
-    if len(q) < 3:
+    # CONNEXIONS-2 Lot 9.2 (KO-13) — géocodage BAN via la fonction UNIQUE `geocode.geocode_ban`.
+    from . import geocode
+    try:
+        g = geocode.geocode_ban(q, ua="LA-BUSE/0.1 (+audit)")
+    except ValueError:
         return AuditResult(ok=False, error="entree_invalide", message="Adresse trop courte.")
-    ban, last_exc = None, None
-    for attempt in range(2):  # BAN rate-limite parfois : une 2e tentative suffit
-        try:
-            with httpx.Client(timeout=config.get_settings().http_timeout_s,
-                              headers={"User-Agent": "LA-BUSE/0.1 (+audit)"}) as c:
-                r = c.get(BAN_URL, params={"q": q, "limit": 1})
-                r.raise_for_status()
-                ban = r.json()
-            break
-        except Exception as exc:  # noqa: BLE001
-            last_exc = exc
-    if ban is None:
-        return AuditResult(ok=False, error="source_indisponible",
-                           message=f"Géocodage (BAN) injoignable : {type(last_exc).__name__}.")
-    feats = ban.get("features") or []
-    if not feats:
+    except geocode.BanIndisponible as exc:
+        return AuditResult(ok=False, error="source_indisponible", message=str(exc))
+    except geocode.BanIntrouvable:
         return AuditResult(ok=False, error="introuvable", message=f"Adresse « {q} » non trouvée.")
-    props = feats[0].get("properties", {})
-    lon, lat = feats[0]["geometry"]["coordinates"]
+    props = g["properties"]
+    lon, lat = g["lon"], g["lat"]
     if props.get("citycode") != insee:
         return _hors_commune(props.get("citycode"), props.get("city"))
 

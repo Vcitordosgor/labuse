@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useApp, type LayerToggles } from '../../store/useApp'
+import { getAccueilFraicheur } from '../../lib/api'
 import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { countActiveFilters } from '../../lib/filters'
@@ -432,6 +434,10 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
 
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const { setView, setAccueilVu, toggleOutils } = useApp()
+  // CONNEXIONS-2 Lot 6.1 (KO-11) — la ligne de fraîcheur n'est plus un texte FIGÉ : elle est CALCULÉE
+  // depuis l'état RÉEL des sources (/accueil/fraicheur, même champ que la page Sources et le dashboard).
+  const { data: fraicheur } = useQuery({ queryKey: ['accueil-fraicheur'], queryFn: getAccueilFraicheur,
+    staleTime: 5 * 60_000 })
   // M87 P1 — le bloc « Cette semaine » (M83) est RETIRÉ (composant + appel /accueil/cette-semaine + calcul
   // d'activité). Le claim et la ligne de fraîcheur restent : le foncier vit sans compteur 7 jours en tête.
   return (
@@ -462,8 +468,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       {/* B5 — la ligne de fraîcheur. OUTILS-1 B1 : phrase courte + lien vers la page Sources (le détail
           daté par source vit là-bas, jamais promis faussement ici). */}
       <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">
-        <span className="h-[5px] w-[5px] shrink-0 rounded-full bg-mint" />
-        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Toutes les données sont à jour.</span>
+        <span className="h-[5px] w-[5px] shrink-0 rounded-full"
+          style={{ background: fraicheur?.ton === 'error' ? '#E05252' : fraicheur?.ton === 'warn' ? '#D9873D' : '#4ADE80' }} />
+        <span data-accueil-fraicheur className="text-[10.5px] leading-snug text-[#7C8A83]">
+          {fraicheur?.phrase ?? 'Toutes les données sont à jour.'}</span>
         <button data-accueil-sources onClick={() => { setAccueilVu(); setView('sources') }}
           className="ml-auto shrink-0 whitespace-nowrap text-[10.5px] text-mint hover:underline">voir les données →</button>
       </div>

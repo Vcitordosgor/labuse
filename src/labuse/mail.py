@@ -1,7 +1,12 @@
-"""Transport e-mail UNIQUE de LABUSE (M21-A).
+"""Point d'entrée e-mail UNIQUE de LABUSE (M21-A ; CONNEXIONS-2 Lot 9.1, KO-12).
 
-Un seul module, quatre appelants (reset mot de passe, avis d'échéance Chatel, digest
-notifications, + `labuse mail-test`). Aucune duplication de transport.
+`mail` est la SEULE FAÇADE d'envoi de LABUSE — invitation, veille, courrier, Radar y passent tous.
+Elle a DEUX voies de livraison, jamais appelées en direct ailleurs (garde : test_transport_unique) :
+  · SMTP (ce module) pour le mail TECHNIQUE brut (reset, échéance, digest de notifications) ;
+  · Brevo (`brevo.py`, transactionnel par template) via `mail.envoyer_template` — pour le CYCLE DE VIE
+    client (essai/onboarding/suspension) et les digests Radar. `brevo` n'est importé QUE par `mail`.
+Un seul EXPÉDITEUR (`contact@labuse.immo`, alias vérifié). L'ancienne doctrine « transport unique »
+disait vrai à moitié (Brevo coexistait, appelé en direct) : désormais c'est bien UNE façade, UN sender.
 
 Règles dures :
 - **Aucun secret en dur, jamais logué.** La config vient de l'environnement (LABUSE_SMTP_*,
@@ -138,3 +143,11 @@ def _journaliser_echec_admin(to: str, subject: str, detail: str, contexte: str) 
 def mail_configured(settings=None) -> bool:
     """True si un transport SMTP est réellement configuré (sinon mode journal/dev)."""
     return bool((settings or get_settings()).smtp_host)
+
+
+def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
+    """CONNEXIONS-2 Lot 9.1 (KO-12) — FAÇADE unique pour les mails TEMPLATISÉS (cycle de vie client,
+    digests Radar) : délègue au relais transactionnel Brevo. C'est le SEUL point d'entrée des templates —
+    `brevo` n'est jamais appelé en direct ailleurs (garde test_transport_unique). Renvoie {envoye, raison?}."""
+    from . import brevo
+    return brevo.envoyer_template(to, key, params)

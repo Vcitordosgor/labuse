@@ -31,6 +31,11 @@ def _where(filtres: dict) -> tuple[str, dict]:
     # ni veilles, ni digests). Le filtre est `est_copro`, JAMAIS le type de bien — c'est ce qui laisse
     # les appartements peupler les SIGNAUX (écart demandé/acté, prix bâti) tout en les retirant du flux.
     conds.append("b.est_copro = false")
+    # CONNEXIONS-2 Lot 7 (#12/H5) — tant que le drapeau « dépôt agence » est FERMÉ, un dépôt agence (même
+    # validé par un test admin) N'EST PAS servi aux clients. Ferme la brèche « test admin visible clients ».
+    from .. import reglages
+    if not reglages.depot_agence_actif():
+        conds.append("NOT b.depose_par_agence")
     p: dict = {}
     statuts = filtres.get("statuts") or list(STATUTS_DEFAUT)
     conds.append("b.statut = ANY(:statuts)")

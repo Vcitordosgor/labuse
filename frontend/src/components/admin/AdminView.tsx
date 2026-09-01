@@ -203,6 +203,14 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
           <div className="mt-1 text-[11.5px] text-txt-mut">
             {data.sante.en_echec.length ? `en échec : ${data.sante.en_echec.join(', ')}` : 'modules de schéma OK au boot (/readyz)'}
           </div>
+          {/* CONNEXIONS-2 Lot 7.2 (N3) — sonde RUNTIME des endpoints métier (avec DB), distincte du heal boot. */}
+          {data.sante.endpoints && data.sante.endpoints.length > 0 && (
+            <div className={`mt-2 border-t border-line pt-2 text-[11.5px] ${data.sante.endpoints_ok === false ? 'text-coral' : 'text-mint'}`}>
+              {data.sante.endpoints_ok === false
+                ? `écrans en échec : ${data.sante.endpoints.filter((e) => !e.ok).map((e) => e.endpoint).join(', ')}`
+                : `${data.sante.endpoints.length} endpoints métier OK (avec base)`}
+            </div>
+          )}
         </div>
         {/* CONNEXIONS-2 Lot 4 — KPI « courriers à déposer » : ce que LABUSE doit encore déposer. */}
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4 cursor-pointer hover:border-line-2" onClick={() => go('courrier')}>
