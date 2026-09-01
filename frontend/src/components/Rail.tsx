@@ -110,7 +110,13 @@ function OutilCard({ m, open }: { m: (typeof MODULES)[number]; open: (k: string)
       className="door door-hot hover-fill mb-0 w-full text-left"
     >
       <div className="text-xs font-medium text-txt">{m.label}</div>
-      <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{m.desc}</div>
+      {/* RETOURS-7 Z3 — une SEULE ligne : nowrap + ellipse (truncate). Les descriptions trop longues
+          pour la largeur du panneau (mesuré) portent `descSmall` → police réduite d'un point plutôt
+          qu'une ellipse. `title` garde le texte intégral au survol. */}
+      <div title={m.desc}
+        className={`mt-0.5 truncate leading-snug text-txt-dim ${m.descSmall ? 'text-[9.5px]' : 'text-[10.5px]'}`}>
+        {m.desc}
+      </div>
     </button>
   )
 }

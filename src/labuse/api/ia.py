@@ -29,8 +29,11 @@ from .projet_schema import (
 router = APIRouter(prefix="/ia", tags=["ia"])
 
 # Alias vers le socle — plus de constantes IA dupliquées ici (source unique = core).
-MODEL_NL = core.MODEL_FACTUAL
-MODEL_SYNTH = core.MODEL_REASONING
+# RETOURS-7 Z7 — le modèle vient du registre PAR USAGE (ai_models.SURFACES), lu via model_for :
+# « search »/« synthese » sont les surfaces représentatives (les appels ci-dessous résolvent leur
+# propre `kind` — entretien, pourquoi — via model_for(kind), donc réglables un par un).
+MODEL_NL = core.model_for("search")
+MODEL_SYNTH = core.model_for("synthese")
 PRICE = core.PRICE
 
 
@@ -562,7 +565,7 @@ def ia_entretien(body: EntretienIn, db: Session = Depends(get_db), request: Requ
                 "message": "L'entretien de cadrage a besoin du copilote IA (indisponible ici). "
                            "Décrivez vos critères pour une recherche directe."}
     res = core.complete(
-        db, kind="entretien", model=MODEL_NL, max_tokens=900,
+        db, kind="entretien", model=core.model_for("entretien"), max_tokens=900,
         system=_ENTRETIEN_SYSTEM.format(
             schema=json.dumps(ENTRETIEN_SCHEMA, ensure_ascii=False),
             types="/".join(TYPE_LABEL), contraintes="/".join(CONTRAINTE_FLAG)),
@@ -673,7 +676,7 @@ def _validee_ou_stub(db: Session, kind: str, system: str, payload: dict, stub_fn
     seule la couche 2 (chiffres) s'applique — c'est l'arbitrage. Sérialisation SÛRE (default=str) via
     le socle. NON caché : ces surfaces n'utilisent pas `ia_cache` → aucun stub ne peut masquer une
     synthèse qui passerait au prochain appel (cf. rapport de clé de cache)."""
-    res = core.complete(db, kind=kind, system=system, context=payload, model=MODEL_SYNTH,
+    res = core.complete(db, kind=kind, system=system, context=payload, model=core.model_for(kind),
                         max_tokens=700, timeout=30.0, validate=True, require_sources=False,
                         strict_numbers=True)
     if res.degraded or res.rejected:

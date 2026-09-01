@@ -68,7 +68,7 @@ def _llm_reel(system: str, payload: dict, db=None) -> str:
     from ..ai import core
     res = core.complete(db, kind="agent-brief", system=system,
                         context=json.dumps(payload, ensure_ascii=False),
-                        model=core.MODEL_REASONING, max_tokens=700)
+                        model=core.model_for("agent-brief"), max_tokens=700)
     if res.degraded:
         raise IAIndisponible(res.reason or "IA indisponible")
     return res.text

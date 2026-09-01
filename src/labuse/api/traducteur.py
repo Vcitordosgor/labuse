@@ -95,7 +95,7 @@ def _translate(db: Session, article: str, applied: list[dict], zone: str, commun
         facts[f"regle_{i}"] = core.Fact(f"{a['regle']} : {a['valeur']} (source {a['source']})", "SOURCE")
     try:
         ctx = core.build_context(facts, allowed_fields=set(facts))
-        res = core.complete(db, kind="traducteur-plu", model=core.MODEL_REASONING, max_tokens=500,
+        res = core.complete(db, kind="traducteur-plu", model=core.model_for("traducteur-plu"), max_tokens=500,
                             system=_SYSTEM, context=ctx, validate=True, require_sources=False,
                             strict_numbers=True)
         if res.degraded:

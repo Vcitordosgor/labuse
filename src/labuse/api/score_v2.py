@@ -33,6 +33,22 @@ AVERTISSEMENT_CENSURE = ("les ventes récentes apparaissent dans DVF avec 1 à 3
                          "le classement est fiable")
 
 
+def libelle_version_servie(run: dict) -> str:
+    """RETOURS-7 Z12.2 — LE libellé de version LISIBLE, unique et identique partout : dérivé du RUN
+    COURANT (Q_A_RUN_LABEL), une DATE. Le client ne voit plus « modèle m36-l2f-2026 » / « run
+    m135-run2-ile » / « q_v11_m137 » (trois identifiants techniques pour trois objets — modèle de
+    probabilité, run de résiduel, run de scoring) : il voit « Analyse LABUSE arrêtée au JJ/MM/AAAA ».
+    Les identifiants techniques restent au dashboard admin (section IA / états). Repli sobre si la
+    date manque (jamais un code technique servi au client)."""
+    ca = run.get("computed_at")
+    if ca is None:
+        return "Analyse LABUSE — version courante"
+    try:
+        return f"Analyse LABUSE arrêtée au {ca.strftime('%d/%m/%Y')}"
+    except AttributeError:
+        return f"Analyse LABUSE arrêtée au {str(ca)[:10]}"
+
+
 def get_db():
     from .app import get_db as _g
     yield from _g()
@@ -86,6 +102,9 @@ def _row_payload(r, run: dict) -> dict:
         },
         "model_version": run["model_version"],
         "run_id": run["run_id"],
+        # RETOURS-7 Z12.2 — le libellé LISIBLE unique servi au client (identique partout, dérivé du
+        # run courant) ; model_version/run_id restent dans le payload pour le dashboard/audit.
+        "version_label": libelle_version_servie(run),
         "avertissement": AVERTISSEMENT_CENSURE,
     }
 

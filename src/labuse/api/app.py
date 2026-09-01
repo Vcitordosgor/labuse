@@ -1166,11 +1166,22 @@ def _zone_plu_ready(db: Session) -> bool:
 
 
 def _adresse_ready(db: Session) -> bool:
-    """Table dérivée `parcel_adresse` (M6.2 — meilleure adresse BAN matérialisée) présente ?
-    Mémorisé 60 s. Présente → LEFT JOIN indexé (remplace le LATERAL par-parcelle coûteux) ;
-    absente → repli sur le lateral BAN (`_ban_ready`), sémantiquement identique."""
+    """Cache matérialisé `parcel_adresse` (M6.2 — meilleure adresse BAN) FIABLE ?
+
+    RETOURS-7 Z8 — le gate ne teste plus la seule EXISTENCE de la table mais sa COMPLÉTUDE :
+    le snapshot doit couvrir TOUTES les parcelles adressables de la source live
+    (`adresse_parcelles`). Un snapshot vide ou à moitié construit était la cause du bug
+    « Adresse non disponible » sur TOUTE la liste (geojson île → `parcel_adresse`) alors que
+    la FICHE — qui lit la source live `_ban_adresse` — affichait bien l'adresse : `_adresse_ready`
+    renvoyait True dès que la table EXISTAIT (même à 0 ligne), et le LEFT JOIN rendait NULL partout.
+
+    Désormais : snapshot incomplet ⇒ NON prêt ⇒ le geojson retombe sur le lateral BAN LIVE
+    (`_ban_ready`), EXACTEMENT le chemin de la fiche. La liste ne peut plus diverger de la fiche.
+    Mémorisé 60 s (le cache se complète après le build one-shot ; comparaison de comptes, indexée)."""
     return _mem_cached(("adresse-ready",), 60.0, lambda: bool(db.execute(text(
-        "SELECT to_regclass('parcel_adresse') IS NOT NULL")).scalar()))
+        "SELECT to_regclass('parcel_adresse') IS NOT NULL"
+        " AND (SELECT count(*) FROM parcel_adresse)"
+        "     >= (SELECT count(DISTINCT idu) FROM adresse_parcelles)")).scalar()))
 
 
 def _fmt_ban(voie: str | None, cp: str | None, commune: str | None) -> str | None:
@@ -1788,7 +1799,10 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
     sur `FiltreCriteres`, plus jamais un export qui ignore les filtres actifs). Tier v2 EN
     PREMIER (M5.1), signaux propriétaire en fin de ligne. M6 2a : utf-8-sig (BOM Excel) +
     séparateur « ; » + adresse postale BAN (1re colonne = idu).
-    ⚠ Doit rester déclarée AVANT /parcels/{idu} (ordre de résolution des routes)."""
+    ⚠ Doit rester déclarée AVANT /parcels/{idu} (ordre de résolution des routes).
+
+    RETOURS-7 Z11 — OBSOLÈTE côté produit : l'export CSV a été retiré de la liste de résultats
+    (décision Vic). Endpoint CONSERVÉ (non supprimé) mais plus aucun appelant front."""
     import csv as _csv
     import io as _io
 
@@ -3542,6 +3556,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M106 P4 — PROXIMITÉS (arbitrage : distance, jamais un booléen) : arrêt, pôle
         # d'échange (statut + concordance OSM↔GTFS dite), téléphérique, ligne HT (contrainte).
         "proximites": _proximites_block(db, idu),
+        # RETOURS-7 Z5 — « À proximité » : équipements du quotidien nommés + distance (moteur BPE déjà
+        # branché, aucun nouveau calcul). Une ligne compacte, pas un bloc.
+        "proximites_equipements": _proximites_equipements_block(db, idu),
         # M125-2 — activité de dépôt récente (Sitadel3), branchée à la premium (était legacy-only).
         "depots": _depots_block(db, head["id"]),
     }
@@ -3701,6 +3718,33 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
             "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
         }
     return out
+
+
+#: RETOURS-7 Z5 — « À proximité » : les équipements du QUOTIDIEN nommés, chacun avec sa distance.
+#: Maille DOMAINE BPE (INSEE) — la seule prouvée (cf. zone._DOMAINES_EQUIP) : on ne distingue pas
+#: « pharmacie » de « médecin » (tous deux « Santé »), ni « supermarché » du reste (« Commerces ») —
+#: on NOMME ce que le moteur expose, jamais une sous-catégorie inventée. Ordre = pertinence quotidienne.
+_PROX_EQUIP = [("École", "amenite_bpe", "C"), ("Commerces", "amenite_bpe", "B"),
+               ("Santé", "amenite_bpe", "D"), ("Bus", "transport_arret", None)]
+
+
+def _proximites_equipements_block(db: Session, idu: str) -> dict | None:
+    """RETOURS-7 Z5 — ligne compacte « À proximité » : école · commerces · santé · arrêt de bus,
+    chacun avec sa distance en mètres. RÉUTILISE le moteur BPE déjà branché (`_plus_proche` KNN sur
+    `spatial_layers`, INSEE BPE 2025 + arrêts BD TOPO/GTFS) — AUCUN nouveau calcul, aucune isochrone.
+    Catégorie non exposée par le moteur (0 résultat) = OMISE, jamais inventée. Absence totale → None."""
+    try:
+        items = []
+        for label, kind, sub in _PROX_EQUIP:
+            r = _plus_proche(db, idu, kind, sub)
+            if r:
+                items.append({"cat": label, "nom": r["nom"], "distance_m": r["distance_m"]})
+    except Exception:
+        db.rollback()
+        return _bloc_indisponible("proximites_equipements")   # panne ≠ absence (M125)
+    if not items:
+        return None
+    return {"items": items, "source": "INSEE BPE (millésime 2025) · arrêts BD TOPO/GTFS — distance à vol d'oiseau"}
 
 
 def _mode_b_block(db: Session, idu: str, run_label: str) -> dict:

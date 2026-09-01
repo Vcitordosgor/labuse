@@ -168,19 +168,23 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
           guillemets). NON cliquables — pas de bordure, pas de fond, pas d'état, pas de curseur.
           Des exemples qui enseignent, pas un menu. */}
       {!reponse && meta && meta.capacites.length > 0 && (
-        <div data-accueil-capacites className="mb-9">
-          <p className="mb-3.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">CE QU'IL SAIT FAIRE</p>
+        // RETOURS-7 Z2 — même marge (mb-8) que « Reprendre » ci-dessous.
+        <div data-accueil-capacites className="mb-8">
+          <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">CE QU'IL SAIT FAIRE</p>
           {/* RETOURS-3 R12 — chaque capacité porte une TUILE d'icône contrastée (mauve 22 %/48 %) ; le
-              bloc reste NON cliquable (curseur défaut, aucun état). */}
-          <div className="grid grid-cols-1 gap-x-6 gap-y-3.5 min-[520px]:grid-cols-2">
+              bloc reste NON cliquable (curseur défaut, aucun état).
+              RETOURS-7 Z2 — grille 2×2 à GOUTTIÈRES RÉGULIÈRES (gap-4 = même espace horizontal et
+              vertical) ; chaque exemple sur UNE ligne (truncate) → toutes les tuiles à la même hauteur,
+              alignées sur la première ligne de texte (items-start). */}
+          <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2">
             {meta.capacites.map((c) => (
               <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle} className="flex cursor-default items-start gap-3">
                 <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border border-cp-ia/[0.48] bg-cp-ia/[0.22] text-cp-ia">
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{CAP_ICONS[c.cle] ?? CAP_ICON_FALLBACK}</svg>
                 </span>
                 <div className="min-w-0">
-                  <div className="mb-[3px] text-[14px] font-medium text-cp-txt">{c.libelle}</div>
-                  <div className="text-[12px] leading-[1.45] text-cp-muted">« {c.exemple} »</div>
+                  <div className="mb-[3px] text-[14px] leading-[1.45] font-medium text-cp-txt">{c.libelle}</div>
+                  <div className="truncate text-[12px] leading-[1.45] text-cp-muted" title={c.exemple}>« {c.exemple} »</div>
                 </div>
               </div>
             ))}

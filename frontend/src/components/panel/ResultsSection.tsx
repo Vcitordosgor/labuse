@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { csvExportUrl, getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
+import { getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
@@ -481,27 +481,13 @@ export function ResultsSection() {
       </div>
 
       <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line py-3">
-        <span className="min-w-0 text-[11px] text-txt-dim">
-          {/* E3 : plus de « 500 premiers » — on affiche le nombre réellement chargé, sur le total. */}
-          {fmt(shown.length)} affichée{shown.length > 1 ? 's' : ''}
-          {!ile && list.length > shown.length ? ` / ${fmt(list.length)}` : ''}
-          {ile && total > 0 && <span className="text-txt-dim"> / {fmt(total)} au total</span>}
+        {/* RETOURS-7 Z11 — compteur SUR UNE SEULE LIGNE : « 200 / 430 813 » (affichées / total). */}
+        <span className="min-w-0 text-[11px] text-txt-dim tnum">
+          {fmt(shown.length)}{total > 0 || !ile ? ` / ${fmt(ile ? total : (list.length || total))}` : ''}
         </span>
         <span className="flex shrink-0 items-center gap-2">
-          {/* GB-016 — jamais de troncature muette : quand le filtre est volumineux, on PRÉVIENT que
-              l'export est plafonné à 5000 lignes ; le fichier porte la notice en 1re ligne SI le
-              plafond est réellement atteint (source de vérité). */}
-          {total > 5000 && (
-            <span className="text-[10px] text-amber"
-              title={`Filtre volumineux (${fmt(total)} correspondances). L'export CSV est plafonné à 5000 lignes ; si ce plafond est atteint, le fichier l'indique en première ligne. Affinez les filtres pour un export ciblé.`}>
-              export ⩽ 5000
-            </span>
-          )}
-          <a href={csvExportUrl(filters, sort)} download
-            className="text-[11px] text-txt-mut hover:text-mint"
-            title="Exporter la liste filtrée en CSV (verdict, rang, ×N — mêmes filtres, même tri)">
-            ⬇ CSV
-          </a>
+          {/* RETOURS-7 Z11 — export CSV RETIRÉ de la liste (décision Vic). L'endpoint /parcels/export.csv
+              reste servi mais sans appelant côté front (marqué obsolète, cf. csvExportUrl). */}
           {/* E3 : île → pagination serveur (Charger plus) ; commune → slice client (Tout voir). */}
           {ile ? (
             serverList.hasNextPage && (

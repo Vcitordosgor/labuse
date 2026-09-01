@@ -526,12 +526,14 @@ function PipelineButton({ idu }: { idu: string }) {
   const inPipe = state.data?.in_pipeline
   const cols = meta.data?.columns ?? []
   return (
-    <div className="relative inline-block">
+    // RETOURS-7 Z1 — flex-1 (au lieu d'inline-block) : le bouton fait la MÊME largeur que « + Projet ».
+    // Le choix de colonne reste APRÈS le clic (menu ci-dessous), jamais dans la forme du bouton.
+    <div className="relative flex-1">
       <button
         onClick={() => !inPipe && setOpen((o) => !o)}
         disabled={!!inPipe || add.isPending}
         aria-disabled={!!inPipe}
-        className={`act whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : 'act-crm'}`}
+        className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : 'act-neutre hover-fill'}`}
         title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
       >
         {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
@@ -552,9 +554,9 @@ function PipelineButton({ idu }: { idu: string }) {
   )
 }
 
-/** F7 (M12) — rattacher la parcelle à un PROJET depuis la fiche. Voisin du « + Pipeline » mais
- *  distinct AU PREMIER COUP D'ŒIL : accent VIOLET (la couleur du copilote/projet dans toute l'app),
- *  quand Pipeline est en MENTHE (CRM prospection). La parcelle atterrit dans « À trier » (proposee).
+/** F7 (M12) — rattacher la parcelle à un PROJET depuis la fiche. Jumeau NEUTRE de « + CRM »
+ *  (RETOURS-7 Z1 : même bord/fond, survol plein vert ; plus de mauve, réservé à l'IA). Actif =
+ *  accent menthe + nom du/des projet(s). La parcelle atterrit dans « À trier » (proposee).
  *  MULTI-PROJET AUTORISÉ : une parcelle peut nourrir plusieurs projets (dédup par projet côté
  *  serveur). Déjà rattachée → bouton actif (violet plein) + nom du/des projet(s) ; clic = ouvrir. */
 // PROJETS-V4 (V5) — FIN DU MODE COLLANT. Le bouton ouvre TOUJOURS un menu listant tous les projets
@@ -600,8 +602,8 @@ function ProjetButton({ idu }: { idu: string }) {
     <div className="relative flex-1">
       <button
         data-projet-fiche onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        className="act act-proj w-full whitespace-nowrap"
-        style={inProjet ? { background: 'var(--iris)', color: 'var(--bg-0)', borderColor: 'transparent' } : undefined}
+        /* RETOURS-7 Z1 — même style NEUTRE que « + CRM » (plus de mauve --iris) ; actif = accent menthe. */
+        className={`act w-full whitespace-nowrap ${inProjet ? 'act-neutre-on' : 'act-neutre hover-fill'}`}
         title={inProjet
           ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — rattacher à un autre`
           : 'Ajouter cette parcelle à un projet'}>
@@ -627,7 +629,7 @@ function ProjetButton({ idu }: { idu: string }) {
               return (
                 <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
                   onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-violet/10 hover:text-txt-hi"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-mint/10 hover:text-txt-hi"
                   title={deja ? `Déjà dans « ${p.nom} » — ouvrir` : `Ajouter à « ${p.nom} » (→ Retenues)`}>
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
                   <span className="min-w-0 flex-1 truncate">{p.nom}</span>
@@ -2404,6 +2406,22 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
+            {/* RETOURS-7 Z5 — « À proximité » : ligne compacte (pas un bloc), équipements du quotidien
+                NOMMÉS avec leur distance, servie par le moteur BPE déjà branché (aucun nouveau calcul).
+                Une catégorie non exposée par le moteur est OMISE, jamais inventée. */}
+            {f.proximites_equipements?.items && f.proximites_equipements.items.length > 0 && (
+              <div data-proximites-equip title={f.proximites_equipements.source ?? undefined}
+                className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-1 text-[11.5px] text-txt-mut">
+                <span className="label-caps text-txt-dim">À proximité</span>
+                {f.proximites_equipements.items.map((e, i) => (
+                  <span key={i}><span className="text-txt">{e.cat}</span>{' '}
+                    <span className="tnum">{e.distance_m >= 1000
+                      ? `${(e.distance_m / 1000).toFixed(1).replace('.', ',')} km`
+                      : `${fmtInt(e.distance_m)} m`}</span></span>
+                ))}
+              </div>
+            )}
+
             {/* ÉTUDE DE ZONE Z3 — « Autour de cette parcelle » : un tiroir de plus, sous Réseaux ;
                 l'isochrone se dessine sur la carte (module-extra). Ne s'active (et n'appelle l'API
                 d'isochrones) qu'à l'OUVERTURE — RefDrawer ne monte les enfants que si le tiroir est ouvert. */}
@@ -2602,28 +2620,9 @@ export function Fiche({ idu }: { idu: string }) {
                     </ul>
                   </details>
                 )}
-                {/* M52 L4 — Qualité de la mesure PAR COMMUNE, DITE (audit RR fold 2025 OOS). RR intra
-                    = pouvoir discriminant dans la commune ; « fragile » = <5 ventes en tête → fréquence
-                    indicative. Mesure seule, aucun tier/seuil/modèle. */}
-                {f.qualite_commune && (
-                  <div data-qualite-commune className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="label-caps">Qualité de la mesure · {f.qualite_commune.commune}</p>
-                      <span className="shrink-0 rounded-full px-1.5 text-[10.5px]" style={{ background: f.qualite_commune.fragile ? '#e8b84d22' : '#5CE6A122', color: f.qualite_commune.fragile ? '#e8b84d' : '#5CE6A1' }}>
-                        {f.qualite_commune.fragile ? 'échantillon limité' : 'robuste'}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-txt-mut">
-                      {/* M-Q P2-74 : `rr_ile_dit` sert l'ordre de grandeur (« ~6,7 ») — jamais la
-                          fausse précision 6.73. Sans lui, on N'affiche PAS le float brut : repli « — ». */}
-                      <span>RR intra <b className="text-txt">{f.qualite_commune.rr_intra}</b>{f.qualite_commune.rr_ile != null ? <span className="text-txt-dim"> · île {f.qualite_commune.rr_ile_dit ?? '—'}</span> : null}</span>
-                      <span>{f.qualite_commune.echantillon.toLocaleString('fr-FR')} parcelles</span>
-                      {f.qualite_commune.taux_base_pct != null && <span>base {f.qualite_commune.taux_base_pct} %</span>}
-                    </div>
-                    <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{f.qualite_commune.libelle}</p>
-                    <p className="mt-1 text-[10px] text-txt-dim">{f.qualite_commune.source}</p>
-                  </div>
-                )}
+                {/* RETOURS-7 Z6 — carte « Qualité de la mesure · commune » RETIRÉE de la fiche client :
+                    métrologie interne (RR intra, base %, audit fold), illisible pour un promoteur. La
+                    donnée `f.qualite_commune` reste servie par le back (disponible côté admin). */}
                 {/* Confiance données (ICD) — jauge de confiance UNIQUE (M55-O 2.2). */}
                 {f.icd && <IcdBlockView icd={f.icd} />}
                 {/* M55-O phase 2.1b : ScoreV2Block (P + « pourquoi ce score ») DÉMÉNAGÉ dans le bloc

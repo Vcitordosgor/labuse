@@ -325,7 +325,9 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                   const distinct = Array.from(new Set((etat?.proposees ?? []).flatMap((it) => (it.signaux ?? []).map((s) => s.label)))).slice(0, 4)
                   return distinct.length ? `Signaux détectés : ${distinct.join(', ')} · ` : ''
                 })()}
-                {etat?.valeurs_run?.date ? `valeurs au ${fmtDate(etat.valeurs_run.date)} · run ${etat.valeurs_run.label}` : ''}
+                {/* RETOURS-7 Z12.2 — libellé lisible = la DATE ; l'identifiant technique du run
+                    (valeurs_run.label) reste au survol et au dashboard, plus servi au client. */}
+                {etat?.valeurs_run?.date ? <span title={`run ${etat.valeurs_run.label}`}>{`valeurs au ${fmtDate(etat.valeurs_run.date)}`}</span> : ''}
                 {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtInt(m)} €/m²` : '' })()}
               </p>
               <button data-kanban-scoring onClick={() => setAlgoModale('scoring')}

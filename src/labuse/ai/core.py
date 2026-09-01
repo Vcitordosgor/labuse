@@ -36,7 +36,10 @@ log = logging.getLogger("labuse.ai")   # SECTEUR-1 (S6) — une erreur d'appel m
 
 # ── Modèles (routeur par TÂCHE, jamais codé en dur chez l'appelant) ───────────────────────────
 # SECTEUR-1 (S6) — les NOMS vivent dans labuse/ai_models.py (UN seul endroit + garde des modèles retirés).
-from ..ai_models import MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, check_model  # noqa: E402,F401
+from ..ai_models import (  # noqa: E402,F401
+    MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, check_model,
+    model_for, SURFACES, surfaces_table,   # RETOURS-7 Z7 — le modèle PAR USAGE (surface)
+)
 #: €/Mtoken (approx, log indicatif — pas la tarification officielle live)
 PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0), MODEL_VISION: (1.0, 5.0)}
 ENV_KEY = "ANTHROPIC_API_KEY"

@@ -129,7 +129,7 @@ def answer_aggregate(db: Session, query: str) -> dict | None:
     ctx = core.build_context(facts, allowed_fields=set(facts))
     # strict_numbers : le COMPTE est la donnée → vérif EXACTE quelle que soit sa taille (Cilaos 2 ≠ 5),
     # l'angle mort « petits entiers tolérés » est levé ; seules les tournures (R+n…) restent tolérées.
-    res = core.complete(db, kind="ia-aggregate", model=core.MODEL_FACTUAL, max_tokens=320,
+    res = core.complete(db, kind="ia-aggregate", model=core.model_for("ia-aggregate"), max_tokens=320,
                         system=_SYSTEM, context={"question": query, "donnees": ctx},
                         validate=True, require_sources=True, strict_numbers=True)
     if res.degraded:

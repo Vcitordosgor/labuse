@@ -569,7 +569,9 @@ export function LeftPanel() {
             <CroixEntete onClick={togglePanel} title="Fermer le panneau" />
           </div>
           <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable />
-          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable />
+          {/* RETOURS-7 Z9 — « Voir les N parcelles » REFERME le panneau Filtres (→ 'listing') et
+              rend la place à la liste. L'état ouvert/fermé suit l'action, pas l'historique de nav. */}
+          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('listing')} fill={sectionFill} closable />
           {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -601,7 +603,9 @@ export function LeftPanel() {
               <CroixEntete dataAttr="data-couches-fermer" onClick={() => setMobileOpen(false)} title="Revenir à la carte" />
             </div>
             <LayersSection open={couchesOpen} onToggle={toggleCouches} fill={sectionFill} closable />
-            <FiltresSection open={filtresOpen} onToggle={toggleFiltres} fill={sectionFill} closable />
+            {/* RETOURS-7 Z9 — « Voir les N parcelles » REFERME le panneau Filtres (→ 'listing') et
+              rend la place à la liste. L'état ouvert/fermé suit l'action, pas l'historique de nav. */}
+          <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('listing')} fill={sectionFill} closable />
             {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />

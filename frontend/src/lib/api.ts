@@ -293,7 +293,9 @@ export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', off
   getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset, groupes).then((r) => r.page)
 /** Export CSV de la liste courante — M46 (Lot D) : EXACTEMENT les mêmes facettes + interrupteur
  *  que la liste/compteur (même construction que getFiltre : facettes hors tiers + tiersParam).
- *  Plus jamais un export qui ignore un filtre actif. */
+ *  Plus jamais un export qui ignore un filtre actif.
+ *  RETOURS-7 Z11 — OBSOLÈTE : l'export CSV a été retiré de la liste de résultats (décision Vic).
+ *  Conservé (endpoint back `/parcels/export.csv` toujours servi) mais SANS appelant front. */
 export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
   const ff = f ?? EMPTY_FILTERS
   const { tiers: _t, ...rest } = filterParams(ff)
@@ -1139,6 +1141,8 @@ export interface AdminIa {
   quota_defaut: number
   // CONNEXIONS-2 Lot 2 — consommé aujourd'hui / plafond effectif par compte (compteur Copilote unique)
   quotas: Array<{ id: number; nom: string; copilote_quota_jour: number | null; plafond_effectif: number; consomme_aujourdhui: number }>
+  // RETOURS-7 Z7 — quel modèle sert chaque surface IA (lu depuis la config, jamais un nom en dur)
+  modeles_par_surface: Array<{ kind: string; label: string; model: string }>
   note: string
 }
 export const getAdminIa = () => j<AdminIa>('/admin/ia')

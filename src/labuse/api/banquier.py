@@ -170,7 +170,7 @@ def _synthese_html(db: Session, out: dict) -> str:
     txt = None
     try:
         ctx = core.build_context(facts, allowed_fields=set(facts))
-        res = core.complete(db, kind="synthese-banquier", model=core.MODEL_REASONING, max_tokens=600,
+        res = core.complete(db, kind="synthese-banquier", model=core.model_for("synthese-banquier"), max_tokens=600,
                             system=_SYSTEM_SYNTHESE, context=ctx, validate=True,
                             require_sources=False, strict_numbers=True)
         if not res.degraded and not res.rejected and res.text:

@@ -28,6 +28,8 @@ export interface ModuleDef {
   hidden?: boolean     // clé RÉSOLVANTE (en-tête + composant) mais PAS de carte au menu — pour une clé
                        // ALIASÉE vers un outil fusionné (ex. M23 calculette → « Étudier un bien »),
                        // qu'une porte/deep-link/copilote ouvre sans jamais 404, sans doublonner la carte.
+  descSmall?: boolean  // RETOURS-7 Z3 — la desc dépasse la largeur du panneau même en nowrap : on réduit
+                       // la police d'un point (10,5 → 9,5 px) plutôt que d'ellipser. Mesuré, pas deviné.
 }
 
 //: les 5 intentions, dans l'ordre du geste (affichage). menu-sous-titres — les sous-titres (hint) sont
@@ -60,10 +62,11 @@ export const MODULES: ModuleDef[] = [
   // RETOURS-3 R11 — descriptions réécrites au mot (une phrase, droit au but). Vic 31/08.
   // RETOURS-3 R5 — FUSION « Étudier un bien » × « Mon secteur » : la desc prend la formule R5 (adresse →
   // secteur ; parcelle → étude complète). « Mon secteur » passe hidden (redirection interne conservée).
+  // RETOURS-7 Z3 — descriptions raccourcies pour tenir sur UNE ligne à la largeur du panneau (320px).
   { key: 'scoreur-adresse', num: 'O2', group: 'instruire', phare: true,
-    label: 'Étudier un bien', desc: 'Une adresse → les prix du secteur ; une parcelle → l’étude complète.' },
+    label: 'Étudier un bien', desc: 'Le secteur, puis l’étude complète du bien.' },
   { key: 'calculette-fonciere', num: 'M23', group: 'instruire', hidden: true,
-    label: 'Étudier un bien', desc: 'Une adresse → les prix du secteur ; une parcelle → l’étude complète.' },
+    label: 'Étudier un bien', desc: 'Le secteur, puis l’étude complète du bien.' },
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,
     label: 'Faisabilité', desc: 'Ce que le PLU laisse construire sur la parcelle.' },
   // K3 (rattrapage KelFoncier) — calculette « Taxe d'aménagement » : assiette, part communale, part
@@ -85,14 +88,14 @@ export const MODULES: ModuleDef[] = [
   { key: 'comparer', num: 'A8', group: 'instruire',
     label: 'Comparer des parcelles', desc: 'Des parcelles côte à côte, critère par critère.' },
   { key: 'assemblage', num: 'M16', group: 'instruire', phare: true,
-    label: 'Assemblage', desc: 'Des parcelles voisines réunies : le potentiel du tout.' },
+    label: 'Assemblage', desc: 'Le potentiel de parcelles voisines réunies.' },
 
   // ── 2. Sourcer un propriétaire, puis l'approcher ──
   // RETOURS-4 S7 — Scan patrimoine ABSORBE Veille promoteurs (2 onglets : possède / construit).
   { key: 'patrimoine', num: 'M02', group: 'agir', phare: true,
-    label: 'Scan patrimoine', desc: 'Ce qu\'un propriétaire possède, et ce qu\'il construit.' },
+    label: 'Scan patrimoine', desc: 'Ce qu\'un propriétaire possède et construit.' },
   { key: 'courriers', num: 'M09', group: 'agir',
-    label: 'Courrier propriétaire', desc: 'Écrivez au propriétaire — LABUSE se charge de l\'envoi.' },
+    label: 'Courrier propriétaire', desc: 'Écrivez au propriétaire, LABUSE envoie.' },
   // Prospection solaire (V1 restitution) — sert la donnée solaire DÉJÀ en base (parcel_solar/PVGIS,
   // pente RGE ALTI, piscine ortho, proba occupant), gelée au 11/07/2026 ; export CSV de démarchage.
   { key: 'prospection-solaire', num: 'M26', group: 'agir',
@@ -103,7 +106,7 @@ export const MODULES: ModuleDef[] = [
   // Rareté (O9). Entrée = la table des 24 communes ; clic → fiche commune (tous ses indicateurs) +
   // « Voir ses parcelles → ». Les 4 clés absorbées sont retirées du registre (composants au dépôt,
   // endpoints /comparateur-communes, /moteurs/marche, /modules/velocite, /pipeline-rarete servis).
-  { key: 'communes', num: 'O6', group: 'marche', phare: true,
+  { key: 'communes', num: 'O6', group: 'marche', phare: true, descSmall: true,
     label: 'Communes', desc: 'Les 24 communes en chiffres : marché, rareté, rythme.' },
   // SECTEUR-1 (S1) — « Mon secteur » : les prix DU SECTEUR autour d'une parcelle. Même moteur que
   // « Marché et secteur » de la fiche + la médiane locale de FICHE-COMMUNE-2 C5.
@@ -128,7 +131,7 @@ export const MODULES: ModuleDef[] = [
   // en surlignage de parcelle). Même patron que les fusions précédentes : la clé `promesses` reste
   // (URL/QA/concept-route inchangés) mais ALIASÉE (hidden) → pas de 2ᵉ carte au menu ; elle ouvre le
   // filtre pré-actif.
-  { key: 'permis', num: 'M03', group: 'marche',
+  { key: 'permis', num: 'M03', group: 'marche', descSmall: true,
     label: 'Permis', desc: 'Qui construit quoi, commune par commune — et les permis au point mort.' },
   { key: 'promesses', num: 'M04', group: 'marche', hidden: true,
     label: 'Permis', desc: 'Le « point mort » (PC accordés jamais réalisés) est un filtre de l’outil Permis' },
@@ -138,7 +141,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Densifier l’existant', desc: 'Le bâti en zone U qui peut porter davantage.' },
   // ÉTUDE DE ZONE Z4 — la chalandise : une zone atteignable (isochrone IGN), qui y vit, qui y travaille,
   // quels concurrents (SIRENE) ; le même moteur alimente le tiroir « Autour de cette parcelle » (fiche).
-  { key: 'etude-zone', num: 'M27', group: 'marche',
+  { key: 'etude-zone', num: 'M27', group: 'marche', descSmall: true,
     label: 'Étude de zone', desc: 'Habitants, emplois, concurrents : la zone autour d\'un point.' },
 
   // ── 4. Analyse ponctuelle (usage rare) ──

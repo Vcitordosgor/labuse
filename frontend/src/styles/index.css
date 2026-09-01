@@ -388,8 +388,12 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* actions de pied */
 .fiche-v6 .actions { display:flex; gap:7px; margin-top:20px; }
 .fiche-v6 .act { flex:1; min-height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }
-.fiche-v6 .act-crm { background:var(--mint); color:var(--mint-on); font-weight:500; border:none; }
-.fiche-v6 .act-proj { border:0.5px solid var(--iris-line); background:var(--iris-bg); color:var(--iris-2); }
+/* RETOURS-7 Z1 — « + CRM » et « + Projet » : DEUX boutons de largeur égale, style NEUTRE identique
+   (bord filet-carte, fond carte), survol PLEIN vert via .hover-fill. Le mauve (--iris) est retiré des
+   deux (réservé à l'IA). Les états « fait » restent lisibles : CRM dedans = .act-cmp, Projet actif =
+   accent menthe (jamais mauve). */
+.fiche-v6 .act-neutre { border:0.5px solid var(--line-card); background:var(--bg-2); color:var(--txt); font-weight:500; }
+.fiche-v6 .act-neutre-on { border:0.5px solid var(--mint); background:var(--mint-bg); color:var(--mint); font-weight:500; }
 .fiche-v6 .act-cmp { border:0.5px solid var(--line-btn); background:none; color:var(--txt); }
 
 /* exports en carte : grille 4 colonnes + bandeau large */

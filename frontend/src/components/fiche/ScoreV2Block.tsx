@@ -21,7 +21,7 @@ type ScoreV2 = {
   hors_classement?: string | null   // M89 — copro : « hors univers de classement », à la place du rang
   tier: string; contrib_z: number; contrib_d: number; pourquoi: Contribution[]
   badges: { copro: boolean; evenement_date: string | null; veille_succession: boolean }
-  model_version: string; avertissement: string
+  model_version: string; version_label?: string; avertissement: string
 }
 
 // palette des tiers : source unique dans lib/status.ts (correctif M5 — le verdict d'en-tête et ce
@@ -136,8 +136,10 @@ export function ScoreV2Block({ idu }: { idu: string }) {
         ))}
       </ul>
 
-      <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">
-        modèle {data.model_version} — {data.avertissement}
+      {/* RETOURS-7 Z12.2 — UN SEUL libellé de version lisible (date, dérivé du run courant), identique
+          partout ; l'identifiant technique du modèle reste au survol (et au dashboard admin). */}
+      <p className="mt-2 text-[10.5px] leading-snug text-txt-dim" title={`modèle ${data.model_version}`}>
+        {data.version_label ?? 'Analyse LABUSE'} — {data.avertissement}
       </p>
     </div>
   )

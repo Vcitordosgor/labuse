@@ -1609,7 +1609,9 @@ def projet_export_csv(pid: int, request: Request, db: Session = Depends(get_db))
     prm = {"run": RUN, "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2, **params}
     vr = _residuel_run_servi(db) or {}
     figee = p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else "non figé"
-    val = f"valeurs au {vr['date']} (run {vr['label']})" if vr.get("date") else "valeurs : run résiduel indisponible"
+    # RETOURS-7 Z12.2 — libellé lisible (date) servi au client ; l'identifiant technique du run reste
+    # au dashboard, plus dans les documents client.
+    val = f"valeurs au {vr['date']}" if vr.get("date") else "valeurs : run résiduel indisponible"
     genere = datetime.now(timezone.utc).date().isoformat()
     cols = ["idu", "commune", "section", "numero", "surface_m2", "adresse", "code_postal",
             "ville", "etat_bien", "sdp_residuelle_m2", "sdp_indispo", "etage0"]

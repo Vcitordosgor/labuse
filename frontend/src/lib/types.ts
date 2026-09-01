@@ -375,6 +375,12 @@ export interface Fiche {
     axe?: { nom: string; nature: string; distance_m: number; libelle: string; source: string }
     ligne_ht?: { distance_m: number; tension: string; libelle: string; source: string }
   } | null
+  // RETOURS-7 Z5 — « À proximité » : équipements du quotidien nommés + distance (moteur BPE branché).
+  proximites_equipements?: {
+    indisponible?: boolean; raison?: string
+    items?: { cat: string; nom: string; distance_m: number }[]
+    source?: string
+  } | null
   // MANDAT RNU : commune sans document local (flag général config/rnu_communes.yaml) —
   // étiquetage obligatoire, jamais une affirmation de constructibilité.
   rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null; dans_pau: boolean | null; avertissement_pau: string } | null
