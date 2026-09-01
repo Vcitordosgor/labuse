@@ -204,6 +204,16 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
             {data.sante.en_echec.length ? `en échec : ${data.sante.en_echec.join(', ')}` : 'modules de schéma OK au boot (/readyz)'}
           </div>
         </div>
+        {/* CONNEXIONS-2 Lot 4 — KPI « courriers à déposer » : ce que LABUSE doit encore déposer. */}
+        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4 cursor-pointer hover:border-line-2" onClick={() => go('courrier')}>
+          <Lbl>Courriers à déposer</Lbl>
+          <div className={`font-display text-2xl font-semibold ${(data.courrier?.a_deposer ?? 0) > 0 ? 'text-amber' : 'text-txt-hi'}`}>
+            {data.courrier?.a_deposer ?? 0}
+          </div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">
+            {(data.courrier?.en_cours ?? 0)} en cours · <span className="text-mint hover:underline">traiter →</span>
+          </div>
+        </div>
       </div>
 
       {/* fil : activité récente (event_log admin) + gels actifs avec Dégeler */}

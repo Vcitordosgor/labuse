@@ -118,6 +118,54 @@ def creer_retour(body: RetourIn, request: Request) -> dict:
     return {"ok": True, "id": rid}
 
 
+# ───────── CONNEXIONS-2 Lot 3 (KO-4) — SIGNALEMENTS (file unique, traitée au dashboard) ─────────
+# Le « Signaler » de la fiche (type='fiche') ET celui du Radar (type='annonce') écrivent dans la
+# MÊME table `signalements`. L'admin les VOIT et les TRAITE ici (plus de revue CLI-only).
+
+@router.get("/admin/signalements")
+def admin_signalements(request: Request, statut: str | None = None) -> dict:
+    """Liste TOUS les signalements (tous comptes), fiche + annonce, du plus récent au plus ancien.
+    `statut` filtre (défaut : tous). Chaque ligne : type, IDU/bien, motif, auteur, date, statut."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    where = " WHERE s.statut = :s" if statut else ""
+    with engine().connect() as c:
+        rows = [dict(r) for r in c.execute(text(
+            "SELECT s.id, s.type, s.parcelle_id, s.bien_id, s.type_erreur, s.champ, s.commentaire,"
+            "       s.utilisateur, s.statut, s.created_at, s.traite_at, s.compte_id,"
+            "       k.nom AS compte_nom"
+            "  FROM signalements s LEFT JOIN comptes k ON k.id = s.compte_id"
+            f"{where} ORDER BY s.created_at DESC LIMIT 500"), {"s": statut}).mappings()]
+        n_ouverts = int(c.execute(text(
+            "SELECT count(*) FROM signalements WHERE statut = 'nouveau'")).scalar() or 0)
+    for r in rows:
+        r["created_at"] = r["created_at"].isoformat() if r["created_at"] else None
+        r["traite_at"] = r["traite_at"].isoformat() if r["traite_at"] else None
+    return {"signalements": rows, "n_ouverts": n_ouverts}
+
+
+class SignalementStatutIn(BaseModel):
+    statut: str = Field(pattern="^(nouveau|traite)$")
+
+
+@router.post("/admin/signalements/{sid}/statut")
+def admin_signalement_statut(sid: int, body: SignalementStatutIn, request: Request) -> dict:
+    """Traite (ou rouvre) un signalement : statut nouveau ↔ traite. `traite_at` horodaté au passage."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text(
+            "UPDATE signalements SET statut = (:st)::varchar,"
+            "       traite_at = CASE WHEN (:st)::varchar = 'traite' THEN now() ELSE NULL END"
+            " WHERE id = :i"), {"st": body.statut, "i": sid}).rowcount
+    if not n:
+        raise HTTPException(404, "Signalement introuvable.")
+    return {"ok": True, "id": sid, "statut": body.statut}
+
+
 # ───────────────────────── D2 — STRIPE (lecture seule) ─────────────────────────
 @router.get("/admin/stripe")
 def admin_stripe(request: Request, force: bool = False) -> dict:
@@ -183,6 +231,17 @@ def admin_pilotage(request: Request) -> dict:
             " ORDER BY ts DESC LIMIT 30")).mappings()]
         gels = [dict(r) for r in c.execute(text(
             "SELECT sujet, motif, ts FROM acces_gels WHERE actif ORDER BY ts DESC LIMIT 20")).mappings()]
+        # CONNEXIONS-2 Lot 4 — KPI « courriers à déposer » : agrégat des demandes par bucket, vocabulaire
+        # unique (courrier.STATUT_BUCKET). « à déposer » = ce que LABUSE doit encore déposer (statut demande).
+        from .. import courrier as _courrier
+        courrier_kpi = {"a_deposer": 0, "en_cours": 0, "clos": 0}
+        if c.execute(text("SELECT to_regclass('courrier_demandes')")).scalar():
+            rows_k = c.execute(text(
+                "SELECT statut, count(*) AS n FROM courrier_demandes WHERE corps IS NOT NULL GROUP BY statut"
+            )).mappings().all()
+            for rk in rows_k:
+                courrier_kpi[_courrier.STATUT_BUCKET.get(
+                    _courrier.normaliser_statut(rk["statut"]), "en_cours")] += int(rk["n"])
         # LED rail : run servi + date de la carte (même vérité que /map/tiles/meta)
         run_label = carte_le = None
         if c.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
@@ -209,6 +268,7 @@ def admin_pilotage(request: Request) -> dict:
         "ia_mois": {"cout_eur": float(ia["cout"]), "appels": int(ia["appels"])},
         "backup": _age_backup(),
         "sante": sante,
+        "courrier": courrier_kpi,   # CONNEXIONS-2 Lot 4 — {a_deposer, en_cours, clos}
         "run": {"label": run_label, "carte_le": carte_le.isoformat() if carte_le else None},
         "fil": fil,
         "gels": gels,
@@ -521,6 +581,12 @@ def admin_ia(request: Request) -> dict:
         quotas = [dict(r) for r in c.execute(text(
             "SELECT id, nom, copilote_quota_jour FROM comptes"
             " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
+    # CONNEXIONS-2 Lot 2 — consommé AUJOURD'HUI / plafond effectif par compte (même compteur que la
+    # garde /ia + /ask). `plafond_effectif` = override licence, sinon défaut config.
+    _defaut_q = int(config.get_settings().copilote_questions_jour_defaut)
+    for q in quotas:
+        q["plafond_effectif"] = int(q["copilote_quota_jour"]) if q["copilote_quota_jour"] is not None else _defaut_q
+        q["consomme_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
     from datetime import date
     import calendar
     today = date.today()
@@ -551,7 +617,8 @@ class QuotaIn(BaseModel):
 @router.post("/admin/licences/{compte_id}/quota")
 def admin_licence_quota(compte_id: int, body: QuotaIn, request: Request) -> dict:
     """Quota Copilote/jour de LA licence (éditable au dashboard, mandat D5) — null = retour
-    au défaut config. Le /ask le lit à la prochaine question (quota_nl_du_compte)."""
+    au défaut config. CONNEXIONS-2 Lot 2 (KO-3) : /ia ET /api/copilote-v2/ask le lisent tous deux
+    à la requête suivante (fonction unique `quota_du_compte`) — l'édition agit sur les deux surfaces."""
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
@@ -761,7 +828,15 @@ def admin_retour_statut(retour_id: int, body: RetourStatutIn, request: Request) 
 
 
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────
-def quota_nl_du_compte(compte_id: int | None) -> int | None:
+#: CONNEXIONS-2 Lot 2 (KO-3) — kind UNIQUE du compteur de quota Copilote, partagé par /ia (recherche
+#: NL) ET /api/copilote-v2/ask. Un seul compteur, un seul plafond (`quota_du_compte`), une seule
+#: fonction : l'admin édite `copilote_quota_jour` au dashboard et les DEUX surfaces la respectent.
+#: (Avant : /ia comptait 'nl' plafonné per-compte, /ask comptait 'copilote_v2_ask' plafonné GLOBAL
+#: `copilote_v2_missions_jour` — l'override dashboard était ignoré par le Copilote réellement servi.)
+QUOTA_COPILOTE_KIND = "copilote"
+
+
+def quota_du_compte(compte_id: int | None) -> int | None:
     """Quota de questions Copilote/jour pour CE compte : l'override de la licence
     (comptes.copilote_quota_jour), sinon le défaut config (80/jour). None si pas de compte
     (pilote/anonyme → l'appelant garde son quota historique nl_quota_jour)."""
@@ -777,3 +852,20 @@ def quota_nl_du_compte(compte_id: int | None) -> int | None:
         return int(v) if v is not None else defaut
     except Exception:  # noqa: BLE001 — lecture best-effort : jamais bloquer une question sur une panne
         return defaut
+
+
+#: alias rétro-compatible (l'ancien nom pointe sur la fonction unifiée — plus de divergence).
+quota_nl_du_compte = quota_du_compte
+
+
+def consomme_copilote_aujourdhui(compte_id: int) -> int:
+    """Compteur Copilote consommé AUJOURD'HUI par ce compte (kind unique, scope `c:<id>`, jour
+    Réunion) — la même mesure que la garde de quota. Pour la tuile dashboard « consommé / plafond »."""
+    from ..tz import today_reunion
+    from .protection import compteur
+    from ..db import engine
+    try:
+        with engine().connect() as c:
+            return compteur(c, f"c:{compte_id}", QUOTA_COPILOTE_KIND, today_reunion().isoformat())
+    except Exception:  # noqa: BLE001 — best-effort, jamais un 500 sur le dashboard
+        return 0

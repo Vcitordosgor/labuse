@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { createContext, isValidElement, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
@@ -507,27 +507,48 @@ function CopyIdu({ value, aria = 'Copier l’IDU', titre = 'Copier l’IDU (14 c
 // header de la fiche (décision Vic). La fonction ShareButton et l'import createShare deviennent
 // 0-caller côté front → retirés aussi (endpoint back /partners/share intact, revient au besoin).
 
+// CONNEXIONS-2 Lot 3 (KO-8) — « Ajouter au CRM » propose LA COLONNE (menu ; défaut = 1re colonne),
+// au lieu d'imposer silencieusement la colonne par défaut. Le clic ouvre le menu ; le choix envoie
+// `status` au back (qui le valide contre les colonnes du tenant).
 function PipelineButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
+  const [open, setOpen] = useState(false)
   const state = useQuery({ queryKey: ['pipeline-parcel', idu], queryFn: () => getPipelineForParcel(idu) })
+  const meta = useQuery({ queryKey: ['pipeline-meta'], queryFn: getPipelineMeta, enabled: open })
   const add = useMutation({
-    mutationFn: () => addToPipeline(idu),
+    mutationFn: (status?: string) => addToPipeline(idu, status),
     onSuccess: () => {
+      setOpen(false)
       qc.invalidateQueries({ queryKey: ['pipeline-parcel', idu] })
       qc.invalidateQueries({ queryKey: ['pipeline'] })
     },
   })
   const inPipe = state.data?.in_pipeline
+  const cols = meta.data?.columns ?? []
   return (
-    <button
-      onClick={() => !inPipe && add.mutate()}
-      disabled={!!inPipe || add.isPending}
-      aria-disabled={!!inPipe}
-      className={`act whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : 'act-crm'}`}
-      title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
-    >
-      {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
-    </button>
+    <div className="relative inline-block">
+      <button
+        onClick={() => !inPipe && setOpen((o) => !o)}
+        disabled={!!inPipe || add.isPending}
+        aria-disabled={!!inPipe}
+        className={`act whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : 'act-crm'}`}
+        title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
+      >
+        {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
+      </button>
+      {open && !inPipe && (
+        <div data-crm-menu className="absolute right-0 z-30 mt-1 min-w-[190px] rounded-lg border border-line bg-surface-2 p-1 shadow-lg">
+          <div className="px-2 py-1 text-[10.5px] uppercase tracking-wide text-txt-dim">Ajouter dans…</div>
+          {cols.map((c, i) => (
+            <button key={c.key} data-crm-col={c.key} onClick={() => add.mutate(c.key)}
+              className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[12.5px] text-txt hover:bg-surface-3">
+              <span>{c.label}</span>{i === 0 && <span className="text-[10px] text-txt-dim">défaut</span>}
+            </button>
+          ))}
+          {!cols.length && <div className="px-2 py-1.5 text-[12px] text-txt-mut">Chargement…</div>}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -1371,6 +1392,7 @@ export function Fiche({ idu }: { idu: string }) {
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)   // M60 P1a — porte Calculette pré-remplie
   const setParcelPrefill = useApp((s) => s.setParcelPrefill) // M-ENTREE — portes Faisabilité + Assemblage (IDU)
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
+  const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)  // CONNEXIONS-2 Lot 3 (KO-5) — Courrier pré-rempli sur la parcelle
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
   const setFlyTo = useApp((s) => s.setFlyTo)        // recentre la carte (porte « Remonter le temps », zoom section)
@@ -2511,7 +2533,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {!f.proprietaire_moral && (
                   <PorteOutil ico="✉" data="spf-letter" titre={CLIENT.fiche.export.spf}
                     sous="Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire."
-                    onClick={() => setModule('courriers')} />
+                    onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} />
                 )}
               </div>
             </RefDrawer>
@@ -2655,7 +2677,7 @@ export function Fiche({ idu }: { idu: string }) {
                     href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
                     ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>} />
                 )}
-                <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => setModule('courriers')} title={CLIENT.fiche.export.courrierTip}
+                <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} title={CLIENT.fiche.export.courrierTip}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
                 <PreDossierTile idu={idu} />
               </GrilleOutils>

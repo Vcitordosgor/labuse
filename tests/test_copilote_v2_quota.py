@@ -1,9 +1,10 @@
-"""FIX-COPILOTE F3 — plafond par compte sur /api/copilote-v2/ask.
+"""CONNEXIONS-2 Lot 2 (KO-3) — plafond PAR COMPTE unifié sur /api/copilote-v2/ask.
 
-Le chat n'avait NI quota NI rate-limit (le docstring l'affirmait à tort). On branche le MÊME
-mécanisme que le run lourd (`compteur_incr_et_lire` sur `usage_compteurs`), scope `c:<compte_id>`,
-kind distinct `copilote_v2_ask`. Dépassement → 429 honnête AVANT tout appel modèle. Sans DB, sans
-appel Anthropic : on éprouve la garde, pas la couche métier.
+Avant : /ask plafonnait sur `copilote_v2_missions_jour` (config GLOBALE), donc l'override édité au
+dashboard (`copilote_quota_jour`) était IGNORÉ par le Copilote réellement servi. Désormais /ask lit
+`quota_du_compte` — la MÊME fonction et le MÊME compteur (`QUOTA_COPILOTE_KIND`) que la recherche NL
+`/ia`. Un seul compteur, un seul plafond, une seule source. Sans DB ni appel Anthropic : on éprouve
+la garde. Ce test échoue sur l'ancien code (qui bornait sur le plafond global).
 """
 from __future__ import annotations
 
@@ -13,43 +14,59 @@ import types
 from fastapi.responses import JSONResponse
 
 from labuse.api import copilote_v2 as cv2
+from labuse.api import dashboard as dash
 
 
 def _req(compte_id):
     return types.SimpleNamespace(state=types.SimpleNamespace(compte_id=compte_id))
 
 
-def _settings(dev_mode, plafond=40, ttl=10):
-    return types.SimpleNamespace(dev_mode=dev_mode, copilote_v2_missions_jour=plafond,
-                                 copilote_v2_contexte_ttl_minutes=ttl)
+def _settings(dev_mode, nl_quota=30, ttl=10):
+    # copilote_v2_missions_jour reste dans la config (obsolète) mais /ask ne le lit PLUS.
+    return types.SimpleNamespace(dev_mode=dev_mode, copilote_v2_missions_jour=999,
+                                 nl_quota_jour=nl_quota, copilote_v2_contexte_ttl_minutes=ttl)
 
 
-def test_ask_429_quand_plafond_depasse(monkeypatch):
-    """Compteur au-dessus du plafond → 429 honnête, RENVOYÉ AVANT answer() (aucun modèle appelé)."""
+def test_ask_lit_le_quota_du_compte_edite(monkeypatch):
+    """L'override dashboard (quota_du_compte) est ce que /ask applique — 429 au plafond ÉDITÉ (12),
+    jamais le plafond global. Prouve KO-3 corrigé : éditer le quota au dashboard agit sur /ask."""
     appels = {"answer": 0}
-    monkeypatch.setattr(cv2, "compteur_incr_et_lire", lambda *a, **k: 41)   # 41 > 40
+    monkeypatch.setattr(dash, "quota_du_compte", lambda cid: 12)          # override licence édité
+    monkeypatch.setattr(cv2, "compteur_incr_et_lire", lambda *a, **k: 13)  # 13 > 12
     monkeypatch.setattr(cv2.config, "get_settings", lambda: _settings(dev_mode=False))
     monkeypatch.setattr(cv2, "answer", lambda *a, **k: appels.__setitem__("answer", appels["answer"] + 1))
     out = cv2.ask(cv2.AskIn(message="combien de parcelles ?"), _req(7), db=None)
     assert isinstance(out, JSONResponse) and out.status_code == 429
     body = json.loads(bytes(out.body))
-    assert body["quota"] == 40 and body["gel_jusqua"] == "minuit"
-    assert "limite quotidienne" in body["detail"].lower()
+    assert body["quota"] == 12 and body["gel_jusqua"] == "minuit"        # le plafond ÉDITÉ, pas 40/999
     assert appels["answer"] == 0                    # la garde court-circuite : zéro appel modèle
 
 
-def test_ask_compte_dans_le_bon_bucket(monkeypatch):
-    """Même stockage que le run lourd, scope `c:<id>`, kind DISTINCT `copilote_v2_ask` (pas 'agent')."""
+def test_ask_compte_et_kind_unifie(monkeypatch):
+    """Scope `c:<id>` et kind UNIQUE `QUOTA_COPILOTE_KIND` (le MÊME que /ia) — un seul compteur."""
     vus = {}
     def _fake(jour, sujet, kind, n=1):
         vus.update(jour=jour, sujet=sujet, kind=kind)
-        return 99
+        return 1
+    monkeypatch.setattr(dash, "quota_du_compte", lambda cid: 80)
     monkeypatch.setattr(cv2, "compteur_incr_et_lire", _fake)
     monkeypatch.setattr(cv2.config, "get_settings", lambda: _settings(dev_mode=False))
     monkeypatch.setattr(cv2, "answer", lambda *a, **k: {"text": ""})
+    monkeypatch.setattr(cv2.historique, "enregistrer", lambda *a, **k: 1)
     cv2.ask(cv2.AskIn(message="x"), _req(7), db=None)
-    assert vus["sujet"] == "c:7"                     # compte connecté → bucket compte
-    assert vus["kind"] == "copilote_v2_ask"          # bucket propre, séparé du run lourd 'agent'
+    assert vus["sujet"] == "c:7"                          # compte connecté → bucket compte
+    assert vus["kind"] == dash.QUOTA_COPILOTE_KIND        # compteur UNIQUE partagé avec /ia
+
+
+def test_ask_pilote_repli_nl_quota(monkeypatch):
+    """Sans compte (pilote/anonyme) : quota_du_compte→None, repli sur nl_quota_jour (comme /ia)."""
+    monkeypatch.setattr(dash, "quota_du_compte", lambda cid: None)
+    monkeypatch.setattr(cv2, "compteur_incr_et_lire", lambda *a, **k: 31)   # 31 > 30
+    monkeypatch.setattr(cv2.config, "get_settings", lambda: _settings(dev_mode=False, nl_quota=30))
+    monkeypatch.setattr(cv2, "_sujet_quota", lambda req: "s:anon")
+    out = cv2.ask(cv2.AskIn(message="x"), _req(None), db=None)
+    assert isinstance(out, JSONResponse) and out.status_code == 429
+    assert json.loads(bytes(out.body))["quota"] == 30
 
 
 def test_ask_dev_mode_ne_compte_pas(monkeypatch):

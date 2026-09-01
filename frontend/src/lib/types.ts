@@ -140,6 +140,8 @@ export interface PipelineEntry {
   projet?: { id: number; nom: string } | null
   proprietaire_public?: { type: 'personne_morale'; denomination: string; siren: string | null; groupe: string | null }
     | { type: 'particulier' } | null
+  // CONNEXIONS-2 Lot 4 (KO-6) — statut du courrier rattaché à cette piste (relu sur la carte Kanban)
+  courrier?: { statut: string; libelle: string; demande_id: number; ts: string | null } | null
 }
 
 export interface SourceInfo {

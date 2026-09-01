@@ -107,12 +107,17 @@ export function IaSection() {
       </div>
 
       <Panel className="mt-3.5">
-        <PHead>Quota Copilote / jour — par licence <Chip tone="ia">le /ask le lit</Chip></PHead>
+        <PHead>Quota Copilote / jour — par licence <Chip tone="ia">recherche NL + Copilote /ask</Chip></PHead>
         <table className="w-full text-[13px]">
           <tbody>
             {d.quotas.map((k) => (
               <tr key={k.id} className="border-b border-line last:border-b-0 hover:bg-surface-3">
                 <td className="px-4 py-2.5">{k.nom}</td>
+                {/* CONNEXIONS-2 Lot 2 — consommé aujourd'hui / plafond effectif (compteur Copilote unique) */}
+                <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">
+                  <span className={k.consomme_aujourdhui >= k.plafond_effectif ? 'text-cp-ia' : ''}>{k.consomme_aujourdhui}</span>
+                  <span className="text-txt-dim"> / {k.plafond_effectif} aujourd'hui</span>
+                </td>
                 <td className="px-4 py-2.5 text-right text-txt-mut">
                   {k.copilote_quota_jour == null ? `défaut (${d.quota_defaut}/j)` : `${k.copilote_quota_jour}/j`}
                 </td>
@@ -122,7 +127,7 @@ export function IaSection() {
           </tbody>
         </table>
         <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
-          Vide = défaut ({d.quota_defaut}/jour). La modification prend effet à la prochaine question du client.
+          Vide = défaut ({d.quota_defaut}/jour). Un seul compteur pour la recherche NL et le Copilote : la modification prend effet à la prochaine question du client.
         </div>
       </Panel>
     </>

@@ -60,7 +60,13 @@ DDL_STATEMENTS = (
     "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS corps text",
     "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS statut varchar(24) DEFAULT 'demande'",
     "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now()",
+    # CONNEXIONS-2 Lot 4 (KO-6) — RATTACHEMENT à la boucle commerciale : la demande de courrier porte
+    # la piste CRM (pipeline_entry_id) et le projet (projet_id) d'où elle est née. Nullable : un courrier
+    # peut naître hors piste (fiche/Assemblage). Backfill par IDU+compte quand univoque (ensure_tables).
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS pipeline_entry_id integer",
+    "ALTER TABLE courrier_demandes ADD COLUMN IF NOT EXISTS projet_id integer",
     "CREATE INDEX IF NOT EXISTS courrier_demandes_compte_idx ON courrier_demandes (compte_id, ts)",
+    "CREATE INDEX IF NOT EXISTS courrier_demandes_pe_idx ON courrier_demandes (pipeline_entry_id)",
     # RÉCONCILIATION du schéma LEGACY (FIX-GB-011, 2ᵉ volet) : une `courrier_demandes` héritée porte des
     # colonnes `sujet`/`texte` en NOT NULL SANS défaut. Le nouvel INSERT (creer_demande) ne les fournit
     # pas → sinon violation not-null (le POST /courrier/demande tombait en 500 même schéma « réparé »).
@@ -80,16 +86,73 @@ DDL_STATEMENTS = (
     END $$""",
 )
 
-# Cycle de vie visible côté client — DASHBOARD-V1 · D8 : Demandé → Imprimé → Posté (les
-# transitions se font à la Tour de contrôle, journalisées). `tarif_confirme`/`envoye` restent
-# VALIDES (héritage de l'ancien flux) mais ne sont plus le chemin servi.
-STATUTS_DEMANDE = ("demande", "tarif_confirme", "imprime", "poste", "envoye")
+# CONNEXIONS-2 Lot 4 (KO-6) — VOCABULAIRE DE STATUT UNIQUE de la boucle commerciale :
+#   demande (le client a demandé, à déposer par LABUSE) → depose → envoye → repondu / sans_reponse.
+# Une seule source pour les trois écrans (outil Courrier, « Mes courriers », Kanban, dashboard).
+STATUTS_DEMANDE = ("demande", "depose", "envoye", "repondu", "sans_reponse")
+#: alias LEGACY → canonique (anciennes lignes, anciens clics de la Tour de contrôle). On NE casse rien :
+#: `tarif_confirme`/`imprime` sont assimilés à « en préparation », `poste` à « envoyé ».
+STATUT_ALIAS = {"tarif_confirme": "demande", "imprime": "depose", "poste": "envoye"}
+#: libellés client uniques (servis partout).
+STATUT_LIBELLES = {"demande": "Demandé", "depose": "Déposé", "envoye": "Envoyé",
+                   "repondu": "Répondu", "sans_reponse": "Sans réponse"}
+#: correspondance statut → BUCKET dashboard (Courrier.tsx) — table unique, plus de sets disjoints.
+STATUT_BUCKET = {"demande": "a_deposer", "depose": "en_cours", "envoye": "en_cours",
+                 "repondu": "clos", "sans_reponse": "clos"}
+#: statuts de RETOUR, saisissables par la CLIENTE (dans le CRM) comme par l'admin (dashboard).
+STATUTS_RETOUR = ("repondu", "sans_reponse")
+
+
+def normaliser_statut(s: str | None) -> str | None:
+    """Ramène un statut (éventuellement legacy) à sa forme canonique unique."""
+    return STATUT_ALIAS.get(s, s) if s is not None else None
 
 
 def ensure_tables(engine) -> None:
     with engine.begin() as c:
         for stmt in DDL_STATEMENTS:
             c.execute(text(stmt))
+    _backfill_rattachement(engine)
+
+
+_BACKFILL_SQL = """
+    UPDATE courrier_demandes d
+       SET pipeline_entry_id = m.pe_id
+      FROM (
+        SELECT did, min(pe_id) AS pe_id
+          FROM (
+            SELECT d2.id AS did, pe.id AS pe_id
+              FROM courrier_demandes d2
+              JOIN parcels par ON par.idu = (d2.parcelles->>0)
+              JOIN pipeline_entries pe ON pe.parcel_id = par.id
+                   AND pe.compte_id IS NOT DISTINCT FROM d2.compte_id
+             WHERE d2.pipeline_entry_id IS NULL
+               AND d2.parcelles IS NOT NULL
+               AND jsonb_array_length(d2.parcelles) = 1
+          ) x
+         GROUP BY did
+        HAVING count(*) = 1
+      ) m
+     WHERE d.id = m.did"""
+
+
+def backfill_rattachement_exec(conn) -> int:
+    """CONNEXIONS-2 Lot 4 (KO-6) — backfill de `pipeline_entry_id` sur les demandes héritées : quand une
+    demande porte EXACTEMENT UN IDU et qu'il existe EXACTEMENT UNE piste (pipeline_entries) de ce même
+    compte sur cette parcelle, on rattache. Ambigu (0 ou ≥2 candidats) → laissé NULL (jamais un faux lien).
+    Idempotent (ne touche que les lignes encore NULL). S'exécute sur un connexion/session fournie."""
+    if conn.execute(text("SELECT to_regclass('pipeline_entries')")).scalar() is None:
+        return 0  # table pipeline_entries absente (schéma partiel) → rien à faire
+    return conn.execute(text(_BACKFILL_SQL)).rowcount
+
+
+def _backfill_rattachement(engine) -> int:
+    """Wrapper boot : ouvre sa propre transaction. Retourne le nombre rattaché."""
+    with engine.begin() as c:
+        n = backfill_rattachement_exec(c)
+    if n:
+        log.info("courrier backfill rattachement : %d demande(s) rattachée(s) à une piste", n)
+    return n
 
 
 # FIX-GB-013 — fenêtre d'idempotence (secondes) : deux demandes IDENTIQUES rapprochées ne créent qu'UNE
@@ -99,7 +162,8 @@ IDEMPOTENCE_FENETRE_S = 120
 
 
 def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
-                  communes: str | None, modele: str | None, corps: str) -> dict:
+                  communes: str | None, modele: str | None, corps: str,
+                  pipeline_entry_id: int | None = None, projet_id: int | None = None) -> dict:
     """Enregistre une demande d'envoi (le client prépare, LABUSE envoie). Une ligne = une demande de N
     courriers. `parcelles` = liste d'IDU (jsonb) ; `communes` = récap lisible fourni par le front.
 
@@ -124,19 +188,22 @@ def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
     if dup is not None:
         return {**dict(dup), "existing": True}
     r = db.execute(text("""
-        INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut)
-        VALUES (:c, cast(:p AS jsonb), :n, :com, :m, :corps, 'demande')
+        INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut,
+                                       pipeline_entry_id, projet_id)
+        VALUES (:c, cast(:p AS jsonb), :n, :com, :m, :corps, 'demande', :pe, :pj)
         RETURNING id, ts, n, communes, statut"""),
         {"c": compte_id, "p": p_json, "n": len(parcelles),
-         "com": communes, "m": modele, "corps": corps}).mappings().one()
+         "com": communes, "m": modele, "corps": corps,
+         "pe": pipeline_entry_id, "pj": projet_id}).mappings().one()
     return {**dict(r), "existing": False}
 
 
 def demandes_de(db, compte_id: int | None) -> list[dict]:
     """Les demandes DU client (cloison), pour la timeline de statut. `corps IS NOT NULL` écarte les
     lignes héritées de l'ancien schéma M82."""
-    return [dict(r) for r in db.execute(text("""
-        SELECT id, ts, n, communes, modele, statut, updated_at
+    return [{**dict(r), "statut": normaliser_statut(r["statut"])}
+            for r in db.execute(text("""
+        SELECT id, ts, n, communes, modele, statut, updated_at, pipeline_entry_id, projet_id
         FROM courrier_demandes
         WHERE corps IS NOT NULL AND compte_id IS NOT DISTINCT FROM :c
         ORDER BY ts DESC LIMIT 100"""), {"c": compte_id}).mappings()]
@@ -146,24 +213,71 @@ def demandes_admin(db, statut: str | None = None) -> list[dict]:
     """Vue admin (Vic) : toutes les demandes, filtrable par statut. D8 (Tour de contrôle) :
     + nom du client (jointure comptes, LEFT — compte NULL = pilote) et parcelles (pour le PDF)."""
     where = "WHERE d.corps IS NOT NULL" + (" AND d.statut = :s" if statut else "")
-    return [dict(r) for r in db.execute(text(
+    return [{**dict(r), "statut": normaliser_statut(r["statut"])}
+            for r in db.execute(text(
         f"SELECT d.id, d.ts, d.compte_id, d.n, d.communes, d.modele, d.corps, d.statut,"
-        f"       d.updated_at, d.parcelles, k.nom AS client"
+        f"       d.updated_at, d.parcelles, d.pipeline_entry_id, d.projet_id, k.nom AS client"
         f" FROM courrier_demandes d LEFT JOIN comptes k ON k.id = d.compte_id"
         f" {where} ORDER BY d.ts DESC LIMIT 300"),
-        ({"s": statut} if statut else {})).mappings()]
+        ({"s": normaliser_statut(statut)} if statut else {})).mappings()]
 
 
-def set_statut_demande(db, demande_id: int, statut: str) -> dict:
-    if statut not in STATUTS_DEMANDE:
-        raise ValueError(f"statut invalide : {statut} (attendu {', '.join(STATUTS_DEMANDE)})")
+def set_statut_demande(db, demande_id: int, statut: str, *, compte_id: int | None = None,
+                       reserve_retour: bool = False) -> dict:
+    """Fait avancer le statut d'une demande (vocabulaire canonique unique ; legacy normalisé).
+
+    CONNEXIONS-2 Lot 4 : `compte_id` fourni ⇒ écriture SCOPÉE (la cliente ne touche QUE ses demandes) ;
+    `reserve_retour` ⇒ seuls les statuts de RETOUR (repondu/sans_reponse) sont permis (garde CRM cliente).
+    Sans ces deux, comportement admin (tout le cycle)."""
+    statut = normaliser_statut(statut)
+    permis = STATUTS_RETOUR if reserve_retour else STATUTS_DEMANDE
+    if statut not in permis:
+        raise ValueError(f"statut invalide : {statut} (attendu {', '.join(permis)})")
+    scope = " AND compte_id IS NOT DISTINCT FROM :cid" if compte_id is not None else ""
+    params = {"s": statut, "id": demande_id}
+    if compte_id is not None:
+        params["cid"] = compte_id
     r = db.execute(text(
-        "UPDATE courrier_demandes SET statut = :s, updated_at = now() WHERE id = :id "
-        "RETURNING id, compte_id, n, communes, statut"),
-        {"s": statut, "id": demande_id}).mappings().first()
+        "UPDATE courrier_demandes SET statut = :s, updated_at = now() "
+        f"WHERE id = :id{scope} "
+        "RETURNING id, compte_id, n, communes, statut, pipeline_entry_id, projet_id"),
+        params).mappings().first()
     if not r:
         raise ValueError("demande introuvable")
     return dict(r)
+
+
+def kpi_dashboard(db) -> dict:
+    """CONNEXIONS-2 Lot 4 (KPI dashboard) — agrégat des demandes par BUCKET (à déposer / en cours / clos),
+    à partir du vocabulaire unique. « à déposer » = ce que LABUSE doit encore déposer (statut 'demande')."""
+    rows = db.execute(text(
+        "SELECT statut, count(*) AS n FROM courrier_demandes WHERE corps IS NOT NULL GROUP BY statut"
+    )).mappings().all()
+    buckets = {"a_deposer": 0, "en_cours": 0, "clos": 0}
+    for r in rows:
+        buckets[STATUT_BUCKET.get(normaliser_statut(r["statut"]), "en_cours")] += int(r["n"])
+    return {"a_deposer": buckets["a_deposer"], "en_cours": buckets["en_cours"], "clos": buckets["clos"]}
+
+
+def statut_par_pipeline_entry(db, compte_id: int | None, entry_ids: list[int]) -> dict[int, dict]:
+    """Statut du DERNIER courrier rattaché à chaque piste (pour la carte Kanban + « Mes courriers »).
+    Scopé compte. Retour : {pipeline_entry_id: {statut, libelle, demande_id, ts}}."""
+    if not entry_ids:
+        return {}
+    rows = db.execute(text("""
+        SELECT DISTINCT ON (pipeline_entry_id) pipeline_entry_id, id, statut, ts
+          FROM courrier_demandes
+         WHERE corps IS NOT NULL AND pipeline_entry_id = ANY(:ids)
+           AND compte_id IS NOT DISTINCT FROM :c
+         ORDER BY pipeline_entry_id, ts DESC"""),
+        {"ids": entry_ids, "c": compte_id}).mappings().all()
+    out: dict[int, dict] = {}
+    for r in rows:
+        st = normaliser_statut(r["statut"])
+        out[r["pipeline_entry_id"]] = {"statut": st, "libelle": STATUT_LIBELLES.get(st, st),
+                                       "demande_id": r["id"],
+                                       "ts": r["ts"].isoformat() if r["ts"] else None}
+    return out
 
 
 def provider_actif() -> str:

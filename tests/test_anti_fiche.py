@@ -1,6 +1,8 @@
 """O3 — ANTI-FICHE : motifs hiérarchisés (RÉDHIBITOIRE puis VIGILANCE), sourcés, non inventés.
 
-Lit la cascade déjà calculée. Une parcelle sans motif le dit ; jamais d'invention.
+CONNEXIONS-2 Lot 1 (KO-2) : la cascade lue est la SERVIE run-scopée (`dryrun_cascade_results`
+du run épinglé), plus la table LIVE `cascade_results`. Les seeds passent donc par la table
+run-scopée ; un test-témoin prouve qu'une ligne de la table LIVE n'est PLUS surfacée.
 """
 from __future__ import annotations
 
@@ -25,10 +27,12 @@ def _seed(s, idu, tier, cascade):
         "contrib_z, contrib_d, top5_contributions, copro, tier, model_version) "
         "VALUES (:run, :i, 0.5, 30.0, 90.0, 1, 0.2, 1.5, '[]', false, :t, 'test')"),
         {"i": idu, "t": tier, "run": Q_A_RUN_LABEL})
+    # KO-2 : on seed la cascade SERVIE run-scopée — la MÊME table que la fiche écran.
     for layer, result, detail in cascade:
         s.execute(text(
-            "INSERT INTO cascade_results (parcel_id, layer_name, result, detail) VALUES (:p,:l,:r,:d)"),
-            {"p": pid, "l": layer, "r": result, "d": detail})
+            "INSERT INTO dryrun_cascade_results (run_label, parcel_id, layer_name, result, detail) "
+            "VALUES (:run,:p,:l,:r,:d)"),
+            {"run": Q_A_RUN_LABEL, "p": pid, "l": layer, "r": result, "d": detail})
     return pid
 
 
@@ -69,3 +73,20 @@ def test_dedup_par_couche(db_session):
     ])
     out = af.anti_fiche(idu, s)
     assert out["n_redhibitoire"] == 1 and out["n_vigilance"] == 0
+
+
+@pytest.mark.db
+def test_ne_lit_plus_la_table_live_cascade_results(db_session):
+    """KO-2 : une ligne présente UNIQUEMENT dans la table LIVE non run-scopée `cascade_results`
+    ne doit PLUS être surfacée — l'anti-fiche lit exclusivement la cascade servie run-scopée.
+    Ce test échoue sur l'ancien code (qui lisait `cascade_results`)."""
+    s = db_session
+    idu = "97499000AF0004"
+    pid = _seed(s, idu, "brulante", [])   # cascade servie VIDE pour cette parcelle
+    # décor : un motif rédhibitoire écrit SEULEMENT dans la table LIVE (rail legacy)
+    s.execute(text(
+        "INSERT INTO cascade_results (parcel_id, layer_name, result, detail) VALUES "
+        "(:p,'risques','HARD_EXCLUDE','FANTÔME legacy — ne doit pas apparaître')"), {"p": pid})
+    out = af.anti_fiche(idu, s)
+    assert out["n_redhibitoire"] == 0 and out["n_vigilance"] == 0
+    assert "FANTÔME" not in str(out)

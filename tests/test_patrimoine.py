@@ -42,6 +42,38 @@ def test_patrimoine_search_ne_leve_pas(db_session):
     assert any(r["siren"] == "111222333" and r["n"] >= 1 for r in out)
 
 
+def test_patrimoine_hors_ecartees_par_vous(db_session, monkeypatch):
+    """CONNEXIONS-2 Lot 4 (KO-10) — « actionnables » retire les parcelles que CE COMPTE a écartées
+    dans un de ses projets (projet_parcelles.statut='ecartee') ; le libellé le dit. Sans décision (ou
+    sans compte), rien n'est retiré et aucun « hors écartées » n'est affirmé (plus de faux ami)."""
+    import types
+    monkeypatch.setattr("labuse.api.app._score_v2_run_id", lambda _db: Q_A_RUN_LABEL)
+    from labuse.api.modules import patrimoine
+    s = db_session
+    siren = "777888999"
+    _seed(s, "97499000EC0001", _WKT[0], siren, "SCI ECART", tier="a_creuser")
+    pid2 = _seed(s, "97499000EC0002", _WKT[1], siren, "SCI ECART", tier="a_creuser")
+    # SANS compte → 2 actionnables, pas de mention « hors écartées »
+    out0 = patrimoine(siren=siren, limit=200, offset=0, request=None, db=s)
+    assert out0["n_actionnables"] == 2 and out0["hors_ecartees_par_vous"] is False
+    # ce compte écarte la 2ᵉ parcelle dans un de SES projets
+    cid = s.execute(text(
+        "INSERT INTO comptes (nom, plan, statut) VALUES ('KO-10', 'integral', 'actif') RETURNING id")).scalar()
+    pjid = s.execute(text(
+        "INSERT INTO projets (compte_id, nom) VALUES (:c, 'Test KO-10') RETURNING id"), {"c": cid}).scalar()
+    s.execute(text(
+        "INSERT INTO projet_parcelles (projet_id, parcel_id, statut) VALUES (:pj, :p, 'ecartee')"),
+        {"pj": pjid, "p": pid2})
+    req = types.SimpleNamespace(state=types.SimpleNamespace(compte_id=cid))
+    out = patrimoine(siren=siren, limit=200, offset=0, request=req, db=s)
+    assert out["n_actionnables"] == 1                     # la 2ᵉ, écartée par ce compte, sort
+    assert out["hors_ecartees_par_vous"] is True and out["n_ecartees_par_vous"] == 1
+    # un AUTRE compte ne voit pas cette décision (cloison)
+    req2 = types.SimpleNamespace(state=types.SimpleNamespace(compte_id=99999))
+    out2 = patrimoine(siren=siren, limit=200, offset=0, request=req2, db=s)
+    assert out2["n_actionnables"] == 2 and out2["hors_ecartees_par_vous"] is False
+
+
 def test_patrimoine_ne_leve_pas_et_ménage_vestiges(db_session, monkeypatch):
     # le run v2 servi est épinglé à p_score_v2_runs (vide en test) → on le pointe sur le run seedé.
     monkeypatch.setattr("labuse.api.app._score_v2_run_id", lambda _db: Q_A_RUN_LABEL)

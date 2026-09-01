@@ -11,7 +11,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getZonageZones, saveSearch } from '../../lib/api'
+import { getFiltre, getFiltreCount, getSearchApercu, getZonageZones, saveSearch } from '../../lib/api'
 import { countActiveFilters, filtersToHash, resumeCriteres } from '../../lib/filters'
 import { tierChipLabel } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
@@ -312,6 +312,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
       openSurveillance('criteres')
     },
   })
+  // CONNEXIONS-2 Lot 5 (KO-7) — aperçu des dimensions surveillées par la veille (moteur partagé carte↔veille).
+  const veilleHash = filtersToHash(filters, zone) || '#f=1'
+  const apercuVeille = useQuery({ queryKey: ['veille-apercu', veilleHash], queryFn: () => getSearchApercu(veilleHash) })
   const analyseOn = filters.analyseLabuse
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
@@ -575,10 +578,22 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
       {/* #1 — « Créer une veille sur cette recherche » : le geste manquant, offert dès qu'un critère
           est posé. On alerte à la bascule d'une parcelle qui matche (Veille › Critères). */}
       {nActifs > 0 && (
-        <button data-creer-veille onClick={() => creerVeille.mutate()} disabled={creerVeille.isPending}
-          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/50 bg-mint/[0.08] py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15 disabled:opacity-40">
-          {creerVeille.isPending ? 'Création…' : '🔔 Créer une veille sur cette recherche'}
-        </button>
+        <>
+          {/* CONNEXIONS-2 Lot 5 (KO-7) — TRANSPARENCE : « cette veille surveille : … » (dimensions
+              réellement évaluées, moteur partagé avec la carte) + ce qui n'est PAS retenu, s'il y a lieu. */}
+          {apercuVeille.data && (
+            <p data-veille-apercu className="mt-2 rounded-lg border border-line-2 bg-surface-2/60 px-2.5 py-1.5 text-[10.5px] leading-snug text-txt-mut">
+              <b className="text-txt">Cette veille surveille :</b> {apercuVeille.data.surveille.join(' · ') || '—'}
+              {apercuVeille.data.non_retenu.length > 0 && (
+                <span className="mt-0.5 block text-amber">Non retenu (non évaluable) : {apercuVeille.data.non_retenu.join(', ')}</span>
+              )}
+            </p>
+          )}
+          <button data-creer-veille onClick={() => creerVeille.mutate()} disabled={creerVeille.isPending}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/50 bg-mint/[0.08] py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15 disabled:opacity-40">
+            {creerVeille.isPending ? 'Création…' : '🔔 Créer une veille sur cette recherche'}
+          </button>
+        </>
       )}
       </>
       )}

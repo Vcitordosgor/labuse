@@ -254,9 +254,17 @@ def enregistrer_clic(db: Session, *, compte_id: int | None, bien_id: int,
 def signaler(db: Session, *, compte_id: int | None, bien_id: int, motif: str = "") -> int:
     """Signalement client (« annonce retirée / erreur ») → événement `pige.signalement_client` qui
     remonte le bien en TÊTE de la file de re-vérif admin. NE change JAMAIS le statut (anti-abus) :
-    il alerte Vic, c'est tout. Retourne l'id de l'événement."""
+    il alerte Vic, c'est tout. Retourne l'id de l'événement.
+
+    CONNEXIONS-2 Lot 3 (KO-4) : écrit AUSSI dans la table UNIQUE `signalements` (type='annonce') —
+    la MÊME que le « Signaler » de la fiche — pour que l'admin le voie et le traite au dashboard.
+    L'événement `pige.signalement_client` reste (il remonte le bien dans la file de re-vérif)."""
     commune = db.execute(text("SELECT commune FROM pige_biens WHERE bien_id = :b"),
                          {"b": bien_id}).scalar()
+    db.execute(text(
+        """INSERT INTO signalements (type, bien_id, parcelle_id, type_erreur, commentaire, compte_id)
+           VALUES ('annonce', :b, NULL, 'annonce', :com, :cid)"""),
+        {"b": bien_id, "com": (motif or "annonce retirée / erreur")[:200], "cid": compte_id})
     return journaliser(
         db, EV_SIGNALEMENT, f"Signalement client — bien #{bien_id} ({commune or '?'})",
         detail=(motif or "annonce retirée / erreur")[:200], compte_id=None,

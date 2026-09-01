@@ -5,8 +5,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getRadarAInstruire, getRadarCheck, getRadarExtraction, getRadarReverif,
-  radarDeposer, radarDeposerHtml,
+  getAdminSignalements, getRadarAInstruire, getRadarCheck, getRadarExtraction, getRadarReverif,
+  postAdminSignalementStatut, radarDeposer, radarDeposerHtml,
   radarInstruire, radarPrix, radarRattacherHumain, radarRetiree, radarToujoursEnLigne, radarValider,
   type RadarAInstruire, type RadarBrouillon, type RadarCritere, type RadarDepotHtml, type RadarPiste,
 } from '../../lib/api'
@@ -371,6 +371,57 @@ function Check() {
   )
 }
 
+// CONNEXIONS-2 Lot 3 (KO-4) — file UNIQUE des signalements clients (erreur de fiche + annonce
+// retirée/erronée). L'admin la VOIT et la TRAITE ici : plus de revue CLI-only. Un signalement = un
+// ticket ; « Traiter » le passe à traité (réversible « Rouvrir »).
+function Signalements() {
+  const qc = useQueryClient()
+  const [filtre, setFiltre] = useState<'nouveau' | 'traite' | undefined>('nouveau')
+  const { data } = useQuery({ queryKey: ['admin-signalements', filtre], queryFn: () => getAdminSignalements(filtre) })
+  const trancher = async (id: number, statut: 'nouveau' | 'traite') => {
+    await postAdminSignalementStatut(id, statut)
+    qc.invalidateQueries({ queryKey: ['admin-signalements'] })
+    qc.invalidateQueries({ queryKey: ['radar-check'] })
+  }
+  const rows = data?.signalements ?? []
+  return (
+    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
+      <div className="flex items-center justify-between">
+        <Lbl>Signalements clients <span className="text-txt-dim">— {data?.n_ouverts ?? 0} en attente</span></Lbl>
+        <div className="flex gap-1 text-[11px]">
+          {([['nouveau', 'à traiter'], ['traite', 'traités'], [undefined, 'tous']] as const).map(([k, lbl]) => (
+            <button key={lbl} data-sig-filtre={String(k)} onClick={() => setFiltre(k)}
+              className={`rounded-md border px-2 py-0.5 ${filtre === k ? 'border-txt-dim bg-surface-3 text-txt' : 'border-line-2 text-txt-mut'}`}>{lbl}</button>
+          ))}
+        </div>
+      </div>
+      {!rows.length && <div className="py-4 text-center text-[12px] text-txt-mut">Aucun signalement.</div>}
+      <div className="mt-2 flex flex-col gap-1.5">
+        {rows.map((s) => (
+          <div key={s.id} data-signalement={s.id} className="flex items-start justify-between gap-3 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[12px]">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Chip tone={s.type === 'annonce' ? 'warn' : 'off'}>{s.type === 'annonce' ? 'annonce' : 'fiche'}</Chip>
+                <span className="font-mono text-[11px] text-txt-mut">{s.type === 'annonce' ? `bien #${s.bien_id}` : s.parcelle_id}</span>
+                <span className="text-txt-dim">· {s.type_erreur}{s.champ ? ` (${s.champ})` : ''}</span>
+              </div>
+              {s.commentaire && <div className="mt-0.5 truncate text-txt">{s.commentaire}</div>}
+              <div className="mt-0.5 text-[10.5px] text-txt-dim">
+                {s.compte_nom ?? s.utilisateur ?? 'anonyme'} · {s.created_at?.slice(0, 10) ?? ''}
+              </div>
+            </div>
+            {s.statut === 'nouveau'
+              ? <button data-sig-traiter={s.id} onClick={() => trancher(s.id, 'traite')}
+                  className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2 py-1 text-[11px] text-mint hover:brightness-125">Traiter</button>
+              : <button data-sig-rouvrir={s.id} onClick={() => trancher(s.id, 'nouveau')}
+                  className="shrink-0 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:bg-surface-3">Rouvrir</button>}
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 // RV2-V1 — bandeau d'alerte EN TÊTE : si le répertoire de captures n'est pas accessible en écriture,
 // le dépôt échouera. On le dit AVANT le premier dépôt, avec le chemin fautif nommé (pas de crash).
 function CapturesAlerte() {
@@ -410,6 +461,7 @@ export function RadarSection() {
       <Extraction />
       <Reverif />
       <Instruction />
+      <Signalements />
       <Check />
     </div>
   )

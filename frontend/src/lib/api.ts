@@ -857,9 +857,10 @@ export const getPipelineMeta = () => j<PipelineMeta>('/pipeline/meta')
 export const getPipeline = () => j<PipelineEntry[]>('/pipeline')
 export const getPipelineForParcel = (idu: string) =>
   j<{ in_pipeline: boolean; entry: PipelineEntry | null }>(`/pipeline/parcel/${idu}`)
-export const addToPipeline = (idu: string) =>
+// CONNEXIONS-2 Lot 3 (KO-8) — la colonne CRM choisie est transmise (défaut : 1re colonne côté back).
+export const addToPipeline = (idu: string, status?: string) =>
   j<{ ok: boolean; already: boolean; entry: PipelineEntry }>('/pipeline', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu }),
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(status ? { idu, status } : { idu }),
   })
 
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
@@ -942,12 +943,20 @@ export const courrierPdf = async (idu: string | null, motif: string, texte: stri
 export interface CourrierDemande {
   id: number; ts: string; n: number; communes: string | null; modele: string | null
   statut: string; updated_at: string
+  // CONNEXIONS-2 Lot 4 (KO-6) — rattachement à la piste/projet d'origine
+  pipeline_entry_id?: number | null; projet_id?: number | null
 }
-export const postCourrierDemande = (parcelles: string[], corps: string, modele: string | null, communes: string | null) =>
+// CONNEXIONS-2 Lot 4 — la demande peut naître d'une piste (pipeline_entry_id) / d'un projet (sans ressaisie).
+export const postCourrierDemande = (parcelles: string[], corps: string, modele: string | null, communes: string | null,
+                                    rattach?: { pipeline_entry_id?: number | null; projet_id?: number | null }) =>
   j<{ ok: boolean; id: number; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ parcelles, corps, modele, communes }) })
+    body: JSON.stringify({ parcelles, corps, modele, communes, ...(rattach ?? {}) }) })
 export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/courrier/demandes')
+// CONNEXIONS-2 Lot 4 (KO-6) — la cliente saisit le RETOUR de sa demande (répondu / sans réponse).
+export const postCourrierClientStatut = (id: number, statut: 'repondu' | 'sans_reponse') =>
+  j<{ ok: boolean; statut: string }>(`/courrier/demandes/${id}/statut`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 export const modDueDiligence = (refs: string) =>
   j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[] }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
@@ -1002,6 +1011,10 @@ export const getSavedSearches = () => j<{ id: number; nom: string; hash: string;
 export const saveSearch = (nom: string, hash: string) =>
   j<{ ok: boolean }>('/events/searches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, hash }) })
 export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })
+// CONNEXIONS-2 Lot 5 (KO-7) — ce qu'une veille de recherche VA surveiller (dimensions retenues +
+// celles non évaluables), moteur partagé avec la carte. Affiché à la création.
+export const getSearchApercu = (hash: string) =>
+  j<{ surveille: string[]; non_retenu: string[] }>(`/events/searches/apercu?hash=${encodeURIComponent(hash)}`)
 // M52 L5 — renommer une vue sauvegardée (compte-scopé).
 // M17-B : veille en langage naturel — traduction réutilisée (schéma), garde-fou déclenchable côté back.
 export const veilleNL = (text: string) =>
@@ -1039,6 +1052,7 @@ export interface AdminPilotage {
   ia_mois: { cout_eur: number; appels: number }
   backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent'; chemin: string; age_jours: number | null; mtime?: string }
   sante: { ok: boolean | null; total: number | null; en_echec: string[] }
+  courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
   run: { label: string | null; carte_le: string | null }
   fil: Array<{ id: number; ts: string | null; kind: string; source: string | null; titre: string; detail: string | null; lien: string | null }>
   gels: Array<{ sujet: string; motif: string | null; ts: string | null }>
@@ -1113,10 +1127,22 @@ export interface AdminIa {
   jours: Array<{ jour: string; cout: number; appels: number }>
   par_licence: Array<{ compte_id: number | null; nom: string; cout: number; appels: number }>
   quota_defaut: number
-  quotas: Array<{ id: number; nom: string; copilote_quota_jour: number | null }>
+  // CONNEXIONS-2 Lot 2 — consommé aujourd'hui / plafond effectif par compte (compteur Copilote unique)
+  quotas: Array<{ id: number; nom: string; copilote_quota_jour: number | null; plafond_effectif: number; consomme_aujourdhui: number }>
   note: string
 }
 export const getAdminIa = () => j<AdminIa>('/admin/ia')
+// CONNEXIONS-2 Lot 3 (KO-4) — file UNIQUE des signalements (fiche + annonce), traitée au dashboard
+export interface Signalement {
+  id: number; type: 'fiche' | 'annonce'; parcelle_id: string | null; bien_id: number | null
+  type_erreur: string; champ: string | null; commentaire: string | null; utilisateur: string | null
+  statut: 'nouveau' | 'traite'; created_at: string | null; traite_at: string | null
+  compte_id: number | null; compte_nom: string | null
+}
+export const getAdminSignalements = (statut?: 'nouveau' | 'traite') =>
+  j<{ signalements: Signalement[]; n_ouverts: number }>(`/admin/signalements${statut ? `?statut=${statut}` : ''}`)
+export const postAdminSignalementStatut = (id: number, statut: 'nouveau' | 'traite') =>
+  j<{ ok: boolean }>(`/admin/signalements/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quota }) })
 // D6 — Sources

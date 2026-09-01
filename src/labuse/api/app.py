@@ -3048,6 +3048,81 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     } for r in rows]
 
 
+# ───────── CONNEXIONS-2 Lot 5 (KO-7) — parité filtre carte ↔ veille de recherche ─────────
+# POINT UNIQUE : un hash de filtres (filtersToHash, 35 dimensions) → un FiltreCriteres → la MÊME
+# requête que la carte (_q_v2_list). La veille de recherche évalue donc TOUTES les dimensions
+# filtrables, plus les 5 dimensions hard-codées d'avant (fini la sur-alerte silencieuse).
+
+#: hash → champ FiltreCriteres. MÊMES clés que filtersToHash (frontend/src/lib/filters.ts).
+_HASH_NUM = {"smin": "surface_min", "smax": "surface_max", "sdp": "sdp_min", "sdpx": "sdp_max",
+             "cap": "capacite_min", "rm": "rang_max", "bud": "budget_max", "chmin": "charge_min",
+             "chmax": "charge_max", "pmin": "prix_marche_min", "pmax": "prix_marche_max",
+             "ca": "ca_min", "pdmin": "pm_dirig_min", "pdmax": "pm_dirig_max"}
+_HASH_BOOL = {"ev": "evenement", "vs2": "veille", "hc": "hors_copro", "pm": "personne_morale",
+              "sd": "sous_densite", "rnv": "renouvellement", "np": "npnru", "aa": "adresse_absente",
+              "mf": "marche_fiable", "mb": "mode_b_rentable"}
+_HASH_STR = {"fx": "flags_exclus", "cs": "communes", "zf": "zonage", "sv": "signaux",
+             "cst": "constructibilite", "es": "etat_sol", "zpx": "zone_plu",
+             "pt": "proprietaire_type", "soc": "etat_societe", "cp": "copro",
+             "drr": "droits_residuels", "pmf": "pm_forme", "pma": "pm_ape",
+             "pmd": "pm_denom", "pms": "pm_siren"}
+#: dimensions du hash RÉELLEMENT évaluables (les seules connues du mappage) — pour l'annonce
+#: « cette veille surveille : … » et le signalement de ce qui n'est PAS retenu (KO-7 point 2).
+DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", *_HASH_NUM, *_HASH_BOOL, *_HASH_STR})
+
+
+def filtre_from_hash(hash_str: str) -> "FiltreCriteres":
+    """Lit un hash de filtres en un FiltreCriteres complet — le MÊME objet que la carte (`/filtre`)."""
+    from urllib.parse import parse_qs
+    q = parse_qs((hash_str or "").lstrip("#"))
+    g = lambda k: q.get(k, [None])[0]  # noqa: E731
+    c = FiltreCriteres()
+    if g("tv"):
+        c.tiers = g("tv")
+    for k, field in _HASH_NUM.items():
+        v = g(k)
+        if v not in (None, ""):
+            setattr(c, field, int(v))
+    if g("mm") not in (None, ""):
+        c.mult_min = float(g("mm"))
+    for k, field in _HASH_BOOL.items():
+        if g(k) == "1":
+            setattr(c, field, True)
+    for k, field in _HASH_STR.items():
+        v = g(k)
+        if v:
+            setattr(c, field, v)
+    return c
+
+
+def dimensions_hash_non_evaluees(hash_str: str) -> list[str]:
+    """Clés présentes dans le hash mais NON reconnues par le mappage (rien de surveillé en silence)."""
+    from urllib.parse import parse_qs
+    q = parse_qs((hash_str or "").lstrip("#"))
+    # `f`/`al`/`z` (marqueur, toggle scoring, zone géo) ne sont pas des dimensions de matching.
+    ignore = {"f", "al", "z"}
+    return [k for k in q if k not in DIMENSIONS_VEILLE_EVALUABLES and k not in ignore]
+
+
+def parcelles_matchant_hash(db: Session, hash_str: str, run_label: str,
+                            idus: list[str], *, sans_tiers: bool = False) -> set[str]:
+    """CONNEXIONS-2 Lot 5 (KO-7) — parmi `idus`, celles qui vérifient le filtre `hash_str`, évaluées
+    par le MÊME moteur que la carte (`_q_v2_list` + `FiltreCriteres.where()`). `sans_tiers` retire la
+    dimension tier de la requête (l'appelant l'évalue au run_to — le tier est run-sensible, le reste non).
+    Retourne l'ensemble des IDU correspondants."""
+    if not idus:
+        return set()
+    c = filtre_from_hash(hash_str)
+    if sans_tiers:
+        c.tiers = None
+    where, params = c.where()
+    extra = where + " AND p.idu = ANY(:_veille_cand)"
+    params = {**params, "_veille_cand": list(idus)}
+    rows = _q_v2_list(db, c.commune, len(idus), 0, run_label=run_label,
+                      extra_where=extra, extra_params=params)
+    return {r["idu"] for r in rows}
+
+
 def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL,
                 extra_where: str = "", extra_params: dict | None = None,
                 legacy: bool = False, exclure_slivers: bool = False) -> dict:
@@ -4425,8 +4500,10 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
                 ORDER BY evaluated_at DESC LIMIT 1
             ) e ON true
             LEFT JOIN LATERAL (
-                SELECT detail FROM cascade_results
-                WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
+                -- CONNEXIONS-2 Lot 1 (KO-2) : motif de déclassement lu dans la cascade SERVIE
+                -- run-scopée (dryrun_cascade_results du run épinglé), plus la table LIVE cascade_results.
+                SELECT detail FROM dryrun_cascade_results
+                WHERE parcel_id = p.id AND run_label = :run AND layer_name = 'declassement' LIMIT 1
             ) d ON true
             LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
             LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
@@ -5125,8 +5202,8 @@ def creer_signalement(body: SignalementIn, request: Request, db: Session = Depen
     if type_err not in SIGNALEMENT_TYPES:
         type_err = "autre"
     sid = db.execute(text(
-        """INSERT INTO signalements (parcelle_id, type_erreur, champ, commentaire, utilisateur, compte_id)
-           VALUES (:idu, :t, :c, :com, :u, :cid) RETURNING id"""),
+        """INSERT INTO signalements (type, parcelle_id, type_erreur, champ, commentaire, utilisateur, compte_id)
+           VALUES ('fiche', :idu, :t, :c, :com, :u, :cid) RETURNING id"""),
         {"idu": idu[:14], "t": type_err,
          "c": (body.champ or None), "com": (body.commentaire or None),
          "u": (body.utilisateur or None), "cid": current_compte(request)}).scalar()
@@ -5468,7 +5545,7 @@ def _prio_keys() -> list[str]:
 
 def _entry_dict(db: Session, e: models.PipelineEntry, *,
                 adr_map: dict | None = None, pm_map: dict | None = None,
-                projet_map: dict | None = None) -> dict:
+                projet_map: dict | None = None, courrier_map: dict | None = None) -> dict:
     # M137 Lot 2 — les blocs `verdict` et `premium` (score/rang : rang_v2, opportunity_score,
     # verdict.rang, tier_v2, completeness_score…) sont RETIRÉS du payload CRM (M133 B.6 : zéro
     # verdict/score/rang hors application ; plus rien ne les rend depuis M136 P1).
@@ -5479,10 +5556,17 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
     adresse = adr_map.get(p.idu) if adr_map is not None else _ban_adresse(db, p.idu)
     proprietaire = (pm_map.get(p.idu) or {"type": "particulier"}) if pm_map is not None else _proprietaire_public(db, p.idu)
     projet = (projet_map.get(e.projet_id) if e.projet_id else None) if projet_map is not None else _projet_ref(db, e.projet_id)
+    # CONNEXIONS-2 Lot 4 (KO-6) — statut du courrier RATTACHÉ à cette piste, relu sur la carte Kanban.
+    if courrier_map is not None:
+        courrier_statut = courrier_map.get(e.id)
+    else:
+        from .. import courrier as _courrier
+        courrier_statut = _courrier.statut_par_pipeline_entry(db, e.compte_id, [e.id]).get(e.id)
     return {
         "id": e.id,
         "idu": p.idu,
         "status": e.status,
+        "courrier": courrier_statut,   # {statut, libelle, demande_id, ts} | None
         "priority": e.priority,
         "notes": e.notes or "",
         "reminder_date": e.reminder_date.isoformat() if e.reminder_date else None,
@@ -5614,7 +5698,9 @@ def pipeline_list(request: Request, db: Session = Depends(get_db)) -> list[dict]
     q = q.where(models.PipelineEntry.archived_at.is_(None))   # M137 — actives seules (archivées cachées)
     entries = db.execute(q).scalars().all()
     adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch (N+1 → O(1))
-    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet) for e in entries]
+    from .. import courrier as _courrier   # CONNEXIONS-2 Lot 4 — statut courrier par piste (batch)
+    cmap = _courrier.statut_par_pipeline_entry(db, cid, [e.id for e in entries])
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet, courrier_map=cmap) for e in entries]
 
 
 @app.get("/pipeline/parcel/{idu}")
@@ -5754,7 +5840,8 @@ def pipeline_archived(request: Request, db: Session = Depends(get_db)) -> list[d
     q = q.where(models.PipelineEntry.archived_at.is_not(None))
     entries = db.execute(q).scalars().all()
     adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch
-    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet) for e in entries]
+    # archivées : pas de statut courrier sur la carte (map vide → pas de requête N+1)
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet, courrier_map={}) for e in entries]
 
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
