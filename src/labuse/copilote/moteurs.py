@@ -121,15 +121,15 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
                v.tier, v.rang, v.percentile, z.zone_lib, z.zone_fam,
                -- M-I : PPR rouge GRADUÉ. La cascade n'ÉCARTE (HARD_EXCLUDE) plus que le rouge
                -- >= 50 % de surface → `ppr_rouge` (exclusion) ne cible plus que ces parcelles.
-               EXISTS (SELECT 1 FROM cascade_results r
-                       WHERE r.parcel_id = p.id AND r.layer_name = 'risques'
+               EXISTS (SELECT 1 FROM dryrun_cascade_results r
+                       WHERE r.run_label = :run AND r.parcel_id = p.id AND r.layer_name = 'risques'
                          AND r.result = 'HARD_EXCLUDE' AND r.detail ILIKE '%ppr%') AS ppr_rouge,
                -- Palier 2–50 % : SERVI mais sous vigilance forte (flag, jamais filtré) → surfacé.
-               EXISTS (SELECT 1 FROM cascade_results r
-                       WHERE r.parcel_id = p.id AND r.layer_name = 'risques'
+               EXISTS (SELECT 1 FROM dryrun_cascade_results r
+                       WHERE r.run_label = :run AND r.parcel_id = p.id AND r.layer_name = 'risques'
                          AND r.result = 'SOFT_FLAG' AND r.detail ILIKE '%PPR zone rouge sur%') AS ppr_partiel,
-               EXISTS (SELECT 1 FROM cascade_results r
-                       WHERE r.parcel_id = p.id AND r.layer_name = 'abf'
+               EXISTS (SELECT 1 FROM dryrun_cascade_results r
+                       WHERE r.run_label = :run AND r.parcel_id = p.id AND r.layer_name = 'abf'
                          AND r.result = 'SOFT_FLAG') AS abf
         FROM parcels p
         JOIN parcel_p_score_v2 v ON v.parcelle_id = p.idu AND v.run_id = :run
@@ -333,17 +333,19 @@ _LAYERS_RISQUES = ("risques", "abf", "trait_de_cote", "pente", "cinquante_pas")
 
 
 def risques(db: Session, brief: dict, dossier: Dossier) -> StepResult:
-    """Verdicts risques déjà journalisés en cascade_results (Factor 13 : pas de recalcul).
-    ABF : signalé, pas exclu (sauf brief contraire, déjà appliqué au criblage)."""
+    """Verdicts risques déjà journalisés en `dryrun_cascade_results` du run servi
+    (Q_A_RUN_LABEL — CONNEXIONS-3 V1 : plus JAMAIS la table LIVE `cascade_results`, cf. la fiche ;
+    Factor 13 : pas de recalcul). ABF : signalé, pas exclu (sauf brief contraire, déjà appliqué au
+    criblage)."""
     retenus = dossier.retenus()
     if not retenus:
         return StepResult(resultat={"n_candidats": 0, "flags": {}}, etiquette="sourcé")
     ids = [c["parcel_id"] for c in retenus]
     rows = db.execute(text(
-        "SELECT parcel_id, layer_name, result, severity, detail FROM cascade_results "
-        "WHERE parcel_id = ANY(:ids) AND layer_name = ANY(:layers) "
+        "SELECT parcel_id, layer_name, result, severity, detail FROM dryrun_cascade_results "
+        "WHERE run_label = :run AND parcel_id = ANY(:ids) AND layer_name = ANY(:layers) "
         "  AND result IN ('SOFT_FLAG', 'HARD_EXCLUDE')"),
-        {"ids": ids, "layers": list(_LAYERS_RISQUES)}).mappings().all()
+        {"run": Q_A_RUN_LABEL, "ids": ids, "layers": list(_LAYERS_RISQUES)}).mappings().all()
     par_parcelle: dict[int, list[dict]] = {}
     for r in rows:
         par_parcelle.setdefault(r["parcel_id"], []).append(
