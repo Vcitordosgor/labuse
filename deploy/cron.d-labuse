@@ -41,8 +41,10 @@ MAILTO=root
 0 0 12 * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run ingest-dpe'
 # le 15 à 04:00 Réunion — diff PLU des 24 communes → événements de veille foncière + bandeau PLU.
 0 0 15 * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sync-gpu'
-# le 20 à 04:00 Réunion — sentinelle DVF/cadastre : vérifie un nouveau millésime et alerte (n'ingère pas).
-0 0 20 * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sentinelle-dvf-cadastre'
+# 07:00 Réunion (= 03:00 UTC) — SENTINELLE-1 : veille QUOTIDIENNE des sources amont (api/page/entete),
+# détecte un nouveau millésime et alerte à la cloche admin (n'ingère RIEN). Généralise l'ancien
+# sentinelle-dvf-cadastre (mensuel), désormais deux lignes de source_veille.
+0 3 * * *    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sentinelle-sources'
 
 # ── K9 · ROBUSTESSE ──────────────────────────────────────────────────────────────────────────────
 # le 1er à 05:00 Réunion — restore-test : restaure le dernier dump dans une base jetable, vérifie, DROP.

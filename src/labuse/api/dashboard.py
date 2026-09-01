@@ -708,10 +708,13 @@ def admin_sources(request: Request) -> dict:
     now = datetime.now(tz=timezone.utc)
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
-            "SELECT id, name, category, provider, status, technical_notes, last_sync_at,"
-            "       source_millesime, source_horizon_at, source_cadence,"
-            "       COALESCE(affichage_desactive, false) AS affichage_desactive"
-            " FROM data_sources ORDER BY name")).mappings()]
+            "SELECT d.id, d.name, d.category, d.provider, d.status, d.technical_notes, d.last_sync_at,"
+            "       d.source_millesime, d.source_horizon_at, d.source_cadence,"
+            "       COALESCE(d.affichage_desactive, false) AS affichage_desactive,"
+            # SENTINELLE-1 (W4) — état de veille amont (LEFT JOIN : une source non surveillée = état normal).
+            "       v.actif AS veille_actif, v.methode AS veille_methode, v.dernier_statut AS veille_statut,"
+            "       v.dernier_vu AS veille_vu, v.dernier_passage_at AS veille_passage, v.dernier_message AS veille_message"
+            " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id ORDER BY d.name")).mappings()]
         runs = [dict(r) for r in c.execute(text(
             "SELECT r.started_at, r.finished_at, r.status, r.parcels_count, d.name"
             " FROM ingestion_runs r LEFT JOIN data_sources d ON d.id = r.data_source_id"
@@ -737,6 +740,18 @@ def admin_sources(request: Request) -> dict:
             "relance": relance["label"] if relance else None,
             # CONNEXIONS-2 Lot 6.3 — état du flag pour le toggle admin (désactivée ⇒ hors vitrine).
             "affichage_desactive": bool(r.get("affichage_desactive")),
+            # SENTINELLE-1 (W4) — bloc veille amont. `surveillee` = une ligne source_veille existe.
+            # `nouvelle_version` = la sonde a constaté un millésime amont postérieur au servi (statut ambre).
+            "veille": {
+                "surveillee": r.get("veille_actif") is not None,
+                "actif": bool(r.get("veille_actif")) if r.get("veille_actif") is not None else None,
+                "methode": r.get("veille_methode"),
+                "statut": r.get("veille_statut"),
+                "millesime_amont": r.get("veille_vu"),
+                "nouvelle_version": r.get("veille_statut") == "nouvelle_version",
+                "passage_at": r["veille_passage"].isoformat() if r.get("veille_passage") else None,
+                "message": r.get("veille_message"),
+            },
         })
     # « à mettre à jour » d'abord (mandat), puis nom
     sources.sort(key=lambda s: (s["a_jour"] is not False, s["name"].lower()))
@@ -746,9 +761,53 @@ def admin_sources(request: Request) -> dict:
     return {"sources": sources,
             "synthese": {"a_mettre_a_jour": sum(1 for s in sources if s["a_jour"] is False),
                          "ok": sum(1 for s in sources if s["a_jour"] is True),
-                         "sans_echeance": sum(1 for s in sources if s["a_jour"] is None)},
+                         "sans_echeance": sum(1 for s in sources if s["a_jour"] is None),
+                         # SENTINELLE-1 (W4.2) — nombre de sources avec une nouvelle version disponible.
+                         "nouvelle_version": sum(1 for s in sources if s["veille"]["nouvelle_version"]),
+                         "surveillees": sum(1 for s in sources if s["veille"]["surveillee"])},
             "cadences": list(CADENCES.keys()),
             "runs": runs}
+
+
+@router.post("/admin/sources/{source_id}/veille/verifier")
+def admin_source_veille_verifier(source_id: int, request: Request) -> dict:
+    """SENTINELLE-1 (W4.3) — « Vérifier maintenant » : lance la sonde sur CETTE source, en direct
+    (forcer=True, hors cadence), et renvoie le verdict. N'écrit que dans source_veille, jamais dans
+    data_sources. 404 si la source n'est pas surveillée (pas de ligne source_veille)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import session_scope
+    from .. import sentinelle
+    with session_scope() as s:
+        existe = s.execute(text("SELECT 1 FROM source_veille WHERE source_id = :i"), {"i": source_id}).scalar()
+        if not existe:
+            raise HTTPException(404, "Cette source n'est pas surveillée (aucune ligne de veille).")
+        recap = sentinelle.passer(s, source_ids=[source_id], forcer=True, notifier=True, delai_s=0)
+        s.commit()
+    detail = recap["details"][0] if recap["details"] else {}
+    return {"ok": True, "statut": detail.get("statut"), "millesime_amont": detail.get("vu"),
+            "servi": detail.get("servi"), "message": detail.get("message"), "notifs": recap["notifs"]}
+
+
+class VeilleActiveIn(BaseModel):
+    actif: bool
+
+
+@router.post("/admin/sources/{source_id}/veille/active")
+def admin_source_veille_active(source_id: int, body: VeilleActiveIn, request: Request) -> dict:
+    """SENTINELLE-1 (W4.3) — active / désactive la SURVEILLANCE d'une source (flag source_veille.actif).
+    Désactivée ⇒ le job quotidien la saute (état normal, pas une erreur). 404 si non surveillée."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text("UPDATE source_veille SET actif = :a, updated_at = now() WHERE source_id = :i"),
+                      {"a": body.actif, "i": source_id}).rowcount
+    if not n:
+        raise HTTPException(404, "Cette source n'est pas surveillée (aucune ligne de veille).")
+    return {"ok": True, "actif": body.actif}
 
 
 class CadenceIn(BaseModel):

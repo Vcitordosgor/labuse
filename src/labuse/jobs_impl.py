@@ -337,16 +337,34 @@ def sync_gpu(ctx: JobContext) -> None:
     ctx.compte(veille_fonciere=r, note="diff PLU délégué au pipeline GPU existant ; événements générés")
 
 
+def sentinelle_sources(ctx: JobContext) -> None:
+    """SENTINELLE-1 (W3) — UN passage quotidien de la veille des sources : parcourt les lignes
+    `source_veille` actives dont la cadence est échue, sonde l'amont (api/page/entete) SÉQUENTIELLEMENT
+    avec un délai, écrit le résultat DANS source_veille (JAMAIS dans data_sources), et notifie l'admin
+    (cloche, dédup par source+millésime) à la première détection d'une nouvelle version.
+
+    Généralise l'ancien `sentinelle-dvf-cadastre` : DVF et cadastre sont désormais deux lignes de
+    source_veille, pas un job à part. Aucune ingestion, aucune donnée touchée — surveille et prévient."""
+    from . import sentinelle
+    recap = sentinelle.passer(ctx.db, notifier=True)
+    ctx.compte(sondees=recap["sondees"], nouvelles=recap["nouvelles"],
+               injoignables=recap["injoignables"], illisibles=recap["illisibles"],
+               notifs=recap["notifs"], details=recap["details"])
+
+
 def sentinelle_dvf_cadastre(ctx: JobContext) -> None:
-    """VÉRIFIE si un nouveau millésime DVF (avril/octobre) ou cadastre est paru et ALERTE. N'ingère pas :
-    ces deux-là restent des gestes supervisés de Vic."""
+    """SUPERSÉDÉ par `sentinelle_sources` (SENTINELLE-1 W2) — conservé pour le test de NON-RÉGRESSION :
+    l'ancienne heuristique DATE (prochain_millesime_at échu) est comparée au nouveau passage réel.
+    N'est plus enregistré au registre des jobs ; ne tourne plus en production."""
     db = ctx.db
     alertes = []
     for nom in ("DVF", "cadastre"):
         r = db.execute(text("SELECT source_millesime, prochain_millesime_at FROM data_sources "
                             "WHERE name ILIKE :n ORDER BY updated_at DESC LIMIT 1"),
                        {"n": f"%{nom}%"}).mappings().first()
-        if r and r["prochain_millesime_at"] and r["prochain_millesime_at"] <= datetime.now(timezone.utc):
+        # prochain_millesime_at est un DATE : comparer à une DATE (l'ancien code comparait à un datetime
+        # → TypeError latent dès qu'une source portait cette date ; corrigé ici, la reprise le rend sain).
+        if r and r["prochain_millesime_at"] and r["prochain_millesime_at"] <= datetime.now(timezone.utc).date():
             alertes.append(f"{nom} : un millésime postérieur à {r['source_millesime']} devrait être paru.")
     if alertes:
         _envoyer_alerte("Sentinelle DVF/cadastre :\n- " + "\n- ".join(alertes)

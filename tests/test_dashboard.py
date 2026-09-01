@@ -190,7 +190,8 @@ def test_ia_conso_et_quota_editable(client, engine, compte_test):
 def test_sources_cadence_et_badge(client, engine):
     """D6 — cadence réglable par source + badge « À mettre à jour » calculé automatiquement."""
     d = client.get("/admin/sources").json()
-    assert d["sources"] and set(d["synthese"]) == {"a_mettre_a_jour", "ok", "sans_echeance"}
+    # SENTINELLE-1 (W4.2) — la synthèse porte désormais aussi le compte des nouvelles versions + surveillées.
+    assert d["sources"] and set(d["synthese"]) == {"a_mettre_a_jour", "ok", "sans_echeance", "nouvelle_version", "surveillees"}
     sid = d["sources"][0]["id"]
     # pose 'mensuelle' → normalisée ; valeur inconnue → 422
     assert client.post(f"/admin/sources/{sid}/cadence", json={"cadence": "mensuel"}).json()["cadence"] == "mensuelle"

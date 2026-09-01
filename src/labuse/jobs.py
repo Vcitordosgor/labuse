@@ -265,8 +265,11 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     _j("ingest-dpe", "DPE ADEME mensuel", "mensuel (12)", "0 0 12 * *", "04:00 le 12", timeout_s=3600),
     _j("sync-gpu", "Diff PLU des 24 communes → événements de veille foncière + bandeau PLU",
        "mensuel (15)", "0 0 15 * *", "04:00 le 15", timeout_s=1800, envoie_mail=True),
-    _j("sentinelle-dvf-cadastre", "Vérifie un nouveau millésime DVF/cadastre (alerte, n'ingère pas)",
-       "mensuel (20)", "0 0 20 * *", "04:00 le 20", timeout_s=600, envoie_mail=True),
+    # SENTINELLE-1 (W3) — veille QUOTIDIENNE des sources amont (généralise l'ancien sentinelle-dvf-cadastre,
+    # devenu deux lignes de source_veille). Sonde api/page/entete, alerte, n'ingère RIEN. envoie_mail=False :
+    # la notification passe par la cloche admin (event_log systeme), pas par un mail (bruit quotidien évité).
+    _j("sentinelle-sources", "Veille des sources amont : détecte un nouveau millésime et alerte (n'ingère pas)",
+       "quotidien", "0 3 * * *", "07:00", timeout_s=900),
     # K9 — robustesse
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", timeout_s=3600, envoie_mail=True, besoin_db=False),
