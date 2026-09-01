@@ -141,6 +141,9 @@
   @media (hover:hover) and (pointer:fine) {
     .hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
     .hover-fill:hover * { color:var(--ink) !important; }
+    /* RETOURS-6 U2 — carré d'icône des cartes de la fiche commune : sur l'aplat plein, on l'éclaircit
+       (ink translucide) pour que le glyphe (passé en encre sombre par la règle ci-dessus) reste lisible. */
+    .hover-fill:hover .lc-ic { background:rgba(7,16,9,.14); border-color:rgba(7,16,9,.22); }
   }
   /* variante IA (mauve profond) — surfaces IA à aplat plein (ex. « Reprendre » du Copilote). */
   .hover-fill-ia { transition:background .15s, color .15s; }

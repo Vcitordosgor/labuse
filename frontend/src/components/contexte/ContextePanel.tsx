@@ -123,8 +123,13 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, childre
   return (
     <details data-acc={id} open={open} className="group mb-2"
       onToggle={(e) => { const o = (e.currentTarget as HTMLDetailsElement).open; setOpen(o); writeAcc(id, o) }}>
-      <summary data-ligne-carte={id} className="flex cursor-pointer list-none items-center gap-2.5 rounded-xl border border-line-2 bg-surface-2 px-3 py-2.5 transition-colors hover:border-line-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line-2 bg-surface-3 text-[14px] text-txt-mut">{ic}</span>
+      {/* RETOURS-6 U2 — survol PLEIN (aplat vert dégradé, encre sombre) via .hover-fill, comme partout ailleurs :
+          titre, sous-ligne, valeur/chip de droite et chevron s'inversent en encre sombre (`* { color: ink }`).
+          Une carte de la fiche commune sent la même main que les cases d'outils et les lignes de la fiche parcelle. */}
+      <summary data-ligne-carte={id} className="hover-fill flex cursor-pointer list-none items-center gap-2.5 rounded-xl border border-line-2 bg-surface-2 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+        {/* `lc-ic` : au survol plein, le carré d'icône s'éclaircit (aplat ink translucide) pour que le glyphe
+            passé en encre sombre reste lisible — sinon sombre-sur-sombre. Réglé dans index.css (gaté pointeur fin). */}
+        <span className="lc-ic flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line-2 bg-surface-3 text-[14px] text-txt-mut">{ic}</span>
         <span className="min-w-0 flex-1">
           <b className="block text-[13px] font-semibold text-txt-hi">{titre}</b>
           {sous && <span className="block truncate text-[11px] text-txt-mut">{sous}</span>}
