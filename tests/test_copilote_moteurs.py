@@ -43,16 +43,18 @@ def _seed_parcelle(s, idu, *, commune="Saint-Paul", surface=1000, tier="chaude",
         {"run": _run_servi(), "i": idu, "r": rang, "t": tier})
     s.execute(text("INSERT INTO parcel_zone_plu (idu, zone_lib, zone_fam) "
                    "VALUES (:i, :zl, :zf)"), {"i": idu, "zl": zone_lib, "zf": zone_fam})
+    # CONNEXIONS-3 V1 : le Copilote v1 lit la cascade SERVIE run-scopée (`dryrun_cascade_results`
+    # du run servi), plus la table LIVE `cascade_results`. Le seed suit la source réelle.
     if ppr_rouge:
         s.execute(text(
-            "INSERT INTO cascade_results (parcel_id, layer_name, result, detail) "
-            "VALUES (:p, 'risques', 'HARD_EXCLUDE', 'Exclue : PPR zone rouge (inconstructible).')"),
-            {"p": pid})
+            "INSERT INTO dryrun_cascade_results (run_label, parcel_id, layer_name, result, detail) "
+            "VALUES (:run, :p, 'risques', 'HARD_EXCLUDE', 'Exclue : PPR zone rouge (inconstructible).')"),
+            {"run": _run_servi(), "p": pid})
     if abf:
         s.execute(text(
-            "INSERT INTO cascade_results (parcel_id, layer_name, result, severity, detail) "
-            "VALUES (:p, 'abf', 'SOFT_FLAG', 'faible', 'Abords monument historique (~500 m).')"),
-            {"p": pid})
+            "INSERT INTO dryrun_cascade_results (run_label, parcel_id, layer_name, result, severity, detail) "
+            "VALUES (:run, :p, 'abf', 'SOFT_FLAG', 'faible', 'Abords monument historique (~500 m).')"),
+            {"run": _run_servi(), "p": pid})
     return pid
 
 

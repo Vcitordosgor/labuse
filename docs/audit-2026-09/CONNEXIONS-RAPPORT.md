@@ -528,8 +528,9 @@ Chaque DOUTE a été **exécuté** (lecture de code réel + tests ciblés) et **
 **OK** (indéterminé levé, correct) · **CORRIGÉ** (réparé dans CONNEXIONS-2 Partie A ou B, avec test) ·
 **KO-LOURD** (réel, > 30 min, listé avec estimation).
 
-**Bilan : 22/22 tranchés → 15 OK · 6 CORRIGÉS · 1 KO-LOURD restant.** Aucun DOUTE ne cachait un faux
-chiffre servi à l'écran ; le socle métier reste sain.
+**Bilan : 22/22 tranchés → 15 OK · 7 CORRIGÉS · 0 KO-LOURD restant** (le KO-LOURD #6 corrigé en
+CONNEXIONS-3, cf. section finale). Aucun DOUTE ne cachait un faux chiffre servi à l'écran ; le
+socle métier reste sain.
 
 | # | ligne (section) | preuve | verdict | où |
 |---|---|---|---|---|
@@ -538,7 +539,7 @@ chiffre servi à l'écran ; le socle métier reste sain.
 | 3 | A6 · accueil `_cache` (TTL 3600) | clé run import-time ; bascule = restart = purge | **OK** (borné, run-cohérent) | — |
 | 4 | A6 · accueil `_cs_cache` (TTL 300) | idem, requête légère | **OK** (borné) | — |
 | 5 | A6 · protection `_gels_cache` (TTL 30) | `protection.py` reset `at=0` à l'écriture d'un gel | **OK** (auto-invalidé) | — |
-| 6 | A7 · `cascade_results` LIVE via Copilote **v1** | `copilote/moteurs.py:124-131,343` SELECT sans `run_id` ; v1 **est servi** (`CopiloteView`→`/api/copilote/runs`) | **KO-LOURD** | **reste** — run-scoper 4 SELECT vers `dryrun_cascade_results` (schéma ≠, moteur de mission) ; est. 1-2 h. *NB : contredit l'hypothèse « v1 mort » — v1 est vivant.* |
+| 6 | A7 · `cascade_results` LIVE via Copilote **v1** | `copilote/moteurs.py:124-131,343` SELECT sans `run_id` ; v1 **est servi** (`CopiloteView`→`/api/copilote/runs`) | **CORRIGÉ** | **CONNEXIONS-3 · V1** — les 4 SELECT basculés sur `dryrun_cascade_results` run-scopé par `Q_A_RUN_LABEL` (criblage ppr_rouge/ppr_partiel/abf + risques) ; moteur de mission INCHANGÉ ; 5 tests (leurre LIVE + leurre `q_v8_calibre` ignorés, tier = fiche). Schéma : tous les champs lus existent dans la table run-scopée (§V1.2). *v1 est vivant, pas mort.* |
 | 7 | A7 · `veille_succession/signaux_vie/pc_caducs` non run-scopés | réécrits à chaque passe ; lus par les filtres | **OK** (alignés, par conception) | — |
 | 8 | C3 · adresse ambiguë → `items[0]` | les choix SONT proposés + navigables ; Entrée→1er = confort assumé | **OK** | — |
 | 9 | D5 · `ortho_tiles.py MILLESIME="2025"` en dur | — | **CORRIGÉ** | **Lot 6.4** — millésime lu de `data_sources.source_millesime` (`millesime_servi`) |
@@ -557,9 +558,135 @@ chiffre servi à l'écran ; le socle métier reste sain.
 | 22 | O4/H6 + P1-bis · faits d'annonce dans le mail | digest rend prix/commune/url portail ; jamais adresse exacte/photo/description | **OK** (conforme ; arbitrage produit Vic, pas un défaut code) | — |
 
 **Erratum signalé** : KO-15 citait `assemblage.py:216` ; la re-division vivait en `api/moteurs.py:216`
-(corrigée là). **Reste unique** : #6 (Copilote v1 lit la cascade LIVE) — à traiter avec la disposition
-Copilote v1 (le v1 est ENCORE servi, pas obsolète), estimation 1-2 h.
+(corrigée là). **Reste unique** : #6 (Copilote v1 lit la cascade LIVE) — **CORRIGÉ en CONNEXIONS-3**
+(section suivante). **Plus AUCUN KO ni KO-LOURD ouvert dans ce rapport.**
 
 ---
 
-*Fin du rapport. Corrections apportées par CONNEXIONS-2 (Parties A et B) ; DOUTE levés au Lot 10 ci-dessus.*
+## MISE À JOUR CONNEXIONS-3 · Copilote v1 sur la cascade run-scopée (2026-09-01)
+
+Dernier KO ouvert du rapport (DOUTE #6, reclassé KO-LOURD au Lot 10). **Corrigé, testé.**
+
+### V1 — Le Copilote v1 lit désormais la cascade RUN-SCOPÉE
+
+`copilote/moteurs.py` : les **4 SELECT** qui lisaient la table LIVE `cascade_results` (non
+run-scopée, réécrite par parcelle) basculent sur `dryrun_cascade_results`, filtrée par
+`run_label = :run` où `:run = Q_A_RUN_LABEL` (le point de vérité unique versionné,
+`config/served_run.txt`, aujourd'hui `q_v11_m137`) — jamais un run en dur. Les 4 :
+`criblage` ppr_rouge (`:124`), ppr_partiel (`:128`), abf (`:131`), et `risques` (`:343`, batch).
+**Le moteur de mission est INCHANGÉ** : mêmes filtres, mêmes étiquettes, seule la SOURCE change.
+Le Copilote v1 sert désormais exactement la cascade de la fiche écran (comme `anti_fiche` et
+`served_cascade` basculés en Partie A / KO-2).
+
+**V1.2 · Correspondance de schéma (colonne par colonne).** Tous les champs lus par v1 existent dans
+la table run-scopée — aucun équivalent inventé :
+
+| champ lu par v1 | `cascade_results` (LIVE) | `dryrun_cascade_results` (run-scopé) | note |
+|---|---|---|---|
+| `parcel_id` | FK parcels | FK parcels | identique |
+| `layer_name` | `String(64)` | `String(64)` | identique |
+| `result` | enum `cascade_verdict` | `String(16)` = `CascadeVerdict.value` | valeurs littérales identiques (`'HARD_EXCLUDE'`, `'SOFT_FLAG'`) ; comparaisons v1 inchangées |
+| `severity` | enum `severity` | `String(16)` | lue (jamais filtrée) par `risques` ; valeurs `.value` identiques |
+| `detail` | `Text` | `Text` | identique (les `ILIKE '%ppr%'` fonctionnent à l'identique) |
+| — `run_label` — | *absente* | `String(32)` | **la colonne qui manquait à la LIVE** : c'est elle qui scope au run servi |
+
+La table run-scopée porte EN PLUS `source_table`/`source_id`/`evenement` (non lus par v1). Aucun
+champ lu par v1 n'est absent de la table run-scopée : la bascule est franche.
+
+**V1.4 · Test de non-régression** (`tests/test_copilote_v1_run_scope.py`, 5 tests) : un signal PPR
+du run servi exclut la parcelle ; un **leurre** PPR seedé dans la table LIVE **et** sous l'ancien run
+`q_v8_calibre` est **ignoré** (parcelle retenue) — échoue sur l'ancien code (qui lisait la LIVE) ;
+le tier servi au Copilote est celui du run servi, pas d'un leurre `q_v8_calibre` d'un autre tier ;
+`risques` lit le run servi et ignore le leurre LIVE ; VERIFICATION (`scoreur_unitaire`) rend le tier
+du run servi. Le seed des tests `test_copilote_moteurs.py` suit la source réelle
+(`dryrun_cascade_results`).
+
+**V1.5 · Recette croisée (par construction).** Le Copilote v1 et la fiche écran lisent maintenant
+**la même table, le même run** : `parcel_p_score_v2` (tier/rang, `run_id=Q_A_RUN_LABEL`, déjà le cas
+avant) ET `dryrun_cascade_results` (risques/zonage/règles, `run_label=Q_A_RUN_LABEL`, désormais).
+Pour une même parcelle, tier, zonage, risques, capacité (faisabilité = même moteur `parcel_faisabilite`)
+et date de valeur (run épinglé) sont **identiques** — il n'existe plus de chemin par lequel le
+Copilote lourd pourrait servir une valeur que la fiche n'affiche pas. Les tests V1.4 verrouillent
+cette parité (tier, signaux de risque, verdict de vérification).
+
+### V2 — Statut de Copilote v1 (situation réelle, aucune action)
+
+1. **Écrans / missions.** v1 (`/api/copilote/runs`) sert les **missions lourdes** : RECHERCHE
+   (`instruire`/`shortlist`) et VERIFICATION (`verifier_adresse`). Elles sont déclenchées **depuis
+   l'entrée v2** : `CopiloteView` classe l'intention via le routeur v2, et pour RECHERCHE/VERIFICATION
+   appelle `run.instruire(...)` → v1 (`copilote.ts:116`, `CopiloteView.tsx:146-153,195`). v2
+   (`/api/copilote-v2/ask`) couvre le conversationnel/factuel/notion/web ; il **ne couvre pas** la
+   cascade lourde parcelle-par-parcelle (criblage → filtre géométrique → faisabilité de TOUS les
+   survivants → risques → charge foncière live → budget → champion P). C'est le seul domaine v1.
+2. **Expérience utilisateur.** L'utilisateur voit **UNE** surface (le Copilote v2 conversationnel).
+   v1 est de la **plomberie invisible** : la mission lourde s'affiche dans le même fil (récap de
+   confirmation, puis run streamé par SSE). Il ne bascule pas entre « deux Copilotes » ; il n'y a
+   pas deux expériences distinctes à l'écran.
+3. **V2.3 · Les deux budgets de quota — le plafond des missions lourdes est-il par compte ou
+   global ?** **PAR COMPTE.** `api/copilote.py:96-99` : le sujet du compteur est
+   `_sujet_quota(request)` = `f"c:{compte_id}"` quand un compte est connecté (repli sujet
+   session/IP pour le bucket pilote). Le compteur `usage_compteurs (jour, sujet, kind='agent')` est
+   donc **cloisonné par compte** — chaque compte a ses propres 10 runs/jour ; un compte **ne peut
+   pas** épuiser le quota des autres. **Aucun défaut de cloisonnement.** Nuance : la *valeur* du
+   plafond est la config globale `s.copilote_quota_jour` (défaut 10, identique pour tous) ; v1 ne
+   lit pas l'override par compte `comptes.copilote_quota_jour` du dashboard (c'est l'objet de KO-3,
+   côté v2/NL — hors périmètre de ce mandat). Le v2/NL partage désormais `quota_du_compte` (Partie A
+   lot 2) ; v1 garde ce plafond distinct de 10 runs/jour, per-compte.
+4. **Recommandation (5 lignes, décision = Vic).** Garder les deux à court terme : v1 est le seul
+   moteur de la mission lourde (aucune régression fonctionnelle à le retirer aujourd'hui), et il est
+   désormais aligné sur le run servi (plus de contradiction avec la fiche). À moyen terme, la
+   convergence naturelle est d'**absorber v1 dans v2** en exposant la mission lourde comme un outil
+   v2 (entrée unique, un seul plafond `quota_du_compte`, un seul historique). Retirer v1 sans
+   réimplémenter la cascade lourde côté v2 amputerait RECHERCHE/VERIFICATION — à ne PAS faire tant
+   que v2 ne porte pas la cascade. Fusion > statu quo > retrait.
+
+### V3 — Vérification finale du rapport
+
+1. **Aucun KO ouvert.** Après V1, la table du Lot 10 ne porte plus de KO-LOURD ; tous les KO du
+   corps du rapport ont été traités en CONNEXIONS-2 (Parties A/B) ou ici. Ligne #6 et synthèse
+   mises à jour ci-dessus.
+2. **V3.2 · Grep exhaustif — aucune lecture de `cascade_results` LIVE ne subsiste dans un chemin
+   servi.** `grep -rn "cascade_results" src/ scripts/ | grep -v dryrun` → toutes les occurrences sont
+   classées :
+   - **Écriture (producteur, conservé)** : `cascade/pipeline.py:172-173` (DELETE+INSERT par
+     parcelle) — le pipeline écrit encore la table LIVE ; on ne supprime aucune table (mandat).
+   - **Schéma / relation** : `models.py:87,153,163,178,209`, `cascade/base.py:20`.
+   - **Commentaires** (rail déclaré mort) : `served_cascade.py:6`, `anti_fiche.py:6,53`,
+     `app.py:4709,4713`, `scoring/opportunity.py:7`, `cli.py:567`, `ingestion/{seed_sources,run_all}.py`,
+     `copilote/moteurs.py:337` (le nouveau, qui pointe vers la bascule).
+   - **Listes de troncature/reset** (maintenance, pas une lecture de donnée servie) :
+     `state.py:28`, `ingestion/demo_saint_paul.py:87`, `scripts/lot2_import_saint_paul.py:46`,
+     `scripts/import_commune_gold_standard.py:37`.
+   - **Deux lectures restantes, HORS chemin servi — justifiées** : `demo.py:168` (auto-contrôle du
+     builder de démo `labuse demo` : compte les motifs `declassement` de la table que le pipeline
+     vient d'écrire, en OR avec le contrôle run-scopé `n_fp` ; offline, jamais servi à un
+     utilisateur) et `scripts/gpu_witness_test.py:117` (script diagnostic ad-hoc de témoin de zonage
+     GPU, inspection manuelle de quelques IDU ; offline). Aucune des deux n'alimente la fiche, les
+     exports, les jobs, une API ou une CLI utilisateur ; toutes deux lisent volontairement le dernier
+     calcul live du pipeline pour vérifier ce même pipeline. **Zéro lecture LIVE dans un chemin
+     servi.**
+3. **V3.3 · Tables / endpoints marqués obsolètes depuis CONNEXIONS-2 (futur mandat d'hygiène — RIEN
+   supprimé)** :
+   - **`cascade_results` (table LIVE)** : plus AUCUN lecteur servi (anti_fiche + shortlist basculés
+     en Partie A, Copilote v1 basculé ici). Encore écrite par `cascade/pipeline.py`. Candidate n°1 à
+     la suppression une fois le pipeline sevré de son écriture.
+   - **`parcel_evaluations.status`** : verdict legacy éteint (M37), colonne physique archivée par
+     renommage puis droppée (M46) ; plus mappée ni lue.
+   - **Constantes de run en dur `q_v8_calibre`** (hors fichier versionné) : `scoring/lignee_tete.py:25`
+     (défaut, inerte tant que `LABUSE_M28_BADGES` OFF) et `bascule_gardes.py:31` (outil de bascule,
+     fonctions `check_*` jamais appelées dans `src`). Inertes (Lot 10 #1-2) ; `served_cascade.py:20`
+     était la 3ᵉ, supprimée en Partie A (KO-1).
+   - **`courrier_envois`** (envoi direct session/IP, provider stub) : marqué obsolète en Partie A
+     (Lot 4), dormant jusqu'à activation Merci Facteur.
+   - **`copilote_v2_missions_jour`** (`config.py:259`) : marqué OBSOLÈTE au profit de
+     `copilote_quota_jour` / `quota_du_compte`.
+   - **`veilles` (table)** : en extinction au profit de `watch_zones` (cf. RETOURS/veille-fantômes,
+     hors périmètre de ce rapport mais noté pour l'hygiène).
+
+**Bilan CONNEXIONS-3** : dernier KO du rapport corrigé ; le Copilote lourd est aligné au run servi ;
+quota v1 confirmé per-compte (pas de faille) ; grep prouve zéro lecture LIVE servie restante.
+
+---
+
+*Fin du rapport. Corrections apportées par CONNEXIONS-2 (Parties A et B) ; DOUTE levés au Lot 10 ;
+dernier KO-LOURD corrigé en CONNEXIONS-3 ci-dessus.*
