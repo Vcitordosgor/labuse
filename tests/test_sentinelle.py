@@ -128,6 +128,8 @@ def test_passer_ecrit_source_veille_jamais_data_sources_et_notifie_une_fois(engi
                          {"s": sid}).mappings().first()
         assert row["dernier_statut"] == "nouvelle_version" and row["dernier_vu"] == "2026-S1"
         assert row["dernier_notifie_vu"] == "2026-S1"   # X5 — le millésime annoncé est mémorisé
+        # X6 DOCTRINE — détecter une nouvelle version n'INJECTE JAMAIS : le pont est un clic humain.
+        assert db.execute(text("SELECT injection_lancee_at FROM source_veille WHERE source_id=:s"), {"s": sid}).scalar() is None
         # data_sources JAMAIS touché : le millésime servi n'a pas bougé.
         assert db.execute(text("SELECT source_millesime FROM data_sources WHERE id=:s"), {"s": sid}).scalar() == "2025-S2"
         n = db.execute(text("SELECT count(*) FROM event_log WHERE dedup=:d"), {"d": dd}).scalar()
@@ -329,6 +331,51 @@ def test_endpoint_active_toggle(client, engine):
     with session_scope() as db:
         assert db.execute(text("SELECT actif FROM source_veille WHERE source_id=:s"), {"s": sid}).scalar() is False
     assert client.post(f"/admin/sources/{sid}/veille/active", json={"actif": True}).json()["actif"] is True
+
+
+# ─────────────────────────── X6 · le pont supervisé « Injecter cette version » ───────────────────────────
+
+def test_x6_injecter_lance_le_job_existant_et_trace_le_geste(client, engine, monkeypatch):
+    """X6 — sur clic (endpoint), on lance le JOB D'INGESTION EXISTANT (même commande que le cron) et on
+    TRACE le geste (injection_lancee_at + millésime). Le subprocess est stubé : on vérifie qu'il PART."""
+    from labuse.db import session_scope
+    lance = {}
+    class _FakePopen:
+        def __init__(self, argv, **kw): lance["argv"] = argv
+    monkeypatch.setattr("subprocess.Popen", _FakePopen)   # ne lance rien pour de vrai en test
+    with session_scope() as db:
+        sid = _source(db, "BODACC (procédures collectives)", millesime="2025")   # matche le motif « BODACC% »
+        _veille(db, sid, "api", "http://x/b", selecteur="metas.default.modified")
+        db.execute(text("UPDATE source_veille SET dernier_statut='nouvelle_version', dernier_vu='2026' WHERE source_id=:s"), {"s": sid})
+        db.commit()
+    r = client.post(f"/admin/sources/{sid}/veille/injecter").json()
+    assert r["ok"] and r["label"] == "bodacc" and r["millesime"] == "2026"
+    assert lance.get("argv"), "le job d'ingestion existant doit être lancé"
+    with session_scope() as db:
+        row = db.execute(text("SELECT injection_lancee_at, injection_vu FROM source_veille WHERE source_id=:s"),
+                         {"s": sid}).mappings().first()
+    assert row["injection_lancee_at"] is not None and row["injection_vu"] == "2026"
+
+
+def test_x6_injecter_404_si_non_surveillee(client, engine):
+    from labuse.db import session_scope
+    with session_scope() as db:
+        sid = _source(db, "TEST x6 non surveillée")
+        db.commit()
+    assert client.post(f"/admin/sources/{sid}/veille/injecter").status_code == 404
+
+
+def test_x6_injecter_404_si_aucune_commande_dingestion(client, engine, monkeypatch):
+    """Pas de commande mappée = injection MANUELLE : 404 honnête, le front n'affiche pas le bouton
+    (mention « injection manuelle »). On stube Popen pour prouver qu'AUCUN lancement n'a lieu."""
+    from labuse.db import session_scope
+    monkeypatch.setattr("subprocess.Popen", lambda *a, **k: (_ for _ in ()).throw(AssertionError("ne doit pas lancer")))
+    with session_scope() as db:
+        sid = _source(db, "TEST x6 sans commande mappée")   # ne matche aucun motif du YAML
+        _veille(db, sid, "api", "http://x/z", selecteur="v")
+        db.execute(text("UPDATE source_veille SET dernier_statut='nouvelle_version', dernier_vu='2026' WHERE source_id=:s"), {"s": sid})
+        db.commit()
+    assert client.post(f"/admin/sources/{sid}/veille/injecter").status_code == 404
 
 
 def test_verifier_maintenant_404_si_non_surveillee(client, engine):

@@ -185,3 +185,17 @@
 |---|---|---|---|
 | INPI RNE (dirigeants) | — | non surveillée | API authentifiée interrogée par SIREN — pas de millésime global. |
 | Recherche d'entreprises (DINUM) | Sirene INSEE / RNE INPI (api.gouv. | non surveillée | API de recherche live (agrégat Sirene/RNE) — pas de millésime ingéré à comparer. |
+
+## X6 — « Injecter cette version » (le pont supervisé)
+
+Depuis la notification (son lien ouvre la page Sources) **et** le panneau, chaque source qui a une
+nouvelle version ET une commande d'ingestion connue porte un bouton **« Injecter cette version »** :
+confirmation explicite (nomme source + millésime) → lancement du **job d'ingestion EXISTANT** (la même
+commande que le cron, détachée) → suivi visible (message + trace `injection_lancee_at` au tableau +
+panneau CRON / `ingestion_runs`). **Aucune ingestion ne part sans ce clic humain ; la sentinelle, elle,
+n'ingère jamais** (doctrine intacte — vérifié par test : détecter une version ne pose pas `injection_lancee_at`).
+
+Sources **injectables en un clic** (commande mappée dans `config/sources_ingestion.yaml`, 5) : **DVF,
+BODACC, DPE ADEME, Base Adresse Nationale, SITADEL**. Les autres surveillées affichent « injection
+manuelle » (pas de commande auto — honnête, pas de faux bouton) ; ajouter une entrée au YAML les rend
+injectables sans changer de code.

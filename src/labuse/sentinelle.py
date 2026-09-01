@@ -471,7 +471,8 @@ def _emettre_digest(db, neuf: list[dict], echec: list[dict]) -> bool:
         lignes.append("Sondes en échec persistant (la sentinelle a échoué, PAS la donnée) :")
         lignes += [f"• {d['row']['source_nom']} : {d['sonde'].message or d['sonde'].statut}" for d in echec]
     if n_neuf:
-        lignes.append("Geste supervisé : Vic déclenche chaque ingestion (rien n'entre sans validation).")
+        lignes.append("Geste supervisé : ouvrez la page Sources et cliquez « Injecter cette version » sur "
+                      "la source voulue — rien n'entre sans ce clic (la sentinelle n'ingère jamais).")
     # clé de dédup = l'ensemble ANNONCÉ (sids neufs + sids en échec) → stable, un même passage ne double pas.
     sig = "n:" + ",".join(str(d["row"]["source_id"]) + ":" + str(d["sonde"].vu) for d in neuf) \
         + "|e:" + ",".join(str(d["row"]["source_id"]) for d in echec)

@@ -14,12 +14,13 @@ const src = (over: Partial<AdminSource> & { id: number; name: string }): AdminSo
   a_jour: true, relance: null, affichage_desactive: false, fournisseur: 'IGN',
   veille: { surveillee: false, actif: null, methode: null, statut: null, millesime_amont: null,
     nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false,
-    raison: 'Import manuel — pas d\'URL de version.' },
+    raison: 'Import manuel — pas d\'URL de version.', injectable: false, injection_lancee_at: null, injection_vu: null },
   ...over,
 })
 const surv = (o: Partial<AdminSource['veille']>): AdminSource['veille'] => ({
   surveillee: true, actif: true, methode: 'page', statut: 'ok', millesime_amont: null,
-  nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false, raison: null, ...o,
+  nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false, raison: null,
+  injectable: false, injection_lancee_at: null, injection_vu: null, ...o,
 })
 
 const renderPanel = (sources: AdminSource[]) => {
@@ -72,5 +73,18 @@ describe('SENTINELLE-2 — panneau de veille des sources', () => {
     fireEvent.click(getByText(/Non surveillée/))
     expect(getByText('Manuelle Y')).toBeTruthy()
     expect(queryByText('Surveillée X')).toBeNull()
+  })
+
+  // SENTINELLE-2 (X6) — « Injecter cette version » : sur nouvelle version SI une commande existe.
+  it('propose « Injecter cette version » sur une nouvelle version injectable, pas sinon', () => {
+    const sources = [
+      src({ id: 1, name: 'DVF neuf injectable', veille: surv({ statut: 'nouvelle_version', nouvelle_version: true, millesime_amont: '2026', injectable: true }) }),
+      src({ id: 2, name: 'IGN neuf non-injectable', veille: surv({ statut: 'nouvelle_version', nouvelle_version: true, millesime_amont: '2026', injectable: false }) }),
+      src({ id: 3, name: 'À jour', veille: surv({ injectable: true }) }),
+    ]
+    const { getByText, queryAllByText } = renderPanel(sources)
+    expect(getByText('Injecter cette version')).toBeTruthy()   // 1 seul bouton (source injectable + neuve)
+    expect(queryAllByText('Injecter cette version').length).toBe(1)
+    expect(getByText('injection manuelle')).toBeTruthy()        // neuve mais sans commande → mention honnête
   })
 })

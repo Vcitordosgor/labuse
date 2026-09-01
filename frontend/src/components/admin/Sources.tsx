@@ -5,7 +5,7 @@
 // « Agent de veille » (V2 — spec : docs/audit-2026-08/DASHBOARD/AGENT-VEILLE-SPEC.md).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getAdminSources, getHealthzCrons, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceVeilleActive, postAdminSourceVeilleVerifier, type AdminSource } from '../../lib/api'
+import { getAdminSources, getHealthzCrons, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceVeilleActive, postAdminSourceVeilleInjecter, postAdminSourceVeilleVerifier, type AdminSource } from '../../lib/api'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
 
 const fmtReu = (iso?: string | null) => {
@@ -98,6 +98,14 @@ function VeilleRow({ s }: { s: AdminSource }) {
     mutationFn: (actif: boolean) => postAdminSourceVeilleActive(s.id, actif),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-sources'] }),
   })
+  // SENTINELLE-2 (X6) — « Injecter cette version » : sur clic humain confirmé, lance le job d'ingestion
+  // EXISTANT (rien n'entre sans ce clic). Le suivi est visible (message + trace injection_lancee_at +
+  // panneau CRON / ingestion_runs).
+  const injecter = useMutation({
+    mutationFn: () => postAdminSourceVeilleInjecter(s.id),
+    onSuccess: (r) => { setMsg(`Injection lancée (${r.label})${r.millesime ? ` → ${r.millesime}` : ''} — suivi dans « CRON nocturne / ingestion_runs ».`); qc.invalidateQueries({ queryKey: ['admin-sources'] }) },
+    onError: () => setMsg("Injection impossible (aucune commande d'ingestion connue ?)."),
+  })
   // SENTINELLE-2 (X3.3) — une source SANS ligne de veille : état EXPLICITE « non surveillée » + raison
   // en infobulle (jamais un blanc, jamais une fausse erreur), pas d'action.
   if (!v.surveillee) {
@@ -130,6 +138,18 @@ function VeilleRow({ s }: { s: AdminSource }) {
           : <Chip>jamais sondée</Chip>}
       </td>
       <td className="px-3 py-2 text-right">
+        {/* SENTINELLE-2 (X6) — le pont supervisé : n'apparaît QUE sur une nouvelle version ET si une
+            commande d'ingestion existe. Confirmation explicite nommant source + millésime ; le clic
+            lance le job EXISTANT. Sans commande : mention « injection manuelle », pas de bouton. */}
+        {v.nouvelle_version && v.injectable && (
+          <ActBtn tone="mint" disabled={injecter.isPending} data-injecter={s.id}
+            onClick={() => { if (window.confirm(`Injecter « ${v.millesime_amont ?? 'la nouvelle version'} » pour « ${s.name} » ?\n\nLance le job d'ingestion EXISTANT (même commande que le cron, détachée — peut durer plusieurs minutes). Rien n'entre sans ce clic ; la sentinelle, elle, n'ingère jamais.`)) injecter.mutate() }}>
+            {injecter.isPending ? 'Lancement…' : 'Injecter cette version'}
+          </ActBtn>
+        )}
+        {v.nouvelle_version && !v.injectable && (
+          <span className="mr-1 text-[10.5px] text-txt-dim" title="Aucune commande d'ingestion mappée pour cette source : injection manuelle.">injection manuelle</span>
+        )}
         <ActBtn tone="ghost" disabled={verifier.isPending} onClick={() => verifier.mutate()}>
           {verifier.isPending ? 'Sonde…' : 'Vérifier maintenant'}
         </ActBtn>
@@ -137,6 +157,9 @@ function VeilleRow({ s }: { s: AdminSource }) {
           onClick={() => active.mutate(!(v.actif ?? true))}>
           {v.actif === false ? 'Réactiver la veille' : 'Suspendre la veille'}
         </ActBtn>
+        {v.injection_lancee_at && (
+          <div className="mt-0.5 text-[10px] text-txt-dim">injection lancée le {fmtReu(v.injection_lancee_at)}{v.injection_vu ? ` (${v.injection_vu})` : ''}</div>
+        )}
       </td>
     </tr>
   )

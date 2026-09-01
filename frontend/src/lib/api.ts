@@ -1171,6 +1171,11 @@ export interface AdminSourceVeille {
   echecs: number
   echec_confirme: boolean
   raison: string | null
+  // SENTINELLE-2 (X6) — `injectable` = une commande d'ingestion existe → bouton « Injecter cette version ».
+  // Trace de la dernière injection déclenchée À LA MAIN par Vic (jamais la sentinelle) : suivi visible.
+  injectable: boolean
+  injection_lancee_at: string | null
+  injection_vu: string | null
 }
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
@@ -1199,6 +1204,9 @@ export const postAdminSourceVeilleVerifier = (id: number) =>
   j<{ ok: boolean; statut: string | null; millesime_amont: string | null; servi: string | null; message: string | null; notifs: number }>(`/admin/sources/${id}/veille/verifier`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminSourceVeilleActive = (id: number, actif: boolean) =>
   j<{ ok: boolean; actif: boolean }>(`/admin/sources/${id}/veille/active`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
+// SENTINELLE-2 (X6) — « Injecter cette version » : sur clic humain, lance le job d'ingestion EXISTANT.
+export const postAdminSourceVeilleInjecter = (id: number) =>
+  j<{ ok: boolean; label: string; log: string; millesime: string | null }>(`/admin/sources/${id}/veille/injecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const getHealthzCrons = () =>
   j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
 // D7 — Produit
