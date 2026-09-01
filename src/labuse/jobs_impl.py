@@ -346,9 +346,13 @@ def sentinelle_sources(ctx: JobContext) -> None:
     d'affilée (X5.2). Généralise l'ancien `sentinelle-dvf-cadastre`. Surveille et prévient — n'ingère rien."""
     from . import sentinelle
     recap = sentinelle.passer(ctx.db, notifier=True)
+    # SENTINELLE-3 (Y4) — même passage : rappel de rafraîchissement des sources MANUELLES (PAS une sonde
+    # amont — aucun appel réseau ; « donnée manuelle non rafraîchie depuis N jours », une fois par dépassement).
+    rap = sentinelle.passer_rappels(ctx.db, notifier=True)
     ctx.compte(sondees=recap["sondees"], nouvelles=recap["nouvelles"],
                injoignables=recap["injoignables"], illisibles=recap["illisibles"],
-               notifs=recap["notifs"], details=recap["details"])
+               notifs=recap["notifs"] + rap["notifs"],
+               rappels=rap["rappels"], rappels_en_retard=rap["retards"], details=recap["details"])
 
 
 def sentinelle_dvf_cadastre(ctx: JobContext) -> None:

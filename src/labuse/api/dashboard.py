@@ -716,7 +716,9 @@ def admin_sources(request: Request) -> dict:
             "       v.actif AS veille_actif, v.methode AS veille_methode, v.dernier_statut AS veille_statut,"
             "       v.dernier_vu AS veille_vu, v.dernier_passage_at AS veille_passage, v.dernier_message AS veille_message,"
             "       v.echecs_consecutifs AS veille_echecs,"
-            "       v.injection_lancee_at AS veille_inj_at, v.injection_vu AS veille_inj_vu"
+            "       v.injection_lancee_at AS veille_inj_at, v.injection_vu AS veille_inj_vu,"
+            # SENTINELLE-3 (Y4) — rappel de rafraîchissement des sources manuelles.
+            "       v.cadence_attendue_jours AS veille_cadence_attendue, v.convention_echeance AS veille_convention"
             " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id ORDER BY d.name")).mappings()]
         runs = [dict(r) for r in c.execute(text(
             "SELECT r.started_at, r.finished_at, r.status, r.parcels_count, d.name"
@@ -749,7 +751,11 @@ def admin_sources(request: Request) -> dict:
             # `raison` (X3.3) = pourquoi une source N'EST PAS surveillée (infobulle, jamais un blanc).
             "fournisseur": r.get("provider"),
             "veille": {
-                "surveillee": r.get("veille_actif") is not None,
+                # SENTINELLE-3 (Y5.4) — `nature` distingue les 4 états : version détectable (api/page),
+                # changement détectable (entete/temoin), rappel manuel (Y4), non surveillable (rien).
+                # `surveillee` = une VRAIE sonde amont existe (un rappel manuel n'en est PAS une).
+                "nature": sentinelle.nature(r.get("veille_methode")),
+                "surveillee": r.get("veille_methode") in ("api", "page", "entete", "temoin"),
                 "actif": bool(r.get("veille_actif")) if r.get("veille_actif") is not None else None,
                 "methode": r.get("veille_methode"),
                 "statut": r.get("veille_statut"),
@@ -761,12 +767,23 @@ def admin_sources(request: Request) -> dict:
                 # sonde en échec CONFIRMÉ (≥3 passages ratés) : distinct d'un aléa transitoire (X5.2).
                 "echec_confirme": (r.get("veille_statut") in ("injoignable", "illisible")
                                    and int(r.get("veille_echecs") or 0) >= sentinelle.SEUIL_ECHECS_NOTIF),
-                "raison": None if r.get("veille_actif") is not None else sentinelle.raison_non_surveillee(r["name"]),
+                # raison précise (X3.3) tant que ce N'EST PAS une vraie sonde (non surveillée OU rappel manuel).
+                "raison": None if r.get("veille_methode") in ("api", "page", "entete", "temoin")
+                          else sentinelle.raison_non_surveillee(r["name"]),
                 # SENTINELLE-2 (X6) — `injectable` = une commande d'ingestion existe (sinon injection
                 # manuelle, pas de bouton). Trace de la dernière injection déclenchée à la main par Vic.
                 "injectable": relance is not None,
                 "injection_lancee_at": r["veille_inj_at"].isoformat() if r.get("veille_inj_at") else None,
                 "injection_vu": r.get("veille_inj_vu"),
+                # SENTINELLE-3 (Y4) — rappel manuel : cadence attendue + retard calculé (last_sync_at),
+                # échéance de convention si connue. `rappel_retard` = donnée manuelle non rafraîchie à temps.
+                "cadence_attendue_jours": r.get("veille_cadence_attendue"),
+                "convention_echeance": r["veille_convention"].isoformat() if r.get("veille_convention") else None,
+                "jours_depuis_maj": (now - r["last_sync_at"]).days if r.get("last_sync_at") else None,
+                "rappel_retard": bool(
+                    r.get("veille_methode") == "rappel" and r.get("veille_cadence_attendue") is not None
+                    and r.get("last_sync_at") is not None
+                    and (now - r["last_sync_at"]).days > r["veille_cadence_attendue"]),
             },
         })
     # « à mettre à jour » d'abord (mandat), puis nom
@@ -784,7 +801,12 @@ def admin_sources(request: Request) -> dict:
                          # SENTINELLE-2 (X4) — pour le tableau à 30+ lignes : sondes en échec confirmé,
                          # et sources non surveillées (état explicite, pas un blanc).
                          "sonde_echec": sum(1 for s in sources if s["veille"]["echec_confirme"]),
-                         "non_surveillees": sum(1 for s in sources if not s["veille"]["surveillee"])},
+                         "non_surveillees": sum(1 for s in sources if not s["veille"]["surveillee"]),
+                         # SENTINELLE-3 — ventilation par nature (Y5.4) + rappels manuels en retard (Y4).
+                         "version": sum(1 for s in sources if s["veille"]["nature"] == "version"),
+                         "changement": sum(1 for s in sources if s["veille"]["nature"] == "changement"),
+                         "rappels": sum(1 for s in sources if s["veille"]["nature"] == "rappel"),
+                         "rappels_en_retard": sum(1 for s in sources if s["veille"]["rappel_retard"])},
             "cadences": list(CADENCES.keys()),
             "runs": runs}
 
@@ -800,9 +822,12 @@ def admin_source_veille_verifier(source_id: int, request: Request) -> dict:
     from ..db import session_scope
     from .. import sentinelle
     with session_scope() as s:
-        existe = s.execute(text("SELECT 1 FROM source_veille WHERE source_id = :i"), {"i": source_id}).scalar()
+        # SENTINELLE-3 — une vraie SONDE seulement (un 'rappel' manuel n'est pas sondable : 404 honnête).
+        existe = s.execute(text("SELECT 1 FROM source_veille WHERE source_id = :i"
+                                " AND methode IN ('api', 'page', 'entete', 'temoin')"),
+                           {"i": source_id}).scalar()
         if not existe:
-            raise HTTPException(404, "Cette source n'est pas surveillée (aucune ligne de veille).")
+            raise HTTPException(404, "Cette source n'est pas surveillée (aucune sonde amont).")
         recap = sentinelle.passer(s, source_ids=[source_id], forcer=True, notifier=True, delai_s=0)
         s.commit()
     detail = recap["details"][0] if recap["details"] else {}

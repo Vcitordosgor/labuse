@@ -5,16 +5,26 @@ n'ingère rien, ne remplace aucune donnée, n'écrit JAMAIS dans `data_sources`.
 à jour. Elle ne visite JAMAIS un portail d'annonces — uniquement les fournisseurs de données publiques
 (IGN, DGFiP, INSEE, Sitadel, BAN, DHUP…). Détection 100 % mécanique : dates, motifs, en-têtes ; zéro LLM.
 
-TROIS MÉTHODES, PAS PLUS (W2), chacune déclarée par la source dans `source_veille.methode` :
+QUATRE MÉTHODES (W2 + SENTINELLE-3 Y3), chacune déclarée par la source dans `source_veille.methode` :
   · `api`    — le fournisseur expose un JSON de versions. `selecteur` = chemin JSON (`a.b.0.c`).
   · `page`   — page HTML, `selecteur` = regex de millésime (ex. `20\\d{2}-S[12]`) ; on garde le PLUS récent.
   · `entete` — pas de millésime lisible : on compare `Last-Modified`/`ETag` au dernier vu (`dernier_entete`).
+  · `temoin` — (SENTINELLE-3) API de REQUÊTE sans notion de version : on fige une requête témoin et on
+               compare une EMPREINTE stable de la réponse (`selecteur` = chemin JSON vers un agrégat
+               stable — un compte, une liste courte — ou None pour la réponse entière) au dernier passage.
+               Elle ne nomme AUCUNE version : elle dit « la donnée amont a changé ». L'empreinte est
+               mémorisée dans `dernier_entete` (même colonne que `entete` : un marqueur opaque).
+
+`api`/`page` détectent une VERSION (millésime comparable) ; `entete`/`temoin` détectent un CHANGEMENT
+(sans nommer de version). Une 5e valeur, `rappel` (Y4), n'est PAS une sonde : c'est un rappel de
+rafraîchissement posé sur une source MANUELLE (aucun amont public) — jamais interrogé (cf. `_lignes_a_sonder`).
 
 Une source injoignable/illisible n'est PAS une source en erreur : c'est la SENTINELLE qui a échoué,
 pas la donnée (W3.5 — les deux états restent distincts partout).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import time
@@ -131,6 +141,41 @@ def sonder_entete(url: str, dernier_entete: str | None) -> Sonde:
     return Sonde("ok", vu=val, entete=val)
 
 
+def _empreinte(val) -> str:
+    """Empreinte STABLE et COMPACTE d'une valeur témoin (Y3). Scalaire (compte, date) → sa chaîne ;
+    liste/dict → longueur + hachage court. On ne stocke JAMAIS la réponse entière, juste de quoi
+    constater qu'elle a changé — et jamais un horodatage volatil (le témoin doit porter sur un agrégat
+    stable, cf. doctrine Y3 : sinon l'empreinte n'a aucun sens et il faut écarter la source)."""
+    if isinstance(val, (str, int, float, bool)):
+        return str(val).strip()
+    canon = json.dumps(val, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    h = hashlib.sha256(canon.encode("utf-8")).hexdigest()[:16]
+    n = len(val) if isinstance(val, (list, dict)) else 0
+    return f"{n}:{h}"
+
+
+def sonder_temoin(url: str, selecteur: str | None, empreinte_prec: str | None) -> Sonde:
+    """`temoin` (SENTINELLE-3 Y3) — requête TÉMOIN figée sur une API sans notion de version : on lit une
+    EMPREINTE stable de la réponse (`selecteur` = chemin JSON vers un agrégat stable, ou None = réponse
+    entière) et on la compare au dernier passage. Ne nomme AUCUNE version : signale « la donnée amont a
+    changé ». Premier passage = baseline (ok, mémorise l'empreinte dans `dernier_entete`, marqueur opaque)."""
+    status, _, corps = _http(url)
+    if status >= 400:
+        return Sonde("injoignable", message=f"HTTP {status}")
+    try:
+        data = json.loads(corps)
+    except ValueError:
+        return Sonde("illisible", message="réponse non-JSON")
+    val = _json_pointe(data, selecteur) if selecteur else data
+    if val is None:
+        return Sonde("illisible", message=f"chemin JSON introuvable : {selecteur}")
+    emp = _empreinte(val)
+    if empreinte_prec and emp != empreinte_prec:
+        return Sonde("nouvelle_version", vu=emp, entete=emp,
+                     message="la donnée amont a changé (empreinte de requête témoin) depuis le dernier passage")
+    return Sonde("ok", vu=emp, entete=emp)
+
+
 # ─────────────────────────────── comparaison au millésime SERVI ───────────────────────────────
 
 def _plus_recent(vu: str, servi: str) -> bool:
@@ -169,11 +214,15 @@ def sonder_ligne(row: dict, servi: str | None, *, http=None) -> Sonde:
                 s = sonder_page(url, row.get("selecteur"))
             elif methode == "entete":
                 s = sonder_entete(url, row.get("dernier_entete"))
+            elif methode == "temoin":
+                s = sonder_temoin(url, row.get("selecteur"), row.get("dernier_entete"))
             else:
                 return Sonde("illisible", message=f"méthode inconnue : {methode}")
         except Exception as exc:  # noqa: BLE001 — tout échec réseau/parse = la SENTINELLE a échoué, pas la donnée
             return Sonde("injoignable", message=f"{type(exc).__name__}: {str(exc)[:200]}")
-        return evaluer(s, servi)
+        # `entete`/`temoin` ont déjà tranché (marqueur opaque, aucune notion de « servi ») : on n'applique
+        # la comparaison au millésime servi qu'aux méthodes À VERSION (api/page).
+        return evaluer(s, servi) if methode in ("api", "page") else s
     finally:
         if http is not None:
             _http = _prev
@@ -184,7 +233,9 @@ def sonder_ligne(row: dict, servi: str | None, *, http=None) -> Sonde:
 def _lignes_a_sonder(db, *, source_ids=None, forcer: bool) -> list[dict]:
     """Lignes `actif=true` dont la cadence est ÉCHUE (ou toutes si `forcer`, ou celles ciblées). On
     joint `data_sources` pour lire le millésime SERVI (source_millesime) et le nom (message/notif)."""
-    where = ["v.actif = true"]
+    # SENTINELLE-3 (Y4) — on ne sonde QUE les vraies méthodes de surveillance ; une ligne `rappel`
+    # (source manuelle, rafraîchissement attendu) n'est jamais interrogée sur le réseau.
+    where = ["v.actif = true", "v.methode IN ('api', 'page', 'entete', 'temoin')"]
     params: dict = {}
     if source_ids:
         where.append("v.source_id = ANY(:ids)")
@@ -371,45 +422,103 @@ SEED: list[dict] = [
     {"name": "Classement sonore ITT (Cerema)", "methode": "api",
      "url": "https://cartagene.cerema.fr/server/rest/services/Hosted/Routes_classement_sonore_La_Reunion_V2/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json",
      "selecteur": "count"},
+    # ══════════════════════ SENTINELLE-3 — second passage sur les non surveillées ══════════════════════
+    # Chacune APPELÉE POUR DE VRAI et sa réponse LUE avant inscription (probe réel 2026-09-01, couche
+    # `_http`, UA LABUSE). Détail des pistes essayées : SENTINELLE-INVENTAIRE.md.
+    # ── Y1 · les récupérables ──
+    # DEAL — PPR : le WFS Lizmap DEAL (deal974.lizmap.com, de nouveau joignable) n'expose pas de projet
+    # « risques » ni de date lisible. L'amont RÉEL des PPR est la base GASPAR (Géorisques), qui porte une
+    # `dateModification` par PPR. Requête TÉMOIN figée sur la commune chef-lieu (Saint-Denis 97411) →
+    # empreinte du PPR (déterministe, vérifié) ; une révision DEAL/Géorisques change l'empreinte. PPR = à
+    # fort enjeu (le risque figure dans les fiches parcelles), donc surveillé même par témoin de commune.
+    {"name": "DEAL Réunion — PPR / aléas", "methode": "temoin",
+     "url": "https://georisques.gouv.fr/api/v1/gaspar/pprn?codeInsee=97411&page=1&page_size=50",
+     "selecteur": "content"},
+    # (DEAL WMS/WFS resté non surveillé : le seul jeu data.gouv « NPNRU » est DÉPARTEMENTAL — Bouches-du-
+    #  Rhône, pas la Réunion ; pas d'URL amont honnête. Cf. RAISONS_NON_SURVEILLEES.)
+    # ── Y2 · le hub qui expose un catalogue ──
+    # Région ODS : portail (283 jeux), pas un jeu unique — mais l'API catalogue Opendatasoft v2.1 rend
+    # `total_count`. Témoin sur le NOMBRE de jeux : quand une couche apparaît/disparaît, le catalogue a
+    # évolué (c'est ainsi qu'on apprend qu'un nouveau jeu exploitable existe). `limit=0` = requête ultra-légère.
+    {"name": "Région Réunion Open Data (Opendatasoft)", "methode": "temoin",
+     "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets?limit=0", "selecteur": "total_count"},
+    # ── Y3 · les API de requête → requête témoin (empreinte d'un agrégat stable) ──
+    # Géorisques live (cavités, mouvements de terrain, sites & sols pollués) : pas de millésime, mais un
+    # COMPTE stable par commune. Témoin figé sur Saint-Denis 97411 (commune à risques, déterministe vérifié) ;
+    # une republication BRGM change le compte/empreinte → « la donnée amont a changé ».
+    {"name": "Géorisques — cavités souterraines", "methode": "temoin",
+     "url": "https://www.georisques.gouv.fr/api/v1/cavites?code_insee=97411&page=1&page_size=1", "selecteur": "results"},
+    {"name": "Géorisques — mouvements de terrain", "methode": "temoin",
+     "url": "https://www.georisques.gouv.fr/api/v1/mvt?code_insee=97411&page=1&page_size=1", "selecteur": "results"},
+    # ssp : la réponse groupe casias/instructions/conclusions (pas de compte unique) → empreinte de la
+    # réponse ENTIÈRE (déterministe vérifié, aucun horodatage volatil au sommet).
+    {"name": "Géorisques — sites et sols pollués", "methode": "temoin",
+     "url": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97411&page=1&page_size=200", "selecteur": None},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
 #: (« non surveillée » + raison en infobulle), jamais un blanc ni une fausse erreur. Raison par nom
 #: EXACT ; défaut générique sinon. Ce que chaque famille a coûté est détaillé dans SENTINELLE-INVENTAIRE.md.
+#: SENTINELLE-3 (Y5.3) — chaque raison DIT ce qui a été essayé au second passage (2026-09-01, appels
+#: réels). Les 6 sources récupérées (DEAL PPR/WMS, Région ODS, Géorisques cavités/mvt/ssp) sont passées
+#: au SEED et retirées d'ici.
 RAISONS_NON_SURVEILLEES: dict[str, str] = {
-    # Endpoints de REQUÊTE sans notion de version (API interrogée à la demande, aucun millésime lisible)
-    "Urbanisme PLU/GPU (API Carto)": "API Carto GPU interrogée à la demande (idurba par commune) — aucun millésime global lisible.",
-    "GPU — zonages d'assainissement": "API Carto GPU interrogée à la demande — aucun millésime global lisible.",
+    # API Carto GPU (Géoportail de l'urbanisme) — interrogée PAR GÉOMÉTRIE à l'usage, aucun millésime global.
+    "Urbanisme PLU/GPU (API Carto)": "API Carto GPU interrogée par géométrie à l'usage. Y3 : le point d'entrée `/municipality` ne porte aucun millésime (gid/insee/is_rnu seulement), `/document` exige une géométrie, aucun jeu data.gouv « documents GPU » à `last_update` ; un témoin par parcelle détecterait un changement de PLU commune par commune, mais LABUSE interroge le GPU EN DIRECT (aucun snapshot ingéré à réinjecter).",
+    "GPU — zonages d'assainissement": "API Carto GPU par géométrie (mêmes limites que « Urbanisme PLU/GPU » : pas de millésime global, interrogé en direct sans snapshot ingéré).",
     "GPU — zonages d'assainissement (info-surf typeinf 19)": "Doublon du GPU assainissement (canal info-surf) — même amont, non re-surveillé.",
-    "SUP — assiettes GPU (API Carto)": "API Carto GPU interrogée à la demande — aucun millésime global lisible.",
-    "Géorisques — sites et sols pollués": "Bases BRGM (BASIAS/BASOL/SIS) servies par l'API Géorisques live ; pas de jeu data.gouv national à millésime trouvé.",
-    "Géorisques — cavités souterraines": "Base BRGM cavités servie par l'API Géorisques live ; pas de jeu data.gouv national à millésime trouvé.",
-    "Géorisques — mouvements de terrain": "Base BRGM BDMvt servie par l'API Géorisques live ; pas de jeu data.gouv national à millésime trouvé.",
-    "Recherche d'entreprises (DINUM)": "API de recherche live (agrégat Sirene/RNE) — pas de millésime ingéré à comparer.",
-    "INPI RNE (dirigeants)": "API authentifiée interrogée par SIREN — pas de millésime global.",
-    "OpenStreetMap / Overpass": "OSM en flux continu (planet) — pas de version ; requête live.",
-    "Parkings OSM (loi APER)": "OSM en flux continu — pas de version ; requête live.",
-    "OSM — transport (pôles d'échange & téléphérique)": "OSM en flux continu — pas de version ; requête live.",
-    "INPN / patrinat — espaces protégés": "Couches patrinat servies en WFS Géoplateforme ; pas de jeu data.gouv national espaces protégés à millésime trouvé.",
-    # Portails / proxys injoignables ou hubs (pas un jeu unique)
-    "PEIGEO (hub régional)": "Hub AGORAH injoignable depuis l'infra (HTTP 000) — pas de jeu unique à sonder.",
-    "DEAL Réunion (WMS/WFS)": "Hôte carto DEAL injoignable (servi par proxys) — aucune URL amont stable.",
-    "DEAL Réunion — PPR / aléas": "WFS Lizmap DEAL (requête) — pas de millésime lisible ; hôte souvent indisponible.",
-    "50 pas géométriques — limite haute (DEAL)": "WFS Lizmap DEAL (requête) — pas de millésime lisible.",
-    "Région Réunion Open Data (Opendatasoft)": "Hub/catalogue ODS (275 jeux) — pas un jeu unique ; les jeux servis sont surveillés individuellement.",
-    "Géoplateforme IGN": "Hub IGN (WFS/WMS) — pas un jeu unique ; les produits IGN servis sont surveillés individuellement.",
-    # Réglementaire Légifrance : pages SPA sans millésime lisible, texte à identifiant figé
-    "ZFANG — zone franche d'activité nouvelle génération (Légifrance)": "Page Légifrance rendue en JS (aucun millésime lisible côté serveur) ; un texte modifié reçoit un nouvel identifiant.",
-    "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)": "Page Légifrance rendue en JS (aucun millésime lisible côté serveur) ; un texte modifié reçoit un nouvel identifiant.",
-    # Alimentées à la main / hors automatisation (non surveillables PAR NATURE — réponse valable, X2)
-    "Radar (pige d'annonces)": "Collecte 100 % humaine — non surveillable par nature.",
-    "VRD / assainissement (SPANC)": "Champ manuel EPCI — aucune donnée ouverte fine, pas d'URL.",
-    "Fichiers fonciers (Cerema)": "Sous convention, non ingérée — aucune URL amont publique.",
-    "MOBPRO (mobilités domicile-travail, INSEE)": "Import CSV manuel (abandonné pour l'étude de zone) — pas d'URL de version stable.",
-    "Office de l'eau Réunion — Chroniques de l'eau": "Seed CSV extrait à la main d'un PDF (chronique numérotée) — chaque édition = nouvelle URL, non surveillable proprement.",
+    "SUP — assiettes GPU (API Carto)": "API Carto GPU (assiette-sup-s) par géométrie — pas de millésime global lisible ; interrogé en direct.",
+    "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
+    "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
+    "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",
+    "Parkings OSM (loi APER)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
+    "OSM — transport (pôles d'échange & téléphérique)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
+    "INPN / patrinat — espaces protégés": "Couches patrinat servies en WFS Géoplateforme ; pas de jeu data.gouv national « espaces protégés » à millésime trouvé, ni de requête témoin à agrégat stable.",
+    # Portails / hubs
+    "PEIGEO (hub régional)": "Y2 : peigeo.re répond désormais (200) mais c'est un site WordPress — plus de GeoNetwork/CSW ni d'API de catalogue à sonder (les chemins /geonetwork renvoient 404). Pas un jeu unique.",
+    "DEAL Réunion (WMS/WFS)": "Y1 : hôte carto DEAL (deal974.lizmap.com) de nouveau joignable mais sans URL amont datée ; le seul jeu data.gouv « NPNRU » est DÉPARTEMENTAL (Bouches-du-Rhône), pas Réunion → inscrire son `last_update` serait une fausse veille. La couche QP génération 2024 servie ici est, elle, déjà couverte par « QPV 2024 (ANCT) ».",
+    "50 pas géométriques — limite haute (DEAL)": "Y1 : WFS Lizmap DEAL de nouveau joignable mais sans projet/date lisible ; 0 jeu data.gouv (« 50 pas », « pas géométriques »). Limite domaniale dérivée du cadastre 1877 géoréférencé — donnée quasi statique, aucun millésime ni empreinte amont.",
+    "Géoplateforme IGN": "Y2 : GetCapabilities WFS `data.geopf.fr` répond (200) mais SANS attribut `updateSequence` ni date, et le catalogue n'est pas exposé en JSON. Hub — les produits IGN servis sont surveillés individuellement (data.gouv `last_update`).",
+    # Réglementaire Légifrance — pistes Y1.2 épuisées
+    "ZFANG — zone franche d'activité nouvelle génération (Légifrance)": "Y1 : 0 jeu data.gouv (ZFANG/zone franche outre-mer) ; la page JORF n'a ni ETag ni Last-Modified (Cache-Control no-store → `entete` illisible) et son HTML n'est pas déterministe (jetons dynamiques) → `page` non fiable ; un texte modifié reçoit un nouvel identifiant JORFTEXT.",
+    "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)": "Y1 : les jeux data.gouv « FRR » trouvés sont DÉPARTEMENTAUX (Charente, Corrèze, Nièvre), aucun national ni Réunion ; la page JORF n'a ni ETag ni Last-Modified et son HTML n'est pas déterministe → ni `entete` ni `page` fiable.",
+    # Alimentées à la main — non surveillables PAR NATURE. Y4 : rappel de rafraîchissement (cadence_attendue_jours).
+    "Radar (pige d'annonces)": "Collecte 100 % humaine — non surveillable par nature (aucun amont public). Y4 : rappel de rafraîchissement posé (cadence attendue).",
+    "VRD / assainissement (SPANC)": "Champ manuel EPCI — aucune donnée ouverte fine, pas d'URL amont. Y4 : rappel de rafraîchissement posé.",
+    "Fichiers fonciers (Cerema)": "Sous convention, non ingérée en libre — aucune URL amont publique. Y4 : rappel de rafraîchissement posé (échéance de convention à porter si connue).",
+    "MOBPRO (mobilités domicile-travail, INSEE)": "Import CSV manuel ABANDONNÉ pour l'étude de zone — pas d'URL de version stable, et pas de rafraîchissement attendu (aucun rappel Y4).",
+    "Office de l'eau Réunion — Chroniques de l'eau": "Seed CSV extrait à la main d'un PDF (chronique numérotée) — chaque édition = nouvelle URL, non surveillable proprement. Y4 : rappel de rafraîchissement posé.",
     # Autre
-    "PVGIS (Commission européenne)": "API de calcul (v5.3 dans l'URL) — pas de jeu à millésime ; le service ne versionne pas de données à comparer.",
+    "PVGIS (Commission européenne)": "API de CALCUL (v5.3 dans l'URL) — pas de jeu à millésime, le service ne versionne pas de données à comparer ; aucune requête témoin actionnable (réponse dérivée d'un modèle, pas d'une donnée ingérée).",
 }
+
+#: SENTINELLE-3 (Y4) — les sources MANUELLES (alimentées par Vic, aucun amont public) reçoivent un RAPPEL
+#: de rafraîchissement : au-delà de `cadence_jours` sans nouvelle ingestion (data_sources.last_sync_at),
+#: le panneau/le job signale « donnée manuelle non rafraîchie depuis N jours » (une fois par dépassement).
+#: Ce n'est PAS une sonde amont (methode='rappel', jamais interrogée). `convention_echeance` (date ISO) si
+#: connue — jamais inventée (Fichiers fonciers : la date de convention n'est pas connue ici → None). MOBPRO
+#: est exclu (abandonné, aucun rafraîchissement attendu).
+RAPPELS_MANUELS: list[dict] = [
+    {"name": "Radar (pige d'annonces)", "cadence_jours": 7, "convention_echeance": None},
+    {"name": "VRD / assainissement (SPANC)", "cadence_jours": 365, "convention_echeance": None},
+    {"name": "Fichiers fonciers (Cerema)", "cadence_jours": 365, "convention_echeance": None},
+    {"name": "Office de l'eau Réunion — Chroniques de l'eau", "cadence_jours": 365, "convention_echeance": None},
+]
+
+
+def nature(methode: str | None) -> str:
+    """Y5.4 — la NATURE de surveillance, pour la distinguer VISUELLEMENT au panneau admin :
+      · `version`         — version détectable (api / page) ;
+      · `changement`      — changement détectable sans version nommée (entete / temoin) ;
+      · `rappel`          — rappel de rafraîchissement d'une source manuelle (Y4) ;
+      · `non_surveillable`— aucune sonde (état normal, raison précise en infobulle)."""
+    if methode in ("api", "page"):
+        return "version"
+    if methode in ("entete", "temoin"):
+        return "changement"
+    if methode == "rappel":
+        return "rappel"
+    return "non_surveillable"
 
 
 def raison_non_surveillee(name: str) -> str:
@@ -442,11 +551,88 @@ def ensemencer(db) -> int:
     return crees
 
 
+def ensemencer_rappels(db) -> int:
+    """Y4 — pose (non destructivement) une ligne de RAPPEL (methode='rappel', AUCUNE sonde amont) sur les
+    sources manuelles à fraîcheur attendue : `cadence_attendue_jours` (+ `convention_echeance` si connue).
+    Une ligne 'rappel' n'est JAMAIS interrogée (cf. `_lignes_a_sonder`) — c'est un rappel de
+    rafraîchissement, pas une surveillance. IDEMPOTENT, préserve `actif`. Rattachement par nom EXACT ;
+    une entrée sans source en base est ignorée (pas de ligne orpheline). Retourne le nombre créé."""
+    crees = 0
+    for e in RAPPELS_MANUELS:
+        sid = db.execute(text("SELECT id FROM data_sources WHERE name = :n"), {"n": e["name"]}).scalar()
+        if not sid:
+            continue
+        existe = db.execute(text("SELECT 1 FROM source_veille WHERE source_id = :s"), {"s": sid}).scalar()
+        if existe:
+            db.execute(text("UPDATE source_veille SET methode = 'rappel', cadence_attendue_jours = :c,"
+                            " convention_echeance = :ce, updated_at = now() WHERE source_id = :s"),
+                       {"c": e["cadence_jours"], "ce": e.get("convention_echeance"), "s": sid})
+        else:
+            db.execute(text("INSERT INTO source_veille (source_id, methode, cadence_attendue_jours,"
+                            " convention_echeance, cadence_heures, actif)"
+                            " VALUES (:s, 'rappel', :c, :ce, 24, true)"),
+                       {"s": sid, "c": e["cadence_jours"], "ce": e.get("convention_echeance")})
+            crees += 1
+    return crees
+
+
+# ─────────────────────────────── Y4 · le rappel des sources manuelles ───────────────────────────────
+
+def passer_rappels(db, *, source_ids=None, notifier: bool = True) -> dict:
+    """Y4 — le RAPPEL de rafraîchissement des sources MANUELLES (ce n'est PAS une sonde amont : aucun
+    appel réseau). Pour chaque ligne 'rappel' active, compare l'âge de la dernière ingestion
+    (`data_sources.last_sync_at`) à `cadence_attendue_jours` ; au-delà, dépose UN rappel admin « donnée
+    manuelle non rafraîchie depuis N jours » — UNE SEULE FOIS par dépassement (dédup sur la date de
+    dernière ingestion : un rafraîchissement rouvre un épisode neuf). Porte l'échéance de convention si
+    connue. N'écrit RIEN dans data_sources, n'ingère rien. Retourne {rappels, retards, notifs}."""
+    where = ["v.methode = 'rappel'", "v.actif = true", "v.cadence_attendue_jours IS NOT NULL"]
+    params: dict = {}
+    if source_ids:
+        where.append("v.source_id = ANY(:ids)")
+        params["ids"] = list(source_ids)
+    rows = [dict(r) for r in db.execute(text(
+        "SELECT v.source_id, v.cadence_attendue_jours AS cad, v.convention_echeance AS echeance,"
+        "       d.name AS nom, d.last_sync_at AS lsa"
+        " FROM source_veille v JOIN data_sources d ON d.id = v.source_id"
+        " WHERE " + " AND ".join(where)), params).mappings()]
+    recap = {"rappels": 0, "retards": 0, "notifs": 0}
+    now = datetime.now(tz=timezone.utc)
+    for r in rows:
+        recap["rappels"] += 1
+        lsa = r["lsa"]
+        if lsa is None:            # aucune date d'ingestion → rien à mesurer (honnête, pas de faux rappel)
+            continue
+        jours = (now - lsa).days
+        if jours <= r["cad"]:
+            continue
+        recap["retards"] += 1
+        if notifier and _emettre_rappel(db, r["nom"], jours, r["cad"], r.get("echeance"), lsa):
+            recap["notifs"] += 1
+    return recap
+
+
+def _emettre_rappel(db, nom: str, jours: int, cadence: int, echeance, lsa) -> bool:
+    """Y4 — dépose UN rappel admin (feed systeme, permanent) pour une donnée manuelle en retard. Dédup sur
+    (source, date de dernière ingestion) : une seule cloche par dépassement ; un rafraîchissement (nouveau
+    last_sync_at) rouvre un épisode. Ce n'est PAS une alerte « amont » : c'est un rappel de saisie."""
+    from .api.events import creer_notification
+    detail = (f"« {nom} » est une donnée saisie à la main (aucun amont public à surveiller). Cadence de "
+              f"rafraîchissement attendue : {cadence} j — dernière ingestion il y a {jours} j. À rafraîchir. "
+              f"La sentinelle ne sonde PAS cette source : ceci est un rappel, pas une alerte amont.")
+    if echeance:
+        detail += f" Échéance de convention : {echeance}."
+    return bool(creer_notification(
+        db, kind="systeme", compte_id=None, source="Veille sources",
+        titre=f"Donnée manuelle non rafraîchie : {nom} (depuis {jours} j)",
+        detail=detail, lien="/sources",
+        dedup=f"sentinelle-rappel:{nom}:{lsa:%Y-%m-%d}", permanent=True))
+
+
 def _ligne_neuf(row: dict, s: Sonde) -> str:
     """Une ligne du détail du digest pour une NOUVELLE version (formulation SENTINELLE-1 conservée)."""
     nom, servi, vu = row["source_nom"], row.get("servi"), (s.vu or "?")
-    if row.get("methode") == "entete":     # pas de millésime lisible : « le fichier a changé »
-        return f"• {nom} : le fichier amont a changé — à vérifier."
+    if row.get("methode") in ("entete", "temoin"):   # pas de millésime lisible : « la donnée a changé »
+        return f"• {nom} : la donnée amont a changé — à vérifier."
     return f"• {nom} : {vu} est publié" + (f" — vous servez {servi}." if servi else ".")
 
 
@@ -480,3 +666,133 @@ def _emettre_digest(db, neuf: list[dict], echec: list[dict]) -> bool:
         db, kind="systeme", compte_id=None, source="Veille sources",
         titre=titre, detail="\n".join(lignes), lien="/sources",
         dedup="sentinelle-digest:" + sig, permanent=True))
+
+
+# ─────────────────────────────── Y5.2 · l'inventaire RÉGÉNÉRÉ depuis le catalogue ───────────────────────────────
+#: Doublons amont : la veille de la canonique vaut pour les deux (une seule sonde).
+DOUBLONS_COUVERTS: dict[str, str] = {
+    "Cadastre Etalab (bulk DGFiP/Etalab)": "amont identique à « Cadastre (API Carto PCI) » (une seule veille, l'alerte vaut pour les deux)",
+    "RGE ALTI 5 m (IGN)": "amont identique à « RGE ALTI (altimétrie) » (une seule veille, l'alerte vaut pour les deux)",
+}
+
+_LIB_METHODE = {"api": "`api`", "page": "`page`", "entete": "`entete`", "temoin": "`temoin`"}
+
+
+def _famille(provider: str | None) -> str:
+    """Regroupement fournisseur pour l'inventaire : on garde le premier segment du `provider` catalogue
+    (avant «/» ou «—»), sinon « Autres »."""
+    if not provider:
+        return "Autres"
+    return re.split(r"\s*[/—]\s*", provider.strip())[0] or "Autres"
+
+
+def inventaire_markdown(millesimes: dict[str, str] | None = None) -> str:
+    """Y5.2 — RÉGÉNÈRE l'inventaire des 64 sources DEPUIS LE CATALOGUE (`seed_sources.SOURCES`) croisé avec
+    SEED / RAPPELS / RAISONS / DOUBLONS. Jamais écrit à la main : ce qui est ici EST l'état du code. Le
+    millésime servi vient du catalogue (`source_millesime`), enrichi par `millesimes` (source→millésime
+    servi lu en base) quand fourni. Retourne le Markdown complet."""
+    from .ingestion.seed_sources import SOURCES
+    millesimes = millesimes or {}
+    seed_by = {e["name"]: e for e in SEED}
+    rappel_by = {e["name"]: e for e in RAPPELS_MANUELS}
+
+    def etat_veille(name: str) -> tuple[str, str, str]:
+        """(nature_libellé, colonne_état, colonne_veille/raison) pour une source."""
+        if name in seed_by:
+            e = seed_by[name]
+            nat = "version détectable" if e["methode"] in ("api", "page") else "changement détectable"
+            veille = e["url"] + (f"  (sél. `{e['selecteur']}`)" if e.get("selecteur") else "")
+            return nat, f"SURVEILLÉE · {_LIB_METHODE[e['methode']]}", veille
+        if name in DOUBLONS_COUVERTS:
+            return "doublon", "DOUBLON couvert", DOUBLONS_COUVERTS[name]
+        if name in rappel_by:
+            r = rappel_by[name]
+            ech = f" · échéance convention {r['convention_echeance']}" if r.get("convention_echeance") else ""
+            return ("rappel manuel", f"rappel manuel · cadence {r['cadence_jours']} j",
+                    f"Rappel de rafraîchissement — cadence attendue {r['cadence_jours']} j{ech} (aucune "
+                    f"sonde amont : source saisie à la main). {raison_non_surveillee(name)}")
+        return "non surveillable", "non surveillée", raison_non_surveillee(name)
+
+    # ventilations
+    par_methode: dict[str, int] = {}
+    for e in SEED:
+        par_methode[e["methode"]] = par_methode.get(e["methode"], 0) + 1
+    familles: dict[str, dict[str, int]] = {}
+    for src in SOURCES:
+        fam = _famille(src.get("provider"))
+        d = familles.setdefault(fam, {"surv": 0, "rappel": 0, "non": 0, "doublon": 0})
+        n = src["name"]
+        if n in seed_by:
+            d["surv"] += 1
+        elif n in DOUBLONS_COUVERTS:
+            d["doublon"] += 1
+        elif n in rappel_by:
+            d["rappel"] += 1
+        else:
+            d["non"] += 1
+
+    n_surv, n_doub, n_rappel = len(seed_by), len(DOUBLONS_COUVERTS), len(rappel_by)
+    n_total = len(SOURCES)
+    n_non = n_total - n_surv - n_doub
+
+    out: list[str] = []
+    A = out.append
+    A("# SENTINELLE-INVENTAIRE — les 64 sources, une par une (SENTINELLE-3)")
+    A("")
+    A("> **Fichier GÉNÉRÉ** — ne pas éditer à la main. Régénéré depuis le catalogue (`seed_sources.SOURCES`) "
+      "croisé avec `sentinelle.SEED` / `RAPPELS_MANUELS` / `RAISONS_NON_SURVEILLEES` / `DOUBLONS_COUVERTS` "
+      "par `labuse sentinelle-inventaire`. Ce qui est ici EST l'état du code.")
+    A("")
+    A("**Vérification réelle** : chaque URL de veille ci-dessous a été APPELÉE POUR DE VRAI (couche `_http` "
+      "de production, UA `LABUSE-sentinelle/1.0`), sa réponse LUE, et la sonde a renvoyé **`ok`** — le "
+      "2026-09-01. Aucune URL supposée. Une candidate qui échouait au semis n'est pas inscrite (elle figure "
+      "en « non surveillée » avec ce qui a été essayé, cf. `RAISONS_NON_SURVEILLEES`).")
+    A("")
+    A(f"**Bilan** : **{n_surv} surveillées** · {n_rappel} rappels manuels (Y4) · {n_doub} doublons couverts "
+      f"par leur canonique · {n_non} non surveillées = **{n_total}**.")
+    A("")
+    A("## Ventilation des surveillées par méthode")
+    A("")
+    A("| Méthode | N | Nature |")
+    A("|---|---|---|")
+    _nat_m = {"api": "version détectable", "page": "version détectable",
+              "entete": "changement détectable", "temoin": "changement détectable (requête témoin)"}
+    for m in ("api", "page", "entete", "temoin"):
+        if par_methode.get(m):
+            A(f"| `{m}` | {par_methode[m]} | {_nat_m[m]} |")
+    A(f"| **Total** | **{n_surv}** | |")
+    A("")
+    A("## Ventilation par fournisseur")
+    A("")
+    A("| Fournisseur | Surveillées | Rappel manuel | Non surveillées | Doublons |")
+    A("|---|---|---|---|---|")
+    for fam in sorted(familles):
+        d = familles[fam]
+        A(f"| {fam} | {d['surv']} | {d['rappel']} | {d['non']} | {d['doublon']} |")
+    A("")
+    A("## Les quatre natures (Y5.4)")
+    A("")
+    A("- **version détectable** (`api`, `page`) — on lit un millésime comparable ; l'alerte le nomme.")
+    A("- **changement détectable** (`entete`, `temoin`) — pas de version lisible ; l'alerte dit « la donnée "
+      "amont a changé » (en-tête de fichier, ou empreinte d'une requête témoin figée).")
+    A("- **rappel manuel** (Y4) — source saisie à la main, aucun amont ; rappel de rafraîchissement au-delà "
+      "de la cadence attendue (ce n'est pas une sonde).")
+    A("- **non surveillable** — aucune sonde possible ; la raison précise ce qui a été essayé.")
+    A("")
+    A("## Inventaire complet — par fournisseur")
+    A("")
+    for fam in sorted(familles):
+        srcs = [s for s in SOURCES if _famille(s.get("provider")) == fam]
+        A(f"### {fam}")
+        A("")
+        A("| Source | Millésime servi | État | Veille / raison |")
+        A("|---|---|---|---|")
+        for src in sorted(srcs, key=lambda s: s["name"].lower()):
+            name = src["name"]
+            _, col_etat, col_veille = etat_veille(name)
+            mil = millesimes.get(name) or src.get("source_millesime") or "—"
+            mil = str(mil).replace("|", "\\|").replace("\n", " ").strip()[:80]
+            col_veille = str(col_veille).replace("|", "\\|").replace("\n", " ")
+            A(f"| {name} | {mil} | {col_etat} | {col_veille} |")
+        A("")
+    return "\n".join(out).rstrip() + "\n"

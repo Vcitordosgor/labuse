@@ -384,3 +384,137 @@ def test_verifier_maintenant_404_si_non_surveillee(client, engine):
         sid = _source(db, "TEST non surveillee")
         db.commit()
     assert client.post(f"/admin/sources/{sid}/veille/verifier").status_code == 404
+
+
+# ─────────────────────────── SENTINELLE-3 · Y3 méthode `temoin` ───────────────────────────
+
+def test_methode_temoin_baseline_puis_changement():
+    """Y3 — la requête témoin lit une EMPREINTE stable (ici un compte) : 1er passage = baseline (ok,
+    mémorise), puis « nouvelle_version » (« la donnée amont a changé ») quand l'empreinte bouge."""
+    row = {"methode": "temoin", "url_version": "http://x/q", "selecteur": "results", "dernier_entete": None}
+    http1 = _fake_http({"http://x/q": (200, {}, '{"results": 377, "data": []}')})
+    s1 = sentinelle.sonder_ligne(row, servi=None, http=http1)
+    assert s1.statut == "ok" and s1.vu == "377" and s1.entete == "377"   # baseline
+    row["dernier_entete"] = s1.entete
+    http2 = _fake_http({"http://x/q": (200, {}, '{"results": 381, "data": []}')})
+    s2 = sentinelle.sonder_ligne(row, servi=None, http=http2)
+    assert s2.statut == "nouvelle_version" and s2.vu == "381"
+    assert "changé" in (s2.message or "")
+
+
+def test_temoin_empreinte_liste_stable_et_change_au_contenu():
+    """Y3 — empreinte d'une réponse ENTIÈRE (selecteur None) : même contenu → même empreinte (ok) ;
+    contenu différent → empreinte différente (nouvelle_version). Jamais la réponse brute stockée."""
+    corps = '{"casias": [1, 2, 3], "conclusions": []}'
+    emp = sentinelle._empreinte({"casias": [1, 2, 3], "conclusions": []})
+    row = {"methode": "temoin", "url_version": "http://x/ssp", "selecteur": None, "dernier_entete": emp}
+    same = sentinelle.sonder_ligne(row, servi=None, http=_fake_http({"http://x/ssp": (200, {}, corps)}))
+    assert same.statut == "ok"   # empreinte identique
+    changed = sentinelle.sonder_ligne(row, servi=None,
+                                      http=_fake_http({"http://x/ssp": (200, {}, '{"casias": [1, 2, 3, 4], "conclusions": []}')}))
+    assert changed.statut == "nouvelle_version"
+
+
+def test_temoin_jamais_compare_au_millesime_servi():
+    """Y3 — un témoin (empreinte, aucune notion de version) NE doit JAMAIS être transformé en
+    « nouvelle_version » par la comparaison au servi (réservée aux méthodes à version api/page)."""
+    http = _fake_http({"http://x/t": (200, {}, '{"total_count": 283}')})
+    row = {"methode": "temoin", "url_version": "http://x/t", "selecteur": "total_count", "dernier_entete": "283"}
+    s = sentinelle.sonder_ligne(row, servi="1", http=http)   # "283" > "1" lexicalement, mais témoin
+    assert s.statut == "ok"   # PAS nouvelle_version : le servi n'entre pas en jeu pour un témoin
+
+
+def test_nature_mappe_les_quatre_etats():
+    assert sentinelle.nature("api") == "version" and sentinelle.nature("page") == "version"
+    assert sentinelle.nature("entete") == "changement" and sentinelle.nature("temoin") == "changement"
+    assert sentinelle.nature("rappel") == "rappel"
+    assert sentinelle.nature(None) == "non_surveillable" and sentinelle.nature("xxx") == "non_surveillable"
+
+
+# ─────────────────────────── SENTINELLE-3 · Y4 rappels manuels ───────────────────────────
+
+def test_rappel_n_est_jamais_sonde(engine):
+    """Y4 — une ligne 'rappel' (source manuelle) n'est JAMAIS interrogée par le passage de veille : aucun
+    appel réseau, aucun changement de statut de sonde. Le http de test lèverait si on l'appelait."""
+    from labuse.db import session_scope
+    from labuse import models
+    models.ensure_source_veille(engine)
+    with session_scope() as db:
+        sid = _source(db, "TEST rappel non sonde")
+        db.execute(text("INSERT INTO source_veille (source_id, methode, cadence_attendue_jours, actif) "
+                        "VALUES (:s, 'rappel', 30, true) ON CONFLICT (source_id) DO UPDATE SET "
+                        "methode='rappel', cadence_attendue_jours=30, dernier_statut=NULL"), {"s": sid})
+        db.commit()
+    with session_scope() as db:
+        recap = sentinelle.passer(db, forcer=True, http=_fake_http({}), delai_s=0)
+        db.commit()
+        st = db.execute(text("SELECT dernier_statut FROM source_veille WHERE source_id=:s"), {"s": sid}).scalar()
+    assert st is None   # jamais sondée → statut inchangé
+    assert not any(d["source"] == "TEST rappel non sonde" for d in recap["details"])
+
+
+def test_passer_rappels_notifie_apres_depassement_une_seule_fois(engine):
+    """Y4 — au-delà de la cadence attendue sans nouvelle ingestion (last_sync_at), UN rappel « donnée
+    manuelle non rafraîchie » — une seule fois par dépassement (dédup sur la date de dernière ingestion)."""
+    from labuse.api import events
+    from labuse.db import session_scope
+    from labuse import models
+    events.ensure_tables(engine)
+    models.ensure_source_veille(engine)
+    with session_scope() as db:
+        sid = _source(db, "TEST rappel retard")
+        # dernière ingestion il y a 400 jours, cadence attendue 365 → dépassement
+        db.execute(text("UPDATE data_sources SET last_sync_at = now() - interval '400 days' WHERE id=:s"), {"s": sid})
+        db.execute(text("INSERT INTO source_veille (source_id, methode, cadence_attendue_jours, actif) "
+                        "VALUES (:s, 'rappel', 365, true) ON CONFLICT (source_id) DO UPDATE SET "
+                        "methode='rappel', cadence_attendue_jours=365"), {"s": sid})
+        # base de test PERSISTANTE : on vide le feed systeme du jour pour repartir sous le plafond quotidien
+        # (kind=systeme/compte NULL est plafonné à 50/j — un run précédent pourrait l'avoir saturé).
+        db.execute(text("DELETE FROM event_log WHERE kind='systeme' AND compte_id IS NULL"))
+        db.commit()
+    with session_scope() as db:
+        r1 = sentinelle.passer_rappels(db, source_ids=[sid], notifier=True)
+        db.commit()
+    assert r1["retards"] == 1 and r1["notifs"] == 1
+    # 2e passage, même last_sync_at → dédup : aucune nouvelle cloche.
+    with session_scope() as db:
+        r2 = sentinelle.passer_rappels(db, source_ids=[sid], notifier=True)
+        db.commit()
+        n = db.execute(text("SELECT count(*) FROM event_log WHERE dedup LIKE 'sentinelle-rappel:%' "
+                            "AND detail LIKE '%TEST rappel retard%'")).scalar()
+    assert r2["retards"] == 1 and n == 1   # toujours en retard, mais UNE seule notif
+
+
+def test_rappel_a_jour_ne_notifie_pas(engine):
+    """Y4 — une donnée manuelle rafraîchie DANS la cadence ne déclenche aucun rappel."""
+    from labuse.api import events
+    from labuse.db import session_scope
+    from labuse import models
+    events.ensure_tables(engine)
+    models.ensure_source_veille(engine)
+    with session_scope() as db:
+        sid = _source(db, "TEST rappel a jour")
+        db.execute(text("UPDATE data_sources SET last_sync_at = now() - interval '10 days' WHERE id=:s"), {"s": sid})
+        db.execute(text("INSERT INTO source_veille (source_id, methode, cadence_attendue_jours, actif) "
+                        "VALUES (:s, 'rappel', 365, true) ON CONFLICT (source_id) DO UPDATE SET "
+                        "methode='rappel', cadence_attendue_jours=365"), {"s": sid})
+        db.commit()
+    with session_scope() as db:
+        r = sentinelle.passer_rappels(db, source_ids=[sid], notifier=True)
+    assert r["rappels"] == 1 and r["retards"] == 0 and r["notifs"] == 0
+
+
+# ─────────────────────────── SENTINELLE-3 · Y5.2 inventaire généré ───────────────────────────
+
+def test_inventaire_markdown_regenere_depuis_le_catalogue():
+    """Y5.2 — l'inventaire est GÉNÉRÉ (jamais à la main) : il couvre les 64 sources, distingue les 4
+    natures, et son bilan reflète SEED/RAISONS/RAPPELS/DOUBLONS."""
+    from labuse.ingestion.seed_sources import SOURCES
+    md = sentinelle.inventaire_markdown()
+    n_surv = len(sentinelle.SEED)
+    assert f"**{n_surv} surveillées**" in md
+    assert "`temoin`" in md and "requête témoin" in md   # la nouvelle méthode est visible
+    assert "rappel manuel" in md
+    # chaque source du catalogue figure au moins par son nom
+    for s in SOURCES:
+        assert s["name"] in md, f"source absente de l'inventaire généré : {s['name']}"
