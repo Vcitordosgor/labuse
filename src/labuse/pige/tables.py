@@ -261,6 +261,19 @@ CREATE TABLE IF NOT EXISTS pige_interets_agence (
 );
 CREATE INDEX IF NOT EXISTS ix_pige_interets_bien ON pige_interets_agence (bien_id);
 
+-- radar_releves : FLUX-1 (F3.2) — RELEVÉ QUOTIDIEN des compteurs cumulés du Radar (un job de fin de
+-- journée écrit la photo du jour). La courbe dans le temps se lit d'ici — elle COMMENCE au jour du
+-- déploiement (première ligne), aucune reconstruction rétroactive inventée. Idempotent sur le jour.
+CREATE TABLE IF NOT EXISTS radar_releves (
+  jour date PRIMARY KEY,
+  annonces integer NOT NULL DEFAULT 0,          -- occurrences portail collectées (cumul)
+  rattachees integer NOT NULL DEFAULT 0,        -- biens rattachés à une parcelle (cumul)
+  paires integer NOT NULL DEFAULT 0,            -- paires annonce ↔ vente DVF rapprochées (cumul)
+  communes integer NOT NULL DEFAULT 0,          -- communes couvertes (distinct)
+  types integer NOT NULL DEFAULT 0,             -- types de bien couverts (distinct)
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- pige_depots : chaque fichier HTML déposé, ARCHIVÉ tel quel (hash) + date de dépôt (traçabilité source).
 CREATE TABLE IF NOT EXISTS pige_depots (
   id serial PRIMARY KEY,

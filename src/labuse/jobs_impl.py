@@ -233,6 +233,36 @@ def sante_endpoints(ctx: JobContext) -> None:
         raise RuntimeError(f"sonde endpoints : {len(en_echec)} en échec ({', '.join(en_echec)})")
 
 
+def radar_releves(ctx: JobContext) -> None:
+    """FLUX-1 (F3.2) — RELEVÉ QUOTIDIEN des compteurs Radar (fin de journée) : écrit la photo cumulée
+    du jour dans `radar_releves` (annonces, rattachées, paires annonce↔DVF, communes, types). La courbe
+    dans le temps se lit de cette table — elle commence au jour du déploiement, aucune reconstruction."""
+    from .pige.releves import ecrire_releve
+    r = ecrire_releve(ctx.db)
+    ctx.compte(**r)
+
+
+def coherence_run(ctx: JobContext) -> None:
+    """FLUX-1 (F4) — GARDE DE COHÉRENCE quotidienne : pour chaque surface, le run lu est-il le run
+    courant, et tier / date de valeur identiques partout (parcelles témoins) ? Réutilise la sonde de
+    santé (CONNEXIONS-2 lot 7.2). Une divergence notifie l'admin (event systeme, dédup jour). Le
+    résultat est lu par la page Flux et la tuile Santé."""
+    from .coherence_flux import verifier
+    res = verifier(ctx.db)
+    en_echec = [c["libelle"] for c in res["checks"] if not c["ok"]]
+    ctx.compte(ok=res["ok"], run=res["run"], n_surfaces=res["n_surfaces"], en_echec=en_echec or None)
+    if not res["ok"]:
+        from datetime import date as _date
+        from .api.events import creer_notification
+        detail = " · ".join(f"{c['libelle']} : {c['detail']}" for c in res["checks"] if not c["ok"])
+        creer_notification(
+            ctx.db, kind="systeme", compte_id=None, source="Cohérence run",
+            titre=f"Garde de cohérence : {len(en_echec)} divergence(s)", detail=detail[:500],
+            lien="/admin", dedup=f"coherence_run:{_date.today().isoformat()}")
+        ctx.db.commit()
+        raise RuntimeError(f"garde de cohérence : {len(en_echec)} divergence(s) ({', '.join(en_echec)})")
+
+
 # ═══════════════════════════ K4 — hebdo & mensuels ═══════════════════════════
 
 def pg_maintenance(ctx: JobContext) -> None:

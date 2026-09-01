@@ -479,6 +479,15 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # Départage explicite (M28) — la clé de tri qui rend le rang REPRODUCTIBLE (le seed n'est que
     # le fallback ultime, inatteignable, l'IDU étant unique).
     departage = "rang: p desc → contrib_D desc → SDP_résiduelle desc → surface desc → IDU alpha → seed"
+    # FLUX-1 (F2.2) — le run ENREGISTRE la photo des sources + millésimes qu'il a consommés à son
+    # lancement. Sans cette liste, on ne peut pas savoir SUR QUOI un run a été calculé, ni afficher
+    # « source plus récente que le run » (l'état intermédiaire assumé). Best-effort : une base sans
+    # `data_sources` (tests) laisse la liste vide, jamais un échec de scoring.
+    try:
+        from ...flux import snapshot_source_millesimes
+        source_millesimes = snapshot_source_millesimes(session)
+    except Exception:  # noqa: BLE001 — l'enregistrement des sources ne doit jamais casser un run
+        source_millesimes = []
     session.execute(text("""
         INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params,
                                      n_parcelles, duration_s, snapshot_label)
@@ -495,7 +504,8 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                          "departage": departage,
                          "annee_features": annee, "recale_intercept_sur": last_labeled,
                          "seed_ties": SEED,   # 3.3 (train 5) : la graine du départage, tant qu'elle existe
-                         "taux_base": taux_base, "prev_run": prev_run}),
+                         "taux_base": taux_base, "prev_run": prev_run,
+                         "source_millesimes": source_millesimes}),   # FLUX-1 F2.2
         "n": len(rows), "d": int(time.time() - t0), "l": snapshot_label})
 
     # M9 lot 1 — Indice de confiance données (ICD) : backfill LECTURE depuis le dataset

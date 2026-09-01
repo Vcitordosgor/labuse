@@ -601,6 +601,51 @@ def dryrun_evaluate_cmd(
     typer.echo(f"✓ DRY-RUN [{label}] {nom} : {len(todo)} parcelles évaluées à blanc (tables dryrun_*).")
 
 
+@app.command("flux-run")
+def flux_run_cmd(
+    label: str = typer.Option(..., help="run_label du run à calculer (ex. q_v12_flux)."),
+    resume: bool = typer.Option(True, help="Reprend un run interrompu (saute les parcelles déjà faites)."),
+) -> None:
+    """FLUX-1 (F2.2) — LANCE UN RUN COMPLET comme la production, en CHAÎNANT les étapes EXISTANTES
+    (aucune réécriture du pipeline) : cascade (dryrun-evaluate) sur les 24 communes, puis scoring/tiers
+    (score-v2) sous le MÊME label. Le run ENREGISTRE sa photo des sources+millésimes (F2.2). Progression
+    visible (une ligne par commune + le scoring). N'est PAS servi : la bascule reste un geste manuel
+    (`labuse golden promote <label>` ou le bouton admin de la page Flux)."""
+    import time
+
+    from .cascade import evaluate_parcels
+    from .cascade.cablage import check_cablage_scoring
+    from .ingestion.run_all import REUNION_COMMUNES
+    from .scoring.p_v2.pipeline import run_score_v2
+
+    t0 = time.time()
+    with session_scope() as s:
+        check_cablage_scoring(session=s)     # garde de câblage AVANT de démarrer (bloquante, nomme le fautif)
+    # 1 — CASCADE par commune (tables dryrun_*), reprenable.
+    for insee, _ in REUNION_COMMUNES:
+        nom = _resolve_commune(insee)
+        with session_scope() as s:
+            ids = _parcel_ids(s, nom)
+            if not ids:
+                typer.echo(f"  · {nom} ({insee}) : 0 parcelle, ignorée")
+                continue
+            done: set[int] = set()
+            if resume:
+                done = {r[0] for r in s.execute(text(
+                    "SELECT parcel_id FROM dryrun_parcel_evaluations WHERE run_label=:r"), {"r": label}).all()}
+            todo = [i for i in ids if i not in done]
+            for k in range(0, len(todo), 2000):
+                evaluate_parcels(todo[k:k + 2000], s, persist=True, dryrun_label=label)
+                s.commit()
+                s.expunge_all()
+            typer.echo(f"  ✓ {nom} : {len(todo)} évaluées ({time.time() - t0:.0f}s)")
+    # 2 — SCORING / tiers sous le MÊME label (enregistre les sources+millésimes, F2.2).
+    with session_scope() as s:
+        res = run_score_v2(s, run_id=label, rebuild=True, snapshot=True)
+    typer.echo(f"✓ FLUX-RUN [{label}] : {res['n']} parcelles scorées, tiers {res['tiers']} "
+               f"({time.time() - t0:.0f}s total). NON servi — bascule manuelle.")
+
+
 #: M80 — tables run-scoped connues qui portent une colonne run_id/run_label (découvertes en base au
 #: lancement ; cette liste sert de repli/documentation). Le cycle de vie d'un run est ATOMIQUE :
 #: un run se crée et se PURGE dans TOUTES ces tables ensemble (défaut #1 du RAPPORT_M80).

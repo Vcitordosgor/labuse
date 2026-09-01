@@ -1065,6 +1065,7 @@ export interface AdminPilotage {
   // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
   sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
   courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
+  radar?: { compteurs: RadarCompteurs; ecart: FluxRadarEcart[] } | null   // FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
   run: { label: string | null; carte_le: string | null }
   fil: Array<{ id: number; ts: string | null; kind: string; source: string | null; titre: string; detail: string | null; lien: string | null }>
   gels: Array<{ sujet: string; motif: string | null; ts: string | null }>
@@ -1222,6 +1223,56 @@ export const postAdminSourceVeilleInjecter = (id: number) =>
   j<{ ok: boolean; label: string; log: string; millesime: string | null }>(`/admin/sources/${id}/veille/injecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const getHealthzCrons = () =>
   j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
+
+// ── FLUX-1 — la page « Flux » (la donnée, de la source à l'écran) ──
+export type FluxDot = 'ok' | 'warn' | 'err' | 'off'
+export interface FluxSourceNode {
+  id: number; name: string; fournisseur: string | null; categorie: string | null
+  millesime: string | null; amont_vu: string | null; ingere_le: string | null
+  dot: FluxDot; etat: string; nature: string; moteurs: string[]; message: string | null
+  injectable: boolean; injection_lancee_at: string | null
+}
+export interface FluxMoteurNode { key: string; label: string; detail: string; run: string; dot: FluxDot; sources: number[] }
+export interface FluxSurfaceNode { key: string; label: string; groupe: string; run: string; moteurs: string[]; dot: FluxDot }
+export interface FluxRun {
+  label: string; precedent: string; calcule_le: string | null; n_parcelles: number | null
+  enregistre_sources: boolean
+  source_millesimes: Array<{ source_id: number; name: string; fournisseur: string | null; millesime: string; horizon: string | null }>
+}
+export interface FluxFourmiliere {
+  run: FluxRun
+  sources: FluxSourceNode[]; moteurs: FluxMoteurNode[]; surfaces: FluxSurfaceNode[]
+  comptes: { total: number; surveillees: number; nouvelle_version: number; plus_recentes_que_run: number; n_surfaces: number }
+  plus_recentes: Array<{ id: number; name: string; millesime: string | null; amont: string | null }>
+  genere_le: string
+}
+export interface RadarCompteurs {
+  annonces: number; annonces_semaine: number; rattachees: number; rattachees_pct: number | null
+  paires: number; paires_semaine: number; communes: number; communes_total: number; types: number
+}
+export interface FluxRadarEcart { type: string; n: number; ecart_pct: number | null; fragile: boolean }
+export interface FluxRadar {
+  compteurs: RadarCompteurs; ecart: FluxRadarEcart[]
+  courbe: { points: Array<{ jour: string; paires: number; annonces: number; rattachees: number }>; depuis_le: string | null }
+}
+export interface CoherenceCheck { libelle: string; ok: boolean; detail: string | null }
+export interface FluxCoherence { ok: boolean | null; run?: string; n_surfaces?: number; verifie_le?: string; checks: CoherenceCheck[]; erreur?: string }
+export interface FluxRunTermine {
+  label: string; servi: boolean; complet: boolean; motif: string; calcule_le: string | null; n_parcelles: number | null
+  ecart: { tiers_changes: number; promues_candidat: number; promues_servi: number; derive_promues_pct: number } | null
+}
+export interface FluxDerniereBascule { ts: string | null; ancien: string | null; nouveau: string; par: string | null; sens: string; caches_purges: string[] }
+export interface AdminFlux {
+  flux: FluxFourmiliere; radar: FluxRadar; coherence: FluxCoherence
+  bascule: { runs: FluxRunTermine[]; derniere: FluxDerniereBascule | null }
+}
+export const getAdminFlux = () => j<AdminFlux>('/admin/flux')
+export const getAdminFluxRuns = () => j<{ runs: FluxRunTermine[]; derniere: FluxDerniereBascule | null }>('/admin/flux/runs')
+export const postAdminFluxLancerRun = () =>
+  j<{ ok: boolean; label: string; estimation: string; log: string }>('/admin/flux/run/lancer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminFluxBascule = (run: string) =>
+  j<{ ok: boolean; ancien?: string; nouveau?: string; caches_purges?: string[]; coherence?: FluxCoherence; note?: string; motif?: string }>(
+    '/admin/flux/bascule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run }) })
 // D7 — Produit
 export interface AdminProduit {
   usage: Array<{ outil: string; n: number }>

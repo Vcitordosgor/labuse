@@ -67,6 +67,9 @@ def ensure_tables(engine) -> None:
             " compte_id integer NOT NULL, mail_key varchar(24) NOT NULL,"
             " statut varchar(12) NOT NULL DEFAULT 'envoye', sent_at timestamptz DEFAULT now(),"
             " PRIMARY KEY (compte_id, mail_key))"))
+    # FLUX-1 (F2.3) — le journal des bascules de run (qui, quand, de quel run vers lequel).
+    from ..bascule_flux import ensure_tables as _bascule_ens
+    _bascule_ens(engine)
 
 
 # ───────────────────────── capteurs côté CLIENT ─────────────────────────
@@ -269,12 +272,22 @@ def admin_pilotage(request: Request) -> dict:
         sante["endpoints_ok"] = None
         sante["endpoints"] = []
 
+    # FLUX-1 (F3.5) — tuile Radar : la donnée qui s'accumule (compteurs + écart demandé/acté).
+    radar_tuile = None
+    try:
+        from ..pige import releves
+        with _ss() as _s:
+            radar_tuile = {"compteurs": releves.compteurs(_s), "ecart": releves.ecart_par_type(_s)}
+    except Exception:  # noqa: BLE001 — la tuile Radar ne casse jamais la page Pilotage
+        radar_tuile = None
+
     for r in fil:
         r["ts"] = r["ts"].isoformat() if r["ts"] else None
     for g in gels:
         g["ts"] = g["ts"].isoformat() if g["ts"] else None
     return {
         "stripe": stripe,
+        "radar": radar_tuile,   # FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
         "licences_actives": licences_actives,
         "actifs_24h": actifs_24h,
         "ia_mois": {"cout_eur": float(ia["cout"]), "appels": int(ia["appels"])},
@@ -999,6 +1012,126 @@ def admin_source_veille_injecter(source_id: int, request: Request) -> dict:
     except Exception:  # noqa: BLE001
         pass
     return {"ok": True, "label": lance["label"], "log": lance["log"], "millesime": millesime}
+
+
+# ═══════════════════════════ FLUX-1 — la page « Flux » du dashboard ═══════════════════════════
+
+@router.get("/admin/flux")
+def admin_flux(request: Request) -> dict:
+    """FLUX-1 (F1/F2/F3/F4) — la page Flux, construite depuis les métadonnées vivantes : la fourmilière
+    (sources → moteurs → surfaces + run courant), le bandeau de mise à jour, le bloc Radar (accumulation),
+    et la garde de cohérence exécutée en direct. Lecture seule ; AUCUN chiffre recalculé au front."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import bascule_flux, coherence_flux, flux
+    from ..db import session_scope
+    from ..pige import releves
+    with session_scope() as s:
+        fourmiliere = flux.construire_flux(s)
+        radar = releves.bloc_radar(s)
+        try:
+            coherence = coherence_flux.verifier(s)
+        except Exception as e:  # noqa: BLE001 — la garde ne casse jamais la page
+            coherence = {"ok": None, "checks": [], "erreur": f"{type(e).__name__}: {e}"[:160]}
+        runs = bascule_flux.runs_termines(s)
+        derniere = bascule_flux.derniere_bascule(s)
+    return {"flux": fourmiliere, "radar": radar, "coherence": coherence,
+            "bascule": {"runs": runs, "derniere": derniere}}
+
+
+@router.get("/admin/flux/runs")
+def admin_flux_runs(request: Request) -> dict:
+    """La liste des runs terminés + écart au run courant (F2.3), rafraîchie seule (poll pendant un run)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import bascule_flux
+    from ..db import session_scope
+    with session_scope() as s:
+        return {"runs": bascule_flux.runs_termines(s), "derniere": bascule_flux.derniere_bascule(s)}
+
+
+def _estimation_run(db) -> str:
+    """Durée estimée d'un run = durée du dernier run scoré si connue, sinon repli honnête (~3 h,
+    la cascade domine). Purement indicatif (affiché à côté du bouton « Lancer un run »)."""
+    d = db.execute(text(
+        "SELECT duration_s FROM p_score_v2_runs WHERE duration_s IS NOT NULL "
+        "ORDER BY computed_at DESC LIMIT 1")).scalar()
+    if not d:
+        return "~3 h estimées (cascade + scoring)"
+    # le score-v2 seul (duration_s) sous-estime : la cascade des 24 communes domine. On borne au-dessus.
+    minutes = max(30, int(d / 60) + 120)
+    return f"~{minutes // 60} h {minutes % 60:02d} estimées" if minutes >= 60 else f"~{minutes} min estimées"
+
+
+@router.post("/admin/flux/run/lancer")
+def admin_flux_lancer_run(request: Request) -> dict:
+    """FLUX-1 (F2.2) — LANCE un run comme un JOB détaché (même mécanique que « Injecter », X6) : la
+    commande CLI `flux-run` chaîne le pipeline EXISTANT (cascade + score-v2, aucune réécriture). Le run
+    n'est PAS servi (la bascule reste manuelle). Retourne le label lancé + une durée estimée + le log."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine, session_scope
+    label = f"q_flux_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}"
+    with engine().begin() as c:
+        deja = c.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"), {"r": label}).scalar()
+    if deja:
+        raise HTTPException(409, f"Un run « {label} » existe déjà — réessayer dans une minute.")
+    argv = [sys.executable, "-m", "labuse", "flux-run", "--label", label]
+    racine = Path(__file__).resolve().parents[3]
+    log_path = f"/tmp/labuse-flux-run-{label}.log"
+    try:
+        with open(log_path, "ab") as fh:
+            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    with session_scope() as s:
+        estimation = _estimation_run(s)
+        try:
+            from .events import creer_notification
+            creer_notification(s, kind="systeme", compte_id=None, source="Flux",
+                               titre=f"Run lancé à la main : {label}",
+                               detail=f"Pipeline existant (cascade + score-v2) chaîné, détaché. "
+                                      f"{estimation}. Non servi — bascule manuelle. Log {log_path}.",
+                               lien="/admin", dedup=f"flux-run:{label}")
+        except Exception:  # noqa: BLE001
+            pass
+    return {"ok": True, "label": label, "estimation": estimation, "log": log_path}
+
+
+class BasculeIn(BaseModel):
+    run: str = Field(min_length=1, max_length=64)
+
+
+@router.post("/admin/flux/bascule")
+def admin_flux_bascule(request: Request, body: BasculeIn) -> dict:
+    """FLUX-1 (F2.3/F2.4) — BASCULE le run courant vers `run` (ou retour arrière si c'est le précédent).
+    Refuse un run incomplet ; sinon promeut le pointeur, fait suivre le précédent, PURGE les caches A6,
+    JOURNALISE (qui/quand/de/vers) et exécute la garde de cohérence immédiatement. Geste humain."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import bascule_flux
+    from ..db import session_scope
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    with session_scope() as s:
+        res = bascule_flux.basculer(s, body.run, par=str(qui))
+        if not res.get("ok"):
+            raise HTTPException(409, res.get("motif", "bascule refusée"))
+        try:
+            from .events import creer_notification
+            creer_notification(s, kind="systeme", compte_id=None, source="Flux",
+                               titre=f"Bascule de run : {res['ancien']} → {res['nouveau']}",
+                               detail=f"Caches purgés : {', '.join(res['caches_purges']) or 'aucun'}. "
+                                      f"Cohérence : {'OK' if res['coherence'].get('ok') else 'à vérifier'}. "
+                                      f"{res['note']}",
+                               lien="/admin", dedup=f"bascule:{res['nouveau']}:{datetime.now(tz=timezone.utc):%Y%m%d%H%M}")
+        except Exception:  # noqa: BLE001
+            pass
+    return res
 
 
 # ───────────────────────── D7 — PRODUIT ─────────────────────────
