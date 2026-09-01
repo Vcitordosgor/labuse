@@ -351,13 +351,12 @@ export function RadarView() {
 
   // SECTEUR-2b (U2) — le bouton « Publier une annonce » de l'en-tête ET le parcours 4 étapes vivent ICI,
   // dans l'écran Radar de l'app (plus dans la Tour de contrôle). Visibilité : ADMIN toujours (drapeau
-  // fermé compris, avec la mention) ; CLIENTS seulement quand le DRAPEAU EST OUVERT (état public /ouvert).
+  // fermé compris) ; CLIENTS seulement quand le DRAPEAU EST OUVERT (état public /ouvert).
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
   const estAdmin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
   const depotOuvert = useQuery({ queryKey: ['radar-depot-ouvert'], queryFn: getRadarDepotOuvert })
   const ouvert = depotOuvert.data?.ouvert === true
   const boutonVisible = estAdmin || ouvert            // client : seulement drapeau ouvert
-  const drapeauFerme = estAdmin && !ouvert            // mention « invisible des clients » (admin, drapeau fermé)
   const [depotPanneau, setDepotPanneau] = useState(false)
   // RETOURS-3 R13 — la barre de filtres passe sur DEUX étages : une ligne visible (recherche · commune ·
   // type · bouton « Filtrer » compteur) + un TIROIR pour le reste, avec des pastilles d'actifs retirables.
@@ -434,11 +433,11 @@ export function RadarView() {
           </div>
           <h3 className="mt-1.5 text-[20px] font-semibold text-txt-hi">Les biens en vente</h3>
           <p className="mt-1.5 text-[12.5px] leading-snug text-txt-mut">Repérés sur les portails, rattachés à leur parcelle. Des faits et un lien — jamais le contenu de l’annonce.</p>
-          {/* RETOURS-5 T7 — la mention « drapeau fermé » du BANDEAU est retirée (elle apparaissait deux fois) ;
-              elle reste dans l'encart de dépôt, là où elle est utile. */}
+          {/* RETOURS-5 T7 + RETOURS-6 U3 — la mention « drapeau fermé » a disparu des DEUX endroits (bandeau puis
+              encart de dépôt) : l'état du drapeau est piloté côté admin, inutile de le répéter dans l'écran. */}
           {/* le parcours de dépôt, déroulé dans l'app sous l'en-tête */}
           {boutonVisible && depotPanneau && (
-            <div className="mt-3"><DepotAgence drapeauFerme={drapeauFerme} onClose={() => setDepotPanneau(false)} /></div>
+            <div className="mt-3"><DepotAgence onClose={() => setDepotPanneau(false)} /></div>
           )}
         </div>
 

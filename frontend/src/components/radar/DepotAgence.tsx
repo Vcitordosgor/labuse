@@ -15,7 +15,7 @@ import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomple
 
 const TYPES = [['', 'Type…'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain']] as const
 
-export function DepotAgence({ drapeauFerme = false, onClose }: { drapeauFerme?: boolean; onClose?: () => void }) {
+export function DepotAgence({ onClose }: { onClose?: () => void }) {
   const [rec, setRec] = useState<DepotRec>({})
   const [adresse, setAdresse] = useState('')
   const [idu, setIdu] = useState('')           // déduit de l'adresse (rattachement certain), jamais saisi
@@ -46,11 +46,14 @@ export function DepotAgence({ drapeauFerme = false, onClose }: { drapeauFerme?: 
 
   return (
     <div data-depot-agence className="rounded-xl border border-viz-cyan/30 bg-viz-cyan/[0.04] p-3">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="rounded bg-viz-cyan/15 px-1.5 py-0.5 font-mono text-[9px] tracking-wide text-viz-cyan">DÉPÔT AGENCE · BÊTA</span>
-        {drapeauFerme && <span data-depot-drapeau-ferme className="rounded border border-st-creuser/40 bg-st-creuser/10 px-1.5 py-0.5 font-mono text-[9px] text-st-creuser">drapeau fermé — invisible des clients</span>}
-        {onClose && <button data-depot-fermer onClick={onClose} className="ml-auto text-txt-dim hover:text-txt-hi" aria-label="Fermer">✕</button>}
-      </div>
+      {/* RETOURS-6 U3 — l'EN-TÊTE de l'encart est retiré : ni le libellé « DÉPÔT AGENCE · BÊTA », ni la
+          pastille ambre « drapeau fermé — invisible des clients ». L'état du drapeau est piloté côté admin,
+          inutile de le répéter ici. Seul le bouton de fermeture (✕) reste, aligné en haut à droite. */}
+      {onClose && (
+        <div className="mb-2 flex justify-end">
+          <button data-depot-fermer onClick={onClose} className="text-txt-dim hover:text-txt-hi" aria-label="Fermer">✕</button>
+        </div>
+      )}
 
       {publie ? (
         <div data-depot-etape="publie" className="flex flex-col gap-2">
