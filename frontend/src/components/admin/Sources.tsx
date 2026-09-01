@@ -5,7 +5,7 @@
 // « Agent de veille » (V2 — spec : docs/audit-2026-08/DASHBOARD/AGENT-VEILLE-SPEC.md).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getAdminSources, getHealthzCrons, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, type AdminSource } from '../../lib/api'
+import { getAdminSources, getHealthzCrons, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceVeilleActive, postAdminSourceVeilleVerifier, type AdminSource } from '../../lib/api'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
 
 const fmtReu = (iso?: string | null) => {
@@ -70,6 +70,77 @@ function SourceRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
   )
 }
 
+// SENTINELLE-1 (W4.3) — une ligne du panneau « Agent de veille » : millésime servi vs amont, dernier
+// passage, statut, et les deux actions (Vérifier maintenant · activer/désactiver la surveillance).
+const VEILLE_TONE: Record<string, 'ok' | 'warn' | 'off'> = {
+  ok: 'ok', nouvelle_version: 'warn', injoignable: 'off', illisible: 'off',
+}
+function VeilleRow({ s }: { s: AdminSource }) {
+  const qc = useQueryClient()
+  const [msg, setMsg] = useState<string | null>(null)
+  const v = s.veille
+  const verifier = useMutation({
+    mutationFn: () => postAdminSourceVeilleVerifier(s.id),
+    onSuccess: (r) => { setMsg(r.statut === 'nouvelle_version' ? `Nouveau : ${r.millesime_amont ?? '?'}` : `À jour (${r.statut ?? '—'})`); qc.invalidateQueries({ queryKey: ['admin-sources'] }) },
+    onError: () => setMsg('Sonde impossible.'),
+  })
+  const active = useMutation({
+    mutationFn: (actif: boolean) => postAdminSourceVeilleActive(s.id, actif),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-sources'] }),
+  })
+  return (
+    <tr className={`border-b border-line last:border-b-0 hover:bg-surface-3 ${v.actif === false ? 'opacity-55' : ''}`}>
+      <td className="px-3 py-2"><b className="text-txt">{s.name}</b>
+        <span className="ml-1.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">{v.methode ?? '—'}</span>
+        {msg && <div className="mt-0.5 text-[10.5px] text-mint">{msg}</div>}
+      </td>
+      <td className="px-3 py-2 font-mono text-[11px] text-txt-mut">{s.millesime ?? '—'}</td>
+      <td className={`px-3 py-2 font-mono text-[11px] ${v.nouvelle_version ? 'font-bold text-amber' : 'text-txt-mut'}`}>{v.millesime_amont ?? '—'}</td>
+      <td className="px-3 py-2 font-mono text-[11px] text-txt-dim">{fmtReu(v.passage_at)}</td>
+      <td className="px-3 py-2">{v.statut ? <Chip tone={VEILLE_TONE[v.statut] ?? 'off'}>{v.statut.replace(/_/g, ' ')}</Chip> : <Chip>jamais sondée</Chip>}</td>
+      <td className="px-3 py-2 text-right">
+        <ActBtn tone="ghost" disabled={verifier.isPending} onClick={() => verifier.mutate()}>
+          {verifier.isPending ? 'Sonde…' : 'Vérifier maintenant'}
+        </ActBtn>
+        <ActBtn tone="ghost" disabled={active.isPending}
+          onClick={() => active.mutate(!(v.actif ?? true))}>
+          {v.actif === false ? 'Réactiver la veille' : 'Suspendre la veille'}
+        </ActBtn>
+      </td>
+    </tr>
+  )
+}
+
+export function VeillePanel({ sources }: { sources: AdminSource[] }) {
+  const surveillees = sources.filter((s) => s.veille.surveillee)
+  return (
+    <Panel className="mb-0">
+      <PHead>Agent de veille des sources</PHead>
+      <div className="px-4 pt-2 pb-1 text-[11px] leading-relaxed text-txt-mut">
+        Surveille le millésime AMONT de chaque source (data.gouv, IGN, DGFiP, ADEME…) et prévient quand
+        une nouvelle version est publiée. Il n'ingère RIEN — Vic déclenche chaque mise à jour.
+      </div>
+      {surveillees.length ? (
+        <table className="w-full text-[12.5px]">
+          <thead>
+            <tr>
+              {['Source', 'Servi', 'Amont', 'Dernier passage', 'Statut', ''].map((h) => (
+                <th key={h} className="border-b border-line px-3 py-2 text-left font-mono text-[9px] font-medium uppercase tracking-[0.12em] text-txt-dim">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>{surveillees.map((s) => <VeilleRow key={s.id} s={s} />)}</tbody>
+        </table>
+      ) : (
+        <div className="px-4 py-6 text-center text-xs text-txt-mut">Aucune source surveillée pour l'instant.</div>
+      )}
+      <div className="border-t border-line bg-surface-1 px-4 py-2 text-[11px] text-txt-mut">
+        Une source injoignable ou illisible signale que la <b className="text-txt">sentinelle</b> a échoué, jamais que la donnée est en erreur — les deux états restent distincts.
+      </div>
+    </Panel>
+  )
+}
+
 export function SourcesSection() {
   const q = useQuery({ queryKey: ['admin-sources'], queryFn: getAdminSources, refetchInterval: 300_000 })
   const crons = useQuery({ queryKey: ['healthz-crons'], queryFn: getHealthzCrons, refetchInterval: 300_000 })
@@ -80,6 +151,8 @@ export function SourcesSection() {
   return (
     <>
       <div className="mb-3.5 flex flex-wrap items-center gap-2">
+        {/* SENTINELLE-1 (W4.2) — tuile Sources : nombre de sources avec une nouvelle version disponible. */}
+        {d.synthese.nouvelle_version > 0 && <Chip tone="warn">{d.synthese.nouvelle_version} nouvelle version disponible</Chip>}
         {d.synthese.a_mettre_a_jour > 0 && <Chip tone="warn">{d.synthese.a_mettre_a_jour} à mettre à jour</Chip>}
         <Chip tone="ok">{d.synthese.ok} OK</Chip>
         {d.synthese.sans_echeance > 0 && <Chip>{d.synthese.sans_echeance} sans échéance (cadence à régler)</Chip>}
@@ -131,15 +204,7 @@ export function SourcesSection() {
             {!d.runs.length && <div className="py-2 text-xs text-txt-dim">Aucune exécution tracée.</div>}
           </div>
         </Panel>
-        <Panel className="mb-0 opacity-60">
-          <PHead>Agent de veille des sources <Chip>V2</Chip></PHead>
-          <div className="p-4 text-xs leading-relaxed text-txt-mut">
-            Un job qui surveille chaque portail amont (data.gouv, IGN, GPU, Sudocuh…), détecte un
-            nouveau millésime publié et notifie : « DVF S2 2026 disponible — lancer l'ingestion ? ».
-            Il ne lance jamais l'ingestion lui-même. La table des cadences ci-dessus couvre le besoin
-            en attendant. Spécification complète : <span className="font-mono text-[10.5px]">docs/audit-2026-08/DASHBOARD/AGENT-VEILLE-SPEC.md</span>.
-          </div>
-        </Panel>
+        <VeillePanel sources={d.sources} />
       </div>
     </>
   )

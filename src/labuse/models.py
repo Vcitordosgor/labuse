@@ -124,6 +124,39 @@ class DataSource(Base, TimestampMixin):
     affichage_desactive: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
 
+# ───────────────────────────── source_veille ─────────────────────────────
+
+class SourceVeille(Base, TimestampMixin):
+    """SENTINELLE-1 (W1) — la ligne de surveillance amont d'UNE source. La sentinelle SURVEILLE et
+    PRÉVIENT : elle ne télécharge rien, n'ingère rien, n'écrit JAMAIS dans `data_sources`. Une source
+    sans ligne ici n'est simplement pas surveillée — état normal, pas une erreur.
+
+    `methode` ∈ {api, page, entete} (W2) : trois façons de lire le millésime amont.
+      · `api`    — JSON de versions ; `selecteur` = chemin JSON pointé (a.b.0.c).
+      · `page`   — page HTML ; `selecteur` = regex de millésime (ex. `20\\d{2}-S[12]`), on garde le PLUS récent.
+      · `entete` — pas de millésime lisible : on compare l'ETag/Last-Modified au dernier vu (`dernier_entete`).
+    `dernier_statut` ∈ {ok, nouvelle_version, injoignable, illisible}. injoignable/illisible = la
+    SENTINELLE a échoué, PAS la donnée (les deux états restent distincts, cf. W3.5)."""
+
+    __tablename__ = "source_veille"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_id: Mapped[int] = mapped_column(
+        ForeignKey("data_sources.id", ondelete="CASCADE"), unique=True, index=True)
+    url_version: Mapped[str | None] = mapped_column(Text)           # URL amont sondée (jamais inventée)
+    methode: Mapped[str | None] = mapped_column(String(8))          # api | page | entete
+    selecteur: Mapped[str | None] = mapped_column(Text)            # chemin JSON (api) OU regex (page)
+    cadence_heures: Mapped[int] = mapped_column(Integer, default=24, server_default=text("24"))
+    dernier_passage_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    dernier_vu: Mapped[str | None] = mapped_column(String(64))      # millésime constaté amont
+    dernier_statut: Mapped[str | None] = mapped_column(String(16))  # ok|nouvelle_version|injoignable|illisible
+    dernier_message: Mapped[str | None] = mapped_column(Text)
+    dernier_entete: Mapped[str | None] = mapped_column(Text)        # methode entete : ETag/Last-Modified mémorisé
+    actif: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+
+    source: Mapped[DataSource] = relationship()
+
+
 # ───────────────────────── parcel_source_results ─────────────────────────
 
 class ParcelSourceResult(Base):
@@ -976,6 +1009,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_zone_filtre(engine)              # M99 : clé normalisée du filtre zonage
     ensure_data_sources_millesime(engine)   # M32 Phase B §2 : colonnes millésime amont
     ensure_data_sources_status_norm(engine)  # FIX-SOURCES S2 : statut normalisé (casse enum)
+    ensure_source_veille(engine)            # SENTINELLE-1 W1/W5 : table de veille amont + seed
     ensure_icd_columns(engine)              # M9 lot 1
     ensure_signalements(engine)             # M9 lot 3
     from . import reglages as _reglages     # CONNEXIONS-2 Lot 7.1 : table app_reglages (toggles runtime)
@@ -1736,6 +1770,40 @@ def ensure_data_sources_millesime(engine) -> None:
         # CONNEXIONS-2 Lot 6.3 (M2) — flag « désactivée au dashboard » (remplace SOURCES_MASQUEES en dur).
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS affichage_desactive "
                        "boolean NOT NULL DEFAULT false"))
+
+
+def ensure_source_veille(engine) -> None:
+    """SENTINELLE-1 (W1) — table de veille amont `source_veille` + peuplement initial (W5). Idempotent
+    (CREATE IF NOT EXISTS + ensemencement non destructif). La sentinelle n'écrit JAMAIS dans data_sources ;
+    tout son état vit ici."""
+    with engine.begin() as c:
+        c.execute(text("""
+            CREATE TABLE IF NOT EXISTS source_veille (
+                id                 serial PRIMARY KEY,
+                source_id          integer NOT NULL UNIQUE REFERENCES data_sources(id) ON DELETE CASCADE,
+                url_version        text,
+                methode            varchar(8),
+                selecteur          text,
+                cadence_heures     integer NOT NULL DEFAULT 24,
+                dernier_passage_at timestamptz,
+                dernier_vu         varchar(64),
+                dernier_statut     varchar(16),
+                dernier_message    text,
+                dernier_entete     text,
+                actif              boolean NOT NULL DEFAULT true,
+                created_at         timestamptz NOT NULL DEFAULT now(),
+                updated_at         timestamptz NOT NULL DEFAULT now()
+            )"""))
+        c.execute(text("CREATE INDEX IF NOT EXISTS ix_source_veille_source ON source_veille (source_id)"))
+    # peuplement : dans une session (rattachement par nom aux sources en base), idempotent.
+    from .db import session_scope
+    from . import sentinelle
+    try:
+        with session_scope() as s:
+            sentinelle.ensemencer(s)
+            s.commit()
+    except Exception:  # noqa: BLE001 — un souci de seed ne doit JAMAIS bloquer le boot (table déjà créée)
+        pass
 
 
 def ensure_data_sources_status_norm(engine) -> None:

@@ -1156,15 +1156,27 @@ export const postAdminSignalementStatut = (id: number, statut: 'nouveau' | 'trai
 export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quota }) })
 // D6 — Sources
+// SENTINELLE-1 (W4) — état de veille amont d'une source (null si non surveillée = état normal).
+export interface AdminSourceVeille {
+  surveillee: boolean
+  actif: boolean | null
+  methode: string | null            // api | page | entete
+  statut: string | null             // ok | nouvelle_version | injoignable | illisible
+  millesime_amont: string | null    // millésime constaté amont
+  nouvelle_version: boolean
+  passage_at: string | null
+  message: string | null
+}
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
   ingere_le: string | null; cadence: string | null; a_jour: boolean | null; relance: string | null
   // CONNEXIONS-2 Lot 6.3 (M2) — désactivée au dashboard ⇒ hors vitrine + consommateurs coupés.
   affichage_desactive: boolean
+  veille: AdminSourceVeille
 }
 export interface AdminSources {
   sources: AdminSource[]
-  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number }
+  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number }
   cadences: string[]
   runs: Array<{ started_at: string | null; finished_at: string | null; status: string | null; parcels_count: number | null; name: string | null }>
 }
@@ -1176,6 +1188,11 @@ export const postAdminSourceRelancer = (id: number) =>
 // CONNEXIONS-2 Lot 6.3 (M2) — désactiver / réactiver une source depuis le dashboard.
 export const postAdminSourceAffichage = (id: number, actif: boolean) =>
   j<{ ok: boolean; actif: boolean }>(`/admin/sources/${id}/affichage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
+// SENTINELLE-1 (W4) — veille amont : « Vérifier maintenant » (sonde en direct) + activer/désactiver la surveillance.
+export const postAdminSourceVeilleVerifier = (id: number) =>
+  j<{ ok: boolean; statut: string | null; millesime_amont: string | null; servi: string | null; message: string | null; notifs: number }>(`/admin/sources/${id}/veille/verifier`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminSourceVeilleActive = (id: number, actif: boolean) =>
+  j<{ ok: boolean; actif: boolean }>(`/admin/sources/${id}/veille/active`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
 export const getHealthzCrons = () =>
   j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
 // D7 — Produit
