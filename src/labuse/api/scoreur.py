@@ -5,15 +5,15 @@ Chemin : adresse → BAN (géocodage) → point → parcelle CONTENANT le point 
 scorée) → verdict compact. Si un prix est saisi, on le confronte à la charge foncière supportable
 et au prix probable du foncier (Score É V2, O0) — sans jamais prétendre que c'est LE prix.
 
-Réutilise l'existant : géocodage BAN (comme `audit.audit_by_address`), run servi lu depuis la
-constante `Q_A_RUN_LABEL` (aujourd'hui `q_v8_calibre`, cf. config/served_run.txt), table `score_e`. Île entière (pas de restriction commune-pilote : on lit une parcelle déjà en base,
-aucune ingestion live). Zéro scraping.
+Réutilise l'existant : géocodage BAN via la fonction UNIQUE `geocode.geocode_ban` (partagée avec
+`audit.audit_by_address` — CONNEXIONS-2 Lot 9.2, plus deux implémentations divergentes), run servi lu
+depuis `Q_A_RUN_LABEL` (config/served_run.txt), table `score_e`. Île entière (pas de restriction
+commune-pilote : on lit une parcelle déjà en base, aucune ingestion live). Zéro scraping.
 """
 from __future__ import annotations
 
 import logging
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -24,8 +24,6 @@ from ..scoring.score_v_constants import Q_A_RUN_LABEL
 
 log = logging.getLogger("labuse.scoreur")
 router = APIRouter(prefix="/scoreur-adresse", tags=["scoreur-adresse"])
-
-BAN_URL = "https://api-adresse.data.gouv.fr/search/"
 
 # M135 — échelle d'action, mapping canonique unique (tiers_client)
 # M137 — le CHIP COURT (v[0]) : un seul vocabulaire servi partout, celui des chips.
@@ -45,27 +43,17 @@ class ScoreurIn(BaseModel):
 
 
 def _geocode(q: str) -> dict:
-    q = (q or "").strip()
-    if len(q) < 3:
-        raise HTTPException(422, "Adresse trop courte.")
-    ban, last = None, None
-    for _ in range(2):   # BAN rate-limite parfois : 2e tentative
-        try:
-            with httpx.Client(timeout=config.get_settings().http_timeout_s,
-                              headers={"User-Agent": "LA-BUSE/0.1 (+scoreur)"}) as c:
-                r = c.get(BAN_URL, params={"q": q, "limit": 1})
-                r.raise_for_status()
-                ban = r.json()
-            break
-        except Exception as exc:  # noqa: BLE001
-            last = exc
-    if ban is None:
-        raise HTTPException(503, f"Géocodage (BAN) injoignable : {type(last).__name__}.")
-    feats = ban.get("features") or []
-    if not feats:
-        raise HTTPException(404, f"Adresse « {q} » non trouvée.")
-    lon, lat = feats[0]["geometry"]["coordinates"]
-    return {"lon": lon, "lat": lat, "label": feats[0].get("properties", {}).get("label", q)}
+    """CONNEXIONS-2 Lot 9.2 (KO-13) — délègue au géocodeur BAN UNIQUE (`geocode.geocode_ban`) et
+    traduit ses erreurs en HTTP. Plus de client httpx ni de BAN_URL réimplémentés ici."""
+    from .. import geocode
+    try:
+        return geocode.geocode_ban(q, ua="LA-BUSE/0.1 (+scoreur)")
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
+    except geocode.BanIntrouvable as e:
+        raise HTTPException(404, str(e)) from e
+    except geocode.BanIndisponible as e:
+        raise HTTPException(503, str(e)) from e
 
 
 _AVERT = "Estimé — ni un prix ni une promesse ; hypothèses de bilan génériques."

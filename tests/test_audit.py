@@ -80,7 +80,8 @@ def test_address_out_of_commune(db_session, monkeypatch):
         def __enter__(self): return self
         def __exit__(self, *a): return False
         def get(self, *a, **k): return _Resp()
-    monkeypatch.setattr("labuse.audit.httpx.Client", _Client)
+    # CONNEXIONS-2 Lot 9.2 (KO-13) — le géocodage BAN vit désormais dans `labuse.geocode` (fonction unique).
+    monkeypatch.setattr("labuse.geocode.httpx.Client", _Client)
     r = audit.audit_by_address(db_session, "Rue X Saint-Denis")
     assert r["ok"] is False and r["error"] == "commune_non_couverte" and "Saint-Denis" in r["message"]
 

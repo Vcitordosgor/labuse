@@ -495,8 +495,10 @@ def radar_marche(request: Request) -> dict:
 # l'avocat de Vic. Drapeau OFF → 404 partout, rien ne s'ouvre. Admin seulement pour le dépôt.
 
 def _porte_depot_agence() -> None:
-    from ..config import get_settings
-    if not get_settings().radar_depot_agence_actif:
+    # CONNEXIONS-2 Lot 7.1 (N2) — le drapeau est désormais éditable au dashboard (réglage EN BASE,
+    # relu à chaud), plus figé dans l'env. `reglages.depot_agence_actif` prime, défaut = env (fermé).
+    from .. import reglages
+    if not reglages.depot_agence_actif():
         from fastapi import HTTPException
         raise HTTPException(404, "dépôt agence désactivé (question Hoguet en attente)")
 
@@ -577,9 +579,24 @@ def radar_depot_agence_etat(request: Request) -> dict:
     toucher la config), avec la mention « drapeau fermé » quand `actif` est false ; les CLIENTS, eux, ne
     voient rien tant que le drapeau est fermé (leur propre porte `radar_interesse`)."""
     from ..api.auth import exiger_admin
-    from ..config import get_settings
+    from .. import reglages
     exiger_admin(request)
-    return {"actif": bool(get_settings().radar_depot_agence_actif), "admin": True}
+    return {"actif": reglages.depot_agence_actif(), "admin": True}
+
+
+class DepotToggleIn(BaseModel):
+    actif: bool
+
+
+@router.post("/admin/radar/depot-agence/toggle")
+def radar_depot_agence_toggle(body: DepotToggleIn, request: Request) -> dict:
+    """CONNEXIONS-2 Lot 7.1 (N2) — l'admin OUVRE / FERME le dépôt agence DEPUIS LE DASHBOARD (réglage en
+    base, relu à chaud par /etat, /ouvert et tous les écrans). Défaut = fermé. Bascule → immédiate."""
+    from ..api.auth import exiger_admin
+    from .. import reglages
+    exiger_admin(request)
+    reglages.set_bool(reglages.CLE_DEPOT_AGENCE, body.actif)
+    return {"ok": True, "actif": body.actif}
 
 
 @router.get("/radar/depot-agence/ouvert")
@@ -587,8 +604,8 @@ def radar_depot_agence_ouvert() -> dict:
     """SECTEUR-2b (U2) — état PUBLIC du drapeau, lisible par TOUS (sans garde admin) : l'écran Radar de
     l'app décide d'afficher ou non le bouton « Publier une annonce » aux CLIENTS. Ne révèle QUE le
     booléen d'ouverture (aucune donnée)."""
-    from ..config import get_settings
-    return {"ouvert": bool(get_settings().radar_depot_agence_actif)}
+    from .. import reglages
+    return {"ouvert": reglages.depot_agence_actif()}
 
 
 @router.post("/admin/radar/depot-agence/analyser")

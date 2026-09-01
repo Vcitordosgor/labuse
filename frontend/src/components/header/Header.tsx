@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, parcelAt, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getProjets, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
+import { estIdu, iduComplet } from '../../lib/format'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
 // nature s'y produisent (« 8 nouveaux permis à Saint-Louis » + « Voir les 8 → »), au lieu de N lignes
@@ -35,10 +36,16 @@ import { CP_COMMUNES } from '../panel/FiltreLabuse'
 // ré-affiche le code postal (source unique CP_COMMUNES, table mesurée du panneau).
 const CP_PAR_COMMUNE: Record<string, string> = Object.fromEntries(CP_COMMUNES.map(([cp, nom]) => [nom, cp]))
 
-function Omnibox() {
-  const { select, setView, setCommune, commune, setToast } = useApp()
+export function Omnibox() {
+  // CONNEXIONS-2 Lot 8 (C1) — la barre résout, dans l'ordre : IDU · SIREN/SIRET · nom de propriétaire ·
+  // projet du compte · commune · adresse. Nom et SIREN ouvrent Scan patrimoine à l'ÉTAT 2 (propriétaire
+  // posé, via setM02Prefill) ; un projet ouvre le projet (setOpenProjet). La résolution propriétaire
+  // RÉUTILISE la recherche self-contained de Scan patrimoine (modPatrimoineSearch) — pas une 4e impl.
+  const { select, setView, setCommune, commune, setToast, setM02Prefill, setModule, setOpenProjet } = useApp()
+  const qc = useQueryClient()
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  const ouvrirScan = (siren: string) => { setM02Prefill(siren); setModule('patrimoine') }
   // M55-B point 3 : la recherche « lancée » (loupe ou Entrée sans suggestion) doit se VOIR —
   // spinner sobre dans le bouton pendant la résolution ; l'état vide reste le toast honnête.
   const [searching, setSearching] = useState(false)
@@ -68,19 +75,52 @@ function Omnibox() {
     setToast(`« ${sel.label} » localisée, mais aucune parcelle en base à ce point.`)
   }
 
-  // Entrée sans suggestion : COMMUNE (nom sans chiffre) → périmètre ; sinon IDU → fiche ;
-  // en dernier ressort, une adresse libre est géocodée via la 1re suggestion interne.
+  // CONNEXIONS-2 Lot 8 (C1) — résolution multi-type par la barre du bandeau. Ordre : IDU · SIREN/SIRET ·
+  // nom de propriétaire · projet · commune · adresse. (Commune AVANT adresse : sinon « Saint-Paul »
+  // serait géocodé en une parcelle au lieu d'ouvrir le périmètre de la commune — écart assumé.)
   const onEnterRaw = async (raw: string) => {
     if (!raw) return
     setSearching(true)
     try {
-      if (!/\d/.test(raw)) {
-        const low = raw.toLowerCase()
-        const c = (communes.data ?? []).find((x) => x.commune.toLowerCase() === low)
-          ?? (raw.length >= 3 ? (communes.data ?? []).find((x) => x.commune.toLowerCase().startsWith(low)) : undefined)
+      const val = raw.trim()
+      const low = val.toLowerCase()
+      const dg = val.replace(/\s+/g, '')
+
+      // 1. IDU explicite → fiche
+      if (estIdu(val)) {
+        const idu = iduComplet(dg.toUpperCase())
+        const localHit = geo.data?.features.find((f) => String(f.properties?.idu ?? '').toUpperCase() === idu)
+        if (localHit) { setView('cartes'); select(idu); return }
+        const rem = await searchParcels(idu, { ileEntiere: true }).catch(() => [])
+        if (rem[0]) { setView('cartes'); select(rem[0].idu); return }
+      }
+
+      // 2. SIREN (9) / SIRET (14) → Scan patrimoine à l'état 2 (propriétaire posé)
+      if (/^\d{9}$/.test(dg) || /^\d{14}$/.test(dg)) { ouvrirScan(dg.slice(0, 9)); return }
+
+      // 3. NOM de propriétaire → Scan patrimoine état 2 (réutilise la recherche de Scan patrimoine)
+      if (/[a-zA-Zà-ÿ]/.test(val)) {
+        const owners = await modPatrimoineSearch(val).catch(() => [])
+        if (owners[0]) { ouvrirScan(owners[0].siren); return }
+      }
+
+      // 4. PROJET du compte (nom exact puis contient) → ouvre le projet
+      const projets = await qc.fetchQuery({ queryKey: ['projets'], queryFn: getProjets }).catch(() => [])
+      const proj = projets.find((p) => p.nom.toLowerCase() === low)
+        ?? (val.length >= 3 ? projets.find((p) => p.nom.toLowerCase().includes(low)) : undefined)
+      if (proj) { setOpenProjet({ id: proj.id, nom: proj.nom }); return }
+
+      // 5. COMMUNE (exacte ou préfixe) → périmètre. Robuste au timing : si la liste n'est pas encore en
+      // cache (recherche juste après le chargement), on la résout à la demande (même query key).
+      if (!/\d/.test(val)) {
+        const comList = communes.data ?? await qc.fetchQuery({ queryKey: ['communes'], queryFn: getCommunes }).catch(() => [])
+        const c = comList.find((x) => x.commune.toLowerCase() === low)
+          ?? (val.length >= 3 ? comList.find((x) => x.commune.toLowerCase().startsWith(low)) : undefined)
         if (c) { setCommune(c.commune); setView('cartes'); return }
       }
-      const qn = raw.toUpperCase().replace(/\s+/g, '')
+
+      // 6. IDU partiel / recherche parcelle
+      const qn = val.toUpperCase().replace(/\s+/g, '')
       const hit = geo.data?.features.find((f) => {
         const idu = String(f.properties?.idu ?? '').toUpperCase()
         return idu.includes(qn) || idu.slice(8).includes(qn)
@@ -88,12 +128,13 @@ function Omnibox() {
       if (hit) { setView('cartes'); select(String(hit.properties?.idu)); return }
       const remote = await searchParcels(qn, { ileEntiere: true }).catch(() => [])
       if (remote[0]) { setView('cartes'); select(remote[0].idu); return }
-      // adresse libre → 1re suggestion interne
-      if (/[a-zA-Zà-ÿ]/.test(raw)) {
-        const feats = await banAutocomplete(raw).catch(() => [])
+
+      // 7. ADRESSE libre → 1re suggestion interne → parcelle
+      if (/[a-zA-Zà-ÿ]/.test(val)) {
+        const feats = await banAutocomplete(val).catch(() => [])
         if (feats[0]) { await onPickAddress({ label: feats[0].label, lon: feats[0].lon, lat: feats[0].lat, idu: feats[0].idu }); return }
       }
-      setToast(`Aucune commune, parcelle ni adresse trouvée pour « ${raw} »`)
+      setToast(`Aucun résultat (IDU, SIREN, propriétaire, projet, commune ou adresse) pour « ${val} »`)
     } finally {
       setSearching(false)
     }
@@ -127,7 +168,7 @@ function Omnibox() {
         data-omnibox
         onSelect={onPickAddress}
         onEnterRaw={onEnterRaw}
-        placeholder="Rechercher : IDU, adresse exacte…"
+        placeholder="Rechercher : IDU, SIREN, propriétaire, projet, adresse…"
         className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
       />
     </div>

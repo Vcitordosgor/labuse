@@ -24,7 +24,7 @@ from pathlib import Path
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .. import brevo
+from .. import mail   # CONNEXIONS-2 Lot 9.1 (KO-12) — façade unique (mail.envoyer_template → Brevo)
 from ..api.events import creer_notification
 from ..tz import today_reunion
 from . import portails, veille as veille_mod
@@ -245,7 +245,7 @@ def _envoyer(db: Session, *, compte_id, email: str, template_key: str, dedup: st
             (dry_dir / f"{type_envoi}_compte{compte_id}.html").write_text(cartes_html_str, encoding="utf-8")
         rapport.append({"compte_id": compte_id, "type_envoi": type_envoi, "n": n_biens, "statut": "simule"})
         return "simule"
-    res = brevo.envoyer_template(email, template_key, params)
+    res = mail.envoyer_template(email, template_key, params)
     if res.get("envoye"):
         journaliser(db, EV_DIGEST, f"Radar — {type_envoi} envoyé ({n_biens})",
                     detail=f"{type_envoi} · {n_biens} bien(s)", compte_id=compte_id, dedup=dedup)

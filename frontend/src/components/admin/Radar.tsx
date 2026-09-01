@@ -2,11 +2,11 @@
 // Quatre zones : Saisie du jour · File d'extraction · Re-vérification (2 niveaux) · Check quotidien.
 // Doctrine : on n'affiche JAMAIS l'annonce (ni photo, ni titre, ni texte) — des FAITS + le lien
 // sortant. Le mauve est réservé aux champs IA « à vérifier » (sous le seuil de confiance).
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getAdminSignalements, getRadarAInstruire, getRadarCheck, getRadarExtraction, getRadarReverif,
-  postAdminSignalementStatut, radarDeposer, radarDeposerHtml,
+  getAdminSignalements, getRadarAInstruire, getRadarCheck, getRadarDepotAgenceEtat, getRadarExtraction, getRadarReverif,
+  postAdminSignalementStatut, postRadarDepotAgenceToggle, radarDeposer, radarDeposerHtml,
   radarInstruire, radarPrix, radarRattacherHumain, radarRetiree, radarToujoursEnLigne, radarValider,
   type RadarAInstruire, type RadarBrouillon, type RadarCritere, type RadarDepotHtml, type RadarPiste,
 } from '../../lib/api'
@@ -437,6 +437,31 @@ function CapturesAlerte() {
   )
 }
 
+// CONNEXIONS-2 Lot 7.1 (N2) — TOGGLE « dépôt agence » : le drapeau (parcours « Publier une annonce »)
+// se règle ICI, plus dans l'env. Bascule → visible immédiatement (réglage base relu à chaud). Défaut = fermé.
+function DepotAgenceToggle() {
+  const qc = useQueryClient()
+  const etat = useQuery({ queryKey: ['depot-agence-etat'], queryFn: getRadarDepotAgenceEtat })
+  const tog = useMutation({
+    mutationFn: (actif: boolean) => postRadarDepotAgenceToggle(actif),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depot-agence-etat'] }) },
+  })
+  const actif = etat.data?.actif
+  return (
+    <section className="flex flex-wrap items-center gap-3 rounded-xl border border-line-2 bg-surface-2/50 px-4 py-3">
+      <Lbl>Dépôt agence — « Publier une annonce »</Lbl>
+      <Chip tone={actif ? 'ok' : 'off'}>{actif ? 'ouvert' : 'fermé'}</Chip>
+      <button data-depot-toggle disabled={tog.isPending || actif === undefined}
+        onClick={() => { if (window.confirm(actif
+          ? 'Fermer le dépôt agence ? Les clients ne verront plus le parcours ni les dépôts agence.'
+          : 'Ouvrir le dépôt agence aux clients ? (question Hoguet — n’ouvrir qu’avec l’accord avocat.)')) tog.mutate(!actif) }}
+        className="ml-auto rounded-md border border-line-2 px-2.5 py-1 text-[11.5px] text-txt-dim hover:border-mint hover:text-mint">
+        {actif ? 'Fermer' : 'Ouvrir'}
+      </button>
+    </section>
+  )
+}
+
 export function RadarSection() {
   const qc = useQueryClient()
   const refresh = () => { qc.invalidateQueries({ queryKey: ['radar-extraction'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
@@ -446,6 +471,7 @@ export function RadarSection() {
         Faits extraits d’annonces publiques + lien vers la source. Aucune photo ni texte d’annonce n’est
         stocké ni affiché — les pages déposées restent des documents de travail privés.
       </p>
+      <DepotAgenceToggle />
       <DepotHtml onDepose={refresh} />
       {/* SECTEUR-2b (U2) — « Publier une annonce » (dépôt agence, 4 étapes) a QUITTÉ la Tour de contrôle :
           le parcours vit désormais dans l'écran Radar de l'app (bouton dans l'en-tête). */}

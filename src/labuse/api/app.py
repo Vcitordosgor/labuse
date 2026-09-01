@@ -974,13 +974,21 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     col_ok = db.execute(text(
         "SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' "
         "AND column_name='fraicheur_statut'")).first()
+    erreurs: dict[str, dict] = {}
     if col_ok:
         persistes = {r[0]: r[1] for r in db.execute(text(
             "SELECT name, fraicheur_statut FROM data_sources WHERE fraicheur_statut IS NOT NULL")).all()}
+        # CONNEXIONS-2 Lot 6.2 (KO-14) — date + motif du dernier échec d'ingestion, si le job les a posés
+        # (garde par existence de colonne : base de test / job jamais lancé → dict vide, pas de crash).
+        if db.execute(text("SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' "
+                           "AND column_name='fraicheur_erreur_at'")).first():
+            erreurs = {r["name"]: {"at": r["at"], "message": r["message"]} for r in db.execute(text(
+                "SELECT name, fraicheur_erreur_at AS at, fraicheur_erreur_message AS message "
+                "FROM data_sources WHERE fraicheur_erreur_at IS NOT NULL")).mappings().all()}
     # M74 C bis / M87 P0 / FIX-SOURCES S1 — la sélection SQL ci-dessus a déjà appliqué la définition
     # canonique ; ce filtre Python (même règle, statut compris) reste en CEINTURE — rows == served.
-    served = [s for s in rows if _srccat.est_affichee(s.name, s.technical_notes,
-                                                       s.status.value if s.status else None)]
+    served = [s for s in rows if _srccat.est_affichee(
+        s.name, s.technical_notes, s.status.value if s.status else None, s.affichage_desactive)]
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -1011,6 +1019,9 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "fraicheur_statut": persistes.get(s.name) or statuts.get(s.name, {}).get("statut"),
             "fraicheur_seuil_jours": statuts.get(s.name, {}).get("seuil_jours"),
             "fraicheur_delta_jours": statuts.get(s.name, {}).get("delta_jours"),
+            # CONNEXIONS-2 Lot 6.2 (KO-14) — badge rouge « en erreur » + date + motif du dernier échec.
+            "fraicheur_erreur_at": erreurs.get(s.name, {}).get("at"),
+            "fraicheur_erreur_message": erreurs.get(s.name, {}).get("message"),
         }
         for s in served
     ]
@@ -4351,6 +4362,16 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
     if kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
+    # CONNEXIONS-2 Lot 6.3 (propagation M2) — si la SOURCE de cette couche est DÉSACTIVÉE au dashboard,
+    # on sert une couche VIDE marquée « source désactivée » plutôt que des objets d'une source coupée.
+    ds_off = db.execute(text(
+        "SELECT bool_or(COALESCE(ds.affichage_desactive, false)) "
+        "FROM spatial_layers sl JOIN data_sources ds ON ds.id = sl.data_source_id "
+        "WHERE sl.kind = :k"), {"k": kind}).scalar()
+    if ds_off:
+        return {"type": "FeatureCollection", "features": [], "source_desactivee": True,
+                "message": "Source désactivée au dashboard", "millesime_integration": None,
+                "source_millesime": None}
     rows = db.execute(text(
         """SELECT sl.id, sl.subtype, sl.name, sl.attrs->>'niveau' AS niveau,
                   sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,

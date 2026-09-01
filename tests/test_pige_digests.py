@@ -122,7 +122,8 @@ def test_ordre_baisse_d_abord():
 
 def test_idempotence_par_jour(seed, monkeypatch):
     """Rejouée le même jour, la commande ne ré-envoie pas le même digest/alerte au même client."""
-    monkeypatch.setattr(digests.brevo, "envoyer_template", lambda to, key, params: {"envoye": True})
+    # CONNEXIONS-2 Lot 9.1 (KO-12) — l'envoi passe désormais par la FAÇADE unique `mail.envoyer_template`.
+    monkeypatch.setattr(digests.mail, "envoyer_template", lambda to, key, params: {"envoye": True})
     with session_scope() as db:
         r1 = digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=False)
     with session_scope() as db:

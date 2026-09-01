@@ -149,11 +149,11 @@ export function M16() {
   // MapView quand `module === 'assemblage'` — les contours de toutes les parcelles apparaissent,
   // bien lisibles, dès qu'on zoome (les tuiles se chargent). Voir MapView `ile-pick`.
   const d = run.data
-  // point 2 (mandat) : ×gain à 2 DÉCIMALES (le back arrondit gain_ratio à 1 → « ×1 » trompeur) —
-  // recalculé côté front depuis les valeurs servies (SDP cumulée ÷ meilleure seule = 1,03 → +3 %).
-  const ratio = d?.sdp_max_seule_m2 ? (d.sdp_combinee_m2 as number) / (d.sdp_max_seule_m2 as number) : null
+  // CONNEXIONS-2 Lot 9.3 (KO-15) — le ratio (2 déc.) ET le pourcentage sont désormais SERVIS par le
+  // backend (api/moteurs.py) : le front NE RE-DIVISE PLUS (fini les deux expressions du même ratio).
+  const ratio = d?.gain_ratio ?? null
   const ratioStr = ratio != null ? ratio.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : null
-  const pct = ratio != null ? Math.round((ratio - 1) * 100) : null
+  const pct = d?.gain_pct ?? null
   return (
     // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden) : on accède à
     // la suite (analyse, propriétaires, courriers) au lieu d'un bas d'écran coupé.

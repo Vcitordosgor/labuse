@@ -118,6 +118,10 @@ class DataSource(Base, TimestampMixin):
     rate_limit: Mapped[str | None] = mapped_column(String(64))
     legal_notes: Mapped[str | None] = mapped_column(Text)
     technical_notes: Mapped[str | None] = mapped_column(Text)
+    # CONNEXIONS-2 Lot 6.3 (M2) — DÉSACTIVER une source depuis le dashboard : flag EN BASE (remplace
+    # `SOURCES_MASQUEES` en dur, désormais vestigial). Désactivée ⇒ retirée de la vitrine ET les
+    # consommateurs (couches/outils) servent « source désactivée » à la place d'un chiffre périmé.
+    affichage_desactive: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
 
 
 # ───────────────────────── parcel_source_results ─────────────────────────
@@ -974,6 +978,8 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_data_sources_status_norm(engine)  # FIX-SOURCES S2 : statut normalisé (casse enum)
     ensure_icd_columns(engine)              # M9 lot 1
     ensure_signalements(engine)             # M9 lot 3
+    from . import reglages as _reglages     # CONNEXIONS-2 Lot 7.1 : table app_reglages (toggles runtime)
+    _reglages.ensure_reglages(engine)
     ensure_suggestions(engine)              # M16-C
     ensure_promesses_index(engine)          # index partiel /promesses
     ensure_flags_probe_index(engine)        # M45 (P1)
@@ -1720,6 +1726,16 @@ def ensure_data_sources_millesime(engine) -> None:
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_horizon_at date"))
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_cadence varchar(32)"))
         c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS prochain_millesime_at date"))
+        # CRON-2 — statut de fraîcheur servi aux badges (posé par le job sources-fraicheur ; ici aussi
+        # pour que le schéma soit complet dès le heal, pas seulement au 1er passage du job).
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_statut varchar(16)"))
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_calcule_at timestamptz"))
+        # CONNEXIONS-2 Lot 6.2 (KO-14) — date + motif du dernier échec d'ingestion (état « en erreur »).
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_erreur_at timestamptz"))
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_erreur_message text"))
+        # CONNEXIONS-2 Lot 6.3 (M2) — flag « désactivée au dashboard » (remplace SOURCES_MASQUEES en dur).
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS affichage_desactive "
+                       "boolean NOT NULL DEFAULT false"))
 
 
 def ensure_data_sources_status_norm(engine) -> None:

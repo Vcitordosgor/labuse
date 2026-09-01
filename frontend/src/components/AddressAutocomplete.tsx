@@ -4,7 +4,9 @@ import { banAutocomplete, type BanFeature } from '../lib/api'
 import { estIdu } from '../lib/format'
 
 // M12-D1 — COMPOSANT D'AUTOCOMPLÉTION D'ADRESSE RÉUTILISABLE (mutualisé D2 + D3).
-// Suggestions au fil de la frappe, adossées à la BAN (api-adresse.data.gouv.fr, publique).
+// CONNEXIONS-2 Lot 9.4 — commentaire périmé corrigé : les suggestions viennent de la TABLE INTERNE
+// `adresses` (endpoint `/adresses/autocomplete`, `banAutocomplete`), PAS d'un appel navigateur à
+// api-adresse.data.gouv.fr. L'IDU accompagne la suggestion (atterrissage direct sur la parcelle).
 // Sélectionner une suggestion renvoie TOUJOURS une adresse normalisée + coordonnées
 // (jamais une chaîne libre) via onSelect. Navigation clavier (↑ ↓ Entrée Échap) + a11y
 // (combobox / listbox ARIA). Debounce + annulation de la requête précédente.

@@ -256,6 +256,18 @@ def admin_pilotage(request: Request) -> dict:
     # jamais un faux rouge ni un faux vert.
     sante = {"ok": heal.get("ok"), "total": heal.get("total"),
              "en_echec": [f.get("module") for f in heal.get("failures", [])]}
+    # CONNEXIONS-2 Lot 7.2 (N3) — sonde RUNTIME des endpoints métier (avec DB) : capte le cas
+    # « /accueil/chiffres vivant mais écran vide » que le heal boot ne voit pas.
+    from ..db import session_scope as _ss
+    from . import sante as _sante
+    try:
+        with _ss() as _s:
+            _sonde = _sante.sonde_metier(_s)
+        sante["endpoints_ok"] = _sonde["ok"]
+        sante["endpoints"] = _sonde["endpoints"]
+    except Exception:  # noqa: BLE001 — la sonde ne casse jamais la page Pilotage
+        sante["endpoints_ok"] = None
+        sante["endpoints"] = []
 
     for r in fil:
         r["ts"] = r["ts"].isoformat() if r["ts"] else None
@@ -273,6 +285,18 @@ def admin_pilotage(request: Request) -> dict:
         "fil": fil,
         "gels": gels,
     }
+
+
+@router.get("/admin/sante-endpoints")
+def admin_sante_endpoints(request: Request) -> dict:
+    """CONNEXIONS-2 Lot 7.2 (N3) — sonde des endpoints MÉTIER (avec DB), à la demande. La tuile
+    « Santé » du dashboard poll ceci : dernier passage + endpoints en échec (forme et non-vacuité)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import session_scope
+    from . import sante
+    with session_scope() as s:
+        return sante.sonde_metier(s)
 
 
 class DegelerIn(BaseModel):
@@ -528,7 +552,8 @@ def admin_licence_mail(compte_id: int, body: MailIn, request: Request) -> dict:
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
-    from ..brevo import LIBELLES, envoyer_template
+    from ..brevo import LIBELLES              # LIBELLES = données d'affichage (pas un transport)
+    from ..mail import envoyer_template       # CONNEXIONS-2 Lot 9.1 (KO-12) — envoi via la façade unique
     from ..db import engine
     if body.key not in LIBELLES:
         raise HTTPException(422, f"Template inconnu « {body.key} ».")
@@ -684,7 +709,8 @@ def admin_sources(request: Request) -> dict:
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
             "SELECT id, name, category, provider, status, technical_notes, last_sync_at,"
-            "       source_millesime, source_horizon_at, source_cadence"
+            "       source_millesime, source_horizon_at, source_cadence,"
+            "       COALESCE(affichage_desactive, false) AS affichage_desactive"
             " FROM data_sources ORDER BY name")).mappings()]
         runs = [dict(r) for r in c.execute(text(
             "SELECT r.started_at, r.finished_at, r.status, r.parcels_count, d.name"
@@ -709,6 +735,8 @@ def admin_sources(request: Request) -> dict:
             # a_jour : true OK · false à mettre à jour · null = pas d'échéance calculable
             "a_jour": a_jour,
             "relance": relance["label"] if relance else None,
+            # CONNEXIONS-2 Lot 6.3 — état du flag pour le toggle admin (désactivée ⇒ hors vitrine).
+            "affichage_desactive": bool(r.get("affichage_desactive")),
         })
     # « à mettre à jour » d'abord (mandat), puis nom
     sources.sort(key=lambda s: (s["a_jour"] is not False, s["name"].lower()))
@@ -743,6 +771,31 @@ def admin_source_cadence(source_id: int, body: CadenceIn, request: Request) -> d
     if not n:
         raise HTTPException(404, "Source introuvable.")
     return {"ok": True, "cadence": cad}
+
+
+class AffichageIn(BaseModel):
+    actif: bool
+
+
+@router.post("/admin/sources/{source_id}/affichage")
+def admin_source_affichage(source_id: int, body: AffichageIn, request: Request) -> dict:
+    """CONNEXIONS-2 Lot 6.3 (M2) — DÉSACTIVER / réactiver une source depuis le dashboard (admin seul).
+    Écrit le flag `affichage_desactive` EN BASE (remplace `SOURCES_MASQUEES` en dur). Désactivée ⇒
+    retirée de la vitrine (WHERE_AFFICHEES) ET les consommateurs (couches/outils) servent « source
+    désactivée » via `sources_catalog.source_active`. Relu à la requête suivante (aucun cache)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        # ceinture : la colonne existe (heal boot) ; ADD IF NOT EXISTS pour une base jamais healée.
+        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS affichage_desactive "
+                       "boolean NOT NULL DEFAULT false"))
+        n = c.execute(text("UPDATE data_sources SET affichage_desactive = :d WHERE id = :i"),
+                      {"d": not body.actif, "i": source_id}).rowcount
+    if not n:
+        raise HTTPException(404, "Source introuvable.")
+    return {"ok": True, "actif": body.actif, "affichage_desactive": not body.actif}
 
 
 @router.post("/admin/sources/{source_id}/relancer")

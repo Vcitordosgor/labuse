@@ -249,6 +249,10 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "quotidien", "0 23 * * *", "03:00", timeout_s=1800),
     _j("healthcheck", "Sonde /health locale + espace disque (2 échecs → alerte)", "15 min",
        "*/15 * * * *", "toutes les 15 min", timeout_s=120, besoin_db=False),
+    # CONNEXIONS-2 Lot 7.2 (N3) — sonde des endpoints MÉTIER (avec DB) : capte « écran vide » (run absent),
+    # source vide, Radar/projets cassés — ce que /health sans DB ne voit pas. Notifie l'admin à la panne.
+    _j("sante-endpoints", "Sonde endpoints métier (accueil/sources/fiche/radar/projets/ask) avec DB",
+       "15 min", "7,37 * * * *", "toutes les 30 min", timeout_s=300),
     # K4 — hebdo & mensuels
     _j("pg-maintenance", "VACUUM ANALYZE des tables chaudes", "hebdo (dim)",
        "0 0 * * 0", "04:00 dim", timeout_s=3600, besoin_db=False),

@@ -5,7 +5,7 @@
 // « Agent de veille » (V2 — spec : docs/audit-2026-08/DASHBOARD/AGENT-VEILLE-SPEC.md).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getAdminSources, getHealthzCrons, postAdminSourceCadence, postAdminSourceRelancer, type AdminSource } from '../../lib/api'
+import { getAdminSources, getHealthzCrons, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, type AdminSource } from '../../lib/api'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
 
 const fmtReu = (iso?: string | null) => {
@@ -27,9 +27,15 @@ function SourceRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
     onSuccess: (r) => setMsg(`Relancée (${r.label}) — log ${r.log}`),
     onError: () => setMsg('Relance impossible.'),
   })
+  // CONNEXIONS-2 Lot 6.3 (M2) — désactiver / réactiver la source (flag en base, propagé aux couches/outils).
+  const aff = useMutation({
+    mutationFn: (actif: boolean) => postAdminSourceAffichage(s.id, actif),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-sources'] }),
+  })
   return (
-    <tr className="border-b border-line last:border-b-0 hover:bg-surface-3">
+    <tr className={`border-b border-line last:border-b-0 hover:bg-surface-3 ${s.affichage_desactive ? 'opacity-55' : ''}`}>
       <td className="px-4 py-2.5"><b className="text-txt">{s.name}</b>
+        {s.affichage_desactive && <Chip tone="warn">désactivée</Chip>}
         {msg && <div className="mt-1 text-[10.5px] text-mint">{msg}</div>}
       </td>
       <td className="px-4 py-2.5 font-mono text-xs text-txt-mut">{s.millesime ?? '—'}</td>
@@ -53,6 +59,12 @@ function SourceRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
             {rel.isPending ? 'Lancement…' : "Relancer l'ingestion"}
           </ActBtn>
         )}
+        <ActBtn tone="ghost" disabled={aff.isPending} data-affichage={s.id}
+          onClick={() => { if (window.confirm(s.affichage_desactive
+            ? `Réactiver « ${s.name} » ? Elle réapparaîtra dans la vitrine et les consommateurs.`
+            : `Désactiver « ${s.name} » ? Elle sortira de la vitrine ; les couches/outils afficheront « source désactivée ».`)) aff.mutate(s.affichage_desactive) }}>
+          {s.affichage_desactive ? 'Réactiver' : 'Désactiver'}
+        </ActBtn>
       </td>
     </tr>
   )

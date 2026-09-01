@@ -9,7 +9,9 @@ import { M16 } from './moteurs'
 const IDUS = ['97415000CT1917', '97415000CT2565', '97415000CT3327']
 const STUDY = {
   n: 3, contigu: false, surface_totale_m2: 14111, sdp_combinee_m2: 11065, sdp_max_seule_m2: 10726,
-  gain_ratio: 1.0, logements_combine: [78, 89], n_proprietaires: 3, n_personnes_morales: 1, n_particuliers: 2,
+  // CONNEXIONS-2 Lot 9.3 (KO-15) — le backend sert désormais gain_ratio (2 déc.) ET gain_pct ; le front
+  // affiche ces valeurs, il ne re-divise plus (11 065 / 10 726 = 1,03 → +3 %, calculé côté serveur).
+  gain_ratio: 1.03, gain_pct: 3, logements_combine: [78, 89], n_proprietaires: 3, n_personnes_morales: 1, n_particuliers: 2,
   tous_personnes_morales: false, proprietaires_pm: [], sans_potentiel: false, n_chiffrables: 3,
   ca: { central: 5000000 }, charge_fonciere: { central: -1879117, par_m2_terrain: -133 },
   terrain_zone_eur_m2: 479, terrain_zone_fiabilite: 'moyenne', zones_mixtes: false, note_sdp: 'Indicatif.',

@@ -70,17 +70,22 @@ def _ligne(commune: str, r: dict | None) -> dict:
 
 def stats(db: Session) -> dict:
     """Les 24 communes (même vides) + le total ÎLE. Chaque mesure porte son n ; < 5 = insuffisant."""
-    par_commune = {row["commune"]: dict(row) for row in db.execute(text(_SQL_COMMUNE)).mappings()}
+    # CONNEXIONS-2 Lot 7 (#12/H5) — drapeau dépôt agence fermé ⇒ les dépôts agence sortent des STATS
+    # servies (comme du flux client) : un test admin ne gonfle pas « N biens » d'une commune.
+    from .. import reglages
+    excl = reglages.exclusion_depot_agence_sql("b")
+    sql_commune = _SQL_COMMUNE.replace("GROUP BY b.commune", f"{excl} GROUP BY b.commune")
+    par_commune = {row["commune"]: dict(row) for row in db.execute(text(sql_commune)).mappings()}
     communes = sorted(nom for _insee, nom in REUNION_COMMUNES)
     lignes = [_ligne(c, par_commune.get(c)) for c in communes]
 
     # total île : ré-agrégé sur TOUT le corpus (pas une somme des médianes — on recalcule les médianes).
-    total_row = db.execute(text(_SQL_ILE)).mappings().first()
+    total_row = db.execute(text(_SQL_ILE + excl)).mappings().first()
     ile = _ligne("Toute l'île", dict(total_row) if total_row else None)
 
     corpus = sum(l["actives"] + l["retirees_30j"] + l["vendues_90j"] for l in lignes)
     return {"communes": lignes, "ile": ile, "seuil_n": SEUIL_N,
             "corpus_total": db.execute(text(
                 "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id "
-                "WHERE f.valide_at IS NOT NULL")).scalar() or 0,
+                f"WHERE f.valide_at IS NOT NULL{excl}")).scalar() or 0,
             "corpus_actif": corpus}

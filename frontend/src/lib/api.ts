@@ -592,6 +592,14 @@ export interface AccueilChiffres {
 }
 export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
 
+// CONNEXIONS-2 Lot 6.1 (KO-11) — la ligne de fraîcheur de l'accueil, CALCULÉE depuis l'état réel des
+// sources (data_sources.fraicheur_statut) : même donnée que la page Sources et le dashboard.
+export interface AccueilFraicheur {
+  ton: 'ok' | 'warn' | 'error'; phrase: string
+  en_erreur: number; en_retard: number; total: number
+}
+export const getAccueilFraicheur = () => j<AccueilFraicheur>('/accueil/fraicheur')
+
 // M83 B4 — « CETTE SEMAINE » : trois signaux mesurés, avec fraîcheur (un zéro n'est pas une absence).
 export interface AccueilCetteSemaine {
   permis: { n_7j: number; frais: boolean; derniere: string | null }
@@ -924,8 +932,9 @@ export const modBailleur = (commune?: string | null) =>
 export const modFantome = (limit = 300, offset = 0, commune?: string | null) =>
   j<Record<string, unknown>>(`/modules/fantome?${commune ? `commune=${encodeURIComponent(commune)}&` : ''}limit=${limit}&offset=${offset}`)
 export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`/ortho/equipements/${idu}`)
-// M82 (option B) : « /courrier/demande » retiré (aucune promesse d'envoi). Le courrier généré est
-// téléchargeable en PDF — le client l'envoie lui-même.
+// M82 (option B) : le courrier généré est téléchargeable en PDF — le client l'envoie lui-même.
+// CONNEXIONS-2 Lot 9.4 — commentaire périmé corrigé : « /courrier/demande » N'EST PAS retiré ; c'est
+// le workflow COURRIER-SERVICE (postCourrierDemande, ci-dessous), bien wiré. Le PDF est une option EN PLUS.
 export const courrierPdf = async (idu: string | null, motif: string, texte: string): Promise<void> => {
   const r = await fetch('/courrier/pdf', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu, motif, texte }) })
@@ -1051,7 +1060,8 @@ export interface AdminPilotage {
   actifs_24h: number
   ia_mois: { cout_eur: number; appels: number }
   backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent'; chemin: string; age_jours: number | null; mtime?: string }
-  sante: { ok: boolean | null; total: number | null; en_echec: string[] }
+  // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
+  sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
   courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
   run: { label: string | null; carte_le: string | null }
   fil: Array<{ id: number; ts: string | null; kind: string; source: string | null; titre: string; detail: string | null; lien: string | null }>
@@ -1149,6 +1159,8 @@ export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
   ingere_le: string | null; cadence: string | null; a_jour: boolean | null; relance: string | null
+  // CONNEXIONS-2 Lot 6.3 (M2) — désactivée au dashboard ⇒ hors vitrine + consommateurs coupés.
+  affichage_desactive: boolean
 }
 export interface AdminSources {
   sources: AdminSource[]
@@ -1161,6 +1173,9 @@ export const postAdminSourceCadence = (id: number, cadence: string | null) =>
   j<{ ok: boolean }>(`/admin/sources/${id}/cadence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadence }) })
 export const postAdminSourceRelancer = (id: number) =>
   j<{ ok: boolean; label: string; log: string }>(`/admin/sources/${id}/relancer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+// CONNEXIONS-2 Lot 6.3 (M2) — désactiver / réactiver une source depuis le dashboard.
+export const postAdminSourceAffichage = (id: number, actif: boolean) =>
+  j<{ ok: boolean; actif: boolean }>(`/admin/sources/${id}/affichage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
 export const getHealthzCrons = () =>
   j<{ ok: boolean; crons: Record<string, { statut: string; note?: string; dernier_ok?: string | null; age_jours?: number }> }>('/healthz/crons')
 // D7 — Produit
@@ -1420,6 +1435,9 @@ export const radarValider = (bien_id: number, faits: Record<string, unknown>) =>
 // RADAR-VEILLE-1 (R3) — parcours DÉPÔT AGENCE (derrière drapeau, admin seulement)
 export interface DepotRec { list_id?: number; url?: string; type?: string; prix?: number; surface_hab?: number; surface_terrain?: number; pieces?: number; commune?: string; description?: string; photos?: string[] }
 export const getRadarDepotAgenceEtat = () => j<{ actif: boolean; admin?: boolean }>('/admin/radar/depot-agence/etat')
+// CONNEXIONS-2 Lot 7.1 (N2) — l'admin ouvre/ferme le dépôt agence au dashboard (réglage base, relu à chaud).
+export const postRadarDepotAgenceToggle = (actif: boolean) =>
+  j<{ ok: boolean; actif: boolean }>('/admin/radar/depot-agence/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
 // SECTEUR-2b (U2) — état PUBLIC du drapeau (lisible par tous) : l'écran Radar de l'app décide d'afficher
 // le bouton « Publier une annonce » aux clients quand le drapeau est ouvert.
 export const getRadarDepotOuvert = () => j<{ ouvert: boolean }>('/radar/depot-agence/ouvert')

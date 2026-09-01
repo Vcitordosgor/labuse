@@ -168,9 +168,12 @@ export interface SourceInfo {
   // « cadence_libre »/« sans_donnee » ne sont jamais une alerte (anti-faux-positif).
   // CRON-2 — vocabulaire du job sources-fraicheur (persisté) : en_panne / sans_echeance, en plus des
   // valeurs du calcul live historique (cadence_libre / sans_donnee).
-  fraicheur_statut?: 'en_retard' | 'en_panne' | 'a_jour' | 'sans_echeance' | 'cadence_libre' | 'sans_donnee' | null
+  fraicheur_statut?: 'en_retard' | 'en_panne' | 'a_jour' | 'sans_echeance' | 'cadence_libre' | 'sans_donnee' | 'en_erreur' | null
   fraicheur_seuil_jours?: number | null
   fraicheur_delta_jours?: number | null
+  // CONNEXIONS-2 Lot 6.2 (KO-14) — dernier échec d'ingestion : badge rouge « en erreur » + date + motif.
+  fraicheur_erreur_at?: string | null
+  fraicheur_erreur_message?: string | null
   ingestion_runs: number
   // VUES item 4 : vérification « dernière version publiée » (source_checks) — NULL tant que
   // le mandat d'audit data n'a pas tourné ; la mention ne s'affiche qu'avec cette date

@@ -72,33 +72,62 @@ def sources_fraicheur(ctx: JobContext) -> None:
     # colonnes de statut servi aux badges (idempotent, migration propre in-place).
     db.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_statut varchar(16)"))
     db.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_calcule_at timestamptz"))
+    # CONNEXIONS-2 Lot 6.2 (KO-14) — un ÉCHEC d'ingestion doit devenir un état visible « en erreur »,
+    # distinct de l'ancienneté : ces colonnes portent la DATE et le MOTIF du dernier run échoué.
+    db.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_erreur_at timestamptz"))
+    db.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_erreur_message text"))
+    db.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS affichage_desactive boolean "
+                    "NOT NULL DEFAULT false"))
     # cadences → seuil en jours (au-delà = en_retard ; au-delà de 2× = en_panne). Depuis la table, pas le code.
     seuils = {"hebdomadaire": 10, "mensuelle": 40, "trimestrielle": 100, "semestrielle": 200,
               "annuelle": 400, "continue": 10}
+    #: statuts de run considérés « en cours / réussis » — tout AUTRE statut non nul = ÉCHEC (KO-14).
+    RUN_OK = {"ok", "success", "running", "en_cours", "started", "partial", "partiel"}
     # CRON-2 — les AFFICHÉES seulement, avec le MÊME prédicat que /sources (est_affichee, ceinture Python
     # canonique) : 59 sources annoncées = 59 statuts calculés. C'est ce qui réconcilie le compte (le 67
     # comptait des sources non affichées ; le prédicat retire doublons/retirées/dormantes/masquées).
     from .sources_catalog import est_affichee
     tous = db.execute(text(
-        "SELECT id, name, technical_notes, status, source_cadence, "
+        "SELECT id, name, technical_notes, status, source_cadence, affichage_desactive, "
         "  GREATEST(COALESCE(source_horizon_at, last_sync_at), last_sync_at) AS reference "
         "FROM data_sources")).mappings().all()
-    rows = [r for r in tous if est_affichee(r["name"], r["technical_notes"], r["status"])]
+    rows = [r for r in tous
+            if est_affichee(r["name"], r["technical_notes"], r["status"], r["affichage_desactive"])]
+    # KO-14 — dernier run d'ingestion PAR source (via la FK data_source_id) : s'il a échoué, la source
+    # passe « en erreur » quelle que soit son ancienneté (un plantage récent n'est pas « à jour »).
+    dernier_run = {r["data_source_id"]: r for r in db.execute(text(
+        "SELECT DISTINCT ON (data_source_id) data_source_id, status, "
+        "  COALESCE(finished_at, started_at) AS le "
+        "FROM ingestion_runs WHERE data_source_id IS NOT NULL "
+        "ORDER BY data_source_id, started_at DESC")).mappings().all()}
     now = datetime.now(timezone.utc)
-    compteurs = {"a_jour": 0, "en_retard": 0, "en_panne": 0, "sans_echeance": 0, "total": 0}
+    compteurs = {"a_jour": 0, "en_retard": 0, "en_panne": 0, "sans_echeance": 0, "en_erreur": 0, "total": 0}
     for r in rows:
         compteurs["total"] += 1
-        cad = (r["source_cadence"] or "").strip().lower()
-        seuil = next((v for k, v in seuils.items() if cad.startswith(k[:6])), None)
-        ref = r["reference"]
-        if seuil is None or ref is None:
-            statut = "sans_echeance"
+        run = dernier_run.get(r["id"])
+        run_echoue = run is not None and run["status"] is not None \
+            and str(run["status"]).strip().lower() not in RUN_OK
+        if run_echoue:
+            statut = "en_erreur"
+            db.execute(text(
+                "UPDATE data_sources SET fraicheur_statut = 'en_erreur', fraicheur_calcule_at = now(), "
+                "  fraicheur_erreur_at = :le, fraicheur_erreur_message = :m WHERE id = :i"),
+                {"le": run["le"], "m": f"Dernière ingestion : {run['status']}", "i": r["id"]})
         else:
-            age = (now - (ref if ref.tzinfo else ref.replace(tzinfo=timezone.utc))).days
-            statut = "a_jour" if age <= seuil else ("en_retard" if age <= 2 * seuil else "en_panne")
+            cad = (r["source_cadence"] or "").strip().lower()
+            seuil = next((v for k, v in seuils.items() if cad.startswith(k[:6])), None)
+            ref = r["reference"]
+            if seuil is None or ref is None:
+                statut = "sans_echeance"
+            else:
+                age = (now - (ref if ref.tzinfo else ref.replace(tzinfo=timezone.utc))).days
+                statut = "a_jour" if age <= seuil else ("en_retard" if age <= 2 * seuil else "en_panne")
+            # un run redevenu bon EFFACE l'erreur mémorisée (jamais un « en erreur » qui colle).
+            db.execute(text(
+                "UPDATE data_sources SET fraicheur_statut = :s, fraicheur_calcule_at = now(), "
+                "  fraicheur_erreur_at = NULL, fraicheur_erreur_message = NULL WHERE id = :i"),
+                {"s": statut, "i": r["id"]})
         compteurs[statut] += 1
-        db.execute(text("UPDATE data_sources SET fraicheur_statut = :s, fraicheur_calcule_at = now() "
-                        "WHERE id = :i"), {"s": statut, "i": r["id"]})
     ctx.compte(**compteurs)
 
 
@@ -180,6 +209,28 @@ def healthcheck(ctx: JobContext) -> None:
                disque_alerte_jour=alerte_disque)
     if not ok:
         raise RuntimeError(f"/health injoignable ({echecs} échec(s) consécutif(s))")
+
+
+def sante_endpoints(ctx: JobContext) -> None:
+    """CONNEXIONS-2 Lot 7.2 (N3) — sonde les endpoints MÉTIER (avec DB) et vérifie forme + non-vacuité.
+    À la PREMIÈRE panne (dédup jour), notifie l'admin (event systeme). Le dashboard lit le même résultat
+    via /admin/sante-endpoints. Ne teste PAS que le process vit (ça, c'est `healthcheck`) — teste que les
+    ÉCRANS ont de quoi s'afficher (le cas `/accueil/chiffres` vivant mais vide)."""
+    from .api import sante
+    res = sante.sonde_metier(ctx.db)
+    en_echec = [e["endpoint"] for e in res["endpoints"] if not e["ok"]]
+    ctx.compte(ok=res["ok"], total=len(res["endpoints"]), en_echec=en_echec or None)
+    if not res["ok"]:
+        from datetime import date as _date
+        from .api.events import creer_notification
+        detail = " · ".join(f"{e['endpoint']} : {e['detail']}"
+                            for e in res["endpoints"] if not e["ok"])
+        creer_notification(
+            ctx.db, kind="systeme", compte_id=None, source="Sonde endpoints",
+            titre=f"Endpoints métier en échec ({len(en_echec)})", detail=detail[:500],
+            dedup=f"sante_endpoints:{_date.today().isoformat()}")
+        ctx.db.commit()
+        raise RuntimeError(f"sonde endpoints : {len(en_echec)} en échec ({', '.join(en_echec)})")
 
 
 # ═══════════════════════════ K4 — hebdo & mensuels ═══════════════════════════

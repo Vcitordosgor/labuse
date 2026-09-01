@@ -15,8 +15,10 @@ from __future__ import annotations
 #: une casse aberrante (ex. 'CONNECTE' au lieu de 'connecte') ne peut plus effacer une source.
 STATUTS_AFFICHES: frozenset[str] = frozenset({"connecte", "manuel"})
 
-#: sources retirées de l'AFFICHAGE (jamais de l'ingestion). Vide depuis M97 (Office de l'eau
-#: démasquée — servie via anc_service depuis M95). Le mécanisme reste pour un prochain arbitrage.
+#: VESTIGIAL (CONNEXIONS-2 Lot 6.3) — le masquage n'est plus un ensemble EN DUR mais un FLAG EN BASE
+#: `data_sources.affichage_desactive`, éditable au dashboard (admin) et propagé aux consommateurs.
+#: L'ensemble reste vide et lu par le SQL (`name <> ALL(:masquees)`) pour ne pas casser les bindings
+#: existants, mais la désactivation vivante passe désormais par la colonne, plus par ce code.
 SOURCES_MASQUEES: frozenset[str] = frozenset()
 
 #: fragment SQL commun. M123 — CORRECTION du piège des `manuel` : la vitrine ne filtre plus
@@ -29,10 +31,13 @@ SOURCES_MASQUEES: frozenset[str] = frozenset()
 #: avec leur note, seul l'écran les écarte.
 #: FIX-SOURCES S1 — l'endpoint /sources SÉLECTIONNE désormais via CE fragment (comme le compteur
 #: d'accueil), plus via `status=='connecte'` en dur : page rendue == chiffre annoncé, par construction.
+#: CONNEXIONS-2 Lot 6.3 — `AND COALESCE(affichage_desactive, false) = false` : une source désactivée
+#: au dashboard sort de la vitrine (et de tout compteur qui lit ce fragment), par construction.
 WHERE_AFFICHEES = ("lower(status) IN ('connecte', 'manuel') "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'DOUBLON%' "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'RETIRÉ%' "
                    "AND COALESCE(technical_notes, '') NOT LIKE 'DORMANT%' "
+                   "AND COALESCE(affichage_desactive, false) = false "
                    "AND name <> ALL(:masquees)")
 
 
@@ -41,14 +46,34 @@ def masquees_param() -> list[str]:
     return list(SOURCES_MASQUEES)
 
 
-def est_affichee(name: str, technical_notes: str | None, status: str | None) -> bool:
+def est_affichee(name: str, technical_notes: str | None, status: str | None,
+                 affichage_desactive: bool | None = False) -> bool:
     """Une source data_sources est-elle AFFICHÉE ? Prédicat CANONIQUE (même règle que WHERE_AFFICHEES,
     y compris le STATUT) — appliqué en SÉLECTION, pas seulement en masquage post-hoc (FIX-SOURCES S1).
-    Casse du statut insensible : une source servie ne disparaît plus pour un 'CONNECTE' mal casé (S2)."""
+    Casse du statut insensible : une source servie ne disparaît plus pour un 'CONNECTE' mal casé (S2).
+    CONNEXIONS-2 Lot 6.3 : `affichage_desactive` (flag base, éditable au dashboard) masque aussi."""
     tn = technical_notes or ""
     return ((status or "").lower() in STATUTS_AFFICHES
             and not tn.startswith("DOUBLON de") and not tn.startswith("RETIRÉ")
-            and not tn.startswith("DORMANT") and name not in SOURCES_MASQUEES)
+            and not tn.startswith("DORMANT") and name not in SOURCES_MASQUEES
+            and not bool(affichage_desactive))
+
+
+def source_active(db, name_like: str) -> bool:
+    """CONNEXIONS-2 Lot 6.3 (propagation) — une source est-elle ACTIVE pour un consommateur (couche,
+    outil, moteur) ? False si elle est désactivée au dashboard (`affichage_desactive`) OU absente.
+    `name_like` est un motif ILIKE ('%ortho%', 'DVF%'…). Un consommateur d'une source inactive doit
+    servir « source désactivée » plutôt qu'un chiffre périmé (jamais un chiffre muet)."""
+    from sqlalchemy import text as _t
+    try:
+        row = db.execute(_t(
+            "SELECT bool_or(COALESCE(affichage_desactive, false)) AS off, count(*) AS n "
+            "FROM data_sources WHERE name ILIKE :m"), {"m": name_like}).mappings().first()
+    except Exception:  # noqa: BLE001 — en cas de doute on ne bloque pas le consommateur
+        return True
+    if not row or not row["n"]:
+        return True                      # source inconnue du catalogue : on ne masque pas (prudence)
+    return not row["off"]
 
 
 def normalize_status(raw: str | None) -> str:

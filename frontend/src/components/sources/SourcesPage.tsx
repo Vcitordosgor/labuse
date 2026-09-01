@@ -39,6 +39,8 @@ const suiviManuel = (s: SourceInfo) => s.radar?.statut === 'verification_manuell
 // CRON-2 — le statut vient désormais du job `sources-fraicheur` (calculé sur les 59/64 affichées, même
 // prédicat que /sources, persisté). « en_panne » = au-delà de 2× la cadence : surfacé comme un retard fort.
 const enRetard = (s: SourceInfo) => s.fraicheur_statut === 'en_retard' || s.fraicheur_statut === 'en_panne'
+// CONNEXIONS-2 Lot 6.2 (KO-14) — échec d'ingestion : distinct de l'ancienneté, badge rouge.
+const enErreur = (s: SourceInfo) => s.fraicheur_statut === 'en_erreur' || !!s.fraicheur_erreur_at
 // M105 P2 — le verdict AMONT EN AVANCE (M96) : le radar a vu une publication plus récente que
 // ce que nous avons intégré. Distinct de « publication ancienne » (là, c'est le producteur).
 // NUANCE mesurée : `nouvelle_publication` = « changé depuis le DERNIER PASSAGE radar », pas
@@ -94,10 +96,12 @@ function fiabiliteBadge(s: SourceInfo): { label: string; title: string } | null 
 // ── Badge (classe .badge de la maquette) : mono, majuscule, 3 variantes. `auto` = mint (le producteur
 // expose une date interrogeable), `late` = warn (#D9873D, en retard sur sa cadence), `dashed` = pointillé
 // (proxy / servi par proxys / curée manuellement — donnée approchée, jamais servie comme source).
-function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed'; children: ReactNode; title?: string }) {
+// CONNEXIONS-2 Lot 6.2 (KO-14) — variante `error` (rouge) : un échec d'ingestion est VISIBLE.
+function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed' | 'error'; children: ReactNode; title?: string }) {
   const base = 'shrink-0 rounded-[3px] px-1.5 py-px font-mono text-[9.5px] uppercase tracking-[.09em]'
   if (kind === 'auto') return <span title={title} className={`${base} border border-mint/40 bg-mint/10 text-mint`}>{children}</span>
   if (kind === 'late') return <span title={title} className={base} style={{ border: `1px solid ${TOKENS.warn}`, color: TOKENS.warn, background: TOKENS.warnBg }}>{children}</span>
+  if (kind === 'error') return <span title={title} className={base} style={{ border: '1px solid #E05252', color: '#E05252', background: 'rgba(224,82,82,.10)' }}>{children}</span>
   return <span title={title} className={`${base} border border-dashed border-line-2 text-txt-dim`}>{children}</span>
 }
 
@@ -110,20 +114,30 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const lic = licence(s)
   const fiab = fiabiliteBadge(s)
   const prod = [s.provider, lic].filter(Boolean)
+  const erreur = enErreur(s)
 
   return (
     <div ref={ref} data-source-row
       className={`grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 hover:bg-white/[0.018] md:grid-cols-[14px_1fr_190px_150px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
-      {/* pastille — mint (à jour) ou warn (en retard), avec halo (comme la maquette) */}
+      {/* pastille — rouge (en erreur) > warn (en retard) > mint (à jour), avec halo */}
       <span className="h-[7px] w-[7px] shrink-0 rounded-full"
-        style={late
-          ? { background: TOKENS.warn, boxShadow: `0 0 0 3px ${TOKENS.warnBg}` }
-          : { background: TOKENS.mint, boxShadow: '0 0 0 3px rgba(74,222,128,.10)' }}
-        title={late ? 'En retard sur sa cadence de publication' : 'À jour selon la cadence du producteur'} />
+        style={erreur
+          ? { background: '#E05252', boxShadow: '0 0 0 3px rgba(224,82,82,.12)' }
+          : late
+            ? { background: TOKENS.warn, boxShadow: `0 0 0 3px ${TOKENS.warnBg}` }
+            : { background: TOKENS.mint, boxShadow: '0 0 0 3px rgba(74,222,128,.10)' }}
+        title={erreur ? 'Dernière ingestion en erreur' : late ? 'En retard sur sa cadence de publication' : 'À jour selon la cadence du producteur'} />
 
       {/* nom + badges d'état */}
       <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
         {s.name}
+        {erreur && (
+          <Badge kind="error" title={s.fraicheur_erreur_message
+            ? `${s.fraicheur_erreur_message}${s.fraicheur_erreur_at ? ` — ${s.fraicheur_erreur_at.slice(0, 10)}` : ''}`
+            : "La dernière ingestion de cette source a échoué."}>
+            <span data-source-erreur>en erreur</span>
+          </Badge>
+        )}
         {sondable(s) && <Badge kind="auto" title="Le producteur expose une date interrogeable : notre radar vérifie automatiquement que c'est la dernière version publiée.">version vérifiée</Badge>}
         {suiviManuel(s) && <Badge kind="dashed" title={`Pas de sonde automatique fiable : version vérifiée à la main. Cadence : ${s.radar?.cadence ?? 'grande passe'}.`}>suivi manuel</Badge>}
         {late && (

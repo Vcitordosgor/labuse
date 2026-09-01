@@ -15,7 +15,7 @@ Sur **~213 connexions examinées** (A→P) :
 | **OK** | ~160 | branché bout en bout, juste, source unique |
 | **KO** | **17** | branché mais faux / cassé / dupliqué / promesse non tenue |
 | **ABSENT** | 14 | fonction non livrée (dont 10 côté dashboard/admin/comptes) |
-| **DOUTE** | 22 | à trancher par exécution ou décision produit |
+| **DOUTE** | 22 | à trancher par exécution ou décision produit — **LEVÉS au Lot 10 (CONNEXIONS-2) : 15 OK · 6 corrigés · 1 KO-LOURD restant ; voir la section finale** |
 
 **Le socle métier est sain** : `sector_price`, tiers, SDP/résiduel, prix neuf/ancien = **source unique, run épinglé, zéro recalcul au front** (vérifié exhaustivement sur les 15 outils, section L). Les KO ne sont **jamais** dans le moteur de score/prix — ils sont concentrés sur (1) la **cascade servie aux exports** (run périmé), (2) la **boucle CRM↔Courrier** (jamais refermée), (3) les **remontées vers le dashboard** (plusieurs promesses UI non tenues), et (4) quelques **gestes de fiche** cassés.
 
@@ -522,4 +522,44 @@ Deux systèmes coexistent : **v2** (`/api/copilote-v2/*`, conversationnel, entr�
 
 ---
 
-*Fin du rapport. Aucun correctif dans ce mandat — les corrections feront l'objet de CONNEXIONS-2, écrit à partir de ce rapport.*
+## MISE À JOUR CONNEXIONS-2 · Lot 10 — Levée des 22 DOUTE (exécution, 2026-09-01)
+
+Chaque DOUTE a été **exécuté** (lecture de code réel + tests ciblés) et **reclassé**. Verdicts :
+**OK** (indéterminé levé, correct) · **CORRIGÉ** (réparé dans CONNEXIONS-2 Partie A ou B, avec test) ·
+**KO-LOURD** (réel, > 30 min, listé avec estimation).
+
+**Bilan : 22/22 tranchés → 15 OK · 6 CORRIGÉS · 1 KO-LOURD restant.** Aucun DOUTE ne cachait un faux
+chiffre servi à l'écran ; le socle métier reste sain.
+
+| # | ligne (section) | preuve | verdict | où |
+|---|---|---|---|---|
+| 1 | A5 · `bascule_gardes.py:31 TARGET=q_v8` | fonctions `check_*` jamais appelées dans `src` | **OK** (inerte) | — |
+| 2 | A5 · `lignee_tete.py:25` défaut q_v8 | `build_parcel_entree_tete` surfacée seulement si `LABUSE_M28_BADGES=1` (OFF) | **OK** (inerte) | — |
+| 3 | A6 · accueil `_cache` (TTL 3600) | clé run import-time ; bascule = restart = purge | **OK** (borné, run-cohérent) | — |
+| 4 | A6 · accueil `_cs_cache` (TTL 300) | idem, requête légère | **OK** (borné) | — |
+| 5 | A6 · protection `_gels_cache` (TTL 30) | `protection.py` reset `at=0` à l'écriture d'un gel | **OK** (auto-invalidé) | — |
+| 6 | A7 · `cascade_results` LIVE via Copilote **v1** | `copilote/moteurs.py:124-131,343` SELECT sans `run_id` ; v1 **est servi** (`CopiloteView`→`/api/copilote/runs`) | **KO-LOURD** | **reste** — run-scoper 4 SELECT vers `dryrun_cascade_results` (schéma ≠, moteur de mission) ; est. 1-2 h. *NB : contredit l'hypothèse « v1 mort » — v1 est vivant.* |
+| 7 | A7 · `veille_succession/signaux_vie/pc_caducs` non run-scopés | réécrits à chaque passe ; lus par les filtres | **OK** (alignés, par conception) | — |
+| 8 | C3 · adresse ambiguë → `items[0]` | les choix SONT proposés + navigables ; Entrée→1er = confort assumé | **OK** | — |
+| 9 | D5 · `ortho_tiles.py MILLESIME="2025"` en dur | — | **CORRIGÉ** | **Lot 6.4** — millésime lu de `data_sources.source_millesime` (`millesime_servi`) |
+| 10 | G2 · évaluation permis/parcelle | `evaluer_toutes` tourne dans les crons d'ingestion + CLI post-ingestion | **OK** (cadence = ingestion) | — |
+| 11 | H4 · veille annonces (event agrégé) | succès → `journaliser(EV_DIGEST)` event_log unifié ; échec → `creer_notification` | **OK** (4 chemins, récap intentionnel) | — |
+| 12 | H5 · dépôt agence visible clients drapeau fermé | `client._where`/`marche`/`mon_secteur` ne filtraient pas le drapeau | **CORRIGÉ** | **Lot 7** — filtre côté LECTURE (`reglages.depot_agence_actif` ⇒ `NOT depose_par_agence`) + toggle dashboard |
+| 13 | I4 · Mes courriers → statut relu | vocabulaire unique + `pipeline_entry_id/projet_id` | **CORRIGÉ** | **Partie A · Lot 4** (déjà committé) |
+| 14 | J5 · `courrier_envois` session/IP | marqué obsolète, dormant (provider stub) | **CORRIGÉ** | **Partie A · Lot 4** (marqué obsolète) |
+| 15 | L7 · ×gain re-divisé au front (KO-15) | **erratum rapport** : la vraie ligne est `api/moteurs.py:216` (pas `assemblage.py:216`) | **CORRIGÉ** | **Lot 9.3** — `gain_ratio` (2 déc.) + `gain_pct` servis backend, front affiche |
+| 16 | L8↔L11 · pont Scan↔Permis | rattachement par SIREN/opération, pas de deep-link | **OK** (intégration par donnée) | — |
+| 17 | L9 · Courrier transport d'envoi | workflow humain (provider stub), statuts unifiés | **OK** (copie produit exacte) | Lot 4 (vocabulaire) |
+| 18 | L11↔L8 · lien opérations | symétrique de #16 | **OK** | — |
+| 19 | N1 · tuile « Santé serveur » = schéma boot | `dashboard.py` lit `app.state.schema_heal` (boot) | **CORRIGÉ** | **Lot 7.2** — sonde RUNTIME endpoints métier (avec DB) ajoutée à la tuile |
+| 20 | N3 · monitoring endpoints métier absent | seule sonde `/health` sans DB | **CORRIGÉ** | **Lot 7.2** — job `sante-endpoints` + `/admin/sante-endpoints` + notif admin |
+| 21 | O2 · multi-users dormant | FK `utilisateurs.compte_id`, aucun parcours 2e user | **OK** (dormant ; hors mandat, mono-siège assumé) | — |
+| 22 | O4/H6 + P1-bis · faits d'annonce dans le mail | digest rend prix/commune/url portail ; jamais adresse exacte/photo/description | **OK** (conforme ; arbitrage produit Vic, pas un défaut code) | — |
+
+**Erratum signalé** : KO-15 citait `assemblage.py:216` ; la re-division vivait en `api/moteurs.py:216`
+(corrigée là). **Reste unique** : #6 (Copilote v1 lit la cascade LIVE) — à traiter avec la disposition
+Copilote v1 (le v1 est ENCORE servi, pas obsolète), estimation 1-2 h.
+
+---
+
+*Fin du rapport. Corrections apportées par CONNEXIONS-2 (Parties A et B) ; DOUTE levés au Lot 10 ci-dessus.*

@@ -112,6 +112,10 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
 
     # RADAR — les annonces actives RATTACHÉES dans le rayon 1500 m, avec l'écart demandé/acté du même
     # moteur `badges_pour_biens` (médiane locale FICHE-COMMUNE-2 C5). L'outil s'enrichit au fil des dépôts.
+    # CONNEXIONS-2 Lot 7 (#12/H5) — drapeau dépôt agence fermé ⇒ les dépôts agence sortent de « Mon
+    # secteur » (comme du flux/stats client) : un test admin ne fuit pas dans les annonces autour d'un IDU.
+    from .. import reglages
+    excl = reglages.exclusion_depot_agence_sql("b")
     biens = [dict(r) for r in db.execute(text(
         "SELECT b.bien_id, b.commune, b.type_bien, b.a_qualifier, b.idu, f.prix, f.surface_hab, f.surface_terrain, "
         "  round(ST_Distance(pb.centroid::geography, "
@@ -119,6 +123,7 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
         "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
         "  JOIN parcels pb ON pb.idu = b.idu "
         "WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND b.statut IN ('active','en_vente_longue') "
+        f"{excl}"
         "  AND ST_DWithin(pb.centroid::geography, "
         "      (SELECT centroid::geography FROM parcels WHERE idu = :idu), 1500) "
         "ORDER BY dist LIMIT 30"), {"idu": idu}).mappings()]

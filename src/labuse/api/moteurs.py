@@ -213,7 +213,11 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     sdp = agg["sdp_m2"]
     sdp_par = agg["sdp_par_parcelle"]
     sdp_max_seule = max(sdp_par.values()) if sdp_par else 0
-    gain_ratio = round(sdp / sdp_max_seule, 1) if sdp_max_seule else None
+    # CONNEXIONS-2 Lot 9.3 (KO-15) — le ratio de gain est calculé ET arrondi ICI (backend), à la
+    # précision servie à l'écran (2 déc. : « ×1,03 », plus le « ×1,0 » trompeur d'un arrondi à 1 déc.).
+    # Le pourcentage servi aussi → le front N'A PLUS À RE-DIVISER (fini les deux expressions du ratio).
+    gain_ratio = round(sdp / sdp_max_seule, 2) if sdp_max_seule else None
+    gain_pct = round((sdp / sdp_max_seule - 1) * 100) if sdp_max_seule else None
     # #2 — VALORISATION : prix du terrain nu de la zone (référentiel UNIQUE prix_terrain_nu_zone),
     # sur la zone dominante de l'assiette. None si hors U/AU ou pas de vente terrain.
     from collections import Counter
@@ -233,7 +237,8 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         "n": len(rows), "contigu": contigu, "surface_totale_m2": agg["surface_cumulee_m2"],
         "tronquee": tronquee, "cap": cap,
         # #1 — capacité + bilan cumulés RÉELS (fiche_payload agrégé)
-        "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule, "gain_ratio": gain_ratio,
+        "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule,
+        "gain_ratio": gain_ratio, "gain_pct": gain_pct,
         "logements_combine": agg["logements"], "n_chiffrables": agg["n_chiffrables"],
         "ca": agg["ca"], "charge_fonciere": agg["charge_fonciere"],
         "note_sdp": "Capacité et bilan CUMULÉS par agrégation des parcelles. À la fusion, les reculs "
