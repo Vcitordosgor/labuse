@@ -23,6 +23,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .p_model import SEED, evaluate as ev
+from .. import runs  # S3 : run servi relu à la requête
 
 #: taille du top-k du protocole M3.6 (RR@1158) — la « réserve » jugée.
 RR_K = 1158
@@ -43,9 +44,8 @@ def served_run(session: Session) -> str | None:
     comparer deux candidats entre eux (challenger vs un autre challenger) n'a aucun sens pour une
     décision de promotion. Le nom `served_run` était juste, l'implémentation ne l'était pas.
     Label absent de la table → None → `run_arene` lève « run champion absent de parcel_p_score_v2 »."""
-    from .score_v_constants import Q_A_RUN_LABEL
     return session.execute(text(
-        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :r"), {"r": Q_A_RUN_LABEL}).scalar()
+        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :r"), {"r": runs.current()}).scalar()
 
 
 def latest_label_year(session: Session) -> int:

@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs
 # communes-tableau — le « €/m² ancien » vient de la MÊME source que le Baromètre (DVF ventes strictes,
 # toutes mutations) : on réutilise le filtre de retenue du baromètre, point de vérité unique.
 from .moteurs import prix_ancien_communes
@@ -119,7 +119,7 @@ def raw_rows(db: Session) -> dict[str, dict]:
     from .app import _mem_cached
 
     def _c():
-        rows = [dict(r) for r in db.execute(text(_SQL), {"run": Q_A_RUN_LABEL}).mappings().all()]
+        rows = [dict(r) for r in db.execute(text(_SQL), {"run": runs.current()}).mappings().all()]
         pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
         for r in rows:
             r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")

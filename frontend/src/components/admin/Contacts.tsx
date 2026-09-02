@@ -2,6 +2,8 @@
 // officiel (mairie & service urbanisme, source service-public.fr) puis les contacts NOMMÉS ajoutés
 // (nom, rôle, tél, mail, note), éditables en place. Communes avec contacts d'abord. Les EPCI et la
 // DEAL/ADIL restent accessibles en second. CRUD admin ici ET depuis la fiche commune (carte Mairie).
+// S0.2 — UN SEUL bouton « + Ajouter un contact » (en-tête, choix de la commune d'abord) ; sur chaque
+// carte, un « + » discret au survol ; communes sans contact reléguées en bas, en lignes compactes.
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -39,6 +41,39 @@ function ContactEdit({ init, onCancel, onSave, busy }: {
   )
 }
 
+// S0.2 — le formulaire d'ajout global : on CHOISIT d'abord la commune (recherche/select), puis les
+// champs contact. Peut être pré-rempli avec une commune (« + » d'une carte).
+function AjoutGlobal({ mairies, initInsee, onDone }: {
+  mairies: Mairie[]; initInsee: string | null; onDone: () => void
+}) {
+  const qc = useQueryClient()
+  const cibles = useMemo(() => mairies.filter((m) => m.insee), [mairies])
+  const [insee, setInsee] = useState<string>(initInsee ?? '')
+  const m = cibles.find((x) => x.insee === insee) ?? null
+  const creer = useMutation({
+    mutationFn: (f: ContactForm) => postCommuneContact({ insee: m?.insee ?? '', commune_nom: m?.commune ?? '', ...trim(f) }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['contacts-institutionnels'] }); onDone() },
+  })
+  return (
+    <div data-contacts-ajout-global className="rounded-xl border border-mint/30 bg-mint/5 p-3.5">
+      <div className="flex items-center justify-between">
+        <b className="font-display text-sm text-txt-hi">Ajouter un contact</b>
+        <ActBtn tone="ghost" onClick={onDone}>Fermer</ActBtn>
+      </div>
+      <label className="mt-2 block text-[11px] text-txt-mut">Commune</label>
+      <select value={insee} onChange={(e) => setInsee(e.target.value)}
+        data-contacts-ajout-commune
+        className="mt-0.5 h-9 w-full rounded-lg border border-line-2 bg-surface-1 px-2 text-[13px] text-txt">
+        <option value="">Choisir une commune…</option>
+        {cibles.map((c) => <option key={c.insee} value={c.insee ?? ''}>{c.commune}</option>)}
+      </select>
+      {m
+        ? <ContactEdit init={VIDE} busy={creer.isPending} onCancel={onDone} onSave={(f) => creer.mutate(f)} />
+        : <p className="mt-2 text-[11px] text-txt-dim">Choisissez d'abord une commune pour saisir le contact.</p>}
+    </div>
+  )
+}
+
 function CarteCommune({ m }: { m: Mairie }) {
   const qc = useQueryClient()
   const [ajout, setAjout] = useState(false)
@@ -55,15 +90,12 @@ function CarteCommune({ m }: { m: Mairie }) {
   const suppr = useMutation({ mutationFn: (id: number) => deleteCommuneContact(id), onSuccess: invalider })
   const contacts = m.contacts ?? []
   return (
-    <div data-contacts-commune={m.commune} className="rounded-xl border border-line bg-surface-2 p-3.5">
+    <div data-contacts-commune={m.commune} className="group rounded-xl border border-line bg-surface-2 p-3.5">
       <div className="flex items-center justify-between">
         <div>
           <b className="font-display text-sm text-txt-hi">{m.commune}</b>
           {contacts.length > 0 && <span className="ml-2 text-[11px] text-txt-dim">{contacts.length} contact(s)</span>}
         </div>
-        {m.insee
-          ? <ActBtn onClick={() => { setAjout(true); setEdit(null) }}>+ Ajouter un contact</ActBtn>
-          : <span className="text-[10.5px] text-txt-dim" title="INSEE manquant pour cette commune">INSEE inconnu</span>}
       </div>
 
       {/* standard officiel */}
@@ -102,6 +134,16 @@ function CarteCommune({ m }: { m: Mairie }) {
       ))}
 
       {ajout && <ContactEdit init={VIDE} busy={creer.isPending} onCancel={() => setAjout(false)} onSave={(f) => creer.mutate(f)} />}
+
+      {/* S0.2 — « + » discret en pied de carte : au survol sur desktop, toujours visible sur mobile. */}
+      {!ajout && (
+        <div className="mt-2 border-t border-line pt-2 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+          {m.insee
+            ? <button type="button" onClick={() => { setAjout(true); setEdit(null) }}
+                className="text-[11px] font-medium text-mint hover:underline">+ Ajouter un contact</button>
+            : <span className="text-[10.5px] text-txt-dim" title="INSEE manquant pour cette commune">INSEE inconnu</span>}
+        </div>
+      )}
     </div>
   )
 }
@@ -114,21 +156,44 @@ const toForm = (c: CommuneContact): ContactForm => ({
   nom: c.nom, role: c.role ?? '', telephone: c.telephone ?? '', email: c.email ?? '', note: c.note ?? '',
 })
 
+// S0.2 — carte compacte (une ligne) pour les communes SANS contact nommé : « + » discret pour en ajouter.
+function CarteCommuneVide({ m, onAjout }: { m: Mairie; onAjout: (insee: string) => void }) {
+  return (
+    <div data-contacts-commune={m.commune} data-contacts-vide
+      className="group flex items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[12px]">
+      <div className="min-w-0 truncate">
+        <b className="text-txt-hi">{m.commune}</b>
+        <span className="ml-2 text-txt-dim">
+          {[m.adresse, m.telephone].filter(Boolean).join(' · ') || 'coordonnées absentes'}
+        </span>
+      </div>
+      {m.insee
+        ? <button type="button" onClick={() => onAjout(m.insee ?? '')}
+            className="ml-2 shrink-0 text-[11px] font-medium text-mint opacity-100 transition hover:underline sm:opacity-0 sm:group-hover:opacity-100">
+            + contact
+          </button>
+        : <span className="ml-2 shrink-0 text-[10.5px] text-txt-dim" title="INSEE manquant">INSEE inconnu</span>}
+    </div>
+  )
+}
+
 export function ContactsSection() {
   const q = useQuery({ queryKey: ['contacts-institutionnels'], queryFn: getContactsInstitutionnels })
   const [filtre, setFiltre] = useState('')
+  // S0.2 — un seul flux d'ajout : null = fermé, '' = ouvert sans commune, '<insee>' = pré-rempli.
+  const [ajout, setAjout] = useState<string | null>(null)
 
-  const communes = useMemo(() => {
-    const src = q.data?.mairies ?? []
+  const mairies = q.data?.mairies ?? []
+
+  const { avecContacts, sansContacts } = useMemo(() => {
     const f = filtre.trim().toLowerCase()
-    const filtered = f ? src.filter((m) => m.commune.toLowerCase().includes(f)) : src
-    // AD10 — communes AVEC contacts d'abord, puis alphabétique.
-    return [...filtered].sort((a, b) => {
-      const na = (a.contacts?.length ?? 0) > 0 ? 0 : 1
-      const nb = (b.contacts?.length ?? 0) > 0 ? 0 : 1
-      return na !== nb ? na - nb : a.commune.localeCompare(b.commune)
-    })
-  }, [q.data, filtre])
+    const filtered = f ? mairies.filter((m) => m.commune.toLowerCase().includes(f)) : mairies
+    const tri = (a: Mairie, b: Mairie) => a.commune.localeCompare(b.commune)
+    return {
+      avecContacts: filtered.filter((m) => (m.contacts?.length ?? 0) > 0).sort(tri),
+      sansContacts: filtered.filter((m) => (m.contacts?.length ?? 0) === 0).sort(tri),
+    }
+  }, [mairies, filtre])
 
   if (q.isLoading) return <Loading label="Contacts…" className="mx-auto mt-6 text-xs" />
   const d = q.data
@@ -136,13 +201,33 @@ export function ContactsSection() {
 
   return (
     <div data-admin-contacts className="flex flex-col gap-4 text-[12.5px]">
-      <input data-contacts-filtre value={filtre} onChange={(e) => setFiltre(e.target.value)}
-        placeholder="🔍  Chercher une commune… (Saint-André)"
-        className="h-9 w-full rounded-lg border border-line-2 bg-surface-1 px-3 text-[13px] text-txt" />
-
-      <div className="grid grid-cols-2 gap-2.5 max-[900px]:grid-cols-1">
-        {communes.map((m) => <CarteCommune key={m.commune} m={m} />)}
+      <div className="flex items-center gap-2.5">
+        <input data-contacts-filtre value={filtre} onChange={(e) => setFiltre(e.target.value)}
+          placeholder="🔍  Chercher une commune… (Saint-André)"
+          className="h-9 min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-1 px-3 text-[13px] text-txt" />
+        <ActBtn onClick={() => setAjout((a) => (a === null ? '' : null))}>+ Ajouter un contact</ActBtn>
       </div>
+
+      {ajout !== null && (
+        <AjoutGlobal mairies={mairies} initInsee={ajout || null} onDone={() => setAjout(null)} />
+      )}
+
+      {avecContacts.length > 0 && (
+        <div className="grid grid-cols-2 gap-2.5 max-[900px]:grid-cols-1">
+          {avecContacts.map((m) => <CarteCommune key={m.commune} m={m} />)}
+        </div>
+      )}
+
+      {sansContacts.length > 0 && (
+        <section>
+          <h3 className="mb-1.5 font-display text-sm font-bold text-txt-hi">
+            Sans contact nommé <span className="text-txt-dim">· {sansContacts.length}</span>
+          </h3>
+          <div className="flex flex-col gap-1">
+            {sansContacts.map((m) => <CarteCommuneVide key={m.commune} m={m} onAjout={setAjout} />)}
+          </div>
+        </section>
+      )}
 
       {/* EPCI */}
       <section className="mt-2">

@@ -20,7 +20,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs
 
 log = logging.getLogger("labuse.anti_fiche")
 router = APIRouter(prefix="/anti-fiche", tags=["anti-fiche"])
@@ -48,11 +48,11 @@ def anti_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
 
     tier = db.execute(text(
         "SELECT tier FROM parcel_p_score_v2 WHERE parcelle_id = :i AND run_id = :r"),
-        {"i": idu, "r": Q_A_RUN_LABEL}).scalar()
+        {"i": idu, "r": runs.current()}).scalar()
 
     # KO-2 : cascade SERVIE du run épinglé (dédup + arbitrée), pas la table LIVE `cascade_results`.
     from .served_cascade import served_cascade_lines
-    lignes = [l for l in served_cascade_lines(db, idu, Q_A_RUN_LABEL)
+    lignes = [l for l in served_cascade_lines(db, idu, runs.current())
               if l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
     rows = sorted(lignes, key=lambda l: (l["result"] != "HARD_EXCLUDE", l["layer_name"]))
 

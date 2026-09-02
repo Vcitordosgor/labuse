@@ -115,21 +115,24 @@ def radar_extraction(request: Request) -> dict:
 
 @router.get("/admin/radar/reverif")
 def radar_reverif(request: Request) -> dict:
-    """File de re-vérification PRIORISÉE : plus anciennes non confirmées d'abord, puis proches du
-    seuil de vente longue (90 j), puis suivies par un client (watched_parcels sur l'idu rattaché)."""
+    """File de re-vérification PRIORISÉE : les NON RATTACHÉES d'abord (S5 — celles qui manquent encore
+    leur parcelle, à rattacher en priorité), puis suivies par un client (watched_parcels sur l'idu
+    rattaché), proches du seuil de vente longue (90 j), enfin les plus anciennes non confirmées."""
     from ..api.auth import exiger_admin
     exiger_admin(request)
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
             f"""SELECT b.bien_id, b.commune, b.type_bien, b.statut, f.prix, a.portail, a.url_sortante,
                       b.date_derniere_confirmation, b.date_publication,
+                      (b.idu IS NULL) AS non_rattachee,
                       EXISTS (SELECT 1 FROM watched_parcels w WHERE w.idu = b.idu) AS suivi_client,
                       (b.date_publication IS NOT NULL
                        AND b.date_publication <= current_date - {SEUIL_VENTE_LONGUE_J}) AS proche_longue
                FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
                LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id
                WHERE f.valide_at IS NOT NULL AND b.statut IN ('active','en_vente_longue','a_reverifier')
-               ORDER BY suivi_client DESC, proche_longue DESC, b.date_derniere_confirmation ASC
+               ORDER BY non_rattachee DESC, suivi_client DESC, proche_longue DESC,
+                        b.date_derniere_confirmation ASC
                LIMIT 200""")).mappings()]
     for r in rows:
         for k in ("date_derniere_confirmation", "date_publication"):

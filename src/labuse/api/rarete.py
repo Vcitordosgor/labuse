@@ -23,7 +23,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs
 
 log = logging.getLogger("labuse.rarete")
 router = APIRouter(prefix="/pipeline-rarete", tags=["pipeline-rarete"])
@@ -66,7 +66,7 @@ def compute_rarete(db: Session) -> list[dict]:
     if db.execute(text("SELECT to_regclass('commune_conso_enaf')")).scalar() is None:
         return []
     rows = [{k: (float(v) if hasattr(v, "__float__") else v) for k, v in dict(r).items()}
-            for r in db.execute(text(_SQL), {"run": Q_A_RUN_LABEL}).mappings().all()]
+            for r in db.execute(text(_SQL), {"run": runs.current()}).mappings().all()]
     out = []
     for r in rows:
         horizon = _horizon(r["reste_zan_ha"], r["conso_ha_an"])

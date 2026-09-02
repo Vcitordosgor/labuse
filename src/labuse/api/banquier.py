@@ -204,7 +204,7 @@ def _synthese_html(db: Session, out: dict) -> str:
 from collections import OrderedDict as _OD
 from threading import Lock as _Lock, Thread as _Thread
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as _RUN
+from .. import runs
 
 _PDF_CACHE: _OD[tuple[str, str], bytes] = _OD()
 _PDF_CACHE_MAX = 32
@@ -239,7 +239,7 @@ def _cache_put(key: tuple[str, str], pdf: bytes) -> None:
 def _job_worker(idu: str) -> None:
     """Thread de génération — session DB PROPRE (jamais celle de la requête, fermée à la réponse)."""
     from ..db import session_scope
-    key = (idu, _RUN)
+    key = (idu, runs.current())
     try:
         with session_scope() as s:
             pdf = _build_pdf(s, idu)
@@ -257,7 +257,7 @@ def dossier_banquier_prepare(idu: str) -> dict:
     """Lance (ou constate) la génération asynchrone. Réponses : pret | en_cours."""
     if not plans.acces("dossier_parcelle"):
         raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
-    key = (idu, _RUN)
+    key = (idu, runs.current())
     with _PDF_LOCK:
         if key in _PDF_CACHE:
             _PDF_JOBS[key] = {"etat": "pret"}
@@ -272,7 +272,7 @@ def dossier_banquier_prepare(idu: str) -> dict:
 @router.get("/{idu}/statut")
 def dossier_banquier_statut(idu: str) -> dict:
     """État de la génération asynchrone : pret | en_cours | erreur | inconnu."""
-    key = (idu, _RUN)
+    key = (idu, runs.current())
     with _PDF_LOCK:
         if key in _PDF_CACHE:
             return {"etat": "pret"}
@@ -292,7 +292,7 @@ def dossier_banquier_pdf(idu: str, request: Request, ign: bool = True,
     from ..marque import charger as _charger_marque
     marque = _charger_marque(db, request)
 
-    key = (idu, _RUN)
+    key = (idu, runs.current())
     with _PDF_LOCK:
         pdf = _PDF_CACHE.get(key)
         if pdf is not None:

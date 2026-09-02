@@ -227,10 +227,12 @@ function joursDepuis(iso: string | null): number {
   if (!iso) return Number.POSITIVE_INFINITY   // jamais contrôlée = la plus ancienne
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
 }
-function LigneReverif({ r, onInval }: { r: RadarReverif; onInval: () => void }) {
+// S5 — le back expose `non_rattachee` (idu IS NULL) pour trier « à rattacher d'abord » + chip.
+function LigneReverif({ r, onInval }: { r: RadarReverif & { non_rattachee?: boolean }; onInval: () => void }) {
   return (
     <div className="flex flex-wrap items-center gap-2 py-2 text-[12px]">
       <span className="text-txt-mut">{fmtEur(r.prix)}</span>
+      {r.non_rattachee && <Chip tone="warn">non rattachée</Chip>}
       {r.suivi_client && <Chip tone="ok">suivi client</Chip>}
       {r.proche_longue && <Chip tone="warn">≈ 90 j</Chip>}
       <a href={r.url_sortante} target="_blank" rel="noopener noreferrer"
@@ -251,18 +253,22 @@ function Reverif() {
   const { data } = useQuery({ queryKey: ['radar-reverif'], queryFn: getRadarReverif })
   const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
   const inval = () => { qc.invalidateQueries({ queryKey: ['radar-reverif'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
-  const items = data?.file ?? []
+  const items = (data?.file ?? []) as (RadarReverif & { non_rattachee?: boolean })[]
   // regroupement par commune, chaque item porte son ancienneté ; on garde le plus ancien contrôle du groupe.
-  const parCommune = new Map<string, RadarReverif[]>()
+  const parCommune = new Map<string, (RadarReverif & { non_rattachee?: boolean })[]>()
   for (const r of items) {
     const arr = parCommune.get(r.commune) ?? []
     arr.push(r)
     parCommune.set(r.commune, arr)
   }
   const groupes = [...parCommune.entries()].map(([commune, rows]) => {
-    rows.sort((a, b) => joursDepuis(b.date_derniere_confirmation) - joursDepuis(a.date_derniere_confirmation))
-    return { commune, rows, plusAncien: joursDepuis(rows[0].date_derniere_confirmation) }
-  }).sort((a, b) => b.plusAncien - a.plusAncien)   // commune au contrôle le plus ancien en premier
+    // S5 — dans chaque commune, les NON RATTACHÉES d'abord (« à rattacher d'abord »), puis le plus ancien contrôle.
+    rows.sort((a, b) => Number(!!b.non_rattachee) - Number(!!a.non_rattachee)
+      || joursDepuis(b.date_derniere_confirmation) - joursDepuis(a.date_derniere_confirmation))
+    const nonRatt = rows.filter((r) => r.non_rattachee).length
+    return { commune, rows, nonRatt, plusAncien: joursDepuis(rows[0].date_derniere_confirmation) }
+  }).sort((a, b) => (b.nonRatt > 0 ? 1 : 0) - (a.nonRatt > 0 ? 1 : 0)   // communes avec des non rattachées en tête
+    || b.plusAncien - a.plusAncien)
   const ageLabel = (j: number) => (j === Number.POSITIVE_INFINITY ? 'jamais contrôlé' : `plus ancien contrôle : ${j} j`)
   return (
     <div>
@@ -272,6 +278,7 @@ function Reverif() {
           <div key={g.commune}>
             <div className="flex items-center gap-2 border-b border-line-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.1em] text-txt-dim">
               <span className="text-txt">{g.commune}</span> · {g.rows.length}
+              {g.nonRatt > 0 && <span className="normal-case tracking-normal text-amber">· {g.nonRatt} à rattacher</span>}
               <span className="ml-auto normal-case tracking-normal">{ageLabel(g.plusAncien)}</span>
             </div>
             <div className="flex flex-col divide-y divide-line-2">

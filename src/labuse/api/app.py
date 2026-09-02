@@ -38,7 +38,8 @@ from .. import config, models, prospection
 from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import FeedbackVerdict
-from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS  # GB-012 : V_BRULANTE_THRESHOLD retiré (import mort)
+from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
+from ..scoring.score_v_constants import V_BAND_LABELS  # GB-012 : V_BRULANTE_THRESHOLD retiré (import mort)
 from ..scoring.fraction_client import fraction_humaine as _fh, fraction_sql_case as _fraction_sql_case  # M135 P2
 from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M135 P3 — chip raison
 
@@ -1808,7 +1809,7 @@ def export_parcels_csv(c: FiltreCriteres = Depends(),
 
     from .export_commun import adresses_ban
 
-    source = c.source or Q_A_RUN_LABEL
+    source = c.source or runs.current()
     c.source = source
     extra, extra_params = c.where()
     items = _q_v2_list(db, c.commune, limit, 0, run_label=source,
@@ -1916,10 +1917,10 @@ def _communes_data(db: Session, source: str) -> list[dict]:
 
 
 @app.get("/communes")
-def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> list[dict]:
+def list_communes(source: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
     """Les 24 communes pour le SÉLECTEUR : nom, INSEE, volumétrie, chaudes, bbox (recadrage
     carte). Trié par nombre de chaudes décroissant. Source unique : _communes_data."""
-    return _communes_data(db, source)
+    return _communes_data(db, source or runs.current())
 
 
 def _foncier_commune(db: Session, commune: str) -> dict:
@@ -1931,7 +1932,7 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     from ..faisabilite.marche_commune import ligne2_terrain_zone, ligne6_offre_engagee
 
     def scal(sql: str):
-        return db.execute(text(sql), {"c": commune, "r": Q_A_RUN_LABEL}).scalar()
+        return db.execute(text(sql), {"c": commune, "r": runs.current()}).scalar()
 
     n_parcelles = scal("SELECT count(*) FROM parcels WHERE commune = :c") or 0
     surface_ha = db.execute(text(
@@ -1974,7 +1975,7 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     stock = db.execute(text(
         "SELECT count(*) n, coalesce(sum(p.surface_m2), 0) m2 FROM parcel_p_score_v2 s "
         "JOIN parcels p ON p.idu = s.parcelle_id WHERE p.commune = :c AND s.run_id = :r "
-        "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": Q_A_RUN_LABEL}).mappings().first()
+        "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": runs.current()}).mappings().first()
     zonage = None
     if total_zone_m2:
         def _fam(m2, nn):
@@ -2139,7 +2140,7 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             d.pop("importe_le", None)
     # M36 Lot D : le compteur du tier haut EN DUR sur la fiche commune — même point de
     # calcul (mémoïsé) que /communes : tiers du run servi, jamais figé, étiquette vraie.
-    _cd = next((c for c in _communes_data(db, Q_A_RUN_LABEL) if c["commune"] == commune), None)
+    _cd = next((c for c in _communes_data(db, runs.current()) if c["commune"] == commune), None)
     classement = ({
         "tiers_hauts": _cd["chaudes"], "dossiers": _cd["dossiers"],
         "libelle": (f"{_cd['chaudes']} parcelles brûlantes ou chaudes au classement servi"
@@ -2200,7 +2201,7 @@ def commune_acquisitions_pm(commune: str, db: Session = Depends(get_db)) -> dict
     (outil Communes › « Acquisitions récentes »). MÊME point de calcul que l'ex-bloc de la fiche
     contexte (acquisitions_recentes, KF-2 L1), borne élargie pour un listing. CONSTAT sourcé
     (« changement de millésime, n'affirme pas une vente »), hors scoring."""
-    _cd = next((c for c in _communes_data(db, Q_A_RUN_LABEL) if c["commune"] == commune), None)
+    _cd = next((c for c in _communes_data(db, runs.current()) if c["commune"] == commune), None)
     insee = _cd.get("insee") if _cd else None
     if not insee:
         return {"commune": commune, "commune_insee": None, "depuis_millesime": 2022,
@@ -2289,7 +2290,7 @@ def adresses_autocomplete(q: str = Query(..., min_length=3),
 
 @app.get("/parcels/search")
 def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None,
-                   source: str = Q_A_RUN_LABEL, limit: int = Query(10, ge=1, le=50),
+                   source: str | None = None, limit: int = Query(10, ge=1, le=50),
                    db: Session = Depends(get_db)) -> list[dict]:
     """Recherche IDU/section pour l'omnibox en mode île (le client n'a plus les features en
     mémoire). Matche la fin d'IDU (section+numéro, ex. « AC0253 ») ou l'IDU complet.
@@ -2297,6 +2298,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     l'ordre (brûlante → chaude → réserve → à creuser → écartée, puis rang).
     M6 2a (§1.8) : l'adresse BAN accompagne chaque résultat — jointure APRÈS le LIMIT
     (sous-requête paginée), jamais un lookup par parcelle scannée."""
+    source = source or runs.current()
     needle = q.strip().upper().replace(" ", "")
     ban_ok = _ban_ready(db)
     ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
@@ -2332,7 +2334,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
 
 
 @app.get("/stats/entonnoir")
-def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
+def stats_entonnoir(commune: str | None = None, source: str | None = None,
                     db: Session = Depends(get_db)) -> dict:
     """L'ENTONNOIR PAR MOTIF (C4, revue Vic) : « LABUSE a analysé N parcelles et trié pour
     vous » — décomposition SQL-exacte des écartées par garde (matérialisée post-matrice ;
@@ -2340,6 +2342,7 @@ def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
     M5.1 : « opportunités détectées » = brûlantes v2 + chaudes v2 (le run v2 est la
     source) ; la ventilation par tier accompagne les motifs d'écartement."""
+    source = source or runs.current()
     # FIX-C6 (GB-058) — comme /stats, l'entonnoir est MÉMORISÉ 30 s : deux agrégations
     # pleine-île (motifs + _q_v2_stats) le rendaient à ~9,8 s p95 au cycle 6 (non caché,
     # contrairement à /stats). Même clé (commune, source), même TTL, single-flight partagé.
@@ -2582,14 +2585,14 @@ def taxe_amenagement(
 
 @app.get("/map/parcels.geojson")
 def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000),
-                    source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> dict:
+                    source: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Parcelles (géométrie simplifiée 4326) + verdict SERVI, pour la carte colorée.
 
     M37 : DÉFAUT = run servi (`Q_A_RUN_LABEL`, lu du point de vérité unique
     `config/served_run.txt`) → toujours le scoring premium v2 (`dryrun_parcel_evaluations`),
     tier servi. Le fallback legacy `parcel_evaluations.status` (rail éteint M37) est SUPPRIMÉ —
     un seul chemin, une seule vérité. Le front envoyait déjà `?source=…` via le helper `q()`."""
-    return _q_v2_geojson(db, commune, limit, run_label=source)
+    return _q_v2_geojson(db, commune, limit, run_label=source or runs.current())
 
 
 #: statuts de la matrice premium v2 (dryrun) — source de vérité du Socle V1.
@@ -2612,7 +2615,7 @@ def _score_v2_run_id(db: Session) -> str | None:
         return None
     return db.execute(text(
         "SELECT run_id FROM p_score_v2_runs WHERE run_id = :label LIMIT 1"),
-        {"label": Q_A_RUN_LABEL}).scalar()
+        {"label": runs.current()}).scalar()
 
 
 #: cache mémoire du nombre de parcelles analysées par run (théâtre M52 L2). Le compte est GELÉ
@@ -2726,12 +2729,14 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     return out
 
 
-def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = Q_A_RUN_LABEL) -> dict:
+def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str | None = None) -> dict:
     """Parcelles + matrice premium v2 (dryrun_parcel_evaluations). `status` = matrice_statut ;
     Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
     l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées.
     M6 2a (§1.8) : l'adresse BAN entre dans les properties (cartes de résultats mode commune) —
     lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo)."""
+    if run_label is None:
+        run_label = runs.current()
     # M6.2 perf (#1) : adresse BAN via la table matérialisée `parcel_adresse` (LEFT JOIN PK
     # indexé) quand elle existe — sinon repli sur le LATERAL par-parcelle (~5,4 s pour 21k en
     # commune). Les deux produisent la MÊME adresse (DISTINCT ON = même ORDER BY que le lateral).
@@ -2915,7 +2920,7 @@ _ETAT_BIEN_SQL = (
     "WHEN COALESCE(rb.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore' ELSE 'bati_max' END")
 
 
-def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = Q_A_RUN_LABEL,
+def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str | None = None,
                extra_where: str = "", extra_params: dict | None = None,
                sort: str | None = None, groupes: bool = False) -> list[dict]:
     """Liste pilotée par le scoring v2 (M5.1) : tri par défaut = RANG P (croissant, copros
@@ -2925,6 +2930,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
 
     M55-H point 5 : `groupes=True` préfixe l'ORDER BY par l'ordre des tiers (groupement) —
     le tri choisi devient secondaire, DANS chaque groupe."""
+    if run_label is None:
+        run_label = runs.current()
     sort_key = sort if (sort or "rang") in _Q_V2_ORDERS else "rang"
     order = _Q_V2_ORDERS[sort_key or "rang"]
     if groupes:
@@ -3148,7 +3155,7 @@ def parcelles_matchant_hash(db: Session, hash_str: str, run_label: str,
     return {r["idu"] for r in rows}
 
 
-def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL,
+def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
                 extra_where: str = "", extra_params: dict | None = None,
                 legacy: bool = False, exclure_slivers: bool = False) -> dict:
     """Comptes par TIER v2 EFFECTIF (M5.1) — l'étage 0 du run servi prime : une parcelle
@@ -3159,6 +3166,8 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
     DOSSIERS (unité de prospection) : parmi les OPPORTUNITÉS v2, propriétaires uniques
     identifiés — clé = SIREN (personnes morales, DGFiP). Limite consignée : les personnes
     physiques n'ont pas d'identité en base (doctrine) → « sans identité »."""
+    if run_label is None:
+        run_label = runs.current()
     params = {"c": commune, "run": run_label, "v2run": _score_v2_run_id(db),
               **(extra_params or {})}
     # FIX-FILTRES F2 — quand demandé (compteur du panneau /filtre), on ALIGNE le COMPTE sur la LISTE :
@@ -3254,13 +3263,15 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
         "FROM parcel_p_score_v2 "
         "WHERE run_id = :run AND parcelle_id >= :s AND parcelle_id < :s || 'ÿ' "
         "  AND left(parcelle_id, 10) = :s"),
-        {"run": Q_A_RUN_LABEL, "s": section}).scalar() or 0
+        {"run": runs.current(), "s": section}).scalar() or 0
     return {"section": section, "n": int(n)}
 
 
-def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
+def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
+    if run_label is None:
+        run_label = runs.current()
     head = db.execute(text(
         """SELECT p.id, p.idu, p.commune, p.surface_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
@@ -3790,7 +3801,7 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         "          AND r2.run_label = :run)                                          AS total_commune "
         # M47 : scopé sur le run servi (config/served_run.txt via Q_A_RUN_LABEL) — jamais un label en dur.
         "FROM parcel_renouvellement WHERE idu = :idu AND run_label = :run"),
-        {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
+        {"idu": idu, "run": runs.current()}).mappings().first()
     if not r:
         return None
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
@@ -4110,7 +4121,7 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     direct). Le front envoie de toute façon `source=q_v*` (api.ts `getFiche`). Le builder legacy
     survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
     idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
-    run = source if (source and source.startswith("q_v")) else Q_A_RUN_LABEL
+    run = source if (source and source.startswith("q_v")) else runs.current()
     return _q_v2_fiche(db, idu, run_label=run)
 
 
@@ -4289,7 +4300,7 @@ def etude_zone_pdf(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> Response:
 
 
 @app.get("/parcels/{idu}/export.pdf")
-def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
+def parcel_export_pdf(idu: str, source: str | None = None,
                       cout_construction_m2: float | None = Query(None, ge=500, le=8000),
                       marge_frais_pct: float | None = Query(None, ge=0, le=60),
                       prix_demande_eur: float | None = Query(None, ge=0, le=500_000_000),
@@ -4299,7 +4310,7 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
     A6 (mandat bilan-calculette) : si les hypothèses de la calculette sont passées, le PDF porte
     la CHARGE FONCIÈRE « selon vos hypothèses » (recalculée par le moteur, jamais un faux chiffre)."""
     from .pdf_premium import render_fiche_pdf
-    fiche = _q_v2_fiche(db, idu, run_label=source)
+    fiche = _q_v2_fiche(db, idu, run_label=source or runs.current())
     # M125-B : adresse UNIFIÉE — `_q_v2_fiche` a déjà posé `fiche["adresse"]` (résolveur unique de
     # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
@@ -4574,7 +4585,7 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
             LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
             WHERE p.commune = :c
             """
-        ), {"c": commune, "run": Q_A_RUN_LABEL, "servables": list(TIERS_SERVABLES)}
+        ), {"c": commune, "run": runs.current(), "servables": list(TIERS_SERVABLES)}
     ).mappings().all()
     candidates = [
         {**{k: r[k] for k in ("idu", "commune", "surface_m2", "status", "rang",
@@ -4638,18 +4649,18 @@ def renouvellement_geojson(commune: str | None = None,
         SELECT r.idu, r.renouv_score, r.rang_segment, r.rang_commune, ST_AsGeoJSON(p.geom) AS g
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
         {where} ORDER BY r.rang_segment LIMIT :n"""),
-        {"c": commune, "n": limit, "run": Q_A_RUN_LABEL}).all()
+        {"c": commune, "n": limit, "run": runs.current()}).all()
     meta = db.execute(text(f"""
         SELECT count(*) AS n, to_char(max(r.computed_at), 'YYYY-MM-DD') AS maj
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
-        {"c": commune, "run": Q_A_RUN_LABEL}).mappings().first()
+        {"c": commune, "run": runs.current()}).mappings().first()
     total = int(meta["n"] or 0)
     feats = [{"type": "Feature", "geometry": json.loads(g),
               "properties": {"idu": idu, "renouv_score": sc, "rang_segment": rg, "rang_commune": rc}}
              for idu, sc, rg, rc, g in rows if g]
     # M47 (P2) : millésime/source de la couche servie (run servi + date de matérialisation).
     return {"type": "FeatureCollection", "features": feats, "total": total, "servis": len(feats),
-            "source": "Analyse LABUSE", "run_label": Q_A_RUN_LABEL, "maj": meta["maj"]}
+            "source": "Analyse LABUSE", "run_label": runs.current(), "maj": meta["maj"]}
 
 
 def _renouv_liste_cap() -> int:
@@ -4695,16 +4706,16 @@ def renouvellement_liste(commune: str | None = None,
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = r.idu AND s2.run_id = :run
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         {where} ORDER BY {orders[sort]} LIMIT :n OFFSET :o"""),
-        {"c": commune, "n": eff, "o": offset, "run": Q_A_RUN_LABEL}).mappings().all()
+        {"c": commune, "n": eff, "o": offset, "run": runs.current()}).mappings().all()
     meta = db.execute(text(f"""
         SELECT count(*) AS n, to_char(max(r.computed_at), 'YYYY-MM-DD') AS maj
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
-        {"c": commune, "run": Q_A_RUN_LABEL}).mappings().first()
+        {"c": commune, "run": runs.current()}).mappings().first()
     total = int(meta["n"] or 0)
     # M47 (P2) : millésime/source de la couche servie (run servi + date de matérialisation).
     return {"total": total, "n": len(rows), "cap": cap, "tronquee": total > len(rows),
             "items": [dict(r) for r in rows],
-            "source": "Analyse LABUSE", "run_label": Q_A_RUN_LABEL, "maj": meta["maj"],
+            "source": "Analyse LABUSE", "run_label": runs.current(), "maj": meta["maj"],
             "libelle": LIBELLE_SEGMENT, "composantes_libelles": LIBELLES_COMPOSANTES,
             "avertissement": ("Parcelles occupées : potentiel physique et réglementaire de "
                               "densification — ni une mise en vente prévisible, ni une "
@@ -4762,7 +4773,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
                ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name, cr.id"""  # cr.id : tiebreaker déterministe (cf. _q_v2_fiche)
-        ), {"pid": p.id, "run": Q_A_RUN_LABEL}
+        ), {"pid": p.id, "run": runs.current()}
     ).mappings().all()
     from .risques_arbitrage import arbitrer_risques
     _seen: set = set()
@@ -5045,7 +5056,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "verdict": verdict_block,
         # M33 — mode B (réhabilitation) : présent aussi sur le payload legacy (exports
         # md/html) — cohérence P2.3 : avec ses étiquettes ou pas du tout.
-        "mode_b": _mode_b_block(db, idu, Q_A_RUN_LABEL),
+        "mode_b": _mode_b_block(db, idu, runs.current()),
         # M73-D — ANC servi (statut_anc, point unique) sur le payload legacy aussi (premium
         # fpdf) : le critère était absent de _build_fiche. Jamais recalculé, jamais lu depuis zone_anc.
         "anc": _anc_block(db, idu),
@@ -5699,7 +5710,9 @@ def _proprietaire_public(db: Session, idu: str) -> dict:
     return {"type": "particulier"}    # aucune identité — non communiqué
 
 
-def _premium_head(db: Session, parcel_id: int, run_label: str = Q_A_RUN_LABEL) -> dict | None:
+def _premium_head(db: Session, parcel_id: int, run_label: str | None = None) -> dict | None:
+    if run_label is None:
+        run_label = runs.current()
     r = db.execute(text(
         "SELECT d.status AS status, d.completeness_score, "  # M129-B : matrice morte
         "       (d.status IN ('exclue', 'faux_positif_probable')) AS etage0, "

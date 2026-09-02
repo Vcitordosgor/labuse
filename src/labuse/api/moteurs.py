@@ -13,7 +13,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/moteurs", tags=["moteurs"])
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
+from .. import runs
 
 
 def get_db():
@@ -65,7 +65,7 @@ def simulplu(zone: str, commune: str | None = None, offset: int = Query(0, ge=0)
         JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 > 0
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail LIKE 'Zone PLU « U%'"""),
-        {"c": commune, "run": RUN}).scalar() or 0.0
+        {"c": commune, "run": runs.current()}).scalar() or 0.0
     # M137-O — le plafond de liste sort du DUR (config/moteurs.yaml) ; on sert AUSSI le total réel pour
     # que l'écran DISE « les N premières sur M » (un plafond muet ment — leçon M120-B).
     # PLU Lot A (pagination SOCLE) : `offset` pagine la liste (cap par page) → « Voir N de plus » jusqu'à
@@ -83,7 +83,7 @@ def simulplu(zone: str, commune: str | None = None, offset: int = Query(0, ge=0)
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail ILIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300"""),
-        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db), "ratio": float(ratio)}).mappings().one()
+        {"c": commune, "z": zone, "run": runs.current(), "v2run": _v2run(db), "ratio": float(ratio)}).mappings().one()
     n_total = int(agg["n_total"])
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut_actuel,
@@ -99,7 +99,7 @@ def simulplu(zone: str, commune: str | None = None, offset: int = Query(0, ge=0)
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail ILIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300
         ORDER BY p.surface_m2 DESC LIMIT :cap OFFSET :off"""),
-        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db), "cap": cap, "off": max(0, offset)}).mappings().all()
+        {"c": commune, "z": zone, "run": runs.current(), "v2run": _v2run(db), "cap": cap, "off": max(0, offset)}).mappings().all()
     items = []
     for r in rows:
         sdp_est = round(float(r["surface_m2"] or 0) * float(ratio))
@@ -174,7 +174,7 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-        WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": RUN, "v2run": _v2run(db)}).mappings().all()
+        WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": runs.current(), "v2run": _v2run(db)}).mappings().all()
     if len(rows) < 2:
         raise HTTPException(404, f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)}")
     # contiguïté : graphe des adjacences (contact cadastral ADJ_BUFFER_M — MÊME seuil que la détection
@@ -371,7 +371,7 @@ def zan(db: Session = Depends(get_db)) -> dict:
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'ocs_ge' AND cr.weight_applied > 0
           AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
-        ORDER BY d.opportunity_score DESC LIMIT 400"""), {"run": RUN, "v2run": _v2run(db)}).mappings().all()
+        ORDER BY d.opportunity_score DESC LIMIT 400"""), {"run": runs.current(), "v2run": _v2run(db)}).mappings().all()
     return {
         "bandeau": ("Signal parcelle robuste (OCS-GE + friches + zonage) + consommation ENAF OBSERVÉE "
                     "par commune. Le budget/reste ZAN est une ESTIMATION (règle -50 %) — pas un droit "

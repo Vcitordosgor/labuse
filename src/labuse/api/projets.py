@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import models
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence
+from .. import runs
 from .ia import SECTEURS
 from .tenant import current_compte
 
@@ -150,7 +150,7 @@ def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)
         "SELECT p.commune, count(*) n FROM parcels p "
         "JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :runref "
         " AND s.tier = ANY(:servables) "
-        "GROUP BY p.commune"), {"runref": RUN, "servables": list(TIERS_SERVABLES)}).mappings()}
+        "GROUP BY p.commune"), {"runref": runs.current(), "servables": list(TIERS_SERVABLES)}).mappings()}
     # prix médian bâti DVF (€/m² habitable) — bornes anti-aberration comme l'affichage marché
     dvf = {r["commune"]: int(r["m"]) for r in db.execute(text(
         "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
@@ -236,7 +236,7 @@ def _cadrage_to_filtre(cadrage: dict):
     """cadrage (camelCase) → instance `FiltreCriteres` (le point d'entrée unique du filtrage carte).
     Import local : casse le cycle projets ↔ app."""
     from .app import FiltreCriteres
-    kw: dict = {"source": RUN}
+    kw: dict = {"source": runs.current()}
     for k, v in (cadrage or {}).items():
         spec = _CADRAGE_MAP.get(k)
         if not spec:
@@ -261,7 +261,7 @@ def _run_cadrage(db: Session, cadrage: dict, limit: int, offset: int = 0,
     if exclude_idus:
         where = f"{where} AND p.idu <> ALL(:_excl_idus)"   # p = parcels (alias du moteur de liste)
         params = {**params, "_excl_idus": list(exclude_idus)}
-    return _q_v2_list(db, None, limit, offset, run_label=RUN, extra_where=where, extra_params=params)
+    return _q_v2_list(db, None, limit, offset, run_label=runs.current(), extra_where=where, extra_params=params)
 
 
 def _cadrage_page_idus(db: Session, cadrage: dict, limit: int, offset: int,
@@ -288,7 +288,7 @@ def _cadrage_page_idus(db: Session, cadrage: dict, limit: int, offset: int,
         f"JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
         f"WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where} {excl} "
         f"ORDER BY s2.rang ASC NULLS LAST, p.idu ASC LIMIT :lim OFFSET :off"),
-        {"run": RUN, "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2,
+        {"run": runs.current(), "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2,
          "lim": limit, "off": offset, **params}).scalars().all())
 
 
@@ -317,7 +317,7 @@ def _vivier_figeable(db: Session, cadrage: dict) -> int:
         "SELECT count(*) FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id "
         "LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
         f"WHERE d.run_label = :run AND NOT {_ETAGE0_SQL}{where}"),
-        {"run": RUN, "v2run": _score_v2_run_id(db), **params}).scalar() or 0
+        {"run": runs.current(), "v2run": _score_v2_run_id(db), **params}).scalar() or 0
 
 
 def _cadrage_total(db: Session, cadrage: dict) -> dict:
@@ -338,7 +338,7 @@ def _cadrage_total(db: Session, cadrage: dict) -> dict:
             "JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run "
             "JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
             f"WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}"),
-            {"run": RUN, "v2run": _score_v2_run_id(db),
+            {"run": runs.current(), "v2run": _score_v2_run_id(db),
              "minsurf": MIN_DISPLAY_SURFACE_M2, **params}).mappings().first()
         return {"total": int(r["total"]), "etage0": int(r["etage0"])}
     except Exception:  # noqa: BLE001 — échec RÉEL de requête → None → État 3 (INDISPONIBLE) à l'affichage
@@ -482,7 +482,7 @@ _REUNION_TZ = timezone(timedelta(hours=4))
 def _compteur_cle(cadrage: dict) -> str:
     import hashlib
     import json as _json
-    return hashlib.md5((RUN + "|" + _json.dumps(cadrage, sort_keys=True)).encode()).hexdigest()
+    return hashlib.md5((runs.current() + "|" + _json.dumps(cadrage, sort_keys=True)).encode()).hexdigest()
 
 
 @router.post("/compteur")
@@ -532,7 +532,7 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
     from .app import _q_v2_stats
     fc = _cadrage_to_filtre(cadrage)
     where, params = fc.where()
-    total = _q_v2_stats(db, None, run_label=RUN, extra_where=where, extra_params=params)["total"]
+    total = _q_v2_stats(db, None, run_label=runs.current(), extra_where=where, extra_params=params)["total"]
     n = _vivier_figeable(db, cadrage)                 # M120-B — le vivier RÉEL, hors exclusions dures
     top = _run_cadrage(db, cadrage, lim)
     top_out = [{
@@ -542,7 +542,7 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
         "pourquoi": _pourquoi_lignes(it, sdp_besoin, carencees),
     } for it in top]
     return {"nom": _nom_repli(identite, cadrage), "n": n, "total": total,
-            "cap": _shortlist_max(), "sdp_besoin_m2": sdp_besoin, "source": RUN, "top": top_out}
+            "cap": _shortlist_max(), "sdp_besoin_m2": sdp_besoin, "source": runs.current(), "top": top_out}
 
 
 class ProjetIn(BaseModel):
@@ -999,7 +999,7 @@ def _analyse_cadrage(db: Session, cadrage: dict) -> dict:
         f"FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run "
         f"JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
         f"WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}"),
-        {"run": RUN, "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2,
+        {"run": runs.current(), "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2,
          **params}).mappings().first()
     p, s = int(r["priorite"] or 0), int(r["a_suivre"] or 0)
     return {"total": int(r["total"] or 0), "priorite": p, "a_suivre": s, "signalees": p + s}
@@ -1166,7 +1166,7 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
         event_set = {x[0] for x in db.execute(text(
             "SELECT DISTINCT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id "
             "WHERE cr.run_label = :r AND cr.evenement = 'rouge' AND p.idu = ANY(:ids)"),
-            {"r": RUN, "ids": all_idus})}
+            {"r": runs.current(), "ids": all_idus})}
     communes_lst = list({r["commune"] for r in rows if r["commune"]})
     marche = {r["commune"]: int(r["m"]) for r in db.execute(text(
         "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
@@ -1428,7 +1428,7 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
            LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = par.id AND d.run_label = :run
            WHERE pp.projet_id = :pid AND pp.statut <> 'ecartee'
            ORDER BY par.commune, section, NULLIF(regexp_replace(numero, '\\D', '', 'g'), '')::int"""),
-        {"pid": p.id, "run": RUN}).mappings().all()
+        {"pid": p.id, "run": runs.current()}).mappings().all()
     figee = bool(p.derniere_execution_at) and bool(rows)
     idus = [r["idu"] for r in rows]
     adrs = {i: format_adresse(a) for i, a in adresses_ban(db, idus).items()} if idus else {}
@@ -1606,7 +1606,7 @@ def projet_export_csv(pid: int, request: Request, db: Session = Depends(get_db))
             WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}
             ORDER BY p.commune, section,
                      NULLIF(regexp_replace(substr(p.idu, 11), '\\D', '', 'g'), '')::int NULLS LAST, p.idu""")
-    prm = {"run": RUN, "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2, **params}
+    prm = {"run": runs.current(), "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2, **params}
     vr = _residuel_run_servi(db) or {}
     figee = p.derniere_execution_at.date().isoformat() if p.derniere_execution_at else "non figé"
     # RETOURS-7 Z12.2 — libellé lisible (date) servi au client ; l'identifiant technique du run reste

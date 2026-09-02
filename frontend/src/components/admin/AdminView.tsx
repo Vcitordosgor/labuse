@@ -14,7 +14,6 @@ import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { ContactsSection } from './Contacts'
-import { ProgrammesSection } from './Programmes'
 
 // ADMIN-1 (AD2) — « sources »/« flux »/« cron » ne sont plus des sections de menu : elles sont
 // FUSIONNÉES dans « donnees » (onglets Catalogue/Circuit/Horloge). Les valeurs restent dans le type
@@ -22,7 +21,11 @@ import { ProgrammesSection } from './Programmes'
 export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
 
 // ADMIN-1 (AD2) — redirection des anciennes routes vers la page fusionnée « Données ».
-const _rediriger = (s: AdminSection): AdminSection => (s === 'sources' || s === 'flux' || s === 'cron' ? 'donnees' : s)
+// LOT S1 — `programmes` n'a plus de section admin : le deep-link sort vers l'outil « Scan patrimoine »
+// (traité dans le useEffect avec setView/setModule). Ici on retombe sur « pilotage » pour que le shell
+// admin ne rende jamais une section morte le temps de la bascule.
+const _rediriger = (s: AdminSection): AdminSection =>
+  s === 'sources' || s === 'flux' || s === 'cron' ? 'donnees' : s === 'programmes' ? 'pilotage' : s
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -238,6 +241,15 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
           <div className="mt-1 text-[11.5px] text-txt-mut">
             {data.radar ? `${data.radar.compteurs.annonces.toLocaleString('fr-FR')} annonces` : ''} · <span className="text-mint hover:underline">le flux →</span>
           </div>
+          {/* S5 — annonces rattachées N / M (M = total biens ; repli sur annonces si l'ancien back ne l'envoie pas). */}
+          {data.radar && (() => {
+            const c = data.radar.compteurs as typeof data.radar.compteurs & { biens?: number }
+            return (
+              <div className="mt-0.5 text-[11.5px] text-txt-mut">
+                <b className="text-txt">{c.rattachees.toLocaleString('fr-FR')}</b> / {(c.biens ?? c.annonces).toLocaleString('fr-FR')} rattachées
+              </div>
+            )
+          })()}
         </div>
       </div>
 
@@ -284,7 +296,9 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'courrier', label: 'Courrier', ic: '✉' },
   { key: 'radar', label: 'Radar', ic: '◎' },
   { key: 'contacts', label: 'Contacts', ic: '☎' },
-  { key: 'programmes', label: 'Programmes', ic: '◳' },
+  // LOT S1 — « Programmes » n'est plus une section de menu : la collecte a été REPLIÉE dans l'outil
+  // « Scan patrimoine » (onglet « Ce qu'ils construisent », geste admin discret). Les anciens
+  // deep-links `programmes` atterrissent désormais sur le Scan (voir `_rediriger`).
 ]
 // SOUS_TITRES : Partial car les valeurs de redirection (sources/flux/cron) n'ont pas de sous-titre propre.
 const SOUS_TITRES: Partial<Record<AdminSection, string>> = {
@@ -296,7 +310,7 @@ const SOUS_TITRES: Partial<Record<AdminSection, string>> = {
   courrier: 'les demandes d’envoi — la page qui manquait',
   radar: 'la pige d’annonces — déposer, valider, re-vérifier',
   contacts: 'le carnet des communes — standard + contacts nommés',
-  programmes: 'coller une URL de portfolio → l’IA propose, vous validez ligne à ligne',
+  // LOT S1 — plus de sous-titre `programmes` : la collecte vit dans « Scan patrimoine ».
 }
 
 function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: string; value: string }) {
@@ -311,15 +325,21 @@ function Led({ ok, label, value }: { ok: 'ok' | 'warn' | 'err' | 'off'; label: s
 
 export function AdminView() {
   const setView = useApp((s) => s.setView)
+  const setModule = useApp((s) => s.setModule)
   const adminSection = useApp((s) => s.adminSection)
   const clearAdminSection = useApp((s) => s.clearAdminSection)
   const [section, setSection] = useState<AdminSection>(_rediriger((adminSection as AdminSection) || 'pilotage'))
   // SECTEUR-2 (T3) — deep-link depuis « Publier une annonce » (en-tête Radar) : ouvre la section
   // demandée puis consomme l'intention (le retour manuel sur une autre section n'est pas réécrasé).
   // ADMIN-1 (AD2) — les anciens deep-links sources/flux/cron sont redirigés vers « donnees ».
+  // LOT S1 — un deep-link `programmes` sort de l'admin et ouvre l'outil « Scan patrimoine »
+  // (setModule bascule déjà view→'cartes'), où la collecte vit désormais (onglet « construit »).
   useEffect(() => {
-    if (adminSection) { setSection(_rediriger(adminSection as AdminSection)); clearAdminSection() }
-  }, [adminSection, clearAdminSection])
+    if (!adminSection) return
+    clearAdminSection()
+    if (adminSection === 'programmes') { setModule('patrimoine'); return }
+    setSection(_rediriger(adminSection as AdminSection))
+  }, [adminSection, clearAdminSection, setModule])
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
   const admin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
   const pilotage = useQuery({ queryKey: ['admin-pilotage'], queryFn: getAdminPilotage, refetchInterval: 60_000, enabled: admin })
@@ -388,7 +408,6 @@ export function AdminView() {
           {section === 'courrier' && <CourrierSection />}
           {section === 'radar' && <RadarSection />}
           {section === 'contacts' && <ContactsSection />}
-          {section === 'programmes' && <ProgrammesSection />}
         </div>
       </div>
     </div>

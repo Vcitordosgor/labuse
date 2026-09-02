@@ -97,7 +97,7 @@ def _cached(session: Session, idu: str) -> AuditResult | None:
     M37 : `status` = TIER SERVI (parcel_p_score_v2), plus le rail legacy
     parcel_evaluations.status (éteint). Cache-hit = parcelle présente au run servi ; les
     métadonnées opportunity/completeness restent lues de parcel_evaluations (inchangées)."""
-    from .scoring.score_v_constants import Q_A_RUN_LABEL
+    from . import runs
     # cache-hit = la parcelle a DÉJÀ une évaluation (son cascade propre) — JOIN sur
     # parcel_evaluations (métadonnées). `status` = tier servi si la parcelle est au run
     # (LEFT JOIN), sinon None : une parcelle auditée hors run servi reste cacheable, sans
@@ -110,7 +110,7 @@ def _cached(session: Session, idu: str) -> AuditResult | None:
              FROM parcel_evaluations e WHERE e.parcel_id = p.id
              ORDER BY evaluated_at DESC LIMIT 1) e ON true
            LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
-           WHERE p.idu = :i LIMIT 1"""), {"i": idu, "run": Q_A_RUN_LABEL}).mappings().first()
+           WHERE p.idu = :i LIMIT 1"""), {"i": idu, "run": runs.current()}).mappings().first()
     if not row:
         return None
     return AuditResult(

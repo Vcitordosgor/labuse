@@ -15,8 +15,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .. import runs
 from .. import sources_catalog as _srccat
-from ..scoring.score_v_constants import Q_A_RUN_LABEL, RUN_PRECEDENT
+from ..scoring.score_v_constants import RUN_PRECEDENT
 
 router = APIRouter(tags=["accueil"])
 
@@ -70,7 +71,7 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
     golden_parcelles, golden_verifs = _golden_counts()
     data = {
         # ── bloc 1 · « Je couvre tout » ──
-        "parcelles": one("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": Q_A_RUN_LABEL}),
+        "parcelles": one("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": runs.current()}),
         "communes": one("SELECT count(DISTINCT commune) FROM parcels"),
         # M71 F / M87 P0 : UN SEUL chiffre partout — définition CANONIQUE des sources affichées
         # (`sources_catalog.WHERE_AFFICHEES` : connecte, hors DOUBLON, hors masquées). accueil ET
@@ -98,8 +99,8 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
             "JOIN parcel_p_score_v2 b ON b.parcelle_id = a.parcelle_id AND b.run_id = :cur "
             "WHERE a.run_id = :prev AND b.tier IN ('brulante','chaude') "
             "  AND (a.tier IS NULL OR a.tier NOT IN ('brulante','chaude'))",
-            {"cur": Q_A_RUN_LABEL, "prev": RUN_PRECEDENT}),
-        "run_label": Q_A_RUN_LABEL,
+            {"cur": runs.current(), "prev": RUN_PRECEDENT}),
+        "run_label": runs.current(),
     }
     _cache.update(at=now, data=data)
     return data

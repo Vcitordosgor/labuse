@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..api.export_commun import nettoyer_libelle_client  # M127-A3 — meme hygiene de libelle que la fiche
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs  # S3 : run servi relu à la requête
 
 log = logging.getLogger("labuse.flash")
 
@@ -147,7 +147,7 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
     # libellé de zone (A/U/RNU…) et la part de recouvrement restent lus en direct dans spatial_layers
     # (détail d'affichage non porté par le servi).
     from ..api.served_cascade import served_cascade_lines, served_group
-    zline = next((l for l in served_group(served_cascade_lines(db, idu, Q_A_RUN_LABEL), "regles")
+    zline = next((l for l in served_group(served_cascade_lines(db, idu, runs.current()), "regles")
                   if l["layer_name"] == "zonage_plu_gpu"), None)
     if zline:
         _zdet = nettoyer_libelle_client(zline["layer_name"], zline["detail"])
@@ -255,7 +255,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             """SELECT (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
                FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
                WHERE p.idu = :idu AND d.run_label = :run"""),
-            {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
+            {"idu": idu, "run": runs.current()}).mappings().first()
         # M-P (P2-67) : la grille matrice Q/A (out["score"], seuils scoring_matrice) est RETIRÉE du
         # Flash — document VENDU 79 €, l'acheteur n'a aucun contexte pour arbitrer un second verdict
         # issu d'un rail éteint (M37). Un seul verdict : le tier v2 (out["verdict_v2"]) ci-dessous.
@@ -274,7 +274,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 """SELECT s2.tier, s2.rang, s2.mult_base
                    FROM parcel_p_score_v2 s2
                    WHERE s2.parcelle_id = :idu AND s2.run_id = :run"""),
-                {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
+                {"idu": idu, "run": runs.current()}).mappings().first()
         if v2 or etage0:
             # M54-AB C1 : libellé CLIENT + motif = POINT DE TRADUCTION UNIQUE (verdict_servi),
             # jamais une table recopiée dans le générateur (l'ancienne, incomplète, laissait
@@ -364,7 +364,7 @@ def _risques(db: Session, idu: str, avail: set[str]) -> dict | None:
     # PPR réglementaire sans « intersection marginale < 10 % », libellés FR propres. Fini les
     # 3 niveaux d'aléa côte à côte lus en direct dans spatial_layers.
     from ..api.served_cascade import served_cascade_lines, served_group
-    lines = served_group(served_cascade_lines(db, idu, Q_A_RUN_LABEL), "risques")
+    lines = served_group(served_cascade_lines(db, idu, runs.current()), "risques")
     items = []
     for l in lines:
         if l["layer_name"] not in _RISQUE_LAYERS:
@@ -407,7 +407,7 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
     # ST_Distance à un tampon 500 m → fini le « 0 m » (distance-à-tampon). La couche ABF = tampons
     # + endpoint décommissionné M74 : on ne re-source pas, on cesse d'afficher une distance-à-tampon.
     from ..api.served_cascade import served_cascade_lines, served_group
-    abf_raw = next((l["detail"] for l in served_group(served_cascade_lines(db, idu, Q_A_RUN_LABEL), "risques")
+    abf_raw = next((l["detail"] for l in served_group(served_cascade_lines(db, idu, runs.current()), "risques")
                     if l["layer_name"] == "abf" and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG",
                                                                      "UNKNOWN")), None)
     abf_note = nettoyer_libelle_client("abf", abf_raw) if abf_raw else None

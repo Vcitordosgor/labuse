@@ -81,10 +81,34 @@ def test_aucune_requete_portail_dans_le_depot():
 
 
 def test_le_paquet_pige_ne_fait_aucun_appel_reseau():
-    """Ceinture + bretelles : le paquet pige/ n'importe même pas de client HTTP."""
+    """Ceinture + bretelles : le paquet pige/ ne contient AUCUN crawler de portail.
+
+    Doctrine « collecte 100 % humaine » : pige/ n'ouvre le réseau QUE pour la lecture ONE-SHOT
+    d'une URL COLLÉE PAR UN HUMAIN (RETOURS-3 R3, décision Vic 31/08 — l'agence colle son propre
+    lien, le serveur le lit une fois, sans retry ni boucle). Ce point d'entrée unique et audité est
+    `_fetch_page_oneshot` dans `pige/api.py`. Le test le tolère NOMMÉMENT et interdit tout autre
+    import d'un client HTTP dans le paquet — un crawler de portail (import HTTP ailleurs, ou boucle
+    de requêtes) reste un échec bruyant."""
+    fautes: list[str] = []
     for p in (_ROOT / "src" / "labuse" / "pige").rglob("*.py"):
         src = p.read_text(encoding="utf-8")
-        assert "import httpx" not in src and "import requests" not in src, f"{p.name} importe un client HTTP"
+        if "import httpx" not in src and "import requests" not in src:
+            continue
+        if p.name != "api.py":
+            fautes.append(f"{p.name} importe un client HTTP (seul le one-shot humain de api.py est toléré)")
+            continue
+        # Dans api.py : l'import HTTP ne vit QUE dans `_fetch_page_oneshot`, et sans boucle de requêtes.
+        assert "def _fetch_page_oneshot" in src, "api.py importe un client HTTP hors du one-shot audité"
+        bloc = src.split("def _fetch_page_oneshot", 1)[1].split("\ndef ", 1)[0]
+        assert "import requests" in bloc, ("l'import HTTP de api.py doit rester confiné à "
+                                           "_fetch_page_oneshot (lecture humaine one-shot)")
+        avant = src.split("def _fetch_page_oneshot", 1)[0]
+        assert "import requests" not in avant and "import httpx" not in avant, (
+            "api.py importe un client HTTP au niveau module — le one-shot doit l'importer localement")
+        for mot in (" while ", "\nwhile ", " for "):
+            assert not (mot in bloc and ".get(" in bloc.split(mot, 1)[1][:200]), (
+                "boucle de requêtes détectée dans le one-shot — un one-shot ne réessaie jamais")
+    assert not fautes, "client HTTP hors du one-shot humain :\n" + "\n".join(fautes)
 
 
 def test_schema_pige_present_et_isole(engine):

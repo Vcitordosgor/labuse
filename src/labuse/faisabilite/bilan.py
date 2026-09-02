@@ -917,8 +917,8 @@ def compute_mode_b(session: Session, idu: str, *,
     `disponible=False` + motif hors population ou données manquantes (ABSENT explicite).
     Bilan négatif au paramètre courant : DIT honnêtement (`negatif=True`, message), jamais
     un prix négatif servi comme actionnable, jamais un masquage silencieux."""
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
-    run = run or Q_A_RUN_LABEL
+    from .. import runs
+    run = run or runs.current()
     tier = session.execute(text(
         "SELECT tier FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = :i"),
         {"r": run, "i": idu}).scalar()

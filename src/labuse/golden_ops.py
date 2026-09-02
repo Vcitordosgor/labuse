@@ -14,8 +14,8 @@ from pathlib import Path
 
 from sqlalchemy import text
 
+from . import runs
 from .db import session_scope
-from .scoring.score_v_constants import Q_A_RUN_LABEL
 
 _SERVED_FILE = Path(__file__).resolve().parents[2] / "config" / "served_run.txt"
 
@@ -32,7 +32,7 @@ def _distribution(db, run_id: str) -> dict:
 
 def comparer(candidat_run: str, servi_run: str | None = None) -> dict:
     """Comparaison LECTURE SEULE candidat vs servi (jamais de bascule). Rend promues, tiers, dérive %."""
-    servi = servi_run or Q_A_RUN_LABEL
+    servi = servi_run or runs.current()
     with session_scope() as db:
         connus = {r[0] for r in db.execute(text("SELECT DISTINCT run_id FROM parcel_p_score_v2")).all()}
         if candidat_run not in connus:
@@ -54,7 +54,7 @@ def candidat() -> str:
             "SELECT run_id FROM parcel_p_score_v2 GROUP BY run_id ORDER BY max(computed_at) DESC LIMIT 1")).scalar()
     if not recent:
         return "Aucun run en base."
-    if recent == Q_A_RUN_LABEL:
+    if recent == runs.current():
         return (f"Le run le plus récent ({recent}) EST déjà le run servi — pas de candidat à comparer.\n"
                 "Un candidat apparaîtra après la prochaine ingestion scoring (sitadel/dvf/cadastre).")
     c = comparer(recent)
@@ -79,7 +79,7 @@ def rapport_candidat(dry_run: bool = True) -> dict:
     with session_scope() as db:
         recent = db.execute(text(
             "SELECT run_id FROM parcel_p_score_v2 GROUP BY run_id ORDER BY max(computed_at) DESC LIMIT 1")).scalar()
-    if not recent or recent == Q_A_RUN_LABEL:
+    if not recent or recent == runs.current():
         return {"candidat": None, "note": "aucun run candidat (le plus récent est déjà le servi)"}
     c = comparer(recent)
     if not c.get("ok"):
@@ -111,8 +111,10 @@ def promote(run: str) -> dict:
         connus = {r[0] for r in db.execute(text("SELECT DISTINCT run_id FROM parcel_p_score_v2")).all()}
     if run not in connus:
         return {"ok": False, "motif": f"run inconnu (aucune parcelle scorée pour {run})"}
-    ancien = Q_A_RUN_LABEL
+    from . import runs
+    ancien = runs.current()
     entete = ("# config/served_run.txt — POINT DE VÉRITÉ UNIQUE du run servi (backend + front).\n"
               "# Bascule via `labuse golden promote <run>` (geste de Vic). Une seule valeur active.\n")
     _SERVED_FILE.write_text(entete + run + "\n", encoding="utf-8")
+    runs.invalidate()   # SUITE-1 S3 — bascule EFFECTIVE À CHAUD : la prochaine lecture relit le pointeur.
     return {"ok": True, "ancien": ancien, "nouveau": run}

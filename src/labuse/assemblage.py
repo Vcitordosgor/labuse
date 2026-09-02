@@ -12,8 +12,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from . import config
+from . import runs  # run servi (point de vérité unique) — lu à la requête
 from .proprietaire_type import classify_owner_type
-from .scoring.score_v_constants import Q_A_RUN_LABEL  # run servi (point de vérité unique)
 
 ADJ_BUFFER_M = 0.5          # contact cadastral (cf. voisinage)
 _INTERESSANT = ("opportunite", "a_creuser")
@@ -62,7 +62,7 @@ def parcel_assemblage(session: Session, parcel_id: int) -> dict:
         ORDER BY cumul DESC LIMIT 5
         """
     ), {"pid": parcel_id, "buf": ADJ_BUFFER_M, "seuil": p["min_surface_m2"],
-        "run": Q_A_RUN_LABEL}).mappings().all()
+        "run": runs.current()}).mappings().all()
     if not rows:
         return {"possible": False}
     own_p = _owner_payload(session, parcel_id)

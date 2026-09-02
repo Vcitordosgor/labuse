@@ -154,22 +154,42 @@ def _empreinte(val) -> str:
     return f"{n}:{h}"
 
 
-def sonder_temoin(url: str, selecteur: str | None, empreinte_prec: str | None) -> Sonde:
-    """`temoin` (SENTINELLE-3 Y3) — requête TÉMOIN figée sur une API sans notion de version : on lit une
-    EMPREINTE stable de la réponse (`selecteur` = chemin JSON vers un agrégat stable, ou None = réponse
-    entière) et on la compare au dernier passage. Ne nomme AUCUNE version : signale « la donnée amont a
-    changé ». Premier passage = baseline (ok, mémorise l'empreinte dans `dernier_entete`, marqueur opaque)."""
+def _lire_temoin(url: str, selecteur: str | None):
+    """Lit UN témoin : (valeur extraite, None) si OK, sinon (None, Sonde d'échec). Facteur commun aux
+    témoins mono- et bi-commune (S4.2)."""
     status, _, corps = _http(url)
     if status >= 400:
-        return Sonde("injoignable", message=f"HTTP {status}")
+        return None, Sonde("injoignable", message=f"HTTP {status}")
     try:
         data = json.loads(corps)
     except ValueError:
-        return Sonde("illisible", message="réponse non-JSON")
+        return None, Sonde("illisible", message="réponse non-JSON")
     val = _json_pointe(data, selecteur) if selecteur else data
     if val is None:
-        return Sonde("illisible", message=f"chemin JSON introuvable : {selecteur}")
-    emp = _empreinte(val)
+        return None, Sonde("illisible", message=f"chemin JSON introuvable : {selecteur}")
+    return val, None
+
+
+def sonder_temoin(url: str, selecteur: str | None, empreinte_prec: str | None,
+                  url2: str | None = None) -> Sonde:
+    """`temoin` (SENTINELLE-3 Y3) — requête TÉMOIN figée sur une API sans notion de version : on lit une
+    EMPREINTE stable de la réponse (`selecteur` = chemin JSON vers un agrégat stable, ou None = réponse
+    entière) et on la compare au dernier passage. Ne nomme AUCUNE version : signale « la donnée amont a
+    changé ». Premier passage = baseline (ok, mémorise l'empreinte dans `dernier_entete`, marqueur opaque).
+
+    SUITE-1 S4.2 — si `url2` (seconde commune témoin, Saint-Pierre) est fourni, l'empreinte combine les
+    DEUX chef-lieux : un changement de L'UN OU L'AUTRE change l'empreinte → « la donnée amont a changé ».
+    Les deux appels restent légers et espacés (une passe par jour, délai entre sources déjà appliqué)."""
+    val, echec = _lire_temoin(url, selecteur)
+    if echec is not None:
+        return echec
+    if url2:
+        val2, echec2 = _lire_temoin(url2, selecteur)
+        if echec2 is not None:
+            return echec2
+        emp = _empreinte([val, val2])   # combinée : l'un OU l'autre change → l'empreinte change
+    else:
+        emp = _empreinte(val)
     if empreinte_prec and emp != empreinte_prec:
         return Sonde("nouvelle_version", vu=emp, entete=emp,
                      message="la donnée amont a changé (empreinte de requête témoin) depuis le dernier passage")
@@ -215,7 +235,8 @@ def sonder_ligne(row: dict, servi: str | None, *, http=None) -> Sonde:
             elif methode == "entete":
                 s = sonder_entete(url, row.get("dernier_entete"))
             elif methode == "temoin":
-                s = sonder_temoin(url, row.get("selecteur"), row.get("dernier_entete"))
+                s = sonder_temoin(url, row.get("selecteur"), row.get("dernier_entete"),
+                                  url2=row.get("url_temoin_2"))
             else:
                 return Sonde("illisible", message=f"méthode inconnue : {methode}")
         except Exception as exc:  # noqa: BLE001 — tout échec réseau/parse = la SENTINELLE a échoué, pas la donnée
@@ -244,8 +265,8 @@ def _lignes_a_sonder(db, *, source_ids=None, forcer: bool) -> list[dict]:
         # cadence échue : jamais passé, ou passage plus vieux que cadence_heures.
         where.append("(v.dernier_passage_at IS NULL OR "
                      "v.dernier_passage_at <= now() - make_interval(hours => v.cadence_heures))")
-    sql = ("SELECT v.id, v.source_id, v.url_version, v.methode, v.selecteur, v.cadence_heures,"
-           "       v.dernier_entete, v.dernier_vu, v.dernier_notifie_vu, v.echecs_consecutifs,"
+    sql = ("SELECT v.id, v.source_id, v.url_version, v.url_temoin_2, v.methode, v.selecteur, v.cadence_heures,"
+           "       v.dernier_entete, v.dernier_vu, v.dernier_notifie_vu, v.echecs_consecutifs, v.mail_alerte,"
            "       d.name AS source_nom, d.source_millesime AS servi"
            " FROM source_veille v JOIN data_sources d ON d.id = v.source_id"
            " WHERE " + " AND ".join(where) + " ORDER BY d.name")
@@ -431,8 +452,10 @@ SEED: list[dict] = [
     # `dateModification` par PPR. Requête TÉMOIN figée sur la commune chef-lieu (Saint-Denis 97411) →
     # empreinte du PPR (déterministe, vérifié) ; une révision DEAL/Géorisques change l'empreinte. PPR = à
     # fort enjeu (le risque figure dans les fiches parcelles), donc surveillé même par témoin de commune.
+    # S4.2 — second chef-lieu témoin : Saint-Pierre (97410). Alerte si l'un des deux PPR change.
     {"name": "DEAL Réunion — PPR / aléas", "methode": "temoin",
      "url": "https://georisques.gouv.fr/api/v1/gaspar/pprn?codeInsee=97411&page=1&page_size=50",
+     "url2": "https://georisques.gouv.fr/api/v1/gaspar/pprn?codeInsee=97410&page=1&page_size=50",
      "selecteur": "content"},
     # (DEAL WMS/WFS resté non surveillé : le seul jeu data.gouv « NPNRU » est DÉPARTEMENTAL — Bouches-du-
     #  Rhône, pas la Réunion ; pas d'URL amont honnête. Cf. RAISONS_NON_SURVEILLEES.)
@@ -446,14 +469,19 @@ SEED: list[dict] = [
     # Géorisques live (cavités, mouvements de terrain, sites & sols pollués) : pas de millésime, mais un
     # COMPTE stable par commune. Témoin figé sur Saint-Denis 97411 (commune à risques, déterministe vérifié) ;
     # une republication BRGM change le compte/empreinte → « la donnée amont a changé ».
+    # S4.2 — chacune sondée sur DEUX chef-lieux (Saint-Denis 97411 + Saint-Pierre 97410) : empreinte
+    # combinée, alerte si l'un des deux change. Appels toujours légers (page_size=1) et espacés.
     {"name": "Géorisques — cavités souterraines", "methode": "temoin",
-     "url": "https://www.georisques.gouv.fr/api/v1/cavites?code_insee=97411&page=1&page_size=1", "selecteur": "results"},
+     "url": "https://www.georisques.gouv.fr/api/v1/cavites?code_insee=97411&page=1&page_size=1",
+     "url2": "https://www.georisques.gouv.fr/api/v1/cavites?code_insee=97410&page=1&page_size=1", "selecteur": "results"},
     {"name": "Géorisques — mouvements de terrain", "methode": "temoin",
-     "url": "https://www.georisques.gouv.fr/api/v1/mvt?code_insee=97411&page=1&page_size=1", "selecteur": "results"},
+     "url": "https://www.georisques.gouv.fr/api/v1/mvt?code_insee=97411&page=1&page_size=1",
+     "url2": "https://www.georisques.gouv.fr/api/v1/mvt?code_insee=97410&page=1&page_size=1", "selecteur": "results"},
     # ssp : la réponse groupe casias/instructions/conclusions (pas de compte unique) → empreinte de la
     # réponse ENTIÈRE (déterministe vérifié, aucun horodatage volatil au sommet).
     {"name": "Géorisques — sites et sols pollués", "methode": "temoin",
-     "url": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97411&page=1&page_size=200", "selecteur": None},
+     "url": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97411&page=1&page_size=200",
+     "url2": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97410&page=1&page_size=200", "selecteur": None},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
@@ -540,13 +568,15 @@ def ensemencer(db) -> int:
             continue
         existe = db.execute(text("SELECT 1 FROM source_veille WHERE source_id = :s"), {"s": sid}).scalar()
         if existe:
-            db.execute(text("UPDATE source_veille SET url_version = :u, methode = :m, selecteur = :sel,"
-                            " updated_at = now() WHERE source_id = :s"),
-                       {"u": e["url"], "m": e["methode"], "sel": e.get("selecteur"), "s": sid})
+            db.execute(text("UPDATE source_veille SET url_version = :u, url_temoin_2 = :u2, methode = :m,"
+                            " selecteur = :sel, updated_at = now() WHERE source_id = :s"),
+                       {"u": e["url"], "u2": e.get("url2"), "m": e["methode"],
+                        "sel": e.get("selecteur"), "s": sid})
         else:
-            db.execute(text("INSERT INTO source_veille (source_id, url_version, methode, selecteur,"
-                            " cadence_heures, actif) VALUES (:s, :u, :m, :sel, 24, true)"),
-                       {"s": sid, "u": e["url"], "m": e["methode"], "sel": e.get("selecteur")})
+            db.execute(text("INSERT INTO source_veille (source_id, url_version, url_temoin_2, methode, selecteur,"
+                            " cadence_heures, actif) VALUES (:s, :u, :u2, :m, :sel, 24, true)"),
+                       {"s": sid, "u": e["url"], "u2": e.get("url2"), "m": e["methode"],
+                        "sel": e.get("selecteur")})
             crees += 1
     return crees
 
@@ -662,10 +692,37 @@ def _emettre_digest(db, neuf: list[dict], echec: list[dict]) -> bool:
     # clé de dédup = l'ensemble ANNONCÉ (sids neufs + sids en échec) → stable, un même passage ne double pas.
     sig = "n:" + ",".join(str(d["row"]["source_id"]) + ":" + str(d["sonde"].vu) for d in neuf) \
         + "|e:" + ",".join(str(d["row"]["source_id"]) for d in echec)
-    return bool(creer_notification(
+    cree = bool(creer_notification(
         db, kind="systeme", compte_id=None, source="Veille sources",
         titre=titre, detail="\n".join(lignes), lien="/sources",
         dedup="sentinelle-digest:" + sig, permanent=True))
+    # SUITE-1 S4.1 — alerte mail OPTIONNELLE, seulement pour les sources dont la veille porte le drapeau
+    # `mail_alerte` (défaut off). Une seule notif in-app agrégée (ci-dessus) ; le mail ne part que si la
+    # notif est neuve (pas de rejeu) ET qu'au moins une source annoncée est abonnée au mail.
+    if cree:
+        _alerter_mail(neuf)
+    return cree
+
+
+def _alerter_mail(neuf: list[dict]) -> None:
+    """S4.1 — envoie UN mail (façade `mail.py` unique) listant les sources abonnées (`mail_alerte`)
+    dont l'amont vient de changer. Non bloquant ; silencieux si aucune source abonnée ou pas de
+    destinataire configuré (l'alerte in-app reste, elle, toujours déposée)."""
+    abonnees = [d for d in neuf if d["row"].get("mail_alerte")]
+    if not abonnees:
+        return
+    from .config import get_settings
+    from .mail import send_email_async
+    dest = get_settings().admin_email or get_settings().contact_email
+    if not dest:
+        return
+    corps = ("La veille des sources a détecté une nouvelle version amont sur des sources que vous "
+             "suivez par mail :\n\n"
+             + "\n".join(f"• {d['row']['source_nom']} — {d['sonde'].message or 'nouvelle version'}"
+                         for d in abonnees)
+             + "\n\nRien n'est ingéré automatiquement : ouvrez la page Données › Catalogue et cliquez "
+               "« Injecter » sur la source voulue.")
+    send_email_async(dest, "[LABUSE] veille sources — nouvelle version amont", corps)
 
 
 # ─────────────────────────────── Y5.2 · l'inventaire RÉGÉNÉRÉ depuis le catalogue ───────────────────────────────

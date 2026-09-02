@@ -34,6 +34,7 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .. import runs
 from ..connectors.recherche_entreprises import normalize_denomination, parse_result
 from . import score_v_constants as C
 
@@ -596,10 +597,12 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
 
 
 def snapshot_scores(session: Session, label: str, notes: str,
-                    brulante_threshold: int, run_label: str = C.Q_A_RUN_LABEL) -> int:
+                    brulante_threshold: int, run_label: str | None = None) -> int:
     """GEL d'un état (M1 lot 4) : statuts matrice + V + brûlantes + veille_succession, figés
     sous un label. Base de la validation forward (RR prospectif au millésime DVF 2026).
     N'écrase JAMAIS un label existant (erreur si présent)."""
+    if run_label is None:
+        run_label = runs.current()
     exists = session.execute(text("SELECT id FROM score_snapshots WHERE label = :l"),
                              {"l": label}).scalar()
     if exists:

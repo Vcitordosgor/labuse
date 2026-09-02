@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .. import runs
 from ..scoring.p_v2 import MODEL_FREEZE, MODEL_VERSION
 from ..scoring.p_v2.libelles_client import enrichir_contributions
 from ..verdict_servi import COPRO_MOTIF as _COPRO_MOTIF   # M89 — motif copro (libellé unique)
@@ -60,14 +61,13 @@ def _served_run(db: Session) -> dict:
     (`app._score_v2_run_id`) et le scoreur d'adresse. Plus jamais « le dernier par
     computed_at » : un run CANDIDAT calculé après le servi ne doit JAMAIS fuir dans
     le produit. Label absent → 503 explicite (jamais un repli silencieux)."""
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
-
+    run = runs.current()
     row = db.execute(text(
         "SELECT run_id, model_version, model_sha256, params, computed_at, snapshot_label "
         "FROM p_score_v2_runs WHERE run_id = :r"),
-        {"r": Q_A_RUN_LABEL}).mappings().one_or_none()
+        {"r": run}).mappings().one_or_none()
     if row is None:
-        raise HTTPException(503, f"run servi « {Q_A_RUN_LABEL} » absent de p_score_v2_runs — "
+        raise HTTPException(503, f"run servi « {run} » absent de p_score_v2_runs — "
                                  "lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
     return dict(row)
 

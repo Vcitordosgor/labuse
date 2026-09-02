@@ -19,6 +19,8 @@ import httpx
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .. import runs  # S3 : run servi relu à la requête
+
 log = logging.getLogger("labuse.fraicheur")
 
 #: tables que la chaîne de fraîcheur n'a PAS LE DROIT de toucher (garde-fou testé statiquement)
@@ -442,8 +444,7 @@ def compteur_reveil_dpe(session: Session) -> dict:
 
 
 def _run_servi() -> str:
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
-    return Q_A_RUN_LABEL
+    return runs.current()
 
 
 def run_derives(session: Session, *, hebdo: bool = False, commit: bool = True, log_fn=print) -> dict:

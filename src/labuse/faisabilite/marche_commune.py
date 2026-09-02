@@ -22,7 +22,8 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import DPE_DOM_INTERDICTION_LOCATION, Q_A_RUN_LABEL
+from .. import runs
+from ..scoring.score_v_constants import DPE_DOM_INTERDICTION_LOCATION
 from ..verdict_servi import TIERS_SERVABLES
 
 #: seuils d'honnêteté (arbitrage Vic 08/08). Sous le seuil : ligne « non calculable », jamais un
@@ -264,7 +265,7 @@ def ligne7_gisement(db: Session, commune: str) -> dict:
         JOIN parcels p ON p.id = r.parcel_id AND p.commune = :c
         JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
         WHERE s.tier = ANY(:tiers) AND r.sdp_residuelle_m2 > 0"""),
-        {"c": commune, "run": Q_A_RUN_LABEL, "tiers": list(TIERS_SERVABLES)}).mappings().first()
+        {"c": commune, "run": runs.current(), "tiers": list(TIERS_SERVABLES)}).mappings().first()
     if not r or not r["sdp"]:
         return _ligne("gisement_constructible", "OFFRE", valeurs={"sdp_residuelle_m2": 0, "parcelles": 0},
                       source="LABUSE — SDP résiduelle, tiers servables", date_amont=None,
@@ -273,8 +274,8 @@ def ligne7_gisement(db: Session, commune: str) -> dict:
     return _ligne("gisement_constructible", "OFFRE",
                   valeurs={"sdp_residuelle_m2": int(r["sdp"]), "parcelles": r["parcelles"]},
                   source="LABUSE — SDP résiduelle, tiers servables",
-                  date_amont=f"run {Q_A_RUN_LABEL} · {r['maj']}", fiabilite="bonne",
-                  etiquette=f"Sourcé LABUSE · run {Q_A_RUN_LABEL}")
+                  date_amont=f"run {runs.current()} · {r['maj']}", fiabilite="bonne",
+                  etiquette=f"Sourcé LABUSE · run {runs.current()}")
 
 
 def ligne8_pression_dpe(db: Session, commune: str) -> dict:

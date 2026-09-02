@@ -10,6 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..config import load_yaml_config
+from .. import runs  # S3 : run servi relu à la requête
 
 
 def compute_matrice(session: Session, run_label: str, commune: str) -> dict:
@@ -269,9 +270,8 @@ def apply_convention(session: Session, run_label: str | None = None) -> dict:
     proche de la retraite), commune différente. NB : une ancre sur procédure collective a une durée
     de vie (cf. BACKLOG) — à re-valider au prochain rejeu."""
     from ..api.tiles import build_mvt_table
-    from .score_v_constants import Q_A_RUN_LABEL
 
-    run_label = run_label or Q_A_RUN_LABEL   # ANO-1 : défaut = run SERVI (source unique), jamais « q_v2 » gelé
+    run_label = run_label or runs.current()   # ANO-1 : défaut = run SERVI (source unique), jamais « q_v2 » gelé
     CANARI_IDU = "97414000CV0907"            # M81 — canari « chaude par événement BODACC rouge »
 
     cfg = load_yaml_config("scoring_matrice")
@@ -315,9 +315,7 @@ def build_entonnoir(session: Session, run_label: str | None = None) -> int:
     """Matérialise la décomposition des écartées PAR MOTIF (île + par commune) — le popover
     entonnoir la sert instantanément. Une parcelle peut cumuler des motifs (affiché tel quel).
     À reconstruire après chaque matrice (matrice-apply le fait)."""
-    from .score_v_constants import Q_A_RUN_LABEL
-
-    run_label = run_label or Q_A_RUN_LABEL   # ANO-1 : défaut = run SERVI, jamais « q_v2 » gelé
+    run_label = run_label or runs.current()   # ANO-1 : défaut = run SERVI, jamais « q_v2 » gelé
     session.execute(text("""
         CREATE TABLE IF NOT EXISTS entonnoir_motifs (
           run_label text, commune text, ord int, motif text, n bigint,

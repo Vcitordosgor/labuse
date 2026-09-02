@@ -663,9 +663,10 @@ def _runs_a_garder(session) -> set[str]:
     """RÈGLE DE RÉTENTION M80 : garder le SERVI + le PRÉCÉDENT (les deux points de vérité versionnés,
     served_run.txt + run_precedent.txt) + TOUT run encore RÉFÉRENCÉ (lignée, exceptions, démo). Un run
     référencé n'est jamais purgé."""
+    from . import runs
     from .scoring.lignee_tete import CHAINE_GESTES
-    from .scoring.score_v_constants import Q_A_RUN_LABEL, RUN_PRECEDENT
-    keep = {Q_A_RUN_LABEL, RUN_PRECEDENT, "q_v2_demo"}          # servi + précédent + démo vivante
+    from .scoring.score_v_constants import RUN_PRECEDENT
+    keep = {runs.current(), RUN_PRECEDENT, "q_v2_demo"}         # servi + précédent + démo vivante
     for a, b, *_ in CHAINE_GESTES:                              # lignée (lignee_tete lit leur donnée)
         keep.update({a, b})
     keep.update(r[0] for r in session.execute(                 # exceptions de service encore posées
@@ -3074,6 +3075,53 @@ def compte_admin_cmd(email: str) -> None:
     typer.echo(f"admin créé (utilisateur #{uid}) — testez le login sur /login AVANT toute bascule")
 
 
+@app.command("admin-list")
+def admin_list_cmd() -> None:
+    """SUITE-1 · S8 — liste les comptes admin (email · utilisateur#id · compte#id · statut · créé le).
+    Lecture seule, pour l'exploitation en production (déploiement)."""
+    from .comptes import lister_admins
+
+    with session_scope() as s:
+        admins = lister_admins(s)
+    if not admins:
+        typer.echo("aucun compte admin.")
+        return
+    typer.echo(f"{len(admins)} compte(s) admin :")
+    for a in admins:
+        cree = (a["created_at"] or "")[:10]
+        typer.echo(f"  {a['email']:<40} utilisateur#{a['utilisateur_id']} · compte#{a['compte_id']} "
+                   f"· {a['statut']:<9} · créé le {cree}")
+
+
+@app.command("admin-set")
+def admin_set_cmd(
+    email: str,
+    on: bool = typer.Option(False, "--on", help="Promeut l'utilisateur au rôle admin"),
+    off: bool = typer.Option(False, "--off", help="Rétrograde l'utilisateur (rôle titulaire)"),
+    oui: bool = typer.Option(False, "--oui", help="Ne pas demander de confirmation interactive"),
+) -> None:
+    """SUITE-1 · S8 — promeut (--on) ou rétrograde (--off) un utilisateur EXISTANT, journalisé.
+    Confirmation demandée (sauf --oui). Idempotent : si le rôle est déjà celui demandé, ne fait rien."""
+    from .comptes import definir_role_admin
+
+    if on == off:
+        typer.echo("choisir exactement --on OU --off", err=True); raise typer.Exit(2)
+    action = "PROMOUVOIR admin" if on else "RÉTROGRADER (titulaire)"
+    if not oui:
+        rep = input(f"{action} « {email} » ? [oui/non] ").strip().lower()
+        if rep not in ("oui", "o", "yes", "y"):
+            typer.echo("annulé."); raise typer.Exit(1)
+    with session_scope() as s:
+        try:
+            r = definir_role_admin(s, email, admin=on)
+        except ValueError as exc:
+            typer.echo(str(exc), err=True); raise typer.Exit(1)
+    if not r["change"]:
+        typer.echo(f"aucun changement — « {r['email']} » est déjà au rôle « {r['role']} ».")
+    else:
+        typer.echo(f"« {r['email']} » → rôle « {r['role']} » (utilisateur#{r['utilisateur_id']}, journalisé).")
+
+
 @app.command("creer-admin")
 def creer_admin_cmd(
     email: str,
@@ -3376,13 +3424,13 @@ def score_e_cmd(
 ) -> None:
     """SCORE É V2 (O0) : marge estimée (€) = charge foncière supportable (prix de sortie NEUF) − prix probable.
     Table additive score_e (Estimé partout). Lecture seule des sources ; ne touche jamais les runs servis."""
-    from .ingestion import score_e, dvf_prix_neuf
-    from .scoring.score_v_constants import Q_A_RUN_LABEL  # M44 Lot 0 : point de vérité (plus de q_v7 en dur)
+    from . import runs
+    from .ingestion import score_e, dvf_prix_neuf  # M44 Lot 0 : point de vérité (plus de q_v7 en dur)
 
     with session_scope() as s:
         if prix_neuf:
             dvf_prix_neuf.build_prix_neuf(s, log=typer.echo)
-        r = score_e.build_score_e(s, run=run or Q_A_RUN_LABEL, log=typer.echo)
+        r = score_e.build_score_e(s, run=run or runs.current(), log=typer.echo)
         typer.echo(f"✓ score_e : {r['total']} non-écartées, {r['estimables']} marge estimable")
 
 

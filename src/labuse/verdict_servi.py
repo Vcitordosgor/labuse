@@ -22,7 +22,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .scoring.score_v_constants import Q_A_RUN_LABEL
+from . import runs
 
 #: tiers actifs (servables) — même liste que le front (LEGEND_V2_ORDER).
 TIERS_SERVABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
@@ -58,9 +58,11 @@ RANG_PERIMETRE = f"copropriétés hors univers de classement — {_COPRO_RAISON}
 COPRO_MOTIF = f"Copropriété — hors univers de classement ({_COPRO_RAISON})"
 
 
-def rang_total(db: Session, run: str = Q_A_RUN_LABEL) -> int | None:
+def rang_total(db: Session, run: str | None = None) -> int | None:
     """Dénominateur du rang servi : nombre de parcelles CLASSÉES (hors copropriétés) du run.
     Un rang ne dit rien sans lui (« rang 57 643 / 428 239 »). Lecture seule, niveau run."""
+    if run is None:
+        run = runs.current()
     return db.execute(text(
         "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r AND rang IS NOT NULL"),
         {"r": run}).scalar()
@@ -166,8 +168,10 @@ def _traduire(idu: str, row, run: str) -> dict:
     }
 
 
-def verdict_servi_batch(db: Session, idus: list[str], run: str = Q_A_RUN_LABEL) -> dict[str, dict]:
+def verdict_servi_batch(db: Session, idus: list[str], run: str | None = None) -> dict[str, dict]:
     """{idu → verdict} en UNE requête. IDU absent du run → NON_EVALUEE (présent dans le retour)."""
+    if run is None:
+        run = runs.current()
     out: dict[str, dict] = {i: dict(NON_EVALUEE) for i in idus}
     if not idus:
         return out
@@ -176,7 +180,7 @@ def verdict_servi_batch(db: Session, idus: list[str], run: str = Q_A_RUN_LABEL) 
     return out
 
 
-def verdict_servi(db: Session, idu: str, run: str = Q_A_RUN_LABEL) -> dict:
+def verdict_servi(db: Session, idu: str, run: str | None = None) -> dict:
     """Verdict traduit d'UNE parcelle (fiche). Toujours un dict — jamais None, jamais legacy."""
     return verdict_servi_batch(db, [idu], run)[idu]
 

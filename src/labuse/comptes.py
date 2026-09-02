@@ -503,6 +503,43 @@ def creer_admin(db: Session, email: str, password: str) -> int:
     return int(uid)
 
 
+def lister_admins(db: Session) -> list[dict]:
+    """SUITE-1 · S8 — les comptes admin pour l'exploitation (déploiement). Lecture seule.
+    Renvoie [{utilisateur_id, compte_id, email, statut, created_at}] triés par ancienneté."""
+    ensure_tables(db)
+    rows = db.execute(text(
+        "SELECT u.id, u.compte_id, u.email, u.statut, u.created_at"
+        " FROM utilisateurs u WHERE u.role = 'admin' ORDER BY u.created_at, u.id")).mappings().all()
+    return [{"utilisateur_id": int(r["id"]), "compte_id": int(r["compte_id"]), "email": r["email"],
+             "statut": r["statut"],
+             "created_at": r["created_at"].isoformat() if r["created_at"] else None} for r in rows]
+
+
+def definir_role_admin(db: Session, email: str, admin: bool) -> dict:
+    """SUITE-1 · S8 — promeut (`admin=True`) ou rétrograde (`admin=False`) un utilisateur EXISTANT,
+    journalisé (evenements_compte). Rétrograder rend le rôle 'titulaire' (défaut). Idempotent :
+    si l'état demandé est déjà en place, `change=False` et rien n'est écrit. Lève ValueError si
+    l'email est inconnu. La confirmation interactive est du ressort de l'appelant (CLI)."""
+    ensure_tables(db)
+    email = _norm_email(email)
+    u = db.execute(text("SELECT id, compte_id, role FROM utilisateurs WHERE email = :e"),
+                   {"e": email}).mappings().first()
+    if not u:
+        raise ValueError(f"aucun utilisateur avec l'email « {email} »")
+    uid, cid = int(u["id"]), int(u["compte_id"])
+    cible = "admin" if admin else "titulaire"
+    deja = (u["role"] == "admin") if admin else (u["role"] != "admin")
+    if deja:
+        return {"utilisateur_id": uid, "compte_id": cid, "email": email,
+                "role": u["role"], "change": False}
+    db.execute(text("UPDATE utilisateurs SET role = :r, updated_at = now() WHERE id = :i"),
+               {"r": cible, "i": uid})
+    audit(db, "admin_promu" if admin else "admin_retrograde", cid, uid,
+          f"role {u['role']} → {cible} (CLI admin-set)")
+    db.commit()
+    return {"utilisateur_id": uid, "compte_id": cid, "email": email, "role": cible, "change": True}
+
+
 def creer_admin_invitation(db: Session, email: str, nom: str | None = None) -> dict:
     """VPS · AC-020 — admin NOMINATIF par invitation (le mot de passe se pose via le lien
     /invitation, jamais en argv ni au clavier de l'opérateur). Idempotent :

@@ -67,7 +67,18 @@ if _override and _override != _SERVED_RUN:
         "LABUSE_SERVED_RUN=%r surcharge le run servi VERSIONNÉ (%r, config/served_run.txt) — "
         "override de DÉVELOPPEMENT uniquement, jamais requis en prod pour servir le bon run.",
         _override, _SERVED_RUN)
-Q_A_RUN_LABEL = _override or _SERVED_RUN
+
+# SUITE-1 · S3 — `Q_A_RUN_LABEL` n'est PLUS une constante d'import (une bascule ne prenait effet
+# qu'au redémarrage). Le run servi se lit désormais À LA REQUÊTE via `labuse.runs.current()`. Les
+# lecteurs doivent appeler `runs.current()` ; ce `__getattr__` garde l'ancien nom fonctionnel pour
+# tout accès par ATTRIBUT (`score_v_constants.Q_A_RUN_LABEL`) — dynamique, jamais figé. Un
+# `from … import Q_A_RUN_LABEL` fige encore au moment de l'import : ces sites ont été convertis
+# (grep exhaustif au compte-rendu SUITE-1/S3).
+def __getattr__(name: str):
+    if name == "Q_A_RUN_LABEL":
+        from ..runs import current
+        return current()
+    raise AttributeError(f"module {__name__!r} n'a pas d'attribut {name!r}")
 
 
 def _run_precedent_versionne() -> str:

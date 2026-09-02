@@ -229,6 +229,64 @@ def _raise(msg: str):
     raise ValueError(msg)
 
 
+def _proposer_rattachement(db: Session, bien_id: int) -> None:
+    """RADAR S5 — à la validation, calcule une PROPOSITION de rattachement (best-effort) et l'écrit
+    comme rattachement_etat + rattachement_pistes. DOCTRINE : jamais d'idu automatique — un rattachement
+    ne s'engage que par un clic HUMAIN (Instruire → « C'est cette parcelle »). Cette proposition sert
+    seulement à trier la file (« à rattacher d'abord ») et à montrer les candidates. Best-effort :
+    tout accident (géocodage, DB) laisse l'état inchangé plutôt que de casser la validation.
+
+    Position : on prend les coordonnées déjà portées par le bien (géoloc du portail, html_next) ; sinon,
+    SI le fait porte une adresse exploitable, on la géocode (BAN). Sans coordonnée dérivable, la cascade
+    rend honnêtement 'non_rattachee' (commune seule) — on n'invente aucune parcelle."""
+    from . import rattachement_html
+    rec = db.execute(text(
+        "SELECT b.bien_id, b.commune, b.type_bien AS type, b.est_copro, b.lat, b.lng, "
+        "       f.surface_terrain, f.surface_hab, f.annee_construction "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE b.bien_id = :b"),
+        {"b": bien_id}).mappings().first()
+    if not rec:
+        return
+    rec = dict(rec)
+    if rec.get("lng") is None or rec.get("lat") is None:
+        # pas de géoloc portail : on tente l'adresse si le fait en porte une (aucune ne l'est aujourd'hui,
+        # mais le point reste ouvert). Sans coordonnée, rattacher() rend 'non_rattachee' proprement.
+        adresse = _adresse_du_bien(db, bien_id)
+        if adresse:
+            try:
+                from ..geocode import geocode_ban
+                g = geocode_ban(adresse)
+                rec["lng"], rec["lat"] = g["lon"], g["lat"]
+            except Exception:  # noqa: BLE001 — BAN KO / adresse introuvable : on n'invente pas de position
+                pass
+    ratt = rattachement_html.rattacher(db, rec)
+    # on n'écrit QUE l'état + les pistes (candidates) : jamais l'idu (le lien reste un clic humain).
+    import json as _json
+    db.execute(text(
+        "UPDATE pige_biens SET rattachement_etat = :e, rattachement_pistes = CAST(:p AS jsonb) "
+        "WHERE bien_id = :b AND rattachement_humain = false AND idu IS NULL"),
+        {"e": ratt.get("etat", "non_rattachee"),
+         "p": _json.dumps(ratt.get("pistes") or []), "b": bien_id})
+
+
+def _adresse_du_bien(db: Session, bien_id: int) -> str | None:
+    """RADAR S5 — cherche une adresse exploitable dans les faits (source_brute JSON). Retourne None si
+    aucune : on ne devine pas d'adresse à partir d'une commune seule (ce serait un faux point)."""
+    import json as _json
+    sb = db.execute(text("SELECT source_brute FROM pige_faits WHERE bien_id = :b"), {"b": bien_id}).scalar()
+    if not sb:
+        return None
+    try:
+        d = sb if isinstance(sb, dict) else _json.loads(sb)
+    except (TypeError, ValueError):
+        return None
+    for k in ("adresse", "address", "street_address", "rue", "localisation"):
+        v = d.get(k) if isinstance(d, dict) else None
+        if isinstance(v, str) and len(v.strip()) >= 5:
+            return v.strip()
+    return None
+
+
 def valider(db: Session, bien_id: int, faits_corriges: dict, *, valide_par: int | None = None) -> dict:
     """Clic « Valider » de Vic : applique les corrections (VALIDÉES, RD-502), promeut le brouillon
     (valide_at), statut active, journalise `pige.nouvelle`. Un prix plus bas → `pige.baisse_prix`."""
@@ -255,6 +313,12 @@ def valider(db: Session, bien_id: int, faits_corriges: dict, *, valide_par: int 
                         detail=f"{ancien} € → {nouveau} €", dedup=f"pige:baisse:{bien_id}:{nouveau}")
     db.execute(text("UPDATE pige_biens SET statut = 'active', date_derniere_confirmation = now() "
                     "WHERE bien_id = :b"), {"b": bien_id})
+    # RADAR S5 — proposition de rattachement best-effort (JAMAIS d'idu auto : le lien reste un clic humain).
+    # Enveloppée : un accident (géocodage, DB) ne casse jamais la validation d'un bien.
+    try:
+        _proposer_rattachement(db, bien_id)
+    except Exception:  # noqa: BLE001
+        pass
     commune = db.execute(text("SELECT commune FROM pige_biens WHERE bien_id = :b"),
                          {"b": bien_id}).scalar()
     journaliser(db, EV_NOUVELLE, f"Nouveau bien Radar — {commune}",

@@ -35,7 +35,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL  # M44 Lot 0 : point de vérité (served_run.txt)
+from .. import runs  # M44 Lot 0 : point de vérité (served_run.txt), relu à la requête (S3)
 
 # Hypothèses DÉRIVÉES de la source unique (`hypotheses_faisabilite` YAML — mandat hypothèses
 # bilan, décision Vic 28/07/2026) : plus de constante de coût autonome ici. Numériquement
@@ -160,10 +160,12 @@ def _row(idu, surface_m2, sdp, terrain, prix_vente, niveau_prix) -> dict:
             "niveau": niveau_prix, "hv": HYP_VERSION, "court": court, "detail": detail}
 
 
-def build_score_e(session: Session, *, run: str = Q_A_RUN_LABEL,
+def build_score_e(session: Session, *, run: str | None = None,
                   commit: bool = True, log=lambda *_: None) -> dict:
     """Construit/rafraîchit `score_e` (rebuild complet idempotent). Lecture seule des sources.
     `commit=False` pour les tests transactionnels. Renvoie {'total', 'estimables'}."""
+    if run is None:
+        run = runs.current()
     from .dvf_prix_neuf import SOCIAL_DOMINANT_INSEE, ILE_VALIDEES_INSEE
     # M-O P2-59 — rebuild NON BLOQUANT (table lue en direct par division_or + scoreur d'adresse ;
     # ~13 s de build). SELECT + INSERT hors-ligne dans une shadow, swap ~ms (cf. _rebuild).

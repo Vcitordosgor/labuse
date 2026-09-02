@@ -30,7 +30,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..config import load_yaml_config
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs  # S3 : run servi relu à la requête
 
 PVGIS_SOURCE = "pvgis_v5_3"
 PVGIS_URL = "https://re.jrc.ec.europa.eu/api/{v}/PVcalc"
@@ -297,7 +297,7 @@ def compute_flag_abf(session: Session) -> int:
         )
         UPDATE parcel_solar ps SET flag_abf = abf.in_abf, updated_at = now()
         FROM abf WHERE abf.idu = ps.idu
-    """), {"run": Q_A_RUN_LABEL}).rowcount
+    """), {"run": runs.current()}).rowcount
     session.commit()
     return n
 

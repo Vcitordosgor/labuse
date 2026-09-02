@@ -89,13 +89,14 @@ def _run_complet(db: Session, run: str) -> tuple[bool, str]:
 def runs_termines(db: Session) -> list[dict]:
     """F2.3 — la liste des runs terminés, avec pour chacun l'ÉCART au run courant (tiers qui changent,
     répartition Priorité/À suivre avant/après). Le run servi est marqué. Lecture seule."""
+    from . import runs
     from .golden_ops import comparer
-    from .scoring.score_v_constants import Q_A_RUN_LABEL
     labels = [r[0] for r in db.execute(text(
         "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 12")).all()]
     out = []
+    servi_run = runs.current()
     for lab in labels:
-        est_servi = (lab == Q_A_RUN_LABEL)
+        est_servi = (lab == servi_run)
         ecart = None
         if not est_servi:
             c = comparer(lab)
@@ -104,7 +105,7 @@ def runs_termines(db: Session) -> list[dict]:
                     "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b "
                     " ON a.parcelle_id = b.parcelle_id "
                     "WHERE a.run_id = :cand AND b.run_id = :servi AND a.tier IS DISTINCT FROM b.tier"),
-                    {"cand": lab, "servi": Q_A_RUN_LABEL}).scalar() or 0
+                    {"cand": lab, "servi": servi_run}).scalar() or 0
                 ecart = {"tiers_changes": int(n_change),
                          "promues_candidat": c["promues_candidat"], "promues_servi": c["promues_servi"],
                          "derive_promues_pct": c["derive_promues_pct"]}
@@ -136,10 +137,10 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     """LA BASCULE (F2.3). Refuse un run incomplet ; sinon promeut, fait suivre le précédent, purge les
     caches, journalise, et lance la garde de cohérence immédiatement (F4.3). `par` = qui (traçabilité).
     Le retour arrière est cette même fonction appelée avec le run précédent."""
+    from . import runs
     from .golden_ops import promote
-    from .scoring.score_v_constants import Q_A_RUN_LABEL
 
-    ancien = Q_A_RUN_LABEL
+    ancien = runs.current()
     if nouveau_run == ancien:
         return {"ok": False, "motif": f"« {nouveau_run} » est déjà le run servi — rien à basculer."}
     complet, motif = _run_complet(db, nouveau_run)

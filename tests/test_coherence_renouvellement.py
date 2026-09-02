@@ -36,8 +36,8 @@ class _FakeSession:
 
 @pytest.fixture(autouse=True)
 def _fixe_run_servi(monkeypatch):
-    # Q_A_RUN_LABEL est ré-importé dans la garde → on fige la valeur servie au niveau du module source.
-    monkeypatch.setattr("labuse.scoring.score_v_constants.Q_A_RUN_LABEL", _SERVI)
+    # SUITE-1 S3 — la garde lit le run servi via runs.current() (plus de constante d'import) : on l'injecte là.
+    monkeypatch.setattr("labuse.runs.current", lambda: _SERVI)
 
 
 def test_statut_ok_quand_table_sur_le_run_servi():

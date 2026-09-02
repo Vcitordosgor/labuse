@@ -10,7 +10,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .scoring.score_v_constants import Q_A_RUN_LABEL as _SERVED_RUN
+from . import runs
 
 # Parcelles utiles en démo (IDU stables Saint-Paul) — rôle + ce qu'elles montrent + vigilance.
 # États VÉRIFIÉS après `rebuild-demo --commune 97415` (peuvent évoluer si les données changent).
@@ -64,7 +64,7 @@ def demo_overview(session: Session, commune: str = "Saint-Paul") -> list[dict]:
             "LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run "
             "LEFT JOIN LATERAL (SELECT opportunity_score FROM parcel_evaluations e "
             "  WHERE e.parcel_id = p.id ORDER BY evaluated_at DESC LIMIT 1) e ON true "
-            "WHERE p.idu = :idu"), {"idu": spec["idu"], "run": _SERVED_RUN}).mappings().first()
+            "WHERE p.idu = :idu"), {"idu": spec["idu"], "run": runs.current()}).mappings().first()
         status = row["status"] if row else None
         out.append({
             "ordre": i, "idu": spec["idu"], "role": spec["role"], "montre": spec["montre"],
@@ -115,7 +115,7 @@ def seed_demo_pipeline(session: Session, commune: str = "Saint-Paul") -> int:
                WHERE p.commune = :c AND p.id <> ALL(:got)
                ORDER BY (s.tier IN ('brulante','chaude')) DESC NULLS LAST, p.idu LIMIT :n"""),
             {"c": commune, "got": list(pids) or [0], "n": len(_SEED_PIPELINE) - len(pids),
-             "run": _SERVED_RUN}).scalars().all()
+             "run": runs.current()}).scalars().all()
         pids = list(pids) + list(extra)
     n = 0
     for pid, spec in zip(pids, _SEED_PIPELINE):
@@ -164,7 +164,7 @@ def healthcheck(session: Session, commune: str = "Saint-Paul") -> dict:
 
     n_fp = scal("SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s "
                 "ON s.parcelle_id=p.idu AND s.run_id=:run "
-                "WHERE p.commune=:c AND s.tier LIKE 'declasse_%'", run=_SERVED_RUN) or 0
+                "WHERE p.commune=:c AND s.tier LIKE 'declasse_%'", run=runs.current()) or 0
     n_decl = scal("SELECT count(*) FROM cascade_results WHERE layer_name='declassement'") or 0
     chk("Déclassement appliqué", n_fp > 0 or n_decl > 0, f"{n_fp} déclassées · {n_decl} motifs cascade")
 
@@ -177,7 +177,7 @@ def healthcheck(session: Session, commune: str = "Saint-Paul") -> dict:
         SELECT count(*) FROM opp o WHERE o.a < 100
            OR EXISTS (SELECT 1 FROM spatial_layers s WHERE s.kind='osm_faux_positif' AND s.commune=:c
                       AND ST_Area(ST_Intersection(s.geom_2975,o.geom_2975))/NULLIF(o.a,0) >= 0.5)""",
-               run=_SERVED_RUN) if has_col else None
+               run=runs.current()) if has_col else None
     chk("Top 20 sans faux positif évident", bad == 0, f"{bad} faux positif(s) dans le top 20")
 
     crit_present = {k for (k,) in session.execute(text("SELECT DISTINCT kind FROM spatial_layers")).all()}

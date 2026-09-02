@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/events", tags=["events"])
 log = logging.getLogger("labuse.events")
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
+from .. import runs
 
 # M137-M — la BASCULE = « notre verdict qui change » = le TIER V2 SERVI (parcel_p_score_v2.tier),
 # plus la matrice morte (matrice_statut/q_score, NULL depuis M129). Les tiers PRIORITAIRES sont ceux
@@ -406,10 +406,12 @@ def evaluer_suivis(db: Session) -> dict:
 
 # ───────────────────────── détection (le job cronable) ─────────────────────────
 
-def run_precedent_servi(db: Session, servi: str = RUN) -> str | None:
+def run_precedent_servi(db: Session, servi: str | None = None) -> str | None:
     """Fix veille-notifs #4 — le run de référence du REJEU vient de la TABLE DES RUNS (le dernier run
     calculé AVANT le servi), JAMAIS d'une constante (fini le q_v9_m81 codé en dur du rejeu). None si le
     servi est le seul run connu."""
+    if servi is None:
+        servi = runs.current()
     return db.execute(text(
         "SELECT run_id FROM p_score_v2_runs WHERE run_id <> :s ORDER BY computed_at DESC LIMIT 1"),
         {"s": servi}).scalar()
@@ -508,7 +510,6 @@ def traiter_reprises(db: Session) -> int:
     """M23-C — échéances de reprise atteintes : une entrée event_log kind='veille' avec la
     MENTION DE CE QUI A CHANGÉ depuis l'archivage (tier servi, nouveaux événements datés).
     Idempotent : traite_at marque la reprise consommée."""
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
     dus = db.execute(text(
         "SELECT id, compte_id, idu, mois, echeance, tier_archivage, event_date_archivage "
         "FROM veille_reprise WHERE traite_at IS NULL AND echeance <= CURRENT_DATE")).mappings().all()
@@ -517,7 +518,7 @@ def traiter_reprises(db: Session) -> int:
         cur = db.execute(text(
             "SELECT tier, event_date FROM parcel_p_score_v2 "
             "WHERE run_id = :run AND parcelle_id = :idu"),
-            {"run": Q_A_RUN_LABEL, "idu": r["idu"]}).mappings().first()
+            {"run": runs.current(), "idu": r["idu"]}).mappings().first()
         tier_now = cur["tier"] if cur else None
         ev_now = cur["event_date"] if cur else None
         changes = []
@@ -542,27 +543,6 @@ def traiter_reprises(db: Session) -> int:
         n += 1
     db.flush()
     return n
-
-
-def _parse_hash_filters(h: str) -> dict:
-    """OBSOLÈTE (CONNEXIONS-2 Lot 5, KO-7) — ancien parseur À 5 DIMENSIONS de la veille (sur-alertait :
-    les 30 autres dimensions du filtre étaient ignorées en silence). Remplacé par le moteur PARTAGÉ
-    `app.filtre_from_hash` + `app.parcelles_matchant_hash` (parité carte↔veille). Conservé (aucun
-    appelant) le temps d'un mandat d'hygiène — ne plus l'utiliser pour évaluer une veille.
-
-    Filtres d'une veille depuis son hash (#f=1&st=…&vm=1…) — même sérialisation que le front."""
-    from urllib.parse import parse_qs
-    q = parse_qs(h.lstrip("#"))
-    g = lambda k: q.get(k, [None])[0]  # noqa: E731
-    # M17-B : honorer AUSSI `tv` (tiers du front, filtersToHash) et `cs` (commune) — jusqu'ici la
-    # veille lisait `st`/rien pour la commune, donc sur-alertait sur ces deux dimensions (silencieux).
-    st = (g("st") or "").split(",") if g("st") else []
-    tv = (g("tv") or "").split(",") if g("tv") else []
-    return {"st": list(dict.fromkeys([*st, *tv])),
-            "cm": (g("cs") or "").split(",") if g("cs") else [],
-            "ev": g("ev") == "1", "q": int(g("q")) if g("q") else None,
-            "smin": int(g("smin")) if g("smin") else None, "smax": int(g("smax")) if g("smax") else None,
-            "sdp": int(g("sdp")) if g("sdp") else None, "fl": (g("fl") or "").split(",") if g("fl") else []}
 
 
 def _veilles_match(db: Session, run_to: str, demo: bool, rattrapage: bool = False) -> int:
@@ -636,14 +616,14 @@ def seed_demo(db: Session) -> dict:
         INSERT INTO parcel_p_score_v2 (run_id, tier, {_cols})
         SELECT 'q_v2_demo', 'chaude', {_cols} FROM parcel_p_score_v2
         WHERE run_id = :run AND tier = 'a_creuser' AND NOT copro
-        ORDER BY rang ASC LIMIT 5"""), {"run": RUN})
+        ORDER BY rang ASC LIMIT 5"""), {"run": runs.current()})
     # 3 DESCENTES : des chaude du run servi rétrogradées 'a_creuser' → bascule ▼
     db.execute(text(f"""
         INSERT INTO parcel_p_score_v2 (run_id, tier, {_cols})
         SELECT 'q_v2_demo', 'a_creuser', {_cols} FROM parcel_p_score_v2
         WHERE run_id = :run AND tier = 'chaude' AND NOT copro
-        ORDER BY rang DESC LIMIT 3"""), {"run": RUN})
-    out = detect_events(db, RUN, "q_v2_demo", demo=True)
+        ORDER BY rang DESC LIMIT 3"""), {"run": runs.current()})
+    out = detect_events(db, runs.current(), "q_v2_demo", demo=True)
     db.flush()
     return {"run_demo": "q_v2_demo", "events": out,
             "note": "Événements de DÉMONSTRATION (étiquetés). La bascule réelle = prochain run de scoring "
@@ -702,7 +682,7 @@ def list_events(request: Request, unread_only: bool = False,
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}{cf}
         ORDER BY {_seen('e')} ASC, e.ts DESC, e.id DESC LIMIT :lim OFFSET :off"""),
-        {"lim": limit, "off": max(0, offset), "run": RUN, "cid": cid, "market": mk}).mappings().all()
+        {"lim": limit, "off": max(0, offset), "run": runs.current(), "cid": cid, "market": mk}).mappings().all()
     unread = db.execute(text(
         f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}{cf}"),
         {"cid": cid, "market": mk}).scalar()
@@ -764,7 +744,9 @@ def mark_all_read(request: Request, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/detect")
-def api_detect(run_from: str = RUN, run_to: str = "q_v2_demo", db: Session = Depends(get_db)) -> dict:
+def api_detect(run_from: str | None = None, run_to: str = "q_v2_demo", db: Session = Depends(get_db)) -> dict:
+    if run_from is None:
+        run_from = runs.current()
     return detect_events(db, run_from, run_to, demo=run_to.endswith("_demo"))
 
 
@@ -788,7 +770,6 @@ def reprise_veille(idu: str, payload: dict, request: Request, db: Session = Depe
     """M23-C — remise en veille d'une parcelle ARCHIVÉE du pipeline : réalerte à 3/6/12/24
     mois. Snapshot de l'état SERVI (tier + dernier événement) au moment de l'archivage —
     l'échéance dira CE QUI A CHANGÉ. Circuit M17 (event_log kind='veille'), pas un second."""
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
     mois = int(payload.get("mois") or 0)
     if mois not in (3, 6, 12, 24):
         raise HTTPException(422, "mois ∈ {3, 6, 12, 24}")
@@ -802,7 +783,7 @@ def reprise_veille(idu: str, payload: dict, request: Request, db: Session = Depe
     compte_id = current_compte(request)
     cur = db.execute(text(
         "SELECT tier, event_date FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = :i"),
-        {"r": Q_A_RUN_LABEL, "i": idu}).mappings().first()
+        {"r": runs.current(), "i": idu}).mappings().first()
     row = db.execute(text(
         "INSERT INTO veille_reprise (compte_id, idu, mois, echeance, tier_archivage, event_date_archivage) "
         "VALUES (:c, :i, :m, CURRENT_DATE + make_interval(months => :m), :t, :e) "
@@ -1040,7 +1021,7 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
           AND e.envoi_statut IS DISTINCT FROM 'rattrapage'   -- M137-M : le rattrapage vit à la cloche, jamais au digest/mail
         ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
                  e.ts DESC NULLS LAST LIMIT 20"""),
-        {"run": RUN, "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()
+        {"run": runs.current(), "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()
     # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
     # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
     communes = _mes_communes(db, cid)
@@ -1063,7 +1044,7 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE s.run_id = :run AND s.tier IN ('brulante', 'chaude')
-        ORDER BY s.rang NULLS LAST LIMIT 5"""), {"run": RUN}).mappings().all()
+        ORDER BY s.rang NULLS LAST LIMIT 5"""), {"run": runs.current()}).mappings().all()
     return {"evenements": [dict(r) for r in events], "marche_resume": marche_resume,
             "top_chaudes": [dict(r) for r in top]}
 
