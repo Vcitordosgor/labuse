@@ -77,6 +77,11 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { e
   const [categorie, setCategorie] = useState('')
   const [depuis, setDepuis] = useState('')
   const [openSiren, setOpenSiren] = useState<string | null>(null)
+  // ADMIN-1 (AD3) — MODE STRICT : quand un propriétaire est choisi (Scan patrimoine embarqué + focusSiren),
+  // on ne montre QUE ses opérations — aucun filtre commune/catégorie, aucun total de l'île, pas de champ
+  // « se positionner ». L'exploration générale reste accessible via « Explorer toutes les opérations → ».
+  const [explorer, setExplorer] = useState(false)
+  const strict = !!(embedded && focusSiren) && !explorer
   // pont entrant : ouvrir la frise du SIREN ciblé. Embarqué → `focusSiren` (fusion) ; autonome → store (consommé).
   const effFocus = embedded ? (focusSiren ?? null) : storeFocus
   useEffect(() => {
@@ -84,8 +89,16 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { e
   }, [effFocus, embedded, setVeilleFocusSiren])
   // pont sortant : embarqué → bascule d'onglet ; autonome → ouvre le module Scan patrimoine pré-rempli.
   const voirPatrimoine = (siren: string) => { if (embedded && onVoirPatrimoine) onVoirPatrimoine(siren); else { setM02Prefill(siren); setModule('patrimoine') } }
-  const q = useQuery({ queryKey: ['veille-promoteurs', commune, categorie, depuis], queryFn: () => getVeillePromoteurs({ commune: commune || undefined, categorie: categorie || undefined, depuis: depuis || undefined, limit: 200 }) })
+  const q = useQuery({
+    queryKey: strict ? ['veille-promoteurs', 'siren', focusSiren] : ['veille-promoteurs', commune, categorie, depuis],
+    queryFn: () => getVeillePromoteurs(strict
+      ? { siren: focusSiren!, limit: 200 }
+      : { commune: commune || undefined, categorie: categorie || undefined, depuis: depuis || undefined, limit: 200 }),
+  })
   const d = q.data
+  // ADMIN-1 (AD3) — sous-titre du mode strict : période RÉELLE des permis (plus ancienne année vue) +
+  // millésime Sitadel. Aucun chiffre inventé : dérivé des opérations servies.
+  const anneeDepuis = d ? Math.min(...(d.operations.map((o) => (o.date_min ? new Date(o.date_min).getFullYear() : NaN)).filter((y) => !Number.isNaN(y)) as number[]), Infinity) : Infinity
   const sel = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt'
 
   // SECTEUR-2 (T2) — pousse les OPÉRATIONS localisées sur la carte (kind='operation', ambre / menthe si
@@ -109,33 +122,49 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { e
   return (
     <div data-veille-promoteurs className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
       <div>
-        <h2 className="font-display text-base font-bold text-txt-hi">Veille promoteurs</h2>
-        <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis d'un même propriétaire moral, sur des parcelles contiguës et une même période).{d?.millesime ? ` Données Sitadel au ${new Date(d.millesime).toLocaleDateString('fr-FR')}.` : ''}</p>
+        <h2 className="font-display text-base font-bold text-txt-hi">{strict ? 'Ce qu\'ils construisent' : 'Veille promoteurs'}</h2>
+        {strict
+          ? <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>
+          : <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis d'un même propriétaire moral, sur des parcelles contiguës et une même période).{d?.millesime ? ` Données Sitadel au ${new Date(d.millesime).toLocaleDateString('fr-FR')}.` : ''}</p>}
       </div>
 
-      {/* RETOURS-3 R4.2 — barre de recherche adresse/IDU en tête d'outil (composant commun) : se
-          positionner sur une parcelle ou une adresse (la carte vole au point choisi). */}
-      <AddressAutocomplete placeholder="Adresse, IDU… (se positionner sur la carte)"
-        className="h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
-        onSelect={(s2) => { if (s2.lon != null && s2.lat != null) setFlyTo({ center: [s2.lon, s2.lat], zoom: 16 }); if (s2.idu) select(s2.idu) }} />
-
-      <div className="flex flex-wrap gap-2">
-        <select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
-          <option value="">Toutes les communes</option>
-          {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <select data-vp-categorie value={categorie} onChange={(e) => setCategorie(e.target.value)} className={sel}>
-          <option value="">Toutes catégories</option>
-          {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
-        </select>
-        <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={sel} title="Déposées depuis…" />
-      </div>
+      {/* ADMIN-1 (AD3) — en mode STRICT : pas de « se positionner », pas de filtres, pas de total d'île.
+          L'exploration générale est à un clic (« Explorer toutes les opérations → »). */}
+      {!strict && (
+        <>
+          {/* RETOURS-3 R4.2 — barre de recherche adresse/IDU (se positionner sur la carte). */}
+          <AddressAutocomplete placeholder="Adresse, IDU… (se positionner sur la carte)"
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
+            onSelect={(s2) => { if (s2.lon != null && s2.lat != null) setFlyTo({ center: [s2.lon, s2.lat], zoom: 16 }); if (s2.idu) select(s2.idu) }} />
+          <div className="flex flex-wrap gap-2">
+            <select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
+              <option value="">Toutes les communes</option>
+              {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <select data-vp-categorie value={categorie} onChange={(e) => setCategorie(e.target.value)} className={sel}>
+              <option value="">Toutes catégories</option>
+              {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
+            </select>
+            <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={sel} title="Déposées depuis…" />
+          </div>
+        </>
+      )}
+      {/* mode STRICT actif → lien vers l'exploration générale ; mode exploration (depuis un proprio) → retour. */}
+      {embedded && focusSiren && (
+        strict
+          ? <button data-vp-explorer onClick={() => setExplorer(true)} className="w-fit text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">Explorer toutes les opérations de l'île →</button>
+          : <button data-vp-retour-proprio onClick={() => setExplorer(false)} className="w-fit text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">← revenir à ce propriétaire</button>
+      )}
 
       {q.isLoading && <Loading label="Regroupement des opérations…" className="mx-auto mt-4 text-xs" />}
       {d && (
         <>
-          <p className="text-[11px] text-txt-dim"><b className="text-txt-mut">{d.n_total.toLocaleString('fr-FR')}</b> opérations · <b className="text-txt-mut">{d.n_logements_total.toLocaleString('fr-FR')}</b> logements · {d.n_servi} affichées{d.tronquee ? ` (plafond ${d.plafond})` : ''}</p>
-          <p className="text-[10px] leading-snug text-txt-dim">{d.regle.phrase}.</p>
+          {strict
+            ? <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${new Date(d.millesime).toLocaleDateString('fr-FR')}` : ''}</span></p>
+            : <>
+                <p className="text-[11px] text-txt-dim"><b className="text-txt-mut">{d.n_total.toLocaleString('fr-FR')}</b> opérations · <b className="text-txt-mut">{d.n_logements_total.toLocaleString('fr-FR')}</b> logements · {d.n_servi} affichées{d.tronquee ? ` (plafond ${d.plafond})` : ''}</p>
+                <p className="text-[10px] leading-snug text-txt-dim">{d.regle.phrase}.</p>
+              </>}
           <div className="flex flex-col gap-1.5">
             {d.operations.length === 0 && <p className="text-[11.5px] text-txt-dim">Aucune opération pour ce filtre.</p>}
             {/* RETOURS-4 S5 — carte REMISE À PLAT : chaque valeur sur SA ligne, aucune ne se chevauche.

@@ -55,6 +55,7 @@ function SourceRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
       <td className="px-4 py-2.5 text-right">
         {s.relance && (
           <ActBtn tone="ghost" disabled={rel.isPending}
+            title={`Relance la commande d'ingestion EXISTANTE de cette source (« ${s.relance} ») — la MÊME que le cron et que « Injecter », en tâche détachée. Elle re-télécharge et recharge la donnée depuis la source (réparation) ; ce n'est pas un simple rechargement d'un millésime figé.`}
             onClick={() => { if (window.confirm(`Relancer l'ingestion « ${s.relance} » maintenant ?\n\nMême commande que le cron, détachée — peut durer plusieurs minutes.`)) rel.mutate() }}>
             {rel.isPending ? 'Lancement…' : "Relancer l'ingestion"}
           </ActBtn>

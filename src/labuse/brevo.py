@@ -32,10 +32,12 @@ TEMPLATES: dict[str, str] = {
     "radar_digest": "brevo_tpl_radar_digest",        # RADAR-DIGESTS — digest quotidien (template Brevo ID 12)
     "radar_alerte": "brevo_tpl_radar_alerte",        # RADAR-DIGESTS — alerte de veille (template Brevo ID 13)
 }
-#: libellés servis au dashboard (boutons/chips)
+#: libellés servis au dashboard (boutons/chips). ADMIN-1 AD4 — les 3 mails d'onboarding sont nommés
+#: explicitement partout (fini « Mail 1/2/3 ») ; la CLÉ code (onboarding1/2/3) reste porteuse (mapping
+#: template Brevo + colonne licence_mails.mail_key), seul le LIBELLE servi change.
 LIBELLES: dict[str, str] = {
     "essai": "Essai 48 h", "souscription": "Lien de souscription",
-    "onboarding1": "Mail 1", "onboarding2": "Mail 2", "onboarding3": "Mail 3",
+    "onboarding1": "Mail de bienvenue", "onboarding2": "Relance J+3", "onboarding3": "Dernier rappel J+10",
     "relance_carte": "Relance carte refusée", "suspension": "Suspension",
     "retablissement": "Rétablissement", "radar": "Radar (legacy)",
     "radar_digest": "Radar — digest quotidien", "radar_alerte": "Radar — alerte de veille",
@@ -71,6 +73,45 @@ def etat_configuration() -> dict:
     """Pour le dashboard : quels templates sont branchés (jamais les IDs eux-mêmes au client)."""
     return {"api": bool(_api_key()),
             "templates": {k: template_id(k) is not None for k in TEMPLATES}}
+
+
+def apercu_template(key: str, params: dict | None = None) -> dict:
+    """ADMIN-1 (AD4) — APERÇU du mail réel : va chercher le template chez Brevo (GET smtpTemplates)
+    et substitue naïvement les variables du compte ({{ params.x }} / {{params.x}}). Ne lève JAMAIS :
+    non configuré / template absent / Brevo injoignable → {configure:false, raison, params}. Le rendu
+    Brevo étant server-side, la substitution ici est indicative (les blocs conditionnels ne sont pas
+    évalués) — l'infobulle du dashboard le dit."""
+    params = params or {}
+    base = {"configure": False, "key": key, "libelle": LIBELLES.get(key, key), "params": params}
+    if key not in TEMPLATES:
+        return {**base, "raison": f"Template inconnu « {key} »."}
+    api_key = _api_key()
+    if not api_key:
+        return {**base, "raison": "Brevo non configuré (BREVO_API_KEY absente)."}
+    tpl = template_id(key)
+    if tpl is None:
+        return {**base, "raison": f"Identifiant de template absent (LABUSE_{TEMPLATES[key].upper()})."}
+    try:
+        import re
+
+        import httpx
+        r = httpx.get(f"https://api.brevo.com/v3/smtpTemplates/{tpl}",
+                      headers={"api-key": api_key}, timeout=15.0)
+        if r.status_code // 100 != 2:
+            return {**base, "raison": f"Brevo a refusé la lecture du template (HTTP {r.status_code})."}
+        data = r.json()
+        subject = data.get("subject") or ""
+        html = data.get("htmlContent") or ""
+
+        def _sub(txt: str) -> str:
+            for k, v in params.items():
+                txt = re.sub(r"\{\{\s*(?:params\.)?" + re.escape(k) + r"\s*\}\}", str(v), txt)
+            return txt
+        return {"configure": True, "key": key, "libelle": LIBELLES.get(key, key),
+                "params": params, "subject": _sub(subject), "html": _sub(html)}
+    except Exception as exc:  # noqa: BLE001 — l'aperçu n'échoue jamais en dur
+        log.warning("Brevo apercu %s injoignable : %s", key, exc)
+        return {**base, "raison": f"Brevo injoignable ({type(exc).__name__})."}
 
 
 def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:

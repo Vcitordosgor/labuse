@@ -252,6 +252,28 @@ def admin_pilotage(request: Request) -> dict:
                 "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
             if row:
                 run_label, carte_le = row["value"], row["updated_at"]
+        # ADMIN-1 (AD5) — deux rangées de tuiles : « À faire » (ambre, un geste attendu) et « Santé »
+        # (vert, traction). Tous les chiffres sont LUS d'une table existante (jamais recalculés/inventés).
+        af_nouvelle_version = af_manuelles_retard = 0
+        if c.execute(text("SELECT to_regclass('source_veille')")).scalar():
+            af_nouvelle_version = int(c.execute(text(
+                "SELECT COUNT(*) FROM source_veille WHERE actif AND dernier_statut = 'nouvelle_version'")).scalar() or 0)
+            af_manuelles_retard = int(c.execute(text(
+                "SELECT COUNT(*) FROM source_veille v JOIN data_sources d ON d.id = v.source_id"
+                " WHERE v.methode = 'rappel' AND v.actif AND v.cadence_attendue_jours IS NOT NULL"
+                " AND (d.last_sync_at IS NULL OR d.last_sync_at"
+                "      < now() - make_interval(days => v.cadence_attendue_jours))")).scalar() or 0)
+        af_essais_24h = int(c.execute(text(
+            "SELECT COUNT(*) FROM comptes WHERE statut = 'actif' AND essai_expire_at IS NOT NULL"
+            " AND essai_expire_at > now() AND essai_expire_at < now() + interval '24 hours'")).scalar() or 0)
+        af_signalements = 0
+        if c.execute(text("SELECT to_regclass('signalements')")).scalar():
+            af_signalements = int(c.execute(text(
+                "SELECT COUNT(*) FROM signalements WHERE statut = 'nouveau'")).scalar() or 0)
+        veilles_7j = 0
+        if c.execute(text("SELECT to_regclass('alertes')")).scalar():
+            veilles_7j = int(c.execute(text(
+                "SELECT COUNT(*) FROM alertes WHERE detected_at > now() - interval '7 days'")).scalar() or 0)
 
     from .app import app as _app
     heal = getattr(_app.state, "schema_heal", None) or {}
@@ -281,6 +303,18 @@ def admin_pilotage(request: Request) -> dict:
     except Exception:  # noqa: BLE001 — la tuile Radar ne casse jamais la page Pilotage
         radar_tuile = None
 
+    # ADMIN-1 (AD5) — garde de cohérence : on LIT le dernier état du job coherence-run (jamais de
+    # re-sonde ici, qui serait coûteuse). Compteurs posés par jobs_impl.coherence_run (ok/n_surfaces).
+    coherence = {"ok": None, "n_surfaces": None, "verifie_le": None}
+    try:
+        from .. import jobs as _jobs
+        etat = _jobs.lire_etat("coherence-run") or {}
+        cpt = etat.get("compteurs") or {}
+        coherence = {"ok": cpt.get("ok"), "n_surfaces": cpt.get("n_surfaces"),
+                     "verifie_le": etat.get("fin") or etat.get("debut")}
+    except Exception:  # noqa: BLE001 — la tuile Santé ne casse jamais la page
+        pass
+
     for r in fil:
         r["ts"] = r["ts"].isoformat() if r["ts"] else None
     for g in gels:
@@ -295,6 +329,13 @@ def admin_pilotage(request: Request) -> dict:
         "sante": sante,
         "courrier": courrier_kpi,   # CONNEXIONS-2 Lot 4 — {a_deposer, en_cours, clos}
         "run": {"label": run_label, "carte_le": carte_le.isoformat() if carte_le else None},
+        # ADMIN-1 (AD5) — rangée « À faire » (ambre) : chaque tuile = un geste attendu, cliquable.
+        "a_faire": {"sources_nouvelle_version": af_nouvelle_version, "essais_24h": af_essais_24h,
+                    "signalements_ouverts": af_signalements, "manuelles_retard": af_manuelles_retard},
+        # ADMIN-1 (AD5) — rangée « Santé · traction » (vert). mrr_eur = Stripe (lecture), paires = Radar
+        # (relevés), veilles_7j = alertes détectées, coherence = dernier passage de la garde.
+        "traction": {"mrr_eur": stripe.get("mrr_eur"), "veilles_7j": veilles_7j,
+                     "coherence": coherence},
         "fil": fil,
         "gels": gels,
     }
@@ -418,8 +459,11 @@ def admin_licences(request: Request) -> dict:
                 "copilote_quota": k["copilote_quota_jour"] or defaut_quota,
             },
         })
+    from ..brevo import LIBELLES as _MAIL_LIBELLES
     return {"licences": out, "stripe_configure": bool(stripe.get("configure")),
             "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration(),
+            # ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
+            "mail_libelles": dict(_MAIL_LIBELLES),
             "partage_seuil": int(config.get_settings().sessions_signal_seuil)}
 
 
@@ -586,6 +630,27 @@ def admin_licence_mail(compte_id: int, body: MailIn, request: Request) -> dict:
                 " DO UPDATE SET statut = 'envoye', sent_at = now()"),
                 {"c": compte_id, "k": body.key})
     return {"ok": True, **res}
+
+
+@router.get("/admin/licences/{compte_id}/mail/{key}/apercu")
+def admin_licence_mail_apercu(compte_id: int, key: str, request: Request) -> dict:
+    """ADMIN-1 (AD4) — APERÇU du mail réel (template Brevo rendu avec les variables du compte) AVANT
+    « Envoyer ». Non configuré → aperçu honnête (raison + variables qui SERAIENT injectées)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..brevo import LIBELLES, apercu_template
+    from ..db import engine
+    if key not in LIBELLES:
+        raise HTTPException(422, f"Template inconnu « {key} ».")
+    with engine().begin() as c:
+        row = c.execute(text(
+            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
+            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
+            {"c": compte_id}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Compte introuvable.")
+    return apercu_template(key, params={"nom": row["nom"], "email": row["email"]})
 
 
 # ───────────────────────── D5 — IA (section mauve) ─────────────────────────
@@ -1136,24 +1201,27 @@ def admin_flux_bascule(request: Request, body: BasculeIn) -> dict:
 
 # ───────────────────────── D7 — PRODUIT ─────────────────────────
 @router.get("/admin/produit")
-def admin_produit(request: Request) -> dict:
-    """Usage par outil 30 j (capteurs D1 — « Par client » = V2, hors mandat) + retours clients
-    (bouton « Signaler », statuts éditables ici)."""
+def admin_produit(request: Request, jours: int = 30) -> dict:
+    """Usage par outil sur la PÉRIODE choisie (ADMIN-1 AD7 : 7 / 30 / 90 j, défaut 30) + retours clients.
+    Le bloc « jamais ouverts » est calculé côté front (catalogue registry.ts − outils vus). Les « retours
+    clients » de la page Produit refondue s'appuient désormais sur la file signalements unifiée
+    (/admin/signalements) — la table `retours` reste servie ici pour compat mais n'alimente plus l'UI."""
     from .auth import exiger_admin
     exiger_admin(request)
     from ..db import engine
+    jours = jours if jours in (7, 30, 90) else 30
     with engine().begin() as c:
         usage = [dict(r) for r in c.execute(text(
             "SELECT outil, COUNT(*) AS n FROM usage_events"
-            " WHERE kind = 'outil' AND outil IS NOT NULL AND ts > now() - interval '30 days'"
-            " GROUP BY outil ORDER BY COUNT(*) DESC")).mappings()]
+            " WHERE kind = 'outil' AND outil IS NOT NULL AND ts > now() - make_interval(days => :j)"
+            " GROUP BY outil ORDER BY COUNT(*) DESC"), {"j": jours}).mappings()]
         retours = [dict(r) for r in c.execute(text(
             "SELECT r.id, r.ts, r.type, r.message, r.statut, k.nom AS compte"
             " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"
             " ORDER BY r.ts DESC LIMIT 200")).mappings()]
     for r in retours:
         r["ts"] = r["ts"].isoformat() if r["ts"] else None
-    return {"usage": usage, "retours": retours}
+    return {"usage": usage, "retours": retours, "jours": jours}
 
 
 class RetourStatutIn(BaseModel):

@@ -34,6 +34,8 @@ export function IaSection() {
   if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
   const maxJour = Math.max(...d.jours.map((x) => x.cout), 0.0001)
   const maxLic = Math.max(...d.par_licence.map((x) => x.cout), 0.0001)
+  // ADMIN-1 AD6.2 — 30 jours (appels) + coût 30 j par compte, joints depuis par_licence.
+  const lic30 = new Map(d.par_licence.map((x) => [x.compte_id, x] as const))
   return (
     <>
       <div className="mb-3.5 flex justify-end">
@@ -50,15 +52,22 @@ export function IaSection() {
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Coût moyen / question</Lbl>
+          {/* ADMIN-1 AD6.1 — unité explicite en CENTIMES (fini l'ambiguïté « ct » ↔ « € ») + calcul affiché. */}
           <div className="font-display text-2xl font-semibold text-cp-ia">
-            {d.mois.cout_moyen_question == null ? '—' : `${(d.mois.cout_moyen_question * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ct`}
+            {d.mois.cout_moyen_question == null
+              ? '—'
+              : `${(d.mois.cout_moyen_question * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ${(d.mois.cout_moyen_question * 100) < 2 ? 'centime' : 'centimes'}`}
           </div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">ledger ia_log, mois courant</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">
+            {d.mois.cout_moyen_question == null
+              ? 'ledger ia_log, mois courant'
+              : `${eur(d.mois.cout_eur)} ÷ ${d.mois.appels.toLocaleString('fr-FR')} appels`}
+          </div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Quota / jour / licence</Lbl>
+          <Lbl>Plafond défaut / jour</Lbl>
           <div className="font-display text-2xl font-semibold text-txt-hi">{d.quota_defaut}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">défaut — modifiable par licence ci-dessous</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">défaut — plafond par compte modifiable ci-dessous</div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Projection fin de mois</Lbl>
@@ -106,28 +115,48 @@ export function IaSection() {
         </Panel>
       </div>
 
+      {/* ADMIN-1 AD6.2 — « Plafond quotidien par compte » : consommé/plafond aujourd'hui · 30 j · coût 30 j ·
+          plafond éditable en ligne. C'est ça, allouer. Le budget € GLOBAL se gère côté console Anthropic. */}
       <Panel className="mt-3.5">
-        <PHead>Quota Copilote / jour — par licence <Chip tone="ia">recherche NL + Copilote /ask</Chip></PHead>
+        <PHead>
+          Plafond quotidien par compte <Chip tone="ia">recherche NL + Copilote /ask</Chip>
+          <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noreferrer"
+            className="ml-auto font-mono text-[10.5px] normal-case tracking-normal text-txt-dim hover:text-cp-ia">
+            le budget € global se gère sur la console Anthropic ↗
+          </a>
+        </PHead>
         <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-line font-mono text-[9.5px] uppercase tracking-[0.14em] text-txt-dim">
+              <th className="px-4 py-2 text-left font-normal">Compte</th>
+              <th className="px-4 py-2 text-right font-normal">Aujourd'hui</th>
+              <th className="px-4 py-2 text-right font-normal">30 jours</th>
+              <th className="px-4 py-2 text-right font-normal">Coût 30 j</th>
+              <th className="px-4 py-2 text-right font-normal">Plafond / jour</th>
+            </tr>
+          </thead>
           <tbody>
-            {d.quotas.map((k) => (
-              <tr key={k.id} className="border-b border-line last:border-b-0 hover:bg-surface-3">
-                <td className="px-4 py-2.5">{k.nom}</td>
-                {/* CONNEXIONS-2 Lot 2 — consommé aujourd'hui / plafond effectif (compteur Copilote unique) */}
-                <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">
-                  <span className={k.consomme_aujourdhui >= k.plafond_effectif ? 'text-cp-ia' : ''}>{k.consomme_aujourdhui}</span>
-                  <span className="text-txt-dim"> / {k.plafond_effectif} aujourd'hui</span>
-                </td>
-                <td className="px-4 py-2.5 text-right text-txt-mut">
-                  {k.copilote_quota_jour == null ? `défaut (${d.quota_defaut}/j)` : `${k.copilote_quota_jour}/j`}
-                </td>
-                <td className="w-32 px-4 py-2.5"><QuotaEdit id={k.id} quota={k.copilote_quota_jour} defaut={d.quota_defaut} /></td>
-              </tr>
-            ))}
+            {d.quotas.map((k) => {
+              const l = lic30.get(k.id)
+              return (
+                <tr key={k.id} className="border-b border-line last:border-b-0 hover:bg-surface-3">
+                  <td className="px-4 py-2.5">{k.nom}</td>
+                  {/* CONNEXIONS-2 Lot 2 — consommé aujourd'hui / plafond effectif (compteur Copilote unique) */}
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">
+                    <span className={k.consomme_aujourdhui >= k.plafond_effectif ? 'text-cp-ia' : ''}>{k.consomme_aujourdhui}</span>
+                    <span className="text-txt-dim"> / {k.plafond_effectif}</span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">{(l?.appels ?? 0).toLocaleString('fr-FR')} appels</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">{eur(l?.cout ?? 0)}</td>
+                  <td className="w-32 px-4 py-2.5 text-right"><QuotaEdit id={k.id} quota={k.copilote_quota_jour} defaut={d.quota_defaut} /></td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
         <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
-          Vide = défaut ({d.quota_defaut}/jour). Un seul compteur pour la recherche NL et le Copilote : la modification prend effet à la prochaine question du client.
+          Vide = défaut ({d.quota_defaut}/jour). L'app ne répartit que des <b>appels</b>, pas des euros.
+          Enregistrer est immédiat : la question suivante du compte lit le nouveau plafond (recherche NL et Copilote partagent ce compteur).
         </div>
       </Panel>
 

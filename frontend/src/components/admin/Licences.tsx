@@ -1,14 +1,16 @@
-// DASHBOARD-V1 · D4 — LICENCES : un client, une ligne (abonnement · onboarding · usage), maquette
-// validée 26/08. Suspension TOUJOURS MANUELLE (confirmation), réversible, données intactes ;
-// mails Brevo déclenchés À LA MAIN (l'app rappelle J+3/J+10, Vic envoie) ; Brevo/Stripe non
-// configurés → boutons visibles + raison explicite, jamais un envoi silencieux.
+// ADMIN-1 (AD4) — page « Comptes » (ex-Licences, clé de section 'licences' conservée). Répond à UNE
+// question : « que dois-je faire pour ce client, maintenant ? ». Création en une ligne en tête ;
+// à gauche la liste avec l'action en attente ; à droite la fiche : carte verte « prochaine action »
+// puis le parcours daté qui NOMME chaque mail (fini « Mail 1/2/3 » — via mail_libelles). Aperçu réel
+// (template Brevo rendu) avant chaque « Envoyer ». Rien d'automatique : tout envoi est un clic.
+// Suspension TOUJOURS manuelle. L'ancien wizard « 3 étapes » a disparu (mandat AD4.6).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getAdminLicences, getOffres, postAdminLicenceConvertir, postAdminLicenceCreer, postAdminLicenceCreerEssai,
-  postAdminLicenceMail, postAdminRetablir, postAdminSuspendre, type AdminLicence,
+  getAdminLicences, getAdminMailApercu, getOffres, postAdminLicenceCreer, postAdminLicenceCreerEssai,
+  postAdminLicenceMail, postAdminRetablir, postAdminSuspendre, type AdminLicence, type AdminLicences,
 } from '../../lib/api'
-import { ActBtn, Chip, H2, Panel } from './AdminView'
+import { ActBtn, Panel } from './AdminView'
 
 const fmtReu = (iso?: string | null, avecHeure = false) => {
   if (!iso) return '—'
@@ -20,208 +22,280 @@ const fmtReu = (iso?: string | null, avecHeure = false) => {
   } catch { return '—' }
 }
 const fmtDuree = (min: number) => (min >= 60 ? `${(min / 60).toFixed(1).replace('.', ',')} h` : `${min} min`)
+const essaiHeuresRestantes = (l: AdminLicence) =>
+  l.essai_expire_at ? Math.round((new Date(l.essai_expire_at).getTime() - Date.now()) / 3_600_000) : null
 
-function chipStatut(l: AdminLicence, stripeConfigure: boolean): { tone: 'ok' | 'err' | 'warn' | 'off'; label: string } {
-  if (l.statut === 'suspendu') return { tone: 'off', label: 'Accès suspendu' }
-  if (l.statut === 'invite') return { tone: 'warn', label: 'Invitation en attente' }
-  if (l.statut === 'paiement_requis') return { tone: 'err', label: 'Paiement requis' }
-  if (l.stripe?.statut === 'past_due') return { tone: 'err', label: 'Carte refusée' }
-  if (l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing') return { tone: 'ok', label: 'Abonnement actif' }
-  if (stripeConfigure) return { tone: 'warn', label: 'Sans abonnement Stripe' }
-  return { tone: 'ok', label: 'Compte actif' }
+// pastille de statut (couleur) — actif=mint, essai=amber, invite=gris, suspendu=coral.
+type Pastille = 'actif' | 'essai' | 'invite' | 'susp'
+function pastille(l: AdminLicence): Pastille {
+  if (l.statut === 'suspendu') return 'susp'
+  if (l.statut === 'invite') return 'invite'
+  if (l.essai_expire_at && l.statut === 'actif') return 'essai'
+  return 'actif'
+}
+const PAST_CLS: Record<Pastille, string> = {
+  actif: 'bg-mint', essai: 'bg-amber', invite: 'bg-txt-dim', susp: 'bg-coral',
 }
 
-function MailChip({ l, mk, label, onSend, busy }: {
-  l: AdminLicence; mk: string; label: string; onSend: (k: string) => void; busy: boolean
-}) {
-  const sent = l.mails[mk]
-  if (sent?.statut === 'envoye') {
-    return <span className="rounded-md border border-mint/30 bg-mint/5 px-2.5 py-1 font-mono text-[10.5px] text-mint">{label} ✓ {fmtReu(sent.sent_at)}</span>
+// ADMIN-1 (AD4.3) — l'ACTION EN ATTENTE, calculée depuis les données (statut, mails envoyés, rappels
+// backend J+3/J+10, essai). Renvoie la 1re action attendue (ou null = rien à faire). `mk` = clé de mail
+// à envoyer (aperçu + Envoyer) ; sans `mk` = geste hors mail (ex. lien Stripe à copier).
+interface Action { court: string; titre: string; sous: string; mk?: string }
+function prochaineAction(l: AdminLicence): Action | null {
+  const sent = (k: string) => l.mails[k]?.statut === 'envoye'
+  const rappel = (needle: string) => l.rappels.some((r) => r.includes(needle))
+  if (l.statut === 'invite' && !sent('souscription') && !sent('onboarding1')) {
+    return { court: 'invitation à envoyer', titre: "Envoyer l'invitation / le lien de souscription",
+             sous: "le compte est créé mais l'accès n'a pas encore été transmis au client", mk: 'souscription' }
   }
-  return (
-    <button data-mail={mk} disabled={busy} onClick={() => onSend(mk)}
-      className="rounded-md border border-dashed border-amber/50 bg-amber/5 px-2.5 py-1 font-mono text-[10.5px] text-amber transition-all duration-quick hover:brightness-125 disabled:opacity-40">
-      {label} · Envoyer →
-    </button>
-  )
+  if (!sent('onboarding1')) {
+    return { court: 'mail de bienvenue à envoyer', titre: 'Envoyer le mail de bienvenue',
+             sous: 'ses premiers pas : la carte, une fiche, le Copilote', mk: 'onboarding1' }
+  }
+  if (rappel('J+3') && !sent('onboarding2')) {
+    return { court: 'relance J+3 à envoyer', titre: 'Envoyer la Relance J+3',
+             sous: '« avez-vous trouvé votre première parcelle ? »', mk: 'onboarding2' }
+  }
+  if (rappel('J+10') && !sent('onboarding3')) {
+    return { court: 'dernier rappel J+10 à envoyer', titre: 'Envoyer le Dernier rappel J+10',
+             sous: "proposition d'appel + lien Stripe", mk: 'onboarding3' }
+  }
+  const h = essaiHeuresRestantes(l)
+  const abonne = l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing'
+  if (!abonne && h != null && h < 48) {
+    return { court: 'lien Stripe à envoyer', titre: 'Envoyer le lien de souscription Stripe',
+             sous: "l'essai touche à sa fin — proposez l'abonnement", mk: 'souscription' }
+  }
+  return null
 }
 
-function ClientRow({ l, stripeConfigure }: { l: AdminLicence; stripeConfigure: boolean }) {
-  const qc = useQueryClient()
-  const [msg, setMsg] = useState<string | null>(null)
-  const refresh = () => qc.invalidateQueries({ queryKey: ['admin-licences'] })
-  const mail = useMutation({
-    mutationFn: (key: string) => postAdminLicenceMail(l.id, key),
-    onSuccess: (r) => { setMsg(r.envoye ? null : (r.raison ?? 'Envoi impossible.')); refresh() },
-    onError: () => setMsg('Envoi impossible — réessayez.'),
-  })
-  const susp = useMutation({
-    mutationFn: () => postAdminSuspendre(l.id),
-    onSuccess: refresh,
-  })
-  const retab = useMutation({ mutationFn: () => postAdminRetablir(l.id), onSuccess: refresh })
-  const convertir = useMutation({ mutationFn: () => postAdminLicenceConvertir(l.id), onSuccess: refresh })
-  const st = chipStatut(l, stripeConfigure)
-  const suspendu = l.statut === 'suspendu'
-  const suspendre = () => {
-    if (window.confirm("Suspendre l'accès de ce client ?\n\nIl verra « abonnement à régulariser » avec le lien de paiement. Ses données restent intactes. Réversible en un clic.")) susp.mutate()
-  }
+// ── panneau APERÇU (AD4.4) : template Brevo rendu avec les variables du compte, ou raison honnête ──
+function ApercuOverlay({ compteId, mk, onClose }: { compteId: number; mk: string; onClose: () => void }) {
+  const q = useQuery({ queryKey: ['mail-apercu', compteId, mk], queryFn: () => getAdminMailApercu(compteId, mk) })
+  const a = q.data
   return (
-    <div data-licence={l.id} className={`grid grid-cols-[196px_1fr_168px] gap-5 border-b border-line px-5 py-4 last:border-b-0 max-[1100px]:grid-cols-1 ${
-      suspendu ? 'opacity-55' : ''} ${st.label === 'Carte refusée' ? 'bg-gradient-to-r from-coral/5 to-transparent' : ''}`}>
-      <div>
-        <b className="font-display text-[15.5px] font-semibold text-txt-hi">{l.nom}</b>
-        <span className="mt-0.5 block font-mono text-xs text-txt-dim">
-          {suspendu ? `suspendu — données conservées` : <>depuis le {fmtReu(l.created_at)}{l.stripe ? ` · ${l.stripe.montant_eur_mois} €/mois` : ''}</>}
-        </span>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          <Chip tone={st.tone}>{st.label}{st.label === 'Carte refusée' && l.stripe?.prochaine_retentative ? ` · retente le ${fmtReu(new Date(l.stripe.prochaine_retentative * 1000).toISOString())}` : ''}</Chip>
-          {l.essai_expire_at && l.statut === 'actif' && (
-            <Chip tone="warn">Essai · expire dans {Math.max(0, Math.round((new Date(l.essai_expire_at).getTime() - Date.now()) / 3_600_000))} h</Chip>
-          )}
-          {/* A5 — signal de partage de compte : informatif, jamais bloquant (Vic décide) */}
-          {l.partage?.probable && (
-            <Chip tone="warn" onClick={undefined}>⚠ Partage probable · {l.partage.ips} postes actifs</Chip>
-          )}
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-6" onClick={onClose}>
+      <div className="max-h-[80vh] w-full max-w-[640px] overflow-hidden rounded-xl border border-line bg-surface-2 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <b className="text-sm text-txt-hi">Aperçu — {a?.libelle ?? mk}</b>
+          <button onClick={onClose} className="text-txt-mut hover:text-txt">✕</button>
         </div>
-      </div>
-      {suspendu ? (
-        <div className="text-xs leading-relaxed text-txt-dim">
-          Données conservées — rien n'est supprimé. Il voit « abonnement à régulariser » avec le lien de paiement.
+        <div className="max-h-[calc(80vh-52px)] overflow-y-auto px-4 py-3 text-[12.5px] text-txt">
+          {!a ? <div className="py-8 text-center text-xs text-txt-mut">Chargement de l'aperçu…</div>
+            : a.configure ? (
+              <>
+                <div className="mb-2 text-txt-mut">Objet : <b className="text-txt">{a.subject || '—'}</b></div>
+                <div className="rounded-lg border border-line bg-bg p-3 text-[12px]" dangerouslySetInnerHTML={{ __html: a.html || '<i>(template vide)</i>' }} />
+                <div className="mt-2 font-mono text-[10.5px] text-txt-dim">Variables : {Object.entries(a.params).map(([k, v]) => `${k}=${v}`).join(' · ')}</div>
+              </>
+            ) : (
+              <div className="text-amber">
+                Aperçu indisponible — {a.raison}
+                <div className="mt-2 font-mono text-[10.5px] text-txt-dim">Variables qui seraient injectées : {Object.entries(a.params).map(([k, v]) => `${k}=${v}`).join(' · ')}</div>
+              </div>
+            )}
         </div>
-      ) : (
-        <div className="flex min-w-0 flex-col gap-2.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 font-mono text-[9.5px] tracking-[0.14em] text-txt-dim">ONBOARDING</span>
-            {l.statut === 'invite' && <MailChip l={l} mk="souscription" label="Lien de souscription" onSend={mail.mutate} busy={mail.isPending} />}
-            <MailChip l={l} mk="onboarding1" label="Mail 1" onSend={mail.mutate} busy={mail.isPending} />
-            <MailChip l={l} mk="onboarding2" label="Mail 2" onSend={mail.mutate} busy={mail.isPending} />
-            <MailChip l={l} mk="onboarding3" label="Mail 3" onSend={mail.mutate} busy={mail.isPending} />
-          </div>
-          {l.rappels.map((r) => <div key={r} className="text-[11px] text-amber">⏱ {r}</div>)}
-          {msg && <div className="text-[11px] text-amber">{msg}</div>}
-          <div className="grid max-w-[520px] grid-cols-3 gap-2.5">
-            <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
-              <b className="block font-display text-[15px] font-semibold text-txt-hi">{fmtDuree(l.kpi.usage_7j_min)}</b>
-              <span className="text-[10.5px] text-txt-dim">usage / 7 j (estimé)</span>
-            </div>
-            <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
-              <b className="block font-display text-[15px] font-semibold text-txt-hi">{fmtReu(l.kpi.derniere_connexion, true)}</b>
-              <span className="text-[10.5px] text-txt-dim">dernière connexion</span>
-            </div>
-            <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
-              <b className="block font-display text-[15px] font-semibold text-txt-hi">{l.kpi.copilote_jour} / {l.kpi.copilote_quota}</b>
-              <span className="text-[10.5px] text-txt-dim">Copilote aujourd'hui</span>
-            </div>
-          </div>
-          {st.label === 'Carte refusée' && (
-            <div>
-              <ActBtn onClick={() => mail.mutate('relance_carte')} disabled={mail.isPending}>Relancer par mail — lien de paiement</ActBtn>
-              {l.stripe?.prochaine_retentative && (
-                <span className="ml-2.5 font-mono text-xs text-txt-dim">Stripe retente le {fmtReu(new Date(l.stripe.prochaine_retentative * 1000).toISOString())}</span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-      <div className="flex flex-col items-stretch gap-2 max-[1100px]:flex-row">
-        {suspendu ? (
-          <ActBtn onClick={() => retab.mutate()} disabled={retab.isPending}>Rétablir l'accès</ActBtn>
-        ) : (
-          <ActBtn tone="danger" onClick={suspendre} disabled={susp.isPending}>Suspendre l'accès</ActBtn>
-        )}
-        {l.essai_expire_at && (
-          <ActBtn onClick={() => convertir.mutate()} disabled={convertir.isPending} title="Lève l'échéance d'essai — le compte paiera via le parcours officiel (login → Checkout)">
-            Convertir en abonnement
-          </ActBtn>
-        )}
       </div>
     </div>
   )
 }
 
-function NouveauClient() {
+// ── barre de création en une ligne (AD4.1) — Créer NE POSTE AUCUN MAIL ──
+function NewBar() {
   const qc = useQueryClient()
-  // E1 — le prix vient du serveur (source de vérité), jamais écrit en dur ici.
-  const offres = useQuery({ queryKey: ['offres'], queryFn: getOffres, staleTime: Infinity })
-  const prixIntegral = offres.data?.integral.eur_mois
   const [email, setEmail] = useState('')
   const [nom, setNom] = useState('')
-  const [heures, setHeures] = useState('48')
   const [lien, setLien] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  const ok = (r: { lien: string }) => { setLien(r.lien); setErr(null); qc.invalidateQueries({ queryKey: ['admin-licences'] }) }
+  const ok = (r: { lien: string }) => { setLien(r.lien); setErr(null); setEmail(''); setNom(''); qc.invalidateQueries({ queryKey: ['admin-licences'] }) }
   const ko = (e: unknown) => setErr(e instanceof Error ? e.message : 'Création impossible.')
-  const creer = useMutation({
-    mutationFn: () => postAdminLicenceCreer({ email: email.trim(), nom: nom.trim() || undefined }),
-    onSuccess: ok, onError: ko,
-  })
-  // D9 — compte d'ESSAI : accès complet tout de suite, échéance (défaut 48 h, paramétrable),
-  // bascule automatique sur la suspension à l'échéance.
-  const creerEssai = useMutation({
-    mutationFn: () => postAdminLicenceCreerEssai({ email: email.trim(), nom: nom.trim() || undefined, heures: Number(heures) || undefined }),
-    onSuccess: ok, onError: ko,
-  })
+  const creer = useMutation({ mutationFn: () => postAdminLicenceCreer({ email: email.trim(), nom: nom.trim() || undefined }), onSuccess: ok, onError: ko })
+  const essai = useMutation({ mutationFn: () => postAdminLicenceCreerEssai({ email: email.trim(), nom: nom.trim() || undefined, heures: 48 }), onSuccess: ok, onError: ko })
+  const inp = 'rounded-md border border-line-2 bg-bg px-2.5 py-2 text-[13px] text-txt outline-none focus:border-mint'
   return (
-    <Panel>
-      <div className="[counter-reset:s]">
-        <div className="flex items-center gap-4 border-b border-line px-5 py-3.5 before:grid before:h-[30px] before:w-[30px] before:shrink-0 before:place-items-center before:rounded-full before:bg-mint/10 before:font-display before:text-[13px] before:font-semibold before:text-mint before:content-['1']">
-          <div className="min-w-0 flex-1">
-            <b className="text-sm text-txt-hi">Créer le compte</b>
-            <div className="text-xs text-txt-dim">email + invitation (mécanisme officiel, cloisonné dès la création) — le lien s'envoie à la main</div>
-            {lien && (
-              <div className="mt-2 flex items-center gap-2">
-                <code className="max-w-[420px] truncate rounded bg-surface-1 px-2 py-1 font-mono text-[10.5px] text-mint">{lien}</code>
-                <ActBtn tone="ghost" onClick={() => navigator.clipboard?.writeText(lien)}>Copier</ActBtn>
-              </div>
-            )}
-            {err && <div className="mt-1 text-[11px] text-coral">{err}</div>}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@client.re" data-nouveau-email
-              className="w-44 rounded-md border border-line-2 bg-bg px-2 py-1.5 text-xs text-txt outline-none focus:border-mint" />
-            <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom (option)"
-              className="w-32 rounded-md border border-line-2 bg-bg px-2 py-1.5 text-xs text-txt outline-none focus:border-mint" />
-            <ActBtn onClick={() => creer.mutate()} disabled={!email.includes('@') || creer.isPending}>Créer →</ActBtn>
-            <span className="mx-1 text-[10px] text-txt-dim">ou</span>
-            <input value={heures} onChange={(e) => setHeures(e.target.value.replace(/[^0-9]/g, ''))} data-essai-heures
-              title="Durée de l'essai (heures)" className="w-12 rounded-md border border-line-2 bg-bg px-2 py-1.5 text-right font-mono text-xs text-txt outline-none focus:border-amber" />
-            <ActBtn tone="ghost" onClick={() => creerEssai.mutate()} disabled={!email.includes('@') || creerEssai.isPending}
-              title="Accès complet immédiat, bascule automatique à l'échéance (données conservées)">
-              Créer un compte d'essai ({heures || '48'} h) →
-            </ActBtn>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 border-b border-line px-5 py-3.5 before:grid before:h-[30px] before:w-[30px] before:shrink-0 before:place-items-center before:rounded-full before:bg-mint/10 before:font-display before:text-[13px] before:font-semibold before:text-mint before:content-['2']">
-          <div>
-            <b className="text-sm text-txt-hi">Lier l'abonnement Stripe</b>
-            <div className="text-xs text-txt-dim">bouton « Lien de souscription » sur la fiche du client{prixIntegral ? ` (${prixIntegral} €/mois)` : ''} — la licence passe « active » au premier paiement</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 px-5 py-3.5 before:grid before:h-[30px] before:w-[30px] before:shrink-0 before:place-items-center before:rounded-full before:bg-mint/10 before:font-display before:text-[13px] before:font-semibold before:text-mint before:content-['3']">
-          <div>
-            <b className="text-sm text-txt-hi">Dérouler la séquence d'onboarding</b>
-            <div className="text-xs text-txt-dim">Mail 1 → 2 → 3 sur sa fiche — vous déclenchez chaque envoi à votre rythme (templates Brevo) ; l'app rappelle à J+3 et J+10</div>
-          </div>
-        </div>
+    <div className="mb-4 rounded-xl border border-line bg-surface-2 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[12.5px] text-txt-dim">Nouveau client :</span>
+        <input data-nouveau-email value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@client.re" className={`${inp} w-56`} />
+        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom (option)" className={`${inp} w-40`} />
+        <ActBtn onClick={() => creer.mutate()} disabled={!email.includes('@') || creer.isPending}>Créer &amp; préparer l'invitation →</ActBtn>
+        <ActBtn tone="ghost" onClick={() => essai.mutate()} disabled={!email.includes('@') || essai.isPending}>ou essai 48 h</ActBtn>
+        <span className="text-[11.5px] text-txt-off">l'invitation ne part jamais seule — tu l'envoies depuis la fiche</span>
       </div>
-    </Panel>
+      {lien && (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[11px] text-mint">Compte créé.</span>
+          <code className="max-w-[440px] truncate rounded bg-surface-1 px-2 py-1 font-mono text-[10.5px] text-mint">{lien}</code>
+          <ActBtn tone="ghost" onClick={() => navigator.clipboard?.writeText(lien)}>Copier le lien</ActBtn>
+        </div>
+      )}
+      {err && <div className="mt-1 text-[11px] text-coral">{err}</div>}
+    </div>
   )
 }
 
+// ── étape du parcours ──
+function Step({ etat, titre, sous, when, mk, onApercu, onSend, sending }: {
+  etat: 'done' | 'now' | 'wait'; titre: string; sous: string; when?: string | null
+  mk?: string; onApercu?: (k: string) => void; onSend?: (k: string) => void; sending?: boolean
+}) {
+  const ic = { done: '✓', now: '●', wait: '·' }[etat]
+  const icCls = { done: 'bg-mint/10 text-mint', now: 'bg-amber/10 text-amber', wait: 'bg-white/5 text-txt-off' }[etat]
+  return (
+    <div className="flex items-center gap-3 border-b border-line py-2.5 last:border-b-0 text-[13px]">
+      <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] ${icCls}`}>{ic}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-txt">{titre}</div>
+        <div className="text-[11px] text-txt-off">{sous}</div>
+      </div>
+      {mk && etat !== 'done' ? (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {onApercu && <button onClick={() => onApercu(mk)} className="rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">aperçu</button>}
+          {onSend && <button onClick={() => onSend(mk)} disabled={sending} className="rounded-md border border-mint/40 bg-mint/10 px-2 py-1 text-[11px] text-mint disabled:opacity-40">Envoyer</button>}
+        </div>
+      ) : (
+        <span className="shrink-0 whitespace-nowrap text-[11.5px] text-txt-dim">{when ?? ''}</span>
+      )}
+    </div>
+  )
+}
+
+// ── fiche client (colonne droite) ──
+function Fiche({ l, libelles, stripeConfigure }: { l: AdminLicence; libelles: Record<string, string>; stripeConfigure: boolean }) {
+  const qc = useQueryClient()
+  const [msg, setMsg] = useState<string | null>(null)
+  const [apercu, setApercu] = useState<string | null>(null)
+  const refresh = () => qc.invalidateQueries({ queryKey: ['admin-licences'] })
+  const mail = useMutation({
+    mutationFn: (key: string) => postAdminLicenceMail(l.id, key),
+    onSuccess: (r) => { setMsg(r.envoye ? '✓ Envoyé.' : (r.raison ?? 'Envoi impossible.')); refresh() },
+    onError: () => setMsg('Envoi impossible — réessayez.'),
+  })
+  const susp = useMutation({ mutationFn: () => postAdminSuspendre(l.id), onSuccess: refresh })
+  const retab = useMutation({ mutationFn: () => postAdminRetablir(l.id), onSuccess: refresh })
+  const suspendu = l.statut === 'suspendu'
+  const act = prochaineAction(l)
+  const sent = (k: string) => l.mails[k]?.statut === 'envoye'
+  const rappel = (n: string) => l.rappels.some((r) => r.includes(n))
+  const h = essaiHeuresRestantes(l)
+  const abonne = l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing'
+  const lib = (k: string) => libelles[k] ?? k
+  const suspendre = () => { if (window.confirm("Suspendre l'accès de ce client ?\n\nIl verra « abonnement à régulariser » avec le lien de paiement. Données intactes, réversible.")) susp.mutate() }
+  // état de chaque mail dans le parcours : envoyé=done, dû (=prochaine action)=now, sinon wait.
+  const etat = (k: string, du: boolean): 'done' | 'now' | 'wait' => sent(k) ? 'done' : (du ? 'now' : 'wait')
+  return (
+    <div className="rounded-xl border border-line bg-surface-2 p-5">
+      {apercu && <ApercuOverlay compteId={l.id} mk={apercu} onClose={() => setApercu(null)} />}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-txt-hi">{l.nom}</h2>
+          <div className="mt-0.5 text-[12.5px] text-txt-dim">
+            {l.email} · compte créé le {fmtReu(l.created_at)}
+            {l.essai_expire_at && l.statut === 'actif' && <span className="ml-2 rounded-full bg-amber/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber">ESSAI — {h != null && h > 0 ? `expire dans ${h} h` : 'expiré'}</span>}
+          </div>
+        </div>
+        <ActBtn tone="ghost" onClick={() => setApercu('souscription')}>Lien de souscription Stripe</ActBtn>
+      </div>
+
+      {/* PROCHAINE ACTION (AD4.3) */}
+      {!suspendu && act && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-mint/40 bg-gradient-to-br from-mint/10 to-transparent px-4 py-3">
+          <div className="min-w-0">
+            <div className="font-mono text-[11px] tracking-[0.2em] text-mint">PROCHAINE ACTION</div>
+            <div className="mt-1 text-[14.5px] font-semibold text-txt-hi">{act.titre}</div>
+            <div className="text-[12px] text-txt-dim">{act.sous}</div>
+          </div>
+          {act.mk && (
+            <div className="flex shrink-0 items-center gap-2">
+              <button onClick={() => setApercu(act.mk!)} className="rounded-md border border-line-2 px-2.5 py-1.5 text-[11.5px] text-txt-mut hover:text-txt">aperçu</button>
+              <ActBtn onClick={() => mail.mutate(act.mk!)} disabled={mail.isPending}>Envoyer →</ActBtn>
+            </div>
+          )}
+        </div>
+      )}
+      {!suspendu && !act && <div className="mt-4 rounded-xl border border-line bg-surface-1 px-4 py-3 text-[12.5px] text-txt-mut">Rien à faire pour ce client — le parcours est à jour.</div>}
+      {msg && <div className="mt-2 text-[11.5px] text-amber">{msg}</div>}
+
+      {/* PARCOURS (AD4.3) */}
+      <div className="mt-5">
+        <div className="mb-1 font-mono text-[10.5px] tracking-[0.22em] text-txt-dim">PARCOURS</div>
+        <Step etat="done" titre="Invitation envoyée" sous="lien de création de compte — mécanisme cloisonné" when={fmtReu(l.created_at, true)} />
+        <Step etat={l.statut === 'invite' ? 'now' : 'done'} titre={l.essai_expire_at ? 'Compte créé — essai' : 'Compte créé'} sous="accès complet, comme une licence" when={fmtReu(l.created_at, true)} />
+        <Step etat={etat('onboarding1', act?.mk === 'onboarding1')} titre={lib('onboarding1')} sous="premiers pas : la carte, une fiche, le Copilote"
+          when={sent('onboarding1') ? fmtReu(l.mails.onboarding1?.sent_at, true) : undefined}
+          mk="onboarding1" onApercu={setApercu} onSend={mail.mutate} sending={mail.isPending} />
+        <Step etat={etat('onboarding2', act?.mk === 'onboarding2')} titre={lib('onboarding2')} sous="« avez-vous trouvé votre première parcelle ? »"
+          when={sent('onboarding2') ? fmtReu(l.mails.onboarding2?.sent_at, true) : (rappel('J+3') ? undefined : 'dès J+3')}
+          mk={rappel('J+3') || sent('onboarding2') ? 'onboarding2' : undefined} onApercu={setApercu} onSend={mail.mutate} sending={mail.isPending} />
+        <Step etat={etat('onboarding3', act?.mk === 'onboarding3')} titre={lib('onboarding3')} sous="proposition d'appel + lien Stripe"
+          when={sent('onboarding3') ? fmtReu(l.mails.onboarding3?.sent_at, true) : (rappel('J+10') ? undefined : 'dès J+10')}
+          mk={rappel('J+10') || sent('onboarding3') ? 'onboarding3' : undefined} onApercu={setApercu} onSend={mail.mutate} sending={mail.isPending} />
+        <Step etat={abonne ? 'done' : 'wait'} titre="Abonnement Stripe" sous="la licence passe « active » au premier paiement"
+          when={abonne ? 'actif' : (stripeConfigure ? 'à souscrire' : 'Stripe non configuré')}
+          mk={abonne ? undefined : 'souscription'} onApercu={setApercu} onSend={mail.mutate} sending={mail.isPending} />
+      </div>
+
+      {/* KPI (AD4.5) */}
+      <div className="mt-5 grid grid-cols-3 gap-2">
+        <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
+          <div className="font-display text-base font-bold text-txt-hi">{fmtDuree(l.kpi.usage_7j_min)}</div>
+          <div className="text-[10.5px] text-txt-dim">usage sur 7 j</div>
+        </div>
+        <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
+          <div className="font-display text-base font-bold text-txt-hi">{fmtReu(l.kpi.derniere_connexion, true)}</div>
+          <div className="text-[10.5px] text-txt-dim">dernière connexion</div>
+        </div>
+        <div className="rounded-lg border border-line bg-surface-1 px-3 py-2">
+          <div className="font-display text-base font-bold text-txt-hi">{l.kpi.copilote_jour} / {l.kpi.copilote_quota}</div>
+          <div className="text-[10.5px] text-txt-dim">Copilote aujourd'hui</div>
+        </div>
+      </div>
+
+      {/* SUSPENSION MANUELLE (AD4.5) */}
+      <div className="mt-5 flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2.5 text-[12px] text-txt-dim">
+        <span>La suspension est toujours <b className="text-coral">manuelle</b> — jamais automatique sur un échec de carte.</span>
+        {suspendu
+          ? <ActBtn onClick={() => retab.mutate()} disabled={retab.isPending}>Rétablir l'accès</ActBtn>
+          : <button onClick={suspendre} disabled={susp.isPending} className="shrink-0 rounded-md border border-coral/40 px-2.5 py-1 text-[12px] text-coral disabled:opacity-40">Suspendre le compte</button>}
+      </div>
+    </div>
+  )
+}
+
+type Filtre = 'tous' | 'actif' | 'essai' | 'invite' | 'susp'
+
 export function LicencesSection() {
   const q = useQuery({ queryKey: ['admin-licences'], queryFn: getAdminLicences, refetchInterval: 120_000 })
-  const d = q.data
+  const offres = useQuery({ queryKey: ['offres'], queryFn: getOffres, staleTime: Infinity })
+  const [filtre, setFiltre] = useState<Filtre>('tous')
+  const [sel, setSel] = useState<number | null>(null)
+  const d: AdminLicences | undefined = q.data
   if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+  const prixIntegral = offres.data?.integral.eur_mois
+  const libelles = d.mail_libelles ?? {}
+  const par = (p: Pastille) => d.licences.filter((l) => pastille(l) === p)
+  const compteurs = { actif: par('actif').length, essai: par('essai').length, invite: par('invite').length, susp: par('susp').length }
+  const mrr = d.licences.filter((l) => l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing')
+    .reduce((s, l) => s + (l.stripe?.montant_eur_mois ?? 0), 0)
+  const visibles = filtre === 'tous' ? d.licences : d.licences.filter((l) => pastille(l) === filtre)
+  const selectionne = d.licences.find((l) => l.id === sel) ?? visibles[0] ?? d.licences[0]
   const orphelins = d.rapprochement && !d.rapprochement.indisponible
     ? [...d.rapprochement.comptes_sans_abo.map((o) => `Compte app « ${o.nom} » sans abonnement Stripe actif`),
        ...d.rapprochement.abos_sans_compte.map((o) => `Abonnement Stripe ${o.email ?? o.customer_id} sans compte app lié`)]
     : []
+  const CHIPS: [Filtre, string, number][] = [
+    ['tous', 'Tous', d.licences.length], ['actif', 'Actifs', compteurs.actif], ['essai', 'Essai', compteurs.essai],
+    ['invite', 'Invités', compteurs.invite], ['susp', 'Suspendus', compteurs.susp],
+  ]
   return (
     <>
+      <div className="mb-3 font-display text-[15px] text-txt-hi">
+        {d.licences.length} compte{d.licences.length > 1 ? 's' : ''} · {compteurs.actif} licence{compteurs.actif > 1 ? 's' : ''} active{compteurs.actif > 1 ? 's' : ''}
+        {mrr > 0 && <> · {mrr.toLocaleString('fr-FR')} € / mois</>}
+      </div>
       {!d.brevo.api && (
         <div className="mb-3.5 rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-xs text-amber">
-          Brevo non configuré (LABUSE_BREVO_API_KEY) — les boutons d'envoi restent visibles et le diront : aucun envoi silencieux.
+          Brevo non configuré (LABUSE_BREVO_API_KEY) — les envois et aperçus restent visibles et le diront : aucun envoi silencieux.
         </div>
       )}
       {orphelins.length > 0 && (
@@ -229,16 +303,49 @@ export function LicencesSection() {
           <b>Rapprochement Stripe ⇄ comptes :</b> {orphelins.join(' · ')}
         </div>
       )}
-      <Panel>
-        {d.licences.map((l) => <ClientRow key={l.id} l={l} stripeConfigure={d.stripe_configure} />)}
-        {!d.licences.length && <div className="px-5 py-8 text-center text-xs text-txt-mut">Aucun compte client — créez le premier ci-dessous.</div>}
-        <div className="border-t border-line bg-surface-1 px-5 py-3 text-xs text-txt-mut">
-          <b className="text-txt">Règle :</b> la suspension est toujours <b className="text-txt">manuelle</b> (votre bouton) — jamais automatique
-          sur un échec de carte. Alerte ambre si un compte app existe sans abonnement Stripe actif, ou l'inverse.
+
+      <NewBar />
+
+      <div className="grid grid-cols-[340px_1fr] gap-4 max-[1100px]:grid-cols-1">
+        {/* LISTE (AD4.2) */}
+        <div>
+          <div className="mb-2.5 flex flex-wrap gap-1.5">
+            {CHIPS.map(([k, label, n]) => (
+              <button key={k} onClick={() => setFiltre(k)}
+                className={`rounded-full border px-2.5 py-1 text-[11.5px] transition-colors duration-quick ${
+                  filtre === k ? 'border-mint/45 bg-mint/10 text-mint' : 'border-line-2 text-txt-dim hover:text-txt'}`}>
+                {label} {n}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {visibles.map((l) => {
+              const act = prochaineAction(l)
+              const on = selectionne?.id === l.id
+              return (
+                <button key={l.id} data-licence={l.id} onClick={() => setSel(l.id)}
+                  className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-quick ${
+                    on ? 'border-mint bg-surface-2' : 'border-line bg-surface-2 hover:border-line-2'}`}>
+                  <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${PAST_CLS[pastille(l)]}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13.5px] font-semibold text-txt-hi">{l.nom}</span>
+                    <span className="block truncate text-[11px] text-txt-off">{l.email}</span>
+                  </span>
+                  {act
+                    ? <span className="shrink-0 text-[10.5px] text-amber">⚑ {act.court}</span>
+                    : <span className="shrink-0 text-[10.5px] text-txt-dim">{l.stripe?.montant_eur_mois ? `actif · ${l.stripe.montant_eur_mois} €` : (l.statut === 'suspendu' ? 'suspendu' : (prixIntegral ? 'actif' : ''))}</span>}
+                </button>
+              )
+            })}
+            {!visibles.length && <div className="rounded-lg border border-line bg-surface-2 px-3 py-6 text-center text-xs text-txt-mut">Aucun compte dans ce filtre.</div>}
+          </div>
         </div>
-      </Panel>
-      <H2>Onboarder un nouveau client</H2>
-      <NouveauClient />
+
+        {/* FICHE (AD4.3-5) */}
+        {selectionne
+          ? <Fiche l={selectionne} libelles={libelles} stripeConfigure={d.stripe_configure} />
+          : <Panel><div className="px-5 py-10 text-center text-xs text-txt-mut">Aucun compte — créez le premier ci-dessus.</div></Panel>}
+      </div>
     </>
   )
 }

@@ -1,78 +1,151 @@
-// SECTEUR-1 (S2) — Contacts institutionnels : les 24 mairies (adresse, téléphone, courriel, site),
-// les EPCI, la DEAL et l'ADIL. La MÊME donnée que la fiche commune (mairie_de), réunie et triable.
-// Pas de notes de relation — le CRM de Vic reste dans Notion.
+// ADMIN-1 (AD10) — le carnet des communes. Recherche en tête, UNE CARTE PAR COMMUNE : le standard
+// officiel (mairie & service urbanisme, source service-public.fr) puis les contacts NOMMÉS ajoutés
+// (nom, rôle, tél, mail, note), éditables en place. Communes avec contacts d'abord. Les EPCI et la
+// DEAL/ADIL restent accessibles en second. CRUD admin ici ET depuis la fiche commune (carte Mairie).
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getContactsInstitutionnels, type Mairie } from '../../lib/api'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  deleteCommuneContact, getContactsInstitutionnels, patchCommuneContact, postCommuneContact,
+  type CommuneContact, type CommuneContactIn, type Mairie,
+} from '../../lib/api'
 import { Loading } from '../Loading'
+import { ActBtn, Chip } from './AdminView'
 
-type Cle = 'commune' | 'telephone' | 'email'
-const COLS: { cle: Cle; label: string }[] = [
-  { cle: 'commune', label: 'Commune' },
-  { cle: 'telephone', label: 'Téléphone' },
-  { cle: 'email', label: 'Courriel' },
-]
+type ContactForm = { nom: string; role: string; telephone: string; email: string; note: string }
+const VIDE: ContactForm = { nom: '', role: '', telephone: '', email: '', note: '' }
 
-const val = (m: Mairie, c: Cle) => (m[c] ?? '').toString().toLowerCase()
+function ContactEdit({ init, onCancel, onSave, busy }: {
+  init: ContactForm; onCancel: () => void; onSave: (f: ContactForm) => void; busy: boolean
+}) {
+  const [f, setF] = useState<ContactForm>(init)
+  const champ = (k: keyof ContactForm, ph: string, w = 'w-full') => (
+    <input value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} placeholder={ph}
+      className={`${w} rounded-md border border-line-2 bg-surface-1 px-2 py-1 text-[11.5px] text-txt`} />
+  )
+  return (
+    <div className="mt-2 rounded-lg border border-mint/30 bg-mint/5 p-2.5">
+      <div className="grid grid-cols-2 gap-1.5">
+        {champ('nom', 'Nom (ex. Mme Gwenaëlle Serveau)')}
+        {champ('role', 'Rôle (ex. resp. PLU)')}
+        {champ('telephone', 'Téléphone')}
+        {champ('email', 'Email')}
+      </div>
+      {champ('note', 'Note (ex. joignable le matin — zone AU nord)')}
+      <div className="mt-2 flex items-center gap-2">
+        <ActBtn onClick={() => onSave(f)} disabled={busy || !f.nom.trim()}>{busy ? 'Enregistrement…' : 'Enregistrer'}</ActBtn>
+        <ActBtn tone="ghost" onClick={onCancel}>Annuler</ActBtn>
+      </div>
+    </div>
+  )
+}
+
+function CarteCommune({ m }: { m: Mairie }) {
+  const qc = useQueryClient()
+  const [ajout, setAjout] = useState(false)
+  const [edit, setEdit] = useState<number | null>(null)
+  const invalider = () => qc.invalidateQueries({ queryKey: ['contacts-institutionnels'] })
+  const creer = useMutation({
+    mutationFn: (f: ContactForm) => postCommuneContact({ insee: m.insee ?? '', commune_nom: m.commune, ...trim(f) }),
+    onSuccess: () => { setAjout(false); invalider() },
+  })
+  const modifier = useMutation({
+    mutationFn: ({ id, f }: { id: number; f: ContactForm }) => patchCommuneContact(id, trim(f)),
+    onSuccess: () => { setEdit(null); invalider() },
+  })
+  const suppr = useMutation({ mutationFn: (id: number) => deleteCommuneContact(id), onSuccess: invalider })
+  const contacts = m.contacts ?? []
+  return (
+    <div data-contacts-commune={m.commune} className="rounded-xl border border-line bg-surface-2 p-3.5">
+      <div className="flex items-center justify-between">
+        <div>
+          <b className="font-display text-sm text-txt-hi">{m.commune}</b>
+          {contacts.length > 0 && <span className="ml-2 text-[11px] text-txt-dim">{contacts.length} contact(s)</span>}
+        </div>
+        {m.insee
+          ? <ActBtn onClick={() => { setAjout(true); setEdit(null) }}>+ Ajouter un contact</ActBtn>
+          : <span className="text-[10.5px] text-txt-dim" title="INSEE manquant pour cette commune">INSEE inconnu</span>}
+      </div>
+
+      {/* standard officiel */}
+      <div className="mt-2 border-t border-line pt-2 text-[11.5px]">
+        <b className="text-txt">Mairie &amp; service urbanisme</b> <span className="text-txt-dim">· standard officiel</span>
+        <div className="mt-0.5 text-txt-mut">
+          {[m.adresse, m.telephone].filter(Boolean).join(' · ') || <i className="text-txt-dim">coordonnées absentes</i>}
+          {m.email && <> · <a href={`mailto:${m.email}`} className="text-mint hover:underline">{m.email}</a></>}
+          {m.site_officiel && <> · <a href={m.site_officiel} target="_blank" rel="noreferrer" className="text-mint hover:underline">site</a></>}
+        </div>
+      </div>
+
+      {/* contacts nommés */}
+      {contacts.map((c) => (
+        <div key={c.id} className="mt-2 border-t border-line pt-2 text-[11.5px]">
+          {edit === c.id ? (
+            <ContactEdit init={toForm(c)} busy={modifier.isPending}
+              onCancel={() => setEdit(null)} onSave={(f) => modifier.mutate({ id: c.id, f })} />
+          ) : (
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <b className="text-txt-hi">{c.nom}</b> {c.role && <Chip tone="ok">{c.role}</Chip>}
+                <div className="mt-0.5 text-txt-mut">
+                  {[c.telephone, c.email].filter(Boolean).join('  ·  ') || <i className="text-txt-dim">—</i>}
+                </div>
+                {c.note && <div className="mt-0.5 text-[10.5px] text-txt-dim">note : {c.note}</div>}
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <ActBtn tone="ghost" onClick={() => { setEdit(c.id); setAjout(false) }}>✎</ActBtn>
+                <ActBtn tone="danger" disabled={suppr.isPending}
+                  onClick={() => { if (window.confirm(`Supprimer le contact « ${c.nom} » ?`)) suppr.mutate(c.id) }}>🗑</ActBtn>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {ajout && <ContactEdit init={VIDE} busy={creer.isPending} onCancel={() => setAjout(false)} onSave={(f) => creer.mutate(f)} />}
+    </div>
+  )
+}
+
+const trim = (f: ContactForm): Omit<CommuneContactIn, 'insee' | 'commune_nom'> => ({
+  nom: f.nom.trim(), role: f.role.trim() || null, telephone: f.telephone.trim() || null,
+  email: f.email.trim() || null, note: f.note.trim() || null,
+})
+const toForm = (c: CommuneContact): ContactForm => ({
+  nom: c.nom, role: c.role ?? '', telephone: c.telephone ?? '', email: c.email ?? '', note: c.note ?? '',
+})
 
 export function ContactsSection() {
   const q = useQuery({ queryKey: ['contacts-institutionnels'], queryFn: getContactsInstitutionnels })
-  const [tri, setTri] = useState<Cle>('commune')
-  const [asc, setAsc] = useState(true)
   const [filtre, setFiltre] = useState('')
 
-  const mairies = useMemo(() => {
+  const communes = useMemo(() => {
     const src = q.data?.mairies ?? []
     const f = filtre.trim().toLowerCase()
-    const filtered = f ? src.filter((m) => `${m.commune} ${m.email ?? ''} ${m.telephone ?? ''}`.toLowerCase().includes(f)) : src
-    return [...filtered].sort((a, b) => (asc ? 1 : -1) * val(a, tri).localeCompare(val(b, tri)))
-  }, [q.data, tri, asc, filtre])
+    const filtered = f ? src.filter((m) => m.commune.toLowerCase().includes(f)) : src
+    // AD10 — communes AVEC contacts d'abord, puis alphabétique.
+    return [...filtered].sort((a, b) => {
+      const na = (a.contacts?.length ?? 0) > 0 ? 0 : 1
+      const nb = (b.contacts?.length ?? 0) > 0 ? 0 : 1
+      return na !== nb ? na - nb : a.commune.localeCompare(b.commune)
+    })
+  }, [q.data, filtre])
 
   if (q.isLoading) return <Loading label="Contacts…" className="mx-auto mt-6 text-xs" />
   const d = q.data
   if (!d) return null
-  const setTriCol = (c: Cle) => (c === tri ? setAsc((v) => !v) : (setTri(c), setAsc(true)))
 
   return (
-    <div data-admin-contacts className="flex flex-col gap-5 text-[12.5px]">
-      {/* Les 24 mairies — tableau triable */}
-      <section>
-        <div className="mb-2 flex items-center gap-3">
-          <h3 className="font-display text-sm font-bold text-txt-hi">Les 24 mairies</h3>
-          <span className="text-[11px] text-txt-dim">{mairies.length} affichées</span>
-          <input data-contacts-filtre value={filtre} onChange={(e) => setFiltre(e.target.value)} placeholder="Filtrer…"
-                 className="ml-auto h-7 w-40 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt" />
-        </div>
-        <div className="overflow-hidden rounded-lg border border-line-2">
-          <div className="grid grid-cols-[1.1fr_1fr_1.6fr_1.4fr] bg-surface-2 text-[11px] font-semibold text-txt-mut">
-            {COLS.map((c) => (
-              <button key={c.cle} data-contacts-tri={c.cle} onClick={() => setTriCol(c.cle)}
-                      className="flex items-center gap-1 px-3 py-2 text-left hover:text-txt">
-                {c.label}{tri === c.cle && <span className="text-mint">{asc ? '▲' : '▼'}</span>}
-              </button>
-            ))}
-            <span className="px-3 py-2">Adresse · site</span>
-          </div>
-          {mairies.map((m) => (
-            <div key={m.commune} data-contacts-mairie={m.commune}
-                 className="grid grid-cols-[1.1fr_1fr_1.6fr_1.4fr] border-t border-line-2 text-[11.5px]">
-              <span className="px-3 py-2 font-semibold text-txt-hi">{m.commune}</span>
-              <span className="px-3 py-2 text-txt-mut">{m.telephone ?? <i className="text-txt-dim">absent</i>}</span>
-              <span className="truncate px-3 py-2 text-txt-mut" title={m.email ?? ''}>
-                {m.email ? <a href={`mailto:${m.email}`} className="text-mint hover:underline">{m.email}</a> : <i className="text-txt-dim">absent</i>}
-              </span>
-              <span className="truncate px-3 py-2 text-txt-dim" title={m.adresse ?? ''}>
-                {m.adresse ?? '—'}
-                {m.site_officiel && <> · <a href={m.site_officiel} target="_blank" rel="noreferrer" className="text-mint hover:underline">site</a></>}
-              </span>
-            </div>
-          ))}
-        </div>
-        <p className="mt-1 text-[10px] text-txt-dim">Service urbanisme non porté par la source (service-public.fr) → absent, jamais inventé.</p>
-      </section>
+    <div data-admin-contacts className="flex flex-col gap-4 text-[12.5px]">
+      <input data-contacts-filtre value={filtre} onChange={(e) => setFiltre(e.target.value)}
+        placeholder="🔍  Chercher une commune… (Saint-André)"
+        className="h-9 w-full rounded-lg border border-line-2 bg-surface-1 px-3 text-[13px] text-txt" />
+
+      <div className="grid grid-cols-2 gap-2.5 max-[900px]:grid-cols-1">
+        {communes.map((m) => <CarteCommune key={m.commune} m={m} />)}
+      </div>
 
       {/* EPCI */}
-      <section>
+      <section className="mt-2">
         <h3 className="mb-2 font-display text-sm font-bold text-txt-hi">Intercommunalités (EPCI)</h3>
         <div className="flex flex-col gap-1.5">
           {d.epci.map((e) => (
@@ -86,7 +159,7 @@ export function ContactsSection() {
 
       {/* DEAL / ADIL */}
       <section>
-        <h3 className="mb-2 font-display text-sm font-bold text-txt-hi">Services de l'État & information logement</h3>
+        <h3 className="mb-2 font-display text-sm font-bold text-txt-hi">Services de l'État &amp; information logement</h3>
         <div className="flex flex-col gap-1.5">
           {d.autres.map((a) => (
             <div key={a.type} data-contacts-autre={a.type} className="rounded-lg border border-line-2 bg-surface-2 p-2.5">
@@ -101,7 +174,10 @@ export function ContactsSection() {
         </div>
       </section>
 
-      <p className="text-[10px] leading-snug text-txt-dim">{d.note}</p>
+      <p className="text-[10px] leading-snug text-txt-dim">
+        Standard officiel = source service-public.fr (service urbanisme non porté → absent, jamais inventé).
+        Les contacts nommés sont ajoutés à la main et visibles sur la fiche commune de tous les comptes.
+      </p>
     </div>
   )
 }

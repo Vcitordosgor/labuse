@@ -972,3 +972,22 @@ def test_marque_roundtrip_logo_relu(app_client):
         assert g2["has_logo"] is False and g2["raison_sociale"] == "Foncière Test"
     finally:
         _purge(e)
+
+
+# ─────────────────────────── ADMIN-1 (AD11) : garde des routes /admin/* ───────────────────────────
+
+def test_admin_route_refuse_non_admin(app_client):
+    """ADMIN-1 (AD11) — un compte NON admin (titulaire, client payant) qui touche une route /admin/*
+    est refusé (403). Garde `exiger_admin` (api/auth.py). Vic est le seul admin : un client ne doit
+    jamais franchir la porte, quelle que soit la section (pilotage, comptes, données, IA…)."""
+    e = f"nonadmin-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(e)   # rôle 'titulaire' par défaut (creer_invitation)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, e)
+        for route in ("/admin/pilotage", "/admin/licences", "/admin/sources",
+                      "/admin/ia", "/admin/produit", "/admin/flux", "/admin/cron",
+                      "/admin/signalements", "/admin/contacts-institutionnels"):
+            r = c.get(route)
+            assert r.status_code == 403, f"{route} devrait renvoyer 403 pour un non-admin, reçu {r.status_code}"
+    finally:
+        _purge(e)

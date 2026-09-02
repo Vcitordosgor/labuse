@@ -165,7 +165,9 @@ def courrier_admin_demandes(request: Request, statut: str | None = None,
     """Vue admin (Vic) : liste des demandes (client, n, communes, corps, date, statut)."""
     from . import auth
     auth.exiger_admin(request)
-    return {"demandes": courrier.demandes_admin(db, statut), "statuts": list(courrier.STATUTS_DEMANDE)}
+    # ADMIN-1 (AD8) — libellés servis des statuts (source unique courrier.STATUT_LIBELLES) pour les chips.
+    return {"demandes": courrier.demandes_admin(db, statut), "statuts": list(courrier.STATUTS_DEMANDE),
+            "statut_libelles": dict(courrier.STATUT_LIBELLES)}
 
 
 class StatutIn(BaseModel):
