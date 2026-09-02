@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Admin · Données (maquette)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#0e1210;--card:#141a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--faint:#5f6b65;
+    --mint:#4ADE80;--mint-deep:#2FBE66;--mint-soft:rgba(74,222,128,.10);--ink:#071009;
+    --amber:#F0B429;--amber-soft:rgba(240,180,41,.12);
+    --red:#F87171;--red-soft:rgba(248,113,113,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050706;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;padding:22px 16px 60px;display:flex;flex-direction:column;align-items:center}
+  .note{font-size:12px;color:var(--dim);text-align:center;line-height:1.6;max-width:940px;margin-bottom:14px}
+  .note b{color:var(--mint)}
+  .page{width:1300px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .kicker{font-size:10.5px;letter-spacing:.26em;color:var(--dim)}
+  h1{font-size:21px;font-weight:650;margin-top:5px}
+  .sub{font-size:12.5px;color:var(--dim);margin-top:3px}
+  .sub b{color:var(--txt)}
+
+  /* mise à jour en 3 gestes, condensée */
+  .gestes{display:flex;gap:8px;margin:14px 0 16px;flex-wrap:wrap;align-items:center}
+  .geste{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px}
+  .geste .num{width:18px;height:18px;border-radius:50%;background:var(--mint-soft);color:var(--mint);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .geste b{font-weight:650}
+  .geste .warn{color:var(--amber)}
+  .gbtn{background:var(--mint);color:var(--ink);border:none;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit}
+  .gbtn.ghost{background:none;border:1px solid var(--line);color:var(--dim)}
+  .arrow{color:var(--faint)}
+
+  /* onglets */
+  .tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .tabs button{background:none;border:none;padding:9px 2px 11px;font-size:13.5px;color:var(--dim);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tabs button.on{color:var(--mint);border-bottom-color:var(--mint);font-weight:600}
+
+  /* barre de filtres */
+  .bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .search{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--faint)}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;border:1px solid var(--line);border-radius:20px;padding:5px 11px;color:var(--dim);cursor:pointer}
+  .chip.on{border-color:rgba(74,222,128,.45);color:var(--mint);background:var(--mint-soft)}
+  .chip .n{font-weight:700}
+
+  /* table catalogue */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.18em;color:var(--faint);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr.grp td{background:var(--panel);color:var(--faint);font-size:11px;letter-spacing:.08em;padding:5px 10px}
+  .src{font-weight:600}
+  .src small{display:block;color:var(--faint);font-weight:400;font-size:11px;margin-top:1px}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+  .d-ok{background:var(--mint)}.d-warn{background:var(--amber)}.d-err{background:var(--red)}.d-off{background:#3a453e}
+  .badge{display:inline-block;font-size:11px;border-radius:6px;padding:2px 8px}
+  .b-new{background:var(--amber-soft);color:var(--amber)}
+  .b-ok{background:var(--mint-soft);color:var(--mint)}
+  .b-err{background:var(--red-soft);color:var(--red)}
+  .b-off{background:rgba(255,255,255,.04);color:var(--faint)}
+  .muted{color:var(--dim)}
+  .acts{white-space:nowrap;text-align:right}
+  .a{display:inline-block;font-size:11.5px;color:var(--mint);border:1px solid rgba(74,222,128,.35);border-radius:7px;padding:4px 9px;margin-left:5px;cursor:pointer;text-decoration:none}
+  .a.main{background:var(--mint);color:var(--ink);border-color:var(--mint);font-weight:650}
+  .a.g{color:var(--dim);border-color:var(--line)}
+  @media (hover:hover){tr.row:hover td{background:rgba(74,222,128,.05)}}
+
+  .foot{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--dim);line-height:1.65}
+  .foot b{color:var(--txt)}
+</style>
+</head>
+<body>
+
+<p class="note">
+  Admin › <b>Données</b> — une seule page remplace Sources, Cron, Agent de veille et Flux.
+  Trois onglets : <b>Catalogue</b> (l'état, une ligne par source, toutes les actions), <b>Circuit</b> (la fourmilière + la garde),
+  <b>Horloge</b> (tous les jobs planifiés). La chaîne se lit en bas de page.
+</p>
+
+<div class="page">
+  <div class="kicker mono">ADMIN · DONNÉES</div>
+  <h1>Les 64 sources, leur fraîcheur, leurs mises à jour.</h1>
+  <div class="sub">Run courant <b class="mono" style="color:var(--mint)">q_v11_m137</b> · calculé le 27/08 · garde de cohérence ce matin : <b style="color:var(--mint)">6/6 ✓</b></div>
+
+  <div class="gestes">
+    <div class="geste"><span class="num">1</span><span><b>Injecter</b> — <span class="warn">2 nouvelles versions</span></span><button class="gbtn">Voir →</button></div>
+    <span class="arrow">→</span>
+    <div class="geste"><span class="num">2</span><span><b>Calculer</b> — 2 sources plus récentes que le run</span><button class="gbtn ghost">Lancer un run (~3 h)</button></div>
+    <span class="arrow">→</span>
+    <div class="geste"><span class="num">3</span><span><b>Basculer</b> — rien à basculer</span><button class="gbtn ghost">Basculer</button></div>
+  </div>
+
+  <div class="tabs">
+    <button class="on">Catalogue</button>
+    <button>Circuit</button>
+    <button>Horloge</button>
+  </div>
+
+  <div class="bar">
+    <div class="search">🔍&nbsp; Chercher une source, un fournisseur…</div>
+    <span class="chip on">Toutes <span class="n">64</span></span>
+    <span class="chip">Nouvelle version <span class="n" style="color:var(--amber)">2</span></span>
+    <span class="chip">En erreur <span class="n">0</span></span>
+    <span class="chip">Rappels manuels <span class="n">4</span></span>
+    <span class="chip">Non surveillées <span class="n">22</span></span>
+  </div>
+
+  <table>
+    <tr>
+      <th style="width:26%">SOURCE</th>
+      <th style="width:12%">SERVI</th>
+      <th style="width:16%">AMONT (agent)</th>
+      <th style="width:14%">DERNIER PASSAGE</th>
+      <th style="width:10%">FRAÎCHEUR</th>
+      <th class="acts">ACTIONS</th>
+    </tr>
+
+    <tr class="grp"><td colspan="6">DGFiP · ETALAB</td></tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-warn"></span>DVF — ventes<small>page · veille quotidienne</small></td>
+      <td class="mono">2025-S2</td>
+      <td><span class="badge b-new">2026-S1 disponible</span></td>
+      <td class="muted">ce matin 07:00</td>
+      <td><span class="badge b-ok">à jour</span></td>
+      <td class="acts"><a class="a main">Injecter 2026-S1 →</a><a class="a g">Vérifier</a><a class="a g">⏸</a></td>
+    </tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-ok"></span>Cadastre PCI<small>entete · veille quotidienne</small></td>
+      <td class="mono">2026-07</td>
+      <td><span class="badge b-ok">identique</span></td>
+      <td class="muted">ce matin 07:00</td>
+      <td><span class="badge b-ok">à jour</span></td>
+      <td class="acts"><a class="a g">Relancer l'ingestion</a><a class="a g">Vérifier</a><a class="a g">⏸</a></td>
+    </tr>
+
+    <tr class="grp"><td colspan="6">INSEE</td></tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-warn"></span>BPE — équipements<small>api (data.gouv) · quotidienne</small></td>
+      <td class="mono">2025</td>
+      <td><span class="badge b-new">2026 disponible</span></td>
+      <td class="muted">ce matin 07:00</td>
+      <td><span class="badge b-ok">à jour</span></td>
+      <td class="acts"><a class="a main">Injecter 2026 →</a><a class="a g">Vérifier</a><a class="a g">⏸</a></td>
+    </tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-ok"></span>Filosofi · revenus<small>api (data.gouv) · quotidienne</small></td>
+      <td class="mono">2022</td>
+      <td><span class="badge b-ok">identique</span></td>
+      <td class="muted">ce matin 07:00</td>
+      <td><span class="badge b-ok">à jour</span></td>
+      <td class="acts"><a class="a g">Relancer l'ingestion</a><a class="a g">Vérifier</a><a class="a g">⏸</a></td>
+    </tr>
+
+    <tr class="grp"><td colspan="6">GÉORISQUES · DEAL</td></tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-ok"></span>PPR<small>témoin Saint-Denis · quotidienne</small></td>
+      <td class="mono">2026-03</td>
+      <td><span class="badge b-ok">pas de changement</span></td>
+      <td class="muted">ce matin 07:01</td>
+      <td><span class="badge b-ok">à jour</span></td>
+      <td class="acts"><a class="a g">Vérifier</a><a class="a g">⏸</a></td>
+    </tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-off"></span>50 pas géométriques<small>non surveillée — aucun amont publié (limite 1877)</small></td>
+      <td class="mono">2024</td>
+      <td><span class="badge b-off">non surveillée</span></td>
+      <td class="muted">—</td>
+      <td><span class="badge b-ok">à jour</span></td>
+      <td class="acts"><a class="a g">Relancer l'ingestion</a></td>
+    </tr>
+
+    <tr class="grp"><td colspan="6">VIVANTES · MANUELLES</td></tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-ok"></span>Radar — annonces<small>rappel si &gt; 7 j sans dépôt</small></td>
+      <td class="mono">aujourd'hui</td>
+      <td><span class="badge b-off">manuelle (toi)</span></td>
+      <td class="muted">dépôt 11:02</td>
+      <td><span class="badge b-ok">à jour</span></td>
+      <td class="acts"><a class="a g">Ouvrir la pige</a></td>
+    </tr>
+    <tr class="row">
+      <td class="src"><span class="dot d-err"></span>SPANC<small>rappel si &gt; 365 j</small></td>
+      <td class="mono">2025-06</td>
+      <td><span class="badge b-off">manuelle (toi)</span></td>
+      <td class="muted">—</td>
+      <td><span class="badge b-err">448 j — à rafraîchir</span></td>
+      <td class="acts"><a class="a g">Relancer l'ingestion</a></td>
+    </tr>
+
+    <tr><td colspan="6" style="text-align:center;color:var(--faint);border-bottom:none">… 56 autres, groupées par fournisseur</td></tr>
+  </table>
+
+  <div class="foot">
+    <b>Qui fait quoi :</b> l'<b>Horloge</b> (cron) sonne chaque nuit à 07:00 → elle réveille l'<b>agent de veille</b>, qui va lire chez chaque fournisseur et remplit la colonne <b>Amont</b>.
+    S'il trouve du nouveau : notification + bouton <b>Injecter</b>. Toi seul cliques — Injecter télécharge et charge (l'ingestion), puis <b>Calculer</b> refait les scores, puis <b>Basculer</b> les met en service.
+    « Relancer l'ingestion » recharge la même version (réparation). « Cadence attendue » sur une source manuelle n'appelle personne : c'est ton rappel.
+  </div>
+</div>
+
+</body>
+</html>

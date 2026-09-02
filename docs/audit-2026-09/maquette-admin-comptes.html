@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Admin · Comptes (maquette)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#0e1210;--card:#141a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--faint:#5f6b65;
+    --mint:#4ADE80;--mint-deep:#2FBE66;--mint-soft:rgba(74,222,128,.10);--ink:#071009;
+    --amber:#F0B429;--amber-soft:rgba(240,180,41,.12);
+    --red:#F87171;--red-soft:rgba(248,113,113,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050706;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;padding:22px 16px 60px;display:flex;flex-direction:column;align-items:center}
+  .note{font-size:12px;color:var(--dim);text-align:center;line-height:1.6;max-width:920px;margin-bottom:14px}
+  .note b{color:var(--mint)}
+  .page{width:1300px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .kicker{font-size:10.5px;letter-spacing:.26em;color:var(--dim)}
+  h1{font-size:21px;font-weight:650;margin-top:5px}
+
+  /* création une ligne */
+  .newbar{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin:14px 0 16px;flex-wrap:wrap}
+  .newbar .lbl{font-size:12.5px;color:var(--dim);margin-right:2px}
+  .inp{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;color:var(--txt);font-family:inherit}
+  .inp::placeholder{color:var(--faint)}
+  .btn{background:var(--mint);color:var(--ink);border:none;border-radius:8px;padding:8px 13px;font-size:13px;font-weight:650;cursor:pointer;font-family:inherit}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--dim)}
+  .hint{font-size:11.5px;color:var(--faint)}
+
+  .cols{display:grid;grid-template-columns:340px 1fr;gap:16px}
+
+  /* liste */
+  .list .chips{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:4px 10px;color:var(--dim)}
+  .chip.on{border-color:rgba(74,222,128,.45);color:var(--mint);background:var(--mint-soft)}
+  .row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:7px;cursor:pointer}
+  .row.sel{border-color:var(--mint)}
+  .st{width:9px;height:9px;border-radius:50%;flex:none}
+  .st.actif{background:var(--mint)}.st.essai{background:var(--amber)}.st.invite{background:#7d8f86}.st.susp{background:var(--red)}
+  .row .nm{font-size:13.5px;font-weight:600;flex:1;min-width:0}
+  .row .nm small{display:block;font-weight:400;color:var(--faint);font-size:11px;margin-top:1px}
+  .row .tag{font-size:10.5px;color:var(--dim)}
+  .row .todo{font-size:10.5px;color:var(--amber)}
+
+  /* fiche */
+  .fiche{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .fhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .fhead h2{font-size:18px;font-weight:650}
+  .fhead .sub{font-size:12.5px;color:var(--dim);margin-top:3px}
+  .pill{display:inline-block;font-size:11px;border-radius:20px;padding:3px 10px;background:var(--amber-soft);color:var(--amber);font-weight:600}
+  .next{margin-top:14px;background:linear-gradient(135deg,rgba(74,222,128,.14),rgba(74,222,128,.05));border:1px solid rgba(74,222,128,.4);border-radius:11px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .next .t{font-size:11px;letter-spacing:.2em;color:var(--mint)}
+  .next .v{font-size:14.5px;font-weight:650;margin-top:3px}
+  .next .v small{display:block;font-weight:400;font-size:12px;color:var(--dim);margin-top:2px}
+
+  .steps{margin-top:16px}
+  .steps h3{font-size:10.5px;letter-spacing:.22em;color:var(--dim);margin-bottom:8px}
+  .step{display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px}
+  .step:last-child{border-bottom:none}
+  .ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex:none}
+  .ic.done{background:var(--mint-soft);color:var(--mint)}
+  .ic.now{background:var(--amber-soft);color:var(--amber)}
+  .ic.wait{background:rgba(255,255,255,.05);color:var(--faint)}
+  .step .lb{flex:1;min-width:0}
+  .step .lb small{display:block;color:var(--faint);font-size:11px;margin-top:1px}
+  .step .when{font-size:11.5px;color:var(--dim);white-space:nowrap}
+  .mini{font-size:11.5px;color:var(--mint);border:1px solid rgba(74,222,128,.35);border-radius:7px;padding:3px 9px;cursor:pointer;white-space:nowrap}
+  .mini.g{color:var(--dim);border-color:var(--line)}
+
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+  .kpi .n{font-size:16px;font-weight:700}
+  .kpi .l{font-size:10.5px;color:var(--dim);margin-top:2px}
+  .danger{margin-top:16px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:12px;color:var(--dim)}
+  .danger .b{color:var(--red);border:1px solid rgba(248,113,113,.4);border-radius:7px;padding:4px 10px;cursor:pointer;font-size:12px}
+</style>
+</head>
+<body>
+
+<p class="note">
+  Admin › <b>Comptes</b> — la page répond à une seule question : <b>« que dois-je faire pour ce client, maintenant ? »</b>.
+  Création en une ligne en haut. À gauche la liste avec l'action en attente ; à droite la fiche : la grosse carte verte dit la prochaine
+  action, la séquence en dessous nomme chaque mail clairement (fini « mail 1 »), avec aperçu avant envoi.
+</p>
+
+<div class="page">
+  <div class="kicker mono">ADMIN · COMPTES</div>
+  <h1>5 comptes · 3 licences actives · 1 047 € / mois</h1>
+
+  <div class="newbar">
+    <span class="lbl">Nouveau client :</span>
+    <input class="inp" style="width:230px" placeholder="email@client.re">
+    <input class="inp" style="width:160px" placeholder="Nom (option)">
+    <button class="btn">Créer &amp; préparer l'invitation →</button>
+    <button class="btn ghost">ou essai 48 h</button>
+    <span class="hint">l'invitation ne part jamais seule — tu l'envoies depuis la fiche</span>
+  </div>
+
+  <div class="cols">
+    <div class="list">
+      <div class="chips">
+        <span class="chip on">Tous 5</span><span class="chip">Actifs 3</span><span class="chip">Essai 1</span><span class="chip">Invités 1</span><span class="chip">Suspendus 0</span>
+      </div>
+      <div class="row"><span class="st actif"></span><div class="nm">GTOI Aménagement<small>direction@gtoi.re</small></div><span class="tag">actif · 349 €</span></div>
+      <div class="row sel"><span class="st essai"></span><div class="nm">Agence SP Immo<small>s.payet@spimmo.re</small></div><span class="todo">⚑ mail de bienvenue à envoyer</span></div>
+      <div class="row"><span class="st actif"></span><div class="nm">CBo Foncier<small>foncier@cbo.re</small></div><span class="tag">actif · 349 €</span></div>
+      <div class="row"><span class="st invite"></span><div class="nm">SHLMR — dév.<small>dev@shlmr.re</small></div><span class="todo">⚑ invitation à envoyer</span></div>
+      <div class="row"><span class="st actif"></span><div class="nm">Sogecore<small>j.hoarau@sogecore.re</small></div><span class="tag">actif · 349 €</span></div>
+    </div>
+
+    <div class="fiche">
+      <div class="fhead">
+        <div>
+          <h2>Agence SP Immo — Stéphanie Payet</h2>
+          <div class="sub">s.payet@spimmo.re · compte créé le 01/09 · <span class="pill">ESSAI — expire demain 14:10</span></div>
+        </div>
+        <button class="btn ghost">Lien de souscription Stripe</button>
+      </div>
+
+      <div class="next">
+        <div>
+          <div class="t mono">PROCHAINE ACTION</div>
+          <div class="v">Envoyer le mail de bienvenue
+            <small>elle a créé son compte hier mais ne s'est pas reconnectée — le mail contient ses premiers pas</small>
+          </div>
+        </div>
+        <div><span class="mini g">aperçu</span> <button class="btn">Envoyer →</button></div>
+      </div>
+
+      <div class="steps">
+        <h3>PARCOURS</h3>
+        <div class="step"><span class="ic done">✓</span><div class="lb">Invitation envoyée<small>lien de création de compte — mécanisme cloisonné</small></div><span class="when">01/09 09:12</span></div>
+        <div class="step"><span class="ic done">✓</span><div class="lb">Compte créé — essai 48 h<small>accès complet, comme une licence</small></div><span class="when">01/09 14:10</span></div>
+        <div class="step"><span class="ic now">●</span><div class="lb">Mail de bienvenue<small>premiers pas : la carte, une fiche, le Copilote</small></div><span class="mini g">aperçu</span>&nbsp;<span class="mini">Envoyer</span></div>
+        <div class="step"><span class="ic wait">·</span><div class="lb">Relance J+3<small>« avez-vous trouvé votre première parcelle ? » — l'app te le rappellera</small></div><span class="when">dès le 04/09</span></div>
+        <div class="step"><span class="ic wait">·</span><div class="lb">Dernier rappel J+10<small>proposition d'appel + lien Stripe</small></div><span class="when">dès le 11/09</span></div>
+        <div class="step"><span class="ic wait">·</span><div class="lb">Abonnement Stripe<small>349 €/mois — la licence passe « active » au premier paiement</small></div><span class="mini g">envoyer le lien</span></div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="n">14 min</div><div class="l">usage sur 7 j</div></div>
+        <div class="kpi"><div class="n">01/09 14:36</div><div class="l">dernière connexion</div></div>
+        <div class="kpi"><div class="n">3 / 80</div><div class="l">Copilote aujourd'hui</div></div>
+      </div>
+
+      <div class="danger">
+        <span>La suspension est toujours <b>manuelle</b> — jamais automatique sur un échec de carte.</span>
+        <span class="b">Suspendre le compte</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

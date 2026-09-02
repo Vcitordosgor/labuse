@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Admin · les 6 autres pages (maquette)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#0e1210;--card:#141a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--faint:#5f6b65;
+    --mint:#4ADE80;--mint-soft:rgba(74,222,128,.10);--ink:#071009;
+    --amber:#F0B429;--amber-soft:rgba(240,180,41,.12);
+    --red:#F87171;--red-soft:rgba(248,113,113,.12);
+    --iris:#B79CFC;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050706;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;padding:22px 14px 70px;display:flex;flex-direction:column;align-items:center;gap:26px}
+  .intro{font-size:12px;color:var(--dim);max-width:900px;text-align:center;line-height:1.6}
+  .intro b{color:var(--mint)}
+  .page{width:1180px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .kicker{font-size:10px;letter-spacing:.26em;color:var(--dim)}
+  h1{font-size:18px;font-weight:650;margin:4px 0 2px}
+  .sub{font-size:12px;color:var(--dim)}
+  .lede{font-size:11.5px;color:var(--faint);margin-top:6px;border-left:2px solid var(--line);padding-left:9px}
+
+  .grid{display:grid;gap:9px;margin-top:13px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer}
+  .tile .n{font-size:19px;font-weight:700;letter-spacing:-.02em}
+  .tile .l{font-size:11px;color:var(--dim);margin-top:2px;line-height:1.35}
+  .tile.act{border-color:rgba(240,180,41,.4)}
+  .tile.act .n{color:var(--amber)}
+  .tile.ok .n{color:var(--mint)}
+  .secttl{font-size:10px;letter-spacing:.22em;color:var(--faint);margin:15px 0 7px}
+
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+  .chip{font-size:11.5px;border:1px solid var(--line);border-radius:20px;padding:4px 11px;color:var(--dim);cursor:pointer}
+  .chip.on{border-color:rgba(74,222,128,.45);color:var(--mint);background:var(--mint-soft)}
+  .chip.amb{color:var(--amber)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.16em;color:var(--faint);text-align:left;padding:6px 9px;border-bottom:1px solid var(--line)}
+  td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;font-size:10.5px;border-radius:6px;padding:2px 8px}
+  .b-ok{background:var(--mint-soft);color:var(--mint)}
+  .b-amb{background:var(--amber-soft);color:var(--amber)}
+  .b-off{background:rgba(255,255,255,.05);color:var(--faint)}
+  .a{display:inline-block;font-size:11px;color:var(--mint);border:1px solid rgba(74,222,128,.35);border-radius:7px;padding:3px 9px;margin-left:4px;cursor:pointer;white-space:nowrap}
+  .a.g{color:var(--dim);border-color:var(--line)}
+  .inp{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px;color:var(--txt);font-family:inherit}
+  .inp.sm{width:52px;text-align:center}
+  .btn{background:var(--mint);color:var(--ink);border:none;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit}
+  .muted{color:var(--dim)}.tiny{font-size:10.5px;color:var(--faint)}
+  .bloc{border:1px solid var(--line);border-radius:10px;margin-top:10px;overflow:hidden}
+  .bloc .bh{display:flex;justify-content:space-between;align-items:center;background:var(--panel);padding:9px 13px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .bloc .bh .tiny{font-weight:400}
+  .bloc .bc{padding:11px 13px}
+  .comh td{background:var(--panel);color:var(--faint);font-size:10.5px;letter-spacing:.1em;padding:4px 9px}
+  .bar{height:9px;border-radius:5px;background:linear-gradient(90deg,#52E68C,#2FBE66)}
+  .brow{display:grid;grid-template-columns:150px 1fr 40px;gap:10px;align-items:center;font-size:12px;padding:4px 0;color:var(--dim)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+</style>
+</head>
+<body>
+
+<p class="intro">Les <b>6 autres pages admin</b>, refondues sur le même principe : une page = une question, l'action de Vic d'abord.
+À déposer avec les deux premières maquettes — chiffres fictifs, structure de référence.</p>
+
+<!-- ════════ 1 · PILOTAGE ════════ -->
+<div class="page">
+  <div class="kicker mono">1 · PILOTAGE</div>
+  <h1>Comment va LABUSE ce matin ?</h1>
+  <div class="lede">Rangée 1 = ce qui attend un geste de toi (ambre). Rangée 2 = la santé (vert). La tuile Courrier a disparu — le courrier vit dans sa page. Chaque tuile est cliquable.</div>
+
+  <div class="secttl mono">À FAIRE</div>
+  <div class="grid g4">
+    <div class="tile act"><div class="n">2</div><div class="l">sources ont une nouvelle version → Données</div></div>
+    <div class="tile act"><div class="n">1</div><div class="l">essai expire sous 24 h (SP Immo) → Comptes</div></div>
+    <div class="tile act"><div class="n">3</div><div class="l">signalements ouverts → Produit</div></div>
+    <div class="tile act"><div class="n">1</div><div class="l">donnée manuelle en retard (SPANC) → Données</div></div>
+  </div>
+
+  <div class="secttl mono">SANTÉ · TRACTION</div>
+  <div class="grid g4">
+    <div class="tile ok"><div class="n">1 047 €</div><div class="l">MRR · 3 licences actives · 1 essai</div></div>
+    <div class="tile ok"><div class="n">6/6 ✓</div><div class="l">garde de cohérence — 07:15</div></div>
+    <div class="tile ok"><div class="n">12</div><div class="l">veilles déclenchées sur 7 j</div></div>
+    <div class="tile ok"><div class="n">0 <span style="font-size:12px;color:var(--dim)">+0</span></div><div class="l">paires annonce ↔ vente DVF</div></div>
+  </div>
+
+  <div class="secttl mono">HIGHLIGHTS · 7 JOURS <span style="letter-spacing:0">(inchangés)</span></div>
+  <div class="card" style="font-size:12.5px;color:var(--dim);line-height:1.7">
+    GTOI a ouvert 34 fiches (record) · 2 courriers ont reçu une réponse · le tier Priorité a gagné 214 parcelles au dernier run · Sogecore n'a pas ouvert l'app depuis 6 jours.
+  </div>
+</div>
+
+<!-- ════════ 2 · IA ════════ -->
+<div class="page">
+  <div class="kicker mono">2 · IA</div>
+  <h1>Ce que l'IA consomme, et qui a droit à quoi.</h1>
+  <div class="lede">Unités enfin claires : le coût moyen est en <b>centimes</b>, avec le calcul affiché. « Quota pilote » devient « Plafond quotidien par compte » — l'édition en ligne, c'est l'allocation.</div>
+
+  <div class="grid g4" style="grid-template-columns:repeat(3,1fr)">
+    <div class="tile"><div class="n" style="color:var(--iris)">0,51 €</div><div class="l">conso du mois · 65 appels servis</div></div>
+    <div class="tile"><div class="n" style="color:var(--iris)">0,79 centime</div><div class="l">par question — 0,51 € ÷ 65 appels</div></div>
+    <div class="tile"><div class="n">sonnet · haiku</div><div class="l">registre surface → modèle, 21 surfaces ↓</div></div>
+  </div>
+
+  <div class="secttl mono">PLAFOND QUOTIDIEN PAR COMPTE <span class="tiny" style="letter-spacing:0">— le budget € global se gère sur la console Anthropic ↗</span></div>
+  <table>
+    <tr><th>COMPTE</th><th>AUJOURD'HUI</th><th>30 JOURS</th><th>COÛT 30 J</th><th>PLAFOND / JOUR</th></tr>
+    <tr><td>GTOI Aménagement</td><td><span class="badge b-ok">31 / 80</span></td><td class="muted">412 appels</td><td class="muted">0,22 €</td><td><input class="inp sm" value="80"> <span class="a">enregistrer</span></td></tr>
+    <tr><td>Agence SP Immo <span class="badge b-amb">essai</span></td><td><span class="badge b-ok">3 / 80</span></td><td class="muted">3 appels</td><td class="muted">0,01 €</td><td><input class="inp sm" value="80"> <span class="a g">enregistrer</span></td></tr>
+    <tr><td>CBo Foncier</td><td><span class="badge b-amb">78 / 80</span></td><td class="muted">1 903 appels</td><td class="muted">0,26 €</td><td><input class="inp sm" value="120"> <span class="a">enregistrer</span></td></tr>
+  </table>
+  <div class="tiny" style="margin-top:8px">Enregistrer est immédiat : la question suivante du compte lit le nouveau plafond (vérifié en recette).</div>
+</div>
+
+<!-- ════════ 3 · PRODUIT ════════ -->
+<div class="page">
+  <div class="kicker mono">3 · PRODUIT</div>
+  <h1>Ce qui est utilisé — et ce qui ne l'est jamais.</h1>
+  <div class="lede">Période au choix, tri par volume, et le bloc « jamais ouverts » mis en avant : c'est lui qui dit où investir. Les retours clients = la table signalements unifiée, filtrable.</div>
+
+  <div class="chips"><span class="chip">7 j</span><span class="chip on">30 j</span><span class="chip">90 j</span></div>
+  <div class="brow"><span>Carte / fiches</span><span><span class="bar" style="width:100%"></span></span><b>525</b></div>
+  <div class="brow"><span>Tour de contrôle</span><span><span class="bar" style="width:21%"></span></span><b>112</b></div>
+  <div class="brow"><span>Radar</span><span><span class="bar" style="width:19%"></span></span><b>99</b></div>
+  <div class="brow"><span>Projets</span><span><span class="bar" style="width:8%"></span></span><b>44</b></div>
+  <div class="tiny" style="margin:4px 0 0 150px">… tri complet en dessous</div>
+
+  <div class="card" style="margin-top:12px;border-color:rgba(240,180,41,.4)">
+    <b style="font-size:12.5px;color:var(--amber)">Jamais ouverts sur 30 j :</b>
+    <span style="font-size:12.5px;color:var(--dim)"> Densifier l'existant · Remonter le temps · Prospection solaire — à montrer en démo, ou à repenser.</span>
+  </div>
+
+  <div class="secttl mono">RETOURS CLIENTS <span class="tiny" style="letter-spacing:0">— table signalements, la même que le compteur Pilotage</span></div>
+  <div class="chips"><span class="chip on">Tous 3</span><span class="chip">Nouveaux 2</span><span class="chip">Traités 1</span><span class="chip g">Compte : tous ▾</span></div>
+  <table>
+    <tr><th>DATE</th><th>COMPTE</th><th>TYPE</th><th>MESSAGE</th><th>STATUT</th><th></th></tr>
+    <tr><td class="muted">02/09</td><td>GTOI</td><td><span class="badge b-amb">fiche</span></td><td>« SDP à vérifier sur DR0946 »</td><td><span class="badge b-amb">nouveau</span></td><td><span class="a">Traiter</span></td></tr>
+    <tr><td class="muted">01/09</td><td>CBo</td><td><span class="badge b-off">annonce</span></td><td>« annonce en doublon »</td><td><span class="badge b-ok">traité</span></td><td><span class="a g">Rouvrir</span></td></tr>
+  </table>
+</div>
+
+<!-- ════════ 4 · COURRIER ════════ -->
+<div class="page">
+  <div class="kicker mono">4 · COURRIER</div>
+  <h1>2 courriers attendent ton dépôt.</h1>
+  <div class="lede">Filtre « à déposer » par défaut — c'est ton travail du jour. Vue par compte, statuts unifiés, aperçu du document réel, et le lien vers la piste CRM d'origine.</div>
+
+  <div class="chips">
+    <span class="chip g">Compte : tous ▾</span>
+    <span class="chip amb on">À déposer 2</span><span class="chip">Demandes 1</span><span class="chip">Envoyés 4</span><span class="chip">Répondus 2</span><span class="chip">Sans réponse 1</span>
+  </div>
+  <table>
+    <tr><th>COMPTE</th><th>PARCELLE · PROPRIÉTAIRE</th><th>DEMANDÉ</th><th>STATUT</th><th style="text-align:right">ACTIONS</th></tr>
+    <tr>
+      <td>GTOI</td><td>DR0946 · Mme H. Payet <span class="tiny">→ piste CRM ↗</span></td><td class="muted">01/09</td><td><span class="badge b-amb">à déposer</span></td>
+      <td style="text-align:right"><span class="a g">aperçu</span><span class="a">Marquer déposé</span></td>
+    </tr>
+    <tr>
+      <td>CBo</td><td>AZ0014 · Indivision Grondin <span class="tiny">→ piste CRM ↗</span></td><td class="muted">31/08</td><td><span class="badge b-amb">à déposer</span></td>
+      <td style="text-align:right"><span class="a g">aperçu</span><span class="a">Marquer déposé</span></td>
+    </tr>
+    <tr>
+      <td>GTOI</td><td>BK0332 · SCI Les Flamboyants</td><td class="muted">28/08</td><td><span class="badge b-ok">envoyé le 29/08</span></td>
+      <td style="text-align:right"><span class="a g">aperçu</span><span class="a g">Marquer répondu</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ════════ 5 · RADAR (PIGE) ════════ -->
+<div class="page">
+  <div class="kicker mono">5 · RADAR · PIGE</div>
+  <h1>Déposer, valider, re-vérifier.</h1>
+  <div class="lede">Trois blocs repliables — le descriptif se replie après première lecture. La re-vérification est groupée par commune, la plus ancienne d'abord, avec le compteur du jour.</div>
+
+  <div class="bloc">
+    <div class="bh">▸ 1 · Déposer <span class="tiny">dépôt HTML · dépôt agence (fermé) · chemin capture replié</span></div>
+  </div>
+  <div class="bloc">
+    <div class="bh">▸ 2 · File d'extraction <span class="badge b-ok">0 à valider — file vidée ✓</span></div>
+  </div>
+  <div class="bloc">
+    <div class="bh">▾ 3 · Re-vérification <span class="tiny">109 annonces · 14 vérifiées aujourd'hui</span></div>
+    <div class="bc">
+      <table>
+        <tr class="comh"><td colspan="4">SAINT-DENIS · 6 — plus ancien contrôle : 92 j</td></tr>
+        <tr><td>139 000 € <span class="badge b-amb">≈ 90 j</span> <span class="tiny">source ↗</span></td><td style="text-align:right;white-space:nowrap"><span class="a g">Toujours en ligne</span><span class="a g">Prix modifié</span><span class="a" style="color:var(--red);border-color:rgba(248,113,113,.4)">Retirée</span></td></tr>
+        <tr><td>367 500 € <span class="badge b-amb">≈ 90 j</span> <span class="tiny">source ↗</span></td><td style="text-align:right;white-space:nowrap"><span class="a g">Toujours en ligne</span><span class="a g">Prix modifié</span><span class="a" style="color:var(--red);border-color:rgba(248,113,113,.4)">Retirée</span></td></tr>
+        <tr class="comh"><td colspan="4">SAINTE-MARIE · 3 — plus ancien contrôle : 47 j</td></tr>
+        <tr><td>428 000 € <span class="tiny">source ↗</span></td><td style="text-align:right;white-space:nowrap"><span class="a g">Toujours en ligne</span><span class="a g">Prix modifié</span><span class="a" style="color:var(--red);border-color:rgba(248,113,113,.4)">Retirée</span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 6 · CONTACTS ════════ -->
+<div class="page">
+  <div class="kicker mono">6 · CONTACTS</div>
+  <h1>Le carnet des communes.</h1>
+  <div class="lede">Recherche en tête, une carte par commune : le standard officiel, puis tes contacts nommés. Ajout depuis ici <b>ou</b> depuis la fiche commune (carte Mairie). Visible sur la fiche commune de tous les comptes.</div>
+
+  <input class="inp" style="width:100%;margin-top:12px" placeholder="🔍  Chercher une commune… (Saint-André)">
+
+  <div class="card" style="margin-top:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <b style="font-size:14px">Saint-André</b>
+      <span class="a">+ Ajouter un contact</span>
+    </div>
+    <table style="margin-top:8px">
+      <tr><td style="width:34%"><b>Mairie & service urbanisme</b><br><span class="tiny">standard officiel</span></td><td class="muted">Place de la Mairie · 02 62 58 …</td><td></td></tr>
+      <tr>
+        <td><b>Mme Gwenaëlle Serveau</b><br><span class="badge b-ok">resp. PLU</span></td>
+        <td class="muted">06 92 …  ·  g.serveau@saint-andre.re<br><span class="tiny">note : joignable le matin — dossier zone AU nord</span></td>
+        <td style="text-align:right"><span class="a g">✎</span><span class="a g" style="color:var(--red)">🗑</span></td>
+      </tr>
+    </table>
+  </div>
+  <div class="card" style="margin-top:9px;color:var(--faint);font-size:12px;text-align:center">… une carte par commune, seules celles avec contacts en premier</div>
+</div>
+
+<!-- ════════ 7 · SCAN PATRIMOINE (client) ════════ -->
+<div class="page">
+  <div class="kicker mono">7 · SCAN PATRIMOINE · ÉCRAN CLIENT</div>
+  <h1>Un propriétaire, deux onglets — et rien d'autre.</h1>
+  <div class="lede">Propriétaire choisi = tout parle de lui. Les filtres commune/catégorie et les totaux de l'île n'ont rien à faire ici : ils vivent dans le mode « Explorer toutes les opérations », accessible depuis l'état 1.</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:13px">
+    <div class="card">
+      <div class="tiny">ÉTAT 1 — avant choix</div>
+      <input class="inp" style="width:100%;margin-top:8px" placeholder="Nom, SIREN, IDU ou adresse">
+      <div class="tiny" style="margin-top:8px">ex. CBO Territoria · SHLMR · 97411000AB0012</div>
+      <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px;font-size:12.5px"><span class="a g">Explorer toutes les opérations de l'île →</span></div>
+      <div class="tiny" style="margin-top:6px">= l'ancien onglet « Veille promoteurs » : 2 357 opérations, filtres commune / catégorie / date</div>
+    </div>
+    <div class="card">
+      <div class="tiny">ÉTAT 2 — propriétaire choisi</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><b>CBO TERRITORIA</b> <span class="a g">changer</span></div>
+      <div class="tiny">SIREN 452038805</div>
+      <div class="chips" style="margin:10px 0 8px"><span class="chip">Ce qu'ils possèdent (61)</span><span class="chip on">Ce qu'ils construisent (14)</span></div>
+      <div style="font-size:12.5px"><b>14 opérations · 612 logements</b> <span class="muted">— construit ou en cours, permis depuis 2019 · Sitadel au 30/06/2026</span></div>
+      <table style="margin-top:8px">
+        <tr><td>Saint-Denis · Moufia</td><td class="muted">84 logements · 2025</td><td style="text-align:right"><span class="a g">voir sur la carte</span></td></tr>
+        <tr><td>Sainte-Marie · La Ressource</td><td class="muted">120 logements · en cours</td><td style="text-align:right"><span class="a g">voir sur la carte</span></td></tr>
+        <tr><td>Le Port · ZAC Mail de l'Océan</td><td class="muted">96 logements · 2024</td><td style="text-align:right"><span class="a g">voir sur la carte</span></td></tr>
+      </table>
+      <div class="tiny" style="margin-top:8px">aucun filtre commune / catégorie, aucun total de l'île, pas de champ « se positionner »</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
