@@ -15,7 +15,7 @@ type Onglet = 'catalogue' | 'circuit' | 'horloge'
 
 // Bandeau « 3 gestes » condensé (AD2.4) — résumé LU de /admin/flux (comptes), boutons → onglet Circuit
 // où vivent les commandes réelles (Injecter/Calculer/Basculer, mécanique FLUX-1 inchangée).
-function Gestes({ onCircuit }: { onCircuit: () => void }) {
+function Gestes() {
   const flux = useQuery({ queryKey: ['admin-flux'], queryFn: getAdminFlux, refetchInterval: 60_000 })
   const c = flux.data?.flux.comptes
   const nv = c?.nouvelle_version ?? 0
@@ -38,9 +38,7 @@ function Gestes({ onCircuit }: { onCircuit: () => void }) {
       <span className="text-txt-dim">→</span>
       <Geste n={3} titre="Basculer" tone={aBasculer > 0 ? 'warn' : 'off'}
         detail={aBasculer > 0 ? `${aBasculer} run(s) prêt(s)` : 'rien à basculer'} />
-      <button onClick={onCircuit} className="ml-auto rounded-lg border border-line-2 px-3 py-1.5 text-xs font-medium text-txt-mut transition-colors duration-quick hover:text-txt">
-        Ouvrir le Circuit →
-      </button>
+      {/* RETOURS-8 (R4.3) — bouton « Ouvrir le Circuit → » retiré : l'onglet Circuit suffit. */}
     </div>
   )
 }
@@ -56,7 +54,7 @@ export function DonneesSection() {
   )
   return (
     <>
-      <Gestes onCircuit={() => setOnglet('circuit')} />
+      <Gestes />
       <div className="mb-4 flex gap-6 border-b border-line">
         <Tab k="catalogue">Catalogue</Tab>
         <Tab k="circuit">Circuit</Tab>

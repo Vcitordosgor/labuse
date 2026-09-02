@@ -126,7 +126,31 @@ def charger(db: Session, compte_id: int | None, conversation_id: int) -> dict | 
 
 
 def purger(db: Session, jours: int) -> int:
-    """Rétention : supprime les conversations plus vieilles que N jours (cron J+1, Train 8)."""
+    """Rétention : supprime les conversations plus vieilles que N jours (cron J+1, Train 8).
+    RETOURS-8 (R11) — appelée par le job quotidien `copilote-purge`, avec la rétention effective
+    (réglage admin, défaut 7 j). Les messages tombent par CASCADE (FK ON DELETE CASCADE)."""
     n = db.execute(text("DELETE FROM copilote_conversations "
                         "WHERE updated_at < now() - make_interval(days => :j)"), {"j": jours}).rowcount
     return n or 0
+
+
+def mesure(db: Session) -> dict:
+    """RETOURS-8 (R11.2) — ce que PÈSENT les conversations stockées : nombre de conversations et de
+    messages, taille en base (octets, index compris) et croissance des 7 derniers jours (messages/jour
+    moyen). Lecture seule, tolérante à l'absence de table (base neuve) → zéros."""
+    try:
+        db.execute(text(DDL))
+        r = db.execute(text(
+            "SELECT (SELECT count(*) FROM copilote_conversations) AS n_conv, "
+            "       (SELECT count(*) FROM copilote_messages) AS n_msg, "
+            "       pg_total_relation_size('copilote_conversations') AS o_conv, "
+            "       pg_total_relation_size('copilote_messages') AS o_msg")).mappings().one()
+        croissance = db.execute(text(
+            "SELECT count(*) FROM copilote_messages WHERE ts > now() - interval '7 days'")).scalar() or 0
+        octets = int(r["o_conv"] or 0) + int(r["o_msg"] or 0)
+        return {"conversations": int(r["n_conv"] or 0), "messages": int(r["n_msg"] or 0),
+                "octets": octets, "mo": round(octets / 1e6, 2),
+                "messages_7j": int(croissance), "croissance_jour": round(int(croissance) / 7.0, 1)}
+    except Exception:  # noqa: BLE001 — la mesure ne casse jamais l'appelant
+        return {"conversations": 0, "messages": 0, "octets": 0, "mo": 0.0,
+                "messages_7j": 0, "croissance_jour": 0.0}

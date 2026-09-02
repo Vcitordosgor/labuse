@@ -103,14 +103,14 @@ def creer_run(body: RunIn, request: Request, db: Session = Depends(get_db)) -> d
         # (`quota_du_compte` + `QUOTA_COPILOTE_KIND`). Fini le plafond v1 distinct (kind 'agent',
         # `copilote_quota_jour`). Compté AVANT création du run, scope propriété du run (c:<id> | session).
         from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
-        from .dashboard import quota_du_compte, QUOTA_COPILOTE_KIND
-        quota = quota_du_compte(current_compte(request)) or s.nl_quota_jour
-        n = compteur_incr_et_lire(today_reunion().isoformat(), _sujet_quota(request), QUOTA_COPILOTE_KIND)
-        if n > quota:
-            # Même style de 429 que M23 (protection.py) : detail + quota + gel_jusqua.
-            return JSONResponse(status_code=429, content={
-                "detail": f"Quota Copilote atteint ({quota} runs/jour). Reprend à minuit.",
-                "quota": quota, "gel_jusqua": "minuit"})
+        from .dashboard import etat_plafond_ia
+        # RETOURS-8 (R3) — plafond en EUROS unifié (garde unique `etat_plafond_ia`). Une mission
+        # lourde (Sonnet) pèse à son COÛT RÉEL sur le budget du jour — l'intérêt du plafond en €.
+        d = etat_plafond_ia(current_compte(request), _sujet_quota(request),
+                            today_reunion().isoformat(), nl_defaut=s.nl_quota_jour)
+        if d:
+            # Même style de 429 que M23 (protection.py) : detail + gel_jusqua (+ budget/dépense).
+            return JSONResponse(status_code=429, content=d)
 
     info = getattr(request.state, "compte_id", None)
     utilisateur_id = None

@@ -333,23 +333,20 @@ def _porte_nl(request) -> None:
     from datetime import date
 
     from .. import config
-    from .protection import compteur_incr_et_lire, sujet_quota
+    from .protection import sujet_quota
     s = config.get_settings()
     if s.dev_mode:
         return
-    # DASHBOARD-V1 · D1 / CONNEXIONS-2 Lot 2 (KO-3) — quota PAR LICENCE UNIFIÉ : un compte connecté
-    # lit SON quota (comptes.copilote_quota_jour, sinon défaut config 80/jour, modifiable au dashboard) ;
-    # sans compte (pilote/anonyme), le quota historique nl_quota_jour reste inchangé. Le compteur est
-    # le kind UNIQUE `QUOTA_COPILOTE_KIND` — le MÊME que /api/copilote-v2/ask (un seul compteur, un
-    # seul plafond pour les deux surfaces Copilote).
-    from .dashboard import quota_du_compte, QUOTA_COPILOTE_KIND
-    quota = quota_du_compte(getattr(request.state, "compte_id", None)) or s.nl_quota_jour
+    # RETOURS-8 (R3) — plafond UNIFIÉ, désormais en EUROS pour un compte connecté (dépense du jour vs
+    # budget €, missions lourdes Sonnet comptées à leur coût réel) ; sans compte (pilote/anonyme), le
+    # plafond historique en APPELS (nl_quota_jour) reste. Garde UNIQUE `etat_plafond_ia` — la MÊME que
+    # /api/copilote-v2/ask et les missions lourdes (un seul compteur, un seul plafond).
+    from .dashboard import etat_plafond_ia
     from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
-    n = compteur_incr_et_lire(today_reunion().isoformat(), sujet_quota(request), QUOTA_COPILOTE_KIND)
-    if n > quota:
-        raise HTTPException(429, detail={
-            "detail": f"Quota d'analyses IA atteint ({quota}/jour). Reprend à minuit.",
-            "quota": quota, "gel_jusqua": "minuit"})
+    d = etat_plafond_ia(getattr(request.state, "compte_id", None), sujet_quota(request),
+                        today_reunion().isoformat(), nl_defaut=s.nl_quota_jour)
+    if d:
+        raise HTTPException(429, detail=d)
 
 
 @router.post("/search")

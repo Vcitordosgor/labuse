@@ -61,6 +61,8 @@ def ensure_tables(engine) -> None:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_ia_log_compte_ts ON ia_log(compte_id, ts)"))
         # quota Copilote PAR LICENCE (NULL = défaut config copilote_questions_jour_defaut)
         c.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS copilote_quota_jour integer"))
+        # RETOURS-8 (R3) — plafond Copilote/IA en EUROS/jour PAR LICENCE (NULL = défaut config 2,00 €).
+        c.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS copilote_budget_eur numeric(6,2)"))
         # D4 — séquence d'onboarding : statut + date d'envoi STOCKÉS par (compte, mail)
         c.execute(text(
             "CREATE TABLE IF NOT EXISTS licence_mails ("
@@ -152,6 +154,24 @@ class SignalementStatutIn(BaseModel):
     statut: str = Field(pattern="^(nouveau|traite)$")
 
 
+@router.post("/admin/signalements/traiter-internes")
+def admin_signalements_traiter_internes(request: Request) -> dict:
+    """RETOURS-8 (R13) — traite en UNE fois tous les signalements ouverts qui viennent d'un compte
+    INTERNE / de TEST (comptes.plan = 'interne', ou compte_id NULL = pilote/admin/interne — rendu
+    « interne » côté Produit). Rien n'est SUPPRIMÉ : tout est marqué `traite` (horodaté), de sorte que
+    le compteur Pilotage retombe au nombre réel de signalements CLIENTS. Réversible (rouvrir à l'unité)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text(
+            "UPDATE signalements SET statut = 'traite', traite_at = now()"
+            " WHERE statut = 'nouveau' AND id IN ("
+            "   SELECT s.id FROM signalements s LEFT JOIN comptes k ON k.id = s.compte_id"
+            "   WHERE s.compte_id IS NULL OR k.plan = 'interne')")).rowcount
+    return {"ok": True, "traites": int(n or 0)}
+
+
 @router.post("/admin/signalements/{sid}/statut")
 def admin_signalement_statut(sid: int, body: SignalementStatutIn, request: Request) -> dict:
     """Traite (ou rouvre) un signalement : statut nouveau ↔ traite. `traite_at` horodaté au passage."""
@@ -182,22 +202,31 @@ def admin_stripe(request: Request, force: bool = False) -> dict:
 
 # ───────────────────────── D3 — PILOTAGE ─────────────────────────
 def _age_backup() -> dict:
-    """Âge du dernier dump (GB-054) : mtime du .dump le plus récent de backup_dir.
-    ambre ≥ 2 j · rouge ≥ 7 j · « absent » honnête si le répertoire est vide/inaccessible."""
+    """Âge + taille du dernier dump (GB-054 · RETOURS-8 R10). La tuile lit le MÊME endroit ET les
+    MÊMES motifs que les DEUX voies de sauvegarde : le cron `backup-postgres` (`labuse-*.sql.gz`,
+    jobs_impl) ET la CLI `backup-db` (`*.dump`, format custom). L'ancien glob `*.dump` SEUL ne voyait
+    jamais les dumps du cron → « aucun » à tort alors qu'un backup existait.
+    ambre ≥ 2 j · rouge ≥ 7 j · « absent » si le répertoire existe mais est vide · « non configuré »
+    si le répertoire n'existe pas (LABUSE_BACKUP_DIR non renseigné en local)."""
     import glob
     import os
     import time as _t
     from .. import config
     rep = config.get_settings().backup_dir
+    if not rep or not os.path.isdir(rep):
+        return {"etat": "non_configure", "chemin": rep, "age_jours": None}
     try:
-        dumps = glob.glob(os.path.join(rep, "*.dump"))
+        dumps = glob.glob(os.path.join(rep, "labuse-*.sql.gz")) + glob.glob(os.path.join(rep, "*.dump"))
         if not dumps:
             return {"etat": "absent", "chemin": rep, "age_jours": None}
-        mtime = max(os.path.getmtime(p) for p in dumps)
+        recent = max(dumps, key=os.path.getmtime)
+        mtime = os.path.getmtime(recent)
+        taille_mo = round(os.path.getsize(recent) / 1e6, 1)
         age_j = (_t.time() - mtime) / 86400
         etat = "rouge" if age_j >= 7 else "ambre" if age_j >= 2 else "ok"
         return {"etat": etat, "chemin": rep, "age_jours": round(age_j, 1),
-                "mtime": datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat()}
+                "mtime": datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat(),
+                "fichier": os.path.basename(recent), "taille_mo": taille_mo}
     except Exception:  # noqa: BLE001 — la tuile dit « absent », jamais un 500
         return {"etat": "absent", "chemin": rep, "age_jours": None}
 
@@ -254,15 +283,12 @@ def admin_pilotage(request: Request) -> dict:
                 run_label, carte_le = row["value"], row["updated_at"]
         # ADMIN-1 (AD5) — deux rangées de tuiles : « À faire » (ambre, un geste attendu) et « Santé »
         # (vert, traction). Tous les chiffres sont LUS d'une table existante (jamais recalculés/inventés).
-        af_nouvelle_version = af_manuelles_retard = 0
-        if c.execute(text("SELECT to_regclass('source_veille')")).scalar():
-            af_nouvelle_version = int(c.execute(text(
-                "SELECT COUNT(*) FROM source_veille WHERE actif AND dernier_statut = 'nouvelle_version'")).scalar() or 0)
-            af_manuelles_retard = int(c.execute(text(
-                "SELECT COUNT(*) FROM source_veille v JOIN data_sources d ON d.id = v.source_id"
-                " WHERE v.methode = 'rappel' AND v.actif AND v.cadence_attendue_jours IS NOT NULL"
-                " AND (d.last_sync_at IS NULL OR d.last_sync_at"
-                "      < now() - make_interval(days => v.cadence_attendue_jours))")).scalar() or 0)
+        # RETOURS-8 (R1) — les deux gestes « sources » dérivent de la LISTE UNIQUE `etats_sources`
+        # (même arbitre que le Catalogue et la page client) : impossible qu'ils se contredisent.
+        from .. import etats_sources as _es
+        _cpt_sources = _es.compteurs(_es.lister_etats(c))
+        af_nouvelle_version = _cpt_sources["nouvelle_version"]
+        af_manuelles_retard = _cpt_sources["a_rafraichir"]
         af_essais_24h = int(c.execute(text(
             "SELECT COUNT(*) FROM comptes WHERE statut = 'actif' AND essai_expire_at IS NOT NULL"
             " AND essai_expire_at > now() AND essai_expire_at < now() + interval '24 hours'")).scalar() or 0)
@@ -682,14 +708,19 @@ def admin_ia(request: Request) -> dict:
             "SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log"
             " WHERE ts > now() - interval '7 days'")).scalar() or 0)
         quotas = [dict(r) for r in c.execute(text(
-            "SELECT id, nom, copilote_quota_jour FROM comptes"
+            "SELECT id, nom, copilote_quota_jour, copilote_budget_eur FROM comptes"
             " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
-    # CONNEXIONS-2 Lot 2 — consommé AUJOURD'HUI / plafond effectif par compte (même compteur que la
-    # garde /ia + /ask). `plafond_effectif` = override licence, sinon défaut config.
-    _defaut_q = int(config.get_settings().copilote_questions_jour_defaut)
+    # RETOURS-8 (R3) — le plafond est désormais en EUROS/jour par compte. Pour chaque licence :
+    # le budget € effectif (override ou défaut), la dépense du jour en €, le nombre d'appels (mention
+    # secondaire), et l'équivalent « ≈ N questions » au coût moyen réel du compte.
+    _budget_defaut = float(config.get_settings().copilote_budget_eur_defaut)
     for q in quotas:
-        q["plafond_effectif"] = int(q["copilote_quota_jour"]) if q["copilote_quota_jour"] is not None else _defaut_q
-        q["consomme_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
+        b = float(q["copilote_budget_eur"]) if q["copilote_budget_eur"] is not None else _budget_defaut
+        cmoy = cout_moyen_appel(int(q["id"]))
+        q["budget_eur"] = round(b, 2)
+        q["depense_eur"] = round(depense_eur_aujourdhui(int(q["id"])), 4)
+        q["equiv_questions"] = int(b / cmoy) if cmoy > 0 else None
+        q["appels_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
     from datetime import date
     import calendar
     today = date.today()
@@ -706,13 +737,19 @@ def admin_ia(request: Request) -> dict:
     # source que celle réellement appelée (model_for), donc ce tableau EST la vérité servie.
     from .. import ai_models
     surfaces = ai_models.surfaces_table()
+    # RETOURS-8 (R3) — coût unitaire d'UNE question : le coût moyen réel (mois), repli sur le plancher
+    # config (0,008 €). Affiché « 0,008 € / question » (plus « pour 1 000 questions »).
+    cout_unitaire = (float(mois["cout"]) / appels) if appels else float(
+        config.get_settings().copilote_cout_moyen_defaut)
     return {
         "mois": {"cout_eur": float(mois["cout"]), "appels": appels,
                  "cout_moyen_question": (float(mois["cout"]) / appels) if appels else None},
+        "cout_unitaire_question_eur": round(cout_unitaire, 5),
         "projection_fin_mois_eur": round(projection, 2),
         "jours": jours,
         "par_licence": par_licence,
-        "quota_defaut": int(config.get_settings().copilote_questions_jour_defaut),
+        # RETOURS-8 (R3) — le plafond par défaut est en EUROS/jour (défaut config), éditable par licence.
+        "budget_defaut_eur": round(float(config.get_settings().copilote_budget_eur_defaut), 2),
         "quotas": quotas,
         "modeles_par_surface": surfaces,
         "note": "Solde Anthropic non exposé par l'API — consommation trackée localement (ledger ia_log).",
@@ -720,25 +757,28 @@ def admin_ia(request: Request) -> dict:
 
 
 class QuotaIn(BaseModel):
+    # RETOURS-8 (R3) — le plafond s'édite désormais en EUROS/jour (0,50 · 1 · 2 · 5 ou libre). null =
+    # retour au défaut config. `quota` (appels) reste ACCEPTÉ pour rétro-compatibilité d'un vieux front.
+    budget_eur: float | None = Field(default=None, ge=0.0, le=1_000.0)
     quota: int | None = Field(default=None, ge=1, le=10_000)
 
 
 @router.post("/admin/licences/{compte_id}/quota")
 def admin_licence_quota(compte_id: int, body: QuotaIn, request: Request) -> dict:
-    """Quota Copilote/jour de LA licence (éditable au dashboard, mandat D5) — null = retour
-    au défaut config. CONNEXIONS-2 Lot 2 (KO-3) : /ia ET /api/copilote-v2/ask le lisent tous deux
-    à la requête suivante (fonction unique `quota_du_compte`) — l'édition agit sur les deux surfaces."""
+    """RETOURS-8 (R3) — édite le plafond Copilote/IA de LA licence, en EUROS/jour (`budget_eur`),
+    null = retour au défaut config. /ia, /api/copilote-v2/ask ET les missions lourdes le lisent tous
+    à la requête suivante (garde unique `etat_plafond_ia`) — l'édition agit sur les trois surfaces."""
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
     from ..db import engine
     with engine().begin() as c:
         n = c.execute(text(
-            "UPDATE comptes SET copilote_quota_jour = :q, updated_at = now() WHERE id = :c"),
-            {"q": body.quota, "c": compte_id}).rowcount
+            "UPDATE comptes SET copilote_budget_eur = :b, updated_at = now() WHERE id = :c"),
+            {"b": body.budget_eur, "c": compte_id}).rowcount
     if not n:
         raise HTTPException(404, "Compte introuvable.")
-    return {"ok": True, "quota": body.quota}
+    return {"ok": True, "budget_eur": body.budget_eur}
 
 
 # ───────────────────────── D6 — SOURCES ─────────────────────────
@@ -790,6 +830,7 @@ def admin_sources(request: Request) -> dict:
     from ..db import engine
     from ..sources_catalog import est_affichee
     from .. import sentinelle
+    from .. import etats_sources
     from .. import flux as _flux_mod
     now = datetime.now(tz=timezone.utc)
     with engine().begin() as c:
@@ -820,12 +861,19 @@ def admin_sources(request: Request) -> dict:
         if delai is not None and r["last_sync_at"] is not None:
             a_jour = (now - r["last_sync_at"]).days <= delai
         relance = _relance_pour(r["name"])
+        # RETOURS-8 (R1) — l'état unique (un des quatre : nouvelle_version / a_rafraichir / a_jour /
+        # non_surveillee), calculé par le MÊME arbitre que Pilotage et la page client. Le constat de
+        # l'agent gagne sur l'heuristique de cadence (DPE/DVF : « à jour » même si le producteur traîne).
+        _et = etats_sources.etat_source(r, now=now)
         sources.append({
             "id": r["id"], "name": r["name"], "category": r["category"],
             "millesime": r["source_millesime"],
             "horizon": r["source_horizon_at"].isoformat() if r["source_horizon_at"] else None,
             "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
             "cadence": cad,
+            # RETOURS-8 (R1) — état unique + phrase honnête + projection client (2 états).
+            "etat": _et["etat"], "etat_client": _et["etat_client"],
+            "etat_phrase": _et["phrase_admin"], "publie_le": _et["publie_le"],
             # a_jour : true OK · false à mettre à jour · null = pas d'échéance calculable
             "a_jour": a_jour,
             "relance": relance["label"] if relance else None,
@@ -886,6 +934,13 @@ def admin_sources(request: Request) -> dict:
             "synthese": {"a_mettre_a_jour": sum(1 for s in sources if s["a_jour"] is False),
                          "ok": sum(1 for s in sources if s["a_jour"] is True),
                          "sans_echeance": sum(1 for s in sources if s["a_jour"] is None),
+                         # RETOURS-8 (R1) — compteurs d'état UNIQUE, dérivés de la même liste que
+                         # Pilotage et la page client (test d'égalité : test_etats_sources).
+                         "etat_nouvelle_version": sum(1 for s in sources if s["etat"] == "nouvelle_version"),
+                         "etat_a_rafraichir": sum(1 for s in sources if s["etat"] == "a_rafraichir"),
+                         "etat_a_jour": sum(1 for s in sources if s["etat"] == "a_jour"),
+                         "etat_non_surveillee": sum(1 for s in sources if s["etat"] == "non_surveillee"),
+                         "pas_a_jour_client": sum(1 for s in sources if s["etat_client"] == "pas_a_jour"),
                          # SENTINELLE-1 (W4.2) — nombre de sources avec une nouvelle version disponible.
                          "nouvelle_version": sum(1 for s in sources if s["veille"]["nouvelle_version"]),
                          "surveillees": sum(1 for s in sources if s["veille"]["surveillee"]),
@@ -1128,17 +1183,35 @@ def admin_flux(request: Request) -> dict:
     from .. import bascule_flux, coherence_flux, flux
     from ..db import session_scope
     from ..pige import releves
-    with session_scope() as s:
-        fourmiliere = flux.construire_flux(s)
-        radar = releves.bloc_radar(s)
+
+    # RETOURS-8 (R4.2) — le Circuit restait bloqué sur « Chargement… » : UNE brique qui lève (radar,
+    # runs, dernière bascule) faisait tomber TOUT l'endpoint, et la page ne rendait jamais. Chaque
+    # brique est désormais ISOLÉE avec un repli TYPÉ valide (jamais un 500, jamais une forme cassée)
+    # + une note d'erreur visible côté admin. `coherence` était déjà gardée ; on généralise à tout.
+    def _garde(label, fn, repli):
         try:
-            coherence = coherence_flux.verifier(s)
-        except Exception as e:  # noqa: BLE001 — la garde ne casse jamais la page
-            coherence = {"ok": None, "checks": [], "erreur": f"{type(e).__name__}: {e}"[:160]}
-        runs = bascule_flux.runs_termines(s)
-        derniere = bascule_flux.derniere_bascule(s)
+            return fn()
+        except Exception as e:  # noqa: BLE001 — une brique qui casse ne bloque plus le Circuit
+            erreurs.append(f"{label}: {type(e).__name__}: {e}"[:160])
+            return repli
+
+    _FLUX_VIDE = {"run": None, "sources": [], "moteurs": [], "surfaces": [],
+                  "comptes": {"total": 0, "surveillees": 0, "nouvelle_version": 0,
+                              "plus_recentes_que_run": 0, "n_surfaces": 0},
+                  "plus_recentes": [], "genere_le": None}
+    _RADAR_VIDE = {"compteurs": {}, "ecart": [], "courbe": {"points": [], "depuis_le": None}}
+    erreurs: list[str] = []
+    with session_scope() as s:
+        fourmiliere = _garde("flux", lambda: flux.construire_flux(s), _FLUX_VIDE)
+        radar = _garde("radar", lambda: releves.bloc_radar(s), _RADAR_VIDE)
+        coherence = _garde("coherence", lambda: coherence_flux.verifier(s),
+                           {"ok": None, "checks": []})
+        runs = _garde("runs", lambda: bascule_flux.runs_termines(s), [])
+        derniere = _garde("derniere", lambda: bascule_flux.derniere_bascule(s), None)
     return {"flux": fourmiliere, "radar": radar, "coherence": coherence,
-            "bascule": {"runs": runs, "derniere": derniere}}
+            "bascule": {"runs": runs, "derniere": derniere},
+            # R4.2 — si une brique a lâché, la page rend quand même (repli) et DIT quoi a échoué.
+            "erreurs": erreurs or None}
 
 
 @router.get("/admin/flux/runs")
@@ -1289,31 +1362,88 @@ def admin_retour_statut(retour_id: int, body: RetourStatutIn, request: Request) 
 QUOTA_COPILOTE_KIND = "copilote"
 
 
-def quota_du_compte(compte_id: int | None) -> int | None:
-    """Quota de questions Copilote/jour pour CE compte : l'override de la licence
-    (comptes.copilote_quota_jour), sinon le défaut config (80/jour). None si pas de compte
-    (pilote/anonyme → l'appelant garde son quota historique nl_quota_jour)."""
-    if compte_id is None:
-        return None
+def _fmt_eur(x: float) -> str:
+    """2.0 → « 2,00 € » (virgule décimale française)."""
+    return f"{float(x):.2f} €".replace(".", ",")
+
+
+def budget_eur_du_compte(compte_id: int | None) -> float:
+    """RETOURS-8 (R3) — le PLAFOND en euros/jour de CE compte : l'override licence
+    (comptes.copilote_budget_eur), sinon le défaut config (2,00 €)."""
     from .. import config
-    defaut = int(config.get_settings().copilote_questions_jour_defaut)
+    defaut = float(config.get_settings().copilote_budget_eur_defaut)
+    if compte_id is None:
+        return defaut
     try:
         from ..db import engine
         with engine().begin() as c:
-            v = c.execute(text("SELECT copilote_quota_jour FROM comptes WHERE id = :c"),
+            v = c.execute(text("SELECT copilote_budget_eur FROM comptes WHERE id = :c"),
                           {"c": compte_id}).scalar()
-        return int(v) if v is not None else defaut
-    except Exception:  # noqa: BLE001 — lecture best-effort : jamais bloquer une question sur une panne
+        return float(v) if v is not None else defaut
+    except Exception:  # noqa: BLE001 — best-effort : jamais bloquer une question sur une panne
         return defaut
+
+
+def cout_moyen_appel(compte_id: int | None) -> float:
+    """RETOURS-8 (R3) — coût moyen RÉEL d'un appel IA sur 30 jours : d'abord pour CE compte, sinon le
+    coût moyen global, sinon le plancher config (0,008 €). Sert à convertir le plafond € en « ≈ N
+    questions » et à afficher le coût unitaire. Jamais 0 (division protégée)."""
+    from .. import config
+    plancher = float(config.get_settings().copilote_cout_moyen_defaut)
+    try:
+        from ..db import engine
+        with engine().connect() as c:
+            if compte_id is not None:
+                r = c.execute(text(
+                    "SELECT COALESCE(SUM(cout_eur), 0) AS s, COUNT(*) AS n FROM ia_log"
+                    " WHERE compte_id = :c AND ts > now() - interval '30 days'"),
+                    {"c": compte_id}).mappings().one()
+                if r["n"] and float(r["s"]) > 0:
+                    return float(r["s"]) / int(r["n"])
+            g = c.execute(text(
+                "SELECT COALESCE(SUM(cout_eur), 0) AS s, COUNT(*) AS n FROM ia_log"
+                " WHERE ts > now() - interval '30 days'")).mappings().one()
+            if g["n"] and float(g["s"]) > 0:
+                return float(g["s"]) / int(g["n"])
+    except Exception:  # noqa: BLE001
+        pass
+    return plancher
+
+
+def quota_du_compte(compte_id: int | None) -> dict | None:
+    """RETOURS-8 (R3) — LA fonction unique du plafond Copilote/IA, désormais en EUROS. Rend un budget
+    € ET son équivalent en appels (au coût moyen réel du compte). None si pas de compte connecté
+    (pilote/anonyme → l'appelant garde son plafond historique en appels, nl_quota_jour)."""
+    if compte_id is None:
+        return None
+    budget = budget_eur_du_compte(compte_id)
+    cmoy = cout_moyen_appel(compte_id)
+    equiv = int(budget / cmoy) if cmoy > 0 else None
+    return {"budget_eur": budget, "cout_moyen_eur": cmoy, "equiv_appels": equiv}
 
 
 #: alias rétro-compatible (l'ancien nom pointe sur la fonction unifiée — plus de divergence).
 quota_nl_du_compte = quota_du_compte
 
 
+def depense_eur_aujourdhui(compte_id: int) -> float:
+    """RETOURS-8 (R3) — la DÉPENSE IA en euros AUJOURD'HUI (jour Réunion) pour ce compte, lue du
+    ledger ia_log (missions lourdes Sonnet comprises, à leur coût réel). Base du plafond en €."""
+    from ..db import engine
+    try:
+        with engine().connect() as c:
+            v = c.execute(text(
+                "SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log"
+                " WHERE compte_id = :c AND (ts AT TIME ZONE 'Indian/Reunion')::date"
+                "       = (now() AT TIME ZONE 'Indian/Reunion')::date"), {"c": compte_id}).scalar()
+        return float(v or 0)
+    except Exception:  # noqa: BLE001 — best-effort, jamais un 500
+        return 0.0
+
+
 def consomme_copilote_aujourdhui(compte_id: int) -> int:
-    """Compteur Copilote consommé AUJOURD'HUI par ce compte (kind unique, scope `c:<id>`, jour
-    Réunion) — la même mesure que la garde de quota. Pour la tuile dashboard « consommé / plafond »."""
+    """Nombre d'appels IA du compte AUJOURD'HUI (jour Réunion) — pour la mention « en petit » sous le
+    compteur en euros. Lu du compteur unique (kind `QUOTA_COPILOTE_KIND`, scope `c:<id>`)."""
     from ..tz import today_reunion
     from .protection import compteur
     from ..db import engine
@@ -1322,3 +1452,24 @@ def consomme_copilote_aujourdhui(compte_id: int) -> int:
             return compteur(c, f"c:{compte_id}", QUOTA_COPILOTE_KIND, today_reunion().isoformat())
     except Exception:  # noqa: BLE001 — best-effort, jamais un 500 sur le dashboard
         return 0
+
+
+def etat_plafond_ia(compte_id: int | None, sujet: str, jour_iso: str, *, nl_defaut: int) -> dict | None:
+    """RETOURS-8 (R3) — LA garde unique du plafond IA, partagée par /ia, /ask et les missions lourdes.
+    Incrémente TOUJOURS le compteur d'appels (mention « appels » de la tuile), puis :
+      · compte connecté → plafond en EUROS : dépense du jour ≥ budget € → dépassement ;
+      · sans compte (pilote/anonyme) → plafond historique en APPELS (nl_defaut).
+    Rend None si tout va bien, sinon un `detail` prêt à servir en 429 (mêmes clés qu'avant + budget)."""
+    from .protection import compteur_incr_et_lire
+    n = compteur_incr_et_lire(jour_iso, sujet, QUOTA_COPILOTE_KIND)
+    if compte_id is None:
+        if n > nl_defaut:
+            return {"detail": f"Quota d'analyses IA atteint ({nl_defaut}/jour). Reprend à minuit.",
+                    "quota": nl_defaut, "gel_jusqua": "minuit"}
+        return None
+    budget = budget_eur_du_compte(compte_id)
+    depense = depense_eur_aujourdhui(compte_id)
+    if depense >= budget:
+        return {"detail": f"Plafond IA du jour atteint ({_fmt_eur(budget)}/jour). Reprend à minuit.",
+                "budget_eur": round(budget, 2), "depense_eur": round(depense, 4), "gel_jusqua": "minuit"}
+    return None

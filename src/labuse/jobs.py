@@ -173,12 +173,37 @@ def exec_one(nom: str) -> int:
 
 
 def _champ_match(val: int, champ: str) -> bool:
-    """Un champ cron (minute/heure/jour/mois/jour-semaine) matche-t-il une valeur ? Gère `*`, `*/N`, entier."""
-    if champ == "*":
-        return True
-    if champ.startswith("*/"):
-        return val % int(champ[2:]) == 0
-    return val == int(champ)
+    """Un champ cron (minute/heure/jour/mois/jour-semaine) matche-t-il une valeur ?
+
+    RETOURS-8 (R4.1) — supporte la GRAMMAIRE cron réelle, séparément ou combinée :
+      · `*`      — n'importe quelle valeur ;
+      · `a,b,c`  — LISTE (le job `sante-endpoints` tourne à `7,37`) — l'ancien `int('7,37')` plantait ;
+      · `a-b`    — PLAGE (bornes incluses) ;
+      · `*/n`    — PAS sur `*` ; `a-b/n` — pas sur une plage ; `a/n` — pas depuis `a` jusqu'au max.
+    Une virgule combine plusieurs de ces termes (`1-5,30,*/15`). Un terme illisible ne matche pas
+    (jamais une exception qui remonte et casse l'Horloge)."""
+    return any(_terme_match(val, t) for t in champ.split(","))
+
+
+def _terme_match(val: int, terme: str) -> bool:
+    """Un TERME cron (sans virgule) : `*`, entier, `a-b`, `*/n`, `a-b/n`, `a/n`. False si illisible."""
+    terme = terme.strip()
+    try:
+        base, _, pas_s = terme.partition("/")
+        pas = int(pas_s) if pas_s else 1
+        if pas <= 0:
+            return False
+        if base == "*":
+            return val % pas == 0
+        if "-" in base:
+            lo_s, _, hi_s = base.partition("-")
+            lo, hi = int(lo_s), int(hi_s)
+            return lo <= val <= hi and (val - lo) % pas == 0
+        n = int(base)
+        # `a/n` (sans borne haute) = à partir de a, tous les n ; `a` seul (pas=1) = égalité stricte.
+        return val >= n and (val - n) % pas == 0 if pas_s else val == n
+    except ValueError:
+        return False
 
 
 def prochaine(cron_utc: str, *, horizon_jours: int = 40) -> datetime | None:
@@ -247,6 +272,9 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "0 14 * * *", "18:00", timeout_s=1200, envoie_mail=True),
     _j("fiche-commune-cache", "Fiche commune — précalcule le contexte des communes (ouverture < 500 ms)",
        "quotidien", "0 23 * * *", "03:00", timeout_s=1800),
+    # RETOURS-8 (R11) — purge des conversations Copilote au-delà de la rétention (défaut 7 j, réglage admin).
+    _j("copilote-purge", "Copilote — purge des conversations au-delà de la rétention (défaut 7 j)",
+       "quotidien", "30 23 * * *", "03:30", timeout_s=300),
     _j("healthcheck", "Sonde /health locale + espace disque (2 échecs → alerte)", "15 min",
        "*/15 * * * *", "toutes les 15 min", timeout_s=120, besoin_db=False),
     # CONNEXIONS-2 Lot 7.2 (N3) — sonde des endpoints MÉTIER (avec DB) : capte « écran vide » (run absent),

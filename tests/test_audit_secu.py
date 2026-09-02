@@ -877,28 +877,32 @@ def test_idor_partners_share_et_profiles(app_client):
 
 
 def test_quota_ia_nl_429_au_depassement(app_client, monkeypatch):
-    """M-K P2-5 : au-delà du plafond JOURNALIER (kind 'nl'), /ia/search renvoie un 429 honnête.
-    Avant, /ia/* n'avait que le 60/min → un client scripté brûlait du sonnet toute la journée.
-    DASHBOARD-V1 · D1 : un COMPTE connecté lit désormais le quota PAR LICENCE (défaut
-    copilote_questions_jour_defaut, override comptes.copilote_quota_jour) — le curseur du
-    test suit ; nl_quota_jour reste celui des sujets sans compte (pilote/anonyme)."""
+    """RETOURS-8 (R3) : un COMPTE connecté est plafonné en EUROS/jour. Quand la dépense IA du jour
+    (ledger ia_log) atteint le budget € du compte, /ia/search renvoie un 429 honnête « Plafond IA ».
+    En mode stub le coût réel serait 0 → on pré-remplit ia_log pour éprouver la garde € par la dépense
+    déjà enregistrée. nl_quota_jour reste le plafond en APPELS des sujets sans compte (pilote/anonyme)."""
     from labuse import config
-    monkeypatch.setenv("LABUSE_NL_QUOTA_JOUR", "2")
-    monkeypatch.setenv("LABUSE_COPILOTE_QUESTIONS_JOUR_DEFAUT", "2")
     config.get_settings.cache_clear()
     email = f"nl-{uuid.uuid4().hex[:8]}@x.test"
     cid = _compte_actif(email)
     try:
+        with session_scope() as s:
+            s.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS copilote_budget_eur numeric(6,2)"))
+            s.execute(text("UPDATE comptes SET copilote_budget_eur = 0.01 WHERE id = :i"), {"i": cid})
+            # dépense du jour DÉJÀ au-dessus du budget (0,02 € > 0,01 €) → la prochaine question 429.
+            s.execute(text("INSERT INTO ia_log (kind, model, stub, tokens_in, tokens_out, cout_eur, compte_id) "
+                           "VALUES ('nl', 'test', true, 0, 0, 0.02, :c)"), {"c": cid}); s.commit()
         c = TestClient(app_client.app, base_url="https://testserver"); _login(c, email)
-        assert c.post("/ia/search", json={"text": "terrains à Saint-Paul"}).status_code == 200
-        assert c.post("/ia/search", json={"text": "grandes parcelles"}).status_code == 200
-        r = c.post("/ia/search", json={"text": "encore une recherche"})   # 3e > quota 2
+        r = c.post("/ia/search", json={"text": "encore une recherche"})
         assert r.status_code == 429, r.text
-        assert "Quota" in r.json()["detail"]["detail"]
+        assert "Plafond" in r.json()["detail"]["detail"]
+        assert r.json()["detail"]["budget_eur"] == 0.01
     finally:
+        with session_scope() as s:
+            s.execute(text("DELETE FROM ia_log WHERE compte_id = :c"), {"c": cid}); s.commit()
         _purge(email)
         with session_scope() as s:
-            s.execute(text("DELETE FROM usage_compteurs WHERE sujet=:s AND kind='nl'"), {"s": f"c:{cid}"}); s.commit()
+            s.execute(text("DELETE FROM usage_compteurs WHERE sujet=:s"), {"s": f"c:{cid}"}); s.commit()
         config.get_settings.cache_clear()
 
 

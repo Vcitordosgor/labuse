@@ -174,6 +174,21 @@ def radar_digests(ctx: JobContext) -> None:
     ctx.compte(**{k: r.get(k) for k in ("n_biens_du_jour", "envoyes", "echecs", "simules", "deja")})
 
 
+def copilote_purge(ctx: JobContext) -> None:
+    """RETOURS-8 (R11) — purge quotidienne des conversations Copilote au-delà de la rétention (réglage
+    admin `copilote_retention_jours`, défaut 7 j). Les messages tombent par CASCADE. Compte-rendu :
+    rétention appliquée, conversations purgées, et le POIDS restant (nb, Mo, croissance/jour)."""
+    from . import reglages
+    from .copilote_v2 import historique
+    jours = reglages.copilote_retention_jours()
+    purgees = historique.purger(ctx.db, jours)
+    ctx.db.commit()
+    poids = historique.mesure(ctx.db)
+    ctx.compte(retention_jours=jours, conversations_purgees=purgees,
+               conversations=poids["conversations"], messages=poids["messages"],
+               mo=poids["mo"], croissance_jour=poids["croissance_jour"])
+
+
 def healthcheck(ctx: JobContext) -> None:
     """Sonde /health locale ; deux échecs consécutifs → alerte (compteur dans l'état). Vérifie AUSSI
     l'espace disque : au-delà de disque_seuil_pct, UNE alerte par jour (l'état mémorise la dernière)."""

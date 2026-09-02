@@ -4,7 +4,7 @@
 // `retours` n'alimente plus l'UI). Filtres par statut ET par compte.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { getAdminProduit, getAdminSignalements, postAdminSignalementStatut, type Signalement } from '../../lib/api'
+import { getAdminProduit, getAdminSignalements, postAdminSignalementStatut, postAdminSignalementsTraiterInternes, type Signalement } from '../../lib/api'
 import { MODULES } from '../outils/registry'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
 
@@ -35,6 +35,12 @@ export function ProduitSection() {
   const statut = useMutation({
     mutationFn: ({ id, s }: { id: number; s: 'nouveau' | 'traite' }) => postAdminSignalementStatut(id, s),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-signalements'] }),
+  })
+  // RETOURS-8 (R13) — traiter en un clic tout ce qui vient d'un compte interne/test (rien supprimé) :
+  // le compteur Pilotage retombe au nombre réel de signalements clients.
+  const traiterInternes = useMutation({
+    mutationFn: postAdminSignalementsTraiterInternes,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-signalements'] }); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) },
   })
 
   const d = q.data
@@ -98,6 +104,10 @@ export function ProduitSection() {
           Retours clients
           <span className="text-txt-dim">— table signalements, la même que le compteur Pilotage</span>
           <span className="ml-auto flex flex-wrap items-center gap-1.5">
+            {/* RETOURS-8 (R13) — purge des signalements de test/interne (marqués traités, rien supprimé). */}
+            <ActBtn tone="ghost" onClick={() => traiterInternes.mutate()} disabled={traiterInternes.isPending}>
+              {traiterInternes.isSuccess ? `✓ ${traiterInternes.data?.traites ?? 0} traités` : 'Traiter les internes/test'}
+            </ActBtn>
             {(['tous', 'nouveau', 'traite'] as const).map((f) => (
               <Chip key={f} tone={fStatut === f ? 'ok' : 'off'} onClick={() => setFStatut(f)}>
                 {f === 'tous' ? 'Tous' : f === 'nouveau' ? 'Nouveaux' : 'Traités'}

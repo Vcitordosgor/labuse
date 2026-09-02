@@ -14,20 +14,25 @@ const eur = (v?: number | null, dec = 2) =>
 const eurUne = (v?: number | null) =>
   v == null ? '—' : `${v.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} €`
 
-function QuotaEdit({ id, quota, defaut }: { id: number; quota: number | null; defaut: number }) {
+// RETOURS-8 (R3) — le plafond s'édite en EUROS/jour (0,50 · 1 · 2 · 5 ou libre). Le champ affiche
+// l'unité « € » ; Enregistrer est immédiat (la question suivante du compte lit le nouveau budget).
+function BudgetEdit({ id, budget, defaut }: { id: number; budget: number | null; defaut: number }) {
   const qc = useQueryClient()
-  const [v, setV] = useState<string>(quota == null ? '' : String(quota))
+  const [v, setV] = useState<string>(budget == null ? '' : String(budget))
+  const parse = (s: string): number | null => { const t = s.trim().replace(',', '.'); return t === '' ? null : Number(t) }
   const save = useMutation({
-    mutationFn: () => postAdminLicenceQuota(id, v.trim() === '' ? null : Number(v)),
+    mutationFn: () => postAdminLicenceQuota(id, parse(v)),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-ia'] }); qc.invalidateQueries({ queryKey: ['admin-licences'] }) },
   })
-  const dirty = (v.trim() === '' ? null : Number(v)) !== quota
+  const val = parse(v)
+  const dirty = val !== budget && !(v.trim() !== '' && Number.isNaN(val))
   return (
-    <span className="flex items-center gap-1.5">
-      <input value={v} onChange={(e) => setV(e.target.value.replace(/[^0-9]/g, ''))} placeholder={String(defaut)}
+    <span className="flex items-center justify-end gap-1.5">
+      <input value={v} onChange={(e) => setV(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder={defaut.toFixed(2)}
         data-quota={id}
         className="w-16 rounded-md border border-line-2 bg-bg px-2 py-1 text-right font-mono text-xs text-txt outline-none focus:border-cp-ia" />
-      {dirty && <ActBtn tone="ia" onClick={() => save.mutate()} disabled={save.isPending}>OK</ActBtn>}
+      <span className="text-xs text-txt-dim">€</span>
+      {dirty && <ActBtn tone="ia" onClick={() => save.mutate()} disabled={save.isPending}>Enregistrer</ActBtn>}
     </span>
   )
 }
@@ -56,23 +61,17 @@ export function IaSection() {
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Coût unitaire</Lbl>
-          {/* S0.1 — on parle en EUROS, cadrage « pour 1 000 questions » (un appel coûte une
-              fraction de centime, illisible à l'unité). Chiffres réels du ledger, juste reformatés. */}
+          {/* RETOURS-8 (R3) — « 0,008 € / question » seulement (plus « pour 1 000 questions »). */}
           <div className="font-display text-2xl font-semibold text-cp-ia">
-            {d.mois.cout_moyen_question == null
-              ? '—'
-              : `${eur(d.mois.cout_moyen_question * 1000)} pour 1 000 questions`}
+            {`${eurUne(d.cout_unitaire_question_eur)} / question`}
           </div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">
-            {d.mois.cout_moyen_question == null
-              ? 'ledger ia_log, mois courant'
-              : `≈ ${eurUne(d.mois.cout_moyen_question)} l'une`}
-          </div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">coût moyen réel (ledger ia_log, mois courant)</div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Plafond défaut / jour</Lbl>
-          <div className="font-display text-2xl font-semibold text-txt-hi">{d.quota_defaut}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">défaut — plafond par compte modifiable ci-dessous</div>
+          {/* RETOURS-8 (R3) — le plafond par défaut est en EUROS/jour. */}
+          <div className="font-display text-2xl font-semibold text-txt-hi">{eur(d.budget_defaut_eur)}</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">défaut — plafond € par compte modifiable ci-dessous</div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Projection fin de mois</Lbl>
@@ -124,20 +123,16 @@ export function IaSection() {
           plafond éditable en ligne. C'est ça, allouer. Le budget € GLOBAL se gère côté console Anthropic. */}
       <Panel className="mt-3.5">
         <PHead>
-          Plafond quotidien par compte <Chip tone="ia">recherche NL + Copilote /ask</Chip>
-          <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noreferrer"
-            className="ml-auto font-mono text-[10.5px] normal-case tracking-normal text-txt-dim hover:text-cp-ia">
-            le budget € global se gère sur la console Anthropic ↗
-          </a>
+          Plafond quotidien par compte <Chip tone="ia">recherche NL + Copilote /ask + missions</Chip>
         </PHead>
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-line font-mono text-[9.5px] uppercase tracking-[0.14em] text-txt-dim">
               <th className="px-4 py-2 text-left font-normal">Compte</th>
               <th className="px-4 py-2 text-right font-normal">Aujourd'hui</th>
-              <th className="px-4 py-2 text-right font-normal">30 jours</th>
+              <th className="px-4 py-2 text-right font-normal">≈ questions</th>
               <th className="px-4 py-2 text-right font-normal">Coût 30 j</th>
-              <th className="px-4 py-2 text-right font-normal">Plafond / jour</th>
+              <th className="px-4 py-2 text-right font-normal">Plafond € / jour</th>
             </tr>
           </thead>
           <tbody>
@@ -146,22 +141,23 @@ export function IaSection() {
               return (
                 <tr key={k.id} className="border-b border-line last:border-b-0 hover:bg-surface-3">
                   <td className="px-4 py-2.5">{k.nom}</td>
-                  {/* CONNEXIONS-2 Lot 2 — consommé aujourd'hui / plafond effectif (compteur Copilote unique) */}
+                  {/* RETOURS-8 (R3) — dépense du jour / budget en EUROS + nb d'appels « en petit ». */}
                   <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">
-                    <span className={k.consomme_aujourdhui >= k.plafond_effectif ? 'text-cp-ia' : ''}>{k.consomme_aujourdhui}</span>
-                    <span className="text-txt-dim"> / {k.plafond_effectif}</span>
+                    <span className={k.depense_eur >= k.budget_eur ? 'text-cp-ia' : ''}>{eurUne(k.depense_eur)}</span>
+                    <span className="text-txt-dim"> / {eur(k.budget_eur)}</span>
+                    <span className="ml-1 text-[10px] text-txt-dim">({k.appels_aujourdhui} appels)</span>
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">{(l?.appels ?? 0).toLocaleString('fr-FR')} appels</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">{k.equiv_questions == null ? '—' : `≈ ${k.equiv_questions.toLocaleString('fr-FR')}`}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-xs text-txt-mut">{eur(l?.cout ?? 0)}</td>
-                  <td className="w-32 px-4 py-2.5 text-right"><QuotaEdit id={k.id} quota={k.copilote_quota_jour} defaut={d.quota_defaut} /></td>
+                  <td className="w-40 px-4 py-2.5 text-right"><BudgetEdit id={k.id} budget={k.copilote_budget_eur} defaut={d.budget_defaut_eur} /></td>
                 </tr>
               )
             })}
           </tbody>
         </table>
         <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
-          Vide = défaut ({d.quota_defaut}/jour). L'app ne répartit que des <b>appels</b>, pas des euros.
-          Enregistrer est immédiat : la question suivante du compte lit le nouveau plafond (recherche NL et Copilote partagent ce compteur).
+          Vide = défaut ({eur(d.budget_defaut_eur)}/jour). Le plafond est en <b>euros</b> : une mission lourde (Sonnet) pèse
+          à son coût réel, pas comme une question. Enregistrer est immédiat : la question suivante du compte lit le nouveau plafond.
         </div>
       </Panel>
 

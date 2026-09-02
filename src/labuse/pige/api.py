@@ -198,6 +198,18 @@ def radar_check(request: Request) -> dict:
     with engine().begin() as c:
         q = lambda s: c.execute(text(s)).scalar() or 0
         file_extraction = q("SELECT count(*) FROM pige_faits WHERE valide_at IS NULL")
+        # RETOURS-8 (R5) — les deux chiffres de tête qui manquaient : annonces EN VIE (biens validés,
+        # actifs) et à RATTACHER (validés, en piste, non tranchés à la main). Comptés ici, servis à
+        # l'en-tête des onglets Radar.
+        annonces_en_vie = q(
+            "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+            "WHERE f.valide_at IS NOT NULL AND b.statut IN ('active','en_vente_longue','a_reverifier')")
+        a_rattacher = q(
+            "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+            "WHERE f.valide_at IS NOT NULL AND b.rattachement_etat = 'piste' "
+            "  AND b.rattachement_humain = false AND b.a_qualifier = false")
+        reverif_dues = q(
+            "SELECT count(*) FROM pige_biens WHERE statut = 'a_reverifier'")
         nouveautes = q("SELECT count(*) FROM pige_biens WHERE date_premiere_saisie::date = current_date")
         en_vente_longue = q("SELECT count(*) FROM pige_biens WHERE statut = 'en_vente_longue'")
         baisses = q("SELECT count(*) FROM event_log WHERE kind = 'pige.baisse_prix' "
@@ -215,6 +227,10 @@ def radar_check(request: Request) -> dict:
     return {
         "cible_minutes": 15,
         "file_extraction": file_extraction,
+        # RETOURS-8 (R5) — les 4 chiffres de tête des onglets Radar.
+        "annonces_en_vie": annonces_en_vie,
+        "a_rattacher": a_rattacher,
+        "reverif_dues": reverif_dues,
         "reverif_du_jour": nouveautes,            # cadence quotidienne du rituel
         "signalements_en_attente": signalements,
         "compteurs": {"nouveautes": nouveautes, "en_vente_longue": en_vente_longue, "baisses": baisses},
@@ -308,14 +324,25 @@ def radar_a_instruire(request: Request) -> dict:
     exiger_admin(request)
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
+            # RETOURS-8 (R5) — on remonte la CONFIANCE et le POURQUOI (déjà calculés/stockés à la
+            # validation, rattachement_html) pour que l'onglet « À rattacher » dise, par proposition :
+            # « forte » (adresse BAN exacte ou position → bouton Rattacher en 1 clic) vs « faible »
+            # (surface seule ±10 % → Instruire avec l'ortho). Zéro calcul neuf : lecture des colonnes.
             """SELECT b.bien_id, b.commune, b.type_bien, f.prix, f.surface_terrain, f.surface_hab,
                       f.declaratif, a.portail, a.url_sortante,
-                      COALESCE(jsonb_array_length(b.rattachement_pistes), 0) AS n_candidates
+                      COALESCE(jsonb_array_length(b.rattachement_pistes), 0) AS n_candidates,
+                      b.rattachement_confiance, b.rattachement_criteres, b.rattachement_etat,
+                      (b.rattachement_pistes -> 0) AS premiere_piste
                FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
                LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id
                WHERE f.valide_at IS NOT NULL AND b.rattachement_etat = 'piste'
                  AND b.rattachement_humain = false AND b.a_qualifier = false
                ORDER BY b.date_premiere_saisie DESC LIMIT 100""")).mappings()]
+    for r in rows:
+        # « forte » = ≥ 0,85 (adresse BAN exacte ou position, ≥ 3 critères convergents) → Rattacher 1 clic ;
+        # « faible » = surface seule (±10 %) → Instruire avec l'ortho. Seuil aligné sur rattachement_html.
+        conf = r.get("rattachement_confiance")
+        r["confiance"] = "forte" if (conf is not None and float(conf) >= 0.85) else "faible"
     return {"file": rows, "n": len(rows)}
 
 

@@ -158,45 +158,44 @@ def accueil_cette_semaine(db: Session = Depends(get_db)) -> dict:
 _fr_cache: dict = {"at": 0.0, "data": None}
 
 
+def _milliers(n: int) -> str:
+    """12345 → « 12 345 » (espace groupant), sobre et sans dépendance de locale."""
+    return f"{int(n):,}".replace(",", " ")
+
+
 @router.get("/accueil/fraicheur")
 def accueil_fraicheur(db: Session = Depends(get_db)) -> dict:
-    """CONNEXIONS-2 Lot 6.1 (KO-11) — la ligne de fraîcheur de l'accueil n'est plus un texte FIGÉ :
-    elle est CALCULÉE depuis l'état RÉEL des sources (`data_sources.fraicheur_statut`, le MÊME champ
-    que la page Sources et le dashboard). Phrase honnête : « Toutes les données sont à jour. » /
-    « N sources en retard. » / « Une source en erreur. ». Cache court (5 min)."""
+    """RETOURS-8 (R2) — le client ne doit JAMAIS croire que LABUSE est en retard. L'ancien bandeau
+    « N sources en retard » DISPARAÎT : à la place, deux chiffres réels et lus — nombre de sources
+    affichées, nombre de parcelles couvertes → « voir les données ». La notion de retard (nouvelle
+    version, à rafraîchir, rappel manuel) reste au dashboard admin (R1), jamais ici. Ton toujours
+    neutre (`ok`) : aucun rouge côté client. Cache court (5 min)."""
     now = time.time()
     if _fr_cache["data"] is not None and now - _fr_cache["at"] < 300:
         return _fr_cache["data"]
 
-    counts = {"a_jour": 0, "en_retard": 0, "en_panne": 0, "en_erreur": 0, "sans_echeance": 0}
-    total = 0
+    n_sources = 0
+    n_parcelles = 0
+    pas_a_jour = 0
     try:
-        # garde par existence de colonne : job jamais lancé / base de test → phrase « à jour » sûre.
-        col_ok = db.execute(text(
-            "SELECT 1 FROM information_schema.columns WHERE table_name='data_sources' "
-            "AND column_name='fraicheur_statut'")).first()
-        if col_ok:
-            rows = db.execute(text(
-                f"SELECT COALESCE(fraicheur_statut, 'a_jour') AS st, count(*) AS n "
-                f"FROM data_sources WHERE {_srccat.WHERE_AFFICHEES} GROUP BY 1"),
-                {"masquees": _srccat.masquees_param()}).mappings().all()
-            for r in rows:
-                total += int(r["n"])
-                counts[r["st"]] = counts.get(r["st"], 0) + int(r["n"])
+        n_sources = int(db.execute(text(
+            f"SELECT count(*) FROM data_sources WHERE {_srccat.WHERE_AFFICHEES}"),
+            {"masquees": _srccat.masquees_param()}).scalar() or 0)
     except Exception:  # noqa: BLE001 — la ligne d'accueil ne casse jamais la page
         pass
+    try:
+        n_parcelles = int(db.execute(text("SELECT count(*) FROM parcels")).scalar() or 0)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        # projection client (R2) : « pas à jour » = les seules nouvelles versions détectées par l'agent.
+        from .. import etats_sources as _es
+        pas_a_jour = _es.compteurs(_es.lister_etats(db))["pas_a_jour"]
+    except Exception:  # noqa: BLE001
+        pass
 
-    en_erreur = counts.get("en_erreur", 0)
-    en_retard = counts.get("en_retard", 0) + counts.get("en_panne", 0)
-    if en_erreur:
-        ton = "error"
-        phrase = ("Une source en erreur." if en_erreur == 1 else f"{en_erreur} sources en erreur.")
-    elif en_retard:
-        ton = "warn"
-        phrase = ("Une source en retard." if en_retard == 1 else f"{en_retard} sources en retard.")
-    else:
-        ton = "ok"
-        phrase = "Toutes les données sont à jour."
-    data = {"ton": ton, "phrase": phrase, "en_erreur": en_erreur, "en_retard": en_retard, "total": total}
+    phrase = f"{n_sources} sources · {_milliers(n_parcelles)} parcelles"
+    data = {"ton": "ok", "phrase": phrase, "n_sources": n_sources, "n_parcelles": n_parcelles,
+            "pas_a_jour": pas_a_jour, "cta": "voir les données"}
     _fr_cache.update(at=now, data=data)
     return data

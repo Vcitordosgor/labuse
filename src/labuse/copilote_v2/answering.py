@@ -1346,6 +1346,12 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
 _OUTIL_MAP = [
     (("assembl",), ("assemblage", "Assemblage", "parcelPrefill")),
     (("faisabil", "constructib", "capacit", "que peut accueillir"), ("programme", "Faisabilité", "parcelPrefill")),
+    # RETOURS-8 (R12) — « pièges »/« risques » ouvrent l'outil Pièges et risques (prérempli IDU) : plus
+    # jamais « pas de mesure dédiée » alors que l'outil existe. « taxe (d'aménagement) » → Taxe d'aménagement.
+    (("piege", "pieges", "risque", "risques", "a surveiller sur cette parcelle", "points de vigilance"),
+     ("risques", "Pièges et risques", "idu")),
+    (("taxe d'amenagement", "taxe damenagement", "taxe amenagement", "combien de taxe", "montant de la taxe"),
+     ("taxe-amenagement", "Taxe d'aménagement", "idu")),
     (("charge fonci", "combien payer", "combien je peux payer", "marge", "prix d'achat max"),
      ("calculette-fonciere", "Calculette foncière", "calcPrefill")),
     (("courrier", "ecrire au proprietaire", "ecrire au proprio"), ("courriers", "Courrier au propriétaire", "idu")),
@@ -1518,7 +1524,8 @@ def _match_concept(message: str):
 
 
 def _substance(db: Session, idu: str | None) -> str:
-    """Ce que LABUSE SAIT déjà sur une parcelle citée (fond), sans outil."""
+    """Ce que LABUSE SAIT déjà sur une parcelle citée (fond), sans outil. RETOURS-8 (R12) — enrichi du
+    VERDICT servi (même source que la fiche, `_q_v2_fiche`) pour un résumé plus riche que « surface·zone »."""
     if not idu:
         return ""
     from .outils import fiche_parcelle
@@ -1528,7 +1535,8 @@ def _substance(db: Session, idu: str | None) -> str:
     d = r.data
     bout = [f"{d['surface_m2']} m²" if d.get("surface_m2") else None,
             f"zone {d['zone']}" if d.get("zone") else None,
-            f"à {d['commune']}" if d.get("commune") else None]
+            f"à {d['commune']}" if d.get("commune") else None,
+            f"verdict LABUSE : {d['verdict']}" if d.get("verdict") else None]
     return " · ".join(x for x in bout if x)
 
 
@@ -1547,12 +1555,20 @@ def _sans_outil(db: Session, message: str, params: dict, intent: str, motif: str
     if "divis" in m or "decoup" in m or "detacher un lot" in m or "lotir" in m:
         telemetrie.refus(db, "aucun_outil", message, intent)
         return _division(db, idu, intent)
+    # RETOURS-8 (R12) — une intention COUVERTE par un outil (pièges/risques, taxe, faisabilité…) OUVRE
+    # l'outil (prérempli IDU) : le message « pas de mesure LABUSE dédiée » ne peut plus apparaître pour
+    # une intention couverte — soit on répond, soit on ouvre l'outil.
+    if _match_outil(message):
+        return _outil(db, message, params)
     if idu:
-        # une PARCELLE est citée : dire ce que LABUSE en sait (fond sourcé) + la voie fiche, jamais un mur.
+        # RETOURS-8 (R12) — une PARCELLE est citée : on RÉPOND avec la vraie donnée (même fond que la
+        # fiche : surface, zone, commune, verdict) + la voie fiche pour la synthèse complète. Plus de
+        # mur « pas de mesure dédiée » : on dit ce que LABUSE sait, puis on tend la fiche.
         telemetrie.refus(db, "aucun_outil", message, intent)
         fond = _substance(db, idu)
-        txt = ("Je n'ai pas de mesure LABUSE dédiée à cette demande précise. " + _COUVRE
-               + (f" Sur la parcelle {idu} : {fond}." if fond else ""))
+        txt = (f"Sur la parcelle {idu} : {fond}. Pour l'analyse complète (constructibilité, risques, "
+               f"marché), ouvrez la fiche." if fond
+               else "Je n'ai pas de mesure LABUSE dédiée à cette demande précise. " + _COUVRE)
         return _reply(txt, intent, refus="aucun_outil",
                       voie={"cible": "fiche", "libelle": "Ouvrir la fiche", "idu": idu})
     # ni parcelle ni donnée : c'est une question de CONNAISSANCE GÉNÉRALE → voie b (honnête, badgée).

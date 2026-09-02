@@ -21,13 +21,14 @@ const CAP_ICONS: Record<string, JSX.Element> = {
 const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
 
 export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
-  missions, onReprendre }: {
+  missions, retentionJours = 7, onReprendre }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
   occupe?: boolean            // dispatch en cours (le routeur réfléchit)
   reponse?: ReactNode         // réponse inline QUESTION/OUTIL/refus (2a → 2e)
   missions?: CopiloteMission[]           // §2b — historique (« Vos dernières questions »)
+  retentionJours?: number                // RETOURS-8 (R11) — rétention affichée sous les fils passés
   onReprendre?: (m: CopiloteMission) => void
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
@@ -160,8 +161,13 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
           {occupe ? '…' : 'Envoyer'}
         </button>
       </div>
-      <p data-accueil-aide className="mb-9 text-center text-[12px] text-cp-faint">
+      <p data-accueil-aide className="mb-2 text-center text-[12px] text-cp-faint">
         {meta?.aide ?? 'Le Copilote comprend ce que vous demandez — rien à choisir.'}
+      </p>
+      {/* RETOURS-8 (R11.1) — dire en une ligne le comportement des fils : cette zone ouvre un NOUVEAU
+          fil ; « Répondre » (sous une réponse) continue le fil en cours. */}
+      <p data-accueil-fils className="mb-9 text-center text-[11px] text-cp-faint">
+        Cette zone ouvre un nouveau fil ; « Répondre » continue le fil en cours.
       </p>
 
       {/* M133 — CE QU'IL SAIT FAIRE : les 4 capacités en TEXTE (libellé + exemple réel entre
@@ -221,6 +227,10 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
               {toutHisto ? 'RÉDUIRE' : `VOIR TOUT · ${questions.length}`}
             </button>
           )}
+          {/* RETOURS-8 (R11.3) — bandeau discret : la rétention est dite, jamais cachée. */}
+          <p data-accueil-retention className="mt-3 text-[11px] text-cp-faint">
+            Vos conversations sont conservées {retentionJours} jour{retentionJours > 1 ? 's' : ''}.
+          </p>
         </div>
       )}
     </div>
