@@ -21,8 +21,8 @@ from datetime import datetime, timezone
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from . import sentinelle
-from .scoring.score_v_constants import Q_A_RUN_LABEL, RUN_PRECEDENT
+from . import runs, sentinelle
+from .scoring.score_v_constants import RUN_PRECEDENT
 from .sources_catalog import WHERE_AFFICHEES, masquees_param
 
 # ─────────────────────────── LA MATRICE (M1 rendue exécutable) ───────────────────────────
@@ -101,6 +101,19 @@ def _moteurs_pour_source(nom: str) -> list[str]:
     return [m["key"] for m in MOTEURS if any(p in bas for p in m["sources"])]
 
 
+def alimente_pour_source(nom: str) -> dict:
+    """SUITE-1 · S2 bis — ce qu'une source NOURRIT, LU DE LA MATRICE (jamais écrit à la main) : les
+    moteurs qu'elle alimente + les surfaces (outils/écrans/exports) que ces moteurs atteignent. Sert la
+    colonne « Alimente » du Catalogue en chips courtes. Une source sans consommateur → `cable=False`
+    (« non câblée »). Renvoie {moteurs:[{key,label}], surfaces:[{key,label}], cable}."""
+    mots = _moteurs_pour_source(nom)
+    mset = set(mots)
+    moteurs = [{"key": m["key"], "label": m["label"]} for m in MOTEURS if m["key"] in mset]
+    surfaces = [{"key": s["key"], "label": s["label"]}
+                for s in SURFACES if mset.intersection(s.get("moteurs") or [])]
+    return {"moteurs": moteurs, "surfaces": surfaces, "cable": bool(moteurs)}
+
+
 def _couleur_source(veille: dict | None, plus_recente_que_run: bool) -> tuple[str, str]:
     """État (dot) d'un nœud source + libellé court. vert=à jour · orange=version amont / plus récente
     que le run · rouge=sonde en échec répété · gris=non surveillée ou manuelle."""
@@ -122,11 +135,11 @@ def _run_courant(db: Session) -> dict:
     `enregistre_sources=False` si le run est antérieur à FLUX-1 (aucune reconstruction inventée)."""
     row = db.execute(text(
         "SELECT run_id, computed_at, n_parcelles, params FROM p_score_v2_runs WHERE run_id = :r"),
-        {"r": Q_A_RUN_LABEL}).mappings().first()
+        {"r": runs.current()}).mappings().first()
     params = (row["params"] if row else None) or {}
     millesimes = params.get("source_millesimes")
     return {
-        "label": Q_A_RUN_LABEL,
+        "label": runs.current(),
         "precedent": RUN_PRECEDENT,
         "calcule_le": row["computed_at"].isoformat() if row and row["computed_at"] else None,
         "n_parcelles": (row["n_parcelles"] if row else None),

@@ -19,8 +19,8 @@ import re
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .. import runs
 from ..ai import core
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
 
 # ── détection d'INTENTION agrégée : mots de quantité/superlatif absents d'une requête de filtre ──
 # « chaudes à Saint-Pierre » (filtre) ≠ « COMBIEN de chaudes à Saint-Pierre » (agrégat).
@@ -70,12 +70,13 @@ def _run_params(db: Session) -> dict:
     dernier run calculé » : un run candidat comptait des brûlantes absentes de la carte servie.
     Run servi absent de p_score_v2_runs → erreur BRUYANTE (aligné sur score_v2._served_run), jamais
     un repli silencieux qui servirait des comptes vides."""
+    run = runs.current()
     if not db.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"),
-                      {"r": Q_A_RUN_LABEL}).scalar():
+                      {"r": run}).scalar():
         raise RuntimeError(
-            f"run servi « {Q_A_RUN_LABEL} » absent de p_score_v2_runs — agrégats /ia/search "
+            f"run servi « {run} » absent de p_score_v2_runs — agrégats /ia/search "
             "indisponibles ; lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
-    return {"run": Q_A_RUN_LABEL, "v2run": Q_A_RUN_LABEL}
+    return {"run": run, "v2run": run}
 
 
 def _detect_tiers(low: str) -> list[tuple[str, str]]:

@@ -34,8 +34,8 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from . import runs
 from .config import load_yaml_config
-from .scoring.score_v_constants import Q_A_RUN_LABEL
 
 #: Reconnaissance du code BatiLayer depuis le motif stocké (préfixes émis par
 #: `bati.classify` — source unique de vérité des libellés ; l'ordre teste le cas
@@ -201,7 +201,7 @@ def build(session: Session, *, run_label: str | None = None,
           commit: bool = True, log=lambda *_: None) -> dict:
     """Reconstruit `parcel_renouvellement` (rebuild complet, idempotent) et renvoie
     l'entonnoir chiffré. LECTURE SEULE des sources ; ne touche jamais les runs servis."""
-    run = run_label or Q_A_RUN_LABEL
+    run = run_label or runs.current()
     cfg = load_config()
     seuils, poids = cfg["seuils"], cfg["poids"]
 

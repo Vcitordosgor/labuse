@@ -22,7 +22,10 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 RAYON_M = 150            # rayon serré autour du point flouté (Lot 0 : au-delà, l'unicité s'effondre)
-TOL_SURFACE = 0.05       # ±5 % surface terrain (cadastre vs annonce) ET DVF terrain
+TOL_SURFACE = 0.10       # ±10 % surface terrain (cadastre vs annonce) ET DVF terrain — élargi (S5) :
+#                          la surface annoncée est souvent arrondie/approximative (« terrain d'environ
+#                          500 m² »), ±5 % ratait des candidates légitimes ; ±10 % ré-ouvre la piste sans
+#                          diluer (la convergence ≥2 critères reste la garde contre le faux positif).
 TOL_DVF_BATI = 0.15      # ±15 % surface réelle bâtie DVF vs surface habitable (habitable ≈ bâti, approx.)
 TOL_DPE = 0.10           # ±10 % surface habitable DPE
 # Emprise au sol : sans le nombre d'étages, une fourchette LARGE (combles/varangues/garages font varier

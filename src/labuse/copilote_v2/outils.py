@@ -16,12 +16,12 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN
+from .. import runs  # S3 : run servi relu à la requête
 
 # M78-quater #4 — la SOURCE affichée au client ne cite JAMAIS un nom de moteur, de table ou de run
 # (« run servi », « recherche à facettes »… = interne). Les parcelles viennent du cadastre ; son
 # millésime réel est celui de l'ingestion (cf. api.app — « cadastre Etalab 2026-06 »). Le run interne
-# (RUN) reste l'argument des points de calcul, il n'apparaît pas dans la source.
+# (runs.current()) reste l'argument des points de calcul, il n'apparaît pas dans la source.
 CADASTRE_MILLESIME = "Etalab 2026-06"
 
 
@@ -151,7 +151,7 @@ def compter_parcelles(db: Session, *, commune: str | None = None, surface_min: i
     cp = (copro or "").strip().lower() if copro and copro.strip().lower() in ("avec", "sans") else None
     zon = ",".join(z for z in [x.strip().upper() for x in (zonage or "").split(",")]
                    if z in ("U", "AU", "A", "N")) or None
-    fc = FiltreCriteres(source=RUN, commune=commune,
+    fc = FiltreCriteres(source=runs.current(), commune=commune,
                         surface_min=int(surface_min) if surface_min is not None else None,
                         surface_max=int(surface_max) if surface_max is not None else None,
                         tiers=tiers, personne_morale=bool(personne_morale),
@@ -333,7 +333,7 @@ def parcelles_par_entreprise(db: Session, *, q: str) -> ToolResult:
 def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
     """Données d'UNE parcelle via `_q_v2_fiche` (verdict/zonage/risques LUS, jamais recalculés)."""
     from ..api.app import _q_v2_fiche
-    f = _q_v2_fiche(db, idu, run_label=RUN)
+    f = _q_v2_fiche(db, idu, run_label=runs.current())
     if not f or f.get("commune") is None:
         return ToolResult("fiche_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
     sv2 = f.get("score_v2") or {}

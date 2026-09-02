@@ -88,28 +88,29 @@ def served_run_status(session: Session) -> dict:
     NOMMÉMENT, aligné sur `score_v2._served_run` : le registre des runs, les scores v2 ET les
     évaluations dryrun DU LABEL SERVI. Lecture seule ; `to_regclass` ne sert qu'à DÉTECTER un manque
     (qui devient un 503 explicite), jamais à replier silencieusement sur des données vides."""
-    from .scoring.score_v_constants import Q_A_RUN_LABEL
+    from . import runs
+    run_servi = runs.current()
     missing: list[str] = []
 
     def regclass(name: str):
         return session.execute(text("SELECT to_regclass(:n)"), {"n": name}).scalar()
 
     def scal(sql: str) -> int:
-        return int(session.execute(text(sql), {"r": Q_A_RUN_LABEL}).scalar() or 0)
+        return int(session.execute(text(sql), {"r": run_servi}).scalar() or 0)
 
     if regclass("p_score_v2_runs") is None:
         missing.append("table p_score_v2_runs (rail scoring v2 non déployé)")
     elif not scal("SELECT count(*) FROM p_score_v2_runs WHERE run_id = :r"):
-        missing.append(f"run servi « {Q_A_RUN_LABEL} » absent de p_score_v2_runs")
+        missing.append(f"run servi « {run_servi} » absent de p_score_v2_runs")
     if regclass("parcel_p_score_v2") is None:
         missing.append("table parcel_p_score_v2")
     elif not scal("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r"):
-        missing.append(f"scores parcel_p_score_v2 du run « {Q_A_RUN_LABEL} »")
+        missing.append(f"scores parcel_p_score_v2 du run « {run_servi} »")
     if regclass("dryrun_parcel_evaluations") is None:
         missing.append("table dryrun_parcel_evaluations")
     elif not scal("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label = :r"):
-        missing.append(f"évaluations dryrun_parcel_evaluations du run « {Q_A_RUN_LABEL} »")
-    return {"ok": not missing, "run": Q_A_RUN_LABEL, "missing": missing}
+        missing.append(f"évaluations dryrun_parcel_evaluations du run « {run_servi} »")
+    return {"ok": not missing, "run": run_servi, "missing": missing}
 
 
 def readiness(session: Session, commune: str) -> dict:

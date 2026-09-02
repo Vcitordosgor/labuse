@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .scoring.score_v_constants import Q_A_RUN_LABEL
+from . import runs
 
 #: nombre de parcelles témoins pour la comparaison de tier inter-surfaces.
 N_TEMOINS = 3
@@ -40,7 +40,7 @@ def verifier(db: Session, run: str | None = None) -> dict:
     `run` force le run mesuré (la bascule passe le NOUVEAU run ; sinon le run servi courant)."""
     from . import flux
     from .api import sante
-    servi = run or Q_A_RUN_LABEL
+    servi = run or runs.current()
     checks: list[dict] = []
 
     surfaces_run = [s for s in flux.SURFACES if s["run"] == "run"]

@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs  # S3 : run servi relu à la requête
 
 #: Ordre de service des tiers du run servi (champion P) — les écartées ne sont jamais criblées.
 _TIERS_SERVIS = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
@@ -136,7 +136,7 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
         WHERE p.commune = ANY(:communes) AND v.tier = ANY(:tiers)
         ORDER BY array_position(CAST(:tiers AS varchar[]), v.tier), v.rang NULLS LAST, p.idu
-        """), {"run": Q_A_RUN_LABEL, "communes": brief["communes"],
+        """), {"run": runs.current(), "communes": brief["communes"],
                "tiers": list(_TIERS_SERVIS)}).mappings().all()
 
     n0 = len(rows)
@@ -166,7 +166,7 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
     for c in dossier.candidats:
         par_tier[c["tier"]] = par_tier.get(c["tier"], 0) + 1
     return StepResult(
-        resultat={"run_servi": Q_A_RUN_LABEL, "n_pool": n0, "filtres": etapes,
+        resultat={"run_servi": runs.current(), "n_pool": n0, "filtres": etapes,
                   "n_candidats": len(kept), "par_tier": par_tier},
         etiquette="sourcé", n_avant=n0, n_apres=len(kept))
 
@@ -345,7 +345,7 @@ def risques(db: Session, brief: dict, dossier: Dossier) -> StepResult:
         "SELECT parcel_id, layer_name, result, severity, detail FROM dryrun_cascade_results "
         "WHERE run_label = :run AND parcel_id = ANY(:ids) AND layer_name = ANY(:layers) "
         "  AND result IN ('SOFT_FLAG', 'HARD_EXCLUDE')"),
-        {"run": Q_A_RUN_LABEL, "ids": ids, "layers": list(_LAYERS_RISQUES)}).mappings().all()
+        {"run": runs.current(), "ids": ids, "layers": list(_LAYERS_RISQUES)}).mappings().all()
     par_parcelle: dict[int, list[dict]] = {}
     for r in rows:
         par_parcelle.setdefault(r["parcel_id"], []).append(
@@ -490,12 +490,12 @@ def mutation(db: Session, brief: dict, dossier: Dossier) -> StepResult:
     Le Radar Mutation V1 (NON SERVI, RR 0,51) n'est JAMAIS appelé ici."""
     retenus = dossier.retenus()
     if not retenus:
-        return StepResult(resultat={"run_servi": Q_A_RUN_LABEL, "n_candidats": 0},
+        return StepResult(resultat={"run_servi": runs.current(), "n_candidats": 0},
                           etiquette="sourcé")
     rows = db.execute(text(
         "SELECT parcelle_id, tier, rang, percentile FROM parcel_p_score_v2 "
         "WHERE run_id = :run AND parcelle_id = ANY(:idus)"),
-        {"run": Q_A_RUN_LABEL, "idus": [c["idu"] for c in retenus]}).mappings().all()
+        {"run": runs.current(), "idus": [c["idu"] for c in retenus]}).mappings().all()
     par_idu = {r["parcelle_id"]: r for r in rows}
     par_tier: dict[str, int] = {}
     for c in retenus:
@@ -506,7 +506,7 @@ def mutation(db: Session, brief: dict, dossier: Dossier) -> StepResult:
         if r is not None:
             par_tier[r["tier"]] = par_tier.get(r["tier"], 0) + 1
     return StepResult(
-        resultat={"run_servi": Q_A_RUN_LABEL, "n_candidats": len(retenus),
+        resultat={"run_servi": runs.current(), "n_candidats": len(retenus),
                   "par_tier": par_tier},
         etiquette="sourcé")
 
@@ -639,7 +639,7 @@ def scoreur_unitaire(db: Session, brief: dict, dossier: Dossier) -> StepResult:
                 "FROM parcels p "
                 "LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run "
                 "WHERE p.idu = :i"),
-                {"run": Q_A_RUN_LABEL, "i": ref["valeur"]}).mappings().first()
+                {"run": runs.current(), "i": ref["valeur"]}).mappings().first()
             if row is None:
                 verdicts.append({"ref": ref["valeur"], "trouvee": False,
                                  "motif": "parcelle absente de la base (non vérifié)"})

@@ -36,6 +36,7 @@ def compteurs(db: Session) -> dict:
     types = _scalar(db, "SELECT count(DISTINCT type_bien) FROM pige_biens WHERE type_bien IS NOT NULL")
     return {
         "annonces": annonces, "annonces_semaine": annonces_sem,
+        "biens": biens,   # S5 — dénominateur M du compteur « rattachées N / M »
         "rattachees": rattachees, "rattachees_pct": round(100.0 * rattachees / biens, 1) if biens else None,
         "paires": paires, "paires_semaine": paires_sem,
         "communes": communes, "communes_total": 24,

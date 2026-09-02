@@ -9,6 +9,10 @@ import { ActBtn, Chip, Lbl, Panel, PHead } from './AdminView'
 
 const eur = (v?: number | null, dec = 2) =>
   v == null ? '—' : `${v.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec })} €`
+// S0.1 — prix « à l'une » : on tolère 3 décimales UNIQUEMENT ici (une question coûte < 1 centime),
+// jamais dans le reste de la page (fini « 0,79 centime »).
+const eurUne = (v?: number | null) =>
+  v == null ? '—' : `${v.toLocaleString('fr-FR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} €`
 
 function QuotaEdit({ id, quota, defaut }: { id: number; quota: number | null; defaut: number }) {
   const qc = useQueryClient()
@@ -51,17 +55,18 @@ export function IaSection() {
           <div className="mt-1 text-[11.5px] text-txt-mut">≈ {d.mois.appels.toLocaleString('fr-FR')} appels servis</div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Coût moyen / question</Lbl>
-          {/* ADMIN-1 AD6.1 — unité explicite en CENTIMES (fini l'ambiguïté « ct » ↔ « € ») + calcul affiché. */}
+          <Lbl>Coût unitaire</Lbl>
+          {/* S0.1 — on parle en EUROS, cadrage « pour 1 000 questions » (un appel coûte une
+              fraction de centime, illisible à l'unité). Chiffres réels du ledger, juste reformatés. */}
           <div className="font-display text-2xl font-semibold text-cp-ia">
             {d.mois.cout_moyen_question == null
               ? '—'
-              : `${(d.mois.cout_moyen_question * 100).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} ${(d.mois.cout_moyen_question * 100) < 2 ? 'centime' : 'centimes'}`}
+              : `${eur(d.mois.cout_moyen_question * 1000)} pour 1 000 questions`}
           </div>
           <div className="mt-1 text-[11.5px] text-txt-mut">
             {d.mois.cout_moyen_question == null
               ? 'ledger ia_log, mois courant'
-              : `${eur(d.mois.cout_eur)} ÷ ${d.mois.appels.toLocaleString('fr-FR')} appels`}
+              : `≈ ${eurUne(d.mois.cout_moyen_question)} l'une`}
           </div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">

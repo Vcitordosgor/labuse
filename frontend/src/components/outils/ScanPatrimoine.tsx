@@ -34,6 +34,9 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   const [owner, setOwner] = useState<string | null>(null)   // le SIREN partagé entre les deux onglets
   const [ownerLabel, setOwnerLabel] = useState<string | null>(null)  // raison sociale connue à la sélection (sinon résolue)
   const [tab, setTab] = useState<Tab>(defaultTab)
+  // LOT S1 — compteur réel de l'onglet « Ce qu'ils construisent », remonté par VeillePromoteurs
+  // (opérations + programmes collectés). null tant qu'inconnu → l'onglet reste sans nombre (rien d'inventé).
+  const [nConstruit, setNConstruit] = useState<number | null>(null)
   const [q, setQ] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -49,6 +52,9 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   // U1.5 — encart propriétaire (état 2) : raison sociale + SIREN. Partage la CLÉ react-query de M02
   // (['m02', siren]) → aucune requête en double. Le payload patrimoine n'expose PAS de « qualité »
   // (forme juridique / rôle) : on n'en invente pas — l'encart montre le nom et le SIREN, rien de plus.
+  // LOT S1 — au changement de propriétaire, on oublie le compteur « construit » (VeillePromoteurs le
+//  re-remontera pour le nouveau SIREN) ; évite d'afficher un nombre hérité du promoteur précédent.
+  useEffect(() => { setNConstruit(null) }, [owner])
   const ownerQ = useQuery({ queryKey: ['m02', owner], queryFn: () => modPatrimoine(owner!), enabled: !!owner })
   const ownerNom = (ownerQ.data as { nom?: string } | undefined)?.nom ?? ownerLabel
 
@@ -168,7 +174,8 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
             {([['possede', 'Ce qu\'ils possèdent'], ['construit', 'Ce qu\'ils construisent']] as const).map(([k, label]) => (
               <button key={k} data-scan-tab={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
                 className={`-mb-px border-b-2 pb-2 pt-1 text-[13px] transition-colors ${tab === k ? 'border-mint font-medium text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
-                {label}
+                {/* LOT S1 — compteur réel sur l'onglet « construit » quand VeillePromoteurs l'a remonté. */}
+                {label}{k === 'construit' && nConstruit != null && <span className="ml-1 text-txt-dim">({nConstruit})</span>}
               </button>
             ))}
           </div>
@@ -176,7 +183,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           <div className="flex min-h-0 flex-1 flex-col gap-1.5">
             {tab === 'possede'
               ? <M02 embedded sirenProp={owner} onVoirOperations={(s) => { setOwner(s); setOwnerLabel(null); setTab('construit') }} />
-              : <VeillePromoteurs embedded focusSiren={owner} onVoirPatrimoine={(s) => { setOwner(s); setOwnerLabel(null); setTab('possede') }} />}
+              : <VeillePromoteurs embedded focusSiren={owner} onCount={setNConstruit} onVoirPatrimoine={(s) => { setOwner(s); setOwnerLabel(null); setTab('possede') }} />}
           </div>
         </>
       )}

@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from .. import config
+from .. import config, runs
 from ..db import session_factory
 from . import events, moteurs
 from .interpreteur import IAIndisponible, interpreter_brief, interpreter_refs
@@ -29,9 +29,8 @@ log = logging.getLogger("labuse.copilote")
 def versions_moteurs() -> dict:
     """Versions/étiquettes des moteurs au moment du run (reproductibilité, §7-J : le run
     servi épinglé est gravé ici — décision Vic, GO M26-A Q3)."""
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
     from .prompts import PROMPT_VERSION
-    out = {"run_servi": Q_A_RUN_LABEL, "rules_version": config.rules_version(),
+    out = {"run_servi": runs.current(), "rules_version": config.rules_version(),
            "prompt_interpreteur": PROMPT_VERSION}
     try:
         import subprocess

@@ -38,7 +38,7 @@ from ..faisabilite.bilan import (  # défauts calculette dérivés de la source 
     CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
     CALCULETTE_VRD_DEFAUT_M2,
 )
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
+from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
 
 
 def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.py)
@@ -175,13 +175,13 @@ def division_list(min_score: int = 0, limit: int = Query(300, ge=1, le=2000),   
         WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)
           AND NOT {etage0}
         ORDER BY m.score DESC LIMIT :lim"""),
-        {"s": min_score, "lim": limit, "c": commune, "run": RUN}).mappings().all()
+        {"s": min_score, "lim": limit, "c": commune, "run": runs.current()}).mappings().all()
     counts = db.execute(text(
         f"SELECT count(*) FILTER (WHERE NOT {etage0}) AS total,"
         f"       count(*) FILTER (WHERE {etage0}) AS exclus"
         " FROM module_division m JOIN parcels p ON p.id = m.parcel_id"
         " WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)"),
-        {"s": min_score, "c": commune, "run": RUN}).mappings().one()
+        {"s": min_score, "c": commune, "run": runs.current()}).mappings().one()
     return {"total": int(counts["total"] or 0), "etage0_exclus": int(counts["exclus"] or 0),
             "items": [{
         "idu": r["idu"], "surface_m2": round(r["surface_m2"] or 0), "bati_count": r["bati_count"],
@@ -260,7 +260,7 @@ def patrimoine(siren: str, fmt: str = "json",
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
         WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
-        {"s": siren, "run": RUN, "v2run": _score_v2_run_id(db)}).mappings().all()
+        {"s": siren, "run": runs.current(), "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
         "SELECT type_procedure, date_annonce FROM v_foncier_sous_pression WHERE siren = :s LIMIT 1"),
         {"s": siren}).mappings().first()
@@ -565,7 +565,7 @@ def promesses(commune: str | None = None, months: int = 24,
               AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
                               WHERE cr.run_label = :run AND cr.parcel_id = p.id
                                 AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
-            {"c": commune, "m": months, "run": RUN}).scalar() or 0)}
+            {"c": commune, "m": months, "run": runs.current()}).scalar() or 0)}
     # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0 (28 s → 5 s) : la jointure
     # latérale lourde est calculée en bloc (hash joins) AVANT le tri+plafond.
     # §3 (23/08/2026) — la GÉOM du permis est RÉ-AJOUTÉE (ST_AsGeoJSON) : depuis la fusion Radar+Point
@@ -597,7 +597,7 @@ def promesses(commune: str | None = None, months: int = 24,
                s2.tier AS tier_v2, s2.rang AS rang_v2
         FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
         ORDER BY cand.date ASC LIMIT :lim OFFSET :off"""),
-        {"c": commune, "m": months, "run": RUN, "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
+        {"c": commune, "m": months, "run": runs.current(), "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
     # tri anciens d'abord (= les plus « morts »). total via l'appel count_only parallèle ; ici on déduit
     # has_more du remplissage de la page (une page pleine ⇒ il reste potentiellement des lignes).
     return {"commune": commune or "Toute l'île", "months": months, "total": None,
@@ -692,7 +692,7 @@ def prospection_solaire(commune: str | None = None,
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         {where}
         ORDER BY {order} LIMIT :lim"""),
-        {**params, "v2run": _v2run(db), "run": RUN, "lim": cap}).mappings().all()
+        {**params, "v2run": _v2run(db), "run": runs.current(), "lim": cap}).mappings().all()
     items = []
     for r in rows:
         d = dict(r)
@@ -770,7 +770,7 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = ps.idu AND s2.run_id = :v2run
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE ps.idu = :idu"""),
-        {"idu": idu, "v2run": _v2run(db), "run": RUN}).mappings().first()
+        {"idu": idu, "v2run": _v2run(db), "run": runs.current()}).mappings().first()
     if not r or r["productible"] is None:
         return {"ok": False, "idu": idu,
                 "message": "Aucune donnée solaire pour cette parcelle (hors couverture V1 gelée)."}
@@ -981,7 +981,7 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = Query(0,
           AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))
         ORDER BY s2.rang ASC NULLS LAST LIMIT :lim OFFSET :off"""),
-        {"c": commune, "run": RUN, "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
+        {"c": commune, "run": runs.current(), "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
     true_total = int(db.execute(text(
         """SELECT count(*) FROM parcels p
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -992,7 +992,7 @@ def fantome(commune: str | None = None, limit: int = 300, offset: int = Query(0,
              AND pm.groupe NOT IN (1, 2, 3, 4, 9) AND pm.siren IS NOT NULL
              AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                   OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))"""),
-        {"c": commune, "run": RUN, "v2run": _v2run(db)}).scalar() or 0)
+        {"c": commune, "run": runs.current(), "v2run": _v2run(db)}).scalar() or 0)
     return {"total": true_total, "affiches": offset + len(rows),
             "has_more": offset + len(rows) < true_total, "items": [{
         **{k: r[k] for k in ("idu", "surface_m2", "statut", "siren", "denomination")},
@@ -1046,7 +1046,7 @@ def bailleur(commune: str = Query(..., min_length=1), db: Session = Depends(get_
         LEFT JOIN commune_contexte_sru cs ON cs.commune = p.commune
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
         ORDER BY (cs.statut = 'carencee') DESC NULLS LAST, COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
-        {"c": commune, "run": RUN, "v2run": _v2run(db)}).mappings().all()
+        {"c": commune, "run": runs.current(), "v2run": _v2run(db)}).mappings().all()
     true_total = len(rows) if len(rows) < 500 else int(db.execute(text(
         """SELECT count(*) FROM parcels p
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -1055,7 +1055,7 @@ def bailleur(commune: str = Query(..., min_length=1), db: Session = Depends(get_
              AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
              AND EXISTS (SELECT 1 FROM spatial_layers q WHERE q.kind = 'qpv'
                          AND ST_Intersects(p.geom_2975, q.geom_2975))"""),
-        {"c": commune, "run": RUN, "v2run": _v2run(db)}).scalar() or 0)
+        {"c": commune, "run": runs.current(), "v2run": _v2run(db)}).scalar() or 0)
     sru = _sru_bloc(db, commune) if commune else None
     n_carencees = len({r["commune"] for r in rows if r["sru_statut"] == "carencee"}) if not commune else None
     return {"total": true_total, "affiches": len(rows), "sru": sru, "n_communes_carencees": n_carencees,
@@ -1136,7 +1136,7 @@ def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
         "  AND cr.result IN ('HARD_EXCLUDE', 'SOFT_FLAG', 'UNKNOWN') "
         "ORDER BY CASE cr.result WHEN 'HARD_EXCLUDE' THEN 0 WHEN 'SOFT_FLAG' THEN 1 ELSE 2 END, "
         "         CASE cr.severity WHEN 'fort' THEN 0 WHEN 'moyen' THEN 1 WHEN 'faible' THEN 2 ELSE 3 END"),
-        {"run": RUN, "pid": parcel_id}).mappings().all()
+        {"run": runs.current(), "pid": parcel_id}).mappings().all()
     checklist = [{"layer": c["layer_name"], "severity": c["severity"], "result": c["result"],
                   "detail": c["detail"]} for c in concerns]
     # M137-U — ZNIEFF : contrainte HORS CASCADE (ne remonte pas dans dryrun_cascade_results) ; on la
@@ -1182,12 +1182,12 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
             LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             WHERE p.idu = :t OR (p.section || p.numero) = :t OR (p.section || lpad(p.numero, 4, '0')) = :t
-            LIMIT 1"""), {"t": t, "run": RUN, "v2run": v2run}).mappings().first()
+            LIMIT 1"""), {"t": t, "run": runs.current(), "v2run": v2run}).mappings().first()
         if row:
             dossier = _diligence_dossier(db, row["parcel_id"], row["idu"])
             items.append({k: row[k] for k in row.keys() if k != "parcel_id"}
                          | {"etage0": bool(row["etage0"]), **dossier,
-                            "pdf": f"/parcels/{row['idu']}/export.pdf?source={RUN}"})
+                            "pdf": f"/parcels/{row['idu']}/export.pdf?source={runs.current()}"})
         else:
             items.append({"ref": t, "erreur": "référence introuvable"})
     ok = [i for i in items if "idu" in i]
@@ -1494,10 +1494,9 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     chiffre absent des étapes. Sur clic uniquement (coût) ; caché par (idu, run, question)."""
     _check_idu(idu)   # M-K (P2-31)
     from ..ai import core
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
     QUESTION = "explication_faisabilite"
 
-    hit = core.cache_get(db, idu, Q_A_RUN_LABEL, QUESTION)
+    hit = core.cache_get(db, idu, runs.current(), QUESTION)
     if hit is not None:
         return {**hit, "cached": True}
     row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
@@ -1520,7 +1519,7 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     else:
         out = {"disponible": True, "rejected": False, "texte": res.text, "sources": res.sources,
                "provenance": {k: facts[k].provenance for k in res.sources if k in facts}}
-    core.cache_put(db, idu, Q_A_RUN_LABEL, QUESTION, out, kind="explain-faisa")
+    core.cache_put(db, idu, runs.current(), QUESTION, out, kind="explain-faisa")
     return out
 
 
@@ -1580,7 +1579,7 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
         LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
           AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')"""),
-        {"sdp": sdp_min, "run": RUN, "c": body.commune, "v2run": _v2run(db),
+        {"sdp": sdp_min, "run": runs.current(), "c": body.commune, "v2run": _v2run(db),
          "smin": sdp_min * 0.4}).mappings().all()
     hcache: dict = {}   # (zone, commune) → (hauteur éligibilité, niveaux_max, estimée, signature calcul)
 

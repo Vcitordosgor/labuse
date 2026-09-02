@@ -37,7 +37,8 @@ def _all(runs):
 
 
 def _check(monkeypatch, table_runs):
-    monkeypatch.setattr("labuse.scoring.score_v_constants.Q_A_RUN_LABEL", _SERVI)
+    # SUITE-1 S3 — le run servi se lit via runs.current() (plus de constante d'import) : on l'injecte là.
+    monkeypatch.setattr("labuse.runs.current", lambda: _SERVI)
     return bg.check_coherence_tables_run_scopees(session=_FakeConn(table_runs))
 
 

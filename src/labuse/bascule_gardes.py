@@ -450,8 +450,8 @@ def check_coherence_renouvellement(session=None) -> dict:
       · **PÉRIMÉE**  : run(table) ≠ run servi → un chiffre périmé serait servi (fiche/carte/liste) ;
       · **MÉLANGÉE** : plusieurs run_label coexistent → une lecture non scopée mélangerait deux runs.
     Lecture seule. Retourne `{ok, servi, runs, statut}`."""
-    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
-    servi = Q_A_RUN_LABEL
+    from labuse import runs
+    servi = runs.current()
     sql_exist = "SELECT to_regclass('parcel_renouvellement') IS NOT NULL"
     sql_runs = "SELECT run_label, count(*) FROM parcel_renouvellement GROUP BY 1 ORDER BY 2 DESC"
     if session is not None:
@@ -610,8 +610,8 @@ def check_coherence_run_fiche(session=None) -> dict:
     SILENCIEUSEMENT sur le repli legacy (`_score_v2_run_id` → None → tier NULL). Cette garde CRIE au lieu
     de compter sur la chance. Bruyante, NON bloquante (régime check_fraicheur).
     Statuts : OK / V2_ABSENT / CASCADE_ABSENT / LES_DEUX_ABSENTS."""
-    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
-    servi = Q_A_RUN_LABEL
+    from labuse import runs
+    servi = runs.current()
     out: dict[str, object] = {}
 
     def _present(conn, table: str, col: str) -> bool | None:
@@ -657,8 +657,8 @@ def check_coherence_tables_run_scopees(session=None) -> dict:
     Bruyante, NON bloquante (régime check_fraicheur). `division_or_candidates` = workflow de revue PAR
     COMMUNE (peut légitimement retarder le run servi, il attend une revue humaine) → alerté mais toléré.
     Statuts par table : OK / PÉRIMÉE / MÉLANGÉE / ABSENTE. Retourne `{table: statut}`."""
-    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
-    servi = Q_A_RUN_LABEL
+    from labuse import runs
+    servi = runs.current()
     # (table, colonne_run, workflow_par_commune?) — flags/renouvellement/score_e montent DANS le geste ;
     # division_or est un workflow de revue par commune (garde informative, tolérée).
     tables = [("parcel_renouvellement", "run_label", False), ("score_e", "run_label", False),

@@ -351,7 +351,9 @@ function ColHead({ titre, note, replie, onToggle }: { titre: string; note: strin
 }
 
 function RadarBox({ radar }: { radar: AdminFlux['radar'] }) {
-  const c = radar.compteurs
+  const c = radar.compteurs as AdminFlux['radar']['compteurs'] & { biens?: number }
+  // S5 — dénominateur M = total des biens (annonces distinctes) ; le KPI dit « rattachées N / M ».
+  const totalBiens = c.biens ?? c.annonces
   const pts = radar.courbe.points
   const max = Math.max(1, ...pts.map((p) => p.paires))
   const line = pts.length >= 2
@@ -362,7 +364,7 @@ function RadarBox({ radar }: { radar: AdminFlux['radar'] }) {
       <div className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.24em] text-txt-dim">La donnée qui s'accumule · Radar</div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         <Kpi n={c.annonces} l="annonces collectées" d={c.annonces_semaine ? `+${c.annonces_semaine} cette semaine` : undefined} />
-        <Kpi n={c.rattachees} l="rattachées à une parcelle" d={c.rattachees_pct != null ? `${c.rattachees_pct} %` : undefined} />
+        <Kpi n={c.rattachees} l={`annonces rattachées / ${totalBiens.toLocaleString('fr-FR')}`} d={c.rattachees_pct != null ? `${c.rattachees_pct} %` : undefined} />
         <Kpi n={c.paires} l="paires annonce ↔ vente DVF" d={c.paires_semaine ? `+${c.paires_semaine} cette semaine` : undefined} key_ />
         <Kpi n={c.communes} l="communes couvertes" d={`sur ${c.communes_total}`} />
         <Kpi n={c.types} l="types couverts" />

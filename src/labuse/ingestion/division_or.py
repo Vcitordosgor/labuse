@@ -51,6 +51,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..bati import ENSEMBLE_MIN_BATIMENTS, GRAND_BATIMENT_M2
+from .. import runs  # S3 : run servi relu à la requête (:served)
 
 def _seuils_cfg() -> dict:
     """M129-C — les ~20 seuils SORTENT DU DUR (config/seuils_geometrie.yaml section
@@ -731,7 +732,6 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
     résiduels — jamais fusionnée). Univers disjoint du pool résiduel (ratio > 50 % vs ≤ 50 %) :
     aucun conflit de clé. Mêmes gardes que le pool validé, aucun critère assoupli."""
     _ensure_ddl(session)
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL   # M50 : stamp du run servi (:served)
     has_score_e = session.execute(text("SELECT to_regclass('score_e')")).scalar() is not None
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
@@ -775,7 +775,7 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             else:
                 insert_sql = _INSERT_PARTIEL.replace("se.marge_estimee,", "NULL::int,").replace(
                     "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL,
+            session.execute(text(insert_sql), {"commune": commune, "served": runs.current(),
                                                "revue_idus": revue_idus, "activite_pats": activite_pats,
                                                "activite_libs": _zones_activite(commune)})
             # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (cf. build_divisions) — durable + incrémental.
@@ -824,8 +824,7 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     # dans la PAU ; sinon (base sans branche RNU) un lot sans zone est simplement exclu.
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
-    # O12-GARDE : run servi (Q_A_RUN_LABEL, suit toute bascule) + garde non-constructibilité.
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+    # O12-GARDE : run servi (runs.current(), suit toute bascule) + garde non-constructibilité.
     has_constr = session.execute(text("SELECT to_regclass('parcel_constructibilite')")).scalar() is not None
     constr_guard = ("NOT EXISTS (SELECT 1 FROM parcel_constructibilite pc WHERE pc.parcel_id = zon.id "
                     "AND pc.label IN ('declasse_zone_fermee','declasse_non_constructible'))"
@@ -873,7 +872,7 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
             else:   # pas de Score É → gain NULL, sans jointure
                 insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
                     "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
-            session.execute(text(insert_sql), {"commune": commune, "served": Q_A_RUN_LABEL,
+            session.execute(text(insert_sql), {"commune": commune, "served": runs.current(),
                                                "revue_idus": revue_idus, "activite_pats": activite_pats,
                                                "activite_libs": _zones_activite(commune)})
             # M50-SUITE-2 : commit ATOMIQUE PAR COMMUNE (purge+insert dans LA MÊME transaction, puis

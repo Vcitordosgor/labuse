@@ -14,7 +14,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs
 from .risques_arbitrage import arbitrer_risques
 
 # CONNEXIONS-2 Lot 1 (KO-1) : le run servi par défaut est le POINT DE VÉRITÉ UNIQUE versionné
@@ -29,7 +29,7 @@ def served_cascade_lines(db: Session, idu: str, run: str | None = None) -> list[
     Colonnes : layer_name, result, severity, weight_applied, detail, source, source_table,
     source_id, evenement. Liste vide si la parcelle n'est pas dans le run servi.
     """
-    run = run or Q_A_RUN_LABEL
+    run = run or runs.current()
     rows = db.execute(text(
         """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
                   ds.name AS source, cr.source_table, cr.source_id, cr.evenement

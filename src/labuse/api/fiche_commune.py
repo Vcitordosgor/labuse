@@ -10,8 +10,6 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
-
 
 # ───────────────────────────── C2 — les chiffres COMMUNS au comparateur ─────────────────────────────
 def comparable(db: Session, commune: str) -> dict | None:

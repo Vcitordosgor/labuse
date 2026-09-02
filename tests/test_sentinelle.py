@@ -518,3 +518,72 @@ def test_inventaire_markdown_regenere_depuis_le_catalogue():
     # chaque source du catalogue figure au moins par son nom
     for s in SOURCES:
         assert s["name"] in md, f"source absente de l'inventaire généré : {s['name']}"
+
+
+# ─────────────────────────── SUITE-1 · S4 · second témoin + alerte mail ───────────────────────────
+
+def test_s4_temoin_deux_communes_alerte_si_l_un_change(engine):
+    """S4.2 — un témoin sur DEUX chef-lieux (url + url_temoin_2) : l'empreinte combine les deux. Un
+    changement de L'UN OU L'AUTRE devient « nouvelle_version » ; identique des deux côtés reste « ok »."""
+    from labuse.db import session_scope
+    u1, u2 = "http://x/sd", "http://x/sp"
+    base = {u1: (200, {}, '{"results":[{"id":1}]}'), u2: (200, {}, '{"results":[{"id":9}]}')}
+    with session_scope() as db:
+        sid = _source(db, "TEST temoin bicommune")
+        _veille(db, sid, "temoin", u1, selecteur="results")
+        db.execute(text("UPDATE source_veille SET url_temoin_2=:u2 WHERE source_id=:s"), {"u2": u2, "s": sid})
+        db.commit()
+        row = db.execute(text("SELECT * FROM source_veille WHERE source_id=:s"), {"s": sid}).mappings().first()
+    # baseline
+    s0 = sentinelle.sonder_ligne(dict(row), servi=None, http=_fake_http(base))
+    assert s0.statut == "ok"
+    row = dict(row); row["dernier_entete"] = s0.entete
+    # rien ne change → ok
+    assert sentinelle.sonder_ligne(row, servi=None, http=_fake_http(base)).statut == "ok"
+    # seule Saint-Pierre change → nouvelle_version
+    change_sp = {u1: base[u1], u2: (200, {}, '{"results":[{"id":42}]}')}
+    assert sentinelle.sonder_ligne(row, servi=None, http=_fake_http(change_sp)).statut == "nouvelle_version"
+
+
+def test_s4_endpoint_mail_toggle(client, engine):
+    """S4.1 — l'endpoint abonne/désabonne une source à l'alerte mail (par défaut off)."""
+    from labuse.db import session_scope
+    with session_scope() as db:
+        sid = _source(db, "TEST mail toggle")
+        _veille(db, sid, "entete", "http://x/m")
+        db.commit()
+    assert client.post(f"/admin/sources/{sid}/veille/mail", json={"mail_alerte": True}).json()["mail_alerte"] is True
+    with session_scope() as db:
+        assert db.execute(text("SELECT mail_alerte FROM source_veille WHERE source_id=:s"), {"s": sid}).scalar() is True
+    # exposé dans /admin/sources
+    ligne = next(s for s in client.get("/admin/sources").json()["sources"] if s["id"] == sid)
+    assert ligne["veille"]["mail_alerte"] is True
+
+
+def test_s4_digest_envoie_mail_seulement_si_abonnee(client, engine, monkeypatch):
+    """S4.1 — le mail ne part QUE si la source est abonnée (`mail_alerte`) ; l'alerte in-app reste toujours."""
+    import labuse.mail as mail_mod
+    from labuse.db import session_scope
+    envois: list = []
+    monkeypatch.setattr(mail_mod, "send_email_async", lambda *a, **k: envois.append(a))
+    # source NON abonnée → aucun mail
+    with session_scope() as db:
+        sid = _source(db, "TEST digest mail off", millesime="2025")
+        _veille(db, sid, "page", "http://x/off", selecteur=r"20\d{2}")
+        db.commit()
+    from labuse.config import get_settings
+    monkeypatch.setattr(get_settings(), "admin_email", "ops@labuse.test", raising=False)
+    http = _fake_http({"http://x/off": (200, {}, "2026")})
+    with session_scope() as db:
+        sentinelle.passer(db, source_ids=[sid], forcer=True, http=http, delai_s=0)
+    assert envois == []
+    # source abonnée → un mail
+    with session_scope() as db:
+        sid2 = _source(db, "TEST digest mail on", millesime="2025")
+        _veille(db, sid2, "page", "http://x/on", selecteur=r"20\d{2}")
+        db.execute(text("UPDATE source_veille SET mail_alerte=true WHERE source_id=:s"), {"s": sid2})
+        db.commit()
+    http2 = _fake_http({"http://x/on": (200, {}, "2026")})
+    with session_scope() as db:
+        sentinelle.passer(db, source_ids=[sid2], forcer=True, http=http2, delai_s=0)
+    assert len(envois) == 1 and "ops@labuse.test" in envois[0]

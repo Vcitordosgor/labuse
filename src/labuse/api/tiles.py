@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["tiles"])
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
+from .. import runs
 _PROMUES = ("chaude", "a_surveiller", "a_creuser")
 
 
@@ -126,9 +126,11 @@ def build_parcel_adresse(db: Session) -> int:
     return int(n)
 
 
-def build_mvt_table(db: Session, run_label: str = RUN) -> int:
+def build_mvt_table(db: Session, run_label: str | None = None) -> int:
     """(Re)construit la table matérialisée servie en tuiles. À lancer APRÈS un run de scoring
     (le script d'extension île le fait) ; idempotent, ~1-2 min pour 431k parcelles."""
+    if run_label is None:
+        run_label = runs.current()
     # M6.1 : le zonage PLU par parcelle est un prérequis des tuiles — construit une seule fois
     # (long) puis réutilisé tel quel à chaque rebuild (le zonage ne bouge pas avec les runs).
     # FIX-C6 (GB-049 étendu) — le heal crée un STUB VIDE de parcel_zone_plu (pour qu'une base
@@ -147,10 +149,10 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     # computed_at » : un run CANDIDAT calculé après le servi bâtirait les tuiles sur le mauvais
     # run et la carte contredirait la fiche. Label absent → échec bruyant, pas de repli silencieux.
     v2run = db.execute(text(
-        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :r"), {"r": RUN}).scalar()
+        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :r"), {"r": run_label}).scalar()
     if v2run is None:
         raise RuntimeError(
-            f"run servi « {RUN} » absent de p_score_v2_runs — "
+            f"run servi « {run_label} » absent de p_score_v2_runs — "
             "lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
     db.execute(text("""
         CREATE TABLE mvt_parcels AS
@@ -191,7 +193,7 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     return int(n)
 
 
-def build_parcel_flags_table(db: Session, run_label: str = RUN) -> dict:
+def build_parcel_flags_table(db: Session, run_label: str | None = None) -> dict:
     """M45 (P2) — DÉNORMALISE les vigilances (non-francs : SOFT_FLAG + abf/UNKNOWN) du run servi
     en une table (run_label, parcel_id, layer_name) INDEXÉE, pour que le filtre `flags` (vigilances
     par type) soit un PROBE indexé — le compteur île entière passait de 4-7 s à sous la barre.
@@ -199,6 +201,8 @@ def build_parcel_flags_table(db: Session, run_label: str = RUN) -> dict:
     RUN-SCOPÉE : (re)bâtie dans le geste de bascule (comme les MVT), jamais à la main. GARDE DE
     COHÉRENCE : le compte par couche DOIT égaler la source (dryrun_cascade_results) — tout écart =
     REFUS bruyant (rollback + RuntimeError). Jamais une 2e vérité qui dérive en silence. Idempotent."""
+    if run_label is None:
+        run_label = runs.current()
     import time as _time
     t0 = _time.perf_counter()
     db.execute(text("DROP TABLE IF EXISTS parcel_flags"))
@@ -229,13 +233,15 @@ def build_parcel_flags_table(db: Session, run_label: str = RUN) -> dict:
             "seconds": round(_time.perf_counter() - t0, 2)}
 
 
-def rebuild_mvt_servies(db: Session, run_label: str = RUN, log=lambda *_: None) -> dict:
+def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_: None) -> dict:
     """GESTE UNIQUE de matérialisation carte (M48) — « un geste = tout ou rien ». À appeler DANS
     chaque bascule du run servi (après le re-score) ET par `labuse build-mvt` : plus jamais un
     re-score sans tuiles à jour (constat M48 : la bascule M39 a régénéré le golden mais PAS les
     tuiles → 4 tiers + 7 854 SDP périmés sur la carte). Reconstruit d'un bloc `mvt_parcels` +
     overlays + `parcel_flags` (M45) + `parcel_renouvellement` (M47) + `score_e` (M50) et enregistre
     `mvt_meta`. Point d'orchestration UNIQUE — le CLI n'en est plus qu'un mince appelant."""
+    if run_label is None:
+        run_label = runs.current()
     import time as _t
     from .. import renouvellement as _renouv
     from ..ingestion import score_e as _score_e

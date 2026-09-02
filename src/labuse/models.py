@@ -1824,6 +1824,12 @@ def ensure_source_veille(engine) -> None:
         # SENTINELLE-3 (Y4) — rappel de rafraîchissement des sources manuelles (idempotent, non destructif).
         c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS cadence_attendue_jours integer"))
         c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS convention_echeance date"))
+        # SUITE-1 (S4.1) — alerte mail optionnelle PAR SOURCE (défaut off ; passe par mail.py unique).
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS "
+                       "mail_alerte boolean NOT NULL DEFAULT false"))
+        # SUITE-1 (S4.2) — seconde commune témoin (Saint-Pierre) pour les sondes `temoin` commune : une
+        # alerte si l'un DES DEUX chef-lieux change. Empreinte combinée ; NULL = un seul témoin.
+        c.execute(text("ALTER TABLE source_veille ADD COLUMN IF NOT EXISTS url_temoin_2 text"))
     # peuplement : dans une session (rattachement par nom aux sources en base), idempotent.
     from .db import session_scope
     from . import sentinelle

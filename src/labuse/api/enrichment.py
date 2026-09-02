@@ -24,6 +24,7 @@ import httpx
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .. import runs
 from ..config import get_settings
 
 
@@ -552,7 +553,6 @@ def warm_commune(db: Session, commune: str,
     M34 (dette #14) : « cliquable » = SERVIE dans un tier actif du run servi
     (`statuses` = tiers, défaut TIERS_SERVABLES) — plus jamais le statut cascade legacy."""
     from ..models import Parcel
-    from ..scoring.score_v_constants import Q_A_RUN_LABEL
     from ..verdict_servi import TIERS_SERVABLES
     _ensure_cache_table(db)
     sql = ("SELECT p.id, ST_X(p.centroid), ST_Y(p.centroid) FROM parcels p "

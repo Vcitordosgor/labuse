@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs
 
 log = logging.getLogger("labuse.carnet")
 router = APIRouter(prefix="/carnet-secteur", tags=["carnet-secteur"])
@@ -72,7 +72,7 @@ def _liste_secteurs(db: Session, commune: str | None, limit: int) -> dict:
            WHERE s.run_id = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
            GROUP BY 1, 2 HAVING count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) > 0
            ORDER BY opportunites DESC, brulantes DESC LIMIT :lim"""),
-        {"run": Q_A_RUN_LABEL, "c": commune, "lim": limit}).mappings().all()
+        {"run": runs.current(), "c": commune, "lim": limit}).mappings().all()
     return {"secteurs": [dict(r) for r in rows], "n": len(rows), "note": POST_M7}
 
 
@@ -95,7 +95,7 @@ def _carnet(secteur: str, db: Session) -> dict:
     # stock par tier
     tiers = {r["tier"]: r["n"] for r in db.execute(text(
         "SELECT tier, count(*) AS n FROM parcel_p_score_v2 WHERE run_id = :run AND left(parcelle_id,10) = :s GROUP BY tier"),
-        {"run": Q_A_RUN_LABEL, "s": secteur}).mappings()}
+        {"run": runs.current(), "s": secteur}).mappings()}
 
     # prix DVF (médianes sectorielles) + prix de sortie neuf
     prix = {}

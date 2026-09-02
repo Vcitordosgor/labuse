@@ -19,7 +19,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs
 from ..verdict_servi import TIERS_SERVABLES
 
 # Adjacence = contact à ≤ 0,5 m en 2975 (tolère les micro-jeux du cadastre sans franchir
@@ -63,7 +63,7 @@ def compute_voisinage(session: Session, parcel_id: int,
         LIMIT :lim
         """
     ), {"pid": parcel_id, "buf": ADJ_BUFFER_M, "mins": MIN_SURFACE_M2, "lim": MAX_VOISINES,
-        "run": Q_A_RUN_LABEL, "servables": list(TIERS_SERVABLES)}).mappings().all()
+        "run": runs.current(), "servables": list(TIERS_SERVABLES)}).mappings().all()
 
     voisines = [{
         "idu": r["idu"],

@@ -2,6 +2,11 @@
 // portfolio d'un promoteur → l'IA (modèle de ai_models.py, journalisé) propose {nom, commune, url, année} ;
 // l'admin CORRIGE et VALIDE ligne à ligne AVANT insertion — rien n'entre sans validation. Aucun texte ni
 // visuel du promoteur n'est stocké : seulement les faits + le lien.
+//
+// LOT S1 — le flux de collecte est EXTRAIT dans <CollecteProgrammes> (sous-composant réutilisable) afin
+// d'être rejoué à l'intérieur de l'outil « Scan patrimoine » (onglet « Ce qu'ils construisent », geste
+// admin discret), avec le SIREN du propriétaire courant PRÉ-REMPLI et verrouillé. La section admin
+// historique <ProgrammesSection> (hors menu depuis LOT S1) réutilise le même sous-composant.
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { collecterProgrammes, delierProgramme, getProgrammes, supprimerProgramme, validerProgrammes,
@@ -9,17 +14,27 @@ import { collecterProgrammes, delierProgramme, getProgrammes, supprimerProgramme
 
 type Ligne = ProgrammeCandidat & { garder: boolean }
 
-export function ProgrammesSection() {
+const inp = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[12px] text-txt'
+
+// LOT S1 — sous-composant de collecte réutilisable. `sirenFixe` : quand fourni (contexte Scan patrimoine),
+// le SIREN est PRÉ-REMPLI et non éditable (c'est le propriétaire courant) et les champs identité sont
+// masqués. `onValide` : notifie l'appelant (rafraîchir la liste embarquée). En mode admin plein (sans
+// `sirenFixe`), les champs SIREN/nom restent saisissables comme avant.
+export function CollecteProgrammes({ sirenFixe, nomFixe, onValide }: {
+  sirenFixe?: string; nomFixe?: string; onValide?: () => void
+} = {}) {
   const qc = useQueryClient()
-  const [siren, setSiren] = useState('')
-  const [nom, setNom] = useState('')
+  const [siren, setSiren] = useState(sirenFixe ?? '')
+  const [nom, setNom] = useState(nomFixe ?? '')
   const [url, setUrl] = useState('')
   const [lignes, setLignes] = useState<Ligne[] | null>(null)
   const [motif, setMotif] = useState<string | null>(null)
   const [bilan, setBilan] = useState<string | null>(null)
+  const verrou = !!sirenFixe   // SIREN imposé par le contexte (propriétaire courant)
+  const effSiren = sirenFixe ?? siren
 
   const collecte = useMutation({
-    mutationFn: () => collecterProgrammes({ url, promoteur_siren: siren || undefined, promoteur_nom: nom || undefined }),
+    mutationFn: () => collecterProgrammes({ url, promoteur_siren: effSiren || undefined, promoteur_nom: nom || undefined }),
     onSuccess: (r) => {
       setMotif(r.ok ? null : (r.motif ?? 'échec'))
       setLignes(r.ok ? (r.programmes ?? []).map((p) => ({ ...p, garder: true })) : null)
@@ -28,25 +43,33 @@ export function ProgrammesSection() {
   })
   const validation = useMutation({
     mutationFn: () => validerProgrammes({
-      promoteur_siren: siren || undefined, promoteur_nom: nom || undefined, url_portfolio: url,
+      promoteur_siren: effSiren || undefined, promoteur_nom: nom || undefined, url_portfolio: url,
       programmes: (lignes ?? []).filter((l) => l.garder && l.nom.trim()).map(({ nom, commune, url, annee }) => ({ nom, commune, url, annee })),
     }),
-    onSuccess: (r) => { setBilan(r.note); setLignes(null); qc.invalidateQueries({ queryKey: ['programmes-admin'] }) },
+    onSuccess: (r) => {
+      setBilan(r.note); setLignes(null)
+      qc.invalidateQueries({ queryKey: ['programmes-admin'] })
+      if (effSiren) qc.invalidateQueries({ queryKey: ['programmes-admin', effSiren] })
+      onValide?.()
+    },
   })
-  const progs = useQuery({ queryKey: ['programmes-admin'], queryFn: () => getProgrammes() })
 
   const maj = (i: number, patch: Partial<Ligne>) => setLignes((ls) => ls ? ls.map((l, j) => (j === i ? { ...l, ...patch } : l)) : ls)
-  const inp = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[12px] text-txt'
 
   return (
-    <div data-admin-programmes className="flex flex-col gap-4 text-[12.5px]">
+    <div className="flex flex-col gap-3 text-[12.5px]">
       {/* collecte */}
       <section className="rounded-lg border border-line-2 bg-surface-2 p-3">
-        <h3 className="font-display text-sm font-bold text-txt-hi">Collecter un portfolio de promoteur</h3>
-        <p className="mt-0.5 text-[11px] text-txt-mut">Coller l'URL de la page « nos programmes » du site du promoteur. L'IA propose la liste ; vous corrigez et validez ligne à ligne. Aucun texte ni photo n'est conservé — seulement le nom, la commune et le lien.</p>
+        <p className="text-[11px] text-txt-mut">Coller l'URL de la page « nos programmes » du site du promoteur. L'IA propose la liste ; vous corrigez et validez ligne à ligne. Aucun texte ni photo n'est conservé — seulement le nom, la commune et le lien.</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          <input data-prog-siren value={siren} onChange={(e) => setSiren(e.target.value)} placeholder="SIREN (si connu)" className={`w-40 ${inp}`} />
-          <input data-prog-nom value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du promoteur" className={`w-52 ${inp}`} />
+          {verrou ? (
+            <span data-prog-siren-fixe className="inline-flex h-8 items-center rounded-md border border-line-2 bg-surface-1 px-2 font-mono text-[11px] text-txt-dim" title="SIREN du propriétaire courant">SIREN {sirenFixe}</span>
+          ) : (
+            <>
+              <input data-prog-siren value={siren} onChange={(e) => setSiren(e.target.value)} placeholder="SIREN (si connu)" className={`w-40 ${inp}`} />
+              <input data-prog-nom value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du promoteur" className={`w-52 ${inp}`} />
+            </>
+          )}
           <input data-prog-url value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…/nos-programmes" className={`min-w-[240px] flex-1 ${inp}`} />
           <button data-prog-collecter onClick={() => { setBilan(null); setMotif(null); collecte.mutate() }} disabled={!url || collecte.isPending}
             className="h-8 rounded-md border border-mint/40 bg-mint/10 px-3 text-[12px] font-medium text-mint disabled:opacity-40">
@@ -82,6 +105,20 @@ export function ProgrammesSection() {
           </button>
         </section>
       )}
+    </div>
+  )
+}
+
+export function ProgrammesSection() {
+  const progs = useQuery({ queryKey: ['programmes-admin'], queryFn: () => getProgrammes() })
+
+  return (
+    <div data-admin-programmes className="flex flex-col gap-4 text-[12.5px]">
+      {/* collecte (SIREN/nom saisissables — contexte admin plein) */}
+      <section>
+        <h3 className="mb-2 font-display text-sm font-bold text-txt-hi">Collecter un portfolio de promoteur</h3>
+        <CollecteProgrammes onValide={() => progs.refetch()} />
+      </section>
 
       {/* référentiel existant */}
       <section>

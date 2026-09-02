@@ -20,7 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import config
-from ..scoring.score_v_constants import Q_A_RUN_LABEL
+from .. import runs
 
 log = logging.getLogger("labuse.scoreur")
 router = APIRouter(prefix="/scoreur-adresse", tags=["scoreur-adresse"])
@@ -106,13 +106,13 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
     if body.idu:
         label = body.q
         row = db.execute(text(_sel + "WHERE p.idu = :idu LIMIT 1"),
-                         {"run": Q_A_RUN_LABEL, "idu": body.idu}).mappings().first()
+                         {"run": runs.current(), "idu": body.idu}).mappings().first()
     else:
         geo = _geocode(body.q)
         label = geo["label"]
         row = db.execute(text(_sel + "WHERE ST_Contains(p.geom, ST_SetSRID(ST_Point(:lon, :lat), 4326)) "
                               "ORDER BY p.surface_m2 DESC NULLS LAST LIMIT 1"),
-                         {"run": Q_A_RUN_LABEL, "lon": geo["lon"], "lat": geo["lat"]}).mappings().first()
+                         {"run": runs.current(), "lon": geo["lon"], "lat": geo["lat"]}).mappings().first()
     if not row:
         return {"ok": False, "adresse": label,
                 "message": "Aucune parcelle en base à cette adresse — hors périmètre couvert, "

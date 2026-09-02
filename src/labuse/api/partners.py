@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["partners"])
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
+from .. import runs
 
 
 def get_db():
@@ -139,7 +139,7 @@ def match_compatibilite(idu: str, db: Session = Depends(get_db)) -> dict:
         LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         -- M37 : statut = TIER SERVI (parcel_p_score_v2), plus la matrice historique.
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run
-        WHERE p.idu = :idu"""), {"idu": idu, "run": RUN}).mappings().first()
+        WHERE p.idu = :idu"""), {"idu": idu, "run": runs.current()}).mappings().first()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
     profs = db.execute(text("SELECT id, nom, commune, surface_min, surface_max, sdp_min, demo "
@@ -510,7 +510,7 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
         WHERE p.commune = :c AND d.opportunity_score >= :q
           AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
         ORDER BY d.opportunity_score DESC LIMIT :lim OFFSET :off"""),
-        {"run": RUN, "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
+        {"run": runs.current(), "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset, "demo": demo,
             # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).
             "mention": (f"Démonstration LABUSE — données RÉELLES, commune {_DEMO_COMMUNE}, "

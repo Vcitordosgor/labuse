@@ -15,8 +15,11 @@ from __future__ import annotations
 import pytest
 
 from labuse.db import session_scope
-from labuse.copilote_v2.outils import compter_parcelles, _TIER_ALIAS, RUN
+from labuse import runs
+from labuse.copilote_v2.outils import compter_parcelles, _TIER_ALIAS
 from labuse.copilote_v2.answering import _criteres_vers_filtres
+
+RUN = runs.current()   # SUITE-1 S3 — le run servi se lit via runs.current() (plus de constante d'import)
 from labuse.api.app import FiltreCriteres, filtre
 
 #: les seuls tiers qui EXISTENT en base (mvt_parcels.tier_v2), côté back ET front (TierV2).

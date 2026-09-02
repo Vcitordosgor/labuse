@@ -1204,6 +1204,14 @@ export interface AdminSourceVeille {
   convention_echeance: string | null
   jours_depuis_maj: number | null
   rappel_retard: boolean
+  // SUITE-1 (S4.1) — alerte mail optionnelle PAR SOURCE (défaut off ; l'alerte in-app reste toujours).
+  mail_alerte: boolean
+}
+// SUITE-1 (S2 bis) — colonne « Alimente » : moteurs + surfaces nourris, LUS de la matrice flux.py.
+export interface AdminSourceAlimente {
+  moteurs: Array<{ key: string; label: string }>
+  surfaces: Array<{ key: string; label: string }>
+  cable: boolean
 }
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
@@ -1211,6 +1219,7 @@ export interface AdminSource {
   // CONNEXIONS-2 Lot 6.3 (M2) — désactivée au dashboard ⇒ hors vitrine + consommateurs coupés.
   affichage_desactive: boolean
   fournisseur: string | null    // SENTINELLE-2 (X4) — colonne/regroupement fournisseur du tableau de veille
+  alimente: AdminSourceAlimente  // SUITE-1 (S2 bis) — ce que la source nourrit (matrice réelle)
   veille: AdminSourceVeille
 }
 export interface AdminSources {
@@ -1223,7 +1232,7 @@ export const getAdminSources = () => j<AdminSources>('/admin/sources')
 export const postAdminSourceCadence = (id: number, cadence: string | null) =>
   j<{ ok: boolean }>(`/admin/sources/${id}/cadence`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadence }) })
 export const postAdminSourceRelancer = (id: number) =>
-  j<{ ok: boolean; label: string; log: string }>(`/admin/sources/${id}/relancer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+  j<{ ok: boolean; label: string; log: string; millesime: string | null }>(`/admin/sources/${id}/relancer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 // CONNEXIONS-2 Lot 6.3 (M2) — désactiver / réactiver une source depuis le dashboard.
 export const postAdminSourceAffichage = (id: number, actif: boolean) =>
   j<{ ok: boolean; actif: boolean }>(`/admin/sources/${id}/affichage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
@@ -1232,6 +1241,9 @@ export const postAdminSourceVeilleVerifier = (id: number) =>
   j<{ ok: boolean; statut: string | null; millesime_amont: string | null; servi: string | null; message: string | null; notifs: number }>(`/admin/sources/${id}/veille/verifier`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminSourceVeilleActive = (id: number, actif: boolean) =>
   j<{ ok: boolean; actif: boolean }>(`/admin/sources/${id}/veille/active`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actif }) })
+// SUITE-1 (S4.1) — abonner/désabonner une source à l'alerte mail (l'alerte in-app reste toujours).
+export const postAdminSourceVeilleMail = (id: number, mail_alerte: boolean) =>
+  j<{ ok: boolean; mail_alerte: boolean }>(`/admin/sources/${id}/veille/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mail_alerte }) })
 // SENTINELLE-2 (X6) — « Injecter cette version » : sur clic humain, lance le job d'ingestion EXISTANT.
 export const postAdminSourceVeilleInjecter = (id: number) =>
   j<{ ok: boolean; label: string; log: string; millesime: string | null }>(`/admin/sources/${id}/veille/injecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })

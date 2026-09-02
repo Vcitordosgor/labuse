@@ -5,12 +5,13 @@
 // patrimoine (les deux se renvoient, ne se dupliquent pas). Chiffres = comptes SQL, millésime affiché.
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getPromoteurFrise, getVeillePromoteurs, type OperationPromoteur } from '../../lib/api'
+import { getMoi, getProgrammes, getPromoteurFrise, getVeillePromoteurs, type OperationPromoteur } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { iduComplet } from '../../lib/format'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
+import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
 
@@ -63,7 +64,7 @@ function Frise({ siren }: { siren: string }) {
 // RETOURS-4 S7 — « Ce qu'ils CONSTRUISENT », onglet 2 de la fusion Scan patrimoine. En mode `embedded`, le
 // focus SIREN vient de `focusSiren` (partagé par la fusion) et le pont « voir son patrimoine » devient une
 // BASCULE D'ONGLET (`onVoirPatrimoine`) au lieu de rouvrir un module.
-export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { embedded?: boolean; focusSiren?: string | null; onVoirPatrimoine?: (siren: string) => void } = {}) {
+export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCount }: { embedded?: boolean; focusSiren?: string | null; onVoirPatrimoine?: (siren: string) => void; onCount?: (n: number | null) => void } = {}) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
   const setFlyTo = useApp((s) => s.setFlyTo)
@@ -96,6 +97,29 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { e
       : { commune: commune || undefined, categorie: categorie || undefined, depuis: depuis || undefined, limit: 200 }),
   })
   const d = q.data
+
+  // LOT S1 — geste admin discret + programmes déjà collectés, uniquement quand un propriétaire est ciblé
+  // (Scan patrimoine embarqué). Non-admin : ni le contrôle de collecte, ni rien qui ne soit déjà public.
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
+  const admin = moi.data?.mode === 'compte' && moi.data.role === 'admin'
+  const ownerSiren = embedded ? (focusSiren ?? null) : null
+  const [collecteOuverte, setCollecteOuverte] = useState(false)
+  const progs = useQuery({
+    queryKey: ['programmes-admin', ownerSiren],
+    queryFn: () => getProgrammes(ownerSiren!),
+    enabled: !!ownerSiren,
+  })
+
+  // LOT S1 (compteur d'onglet réel) — le parent (Scan patrimoine) affiche « Ce qu'ils construisent (N) ».
+  // N = opérations servies + programmes publiés collectés pour ce propriétaire. Remonté SEULEMENT quand
+  // les deux chiffres sont connus (sinon null → le parent n'affiche pas de compteur, aucun chiffre inventé).
+  const nOperations = d?.n_total ?? null
+  const nProgrammes = progs.data?.n ?? (ownerSiren ? null : 0)
+  useEffect(() => {
+    if (!onCount) return
+    onCount(nOperations == null || nProgrammes == null ? null : nOperations + nProgrammes)
+  }, [onCount, nOperations, nProgrammes])
+
   // ADMIN-1 (AD3) — sous-titre du mode strict : période RÉELLE des permis (plus ancienne année vue) +
   // millésime Sitadel. Aucun chiffre inventé : dérivé des opérations servies.
   const anneeDepuis = d ? Math.min(...(d.operations.map((o) => (o.date_min ? new Date(o.date_min).getFullYear() : NaN)).filter((y) => !Number.isNaN(y)) as number[]), Infinity) : Infinity
@@ -127,6 +151,26 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { e
           ? <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>
           : <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis d'un même propriétaire moral, sur des parcelles contiguës et une même période).{d?.millesime ? ` Données Sitadel au ${new Date(d.millesime).toLocaleDateString('fr-FR')}.` : ''}</p>}
       </div>
+
+      {/* LOT S1 — geste ADMIN discret : collecter les programmes du promoteur courant depuis son site.
+          Réservé au rôle admin (l'endpoint /admin/programmes/* garde exiger_admin côté serveur). Le SIREN
+          est le propriétaire ciblé : il est pré-rempli et verrouillé dans la collecte. Jamais visible pour
+          un non-admin. */}
+      {admin && ownerSiren && (
+        <div data-vp-collecte-admin className="rounded-lg border border-dashed border-line-2 bg-surface-2/40">
+          <button data-vp-collecte-toggle onClick={() => setCollecteOuverte((v) => !v)}
+            className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[10.5px] text-txt-dim transition-colors hover:text-txt-mut">
+            <span className="font-mono uppercase tracking-[0.14em]">Admin · collecter ses programmes depuis son site</span>
+            <span className="text-txt-off">{collecteOuverte ? '▾' : '▸'}</span>
+          </button>
+          {collecteOuverte && (
+            <div className="border-t border-line-2 p-2.5">
+              <CollecteProgrammes sirenFixe={ownerSiren} nomFixe={d?.operations[0]?.denomination ?? undefined}
+                onValide={() => progs.refetch()} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ADMIN-1 (AD3) — en mode STRICT : pas de « se positionner », pas de filtres, pas de total d'île.
           L'exploration générale est à un clic (« Explorer toutes les opérations → »). */}
@@ -202,6 +246,26 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine }: { e
             ))}
           </div>
           <p className="text-[10px] leading-snug text-txt-dim">{d.note}</p>
+
+          {/* LOT S1 — programmes DÉJÀ collectés sur le site du promoteur (référentiel), scopés au SIREN
+              courant. Un FAIT (nom · commune · année) + le rattachement à une opération quand connu +
+              le lien externe. Aucun visuel du promoteur, comme partout ailleurs. */}
+          {ownerSiren && (progs.data?.n ?? 0) > 0 && (
+            <div data-vp-programmes-publies className="mt-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
+              <p className="mb-1.5 text-[11px] font-medium text-txt-mut">Programmes publiés sur leur site <span className="text-txt-dim">({progs.data!.n})</span></p>
+              <div className="flex flex-col gap-1">
+                {progs.data!.programmes.map((p) => (
+                  <div key={p.id} data-vp-programme-publie className="text-[10.5px] text-txt-dim">
+                    <b className="text-txt">{p.url ? <a href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{p.nom}</a> : p.nom}</b>
+                    {p.commune ? ` · ${p.commune}` : ''}{p.annee ? ` · ${p.annee}` : ''}
+                    {p.rattachement_mode
+                      ? <span className="ml-1 text-mint">→ rattaché à {p.op_commune ?? '—'} {p.op_annee ?? ''}</span>
+                      : <span className="ml-1 text-txt-off">· publié sur leur site</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

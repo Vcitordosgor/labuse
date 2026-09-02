@@ -34,7 +34,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import score_v  # mécanisme snapshot M1 (lecture seule, réutilisé)
-from ..score_v_constants import Q_A_RUN_LABEL  # source unique du run SERVI (bascule centralisée)
+from ... import runs  # source unique du run SERVI, relu à la requête (S3, bascule centralisée)
 from ..p_model import ext_sql
 from ..p_model.features import check_non_constance, derive
 from ..p_model.model import PModel
@@ -323,7 +323,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # M8a — override NON DESTRUCTIF pour scorer un run CANDIDAT sur SA propre cascade sans
     # toucher la constante servie : `LABUSE_ETAGE0_RUN` (défaut = Q_A_RUN_LABEL, comportement
     # inchangé pour l'app et les tests). Utilisé uniquement en batch candidat, jamais en prod.
-    etage0_run = os.environ.get("LABUSE_ETAGE0_RUN", Q_A_RUN_LABEL)
+    etage0_run = os.environ.get("LABUSE_ETAGE0_RUN", runs.current())
     etage0 = pd.read_sql(text("""
         SELECT p.idu FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
         WHERE d.run_label = :run AND d.status IN ('exclue', 'faux_positif_probable')

@@ -20,7 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..ai import core
-from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN
+from .. import runs
 
 router = APIRouter(tags=["ia"])
 
@@ -265,7 +265,7 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
         return {"error": "question vide"}
 
     # 1. CACHE (ne décompte pas le quota) — clé (idu, run servi, question normalisée)
-    hit = core.cache_get(db, idu, RUN, question)
+    hit = core.cache_get(db, idu, runs.current(), question)
     if hit is not None:
         return {**hit, "cached": True}
 
@@ -321,5 +321,5 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
                "model": res.model, "rejected": False, "cached": False}
 
     # cache déterministe (temp 0) : validé OU rejeté → une question répétée ne rappelle plus le modèle
-    core.cache_put(db, idu, RUN, question, out, kind="fiche_ask")
+    core.cache_put(db, idu, runs.current(), question, out, kind="fiche_ask")
     return out

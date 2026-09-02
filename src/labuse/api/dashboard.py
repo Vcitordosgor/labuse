@@ -790,6 +790,7 @@ def admin_sources(request: Request) -> dict:
     from ..db import engine
     from ..sources_catalog import est_affichee
     from .. import sentinelle
+    from .. import flux as _flux_mod
     now = datetime.now(tz=timezone.utc)
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
@@ -801,6 +802,7 @@ def admin_sources(request: Request) -> dict:
             "       v.dernier_vu AS veille_vu, v.dernier_passage_at AS veille_passage, v.dernier_message AS veille_message,"
             "       v.echecs_consecutifs AS veille_echecs,"
             "       v.injection_lancee_at AS veille_inj_at, v.injection_vu AS veille_inj_vu,"
+            "       COALESCE(v.mail_alerte, false) AS veille_mail_alerte,"   # SUITE-1 S4.1
             # SENTINELLE-3 (Y4) — rappel de rafraîchissement des sources manuelles.
             "       v.cadence_attendue_jours AS veille_cadence_attendue, v.convention_echeance AS veille_convention"
             " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id ORDER BY d.name")).mappings()]
@@ -834,6 +836,9 @@ def admin_sources(request: Request) -> dict:
             # SENTINELLE-2 (X4) — `fournisseur` pour la colonne/regroupement du tableau de veille ;
             # `raison` (X3.3) = pourquoi une source N'EST PAS surveillée (infobulle, jamais un blanc).
             "fournisseur": r.get("provider"),
+            # SUITE-1 (S2 bis) — colonne « Alimente » : moteurs + surfaces nourris, LUS de la matrice
+            # réelle (flux.py) ; jamais écrit à la main. `cable=False` → « non câblée ».
+            "alimente": _flux_mod.alimente_pour_source(r["name"]),
             "veille": {
                 # SENTINELLE-3 (Y5.4) — `nature` distingue les 4 états : version détectable (api/page),
                 # changement détectable (entete/temoin), rappel manuel (Y4), non surveillable (rien).
@@ -859,6 +864,8 @@ def admin_sources(request: Request) -> dict:
                 "injectable": relance is not None,
                 "injection_lancee_at": r["veille_inj_at"].isoformat() if r.get("veille_inj_at") else None,
                 "injection_vu": r.get("veille_inj_vu"),
+                "mail_alerte": bool(r.get("veille_mail_alerte")),   # SUITE-1 S4.1
+
                 # SENTINELLE-3 (Y4) — rappel manuel : cadence attendue + retard calculé (last_sync_at),
                 # échéance de convention si connue. `rappel_retard` = donnée manuelle non rafraîchie à temps.
                 "cadence_attendue_jours": r.get("veille_cadence_attendue"),
@@ -937,6 +944,27 @@ def admin_source_veille_active(source_id: int, body: VeilleActiveIn, request: Re
     if not n:
         raise HTTPException(404, "Cette source n'est pas surveillée (aucune ligne de veille).")
     return {"ok": True, "actif": body.actif}
+
+
+class VeilleMailIn(BaseModel):
+    mail_alerte: bool
+
+
+@router.post("/admin/sources/{source_id}/veille/mail")
+def admin_source_veille_mail(source_id: int, body: VeilleMailIn, request: Request) -> dict:
+    """SUITE-1 (S4.1) — abonne/désabonne une source à l'alerte MAIL (défaut off). L'alerte in-app
+    reste toujours déposée ; ce drapeau décide seulement si le digest part AUSSI par mail. 404 si la
+    source n'est pas surveillée (aucune ligne de veille)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    with engine().begin() as c:
+        n = c.execute(text("UPDATE source_veille SET mail_alerte = :m, updated_at = now()"
+                           " WHERE source_id = :i"), {"m": body.mail_alerte, "i": source_id}).rowcount
+    if not n:
+        raise HTTPException(404, "Cette source n'est pas surveillée (aucune ligne de veille).")
+    return {"ok": True, "mail_alerte": body.mail_alerte}
 
 
 class CadenceIn(BaseModel):
@@ -1021,20 +1049,29 @@ def admin_source_relancer(source_id: int, request: Request) -> dict:
     exiger_admin(request)
     from ..db import engine, session_scope
     with engine().begin() as c:
-        nom = c.execute(text("SELECT name FROM data_sources WHERE id = :i"), {"i": source_id}).scalar()
-    if not nom:
+        row = c.execute(text("SELECT name, source_millesime FROM data_sources WHERE id = :i"),
+                        {"i": source_id}).mappings().first()
+    if not row:
         raise HTTPException(404, "Source introuvable.")
+    nom, servi = row["name"], row.get("source_millesime")
     r = _lancer_ingestion(nom)
+    # SUITE-1 (S2.2) — UNE SEULE TRACE : tout lancement manuel (Recharger comme Injecter) écrit
+    # `injection_lancee_at` + la version constatée. Recharger recharge la MÊME version → on trace le
+    # millésime servi. Best-effort : les sources sans ligne de veille (manuelles) n'ont pas ce slot.
+    with engine().begin() as c:
+        c.execute(text("UPDATE source_veille SET injection_lancee_at = now(), injection_vu = :v,"
+                       " updated_at = now() WHERE source_id = :i"), {"v": servi, "i": source_id})
     try:
         from .events import creer_notification
         with session_scope() as s:
             creer_notification(s, kind="systeme", compte_id=None, source="Sources",
-                               titre=f"Ingestion relancée à la main : {r['label']}",
-                               detail=f"{nom} — commande du cron, détachée (log {r['log']}).",
+                               titre=f"Ingestion rechargée à la main : {r['label']}",
+                               detail=f"{nom} — recharge de la version servie {servi or '?'} "
+                                      f"(même commande que le cron, détachée ; log {r['log']}).",
                                dedup=f"relance:{r['label']}:{datetime.now(tz=timezone.utc):%Y%m%d%H%M}")
     except Exception:  # noqa: BLE001
         pass
-    return {"ok": True, "label": r["label"], "log": r["log"]}
+    return {"ok": True, "label": r["label"], "log": r["log"], "millesime": servi}
 
 
 @router.post("/admin/sources/{source_id}/veille/injecter")
