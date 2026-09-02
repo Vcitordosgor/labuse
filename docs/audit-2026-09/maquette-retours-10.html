@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — RETOURS-10 (en-tête fiche · accueil Copilote)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#0e1210;--card:#141a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--faint:#5f6b65;
+    --mint:#4ADE80;--mint-soft:rgba(74,222,128,.10);--ink:#071009;
+    --amber:#F0B429;--amber-soft:rgba(240,180,41,.12);
+    --iris:#B79CFC;--iris-deep:#8B6CF2;--iris-soft:rgba(183,156,252,.10);--iris-ink:#150f24;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050706;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;padding:22px 14px 70px;display:flex;flex-direction:column;align-items:center;gap:26px}
+  .intro{font-size:12px;color:var(--dim);max-width:900px;text-align:center;line-height:1.6}
+  .intro b{color:var(--mint)}
+  .page{width:1100px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .kicker{font-size:10px;letter-spacing:.26em;color:var(--dim)}
+  h1{font-size:18px;font-weight:650;margin:4px 0 2px}
+  .lede{font-size:11.5px;color:var(--faint);margin-top:6px;border-left:2px solid var(--line);padding-left:9px;line-height:1.5}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+  .fiche{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 15px;max-width:400px}
+  .fiche .k{font-size:10px;letter-spacing:.22em;color:var(--dim)}
+  .fiche .idu{font-size:20px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
+  .fiche .adr{font-size:12.5px;color:var(--dim);margin-top:3px;line-height:1.4}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:9px;margin-top:12px;overflow:hidden}
+  .stats div{padding:8px 9px;border-right:1px solid var(--line)}
+  .stats div:last-child{border-right:none}
+  .stats .l{font-size:9.5px;letter-spacing:.16em;color:var(--faint)}
+  .stats .v{font-size:14px;font-weight:600;margin-top:2px}
+  .tag{font-size:10.5px;color:var(--faint);margin-top:10px;letter-spacing:.06em}
+
+  /* Variante A — pastilles d'accès */
+  .links{display:flex;gap:6px;margin-top:10px}
+  .lk{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;border-radius:8px;padding:8px 6px;border:1px solid;cursor:pointer;white-space:nowrap;transition:.15s}
+  .lk.g{color:var(--mint);border-color:rgba(74,222,128,.45)}
+  .lk.y{color:var(--amber);border-color:rgba(240,180,41,.45)}
+  .lk.w{color:var(--txt);border-color:rgba(233,237,235,.35)}
+  .lk .ic{font-size:13px;opacity:.85}
+  @media (hover:hover){.lk.g:hover{background:var(--mint);color:var(--ink)}.lk.y:hover{background:var(--amber);color:var(--ink)}.lk.w:hover{background:var(--txt);color:var(--ink)}}
+
+  /* Variante B — tuiles comme les exports */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+  .tl{border:1px solid var(--line);border-radius:9px;padding:10px 6px 8px;text-align:center;cursor:pointer;background:var(--panel)}
+  .tl .ic{font-size:16px}
+  .tl .n{font-size:11px;margin-top:5px;line-height:1.25;color:var(--dim)}
+  .tl.g{border-color:rgba(74,222,128,.45)}.tl.g .ic{color:var(--mint)}
+  .tl.y{border-color:rgba(240,180,41,.45)}.tl.y .ic{color:var(--amber)}
+  .tl.w{border-color:rgba(233,237,235,.35)}.tl.w .ic{color:var(--txt)}
+
+  /* Copilote */
+  .cop{max-width:720px;margin:14px auto 0;text-align:center}
+  .cop .k{font-size:10px;letter-spacing:.3em;color:var(--iris)}
+  .cop h2{font-size:30px;font-weight:700;margin:8px 0 6px;letter-spacing:-.02em}
+  .cop .s{font-size:13px;color:var(--dim)}
+  .ask{display:flex;margin:18px 0 10px;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+  .ask input{flex:1;background:none;border:none;padding:14px 16px;font-size:14px;color:var(--txt);font-family:inherit;outline:none}
+  .ask input::placeholder{color:var(--faint)}
+  .ask button{background:var(--iris-deep);color:#fff;border:none;padding:0 20px;font-size:14px;font-weight:650;cursor:pointer;font-family:inherit}
+  .ex{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+  .ex span{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:5px 12px;cursor:pointer}
+  @media (hover:hover){.ex span:hover{background:linear-gradient(135deg,var(--iris),var(--iris-deep));color:var(--iris-ink);border-color:var(--iris-deep)}}
+  .cap{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:26px;text-align:left}
+  .cp{display:flex;flex-direction:column;gap:6px}
+  .cp .ic{width:30px;height:30px;border-radius:8px;background:var(--iris-soft);color:var(--iris);display:flex;align-items:center;justify-content:center;font-size:14px}
+  .cp b{font-size:13px;font-weight:600}
+  .cp small{font-size:11.5px;color:var(--faint);line-height:1.35}
+  .rep{margin-top:26px;text-align:left}
+  .rep .h{font-size:10px;letter-spacing:.22em;color:var(--faint);margin-bottom:6px;display:flex;justify-content:space-between}
+  .rep .r{display:flex;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px}
+  .rep .r span:last-child{color:var(--faint);font-size:11px;font-family:ui-monospace,Menlo,monospace}
+  .rep .foot{font-size:11px;color:var(--faint);margin-top:8px}
+</style>
+</head>
+<body>
+
+<p class="intro"><b>RETOURS-10</b> — deux maquettes : l'en-tête de la fiche parcelle (deux variantes, tu choisis) et l'accueil du Copilote épuré. Chiffres fictifs.</p>
+
+<!-- ════════ 1 · EN-TÊTE FICHE ════════ -->
+<div class="page">
+  <div class="kicker mono">1 · FICHE PARCELLE — EN-TÊTE</div>
+  <h1>Trois accès, sans pavés de couleur.</h1>
+  <div class="lede">Les gros blocs pleins écrasaient l'IDU. Deux propositions : <b>A</b> — trois pastilles contour, chacune sa couleur, pleines au survol et au clic ; <b>B</b> — trois tuiles du même gabarit que les exports, icône colorée, libellé sous. Dans les deux cas, la ligne de chiffres reste juste dessous.</div>
+
+  <div class="two">
+    <div>
+      <div class="tag">VARIANTE A — PASTILLES</div>
+      <div class="fiche">
+        <div class="k mono">PARCELLE · LA POSSESSION</div>
+        <div class="idu mono">97408000AP1599</div>
+        <div class="adr">14 rue Françoise-Dolto, 97419 La Possession</div>
+        <div class="links">
+          <span class="lk g"><span class="ic">▦</span>Cadastre Géoportail</span>
+          <span class="lk y"><span class="ic">☎</span>Pages jaunes</span>
+          <span class="lk w"><span class="ic">◎</span>Google Maps</span>
+        </div>
+        <div class="stats">
+          <div><div class="l">SURFACE</div><div class="v">483 m²</div></div>
+          <div><div class="l">ZONE</div><div class="v">AUBm</div></div>
+          <div><div class="l">SDP DISPO.</div><div class="v">329 m²</div></div>
+          <div><div class="l">NU</div><div class="v">409 €/m²</div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="tag">VARIANTE B — TUILES</div>
+      <div class="fiche">
+        <div class="k mono">PARCELLE · LA POSSESSION</div>
+        <div class="idu mono">97408000AP1599</div>
+        <div class="adr">14 rue Françoise-Dolto, 97419 La Possession</div>
+        <div class="tiles">
+          <div class="tl g"><div class="ic">▦</div><div class="n">Cadastre<br>Géoportail</div></div>
+          <div class="tl y"><div class="ic">☎</div><div class="n">Pages<br>jaunes</div></div>
+          <div class="tl w"><div class="ic">◎</div><div class="n">Google<br>Maps</div></div>
+        </div>
+        <div class="stats">
+          <div><div class="l">SURFACE</div><div class="v">483 m²</div></div>
+          <div><div class="l">ZONE</div><div class="v">AUBm</div></div>
+          <div><div class="l">SDP DISPO.</div><div class="v">329 m²</div></div>
+          <div><div class="l">NU</div><div class="v">409 €/m²</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 2 · ACCUEIL COPILOTE ════════ -->
+<div class="page">
+  <div class="kicker mono">2 · COPILOTE — ACCUEIL</div>
+  <h1>Une question, trois exemples, rien d'autre.</h1>
+  <div class="lede">Les deux phrases d'aide disparaissent. Les exemples deviennent des chips discrètes sous le champ (mauve au survol). « Ce qu'il sait faire » passe sur une ligne de quatre, plus léger. « Reprendre » garde ses quatre derniers fils.</div>
+
+  <div class="cop">
+    <div class="k mono">COPILOTE</div>
+    <h2>Posez votre question.</h2>
+    <div class="s">Réponse courte, sourcée, datée — La Réunion uniquement.</div>
+    <div class="ask"><input placeholder="Ex. combien de parcelles en procédure à Saint-Denis ?"><button>Envoyer</button></div>
+    <div class="ex">
+      <span>Dis-moi tout sur la parcelle 97415000CV1186</span>
+      <span>Combien de parcelles possède CBO Territoria ?</span>
+      <span>Quels sont les pièges de la parcelle 97415000CV1186 ?</span>
+    </div>
+
+    <div class="cap">
+      <div class="cp"><div class="ic">⌕</div><b>Trouver une donnée</b><small>« Parcelles en procédure à Saint-Denis ? »</small></div>
+      <div class="cp"><div class="ic">◍</div><b>Renseigner par le web</b><small>« Qui est le maire de Saint-Benoît ? »</small></div>
+      <div class="cp"><div class="ic">✦</div><b>Expliquer une notion</b><small>« C'est quoi une zone AU stricte ? »</small></div>
+      <div class="cp"><div class="ic">▤</div><b>Préparer un script</b><small>« Un argumentaire pour un propriétaire »</small></div>
+    </div>
+
+    <div class="rep">
+      <div class="h mono"><span>REPRENDRE</span><span>voir tout · 38</span></div>
+      <div class="r"><span>résume-moi cette parcelle : 97409000AB0570</span><span>il y a 4 h</span></div>
+      <div class="r"><span>combien de parcelles à Saint-André</span><span>il y a 4 h</span></div>
+      <div class="r"><span>compare Saint-Paul et Saint-Leu sur les permis</span><span>il y a 5 j</span></div>
+      <div class="foot">Vos conversations sont conservées 7 jours.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
