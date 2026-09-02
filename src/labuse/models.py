@@ -1058,6 +1058,19 @@ def ensure_icd_columns(engine) -> None:
         # Scan de ~430k lignes (p95 mesuré ~3,9 s au cycle 6). Index couvrant → max index-only.
         c.execute(_t("CREATE INDEX IF NOT EXISTS ix_p_v2_run_computed "
                      "ON parcel_p_score_v2 (run_id, computed_at)"))
+        # RETOURS-10 (T2) — /accueil/chiffres (sondé aussi par Pilotage et Données·Circuit) comptait
+        # `p_model_ext_dataset WHERE label_l2=1 AND annee BETWEEN …` en Parallel Seq Scan de 4,3 M lignes
+        # (~0,95 s mesuré sur la base réelle). Index composite (label_l2, annee) → range scan sélectif.
+        # `p_model_ext_dataset` n'est PAS une table ORM (bâtie par l'ingestion) : elle peut manquer sur une
+        # base neuve/de test → on ne crée l'index QUE si la table existe (sinon l'index vivra au 1ᵉ passage).
+        if c.execute(_t("SELECT to_regclass('p_model_ext_dataset')")).scalar():
+            c.execute(_t("CREATE INDEX IF NOT EXISTS ix_pmed_label_annee "
+                         "ON p_model_ext_dataset (label_l2, annee)"))
+        # RETOURS-10 (T2) — /accueil/chiffres (sondé LIVE par Pilotage & Circuit, cache busté exprès)
+        # compte les communes calibrées via `parcels ⋈ parcel_zone_plu GROUP BY commune` : sans index
+        # couvrant, Parallel Seq Scan de parcels (~0,66 s). (idu) INCLUDE (commune) → index-only (~0,15 s).
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_parcels_idu_commune "
+                     "ON parcels (idu) INCLUDE (commune)"))
 
 
 def ensure_signalements(engine) -> None:

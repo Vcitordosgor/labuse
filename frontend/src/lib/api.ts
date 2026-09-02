@@ -1548,6 +1548,9 @@ export interface RadarReverif {
   bien_id: number; commune: string; type_bien: string | null; statut: string; prix: number | null
   portail: string; url_sortante: string; date_derniere_confirmation: string | null
   date_publication: string | null; suivi_client: boolean; proche_longue: boolean
+  // RETOURS-10 (T1) — non rattachée (idu NULL) + rattachement AUTOMATIQUE à confiance forte disponible :
+  // un bouton « Rattacher » (1 clic) sur la ligne, dans la re-vérification. Faible → pas de bouton.
+  non_rattachee?: boolean; rattachable_forte?: boolean; piste_idu?: string | null
 }
 export interface RadarCheck {
   cible_minutes: number; file_extraction: number; reverif_du_jour: number; signalements_en_attente: number

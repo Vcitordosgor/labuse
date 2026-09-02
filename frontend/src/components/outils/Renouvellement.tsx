@@ -12,7 +12,7 @@
  *     entier, pagination SOCLE (400 par 400 + tout charger) + export CSV.
  */
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { getFiche, getRenouvListe } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { verdictMeta } from '../../lib/status'
@@ -146,7 +146,6 @@ export function DensifierTablePanel() {
   const select = useApp((s) => s.select)
   const commune = useApp((s) => s.commune)
   const [sort, setSort] = useState<(typeof SORTS)[number]['key']>('score')
-  const [chargeTout, setChargeTout] = useState(false)
   const [inclure, setInclure] = useState(false)   // LOT12b — écartées MASQUÉES par défaut (comme Solaire)
 
   const q = useInfiniteQuery({
@@ -166,12 +165,7 @@ export function DensifierTablePanel() {
   const total = q.data?.pages[0]?.total ?? 0
   const meta = q.data?.pages[0]
 
-  // « Tout charger » : enchaîne les pages (400 chacune) jusqu'à épuisement.
-  useEffect(() => {
-    if (!chargeTout) return
-    if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage()
-    else if (!q.hasNextPage) setChargeTout(false)
-  }, [chargeTout, q.hasNextPage, q.isFetchingNextPage, q])
+  // RETOURS-10 (T3) — plus de « Tout charger » : « Voir 200 de plus » seul, jamais de tir massif.
 
   if (module !== 'renouvellement' || !open) return null
 
@@ -256,10 +250,8 @@ export function DensifierTablePanel() {
           )}
           <ListPaginationFooter
             className="flex flex-wrap items-center gap-3 text-[11px] text-txt-mut"
-            shown={visibles.length} total={total} step={meta?.cap ?? 400}
+            shown={visibles.length} total={total} step={meta?.cap ?? 200}
             onMore={() => q.fetchNextPage()}
-            onAll={() => setChargeTout(true)}
-            allLabel={`Tout charger (${fmtInt(total)})`}
           >
             {q.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
             {/* OUTILS-1 B7 — export CSV RETIRÉ (la consultation reste illimitée, l'extraction de la base non). */}

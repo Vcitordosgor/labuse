@@ -20,13 +20,24 @@ from .db import session_scope
 _SERVED_FILE = Path(__file__).resolve().parents[2] / "config" / "served_run.txt"
 
 
+# RETOURS-10 (T2) — la distribution des tiers d'un run est IMMUABLE (un run n'est jamais réécrit sous le
+# même id). On la mémoïse : `comparer()` la relit pour le run servi à CHAQUE run comparé (runs_termines en
+# compare 4) — sans cache c'était 8 Parallel Seq Scan de 3 M lignes (~2 s chacun) par ouverture de Circuit.
+_DISTRIB_CACHE: dict[str, dict] = {}
+
+
 def _distribution(db, run_id: str) -> dict:
+    cached = _DISTRIB_CACHE.get(run_id)
+    if cached is not None:
+        return cached
     rows = db.execute(text(
         "SELECT tier, count(*) n FROM parcel_p_score_v2 WHERE run_id = :r GROUP BY tier"),
         {"r": run_id}).mappings().all()
     d = {r["tier"]: int(r["n"]) for r in rows}
     d["_total"] = sum(v for k, v in d.items() if not k.startswith("_"))
     d["_promues"] = d.get("brulante", 0) + d.get("chaude", 0)
+    if d["_total"] > 0:  # ne mémoïse qu'un run RÉEL (un run vide/inconnu peut se remplir ensuite)
+        _DISTRIB_CACHE[run_id] = d
     return d
 
 
@@ -34,7 +45,9 @@ def comparer(candidat_run: str, servi_run: str | None = None) -> dict:
     """Comparaison LECTURE SEULE candidat vs servi (jamais de bascule). Rend promues, tiers, dérive %."""
     servi = servi_run or runs.current()
     with session_scope() as db:
-        connus = {r[0] for r in db.execute(text("SELECT DISTINCT run_id FROM parcel_p_score_v2")).all()}
+        # RETOURS-10 (T2) — les runs connus se lisent du REGISTRE (`p_score_v2_runs`, ~12 lignes), pas d'un
+        # `DISTINCT run_id` sur parcel_p_score_v2 (Parallel Seq Scan de 3 M lignes, ~1,9 s mesuré).
+        connus = {r[0] for r in db.execute(text("SELECT run_id FROM p_score_v2_runs")).all()}
         if candidat_run not in connus:
             return {"ok": False, "motif": f"run candidat inconnu : {candidat_run}"}
         dc, ds = _distribution(db, candidat_run), _distribution(db, servi)

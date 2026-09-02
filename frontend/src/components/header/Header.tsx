@@ -624,10 +624,12 @@ function SignalerButton() {
   }
   return (
     <div className="relative">
-      <button data-signaler onClick={() => setOpen((o) => !o)}
+      {/* RETOURS-10 (T6) — bouton ACTIF = PLEIN vert, encre sombre (règle DA RETOURS-9), comme la
+          cloche : plus de simple liseré quand le panneau est ouvert. */}
+      <button data-signaler onClick={() => setOpen((o) => !o)} aria-pressed={open}
         title="Signaler un bug, proposer une idée, poser une question"
         className={`rounded-lg border px-3 py-1.5 text-xs transition-colors duration-quick ${
-          open ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+          open ? 'border-mint bg-mint font-medium text-mint-ink' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
         Signaler
       </button>
       {open && (

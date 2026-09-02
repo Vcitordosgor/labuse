@@ -20,6 +20,10 @@ from sqlalchemy.orm import Session
 
 _RUN_PRECEDENT_FILE = Path(__file__).resolve().parents[2] / "config" / "run_precedent.txt"
 
+# RETOURS-10 (T2) — cache des écarts (candidat, servi) → immuable (runs append-only). Vidé à la bascule
+# (le run servi change) par `_ECART_CACHE.clear()` dans le chemin de bascule ; sinon borné (~12 runs).
+_ECART_CACHE: dict[tuple[str, str], dict] = {}
+
 #: les caches recensés en CONNEXIONS-1 A6 — chacun avec le nom de son purgeur. Purge best-effort (un
 #: cache absent/déjà froid n'est jamais une erreur). Ceux auto-invalidés (tuiles LRU sur mvt_meta)
 #: sont purgés aussi par prudence. Renvoyé au journal : ce qui a réellement été purgé.
@@ -52,6 +56,8 @@ def purger_caches_run() -> list[str]:
     _try("protection (_gels_cache)", lambda: _protection._gels_cache.update(at=0.0, sujets={}))
     from .api import tiles as _tiles
     _try("tuiles carte (LRU)", lambda: _tiles._CACHE.clear())
+    # RETOURS-10 (T2) — écarts de runs (Circuit) : le servi change → l'écart de chaque candidat à lui aussi.
+    _try("flux (_ECART_CACHE)", _ECART_CACHE.clear)
     return purges
 
 
@@ -109,16 +115,22 @@ def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
         calcul_ok = limit_ecart is None or ecarts_calcules < limit_ecart
         if not est_servi and calcul_ok:
             ecarts_calcules += 1
-            c = comparer(lab)
-            if c.get("ok"):
-                n_change = db.execute(text(
-                    "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b "
-                    " ON a.parcelle_id = b.parcelle_id "
-                    "WHERE a.run_id = :cand AND b.run_id = :servi AND a.tier IS DISTINCT FROM b.tier"),
-                    {"cand": lab, "servi": servi_run}).scalar() or 0
-                ecart = {"tiers_changes": int(n_change),
-                         "promues_candidat": c["promues_candidat"], "promues_servi": c["promues_servi"],
-                         "derive_promues_pct": c["derive_promues_pct"]}
+            # RETOURS-10 (T2) — l'écart (candidat, servi) est IMMUABLE (les runs sont append-only, jamais
+            # réécrits sous le même id) : on le mémoïse. Le COUNT self-join sur parcel_p_score_v2 (~1,5 s)
+            # et la comparaison ne se refont plus à chaque ouverture de Circuit. Clé = (lab, servi).
+            ecart = _ECART_CACHE.get((lab, servi_run))
+            if ecart is None:
+                c = comparer(lab)
+                if c.get("ok"):
+                    n_change = db.execute(text(
+                        "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b "
+                        " ON a.parcelle_id = b.parcelle_id "
+                        "WHERE a.run_id = :cand AND b.run_id = :servi AND a.tier IS DISTINCT FROM b.tier"),
+                        {"cand": lab, "servi": servi_run}).scalar() or 0
+                    ecart = {"tiers_changes": int(n_change),
+                             "promues_candidat": c["promues_candidat"], "promues_servi": c["promues_servi"],
+                             "derive_promues_pct": c["derive_promues_pct"]}
+                    _ECART_CACHE[(lab, servi_run)] = ecart
         complet, motif = _run_complet(db, lab)
         row = db.execute(text(
             "SELECT computed_at, n_parcelles FROM p_score_v2_runs WHERE run_id = :r"),

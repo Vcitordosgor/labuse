@@ -8,6 +8,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotOuvert, radarClic, radarInteresse, radarSignaler,
   type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
 import { DepotAgence } from '../radar/DepotAgence'
+import { usePagination } from '../ListPagination'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R13 — recherche adresse/IDU commune
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
@@ -364,6 +365,9 @@ export function RadarView() {
 
   const { data, isLoading } = useQuery({ queryKey: ['radar-biens', f, tri], queryFn: () => getRadarBiens(f, tri) })
   const biens = useMemo(() => data?.biens ?? [], [data])
+  // RETOURS-10 (T3) — liste bornée à 200, « Voir plus » incrémental (jamais tout d'un coup). La carte,
+  // elle, reçoit tous les rattachés (pins) : c'est la LISTE seule qu'on pagine.
+  const pg = usePagination(biens.length)
 
   // carte = rattachés SEULEMENT → pins (kind='radar', couleur par statut) poussés sur la carte existante
   useEffect(() => {
@@ -549,7 +553,13 @@ export function RadarView() {
           {!isLoading && biens.length === 0 && !aucunFiltre && (
             <div className="rounded-xl border border-dashed border-line-2 py-8 text-center text-[12px] text-txt-mut">Aucun bien ne correspond à ces filtres.<br />Élargissez la recherche.</div>
           )}
-          {biens.map((b) => <CarteBien key={b.bien_id} b={b} sel={bienOuvert === b.bien_id} onClick={() => ouvrir(b)} />)}
+          {biens.slice(0, pg.shown).map((b) => <CarteBien key={b.bien_id} b={b} sel={bienOuvert === b.bien_id} onClick={() => ouvrir(b)} />)}
+          {pg.hasMore && (
+            <button data-radar-liste-more onClick={pg.more}
+              className="mt-1 rounded-lg border border-line-2 py-2 text-center text-[12px] text-mint hover:border-mint/50">
+              Voir {Math.min(pg.step, biens.length - pg.shown)} de plus · {pg.shown} / {biens.length}
+            </button>
+          )}
         </div>
       </aside>
 

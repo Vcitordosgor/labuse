@@ -151,7 +151,9 @@ export function ProjetsPanel() {
   const [showArchived, setShowArchived] = useState(false)
   const [showCourriers, setShowCourriers] = useState(false)   // OUTILS-1 A4 — onglet « Mes courriers »
   const [formOuvert, setFormOuvert] = useState(false)
-  const [toutMontre, setToutMontre] = useState(false)
+  // RETOURS-10 (T3) — la liste reste compacte (4 au repos, choix Projets), mais « voir plus » révèle par
+  // paquets de 200 (jamais tout d'un coup) : une liste très longue ne fige plus l'app.
+  const [montre, setMontre] = useState(4)
   const qc = useQueryClient()
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets })
   // OUTILS-1 A4/B6 — le client retrouve ici ses demandes de courrier (n°, date, communes, volume),
@@ -188,7 +190,7 @@ export function ProjetsPanel() {
   const actifs = all.filter((p) => p.statut === 'actif')
   const archives = all.filter((p) => p.statut === 'archive')
   const visibles = (showArchived ? archives : actifs).slice().sort(parTravail)
-  const affichees = toutMontre ? visibles : visibles.slice(0, 4)
+  const affichees = visibles.slice(0, montre)
   const reste = visibles.length - affichees.length
 
   const tab = (on: boolean) => ({
@@ -227,9 +229,9 @@ export function ProjetsPanel() {
             {/* RETOURS-4 S3 — onglets : survol PLEIN (mint + encre sombre) sur l'onglet INACTIF, via .proj-tab
                 (index.css) ; l'onglet actif (.proj-tab-on) reste plein et ne re-survole pas. */}
             <div style={{ display: 'inline-flex', gap: 4, background: '#0C1410', borderRadius: 9, padding: 4, marginBottom: 20 }}>
-              <button data-tab-actifs className={`proj-tab${!showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(false); setShowCourriers(false); setToutMontre(false) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
-              <button data-tab-archives className={`proj-tab${showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(true); setShowCourriers(false); setToutMontre(false) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
-              <button data-tab-courriers className={`proj-tab${showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowCourriers(true); setToutMontre(false) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
+              <button data-tab-actifs className={`proj-tab${!showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(false); setShowCourriers(false); setMontre(4) }} style={tab(!showArchived && !showCourriers)}>Actifs {actifs.length}</button>
+              <button data-tab-archives className={`proj-tab${showArchived && !showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }} style={tab(showArchived && !showCourriers)}>Archivés {archives.length}</button>
+              <button data-tab-courriers className={`proj-tab${showCourriers ? ' proj-tab-on' : ''}`} onClick={() => { setShowCourriers(true); setMontre(4) }} style={tab(showCourriers)}>Mes courriers {courriers.length}</button>
             </div>
 
             {showCourriers ? (
@@ -295,11 +297,12 @@ export function ProjetsPanel() {
                   )}
                 </div>
 
-                {/* 7 · VOIR LES N AUTRES — ne pas dérouler 9 lignes d'un coup. */}
+                {/* 7 · VOIR PLUS — RETOURS-10 (T3) : on révèle par paquets de 200 (jamais tout d'un coup),
+                    avec le compteur affichées / total. */}
                 {reste > 0 && (
-                  <div data-projets-plus onClick={() => setToutMontre(true)}
+                  <div data-projets-plus onClick={() => setMontre((m) => m + 200)}
                     style={{ textAlign: 'center', padding: '16px 0 4px', fontFamily: MONO, fontSize: 12, color: '#8FA69A', letterSpacing: '.06em', cursor: 'pointer' }}>
-                    VOIR LES {reste} AUTRES
+                    VOIR {Math.min(200, reste)} DE PLUS · {affichees.length} / {visibles.length}
                   </div>
                 )}
               </>
