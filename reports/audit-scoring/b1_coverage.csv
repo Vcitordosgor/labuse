@@ -1,0 +1,30 @@
+feature,bloc,kind,pct_non_null,pct_informatif,source,retired
+rot_nu,Z,num,100.0,100.0,DVF L2 dédupliqué (p_model_mut_l2) + stock parcelles,False
+rot_bati,Z,num,100.0,100.0,DVF L2 dédupliqué + stock parcelles,False
+med_pm2_terrain_36m,Z,num,94.28,94.28,DVF L2 mutations nues (valeur / surface terrain de la mutati,False
+med_pm2_bati_36m,Z,num,96.11,96.11,DVF L2 mutations bâties (valeur / surface bâtie de la mutati,False
+tendance_pm2_bati,Z,num,88.23,88.23,DVF L2 : médiane €/m² bâti 12 derniers mois vs début de fenê,False
+permis_24m_norm,Z,num,100.0,100.0,"Sitadel PC+PA autorisés (DATE_REELLE_AUTORISATION), rattaché",True
+dens_bati_secteur,Z,num,100.0,100.0,BD TOPO bâtiments × parcelles (emprise / surface du secteur),False
+pct_bati_secteur,Z,num,100.0,100.0,BD TOPO : part de parcelles bâties du secteur,False
+filo_snv_pp,Z,num,89.28,89.28,Filosofi INSEE carreau 200 m : niveau de vie / individu,False
+filo_pct_pauv,Z,num,89.28,89.28,Filosofi 200 m : part ménages pauvres,False
+filo_pct_prop,Z,num,89.28,89.28,Filosofi 200 m : part ménages propriétaires,False
+filo_dens_pop,Z,num,89.28,89.28,Filosofi 200 m : individus / km²,True
+qpv,Z,bool,100.0,9.55,"périmètres QPV (spatial_layers kind=qpv), centroïde dans le ",True
+pente_moy_deg,Z,num,98.1,98.1,RGE ALTI 5 m (parcel_terrain.pente_moy_deg),False
+acces_equipements,Z,num,100.0,100.0,"OSM (parcel_amenites) : Σ exp(-dist/800 m) sur école, santé,",False
+zone_plu,Z,cat,100.0,98.99,"GPU zonage agrégé U / AU (AUc,AUs) / A / N, centroïde dans l",False
+window_coverage,Z,num,100.0,100.0,mois DVF réellement disponibles dans la fenêtre 36 mois / 36,True
+nu_constructible,D,bool,100.0,15.52,BD TOPO (emprise ≤ 20 m²) × zone PLU U/AU,False
+surface_m2,D,num,100.0,100.0,référentiel parcellaire (mvt_parcels/parcels),False
+dormance_droits,D,num,58.69,58.69,parcel_residuel.pct_potentiel : part du potentiel de droits ,True
+sous_densite,D,bool,58.69,15.73,parcel_residuel.sous_densite,False
+sdp_residuelle_m2,D,num,58.69,58.69,parcel_residuel.sdp_residuelle_m2,False
+tenure_bin,D,cat,100.0,17.12,DVF toutes natures : dernière mutation avant le 01/01/Y → bi,False
+permis_bin,D,cat,100.0,8.81,Sitadel 2013+ : ancienneté du dernier permis SUR la parcelle,False
+canopee_pct,D,num,98.71,98.71,LiDAR/ortho (parcel_vegetation.canopee_pct),False
+ndvi_moyen,D,num,98.71,98.71,parcel_vegetation.ndvi_moyen,False
+friche,D,bool,100.0,0.15,Cartofriches (spatial_layers kind=friche),False
+piscine,D,bool,100.0,4.11,"détection ortho validée ou non-infirmée (type=piscine, hors ",False
+pv_candidat,D,bool,100.0,4.63,candidats photovoltaïque (ortho_detections type=pv),False
