@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — RETOURS-8 (maquettes Radar · Contacts · Fiche parcelle)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#0e1210;--card:#141a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--faint:#5f6b65;
+    --mint:#4ADE80;--mint-soft:rgba(74,222,128,.10);--ink:#071009;
+    --amber:#F0B429;--amber-soft:rgba(240,180,41,.12);
+    --red:#F87171;--iris:#B79CFC;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050706;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;padding:22px 14px 70px;display:flex;flex-direction:column;align-items:center;gap:26px}
+  .intro{font-size:12px;color:var(--dim);max-width:900px;text-align:center;line-height:1.6}
+  .intro b{color:var(--mint)}
+  .page{width:1180px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .kicker{font-size:10px;letter-spacing:.26em;color:var(--dim)}
+  h1{font-size:18px;font-weight:650;margin:4px 0 2px}
+  .lede{font-size:11.5px;color:var(--faint);margin-top:6px;border-left:2px solid var(--line);padding-left:9px;line-height:1.5}
+  .tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);margin:14px 0 12px}
+  .tabs span{padding:8px 2px 10px;font-size:13px;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer}
+  .tabs span.on{color:var(--mint);border-bottom-color:var(--mint);font-weight:600}
+  .tabs b{font-weight:600;color:var(--amber);margin-left:4px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 11px}
+  .kpi .n{font-size:17px;font-weight:700}.kpi .n.a{color:var(--amber)}.kpi .n.g{color:var(--mint)}
+  .kpi .l{font-size:10.5px;color:var(--dim);margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:ui-monospace,Menlo,monospace;font-size:9.5px;letter-spacing:.16em;color:var(--faint);text-align:left;padding:6px 9px;border-bottom:1px solid var(--line)}
+  td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;font-size:10.5px;border-radius:6px;padding:2px 8px}
+  .b-ok{background:var(--mint-soft);color:var(--mint)}.b-amb{background:var(--amber-soft);color:var(--amber)}.b-off{background:rgba(255,255,255,.05);color:var(--faint)}
+  .a{display:inline-block;font-size:11px;color:var(--mint);border:1px solid rgba(74,222,128,.35);border-radius:7px;padding:3px 9px;margin-left:4px;cursor:pointer;white-space:nowrap}
+  .a.g{color:var(--dim);border-color:var(--line)}.a.main{background:var(--mint);color:var(--ink);border-color:var(--mint);font-weight:650}
+  .a.amb{color:var(--amber);border-color:rgba(240,180,41,.4)}
+  .muted{color:var(--dim)}.tiny{font-size:10.5px;color:var(--faint)}
+  .cols{display:grid;grid-template-columns:260px 1fr;gap:14px;margin-top:12px}
+  .list .it{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;font-size:12.5px;cursor:pointer;background:var(--card)}
+  .list .it.on{border-color:var(--mint)}
+  .list .it .c{font-size:10.5px;color:var(--mint);background:var(--mint-soft);border-radius:10px;padding:1px 7px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .inp{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:12px;color:var(--txt);font-family:inherit}
+  .row-add td{background:rgba(74,222,128,.04)}
+  .btn{display:inline-block;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:650;border:1px solid var(--line);color:var(--dim);cursor:pointer}
+  .btn.mint{color:var(--mint);border-color:var(--mint)}.btn.mint.on{background:var(--mint);color:var(--ink)}
+  .btn.amb{color:var(--amber);border-color:var(--amber)}.btn.amb.on{background:var(--amber);color:var(--ink)}
+  .fiche{display:grid;grid-template-columns:1fr;gap:10px;max-width:420px}
+  .fh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .fh .idu{font-weight:700;font-size:15px}
+  .ico{display:inline-flex;align-items:center;gap:5px;font-size:11px;border:1px solid var(--line);border-radius:7px;padding:4px 8px;color:var(--dim)}
+  .ico.y{color:#f5d76e;border-color:rgba(245,215,110,.4)}
+</style>
+</head>
+<body>
+
+<p class="intro"><b>RETOURS-8</b> — trois maquettes : la pige Radar en onglets (on ne descend plus), Contacts en liste + panneau (un ajout = une ligne dans la commune),
+la fiche parcelle en onglets avec ses trois boutons en tête. Chiffres fictifs, structure de référence.</p>
+
+<!-- ════════ 1 · RADAR (PIGE) EN ONGLETS ════════ -->
+<div class="page">
+  <div class="kicker mono">1 · RADAR · PIGE — ADMIN</div>
+  <h1>109 annonces · 13 à rattacher · rien à valider.</h1>
+  <div class="lede">Quatre chiffres en tête disent où en est la pige. Puis des onglets : chaque tâche a le sien, on n'empile plus. Le dépôt HTML est un onglet comme les autres. L'onglet ouvert par défaut est celui qui a du travail.</div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">109</div><div class="l">annonces en vie</div></div>
+    <div class="kpi"><div class="n a">13</div><div class="l">à rattacher à une parcelle</div></div>
+    <div class="kpi"><div class="n g">0</div><div class="l">à valider (file d'extraction)</div></div>
+    <div class="kpi"><div class="n">0 <span class="tiny">/ 18 dues</span></div><div class="l">re-vérifiées aujourd'hui</div></div>
+  </div>
+
+  <div class="tabs">
+    <span>Déposer</span><span>À valider <b style="color:var(--dim)">0</b></span><span class="on">À rattacher <b>13</b></span><span>Re-vérifier <b style="color:var(--dim)">18</b></span><span>Check du jour</span>
+  </div>
+
+  <table>
+    <tr><th>ANNONCE</th><th>PROPOSITION</th><th>POURQUOI</th><th style="text-align:right">DÉCISION</th></tr>
+    <tr>
+      <td><b>Saint-Denis</b> · maison · 170 m² hab · 350 000 € <span class="tiny">source ↗</span></td>
+      <td><span class="badge b-ok">1 candidate · confiance forte</span><br><span class="tiny mono">97411000AB0123</span></td>
+      <td class="muted">adresse BAN exacte + surface terrain 612 m² (annonce : 600)</td>
+      <td style="text-align:right"><span class="a main">Rattacher</span><span class="a g">ortho</span><span class="a g">refuser</span></td>
+    </tr>
+    <tr>
+      <td><b>Sainte-Marie</b> · terrain · 533 m² · 198 000 € <span class="tiny">source ↗</span></td>
+      <td><span class="badge b-amb">1 candidate · confiance faible</span><br><span class="tiny mono">97418000CK0044</span></td>
+      <td class="muted">surface seule (±10 %), pas d'adresse dans l'annonce</td>
+      <td style="text-align:right"><span class="a amb">Instruire</span><span class="a g">ortho</span></td>
+    </tr>
+    <tr>
+      <td><b>La Possession</b> · maison · 200 m² hab · 690 000 € <span class="tiny">source ↗</span></td>
+      <td><span class="badge b-off">12 candidates</span></td>
+      <td class="muted">quartier connu, ni adresse ni surface terrain</td>
+      <td style="text-align:right"><span class="a g">Instruire</span></td>
+    </tr>
+  </table>
+  <div class="tiny" style="margin-top:8px">Rattacher = un clic humain, toujours. « Confiance forte » = adresse BAN exacte ou position ; « faible » = surface seule.</div>
+</div>
+
+<!-- ════════ 2 · CONTACTS : LISTE + PANNEAU ════════ -->
+<div class="page">
+  <div class="kicker mono">2 · CONTACTS — ADMIN</div>
+  <h1>Une commune à gauche, sa fiche à droite.</h1>
+  <div class="lede">Plus de barre de recherche ni de bouton global en tête : on clique la commune, et « + Ajouter » dans la fiche ouvre <b>une ligne vide dans cette commune</b>. Pas de formulaire séparé. Les communes avec contacts nommés portent un badge.</div>
+
+  <div class="cols">
+    <div class="list">
+      <div class="it on"><span>Bras-Panon</span><span class="c">1</span></div>
+      <div class="it"><span>Cilaos</span></div>
+      <div class="it"><span>Entre-Deux</span></div>
+      <div class="it"><span>L'Étang-Salé</span></div>
+      <div class="it"><span>La Plaine-des-Palmistes</span></div>
+      <div class="it"><span>La Possession</span></div>
+      <div class="it"><span>Le Port</span></div>
+      <div class="it"><span>Saint-André</span><span class="c">2</span></div>
+      <div class="it" style="justify-content:center;color:var(--faint)">… 24 communes</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:15px">Bras-Panon</b><span class="a">+ Ajouter</span></div>
+      <table style="margin-top:8px">
+        <tr><td style="width:30%"><b>Mairie & service urbanisme</b><br><span class="tiny">standard officiel</span></td><td class="muted">89 route nationale 2 · 02 62 51 50 50 · courrier@braspanon.re · site</td><td></td></tr>
+        <tr><td><b>Elise Lucet</b> <span class="badge b-ok">respo PLU</span></td><td class="muted">06 48 34 57 07 · e.lucet@braspanon.re<br><span class="tiny">note : super contact</span></td><td style="text-align:right"><span class="a g">✎</span><span class="a g" style="color:var(--red)">🗑</span></td></tr>
+        <tr class="row-add">
+          <td><input class="inp" style="width:100%" placeholder="Nom"> <input class="inp" style="width:100%;margin-top:4px" placeholder="Rôle (respo PLU…)"></td>
+          <td><input class="inp" style="width:48%" placeholder="Téléphone"> <input class="inp" style="width:48%" placeholder="Email"><input class="inp" style="width:100%;margin-top:4px" placeholder="Note"></td>
+          <td style="text-align:right"><span class="a main">Enregistrer</span><span class="a g">annuler</span></td>
+        </tr>
+      </table>
+      <div class="tiny" style="margin-top:8px">La ligne d'ajout apparaît dans la commune, sous les contacts existants. Visible ensuite sur la fiche commune de tous les comptes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 3 · FICHE PARCELLE EN ONGLETS ════════ -->
+<div class="page">
+  <div class="kicker mono">3 · FICHE PARCELLE — ÉCRAN CLIENT</div>
+  <h1>Trois boutons en tête, trois onglets, plus de descente.</h1>
+  <div class="lede">Maps · Cadastre · Pages jaunes remontent à côté de l'IDU (ce ne sont pas des exports). Les onglets donnent l'accès direct aux actions — CRM, Projet, Courrier, exports — sans faire défiler l'analyse. Un bouton cliqué reste plein de sa couleur.</div>
+
+  <div class="fiche" style="margin-top:12px">
+    <div class="card">
+      <div class="fh">
+        <div><div class="tiny mono">PARCELLE · SAINT-PAUL</div><div class="idu">97415000DR0946</div><div class="tiny">12 rue des Flamboyants</div></div>
+        <div style="display:flex;gap:5px"><span class="ico">🗺 Maps</span><span class="ico">▦ Cadastre</span><span class="ico y">☎ Pages jaunes</span></div>
+      </div>
+      <div class="tabs" style="margin:12px 0 10px"><span class="on">Analyse</span><span>Autour</span><span>Actions</span></div>
+      <div class="tiny">— onglet Actions —</div>
+      <div style="display:flex;gap:8px;margin-top:8px"><span class="btn mint on">+ CRM · Repérée</span><span class="btn amb">+ Projet</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <span class="btn">✉ Courrier propriétaire</span><span class="btn">⇩ Dossier expert</span>
+        <span class="btn">⇩ Finance</span><span class="btn">⇩ Pré-dossier PC</span>
+      </div>
+      <div class="tiny" style="margin-top:8px">« + CRM » est déjà cliqué : il reste plein vert et affiche la colonne. Même règle pour « + Projet » en ambre.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
