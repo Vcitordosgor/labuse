@@ -301,6 +301,7 @@ function Reverif() {
 function InstructionCard({ b, onTranche }: { b: RadarAInstruire; onTranche: () => void }) {
   const [instr, setInstr] = useState<{ busy: boolean; ouvert: boolean; cands?: RadarPiste[]; motif?: string | null }>({ busy: false, ouvert: false })
   const [choix, setChoix] = useState<{ busy: boolean; idu?: string }>({ busy: false })
+  const [idx, setIdx] = useState(0)   // RETOURS-9 (Q7) — candidate courante (« Suivante » fait défiler)
   const specs = b.type_bien === 'terrain'
     ? (b.surface_terrain ? `${b.surface_terrain} m² terrain` : '')
     : (b.surface_hab ? `${b.surface_hab} m² hab` : '')
@@ -354,40 +355,92 @@ function InstructionCard({ b, onTranche }: { b: RadarAInstruire; onTranche: () =
       {pourquoi && <div data-radar-pourquoi className="mt-1.5 text-[11px] leading-snug text-txt-mut">{pourquoi}</div>}
       {/* la zone DÉCLARÉE (page d'annonce) aide à trier les candidates — déclaratif vendeur. */}
       {b.declaratif && <div className="mt-2"><Declaratif d={b.declaratif} /></div>}
-      {instr.ouvert && instr.cands && (
-        <div className="mt-2.5 flex flex-col gap-2">
-          {instr.cands.length === 0 && <span className="text-[11px] text-txt-dim">{instr.motif || 'aucune candidate exploitable'}</span>}
-          {instr.cands.map((c) => (
-            <div key={c.idu} data-radar-candidate className="overflow-hidden rounded-xl border border-line-2 bg-surface-2">
-              <div className="grid grid-cols-[96px_1fr]">
-                {c.ortho_url
-                  ? <img src={c.ortho_url} alt={`ortho ${c.idu}`} className="h-24 w-24 object-cover" loading="lazy" />
-                  : <div className="flex h-24 w-24 items-center justify-center bg-surface-3 text-[9px] text-txt-dim">ortho indispo.</div>}
-                <div className="min-w-0 px-2.5 py-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[11px] text-txt">{c.idu}</span>
-                    <span className="text-[10px] text-txt-dim">{c.distance_m != null ? `${Math.round(c.distance_m)} m` : ''}</span>
-                  </div>
-                  <ul className="mt-1 flex flex-col gap-0.5 text-[10px] leading-snug">
-                    {(c.criteres_detail ?? []).map((x: RadarCritere, i: number) => (
-                      <li key={i} className={x.converge ? 'text-mint' : 'text-txt-dim'}>
-                        {x.converge ? '✓' : '✗'} <span className="text-txt-mut">{x.critere}</span> {x.valeur}
-                      </li>
-                    ))}
-                  </ul>
-                  <button data-radar-choisir disabled={choix.busy}
-                    onClick={() => { setChoix({ busy: true, idu: c.idu }); radarRattacherHumain(b.bien_id, c.idu)
-                      .then(() => { setChoix({ busy: false }); onTranche() })
-                      .catch(() => setChoix({ busy: false })) }}
-                    className="mt-1.5 rounded-md border border-mint/50 bg-mint/10 px-2 py-1 text-[10.5px] font-medium text-mint hover:bg-mint/20 disabled:opacity-60">
-                    {choix.busy && choix.idu === c.idu ? 'Enregistrement…' : "C'est cette parcelle"}
-                  </button>
+      {/* RETOURS-9 (Q7) — écran INSTRUIRE : l'annonce et la candidate CÔTE À CÔTE, une ligne
+          « ce qui concorde / ce qui diverge », puis la décision (Rattacher · Suivante · Aucune).
+          Aucun calcul neuf : les faits candidate viennent de la fiche parcelle. */}
+      {instr.ouvert && instr.cands && (() => {
+        if (instr.cands.length === 0) return <div className="mt-2.5 text-[11px] text-txt-dim">{instr.motif || 'aucune candidate exploitable'}</div>
+        const c = instr.cands[Math.min(idx, instr.cands.length - 1)]
+        const fi = c.fiche
+        const m2 = (v?: number | null) => v != null ? `${v.toLocaleString('fr-FR')} m²` : '—'
+        const rattacher = () => { setChoix({ busy: true, idu: c.idu }); radarRattacherHumain(b.bien_id, c.idu)
+          .then(() => { setChoix({ busy: false }); onTranche() }).catch(() => setChoix({ busy: false })) }
+        return (
+          <div data-radar-instruire-ecran className="mt-2.5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {/* ANNONCE */}
+              <div data-radar-annonce className="rounded-xl border border-line-2 bg-surface-2 p-2.5">
+                <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-txt-dim">Annonce</div>
+                <Fait k="Type" v={b.type_bien ?? '—'} />
+                <Fait k="Surface habitable" v={m2(b.surface_hab)} />
+                <Fait k="Surface terrain" v={m2(b.surface_terrain)} />
+                <Fait k="Prix" v={fmtEur(b.prix)} />
+                <Fait k="Quartier / commune" v={b.commune} />
+                {b.url_sortante && <a href={b.url_sortante} target="_blank" rel="noopener noreferrer"
+                  className="mt-1 inline-block font-mono text-[10px] text-mint underline decoration-dotted">voir l'annonce (photos) ↗</a>}
+              </div>
+              {/* CANDIDATE */}
+              <div data-radar-candidate data-radar-candidate-idu={c.idu} className="rounded-xl border border-line-2 bg-surface-2 p-2.5">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-txt-dim">Candidate {instr.cands.length > 1 ? `${Math.min(idx, instr.cands.length - 1) + 1}/${instr.cands.length}` : ''}</span>
+                  {c.distance_m != null && <span className="text-[10px] text-txt-dim">{Math.round(c.distance_m)} m du point</span>}
                 </div>
+                <div className="mb-1.5 grid grid-cols-[64px_1fr] gap-2">
+                  {c.ortho_url
+                    ? <img src={c.ortho_url} alt={`ortho ${c.idu}`} className="h-16 w-16 rounded object-cover" loading="lazy" />
+                    : <div className="flex h-16 w-16 items-center justify-center rounded bg-surface-3 text-[9px] text-txt-dim">ortho indispo.</div>}
+                  <span className="self-center font-mono text-[11px] text-txt">{c.idu}</span>
+                </div>
+                <Fait k="Surface cadastrale" v={m2(fi?.surface_cadastrale)} />
+                <Fait k="Surface bâtie (BD TOPO)" v={m2(fi?.surface_bati)} />
+                <Fait k="Bâtiments" v={fi?.n_batiments != null ? String(fi.n_batiments) : '—'} />
+                <Fait k="Zone PLU" v={fi?.zone_plu ?? '—'} />
+                <Fait k="Adresse BAN" v={fi?.adresse_ban ?? '—'} />
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            {/* concordance / divergence — les critères déjà calculés, en clair */}
+            <div data-radar-concordance className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-line bg-surface-1 px-2.5 py-1.5 text-[10.5px]">
+              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-txt-dim">Concorde / diverge</span>
+              {(c.criteres_detail ?? []).map((x: RadarCritere, i: number) => (
+                <span key={i} className={x.converge ? 'text-mint' : 'text-coral'}>
+                  {x.converge ? '✓' : '✗'} <span className="text-txt-mut">{x.critere}</span> {x.valeur}
+                </span>
+              ))}
+              {(c.criteres_detail ?? []).length === 0 && <span className="text-txt-dim">critères non disponibles</span>}
+              <span className="ml-auto"><Chip tone={b.confiance === 'forte' ? 'ok' : 'warn'}>confiance {b.confiance}</Chip></span>
+            </div>
+
+            {/* décision : Rattacher · Suivante · Aucune */}
+            <div className="mt-2 flex items-center gap-1.5">
+              <button data-radar-choisir disabled={choix.busy} onClick={rattacher}
+                className="rounded-md bg-mint px-3 py-1 text-[11.5px] font-medium text-mint-on hover:brightness-110 disabled:opacity-60">
+                {choix.busy && choix.idu === c.idu ? 'Enregistrement…' : 'Rattacher'}
+              </button>
+              {instr.cands.length > 1 && (
+                <button data-radar-suivante onClick={() => setIdx((i) => (i + 1) % instr.cands!.length)}
+                  className="rounded-md border border-line-2 px-3 py-1 text-[11.5px] text-txt-mut hover:text-txt">
+                  Suivante
+                </button>
+              )}
+              <button data-radar-aucune onClick={() => setInstr((s) => ({ ...s, ouvert: false }))}
+                className="rounded-md border border-line-2 px-3 py-1 text-[11.5px] text-txt-mut hover:text-txt">
+                Aucune
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
+// RETOURS-9 (Q7) — une ligne « clé : valeur » compacte pour les colonnes annonce/candidate.
+function Fait({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2 py-px text-[11px]">
+      <span className="shrink-0 text-txt-dim">{k}</span>
+      <span className={`text-right ${v === '—' ? 'text-txt-mut' : 'text-txt'}`}>{v}</span>
     </div>
   )
 }
@@ -549,11 +602,12 @@ export function RadarSection() {
       <div className="text-[10.5px] text-txt-mut">{sub}</div>
     </div>
   )
+  // RETOURS-9 (Q9) — onglet Radar ACTIF = plein vert, encre sombre (pas un simple soulignement).
   const Onglet = ({ k, children, n, tone }: { k: RadarTab; children: React.ReactNode; n?: number; tone?: 'a' }) => (
-    <button data-radar-onglet={k} onClick={() => setTab(k)}
-      className={`-mb-px whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-2 text-[13px] transition-colors duration-quick ${
-        actif === k ? 'border-mint font-semibold text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
-      {children}{n != null && <b className={`ml-1 ${n > 0 && tone === 'a' ? 'text-amber' : 'text-txt-dim'}`}>{n}</b>}
+    <button data-radar-onglet={k} onClick={() => setTab(k)} aria-pressed={actif === k}
+      className={`mb-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] transition-colors duration-quick ${
+        actif === k ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
+      {children}{n != null && <b className={`ml-1 ${actif === k ? 'text-mint-ink' : n > 0 && tone === 'a' ? 'text-amber' : 'text-txt-dim'}`}>{n}</b>}
     </button>
   )
   return (

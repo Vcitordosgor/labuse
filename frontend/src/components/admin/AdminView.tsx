@@ -305,7 +305,7 @@ const SOUS_TITRES: Partial<Record<AdminSection, string>> = {
   pilotage: 'comment va LABUSE ce matin ?',
   licences: 'que dois-je faire pour ce client, maintenant ?',
   ia: 'consommation, plafonds par compte, registre modèle',
-  donnees: 'mes données sont-elles à jour ? — Catalogue · Circuit · Horloge',
+  donnees: 'mes données sont-elles à jour ? — Catalogue · Circuit · CRON',
   produit: 'ce qui est utilisé · ce que les clients demandent',
   courrier: 'les demandes d’envoi — la page qui manquait',
   radar: 'la pige d’annonces — déposer, valider, re-vérifier',

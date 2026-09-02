@@ -6,8 +6,33 @@
 // « Cron nocturne » et « Dernières exécutions » vivent désormais dans l'onglet Horloge (CronSection).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { getAdminSources, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceVeilleActive, postAdminSourceVeilleInjecter, postAdminSourceVeilleMail, postAdminSourceVeilleVerifier, type AdminSource } from '../../lib/api'
+import { getAdminSources, postAdminCronRun, postAdminSourceAffichage, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceVeilleActive, postAdminSourceVeilleInjecter, postAdminSourceVeilleMail, postAdminSourceVeilleVerifier, type AdminSource } from '../../lib/api'
 import { ActBtn, Chip, Panel } from './AdminView'
+
+// RETOURS-9 (Q2.4) — « Vérifier toutes les sources maintenant » : lance le job `sentinelle-sources`
+// à la main (le MÊME que l'Horloge/CRON, verrou flock partagé). Détaché : l'état se met à jour au
+// prochain rafraîchissement. Indispensable en local (le cron ne sonne pas sur le Mac de Vic).
+function VerifierToutes() {
+  const qc = useQueryClient()
+  const [msg, setMsg] = useState<string | null>(null)
+  const run = useMutation({
+    mutationFn: () => postAdminCronRun('sentinelle-sources'),
+    onSuccess: (r) => {
+      setMsg(r.ok ? 'Vérification lancée — les états se mettront à jour dans une minute.' : (r.motif ?? 'Lancement refusé.'))
+      setTimeout(() => qc.invalidateQueries({ queryKey: ['admin-sources'] }), 4000)
+    },
+    onError: () => setMsg('Lancement impossible.'),
+  })
+  return (
+    <div className="text-right">
+      <ActBtn tone="mint" disabled={run.isPending} data-verifier-toutes
+        onClick={() => run.mutate()}>
+        {run.isPending ? 'Lancement…' : 'Vérifier toutes les sources maintenant'}
+      </ActBtn>
+      {msg && <div className="mt-0.5 text-[10px] text-mint">{msg}</div>}
+    </div>
+  )
+}
 
 const fmtReu = (iso?: string | null) => {
   if (!iso) return '—'
@@ -22,6 +47,15 @@ const METHODE_LABEL: Record<string, string> = {
   api: 'api', page: 'page', entete: 'entete', temoin: 'témoin', rappel: 'rappel manuel',
 }
 
+// RETOURS-9 (Q2.3) — étiquette « qui s'en occupe », lue en une seconde : auto (agent quotidien) /
+// manuelle (rappel N j) / non surveillée (avec la raison). Rendue sous le nom de la source.
+function responsable(s: AdminSource): { texte: string; tone: 'auto' | 'manuel' | 'non' } {
+  const v = s.veille
+  if (v.surveillee) return { texte: `auto · agent quotidien · ${METHODE_LABEL[v.methode ?? ''] ?? v.methode ?? 'sonde'}`, tone: 'auto' }
+  if (v.nature === 'rappel') return { texte: v.cadence_attendue_jours != null ? `manuelle · rappel ${v.cadence_attendue_jours} j` : 'manuelle · rappel', tone: 'manuel' }
+  return { texte: `non surveillée${v.raison ? ` · ${v.raison}` : ''}`, tone: 'non' }
+}
+
 // AMONT (colonne « ce que l'agent a vu ») — un badge par état. Jamais un blanc.
 function AmontBadge({ s }: { s: AdminSource }) {
   const v = s.veille
@@ -31,6 +65,8 @@ function AmontBadge({ s }: { s: AdminSource }) {
   }
   if (v.nouvelle_version) return <Chip tone="warn">{v.millesime_amont ?? 'nouvelle'} disponible</Chip>
   if (v.echec_confirme) return <span title={v.message ?? undefined} className="cursor-help"><Chip tone="off">sonde en échec</Chip></span>
+  // RETOURS-9 (Q2.2) — surveillée mais l'agent n'est pas encore passé : jamais « — », on l'annonce.
+  if (s.etat === 'jamais_verifiee') return <Chip tone="warn">en attente de la 1ʳᵉ vérification</Chip>
   if (v.statut === 'ok') return <Chip tone="ok">{v.nature === 'changement' ? 'pas de changement' : 'identique'}</Chip>
   return <Chip>{v.statut ? v.statut.replace(/_/g, ' ') : 'jamais sondée'}</Chip>
 }
@@ -125,7 +161,7 @@ function ActionPrincipale({ s }: { s: AdminSource }) {
   const v = s.veille
   const injecter = useMutation({
     mutationFn: () => postAdminSourceVeilleInjecter(s.id),
-    onSuccess: (r) => { setMsg(`Injection lancée (${r.label})${r.millesime ? ` → ${r.millesime}` : ''} — suivi dans l'Horloge.`); inval() },
+    onSuccess: (r) => { setMsg(`Injection lancée (${r.label})${r.millesime ? ` → ${r.millesime}` : ''} — suivi dans le CRON.`); inval() },
     onError: () => setMsg("Injection impossible (aucune commande d'ingestion connue ?)."),
   })
   const recharger = useMutation({
@@ -134,6 +170,27 @@ function ActionPrincipale({ s }: { s: AdminSource }) {
     onError: () => setMsg('Rechargement impossible.'),
   })
   const verifierAvant = useMutation({ mutationFn: () => postAdminSourceVeilleVerifier(s.id) })
+  const verifier = useMutation({
+    mutationFn: () => postAdminSourceVeilleVerifier(s.id),
+    onSuccess: (r) => { setMsg(r.statut === 'nouvelle_version'
+      ? `Nouvelle version (${r.millesime_amont ?? '?'}) — utilisez « Injecter ».`
+      : 'Vérifiée — l\'amont est à jour.'); inval() },
+    onError: () => setMsg('Sonde impossible.'),
+  })
+
+  // RETOURS-9 (Q2.2) — source surveillée jamais sondée : l'action PRINCIPALE est « Vérifier maintenant »
+  // (pas un « — »). Elle lance la sonde amont de CETTE source (le job global reste « Vérifier toutes »).
+  if (s.etat === 'jamais_verifiee') {
+    return (
+      <div className="inline-block text-right" data-verifier={s.id}>
+        <ActBtn tone="mint" disabled={verifier.isPending}
+          onClick={() => verifier.mutate()}>
+          {verifier.isPending ? 'Sonde…' : 'Vérifier maintenant'}
+        </ActBtn>
+        {msg && <div className="mt-0.5 text-[10px] text-mint">{msg}</div>}
+      </div>
+    )
+  }
 
   if (v.nouvelle_version && v.injectable) {
     return (
@@ -192,9 +249,13 @@ function CatalogueRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
       <td className="px-3 py-2.5">
         <b className="text-txt">{s.name}</b>
         {s.affichage_desactive && <span className="ml-1"><Chip tone="warn">désactivée</Chip></span>}
-        <div className="mt-0.5 text-[10.5px] text-txt-dim">
-          {s.fournisseur ?? '—'}{v.methode ? ` · ${METHODE_LABEL[v.methode] ?? v.methode}` : ''}
-        </div>
+        <div className="mt-0.5 text-[10.5px] text-txt-dim">{s.fournisseur ?? '—'}</div>
+        {/* RETOURS-9 (Q2.3) — qui s'occupe de cette source, en une ligne */}
+        {(() => { const r = responsable(s); return (
+          <div data-responsable={r.tone}
+            className={`mt-0.5 text-[10px] ${r.tone === 'auto' ? 'text-mint' : r.tone === 'manuel' ? 'text-amber' : 'text-txt-mut'}`}
+            title={r.texte}>{r.texte}</div>
+        ) })()}
       </td>
       <td className="px-3 py-2.5 font-mono text-[11.5px] text-txt-mut">{s.millesime ?? '—'}</td>
       <td className="px-3 py-2.5"><AmontBadge s={s} /></td>
@@ -209,30 +270,29 @@ function CatalogueRow({ s, cadences }: { s: AdminSource; cadences: string[] }) {
   )
 }
 
-// Filtres (chips) de tête : toutes · nouvelle version · en erreur · rappels manuels · non surveillées.
-type CatFiltre = 'toutes' | 'neuf' | 'erreur' | 'rappels' | 'non'
+// RETOURS-9 (Q2.1) — les chips comptent les 64 par ÉTAT UNIQUE (arbitre serveur `s.etat`). Les cinq
+// états PARTITIONNENT le catalogue : leur somme = le total (verrouillé par test). « Toutes » remet à plat.
+type CatFiltre = 'toutes' | 'a_jour' | 'nouvelle_version' | 'a_rafraichir' | 'non_surveillee' | 'jamais_verifiee'
 const CAT_PRED: Record<CatFiltre, (s: AdminSource) => boolean> = {
   toutes: () => true,
-  neuf: (s) => s.veille.nouvelle_version,
-  erreur: (s) => s.veille.echec_confirme,
-  rappels: (s) => s.veille.nature === 'rappel',
-  non: (s) => !s.veille.surveillee && s.veille.nature !== 'rappel',
+  a_jour: (s) => s.etat === 'a_jour',
+  nouvelle_version: (s) => s.etat === 'nouvelle_version',
+  a_rafraichir: (s) => s.etat === 'a_rafraichir',
+  non_surveillee: (s) => s.etat === 'non_surveillee',
+  jamais_verifiee: (s) => s.etat === 'jamais_verifiee',
 }
+// ordre du mandat Q2.1 : à jour · nouvelle version · à rafraîchir · non surveillée · jamais vérifiée
 const CAT_LABELS: Array<[CatFiltre, string]> = [
-  ['toutes', 'Toutes'], ['neuf', 'Nouvelle version'], ['erreur', 'En erreur'],
-  ['rappels', 'Rappels manuels'], ['non', 'Non surveillées'],
+  ['toutes', 'Toutes'], ['a_jour', 'À jour'], ['nouvelle_version', 'Nouvelle version'],
+  ['a_rafraichir', 'À rafraîchir'], ['non_surveillee', 'Non surveillée'], ['jamais_verifiee', 'Jamais vérifiée'],
 ]
 
 // Table présentationnelle (testable en isolation) : filtres + recherche + regroupement par fournisseur
 // avec en-têtes repliables. Chaque source UNE FOIS.
 export function Catalogue({ sources, cadences }: { sources: AdminSource[]; cadences: string[] }) {
   const [filtre, setFiltre] = useState<CatFiltre>('toutes')
-  const [q, setQ] = useState('')
   const n = (f: CatFiltre) => sources.filter(CAT_PRED[f]).length
-  const visibles = useMemo(() => sources
-    .filter(CAT_PRED[filtre])
-    .filter((s) => (s.name + ' ' + (s.fournisseur ?? '')).toLowerCase().includes(q.toLowerCase())),
-    [sources, filtre, q])
+  const visibles = useMemo(() => sources.filter(CAT_PRED[filtre]), [sources, filtre])
   // regroupement par fournisseur, en gardant l'ordre d'apparition des fournisseurs
   const groupes = useMemo(() => {
     const m = new Map<string, AdminSource[]>()
@@ -248,14 +308,12 @@ export function Catalogue({ sources, cadences }: { sources: AdminSource[]; caden
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {CAT_LABELS.map(([f, lbl]) => (
           <button key={f} onClick={() => setFiltre(f)} data-cat-filtre={f}
-            className={`rounded-full border px-2.5 py-1 text-[11.5px] transition ${filtre === f ? 'border-mint/45 bg-mint/10 text-mint' : 'border-line bg-surface-1 text-txt-dim hover:text-txt-mut'}`}>
-            {lbl} <span className={`font-bold ${f === 'neuf' && n(f) > 0 ? 'text-amber' : ''}`}>{n(f)}</span>
+            className={`rounded-full border px-2.5 py-1 text-[11.5px] transition ${filtre === f ? 'border-mint bg-mint text-mint-ink font-medium' : 'border-line bg-surface-1 text-txt-dim hover:text-txt-mut'}`}>
+            {lbl} <span className={`font-bold ${f === 'nouvelle_version' && n(f) > 0 ? 'text-amber' : ''}`}>{n(f)}</span>
           </button>
         ))}
-        <label className="ml-auto flex min-w-[210px] items-center gap-2 rounded-lg border border-line bg-surface-1 px-3 py-1.5 text-xs text-txt-dim">
-          ⌕ <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chercher une source, un fournisseur…" data-sources-filtre
-            className="w-full bg-transparent text-txt outline-none" />
-        </label>
+        {/* Q2.4 — lance le job sentinelle-sources À LA MAIN (le même que l'Horloge). Indispensable en local. */}
+        <div className="ml-auto"><VerifierToutes /></div>
       </div>
       <Panel>
         <table className="w-full text-[12.5px]">
@@ -301,16 +359,9 @@ export function SourcesSection() {
   const q = useQuery({ queryKey: ['admin-sources'], queryFn: getAdminSources, refetchInterval: 300_000 })
   const d = q.data
   if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
-  const sy = d.synthese
-  return (
-    <>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        {sy.nouvelle_version > 0 && <Chip tone="warn">{sy.nouvelle_version} nouvelle version disponible</Chip>}
-        {sy.rappels_en_retard > 0 && <Chip tone="warn">{sy.rappels_en_retard} donnée manuelle non rafraîchie</Chip>}
-        {sy.a_mettre_a_jour > 0 && <Chip tone="warn">{sy.a_mettre_a_jour} à rafraîchir</Chip>}
-        <Chip tone="ok">{sy.ok} à jour</Chip>
-      </div>
-      <Catalogue sources={d.sources} cadences={d.cadences} />
-    </>
-  )
+  // RETOURS-9 (Q2.1) — l'ancien bandeau de synthèse comptait la FRAÎCHEUR heuristique (« 3 à jour »
+  // sur 64) et contredisait tout. Retiré : les chips du Catalogue comptent désormais les 64 par
+  // état unique R1 (à jour · nouvelle version · à rafraîchir · non surveillée · jamais vérifiée),
+  // et leur somme fait le total. Une seule vérité.
+  return <Catalogue sources={d.sources} cadences={d.cadences} />
 }

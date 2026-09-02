@@ -8,17 +8,35 @@ import type { AdminSource } from '../../lib/api'
 // passage/fraîcheur/alimente/actions. Chaque source apparaît UNE FOIS (plus de panneau de veille
 // séparé). Filtres : toutes · nouvelle version · en erreur · rappels manuels · non surveillées.
 
-const src = (over: Partial<AdminSource> & { id: number; name: string }): AdminSource => ({
-  category: null, millesime: '2025-S2', horizon: null, ingere_le: null, cadence: null,
-  a_jour: true, relance: null, affichage_desactive: false, fournisseur: 'IGN',
-  alimente: { moteurs: [], surfaces: [], cable: false },
-  veille: { nature: 'non_surveillable', surveillee: false, actif: null, methode: null, statut: null, millesime_amont: null,
-    nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false,
-    raison: 'Import manuel — pas d\'URL de version.', injectable: false, injection_lancee_at: null, injection_vu: null,
-    mail_alerte: false,
-    cadence_attendue_jours: null, convention_echeance: null, jours_depuis_maj: null, rappel_retard: false },
-  ...over,
-})
+// RETOURS-9 (Q2) — l'état unique R1 (arbitre serveur) est dérivé ici pour refléter le backend :
+// nouvelle_version > jamais_verifiee (surveillée jamais sondée) > a_jour ; rappel en retard = a_rafraichir ;
+// sinon non_surveillee. Les tests peuvent toujours forcer `etat` explicitement.
+const deriveEtat = (v: AdminSource['veille']): AdminSource['etat'] => {
+  if (v.surveillee) {
+    if (v.nouvelle_version) return 'nouvelle_version'
+    if (v.statut == null || v.statut === '') return 'jamais_verifiee'
+    return 'a_jour'
+  }
+  if (v.nature === 'rappel') return v.rappel_retard ? 'a_rafraichir' : 'a_jour'
+  return 'non_surveillee'
+}
+const src = (over: Partial<AdminSource> & { id: number; name: string }): AdminSource => {
+  const base: AdminSource = {
+    category: null, millesime: '2025-S2', horizon: null, ingere_le: null, cadence: null,
+    a_jour: true, relance: null, affichage_desactive: false, fournisseur: 'IGN',
+    etat: 'a_jour', etat_client: 'a_jour', etat_phrase: '', publie_le: null,
+    alimente: { moteurs: [], surfaces: [], cable: false },
+    veille: { nature: 'non_surveillable', surveillee: false, actif: null, methode: null, statut: null, millesime_amont: null,
+      nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false,
+      raison: 'Import manuel — pas d\'URL de version.', injectable: false, injection_lancee_at: null, injection_vu: null,
+      mail_alerte: false,
+      cadence_attendue_jours: null, convention_echeance: null, jours_depuis_maj: null, rappel_retard: false },
+    ...over,
+  }
+  // etat non fourni explicitement → dérivé de l'état de veille final
+  if (!('etat' in over)) base.etat = deriveEtat(base.veille)
+  return base
+}
 const surv = (o: Partial<AdminSource['veille']>): AdminSource['veille'] => ({
   nature: 'version', surveillee: true, actif: true, methode: 'page', statut: 'ok', millesime_amont: null,
   nouvelle_version: false, passage_at: null, message: null, echecs: 0, echec_confirme: false, raison: null,
@@ -69,15 +87,66 @@ describe('SUITE-1 S2 bis — catalogue une-ligne-par-source', () => {
     expect(getByText('Recharger')).toBeTruthy()
   })
 
-  it('le filtre « Non surveillées » ne montre que les non surveillées (hors rappels)', () => {
+  it('le filtre « Non surveillée » ne montre que les non surveillées', () => {
     const sources = [
       src({ id: 1, name: 'Surveillée X', veille: surv({}) }),
       src({ id: 2, name: 'Manuelle Y' }),
     ]
     const { getByText, queryByText } = renderCat(sources)
-    fireEvent.click(getByText(/Non surveillées/))
+    fireEvent.click(getByText(/Non surveillée/))
     expect(getByText('Manuelle Y')).toBeTruthy()
     expect(queryByText('Surveillée X')).toBeNull()
+  })
+
+  // ─────────────── RETOURS-9 (Q2) — les chips par état, la somme = total, jamais vérifiée ───────────────
+  it('Q2.1 — cinq chips d\'état ; leur somme fait le total (partition du catalogue)', () => {
+    const sources = [
+      src({ id: 1, name: 'À jour A', veille: surv({ statut: 'ok', passage_at: new Date().toISOString() }) }),
+      src({ id: 2, name: 'Neuf B', relance: 'dvf', veille: surv({ statut: 'nouvelle_version', nouvelle_version: true, millesime_amont: '2026', injectable: true }) }),
+      src({ id: 3, name: 'Jamais vérifiée C', veille: surv({ statut: null }) }),
+      src({ id: 4, name: 'Non surveillée D' }),
+      src({ id: 5, name: 'Rappel retard E', a_jour: null, veille: { ...src({ id: 5, name: 'x' }).veille, nature: 'rappel', methode: 'rappel', cadence_attendue_jours: 7, rappel_retard: true } }),
+    ]
+    const { getByText, container } = renderCat(sources)
+    const chipN = (f: string) => {
+      const btn = container.querySelector(`[data-cat-filtre="${f}"]`) as HTMLElement
+      return Number(btn.querySelector('span')!.textContent)
+    }
+    expect(chipN('a_jour')).toBe(1)
+    expect(chipN('nouvelle_version')).toBe(1)
+    expect(chipN('a_rafraichir')).toBe(1)
+    expect(chipN('non_surveillee')).toBe(1)
+    expect(chipN('jamais_verifiee')).toBe(1)
+    // partition : somme des 5 états = total (« Toutes »)
+    const somme = chipN('a_jour') + chipN('nouvelle_version') + chipN('a_rafraichir') + chipN('non_surveillee') + chipN('jamais_verifiee')
+    expect(somme).toBe(chipN('toutes'))
+    expect(somme).toBe(5)
+    // Q2.2 — la source jamais vérifiée propose « Vérifier maintenant » comme action PRINCIPALE (jamais « — »)
+    const btn = container.querySelector('[data-verifier="3"]') as HTMLElement
+    expect(btn?.textContent).toContain('Vérifier maintenant')
+    expect(getByText(/en attente de la 1/)).toBeTruthy()
+  })
+
+  it('Q2.3 — étiquette AUTO / MANUELLE / non surveillée sous le nom', () => {
+    const sources = [
+      src({ id: 1, name: 'Auto A', veille: surv({ statut: 'ok', methode: 'page' }) }),
+      src({ id: 2, name: 'Rappel B', veille: { ...src({ id: 2, name: 'x' }).veille, nature: 'rappel', methode: 'rappel', cadence_attendue_jours: 30 } }),
+      src({ id: 3, name: 'Muette C' }),
+    ]
+    const { getByText } = renderCat(sources)
+    expect(getByText(/auto · agent quotidien · page/)).toBeTruthy()
+    expect(getByText(/manuelle · rappel 30 j/)).toBeTruthy()
+    expect(getByText(/non surveillée ·/)).toBeTruthy()
+  })
+
+  it('Q2.4 — un bouton « Vérifier toutes les sources maintenant » en tête', () => {
+    const { getByText } = renderCat([src({ id: 1, name: 'X', veille: surv({}) })])
+    expect(getByText('Vérifier toutes les sources maintenant')).toBeTruthy()
+  })
+
+  it('Q3 — la barre de recherche a disparu', () => {
+    const { container } = renderCat([src({ id: 1, name: 'X', veille: surv({}) })])
+    expect(container.querySelector('[data-sources-filtre]')).toBeNull()
   })
 
   it('groupe par fournisseur avec en-tête repliable', () => {

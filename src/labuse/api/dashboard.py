@@ -938,6 +938,8 @@ def admin_sources(request: Request) -> dict:
                          # Pilotage et la page client (test d'égalité : test_etats_sources).
                          "etat_nouvelle_version": sum(1 for s in sources if s["etat"] == "nouvelle_version"),
                          "etat_a_rafraichir": sum(1 for s in sources if s["etat"] == "a_rafraichir"),
+                         # RETOURS-9 (Q2) — 5e état : surveillée jamais sondée (l'agent n'est pas passé).
+                         "etat_jamais_verifiee": sum(1 for s in sources if s["etat"] == "jamais_verifiee"),
                          "etat_a_jour": sum(1 for s in sources if s["etat"] == "a_jour"),
                          "etat_non_surveillee": sum(1 for s in sources if s["etat"] == "non_surveillee"),
                          "pas_a_jour_client": sum(1 for s in sources if s["etat_client"] == "pas_a_jour"),
@@ -1188,6 +1190,14 @@ def admin_flux(request: Request) -> dict:
     # runs, dernière bascule) faisait tomber TOUT l'endpoint, et la page ne rendait jamais. Chaque
     # brique est désormais ISOLÉE avec un repli TYPÉ valide (jamais un 500, jamais une forme cassée)
     # + une note d'erreur visible côté admin. `coherence` était déjà gardée ; on généralise à tout.
+    #
+    # RETOURS-9 (Q1) — le Circuit affichait ENCORE « Chargement… » chez Vic : le repli marchait, mais
+    # sur la base réelle l'endpoint mettait ~55 s (mesuré). Cause exacte : `runs_termines` calcule,
+    # pour chacun des runs non-servis, l'écart au run courant (`comparer()` ~5 s + un COUNT self-join
+    # sur parcel_p_score_v2, 3 M lignes) → ~50 s à lui seul. Le front attend la charge COMPLÈTE avant
+    # de rendre (`if (!d) Chargement…`). On sort donc les runs de la charge initiale : `/admin/flux`
+    # ne garde que les briques rapides (~6 s, coherence domine) et rend le Circuit tout de suite ;
+    # les runs terminés + écarts arrivent en RENDU PROGRESSIF via `/admin/flux/runs` (2e requête).
     def _garde(label, fn, repli):
         try:
             return fn()
@@ -1206,10 +1216,11 @@ def admin_flux(request: Request) -> dict:
         radar = _garde("radar", lambda: releves.bloc_radar(s), _RADAR_VIDE)
         coherence = _garde("coherence", lambda: coherence_flux.verifier(s),
                            {"ok": None, "checks": []})
-        runs = _garde("runs", lambda: bascule_flux.runs_termines(s), [])
+        # Q1 — les runs terminés (coûteux) NE sont plus dans la charge initiale : rendu progressif
+        # via /admin/flux/runs. On garde seulement `derniere` (0,01 s) pour le bandeau « Basculer ».
         derniere = _garde("derniere", lambda: bascule_flux.derniere_bascule(s), None)
     return {"flux": fourmiliere, "radar": radar, "coherence": coherence,
-            "bascule": {"runs": runs, "derniere": derniere},
+            "bascule": {"derniere": derniere},
             # R4.2 — si une brique a lâché, la page rend quand même (repli) et DIT quoi a échoué.
             "erreurs": erreurs or None}
 

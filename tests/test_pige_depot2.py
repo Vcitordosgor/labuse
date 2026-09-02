@@ -223,6 +223,16 @@ def test_d3_instruire_est_admin_only(client_http, monkeypatch):
     assert client_http.post("/radar/rattacher-humain", json={"bien_id": 1, "idu": "X"}).status_code == 404
 
 
+def test_q7_candidate_fiche_robuste(db_session):
+    """RETOURS-9 (Q7) — les faits de la candidate (surface cadastrale, bâti, bâtiments, zone PLU, adresse
+    BAN) sont lus de la fiche parcelle. Pour un IDU inconnu, TOUS les champs sortent None (jamais un
+    chiffre inventé, jamais un 500) — la garde par table tient sur une base partielle."""
+    from labuse.pige import api as pige_api
+    fi = pige_api._candidate_fiche(db_session, "IDU-INEXISTANT-00")
+    assert set(fi) == {"surface_cadastrale", "surface_bati", "n_batiments", "zone_plu", "adresse_ban"}
+    assert all(v is None for v in fi.values())
+
+
 # ════════════════════════ D4 — badge « sous le marché » ════════════════════════
 
 def test_d4_badge_seuil():

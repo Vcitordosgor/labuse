@@ -395,7 +395,7 @@ export const CLIENT = {
     // C8 · le bloc IA en une ligne, accroche client
     ia: {
       accroche: 'Une question sur cette parcelle ?',
-      premium: 'Premium',
+      // RETOURS-9 (Q10.3) — token `premium` retiré : l'essai voit tout, il n'y a pas de premium.
       demander: 'demander →',
       gardee: 'dernière réponse gardée — rouvrir →',
       // M54-EXPO-2 — synthèse IA de toute la fiche

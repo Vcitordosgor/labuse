@@ -1052,6 +1052,41 @@ _LICENCE_URLS = {
 }
 
 
+@app.get("/sources/couverture")
+def sources_couverture(db: Session = Depends(get_db)) -> dict:
+    """RETOURS-9 (Q11.5) — les chiffres de COUVERTURE qui parlent au client, LUS des données réelles :
+    parcelles couvertes, communes (couvertes / total), transactions DVF analysées, annonces Radar
+    suivies, et la date de la dernière analyse (run servi). Chaque valeur est gardée : une table absente
+    (base partielle) rend `null`, jamais un 500 ni un chiffre inventé."""
+    def _scal(sql: str):
+        try:
+            return db.execute(text(sql)).scalar()
+        except Exception:  # noqa: BLE001 — base partielle : la tuile dira « — », jamais un crash
+            return None
+    parcelles = _scal("SELECT count(*) FROM parcels")
+    communes = _scal("SELECT count(DISTINCT commune) FROM parcels")
+    dvf = _scal("SELECT count(*) FROM dvf_mutations")
+    radar = _scal("SELECT count(*) FROM pige_biens")
+    analyse_label, analyse_date = None, None
+    try:
+        from .. import runs as _runs
+        analyse_label = _runs.current()
+        if analyse_label:
+            d = db.execute(text("SELECT computed_at FROM p_score_v2_runs WHERE run_id = :r"),
+                           {"r": analyse_label}).scalar()
+            analyse_date = d.isoformat() if d else None
+    except Exception:  # noqa: BLE001
+        pass
+    return {
+        "parcelles": int(parcelles) if parcelles is not None else None,
+        "communes": int(communes) if communes is not None else None,
+        "communes_total": 24,   # les 24 communes de La Réunion (constante du référentiel radar)
+        "dvf_transactions": int(dvf) if dvf is not None else None,
+        "radar_annonces": int(radar) if radar is not None else None,
+        "analyse_label": analyse_label, "analyse_date": analyse_date,
+    }
+
+
 def _source_licence(legal_notes: str | None) -> dict:
     """FIX-SOURCES S6 — libellé court + lien de licence, DÉRIVÉS de `legal_notes` (vérité base). Ordre =
     du plus spécifique au plus générique ; jamais un libellé inventé (défaut sûr « Licence à confirmer »)."""

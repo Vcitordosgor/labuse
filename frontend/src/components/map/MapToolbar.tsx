@@ -92,8 +92,9 @@ export function MapToolbar() {
       {/* relief 3D — DA §11 : PAS d'icône sur « 3D » (aligné avec « Sombre »). */}
       <button
         onClick={toggleTerrain}
+        /* RETOURS-9 (Q9) — contour 3D actif = plein vert, encre sombre (pas un liseré). */
         className={`flex h-9 items-center rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
-          terrain3d ? 'border-mint bg-surface-2 text-mint' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
+          terrain3d ? 'border-mint bg-mint text-mint-ink font-medium' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
         title="Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la vue"
       >
         3D
@@ -109,8 +110,9 @@ export function MapToolbar() {
             <Tip side="top" hoverDelayMs={150} tip={`${t.label} — ${t.hint}`}>
               <button
                 onClick={() => setTool(tool === t.key ? null : t.key)}
+                /* RETOURS-9 (Q9) — outil de carte actif = plein vert, encre sombre. */
                 className={`relative flex h-9 w-9 items-center justify-center border-b border-line-2 transition-colors duration-quick last:border-0 ${
-                  tool === t.key ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:text-txt'}`}
+                  tool === t.key ? 'bg-mint text-mint-ink' : 'text-txt-mut hover:text-txt'}`}
                 aria-label={t.label}
               >
                 <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">{t.icon}</svg>

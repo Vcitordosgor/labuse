@@ -7,7 +7,7 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  getAdminFlux, postAdminFluxLancerRun, postAdminFluxBascule, postAdminSourceVeilleInjecter,
+  getAdminFlux, getAdminFluxRuns, postAdminFluxLancerRun, postAdminFluxBascule, postAdminSourceVeilleInjecter,
   type AdminFlux, type FluxDot, type FluxSourceNode, type FluxRadarEcart,
 } from '../../lib/api'
 import { Chip } from './AdminView'
@@ -44,6 +44,10 @@ function Node({ dot, nom, mv, hi, dim, onClick }: {
 export function FluxSection() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-flux'], queryFn: getAdminFlux, refetchInterval: 60_000 })
+  // RETOURS-9 (Q1) — RENDU PROGRESSIF : les runs terminés + écarts au servi (calcul ~50 s en base
+  // réelle) sont sortis de /admin/flux et chargés à part. Le Circuit rend tout de suite (q ci-dessus,
+  // ~6 s) ; ce panneau se remplit ensuite. Il alimente la liste « Runs terminés · écart au servi ».
+  const qRuns = useQuery({ queryKey: ['admin-flux-runs'], queryFn: getAdminFluxRuns, refetchInterval: 60_000 })
   const [sel, setSel] = useState<{ kind: 'source' | 'moteur' | 'surface'; id: string } | null>(null)
   const [recherche, setRecherche] = useState('')
   const [replie, setReplie] = useState<Record<string, boolean>>({})
@@ -111,7 +115,17 @@ export function FluxSection() {
   for (const s of flux.surfaces) (surfacesParGroupe[s.groupe] ||= []).push(s)
 
   const coherenceKo = coherence.ok === false
-  const runsBasculables = d.bascule.runs.filter((r) => !r.servi)
+  // Q1 — runs servis via la 2e requête (rendu progressif). Tant qu'elle charge, on l'indique.
+  const runsBasculables = (qRuns.data?.runs ?? []).filter((r) => !r.servi)
+
+  // Q4 — UN SEUL chiffre de surfaces, la même phrase partout. Le total (comptes.n_surfaces) inclut
+  // la surface VIVANTE hors run (« Remonter le temps ») ; le run n'en scoré que coherence.n_surfaces.
+  const surfTotal = comptes.n_surfaces
+  const surfRun = coherence.n_surfaces ?? surfTotal
+  const surfVivantes = Math.max(0, surfTotal - surfRun)
+  const phraseSurfaces = surfVivantes > 0
+    ? `${surfTotal} surfaces · ${surfRun} sur ${run.label} · ${surfVivantes} vivante${surfVivantes > 1 ? 's' : ''} (hors run)`
+    : `${surfTotal} surfaces · toutes sur ${run.label}`
 
   return (
     <div className="pb-10">
@@ -121,9 +135,8 @@ export function FluxSection() {
       <div className="mt-1 text-[13px] text-txt-dim">
         Run courant <span className="font-mono text-mint">{run.label}</span>
         {run.calcule_le && <> · calculé le {fmtReu(run.calcule_le)}</>}
-        {coherence.n_surfaces != null && (
-          <> · {coherence.n_surfaces} surfaces {coherenceKo ? 'à vérifier' : 'sur ce run'}</>
-        )}
+        {/* Q4 — une seule phrase exacte, identique à la colonne Surfaces (test d'égalité). */}
+        <> · <span data-flux-surfaces-phrase>{phraseSurfaces}</span></>
       </div>
 
       {/* alerte cohérence en tête (F1.4) — ne doit jamais arriver depuis CONNEXIONS-2 */}
@@ -263,7 +276,7 @@ export function FluxSection() {
 
         {/* SURFACES */}
         <div>
-          <ColHead titre="Surfaces" note={`${comptes.n_surfaces} · toutes sur ${run.label}`}
+          <ColHead titre="Surfaces" note={phraseSurfaces}
             replie={!!replie.surfaces} onToggle={() => setReplie((r) => ({ ...r, surfaces: !r.surfaces }))} />
           {!replie.surfaces && Object.entries(surfacesParGroupe).map(([g, items]) => (
             <div key={g}>
@@ -276,6 +289,17 @@ export function FluxSection() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Q5 — dire ce que le clic montre + un moyen de tout éteindre */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line bg-surface-1 px-3.5 py-2.5">
+        <span className="text-[12.5px] leading-relaxed text-txt-dim">
+          Cliquez une source, un moteur ou une surface : tout ce qui est relié s'allume — en amont ce qui l'alimente, en aval ce qui s'en sert.
+        </span>
+        <button onClick={() => setSel(null)} disabled={!sel}
+          className="shrink-0 rounded-lg border border-line px-2.5 py-1 text-[12px] text-txt-mut hover:text-txt disabled:opacity-30">
+          Tout désélectionner
+        </button>
       </div>
 
       {/* ── bas : radar + cohérence ── */}
@@ -299,7 +323,10 @@ export function FluxSection() {
             </div>
           )}
 
-          {/* runs basculables (F2.3) */}
+          {/* runs basculables (F2.3) — Q1 : rendu progressif (le calcul d'écart est lent en base réelle) */}
+          {qRuns.isLoading && (
+            <div className="mt-4 text-[12px] text-txt-mut">Calcul des écarts au run servi en cours…</div>
+          )}
           {runsBasculables.length > 0 && (
             <div className="mt-4">
               <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-txt-dim">Runs terminés · écart au servi</div>

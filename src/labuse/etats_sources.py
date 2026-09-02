@@ -25,8 +25,11 @@ from sqlalchemy import text
 from . import sentinelle
 from .sources_catalog import WHERE_AFFICHEES, masquees_param
 
-#: les QUATRE états admin — le vocabulaire unique. Ordre = priorité d'affichage (geste attendu d'abord).
-ETATS = ("nouvelle_version", "a_rafraichir", "a_jour", "non_surveillee")
+#: les CINQ états admin — le vocabulaire unique. Ordre = priorité d'affichage (geste attendu d'abord).
+#: RETOURS-9 (Q2) — `jamais_verifiee` ajouté : une source SURVEILLÉE dont l'agent n'est pas encore
+#: passé (aucun `dernier_statut`). Elle n'est pas « à jour » (rien n'a été constaté) ni « non surveillée »
+#: (une sonde est bien câblée) : elle attend sa première vérification. Fréquent en local (pas de cron).
+ETATS = ("nouvelle_version", "a_rafraichir", "jamais_verifiee", "a_jour", "non_surveillee")
 
 #: méthodes de veille qui sont une VRAIE sonde amont (un rappel manuel n'en est pas une).
 _SONDES = ("api", "page", "entete", "temoin")
@@ -81,6 +84,12 @@ def etat_source(row, *, now: datetime | None = None) -> dict:
             etat = "nouvelle_version"
             phrase_admin = "Nouvelle version disponible chez le producteur — à injecter."
             phrase_client = "Mise à jour en cours."
+        elif statut in (None, ""):
+            # Q2 — sonde câblée mais l'agent n'est JAMAIS passé (aucun dernier_statut). En local, le cron
+            # ne sonne pas : la ligne dit « en attente de la première vérification » (jamais « — »).
+            etat = "jamais_verifiee"
+            phrase_admin = "En attente de la première vérification — cliquez « Vérifier maintenant »."
+            phrase_client = "À jour."
         else:
             # 'ok', None (pas encore sondée), 'injoignable', 'illisible' → aucune version plus récente
             # CONNUE : la source est à jour. (Un échec de sonde est signalé À PART au dashboard.)

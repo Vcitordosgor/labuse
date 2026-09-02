@@ -898,6 +898,13 @@ export const resetCrmColumns = () =>
 
 // ── Sources ──
 export const getSources = () => j<SourceInfo[]>('/sources')
+// RETOURS-9 (Q11.5) — les chiffres de couverture client (parcelles · communes · DVF · Radar · dernière analyse).
+export interface SourcesCouverture {
+  parcelles: number | null; communes: number | null; communes_total: number
+  dvf_transactions: number | null; radar_annonces: number | null
+  analyse_label: string | null; analyse_date: string | null
+}
+export const getSourcesCouverture = () => j<SourcesCouverture>('/sources/couverture')
 
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
@@ -1216,9 +1223,14 @@ export interface AdminSourceAlimente {
   surfaces: Array<{ key: string; label: string }>
   cable: boolean
 }
+// RETOURS-8 (R1) / RETOURS-9 (Q2) — l'état UNIQUE d'une source, calculé par l'arbitre backend.
+// Cinq états qui partitionnent EXACTEMENT le catalogue (leur somme = le total).
+export type SourceEtat = 'nouvelle_version' | 'a_rafraichir' | 'jamais_verifiee' | 'a_jour' | 'non_surveillee'
 export interface AdminSource {
   id: number; name: string; category: string | null; millesime: string | null; horizon: string | null
   ingere_le: string | null; cadence: string | null; a_jour: boolean | null; relance: string | null
+  // RETOURS-8 (R1) — état unique (arbitre serveur) + phrase honnête + projection client (2 états).
+  etat: SourceEtat; etat_client: 'a_jour' | 'pas_a_jour'; etat_phrase: string; publie_le: string | null
   // CONNEXIONS-2 Lot 6.3 (M2) — désactivée au dashboard ⇒ hors vitrine + consommateurs coupés.
   affichage_desactive: boolean
   fournisseur: string | null    // SENTINELLE-2 (X4) — colonne/regroupement fournisseur du tableau de veille
@@ -1227,7 +1239,7 @@ export interface AdminSource {
 }
 export interface AdminSources {
   sources: AdminSource[]
-  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number; sonde_echec: number; non_surveillees: number; version: number; changement: number; rappels: number; rappels_en_retard: number }
+  synthese: { a_mettre_a_jour: number; ok: number; sans_echeance: number; nouvelle_version: number; surveillees: number; sonde_echec: number; non_surveillees: number; version: number; changement: number; rappels: number; rappels_en_retard: number; etat_nouvelle_version: number; etat_a_rafraichir: number; etat_jamais_verifiee: number; etat_a_jour: number; etat_non_surveillee: number }
   cadences: string[]
   runs: Array<{ started_at: string | null; finished_at: string | null; status: string | null; parcels_count: number | null; name: string | null }>
 }
@@ -1293,7 +1305,10 @@ export interface FluxRunTermine {
 export interface FluxDerniereBascule { ts: string | null; ancien: string | null; nouveau: string; par: string | null; sens: string; caches_purges: string[] }
 export interface AdminFlux {
   flux: FluxFourmiliere; radar: FluxRadar; coherence: FluxCoherence
-  bascule: { runs: FluxRunTermine[]; derniere: FluxDerniereBascule | null }
+  // RETOURS-9 (Q1) — les runs terminés (calcul d'écart coûteux, ~50 s en base réelle) ne sont
+  // PLUS dans cette charge : le Circuit rend tout de suite, les runs arrivent via getAdminFluxRuns
+  // (rendu progressif). `bascule` ne porte donc plus que la dernière bascule (rapide).
+  bascule: { derniere: FluxDerniereBascule | null }
   // RETOURS-8 (R4.2) — briques qui ont lâché (repli servi) : la page rend quand même et le dit.
   erreurs?: string[] | null
 }
@@ -1676,11 +1691,17 @@ export const radarSignaler = (bien_id: number, motif = '') =>
   j<{ ok: boolean; event_id: number }>('/radar/signaler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, motif }) })
 // RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire » : candidates ENRICHIES (ortho + critères par candidate).
 export interface RadarCritere { critere: string; valeur: string; converge?: boolean }
+// RETOURS-9 (Q7) — les faits de la candidate, lus tels quels de la fiche parcelle (aucun calcul neuf).
+export interface RadarCandidateFiche {
+  surface_cadastrale: number | null; surface_bati: number | null; n_batiments: number | null
+  zone_plu: string | null; adresse_ban: string | null
+}
 export interface RadarPiste {
   idu: string; distance_m?: number | null; n_criteres?: number
   criteres?: RadarCritere[]                 // critères convergents (cascade)
   criteres_detail?: RadarCritere[]          // chaque critère applicable : converge (✓) ou diverge (✗)
   ortho_url?: string | null                 // vignette BD ORTHO 20 cm de la candidate
+  fiche?: RadarCandidateFiche | null        // RETOURS-9 (Q7) — faits candidate pour trancher côte à côte
 }
 // RADAR-DEPOT-2 (D3) — l'Instruire et le rattachement humain sont ADMIN SEULEMENT (endpoints /admin/…).
 export const radarInstruire = (bien_id: number) =>
