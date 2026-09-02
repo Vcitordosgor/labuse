@@ -36,32 +36,13 @@ const sondable = (s: SourceInfo) => s.radar?.statut === 'a_jour' || s.radar?.sta
 // M123 — état HONNÊTE d'une source sans sonde auto fiable : suivie À LA MAIN (cadence dite), ni
 // « à jour » automatique ni « cassé ». Distinct de `sondable` (radar auto).
 const suiviManuel = (s: SourceInfo) => s.radar?.statut === 'verification_manuelle'
-// CRON-2 — le statut vient désormais du job `sources-fraicheur` (calculé sur les 59/64 affichées, même
-// prédicat que /sources, persisté). « en_panne » = au-delà de 2× la cadence : surfacé comme un retard fort.
-const enRetard = (s: SourceInfo) => s.fraicheur_statut === 'en_retard' || s.fraicheur_statut === 'en_panne'
-// CONNEXIONS-2 Lot 6.2 (KO-14) — échec d'ingestion : distinct de l'ancienneté, badge rouge.
-const enErreur = (s: SourceInfo) => s.fraicheur_statut === 'en_erreur' || !!s.fraicheur_erreur_at
-// M105 P2 — le verdict AMONT EN AVANCE (M96) : le radar a vu une publication plus récente que
-// ce que nous avons intégré. Distinct de « publication ancienne » (là, c'est le producteur).
-// NUANCE mesurée : `nouvelle_publication` = « changé depuis le DERNIER PASSAGE radar », pas
-// « non intégré » — les sources à cron auto (SITADEL/DPE) sont souvent déjà ingérées APRÈS la
-// publication détectée. Le verdict compare donc la date AMONT sondée à notre dernière
-// intégration (tolérance 1 jour) — faux positifs mesurés et écartés (17/08).
-const amontEnAvance = (s: SourceInfo) => {
-  if (s.radar?.statut !== 'nouvelle_publication' || !s.radar?.valeur) return false
-  const amont = Date.parse(s.radar.valeur)
-  const integreStr = majReelle(s)
-  const integre = integreStr ? Date.parse(integreStr) : NaN
-  return Number.isFinite(amont) && (!Number.isFinite(integre) || amont > integre + 86_400_000)
-}
-/** La cadence en mots (dérivée du seuil servi = 2× la cadence — jamais un chiffre en dur ici). */
-function cadenceMot(seuil?: number | null): string {
-  const j = seuil != null ? Math.round(seuil / 2) : null
-  if (j === 7) return 'chaque semaine'
-  if (j === 30) return 'chaque mois'
-  if (j === 91) return 'chaque trimestre'
-  return j != null ? `tous les ${j} jours` : 'à cadence connue'
-}
+// RETOURS-8 (R2) — le client ne voit que DEUX états, et le mot « retard » n'apparaît JAMAIS. L'arbitre
+// unique du serveur (etats_sources → `etat_client`) tranche : « pas à jour » = une version plus récente
+// existe chez le producteur et n'est pas encore intégrée (« mise à jour en cours », jamais rouge) ; tout
+// le reste = « à jour ». Les anciens prédicats fraîcheur (en_retard / en_panne / en_erreur / amont en
+// avance) NE SONT PLUS surfacés côté client : leur détail vit au dashboard admin (R1).
+const pasAJour = (s: SourceInfo) => s.etat_client === 'pas_a_jour'
+const aJour = (s: SourceInfo) => !pasAJour(s)
 /** FIX-SOURCES S7 — la version DISTINGUE les deux dates, comme les « i » des couches (Legend.fmtFraich :
  *  « millésime X (ingéré le Y) ») : `label` = la fraîcheur AMONT (jusqu'au / millésime), `ingere` = la
  *  date d'INGESTION en mention secondaire « ingéré le … ». Jamais fondues, jamais une date inventée.
@@ -76,10 +57,6 @@ function versionMeta(s: SourceInfo): { label: string; untracked: boolean; ingere
   return { label: 'millésime non tracé', untracked: true, ingere: null }
 }
 const nonTrace = (s: SourceInfo) => versionMeta(s).untracked
-// M105 P1 — « à jour » = ni retard de publication (producteur), ni version plus récente non
-// intégrée (nous). Une source SANS date exposée par le producteur n'est PAS « pas à jour » —
-// c'est une propriété du producteur, dite dans la petite ligne de l'encart, pas un défaut LABUSE.
-const aJour = (s: SourceInfo) => !enRetard(s) && !amontEnAvance(s)
 
 // FIX-SOURCES S4 — la FIABILITÉ (data_sources.reliability_level) était STOCKÉE mais jamais rendue
 // (champ mort). On la montre quand elle appelle une réserve honnête (« à confirmer » / convention /
@@ -110,46 +87,34 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   useEffect(() => { if (focused) ref.current?.scrollIntoView({ block: 'center' }) }, [focused])
 
   const meta = versionMeta(s)
-  const late = enRetard(s)
+  const majEnCours = pasAJour(s)
   const lic = licence(s)
   const fiab = fiabiliteBadge(s)
   const prod = [s.provider, lic].filter(Boolean)
-  const erreur = enErreur(s)
 
   return (
     <div ref={ref} data-source-row
       className={`grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 hover:bg-white/[0.018] md:grid-cols-[14px_1fr_190px_150px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
-      {/* pastille — rouge (en erreur) > warn (en retard) > mint (à jour), avec halo */}
+      {/* RETOURS-8 (R2) — pastille JAMAIS rouge : mint (à jour) ou mint atténué (mise à jour en cours).
+          Le client ne doit jamais croire que LABUSE est en retard. */}
       <span className="h-[7px] w-[7px] shrink-0 rounded-full"
-        style={erreur
-          ? { background: '#E05252', boxShadow: '0 0 0 3px rgba(224,82,82,.12)' }
-          : late
-            ? { background: TOKENS.warn, boxShadow: `0 0 0 3px ${TOKENS.warnBg}` }
-            : { background: TOKENS.mint, boxShadow: '0 0 0 3px rgba(74,222,128,.10)' }}
-        title={erreur ? 'Dernière ingestion en erreur' : late ? 'En retard sur sa cadence de publication' : 'À jour selon la cadence du producteur'} />
+        style={majEnCours
+          ? { background: TOKENS.mint, opacity: 0.5, boxShadow: '0 0 0 3px rgba(74,222,128,.08)' }
+          : { background: TOKENS.mint, boxShadow: '0 0 0 3px rgba(74,222,128,.10)' }}
+        title={majEnCours ? 'Mise à jour en cours (une version plus récente arrive)' : 'À jour : la dernière version publiée par le producteur est dans l\'app'} />
 
       {/* nom + badges d'état */}
       <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
         {s.name}
-        {erreur && (
-          <Badge kind="error" title={s.fraicheur_erreur_message
-            ? `${s.fraicheur_erreur_message}${s.fraicheur_erreur_at ? ` — ${s.fraicheur_erreur_at.slice(0, 10)}` : ''}`
-            : "La dernière ingestion de cette source a échoué."}>
-            <span data-source-erreur>en erreur</span>
+        {/* RETOURS-8 (R2) — le seul état « non à jour » possible côté client : « mise à jour en cours »
+            (une version plus récente existe chez le producteur). Neutre, jamais rouge, jamais « retard ». */}
+        {majEnCours && (
+          <Badge kind="auto" title="Une version plus récente existe chez le producteur ; son intégration est en cours.">
+            <span data-source-maj>mise à jour en cours</span>
           </Badge>
         )}
         {sondable(s) && <Badge kind="auto" title="Le producteur expose une date interrogeable : notre radar vérifie automatiquement que c'est la dernière version publiée.">version vérifiée</Badge>}
         {suiviManuel(s) && <Badge kind="dashed" title={`Pas de sonde automatique fiable : version vérifiée à la main. Cadence : ${s.radar?.cadence ?? 'grande passe'}.`}>suivi manuel</Badge>}
-        {late && (
-          <Badge kind="late" title="Le producteur n'a rien publié depuis plus longtemps que sa cadence habituelle — nous servons bien la dernière version publiée.">
-            <span data-source-decroche>publication ancienne</span>
-          </Badge>
-        )}
-        {amontEnAvance(s) && (
-          <Badge kind="late" title="Le radar amont a détecté une publication plus récente chez le producteur, pas encore intégrée chez nous.">
-            <span data-source-amont>version plus récente disponible</span>
-          </Badge>
-        )}
         {s.nature?.dashed && (
           <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
         )}
@@ -177,20 +142,13 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         {meta.ingere && <span data-source-ingere className="ml-1 text-txt-dim">· {meta.ingere}</span>}
       </span>
 
-      {/* ligne dépliée : le retard chiffré, ou la nature (proxy/curée) dite en clair */}
-      {/* M105 P2 — état 1 : c'est le PRODUCTEUR qui n'a rien publié (nous servons la dernière
-          version publiée) — formulation côté producteur, jamais « LABUSE en retard ». */}
-      {late && (
-        <p data-source-retard-producteur className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
-          Dernière publication : {s.derniere_donnee ? new Date(s.derniere_donnee).toLocaleDateString('fr-FR') : 'date inconnue'}.
-          {' '}Le producteur publie habituellement {cadenceMot(s.fraicheur_seuil_jours)}.
-        </p>
-      )}
-      {/* M105 P2 — état 2 (verdict AMONT EN AVANCE de M96, côté NOUS) : devrait rester vide en
-          permanence une fois les crons VPS actifs — sinon c'est un vrai signal. */}
-      {amontEnAvance(s) && (
-        <p data-source-amont-detail className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
-          Une version plus récente est disponible et n'est pas encore intégrée.
+      {/* RETOURS-8 (R2) — chaque ligne dit la DATE de publication par le producteur et sa cadence
+          habituelle, À TITRE D'INFORMATION (jamais un jugement, jamais « retard »). */}
+      {(s.publie_le || s.cadence_mention) && (
+        <p data-source-publication className="col-[2/-1] text-[12px] leading-snug text-txt-dim">
+          {s.publie_le && <>Publié le {s.publie_le}.</>}
+          {s.publie_le && s.cadence_mention ? ' ' : ''}
+          {s.cadence_mention && <>Le producteur publie habituellement {s.cadence_mention}.</>}
         </p>
       )}
       {s.nature?.detail && (
@@ -200,7 +158,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   )
 }
 
-type Filtre = 'toutes' | 'ajour' | 'retard' | 'nontrace'
+type Filtre = 'toutes' | 'ajour' | 'majencours' | 'nontrace'
 
 export function SourcesPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources })
@@ -226,7 +184,7 @@ export function SourcesPage() {
   const comptees = useMemo(() => (data ?? []).filter((s) => !s.doublon), [data])
   const nTotal = comptees.length
   const nVerif = comptees.filter(sondable).length
-  const nRetard = comptees.filter(enRetard).length
+  const nMajEnCours = comptees.filter(pasAJour).length
   const nNonTrace = comptees.filter(nonTrace).length
   const nAJour = comptees.filter(aJour).length
   // M105 P3.2 — la DATE du dernier passage radar (max des derniere_verif servis) : un état
@@ -247,7 +205,7 @@ export function SourcesPage() {
   const CHIPS: { key: Filtre; label: string; n: number }[] = [
     { key: 'toutes', label: 'Toutes', n: nTotal },
     { key: 'ajour', label: 'À jour', n: nAJour },
-    { key: 'retard', label: 'En retard', n: nRetard },
+    { key: 'majencours', label: 'Mise à jour en cours', n: nMajEnCours },
     { key: 'nontrace', label: 'Millésime non tracé', n: nNonTrace },
   ]
 
@@ -255,7 +213,7 @@ export function SourcesPage() {
   const cats = useMemo(() => {
     const ql = q.trim().toLowerCase()
     const passeFiltre = (s: SourceInfo) =>
-      filtre === 'toutes' ? true : filtre === 'ajour' ? aJour(s) : filtre === 'retard' ? enRetard(s) : nonTrace(s)
+      filtre === 'toutes' ? true : filtre === 'ajour' ? aJour(s) : filtre === 'majencours' ? pasAJour(s) : nonTrace(s)
     const passeSearch = (s: SourceInfo) =>
       !ql || [s.name, s.provider, s.category, licence(s)].some((v) => (v ?? '').toLowerCase().includes(ql))
     const m = new Map<string, SourceInfo[]>()

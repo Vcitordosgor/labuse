@@ -168,23 +168,27 @@ def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
     assert client.post(f"/admin/licences/{compte_test}/mail", json={"key": "zzz"}).status_code == 422
 
 
-def test_ia_conso_et_quota_editable(client, engine, compte_test):
-    """D5 / CONNEXIONS-2 Lot 2 — /admin/ia sert la conso lue du ledger + le quota par licence est
-    ÉDITABLE, RELU à la requête suivante par la fonction UNIQUE `quota_du_compte` (partagée /ia + /ask),
-    et le dashboard expose consommé/plafond par compte."""
-    from labuse.api.dashboard import quota_du_compte, quota_nl_du_compte
+def test_ia_conso_et_plafond_euros_editable(client, engine, compte_test):
+    """RETOURS-8 (R3) — /admin/ia sert la conso lue du ledger + le plafond par licence est en EUROS,
+    ÉDITABLE, RELU à la requête suivante par la fonction UNIQUE `quota_du_compte` (partagée /ia + /ask +
+    missions). Le dashboard expose la dépense €/budget € par compte, et le coût unitaire à la question."""
+    from labuse.api.dashboard import quota_du_compte, quota_nl_du_compte, budget_eur_du_compte
     assert quota_nl_du_compte is quota_du_compte           # l'alias pointe la fonction unifiée
     d = client.get("/admin/ia").json()
-    assert d["quota_defaut"] == 80 and "mois" in d and "jours" in d and "par_licence" in d
+    assert d["budget_defaut_eur"] == 2.0 and "mois" in d and "jours" in d and "par_licence" in d
+    assert "cout_unitaire_question_eur" in d               # « 0,008 € / question »
     ligne = next(k for k in d["quotas"] if k["id"] == compte_test)
-    assert "plafond_effectif" in ligne and "consomme_aujourdhui" in ligne   # tuile consommé/plafond
-    r = client.post(f"/admin/licences/{compte_test}/quota", json={"quota": 120})
+    assert "budget_eur" in ligne and "depense_eur" in ligne and "equiv_questions" in ligne
+    # éditer 2 € → 5 € : la question suivante lit 5 € (fonction unique, relue à la requête suivante).
+    r = client.post(f"/admin/licences/{compte_test}/quota", json={"budget_eur": 5.0})
     assert r.status_code == 200
-    assert quota_du_compte(compte_test) == 120             # /ia ET /ask liront 120 à la requête suivante
+    assert budget_eur_du_compte(compte_test) == 5.0
+    assert quota_du_compte(compte_test)["budget_eur"] == 5.0
     assert next(k for k in client.get("/admin/ia").json()["quotas"]
-                if k["id"] == compte_test)["plafond_effectif"] == 120
-    client.post(f"/admin/licences/{compte_test}/quota", json={"quota": None})
-    assert quota_du_compte(compte_test) == 80
+                if k["id"] == compte_test)["budget_eur"] == 5.0
+    # null = retour au défaut config (2,00 €).
+    client.post(f"/admin/licences/{compte_test}/quota", json={"budget_eur": None})
+    assert budget_eur_du_compte(compte_test) == 2.0
 
 
 def test_sources_cadence_et_badge(client, engine):
@@ -194,7 +198,10 @@ def test_sources_cadence_et_badge(client, engine):
     # surveillées, la ventilation par nature (version/changement) et les rappels manuels (Y4).
     assert d["sources"] and set(d["synthese"]) == {
         "a_mettre_a_jour", "ok", "sans_echeance", "nouvelle_version", "surveillees", "sonde_echec",
-        "non_surveillees", "version", "changement", "rappels", "rappels_en_retard"}
+        "non_surveillees", "version", "changement", "rappels", "rappels_en_retard",
+        # RETOURS-8 (R1) — compteurs d'état UNIQUE, dérivés de la même liste que Pilotage/page client.
+        "etat_nouvelle_version", "etat_a_rafraichir", "etat_a_jour", "etat_non_surveillee",
+        "pas_a_jour_client"}
     sid = d["sources"][0]["id"]
     # pose 'mensuelle' → normalisée ; valeur inconnue → 422
     assert client.post(f"/admin/sources/{sid}/cadence", json={"cadence": "mensuel"}).json()["cadence"] == "mensuelle"
@@ -360,9 +367,10 @@ def test_admin_403_depuis_compte_client(engine, monkeypatch):
             comptes.supprimer_utilisateur(s, email)
 
 
-def test_quota_copilote_par_licence(client, engine):
-    """D1 — quota Copilote PAR LICENCE : override du compte sinon défaut config (80/jour)."""
-    from labuse.api.dashboard import quota_nl_du_compte
+def test_plafond_copilote_par_licence_en_euros(client, engine):
+    """RETOURS-8 (R3) — plafond Copilote PAR LICENCE en EUROS : override du compte sinon défaut config
+    (2,00 €). `quota_du_compte` rend un budget € + un équivalent appels."""
+    from labuse.api.dashboard import budget_eur_du_compte, quota_du_compte
     from labuse.comptes import ensure_tables as comptes_ens
     from labuse.db import session_scope
     with session_scope() as s:
@@ -371,13 +379,16 @@ def test_quota_copilote_par_licence(client, engine):
         cid = c.execute(text(
             "INSERT INTO comptes (nom, plan, statut) VALUES ('Test D1', 'integral', 'actif') RETURNING id"
         )).scalar_one()
-        c.execute(text("UPDATE comptes SET copilote_quota_jour = 5 WHERE id = :c"), {"c": cid})
+        c.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS copilote_budget_eur numeric(6,2)"))
+        c.execute(text("UPDATE comptes SET copilote_budget_eur = 5 WHERE id = :c"), {"c": cid})
     try:
-        assert quota_nl_du_compte(cid) == 5                       # override licence
+        assert budget_eur_du_compte(cid) == 5.0                   # override licence
+        q = quota_du_compte(cid)
+        assert q["budget_eur"] == 5.0 and q["equiv_appels"] is not None   # budget € + équiv appels
         with engine.begin() as c:
-            c.execute(text("UPDATE comptes SET copilote_quota_jour = NULL WHERE id = :c"), {"c": cid})
-        assert quota_nl_du_compte(cid) == 80                      # défaut config (mandat)
-        assert quota_nl_du_compte(None) is None                   # pilote/anonyme → quota historique
+            c.execute(text("UPDATE comptes SET copilote_budget_eur = NULL WHERE id = :c"), {"c": cid})
+        assert budget_eur_du_compte(cid) == 2.0                   # défaut config (mandat)
+        assert quota_du_compte(None) is None                      # pilote/anonyme → plafond historique
     finally:
         with engine.begin() as c:
             c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})

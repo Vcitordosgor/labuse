@@ -5,6 +5,7 @@ import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille partagée
+import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
@@ -96,14 +97,11 @@ function ContactsMairie({ insee, commune }: { insee: string | null; commune: str
   const admin = moi.data?.role === 'admin'
   const q = useQuery({ queryKey: ['commune-contacts', insee], queryFn: () => getCommuneContacts(insee!), enabled: !!insee })
   const [ajout, setAjout] = useState(false)
-  const [f, setF] = useState({ nom: '', role: '', telephone: '', email: '', note: '' })
   const invalider = () => qc.invalidateQueries({ queryKey: ['commune-contacts', insee] })
+  // RETOURS-8 (R6) — même geste d'ajout que la page admin Contacts (composant ContactEdit partagé).
   const creer = useMutation({
-    mutationFn: () => postCommuneContact({
-      insee: insee!, commune_nom: commune, nom: f.nom.trim(), role: f.role.trim() || null,
-      telephone: f.telephone.trim() || null, email: f.email.trim() || null, note: f.note.trim() || null,
-    }),
-    onSuccess: () => { setAjout(false); setF({ nom: '', role: '', telephone: '', email: '', note: '' }); invalider() },
+    mutationFn: (f: ContactForm) => postCommuneContact({ insee: insee!, commune_nom: commune, ...trimContact(f) }),
+    onSuccess: () => { setAjout(false); invalider() },
   })
   const suppr = useMutation({ mutationFn: (id: number) => deleteCommuneContact(id), onSuccess: invalider })
   const contacts = q.data?.contacts ?? []
@@ -133,20 +131,8 @@ function ContactsMairie({ insee, commune }: { insee: string | null; commune: str
         <button onClick={() => setAjout(true)} className="mt-1 text-[11.5px] text-mint hover:underline">+ Ajouter un contact</button>
       )}
       {admin && ajout && (
-        <div className="mt-1.5 rounded-lg border border-mint/30 bg-mint/5 p-2">
-          {(['nom', 'role', 'telephone', 'email', 'note'] as const).map((k) => (
-            <input key={k} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })}
-              placeholder={{ nom: 'Nom', role: 'Rôle (ex. resp. PLU)', telephone: 'Téléphone', email: 'Email', note: 'Note' }[k]}
-              className="mb-1 w-full rounded-md border border-line-2 bg-surface-1 px-2 py-1 text-[11.5px] text-txt" />
-          ))}
-          <div className="mt-1 flex gap-2">
-            <button onClick={() => creer.mutate()} disabled={creer.isPending || !f.nom.trim()}
-              className="rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] text-mint disabled:opacity-40">
-              {creer.isPending ? 'Ajout…' : 'Enregistrer'}
-            </button>
-            <button onClick={() => setAjout(false)} className="rounded-md border border-line-2 px-2.5 py-1 text-[11.5px] text-txt-mut">Annuler</button>
-          </div>
-        </div>
+        <ContactEdit init={CONTACT_VIDE} busy={creer.isPending}
+          onCancel={() => setAjout(false)} onSave={(f) => creer.mutate(f)} />
       )}
     </div>
   )

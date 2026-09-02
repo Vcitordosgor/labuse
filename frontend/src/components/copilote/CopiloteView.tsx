@@ -106,13 +106,15 @@ export function CopiloteView() {
   const [recapConfirme, setRecapConfirme] = useState<string | null>(null)  // reste en tête pendant l'instruction
   const [dispatching, setDispatching] = useState(false)
   const [missions, setMissions] = useState<CopiloteMission[]>([])   // §2b — historique
+  const [retentionJours, setRetentionJours] = useState(7)            // RETOURS-8 (R11) — bandeau rétention
   const [convId, setConvId] = useState<number | null>(null)         // conversation en cours (chaînée)
   // M133 — plus de `scenario` : l'accueil v3 ne force AUCUN mode (les chips sont partis). Le routeur
   // comprend seul ; le serveur ne reçoit plus d'intention forcée depuis l'écran d'accueil.
   const [projetForm, setProjetForm] = useState<{ prefill: Record<string, unknown> } | null>(null)  // M113 P3
   const briefRef = useRef<HTMLTextAreaElement | null>(null)
 
-  const rafraichirMissions = () => copiloteV2Missions().then((d) => setMissions(d.missions)).catch(() => {})
+  const rafraichirMissions = () => copiloteV2Missions()
+    .then((d) => { setMissions(d.missions); setRetentionJours(d.retention_jours) }).catch(() => {})
   useEffect(() => { void rafraichirMissions() }, [])
   // M78-quater #3 — la veille n'est plus exposée sur cet écran (bloc retiré) ; le mécanisme (intention
   // VEILLE, stockage, évaluation) reste branché côté serveur. Écran veilles dédié = BACKLOG.
@@ -345,7 +347,7 @@ export function CopiloteView() {
           /* ── 2a · ACCUEIL recopié de la maquette (idle) — la barre dispatche via le routeur v2 ── */
           <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
             occupe={dispatching}
-            missions={missions} onReprendre={rouvrir}
+            missions={missions} retentionJours={retentionJours} onReprendre={rouvrir}
             reponse={projetForm
               ? /* M113 P3 — le parcours projet guidé, prérempli ; M117 D8 — TTL + « Nouveau fil ». */
                 avecChrome(<ParcoursProjet prefill={projetForm.prefill} accent="ia"

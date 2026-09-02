@@ -174,6 +174,11 @@ export interface SourceInfo {
   // CONNEXIONS-2 Lot 6.2 (KO-14) — dernier échec d'ingestion : badge rouge « en erreur » + date + motif.
   fraicheur_erreur_at?: string | null
   fraicheur_erreur_message?: string | null
+  // RETOURS-8 (R2) — l'état CLIENT à deux valeurs (arbitre unique etats_sources) + publication producteur
+  // et cadence habituelle, à titre d'information. « pas_a_jour » = mise à jour en cours, jamais « retard ».
+  etat_client?: 'a_jour' | 'pas_a_jour'
+  publie_le?: string | null
+  cadence_mention?: string | null
   ingestion_runs: number
   // VUES item 4 : vérification « dernière version publiée » (source_checks) — NULL tant que
   // le mandat d'audit data n'a pas tourné ; la mention ne s'affiche qu'avec cette date

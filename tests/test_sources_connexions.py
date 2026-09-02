@@ -29,29 +29,27 @@ def client(engine):
     return TestClient(app, base_url="https://testserver")
 
 
-def test_accueil_fraicheur_calculee(client, engine):
-    """KO-11 — /accueil/fraicheur reflète l'état RÉEL des sources : à jour / en retard / en erreur.
-    Échoue sur l'ancien front (chaîne littérale « Toutes les données sont à jour. »)."""
+def test_accueil_fraicheur_deux_chiffres(client, engine):
+    """RETOURS-8 (R2) — /accueil/fraicheur n'annonce plus de « retard » : deux chiffres réels et lus
+    (sources affichées · parcelles), ton toujours neutre. Le mot « retard » ne doit JAMAIS apparaître
+    côté client, même si une source est marquée en retard/erreur en base (cela reste au dashboard R1)."""
     from labuse.api import accueil
     with engine.begin() as c:
         c.execute(text("UPDATE data_sources SET fraicheur_statut='a_jour'"))
     accueil._fr_cache.update(at=0.0, data=None)
     r = client.get("/accueil/fraicheur").json()
-    assert r["ton"] == "ok" and r["phrase"] == "Toutes les données sont à jour."
+    assert r["ton"] == "ok"
+    assert "retard" not in r["phrase"] and "erreur" not in r["phrase"]
+    assert "sources" in r["phrase"] and "parcelles" in r["phrase"]
+    assert r["n_sources"] >= 1
 
+    # même une source marquée « en erreur » en base ne fait PAS apparaître de rouge/retard côté client.
     with engine.begin() as c:
         sid = c.execute(text(f"SELECT id FROM data_sources WHERE {_AFFICHEE} LIMIT 1")).scalar()
-        c.execute(text("UPDATE data_sources SET fraicheur_statut='en_retard' WHERE id=:i"), {"i": sid})
-    accueil._fr_cache.update(at=0.0, data=None)
-    r = client.get("/accueil/fraicheur").json()
-    assert r["ton"] == "warn" and "retard" in r["phrase"] and r["en_retard"] >= 1
-
-    # l'erreur PRIME le retard (une source cassée est plus grave qu'une source ancienne).
-    with engine.begin() as c:
         c.execute(text("UPDATE data_sources SET fraicheur_statut='en_erreur' WHERE id=:i"), {"i": sid})
     accueil._fr_cache.update(at=0.0, data=None)
     r = client.get("/accueil/fraicheur").json()
-    assert r["ton"] == "error" and "erreur" in r["phrase"]
+    assert r["ton"] == "ok" and "retard" not in r["phrase"] and "erreur" not in r["phrase"]
 
     with engine.begin() as c:   # remise à plat
         c.execute(text("UPDATE data_sources SET fraicheur_statut='a_jour'"))

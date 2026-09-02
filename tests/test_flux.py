@@ -57,6 +57,39 @@ def test_snapshot_source_millesimes(db_session, seed_source):
     assert ligne["millesime"] == "2025-S2" and ligne["fournisseur"] == "DGFiP"
 
 
+def test_circuit_rend_forme_complete(db_session, seed_source):
+    """RETOURS-8 (R4.2) — /admin/flux rend TOUJOURS la forme complète (flux/radar/coherence/bascule)
+    que le Circuit attend — le nerf de « Chargement… » (une brique manquante bloquait la page)."""
+    import types
+    from labuse.api import auth, dashboard
+    _prev = auth.exiger_admin
+    auth.exiger_admin = lambda req: None
+    try:
+        out = dashboard.admin_flux(types.SimpleNamespace(state=types.SimpleNamespace(compte_id=None)))
+    finally:
+        auth.exiger_admin = _prev
+    assert set(out) >= {"flux", "radar", "coherence", "bascule"}
+    assert set(out["flux"]) >= {"run", "sources", "moteurs", "surfaces", "comptes"}
+    assert set(out["radar"]) >= {"compteurs", "ecart", "courbe"}
+    assert "runs" in out["bascule"] and "derniere" in out["bascule"]
+
+
+def test_circuit_degrade_si_une_brique_casse(db_session, seed_source, monkeypatch):
+    """R4.2 — si UNE brique lève (ici le radar), l'endpoint ne tombe plus : il sert un repli typé
+    valide + une note d'erreur, et la page rend au lieu de rester bloquée sur « Chargement… »."""
+    import types
+    from labuse.api import auth, dashboard
+    from labuse.pige import releves as _rel
+    def _boom(_s):
+        raise RuntimeError("radar cassé (test)")
+    monkeypatch.setattr(_rel, "bloc_radar", _boom)
+    monkeypatch.setattr(auth, "exiger_admin", lambda req: None)
+    out = dashboard.admin_flux(types.SimpleNamespace(state=types.SimpleNamespace(compte_id=None)))
+    assert set(out) >= {"flux", "radar", "coherence", "bascule"}      # forme complète malgré la panne
+    assert out["radar"]["compteurs"] == {} and out["radar"]["ecart"] == []   # repli typé
+    assert out["erreurs"] and any("radar" in e for e in out["erreurs"])      # et ça le DIT
+
+
 @pytest.fixture
 def seed_radar(db_session):
     """Deux biens Radar : un vendu (paire annonce↔DVF, avec prix demandé + acté) + un actif rattaché."""

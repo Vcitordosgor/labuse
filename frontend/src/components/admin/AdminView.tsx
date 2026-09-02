@@ -379,8 +379,15 @@ export function AdminView() {
           <Led ok={d?.sante.ok === false ? 'err' : d?.sante.ok ? 'ok' : 'off'} label="Serveur" value={d?.sante.ok == null ? '—' : d.sante.ok ? 'OK' : 'dégradé'} />
           <Led ok={d?.run.label ? 'ok' : 'off'} label="Run" value={d?.run.label ?? '—'} />
           <Led ok={d?.run.carte_le ? 'ok' : 'off'} label="Carte" value={fmtReu(d?.run.carte_le, false)} />
-          <Led ok={d ? ({ ok: 'ok', ambre: 'warn', rouge: 'err', absent: 'err' } as const)[d.backup.etat] : 'off'}
-            label="Backup" value={d?.backup.etat === 'absent' ? 'aucun' : d?.backup.age_jours != null ? `il y a ${Math.floor(d.backup.age_jours)} j` : '—'} />
+          {/* RETOURS-8 (R10) — la tuile lit le même endroit/motif que le job (cron .sql.gz + CLI .dump).
+              « répertoire non configuré » distinct d'« aucun » (dossier vide) ; date + taille du dernier. */}
+          <Led ok={d ? ({ ok: 'ok', ambre: 'warn', rouge: 'err', absent: 'err', non_configure: 'off' } as const)[d.backup.etat] ?? 'off' : 'off'}
+            label="Backup" value={
+              d?.backup.etat === 'non_configure' ? 'répertoire non configuré'
+                : d?.backup.etat === 'absent' ? 'aucun'
+                  : d?.backup.age_jours != null
+                    ? `il y a ${Math.floor(d.backup.age_jours)} j${d.backup.taille_mo != null ? ` · ${d.backup.taille_mo} Mo` : ''}`
+                    : '—'} />
           <button onClick={() => setView('cartes')} className="mt-3 text-xs text-mint hover:underline">Ouvrir l'app cliente →</button>
         </div>
       </aside>

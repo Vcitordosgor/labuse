@@ -75,14 +75,13 @@ def ask(body: AskIn, request: Request, db: Session = Depends(get_db)) -> dict:
     s = config.get_settings()
     if not s.dev_mode:
         from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
-        from .dashboard import quota_du_compte, QUOTA_COPILOTE_KIND
-        quota = quota_du_compte(current_compte(request)) or s.nl_quota_jour
-        n = compteur_incr_et_lire(today_reunion().isoformat(), _sujet_quota(request), QUOTA_COPILOTE_KIND)
-        if n > quota:
-            return JSONResponse(status_code=429, content={
-                "detail": f"Vous avez atteint la limite quotidienne du Copilote "
-                          f"({quota} échanges par jour). Elle repart à minuit.",
-                "quota": quota, "gel_jusqua": "minuit"})
+        from .dashboard import etat_plafond_ia
+        # RETOURS-8 (R3) — plafond PAR COMPTE en EUROS (garde unique `etat_plafond_ia`, partagée avec
+        # /ia et les missions lourdes). Le contenu du 429 porte le budget/dépense du jour.
+        d = etat_plafond_ia(current_compte(request), _sujet_quota(request),
+                            today_reunion().isoformat(), nl_defaut=s.nl_quota_jour)
+        if d:
+            return JSONResponse(status_code=429, content=d)
     import logging
     log = logging.getLogger("labuse.copilote_v2")
     payload_tour = None
@@ -187,8 +186,11 @@ def heros(body: HerosIn, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/missions")
 def missions(request: Request, db: Session = Depends(get_db)) -> dict:
-    """§2b — les missions passées du compte (titre auto, date, statut) pour rouvrir."""
-    return {"missions": historique.lister(db, current_compte(request))}
+    """§2b — les missions passées du compte (titre auto, date, statut) pour rouvrir.
+    RETOURS-8 (R11) — `retention_jours` accompagne la liste pour le bandeau « conservées N jours »."""
+    from .. import reglages
+    return {"missions": historique.lister(db, current_compte(request)),
+            "retention_jours": reglages.copilote_retention_jours()}
 
 
 @router.get("/missions/{conversation_id}")

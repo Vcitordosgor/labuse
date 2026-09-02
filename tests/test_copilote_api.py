@@ -147,8 +147,10 @@ def test_quota_actif_429_honnete_aucun_run_aucun_moteur(client, engine, monkeypa
                         json={"mission": "instruire", "brief_raw": "test-api quota 2"})
     assert refus.status_code == 429
     corps = refus.json()
+    # RETOURS-8 (R3) — garde UNIFIÉE `etat_plafond_ia` : sujet SANS compte (pilote) → plafond en APPELS
+    # (nl_quota_jour), message honnête commun aux trois surfaces (/ia, /ask, missions).
     assert corps["quota"] == 1 and corps["gel_jusqua"] == "minuit"
-    assert "Quota Copilote atteint" in corps["detail"]
+    assert "Quota d'analyses IA atteint" in corps["detail"]
 
     with engine.connect() as conn:
         n_runs = conn.execute(text(

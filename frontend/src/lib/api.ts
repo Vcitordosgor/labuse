@@ -587,11 +587,11 @@ export interface AccueilChiffres {
 }
 export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
 
-// CONNEXIONS-2 Lot 6.1 (KO-11) — la ligne de fraîcheur de l'accueil, CALCULÉE depuis l'état réel des
-// sources (data_sources.fraicheur_statut) : même donnée que la page Sources et le dashboard.
+// RETOURS-8 (R2) — la ligne d'accueil n'annonce plus de « retard » : deux chiffres réels (sources
+// affichées · parcelles couvertes) → « voir les données ». `ton` toujours 'ok' (aucun rouge client).
 export interface AccueilFraicheur {
   ton: 'ok' | 'warn' | 'error'; phrase: string
-  en_erreur: number; en_retard: number; total: number
+  n_sources: number; n_parcelles: number; pas_a_jour: number; cta: string
 }
 export const getAccueilFraicheur = () => j<AccueilFraicheur>('/accueil/fraicheur')
 
@@ -679,7 +679,8 @@ export interface CopiloteConversation extends CopiloteMission {
   created_at: string
   messages: { role: 'client' | 'copilote'; texte: string; intent: string | null; ts: string }[]
 }
-export const copiloteV2Missions = () => j<{ missions: CopiloteMission[] }>('/api/copilote-v2/missions')
+// RETOURS-8 (R11) — `retention_jours` accompagne la liste pour le bandeau « conservées N jours ».
+export const copiloteV2Missions = () => j<{ missions: CopiloteMission[]; retention_jours: number }>('/api/copilote-v2/missions')
 export const copiloteV2Mission = (id: number) => j<CopiloteConversation>(`/api/copilote-v2/missions/${id}`)
 
 // §2e — le héros : phrase (pourquoi cette parcelle gagne, faiblesses comprises) avec verrou
@@ -1054,7 +1055,8 @@ export interface AdminPilotage {
   licences_actives: number
   actifs_24h: number
   ia_mois: { cout_eur: number; appels: number }
-  backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent'; chemin: string; age_jours: number | null; mtime?: string }
+  // RETOURS-8 (R10) — « non_configure » (répertoire absent) distinct d'« absent » (vide) ; + fichier/taille.
+  backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent' | 'non_configure'; chemin: string; age_jours: number | null; mtime?: string; fichier?: string; taille_mo?: number }
   // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
   sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
   courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
@@ -1142,12 +1144,17 @@ export const postAdminLicenceMail = (compteId: number, key: string) =>
 // D5 — IA
 export interface AdminIa {
   mois: { cout_eur: number; appels: number; cout_moyen_question: number | null }
+  // RETOURS-8 (R3) — coût unitaire d'UNE question (« 0,008 € / question »).
+  cout_unitaire_question_eur: number
   projection_fin_mois_eur: number
   jours: Array<{ jour: string; cout: number; appels: number }>
   par_licence: Array<{ compte_id: number | null; nom: string; cout: number; appels: number }>
-  quota_defaut: number
-  // CONNEXIONS-2 Lot 2 — consommé aujourd'hui / plafond effectif par compte (compteur Copilote unique)
-  quotas: Array<{ id: number; nom: string; copilote_quota_jour: number | null; plafond_effectif: number; consomme_aujourdhui: number }>
+  // RETOURS-8 (R3) — le plafond par défaut est en EUROS/jour, éditable par licence.
+  budget_defaut_eur: number
+  // RETOURS-8 (R3) — par compte : budget €/jour, dépense du jour en €, équivalent « ≈ N questions »,
+  // nombre d'appels du jour (mention secondaire).
+  quotas: Array<{ id: number; nom: string; copilote_budget_eur: number | null; budget_eur: number
+    depense_eur: number; equiv_questions: number | null; appels_aujourdhui: number }>
   // RETOURS-7 Z7 — quel modèle sert chaque surface IA (lu depuis la config, jamais un nom en dur)
   modeles_par_surface: Array<{ kind: string; label: string; model: string }>
   note: string
@@ -1164,8 +1171,12 @@ export const getAdminSignalements = (statut?: 'nouveau' | 'traite') =>
   j<{ signalements: Signalement[]; n_ouverts: number }>(`/admin/signalements${statut ? `?statut=${statut}` : ''}`)
 export const postAdminSignalementStatut = (id: number, statut: 'nouveau' | 'traite') =>
   j<{ ok: boolean }>(`/admin/signalements/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
-export const postAdminLicenceQuota = (compteId: number, quota: number | null) =>
-  j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quota }) })
+// RETOURS-8 (R13) — traite en masse les signalements venus d'un compte interne/test (rien supprimé).
+export const postAdminSignalementsTraiterInternes = () =>
+  j<{ ok: boolean; traites: number }>('/admin/signalements/traiter-internes', { method: 'POST' })
+// RETOURS-8 (R3) — le plafond s'édite en EUROS/jour (`budget_eur`, null = défaut config).
+export const postAdminLicenceQuota = (compteId: number, budgetEur: number | null) =>
+  j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ budget_eur: budgetEur }) })
 // D6 — Sources
 // SENTINELLE-1 (W4) — état de veille amont d'une source (null si non surveillée = état normal).
 export interface AdminSourceVeille {
@@ -1283,6 +1294,8 @@ export interface FluxDerniereBascule { ts: string | null; ancien: string | null;
 export interface AdminFlux {
   flux: FluxFourmiliere; radar: FluxRadar; coherence: FluxCoherence
   bascule: { runs: FluxRunTermine[]; derniere: FluxDerniereBascule | null }
+  // RETOURS-8 (R4.2) — briques qui ont lâché (repli servi) : la page rend quand même et le dit.
+  erreurs?: string[] | null
 }
 export const getAdminFlux = () => j<AdminFlux>('/admin/flux')
 export const getAdminFluxRuns = () => j<{ runs: FluxRunTermine[]; derniere: FluxDerniereBascule | null }>('/admin/flux/runs')
@@ -1523,6 +1536,8 @@ export interface RadarReverif {
 }
 export interface RadarCheck {
   cible_minutes: number; file_extraction: number; reverif_du_jour: number; signalements_en_attente: number
+  // RETOURS-8 (R5) — les 4 chiffres de tête des onglets Radar.
+  annonces_en_vie: number; a_rattacher: number; reverif_dues: number
   compteurs: { nouveautes: number; en_vente_longue: number; baisses: number }
   intake_vide_48h: boolean; derniere_saisie: string | null
   // RV2-V1 — état du répertoire de captures (écriture) : le défaut prod se voit AVANT le 1er dépôt.
@@ -1577,6 +1592,10 @@ export interface RadarAInstruire {
   surface_terrain: number | null; surface_hab: number | null
   declaratif: RadarDeclaratif | null
   portail: string | null; url_sortante: string | null; n_candidates: number
+  // RETOURS-8 (R5) — confiance (forte/faible) + pourquoi (critères convergents) + 1re candidate.
+  rattachement_confiance: number | null; confiance: 'forte' | 'faible'
+  rattachement_criteres: RadarCritere[] | null; rattachement_etat: string | null
+  premiere_piste: RadarPiste | null
 }
 export const getRadarAInstruire = () => j<{ file: RadarAInstruire[]; n: number }>('/admin/radar/a-instruire')
 export const getRadarReverif = () => j<{ file: RadarReverif[]; n: number }>('/admin/radar/reverif')

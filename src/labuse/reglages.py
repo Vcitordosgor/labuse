@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS app_reglages (
 
 #: clé canonique du drapeau dépôt agence.
 CLE_DEPOT_AGENCE = "radar_depot_agence_actif"
+#: RETOURS-8 (R11) — rétention des conversations Copilote (jours), éditable à chaud (défaut config 7).
+CLE_COPILOTE_RETENTION = "copilote_retention_jours"
 
 _cache: dict = {}          # cle -> (expire_at, valeur_bool)
 _CACHE_TTL_S = 5.0
@@ -69,6 +71,41 @@ def set_bool(cle: str, valeur: bool) -> None:
             {"k": cle, "v": "true" if valeur else "false"})
         s.commit()
     _cache.pop(cle, None)
+
+
+def get_int(cle: str, defaut: int) -> int:
+    """RETOURS-8 (R11) — valeur ENTIÈRE d'un réglage (cache 5 s). Absent/illisible → `defaut`."""
+    now = time.time()
+    hit = _cache.get(cle)
+    if hit and hit[0] > now:
+        return hit[1]
+    brut = _lire_brut(cle)
+    try:
+        val = defaut if brut is None else int(str(brut).strip())
+    except ValueError:
+        val = defaut
+    _cache[cle] = (now + _CACHE_TTL_S, val)
+    return val
+
+
+def set_int(cle: str, valeur: int) -> None:
+    """Écrit un réglage entier (admin) et INVALIDE le cache."""
+    from .db import session_scope
+    with session_scope() as s:
+        s.execute(text(_DDL))
+        s.execute(text(
+            "INSERT INTO app_reglages (cle, valeur, updated_at) VALUES (:k, :v, now()) "
+            "ON CONFLICT (cle) DO UPDATE SET valeur = EXCLUDED.valeur, updated_at = now()"),
+            {"k": cle, "v": str(int(valeur))})
+        s.commit()
+    _cache.pop(cle, None)
+
+
+def copilote_retention_jours() -> int:
+    """RETOURS-8 (R11) — la rétention EFFECTIVE des conversations Copilote : réglage base s'il existe,
+    sinon défaut config (7 jours). Lue par le job de purge ET par le bandeau front (via /copilote-v2)."""
+    from .config import get_settings
+    return get_int(CLE_COPILOTE_RETENTION, int(get_settings().copilote_v2_retention_jours))
 
 
 def depot_agence_actif() -> bool:

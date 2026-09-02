@@ -471,7 +471,7 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         <span className="h-[5px] w-[5px] shrink-0 rounded-full"
           style={{ background: fraicheur?.ton === 'error' ? '#E05252' : fraicheur?.ton === 'warn' ? '#D9873D' : '#4ADE80' }} />
         <span data-accueil-fraicheur className="text-[10.5px] leading-snug text-[#7C8A83]">
-          {fraicheur?.phrase ?? 'Toutes les données sont à jour.'}</span>
+          {fraicheur?.phrase ?? 'Toutes les données au même endroit.'}</span>
         <button data-accueil-sources onClick={() => { setAccueilVu(); setView('sources') }}
           className="ml-auto shrink-0 whitespace-nowrap text-[10.5px] text-mint hover:underline">voir les données →</button>
       </div>

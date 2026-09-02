@@ -990,6 +990,12 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     # canonique ; ce filtre Python (même règle, statut compris) reste en CEINTURE — rows == served.
     served = [s for s in rows if _srccat.est_affichee(
         s.name, s.technical_notes, s.status.value if s.status else None, s.affichage_desactive)]
+    # RETOURS-8 (R2) — l'état CLIENT (deux états seulement) vient du MÊME arbitre unique que le
+    # dashboard (etats_sources) : « à jour » sauf nouvelle version détectée par l'agent → « pas à jour »
+    # (« mise à jour en cours »). Le mot « retard » n'apparaît jamais côté client. La date de publication
+    # producteur (`publie_le`) et la cadence habituelle accompagnent, à titre d'information.
+    from .. import etats_sources as _es
+    etats_client = {e["id"]: e for e in _es.lister_etats(db)}
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -1023,6 +1029,10 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             # CONNEXIONS-2 Lot 6.2 (KO-14) — badge rouge « en erreur » + date + motif du dernier échec.
             "fraicheur_erreur_at": erreurs.get(s.name, {}).get("at"),
             "fraicheur_erreur_message": erreurs.get(s.name, {}).get("message"),
+            # RETOURS-8 (R2) — état CLIENT à deux valeurs (jamais « en retard ») + publication producteur.
+            "etat_client": etats_client.get(s.id, {}).get("etat_client", "a_jour"),
+            "publie_le": etats_client.get(s.id, {}).get("publie_le"),
+            "cadence_mention": etats_client.get(s.id, {}).get("cadence"),
         }
         for s in served
     ]

@@ -311,20 +311,47 @@ function InstructionCard({ b, onTranche }: { b: RadarAInstruire; onTranche: () =
       .then((r) => setInstr({ busy: false, ouvert: true, cands: r.candidates, motif: r.motif }))
       .catch(() => setInstr({ busy: false, ouvert: true, motif: 'échec — réessayer' }))
   }
+  // RETOURS-8 (R5) — confiance FORTE = adresse BAN exacte ou position (rattachement à 1 clic sur la
+  // 1re candidate) ; FAIBLE = surface seule (±10 %) → passer par l'Instruction (ortho). Le POURQUOI
+  // vient des critères convergents déjà calculés (rattachement_criteres), jamais recalculé au front.
+  const forte = b.confiance === 'forte' && !!b.premiere_piste?.idu
+  const pourquoi = (b.rattachement_criteres ?? []).filter((c) => c.converge !== false)
+    .map((c) => `${c.critere} ${c.valeur}`).join(' · ')
+  const rattacher1clic = () => {
+    const idu = b.premiere_piste?.idu
+    if (!idu) return
+    setChoix({ busy: true, idu })
+    radarRattacherHumain(b.bien_id, idu).then(() => { setChoix({ busy: false }); onTranche() })
+      .catch(() => setChoix({ busy: false }))
+  }
   return (
     <div data-radar-instruction className="rounded-lg border border-line-2 bg-surface-1 p-3">
       <div className="flex flex-wrap items-center gap-2 text-[12px]">
         <span className="font-medium text-txt-hi">{b.commune}</span>
         <span className="text-txt-mut">{(b.type_bien ?? '—')}{specs ? ` · ${specs}` : ''}</span>
         <span className="text-txt-mut">{fmtEur(b.prix)}</span>
-        <Chip tone="warn">{b.n_candidates} candidate{b.n_candidates > 1 ? 's' : ''}</Chip>
+        {/* RETOURS-8 (R5) — badge CONFIANCE (forte = vert · faible = ambre) + nb candidates. */}
+        <Chip tone={forte ? 'ok' : 'warn'} data-radar-confiance={b.confiance}>
+          {b.n_candidates} candidate{b.n_candidates > 1 ? 's' : ''} · confiance {b.confiance}
+        </Chip>
         {b.url_sortante && <a href={b.url_sortante} target="_blank" rel="noopener noreferrer"
           className="font-mono text-[10px] text-txt-dim underline decoration-dotted">source ↗</a>}
-        <button data-radar-instruire onClick={instruire}
-          className="ml-auto rounded-md border border-amber/50 bg-amber/10 px-2.5 py-1 text-[11.5px] font-medium text-amber hover:bg-amber/20">
-          {instr.busy ? 'Instruction…' : instr.ouvert ? 'Fermer' : 'Instruire'}
-        </button>
+        <span className="ml-auto flex items-center gap-1.5">
+          {/* forte → Rattacher en UN clic (humain, toujours) sur la 1re candidate. */}
+          {forte && (
+            <button data-radar-rattacher disabled={choix.busy} onClick={rattacher1clic}
+              className="rounded-md bg-mint px-2.5 py-1 text-[11.5px] font-medium text-mint-on hover:brightness-110 disabled:opacity-60">
+              {choix.busy ? 'Rattachement…' : 'Rattacher'}
+            </button>
+          )}
+          <button data-radar-instruire onClick={instruire}
+            className="rounded-md border border-amber/50 bg-amber/10 px-2.5 py-1 text-[11.5px] font-medium text-amber hover:bg-amber/20">
+            {instr.busy ? 'Instruction…' : instr.ouvert ? 'Fermer' : 'Instruire'}
+          </button>
+        </span>
       </div>
+      {/* RETOURS-8 (R5) — le POURQUOI de la proposition, en clair (critères convergents). */}
+      {pourquoi && <div data-radar-pourquoi className="mt-1.5 text-[11px] leading-snug text-txt-mut">{pourquoi}</div>}
       {/* la zone DÉCLARÉE (page d'annonce) aide à trier les candidates — déclaratif vendeur. */}
       {b.declaratif && <div className="mt-2"><Declaratif d={b.declaratif} /></div>}
       {instr.ouvert && instr.cands && (
@@ -456,23 +483,6 @@ function DepotAgenceToggle() {
   )
 }
 
-// ── ADMIN-1 (AD9) — bloc repliable (en-tête cliquable + badge) ──
-function BlocRepliable({ titre, badge, defaultOpen = true, children }:
-  { titre: React.ReactNode; badge?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <section className="overflow-hidden rounded-xl border border-line-2 bg-surface-2">
-      <button onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 px-4 py-3 text-left font-mono text-[11px] uppercase tracking-[0.16em] text-txt-dim hover:text-txt">
-        <span className="w-3 text-center">{open ? '▾' : '▸'}</span>
-        <span>{titre}</span>
-        {badge && <span className="ml-auto normal-case tracking-normal">{badge}</span>}
-      </button>
-      {open && <div className="border-t border-line-2 p-4">{children}</div>}
-    </section>
-  )
-}
-
 // ── ADMIN-1 (AD9) — bandeau descriptif qui se replie après première lecture (état mémorisé) ──
 function Bandeau() {
   const [lu, setLu] = useState(() => { try { return localStorage.getItem('radar-bandeau-lu') === '1' } catch { return false } })
@@ -489,69 +499,86 @@ function Bandeau() {
   )
 }
 
-function BlocDeposer() {
+// RETOURS-8 (R5) — le panneau « Déposer » (dépôt HTML + toggle agence + saisie historique repliée).
+function DeposerPanel() {
   const qc = useQueryClient()
   const onDepose = () => {
     qc.invalidateQueries({ queryKey: ['radar-extraction'] })
     qc.invalidateQueries({ queryKey: ['radar-check'] })
   }
   return (
-    <BlocRepliable titre="1 · Déposer" defaultOpen>
-      <div className="flex flex-col gap-3">
-        <DepotAgenceToggle />
-        <DepotHtml onDepose={onDepose} />
-        {/* SECTEUR-2b (U2) — « Publier une annonce » (dépôt agence) vit dans l'écran Radar de l'app.
-            Chemin de capture HISTORIQUE (remplacé par le dépôt HTML), replié. */}
-        <details className="rounded-xl border border-line-2 bg-surface-2/50">
-          <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-txt-dim">
-            Saisie par capture d’écran (chemin historique — remplacé par le dépôt HTML)
-          </summary>
-          <div className="p-3 pt-0">
-            <CapturesAlerte />
-            <Saisie onDepose={onDepose} />
-          </div>
-        </details>
-      </div>
-    </BlocRepliable>
+    <div className="flex flex-col gap-3">
+      <DepotAgenceToggle />
+      <DepotHtml onDepose={onDepose} />
+      {/* SECTEUR-2b (U2) — chemin de capture HISTORIQUE (remplacé par le dépôt HTML), replié. */}
+      <details className="rounded-xl border border-line-2 bg-surface-2/50">
+        <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-txt-dim">
+          Saisie par capture d’écran (chemin historique — remplacé par le dépôt HTML)
+        </summary>
+        <div className="p-3 pt-0">
+          <CapturesAlerte />
+          <Saisie onDepose={onDepose} />
+        </div>
+      </details>
+    </div>
   )
 }
 
-function BlocExtraction() {
-  const { data } = useQuery({ queryKey: ['radar-extraction'], queryFn: getRadarExtraction })
-  const n = data?.n ?? 0
-  return (
-    <BlocRepliable titre="2 · File d’extraction"
-      badge={<Chip tone={n > 0 ? 'warn' : 'ok'}>{n > 0 ? `${n} à valider` : 'file vidée ✓'}</Chip>}
-      defaultOpen={n > 0}>
-      <Extraction />
-    </BlocRepliable>
-  )
-}
-
-function BlocReverif() {
-  const rev = useQuery({ queryKey: ['radar-reverif'], queryFn: getRadarReverif })
-  const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
-  const n = rev.data?.n ?? 0
-  return (
-    <BlocRepliable titre="3 · Re-vérification"
-      badge={<span className="text-[11px] text-txt-dim">{n} annonces · {check.data?.reverif_du_jour ?? 0} vérifiées aujourd’hui</span>}
-      defaultOpen>
-      <Reverif />
-    </BlocRepliable>
-  )
-}
+// RETOURS-8 (R5) — la pige EN ONGLETS (maquette section 1) : 4 chiffres en tête disent où en est la
+// pige, puis un onglet par tâche (on n'empile plus, on ne descend plus). L'onglet ouvert par défaut est
+// le PREMIER qui a du travail. Le dépôt HTML est un onglet comme les autres.
+type RadarTab = 'deposer' | 'valider' | 'rattacher' | 'reverifier' | 'check'
 
 export function RadarSection() {
+  const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
+  const d = check.data
+  const enVie = d?.annonces_en_vie ?? 0
+  const aRattacher = d?.a_rattacher ?? 0
+  const aValider = d?.file_extraction ?? 0
+  const reverifDues = d?.reverif_dues ?? 0
+  const reverifJour = d?.reverif_du_jour ?? 0
+  // onglet par défaut = le premier qui a du travail (À valider → À rattacher → Re-vérifier → Déposer).
+  const defaut: RadarTab = aValider > 0 ? 'valider' : aRattacher > 0 ? 'rattacher'
+    : reverifDues > 0 ? 'reverifier' : 'deposer'
+  const [tab, setTab] = useState<RadarTab | null>(null)
+  const actif = tab ?? defaut
+
+  const Kpi = ({ n, sub, tone }: { n: React.ReactNode; sub: string; tone?: 'a' | 'g' }) => (
+    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+      <div className={`text-[17px] font-bold ${tone === 'a' ? 'text-amber' : tone === 'g' ? 'text-mint' : 'text-txt-hi'}`}>{n}</div>
+      <div className="text-[10.5px] text-txt-mut">{sub}</div>
+    </div>
+  )
+  const Onglet = ({ k, children, n, tone }: { k: RadarTab; children: React.ReactNode; n?: number; tone?: 'a' }) => (
+    <button data-radar-onglet={k} onClick={() => setTab(k)}
+      className={`-mb-px whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-2 text-[13px] transition-colors duration-quick ${
+        actif === k ? 'border-mint font-semibold text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
+      {children}{n != null && <b className={`ml-1 ${n > 0 && tone === 'a' ? 'text-amber' : 'text-txt-dim'}`}>{n}</b>}
+    </button>
+  )
   return (
     <div className="flex flex-col gap-4">
       <Bandeau />
-      {/* AD9 — trois blocs repliables : Déposer · File d'extraction · Re-vérification (groupée par commune). */}
-      <BlocDeposer />
-      <BlocExtraction />
-      <BlocReverif />
-      {/* Instruction (rattachement admin) et Check (rituel) conservés sous les 3 blocs. */}
-      <Instruction />
-      <Check />
+      {/* 4 chiffres en tête (maquette) : annonces en vie · à rattacher · à valider · re-vérifiées/dues. */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Kpi n={enVie} sub="annonces en vie" />
+        <Kpi n={aRattacher} sub="à rattacher à une parcelle" tone="a" />
+        <Kpi n={aValider} sub="à valider (file d’extraction)" tone="g" />
+        <Kpi n={<>{reverifJour} <span className="text-[11px] text-txt-dim">/ {reverifDues} dues</span></>} sub="re-vérifiées aujourd’hui" />
+      </div>
+      {/* les onglets : une tâche = un onglet, on n'empile plus. */}
+      <div className="flex gap-5 overflow-x-auto border-b border-line">
+        <Onglet k="deposer">Déposer</Onglet>
+        <Onglet k="valider" n={aValider} tone="a">À valider</Onglet>
+        <Onglet k="rattacher" n={aRattacher} tone="a">À rattacher</Onglet>
+        <Onglet k="reverifier" n={reverifDues} tone="a">Re-vérifier</Onglet>
+        <Onglet k="check">Check du jour</Onglet>
+      </div>
+      {actif === 'deposer' && <DeposerPanel />}
+      {actif === 'valider' && <Extraction />}
+      {actif === 'rattacher' && <Instruction />}
+      {actif === 'reverifier' && <Reverif />}
+      {actif === 'check' && <Check />}
     </div>
   )
 }

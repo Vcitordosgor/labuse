@@ -1432,6 +1432,9 @@ export function Fiche({ idu }: { idu: string }) {
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
   const [ficheQuery, setFicheQuery] = useState('')
+  // RETOURS-8 (R7) — la fiche en ONGLETS : Analyse (la fiche détaillée), Autour (le voisinage isochrone),
+  // Actions (CRM · Projet · Courrier · exports) — accès direct aux actions sans faire défiler l'analyse.
+  const [ficheTab, setFicheTab] = useState<'analyse' | 'autour' | 'actions'>('analyse')
   // M61 P1 — panneau IA unifié : 'aucun' = les deux boutons ; 'question' = AskBar pleine largeur ;
   // 'synthese' = panneau Synthèse pleine largeur. Le panneau actif REMPLACE la rangée de boutons
   // (ne se pose plus À CÔTÉ). Synthèse : la mutation vit ICI (persiste au repli) → replier puis
@@ -1612,14 +1615,27 @@ export function Fiche({ idu }: { idu: string }) {
                   </Tip>
                 )}
               </div>
-              {f?.adresse && (
-                <a className="addr-link" data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
-                  target="_blank" rel="noreferrer noopener" title={CLIENT.fiche.pagesJaunesTip}>
-                  {CLIENT.fiche.pagesJaunes} ↗
-                </a>
-              )}
+              {/* RETOURS-8 (R7) — le lien « Pages jaunes » quitte l'adresse : il remonte en tête,
+                  à côté de l'IDU, dans le trio Maps · Cadastre · Pages jaunes (voir .hbtns). */}
             </div>
             <div className="hbtns">
+              {/* RETOURS-8 (R7) — Maps · Cadastre · Pages jaunes REMONTÉS en tête (à côté de l'IDU) :
+                  ce ne sont pas des exports. Trois petits boutons discrets (quittent la grille Exports). */}
+              {f?.coords && (
+                <a className="hbtn" data-maps-link title="Ouvrir dans Google Maps (épingle sur la parcelle)"
+                  href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
+                  target="_blank" rel="noreferrer noopener">🗺</a>
+              )}
+              {f?.coords && (
+                <a className="hbtn" data-cadastre-link title={CLIENT.fiche.export.cadastreTip}
+                  href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
+                  target="_blank" rel="noreferrer noopener">▦</a>
+              )}
+              {f?.adresse && (
+                <a className="hbtn" data-fiche-pj title={CLIENT.fiche.pagesJaunesTip} style={{ color: '#f5d76e' }}
+                  href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
+                  target="_blank" rel="noreferrer noopener">☎</a>
+              )}
               <WatchButton idu={idu} />
               <button className="hbtn" onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
                 style={ficheSearchOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
@@ -1672,13 +1688,56 @@ export function Fiche({ idu }: { idu: string }) {
           )
         })()}
         </div>{/* /.head — la carte d'en-tête (identité + 4 chiffres) est le SEUL bloc FIXE. */}
+        {/* RETOURS-8 (R7) — ONGLETS de la fiche : Analyse · Autour · Actions. « Actions » donne l'accès
+            direct au CRM/Projet/Courrier/exports sans faire défiler l'analyse. L'onglet reste dans le
+            bloc FIXE (comme l'en-tête), le contenu de chaque onglet défile en dessous. */}
+        <div data-fiche-tabs className="mt-2 flex gap-5 border-b border-line px-[14px]">
+          {([['analyse', 'Analyse'], ['autour', 'Autour'], ['actions', 'Actions']] as const).map(([k, lbl]) => (
+            <button key={k} data-fiche-tab={k} onClick={() => setFicheTab(k)}
+              className={`-mb-px border-b-2 pb-2 pt-1 text-[13px] transition-colors duration-quick ${
+                ficheTab === k ? 'border-mint font-semibold text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
+              {lbl}
+            </button>
+          ))}
+        </div>
       </div>{/* M68 P1a — fin du wrapper FIXE (en-tête seul) : tout le reste défile. */}
+
+      {/* RETOURS-8 (R7) — ONGLET « AUTOUR » : le voisinage isochrone, accès direct (composant existant). */}
+      {ficheTab === 'autour' && (
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-3">
+          {f ? <AutourZoneBlock idu={idu} /> : <div className="text-[13px] text-txt-mut">Chargement…</div>}
+        </div>
+      )}
+
+      {/* RETOURS-8 (R7) — ONGLET « ACTIONS » : CRM · Projet · Courrier · exports experts, sans défiler
+          l'analyse. Réutilise EXACTEMENT les mêmes composants/boutons que le pied de fiche (aucune
+          logique métier réécrite). Les états cliqués restent pleins (+CRM vert, +Projet ambre). */}
+      {ficheTab === 'actions' && f && (
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-3">
+          <div className="actions">
+            <PipelineButton idu={idu} />
+            <ProjetButton idu={idu} />
+          </div>
+          <div className="sec"><span>EXPORTS</span><i /></div>
+          <GrilleOutils>
+            <OutilCase nom="PDF" href={pdfUrl(idu, calculette)} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}
+              ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>} />
+            <DossierTile idu={idu} />
+            <BanquierButton idu={idu} />
+            <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} title={CLIENT.fiche.export.courrierTip}
+              ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
+            <PreDossierTile idu={idu} />
+          </GrilleOutils>
+        </div>
+      )}
 
       {/* M68 P1a — DÉFILEMENT UNIQUE : le bloc Analyse (CTA + carte verdict), la bannière RNU, les
           signaux, puis les tiroirs / actions / exports / mention légale vivent tous DANS ce conteneur
           `overflow-y-auto flex-1`. La fiche défile donc jusqu'au pied EN TOUTE circonstance (bloc
           Analyse absent / déplié / replié, synthèse ouverte, n'importe quel tiroir ouvert). Avant M68,
-          le bloc Analyse était dans le wrapper flex-shrink:0 et affamait ce conteneur (cf. RAPPORT_M68). */}
+          le bloc Analyse était dans le wrapper flex-shrink:0 et affamait ce conteneur (cf. RAPPORT_M68).
+          RETOURS-8 (R7) — n'est monté que sur l'onglet « Analyse ». */}
+      {ficheTab === 'analyse' && (
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-1">
         {/* wrapper NON-flex : conserve l'espacement interne d'origine du bloc Analyse (marges inline). */}
         <div>
@@ -2664,19 +2723,12 @@ export function Fiche({ idu }: { idu: string }) {
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>} />
                 <DossierTile idu={idu} />
                 <BanquierButton idu={idu} />
-                {f.coords && (
-                  <OutilCase nom="Cadastre" data-cadastre-link title={CLIENT.fiche.export.cadastreTip}
-                    href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
-                    ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>} />
-                )}
+                {/* RETOURS-8 (R7) — Cadastre a QUITTÉ les Exports : il vit désormais en tête de fiche
+                    (trio Maps · Cadastre · Pages jaunes à côté de l'IDU). */}
                 <OutilCase nom="Argumentaire" data-argumentaire title="Argumentaire de négociation (PDF) — avec les hypothèses de la calculette"
                   href={`/argumentaire/${idu}.pdf${calculette ? `?cout_construction_m2=${calculette.cout_construction_m2}&marge_frais_pct=${calculette.marge_frais_pct}${calculette.vrd_m2 != null ? `&vrd_m2=${calculette.vrd_m2}` : ''}${calculette.prix_demande_eur ? `&prix_demande_eur=${calculette.prix_demande_eur}` : ''}` : ''}`}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>} />
-                {f.coords && (
-                  <OutilCase nom="Maps" data-maps-link title="Ouvrir dans Google Maps (épingle sur la parcelle)"
-                    href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
-                    ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>} />
-                )}
+                {/* RETOURS-8 (R7) — Maps a QUITTÉ les Exports : il vit en tête de fiche (trio près de l'IDU). */}
                 <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} title={CLIENT.fiche.export.courrierTip}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
                 <PreDossierTile idu={idu} />
@@ -2698,6 +2750,7 @@ export function Fiche({ idu }: { idu: string }) {
           )
         })()}
       </div>
+      )}{/* RETOURS-8 (R7) — fin de l'onglet « Analyse ». */}
 
 
     </aside>

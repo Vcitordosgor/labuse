@@ -124,6 +124,12 @@ class Settings(BaseSettings):
     # surchargeable par compte (comptes.copilote_quota_jour, éditable au dashboard). Le quota
     # historique nl_quota_jour reste celui des sujets SANS compte (pilote/anonyme).
     copilote_questions_jour_defaut: int = 80
+    # RETOURS-8 (R3) — le plafond Copilote/IA d'un compte est désormais exprimé en EUROS/jour (défaut
+    # 2,00 €), éditable au dashboard. L'app le convertit en « ≈ N questions » au coût moyen réel des 30
+    # derniers jours du compte (repli : coût moyen global, puis plancher `copilote_cout_moyen_defaut`).
+    # Les missions lourdes (Sonnet) comptent à leur COÛT RÉEL — c'est l'intérêt du plafond en €.
+    copilote_budget_eur_defaut: float = 2.0
+    copilote_cout_moyen_defaut: float = 0.008   # coût moyen d'une question (repli d'affichage/conversion)
     dossier_quota_mois: int = 20          # Dossiers parcelle / mois (plan Essentiel, Lot 4)
     plan_defaut: str = "integral"         # stub : essentiel | integral (pilote = intégral)
     raison_sociale: str = "Pilote LABUSE"  # mention « Généré via LABUSE pour … » (Lot 4)
@@ -258,7 +264,9 @@ class Settings(BaseSettings):
     # (comptes.copilote_quota_jour, édité au dashboard ; défaut config `nl_quota_jour`).
     copilote_v2_tokens_mission: int = 40_000   # plafond de tokens par mission (routage+outils+formulation)
     copilote_v2_instructions_lourdes_max: int = 1  # RECHERCHE/VERIFICATION simultanées / utilisateur (le reste en file)
-    copilote_v2_retention_jours: int = 90      # historique conversations/missions conservé N jours (§2b)
+    # RETOURS-8 (R11) — rétention des conversations Copilote : défaut 7 JOURS (réglage admin, surchargeable
+    # à chaud via app_reglages `copilote_retention_jours`), purge par le job quotidien `copilote-purge`.
+    copilote_v2_retention_jours: int = 7       # historique conversations/missions conservé N jours (§2b)
     copilote_v2_veilles_max: int = 20          # plafond de veilles actives par compte (§4)
     copilote_v2_contexte_ttl_minutes: int = 10   # M107 (arbitrage Vic) : 10 min d'INACTIVITÉ → le
                                                  # fil repart de zéro (M102-B1 posait 120). Le front
