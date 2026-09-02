@@ -1117,6 +1117,92 @@ def _preparer(db: Session, message: str, params: dict, contexte: dict | None) ->
                   sources=(["fiche parcelle (faits sourcés)"] if faits else None))
 
 
+# ───────────── SUITE-1 S9 — LES MISSIONS LOURDES (RECHERCHE / VERIFICATION) DANS v2 ─────────────
+# Décision Vic : un seul Copilote, le v2. M118 avait renvoyé RECHERCHE/VERIFICATION hors du chat
+# (refus-voie). S9 les RAPATRIE : elles s'exécutent DANS le chat par le moteur de mission run-scopé
+# (copilote/{executeur,moteurs}, servi sous /api/copilote-v2/runs), avec le récap-péage M78-bis. Le
+# récap est produit ICI (needs_confirmation + brief_effectif) ; le FRONT lance le run (RECHERCHE) ou
+# renvoie `confirme=True` (VERIFICATION → avis instruit missions_lourdes). PROJET/VEILLE/OUTIL restent
+# refus-voie (leur exécution vit ailleurs — Projets/Surveillance/Outils).
+def _brief_effectif_recherche(message: str, params: dict) -> str:
+    """Brief NATUREL recomposé des paramètres compris (commune héritée du fil comprise) : c'est le
+    `brief_raw` que le moteur run-scopé réinterprète. Garantit que le run part des critères annoncés
+    au récap, jamais d'un fil perdu. Vide de params → le message verbatim."""
+    bits = []
+    if params.get("commune"):
+        bits.append(f"à {params['commune']}")
+    if params.get("programme_logements"):
+        bits.append(f"pour {int(params['programme_logements'])} logements")
+    if params.get("budget_eur"):
+        bits.append(f"avec un budget de {int(params['budget_eur'])} €")
+    if params.get("surface_min"):
+        bits.append(f"d'au moins {int(params['surface_min'])} m²")
+    if params.get("zone"):
+        bits.append(f"en zone {params['zone']}")
+    return ("Trouve des terrains à instruire " + " ".join(bits)) if bits else (message or "")
+
+
+def _recap_recherche(params: dict) -> str:
+    bits = []
+    if params.get("commune"):
+        bits.append(str(params["commune"]))
+    if params.get("programme_logements"):
+        bits.append(f"{int(params['programme_logements'])} logements")
+    if params.get("budget_eur"):
+        bits.append(f"budget {int(params['budget_eur'])} €")
+    if params.get("surface_min"):
+        bits.append(f"≥ {int(params['surface_min'])} m²")
+    if params.get("zone"):
+        bits.append(f"zone {params['zone']}")
+    return ("J'ai compris : une recherche de terrains à instruire"
+            + (" — " + " · ".join(bits) if bits else "") + ".")
+
+
+def _mission_recherche(db: Session, message: str, params: dict) -> dict:
+    """RECHERCHE → récap-péage (needs_confirmation) ; le front lancera le run lourd. Le moteur cherche
+    commune par commune : sans commune, on DEMANDE (clarification-récap), jamais un run à vide."""
+    if not params.get("commune"):
+        return _reply("Sur quelle commune dois-je chercher ? J'instruis commune par commune.",
+                      "RECHERCHE", needs_confirmation=True, brief_effectif=message,
+                      clarification_recap={"question": "Sur quelle commune dois-je chercher les terrains ?",
+                                           "options": [], "champ": "commune"})
+    recap = _recap_recherche(params)
+    return _reply(recap, "RECHERCHE", needs_confirmation=True, recap=recap,
+                  brief_effectif=_brief_effectif_recherche(message, params))
+
+
+def _mission_verification(db: Session, message: str, params: dict, contexte: dict | None,
+                          confirme: bool) -> dict:
+    """VERIFICATION → récap-péage, puis (confirme=True) AVIS instruit face au prix (missions_lourdes :
+    marché DVF, réserve de méthode, verrou anti-invention). Sans IDU résoluble, on DEMANDE l'IDU."""
+    idu = (params.get("idu") or (contexte or {}).get("idu")
+           or _resoudre_idu_court(db, message, params.get("commune")))
+    if idu:
+        params["idu"] = idu
+    if confirme:
+        from . import missions_lourdes
+        av = missions_lourdes.verification(db, params)
+        if av.get("clarification"):
+            return _reply(av["text"], "VERIFICATION", clarification=True)
+        if av.get("refus"):
+            return _reply(av["text"], "VERIFICATION", refus=av["refus"],
+                          voie={"cible": "fiche", "libelle": "Ouvrir la fiche", **({"idu": idu} if idu else {})})
+        return _reply(av["text"], "VERIFICATION", tool=av.get("tool"), idu=av.get("idu"),
+                      sources=av.get("sources"), actions=av.get("actions"))
+    if not idu:
+        return _reply("Quelle parcelle dois-je vérifier ?", "VERIFICATION", needs_confirmation=True,
+                      brief_effectif=message,
+                      clarification_recap={"question": "Donnez-moi l'IDU (14 caractères) de la parcelle "
+                                                       "à vérifier — et son prix demandé si vous l'avez.",
+                                           "options": [], "champ": "idu"})
+    prix = params.get("prix_eur") or params.get("budget_eur")
+    recap = (f"J'ai compris : vérifier la parcelle {idu}"
+             + (f" face à un prix de {int(prix)} €" if prix else " (donnez-moi le prix demandé pour l'avis complet)")
+             + ".")
+    brief_eff = f"Vérifie la parcelle {idu}" + (f" proposée à {int(prix)} €" if prix else "")
+    return _reply(recap, "VERIFICATION", needs_confirmation=True, recap=recap, brief_effectif=brief_eff)
+
+
 def _answer_with_route(db: Session, message: str, route, contexte: dict | None = None,
                        confirme: bool = False, faits_fil: list[dict] | None = None,
                        history: list[dict] | None = None) -> dict:
@@ -1167,7 +1253,7 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
     if intent == "RECHERCHE":
         # M112/M118 — une demande VISUELLE de données (« montre-moi les friches à Saint-Paul », « où
         # sont les parcelles en procédure ») est de la MISSION 1 (compte + carte), pas de l'instruction :
-        # on la GARDE. Une vraie recherche (programme/budget) part en refus-voie Projets.
+        # on la GARDE. Une vraie recherche part désormais en MISSION LOURDE dans le chat (S9).
         if _veut_carte(message) and not params.get("programme_logements") and not params.get("budget_eur"):
             sel = _select_tool(db, message, params)
             if sel.get("tool") == "compter_parcelles":
@@ -1175,40 +1261,14 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
                 res.criteres_non_appliques = sel.get("criteres_non_appliques") or []
                 if res.ok:
                     return _reply_compte(db, message, res, faits_fil, "QUESTION")
-        return _refus_voie(db, message, intent, "Trouver et instruire des parcelles se fait dans Projets : "
-                           "créez un projet, il propose et classe les candidates. Le chat ne lance plus "
-                           "d'instruction.", "projets", "Ouvrir Projets")
+        # SUITE-1 S9 — RECHERCHE instruite DANS le chat (moteur run-scopé), via le récap-péage.
+        return _mission_recherche(db, message, params)
     if intent == "PROJET":
         return _refus_voie(db, message, intent, "La création d'un projet se fait dans Projets, avec le "
                            "parcours guidé.", "projets", "Ouvrir Projets")
     if intent == "VERIFICATION":
-        idu = (params.get("idu") or (contexte or {}).get("idu")
-               or _resoudre_idu_court(db, message, params.get("commune")))   # Q13 — réf courte « BZ1065 »
-        # FIX-COPILOTE-BATTERIE (Q13) — « BZ1065, elle vaut quoi ? » ne part plus en voie fiche MUETTE :
-        # on SERT le verdict inline (voie a, depuis fiche_parcelle : surface · zone · classement LABUSE),
-        # PUIS la voie fiche pour l'évaluation complète face à un prix. Déterministe (0 modèle), les
-        # chiffres viennent de l'outil (anti-invention respecté).
-        if idu:
-            from . import registre_faits
-            from .outils import fiche_parcelle
-            try:
-                r = fiche_parcelle(db, idu=idu)
-            except Exception:  # noqa: BLE001 — fiche indisponible → repli propre sur la voie fiche
-                r = None
-            if r is not None and r.ok:
-                d = r.data
-                bouts = [f"{d['surface_m2']} m²" if d.get("surface_m2") else None,
-                         f"zone {d['zone']}" if d.get("zone") else None,
-                         f"classement LABUSE : {d['verdict']}" if d.get("verdict") else None]
-                corps = " · ".join(x for x in bouts if x) or "données limitées sur cette parcelle"
-                txt = (f"Parcelle {idu}" + (f" à {d['commune']}" if d.get("commune") else "") + " — " + corps
-                       + f" ({r.source}" + (f" · {r.millesime}" if r.millesime else "") + "). "
-                       "L'évaluation complète face à un prix (avis, marché DVF) est sur sa fiche.")
-                return _reply(txt, intent, tool="fiche_parcelle", sources=[r.source],
-                              voie={"cible": "fiche", "libelle": "Ouvrir la fiche", "idu": idu},
-                              _faits_tour=registre_faits.extraire_faits(r))
-        return _refus_voie(db, message, intent, "L'évaluation d'une parcelle (avis, marché DVF) vit sur sa "
-                           "fiche — pas dans le chat.", "fiche", "Ouvrir la fiche", idu)
+        # SUITE-1 S9 — VERIFICATION instruite DANS le chat : récap-péage puis avis complet (marché DVF).
+        return _mission_verification(db, message, params, contexte, confirme)
     if intent == "VEILLE":
         return _refus_voie(db, message, intent, "La veille se pose et se règle dans "
                            "Veille.", "surveillance", "Ouvrir la Veille")

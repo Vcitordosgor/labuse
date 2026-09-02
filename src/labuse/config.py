@@ -252,11 +252,10 @@ class Settings(BaseSettings):
     copilote_sessions_paralleles: int = 4  # faisabilité/charge : pool borné (arbitrage Vic)
     # M78 · 1f — plafonds Copilote v2 (VALEURS EN CONFIG, jamais en dur ; au plafond : message clair,
     # jamais un échec silencieux). Sonnet partout (Opus interdit sans justification). Chaque appel
-    # modèle est déjà journalisé dans ia_log (kind copilote-route|select|formule). Valeurs proposées :
-    # OBSOLÈTE (CONNEXIONS-2 Lot 2, KO-3) : le plafond /ask est désormais PAR COMPTE via
-    # `quota_du_compte` (comptes.copilote_quota_jour, édité au dashboard ; défaut copilote_questions_jour_defaut).
-    # Ce plafond global n'est plus lu par /ask — conservé pour rétro-compat de config, à retirer en hygiène.
-    copilote_v2_missions_jour: int = 40        # OBSOLÈTE — voir copilote_quota_jour
+    # modèle est déjà journalisé dans ia_log (kind copilote-route|select|formule).
+    # SUITE-1 S7 — `copilote_v2_missions_jour` SUPPRIMÉ (obsolète, aucun lecteur) : le plafond du
+    # Copilote (chat /ask ET missions lourdes /runs) est UNIFIÉ par compte via `quota_du_compte`
+    # (comptes.copilote_quota_jour, édité au dashboard ; défaut config `nl_quota_jour`).
     copilote_v2_tokens_mission: int = 40_000   # plafond de tokens par mission (routage+outils+formulation)
     copilote_v2_instructions_lourdes_max: int = 1  # RECHERCHE/VERIFICATION simultanées / utilisateur (le reste en file)
     copilote_v2_retention_jours: int = 90      # historique conversations/missions conservé N jours (§2b)

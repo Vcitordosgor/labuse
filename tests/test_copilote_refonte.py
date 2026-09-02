@@ -186,18 +186,15 @@ def test_q11_programme_ouvre_la_faisabilite(monkeypatch):
     assert r.get("prefill_programme") == {"batiments": 3, "niveaux": 3, "logements_par_batiment": 8}
 
 
-def test_q13_verification_sert_le_verdict_inline(monkeypatch):
-    """Q13 — « BZ1065 vaut quoi » sert le verdict INLINE (voie a) + la voie fiche, plus muette."""
-    from labuse.copilote_v2 import outils
-    from labuse.copilote_v2.outils import ToolResult
-    monkeypatch.setattr(outils, "fiche_parcelle", lambda db, idu: ToolResult(
-        "fiche_parcelle", valeur=1625, data={"idu": idu, "commune": "Saint-Denis", "surface_m2": 1625,
-                                             "zone": "Uh", "verdict": "a_creuser"}, source="cadastre"))
+def test_q13_verification_recap_peage_pas_muette(monkeypatch):
+    """Q13 + SUITE-1 S9 — « BZ1065 elle vaut quoi » n'est plus une voie fiche muette : le v2 l'instruit
+    DANS le chat (récap-péage → avis complet face au prix). Le récap NOMME la parcelle, ne refuse pas."""
     from labuse.copilote_v2.router import Route
     r = answering._answer_with_route(None, "97411000BZ1065 elle vaut quoi",
                                      Route("VERIFICATION", params={"idu": "97411000BZ1065"}))
-    assert r.get("tool") == "fiche_parcelle" and "a_creuser" in r["text"] and "1625" in r["text"]
-    assert (r.get("voie") or {}).get("cible") == "fiche"
+    assert r.get("refus") is None and r.get("intent") == "VERIFICATION"
+    assert r.get("needs_confirmation") is True
+    assert "97411000BZ1065" in (r.get("recap") or "")
 
 
 def test_q3_herite_la_commune_du_fil(monkeypatch):

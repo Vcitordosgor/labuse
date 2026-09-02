@@ -22,8 +22,9 @@ def _req(compte_id):
 
 
 def _settings(dev_mode, nl_quota=30, ttl=10):
-    # copilote_v2_missions_jour reste dans la config (obsolète) mais /ask ne le lit PLUS.
-    return types.SimpleNamespace(dev_mode=dev_mode, copilote_v2_missions_jour=999,
+    # SUITE-1 S7 — `copilote_v2_missions_jour` a été SUPPRIMÉ de la config (obsolète, aucun lecteur) :
+    # le plafond du Copilote est unifié via `quota_du_compte` (défaut `nl_quota_jour`).
+    return types.SimpleNamespace(dev_mode=dev_mode,
                                  nl_quota_jour=nl_quota, copilote_v2_contexte_ttl_minutes=ttl)
 
 
@@ -38,7 +39,7 @@ def test_ask_lit_le_quota_du_compte_edite(monkeypatch):
     out = cv2.ask(cv2.AskIn(message="combien de parcelles ?"), _req(7), db=None)
     assert isinstance(out, JSONResponse) and out.status_code == 429
     body = json.loads(bytes(out.body))
-    assert body["quota"] == 12 and body["gel_jusqua"] == "minuit"        # le plafond ÉDITÉ, pas 40/999
+    assert body["quota"] == 12 and body["gel_jusqua"] == "minuit"        # le plafond ÉDITÉ, pas un global
     assert appels["answer"] == 0                    # la garde court-circuite : zéro appel modèle
 
 

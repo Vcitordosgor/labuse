@@ -1791,88 +1791,10 @@ def list_parcels(commune: str | None = None,
                       extra_where=extra, extra_params=extra_params, sort=sort)
 
 
-@app.get("/parcels/export.csv")
-def export_parcels_csv(c: FiltreCriteres = Depends(),
-                       sort: str | None = Query(None, pattern="^(v|rang|mult|surface|surface_asc|commune)$"),
-                       limit: int = Query(1000, ge=1, le=5000),
-                       db: Session = Depends(get_db)) -> Response:
-    """Export CSV de la liste — MÊMES facettes que le compteur et la liste (M46 Lot D : routé
-    sur `FiltreCriteres`, plus jamais un export qui ignore les filtres actifs). Tier v2 EN
-    PREMIER (M5.1), signaux propriétaire en fin de ligne. M6 2a : utf-8-sig (BOM Excel) +
-    séparateur « ; » + adresse postale BAN (1re colonne = idu).
-    ⚠ Doit rester déclarée AVANT /parcels/{idu} (ordre de résolution des routes).
-
-    RETOURS-7 Z11 — OBSOLÈTE côté produit : l'export CSV a été retiré de la liste de résultats
-    (décision Vic). Endpoint CONSERVÉ (non supprimé) mais plus aucun appelant front."""
-    import csv as _csv
-    import io as _io
-
-    from .export_commun import adresses_ban
-
-    source = c.source or runs.current()
-    c.source = source
-    extra, extra_params = c.where()
-    items = _q_v2_list(db, c.commune, limit, 0, run_label=source,
-                       extra_where=extra, extra_params=extra_params, sort=sort)
-    # GB-016 — plus de troncature SILENCIEUSE. Signal FIABLE = on a atteint le cap (`len == limit`) →
-    # il reste (peut-être) des lignes ; si `len < limit`, TOUT le périmètre a été servi. On ne
-    # compare PAS à un compteur externe : `/filtre` compte tout (ecartee incluse) alors que la liste
-    # exporte le périmètre v2 (hors étage 0) → un « sur M » serait un FAUX chiffre. On dit donc le cap,
-    # pas un total inexact. En-têtes X-Truncated/X-Cap pour l'UI ; notice en 1re ligne du fichier.
-    tronque = len(items) >= limit
-    tops = {r[0]: r[1] for r in db.execute(text(
-        "SELECT parcelle_id, (SELECT string_agg(s->>'label', ' | ') FROM ("
-        "  SELECT s FROM jsonb_array_elements(signals) s "
-        "  ORDER BY (s->>'points')::int DESC LIMIT 3) t(s)) "
-        "FROM parcel_v_score WHERE parcelle_id = ANY(:idus)"),
-        {"idus": [it["idu"] for it in items]}).all()}
-    adrs = adresses_ban(db, [it["idu"] for it in items])
-    # M9 lot 1 — ICD (indice de confiance données) du run servi. Colonne annexe, jointe ici
-    # (comme top_signaux) pour ne pas alourdir _q_v2_list ; CLOISONNÉE du score P.
-    from ..scoring import icd as _icd
-    v2run = _score_v2_run_id(db)
-    icd_map = {r[0]: r[1] for r in db.execute(text(
-        "SELECT parcelle_id, icd FROM parcel_p_score_v2 "
-        "WHERE run_id = :r AND parcelle_id = ANY(:idus)"),
-        {"r": v2run, "idus": [it["idu"] for it in items]}).all()} if v2run else {}
-    buf = _io.StringIO()
-    w = _csv.writer(buf, delimiter=";")          # Excel FR : point-virgule (standard maison)
-    if tronque:                                  # GB-016 — notice EXPLICITE en tête (jamais muet)
-        w.writerow([f"Export limité aux {len(items)} premières lignes (plafond d'export {limit} atteint) — "
-                    "affinez les filtres, ou augmentez la limite (≤ 5000), pour exporter le reste."])
-    # M129-B : statut_matrice/q_score/a_score retirés (matrice morte) — le statut servi est
-    # celui de la CASCADE (status), la présentation est le tier v2.
-    # FIX-C6 (GB-066) — l'export sert le LIBELLÉ M137 (« À suivre », « Écartée »…) via la
-    # source unique `TIER_LABELS`, plus le CODE interne (« chaude », « ecartee ») : même mot
-    # que la fiche/la carte/le Copilote, partout. En-tête renommé `classement` (self-describing).
-    from ..verdict_servi import TIER_LABELS as _TIER_LABELS
-    w.writerow(["idu", "commune", "adresse_ban", "code_postal", "ville",
-                "surface_m2", "classement", "rang_v2", "mult_v2", "copro",
-                "veille_succession", "statut_cascade",
-                "completeness", "icd", "confiance_donnees",
-                "proprio", "v_score", "v_band", "top_signaux"])
-    for it in items:
-        a = adrs.get(it["idu"]) or {}
-        icd_val = icd_map.get(it["idu"])
-        w.writerow([it["idu"], it["commune"],
-                    a.get("adresse") or "", a.get("code_postal") or "", a.get("ville") or "",
-                    it["surface_m2"],
-                    _TIER_LABELS.get(("ecartee" if it["etage0"] else it["tier_v2"]), it["tier_v2"]) or "",
-                    it["rang_v2"] if it["rang_v2"] is not None else "",
-                    f"{it['mult_v2']:.1f}" if it.get("mult_v2") is not None else "",
-                    "oui" if it.get("copro_v2") else "",
-                    "oui" if it.get("veille") else "",
-                    it["status"], it["completeness_score"],
-                    icd_val if icd_val is not None else "",
-                    _icd.libelle_bande(icd_val) if icd_val is not None else "",
-                    it["proprio"] or "",
-                    it["v_score"] if it["v_score"] is not None else "",
-                    it["v_band"] or "", tops.get(it["idu"]) or ""])
-    return Response(buf.getvalue().encode("utf-8-sig"),   # BOM : accents corrects dans Excel
-                    media_type="text/csv; charset=utf-8",
-                    headers={"Content-Disposition": 'attachment; filename="labuse_parcelles.csv"',
-                             "X-Rows": str(len(items)), "X-Cap": str(limit),
-                             "X-Truncated": "1" if tronque else "0"})
+# SUITE-1 S7 — `/parcels/export.csv` SUPPRIMÉ (code + endpoint sans appelant). L'export CSV de la
+# liste avait été retiré du front en RETOURS-7 Z11 (décision Vic) ; l'endpoint survivait sans aucun
+# appelant (grep front : 0). Les exports CSV du PROJET (`/projets/{id}/export.csv`) et des SIGNALEMENTS
+# (`/signalements/export.csv`) sont DISTINCTS et conservés (toujours servis).
 
 
 def _communes_data(db: Session, source: str) -> list[dict]:
@@ -5952,7 +5874,7 @@ from .tiles import router as _tiles_router  # noqa: E402
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
 from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H — CRM personnalisable)
-from .copilote import router as _copilote_router  # noqa: E402  (M26-A — Copilote, socle agentique)
+from .copilote import router as _copilote_router  # noqa: E402  (SUITE-1 S9 — /api/copilote-v2/runs* : missions lourdes)
 from .copilote_v2 import router as _copilote_v2_router  # noqa: E402  (M78 — Copilote v2 : routeur + outils)
 from .accueil import router as _accueil_router  # noqa: E402  (M55-D stage 9 — chiffres de l'accueil)
 from .dashboard import router as _dashboard_router  # noqa: E402  (DASHBOARD-V1 — Tour de contrôle)

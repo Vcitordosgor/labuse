@@ -96,12 +96,12 @@ describe('état 2 — instruction en cours', () => {
     // les critères déduits sont montrés en chips (brief_json), avec la traduction visible
     expect(document.querySelector('[data-chips-compris]')).toBeInTheDocument()
     expect(document.querySelector('[data-chip="programme"] [data-chip-traduction]')).toBeInTheDocument()
-    const nRunsAvant = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/copilote/runs')).length
+    const nRunsAvant = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/api/copilote-v2/runs')).length
     // retirer une chip pendant l'instruction : annulation PROPRE (POST /cancel) puis relance (nouveau run)
     fireEvent.click(document.querySelector('[data-chip="ppr"] [data-chip-retirer]')!)
     await waitFor(() => expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/cancel'))).toBe(true))
     await waitFor(() => expect(fetchMock.mock.calls.filter(
-      (c) => String(c[0]).endsWith('/api/copilote/runs')).length).toBe(nRunsAvant + 1))
+      (c) => String(c[0]).endsWith('/api/copilote-v2/runs')).length).toBe(nRunsAvant + 1))
   })
 
   it('rafraîchissement en plein run : le même fil revient, sans doublon ni trou', async () => {

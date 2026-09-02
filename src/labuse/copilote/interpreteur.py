@@ -66,9 +66,9 @@ def commune_officielle(nom: str) -> str | None:
 # ── Appel modèle (injectable pour les tests — le défaut passe par le socle M7) ──────────
 def _llm_reel(system: str, payload: dict, db=None) -> str:
     from ..ai import core
-    res = core.complete(db, kind="agent-brief", system=system,
+    res = core.complete(db, kind="copilote_mission", system=system,
                         context=json.dumps(payload, ensure_ascii=False),
-                        model=core.model_for("agent-brief"), max_tokens=700)
+                        model=core.model_for("copilote_mission"), max_tokens=700)
     if res.degraded:
         raise IAIndisponible(res.reason or "IA indisponible")
     return res.text

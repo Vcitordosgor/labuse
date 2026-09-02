@@ -1,6 +1,9 @@
-"""M118 — le Copilote resserré à 4 missions. Tests DÉTERMINISTES (monkeypatch classify) : les
-intentions qui QUITTENT le chat (RECHERCHE/PROJET/VERIFICATION/VEILLE/OUTIL) reçoivent un refus +
-une voie cliquable, et le registre ne sert plus que 4 chips."""
+"""M118 + SUITE-1 S9 — le Copilote resserré. Tests DÉTERMINISTES (monkeypatch classify).
+
+S9 : RECHERCHE et VERIFICATION sont RAPATRIÉES dans le chat (missions lourdes du v2) — elles ne
+partent plus en refus-voie mais produisent un RÉCAP-PÉAGE (needs_confirmation), puis le front lance le
+run / renvoie confirme. Restent en refus-voie : PROJET (→ Projets), VEILLE (→ Surveillance), OUTIL
+(→ Outils/CRM)."""
 from __future__ import annotations
 
 import pytest
@@ -19,7 +22,7 @@ def _force(monkeypatch, intent, **params):
 
 
 @pytest.mark.parametrize("intent, cible", [
-    ("RECHERCHE", "projets"), ("PROJET", "projets"), ("VEILLE", "surveillance"),
+    ("PROJET", "projets"), ("VEILLE", "surveillance"),
 ])
 def test_intent_hors_mission_donne_sa_voie(monkeypatch, intent, cible):
     _force(monkeypatch, intent)
@@ -28,11 +31,29 @@ def test_intent_hors_mission_donne_sa_voie(monkeypatch, intent, cible):
     assert (r.get("voie") or {}).get("cible") == cible
 
 
-def test_verification_voie_fiche_avec_idu(monkeypatch):
+def test_recherche_est_une_mission_lourde_pas_un_refus(monkeypatch):
+    # S9 — RECHERCHE (avec commune) → récap-péage dans le chat, jamais un refus-voie.
+    _force(monkeypatch, "RECHERCHE", commune="Saint-Leu", programme_logements=15)
+    r = answering.answer(None, "trouve des terrains à Saint-Leu pour 15 logements")
+    assert r.get("refus") is None
+    assert r.get("intent") == "RECHERCHE" and r.get("needs_confirmation") is True
+    assert r.get("brief_effectif")                      # le run partira de ce brief
+
+
+def test_recherche_sans_commune_demande_la_commune(monkeypatch):
+    _force(monkeypatch, "RECHERCHE")
+    r = answering.answer(None, "trouve des terrains")
+    assert r.get("refus") is None and r.get("needs_confirmation") is True
+    assert (r.get("clarification_recap") or {}).get("champ") == "commune"
+
+
+def test_verification_est_une_mission_lourde_avec_idu(monkeypatch):
+    # S9 — VERIFICATION → récap-péage (puis confirme → avis), plus un refus-voie fiche.
     _force(monkeypatch, "VERIFICATION", idu="97415000AC0016")
     r = answering.answer(None, "cette parcelle vaut-elle 320000 € ?")
-    v = r.get("voie") or {}
-    assert r.get("refus") == "hors_mission" and v.get("cible") == "fiche" and v.get("idu") == "97415000AC0016"
+    assert r.get("refus") is None
+    assert r.get("intent") == "VERIFICATION" and r.get("needs_confirmation") is True
+    assert "97415000AC0016" in (r.get("brief_effectif") or "")
 
 
 def test_outil_courrier_voie_courriers(monkeypatch):

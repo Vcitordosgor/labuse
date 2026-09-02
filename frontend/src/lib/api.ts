@@ -291,16 +291,8 @@ export const getStats = (f?: Filters) => getFiltre(f ?? EMPTY_FILTERS, 0).then((
 // M55-H point 5 : `groupes` = liste groupée par tier (mode analyse), tri secondaire dedans
 export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0, groupes = false) =>
   getFiltre(f ?? EMPTY_FILTERS, limit, sort, offset, groupes).then((r) => r.page)
-/** Export CSV de la liste courante — M46 (Lot D) : EXACTEMENT les mêmes facettes + interrupteur
- *  que la liste/compteur (même construction que getFiltre : facettes hors tiers + tiersParam).
- *  Plus jamais un export qui ignore un filtre actif.
- *  RETOURS-7 Z11 — OBSOLÈTE : l'export CSV a été retiré de la liste de résultats (décision Vic).
- *  Conservé (endpoint back `/parcels/export.csv` toujours servi) mais SANS appelant front. */
-export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') => {
-  const ff = f ?? EMPTY_FILTERS
-  const { tiers: _t, ...rest } = filterParams(ff)
-  return `/parcels/export.csv?${qf({ limit: 5000, sort, ...rest, ...tiersParam(ff) })}`
-}
+// SUITE-1 S7 — `csvExportUrl` + l'endpoint `/parcels/export.csv` SUPPRIMÉS (sans appelant depuis
+// RETOURS-7 Z11, décision Vic). L'export CSV du projet (`projetCsvUrl`) est distinct et conservé.
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 // OUTILS-2 (O2-4) — géométrie d'UNE parcelle (Feature + centroïde) pour tracer son contour sur l'écran

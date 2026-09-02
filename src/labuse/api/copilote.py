@@ -1,21 +1,27 @@
-"""M26-A — API du Copilote : runs, SSE, réponse de clarification, annulation.
+"""SUITE-1 S9 — API des MISSIONS LOURDES du Copilote (un seul Copilote : le v2).
+
+Historiquement l'« API Copilote v1 » (préfixe `/api/copilote`). SUITE-1 S9 retire v1 : ces endpoints
+passent sous le préfixe **`/api/copilote-v2`** (les URL `/api/copilote/*` n'existent plus) et le moteur
+de mission (`copilote/{executeur,moteurs,events,interpreteur,plans}`, run-scopé) devient le moteur
+lourd DU v2. Les intentions RECHERCHE/VERIFICATION du routeur v2 (`copilote_v2/answering.py`) mènent ici
+via le récap-péage → `POST /runs`.
 
 Tout est DÉRIVÉ de l'event log (source de vérité unique). Le SSE rejoue les événements
 existants (`after_seq` → reprise sans doublon ni trou) puis streame les nouveaux par
-polling de la table agent_events (intervalle _POLL_S — pas de LISTEN/NOTIFY en M26-A,
-décision GO). À la déconnexion du client, le générateur est fermé par Starlette : le run
-continue en arrière-plan, un rafraîchissement retombe sur le même fil via after_seq.
+polling de la table agent_events (intervalle _POLL_S — pas de LISTEN/NOTIFY, décision GO).
+À la déconnexion du client, le générateur est fermé par Starlette : le run continue en
+arrière-plan, un rafraîchissement retombe sur le même fil via after_seq.
 
-Quota (emplacement M23) : compté AVANT run_started, kind='agent', même scope que la
-propriété du run (décision Vic GO Q2) : compte connecté → sujet « c:<compte_id> » ;
-bucket pilote (compte NULL) → sujet session/IP de protection.sujet_de. Dépassement →
-429 honnête, même style que M23. LABUSE_DEV_MODE=1 désactive (comme partout).
+QUOTA UNIFIÉ (S9) : le plafond v1 distinct (kind='agent', `copilote_quota_jour`) DISPARAÎT. Le run
+lourd compte désormais sur le MÊME compteur que `/ask` — `quota_du_compte` (comptes.copilote_quota_jour
+édité au dashboard, sinon défaut config) + kind `QUOTA_COPILOTE_KIND`, scope « c:<compte_id> » (bucket
+pilote : session/IP). Dépassement → 429 honnête (repart à minuit) AVANT création du run. `LABUSE_DEV_MODE=1`
+désactive (comme partout).
 """
 from __future__ import annotations
 
 import json
 import time
-from datetime import date
 from typing import Iterator
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -33,7 +39,7 @@ from ..db import session_scope
 from .protection import compteur_incr_et_lire, sujet_de
 from .tenant import current_compte
 
-router = APIRouter(prefix="/api/copilote", tags=["copilote"])
+router = APIRouter(prefix="/api/copilote-v2", tags=["copilote-v2"])
 
 _POLL_S = 0.4          # intervalle de polling SSE (documenté M26A_RAPPORT)
 _SSE_MAX_S = 180.0     # filet : un flux SSE ne survit pas à 1,5× le budget d'un run
@@ -93,15 +99,18 @@ def creer_run(body: RunIn, request: Request, db: Session = Depends(get_db)) -> d
 
     s = config.get_settings()
     if not s.dev_mode:
-        sujet = _sujet_quota(request)
+        # SUITE-1 S9 — QUOTA UNIFIÉ : la MÊME source et le MÊME compteur que `/ask`
+        # (`quota_du_compte` + `QUOTA_COPILOTE_KIND`). Fini le plafond v1 distinct (kind 'agent',
+        # `copilote_quota_jour`). Compté AVANT création du run, scope propriété du run (c:<id> | session).
         from ..tz import today_reunion   # R2 — quota jour aligné minuit Réunion
-        n = compteur_incr_et_lire(today_reunion().isoformat(), sujet, "agent")
-        if n > s.copilote_quota_jour:
+        from .dashboard import quota_du_compte, QUOTA_COPILOTE_KIND
+        quota = quota_du_compte(current_compte(request)) or s.nl_quota_jour
+        n = compteur_incr_et_lire(today_reunion().isoformat(), _sujet_quota(request), QUOTA_COPILOTE_KIND)
+        if n > quota:
             # Même style de 429 que M23 (protection.py) : detail + quota + gel_jusqua.
             return JSONResponse(status_code=429, content={
-                "detail": f"Quota Copilote atteint ({s.copilote_quota_jour} runs/jour). "
-                          "Reprend à minuit.",
-                "quota": s.copilote_quota_jour, "gel_jusqua": "minuit"})
+                "detail": f"Quota Copilote atteint ({quota} runs/jour). Reprend à minuit.",
+                "quota": quota, "gel_jusqua": "minuit"})
 
     info = getattr(request.state, "compte_id", None)
     utilisateur_id = None
