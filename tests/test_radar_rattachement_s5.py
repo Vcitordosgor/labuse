@@ -235,6 +235,44 @@ def test_reverif_rend_les_non_rattachees_en_premier(seed):
             db.commit()
 
 
+def test_reverif_expose_le_rattachement_forte_en_un_clic(seed):
+    """RETOURS-10 (T1) — l'instruction humaine des candidates est retirée. Sur une annonce NON RATTACHÉE,
+    la file de re-vérif expose `rattachable_forte`+`piste_idu` UNIQUEMENT si la confiance stockée est
+    forte (≥ 0,85) ET qu'une 1re piste existe → le front propose « Rattacher » en un clic. Une confiance
+    faible ne rend AUCUN bouton (l'annonce reste « non rattachée », point)."""
+    import json
+
+    with session_scope() as db:
+        b_forte = _creer_bien(db)   # idu NULL, confiance forte + piste
+        b_faible = _creer_bien(db)  # idu NULL, confiance faible
+        db.execute(text("UPDATE pige_faits SET valide_at = now() WHERE bien_id IN (:a,:b)"),
+                   {"a": b_forte, "b": b_faible})
+        db.execute(text("UPDATE pige_biens SET rattachement_confiance = 0.92, "
+                        "rattachement_pistes = CAST(:p AS jsonb) WHERE bien_id = :b"),
+                   {"p": json.dumps([{"idu": seed["idu"]}]), "b": b_forte})
+        db.execute(text("UPDATE pige_biens SET rattachement_confiance = 0.40, "
+                        "rattachement_pistes = CAST(:p AS jsonb) WHERE bien_id = :b"),
+                   {"p": json.dumps([{"idu": seed["idu"]}]), "b": b_faible})
+        db.commit()
+    try:
+        import labuse.api.auth as auth
+        rows = _appeler_reverif(auth)
+        par_id = {r["bien_id"]: r for r in rows}
+        assert par_id[b_forte]["rattachable_forte"] is True
+        assert par_id[b_forte]["piste_idu"] == seed["idu"]
+        # confiance faible → aucune tâche : pas de bouton, pas d'idu de piste servi.
+        assert par_id[b_faible]["rattachable_forte"] is False
+        assert par_id[b_faible]["piste_idu"] is None
+        # les colonnes brutes de confiance/piste ne fuient pas dans la réponse (nettoyées).
+        assert "rattachement_confiance" not in par_id[b_forte]
+        assert "premiere_piste_idu" not in par_id[b_forte]
+    finally:
+        with session_scope() as db:
+            _purge(db, b_forte)
+            _purge(db, b_faible)
+            db.commit()
+
+
 def _appeler_reverif(auth_mod) -> list[dict]:
     """Appelle radar_reverif en neutralisant la garde admin (on teste la REQUÊTE/l'ordre, pas l'auth)."""
     from labuse.pige import api as pige_api

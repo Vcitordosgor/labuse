@@ -40,20 +40,14 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
     getNextPageParam: (last: any, pages) => { const n = pages.reduce((s, p: any) => s + (p.items?.length ?? 0), 0); return n < (last.n_total ?? 0) ? n : undefined },
     enabled: !!zone,
   })
-  const [chargeTout, setChargeTout] = useState(false)
-  useEffect(() => { setZone(null); setChargeTout(false) }, [commune])   // les zones AU diffèrent par commune → on repart à zéro
+  useEffect(() => { setZone(null) }, [commune])   // les zones AU diffèrent par commune → on repart à zéro
   const { setModuleMap, select } = useApp()   // fix : la liste était inerte (select non branché)
   const pages = (sim.data?.pages ?? []) as Record<string, any>[]
   const meta = pages[0]
   const items = pages.flatMap((p) => (p.items ?? []) as Record<string, any>[])
   const total = meta?.n_total ?? 0
 
-  // « Tout charger » : enchaîne les pages jusqu'à épuisement.
-  useEffect(() => {
-    if (!chargeTout) return
-    if (sim.hasNextPage && !sim.isFetchingNextPage) sim.fetchNextPage()
-    else if (!sim.hasNextPage) setChargeTout(false)
-  }, [chargeTout, sim.hasNextPage, sim.isFetchingNextPage, sim])
+  // RETOURS-10 (T3) — plus de « Tout charger » : on ne tire jamais tout d'un coup. « Voir 200 de plus ».
 
   useEffect(() => {
     setModuleMap({ idus: items.filter((i) => i.bascule_potentielle).map((i) => i.idu), extra: null })
@@ -62,7 +56,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
   }, [sim.dataUpdatedAt])
 
   // Annulation EFFECTIVE (Lot B, UI honnête) : abort la requête en vol + retour au choix de zone.
-  const annuler = () => { qc.cancelQueries({ queryKey: ['m15', zone, commune] }); setChargeTout(false); setZone(null) }
+  const annuler = () => { qc.cancelQueries({ queryKey: ['m15', zone, commune] }); setZone(null) }
 
   return (
     // §1a — un seul conteneur de défilement (wrapper ModulePanel = overflow-hidden).
@@ -112,12 +106,11 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
               </button>
             ))}
           </div>
-          {/* PAGINATION SOCLE — « Voir N de plus » + « Tout charger (total) », compteur toujours visible. */}
+          {/* PAGINATION SOCLE (RETOURS-10 T3) — « Voir N de plus » seul, compteur toujours visible. */}
           <ListPaginationFooter
             className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut"
-            shown={items.length} total={total} step={meta.cap ?? 400}
-            onMore={() => sim.fetchNextPage()} onAll={() => setChargeTout(true)}
-            allLabel={`Tout charger (${fmt(total)})`}>
+            shown={items.length} total={total} step={meta.cap ?? 200}
+            onMore={() => sim.fetchNextPage()}>
             {sim.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
           </ListPaginationFooter>
         </>

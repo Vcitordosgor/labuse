@@ -5,12 +5,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getRadarAInstruire, getRadarCheck, getRadarDepotAgenceEtat, getRadarExtraction, getRadarReverif,
+  getRadarCheck, getRadarDepotAgenceEtat, getRadarExtraction, getRadarReverif,
   postRadarDepotAgenceToggle, radarDeposer, radarDeposerHtml,
-  radarInstruire, radarPrix, radarRattacherHumain, radarRetiree, radarToujoursEnLigne, radarValider,
-  type RadarAInstruire, type RadarBrouillon, type RadarCritere, type RadarDepotHtml, type RadarPiste, type RadarReverif,
+  radarPrix, radarRattacherHumain, radarRetiree, radarToujoursEnLigne, radarValider,
+  type RadarBrouillon, type RadarDepotHtml, type RadarReverif,
 } from '../../lib/api'
-import { Declaratif } from '../outils/RadarDeclaratif'
 import { Lbl, Chip } from './AdminView'
 
 const NIV: Record<string, { label: string; tone: 'ok' | 'warn' | 'off' }> = {
@@ -228,11 +227,25 @@ function joursDepuis(iso: string | null): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
 }
 // S5 — le back expose `non_rattachee` (idu IS NULL) pour trier « à rattacher d'abord » + chip.
-function LigneReverif({ r, onInval }: { r: RadarReverif & { non_rattachee?: boolean }; onInval: () => void }) {
+// RETOURS-10 (T1) — sur une NON RATTACHÉE à confiance forte, un bouton « Rattacher » (1 clic humain) fait
+// le rattachement automatique proposé ; plus d'écran d'instruction. Confiance faible → aucune tâche.
+function LigneReverif({ r, onInval }: { r: RadarReverif; onInval: () => void }) {
+  const [ratt, setRatt] = useState(false)
+  const rattacher = () => {
+    if (!r.piste_idu) return
+    setRatt(true)
+    radarRattacherHumain(r.bien_id, r.piste_idu).then(onInval).catch(() => setRatt(false))
+  }
   return (
     <div className="flex flex-wrap items-center gap-2 py-2 text-[12px]">
       <span className="text-txt-mut">{fmtEur(r.prix)}</span>
       {r.non_rattachee && <Chip tone="warn">non rattachée</Chip>}
+      {r.rattachable_forte && (
+        <button data-radar-rattacher disabled={ratt} onClick={rattacher}
+          className="rounded-md bg-mint px-2.5 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-60">
+          {ratt ? 'Rattachement…' : 'Rattacher'}
+        </button>
+      )}
       {r.suivi_client && <Chip tone="ok">suivi client</Chip>}
       {r.proche_longue && <Chip tone="warn">≈ 90 j</Chip>}
       <a href={r.url_sortante} target="_blank" rel="noopener noreferrer"
@@ -253,9 +266,9 @@ function Reverif() {
   const { data } = useQuery({ queryKey: ['radar-reverif'], queryFn: getRadarReverif })
   const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
   const inval = () => { qc.invalidateQueries({ queryKey: ['radar-reverif'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
-  const items = (data?.file ?? []) as (RadarReverif & { non_rattachee?: boolean })[]
+  const items = data?.file ?? []
   // regroupement par commune, chaque item porte son ancienneté ; on garde le plus ancien contrôle du groupe.
-  const parCommune = new Map<string, (RadarReverif & { non_rattachee?: boolean })[]>()
+  const parCommune = new Map<string, RadarReverif[]>()
   for (const r of items) {
     const arr = parCommune.get(r.commune) ?? []
     arr.push(r)
@@ -291,176 +304,6 @@ function Reverif() {
         {items.length} annonce{items.length > 1 ? 's' : ''} à re-vérifier · <b className="text-txt">{check.data?.reverif_du_jour ?? 0}</b> vérifiée{(check.data?.reverif_du_jour ?? 0) > 1 ? 's' : ''} aujourd’hui
       </div>
     </div>
-  )
-}
-
-// ── Zone 3bis — INSTRUCTION (D3, ADMIN SEULEMENT) : rattacher un bien en piste via l'ortho ──
-// RADAR-DEPOT-2 D3 — le rattachement humain est un geste ADMIN (un rattachement client erroné serait
-// servi à tous). On relance la cascade à la demande, on compare les toits (ortho BD ORTHO 20 cm) avec
-// les critères ✓/✗, la zone DÉCLARÉE aide à trancher, puis « C'est cette parcelle » (fait foi).
-function InstructionCard({ b, onTranche }: { b: RadarAInstruire; onTranche: () => void }) {
-  const [instr, setInstr] = useState<{ busy: boolean; ouvert: boolean; cands?: RadarPiste[]; motif?: string | null }>({ busy: false, ouvert: false })
-  const [choix, setChoix] = useState<{ busy: boolean; idu?: string }>({ busy: false })
-  const [idx, setIdx] = useState(0)   // RETOURS-9 (Q7) — candidate courante (« Suivante » fait défiler)
-  const specs = b.type_bien === 'terrain'
-    ? (b.surface_terrain ? `${b.surface_terrain} m² terrain` : '')
-    : (b.surface_hab ? `${b.surface_hab} m² hab` : '')
-  const instruire = () => {
-    if (instr.ouvert) { setInstr((s) => ({ ...s, ouvert: false })); return }
-    setInstr({ busy: true, ouvert: true })
-    radarInstruire(b.bien_id)
-      .then((r) => setInstr({ busy: false, ouvert: true, cands: r.candidates, motif: r.motif }))
-      .catch(() => setInstr({ busy: false, ouvert: true, motif: 'échec — réessayer' }))
-  }
-  // RETOURS-8 (R5) — confiance FORTE = adresse BAN exacte ou position (rattachement à 1 clic sur la
-  // 1re candidate) ; FAIBLE = surface seule (±10 %) → passer par l'Instruction (ortho). Le POURQUOI
-  // vient des critères convergents déjà calculés (rattachement_criteres), jamais recalculé au front.
-  const forte = b.confiance === 'forte' && !!b.premiere_piste?.idu
-  const pourquoi = (b.rattachement_criteres ?? []).filter((c) => c.converge !== false)
-    .map((c) => `${c.critere} ${c.valeur}`).join(' · ')
-  const rattacher1clic = () => {
-    const idu = b.premiere_piste?.idu
-    if (!idu) return
-    setChoix({ busy: true, idu })
-    radarRattacherHumain(b.bien_id, idu).then(() => { setChoix({ busy: false }); onTranche() })
-      .catch(() => setChoix({ busy: false }))
-  }
-  return (
-    <div data-radar-instruction className="rounded-lg border border-line-2 bg-surface-1 p-3">
-      <div className="flex flex-wrap items-center gap-2 text-[12px]">
-        <span className="font-medium text-txt-hi">{b.commune}</span>
-        <span className="text-txt-mut">{(b.type_bien ?? '—')}{specs ? ` · ${specs}` : ''}</span>
-        <span className="text-txt-mut">{fmtEur(b.prix)}</span>
-        {/* RETOURS-8 (R5) — badge CONFIANCE (forte = vert · faible = ambre) + nb candidates. */}
-        <Chip tone={forte ? 'ok' : 'warn'} data-radar-confiance={b.confiance}>
-          {b.n_candidates} candidate{b.n_candidates > 1 ? 's' : ''} · confiance {b.confiance}
-        </Chip>
-        {b.url_sortante && <a href={b.url_sortante} target="_blank" rel="noopener noreferrer"
-          className="font-mono text-[10px] text-txt-dim underline decoration-dotted">source ↗</a>}
-        <span className="ml-auto flex items-center gap-1.5">
-          {/* forte → Rattacher en UN clic (humain, toujours) sur la 1re candidate. */}
-          {forte && (
-            <button data-radar-rattacher disabled={choix.busy} onClick={rattacher1clic}
-              className="rounded-md bg-mint px-2.5 py-1 text-[11.5px] font-medium text-mint-on hover:brightness-110 disabled:opacity-60">
-              {choix.busy ? 'Rattachement…' : 'Rattacher'}
-            </button>
-          )}
-          <button data-radar-instruire onClick={instruire}
-            className="rounded-md border border-amber/50 bg-amber/10 px-2.5 py-1 text-[11.5px] font-medium text-amber hover:bg-amber/20">
-            {instr.busy ? 'Instruction…' : instr.ouvert ? 'Fermer' : 'Instruire'}
-          </button>
-        </span>
-      </div>
-      {/* RETOURS-8 (R5) — le POURQUOI de la proposition, en clair (critères convergents). */}
-      {pourquoi && <div data-radar-pourquoi className="mt-1.5 text-[11px] leading-snug text-txt-mut">{pourquoi}</div>}
-      {/* la zone DÉCLARÉE (page d'annonce) aide à trier les candidates — déclaratif vendeur. */}
-      {b.declaratif && <div className="mt-2"><Declaratif d={b.declaratif} /></div>}
-      {/* RETOURS-9 (Q7) — écran INSTRUIRE : l'annonce et la candidate CÔTE À CÔTE, une ligne
-          « ce qui concorde / ce qui diverge », puis la décision (Rattacher · Suivante · Aucune).
-          Aucun calcul neuf : les faits candidate viennent de la fiche parcelle. */}
-      {instr.ouvert && instr.cands && (() => {
-        if (instr.cands.length === 0) return <div className="mt-2.5 text-[11px] text-txt-dim">{instr.motif || 'aucune candidate exploitable'}</div>
-        const c = instr.cands[Math.min(idx, instr.cands.length - 1)]
-        const fi = c.fiche
-        const m2 = (v?: number | null) => v != null ? `${v.toLocaleString('fr-FR')} m²` : '—'
-        const rattacher = () => { setChoix({ busy: true, idu: c.idu }); radarRattacherHumain(b.bien_id, c.idu)
-          .then(() => { setChoix({ busy: false }); onTranche() }).catch(() => setChoix({ busy: false })) }
-        return (
-          <div data-radar-instruire-ecran className="mt-2.5">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {/* ANNONCE */}
-              <div data-radar-annonce className="rounded-xl border border-line-2 bg-surface-2 p-2.5">
-                <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.14em] text-txt-dim">Annonce</div>
-                <Fait k="Type" v={b.type_bien ?? '—'} />
-                <Fait k="Surface habitable" v={m2(b.surface_hab)} />
-                <Fait k="Surface terrain" v={m2(b.surface_terrain)} />
-                <Fait k="Prix" v={fmtEur(b.prix)} />
-                <Fait k="Quartier / commune" v={b.commune} />
-                {b.url_sortante && <a href={b.url_sortante} target="_blank" rel="noopener noreferrer"
-                  className="mt-1 inline-block font-mono text-[10px] text-mint underline decoration-dotted">voir l'annonce (photos) ↗</a>}
-              </div>
-              {/* CANDIDATE */}
-              <div data-radar-candidate data-radar-candidate-idu={c.idu} className="rounded-xl border border-line-2 bg-surface-2 p-2.5">
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-txt-dim">Candidate {instr.cands.length > 1 ? `${Math.min(idx, instr.cands.length - 1) + 1}/${instr.cands.length}` : ''}</span>
-                  {c.distance_m != null && <span className="text-[10px] text-txt-dim">{Math.round(c.distance_m)} m du point</span>}
-                </div>
-                <div className="mb-1.5 grid grid-cols-[64px_1fr] gap-2">
-                  {c.ortho_url
-                    ? <img src={c.ortho_url} alt={`ortho ${c.idu}`} className="h-16 w-16 rounded object-cover" loading="lazy" />
-                    : <div className="flex h-16 w-16 items-center justify-center rounded bg-surface-3 text-[9px] text-txt-dim">ortho indispo.</div>}
-                  <span className="self-center font-mono text-[11px] text-txt">{c.idu}</span>
-                </div>
-                <Fait k="Surface cadastrale" v={m2(fi?.surface_cadastrale)} />
-                <Fait k="Surface bâtie (BD TOPO)" v={m2(fi?.surface_bati)} />
-                <Fait k="Bâtiments" v={fi?.n_batiments != null ? String(fi.n_batiments) : '—'} />
-                <Fait k="Zone PLU" v={fi?.zone_plu ?? '—'} />
-                <Fait k="Adresse BAN" v={fi?.adresse_ban ?? '—'} />
-              </div>
-            </div>
-
-            {/* concordance / divergence — les critères déjà calculés, en clair */}
-            <div data-radar-concordance className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border border-line bg-surface-1 px-2.5 py-1.5 text-[10.5px]">
-              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-txt-dim">Concorde / diverge</span>
-              {(c.criteres_detail ?? []).map((x: RadarCritere, i: number) => (
-                <span key={i} className={x.converge ? 'text-mint' : 'text-coral'}>
-                  {x.converge ? '✓' : '✗'} <span className="text-txt-mut">{x.critere}</span> {x.valeur}
-                </span>
-              ))}
-              {(c.criteres_detail ?? []).length === 0 && <span className="text-txt-dim">critères non disponibles</span>}
-              <span className="ml-auto"><Chip tone={b.confiance === 'forte' ? 'ok' : 'warn'}>confiance {b.confiance}</Chip></span>
-            </div>
-
-            {/* décision : Rattacher · Suivante · Aucune */}
-            <div className="mt-2 flex items-center gap-1.5">
-              <button data-radar-choisir disabled={choix.busy} onClick={rattacher}
-                className="rounded-md bg-mint px-3 py-1 text-[11.5px] font-medium text-mint-on hover:brightness-110 disabled:opacity-60">
-                {choix.busy && choix.idu === c.idu ? 'Enregistrement…' : 'Rattacher'}
-              </button>
-              {instr.cands.length > 1 && (
-                <button data-radar-suivante onClick={() => setIdx((i) => (i + 1) % instr.cands!.length)}
-                  className="rounded-md border border-line-2 px-3 py-1 text-[11.5px] text-txt-mut hover:text-txt">
-                  Suivante
-                </button>
-              )}
-              <button data-radar-aucune onClick={() => setInstr((s) => ({ ...s, ouvert: false }))}
-                className="rounded-md border border-line-2 px-3 py-1 text-[11.5px] text-txt-mut hover:text-txt">
-                Aucune
-              </button>
-            </div>
-          </div>
-        )
-      })()}
-    </div>
-  )
-}
-
-// RETOURS-9 (Q7) — une ligne « clé : valeur » compacte pour les colonnes annonce/candidate.
-function Fait({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-2 py-px text-[11px]">
-      <span className="shrink-0 text-txt-dim">{k}</span>
-      <span className={`text-right ${v === '—' ? 'text-txt-mut' : 'text-txt'}`}>{v}</span>
-    </div>
-  )
-}
-
-function Instruction() {
-  const qc = useQueryClient()
-  const { data } = useQuery({ queryKey: ['radar-a-instruire'], queryFn: getRadarAInstruire })
-  const inval = () => { qc.invalidateQueries({ queryKey: ['radar-a-instruire'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
-  return (
-    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
-      <Lbl>3bis · Instruction <span className="text-txt-dim">— {data?.n ?? 0} en piste · admin</span></Lbl>
-      <p className="mb-2 text-[11px] leading-relaxed text-txt-mut">
-        Le rattachement d’une parcelle est un geste d’admin : le client ne rattache jamais. Comparez les
-        toits (ortho) avec les critères, puis tranchez — ce choix fait foi.
-      </p>
-      {data?.n === 0 && <div className="py-4 text-center text-[12px] text-txt-dim">aucun bien en piste ✓</div>}
-      <div className="flex flex-col gap-2">
-        {data?.file.map((b) => <InstructionCard key={b.bien_id} b={b} onTranche={inval} />)}
-      </div>
-    </section>
   )
 }
 
@@ -577,21 +420,22 @@ function DeposerPanel() {
   )
 }
 
-// RETOURS-8 (R5) — la pige EN ONGLETS (maquette section 1) : 4 chiffres en tête disent où en est la
+// RETOURS-8 (R5) — la pige EN ONGLETS (maquette section 1) : des chiffres en tête disent où en est la
 // pige, puis un onglet par tâche (on n'empile plus, on ne descend plus). L'onglet ouvert par défaut est
 // le PREMIER qui a du travail. Le dépôt HTML est un onglet comme les autres.
-type RadarTab = 'deposer' | 'valider' | 'rattacher' | 'reverifier' | 'check'
+// RETOURS-10 (T1) — l'onglet « À rattacher » (instruction humaine des candidates) est retiré : le
+// rattachement à confiance forte se fait désormais d'un clic dans la re-vérification.
+type RadarTab = 'deposer' | 'valider' | 'reverifier' | 'check'
 
 export function RadarSection() {
   const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
   const d = check.data
   const enVie = d?.annonces_en_vie ?? 0
-  const aRattacher = d?.a_rattacher ?? 0
   const aValider = d?.file_extraction ?? 0
   const reverifDues = d?.reverif_dues ?? 0
   const reverifJour = d?.reverif_du_jour ?? 0
-  // onglet par défaut = le premier qui a du travail (À valider → À rattacher → Re-vérifier → Déposer).
-  const defaut: RadarTab = aValider > 0 ? 'valider' : aRattacher > 0 ? 'rattacher'
+  // onglet par défaut = le premier qui a du travail (À valider → Re-vérifier → Déposer).
+  const defaut: RadarTab = aValider > 0 ? 'valider'
     : reverifDues > 0 ? 'reverifier' : 'deposer'
   const [tab, setTab] = useState<RadarTab | null>(null)
   const actif = tab ?? defaut
@@ -613,10 +457,11 @@ export function RadarSection() {
   return (
     <div className="flex flex-col gap-4">
       <Bandeau />
-      {/* 4 chiffres en tête (maquette) : annonces en vie · à rattacher · à valider · re-vérifiées/dues. */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* RETOURS-10 (T1) — TROIS chiffres en tête : annonces en vie · à valider · re-vérifiées/dues.
+          Le « à rattacher » disparaît (plus d'instruction). Le compteur « rattachées N / M » reste,
+          lui, sur Circuit et Pilotage. */}
+      <div className="grid grid-cols-3 gap-2">
         <Kpi n={enVie} sub="annonces en vie" />
-        <Kpi n={aRattacher} sub="à rattacher à une parcelle" tone="a" />
         <Kpi n={aValider} sub="à valider (file d’extraction)" tone="g" />
         <Kpi n={<>{reverifJour} <span className="text-[11px] text-txt-dim">/ {reverifDues} dues</span></>} sub="re-vérifiées aujourd’hui" />
       </div>
@@ -624,13 +469,11 @@ export function RadarSection() {
       <div className="flex gap-5 overflow-x-auto border-b border-line">
         <Onglet k="deposer">Déposer</Onglet>
         <Onglet k="valider" n={aValider} tone="a">À valider</Onglet>
-        <Onglet k="rattacher" n={aRattacher} tone="a">À rattacher</Onglet>
         <Onglet k="reverifier" n={reverifDues} tone="a">Re-vérifier</Onglet>
         <Onglet k="check">Check du jour</Onglet>
       </div>
       {actif === 'deposer' && <DeposerPanel />}
       {actif === 'valider' && <Extraction />}
-      {actif === 'rattacher' && <Instruction />}
       {actif === 'reverifier' && <Reverif />}
       {actif === 'check' && <Check />}
     </div>

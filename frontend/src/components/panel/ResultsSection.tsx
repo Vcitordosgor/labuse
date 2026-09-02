@@ -10,6 +10,7 @@ import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
+import { usePagination } from '../ListPagination'
 
 
 // M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
@@ -154,8 +155,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
 // actifs) ». Le concept « opportunités » (brûlantes + chaudes) reste vivant : tooltip de la
 // ventilation (uni.data.opportunites) + champ API /filtre + outil blocB (autre endpoint).
 
-const CAP = 200          // slice client — mode commune uniquement (le GeoJSON est déjà complet)
-const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset serveur)
+const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset serveur) — RETOURS-10 T3 : 200 partout
 
 //: tris (M5.1 lot 1.3) — rang P par défaut ; le tri par V a disparu du sélecteur.
 // B3 (M12) : libellés client centralisés (CLIENT.tri) ; « rang P » → « classement ».
@@ -219,7 +219,6 @@ const TIER_ZERO: Record<TierV2 | 'all', number> = {
 export function ResultsSection() {
   const { filters, query, zone, resetFilters, commune, setCommune } = useApp()
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
-  const [showAll, setShowAll] = useState(false)
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Mode FACTUEL (analyse OFF) : liste neutre, tri Surface seul, aucune ventilation d'opinion.
   const analyse = filters.analyseLabuse
@@ -311,9 +310,11 @@ export function ResultsSection() {
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
     return sortRows(filtered, sort, groupes)
   }, [ile, serverRows, props, filters, zone, qNorm, sort, groupes])
-  // E3 : en mode île, la liste paginée est déjà bornée par ce qui a été chargé → tout afficher.
-  // En mode commune, le GeoJSON est complet → on garde le slice client + « Tout voir ».
-  const shown = ile || showAll ? list : list.slice(0, CAP)
+  // RETOURS-10 (T3) — mode commune : le GeoJSON est complet en mémoire, mais on ne le déverse JAMAIS d'un
+  // coup (« Tout voir » figeait l'app). Fenêtre de 200, « Voir 200 de plus » incrémental (usePagination),
+  // position de défilement conservée (on APPEND). Mode île : la pagination serveur (200/page) borne déjà.
+  const pg = usePagination(list.length)
+  const shown = ile ? list : list.slice(0, pg.shown)
 
   const loading = ile ? serverList.isLoading : geo.isLoading
   const error = ile ? serverList.isError : geo.isError
@@ -488,18 +489,19 @@ export function ResultsSection() {
         <span className="flex shrink-0 items-center gap-2">
           {/* RETOURS-7 Z11 — export CSV RETIRÉ de la liste (décision Vic). SUITE-1 S7 : l'endpoint
               /parcels/export.csv et `csvExportUrl` ont été supprimés (code mort sans appelant). */}
-          {/* E3 : île → pagination serveur (Charger plus) ; commune → slice client (Tout voir). */}
+          {/* RETOURS-10 (T3) — UN SEUL geste « Voir 200 de plus » (jamais « Tout voir ») : île → page
+              serveur suivante ; commune → fenêtre client +200. Jamais de chargement massif. */}
           {ile ? (
             serverList.hasNextPage && (
-              <button onClick={() => serverList.fetchNextPage()} disabled={serverList.isFetchingNextPage}
+              <button data-results-more onClick={() => serverList.fetchNextPage()} disabled={serverList.isFetchingNextPage}
                 className="text-xs text-mint hover:underline disabled:opacity-50">
-                {serverList.isFetchingNextPage ? 'Chargement…' : 'Charger plus →'}
+                {serverList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
               </button>
             )
           ) : (
-            list.length > CAP && (
-              <button onClick={() => setShowAll((v) => !v)} className="text-xs text-mint hover:underline">
-                {showAll ? 'Réduire' : 'Tout voir →'}
+            pg.hasMore && (
+              <button data-results-more onClick={pg.more} className="text-xs text-mint hover:underline">
+                Voir {fmt(Math.min(pg.step, list.length - pg.shown))} de plus →
               </button>
             )
           )}

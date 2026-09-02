@@ -43,8 +43,7 @@ export function M22() {
   // pagine les résultats par `offset`. « Trouver » (re)pose le snapshot ; changer le formulaire ne
   // relance rien tant qu'on ne resoumet pas (comportement d'avant, + pagination).
   const [query, setQuery] = useState<Record<string, unknown> | null>(null)
-  const [chargeTout, setChargeTout] = useState(false)
-  const lancer = (f = form, c = commune) => { setChargeTout(false); setQuery({ ...f, commune: c, coef_circulation: 1 + f.circulation_pct / 100 }) }
+  const lancer = (f = form, c = commune) => { setQuery({ ...f, commune: c, coef_circulation: 1 + f.circulation_pct / 100 }) }
   const results = useInfiniteQuery({
     queryKey: ['programme', query],
     queryFn: ({ pageParam }) => postProgramme({ ...(query as Record<string, unknown>), offset: pageParam }),
@@ -81,12 +80,7 @@ export function M22() {
   const meta = pages[0]
   const items = pages.flatMap((p) => (p.items ?? []) as Record<string, any>[])
   const total = meta?.n ?? 0
-  // « Tout charger » : enchaîne les pages jusqu'à épuisement.
-  useEffect(() => {
-    if (!chargeTout) return
-    if (results.hasNextPage && !results.isFetchingNextPage) results.fetchNextPage()
-    else if (!results.hasNextPage) setChargeTout(false)
-  }, [chargeTout, results.hasNextPage, results.isFetchingNextPage, results])
+  // RETOURS-10 (T3) — plus de « Tout charger » : « Voir 200 de plus » seul, jamais de tir massif.
   // carte : résultats en mode critères (accumulés), parcelle désignée en mode parcelle
   useEffect(() => {
     const idus = mode === 'criteres' ? items.map((i) => i.idu as string) : (picked ? [picked] : [])
@@ -182,8 +176,7 @@ export function M22() {
               <ListPaginationFooter
                 className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut"
                 shown={items.length} total={total} step={meta.cap ?? 200}
-                onMore={() => results.fetchNextPage()} onAll={() => setChargeTout(true)}
-                allLabel={`Tout charger (${fmtInt(total)})`}>
+                onMore={() => results.fetchNextPage()}>
                 {results.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
                 <button data-prog-csv onClick={() => exportProgrammeCsv(items)}
                   className="ml-auto text-[11px] text-mint hover:underline">⬇ Exporter CSV</button>

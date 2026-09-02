@@ -238,10 +238,11 @@ export function SourcesPage() {
                 { v: String(nAJour), l: 'à jour', mint: true },
                 { v: couverture?.parcelles != null ? couverture.parcelles.toLocaleString('fr-FR') : '—', l: 'parcelles couvertes', mint: false },
                 { v: couverture?.communes != null ? `${couverture.communes}/${couverture.communes_total}` : '—', l: 'communes', mint: false },
-                { v: couverture?.analyse_date ? `arrêtée au ${new Date(couverture.analyse_date).toLocaleDateString('fr-FR')}` : '—', l: 'dernière analyse', mint: false, small: true },
+                // RETOURS-10 (T7) — la tuile « dernière analyse » est retirée : la date de l'analyse
+                // vit déjà sur les fiches et dans Projets. Les quatre tuiles restantes se répartissent la ligne.
               ] as const).map((t, i) => (
                 <div key={i} className="min-w-[130px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
-                  <b className={`block font-semibold leading-tight ${'small' in t && t.small ? 'text-[15px]' : 'text-[26px]'} ${t.mint ? 'text-mint' : 'text-txt-hi'}`}>{t.v}</b>
+                  <b className={`block font-semibold leading-tight text-[26px] ${t.mint ? 'text-mint' : 'text-txt-hi'}`}>{t.v}</b>
                   <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">{t.l}</span>
                 </div>
               ))}

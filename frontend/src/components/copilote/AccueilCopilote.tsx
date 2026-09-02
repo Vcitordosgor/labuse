@@ -171,21 +171,15 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
           {occupe ? '…' : 'Envoyer'}
         </button>
       </div>
-      <p data-accueil-aide className="mb-2 text-center text-[12px] text-cp-faint">
-        {meta?.aide ?? 'Le Copilote comprend ce que vous demandez — rien à choisir.'}
-      </p>
-      {/* RETOURS-8 (R11.1) — dire en une ligne le comportement des fils : cette zone ouvre un NOUVEAU
-          fil ; « Répondre » (sous une réponse) continue le fil en cours. */}
-      <p data-accueil-fils className="mb-5 text-center text-[11px] text-cp-faint">
-        Cette zone ouvre un nouveau fil ; « Répondre » continue le fil en cours.
-      </p>
-
-      {/* RETOURS-9 (Q10.4) — trois exemples cliquables (raccourcis R12). Cliquer LANCE la question. */}
+      {/* RETOURS-10 (T5) — les deux phrases d'aide (« rien à choisir » / « nouveau fil ») sont RETIRÉES :
+          le champ + les exemples suffisent. Les trois exemples deviennent des chips DISCRÈTES sous le
+          champ (texte muet, contour ligne au repos ; plein mauve profond au survol via .hover-fill-ia).
+          Cliquer LANCE la question (raccourcis R12). */}
       {!reponse && onExemple && (
         <div data-accueil-exemples className="mb-9 flex flex-wrap justify-center gap-2">
           {EXEMPLES_R12.map((ex) => (
             <button key={ex} data-accueil-exemple onClick={() => onExemple(ex)} disabled={occupe}
-              className="rounded-full border border-cp-ia/40 bg-cp-ia/[0.08] px-3 py-1.5 text-[12px] text-cp-ia transition-colors duration-quick hover:bg-cp-ia hover:text-cp-ia-on disabled:opacity-40">
+              className="hover-fill-ia rounded-full border border-cp-line px-3 py-1.5 text-[12px] text-cp-muted transition-colors duration-quick hover:border-transparent disabled:opacity-40">
               {ex}
             </button>
           ))}
@@ -199,20 +193,19 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
         // RETOURS-7 Z2 — même marge (mb-8) que « Reprendre » ci-dessous.
         <div data-accueil-capacites className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">CE QU'IL SAIT FAIRE</p>
-          {/* RETOURS-3 R12 — chaque capacité porte une TUILE d'icône contrastée (mauve 22 %/48 %) ; le
-              bloc reste NON cliquable (curseur défaut, aucun état).
-              RETOURS-7 Z2 — grille 2×2 à GOUTTIÈRES RÉGULIÈRES (gap-4 = même espace horizontal et
-              vertical) ; chaque exemple sur UNE ligne (truncate) → toutes les tuiles à la même hauteur,
-              alignées sur la première ligne de texte (items-start). */}
-          <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2">
+          {/* RETOURS-10 (T5) — « une ligne de quatre, plus léger » (maquette) : les 4 capacités en colonne
+              (icône mauve LÉGÈRE dessus, libellé, exemple dessous), quatre de front sur écran large, deux
+              par deux en dessous. Toujours NON cliquable (curseur défaut, aucun état). L'icône passe en
+              tuile discrète (mauve ~10 %, sans contour) — plus l'aplat contrasté d'avant. */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-5 min-[560px]:grid-cols-4">
             {meta.capacites.map((c) => (
-              <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle} className="flex cursor-default items-start gap-3">
-                <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border border-cp-ia/[0.48] bg-cp-ia/[0.22] text-cp-ia">
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{CAP_ICONS[c.cle] ?? CAP_ICON_FALLBACK}</svg>
+              <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle} className="flex cursor-default flex-col gap-1.5">
+                <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-cp-ia/[0.10] text-cp-ia">
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{CAP_ICONS[c.cle] ?? CAP_ICON_FALLBACK}</svg>
                 </span>
                 <div className="min-w-0">
-                  <div className="mb-[3px] text-[14px] leading-[1.45] font-medium text-cp-txt">{c.libelle}</div>
-                  <div className="truncate text-[12px] leading-[1.45] text-cp-muted" title={c.exemple}>« {c.exemple} »</div>
+                  <div className="text-[13px] leading-[1.35] font-medium text-cp-txt">{c.libelle}</div>
+                  <div className="mt-[3px] text-[11.5px] leading-[1.35] text-cp-faint" title={c.exemple}>« {c.exemple} »</div>
                 </div>
               </div>
             ))}
@@ -230,7 +223,17 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {/* REPRENDRE — conversations passées, dédoublonnées, datées en relatif, 4 max puis « voir tout ». */}
       {!reponse && questions.length > 0 && (
         <div data-accueil-historique className="mb-8">
-          <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">REPRENDRE</p>
+          {/* RETOURS-10 (T5) — « voir tout · N » remonte dans l'EN-TÊTE de section (à droite), comme la
+              maquette ; il n'y a plus de bouton séparé sous la liste. Toujours quatre fils au repos. */}
+          <div className="mb-2.5 flex items-baseline justify-between font-mono text-[10px] tracking-[.12em] text-cp-faint">
+            <span>REPRENDRE</span>
+            {questions.length > 4 && (
+              <button data-histo-tout onClick={() => setToutHisto((v) => !v)}
+                className="tracking-[.06em] text-cp-muted transition-colors duration-quick hover:text-cp-txt">
+                {toutHisto ? 'réduire' : `voir tout · ${questions.length}`}
+              </button>
+            )}
+          </div>
           <div className="flex flex-col">
             {/* RETOURS-3 R12 / RETOURS-4 S8 — survol PLEIN mauve PROFOND (dégradé, texte inversé sombre) via
                 .hover-fill-ia, comme partout ; la date « il y a N j » ne se tronque jamais (whitespace-nowrap). */}
@@ -243,12 +246,6 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
               </button>
             ))}
           </div>
-          {questions.length > 4 && (
-            <button data-histo-tout onClick={() => setToutHisto((v) => !v)}
-              className="mt-3 font-mono text-[11px] tracking-[.06em] text-cp-muted hover:text-cp-txt">
-              {toutHisto ? 'RÉDUIRE' : `VOIR TOUT · ${questions.length}`}
-            </button>
-          )}
           {/* RETOURS-8 (R11.3) — bandeau discret : la rétention est dite, jamais cachée. */}
           <p data-accueil-retention className="mt-3 text-[11px] text-cp-faint">
             Vos conversations sont conservées {retentionJours} jour{retentionJours > 1 ? 's' : ''}.

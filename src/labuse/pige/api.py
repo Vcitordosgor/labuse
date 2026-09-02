@@ -125,6 +125,8 @@ def radar_reverif(request: Request) -> dict:
             f"""SELECT b.bien_id, b.commune, b.type_bien, b.statut, f.prix, a.portail, a.url_sortante,
                       b.date_derniere_confirmation, b.date_publication,
                       (b.idu IS NULL) AS non_rattachee,
+                      b.rattachement_confiance,
+                      (b.rattachement_pistes -> 0 ->> 'idu') AS premiere_piste_idu,
                       EXISTS (SELECT 1 FROM watched_parcels w WHERE w.idu = b.idu) AS suivi_client,
                       (b.date_publication IS NOT NULL
                        AND b.date_publication <= current_date - {SEUIL_VENTE_LONGUE_J}) AS proche_longue
@@ -137,6 +139,16 @@ def radar_reverif(request: Request) -> dict:
     for r in rows:
         for k in ("date_derniere_confirmation", "date_publication"):
             r[k] = r[k].isoformat() if r[k] else None
+        # RETOURS-10 (T1) — l'instruction humaine des candidates est retirée : il ne reste, sur la ligne
+        # d'une annonce NON RATTACHÉE, que le rattachement AUTOMATIQUE à CONFIANCE FORTE (adresse BAN
+        # exacte ou position, ≥ 0,85 — même seuil que l'ex-« À rattacher »), proposé en un bouton
+        # « Rattacher » (un clic humain). Faible → pas de tâche : l'annonce reste « non rattachée ».
+        # Aucun calcul neuf : on relit la confiance et la 1re piste déjà stockées à la validation.
+        conf = r.pop("rattachement_confiance", None)
+        idu_piste = r.pop("premiere_piste_idu", None)
+        r["rattachable_forte"] = bool(r.get("non_rattachee") and conf is not None
+                                      and float(conf) >= 0.85 and idu_piste)
+        r["piste_idu"] = idu_piste if r["rattachable_forte"] else None
     return {"file": rows, "n": len(rows)}
 
 

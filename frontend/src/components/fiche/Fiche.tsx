@@ -11,6 +11,7 @@ import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
+import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
 import { AvisIA } from '../AvisIA'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
@@ -1633,34 +1634,40 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           </div>
 
-        {/* RETOURS-9 (Q8.2) — sous l'IDU, trois BOUTONS PLEINS du gabarit des tuiles d'export, texte en
-            toutes lettres : Cadastre Géoportail (vert) · Pages jaunes (jaune) · Google Maps (blanc).
-            Ils quittent définitivement la grille Exports. Chacun s'ouvre dans un nouvel onglet. */}
-        {f && (f.coords || f.adresse) && (
-          <div data-fiche-liens-externes className="mt-2 grid grid-cols-3 gap-1.5 px-[14px]">
-            {f.coords ? (
-              <a data-cadastre-link title={CLIENT.fiche.export.cadastreTip} target="_blank" rel="noreferrer noopener"
-                href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
-                className="flex items-center justify-center rounded-lg border border-mint bg-mint px-2 py-2 text-center text-[11.5px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110">
-                Cadastre Géoportail
-              </a>
-            ) : <span />}
-            {f.adresse ? (
-              <a data-fiche-pj title={CLIENT.fiche.pagesJaunesTip} target="_blank" rel="noreferrer noopener"
-                href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
-                className="flex items-center justify-center rounded-lg border border-amber bg-amber px-2 py-2 text-center text-[11.5px] font-semibold text-[#2A2113] transition-[filter] duration-quick hover:brightness-110">
-                Pages jaunes
-              </a>
-            ) : <span />}
-            {f.coords ? (
-              <a data-maps-link title="Ouvrir dans Google Maps (épingle sur la parcelle)" target="_blank" rel="noreferrer noopener"
-                href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
-                className="flex items-center justify-center rounded-lg border border-line-2 bg-white px-2 py-2 text-center text-[11.5px] font-semibold text-[#111614] transition-[filter] duration-quick hover:brightness-95">
-                Google Maps
-              </a>
-            ) : <span />}
-          </div>
-        )}
+        {/* RETOURS-10 (T4, maquette variante A) — sous l'IDU, trois PASTILLES CONTOUR, chacune sa couleur
+            (Cadastre vert · Pages jaunes ambre · Google Maps blanc), PLEINES au survol ET au clic (:active).
+            Fini les pavés pleins qui écrasaient l'IDU. Les URL sont construites par des fonctions pures
+            testées (liensExternes.ts) : Cadastre & Maps centrés sur le centroïde, Pages jaunes sur
+            l'adresse exacte — repli commune seule dûment annoncé. La ligne de chiffres reste juste dessous. */}
+        {f && (() => {
+          const pj = pagesJaunes(f.adresse, f.commune)
+          if (!f.coords && !pj.url) return null
+          return (
+            <div data-fiche-liens-externes className="mt-2 flex gap-1.5 px-[14px]">
+              {f.coords ? (
+                <a data-cadastre-link title={CLIENT.fiche.export.cadastreTip} target="_blank" rel="noreferrer noopener"
+                  href={cadastreGeoportailUrl(f.coords)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-mint bg-transparent px-2 py-2 text-center text-[11.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint hover:text-mint-ink active:bg-mint active:text-mint-ink">
+                  <span aria-hidden className="text-[13px] leading-none opacity-90">▦</span>Cadastre Géoportail
+                </a>
+              ) : <span className="flex-1" />}
+              {pj.url ? (
+                <a data-fiche-pj data-pj-commune-seule={pj.commune_seule || undefined} title={CLIENT.fiche.pagesJaunesTip}
+                  target="_blank" rel="noreferrer noopener" href={pj.url}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber bg-transparent px-2 py-2 text-center text-[11.5px] font-semibold text-amber transition-colors duration-quick hover:bg-amber hover:text-[#2A2113] active:bg-amber active:text-[#2A2113]">
+                  <span aria-hidden className="text-[13px] leading-none opacity-90">☎</span>{pj.commune_seule ? 'Pages jaunes — commune' : 'Pages jaunes'}
+                </a>
+              ) : <span className="flex-1" />}
+              {f.coords ? (
+                <a data-maps-link title="Ouvrir dans Google Maps (épingle sur la parcelle)" target="_blank" rel="noreferrer noopener"
+                  href={googleMapsUrl(f.coords)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line-2 bg-transparent px-2 py-2 text-center text-[11.5px] font-semibold text-txt transition-colors duration-quick hover:bg-white hover:text-[#111614] active:bg-white active:text-[#111614]">
+                  <span aria-hidden className="text-[13px] leading-none opacity-90">◎</span>Google Maps
+                </a>
+              ) : <span className="flex-1" />}
+            </div>
+          )
+        })()}
 
         {/* M55-O phase 2.1 — BANDEAU DE 4 CHIFFRES (toujours visible, factuel, aucun avis) :
             Surface · Zone · SDP disponible · Prix secteur €/m². Valeurs SERVIES (jamais en dur) ;
