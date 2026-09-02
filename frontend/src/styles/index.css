@@ -151,6 +151,12 @@
     .hover-fill-ia:hover { background:var(--fill-mauve); color:var(--mauve-ink); }
     .hover-fill-ia:hover * { color:var(--mauve-ink) !important; }
   }
+  /* ADMIN-1 AD1 — variante AMBRE (« + Projet » de la fiche) : aplat ambre profond, encre presque noire. */
+  .hover-fill-amber { transition:background .15s, color .15s, border-color .15s; }
+  @media (hover:hover) and (pointer:fine) {
+    .hover-fill-amber:hover { background:var(--fill-amber); border-color:#D99A2E; color:var(--ink); }
+    .hover-fill-amber:hover * { color:var(--ink) !important; }
+  }
 
   /* RETOURS-4 S3 — survol PLEIN sur des surfaces à STYLES INLINE (Projets : lignes de « Vos projets » et
      onglets Actifs/Archivés/Mes courriers). L'aplat mint et l'inversion du contenu passent par !important
@@ -388,12 +394,15 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* actions de pied */
 .fiche-v6 .actions { display:flex; gap:7px; margin-top:20px; }
 .fiche-v6 .act { flex:1; min-height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }
-/* RETOURS-7 Z1 — « + CRM » et « + Projet » : DEUX boutons de largeur égale, style NEUTRE identique
-   (bord filet-carte, fond carte), survol PLEIN vert via .hover-fill. Le mauve (--iris) est retiré des
-   deux (réservé à l'IA). Les états « fait » restent lisibles : CRM dedans = .act-cmp, Projet actif =
-   accent menthe (jamais mauve). */
+/* ADMIN-1 AD1 — « + CRM » = VERT (contour --mint, survol plein vert via .hover-fill), « + Projet » =
+   JAUNE (contour + texte --amber, même famille que la chip « Fiche commune », survol plein ambre via
+   .hover-fill-amber). DEUX boutons de largeur égale (flex:1 sur .act). Aucun mauve (réservé à l'IA).
+   États « fait » lisibles : CRM dedans = .act-cmp, Projet rattaché = accent ambre (.act-amber-on). */
 .fiche-v6 .act-neutre { border:0.5px solid var(--line-card); background:var(--bg-2); color:var(--txt); font-weight:500; }
 .fiche-v6 .act-neutre-on { border:0.5px solid var(--mint); background:var(--mint-bg); color:var(--mint); font-weight:500; }
+.fiche-v6 .act-mint { border:0.5px solid var(--mint); background:var(--bg-2); color:var(--mint); font-weight:500; }
+.fiche-v6 .act-amber { border:0.5px solid var(--amber); background:var(--bg-2); color:var(--amber); font-weight:500; }
+.fiche-v6 .act-amber-on { border:0.5px solid var(--amber); background:var(--amber-bg); color:var(--amber); font-weight:500; }
 .fiche-v6 .act-cmp { border:0.5px solid var(--line-btn); background:none; color:var(--txt); }
 
 /* exports en carte : grille 4 colonnes + bandeau large */

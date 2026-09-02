@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -149,11 +150,17 @@ def admin_contacts(request: Request):
     exiger_admin(request)
     with session_scope() as db:
         mairies = [dict(r) for r in db.execute(text(
-            "SELECT commune, nom, adresse, code_postal, telephone, email, site_officiel, url_annuaire, "
+            "SELECT insee, commune, nom, adresse, code_postal, telephone, email, site_officiel, url_annuaire, "
             "       source, date_import "
             "FROM mairies ORDER BY commune")).mappings()]
+        # ADMIN-1 (AD10) — contacts nommés ajoutés, groupés par INSEE, pour enrichir les cartes commune.
+        from .. import commune_contacts as _cc
+        contacts_par_insee: dict[str, list] = {}
+        for g in _cc.lister_tous(db):
+            contacts_par_insee[g["insee"]] = g["contacts"]
     for m in mairies:
         m["date_import"] = m["date_import"].isoformat() if m.get("date_import") else None
+        m["contacts"] = contacts_par_insee.get(m.get("insee"), [])   # AD10 — contacts nommés de la commune
     try:
         epci_cfg = load_yaml_config("epci_974")["epci"]
         epci = [{"code": k, "nom": v.get("nom"), "communes": v.get("communes", [])} for k, v in epci_cfg.items()]
@@ -171,6 +178,95 @@ def admin_contacts(request: Request):
     return {"mairies": mairies, "epci": epci, "autres": autres,
             "note": "Même donnée que la fiche commune, réunie et triable. Pas de notes de relation "
                     "(le CRM reste dans Notion)."}
+
+
+# ═══════════════════════════ ADMIN-1 (AD10) — carnet des contacts nommés de communes ═══════════════════════════
+
+class _ContactIn(BaseModel):
+    insee: str = Field(min_length=1, max_length=5)
+    commune_nom: str | None = Field(default=None, max_length=120)
+    nom: str = Field(min_length=1, max_length=160)
+    role: str | None = Field(default=None, max_length=120)
+    telephone: str | None = Field(default=None, max_length=60)
+    email: str | None = Field(default=None, max_length=160)
+    note: str | None = Field(default=None, max_length=1000)
+
+
+class _ContactPatch(BaseModel):
+    commune_nom: str | None = Field(default=None, max_length=120)
+    nom: str | None = Field(default=None, max_length=160)
+    role: str | None = Field(default=None, max_length=120)
+    telephone: str | None = Field(default=None, max_length=60)
+    email: str | None = Field(default=None, max_length=160)
+    note: str | None = Field(default=None, max_length=1000)
+
+
+@router.get("/communes/{insee}/contacts")
+def commune_contacts_publics(insee: str):
+    """LECTURE OUVERTE (tout utilisateur connecté) : les contacts nommés d'une commune, servis à la
+    carte « Mairie » de la fiche commune (tous comptes). Contacts partagés, non cloisonnés."""
+    from .. import commune_contacts as cc
+    from ..db import session_scope
+    with session_scope() as db:
+        return {"contacts": cc.lister(db, insee)}
+
+
+@router.get("/admin/commune-contacts")
+def admin_commune_contacts(request: Request):
+    """ADMIN — tous les contacts nommés, groupés par commune (page Contacts)."""
+    from ..api.auth import exiger_admin
+    from .. import commune_contacts as cc
+    from ..db import session_scope
+    exiger_admin(request)
+    with session_scope() as db:
+        return {"communes": cc.lister_tous(db)}
+
+
+@router.post("/admin/commune-contacts")
+def admin_commune_contact_creer(body: _ContactIn, request: Request):
+    """ADMIN — ajoute un contact nommé à une commune (depuis la page Contacts OU la fiche commune)."""
+    from ..api.auth import exiger_admin
+    from .. import commune_contacts as cc
+    from ..db import session_scope
+    info = exiger_admin(request)
+    with session_scope() as db:
+        out = cc.creer(db, insee=body.insee, commune_nom=body.commune_nom, nom=body.nom,
+                       role=body.role, telephone=body.telephone, email=body.email, note=body.note,
+                       cree_par=(info or {}).get("email") or (info or {}).get("role"))
+        db.commit()
+        return {"ok": True, "contact": out}
+
+
+@router.patch("/admin/commune-contacts/{contact_id}")
+def admin_commune_contact_modifier(contact_id: int, body: _ContactPatch, request: Request):
+    """ADMIN — édition en place d'un contact."""
+    from fastapi import HTTPException
+    from ..api.auth import exiger_admin
+    from .. import commune_contacts as cc
+    from ..db import session_scope
+    exiger_admin(request)
+    with session_scope() as db:
+        out = cc.modifier(db, contact_id, **body.model_dump(exclude_none=True))
+        db.commit()
+    if out is None:
+        raise HTTPException(404, "Contact introuvable.")
+    return {"ok": True, "contact": out}
+
+
+@router.delete("/admin/commune-contacts/{contact_id}")
+def admin_commune_contact_supprimer(contact_id: int, request: Request):
+    """ADMIN — supprime un contact."""
+    from fastapi import HTTPException
+    from ..api.auth import exiger_admin
+    from .. import commune_contacts as cc
+    from ..db import session_scope
+    exiger_admin(request)
+    with session_scope() as db:
+        ok = cc.supprimer(db, contact_id)
+        db.commit()
+    if not ok:
+        raise HTTPException(404, "Contact introuvable.")
+    return {"ok": True}
 
 
 # ═══════════════════════════ CRON-1 (K7) — la page CRON de l'admin (état des jobs) ═══════════════════════════

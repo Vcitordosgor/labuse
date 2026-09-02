@@ -526,14 +526,14 @@ function PipelineButton({ idu }: { idu: string }) {
   const inPipe = state.data?.in_pipeline
   const cols = meta.data?.columns ?? []
   return (
-    // RETOURS-7 Z1 — flex-1 (au lieu d'inline-block) : le bouton fait la MÊME largeur que « + Projet ».
-    // Le choix de colonne reste APRÈS le clic (menu ci-dessous), jamais dans la forme du bouton.
+    // ADMIN-1 AD1 — « + CRM » = VERT (contour --mint via .act-mint, survol plein vert via .hover-fill),
+    // largeur ÉGALE à « + Projet » (flex-1). Le choix de colonne reste APRÈS le clic (menu ci-dessous).
     <div className="relative flex-1">
       <button
         onClick={() => !inPipe && setOpen((o) => !o)}
         disabled={!!inPipe || add.isPending}
         aria-disabled={!!inPipe}
-        className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : 'act-neutre hover-fill'}`}
+        className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : 'act-mint hover-fill'}`}
         title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
       >
         {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
@@ -602,8 +602,9 @@ function ProjetButton({ idu }: { idu: string }) {
     <div className="relative flex-1">
       <button
         data-projet-fiche onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        /* RETOURS-7 Z1 — même style NEUTRE que « + CRM » (plus de mauve --iris) ; actif = accent menthe. */
-        className={`act w-full whitespace-nowrap ${inProjet ? 'act-neutre-on' : 'act-neutre hover-fill'}`}
+        /* ADMIN-1 AD1 — « + Projet » = JAUNE (contour + texte --amber, famille de la chip « Fiche commune »),
+           survol plein ambre via .hover-fill-amber ; rattaché = accent ambre (.act-amber-on). Aucun mauve. */
+        className={`act w-full whitespace-nowrap ${inProjet ? 'act-amber-on' : 'act-amber hover-fill-amber'}`}
         title={inProjet
           ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — rattacher à un autre`
           : 'Ajouter cette parcelle à un projet'}>

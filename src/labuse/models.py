@@ -1028,6 +1028,8 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_source_veille(engine)            # SENTINELLE-1 W1/W5 : table de veille amont + seed
     ensure_icd_columns(engine)              # M9 lot 1
     ensure_signalements(engine)             # M9 lot 3
+    from . import commune_contacts as _cc   # ADMIN-1 (AD10) : carnet des contacts nommés de communes
+    _cc.ensure_table(engine)
     from . import reglages as _reglages     # CONNEXIONS-2 Lot 7.1 : table app_reglages (toggles runtime)
     _reglages.ensure_reglages(engine)
     ensure_suggestions(engine)              # M16-C

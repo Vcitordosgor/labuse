@@ -160,11 +160,18 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
 @router.get("")
 def veille_promoteurs(commune: str | None = Query(None), categorie: str | None = Query(None),
                       depuis: str | None = Query(None, description="AAAA-MM-JJ — période de dépôt"),
+                      siren: str | None = Query(None, description="ADMIN-1 AD3 — restreindre à UN propriétaire"),
                       limit: int = Query(100), db: Session = Depends(get_db)) -> dict:
     """Les OPÉRATIONS (groupes de permis) des promoteurs / bailleurs / SEM. Filtrable commune / catégorie
-    / période. Chaque opération : un point, promoteur, commune, logements, dates, état. Comptes SQL."""
+    / période. ADMIN-1 (AD3) : `siren` restreint à UN propriétaire — le Scan patrimoine (mode « ce qu'ils
+    construisent » d'un propriétaire choisi) ne montre alors QUE ses opérations, jamais toute l'île. Même
+    moteur (regroupement de permis), aucun recalcul. Chaque opération : un point, promoteur, commune,
+    logements, dates, état. Comptes SQL."""
     groupes = CATEGORIES.get(categorie, {}).get("groupes", _TOUS_GROUPES) if categorie else _TOUS_GROUPES
     ops = _operations(db, groupes, commune, depuis)
+    if siren:
+        s9 = siren.strip()[:9]
+        ops = [o for o in ops if (o.get("siren") or "")[:9] == s9]
     ops.sort(key=lambda o: (o["date_max"] is not None, o["date_max"] or ""), reverse=True)
     n_total = len(ops)
     lim = min(max(limit, 1), PLAFOND)

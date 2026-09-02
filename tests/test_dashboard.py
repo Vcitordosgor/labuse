@@ -381,3 +381,62 @@ def test_quota_copilote_par_licence(client, engine):
     finally:
         with engine.begin() as c:
             c.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
+
+
+# ─────────────────────────── ADMIN-1 — nouveaux contrats ───────────────────────────
+
+def test_produit_periode_7_30_90(client):
+    """ADMIN-1 (AD7) — /admin/produit accepte la période 7/30/90 (défaut 30) ; hors-liste → 30."""
+    assert client.get("/admin/produit").json()["jours"] == 30
+    assert client.get("/admin/produit", params={"jours": 7}).json()["jours"] == 7
+    assert client.get("/admin/produit", params={"jours": 90}).json()["jours"] == 90
+    assert client.get("/admin/produit", params={"jours": 999}).json()["jours"] == 30   # borné
+
+
+def test_pilotage_a_faire_et_traction(client):
+    """ADMIN-1 (AD5) — /admin/pilotage sert les deux rangées : « À faire » (4 compteurs) et
+    « Santé · traction » (mrr, veilles 7 j, cohérence). Tous LUS (jamais recalculés)."""
+    d = client.get("/admin/pilotage").json()
+    assert set(d["a_faire"]) == {"sources_nouvelle_version", "essais_24h",
+                                 "signalements_ouverts", "manuelles_retard"}
+    assert all(isinstance(v, int) for v in d["a_faire"].values())
+    assert set(d["traction"]) == {"mrr_eur", "veilles_7j", "coherence"}
+    assert set(d["traction"]["coherence"]) == {"ok", "n_surfaces", "verifie_le"}
+
+
+def test_licences_mail_libelles_renommes(client):
+    """ADMIN-1 (AD4) — les mails d'onboarding sont NOMMÉS (fini « Mail 1/2/3 ») : la source servie
+    (brevo.LIBELLES) est exposée par /admin/licences."""
+    lib = client.get("/admin/licences").json()["mail_libelles"]
+    assert lib["onboarding1"] == "Mail de bienvenue"
+    assert lib["onboarding2"] == "Relance J+3"
+    assert lib["onboarding3"] == "Dernier rappel J+10"
+
+
+def test_mail_apercu_honnete_si_non_configure(client, engine):
+    """ADMIN-1 (AD4) — l'aperçu d'un mail ne lève JAMAIS : Brevo non configuré (cas des tests) →
+    {configure:false, raison, libelle nommé}. Template inconnu → 422."""
+    from labuse import comptes
+    from labuse.db import session_scope
+    with session_scope() as s:
+        try:
+            comptes.supprimer_utilisateur(s, "apercu-ad4@x.test")
+        except Exception:
+            pass
+        inv = comptes.creer_invitation(s, "apercu-ad4@x.test", "Client Aperçu")
+        s.commit(); cid = inv["compte_id"]
+    r = client.get(f"/admin/licences/{cid}/mail/onboarding1/apercu")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["libelle"] == "Mail de bienvenue"
+    assert body["configure"] is False and body["raison"]   # honnête, pas d'envoi
+    assert client.get(f"/admin/licences/{cid}/mail/inconnu/apercu").status_code == 422
+
+
+def test_veille_promoteurs_filtre_siren(client):
+    """ADMIN-1 (AD3) — /outils/veille-promoteurs?siren=… ne renvoie QUE les opérations de ce
+    propriétaire (mode « ce qu'ils construisent » d'un propriétaire choisi, jamais toute l'île)."""
+    r = client.get("/outils/veille-promoteurs", params={"siren": "310863592"})
+    assert r.status_code == 200, r.text
+    ops = r.json()["operations"]
+    assert all((o.get("siren") or "")[:9] == "310863592" for o in ops)

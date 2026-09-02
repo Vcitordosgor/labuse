@@ -5,10 +5,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  getAdminSignalements, getRadarAInstruire, getRadarCheck, getRadarDepotAgenceEtat, getRadarExtraction, getRadarReverif,
-  postAdminSignalementStatut, postRadarDepotAgenceToggle, radarDeposer, radarDeposerHtml,
+  getRadarAInstruire, getRadarCheck, getRadarDepotAgenceEtat, getRadarExtraction, getRadarReverif,
+  postRadarDepotAgenceToggle, radarDeposer, radarDeposerHtml,
   radarInstruire, radarPrix, radarRattacherHumain, radarRetiree, radarToujoursEnLigne, radarValider,
-  type RadarAInstruire, type RadarBrouillon, type RadarCritere, type RadarDepotHtml, type RadarPiste,
+  type RadarAInstruire, type RadarBrouillon, type RadarCritere, type RadarDepotHtml, type RadarPiste, type RadarReverif,
 } from '../../lib/api'
 import { Declaratif } from '../outils/RadarDeclaratif'
 import { Lbl, Chip } from './AdminView'
@@ -211,45 +211,79 @@ function Extraction() {
     qc.invalidateQueries({ queryKey: ['radar-check'] })
   }
   return (
-    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
-      <Lbl>2 · File d’extraction <span className="text-txt-dim">— {data?.n ?? 0} à valider</span></Lbl>
+    <div>
       {data?.n === 0 && <div className="py-4 text-center text-[12px] text-txt-dim">file vidée ✓</div>}
       <div className="flex flex-col gap-2">
         {data?.file.map((b) => <BrouillonCard key={b.bien_id} b={b} onValide={() => valider(b.bien_id)} />)}
       </div>
-    </section>
+    </div>
   )
 }
 
-// ── Zone 3 — Re-vérification à deux niveaux (léger en volume · attentif sur prix/retrait) ──
+// ── Zone 3 — Re-vérification (ADMIN-1 AD9) : GROUPÉE PAR COMMUNE, la plus ancienne d'abord ──
+// Boutons par ligne INCHANGÉS (Toujours en ligne / Prix modifié / Retirée) — aucune mécanique réécrite.
+// Compteur « N vérifiées aujourd'hui » = RadarCheck.reverif_du_jour (chiffre réel, jamais fabriqué).
+function joursDepuis(iso: string | null): number {
+  if (!iso) return Number.POSITIVE_INFINITY   // jamais contrôlée = la plus ancienne
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+}
+function LigneReverif({ r, onInval }: { r: RadarReverif; onInval: () => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 py-2 text-[12px]">
+      <span className="text-txt-mut">{fmtEur(r.prix)}</span>
+      {r.suivi_client && <Chip tone="ok">suivi client</Chip>}
+      {r.proche_longue && <Chip tone="warn">≈ 90 j</Chip>}
+      <a href={r.url_sortante} target="_blank" rel="noopener noreferrer"
+        className="font-mono text-[10px] text-txt-dim underline decoration-dotted">source ↗</a>
+      <span className="ml-auto flex gap-1.5">
+        <button onClick={() => radarToujoursEnLigne(r.bien_id).then(onInval)}
+          className="rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt hover:border-mint/40">Toujours en ligne</button>
+        <button onClick={() => { const p = prompt('Nouveau prix (€) :'); if (p) radarPrix(r.bien_id, Number(p)).then(onInval) }}
+          className="rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt">Prix modifié</button>
+        <button onClick={() => radarRetiree(r.bien_id).then(onInval)}
+          className="rounded-md border border-coral/30 px-2 py-1 text-[11px] text-coral">Retirée</button>
+      </span>
+    </div>
+  )
+}
 function Reverif() {
   const qc = useQueryClient()
   const { data } = useQuery({ queryKey: ['radar-reverif'], queryFn: getRadarReverif })
+  const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
   const inval = () => { qc.invalidateQueries({ queryKey: ['radar-reverif'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
+  const items = data?.file ?? []
+  // regroupement par commune, chaque item porte son ancienneté ; on garde le plus ancien contrôle du groupe.
+  const parCommune = new Map<string, RadarReverif[]>()
+  for (const r of items) {
+    const arr = parCommune.get(r.commune) ?? []
+    arr.push(r)
+    parCommune.set(r.commune, arr)
+  }
+  const groupes = [...parCommune.entries()].map(([commune, rows]) => {
+    rows.sort((a, b) => joursDepuis(b.date_derniere_confirmation) - joursDepuis(a.date_derniere_confirmation))
+    return { commune, rows, plusAncien: joursDepuis(rows[0].date_derniere_confirmation) }
+  }).sort((a, b) => b.plusAncien - a.plusAncien)   // commune au contrôle le plus ancien en premier
+  const ageLabel = (j: number) => (j === Number.POSITIVE_INFINITY ? 'jamais contrôlé' : `plus ancien contrôle : ${j} j`)
   return (
-    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
-      <Lbl>3 · Re-vérification <span className="text-txt-dim">— {data?.n ?? 0} · priorisée</span></Lbl>
-      <div className="flex flex-col divide-y divide-line-2">
-        {data?.file.map((r) => (
-          <div key={r.bien_id} className="flex flex-wrap items-center gap-2 py-2 text-[12px]">
-            <span className="font-medium text-txt-hi">{r.commune}</span>
-            <span className="text-txt-mut">{fmtEur(r.prix)}</span>
-            {r.suivi_client && <Chip tone="ok">suivi client</Chip>}
-            {r.proche_longue && <Chip tone="warn">≈ 90 j</Chip>}
-            <a href={r.url_sortante} target="_blank" rel="noopener noreferrer"
-              className="font-mono text-[10px] text-txt-dim underline decoration-dotted">source ↗</a>
-            <span className="ml-auto flex gap-1.5">
-              <button onClick={() => radarToujoursEnLigne(r.bien_id).then(inval)}
-                className="rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt hover:border-mint/40">Toujours en ligne</button>
-              <button onClick={() => { const p = prompt('Nouveau prix (€) :'); if (p) radarPrix(r.bien_id, Number(p)).then(inval) }}
-                className="rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt">Prix modifié</button>
-              <button onClick={() => radarRetiree(r.bien_id).then(inval)}
-                className="rounded-md border border-coral/30 px-2 py-1 text-[11px] text-coral">Retirée</button>
-            </span>
+    <div>
+      {items.length === 0 && <div className="py-4 text-center text-[12px] text-txt-dim">file de re-vérification vidée ✓</div>}
+      <div className="flex flex-col gap-3">
+        {groupes.map((g) => (
+          <div key={g.commune}>
+            <div className="flex items-center gap-2 border-b border-line-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.1em] text-txt-dim">
+              <span className="text-txt">{g.commune}</span> · {g.rows.length}
+              <span className="ml-auto normal-case tracking-normal">{ageLabel(g.plusAncien)}</span>
+            </div>
+            <div className="flex flex-col divide-y divide-line-2">
+              {g.rows.map((r) => <LigneReverif key={r.bien_id} r={r} onInval={inval} />)}
+            </div>
           </div>
         ))}
       </div>
-    </section>
+      <div className="mt-3 border-t border-line-2 pt-2 text-[11px] text-txt-mut">
+        {items.length} annonce{items.length > 1 ? 's' : ''} à re-vérifier · <b className="text-txt">{check.data?.reverif_du_jour ?? 0}</b> vérifiée{(check.data?.reverif_du_jour ?? 0) > 1 ? 's' : ''} aujourd’hui
+      </div>
+    </div>
   )
 }
 
@@ -371,56 +405,9 @@ function Check() {
   )
 }
 
-// CONNEXIONS-2 Lot 3 (KO-4) — file UNIQUE des signalements clients (erreur de fiche + annonce
-// retirée/erronée). L'admin la VOIT et la TRAITE ici : plus de revue CLI-only. Un signalement = un
-// ticket ; « Traiter » le passe à traité (réversible « Rouvrir »).
-function Signalements() {
-  const qc = useQueryClient()
-  const [filtre, setFiltre] = useState<'nouveau' | 'traite' | undefined>('nouveau')
-  const { data } = useQuery({ queryKey: ['admin-signalements', filtre], queryFn: () => getAdminSignalements(filtre) })
-  const trancher = async (id: number, statut: 'nouveau' | 'traite') => {
-    await postAdminSignalementStatut(id, statut)
-    qc.invalidateQueries({ queryKey: ['admin-signalements'] })
-    qc.invalidateQueries({ queryKey: ['radar-check'] })
-  }
-  const rows = data?.signalements ?? []
-  return (
-    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
-      <div className="flex items-center justify-between">
-        <Lbl>Signalements clients <span className="text-txt-dim">— {data?.n_ouverts ?? 0} en attente</span></Lbl>
-        <div className="flex gap-1 text-[11px]">
-          {([['nouveau', 'à traiter'], ['traite', 'traités'], [undefined, 'tous']] as const).map(([k, lbl]) => (
-            <button key={lbl} data-sig-filtre={String(k)} onClick={() => setFiltre(k)}
-              className={`rounded-md border px-2 py-0.5 ${filtre === k ? 'border-txt-dim bg-surface-3 text-txt' : 'border-line-2 text-txt-mut'}`}>{lbl}</button>
-          ))}
-        </div>
-      </div>
-      {!rows.length && <div className="py-4 text-center text-[12px] text-txt-mut">Aucun signalement.</div>}
-      <div className="mt-2 flex flex-col gap-1.5">
-        {rows.map((s) => (
-          <div key={s.id} data-signalement={s.id} className="flex items-start justify-between gap-3 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[12px]">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Chip tone={s.type === 'annonce' ? 'warn' : 'off'}>{s.type === 'annonce' ? 'annonce' : 'fiche'}</Chip>
-                <span className="font-mono text-[11px] text-txt-mut">{s.type === 'annonce' ? `bien #${s.bien_id}` : s.parcelle_id}</span>
-                <span className="text-txt-dim">· {s.type_erreur}{s.champ ? ` (${s.champ})` : ''}</span>
-              </div>
-              {s.commentaire && <div className="mt-0.5 truncate text-txt">{s.commentaire}</div>}
-              <div className="mt-0.5 text-[10.5px] text-txt-dim">
-                {s.compte_nom ?? s.utilisateur ?? 'anonyme'} · {s.created_at?.slice(0, 10) ?? ''}
-              </div>
-            </div>
-            {s.statut === 'nouveau'
-              ? <button data-sig-traiter={s.id} onClick={() => trancher(s.id, 'traite')}
-                  className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2 py-1 text-[11px] text-mint hover:brightness-125">Traiter</button>
-              : <button data-sig-rouvrir={s.id} onClick={() => trancher(s.id, 'nouveau')}
-                  className="shrink-0 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:bg-surface-3">Rouvrir</button>}
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
+// ADMIN-1 (AD9) — les signalements clients sont désormais servis par la page PRODUIT (table
+// signalements unifiée, filtres compte/statut) : retirés d'ici pour éviter le doublon. La mécanique
+// (getAdminSignalements / postAdminSignalementStatut) est inchangée, seul l'emplacement change.
 
 // RV2-V1 — bandeau d'alerte EN TÊTE : si le répertoire de captures n'est pas accessible en écriture,
 // le dépôt échouera. On le dit AVANT le premier dépôt, avec le chemin fautif nommé (pas de crash).
@@ -462,32 +449,101 @@ function DepotAgenceToggle() {
   )
 }
 
-export function RadarSection() {
+// ── ADMIN-1 (AD9) — bloc repliable (en-tête cliquable + badge) ──
+function BlocRepliable({ titre, badge, defaultOpen = true, children }:
+  { titre: React.ReactNode; badge?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <section className="overflow-hidden rounded-xl border border-line-2 bg-surface-2">
+      <button onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 px-4 py-3 text-left font-mono text-[11px] uppercase tracking-[0.16em] text-txt-dim hover:text-txt">
+        <span className="w-3 text-center">{open ? '▾' : '▸'}</span>
+        <span>{titre}</span>
+        {badge && <span className="ml-auto normal-case tracking-normal">{badge}</span>}
+      </button>
+      {open && <div className="border-t border-line-2 p-4">{children}</div>}
+    </section>
+  )
+}
+
+// ── ADMIN-1 (AD9) — bandeau descriptif qui se replie après première lecture (état mémorisé) ──
+function Bandeau() {
+  const [lu, setLu] = useState(() => { try { return localStorage.getItem('radar-bandeau-lu') === '1' } catch { return false } })
+  if (lu) return (
+    <button onClick={() => setLu(false)} className="self-start text-[11px] text-txt-dim hover:text-txt">ⓘ à propos du Radar</button>
+  )
+  const replier = () => { try { localStorage.setItem('radar-bandeau-lu', '1') } catch { /* localStorage indispo */ } ; setLu(true) }
+  return (
+    <div className="rounded-xl border border-line-2 bg-surface-2/50 px-4 py-3 text-[12.5px] leading-relaxed text-txt-mut">
+      <p>Faits extraits d’annonces publiques + lien vers la source. Aucune photo ni texte d’annonce n’est
+        stocké ni affiché — les pages déposées restent des documents de travail privés.</p>
+      <button onClick={replier} className="mt-2 text-[11px] text-mint hover:underline">J’ai lu — replier</button>
+    </div>
+  )
+}
+
+function BlocDeposer() {
   const qc = useQueryClient()
-  const refresh = () => { qc.invalidateQueries({ queryKey: ['radar-extraction'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
+  const onDepose = () => {
+    qc.invalidateQueries({ queryKey: ['radar-extraction'] })
+    qc.invalidateQueries({ queryKey: ['radar-check'] })
+  }
+  return (
+    <BlocRepliable titre="1 · Déposer" defaultOpen>
+      <div className="flex flex-col gap-3">
+        <DepotAgenceToggle />
+        <DepotHtml onDepose={onDepose} />
+        {/* SECTEUR-2b (U2) — « Publier une annonce » (dépôt agence) vit dans l'écran Radar de l'app.
+            Chemin de capture HISTORIQUE (remplacé par le dépôt HTML), replié. */}
+        <details className="rounded-xl border border-line-2 bg-surface-2/50">
+          <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-txt-dim">
+            Saisie par capture d’écran (chemin historique — remplacé par le dépôt HTML)
+          </summary>
+          <div className="p-3 pt-0">
+            <CapturesAlerte />
+            <Saisie onDepose={onDepose} />
+          </div>
+        </details>
+      </div>
+    </BlocRepliable>
+  )
+}
+
+function BlocExtraction() {
+  const { data } = useQuery({ queryKey: ['radar-extraction'], queryFn: getRadarExtraction })
+  const n = data?.n ?? 0
+  return (
+    <BlocRepliable titre="2 · File d’extraction"
+      badge={<Chip tone={n > 0 ? 'warn' : 'ok'}>{n > 0 ? `${n} à valider` : 'file vidée ✓'}</Chip>}
+      defaultOpen={n > 0}>
+      <Extraction />
+    </BlocRepliable>
+  )
+}
+
+function BlocReverif() {
+  const rev = useQuery({ queryKey: ['radar-reverif'], queryFn: getRadarReverif })
+  const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
+  const n = rev.data?.n ?? 0
+  return (
+    <BlocRepliable titre="3 · Re-vérification"
+      badge={<span className="text-[11px] text-txt-dim">{n} annonces · {check.data?.reverif_du_jour ?? 0} vérifiées aujourd’hui</span>}
+      defaultOpen>
+      <Reverif />
+    </BlocRepliable>
+  )
+}
+
+export function RadarSection() {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[12.5px] text-txt-mut">
-        Faits extraits d’annonces publiques + lien vers la source. Aucune photo ni texte d’annonce n’est
-        stocké ni affiché — les pages déposées restent des documents de travail privés.
-      </p>
-      <DepotAgenceToggle />
-      <DepotHtml onDepose={refresh} />
-      {/* SECTEUR-2b (U2) — « Publier une annonce » (dépôt agence, 4 étapes) a QUITTÉ la Tour de contrôle :
-          le parcours vit désormais dans l'écran Radar de l'app (bouton dans l'en-tête). */}
-      <details className="rounded-xl border border-line-2 bg-surface-2/50">
-        <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-txt-dim">
-          Saisie par capture d’écran (chemin historique — remplacé par le dépôt HTML)
-        </summary>
-        <div className="p-3 pt-0">
-          <CapturesAlerte />
-          <Saisie onDepose={refresh} />
-        </div>
-      </details>
-      <Extraction />
-      <Reverif />
+      <Bandeau />
+      {/* AD9 — trois blocs repliables : Déposer · File d'extraction · Re-vérification (groupée par commune). */}
+      <BlocDeposer />
+      <BlocExtraction />
+      <BlocReverif />
+      {/* Instruction (rattachement admin) et Check (rituel) conservés sous les 3 blocs. */}
       <Instruction />
-      <Signalements />
       <Check />
     </div>
   )

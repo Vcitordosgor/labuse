@@ -498,11 +498,12 @@ export interface VeillePromoteurs {
   regle: { contiguite_m: number; periode_mois: number; phrase: string }
   operations: OperationPromoteur[]; note: string
 }
-export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; depuis?: string; limit?: number } = {}) => {
+export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; depuis?: string; siren?: string; limit?: number } = {}) => {
   const q = new URLSearchParams()
   if (p.commune) q.set('commune', p.commune)
   if (p.categorie) q.set('categorie', p.categorie)
   if (p.depuis) q.set('depuis', p.depuis)
+  if (p.siren) q.set('siren', p.siren)   // ADMIN-1 (AD3) — restreindre aux opérations d'UN propriétaire
   if (p.limit) q.set('limit', String(p.limit))
   return j<VeillePromoteurs>(`/outils/veille-promoteurs${q.toString() ? `?${q}` : ''}`)
 }
@@ -1067,6 +1068,10 @@ export interface AdminPilotage {
   courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
   radar?: { compteurs: RadarCompteurs; ecart: FluxRadarEcart[] } | null   // FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
   run: { label: string | null; carte_le: string | null }
+  // ADMIN-1 (AD5) — rangée « À faire » (ambre) : un geste attendu par tuile.
+  a_faire: { sources_nouvelle_version: number; essais_24h: number; signalements_ouverts: number; manuelles_retard: number }
+  // ADMIN-1 (AD5) — rangée « Santé · traction » (vert).
+  traction: { mrr_eur: number | null; veilles_7j: number; coherence: { ok: boolean | null; n_surfaces: number | null; verifie_le: string | null } }
   fil: Array<{ id: number; ts: string | null; kind: string; source: string | null; titre: string; detail: string | null; lien: string | null }>
   gels: Array<{ sujet: string; motif: string | null; ts: string | null }>
 }
@@ -1089,8 +1094,17 @@ export interface AdminLicences {
   stripe_configure: boolean
   rapprochement?: StripeApercu['rapprochement']
   brevo: { api: boolean; templates: Record<string, boolean> }
+  // ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
+  mail_libelles: Record<string, string>
   partage_seuil: number
 }
+// ADMIN-1 (AD4) — aperçu du mail réel (template Brevo rendu avec les variables du compte) avant Envoyer.
+export interface MailApercu {
+  configure: boolean; key: string; libelle: string; params: Record<string, string>
+  subject?: string; html?: string; raison?: string
+}
+export const getAdminMailApercu = (compteId: number, key: string) =>
+  j<MailApercu>(`/admin/licences/${compteId}/mail/${encodeURIComponent(key)}/apercu`)
 // E1 — offres servies par le serveur (source de vérité unique) : le front n'écrit AUCUN prix en dur.
 export interface Offre { cle: string; label: string; eur_mois?: number; eur?: number; engagement?: boolean; periodicite: string; validite_lien_jours?: number }
 export interface Offres { integral: Offre; flash: Offre }
@@ -1277,8 +1291,10 @@ export const postAdminFluxBascule = (run: string) =>
 export interface AdminProduit {
   usage: Array<{ outil: string; n: number }>
   retours: Array<{ id: number; ts: string | null; type: string; message: string; statut: string; compte: string | null }>
+  jours?: number
 }
-export const getAdminProduit = () => j<AdminProduit>('/admin/produit')
+// ADMIN-1 (AD7) — période au choix : 7 / 30 / 90 j (défaut 30).
+export const getAdminProduit = (jours: 7 | 30 | 90 = 30) => j<AdminProduit>(`/admin/produit?jours=${jours}`)
 export const postAdminRetourStatut = (id: number, statut: 'nouveau' | 'traite' | 'repondu') =>
   j<{ ok: boolean }>(`/admin/retours/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 // D8 — Courrier (endpoints /courrier/admin/* EXISTANTS, consommés par la Tour de contrôle)
@@ -1286,9 +1302,11 @@ export interface AdminDemandeCourrier {
   id: number; ts: string | null; compte_id: number | null; n: number; communes: string | null
   modele: string | null; corps: string | null; statut: string; updated_at: string | null
   parcelles: string[] | null; client: string | null
+  // ADMIN-1 (AD8) — lien vers la piste CRM d'origine (et le projet), nullable.
+  pipeline_entry_id: number | null; projet_id: number | null
 }
 export const getAdminCourrierDemandes = () =>
-  j<{ demandes: AdminDemandeCourrier[]; statuts: string[] }>('/courrier/admin/demandes')
+  j<{ demandes: AdminDemandeCourrier[]; statuts: string[]; statut_libelles: Record<string, string> }>('/courrier/admin/demandes')
 export const postAdminCourrierStatut = (id: number, statut: string) =>
   j<{ ok: boolean }>(`/courrier/admin/demandes/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
 export const urlCourrierPdf = '/courrier/pdf'
@@ -1688,11 +1706,33 @@ export interface CronJob {
   prochaine_utc: string | null; prochaine_reunion: string | null
   dernier: { statut: string | null; fin: string | null; duree_s: number | null; dry_run: boolean | null; compteurs: Record<string, unknown> | null; erreur: string | null }
 }
-export interface Mairie { commune: string; nom: string | null; adresse: string | null; code_postal: string | null; telephone: string | null; email: string | null; site_officiel: string | null; url_annuaire: string | null; source: string; date_import: string | null }
+export interface Mairie { insee: string | null; commune: string; nom: string | null; adresse: string | null; code_postal: string | null; telephone: string | null; email: string | null; site_officiel: string | null; url_annuaire: string | null; source: string; date_import: string | null; contacts?: CommuneContact[] }
 export interface Epci { code: string; nom: string | null; communes: string[] }
 export interface AutreContact { type: string; nom: string; adresse: string; telephone: string; site: string }
 export interface ContactsInstitutionnels { mairies: Mairie[]; epci: Epci[]; autres: AutreContact[]; note: string }
 export const getContactsInstitutionnels = () => j<ContactsInstitutionnels>('/admin/contacts-institutionnels')
+
+// ADMIN-1 (AD10) — carnet des contacts NOMMÉS d'une commune (au-delà du standard officiel).
+export interface CommuneContact {
+  id: number; insee: string; commune_nom: string | null; nom: string; role: string | null
+  telephone: string | null; email: string | null; note: string | null; cree_le: string | null; cree_par: string | null
+}
+export interface CommuneContactIn {
+  insee: string; commune_nom?: string | null; nom: string; role?: string | null
+  telephone?: string | null; email?: string | null; note?: string | null
+}
+// Lecture OUVERTE (fiche commune, tous comptes) : contacts d'une commune par INSEE.
+export const getCommuneContacts = (insee: string) =>
+  j<{ contacts: CommuneContact[] }>(`/communes/${encodeURIComponent(insee)}/contacts`)
+// ADMIN — tous les contacts groupés par commune (page Contacts).
+export const getAdminCommuneContacts = () =>
+  j<{ communes: Array<{ insee: string; commune_nom: string | null; contacts: CommuneContact[] }> }>('/admin/commune-contacts')
+export const postCommuneContact = (body: CommuneContactIn) =>
+  j<{ ok: boolean; contact: CommuneContact }>('/admin/commune-contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const patchCommuneContact = (id: number, body: Partial<CommuneContactIn>) =>
+  j<{ ok: boolean; contact: CommuneContact }>(`/admin/commune-contacts/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const deleteCommuneContact = (id: number) =>
+  j<{ ok: boolean }>(`/admin/commune-contacts/${id}`, { method: 'DELETE' })
 
 // SECTEUR-2b (U1) — panneau de détail d'une commune de la couche VEFA (clic carte).
 export interface VefaDetail {

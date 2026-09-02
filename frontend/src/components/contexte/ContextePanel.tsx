@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
+import { deleteCommuneContact, getCommuneContacts, getContexteCommune, getMoi, motMarcheCommune, motRarete, postCommuneContact } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -86,6 +86,70 @@ function MairieLigne({ label, val, href }: { label: string; val: string | null; 
 function fmtDateFr(iso: string): string {
   try { return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(iso)) }
   catch { return iso }
+}
+
+// ADMIN-1 (AD10) — contacts NOMMÉS de la commune, servis sous le standard officiel de la carte Mairie.
+// Lecture ouverte à tous les comptes ; l'ajout/suppression n'est proposé qu'à l'admin (getMoi.role).
+function ContactsMairie({ insee, commune }: { insee: string | null; commune: string }) {
+  const qc = useQueryClient()
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
+  const admin = moi.data?.role === 'admin'
+  const q = useQuery({ queryKey: ['commune-contacts', insee], queryFn: () => getCommuneContacts(insee!), enabled: !!insee })
+  const [ajout, setAjout] = useState(false)
+  const [f, setF] = useState({ nom: '', role: '', telephone: '', email: '', note: '' })
+  const invalider = () => qc.invalidateQueries({ queryKey: ['commune-contacts', insee] })
+  const creer = useMutation({
+    mutationFn: () => postCommuneContact({
+      insee: insee!, commune_nom: commune, nom: f.nom.trim(), role: f.role.trim() || null,
+      telephone: f.telephone.trim() || null, email: f.email.trim() || null, note: f.note.trim() || null,
+    }),
+    onSuccess: () => { setAjout(false); setF({ nom: '', role: '', telephone: '', email: '', note: '' }); invalider() },
+  })
+  const suppr = useMutation({ mutationFn: (id: number) => deleteCommuneContact(id), onSuccess: invalider })
+  const contacts = q.data?.contacts ?? []
+  if (!insee) return null
+  return (
+    <div className="mt-2.5 border-t border-line pt-2">
+      {contacts.map((c) => (
+        <div key={c.id} className="mb-1.5 text-[12px]">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <b className="text-txt">{c.nom}</b>{c.role && <span className="ml-1.5 rounded bg-mint/12 px-1.5 py-0.5 text-[10px] text-mint">{c.role}</span>}
+              <div className="mt-0.5 text-txt-mut">
+                {c.telephone && <a href={`tel:${c.telephone.replace(/\s/g, '')}`} className="text-mint hover:underline">{c.telephone}</a>}
+                {c.telephone && c.email && '  ·  '}
+                {c.email && <a href={`mailto:${c.email}`} className="text-mint hover:underline">{c.email}</a>}
+              </div>
+              {c.note && <div className="mt-0.5 text-[10.5px] text-txt-dim">note : {c.note}</div>}
+            </div>
+            {admin && (
+              <button onClick={() => { if (window.confirm(`Supprimer « ${c.nom} » ?`)) suppr.mutate(c.id) }}
+                className="shrink-0 text-[11px] text-coral hover:underline">🗑</button>
+            )}
+          </div>
+        </div>
+      ))}
+      {admin && !ajout && (
+        <button onClick={() => setAjout(true)} className="mt-1 text-[11.5px] text-mint hover:underline">+ Ajouter un contact</button>
+      )}
+      {admin && ajout && (
+        <div className="mt-1.5 rounded-lg border border-mint/30 bg-mint/5 p-2">
+          {(['nom', 'role', 'telephone', 'email', 'note'] as const).map((k) => (
+            <input key={k} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })}
+              placeholder={{ nom: 'Nom', role: 'Rôle (ex. resp. PLU)', telephone: 'Téléphone', email: 'Email', note: 'Note' }[k]}
+              className="mb-1 w-full rounded-md border border-line-2 bg-surface-1 px-2 py-1 text-[11.5px] text-txt" />
+          ))}
+          <div className="mt-1 flex gap-2">
+            <button onClick={() => creer.mutate()} disabled={creer.isPending || !f.nom.trim()}
+              className="rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] text-mint disabled:opacity-40">
+              {creer.isPending ? 'Ajout…' : 'Enregistrer'}
+            </button>
+            <button onClick={() => setAjout(false)} className="rounded-md border border-line-2 px-2.5 py-1 text-[11.5px] text-txt-mut">Annuler</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // OUTILS-6 C6 — ouvrir un outil AVEC LA COMMUNE DÉJÀ SÉLECTIONNÉE (jamais un formulaire vide). On pose la
@@ -509,6 +573,8 @@ export function ContextePanel() {
                     <MairieLigne label="Annuaire" val={d.mairie.url_annuaire ? 'Fiche service-public' : null} href={d.mairie.url_annuaire ?? undefined} />
                   </dl>
                   <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
+                  {/* ADMIN-1 (AD10) — contacts NOMMÉS de la commune, sous le standard officiel (tous comptes). */}
+                  <ContactsMairie insee={insee} commune={commune} />
                 </LigneCarte>
               )}
 

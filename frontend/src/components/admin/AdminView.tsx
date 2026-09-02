@@ -9,16 +9,20 @@ import { getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '
 import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
 import { IaSection } from './Ia'
-import { SourcesSection } from './Sources'
-import { FluxSection } from './Flux'
+import { DonneesSection } from './Donnees'
 import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
-import { CronSection } from './Cron'
 import { ContactsSection } from './Contacts'
 import { ProgrammesSection } from './Programmes'
 
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
+// ADMIN-1 (AD2) — « sources »/« flux »/« cron » ne sont plus des sections de menu : elles sont
+// FUSIONNÉES dans « donnees » (onglets Catalogue/Circuit/Horloge). Les valeurs restent dans le type
+// pour REDIRIGER les anciens deep-links (voir `_rediriger` plus bas).
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
+
+// ADMIN-1 (AD2) — redirection des anciennes routes vers la page fusionnée « Données ».
+const _rediriger = (s: AdminSection): AdminSection => (s === 'sources' || s === 'flux' || s === 'cron' ? 'donnees' : s)
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -76,6 +80,19 @@ export function H2({ children }: { children: React.ReactNode }) {
     <h2 className="mb-3 mt-7 flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.18em] text-txt-dim first:mt-0">
       {children}<span className="h-px min-w-[40px] flex-1 bg-line" />
     </h2>
+  )
+}
+
+// ADMIN-1 (AD5) — tuile « À faire » : ambre dès qu'un geste attend (n>0), neutre sinon ; cliquable.
+function ActTuile({ n, label, onClick }: { n: number; label: string; onClick: () => void }) {
+  const actif = n > 0
+  return (
+    <div onClick={onClick}
+      className={`cursor-pointer rounded-xl border px-4 py-4 transition-colors duration-quick ${
+        actif ? 'border-amber/40 bg-gradient-to-b from-amber/5 to-transparent hover:border-amber' : 'border-line bg-surface-2 hover:border-line-2'}`}>
+      <div className={`font-display text-2xl font-semibold ${actif ? 'text-amber' : 'text-txt-hi'}`}>{n}</div>
+      <div className="mt-1 text-[11.5px] leading-snug text-txt-mut">{label}</div>
+    </div>
   )
 }
 
@@ -172,70 +189,56 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
         </div>
       </div>
 
-      {/* tuiles */}
+      {/* ADMIN-1 (AD5) — deux rangées sémantiques : « À faire » (ambre, un geste attendu, cliquable) et
+          « Santé · traction » (vert). La tuile Courrier a disparu (le courrier vit dans sa page). */}
+      <H2>À faire</H2>
+      <div className="grid grid-cols-4 gap-3.5 max-[1100px]:grid-cols-2">
+        <ActTuile n={data.a_faire?.sources_nouvelle_version ?? 0}
+          label="source(s) ont une nouvelle version → Données" onClick={() => go('donnees')} />
+        <ActTuile n={data.a_faire?.essais_24h ?? 0}
+          label="essai(s) expire(nt) sous 24 h → Comptes" onClick={() => go('licences')} />
+        <ActTuile n={data.a_faire?.signalements_ouverts ?? 0}
+          label="signalement(s) ouvert(s) → Produit" onClick={() => go('produit')} />
+        <ActTuile n={data.a_faire?.manuelles_retard ?? 0}
+          label="donnée(s) manuelle(s) en retard → Données" onClick={() => go('donnees')} />
+      </div>
+
+      <H2>Santé · traction</H2>
       <div className="grid grid-cols-4 gap-3.5 max-[1100px]:grid-cols-2">
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Actifs aujourd'hui</Lbl>
-          <div className="font-display text-2xl font-semibold text-txt-hi">
-            {data.actifs_24h}<span className="text-sm font-normal text-txt-dim"> / {data.licences_actives}</span>
+          <Lbl>MRR · licences</Lbl>
+          <div className="font-display text-2xl font-semibold text-mint">
+            {data.traction?.mrr_eur != null ? `${fmtEur(data.traction.mrr_eur)} €` : '—'}
           </div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">connectés ces dernières 24 h</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">{data.licences_actives} licence(s) active(s)</div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Conso IA du mois</Lbl>
-          <div className="font-display text-2xl font-semibold text-cp-ia">{fmtEur(data.ia_mois.cout_eur, 2)} €</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">
-            ≈ {fmtEur(data.ia_mois.appels)} appels · <span className="cursor-pointer text-mint hover:underline" onClick={() => go('ia')}>détail →</span>
-          </div>
-        </div>
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Dernier backup</Lbl>
+          <Lbl>Garde de cohérence</Lbl>
           <div className={`font-display text-2xl font-semibold ${
-            data.backup.etat === 'ok' ? 'text-mint' : data.backup.etat === 'ambre' ? 'text-amber' : 'text-coral'}`}>
-            {data.backup.etat === 'absent' ? 'aucun trouvé' : data.backup.age_jours != null && data.backup.age_jours < 1 ? "aujourd'hui" : `il y a ${Math.floor(data.backup.age_jours ?? 0)} j`}
+            data.traction?.coherence?.ok === false ? 'text-coral' : data.traction?.coherence?.ok ? 'text-mint' : 'text-txt-mut'}`}>
+            {data.traction?.coherence?.ok == null ? '—'
+              : data.traction.coherence.ok ? `${data.traction.coherence.n_surfaces ?? ''} ✓`.trim() : 'divergence'}
           </div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">ambre dès 2 j · rouge dès 7 j</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">
+            {data.traction?.coherence?.verifie_le ? `vérifié ${fmtReu(data.traction.coherence.verifie_le)}` : 'jamais passée'}
+          </div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Santé serveur</Lbl>
-          <div className={`font-display text-2xl font-semibold ${data.sante.ok === false ? 'text-coral' : data.sante.ok ? 'text-mint' : 'text-txt-mut'}`}>
-            {data.sante.total != null ? `${data.sante.total - data.sante.en_echec.length} / ${data.sante.total}` : '—'}
+          <Lbl>Veilles · 7 jours</Lbl>
+          <div className="font-display text-2xl font-semibold text-mint">{data.traction?.veilles_7j ?? 0}</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">alertes déclenchées sur les zones suivies</div>
+        </div>
+        {/* FLUX-1 F3.5 — paires annonce ↔ vente DVF (mesure de finesse) ; cliquable vers Données/Circuit. */}
+        <div className="cursor-pointer rounded-xl border border-line bg-surface-2 px-4 py-4 hover:border-line-2" onClick={() => go('donnees')}>
+          <Lbl>Radar · paires DVF</Lbl>
+          <div className="font-display text-2xl font-semibold text-mint">
+            {data.radar ? data.radar.compteurs.paires.toLocaleString('fr-FR') : '—'}
+            {data.radar && data.radar.compteurs.paires_semaine > 0 && <span className="ml-1 text-sm font-normal text-mint">+{data.radar.compteurs.paires_semaine}</span>}
           </div>
           <div className="mt-1 text-[11.5px] text-txt-mut">
-            {data.sante.en_echec.length ? `en échec : ${data.sante.en_echec.join(', ')}` : 'modules de schéma OK au boot (/readyz)'}
-          </div>
-          {/* CONNEXIONS-2 Lot 7.2 (N3) — sonde RUNTIME des endpoints métier (avec DB), distincte du heal boot. */}
-          {data.sante.endpoints && data.sante.endpoints.length > 0 && (
-            <div className={`mt-2 border-t border-line pt-2 text-[11.5px] ${data.sante.endpoints_ok === false ? 'text-coral' : 'text-mint'}`}>
-              {data.sante.endpoints_ok === false
-                ? `écrans en échec : ${data.sante.endpoints.filter((e) => !e.ok).map((e) => e.endpoint).join(', ')}`
-                : `${data.sante.endpoints.length} endpoints métier OK (avec base)`}
-            </div>
-          )}
-        </div>
-        {/* CONNEXIONS-2 Lot 4 — KPI « courriers à déposer » : ce que LABUSE doit encore déposer. */}
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4 cursor-pointer hover:border-line-2" onClick={() => go('courrier')}>
-          <Lbl>Courriers à déposer</Lbl>
-          <div className={`font-display text-2xl font-semibold ${(data.courrier?.a_deposer ?? 0) > 0 ? 'text-amber' : 'text-txt-hi'}`}>
-            {data.courrier?.a_deposer ?? 0}
-          </div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">
-            {(data.courrier?.en_cours ?? 0)} en cours · <span className="text-mint hover:underline">traiter →</span>
+            {data.radar ? `${data.radar.compteurs.annonces.toLocaleString('fr-FR')} annonces` : ''} · <span className="text-mint hover:underline">le flux →</span>
           </div>
         </div>
-        {/* FLUX-1 F3.5 — la donnée qui s'accumule (Radar) : paires annonce ↔ vente DVF (mesure de finesse). */}
-        {data.radar && (
-          <div className="cursor-pointer rounded-xl border border-line bg-surface-2 px-4 py-4 hover:border-line-2" onClick={() => go('flux')}>
-            <Lbl>Radar · paires DVF</Lbl>
-            <div className="font-display text-2xl font-semibold text-mint">
-              {data.radar.compteurs.paires.toLocaleString('fr-FR')}
-              {data.radar.compteurs.paires_semaine > 0 && <span className="ml-1 text-sm font-normal text-mint">+{data.radar.compteurs.paires_semaine}</span>}
-            </div>
-            <div className="mt-1 text-[11.5px] text-txt-mut">
-              {data.radar.compteurs.annonces.toLocaleString('fr-FR')} annonces · <span className="text-mint hover:underline">le flux →</span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* fil : activité récente (event_log admin) + gels actifs avec Dégeler */}
@@ -271,30 +274,28 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
 }
 
 // ═══════════════ SHELL ═══════════════
+// ADMIN-1 (AD2/AD4) — « Données » remplace Sources/Flux/Cron ; « Licences » devient « Comptes ».
 const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[] = [
   { key: 'pilotage', label: 'Pilotage', ic: '◉' },
-  { key: 'licences', label: 'Licences', ic: '▣' },
+  { key: 'licences', label: 'Comptes', ic: '▣' },
   { key: 'ia', label: 'IA', ic: '✦', ia: true },
-  { key: 'sources', label: 'Sources', ic: '☰' },
-  { key: 'flux', label: 'Flux', ic: '≈' },
+  { key: 'donnees', label: 'Données', ic: '☰' },
   { key: 'produit', label: 'Produit', ic: '◫' },
   { key: 'courrier', label: 'Courrier', ic: '✉' },
   { key: 'radar', label: 'Radar', ic: '◎' },
-  { key: 'cron', label: 'Cron', ic: '⧗' },
   { key: 'contacts', label: 'Contacts', ic: '☎' },
   { key: 'programmes', label: 'Programmes', ic: '◳' },
 ]
-const SOUS_TITRES: Record<AdminSection, string> = {
-  pilotage: "l'état de LABUSE en cinq secondes",
-  licences: 'un client, une ligne — abonnement · onboarding · usage',
-  ia: 'consommation, quotas, crédit',
-  sources: 'les 59, leur fraîcheur, leur cadence',
-  flux: 'la donnée, de la source à l’écran — injecter · calculer · basculer',
+// SOUS_TITRES : Partial car les valeurs de redirection (sources/flux/cron) n'ont pas de sous-titre propre.
+const SOUS_TITRES: Partial<Record<AdminSection, string>> = {
+  pilotage: 'comment va LABUSE ce matin ?',
+  licences: 'que dois-je faire pour ce client, maintenant ?',
+  ia: 'consommation, plafonds par compte, registre modèle',
+  donnees: 'mes données sont-elles à jour ? — Catalogue · Circuit · Horloge',
   produit: 'ce qui est utilisé · ce que les clients demandent',
   courrier: 'les demandes d’envoi — la page qui manquait',
-  radar: 'la pige d’annonces — saisie, extraction, re-vérif, rituel',
-  cron: 'les jobs planifiés — état, prochaine exécution, lancer, logs',
-  contacts: 'mairies, EPCI, DEAL, ADIL — réunis et triables',
+  radar: 'la pige d’annonces — déposer, valider, re-vérifier',
+  contacts: 'le carnet des communes — standard + contacts nommés',
   programmes: 'coller une URL de portfolio → l’IA propose, vous validez ligne à ligne',
 }
 
@@ -312,11 +313,12 @@ export function AdminView() {
   const setView = useApp((s) => s.setView)
   const adminSection = useApp((s) => s.adminSection)
   const clearAdminSection = useApp((s) => s.clearAdminSection)
-  const [section, setSection] = useState<AdminSection>((adminSection as AdminSection) || 'pilotage')
+  const [section, setSection] = useState<AdminSection>(_rediriger((adminSection as AdminSection) || 'pilotage'))
   // SECTEUR-2 (T3) — deep-link depuis « Publier une annonce » (en-tête Radar) : ouvre la section
   // demandée puis consomme l'intention (le retour manuel sur une autre section n'est pas réécrasé).
+  // ADMIN-1 (AD2) — les anciens deep-links sources/flux/cron sont redirigés vers « donnees ».
   useEffect(() => {
-    if (adminSection) { setSection(adminSection as AdminSection); clearAdminSection() }
+    if (adminSection) { setSection(_rediriger(adminSection as AdminSection)); clearAdminSection() }
   }, [adminSection, clearAdminSection])
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
   const admin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
@@ -381,12 +383,10 @@ export function AdminView() {
           {section === 'pilotage' && <PilotageSection data={d} go={setSection} />}
           {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <IaSection />}
-          {section === 'sources' && <SourcesSection />}
-          {section === 'flux' && <FluxSection />}
+          {section === 'donnees' && <DonneesSection />}
           {section === 'produit' && <ProduitSection />}
           {section === 'courrier' && <CourrierSection />}
           {section === 'radar' && <RadarSection />}
-          {section === 'cron' && <CronSection />}
           {section === 'contacts' && <ContactsSection />}
           {section === 'programmes' && <ProgrammesSection />}
         </div>
