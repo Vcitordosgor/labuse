@@ -486,8 +486,8 @@ export function ResultsSection() {
           {fmt(shown.length)}{total > 0 || !ile ? ` / ${fmt(ile ? total : (list.length || total))}` : ''}
         </span>
         <span className="flex shrink-0 items-center gap-2">
-          {/* RETOURS-7 Z11 — export CSV RETIRÉ de la liste (décision Vic). L'endpoint /parcels/export.csv
-              reste servi mais sans appelant côté front (marqué obsolète, cf. csvExportUrl). */}
+          {/* RETOURS-7 Z11 — export CSV RETIRÉ de la liste (décision Vic). SUITE-1 S7 : l'endpoint
+              /parcels/export.csv et `csvExportUrl` ont été supprimés (code mort sans appelant). */}
           {/* E3 : île → pagination serveur (Charger plus) ; commune → slice client (Tout voir). */}
           {ile ? (
             serverList.hasNextPage && (

@@ -67,7 +67,10 @@ SURFACES: dict[str, dict] = {
     "fiche-ask":         {"label": "Question sur la fiche (routée)",     "model": MODEL_REASONING},
     "explain":           {"label": "Assistant — expliquer",             "model": MODEL_REASONING},
     "explain-faisa":     {"label": "Faisabilité — expliquer",           "model": MODEL_REASONING},
-    "agent-brief":       {"label": "Copilote v1 (missions lourdes)",     "model": MODEL_REASONING},
+    # SUITE-1 S9 — un seul Copilote (v2). La surface des MISSIONS LOURDES (RECHERCHE/VERIFICATION,
+    # interprétation du brief par le moteur run-scopé) porte son propre `kind` `copilote_mission`
+    # (l'ancienne ligne « Copilote v1 (missions) » disparaît). Modèle : sonnet (raisonnement).
+    "copilote_mission":  {"label": "Copilote — missions lourdes (RECHERCHE/VERIFICATION)", "model": MODEL_REASONING},
     "copilote-route":    {"label": "Copilote v2 — routage",              "model": MODEL_FACTUAL},
     "copilote-select":   {"label": "Copilote v2 — sélection d'outil",    "model": MODEL_REASONING},
     "copilote-formule":  {"label": "Copilote v2 — formulation",          "model": MODEL_REASONING},

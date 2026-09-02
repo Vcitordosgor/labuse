@@ -1,9 +1,12 @@
-"""M26-A — API Copilote : runs, SSE (reconnexion after_seq), quota ACTIF, cloison.
+"""SUITE-1 S9 — API des MISSIONS LOURDES du Copilote (v2) : runs, SSE (reconnexion after_seq),
+quota UNIFIÉ ACTIF, cloison. Endpoints sous `/api/copilote-v2/runs*` (les URL v1 `/api/copilote/*`
+n'existent plus).
 
-Le quota est testé HORS dev mode (exigence GO M26-A) : quota atteint → 429 honnête,
-AUCUN run créé, AUCUN moteur appelé — le chemin quota est exercé tel qu'en prod.
-L'exécuteur est neutralisé (demarrer_run mocké) : on teste l'API et l'event log, pas
-les moteurs (couverts par test_copilote_executeur).
+Le quota est testé HORS dev mode : quota atteint → 429 honnête, AUCUN run créé, AUCUN moteur appelé —
+le chemin quota est exercé tel qu'en prod. Le plafond v1 distinct (kind 'agent', `copilote_quota_jour`)
+a DISPARU : le run compte sur le MÊME compteur que `/ask` (`quota_du_compte` + `QUOTA_COPILOTE_KIND`,
+kind 'copilote' ; bucket pilote → défaut `nl_quota_jour`). L'exécuteur est neutralisé (demarrer_run
+mocké) : on teste l'API et l'event log, pas les moteurs (couverts par test_copilote_executeur).
 """
 from __future__ import annotations
 
@@ -21,7 +24,7 @@ def client(engine, monkeypatch):
     from labuse.api import copilote as api_cop
     from labuse.api.app import app
     from labuse.api.protection import ensure_tables as _prot_ens
-    _prot_ens(engine)                                 # usage_compteurs (quota kind='agent')
+    _prot_ens(engine)                                 # usage_compteurs (quota UNIFIÉ kind='copilote')
     lances: list[str] = []
     monkeypatch.setattr(api_cop, "demarrer_run", lambda rid: lances.append(rid))
     c = TestClient(app)
@@ -41,7 +44,7 @@ def _session(engine):
 
 @pytest.mark.db
 def test_post_run_cree_run_started_et_plan_fige(client, engine):
-    r = client.post("/api/copilote/runs",
+    r = client.post("/api/copilote-v2/runs",
                     json={"mission": "instruire", "brief_raw": "test-api 6 logements"})
     assert r.status_code == 200
     run_id = r.json()["run_id"]
@@ -63,14 +66,14 @@ def test_post_run_cree_run_started_et_plan_fige(client, engine):
 
 @pytest.mark.db
 def test_mission_inconnue_422(client):
-    r = client.post("/api/copilote/runs",
+    r = client.post("/api/copilote-v2/runs",
                     json={"mission": "dominer", "brief_raw": "test-api x"})
     assert r.status_code == 422 and "instruire" in r.json()["detail"]
 
 
 @pytest.mark.db
 def test_liste_et_detail_derives_de_l_event_log(client, engine):
-    run_id = client.post("/api/copilote/runs", json={
+    run_id = client.post("/api/copilote-v2/runs", json={
         "mission": "shortlist", "brief_raw": "test-api shortlist"}).json()["run_id"]
     s = _session(engine)
     try:
@@ -78,9 +81,9 @@ def test_liste_et_detail_derives_de_l_event_log(client, engine):
         ev.emit(s, run_id, "run_completed", {"n_retenues": 0, "n_ecartees": 0})
     finally:
         s.close()
-    liste = client.get("/api/copilote/runs").json()["runs"]
+    liste = client.get("/api/copilote-v2/runs").json()["runs"]
     assert any(x["run_id"] == run_id and x["status"] == "done" for x in liste)
-    detail = client.get(f"/api/copilote/runs/{run_id}").json()
+    detail = client.get(f"/api/copilote-v2/runs/{run_id}").json()
     assert detail["status"] == "done"
     assert detail["recap"]["n_retenues"] == 0
     assert detail["n_events"] == 3
@@ -90,7 +93,7 @@ def test_liste_et_detail_derives_de_l_event_log(client, engine):
 
 @pytest.mark.db
 def test_sse_rejoue_puis_reconnecte_sans_doublon_ni_trou(client, engine):
-    run_id = client.post("/api/copilote/runs", json={
+    run_id = client.post("/api/copilote-v2/runs", json={
         "mission": "instruire", "brief_raw": "test-api sse"}).json()["run_id"]
     s = _session(engine)
     try:
@@ -114,12 +117,12 @@ def test_sse_rejoue_puis_reconnecte_sans_doublon_ni_trou(client, engine):
         return seqs, kinds, data
 
     # Rejeu complet (after_seq=0) : run terminal → le flux se ferme après le rejeu.
-    seqs, kinds, _ = _lire(f"/api/copilote/runs/{run_id}/events")
+    seqs, kinds, _ = _lire(f"/api/copilote-v2/runs/{run_id}/events")
     assert seqs == [1, 2, 3, 4]                     # ni doublon ni trou
     assert kinds == ["run_started", "brief_parsed", "step_started", "run_completed"]
 
     # Reconnexion en plein milieu : exactement la suite, jamais l'avant.
-    seqs2, kinds2, brut = _lire(f"/api/copilote/runs/{run_id}/events?after_seq=2")
+    seqs2, kinds2, brut = _lire(f"/api/copilote-v2/runs/{run_id}/events?after_seq=2")
     assert seqs2 == [3, 4] and kinds2 == ["step_started", "run_completed"]
     assert "run_started" not in kinds2
     assert '"status": "done"' in brut               # événement de fin explicite
@@ -131,16 +134,16 @@ def test_sse_rejoue_puis_reconnecte_sans_doublon_ni_trou(client, engine):
 def test_quota_actif_429_honnete_aucun_run_aucun_moteur(client, engine, monkeypatch):
     s = config.get_settings()
     monkeypatch.setattr(s, "dev_mode", False)
-    monkeypatch.setattr(s, "copilote_quota_jour", 1)
+    monkeypatch.setattr(s, "nl_quota_jour", 1)        # bucket pilote → défaut nl_quota_jour (quota UNIFIÉ)
     with engine.begin() as conn:
-        conn.execute(text("DELETE FROM usage_compteurs WHERE kind = 'agent'"))
+        conn.execute(text("DELETE FROM usage_compteurs WHERE kind = 'copilote'"))
     avant_runs = client.lances[:]
 
-    ok = client.post("/api/copilote/runs",
+    ok = client.post("/api/copilote-v2/runs",
                      json={"mission": "instruire", "brief_raw": "test-api quota 1"})
     assert ok.status_code == 200                     # 1er run du jour : passe
 
-    refus = client.post("/api/copilote/runs",
+    refus = client.post("/api/copilote-v2/runs",
                         json={"mission": "instruire", "brief_raw": "test-api quota 2"})
     assert refus.status_code == 429
     corps = refus.json()
@@ -156,18 +159,18 @@ def test_quota_actif_429_honnete_aucun_run_aucun_moteur(client, engine, monkeypa
 
 @pytest.mark.db
 def test_quota_compte_sur_le_scope_du_run(client, engine, monkeypatch):
-    # GO Q2 : le quota est compté sur le MÊME scope que la propriété du run — en mode
-    # pilote (compte NULL), sujet session/IP ; le kind est 'agent'.
+    # S9 : le quota est compté sur le MÊME scope que la propriété du run — en mode
+    # pilote (compte NULL), sujet session/IP ; le kind UNIFIÉ est 'copilote' (le même que /ask).
     s = config.get_settings()
     monkeypatch.setattr(s, "dev_mode", False)
-    monkeypatch.setattr(s, "copilote_quota_jour", 10)
+    monkeypatch.setattr(s, "nl_quota_jour", 10)
     with engine.begin() as conn:
-        conn.execute(text("DELETE FROM usage_compteurs WHERE kind = 'agent'"))
-    client.post("/api/copilote/runs",
+        conn.execute(text("DELETE FROM usage_compteurs WHERE kind = 'copilote'"))
+    client.post("/api/copilote-v2/runs",
                 json={"mission": "instruire", "brief_raw": "test-api scope"})
     with engine.connect() as conn:
         rows = conn.execute(text(
-            "SELECT sujet, n FROM usage_compteurs WHERE kind = 'agent'")).all()
+            "SELECT sujet, n FROM usage_compteurs WHERE kind = 'copilote'")).all()
     assert len(rows) == 1 and rows[0][1] == 1
 
 
@@ -175,7 +178,7 @@ def test_quota_compte_sur_le_scope_du_run(client, engine, monkeypatch):
 
 @pytest.mark.db
 def test_answer_reprend_un_run_awaiting_user(client, engine):
-    run_id = client.post("/api/copilote/runs", json={
+    run_id = client.post("/api/copilote-v2/runs", json={
         "mission": "instruire", "brief_raw": "test-api clarif"}).json()["run_id"]
     s = _session(engine)
     try:
@@ -183,12 +186,12 @@ def test_answer_reprend_un_run_awaiting_user(client, engine):
                 {"question": "Quelle commune ?", "champ_manquant": "communes"})
     finally:
         s.close()
-    detail = client.get(f"/api/copilote/runs/{run_id}").json()
+    detail = client.get(f"/api/copilote-v2/runs/{run_id}").json()
     assert detail["status"] == "awaiting_user"
     assert detail["clarification"]["champ_manquant"] == "communes"
 
     n_avant = len(client.lances)
-    r = client.post(f"/api/copilote/runs/{run_id}/answer", json={"reponse": "Saint-Paul"})
+    r = client.post(f"/api/copilote-v2/runs/{run_id}/answer", json={"reponse": "Saint-Paul"})
     assert r.status_code == 200
     assert len(client.lances) == n_avant + 1        # l'exécuteur repart
     s = _session(engine)
@@ -202,17 +205,17 @@ def test_answer_reprend_un_run_awaiting_user(client, engine):
 
 @pytest.mark.db
 def test_answer_refuse_si_pas_awaiting(client):
-    run_id = client.post("/api/copilote/runs", json={
+    run_id = client.post("/api/copilote-v2/runs", json={
         "mission": "instruire", "brief_raw": "test-api pas-attente"}).json()["run_id"]
-    r = client.post(f"/api/copilote/runs/{run_id}/answer", json={"reponse": "x"})
+    r = client.post(f"/api/copilote-v2/runs/{run_id}/answer", json={"reponse": "x"})
     assert r.status_code == 409
 
 
 @pytest.mark.db
 def test_cancel_emet_run_cancelled(client, engine):
-    run_id = client.post("/api/copilote/runs", json={
+    run_id = client.post("/api/copilote-v2/runs", json={
         "mission": "instruire", "brief_raw": "test-api cancel"}).json()["run_id"]
-    r = client.post(f"/api/copilote/runs/{run_id}/cancel")
+    r = client.post(f"/api/copilote-v2/runs/{run_id}/cancel")
     assert r.status_code == 200 and r.json()["status"] == "cancelled"
     s = _session(engine)
     try:
@@ -220,7 +223,7 @@ def test_cancel_emet_run_cancelled(client, engine):
     finally:
         s.close()
     # Un second cancel → 409 (déjà terminal), jamais un double événement.
-    assert client.post(f"/api/copilote/runs/{run_id}/cancel").status_code == 409
+    assert client.post(f"/api/copilote-v2/runs/{run_id}/cancel").status_code == 409
 
 
 @pytest.mark.db
@@ -240,7 +243,7 @@ def test_cloison_aucun_acces_croise(client, engine):
     finally:
         s.close()
     # Le client de test n'a pas de session compte → cid NULL ≠ compte du run.
-    assert client.get(f"/api/copilote/runs/{autre}").status_code == 404
-    assert client.post(f"/api/copilote/runs/{autre}/cancel").status_code == 404
-    ids = [x["run_id"] for x in client.get("/api/copilote/runs").json()["runs"]]
+    assert client.get(f"/api/copilote-v2/runs/{autre}").status_code == 404
+    assert client.post(f"/api/copilote-v2/runs/{autre}/cancel").status_code == 404
+    ids = [x["run_id"] for x in client.get("/api/copilote-v2/runs").json()["runs"]]
     assert autre not in ids

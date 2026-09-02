@@ -112,26 +112,29 @@ async function jc<T>(url: string, init?: RequestInit): Promise<T> {
   return r.json() as Promise<T>
 }
 
+// SUITE-1 S9 — un seul Copilote (v2). Les missions lourdes (RECHERCHE/VERIFICATION) sont servies par
+// le moteur run-scopé sous le préfixe /api/copilote-v2/runs* (les URL v1 /api/copilote/* n'existent
+// plus). Quota UNIFIÉ (comme /ask). Le contrat d'événements/SSE est INCHANGÉ.
 export const copiloteCreerRun = (mission: MissionActive, brief_raw: string) =>
-  jc<{ run_id: string }>('/api/copilote/runs', {
+  jc<{ run_id: string }>('/api/copilote-v2/runs', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mission, brief_raw }),
   })
 
 export const copiloteRepondre = (runId: string, reponse: string) =>
-  jc<{ run_id: string; status: string }>(`/api/copilote/runs/${runId}/answer`, {
+  jc<{ run_id: string; status: string }>(`/api/copilote-v2/runs/${runId}/answer`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ reponse }),
   })
 
 export const copiloteAnnuler = (runId: string) =>
-  jc<{ run_id: string; status: string }>(`/api/copilote/runs/${runId}/cancel`, { method: 'POST' })
+  jc<{ run_id: string; status: string }>(`/api/copilote-v2/runs/${runId}/cancel`, { method: 'POST' })
 
 export const copiloteRuns = (limit = 20, offset = 0) =>
   jc<{ runs: Array<{ run_id: string; mission: string; status: CopiloteStatut; brief_raw: string
        created_at: string; finished_at: string | null }>; limit: number; offset: number }>(
-    `/api/copilote/runs?limit=${limit}&offset=${offset}`)
+    `/api/copilote-v2/runs?limit=${limit}&offset=${offset}`)
 
 /** URL du flux SSE — reprise sans doublon ni trou : after_seq = dernier seq reçu. */
 export const copiloteEventsUrl = (runId: string, afterSeq: number) =>
-  `/api/copilote/runs/${runId}/events?after_seq=${afterSeq}`
+  `/api/copilote-v2/runs/${runId}/events?after_seq=${afterSeq}`
