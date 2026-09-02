@@ -545,27 +545,6 @@ def traiter_reprises(db: Session) -> int:
     return n
 
 
-def _parse_hash_filters(h: str) -> dict:
-    """OBSOLÈTE (CONNEXIONS-2 Lot 5, KO-7) — ancien parseur À 5 DIMENSIONS de la veille (sur-alertait :
-    les 30 autres dimensions du filtre étaient ignorées en silence). Remplacé par le moteur PARTAGÉ
-    `app.filtre_from_hash` + `app.parcelles_matchant_hash` (parité carte↔veille). Conservé (aucun
-    appelant) le temps d'un mandat d'hygiène — ne plus l'utiliser pour évaluer une veille.
-
-    Filtres d'une veille depuis son hash (#f=1&st=…&vm=1…) — même sérialisation que le front."""
-    from urllib.parse import parse_qs
-    q = parse_qs(h.lstrip("#"))
-    g = lambda k: q.get(k, [None])[0]  # noqa: E731
-    # M17-B : honorer AUSSI `tv` (tiers du front, filtersToHash) et `cs` (commune) — jusqu'ici la
-    # veille lisait `st`/rien pour la commune, donc sur-alertait sur ces deux dimensions (silencieux).
-    st = (g("st") or "").split(",") if g("st") else []
-    tv = (g("tv") or "").split(",") if g("tv") else []
-    return {"st": list(dict.fromkeys([*st, *tv])),
-            "cm": (g("cs") or "").split(",") if g("cs") else [],
-            "ev": g("ev") == "1", "q": int(g("q")) if g("q") else None,
-            "smin": int(g("smin")) if g("smin") else None, "smax": int(g("smax")) if g("smax") else None,
-            "sdp": int(g("sdp")) if g("sdp") else None, "fl": (g("fl") or "").split(",") if g("fl") else []}
-
-
 def _veilles_match(db: Session, run_to: str, demo: bool, rattrapage: bool = False) -> int:
     # Batch : on parcourt TOUTES les veilles (tous comptes), et chaque événement produit est
     # attribué au COMPTE propriétaire de la veille (v["compte_id"]) — jamais partagé.
