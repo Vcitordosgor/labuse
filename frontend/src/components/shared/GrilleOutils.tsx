@@ -31,7 +31,8 @@ export function OutilCase({ ic, nom, chiffre, onClick, href, disabled, title, ..
   return <button data-outil-case={nom} onClick={onClick} className={CASE} title={title} {...rest}>{inner}</button>
 }
 
-/** La GRILLE (4 colonnes) qui contient les cases. */
-export function GrilleOutils({ children }: { children: ReactNode }) {
-  return <div data-outils-grille className="grid grid-cols-4 gap-1.5">{children}</div>
+/** La GRILLE qui contient les cases. 4 colonnes par défaut ; RETOURS-9 (Q8.3) — la fiche parcelle
+ *  passe ses exports sur 3 colonnes (deux lignes de trois). */
+export function GrilleOutils({ children, cols = 4 }: { children: ReactNode; cols?: 3 | 4 }) {
+  return <div data-outils-grille className={`grid gap-1.5 ${cols === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>{children}</div>
 }

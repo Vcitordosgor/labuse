@@ -346,6 +346,49 @@ def radar_a_instruire(request: Request) -> dict:
     return {"file": rows, "n": len(rows)}
 
 
+def _candidate_fiche(db, idu: str) -> dict:
+    """RETOURS-9 (Q7) — les faits de la CANDIDATE, lus tels quels de la fiche parcelle (AUCUN calcul
+    neuf) : surface cadastrale, surface bâtie (BD TOPO) + nombre de bâtiments, zone PLU, adresse BAN.
+    L'admin met l'annonce et ces faits côte à côte pour trancher. Toute valeur absente → None (jamais
+    inventée). Robuste : une table manquante (base partielle) ne casse pas l'instruction."""
+    from sqlalchemy import text as _t
+    out = {"surface_cadastrale": None, "surface_bati": None, "n_batiments": None,
+           "zone_plu": None, "adresse_ban": None}
+    try:
+        p = db.execute(_t("SELECT id, surface_m2 FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    except Exception:  # noqa: BLE001
+        return out
+    if not p:
+        return out
+    out["surface_cadastrale"] = round(p["surface_m2"]) if p["surface_m2"] is not None else None
+    for sql, key, cast in (
+        ("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i", "surface_bati", lambda v: round(v) if v else None),
+        ("SELECT zone_libelle FROM parcel_zone_plu WHERE idu = :i", "zone_plu", lambda v: v or None),
+    ):
+        try:
+            v = db.execute(_t(sql), {"i": idu}).scalar()
+            out[key] = cast(v)
+        except Exception:  # noqa: BLE001 — table absente/partielle : le champ reste None, jamais un 500
+            pass
+    # nombre de bâtiments — même bloc « bâti détecté » que la fiche (bati.fiche_block).
+    try:
+        from .. import bati
+        out["n_batiments"] = bati.fiche_block(db, p["id"], p["surface_m2"]).get("nb_batiments")
+    except Exception:  # noqa: BLE001
+        pass
+    # adresse BAN principale de la parcelle (comme la fiche/exports).
+    try:
+        a = db.execute(_t("SELECT numero, rep, voie, code_postal, commune FROM adresses "
+                          "WHERE idu = :i ORDER BY (numero IS NULL), id_ban LIMIT 1"), {"i": idu}).mappings().first()
+        if a and a["voie"]:
+            num = " ".join(x for x in (a["numero"], a["rep"]) if x)
+            out["adresse_ban"] = " ".join(x for x in (num, a["voie"]) if x) + (
+                f", {a['code_postal']} {a['commune']}" if a["commune"] else "")
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
 @router.post("/admin/radar/instruire")
 def radar_instruire(body: BienIn, request: Request) -> dict:
     """RADAR-DEPOT-2 (D3) — « Instruire cette annonce » est désormais un geste ADMIN SEULEMENT : un
@@ -378,7 +421,9 @@ def radar_instruire(body: BienIn, request: Request) -> dict:
         for p in ratt.get("pistes", []):
             idu = p.get("idu")
             candidates.append({**p, "ortho_url": f"/admin/radar/ortho/{idu}" if idu else None,
-                               "criteres_detail": rattachement_html.criteres_pour_idu(db, dict(rec), idu) if idu else []})
+                               "criteres_detail": rattachement_html.criteres_pour_idu(db, dict(rec), idu) if idu else [],
+                               # RETOURS-9 (Q7) — faits de la candidate (fiche parcelle), pour trancher côte à côte.
+                               "fiche": _candidate_fiche(db, idu) if idu else None})
         # ré-écrit UNIQUEMENT l'état/pistes/critères (jamais la position ni le statut).
         db.execute(_t(
             "UPDATE pige_biens SET rattachement_etat = :e, rattachement_niveau = :n, idu = :idu, "

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { getSources } from '../../lib/api'
+import { getSources, getSourcesCouverture } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
@@ -29,13 +29,9 @@ function majReelle(s: SourceInfo): string | null {
   return b ?? a
 }
 
-// M87 P4 — DÉRIVÉS de la donnée servie (jamais recalculés : la fraîcheur vient de fraicheur.py via /sources,
-// le radar amont de radar.py). Ces prédicats nourrissent la barre d'état, les filtres ET les badges — un
-// seul jeu de règles, pas de chiffre en dur.
-const sondable = (s: SourceInfo) => s.radar?.statut === 'a_jour' || s.radar?.statut === 'nouvelle_publication'
-// M123 — état HONNÊTE d'une source sans sonde auto fiable : suivie À LA MAIN (cadence dite), ni
-// « à jour » automatique ni « cassé ». Distinct de `sondable` (radar auto).
-const suiviManuel = (s: SourceInfo) => s.radar?.statut === 'verification_manuelle'
+// RETOURS-9 (Q11.3) — les prédicats de MÉTHODE DE VEILLE (sondable/suiviManuel) ne servent plus côté
+// client : la « dernière colonne » (collecte manuelle/automatique) disparaît. Le client lit source ·
+// producteur · publié le · à jour. Ces distinctions restent dans Données (admin).
 // RETOURS-8 (R2) — le client ne voit que DEUX états, et le mot « retard » n'apparaît JAMAIS. L'arbitre
 // unique du serveur (etats_sources → `etat_client`) tranche : « pas à jour » = une version plus récente
 // existe chez le producteur et n'est pas encore intégrée (« mise à jour en cours », jamais rouge) ; tout
@@ -56,7 +52,6 @@ function versionMeta(s: SourceInfo): { label: string; untracked: boolean; ingere
   if (ing) return { label: `donnée du ${new Date(ing).toLocaleDateString('fr-FR')}`, untracked: false, ingere: null }
   return { label: 'millésime non tracé', untracked: true, ingere: null }
 }
-const nonTrace = (s: SourceInfo) => versionMeta(s).untracked
 
 // FIX-SOURCES S4 — la FIABILITÉ (data_sources.reliability_level) était STOCKÉE mais jamais rendue
 // (champ mort). On la montre quand elle appelle une réserve honnête (« à confirmer » / convention /
@@ -113,8 +108,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             <span data-source-maj>mise à jour en cours</span>
           </Badge>
         )}
-        {sondable(s) && <Badge kind="auto" title="Le producteur expose une date interrogeable : notre radar vérifie automatiquement que c'est la dernière version publiée.">version vérifiée</Badge>}
-        {suiviManuel(s) && <Badge kind="dashed" title={`Pas de sonde automatique fiable : version vérifiée à la main. Cadence : ${s.radar?.cadence ?? 'grande passe'}.`}>suivi manuel</Badge>}
+        {/* RETOURS-9 (Q11.3) — badges « version vérifiée » / « suivi manuel » (méthode de veille) retirés côté client. */}
         {s.nature?.dashed && (
           <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
         )}
@@ -158,13 +152,15 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   )
 }
 
-type Filtre = 'toutes' | 'ajour' | 'majencours' | 'nontrace'
-
 export function SourcesPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources })
+  // RETOURS-9 (Q11.5) — les chiffres de couverture qui parlent au client, lus des données réelles.
+  const couverture = useQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).data
   const sourcesFocus = useApp((s) => s.sourcesFocus)
   const [q, setQ] = useState('')
-  const [filtre, setFiltre] = useState<Filtre>('toutes')
+  // RETOURS-9 (Q11.1) — plus de chips de tri : « Toutes » ou un thème (accordéon replié « Filtrer par thème »).
+  const [theme, setTheme] = useState<string | null>(null)
+  const [themeOuvert, setThemeOuvert] = useState(false)
 
   // M5 : version du modèle P v2 (sha + avertissement censure) — RÉSERVE DE MÉTHODE conservée (repliée
   // en bas), jamais supprimée : la maquette ne la montre pas mais la doctrine interdit d'effacer une réserve.
@@ -179,51 +175,38 @@ export function SourcesPage() {
     retry: false, staleTime: 5 * 60_000,
   }).data
 
-  // M87 P4 — les 4 compteurs de la barre d'état sont DÉRIVÉS des sources servies (jamais en dur).
-  // L'API ne sert déjà que connecte-hors-doublons-hors-masquées ; le filtre reste défensif.
+  // Les sources servies (hors doublons). L'API ne sert déjà que connecte-hors-masquées ; filtre défensif.
   const comptees = useMemo(() => (data ?? []).filter((s) => !s.doublon), [data])
   const nTotal = comptees.length
-  const nVerif = comptees.filter(sondable).length
-  const nMajEnCours = comptees.filter(pasAJour).length
-  const nNonTrace = comptees.filter(nonTrace).length
   const nAJour = comptees.filter(aJour).length
-  // M105 P3.2 — la DATE du dernier passage radar (max des derniere_verif servis) : un état
-  // « à jour » mesuré il y a un mois doit dire son âge.
-  const radarPassage = useMemo(() => comptees.reduce<string | null>((acc, s) => {
-    const d = s.radar?.derniere_verif ?? null
-    return d && (!acc || d > acc) ? d : acc
-  }, null), [comptees])
   // FIX-SOURCES S3 — la réserve DVF ne code plus « 2025–2026 » en dur : la borne RÉCENTE est LUE dans
-  // la base (dernière donnée servie de la source DVF, dvf_mutations_parcelle). Sans donnée → phrase
-  // sans chiffre. Jamais une année inventée.
+  // la base (dernière donnée servie de la source DVF). Sans donnée → phrase sans chiffre.
   const dvfMaxAnnee = useMemo(() => {
     const d = (data ?? []).find((s) => s.name === 'DVF / valeurs foncières')?.derniere_donnee
     const y = d ? new Date(d).getFullYear() : NaN
     return Number.isFinite(y) ? y : null
   }, [data])
+  // RETOURS-9 (Q11.1) — les THÈMES existants (catégorie du catalogue), pour l'accordéon « Filtrer par thème ».
+  const themes = useMemo(() => {
+    const set = new Map<string, number>()
+    for (const s of comptees) { const k = s.category || 'Autres'; set.set(k, (set.get(k) ?? 0) + 1) }
+    return [...set.entries()].sort((a, b) => a[0].localeCompare(b[0], 'fr'))
+  }, [comptees])
 
-  const CHIPS: { key: Filtre; label: string; n: number }[] = [
-    { key: 'toutes', label: 'Toutes', n: nTotal },
-    { key: 'ajour', label: 'À jour', n: nAJour },
-    { key: 'majencours', label: 'Mise à jour en cours', n: nMajEnCours },
-    { key: 'nontrace', label: 'Millésime non tracé', n: nNonTrace },
-  ]
-
-  // Recherche (nom / producteur / licence / catégorie) + filtre actif. Groupé par catégorie.
+  // Recherche (nom / producteur / licence / catégorie) + thème actif. Groupé par catégorie.
   const cats = useMemo(() => {
     const ql = q.trim().toLowerCase()
-    const passeFiltre = (s: SourceInfo) =>
-      filtre === 'toutes' ? true : filtre === 'ajour' ? aJour(s) : filtre === 'majencours' ? pasAJour(s) : nonTrace(s)
+    const passeTheme = (s: SourceInfo) => theme == null || (s.category || 'Autres') === theme
     const passeSearch = (s: SourceInfo) =>
       !ql || [s.name, s.provider, s.category, licence(s)].some((v) => (v ?? '').toLowerCase().includes(ql))
     const m = new Map<string, SourceInfo[]>()
     for (const s of comptees) {
-      if (!passeFiltre(s) || !passeSearch(s)) continue
+      if (!passeTheme(s) || !passeSearch(s)) continue
       const k = s.category || 'Autres'
       m.set(k, [...(m.get(k) ?? []), s])
     }
     return [...m.entries()]
-  }, [comptees, q, filtre])
+  }, [comptees, q, theme])
 
   const nVisibles = cats.reduce((acc, [, l]) => acc + l.length, 0)
 
@@ -233,10 +216,10 @@ export function SourcesPage() {
         {/* en-tête */}
         <p className="mb-3.5 font-mono text-[10.5px] uppercase tracking-[.16em] text-txt-dim">Données et méthode</p>
         <h1 className="mb-2 text-[26px] font-semibold tracking-[-.02em] text-txt-hi">Sources &amp; fraîcheur</h1>
-        <p data-sources-positionnement className="mb-7 max-w-[62ch] text-[13px] leading-relaxed text-txt-mut">
-          Chaque réponse LABUSE est traçable jusqu'à sa source publique. Ce tableau dit d'où vient le
-          chiffre, à quelle date il a été publié par son producteur, et si nous savons vérifier cette
-          date automatiquement.
+        {/* RETOURS-9 (Q11.4) — intro en PLEINE LARGEUR (plus de marge interne étroite), raccourcie. */}
+        <p data-sources-positionnement className="mb-7 text-[13px] leading-relaxed text-txt-mut">
+          Chaque chiffre LABUSE est traçable jusqu'à sa source publique : d'où il vient, quand son
+          producteur l'a publié, et s'il est à jour dans l'app.
         </p>
 
         {/* M105 P1 — l'encart HIÉRARCHISÉ : en grand l'essentiel (sources · à jour), en petit la
@@ -244,22 +227,25 @@ export function SourcesPage() {
             ne trace pas). Le compteur « en retard » a QUITTÉ l'encart : l'information vit sur la
             ligne de chaque source concernée (badge + formulation, jamais masquée). Tous les
             compteurs restent CALCULÉS (nAJour dérivé), aucun chiffre en dur. */}
+        {/* RETOURS-9 (Q11.5) — cinq tuiles au plus, une ligne : les deux chiffres cœur (sources · à jour)
+            gagnent des voisins qui parlent au client, LUS des données réelles (couverture). Q11.2 : la
+            ligne d'exploitation (« vérifiées automatiquement · radar amont… ») est retirée. */}
         {data && (
           <div data-sources-bandeau className="mb-3.5 overflow-hidden rounded-[10px] border border-line bg-surface-2">
             <div className="flex flex-wrap">
-              <div className="min-w-[150px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
-                <b className="block text-[26px] font-semibold leading-tight text-txt-hi">{nTotal}</b>
-                <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">sources</span>
-              </div>
-              <div className="min-w-[150px] flex-1 px-[18px] py-3.5">
-                <b className="block text-[26px] font-semibold leading-tight text-mint">{nAJour}</b>
-                <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">à jour</span>
-              </div>
+              {([
+                { v: String(nTotal), l: 'sources', mint: false },
+                { v: String(nAJour), l: 'à jour', mint: true },
+                { v: couverture?.parcelles != null ? couverture.parcelles.toLocaleString('fr-FR') : '—', l: 'parcelles couvertes', mint: false },
+                { v: couverture?.communes != null ? `${couverture.communes}/${couverture.communes_total}` : '—', l: 'communes', mint: false },
+                { v: couverture?.analyse_date ? `arrêtée au ${new Date(couverture.analyse_date).toLocaleDateString('fr-FR')}` : '—', l: 'dernière analyse', mint: false, small: true },
+              ] as const).map((t, i) => (
+                <div key={i} className="min-w-[130px] flex-1 border-r border-line px-[18px] py-3.5 last:border-r-0">
+                  <b className={`block font-semibold leading-tight ${'small' in t && t.small ? 'text-[15px]' : 'text-[26px]'} ${t.mint ? 'text-mint' : 'text-txt-hi'}`}>{t.v}</b>
+                  <span className="font-mono text-[10px] uppercase tracking-[.13em] text-txt-dim">{t.l}</span>
+                </div>
+              ))}
             </div>
-            <p data-sources-sousligne className="border-t border-line px-[18px] py-2 text-[11.5px] text-txt-dim">
-              {nVerif} vérifiées automatiquement · {nNonTrace} sans date exposée par le producteur
-              {radarPassage && <> · radar amont : dernier passage le {new Date(radarPassage).toLocaleDateString('fr-FR')}</>}
-            </p>
           </div>
         )}
 
@@ -287,24 +273,40 @@ export function SourcesPage() {
           </div>
         </details>
 
-        {/* barre d'outils : recherche + 4 filtres (comptes calculés) */}
+        {/* RETOURS-9 (Q11.1) — barre d'outils : recherche + « Toutes » + accordéon replié « Filtrer par thème »
+            (les thèmes existent déjà dans le catalogue : Énergie, Urbanisme, Risques, Marché, Cadastre…). */}
         <div className="sticky top-0 z-[5] mb-5 flex flex-wrap items-center gap-2.5 border-b border-line bg-bg py-3">
           <input data-sources-search value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Chercher une source, un producteur…"
             className="min-w-[200px] flex-[1_1_240px] rounded-lg border border-line bg-surface-2 px-3 py-2 text-[13px] text-txt placeholder:text-txt-dim focus:border-line-2 focus:outline-none" />
-          {CHIPS.map((c) => (
-            <button key={c.key} data-sources-chip={c.key} aria-pressed={filtre === c.key} onClick={() => setFiltre(c.key)}
+          <button data-sources-chip="toutes" aria-pressed={theme == null} onClick={() => { setTheme(null); setThemeOuvert(false) }}
+            className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
+              theme == null ? 'border-mint bg-mint text-mint-ink' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
+            Toutes <span className="ml-1.5 font-mono text-[11px] opacity-70">{nTotal}</span>
+          </button>
+          <div className="relative">
+            <button data-sources-theme-toggle aria-expanded={themeOuvert} onClick={() => setThemeOuvert((o) => !o)}
               className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
-                filtre === c.key ? 'border-mint/40 bg-mint/10 text-mint' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
-              {c.label} <span className="ml-1.5 font-mono text-[11px] opacity-70">{c.n}</span>
+                theme != null ? 'border-mint bg-mint text-mint-ink' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
+              {theme != null ? `Thème : ${theme}` : 'Filtrer par thème'} {themeOuvert ? '▴' : '▾'}
             </button>
-          ))}
+            {themeOuvert && (
+              <div data-sources-themes className="absolute left-0 top-10 z-10 max-h-[60vh] w-64 overflow-y-auto rounded-lg border border-line bg-surface-1 p-1.5 shadow-lg">
+                {themes.map(([t, n]) => (
+                  <button key={t} data-sources-theme={t} onClick={() => { setTheme(t); setThemeOuvert(false) }}
+                    className={`flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-[12.5px] hover:bg-surface-3 ${theme === t ? 'text-mint' : 'text-txt-mut'}`}>
+                    <span>{t}</span><span className="font-mono text-[11px] text-txt-dim">{n}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {isLoading && <div className="mt-6"><Loading label="Chargement des sources" className="text-xs" /></div>}
         {isError && <p className="mt-6 text-xs text-st-ecartee">Sources inaccessibles — vérifiez votre réseau ou réessayez.</p>}
         {data && nVisibles === 0 && (
-          <p className="mt-8 text-[13px] text-txt-dim">Aucune source ne correspond{q ? <> à « {q} »</> : null}{filtre !== 'toutes' ? ' pour ce filtre' : ''}.</p>
+          <p className="mt-8 text-[13px] text-txt-dim">Aucune source ne correspond{q ? <> à « {q} »</> : null}{theme != null ? <> au thème « {theme} »</> : null}.</p>
         )}
 
         {/* groupes par catégorie */}
@@ -320,12 +322,11 @@ export function SourcesPage() {
           </div>
         ))}
 
-        {/* légende (reprise de la maquette) */}
+        {/* légende — RETOURS-9 (Q11.3) : plus de méthode de veille, le client lit source · producteur · publié le · à jour. */}
         {data && (
           <div className="mt-9 flex flex-wrap gap-x-6 gap-y-2.5 border-t border-line pt-4 text-[12px] text-txt-dim">
-            <span className="flex items-center gap-2"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: TOKENS.mint }} /> à jour selon la cadence du producteur</span>
-            <span className="flex items-center gap-2"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: TOKENS.warn }} /> en retard sur sa cadence</span>
-            <span className="flex items-center gap-2"><Badge kind="auto">version vérifiée</Badge> le producteur expose une date interrogeable</span>
+            <span className="flex items-center gap-2"><i className="inline-block h-[7px] w-[7px] rounded-full" style={{ background: TOKENS.mint }} /> à jour : la dernière version publiée est dans l'app</span>
+            <span className="flex items-center gap-2"><Badge kind="auto">mise à jour en cours</Badge> une version plus récente arrive</span>
             <span className="flex items-center gap-2"><Badge kind="dashed">proxy</Badge> donnée approchée, jamais servie comme source</span>
           </div>
         )}

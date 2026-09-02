@@ -1,0 +1,1577 @@
+{
+  "flux": {
+    "flux": {
+      "run": {
+        "label": "q_v11_m137",
+        "precedent": "q_v10_m129",
+        "calcule_le": "2026-08-27T15:02:01.158163+04:00",
+        "n_parcelles": 431663,
+        "enregistre_sources": false,
+        "source_millesimes": []
+      },
+      "sources": [
+        {
+          "id": 37,
+          "name": "DPE ADEME (logements existants)",
+          "fournisseur": "ADEME",
+          "categorie": "energie",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-08-18T22:16:42.975502+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "signaux"
+          ],
+          "message": null,
+          "injectable": true,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 38,
+          "name": "QPV 2024 (ANCT)",
+          "fournisseur": "ANCT (Agence nationale cohésion des territoires)",
+          "categorie": "fiscal",
+          "millesime": "génération 2024",
+          "amont_vu": null,
+          "ingere_le": "2026-07-05T22:47:03.073758+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 74,
+          "name": "Transport public — GTFS (PAN, 7 réseaux)",
+          "fournisseur": "AOM Réunion (Région, CINOR, TCO, CIVIS, CIREST, CASUD) via transport.data.gouv.fr",
+          "categorie": "acces",
+          "millesime": "7 jeux PAN, màj 2025-12-29 → 2026-08-17",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 34,
+          "name": "Géorisques — ICPE",
+          "fournisseur": "BRGM / Géorisques",
+          "categorie": "risques",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-08-13T03:24:37.656414+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 33,
+          "name": "Géorisques — cavités souterraines",
+          "fournisseur": "BRGM / Géorisques",
+          "categorie": "risques",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-08-13T03:17:22.237489+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "changement",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 36,
+          "name": "Géorisques — mouvements de terrain",
+          "fournisseur": "BRGM / Géorisques",
+          "categorie": "risques",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-05T19:08:08.945359+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "changement",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 32,
+          "name": "Géorisques — sites et sols pollués",
+          "fournisseur": "BRGM / Géorisques",
+          "categorie": "risques",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-08-13T03:24:37.656414+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "changement",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 4,
+          "name": "Géorisques",
+          "fournisseur": "BRGM / MTE",
+          "categorie": "risques",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 24,
+          "name": "ABF / Monuments historiques",
+          "fournisseur": "Base Mérimée (Ministère Culture)",
+          "categorie": "patrimoine",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-05T21:38:53.065620+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 48,
+          "name": "PVGIS (Commission européenne)",
+          "fournisseur": "CE / JRC",
+          "categorie": "energie",
+          "millesime": "PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)",
+          "amont_vu": null,
+          "ingere_le": "2026-08-23T16:56:49.906521+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 46,
+          "name": "Classement sonore ITT (Cerema)",
+          "fournisseur": "Cerema (Cartagène)",
+          "categorie": "reglement",
+          "millesime": "arrêtés déc. 2023",
+          "amont_vu": null,
+          "ingere_le": "2026-07-10T18:40:50.980123+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 35,
+          "name": "Cartofriches (Cerema)",
+          "fournisseur": "Cerema / DGALN",
+          "categorie": "foncier",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-08-13T03:24:37.656414+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 28,
+          "name": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+          "fournisseur": "Cerema / GéoLittoral",
+          "categorie": "risques",
+          "millesime": "millésime 2018",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "changement",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 10,
+          "name": "RPG — déclarations agricoles (IGN/ASP)",
+          "fournisseur": "DAAF (propre non public) · proxy RPG/IGN",
+          "categorie": "agricole",
+          "millesime": "proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 13,
+          "name": "DEAL Réunion (WMS/WFS)",
+          "fournisseur": "DEAL Réunion",
+          "categorie": "urbanisme",
+          "millesime": "NPNRU — QP génération 2024 (DEAL/ANCT)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 47,
+          "name": "50 pas géométriques — limite haute (DEAL)",
+          "fournisseur": "DEAL Réunion (Lizmap)",
+          "categorie": "reglement",
+          "millesime": "cadastre 1877 (géoréf. 2012/1950)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 30,
+          "name": "DEAL Réunion — PPR / aléas",
+          "fournisseur": "DEAL Réunion (Lizmap)",
+          "categorie": "risques",
+          "millesime": "PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "changement",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 40,
+          "name": "NPNRU (DEAL Réunion / ANCT)",
+          "fournisseur": "DEAL Réunion (WFS Carmen) · ANCT (liste)",
+          "categorie": "logement",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-08T01:36:06.717909+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 71,
+          "name": "DGFiP — parcelles des personnes morales",
+          "fournisseur": "DGFiP",
+          "categorie": "proprietaire",
+          "millesime": "Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)",
+          "amont_vu": null,
+          "ingere_le": "2026-07-12T16:28:56.429917+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "changement",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 27,
+          "name": "Fichiers fonciers (Cerema)",
+          "fournisseur": "DGFiP / Cerema",
+          "categorie": "proprietaire",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "rappel",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 5,
+          "name": "DVF / valeurs foncières",
+          "fournisseur": "DGFiP / Etalab — géo-DVF",
+          "categorie": "marche",
+          "millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "sector_price",
+            "scoring",
+            "signaux"
+          ],
+          "message": null,
+          "injectable": true,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 29,
+          "name": "BODACC (procédures collectives)",
+          "fournisseur": "DILA (Opendatasoft)",
+          "categorie": "economie",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-08-19T01:06:32.167446+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "scoring",
+            "signaux"
+          ],
+          "message": null,
+          "injectable": true,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 45,
+          "name": "Recherche d'entreprises (DINUM)",
+          "fournisseur": "DINUM (api.gouv.fr)",
+          "categorie": "economie",
+          "millesime": "Sirene INSEE / RNE INPI (api.gouv.fr) — courant",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 18,
+          "name": "Base Adresse Nationale",
+          "fournisseur": "DINUM / IGN",
+          "categorie": "acces",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-08-19T01:06:38.388079+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "rattachement"
+          ],
+          "message": null,
+          "injectable": true,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 26,
+          "name": "VRD / assainissement (SPANC)",
+          "fournisseur": "EPCI",
+          "categorie": "reseaux",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "rappel",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 42,
+          "name": "PLH des 5 EPCI (extraction documentaire)",
+          "fournisseur": "EPCI 974 · DEAL Réunion (CDHH)",
+          "categorie": "logement",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-08T01:59:52.339407+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 44,
+          "name": "SUP — assiettes GPU (API Carto)",
+          "fournisseur": "IGN (Géoportail de l'urbanisme)",
+          "categorie": "reglement",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-10T18:32:23.596517+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [
+            "scoring",
+            "cascade",
+            "capacite"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 1,
+          "name": "Cadastre (API Carto PCI)",
+          "fournisseur": "IGN / API Carto",
+          "categorie": "cadastre",
+          "millesime": "PCI Parcellaire Express (DGFiP) — « latest » ingérée",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "sector_price",
+            "capacite",
+            "rattachement"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 3,
+          "name": "Urbanisme PLU/GPU (API Carto)",
+          "fournisseur": "IGN / API Carto GPU",
+          "categorie": "urbanisme",
+          "millesime": "GPU/PLU par commune (révisions — détail en fiche)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [
+            "scoring",
+            "capacite",
+            "rattachement"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 61,
+          "name": "BD ORTHO 20 cm (IGN)",
+          "fournisseur": "IGN / Géoplateforme",
+          "categorie": "imagerie",
+          "millesime": "BD ORTHO IGN 974 — millésime 2025 (piscine, 90,7 %)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 69,
+          "name": "BD ORTHO IRC (IGN)",
+          "fournisseur": "IGN / Géoplateforme",
+          "categorie": "imagerie",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 17,
+          "name": "BD TOPO IGN",
+          "fournisseur": "IGN / Géoplateforme",
+          "categorie": "topographie",
+          "millesime": "BD TOPO® V3 (IGN) — édition non enregistrée",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "scoring",
+            "capacite"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 83,
+          "name": "CoSIA (couverture du sol IA, IGN)",
+          "fournisseur": "IGN / Géoplateforme",
+          "categorie": "occupation_sol",
+          "millesime": "CoSIA 2025 (PVA juil.-août 2025, 20 cm)",
+          "amont_vu": null,
+          "ingere_le": "2026-08-22T15:30:40.074849+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 22,
+          "name": "IGN BD CARTO V5 — occupation du sol",
+          "fournisseur": "IGN / Géoplateforme",
+          "categorie": "occupation_sol",
+          "millesime": "BD CARTO® V5 — occupation du sol (IGN, proxy)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 70,
+          "name": "LiDAR HD — MNH 50 cm (IGN)",
+          "fournisseur": "IGN / Géoplateforme",
+          "categorie": "terrain",
+          "millesime": "LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 6,
+          "name": "RGE ALTI (altimétrie)",
+          "fournisseur": "IGN / Géoplateforme",
+          "categorie": "topographie",
+          "millesime": "RGE ALTI® (IGN) — édition non enregistrée",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 63,
+          "name": "GPU — zonages d'assainissement",
+          "fournisseur": "IGN / Géoportail de l'urbanisme",
+          "categorie": "urbanisme",
+          "millesime": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [
+            "scoring",
+            "cascade",
+            "capacite"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 64,
+          "name": "Contours IRIS (IGN/INSEE)",
+          "fournisseur": "IGN / INSEE",
+          "categorie": "attractivite",
+          "millesime": "Contours IRIS — géographie 2024 (IGN/INSEE)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 31,
+          "name": "INPI RNE (dirigeants)",
+          "fournisseur": "INPI (Registre National des Entreprises)",
+          "categorie": "economie",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-06T13:46:56.129184+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [
+            "scoring"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 25,
+          "name": "INPN / patrinat — espaces protégés",
+          "fournisseur": "INPN/MNHN (espaces protégés) · ENS dép. non public",
+          "categorie": "environnement",
+          "millesime": "INPN/patrinat espaces protégés — passe 05/07/2026",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 7,
+          "name": "Parc National de La Réunion (INPN)",
+          "fournisseur": "INPN/MNHN · API Carto · Région ODS",
+          "categorie": "environnement",
+          "millesime": "millésime 2021",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 76,
+          "name": "ZNIEFF (INPN/MNHN)",
+          "fournisseur": "INPN/MNHN · PatriNat",
+          "categorie": "environnement",
+          "millesime": "INPN, mise à jour 29/08/2025",
+          "amont_vu": null,
+          "ingere_le": "2026-08-21T13:38:57.658296+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "cascade"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 20,
+          "name": "BPE INSEE",
+          "fournisseur": "INSEE",
+          "categorie": "attractivite",
+          "millesime": "millésime 2025 (géographie au 01/01/2025)",
+          "amont_vu": null,
+          "ingere_le": "2026-08-21T13:39:32.632744+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 52,
+          "name": "Filosofi INSEE (carreaux 200 m)",
+          "fournisseur": "INSEE",
+          "categorie": "attractivite",
+          "millesime": "millésime 2021",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 41,
+          "name": "INSEE RP Logement 2023",
+          "fournisseur": "INSEE",
+          "categorie": "logement",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-08T01:37:42.271004+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 66,
+          "name": "INSEE RP2022 — fichier détail Logements (EGOUL)",
+          "fournisseur": "INSEE",
+          "categorie": "assainissement",
+          "millesime": "RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 87,
+          "name": "MOBPRO (mobilités domicile-travail, INSEE)",
+          "fournisseur": "INSEE (RP)",
+          "categorie": "economie",
+          "millesime": "MOBPRO INSEE — fichier détail (millésime RP)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 21,
+          "name": "SIRENE",
+          "fournisseur": "INSEE / annuaire-entreprises",
+          "categorie": "economie",
+          "millesime": "Sirene INSEE — état courant (non versionné)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 86,
+          "name": "SIRENE établissements géolocalisés",
+          "fournisseur": "INSEE / data.gouv",
+          "categorie": "economie",
+          "millesime": "SIRENE géolocalisé — publication mensuelle INSEE",
+          "amont_vu": null,
+          "ingere_le": "2026-08-29T01:47:33.218709+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 84,
+          "name": "Radar (pige d'annonces)",
+          "fournisseur": "LABUSE — collecte humaine",
+          "categorie": "marche",
+          "millesime": "Collecte manuelle — biens en vente (faits + lien)",
+          "amont_vu": null,
+          "ingere_le": "2026-08-30T17:03:15.519447+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "rappel",
+          "moteurs": [
+            "sector_price"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 72,
+          "name": "ZFANG — zone franche d'activité nouvelle génération (Légifrance)",
+          "fournisseur": "Légifrance / DGOM",
+          "categorie": "fiscal",
+          "millesime": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 73,
+          "name": "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)",
+          "fournisseur": "Légifrance / Région Réunion",
+          "categorie": "fiscal",
+          "millesime": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 43,
+          "name": "RTAA DOM (textes réglementaires)",
+          "fournisseur": "Légifrance — CCH R.192-1 à R.192-4 + arrêtés 17/04/2009 modifiés 11/01/2016",
+          "categorie": "reglementaire",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-08T02:45:40.763883+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 62,
+          "name": "Sudocuh (procédures d'urbanisme)",
+          "fournisseur": "Ministère Cohésion des territoires / DGALN",
+          "categorie": "urbanisme",
+          "millesime": "Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [
+            "rattachement"
+          ],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 39,
+          "name": "Inventaire SRU (DHUP)",
+          "fournisseur": "Ministère Transition écologique — DHUP",
+          "categorie": "logement",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-08T01:36:06.717909+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 8,
+          "name": "Forêts publiques (ONF)",
+          "fournisseur": "ONF / IGN (BD TOPO)",
+          "categorie": "environnement",
+          "millesime": "BD TOPO® V3 — forêt publique (IGN)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 19,
+          "name": "OpenStreetMap / Overpass",
+          "fournisseur": "OSM",
+          "categorie": "signal",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-06T00:10:33.626904+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 68,
+          "name": "Office de l'eau Réunion — Chroniques de l'eau",
+          "fournisseur": "Office de l'eau Réunion",
+          "categorie": "assainissement",
+          "millesime": "Chronique n°149 — données 2023",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "rappel",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 75,
+          "name": "OSM — transport (pôles d'échange & téléphérique)",
+          "fournisseur": "OpenStreetMap",
+          "categorie": "acces",
+          "millesime": "extraction Overpass (base OSM vivante, ODbL)",
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 51,
+          "name": "Parkings OSM (loi APER)",
+          "fournisseur": "OpenStreetMap",
+          "categorie": "energie",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": "2026-07-11T11:35:17.587530+04:00",
+          "dot": "off",
+          "etat": "non surveillée",
+          "nature": "non_surveillable",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 15,
+          "name": "data.regionreunion.com — Potentiel foncier",
+          "fournisseur": "Région Réunion (Opendatasoft)",
+          "categorie": "potentiel",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 88,
+          "name": "Trafic RN (Région Réunion — SIR)",
+          "fournisseur": "Région Réunion (Système d'Information Routier)",
+          "categorie": "economie",
+          "millesime": "Trafic RN Région — comptages 1992–2023",
+          "amont_vu": null,
+          "ingere_le": "2026-08-29T02:06:53.905385+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 9,
+          "name": "Potentiel foncier Région (Région ODS)",
+          "fournisseur": "Région Réunion / AGORAH",
+          "categorie": "urbanisme",
+          "millesime": null,
+          "amont_vu": null,
+          "ingere_le": null,
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [],
+          "message": null,
+          "injectable": false,
+          "injection_lancee_at": null
+        },
+        {
+          "id": 16,
+          "name": "SITADEL (autorisations d'urbanisme)",
+          "fournisseur": "SDES (Dido)",
+          "categorie": "dynamique",
+          "millesime": "2026-06",
+          "amont_vu": null,
+          "ingere_le": "2026-08-14T15:14:41.298011+04:00",
+          "dot": "ok",
+          "etat": "à jour",
+          "nature": "version",
+          "moteurs": [
+            "scoring",
+            "rattachement",
+            "signaux"
+          ],
+          "message": null,
+          "injectable": true,
+          "injection_lancee_at": null
+        }
+      ],
+      "moteurs": [
+        {
+          "key": "sector_price",
+          "label": "sector_price (valorisation €/m²)",
+          "detail": "← DVF · Radar · cadastre",
+          "run": "q_v11_m137",
+          "dot": "ok",
+          "sources": [
+            5,
+            1,
+            84
+          ]
+        },
+        {
+          "key": "scoring",
+          "label": "scoring · tiers",
+          "detail": "← DVF · permis · succession · PLU · BD TOPO",
+          "run": "q_v11_m137",
+          "dot": "ok",
+          "sources": [
+            5,
+            29,
+            44,
+            3,
+            17,
+            63,
+            31,
+            16
+          ]
+        },
+        {
+          "key": "cascade",
+          "label": "cascade · risques",
+          "detail": "← PPR · SUP · ABF · Géorisques",
+          "run": "q_v11_m137",
+          "dot": "ok",
+          "sources": [
+            34,
+            33,
+            36,
+            32,
+            4,
+            24,
+            30,
+            44,
+            63,
+            76
+          ]
+        },
+        {
+          "key": "capacite",
+          "label": "capacité · SDP",
+          "detail": "← PLU · cadastre · BD TOPO",
+          "run": "q_v11_m137",
+          "dot": "ok",
+          "sources": [
+            44,
+            1,
+            3,
+            17,
+            63
+          ]
+        },
+        {
+          "key": "rattachement",
+          "label": "rattachement adresse → IDU",
+          "detail": "← BAN · cadastre (vivant, hors run)",
+          "run": "vivant",
+          "dot": "ok",
+          "sources": [
+            18,
+            1,
+            3,
+            62,
+            16
+          ]
+        },
+        {
+          "key": "signaux",
+          "label": "signaux (permis/vie)",
+          "detail": "← permis · DVF · BODACC",
+          "run": "q_v11_m137",
+          "dot": "ok",
+          "sources": [
+            37,
+            5,
+            29,
+            16
+          ]
+        }
+      ],
+      "surfaces": [
+        {
+          "key": "scoreur-adresse",
+          "label": "Étudier un bien",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "sector_price",
+            "scoring",
+            "cascade",
+            "capacite",
+            "rattachement"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "programme",
+          "label": "Faisabilité",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "sector_price",
+            "capacite",
+            "cascade"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "taxe-amenagement",
+          "label": "Taxe d'aménagement",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "capacite"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "risques",
+          "label": "Pièges et risques",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "cascade"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "plu",
+          "label": "PLU",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "cascade",
+            "capacite"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "comparer",
+          "label": "Comparer des parcelles",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "scoring",
+            "sector_price"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "assemblage",
+          "label": "Assemblage",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "capacite",
+            "sector_price"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "patrimoine",
+          "label": "Scan patrimoine",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "scoring",
+            "signaux"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "courriers",
+          "label": "Courrier propriétaire",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "scoring"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "prospection-solaire",
+          "label": "Prospection solaire",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "capacite"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "communes",
+          "label": "Communes",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "sector_price",
+            "scoring"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "permis",
+          "label": "Permis",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "signaux"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "renouvellement",
+          "label": "Densifier l'existant",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "scoring",
+            "capacite"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "etude-zone",
+          "label": "Étude de zone",
+          "groupe": "Outils",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "cascade",
+            "capacite"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "temps",
+          "label": "Remonter le temps",
+          "groupe": "Outils",
+          "run": "vivant",
+          "moteurs": [],
+          "dot": "ok"
+        },
+        {
+          "key": "fiche",
+          "label": "Fiche parcelle",
+          "groupe": "Écrans",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "sector_price",
+            "scoring",
+            "cascade",
+            "capacite"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "radar",
+          "label": "Radar",
+          "groupe": "Écrans",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "sector_price"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "projets",
+          "label": "Projets",
+          "groupe": "Écrans",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "scoring"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "carte",
+          "label": "Carte · couches",
+          "groupe": "Écrans",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "scoring",
+            "cascade"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "exports",
+          "label": "Exports experts (5)",
+          "groupe": "Exports · IA",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "sector_price",
+            "scoring",
+            "cascade",
+            "capacite"
+          ],
+          "dot": "ok"
+        },
+        {
+          "key": "copilote",
+          "label": "Copilote",
+          "groupe": "Exports · IA",
+          "run": "q_v11_m137",
+          "moteurs": [
+            "scoring",
+            "sector_price",
+            "cascade"
+          ],
+          "dot": "ok"
+        }
+      ],
+      "comptes": {
+        "total": 73,
+        "surveillees": 42,
+        "nouvelle_version": 0,
+        "plus_recentes_que_run": 0,
+        "n_surfaces": 21
+      },
+      "plus_recentes": [],
+      "genere_le": "2026-09-02T20:00:38.137309+00:00"
+    },
+    "radar": {
+      "compteurs": {
+        "annonces": 108,
+        "annonces_semaine": 108,
+        "biens": 109,
+        "rattachees": 7,
+        "rattachees_pct": 6.4,
+        "paires": 0,
+        "paires_semaine": 0,
+        "communes": 12,
+        "communes_total": 24,
+        "types": 3
+      },
+      "ecart": [],
+      "courbe": {
+        "points": [],
+        "depuis_le": null
+      }
+    },
+    "coherence": {
+      "ok": true,
+      "run": "q_v11_m137",
+      "n_surfaces": 20,
+      "verifie_le": "2026-09-02T20:00:43.139318+00:00",
+      "checks": [
+        {
+          "libelle": "20 surfaces lisent le run courant (q_v11_m137)",
+          "ok": true,
+          "detail": null
+        },
+        {
+          "libelle": "Tier identique fiche / Projets / Scan (3 parcelles témoins)",
+          "ok": true,
+          "detail": null
+        },
+        {
+          "libelle": "Date de valeur identique partout (= date du run)",
+          "ok": true,
+          "detail": "run calculé le 2026-08-27"
+        },
+        {
+          "libelle": "Exports = écran (même run que la fiche)",
+          "ok": true,
+          "detail": "exports hérités du run fiche (verdict_servi partagé)"
+        },
+        {
+          "libelle": "Aucune lecture de table obsolète",
+          "ok": true,
+          "detail": "toléré (revue par commune) : ['division_or_candidates']"
+        },
+        {
+          "libelle": "Endpoints métier vivants (sonde santé)",
+          "ok": true,
+          "detail": null
+        }
+      ]
+    },
+    "bascule": {
+      "derniere": null
+    },
+    "erreurs": null
+  },
+  "runs": {
+    "runs": [
+      {
+        "label": "q_v11_m137",
+        "servi": true,
+        "complet": true,
+        "motif": "run complet (score v2 + cascade).",
+        "calcule_le": "2026-08-27T15:02:01.158163+04:00",
+        "n_parcelles": 431663,
+        "ecart": null
+      },
+      {
+        "label": "q_v10_m129",
+        "servi": false,
+        "complet": true,
+        "motif": "run complet (score v2 + cascade).",
+        "calcule_le": "2026-08-19T18:38:08.085858+04:00",
+        "n_parcelles": 431663,
+        "ecart": {
+          "tiers_changes": 220,
+          "promues_candidat": 1607,
+          "promues_servi": 1478,
+          "derive_promues_pct": 8.7
+        }
+      },
+      {
+        "label": "q_v8_calibre",
+        "servi": false,
+        "complet": true,
+        "motif": "run complet (score v2 + cascade).",
+        "calcule_le": "2026-08-07T00:17:13.199170+04:00",
+        "n_parcelles": 431663,
+        "ecart": {
+          "tiers_changes": 231556,
+          "promues_candidat": 1156,
+          "promues_servi": 1478,
+          "derive_promues_pct": -21.8
+        }
+      },
+      {
+        "label": "q_v8_calibre_pre_m39",
+        "servi": false,
+        "complet": true,
+        "motif": "cascade non vérifiable (table absente) — toléré hors production.",
+        "calcule_le": "2026-08-05T23:20:29.323178+04:00",
+        "n_parcelles": 431663,
+        "ecart": {
+          "tiers_changes": 231554,
+          "promues_candidat": 1160,
+          "promues_servi": 1478,
+          "derive_promues_pct": -21.5
+        }
+      },
+      {
+        "label": "q_v8_calibre_pre_m28",
+        "servi": false,
+        "complet": true,
+        "motif": "cascade non vérifiable (table absente) — toléré hors production.",
+        "calcule_le": "2026-08-04T23:23:44.685398+04:00",
+        "n_parcelles": 431663,
+        "ecart": {
+          "tiers_changes": 216588,
+          "promues_candidat": 1160,
+          "promues_servi": 1478,
+          "derive_promues_pct": -21.5
+        }
+      },
+      {
+        "label": "q_v8_calibre_pre_regle",
+        "servi": false,
+        "complet": true,
+        "motif": "cascade non vérifiable (table absente) — toléré hors production.",
+        "calcule_le": "2026-08-04T18:17:21.138855+04:00",
+        "n_parcelles": 431663,
+        "ecart": null
+      },
+      {
+        "label": "q_v8_calibre_pre_pond",
+        "servi": false,
+        "complet": true,
+        "motif": "cascade non vérifiable (table absente) — toléré hors production.",
+        "calcule_le": "2026-08-04T15:14:37.743562+04:00",
+        "n_parcelles": 431663,
+        "ecart": null
+      }
+    ],
+    "derniere": null
+  }
+}

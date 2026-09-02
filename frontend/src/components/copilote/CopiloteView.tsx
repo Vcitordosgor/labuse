@@ -347,6 +347,7 @@ export function CopiloteView() {
           /* ── 2a · ACCUEIL recopié de la maquette (idle) — la barre dispatche via le routeur v2 ── */
           <AccueilCopilote value={brief} onChange={setBrief} onSubmit={soumettre}
             occupe={dispatching}
+            onExemple={(t) => { setBrief(t); void interroger(t) }}
             missions={missions} retentionJours={retentionJours} onReprendre={rouvrir}
             reponse={projetForm
               ? /* M113 P3 — le parcours projet guidé, prérempli ; M117 D8 — TTL + « Nouveau fil ». */

@@ -402,8 +402,10 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .act-neutre-on { border:0.5px solid var(--mint); background:var(--mint-bg); color:var(--mint); font-weight:500; }
 .fiche-v6 .act-mint { border:0.5px solid var(--mint); background:var(--bg-2); color:var(--mint); font-weight:500; }
 .fiche-v6 .act-amber { border:0.5px solid var(--amber); background:var(--bg-2); color:var(--amber); font-weight:500; }
-.fiche-v6 .act-amber-on { border:0.5px solid var(--amber); background:var(--amber-bg); color:var(--amber); font-weight:500; }
-.fiche-v6 .act-cmp { border:0.5px solid var(--line-btn); background:none; color:var(--txt); }
+/* RETOURS-9 (Q9) — règle DA gravée : un contrôle ACTIF/sélectionné devient PLEIN de sa couleur, encre
+   sombre (jamais un simple liseré). Projet rattaché = plein ambre ; CRM dedans = plein vert. */
+.fiche-v6 .act-amber-on { border:0.5px solid var(--amber); background:var(--amber); color:var(--ink); font-weight:600; }
+.fiche-v6 .act-cmp { border:0.5px solid var(--mint); background:var(--mint); color:var(--mint-on); font-weight:600; }
 
 /* exports en carte : grille 4 colonnes + bandeau large */
 .fiche-v6 .exports { background:var(--f-card); border:0.5px solid var(--f-linecard); border-radius:12px; overflow:hidden; }

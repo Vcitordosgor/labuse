@@ -1,26 +1,30 @@
 // ADMIN-1 (AD2) — page « Données » : UNE page pour la question « mes données sont-elles à jour ? ».
 // Fusionne les anciennes pages Sources, Cron/Horloge, Flux/Circuit et l'Agent de veille en TROIS
-// onglets — Catalogue (l'état, une ligne par source), Circuit (la fourmilière + la garde), Horloge
-// (les jobs planifiés). Rien n'est réécrit : chaque onglet réutilise le composant EXISTANT
-// (SourcesSection / FluxSection / CronSection). En tête, un bandeau « 3 gestes » condensé, commun
-// aux trois onglets (injecter · calculer · basculer), lu du même endpoint /admin/flux que le Circuit.
+// onglets — Catalogue (l'état, une ligne par source), Circuit (la fourmilière + la garde), CRON
+// (les jobs planifiés — RETOURS-9 Q6 : « Horloge » s'appelle désormais CRON, c'est ce que c'est).
+// Rien n'est réécrit : chaque onglet réutilise le composant EXISTANT (SourcesSection / FluxSection /
+// CronSection). En tête, un bandeau « 3 gestes » condensé, commun aux trois onglets (injecter ·
+// calculer · basculer), lu du même endpoint /admin/flux que le Circuit.
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getAdminFlux } from '../../lib/api'
+import { getAdminFlux, getAdminFluxRuns } from '../../lib/api'
 import { SourcesSection } from './Sources'
 import { FluxSection } from './Flux'
 import { CronSection } from './Cron'
 
-type Onglet = 'catalogue' | 'circuit' | 'horloge'
+type Onglet = 'catalogue' | 'circuit' | 'cron'
 
 // Bandeau « 3 gestes » condensé (AD2.4) — résumé LU de /admin/flux (comptes), boutons → onglet Circuit
 // où vivent les commandes réelles (Injecter/Calculer/Basculer, mécanique FLUX-1 inchangée).
 function Gestes() {
   const flux = useQuery({ queryKey: ['admin-flux'], queryFn: getAdminFlux, refetchInterval: 60_000 })
+  // Q1 — les runs (calcul d'écart coûteux) sont servis à part (rendu progressif) ; le compteur
+  // « à basculer » du bandeau les lit de cette 2e requête, sans bloquer le reste.
+  const runsQ = useQuery({ queryKey: ['admin-flux-runs'], queryFn: getAdminFluxRuns, refetchInterval: 60_000 })
   const c = flux.data?.flux.comptes
   const nv = c?.nouvelle_version ?? 0
   const recentes = c?.plus_recentes_que_run ?? 0
-  const runs = flux.data?.bascule.runs ?? []
+  const runs = runsQ.data?.runs ?? []
   const aBasculer = runs.filter((r) => !r.servi && r.complet).length
   const Geste = ({ n, titre, detail, tone }: { n: number; titre: string; detail: string; tone: 'warn' | 'off' }) => (
     <div className="flex items-center gap-2.5 rounded-lg border border-line bg-surface-2 px-3 py-2 text-[12.5px]">
@@ -45,10 +49,11 @@ function Gestes() {
 
 export function DonneesSection() {
   const [onglet, setOnglet] = useState<Onglet>('catalogue')
+  // RETOURS-9 (Q9) — onglet ACTIF = plein de sa couleur (vert, encre sombre), pas un simple soulignement.
   const Tab = ({ k, children }: { k: Onglet; children: React.ReactNode }) => (
-    <button onClick={() => setOnglet(k)}
-      className={`-mb-px border-b-2 px-0.5 pb-2.5 pt-2 text-[13.5px] transition-colors duration-quick ${
-        onglet === k ? 'border-mint font-semibold text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
+    <button onClick={() => setOnglet(k)} aria-pressed={onglet === k}
+      className={`mb-1.5 rounded-lg px-3 py-1.5 text-[13.5px] transition-colors duration-quick ${
+        onglet === k ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
       {children}
     </button>
   )
@@ -58,19 +63,20 @@ export function DonneesSection() {
       <div className="mb-4 flex gap-6 border-b border-line">
         <Tab k="catalogue">Catalogue</Tab>
         <Tab k="circuit">Circuit</Tab>
-        <Tab k="horloge">Horloge</Tab>
+        <Tab k="cron">CRON</Tab>
       </div>
       {onglet === 'catalogue' && <SourcesSection />}
       {onglet === 'circuit' && <FluxSection />}
-      {onglet === 'horloge' && <CronSection />}
+      {onglet === 'cron' && <CronSection />}
 
-      {/* AD2.8 — pied « Qui fait quoi » repris tel quel de la maquette. */}
+      {/* AD2.8 — pied « Qui fait quoi ». RETOURS-9 Q6 : « Horloge » = CRON. Q2.5 : dire qu'en local il ne sonne pas. */}
       <div className="mt-4 rounded-xl border border-line px-4 py-3 text-[12.5px] leading-relaxed text-txt-mut">
-        <b className="text-txt">Qui fait quoi :</b> l'<b className="text-txt">Horloge</b> (cron) sonne chaque nuit à 07:00 → elle réveille
+        <b className="text-txt">Qui fait quoi :</b> le <b className="text-txt">CRON</b> sonne chaque nuit à 07:00 → il réveille
         l'<b className="text-txt">agent de veille</b>, qui va lire chez chaque fournisseur et remplit la colonne <b className="text-txt">Amont</b> du Catalogue.
         S'il trouve du nouveau : notification + bouton <b className="text-txt">Injecter</b>. Vous seul cliquez — Injecter télécharge et charge (l'ingestion),
         puis <b className="text-txt">Calculer</b> refait les scores (Circuit), puis <b className="text-txt">Basculer</b> les met en service.
-        « Relancer l'ingestion » relance la même commande que le cron (réparation). « Cadence attendue » sur une source manuelle n'appelle personne : c'est votre rappel.
+        « Relancer l'ingestion » relance la même commande que le CRON (réparation). « Cadence attendue » sur une source manuelle n'appelle personne : c'est votre rappel.
+        {' '}<b className="text-txt">En local, le CRON ne sonne pas</b> : cliquez <b className="text-txt">Vérifier toutes les sources</b> dans le Catalogue.
       </div>
     </>
   )

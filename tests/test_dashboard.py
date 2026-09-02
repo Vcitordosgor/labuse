@@ -200,8 +200,9 @@ def test_sources_cadence_et_badge(client, engine):
         "a_mettre_a_jour", "ok", "sans_echeance", "nouvelle_version", "surveillees", "sonde_echec",
         "non_surveillees", "version", "changement", "rappels", "rappels_en_retard",
         # RETOURS-8 (R1) — compteurs d'état UNIQUE, dérivés de la même liste que Pilotage/page client.
-        "etat_nouvelle_version", "etat_a_rafraichir", "etat_a_jour", "etat_non_surveillee",
-        "pas_a_jour_client"}
+        # RETOURS-9 (Q2) — 5e état ajouté : etat_jamais_verifiee (surveillée jamais sondée).
+        "etat_nouvelle_version", "etat_a_rafraichir", "etat_jamais_verifiee", "etat_a_jour",
+        "etat_non_surveillee", "pas_a_jour_client"}
     sid = d["sources"][0]["id"]
     # pose 'mensuelle' → normalisée ; valeur inconnue → 422
     assert client.post(f"/admin/sources/{sid}/cadence", json={"cadence": "mensuel"}).json()["cadence"] == "mensuelle"
@@ -215,6 +216,41 @@ def test_sources_cadence_et_badge(client, engine):
     assert s["a_jour"] is False and s["cadence"] == "mensuelle"
     # remet la cadence à null (état d'origine : la plupart des sources n'en ont pas encore)
     client.post(f"/admin/sources/{sid}/cadence", json={"cadence": None})
+
+
+def test_q11_sources_couverture(client):
+    """RETOURS-9 (Q11.5) — /sources/couverture rend les chiffres client (parcelles · communes · DVF ·
+    Radar · dernière analyse), tous LUS des données réelles. Forme stable ; communes_total = 24 (les 24
+    communes de La Réunion) ; base partielle → valeurs null, jamais un 500."""
+    d = client.get("/sources/couverture").json()
+    assert set(d) == {"parcelles", "communes", "communes_total", "dvf_transactions",
+                      "radar_annonces", "analyse_label", "analyse_date"}
+    assert d["communes_total"] == 24
+
+
+def test_q2_4_cron_run_dossiers_locaux(monkeypatch):
+    """RETOURS-9 (Q2.4) — « Vérifier toutes les sources » (et tout « Lancer maintenant ») doit marcher
+    EN LOCAL : l'endpoint passe au wrapper run-job.sh les dossiers de log/verrou CONFIGURÉS (repo-local
+    en dev), sinon le job écrivait dans /var/log/labuse (inécrivable sur le Mac) et échouait en silence."""
+    import types
+    from labuse.api import ops
+    from labuse.config import get_settings
+    monkeypatch.setattr("labuse.api.auth.exiger_admin", lambda req: None)
+    captured = {}
+    def _fake_popen(argv, **kw):
+        captured["argv"] = argv
+        captured["env"] = kw.get("env")
+        return types.SimpleNamespace(pid=1)
+    monkeypatch.setattr(ops.__dict__.get("subprocess", __import__("subprocess")), "Popen", _fake_popen)
+    # importe subprocess dans le module au moment de l'appel : on patche la lib standard
+    import subprocess as _sp
+    monkeypatch.setattr(_sp, "Popen", _fake_popen)
+    res = ops.admin_cron_run("sentinelle-sources", types.SimpleNamespace(state=types.SimpleNamespace()))
+    assert res["ok"] is True
+    s = get_settings()
+    assert captured["env"]["LABUSE_JOBS_LOG_DIR"] == s.jobs_log_dir
+    assert captured["env"]["LABUSE_LOCK_DIR"] == s.jobs_lock_dir
+    assert captured["argv"][1:] == ["jobs", "run", "sentinelle-sources"]
 
 
 def test_source_relance_sans_commande_404(client, engine):

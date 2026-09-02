@@ -86,19 +86,29 @@ def _run_complet(db: Session, run: str) -> tuple[bool, str]:
     return True, "run complet (score v2 + cascade)."
 
 
-def runs_termines(db: Session) -> list[dict]:
+def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
     """F2.3 — la liste des runs terminés, avec pour chacun l'ÉCART au run courant (tiers qui changent,
-    répartition Priorité/À suivre avant/après). Le run servi est marqué. Lecture seule."""
+    répartition Priorité/À suivre avant/après). Le run servi est marqué. Lecture seule.
+
+    RETOURS-9 (Q1) — l'écart est COÛTEUX à calculer (par run non-servi : `comparer()` ~5 s +
+    un COUNT self-join sur parcel_p_score_v2, 3 M lignes, ~2,4 s). Sur la base réelle de Vic
+    (7 runs, 6 non-servis) cela faisait ~50 s et bloquait toute la page Circuit. On ne calcule
+    donc l'écart QUE pour les `limit_ecart` premiers runs non-servis — exactement ceux que la
+    page affiche (elle en montre 4). Les autres sortent avec `ecart=None` (label + « basculable »
+    restent disponibles). `limit_ecart=None` = tout calculer (compat/CLI)."""
     from . import runs
     from .golden_ops import comparer
     labels = [r[0] for r in db.execute(text(
         "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 12")).all()]
     out = []
     servi_run = runs.current()
+    ecarts_calcules = 0
     for lab in labels:
         est_servi = (lab == servi_run)
         ecart = None
-        if not est_servi:
+        calcul_ok = limit_ecart is None or ecarts_calcules < limit_ecart
+        if not est_servi and calcul_ok:
+            ecarts_calcules += 1
             c = comparer(lab)
             if c.get("ok"):
                 n_change = db.execute(text(

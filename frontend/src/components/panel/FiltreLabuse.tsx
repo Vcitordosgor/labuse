@@ -91,9 +91,10 @@ const nf = new Intl.NumberFormat('fr-FR')
 // disponible = fond léger + survol menthe (ça s'active) ; sélectionné = rempli menthe, texte franc.
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick}
+    <button onClick={onClick} aria-pressed={on}
+      /* RETOURS-9 (Q9) — chip de filtre sélectionnée = pleine de sa couleur, encre sombre (pas un liseré). */
       className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${
-        on ? 'border-mint bg-mint/20 font-medium text-txt-hi'
+        on ? 'border-mint bg-mint font-medium text-mint-ink'
           : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
       {children}
     </button>

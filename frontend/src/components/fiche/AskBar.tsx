@@ -6,7 +6,6 @@ import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
-import { AvisIA } from '../AvisIA'
 
 // Rend le Markdown minimal du modèle et GARANTIT qu'aucun marqueur brut ne reste visible côté client
 // (filet de sécurité : répare aussi les réponses DÉJÀ EN CACHE — cf. incident zonage 15/07 où un
@@ -83,13 +82,13 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
   useEffect(() => { setOpen(!!startOpen); setQ(''); ask.reset() }, [idu])   // eslint-disable-line react-hooks/exhaustive-deps
 
   // Exemples curés (point 15) — tous GROUNDÉS sur la liste blanche de /ask (aménités = ajout backend).
+  // RETOURS-9 (Q10.2) — « Pourquoi ce statut ? » retiré (suggestion peu actionnable).
   const chips = [
     'Y a-t-il des équipements à proximité ?',
     'Combien je peux construire ?',
     'C’est raccordé à l’assainissement ?',
     'Des ventes récentes dans le secteur ?',
     'Y a-t-il un risque inondation ?',
-    'Pourquoi ce statut ?',
   ]
 
   // M19 : en mode contrôlé (carte IA en bas de pile), replié = rien (le parent fournit la carte).
@@ -98,11 +97,11 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
   if (!open) {
     return (
       <div data-askbar className="shrink-0 border-b border-violet/50 bg-violet/[0.07] px-5 py-2">
-        {/* C8 : bloc IA en UNE LIGNE — l'accroche client mène, PREMIUM assumé en violet. */}
+        {/* C8 : bloc IA en UNE LIGNE — l'accroche client mène (violet = IA). */}
         <button data-askbar-open onClick={() => setOpen(true)}
           className="group flex w-full items-center gap-2 whitespace-nowrap rounded-lg border border-violet/40 bg-violet/10 px-3 py-1.5 transition-colors duration-quick hover:border-violet hover:bg-violet/15">
+          {/* RETOURS-9 (Q10.3) — badge « PREMIUM » retiré : l'essai voit tout, il n'y a pas de premium. */}
           <span className="shrink-0 text-[13px] font-medium text-violet">✦ {CLIENT.fiche.ia.accroche}</span>
-          <span className="shrink-0 rounded bg-violet/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-violet">{CLIENT.fiche.ia.premium}</span>
           <span className="ml-auto min-w-0 truncate text-[11px] text-txt-dim transition-colors duration-quick group-hover:text-txt-mut">
             {d && !ask.isPending ? CLIENT.fiche.ia.gardee : CLIENT.fiche.ia.demander}
           </span>
@@ -116,7 +115,6 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
     <div data-askbar className="shrink-0 border-b border-violet/50 bg-violet/[0.07] px-5 py-3">
       <div className="flex items-center gap-2">
         <span className="label-caps text-[10px] text-violet">✦ Demander à l'IA</span>
-        <span className="rounded bg-violet/15 px-1.5 py-0.5 text-[9px] font-semibold text-violet">PREMIUM</span>
         <button data-askbar-close onClick={close}
           className="ml-auto min-h-7 rounded px-1.5 py-0.5 text-[11px] text-txt-dim transition-colors duration-quick hover:bg-violet/15 hover:text-txt"
           title="Replier — afficher toute la fiche">✕ fermer</button>
@@ -141,8 +139,7 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
         ))}
       </div>
 
-      {/* EXPRESS-01 · avis IA — en tête du panneau, avant toute réponse générée */}
-      <AvisIA className="mt-3 border-violet/25 bg-violet/[0.05] text-txt-mut" />
+      {/* RETOURS-9 (Q10.1) — encart « L'IA ne juge pas le sentiment… » (AvisIA) retiré de ce panneau. */}
 
       {/* état de chargement HONNÊTE (pas de silent-fail) */}
       {ask.isPending && <Loading accent="violet" className="mt-3 text-[11px]" label="L'IA lit la fiche…" />}

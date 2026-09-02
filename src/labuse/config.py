@@ -173,6 +173,10 @@ class Settings(BaseSettings):
     # + dossier des LOGS. Défauts DEV (repo-local) ; le VPS pointe /opt/labuse/state et /var/log/labuse.
     jobs_state_dir: str = ".local/state/jobs"        # LABUSE_JOBS_STATE_DIR
     jobs_log_dir: str = ".local/log/labuse"          # LABUSE_JOBS_LOG_DIR
+    # RETOURS-9 (Q2.4) — dossier des VERROUS de jobs. Défaut DEV repo-local (le VPS pointe /run/lock).
+    # Passé au wrapper run-job.sh par « Lancer maintenant » pour que le bouton marche EN LOCAL (le Mac
+    # n'a ni /var/log/labuse ni /run/lock écrivables — sinon le job échoue silencieusement).
+    jobs_lock_dir: str = ".local/lock"               # LABUSE_LOCK_DIR
     disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
     # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
     # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de

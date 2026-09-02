@@ -357,8 +357,10 @@ function NotifBell() {
   }, [open])
   return (
     <div className="relative">
-      <button onClick={() => setOpen((o) => !o)} title="Notifications" aria-label="Notifications"
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-txt-mut transition-colors duration-quick hover:text-txt">
+      {/* RETOURS-9 (Q9) — la cloche OUVERTE devient pleine de sa couleur (vert, encre sombre), pas un liseré. */}
+      <button onClick={() => setOpen((o) => !o)} title="Notifications" aria-label="Notifications" aria-pressed={open}
+        className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-quick ${
+          open ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt-mut hover:text-txt'}`}>
         <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">
           <path d="M10 3 a4 4 0 0 1 4 4 v3 l1.5 2.5 h-11 L6 10 V7 a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
           <path d="M8.5 15 a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -666,7 +668,7 @@ export function Header() {
       {/* RETOURS-4 S6 — l'OISEAU part au sommet du rail ; le MOT-SYMBOLE reste ici, seul, AGRANDI (~29 px,
           gras) pour occuper l'espace libéré, et BICOLORE : « LA » blanc, « BUSE » vert. Un seul bloc de
           texte, aucun espace entre les deux moitiés. */}
-      <div className="flex shrink-0 items-center pr-1" title="LABUSE — Radar foncier premium, La Réunion">
+      <div className="flex shrink-0 items-center pr-1" title="LABUSE — Radar foncier, La Réunion">
         <span data-logo className="font-display text-[29px] font-extrabold leading-none tracking-[.04em]">
           <span className="text-white">LA</span><span className="text-mint">BUSE</span>
         </span>

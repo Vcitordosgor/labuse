@@ -59,7 +59,11 @@ def test_snapshot_source_millesimes(db_session, seed_source):
 
 def test_circuit_rend_forme_complete(db_session, seed_source):
     """RETOURS-8 (R4.2) — /admin/flux rend TOUJOURS la forme complète (flux/radar/coherence/bascule)
-    que le Circuit attend — le nerf de « Chargement… » (une brique manquante bloquait la page)."""
+    que le Circuit attend — le nerf de « Chargement… » (une brique manquante bloquait la page).
+
+    RETOURS-9 (Q1) — la charge initiale ne porte PLUS les runs terminés (calcul d'écart ~50 s en
+    base réelle → « Chargement… » interminable). `bascule` ne garde que `derniere` (rapide) ; les
+    runs arrivent en rendu progressif via /admin/flux/runs (test dédié ci-dessous)."""
     import types
     from labuse.api import auth, dashboard
     _prev = auth.exiger_admin
@@ -71,7 +75,32 @@ def test_circuit_rend_forme_complete(db_session, seed_source):
     assert set(out) >= {"flux", "radar", "coherence", "bascule"}
     assert set(out["flux"]) >= {"run", "sources", "moteurs", "surfaces", "comptes"}
     assert set(out["radar"]) >= {"compteurs", "ecart", "courbe"}
-    assert "runs" in out["bascule"] and "derniere" in out["bascule"]
+    # Q1 — les runs sont SORTIS de la charge initiale (rendu progressif) ; seul `derniere` reste.
+    assert "derniere" in out["bascule"] and "runs" not in out["bascule"]
+
+
+def test_admin_flux_runs_progressif_et_ecart_borne(db_session, seed_source, monkeypatch):
+    """RETOURS-9 (Q1) — les runs terminés + écarts sont servis par /admin/flux/runs (2e requête,
+    rendu progressif). L'écart (COÛTEUX : `comparer()` + COUNT self-join sur parcel_p_score_v2)
+    n'est calculé QUE pour les `limit_ecart` premiers runs non-servis — ceux que la page montre —
+    jamais pour tous. Sur la base réelle de Vic cela ramène ~50 s à ~6 s pour le Circuit."""
+    import types
+    from labuse import bascule_flux
+    from labuse.api import auth, dashboard
+    # on compte les appels à comparer() : ils doivent être bornés par limit_ecart, pas illimités
+    appels = {"n": 0}
+    _vrai = bascule_flux.comparer if hasattr(bascule_flux, "comparer") else None
+    from labuse import golden_ops
+    def _compte(lab):
+        appels["n"] += 1
+        return {"ok": False}
+    monkeypatch.setattr(golden_ops, "comparer", _compte)
+    monkeypatch.setattr(auth, "exiger_admin", lambda req: None)
+    out = dashboard.admin_flux_runs(types.SimpleNamespace(state=types.SimpleNamespace(compte_id=None)))
+    assert "runs" in out and "derniere" in out
+    # borne : jamais plus d'appels à comparer() que le plafond (4 par défaut), quel que soit le nb de runs
+    assert appels["n"] <= 4
+    _ = _vrai
 
 
 def test_circuit_degrade_si_une_brique_casse(db_session, seed_source, monkeypatch):

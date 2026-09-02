@@ -302,18 +302,33 @@ def admin_cron_log(nom: str, request: Request, lignes: int = 40):
 def admin_cron_run(nom: str, request: Request):
     """« Lancer maintenant » (admin) — passe par la CLI, donc le MÊME verrou : un job en cours refuse le
     double lancement (code 200) et le dit. Ne bloque pas la requête (lancement détaché)."""
+    import os
     import subprocess
     import sys
     from pathlib import Path
     from ..api.auth import exiger_admin
+    from ..config import get_settings
     from .. import jobs as jobs_mod
     exiger_admin(request)
     if nom not in jobs_mod.JOBS:
         return {"ok": False, "motif": f"job inconnu : {nom}"}
     labuse_bin = str(Path(sys.executable).parent / "labuse")
     bin_cmd = labuse_bin if Path(labuse_bin).exists() else "labuse"
+    # RETOURS-9 (Q2.4) — le wrapper run-job.sh écrit son log et pose son verrou dans LABUSE_JOBS_LOG_DIR
+    # / LABUSE_LOCK_DIR (défauts /var/log/labuse et /run/lock, inécrivables sur le Mac de Vic → le job
+    # échouait silencieusement). On passe les dossiers CONFIGURÉS (repo-local en dev) et on les crée.
+    s = get_settings()
+    env = {**os.environ,
+           "LABUSE_BIN": bin_cmd,
+           "LABUSE_JOBS_LOG_DIR": s.jobs_log_dir,
+           "LABUSE_LOCK_DIR": s.jobs_lock_dir}
+    for d in (s.jobs_log_dir, s.jobs_lock_dir):
+        try:
+            Path(d).mkdir(parents=True, exist_ok=True)
+        except Exception:  # noqa: BLE001 — dossier non créable : le wrapper le redira, jamais un 500 ici
+            pass
     # détaché : l'admin voit « en cours » à la prochaine lecture d'état ; le verrou gère le double-clic.
-    subprocess.Popen([bin_cmd, "jobs", "run", nom],
+    subprocess.Popen([bin_cmd, "jobs", "run", nom], env=env,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return {"ok": True, "nom": nom, "note": "lancé (détaché) — l'état se met à jour à la fin ; "
             "un job déjà en cours refuse ce lancement (verrou)."}

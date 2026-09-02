@@ -20,8 +20,17 @@ const CAP_ICONS: Record<string, JSX.Element> = {
 }
 const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
 
+// RETOURS-9 (Q10.4) — trois exemples CLIQUABLES qui déclenchent les raccourcis RETOURS-8 R12
+// (fiche parcelle complète · patrimoine d'un promoteur · pièges d'une parcelle). Cliquer LANCE la
+// question telle quelle (onExemple), pas juste remplir la barre — ce sont des démonstrations.
+const EXEMPLES_R12 = [
+  'Dis-moi tout sur la parcelle 97415000CV1186',
+  'Combien de parcelles possède CBO Territoria ?',
+  'Quels sont les pièges de la parcelle 97415000CV1186 ?',
+]
+
 export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
-  missions, retentionJours = 7, onReprendre }: {
+  missions, retentionJours = 7, onReprendre, onExemple }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
@@ -30,6 +39,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
   missions?: CopiloteMission[]           // §2b — historique (« Vos dernières questions »)
   retentionJours?: number                // RETOURS-8 (R11) — rétention affichée sous les fils passés
   onReprendre?: (m: CopiloteMission) => void
+  onExemple?: (t: string) => void        // RETOURS-9 (Q10.4) — clic sur un exemple → lance la question
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null)
   useEffect(() => { ref.current?.focus() }, [])
@@ -166,9 +176,21 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       </p>
       {/* RETOURS-8 (R11.1) — dire en une ligne le comportement des fils : cette zone ouvre un NOUVEAU
           fil ; « Répondre » (sous une réponse) continue le fil en cours. */}
-      <p data-accueil-fils className="mb-9 text-center text-[11px] text-cp-faint">
+      <p data-accueil-fils className="mb-5 text-center text-[11px] text-cp-faint">
         Cette zone ouvre un nouveau fil ; « Répondre » continue le fil en cours.
       </p>
+
+      {/* RETOURS-9 (Q10.4) — trois exemples cliquables (raccourcis R12). Cliquer LANCE la question. */}
+      {!reponse && onExemple && (
+        <div data-accueil-exemples className="mb-9 flex flex-wrap justify-center gap-2">
+          {EXEMPLES_R12.map((ex) => (
+            <button key={ex} data-accueil-exemple onClick={() => onExemple(ex)} disabled={occupe}
+              className="rounded-full border border-cp-ia/40 bg-cp-ia/[0.08] px-3 py-1.5 text-[12px] text-cp-ia transition-colors duration-quick hover:bg-cp-ia hover:text-cp-ia-on disabled:opacity-40">
+              {ex}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* M133 — CE QU'IL SAIT FAIRE : les 4 capacités en TEXTE (libellé + exemple réel entre
           guillemets). NON cliquables — pas de bordure, pas de fond, pas d'état, pas de curseur.
