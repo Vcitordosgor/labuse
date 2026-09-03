@@ -278,11 +278,16 @@ def fit_protocole(df_all: pd.DataFrame, feature_names: list[str],
                   specs=None, interactions: list[tuple[str, str]] | None = None,
                   label_col: str = "label", train_max: int = TRAIN_MAX,
                   cal_year: int = CAL_YEAR, C: float = 5.0,
-                  min_count: int = 200) -> PModel:
+                  min_count: int = 200, df_encodeur: pd.DataFrame | None = None) -> PModel:
     """Un PModel candidat : binning+fit ≤ train_max, isotonique sur cal_year.
 
     specs : FeatureSpec des features candidates (celles hors registre servi) —
     l'encodeur est pré-ajusté ici, features.py n'est JAMAIS modifié.
+    df_encodeur : lignes sur lesquelles ajuster le DICTIONNAIRE WoE si elles
+    diffèrent des lignes de fit (K4 : l'encodeur du segment voit toutes les
+    zones, les coefficients restent ajustés hors zone A — sinon la catégorie
+    « A » est inconnue au dictionnaire et son WoE vaut 0, neutre, ce qui fait
+    remonter artificiellement la zone A au classement).
     """
     train = df_all[(df_all.annee >= TRAIN_MIN) & (df_all.annee <= train_max)
                    & df_all[label_col].notna()].reset_index(drop=True)
@@ -295,7 +300,11 @@ def fit_protocole(df_all: pd.DataFrame, feature_names: list[str],
                       if a in feature_names and b in feature_names]
     if specs is not None:
         from labuse.scoring.p_model.woe import WoeEncoder
-        m.encoder = WoeEncoder(min_count=min_count).fit(train, y_tr, specs)
+        enc_df = train if df_encodeur is None else df_encodeur[
+            (df_encodeur.annee >= TRAIN_MIN) & (df_encodeur.annee <= train_max)
+            & df_encodeur[label_col].notna()].reset_index(drop=True)
+        m.encoder = WoeEncoder(min_count=min_count).fit(
+            enc_df, enc_df[label_col].astype(int), specs)
     m.fit(train, y_tr, C=C, min_count=min_count)
     m.calibrate(cal, cal[label_col].astype(int))
     return m

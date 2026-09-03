@@ -391,11 +391,13 @@ def fit_segments(df: pd.DataFrame, names, specs, inter, eng,
     hors_a = df["zone_plu"].fillna("inconnu") != "A"
     modeles = {}
     for s in protocole.SEGMENTS:
+        sub_tout = df[(seg == s).to_numpy()].reset_index(drop=True)
         sub = df[(seg == s).to_numpy() & hors_a.to_numpy()].reset_index(drop=True)
-        log(f"  segment {s} : {len(sub)} lignes (zone A exclue de l'apprentissage)")
+        log(f"  segment {s} : {len(sub)} lignes de fit (zone A hors apprentissage ; "
+            f"dictionnaire WoE sur {len(sub_tout)})")
         modeles[s] = fit_protocole(sub, names, specs=specs, interactions=inter,
                                    label_col=label_col, train_max=train_max,
-                                   cal_year=cal_year)
+                                   cal_year=cal_year, df_encodeur=sub_tout)
     d_feats = [sp.name for sp in specs if sp.bloc == "D"]
     return ModeleSegments(modeles, d_feats), seg
 
