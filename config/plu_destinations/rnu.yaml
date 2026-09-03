@@ -1,0 +1,93 @@
+# =============================================================================
+# RÈGLEMENT NATIONAL D'URBANISME — calibration destinations (DESTINATIONS-1, X2)
+# S'applique aux communes SANS document d'urbanisme : Saint-Philippe (97417).
+# =============================================================================
+# Le RNU ne réglemente PAS les destinations par zone : il n'y a pas de zonage.
+# Le régime est celui de la CONSTRUCTIBILITÉ LIMITÉE :
+#   - art. L111-3 c. urb. : « En l'absence de plan local d'urbanisme, de tout
+#     document d'urbanisme en tenant lieu ou de carte communale, les constructions
+#     ne peuvent être autorisées que dans les parties urbanisées de la commune. »
+#   - art. L111-4 c. urb. : exceptions hors parties urbanisées (1° adaptation/
+#     changement de destination/réfection/extension des constructions existantes ;
+#     2° constructions et installations nécessaires à l'exploitation agricole, à
+#     des équipements collectifs [si compatibles avec l'activité agricole, pastorale
+#     ou forestière], à la mise en valeur des ressources naturelles ; 3° ... ;
+#     4° constructions autorisées par délibération motivée du conseil municipal).
+#   - art. R111-1 et suivants c. urb. : règles générales (R111-2 : refus possible
+#     si atteinte à la salubrité ou à la sécurité publique), appréciées PROJET PAR
+#     PROJET par le service instructeur (avis conforme du préfet, L422-5).
+# AUCUNE sous-destination n'est interdite ni autorisée en soi : TOUT est
+# « sous condition » de localisation (partie urbanisée) et d'instruction.
+meta:
+  source: "code de l'urbanisme, art. L111-3, L111-4 et R111-1 et suivants (version en vigueur, lus sur Légifrance le 03/09/2026)"
+  lu_le: "2026-09-03"
+  communes: ["97417"]
+  note: >-
+    Saint-Philippe est au RNU (aucun PLU, zéro zonage — cf. config/plu_millesimes.yaml).
+    Verdict identique pour toute « zone » : le zonage n'existe pas.
+
+# Le silence n'a pas d'objet : les 23 sous-destinations sont explicites ci-dessous.
+silence:
+  regle: null
+  source: "sans objet — régime de constructibilité limitée, pas de listes par destination"
+
+_condition_commune: &rnu_commun
+  statut: sous_condition
+  condition: >-
+    uniquement dans les parties urbanisées de la commune (constructibilité limitée) ;
+    appréciation projet par projet par le service instructeur (avis conforme du préfet)
+  article: "L111-3 c. urb. (et R111-2)"
+  citation: >-
+    « les constructions ne peuvent être autorisées que dans les parties urbanisées
+    de la commune » (L111-3)
+
+sous_destinations:
+  logement:
+    statut: sous_condition
+    condition: >-
+      dans les parties urbanisées (L111-3) ; hors parties urbanisées, seulement
+      l'adaptation, le changement de destination, la réfection ou l'extension des
+      constructions existantes (L111-4 1°)
+    article: "L111-3 et L111-4 1° c. urb."
+    citation: "« L'adaptation, le changement de destination, la réfection ou l'extension des constructions existantes » (L111-4 1°)"
+  hebergement: *rnu_commun
+  artisanat_commerce_detail: *rnu_commun
+  restauration: *rnu_commun
+  commerce_gros: *rnu_commun
+  activites_services_clientele: *rnu_commun
+  cinema: *rnu_commun
+  hotels: *rnu_commun
+  autres_hebergements_touristiques: *rnu_commun
+  locaux_bureaux_administrations: *rnu_commun
+  locaux_techniques_administrations:
+    statut: sous_condition
+    condition: >-
+      dans les parties urbanisées (L111-3) ; hors parties urbanisées, admis si
+      nécessaires à des équipements collectifs et compatibles avec l'exercice d'une
+      activité agricole, pastorale ou forestière sur le terrain (L111-4 2°)
+    article: "L111-3 et L111-4 2° c. urb."
+    citation: "« Les constructions et installations nécessaires […] à des équipements collectifs dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière » (L111-4 2°)"
+  enseignement_sante_action_sociale: *rnu_commun
+  salles_art_spectacles: *rnu_commun
+  equipements_sportifs: *rnu_commun
+  lieux_culte: *rnu_commun
+  autres_equipements_public: *rnu_commun
+  industrie: *rnu_commun
+  entrepot: *rnu_commun
+  bureau: *rnu_commun
+  centre_congres_exposition: *rnu_commun
+  cuisine_vente_en_ligne: *rnu_commun
+  exploitation_agricole:
+    statut: sous_condition
+    condition: >-
+      admise y compris hors parties urbanisées : constructions et installations
+      nécessaires à l'exploitation agricole (L111-4 2°)
+    article: "L111-4 2° c. urb."
+    citation: "« Les constructions et installations nécessaires à l'exploitation agricole » (L111-4 2°)"
+  exploitation_forestiere:
+    statut: sous_condition
+    condition: >-
+      dans les parties urbanisées (L111-3) ; hors parties urbanisées, admise au titre
+      de la mise en valeur des ressources naturelles (L111-4 2°) selon le projet
+    article: "L111-3 et L111-4 2° c. urb."
+    citation: "« à la mise en valeur des ressources naturelles » (L111-4 2°)"

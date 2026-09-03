@@ -183,6 +183,8 @@ def etat_commune(commune: str) -> dict:
     doc = _doc(commune)
     mills = _millesimes()
     insee = (doc or {}).get("meta", {}).get("insee")
+    if not insee and re.fullmatch(r"974\d\d", (commune or "").strip()):
+        insee = commune.strip()
     cat = None
     if insee:
         cat = mills.get(insee)
