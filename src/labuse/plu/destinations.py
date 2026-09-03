@@ -177,16 +177,27 @@ def etat_commune(commune: str) -> dict:
     meta = doc.get("meta", {})
     etat = "calibree"
     # X5.2 — une nouvelle version de PLU servie (idurba du catalogue ≠ document lu) passe
-    # la commune « à relire ». Comparaison sur le nom de document GPU gravé au calibrage.
+    # la commune « à relire ». Comparaison sur le nom de document GPU gravé au calibrage ;
+    # le sens compte : « à relire » SEULEMENT si le servi est plus récent que le lu (une
+    # calibration lue sur un document GPU plus frais que le catalogue n'est pas périmée —
+    # c'est le catalogue qui est en retard, dit tel quel).
     idurba_servi = (cat or {}).get("idurba")
     idurba_lu = meta.get("document_gpu")
+    note_catalogue = None
     if idurba_servi and idurba_lu and idurba_servi.lower() != idurba_lu.lower():
-        etat = "a_relire"
+        d_servi = re.search(r"(\d{8})", idurba_servi)
+        d_lu = re.search(r"(\d{8})", idurba_lu)
+        if d_servi and d_lu and d_servi.group(1) <= d_lu.group(1):
+            note_catalogue = (f"catalogue millésimes en retard ({idurba_servi}) sur le document "
+                              f"GPU lu ({idurba_lu})")
+        else:
+            etat = "a_relire"
     return {"etat": etat, "insee": meta.get("insee") or insee,
             "commune": meta.get("commune") or commune,
             "millesime": meta.get("millesime"), "lu_le": meta.get("lu_le"),
             "document": meta.get("document"), "url": meta.get("url"),
             "document_gpu": idurba_lu, "document_gpu_servi": idurba_servi,
+            "note": note_catalogue,
             "zones": sorted((doc.get("zones") or {}).keys())}
 
 

@@ -1,0 +1,1439 @@
+meta:
+  insee: '97411'
+  commune: Saint-Denis
+  document: 97411_reglement_20260805.pdf
+  document_gpu: 97411_PLU_20260805
+  gpu_doc_id: eee143f619882c020cfb0fbd52e178b7
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf
+  md5: 43426a8faf55efcdaa2a235e95a45d2f
+  millesime: '2026-08-05'
+  pages_total: 154
+  lu_le: '2026-09-03'
+  edition: Modification simplifiée n°8 du PLU — règlement approuvé, février 2024 (pièce servie par le document GPU
+    97411_PLU_20260805, MAJ18)
+  structure: 'Règlement par chapitres de zone (Uavap, Up, Ud, Uu, Ui, Uj, Um, Uh, Ua, Uv, Uma, AUj, AUm, AUh, AUa,
+    AUx, A, N) ; dans chaque chapitre, article 1 = occupations et utilisations du sol interdites, article 2 = soumises
+    à des conditions particulières. Zones U/AU : article 1 en liste fermée (silence = autorisé). Zones A et N :
+    « constructions de toute nature sauf celles prévues à l''article 2 » (silence = interdit). Prescriptions annexées
+    (captages/forages n°5, carrières n°4, PPRNP) prévalent sur le règlement (Dispositions générales IV-V, p. 10-12).'
+zones:
+  Uavap:
+    silence: autorise
+    silence_src: 'Le règlement procède par liste fermée d''interdictions : article Uavap.1 « Occupations et utilisations
+      du sol interdites — Sont interdites : … » (p. 26) puis article Uavap.2 « Occupations et utilisations du sol
+      soumises à des conditions particulières — Sont admis et soumis à des conditions particulières : … » (p. 27).
+      Ce qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Uavap 1
+        page_pdf: 26
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: interdit
+        article: Uavap 1
+        page_pdf: 26
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Uavap 1
+        page_pdf: 26
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'Ne pas entraîner pour le voisinage des nuisances inacceptables (le texte vise « l''artisanat
+          » seul ; le commerce de détail n''est pas visé par cette règle). Interdit hors ce cas par Uavap 1 (p.
+          26 : « Les constructions destinées à l’artisanat et à la fonction d’entrepôts sauf celles mentionnées
+          à l’article 2 »).'
+        article: Uavap 2
+        page_pdf: 27
+        citation: « les constructions destinées à l’artisanat sous réserve qu’elles n’entraînent pas pour leur voisinage
+          des nuisances inacceptables »
+      entrepot:
+        statut: sous_condition
+        condition: Entrepôt lié aux occupations et utilisations des sols admises dans la zone et ne pas entraîner
+          pour le voisinage des nuisances inacceptables. Interdit hors ce cas par Uavap 1 (p. 26).
+        article: Uavap 2
+        page_pdf: 27
+        citation: « les constructions destinées à la fonction d’entrepôt liée aux occupations et utilisations des
+          sols admises dans la zone et sous réserve qu’elles n’entraînent pas pour leur voisinage des nuisances
+          inacceptables »
+      logement:
+        statut: sous_condition
+        condition: 'Condition portant sur les seules opérations nouvelles d''habitat collectif de 30 logements et
+          plus : comporter un minimum de 15 % de logements sociaux et/ou intermédiaires. Les autres logements ne
+          sont pas visés par l''article.'
+        article: Uavap 2
+        page_pdf: 27
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  Up:
+    silence: autorise
+    silence_src: 'Le règlement procède par liste fermée d''interdictions : article Up.1 « Occupations et utilisations
+      du sol interdites — Sont interdites : … » (p. 30) puis article Up.2 « Occupations et utilisations du sol soumises
+      à des conditions particulières — Sont admis et soumis à des conditions particulières : … » (p. 31). Ce qui
+      n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Up 1
+        page_pdf: 30
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: interdit
+        article: Up 1
+        page_pdf: 30
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Up 1
+        page_pdf: 30
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'Ne pas entraîner pour le voisinage des nuisances inacceptables (le texte vise « l''artisanat
+          » seul ; le commerce de détail n''est pas visé par cette règle). Interdit hors ce cas par Up 1 (p. 30
+          : « Les constructions destinées à l’artisanat et à la fonction d’entrepôts sauf celles mentionnées à l’article
+          2 »).'
+        article: Up 2
+        page_pdf: 31
+        citation: « Les constructions destinées à l’artisanat sous réserve qu’elles n’entraînent pas pour leur voisinage
+          des nuisances inacceptables »
+      entrepot:
+        statut: sous_condition
+        condition: Entrepôt lié aux occupations et utilisations des sols admises dans la zone et ne pas entraîner
+          pour le voisinage des nuisances inacceptables. Interdit hors ce cas par Up 1 (p. 30).
+        article: Up 2
+        page_pdf: 31
+        citation: « Les constructions destinées à la fonction d’entrepôt liée aux occupations et utilisations des
+          sols admises dans la zone et sous réserve qu’elles n’entraînent pas pour leur voisinage des nuisances
+          inacceptables »
+      logement:
+        statut: sous_condition
+        condition: 'Condition portant sur les seules opérations nouvelles d''habitat collectif de 30 logements et
+          plus : comporter un minimum de 15 % de logements sociaux et/ou intermédiaires. Les autres logements ne
+          sont pas visés par l''article.'
+        article: Up 2
+        page_pdf: 31
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  Upi:
+    renvoi: Up
+    renvoi_src: « La zone comprend un secteur Upi et un secteur Upr. » (caractère de la zone Up, p. 30). Les articles
+      Up.1 et Up.2 (p. 30-31) ne prévoient aucune règle de destination propre au secteur Upi (les seules règles
+      propres à Upi portent sur l'emprise au sol et la hauteur, Up.9-Up.10, p. 33-34).
+  Upr:
+    renvoi: Up
+    renvoi_src: « La zone comprend un secteur Upi et un secteur Upr. » (caractère de la zone Up, p. 30). Les articles
+      Up.1 et Up.2 (p. 30-31) ne prévoient aucune règle de destination propre au secteur Upr (les seules règles
+      propres à Upr portent sur l'implantation, l'emprise au sol et la hauteur, Up.7/Up.9/Up.10, p. 33-34).
+  Ud:
+    silence: autorise
+    silence_src: 'Le règlement procède par liste fermée d''interdictions : article Ud.1 « Occupations et utilisations
+      du sol interdites — Sont interdits : … » (p. 38) puis article Ud.2 « Occupations et utilisations du sol soumises
+      à des conditions particulières — Sont admis et soumis à des conditions particulières : … » (p. 38-39). Ce
+      qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      entrepot:
+        statut: sous_condition
+        condition: 'Stockage de marchandises nécessaire au fonctionnement des activités de commerces, artisanat
+          ou services auxquelles il est rattaché, dans la limite de 100 m² de surface de plancher pour 100 m² de
+          terrain. Interdit hors ce cas par Ud 1 (p. 38 : « Les entrepôts sauf ceux mentionnés à l’article 2 »).
+          Cette admission ne vaut pas en Udp/Udop (« Sauf dans les secteurs Udp et Udop »).'
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: Ud 2
+        page_pdf: 39
+        citation: « Les constructions à destination de stockage de marchandises nécessaires pour le fonctionnement
+          des activités de commerces, artisanat ou services auxquelles ils sont rattachés à la condition que leurs
+          surfaces n’excèdent pas 100 m2 de surface de plancher pour 100 m2 de terrain »
+      logement:
+        statut: sous_condition
+        condition: 'Condition portant sur les seules opérations nouvelles d''habitat collectif de 30 logements et
+          plus : comporter un minimum de 15 % de logements sociaux et/ou intermédiaires. Les autres logements ne
+          sont pas visés par l''article.'
+        article: Ud 2
+        page_pdf: 39
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  Udo:
+    renvoi: Ud
+    renvoi_src: « Elle contient un sous-secteur Udo correspondant aux sites des opérations Océan et Butor » (caractère
+      de la zone Ud, p. 37). Les articles Ud.1 et Ud.2 (p. 38-39) ne prévoient aucune règle de destination propre
+      au secteur Udo (ses règles propres portent sur les accès, l'assainissement, l'implantation, l'emprise, la
+      hauteur, les clôtures et la perméabilité, Ud.3/Ud.4/Ud.6/Ud.8/Ud.9/Ud.10/Ud.11/Ud.13, p. 39-46).
+  Udop:
+    silence: autorise
+    silence_src: 'Même structure que la zone Ud : article Ud.1 « Occupations et utilisations du sol interdites —
+      Sont interdits : … », complété par une liste fermée « En sus dans les secteurs Udp et Udop : … » (p. 38),
+      puis article Ud.2 « … soumises à des conditions particulières — Sont admis et soumis à des conditions particulières
+      : … » (p. 38-39). Ce qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'Seules les constructions ou installations relevant de l''agriculture urbaine, compatibles avec
+          le caractère de la zone, sont admises (Ud 2, p. 39). L''exploitation agricole demeure interdite par ailleurs
+          (Ud 1, p. 38 : « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »).'
+        article: Ud 2
+        page_pdf: 39
+        citation: '« Uniquement au sein du secteur Udop et Udp : - Les constructions ou installations relevant de
+          l’agriculture urbaine, compatibles avec le caractère de la zone »'
+      entrepot:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: '« Les entrepôts sauf ceux mentionnés à l’article 2 » ; l''admission de l''article 2 (stockage
+          de marchandises ≤ 100 m²) est expressément écartée en Udop : « Sauf dans les secteurs Udp et Udop : -
+          Les constructions à destination de stockage de marchandises… » (Ud 2, p. 39)'
+      logement:
+        statut: sous_condition
+        condition: Nouveaux logements interdits en premier front des axes Blvd Lancastel, rue L. Rambaud et Blvd
+          Jean Jaurès (obligatoirement en second front, autres bâtiments/édifices bâtis devant) ; transformation
+          de locaux commerciaux en logements interdite dans les espaces aux nuisances importantes (Blvd Lancastel,
+          rue Léopold Rambaud, Blvd Sud J. Jaurès). Par ailleurs « Spécifiquement au sein des secteurs Udop et Udp,
+          il n’est pas imposé de pourcentage relatif aux logements sociaux » (Ud 2, p. 39).
+        article: Ud 1
+        page_pdf: 38
+        citation: '« La construction de nouveaux logements interdits en premier front des axes Blvd Lancastel, Rue
+          L. Rambaud et Blvd Jean Jaurès, ils devront être obligatoirement être en second front » ; « la transformation
+          de locaux commerciaux en logements dans les espaces aux nuisances importantes : Blvd Lancastel, rue Léopold
+          Rambaud, Blvd Sud J. Jaurès »'
+  Udp:
+    silence: autorise
+    silence_src: 'Même structure que la zone Ud : article Ud.1 « Occupations et utilisations du sol interdites —
+      Sont interdits : … », complété par une liste fermée « En sus dans les secteurs Udp et Udop : … » (p. 38),
+      puis article Ud.2 « … soumises à des conditions particulières — Sont admis et soumis à des conditions particulières
+      : … » (p. 38-39). Ce qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'Seules les constructions ou installations relevant de l''agriculture urbaine, compatibles avec
+          le caractère de la zone, sont admises (Ud 2, p. 39). L''exploitation agricole demeure interdite par ailleurs
+          (Ud 1, p. 38 : « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »).'
+        article: Ud 2
+        page_pdf: 39
+        citation: '« Uniquement au sein du secteur Udop et Udp : - Les constructions ou installations relevant de
+          l’agriculture urbaine, compatibles avec le caractère de la zone »'
+      entrepot:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 38
+        citation: '« Les entrepôts sauf ceux mentionnés à l’article 2 » ; l''admission de l''article 2 (stockage
+          de marchandises ≤ 100 m²) est expressément écartée en Udp : « Sauf dans les secteurs Udp et Udop : - Les
+          constructions à destination de stockage de marchandises… » (Ud 2, p. 39)'
+      logement:
+        statut: sous_condition
+        condition: Nouveaux logements interdits en premier front des axes Blvd Lancastel, rue L. Rambaud et Blvd
+          Jean Jaurès (obligatoirement en second front, autres bâtiments/édifices bâtis devant) ; transformation
+          de locaux commerciaux en logements interdite dans les espaces aux nuisances importantes (Blvd Lancastel,
+          rue Léopold Rambaud, Blvd Sud J. Jaurès). Par ailleurs « Spécifiquement au sein des secteurs Udop et Udp,
+          il n’est pas imposé de pourcentage relatif aux logements sociaux » (Ud 2, p. 39).
+        article: Ud 1
+        page_pdf: 38
+        citation: '« La construction de nouveaux logements interdits en premier front des axes Blvd Lancastel, Rue
+          L. Rambaud et Blvd Jean Jaurès, ils devront être obligatoirement être en second front » ; « la transformation
+          de locaux commerciaux en logements dans les espaces aux nuisances importantes : Blvd Lancastel, rue Léopold
+          Rambaud, Blvd Sud J. Jaurès »'
+  Uu:
+    silence: autorise
+    silence_src: 'Le règlement procède par liste fermée d''interdictions : article Uu.1 « Occupations et utilisations
+      du sol interdites — Sont interdits : … » (p. 47) puis article Uu.2 « Occupations et utilisations du sol soumises
+      à des conditions particulières — Sont admis et soumis à des conditions particulières : … » (p. 47). Ce qui
+      n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Uu 1
+        page_pdf: 47
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: interdit
+        article: Uu 1
+        page_pdf: 47
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Uu 1
+        page_pdf: 47
+        citation: « Les constructions à fonction d’industrie, d’exploitation agricole et forestière »
+      entrepot:
+        statut: interdit
+        article: Uu 1
+        page_pdf: 47
+        citation: « Les entrepôts » (interdiction sans renvoi à l'article 2)
+  Ui:
+    silence: autorise
+    silence_src: 'Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
+      d''interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières
+      » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n''est ni interdit ni conditionné
+      est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ui 1
+        page_pdf: 51
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: interdit
+        article: Ui 1
+        page_pdf: 51
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ui 1
+        page_pdf: 51
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      entrepot:
+        statut: sous_condition
+        condition: 'interdits (Ui.1, p. 51 : « les entrepôts sauf ceux mentionnés à l''article 2 ») sauf s''ils
+          sont liés aux occupations et utilisations du sol admises dans la zone et n''entraînent pas pour leur voisinage
+          des nuisances inacceptables'
+        article: Ui 2
+        page_pdf: 52
+        citation: « les constructions destinées à la fonction d'entrepôt liées aux occupations et utilisations des
+          sols admises la zone et sous réserve qu'elles n'entraînent pas pour leur voisinage des nuisances inacceptables
+          »
+      logement:
+        statut: sous_condition
+        condition: 'condition portant uniquement sur les opérations nouvelles d''habitat collectif de 30 logements
+          et plus : minimum 15 % de logements sociaux et/ou intermédiaires ; les autres constructions de logement
+          ne sont ni interdites ni conditionnées par les articles Ui.1/Ui.2'
+        article: Ui 2
+        page_pdf: 52
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  Uicm:
+    renvoi: Ui
+    renvoi_src: 'caractère de la zone, p. 51 : « Cette zone contient un secteur Uicm qui concerne le secteur Canne
+      Mapou […] Sa vocation générale est celle de la zone Ui » ; les articles Ui.1 et Ui.2 (p. 51-52) ne comportent
+      aucune disposition propre au secteur Uicm (les règles particulières Uicm ne portent que sur les articles Ui.6,
+      Ui.7, Ui.9 et Ui.10 — implantation, emprise, hauteur), les règles de destination sont donc identiques à Ui.'
+  Uip:
+    silence: autorise
+    silence_src: 'Le secteur Uip relève des articles Ui.1 « Occupations et utilisations du sol interdites » (« Sont
+      interdits : … », p. 51, complété « En sus dans le secteur Uip », p. 52) et Ui.2 « … soumises à des conditions
+      particulières » (p. 52) : liste fermée d''interdictions, ce qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ui 1
+        page_pdf: 51
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ui 1
+        page_pdf: 51
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'interdites par Ui.1 (p. 51 : « constructions à fonction […] d''exploitation agricole ») sauf,
+          uniquement au sein du secteur Uip, les constructions ou installations relevant de l''agriculture urbaine,
+          compatibles avec le caractère de la zone'
+        article: Ui 2
+        page_pdf: 52
+        citation: '« Uniquement au sein du secteur Uip : - Les constructions ou installations relevant de l''agriculture
+          urbaine, compatibles avec le caractère de la zone »'
+      entrepot:
+        statut: sous_condition
+        condition: 'interdits (Ui.1, p. 51 : « les entrepôts sauf ceux mentionnés à l''article 2 ») sauf s''ils
+          sont liés aux occupations et utilisations du sol admises dans la zone et n''entraînent pas pour leur voisinage
+          des nuisances inacceptables'
+        article: Ui 2
+        page_pdf: 52
+        citation: « les constructions destinées à la fonction d'entrepôt liées aux occupations et utilisations des
+          sols admises la zone et sous réserve qu'elles n'entraînent pas pour leur voisinage des nuisances inacceptables
+          »
+      logement:
+        statut: sous_condition
+        condition: 'en secteur Uip : nouveaux logements interdits en premier front des axes Blvd Lancastel, Rue
+          L. Rambaud et Blvd Jean Jaurès (obligation de second front) ; transformation de locaux commerciaux en
+          logements interdite sur les espaces Blvd Lancastel, rue Léopold Rambaud, Blvd Sud J. Jaurès ; pour les
+          opérations nouvelles d''habitat collectif de 30 logements et plus, il n''est pas imposé de pourcentage
+          relatif aux logements sociaux (Ui.2, p. 52 : « Spécifiquement au sein du secteur Uip : - il n''est pas
+          imposé de pourcentage relatif aux logements sociaux »)'
+        article: Ui 1
+        page_pdf: 52
+        citation: '« La construction de nouveaux logements interdits en premier front des axes Blvd Lancastel, Rue
+          L. Rambaud et Blvd Jean Jaurès, ils devront être obligatoirement être en second front » ; « la transformation
+          de locaux commerciaux en logements dans les espaces aux nuisances importantes : Blvd Lancastel, rue Léopold
+          Rambaud, Blvd Sud J. Jaurès »'
+  Uj:
+    silence: autorise
+    silence_src: 'Art. Uj.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
+      d''interdictions, p. 59) ; art. Uj.2 « Occupations et utilisations du sol soumises à des conditions particulières
+      » : « Sont admis et soumis à des conditions particulières : … » (p. 59). Ce qui n''est ni interdit ni conditionné
+      est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Uj 1
+        page_pdf: 59
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: interdit
+        article: Uj 1
+        page_pdf: 59
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Uj 1
+        page_pdf: 59
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      entrepot:
+        statut: sous_condition
+        condition: 'interdits (Uj.1, p. 59 : « les entrepôts sauf ceux mentionnés à l''article 2 ») sauf s''ils
+          sont liés aux occupations et utilisations du sol admises dans la zone et n''entraînent pas pour leur voisinage
+          des nuisances inacceptables'
+        article: Uj 2
+        page_pdf: 60
+        citation: « les constructions destinées à la fonction d'entrepôt liées aux occupations et utilisations des
+          sols admises la zone et sous réserve qu'elles n'entraînent pas pour leur voisinage des nuisances inacceptables
+          »
+      logement:
+        statut: sous_condition
+        condition: 'condition portant uniquement sur les opérations nouvelles d''habitat collectif de 30 logements
+          et plus : minimum 15 % de logements sociaux et/ou intermédiaires ; les autres constructions de logement
+          ne sont ni interdites ni conditionnées par les articles Uj.1/Uj.2'
+        article: Uj 2
+        page_pdf: 60
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  Um:
+    silence: autorise
+    silence_src: 'Art. Um.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
+      d''interdictions, p. 65, dont « les constructions à usage d''activités, sauf celles prévues à l''article 2
+      ») ; art. Um.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis
+      et soumis à des conditions particulières : … » (p. 65). Ce qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Um 1
+        page_pdf: 65
+        citation: « les constructions à fonction d'exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Um 1
+        page_pdf: 65
+        citation: « les constructions à fonction d'exploitation agricole et forestière »
+      industrie:
+        statut: sous_condition
+        condition: 'seules sont admises les industries de production et de transformation agro-alimentaire ; les
+          autres relèvent de l''interdiction Um.1 (p. 65 : « les constructions à usage d''activités, sauf celles
+          prévues à l''article 2 »)'
+        article: Um 2
+        page_pdf: 65
+        citation: « les industries de production et de transformation agro-alimentaire »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: surface de plancher limitée à 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Um 2
+        page_pdf: 65
+        citation: « les constructions à usage commercial, artisanal ou de service, dans la limite d'une surface
+          plancher de 300 m2 »
+      commerce_gros:
+        statut: sous_condition
+        condition: surface de plancher limitée à 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Um 2
+        page_pdf: 65
+        citation: « les constructions à usage commercial, artisanal ou de service, dans la limite d'une surface
+          plancher de 300 m2 »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: surface de plancher limitée à 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Um 2
+        page_pdf: 65
+        citation: « les constructions à usage commercial, artisanal ou de service, dans la limite d'une surface
+          plancher de 300 m2 »
+      bureau:
+        statut: sous_condition
+        condition: au-delà de 300 m² de surface de plancher, admis uniquement si liés à une activité déjà existante
+          à la date d'approbation du présent PLU (modification n°6)
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Um 2
+        page_pdf: 65
+        citation: « Les constructions destinées à usage de bureaux ayant une surface plancher supérieure à 300 m²,
+          lorsqu'elles sont liées à une activité déjà existante à la date d'approbation du présent PLU (modification
+          n°6) »
+      entrepot:
+        statut: sous_condition
+        condition: 'interdits (Um.1, p. 65 : « les entrepôts sauf ceux mentionnés à l''article 2 ») sauf s''ils
+          sont liés aux occupations et utilisations du sol admises dans la zone et n''entraînent pas pour leur voisinage
+          des nuisances inacceptables'
+        article: Um 2
+        page_pdf: 65
+        citation: « les constructions destinées à la fonction d'entrepôt liées aux occupations et utilisations des
+          sols admises dans la zone et sous réserve qu'elles n'entraînent pas pour leur voisinage des nuisances
+          inacceptables »
+      logement:
+        statut: sous_condition
+        condition: 'condition portant uniquement sur les opérations nouvelles d''habitat collectif de 30 logements
+          et plus : minimum 15 % de logements sociaux et/ou intermédiaires ; les autres constructions de logement
+          ne sont ni interdites ni conditionnées par les articles Um.1/Um.2'
+        article: Um 2
+        page_pdf: 66
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  Uh:
+    silence: autorise
+    silence_src: 'Art. Uh.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée
+      d''interdictions, p. 71, dont « les constructions à usage d''activités, sauf celles prévues à l''article 2
+      ») ; art. Uh.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis
+      et soumis à des conditions particulières » (p. 71). Ce qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Uh 1
+        page_pdf: 71
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: Uh 1
+        page_pdf: 71
+        citation: « les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'interdites par Uh.1 (p. 71 : « constructions à fonction […] d''exploitation agricole ») sauf
+          constructions à usage agricole dans la limite d''une surface de plancher de 300 m²'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Uh 2
+        page_pdf: 71
+        citation: « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une
+          surface plancher de 300 m2 »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: surface de plancher limitée à 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Uh 2
+        page_pdf: 71
+        citation: « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une
+          surface plancher de 300 m2 »
+      commerce_gros:
+        statut: sous_condition
+        condition: surface de plancher limitée à 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Uh 2
+        page_pdf: 71
+        citation: « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une
+          surface plancher de 300 m2 »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: surface de plancher limitée à 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Uh 2
+        page_pdf: 71
+        citation: « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une
+          surface plancher de 300 m2 »
+      entrepot:
+        statut: interdit
+        article: Uh 1
+        page_pdf: 71
+        citation: « les entrepôts et dépôts de toute nature (ferrailles, matériaux, récupération de voitures, etc.)
+          »
+      logement:
+        statut: sous_condition
+        condition: 'condition portant uniquement sur les opérations nouvelles d''habitat collectif de 30 logements
+          et plus : minimum 15 % de logements sociaux et/ou intermédiaires ; les autres constructions de logement
+          ne sont ni interdites ni conditionnées par les articles Uh.1/Uh.2'
+        article: Uh 2
+        page_pdf: 71
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  Ua:
+    silence: autorise
+    silence_src: 'Art. Ua.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
+      de trois tirets, p. 76) et art. Ua.2 « Occupations et utilisations du sol soumises à des conditions particulières
+      » (p. 76) : ce qui n''est ni interdit ni conditionné est autorisé.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: seules les constructions à usage d'habitation strictement nécessaires à la direction ou à la
+          surveillance des établissements autorisés
+        article: Ua.1 / Ua.2
+        page_pdf: 76
+        citation: « les constructions à usage d'habitation sauf celles prévues à l'article 2 » (Ua.1) ; « les constructions
+          à usage d'habitation, strictement nécessaires à la direction ou à la surveillance des établissements autorisés
+          » (Ua.2)
+      exploitation_agricole:
+        statut: sous_condition
+        condition: interdites, à l'exception des serres nécessaires à une activité de production alimentaire (Ua.2)
+        article: Ua.1 / Ua.2
+        page_pdf: 76
+        citation: « les constructions à fonction d'exploitation agricole et forestière » (Ua.1, interdites) ; «
+          Sont autorisées la réalisation de serres nécessaires à une activité de production alimentaire » (Ua.2)
+      exploitation_forestiere:
+        statut: interdit
+        article: Ua.1
+        page_pdf: 76
+        citation: « les constructions à fonction d'exploitation agricole et forestière »
+  Uac:
+    renvoi: Ua
+    renvoi_src: 'Caractère de la zone, p. 76 : « La zone comprend quatre secteurs : - Le secteur Ua correspondant
+      à la zone d''activités du Chaudron, - Les secteurs Uac et Uad pour la Technopole. - Le secteur Uat recouvrant
+      la ZAC Triangle » ; les articles Ua.1 (p. 76) et Ua.2 (p. 76) ne distinguent aucun secteur (les règles sectorielles
+      ne portent que sur l''implantation, la hauteur, le stationnement et les espaces libres, art. Ua.6/Ua.10/Ua.12/Ua.13).'
+  Uad:
+    renvoi: Ua
+    renvoi_src: 'Caractère de la zone, p. 76 : « Les secteurs Uac et Uad pour la Technopole » ; les articles Ua.1
+      et Ua.2 (p. 76) ne distinguent aucun secteur.'
+  Uat:
+    renvoi: Ua
+    renvoi_src: 'Caractère de la zone, p. 76 : « Le secteur Uat recouvrant la ZAC Triangle » ; les articles Ua.1
+      et Ua.2 (p. 76) ne distinguent aucun secteur.'
+  Uv:
+    silence: interdit
+    silence_src: 'Art. Uv.1 (p. 81) : « Sont interdites : toutes les constructions ou installations autres que celles
+      prévues à l''article 2. »'
+    note: L'article Uv.2 ne liste les occupations admises que secteur par secteur (Uva, Uvac, Uvl, p. 81-82) ; le
+      zonage sert ces trois codes, pas « Uv » nu — voir les entrées Uva, Uvac, Uvl.
+  Uva:
+    silence: interdit
+    silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
+      installations autres que celles prévues à l''article 2. »'
+    sous_destinations:
+      equipements_sportifs:
+        statut: sous_condition
+        condition: équipements ou services directement liés aux loisirs ou aux sports
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les équipements ou services directement liées aux loisirs ou aux sports »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations à caractère technique directement liées à l'alimentation en eau,
+          à l'assainissement, à la sécurité
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les constructions et installations à caractère technique, directement liées à l'alimentation
+          en eau, à l'assainissement, à la sécurité »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      lieux_culte:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: agriculture urbaine compatible avec le caractère de la zone ; serres nécessaires à une activité
+          de production alimentaire
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « Les constructions ou installations relevant de l'agriculture urbaine, compatibles avec le caractère
+          de la zone » ; « sont autorisées la réalisation de serres nécessaires à une activité de production alimentaire
+          »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: surface n'excédant pas 50 m² de surface plancher
+        seuil_m2: 50
+        seuil_type: surface_plancher
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les constructions à destination de commerces ou d'artisanat à la condition que leur surface
+          n'excède pas 50 m² de surface plancher »
+      commerce_gros:
+        statut: sous_condition
+        condition: surface n'excédant pas 50 m² de surface plancher
+        seuil_m2: 50
+        seuil_type: surface_plancher
+        article: Uv.2 (secteur Uva)
+        page_pdf: 81
+        citation: « les constructions à destination de commerces ou d'artisanat à la condition que leur surface
+          n'excède pas 50 m² de surface plancher »
+  Uvac:
+    silence: interdit
+    silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
+      installations autres que celles prévues à l''article 2. »'
+    sous_destinations:
+      equipements_sportifs:
+        statut: sous_condition
+        condition: équipements ou services directement liés aux loisirs ou aux sports
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les équipements ou services directement liées aux loisirs ou aux sports »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations à caractère technique directement liées à l'alimentation en eau,
+          à l'assainissement, à la sécurité
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les constructions et installations à caractère technique, directement liées à l'alimentation
+          en eau, à l'assainissement, à la sécurité »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      lieux_culte:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les
+          rendre compatibles avec le milieu environnant
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les équipements de proximité d'intérêt collectif, sous réserve que tout soit mis en œuvre pour
+          les rendre compatibles avec le milieu environnant »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: agriculture urbaine compatible avec le caractère de la zone ; serres nécessaires à une activité
+          de production alimentaire
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les constructions ou installations relevant de l'agriculture urbaine, compatibles avec le caractère
+          de la zone » ; « sont autorisées la réalisation de serres nécessaires à une activité de production alimentaire
+          »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: surfaces n'excédant pas 100 m² de surface plancher pour 100 m² de terrain
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les constructions à destination de commerces ainsi que le stockage de marchandises rendus nécessaires
+          pour le fonctionnement de ces activités, services ou d'artisanat à la condition que leurs surfaces n'excèdent
+          pas 100 m² de surface plancher pour 100 m² de terrain »
+      commerce_gros:
+        statut: sous_condition
+        condition: surfaces n'excédant pas 100 m² de surface plancher pour 100 m² de terrain
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « les constructions à destination de commerces … à la condition que leurs surfaces n'excèdent
+          pas 100 m² de surface plancher pour 100 m² de terrain »
+      entrepot:
+        statut: sous_condition
+        condition: stockage de marchandises rendu nécessaire pour le fonctionnement des commerces, services ou artisanat
+          admis ; surfaces n'excédant pas 100 m² de surface plancher pour 100 m² de terrain
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: Uv.2 (secteur Uvac)
+        page_pdf: 82
+        citation: « le stockage de marchandises rendus nécessaires pour le fonctionnement de ces activités, services
+          ou d'artisanat à la condition que leurs surfaces n'excèdent pas 100 m² de surface plancher pour 100 m²
+          de terrain »
+  Uvl:
+    silence: interdit
+    silence_src: 'Art. Uv.1 (p. 81), applicable à toute la zone : « Sont interdites : toutes les constructions ou
+      installations autres que celles prévues à l''article 2. »'
+    note: '« les équipements touristiques dont la localisation à proximité de la mer est justifiée par son usage
+      ou par nécessité économique de desserte par voie maritime … » (Uv.2 secteur Uvl, p. 82) : terme trop générique
+      pour être mappé vers hotels / autres_hebergements_touristiques sans doute — non écrit.'
+    sous_destinations:
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre compatibles
+          avec le milieu environnant, et sous réserve de la valorisation des espaces boisés, des parcs, des jardins
+          publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: '« Sous réserve de la valorisation des espaces boisés, des parcs, des jardins publics, des plages,
+          sont admis : les équipements d''intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre
+          compatibles avec le milieu environnant »'
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre compatibles
+          avec le milieu environnant, et sous réserve de la valorisation des espaces boisés, des parcs, des jardins
+          publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre
+          compatibles avec le milieu environnant »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre compatibles
+          avec le milieu environnant, et sous réserve de la valorisation des espaces boisés, des parcs, des jardins
+          publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre
+          compatibles avec le milieu environnant »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre compatibles
+          avec le milieu environnant, et sous réserve de la valorisation des espaces boisés, des parcs, des jardins
+          publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre
+          compatibles avec le milieu environnant »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre compatibles
+          avec le milieu environnant, et sous réserve de la valorisation des espaces boisés, des parcs, des jardins
+          publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre
+          compatibles avec le milieu environnant »
+      lieux_culte:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre compatibles
+          avec le milieu environnant, et sous réserve de la valorisation des espaces boisés, des parcs, des jardins
+          publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre
+          compatibles avec le milieu environnant »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre compatibles
+          avec le milieu environnant, et sous réserve de la valorisation des espaces boisés, des parcs, des jardins
+          publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les équipements d'intérêt collectif, sous réserve que tout soit mis en œuvre pour les rendre
+          compatibles avec le milieu environnant »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: agriculture urbaine compatible avec le caractère de la zone ; serres nécessaires à une activité
+          de production alimentaire
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « Les constructions ou installations relevant de l'agriculture urbaine, compatibles avec le caractère
+          de la zone » ; « Sont autorisées la réalisation de serres nécessaires à une activité de production alimentaire
+          »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: commerces et structures artisanales liés à l'accueil du public, sous réserve de la valorisation
+          des espaces boisés, des parcs, des jardins publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les commerces, services, structures artisanales liées à l'accueil du public »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: services liés à l'accueil du public, sous réserve de la valorisation des espaces boisés, des
+          parcs, des jardins publics, des plages
+        article: Uv.2 (secteur Uvl)
+        page_pdf: 82
+        citation: « les commerces, services, structures artisanales liées à l'accueil du public »
+  Uma:
+    silence: interdit
+    silence_src: 'Art. Uma.1 (p. 86) : « Sont interdits : les constructions de toute nature sauf celles prévues
+      à l''article 2. »'
+    note: 'L''article Uma.2 (p. 86) admet, soit lors d''une opération d''aménagement d''ensemble, soit au fur et
+      à mesure des équipements internes : « la maison d''arrêt ; les constructions et équipements nécessaires à
+      son fonctionnement », les « équipements d''infrastructures et ouvrages techniques liés et nécessaires à l''aménagement
+      de la zone » et « l''implantation ou l''extension d''installation de dispositifs de production d''énergie
+      renouvelable » — occupations non mappées vers une sous-destination R151-28 (rattachement douteux, non écrit).'
+    sous_destinations: {}
+  AUj:
+    silence: autorise
+    silence_src: 'Art. AUj.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
+      de six tirets, p. 90) et art. AUj.2 « Occupations et utilisations du sol soumises à des conditions particulières
+      » (p. 90-91) : ce qui n''est ni interdit ni conditionné est autorisé.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: AUj.1
+        page_pdf: 90
+        citation: « Les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: AUj.1
+        page_pdf: 90
+        citation: « Les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      industrie:
+        statut: sous_condition
+        condition: constructions à fonction d'industrie interdites (AUj.1) ; sont toutefois admises les installations
+          industrielles ou artisanales non classées, ainsi que les ICPE soumises à déclaration limitativement listées,
+          sous réserve qu'elles n'entraînent pas pour leur voisinage des nuisances inacceptables
+        article: AUj.1 / AUj.2
+        page_pdf: 91
+        citation: « Les constructions à fonction d'industrie … » (AUj.1, p. 90, interdites) ; « Les installations
+          industrielles ou artisanales non classées » (AUj.2, liste des installations admises, p. 91)
+      entrepot:
+        statut: sous_condition
+        condition: entrepôts liés aux occupations et utilisations des sols admises dans la zone, sous réserve qu'ils
+          n'entraînent pas pour leur voisinage des nuisances inacceptables
+        article: AUj.1 / AUj.2
+        page_pdf: 91
+        citation: « Les entrepôts sauf ceux mentionnés à l'article 2 » (AUj.1, p. 90) ; « Les constructions destinées
+          à la fonction d'entrepôt liées aux occupations et utilisations des sols admises la zone et sous réserve
+          qu'elles n'entraînent pas pour leur voisinage des nuisances inacceptables » (AUj.2, p. 91)
+      logement:
+        statut: sous_condition
+        condition: les opérations nouvelles d'habitat collectif de 30 logements et plus doivent comporter un minimum
+          de 15 % de logements sociaux et/ou intermédiaires ; les autres constructions d'habitation ne sont pas
+          mentionnées (silence)
+        article: AUj.2
+        page_pdf: 91
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
+          un minimum de15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  AUm:
+    silence: autorise
+    silence_src: 'Art. AUm.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
+      de six tirets, p. 96) et art. AUm.2 « Occupations et utilisations du sol soumises à des conditions particulières
+      » (p. 96-97) : ce qui n''est ni interdit ni conditionné est autorisé.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: AUm.1
+        page_pdf: 96
+        citation: « Les constructions à fonction d'exploitation industrielle, agricole et forestière »
+      exploitation_agricole:
+        statut: interdit
+        article: AUm.1
+        page_pdf: 96
+        citation: « Les constructions à fonction d'exploitation industrielle, agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: AUm.1
+        page_pdf: 96
+        citation: « Les constructions à fonction d'exploitation industrielle, agricole et forestière »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: dans la limite d'une surface plancher de 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: AUm.2
+        page_pdf: 96
+        citation: « Les constructions à usage commercial, artisanal ou de service, dans la limite d'une surface
+          plancher de 300 m2 »
+      commerce_gros:
+        statut: sous_condition
+        condition: dans la limite d'une surface plancher de 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: AUm.2
+        page_pdf: 96
+        citation: « Les constructions à usage commercial, artisanal ou de service, dans la limite d'une surface
+          plancher de 300 m2 »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: dans la limite d'une surface plancher de 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: AUm.2
+        page_pdf: 96
+        citation: « Les constructions à usage commercial, artisanal ou de service, dans la limite d'une surface
+          plancher de 300 m2 »
+      entrepot:
+        statut: sous_condition
+        condition: entrepôts liés aux occupations et utilisations des sols admises dans la zone, sous réserve qu'ils
+          n'entraînent pas pour leur voisinage des nuisances inacceptables
+        article: AUm.1 / AUm.2
+        page_pdf: 96
+        citation: « Les entrepôts sauf ceux mentionnés à l'article 2 » (AUm.1) ; « Les constructions destinées à
+          la fonction d'entrepôt liées aux occupations et utilisations des sols admises la zone et sous réserve
+          qu'elles n'entraînent pas pour leur voisinage des nuisances inacceptables » (AUm.2)
+      logement:
+        statut: sous_condition
+        condition: les opérations nouvelles d'habitat collectif de 30 logements et plus doivent comporter un minimum
+          de 15 % de logements sociaux et/ou intermédiaires ; les autres constructions d'habitation ne sont pas
+          mentionnées (silence)
+        article: AUm.2
+        page_pdf: 97
+        citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
+          un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
+  AUh:
+    silence: autorise
+    silence_src: 'Art. AUh.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
+      de six tirets, p. 101) et art. AUh.2 « Occupations et utilisations du sol soumises à des conditions particulières
+      » (p. 101) : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'L''art. AUh.1 (p. 101) interdit largement « Les constructions à usage d''habitation, d''activités et
+      d''entrepôt sauf celles prévues à l''article 2 » : le terme « activités » est trop générique pour être mappé
+      vers d''autres sous-destinations que celles que l''article 2 nomme (commercial, artisanal, service, agricole)
+      — le reste demeure non mentionné. Incohérence interne : le même article dit « d''entrepôt sauf celles prévues
+      à l''article 2 » puis interdit sans réserve « Les entrepôts et dépôts de toute nature », et l''article 2 ne
+      prévoit aucun entrepôt.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: AUh.1
+        page_pdf: 101
+        citation: « Les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: AUh.1
+        page_pdf: 101
+        citation: « Les constructions à fonction d'industrie, d'exploitation agricole et forestière »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: interdites (AUh.1) sauf constructions à usage agricole dans la limite d'une surface plancher
+          de 300 m² (AUh.2)
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: AUh.1 / AUh.2
+        page_pdf: 101
+        citation: « Les constructions à fonction d'industrie, d'exploitation agricole et forestière » (AUh.1) ;
+          « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une surface
+          plancher de 300 m2 » (AUh.2)
+      logement:
+        statut: sous_condition
+        condition: surface plancher n'excédant pas 115 m² par tranche de 400 m² de terrain ou 170 m² par tranche
+          de 600 m² de terrain ; les opérations nouvelles d'habitat collectif de 30 logements et plus doivent comporter
+          un minimum de 15 % de logements sociaux et/ou intermédiaires
+        article: AUh.1 / AUh.2
+        page_pdf: 101
+        citation: « Les constructions à usage d'habitation, d'activités et d'entrepôt sauf celles prévues à l'article
+          2 » (AUh.1) ; « les constructions à usage d'habitation dont la surface plancher n'excède pas 115 m² par
+          tranche de 400m² de terrain ou qui n'excède pas 170 m2 par tranche de 600m2 de terrain » (AUh.2)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: dans la limite d'une surface plancher de 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: AUh.2
+        page_pdf: 101
+        citation: « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une
+          surface plancher de 300 m2 »
+      commerce_gros:
+        statut: sous_condition
+        condition: dans la limite d'une surface plancher de 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: AUh.2
+        page_pdf: 101
+        citation: « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une
+          surface plancher de 300 m2 »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: dans la limite d'une surface plancher de 300 m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: AUh.2
+        page_pdf: 101
+        citation: « les constructions à usage commercial, artisanal, de service, ou agricole, dans la limite d'une
+          surface plancher de 300 m2 »
+      entrepot:
+        statut: interdit
+        article: AUh.1
+        page_pdf: 101
+        citation: « Les entrepôts et dépôts de toute nature (ferrailles, matériaux, récupération de voitures, etc).
+          »
+  AUa:
+    silence: autorise
+    silence_src: 'Art. AUa.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
+      de cinq tirets, p. 106) et art. AUa.2 « Occupations et utilisations du sol soumises à des conditions particulières
+      » (p. 106-107) : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'Le caractère de la zone (p. 106) mentionne « l''implantation des équipements et activités commerciales
+      et de services doit y être limitée à 5% de la superficie de la zone d''implantation » (SAR) — caractère de
+      zone, pas une règle d''article : non retenu comme statut.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: seules les constructions à usage d'habitation strictement nécessaires à la surveillance des établissements
+          autorisés
+        article: AUa.1 / AUa.2
+        page_pdf: 106
+        citation: « les constructions à usage d'habitation sauf celles prévues à l'article 2 » (AUa.1) ; « les constructions
+          à usage d'habitation, strictement nécessaires à la surveillance des établissements autorisés » (AUa.2)
+  AUx:
+    silence: interdit
+    silence_src: 'Art. AUx.1 (p. 110) : « Sont interdites : Les constructions et occupations du sol autres que celles
+      prévues à l''article 2. »'
+    note: L'article AUx.2 (p. 110) n'admet, « sous réserve de ne pas porter entrave à l'aménagement ultérieur de
+      la zone », que « Les équipements d'infrastructures et ouvrages techniques liés et nécessaires à l'aménagement
+      de la zone » et « Les travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires (limités
+      à 30 m2) réalisés sur des constructions existantes » — aucune sous-destination R151-28 n'est mappable sans
+      doute (non écrit). Le caractère de zone précise que l'ouverture à l'urbanisation est subordonnée à une modification
+      ou révision du PLU (p. 110).
+    sous_destinations: {}
+  A:
+    silence: interdit
+    silence_src: 'Art. A.1, page_pdf 113 : « Sont interdits : - les constructions de toute nature sauf celles prévues
+      à l''article 2 ; - les occupations et utilisations ne visant pas à exploiter le potentiel agronomique, biologique
+      ou économique des terres agricoles. » (liste fermée : tout ce qui n''est pas prévu à l''article 2 est interdit)'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'réserve générale A.2 : « sous réserve qu''elles ne portent atteinte ni à la préservation des
+          sols agricoles et forestiers ni à la sauvegarde des sites, milieux naturels et paysages »'
+        article: A.2
+        page_pdf: 114
+        citation: « les bâtiments techniques agricoles et les installations techniques nécessaires à l'exercice
+          de l'activité agricole »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: « si leur implantation dans la zone s'impose et soit rendue indispensable par des nécessités
+          techniques et économiques impératives, et à la condition que l'activité agricole soit intégralement préservée
+          » ; réserve générale A.2
+        article: A.2
+        page_pdf: 113
+        citation: « les ouvrages techniques et installations nécessaires aux services publics liés à la production,
+          au stockage et à la desserte en eau et en énergie, et au traitement des eaux potables et usées »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'hébergement temporaire agrotouristique : « complément de revenu d''une exploitation agricole
+          existante », conforme au schéma départemental des structures agricoles, « localisées sur l''exploitation
+          agricole en extension de l''habitation principale existante » ; ensemble de la construction (habitation
+          et extension comprise) limité à 300 m² de surface plancher ; réserve générale A.2'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: « les constructions à usage agrotouristique pour l'hébergement temporaire et la restauration […]
+          dans la limite de 300 m² de surface plancher pour l'ensemble de la construction »
+      restauration:
+        statut: sous_condition
+        condition: 'restauration agrotouristique : « complément de revenu d''une exploitation agricole existante
+          », sur l''exploitation, en extension de l''habitation principale existante ; comprise dans la limite de
+          300 m² de surface plancher de l''ensemble ; réserve générale A.2'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: « les constructions à usage agrotouristique pour l'hébergement temporaire et la restauration,
+          dès lors qu'ils constituent un complément de revenu d'une exploitation agricole existante »
+      logement:
+        statut: sous_condition
+        condition: 'uniquement l''habitation comprise dans la construction agrotouristique en extension de l''habitation
+          principale existante de l''exploitation : maximum 150 m² de surface plancher pour l''habitation (dans
+          l''ensemble plafonné à 300 m²) ; réserve générale A.2'
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: « avec un maximum de 150 m² de surface plancher pour l'habitation »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: seule la vente de produits de l'exploitation agricole, dans la limite de 25 m² de surface de
+          plancher ; réserve générale A.2
+        seuil_m2: 25
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: « les locaux destinés à la vente de produits de l'exploitation, dans la limite de 25 m2 de surface
+          de plancher »
+  Ac:
+    silence: interdit
+    silence_src: 'Art. A.1, page_pdf 113 (zone entière, secteur compris) : « Sont interdits : - les constructions
+      de toute nature sauf celles prévues à l''article 2 ; - les occupations et utilisations ne visant pas à exploiter
+      le potentiel agronomique, biologique ou économique des terres agricoles. »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: bloc A.2 « Sur l'ensemble de la zone » ; réserve générale A.2 (ne pas porter atteinte aux sols
+          agricoles et forestiers, sites, milieux naturels et paysages)
+        article: A.2
+        page_pdf: 114
+        citation: « les bâtiments techniques agricoles et les installations techniques nécessaires à l'exercice
+          de l'activité agricole »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: « si leur implantation dans la zone s'impose et soit rendue indispensable par des nécessités
+          techniques et économiques impératives, et à la condition que l'activité agricole soit intégralement préservée
+          » ; réserve générale A.2
+        article: A.2
+        page_pdf: 113
+        citation: « les ouvrages techniques et installations nécessaires aux services publics liés à la production,
+          au stockage et à la desserte en eau et en énergie, et au traitement des eaux potables et usées »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: hébergement temporaire agrotouristique, complément de revenu d'une exploitation agricole existante,
+          sur l'exploitation en extension de l'habitation principale existante ; ensemble limité à 300 m² de surface
+          plancher ; réserve générale A.2
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: « les constructions à usage agrotouristique pour l'hébergement temporaire et la restauration […]
+          dans la limite de 300 m² de surface plancher pour l'ensemble de la construction »
+      restauration:
+        statut: sous_condition
+        condition: restauration agrotouristique, complément de revenu d'une exploitation agricole existante, comprise
+          dans la limite de 300 m² de surface plancher de l'ensemble ; réserve générale A.2
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: « les constructions à usage agrotouristique pour l'hébergement temporaire et la restauration,
+          dès lors qu'ils constituent un complément de revenu d'une exploitation agricole existante »
+      logement:
+        statut: sous_condition
+        condition: 'règle propre au secteur : « ne concerne que des constructions existantes » ; constructions à
+          usage d''habitation dans la limite de 170 m² de surface de plancher ; réserve générale A.2'
+        seuil_m2: 170
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: '« En secteur Ac, qui ne concerne que des constructions existantes : - les constructions à usage
+          d''habitation dans la limite de 170 m² de surface de plancher. »'
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: seule la vente de produits de l'exploitation agricole, dans la limite de 25 m² de surface de
+          plancher ; réserve générale A.2
+        seuil_m2: 25
+        seuil_type: surface_plancher
+        article: A.2
+        page_pdf: 114
+        citation: « les locaux destinés à la vente de produits de l'exploitation, dans la limite de 25 m2 de surface
+          de plancher »
+  N:
+    silence: interdit
+    silence_src: 'Art. N.1, page_pdf 119 : « Sont interdits : - les constructions de toute nature sauf celles prévues
+      à l''article 2 ; - les occupations et utilisations autres que celles favorisant la préservation des sols agricoles
+      et forestiers, la sauvegarde des sites, milieux naturels et paysages. » (liste fermée : tout ce qui n''est
+      pas prévu à l''article 2 est interdit)'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones Npf, N, Ntn et Ntc », en dehors du cœur du parc national : « si leur
+          implantation dans la zone s''impose et soit rendue indispensable par des nécessités techniques et économiques
+          impératives » ; réserve générale N.2 (ne porter atteinte ni à la préservation des sols agricoles et forestiers
+          ni à la sauvegarde des sites, milieux naturels et paysages)'
+        article: N.2
+        page_pdf: 119
+        citation: « les ouvrages techniques et installations nécessaires aux services publics liés à la production,
+          au stockage et à la desserte en eau et en énergie, et au traitement des eaux potables et usées »
+      logement:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones N, Ntn et Ntc » : réhabilitation de bâtiments d''habitation existants
+          uniquement, « sous réserve de ne pas créer d''extension et d''avoir un impact environnemental et paysager
+          réduit » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: « la réhabilitation des bâtiments d'habitation existants sous réserve de ne pas créer d'extension
+          »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones N, Ntn et Ntc » : seules les installations techniques « strictement
+          nécessaires au fonctionnement et au développement d''une exploitation agricole » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: « l'implantation ou l'extension d'installations techniques strictement nécessaires au fonctionnement
+          et au développement d'une exploitation agricole »
+  Npf:
+    silence: interdit
+    silence_src: 'Art. N.1, page_pdf 119 (zone entière, secteurs compris) : « Sont interdits : - les constructions
+      de toute nature sauf celles prévues à l''article 2 ; - les occupations et utilisations autres que celles favorisant
+      la préservation des sols agricoles et forestiers, la sauvegarde des sites, milieux naturels et paysages. »'
+    note: 'À l''intérieur du cœur du parc national, N.2 (page_pdf 119) n''admet que « les travaux, constructions
+      et installations ayant obtenus l''autorisation spéciale de l''établissement public du Parc délivrée après
+      avis de son Conseil Scientifique, conformément à l''article L.331-4 du Code de l''Environnement » (cités en
+      exemple : approvisionnement en eau et énergie, constructions légères à usage touristique, équipements DFCI)
+      — régime d''autorisation spéciale, non mappé sur une sous-destination.'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones Npf, N, Ntn et Ntc », en dehors du cœur du parc national : « si leur
+          implantation dans la zone s''impose et soit rendue indispensable par des nécessités techniques et économiques
+          impératives » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 119
+        citation: « les ouvrages techniques et installations nécessaires aux services publics liés à la production,
+          au stockage et à la desserte en eau et en énergie, et au traitement des eaux potables et usées »
+  Ntn:
+    silence: interdit
+    silence_src: 'Art. N.1, page_pdf 119 (zone entière, secteurs compris) : « Sont interdits : - les constructions
+      de toute nature sauf celles prévues à l''article 2 ; - les occupations et utilisations autres que celles favorisant
+      la préservation des sols agricoles et forestiers, la sauvegarde des sites, milieux naturels et paysages. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones Npf, N, Ntn et Ntc », en dehors du cœur du parc national : « si leur
+          implantation dans la zone s''impose et soit rendue indispensable par des nécessités techniques et économiques
+          impératives » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 119
+        citation: « les ouvrages techniques et installations nécessaires aux services publics liés à la production,
+          au stockage et à la desserte en eau et en énergie, et au traitement des eaux potables et usées »
+      logement:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones N, Ntn et Ntc » : réhabilitation de bâtiments d''habitation existants
+          uniquement, « sous réserve de ne pas créer d''extension et d''avoir un impact environnemental et paysager
+          réduit » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: « la réhabilitation des bâtiments d'habitation existants sous réserve de ne pas créer d'extension
+          »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones N, Ntn et Ntc » : seules les installations techniques « strictement
+          nécessaires au fonctionnement et au développement d''une exploitation agricole » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: « l'implantation ou l'extension d'installations techniques strictement nécessaires au fonctionnement
+          et au développement d'une exploitation agricole »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les secteurs Ntn et Ntc » : constructions et installations LÉGÈRES d''intérêt
+          collectif nécessaires à l''accueil du public ou liées à la pratique d''activités de loisirs (kiosques,
+          rondavelles, abris, sanitaires…), surface plancher maximale 20 m² ; réserve générale N.2'
+        seuil_m2: 20
+        seuil_type: surface_plancher
+        article: N.2
+        page_pdf: 120
+        citation: « les constructions et installations légères d'intérêt collectif nécessaires à l'accueil du public
+          ou liées à la pratique d'activités de loisirs […] sous réserve que leur surface plancher n'excède pas
+          20 m2 »
+  Ntc:
+    silence: interdit
+    silence_src: 'Art. N.1, page_pdf 119 (zone entière, secteurs compris) : « Sont interdits : - les constructions
+      de toute nature sauf celles prévues à l''article 2 ; - les occupations et utilisations autres que celles favorisant
+      la préservation des sols agricoles et forestiers, la sauvegarde des sites, milieux naturels et paysages. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones Npf, N, Ntn et Ntc », en dehors du cœur du parc national : « si leur
+          implantation dans la zone s''impose et soit rendue indispensable par des nécessités techniques et économiques
+          impératives » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 119
+        citation: « les ouvrages techniques et installations nécessaires aux services publics liés à la production,
+          au stockage et à la desserte en eau et en énergie, et au traitement des eaux potables et usées »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les zones N, Ntn et Ntc » : seules les installations techniques « strictement
+          nécessaires au fonctionnement et au développement d''une exploitation agricole » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: « l'implantation ou l'extension d'installations techniques strictement nécessaires au fonctionnement
+          et au développement d'une exploitation agricole »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: 'bloc N.2 « Dans les secteurs Ntn et Ntc » : constructions et installations LÉGÈRES d''intérêt
+          collectif nécessaires à l''accueil du public ou liées à la pratique d''activités de loisirs (kiosques,
+          rondavelles, abris, sanitaires…), surface plancher maximale 20 m² ; réserve générale N.2'
+        seuil_m2: 20
+        seuil_type: surface_plancher
+        article: N.2
+        page_pdf: 120
+        citation: « les constructions et installations légères d'intérêt collectif nécessaires à l'accueil du public
+          ou liées à la pratique d'activités de loisirs […] sous réserve que leur surface plancher n'excède pas
+          20 m2 »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'uniquement les constructions et installations nécessaires aux services publics ou d''intérêt
+          collectif : hors cœur du Parc national « ayant une vocation de commerce ou d''artisanat » ; à l''intérieur
+          du cœur « ayant une vocation de commerce, artisanat ou touristique » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: « les constructions et installations nécessaires aux services publics ou d'intérêt collectif ayant
+          une vocation de commerce ou d'artisanat »
+      hotels:
+        statut: sous_condition
+        condition: 'hors cœur du Parc national : constructions et installations à vocation touristique dont l''hébergement
+          hôtelier ; à l''intérieur du cœur : uniquement au titre des constructions nécessaires aux services publics
+          ou d''intérêt collectif « ayant une vocation de commerce, artisanat ou touristique, dont l''hébergement
+          hôtelier » ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: '« Les constructions et installations à vocation touristique dont l''hébergement hôtelier : les
+          fermes auberges, les gîtes et les chambres d''hôtes. »'
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'hors cœur du Parc national : fermes auberges, gîtes et chambres d''hôtes admis au titre des
+          constructions à vocation touristique ; réserve générale N.2'
+        article: N.2
+        page_pdf: 120
+        citation: '« Les constructions et installations à vocation touristique dont l''hébergement hôtelier : les
+          fermes auberges, les gîtes et les chambres d''hôtes. »'
+      logement:
+        statut: sous_condition
+        condition: 'deux régimes lus : (1) bloc « Dans les zones N, Ntn et Ntc » : réhabilitation des bâtiments
+          d''habitation existants sans création d''extension ; (2) bloc « Dans les secteurs Ntc » : constructions
+          à usage d''habitation « principalement pour la surveillance des établissements autorisés », limite 130
+          m² de surface de plancher à l''intérieur du cœur du Parc national, 170 m² de surface plancher en dehors
+          du cœur ; réserve générale N.2'
+        seuil_m2: 170
+        seuil_type: surface_plancher
+        article: N.2
+        page_pdf: 120
+        citation: '« les constructions à usage d''habitation, dans la limite de 170 m2 de surface plancher, principalement
+          pour la surveillance des établissements autorisés » (hors cœur ; dans le cœur : « dans la limite de 130
+          m² de surface de plancher »)'
