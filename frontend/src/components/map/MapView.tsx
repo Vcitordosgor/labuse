@@ -610,7 +610,9 @@ export function MapView() {
       useApp.getState().setMapPeint({
         parcelles: parcVis,
         equipements: layers.equipements && z >= 12,
-        zonage: zonageFill && parcVis,
+        // RETOURS-11 C1 — la légende du zonage suit l'aplat RÉELLEMENT peint (zonageFill au bon zoom),
+        // indépendamment de la couche « Limites parcelles ».
+        zonage: zonageFill && (!ile || z >= 10),
       })
     }
     upd()
@@ -1274,10 +1276,14 @@ export function MapView() {
     if (!m || !ready.current || !m.getLayer('parcels-fill')) return
     const vis = (on: boolean) => (on ? 'visible' : 'none')
     // deux jeux de calques (GeoJSON commune / MVT île) — un seul visible à la fois
-    m.setLayoutProperty('parcels-fill', 'visibility', vis(layers.parcelles && !ile))
+    // RETOURS-11 C1 (03/09) — le REMPLISSAGE des parcelles porte AUSSI l'aplat de zonage (par famille).
+    // Régression SECTEUR-2 (07d16986) : `parcels-fill` était gated sur `layers.parcelles` seul, donc
+    // « Zonage PLU par parcelle » coché SANS « Limites parcelles » n'affichait que les lettres, aplat perdu.
+    // Le fill est visible dès que les limites OU le zonage-par-parcelle (zonageFill) sont actifs.
+    m.setLayoutProperty('parcels-fill', 'visibility', vis((layers.parcelles || zonageFill) && !ile))
     m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile))
     m.setLayoutProperty('parcels-limites', 'visibility', vis(layers.limites && !ile))
-    m.setLayoutProperty('ile-fill', 'visibility', vis(layers.parcelles && ile))
+    m.setLayoutProperty('ile-fill', 'visibility', vis((layers.parcelles || zonageFill) && ile))
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile))
     m.setLayoutProperty('ile-limites', 'visibility', vis(layers.limites && ile))
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
@@ -1641,8 +1647,9 @@ export function MapView() {
       })
     }
     const onDbl = (e: maplibregl.MapMouseEvent) => {
-      // ZONE-RECETTE LOT E : le double-clic est NEUTRALISÉ (preventDefault sur le zoom) — en mode 'zone'
-      // la fermeture passe UNIQUEMENT par Entrée (une seule voie de validation, pas deux en concurrence).
+      // ZONE-RECETTE LOT E + RETOURS-11 C8 (décision Vic 03/09) : le double-clic ne VALIDE plus rien
+      // (preventDefault sur le zoom) — la validation d'une forme passe UNIQUEMENT par Entrée (≥ 3 points),
+      // Échap annule. Le double-clic est libéré pour l'édition des points (glisser-déplacer : à venir).
       e.preventDefault()
       // distance/surface : le double-clic fige la mesure (l'outil reste actif pour recommencer)
       if (tool === 'distance' || tool === 'surface') setMeasure((s) => ({ ...s, pts: s.pts }))
@@ -1720,8 +1727,9 @@ export function MapView() {
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
-            : tool === 'zone' ? 'Cliquez pour poser les sommets — Entrée pour valider, Échap pour annuler'
-            : 'Cliquez pour mesurer — Échap pour quitter')}
+            /* RETOURS-11 C8 (03/09) — libellé exact : Entrée valide, Échap annule (le double-clic ne valide plus). */
+            : tool === 'zone' ? 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler'
+            : 'Cliquez pour placer les points · Échap pour quitter')}
         </div>
       )}
       {!tool && (

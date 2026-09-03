@@ -112,6 +112,12 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       <div key={f} className="flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ background: ZONE_FAM_META[f].color }} /><span className="text-[11px] text-txt">{ZONE_FAM_META[f].label}</span></div>
     ))}</div>,
   })
+  // RETOURS-11 C5 (03/09) — la couche officielle brute du GPU (premier niveau) a SA légende.
+  if (layers.zonage) groupes.push({
+    id: 'zonage-gpu', titre: 'Limites officielles PLU (GPU brut)',
+    note: 'Polygones bruts du document opposable (Géoportail de l’urbanisme), non rattachés au cadastre.',
+    body: <div data-legend-zonage-gpu className="flex items-center gap-2"><span className="h-3 w-4 rounded-sm border" style={{ borderColor: '#5CE6A1', background: 'rgba(92,230,161,.12)' }} /><span className="text-[11px] text-txt">contour + aplat des zones du PLU officiel</span></div>,
+  })
   if (layers.cinquante_pas) groupes.push({
     id: '50pas', titre: '50 pas géométriques',
     note: 'Réserve des 50 pas géométriques — bande de 81,20 m depuis le rivage (spécifique outre-mer).',
