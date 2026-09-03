@@ -293,6 +293,12 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     _j("ingest-dpe", "DPE ADEME mensuel", "mensuel (12)", "0 0 12 * *", "04:00 le 12", timeout_s=3600),
     _j("sync-gpu", "Diff PLU des 24 communes → événements de veille foncière + bandeau PLU",
        "mensuel (15)", "0 0 15 * *", "04:00 le 15", timeout_s=1800, envoie_mail=True),
+    # SCORING-3 (L3) — BDNB trimestriel (plan v2 §5 : « CRON calcule, Vic promeut »). L'export amont
+    # n'existe qu'en France entier (~39 Go depuis 2026-02) : l'ingestion streame l'archive et ne garde
+    # que le 974 (ingestion/bdnb.py), idempotente par millésime. Aucune variable au modèle sans banc K0.
+    _j("ingest-bdnb", "BDNB trimestriel (CSTB) — bâtiments : année, DPE, surfaces (stream filtré 974)",
+       "trimestriel (1er)", "0 1 1 1,4,7,10 *", "05:00 le 1er (jan/avr/juil/oct)",
+       timeout_s=14400, envoie_mail=True),
     # SENTINELLE-1 (W3) — veille QUOTIDIENNE des sources amont (généralise l'ancien sentinelle-dvf-cadastre,
     # devenu deux lignes de source_veille). Sonde api/page/entete, alerte, n'ingère RIEN. envoie_mail=False :
     # la notification passe par la cloche admin (event_log systeme), pas par un mail (bruit quotidien évité).

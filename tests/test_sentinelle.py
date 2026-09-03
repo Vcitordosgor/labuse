@@ -254,7 +254,9 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     doublons_couverts = {"Cadastre Etalab (bulk DGFiP/Etalab)", "RGE ALTI 5 m (IGN)"}
     reste = noms - seed_noms - raison_noms - doublons_couverts
     assert not reste, f"sources non classées (ni surveillées, ni raison, ni doublon couvert) : {reste}"
-    assert len(noms) == 64
+    # SCORING-3 (L3) — 64 → 65 : la BDNB entre au catalogue (surveillée par la sentinelle,
+    # api data.gouv ; ingestion trimestrielle prête, amont sans le 974 au 03/09/2026).
+    assert len(noms) == 65
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():
