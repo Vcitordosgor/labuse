@@ -570,6 +570,41 @@ def compter_permis(db: Session, *, commune: str | None = None, mois: int = 24) -
                       source="Sitadel — permis accordés (dossiers autorisés)", millesime=jusqu)
 
 
+def destination_zone(db: Session, *, idu: str | None = None, commune: str | None = None,
+                     zone: str | None = None, activite: str | None = None) -> ToolResult:
+    """DESTINATIONS-1 (X4.4) — « peut-on ouvrir un restaurant sur cette parcelle ? » : MÊME moteur,
+    MÊME phrase que l'Étude de zone et la fiche (module unique plu.destinations, calibration citée
+    article/page/millésime, CDAC L752-1). `data.prefill` alimente le bouton « Étude de zone »."""
+    from ..plu.destinations import resoudre_sous_destination, verdict
+    sd = resoudre_sous_destination(activite or "")
+    if sd is None:
+        return ToolResult("destination_zone", ok=False,
+                          refus=f"activité « {activite} » non rattachable à une sous-destination "
+                                "R151-28 — préciser (ex. restaurant, hôtel, commerce, bureau)")
+    if idu and not (commune and zone):
+        row = db.execute(text(
+            "SELECT p.commune, zp.zone_lib FROM parcels p "
+            "LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu WHERE p.idu = :idu"),
+            {"idu": idu.strip().upper()}).mappings().first()
+        if not row:
+            return ToolResult("destination_zone", ok=False, refus="parcelle introuvable")
+        commune, zone = commune or row["commune"], zone or row["zone_lib"]
+    if commune and not zone:
+        return ToolResult("destination_zone", ok=False,
+                          refus="zone PLU inconnue pour cette parcelle — verdict impossible sans zone")
+    if not commune:
+        return ToolResult("destination_zone", ok=False,
+                          refus="préciser une parcelle (IDU) ou une commune + zone")
+    v = verdict(commune, zone, sd)
+    return ToolResult("destination_zone", valeur=v.get("statut_effectif"),
+                      data={"phrase": v.get("phrase"), "verdict": v,
+                            "prefill": {"idu": idu, "commune": commune, "zone": zone,
+                                        "sous_destination": sd}},
+                      source=("calibration destinations du règlement PLU — "
+                              + (f"millésime {v['millesime']}" if v.get("millesime") else v["etat_calibration"])),
+                      millesime=v.get("millesime"))
+
+
 OUTILS = {
     "compter_parcelles": compter_parcelles,
     "compter_permis": compter_permis,
@@ -579,5 +614,6 @@ OUTILS = {
     "delais_instruction": delais_instruction,
     "marche": marche,
     "compter_piscines": compter_piscines,
+    "destination_zone": destination_zone,
     "recherche_web": recherche_web,
 }

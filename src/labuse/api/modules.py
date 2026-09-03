@@ -1614,6 +1614,10 @@ class ProgrammeIn(BaseModel):
     coef_circulation: float = Field(PROGRAMME_CIRCULATION_COEF, ge=1.0, le=1.6)
     commune: str | None = None       # None = île entière (extension île)
     offset: int = 0                  # FAISABILITE (pagination SOCLE) : fenêtre d'affichage (par page)
+    # DESTINATIONS-1 (X4.3) — sous-destination du programme (slug R151-28). Contrairement à
+    # l'ancien champ TYPE décoratif (M133), celui-ci AGIT : zone au verdict « interdit » écartée
+    # (comptée), « sous condition »/« en cours de calibration » annotées — dit AVANT de calculer.
+    destination: str | None = None
 
 
 @router.post("/programme")
@@ -1678,6 +1682,26 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
             hcache[key] = (float(h) if h is not None else None, nmax, estimee, (cn, he, hf))
         return hcache[key]
 
+    # DESTINATIONS-1 (X4.3) — verdict destination par (commune, zone), lecture UNIQUE via
+    # plu.destinations. Slug inconnu → 400 explicite (pas un filtre silencieux).
+    dest = (body.destination or "").strip() or None
+    dcache: dict = {}
+    if dest:
+        from ..plu.destinations import SOUS_DESTINATIONS as _SD, verdict as _dverdict
+        if dest not in _SD:
+            raise HTTPException(400, f"sous-destination inconnue : {dest}")
+
+    def _dinfo(zone: str, commune):
+        key = (zone, commune)
+        if key not in dcache:
+            v = _dverdict(commune or "", zone or "", dest)
+            etat = v.get("statut_effectif")
+            if v["etat_calibration"] == "non_calibree" or etat == "non_lu":
+                etat = "en_cours_de_calibration"
+            dcache[key] = {"etat": etat, "phrase": v.get("phrase")}
+        return dcache[key]
+
+    ecartees_destination = 0
     items = []
     for r in rows:
         zone = (r["zone"] or "").strip()   # étiquette FINE (parcel_zone_plu), pas la famille cascade
@@ -1713,8 +1737,15 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
         emprise_besoin = (sdp_min / niveaux_dem) if niveaux_dem else None
         if emprise_dispo is not None and emprise_besoin is not None and emprise_besoin > emprise_dispo + 0.5:
             continue
+        # (4) DESTINATIONS-1 (X4.3) — la destination du programme doit être admise dans la zone :
+        #     interdit → écartée (comptée) ; sous condition / en cours de calibration → annotée.
+        dv = _dinfo(zone, r["commune"]) if dest else None
+        if dv and dv["etat"] == "interdit":
+            ecartees_destination += 1
+            continue
         marge = round(sdp_dispo / sdp_min, 2)
         items.append({"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+                      **({"destination_verdict": dv} if dv else {}),
                       "sdp": round(sdp_dispo), "sdp_plein_gabarit_m2": round(sdp_resid),
                       "niveaux_demandes": niveaux_dem, "niveaux_max_zone": niveaux_max,
                       "emprise_besoin_m2": round(emprise_besoin) if emprise_besoin is not None else None,
@@ -1747,7 +1778,14 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
                                f"{body.coef_circulation:g} (+{_coef_pct} % circulations/murs/communs, hypothèse)",
                      "hauteur_min_m": hauteur_min,
                      "hauteur_regle": f"R+{body.niveaux} → SDP plafonnée au gabarit demandé "
-                                      f"({body.niveaux + 1} niveaux, {hauteur_min:.0f} m)"},
+                                      f"({body.niveaux + 1} niveaux, {hauteur_min:.0f} m)",
+                     **({"destination": dest,
+                         "destination_ecartees": ecartees_destination,
+                         "destination_regle": ("zones au verdict « interdit » écartées ; "
+                                               "« sous condition » et « en cours de calibration » "
+                                               "annotées par parcelle (source : calibration "
+                                               "destinations, article/page/millésime)")}
+                        if dest else {})},
         "bandeau": (f"Estimation capacitaire — hypothèses affichées (surface utile/unité, +{_coef_pct} % "
                     "SDP) ; SDP plafonnée au gabarit R+N demandé et emprise au sol vérifiée ; hauteur PLU "
                     "vérifiée quand la zone est calibrée, sinon « à instruire » ; capacité « estimée » "

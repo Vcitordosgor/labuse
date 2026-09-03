@@ -172,3 +172,64 @@ def test_etats_ile_couvre_le_catalogue(commune_test):
 
 def test_lookup_par_insee(commune_test):
     assert d.etat_commune("97499")["etat"] == "calibree"
+
+
+# ---------------------------------------------------------------------------
+# X4 — les surfaces lisent le MÊME moteur
+# ---------------------------------------------------------------------------
+
+def test_verdicts_zones_etude_chalandise(commune_test):
+    # X4.1 — verdict par zone PLU recouverte + états « en cours de calibration »
+    zones = [{"zone": "UA", "commune": "Testville", "part_pct": 70},
+             {"zone": "N", "commune": "Testville", "part_pct": 20},
+             {"zone": "UA", "commune": "Saint-Nulle-Part", "part_pct": 10}]
+    out = d.verdicts_zones_etude(zones, "artisanat_commerce_detail")
+    etats = {(z["zone"], z["commune"]): z["etat"] for z in out["zones"]}
+    assert etats[("UA", "Testville")] == "sous_condition"
+    assert etats[("N", "Testville")] == "en_cours_de_calibration"      # zone non lue
+    assert etats[("UA", "Saint-Nulle-Part")] == "en_cours_de_calibration"  # commune non calibrée
+    with pytest.raises(ValueError):
+        d.verdicts_zones_etude(zones, "hammam_geant")
+
+
+def test_zone_resume_fiche(commune_test):
+    # X4.2 — la ligne « Destinations » de la fiche : groupes + seuil commerce + dépliable
+    r = d.zone_resume("Testville", "UA")
+    assert r["etat_calibration"] == "calibree"
+    assert "Industrie" in r["interdites"]
+    assert any("300" in (s or "") for s in [str(r["seuil_commerce_m2"])])
+    assert len(r["lignes"]) == 23
+    assert d.zone_resume("Saint-Nulle-Part", "UA")["phrase"] == \
+        "destination non calibrée sur cette commune"
+
+
+def test_resoudre_sous_destination():
+    # X4.4 — Copilote : « restaurant » → restauration, jamais un slug deviné
+    assert d.resoudre_sous_destination("restaurant") == "restauration"
+    assert d.resoudre_sous_destination("Hôtel") == "hotels"
+    assert d.resoudre_sous_destination("commerce") == "artisanat_commerce_detail"
+    assert d.resoudre_sous_destination("Cinéma") == "cinema"
+    assert d.resoudre_sous_destination("logement") == "logement"
+    assert d.resoudre_sous_destination("téléporteur quantique") is None
+
+
+def test_referentiel_servi():
+    ref = d.referentiel()
+    assert len(ref["destinations"]) == 5 and len(ref["sous_destinations"]) == 23
+
+
+# ---------------------------------------------------------------------------
+# X5.1 — module UNIQUE : aucune autre lecture du dossier de calibration
+# ---------------------------------------------------------------------------
+
+def test_module_unique_aucune_autre_lecture():
+    """Le dossier config/plu_destinations n'est référencé QUE par plu/destinations.py
+    (les surfaces passent par le module, jamais par les YAML)."""
+    import subprocess
+    from pathlib import Path
+    src = Path(__file__).resolve().parents[1] / "src"
+    out = subprocess.run(["grep", "-rl", "plu_destinations", str(src)],
+                         capture_output=True, text=True).stdout.split()
+    offenders = [p for p in out
+                 if Path(p).name != "destinations.py" and "__pycache__" not in p]
+    assert not offenders, f"lectures hors module unique : {offenders}"

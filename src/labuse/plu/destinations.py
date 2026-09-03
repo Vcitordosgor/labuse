@@ -351,3 +351,103 @@ def zone_destinations(commune: str, zone: str) -> dict:
             "document": ec.get("document"), "url": ec.get("url"),
             "lignes": lignes,
             "referentiel": REF_SOURCE}
+
+
+def zone_resume(commune: str, zone: str) -> dict:
+    """Résumé d'une zone pour la ligne « Destinations » de la fiche (X4.2) : principales
+    autorisées / interdites / sous condition + seuil commerce, dépliable via `lignes`."""
+    t = zone_destinations(commune, zone)
+    if t["etat_calibration"] == "non_calibree":
+        return {"etat_calibration": "non_calibree", "zone": zone,
+                "phrase": "destination non calibrée sur cette commune"}
+    lignes = t["lignes"]
+    if all(l.get("statut_effectif") == "non_lu" for l in lignes):
+        return {"etat_calibration": t["etat_calibration"], "zone": zone,
+                "millesime": t.get("millesime"),
+                "phrase": f"zone {zone} non lue — calibration en cours sur cette commune"}
+    grp = {"autorise": [], "interdit": [], "sous_condition": []}
+    for l in lignes:
+        eff = l.get("statut_effectif")
+        if eff in grp:
+            grp[eff].append(l["libelle"])
+    commerce = next(l for l in lignes if l["sous_destination"] == "artisanat_commerce_detail")
+    return {"etat_calibration": t["etat_calibration"], "zone": t["zone"],
+            "millesime": t.get("millesime"), "document": t.get("document"), "url": t.get("url"),
+            "autorisees": grp["autorise"], "interdites": grp["interdit"],
+            "sous_conditions": grp["sous_condition"],
+            "seuil_commerce_m2": commerce.get("seuil_m2"),
+            "seuil_commerce_type": commerce.get("seuil_type"),
+            "commerce_cdac": commerce.get("cdac"),
+            "lignes": lignes, "referentiel": t["referentiel"]}
+
+
+def verdicts_zones_etude(zones: list[dict], sous_destination: str) -> dict:
+    """X4.1 — chalandise : verdict de la sous-destination choisie sur chaque zone PLU
+    recouverte par la zone d'étude (`zones` = lignes {zone, commune, part_pct, document}
+    de contraintes_plu). États : autorisé / sous condition / interdit / en cours de
+    calibration (commune non calibrée ou zone non lue)."""
+    if sous_destination not in SOUS_DESTINATIONS:
+        raise ValueError(f"sous-destination inconnue : {sous_destination!r}")
+    out = []
+    for z in zones or []:
+        v = verdict(z.get("commune") or "", z.get("zone") or "", sous_destination)
+        etat = v.get("statut_effectif")
+        if v["etat_calibration"] == "non_calibree" or etat == "non_lu":
+            etat = "en_cours_de_calibration"
+        out.append({"zone": z.get("zone"), "commune": z.get("commune"),
+                    "part_pct": z.get("part_pct"), "etat": etat,
+                    **{k: v.get(k) for k in ("statut", "condition", "seuil_m2", "seuil_type",
+                                             "article", "page_pdf", "millesime",
+                                             "etat_calibration", "cdac", "phrase")}})
+    return {"sous_destination": sous_destination,
+            "libelle": SOUS_DESTINATIONS[sous_destination][1],
+            "zones": out, "referentiel": REF_SOURCE, "cdac_regle": CDAC_SOURCE}
+
+
+_ALIAS = {
+    "restaurant": "restauration", "snack": "restauration", "brasserie": "restauration",
+    "hotel": "hotels", "boutique": "artisanat_commerce_detail", "magasin": "artisanat_commerce_detail",
+    "commerce": "artisanat_commerce_detail", "commerce de detail": "artisanat_commerce_detail",
+    "artisanat": "artisanat_commerce_detail", "supermarche": "artisanat_commerce_detail",
+    "grossiste": "commerce_gros", "usine": "industrie", "atelier industriel": "industrie",
+    "entrepots": "entrepot", "stockage": "entrepot", "bureaux": "bureau",
+    "gite": "autres_hebergements_touristiques", "meuble de tourisme": "autres_hebergements_touristiques",
+    "chambre d'hotes": "autres_hebergements_touristiques", "camping": "autres_hebergements_touristiques",
+    "residence de tourisme": "autres_hebergements_touristiques",
+    "ecole": "enseignement_sante_action_sociale", "clinique": "enseignement_sante_action_sociale",
+    "creche": "enseignement_sante_action_sociale", "ehpad": "enseignement_sante_action_sociale",
+    "salle de sport": "equipements_sportifs", "gymnase": "equipements_sportifs",
+    "eglise": "lieux_culte", "mosquee": "lieux_culte", "temple": "lieux_culte",
+    "dark kitchen": "cuisine_vente_en_ligne", "coiffeur": "activites_services_clientele",
+    "agence": "activites_services_clientele", "banque": "activites_services_clientele",
+    "ferme": "exploitation_agricole", "elevage": "exploitation_agricole",
+}
+
+
+def resoudre_sous_destination(texte: str) -> str | None:
+    """« restaurant » → restauration, « Hôtels » → hotels… Résolution honnête : slug exact,
+    libellé officiel, puis alias usuels ; None si rien ne colle (jamais un slug deviné)."""
+    if not texte:
+        return None
+    t = unicodedata.normalize("NFKD", texte).encode("ascii", "ignore").decode("ascii").strip().lower()
+    t = re.sub(r"[^a-z0-9' ]+", " ", t).strip()
+    if t.replace(" ", "_") in SOUS_DESTINATIONS:
+        return t.replace(" ", "_")
+    for slug, (_p, lib) in SOUS_DESTINATIONS.items():
+        libn = unicodedata.normalize("NFKD", lib).encode("ascii", "ignore").decode("ascii").lower()
+        if t == libn:
+            return slug
+    if t in _ALIAS:
+        return _ALIAS[t]
+    # singulier/pluriel simple
+    if t.rstrip("s") in _ALIAS:
+        return _ALIAS[t.rstrip("s")]
+    return None
+
+
+def referentiel() -> dict:
+    """Le référentiel servi aux surfaces (sélecteur d'activité)."""
+    return {"destinations": [{"slug": k, "libelle": v} for k, v in DESTINATIONS.items()],
+            "sous_destinations": [{"slug": k, "destination": p, "libelle": lib}
+                                  for k, (p, lib) in SOUS_DESTINATIONS.items()],
+            "source": REF_SOURCE}

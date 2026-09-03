@@ -1596,3 +1596,21 @@ def etat_plafond_ia(compte_id: int | None, sujet: str, jour_iso: str, *, nl_defa
         return {"detail": f"Plafond IA du jour atteint ({_fmt_eur(budget)}/jour). Reprend à minuit.",
                 "budget_eur": round(budget, 2), "depense_eur": round(depense, 4), "gel_jusqua": "minuit"}
     return None
+
+
+# ═════════════════ DESTINATIONS-1 (X5.3) — calibration destinations par commune ═════════════════
+
+@router.get("/admin/destinations")
+def admin_destinations(request: Request) -> dict:
+    """Tableau commune × état de la calibration destinations (calibrée le … / à relire /
+    non calibrée / RNU), lien vers le règlement lu. Lecture seule, module unique
+    plu.destinations ; l'état « à relire » est directionnel (nouvelle version SERVIE
+    postérieure au document LU — X5.2)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..plu.destinations import REF_SOURCE, etats_ile
+    etats = etats_ile()
+    compte = {"calibree": 0, "a_relire": 0, "rnu": 0, "non_calibree": 0}
+    for e in etats:
+        compte[e["etat"]] = compte.get(e["etat"], 0) + 1
+    return {"communes": etats, "compte": compte, "referentiel": REF_SOURCE}

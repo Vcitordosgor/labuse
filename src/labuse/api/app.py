@@ -4029,7 +4029,16 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
              for i, z in enumerate(zr)
              if i == 0 or (z["part"] is not None and z["part"] >= _SEUIL_PART)]
     try:
-        return reglement_block(zones, commune)
+        block = reglement_block(zones, commune)
+        # DESTINATIONS-1 (X4.2) — ligne « Destinations » par zone : principales autorisées,
+        # interdites, seuil commerce, dépliable sous-destination par sous-destination (chacune
+        # sourcée article/page/millésime). Lecture UNIQUE via plu.destinations ; commune non
+        # calibrée = phrase explicite, jamais un silence.
+        if block and block.get("zones"):
+            from ..plu.destinations import zone_resume
+            for ref in block["zones"]:
+                ref["destinations"] = zone_resume(commune, ref.get("zone"))
+        return block
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)
 
@@ -4149,6 +4158,13 @@ def parcel_zone(idu: str, mode: str = "pied", minutes: int = Query(15, ge=1, le=
 
 # ═══════════ ÉTUDE DE ZONE · Z4 — l'outil « Étude de zone » (maquette, écran 2) ═══════════
 
+@app.get("/outils/etude-zone/destinations")
+def etude_zone_destinations() -> dict:
+    """DESTINATIONS-1 (X4.1) — référentiel R151-27/28 pour le sélecteur d'activité."""
+    from ..plu.destinations import referentiel
+    return referentiel()
+
+
 @app.get("/outils/etude-zone/naf")
 def etude_zone_naf(q: str = Query("", max_length=80)) -> dict:
     """Recherche d'activité sur la NOMENCLATURE NAF COMPLÈTE (rév. 2) — par libellé, mot usuel
@@ -4170,6 +4186,7 @@ class EtudeZoneIn(BaseModel):
     lat: float | None = None
     geom: dict | None = None        # entrée 3 : un polygone dessiné (court-circuite l'isochrone)
     naf: str | None = None          # activité étudiée (concurrents SIRENE)
+    sous_destination: str | None = None   # DESTINATIONS-1 (X4.1) — slug R151-28 (verdict par zone PLU)
     minutes: int = 10               # 5 / 10 / 15
     mode: str = "voiture"           # voiture / pied
     titre: str | None = None        # libellé d'entrée (adresse) pour le titre du PDF
@@ -4212,7 +4229,8 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     if lon is None or lat is None:
         raise HTTPException(400, "fournir une parcelle (idu), un point (lon/lat) ou un polygone (geom)")
 
-    out = etude_de_zone(db, lon, lat, minutes, mode, geom_geojson=geom, naf=naf)
+    out = etude_de_zone(db, lon, lat, minutes, mode, geom_geojson=geom, naf=naf,
+                        sous_destination=(inp.sous_destination or None))
     out["origine"] = {"lon": lon, "lat": lat}
     out["adresse"] = adresse            # LOT D — periment réellement mesuré (point) : « depuis {adresse} »
     out["entree"] = "polygone" if geom is not None else "point"

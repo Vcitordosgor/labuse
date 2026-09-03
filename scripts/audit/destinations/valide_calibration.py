@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 from labuse.plu.destinations import SOUS_DESTINATIONS  # noqa: E402
 
 STATUTS = {"autorise", "interdit", "sous_condition"}
-SEUIL_TYPES = {"surface_vente", "surface_plancher", None}
+SEUIL_TYPES = {"surface_vente", "surface_plancher", "emprise_sol", None}
 
 
 def valide(path: str, pages_max: int | None = None) -> list[str]:

@@ -39,7 +39,7 @@ zones:
         statut: sous_condition
         condition: "surface de vente limitée à 300 m²"
         seuil_m2: 300
-        seuil_type: surface_vente           # surface_vente | surface_plancher
+        seuil_type: surface_vente           # surface_vente | surface_plancher | emprise_sol
         article: "UA2"
         page_pdf: 11
   1AUa:
