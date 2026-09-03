@@ -1,0 +1,2 @@
+n,n_ponderees_au,ecart_median,ecart_max_hors_au,ecart_median_hors_au,n_ecart_gt_1e6_hors_au,explication_au
+1000,5,3.064826524443176e-07,4.852438645550072e-07,3.064826524443176e-07,0,"les parcelles au_sous_plancher portent la pondération de RANG du pipeline (option B, hors modèle) — écart attendu"

@@ -605,6 +605,8 @@ def dryrun_evaluate_cmd(
 def flux_run_cmd(
     label: str = typer.Option(..., help="run_label du run à calculer (ex. q_v12_flux)."),
     resume: bool = typer.Option(True, help="Reprend un run interrompu (saute les parcelles déjà faites)."),
+    recette: str = typer.Option("m36", help="Recette du scoring : m36 (servie) ou q_v12 "
+                                            "(SCORING-3 L1 — artefact gelé qv12, calculé jamais basculé)."),
 ) -> None:
     """FLUX-1 (F2.2) — LANCE UN RUN COMPLET comme la production, en CHAÎNANT les étapes EXISTANTES
     (aucune réécriture du pipeline) : cascade (dryrun-evaluate) sur les 24 communes, puis scoring/tiers
@@ -641,7 +643,7 @@ def flux_run_cmd(
             typer.echo(f"  ✓ {nom} : {len(todo)} évaluées ({time.time() - t0:.0f}s)")
     # 2 — SCORING / tiers sous le MÊME label (enregistre les sources+millésimes, F2.2).
     with session_scope() as s:
-        res = run_score_v2(s, run_id=label, rebuild=True, snapshot=True)
+        res = run_score_v2(s, run_id=label, rebuild=True, snapshot=True, recette=recette)
     typer.echo(f"✓ FLUX-RUN [{label}] : {res['n']} parcelles scorées, tiers {res['tiers']} "
                f"({time.time() - t0:.0f}s total). NON servi — bascule manuelle.")
 
@@ -1139,6 +1141,35 @@ def ingest_cartofriches_cmd(
             total += n
             typer.echo(f"  ✓ {nom} : {n} friches")
     typer.echo(f"✓ Cartofriches île : {total} friches ({time.time() - t0:.0f}s)")
+
+
+@app.command("potentiel-backfill")
+def potentiel_backfill_cmd(
+    run: str = typer.Option(..., help="run_id du run à équiper (ex. q_v12)."),
+) -> None:
+    """SCORING-3 (L4) — calcule et stocke le POTENTIEL d'un run existant : SDP résiduelle,
+    valeur créée (€, intervalle q1-q3 communal), indice d'opportunité (percentile communal de
+    p × valeur), accès (PM/SIREN, courrier). Colonnes annexes — ni p_raw, ni rang, ni tier."""
+    from .scoring.p_v2.potentiel import backfill_run
+    with session_scope() as s:
+        r = backfill_run(s, run)
+        s.commit()
+    typer.echo(f"✓ potentiel [{run}] : {r}")
+
+
+@app.command("ingest-bdnb")
+def ingest_bdnb_cmd(
+    force: bool = typer.Option(False, help="Rejouer même si le millésime courant est déjà ingéré."),
+) -> None:
+    """SCORING-3 (L3) — BDNB (CSTB, Licence Ouverte) : année de construction, classe DPE, surfaces,
+    usage PAR BÂTIMENT. L'amont ne publie que l'export France entier (~39 Go) : STREAME l'archive et
+    ne garde que le 974 → tables bdnb_rel_parcelle / bdnb_ffo / bdnb_dpe / bdnb_bdtopo + couverture
+    parcelle mesurée. Idempotent par millésime. Aucune variable au modèle sans banc K0 (L3.2)."""
+    from .ingestion.bdnb import build_bdnb
+    with session_scope() as s:
+        r = build_bdnb(s, force=force, log=typer.echo)
+        s.commit()
+    typer.echo(f"✓ BDNB : {r}")
 
 
 @app.command("ingest-dpe")

@@ -1,0 +1,455 @@
+{
+  "candidat": "q_v12",
+  "gel": "2026-09-03 13:27:16",
+  "doctrine": "calculé par le pipeline réel, jamais basculé — q_v11_m137 reste le run servi (bascule = geste Vic)",
+  "recette": "K1c censoring + K2 mortes retirées + K3 résiduel 100 % + K4bis voisinage GLOBAL + isotonique PAR SEGMENT (2024) ; 12 mois servi, 24 mois stocké (p_24m)",
+  "protocole_12m": {
+    "train": "2017-2023",
+    "calibration": 2024,
+    "test": 2025
+  },
+  "protocole_24m": {
+    "train": "2017-2022",
+    "calibration": 2023,
+    "test": 2024,
+    "motif": "seule année de test à fenêtre 24 mois complète (DVF s'arrête au 31/12/2025)"
+  },
+  "recale_intercept": "non — la calibration est l'isotonique par segment (2024), exactement ce que l'arène a mesuré",
+  "hygiene_cible": {
+    "annee_test": 2025,
+    "horizon_mois": 12,
+    "parcelles_vendues": 6693,
+    "parcelles_vente_groupee": 2934,
+    "parcelles_exclues_client_labuse": 0,
+    "courriers_simules_touchant_ventes": 0,
+    "pistes_crm_posterieures_vente": 13
+  },
+  "segments": {
+    "bati_individuel": 2516560,
+    "terrain_nu": 954420,
+    "personne_morale": 811410,
+    "copropriete": 34240
+  },
+  "n_features": 32,
+  "interactions": [
+    [
+      "tenure_bin_v2",
+      "permis_bin"
+    ],
+    [
+      "tenure_bin_v2",
+      "surface_m2"
+    ],
+    [
+      "tenure_bin_v2",
+      "rot_nu"
+    ],
+    [
+      "surface_m2",
+      "permis_bin"
+    ]
+  ],
+  "features_couverture_2026": [
+    {
+      "feature": "rot_nu",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "rot_bati",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "med_pm2_terrain_36m",
+      "pct_non_null": 94.28
+    },
+    {
+      "feature": "med_pm2_bati_36m",
+      "pct_non_null": 96.11
+    },
+    {
+      "feature": "tendance_pm2_bati",
+      "pct_non_null": 88.23
+    },
+    {
+      "feature": "dens_bati_secteur",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pct_bati_secteur",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "filo_snv_pp",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "filo_pct_pauv",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "filo_pct_prop",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "pente_moy_deg",
+      "pct_non_null": 98.1
+    },
+    {
+      "feature": "zone_plu",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "surface_m2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "permis_bin",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "piscine",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pv_candidat",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "tenure_bin_v2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "sdp_residuelle_v2_m2",
+      "pct_non_null": 98.98
+    },
+    {
+      "feature": "sous_densite_v2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "residuel_famille",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "nu_constructible_v3",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_150m_12m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_150m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_12m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_delta",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "permis_100m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "operations_pa_400m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "volume_commune_a1",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "med_pm2_commune_a1",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "tendance_volume_3ans",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pm_vendeur_actif",
+      "pct_non_null": 100.0
+    }
+  ],
+  "test_fuite": {
+    "annee_testee": 2025,
+    "ventes_voisines_egales_source_tronquee": true,
+    "permis_voisins_egaux_source_tronquee": true,
+    "asof": "2025-01-01",
+    "fuite_detectee": false
+  },
+  "metriques_k0_2025": {
+    "candidat": "q_v12",
+    "n_eval": 431663,
+    "n_exclues_client": 0,
+    "prec@100_commune_mediane": 0.08,
+    "n_communes": 24,
+    "n_priorite": 79,
+    "prec_priorite": 0.0759493670886076,
+    "n_a_suivre": 690,
+    "prec_a_suivre": 0.10144927536231885,
+    "lift_decile_sup": 2.2706899342377,
+    "auc_global": 0.6200901468069275,
+    "auc_bati_individuel": 0.5842055293470032,
+    "auc_terrain_nu": 0.6542363275427516,
+    "auc_personne_morale": 0.6725505804826072,
+    "auc_copropriete": 0.5998643053290998,
+    "ece_global": 0.0021610969163766555,
+    "ece_bati_individuel": 0.0015978915390036982,
+    "ece_terrain_nu": 0.0057241789002049105,
+    "ece_personne_morale": 0.004909102951036743,
+    "ece_copropriete": 0.015677520854558032,
+    "churn_top1158_vs_servi": 0.48445595854922274
+  },
+  "metriques_24m_test2024": {
+    "candidat": "q_v12_24m_test2024",
+    "n_eval": 431663,
+    "n_exclues_client": 0,
+    "prec@100_commune_mediane": 0.125,
+    "n_communes": 24,
+    "n_priorite": 78,
+    "prec_priorite": 0.14102564102564102,
+    "n_a_suivre": 594,
+    "prec_a_suivre": 0.16161616161616163,
+    "lift_decile_sup": 2.454323101207269,
+    "auc_global": 0.6382111458064095,
+    "auc_bati_individuel": 0.5929964468329039,
+    "auc_terrain_nu": 0.6509112712275507,
+    "auc_personne_morale": 0.6707019271081235,
+    "auc_copropriete": 0.6244936436112907,
+    "ece_global": 0.0027492931809108,
+    "ece_bati_individuel": 0.0025273422286926956,
+    "ece_terrain_nu": 0.004405689069012795,
+    "ece_personne_morale": 0.00643022073142831,
+    "ece_copropriete": 0.01957967896674193,
+    "churn_top1158_vs_servi": 0.6614853195164077
+  },
+  "millesimes_sources": [
+    {
+      "name": "50 pas géométriques — limite haute (DEAL)",
+      "source_millesime": "cadastre 1877 (géoréf. 2012/1950)",
+      "ingere_le": null
+    },
+    {
+      "name": "BD ORTHO 20 cm (IGN)",
+      "source_millesime": "BD ORTHO IGN 974 — millésime 2025 (piscine, 90,7 %)",
+      "ingere_le": null
+    },
+    {
+      "name": "BD TOPO IGN",
+      "source_millesime": "BD TOPO® V3 (IGN) — édition non enregistrée",
+      "ingere_le": null
+    },
+    {
+      "name": "BPE INSEE",
+      "source_millesime": "millésime 2025 (géographie au 01/01/2025)",
+      "ingere_le": "2026-08-21T00:00:00.000"
+    },
+    {
+      "name": "Cadastre (API Carto PCI)",
+      "source_millesime": "PCI Parcellaire Express (DGFiP) — « latest » ingérée",
+      "ingere_le": null
+    },
+    {
+      "name": "Cadastre Etalab (bulk DGFiP/Etalab)",
+      "source_millesime": "Etalab cadastre — « latest » ingérée (DGFiP)",
+      "ingere_le": null
+    },
+    {
+      "name": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+      "source_millesime": "millésime 2018",
+      "ingere_le": null
+    },
+    {
+      "name": "Classement sonore ITT (Cerema)",
+      "source_millesime": "arrêtés déc. 2023",
+      "ingere_le": "2026-07-10T00:00:00.000"
+    },
+    {
+      "name": "CoSIA (couverture du sol IA, IGN)",
+      "source_millesime": "CoSIA 2025 (PVA juil.-août 2025, 20 cm)",
+      "ingere_le": "2026-08-22T00:00:00.000"
+    },
+    {
+      "name": "Contours IRIS (IGN/INSEE)",
+      "source_millesime": "Contours IRIS — géographie 2024 (IGN/INSEE)",
+      "ingere_le": null
+    },
+    {
+      "name": "DEAL Réunion (WMS/WFS)",
+      "source_millesime": "NPNRU — QP génération 2024 (DEAL/ANCT)",
+      "ingere_le": null
+    },
+    {
+      "name": "DEAL Réunion — PPR / aléas",
+      "source_millesime": "PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)",
+      "ingere_le": null
+    },
+    {
+      "name": "DGFiP — parcelles des personnes morales",
+      "source_millesime": "Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)",
+      "ingere_le": "2026-07-12T00:00:00.000"
+    },
+    {
+      "name": "DVF / valeurs foncières",
+      "source_millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
+      "ingere_le": null
+    },
+    {
+      "name": "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)",
+      "source_millesime": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)",
+      "ingere_le": null
+    },
+    {
+      "name": "Filosofi INSEE (carreaux 200 m)",
+      "source_millesime": "millésime 2021",
+      "ingere_le": null
+    },
+    {
+      "name": "Forêts publiques (ONF)",
+      "source_millesime": "BD TOPO® V3 — forêt publique (IGN)",
+      "ingere_le": null
+    },
+    {
+      "name": "GPU — zonages d'assainissement",
+      "source_millesime": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+      "ingere_le": null
+    },
+    {
+      "name": "GPU — zonages d'assainissement (info-surf typeinf 19)",
+      "source_millesime": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+      "ingere_le": null
+    },
+    {
+      "name": "IGN BD CARTO V5 — occupation du sol",
+      "source_millesime": "BD CARTO® V5 — occupation du sol (IGN, proxy)",
+      "ingere_le": null
+    },
+    {
+      "name": "INPN / patrinat — espaces protégés",
+      "source_millesime": "INPN/patrinat espaces protégés — passe 05/07/2026",
+      "ingere_le": null
+    },
+    {
+      "name": "INSEE RP2022 — fichier détail Logements (EGOUL)",
+      "source_millesime": "RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)",
+      "ingere_le": null
+    },
+    {
+      "name": "LiDAR HD — MNH 50 cm (IGN)",
+      "source_millesime": "LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)",
+      "ingere_le": null
+    },
+    {
+      "name": "MOBPRO (mobilités domicile-travail, INSEE)",
+      "source_millesime": "MOBPRO INSEE — fichier détail (millésime RP)",
+      "ingere_le": null
+    },
+    {
+      "name": "OSM — transport (pôles d'échange & téléphérique)",
+      "source_millesime": "extraction Overpass (base OSM vivante, ODbL)",
+      "ingere_le": null
+    },
+    {
+      "name": "Office de l'eau Réunion — Chroniques de l'eau",
+      "source_millesime": "Chronique n°149 — données 2023",
+      "ingere_le": null
+    },
+    {
+      "name": "PVGIS (Commission européenne)",
+      "source_millesime": "PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)",
+      "ingere_le": "2026-08-23T00:00:00.000"
+    },
+    {
+      "name": "Parc National de La Réunion (INPN)",
+      "source_millesime": "millésime 2021",
+      "ingere_le": null
+    },
+    {
+      "name": "QPV 2024 (ANCT)",
+      "source_millesime": "génération 2024",
+      "ingere_le": "2026-07-05T00:00:00.000"
+    },
+    {
+      "name": "RGE ALTI (altimétrie)",
+      "source_millesime": "RGE ALTI® (IGN) — édition non enregistrée",
+      "ingere_le": null
+    },
+    {
+      "name": "RGE ALTI 5 m (IGN)",
+      "source_millesime": "RGE ALTI® 5 m (IGN) — édition non enregistrée",
+      "ingere_le": null
+    },
+    {
+      "name": "RPG — déclarations agricoles (IGN/ASP)",
+      "source_millesime": "proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+      "ingere_le": null
+    },
+    {
+      "name": "Radar (pige d'annonces)",
+      "source_millesime": "Collecte manuelle — biens en vente (faits + lien)",
+      "ingere_le": "2026-08-30T00:00:00.000"
+    },
+    {
+      "name": "Recherche d'entreprises (DINUM)",
+      "source_millesime": "Sirene INSEE / RNE INPI (api.gouv.fr) — courant",
+      "ingere_le": null
+    },
+    {
+      "name": "SIRENE",
+      "source_millesime": "Sirene INSEE — état courant (non versionné)",
+      "ingere_le": null
+    },
+    {
+      "name": "SIRENE établissements géolocalisés",
+      "source_millesime": "SIRENE géolocalisé — publication mensuelle INSEE",
+      "ingere_le": "2026-08-29T00:00:00.000"
+    },
+    {
+      "name": "SITADEL (autorisations d'urbanisme)",
+      "source_millesime": "2026-06",
+      "ingere_le": "2026-08-14T00:00:00.000"
+    },
+    {
+      "name": "Sudocuh (procédures d'urbanisme)",
+      "source_millesime": "Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)",
+      "ingere_le": null
+    },
+    {
+      "name": "Trafic RN (Région Réunion — SIR)",
+      "source_millesime": "Trafic RN Région — comptages 1992–2023",
+      "ingere_le": "2026-08-29T00:00:00.000"
+    },
+    {
+      "name": "Transport public — GTFS (PAN, 7 réseaux)",
+      "source_millesime": "7 jeux PAN, màj 2025-12-29 → 2026-08-17",
+      "ingere_le": null
+    },
+    {
+      "name": "Urbanisme PLU/GPU (API Carto)",
+      "source_millesime": "GPU/PLU par commune (révisions — détail en fiche)",
+      "ingere_le": null
+    },
+    {
+      "name": "ZFANG — zone franche d'activité nouvelle génération (Légifrance)",
+      "source_millesime": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)",
+      "ingere_le": null
+    },
+    {
+      "name": "ZNIEFF (INPN/MNHN)",
+      "source_millesime": "INPN, mise à jour 29/08/2025",
+      "ingere_le": "2026-08-21T00:00:00.000"
+    }
+  ],
+  "note_de_version": "Candidat q_v12 du 03/09/2026 — les gains sûrs de SCORING-2, produits par le pipeline réel.\n\nCe qui change : 4 variables mortes + 5 retired retirées (K2) · résiduel lu à 100 % (zéros M125, hors_plu seul inconnu — K3) · voisinage et marché as-of, architecture globale (K4 bis, fuite testée) · calibration isotonique par segment sur 2024 (seul apport de K4 retenu) · censoring explicite (détention/permis couverts à 100 %). Horizon 12 mois servi ; 24 mois calculé et stocké (p_24m), rien d'affiché.\n\nLes chiffres (banc K0, année vierge 2025 : train ≤2023, cal 2024) :\n- précision@100 par commune (médiane) : 0.060 → 0.080 ;\n- Priorité : 13.7% sur 73 parcelles → 7.6% sur 79 (effectif ×1.1) ;\n- lift du décile supérieur : 2.06 → 2.27 ;\n- AUC global : 0.613 → 0.620 (nu 0.654, PM 0.673) ;\n- ECE global : 0.0022 (par segment : bâti 0.0016, nu 0.0057, PM 0.0049, copro 0.0157) ;\n- churn top-1158 vs le run servi : 48.4% (la garde de churn liste les sorties de Priorité au compte-rendu) ;\n- horizon 24 mois (test 2024) : AUC 0.638, préc@100 méd 0.125 — colonne stockée.\n\nRien de servi ne change tant que la bascule n'est pas faite : `q_v11_m137` reste le run servi. La bascule est un geste manuel (Données › Circuit › Basculer), réversible (retour arrière tracé).",
+  "sha256_12m": "0e465931cc9fdb4c2c892f8c3ffbcb2e8181f9973e5b85b4882531fb719ee06b",
+  "sha256_24m": "aef75f7c3934a9cbcf3bd1cee2e4d7384ca2ac04fe589fe4cd154be996898fbc"
+}

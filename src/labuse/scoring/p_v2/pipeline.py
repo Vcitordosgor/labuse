@@ -125,11 +125,16 @@ def rebuild_features(session: Session) -> dict:
     # M-F : build_permits AVANT build_ext_dataset (qui LIT p_model_permits, lecture seule) — sinon le
     # modèle score sur des permis PÉRIMÉS. Coût mesuré ~0,2 s → intégré inconditionnellement.
     p_sql.build_permits(session)
+    # SCORING-3 (L2) — le RÉSIDUEL du feature store est rafraîchi à CHAQUE rebuild (UPDATE ciblé,
+    # quelques secondes) : sans cela, les zéros M125 de parcel_residuel (0 = réponse du moteur)
+    # n'atteignaient jamais le dataset et ressortaient « inconnus » (bug K3, 173 678 parcelles).
+    n_residuel = p_sql.refresh_static_residuel(session)
     ext_sql.build_ext_union(session)
     ext_sql.build_ext_mutations(session)
     ext_sql.build_ext_dataset(session)
     ext_sql.build_copro_flags(session)
     stats = check_permits_fraicheur(session)   # garde double : features à jour avec la source
+    stats["residuel_rafraichis"] = n_residuel  # L2 — traçé au rapport de run
     session.commit()   # F7 : commit à la FRONTIÈRE (les builders ext ne committent plus) — testabilité.
     return stats
 
@@ -145,8 +150,12 @@ def load_events(session: Session) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["idu", "event_date"])
 
 
-def top5_lisibles(model: PModel, contrib: pd.DataFrame, df: pd.DataFrame) -> list:
-    """Top 5 contributions par ligne : [{feature, bin, signe, libelle, valeur}]."""
+def top5_lisibles(model: PModel, contrib: pd.DataFrame, df: pd.DataFrame,
+                  libelles: dict[str, str] | None = None) -> list:
+    """Top 5 contributions par ligne : [{feature, bin, signe, libelle, valeur}].
+    `libelles` : dictionnaire de libellés (défaut LIBELLES ; la recette q_v12
+    y ajoute les siens — qv12.LIBELLES_QV12)."""
+    LIB = libelles or LIBELLES
     feat_cols = [c for c in contrib.columns if not c.startswith("contrib_")]
     vals = contrib[feat_cols].to_numpy()
     order = np.argsort(-np.abs(vals), axis=1)[:, :5]
@@ -169,10 +178,10 @@ def top5_lisibles(model: PModel, contrib: pd.DataFrame, df: pd.DataFrame) -> lis
             if abs(v) < 1e-9:
                 continue
             base = name.split("*")[0] if "*" in name else name
-            lib = LIBELLES.get(base, base)
+            lib = LIB.get(base, base)
             if "*" in name:
                 autre = name.split("*")[1]
-                lib = f"croisement {lib} × {LIBELLES.get(autre, autre)}"
+                lib = f"croisement {lib} × {LIB.get(autre, autre)}"
                 bin_lab = ""
             else:
                 bin_lab = labels[name][int(bin_cache[name][i]) + 1]
@@ -229,13 +238,29 @@ def _pondere_au_sous_plancher(session: Session, df: pd.DataFrame,
 
 def run_score_v2(session: Session, *, run_id: str | None = None,
                  rebuild: bool = True, annee: int | None = None,
-                 snapshot: bool = True) -> dict:
+                 snapshot: bool = True, recette: str = "m36") -> dict:
     """Exécute le scoring v2 complet. Idempotent : run_id identique → REFUS
-    explicite (versionné par run, jamais d'écrasement silencieux)."""
+    explicite (versionné par run, jamais d'écrasement silencieux).
+
+    SCORING-3 (L1) — `recette` : "m36" (défaut, comportement historique intact)
+    ou "q_v12" (les gains sûrs de SCORING-2 : artefact gelé qv12, features
+    candidates enrichies, isotonique PAR SEGMENT, p_24m stocké). Le run q_v12
+    est CALCULÉ par ce même pipeline, jamais basculé automatiquement."""
     t0 = time.time()
-    model, sha = verify_artifact()
+    freeze_qv12: dict = {}
+    if recette == "q_v12":
+        from . import qv12 as _qv12
+        m12_qv12, m24_qv12, freeze_qv12 = _qv12.verify_artifacts()
+        sha = freeze_qv12["sha256_12m"]
+        model_version = _qv12.QV12_VERSION
+        model = m12_qv12.base       # encoder/coefs de la recette (top 5 lisibles)
+    elif recette == "m36":
+        model, sha = verify_artifact()
+        model_version = MODEL_VERSION
+    else:
+        raise RuntimeError(f"recette inconnue : {recette!r} (attendu m36 | q_v12)")
     annee = annee or date.today().year
-    run_id = run_id or f"{MODEL_VERSION}-{date.today().isoformat()}"
+    run_id = run_id or f"{model_version}-{date.today().isoformat()}"
 
     if session.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"),
                        {"r": run_id}).scalar():
@@ -255,23 +280,41 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     if morts_exemptes:
         print(f"  ⚠ signaux constants EXEMPTÉS (arbitrage en cours) : {', '.join(morts_exemptes)}")
 
-    # recalage d'intercept sur la dernière année labellisée (politique 1.3)
-    last_labeled = int(pd.read_sql(text(
-        "SELECT max(annee) FROM p_model_ext_dataset WHERE label IS NOT NULL"),
-        session.connection()).iloc[0, 0])
-    dcal = pd.read_sql(text("SELECT * FROM p_model_ext_dataset WHERE annee = :a"),
-                       session.connection(), params={"a": last_labeled})
-    dcal = derive(dcal).reset_index(drop=True)
-    model = copy.deepcopy(model)
-    model.recale_intercept(dcal, dcal["label"].astype(int))
-
-    p = model.predict_proba(df)
-    contrib = model.contributions(df)
-
     copro = pd.read_sql("SELECT idu, (copro_rnic OR copro_dvf) AS copro "
                         "FROM p_model_ext_copro", session.connection())
     df = df.merge(copro, on="idu", how="left")
     df["copro"] = df["copro"].fillna(False).astype(bool)
+
+    p24 = None
+    if recette == "q_v12":
+        # SCORING-3 (L1) — features candidates de la recette (censoring + résiduel
+        # lu à 100 % + voisinage as-of), calculées par le MÊME code que l'arène
+        # (qv12.enrichir). Pas de recalage d'intercept : la calibration est
+        # l'isotonique PAR SEGMENT (2024), exactement ce que l'arène a mesuré.
+        from . import qv12 as _qv12
+        last_labeled = None
+        df = _qv12.enrichir(session.connection(), df, (annee,))
+        seg = _qv12.segmenter(df, df["copro"].to_numpy())
+        p = m12_qv12.predict_proba(df, seg)
+        contrib = m12_qv12.contributions(df)
+        # horizon 24 mois : calculé et STOCKÉ (p_24m), rien d'affiché — sortie
+        # PURE du modèle 24 mois (aucune pondération de rang appliquée).
+        p24 = m24_qv12.predict_proba(df, seg)
+        session.execute(text("ALTER TABLE parcel_p_score_v2 "
+                             "ADD COLUMN IF NOT EXISTS p_24m double precision"))
+    else:
+        # recalage d'intercept sur la dernière année labellisée (politique 1.3)
+        last_labeled = int(pd.read_sql(text(
+            "SELECT max(annee) FROM p_model_ext_dataset WHERE label IS NOT NULL"),
+            session.connection()).iloc[0, 0])
+        dcal = pd.read_sql(text("SELECT * FROM p_model_ext_dataset WHERE annee = :a"),
+                           session.connection(), params={"a": last_labeled})
+        dcal = derive(dcal).reset_index(drop=True)
+        model = copy.deepcopy(model)
+        model.recale_intercept(dcal, dcal["label"].astype(int))
+
+        p = model.predict_proba(df)
+        contrib = model.contributions(df)
 
     # MANDAT RNU (plancher C, branche validée) : parcelles dans la PAU estimée des
     # communes SANS document local (parcel_pau, construite par `labuse rnu-pau`).
@@ -430,7 +473,11 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     params = calibre_brulante(chaudes, params)
     tier = assign_tiers(work, params, prev_aligned)
 
-    top5 = top5_lisibles(model, contrib, df)
+    libelles = None
+    if recette == "q_v12":
+        from . import qv12 as _qv12
+        libelles = {**LIBELLES, **_qv12.LIBELLES_QV12}
+    top5 = top5_lisibles(model, contrib, df, libelles=libelles)
 
     event_dates = pd.to_datetime(df["event_date"], errors="coerce")
     rows = pd.DataFrame({
@@ -446,13 +493,19 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
         "top5_contributions": top5,
         "copro": df["copro"], "tier": tier,
         "event_date": [d.date() if pd.notna(d) else None for d in event_dates],
-        "model_version": MODEL_VERSION,
+        "model_version": model_version,
     })
+    if p24 is not None:
+        rows["p_24m"] = np.round(p24, 6)
     assert len(rows) == len(df) and rows["p_raw"].notna().all(), "NA interdit"
 
     from sqlalchemy.dialects.postgresql import JSONB
+    # SCORING-3 — chunksize DYNAMIQUE : psycopg plafonne à 65 535 paramètres par requête.
+    # 13 colonnes × 5000 passaient (65 000) ; la 14e (p_24m, recette q_v12) faisait déborder
+    # (70 000 → OperationalError). On dimensionne par le nombre réel de colonnes.
+    chunk = max(500, 65000 // max(1, len(rows.columns)))
     rows.to_sql("parcel_p_score_v2", session.connection(), if_exists="append",
-                index=False, method="multi", chunksize=5000,
+                index=False, method="multi", chunksize=chunk,
                 dtype={"top5_contributions": JSONB})
 
     snapshot_label = None
@@ -466,7 +519,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                               {"l": snapshot_label}).scalar():
             snapshot_label = f"{base_label}-{k}"
             k += 1
-        _snapshot_v2(session, snapshot_label, run_id, rows)
+        _snapshot_v2(session, snapshot_label, run_id, rows, model_version)
 
     # M50 (Lot A) : cutoffs de RÉSERVE FONCIÈRE + critère de DÉPARTAGE intra-palier persistés dans
     # l'artefact du run (comme le registre des features) — pour que « pourquoi réserve et pas à
@@ -488,12 +541,28 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
         source_millesimes = snapshot_source_millesimes(session)
     except Exception:  # noqa: BLE001 — l'enregistrement des sources ne doit jamais casser un run
         source_millesimes = []
+    # SCORING-3 (L1.3) — le run q_v12 enregistre sa recette, son protocole, ses
+    # métriques K0 (2025) et SA NOTE DE VERSION (composée depuis les chiffres,
+    # lue depuis Données › Circuit › Basculer). Le manifeste de gel fait foi.
+    extra_recette: dict = {}
+    if recette == "q_v12":
+        extra_recette = {
+            "recette": "q_v12",
+            "protocole": freeze_qv12.get("protocole_12m"),
+            "protocole_24m": freeze_qv12.get("protocole_24m"),
+            "calibration": "isotonique par segment (2024) — pas de recalage d'intercept",
+            "metriques_k0_2025": freeze_qv12.get("metriques_k0_2025"),
+            "metriques_24m_test2024": freeze_qv12.get("metriques_24m_test2024"),
+            "note_de_version": freeze_qv12.get("note_de_version"),
+            "artefact_24m_sha256": freeze_qv12.get("sha256_24m"),
+        }
     session.execute(text("""
         INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params,
                                      n_parcelles, duration_s, snapshot_label)
         VALUES (:r, :v, :s, :p, :n, :d, :l)"""), {
-        "r": run_id, "v": MODEL_VERSION, "s": sha,
-        "p": json.dumps({"n_entree": params.n_entree, "n_sortie": params.n_sortie,
+        "r": run_id, "v": model_version, "s": sha,
+        "p": json.dumps({**extra_recette,
+                         "n_entree": params.n_entree, "n_sortie": params.n_sortie,
                          "c_surface_min_m2": params.c_surface_min_m2,
                          "brulante_seuil_d": params.brulante_seuil_d,
                          "brulante_top_decile_d": params.brulante_top_decile_d,
@@ -527,8 +596,25 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                       f"— {icd_error}. Score P intact ; méta d'affichage ICD manquante.",
                       stacklevel=2)
 
+    # SCORING-3 (L4) — le POTENTIEL du run candidat : valeur créée (SDP × prix de
+    # secteur), indice d'opportunité (p × valeur, percentile communal), accès.
+    # Colonnes annexes CLOISONNÉES du score (ni p_raw, ni rang, ni tier) — même
+    # doctrine que l'ICD : best-effort SIGNALÉ, jamais avalé.
+    potentiel_stats: dict | None = None
+    potentiel_error: str | None = None
+    if recette == "q_v12":
+        try:
+            from .potentiel import backfill_run as _potentiel_backfill
+            potentiel_stats = _potentiel_backfill(session, run_id)
+        except Exception as _e:  # noqa: BLE001
+            potentiel_error = f"{type(_e).__name__}: {_e}"
+            import warnings
+            warnings.warn(f"POTENTIEL backfill ÉCHEC (run '{run_id}') — {potentiel_error}. "
+                          "Score P intact ; colonnes potentiel manquantes.", stacklevel=2)
+
     tiers_counts = tier.value_counts().to_dict()
     return {"run_id": run_id, "n": len(rows), "duree_s": int(time.time() - t0),
+            "potentiel": potentiel_stats, "potentiel_error": potentiel_error,
             "params": params, "tiers": tiers_counts, "taux_base": taux_base,
             "snapshot": snapshot_label, "sha256": sha[:16], "icd_backfill": n_icd,
             "icd_error": icd_error,   # M-E (P1-5) : None si OK, sinon la cause — signalé, pas comblé
@@ -538,7 +624,8 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
             "signaux_constants_exemptes": morts_exemptes}
 
 
-def _snapshot_v2(session: Session, label: str, run_id: str, rows: pd.DataFrame) -> None:
+def _snapshot_v2(session: Session, label: str, run_id: str, rows: pd.DataFrame,
+                 model_version: str = MODEL_VERSION) -> None:
     """Gel v2 dans les tables snapshots M1 (protocole : un label ne s'écrase
     JAMAIS — même refus que score_v.snapshot_scores)."""
     if session.execute(text("SELECT 1 FROM score_snapshots WHERE label = :l"),
@@ -549,7 +636,7 @@ def _snapshot_v2(session: Session, label: str, run_id: str, rows: pd.DataFrame) 
         INSERT INTO score_snapshots (label, run_label, brulante_threshold, notes)
         VALUES (:l, :r, 0, :n) RETURNING id"""), {
         "l": label, "r": run_id,
-        "n": f"scoring v2 (M5) — modèle {MODEL_VERSION}, tiers v2 ; "
+        "n": f"scoring v2 (M5) — modèle {model_version}, tiers v2 ; "
              "brulante_threshold=0 (sans objet, seuils v2 dans p_score_v2_runs.params)",
     }).scalar()
     # v_score / v_band omis : NULL par défaut (sans objet pour un snapshot v2)
