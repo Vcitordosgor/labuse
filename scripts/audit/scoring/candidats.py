@@ -321,7 +321,10 @@ def features_k4bis() -> tuple[list[str], list[FeatureSpec], list[tuple[str, str]
 
 
 def k4bis() -> None:
-    """K4 bis — segments K4 + voisinage/marché. Sauve le CHAMPION (K5/K6/K7)."""
+    """K4 bis — voisinage/marché sur les DEUX architectures : segmentée (K4,
+    mandatée) enregistrée comme K4bis_voisinage, globale en témoin (le verdict
+    K4 a montré segments = calibration ↑ / discrimination ↓ — Vic tranchera).
+    Sauve le CHAMPION segmenté (K5/K6/K7)."""
     import joblib
     import voisinage
     eng = engine()
@@ -333,9 +336,18 @@ def k4bis() -> None:
     log("[K4bis] chargement…")
     df = load_range(eng, YEARS)
     df = _enrichir_k4bis(eng, df)
+    ctx = Contexte(eng, df[df.annee == TEST_YEAR], df[df.annee == SCORE_YEAR])
+    d_feats = [s.name for s in specs if s.bloc == "D"]
+
+    log("[K4bis] fit GLOBAL témoin…")
+    mg = fit_protocole(df, names, specs=specs, interactions=inter)
+    p_g = mg.predict_proba(ctx.test)
+    cd_g = protocole.contrib_d_de(mg, ctx.test, d_feats)
+    p26_g = mg.predict_proba(ctx.score26)
+    enregistrer(metriques(ctx, "K4bis_voisinage_global", p_g, cd_g, p26_g))
+
     log("[K4bis] fit des 4 segments…")
     ms, seg_all = fit_segments(df, names, specs, inter, eng)
-    ctx = Contexte(eng, df[df.annee == TEST_YEAR], df[df.annee == SCORE_YEAR])
     seg_test = seg_all[(df.annee == TEST_YEAR).to_numpy()].reset_index(drop=True)
     seg_26 = seg_all[(df.annee == SCORE_YEAR).to_numpy()].reset_index(drop=True)
     p = ms.predict_proba(ctx.test, seg_test)
@@ -343,7 +355,8 @@ def k4bis() -> None:
     p26 = ms.predict_proba(ctx.score26, seg_26)
     table = enregistrer(metriques(ctx, "K4bis_voisinage", p, cd, p26))
     joblib.dump({"modeles": ms.modeles, "d_features": ms.d_features,
-                 "names": names, "inter": inter},
+                 "names": names, "inter": inter,
+                 "global": mg},
                 protocole.OUT / "cache/champion_k4bis.joblib")
     print(table.to_string(index=False))
 
