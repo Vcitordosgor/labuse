@@ -1,0 +1,1533 @@
+meta:
+  insee: '97422'
+  commune: Le Tampon
+  document: 97422_reglement_20230811.pdf
+  document_gpu: 97422_PLU_20230811
+  gpu_doc_id: 3bd1b9d43addd334e64405c82343c405
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97422/3bd1b9d43addd334e64405c82343c405/97422_reglement_20230811.pdf
+  md5: 678cf0c64a4aa293f25f99f805974715
+  millesime: '2023-08-11'
+  pages_total: 137
+  lu_le: '2026-09-03'
+  edition: « PLU du Tampon — Règlement 2018 », servi par le document GPU 97422_PLU_20230811
+  structure: 'Ancienne nomenclature : par zone, article 1.2 = occupations interdites (liste fermée), article 2.2
+    = admises sous conditions, avec clause explicite « sont admises toutes les occupations non citées à l''article
+    1.2 » (silence = autorisé) en Ua/Ub/Uc/Ud/Ue ; secteur Ucto fermé (« seules sont admises », silence = interdit)
+    ; A et N fermées (« sont interdits toutes les constructions… sauf article 2.2 », silence = interdit). Chapitre
+    AU = renvois écrits vers la zone U d''indice correspondant (AUto → Ucto). Règle secteur = règle de zone sauf
+    disposition particulière (DG art. 3, p. 6).'
+zones:
+  Ua:
+    silence: autorise
+    silence_src: 'Art. Ua2, 2.2, p. 12 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article Ua1.2 » — structure en liste fermée d''interdictions (Ua1.2), tout le reste est admis.'
+    note: 'Périmètres particuliers non reportés en statut (overlays, pas des règles de zone) : Ua1.2 7°, p. 12 —
+      dans les périmètres des Monuments Historiques délimités aux documents graphiques, « sont interdites les constructions
+      à destination d''activités […] dès lors qu''ils sont susceptibles d''entrainer pour le voisinage des risques
+      de nuisances sonores ou de dénaturer l''image des Monuments Historiques protégés » ; rappels PPRN/PPRT/captages
+      (Ua1.1, p. 11). Interdictions hors champ des 23 sous-destinations, non mappées : « terrains de camping, de
+      caravanning, d''aires naturelles de camping » (aménagement de terrains, pas une construction) et « création
+      ou extension de carrières » (Ua1.2 4° et 5°, p. 12). Le terme « constructions à destination d''activités »
+      (Ua2.2 1°) est mappé aux sous-destinations des deux destinations économiques R151-27 (« commerce et activités
+      de service », « autres activités des secteurs secondaire ou tertiaire »), exceptées celles visées à l''article
+      Ua1.2, comme le texte le prévoit.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ua1.2 1°
+        page_pdf: 12
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Ua1.2 1°
+        page_pdf: 12
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+        note: Le texte interdit la destination « exclusive » d'entrepôt ; un local de stockage accessoire d'une
+          activité admise n'est pas visé par cette interdiction (cf. aussi Ua1.2 3° pour le commerce).
+      exploitation_agricole:
+        statut: interdit
+        article: Ua1.2 2°
+        page_pdf: 12
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: Interdit lorsque « la surface de stockage excède la surface de vente sise sur le terrain d'assiette
+          » (Ua1.2 3°) ; admis sinon, en tant que « construction à destination d'activités », « sous réserve qu'elles
+          correspondent à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité
+          avec les milieux environnants, ni incommodité ni aggravation des risques (Ua2.2 1°) et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.
+        article: Ua1.2 3° et Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette » (interdits).
+      commerce_gros:
+        statut: sous_condition
+        condition: Interdit lorsque « la surface de stockage excède la surface de vente sise sur le terrain d'assiette
+          » (Ua1.2 3°) ; admis sinon, en tant que « construction à destination d'activités », « sous réserve qu'elles
+          correspondent à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité
+          avec les milieux environnants, ni incommodité ni aggravation des risques (Ua2.2 1°) et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.
+        article: Ua1.2 3° et Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette » (interdits).
+      restauration:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre
+          toutes dispositions pour les rendre compatibles avec les milieux environnants, qu''elles n''entraînent
+          pour le voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu''elles
+          prévoient tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cinema:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      hotels:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques. NB : l''« aménagement de terrains de
+          camping, de caravanning, d''aires naturelles de camping » est interdit (Ua1.2 4°, p. 12) — hors champ
+          des constructions et qu''elles prévoient tous moyens ou dispositifs nécessaires visant à atténuer les
+          éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      bureau:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      centre_congres_exposition:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cuisine_vente_en_ligne:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ua2.2 1°
+        page_pdf: 12
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      logement:
+        statut: sous_condition
+        condition: Admis (silence Ua2.2) ; si programme de logements > 3 000 m² de surface de plancher, « au minimum
+          30% de ce programme doit être affecté à des logements aidés (logements locatifs sociaux, logements intermédiaires…)
+          ».
+        seuil_m2: 3000
+        seuil_type: surface_plancher
+        article: Ua2.2 3°
+        page_pdf: 13
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 3 000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ua2.2 2°
+        page_pdf: 13
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » —
+          et « constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement, à
+          la production et à la distribution d'énergie » — admises « dès lors qu'ils s'insèrent dans le milieu environnant
+          ».
+        article: Ua2.2 2°
+        page_pdf: 13
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif ainsi
+          que les constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement,
+          à la production et à la distribution d'énergie, notamment les énergies renouvelables, dès lors qu'ils
+          s'insèrent dans le milieu environnant. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ua2.2 2°
+        page_pdf: 13
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ua2.2 2°
+        page_pdf: 13
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ua2.2 2°
+        page_pdf: 13
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      lieux_culte:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ua2.2 2°
+        page_pdf: 13
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ua2.2 2°
+        page_pdf: 13
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+  Uav:
+    renvoi: Ua
+    renvoi_src: 'Chapitre Ua, p. 11 : « Il existe un secteur Uav, couvrant la zone d''habitation de densité moyenne
+      qui se situe au cœur centre-ville. » — secteur DE la zone Ua ; les articles Ua1 et Ua2 (destinations) ne comportent
+      aucune disposition propre au secteur Uav, qui n''apparaît qu''aux articles Ua10 (hauteurs, p. 18 : « Dans
+      le secteur Uav, ce seuil est limité à 16 mètres… ») et Ua13 (espaces libres, p. 25 : « En secteur Uav, ces
+      seuils sont respectivement portés à 30% et 20%. »).'
+  Ub:
+    silence: autorise
+    silence_src: 'Art. Ub2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article Uc1.2 » (sic — le renvoi vise « Uc1.2 », erreur matérielle probable pour Ub1.2, seul article
+      d''interdictions du chapitre ; la structure — liste fermée d''interdictions Ub1.2 puis admission générale
+      — vaut silence = autorise).'
+    note: 'Ub1.2 (p. 27) est mot pour mot identique à Ua1.2. Périmètres particuliers non reportés en statut : Ub1.2
+      7°, p. 27 (Monuments Historiques — activités susceptibles de nuisances interdites dans les périmètres délimités)
+      ; rappels PPRN/PPRT/captages (Ub1.1, p. 26). Interdictions hors champ des 23 sous-destinations, non mappées
+      : camping/caravanning et carrières (Ub1.2 4° et 5°, p. 27). « Constructions à destination d''activités » (Ub2.2
+      1°) mappé comme en Ua (destinations économiques R151-27, exceptées celles visées à l''article 1-2).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ub1.2 1°
+        page_pdf: 27
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Ub1.2 1°
+        page_pdf: 27
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+        note: Le texte interdit la destination « exclusive » d'entrepôt ; un local de stockage accessoire d'une
+          activité admise n'est pas visé par cette interdiction (cf. aussi Ub1.2 3° pour le commerce).
+      exploitation_agricole:
+        statut: interdit
+        article: Ub1.2 2°
+        page_pdf: 27
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: Interdit lorsque « la surface de stockage excède la surface de vente sise sur le terrain d'assiette
+          » (Ub1.2 3°) ; admis sinon, en tant que « construction à destination d'activités », « sous réserve qu'elles
+          correspondent à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité
+          avec les milieux environnants, ni incommodité ni aggravation des risques (Ub2.2 1°) et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.
+        article: Ub1.2 3° et Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette » (interdits).
+      commerce_gros:
+        statut: sous_condition
+        condition: Interdit lorsque « la surface de stockage excède la surface de vente sise sur le terrain d'assiette
+          » (Ub1.2 3°) ; admis sinon, en tant que « construction à destination d'activités », « sous réserve qu'elles
+          correspondent à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité
+          avec les milieux environnants, ni incommodité ni aggravation des risques (Ub2.2 1°) et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.
+        article: Ub1.2 3° et Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette » (interdits).
+      restauration:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre
+          toutes dispositions pour les rendre compatibles avec les milieux environnants, qu''elles n''entraînent
+          pour le voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu''elles
+          prévoient tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cinema:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      hotels:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques. NB : l''« aménagement de terrains de
+          camping, de caravanning, d''aires naturelles de camping » est interdit (Ub1.2 4°, p. 27) — hors champ
+          des constructions et qu''elles prévoient tous moyens ou dispositifs nécessaires visant à atténuer les
+          éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      bureau:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      centre_congres_exposition:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cuisine_vente_en_ligne:
+        statut: sous_condition
+        condition: '« Construction à destination d''activités » : admise « sous réserve qu''elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone », compatibilité avec les
+          milieux environnants, ni incommodité ni aggravation des risques et qu''elles prévoient tous moyens ou
+          dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances.'
+        article: Ub2.2 1°
+        page_pdf: 27
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      logement:
+        statut: sous_condition
+        condition: Admis (silence Ub2.2) ; si programme de logements > 1 000 m² de surface de plancher, « au minimum
+          30% de ce programme doit être affecté à des logements aidés (logements locatifs sociaux, logements intermédiaires…)
+          ».
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        article: Ub2.2 3°
+        page_pdf: 28
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 1000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ub2.2 2°
+        page_pdf: 28
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » —
+          et « constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement, à
+          la production et à la distribution d'énergie » — admises « dès lors qu'ils s'insèrent dans le milieu environnant
+          ».
+        article: Ub2.2 2°
+        page_pdf: 28
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif ainsi
+          que les constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement,
+          à la production et à la distribution d'énergie, notamment les énergies renouvelables, dès lors qu'ils
+          s'insèrent dans le milieu environnant. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ub2.2 2°
+        page_pdf: 28
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ub2.2 2°
+        page_pdf: 28
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ub2.2 2°
+        page_pdf: 28
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      lieux_culte:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ub2.2 2°
+        page_pdf: 28
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: « Constructions et installations nécessaires aux services publics ou d'intérêt collectif » admises
+          « dès lors qu'ils s'insèrent dans le milieu environnant ».
+        article: Ub2.2 2°
+        page_pdf: 28
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif […]
+          dès lors qu'ils s'insèrent dans le milieu environnant. »
+  Uc:
+    silence: autorise
+    silence_src: 'Art. Uc2.2, p. 42 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article Uc1.2 »'
+    notes:
+    - 'Uc2.2 (1), p. 42-43 : les « constructions à destination d''activités » sont admises « sous réserve qu''elles
+      correspondent à des besoins nécessaires à la vie et à la commodité des habitants de la zone » et de compatibilité
+      avec le voisinage. Le terme est mappé aux sous-destinations des deux destinations économiques R151-27 (« commerce
+      et activités de service », « autres activités des secteurs secondaire ou tertiaire »), exceptées celles visées
+      à l''article Uc1.2 (industrie et entrepôt exclusif restent interdits), comme le texte le prévoit.'
+    - 'Uc2.2 (2), p. 43 : constructions et installations nécessaires aux services publics ou d''intérêt collectif
+      admises « dès lors qu''ils s''insèrent dans le milieu environnant » (terme générique, non mappé).'
+    - 'Uc1.2 (4) et (5), p. 42 : interdits hors nomenclature des sous-destinations — « L''aménagement de terrains
+      de camping, de caravanning, d''aires naturelles de camping » ; « La création ou l''extension de carrières
+      ».'
+    - 'Uc1.2 (7), p. 42 : dans les périmètres des Monuments Historiques, interdiction des « constructions à destination
+      d''activités » susceptibles de nuisances sonores ou de dénaturer l''image des monuments.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Uc1.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Uc1.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+        note: l'interdiction vise la destination « exclusive » d'entrepôt (texte cité)
+      exploitation_agricole:
+        statut: interdit
+        article: Uc1.2 (2)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'la surface de stockage ne doit pas excéder la surface de vente sise sur le terrain d''assiette
+          (au-delà : interdit, Uc1.2 (3)) ; admis sinon, en tant que « construction à destination d''activités »,
+          « sous réserve qu''elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone, que soient mises en œuvre toutes dispositions pour les rendre compatibles avec les milieux
+          environnants, qu''elles n''entraînent pour le voisinage ni incommodité (nuisances sonores, visuelles,
+          …), ni aggravation des risques et qu''elles prévoient tous moyens ou dispositifs nécessaires visant à
+          atténuer les éventuels risques ou nuisances » (Uc2.2 (1))'
+        article: Uc1.2 (3) et Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette. » (interdits) ; « Les constructions à destination
+          d'activités, exceptées celles visées à l'article 1-2 ci-dessus […] sous réserve qu'elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone […] »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'la surface de stockage ne doit pas excéder la surface de vente sise sur le terrain d''assiette
+          (au-delà : interdit, Uc1.2 (3)) ; admis sinon, en tant que « construction à destination d''activités »,
+          « sous réserve qu''elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone, que soient mises en œuvre toutes dispositions pour les rendre compatibles avec les milieux
+          environnants, qu''elles n''entraînent pour le voisinage ni incommodité (nuisances sonores, visuelles,
+          …), ni aggravation des risques et qu''elles prévoient tous moyens ou dispositifs nécessaires visant à
+          atténuer les éventuels risques ou nuisances » (Uc2.2 (1))'
+        article: Uc1.2 (3) et Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette. » (interdits) ; « Les constructions à destination
+          d'activités, exceptées celles visées à l'article 1-2 ci-dessus […] sous réserve qu'elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone […] »
+      restauration:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus,
+          ainsi que les travaux d'amélioration ou d'extension de ces constructions, qu'elles soient soumises ou
+          non au régime des installations classées pour la protection de l'environnement, sous réserve qu'elles
+          correspondent à des besoins nécessaires à la vie et à la commodité des habitants de la zone […] »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cinema:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      hotels:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: '« construction à destination d''activités » admise « sous réserve qu''elles correspondent à
+          des besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre
+          toutes dispositions pour les rendre compatibles avec les milieux environnants, qu''elles n''entraînent
+          pour le voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu''elles
+          prévoient tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances
+          ». NB : l''« aménagement de terrains de camping, de caravanning, d''aires naturelles de camping » est
+          interdit (Uc1.2 (4), p. 42) — hors champ des constructions'
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      bureau:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      centre_congres_exposition:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cuisine_vente_en_ligne:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Uc2.2 (1)
+        page_pdf: 42
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      logement:
+        statut: sous_condition
+        condition: 'programme de logements de plus de 1000 m² de surface de plancher : au minimum 30 % du programme
+          affecté à des logements aidés'
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        article: Uc2.2 (3)
+        page_pdf: 43
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 1000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+  Ucm:
+    renvoi: Uc
+    renvoi_src: 'chapeau du chapitre Uc, p. 41 : l''indice « m » désigne le polygone de protection du dépôt de munitions
+      ; aucune règle de destination propre au secteur dans Uc1/Uc2'
+    note: ' — indice m : rappel PPRT dépôt de munitions (Uc1.1 (3)).'
+  UCto:
+    silence: interdit
+    silence_src: 'Art. Uc2.2 (4), p. 43 : « Dans le secteur Ucto, seules sont admises les constructions, ouvrages
+      et travaux destinés à la pratique de sports, de loisirs, de culture et de tourisme (hébergement, restauration,
+      équipements structurants, terrains de jeux, etc.) ainsi que les équipements nécessaires à leur fonctionnement
+      (accueil, sanitaires, etc.). »'
+    notes:
+    - 'Rattachement : code GPU « UCto » = secteur « Ucto » du chapitre Uc — p. 41 : « Il existe un secteur Ucto,
+      dans lequel sont uniquement autorisées les activités touristiques. »'
+    - 'Les termes « loisirs », « culture », « équipements structurants », « terrains de jeux » (Uc2.2 (4), p. 43)
+      ne sont pas mappés : pas de correspondance univoque et pleine avec une sous-destination.'
+    - L'article Uc1.2 (interdictions de la zone Uc, p. 42) s'applique aussi dans le secteur ; les interdictions
+      reprises ci-dessous en sont issues.
+    sous_destinations:
+      equipements_sportifs:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « seules sont admises les constructions, ouvrages et travaux destinés à la pratique de sports,
+          de loisirs, de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) »
+      restauration:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « … de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) … »
+      hotels:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « … de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) … »
+        note: « hébergement » cité comme composante du tourisme admis dans le secteur
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « … de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) … »
+        note: « hébergement » cité comme composante du tourisme admis dans le secteur
+      logement:
+        statut: sous_condition
+        condition: 100 m² de surface de plancher maximum, exclusivement destinées et liées au gardiennage et à la
+          surveillance des installations autorisées dans la zone
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « Sont également admises les constructions à usage d'habitation dans la limite de 100 m² de surface
+          de plancher, à condition qu'elles soient exclusivement destinées et liées au gardiennage et à la surveillance
+          des installations autorisées dans la zone. »
+      industrie:
+        statut: interdit
+        article: Uc1.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Uc1.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+        note: l'interdiction vise la destination « exclusive » d'entrepôt (texte cité)
+      exploitation_agricole:
+        statut: interdit
+        article: Uc1.2 (2)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+  UCtom:
+    silence: interdit
+    silence_src: 'Art. Uc2.2 (4), p. 43 : « Dans le secteur Ucto, seules sont admises les constructions, ouvrages
+      et travaux destinés à la pratique de sports, de loisirs, de culture et de tourisme (hébergement, restauration,
+      équipements structurants, terrains de jeux, etc.) ainsi que les équipements nécessaires à leur fonctionnement
+      (accueil, sanitaires, etc.). »'
+    notes:
+    - 'Rattachement : code GPU « UCtom » = secteur « Ucto » du chapitre Uc + indice « m » — p. 41 : « Il existe
+      un secteur Ucto, dans lequel sont uniquement autorisées les activités touristiques. » ; « Il existe un indice
+      « m » qui identifie les terrains situés à l''intérieur du polygone de protection des installations du dépôt
+      de munitions de la Plaine des Cafres. » L''indice « m » ne porte aucune règle de destination propre ; s''applique
+      le rappel Uc1.1 (3), p. 41 (règlement du PPRT à appliquer).'
+    - Mêmes règles de destinations que le secteur UCto (voir notes UCto).
+    sous_destinations:
+      equipements_sportifs:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « seules sont admises les constructions, ouvrages et travaux destinés à la pratique de sports,
+          de loisirs, de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) »
+      restauration:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « … de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) … »
+      hotels:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « … de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) … »
+        note: « hébergement » cité comme composante du tourisme admis dans le secteur
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « … de culture et de tourisme (hébergement, restauration, équipements structurants, terrains de
+          jeux, etc.) … »
+        note: « hébergement » cité comme composante du tourisme admis dans le secteur
+      logement:
+        statut: sous_condition
+        condition: 100 m² de surface de plancher maximum, exclusivement destinées et liées au gardiennage et à la
+          surveillance des installations autorisées dans la zone
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: Uc2.2 (4)
+        page_pdf: 43
+        citation: « Sont également admises les constructions à usage d'habitation dans la limite de 100 m² de surface
+          de plancher, à condition qu'elles soient exclusivement destinées et liées au gardiennage et à la surveillance
+          des installations autorisées dans la zone. »
+      industrie:
+        statut: interdit
+        article: Uc1.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Uc1.2 (1)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+        note: l'interdiction vise la destination « exclusive » d'entrepôt (texte cité)
+      exploitation_agricole:
+        statut: interdit
+        article: Uc1.2 (2)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+  Ud:
+    silence: autorise
+    silence_src: 'Art. Ud2.2, p. 57 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article Ud1.2 »'
+    notes:
+    - 'Ud1.2 ne comporte PAS d''interdiction de la destination agricole (à la différence de Uc1.2 (2)) : l''agricole
+      relève du silence.'
+    - 'Ud2.2 (1), p. 57-58 : « constructions à destination d''activités » admises « sous réserve qu''elles correspondent
+      à des besoins nécessaires à la vie et à la commodité des habitants de la zone » et de compatibilité avec le
+      voisinage. Le terme est mappé aux sous-destinations des deux destinations économiques R151-27 (« commerce
+      et activités de service », « autres activités des secteurs secondaire ou tertiaire »), exceptées celles visées
+      à l''article Ud1.2 (industrie et entrepôt exclusif restent interdits), comme le texte le prévoit.'
+    - 'Ud2.2 (2), p. 58 : services publics ou d''intérêt collectif admis « dès lors qu''ils s''insèrent dans le
+      milieu environnant » (terme générique, non mappé).'
+    - 'Ud1.2 (3) et (4), p. 57 : interdits hors nomenclature — camping/caravanning/aires naturelles de camping ;
+      création ou extension de carrières.'
+    - 'Ud1.2 (6), p. 57 : périmètres Monuments Historiques — interdiction des « constructions à destination d''activités
+      » susceptibles de nuisances sonores ou de dénaturer l''image des monuments.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ud1.2 (1)
+        page_pdf: 57
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Ud1.2 (1)
+        page_pdf: 57
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+        note: l'interdiction vise la destination « exclusive » d'entrepôt (texte cité)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'la surface de stockage ne doit pas excéder la surface de vente sise sur le terrain d''assiette
+          (au-delà : interdit, Ud1.2 (2)) ; admis sinon, en tant que « construction à destination d''activités »,
+          « sous réserve qu''elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone, que soient mises en œuvre toutes dispositions pour les rendre compatibles avec les milieux
+          environnants, qu''elles n''entraînent pour le voisinage ni incommodité (nuisances sonores, visuelles,
+          …), ni aggravation des risques et qu''elles prévoient tous moyens ou dispositifs nécessaires visant à
+          atténuer les éventuels risques ou nuisances » (Ud2.2 (1))'
+        article: Ud1.2 (2) et Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette. » (interdits) ; « Les constructions à destination
+          d'activités, exceptées celles visées à l'article 1-2 ci-dessus […] sous réserve qu'elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone […] »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'la surface de stockage ne doit pas excéder la surface de vente sise sur le terrain d''assiette
+          (au-delà : interdit, Ud1.2 (2)) ; admis sinon, en tant que « construction à destination d''activités »,
+          « sous réserve qu''elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone, que soient mises en œuvre toutes dispositions pour les rendre compatibles avec les milieux
+          environnants, qu''elles n''entraînent pour le voisinage ni incommodité (nuisances sonores, visuelles,
+          …), ni aggravation des risques et qu''elles prévoient tous moyens ou dispositifs nécessaires visant à
+          atténuer les éventuels risques ou nuisances » (Ud2.2 (1))'
+        article: Ud1.2 (2) et Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions, ouvrages et travaux à usage de commerce dont la surface de stockage excède
+          la surface de vente sise sur le terrain d'assiette. » (interdits) ; « Les constructions à destination
+          d'activités, exceptées celles visées à l'article 1-2 ci-dessus […] sous réserve qu'elles correspondent
+          à des besoins nécessaires à la vie et à la commodité des habitants de la zone […] »
+      restauration:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus,
+          ainsi que les travaux d'amélioration ou d'extension de ces constructions, qu'elles soient soumises ou
+          non au régime des installations classées pour la protection de l'environnement, sous réserve qu'elles
+          correspondent à des besoins nécessaires à la vie et à la commodité des habitants de la zone […] »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cinema:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      hotels:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: '« construction à destination d''activités » admise « sous réserve qu''elles correspondent à
+          des besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre
+          toutes dispositions pour les rendre compatibles avec les milieux environnants, qu''elles n''entraînent
+          pour le voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu''elles
+          prévoient tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances
+          ». NB : l''« aménagement de terrains de camping, de caravanning, d''aires naturelles de camping » est
+          interdit (Ud1.2 (3), p. 57) — hors champ des constructions'
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      bureau:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      centre_congres_exposition:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+      cuisine_vente_en_ligne:
+        statut: sous_condition
+        condition: « construction à destination d'activités » admise « sous réserve qu'elles correspondent à des
+          besoins nécessaires à la vie et à la commodité des habitants de la zone, que soient mises en œuvre toutes
+          dispositions pour les rendre compatibles avec les milieux environnants, qu'elles n'entraînent pour le
+          voisinage ni incommodité (nuisances sonores, visuelles, …), ni aggravation des risques et qu'elles prévoient
+          tous moyens ou dispositifs nécessaires visant à atténuer les éventuels risques ou nuisances »
+        article: Ud2.2 (1)
+        page_pdf: 57
+        citation: « Les constructions à destination d'activités, exceptées celles visées à l'article 1-2 ci-dessus
+          […] sous réserve qu'elles correspondent à des besoins nécessaires à la vie et à la commodité des habitants
+          de la zone […] »
+  Ue:
+    silence: autorise
+    silence_src: 'Art. Ue2.2, p. 72 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article Ue 1.2 »'
+    notes:
+    - 'Ue2.2 (1), p. 72 : la condition des 5 % vise « les constructions, ouvrages et travaux à destination de commerce,
+      de service et d''équipement recevant du public » ; « service » et « équipement recevant du public » (termes
+      génériques) ne sont pas mappés à des sous-destinations.'
+    - 'Ue1.2 (5) et (6), p. 72 : interdits hors nomenclature — camping/caravanning/aires naturelles de camping ;
+      création ou extension de carrières.'
+    - 'Ue2.2 (2), p. 72 : services publics ou d''intérêt collectif admis « dès lors qu''ils s''insèrent dans le
+      milieu environnant » (terme générique, non mappé).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Ue1.2 (1)
+        page_pdf: 72
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: interdit
+        article: Ue1.2 (2)
+        page_pdf: 72
+        citation: « Les constructions ouvrages et travaux à usage d'habitation y compris celles liées au gardiennage.
+          »
+      hebergement:
+        statut: interdit
+        article: Ue1.2 (2)
+        page_pdf: 72
+        citation: « Les constructions ouvrages et travaux à usage d'habitation y compris celles liées au gardiennage.
+          »
+        note: « habitation » = destination Habitation entière (sous-destinations logement + hébergement)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'interdit sauf Ue2.2 (1) : admis dès lors que l''emprise foncière totale cumulée de l''ensemble
+          des constructions de commerce, de service et d''équipement recevant du public n''excède pas 5 % de la
+          superficie de la zone Ue d''implantation (seuil relatif, pas de seuil en m²)'
+        article: Ue1.2 (3) et Ue2.2 (1)
+        page_pdf: 72
+        citation: « Les constructions ouvrages et travaux à destination de commerce sauf ceux visées à l'article
+          Ue 2.2. » ; « Les constructions, ouvrages et travaux à destination de commerce, de service et d'équipement
+          recevant du public sont admis dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions
+          n'excède pas 5% de la superficie de la zone Ue d'implantation. »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'interdit sauf Ue2.2 (1) : admis dès lors que l''emprise foncière totale cumulée de l''ensemble
+          des constructions de commerce, de service et d''équipement recevant du public n''excède pas 5 % de la
+          superficie de la zone Ue d''implantation (seuil relatif, pas de seuil en m²)'
+        article: Ue1.2 (3) et Ue2.2 (1)
+        page_pdf: 72
+        citation: « Les constructions ouvrages et travaux à destination de commerce sauf ceux visées à l'article
+          Ue 2.2. » ; « Les constructions, ouvrages et travaux à destination de commerce, de service et d'équipement
+          recevant du public sont admis dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions
+          n'excède pas 5% de la superficie de la zone Ue d'implantation. »
+      hotels:
+        statut: interdit
+        article: Ue1.2 (4)
+        page_pdf: 72
+        citation: « Les constructions ouvrages et travaux à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Ue1.2 (4)
+        page_pdf: 72
+        citation: « Les constructions ouvrages et travaux à usage d'hébergement hôtelier. »
+  1AUa:
+    renvoi: Ua
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2, p. 86 : les occupations prévues au règlement de la zone U renvoyée sont admises sous conditions
+      — « Réaliser les infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité
+      incendie, etc.) » et respect des OAP.'
+  1AUb:
+    renvoi: Ub
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2, p. 86 : admission sous conditions (infrastructures suffisantes, respect des OAP).'
+  1AUc:
+    renvoi: Uc
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2, p. 86 : admission sous conditions (infrastructures suffisantes, respect des OAP).'
+  1AUcto:
+    renvoi: UCto
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. » (indice « cto » → zone Ucto du chapitre
+      Uc)'
+    note: 'AUindicée 2.2, p. 86 : admission sous conditions (infrastructures suffisantes, respect des OAP).'
+  1AUe:
+    renvoi: Ue
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2, p. 86 : admission sous conditions (infrastructures suffisantes, respect des OAP).'
+  1AUto:
+    renvoi: UCto
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Pour la zone AUto, il convient de se reporter au règlement de la
+      zone Ucto. »'
+    note: 'AUindicée 2.2, p. 86 : admission sous conditions (infrastructures suffisantes, respect des OAP).'
+  2AUa:
+    renvoi: Ua
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2 (3), p. 86 : « Pour les zones 2AUindicée, leur ouverture à l''urbanisation ne peut intervenir
+      dès lors que l''aménagement de l''ensemble des zones 1AUindicée du pôle urbain de référence ou du territoire
+      rural habité fixé par le SAR associée au classement de la zone considérée (zone Ua, Ub, Uc, et Ud) soit entrepris.
+      » (cité tel quel ; formulation ambiguë du règlement). S''ajoutent les conditions AUindicée 2.2 (1)-(2) : infrastructures
+      suffisantes, respect des OAP.'
+  2AUb:
+    renvoi: Ub
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2 (3), p. 86 : ouverture à l''urbanisation conditionnée à l''aménagement de l''ensemble des
+      zones 1AUindicée du pôle de référence (citation complète sous 2AUa). S''ajoutent les conditions AUindicée
+      2.2 (1)-(2) : infrastructures suffisantes, respect des OAP.'
+  2AUc:
+    renvoi: Uc
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2 (3), p. 86 : ouverture à l''urbanisation conditionnée à l''aménagement de l''ensemble des
+      zones 1AUindicée du pôle de référence (citation complète sous 2AUa). S''ajoutent les conditions AUindicée
+      2.2 (1)-(2) : infrastructures suffisantes, respect des OAP.'
+  2AUd:
+    renvoi: Ud
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2 (3), p. 86 : ouverture à l''urbanisation conditionnée à l''aménagement de l''ensemble des
+      zones 1AUindicée du pôle de référence (citation complète sous 2AUa). S''ajoutent les conditions AUindicée
+      2.2 (1)-(2) : infrastructures suffisantes, respect des OAP.'
+  2AUe:
+    renvoi: Ue
+    renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'AUindicée 2.2 (3), p. 86 : ouverture à l''urbanisation conditionnée à l''aménagement de l''ensemble des
+      zones 1AUindicée du pôle de référence (citation complète sous 2AUa ; le texte énumère « zone Ua, Ub, Uc, et
+      Ud » sans citer Ue — anomalie relevée, citée telle quelle). S''ajoutent les conditions AUindicée 2.2 (1)-(2)
+      : infrastructures suffisantes, respect des OAP.'
+  A:
+    silence: interdit
+    silence_src: 'Art. A1, 1.2, p. 92 : « A l''exception de ceux visés à l''article A 2.2., sont interdits toutes
+      les constructions, ouvrages et travaux, ainsi que le changement de destination des bâtiments à usage agricole
+      en bâtiments à usage autre qu''agricole. »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: implantation strictement nécessaire au fonctionnement d'une exploitation agricole, justifiée
+          au regard de la superficie de l'exploitation, de la nature de l'activité, du matériel et des bâtiments
+          existants ; ICPE admises si nécessaires à l'activité de production agricole (A2, 2.2-2, p. 92) ; le choix
+          de l'implantation sur l'exploitation de ces bâtiments techniques doit être adapté au site, notamment au
+          regard de leur insertion paysagère (A2 2.2-1, 3e phrase)
+        article: A2, 2.2-1
+        page_pdf: 92
+        citation: « Les bâtiments techniques agricoles et leurs annexes, ouvrages et travaux à usage agricole, sous
+          réserve que leur implantation soit strictement nécessaire au fonctionnement d'une exploitation agricole.
+          »
+      logement:
+        statut: sous_condition
+        condition: uniquement travaux d'amélioration et de reconstruction de logements existants (nécessaires ou
+          non à une exploitation agricole), sous réserve de la légalité du bâti, sur l'emplacement du bâtiment préexistant
+          sauf contrainte particulière (PPR par exemple), dans la limite totale cumulée de 250 m² de surface de
+          plancher — aucun logement neuf
+        seuil_m2: 250
+        seuil_type: surface_plancher
+        article: A2, 2.2-3
+        page_pdf: 92
+        citation: « Les travaux d'amélioration et de reconstruction des logements nécessaires ou non à une exploitation
+          agricole, sous réserve de la légalité du bâti. Ces travaux ne sont admis que sur l'emplacement du bâtiment
+          préexistant, sauf contrainte particulière (PPR par exemple) et dans la limite totale cumulée de 250 m²
+          de surface de plancher. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: implantation dans la zone rendue nécessaire pour des raisons techniques ou économiques, bonne
+          intégration dans le site, emprise limitée au strict minimum, mesures éviter/réduire/compenser sur l'environnement
+          et l'économie agricole
+        article: A2, 2.2-4
+        page_pdf: 93
+        citation: « Les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+    notes:
+    - 'A2, 2.2-5, p. 93 : « Les constructions à usage agrotouristique sont autorisées sur le site d''une exploitation
+      agricole existante […] réalisées en extension de l''habitation principale existante de l''exploitant et dans
+      la limite totale de 200 m² de surface de plancher, y compris la surface des bâtiments déjà existants. » —
+      « agrotouristique » ne correspond à aucune des 23 sous-destinations sans déduction : non mappé.'
+    - 'A2, 2.2-7, p. 93 : constructions, ouvrages et travaux liés aux réseaux, à la voirie, à la production et à
+      la distribution d''énergie (notamment renouvelables) et installations d''infrastructure nécessaires au fonctionnement
+      des services publics, admis s''ils s''insèrent dans le milieu et ne compromettent pas le caractère agricole.'
+    - 'A2, 2.2-8, p. 93 : dans les secteurs riches en sol/sous-sol délimités au titre de l''art. R.123-11c, exploitation
+      de carrières, concassage et transit de matériaux admis sous condition de remise en état — pas une sous-destination
+      R151-28 : non mappé.'
+    - 'A1, 1.1-6, p. 91 : tout changement de destination soumis à l''avis favorable de la CDPENAF préalablement
+      à la délivrance du permis.'
+    - 'A12, 12.2, p. 101 : « Pour les constructions à destination d''habitation autorisées, il est imposé au minimum
+      2 places de stationnement par logement. »'
+  Aba:
+    silence: interdit
+    silence_src: 'Art. A1, 1.2, p. 92 (règle de zone applicable au secteur, DG Article 3 p. 6) : « A l''exception
+      de ceux visés à l''article A 2.2., sont interdits toutes les constructions, ouvrages et travaux, ainsi que
+      le changement de destination des bâtiments à usage agricole en bâtiments à usage autre qu''agricole. »'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: constructions à usage d'habitation admises dès lors qu'elles s'intègrent dans le milieu environnant
+          sans le dénaturer et ne portent pas atteinte à la préservation des sols naturels, agricoles et forestiers,
+          dans la limite totale de 120 m² de surface de plancher ; s'y ajoute la règle de zone A2, 2.2-3 (p. 92)
+          pour l'amélioration/reconstruction des logements existants (250 m² cumulés)
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: A2, 2.2-6
+        page_pdf: 93
+        citation: « Dans le secteur Aba, les constructions à usage d'habitation dès lors qu'elles s'intègrent dans
+          le milieu environnant sans le dénaturer et qu'elles ne portent pas atteinte à la préservation des sols
+          naturels, agricoles et forestiers. Ces constructions sont admises dans la limite totale de 120 m² de surface
+          de plancher. »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: implantation strictement nécessaire au fonctionnement d'une exploitation agricole (règle de zone
+          A, applicable au secteur — DG Article 3, p. 6)
+        article: A2, 2.2-1
+        page_pdf: 92
+        citation: « Les bâtiments techniques agricoles et leurs annexes, ouvrages et travaux à usage agricole, sous
+          réserve que leur implantation soit strictement nécessaire au fonctionnement d'une exploitation agricole.
+          »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: implantation rendue nécessaire pour des raisons techniques ou économiques, intégration au site,
+          emprise au strict minimum (règle de zone A, applicable au secteur — DG Article 3, p. 6)
+        article: A2, 2.2-4
+        page_pdf: 93
+        citation: « Les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+  N:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes
+      les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires (limités
+          à 20 m² de surface de plancher) sur des habitations existantes régulièrement édifiées, dans la limite
+          d'une surface de plancher totale cumulée de 120 m² — aucun logement neuf
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-5
+        page_pdf: 106
+        citation: « A l'exception des secteurs Nco et Npnr, les travaux d'aménagement et d'extension mineure pour
+          mise aux normes sanitaires (limités à 20 m² de surface de plancher) réalisés sur des habitations existantes
+          régulièrement édifiées, dans la limite d'une surface de plancher totale cumulée de 120 m². »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement les bâtiments d'élevage, dès lors qu'ils s'insèrent dans le milieu environnant et
+          ne compromettent pas le caractère naturel de la zone (exclu des secteurs Nco et Npnr)
+        article: N2, 2.2-6
+        page_pdf: 106
+        citation: « A l'exception des secteurs Nco et Npnr, les bâtiments d'élevage dès lors qu'ils s'insèrent dans
+          le milieu environnant et qu'ils ne compromettent pas le caractère naturel de la zone. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions, ouvrages et travaux liés aux réseaux, à la voirie, aux transports et déplacements,
+          à la production/distribution d'énergie et installations d'infrastructure nécessaires au fonctionnement
+          des services publics, s'ils s'insèrent dans le milieu environnant et ne compromettent pas le caractère
+          naturel de la zone
+        article: N2, 2.2-3
+        page_pdf: 106
+        citation: « […] les installations et ouvrages techniques d'infrastructure nécessaires au fonctionnement
+          des services publics, dès lors qu'ils s'insèrent dans le milieu environnant et qu'ils ne compromettent
+          pas le caractère naturel de la zone. »
+    notes:
+    - 'N2, 2.2-1, p. 105 : aménagements légers à vocation touristique et de loisirs ouverts au public, « sans hébergement
+      » (cheminements ni cimentés ni bitumés, mobilier d''accueil/information, postes d''observation, équipements
+      démontables hygiène/sécurité), conçus pour permettre un retour du site à l''état naturel — pas des constructions
+      rattachables à une sous-destination : non mappé.'
+    - 'N2, 2.2-2, p. 105 : travaux, installations et aménagements liés à la gestion des risques naturels identifiés
+      et autorisés par le PPR.'
+    - 'N2, 2.2-8, p. 106 : carrières, concassage et transit de matériaux dans les secteurs délimités au titre de
+      l''art. R.123-11c, sous condition de remise en état — pas une sous-destination R151-28 : non mappé.'
+    - 'N1, 1.1-5, p. 105 : tout changement de destination soumis à l''avis favorable de la CDPENAF préalablement
+      à la délivrance du permis.'
+  Nco:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 (règle de zone applicable au secteur, DG Article 3 p. 6) : « A l''exception
+      de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions, ouvrages et travaux liés aux réseaux, voirie, transports, production/distribution
+          d'énergie et installations d'infrastructure nécessaires au fonctionnement des services publics (règle
+          N2, 2.2-3, sans exclusion de secteur), insertion dans le milieu et respect du caractère naturel
+        article: N2, 2.2-3
+        page_pdf: 106
+        citation: « […] les installations et ouvrages techniques d'infrastructure nécessaires au fonctionnement
+          des services publics, dès lors qu'ils s'insèrent dans le milieu environnant et qu'ils ne compromettent
+          pas le caractère naturel de la zone. »
+    notes:
+    - 'N2, 2.2-7, p. 106 : « Dans le secteur Nco, les travaux liés au renforcement végétal et à l''aménagement des
+      corridors écologiques sous réserve de procéder d''une démarche concertée » — travaux, pas une sous-destination
+      : non mappé.'
+    - 'N2, 2.2-5 et 2.2-6, p. 106 : les admissions logement (mise aux normes) et bâtiments d''élevage s''appliquent
+      « A l''exception des secteurs Nco et Npnr » — donc exclues du secteur Nco.'
+  Npnr:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes
+      les constructions, ouvrages et travaux. » — et caractère de zone, p. 104 : « le secteur Npnr, correspondant
+      aux espaces situés dans le Cœur du Parc national de la Réunion, dans lesquels aucune construction n''est admise,
+      sauf autorisation spéciale. »'
+    sous_destinations: {}
+    notes:
+    - 'N2, 2.2-4, p. 106 : « Dans le secteur Npnr, seuls les travaux, constructions et installations ayant reçus
+      une autorisation spéciale de l''établissement public du Parc peuvent être admis. » — aucune sous-destination
+      désignée par le texte : rien à mapper.'
+    - 'N2, 2.2-5 et 2.2-6, p. 106 : admissions logement (mise aux normes) et bâtiments d''élevage expressément exclues
+      du secteur Npnr.'
+  Nto1:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 (règle de zone applicable au secteur, DG Article 3 p. 6) : « A l''exception
+      de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: au titre du chapeau Nto (« pratique de sports, de loisirs, de tourisme et d'hébergement hôtelier
+          »), limité en Nto1 à « la réhabilitation et l'aménagement du bâtiment existant » ; insertion dans le milieu
+          sans le dénaturer, préservation des sols et des paysages
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de tourisme
+          et d'hébergement hôtelier […] En secteur Nto1, la réhabilitation et l'aménagement du bâtiment existant.
+          »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: constructions destinées à « la pratique de sports » (chapeau Nto), limité en Nto1 à la réhabilitation
+          et l'aménagement du bâtiment existant
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de tourisme
+          et d'hébergement hôtelier »
+      restauration:
+        statut: sous_condition
+        condition: uniquement en tant qu'équipement lié et nécessaire au fonctionnement des installations du secteur
+          (« accueil, local technique, sanitaires, restauration, etc. »), limité en Nto1 à la réhabilitation et
+          l'aménagement du bâtiment existant
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « ainsi que les équipements qui sont liés et nécessaires à leur fonctionnement (accueil, local
+          technique, sanitaires, restauration, etc.) »
+      logement:
+        statut: sous_condition
+        condition: uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires (20 m²)
+          sur habitations existantes régulièrement édifiées, limite cumulée 120 m² (règle N2, 2.2-5, applicable
+          hors Nco/Npnr)
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-5
+        page_pdf: 106
+        citation: « A l'exception des secteurs Nco et Npnr, les travaux d'aménagement et d'extension mineure pour
+          mise aux normes sanitaires (limités à 20 m² de surface de plancher) réalisés sur des habitations existantes
+          régulièrement édifiées, dans la limite d'une surface de plancher totale cumulée de 120 m². »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: réseaux, voirie, transports, énergie et installations d'infrastructure des services publics (règle
+          N2, 2.2-3, sans exclusion de secteur)
+        article: N2, 2.2-3
+        page_pdf: 106
+        citation: « […] les installations et ouvrages techniques d'infrastructure nécessaires au fonctionnement
+          des services publics, dès lors qu'ils s'insèrent dans le milieu environnant et qu'ils ne compromettent
+          pas le caractère naturel de la zone. »
+  Nto2:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 (règle de zone applicable au secteur, DG Article 3 p. 6) : « A l''exception
+      de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: 'au titre du chapeau Nto (« hébergement hôtelier »), sous la forme prévue en Nto2 : « la réalisation
+          d''un écolodge et de ses équipements annexes à vocation touristique (restaurants, piscine couverte, …)
+          » ; surface de plancher totale admise dans le secteur : 2 500 m² dans une assiette aménageable de 21 000
+          m²'
+        seuil_m2: 2500
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « En secteur Nto2, la réalisation d'un écolodge et de ses équipements annexes à vocation touristique
+          (restaurants, piscine couverte, …). La surface de plancher totale admise dans le secteur est de 2 500
+          m² dans une assiette aménageable de 21 000 m². »
+      restauration:
+        statut: sous_condition
+        condition: uniquement en tant qu'équipement annexe de l'écolodge (« restaurants ») ou équipement lié et
+          nécessaire au fonctionnement des installations ; dans la limite des 2 500 m² de surface de plancher totale
+          du secteur
+        seuil_m2: 2500
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « la réalisation d'un écolodge et de ses équipements annexes à vocation touristique (restaurants,
+          piscine couverte, …) »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: en Nto2, uniquement au titre de « la réalisation d'un écolodge et de ses équipements annexes
+          à vocation touristique » (N2 2.2-10, tiret Nto2), dans la limite des 2 500 m² de surface de plancher totale
+          du secteur
+        seuil_m2: 2500
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: En secteur Nto2, la réalisation d'un écolodge et de ses équipements annexes à vocation touristique
+      logement:
+        statut: sous_condition
+        condition: uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires (20 m²)
+          sur habitations existantes régulièrement édifiées, limite cumulée 120 m² (règle N2, 2.2-5, applicable
+          hors Nco/Npnr)
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-5
+        page_pdf: 106
+        citation: « A l'exception des secteurs Nco et Npnr, les travaux d'aménagement et d'extension mineure pour
+          mise aux normes sanitaires (limités à 20 m² de surface de plancher) réalisés sur des habitations existantes
+          régulièrement édifiées, dans la limite d'une surface de plancher totale cumulée de 120 m². »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: réseaux, voirie, transports, énergie et installations d'infrastructure des services publics (règle
+          N2, 2.2-3, sans exclusion de secteur)
+        article: N2, 2.2-3
+        page_pdf: 106
+        citation: « […] les installations et ouvrages techniques d'infrastructure nécessaires au fonctionnement
+          des services publics, dès lors qu'ils s'insèrent dans le milieu environnant et qu'ils ne compromettent
+          pas le caractère naturel de la zone. »
+    notes:
+    - 'N11, 11.11, p. 114 : dispositions d''aspect spécifiques au secteur Nto2 (matériaux bioclimatiques, contraste
+      minimal, clôtures ≤ 80 cm, aucune insertion publicitaire ou enseigne d''envergure).'
+  Nto3:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 (règle de zone applicable au secteur, DG Article 3 p. 6) : « A l''exception
+      de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: 'au titre du chapeau Nto (« hébergement hôtelier ») ; surface de plancher totale admise : 120
+          m² par bâtiment sans pouvoir excéder 360 m² pour l''ensemble du secteur'
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « En secteur Nto3, la surface de plancher totale admise est de 120 m² par bâtiment sans pouvoir
+          excéder 360 m² pour l'ensemble du secteur concerné. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: constructions destinées à « la pratique de sports » (chapeau Nto) ; 120 m² par bâtiment, 360
+          m² maximum pour l'ensemble du secteur
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de tourisme
+          et d'hébergement hôtelier »
+      restauration:
+        statut: sous_condition
+        condition: uniquement en tant qu'équipement lié et nécessaire au fonctionnement des installations (« accueil,
+          local technique, sanitaires, restauration, etc. ») ; 120 m² par bâtiment, 360 m² maximum pour l'ensemble
+          du secteur
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « ainsi que les équipements qui sont liés et nécessaires à leur fonctionnement (accueil, local
+          technique, sanitaires, restauration, etc.) »
+      logement:
+        statut: sous_condition
+        condition: uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires (20 m²)
+          sur habitations existantes régulièrement édifiées, limite cumulée 120 m² (règle N2, 2.2-5, applicable
+          hors Nco/Npnr)
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-5
+        page_pdf: 106
+        citation: « A l'exception des secteurs Nco et Npnr, les travaux d'aménagement et d'extension mineure pour
+          mise aux normes sanitaires (limités à 20 m² de surface de plancher) réalisés sur des habitations existantes
+          régulièrement édifiées, dans la limite d'une surface de plancher totale cumulée de 120 m². »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: réseaux, voirie, transports, énergie et installations d'infrastructure des services publics (règle
+          N2, 2.2-3, sans exclusion de secteur)
+        article: N2, 2.2-3
+        page_pdf: 106
+        citation: « […] les installations et ouvrages techniques d'infrastructure nécessaires au fonctionnement
+          des services publics, dès lors qu'ils s'insèrent dans le milieu environnant et qu'ils ne compromettent
+          pas le caractère naturel de la zone. »
+  Nto4:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 (règle de zone applicable au secteur, DG Article 3 p. 6) : « A l''exception
+      de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      restauration:
+        statut: sous_condition
+        condition: constructions et installations nouvelles « de restauration » ouvertes au public, dans la limite
+          totale de 300 m² de surface de plancher (toutes constructions du secteur confondues), intégration dans
+          le site et lien fonctionnel avec le Parc des Palmiers
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: N2, 2.2-9
+        page_pdf: 106
+        citation: « En secteur Nto4, les constructions et installations nouvelles à vocation touristique, de loisirs,
+          d'accueil, de restauration et de commerces ouvertes au public […] dans la limite totale de 300 m² de surface
+          de plancher, à condition qu'elles s'intègrent dans le site et qu'elles aient un lien fonctionnel avec
+          le Parc des Palmiers. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions et installations nouvelles « de commerces ouvertes au public », dans la limite
+          totale de 300 m² de surface de plancher (toutes constructions du secteur confondues), intégration dans
+          le site et lien fonctionnel avec le Parc des Palmiers
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: N2, 2.2-9
+        page_pdf: 106
+        citation: « […] de restauration et de commerces ouvertes au public, […] dans la limite totale de 300 m²
+          de surface de plancher »
+      logement:
+        statut: sous_condition
+        condition: uniquement « les locaux d'habitation du personnel indispensable au fonctionnement et au gardiennage
+          des installations », dans la limite totale de 300 m² de surface de plancher du secteur ; s'y ajoute la
+          règle N2, 2.2-5 (p. 106) de mise aux normes des habitations existantes (120 m² cumulés)
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: N2, 2.2-9
+        page_pdf: 106
+        citation: « ainsi que les locaux d'habitation du personnel indispensable au fonctionnement et au gardiennage
+          des installations, dans la limite totale de 300 m² de surface de plancher »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: réseaux, voirie, transports, énergie et installations d'infrastructure des services publics (règle
+          N2, 2.2-3, sans exclusion de secteur)
+        article: N2, 2.2-3
+        page_pdf: 106
+        citation: « […] les installations et ouvrages techniques d'infrastructure nécessaires au fonctionnement
+          des services publics, dès lors qu'ils s'insèrent dans le milieu environnant et qu'ils ne compromettent
+          pas le caractère naturel de la zone. »
+    notes:
+    - 'N2, 2.2-9, p. 106 : les « constructions et installations nouvelles à vocation touristique, de loisirs, d''accueil
+      » ne désignent pas une sous-destination R151-28 identifiable sans déduction (pas d''« hébergement hôtelier
+      » cité pour Nto4, contrairement au chapeau des autres Nto) : ces vocations restent non mappées.'
+  Nto5:
+    silence: interdit
+    silence_src: 'Art. N1, 1.2, p. 105 (règle de zone applicable au secteur, DG Article 3 p. 6) : « A l''exception
+      de ceux visés à l''article N2.2., sont interdits toutes les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: 'au titre du chapeau Nto (« hébergement hôtelier ») ; surface de plancher totale admise : 170
+          m² par unité foncière, y compris les bâtis existants'
+        seuil_m2: 170
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « En secteur Nto5, la surface de plancher totale admise est de 170 m² par unité foncière y compris
+          les bâtis existants. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: constructions destinées à « la pratique de sports » (chapeau Nto) ; 170 m² de surface de plancher
+          par unité foncière, y compris les bâtis existants
+        seuil_m2: 170
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de tourisme
+          et d'hébergement hôtelier »
+      restauration:
+        statut: sous_condition
+        condition: uniquement en tant qu'équipement lié et nécessaire au fonctionnement des installations (« accueil,
+          local technique, sanitaires, restauration, etc. ») ; 170 m² par unité foncière, y compris les bâtis existants
+        seuil_m2: 170
+        seuil_type: surface_plancher
+        article: N2, 2.2-10
+        page_pdf: 106
+        citation: « ainsi que les équipements qui sont liés et nécessaires à leur fonctionnement (accueil, local
+          technique, sanitaires, restauration, etc.) »
+      logement:
+        statut: sous_condition
+        condition: uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires (20 m²)
+          sur habitations existantes régulièrement édifiées, limite cumulée 120 m² (règle N2, 2.2-5, applicable
+          hors Nco/Npnr)
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2, 2.2-5
+        page_pdf: 106
+        citation: « A l'exception des secteurs Nco et Npnr, les travaux d'aménagement et d'extension mineure pour
+          mise aux normes sanitaires (limités à 20 m² de surface de plancher) réalisés sur des habitations existantes
+          régulièrement édifiées, dans la limite d'une surface de plancher totale cumulée de 120 m². »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: réseaux, voirie, transports, énergie et installations d'infrastructure des services publics (règle
+          N2, 2.2-3, sans exclusion de secteur)
+        article: N2, 2.2-3
+        page_pdf: 106
+        citation: « […] les installations et ouvrages techniques d'infrastructure nécessaires au fonctionnement
+          des services publics, dès lors qu'ils s'insèrent dans le milieu environnant et qu'ils ne compromettent
+          pas le caractère naturel de la zone. »
