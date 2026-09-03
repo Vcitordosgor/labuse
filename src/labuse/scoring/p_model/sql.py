@@ -334,6 +334,37 @@ def build_static(session: Session) -> None:
     """)
 
 
+def refresh_static_residuel(session: Session) -> int:
+    """SCORING-3 (L2) — rafraîchit les colonnes RÉSIDUEL du feature store depuis
+    `parcel_residuel`, à CHAQUE rebuild de features.
+
+    Le bug K3 (SCORING-2) : `p_model_static` n'est reconstruite qu'aux
+    rafraîchissements PLU/bâti (build_static, ~1 h 47 de jointures spatiales) —
+    entre deux, les écritures M125 de `parcel_residuel` (0 = réponse du moteur,
+    cause explicite) n'atteignaient JAMAIS le dataset : 173 678 parcelles à
+    résiduel 0 ressortaient « inconnues » (NULL). Ici : UPDATE ciblé des trois
+    colonnes dérivées du résiduel (quelques secondes), le reste de la statique
+    garde son cycle propre. Un zéro n'est jamais un NULL.
+
+    Renvoie le nombre de lignes mises à jour (0 si tables absentes — bases de
+    test sans le feature store)."""
+    if not (_has_table(session, "p_model_static")
+            and _has_table(session, "parcel_residuel")):
+        return 0
+    r = session.execute(text("""
+        UPDATE p_model_static st
+        SET pct_potentiel     = pr.pct_potentiel,
+            sous_densite      = pr.sous_densite,
+            sdp_residuelle_m2 = pr.sdp_residuelle_m2
+        FROM parcel_residuel pr
+        JOIN parcels p ON p.id = pr.parcel_id
+        WHERE st.idu = p.idu
+          AND (st.pct_potentiel     IS DISTINCT FROM pr.pct_potentiel
+            OR st.sous_densite      IS DISTINCT FROM pr.sous_densite
+            OR st.sdp_residuelle_m2 IS DISTINCT FROM pr.sdp_residuelle_m2)"""))
+    return int(r.rowcount or 0)
+
+
 def build_dataset(session: Session, years: tuple[int, ...] = YEARS) -> None:
     """Assemble p_model_dataset : 1 ligne par parcelle × année.
 

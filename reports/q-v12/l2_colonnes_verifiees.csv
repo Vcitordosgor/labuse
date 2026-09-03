@@ -1,0 +1,12 @@
+colonne,source,n_source_zero,n_store_null_pour_zero,n_source_null_legitime,verdict
+sdp_residuelle_m2,parcel_residuel.sdp_residuelle_m2,285108,0,4397,OK — aucun zéro avalé
+pct_potentiel,parcel_residuel.pct_potentiel,23228,0,177899,OK — aucun zéro avalé
+sous_densite,parcel_residuel.sous_densite,189617,0,177899,OK — aucun zéro avalé
+pente_moy_deg,parcel_terrain.pente_moy_deg,1,0,0,OK — aucun zéro avalé
+canopee_pct,parcel_vegetation.canopee_pct,71981,0,5556,OK — aucun zéro avalé
+ndvi_moyen,parcel_vegetation.ndvi_moyen,1042,0,5556,OK — aucun zéro avalé
+dist_ecole_m,parcel_amenites.dist_ecole_m,545,0,0,OK — aucun zéro avalé
+dist_sante_m,parcel_amenites.dist_sante_m,405,0,0,OK — aucun zéro avalé
+dist_commerce_m,parcel_amenites.dist_commerce_m,599,0,0,OK — aucun zéro avalé
+dist_tcsp_m,parcel_amenites.dist_tcsp_m,1977,0,0,OK — aucun zéro avalé
+emprise_bati_m2,p_model_bati.emprise_bati_m2,0,0,0,OK — aucun zéro avalé
