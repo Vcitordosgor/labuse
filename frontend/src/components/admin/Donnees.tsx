@@ -1,82 +1,104 @@
-// ADMIN-1 (AD2) — page « Données » : UNE page pour la question « mes données sont-elles à jour ? ».
-// Fusionne les anciennes pages Sources, Cron/Horloge, Flux/Circuit et l'Agent de veille en TROIS
-// onglets — Catalogue (l'état, une ligne par source), Circuit (la fourmilière + la garde), CRON
-// (les jobs planifiés — RETOURS-9 Q6 : « Horloge » s'appelle désormais CRON, c'est ce que c'est).
-// Rien n'est réécrit : chaque onglet réutilise le composant EXISTANT (SourcesSection / FluxSection /
-// CronSection). En tête, un bandeau « 3 gestes » condensé, commun aux trois onglets (injecter ·
-// calculer · basculer), lu du même endpoint /admin/flux que le Circuit.
+// ADMIN-1 (AD2) → DONNEES-2 — page « Données » : UNE page pour la question « mes données sont-elles
+// à jour ? ». QUATRE onglets. Le premier, MISE À JOUR (DONNEES-2, cf. maquette-admin-donnees-v2.html),
+// est le cœur : trois étapes verticales (injecter · calculer · basculer), une action = un endroit.
+// Les trois autres sont des VUES sans action de mise à jour — Catalogue (l'état, une ligne par source),
+// Circuit (la fourmilière + la garde), CRON (les jobs planifiés). Chaque onglet réutilise le composant
+// EXISTANT ; rien n'est réécrit. Le bandeau « 3 gestes » condensé a disparu : ses chiffres vivent
+// désormais dans le badge de l'onglet Mise à jour et dans les étapes elles-mêmes.
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getAdminFlux, getAdminFluxRuns } from '../../lib/api'
+import { MiseAJour } from './MiseAJour'
 import { SourcesSection } from './Sources'
 import { FluxSection } from './Flux'
 import { CronSection } from './Cron'
 
-type Onglet = 'catalogue' | 'circuit' | 'cron'
+type Onglet = 'maj' | 'catalogue' | 'circuit' | 'cron'
 
-// Bandeau « 3 gestes » condensé (AD2.4) — résumé LU de /admin/flux (comptes), boutons → onglet Circuit
-// où vivent les commandes réelles (Injecter/Calculer/Basculer, mécanique FLUX-1 inchangée).
-function Gestes() {
+// en-tête de page (commun aux onglets) + badge de l'onglet Mise à jour : LU du même endpoint que le
+// Circuit (/admin/flux) et des runs (/admin/flux/runs, rendu progressif). Le badge compte les ÉTAPES
+// qui demandent une action (source à injecter · run en retard · run prêt à basculer).
+function useMajEtat() {
   const flux = useQuery({ queryKey: ['admin-flux'], queryFn: getAdminFlux, refetchInterval: 60_000 })
-  // Q1 — les runs (calcul d'écart coûteux) sont servis à part (rendu progressif) ; le compteur
-  // « à basculer » du bandeau les lit de cette 2e requête, sans bloquer le reste.
   const runsQ = useQuery({ queryKey: ['admin-flux-runs'], queryFn: getAdminFluxRuns, refetchInterval: 60_000 })
-  const c = flux.data?.flux.comptes
-  const nv = c?.nouvelle_version ?? 0
-  const recentes = c?.plus_recentes_que_run ?? 0
-  const runs = runsQ.data?.runs ?? []
-  const aBasculer = runs.filter((r) => !r.servi && r.complet).length
-  const Geste = ({ n, titre, detail, tone }: { n: number; titre: string; detail: string; tone: 'warn' | 'off' }) => (
-    <div className="flex items-center gap-2.5 rounded-lg border border-line bg-surface-2 px-3 py-2 text-[12.5px]">
-      <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full font-mono text-[11px] font-bold ${tone === 'warn' ? 'bg-amber/15 text-amber' : 'bg-mint/10 text-mint'}`}>{n}</span>
-      <span><b className="font-medium">{titre}</b> — <span className={tone === 'warn' ? 'text-amber' : 'text-txt-mut'}>{detail}</span></span>
-    </div>
-  )
-  return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
-      <Geste n={1} titre="Injecter" tone={nv > 0 ? 'warn' : 'off'}
-        detail={nv > 0 ? `${nv} nouvelle(s) version(s)` : 'rien à injecter'} />
-      <span className="text-txt-dim">→</span>
-      <Geste n={2} titre="Calculer" tone={recentes > 0 ? 'warn' : 'off'}
-        detail={recentes > 0 ? `${recentes} source(s) plus récente(s) que le run` : 'run à jour'} />
-      <span className="text-txt-dim">→</span>
-      <Geste n={3} titre="Basculer" tone={aBasculer > 0 ? 'warn' : 'off'}
-        detail={aBasculer > 0 ? `${aBasculer} run(s) prêt(s)` : 'rien à basculer'} />
-      {/* RETOURS-8 (R4.3) — bouton « Ouvrir le Circuit → » retiré : l'onglet Circuit suffit. */}
-    </div>
-  )
+  const d = flux.data
+  const injectables = d ? d.flux.sources.filter((s) => s.dot === 'warn' && s.injectable).length : 0
+  const plusRecentes = d?.flux.comptes.plus_recentes_que_run ?? 0
+  const aBasculer = (runsQ.data?.runs ?? []).filter((r) => !r.servi && r.complet).length
+  const aFaire = (injectables > 0 ? 1 : 0) + (plusRecentes > 0 ? 1 : 0) + (aBasculer > 0 ? 1 : 0)
+  return { d, aFaire, nCatalogue: d?.flux.comptes.total ?? null }
 }
 
 export function DonneesSection() {
-  const [onglet, setOnglet] = useState<Onglet>('catalogue')
-  // RETOURS-9 (Q9) — onglet ACTIF = plein de sa couleur (vert, encre sombre), pas un simple soulignement.
-  const Tab = ({ k, children }: { k: Onglet; children: React.ReactNode }) => (
+  const [onglet, setOnglet] = useState<Onglet>('maj')
+  const { d, aFaire, nCatalogue } = useMajEtat()
+
+  // en-tête « Mes données sont-elles à jour ? » (maquette v2) — run servi, garde, phrase surfaces.
+  const run = d?.flux.run
+  const coh = d?.coherence
+  const nOk = coh?.checks.filter((c) => c.ok).length ?? 0
+  const nTot = coh?.checks.length ?? 0
+  const surfTotal = d?.flux.comptes.n_surfaces ?? 0
+  const surfRun = coh?.n_surfaces ?? surfTotal
+  const surfVivantes = Math.max(0, surfTotal - surfRun)
+  const phraseSurfaces = surfVivantes > 0
+    ? `${surfTotal} surfaces · ${surfRun} sur le run servi · ${surfVivantes} vivante${surfVivantes > 1 ? 's' : ''} (hors run)`
+    : `${surfTotal} surfaces, toutes sur ce run`
+
+  // RETOURS-9 (Q9) — onglet ACTIF = plein de sa couleur (vert, encre sombre).
+  const Tab = ({ k, children, badge }: { k: Onglet; children: React.ReactNode; badge?: React.ReactNode }) => (
     <button onClick={() => setOnglet(k)} aria-pressed={onglet === k}
-      className={`mb-1.5 rounded-lg px-3 py-1.5 text-[13.5px] transition-colors duration-quick ${
+      className={`mb-1.5 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13.5px] transition-colors duration-quick ${
         onglet === k ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
-      {children}
+      {children}{badge}
     </button>
   )
+
   return (
     <>
-      <Gestes />
-      <div className="mb-4 flex gap-6 border-b border-line">
-        <Tab k="catalogue">Catalogue</Tab>
+      {/* en-tête de page (maquette v2) */}
+      <div className="font-mono text-[10.5px] uppercase tracking-[0.26em] text-txt-dim">Admin · Données</div>
+      <h1 className="mt-1.5 font-display text-[22px] font-semibold text-txt-hi">Mes données sont-elles à jour ?</h1>
+      {run && (
+        <div className="mt-1 text-[12.5px] text-txt-dim">
+          Run servi <span className="font-mono text-mint">{run.label}</span>
+          {run.calcule_le && <> · calculé le {new Intl.DateTimeFormat('fr-FR', { timeZone: 'Indian/Reunion', day: '2-digit', month: '2-digit' }).format(new Date(run.calcule_le))}</>}
+          {nTot > 0 && <> · garde de cohérence <span className={nOk === nTot ? 'text-mint' : 'text-coral'}>{nOk}/{nTot} {nOk === nTot ? '✓' : '✕'}</span></>}
+          {' · '}{phraseSurfaces}
+        </div>
+      )}
+
+      <div className="mb-4 mt-4 flex gap-6 border-b border-line">
+        <Tab k="maj" badge={aFaire > 0
+          ? <span className="rounded-full bg-amber/15 px-1.5 py-px font-mono text-[11px] font-semibold text-amber">{aFaire}</span>
+          : <span className="rounded-full bg-mint/10 px-1.5 py-px font-mono text-[11px] font-semibold text-mint">✓</span>}>Mise à jour</Tab>
+        <Tab k="catalogue" badge={nCatalogue != null
+          ? <span className="rounded-full bg-white/5 px-1.5 py-px font-mono text-[11px] text-txt-dim">{nCatalogue}</span>
+          : undefined}>Catalogue</Tab>
         <Tab k="circuit">Circuit</Tab>
         <Tab k="cron">CRON</Tab>
       </div>
+
+      {onglet === 'maj' && <MiseAJour />}
       {onglet === 'catalogue' && <SourcesSection />}
       {onglet === 'circuit' && <FluxSection />}
       {onglet === 'cron' && <CronSection />}
 
-      {/* AD2.8 — pied « Qui fait quoi ». RETOURS-9 Q6 : « Horloge » = CRON. Q2.5 : dire qu'en local il ne sonne pas. */}
+      {/* pied « Qui fait quoi » — commun aux onglets. RETOURS-9 Q6 : « Horloge » = CRON ; Q2.5 : le
+          CRON ne sonne pas en local. */}
       <div className="mt-4 rounded-xl border border-line px-4 py-3 text-[12.5px] leading-relaxed text-txt-mut">
         <b className="text-txt">Qui fait quoi :</b> le <b className="text-txt">CRON</b> sonne chaque nuit à 07:00 → il réveille
-        l'<b className="text-txt">agent de veille</b>, qui va lire chez chaque fournisseur et remplit la colonne <b className="text-txt">Amont</b> du Catalogue.
-        S'il trouve du nouveau : notification + bouton <b className="text-txt">Injecter</b>. Vous seul cliquez — Injecter télécharge et charge (l'ingestion),
-        puis <b className="text-txt">Calculer</b> refait les scores (Circuit), puis <b className="text-txt">Basculer</b> les met en service.
-        « Relancer l'ingestion » relance la même commande que le CRON (réparation). « Cadence attendue » sur une source manuelle n'appelle personne : c'est votre rappel.
-        {' '}<b className="text-txt">En local, le CRON ne sonne pas</b> : cliquez <b className="text-txt">Vérifier toutes les sources</b> dans le Catalogue.
+        l'<b className="text-txt">agent de veille</b>, qui va lire chez chaque producteur et remplit la colonne <b className="text-txt">Amont</b> du Catalogue.
+        S'il trouve du nouveau : notification + l'étape <b className="text-txt">Injecter</b> vous le propose. Vous seul cliquez — Injecter charge la version (l'ingestion),
+        <b className="text-txt"> Calculer</b> refait les scores, <b className="text-txt">Basculer</b> les met en service. Rien n'est automatique.
+        {' '}<b className="text-txt">En local, le CRON ne sonne pas</b> : cliquez <b className="text-txt">Vérifier toutes les sources</b> à l'étape 1.
+      </div>
+
+      {/* rappel des autres onglets (maquette v2) — vues, pas d'action de mise à jour */}
+      <div className="mt-3 border-l-2 border-line pl-3 text-[12px] leading-relaxed text-txt-mut">
+        <b className="text-txt-dim">Les autres onglets sont des vues.</b> <b className="text-txt">Catalogue</b> : une ligne par source (servi · amont · dernier passage · fraîcheur · alimente).
+        {' '}<b className="text-txt">Circuit</b> : la fourmilière (sources → moteurs → surfaces) et les compteurs Radar — lecture seule, clic-surlignage.
+        {' '}<b className="text-txt">CRON</b> : les jobs, dernier passage, prochain, « lancer maintenant ».
       </div>
     </>
   )
