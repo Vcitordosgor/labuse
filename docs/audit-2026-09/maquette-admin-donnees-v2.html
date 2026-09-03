@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE — Admin · Données v2 (maquette)</title>
+<style>
+  :root{
+    --bg:#0a0d0b;--panel:#0e1210;--card:#141a16;--line:#242b26;
+    --txt:#e9edeb;--dim:#98a39d;--faint:#5f6b65;
+    --mint:#4ADE80;--mint-deep:#2FBE66;--mint-soft:rgba(74,222,128,.10);--ink:#071009;
+    --amber:#F0B429;--amber-soft:rgba(240,180,41,.12);
+    --red:#F87171;--red-soft:rgba(248,113,113,.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#050706;color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;padding:22px 16px 60px;display:flex;flex-direction:column;align-items:center;gap:22px}
+  .note{font-size:12px;color:var(--dim);text-align:center;line-height:1.6;max-width:940px}
+  .note b{color:var(--mint)}
+  .page{width:1180px;max-width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  .kicker{font-size:10.5px;letter-spacing:.26em;color:var(--dim)}
+  h1{font-size:21px;font-weight:650;margin-top:5px}
+  .sub{font-size:12.5px;color:var(--dim);margin-top:4px}
+  .sub b{color:var(--txt)}
+  .sub .ok{color:var(--mint)}
+
+  .tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin:16px 0 18px}
+  .tabs span{padding:9px 2px 11px;font-size:13.5px;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tabs span.on{color:var(--mint);border-bottom-color:var(--mint);font-weight:600}
+  .tabs b{margin-left:5px;font-size:11px;background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:1px 7px;font-weight:600}
+
+  /* stepper vertical */
+  .step{display:grid;grid-template-columns:44px 1fr;gap:14px;margin-bottom:14px}
+  .rail{display:flex;flex-direction:column;align-items:center}
+  .num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+  .num.todo{background:var(--amber-soft);color:var(--amber);border:1px solid rgba(240,180,41,.4)}
+  .num.ok{background:var(--mint-soft);color:var(--mint);border:1px solid rgba(74,222,128,.4)}
+  .num.wait{background:var(--panel);color:var(--faint);border:1px solid var(--line)}
+  .rail .ln{flex:1;width:2px;background:var(--line);margin-top:6px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .box h2{font-size:15px;font-weight:650;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .box h2 small{font-size:12px;color:var(--dim);font-weight:400}
+  .box p{font-size:12.5px;color:var(--dim);margin-top:5px;line-height:1.55}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+  .row:first-of-type{margin-top:8px}
+  .row .l small{display:block;color:var(--faint);font-size:11px;margin-top:2px}
+  .btn{display:inline-block;background:var(--mint);color:var(--ink);border-radius:9px;padding:8px 13px;font-size:12.5px;font-weight:650;cursor:pointer;white-space:nowrap}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--dim)}
+  .btn.stop{background:none;border:1px solid rgba(248,113,113,.4);color:var(--red)}
+  .pill{display:inline-block;font-size:11px;border-radius:20px;padding:2px 9px}
+  .p-ok{background:var(--mint-soft);color:var(--mint)}.p-amb{background:var(--amber-soft);color:var(--amber)}.p-off{background:rgba(255,255,255,.05);color:var(--faint)}
+  .bar{height:6px;border-radius:3px;background:var(--panel);margin-top:6px;overflow:hidden}
+  .bar i{display:block;height:100%;width:38%;background:var(--mint)}
+  .run{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:8px;background:var(--panel)}
+  .run.best{border-color:rgba(74,222,128,.5)}
+  .run .t{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .run .t b{font-size:13.5px}
+  .run .m{font-size:12px;color:var(--dim);margin-top:4px}
+  .run .m b{color:var(--txt)}
+  .run details{margin-top:6px;font-size:12px;color:var(--dim)}
+  .run summary{cursor:pointer;color:var(--mint);font-size:12px;list-style:none}
+  .run summary::-webkit-details-marker{display:none}
+  .old{margin-top:10px;font-size:12px;color:var(--faint);cursor:pointer}
+  .guard{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin-top:8px;font-size:12.5px}
+  .guard span{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0}
+  .guard i{font-style:normal;color:var(--mint)}
+  .foot{margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--dim);line-height:1.6}
+  .foot b{color:var(--txt)}
+  .other{font-size:12px;color:var(--faint);border-left:2px solid var(--line);padding-left:10px;margin-top:6px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<p class="note">
+  <b>Données v2</b> — une page, quatre onglets, <b>une action = un endroit</b>. L'onglet <b>Mise à jour</b> est le cœur : trois étapes verticales,
+  chaque étape porte SES informations et SES boutons — plus rien n'est caché en bas de page. Le Circuit (fourmilière) et le Catalogue sont des vues, sans action de mise à jour.
+  Le bandeau du haut disparaît : ses chiffres vivent dans les onglets (badge) et dans les étapes.
+</p>
+
+<div class="page">
+  <div class="kicker mono">ADMIN · DONNÉES</div>
+  <h1>Mes données sont-elles à jour ?</h1>
+  <div class="sub">Run servi <b class="mono" style="color:var(--mint)">q_v11_m137</b> · calculé le 27/08 · garde de cohérence <span class="ok">6/6 ✓</span> ce matin 07:15 · 21 surfaces, toutes sur ce run</div>
+
+  <div class="tabs">
+    <span class="on">Mise à jour <b>2</b></span>
+    <span>Catalogue <b style="background:rgba(255,255,255,.05);color:var(--dim)">74</b></span>
+    <span>Circuit</span>
+    <span>CRON</span>
+  </div>
+
+  <!-- ÉTAPE 1 -->
+  <div class="step">
+    <div class="rail"><div class="num todo">1</div><div class="ln"></div></div>
+    <div class="box">
+      <h2>Injecter <small>43 sources surveillées sur 74 · dernière vérification aujourd'hui 07:00</small></h2>
+      <p>L'agent a trouvé une version plus récente chez le producteur. Rien n'entre sans votre clic.</p>
+      <div class="row">
+        <div class="l"><b>SITADEL — autorisations d'urbanisme</b><small>servi 2026-07 · amont <b style="color:var(--amber)">2026-08 disponible</b> · alimente scoring · signaux · permis</small></div>
+        <span class="btn">Injecter 2026-08 →</span>
+      </div>
+      <div class="row" style="border-top:1px dashed var(--line)">
+        <div class="l" style="color:var(--faint);font-size:12px">Les 73 autres sont à jour, en rappel manuel, ou non surveillées — détail dans Catalogue.</div>
+        <span class="btn ghost">Vérifier toutes les sources</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 -->
+  <div class="step">
+    <div class="rail"><div class="num todo">2</div><div class="ln"></div></div>
+    <div class="box">
+      <h2>Calculer <small>un run refait les scores de toutes les parcelles (~2 h 05)</small></h2>
+      <p>Le run servi a été calculé le 27/08. <b style="color:var(--amber)">1 source</b> est plus récente que lui (SITADEL). Un run ne change rien pour les clients tant qu'il n'est pas basculé.</p>
+      <div class="row">
+        <div class="l"><b>Lancer un nouveau run</b><small>recette servie (q_v12) · confirmation demandée · tourne de nuit de préférence</small></div>
+        <span class="btn">Lancer un run →</span>
+      </div>
+      <div class="row">
+        <div class="l" style="flex:1"><b>En cours : q_v12_20260903_1550</b><small>lancé 17:50 · cascade Saint-Paul · fin estimée ~19:55</small><div class="bar"><i></i></div></div>
+        <span class="btn stop">Arrêter</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 -->
+  <div class="step">
+    <div class="rail"><div class="num ok">3</div></div>
+    <div class="box">
+      <h2>Basculer <small>2 runs prêts · le geste qui change ce que voient les clients · réversible</small></h2>
+      <p>Lisez l'écart et la note de version, puis basculez. La garde de cohérence tourne aussitôt après.</p>
+
+      <div class="run best">
+        <div class="t"><b class="mono">q_v12</b><span><span class="pill p-ok">garde ✓</span> <span class="pill p-ok">recommandé</span> &nbsp;<span class="btn">Basculer vers q_v12 →</span></span></div>
+        <div class="m">calculé le 03/09 · <b>4 688</b> parcelles changent de palier · Priorité <b>1 478 → 1 225</b> (−17 %) · À suivre 3 210 → 3 302 · sources : SITADEL 2026-07, DVF 2025-S2, cadastre 2026-07…</div>
+        <details><summary>Note de version ▾</summary>
+          <div style="margin-top:6px">Les gains sûrs de SCORING-2, produits par le pipeline réel : 4 variables mortes retirées · résiduel lu à 100 % · voisinage et marché · calibration par segment. Précision@100 par commune 0,060 → 0,080. Les 50 principales sorties de Priorité : 37 « variable retirée », 8 « recalibration », 5 « voisinage » — <span style="color:var(--mint)">voir la liste</span>.</div>
+        </details>
+      </div>
+
+      <div class="run">
+        <div class="t"><b class="mono">q_v10_m129</b><span><span class="pill p-off">ancien run servi</span> &nbsp;<span class="btn ghost">Basculer</span></span></div>
+        <div class="m">calculé le 12/08 · 220 parcelles changent · Priorité +8,7 % · c'est le retour arrière</div>
+      </div>
+
+      <div class="old">▸ 4 runs anciens ou abandonnés (q_v8_calibre, q_flux_20260903_1548…) — masqués</div>
+
+      <div class="secttl" style="font-size:10px;letter-spacing:.22em;color:var(--faint);margin-top:14px">GARDE DE COHÉRENCE · APRÈS LA DERNIÈRE BASCULE</div>
+      <div class="guard">
+        <span>21 surfaces lisent le run servi <i>✓</i></span><span>Exports = écran <i>✓</i></span>
+        <span>Tier identique fiche / Projets / Scan <i>✓</i></span><span>Aucune lecture de table obsolète <i>✓</i></span>
+        <span>Date de valeur identique partout <i>✓</i></span><span>Endpoints métier vivants <i>✓</i></span>
+      </div>
+      <div class="m" style="font-size:11.5px;color:var(--faint);margin-top:8px">Historique : 22/08 q_v10 → q_v11 (Vic) · 12/08 q_v9 → q_v10 (Vic)</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Qui fait quoi :</b> le CRON sonne à 07:00 → l'agent lit chez chaque producteur → s'il y a du neuf, l'étape 1 vous le propose. Vous injectez, vous calculez, vous basculez. Rien n'est automatique. En local le CRON ne sonne pas : « Vérifier toutes les sources ».
+  </div>
+
+  <div class="other" style="margin-top:14px">
+    <b style="color:var(--dim)">Les autres onglets</b> — <b>Catalogue</b> : une ligne par source (servi · amont · dernier passage · fraîcheur · alimente · action), groupes repliables, chips de filtre ; les actions Injecter / Recharger y sont aussi, mais pointent la même mécanique que l'étape 1.
+    <b>Circuit</b> : la fourmilière (sources → moteurs → surfaces) et les compteurs Radar — lecture seule, clic-surlignage, aucun bouton de mise à jour.
+    <b>CRON</b> : les jobs, dernier passage, prochain, « lancer maintenant ».
+  </div>
+</div>
+
+</body>
+</html>
