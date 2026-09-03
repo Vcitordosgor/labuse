@@ -25,7 +25,8 @@ import { CoproprietesBlock } from './CoproprietesBlock'
 import { ProprietaireHistorique } from './ProprietaireHistorique'
 import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
-import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
+import type { FicheLine, FicheZoneDestinations, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
+import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
 
@@ -361,6 +362,52 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   )
 }
 
+// ── DESTINATIONS-1 (X4.2) — ligne « Destinations » d'une zone du règlement PLU ──────────────────
+// Résumé (principales autorisées / interdites / seuil commerce) + dépliable (chevron) : les 23
+// sous-destinations R151-28 avec leur PHRASE SOURCÉE (servie telle quelle — jamais reformulée).
+// Commune non calibrée / zone non lue → la phrase du backend, JAMAIS un vide.
+function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
+  const [open, setOpen] = useState(false)
+  // phrase seule (non calibrée / zone non lue) — dite telle quelle, rien à déplier
+  if (d.phrase && !d.lignes?.length) {
+    return <p data-fiche-destinations className="mt-1 text-[10.5px] text-txt-mut">Destinations · {d.phrase}</p>
+  }
+  const resume = [
+    d.autorisees?.length ? `${d.autorisees.length} autorisée${d.autorisees.length > 1 ? 's' : ''} (${d.autorisees.slice(0, 3).join(', ')}${d.autorisees.length > 3 ? '…' : ''})` : null,
+    d.interdites?.length ? `${d.interdites.length} interdite${d.interdites.length > 1 ? 's' : ''}` : null,
+    d.sous_conditions?.length ? `${d.sous_conditions.length} sous condition` : null,
+    d.seuil_commerce_m2 != null
+      ? `commerce ≤ ${fmtInt(d.seuil_commerce_m2)} m²${d.seuil_commerce_type === 'emprise_sol' ? ' (emprise au sol)' : ''}` : null,
+  ].filter(Boolean).join(' · ')
+  return (
+    <div data-fiche-destinations className="mt-1">
+      <button onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-txt">
+        <span className="text-mint">{open ? '▾' : '▸'}</span>
+        <span className="min-w-0 flex-1 truncate"><b className="text-txt">Destinations</b>{resume ? ` · ${resume}` : ''}</span>
+      </button>
+      {open && (
+        <div className="mt-1 flex flex-col gap-1 border-l border-line-2 pl-2.5">
+          {d.lignes!.map((l) => (
+            <div key={l.sous_destination} className="flex items-start gap-2">
+              <DestinationBadge etat={l.statut_effectif} />
+              {/* la phrase SERVIE, telle quelle (libellé + verdict + article/page/millésime + CDAC) */}
+              <span className="min-w-0 flex-1 text-[10.5px] leading-snug text-txt-mut">{l.phrase}</span>
+            </div>
+          ))}
+          {(d.millesime || d.referentiel) && (
+            <p className="text-[9.5px] leading-snug text-txt-dim">
+              {d.millesime ? `PLU millésime ${d.millesime}` : ''}
+              {d.millesime && d.referentiel ? ' · ' : ''}
+              {d.referentiel ? `référentiel : ${d.referentiel}` : ''}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
 function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   if (rp.indisponible) return <BlocIndisponible titre="Règlement PLU" />   // M125 — panne ≠ absence
@@ -396,6 +443,8 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
                 ))}
               </ul>
             )}
+            {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
+            {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}
             {/* note par zone UNIQUEMENT si elles diffèrent (sinon rendue une fois plus bas) */}
             {z.note && !noteCommune && <p className="mt-0.5 text-[10px] text-txt-dim">{z.note}</p>}
           </div>

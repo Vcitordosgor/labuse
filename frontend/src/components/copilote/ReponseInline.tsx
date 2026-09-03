@@ -21,7 +21,7 @@ const KICKER: Record<string, string> = {
 }
 
 export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
-  const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill, setM22Prefill,
+  const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill, setM22Prefill, setEtudeZonePrefill,
     setView, setFilters, setVerdict, openListing, openSurveillance, toggleOutils, outilsOpen, select } = useApp()
   // M118 — la VOIE d'un refus-voie : NAVIGATION pure vers la surface qui fait le travail (jamais une
   // exécution). Chaque cible mène à son écran ; la fiche/courrier ouvre la parcelle si l'IDU est connu.
@@ -38,6 +38,7 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   const ouvrir = () => {
     if (!v2.porte) return
     if (v2.prefill_programme) setM22Prefill(v2.prefill_programme)   // Q11 — pré-remplit la Faisabilité (M22)
+    else if (v2.prefill_etude_zone) setEtudeZonePrefill(v2.prefill_etude_zone)   // DESTINATIONS-1 (X4.4)
     else if (v2.prefill_plu) setPluPrefill(v2.prefill_plu)
     else if (v2.prefill === 'calcPrefill' && v2.prefill_idu) setCalcPrefill(v2.prefill_idu)
     else if (v2.prefill_idu) setParcelPrefill(v2.prefill_idu)
@@ -103,10 +104,18 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
       {v2.compris && <p data-compris className="mb-2.5 text-[12px] leading-snug text-cp-muted">{v2.compris}</p>}
       <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-cp-txt">{v2.text}</p>
 
+      {/* DESTINATIONS-1 (X4.4) — la PHRASE SOURCÉE du verdict destination, servie TELLE QUELLE
+          (article/page/millésime/CDAC) — le fait exact sous la formulation, jamais reformulé. */}
+      {v2.destination_phrase && (
+        <p data-destination-phrase className="mt-2.5 rounded-lg border border-cp-line2 bg-cp-card/60 px-3 py-2 text-[12px] leading-snug text-cp-muted">
+          {v2.destination_phrase}
+        </p>
+      )}
+
       {v2.porte && (
         <button data-reponse-porte onClick={ouvrir}
           className={`mt-3.5 inline-flex rounded-lg border px-3.5 py-2 font-display text-[12.5px] transition-colors duration-quick ${porteCls}`}>
-          Ouvrir l'outil →
+          {v2.porte === 'etude-zone' && v2.prefill_etude_zone ? 'Étude de zone →' : "Ouvrir l'outil →"}
         </button>
       )}
       {v2.carte_filtre && (

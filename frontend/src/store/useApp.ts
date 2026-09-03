@@ -444,6 +444,10 @@ interface AppState {
   // refactore pas ce qui marche pendant qu'on ajoute).
   parcelPrefill: string | null
   setParcelPrefill: (s: string | null) => void
+  // DESTINATIONS-1 (X4.4) — Copilote (outil destination_zone) → Étude de zone préremplie (parcelle +
+  // sous-destination R151-28). Même idiome consommé-puis-reset : EtudeZone lit AU MONTAGE, remet à null.
+  etudeZonePrefill: { idu?: string | null; commune?: string | null; zone?: string | null; sous_destination: string } | null
+  setEtudeZonePrefill: (p: { idu?: string | null; commune?: string | null; zone?: string | null; sous_destination: string } | null) => void
   // M137-Z — même idiome pour l'outil « Communes » : une porte (fiche « Voir le marché de X ») fait
   // setCommunePrefill(commune)+setModule('communes') ; Communes lit communePrefill AU MONTAGE, ouvre
   // directement la fiche de cette commune, puis setCommunePrefill(null). Menu (page Outils) → null →
@@ -779,6 +783,8 @@ export const useApp = create<AppState>((set) => ({
   setCourrierPrefillPiste: (courrierPrefillPiste) => set({ courrierPrefillPiste }),
   parcelPrefill: null,
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
+  etudeZonePrefill: null,
+  setEtudeZonePrefill: (etudeZonePrefill) => set({ etudeZonePrefill }),
   communePrefill: null,
   setCommunePrefill: (communePrefill) => set({ communePrefill }),
   calculette: null,

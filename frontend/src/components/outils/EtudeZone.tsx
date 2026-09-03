@@ -21,9 +21,10 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { ParcelInput } from '../ParcelInput'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { etudeZone, etudeZoneEntreprises, nafFamilles, nafSearch, parcelAt, type EtudeZoneInput } from '../../lib/api'
-import type { EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
+import type { EtudeZoneDestinations, EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { DestinationBadge, DestinationSelect } from './DestinationSelect'
 
 const TEMPS = [5, 10, 15]
 
@@ -49,6 +50,20 @@ export function EtudeZone() {
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [mode, setMode] = useState<'voiture' | 'pied'>('voiture')
   const [minutes, setMinutes] = useState(10)
+  // DESTINATIONS-1 (X4.1) — sous-destination R151-28 choisie (facultative) : verdict par zone PLU.
+  const [sousDest, setSousDest] = useState<string | null>(null)
+
+  // DESTINATIONS-1 (X4.4) — porte Copilote « Étude de zone » préremplie (parcelle + sous-destination).
+  // Même idiome consommé-puis-reset que parcelPrefill : lu AU MONTAGE, remis à null aussitôt.
+  const etudeZonePrefill = useApp((s) => s.etudeZonePrefill)
+  const setEtudeZonePrefill = useApp((s) => s.setEtudeZonePrefill)
+  useEffect(() => {
+    if (!etudeZonePrefill) return
+    if (etudeZonePrefill.idu) { setEntree('point'); setCible({ idu: etudeZonePrefill.idu, label: iduCourt(etudeZonePrefill.idu) }) }
+    setSousDest(etudeZonePrefill.sous_destination)
+    setEtudeZonePrefill(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [nafQuery, setNafQuery] = useState('')
   const [naf, setNaf] = useState<NafOption | null>(null)
@@ -75,7 +90,7 @@ export function EtudeZone() {
 
   const mut = useMutation<EtudeZoneResult, Error, void>({
     mutationFn: () => {
-      const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null }
+      const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null, sous_destination: sousDest }
       if (entree === 'polygone' && geomFromDrawn) { body.geom = geomFromDrawn; body.titre = 'Zone dessinée' }
       else if (cible) { body.idu = cible.idu; body.titre = cible.label }
       return etudeZone(body)
@@ -101,7 +116,10 @@ export function EtudeZone() {
   // O19 : l'ACTIVITÉ (étape 3) N'EST PAS dans ces dépendances — changer d'activité n'efface pas la
   // lecture de zone ; elle est appliquée par le bouton dédié de l'étape 3 (lentille additive).
   useEffect(() => { mut.reset(); setEntOpen(false) /* eslint-disable-next-line react-hooks/exhaustive-deps */ },
-    [entree, cible, minutes, mode, geomFromDrawn])
+    // DESTINATIONS-1 (X4.1) — sousDest fait partie de la LECTURE de zone (étape 1/2, payload principal) :
+    // le changer réarme « Lire la zone ». naf reste HORS deps (RETOURS-11 O19 : l'activité est la lentille
+    // additive de l'étape 3, appliquée par son propre bouton — elle n'efface pas la lecture).
+    [entree, cible, sousDest, minutes, mode, geomFromDrawn])
 
   // basculer d'onglet efface le périmètre de l'AUTRE entrée
   const choisirEntree = (e: 'point' | 'polygone') => {
@@ -141,7 +159,7 @@ export function EtudeZone() {
   const pretA = entree === 'polygone' ? !!geomFromDrawn : !!cible
 
   const nouvelleEtude = () => {
-    setCible(null); setNaf(null); setNafQuery(''); setZone(null); setTool(null)
+    setCible(null); setNaf(null); setNafQuery(''); setSousDest(null); setZone(null); setTool(null)
     setModuleMap({ idus: [], extra: null }); mut.reset()
   }
 
@@ -193,6 +211,12 @@ export function EtudeZone() {
           </div>
         </>
       )}
+
+      {/* DESTINATIONS-1 (X4.1) — sous-destination R151-28 (facultative) : « peut-on y ouvrir un
+          restaurant / un hôtel / un commerce ? » — verdict par zone PLU recouverte, phrase sourcée.
+          Fait partie de la LECTURE de zone (payload principal) ; l'activité NAF est, elle, portée par
+          la lentille additive de l'étape 3 (RETOURS-11 O19). */}
+      <DestinationSelect dataAttr="etude-zone" value={sousDest} onChange={setSousDest} />
 
       <button onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}
         className={`rounded-lg px-3 py-2 text-[12px] font-medium ${pretA && !mut.isPending ? 'bg-mint/20 text-txt-hi hover:bg-mint/30' : 'bg-surface-2 text-txt-dim'}`}>
@@ -295,6 +319,10 @@ export function EtudeZone() {
               {res.contraintes_plu.cdac_vigilance && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{res.contraintes_plu.cdac_vigilance}</p>}
             </div>
           )}
+
+          {/* DESTINATIONS-1 (X4.1) — verdict de la sous-destination choisie, zone PLU par zone PLU.
+              La phrase est celle du backend, TELLE QUELLE (jamais reformulée au front). */}
+          {res.destinations && <DestinationsBloc d={res.destinations} />}
 
           {/* LOT 8 — La zone de demain : signal DATÉ (logements autorisés 36 mois + zones AU), jamais une projection */}
           {res.zone_demain && ((res.zone_demain.logements_autorises_36m ?? 0) > 0 || (res.zone_demain.au_zones_n ?? 0) > 0) && (
@@ -487,6 +515,42 @@ function FamilleEtabs({ f, ouvrirParcelle }: { f: ZoneFamille; ouvrirParcelle: (
           className="mt-0.5 flex flex-wrap items-center gap-3 border-t border-line-2 pt-1 text-[9.5px] text-txt-mut" />
       )}
       {reste > 0 && <p className="px-1 text-[9.5px] text-txt-dim">+ {nb(reste)} autres — aperçu plafonné</p>}
+    </div>
+  )
+}
+
+// DESTINATIONS-1 (X4.1) — bloc « Destinations » : une ligne par zone PLU recouverte — badge d'état
+// (pastille contour), part %, mention CDAC si présente, et la PHRASE SERVIE telle quelle (sourcée
+// article/page/millésime par le backend — le front n'en reformule jamais un mot).
+function DestinationsBloc({ d }: { d: EtudeZoneDestinations }) {
+  if (d.erreur) {
+    return <p data-zone-destinations className="text-[11px] text-txt-mut">Destinations — {d.erreur}</p>
+  }
+  return (
+    <div data-zone-destinations>
+      <SectionTitle>Destinations{d.libelle ? <span className="ml-1 normal-case tracking-normal">· {d.libelle}</span> : null}</SectionTitle>
+      {(d.zones?.length ?? 0) === 0 ? (
+        <p className="text-[11px] text-txt-mut">Aucune zone PLU recouverte par la zone d’étude.</p>
+      ) : (
+        <div className="mt-1 flex flex-col gap-1.5">
+          {d.zones!.map((z, i) => (
+            <div key={i}>
+              <div className="flex items-center gap-2 text-[11.5px]">
+                <span className="font-mono text-txt-hi">{z.zone ?? '?'}</span>
+                {z.commune && <span className="truncate text-txt-mut">{z.commune}</span>}
+                <DestinationBadge etat={z.etat} />
+                {z.cdac && (
+                  <span title={z.cdac.source}
+                    className="inline-flex shrink-0 items-center rounded-full border border-amber/40 px-1.5 py-px font-mono text-[9px] uppercase tracking-wide text-amber">CDAC</span>
+                )}
+                {z.part_pct != null && <span className="ml-auto shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>}
+              </div>
+              <p className="mt-0.5 text-[10.5px] leading-snug text-txt-mut">{z.phrase}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {d.referentiel && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Référentiel : {d.referentiel}</p>}
     </div>
   )
 }

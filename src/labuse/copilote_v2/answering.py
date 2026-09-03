@@ -308,10 +308,18 @@ def _reply_compte(db: Session, message: str, res, faits_fil, intent: str) -> dic
                       carte_filtre=_carte_depuis_compte(res),
                       _faits_tour=registre_faits.extraire_faits(res))
     text = _formuler(db, message, res, faits_fil)
+    # DESTINATIONS-1 (X4.4) — le verdict destination voyage jusqu'au front : la PHRASE SOURCÉE
+    # (servie telle quelle, jamais reformulée) + la porte « Étude de zone » préremplie (idu/commune/
+    # zone/sous_destination). Motif prefill dédié (etudeZonePrefill), même grammaire que M22/PLU.
+    extra: dict = {}
+    if res.tool == "destination_zone" and isinstance(res.data, dict):
+        extra = {"destination_phrase": res.data.get("phrase"),
+                 "porte": "etude-zone", "prefill": "etudeZonePrefill",
+                 "prefill_etude_zone": res.data.get("prefill")}
     return _reply(text, intent, refus=None, tool=res.tool, sources=[res.source],
                   partiel=res.partiel, criteres_non_appliques=cna,
                   criteres_appliques=labels, carte_filtre=_carte_depuis_compte(res),
-                  _faits_tour=registre_faits.extraire_faits(res))
+                  _faits_tour=registre_faits.extraire_faits(res), **extra)
 
 
 def _repli_lisible(res) -> str:

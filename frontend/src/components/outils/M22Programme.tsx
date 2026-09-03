@@ -6,6 +6,7 @@ import { useApp } from '../../store/useApp'
 import { FaisabiliteTab } from '../fiche/Fiche'
 import { ListPaginationFooter } from '../ListPagination'
 import { CommuneScope } from './ModulePanel'
+import { DestinationBadge, DestinationSelect, useDestinationsRef } from './DestinationSelect'
 import { ParcelPicker } from './ParcelPicker'
 import { TierBadge } from './TierBadge'
 
@@ -26,12 +27,19 @@ export function M22() {
   // naturelles (N) éventuelles. Le moteur exclut DÉJÀ ces zones (constructible_neuf faux) : ce garde-fou
   // ne fait donc que confirmer visuellement, et laisse à l'utilisateur le choix de les réafficher.
   const [inclureAgriNat, setInclureAgriNat] = useState(false)
+  // DESTINATIONS-1 (X4.3) — sous-destination R151-28 du programme (facultative) : elle AGIT (zone au
+  // verdict « interdit » écartée et comptée, « sous condition »/« calibration » annotées par parcelle).
+  const [dest, setDest] = useState<string | null>(null)
+  const refDest = useDestinationsRef()
+  const destLabel = (slug: string) => refDest.data?.sous_destinations.find((s) => s.slug === slug)?.libelle ?? slug
   // coef utile→SDP = 1 + circulations % (hypothèse éditable ; défaut 20 %, bas de fourchette 20-25 %)
   // FAISABILITE (pagination SOCLE) : le formulaire soumis est FIGÉ dans `query` ; une useInfiniteQuery
   // pagine les résultats par `offset`. « Trouver » (re)pose le snapshot ; changer le formulaire ne
   // relance rien tant qu'on ne resoumet pas (comportement d'avant, + pagination).
   const [query, setQuery] = useState<Record<string, unknown> | null>(null)
-  const lancer = (f = form, c = commune) => { setQuery({ ...f, commune: c, coef_circulation: 1 + f.circulation_pct / 100 }) }
+  const lancer = (f = form, c = commune, d = dest) => {
+    setQuery({ ...f, commune: c, coef_circulation: 1 + f.circulation_pct / 100, ...(d ? { destination: d } : {}) })
+  }
   const results = useInfiniteQuery({
     queryKey: ['programme', query],
     queryFn: ({ pageParam }) => postProgramme({ ...(query as Record<string, unknown>), offset: pageParam }),
@@ -139,6 +147,9 @@ export function M22() {
             {F('surface_unite_m2', 'M²/UNITÉ (utile)', { min: 15 })}
             {F('circulation_pct', 'Circulations & murs %', { min: 0, title: 'Surface perdue en circulations, murs et parties communes, ajoutée à la surface habitable pour obtenir la SDP (hypothèse ; défaut 20 %, bas de la fourchette 20-25 %).' })}
           </div>
+          {/* DESTINATIONS-1 (X4.3) — la destination AGIT : zone « interdit » écartée (et comptée),
+              « sous condition » / « calibration en cours » annotées sur chaque parcelle. */}
+          <DestinationSelect dataAttr="programme" value={dest} onChange={setDest} />
           <button onClick={() => lancer()} disabled={results.isLoading}
             className="rounded-lg bg-mint py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
             {results.isLoading ? 'Calcul…' : 'Trouver les parcelles'}
@@ -165,6 +176,15 @@ export function M22() {
                   Inclure les zones agricoles (A) et naturelles (N)
                   {masquees > 0 && !inclureAgriNat && <span className="text-txt-mut">· {fmtInt(masquees)} masquée{masquees > 1 ? 's' : ''}</span>}
                 </label>
+                {/* DESTINATIONS-1 (X4.3) — l'écart est DIT : combien de parcelles la destination a écartées. */}
+                {meta.criteres.destination && (
+                  <p data-prog-dest-ecartees className="mt-0.5 text-[9.5px] leading-snug text-txt-mut"
+                    title={meta.criteres.destination_regle ?? undefined}>
+                    Destination « {destLabel(meta.criteres.destination)} » —{' '}
+                    <b className="text-txt">{fmtInt(meta.criteres.destination_ecartees ?? 0)}</b>{' '}
+                    parcelle{(meta.criteres.destination_ecartees ?? 0) > 1 ? 's' : ''} écartée{(meta.criteres.destination_ecartees ?? 0) > 1 ? 's' : ''} : destination interdite dans leur zone.
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 {items.map((i) => (
@@ -178,6 +198,12 @@ export function M22() {
                         <span title="Capacité constructible au gabarit PLU — ≠ SDP estimée (Assemblage) ≠ SHAB vendable (Faisabilité)">SDP gabarit</span> {fmtInt(i.sdp)} m² · zone {i.zone ?? '—'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
                         {i.capacite_estimee && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[9.5px] text-amber-500"
                           title="Capacité ESTIMÉE — zone non calibrée finement (hypothèses génériques)">estimée</span>}
+                        {/* DESTINATIONS-1 (X4.3) — verdict destination annoté (phrase sourcée au survol). */}
+                        {i.destination_verdict && i.destination_verdict.etat !== 'autorise' && (
+                          <span className="ml-1 inline-flex align-middle" title={i.destination_verdict.phrase ?? undefined}>
+                            <DestinationBadge etat={i.destination_verdict.etat} />
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
