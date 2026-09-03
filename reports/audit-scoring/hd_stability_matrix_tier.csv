@@ -1,0 +1,12 @@
+t_old,a_creuser,brulante,chaude,declasse_au_fermee,declasse_au_statut_inconnu,declasse_bati_revele,declasse_bati_sature,declasse_non_constructible,declasse_zone_fermee,ecartee,reserve_fonciere
+a_creuser,136710,0,2,0,0,0,0,0,0,0,51
+brulante,7,75,0,0,0,0,0,0,0,0,0
+chaude,124,36,1365,0,0,0,0,0,0,0,0
+declasse_au_fermee,0,0,0,245,0,0,0,0,0,0,0
+declasse_au_statut_inconnu,0,0,0,0,900,0,0,0,0,0,0
+declasse_bati_revele,0,0,0,0,0,5475,0,0,0,0,0
+declasse_bati_sature,0,0,0,0,0,0,123066,0,0,0,0
+declasse_non_constructible,0,0,0,0,0,0,0,6178,0,0,0
+declasse_zone_fermee,0,0,0,0,0,0,0,0,2809,0,0
+ecartee,0,0,0,0,0,0,0,0,0,145882,0
+reserve_fonciere,0,0,0,0,0,0,0,0,0,0,8738
