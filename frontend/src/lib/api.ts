@@ -717,11 +717,12 @@ export interface RenouvListe {
   source: string; run_label: string; maj: string | null
   libelle: string; composantes_libelles: Record<string, string>; avertissement: string
 }
-// le plafond vit côté serveur (config renouvellement.yaml, liste_max=400 PAR requête) → on n'envoie
-// PAS de `limit` (sinon la borne serveur min(limit,offset,cap) renvoie 0 à offset 0). DENSIFIER : on
-// pagine par `offset` (400 par page) pour atteindre les 67 214 sans jamais dépasser le cap par requête.
+// RETOURS-11 (T4) — pagination par 200 (doctrine SOCLE) : on envoie `limit=200` (le serveur borne à
+// min(limit, cap), donc 200 par page) et on pagine par `offset` pour atteindre les 67 214 sans jamais
+// tirer un bloc massif. Le plafond serveur (config renouvellement.yaml) reste une borne dure de sécurité.
+export const RENOUV_PAGE = 200
 export const getRenouvListe = (sort: string, communeNom?: string | null, offset = 0) =>
-  j<RenouvListe>(`/renouvellement/liste?sort=${sort}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
+  j<RenouvListe>(`/renouvellement/liste?sort=${sort}&limit=${RENOUV_PAGE}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
 
 // ── Prospection solaire (V1 restitution) — données gelées au 11/07/2026, masque solaire non calculé ──
 export interface SolaireItem {
@@ -909,7 +910,10 @@ export const getSourcesCouverture = () => j<SourcesCouverture>('/sources/couvert
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
-export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
+// RETOURS-11 (T4) — liste PAGINÉE (limit/offset) : l'endpoint sert déjà des pages (géom calculée pour la
+// page seulement) ; le front tranche par 200 via « Voir plus » (jamais de dump). Défauts = 1re page 200.
+export const modPatrimoine = (siren: string, limit = 200, offset = 0) =>
+  j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}&limit=${limit}&offset=${offset}`)
 // GB-017/018 — export CSV du portefeuille d'une PM (raison sociale entière ; notice si plafond serveur).
 export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren=${encodeURIComponent(siren)}&fmt=csv`
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')

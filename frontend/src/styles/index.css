@@ -106,11 +106,13 @@
   .acc-entry.mauve .acc-arrow { color:var(--violet); }
   @media (hover:hover) and (pointer:fine) {
     .acc-entry.mint:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
-    .acc-entry.mint:hover .acc-tile { background:rgba(7,16,9,.10); border-color:rgba(7,16,9,.38); color:var(--ink); }
+    /* RETOURS-11 T2 (03/09) — au survol : la TUILE passe en FOND SOMBRE, glyphe et contour VERTS
+       (mauve sur l'IA). Remplace le choix RETOURS-4 (tuile transparente, glyphe inversé en encre). */
+    .acc-entry.mint:hover .acc-tile { background:var(--ink); border-color:var(--mint); color:var(--mint); }
     .acc-entry.mint:hover .acc-desc { color:rgba(7,16,9,.72); }
     .acc-entry.mint:hover .acc-arrow { color:var(--ink); transform:translateX(3px); }
     .acc-entry.mauve:hover { background:var(--fill-mauve); border-color:#8B6CF2; color:var(--mauve-ink); }
-    .acc-entry.mauve:hover .acc-tile { background:rgba(20,14,34,.10); border-color:rgba(20,14,34,.38); color:var(--mauve-ink); }
+    .acc-entry.mauve:hover .acc-tile { background:var(--mauve-ink); border-color:var(--violet); color:var(--violet); }
     .acc-entry.mauve:hover .acc-desc { color:rgba(20,14,34,.72); }
     .acc-entry.mauve:hover .acc-arrow { color:var(--mauve-ink); transform:translateX(3px); }
   }
@@ -156,6 +158,22 @@
   @media (hover:hover) and (pointer:fine) {
     .hover-fill-amber:hover { background:var(--fill-amber); border-color:#D99A2E; color:var(--ink); }
     .hover-fill-amber:hover * { color:var(--ink) !important; }
+  }
+
+  /* RETOURS-11 T2 — tuile d'icône RÉUTILISABLE (composant IconTile, une seule copie). Au repos : tuile
+     teintée (vert, ou mauve `.ia` sur l'IA). Au SURVOL de la carte cliquable qui la contient
+     (`.hover-fill` / `.hover-fill-ia`), la tuile passe en FOND SOMBRE, glyphe et contour restent VERTS
+     (mauve sur l'IA) — décision Vic 03/09. Le `!important` bat la règle générique `.hover-fill:hover *`. */
+  .itile { width:34px; height:34px; flex:none; border-radius:9px; display:flex; align-items:center;
+    justify-content:center; border:1px solid rgba(74,222,128,.38); background:rgba(74,222,128,.14);
+    color:var(--mint); transition:background .15s, color .15s, border-color .15s; }
+  .itile svg { width:17px; height:17px; }
+  .itile.ia { border-color:rgba(180,151,240,.42); background:rgba(180,151,240,.16); color:var(--violet); }
+  @media (hover:hover) and (pointer:fine) {
+    .hover-fill:hover .itile:not(.ia) { background:var(--ink) !important; border-color:var(--mint) !important; }
+    .hover-fill:hover .itile:not(.ia), .hover-fill:hover .itile:not(.ia) * { color:var(--mint) !important; }
+    .hover-fill-ia:hover .itile, .hover-fill:hover .itile.ia { background:var(--mauve-ink) !important; border-color:var(--violet) !important; }
+    .hover-fill-ia:hover .itile, .hover-fill-ia:hover .itile *, .hover-fill:hover .itile.ia, .hover-fill:hover .itile.ia * { color:var(--violet) !important; }
   }
 
   /* RETOURS-4 S3 — survol PLEIN sur des surfaces à STYLES INLINE (Projets : lignes de « Vos projets » et
@@ -374,7 +392,8 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    sur un tiroir ouvert, ni sur un tiroir non cliquable). !important bat les couleurs inline (valueColor/accent). */
 @media (hover:hover) and (pointer:fine) {
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover { background:var(--fill-mint); border-color:#2FBE66; }
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:rgba(7,16,9,.10); border:1px solid rgba(7,16,9,.38); color:var(--ink); }
+  /* RETOURS-11 T2 (03/09) — tuile en fond SOMBRE, glyphe et contour VERTS au survol de la section. */
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:var(--ink); border:1px solid var(--mint); color:var(--mint); }
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-title,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-sub,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,

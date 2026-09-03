@@ -181,7 +181,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
           return (
             <Cell key={String(c['insee'])} data-o6-row title={String(c['commune'])}
               {...(onSelect ? { onClick: () => onSelect(String(c['commune'])) } : {})}
-              className={`group grid w-full ${O6_GRID} items-baseline border-b border-line py-2 text-left ${onSelect ? 'transition-colors duration-quick hover:bg-surface-3' : ''}`}>
+              className={`group grid w-full ${O6_GRID} items-baseline border-b border-line py-2 text-left ${onSelect ? 'hover-fill transition-colors duration-quick' : ''}`}>
               <span className="min-w-0 truncate text-[12px] font-medium text-txt group-hover:text-txt-hi">{String(c['commune'])}</span>
               {O6_COLS.map((col) => {
                 const isBest = best[col.k] != null && Number(c[col.k]) === best[col.k]

@@ -347,7 +347,7 @@ function VerdictHero() {
           {/* M55-J point 7 : « Masquer » → « Retour » — destination UNIQUE (store.retourFiltres) :
               sortir de la vue verdict et atterrir sur Filtres ouvert, jamais sur Couches. */}
           <button data-verdict-off onClick={retourFiltres}
-            className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
+            className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
             title="Retour — revenir aux filtres">
             Retour
           </button>
@@ -367,12 +367,12 @@ function VerdictHero() {
         {analyse && (
           <div className="flex gap-1.5">
             <button data-algo-open onClick={() => setAlgoModale('classement')}
-              className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
+              className="flex-1 whitespace-nowrap rounded-ctl border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
               title="La méthode : le tri, la fraction « 1/5 sous 1 an », la validation">
               {CLIENT.algo.bouton}
             </button>
             <button data-scoring-open onClick={() => setAlgoModale('scoring')}
-              className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
+              className="flex-1 whitespace-nowrap rounded-ctl border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
               title="Le sens des paliers : Priorité, À suivre, Long terme, Neutre, Faible, Écartée">
               {CLIENT.algo.boutonScoring}
             </button>

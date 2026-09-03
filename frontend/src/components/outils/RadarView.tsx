@@ -11,6 +11,7 @@ import { DepotAgence } from '../radar/DepotAgence'
 import { usePagination } from '../ListPagination'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R13 — recherche adresse/IDU commune
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
+import { trierCommunes } from '../../lib/communes'
 import { Declaratif } from './RadarDeclaratif'         // D2 — bloc déclaratif partagé (fiche + admin)
 import { useApp } from '../../store/useApp'
 
@@ -29,7 +30,8 @@ function useIsMobile(): boolean {
   return m
 }
 
-const COMMUNES_24 = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
+// RETOURS-11 T6 — tri sans tenir compte de l'article (« Le Port » se range à P).
+const COMMUNES_24 = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
 // RADAR-DEPOT-2 D5 — pas d'« Appartement » : les copros sont collectées mais jamais servies comme
 // annonces au client (elles n'existent que dans les signaux). Le tri se fait par est_copro, pas par type.
 // OUTILS-3 (ajout Vic) — « Immeuble » retiré des filtres Radar (hors périmètre de la pige).

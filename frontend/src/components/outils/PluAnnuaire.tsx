@@ -69,8 +69,8 @@ export function PluAnnuaire() {
                   const ok = c.statut === 'servable'
                   return (
                     <button key={c.insee} data-plu-commune={c.insee} onClick={() => entrer(c.insee)}
-                      className={`flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left ${
-                        ok ? 'border-line bg-surface-2 hover:border-mint/40' : 'border-line/60 bg-surface-1 hover:border-cp-amber/40'}`}>
+                      className={`hover-fill flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left ${
+                        ok ? 'border-line bg-surface-2' : 'border-line/60 bg-surface-1'}`}>
                       <span className={`truncate text-[11.5px] ${ok ? 'text-txt' : 'text-txt-dim'}`}>{c.commune}</span>
                       {ok
                         ? <span className="shrink-0 font-mono text-[8.5px] text-mint/70">à jour</span>
@@ -107,12 +107,12 @@ export function PluAnnuaire() {
       {insee && servable && mode === 'choix' && (
         <div data-plu-choix className="flex flex-col gap-2">
           <a data-plu-integral href={cur?.source_url ?? '#'} target="_blank" rel="noreferrer"
-            className="flex flex-col gap-0.5 rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2.5 hover:border-mint/70">
+            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2.5">
             <span className="text-[12.5px] font-medium text-mint">Télécharger le PLU intégral (.zip) ↓</span>
             <span className="text-[10px] leading-snug text-txt-dim">Pack officiel Géoportail de l’Urbanisme — règlement, zonage, annexes{cur?.document ? ` · contient ${cur.document}` : ''}</span>
           </a>
           <button data-plu-rechercher onClick={() => setMode('recherche')}
-            className="flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-left hover:border-mint/40">
+            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-left">
             <span className="text-[12.5px] font-medium text-txt">Rechercher dans le PLU →</span>
             <span className="text-[10px] leading-snug text-txt-dim">Le verbatim opposable (article, page, lien), jamais un résumé</span>
           </button>

@@ -535,15 +535,25 @@ function PipelineButton({ idu }: { idu: string }) {
     },
   })
   const cols = meta.data?.columns ?? []
+  // RETOURS-11 T3 (03/09) — le menu se ferme au clic n'importe où ailleurs et à Échap.
+  const wrap = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => { if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDown); document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
   return (
     // ADMIN-1 AD1 — « + CRM » = VERT (contour --mint via .act-mint, survol plein vert via .hover-fill),
     // largeur ÉGALE à « + Projet » (flex-1). Le choix de colonne reste APRÈS le clic (menu ci-dessous).
-    <div className="relative flex-1">
+    // RETOURS-11 T3 — bouton OPAQUE (act-cmp) tant que le menu est ouvert.
+    <div ref={wrap} className="relative flex-1">
       <button
         onClick={() => !inPipe && setOpen((o) => !o)}
         disabled={!!inPipe || add.isPending}
         aria-disabled={!!inPipe}
-        className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : 'act-mint hover-fill'}`}
+        className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : open ? 'act-cmp' : 'act-mint hover-fill'}`}
         title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
       >
         {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
@@ -553,7 +563,7 @@ function PipelineButton({ idu }: { idu: string }) {
           <div className="px-2 py-1 text-[10.5px] uppercase tracking-wide text-txt-dim">Ajouter dans…</div>
           {cols.map((c, i) => (
             <button key={c.key} data-crm-col={c.key} onClick={() => add.mutate(c.key)}
-              className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[12.5px] text-txt hover:bg-surface-3">
+              className="hover-fill flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[12.5px] text-txt">
               <span>{c.label}</span>{i === 0 && <span className="text-[10px] text-txt-dim">défaut</span>}
             </button>
           ))}
@@ -624,13 +634,23 @@ function ProjetButton({ idu }: { idu: string }) {
     return (c.proposee ?? 0) + (c.retenue ?? 0) + (c.ecartee ?? 0) + (c.a_analyser ?? 0)
   }
 
+  // RETOURS-11 T3 (03/09) — le menu se ferme au clic ailleurs et à Échap.
+  const wrap = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => { if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDown); document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
   return (
-    <div className="relative flex-1">
+    <div ref={wrap} className="relative flex-1">
       <button
         data-projet-fiche onClick={() => setOpen((o) => !o)} aria-expanded={open}
         /* ADMIN-1 AD1 — « + Projet » = JAUNE (contour + texte --amber, famille de la chip « Fiche commune »),
-           survol plein ambre via .hover-fill-amber ; rattaché = accent ambre (.act-amber-on). Aucun mauve. */
-        className={`act w-full whitespace-nowrap ${inProjet ? 'act-amber-on' : 'act-amber hover-fill-amber'}`}
+           survol plein ambre via .hover-fill-amber ; rattaché = accent ambre (.act-amber-on). Aucun mauve.
+           RETOURS-11 T3 — bouton OPAQUE (act-amber-on) tant que le menu est ouvert. */
+        className={`act w-full whitespace-nowrap ${inProjet || open ? 'act-amber-on' : 'act-amber hover-fill-amber'}`}
         title={inProjet
           ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — rattacher à un autre`
           : 'Ajouter cette parcelle à un projet'}>
@@ -656,7 +676,7 @@ function ProjetButton({ idu }: { idu: string }) {
               return (
                 <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
                   onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-mint/10 hover:text-txt-hi"
+                  className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick"
                   title={deja ? `Déjà dans « ${p.nom} » — ouvrir` : `Ajouter à « ${p.nom} » (→ Retenues)`}>
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
                   <span className="min-w-0 flex-1 truncate">{p.nom}</span>
@@ -667,7 +687,7 @@ function ProjetButton({ idu }: { idu: string }) {
           </div>
           <div className="my-1.5 h-px bg-line/40" />
           <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-50"
+            className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick disabled:opacity-50"
             title="Créer un projet et y ajouter cette parcelle">
             <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
           </button>
@@ -2063,8 +2083,9 @@ export function Fiche({ idu }: { idu: string }) {
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
                     Poser une question
                   </button>
+                  {/* RETOURS-11 T9 (03/09) — explication au survol retirée (plus de title). */}
                   <button onClick={() => { setIaOuvert('synthese'); if (!syntheseM.data && !syntheseM.isPending) syntheseM.mutate() }}
-                    data-synthese-ia className="ia-btn" title={CLIENT.fiche.ia.syntheseTip}>
+                    data-synthese-ia className="ia-btn">
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /></svg>
                     Synthèse IA
                   </button>

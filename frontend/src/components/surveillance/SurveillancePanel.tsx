@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getSuivis, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
 import { CP_COMMUNES, FiltreLabuse } from '../panel/FiltreLabuse'
+import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { iduCourt } from '../../lib/format'
@@ -197,7 +198,8 @@ function VoletCriteres() {
 }
 
 // ── Veille externe — les annonces Radar : créer + gérer ses veilles (back type 'radar' réutilisé). ──
-const V_COMMUNES = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
+// RETOURS-11 T6 — tri sans tenir compte de l'article (« Le Port » se range à P).
+const V_COMMUNES = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
 const V_TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
 
 function resumeVeille(v: RadarVeille): string {
