@@ -229,7 +229,13 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Veilles · 7 jours</Lbl>
           <div className="font-display text-2xl font-semibold text-mint">{data.traction?.veilles_7j ?? 0}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">alertes déclenchées sur les zones suivies</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">
+            alertes zones suivies
+            {/* SCORING-3 (L5.3) — retour terrain : étiquettes posées / semaine (cumul → seuil TERRAIN-1 : 200) */}
+            {' '}· <span title={`Étiquettes de retour terrain posées (7 j) — ${data.etiquettes_terrain?.total ?? 0} au total, seuil TERRAIN-1 : 200`}>
+              <b className="text-txt">{data.etiquettes_terrain?.semaine ?? 0}</b> retour{(data.etiquettes_terrain?.semaine ?? 0) > 1 ? 's' : ''} terrain
+            </span>
+          </div>
         </div>
         {/* FLUX-1 F3.5 — paires annonce ↔ vente DVF (mesure de finesse) ; cliquable vers Données/Circuit. */}
         <div className="cursor-pointer rounded-xl border border-line bg-surface-2 px-4 py-4 hover:border-line-2" onClick={() => go('donnees')}>

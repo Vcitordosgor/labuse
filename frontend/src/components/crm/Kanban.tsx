@@ -17,7 +17,13 @@ const TONE_ACCENT: Record<string, string> = {
   cold: '#5C7268', warm: '#E8B44C', hot: '#5CE6A1', reject: '#E8695A',
 }
 
-function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number; onArchive: () => void; onEdit: () => void }) {
+function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiquette }: {
+  e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number
+  onArchive: () => void; onEdit: () => void
+  // SCORING-3 (L5) — retour terrain : sélecteur d'un clic après contact (8 états, réversible)
+  etiquettes: { key: string; label: string }[]
+  onEtiquette: (key: string) => void
+}) {
   const { select, setView, setCourrierPrefillPiste, setModule } = useApp()
   // CONNEXIONS-2 Lot 4 (KO-6) — « Courrier » depuis la piste, SANS RESSAISIE : on pose l'IDU + la
   // piste (pipeline_entry_id/projet) et on ouvre l'outil, qui amorce le destinataire et rattache la
@@ -41,14 +47,14 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEnt
       tabIndex={0}
       role="button"
       onKeyDown={(ev) => {
-        if ((ev.key === 'Enter' || ev.key === ' ') && !(ev.target as HTMLElement).closest('button')) {
+        if ((ev.key === 'Enter' || ev.key === ' ') && !(ev.target as HTMLElement).closest('button, select')) {
           ev.preventDefault(); onEdit()
         }
       }}
       onClick={(ev) => {
         // M137 — le CORPS de la carte ouvre l'ÉCRAN D'ÉDITION (note/priorité/relance/prospection).
-        // Le bouton IDU garde l'ouverture de la fiche. Les autres boutons (✕) sont inertes ici.
-        if ((ev.target as HTMLElement).closest('button')) return
+        // Le bouton IDU garde l'ouverture de la fiche. Boutons (✕) et sélecteur d'étiquette inertes ici.
+        if ((ev.target as HTMLElement).closest('button, select')) return
         onEdit()
       }}
       className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30 focus:outline-none focus:ring-2 focus:ring-mint/50"
@@ -125,6 +131,22 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit }: { e: PipelineEnt
           title="Préparer un courrier pour cette piste (pré-rempli)">
           {e.courrier ? 'Relancer' : '✉ Courrier'}
         </button>
+      </div>
+      {/* SCORING-3 (L5) — RETOUR TERRAIN : après un contact, UN clic pose l'état réel
+          (contacté / refus / négo / vendu…). Par compte, horodaté, réversible (« — » efface). */}
+      <div className="mt-1.5">
+        <select
+          data-contact-etiquette
+          value={e.contact_etiquette ?? ''}
+          onChange={(ev) => onEtiquette(ev.target.value)}
+          title={e.contact_etiquette_at
+            ? `Retour terrain posé le ${e.contact_etiquette_at.slice(8, 10)}/${e.contact_etiquette_at.slice(5, 7)} — modifiable`
+            : 'Retour terrain : que s’est-il passé après le contact ?'}
+          className={`w-full cursor-pointer rounded-md border bg-surface-2 px-1.5 py-1 text-[10.5px] focus:outline-none focus:ring-1 focus:ring-mint/50 ${e.contact_etiquette ? 'border-mint/40 text-txt' : 'border-line-2 text-txt-dim'}`}
+        >
+          <option value="">— retour terrain ?</option>
+          {etiquettes.map((et) => <option key={et.key} value={et.key}>{et.label}</option>)}
+        </select>
       </div>
     </div>
   )
@@ -586,7 +608,9 @@ export function Kanban() {
                   <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0}
                     onArchive={() => setPendingArchive(e)}
-                    onEdit={() => setEditingEntry(e)} />
+                    onEdit={() => setEditingEntry(e)}
+                    etiquettes={meta.data?.contact_etiquettes ?? []}
+                    onEtiquette={(key) => patch.mutate({ id: e.id, body: { contact_etiquette: key } })} />
                 ))}
                 {items.length === 0 && (
                   /* DA §8 — colonne vide PARLANTE (dit quoi faire), pas un « vide » muet. */
