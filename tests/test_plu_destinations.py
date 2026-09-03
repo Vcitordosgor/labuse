@@ -218,6 +218,16 @@ def test_referentiel_servi():
     assert len(ref["destinations"]) == 5 and len(ref["sous_destinations"]) == 23
 
 
+def test_scot_daac_verdicts_reels():
+    # X3.2 — fichier réel : 24 communes, trois verdicts possibles, secteurs cités par page
+    s = d.scot_daac("Saint-Pierre")
+    assert s["verdict"] == "oui" and len(s["secteurs"]) == 4
+    assert all(sec.get("page_pdf") for sec in s["secteurs"])
+    assert d.scot_daac("Cilaos")["verdict"] == "non"           # DAAC en vigueur, commune sans ZPLC
+    assert d.scot_daac("Saint-Denis")["verdict"] == "non_localise"   # CINOR : DAACL en projet
+    assert d.scot_daac("97415")["verdict"] == "non_localise"         # TCO : pas de DAAC
+
+
 # ---------------------------------------------------------------------------
 # X5.1 — module UNIQUE : aucune autre lecture du dossier de calibration
 # ---------------------------------------------------------------------------

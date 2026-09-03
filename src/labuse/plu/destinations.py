@@ -143,6 +143,33 @@ def _rnu_doc() -> dict:
     return _load_yaml(str(p)) if p.is_file() else {}
 
 
+def scot_daac(commune: str) -> dict | None:
+    """X3.2 — « secteur préférentiel du SCoT : oui / non / non localisé » par commune
+    (config/plu_destinations/scot_daac.yaml — extraction PDF citée, aucune géométrie
+    ZACOM publiée à La Réunion au 03/09/2026). None si le fichier n'existe pas."""
+    p = _DEST_DIR / "scot_daac.yaml"
+    if not p.is_file():
+        return None
+    doc = _load_yaml(str(p))
+    communes = doc.get("communes") or {}
+    entry = None
+    if re.fullmatch(r"974\d\d", (commune or "").strip()):
+        entry = communes.get(commune.strip())
+    else:
+        for _insee, c in communes.items():
+            if _slug(c.get("commune", "")) == _slug(commune or ""):
+                entry = c
+                break
+    if entry is None:
+        return None
+    scot = (doc.get("scots") or {}).get(entry.get("scot")) or {}
+    lib = {"oui": "oui", "non": "non", "non_localise": "non localisé"}.get(entry.get("verdict"),
+                                                                          entry.get("verdict"))
+    return {"verdict": entry.get("verdict"), "libelle": lib, "scot": entry.get("scot"),
+            "secteurs": entry.get("secteurs") or [], "note": entry.get("note") or scot.get("note"),
+            "daac": scot.get("daac"), "document": scot.get("document"), "url": scot.get("url")}
+
+
 # ---------------------------------------------------------------------------
 # États de calibration (X5.2 / X5.3)
 # ---------------------------------------------------------------------------
@@ -399,9 +426,16 @@ def verdicts_zones_etude(zones: list[dict], sous_destination: str) -> dict:
                     **{k: v.get(k) for k in ("statut", "condition", "seuil_m2", "seuil_type",
                                              "article", "page_pdf", "millesime",
                                              "etat_calibration", "cdac", "phrase")}})
+    # X3.2 — secteur préférentiel du SCoT, par commune recouverte (oui/non/non localisé).
+    scots = {}
+    for z in out:
+        c = z.get("commune")
+        if c and c not in scots:
+            scots[c] = scot_daac(c)
     return {"sous_destination": sous_destination,
             "libelle": SOUS_DESTINATIONS[sous_destination][1],
-            "zones": out, "referentiel": REF_SOURCE, "cdac_regle": CDAC_SOURCE}
+            "zones": out, "scot": scots,
+            "referentiel": REF_SOURCE, "cdac_regle": CDAC_SOURCE}
 
 
 _ALIAS = {
