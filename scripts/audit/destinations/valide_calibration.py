@@ -40,8 +40,12 @@ def valide(path: str, pages_max: int | None = None) -> list[str]:
         if zv.get("etat") == "non_lu":
             continue
         sil = zv.get("silence")
+        toutes_explicites = len(zv.get("sous_destinations") or {}) >= len(SOUS_DESTINATIONS)
         if sil not in ("autorise", "interdit"):
-            errs.append(f"{zc}: silence manquant ou invalide ({sil!r})")
+            # silence sans objet quand les 23 sous-destinations sont explicites (ex. Uea/Uemi
+            # Saint-Pierre : « toutes destinations nécessaires au fonctionnement » → 23 conditions)
+            if not toutes_explicites:
+                errs.append(f"{zc}: silence manquant ou invalide ({sil!r})")
         elif not zv.get("silence_src"):
             errs.append(f"{zc}: silence sans silence_src (citation obligatoire)")
         for sd, e in (zv.get("sous_destinations") or {}).items():

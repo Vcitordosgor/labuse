@@ -962,6 +962,21 @@ def admin_sources(request: Request) -> dict:
                     and (now - r["last_sync_at"]).days > r["veille_cadence_attendue"]),
             },
         })
+    # DESTINATIONS-1 (X5.2) — la ligne PLU du Catalogue porte l'état de la calibration
+    # destinations (calibrées / à relire / non calibrées / RNU) : une nouvelle version de
+    # PLU passe la commune « à relire », visible ici sans changer d'écran.
+    try:
+        from ..plu.destinations import etats_ile
+        _etats_dest = etats_ile()
+        _chip = {"calibrees": sum(1 for e in _etats_dest if e["etat"] == "calibree"),
+                 "a_relire": sum(1 for e in _etats_dest if e["etat"] == "a_relire"),
+                 "rnu": sum(1 for e in _etats_dest if e["etat"] == "rnu"),
+                 "non_calibrees": sum(1 for e in _etats_dest if e["etat"] == "non_calibree")}
+        for s in sources:
+            if "plu" in s["name"].lower():
+                s["destinations"] = _chip
+    except Exception:  # noqa: BLE001 — la vitrine Catalogue ne casse jamais sur ce chip
+        pass
     # « à mettre à jour » d'abord (mandat), puis nom
     sources.sort(key=lambda s: (s["a_jour"] is not False, s["name"].lower()))
     for r in runs:
