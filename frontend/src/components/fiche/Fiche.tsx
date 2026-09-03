@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { createContext, isValidElement, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, faisabiliteExplain, getCalculetteDefaults, getDossierStatut, getExplain, getFaisabilite, getFiche, getModeB, getMoi, getOrthoEquipements, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postChargeFonciere, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch, type CalculetteDefaults } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtDateNum, fmtEurCompact, fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
@@ -515,7 +515,8 @@ function PipelineButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const state = useQuery({ queryKey: ['pipeline-parcel', idu], queryFn: () => getPipelineForParcel(idu) })
-  const meta = useQuery({ queryKey: ['pipeline-meta'], queryFn: getPipelineMeta, enabled: open })
+  const inPipe = state.data?.in_pipeline
+  const meta = useQuery({ queryKey: ['pipeline-meta'], queryFn: getPipelineMeta, enabled: open || !!inPipe })
   const add = useMutation({
     mutationFn: (status?: string) => addToPipeline(idu, status),
     onSuccess: () => {
@@ -524,7 +525,15 @@ function PipelineButton({ idu }: { idu: string }) {
       qc.invalidateQueries({ queryKey: ['pipeline'] })
     },
   })
-  const inPipe = state.data?.in_pipeline
+  // SCORING-3 (L5) — RETOUR TERRAIN depuis la fiche : quand la parcelle est suivie, UN clic
+  // pose l'état réel après contact (même étiquette que la carte Kanban — par compte, réversible).
+  const etiqueter = useMutation({
+    mutationFn: (key: string) => patchPipeline(state.data!.entry!.id, { contact_etiquette: key }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['pipeline-parcel', idu] })
+      qc.invalidateQueries({ queryKey: ['pipeline'] })
+    },
+  })
   const cols = meta.data?.columns ?? []
   return (
     // ADMIN-1 AD1 — « + CRM » = VERT (contour --mint via .act-mint, survol plein vert via .hover-fill),
@@ -550,6 +559,22 @@ function PipelineButton({ idu }: { idu: string }) {
           ))}
           {!cols.length && <div className="px-2 py-1.5 text-[12px] text-txt-mut">Chargement…</div>}
         </div>
+      )}
+      {/* SCORING-3 (L5) — sélecteur de retour terrain (visible dès que la parcelle est suivie) */}
+      {inPipe && state.data?.entry && (
+        <select
+          data-contact-etiquette
+          value={state.data.entry.contact_etiquette ?? ''}
+          onChange={(ev) => etiqueter.mutate(ev.target.value)}
+          disabled={etiqueter.isPending}
+          title="Retour terrain : que s’est-il passé après le contact ? (par compte, modifiable)"
+          className={`mt-1.5 w-full cursor-pointer rounded-md border bg-surface-2 px-1.5 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-mint/50 ${state.data.entry.contact_etiquette ? 'border-mint/40 text-txt' : 'border-line-2 text-txt-dim'}`}
+        >
+          <option value="">— retour terrain ?</option>
+          {(meta.data?.contact_etiquettes ?? []).map((et) => (
+            <option key={et.key} value={et.key}>{et.label}</option>
+          ))}
+        </select>
       )}
     </div>
   )

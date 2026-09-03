@@ -392,6 +392,12 @@ SEED: list[dict] = [
      "url": "https://www.data.gouv.fr/api/1/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/", "selecteur": "last_update"},
     {"name": "Cartofriches (Cerema)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/cartofriches/", "selecteur": "last_update"},
+    # SCORING-3 (L3) — BDNB (CSTB) : jeu data.gouv officiel, `last_update` (sondé 03/09/2026 :
+    # 2026-05-22, millésime 2026-02-a). La sentinelle PRÉVIENT ; l'ingestion (39 Go streamés,
+    # filtre 974) reste le CRON trimestriel `ingest-bdnb` — jamais auto-injectée.
+    {"name": "BDNB", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/base-de-donnees-nationale-des-batiments/",
+     "selecteur": "last_update"},
     {"name": "ZNIEFF (INPN/MNHN)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/inventaire-des-zones-naturelles-dinteret-ecologique-faunistique-et-floristique-znieff/", "selecteur": "last_update"},
     {"name": "ABF / Monuments historiques", "methode": "api",   # remplace l'endpoint ODS culture décommissionné

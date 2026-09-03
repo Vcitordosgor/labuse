@@ -375,6 +375,13 @@ def ingest_dpe(ctx: JobContext) -> None:
     _ingest_via_cli(ctx, "ingest-dpe")
 
 
+def ingest_bdnb(ctx: JobContext) -> None:
+    """SCORING-3 (L3) — BDNB trimestriel : stream de l'export national (~39 Go), filtre 974,
+    tables bdnb_* + couverture parcelle mesurée. Idempotent par millésime (skip si déjà ingéré).
+    N'inscrit AUCUNE variable au modèle : les candidates passent au banc K0 d'abord (L3.2)."""
+    _ingest_via_cli(ctx, "ingest-bdnb")
+
+
 def sync_gpu(ctx: JobContext) -> None:
     """Diff des PLU des 24 communes ; génère les événements de veille foncière concernés + bandeau PLU."""
     from .copilote_v2 import veilles as veilles_mod

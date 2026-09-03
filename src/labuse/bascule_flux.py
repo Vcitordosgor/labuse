@@ -133,11 +133,18 @@ def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
                     _ECART_CACHE[(lab, servi_run)] = ecart
         complet, motif = _run_complet(db, lab)
         row = db.execute(text(
-            "SELECT computed_at, n_parcelles FROM p_score_v2_runs WHERE run_id = :r"),
+            "SELECT computed_at, n_parcelles, model_version, "
+            "       params ->> 'recette' AS recette, "
+            "       params ->> 'note_de_version' AS note_de_version "
+            "FROM p_score_v2_runs WHERE run_id = :r"),
             {"r": lab}).mappings().first()
         out.append({"label": lab, "servi": est_servi, "complet": complet, "motif": motif,
                     "calcule_le": row["computed_at"].isoformat() if row and row["computed_at"] else None,
-                    "n_parcelles": row["n_parcelles"] if row else None, "ecart": ecart})
+                    "n_parcelles": row["n_parcelles"] if row else None, "ecart": ecart,
+                    # SCORING-3 (L1.3) — la note de version du candidat, lisible AVANT de basculer.
+                    "modele": row["model_version"] if row else None,
+                    "recette": (row["recette"] or row["model_version"]) if row else None,
+                    "note_de_version": row["note_de_version"] if row else None})
     return out
 
 

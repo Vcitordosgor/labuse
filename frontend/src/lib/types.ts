@@ -108,6 +108,8 @@ export interface PipelineMeta {
   priorities: { key: string; label: string }[]
   defaults: { status?: string; priority?: string }
   proprietaire_statuts?: { key: string; label: string }[]   // M137 — pour l'écran d'édition de carte
+  // SCORING-3 (L5) — les 8 étiquettes de retour terrain (sélecteur d'un clic après contact)
+  contact_etiquettes?: { key: string; label: string }[]
 }
 
 // M12 LOT H — colonnes CRM personnalisables (par tenant)
@@ -142,6 +144,10 @@ export interface PipelineEntry {
     | { type: 'particulier' } | null
   // CONNEXIONS-2 Lot 4 (KO-6) — statut du courrier rattaché à cette piste (relu sur la carte Kanban)
   courrier?: { statut: string; libelle: string; demande_id: number; ts: string | null } | null
+  // SCORING-3 (L5) — étiquette de retour terrain (par compte, horodatée, réversible)
+  contact_etiquette?: string | null
+  contact_etiquette_label?: string | null
+  contact_etiquette_at?: string | null
 }
 
 export interface SourceInfo {

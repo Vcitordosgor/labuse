@@ -53,8 +53,9 @@ export function FluxSection() {
   const [replie, setReplie] = useState<Record<string, boolean>>({})
   const [glossaire, setGlossaire] = useState(false)
 
+  // SCORING-3 (L1) — même pipeline, deux recettes : m36 (servie) ou q_v12 (candidat gelé, jamais basculé seul).
   const lancer = useMutation({
-    mutationFn: postAdminFluxLancerRun,
+    mutationFn: (recette?: 'm36' | 'q_v12') => postAdminFluxLancerRun(recette ?? 'm36'),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-flux'] }),
   })
   const bascule = useMutation({
@@ -183,10 +184,15 @@ export function FluxSection() {
               : <>Ce run est antérieur à Flux : il n'a pas enregistré ses millésimes (les prochains runs le feront).</>}
           </div>
           {plusRecentes > 0 && <div className="mt-2"><Chip tone="warn">● {plusRecentes} source(s) plus récentes que ce run</Chip></div>}
-          <div className="mt-3 flex items-center gap-2">
-            <button onClick={() => lancer.mutate()} disabled={lancer.isPending}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button onClick={() => lancer.mutate('m36')} disabled={lancer.isPending}
               className="rounded-lg bg-mint px-3.5 py-2 text-[13px] font-semibold text-[#071009] disabled:opacity-40">
               {lancer.isPending ? 'Lancement…' : 'Lancer un run →'}
+            </button>
+            <button onClick={() => lancer.mutate('q_v12')} disabled={lancer.isPending}
+              title="Recette candidate SCORING-3 (artefact gelé q_v12) — calculée par le même pipeline, jamais basculée automatiquement"
+              className="rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-[12.5px] font-medium text-mint disabled:opacity-40">
+              Candidat q_v12 →
             </button>
             {lancer.data?.estimation && <span className="text-[12px] text-txt-mut">{lancer.data.estimation}</span>}
           </div>
@@ -331,16 +337,26 @@ export function FluxSection() {
             <div className="mt-4">
               <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-txt-dim">Runs terminés · écart au servi</div>
               {runsBasculables.slice(0, 4).map((r) => (
-                <div key={r.label} className="mb-1.5 flex items-center justify-between gap-2 rounded-lg border border-line bg-surface-1 px-3 py-2 text-[12px]">
-                  <span className="min-w-0">
-                    <span className="font-mono text-txt">{r.label}</span>
-                    {r.ecart && <span className="text-txt-dim"> · {r.ecart.tiers_changes} tiers changent · dérive {r.ecart.derive_promues_pct > 0 ? '+' : ''}{r.ecart.derive_promues_pct}%</span>}
-                  </span>
-                  <button onClick={() => bascule.mutate(r.label)} disabled={!r.complet || bascule.isPending}
-                    title={r.complet ? 'Basculer vers ce run' : r.motif}
-                    className="shrink-0 rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint disabled:opacity-30">
-                    Basculer
-                  </button>
+                <div key={r.label} className="mb-1.5 rounded-lg border border-line bg-surface-1 px-3 py-2 text-[12px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0">
+                      <span className="font-mono text-txt">{r.label}</span>
+                      {r.recette === 'q_v12' && <span className="ml-1.5 rounded border border-mint/40 px-1 py-px font-mono text-[10px] text-mint">q_v12</span>}
+                      {r.ecart && <span className="text-txt-dim"> · {r.ecart.tiers_changes} tiers changent · dérive {r.ecart.derive_promues_pct > 0 ? '+' : ''}{r.ecart.derive_promues_pct}%</span>}
+                    </span>
+                    <button onClick={() => bascule.mutate(r.label)} disabled={!r.complet || bascule.isPending}
+                      title={r.complet ? 'Basculer vers ce run' : r.motif}
+                      className="shrink-0 rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] font-medium text-mint disabled:opacity-30">
+                      Basculer
+                    </button>
+                  </div>
+                  {/* SCORING-3 (L1.3) — la note de version du candidat, lue AVANT de basculer */}
+                  {r.note_de_version && (
+                    <details className="mt-1.5">
+                      <summary className="cursor-pointer text-[11.5px] text-txt-dim hover:text-txt">Note de version</summary>
+                      <div className="mt-1 whitespace-pre-wrap border-l-2 border-line pl-2.5 text-[11.5px] leading-relaxed text-txt-dim">{r.note_de_version}</div>
+                    </details>
+                  )}
                 </div>
               ))}
             </div>

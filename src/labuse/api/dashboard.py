@@ -274,6 +274,17 @@ def admin_pilotage(request: Request) -> dict:
             for rk in rows_k:
                 courrier_kpi[_courrier.STATUT_BUCKET.get(
                     _courrier.normaliser_statut(rk["statut"]), "en_cours")] += int(rk["n"])
+        # SCORING-3 (L5.3) — étiquettes de retour terrain POSÉES (journal, jamais agrégé par
+        # compte ni par parcelle ici : des COMPTES GLOBAUX seulement). Quand le cumul dépassera
+        # 200, TERRAIN-1 aura de la matière.
+        etiquettes = {"semaine": 0, "total": 0}
+        if c.execute(text("SELECT to_regclass('contact_etiquette_log')")).scalar():
+            r_et = c.execute(text(
+                "SELECT count(*) FILTER (WHERE ts > now() - interval '7 days' "
+                "                        AND etiquette IS NOT NULL) AS semaine, "
+                "       count(*) FILTER (WHERE etiquette IS NOT NULL) AS total "
+                "FROM contact_etiquette_log")).mappings().one()
+            etiquettes = {"semaine": int(r_et["semaine"]), "total": int(r_et["total"])}
         # LED rail : run servi + date de la carte (même vérité que /map/tiles/meta)
         run_label = carte_le = None
         if c.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
@@ -354,6 +365,8 @@ def admin_pilotage(request: Request) -> dict:
         "backup": _age_backup(),
         "sante": sante,
         "courrier": courrier_kpi,   # CONNEXIONS-2 Lot 4 — {a_deposer, en_cours, clos}
+        # SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul, seuil TERRAIN-1 : 200)
+        "etiquettes_terrain": etiquettes,
         "run": {"label": run_label, "carte_le": carte_le.isoformat() if carte_le else None},
         # ADMIN-1 (AD5) — rangée « À faire » (ambre) : chaque tuile = un geste attendu, cliquable.
         "a_faire": {"sources_nouvelle_version": af_nouvelle_version, "essais_24h": af_essais_24h,
@@ -1249,11 +1262,17 @@ def _estimation_run(db) -> str:
     return f"~{minutes // 60} h {minutes % 60:02d} estimées" if minutes >= 60 else f"~{minutes} min estimées"
 
 
+class LancerRunIn(BaseModel):
+    # SCORING-3 (L1) — recette du scoring : m36 (servie) ou q_v12 (candidat gelé).
+    recette: str = Field(default="m36", pattern="^(m36|q_v12)$")
+
+
 @router.post("/admin/flux/run/lancer")
-def admin_flux_lancer_run(request: Request) -> dict:
+def admin_flux_lancer_run(request: Request, body: LancerRunIn | None = None) -> dict:
     """FLUX-1 (F2.2) — LANCE un run comme un JOB détaché (même mécanique que « Injecter », X6) : la
     commande CLI `flux-run` chaîne le pipeline EXISTANT (cascade + score-v2, aucune réécriture). Le run
-    n'est PAS servi (la bascule reste manuelle). Retourne le label lancé + une durée estimée + le log."""
+    n'est PAS servi (la bascule reste manuelle). Retourne le label lancé + une durée estimée + le log.
+    SCORING-3 (L1) — `recette` optionnelle : q_v12 lance le MÊME pipeline avec l'artefact candidat gelé."""
     import subprocess
     import sys
     from pathlib import Path
@@ -1261,12 +1280,16 @@ def admin_flux_lancer_run(request: Request) -> dict:
     from .auth import exiger_admin
     exiger_admin(request)
     from ..db import engine, session_scope
-    label = f"q_flux_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}"
+    recette = body.recette if body else "m36"
+    prefixe = "q_v12" if recette == "q_v12" else "q_flux"
+    label = f"{prefixe}_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}"
     with engine().begin() as c:
         deja = c.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"), {"r": label}).scalar()
     if deja:
         raise HTTPException(409, f"Un run « {label} » existe déjà — réessayer dans une minute.")
-    argv = [sys.executable, "-m", "labuse", "flux-run", "--label", label]
+    # SCORING-3 — `-m labuse.cli` (module exécutable), PAS `-m labuse` : le paquet n'a pas de
+    # __main__.py, l'ancien argv échouait silencieusement dans le log (constaté au run q_v12).
+    argv = [sys.executable, "-m", "labuse.cli", "flux-run", "--label", label, "--recette", recette]
     racine = Path(__file__).resolve().parents[3]
     log_path = f"/tmp/labuse-flux-run-{label}.log"
     try:

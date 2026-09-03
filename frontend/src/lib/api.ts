@@ -1067,6 +1067,8 @@ export interface AdminPilotage {
   // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
   sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
   courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
+  // SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul ; seuil TERRAIN-1 : 200)
+  etiquettes_terrain?: { semaine: number; total: number }
   radar?: { compteurs: RadarCompteurs; ecart: FluxRadarEcart[] } | null   // FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
   run: { label: string | null; carte_le: string | null }
   // ADMIN-1 (AD5) — rangée « À faire » (ambre) : un geste attendu par tuile.
@@ -1301,6 +1303,8 @@ export interface FluxCoherence { ok: boolean | null; run?: string; n_surfaces?: 
 export interface FluxRunTermine {
   label: string; servi: boolean; complet: boolean; motif: string; calcule_le: string | null; n_parcelles: number | null
   ecart: { tiers_changes: number; promues_candidat: number; promues_servi: number; derive_promues_pct: number } | null
+  // SCORING-3 (L1.3) — recette du run (m36 | q_v12) + note de version du candidat, lisible avant de basculer.
+  modele?: string | null; recette?: string | null; note_de_version?: string | null
 }
 export interface FluxDerniereBascule { ts: string | null; ancien: string | null; nouveau: string; par: string | null; sens: string; caches_purges: string[] }
 export interface AdminFlux {
@@ -1314,8 +1318,8 @@ export interface AdminFlux {
 }
 export const getAdminFlux = () => j<AdminFlux>('/admin/flux')
 export const getAdminFluxRuns = () => j<{ runs: FluxRunTermine[]; derniere: FluxDerniereBascule | null }>('/admin/flux/runs')
-export const postAdminFluxLancerRun = () =>
-  j<{ ok: boolean; label: string; estimation: string; log: string }>('/admin/flux/run/lancer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+export const postAdminFluxLancerRun = (recette: 'm36' | 'q_v12' = 'm36') =>
+  j<{ ok: boolean; label: string; estimation: string; log: string }>('/admin/flux/run/lancer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recette }) })
 export const postAdminFluxBascule = (run: string) =>
   j<{ ok: boolean; ancien?: string; nouveau?: string; caches_purges?: string[]; coherence?: FluxCoherence; note?: string; motif?: string }>(
     '/admin/flux/bascule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run }) })

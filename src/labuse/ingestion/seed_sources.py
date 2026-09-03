@@ -598,6 +598,26 @@ SOURCES: list[dict] = [
                          "productible mensuel (12 E_m) + annuel + GHI, grille ST_SquareGrid 400 m "
                          "(~15 680 points) → IDW 4-NN, aspect 180° (plein nord, hémisphère sud), "
                          "usehorizon=1 (horizon topo intégré). ~10 req/s, résumable (`labuse solaire-build`)."),
+    # SCORING-3 (L3) — BDNB : année de construction, classe DPE, surfaces, usage PAR BÂTIMENT —
+    # le dernier proxy accessible de l'âge du propriétaire et de l'état du bien (plan v2 §2.4).
+    dict(name="BDNB", category="proprietaire", provider="CSTB",
+         access_type="import", status=S.A_FAIRE, reliability_level=R.VERIFIE,
+         source_millesime="2026-02-a (métropole seule — 974 absent)",
+         source_cadence="trimestrielle",
+         documentation_url="https://www.data.gouv.fr/datasets/base-de-donnees-nationale-des-batiments",
+         endpoint_url="https://www.data.gouv.fr/api/1/datasets/base-de-donnees-nationale-des-batiments/",
+         legal_notes="Licence Ouverte / Etalab 2.0 — attribution : « CSTB — Base de données nationale "
+                     "des bâtiments ».",
+         technical_notes="SCORING-3 L3 — CONSTAT MESURÉ 03/09/2026 : l'export « France » 2026-02-a "
+                         "(seule distribution, csv.tar.gz 39 Go) couvre la MÉTROPOLE SEULE — 96 "
+                         "départements, 0 ligne 974 sur 22,3 M vérifiées ligne à ligne "
+                         "(batiment_groupe_ffo_bat). L'ingestion est PRÊTE (ingestion/bdnb.py : stream "
+                         "gunzip→tar→filtre 974, `labuse ingest-bdnb`, CRON trimestriel qui re-SONDE la "
+                         "couverture avant tout téléchargement) ; les variables candidates (année de "
+                         "construction, DPE F/G, écart surface) et leur banc K0 (l3_bdnb.py) attendent "
+                         "un millésime couvrant La Réunion. La sentinelle surveille (api data.gouv, "
+                         "last_update) ; le CRON calcule ; Vic promeut. AUCUNE variable au modèle sans "
+                         "banc K0 (L3.2)."),
 ]
 
 

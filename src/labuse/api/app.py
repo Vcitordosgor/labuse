@@ -5616,6 +5616,11 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
         "created_at": e.created_at.isoformat() if e.created_at else None,
         "archived_at": e.archived_at.isoformat() if e.archived_at else None,   # M137
         "prospection": e.prospection or {},
+        # SCORING-3 (L5) — étiquette de retour terrain (par compte, horodatée, réversible)
+        "contact_etiquette": e.contact_etiquette,
+        "contact_etiquette_label": CONTACT_ETIQUETTES.get(e.contact_etiquette or ""),
+        "contact_etiquette_at": (e.contact_etiquette_at.isoformat()
+                                 if e.contact_etiquette_at else None),
         "proprietaire_label": prospection.statut_label((e.prospection or {}).get("statut_proprietaire")),
         "has_manual_contact": prospection.has_manual_contact(e.prospection),
         "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2,
@@ -5703,12 +5708,29 @@ class PipelineAddIn(BaseModel):
     projet_id: int | None = None         # référence du projet d'où vient la piste (copilote-projet)
 
 
+#: SCORING-3 (L5) — RETOUR TERRAIN : les 8 états d'un clic après contact. Stockés PAR COMPTE
+#: (cloison = celle de l'entrée pipeline), horodatés, RÉVERSIBLES ("" = effacer). Chaque pose
+#: est journalisée (contact_etiquette_log → compteur Pilotage « étiquettes/semaine »). AUCUN
+#: agrégat inter-comptes n'est produit dans ce mandat (doctrine L5.2, testée par IDOR).
+CONTACT_ETIQUETTES = {
+    "contacte": "Contacté",
+    "pas_de_reponse": "Pas de réponse",
+    "refus_ferme": "Refus ferme",
+    "pas_maintenant": "Pas maintenant",
+    "ouvert_discussion": "Ouvert à discuter",
+    "en_negociation": "En négociation",
+    "vendu_a_nous": "Vendu à nous",
+    "vendu_a_autre": "Vendu à un autre",
+}
+
+
 class PipelinePatchIn(BaseModel):
     status: str | None = None
     priority: str | None = None
     notes: str | None = None
     reminder_date: str | None = None     # "YYYY-MM-DD" = définir ; "" = effacer ; absent = inchangé
     prospection: dict | None = None      # patch partiel validé (merge dans l'existant)
+    contact_etiquette: str | None = None  # L5 : clé CONTACT_ETIQUETTES ; "" = effacer ; absent = inchangé
 
 
 @app.get("/pipeline/meta")
@@ -5729,7 +5751,9 @@ def pipeline_meta(request: Request, db: Session = Depends(get_db)) -> dict:
     return {"columns": [{"key": c["key"], "label": c["label"], "tone": c["tone"], "id": c["id"]}
                         for c in cols],
             "priorities": cfg.get("priorities", []), "defaults": dfl,
-            "proprietaire_statuts": [{"key": s, "label": _prosp.statut_label(s)} for s in _statut_order]}
+            "proprietaire_statuts": [{"key": s, "label": _prosp.statut_label(s)} for s in _statut_order],
+            # SCORING-3 (L5) — les 8 étiquettes de retour terrain (sélecteur d'un clic)
+            "contact_etiquettes": [{"key": k, "label": v} for k, v in CONTACT_ETIQUETTES.items()]}
 
 
 @app.get("/pipeline")
@@ -5841,6 +5865,21 @@ def pipeline_patch(entry_id: int, body: PipelinePatchIn, request: Request, db: S
             e.prospection = prospection.merge_prospection(e.prospection, body.prospection)
         except ValueError as exc:
             raise HTTPException(422, f"Prospection invalide : {exc}") from None
+    if body.contact_etiquette is not None:
+        # SCORING-3 (L5) — étiquette de retour terrain : validée, horodatée, réversible ("" =
+        # effacer). Chaque pose/effacement est JOURNALISÉ (compteur Pilotage) avec le compte —
+        # le journal n'est JAMAIS agrégé entre comptes.
+        et = body.contact_etiquette.strip()
+        if et and et not in CONTACT_ETIQUETTES:
+            raise HTTPException(422, f"Étiquette invalide : {et} "
+                                     f"(attendu : {', '.join(CONTACT_ETIQUETTES)})")
+        from datetime import datetime as _dt, timezone as _tz
+        e.contact_etiquette = et or None
+        e.contact_etiquette_at = _dt.now(tz=_tz.utc) if et else None
+        db.execute(text(
+            "INSERT INTO contact_etiquette_log (compte_id, parcel_id, entry_id, etiquette) "
+            "VALUES (:c, :p, :e, :et)"),
+            {"c": e.compte_id, "p": e.parcel_id, "e": e.id, "et": et or None})
     db.flush()
     return {"ok": True, "entry": _entry_dict(db, e)}
 

@@ -715,6 +715,12 @@ class PipelineEntry(Base, TimestampMixin):
     # M137 — ARCHIVAGE réversible (« aucune carte perdue ») : NULL = active ; sinon date d'archivage.
     # Plus de suppression dure. Filtré partout (listes/compteurs), toujours conjoint à compte_id.
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    # SCORING-3 (L5) — RETOUR TERRAIN : étiquette d'un clic après contact (8 états, cf.
+    # api.app.CONTACT_ETIQUETTES). PAR COMPTE (la cloison est celle de l'entrée), horodatée,
+    # RÉVERSIBLE (nouvelle valeur ou effacement) ; chaque pose est journalisée dans
+    # contact_etiquette_log (compteur Pilotage, jamais agrégée entre comptes).
+    contact_etiquette: Mapped[str | None] = mapped_column(String(24))
+    contact_etiquette_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     parcel: Mapped[Parcel] = relationship()
 
@@ -1019,6 +1025,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)
     ensure_pipeline_archived(engine)
+    ensure_contact_etiquette(engine)        # SCORING-3 (L5) : étiquette retour terrain + journal
     ensure_enrichment_cache(engine)
     ensure_score_v_view(engine)
     ensure_dvf_marche(engine)
@@ -1198,6 +1205,33 @@ def ensure_pipeline_archived(engine) -> None:
     with engine.begin() as c:
         c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS archived_at timestamptz"))
         c.execute(_t("CREATE INDEX IF NOT EXISTS ix_pipeline_archived ON pipeline_entries (archived_at)"))
+
+
+def ensure_contact_etiquette(engine) -> None:
+    """SCORING-3 (L5) — retour terrain : colonnes d'étiquette sur pipeline_entries + JOURNAL
+    horodaté des poses (compteur Pilotage « étiquettes/semaine », réversibilité tracée).
+    Idempotent ; le journal porte compte_id — les lecteurs ne produisent JAMAIS d'agrégat
+    inter-comptes (doctrine L5.2, testée)."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS "
+                     "contact_etiquette varchar(24)"))
+        c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS "
+                     "contact_etiquette_at timestamptz"))
+        c.execute(_t("""
+            CREATE TABLE IF NOT EXISTS contact_etiquette_log (
+                id serial PRIMARY KEY,
+                ts timestamptz NOT NULL DEFAULT now(),
+                compte_id integer,
+                parcel_id integer REFERENCES parcels(id) ON DELETE CASCADE,
+                entry_id integer,
+                etiquette varchar(24)
+            )"""))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_contact_etiq_ts "
+                     "ON contact_etiquette_log (ts DESC)"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_contact_etiq_compte "
+                     "ON contact_etiquette_log (compte_id)"))
 
 
 def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) -> None:

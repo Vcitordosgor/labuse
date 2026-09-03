@@ -1,0 +1,2 @@
+churn_top1158_vs_servi,n_priorite_servi,n_priorite_candidat,n_sorties_priorite,raisons
+0.4629,1478,1225,576,"{'variable retirée': 37, 'redistribution de la tête': 8, 'voisinage défavorable': 5}"
