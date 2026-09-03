@@ -1,0 +1,16 @@
+{
+  "regle": {
+    "precision_tete": "prec@100_commune_mediane ≥ champion ET prec_priorite ≥ champion",
+    "auc": "auc_global > champion",
+    "calibration": "ece ≤ 0,01 sur chacun des 4 segments",
+    "decision": "les trois conditions À LA FOIS, sur 2025 (année vierge) — sinon le champion reste",
+    "appliquee_dans_ce_mandat": false
+  },
+  "verdict": {
+    "gagne_precision_tete": false,
+    "gagne_auc": false,
+    "ece_tenue_par_segment": false,
+    "promotion_satisfaite": false,
+    "promotion_appliquee": false
+  }
+}

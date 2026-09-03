@@ -1,0 +1,3 @@
+jeu,n_tirages,frac_train,auc_test_moy,auc_test_std,signes_constants_pct,n_features
+K1 (avant retrait),3,0.6,0.6159857630757305,0.00040375239930748736,93.10344827586206,29
+K2 (après retrait),3,0.6,0.6290193369813899,0.000769674175685071,100.0,20

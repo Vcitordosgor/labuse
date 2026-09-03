@@ -1,0 +1,487 @@
+{
+  "candidat": "score-v2-candidat-2026-09-03",
+  "doctrine": "arène seulement — rien de servi ne change, le run servi reste q_v11_m137",
+  "protocole": {
+    "train": "2017-2023",
+    "calibration": 2024,
+    "test": 2025,
+    "annee_scoree": 2026,
+    "hygiene_cible": {
+      "annee_test": 2025,
+      "horizon_mois": 12,
+      "parcelles_vendues": 6693,
+      "parcelles_vente_groupee": 2934,
+      "parcelles_exclues_client_labuse": 0,
+      "courriers_simules_touchant_ventes": 0,
+      "pistes_crm_posterieures_vente": 13
+    }
+  },
+  "segments": {
+    "bati_individuel": 251656,
+    "terrain_nu": 95442,
+    "personne_morale": 81141,
+    "copropriete": 3424
+  },
+  "zone_A_hors_apprentissage": true,
+  "features": [
+    {
+      "feature": "rot_nu",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "rot_bati",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "med_pm2_terrain_36m",
+      "pct_non_null": 94.28
+    },
+    {
+      "feature": "med_pm2_bati_36m",
+      "pct_non_null": 96.11
+    },
+    {
+      "feature": "tendance_pm2_bati",
+      "pct_non_null": 88.23
+    },
+    {
+      "feature": "dens_bati_secteur",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pct_bati_secteur",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "filo_snv_pp",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "filo_pct_pauv",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "filo_pct_prop",
+      "pct_non_null": 89.28
+    },
+    {
+      "feature": "pente_moy_deg",
+      "pct_non_null": 98.1
+    },
+    {
+      "feature": "zone_plu",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "surface_m2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "permis_bin",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "piscine",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pv_candidat",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "tenure_bin_v2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "sdp_residuelle_v2_m2",
+      "pct_non_null": 98.98
+    },
+    {
+      "feature": "sous_densite_v2",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "residuel_famille",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "nu_constructible_v3",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_150m_12m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_150m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_12m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "ventes_400m_delta",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "permis_100m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "operations_pa_400m_24m",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "volume_commune_a1",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "med_pm2_commune_a1",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "tendance_volume_3ans",
+      "pct_non_null": 100.0
+    },
+    {
+      "feature": "pm_vendeur_actif",
+      "pct_non_null": 100.0
+    }
+  ],
+  "interactions": [
+    [
+      "tenure_bin_v2",
+      "permis_bin"
+    ],
+    [
+      "tenure_bin_v2",
+      "surface_m2"
+    ],
+    [
+      "tenure_bin_v2",
+      "rot_nu"
+    ],
+    [
+      "surface_m2",
+      "permis_bin"
+    ]
+  ],
+  "metriques_k0": [
+    {
+      "candidat": "ligne_de_base",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.06,
+      "n_communes": 24,
+      "n_priorite": 73,
+      "prec_priorite": 0.1369863014,
+      "n_a_suivre": 643,
+      "prec_a_suivre": 0.101088647,
+      "lift_decile_sup": 2.0594988134,
+      "auc_global": 0.6127410404,
+      "auc_bati_individuel": 0.5753331333,
+      "auc_terrain_nu": 0.6534709593,
+      "auc_personne_morale": 0.6590879516,
+      "auc_copropriete": 0.6138056366,
+      "ece_global": 0.0012532318,
+      "ece_bati_individuel": 0.0015772655,
+      "ece_terrain_nu": 0.004341294,
+      "ece_personne_morale": 0.00633041,
+      "ece_copropriete": 0.0239042377,
+      "churn_top1158_vs_servi": 0.1804835924
+    },
+    {
+      "candidat": "K1_censoring",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.055,
+      "n_communes": 24,
+      "n_priorite": 68,
+      "prec_priorite": 0.0735294118,
+      "n_a_suivre": 607,
+      "prec_a_suivre": 0.0955518946,
+      "lift_decile_sup": 2.0471664852,
+      "auc_global": 0.6116181788,
+      "auc_bati_individuel": 0.5768875594,
+      "auc_terrain_nu": 0.6487612698,
+      "auc_personne_morale": 0.6644314688,
+      "auc_copropriete": 0.6096212706,
+      "ece_global": 0.0011835785,
+      "ece_bati_individuel": 0.0018511321,
+      "ece_terrain_nu": 0.0043553403,
+      "ece_personne_morale": 0.0064548298,
+      "ece_copropriete": 0.0260511438,
+      "churn_top1158_vs_servi": 0.2892918826
+    },
+    {
+      "candidat": "K1bis_12m_test2024",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.065,
+      "n_communes": 24,
+      "n_priorite": 68,
+      "prec_priorite": 0.1029411765,
+      "n_a_suivre": 591,
+      "prec_a_suivre": 0.0676818951,
+      "lift_decile_sup": 1.8595782003,
+      "auc_global": 0.5852148379,
+      "auc_bati_individuel": 0.5948778756,
+      "auc_terrain_nu": 0.6528295622,
+      "auc_personne_morale": 0.533164613,
+      "auc_copropriete": 0.6479855906,
+      "ece_global": 0.0030162712,
+      "ece_bati_individuel": 0.0059219458,
+      "ece_terrain_nu": 0.0020719395,
+      "ece_personne_morale": 0.0089046886,
+      "ece_copropriete": 0.0212960498,
+      "churn_top1158_vs_servi": 0.2435233161
+    },
+    {
+      "candidat": "K1bis_24m_test2024",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.085,
+      "n_communes": 24,
+      "n_priorite": 66,
+      "prec_priorite": 0.0909090909,
+      "n_a_suivre": 593,
+      "prec_a_suivre": 0.1483979764,
+      "lift_decile_sup": 1.7791856785,
+      "auc_global": 0.5918392091,
+      "auc_bati_individuel": 0.5785973044,
+      "auc_terrain_nu": 0.6452673496,
+      "auc_personne_morale": 0.5855826869,
+      "auc_copropriete": 0.620099998,
+      "ece_global": 0.0025011928,
+      "ece_bati_individuel": 0.0078890881,
+      "ece_terrain_nu": 0.0028284618,
+      "ece_personne_morale": 0.0109756925,
+      "ece_copropriete": 0.0340751341,
+      "churn_top1158_vs_servi": 0.5544041451
+    },
+    {
+      "candidat": "K2_mortes",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.07,
+      "n_communes": 24,
+      "n_priorite": 69,
+      "prec_priorite": 0.0724637681,
+      "n_a_suivre": 621,
+      "prec_a_suivre": 0.0901771337,
+      "lift_decile_sup": 2.0980373391,
+      "auc_global": 0.6257251715,
+      "auc_bati_individuel": 0.5893020839,
+      "auc_terrain_nu": 0.6555277332,
+      "auc_personne_morale": 0.6862956256,
+      "auc_copropriete": 0.6054127692,
+      "ece_global": 0.0013850588,
+      "ece_bati_individuel": 0.0018631555,
+      "ece_terrain_nu": 0.0045484255,
+      "ece_personne_morale": 0.0074767742,
+      "ece_copropriete": 0.0205872429,
+      "churn_top1158_vs_servi": 0.3402417962
+    },
+    {
+      "candidat": "K3_residuel",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.06,
+      "n_communes": 24,
+      "n_priorite": 91,
+      "prec_priorite": 0.0769230769,
+      "n_a_suivre": 604,
+      "prec_a_suivre": 0.0860927152,
+      "lift_decile_sup": 2.0857050109,
+      "auc_global": 0.6218309637,
+      "auc_bati_individuel": 0.5865557608,
+      "auc_terrain_nu": 0.6570825412,
+      "auc_personne_morale": 0.6854604164,
+      "auc_copropriete": 0.6053341057,
+      "ece_global": 0.0014586605,
+      "ece_bati_individuel": 0.0019933711,
+      "ece_terrain_nu": 0.0050012859,
+      "ece_personne_morale": 0.0078773919,
+      "ece_copropriete": 0.0213735232,
+      "churn_top1158_vs_servi": 0.3635578584
+    },
+    {
+      "candidat": "K4_segments",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.05,
+      "n_communes": 24,
+      "n_priorite": 77,
+      "prec_priorite": 0.0779220779,
+      "n_a_suivre": 689,
+      "prec_a_suivre": 0.1117561684,
+      "lift_decile_sup": 1.9962956313,
+      "auc_global": 0.6108016715,
+      "auc_bati_individuel": 0.588816446,
+      "auc_terrain_nu": 0.618217911,
+      "auc_personne_morale": 0.6454365796,
+      "auc_copropriete": 0.6090357633,
+      "ece_global": 0.002421448,
+      "ece_bati_individuel": 0.0015345378,
+      "ece_terrain_nu": 0.0057543605,
+      "ece_personne_morale": 0.0039070058,
+      "ece_copropriete": 0.0180836725,
+      "churn_top1158_vs_servi": 0.8497409326
+    },
+    {
+      "candidat": "K4bis_voisinage_global",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.075,
+      "n_communes": 24,
+      "n_priorite": 91,
+      "prec_priorite": 0.0659340659,
+      "n_a_suivre": 608,
+      "prec_a_suivre": 0.1069078947,
+      "lift_decile_sup": 2.1119112084,
+      "auc_global": 0.6101613922,
+      "auc_bati_individuel": 0.5837714937,
+      "auc_terrain_nu": 0.6573210846,
+      "auc_personne_morale": 0.6812733774,
+      "auc_copropriete": 0.6100709045,
+      "ece_global": 0.0012161455,
+      "ece_bati_individuel": 0.0020980781,
+      "ece_terrain_nu": 0.0044629513,
+      "ece_personne_morale": 0.0086094194,
+      "ece_copropriete": 0.0195212499,
+      "churn_top1158_vs_servi": 0.4525043178
+    },
+    {
+      "candidat": "K4bis_voisinage",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.045,
+      "n_communes": 24,
+      "n_priorite": 86,
+      "prec_priorite": 0.023255814,
+      "n_a_suivre": 651,
+      "prec_a_suivre": 0.0967741935,
+      "lift_decile_sup": 1.982421762,
+      "auc_global": 0.607729433,
+      "auc_bati_individuel": 0.589713962,
+      "auc_terrain_nu": 0.6226111287,
+      "auc_personne_morale": 0.6305208795,
+      "auc_copropriete": 0.5961805258,
+      "ece_global": 0.0043935456,
+      "ece_bati_individuel": 0.0019373974,
+      "ece_terrain_nu": 0.0063291851,
+      "ece_personne_morale": 0.0090625826,
+      "ece_copropriete": 0.0191265918,
+      "churn_top1158_vs_servi": 0.8911917098
+    },
+    {
+      "candidat": "K5_challenger_gbm",
+      "n_eval": 431663,
+      "n_exclues_client": 0,
+      "prec@100_commune_mediane": 0.07,
+      "n_communes": 24,
+      "n_priorite": 76,
+      "prec_priorite": 0.1973684211,
+      "n_a_suivre": 676,
+      "prec_a_suivre": 0.0813609467,
+      "lift_decile_sup": 1.9300093671,
+      "auc_global": 0.6071358348,
+      "auc_bati_individuel": 0.5953725435,
+      "auc_terrain_nu": 0.6194006437,
+      "auc_personne_morale": 0.623859209,
+      "auc_copropriete": 0.6658049429,
+      "ece_global": 0.0044336097,
+      "ece_bati_individuel": 0.0022177006,
+      "ece_terrain_nu": 0.006109918,
+      "ece_personne_morale": 0.0085870147,
+      "ece_copropriete": 0.0151222722,
+      "churn_top1158_vs_servi": 0.8566493955
+    }
+  ],
+  "millesimes_sources": [
+    {
+      "name": "BD TOPO IGN",
+      "source_millesime": "BD TOPO® V3 (IGN) — édition non enregistrée",
+      "ingere_le": null
+    },
+    {
+      "name": "Cadastre (API Carto PCI)",
+      "source_millesime": "PCI Parcellaire Express (DGFiP) — « latest » ingérée",
+      "ingere_le": null
+    },
+    {
+      "name": "Cadastre Etalab (bulk DGFiP/Etalab)",
+      "source_millesime": "Etalab cadastre — « latest » ingérée (DGFiP)",
+      "ingere_le": null
+    },
+    {
+      "name": "DVF / valeurs foncières",
+      "source_millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
+      "ingere_le": null
+    },
+    {
+      "name": "Fichiers fonciers (Cerema)",
+      "source_millesime": null,
+      "ingere_le": null
+    },
+    {
+      "name": "Filosofi INSEE (carreaux 200 m)",
+      "source_millesime": "millésime 2021",
+      "ingere_le": null
+    },
+    {
+      "name": "GPU — zonages d'assainissement",
+      "source_millesime": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+      "ingere_le": null
+    },
+    {
+      "name": "GPU — zonages d'assainissement (info-surf typeinf 19)",
+      "source_millesime": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+      "ingere_le": null
+    },
+    {
+      "name": "RGE ALTI (altimétrie)",
+      "source_millesime": "RGE ALTI® (IGN) — édition non enregistrée",
+      "ingere_le": null
+    },
+    {
+      "name": "RGE ALTI 5 m (IGN)",
+      "source_millesime": "RGE ALTI® 5 m (IGN) — édition non enregistrée",
+      "ingere_le": null
+    },
+    {
+      "name": "SITADEL (autorisations d'urbanisme)",
+      "source_millesime": "2026-06",
+      "ingere_le": "2026-08-14T00:00:00.000"
+    },
+    {
+      "name": "SUP — assiettes GPU (API Carto)",
+      "source_millesime": null,
+      "ingere_le": "2026-07-10T00:00:00.000"
+    },
+    {
+      "name": "Urbanisme PLU/GPU (API Carto)",
+      "source_millesime": "GPU/PLU par commune (révisions — détail en fiche)",
+      "ingere_le": null
+    }
+  ],
+  "regle_promotion": {
+    "precision_tete": "prec@100_commune_mediane ≥ champion ET prec_priorite ≥ champion",
+    "auc": "auc_global > champion",
+    "calibration": "ece ≤ 0,01 sur chacun des 4 segments",
+    "decision": "les trois conditions À LA FOIS, sur 2025 (année vierge) — sinon le champion reste",
+    "appliquee_dans_ce_mandat": false
+  },
+  "verdict_arene": {
+    "gagne_precision_tete": false,
+    "gagne_auc": false,
+    "ece_tenue_par_segment": false,
+    "promotion_satisfaite": false,
+    "promotion_appliquee": false
+  }
+}
