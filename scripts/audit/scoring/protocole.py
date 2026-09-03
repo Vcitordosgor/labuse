@@ -89,13 +89,15 @@ def segmenter(df: pd.DataFrame, copro: np.ndarray) -> pd.Series:
 
 # ─────────────────────────────── hygiène de la cible (K0.3) ───────────────────────────────
 
-def hygiene(eng) -> tuple[pd.DataFrame, dict]:
-    """Flags par parcelle vendue en TEST_YEAR : vente groupée + vente à un client LABUSE.
+def hygiene(eng, annee: int = TEST_YEAR, horizon_mois: int = 12) -> tuple[pd.DataFrame, dict]:
+    """Flags par parcelle vendue dans [01/01/annee, +horizon) : vente groupée +
+    vente à un client LABUSE.
 
     Retourne (flags indexés idu, compte-rendu). `exclue_client` = courrier réellement
     parti OU piste CRM créée AVANT la date de la vente (les courriers `simule` ne sont
     jamais partis : comptés à part, jamais une exclusion).
     """
+    fin = f"'{annee}-01-01'::date + interval '{int(horizon_mois)} months'"
     ventes = pd.read_sql(f"""
         SELECT m.idu, min(m.date_mutation) AS date_vente,
                bool_or(g.n_parc > 1)       AS vente_groupee
@@ -103,8 +105,8 @@ def hygiene(eng) -> tuple[pd.DataFrame, dict]:
         JOIN (SELECT id_mutation, count(DISTINCT idu) AS n_parc
               FROM p_model_ext_mut_l2 WHERE NOT exclue_l2f GROUP BY 1) g USING (id_mutation)
         WHERE NOT m.exclue_l2f
-          AND m.date_mutation >= '{TEST_YEAR}-01-01'
-          AND m.date_mutation <  '{TEST_YEAR + 1}-01-01'
+          AND m.date_mutation >= '{annee}-01-01'
+          AND m.date_mutation <  {fin}
         GROUP BY 1""", eng).set_index("idu")
 
     courrier = pd.read_sql(
@@ -124,15 +126,16 @@ def hygiene(eng) -> tuple[pd.DataFrame, dict]:
                               | (piste.notna() & (piste < dv)))
 
     cr = {
-        "annee_test": TEST_YEAR,
+        "annee_test": annee, "horizon_mois": horizon_mois,
         "parcelles_vendues": int(len(flags)),
         "parcelles_vente_groupee": int(flags["vente_groupee"].fillna(False).sum()),
         "parcelles_exclues_client_labuse": int(flags["exclue_client"].sum()),
         "courriers_simules_touchant_ventes": int(flags["n_simule"].fillna(0).gt(0).sum()),
         "pistes_crm_posterieures_vente": int((piste.notna() & (piste >= dv)).sum()),
     }
-    flags.to_csv(OUT / "k0_hygiene_flags.csv")
-    pd.DataFrame([cr]).to_csv(OUT / "k0_hygiene.csv", index=False)
+    suffixe = "" if (annee, horizon_mois) == (TEST_YEAR, 12) else f"_{annee}_{horizon_mois}m"
+    flags.to_csv(OUT / f"k0_hygiene_flags{suffixe}.csv")
+    pd.DataFrame([cr]).to_csv(OUT / f"k0_hygiene{suffixe}.csv", index=False)
     return flags, cr
 
 
@@ -143,13 +146,15 @@ class Contexte:
     (label + segments + gates statiques servis + exclusions d'hygiène) et les
     scores servis 2026 (churn). Construit UNE fois, réutilisé par tous les lots."""
 
-    def __init__(self, eng, test: pd.DataFrame, score26: pd.DataFrame | None = None):
+    def __init__(self, eng, test: pd.DataFrame, score26: pd.DataFrame | None = None,
+                 label_col: str = "label", annee_test: int = TEST_YEAR,
+                 horizon_mois: int = 12):
         self.eng = eng
         self.test = test.reset_index(drop=True)
         self.copro = measure.copro_mask(eng, self.test)
         self.seg = segmenter(self.test, self.copro)
-        self.y = self.test["label"].astype(int).to_numpy()
-        flags, self.hygiene_cr = hygiene(eng)
+        self.y = self.test[label_col].astype(int).to_numpy()
+        flags, self.hygiene_cr = hygiene(eng, annee_test, horizon_mois)
         self.exclues = set(flags.index[flags["exclue_client"]])
         self.eval_mask = ~self.test["idu"].isin(self.exclues).to_numpy()
         # gates statiques servis (mêmes lectures que le pipeline) — attachés une fois
