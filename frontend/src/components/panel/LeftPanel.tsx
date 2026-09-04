@@ -136,6 +136,8 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'cinquante_pas', label: '50 pas géométriques' },
   // M106 P4 : transport public (tracés + pôles + téléphérique) et lignes HT (contrainte)
   { key: 'transport', label: 'Transport public' },
+  // RETOURS-12 C2 — l'axe de transport structurant (BAOBAB Express, CINOR) : couche dédiée.
+  { key: 'tcsp', label: 'Axe structurant (BAOBAB Express)' },
   { key: 'axes', label: 'Axes structurants' },
   { key: 'lignes_ht', label: 'Lignes haute tension' },
   // M134 — couche « Dispositifs et périmètres ». Jamais un sigle nu : chaque libellé développe.
@@ -161,7 +163,7 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas'] },
   { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
   // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
-  { famille: 'Accès et réseaux', keys: ['transport', 'axes', 'lignes_ht'] },
+  { famille: 'Accès et réseaux', keys: ['transport', 'tcsp', 'axes', 'lignes_ht'] },
   // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
   // fiscaux à la maille COMMUNE (ZFANG, FRR). L'ANRU quitte « Risques » pour ici (un seul endroit).
   { famille: 'Dispositifs et périmètres', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr'] },

@@ -3681,10 +3681,20 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
         tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
         ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
+        # RETOURS-12 C2 — distance à l'AXE DE TRANSPORT STRUCTURANT : la ligne BAOBAB Express
+        # (Citalis/CINOR), desserte rapide EN SERVICE (GTFS, route_id 'BAO' — déjà en base). On mesure
+        # la distance à l'AXE (transport_ligne, route_id=BAO), pas à un arrêt de bus quelconque : c'est
+        # l'axe structurant qui ouvre la modulation possible du stationnement. Seuil de pertinence 1,5 km.
+        tcsp_m = db.execute(text(
+            "SELECT round(MIN(ST_Distance(l.geom_2975, p.geom_2975)))::int AS d "
+            "FROM spatial_layers l, parcels p "
+            "WHERE p.idu = :idu AND l.kind = 'transport_ligne' AND l.attrs->>'route_id' = 'BAO' "
+            "AND l.geom_2975 IS NOT NULL"), {"idu": idu}).scalar()
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
-    if not any((arret, pole, tele, ht)):
+    tcsp = {"distance_m": tcsp_m} if (tcsp_m is not None and tcsp_m <= 1500) else None
+    if not any((arret, pole, tele, ht, tcsp)):
         return None
     out: dict = {}
     if arret:
@@ -3746,6 +3756,22 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
                         "pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire "
                         "de réseau (EDF SEI)."),
             "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
+        }
+    if tcsp:
+        d = tcsp["distance_m"]
+        proche = d <= 500
+        # RETOURS-12 C2 — FORMULATION PRUDENTE : on ne PROMET jamais une réduction de stationnement ;
+        # on signale le point à instruire, en renvoyant au PLU (zone lue par le module destinations).
+        out["tcsp"] = {
+            "distance_m": d, "sous_500m": proche,
+            "libelle": (
+                "Axe de transport structurant — BAOBAB Express (Citalis / CINOR, ligne express en service) "
+                + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m")
+                + (" : à moins de 500 m d'un axe de transport structurant, le règlement de la zone PEUT "
+                   "moduler l'exigence de stationnement — à vérifier dans le PLU (règles de la zone). "
+                   "Rien n'est promis : c'est un point à instruire." if proche
+                   else ".")),
+            "source": "GTFS Citalis (CINOR) — Licence Ouverte (Point d'Accès National)",
         }
     return out
 
@@ -4470,7 +4496,11 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     "znieff", "amenite_bpe",
                     # SECTEUR-2 (T4) — prix du logement NEUF (VEFA acté DVF) en aplat COMMUNE ; subtype =
                     # tranche de prix (choropleth). ECLN écartée (métropole seule, N/A DOM) → jamais de stock.
-                    "vefa_neuf"}
+                    "vefa_neuf",
+                    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT : synthétique (pas un kind stocké),
+                    # dérivé de transport_ligne WHERE route_id='BAO' (BAOBAB Express, Citalis/CINOR). Voir
+                    # le cas particulier dans map_layers_geojson (jamais d'ingestion neuve : réutilise le GTFS).
+                    "tcsp_axe"}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
@@ -4492,6 +4522,22 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
     if kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
+    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT (couche synthétique) : le tracé de la ligne
+    # express BAOBAB (Citalis/CINOR), dérivé du GTFS déjà en base (transport_ligne, route_id='BAO').
+    # Aucune ingestion neuve → aucune traçabilité à recréer : on réutilise la source GTFS existante.
+    if kind == "tcsp_axe":
+        rows = db.execute(text(
+            "SELECT sl.id, sl.name, sl.attrs->>'reseau' AS reseau, sl.attrs->>'gtfs_maj' AS maj, "
+            "ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0001)) AS g "
+            "FROM spatial_layers sl WHERE sl.kind='transport_ligne' AND sl.attrs->>'route_id'='BAO'"
+        )).mappings().all()
+        feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
+                  "properties": {"id": r["id"], "name": "BAOBAB Express", "reseau": r["reseau"],
+                                 "subtype": "axe_structurant"}}
+                 for r in rows if r["g"]]
+        maj = rows[0]["maj"] if rows else None
+        return {"type": "FeatureCollection", "features": feats,
+                "millesime_integration": maj, "source_millesime": maj}
     # CONNEXIONS-2 Lot 6.3 (propagation M2) — si la SOURCE de cette couche est DÉSACTIVÉE au dashboard,
     # on sert une couche VIDE marquée « source désactivée » plutôt que des objets d'une source coupée.
     ds_off = db.execute(text(

@@ -176,6 +176,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     note: `Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI). BD TOPO IGN (Licence Ouverte)${fmtFraich(htQ)}`,
     body: <div data-legend-ht className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} /><span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span></div>,
   })
+  if (layers.tcsp) groupes.push({
+    id: 'tcsp', titre: 'Axe de transport structurant',
+    note: 'BAOBAB Express (Citalis / CINOR) — desserte rapide EN SERVICE, corridor Saint-Denis ↔ Sainte-Marie. Source : GTFS (Licence Ouverte). À moins de 500 m, le règlement PEUT moduler l’exigence de stationnement — à vérifier au PLU (jamais promis).',
+    body: <div data-legend-tcsp className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} /><span className="text-[11px] text-txt">BAOBAB Express (axe structurant en service)</span></div>,
+  })
   if (dispoActif) groupes.push({
     id: 'dispositifs', titre: 'Dispositifs et périmètres',
     note: 'ZFANG / FRR : maille COMMUNE entière (pas un périmètre fin). Bande TVA : périmètre dérivé des QPV (Estimé).',

@@ -392,6 +392,9 @@ export interface Fiche {
     // M106-B P3 — axe structurant (BD TOPO importance 1-2) : libellé à DEUX FACES
     axe?: { nom: string; nature: string; distance_m: number; libelle: string; source: string }
     ligne_ht?: { distance_m: number; tension: string; libelle: string; source: string }
+    // RETOURS-12 C2 — axe de transport structurant (BAOBAB Express, GTFS Citalis/CINOR) : distance
+    // + drapeau < 500 m (modulation possible du stationnement, à vérifier au PLU — jamais promis).
+    tcsp?: { distance_m: number; sous_500m: boolean; libelle: string; source: string }
   } | null
   // RETOURS-7 Z5 — « À proximité » : équipements du quotidien nommés + distance (moteur BPE branché).
   proximites_equipements?: {

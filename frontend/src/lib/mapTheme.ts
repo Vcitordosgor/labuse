@@ -80,6 +80,9 @@ export type MapTokens = {
   /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
    *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
   ht: string
+  /** RETOURS-12 C2 — axe de transport structurant (BAOBAB Express) : trait PLEIN épais, teinte
+   *  identitaire forte distincte des réseaux de bus (ni rose Citalis, ni ardoise des axes routiers). */
+  tcsp: string
   /** M134 / M137-Y — couche « Dispositifs ». QPV orange · ANRU chartreuse · TVA cyan. Pour ZFANG et
    *  FRR, l'ÉTAT se lit à la COULEUR (une par état, ci-dessous) + hachures en second signal sur
    *  l'état moindre — plus une teinte déclinée en opacité (illisible à l'échelle île). */
@@ -140,6 +143,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#FF6DB3',            // M137-X — magenta vif : les pôles RESSORTENT sur l'axe gris — 8,9
     axe: '#8FA6C4',             // bleu-gris — 7,06
     ht: '#B9C4C0',              // 9,83 sur fond sombre
+    tcsp: '#3FE0C8',             // C2 — turquoise vif structurant (fond sombre)
     // M134 dispositifs (sombre = tints vifs, tous > 5:1 sur fond sombre)
     qpv: '#E8934A', qpvOpacity: 0.28,                     // orange (opérationnel)
     tvaPrimo: '#56C5D0', tvaPrimoOpacity: 0.24,           // cyan (fiscal, dérivé)
@@ -190,6 +194,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#C21F7E',            // M137-X — magenta profond : ressort sur l'axe et l'ortho claire — 5,6
     axe: '#33506B',             // bleu-gris profond — 7,50
     ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓
+    tcsp: '#0E8F7E',             // C2 — turquoise profond structurant (terre claire)
     // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)
     qpv: '#C25E1B', qpvOpacity: 0.28,                     // orange — aplat 1,40 ✓ ; contour 3,82 ✓
     tvaPrimo: '#1487A0', tvaPrimoOpacity: 0.24,           // cyan — aplat 1,34 ✓ ; contour 3,75 ✓

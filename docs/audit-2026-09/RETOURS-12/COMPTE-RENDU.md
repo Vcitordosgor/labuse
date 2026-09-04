@@ -79,12 +79,23 @@ Investigation données faite sur la base réelle avant tout code.
   DOM), qui a **retiré ses couches ouvertes le 24/12/2025**, et la BD TOPO ne porte que le transport HT
   (aucune ligne HTA ~20 kV en base). Conformément au mandat (« si aucune source fiable, on ne pose pas la
   couche : on l'écrit »), **la couche MT n'est pas posée** ; le motif est dit dans l'`i` de la couche HT.
-- **C2 — TCSP + distance à l'arrêt — PAS FAIT (pas de source, documenté).** Aucun jeu ouvert TCSP/BHNS
-  dédié au 974 (vérifié : `spatial_layers` n'a aucun `kind` tcsp/bhns ; seuls GTFS `transport_arret`
-  9 956 et `transport_ligne` 300). L'axe décrit par Vic (Sainte-Marie → boulevard sud) est un projet
-  d'aménagement sans tracé ouvert publié distinct. Numériser à la main un tracé non publié violerait la
-  doctrine « faux positif = péché cardinal ». **Couche non posée, fait « distance à l'arrêt TCSP » non
-  servi**, en attente d'un jeu CINOR/Région ouvert. Documenté ici avec le motif.
+- **C2 — TCSP + distance à l'axe structurant — FAIT (rouvert : dérivé du GTFS).** Mesure du GTFS déjà
+  en base : pas de tables GTFS brutes, mais les tracés/arrêts sont dérivés dans `spatial_layers`
+  (`transport_ligne` 300 lignes / 6 réseaux, `transport_arret` 9 956) ; les attrs des lignes ne portent
+  que `route_id`/`route_type` (tous 3=bus), sans nom. En re-mesurant le **GTFS Citalis (CINOR)** à la
+  source (routes.txt), la ligne **« BAO — BAOBAB Express »** ressort : c'est l'axe express structurant de
+  la CINOR, **en base** (transport_ligne route_id=BAO, tracé aller/retour), **corridor Saint-Denis ↔
+  Sainte-Marie/Sainte-Suzanne** (bbox 55,49→55,63, côte nord — cohérent avec « part de Sainte-Marie »),
+  **16 arrêts**, **EN SERVICE** (calendriers GTFS actifs jusqu'à fin 2026). Piège écarté : `dist_tcsp_m`
+  et `amenite/tcsp` (6 464) en base sont en réalité les **arrêts de bus OSM génériques** (mal nommés),
+  pas l'axe en site propre — non réutilisés (ce serait trompeur). **Livré** : (a) couche carte dédiée
+  « Axe structurant (BAOBAB Express) » — kind synthétique `tcsp_axe` dérivé du GTFS déjà tracé (aucune
+  ingestion neuve), trait turquoise épais, légende, `i` honnête (en service, source GTFS Licence
+  Ouverte) ; (b) fiche parcelle : **distance à l'axe** + drapeau **< 500 m** avec formulation prudente
+  (« le règlement PEUT moduler l'exigence de stationnement — à vérifier dans le PLU, rien n'est promis »).
+  Recette : corridor rendu en carte (capture `C2-baobab-corridor-z11`), fait fiche prouvé via API
+  (parcelle au contact, sous_500m). Tests `test_retours12_c2_tcsp.py` (couche = un tracé BAOBAB ; fiche
+  < 500 m ; pas de faux positif « stationnement réduit »). *Livré en réouverture Lot C, commit dédié.*
 - **C3 — rampes d'aléas distinctes — FAIT.** Cause racine mesurée : les niveaux étaient rendus par
   **opacité d'une couleur unique** (le camaïeu). Désormais une **teinte par niveau** (mapTheme
   `aleaInondationRamp`/`aleaMvtRamp`, expression `aleaColorExpr` sur `niveau`, opacité constante) :
@@ -108,7 +119,8 @@ Investigation données faite sur la base réelle avant tout code.
   Recette aux zooms 8/10/12 : île en ortho, mer sombre continue, plus aucun escalier blanc (captures
   `C6-ortho-mer-zoom8/10/12`). Test `basemaps.test.ts` (tout fond ortho borné, Plan IGN non borné).
 
-**Vérifs Lot C** : tsc 0 · build OK · suite frontend 160→171 (11 nouveaux tests C3/C6/T conservés) · recette
+**Vérifs Lot C** : tsc 0 · build OK · suite frontend 166/166 (tests C3/C6 ajoutés) · backend
+`test_retours12_c2_tcsp.py` 3/3 (C2) · recette
 navigateur à 3 zooms · golden intact (0 fichier scoring). PIÈGE noté : le toggle d'une couche aléa/PPR
 peut ne pas re-render sur un double-clic programmatique rapide (artefact de recette headless du tiroir
 repliable) — le fetch et le rendu sont corrects en clic normal (prouvé) ; PPR non modifié se comporte

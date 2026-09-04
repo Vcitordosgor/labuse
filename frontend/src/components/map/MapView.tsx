@@ -349,6 +349,7 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
   set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
+  set('ov-tcsp', 'line-color', t.tcsp)   // RETOURS-12 C2 — axe structurant BAOBAB (teinte du thème)
 
   // ═══ RETOURS-11 C4 — VARIANT LISIBILITÉ « fond photo/clair » (Plan & Ortho) ═══
   // Ce bloc s'exécute EN DERNIER : il écrase, pour les seuls fonds photo, les propriétés posées
@@ -649,6 +650,8 @@ export function MapView() {
   const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
   const tele = useQuery({ queryKey: ['layer', 'telepherique'], queryFn: () => getMapLayer('telepherique'), enabled: layers.transport })
   const lignesHt = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
+  // RETOURS-12 C2 — axe de transport structurant (BAOBAB Express), couche synthétique dérivée du GTFS.
+  const tcspAxe = useQuery({ queryKey: ['layer', 'tcsp_axe'], queryFn: () => getMapLayer('tcsp_axe'), enabled: layers.tcsp })
   // M106-B P3 : axes structurants (3 481 tronçons BD TOPO importance 1-2)
   const axes = useQuery({ queryKey: ['layer', 'axe_structurant'], queryFn: () => getMapLayer('axe_structurant', 5_000), enabled: layers.axes })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
@@ -835,7 +838,7 @@ export function MapView() {
       // pôle OSM (Sourcé) = disque plein NEUTRE · pôle dérivé (Estimé) = anneau ·
       // téléphérique = tireté couleur CINOR/Citalis. Plus les AXES STRUCTURANTS (BD TOPO,
       // importance IGN 1-2, trait plein ardoise) et les LIGNES HT (anthracite tireté).
-      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht']) {
+      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht', 'ov-tcsp']) {
         m.addSource(src, { type: 'geojson', data: EMPTY_FC as never })
       }
       m.addLayer({ id: 'ov-axe', type: 'line', source: 'ov-axe', layout: { visibility: 'none' },
@@ -865,6 +868,10 @@ export function MapView() {
                  'circle-stroke-color': T_SOMBRE.pole, 'circle-stroke-width': 2 } })
       m.addLayer({ id: 'ov-ht', type: 'line', source: 'ov-ht', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.ht, 'line-width': 1.6, 'line-dasharray': [5, 2.5], 'line-opacity': 0.9 } })
+      // RETOURS-12 C2 — axe structurant BAOBAB : trait PLEIN ÉPAIS (la desserte rapide se lit d'un coup),
+      // teinte turquoise identitaire ; halo sombre pour tenir sur ortho comme sur fond clair.
+      m.addLayer({ id: 'ov-tcsp', type: 'line', source: 'ov-tcsp', layout: { visibility: 'none', 'line-cap': 'round' },
+        paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.5, 13, 4, 16, 6] as unknown as maplibregl.ExpressionSpecification, 'line-opacity': 0.95 } })
       // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
       // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
       m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
@@ -1278,7 +1285,7 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
-      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt],
+      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['tcsp', tcspAxe],
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf]]   // M134 dispositifs · M137-U znieff · T4 vefa
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
@@ -1337,7 +1344,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, tcspAxe.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1464,6 +1471,7 @@ export function MapView() {
     m.setLayoutProperty('ov-axe', 'visibility', vis(layers.axes))
     m.setLayoutProperty('ov-pole', 'visibility', vis(layers.axes))   // M137-X — pôles sur « Axes structurants »
     m.setLayoutProperty('ov-ht', 'visibility', vis(layers.lignes_ht))
+    m.setLayoutProperty('ov-tcsp', 'visibility', vis(layers.tcsp))   // RETOURS-12 C2
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
     m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))
