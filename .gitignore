@@ -144,3 +144,4 @@ qa/dashboard/out/
 .local/
 reports/score-v2-arene/cache/
 data/reglements-plu/
+frontend/*.d.ts
