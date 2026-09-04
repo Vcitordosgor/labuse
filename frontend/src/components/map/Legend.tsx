@@ -145,9 +145,12 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   ;(['alea_inondation', 'alea_mvt'] as const).forEach((k) => { if (layers[k]) groupes.push({
     id: k, titre: k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain',
     note: `DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)${fmtFraich(aleaQ)}`,
-    body: <div data-legend-alea={k} className="flex items-center gap-2">{(['faible', 'moyen', 'fort'] as const).map((n) => (
-      <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt, opacity: Math.min(1, tTheme.aleaOpacity[n] + 0.25), borderColor: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt }} /><span className="text-[10.5px] text-txt-dim">{n}</span></span>
-    ))}</div>,
+    /* RETOURS-12 C3 — légende par TRANCHES NOMMÉES à teintes distinctes (plus le camaïeu d'opacité) :
+       la couleur ordonne les niveaux (bleu→orange→rouge / beige→marron→rouge), le libellé officiel reste. */
+    body: <div data-legend-alea={k} className="flex items-center gap-2">{(['faible', 'moyen', 'fort'] as const).map((n) => {
+      const ramp = k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp
+      return <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: ramp[n], borderColor: ramp[n] }} /><span className="text-[10.5px] text-txt-dim">{n}</span></span>
+    })}</div>,
   }) })
   if (layers.transport) groupes.push({
     id: 'transport', titre: 'Transport public',

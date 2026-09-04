@@ -37,6 +37,19 @@ describe('FIX-FONDS — fonds de carte', () => {
     expect(basemapLabel('bm-plan')).toBe('Plan IGN')
   })
 
+  // RETOURS-12 C6 — le test qui aurait attrapé « la mer en escalier de tuiles blanches » : chaque
+  // fond ORTHO doit être borné à l'emprise 974 (sinon IGN sert des tuiles no-data au large). Le Plan
+  // IGN (couverture mondiale) n'est PAS borné.
+  it('C6 : les fonds ortho sont bornés à l\'emprise 974 (pas de tuiles no-data au large)', () => {
+    for (const [key, def] of Object.entries(BASEMAP_SOURCES)) {
+      if (key.startsWith('bm-ortho')) {
+        expect(def.bounds, `${key} doit être borné`).toBeTruthy()
+        expect(def.bounds).toHaveLength(4)
+      }
+    }
+    expect(BASEMAP_SOURCES['bm-plan'].bounds).toBeUndefined()   // Plan IGN = monde, non borné
+  })
+
   // FOND-SOMBRE : plus AUCUNE source CARTO (clé requise) — le Sombre est rendu sans raster.
   it('FOND-SOMBRE : aucun fond ne pointe vers cartocdn/carto.com', () => {
     expect(BASEMAP_SOURCES['bm-carto']).toBeUndefined()

@@ -101,8 +101,13 @@ export function ScoringExplainer({ onClose }: { onClose: () => void }) {
 //  9. anru            — périmètres de renouvellement, de niche
 // 10. cinquante_pas   — bande littorale, la plus rare (communes côtières uniquement)
 const LAYERS: { key: keyof LayerToggles; label: string }[] = [
-  { key: 'parcelles', label: 'Parcelles' },
-  { key: 'limites', label: 'Limites parcelles' },
+  // RETOURS-12 C4 — décision par la mesure : « Parcelles » (aplat) et « Limites parcelles » (contour)
+  // sont DISTINCTES et non redondantes avec le fond (le contour cadastral n'est PAS toujours présent —
+  // absent sur ortho/sombre). L'impression « ne sert à rien » venait du label nu « Parcelles » : en mode
+  // neutre l'aplat est discret ; sa valeur (la couleur du CLASSEMENT LABUSE) n'était pas dite. On renomme
+  // pour la rendre évidente, on ne retire pas.
+  { key: 'parcelles', label: 'Parcelles — classement LABUSE' },
+  { key: 'limites', label: 'Limites parcelles (contour cadastral)' },
   // M62-P1 (g) : les toggles « Verdict — toute l'île » (couleurs_verdict) et « Renouvellement »
   // (renouv) sont RETIRÉS du panneau (P5, diagnostic P0-3 : sûr — OFF par défaut, seuls setters =
   // ce panneau ; le filtre `renouvellement`, le module et le bloc fiche sont indépendants). Les clés

@@ -332,7 +332,9 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('parcels-brulantes', 'line-color', t.lisereBrulantes)
   // M106 : les deux couches d'aléa suivent le jeu du thème (teinte + gradation + trame + contour)
   for (const c of ALEA_COUCHES) {
-    set(c.id, 'fill-color', t[c.token]); set(c.id, 'fill-opacity', aleaOpacityExpr(t))
+    // RETOURS-12 C3 — teinte par NIVEAU (rampe du thème) + opacité constante ; le contour et la trame
+    // gardent la teinte d'IDENTITÉ de l'aléa (distinction inondation vs mouvement de terrain superposés).
+    set(c.id, 'fill-color', aleaColorExpr(t, c.ramp)); set(c.id, 'fill-opacity', t.aleaFillOpacity)
     set(`${c.id}-trame`, 'fill-pattern', `${c.trame}-${clair ? 'clair' : 'sombre'}`)
     set(`${c.id}-trame`, 'fill-opacity', t.aleaTrameOpacity)
     set(`${c.id}-line`, 'line-color', t[c.token]); set(`${c.id}-line`, 'line-width', t.aleaContourW)
@@ -458,9 +460,12 @@ const DISPO_TRAMES = [
 ] as const
 // M106 : l'aplat des aléas est GRADUÉ par le niveau servi (faible/moyen/fort) — expression
 // partagée création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
-const aleaOpacityExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
+// RETOURS-12 C3 — l'aplat prend une TEINTE par niveau (bleu→orange→rouge / beige→marron→rouge),
+// franchement distinctes : on lit l'échelle de gravité sans deviner un camaïeu d'opacité. Le libellé
+// officiel de l'aléa reste la vérité ; la couleur ne fait qu'ordonner. Opacité désormais constante.
+const aleaColorExpr = (t: MapTokens, ramp: 'aleaInondationRamp' | 'aleaMvtRamp'): maplibregl.ExpressionSpecification => [
   'match', ['coalesce', ['get', 'niveau'], 'moyen'],
-  'faible', t.aleaOpacity.faible, 'fort', t.aleaOpacity.fort, t.aleaOpacity.moyen,
+  'faible', t[ramp].faible, 'fort', t[ramp].fort, t[ramp].moyen,
 ] as unknown as maplibregl.ExpressionSpecification
 // M106-B — LA COULEUR DIT LE RÉSEAU : expression match sur subtype (= réseau GTFS), tokens
 // par thème (mapTheme.transportReseaux) ; repli transportDefaut pour un réseau futur.
@@ -472,8 +477,8 @@ const reseauColorExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
 
 //: M106 — les deux couches d'aléa DEAL (id, subtype du flux, token de teinte, trame dédiée)
 const ALEA_COUCHES = [
-  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', trame: 'trame-alea-inond', orient: 'backslash' },
-  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', trame: 'trame-alea-mvt', orient: 'horiz' },
+  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', ramp: 'aleaInondationRamp', trame: 'trame-alea-inond', orient: 'backslash' },
+  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', ramp: 'aleaMvtRamp', trame: 'trame-alea-mvt', orient: 'horiz' },
 ] as const
 
 function makeEquipIcons(m: maplibregl.Map) {
@@ -736,7 +741,9 @@ export function MapView() {
       // fonds de plan (tous chargés, visibilité pilotée par l'effet fond via activeBasemapKey —
       // FOND-SOMBRE : plus de fond visible à la création, le défaut « dark » n'a plus de raster)
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
-        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
+        // RETOURS-12 C6 — `bounds` sur les fonds ortho (emprise 974) : maplibre ne demande plus les
+        // tuiles no-data (blanches) au large → fini l'escalier de tuiles sur fond blanc en vue dézoomée.
+        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}), ...(src.bounds ? { bounds: src.bounds } : {}) })
         m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' } })
       }
       // M65 P8 — MASSE TERRESTRE (île dissoute) : la terre sans parcelle (cirques, forêt, volcan)
@@ -807,7 +814,7 @@ export function MapView() {
         makeTrame(m, `${c.trame}-sombre`, MAP_THEME.sombre[c.token], c.orient)
         makeTrame(m, `${c.trame}-clair`, MAP_THEME.clair[c.token], c.orient)
         m.addLayer({ id: c.id, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
-          paint: { 'fill-color': T_SOMBRE[c.token], 'fill-opacity': aleaOpacityExpr(T_SOMBRE) } })
+          paint: { 'fill-color': aleaColorExpr(T_SOMBRE, c.ramp), 'fill-opacity': T_SOMBRE.aleaFillOpacity } })
         m.addLayer({ id: `${c.id}-trame`, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
           paint: { 'fill-pattern': `${c.trame}-sombre`, 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
         m.addLayer({ id: `${c.id}-line`, type: 'line', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
@@ -835,9 +842,16 @@ export function MapView() {
         paint: { 'line-color': T_SOMBRE.axe, 'line-width': 2.2, 'line-opacity': 0.85 } })
       m.addLayer({ id: 'ov-trans-ligne', type: 'line', source: 'ov-trans-ligne', layout: { visibility: 'none' },
         paint: { 'line-color': reseauColorExpr(T_SOMBRE), 'line-width': 1.3, 'line-opacity': 0.75 } })
-      m.addLayer({ id: 'ov-trans-arret', type: 'circle', source: 'ov-trans-arret', minzoom: 12,
+      // RETOURS-12 C5 — arrêts NETTEMENT plus visibles : rayon proportionné au zoom (discret à
+      // l'échelle île, franc à l'échelle quartier) + contour sombre pour tenir sur fond clair comme
+      // sur ortho. Un arrêt se lit comme un arrêt, plus comme un pixel sur le trait.
+      m.addLayer({ id: 'ov-trans-arret', type: 'circle', source: 'ov-trans-arret', minzoom: 11,
         layout: { visibility: 'none' },
-        paint: { 'circle-radius': 2.2, 'circle-color': reseauColorExpr(T_SOMBRE), 'circle-opacity': 0.85 } })
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 3, 14, 5.5, 16, 8, 18, 10] as unknown as maplibregl.ExpressionSpecification,
+          'circle-color': reseauColorExpr(T_SOMBRE), 'circle-opacity': 0.9,
+          'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 16, 1.6] as unknown as maplibregl.ExpressionSpecification,
+        } })
       m.addLayer({ id: 'ov-tele', type: 'line', source: 'ov-tele', layout: { visibility: 'none' },
         filter: ['==', ['get', 'subtype'], 'ligne'] as never,
         paint: { 'line-color': T_SOMBRE.transportReseaux['Papang'], 'line-width': 2.4, 'line-dasharray': [1.6, 1.2], 'line-opacity': 0.95 } })
