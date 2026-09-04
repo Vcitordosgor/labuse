@@ -278,7 +278,7 @@ export const getContexteCommune = (commune: string) =>
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
-  j<{ idu: string; commune: string; status: string | null; q_score: number | null;
+  j<{ idu: string; commune: string; surface_m2: number | null; status: string | null; q_score: number | null;
       tier_v2: string | null; rang_v2: number | null; etage0: boolean;
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)

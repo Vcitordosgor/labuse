@@ -1573,9 +1573,11 @@ export function MapView() {
       // en évidence ; le nombre de chaudes reste en INFO secondaire (survol).
       // M36 Lot A : depuis M35 `c.chaudes` = TIERS du run servi (brûlantes + chaudes) — l'ancienne
       // étiquette « (matrice Q×A) » était devenue FAUSSE. L'échelle thermique est la bonne (R3).
-      el.title = hot
-        ? `${c.commune} — ${c.chaudes} parcelles prioritaires ou à suivre au classement servi · ouvrir la fiche commune`
-        : `${c.commune} · ouvrir la fiche commune`
+      // RETOURS-12 T5 — infobulle réduite au FAIT NON AFFICHÉ. La pastille dit déjà le nom de la
+      // commune et le curseur dit qu'elle est cliquable : on ne répète ni l'un ni l'autre. Reste le
+      // seul fait absent de la pastille — le nombre de parcelles chaudes — et seulement quand il existe.
+      if (hot) el.title = `${c.chaudes} parcelles prioritaires ou à suivre au classement servi`
+      else el.removeAttribute('title')
       // RETOURS-11 T6 (03/09) — l'article n'est élidé QUE pour les 21 autres communes ; « Le Port »,
       // « Le Tampon », « La Possession » gardent leur article (référentiel unique lib/communes).
       const name = communePastille(c.commune)

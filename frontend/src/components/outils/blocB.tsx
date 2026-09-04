@@ -168,7 +168,8 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
       {q.isLoading && <Loading accent="mint" label="Chargement des communes…" />}
       {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className={`sticky top-0 z-10 grid ${O6_GRID} items-end border-b border-line-2 bg-bg-3 py-1.5`}>
+        {/* RETOURS-12 T4 — thead-sticky (z-20, fond opaque) : l'en-tête « 24 communes » ne glisse plus sur les lignes. */}
+        <div className={`thead-sticky grid ${O6_GRID} items-end border-b border-line-2 py-1.5`}>
           <span className="label-caps text-[10px] text-txt-mut">Commune</span>
           {O6_COLS.map((c) => (
             <span key={c.k} className="flex items-center justify-end gap-1">

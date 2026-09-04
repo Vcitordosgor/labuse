@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
 import { RadarMarche } from './RadarMarche'   // RADAR-CATÉGORIE (T5) — le Marché des annonces déménage ici
@@ -257,9 +258,10 @@ export function M16() {
                   return (
                     <div data-asm-charge data-neg={neg ? '1' : '0'} className={`rounded-lg border px-3 py-2 text-[11px] leading-snug ${neg ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
                       <span className={neg ? 'text-st-ecartee' : 'text-mint'}>Charge foncière cumulée : <b>{fmtEurCompact(c)}</b> ({fmt(d.charge_fonciere.par_m2_terrain)} €/m² de terrain)</span>
+                      {/* RETOURS-12 T7 — résultat d'un scénario d'opération, pas un verdict sur les parcelles. */}
                       {neg
-                        ? <span className="text-txt-dim"> — négative : l'<b>ensemble ne finance pas ce foncier</b> à ces hypothèses.</span>
-                        : <span className="text-txt-dim"> — CA cumulé ~{fmtEurCompact(d.ca?.central)}.</span>}
+                        ? <span className="text-txt-dim"> — à ces hypothèses, une opération sur cet ensemble ne dégage rien pour le terrain (résultat d'un scénario, pas la valeur des parcelles).</span>
+                        : <span className="text-txt-dim"> — chiffre d'affaires (CA) cumulé ~{fmtEurCompact(d.ca?.central)}.</span>}
                       {d.terrain_zone_eur_m2 != null && <span className="text-txt-dim"> Marché zone : <b className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</b> (DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}{d.zones_mixtes ? ' · zones mixtes' : ''}).</span>}
                       {d.n_chiffrables < d.n && <span className="text-st-creuser"> · {d.n_chiffrables}/{d.n} parcelles chiffrables</span>}
                     </div>
@@ -298,7 +300,7 @@ export function M16() {
                   {/* PRIVACY : PM = dénomination + SIREN (public) ; particulier = jamais nommé */}
                   <div className="min-w-0 flex-1 truncate text-[11px] text-txt-dim" title={pr.type === 'personne_morale' ? `SIREN ${pr.siren ?? '—'}${pr.groupe ? ' · ' + pr.groupe : ''}` : 'personne physique — non communiqué'}>
                     {pr.type === 'personne_morale'
-                      ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN {pr.siren}</span> : null}</>
+                      ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN <Siren value={pr.siren} className="font-mono text-txt-dim" /></span> : null}</>
                       : <span className="italic">propriétaire particulier — non communiqué</span>}
                   </div>
                   {/* point 4 : plus de bouton courrier PAR parcelle — un seul geste en pied (pont Courrier). */}
@@ -755,7 +757,7 @@ function PromoteursActifs({ commune }: { commune: string | null }) {
       {promos.map((p, k) => (
         <div key={k} className="rounded-lg border border-mint/25 bg-mint/[0.04] px-3 py-1.5 text-[11px]">
           <div className="truncate text-txt" title={`SIREN ${p.siren}`}>{p.nom}</div>
-          <div className="text-[10.5px] text-txt-dim">SIREN {p.siren} · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
+          <div className="text-[10.5px] text-txt-dim">SIREN <Siren value={p.siren} className="font-mono text-txt-dim" /> · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
         </div>
       ))}
       {promos.length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun promoteur (personne morale) avec ≥ 2 permis récents ici.</p>}

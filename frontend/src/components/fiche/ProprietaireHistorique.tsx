@@ -5,6 +5,7 @@
  * un signal de scoring. RGPD : personnes morales uniquement. Aucun fetch (charge utile de la fiche).
  */
 import { useState } from 'react'
+import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import type { Fiche } from '../../lib/types'
 
 type Histo = NonNullable<Fiche['proprietaire_historique']>
@@ -44,7 +45,7 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
               <span className="font-medium text-txt-hi">{c.denomination_apres ?? '—'}</span>
               {(c.siren_avant || c.siren_apres) && (
                 <div className="mt-0.5 font-mono text-[9.5px] text-txt-dim">
-                  SIREN {c.siren_avant ?? '—'} → {c.siren_apres ?? '—'}
+                  SIREN <Siren value={c.siren_avant} className="font-mono text-txt-dim" /> → <Siren value={c.siren_apres} className="font-mono text-txt-dim" />
                 </div>
               )}
             </div>
@@ -75,7 +76,7 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
             <div key={m.millesime} className="flex items-baseline gap-2 text-[10.5px] leading-snug">
               <span className="w-8 shrink-0 font-mono text-txt-dim">{m.millesime}</span>
               <span className="text-txt">{m.denomination ?? '—'}</span>
-              {m.siren && <span className="font-mono text-[9.5px] text-txt-dim">· {m.siren}</span>}
+              {m.siren && <span className="font-mono text-[9.5px] text-txt-dim">· <Siren value={m.siren} className="font-mono text-txt-dim" /></span>}
             </div>
           ))}
         </div>

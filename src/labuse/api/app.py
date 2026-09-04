@@ -2273,10 +2273,11 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     ban_join = _ban_lateral("s.idu") if ban_ok else ""
     rows = db.execute(text(
         f"""
-        SELECT s.idu, s.commune, s.status, s.tier_v2, s.rang_v2, s.etage0
+        SELECT s.idu, s.commune, s.surface_m2, s.status, s.tier_v2, s.rang_v2, s.etage0
                {ban_cols}
         FROM (
-            SELECT p.idu, p.commune, d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
+            SELECT p.idu, p.commune, p.surface_m2,  -- RETOURS-12 T1 : surface pour désambiguïser une réf. courte
+                   d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    {_ETAGE0_SQL} AS etage0,
                    CASE WHEN {_ETAGE0_SQL} THEN 5
@@ -2294,8 +2295,8 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
         ORDER BY s.ord, s.rang_v2 ASC NULLS LAST, s.idu
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit,
                "v2run": _score_v2_run_id(db)}).mappings().all()
-    return [{"idu": r["idu"], "commune": r["commune"], "status": r["status"],
-             "tier_v2": r["tier_v2"],
+    return [{"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+             "status": r["status"], "tier_v2": r["tier_v2"],
              "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
              "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
 

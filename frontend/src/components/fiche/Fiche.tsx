@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
+import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
@@ -1410,7 +1411,7 @@ export function Fiche({ idu }: { idu: string }) {
                     <p className="label-caps">Propriétaire (DGFiP)</p>
                     <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
                     <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
-                      {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
+                      {f.proprietaire_moral.siren && <span className="font-mono">SIREN <Siren value={f.proprietaire_moral.siren} className="font-mono text-txt-mut" /></span>}
                       {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
                     </div>
                     {/* RETOURS-11F3 F11 — carte d'identité publique (SIRENE) : activité, siège, création,

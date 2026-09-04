@@ -70,7 +70,10 @@ export function EtudierBien() {
   return (
     <div data-etudier-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-        Un bien vous intéresse ? Tapez son adresse. LABUSE vous donne les vrais prix du secteur (ventes actées DVF, annonces en cours) et, pour une parcelle, ce qu’on peut y construire et ce que le terrain vaut pour une opération.
+        {/* RETOURS-12 T7 — accueil DESCRIPTIF, neutre, utile à tous les métiers (agence, notaire,
+            architecte, particulier), pas seulement à un promoteur : ce qu'est la parcelle et ce qu'elle
+            porte. Le raisonnement d'opération (bilan, charge) est un second niveau, plus bas. */}
+        Un bien vous intéresse ? Tapez son adresse. LABUSE vous donne les vrais prix du secteur (ventes actées DVF, annonces en cours) et, pour une parcelle, ce qu’on peut y construire, ce qui la contraint et ce que valent les biens autour.
       </div>
 
       {/* ENTRÉE UNIFIÉE (patron omnibox M137) — UN SEUL champ : adresse OU IDU + clic carte.
@@ -161,10 +164,14 @@ export function EtudierBien() {
                           <b data-etudier-charge className={`num-key text-lg ${chargeNeg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(chargeCourante)}</b>
                           <span className="ml-1.5 text-[11px] text-txt-mut">de charge foncière{parM2Courant != null && <> ≈ {fmtInt(parM2Courant)} €/m² de terrain</>}</span>
                         </p>
+                        {/* RETOURS-12 T7 — le résultat est présenté comme celui d'UN scénario d'opération
+                            aux hypothèses affichées, jamais comme un verdict sur la parcelle elle-même.
+                            Négatif : on le dit sobrement (« ne dégage rien pour le terrain ») sans conclure
+                            que la parcelle « ne vaut rien ». */}
                         <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">
                           {chargeNeg
-                            ? 'L’opération ne finance pas ce foncier à ces hypothèses — même terrain gratuit, elle ne dégage pas de valeur.'
-                            : 'Ce que l’opération peut payer le terrain à ces hypothèses.'}
+                            ? 'À ces hypothèses, une opération de ce type ne dégage rien pour le terrain — c’est le résultat d’un scénario, pas la valeur de la parcelle.'
+                            : 'Ce qu’une opération de ce type pourrait payer le terrain, à ces hypothèses.'}
                         </p>
                         {ecart != null && (
                           <p data-etudier-ecart className={`mt-1.5 text-[11px] font-medium ${ecart >= 0 ? 'text-st-ecartee' : 'text-mint'}`}>
@@ -176,8 +183,9 @@ export function EtudierBien() {
                       </div>
                     )}
 
+                    {/* RETOURS-12 T7 — français d'abord, terme technique entre parenthèses. */}
                     {cal.ca_central != null && (
-                      <p className="mt-1.5 text-[11px] text-txt-dim">CA visé <b className="tnum text-txt-mut">{fmtEurCompact(cal.ca_central)}</b>{vendable != null && <> sur {fmtInt(vendable)} m² vendables</>}.</p>
+                      <p className="mt-1.5 text-[11px] text-txt-dim">Chiffre d’affaires visé (CA) <b className="tnum text-txt-mut">{fmtEurCompact(cal.ca_central)}</b>{vendable != null && <> sur {fmtInt(vendable)} m² vendables</>}.</p>
                     )}
 
                     {/* PRIX DEMANDÉ (saisi à la main) — pilote l'écart du verdict, quel que soit le mode. */}

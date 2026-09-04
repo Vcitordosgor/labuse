@@ -4,6 +4,7 @@
 // promoteur, commune, logements, dates, état. Par promoteur : une frise par année + lien vers son Scan
 // patrimoine (les deux se renvoient, ne se dupliquent pas). Chiffres = comptes SQL, millésime affiché.
 import { useEffect, useMemo, useState } from 'react'
+import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useQuery } from '@tanstack/react-query'
 import { getMoi, getProgrammes, getPromoteurFrise, getVeillePromoteurs, type OperationPromoteur } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
@@ -219,11 +220,12 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 <b className="truncate text-[12.5px] text-txt-hi" title={o.denomination ?? undefined}>{o.denomination ?? '(propriétaire non nommé)'}</b>
                 <span className="text-[11px] text-txt-mut">{CAT_LABEL[o.categorie] ?? o.categorie} · <b className="text-txt">{o.n_permis}</b> permis · <b className="text-txt">{o.nb_logements}</b> logement{o.nb_logements > 1 ? 's' : ''}</span>
                 <span className="text-[10.5px] text-txt-dim">{o.commune}{o.date_min && o.date_max && o.date_min !== o.date_max ? ` · ${new Date(o.date_min).toLocaleDateString('fr-FR')} → ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : (o.date_max ? ` · ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : '')}{o.etat ? ` · ${o.etat}` : ''}</span>
+                {/* RETOURS-12 T5 — infobulle « Ouvrir la fiche parcelle » retirée : l'IDU + « → » en lien mint le dit déjà. */}
                 {o.idus[0] && (
-                  <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))} title="Ouvrir la fiche parcelle"
+                  <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))}
                     className="block truncate text-left font-mono text-[10.5px] text-mint hover:underline">{o.idus[0]} →</button>
                 )}
-                {o.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN {o.siren}</span>}
+                {o.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN <Siren value={o.siren} className="font-mono text-txt-off" /></span>}
                 {o.radar_cite && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
 
                 {/* PROMO-1 (P4) — programme rattaché : un FAIT (nom) + un LIEN, jamais un visuel externe. */}

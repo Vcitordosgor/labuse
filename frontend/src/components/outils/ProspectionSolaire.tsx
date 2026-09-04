@@ -211,7 +211,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         <>
           <div className="min-h-0 flex-1 overflow-y-auto">
             <table className="w-full text-[11px]">
-              <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
+              {/* RETOURS-12 T4 — .thead-sticky (fond opaque + z-20). */}
+              <thead className="thead-sticky on-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
                 <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Commune</th><th className="px-2 py-1.5" /></tr>
               </thead>
               <tbody>
