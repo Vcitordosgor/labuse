@@ -28,6 +28,24 @@ def test_config_datee_et_sourcee():
     assert c["taux"]["part_communale_defaut"] is None        # aucun défaut communal
 
 
+def test_valeurs_2026_conformes_arrete_officiel():
+    """RETOURS-11F M8 — les valeurs forfaitaires de la config sont EXACTEMENT celles de l'arrêté 2026
+    (vérifiées 04/09/2026 contre service-public / BOFiP). La « fausse alerte » du mandat : 892 €/m² est
+    la valeur RÉELLE 2026 hors-IdF — elle a BAISSÉ (930→892, indice ICC en repli), ce n'est pas un bug ;
+    et le forfait stationnement 2 928 € est la valeur 2026 indépendante, sans incohérence entre les deux.
+    Ce test GÈLE les valeurs vérifiées : toute dérive silencieuse au prochain millésime rougira."""
+    c = config()
+    assert c["meta"]["annee"] == 2026
+    assert c["valeur_forfaitaire_m2"]["hors_idf"] == 892     # La Réunion (DOM) — arrêté 2026
+    assert c["valeur_forfaitaire_m2"]["idf"] == 1011
+    assert c["forfaits"]["piscine_m2"] == 251                # CGI 1635 quater J, millésime 2026
+    assert c["forfaits"]["panneau_pv_sol_m2"] == 10
+    assert c["forfaits"]["stationnement_ext_place"] == 2928
+    assert c["forfaits"]["eolienne_mat"] == 3000
+    assert c["abattement"]["taux_pct"] == 50 and c["abattement"]["plafond_m2_residence_principale"] == 100
+    assert c["exoneration_surface_min_m2"] == 5
+
+
 def test_sans_taux_communal_pas_de_total():
     r = calculer(surface_taxable_m2=150, residence_principale=True)
     assert r["taux_communal_manquant"] is True

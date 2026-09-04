@@ -18,38 +18,9 @@ import { SecteurResultats } from './MonSecteur'   // RETOURS-3 R5 — fusion : l
 //   • Garde-fou : 100 % présentation — aucun moteur touché. La charge « vos hypothèses » vient de la
 //     même calculette (compute_bilan), simplement HISSÉE dans le verdict via onResult.
 
-// JAUGE — situe la charge (négative en rouge), le zéro, et le prix demandé ; l'écart se lit d'un coup.
-function Jauge({ charge, prix, accentNeg }: { charge: number; prix: number | null; accentNeg: boolean }) {
-  const pts = prix != null ? [charge, 0, prix] : [charge, 0]
-  let lo = Math.min(...pts), hi = Math.max(...pts)
-  const range = hi - lo || Math.max(Math.abs(charge), 1)
-  lo -= range * 0.1; hi += range * 0.1
-  const span = hi - lo || 1
-  const pos = (v: number) => `${Math.max(0, Math.min(100, ((v - lo) / span) * 100))}%`
-  return (
-    <div className="mt-2" data-etudier-jauge>
-      <div className="relative h-5">
-        <div className="absolute inset-x-0 top-2.5 h-1 rounded bg-line" />
-        {/* l'écart charge ↔ prix */}
-        {prix != null && (
-          <div className="absolute top-2.5 h-1 rounded bg-st-ecartee/40"
-            style={{ left: pos(Math.min(charge, prix)), right: `calc(100% - ${pos(Math.max(charge, prix))})` }} />
-        )}
-        {/* le zéro, marqué */}
-        <div className="absolute top-1 h-3.5 w-px bg-txt-dim" style={{ left: pos(0) }} />
-        {/* la charge (rouge si négative) */}
-        <div className={`absolute top-1.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-bg ${accentNeg ? 'bg-st-ecartee' : 'bg-mint'}`} style={{ left: pos(charge) }} />
-        {/* le prix demandé */}
-        {prix != null && <div className="absolute top-1.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-bg bg-txt" style={{ left: pos(prix) }} />}
-      </div>
-      <div className="mt-0.5 flex justify-between text-[9px]">
-        <span className={accentNeg ? 'text-st-ecartee' : 'text-mint'}>charge {fmtEurCompact(charge)}</span>
-        <span className="text-txt-dim">0 €</span>
-        {prix != null && <span className="text-txt">prix {fmtEurCompact(prix)}</span>}
-      </div>
-    </div>
-  )
-}
+// RETOURS-11 R7 — la JAUGE horizontale (barre situant charge/zéro/prix) est RETIRÉE du bloc-verdict :
+// le liseré coloré et la barre disparaissent, le bloc garde une hauteur stable (min-h). Le chiffre de
+// charge et la phrase d'écart suffisent ; plus rien ne fait sauter la hauteur du bloc au changement.
 
 export function EtudierBien() {
   const calcPrefill = useApp((s) => s.calcPrefill)         // porte fiche/copilote (IDU pré-rempli)
@@ -177,11 +148,14 @@ export function EtudierBien() {
                       ))}
                     </div>
 
-                    {/* LE VERDICT UNIQUE — charge (négative en rouge, jamais écrêtée) + jauge + écart. */}
+                    {/* LE VERDICT UNIQUE — charge (négative en rouge, jamais écrêtée) + écart.
+                        RETOURS-11 R7 — le liseré vert et la jauge horizontale sont retirés ; le bloc a une
+                        hauteur minimale (min-h) pour ne PLUS sauter quand le résultat change (charge ±,
+                        écart apparaît/disparaît). Fond neutre (surface-2), plus de bordure de couleur. */}
                     {chargeCourante == null ? (
                       <p className="mt-2 text-[11px] text-txt-mut">Calcul de vos hypothèses…</p>
                     ) : (
-                      <div data-etudier-verdict className={`mt-2 rounded-lg border px-3 py-2 ${chargeNeg ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
+                      <div data-etudier-verdict className="mt-2 flex min-h-[104px] flex-col rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
                         <p className="text-[10px] uppercase tracking-wide text-txt-mut">{verdictMode === 'calibree' ? 'Hypothèses calibrées LABUSE' : 'Selon vos hypothèses'}</p>
                         <p className="mt-0.5">
                           <b data-etudier-charge className={`num-key text-lg ${chargeNeg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(chargeCourante)}</b>
@@ -192,7 +166,6 @@ export function EtudierBien() {
                             ? 'L’opération ne finance pas ce foncier à ces hypothèses — même terrain gratuit, elle ne dégage pas de valeur.'
                             : 'Ce que l’opération peut payer le terrain à ces hypothèses.'}
                         </p>
-                        <Jauge charge={chargeCourante} prix={prix} accentNeg={chargeNeg} />
                         {ecart != null && (
                           <p data-etudier-ecart className={`mt-1.5 text-[11px] font-medium ${ecart >= 0 ? 'text-st-ecartee' : 'text-mint'}`}>
                             {ecart >= 0

@@ -13,11 +13,14 @@ from labuse.ingestion import vefa_neuf as V
 pytestmark = pytest.mark.db
 
 
-def test_constantes_fenetre_36_mois_et_seuil():
-    assert V.FENETRE_MOIS == 36
-    assert V.SEUIL_VEFA_AFFICHAGE == 10          # le seuil ne bouge pas
+def test_constantes_fenetre_60_mois_et_seuil():
+    # RETOURS-11F M1/M2 — moteur VEFA unique : fenêtre 60 mois (= NEUF_VEFA_FENETRE_ANS×12) et seuil
+    # aligné sur le profil `neuf_vefa` (source unique, partagée avec la fiche et le comparateur).
+    from labuse.marche_service import neuf_vefa_seuil
+    assert V.FENETRE_MOIS == 60
+    assert V.SEUIL_VEFA_AFFICHAGE == neuf_vefa_seuil() == 8
     assert V.OFFRE_SITADEL_MOIS == 24
-    assert V.TRANCHE_LIBELLE["sous_seuil"] == "moins de 10 ventes"
+    assert V.TRANCHE_LIBELLE["sous_seuil"] == "moins de 8 ventes"
 
 
 def test_tranche_borne_haute():
@@ -52,7 +55,7 @@ def test_detail_commune_pieces_absentes_jamais_extrapolees():
         if not insee:
             pytest.skip("base de test sans Saint-Denis")
         d = V.detail_commune(db, insee)
-        assert d["fenetre_mois"] == 36 and d["seuil"] == 10
+        assert d["fenetre_mois"] == 60 and d["seuil"] == 8
         assert d["par_taille"]["disponible"] is False       # pièces absentes → jamais extrapolé
         assert "pièces" in d["par_taille"]["motif"]
         # chaque chiffre porte son n / est structurellement présent

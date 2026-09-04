@@ -95,12 +95,18 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   // O12c (RETOURS-11) — le listing (jusqu'à 8 299) se pagine par 200 via le pied partagé.
   const page = usePagination(items.length)
   const [carteBusy, setCarteBusy] = useState(false)
+  // R8(a) — la carte se BASCULE : une fois posée, le bouton dit « Masquer sur la carte » et un
+  // second clic retire les marqueurs (l'utilisateur voit que l'action a eu lieu, et peut la défaire).
+  const [carteAffichee, setCarteAffichee] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
+  // Changer de commune (ou revenir à l'île) invalide les points posés : on repart « Voir sur la carte ».
+  useEffect(() => { setCarteAffichee(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
   // LOT8b — « Voir sur la carte » = TOUTES les piscines en marqueurs (pas le listing capé à 500) :
   // on charge les points GeoJSON et on les pose dans module-extra (couche module-pts, kind='piscine').
   const voirCarte = async () => {
+    if (carteAffichee) { setModuleMap({ idus: [], extra: null }); setCarteAffichee(false); return }
     setCarteBusy(true)
-    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune) }) }
+    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune) }); setCarteAffichee(true) }
     finally { setCarteBusy(false) }
   }
 
@@ -136,10 +142,14 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      <button data-solaire-carte onClick={voirCarte} disabled={carteBusy}
+      <button data-solaire-carte data-carte-affichee={carteAffichee ? '1' : '0'} onClick={voirCarte} disabled={carteBusy}
         className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110 disabled:opacity-50"
-        style={{ borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }}>
-        {carteBusy ? '💧 Chargement…' : `💧 Voir sur la carte${agg.data ? ` (${fmtInt(agg.data.total)})` : ''}`}
+        style={carteAffichee
+          ? { borderColor: `${TOKENS.mint}66`, color: 'var(--txt-mut)', background: 'transparent' }
+          : { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }}>
+        {carteBusy ? '💧 Chargement…'
+          : carteAffichee ? 'Masquer sur la carte'
+            : `💧 Voir sur la carte${agg.data ? ` (${fmtInt(agg.data.total)})` : ''}`}
       </button>
 
       {/* LISTING piscines — 2 colonnes (Parcelle · Commune), surface retirée (O12a). */}
@@ -161,7 +171,17 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               </tbody>
             </table>
           </div>
-          <ListPaginationFooter shown={Math.min(page.shown, items.length)} total={items.length} onMore={page.more} />
+          {/* R8(b) — COMPTEUR HONNÊTE. Le listing est plafonné par le serveur (`cap`, ex. 500) alors que
+              la détection compte ~8 299 piscines (`total`). On paginait 200 par 200 SUR les lignes chargées,
+              d'où le trompeur « 200 / 500 ». Ici : « N affichées · P listées sur T détectées » — la borne de
+              pagination reste le nombre de lignes réellement chargées (items.length), on annonce la vérité. */}
+          <ListPaginationFooter shown={Math.min(page.shown, items.length)} total={items.length} onMore={page.more}>
+            {list.data && list.data.total > items.length && (
+              <span data-piscines-cap className="text-[10.5px] text-txt-dim">
+                {fmtInt(items.length)} listées{list.data.tronquee ? ` (limite ${fmtInt(list.data.cap)})` : ''} sur <b className="text-txt-mut">{fmtInt(list.data.total)}</b> détectées — la carte les montre toutes.
+              </span>
+            )}
+          </ListPaginationFooter>
         </>
       )}
       <p className="text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>

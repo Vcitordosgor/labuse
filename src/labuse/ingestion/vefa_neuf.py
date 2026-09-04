@@ -26,12 +26,15 @@ from pathlib import Path
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .dvf_marche import neuf_vefa_commune
+from .dvf_marche import NEUF_VEFA_FENETRE_ANS, neuf_vefa_commune
 
-# Fenêtre glissante de la couche VEFA, en MOIS (constante — affichée dans le « i »). 36 mois = 3 ans,
-# cohérent avec `neuf_vefa_commune` (NEUF_VEFA_FENETRE_ANS). Le SEUIL d'effectif ne bouge pas.
-FENETRE_MOIS = 36
-SEUIL_VEFA_AFFICHAGE = 10        # sous 10 ventes VEFA (avec prix), la commune est HACHURÉE (jamais peinte)
+# Fenêtre glissante de la couche VEFA, en MOIS (affichée dans le « i »). RETOURS-11F M2 : 60 mois = 5 ans,
+# alignée sur `neuf_vefa_commune` (NEUF_VEFA_FENETRE_ANS=5) — un seul moteur, une seule fenêtre.
+FENETRE_MOIS = NEUF_VEFA_FENETRE_ANS * 12
+# RETOURS-11F M1 — le SEUIL vient du profil `neuf_vefa` (source unique, comme la fiche et le comparateur) :
+# la carte ne peut pas hachurer à 10 pendant que la fiche sert une médiane dès 8. Un seuil, un endroit.
+from ..marche_service import neuf_vefa_seuil as _neuf_vefa_seuil  # noqa: E402
+SEUIL_VEFA_AFFICHAGE = _neuf_vefa_seuil()
 OFFRE_SITADEL_MOIS = 24          # offre engagée = logements collectifs autorisés sur 24 mois
 _VEFA = "nature_mutation = 'Vente en l''état futur d''achèvement'"
 
@@ -40,7 +43,8 @@ TRANCHES = [(4000, "moins_4000"), (4500, "4000_4500"), (5000, "4500_5000"),
             (5500, "5000_5500"), (float("inf"), "5500_plus")]
 TRANCHE_LIBELLE = {
     "moins_4000": "< 4 000 €/m²", "4000_4500": "4 000–4 500 €/m²", "4500_5000": "4 500–5 000 €/m²",
-    "5000_5500": "5 000–5 500 €/m²", "5500_plus": "≥ 5 500 €/m²", "sous_seuil": "moins de 10 ventes",
+    "5000_5500": "5 000–5 500 €/m²", "5500_plus": "≥ 5 500 €/m²",
+    "sous_seuil": f"moins de {SEUIL_VEFA_AFFICHAGE} ventes",
 }
 
 

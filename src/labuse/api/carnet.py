@@ -103,11 +103,14 @@ def _carnet(secteur: str, db: Session) -> dict:
         prix = {r["type_bien"]: {"mediane_prix_m2": r["mediane_prix_m2"], "n": r["n_ventes"]} for r in db.execute(text(
             "SELECT type_bien, mediane_prix_m2, n_ventes FROM dvf_secteur_medianes WHERE secteur = :s"),
             {"s": secteur}).mappings()}
-    neuf = None
-    if _has(db, "dvf_prix_sortie_neuf"):
-        neuf = db.execute(text(
-            "SELECT prix_m2_neuf, n FROM dvf_prix_sortie_neuf WHERE cle = :s AND niveau = 'secteur'"),
-            {"s": secteur}).mappings().first()
+    # RETOURS-11F M1 — le NEUF (VEFA) ne se sert qu'au grain COMMUNE (doctrine : un grain plus fin n'est
+    # pas servable, cf. profil neuf_vefa) : on route vers le MÊME moteur live que la fiche/carte/comparateur
+    # (`neuf_vefa_commune`), plus le précalcul secteur `dvf_prix_sortie_neuf` (divergent, plus fin que servable).
+    from ..ingestion.dvf_marche import neuf_vefa_commune
+    from ..marche_service import neuf_vefa_seuil
+    _v = neuf_vefa_commune(db, secteur[:5])
+    neuf = ({"prix_m2_neuf": _v["mediane_prix_m2_bati"], "n": _v["n"]}
+            if _v["n"] >= neuf_vefa_seuil() and _v["mediane_prix_m2_bati"] is not None else None)
 
     # signaux de veille récents sur les parcelles du secteur
     signaux = []

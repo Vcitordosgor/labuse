@@ -38,7 +38,7 @@ INDICATEURS = {
     "permis":    ("Dynamisme permis (SITADEL, 5 ans)", +1, 0.15, "SITADEL", "Sourcé"),
     "deficit_sru": ("Déficit SRU (objectif − taux LLS, points)", +1, 0.15, "DHUP", "Sourcé"),
     "pression_zan": ("Pression ZAN (ENAF consommé 2021-2024, ha)", -1, 0.10, "Cerema", "Sourcé"),
-    "prix_neuf": ("Prix de sortie neuf (DVF, €/m²)", +1, 0.15, "DVF", "Estimé"),
+    "prix_neuf": ("Prix de sortie neuf VEFA (DVF, €/m²)", +1, 0.15, "DVF", "Sourcé"),
 }
 
 _SQL = f"""
@@ -54,21 +54,22 @@ permis AS (
   SELECT commune, count(*) AS n FROM sitadel_permits
   WHERE date >= (CURRENT_DATE - INTERVAL '5 years') GROUP BY 1),
 sru AS (SELECT insee, greatest(objectif_pct - taux_lls, 0) AS deficit, statut FROM commune_contexte_sru),
-zan AS (SELECT insee, conso_2021_2024_m2 / 10000.0 AS ha FROM commune_conso_enaf),
-prix AS (SELECT cle AS insee, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau = 'commune')
+zan AS (SELECT insee, conso_2021_2024_m2 / 10000.0 AS ha FROM commune_conso_enaf)
 -- €/m² ANCIEN : SOURCE UNIQUE `prix_ancien_communes` (moteurs), mappée en Python (cf. _compute) —
 -- plus de CTE recopiée : le tableau Communes et le PDF baromètre lisent la MÊME fonction (§1b).
+-- RETOURS-11F M1 : le NEUF (prix_neuf) ne vient PLUS de `dvf_prix_sortie_neuf` (précalcul divergent —
+-- mesuré Saint-Paul 97415 : précalc 4 730 vs live 5 003) mais du MÊME moteur live `neuf_vefa_commune`
+-- que la fiche et la carte, calculé en Python dans `raw_rows` (fiche = table = carte, à l'euro près).
 SELECT b.insee, b.commune,
        stock.n AS stock, velo.mois AS velocite, velo.n AS velocite_n, permis.n AS permis,
        sru.deficit AS deficit_sru, sru.statut AS sru_statut,
-       zan.ha AS pression_zan, prix.prix_m2_neuf AS prix_neuf
+       zan.ha AS pression_zan
 FROM base b
 LEFT JOIN stock ON stock.insee = b.insee
 LEFT JOIN velo ON velo.commune = b.commune
 LEFT JOIN permis ON permis.commune = b.commune
 LEFT JOIN sru ON sru.insee = b.insee
 LEFT JOIN zan ON zan.insee = b.insee
-LEFT JOIN prix ON prix.insee = b.insee
 ORDER BY b.commune;
 """
 
@@ -119,11 +120,20 @@ def raw_rows(db: Session) -> dict[str, dict]:
     from .app import _mem_cached
 
     def _c():
+        from ..ingestion.dvf_marche import neuf_vefa_commune
+        from ..marche_service import neuf_vefa_seuil
+        seuil = neuf_vefa_seuil()
         rows = [dict(r) for r in db.execute(text(_SQL), {"run": runs.current()}).mappings().all()]
         pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
         for r in rows:
             r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")
             r["prix_ancien_n"] = (pa.get(r["commune"]) or {}).get("n")
+            # RETOURS-11F M1 — NEUF depuis le moteur live (même seuil/fenêtre que la fiche et la carte) :
+            # sous le seuil, prix_neuf reste null (jamais un chiffre fragile ni un précalcul périmé).
+            v = neuf_vefa_commune(db, r["insee"])
+            suffisant = v["n"] >= seuil and v["mediane_prix_m2_bati"] is not None
+            r["prix_neuf"] = v["mediane_prix_m2_bati"] if suffisant else None
+            r["prix_neuf_n"] = v["n"]
         return {r["commune"]: r for r in rows}
     return _mem_cached(("o6-raw",), 3600.0, _c)
 

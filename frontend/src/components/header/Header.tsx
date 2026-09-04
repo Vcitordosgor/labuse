@@ -661,11 +661,12 @@ function AccountMenu() {
                     </button>
                   </>
                 )}
-                {/* SIGNALER / NOUS ÉCRIRE — mailto direct (le bouton « Signaler » de la barre reste). */}
-                <a data-account-ecrire href="mailto:victor@labuse.immo"
+                {/* RETOURS-11 R4 — « Contact » : mailto contact@labuse.immo, sujet pré-rempli avec le
+                    compte (le bouton « Signaler » de la barre reste, distinct). */}
+                <a data-account-ecrire href={`mailto:contact@labuse.immo?subject=${encodeURIComponent(`Contact LABUSE — ${d?.email ?? d?.nom ?? 'compte'}`)}`}
                   className="mt-0.5 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
                   <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="3" y="5" width="14" height="10" rx="1.5" /><path d="M3.5 6l6.5 5 6.5-5" /></svg>
-                  Signaler / nous écrire
+                  Contact
                 </a>
                 {/* DÉCONNEXION */}
                 <a href="/logout" className="mt-0.5 flex items-center gap-2 rounded-lg px-3 py-2 text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">

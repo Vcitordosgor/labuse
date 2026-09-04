@@ -71,6 +71,14 @@ const STATUS_OPACITY: maplibregl.ExpressionSpecification = [
     ...Object.keys(ALL_TIER_META).flatMap((k) => [k, TIER_OPACITY[k] ?? DECLASSE_OPACITY]),
     LEGACY_OPACITY],
 ] as unknown as maplibregl.ExpressionSpecification
+// RETOURS-11 R5 (04/09) — sur fond PHOTO (ortho/plan), l'aplat parcellaire (verdict/zonage) noie
+// l'île entière au zoom large. `photoFade` fond n'importe quelle opacité cible AU ZOOM sur photo
+// (0 sous ~12, cible atteinte vers 16) ; hors photo (Sombre/Clair = témoins) la valeur passe telle
+// quelle → aucun changement de rendu. Le multiplicateur d'un aplat par le zoom n'existe pas en
+// style MapLibre : on ré-échelonne la cible dans une interpolation de zoom.
+const photoFade = (target: number, photo: boolean): number | maplibregl.ExpressionSpecification =>
+  !photo ? target
+    : (['interpolate', ['linear'], ['zoom'], 12, 0, 14, target * 0.55, 16, target] as unknown as maplibregl.ExpressionSpecification)
 // M105-B — contour des tiers PAR THÈME : en Clair, les liserés brûlante/chaude s'assombrissent
 // (mêmes teintes, ≥ 3:1 sur la terre claire — tokens lib/mapTheme) ; en Sombre, l'expression
 // historique verbatim. Un seul propriétaire du paint : l'effet « résultats en violet » plus bas.
@@ -350,18 +358,30 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
     // (liseré sombre large SOUS un trait clair fin) demanderait une 2e couche — interdit ici (« pas
     // de couche dupliquée »). FAIT AUTREMENT : un TRAIT SOMBRE nettement plus large (jusqu'à 2,2 px)
     // et opaque, très lisible sur la photo (cf. rapport C4).
+    // RETOURS-11 R5 (04/09) — sur ortho, TOUTES les limites parcellaires sur l'île entière =
+    // illisible. La densité SUIT LE ZOOM : au zoom large seules les limites communes portent
+    // (les parcelles sont éteintes, opacité → 0 sous ~14) ; en zoomant elles apparaissent
+    // PROGRESSIVEMENT (opacité ET épaisseur montent). Gate sur photo uniquement → Sombre/Clair
+    // (témoins) inchangés. Le contour des tiers (parcels-line/ile-line) suit la même rampe.
     for (const id of ['parcels-limites', 'ile-limites']) {
       set(id, 'line-color', '#0A0F0C')
-      set(id, 'line-width', ['interpolate', ['linear'], ['zoom'], 12, 0.8, 16, 1.6, 19, 2.2])
-      set(id, 'line-opacity', 0.9)
+      set(id, 'line-width', ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.8, 19, 2.2])
+      set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.25, 16, 0.7, 18, 0.9])
+    }
+    for (const id of ['parcels-line', 'ile-line']) {
+      set(id, 'line-opacity', ['interpolate', ['linear'], ['zoom'], 13, 0.2, 15, 0.6, 17, 0.9])
     }
     // Limites communes : même recette de casing — trait sombre large, très visible sur ortho/plan.
     set('communes-bounds', 'line-color', '#0A2417')
     set('communes-bounds', 'line-width', ['interpolate', ['linear'], ['zoom'], 8, 2.0, 13, 3.2])
     set('communes-bounds', 'line-opacity', 0.95)
     // Zonage (aplat) : plus opaque + contour sombre net — l'aplat clair ressort sur la photo.
-    for (const id of ['ov-zonage', 'ovmvt-zonage']) set(id, 'fill-opacity', 0.34)
+    // RETOURS-11 R5 — l'aplat MONTE avec le zoom (au zoom large il noierait l'île entière) :
+    // faible loin, ~0,34 en approche. Contour idem. Gate photo → Sombre/Clair intacts.
+    for (const id of ['ov-zonage', 'ovmvt-zonage']) set(id, 'fill-opacity', ['interpolate', ['linear'], ['zoom'], 11, 0.10, 14, 0.22, 16, 0.34])
     for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
+    // NB : l'aplat parcellaire (parcels-fill/ile-fill) est fondu au zoom sur photo AILLEURS — dans
+    // l'effet qui possède fill-opacity (il la re-pilote à chaque filtre/couche) ; cf. photoFade().
     // Zonage — LETTRES (symbol) : halo SOMBRE épaissi → les lettres blanches restent lisibles sur photo.
     for (const id of ['parcels-zone-label', 'ile-zone-label']) {
       set(id, 'text-color', '#FFFFFF'); set(id, 'text-halo-color', '#000000'); set(id, 'text-halo-width', 2.2)
@@ -829,6 +849,12 @@ export function MapView() {
       // neutre au lieu de disparaître. Visible seulement dans ce mode (effet plus bas).
       m.addLayer({ id: 'parcels-base', type: 'fill', source: 'parcels', layout: { visibility: 'none' },
         paint: { 'fill-color': '#22302A', 'fill-opacity': 0.28 } })
+      // RETOURS-11 R2 (04/09) — VERDICT : « Parcelles » (parcels-fill) est GARDÉE, distincte de
+      // « Limites parcelles ». Mesure du paint : parcels-fill peint un APLAT COLORÉ PAR STATUT/TIER
+      // (STATUS_COLOR/STATUS_OPACITY : brûlante, chaude, réserve, à creuser… teintes et opacités
+      // par tier), info que « Limites parcelles » (parcels-limites) ne porte pas — celle-ci n'est
+      // qu'un contour gris uni sans couleur. Les deux ne font PAS doublon → on garde le second
+      // interrupteur et on précise son « i » (cf. lib/layers LAYER_INFO.parcelles).
       m.addLayer({ id: 'parcels-fill', type: 'fill', source: 'parcels', paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
       // contours : promues (statut) OU toutes (couche « limites parcelles »)
       m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
@@ -845,12 +871,23 @@ export function MapView() {
       })
       // M55-F point 4 (décision Vic) : les étiquettes « #rang » ont QUITTÉ la carte — la
       // référence cadastrale vit sur la fiche. Layer parcels-v-badge retirée (0-caller).
-      // M6.1 item 1 : étiquette de la zone PLU PRÉCISE (zone_lib) au zoom ≥ 16 — mode commune
+      // M6.1 item 1 : étiquette de la zone PLU PRÉCISE (zone_lib) — mode commune.
+      // RETOURS-11 R1 (04/09) : les lettres apparaissent PLUS TÔT (minzoom 16 → 14, trop zoomé
+      // avant). Pour ne pas saturer au zoom moyen, on laisse MapLibre trier naturellement les
+      // étiquettes : text-allow-overlap=false + symbol-spacing large (250) → à ~14-15 on obtient
+      // grosso modo UNE lettre par bloc de zone, pas une par parcelle ; en zoom rapproché la
+      // densité remonte. text-size interpolée (plus petite à 14, 11 dès 16).
+      const ZONE_LABEL_LAYOUT = {
+        'text-field': ['coalesce', ['get', 'zone_lib'], ''] as never,
+        'text-font': ['Open Sans Regular'] as string[],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 14, 9, 16, 11] as never,
+        'text-optional': true, 'text-allow-overlap': false, 'text-ignore-placement': false,
+        'symbol-spacing': 250,
+      }
       m.addLayer({
-        id: 'parcels-zone-label', type: 'symbol', source: 'parcels', minzoom: 16,
+        id: 'parcels-zone-label', type: 'symbol', source: 'parcels', minzoom: 14,
         // FOND-SOMBRE : text-font EXPLICITE = la pile du dossier de glyphs embarqué (cf. STYLE.glyphs)
-        layout: { visibility: 'none', 'text-field': ['coalesce', ['get', 'zone_lib'], ''] as never,
-          'text-font': ['Open Sans Regular'], 'text-size': 11, 'text-optional': true },
+        layout: { visibility: 'none', ...ZONE_LABEL_LAYOUT },
         paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
       })
 
@@ -894,10 +931,9 @@ export function MapView() {
       // M6.1 : étiquette zone PLU en mode île — ne rend que si les tuiles portent zone_lib
       // (prochain build-mvt) ; d'ici là text-field vide = aucun rendu, rien ne casse
       m.addLayer({
-        id: 'ile-zone-label', type: 'symbol', ...SL, minzoom: 16,
+        id: 'ile-zone-label', type: 'symbol', ...SL, minzoom: 14,   // RETOURS-11 R1 : idem parcels-zone-label
         // FOND-SOMBRE : text-font EXPLICITE = la pile du dossier de glyphs embarqué (cf. STYLE.glyphs)
-        layout: { visibility: 'none', 'text-field': ['coalesce', ['get', 'zone_lib'], ''] as never,
-          'text-font': ['Open Sans Regular'], 'text-size': 11, 'text-optional': true },
+        layout: { visibility: 'none', ...ZONE_LABEL_LAYOUT },
         paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
       })
 
@@ -940,7 +976,9 @@ export function MapView() {
         // distincts alimentent module-extra), le clic route selon la propriété présente (permit_id/idu).
         // ÉTUDE DE ZONE Z4 — 'zone-concurrent' (SIRENE, ambre) et 'zone-origin' (le point étudié, mint)
         // partagent cette couche (outils distincts alimentent module-extra, jamais en même temps).
-        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'piscine', 'radar', 'zone-concurrent', 'zone-origin', 'operation']]],
+        // RETOURS-11 R8 (04/09) — les piscines ont QUITTÉ cette couche de ronds : elles sont rendues en
+        // GOUTTE D'EAU par la couche symbol `module-piscine` juste dessous (plus parlant qu'un point vert).
+        filter: ['in', ['get', 'kind'], ['literal', ['permis', 'radar', 'zone-concurrent', 'zone-origin', 'operation']]],
         // radar-permis (agrandissement) : rayon ZOOM-ADAPTATIF — modéré en vue île (limite le
         // chevauchement des permis groupés en centre-ville), NETTEMENT plus gros en zoom rue où
         // l'on clique un permis précis (cible large, prime sur la parcelle). Opacité < 1 + contour
@@ -965,6 +1003,12 @@ export function MapView() {
                    '#4ADE80'],
                  'circle-opacity': 0.8,
                  'circle-stroke-color': '#0b0f14', 'circle-stroke-width': 1.5 } })
+      // RETOURS-11 R8 — PISCINES : marqueur GOUTTE D'EAU (emoji 💧) au lieu du rond vert. Même source
+      // (module-extra) et même visibilité que module-pts ; le clic route par idu (cf. handler partagé).
+      m.addLayer({ id: 'module-piscine', type: 'symbol', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'piscine'],
+        layout: { 'text-field': '💧', 'text-allow-overlap': true, 'text-ignore-placement': true,
+          'text-size': ['interpolate', ['linear'], ['zoom'], 10, 13, 15, 18, 18, 24] as never } })
       // PERMIS (refonte) — anneau de SURVOL : le point du permis survolé dans la liste « s'allume »
       // (source dédiée à UN point → aucun re-render des 8 000 points de la couche radar).
       m.addSource('permit-hover', { type: 'geojson', data: EMPTY_FC as never })
@@ -978,7 +1022,7 @@ export function MapView() {
       // M55-A) → les handlers parcels-fill / ile-fill et le clic universel testent `defaultPrevented`
       // et s'abstiennent (jamais la fiche parcelle sous le point). stopPropagation seul ne suffisait
       // PAS (il n'arrête pas les autres abonnés maplibre du même clic).
-      m.on('click', 'module-pts', (e) => {
+      const onModulePtClick = (e: maplibregl.MapLayerMouseEvent) => {
         const props = e.features?.[0]?.properties
         const pid = props?.permit_id
         if (props?.kind === 'radar' && props?.bien_id != null) {
@@ -1054,9 +1098,15 @@ export function MapView() {
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle
-      })
-      m.on('mouseenter', 'module-pts', () => { m.getCanvas().style.cursor = 'pointer' })
-      m.on('mouseleave', 'module-pts', () => { m.getCanvas().style.cursor = '' })
+      }
+      // RETOURS-11 R8 — même handler pour les ronds ET les gouttes piscine (clic idu → fiche parcelle).
+      const enterPt = () => { m.getCanvas().style.cursor = 'pointer' }
+      const leavePt = () => { m.getCanvas().style.cursor = '' }
+      for (const lid of ['module-pts', 'module-piscine']) {
+        m.on('click', lid, onModulePtClick)
+        m.on('mouseenter', lid, enterPt)
+        m.on('mouseleave', lid, leavePt)
+      }
 
       // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
       // d'icônes par milliers à l'écran), clic = nom de l'équipement
@@ -1298,9 +1348,13 @@ export function MapView() {
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     // M6.1 : couche zonage parcelle active → NE PAS écraser son opacité dédiée
     // M55-G point 8 : seulement en mode OPINION — le mode factuel garde sa surbrillance neutre
+    const photo = basemap === 'plan' || basemap === 'ortho'   // RETOURS-11 R5 — gate fondu photo
     if (m.getLayer('parcels-fill') && !zonageFill && opinion) {
-      m.setPaintProperty('parcels-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
-      m.setPaintProperty('ile-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
+      // filtre actif → 0,72 constant (fondu R5 au zoom sur photo) ; sinon la table STATUS_OPACITY
+      // (déjà par tier) reste — sur photo elle n'est pas fondue mais les écartées y sont ~0.
+      const op = filters.tiers.length === 0 ? STATUS_OPACITY : photoFade(0.72, photo)
+      m.setPaintProperty('parcels-fill', 'fill-opacity', op)
+      m.setPaintProperty('ile-fill', 'fill-opacity', op)
     }
   }, [basemap, orthoYear, filters.tiers, mapReady, ile, lowZoom, zonageFill, opinion])
 
@@ -1321,6 +1375,7 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current || !m.getLayer('parcels-fill')) return
     const vis = (on: boolean) => (on ? 'visible' : 'none')
+    const photo = basemap === 'plan' || basemap === 'ortho'   // RETOURS-11 R5 — gate fondu photo de l'aplat
     // deux jeux de calques (GeoJSON commune / MVT île) — un seul visible à la fois
     // RETOURS-11 C1 (03/09) — le REMPLISSAGE des parcelles porte AUSSI l'aplat de zonage (par famille).
     // Régression SECTEUR-2 (07d16986) : `parcels-fill` était gated sur `layers.parcelles` seul, donc
@@ -1407,17 +1462,19 @@ export function MapView() {
       // M6.1 item 1 : la couche « Zonage PLU (parcelles) » PRIME sur le verdict — le
       // remplissage devient la famille de zone (palette dédiée), verdict rallumé au toggle off.
       // `zonageFill` déjà conditionné : geojson commune toujours, tuiles île si zone_fam servie.
+      // RETOURS-11 R5 — sur photo, l'opacité cible est FONDUE au zoom (photoFade) : lisible au large,
+      // pleine en approche. STATUS_OPACITY (table par tier, écartées ~0) reste non fondue (déjà éteinte).
       if (zonageFill) {
         m.setPaintProperty(fill, 'fill-color', ZONE_FAM_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', ZONE_FAM_OPACITY)
+        m.setPaintProperty(fill, 'fill-opacity', photo ? photoFade(0.62, photo) : ZONE_FAM_OPACITY)
       } else if (opinion) {
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 && !resultIdus ? STATUS_OPACITY : 0.72)
+        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 && !resultIdus ? STATUS_OPACITY : photoFade(0.72, photo))
       } else if (verdict) {
         // M55-G point 8 : TRI FACTUEL — les parcelles correspondantes en surbrillance NEUTRE
         // (aucune couleur de tier) ; la couche « Verdict » reste activable dans Couches.
         m.setPaintProperty(fill, 'fill-color', '#8FA69A')
-        m.setPaintProperty(fill, 'fill-opacity', 0.42)
+        m.setPaintProperty(fill, 'fill-opacity', photoFade(0.42, photo))
       } else {
         // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur.
         // M65 P8 : en mode CLAIR, cette trame neutre = les PARCELLES en BLANC CASSÉ #F4F2EC (opaques)

@@ -67,7 +67,7 @@ export const LAYER_INFO: Record<string, string> = {
   // M55-A item 6 : chaque « i » dit désormais CE QUE montre la couche, SA source, et SA
   // couverture (partielle → dite franchement).
   parcelles:
-    'Les 431 663 parcelles cadastrales de l’île (source DGFiP), colorées selon l’avis de LABUSE : les plus prometteuses ressortent. C’est la couche de travail principale — présente sur les 24 communes.',
+    'Les 431 663 parcelles cadastrales de l’île (source DGFiP) en APLAT COLORÉ PAR STATUT / TIER de LABUSE (Priorité → Écartée) : chaque parcelle est REMPLIE de la couleur de son avis, les plus prometteuses ressortent d’un coup d’œil. C’est ce qui la distingue de « Limites parcelles », qui n’affiche que le contour gris du découpage, sans couleur. C’est la couche de travail principale — présente sur les 24 communes.',
   ppr:
     'Les zones exposées à un risque naturel connu (inondation, mouvement de terrain, littoral…) inscrites dans un Plan de Prévention des Risques. Source : la DEAL (via Géorisques). Couverture : les 24 communes de l’île. Utile pour écarter tôt un terrain contraint.',
   // M106 P1 : les aléas DEAL séparés. La séparation inondation / mouvement de terrain n'existe

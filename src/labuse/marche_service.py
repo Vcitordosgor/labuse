@@ -93,6 +93,16 @@ def profil_meta(profil: str) -> dict:
     return (_profils_doc().get("profils") or {}).get(profil, {})
 
 
+def neuf_vefa_seuil() -> int:
+    """RETOURS-11F M1 — LE seuil d'effectif VEFA, source unique (profil `neuf_vefa`). La fiche
+    (marche_service), la couche carte (`vefa_neuf`) ET le tableau Communes (comparateur) le lisent ICI
+    pour que « fiche = table = carte » : même seuil, même fenêtre, même médiane, à l'euro près."""
+    try:
+        return int(profil_meta("neuf_vefa").get("seuil_effectif") or 8)
+    except (TypeError, ValueError):
+        return 8
+
+
 def seuil_effectif_local(nom: str, defaut: int) -> int:
     """M103 P1 — seuils d'effectif DVF hors profils nommés (bloc `seuils_effectif` de la config).
     Un critère, un endroit : plus aucun seuil d'effectif DVF écrit dans le code. `defaut` = repli

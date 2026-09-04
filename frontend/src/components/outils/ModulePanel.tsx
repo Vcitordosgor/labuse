@@ -603,50 +603,44 @@ export function M03() {
 
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.map((i, k) => {
-          // O2-1 — items sur DEUX lignes : (pastille · type · date · logements/surface) / (commune · badge).
-          // Pastille VERTE (en cours) / ROUGE (point mort) = même code que la carte. Le badge point mort
-          // porte l'ANCIENNETÉ CALCULÉE (« Sans DAACT · X ans ») : c'est elle qui mesure la dormance,
-          // donc l'intérêt. Année depuis la date d'autorisation (AAAA-…).
+          // R6 — items sur UNE ligne : pastille · type · date · logements/surface · commune, puis le badge
+          // d'état À DROITE de la même ligne. Pastille VERTE (en cours) / ROUGE (point mort) = même code que
+          // la carte. Le badge point mort porte l'ANCIENNETÉ CALCULÉE (« Sans DAACT · X ans ») : c'est elle
+          // qui mesure la dormance, donc l'intérêt. Année depuis la date d'autorisation (AAAA-…).
           const an = Number(String(i['date'] ?? '').slice(0, 4))
           const ans = an ? new Date().getFullYear() - an : null
-          // O17 (b) — ligne 2 : on montre CE QU'ON A. Commune si connue ; à défaut la section-parcelle
-          // (IDU rattaché, cadre point mort). Jamais un « — » orphelin : si rien, la ligne 2 disparaît.
+          // O17 (b) — commune si connue ; à défaut la section-parcelle (IDU rattaché). Jamais un « — » nu.
           const commuLbl = (i['commune'] as string) || ''
           const iduLbl = i['idu'] ? iduCourt(i['idu'] as string) : ''
           const gaucheL2 = commuLbl || (iduLbl ? `Parcelle ${iduLbl}` : '')
-          const aBadge = pointMort || i['etat_label'] || !i['geom']
-          const ligne2 = gaucheL2 || aBadge   // rendre la ligne 2 ssi elle porte une info réelle
           return (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'}
             onClick={() => setOpen(i['permit_id'] as string)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
-            className={`flex w-full flex-col gap-0.5 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
-            {/* ligne 1 */}
-            <span className="flex w-full items-center gap-2">
-              {/* O17 (h) — la pastille ROUGE = « point mort » : sa définition tient dans l'infobulle. */}
-              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: pointMort ? '#E2726A' : '#4ADE80' }}
-                title={pointMort ? 'Point mort — permis de construire daté de plus de N mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.' : 'Permis récent (radar)'} />
-              <span className="rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
-              {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
-              <span className="font-mono text-txt-mut" title="Date d'autorisation du permis">{i['date'] as string}</span>
-              {i['nb_lgt'] != null && <b className="tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
-              {pointMort && i['surface_m2'] != null && <span className="tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
-              {!pointMort && i['delai_mois'] != null && <span className="ml-auto" style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
+            className={`flex w-full items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
+            {/* RETOURS-11 R6 — puce sur UNE seule ligne (moitié moins haute) : pastille · type · date ·
+                lgt/surface · commune (tronquée) à gauche, badge d'état (Autorisé / Sans DAACT / non géocodé)
+                aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
+            {/* O17 (h) — la pastille ROUGE = « point mort » : sa définition tient dans l'infobulle. */}
+            <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: pointMort ? '#E2726A' : '#4ADE80' }}
+              title={pointMort ? 'Point mort — permis de construire daté de plus de N mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.' : 'Permis récent (radar)'} />
+            <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
+            {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
+            <span className="shrink-0 font-mono text-txt-mut" title="Date d'autorisation du permis">{i['date'] as string}</span>
+            {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
+            {pointMort && i['surface_m2'] != null && <span className="shrink-0 tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
+            {/* commune / parcelle en clair — tronquée pour laisser la place au badge. */}
+            {gaucheL2 && <span className="min-w-0 truncate text-txt-mut">{gaucheL2}</span>}
+            {/* badges (délai + état) poussés à droite, sur la même ligne. */}
+            <span className={`flex shrink-0 items-center gap-1.5 ${gaucheL2 ? '' : 'ml-auto'}`}>
+              {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
+              {pointMort
+                ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
+                    title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
+                : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
+              {!i['geom'] && <span data-permis-badge-nongeo className="rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
+                title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
             </span>
-            {/* ligne 2 — O17 (b) : rendue seulement si elle porte une info (plus de « — » nu). */}
-            {ligne2 && (
-            <span className="flex w-full items-center gap-2 pl-[15px]">
-              {gaucheL2 && <span className="min-w-0 truncate text-txt-mut">{gaucheL2}</span>}
-              <span className="ml-auto flex items-center gap-1.5">
-                {pointMort
-                  ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
-                      title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
-                  : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
-                {!i['geom'] && <span data-permis-badge-nongeo className="rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
-                  title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
-              </span>
-            </span>
-            )}
           </button>
           )
         })}
