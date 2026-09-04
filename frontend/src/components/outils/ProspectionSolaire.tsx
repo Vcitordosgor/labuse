@@ -11,10 +11,10 @@
  * présentation + requêtes d'agrégats (nouveaux endpoints /prospection-piscines et .../parcelle/{idu}
  * = lecture seule de données gelées).
  */
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesPoints, getProspectionSolaire, getSolaireFiche,
-  type SolaireFiche, type SolaireFiltres } from '../../lib/api'
+  postPasUnePiscine, type SolaireFiche, type SolaireFiltres } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -83,13 +83,25 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
+  const qc = useQueryClient()
   const [commune, setCommune] = useState<string | null>(null)
+  // RETOURS-11F M12 — bascule « inclure les incertaines » : par défaut seule la confiance HAUTE (≥ 0,80)
+  // est comptée/cartographiée ; la bascule ajoute les bandes moyenne/basse (Vic a vu ~1 faux sur 4).
+  const [inclureIncertaines, setInclureIncertaines] = useState(false)
 
-  const agg = useQuery({ queryKey: ['piscines-agg', commune], queryFn: () => getPiscinesAgregat(commune), staleTime: 60_000 })
+  const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureIncertaines], queryFn: () => getPiscinesAgregat(commune, 0, inclureIncertaines), staleTime: 60_000 })
   // O12a (RETOURS-11) — la surface piscine (mesure vue du ciel) était FAUSSE : plus de filtre ni de
   // colonne surface. Le pisciniste veut la parcelle et la commune, pas un m² inventé.
   const filtres: SolaireFiltres = { commune, piscine: 'oui' }
   const list = useQuery({ queryKey: ['piscines-list', commune], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
+  // « pas une piscine » — retire la parcelle du service et rafraîchit compteur/carte/listing.
+  const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
+  const signalerPasPiscine = async (idu: string) => {
+    setPasPiscine((s) => new Set(s).add(idu))
+    try { await postPasUnePiscine(idu) } finally {
+      qc.invalidateQueries({ queryKey: ['piscines-agg'] })
+    }
+  }
 
   const items = list.data?.items ?? []   // aucune exclusion « écartée » : le pisciniste veut TOUTES les piscines
   // O12c (RETOURS-11) — le listing (jusqu'à 8 299) se pagine par 200 via le pied partagé.
@@ -106,7 +118,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const voirCarte = async () => {
     if (carteAffichee) { setModuleMap({ idus: [], extra: null }); setCarteAffichee(false); return }
     setCarteBusy(true)
-    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune) }); setCarteAffichee(true) }
+    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureIncertaines) }); setCarteAffichee(true) }
     finally { setCarteBusy(false) }
   }
 
@@ -127,6 +139,22 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
           <div className="text-[10px] text-txt-dim">Piscines détectées — {commune ?? 'toute l’île'}</div>
           <div className="mt-0.5"><b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
             <span className="ml-2 text-[9.5px] text-txt-dim">détection ortho/IA · à confirmer sur site</span></div>
+          {/* RETOURS-11F M12 — bascule CONFIANCE : par défaut « haute » ; le nombre d'incertaines est DIT. */}
+          {agg.data.confiance && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+              <span className="text-txt-dim">Confiance <b className="text-txt-mut">haute (≥ {agg.data.confiance.seuil_haute.toLocaleString('fr-FR')})</b> par défaut.</span>
+              <button data-piscines-toggle-incertaines onClick={() => setInclureIncertaines((v) => !v)}
+                className="rounded border px-1.5 py-0.5 font-medium transition-colors duration-quick hover:brightness-110"
+                style={inclureIncertaines
+                  ? { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }
+                  : { borderColor: 'var(--line-2)', color: 'var(--txt-mut)' }}>
+                {inclureIncertaines ? '✓ incertaines incluses' : `inclure les incertaines (+${fmtInt(agg.data.confiance.incertaines)})`}
+              </button>
+              {(agg.data.corrigees ?? 0) > 0 && (
+                <span className="text-txt-dim">· {fmtInt(agg.data.corrigees ?? 0)} retirée(s) « pas une piscine »</span>
+              )}
+            </div>
+          )}
           {/* LOT8a — le SEUIL de rétention est écrit à l'écran (des détections plus incertaines sont exclues) */}
           <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">{agg.data.source}</div>
           {!commune && agg.data.communes.length > 0 && (
@@ -159,15 +187,25 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
           <div className="min-h-0 flex-1 overflow-y-auto">
             <table className="w-full text-[11px]">
               <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
-                <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Commune</th></tr>
+                <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Commune</th><th className="px-2 py-1.5" /></tr>
               </thead>
               <tbody>
-                {items.slice(0, page.shown).map((it) => (
-                  <tr key={it.idu} data-piscines-row className="hover-fill cursor-pointer border-t border-line" onClick={() => select(it.idu)}>
+                {items.slice(0, page.shown).map((it) => {
+                  const retiree = pasPiscine.has(it.idu)
+                  return (
+                  <tr key={it.idu} data-piscines-row className={`border-t border-line ${retiree ? 'opacity-40' : 'hover-fill cursor-pointer'}`} onClick={() => !retiree && select(it.idu)}>
                     <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
                     <td className="px-2 py-1.5 text-txt-mut">{it.commune}</td>
+                    {/* RETOURS-11F M12 — « pas une piscine » : signal humain, retire du service (compteur/carte). */}
+                    <td className="px-2 py-1.5 text-right">
+                      {retiree ? <span className="text-[9.5px] text-txt-dim">retirée</span> : (
+                        <button data-piscines-pas onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
+                          title="Signaler que cette parcelle n'a pas de piscine — la retire du compteur et de la carte"
+                          className="text-[9.5px] text-txt-dim hover:text-mint">pas une piscine</button>
+                      )}
+                    </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

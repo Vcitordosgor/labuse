@@ -122,10 +122,16 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
   { k: 'prix_neuf', head: '€/m² neuf',
     title: '€/m² NEUF — prix de sortie du neuf (DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents.',
     tip: '€/m² NEUF — prix de sortie du neuf (DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents.' },
+  // RETOURS-11F O14/M13 — €/m² TERRAIN NU DVF : « le chiffre du promoteur », absent jusqu'ici. MÊME
+  // moteur que la fiche (Marché) — médiane DVF terrain nu par zone PLU calibrée (U de préférence, sinon
+  // AU). Sous le seuil de cellule → « — ». 23/24 communes servables (mesuré base réelle).
+  { k: 'prix_terrain_nu', head: '€/m² terrain nu',
+    title: '€/m² TERRAIN NU — médiane DVF des ventes de terrain nu de la commune, par zone PLU calibrée (U de préférence, sinon AU). C’est la valeur foncière brute que vise un promoteur — le chiffre le plus direct pour arbitrer un achat.',
+    tip: '€/m² TERRAIN NU — médiane DVF terrain nu par zone PLU (U sinon AU). La valeur foncière brute (« le chiffre du promoteur »). Absente si la commune n’a pas assez de ventes de terrain (→ « — »).' },
 ]
 // Rendu en GRAND (overlay ≤ 1100 px) : colonnes larges, tout lisible, zéro scroll horizontal. Dernière
 // piste = affordance de clic (chevron › / « Ouvrir la fiche → » au survol).
-const O6_GRID = 'grid-cols-[minmax(150px,1.6fr)_repeat(6,minmax(78px,1fr))_minmax(104px,0.8fr)] gap-x-2'
+const O6_GRID = 'grid-cols-[minmax(140px,1.5fr)_repeat(7,minmax(72px,1fr))_minmax(96px,0.7fr)] gap-x-2'
 const fmtFr = (v: unknown) => (v == null ? '—' : Number(v).toLocaleString('fr-FR'))
 
 // `onSelect` : dans l'outil Communes, cliquer une ligne ouvre la fiche commune.
@@ -212,7 +218,8 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
         <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
         <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
         <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
-        <b>€/m² neuf</b> = prix de sortie du neuf.
+        <b>€/m² neuf</b> = prix de sortie du neuf ·{' '}
+        <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.
         <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
           Une donnée absente reste « — », jamais un zéro inventé.</span>
       </div>

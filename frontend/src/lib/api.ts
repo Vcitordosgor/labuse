@@ -769,12 +769,20 @@ export const getSolaireFiche = (idu: string) =>
 // SOLAIRE (refonte) — mode Piscines : AGRÉGATS de la détection (île + par commune). Décomptes, jamais recalcul.
 export interface PiscinesAgregat {
   total: number; communes: { commune: string; n: number }[]; source: string; maj: string
+  // RETOURS-11F M12 — bandes de confiance + corrections « pas une piscine »
+  confiance?: { haute: number; incertaines: number; seuil_haute: number; inclure_incertaines: boolean }
+  corrigees?: number
 }
-export const getPiscinesAgregat = (commune?: string | null, surfMin = 0) =>
-  j<PiscinesAgregat>(`/modules/prospection-piscines?${qf({ ...(commune ? { commune } : {}), ...(surfMin ? { piscine_surf_min: surfMin } : {}) })}`)
+export const getPiscinesAgregat = (commune?: string | null, surfMin = 0, inclureIncertaines = false) =>
+  j<PiscinesAgregat>(`/modules/prospection-piscines?${qf({ ...(commune ? { commune } : {}), ...(surfMin ? { piscine_surf_min: surfMin } : {}), ...(inclureIncertaines ? { inclure_incertaines: 1 } : {}) })}`)
 // LOT8b — TOUTES les piscines (île/commune) en points GeoJSON pour la carte (pas le listing capé à 500).
-export const getPiscinesPoints = (commune?: string | null, surfMin = 0) =>
-  j<{ type: 'FeatureCollection'; features: unknown[] }>(`/modules/prospection-piscines/points?${qf({ ...(commune ? { commune } : {}), ...(surfMin ? { piscine_surf_min: surfMin } : {}) })}`)
+export const getPiscinesPoints = (commune?: string | null, surfMin = 0, inclureIncertaines = false) =>
+  j<{ type: 'FeatureCollection'; features: unknown[] }>(`/modules/prospection-piscines/points?${qf({ ...(commune ? { commune } : {}), ...(surfMin ? { piscine_surf_min: surfMin } : {}), ...(inclureIncertaines ? { inclure_incertaines: 1 } : {}) })}`)
+// RETOURS-11F M12 — « pas une piscine » : signal humain qui retire la parcelle du service (compteur, carte).
+export const postPasUnePiscine = (idu: string, motif?: string) =>
+  j<{ ok: boolean; idu: string; corrigees_total: number }>(`/modules/prospection-piscines/pas-une-piscine`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu, motif: motif ?? null }),
+  })
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {

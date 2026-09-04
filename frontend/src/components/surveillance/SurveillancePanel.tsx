@@ -107,7 +107,8 @@ function VoletParcelles() {
   // RV2-V3 — toggleWatch : suit (ou dé-suit) une parcelle, cloisonné au compte (events.py).
   const suivre = useMutation({
     mutationFn: (idu: string) => toggleWatch(idu),
-    onSuccess: (r) => { qc.invalidateQueries({ queryKey: ['suivis'] }); setMsg(r.watched ? '✓ Parcelle ajoutée au suivi.' : 'Parcelle retirée du suivi.') },
+    // RETOURS-11F M10 — sens Veille → fiche : retirer ici éteint la cloche de la fiche (clé ['watch']).
+    onSuccess: (r) => { qc.invalidateQueries({ queryKey: ['suivis'] }); qc.invalidateQueries({ queryKey: ['watch'] }); setMsg(r.watched ? '✓ Parcelle ajoutée au suivi.' : 'Parcelle retirée du suivi.') },
     onError: () => setMsg('Impossible de suivre cette parcelle (plafond atteint ?).'),
   })
   return (

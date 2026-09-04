@@ -488,8 +488,20 @@ function SignalerErreur({ idu, section }: { idu: string; section?: string | null
 // M14 — suivi de cible : événements sur cette parcelle SANS l'entrer au pipeline.
 function WatchButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
+  const setToast = useApp((s) => s.setToast)
   const w = useQuery({ queryKey: ['watch', idu], queryFn: () => getWatch(idu) })
-  const t = useMutation({ mutationFn: () => toggleWatch(idu), onSuccess: () => qc.invalidateQueries({ queryKey: ['watch', idu] }) })
+  // RETOURS-11F M10 — la cloche EST le pont vers la Veille (dans les deux sens : retirer depuis
+  // Veille éteint la cloche via la même clé de requête `suivis`). Le toast dit où la retrouver.
+  const t = useMutation({
+    mutationFn: () => toggleWatch(idu),
+    onSuccess: (res: { watched?: boolean } | void) => {
+      qc.invalidateQueries({ queryKey: ['watch', idu] })
+      qc.invalidateQueries({ queryKey: ['suivis'] })   // la liste Veille › Parcelles reflète aussitôt
+      const nowOn = (res && typeof res === 'object' && 'watched' in res) ? !!res.watched : !w.data?.watched
+      setToast(nowOn ? 'Parcelle suivie — retrouvez-la dans Veille › Parcelles.'
+                     : 'Parcelle retirée du suivi.')
+    },
+  })
   const on = w.data?.watched
   // C4 · cloche = suivi ; style référence (31×31, vert actif quand suivie).
   return (
