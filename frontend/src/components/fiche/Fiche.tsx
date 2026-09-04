@@ -20,17 +20,17 @@ import { DepotsBlock } from './DepotsBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import { CoproprietesBlock } from './CoproprietesBlock'
 import { ProprietaireHistorique } from './ProprietaireHistorique'
-import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
 import type { FicheLine, FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu } from '../../lib/types'
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
-import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroSpark, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil } from './primitives'
+import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil } from './primitives'
 // RETOURS-11F4 (F5) — la section Constructibilité + sa machinerie vivent dans `constructibilite.tsx`.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
 import { ConstructibiliteSection } from './constructibilite'
 import { RisquesSection } from './risques'
+import { MarcheSection } from './marche'
 export { Calculette, FaisabiliteTab } from './constructibilite'
 export type { CalcResult } from './constructibilite'
 
@@ -579,12 +579,10 @@ export function Fiche({ idu }: { idu: string }) {
   const toggleAnalyseReplie = useApp((s) => s.toggleAnalyseReplie)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
-  const setParcelPrefill = useApp((s) => s.setParcelPrefill) // M-ENTREE — portes Faisabilité + Assemblage (IDU)
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)  // CONNEXIONS-2 Lot 3 (KO-5) — Courrier pré-rempli sur la parcelle
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
-  const setFlyTo = useApp((s) => s.setFlyTo)        // recentre la carte (porte « Remonter le temps », zoom section)
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   const calculette = useApp((s) => s.calculette)   // A6 : hypothèses courantes → reflétées dans le PDF
@@ -665,13 +663,9 @@ export function Fiche({ idu }: { idu: string }) {
     ...(!f.proprietaire_moral ? [{ quoi: 'Identité du propriétaire', pourquoi: 'personne physique — non automatisée (workflow SPF/CERFA)' }] : []),
   ] : []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
-  // RETOURS-11F4 (F6) : les lignes Risques (vigilances/clean/compteur) vivent dans `RisquesSection`.
-  // Marché : médiane €/m² structurée (dvf_parcelle.secteur) + nb de ventes — donnée propre.
-  const marcheLines = ongletLines('marche')
-  // M137-G — SECTEUR = prix du TERRAIN NU SEUL (mesuré : dvf_marche.py:107 `bati_m2=0`, médiane
-  // €/m² terrain, géo-DVF 2021-2025, emprise commune+section). PLUS de repli sur secteur[0] : une
-  // section sans vente de terrain nu affiche « — » — un prix bâti (~2 200 €/m²) dans une case
-  // « prix terrain » mentirait (arbitrage Vic). Le nu et le bâti ne se moyennent jamais.
+  // RETOURS-11F4 (F6/F7) : les lignes Risques ET Marché (marcheLines, prix de sortie, socio-éco)
+  // vivent désormais dans `RisquesSection` / `MarcheSection`. `dvfSecteur` (prix terrain nu) reste
+  // dérivé ici car l'ANALYSE d'en-tête l'affiche aussi (M137-G — nu SEUL, jamais moyenné au bâti).
   const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain')
   // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
   // propriétaire. Jamais d'identité de personne physique (boussole).
@@ -1382,121 +1376,9 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M55-O phase 2.3 (incohérence 3) : le prix d'en-tête est étiqueté « terrain nu » — à
                 distinguer du « prix de sortie bâti » (bilan) : deux métriques légitimes, jamais
                 confondues (269-286 €/m² terrain vs ~2 000 €/m² bâti). */}
-            <RefDrawer id="marche" icon={IC.marche} name="Marché et secteur"
-              context={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''} secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')}
-              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
-              micro={<MicroSpark label={(dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF') + ((faisa.data?.marche?.fraicheur?.horizon_libelle || faisa.data?.marche?.dvf_couverture?.libelle) ? ` · DVF — ${faisa.data.marche.fraicheur?.horizon_libelle ?? faisa.data.marche.dvf_couverture.libelle}` : '')} />}>
-              {marcheLines.length
-                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
-                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-              {/* M101 B2 — le NEUF (VEFA) de la commune : grandeur NOMMÉE, effectif, fenêtre et
-                  réserve avec le chiffre ; sous le seuil, la phrase « échantillon insuffisant »
-                  À LA PLACE du chiffre (absence normale du profil, jamais un trou). */}
-              {(() => { const nv = f.dvf_parcelle?.neuf_vefa
-                return nv ? (
-                  <div data-fiche-neuf-vefa className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px]">
-                    {nv.effectif_suffisant && nv.mediane_prix_m2_bati != null ? (
-                      <span className="font-medium text-txt">
-                        Neuf (VEFA) — commune : {fmtInt(nv.mediane_prix_m2_bati)} €/m² bâti
-                        <span className="font-normal text-txt-mut"> · {nv.n} ventes / {nv.fenetre_ans} ans</span>
-                      </span>
-                    ) : (
-                      <span className="text-txt-mut">Neuf (VEFA) — commune : {nv.insuffisant_libelle}</span>
-                    )}
-                    <p className="mt-0.5 text-[9px] text-txt-dim">{nv.grandeur} · {nv.reserve}</p>
-                  </div>
-                ) : null })()}
-              {/* M-U — signal de marché condensé (DVF actes + Sitadel), jamais un mot nu : les 2
-                  composantes sont affichées ; l'outil « Marché » donne le bloc commune complet (9 lignes). */}
-              {(() => { const sig = (f as unknown as { market_signal?: Record<string, any> }).market_signal
-                return sig?.disponible ? (
-                  <div data-fiche-market-signal className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px]">
-                    <span className="font-medium text-txt">Signal de marché : {sig.label}</span>
-                    {(sig.composantes as Record<string, any>[]).map((c, i) => (
-                      <div key={i} className="mt-0.5 text-[10px] text-txt-mut">{c.sens} {c.cle} — {c.valeur}</div>
-                    ))}
-                    <p className="mt-0.5 text-[9px] text-txt-dim">{sig.source} · outil « Marché » pour le détail commune</p>
-                  </div>
-                ) : null })()}
-              {/* M55-O phase 2.1c — HYPER-LOCAL absorbé depuis l'ancien tiroir « Contexte » :
-                  historique permis sur la parcelle + voisinage proche (ventes DVF + permis 36 mois). */}
-              {f.historique_site?.indisponible && <div className="mt-2"><BlocIndisponible titre="Sur cette parcelle (historique)" /></div>}
-              {f.historique_site && !f.historique_site.indisponible && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
-                <div data-historique-site className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                  <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
-                  <ul className="mt-1 list-disc pl-4 text-txt-mut">
-                    {f.historique_site.permis.slice(0, 6).map((pm, i) => (
-                      <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
-                    ))}
-                    {f.historique_site.caducite && (
-                      <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
-                    )}
-                  </ul>
-                  <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
-                </div>
-              )}
-              {f.voisinage_proche?.indisponible && <div className="mt-2"><BlocIndisponible titre="Autour, à moins de 100 m" /></div>}
-              {f.voisinage_proche && !f.voisinage_proche.indisponible && (
-                <div data-voisinage-proche className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-                  <div className="font-medium text-txt">📍 {f.voisinage_proche.titre}</div>
-                  <div className="mt-1 text-txt-mut">
-                    {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} · {f.voisinage_proche.permis} permis <span className="text-txt-dim">(&lt; 100 m, 36 mois)</span>
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
-                </div>
-              )}
-              {/* M137-H — porte vers l'outil « Marché » PRÉFILTRÉ sur la commune de la parcelle : les
-                  indicateurs COMMUNAUX (9 lignes) vivent dans l'outil ; la fiche garde le parcelle/section.
-                  `setCommune` = le point d'entrée unique de l'app (le tool lit useApp.commune au montage) ;
-                  le nom est SERVI (`f.commune`), jamais en dur. */}
-              {/* RETOURS-1 R4 (Vic) — la fiche commune de l'outil a disparu : la porte ouvre la fiche
-                  commune de CONTEXTE (panneau droit, z-30 au-dessus de la fiche), qui porte désormais
-                  marché local + rareté/ZAN + vélocité en plus de son contexte officiel. */}
-              {f.commune && (
-                <PorteOutil ico="↗" data="marche" titre={`Voir le marché de ${f.commune}`}
-                  sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
-                  onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) }} />
-              )}
-              {/* RETOURS-1 R5 (Vic) — porte vers la calculette Taxe d'aménagement : la parcelle reste
-                  sélectionnée (M60), l'outil charge d'emblée son contexte (commune pré-remplie,
-                  surface du terrain en référence — la surface TAXABLE reste saisie à la main). */}
-              <PorteOutil ico="€" data="taxe-amenagement" titre="Taxe d'aménagement"
-                sous={`Estimation détaillée pour un projet ici${f.commune ? ` (${f.commune})` : ''} — barème officiel daté, taux jamais inventés`}
-                onClick={() => setModule('taxe-amenagement')} />
-              {/* fiche-secteur (ex-carnet) — le COMPTE d'opportunités de la section cadastrale. « opportunités »
-                  = parcelles Priorité + À suivre du run servi (rien de plus). CLIC → carte sur la commune,
-                  zoomée sur la section, filtrée sur ces deux tiers (jamais un chiffre mort). */}
-              {f.secteur_opportunites && f.secteur_opportunites.n > 0 && f.commune && (
-                <button data-secteur-opp
-                  onClick={() => {
-                    const st = useApp.getState()
-                    st.setFilters({ ...EMPTY_FILTERS, communes: [f.commune!], tiers: ['brulante', 'chaude'] })
-                    st.setCommune(f.commune!)                                     // garde les tiers (spread), pose la commune-vue
-                    if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 })     // zoom sur la section
-                    st.setView('cartes'); select(null)                           // carte + ferme la fiche
-                  }}
-                  className="card-elev flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors duration-quick hover:border-mint/50"
-                  title={`Voir les ${f.secteur_opportunites.n} parcelles Priorité ou À suivre de la section ${f.secteur_opportunites.section} sur la carte`}>
-                  <span className="text-[11px] leading-snug text-txt">
-                    <b className="tnum text-mint">{f.secteur_opportunites.n}</b> parcelle{f.secteur_opportunites.n > 1 ? 's' : ''}{' '}
-                    <b>Priorité</b> ou <b>À suivre</b> dans cette section
-                    <span className="text-txt-dim"> (n° {f.secteur_opportunites.section.slice(8)})</span></span>
-                  <span className="shrink-0 text-mint">→</span>
-                </button>
-              )}
-              {/* M125-2 — contexte socio-éco du secteur (Filosofi + parc social RPLS), hors scoring */}
-              {f.marche_secteur && <MarcheSecteurBlock ms={f.marche_secteur} />}
-              {/* M70 déc. 9 — PORTES Marché (grille terminale supprimée) : Comparer (cette parcelle
-                  chargée) + Remonter le temps (centré sur la parcelle via flyTo). Une porte/outil (M60). */}
-              <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
-                sous="Cette parcelle chargée — ajoutez-en d'autres à comparer"
-                onClick={() => { const st = useApp.getState(); st.openCompare(); st.addToCompare(idu) }} />
-              {f.coords && (
-                <PorteOutil ico="◷" data="temps" titre="Remonter le temps"
-                  sous="Ce terrain de 1950 à aujourd'hui (curseur avant/après)"
-                  onClick={() => { setParcelPrefill(idu); setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
-              )}
-            </RefDrawer>
+            {/* MARCHÉ — RETOURS-11F4 (F7) : recentré sur le PRIX (prix de sortie rapatrié ici, socio-éco
+                et permis déménagés vers Autour) → module `marche.tsx`. */}
+            <MarcheSection f={f} idu={idu} />
 
             {/* RÉSEAUX ET ACCÈS — accès, équipements, gestionnaires, permis */}
             <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" context={viabContext}
