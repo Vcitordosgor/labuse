@@ -253,6 +253,11 @@ const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
 function applyClairMode(m: maplibregl.Map, basemap: string) {
   const clair = basemap === 'clair'
   const sombre = basemap === 'dark'
+  // RETOURS-11 C4 — fonds PHOTO/CLAIR (Plan IGN, Ortho IGN, tous millésimes) : les traits fins et
+  // les aplats sombres se noient sur la tuile claire/photographique. On applique un variant de style
+  // « lisibilité fond clair » en surcouche, PILOTÉ ICI (seul propriétaire du paint basemap-dépendant),
+  // sans DUPLIQUER de couche. Clair et Sombre (témoins) ne passent JAMAIS par ce bloc.
+  const photo = basemap === 'plan' || basemap === 'ortho'
   const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
   const vis = (id: string, on: boolean) => { if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none') }
   // FOND-SOMBRE : la mer du Sombre = teinte mesurée du rendu raster d'avant ; Clair garde le noir.
@@ -265,17 +270,21 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   // traits achromatiques (#ECF5EF) invisibles sur terre claire → foncés en Clair (bascule M64).
   const selLine = clair ? '#14181A' : '#ECF5EF'
   for (const id of ['parcels-sel', 'ile-sel', 'parcels-ping', 'ile-ping']) set(id, 'line-color', selLine)
-  for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', clair ? '#14181A' : '#ECF5EF'); set(id, 'text-halo-color', clair ? '#FFFFFF' : '#06130C') }
+  // RETOURS-11 C4 — text-halo-width réappliqué à sa valeur de création (1.3) hors fond photo, pour
+  // que le retour en Clair/Sombre efface l'épaississement du variant photo (témoins intacts).
+  for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', clair ? '#14181A' : '#ECF5EF'); set(id, 'text-halo-color', clair ? '#FFFFFF' : '#06130C'); set(id, 'text-halo-width', 1.3) }
   // M105 P4.1 — limites parcelles NOIRES en vue claire (le beige #B9B3A6 se noyait sur la
   // terre claire) ; la vue sombre ne bouge pas. Deux traitements selon le fond, assumés.
   for (const id of ['parcels-limites', 'ile-limites']) {
     set(id, 'line-color', clair ? '#000000' : '#8FA69A')
     set(id, 'line-width', clair ? 0.5 : 0.3)
+    set(id, 'line-opacity', 0.4)   // RETOURS-11 C4 — valeur de création restaurée (le variant photo la monte à 0,9)
   }
   // limites communes : vert foncé #2E7D52 / 1,6 px (≈3× parcelles) sur terre claire — elles ne se
   // noient plus dans le cadastre ; sinon menthe + interpolation sombre d'origine.
   set('communes-bounds', 'line-color', clair ? '#2E7D52' : '#5CE6A1')
   set('communes-bounds', 'line-width', clair ? 1.6 : COMMUNES_W_SOMBRE)
+  set('communes-bounds', 'line-opacity', 0.55)   // RETOURS-11 C4 — création restaurée (variant photo la monte à 0,95)
   // M105-B — les couches d'INFORMATION consomment le jeu de tokens du thème (lib/mapTheme,
   // un jeu par thème, un seul endroit) : zonage, PPR, ANRU (+trame), 50 pas, liseré brûlantes.
   // Le contour des tiers (parcels-line/ile-line) a son propriétaire unique : l'effet violet.
@@ -330,6 +339,41 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
   set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
+
+  // ═══ RETOURS-11 C4 — VARIANT LISIBILITÉ « fond photo/clair » (Plan & Ortho) ═══
+  // Ce bloc s'exécute EN DERNIER : il écrase, pour les seuls fonds photo, les propriétés posées
+  // plus haut (colonne « sombre » par défaut hors clair/sombre). Il ne s'exécute jamais en Clair ni
+  // en Sombre → les deux témoins gardent EXACTEMENT leur rendu (les lignes ci-dessus les ré-appliquent
+  // à chaque bascule, ce bloc étant sauté). Aucune couche neuve : uniquement setPaintProperty.
+  if (photo) {
+    // Limites parcelles : sur ortho/plan le beige fin (#8FA69A / 0,3 px) disparaît. Le vrai casing
+    // (liseré sombre large SOUS un trait clair fin) demanderait une 2e couche — interdit ici (« pas
+    // de couche dupliquée »). FAIT AUTREMENT : un TRAIT SOMBRE nettement plus large (jusqu'à 2,2 px)
+    // et opaque, très lisible sur la photo (cf. rapport C4).
+    for (const id of ['parcels-limites', 'ile-limites']) {
+      set(id, 'line-color', '#0A0F0C')
+      set(id, 'line-width', ['interpolate', ['linear'], ['zoom'], 12, 0.8, 16, 1.6, 19, 2.2])
+      set(id, 'line-opacity', 0.9)
+    }
+    // Limites communes : même recette de casing — trait sombre large, très visible sur ortho/plan.
+    set('communes-bounds', 'line-color', '#0A2417')
+    set('communes-bounds', 'line-width', ['interpolate', ['linear'], ['zoom'], 8, 2.0, 13, 3.2])
+    set('communes-bounds', 'line-opacity', 0.95)
+    // Zonage (aplat) : plus opaque + contour sombre net — l'aplat clair ressort sur la photo.
+    for (const id of ['ov-zonage', 'ovmvt-zonage']) set(id, 'fill-opacity', 0.34)
+    for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
+    // Zonage — LETTRES (symbol) : halo SOMBRE épaissi → les lettres blanches restent lisibles sur photo.
+    for (const id of ['parcels-zone-label', 'ile-zone-label']) {
+      set(id, 'text-color', '#FFFFFF'); set(id, 'text-halo-color', '#000000'); set(id, 'text-halo-width', 2.2)
+    }
+    // Risques (PPR + aléas DEAL) : aplat plus opaque + contour sombre — même gain de lisibilité.
+    for (const id of ['ov-ppr', 'ovmvt-ppr']) set(id, 'fill-opacity', 0.30)
+    for (const id of ['ov-ppr-line', 'ovmvt-ppr-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
+    for (const c of ALEA_COUCHES) {
+      set(c.id, 'fill-opacity', ['match', ['coalesce', ['get', 'niveau'], 'moyen'], 'faible', 0.30, 'fort', 0.5, 0.4] as unknown as maplibregl.ExpressionSpecification)
+      set(`${c.id}-line`, 'line-color', '#0A0F0C'); set(`${c.id}-line`, 'line-width', 1.4)
+    }
+  }
 }
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
@@ -447,6 +491,8 @@ function fcTouchesBbox(fc: { features: { geometry: unknown }[] },
 interface Measure {
   pts: LngLat[]
   alti: { pt: LngLat; z: number } | null
+  // RETOURS-11 C8 — forme VALIDÉE (par Entrée) : la mesure est figée, le prochain clic repart à zéro.
+  done?: boolean
 }
 
 // M55-G point 13 — BOUTON DE CARTE MOMENTANÉ (zoom +/−…) : au clic, flash mint ~180 ms puis
@@ -1641,25 +1687,35 @@ export function MapView() {
       // ZONE-RECETTE LOT E : on IGNORE un sommet dupliqué (les deux clics d'un double-clic tombent au
       // même endroit) — plus de spike parasite en bout de tracé.
       setMeasure((s) => {
+        // RETOURS-11 C8 — une forme VALIDÉE (Entrée) est figée : le prochain clic repart d'une forme neuve.
+        if (s.done) return { pts: [p], alti: null }
         const last = s.pts[s.pts.length - 1]
         if (last && Math.abs(last[0] - p[0]) < 1e-6 && Math.abs(last[1] - p[1]) < 1e-6) return s
         return { ...s, pts: [...s.pts, p] }
       })
     }
     const onDbl = (e: maplibregl.MapMouseEvent) => {
-      // ZONE-RECETTE LOT E + RETOURS-11 C8 (décision Vic 03/09) : le double-clic ne VALIDE plus rien
-      // (preventDefault sur le zoom) — la validation d'une forme passe UNIQUEMENT par Entrée (≥ 3 points),
-      // Échap annule. Le double-clic est libéré pour l'édition des points (glisser-déplacer : à venir).
+      // RETOURS-11 C8 (décision Vic 03/09) : le double-clic ne VALIDE PLUS AUCUNE forme. La validation
+      // passe UNIQUEMENT par Entrée (surface/zone ≥ 3 points, distance ≥ 2 points), Échap annule.
+      // On neutralise seulement le zoom au double-clic (preventDefault) ; aucune finalisation ici.
+      // Le double-clic reste disponible pour l'édition des points (glisser-déplacer : non implémenté,
+      // cf. rapport C8) — il ne ferme jamais la forme en cours.
       e.preventDefault()
-      // distance/surface : le double-clic fige la mesure (l'outil reste actif pour recommencer)
-      if (tool === 'distance' || tool === 'surface') setMeasure((s) => ({ ...s, pts: s.pts }))
     }
     const onKey = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') { setMeasure({ pts: [], alti: null }); setTool(null); return }
-      // Entrée ferme le polygone de zone et lance le filtrage (≥ 3 sommets).
-      if (ev.key === 'Enter' && tool === 'zone') {
-        const pts = measureRef.current.pts
+      if (ev.key !== 'Enter') return
+      // RETOURS-11 C8 — Entrée (et Entrée SEULE) valide la forme en cours :
+      //  · zone   : ferme le polygone (≥ 3 sommets), applique le filtre et referme l'outil ;
+      //  · surface: fige la mesure du polygone (≥ 3 sommets) — l'outil reste actif, prochain clic = neuve ;
+      //  · distance: fige la mesure de la ligne (≥ 2 points) — idem.
+      const pts = measureRef.current.pts
+      if (tool === 'zone') {
         if (pts.length >= 3) { setZone(pts); setTool(null); setMeasure({ pts: [], alti: null }) }
+      } else if (tool === 'surface') {
+        if (pts.length >= 3) setMeasure((s) => ({ ...s, done: true }))
+      } else if (tool === 'distance') {
+        if (pts.length >= 2) setMeasure((s) => ({ ...s, done: true }))
       }
     }
     m.on('click', onClick)
@@ -1728,8 +1784,7 @@ export function MapView() {
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
             /* RETOURS-11 C8 (03/09) — libellé exact : Entrée valide, Échap annule (le double-clic ne valide plus). */
-            : tool === 'zone' ? 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler'
-            : 'Cliquez pour placer les points · Échap pour quitter')}
+            : 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler')}
         </div>
       )}
       {!tool && (
