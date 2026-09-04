@@ -30,8 +30,9 @@ describe('FIX-FONDS — fonds de carte', () => {
   })
 
   it('B6 : basemapLabel résout tous les fonds SANS BASEMAP_CHOICES', () => {
-    // RETOURS-11F3 C6 — « Actuelle » porte désormais son millésime réel au 974 (GetTile vérifié 2022).
-    expect(basemapLabel('bm-ortho-now')).toBe('Actuelle · BD ORTHO 2022')
+    // RETOURS-11F4 C6 — « Actuelle » = Ortho Express 2025, millésime réellement le plus récent servi
+    // au 974 (GetTile vérifié 8/8 points île, z15/18/19 ; la mosaïque ORTHOPHOTOS ne sert que 2022).
+    expect(basemapLabel('bm-ortho-now')).toBe('Actuelle · Ortho Express 2025')
     expect(basemapLabel('bm-ortho-2011')).toBe('2011-2015')
     expect(basemapLabel('bm-plan')).toBe('Plan IGN')
   })
