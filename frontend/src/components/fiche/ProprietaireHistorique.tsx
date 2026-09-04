@@ -51,20 +51,25 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
           ))}
         </div>
       ) : (
-        <div className="mt-1.5 text-[11px] text-txt-mut">
-          Même propriétaire moral sur toute la période suivie (aucun changement constaté).
+        <div data-proprietaire-sans-changement className="mt-1.5 text-[11px] text-txt-mut">
+          {/* RETOURS-11 F11 — sans changement, un TEXTE honnête (« même propriétaire 2019 → 2025 »),
+              plus le bouton trompeur « voir les anciens propriétaires » (il n'y en a aucun). */}
+          Même propriétaire moral {premier.millesime} → {dernier.millesime} (aucun changement constaté).
         </div>
       )}
 
       {/* R6 — un VRAI bouton (l'ex-lien gris 10,5 px souligné pointillé passait inaperçu — cause
-          n° 2 de l'invisibilité). Libellé de Vic retenu, borne des millésimes en contexte. */}
-      <button type="button" data-histo-toggle onClick={() => setOuvert((o) => !o)}
-        className="mt-2 w-full rounded-md border border-mint/40 bg-mint/[0.07] px-2.5 py-1.5 text-left text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
-        {ouvert
-          ? 'Masquer les anciens propriétaires'
-          : `Voir les anciens propriétaires — ${h.n_millesimes} millésimes (${premier.millesime}–${dernier.millesime})`}
-      </button>
-      {ouvert && (
+          n° 2 de l'invisibilité). RETOURS-11 F11 : le bouton n'apparaît QUE s'il y a un changement
+          constaté — sinon il laissait croire à d'anciens propriétaires inexistants. */}
+      {h.n_changements > 0 && (
+        <button type="button" data-histo-toggle onClick={() => setOuvert((o) => !o)}
+          className="mt-2 w-full rounded-md border border-mint/40 bg-mint/[0.07] px-2.5 py-1.5 text-left text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
+          {ouvert
+            ? 'Masquer les anciens propriétaires'
+            : `Voir les anciens propriétaires — ${h.n_millesimes} millésimes (${premier.millesime}–${dernier.millesime})`}
+        </button>
+      )}
+      {ouvert && h.n_changements > 0 && (
         <div className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5">
           {h.millesimes.map((m) => (
             <div key={m.millesime} className="flex items-baseline gap-2 text-[10.5px] leading-snug">

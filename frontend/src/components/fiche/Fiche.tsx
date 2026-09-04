@@ -12,6 +12,7 @@ import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
 import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
+import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
 import { AvisIA } from '../AvisIA'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
@@ -406,17 +407,38 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   )
 }
 
+// RETOURS-11 F2 — id de tiroir (RefDrawer) → libellé de section, pour tagger le signalement
+// avec « la section ouverte » (jamais une clé technique à l'écran).
+const SECTION_LABELS: Record<string, string> = {
+  regles: 'Urbanisme',
+  faisabilite: 'Constructibilité',
+  'mode-b': 'Constructibilité',
+  risques: 'Risques et protections',
+  marche: 'Marché et secteur',
+  reseaux: 'Réseaux et accès',
+  autour: 'Autour de cette parcelle',
+  dispositifs: 'Dispositifs territoriaux',
+  proprio: 'Propriétaire',
+  donnees: 'Données et méthode',
+}
+
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
 const SIGNALEMENT_TYPES: [string, string][] = [
   ['faux_positif', 'Erreur de détection (piscine, PV…)'], ['zonage', 'Zonage PLU'],
   ['bati', 'Bâti / occupation'], ['adresse', 'Adresse'], ['proprietaire', 'Propriétaire'],
   ['risque', 'Risque'], ['score', 'Score / verdict'], ['viabilisation', 'Viabilisation'], ['autre', 'Autre'],
 ]
-function SignalerErreur({ idu }: { idu: string }) {
+// RETOURS-11 F2 — le signalement de fiche porte l'IDU, la SECTION ouverte et (côté Produit) le
+// type « Donnée ». La section arrive pré-remplie dans le champ concerné (éditable) : le signalement
+// atterrit dans Produit avec la mention « parcelle <IDU> — <Section> ».
+function SignalerErreur({ idu, section }: { idu: string; section?: string | null }) {
   const [open, setOpen] = useState(false)
   const [type, setType] = useState('faux_positif')
-  const [champ, setChamp] = useState('')
+  const [champ, setChamp] = useState(section ?? '')
   const [commentaire, setCommentaire] = useState('')
+  // La section ouverte change pendant qu'on lit la fiche → on garde le champ à jour tant que
+  // l'utilisateur n'a pas ouvert le formulaire (une fois ouvert, on ne réécrit plus sa saisie).
+  useEffect(() => { if (!open) setChamp(section ?? '') }, [section, open])
   const m = useMutation({ mutationFn: () => postSignalement({ idu, type_erreur: type, champ: champ || undefined, commentaire: commentaire || undefined }) })
   if (m.isSuccess) {
     return (
@@ -1123,7 +1145,8 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
               <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
                 <div>Gabarit : <b className="text-txt">{fo.niveaux && fo.hauteur_m != null ? `${fo.niveaux} (${fo.hauteur_m} m)` : '—'}</b></div>
                 <div>SDP : <b className="text-txt">{fo.surface_plancher_m2 ? fmtM2(fo.surface_plancher_m2) : '—'}</b></div>
-                <div>Logements : <b className="text-txt">{`${logAuSol![0]}–${logAuSol![1]}`}</b></div>
+                {/* RETOURS-11 F5 — fourchette bornes égales → un seul nombre (« 2 », plus jamais « 2–2 »). */}
+                <div>Logements : <b className="text-txt">{logAuSol![0] === logAuSol![1] ? `${logAuSol![0]}` : `${logAuSol![0]}–${logAuSol![1]}`}</b></div>
                 <div>SHAB vendable <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
               </div>
               {/* FAISABILITE (mandat) : dire pourquoi la SHAB vendable (~123) < SHAB brute — c'est le
@@ -1665,8 +1688,36 @@ export function Fiche({ idu }: { idu: string }) {
                   à côté de l'IDU, dans le trio Maps · Cadastre · Pages jaunes (voir .hbtns). */}
             </div>
             <div className="hbtns">
-              {/* RETOURS-9 (Q8.2) — Maps · Cadastre · Pages jaunes ne sont plus des icônes discrètes :
-                  ils descendent sous l'IDU en trois BOUTONS PLEINS (voir data-fiche-liens-externes). */}
+              {/* RETOURS-11 F1 (03/09) — trois boutons-LOGOS (Cadastre Géoportail · Pages Jaunes · Google
+                  Maps) À CÔTÉ de la cloche, remplaçant les trois grandes pastilles sur deux lignes. Logos
+                  publics stockés en local (SVG inline, aucune requête externe), nom complet au survol. Les
+                  URL restent construites par les fonctions pures testées (liensExternes.ts). */}
+              {f && (() => {
+                const pj = pagesJaunes(f.adresse, f.commune)
+                return (
+                  <>
+                    {f.coords && (
+                      <a data-cadastre-link className="hbtn" target="_blank" rel="noreferrer noopener"
+                        href={cadastreGeoportailUrl(f.coords)} title="Cadastre Géoportail">
+                        <LogoCadastre />
+                      </a>
+                    )}
+                    {pj.url && (
+                      <a data-fiche-pj data-pj-commune-seule={pj.commune_seule || undefined} className="hbtn"
+                        target="_blank" rel="noreferrer noopener" href={pj.url}
+                        title={pj.commune_seule ? 'Pages Jaunes — commune' : 'Pages Jaunes'}>
+                        <LogoPagesJaunes />
+                      </a>
+                    )}
+                    {f.coords && (
+                      <a data-maps-link className="hbtn" target="_blank" rel="noreferrer noopener"
+                        href={googleMapsUrl(f.coords)} title="Google Maps (épingle sur la parcelle)">
+                        <LogoGoogleMaps />
+                      </a>
+                    )}
+                  </>
+                )
+              })()}
               <WatchButton idu={idu} />
               <button className="hbtn" onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
                 style={ficheSearchOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
@@ -1679,40 +1730,9 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           </div>
 
-        {/* RETOURS-10 (T4, maquette variante A) — sous l'IDU, trois PASTILLES CONTOUR, chacune sa couleur
-            (Cadastre vert · Pages jaunes ambre · Google Maps blanc), PLEINES au survol ET au clic (:active).
-            Fini les pavés pleins qui écrasaient l'IDU. Les URL sont construites par des fonctions pures
-            testées (liensExternes.ts) : Cadastre & Maps centrés sur le centroïde, Pages jaunes sur
-            l'adresse exacte — repli commune seule dûment annoncé. La ligne de chiffres reste juste dessous. */}
-        {f && (() => {
-          const pj = pagesJaunes(f.adresse, f.commune)
-          if (!f.coords && !pj.url) return null
-          return (
-            <div data-fiche-liens-externes className="mt-2 flex gap-1.5 px-[14px]">
-              {f.coords ? (
-                <a data-cadastre-link title={CLIENT.fiche.export.cadastreTip} target="_blank" rel="noreferrer noopener"
-                  href={cadastreGeoportailUrl(f.coords)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-mint bg-transparent px-2 py-2 text-center text-[11.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint hover:text-mint-ink active:bg-mint active:text-mint-ink">
-                  <span aria-hidden className="text-[13px] leading-none opacity-90">▦</span>Cadastre Géoportail
-                </a>
-              ) : <span className="flex-1" />}
-              {pj.url ? (
-                <a data-fiche-pj data-pj-commune-seule={pj.commune_seule || undefined} title={CLIENT.fiche.pagesJaunesTip}
-                  target="_blank" rel="noreferrer noopener" href={pj.url}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-amber bg-transparent px-2 py-2 text-center text-[11.5px] font-semibold text-amber transition-colors duration-quick hover:bg-amber hover:text-[#2A2113] active:bg-amber active:text-[#2A2113]">
-                  <span aria-hidden className="text-[13px] leading-none opacity-90">☎</span>{pj.commune_seule ? 'Pages jaunes — commune' : 'Pages jaunes'}
-                </a>
-              ) : <span className="flex-1" />}
-              {f.coords ? (
-                <a data-maps-link title="Ouvrir dans Google Maps (épingle sur la parcelle)" target="_blank" rel="noreferrer noopener"
-                  href={googleMapsUrl(f.coords)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line-2 bg-transparent px-2 py-2 text-center text-[11.5px] font-semibold text-txt transition-colors duration-quick hover:bg-white hover:text-[#111614] active:bg-white active:text-[#111614]">
-                  <span aria-hidden className="text-[13px] leading-none opacity-90">◎</span>Google Maps
-                </a>
-              ) : <span className="flex-1" />}
-            </div>
-          )
-        })()}
+        {/* RETOURS-11 F1 — les trois accès (Cadastre · Pages Jaunes · Google Maps) ont MONTÉ dans
+            l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
+            pastilles pleines sur deux lignes sont retirées. */}
 
         {/* M55-O phase 2.1 — BANDEAU DE 4 CHIFFRES (toujours visible, factuel, aucun avis) :
             Surface · Zone · SDP disponible · Prix secteur €/m². Valeurs SERVIES (jamais en dur) ;
@@ -2571,6 +2591,14 @@ export function Fiche({ idu }: { idu: string }) {
                       {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
                       {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
                     </div>
+                    {/* RETOURS-11 F11 — lien vers l'Annuaire des entreprises (fiche INPI/INSEE publique). */}
+                    {f.proprietaire_moral.siren && (
+                      <a data-annuaire-entreprises target="_blank" rel="noreferrer noopener"
+                        href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${f.proprietaire_moral.siren}`}
+                        className="mt-1 inline-block text-[10.5px] text-mint underline decoration-dotted">
+                        Annuaire des entreprises ↗
+                      </a>
+                    )}
                     {f.proprietaire_moral.etat_societe && (
                       // M43 — fait public d'entreprise (état société) : on le DIT, on n'en déduit RIEN
                       // (pas de vigilance, pas de badge, pas de filtre). PM only ; jamais la personne.
@@ -2716,7 +2744,8 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* M55-O phase 2.2 — le bloc « Signaux additionnels » (f.flags) est SUPPRIMÉ : ce sont
                     des redites des tiroirs dédiés (ABF → Risques, bâti/SDP → Constructibilité, PPR →
                     Risques). Chaque information n'apparaît qu'une fois. */}
-                <SignalerErreur idu={idu} />
+                {/* RETOURS-11 F2 — « Signaler une erreur » a QUITTÉ « Données et méthode » : c'est
+                    désormais le TOUT DERNIER bloc de la fiche (voir bas de fiche). */}
               </div>
             </RefDrawer>
 
@@ -2772,6 +2801,11 @@ export function Fiche({ idu }: { idu: string }) {
               <p data-disclaimer-legal className="legal">
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
               </p>
+              {/* RETOURS-11 F2 — « Signaler une erreur » = DERNIER bloc de la fiche (F0). Il porte
+                  la section ouverte : le signalement arrive dans Produit « parcelle <IDU> — <Section> ». */}
+              <div className="mt-2">
+                <SignalerErreur idu={idu} section={SECTION_LABELS[tiroirOuvert ?? ''] ?? null} />
+              </div>
             </div>
           </div>
           )
