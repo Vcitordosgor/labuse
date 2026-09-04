@@ -277,6 +277,11 @@ export interface Fiche {
       etats: { type: string; date: string | null; libelle: string; source: string; etiquette: string }[]
       libelle: string; note: string
     } | null
+    // RETOURS-11F3 F11 — carte d'identité publique SIRENE (activité APE, siège, date de création, état actif)
+    identite?: {
+      ape: string | null; activite: string | null; siege: string | null; siege_commune: string | null
+      date_creation: string | null; actif: boolean | null; annuaire_url: string; source: string
+    } | null
   } | null
   // L1 (KF-2) — historique du propriétaire PM par millésime + diff CONSTATÉ (hors scoring, PM only)
   proprietaire_historique?: {

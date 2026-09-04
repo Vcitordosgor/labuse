@@ -217,3 +217,30 @@ def test_f10_dispositifs_dom_b1_et_tva():
     assert "B1" in src and "8,5" in src and "2,1" in src
     # la bande TVA cite le CGI (art. 278 sexies) et la largeur 300 m (QPV) / 500 m (NPNRU)
     assert "278 sexies" in src and "300 m" in src
+
+
+# ─────────────────────────── Lot S / F11 — Propriétaire : identité société + wording ───────────────────────────
+
+def test_f11_pm_identite_sirene():
+    """F11 — la carte d'identité PUBLIQUE de la société propriétaire (activité APE, siège, date de
+    création, état actif) vient de SIRENE (open data), jamais une personne (RGPD)."""
+    from labuse.db import session_scope
+    from labuse.api.app import _pm_identite
+    with session_scope() as s:
+        r = _pm_identite(s, "484061601")   # PACIFIC (parcelle des captures)
+    if r is None:
+        import pytest as _p
+        _p.skip("SIRENE indisponible en base de test")
+    assert r["ape"] and r["activite"]         # activité NAF résolue
+    assert r["siege"] and r["date_creation"]  # siège + date de création
+    assert r["actif"] in (True, False)
+    assert r["annuaire_url"].endswith("/484061601")
+
+
+def test_f11_wording_client_non_remarquable():
+    """F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une phrase
+    client → remplacé par « Personne morale — fichier DGFiP » au point de service de la fiche."""
+    import inspect as _i
+    from labuse.api import app
+    src = _i.getsource(app._q_v2_fiche)
+    assert "non remarquable" in src and "Personne morale — fichier DGFiP" in src

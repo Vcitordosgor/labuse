@@ -3362,6 +3362,13 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     pm = dict(pm) if pm else None
     if pm and pm.get("siren"):
         pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
+        pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
+    if pm:
+        # RETOURS-11F3 F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une
+        # phrase client. On sert une étiquette humaine ; le nom de fichier ne s'affiche jamais.
+        gl = (pm.get("groupe_label") or "")
+        if "non remarquable" in gl.lower():
+            pm["groupe_label"] = "Personne morale — fichier DGFiP"
     # L1 (KF-2) — historique propriétaire PM par millésime + diff annuel CONSTATÉ (hors scoring,
     # PM uniquement). None si la parcelle n'a jamais eu de propriétaire moral connu.
     from ..proprietaire_historique import historique as _pm_historique
@@ -4022,6 +4029,36 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
     return {"etats": etats,
             "libelle": "Société propriétaire : " + " ; ".join(e["libelle"] for e in etats) + ".",
             "note": "Fait public d'entreprise (état de la société) — information de contexte, aucune déduction."}
+
+
+def _pm_identite(db: Session, siren: str | None) -> dict | None:
+    """RETOURS-11F3 F11 — carte d'identité PUBLIQUE de la société propriétaire (PM only), lue de
+    SIRENE (open data) : activité (APE + libellé), siège (adresse), date de création, état actif.
+    Fait public d'entreprise, jamais une personne (RGPD). None si SIREN inconnu de SIRENE.
+    SAVEPOINT : table absente en base de test n'avorte pas la fiche."""
+    if not siren:
+        return None
+    try:
+        with db.begin_nested():
+            row = db.execute(text(
+                "SELECT naf, adresse, commune, date_creation, actif, tranche_effectif "
+                "FROM sirene_etablissements WHERE siren = :s "
+                "ORDER BY actif DESC NULLS LAST, date_creation ASC NULLS LAST LIMIT 1"),
+                {"s": siren}).mappings().first()
+    except Exception:  # noqa: BLE001 — bloc additif, jamais bloquant pour la fiche
+        return None
+    if not row:
+        return None
+    from ..naf_labels import label as _naf_label
+    return {
+        "ape": row["naf"],
+        "activite": _naf_label(row["naf"]) if row["naf"] else None,
+        "siege": row["adresse"], "siege_commune": row["commune"],
+        "date_creation": row["date_creation"].isoformat() if row["date_creation"] else None,
+        "actif": bool(row["actif"]) if row["actif"] is not None else None,
+        "annuaire_url": f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}",
+        "source": "SIRENE (INSEE, open data)",
+    }
 
 
 def _historique_site(db: Session, idu: str) -> dict | None:

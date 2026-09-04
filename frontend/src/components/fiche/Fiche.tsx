@@ -2646,6 +2646,19 @@ export function Fiche({ idu }: { idu: string }) {
                       {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
                       {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
                     </div>
+                    {/* RETOURS-11F3 F11 — carte d'identité publique (SIRENE) : activité, siège, création,
+                        état actif — faits publics d'entreprise, jamais une personne. */}
+                    {f.proprietaire_moral.identite && (
+                      <div data-proprio-identite className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5 text-[10.5px] text-txt-mut">
+                        {f.proprietaire_moral.identite.activite && <div><span className="text-txt-dim">Activité </span><span className="text-txt">{f.proprietaire_moral.identite.activite}</span>{f.proprietaire_moral.identite.ape && <span className="ml-1 font-mono text-txt-dim">({f.proprietaire_moral.identite.ape})</span>}</div>}
+                        {f.proprietaire_moral.identite.siege && <div><span className="text-txt-dim">Siège </span><span className="text-txt">{f.proprietaire_moral.identite.siege}</span></div>}
+                        <div className="flex gap-3">
+                          {f.proprietaire_moral.identite.date_creation && <span><span className="text-txt-dim">Créée </span>{f.proprietaire_moral.identite.date_creation}</span>}
+                          {f.proprietaire_moral.identite.actif != null && <span className={f.proprietaire_moral.identite.actif ? 'text-mint' : 'text-st-ecartee'}>{f.proprietaire_moral.identite.actif ? 'active' : 'cessée'}</span>}
+                        </div>
+                        <div className="text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.identite.source}</div>
+                      </div>
+                    )}
                     {/* RETOURS-11 F11 — lien vers l'Annuaire des entreprises (fiche INPI/INSEE publique). */}
                     {f.proprietaire_moral.siren && (
                       <a data-annuaire-entreprises target="_blank" rel="noreferrer noopener"
