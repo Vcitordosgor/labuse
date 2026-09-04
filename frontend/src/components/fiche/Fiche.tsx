@@ -2586,8 +2586,8 @@ export function Fiche({ idu }: { idu: string }) {
             {f.territoire_fiscal && (
               <RefDrawer id="territoire" icon={IC.marche} name="Dispositifs territoriaux"
                 context={f.territoire_fiscal.commune}
-                value={f.territoire_fiscal.zfang.regime === 'renforce'
-                  ? <span className="pill-mint">ZFANG renforcé</span> : 'ZFANG standard'}>
+                value={f.territoire_fiscal.zfang?.regime === 'renforce'
+                  ? <span className="pill-mint">ZFANG renforcé</span> : f.territoire_fiscal.zfang ? 'ZFANG standard' : undefined}>
                 <div className="flex flex-col gap-2.5" data-territoire-fiscal>
                   {/* M134 — les périmètres FINS qui touchent LA parcelle (QPV / bande TVA 500 m),
                       au-dessus des attributs de commune (ZFANG/FRR). Jamais un sigle nu. */}
@@ -2599,18 +2599,30 @@ export function Fiche({ idu }: { idu: string }) {
                     </div>
                   ))}
                   {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
-                     ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const).map(([titre, a]) => (
+                     ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const)
+                    .filter(([, a]) => !!a).map(([titre, a]) => (
                     <div key={titre}>
                       <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
-                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a.libelle}</p>
+                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
                       <p className="mt-0.5 text-[10.5px] text-txt-dim">
-                        {a.source_ref} · <a href={a.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a>
+                        {a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a>
                       </p>
                     </div>
                   ))}
-                  <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
-                    {f.territoire_fiscal.avertissement}
-                  </p>
+                  {/* RETOURS-11F3 F10 — dispositifs valables sur TOUTE La Réunion (zonage B1, TVA DOM
+                      8,5 % / 2,1 % LLS), rapatriés de Constructibilité. Repères, jamais un calcul fiscal. */}
+                  {(f.territoire_fiscal.dispositifs_dom ?? []).map((d) => (
+                    <div key={d.libelle} data-dispositif-dom>
+                      <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
+                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
+                      <p className="mt-0.5 text-[10.5px] text-txt-dim">{d.source}</p>
+                    </div>
+                  ))}
+                  {f.territoire_fiscal.avertissement && (
+                    <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
+                      {f.territoire_fiscal.avertissement}
+                    </p>
+                  )}
                 </div>
               </RefDrawer>
             )}

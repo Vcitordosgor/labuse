@@ -3584,14 +3584,32 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
             "source": "ANCT — quartiers de génération 2024", "derive": False})
     elif tva:
         perimetres.append({
-            "libelle": "Bande des 500 m d'un quartier prioritaire",
-            "detail": "La parcelle est à moins de 500 m d'un QPV : la TVA réduite pour l'accession "
-                      "sociale peut s'y étendre. Périmètre DÉRIVÉ par LABUSE à partir des QPV "
-                      "(Estimé) — à confirmer, ce n'est pas une source officielle.",
-            "source": "LABUSE — dérivé des QPV (500 m)", "derive": True})
+            # RETOURS-11F3 F10 — le CGI (art. 278 sexies) ouvre la TVA réduite accession sociale dans
+            # les QPV ET une bande de 300 m autour (pour les NPNRU sous convention, 500 m). Le calque
+            # `tva_primo` de LABUSE est dérivé à 500 m (majorant prudent) : on le DIT, à confirmer.
+            "libelle": "Bande autour d'un quartier prioritaire (TVA réduite accession)",
+            "detail": "La parcelle est à moins de 500 m d'un QPV. Le CGI (art. 278 sexies) ouvre la TVA "
+                      "réduite pour l'accession sociale dans les QPV et une bande de 300 m autour "
+                      "(500 m pour un quartier NPNRU sous convention). Le calque LABUSE est dérivé à "
+                      "500 m (majorant) — à confirmer, ce n'est pas une source officielle.",
+            "source": "LABUSE — dérivé des QPV (500 m) · CGI art. 278 sexies", "derive": True})
+    # RETOURS-11F3 F10 — dispositifs fiscaux valables sur TOUTE La Réunion (constants, hors table),
+    # rapatriés de « Constructibilité » (F0) : le zonage d'investissement (B1) et les taux de TVA DOM.
+    # Faits territoriaux datés/sourcés, JAMAIS un calcul fiscal par projet (interdit du mandat).
+    dispositifs_dom = [
+        {"libelle": "Zonage d'investissement locatif : B1",
+         "detail": "La Réunion est classée en zone B1 (arrêté zonage A/B/C) — éligibilité PTZ dans le "
+                   "neuf et plafonds des dispositifs outre-mer. S'applique à toute l'île.",
+         "source": "Arrêté de zonage A/B/C (DHUP)"},
+        {"libelle": "TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 % logement locatif social",
+         "detail": "Dans les DOM, le taux normal de TVA est 8,5 % ; la construction/vente de logements "
+                   "locatifs sociaux (LLS/LLTS) relève du taux de 2,1 %. Repères territoriaux — le "
+                   "régime exact dépend de l'opération.",
+         "source": "CGI (TVA DOM, art. 296 et 278 sexies)"},
+    ]
     if base is None and not perimetres:
-        return None
-    return {**(base or {}), "perimetres": perimetres}
+        return {"perimetres": [], "dispositifs_dom": dispositifs_dom}
+    return {**(base or {}), "perimetres": perimetres, "dispositifs_dom": dispositifs_dom}
 
 
 def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -> dict | None:
@@ -3632,14 +3650,29 @@ def _depots_block(db: Session, parcel_id: int) -> dict | None:
         return _bloc_indisponible("depots")
 
 
+# RETOURS-11F3 F0 — SEUILS DE PERTINENCE par famille (mètres) : au-delà, l'objet n'est PAS une
+# information (Vic : « une ligne HT à 3 887 m ou un téléphérique à 24 km ne sont pas des infos »).
+# Gravés dans le code (F0), jamais dans la tête. None = pas de seuil (l'axe porte déjà son libellé).
+SEUILS_PROXIMITE_M = {
+    "arret": 1500,        # arrêt de bus au-delà de ~1,5 km : hors marche quotidienne
+    "pole": 3000,         # pôle d'échange : structurant, rayon plus large
+    "telepherique": 2000, # un téléphérique à 24 km n'a aucun sens pour la parcelle
+    "ligne_ht": 500,      # servitude I4 : au-delà de 500 m, ni contrainte ni recul
+}
+
+
 def _proximites_block(db: Session, idu: str) -> dict | None:
     """M106 P4 — proximité transport (arrêt / pôle d'échange / téléphérique) et ligne HT.
-    Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas."""
+    Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas.
+    RETOURS-11F3 F0 — chaque famille a un SEUIL de pertinence (SEUILS_PROXIMITE_M) : au-delà,
+    l'objet est écarté (pas affiché) — plus de « téléphérique à 24 km » ni de « ligne HT à 3 887 m »."""
+    def _sous_seuil(obj, cle):
+        return obj if (obj and obj["distance_m"] <= SEUILS_PROXIMITE_M[cle]) else None
     try:
-        arret = _plus_proche(db, idu, "transport_arret")
-        pole = _plus_proche(db, idu, "pole_echange")
-        tele = _plus_proche(db, idu, "telepherique", "station")
-        ht = _plus_proche(db, idu, "ligne_ht")
+        arret = _sous_seuil(_plus_proche(db, idu, "transport_arret"), "arret")
+        pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
+        tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
+        ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
@@ -3676,6 +3709,9 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         # M125 — sous-requête isolée : on ne masque plus l'échec en silence (log), mais le bloc
         # garde ses autres proximités réelles ; l'axe est simplement omis (dégradation partielle).
         _FICHE_LOG.exception("fiche · bloc « proximites.axe » indisponible (erreur technique)")
+        axe = None
+    # F0 — seuil de pertinence : un axe structurant à plus d'1 km ne desservt ni ne nuit à la parcelle.
+    if axe and axe["distance_m"] > 1000:
         axe = None
     if axe:
         nat = (axe["attrs"].get("nature") or "route")

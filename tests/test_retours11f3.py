@@ -186,3 +186,34 @@ def test_f4_zone_non_outillee_pas_de_valeurs_fabriquees():
     r = resolve_reglement(None, "UC", "97400")
     assert r and not r["calibree"]
     assert r.get("regles_valeurs", []) == []
+
+
+# ─────────────────────────── Lot S / F0 — seuils de pertinence par famille ───────────────────────────
+
+def test_f0_seuils_de_pertinence_proximite():
+    """F0 — chaque objet « à proximité » a un rayon au-delà duquel il n'est PAS affiché : une ligne HT
+    à 3 887 m ou un téléphérique à 24 km ne sont pas des informations (Vic). Les seuils sont GRAVÉS."""
+    from labuse.api.app import SEUILS_PROXIMITE_M
+    # les familles pointées par l'audit ont un seuil resserré
+    assert SEUILS_PROXIMITE_M["ligne_ht"] <= 600      # une HT à 3 887 m n'est pas une contrainte
+    assert SEUILS_PROXIMITE_M["telepherique"] <= 3000  # un téléphérique à 24 km est écarté
+    assert SEUILS_PROXIMITE_M["arret"] <= 2000
+    # le bloc applique bien un filtre par seuil
+    import inspect as _i
+    src = _i.getsource(__import__("labuse.api.app", fromlist=["_proximites_block"])._proximites_block)
+    assert "_sous_seuil" in src and "SEUILS_PROXIMITE_M" in src
+
+
+# ─────────────────────────── Lot S / F10 — Dispositifs : zonage B1 + TVA DOM ───────────────────────────
+
+def test_f10_dispositifs_dom_b1_et_tva():
+    """F10 — la section Dispositifs sert les dispositifs valables sur TOUTE La Réunion : zonage B1
+    (PTZ / outre-mer) et TVA DOM (8,5 % ; 2,1 % LLS), rapatriés de Constructibilité. Faits datés,
+    JAMAIS un calcul fiscal par projet."""
+    import inspect as _i
+    from labuse.api import app
+    src = _i.getsource(app._territoire_fiscal_block)
+    assert "dispositifs_dom" in src
+    assert "B1" in src and "8,5" in src and "2,1" in src
+    # la bande TVA cite le CGI (art. 278 sexies) et la largeur 300 m (QPV) / 500 m (NPNRU)
+    assert "278 sexies" in src and "300 m" in src

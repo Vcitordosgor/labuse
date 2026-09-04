@@ -368,12 +368,14 @@ export interface Fiche {
   // M106 P3 — dispositifs fiscaux territoriaux (ZFANG / FRR ex-ZRR) : attribut de COMMUNE,
   // des ÉTATS sourcés + lien vers le texte — JAMAIS un chiffre fiscal (interdit du mandat).
   territoire_fiscal?: {
-    commune: string
-    zfang: { regime: 'standard' | 'renforce'; libelle: string; source_ref: string; lien: string }
-    frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
-    avertissement: string
+    commune?: string
+    zfang?: { regime: 'standard' | 'renforce'; libelle: string; source_ref: string; lien: string }
+    frr?: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
+    avertissement?: string
     // M134 — les périmètres FINS qui touchent la parcelle (QPV dedans, ou bande TVA 500 m dérivée)
     perimetres?: { libelle: string; detail: string; source: string; derive: boolean }[]
+    // RETOURS-11F3 F10 — dispositifs valables sur toute La Réunion (zonage B1, TVA DOM 8,5 / 2,1 LLS)
+    dispositifs_dom?: { libelle: string; detail: string; source: string }[]
   } | null
   // M106 P4 — PROXIMITÉS (distance, jamais un booléen) : transport + ligne HT (contrainte).
   proximites?: {
