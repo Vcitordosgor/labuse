@@ -264,6 +264,29 @@ intact (0 fichier scoring). Les 7 travaux O1-O7 sont livrés (O2 en commit dédi
   de chaque permis (`_ETAT_LABELS`, source unique tool+fiche). **Zoom** : à la recherche par IDU (ou
   adresse rattachée), la carte zoome et délimite la parcelle via **`focusParcelle`** (même geste que O1/J1),
   sans ouvrir la fiche. Recette : « Chantier récent 5 575 », IDU → zoom 9,9 → 16 (capture `O12-permis-zoom`).
-- **O13 — À FAIRE** (priorité haute — refonte Étude de zone)
+- **O13 — « Étude de zone » retapée — FAIT (priorité haute).** Beaucoup était DÉJÀ résolu par
+  DESTINATIONS-1 (mergé, prérequis) — vérifié empiriquement avant de coder :
+  - **O13.2 activité en champ libre** : DÉJÀ en place (`/outils/etude-zone/naf` autocomplétion) — vérifié :
+    « boulangerie » → `1071C Boulangerie et boulangerie-pâtisserie` (+ 1071B). Champ libre, correspondance
+    NAF montrée et modifiable, jamais de liste fermée.
+  - **O13.4 destinations PLU** : « CALIBRATION EN COURS » **absent** après DESTINATIONS-1 — l'outil sert
+    `contraintes_plu` réel (ex. Saint-Denis : U 76 % + N 12 %, document `97411_PLU_20260423`), avec le
+    verrou CDAC (> 1 000 m²) en **point de vigilance à instruire**, jamais un verdict. Vérifié.
+  - **O13.1 deux portes distinctes — LIVRÉ** : accueil à deux portes — **« Zone de chalandise »**
+    (implantation d'une activité : activité NAF + sous-destination PLU au premier plan) et **« Zone
+    particulière »** (contexte foncier, sans hypothèse d'activité : sous-destination et lentille activité
+    MASQUÉES). Moteur unique (`/outils/etude-zone`), deux entrées/sorties ; « changer » revient à l'accueil ;
+    la porte Copilote préremplie choisit la porte selon la sous-destination visée. Le bloc « Autour de cette
+    parcelle » de la fiche reste sur le même moteur (hors portes).
+  - **O13.3 trafic daté — LIVRÉ** : le millésime est affiché PAR AXE (ex. N6 · 2011) + phrase de méthode
+    honnête (comptages Région Réunion / ODS, dernier millésime ouvert servi ; aucun plus récent publié en
+    open data à ce jour — « 2011 assumé vaut mieux que 2011 caché »). Recherche consignée : pas de comptage
+    routier ouvert plus récent identifié au 974 ; un nouveau jeu serait une ingestion à chiffrer (hors mandat).
+  - **O13.5 chasse aux bugs** : parcours des 2 portes × plusieurs cas réels (point St-Denis/Saint-Paul,
+    zone particulière) — **0 erreur page/console**, plus de « CALIBRATION EN COURS », isochrone dégradé
+    honnête (jamais un cercle). Captures `O13-chalandise`, `O13-particuliere`.
+
+**Vérifs Lot O bloc 3** : tsc 0 · build OK · suite frontend 169/169 · backend `test_retours12_o8_sru` 3/3 ·
+recette navigateur chaque outil · golden intact (0 fichier scoring). O8-O13 livrés (O8 en commit dédié).
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE

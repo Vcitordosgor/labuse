@@ -46,6 +46,12 @@ export function EtudeZone() {
   const setZone = useApp((s) => s.setZone)
   const setFlyTo = useApp((s) => s.setFlyTo)
 
+  // RETOURS-12 O13.1 — DEUX PORTES à l'ouverture (le MOTEUR reste unique — seules l'entrée et la sortie
+  // changent) : « chalandise » (implantation d'une activité : l'activité NAF + la sous-destination PLU
+  // sont au premier plan) · « particulière » (contexte foncier autour d'une parcelle, sans hypothèse
+  // d'activité : la lentille activité est masquée). Le bloc « Autour de cette parcelle » de la fiche
+  // reste branché sur le même moteur (endpoint /outils/etude-zone), hors de ces portes.
+  const [porteZone, setPorteZone] = useState<'chalandise' | 'particuliere' | null>(null)
   const [entree, setEntree] = useState<'point' | 'polygone'>('point')
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [mode, setMode] = useState<'voiture' | 'pied'>('voiture')
@@ -61,6 +67,8 @@ export function EtudeZone() {
     if (!etudeZonePrefill) return
     if (etudeZonePrefill.idu) { setEntree('point'); setCible({ idu: etudeZonePrefill.idu, label: iduCourt(etudeZonePrefill.idu) }) }
     setSousDest(etudeZonePrefill.sous_destination)
+    // O13.1 — la porte Copilote choisit la porte : sous-destination visée → chalandise, sinon contexte.
+    setPorteZone(etudeZonePrefill.sous_destination ? 'chalandise' : 'particuliere')
     setEtudeZonePrefill(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -160,7 +168,7 @@ export function EtudeZone() {
 
   const nouvelleEtude = () => {
     setCible(null); setNaf(null); setNafQuery(''); setSousDest(null); setZone(null); setTool(null)
-    setModuleMap({ idus: [], extra: null }); mut.reset()
+    setModuleMap({ idus: [], extra: null }); mut.reset(); setPorteZone(null)
   }
 
   const enTete = res?.zone_disponible
@@ -169,8 +177,30 @@ export function EtudeZone() {
         : `La zone à ${res.minutes} min ${res.mode === 'voiture' ? 'en voiture' : 'à pied'}${res.adresse ? ` — depuis ${res.adresse}` : ''}`)
     : ''
 
+  if (porteZone === null) {
+    // RETOURS-12 O13.1 — ACCUEIL : deux portes distinctes (moteur unique derrière).
+    return (
+      <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+        <p className="text-[11.5px] leading-snug text-txt-mut">Autour d’un lieu, que voulez-vous étudier ?</p>
+        <button data-etude-porte="chalandise" onClick={() => setPorteZone('chalandise')} className="door door-hot hover-fill w-full text-left">
+          <div className="text-[12.5px] font-medium text-txt">Zone de chalandise</div>
+          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Implanter une activité : population, emplois, concurrence, équipements, trafic — et ce que le PLU autorise pour cette activité.</div>
+        </button>
+        <button data-etude-porte="particuliere" onClick={() => setPorteZone('particuliere')} className="door door-hot hover-fill w-full text-left">
+          <div className="text-[12.5px] font-medium text-txt">Zone particulière</div>
+          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Le contexte foncier autour d’une parcelle ou d’un périmètre : ce qu’il y a autour, sans hypothèse d’activité.</div>
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      {/* O13.1 — en-tête de la porte choisie + « changer » (revient à l'accueil). */}
+      <div className="flex items-center justify-between">
+        <span data-etude-porte-active={porteZone} className="text-[10px] uppercase tracking-[.08em] text-mint">{porteZone === 'chalandise' ? 'Zone de chalandise' : 'Zone particulière'}</span>
+        <button data-etude-changer-porte onClick={nouvelleEtude} className="text-[10.5px] text-mint hover:underline">changer</button>
+      </div>
       {/* ÉTAPE 1 — DÉFINIR LA ZONE */}
       <StepHead n={1} titre="Définir la zone" sous="autour d’un point (temps + mode) ou zone dessinée" />
       {/* SEGMENTÉ — deux entrées exclusives */}
@@ -216,7 +246,9 @@ export function EtudeZone() {
           restaurant / un hôtel / un commerce ? » — verdict par zone PLU recouverte, phrase sourcée.
           Fait partie de la LECTURE de zone (payload principal) ; l'activité NAF est, elle, portée par
           la lentille additive de l'étape 3 (RETOURS-11 O19). */}
-      <DestinationSelect dataAttr="etude-zone" value={sousDest} onChange={setSousDest} />
+      {/* O13.1 — la sous-destination PLU (« peut-on y ouvrir un commerce ? ») est une question
+          d'ACTIVITÉ → porte chalandise seulement. La zone particulière ne suppose aucune activité. */}
+      {porteZone === 'chalandise' && <DestinationSelect dataAttr="etude-zone" value={sousDest} onChange={setSousDest} />}
 
       <button onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}
         className={`rounded-lg px-3 py-2 text-[12px] font-medium ${pretA && !mut.isPending ? 'bg-mint/20 text-txt-hi hover:bg-mint/30' : 'bg-surface-2 text-txt-dim'}`}>
@@ -298,7 +330,11 @@ export function EtudeZone() {
                       <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(a.tmja)} véh./j</span>
                     </div>
                   ))}
-                  <span className="text-[9.5px] text-txt-dim">Trafic véhicules sur routes nationales (Région Réunion) — pas un flux piéton.</span>
+                  {/* RETOURS-12 O13.3 — le MILLÉSIME est affiché par axe (ci-dessus) et assumé ici : le
+                      dernier comptage routier OUVERT servi au 974 est celui de la Région Réunion (ODS) ;
+                      aucun millésime plus récent n'est publié en open data à ce jour. 2011 assumé vaut
+                      mieux que 2011 caché. */}
+                  <span className="text-[9.5px] leading-snug text-txt-dim">Trafic véhicules/jour sur routes nationales — comptages Région Réunion (ODS), dernier millésime ouvert servi (indiqué par axe). Pas un flux piéton.</span>
                 </div>
               )}
             </div>
@@ -336,8 +372,9 @@ export function EtudeZone() {
             </div>
           )}
 
-          {/* ÉTAPE 3 — UNE ACTIVITÉ (facultative, lentille additive : elle S'AJOUTE à la lecture ci-dessus). */}
-          <div className="mt-1 rounded-lg border border-line-2 bg-surface-2/40 p-2.5">
+          {/* ÉTAPE 3 — UNE ACTIVITÉ (lentille additive). O13.1 — porte CHALANDISE seulement : la zone
+              particulière est un contexte foncier, sans hypothèse d'activité. */}
+          {porteZone === 'chalandise' && <div className="mt-1 rounded-lg border border-line-2 bg-surface-2/40 p-2.5">
             <StepHead n={3} titre="Une activité" facultatif
               sous="lentille facultative — concurrents / chalandise d’une activité, en plus de la lecture" />
             <ActiviteLens
@@ -349,7 +386,7 @@ export function EtudeZone() {
               onAppliquer={() => mut.mutate()} enCours={mut.isPending} />
             {/* CONCURRENTS — trois états honnêtes, jamais un faux zéro. Rendu SOUS la lentille. */}
             {res.concurrents != null && <Concurrents res={res} />}
-          </div>
+          </div>}
 
           {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré. */}
           <button onClick={nouvelleEtude} className="w-full rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
