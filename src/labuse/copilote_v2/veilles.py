@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS veilles (
 );
 CREATE INDEX IF NOT EXISTS ix_veilles_compte ON veilles (compte_id, actif);
 ALTER TABLE veilles ADD COLUMN IF NOT EXISTS criteria jsonb DEFAULT '{}'::jsonb;
+ALTER TABLE veilles ADD COLUMN IF NOT EXISTS nom varchar(120);
 """
 
 

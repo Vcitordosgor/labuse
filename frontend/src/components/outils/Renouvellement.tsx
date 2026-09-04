@@ -9,11 +9,11 @@
  *     « ⛶ Ouvrir le tableau complet ».
  *   • OVERLAY plein écran (DensifierTablePanel, patron Comparaison/Communes, cycle de vie SOCLE via
  *     densifierTableOpen ∈ CLOSE_OVERLAYS) : toutes les colonnes visibles sans scroll horizontal, tri
- *     entier, pagination SOCLE (400 par 400 + tout charger) + export CSV.
+ *     entier, pagination SOCLE (200 par 200, « Voir plus » — jamais de « tout charger »).
  */
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getFiche, getRenouvListe } from '../../lib/api'
+import { getFiche, getRenouvListe, RENOUV_PAGE } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { verdictMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
@@ -63,8 +63,9 @@ export function RenouvellementModule() {
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.renouv}4d`, background: `${TOKENS.renouv}0f` }}>
         Le <b style={{ color: TOKENS.renouv }}>bâti qui peut porter davantage</b> — extensions,
-        surélévations : des parcelles <b className="text-txt">déjà occupées</b> en zone constructible
-        avec une <b className="text-txt">capacité résiduelle réelle</b>.
+        surélévations : une parcelle <b className="text-txt">en zone constructible, déjà bâtie</b>, dont
+        la <b className="text-txt">SDP résiduelle</b> dépasse le seuil de surface constructible et
+        représente une <b className="text-txt">part significative de la SDP autorisée</b>.
         <Tip tip="Parcelles déjà bâties en zone U/AU dont la capacité résiduelle > 100 m² (ou surface ≥ 600 m²), hors copropriété et hors foncier public. Score = heuristique déterministe (percent_rank : SDP résiduelle · assiette · rotation du bâti). Estimé — règles PLU calibrées, pas une expertise.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
@@ -178,6 +179,10 @@ export function DensifierTablePanel() {
           <div className="mr-auto">
             <h2 className="text-sm font-medium text-txt-hi">Densifier l’existant — <span className="tnum">{fmtInt(total)}</span> parcelles</h2>
             <p className="text-[10.5px] text-txt-dim">{meta?.maj ? `maj ${meta.maj} · ` : ''}cliquez une ligne pour ouvrir sa fiche{commune ? ` · ${commune}` : ''}</p>
+            {/* O18 (d) — le score est une note RELATIVE (percentile) : les meilleures parcelles se
+                tassent naturellement près de 100, il départage donc mal la tête de liste. Le tri
+                « SDP résiduelle » sépare plus finement le haut du classement. */}
+            <p className="text-[9.5px] text-txt-dim">Score = note relative (percentile) — près du sommet il départage peu ; pour la tête de liste, trier par SDP résiduelle.</p>
           </div>
           <div className="flex items-center gap-1">
             <span className="mr-1 text-[10px] text-txt-dim">Trier :</span>
@@ -216,7 +221,7 @@ export function DensifierTablePanel() {
               </thead>
               <tbody>
                 {visibles.map((it) => (
-                  <tr key={it.idu} data-densifier-row className="cursor-pointer border-t border-line hover:bg-surface-2"
+                  <tr key={it.idu} data-densifier-row className="hover-fill cursor-pointer border-t border-line"
                     onClick={() => { select(it.idu); setOpen(false) }}>
                     <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
                     <td className="px-2 py-1.5">
@@ -240,7 +245,7 @@ export function DensifierTablePanel() {
           )}
         </div>
 
-        {/* pied : écartées (LOT12b) + pagination SOCLE (400 par 400 + tout charger) + export CSV */}
+        {/* pied : écartées (LOT12b) + pagination SOCLE (200 par 200, « Voir plus » seul) */}
         <div className="border-t border-line px-4 py-2">
           {(nHidden > 0 || inclure) && (
             <div className="mb-1.5 flex items-center gap-2 text-[10px] text-txt-dim">
@@ -250,7 +255,7 @@ export function DensifierTablePanel() {
           )}
           <ListPaginationFooter
             className="flex flex-wrap items-center gap-3 text-[11px] text-txt-mut"
-            shown={visibles.length} total={total} step={meta?.cap ?? 200}
+            shown={visibles.length} total={total} step={RENOUV_PAGE}
             onMore={() => q.fetchNextPage()}
           >
             {q.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}

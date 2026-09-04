@@ -43,9 +43,10 @@ export function O5Servitudes() {
   const d = q.data
   return (
     <>
-      <Banner>Les contraintes <b>dormantes</b> qui ne se voient pas sur la carte — servitudes
-        d'utilité publique, sols, bruit — ET ce que la base ne couvre pas (jamais un faux
-        « RAS »). La due diligence notariale reste indispensable.</Banner>
+      {/* RETOURS-11 O5(a) — intro reformulée (mandat). */}
+      <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
+        assainissement. Et, franchement, ce que nos données ne couvrent pas — pour que vous sachiez
+        quoi vérifier ailleurs.</Banner>
       {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
           carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
       <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse ou IDU (ou clic carte)" onPick={(id) => setIdu(id)} />
@@ -105,8 +106,10 @@ type Comparateur = {
 // PERMIS : la donnée servie est un CUMUL SUR 5 ANS (comparateur.py : INTERVAL '5 years'), PAS un
 // glissant 12 mois — la maquette disait « Permis 12 m », c'était illustratif et faux. On étiquette vrai.
 const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'max' | 'min' }[] = [
-  { k: 'stock', head: 'Stock foncier', best: 'max',
-    title: 'Stock foncier — parcelles promues LABUSE (brûlantes + chaudes du run servi)' },
+  // RETOURS-11 O14b (décision Vic) — « Stock foncier » renommé « Parcelles à potentiel »
+  // (= Priorité + À suivre), définition au survol.
+  { k: 'stock', head: 'Parcelles à potentiel', best: 'max',
+    title: 'Parcelles à potentiel — parcelles promues par LABUSE sur la commune (Priorité + À suivre, run servi)' },
   { k: 'velocite', head: 'Instruction (mois)', best: 'min',
     title: 'Instruction — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
   { k: 'permis', head: 'Permis (5 ans)',
@@ -181,7 +184,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
           return (
             <Cell key={String(c['insee'])} data-o6-row title={String(c['commune'])}
               {...(onSelect ? { onClick: () => onSelect(String(c['commune'])) } : {})}
-              className={`group grid w-full ${O6_GRID} items-baseline border-b border-line py-2 text-left ${onSelect ? 'transition-colors duration-quick hover:bg-surface-3' : ''}`}>
+              className={`group grid w-full ${O6_GRID} items-baseline border-b border-line py-2 text-left ${onSelect ? 'hover-fill transition-colors duration-quick' : ''}`}>
               <span className="min-w-0 truncate text-[12px] font-medium text-txt group-hover:text-txt-hi">{String(c['commune'])}</span>
               {O6_COLS.map((col) => {
                 const isBest = best[col.k] != null && Number(c[col.k]) === best[col.k]
@@ -204,7 +207,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
       {/* LÉGENDE PERMANENTE en pied — plus d'en-tête à deviner. */}
       <div data-o6-legende className="shrink-0 border-t border-line-2 pt-2 text-[10px] leading-relaxed text-txt-dim">
         <b className="text-txt-mut">Légende :</b>{' '}
-        <b>Stock foncier</b> = parcelles promues LABUSE ·{' '}
+        <b>Parcelles à potentiel</b> = parcelles promues par LABUSE (Priorité + À suivre) ·{' '}
         <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
         <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
         <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}

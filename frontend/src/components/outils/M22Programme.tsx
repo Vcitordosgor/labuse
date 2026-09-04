@@ -15,22 +15,6 @@ import { TierBadge } from './TierBadge'
  *    commune est SAISI ICI (plus hérité du filtre carte).
  *  · « Par parcelle » (SENS 1) : on désigne UNE parcelle (IDU / adresse / clic carte) et on voit sa
  *    faisabilité — exactement l'onglet Faisabilité des fiches, porté dans l'outil (aucune divergence). */
-// export CSV (client-side) des parcelles candidates — mêmes colonnes que l'écran (mandat pagination).
-function csvCell(v: unknown): string {
-  const s = v == null ? '' : String(v)
-  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-}
-function exportProgrammeCsv(items: Record<string, any>[]) {
-  const head = ['Parcelle', 'Commune', 'SDP gabarit (m²)', 'Zone', 'Hauteur PLU (m)', 'Marge capacité', 'Classement']
-  const rows = items.map((i) => [i.idu, i.commune ?? '', i.sdp ?? '', i.zone ?? '', i.hauteur_verifiee ? i.hauteur_plu_m : 'à instruire',
-    `x${i.marge_capacite}`, i.statut ?? ''])
-  const csv = [head, ...rows].map((r) => r.map(csvCell).join(';')).join('\n')
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = 'faisabilite-programme.csv'; a.click()
-  URL.revokeObjectURL(url)
-}
 
 export function M22() {
   const { m22Prefill, setM22Prefill, parcelPrefill, setParcelPrefill, setModuleMap, select } = useApp()
@@ -38,6 +22,10 @@ export function M22() {
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
   const [picked, setPicked] = useState<string | null>(null)     // mode « par parcelle »
   const [form, setForm] = useState({ batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60, circulation_pct: 20 })
+  // RETOURS-11 (O2c) — filtre de zonage côté client, DÉCOCHÉ = on masque les zones agricoles (A) et
+  // naturelles (N) éventuelles. Le moteur exclut DÉJÀ ces zones (constructible_neuf faux) : ce garde-fou
+  // ne fait donc que confirmer visuellement, et laisse à l'utilisateur le choix de les réafficher.
+  const [inclureAgriNat, setInclureAgriNat] = useState(false)
   // coef utile→SDP = 1 + circulations % (hypothèse éditable ; défaut 20 %, bas de fourchette 20-25 %)
   // FAISABILITE (pagination SOCLE) : le formulaire soumis est FIGÉ dans `query` ; une useInfiniteQuery
   // pagine les résultats par `offset`. « Trouver » (re)pose le snapshot ; changer le formulaire ne
@@ -78,8 +66,30 @@ export function M22() {
 
   const pages = (results.data?.pages ?? []) as Record<string, any>[]
   const meta = pages[0]
-  const items = pages.flatMap((p) => (p.items ?? []) as Record<string, any>[])
+  const brut = pages.flatMap((p) => (p.items ?? []) as Record<string, any>[])
+  // RETOURS-11 (O2c) — la famille de zone se lit sur la 1re lettre du code PLU fin renvoyé (« Ud », « 1AUb »,
+  // « Nto », « Ap »…) : A = agricole, N = naturel. Les zones AU fermées (secteurs de transition « AU…st »)
+  // sont déjà écartées par le moteur ; on complète le garde-fou pour la forme « <chiffre>?AU…st ».
+  const estAgriNat = (z: unknown): boolean => {
+    const c = String(z ?? '').trim().toUpperCase()
+    if (!c) return false
+    if (/^A/.test(c) && !/^AU/.test(c)) return true          // A… (agricole) mais pas AU…
+    if (/^N/.test(c)) return true                            // N… (naturel)
+    if (/^\d*AU\w*ST$/.test(c)) return true                  // AU fermée (secteur de transition)
+    return false
+  }
+  const filtres = inclureAgriNat ? brut : brut.filter((i) => !estAgriNat(i.zone))
+  // RETOURS-11 (O2c) — tri par ADÉQUATION : la parcelle la mieux ajustée d'abord (marge ×1 à ×3), les
+  // très gros dépassements (grosses parcelles, ×>3) ensuite. Ne réordonne que les lignes DÉJÀ chargées.
+  const bienAjuste = (m: number) => m >= 1 && m <= 3
+  const items = [...filtres].sort((a, b) => {
+    const ma = a.marge_capacite as number, mb = b.marge_capacite as number
+    const aj = Number(bienAjuste(mb)) - Number(bienAjuste(ma))
+    if (aj !== 0) return aj                                   // les ×1-×3 remontent en tête
+    return ma - mb                                            // puis marge croissante (le plus ajusté d'abord)
+  })
   const total = meta?.n ?? 0
+  const masquees = brut.length - filtres.length              // lignes agri/nat masquées (honnêteté compteur)
   // RETOURS-10 (T3) — plus de « Tout charger » : « Voir 200 de plus » seul, jamais de tir massif.
   // carte : résultats en mode critères (accumulés), parcelle désignée en mode parcelle
   useEffect(() => {
@@ -87,7 +97,7 @@ export function M22() {
     setModuleMap({ idus, extra: null })
     return () => setModuleMap({ idus: [], extra: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, results.dataUpdatedAt, picked])
+  }, [mode, results.dataUpdatedAt, picked, inclureAgriNat])
 
   const F = (k: keyof typeof form, label: string, opts?: { min?: number; title?: string }) => (
     <label title={opts?.title} className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
@@ -114,9 +124,9 @@ export function M22() {
       {mode === 'criteres' && (
         <>
           <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-            Recherche de foncier pour du <b>logement</b> — décrivez le programme, les critères sont
-            <b> calculés et affichés</b> (SDP au gabarit R+N, hauteur PLU). Le copilote sait pré-remplir :
-            « un terrain pour 3 immeubles R+3 de 8 logements ».
+            Décrivez votre programme — bâtiments, hauteur, logements par bâtiment, surface par logement.
+            LABUSE calcule la surface de plancher nécessaire et trouve les parcelles où le PLU la permet.
+            Le Copilote peut remplir le formulaire pour vous : « 3 immeubles R+3 de 8 logements ».
           </div>
           <CommuneScope commune={commune} onChange={setCommune} />
           {/* LOT2 — grille 2 colonnes UNIQUE : les 5 champs s'alignent en colonnes (M²/UNITÉ et
@@ -147,7 +157,14 @@ export function M22() {
                   <b className="num-key text-mint">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} · <b className="text-txt">{meta.criteres.unites}</b> unités → <span title="Capacité constructible au gabarit PLU (R+N, hauteur), coef circulations appliqué — pas la SDP estimée de l'Assemblage ni la SHAB vendable de la Faisabilité">SDP gabarit</span> ≥ <b className="tnum text-mint">{fmtInt(meta.criteres.sdp_min_m2)} m²</b>
                   <span className="text-txt-dim">{commune ? ` · ${commune}` : ' · toute l’île'}</span>
                 </p>
-                <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">{meta.criteres.hauteur_regle} · triées par marge de capacité décroissante.</p>
+                <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">{meta.criteres.hauteur_regle} · triées par adéquation (les parcelles ajustées au programme d’abord).</p>
+                {/* RETOURS-11 (O2c) — le zonage agricole/naturel est masqué par défaut ; case pour le réafficher. */}
+                <label className="mt-1 flex cursor-pointer items-center gap-1.5 text-[9.5px] text-txt-dim hover-fill rounded px-1 py-0.5">
+                  <input type="checkbox" checked={inclureAgriNat} onChange={(e) => setInclureAgriNat(e.target.checked)}
+                    className="h-3 w-3 accent-mint" />
+                  Inclure les zones agricoles (A) et naturelles (N)
+                  {masquees > 0 && !inclureAgriNat && <span className="text-txt-mut">· {fmtInt(masquees)} masquée{masquees > 1 ? 's' : ''}</span>}
+                </label>
               </div>
               <div className="flex flex-col gap-1.5">
                 {items.map((i) => (
@@ -158,7 +175,7 @@ export function M22() {
                         {!commune && i.commune && <span className="ml-1.5 font-sans text-[11px] text-txt-dim">{i.commune}</span>}
                       </div>
                       <div className="truncate text-[10.5px] text-txt-mut">
-                        <span title="Capacité constructible au gabarit PLU — ≠ SDP estimée (Assemblage) ≠ SHAB vendable (Faisabilité)">SDP gabarit</span> {fmtInt(i.sdp)} m² · zone {i.zone ?? '?'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
+                        <span title="Capacité constructible au gabarit PLU — ≠ SDP estimée (Assemblage) ≠ SHAB vendable (Faisabilité)">SDP gabarit</span> {fmtInt(i.sdp)} m² · zone {i.zone ?? '—'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
                         {i.capacite_estimee && <span className="ml-1 rounded bg-amber-500/15 px-1 text-[9.5px] text-amber-500"
                           title="Capacité ESTIMÉE — zone non calibrée finement (hypothèses génériques)">estimée</span>}
                       </div>
@@ -172,14 +189,12 @@ export function M22() {
                   </button>
                 ))}
               </div>
-              {/* PAGINATION SOCLE + export CSV (client-side, mêmes colonnes que l'écran). */}
+              {/* PAGINATION SOCLE — 200 par 200, jamais de tir massif ni d'export. */}
               <ListPaginationFooter
                 className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut"
                 shown={items.length} total={total} step={meta.cap ?? 200}
                 onMore={() => results.fetchNextPage()}>
                 {results.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
-                <button data-prog-csv onClick={() => exportProgrammeCsv(items)}
-                  className="ml-auto text-[11px] text-mint hover:underline">⬇ Exporter CSV</button>
               </ListPaginationFooter>
             </>
           )}

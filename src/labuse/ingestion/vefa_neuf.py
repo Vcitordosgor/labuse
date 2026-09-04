@@ -7,8 +7,13 @@ DIAGNOSTIC (rendu au compte-rendu, préalable au code) — ce que DVF porte rée
     → la « médiane par taille T2/T3/T4 » est IMPOSSIBLE (absence honnête, jamais extrapolée) ;
   · ECLN (SDES) = métropole seule, N/A DOM → aucun STOCK/écoulement servi (jamais extrapolé) ;
   · en FACE, Sitadel donne l'OFFRE ENGAGÉE (logements collectifs autorisés) = ce qui arrive.
-  · 7 communes atteignent 10 ventes VEFA AVEC un prix calculable (peintes) ; les 17 autres = HACHURE
-    grise « moins de 10 ventes » (jamais vides).
+  · 7 communes atteignent 10 ventes VEFA AVEC un prix calculable (peintes) ; les 17 autres = HACHURE.
+  · RETOURS-11 C3 (mesuré 09/2026) : 988 mutations VEFA sur 36 mois, mais SEULES 315 (32 %) portent
+    `surface_reelle_bati` — à l'acte VEFA le bâti n'est pas construit, la surface réelle est vide. Le
+    filtre `bati > 0` élimine donc 68 % des ventes. DVF au 974 (dvf_mutations_parcelle) NE porte PAS la
+    surface Carrez des lots → aucun moyen de récupérer le prix des 673 restantes (jamais inventé). La
+    correction porte sur l'HONNÊTETÉ de la hachure (dire le volume réel, pas « moins de 10 ventes »),
+    pas sur un déblocage impossible faute de donnée amont.
 
 La couche réutilise le plombing des aplats commune (spatial_layers `kind='vefa_neuf'`, servie par
 `/map/layers.geojson`). La TRANCHE DE PRIX (ou 'sous_seuil') voyage dans `subtype` ; le détail dans `attrs`.
@@ -81,6 +86,7 @@ def build_vefa_neuf(session: Session, *, commit: bool = True, log=lambda *_: Non
             continue
         v = neuf_vefa_commune(session, insee)
         prix, n = v.get("mediane_prix_m2_bati"), v.get("n") or 0
+        n_total = v.get("n_total") or n     # RETOURS-11 C3 — volume RÉEL de VEFA (avant filtre surface)
         offre = _offre_sitadel(session, commune)
         peinte = bool(prix) and n >= SEUIL_VEFA_AFFICHAGE
         if peinte:
@@ -89,9 +95,18 @@ def build_vefa_neuf(session: Session, *, commit: bool = True, log=lambda *_: Non
             n_peintes += 1
         else:
             cle = "sous_seuil"
-            name = f"{commune} · moins de {SEUIL_VEFA_AFFICHAGE} ventes VEFA ({int(n)})"
+            # RETOURS-11 C3 — hachure HONNÊTE : « peu de ventes » seulement si le volume est vraiment faible.
+            # Si le marché VEFA existe (≥ seuil) mais que peu de ventes portent une surface bâtie (à l'acte
+            # VEFA le bâti n'est pas construit → surface souvent vide, non récupérable faute de Carrez au 974),
+            # on le DIT au lieu de laisser croire « moins de 10 ventes ».
+            if n_total >= SEUIL_VEFA_AFFICHAGE:
+                name = (f"{commune} · {int(n_total)} ventes VEFA · prix calculable sur {int(n)} "
+                        f"(surface bâtie souvent absente à l'acte)")
+            else:
+                name = f"{commune} · moins de {SEUIL_VEFA_AFFICHAGE} ventes VEFA ({int(n_total)})"
             hachurees += 1
         attrs = {"insee": insee, "prix_m2_neuf": int(prix) if peinte else None, "n_ventes": int(n),
+                 "n_ventes_vefa_total": int(n_total),   # volume réel (avant filtre surface)
                  "maille": "commune", "fenetre_mois": FENETRE_MOIS, "peinte": peinte,
                  "tranche": TRANCHE_LIBELLE[cle], "seuil": SEUIL_VEFA_AFFICHAGE,
                  "offre_engagee_logements": offre["logements"], "offre_engagee_permis": offre["permis"],
@@ -114,6 +129,7 @@ def detail_commune(session: Session, insee: str) -> dict:
         "SELECT commune FROM parcels WHERE substring(idu,1,5) = :i LIMIT 1"), {"i": insee}).scalar()
     v = neuf_vefa_commune(session, insee)           # médiane €/m² + n (36 mois, prix calculable)
     med, n = v.get("mediane_prix_m2_bati"), int(v.get("n") or 0)
+    n_total = int(v.get("n_total") or n)            # RETOURS-11 C3 — volume VEFA réel (avant filtre surface)
 
     # TENDANCE 12 mois vs période : médiane des 12 derniers mois vs médiane des 36 mois (si n suffisant).
     # Le pivot « 12 derniers mois » est calé sur la DERNIÈRE VENTE observée (pas sur l'horloge système) —
@@ -154,7 +170,8 @@ def detail_commune(session: Session, insee: str) -> dict:
     return {
         "insee": insee, "commune": commune,
         "peinte": bool(med) and n >= SEUIL_VEFA_AFFICHAGE,
-        "mediane_eur_m2": med, "n_ventes": n, "fenetre_mois": FENETRE_MOIS, "seuil": SEUIL_VEFA_AFFICHAGE,
+        "mediane_eur_m2": med, "n_ventes": n, "n_ventes_vefa_total": n_total,
+        "fenetre_mois": FENETRE_MOIS, "seuil": SEUIL_VEFA_AFFICHAGE,
         "tendance_12m": tendance,   # None si n insuffisant (jamais une tendance inventée)
         "repartition": {"appartements": int(rep["n_appt"] or 0), "maisons": int(rep["n_maison"] or 0)},
         # médiane par TAILLE (T2/T3/T4) : INDISPONIBLE — DVF au 974 ne porte pas le nombre de pièces.

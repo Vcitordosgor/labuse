@@ -307,6 +307,12 @@ def admin_pilotage(request: Request) -> dict:
         if c.execute(text("SELECT to_regclass('signalements')")).scalar():
             af_signalements = int(c.execute(text(
                 "SELECT COUNT(*) FROM signalements WHERE statut = 'nouveau'")).scalar() or 0)
+        # A4 — ventilation PAR TYPE des retours clients « Signaler » (bug/idée/question/donnée) encore
+        # ouverts (statut nouveau). Lu de la table `retours` — sert le mini-compteur du Pilotage.
+        retours_par_type: dict[str, int] = {}
+        if c.execute(text("SELECT to_regclass('retours')")).scalar():
+            retours_par_type = {r[0]: int(r[1]) for r in c.execute(text(
+                "SELECT type, COUNT(*) FROM retours WHERE statut = 'nouveau' GROUP BY type"))}
         veilles_7j = 0
         if c.execute(text("SELECT to_regclass('alertes')")).scalar():
             veilles_7j = int(c.execute(text(
@@ -369,8 +375,11 @@ def admin_pilotage(request: Request) -> dict:
         "etiquettes_terrain": etiquettes,
         "run": {"label": run_label, "carte_le": carte_le.isoformat() if carte_le else None},
         # ADMIN-1 (AD5) — rangée « À faire » (ambre) : chaque tuile = un geste attendu, cliquable.
+        # RETOURS-11 A4 — `a_faire` reste 4 compteurs ENTIERS (contrat testé) ; la ventilation par type
+        # des retours « Signaler » vit à côté (clé sœur `retours_par_type`, dict), pas dans `a_faire`.
         "a_faire": {"sources_nouvelle_version": af_nouvelle_version, "essais_24h": af_essais_24h,
                     "signalements_ouverts": af_signalements, "manuelles_retard": af_manuelles_retard},
+        "retours_par_type": retours_par_type,
         # ADMIN-1 (AD5) — rangée « Santé · traction » (vert). mrr_eur = Stripe (lecture), paires = Radar
         # (relevés), veilles_7j = alertes détectées, coherence = dernier passage de la garde.
         "traction": {"mrr_eur": stripe.get("mrr_eur"), "veilles_7j": veilles_7j,

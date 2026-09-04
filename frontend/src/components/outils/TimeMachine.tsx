@@ -156,8 +156,18 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       el.setAttribute('data-temps-idu', pinIdu ?? '')
       el.textContent = pinIdu ?? ''
       el.style.cssText = 'font:600 10px ui-monospace,Menlo,monospace;color:#4ADE80;background:rgba(6,17,11,.82);'
-        + 'padding:2px 7px;border-radius:5px;letter-spacing:.06em;white-space:nowrap;pointer-events:none;transform:translateY(-18px)'
-      const mk = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(feat.centroid as [number, number]).addTo(past)
+        + 'padding:2px 7px;border-radius:5px;letter-spacing:.06em;white-space:nowrap;pointer-events:none;transform:translateY(-8px)'
+      // RETOURS-11 C9 (03/09) — l'étiquette IDU se pose AU-DESSUS DU CONTOUR (bord haut de la parcelle),
+      // jamais dessus : ancre = [centroïde en X, latitude MAX de la géométrie en Y], ancrée par le bas.
+      const centroid = feat.centroid as [number, number]
+      let maxLat = -Infinity
+      const walk = (a: unknown): void => {
+        if (Array.isArray(a) && typeof a[0] === 'number') { if ((a[1] as number) > maxLat) maxLat = a[1] as number }
+        else if (Array.isArray(a)) a.forEach(walk)
+      }
+      walk((feat.geometry as { coordinates?: unknown })?.coordinates ?? [])
+      const ancre: [number, number] = Number.isFinite(maxLat) ? [centroid[0], maxLat] : centroid
+      const mk = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(ancre).addTo(past)
       labelMarkers.current.push(mk)
     }
     if (feat) for (const m of maps.current ?? []) m.jumpTo({ center: feat.centroid as [number, number], zoom: 17 })

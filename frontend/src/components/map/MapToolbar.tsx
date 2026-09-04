@@ -14,11 +14,11 @@ const BASEMAPS: { key: Basemap; label: string }[] = [
 // Millésimes VÉRIFIÉS sur le 974 : ORTHO_YEARS (basemaps.ts) = Actuelle + les 6 de TEMPS_MILLESIMES.
 const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] = [
   {
-    key: 'distance', label: 'Distance', hint: 'Clics = points · double-clic termine · Échap annule',
+    key: 'distance', label: 'Distance', hint: 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler',
     icon: <path d="M3 17 L17 3 M5.5 14.5 l1.6 1.6 M8.5 11.5 l1.6 1.6 M11.5 8.5 l1.6 1.6" stroke="currentColor" strokeWidth="1.4" fill="none" />,
   },
   {
-    key: 'surface', label: 'Surface', hint: 'Clics = sommets · double-clic ferme le polygone',
+    key: 'surface', label: 'Surface', hint: 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler',
     icon: <path d="M4 6 L14 3.5 L16.5 13 L7 16.5 Z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" />,
   },
   {

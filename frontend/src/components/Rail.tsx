@@ -93,7 +93,7 @@ const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
 ]
 // titres NON redondants seulement (R2.3 : le tooltip qui répète le libellé sous l'icône est retiré).
 const RAIL_TITLE: Partial<Record<RailKey, string>> = {
-  veille: 'Veille — le foncier (parcelles, critères) et les annonces (Radar)',
+  // RETOURS-11 T9 (03/09) — explication au survol de « Veille » retirée.
   sources: 'Fraîcheur des données — sources et mises à jour',
 }
 

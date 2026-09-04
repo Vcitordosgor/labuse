@@ -9,7 +9,9 @@ import { getRadarMarche, getRadarSignaux, type RadarEcart, type RadarMarcheLigne
 // RADAR-HTML (Lot 4) — « écart demandé/acté » d'une commune : médiane Radar (demandé) vs médiane DVF
 // (acté). C'est la marge de négociation du moment. Écart CONSTATÉ entre deux sources datées, aucun verdict.
 function EcartLigne({ label, e }: { label: string; e: RadarEcart }) {
-  if (!e.calculable) {
+  // RETOURS-11 O15c (décision Vic) — n'affiche l'écart QUE si n ≥ 5 des DEUX côtés (annonces ET actes) :
+  // en deçà, ce n'est pas une mesure. Sinon « échantillon insuffisant » (jamais un chiffre fragile servi).
+  if (!e.calculable || (e.n_demande ?? 0) < 5 || (e.n_acte ?? 0) < 5) {
     return <div className="flex items-center justify-between py-1 text-[11px] text-txt-dim"><span>{label}</span><span title={e.motif}>— (échantillon insuffisant)</span></div>
   }
   const baisse = (e.ecart_pct ?? 0) > 0
@@ -31,7 +33,8 @@ function SignauxCommune({ communes }: { communes: string[] }) {
   return (
     <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
       <div className="mb-1.5 flex items-center gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-wider text-txt-dim">Marge de négociation — écart demandé / acté</span>
+        {/* RETOURS-11 O15c (décision Vic) — renommé : un écart affiché/acté n'est pas une « marge ». */}
+        <span className="font-mono text-[10px] uppercase tracking-wider text-txt-dim">Prix affichés vs prix actés</span>
         <select value={commune} onChange={(e) => setCommune(e.target.value)}
           className="ml-auto rounded border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[11px] text-txt">
           <option value="">choisir une commune…</option>

@@ -141,6 +141,12 @@ def neuf_vefa_commune(session: Session, insee: str) -> dict:
     communes (§B1.3) — l'absence est un état normal du profil, dite, pas un trou. Le SEUIL
     d'effectif est appliqué par marche_service (config dvf_profils.yaml, un critère un endroit).
     Renvoie {n, mediane_prix_m2_bati|None, fenetre_ans}."""
+    # RETOURS-11 C3 (diagnostic mesuré) — sur 36 mois, ~988 mutations VEFA au 974 mais seules ~315 (32 %)
+    # portent `surface_reelle_bati` : à l'acte VEFA le bâti n'existe pas encore, la surface réelle est
+    # souvent VIDE. DVF au 974 (tel qu'ingéré : dvf_mutations_parcelle) NE porte PAS la surface Carrez des
+    # lots → on ne peut PAS récupérer le prix des ~673 restantes (jamais un prix inventé). On distingue
+    # donc le VOLUME VÉRITABLE de VEFA (`n_total`) du nombre à prix calculable (`n`) : la hachure honnête
+    # dit « peu de ventes » SEULEMENT quand le volume est vraiment faible, pas quand seule la surface manque.
     row = session.execute(text(f"""
         WITH mut AS (
           SELECT id_mutation, max(valeur_fonciere) AS valeur,
@@ -150,12 +156,14 @@ def neuf_vefa_commune(session: Session, insee: str) -> dict:
             AND nature_mutation = 'Vente en l''état futur d''achèvement'
             AND date_mutation >= (now() - interval '{NEUF_VEFA_FENETRE_ANS} years')::date
           GROUP BY id_mutation)
-        SELECT count(*) FILTER (WHERE bati > 0 AND valeur > 1000
+        SELECT count(*) AS n_total,
+               count(*) FILTER (WHERE bati > 0 AND valeur > 1000
                                 AND valeur/bati BETWEEN 50 AND 20000) AS n,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur/bati)
                  FILTER (WHERE bati > 0 AND valeur > 1000
                          AND valeur/bati BETWEEN 50 AND 20000) AS med
         FROM mut"""), {"insee": insee}).one()
-    n = int(row[0] or 0)
-    return {"n": n, "mediane_prix_m2_bati": round(float(row[1])) if row[1] is not None else None,
+    n_total, n = int(row[0] or 0), int(row[1] or 0)
+    return {"n": n, "n_total": n_total,
+            "mediane_prix_m2_bati": round(float(row[2])) if row[2] is not None else None,
             "fenetre_ans": NEUF_VEFA_FENETRE_ANS}

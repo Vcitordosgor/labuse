@@ -16,23 +16,50 @@ function verdict(r: CompareRow) {
 
 // lignes du tableau (libellé, valeur) — resserrées : les doublons fiche (Capacité, CA estimé) retirés ;
 // ajoutés : prix terrain nu/zone (M79) + contrainte majeure explicite.
-const ROWS: { label: string; val: (r: CompareRow) => string }[] = [
-  { label: 'Surface', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—' },
+// O9(d) — `num` + `best` permettent de surligner en vert la meilleure valeur de la ligne (front-side,
+// comme la table Communes) : `best:'hi'` = la plus grande gagne (surface, capacité), `best:'lo'` = la
+// plus basse gagne (charge foncière = moins cher). Les lignes booléennes/texte n'ont pas de gagnant.
+// `title` (O9-c) = infobulle définissant la ligne au survol du libellé.
+type Row = {
+  label: string
+  val: (r: CompareRow) => string
+  num?: (r: CompareRow) => number | null
+  best?: 'hi' | 'lo'
+  title?: string
+}
+const ROWS: Row[] = [
+  { label: 'Surface', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
   { label: 'Zone PLU', val: (r) => r.zone || '—' },
   { label: 'Constructible', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
-  { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—' },
-  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—' },
-  { label: 'Sous-densité', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non' },
-  { label: 'Charge foncière /m²', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—' },
-  { label: 'Prix terrain nu zone', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—' },
+  { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
+  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—', num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
+  { label: 'Emprise au sol max', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'hi', title: 'Part maximale du terrain que le PLU autorise à couvrir au sol.' },
+  { label: 'Sous-densité', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
+  { label: 'Charge foncière /m²', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'lo', title: 'Coût du foncier ramené au m² de surface de plancher constructible — plus bas = plus intéressant.' },
+  { label: 'Prix terrain nu zone', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Prix moyen du terrain nu observé dans la zone — plus bas = plus intéressant.' },
   { label: 'Contrainte majeure', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
+
+// O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
+// Ne renvoie rien si < 2 valeurs numériques (rien à comparer) : on ne surligne pas un « gagnant » seul.
+function bestIdx(row: Row, parcels: CompareRow[]): Set<number> {
+  const out = new Set<number>()
+  if (!row.num || !row.best) return out
+  const nums = parcels.map((p) => row.num!(p))
+  const present = nums.filter((v): v is number => v != null)
+  if (present.length < 2) return out
+  const target = row.best === 'hi' ? Math.max(...present) : Math.min(...present)
+  nums.forEach((v, i) => { if (v != null && v === target) out.add(i) })
+  return out
+}
 
 // ── LE PANNEAU GAUCHE (outil « comparer », hôte ModulePanel) — ancré dans Outils, carte active à droite.
 export function CompareModule() {
   const compareIdus = useApp((s) => s.compareIdus)
+  const selectedIdu = useApp((s) => s.selectedIdu)   // O9(e) — parcelle courante (fiche ouverte)
+  const addToCompare = useApp((s) => s.addToCompare)
   const removeFromCompare = useApp((s) => s.removeFromCompare)
   const clearCompare = useApp((s) => s.clearCompare)
   const setCompareOpen = useApp((s) => s.setCompareOpen)
@@ -68,6 +95,14 @@ export function CompareModule() {
                 <span key={`libre-${k}`} className="rounded-lg border border-dashed border-line-2 px-2 py-1 text-[11px] text-txt-dim">+ 1 libre</span>
               ))}
             </div>
+            {/* O9(e) — ajouter la parcelle courante (fiche ouverte) sans avoir à la re-cliquer sur la carte.
+                Visible seulement s'il y a une parcelle courante, qu'elle n'est pas déjà dans la liste, et qu'il reste une place. */}
+            {selectedIdu && !compareIdus.includes(selectedIdu) && n < 3 && (
+              <button data-compare-ajouter-courante onClick={() => addToCompare(selectedIdu)}
+                className="hover-fill mt-1.5 block rounded-lg border border-mint/50 px-2 py-1 text-[10.5px] text-mint transition-colors duration-quick">
+                + Ajouter la parcelle courante ({iduCourt(selectedIdu)})
+              </button>
+            )}
             {n > 0 && <button data-compare-vider onClick={clearCompare} className="mt-1.5 text-[10px] text-txt-dim hover:text-txt">tout vider</button>}
           </div>
         </div>
@@ -151,20 +186,37 @@ export function ComparePanel() {
                           {/* raison dominante M135 (chip court), comme sur la carte/la liste */}
                           {r.raison && <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>}
                         </div>
-                        {/* commune · rang servi · fraction M135 (« 1/5 sous 1 an ») */}
-                        <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}{r.rang_v2 != null ? ` · rang ${fmtInt(r.rang_v2)}` : ''}{r.fraction ? ` · ${r.fraction} sous 1 an` : ''}</p>
+                        {/* O9(a) — commune · fraction M135 (« 1/5 sous 1 an »). Le rang GLOBAL servi (ex.
+                            « rang 271 141 » sur 431 663) ne veut rien dire pour l'utilisateur ; l'action
+                            utile (le tier) est déjà portée par la puce ci-dessus. Un rang DANS LA COMMUNE
+                            serait parlant mais n'existe pas dans le payload → non affiché (voir rapport). */}
+                        <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}{r.fraction ? ` · ${r.fraction} sous 1 an` : ''}</p>
                       </th>
                     )
                   })}
                 </tr>
               </thead>
               <tbody>
-                {ROWS.map((row) => (
-                  <tr key={row.label} className="border-t border-line">
-                    <td className="p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">{row.label}</td>
-                    {parcels.map((r) => <td key={r.idu} className="border-l border-line p-2 text-txt">{row.val(r)}</td>)}
-                  </tr>
-                ))}
+                {ROWS.map((row) => {
+                  const winners = bestIdx(row, parcels)   // O9(d) — cellules gagnantes de la ligne
+                  return (
+                    <tr key={row.label} className="border-t border-line">
+                      <td className="p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
+                        {row.title
+                          ? <span title={row.title} className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
+                          : row.label}
+                      </td>
+                      {parcels.map((r, i) => {
+                        const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
+                        return (
+                          <td key={r.idu} className={`border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
+                            {row.val(r)}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
                 <tr className="border-t border-line">
                   <td className="p-2 align-top text-[10.5px] uppercase tracking-wide text-txt-dim">Détail contraintes</td>
                   {parcels.map((r) => (

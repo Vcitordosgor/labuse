@@ -2,14 +2,14 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
-  modDueDiligence, modFantome, modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
+  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
-import { iduComplet, iduCourt } from '../../lib/format'
+import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -41,6 +41,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
 import { TierBadge } from './TierBadge'
+import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -136,9 +137,20 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m02Prefill, embedded])
   const sug = useQuery({ queryKey: ['m02s', q], queryFn: () => modPatrimoineSearch(q), enabled: q.length >= 2 && !siren })
-  const pat = useQuery({ queryKey: ['m02', siren], queryFn: () => modPatrimoine(siren!), enabled: !!siren })
-  const d = pat.data as Record<string, any> | undefined
-  const items = ((d?.['items'] ?? []) as Record<string, any>[])
+  // RETOURS-11 (T4) — la LISTE du patrimoine est paginée par 200 (« Voir plus »), plus jamais tronquée
+  // muettement. L'endpoint sert des pages (limit/offset) : la page 0 porte aussi les agrégats (`d`).
+  const M02_PAGE = 200
+  const pat = useInfiniteQuery({
+    queryKey: ['m02-liste', siren],
+    queryFn: ({ pageParam }) => modPatrimoine(siren!, M02_PAGE, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['tronquee'] ? pages.length * M02_PAGE : undefined,
+    enabled: !!siren,
+  })
+  const pages = (pat.data?.pages ?? []) as Record<string, any>[]
+  const d = pages[0]  // page 0 = agrégats (nom, n_parcelles, n_actionnables, sdp…) + 1re tranche d'items
+  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
+  const total = (d?.['n_parcelles'] as number) ?? 0
   useModuleMap(items.map((i) => i['idu'] as string), null, [pat.dataUpdatedAt])
   return (
     <>
@@ -223,11 +235,14 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
               </div>
             ))}
           </div>
-          {/* RETOURS-5 T4.3 — le « N affichées sur M » QUITTE l'encart : ligne discrète SOUS la liste, avec le tri. */}
-          <div className="shrink-0 text-center text-[11px] text-txt-off">
-            {d['tronquee'] === true
-              ? <>{fmt(items.length)} affichées sur {fmt(d['n_parcelles'] as number)} · triées par probabilité</>
-              : <>{fmt(items.length)} affichée{items.length > 1 ? 's' : ''} · triées par probabilité</>}
+          {/* RETOURS-11 T4 — pied de liste PARTAGÉ (SOCLE) : compteur exact « n / total affichées » +
+              « Voir 200 de plus » (jamais de dump, jamais de « Tout charger »). Trié par probabilité. */}
+          <div className="shrink-0">
+            <ListPaginationFooter shown={items.length} total={total} step={M02_PAGE}
+              onMore={() => pat.fetchNextPage()}>
+              {pat.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
+              <span className="text-txt-off">· triées par probabilité</span>
+            </ListPaginationFooter>
           </div>
         </>
       )}
@@ -327,6 +342,20 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
 // CLIQUABLES (comme le radar), plus en surlignage de parcelle. Les DEUX clés internes vivent : `promesses`
 // ouvre l'outil avec le filtre déjà actif (deep-link/copilote/QA inchangés, aucun 404).
 // Exporté pour test (double entrée + lignes enrichies + survol = cœur du mandat PERMIS).
+// RETOURS-11 O17 — sélecteur de commune de l'outil Permis, alimenté par la liste réelle des communes
+// servies. Écrit le filtre commune GLOBAL (`setCommune`) — le même que lisent déjà `modPermis` /
+// `modPromesses` via `cq()` : un seul état, aucune divergence liste/carte.
+function CommunePermisSelect({ value, onChange }: { value: string | null; onChange: (c: string | null) => void }) {
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  return (
+    <select data-permis-commune value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}
+      className="w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none">
+      <option value="">Toutes les communes</option>
+      {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
+    </select>
+  )
+}
+
 export function M03() {
   const moduleKey = useApp((s) => s.module)
   // O2-1 (OUTILS-2) — SEGMENT à 3 états : « En cours » (radar récent, VERT) · « Point mort » (PC sans
@@ -341,8 +370,14 @@ export function M03() {
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
   const [nature, setNature] = useState('')
   const [open, setOpen] = useState<string | null>(null)
+  // O17 (i) — panneau en 3 zones : recherche · FILTRES REPLIABLES · liste. Les filtres (statut, période,
+  // type, commune, géocodage) sont regroupés dans une boîte dépliable pour dégager la liste et la carte.
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  // O17 (e) — « non géocodés » devient un FILTRE : tous | seuls les géocodés | seuls les non géocodés.
+  const [geoFiltre, setGeoFiltre] = useState<'tous' | 'geo' | 'nongeo'>('tous')
   const zone = useApp((s) => s.zone)
   const commune = useApp((s) => s.commune)
+  const setCommune = useApp((s) => s.setCommune)
   // radar-permis #2a — un clic sur un point permis de la carte (MapView) demande l'ouverture du drawer
   // via `permitToOpen` ; on le consomme puis on le remet à null (même idiome que parcelPrefill).
   const permitToOpen = useApp((s) => s.permitToOpen)
@@ -359,14 +394,16 @@ export function M03() {
 
   // deux sources, une seule active à la fois (enabled) : RADAR = tous les permis ; POINT MORT = PC
   // anciens sans achèvement (l'endpoint /promesses renvoie désormais aussi la géom → des points).
+  // RETOURS-11 (T4) — pagination par 200 partout (doctrine SOCLE) : plus de pages de 300/1000.
+  const RADAR_PAGE = 200
   const qRadar = useInfiniteQuery({
     queryKey: ['m03', months, nature, commune],
-    queryFn: ({ pageParam }) => modPermis(months, nature || null, 300, pageParam as number),
+    queryFn: ({ pageParam }) => modPermis(months, nature || null, RADAR_PAGE, pageParam as number),
     initialPageParam: 0,
-    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 300 : undefined,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * RADAR_PAGE : undefined,
     enabled: !pointMort,
   })
-  const PM_PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
+  const PM_PAGE = 200  // RETOURS-11 (T4) — 1re page par 200 (SOCLE) → affichage rapide ; le reste en « voir plus »
   // F2 — le `months` du point mort mesure la DORMANCE (« PC plus vieux que N mois ») : sémantique
   // INVERSE du radar (« derniers N mois »). En « Tous », le radar élargit à 240 (tout), mais le point
   // mort DOIT garder sa fenêtre de caducité (36 mois) — sinon « plus vieux que 240 mois » = 0 résultat
@@ -393,6 +430,22 @@ export function M03() {
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
+  // O17 (g) — RECHERCHE PAR PARCELLE : un IDU complet (14 car.) saisi dans la barre interroge
+  // /modules/parcelle-permis ; s'il n'a AUCUN permis rattaché, on le dit clairement (« Aucun permis
+  // rattaché à cette parcelle »), sinon on ouvre le 1er permis. On distingue un IDU (14 car.) d'un n°
+  // de permis Sitadel (chaîne alphanumérique plus courte) sur la longueur — un seul champ, deux sens.
+  const [parcelIdu, setParcelIdu] = useState<string | null>(null)
+  const qParcelPermis = useQuery({ queryKey: ['parcelle-permis-search', parcelIdu],
+    queryFn: () => modParcellePermis(parcelIdu!), enabled: !!parcelIdu })
+  // date du millésime Sitadel servi — lue du compteur radar (fenêtre 24 m, TOUJOURS actif).
+  const donneesJusquAu = (qRadarEntry.data as Record<string, any> | undefined)?.['donnees_jusqu_au'] as string | undefined
+  useEffect(() => {
+    if (!parcelIdu) return
+    const d = qParcelPermis.data as Record<string, any> | undefined
+    const found = (d?.['items'] ?? []) as Record<string, any>[]
+    if (d && found.length > 0) { setOpen(found[0]['permit_id'] as string); setParcelIdu(null) }
+  }, [parcelIdu, qParcelPermis.data])
+
   const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
   const head = pages[0]  // radar : carte (tous géocodés) + compteurs viennent de la page 0
@@ -401,15 +454,20 @@ export function M03() {
     if (!zone || !i['geom']) return true   // non géocodé → toujours listé
     return pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
   }
+  // O17 (e) — filtre géocodage appliqué à la liste ET à la carte (elles restent synchrones, item i).
+  const passeGeo = (i: Record<string, any>) => geoFiltre === 'tous' || (geoFiltre === 'geo' ? !!i['geom'] : !i['geom'])
   // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre les géocodés
-  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone)
+  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone).filter(passeGeo)
   const geomInZone = (i: Record<string, any>) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
   // CARTE = points cliquables. F2 : trois cas —
   //   • en cours → radar (carte page 0, plafond 8 000), VERT ;
   //   • point mort → les PC dormants géocodés, ROUGE ;
   //   • Tous → les DEUX superposés (le rouge par-dessus le vert : un PC au point mort reste rouge).
-  const carteRadar = (pointMort ? [] : ((head?.['carte'] ?? []) as Record<string, any>[])).filter(geomInZone)
-  const cartePm = (pointMort || tous
+  // O17 (d/i) — le filtre « non géocodés seuls » vide la carte (aucun point à poser) : liste et carte
+  // suivent le MÊME filtre géocodage, comme les mêmes commune/zone. Les points mort suivent donc bien
+  // les filtres partagés (commune, zone, géocodage) — seule leur FENÊTRE reste la caducité (F2 ci-dessus).
+  const carteRadar = (pointMort || geoFiltre === 'nongeo' ? [] : ((head?.['carte'] ?? []) as Record<string, any>[])).filter(geomInZone)
+  const cartePm = ((pointMort || tous) && geoFiltre !== 'nongeo'
     ? (qPm.data?.pages ?? []).flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => i['geom'])
     : []).filter(geomInZone)
   const carte = [...carteRadar, ...cartePm]
@@ -419,27 +477,43 @@ export function M03() {
     // O2-1 — `point_mort` voyage dans les properties : la carte colore VERT (en cours) / ROUGE (point
     // mort). En « Tous », le rouge est posé APRÈS le vert → il prime visuellement.
     featureCollection([...carteRadar.map((i) => _feat(i, false)), ...cartePm.map((i) => _feat(i, true))]),
-    [pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone])
+    // O17 (i) — `geoFiltre` en dép. : le filtre géocodage resynchronise la carte avec la liste.
+    [pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre])
   const total = pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
-  const sansLoc = pointMort ? 0 : ((head?.['sans_localisation'] as number) ?? 0)
   const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      {/* O2-1 — UN champ de recherche INTELLIGENT en tête, PLEINE LARGEUR : adresse | commune (autocomplete
-          → recadre la carte) OU n° de permis (Entrée sur une saisie sans suggestion → ouvre la fiche).
-          Un n° Sitadel est une chaîne alphanumérique compacte (ex. 97441116A0361) ; une adresse a des
-          espaces/mots → on distingue sur le motif. F3 : enveloppe NON-flex — le wrapper interne
-          `flex-1` d'AddressAutocomplete grandissait VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
+      {/* ZONE 1 — RECHERCHE. O2-1 — UN champ INTELLIGENT en tête, PLEINE LARGEUR : adresse | commune
+          (autocomplete → recadre la carte) OU n° de permis OU IDU de parcelle. À la saisie Entrée sans
+          suggestion, on distingue : un IDU cadastral complet (14 car.) → recherche des permis rattachés à
+          la parcelle (O17 g) ; sinon une chaîne alphanumérique compacte → n° de permis (ouvre la fiche).
+          F3 : enveloppe NON-flex — le wrapper interne `flex-1` d'AddressAutocomplete grandissait
+          VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
       <div>
-        <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune ou n° de permis…"
+        <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune, n° de permis ou parcelle…"
           onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
-          onEnterRaw={(t) => { const v = t.replace(/\s/g, ''); if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v) }} />
+          onEnterRaw={(t) => {
+            const v = iduComplet(t)
+            // IDU cadastral complet (14 car.) → cherche les permis de la parcelle (O17 g)
+            if (v.length === 14 && estIdu(v)) { setParcelIdu(v); return }
+            // sinon une référence Sitadel compacte → fiche permis
+            if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
+          }} />
+        {/* O17 (g) — parcelle SANS permis rattaché : message honnête daté du millésime Sitadel servi. */}
+        {parcelIdu && qParcelPermis.data && ((qParcelPermis.data as Record<string, any>)['items'] ?? []).length === 0 && (
+          <p data-permis-parcelle-vide className="mt-1 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
+            Aucun permis rattaché à cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span>
+            {donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ' (Sitadel)'}.
+            <button onClick={() => setParcelIdu(null)} className="ml-2 underline">effacer</button>
+          </p>
+        )}
       </div>
 
-      {/* SEGMENT PLEIN — En cours (VERT) · Point mort (ROUGE) · Tous. Compteurs live ; la couleur du
-          point suit la liste et la carte. */}
-      <div data-permis-segment className="flex overflow-hidden rounded-lg border border-line-2">
+      {/* STATUT — En cours (VERT) · Point mort (ROUGE) · Tous. Compteurs live sur chaque puce. C'est le
+          commutateur PRIMAIRE (vert/rouge/tous) : il reste TOUJOURS visible au-dessus des filtres repliés
+          (les autres filtres — période, type, commune, géocodage — se plient, eux, dans la boîte ci-dessous). */}
+      <div data-permis-segment className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
         {([
           ['cours', 'En cours', '#4ADE80', radarEntryTotal],
           ['mort', 'Point mort', '#E2726A', pmEntryTotal],
@@ -447,46 +521,82 @@ export function M03() {
           ['tous', 'Tous', null, (radarEntryTotal != null && pmEntryTotal != null) ? radarEntryTotal + pmEntryTotal : null],
         ] as const).map(([k, label, dot, n], i) => (
           <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)}
-            className={`flex flex-1 items-center justify-center gap-1.5 px-2 py-1.5 text-[11.5px] transition-colors duration-quick ${i > 0 ? 'border-l border-line-2' : ''} ${
+            className={`flex flex-1 basis-0 items-center justify-center gap-1.5 px-2 py-1.5 text-[11.5px] transition-colors duration-quick ${i > 0 ? 'border-l border-line-2' : ''} ${
               seg === k ? 'bg-mint/[0.10] font-medium text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>
             {dot && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: dot }} />}
-            <span className="truncate">{label}{n != null ? ` ${fmt(n)}` : ''}</span>
+            <span>{label}{n != null ? ` ${fmt(n)}` : ''}</span>
           </button>
         ))}
       </div>
 
-      {/* PÉRIODE puis TYPE — empilés, pleine largeur (segments pleins). */}
-      <div className="flex overflow-hidden rounded-lg border border-line-2">
-        {(pointMort ? MONTHS_PM : MONTHS_RADAR).map((m, i) => (
-          <button key={m} onClick={() => setMonths(m)}
-            className={`flex-1 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${months === m ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
-            {!pointMort && m >= 240 ? 'Tout' : `${m} m${pointMort ? '+' : ''}`}
-          </button>
-        ))}
-      </div>
-      {!pointMort && (
-        <div className="flex overflow-hidden rounded-lg border border-line-2">
-          {NATURES.map(([v, l], i) => (
-            <button key={v || 'tout'} onClick={() => setNature(v)}
-              className={`flex-1 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${nature === v ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
-              {l}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* ZONE 2 — FILTRES REPLIABLES (O17 a/f/i) : période · type · commune · géocodage. Un en-tête
+          cliquable ouvre/ferme la boîte ; il porte le résumé des filtres actifs pour que rien ne soit
+          perdu quand la boîte est fermée. */}
+      <div className="rounded-lg border border-line-2">
+        <button data-permis-filtres-toggle onClick={() => setFiltersOpen((o) => !o)}
+          className="hover-fill flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[11px] text-txt-mut">
+          <span className="font-medium text-txt">Filtres</span>
+          <span className="min-w-0 flex-1 truncate text-txt-dim">
+            {!pointMort && months >= 240 ? 'Tout' : `${months} m${pointMort ? '+' : ''}`}
+            {!pointMort && nature ? ` · ${NATURES.find(([v]) => v === nature)?.[1]}` : ''}
+            {commune ? ` · ${commune}` : ''}
+            {geoFiltre !== 'tous' ? ` · ${geoFiltre === 'geo' ? 'géocodés' : 'non géocodés'}` : ''}
+          </span>
+          <span className="shrink-0 text-txt-dim">{filtersOpen ? '▲' : '▼'}</span>
+        </button>
 
-      {/* LIGNE DE STATS — puis la liste commence immédiatement (plus de vide noir). */}
+        {filtersOpen && (
+          <div className="flex flex-col gap-2 border-t border-line-2 px-2 py-2">
+            {/* PÉRIODE — pleine largeur (segments pleins). Aucun libellé tronqué (flex-wrap si besoin). */}
+            <div className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
+              {(pointMort ? MONTHS_PM : MONTHS_RADAR).map((m, i) => (
+                <button key={m} onClick={() => setMonths(m)}
+                  className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${months === m ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+                  {!pointMort && m >= 240 ? 'Tout' : `${m} m${pointMort ? '+' : ''}`}
+                </button>
+              ))}
+            </div>
+
+            {/* TYPE (nature) — masqué au point mort (PC seul par construction). */}
+            {!pointMort && (
+              <div className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
+                {NATURES.map(([v, l], i) => (
+                  <button key={v || 'tout'} onClick={() => setNature(v)}
+                    className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${nature === v ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* COMMUNE (O17 f) — filtre commune, liste réelle, jamais tronqué (select). */}
+            <CommunePermisSelect value={commune} onChange={setCommune} />
+
+            {/* GÉOCODAGE (O17 e) — « non géocodés » devient un filtre à part entière. */}
+            <div className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
+              {([['tous', 'Tous'], ['geo', 'Sur la carte'], ['nongeo', 'Non géocodés']] as const).map(([k, l], i) => (
+                <button key={k} data-permis-geo={k} onClick={() => setGeoFiltre(k)}
+                  className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${geoFiltre === k ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* LIGNE DE STATS — compteur liste/carte concis (la date est passée dans le sous-titre ci-dessous). */}
       <p className="text-[11px] text-txt-dim">
         {pointMort
           ? <>{total != null ? fmt(total) : '…'} au point mort · {fmt(carte.length)} sur la carte{total != null && loaded < total
               ? <> · <span data-permis-plafond title="Le point mort peut compter des milliers de PC : on charge d'abord les plus anciens (les plus dormants) ; affinez en zoomant/filtrant.">les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
           : <>{zone ? `${items.length} permis dans la zone dessinée` : `${fmt(total ?? 0)} permis`} · {fmt(carte.length)} sur la carte
-              {!zone && sansLoc > 0 && <span data-permis-sansloc className="text-mint/70"
-                title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte, mais listé."> · {fmt(sansLoc)} sans localisation → liste</span>}
-              {carte.length < ((head?.['geocodes'] as number) ?? 0) && <span data-permis-carte-plafond className="text-mint/70"
-                title="Carte plafonnée à 8 000 points (performance) ; la liste n'est pas plafonnée."> · carte plafonnée</span>}
-              {zone && <span className="text-mint/70"> · outil Zone actif</span>}
-              {head?.['pct_geocode'] != null && <span className="text-txt-dim"> · géocodage {String(head['pct_geocode'])} % · jusqu'au {String(head['donnees_jusqu_au'] ?? '…')}</span>}</>}
+              {zone && <span className="text-mint/70"> · outil Zone actif</span>}</>}
+        {/* O17 (e) — la DATE du millésime Sitadel remonte dans le sous-titre, plus dans une phrase-fleuve. */}
+        {!pointMort && head?.['donnees_jusqu_au'] != null && (
+          <span className="text-txt-dim"> · données jusqu'au {String(head['donnees_jusqu_au'])}
+            {head?.['pct_geocode'] != null ? ` · géocodage ${String(head['pct_geocode'])} %` : ''}</span>
+        )}
       </p>
 
       {pointMort && qPm.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
@@ -499,6 +609,13 @@ export function M03() {
           // donc l'intérêt. Année depuis la date d'autorisation (AAAA-…).
           const an = Number(String(i['date'] ?? '').slice(0, 4))
           const ans = an ? new Date().getFullYear() - an : null
+          // O17 (b) — ligne 2 : on montre CE QU'ON A. Commune si connue ; à défaut la section-parcelle
+          // (IDU rattaché, cadre point mort). Jamais un « — » orphelin : si rien, la ligne 2 disparaît.
+          const commuLbl = (i['commune'] as string) || ''
+          const iduLbl = i['idu'] ? iduCourt(i['idu'] as string) : ''
+          const gaucheL2 = commuLbl || (iduLbl ? `Parcelle ${iduLbl}` : '')
+          const aBadge = pointMort || i['etat_label'] || !i['geom']
+          const ligne2 = gaucheL2 || aBadge   // rendre la ligne 2 ssi elle porte une info réelle
           return (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'}
             onClick={() => setOpen(i['permit_id'] as string)}
@@ -506,16 +623,20 @@ export function M03() {
             className={`flex w-full flex-col gap-0.5 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
             {/* ligne 1 */}
             <span className="flex w-full items-center gap-2">
-              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: pointMort ? '#E2726A' : '#4ADE80' }} />
+              {/* O17 (h) — la pastille ROUGE = « point mort » : sa définition tient dans l'infobulle. */}
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: pointMort ? '#E2726A' : '#4ADE80' }}
+                title={pointMort ? 'Point mort — permis de construire daté de plus de N mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.' : 'Permis récent (radar)'} />
               <span className="rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
-              <span className="font-mono text-txt-mut">{i['date'] as string}</span>
+              {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
+              <span className="font-mono text-txt-mut" title="Date d'autorisation du permis">{i['date'] as string}</span>
               {i['nb_lgt'] != null && <b className="tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
               {pointMort && i['surface_m2'] != null && <span className="tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
               {!pointMort && i['delai_mois'] != null && <span className="ml-auto" style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
             </span>
-            {/* ligne 2 */}
+            {/* ligne 2 — O17 (b) : rendue seulement si elle porte une info (plus de « — » nu). */}
+            {ligne2 && (
             <span className="flex w-full items-center gap-2 pl-[15px]">
-              <span className="text-txt-mut">{(i['commune'] as string) || '—'}</span>
+              {gaucheL2 && <span className="min-w-0 truncate text-txt-mut">{gaucheL2}</span>}
               <span className="ml-auto flex items-center gap-1.5">
                 {pointMort
                   ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
@@ -525,10 +646,26 @@ export function M03() {
                   title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
               </span>
             </span>
+            )}
           </button>
           )
         })}
-        <MoreButton q={q} loaded={loaded} total={total ?? undefined} />
+        {/* O17 (i) — ÉTAT VIDE : message clair quand aucun permis ne correspond aux filtres. */}
+        {!q.isLoading && items.length === 0 && (
+          <p data-permis-vide className="px-1 py-6 text-center text-[11px] text-txt-dim">
+            Aucun permis ne correspond aux filtres{commune ? ` pour ${commune}` : ''}
+            {zone ? ' dans la zone dessinée' : ''}. Élargissez la période ou effacez un filtre.
+          </p>
+        )}
+        {/* O17 (c) — pagination SOCLE par 200 (ListPaginationFooter) au lieu du bouton « voir plus » ad hoc.
+            `shown` = lignes chargées du serveur (loaded, avant filtre client) ; `total` = compteur serveur ;
+            le bouton « Voir 200 de plus » ne pagine que s'il reste des pages (hasNextPage). */}
+        {loaded > 0 && (
+          <ListPaginationFooter
+            shown={loaded}
+            total={total != null ? Math.max(total, loaded) : (q.hasNextPage ? loaded + PAGE_SIZE : loaded)}
+            onMore={() => { if (q.hasNextPage) q.fetchNextPage() }} />
+        )}
       </div>
       {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
     </div>
@@ -1027,11 +1164,17 @@ export function M10() {
   // Le collage en masse reste offert (SECTION+NUMÉRO, une par ligne). Plus d'export PDF (retiré).
   const [lot, setLot] = useState<string[]>([])
   const [paste, setPaste] = useState('')
+  const [msg, setMsg] = useState<string | null>(null)
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
   const setModule = useApp((s) => s.setModule)
-  // ajout dédupliqué au lot (IDU résolu, SECTION+NUMÉRO ou adresse brute — le back résout, ou dit « introuvable »).
+  // O6(b) — n'ajoute QUE des références cadastrales résolues (IDU complet ou SECTION+NUMÉRO).
+  // Une adresse brute non rattachée à une parcelle NE DOIT JAMAIS entrer dans le lot comme chip :
+  // ParcelInput ne câble pas onAddress → l'adresse résolue arrive par onPick, l'adresse non résolue
+  // affiche son propre message (« aucune parcelle rattachée »). Le collage garde le même garde-fou.
   const ajouter = (v: string) => {
-    const t = (iduComplet(v) || v).trim().toUpperCase(); if (!t) return
+    const t = iduComplet(v).toUpperCase(); if (!t) return
+    if (!estIdu(t)) return   // pas une référence cadastrale (ex. adresse brute) → ignorée
+    setMsg(null)
     setLot((l) => l.includes(t) ? l : [...l, t])
   }
   const ajouterListe = () => {
@@ -1043,14 +1186,21 @@ export function M10() {
   const items = (run.data?.items ?? []) as Record<string, any>[]
   const iduxResolus = items.filter((i) => 'idu' in i).map((i) => i['idu'] as string)
   return (
-    <>
-      <Banner>Un lot au crible : risque, points de vigilance et propriétaire, par parcelle. Alimentez-le
-        par la <b>barre</b> ci-dessous (une parcelle à la fois), ou <b>collez une liste</b> (IDU ou
-        SECTION+NUMÉRO, une par ligne). Adressage/propriétaire particulier jamais nommé.</Banner>
+    // O6(c) — le PANNEAU ENTIER scrolle : le wrapper d'outil (ModulePanel) est overflow-hidden, donc
+    // M10 porte lui-même un unique conteneur défilant (flex-1 min-h-0 overflow-y-auto). Avant, seule la
+    // liste des items scrollait et le bouton « Préparer les courriers » + le bas étaient coupés.
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <Banner>Passez plusieurs parcelles au crible d'un coup : risques, points de vigilance,
+        propriétaire — parcelle par parcelle. Ajoutez-les en tapant une adresse ou un IDU dans la
+        barre, ou en cliquant les parcelles sur la carte.</Banner>
       {/* BARRE UNIQUE (SOCLE) + « + Ajouter » → chips du lot */}
       <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+        {/* O6(b) — onPick ajoute l'IDU RÉSOLU ; onAddress (adresse sans parcelle rattachée) ne pousse
+            JAMAIS la chaîne brute dans le lot : il affiche un message. Fin du chip « ELACITERNE,… ». */}
         <ParcelInput dataAttr="diligence-idu" placeholder="IDU, SECTION+NUMÉRO ou adresse — puis Entrée"
-          onPick={ajouter} onAddress={ajouter} />
+          onPick={ajouter}
+          onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — saisissez un IDU ou cliquez la parcelle sur la carte.")} />
+        {msg && <p data-diligence-msg className="text-[10.5px] leading-snug text-st-creuser">{msg}</p>}
         <details className="text-[10.5px] text-txt-dim">
           <summary className="cursor-pointer hover:text-txt-mut">ou collez une liste (une par ligne)</summary>
           <div className="mt-1.5 flex flex-col gap-1.5">
@@ -1082,7 +1232,10 @@ export function M10() {
       </button>
       {run.data && (
         <>
-          <p className="text-[11px] text-txt-dim">{run.data.n_trouvees}/{run.data.n_demandes} références trouvées</p>
+          {/* O6(d) — compteur COHÉRENT : dérivé des items réellement renvoyés (trouvées = items avec IDU,
+              demandées = nombre de lignes du résultat), plus des champs n_trouvees/n_demandes qui pouvaient
+              diverger du lot affiché. « 5/7 » contre « 6 références » disparaît. */}
+          <p className="text-[11px] text-txt-dim">{iduxResolus.length}/{items.length} référence{items.length > 1 ? 's' : ''} trouvée{iduxResolus.length > 1 ? 's' : ''}</p>
           {/* M137-T — NON COUVERT reporté sur le LOT : un lot sans flag cascade ne doit jamais être un
               « RAS » muet. Le bloc dit ce que la base ne couvre pas, à l'échelle des 60 parcelles. */}
           {(run.data.non_couvert ?? []).length > 0 && (
@@ -1093,7 +1246,7 @@ export function M10() {
               </div>
             </div>
           )}
-          <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+          <div className="flex flex-col gap-1.5">
             {items.map((i, k) => 'idu' in i ? (() => {
               const risque = i['risque'] as number
               const rColor = risque >= 100 ? TOKENS.stEcartee : risque >= 60 ? TOKENS.stEcartee : risque >= 30 ? TOKENS.stCreuser : TOKENS.mint
@@ -1151,7 +1304,7 @@ export function M10() {
           )}
         </>
       )}
-    </>
+    </div>
   )
 }
 

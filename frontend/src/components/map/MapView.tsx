@@ -7,6 +7,7 @@ import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } fro
 import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
+import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
@@ -252,6 +253,11 @@ const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
 function applyClairMode(m: maplibregl.Map, basemap: string) {
   const clair = basemap === 'clair'
   const sombre = basemap === 'dark'
+  // RETOURS-11 C4 — fonds PHOTO/CLAIR (Plan IGN, Ortho IGN, tous millésimes) : les traits fins et
+  // les aplats sombres se noient sur la tuile claire/photographique. On applique un variant de style
+  // « lisibilité fond clair » en surcouche, PILOTÉ ICI (seul propriétaire du paint basemap-dépendant),
+  // sans DUPLIQUER de couche. Clair et Sombre (témoins) ne passent JAMAIS par ce bloc.
+  const photo = basemap === 'plan' || basemap === 'ortho'
   const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
   const vis = (id: string, on: boolean) => { if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none') }
   // FOND-SOMBRE : la mer du Sombre = teinte mesurée du rendu raster d'avant ; Clair garde le noir.
@@ -264,17 +270,21 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   // traits achromatiques (#ECF5EF) invisibles sur terre claire → foncés en Clair (bascule M64).
   const selLine = clair ? '#14181A' : '#ECF5EF'
   for (const id of ['parcels-sel', 'ile-sel', 'parcels-ping', 'ile-ping']) set(id, 'line-color', selLine)
-  for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', clair ? '#14181A' : '#ECF5EF'); set(id, 'text-halo-color', clair ? '#FFFFFF' : '#06130C') }
+  // RETOURS-11 C4 — text-halo-width réappliqué à sa valeur de création (1.3) hors fond photo, pour
+  // que le retour en Clair/Sombre efface l'épaississement du variant photo (témoins intacts).
+  for (const id of ['parcels-zone-label', 'ile-zone-label']) { set(id, 'text-color', clair ? '#14181A' : '#ECF5EF'); set(id, 'text-halo-color', clair ? '#FFFFFF' : '#06130C'); set(id, 'text-halo-width', 1.3) }
   // M105 P4.1 — limites parcelles NOIRES en vue claire (le beige #B9B3A6 se noyait sur la
   // terre claire) ; la vue sombre ne bouge pas. Deux traitements selon le fond, assumés.
   for (const id of ['parcels-limites', 'ile-limites']) {
     set(id, 'line-color', clair ? '#000000' : '#8FA69A')
     set(id, 'line-width', clair ? 0.5 : 0.3)
+    set(id, 'line-opacity', 0.4)   // RETOURS-11 C4 — valeur de création restaurée (le variant photo la monte à 0,9)
   }
   // limites communes : vert foncé #2E7D52 / 1,6 px (≈3× parcelles) sur terre claire — elles ne se
   // noient plus dans le cadastre ; sinon menthe + interpolation sombre d'origine.
   set('communes-bounds', 'line-color', clair ? '#2E7D52' : '#5CE6A1')
   set('communes-bounds', 'line-width', clair ? 1.6 : COMMUNES_W_SOMBRE)
+  set('communes-bounds', 'line-opacity', 0.55)   // RETOURS-11 C4 — création restaurée (variant photo la monte à 0,95)
   // M105-B — les couches d'INFORMATION consomment le jeu de tokens du thème (lib/mapTheme,
   // un jeu par thème, un seul endroit) : zonage, PPR, ANRU (+trame), 50 pas, liseré brûlantes.
   // Le contour des tiers (parcels-line/ile-line) a son propriétaire unique : l'effet violet.
@@ -329,6 +339,41 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
   set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
+
+  // ═══ RETOURS-11 C4 — VARIANT LISIBILITÉ « fond photo/clair » (Plan & Ortho) ═══
+  // Ce bloc s'exécute EN DERNIER : il écrase, pour les seuls fonds photo, les propriétés posées
+  // plus haut (colonne « sombre » par défaut hors clair/sombre). Il ne s'exécute jamais en Clair ni
+  // en Sombre → les deux témoins gardent EXACTEMENT leur rendu (les lignes ci-dessus les ré-appliquent
+  // à chaque bascule, ce bloc étant sauté). Aucune couche neuve : uniquement setPaintProperty.
+  if (photo) {
+    // Limites parcelles : sur ortho/plan le beige fin (#8FA69A / 0,3 px) disparaît. Le vrai casing
+    // (liseré sombre large SOUS un trait clair fin) demanderait une 2e couche — interdit ici (« pas
+    // de couche dupliquée »). FAIT AUTREMENT : un TRAIT SOMBRE nettement plus large (jusqu'à 2,2 px)
+    // et opaque, très lisible sur la photo (cf. rapport C4).
+    for (const id of ['parcels-limites', 'ile-limites']) {
+      set(id, 'line-color', '#0A0F0C')
+      set(id, 'line-width', ['interpolate', ['linear'], ['zoom'], 12, 0.8, 16, 1.6, 19, 2.2])
+      set(id, 'line-opacity', 0.9)
+    }
+    // Limites communes : même recette de casing — trait sombre large, très visible sur ortho/plan.
+    set('communes-bounds', 'line-color', '#0A2417')
+    set('communes-bounds', 'line-width', ['interpolate', ['linear'], ['zoom'], 8, 2.0, 13, 3.2])
+    set('communes-bounds', 'line-opacity', 0.95)
+    // Zonage (aplat) : plus opaque + contour sombre net — l'aplat clair ressort sur la photo.
+    for (const id of ['ov-zonage', 'ovmvt-zonage']) set(id, 'fill-opacity', 0.34)
+    for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
+    // Zonage — LETTRES (symbol) : halo SOMBRE épaissi → les lettres blanches restent lisibles sur photo.
+    for (const id of ['parcels-zone-label', 'ile-zone-label']) {
+      set(id, 'text-color', '#FFFFFF'); set(id, 'text-halo-color', '#000000'); set(id, 'text-halo-width', 2.2)
+    }
+    // Risques (PPR + aléas DEAL) : aplat plus opaque + contour sombre — même gain de lisibilité.
+    for (const id of ['ov-ppr', 'ovmvt-ppr']) set(id, 'fill-opacity', 0.30)
+    for (const id of ['ov-ppr-line', 'ovmvt-ppr-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
+    for (const c of ALEA_COUCHES) {
+      set(c.id, 'fill-opacity', ['match', ['coalesce', ['get', 'niveau'], 'moyen'], 'faible', 0.30, 'fort', 0.5, 0.4] as unknown as maplibregl.ExpressionSpecification)
+      set(`${c.id}-line`, 'line-color', '#0A0F0C'); set(`${c.id}-line`, 'line-width', 1.4)
+    }
+  }
 }
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
@@ -446,6 +491,8 @@ function fcTouchesBbox(fc: { features: { geometry: unknown }[] },
 interface Measure {
   pts: LngLat[]
   alti: { pt: LngLat; z: number } | null
+  // RETOURS-11 C8 — forme VALIDÉE (par Entrée) : la mesure est figée, le prochain clic repart à zéro.
+  done?: boolean
 }
 
 // M55-G point 13 — BOUTON DE CARTE MOMENTANÉ (zoom +/−…) : au clic, flash mint ~180 ms puis
@@ -609,7 +656,9 @@ export function MapView() {
       useApp.getState().setMapPeint({
         parcelles: parcVis,
         equipements: layers.equipements && z >= 12,
-        zonage: zonageFill && parcVis,
+        // RETOURS-11 C1 — la légende du zonage suit l'aplat RÉELLEMENT peint (zonageFill au bon zoom),
+        // indépendamment de la couche « Limites parcelles ».
+        zonage: zonageFill && (!ile || z >= 10),
       })
     }
     upd()
@@ -1273,10 +1322,14 @@ export function MapView() {
     if (!m || !ready.current || !m.getLayer('parcels-fill')) return
     const vis = (on: boolean) => (on ? 'visible' : 'none')
     // deux jeux de calques (GeoJSON commune / MVT île) — un seul visible à la fois
-    m.setLayoutProperty('parcels-fill', 'visibility', vis(layers.parcelles && !ile))
+    // RETOURS-11 C1 (03/09) — le REMPLISSAGE des parcelles porte AUSSI l'aplat de zonage (par famille).
+    // Régression SECTEUR-2 (07d16986) : `parcels-fill` était gated sur `layers.parcelles` seul, donc
+    // « Zonage PLU par parcelle » coché SANS « Limites parcelles » n'affichait que les lettres, aplat perdu.
+    // Le fill est visible dès que les limites OU le zonage-par-parcelle (zonageFill) sont actifs.
+    m.setLayoutProperty('parcels-fill', 'visibility', vis((layers.parcelles || zonageFill) && !ile))
     m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile))
     m.setLayoutProperty('parcels-limites', 'visibility', vis(layers.limites && !ile))
-    m.setLayoutProperty('ile-fill', 'visibility', vis(layers.parcelles && ile))
+    m.setLayoutProperty('ile-fill', 'visibility', vis((layers.parcelles || zonageFill) && ile))
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile))
     m.setLayoutProperty('ile-limites', 'visibility', vis(layers.limites && ile))
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
@@ -1419,15 +1472,10 @@ export function MapView() {
     aggMarkers.current.forEach((mk) => mk.remove())
     aggMarkers.current = []
     if (!ile || !communes.data) return
-    // M65 P8 — pastilles de libellés de commune : INCHANGÉES entre les modes (annule l'adaptation
-    // « pastille claire à texte sombre » livrée en M64). Fond sombre + texte clair dans les DEUX
-    // modes → sur la terre claire elles deviennent des ancres fortes. Valeurs Sombre d'origine
-    // conservées (le hot/cold sémantique — menthe pour une commune à chaudes — est préservé).
-    const lab = {
-      borderHot: '#2E6B4F', borderCold: '#26302B',
-      bgHot: 'rgba(9,26,18,.92)', bgCold: 'rgba(10,14,12,.85)',
-      textHot: '#5CE6A1', textCold: '#8FA69A',
-    }
+    // RETOURS-11 T7 (03/09) — pastilles de commune UNIFORMES sur toutes les couches et tous les fonds :
+    // FOND VERT, liseré NOIR, nom en BLANC. Le vert est assez profond pour que le blanc reste lisible.
+    // Le hot (commune à chaudes, mode opinion) ne change plus la couleur — il garde juste une lueur.
+    const PAST_BG = '#0E7A43', PAST_BORDER = '#000000', PAST_TXT = '#FFFFFF'
     const updateVis = () => {
       const show = m.getZoom() < 10
       aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
@@ -1449,18 +1497,20 @@ export function MapView() {
       el.title = hot
         ? `${c.commune} — ${c.chaudes} parcelles prioritaires ou à suivre au classement servi · ouvrir la fiche commune`
         : `${c.commune} · ouvrir la fiche commune`
-      const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
+      // RETOURS-11 T6 (03/09) — l'article n'est élidé QUE pour les 21 autres communes ; « Le Port »,
+      // « Le Tampon », « La Possession » gardent leur article (référentiel unique lib/communes).
+      const name = communePastille(c.commune)
       // M62-P1 (e) : le libellé = le NOM SEUL (« · Fiche commune » retiré des 24). Le clic ouvre
       // toujours la fiche commune (inchangé) ; l'affordance reste dans le `title` au survol.
       el.innerHTML = `<span>${name}</span>`
-      const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
-      el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
+      // RETOURS-11 T8 — taille de police et padding +20 %.
+      const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0)) * 1.2
+      el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2.4px 10.8px;` +
         `display:inline-flex;align-items:center;gap:4px;` +
-        `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? lab.borderHot : lab.borderCold};` +
-        `background:${hot ? lab.bgHot : lab.bgCold};color:${hot ? lab.textHot : lab.textCold};` +
-        // M65 P8 — pastilles identiques au Sombre dans les deux modes : l'ombre menthe s'applique
-        // dès qu'une commune est « hot » (opinion + chaudes), quel que soit le fond.
-        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
+        `font:600 ${size}px Inter,sans-serif;border:1px solid ${PAST_BORDER};` +
+        `background:${PAST_BG};color:${PAST_TXT};` +
+        // le hot (opinion + chaudes) garde une lueur menthe pour rester une ancre forte.
+        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.30);' : '')
       // M55-C point 4 (décision Vic 10/08, remplace le comportement « fiche seule ») : cliquer le
       // nom de commune = TROIS effets en un — ouvrir la fiche, caler le périmètre sur la commune
       // (liste/compteurs/filtres suivent) ET recadrer la carte (l'effet de fit sur `commune` s'en
@@ -1637,24 +1687,35 @@ export function MapView() {
       // ZONE-RECETTE LOT E : on IGNORE un sommet dupliqué (les deux clics d'un double-clic tombent au
       // même endroit) — plus de spike parasite en bout de tracé.
       setMeasure((s) => {
+        // RETOURS-11 C8 — une forme VALIDÉE (Entrée) est figée : le prochain clic repart d'une forme neuve.
+        if (s.done) return { pts: [p], alti: null }
         const last = s.pts[s.pts.length - 1]
         if (last && Math.abs(last[0] - p[0]) < 1e-6 && Math.abs(last[1] - p[1]) < 1e-6) return s
         return { ...s, pts: [...s.pts, p] }
       })
     }
     const onDbl = (e: maplibregl.MapMouseEvent) => {
-      // ZONE-RECETTE LOT E : le double-clic est NEUTRALISÉ (preventDefault sur le zoom) — en mode 'zone'
-      // la fermeture passe UNIQUEMENT par Entrée (une seule voie de validation, pas deux en concurrence).
+      // RETOURS-11 C8 (décision Vic 03/09) : le double-clic ne VALIDE PLUS AUCUNE forme. La validation
+      // passe UNIQUEMENT par Entrée (surface/zone ≥ 3 points, distance ≥ 2 points), Échap annule.
+      // On neutralise seulement le zoom au double-clic (preventDefault) ; aucune finalisation ici.
+      // Le double-clic reste disponible pour l'édition des points (glisser-déplacer : non implémenté,
+      // cf. rapport C8) — il ne ferme jamais la forme en cours.
       e.preventDefault()
-      // distance/surface : le double-clic fige la mesure (l'outil reste actif pour recommencer)
-      if (tool === 'distance' || tool === 'surface') setMeasure((s) => ({ ...s, pts: s.pts }))
     }
     const onKey = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') { setMeasure({ pts: [], alti: null }); setTool(null); return }
-      // Entrée ferme le polygone de zone et lance le filtrage (≥ 3 sommets).
-      if (ev.key === 'Enter' && tool === 'zone') {
-        const pts = measureRef.current.pts
+      if (ev.key !== 'Enter') return
+      // RETOURS-11 C8 — Entrée (et Entrée SEULE) valide la forme en cours :
+      //  · zone   : ferme le polygone (≥ 3 sommets), applique le filtre et referme l'outil ;
+      //  · surface: fige la mesure du polygone (≥ 3 sommets) — l'outil reste actif, prochain clic = neuve ;
+      //  · distance: fige la mesure de la ligne (≥ 2 points) — idem.
+      const pts = measureRef.current.pts
+      if (tool === 'zone') {
         if (pts.length >= 3) { setZone(pts); setTool(null); setMeasure({ pts: [], alti: null }) }
+      } else if (tool === 'surface') {
+        if (pts.length >= 3) setMeasure((s) => ({ ...s, done: true }))
+      } else if (tool === 'distance') {
+        if (pts.length >= 2) setMeasure((s) => ({ ...s, done: true }))
       }
     }
     m.on('click', onClick)
@@ -1722,8 +1783,8 @@ export function MapView() {
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
-            : tool === 'zone' ? 'Cliquez pour poser les sommets — Entrée pour valider, Échap pour annuler'
-            : 'Cliquez pour mesurer — Échap pour quitter')}
+            /* RETOURS-11 C8 (03/09) — libellé exact : Entrée valide, Échap annule (le double-clic ne valide plus). */
+            : 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler')}
         </div>
       )}
       {!tool && (

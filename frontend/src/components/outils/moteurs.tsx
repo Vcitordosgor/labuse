@@ -10,6 +10,8 @@ import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { Tip } from '../Tip'
 import { TierBadge } from './TierBadge'
+import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
+import { trierCommunes } from '../../lib/communes'
 
 const fmt = fmtInt
 
@@ -153,9 +155,7 @@ export function M16() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
       {/* M15 A1 : la cause du « ne fonctionne pas » = à l'échelle de l'île aucune parcelle n'est
           chargée ni cliquable. On guide explicitement : ZOOMER d'abord fait apparaître les contours. */}
-      <Banner><b>Zoomez sur le secteur</b> pour faire apparaître les contours des parcelles, puis
-        <b> cliquez-les</b> pour composer l'assiette (re-cliquer retire). Le <b>bilan réel</b> de
-        l'assiette (capacité + charge foncière cumulées) — le <b>règlement d'ensemble reste à instruire</b>.</Banner>
+      <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer), puis lancez l'analyse.</Banner>
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
@@ -186,9 +186,34 @@ export function M16() {
               {d.contigu ? "d'un seul tenant" : 'NON contiguë'}</span>
             <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_proprietaires} interlocuteur(s)</span>
             {(d.n_personnes_morales > 0 || d.n_particuliers > 0) && (
-              <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_personnes_morales} PM · {d.n_particuliers} particulier(s)</span>
+              <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · {d.n_particuliers} particulier{d.n_particuliers > 1 ? 's' : ''}</span>
             )}
           </div>
+
+          {/* O10(c) — EXPLIQUER, pas seulement signaler. La non-contiguïté est un problème de fond (deux
+              blocs séparés ne font pas une opération) : on le DIT fort, pas juste une pastille. Et les
+              parcelles qui n'apportent RIEN au bilan (SDP estimée nulle — souvent zones sans droits à
+              bâtir A/N, mais on ne nomme pas la zone qui n'est pas servie par parcelle) : on propose de
+              les retirer. Les deux blocs ne s'affichent que si la donnée du payload les justifie. */}
+          {!d.contigu && (
+            <div data-asm-non-contigu className="rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.09] px-3 py-2 text-[11px] leading-snug text-st-ecartee">
+              <b>Assiette NON contiguë.</b> <span className="text-txt-dim">Les parcelles ne se touchent pas toutes : ce sont plusieurs blocs séparés, pas une seule opération. Le bilan les additionne, mais un projet d'ensemble suppose une assiette d'un seul tenant — vérifiez la sélection.</span>
+            </div>
+          )}
+          {(() => {
+            const vides = (d.items as Record<string, any>[]).filter((i) => !((i.sdp_m2 as number) > 0))
+            if (vides.length === 0) return null
+            const n = vides.length
+            return (
+              <div data-asm-sans-droits className="flex flex-col gap-1.5 rounded-lg border border-st-creuser/50 bg-st-creuser/[0.09] px-3 py-2 text-[11px] leading-snug text-st-creuser">
+                <span><b>{n} parcelle{n > 1 ? 's' : ''} sans droits à bâtir estimés</b> <span className="text-txt-dim">n'apporte{n > 1 ? 'nt' : ''} rien au bilan (aucune surface de plancher estimée — souvent des terrains non constructibles). Les retirer ?</span></span>
+                <button data-asm-retirer-vides onClick={() => { const rm = new Set(vides.map((i) => i.idu as string)); setMsel(msel.filter((x) => !rm.has(x))) }}
+                  className="hover-fill self-start rounded-lg border border-st-creuser/50 px-2 py-0.5 text-[10.5px] text-st-creuser transition-colors duration-quick">
+                  Retirer {n > 1 ? `ces ${n} parcelles` : 'cette parcelle'}
+                </button>
+              </div>
+            )
+          })()}
 
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
             {/* CAS I — assiette sans potentiel : on le DIT, pas de bloc gain trompeur. */}
@@ -497,10 +522,8 @@ export function M18() {
 
 /* ───────────── M-U — MARCHÉ PAR COMMUNE (Agent Prix) ───────────── */
 
-const MU_COMMUNES = ['Bras-Panon', 'Cilaos', 'Entre-Deux', "L'Étang-Salé", 'La Plaine-des-Palmistes',
-  'La Possession', 'Le Port', 'Le Tampon', 'Les Avirons', 'Les Trois-Bassins', 'Petite-Île',
-  'Saint-André', 'Saint-Benoît', 'Saint-Denis', 'Saint-Joseph', 'Saint-Leu', 'Saint-Louis',
-  'Saint-Paul', 'Saint-Philippe', 'Saint-Pierre', 'Sainte-Marie', 'Sainte-Rose', 'Sainte-Suzanne', 'Salazie']
+// RETOURS-11 T6 — dérivé du référentiel unique CP_COMMUNES, trié sans tenir compte de l'article.
+const MU_COMMUNES = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
 
 const MU_FIAB: Record<string, string> = { bonne: TOKENS.mint, moyenne: TOKENS.stCreuser,
   faible: TOKENS.txtMut, insuffisant: TOKENS.txtDim }

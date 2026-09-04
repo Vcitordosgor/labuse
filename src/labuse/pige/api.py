@@ -567,6 +567,21 @@ def radar_veille_supprimer(veille_id: int, request: Request) -> dict:
     return {"ok": ok}
 
 
+class VeilleRenommerIn(BaseModel):
+    nom: str = ""
+
+
+@router.patch("/radar/veille/{veille_id}")
+def radar_veille_renommer(veille_id: int, body: VeilleRenommerIn, request: Request) -> dict:
+    """RETOURS-11 A7 — renomme une veille Radar du compte (garde IDOR = celle de la suppression)."""
+    from ..api.tenant import current_compte
+    from . import veille
+    with session_scope() as db:
+        ok = veille.renommer(db, current_compte(request), veille_id, body.nom)
+        db.commit()
+    return {"ok": ok}
+
+
 # ══════════════ RADAR P6 · D3 — onglet Marché (stats par commune, honnêteté statistique) ══════════════
 
 @router.get("/radar/marche")
