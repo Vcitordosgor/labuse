@@ -1952,10 +1952,17 @@ export function Fiche({ idu }: { idu: string }) {
                         <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
                       </div>
                     ))}
+                    {/* RETOURS-11F M9 — capacité NETTE des contraintes : on sert la SDP réellement
+                        mobilisable (contraintes déduites), avec la brute + la part déduite en mots
+                        quand une contrainte s'applique ; jamais un chiffre brut trompeur. */}
                     <MicroTriple items={[
-                      f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
+                      f.renouvellement.sdp_nette_m2 != null && f.renouvellement.sdp_nette_m2 > 0
+                        ? `SDP nette ${fmtInt(f.renouvellement.sdp_nette_m2)} m²${f.renouvellement.contrainte_pct ? ` (−${f.renouvellement.contrainte_pct} % contraintes)` : ''}`
+                        : (f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —'),
                       f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
-                      `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
+                      f.renouvellement.surelevation_possible
+                        ? `surélévation ${f.renouvellement.niveaux_surelevation ? `+${f.renouvellement.niveaux_surelevation} niv.` : 'possible'}`
+                        : `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
                     ]} />
                     <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}</p>
                   </div>
