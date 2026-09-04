@@ -316,3 +316,65 @@ zone non outillée), F10 (B1/TVA/CGI), F11 (identité SIRENE + wording), avenant
   de ce mandat — à traiter comme dette de fiabilité de suite, hors périmètre F3. Les 49 skips = base
   applicative/Saint-Denis/SIRENE absentes du `labuse_test` (comme F1/F2).
 - 9 commits sur `fix/retours-11f3` **avant** ce compte-rendu. **Merge = Vic.** Aucun sous-agent n'a touché à git.
+
+---
+
+# SESSION F4 — branche `fix/retours-11f4` (les 5 sections restantes + fonds)
+
+**Étape 0** — `pwd` = `/Users/openclaw/Desktop/labuse` · branche `fix/retours-11f4` · arbre propre au départ ·
+**run servi = `q_v11_m137`** (lu dans `config/served_run.txt`, **INCHANGÉ à la fin** — aucune bascule).
+Base RÉELLE `labuse`. **6 commits (fonds + primitives + 1 par section) AVANT ce compte-rendu. Merge = Vic.**
+Aucun sous-agent n'a touché à git (le seul agent lancé = cartographie de `Fiche.tsx`, lecture seule).
+
+**L'issue tenue : `Fiche.tsx` a été DÉCOUPÉ.** 3 130 → **1 848 lignes**. Un module par section extrait,
+commité section par section : `primitives.tsx` (UI partagée), `constructibilite.tsx`, `risques.tsx`,
+`marche.tsx`, `reseaux.tsx`, `autour.tsx`. Fiche ré-exporte `Calculette` + `FaisabiliteTab` (consommés par
+EtudierBien / M22Programme / le test) — aucun cycle d'import (les modules n'importent jamais `Fiche.tsx`).
+
+## Une ligne par section
+
+| Section | Statut | Fait — déplacé / retiré / fusionné |
+|---|---|---|
+| **F5 Constructibilité** | FAIT | Module `constructibilite.tsx` (capacité, calcul tracé, bilan, Mode B, RTAA, calculette, potentiel de transformation). **Prix de sortie bâti RETIRÉ d'ici** (ne montre plus une fiche de marché rivale) → « Prix de sortie retenu (bilan) N €/m² · détail dans Marché ». Fourchette bornes égales → un seul nombre aussi sur la valeur d'en-tête. RTAA reste en accordéon. |
+| **F6 Risques** | FAIT | Module `risques.tsx` : **vigilances D'ABORD** (puce ambre), **« N couches sans objet — déplier »** (repli), **compteur VRAI** (couches réellement évaluées, plus « 9 pour 15 »). **SUP rapatriées** d'Urbanisme (routage onglet backend). Ligne HT = contrainte (distance, seuil F3). |
+| **F7 Marché** | FAIT | Module `marche.tsx`, **recentré sur le PRIX**. **Prix de sortie bâti RAPATRIÉ ici** (fait unique). **Socio-éco (Filosofi + parc social) DÉPLACÉ vers Autour** ; **historique permis DÉPLACÉ vers Autour** ; **nombre de permis RETIRÉ** de « ventes < 100 m » (les ventes restent). |
+| **F8 Réseaux** | FAIT | Module `reseaux.tsx` = **4 blocs** (① Accès — UN verdict du moteur `acces`, la phrase codée en dur qui contredisait le faisceau est **supprimée** + transport ; ② Réseaux gestionnaires ; ③ Viabilisation indicateur + faisceau ; ④ Axes et nuisances). **Permis + dépôts DÉPLACÉS vers Autour.** Ensoleillement : déjà absent (détection PV abandonnée). |
+| **F9 Autour** | FAIT | Module `autour.tsx` = LA section de voisinage. **Équipements = UN moteur** (BPE+OSM, distance ; absent = omis). **Permis à proximité = UN tableau** (rapatrié de Réseaux) + historique permis (de Marché) + dépôts (de Réseaux). **Socio-éco reçu de Marché** ; **Filosofi = Sourcé** (carreau INSEE — le badge « estimé » ne s'affiche plus que si le revenu est IMPUTÉ). |
+
+## Doublons F0 soldés cette passe (routage onglet backend `served_cascade._ONGLET`, source unique écran + PDF)
+
+- **Accès voirie** (dit 3×) → **`acces` quitte l'onglet « marche » pour « reseaux »** : le verdict vit UNIQUEMENT
+  dans « Réseaux et accès » ; aucune section ne rend ces lignes ailleurs. UN verdict, une phrase.
+- **École / équipements** (OSM Marché vs BPE Autour) → **un moteur, dans Autour** (`f.proximites_equipements`,
+  déjà single-source depuis F2 ; Marché ne les montrait plus). Confirmé.
+- **Permis à proximité** (Marché + Réseaux + Autour) → **UN tableau dans Autour** (`PermitsProximityBlock` déplacé
+  de Réseaux ; compte permis retiré du bloc « ventes < 100 m » de Marché).
+- **Prix de sortie** → **Marché** (rapatrié) ; Constructibilité affiche « prix retenu → voir Marché ».
+- **Ensoleillement** → **hors Réseaux** : déjà retiré (renoncement détection PV, SOLAIRE M2) — rien à faire, confirmé.
+- **Bonus F4/F7** : `friche` + `ocs_ge` (occupation du sol / ZAN) quittent « marche » → « regles » (rapatriés dans Urbanisme).
+
+## Fonds de carte (C6, révisé)
+
+- **GetTile RÉELS Géoplateforme (2026-09-04)** sur 8 points île (littoral + cirques/Mafate/est), z15/18/19 :
+  la mosaïque `ORTHOIMAGERY.ORTHOPHOTOS` ne sert que **2022** au 974 (annuels 2023/2024 = 404), MAIS
+  **`ORTHO-EXPRESS.2025` (« Ortho-express RVB 2025 », 20 cm, PM_0_19) sert 8/8 dalles non vides**.
+- Décision : **« Actuelle » = Ortho Express 2025** (au lieu de la mosaïque 2022) — `bm-ortho-now` pointe sur
+  `ORTHO-EXPRESS.2025`, libellé « Actuelle · Ortho Express 2025 », attribution alignée. **Plan IGN v2 = déjà la
+  couche courante** (rien de plus récent). Libellé Solaire « BD ORTHO 20 cm 2025 » corrigé en
+  « Ortho Express RVB 20 cm 2025 » (« BD ORTHO 2025 » n'existe pas au 974). Le libellé de l'app est enfin VRAI.
+
+## Gardes ajoutées (`tests/test_retours11f4.py`, 11 vertes)
+Routage onglet (acces→reseaux, sup→risques, friche/ocs_ge→regles) · fonds Ortho Express 2025 + libellé Solaire ·
+découpe (6 modules existent, le shell rend les 5 sections, ré-export des 2 symboles publics) · F5 renvoi prix
+de sortie · F6 vigilances-first/repli · F7 socio-éco parti · F8 4 blocs sans permis · F9 permis+socio-éco réunis.
+`test_front_reliquats` mis à jour : ses gardes « marqueur dans le source » lisent désormais TOUT le dossier fiche.
+
+## Clôture F4
+- **tsc** 0 · **build** vert · **vitest** 152/152 · **golden** gravé sur `q_v11_m137` (**inchangé** ; **0 fichier
+  de scoring touché** — seul changement backend = `served_cascade._ONGLET`, routage d'affichage).
+- **pytest** : **2 268 passed, 36 skipped, 7 failed** (65 s) — les **7 failed sont TOUS le problème
+  d'environnement weasyprint/`libgobject`** (génération PDF : audit_stripe flash ×4, dossier, flash_report,
+  pré-dossier CERFA dont le pack perd `regles-zonage.pdf` que WeasyPrint n'a pas pu produire). **Cause
+  machine-level** (`cannot load library 'libgobject-2.0-0'`), **indépendante de F4** — sur une machine avec
+  Pango installé (cf. clôture F2, 2 240 passed) ils passent. Aucune de mes modifications ne touche la génération PDF.
+- **6 commits** sur `fix/retours-11f4` **avant** ce compte-rendu. **Merge = Vic.**
