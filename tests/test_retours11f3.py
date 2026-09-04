@@ -106,3 +106,22 @@ def test_m13_evolution_barometre_accepte_commune():
     src = inspect.getsource(moteurs._barometre_data)
     assert "neuf_vefa_commune" in src, "le neuf commune doit venir du moteur unique M1"
     assert "code_commune = :insee" in src, "la série terrain doit filtrer par commune"
+
+
+# ─────────────────────────── M3 — moteur prix de secteur RÉELLEMENT unique ───────────────────────────
+
+def test_m3_reference_locale_est_dans_le_moteur_et_ref_local_delegue():
+    """Le merge est RÉEL : la médiane locale mono-type vit dans le moteur (bilan.reference_locale),
+    à côté de sector_price ; `pige.signaux._ref_local` ne recopie plus la boucle/requête, il délègue.
+    Un seul point de calcul → plus de « 2 365 vs 2 403 » nés de deux chemins."""
+    import inspect as _i
+    from labuse.faisabilite import bilan
+    from labuse.pige import signaux
+    assert hasattr(bilan, "reference_locale"), "le moteur doit posséder reference_locale"
+    # sector_price ET reference_locale vivent dans LE MÊME module moteur.
+    assert bilan.reference_locale.__module__ == bilan.sector_price.__module__
+    deleg = _i.getsource(signaux._ref_local)
+    assert "reference_locale" in deleg and "for rayon in RAYONS_SECTEUR_M" not in deleg
+    assert "dvf_mutations" not in deleg, "plus aucune requête DVF recopiée hors du moteur"
+    # constantes partagées (fenêtre/seuil uniques).
+    assert bilan.MIN_N_SECTEUR == 8 and bilan.PERIODE_SECTEUR_ANS == 5

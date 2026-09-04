@@ -285,6 +285,42 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             "comparables": _comparables(kept, min_n, niveau)}
 
 
+def reference_locale(db: Session, idu: str | None, type_bien: str | None,
+                     seuil: int = MIN_N_SECTEUR) -> dict | None:
+    """RETOURS-11F M3 — MÉDIANE LOCALE €/m² d'un SEUL type autour de la parcelle. C'est L'AUTRE face
+    du moteur de secteur (`sector_price` sert le bâti multi-type du bilan ; celle-ci sert la référence
+    mono-type du Radar / de Mon secteur). Les DEUX vivent désormais DANS CE MODULE et partagent la
+    MÊME robustification (trim des 5 % extrêmes, rayon adaptatif 500→1500 m jusqu'à `seuil`, MÊMES
+    constantes RAYONS_SECTEUR_M / MIN_N_SECTEUR, distribution avant/après). Avant, `pige.signaux.
+    _ref_local` réimplémentait la boucle et la requête → deux chemins pour un même chiffre. Ce point
+    de calcul est UNIQUE : `_ref_local` n'est plus qu'un délégué. None si pas d'idu, type non bâti,
+    ou n < seuil au plus grand rayon (l'appelant replie alors sur la commune)."""
+    tl = {"maison": "Maison", "appartement": "Appartement", "immeuble": "Maison"}.get(type_bien or "")
+    if not idu or not tl:
+        return None
+    from ..api.moteurs import _BAROMETRE_RETENUE   # lazy : évite le cycle bilan ↔ api.moteurs
+    n_min = max(int(seuil), MIN_N_SECTEUR)
+    for rayon in RAYONS_SECTEUR_M:
+        rows = db.execute(text(
+            f"SELECT valeur_fonciere / NULLIF(surface_reelle_bati,0) AS pm, "
+            f"  to_char(max(date_mutation) OVER (), 'YYYY') AS millesime "
+            f"FROM dvf_mutations "
+            f"WHERE type_local = :t AND {_BAROMETRE_RETENUE} "
+            f"  AND ST_DWithin(geom::geography, "
+            f"      (SELECT centroid::geography FROM parcels WHERE idu = :idu), :rad)"),
+            {"t": tl, "idu": idu, "rad": rayon}).mappings().all()
+        prices = [float(r["pm"]) for r in rows if r["pm"] is not None]
+        kept, _lo, _hi = trim_extremes_5pct(prices)
+        if len(kept) >= n_min and kept:
+            millesime = rows[0]["millesime"] if rows else None
+            return {"eur_m2": float(statistics.median(kept)), "n": len(kept), "millesime": millesime,
+                    "perimetre": f"{'maisons' if tl == 'Maison' else 'appartements'} · {int(rayon)} m autour de la parcelle",
+                    "meme_type": True, "locale": True, "rayon_m": int(rayon),
+                    "distribution": {"avant": distribution_secteur(prices), "apres": distribution_secteur(kept),
+                                     "n_exclus_extremes": len(prices) - len(kept), "n_min_vise": n_min}}
+    return None
+
+
 # ── POINT DE RÉSOLUTION PARTAGÉ du prix de sortie neuf (mandat prix sortie consommateurs) ──────
 def resolve_prix_sortie_servi(session: Session, parcel_id: int, secteur: str | None = None) -> dict:
     """UN SEUL chemin pour le prix de sortie NEUF servi — cœur (fiche) ET les 6 consommateurs

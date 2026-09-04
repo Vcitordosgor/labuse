@@ -84,9 +84,11 @@ export function SecteurResultats({ idu, embedded }: { idu: string; embedded?: bo
             ) : <p className="mt-1 text-[12px] italic text-txt-dim">échantillon bâti insuffisant dans le rayon.</p>}
           </div>
 
-          {/* PAR TYPE — cases alignées, mêmes cellules que le bandeau (jamais un nombre coupé) */}
+          {/* RETOURS-11F3 M3 — le bloc « bâti » ci-dessus est LE prix du secteur (moteur unique). Ce
+              bloc n'est plus une médiane RIVALE (« 2 365 vs 2 403 » de l'audit O1) mais son DÉTAIL par
+              type — même moteur (reference_locale), même méthode. Le titre le dit clairement. */}
           <div>
-            <p className="label-caps mb-1 text-txt-dim">Médiane locale par type</p>
+            <p className="label-caps mb-1 text-txt-dim">Détail par type <span className="normal-case text-txt-dim">(dont terrain nu)</span></p>
             <div className="stats" data-secteur-par-type>
               {typeCell('Maison', d.par_type?.maison ?? null)}
               {typeCell('Appartement', d.par_type?.appartement ?? null)}
