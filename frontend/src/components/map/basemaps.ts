@@ -16,8 +16,12 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
   // aucune tuile de labels ; le Plan IGN reste disponible pour qui veut des labels.
   // M64-P1 : le fond « Clair » n'est PLUS un raster (Positron retiré) — c'est le rendu SOMBRE avec le
   // fond du canvas passé au blanc (cf. MapView.applyClairMode). Aucune tuile claire à charger.
-  'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
-  'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')], attribution: '© IGN BD ORTHO' },
+  // RETOURS-11F3 C6 — GetCapabilities + GetTile RÉELS Géoplateforme (2026-09-04) sur St-Denis ET
+  // St-Pierre : Plan IGN v2 et les 6 orthos historiques servent des dalles au 974 (200 / non vides) ;
+  // 1965-1980 et 1980-1995 → 404 au 974 (confirmés métropole seule, exclusion maintenue). Le millésime
+  // ORTHO île-entière le plus récent servi au 974 est 2022 (2023/2024 = 404) → « Actuelle · BD ORTHO 2022 ».
+  'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme — Plan IGN v2' },
+  'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')], attribution: '© IGN BD ORTHO 2022 (millésime le plus récent au 974)' },
   'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
   // le millésime 1950 s'arrête ~z15 : overzoom (maxzoom) plutôt que des tuiles NOIRES au-delà.
   'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
@@ -47,7 +51,7 @@ export const TEMPS_MILLESIMES: { key: keyof typeof BASEMAP_SOURCES; an: string; 
 // l'outil TEMPS : « Actuelle » (bm-ortho-now) + les 6 millésimes vérifiés (TEMPS_MILLESIMES). Un seul
 // jeu de millésimes pour les deux surfaces. Le libellé `an` est l'identifiant OrthoYear (store).
 export const ORTHO_YEARS: { key: keyof typeof BASEMAP_SOURCES; an: OrthoYear; label: string }[] = [
-  { key: 'bm-ortho-now', an: 'now', label: 'Actuelle' },
+  { key: 'bm-ortho-now', an: 'now', label: 'Actuelle · BD ORTHO 2022' },
   ...TEMPS_MILLESIMES.map((m) => ({ key: m.key, an: m.an as OrthoYear, label: m.label })),
 ]
 

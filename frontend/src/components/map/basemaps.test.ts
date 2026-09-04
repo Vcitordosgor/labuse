@@ -30,7 +30,8 @@ describe('FIX-FONDS — fonds de carte', () => {
   })
 
   it('B6 : basemapLabel résout tous les fonds SANS BASEMAP_CHOICES', () => {
-    expect(basemapLabel('bm-ortho-now')).toBe('Actuelle')
+    // RETOURS-11F3 C6 — « Actuelle » porte désormais son millésime réel au 974 (GetTile vérifié 2022).
+    expect(basemapLabel('bm-ortho-now')).toBe('Actuelle · BD ORTHO 2022')
     expect(basemapLabel('bm-ortho-2011')).toBe('2011-2015')
     expect(basemapLabel('bm-plan')).toBe('Plan IGN')
   })
