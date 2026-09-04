@@ -455,27 +455,56 @@ export function M17() {
 
 // une série trimestrielle : barres (volume) + médiane ; un trimestre PARTIEL est GRISÉ et dit
 // « données partielles (délai DVF) » — jamais une barre courte muette (§1a véracité).
-function SerieTrim({ titre, tip, rows, volKey, medKey, unite, pct }:
-  { titre: string; tip: string; rows: Record<string, any>[]; volKey: string; medKey?: string; unite?: string; pct?: number | null }) {
-  const max = Math.max(1, ...rows.map((r) => Number(r[volKey]) || 0))
+// RETOURS-12 O10 — ÉVOLUTION DU MARCHÉ en VRAI TABLEAU (une ligne par trimestre, en-tête collant),
+// même grammaire que la comparaison des communes. Les 3 séries (ancien bâti · terrain nu · permis) sont
+// fusionnées par trimestre ; les tendances /an et les notes restent en pied. Aucune donnée nouvelle.
+function M18Tableau({ d }: { d: Record<string, any> }) {
+  const ancien: Record<string, any>[] = d.dvf_trimestres ?? []
+  const terr = Object.fromEntries((d.terrain_trimestres ?? []).map((r: any) => [r.trimestre, r]))
+  const perm = Object.fromEntries((d.permis_trimestres ?? []).map((r: any) => [r.trimestre, r]))
+  // union des trimestres (l'ancien porte l'axe de référence), tri chronologique.
+  const tris = [...new Set([...ancien.map((r) => r.trimestre), ...Object.keys(terr), ...Object.keys(perm)])].sort()
+  const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
+  const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
+  const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
+  const tendance = (pct: number | null | undefined) => pct == null ? null :
+    <span className={`font-medium ${pct >= 0 ? 'text-mint' : 'text-st-ecartee'}`}>{pct >= 0 ? '+' : ''}{pct} %/an</span>
   return (
-    <div className="flex shrink-0 flex-col gap-1">
-      <p className="label-caps flex items-center gap-1.5">
-        {titre}
-        <Tip tip={tip}><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
-        {pct != null && <span className={`ml-auto text-[10.5px] font-medium ${pct >= 0 ? 'text-mint' : 'text-st-ecartee'}`}>{pct >= 0 ? '+' : ''}{pct} % / an</span>}
-      </p>
-      {rows.map((r) => (
-        <div key={r.trimestre} className={`flex items-center gap-2 text-[11px] ${r.partiel ? 'opacity-45' : ''}`}>
-          <span className="w-24 font-mono text-txt-dim">{r.trimestre}{r.partiel && <span className="text-st-creuser"> ·partiel</span>}</span>
-          <span className="relative h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-            <span className={`absolute left-0 top-0 h-full rounded-full ${r.partiel ? 'bg-txt-dim' : 'bg-mint'}`} style={{ width: `${(100 * (Number(r[volKey]) || 0)) / max}%` }} />
-          </span>
-          <span className="w-12 text-right font-mono text-txt-mut">{fmt(r[volKey])}</span>
-          {medKey && <span className="w-20 text-right font-mono text-txt-dim">{fmt(r[medKey])} {unite}</span>}
-        </div>
-      ))}
-      {rows.some((r) => r.partiel) && <p className="text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
+    <div className="flex min-h-0 flex-col">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px]">
+          <thead>
+            <tr className="border-b border-line-2">
+              <th className={`thead-sticky ${th}`}>Trimestre</th>
+              <th className={`thead-sticky ${th}`}>Ancien €/m² <span className="text-txt-off">(n)</span></th>
+              <th className={`thead-sticky ${th}`}>Terrain €/m² <span className="text-txt-off">(n)</span></th>
+              <th className={`thead-sticky ${th}`}>Permis</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tris.map((t) => {
+              const a = ancByT[t] ?? {}; const tn = terr[t] ?? {}; const pe = perm[t] ?? {}
+              const p = partiel.has(t)
+              return (
+                <tr key={t} className={`border-b border-line ${p ? 'opacity-45' : ''}`}>
+                  <td className="px-2 py-1 font-mono text-txt-dim">{t}{p && <span className="text-st-creuser"> ·partiel</span>}</td>
+                  <td className="px-2 py-1 text-right font-mono text-txt"><b className="text-txt-hi">{fmt(a.median_eur_m2_bati)}</b> <span className="text-txt-off">{a.mutations != null ? `(${fmt(a.mutations)})` : ''}</span></td>
+                  <td className="px-2 py-1 text-right font-mono text-txt"><b className="text-txt-hi">{fmt(tn.median_eur_m2_terrain)}</b> <span className="text-txt-off">{tn.mutations != null ? `(${fmt(tn.mutations)})` : ''}</span></td>
+                  <td className="px-2 py-1 text-right font-mono text-txt-hi">{fmt(pe.permis)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {/* LÉGENDE sous le tableau : tendances /an + méthode (T4/O10). */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-txt-dim">
+        <span className="flex items-center gap-1">Ancien bâti {tendance(d.tendance_ancien_pct)}</span>
+        <span className="flex items-center gap-1">Terrain nu {tendance(d.tendance_terrain_pct)}</span>
+        <span className="flex items-center gap-1">Permis {tendance(d.tendance_permis_pct)}</span>
+        <Tip tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
+      </div>
+      {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
     </div>
   )
 }
@@ -507,15 +536,10 @@ export function M18() {
           <Tip tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
         </p>
       )}
-      {d && <SerieTrim titre="Ancien bâti · €/m²" pct={d.tendance_ancien_pct}
-        tip="Médiane €/m² BÂTI, ventes strictes DVF (nature 'Vente', prix > 1 000 €, €/m² ∈ [100, 12 000] ; VEFA/neuf exclu). Volume = nombre de ventes retenues."
-        rows={d.dvf_trimestres} volKey="mutations" medKey="median_eur_m2_bati" unite="€/m²" />}
-      {d && <SerieTrim titre="Terrain nu · €/m²" pct={d.tendance_terrain_pct}
-        tip="Médiane €/m² TERRAIN, ventes de terrain nu (bâti = 0), €/m² dédupliqué par mutation (valeur ÷ terrain total). Source dvf_mutations_parcelle."
-        rows={d.terrain_trimestres ?? []} volKey="mutations" medKey="median_eur_m2_terrain" unite="€/m²" />}
-      {d && <SerieTrim titre="Permis autorisés (Sitadel)" pct={d.tendance_permis_pct}
-        tip="Nombre de permis autorisés par trimestre (Sitadel régional, toutes destinations)."
-        rows={d.permis_trimestres ?? []} volKey="permis" />}
+      {/* RETOURS-12 O10 — les 3 séries (ancien · terrain · permis) fusionnées en UN VRAI TABLEAU,
+          une ligne par trimestre, en-tête collant (.thead-sticky, T4) : « ça respire », même grammaire
+          que la comparaison des communes. Les tendances /an restent en pied (légende). */}
+      {d && <M18Tableau d={d} />}
 
       {/* RADAR-CATÉGORIE (T5) — le « Marché des annonces (Radar) » a QUITTÉ le Radar : ses agrégats
           par commune (pige/marche.py, réutilisé — socle R9) vivent ICI, sous les stats de marché.

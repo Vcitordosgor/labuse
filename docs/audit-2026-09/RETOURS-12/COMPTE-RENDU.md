@@ -238,6 +238,22 @@ intact (0 fichier scoring). Les 7 travaux O1-O7 sont livrés (O2 en commit dédi
   (capture `O8-fiche-commune-sru`). Tests `test_retours12_o8_sru.py` (déficit même arithmétique · join
   casse-insensible · SRU absent → None).
 
-- **O9 — À FAIRE** · **O10 — À FAIRE** · **O11 — À FAIRE** · **O12 — À FAIRE** · **O13 — À FAIRE**
+- **O9 — « Communes » : tenue du tableau au scroll — FAIT (fondations T4/T6 + vérifié).** En-tête
+  réellement collant + opaque (`.thead-sticky` z-20, posé en T4 sur la table des 24 communes) ; marges
+  gauche/droite respectées y compris ligne survolée (T6) ; **légende PERMANENTE en pied** de la colonne
+  (`shrink-0`, hors du conteneur scrollable → elle ne flotte jamais au milieu des lignes) ; le panneau est
+  une colonne flex bornée (`min-h-0 flex-1`), le scroll est UNIQUE (les rangs), la fiche modale n'est pas
+  coupée. Vérifié à la recette (scroll de la table). Aucun code neuf hors T4/T6.
+- **O10 — « Communes » / évolution du marché en tableau — FAIT.** Les 3 séries cramponnées (ancien bâti ·
+  terrain nu · permis) fusionnées en **UN VRAI TABLEAU** (`M18Tableau`) : une ligne par trimestre, colonnes
+  Trimestre · Ancien €/m² (n) · Terrain €/m² (n) · Permis, **en-tête collant** (`.thead-sticky`), tendances
+  /an + méthode en **légende sous le tableau**, dernier trimestre partiel grisé. Même grammaire que la
+  comparaison des communes ; « ça respire ». Aucune donnée nouvelle (mêmes séries `motBarometre`). Recette :
+  4 en-têtes collants + lignes trimestrielles (capture `O10-evolution-tableau`).
+- **O11 — « Communes » / acquisitions : survol lisible + infobulle — FAIT (via T5/T6).** Chips de millésime
+  (`2024→2025`) lisibles sur ligne survolée : `.chip chip-mint` (T6) → fond sombre + texte mint sur le vert
+  plein. Infobulle « Ouvrir la parcelle 974… » retirée (T5) — le lien « parcelle {idu} → » est déjà sous la
+  ligne. Livré au Lot T (fichier `Communes.tsx`), confirmé ici.
+- **O12 — À FAIRE** · **O13 — À FAIRE**
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
