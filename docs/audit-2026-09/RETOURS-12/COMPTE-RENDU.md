@@ -187,7 +187,25 @@ pareil, donc pré-existant, hors périmètre C3.
   Recette : « Explorer toutes les opérations » → 154 cartes promoteur, **0 SIREN dupliqué** ; CBO une
   seule carte (capture `O6-veille-regroupe`). Test `VeillePromoteurs.test.tsx` (2 opérations CBO → 1 carte,
   compteurs sommés 41 permis / 123 logements, 2 sous-opérations listées).
-- **O4 — « PLU » : compteurs réconciliés + bug IDU — À FAIRE** (dernier de ce bloc)
+- **O4 — « PLU » : compteurs réconciliés + bug IDU — FAIT.** **Bug IDU** reproduit : `/verif-procedure/{idu}`
+  faisait `WHERE idu = :i` sur l'IDU BRUT → 404 « Parcelle inconnue » sur un IDU VALIDE saisi en minuscules
+  (`97413000cj0096`) ou collé avec un espace/retour en queue. Corrigé : **normalisation** (trim + majuscules,
+  doctrine T1) avant le lookup. Recette : minuscule → 200, espace → 200 (étaient 404) ; 24/24 communes OK.
+  **Compteurs** : l'annuaire disait « 2 en révision » (statut d'opposabilité GPU = règlement non servi) et
+  RATAIT Les Trois-Bassins ; le radar Sudocuh (`veille_plu`, source unique de « Vérif procédure » et de la
+  fiche) porte **3 révisions générales prescrites** : Saint-André (22/06/2022), Saint-Leu (17/05/2022),
+  **Les Trois-Bassins (02/06/2022)**. Réconcilié : l'endpoint annuaire lit `veille_plu` → `n_procedures` = 3
+  (`procedures_par_etat`), chaque commune porte sa `procedure_active` ; le bandeau affiche « 3 procédures en
+  cours » (badge « révision générale » sur Trois-Bassins), le statut du RÈGLEMENT (GPU en attente / RNU)
+  reste distinct (jamais confondu). **Nombre réel par état** : 3 révisions générales actives · 1 élaboration
+  prescrite-dormante (non comptée active) · 7 clôturées · 13 aucune · 1 RNU (Saint-Philippe) ; côté règlement
+  GPU : 21 servis, 2 en attente d'opposabilité, 1 RNU. Recette : bandeau « 21 PLU · 3 procédures · 1 RNU »
+  (capture `O4-plu-annuaire`). Tests `test_retours12_o4_plu.py` (normalisation IDU · 404 si vraiment inconnu ·
+  compteur réconcilié inclut Trois-Bassins).
+
+**Vérifs Lot O bloc 2** : tsc 0 · build OK · suite frontend 169/169 (+EtudierBien/VeillePromoteurs réécrits) ·
+backend `test_retours12_o4_plu` 3/3 + `test_retours12_c2_tcsp` 3/3 · recette navigateur chaque outil · golden
+intact (0 fichier scoring). Les 7 travaux O1-O7 sont livrés (O2 en commit dédié).
 ## LOT O bloc 3 — outils O8-O13 (commit 4) — À FAIRE
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE

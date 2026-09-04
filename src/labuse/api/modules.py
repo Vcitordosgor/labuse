@@ -1817,6 +1817,10 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     en cours (OUI/NON), et les conséquences parcellaires applicables. L'outil LIT le radar
     (labuse.veille_plu, point de calcul UNIQUE) — il ne calcule rien, mêmes libellés que la fiche.
     L'absence est DATÉE elle aussi (« aucune procédure connue au JJ/MM — dernier constat le X »)."""
+    # RETOURS-12 O4 — NORMALISER l'IDU avant tout (doctrine T1 : casse, espaces, retour-ligne). Le bug
+    # « Parcelle inconnue » sur un IDU VALIDE venait d'un lookup `WHERE idu = :i` sur l'IDU BRUT : un IDU
+    # collé avec un espace/retour en queue, ou saisi en minuscules (97413000cj0096), ne matchait pas.
+    idu = (idu or "").strip().upper()
     _check_idu(idu)   # M-K (P2-31)
     import datetime
 
@@ -1889,7 +1893,9 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
     ou non ingéré. Réponse HONNÊTE (pas de trou masqué)."""
     from ..ingestion.plu_ingest import corpus_status
+    from .. import veille_plu as V   # RETOURS-12 O4 — source UNIQUE des procédures (radar Sudocuh + registre)
     ing = corpus_status(db)
+    _TYPE_PROC = {"revision_plu": "révision générale", "elaboration_plu": "élaboration", "modification_plu": "modification"}
     out = []
     for insee, c in sorted(_plu_millesimes().items()):
         e = ing.get(insee)
@@ -1918,12 +1924,34 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     # ne doit jamais être compté « en révision ». Si une commune passe en révision demain, le bandeau suit
     # seul. `n_revision` = procédure de révision non réconciliée ; `n_rnu` = RNU ; `n_non_ingere` = corpus
     # manquant. Somme des quatre = n_communes (invariant vérifié par test).
+    # RETOURS-12 O4 — RÉCONCILIATION : le compteur « en révision » de l'annuaire et le registre des
+    # procédures lisaient DEUX sources différentes (statut d'opposabilité GPU vs radar Sudocuh) → l'annuaire
+    # disait « 2 en révision » et ratait Les Trois-Bassins (révision prescrite le 02/06/2022, servie par le
+    # radar). Désormais les DEUX lisent `veille_plu` (source unique). On attache à chaque commune sa
+    # procédure ACTIVE (le fait), distincte de la disponibilité du règlement (statut GPU, conservé).
+    for c in out:
+        e_vp = V.entry(c["insee"])
+        if e_vp and V.procedure_active(e_vp) and e_vp["procedure"] in _TYPE_PROC:
+            c["procedure_active"] = _TYPE_PROC[e_vp["procedure"]]
+            c["procedure_date"] = e_vp.get("date_acte")
+        else:
+            c["procedure_active"] = None
     servables = sum(1 for c in out if c["statut"] == "servable")
+    # `n_revision`/`n_rnu` restent la disponibilité du RÈGLEMENT (statut GPU) — inchangés (invariant test).
     n_revision = sum(1 for c in out if c["statut"] == "revision")
     n_rnu = sum(1 for c in out if c["statut"] == "rnu")
     n_non_ingere = sum(1 for c in out if c["statut"] == "non_ingere")
+    # `procedures` = la LISTE réconciliée des procédures PLU en cours (radar Sudocuh), par état — la MÊME
+    # source que l'outil « Vérif procédure » et la fiche. C'est ce que le bandeau doit afficher.
+    procedures = {}
+    for c in out:
+        if c["procedure_active"]:
+            procedures[c["procedure_active"]] = procedures.get(c["procedure_active"], 0) + 1
+    n_procedures = sum(1 for c in out if c["procedure_active"])
     return {"n_communes": len(out), "servables": servables,
             "n_revision": n_revision, "n_rnu": n_rnu, "n_non_ingere": n_non_ingere,
+            # RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures (source unique veille_plu).
+            "n_procedures": n_procedures, "procedures_par_etat": procedures,
             "communes": out}
 
 

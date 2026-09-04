@@ -354,11 +354,15 @@ export interface PluCommune {
   extraits: number; doutes?: number; pagination_ambigue?: boolean; message?: string
   // M137-P — le « PLU intégral » = pack officiel GPU (.zip) à télécharger (aucun PDF en base).
   source_url?: string | null; document?: string | null
+  // RETOURS-12 O4 — procédure PLU EN COURS (source unique veille_plu) : « révision générale »… ou null.
+  procedure_active?: string | null; procedure_date?: string | null
 }
 export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
   j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
 export const pluAnnuaireCommunes = () =>
-  j<{ n_communes: number; servables: number; n_revision: number; n_rnu: number; n_non_ingere: number; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
+  j<{ n_communes: number; servables: number; n_revision: number; n_rnu: number; n_non_ingere: number
+      // RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures PLU en cours (source unique veille_plu).
+      n_procedures: number; procedures_par_etat: Record<string, number>; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
 
 // M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
 export const getModeB = (idu: string, travauxM2?: number) =>
