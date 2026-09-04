@@ -13,41 +13,19 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getPiscinesAgregat, getPiscinesPoints, getProspectionSolaire, getSolaireFiche, prospectionSolaireCsvUrl,
-  type SolaireFiche, type SolaireFiltres, type SolaireItem } from '../../lib/api'
+import { getPiscinesAgregat, getPiscinesPoints, getProspectionSolaire, getSolaireFiche,
+  type SolaireFiche, type SolaireFiltres } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
-import { verdictMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
-import { CommuneScope } from './ModulePanel'
+import { ListPaginationFooter, usePagination } from '../ListPagination'
 
 const SOURCES_PIED = 'Détection FLAIR sur ortho · PVGIS v5.3 SARAH3 · RGE ALTI · données gelées 11/07/2026'
 const MOIS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
-const POTENTIELS = [[0, 'Tous'], [1300, '≥ 1 300'], [1400, '≥ 1 400'], [1500, '≥ 1 500']] as const
-const SURFACES = [[0, 'Toutes'], [20, '≥ 20 m²'], [40, '≥ 40 m²'], [60, '≥ 60 m²']] as const
 const num = (v: number | null | undefined, unit = '') => (v == null ? '—' : `${fmtInt(v)}${unit}`)
-// Écartée = verdict du run servi ; on l'exclut par défaut des listes (le tri par potentiel ne doit
-// plus être noyé d'Écartées, mandat).
-const isEcartee = (it: SolaireItem) => it.etage0 || it.classement === 'Écartée'
-
-function Verdict({ it }: { it: SolaireItem }) {
-  const v = verdictMeta(null, it.tier_v2, it.etage0)
-  return <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: `${v.color}22`, color: v.color }}>{v.label}</span>
-}
-
-// pied « Écartées masquées · les inclure » partagé par les deux listings
-function EcarteesFooter({ hidden, nHidden, onToggle }: { hidden: boolean; nHidden: number; onToggle: () => void }) {
-  if (nHidden <= 0 && hidden) return null
-  return (
-    <div className="flex items-center gap-2 border-t border-line pt-1.5 text-[10px] text-txt-dim">
-      <span>{hidden ? `${fmtInt(nHidden)} écartée${nHidden > 1 ? 's' : ''} masquée${nHidden > 1 ? 's' : ''}` : 'écartées incluses'}</span>
-      <button data-solaire-ecartees onClick={onToggle} className="text-mint hover:underline">{hidden ? 'les inclure' : 'les masquer'}</button>
-    </div>
-  )
-}
 
 export function ProspectionSolaire() {
   const [mode, setMode] = useState<'piscines' | 'ensoleillement' | null>(null)
@@ -97,49 +75,43 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   )
 }
 
-function Select({ value, onChange, options, label }: { value: number; onChange: (v: number) => void; options: readonly (readonly [number, string])[]; label: string }) {
-  return (
-    <label className="flex items-center gap-1 text-[10.5px] text-txt-mut">{label}
-      <select value={value} onChange={(e) => onChange(Number(e.target.value))}
-        className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
-        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-    </label>
-  )
-}
-
 // ── MODE PISCINES — la stat d'abord, puis carte + listing ──
 // LOT8 (OUTILS-FINALE) : le mode Piscines IGNORE le classement (toutes les piscines listées, pas de
 // pied « écartées ») ; PAS de sélecteur Périmètre (toute l'île d'office, la ventilation par commune
-// reste dans le bloc stats, cliquable pour drill) ; tableau 3 colonnes (Parcelle · Piscine · Commune).
+// reste dans le bloc stats, cliquable pour drill) ; tableau 2 colonnes (Parcelle · Commune ;
+// surface retirée O12a), paginé par 200 (O12c).
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
   const [commune, setCommune] = useState<string | null>(null)
-  const [surfMin, setSurfMin] = useState(0)
 
-  const agg = useQuery({ queryKey: ['piscines-agg', commune, surfMin], queryFn: () => getPiscinesAgregat(commune, surfMin), staleTime: 60_000 })
-  const filtres: SolaireFiltres = { commune, piscine: 'oui', piscineSurfMin: surfMin }
-  const list = useQuery({ queryKey: ['piscines-list', commune, surfMin], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
+  const agg = useQuery({ queryKey: ['piscines-agg', commune], queryFn: () => getPiscinesAgregat(commune), staleTime: 60_000 })
+  // O12a (RETOURS-11) — la surface piscine (mesure vue du ciel) était FAUSSE : plus de filtre ni de
+  // colonne surface. Le pisciniste veut la parcelle et la commune, pas un m² inventé.
+  const filtres: SolaireFiltres = { commune, piscine: 'oui' }
+  const list = useQuery({ queryKey: ['piscines-list', commune], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
 
   const items = list.data?.items ?? []   // aucune exclusion « écartée » : le pisciniste veut TOUTES les piscines
+  // O12c (RETOURS-11) — le listing (jusqu'à 8 299) se pagine par 200 via le pied partagé.
+  const page = usePagination(items.length)
   const [carteBusy, setCarteBusy] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
   // LOT8b — « Voir sur la carte » = TOUTES les piscines en marqueurs (pas le listing capé à 500) :
   // on charge les points GeoJSON et on les pose dans module-extra (couche module-pts, kind='piscine').
   const voirCarte = async () => {
     setCarteBusy(true)
-    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, surfMin) }) }
+    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune) }) }
     finally { setCarteBusy(false) }
   }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="💧 Piscines" />
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <Select label="Surface piscine" value={surfMin} onChange={setSurfMin} options={SURFACES} />
-        {commune && <button data-piscines-reset onClick={() => setCommune(null)} className="text-[10.5px] text-mint hover:underline">‹ toute l’île</button>}
-      </div>
+      {commune && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <button data-piscines-reset onClick={() => setCommune(null)} className="text-[10.5px] text-mint hover:underline">‹ toute l’île</button>
+        </div>
+      )}
 
       {/* LA STAT D'ABORD */}
       {agg.isLoading && <Loading label="Comptage des piscines…" />}
@@ -170,117 +142,52 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         {carteBusy ? '💧 Chargement…' : `💧 Voir sur la carte${agg.data ? ` (${fmtInt(agg.data.total)})` : ''}`}
       </button>
 
-      {/* LISTING piscines — 3 colonnes, aucun scroll horizontal (Classement + Toiture retirés, LOT8c) */}
+      {/* LISTING piscines — 2 colonnes (Parcelle · Commune), surface retirée (O12a). */}
       {list.isLoading && <Loading label="Parcelles…" />}
       {list.data && (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <table className="w-full text-[11px]">
-            <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
-              <tr><th className="px-2 py-1.5">Parcelle</th>
-                <th className="px-2 py-1.5 text-right">Piscine ~m²</th><th className="px-2 py-1.5">Commune</th></tr>
-            </thead>
-            <tbody>
-              {items.map((it) => (
-                <tr key={it.idu} data-piscines-row className="cursor-pointer border-t border-line hover:bg-surface-2" onClick={() => select(it.idu)}>
-                  <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
-                  <td className="px-2 py-1.5 text-right" style={{ color: TOKENS.mint }}>{it.piscine_m2 == null ? 'détectée' : `~${fmtInt(it.piscine_m2)} m²`}</td>
-                  <td className="px-2 py-1.5 text-txt-mut">{it.commune}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <table className="w-full text-[11px]">
+              <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
+                <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Commune</th></tr>
+              </thead>
+              <tbody>
+                {items.slice(0, page.shown).map((it) => (
+                  <tr key={it.idu} data-piscines-row className="hover-fill cursor-pointer border-t border-line" onClick={() => select(it.idu)}>
+                    <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
+                    <td className="px-2 py-1.5 text-txt-mut">{it.commune}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ListPaginationFooter shown={Math.min(page.shown, items.length)} total={items.length} onMore={page.more} />
+        </>
       )}
       <p className="text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
     </div>
   )
 }
 
-// ── MODE ENSOLEILLEMENT — critères + barre unique → fiche soleil + listing ──
+// ── MODE ENSOLEILLEMENT — barre unique → fiche soleil « Ma parcelle » ──
+// O13a (RETOURS-11) — l'onglet « Top parcelles » (classement) est retiré : l'installateur PV part
+// d'UNE parcelle désignée, pas d'une liste globale. Reste la barre unique (SOCLE) → fiche soleil.
 function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefillIdu?: string | null }) {
   const select = useApp((s) => s.select)
-  const [commune, setCommune] = useState<string | null>(null)
-  const [potMin, setPotMin] = useState(0)
-  const [inclure, setInclure] = useState(false)
   const [ficheIdu, setFicheIdu] = useState<string | null>(prefillIdu ?? null)
-  // OUTILS-2 (O2-2) — deux gestes SÉPARÉS en onglets : « Ma parcelle » (la fiche soleil d'une parcelle
-  // désignée) et « Top parcelles » (le classement). Ouverte sur une parcelle pré-remplie → « Ma parcelle ».
-  const [onglet, setOnglet] = useState<'ma-parcelle' | 'top'>(prefillIdu ? 'ma-parcelle' : 'top')
 
-  const filtres: SolaireFiltres = { commune, potentielMin: potMin, sort: 'potentiel' }
-  const list = useQuery({ queryKey: ['ens-list', commune, potMin], queryFn: () => getProspectionSolaire(filtres),
-    staleTime: 60_000, enabled: onglet === 'top' })
   const fiche = useQuery({ queryKey: ['solaire-fiche', ficheIdu], queryFn: () => getSolaireFiche(ficheIdu!), enabled: !!ficheIdu, retry: false })
-
-  const items = list.data?.items ?? []
-  const visibles = inclure ? items : items.filter((it) => !isEcartee(it))
-  const nHidden = items.length - items.filter((it) => !isEcartee(it)).length
-
-  const Onglet = ({ k, label }: { k: 'ma-parcelle' | 'top'; label: string }) => (
-    <button data-solaire-onglet={k} onClick={() => setOnglet(k)}
-      className={`flex-1 rounded-md px-2 py-1 text-center text-[11px] font-medium transition-colors duration-quick ${
-        onglet === k ? 'bg-mint/15 text-mint' : 'text-txt-mut hover:text-txt'}`}>{label}</button>
-  )
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="☀️ Ensoleillement" />
-      <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-        <Onglet k="ma-parcelle" label="Ma parcelle" />
-        <Onglet k="top" label="Top parcelles" />
-      </div>
-
-      {onglet === 'ma-parcelle' && (
-        <>
-          {/* BARRE UNIQUE (SOCLE) → FICHE SOLEIL */}
-          <ParcelInput dataAttr="solaire-idu" placeholder="Adresse ou IDU — la fiche soleil de la parcelle" onPick={setFicheIdu} />
-          {ficheIdu && fiche.isLoading && <p className="text-[11px] text-txt-mut">Fiche soleil…</p>}
-          {ficheIdu && fiche.isError && <p className="text-[11px] text-st-ecartee">Parcelle introuvable — vérifiez l’IDU.</p>}
-          {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
-          {!ficheIdu && <p className="text-[11px] text-txt-mut">Saisissez une parcelle pour sa fiche soleil (potentiel, toiture, profil mensuel).</p>}
-        </>
-      )}
-
-      {onglet === 'top' && (
-        <>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <CommuneScope commune={commune} onChange={setCommune} />
-            <Select label="Potentiel" value={potMin} onChange={setPotMin} options={POTENTIELS} />
-          </div>
-          {list.isLoading && <Loading label="Prospection solaire…" />}
-          {list.isError && <ErrorState message="Données solaires momentanément indisponibles." />}
-          {list.data && (
-            <>
-              <a data-solaire-csv href={prospectionSolaireCsvUrl(filtres)} download className="self-start text-[11px] font-medium text-mint hover:underline">↓ Exporter (CSV)</a>
-              {/* O2-2 — TOITURE M² en 2ᵉ colonne (2ᵉ critère de tri : à potentiel égal, la toiture départage). */}
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <table className="w-full text-[11px]">
-                  <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
-                    <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5 text-right">Toiture m²</th>
-                      <th className="px-2 py-1.5">Classement</th><th className="px-2 py-1.5 text-right">Potentiel</th>
-                      <th className="px-2 py-1.5 text-right">Pente</th><th className="px-2 py-1.5 text-right">Orient.</th></tr>
-                  </thead>
-                  <tbody>
-                    {visibles.map((it) => (
-                      <tr key={it.idu} data-ens-row className="cursor-pointer border-t border-line hover:bg-surface-2" onClick={() => { setFicheIdu(it.idu); setOnglet('ma-parcelle') }}>
-                        <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
-                        <td className="px-2 py-1.5 text-right font-medium text-txt">{num(it.toit_m2, ' m²')}</td>
-                        <td className="px-2 py-1.5"><Verdict it={it} /></td>
-                        <td className="px-2 py-1.5 text-right font-medium" style={{ color: TOKENS.mint }}>{num(it.productible)}</td>
-                        <td className="px-2 py-1.5 text-right text-txt-mut">{it.pente == null ? '—' : `${it.pente}°`}</td>
-                        <td className="px-2 py-1.5 text-right text-txt-mut">{it.azimut == null ? '—' : `${it.azimut}°`}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="-mt-1 text-[9px] text-txt-dim">Tri : potentiel (kWh/kWc/an PVGIS) puis toiture. À potentiel égal (maille ~400 m), la toiture départage. Cliquez une ligne pour sa fiche soleil.</p>
-              <EcarteesFooter hidden={!inclure} nHidden={nHidden} onToggle={() => setInclure((v) => !v)} />
-            </>
-          )}
-        </>
-      )}
-      <p className="text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
+      {/* BARRE UNIQUE (SOCLE) → FICHE SOLEIL */}
+      <ParcelInput dataAttr="solaire-idu" placeholder="Adresse ou IDU — la fiche soleil de la parcelle" onPick={setFicheIdu} />
+      {ficheIdu && fiche.isLoading && <p className="text-[11px] text-txt-mut">Fiche soleil…</p>}
+      {ficheIdu && fiche.isError && <p className="text-[11px] text-st-ecartee">Parcelle introuvable — vérifiez l’IDU.</p>}
+      {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
+      {!ficheIdu && <p className="text-[11px] text-txt-mut">Saisissez une parcelle pour sa fiche soleil (potentiel, toiture, profil mensuel).</p>}
+      <p className="mt-auto text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
     </div>
   )
 }
@@ -299,6 +206,11 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
   if (!f.ok) return <p className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">{f.message ?? 'Aucune donnée solaire pour cette parcelle.'}</p>
   const pm = f.prod_mensuel ?? []
   const max = Math.max(...pm, 1)
+  // O13b (RETOURS-11) — dimensionnement dérivé des champs déjà servis (jamais inventé) :
+  //   kWc installable = emprise toit × part réellement exploitable (0,2 kWc/m², règle métier) ;
+  //   production annuelle = kWc × productible PVGIS (kWh/kWc/an). Absents → « — » (pas de zéro fabriqué).
+  const kwc = f.toit_m2 == null ? null : Math.round(f.toit_m2 * 0.2 * 10) / 10
+  const prodAn = kwc == null || f.productible == null ? null : Math.round(kwc * f.productible)
   return (
     <div data-solaire-fiche className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}55` }}>
       <div className="flex items-center justify-between gap-2">
@@ -308,11 +220,21 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         <KPI k="Potentiel" v={num(f.productible)} u="kWh/kWc/an" />
         <KPI k="Toiture (emprise)" v={num(f.toit_m2, ' m²')} />
+        {/* O13b — puissance installable + production annuelle estimées, dérivées des mesures servies. */}
+        <KPI k="Puissance installable" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" />
+        <KPI k="Production annuelle" v={num(prodAn)} u="kWh/an" />
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
             l'inclinaison optimale n'est pas servie par la V1 → non affichée (jamais inventée). */}
         <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} />
         <KPI k="Pente terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
       </div>
+      {/* O13b — croisement piscine sur la parcelle (champ déjà servi par la fiche) : signal métier
+          (climatisation / bassin à chauffer). Surface piscine NON affichée (mesure aérienne fausse, O12a). */}
+      {f.piscine && (
+        <div data-solaire-piscine className="mt-1.5 rounded px-2 py-1 text-[10px]" style={{ background: `${TOKENS.mint}12`, color: TOKENS.mint }}>
+          💧 Piscine détectée sur la parcelle
+        </div>
+      )}
       {pm.length === 12 && (
         <>
           <p className="mt-2 text-[9px] text-txt-dim">Profil mensuel (kWh/kWc · maille PVGIS){f.mois_optimal ? ` · pic en ${MOIS[f.mois_optimal - 1]}` : ''}</p>
@@ -330,6 +252,10 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
           DIT, pas de fausse précision parcellaire. */}
       <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">
         Productible estimé à la <b className="text-txt-mut">maille PVGIS (~400 m)</b> — commun aux parcelles voisines, pas une mesure au toit. · Ombrage de proximité (bâti, arbres) non modélisé · panneaux existants non détectés — vérif photo aérienne avant démarchage.{f.millesime ? ` · ${f.millesime}` : ''}
+      </p>
+      {/* O13b — explication en clair de la maille et de l'orientation de référence (jargon → phrase). */}
+      <p className="mt-1 text-[9px] leading-snug text-txt-dim">
+        En clair : le potentiel est calculé sur un carré d’environ 400 m de côté (une même valeur pour toutes les parcelles du carré), pour des panneaux exposés plein nord et inclinés à 65° — l’orientation qui capte le mieux le soleil à La Réunion.
       </p>
       <button data-solaire-fiche-ouvrir onClick={onOpen} className="mt-1 text-[11px] font-medium text-mint hover:underline">Ouvrir la fiche complète →</button>
     </div>

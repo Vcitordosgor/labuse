@@ -63,8 +63,9 @@ export function RenouvellementModule() {
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.renouv}4d`, background: `${TOKENS.renouv}0f` }}>
         Le <b style={{ color: TOKENS.renouv }}>bâti qui peut porter davantage</b> — extensions,
-        surélévations : des parcelles <b className="text-txt">déjà occupées</b> en zone constructible
-        avec une <b className="text-txt">capacité résiduelle réelle</b>.
+        surélévations : une parcelle <b className="text-txt">en zone constructible, déjà bâtie</b>, dont
+        la <b className="text-txt">SDP résiduelle</b> dépasse le seuil de surface constructible et
+        représente une <b className="text-txt">part significative de la SDP autorisée</b>.
         <Tip tip="Parcelles déjà bâties en zone U/AU dont la capacité résiduelle > 100 m² (ou surface ≥ 600 m²), hors copropriété et hors foncier public. Score = heuristique déterministe (percent_rank : SDP résiduelle · assiette · rotation du bâti). Estimé — règles PLU calibrées, pas une expertise.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
@@ -178,6 +179,10 @@ export function DensifierTablePanel() {
           <div className="mr-auto">
             <h2 className="text-sm font-medium text-txt-hi">Densifier l’existant — <span className="tnum">{fmtInt(total)}</span> parcelles</h2>
             <p className="text-[10.5px] text-txt-dim">{meta?.maj ? `maj ${meta.maj} · ` : ''}cliquez une ligne pour ouvrir sa fiche{commune ? ` · ${commune}` : ''}</p>
+            {/* O18 (d) — le score est une note RELATIVE (percentile) : les meilleures parcelles se
+                tassent naturellement près de 100, il départage donc mal la tête de liste. Le tri
+                « SDP résiduelle » sépare plus finement le haut du classement. */}
+            <p className="text-[9.5px] text-txt-dim">Score = note relative (percentile) — près du sommet il départage peu ; pour la tête de liste, trier par SDP résiduelle.</p>
           </div>
           <div className="flex items-center gap-1">
             <span className="mr-1 text-[10px] text-txt-dim">Trier :</span>

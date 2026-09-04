@@ -106,8 +106,10 @@ type Comparateur = {
 // PERMIS : la donnée servie est un CUMUL SUR 5 ANS (comparateur.py : INTERVAL '5 years'), PAS un
 // glissant 12 mois — la maquette disait « Permis 12 m », c'était illustratif et faux. On étiquette vrai.
 const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'max' | 'min' }[] = [
-  { k: 'stock', head: 'Stock foncier', best: 'max',
-    title: 'Stock foncier — parcelles promues LABUSE (brûlantes + chaudes du run servi)' },
+  // RETOURS-11 O14b (décision Vic) — « Stock foncier » renommé « Parcelles à potentiel »
+  // (= Priorité + À suivre), définition au survol.
+  { k: 'stock', head: 'Parcelles à potentiel', best: 'max',
+    title: 'Parcelles à potentiel — parcelles promues par LABUSE sur la commune (Priorité + À suivre, run servi)' },
   { k: 'velocite', head: 'Instruction (mois)', best: 'min',
     title: 'Instruction — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
   { k: 'permis', head: 'Permis (5 ans)',
@@ -205,7 +207,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
       {/* LÉGENDE PERMANENTE en pied — plus d'en-tête à deviner. */}
       <div data-o6-legende className="shrink-0 border-t border-line-2 pt-2 text-[10px] leading-relaxed text-txt-dim">
         <b className="text-txt-mut">Légende :</b>{' '}
-        <b>Stock foncier</b> = parcelles promues LABUSE ·{' '}
+        <b>Parcelles à potentiel</b> = parcelles promues par LABUSE (Priorité + À suivre) ·{' '}
         <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
         <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
         <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}

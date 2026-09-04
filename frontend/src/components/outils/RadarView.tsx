@@ -8,7 +8,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { getMoi, getRadarBienDetail, getRadarBiens, getRadarDepotOuvert, radarClic, radarInteresse, radarSignaler,
   type RadarBienClient, type RadarCritere, type RadarFiltres } from '../../lib/api'
 import { DepotAgence } from '../radar/DepotAgence'
-import { usePagination } from '../ListPagination'
+import { usePagination, ListPaginationFooter } from '../ListPagination'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R13 — recherche adresse/IDU commune
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // R2 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
@@ -182,7 +182,8 @@ function RadarFiche({ bienId, onClose, mobile }: { bienId: number; onClose: () =
         </div>
         <h4 className="mt-1.5 flex items-center gap-2 text-[17px] font-semibold text-txt-hi">
           <span className="truncate">{(b.type_bien ?? 'Bien')[0].toUpperCase()}{(b.type_bien ?? '').slice(1)} · {b.commune}</span>
-          <span className="shrink-0 rounded-md bg-mint/12 px-2 py-0.5 font-mono text-[10px] tracking-wide text-mint">{STATUT_LABEL[b.statut] ?? b.statut}</span>
+          {/* O20 (b) — jamais la clé brute : à défaut de libellé connu, on retombe sur « EN VENTE » (statut public par défaut), pas sur `b.statut`. */}
+          <span className="shrink-0 rounded-md bg-mint/12 px-2 py-0.5 font-mono text-[10px] tracking-wide text-mint">{STATUT_LABEL[b.statut] ?? 'EN VENTE'}</span>
         </h4>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-3.5">
@@ -359,7 +360,13 @@ export function RadarView() {
   const estAdmin = moi.data == null || moi.data.mode !== 'compte' || moi.data.role === 'admin'
   const depotOuvert = useQuery({ queryKey: ['radar-depot-ouvert'], queryFn: getRadarDepotOuvert })
   const ouvert = depotOuvert.data?.ouvert === true
-  const boutonVisible = estAdmin || ouvert            // client : seulement drapeau ouvert
+  // RETOURS-11 O20 (a) — le bouton « Publier une annonce » est RETIRÉ de l'écran, admin COMPRIS : on ne
+  // rend plus rien. Le drapeau DEPOT_ACTIF éteint la fonction sans supprimer le code ; la règle de
+  // visibilité d'origine (estAdmin || drapeau ouvert) est conservée derrière lui. Pour rallumer le dépôt,
+  // repasser DEPOT_ACTIF à true.
+  const DEPOT_ACTIF = false
+  const regleDepot = estAdmin || ouvert               // (conservée) client : seulement drapeau ouvert
+  const boutonVisible = DEPOT_ACTIF && regleDepot     // O20 (a) : rien n'est rendu tant que DEPOT_ACTIF=false
   const [depotPanneau, setDepotPanneau] = useState(false)
   // RETOURS-3 R13 — la barre de filtres passe sur DEUX étages : une ligne visible (recherche · commune ·
   // type · bouton « Filtrer » compteur) + un TIROIR pour le reste, avec des pastilles d'actifs retirables.
@@ -556,11 +563,11 @@ export function RadarView() {
             <div className="rounded-xl border border-dashed border-line-2 py-8 text-center text-[12px] text-txt-mut">Aucun bien ne correspond à ces filtres.<br />Élargissez la recherche.</div>
           )}
           {biens.slice(0, pg.shown).map((b) => <CarteBien key={b.bien_id} b={b} sel={bienOuvert === b.bien_id} onClick={() => ouvrir(b)} />)}
-          {pg.hasMore && (
-            <button data-radar-liste-more onClick={pg.more}
-              className="mt-1 rounded-lg border border-line-2 py-2 text-center text-[12px] text-mint hover:border-mint/50">
-              Voir {Math.min(pg.step, biens.length - pg.shown)} de plus · {pg.shown} / {biens.length}
-            </button>
+          {/* RETOURS-11 O20 (b) — pied de liste PARTAGÉ (doctrine) : pagination par 200, compteur exact
+              « N / total » toujours visible, un seul « Voir N de plus » (jamais de chargement massif). */}
+          {biens.length > 0 && (
+            <ListPaginationFooter shown={pg.shown} total={biens.length} onMore={pg.more}
+              className="mt-1 flex flex-wrap items-center gap-3 pt-1 text-[11px] text-txt-mut" />
           )}
         </div>
       </aside>

@@ -169,16 +169,32 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
             <button data-scan-changer onClick={changer} className="shrink-0 text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
           </div>
 
-          {/* U1.6 — onglets SOULIGNÉS (pas des boutons pleins) ; le propriétaire est partagé (aucune relance). */}
+          {/* U1.6 — onglets SOULIGNÉS (pas des boutons pleins) ; le propriétaire est partagé (aucune relance).
+              RETOURS-11 O11(a) — libellés courts « Possession » / « Construction », chacun sur UNE ligne
+              (whitespace-nowrap) : ce sont deux natures de chiffre, pas deux phrases. */}
           <div className="flex gap-6 border-b border-line-2" role="tablist">
-            {([['possede', 'Ce qu\'ils possèdent'], ['construit', 'Ce qu\'ils construisent']] as const).map(([k, label]) => (
+            {([['possede', 'Possession'], ['construit', 'Construction']] as const).map(([k, label]) => (
               <button key={k} data-scan-tab={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-                className={`-mb-px border-b-2 pb-2 pt-1 text-[13px] transition-colors ${tab === k ? 'border-mint font-medium text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
-                {/* LOT S1 — compteur réel sur l'onglet « construit » quand VeillePromoteurs l'a remonté. */}
-                {label}{k === 'construit' && nConstruit != null && <span className="ml-1 text-txt-dim">({nConstruit})</span>}
+                className={`-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-[13px] transition-colors ${tab === k ? 'border-mint font-medium text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
+                {/* LOT S1 — compteur réel sur l'onglet « Construction » quand VeillePromoteurs l'a remonté.
+                    RETOURS-11 O11(d) — CE nombre = opérations Sitadel + programmes publiés sur leur site.
+                    Il est DONC plus grand que le « N opérations » affiché dans l'onglet (qui ne compte que
+                    les opérations regroupées) : la parenthèse le dit pour que les deux ne se contredisent pas. */}
+                {label}{k === 'construit' && nConstruit != null && (
+                  <span className="ml-1 text-txt-dim" title="Opérations Sitadel regroupées + programmes publiés sur son site (total). L'onglet détaille les opérations séparément.">({nConstruit})</span>
+                )}
               </button>
             ))}
           </div>
+
+          {/* RETOURS-11 O11(d) — LÉGENDE des deux natures de chiffre, pour lever la contradiction
+              apparente entre l'onglet « Possession » (parcelles détenues, fichiers fonciers) et l'onglet
+              « Construction » (opérations + programmes, Sitadel). Deux sources, deux comptes : on le dit. */}
+          <p className="-mt-1 text-[10px] leading-snug text-txt-off">
+            {tab === 'possede'
+              ? 'Parcelles détenues (fichiers fonciers DGFiP) — c’est ce qu’il possède, pas ce qu’il construit.'
+              : 'Opérations bâties et programmes (Sitadel + sites promoteurs) — indépendant du nombre de parcelles possédées.'}
+          </p>
 
           <div className="flex min-h-0 flex-1 flex-col gap-1.5">
             {tab === 'possede'

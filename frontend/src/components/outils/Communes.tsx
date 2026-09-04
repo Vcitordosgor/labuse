@@ -19,31 +19,76 @@ import { M18 } from './moteurs'
 // ZAN, Vélocité) sont TRANSFÉRÉS dans ContextePanel — aucune donnée perdue, aucun doublon.
 
 // ── Vue « Acquisitions récentes » (R3.3) — sélecteur de commune + listing, clic → parcelle ──
+// RETOURS-11 O16 (Vic) : (c) le clic ouvre la fiche parcelle EN SUPERPOSITION (on ne quitte plus
+// l'outil) ; (b) filtre par millésime d'arrivée (2023/2024/2025) sur les lignes chargées ; (d)
+// mention « personnes morales uniquement » ; (e) regroupement par acquéreur (SIREN) avec renvoi vers
+// son Scan patrimoine. NB : le backend ne sert au plus 50 lignes (limit=50) depuis 2022 — le total
+// (« sur N ») n'est donc PAS paginable côté front (O16-a reste à faire côté serveur).
 function AcquisitionsRecentes() {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const [commune, setCommune] = useState<string | null>(null)
+  const [millesime, setMillesime] = useState<number | null>(null)   // O16(b) — filtre année d'arrivée
   const q = useQuery({
     queryKey: ['commune-acquisitions', commune],
     queryFn: () => getCommuneAcquisitions(commune!),
     enabled: !!commune,
   })
   const d = q.data
-  const ouvrirParcelle = (idu: string) => {
-    // même patron que les listes d'événements (blocB O10) : retour carte + fiche parcelle
+  // O16(c) — la fiche parcelle s'ouvre en SUPERPOSITION (carte-overlay via `select`) : on ne touche
+  // NI à `view` NI à `module`, l'outil Communes reste monté dessous et se retrouve à la fermeture.
+  const ouvrirParcelle = (idu: string) => useApp.getState().select(idu)
+  // O16(e) — Scan patrimoine d'un acquéreur : même idiome que « Voir le patrimoine » (m02Prefill + module).
+  const ouvrirScanPatrimoine = (siren: string) => {
     const s = useApp.getState()
-    s.setView('cartes')
-    s.select(idu)
+    s.setM02Prefill(siren)
+    s.setModule('patrimoine')
   }
+  // millésimes d'arrivée réellement présents dans les lignes chargées (jamais une année inventée)
+  const anneesDispo = d
+    ? [...new Set(d.acquisitions.map((a) => a.a_millesime))].sort((x, y) => y - x)
+    : []
+  const lignes = (d?.acquisitions ?? []).filter((a) => millesime == null || a.a_millesime === millesime)
+  // O16(e) — regroupement par acquéreur (SIREN d'arrivée). Sans SIREN → seau « acquéreur non identifié ».
+  const parAcquereur = new Map<string, { siren: string | null; denomination: string | null; items: typeof lignes }>()
+  for (const a of lignes) {
+    const cle = a.siren_apres ?? '∅'
+    const g = parAcquereur.get(cle)
+    if (g) g.items.push(a)
+    else parAcquereur.set(cle, { siren: a.siren_apres, denomination: a.denomination_apres, items: [a] })
+  }
+  const groupes = [...parAcquereur.values()].sort((x, y) => y.items.length - x.items.length)
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="shrink-0">
         <p className="label-caps text-[9.5px]">Commune</p>
-        <select data-acq-commune value={commune ?? ''} onChange={(e) => setCommune(e.target.value || null)}
+        <select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesime(null) }}
           className="mt-1 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
           <option value="">Choisir une commune…</option>
           {(communes.data ?? []).map((c) => <option key={c.insee} value={c.commune}>{c.commune}</option>)}
         </select>
       </div>
+      {/* O16(d) — le champ DGFiP ne publie QUE les personnes morales : dit une fois, franchement. */}
+      {commune && (
+        <p className="shrink-0 text-[10px] leading-snug text-txt-dim">
+          Personnes morales uniquement — fichier DGFiP ; les acquisitions par des particuliers ne
+          sont pas publiées.
+        </p>
+      )}
+      {/* O16(b) — filtre par millésime d'arrivée (seulement les années effectivement présentes). */}
+      {commune && anneesDispo.length > 1 && (
+        <div data-acq-millesimes className="flex shrink-0 flex-wrap items-center gap-1.5 text-[11px]">
+          <button data-acq-millesime="" onClick={() => setMillesime(null)}
+            className={`rounded-full px-2 py-0.5 ${millesime == null ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
+            Tous
+          </button>
+          {anneesDispo.map((an) => (
+            <button key={an} data-acq-millesime={an} onClick={() => setMillesime(an)}
+              className={`rounded-full px-2 py-0.5 font-mono ${millesime === an ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
+              {an - 1}→{an}
+            </button>
+          ))}
+        </div>
+      )}
       {!commune ? (
         <p className="text-[11px] leading-snug text-txt-dim">Choisissez une commune pour lister les
           changements récents de propriétaire moral (constat DGFiP par millésime).</p>
@@ -57,20 +102,39 @@ function AcquisitionsRecentes() {
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
           <p className="shrink-0 text-[11px] text-txt-mut">
-            {d.n} affichée{d.n > 1 ? 's' : ''} sur {d.n_total} changement{d.n_total > 1 ? 's' : ''} de
-            propriétaire moral depuis {d.depuis_millesime}.
+            {lignes.length} changement{lignes.length > 1 ? 's' : ''}
+            {millesime != null ? ` en ${millesime - 1}→${millesime}` : ''} · {groupes.length} acquéreur{groupes.length > 1 ? 's' : ''}
+            {d.tronquee ? ` (${d.n} servis sur ${d.n_total} depuis ${d.depuis_millesime})` : ` depuis ${d.depuis_millesime}`}.
           </p>
-          {d.acquisitions.map((a) => (
-            <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
-              onClick={() => ouvrirParcelle(a.idu)}
-              title={`Ouvrir la parcelle ${a.idu}`}
-              className="hover-fill rounded-md border border-line-2 bg-surface-2 px-2.5 py-1.5 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
-              <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
-              <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
-              <span className="mx-1 text-txt-dim">→</span>
-              <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
-              <span className="mt-0.5 block font-mono text-[9.5px] text-txt-dim">parcelle {a.idu} →</span>
-            </button>
+          {groupes.map((g) => (
+            <div key={g.siren ?? '∅'} data-acq-groupe={g.siren ?? ''}
+              className="rounded-md border border-line-2 bg-surface-2 px-2.5 py-1.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="min-w-0 truncate text-[11px] font-medium text-txt-hi">
+                  {g.denomination ?? 'Acquéreur non identifié'}
+                  <span className="ml-1 text-[10px] font-normal text-txt-dim">· {g.items.length} parcelle{g.items.length > 1 ? 's' : ''}</span>
+                </span>
+                {g.siren && (
+                  <button data-acq-scan={g.siren} onClick={() => ouvrirScanPatrimoine(g.siren!)}
+                    title={`Scan patrimoine de ${g.denomination ?? g.siren}`}
+                    className="shrink-0 text-[11px] text-mint hover:underline">Scan patrimoine →</button>
+                )}
+              </div>
+              <div className="mt-1 flex flex-col gap-1">
+                {g.items.map((a) => (
+                  <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
+                    onClick={() => ouvrirParcelle(a.idu)}
+                    title={`Ouvrir la parcelle ${a.idu}`}
+                    className="hover-fill rounded border border-line-2 bg-surface-3 px-2 py-1 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
+                    <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
+                    <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
+                    <span className="mx-1 text-txt-dim">→</span>
+                    <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>
+                    <span className="mt-0.5 block font-mono text-[9.5px] text-txt-dim">parcelle {a.idu} →</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
           <p className="shrink-0 pb-1 text-[10px] leading-snug text-txt-dim italic">{d.note}</p>
         </div>
@@ -79,50 +143,26 @@ function AcquisitionsRecentes() {
   )
 }
 
-// ── O2-3 (OUTILS-2) — Bloc « Marché des annonces (Radar) » sous la table comparative ──
-// Règle : tant qu'AUCUNE commune n'atteint SEUIL_N biens en vente, le bloc se replie en UNE ligne
-// « en constitution · N biens collectés · à partir de 5 biens » — 24 lignes de zéros dilueraient les
-// vrais chiffres et donneraient l'impression d'un produit vide. Au-delà, SEULES les communes au seuil
-// s'affichent (les autres restent absentes, jamais un zéro). SEUIL_N vient du backend (pige/marche.py),
-// jamais écrit en dur ici.
+// ── Renvoi « Marché des annonces (Radar) » sous la table comparative ──
+// RETOURS-11 O15(b) (Vic) : le détail PAR COMMUNE (actives / nouveautés / retirées, prix demandé)
+// appartient au RADAR, pas à Communes. Ce bloc ne re-rend donc PLUS les lignes par commune : c'est
+// un simple RENVOI vers le Radar (avec, pour contexte honnête, le volume total du corpus collecté).
 function MarcheAnnoncesRadar() {
   const setView = useApp((s) => s.setView)
   const { data: d } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche, staleTime: 60_000 })
   if (!d) return null   // bloc non critique : silencieux si la donnée n'est pas là
-  const auSeuil = d.communes
-    .filter((c) => (c.actives ?? 0) >= d.seuil_n)
-    .sort((a, b) => (b.actives ?? 0) - (a.actives ?? 0))
   return (
     <div data-communes-marche-radar className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[12px]">
       <div className="flex items-center justify-between gap-2">
-        <b className="label-caps text-[10px] tracking-[0.14em] text-txt-dim">Marché des annonces (Radar)</b>
+        <b className="label-caps text-[10px] tracking-[0.14em] text-txt-dim">Marché des annonces</b>
         <button data-marche-radar-lien onClick={() => setView('radar')} className="shrink-0 text-[11px] text-mint hover:underline">
-          {auSeuil.length ? 'Ouvrir le Radar →' : 'Suivre la collecte →'}
+          Ouvrir le Radar →
         </button>
       </div>
-      {auSeuil.length === 0 ? (
-        <p className="mt-1 leading-snug text-txt-mut">
-          <span className="text-txt-dim">en constitution</span> · <b className="text-txt">{fmtInt(d.corpus_actif)} biens collectés</b> ·
-          affichage par commune à partir de {d.seuil_n} biens.
-        </p>
-      ) : (
-        <div className="mt-1.5 flex flex-col gap-1">
-          {auSeuil.map((c) => (
-            <div key={c.commune} className="flex items-baseline justify-between gap-2">
-              <span className="text-txt">{c.commune}</span>
-              <span className="flex items-baseline gap-2 font-mono text-[11px]">
-                <span className="text-txt-hi">{c.actives} en vente</span>
-                {!c.prix_m2_bati.insuffisant && c.prix_m2_bati.valeur != null && (
-                  <span className="text-txt-mut">{fmtInt(c.prix_m2_bati.valeur)} €/m² bâti</span>
-                )}
-              </span>
-            </div>
-          ))}
-          <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">
-            Seules les communes atteignant {d.seuil_n} biens en vente s'affichent ({fmtInt(d.corpus_actif)} collectés en tout) ; prix médian quand n ≥ {d.seuil_n}.
-          </p>
-        </div>
-      )}
+      <p className="mt-1 leading-snug text-txt-mut">
+        Le détail par commune (biens en vente, nouveautés, retraits, prix demandés) vit dans le
+        <b className="text-txt"> Radar</b> — <b className="text-txt">{fmtInt(d.corpus_actif)} bien{d.corpus_actif > 1 ? 's' : ''} collecté{d.corpus_actif > 1 ? 's' : ''}</b> à ce jour.
+      </p>
     </div>
   )
 }
@@ -131,7 +171,7 @@ function MarcheAnnoncesRadar() {
 function Porte({ dataAttr, titre, sous, onClick }: { dataAttr: string; titre: string; sous: string; onClick: () => void }) {
   return (
     <button data-communes-porte={dataAttr} onClick={onClick}
-      className="door door-hot mb-0 w-full text-left transition-colors duration-quick hover:border-line-3">
+      className="door door-hot hover-fill mb-0 w-full text-left transition-colors duration-quick">
       <div className="text-xs font-medium text-txt">{titre}</div>
       <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{sous}</div>
     </button>
@@ -168,16 +208,23 @@ export function Communes() {
 /** §4 — SECTION FLOTTANTE plein écran de la table des 24 communes (patron ex-Comparateur : overlay
  *  `absolute inset-0 z-40 bg-black/50` + carte `floating`). Ouverte par la porte « Comparaison
  *  communes » (drapeau `communesTableOpen`). RETOURS-1 R4 (Vic) : cliquer une commune ouvre la
- *  fiche commune de CONTEXTE en panneau à droite (setContexteCommune) — l'ex-fiche-outil a disparu,
- *  la table se referme pour laisser voir le panneau. */
+ *  fiche commune de CONTEXTE en panneau à droite (setContexteCommune).
+ *  RETOURS-11 O14(c) (Vic) — la table NE se referme PLUS à la sélection : la fiche commune
+ *  (ContextePanel, panneau droit z-30) s'ouvre EN SUPERPOSITION par-dessus la carte. La table
+ *  (overlay z-40) est simplement MASQUÉE tant qu'une fiche est ouverte — mais reste MONTÉE, donc
+ *  fermer la fiche (setContexteCommune(null)) la fait RÉAPPARAÎTRE telle quelle (tri conservé). */
 export function CommunesTablePanel() {
   const module = useApp((s) => s.module)
   const communesTableOpen = useApp((s) => s.communesTableOpen)
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const setContexteCommune = useApp((s) => s.setContexteCommune)
+  const contexteCommune = useApp((s) => s.contexteCommune)
   if (module !== 'communes' || !communesTableOpen) return null
+  // Fiche ouverte : on MASQUE l'overlay (sans démonter O6Comparateur, pour garder son tri) afin que
+  // la fiche z-30 soit visible par-dessus la carte. Fermer la fiche la ramène intacte.
   return (
-    <div data-communes-table-panel className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6"
+    <div data-communes-table-panel
+      className={`absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6${contexteCommune ? ' hidden' : ''}`}
       onClick={() => setCommunesTableOpen(false)}>
       <div className="floating flex max-h-full w-full max-w-[1100px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
@@ -190,7 +237,10 @@ export function CommunesTablePanel() {
         {/* flex column bornée : O6Comparateur gère son propre scroll interne (rangs) + légende permanente.
             Pas d'overflow ICI (sinon double scroll + légende poussée hors écran). */}
         <div className="flex min-h-0 flex-1 flex-col p-3">
-          <O6Comparateur onSelect={(c) => { setContexteCommune(c); setCommunesTableOpen(false) }} />
+          {/* RETOURS-11 O14(c) — cliquer une commune OUVRE sa fiche (ContextePanel, panneau droit)
+              en SUPERPOSITION : la table reste montée dessous (on ne la referme plus). Fermer la
+              fiche fait donc RÉAPPARAÎTRE le tableau comparatif, sans le reconstruire ni perdre le tri. */}
+          <O6Comparateur onSelect={(c) => setContexteCommune(c)} />
           {/* O2-3 — le marché des annonces (Radar) sous la table, seuil géré côté backend. */}
           <MarcheAnnoncesRadar />
         </div>

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ProspectionSolaire } from './ProspectionSolaire'
+import { useApp } from '../../store/useApp'
 
 // Mandat SOLAIRE — deux modes : Piscines (stat d'abord = agrégat) / Ensoleillement (barre unique →
 // fiche soleil avec profil mensuel). Écartées masquées par défaut. Potentiel avec unité kWh/kWc/an.
@@ -76,11 +77,10 @@ describe('SOLAIRE — deux modes', () => {
   })
 
   it('mode Ensoleillement : fiche soleil (profil mensuel 12 barres + unité kWh/kWc/an)', async () => {
+    // RETOURS-11 O13 — l'onglet « Top parcelles » (et ses lignes data-ens-row) est RETIRÉ : la fiche
+    // soleil s'ouvre via la barre unique « Ma parcelle » (prefill IDU → mode ensoleillement).
+    useApp.setState({ solairePrefill: '97411000AP0000' })
     renderTool()
-    fireEvent.click(document.querySelector('[data-solaire-mode="ensoleillement"]')!)
-    // la fiche s'ouvre par setFicheIdu (même chemin que la barre unique SOCLE) — ici via une ligne.
-    await waitFor(() => expect(document.querySelector('[data-ens-row]')).toBeTruthy())
-    fireEvent.click(document.querySelector('[data-ens-row]')!)
     await screen.findByText(/Profil mensuel/)
     expect(document.querySelectorAll('[data-solaire-bar]')).toHaveLength(12)          // profil mensuel
     expect(document.querySelector('[data-solaire-fiche]')?.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité

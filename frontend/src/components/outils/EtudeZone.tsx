@@ -1,10 +1,15 @@
 /**
  * ÉTUDE DE ZONE · Z4 + ZONE-RECETTE — l'outil de chalandise (maquette, écran 2).
  *
- * DEUX entrées EXCLUSIVES (segmenté en tête) :
- *  · « Autour d'un point » → ParcelInput (SOCLE : adresse OU IDU) + temps de trajet + mode.
- *  · « Zone dessinée » → « Dessiner la zone » (polygone) ; temps/mode disparaissent (ils n'ont aucun
- *    sens sur un polygone). Basculer d'un onglet à l'autre efface le périmètre de l'autre.
+ * TROIS ÉTAPES LISIBLES À L'ÉCRAN (RETOURS-11 · O19) :
+ *  · Étape 1 « Définir la zone » — DEUX entrées EXCLUSIVES (segmenté) :
+ *      « Autour d'un point » → ParcelInput (SOCLE : adresse OU IDU) + temps de trajet + mode ;
+ *      « Zone dessinée » → « Dessiner la zone » (polygone) ; temps/mode disparaissent (ils n'ont
+ *      aucun sens sur un polygone). Basculer d'un onglet à l'autre efface le périmètre de l'autre.
+ *  · Étape 2 « Lire la zone » — la lecture brute du périmètre : habitants, ménages, revenus, emplois,
+ *      toutes les entreprises, marché, permis, trafic, PLU, zone de demain. Aucune activité requise.
+ *  · Étape 3 « Une activité » (FACULTATIVE) — une LENTILLE qui S'AJOUTE à la lecture : concurrents /
+ *      chalandise d'une activité choisie. Ce n'est pas un autre mode ; elle ne remplace pas l'étape 2.
  *
  * L'en-tête de résultat DÉSIGNE le périmètre réellement mesuré (jamais « à 10 min » sur un polygone).
  * Concurrents / actifs : trois états honnêtes (servie+0 / non couvert / indisponible), jamais un faux zéro.
@@ -14,8 +19,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
+import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { etudeZone, etudeZoneEntreprises, nafFamilles, nafSearch, parcelAt, type EtudeZoneInput } from '../../lib/api'
-import type { EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises } from '../../lib/types'
+import type { EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 
@@ -91,9 +97,11 @@ export function EtudeZone() {
     queryFn: () => etudeZoneEntreprises(entBody()), enabled: entOpen && !!res?.zone_disponible,
   })
 
-  // RELANCER — toute modification d'entrée réarme « Analyser » : on efface le résultat périmé.
+  // RELANCER — toute modification de la ZONE (étape 1) réarme « Analyser » : on efface le résultat périmé.
+  // O19 : l'ACTIVITÉ (étape 3) N'EST PAS dans ces dépendances — changer d'activité n'efface pas la
+  // lecture de zone ; elle est appliquée par le bouton dédié de l'étape 3 (lentille additive).
   useEffect(() => { mut.reset(); setEntOpen(false) /* eslint-disable-next-line react-hooks/exhaustive-deps */ },
-    [entree, cible, naf, minutes, mode, geomFromDrawn])
+    [entree, cible, minutes, mode, geomFromDrawn])
 
   // basculer d'onglet efface le périmètre de l'AUTRE entrée
   const choisirEntree = (e: 'point' | 'polygone') => {
@@ -145,6 +153,8 @@ export function EtudeZone() {
 
   return (
     <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      {/* ÉTAPE 1 — DÉFINIR LA ZONE */}
+      <StepHead n={1} titre="Définir la zone" sous="autour d’un point (temps + mode) ou zone dessinée" />
       {/* SEGMENTÉ — deux entrées exclusives */}
       <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
         {([['point', 'Autour d’un point'], ['polygone', 'Zone dessinée']] as const).map(([e, lbl]) => (
@@ -176,7 +186,7 @@ export function EtudeZone() {
         <>
           <button onClick={() => setTool('zone')}
             className="w-full rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-[12px] font-medium text-mint hover:bg-mint/15">
-            ✏️ Dessiner la zone
+            Dessiner la zone
           </button>
           <div className="text-[10.5px] text-txt-mut">
             {geomFromDrawn ? `Polygone dessiné (${drawnZone!.length} sommets)` : 'Aucune zone tracée — cliquez « Dessiner la zone », posez les sommets, Entrée pour valider.'}
@@ -184,60 +194,9 @@ export function EtudeZone() {
         </>
       )}
 
-      {/* ACTIVITÉ (NAF) — deux entrées : frappe libre avec propositions, OU déroulé par familles.
-          Référentiel = nomenclature NAF complète (« notaire », « pharmacie », « garage »… résolvent). */}
-      <div>
-        <div className="relative">
-          <input value={naf ? naf.label : nafQuery}
-            onChange={(e) => { setNaf(null); setNafQuery(e.target.value) }}
-            placeholder="Activité étudiée (ex. « notaire », « pharmacie »)"
-            className="w-full rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[12px] text-txt outline-none focus:border-mint/60" />
-          {naf && <button onClick={() => { setNaf(null); setNafQuery('') }} className="absolute right-2 top-1.5 text-[11px] text-txt-dim hover:text-txt">×</button>}
-          {nafOpts.length > 0 && (
-            <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-line-2 bg-surface-1 shadow-lg">
-              {nafOpts.map((o) => (
-                <button key={o.code} onClick={() => choisirNaf(o)}
-                  className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] text-txt hover:bg-mint/10">
-                  <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[10px] text-txt-dim">{o.code}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <button onClick={() => setParcourir((v) => !v)}
-          className="mt-1 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
-          {parcourir ? 'masquer les familles' : 'parcourir par famille d’activité'}
-        </button>
-        {parcourir && (
-          <div className="mt-1 max-h-64 overflow-y-auto rounded-lg border border-line-2 bg-surface-1">
-            {familles == null ? (
-              <p className="px-2.5 py-2 text-[11px] text-txt-dim">Chargement…</p>
-            ) : familles.map((f) => (
-              <div key={f.section} className="border-b border-line-2 last:border-b-0">
-                <button onClick={() => setFamOuverte((s) => (s === f.section ? null : f.section))}
-                  className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] font-medium text-txt hover:bg-mint/10">
-                  <span className="truncate">{f.nom}</span>
-                  <span className="shrink-0 text-[10px] text-txt-dim">{f.activites.length}</span>
-                </button>
-                {famOuverte === f.section && (
-                  <div className="bg-surface-2/40">
-                    {f.activites.map((o) => (
-                      <button key={o.code} onClick={() => choisirNaf(o)}
-                        className="flex w-full items-center justify-between gap-2 px-3 py-1 text-left text-[11px] text-txt-mut hover:bg-mint/10 hover:text-txt">
-                        <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{o.code}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       <button onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}
         className={`rounded-lg px-3 py-2 text-[12px] font-medium ${pretA && !mut.isPending ? 'bg-mint/20 text-txt-hi hover:bg-mint/30' : 'bg-surface-2 text-txt-dim'}`}>
-        {mut.isPending ? 'Calcul de la zone…' : 'Analyser la zone'}
+        {mut.isPending ? 'Calcul de la zone…' : 'Lire la zone'}
       </button>
 
       {/* RÉSULTATS */}
@@ -250,6 +209,8 @@ export function EtudeZone() {
 
       {res?.zone_disponible && (
         <div className="flex flex-col gap-3">
+          {/* ÉTAPE 2 — LIRE LA ZONE */}
+          <StepHead n={2} titre="Lire la zone" sous="habitants, revenus, emplois, marché, permis, trafic, PLU" />
           <SectionTitle>{enTete}</SectionTitle>
           {res.population?.inhabitee ? (
             <p className="text-[11px] text-txt-mut">Zone peu ou pas habitée (aucun carreau INSEE peuplé).</p>
@@ -257,16 +218,16 @@ export function EtudeZone() {
             <div className="grid grid-cols-2 gap-2">
               <Stat v={nb(res.population?.habitants)} k="habitants" />
               <Stat v={nb(res.population?.menages)} k="ménages" />
+              {/* O19(c) — revenu médian = carreau Filosofi (INSEE), donnée SOURCÉE, pas une estimation.
+                  Le badge « imputé » ne s'affiche que si le backend a comblé la MAJORITÉ des carreaux. */}
               <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'}
                 k={res.population?.revenu_majorite_imputee
                   ? `revenu médian / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
-                  : 'revenu médian / an'} est />
+                  : 'revenu médian / an · source Filosofi (INSEE)'}
+                variante={res.population?.revenu_majorite_imputee ? 'approche' : 'source'} />
               <ActifsStat res={res} />
             </div>
           )}
-
-          {/* CONCURRENTS — trois états honnêtes, jamais un faux zéro */}
-          {naf && <Concurrents res={res} />}
 
           {/* F3 (OUTILS-4) — TOUTES les entreprises de la zone, groupées par famille (à la demande). */}
           {res.emplois_couverture === 'servie' && (res.emplois?.n_etablissements ?? 0) > 0 && (
@@ -346,6 +307,21 @@ export function EtudeZone() {
               <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Signal daté (Sitadel · PLU) — une urbanisation programmée, jamais une projection de population.</p>
             </div>
           )}
+
+          {/* ÉTAPE 3 — UNE ACTIVITÉ (facultative, lentille additive : elle S'AJOUTE à la lecture ci-dessus). */}
+          <div className="mt-1 rounded-lg border border-line-2 bg-surface-2/40 p-2.5">
+            <StepHead n={3} titre="Une activité" facultatif
+              sous="lentille facultative — concurrents / chalandise d’une activité, en plus de la lecture" />
+            <ActiviteLens
+              naf={naf} nafQuery={nafQuery} setNafQuery={setNafQuery} setNaf={setNaf}
+              nafOpts={nafOpts} choisirNaf={choisirNaf}
+              parcourir={parcourir} setParcourir={setParcourir}
+              familles={familles} famOuverte={famOuverte} setFamOuverte={setFamOuverte}
+              dejaApplique={res.concurrents != null}
+              onAppliquer={() => mut.mutate()} enCours={mut.isPending} />
+            {/* CONCURRENTS — trois états honnêtes, jamais un faux zéro. Rendu SOUS la lentille. */}
+            {res.concurrents != null && <Concurrents res={res} />}
+          </div>
 
           {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré. */}
           <button onClick={nouvelleEtude} className="w-full rounded-lg border border-line-2 px-3 py-1.5 text-[11.5px] font-medium text-txt-mut hover:border-mint/40 hover:text-txt">Nouvelle étude</button>
@@ -479,20 +455,7 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
                 <span className="min-w-0 truncate text-txt">{f.nom}</span>
                 <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(f.n)} <span className="text-txt-dim">{ouvertes.has(f.section) ? '▾' : '▸'}</span></span>
               </button>
-              {ouvertes.has(f.section) && (
-                <div className="flex flex-col gap-0.5 border-t border-line-2 px-2 py-1">
-                  {f.etablissements.map((e) => (
-                    <button key={e.siret} onClick={() => ouvrirParcelle(e.lon, e.lat)}
-                      className="flex items-start rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3">
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-txt">{e.nom}{e.annee_creation != null && <span className="text-txt-dim"> · depuis {e.annee_creation}</span>}</span>
-                        <span className="block truncate text-[9px] text-txt-dim">{e.naf_label ?? e.naf}{majFr(e.date_maj) ? ` · maj ${majFr(e.date_maj)}` : ''}</span>
-                      </span>
-                    </button>
-                  ))}
-                  {f.n > f.charges && <p className="px-1 text-[9.5px] text-txt-dim">+ {nb(f.n - f.charges)} autres — aperçu plafonné</p>}
-                </div>
-              )}
+              {ouvertes.has(f.section) && <FamilleEtabs f={f} ouvrirParcelle={ouvrirParcelle} />}
             </div>
           ))}
           {data && <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">Établissements actifs au registre · Source {data.millesime ?? 'SIRENE (INSEE)'} · pastilles cliquables sur la carte.</p>}
@@ -502,15 +465,150 @@ function ToutesEntreprises({ total, open, setOpen, data, loading, error }: {
   )
 }
 
+// O19(d) — la liste des établissements d'une famille se PAGINE PAR 200 (ListPaginationFooter partagé) :
+// les 200 premiers, puis « Voir N de plus », compteur exact toujours visible. Le plafond serveur (f.charges)
+// est dit honnêtement en pied quand le backend n'a pas tout renvoyé.
+function FamilleEtabs({ f, ouvrirParcelle }: { f: ZoneFamille; ouvrirParcelle: (lon: number, lat: number) => void }) {
+  const pg = usePagination(f.etablissements.length)
+  const reste = f.n > f.charges ? f.n - f.charges : 0
+  return (
+    <div className="flex flex-col gap-0.5 border-t border-line-2 px-2 py-1">
+      {f.etablissements.slice(0, pg.shown).map((e) => (
+        <button key={e.siret} onClick={() => ouvrirParcelle(e.lon, e.lat)}
+          className="flex items-start rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3">
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-txt">{e.nom}{e.annee_creation != null && <span className="text-txt-dim"> · depuis {e.annee_creation}</span>}</span>
+            <span className="block truncate text-[9px] text-txt-dim">{e.naf_label ?? e.naf}{majFr(e.date_maj) ? ` · maj ${majFr(e.date_maj)}` : ''}</span>
+          </span>
+        </button>
+      ))}
+      {f.etablissements.length > 0 && (
+        <ListPaginationFooter shown={pg.shown} total={f.etablissements.length} onMore={pg.more}
+          className="mt-0.5 flex flex-wrap items-center gap-3 border-t border-line-2 pt-1 text-[9.5px] text-txt-mut" />
+      )}
+      {reste > 0 && <p className="px-1 text-[9.5px] text-txt-dim">+ {nb(reste)} autres — aperçu plafonné</p>}
+    </div>
+  )
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-txt-dim">{children}</div>
 }
-function Stat({ v, k, est }: { v: string; k: string; est?: boolean }) {
+
+// O19(a) — en-tête d'ÉTAPE : donne à l'écran la structure « 1 · 2 · 3 » de l'outil. L'étape 3 porte un
+// badge « facultatif » pour dire qu'elle s'AJOUTE (lentille), sans jamais être obligatoire.
+function StepHead({ n, titre, sous, facultatif }: { n: number; titre: string; sous?: string; facultatif?: boolean }) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-mint/15 font-mono text-[9px] font-semibold text-mint">{n}</span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11.5px] font-semibold text-txt-hi">{titre}</span>
+          {facultatif && <span className="rounded bg-surface-3 px-1 py-px font-mono text-[8px] uppercase tracking-wide text-txt-dim">facultatif</span>}
+        </div>
+        {sous && <div className="text-[10px] leading-snug text-txt-mut">{sous}</div>}
+      </div>
+    </div>
+  )
+}
+
+// O19(a) — ÉTAPE 3, la LENTILLE « activité ». Réunit le champ NAF (frappe libre + parcours par familles)
+// et le bouton qui APPLIQUE l'activité à la zone déjà lue. On dit honnêtement que la lecture est relue
+// à travers cette activité (le calcul concurrents vient du même appel serveur) — on ne prétend pas que
+// c'est purement local. Tant qu'aucune activité n'est appliquée, l'étape n'affiche que son invite.
+function ActiviteLens({
+  naf, nafQuery, setNafQuery, setNaf, nafOpts, choisirNaf,
+  parcourir, setParcourir, familles, famOuverte, setFamOuverte,
+  dejaApplique, onAppliquer, enCours,
+}: {
+  naf: NafOption | null
+  nafQuery: string
+  setNafQuery: (v: string) => void
+  setNaf: (v: NafOption | null) => void
+  nafOpts: NafOption[]
+  choisirNaf: (o: NafOption) => void
+  parcourir: boolean
+  setParcourir: (f: (v: boolean) => boolean) => void
+  familles: NafFamille[] | null
+  famOuverte: string | null
+  setFamOuverte: (f: (s: string | null) => string | null) => void
+  dejaApplique: boolean
+  onAppliquer: () => void
+  enCours: boolean
+}) {
+  return (
+    <div className="mt-2">
+      {/* ACTIVITÉ (NAF) — deux entrées : frappe libre avec propositions, OU déroulé par familles.
+          Référentiel = nomenclature NAF complète (« notaire », « pharmacie », « garage »… résolvent). */}
+      <div className="relative">
+        <input value={naf ? naf.label : nafQuery}
+          onChange={(e) => { setNaf(null); setNafQuery(e.target.value) }}
+          placeholder="Activité étudiée (ex. « notaire », « pharmacie »)"
+          className="w-full rounded-lg border border-line-2 bg-surface-1 px-2.5 py-1.5 text-[12px] text-txt outline-none focus:border-mint/60" />
+        {naf && <button onClick={() => { setNaf(null); setNafQuery('') }} className="absolute right-2 top-1.5 text-[11px] text-txt-dim hover:text-txt">×</button>}
+        {nafOpts.length > 0 && (
+          <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-line-2 bg-surface-1 shadow-lg">
+            {nafOpts.map((o) => (
+              <button key={o.code} onClick={() => choisirNaf(o)}
+                className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] text-txt hover:bg-mint/10">
+                <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[10px] text-txt-dim">{o.code}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <button onClick={() => setParcourir((v) => !v)}
+        className="mt-1 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">
+        {parcourir ? 'masquer les familles' : 'parcourir par famille d’activité'}
+      </button>
+      {parcourir && (
+        <div className="mt-1 max-h-64 overflow-y-auto rounded-lg border border-line-2 bg-surface-1">
+          {familles == null ? (
+            <p className="px-2.5 py-2 text-[11px] text-txt-dim">Chargement…</p>
+          ) : familles.map((f) => (
+            <div key={f.section} className="border-b border-line-2 last:border-b-0">
+              <button onClick={() => setFamOuverte((s) => (s === f.section ? null : f.section))}
+                className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] font-medium text-txt hover:bg-mint/10">
+                <span className="truncate">{f.nom}</span>
+                <span className="shrink-0 text-[10px] text-txt-dim">{f.activites.length}</span>
+              </button>
+              {famOuverte === f.section && (
+                <div className="bg-surface-2/40">
+                  {f.activites.map((o) => (
+                    <button key={o.code} onClick={() => choisirNaf(o)}
+                      className="flex w-full items-center justify-between gap-2 px-3 py-1 text-left text-[11px] text-txt-mut hover:bg-mint/10 hover:text-txt">
+                      <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{o.code}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {/* APPLIQUER — la lentille s'ajoute à la lecture ; visible seulement quand une activité est choisie. */}
+      {naf && (
+        <>
+          <button onClick={onAppliquer} disabled={enCours}
+            className={`mt-2 w-full rounded-lg px-3 py-1.5 text-[11.5px] font-medium ${enCours ? 'bg-surface-2 text-txt-dim' : 'bg-mint/20 text-txt-hi hover:bg-mint/30'}`}>
+            {enCours ? 'Application de l’activité…' : dejaApplique ? 'Mettre à jour l’activité' : 'Ajouter cette activité à la lecture'}
+          </button>
+          <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">La lecture de la zone est relue à travers cette activité — les résultats ci-dessus restent, les concurrents s’ajoutent.</p>
+        </>
+      )}
+    </div>
+  )
+}
+// O19(c) — le badge dit la NATURE de la donnée, sans jamais mentir : « sourcé » (carreau Filosofi INSEE),
+// « approché » (majorité de carreaux imputés côté backend). Plus de badge « estimé » : le revenu médian
+// est une donnée SOURCÉE, pas une estimation LABUSE.
+function Stat({ v, k, variante }: { v: string; k: string; variante?: 'source' | 'approche' }) {
   return (
     <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
       <div className="flex items-center gap-1.5 text-[13px] font-semibold text-txt-hi">
         <span>{v}</span>
-        {est && <span className="rounded bg-mint/12 px-1 py-px font-mono text-[8px] uppercase tracking-wide text-mint">estimé</span>}
+        {variante === 'source' && <span className="rounded bg-mint/12 px-1 py-px font-mono text-[8px] uppercase tracking-wide text-mint">sourcé</span>}
+        {variante === 'approche' && <span className="rounded bg-cp-amber/15 px-1 py-px font-mono text-[8px] uppercase tracking-wide text-cp-amber">approché</span>}
       </div>
       <div className="mt-0.5 text-[10px] text-txt-mut">{k}</div>
     </div>
