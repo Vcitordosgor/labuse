@@ -277,6 +277,11 @@ export interface Fiche {
       etats: { type: string; date: string | null; libelle: string; source: string; etiquette: string }[]
       libelle: string; note: string
     } | null
+    // RETOURS-11F3 F11 — carte d'identité publique SIRENE (activité APE, siège, date de création, état actif)
+    identite?: {
+      ape: string | null; activite: string | null; siege: string | null; siege_commune: string | null
+      date_creation: string | null; actif: boolean | null; annuaire_url: string; source: string
+    } | null
   } | null
   // L1 (KF-2) — historique du propriétaire PM par millésime + diff CONSTATÉ (hors scoring, PM only)
   proprietaire_historique?: {
@@ -368,12 +373,14 @@ export interface Fiche {
   // M106 P3 — dispositifs fiscaux territoriaux (ZFANG / FRR ex-ZRR) : attribut de COMMUNE,
   // des ÉTATS sourcés + lien vers le texte — JAMAIS un chiffre fiscal (interdit du mandat).
   territoire_fiscal?: {
-    commune: string
-    zfang: { regime: 'standard' | 'renforce'; libelle: string; source_ref: string; lien: string }
-    frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
-    avertissement: string
+    commune?: string
+    zfang?: { regime: 'standard' | 'renforce'; libelle: string; source_ref: string; lien: string }
+    frr?: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
+    avertissement?: string
     // M134 — les périmètres FINS qui touchent la parcelle (QPV dedans, ou bande TVA 500 m dérivée)
     perimetres?: { libelle: string; detail: string; source: string; derive: boolean }[]
+    // RETOURS-11F3 F10 — dispositifs valables sur toute La Réunion (zonage B1, TVA DOM 8,5 / 2,1 LLS)
+    dispositifs_dom?: { libelle: string; detail: string; source: string }[]
   } | null
   // M106 P4 — PROXIMITÉS (distance, jamais un booléen) : transport + ligne HT (contrainte).
   proximites?: {
@@ -542,6 +549,11 @@ export interface Renouvellement {
   code_bati_origine: string
   zone_plu: string | null
   sdp_residuelle_m2: number | null
+  // RETOURS-11F M9 — capacité NETTE des contraintes + surélévation (données servies du run).
+  sdp_nette_m2: number | null
+  contrainte_pct: number | null
+  surelevation_possible: boolean | null
+  niveaux_surelevation: number | null
   surface_m2: number | null
   composantes: { cle: string; points: number; max: number; libelle: string }[]
 }
@@ -583,6 +595,9 @@ export interface ReglementZone {
   edition?: string | null
   idurba?: string | null
   articles: { regle: string; reference: string; page_imprimee: number | null; url: string | null }[]
+  // RETOURS-11F3 F4 — les règles clés de la zone AVEC leurs valeurs (hauteur, emprise, reculs,
+  // pleine terre, stationnement). etat : chiffre | texte | absent (« non réglementé ») | a_verifier.
+  regles_valeurs?: { cle: string; libelle: string; valeur: string | null; etat: string; reference: string | null; url: string | null }[]
   annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
   // DESTINATIONS-1 (X4.2) — ligne « Destinations » de la zone : résumé + dépliable 23 sous-destinations

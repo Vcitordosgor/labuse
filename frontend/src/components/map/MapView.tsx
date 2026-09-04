@@ -494,6 +494,25 @@ function makeEquipIcons(m: maplibregl.Map) {
   }
 }
 
+// RETOURS-11F3 avenant R10 — la GOUTTE D'EAU des piscines, rendue en ICÔNE CANVAS (addImage) et non
+// en `text-field:'💧'` : un emoji en text-field dépend des glyphes du style (souvent ABSENTS pour les
+// emoji) → aucun marqueur ne s'affichait (échec silencieux). Le canvas rasterise l'emoji côté client
+// (même mécanisme fiable que les équipements) : la goutte est TOUJOURS rendue.
+function makePiscineIcon(m: maplibregl.Map) {
+  if (m.hasImage('piscine-drop')) return
+  const S = 40
+  const cv = document.createElement('canvas'); cv.width = cv.height = S
+  const ctx = cv.getContext('2d'); if (!ctx) return
+  // pastille verte de marque + goutte, halo sombre pour la lisibilité sur ortho comme sur plan.
+  ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2 - 3, 0, Math.PI * 2)
+  ctx.fillStyle = '#4ADE80'; ctx.globalAlpha = 0.95; ctx.fill()
+  ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.strokeStyle = '#06130C'; ctx.stroke()
+  ctx.font = `${Math.round(S * 0.52)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui`
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+  ctx.fillText('💧', S / 2, S / 2 + 1)
+  m.addImage('piscine-drop', ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
+}
+
 // M6.1 item 2 : une géométrie de la collection touche-t-elle la bbox de la commune ?
 // Test sommet-dans-bbox, suffisant pour le toast « commune sans littoral » (les bandes des
 // 50 pas sont étroites et longent le rivage — pas besoin d'intersection géométrique fine).
@@ -1007,8 +1026,10 @@ export function MapView() {
       // (module-extra) et même visibilité que module-pts ; le clic route par idu (cf. handler partagé).
       m.addLayer({ id: 'module-piscine', type: 'symbol', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'piscine'],
-        layout: { 'text-field': '💧', 'text-allow-overlap': true, 'text-ignore-placement': true,
-          'text-size': ['interpolate', ['linear'], ['zoom'], 10, 13, 15, 18, 18, 24] as never } })
+        // R10 — ICÔNE canvas (piscine-drop), plus jamais `text-field:'💧'` (glyphes emoji absents →
+        // rien ne s'affichait). icon-allow-overlap : les gouttes proches ne se masquent pas.
+        layout: { 'icon-image': 'piscine-drop', 'icon-allow-overlap': true, 'icon-ignore-placement': true,
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 0.5, 15, 0.8, 18, 1.1] as never } })
       // PERMIS (refonte) — anneau de SURVOL : le point du permis survolé dans la liste « s'allume »
       // (source dédiée à UN point → aucun re-render des 8 000 points de la couche radar).
       m.addSource('permit-hover', { type: 'geojson', data: EMPTY_FC as never })
@@ -1111,6 +1132,7 @@ export function MapView() {
       // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
       // d'icônes par milliers à l'écran), clic = nom de l'équipement
       makeEquipIcons(m)
+      makePiscineIcon(m)   // R10 — la goutte des piscines en icône canvas (voir makePiscineIcon)
       m.addSource('ov-equip', { type: 'geojson', data: EMPTY_FC as never })
       // M12 C3 — les pastilles d'équipement GROSSISSENT quand on zoome (elles rétrécissaient) :
       // l'ancienne rampe 12→0,32 / 17→0,60 s'aplatissait vite et PLAFONNAIT à z17 ; au zoom

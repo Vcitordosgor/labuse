@@ -211,9 +211,13 @@ export function DensifierTablePanel() {
                       parcel_renouvellement). Le score n'EST PAS le tier. */}
                   <th className="px-2 py-1.5" title="Classement canonique — le tier de la parcelle (même que la fiche et la carte). Différent du score de densification.">Classement</th>
                   <th className="px-2 py-1.5 text-right" title="Score de densification 0-100 (potentiel de renouvellement) — une grandeur DIFFÉRENTE du classement.">Score densif.</th>
-                  <th className="px-2 py-1.5 text-right">SDP résiduelle</th>
+                  {/* RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine) :
+                      c'est ELLE qui pilote le score de densification. La SDP brute est en infobulle. */}
+                  <th className="px-2 py-1.5 text-right" title="SDP résiduelle NETTE des contraintes physiques (PPR zone rouge, pente > 30 %, ravine). C'est la capacité réellement mobilisable — et ce qui classe la parcelle.">SDP nette</th>
                   <th className="px-2 py-1.5 text-right">Surface</th>
                   <th className="px-2 py-1.5">Bâti existant</th>
+                  {/* RETOURS-11F M9 — surélévation : hauteur PLU − hauteur du bâti (BD TOPO). */}
+                  <th className="px-2 py-1.5" title="Surélévation possible : la hauteur autorisée au PLU dépasse la hauteur du bâti existant (BD TOPO) — un ou plusieurs niveaux gagnables.">Surélévation</th>
                   <th className="px-2 py-1.5">Zone</th>
                   {/* LOT12c — rang DANS la commune par score de densification (1 = meilleure de la commune) */}
                   <th className="px-2 py-1.5 text-right" title="Rang de la parcelle dans sa commune par score de densification (1 = la meilleure de la commune).">Rang commune</th>
@@ -230,12 +234,25 @@ export function DensifierTablePanel() {
                       ) })()}
                     </td>
                     <td className="px-2 py-1.5 text-right font-medium" style={{ color: TOKENS.renouv }}>{it.renouv_score}</td>
-                    <td className="px-2 py-1.5 text-right text-txt-mut">{fmtM2(it.sdp_residuelle_m2)}</td>
+                    {/* SDP NETTE + puce « −N % » quand une contrainte a été déduite (brute en infobulle) */}
+                    <td className="px-2 py-1.5 text-right text-txt-mut" title={it.contrainte_pct ? `SDP brute ${fmtM2(it.sdp_residuelle_m2)} — ${it.contrainte_pct} % déduits (PPR rouge, pente > 30 %, ravine)` : undefined}>
+                      {fmtM2(it.sdp_nette_m2 ?? it.sdp_residuelle_m2)}
+                      {it.contrainte_pct != null && it.contrainte_pct > 0 && (
+                        <span className="ml-1 rounded bg-st-amber/15 px-1 text-[9px] text-st-amber">−{it.contrainte_pct} %</span>
+                      )}
+                    </td>
                     <td className="px-2 py-1.5 text-right text-txt-mut">{fmtM2(it.surface_m2)}</td>
                     {/* « Bâti existant » : la surface bâtie en m² n'est PAS servie par l'endpoint (absente de
                         parcel_renouvellement) — on sert le TYPE d'occupation (déjà bâtie / ensemble bâti),
                         jamais un m² inventé. */}
                     <td className="px-2 py-1.5 text-txt-dim">{CODE_LABEL[it.code_bati_origine] ?? it.code_bati_origine}</td>
+                    {/* Surélévation possible → « +N niveau(x) » (ou « possible » si le nombre de niveaux
+                        n'est pas connu) ; « — » si non / donnée absente (jamais un « non » inventé). */}
+                    <td className="px-2 py-1.5 text-txt-mut">
+                      {it.surelevation_possible
+                        ? <span className="rounded bg-mint/12 px-1 text-[10px] text-mint">{it.niveaux_surelevation ? `+${it.niveaux_surelevation} niv.` : 'possible'}</span>
+                        : <span className="text-txt-dim">—</span>}
+                    </td>
                     <td className="px-2 py-1.5 text-txt-mut">{it.zone_plu ?? '—'}</td>
                     <td className="px-2 py-1.5 text-right text-txt-mut">{it.rang_commune}</td>
                   </tr>

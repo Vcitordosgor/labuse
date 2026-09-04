@@ -3362,6 +3362,13 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     pm = dict(pm) if pm else None
     if pm and pm.get("siren"):
         pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
+        pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
+    if pm:
+        # RETOURS-11F3 F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une
+        # phrase client. On sert une étiquette humaine ; le nom de fichier ne s'affiche jamais.
+        gl = (pm.get("groupe_label") or "")
+        if "non remarquable" in gl.lower():
+            pm["groupe_label"] = "Personne morale — fichier DGFiP"
     # L1 (KF-2) — historique propriétaire PM par millésime + diff annuel CONSTATÉ (hors scoring,
     # PM uniquement). None si la parcelle n'a jamais eu de propriétaire moral connu.
     from ..proprietaire_historique import historique as _pm_historique
@@ -3584,14 +3591,32 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
             "source": "ANCT — quartiers de génération 2024", "derive": False})
     elif tva:
         perimetres.append({
-            "libelle": "Bande des 500 m d'un quartier prioritaire",
-            "detail": "La parcelle est à moins de 500 m d'un QPV : la TVA réduite pour l'accession "
-                      "sociale peut s'y étendre. Périmètre DÉRIVÉ par LABUSE à partir des QPV "
-                      "(Estimé) — à confirmer, ce n'est pas une source officielle.",
-            "source": "LABUSE — dérivé des QPV (500 m)", "derive": True})
+            # RETOURS-11F3 F10 — le CGI (art. 278 sexies) ouvre la TVA réduite accession sociale dans
+            # les QPV ET une bande de 300 m autour (pour les NPNRU sous convention, 500 m). Le calque
+            # `tva_primo` de LABUSE est dérivé à 500 m (majorant prudent) : on le DIT, à confirmer.
+            "libelle": "Bande autour d'un quartier prioritaire (TVA réduite accession)",
+            "detail": "La parcelle est à moins de 500 m d'un QPV. Le CGI (art. 278 sexies) ouvre la TVA "
+                      "réduite pour l'accession sociale dans les QPV et une bande de 300 m autour "
+                      "(500 m pour un quartier NPNRU sous convention). Le calque LABUSE est dérivé à "
+                      "500 m (majorant) — à confirmer, ce n'est pas une source officielle.",
+            "source": "LABUSE — dérivé des QPV (500 m) · CGI art. 278 sexies", "derive": True})
+    # RETOURS-11F3 F10 — dispositifs fiscaux valables sur TOUTE La Réunion (constants, hors table),
+    # rapatriés de « Constructibilité » (F0) : le zonage d'investissement (B1) et les taux de TVA DOM.
+    # Faits territoriaux datés/sourcés, JAMAIS un calcul fiscal par projet (interdit du mandat).
+    dispositifs_dom = [
+        {"libelle": "Zonage d'investissement locatif : B1",
+         "detail": "La Réunion est classée en zone B1 (arrêté zonage A/B/C) — éligibilité PTZ dans le "
+                   "neuf et plafonds des dispositifs outre-mer. S'applique à toute l'île.",
+         "source": "Arrêté de zonage A/B/C (DHUP)"},
+        {"libelle": "TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 % logement locatif social",
+         "detail": "Dans les DOM, le taux normal de TVA est 8,5 % ; la construction/vente de logements "
+                   "locatifs sociaux (LLS/LLTS) relève du taux de 2,1 %. Repères territoriaux — le "
+                   "régime exact dépend de l'opération.",
+         "source": "CGI (TVA DOM, art. 296 et 278 sexies)"},
+    ]
     if base is None and not perimetres:
-        return None
-    return {**(base or {}), "perimetres": perimetres}
+        return {"perimetres": [], "dispositifs_dom": dispositifs_dom}
+    return {**(base or {}), "perimetres": perimetres, "dispositifs_dom": dispositifs_dom}
 
 
 def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -> dict | None:
@@ -3632,14 +3657,29 @@ def _depots_block(db: Session, parcel_id: int) -> dict | None:
         return _bloc_indisponible("depots")
 
 
+# RETOURS-11F3 F0 — SEUILS DE PERTINENCE par famille (mètres) : au-delà, l'objet n'est PAS une
+# information (Vic : « une ligne HT à 3 887 m ou un téléphérique à 24 km ne sont pas des infos »).
+# Gravés dans le code (F0), jamais dans la tête. None = pas de seuil (l'axe porte déjà son libellé).
+SEUILS_PROXIMITE_M = {
+    "arret": 1500,        # arrêt de bus au-delà de ~1,5 km : hors marche quotidienne
+    "pole": 3000,         # pôle d'échange : structurant, rayon plus large
+    "telepherique": 2000, # un téléphérique à 24 km n'a aucun sens pour la parcelle
+    "ligne_ht": 500,      # servitude I4 : au-delà de 500 m, ni contrainte ni recul
+}
+
+
 def _proximites_block(db: Session, idu: str) -> dict | None:
     """M106 P4 — proximité transport (arrêt / pôle d'échange / téléphérique) et ligne HT.
-    Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas."""
+    Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas.
+    RETOURS-11F3 F0 — chaque famille a un SEUIL de pertinence (SEUILS_PROXIMITE_M) : au-delà,
+    l'objet est écarté (pas affiché) — plus de « téléphérique à 24 km » ni de « ligne HT à 3 887 m »."""
+    def _sous_seuil(obj, cle):
+        return obj if (obj and obj["distance_m"] <= SEUILS_PROXIMITE_M[cle]) else None
     try:
-        arret = _plus_proche(db, idu, "transport_arret")
-        pole = _plus_proche(db, idu, "pole_echange")
-        tele = _plus_proche(db, idu, "telepherique", "station")
-        ht = _plus_proche(db, idu, "ligne_ht")
+        arret = _sous_seuil(_plus_proche(db, idu, "transport_arret"), "arret")
+        pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
+        tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
+        ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
@@ -3676,6 +3716,9 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         # M125 — sous-requête isolée : on ne masque plus l'échec en silence (log), mais le bloc
         # garde ses autres proximités réelles ; l'axe est simplement omis (dégradation partielle).
         _FICHE_LOG.exception("fiche · bloc « proximites.axe » indisponible (erreur technique)")
+        axe = None
+    # F0 — seuil de pertinence : un axe structurant à plus d'1 km ne desservt ni ne nuit à la parcelle.
+    if axe and axe["distance_m"] > 1000:
         axe = None
     if axe:
         nat = (axe["attrs"].get("nature") or "route")
@@ -3766,7 +3809,8 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         return None
     r = db.execute(text(
         "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, "
-        "       code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune, "
+        "       code_bati_origine, sdp_residuelle_m2, sdp_nette_m2, contrainte_pct, "
+        "       surelevation_possible, niveaux_surelevation, surface_m2, zone_plu, commune, "
         "       rang_segment, rang_commune, "
         # M47 (P2) : millésime/source de la couche servie — run servi + date de matérialisation.
         "       run_label, to_char(computed_at, 'YYYY-MM-DD') AS maj, "
@@ -3792,6 +3836,12 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         "code_bati_origine": r["code_bati_origine"],
         "zone_plu": r["zone_plu"],
         "sdp_residuelle_m2": r["sdp_residuelle_m2"], "surface_m2": r["surface_m2"],
+        # RETOURS-11F M9 — capacité NETTE des contraintes + surélévation (données servies du run,
+        # jamais inventées). sdp_nette < sdp_brute quand PPR rouge / pente > 30 % / ravine touchent
+        # la parcelle ; contrainte_pct = part déduite ; surélévation = hauteur PLU − hauteur bâti.
+        "sdp_nette_m2": r["sdp_nette_m2"], "contrainte_pct": r["contrainte_pct"],
+        "surelevation_possible": bool(r["surelevation_possible"]) if r["surelevation_possible"] is not None else None,
+        "niveaux_surelevation": r["niveaux_surelevation"],
         "composantes": [
             {"cle": k, "points": r[k], "max": m, "libelle": LIBELLES_COMPOSANTES[k]}
             for k, m in (("comp_potentiel", 47), ("comp_assiette", 29),
@@ -3979,6 +4029,36 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
     return {"etats": etats,
             "libelle": "Société propriétaire : " + " ; ".join(e["libelle"] for e in etats) + ".",
             "note": "Fait public d'entreprise (état de la société) — information de contexte, aucune déduction."}
+
+
+def _pm_identite(db: Session, siren: str | None) -> dict | None:
+    """RETOURS-11F3 F11 — carte d'identité PUBLIQUE de la société propriétaire (PM only), lue de
+    SIRENE (open data) : activité (APE + libellé), siège (adresse), date de création, état actif.
+    Fait public d'entreprise, jamais une personne (RGPD). None si SIREN inconnu de SIRENE.
+    SAVEPOINT : table absente en base de test n'avorte pas la fiche."""
+    if not siren:
+        return None
+    try:
+        with db.begin_nested():
+            row = db.execute(text(
+                "SELECT naf, adresse, commune, date_creation, actif, tranche_effectif "
+                "FROM sirene_etablissements WHERE siren = :s "
+                "ORDER BY actif DESC NULLS LAST, date_creation ASC NULLS LAST LIMIT 1"),
+                {"s": siren}).mappings().first()
+    except Exception:  # noqa: BLE001 — bloc additif, jamais bloquant pour la fiche
+        return None
+    if not row:
+        return None
+    from ..naf_labels import label as _naf_label
+    return {
+        "ape": row["naf"],
+        "activite": _naf_label(row["naf"]) if row["naf"] else None,
+        "siege": row["adresse"], "siege_commune": row["commune"],
+        "date_creation": row["date_creation"].isoformat() if row["date_creation"] else None,
+        "actif": bool(row["actif"]) if row["actif"] is not None else None,
+        "annuaire_url": f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}",
+        "source": "SIRENE (INSEE, open data)",
+    }
 
 
 def _historique_site(db: Session, idu: str) -> dict | None:
@@ -4692,7 +4772,8 @@ def renouvellement_liste(commune: str | None = None,
     rows = db.execute(text(f"""
         SELECT r.idu, p.commune AS commune_nom, r.commune AS commune_insee, r.renouv_score,
                r.comp_potentiel, r.comp_assiette, r.comp_marche,
-               r.code_bati_origine, r.sdp_residuelle_m2, r.surface_m2, r.zone_plu,
+               r.code_bati_origine, r.sdp_residuelle_m2, r.sdp_nette_m2, r.contrainte_pct,
+               r.surelevation_possible, r.niveaux_surelevation, r.surface_m2, r.zone_plu,
                r.rang_segment, r.rang_commune,
                s2.tier AS tier_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
@@ -5185,6 +5266,28 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # M135 — la RAISON dominante = même point de calcul que la carte/la liste (raison_dominante,
     # chip court de la 1re contribution positive). `pourquoi` porte signe/feature/bin requis.
     raison = _raison_dom(s2.get("pourquoi"))
+    # RETOURS-11F M13 (O9) — colonnes manquantes de « Comparer », toutes lues de la fiche SERVIE
+    # (qv2) ou de la faisabilité du MÊME point de calcul (faisab) — jamais un second moteur.
+    # propriétaire : moral (PM connue) sinon particulier (doctrine fiche F11).
+    pm = qv2.get("proprietaire_moral") or {}
+    proprietaire = "morale" if pm.get("denomination") or pm.get("siren") else "particulier"
+    # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
+    surf = qv2.get("surface_m2") or 0
+    bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
+                if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
+    # logements possibles (borne haute de la fourchette servie, au sol ou sous-sol).
+    def _hi(pair):
+        return pair[1] if isinstance(pair, (list, tuple)) and len(pair) == 2 else None
+    log_hi = max([v for v in (_hi(fr.get("logements_au_sol")), _hi(fr.get("logements_sous_sol"))) if v is not None] or [None])
+    # accès & réseaux : UN verdict (le faisceau de viabilisation servi, F0/F8) ; assainissement à part.
+    via = qv2.get("viabilisation") or {}
+    anc = qv2.get("anc") or {}
+    # prix bâti du secteur : médiane DVF du type bâti le plus documenté (maison/appartement),
+    # jamais le terrain nu — même source que la fiche Marché (dvf_parcelle.secteur).
+    secteur = ((qv2.get("dvf_parcelle") or {}).get("secteur")) or []
+    bati_rows = [s for s in secteur if (s.get("type_bien") or "").lower() not in ("terrain", "terrain à bâtir")
+                 and s.get("mediane_prix_m2")]
+    prix_bati = max(bati_rows, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if bati_rows else None
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
         "surface_m2": qv2.get("surface_m2"),
@@ -5204,6 +5307,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
         "n_contraintes": len(contraintes),
         "contraintes": [c["detail"] for c in contraintes[:4]],
+        # RETOURS-11F M13 (O9) — colonnes ajoutées :
+        "proprietaire": proprietaire,                                   # moral / particulier
+        "bati_existant_pct": bati_pct,                                  # emprise bâtie ÷ terrain
+        "gabarit_niveaux_max": res.get("niveaux_max") if res.get("disponible") else None,  # hauteur max (R+N)
+        "logements_possibles": log_hi,                                  # borne haute fourchette
+        "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
+        "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
+        "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur
     }
 
 

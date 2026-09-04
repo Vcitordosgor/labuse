@@ -49,8 +49,9 @@ describe('DENSIFIER — DensifierTablePanel (grand tableau)', () => {
     // compteur SOCLE « 3 / 7 »
     expect(document.querySelector('[data-pagination-count]')?.textContent).toContain('3 / 7')
     expect(document.querySelectorAll('[data-densifier-row]')).toHaveLength(CAP)
-    // colonnes du mandat, dont « Bâti existant » (certains libellés existent aussi en chip de tri → getAll)
-    for (const h of ['Parcelle', 'Classement', 'SDP résiduelle', 'Surface', 'Bâti existant', 'Zone', 'Rang commune'])
+    // colonnes du mandat, dont « Bâti existant » (certains libellés existent aussi en chip de tri → getAll).
+    // RETOURS-11F M9 : « SDP résiduelle » → « SDP nette » (des contraintes), + colonne « Surélévation ».
+    for (const h of ['Parcelle', 'Classement', 'SDP nette', 'Surface', 'Bâti existant', 'Surélévation', 'Zone', 'Rang commune'])
       expect(screen.getAllByText(h).length).toBeGreaterThan(0)
   })
 

@@ -92,8 +92,9 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureIncertaines], queryFn: () => getPiscinesAgregat(commune, 0, inclureIncertaines), staleTime: 60_000 })
   // O12a (RETOURS-11) — la surface piscine (mesure vue du ciel) était FAUSSE : plus de filtre ni de
   // colonne surface. Le pisciniste veut la parcelle et la commune, pas un m² inventé.
-  const filtres: SolaireFiltres = { commune, piscine: 'oui' }
-  const list = useQuery({ queryKey: ['piscines-list', commune], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
+  // RETOURS-11F3 avenant (note liée) — le LISTING suit le MÊME filtre de confiance que le compteur.
+  const filtres: SolaireFiltres = { commune, piscine: 'oui', inclureIncertaines }
+  const list = useQuery({ queryKey: ['piscines-list', commune, inclureIncertaines], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
   // « pas une piscine » — retire la parcelle du service et rafraîchit compteur/carte/listing.
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
   const signalerPasPiscine = async (idu: string) => {
@@ -110,15 +111,22 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   // R8(a) — la carte se BASCULE : une fois posée, le bouton dit « Masquer sur la carte » et un
   // second clic retire les marqueurs (l'utilisateur voit que l'action a eu lieu, et peut la défaire).
   const [carteAffichee, setCarteAffichee] = useState(false)
+  // RETOURS-11F3 avenant R11 — une fois la carte affichée, le gros encadré « Piscines détectées »
+  // (nombre + méthode + 8 communes) SE REPLIE en une ligne de résumé pour laisser voir le listing.
+  // Réversible (déplier). Reposé à faux quand on masque la carte ou change de commune.
+  const [comptageReplie, setComptageReplie] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
   // Changer de commune (ou revenir à l'île) invalide les points posés : on repart « Voir sur la carte ».
-  useEffect(() => { setCarteAffichee(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
+  useEffect(() => { setCarteAffichee(false); setComptageReplie(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
   // LOT8b — « Voir sur la carte » = TOUTES les piscines en marqueurs (pas le listing capé à 500) :
   // on charge les points GeoJSON et on les pose dans module-extra (couche module-pts, kind='piscine').
   const voirCarte = async () => {
-    if (carteAffichee) { setModuleMap({ idus: [], extra: null }); setCarteAffichee(false); return }
+    if (carteAffichee) { setModuleMap({ idus: [], extra: null }); setCarteAffichee(false); setComptageReplie(false); return }
     setCarteBusy(true)
-    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureIncertaines) }); setCarteAffichee(true) }
+    try {
+      setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureIncertaines) })
+      setCarteAffichee(true); setComptageReplie(true)   // R11 — replie le comptage pour dévoiler le listing
+    }
     finally { setCarteBusy(false) }
   }
 
@@ -134,8 +142,23 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       {/* LA STAT D'ABORD */}
       {agg.isLoading && <Loading label="Comptage des piscines…" />}
       {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." />}
-      {agg.data && (
+      {/* R11 — quand la carte est affichée, le comptage se replie en UNE ligne (déplier) pour dévoiler le listing. */}
+      {agg.data && comptageReplie && (
+        <button data-piscines-comptage-replie onClick={() => setComptageReplie(false)}
+          className="flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:brightness-110"
+          style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
+          <b className="tnum" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
+          <span className="text-txt-mut">piscines · confiance {inclureIncertaines ? 'haute + incertaines' : 'haute'}</span>
+          <span className="ml-auto text-mint">déplier ▾</span>
+        </button>
+      )}
+      {agg.data && !comptageReplie && (
         <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
+          {carteAffichee && (
+            <div className="mb-1 text-right">
+              <button data-piscines-comptage-replier onClick={() => setComptageReplie(true)} className="text-[10px] text-txt-dim hover:text-mint">replier ▴</button>
+            </div>
+          )}
           <div className="text-[10px] text-txt-dim">Piscines détectées — {commune ?? 'toute l’île'}</div>
           <div className="mt-0.5"><b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
             <span className="ml-2 text-[9.5px] text-txt-dim">détection ortho/IA · à confirmer sur site</span></div>

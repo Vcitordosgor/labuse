@@ -442,8 +442,13 @@ def _tendance_pct(serie: list[dict], med_key: str) -> int | None:
     return round(100 * (a - b) / b) if (a and b) else None
 
 
-def _barometre_data(db: Session) -> dict:
-    """Baromètre foncier M18 — séries DVF et Sitadel, île entière (JSON + PDF marketing).
+def _barometre_data(db: Session, insee: str | None = None) -> dict:
+    """Baromètre foncier M18 — séries DVF et Sitadel (JSON + PDF marketing).
+
+    RETOURS-11F M13 (O15) — `insee` optionnel : île entière (défaut) OU une commune. Les tables
+    DVF/Sitadel portent le NOM de commune (dvf_mutations, sitadel_permits) ou l'INSEE
+    (dvf_mutations_parcelle) → on résout le nom une fois et on filtre les trois séries de façon
+    cohérente ; le neuf de la commune vient du moteur unique M1 (`neuf_vefa_commune`).
 
     Critère outliers (P1-03, audit M6 §1.1b BLOC B) — appliqué aux MÉDIANES ET AUX
     VOLUMES (`_BAROMETRE_RETENUE`) ; avant P1-03 les volumes n'avaient AUCUN filtre :
@@ -468,6 +473,12 @@ def _barometre_data(db: Session) -> dict:
     payload global `ecartees` ventile la fenêtre entière — « médiane sur N ventes,
     M écartées (VEFA, prix symboliques…) ».
     """
+    # RETOURS-11F M13 — résolution du nom de commune (tables DVF/Sitadel portent le nom) une seule fois.
+    nom = None
+    if insee:
+        nom = db.execute(text("SELECT commune FROM parcels WHERE left(idu, 5) = :i LIMIT 1"),
+                         {"i": insee}).scalar()
+    par = {"nom": nom, "insee": insee}
     dvf = db.execute(text(f"""
         SELECT to_char(date_trunc('quarter', date_mutation), 'YYYY"T"Q') AS trimestre,
                count(*) FILTER (WHERE {_BAROMETRE_RETENUE}) AS mutations,
@@ -477,11 +488,13 @@ def _barometre_data(db: Session) -> dict:
                  FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS median_eur_m2_bati
         FROM dvf_mutations WHERE date_mutation IS NOT NULL
           AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
-        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
+          AND (CAST(:nom AS text) IS NULL OR commune = :nom)
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
     permis = db.execute(text("""
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
         FROM sitadel_permits WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
-        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
+          AND (CAST(:nom AS text) IS NULL OR commune = :nom)
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
     # §2 — SÉRIE TERRAIN NU par trimestre (dvf_mutations_parcelle, ventes terrain, €/m² dédupliqué
     # par mutation comme ligne2_terrain_zone : val / terrain TOTAL de la mutation, jamais val÷un-bout).
     # Échantillon robuste (~600-770 ventes/trim) — contrairement à la VEFA (neuf), trop rare pour une série.
@@ -492,17 +505,25 @@ def _barometre_data(db: Session) -> dict:
           FROM dvf_mutations_parcelle m
           WHERE m.nature_mutation = 'Vente' AND COALESCE(m.surface_reelle_bati, 0) = 0 AND m.surface_terrain > 0
             AND m.valeur_fonciere > 1000 AND m.date_mutation IS NOT NULL
-            AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)),
+            AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)
+            AND (CAST(:insee AS text) IS NULL OR m.code_commune = :insee)),
         tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(dm) AS dm
                 FROM parc GROUP BY id_mutation)
         SELECT to_char(date_trunc('quarter', dm), 'YYYY"T"Q') AS trimestre, count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot, 0)))::int AS median_eur_m2_terrain
         FROM tot WHERE terr_tot > 0 AND val / NULLIF(terr_tot, 0) BETWEEN 5 AND 5000
-        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
     # §2 — NEUF : PAS de série (VEFA DVF trop rare : 0-4 ventes/trim récents → une courbe sur 2 points
-    # mentirait). On sert la RÉFÉRENCE actuelle île (dvf_prix_sortie_neuf, la même que la calculette).
-    neuf_ref = db.execute(text(
-        "SELECT prix_m2_neuf, n FROM dvf_prix_sortie_neuf WHERE niveau = 'ile' LIMIT 1")).mappings().first()
+    # mentirait). On sert la RÉFÉRENCE actuelle. Île : dvf_prix_sortie_neuf. Commune : le moteur UNIQUE
+    # M1 (`neuf_vefa_commune`, même chiffre que la fiche/la table Communes/la carte).
+    if insee:
+        from ..ingestion.dvf_marche import neuf_vefa_commune
+        _nv = neuf_vefa_commune(db, insee)
+        neuf_ref = ({"prix_m2_neuf": _nv["mediane_prix_m2_bati"], "n": _nv["n"]}
+                    if _nv.get("mediane_prix_m2_bati") is not None else None)
+    else:
+        neuf_ref = db.execute(text(
+            "SELECT prix_m2_neuf, n FROM dvf_prix_sortie_neuf WHERE niveau = 'ile' LIMIT 1")).mappings().first()
     # M137-Z — le plafond du classement prix sort du DUR (config/moteurs.yaml). §1b — le « prix par
     # commune » du PDF lit la SOURCE UNIQUE `prix_ancien_communes` (la même que le tableau Communes) :
     # un seul chiffre par commune dans tout le produit, plus une 2ᵉ requête qui pourrait dériver.
@@ -522,14 +543,17 @@ def _barometre_data(db: Session) -> dict:
                  AND (surface_reelle_bati IS NULL OR surface_reelle_bati <= 0
                       OR valeur_fonciere / NULLIF(surface_reelle_bati, 0)
                          NOT BETWEEN 100 AND 12000))::int AS ratio_hors_bande
-        FROM dvf_mutations"""), ).mappings().one()
+        FROM dvf_mutations WHERE (CAST(:nom AS text) IS NULL OR commune = :nom)"""),
+        par).mappings().one()
     # listes MUTABLES (RowMapping = lecture seule) pour poser `partiel` + calculer la tendance YoY.
     dvf_l = [dict(r) for r in dvf]
     terrain_l = [dict(r) for r in terrain]
     permis_l = [dict(r) for r in permis]
     for s in (dvf_l, terrain_l, permis_l):
         _marque_partiel(s, "mutations" if s is not permis_l else "permis")
-    return {"perimetre": "île entière (24 communes DVF, flux Sitadel régional)",
+    return {"perimetre": (f"{nom} (DVF communal, Sitadel)" if nom
+                          else "île entière (24 communes DVF, flux Sitadel régional)"),
+            "commune": nom, "insee": insee,   # RETOURS-11F M13 — écho du filtre pour le sélecteur front
             "criteres": ("Ventes strictes uniquement (P1-03) : nature 'Vente', prix > 1 000 €, "
                          "€/m² bâti dans [100, 12 000] — médianes ET volumes. Écartées : VEFA (neuf), "
                          "adjudications/échanges/expropriations, prix symboliques, ratios aberrants."),
@@ -547,8 +571,10 @@ def _barometre_data(db: Session) -> dict:
 
 
 @router.get("/barometre")
-def barometre(db: Session = Depends(get_db)) -> dict:
-    return _barometre_data(db)
+def barometre(insee: str | None = Query(None, min_length=5, max_length=5),
+              db: Session = Depends(get_db)) -> dict:
+    """RETOURS-11F M13 (O15) — `insee` optionnel : île entière (défaut) ou une commune (sélecteur)."""
+    return _barometre_data(db, insee=insee)
 
 
 @router.get("/marche/{commune}")

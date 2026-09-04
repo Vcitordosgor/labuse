@@ -39,6 +39,14 @@ const ROWS: Row[] = [
   { label: 'Sous-densité', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
   { label: 'Charge foncière /m²', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'lo', title: 'Coût du foncier ramené au m² de surface de plancher constructible — plus bas = plus intéressant.' },
   { label: 'Prix terrain nu zone', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Prix moyen du terrain nu observé dans la zone — plus bas = plus intéressant.' },
+  // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
+  { label: 'Prix bâti secteur', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur — même source que la fiche Marché.' },
+  { label: 'Logements possibles', val: (r) => r.logements_possibles != null ? `${fmtInt(r.logements_possibles)}` : '—', num: (r) => r.logements_possibles ?? null, best: 'hi', title: 'Borne haute de la fourchette de logements estimée (au sol ou sous-sol).' },
+  { label: 'Bâti existant', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
+  { label: 'Gabarit max', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
+  { label: 'Accès & réseaux', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
+  { label: 'Assainissement', val: (r) => r.assainissement ?? '—' },
+  { label: 'Propriétaire', val: (r) => r.proprietaire === 'morale' ? 'personne morale' : r.proprietaire === 'particulier' ? 'particulier' : '—', title: 'Personne morale (société) ou particulier — issu du fichier DGFiP.' },
   { label: 'Contrainte majeure', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
 

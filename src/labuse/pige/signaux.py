@@ -54,36 +54,12 @@ SEUIL_REF_LOCAL = 8   # sous ce n dans le rayon, le local ne tient pas → on é
 
 
 def _ref_local(db: Session, idu: str | None, type_bien: str | None) -> dict | None:
-    """C5 — MÉDIANE LOCALE du MÊME type autour de la parcelle rattachée. SECTEUR-2 (T1) : la MÊME
-    méthode que le moteur « Marché et secteur » de la fiche (`faisabilite.bilan`) — exclusion des 5 %
-    extrêmes, rayon adaptatif 500→1500 m jusqu'à n minimum (constante partagée), rayon effectif
-    affiché, distribution avant/après rendue. None si pas d'idu, type non bâti, ou n < seuil à 1500 m
-    (→ repli commune). Sert la médiane secteur, jamais la commune entière (diagnostic C5)."""
-    tl = {"maison": "Maison", "appartement": "Appartement", "immeuble": "Maison"}.get(type_bien or "")
-    if not idu or not tl:
-        return None
-    from ..api.moteurs import _BAROMETRE_RETENUE
-    from ..faisabilite.bilan import MIN_N_SECTEUR, RAYONS_SECTEUR_M, trim_extremes_5pct, distribution_secteur
-    import statistics
-    for rayon in RAYONS_SECTEUR_M:
-        rows = db.execute(text(
-            f"SELECT valeur_fonciere / NULLIF(surface_reelle_bati,0) AS pm, "
-            f"  to_char(max(date_mutation) OVER (), 'YYYY') AS millesime "
-            f"FROM dvf_mutations "
-            f"WHERE type_local = :t AND {_BAROMETRE_RETENUE} "
-            f"  AND ST_DWithin(geom::geography, "
-            f"      (SELECT centroid::geography FROM parcels WHERE idu = :idu), :rad)"),
-            {"t": tl, "idu": idu, "rad": rayon}).mappings().all()
-        prices = [float(r["pm"]) for r in rows if r["pm"] is not None]
-        kept, _lo, _hi = trim_extremes_5pct(prices)
-        if len(kept) >= max(SEUIL_REF_LOCAL, MIN_N_SECTEUR) and kept:
-            millesime = rows[0]["millesime"] if rows else None
-            return {"eur_m2": float(statistics.median(kept)), "n": len(kept), "millesime": millesime,
-                    "perimetre": f"{'maisons' if tl == 'Maison' else 'appartements'} · {int(rayon)} m autour de la parcelle",
-                    "meme_type": True, "locale": True, "rayon_m": int(rayon),
-                    "distribution": {"avant": distribution_secteur(prices), "apres": distribution_secteur(kept),
-                                     "n_exclus_extremes": len(prices) - len(kept), "n_min_vise": max(SEUIL_REF_LOCAL, MIN_N_SECTEUR)}}
-    return None
+    """C5 — MÉDIANE LOCALE du MÊME type autour de la parcelle rattachée. RETOURS-11F M3 : ce n'est
+    plus qu'un DÉLÉGUÉ du moteur de secteur UNIQUE (`faisabilite.bilan.reference_locale`) — un seul
+    point de calcul, plus de boucle/requête recopiée ici. Le seuil local (SEUIL_REF_LOCAL) reste la
+    convention Radar. None si pas d'idu, type non bâti, ou n insuffisant à 1500 m (→ repli commune)."""
+    from ..faisabilite.bilan import reference_locale
+    return reference_locale(db, idu, type_bien, seuil=SEUIL_REF_LOCAL)
 
 
 def _radar_medianes(db: Session, commune: str) -> dict:

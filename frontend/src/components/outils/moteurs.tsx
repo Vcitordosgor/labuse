@@ -478,16 +478,27 @@ function SerieTrim({ titre, tip, rows, volKey, medKey, unite, pct }:
   )
 }
 
+// RETOURS-11F M13 (O15) — communes triées (article ignoré), option « Île entière » en tête.
+const M18_COMMUNES = trierCommunes(CP_COMMUNES as [string, string][], ([, nom]) => nom)
+
 export function M18() {
-  const q = useQuery({ queryKey: ['m18'], queryFn: motBarometre })
+  // sélecteur de commune : '' = île entière (défaut, comportement historique).
+  const [insee, setInsee] = useState('')
+  const q = useQuery({ queryKey: ['m18', insee || 'ile'], queryFn: () => motBarometre(insee || null) })
   const d = q.data as Record<string, any> | undefined
   const nr = d?.neuf_reference as Record<string, any> | undefined
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* M141 Partie 1 — bouton « Rapport PDF » RETIRÉ (le baromètre ne sort plus en PDF, décision Vic).
-          L'onglet Évolution reste inchangé ; seul l'export disparaît. */}
-      <div className="flex items-center gap-2">
-        <span className="text-[10.5px] text-txt-mut">Île entière (DVF 24 communes, Sitadel régional) — 8 derniers trimestres.</span>
+          RETOURS-11F M13 — sélecteur de commune (île entière par défaut). */}
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-[10.5px] text-txt-mut">Périmètre</label>
+        <select value={insee} onChange={(e) => setInsee(e.target.value)}
+          className="min-h-7 rounded border border-line-2 bg-bg-2 px-2 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint/60">
+          <option value="">Île entière (24 communes)</option>
+          {M18_COMMUNES.map(([code, nom]) => <option key={code} value={code}>{nom}</option>)}
+        </select>
+        <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''} — 8 derniers trimestres.</span>
       </div>
       {nr && (
         <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)

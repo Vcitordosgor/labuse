@@ -259,3 +259,60 @@ barème · F7 `pct_qpv` non servi. Mesures : `scripts/mesures_retours11f2.py`.
 - Périmètre tenu sur les items à fort levier + toutes les mesures ; les restructurations profondes de fiche
   (Lot S sections complètes) et les extensions de moteur (M9 capacité nette, M13 Comparer/Évolution) sont
   **mesurées et notées**, à reprendre en tête d'une F3.
+
+---
+
+# SESSION F3 — branche `fix/retours-11f3` (la DERNIÈRE : on solde le reste)
+
+**Étape 0** — `pwd` = `/Users/openclaw/Desktop/labuse` · branche `fix/retours-11f3` · arbre propre au départ ·
+**run servi = `q_v11_m137`** (lu dans `config/served_run.txt`, **INCHANGÉ à la fin** — aucune bascule).
+Base RÉELLE `labuse` (431 663 parcelles) ; chaque chiffre vient d'une requête, jamais d'une lecture de code.
+**Clôture** — tsc 0 · build/vitest 152/152 · golden 119/119 (run servi inchangé) · pytest : voir §Clôture.
+Gardes ajoutées : `tests/test_retours11f3.py`. **9 commits (1 par bloc) AVANT ce compte-rendu. Merge = Vic.**
+
+## Une ligne par ID
+
+| ID | Statut | Fait |
+|---|---|---|
+| **M9** | FAIT | Densifier : capacité **NETTE** (SDP brute × facteur constructibilité borné [0,1], config `renouvellement.yaml`) = déduction PPR rouge (**fraction réelle** lue au motif « N % de la surface »), pente > 30 % (`parcel_terrain`), ravine/mvt. `comp_potentiel` rank sur la NETTE. **Surélévation** lue de `parcel_residuel_bati` (hauteur PLU − hauteur bâti, niveaux). Rebuild q_v11_m137 : 67 260 parcelles, **6 896 contraintes** (5 815 fortes), **42 639 surélévables**, 959 scores distincts ; parcelles 78-96 % contraintes redescendent au rang ~24 000-27 000. Reculs/falaise fine : non cartographiés par parcelle (dit), non déduits. Colonnes exposées outil (SDP nette + −N %, Surélévation) + fiche. |
+| **M13** | FAIT | **Comparer** : 7 colonnes O9 ajoutées, toutes de la fiche servie / du bilan servi (aucun 2ᵉ moteur) — propriétaire (moral/particulier), bâti existant %, gabarit max, logements possibles, accès & réseaux (UN verdict), assainissement, prix bâti secteur (jamais le terrain nu). Absent = « — ». **Évolution du marché** : **sélecteur de commune** (`_barometre_data(insee)`, 3 séries filtrées ; neuf commune via le moteur unique M1) — mesuré Saint-Paul neuf 4 742 €/m² = exactement le chiffre M1. |
+| **M3** | FAIT | Fusion RÉELLE : la médiane locale mono-type vit désormais DANS le moteur (`faisabilite.bilan.reference_locale`), à côté de `sector_price` ; `pige.signaux._ref_local` n'est plus qu'un **délégué** (0 requête recopiée). Double affichage O1 sur « Mon secteur / Étudier un bien » résolu (bloc « par type » = DÉTAIL du prix, plus une médiane rivale). Convergence mesurée 97415000BS0086 : `_ref_local`==`reference_locale` à l'euro (maison 4 662, appart 4 083). `sector_price` inchangé (golden intact). |
+| **C6** | FAIT | GetCapabilities + **GetTile RÉELS** Géoplateforme (réseau, 04/09) sur St-Denis ET St-Pierre : Plan IGN v2 + 6 orthos historiques + « Actuelle » servent des dalles au 974 (200, non vides) → **rien à retirer**. 1965-1980 et 1980-1995 = **404 au 974** (métropole seule) → exclusion CONFIRMÉE. Millésime réel île-entière le plus récent = **2022** (2023/2024 = 404) → « Actuelle · **BD ORTHO 2022** » (au lieu d'un « Actuelle » nu / d'un 2025 non servi). |
+| **A5** | FAIT | Préférences notifications : **3ᵉ canal « brief »** ajouté de bout en bout (colonne `notif_canaux.brief`, `prefs_compte`/`set_pref`, `PATCH /events/prefs`, front). Le brief n'est applicable qu'aux **chaînes 1+2** (parcelles/secteurs) ; chaînes 3 (annonce/maintenance = immédiat) → `brief_na` (case grisée). `brief_matin` RESPECTE le canal (`_brief_filter_sql`) — pas un toggle décoratif. |
+| **Lot S / F0** | FAIT | **Seuils de pertinence** par famille (`SEUILS_PROXIMITE_M`) : ligne HT 500 m, téléphérique 2000 m, arrêt 1500 m, pôle 3000 m, axe 1000 m — au-delà l'objet est écarté. Plus de « ligne HT à 3 887 m » ni « téléphérique à 24 km ». |
+| **Lot S / F4** | FAIT | Urbanisme : **tableau des règles de zone AVEC valeurs** (hauteur faîtage+égout, emprise, reculs voie/limites, pleine terre, stationnement) — `resolve_reglement.regles_valeurs`, valeurs LUES du YAML PLU. « non réglementé » / « à vérifier » DITS, jamais comblés. Mesuré U1b (97415000BS0086) : 16 m faîtage/12 m égout, pleine terre 30 %, recul limites 3 m, stationnement 1 pl./logt. `declassement` brut / « rien à construire » : absents de la fiche servie (legacy /explain seul). |
+| **Lot S / F10** | FAIT | Dispositifs : **zonage B1** + **TVA DOM 8,5 % / 2,1 % LLS** (constants île, rapatriés de Constructibilité). Bande TVA réduite accession recadrée sur le **CGI art. 278 sexies** (300 m QPV / 500 m NPNRU ; le calque LABUSE dérivé à 500 m est dit). Jamais un calcul fiscal par projet. |
+| **Lot S / F11** | FAIT | Propriétaire : « Personnes morales non remarquables » (nom de fichier DGFiP) → « **Personne morale — fichier DGFiP** ». **Carte d'identité SIRENE** (`_pm_identite`) : activité (APE + libellé), siège, date de création, état actif. Mesuré PACIFIC (484061601) : « Location de terrains et d'autres biens immobiliers » (6820B), siège 336 rue Saint-Louis Saint-Paul, créée 2005-07-01, active. |
+| **AVENANT R9** | FAIT | Adresse fiche : plus de troncature « … » (`.addr > span` white-space normal + line-clamp 2) — adresse complète visible, 2 lignes si très longue. |
+| **AVENANT R10** | FAIT + **VÉRIFIÉ NAVIGATEUR** | Gouttes piscines invisibles : cause = `text-field:'💧'` (glyphes emoji absents → échec silencieux). Fix = icône **canvas** `piscine-drop` (addImage) + couche `icon-image`. Playwright/`window.__labuse_map` : `hasImage`=true, gouttes rendues z9/z12/z16 (capture `captures-retours-11f3/R10-apres-gouttes-piscines-z16.png`). |
+| **AVENANT R11** | FAIT | Bloc « Piscines détectées » se REPLIE en une ligne au clic « Voir sur la carte » (réversible), dévoilant le listing. **Note liée** : totaux ALIGNÉS — le listing suit le filtre de confiance du compteur (`_piscine_conf_filtre` + exclusion « pas une piscine ») et la limite 500 est LEVÉE. Mesuré : agg==liste = 7 821 (haute) / 8 299 (incertaines), `tronquee`=false. |
+
+## Ce qui RESTE (Lot S — restructurations d'affichage profondes, non soldées)
+
+Objectif « zéro reste » non atteint sur ces cinq sections — ce sont des refontes de rendu de `Fiche.tsx`
+(déplacements de faits entre tiroirs), pas des vérités fausses : la fiche ne ment pas dessus aujourd'hui.
+- **F5 (Constructibilité)** : fourchettes « ~2 à 2 », bascule Hypothèses calibrées/Vos hypothèses, mini-bilan
+  avec hypothèses visibles, RTAA en accordéon. (Le moteur d'étapes unique M7 est déjà en place, F2.)
+- **F6 (Risques)** : vigilances D'ABORD (chip ambre), « rien à signaler » repliés, SUP par famille, monument ABF nommé.
+- **F7 (Marché)** : déplacer le socio-éco vers Autour, annonces Radar dans le rayon. (VEFA M1 + QPV : déjà faits.)
+- **F8 (Réseaux et accès)** : UN verdict d'accès en 4 blocs (Accès/Réseaux/Viabilisation/Axes), ensoleillement sorti.
+- **F9 (Autour)** : Filosofi étiqueté **Sourcé** (carreau INSEE) et non Estimé ; permis rapatriés en un seul tableau.
+  *Seam identifié* : `marche_secteur.filosofi_200m` (fiche) + `AutourZoneBlock` (population/revenu) — le libellé
+  « valeur approchée » du revenu IMPUTÉ est correct, mais le carreau brut Filosofi doit porter « Sourcé ».
+
+## Gardes ajoutées (`tests/test_retours11f3.py`)
+M9 (capacité nette + surélévation + config), M13 (colonnes Comparer + baromètre commune + moteur M1),
+M3 (moteur unique + délégation), A5 (3 canaux + brief_na + filtre brief), F0 (seuils), F4 (règles valeurs +
+zone non outillée), F10 (B1/TVA/CGI), F11 (identité SIRENE + wording), avenant R11 (alignement listing/compteur).
+
+## Clôture F3
+- **tsc** 0 · **build/vitest** 152/152 · **golden** 119/119 (run servi `q_v11_m137` **inchangé**).
+- **pytest** : **2 242 passed, 49 skipped, 1 failed** en suite complète (106 s) — MAIS le failed est un
+  **flottant PRÉ-EXISTANT, non-déterministe, non causé par F3** : la 1re passe échoue sur `test_cascade::
+  test_statuts_attendus`, une 2ᵉ passe (sans mon fichier de tests) échoue sur un AUTRE test
+  (`test_audit_stripe::test_flash_recuperable_apres_onglet_ferme`) tandis que `test_cascade` passe. **Chaque
+  test incriminé PASSE en isolation** (vérifié pour les deux) et mes 15 gardes F3 + `test_cascade` passent
+  ensemble (27/27) : c'est une pollution d'état inter-tests de la suite (ordre de collection), indépendante
+  de ce mandat — à traiter comme dette de fiabilité de suite, hors périmètre F3. Les 49 skips = base
+  applicative/Saint-Denis/SIRENE absentes du `labuse_test` (comme F1/F2).
+- 9 commits sur `fix/retours-11f3` **avant** ce compte-rendu. **Merge = Vic.** Aucun sous-agent n'a touché à git.

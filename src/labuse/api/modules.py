@@ -640,6 +640,7 @@ def prospection_solaire(commune: str | None = None,
                         potentiel_min: int = 0, proba_occ_min: int = 0,
                         piscine: str = "tous",   # tous | oui | non
                         piscine_surf_min: int = 0,   # surface piscine ≥ (m²) — mode Piscines
+                        inclure_incertaines: bool = False,   # RETOURS-11F3 avenant — aligne le LISTING sur le filtre confiance de l'agg
                         sort: str = "potentiel",  # potentiel | toiture | proba
                         fmt: str = "json",
                         db: Session = Depends(get_db)):
@@ -665,17 +666,31 @@ def prospection_solaire(commune: str | None = None,
         else " AND (e.piscine IS NOT TRUE)" if piscine == "non" else ""
     # surface piscine ≥ (mode Piscines) : implique une piscine détectée avec une surface mesurée.
     surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
+    # RETOURS-11F3 avenant (note liée R11) — en mode PISCINES (piscine='oui'), le LISTING suit le MÊME
+    # filtre que le compteur (agg) : confiance HAUTE par défaut (+ incertaines à la bascule) ET exclusion
+    # des « pas une piscine ». Avant, la liste ignorait ces deux filtres → « 7 821 (agg) vs 8 299 (liste) »
+    # sur le même écran. Point de calcul partagé `_piscine_conf_filtre`.
+    conf_cond = corr_cond = ""
+    if piscine == "oui":
+        from ..ingestion.ortho_equipements import ensure_corrections
+        ensure_corrections(db)   # idempotent — la table existe avant le NOT EXISTS
+        conf_cond = _piscine_conf_filtre(inclure_incertaines)
+        corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = e.idu)"
     where = ("WHERE ps.prod_spec_kwh_kwc IS NOT NULL AND ps.prod_spec_kwh_kwc >= :pmin"
              " AND ps.proba_proprio_occupant >= :prmin"
-             + (" AND p.commune = :c" if commune else "") + pisc_cond + surf_cond)
+             + (" AND p.commune = :c" if commune else "") + pisc_cond + surf_cond + conf_cond + corr_cond)
     base = """
         FROM parcel_solar ps
         JOIN parcels p ON p.idu = ps.idu
         LEFT JOIN parcel_terrain t ON t.idu = ps.idu
         LEFT JOIN p_model_bati b ON b.idu = ps.idu
         LEFT JOIN parcel_equipements e ON e.idu = ps.idu"""
-    params = {"c": commune, "pmin": potentiel_min, "prmin": proba_occ_min, "psmin": piscine_surf_min}
+    params = {"c": commune, "pmin": potentiel_min, "prmin": proba_occ_min, "psmin": piscine_surf_min,
+              "cmin": SEUIL_PISCINE_HAUTE}
     total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
+    # RETOURS-11F3 avenant R11 — en mode PISCINES, la limite de 500 est LEVÉE : le listing sert TOUTES
+    # les piscines du filtre actif (le front pagine par 200). Ailleurs, le cap habituel tient.
+    lim = total if piscine == "oui" else cap
     rows = db.execute(text(f"""
         SELECT ps.idu, p.commune AS commune,
                round(ps.prod_spec_kwh_kwc)::int AS productible,
@@ -692,7 +707,7 @@ def prospection_solaire(commune: str | None = None,
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         {where}
         ORDER BY {order} LIMIT :lim"""),
-        {**params, "v2run": _v2run(db), "run": runs.current(), "lim": cap}).mappings().all()
+        {**params, "v2run": _v2run(db), "run": runs.current(), "lim": lim}).mappings().all()
     items = []
     for r in rows:
         d = dict(r)

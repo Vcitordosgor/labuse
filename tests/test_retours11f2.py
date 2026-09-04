@@ -114,10 +114,12 @@ def test_m3_prix_secteur_une_seule_methode_fenetre_n():
     # de deux fenêtres/seuils divergents sur le même écran. On grave le partage des constantes SECTEUR-2.
     from labuse.faisabilite import bilan
     from labuse.pige import signaux
-    # _ref_local importe la robustification de bilan (méthode unique), il ne la recopie pas.
+    # RETOURS-11F3 M3 — merge RÉEL : _ref_local ne recopie plus la boucle/requête ; il DÉLÈGUE au
+    # moteur unique bilan.reference_locale (un seul point de calcul). La garde suit le merge profond.
     src = inspect.getsource(signaux._ref_local)
-    assert "from ..faisabilite.bilan import" in src
-    assert "trim_extremes_5pct" in src and "RAYONS_SECTEUR_M" in src
+    assert "reference_locale" in src, "_ref_local doit déléguer au moteur unique bilan.reference_locale"
+    assert "for rayon in RAYONS_SECTEUR_M" not in src, "plus de boucle rayon recopiée dans _ref_local"
+    assert "dvf_mutations" not in src, "plus de requête DVF recopiée dans _ref_local"
     # même n minimum des deux côtés (le seuil local ne descend jamais sous le n secteur).
     assert signaux.SEUIL_REF_LOCAL >= 1 and bilan.MIN_N_SECTEUR == 8
     assert bilan.PERIODE_SECTEUR_ANS == 5   # fenêtre unique (années récentes), partagée

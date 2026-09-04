@@ -41,6 +41,30 @@ poids:
                            # la rotation brute (le shrinkage gamma-Poisson vit dans le modèle P,
                            # hors de portée d'une heuristique lisible — assumé, cf. rapport).
 
+# ── Capacité NETTE des contraintes (RETOURS-11F M9) ──────────────────────────────
+# Vic : « une maison de 100 m² sur 1 000 m² dont 900 sont en falaise ne densifie rien ».
+# La SDP résiduelle BRUTE (droits à bâtir non consommés) est corrigée par un facteur de
+# constructibilité MULTIPLICATIF, borné [0,1], qui déduit ce qui n'est physiquement pas
+# constructible sur la parcelle. Le score de renouvellement (comp_potentiel) est calculé
+# sur la SDP NETTE, plus sur la brute — une parcelle contrainte descend dans le classement.
+#
+# Chaque facteur est SOURCÉ sur une donnée servie du run (jamais inventé) :
+#   - PPR zone rouge : fraction RÉELLE de la surface (le motif cascade porte « N % de la
+#     surface ») → on retire EXACTEMENT cette fraction (facteur = 1 − pct/100).
+#   - pente > 30 % : terrain non aisément constructible (RGE ALTI 5 m, parcel_terrain,
+#     pente de la part NON bâtie). Facteur forfaitaire (l'assiette constructible se réduit
+#     fortement — terrassement lourd, reculs de talus).
+#   - ravine (au contact de la berge, seuil 10 m) / mouvement de terrain : bande non
+#     constructible sur l'assiette. Facteur forfaitaire.
+# Les RECULS voie/séparatifs et l'emprise de falaise fine ne sont PAS cartographiés en
+# donnée ouverte par parcelle (dit au rapport) : ils ne sont pas déduits ici, seule
+# l'emprise réglementaire max (parcel_residuel_bati) les porte déjà pour la surélévation.
+capacite_nette:
+  pente_seuil_pct: 30       # au-delà : facteur pente appliqué
+  facteur_pente_forte: 0.5  # pente > 30 % → moitié de l'assiette résiduelle réputée constructible
+  facteur_ravine: 0.85      # contact ravine → −15 % (bande de berge)
+  facteur_mvt: 0.90         # mouvement de terrain à proximité → −10 %
+
 # ── Plafond de la LISTE servie (outil « Densifier l'existant ») ──────────────────
 # Le tri se fait côté serveur ; l'écran DIT « les N premières sur M » (jamais un LIMIT muet).
 liste_max: 400

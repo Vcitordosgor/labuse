@@ -716,6 +716,9 @@ export interface RenouvItem {
   idu: string; commune_nom: string; commune_insee: string; renouv_score: number
   comp_potentiel: number; comp_assiette: number; comp_marche: number
   code_bati_origine: string; sdp_residuelle_m2: number | null; surface_m2: number | null
+  // RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine) + surélévation.
+  sdp_nette_m2: number | null; contrainte_pct: number | null
+  surelevation_possible: boolean | null; niveaux_surelevation: number | null
   zone_plu: string | null; rang_segment: number; rang_commune: number
   // puce d'action (verdictMeta) : tier v2 servi + étage 0 du run servi — jamais « Classement historique »
   tier_v2: string | null; etage0: boolean
@@ -747,6 +750,8 @@ export interface ProspectionSolaireResp {
 export interface SolaireFiltres {
   commune?: string | null; potentielMin?: number; probaOccMin?: number
   piscine?: 'tous' | 'oui' | 'non'; piscineSurfMin?: number; sort?: 'potentiel' | 'toiture' | 'proba'
+  // RETOURS-11F3 avenant — aligne le listing piscines sur le filtre confiance du compteur (agg).
+  inclureIncertaines?: boolean
 }
 const solaireQs = (f: SolaireFiltres) => {
   const p: Record<string, string | number> = {}
@@ -755,6 +760,7 @@ const solaireQs = (f: SolaireFiltres) => {
   if (f.probaOccMin) p.proba_occ_min = f.probaOccMin
   if (f.piscine && f.piscine !== 'tous') p.piscine = f.piscine
   if (f.piscineSurfMin) p.piscine_surf_min = f.piscineSurfMin
+  if (f.inclureIncertaines) p.inclure_incertaines = 'true'
   if (f.sort) p.sort = f.sort
   return qf(p)   // qf ajoute source=SOURCE (convention)
 }
@@ -844,6 +850,11 @@ export interface CompareRow {
   charge_fonciere_m2?: number | null
   terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
   n_contraintes?: number; contraintes?: string[]
+  // RETOURS-11F M13 (O9) — colonnes ajoutées, toutes de la fiche servie / du bilan servi.
+  proprietaire?: string | null; bati_existant_pct?: number | null
+  gabarit_niveaux_max?: number | null; logements_possibles?: number | null
+  acces_reseaux?: string | null; assainissement?: string | null
+  prix_secteur_bati_m2?: number | null
 }
 export const getCompare = (idus: string[]) =>
   j<{ count: number; parcels: CompareRow[] }>(`/compare?idus=${encodeURIComponent(idus.join(','))}`)
@@ -1032,9 +1043,11 @@ export interface SuiviItem { idu: string; depuis: string; commune: string | null
 export const getSuivis = () => j<{ suivis: SuiviItem[]; plafond: number }>('/events/suivis')
 // M85 / M85-B — préférences par type (registre) et par canal (cloche / e-mail). `verrou` = non
 // désactivable (maintenance : e-mail toujours actif, conséquences réelles).
-export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean; verrou?: boolean }
+// RETOURS-11F3 A5 — 3 canaux : cloche · brief (du matin) · e-mail. `brief_na` = brief non applicable
+// (chaînes 3, envoi immédiat — la case est grisée). `verrou` = e-mail non désactivable (maintenance).
+export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean; brief: boolean; brief_na?: boolean; verrou?: boolean }
 export const getNotifPrefs = () => j<{ types: NotifPref[] }>('/events/prefs')
-export const patchNotifPref = (p: { pref_type: string; cloche: boolean; email: boolean }) =>
+export const patchNotifPref = (p: { pref_type: string; cloche: boolean; email: boolean; brief?: boolean }) =>
   j<{ ok: boolean }>('/events/prefs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
 export const getEventsCount = () => j<{ unread: number; par_parcelle: Record<string, number> }>('/events/count')
 export const markEventRead = (id: number) => j<{ ok: boolean }>(`/events/${id}/read`, { method: 'POST' })
@@ -1429,7 +1442,8 @@ export const motAssemblage = (idus: string[]) =>
   j<Record<string, any>>('/moteurs/assemblage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 export const motZan = () => j<Record<string, any>>('/moteurs/zan')
 export const zanParcelle = (idu: string) => j<Record<string, any>>(`/moteurs/zan/parcelle/${idu}`)
-export const motBarometre = () => j<Record<string, any>>('/moteurs/barometre')
+export const motBarometre = (insee?: string | null) =>
+  j<Record<string, any>>(`/moteurs/barometre${insee ? `?insee=${encodeURIComponent(insee)}` : ''}`)
 // M-U — bloc « Marché » par commune (9 lignes datées + market_signal DVF/Sitadel)
 export const motMarcheCommune = (commune: string) =>
   j<Record<string, any>>(`/moteurs/marche/${encodeURIComponent(commune)}`)

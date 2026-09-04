@@ -54,7 +54,7 @@ LIBELLE_SEGMENT = "Parcelle occupée — potentiel de densification"
 #: M129-C (Vic 19/08/2026) : `comp_divisibilite` RETIRÉE — division_or sort du produit.
 #: Impact mesuré avant retrait : 2 lignes/67 258 portaient le +15, 0 sortie du top 100.
 LIBELLES_COMPOSANTES = {
-    "comp_potentiel": "droits à bâtir résiduels (SDP non consommée)",
+    "comp_potentiel": "droits à bâtir résiduels NETS des contraintes (pente, PPR rouge, ravine)",
     "comp_assiette": "taille de l'assiette foncière",
     "comp_marche": "rotation du bâti dans le secteur",
 }
@@ -78,8 +78,17 @@ def load_config() -> dict:
     total = sum(int(v) for v in poids.values())
     if total != 100:
         raise ValueError(f"renouvellement.yaml : Σ poids = {total} ≠ 100 — corriger la config.")
+    # RETOURS-11F M9 — facteurs de capacité NETTE (défauts sûrs si la section manque).
+    cn = cfg.get("capacite_nette") or {}
+    capacite_nette = {
+        "pente_seuil_pct": float(cn.get("pente_seuil_pct", 30)),
+        "facteur_pente_forte": float(cn.get("facteur_pente_forte", 0.5)),
+        "facteur_ravine": float(cn.get("facteur_ravine", 0.85)),
+        "facteur_mvt": float(cn.get("facteur_mvt", 0.90)),
+    }
     return {"poids": {k: int(v) for k, v in poids.items()},
-            "seuils": {k: int(v) for k, v in seuils.items()}}
+            "seuils": {k: int(v) for k, v in seuils.items()},
+            "capacite_nette": capacite_nette}
 
 
 DDL = """
@@ -94,7 +103,13 @@ CREATE TABLE IF NOT EXISTS parcel_renouvellement (
   comp_assiette      int  NOT NULL,      -- 0-29  : surface (percent_rank segment)
   comp_marche        int  NOT NULL,      -- 0-24  : rotation bâti secteur (percent_rank)
   code_bati_origine  text NOT NULL,      -- deja_bati | deja_bati_probable | ensemble_bati
-  sdp_residuelle_m2  int,                -- dénormalisé pour l'affichage « pourquoi »
+  sdp_residuelle_m2  int,                -- SDP résiduelle BRUTE (droits à bâtir non consommés)
+  sdp_nette_m2       int,                -- RETOURS-11F M9 : SDP résiduelle NETTE des contraintes
+                                          -- (pente > 30 %, PPR rouge %, ravine/mvt). C'est ELLE qui
+                                          -- alimente comp_potentiel — une parcelle contrainte descend.
+  contrainte_pct     int,                -- part déduite (0-100) = 100 × (1 − sdp_nette/sdp_brute)
+  surelevation_possible boolean,         -- RETOURS-11F M9 : hauteur PLU − hauteur bâti (BD TOPO)
+  niveaux_surelevation  int,             -- niveaux gagnables (~3 m/niveau) si surélévation possible
   surface_m2         int,
   zone_plu           text,
   commune            varchar(5) NOT NULL,
@@ -163,30 +178,77 @@ public_x AS (
     WHERE cr.run_label = :run AND cr.layer_name = 'foncier_public'
       AND cr.result = 'SOFT_FLAG'
 ),
+-- RETOURS-11F M9 — contraintes NON constructibles servies par le run (jamais inventées) :
+-- PPR zone rouge (fraction RÉELLE lue dans le motif « N % de la surface »), ravine (contact
+-- berge), mouvement de terrain. Elles réduisent la SDP résiduelle exploitable → la NETTE.
+ppr_x AS (
+    SELECT p.idu,
+           max((regexp_match(cr.detail, '([0-9]+) % de la surface'))[1]::int) AS pct_rouge
+    FROM dryrun_cascade_results cr
+    JOIN parcels p ON p.id = cr.parcel_id
+    WHERE cr.run_label = :run AND cr.layer_name = 'risques'
+      AND cr.result = 'HARD_EXCLUDE' AND cr.detail LIKE '%PPR zone rouge%'
+    GROUP BY p.idu
+),
+ravine_x AS (
+    SELECT DISTINCT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id
+    WHERE cr.run_label = :run AND cr.layer_name = 'ravine' AND cr.result = 'SOFT_FLAG'
+),
+mvt_x AS (
+    SELECT DISTINCT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id
+    WHERE cr.run_label = :run AND cr.layer_name = 'mvt' AND cr.result = 'SOFT_FLAG'
+),
 seg AS (
     SELECT b.idu, b.code, left(b.idu, 5) AS commune, d.zone_plu,
            coalesce(d.sdp_residuelle_m2, 0)::int AS sdp,
            round(d.surface_m2)::int              AS surface,
-           coalesce(d.rot_bati_brute, 0)         AS rot_bati
+           coalesce(d.rot_bati_brute, 0)         AS rot_bati,
+           -- facteur de constructibilité MULTIPLICATIF borné [0,1] (config capacite_nette) :
+           greatest(0.0, (
+               (1.0 - coalesce(ppr.pct_rouge, 0) / 100.0)
+             * CASE WHEN tan(radians(coalesce(t.pente_non_batie_deg, t.pente_moy_deg, 0))) * 100
+                         > :pente_seuil THEN :f_pente ELSE 1.0 END
+             * CASE WHEN rav.idu IS NOT NULL THEN :f_ravine ELSE 1.0 END
+             * CASE WHEN mvt.idu IS NOT NULL THEN :f_mvt   ELSE 1.0 END
+           )) AS frac_net,
+           -- surélévation possible (hauteur PLU − hauteur bâti BD TOPO, parcel_residuel_bati déjà calculé) :
+           coalesce(rb.surelevation_possible, false) AS surelevable,
+           CASE WHEN rb.surelevation_possible
+                     AND rb.hauteur_max_m IS NOT NULL AND rb.hauteur_bati_m IS NOT NULL
+                THEN greatest(0, floor((rb.hauteur_max_m - rb.hauteur_bati_m) / 3.0))::int
+           END AS niveaux_sur
     FROM bati_x b
     JOIN p_model_ext_dataset d ON d.idu = b.idu AND d.annee = :annee
     LEFT JOIN p_model_ext_copro c ON c.idu = b.idu
+    LEFT JOIN ppr_x    ppr ON ppr.idu = b.idu
+    LEFT JOIN ravine_x rav ON rav.idu = b.idu
+    LEFT JOIN mvt_x    mvt ON mvt.idu = b.idu
+    LEFT JOIN parcel_terrain      t  ON t.idu  = b.idu
+    LEFT JOIN parcel_residuel_bati rb ON rb.idu = b.idu
     WHERE d.zone_plu IN ('U', 'AU')
       AND (d.sdp_residuelle_m2 > :sdp_min OR d.surface_m2 >= :surf_min)
       AND NOT coalesce(c.copro_rnic OR c.copro_dvf, false)
       AND NOT EXISTS (SELECT 1 FROM public_x px WHERE px.idu = b.idu)
 ),
-comp AS (
+netd AS (
+    -- SDP NETTE = SDP brute × facteur de constructibilité ; part de contrainte déduite (0-100).
     SELECT s.*,
+           round(s.sdp * s.frac_net)::int                  AS sdp_nette,
+           round(100 * (1.0 - s.frac_net))::int            AS contrainte_pct
+    FROM seg s
+),
+comp AS (
+    SELECT n.*,
            -- percent_rank BRUTS (0-1) — la source de discrimination fine ; les composantes affichées
            -- (points arrondis) restent des ENTIERS pour le « pourquoi », mais ne portent PLUS le score.
-           :w_pot * percent_rank() OVER (ORDER BY s.sdp)          AS pr_pot,
-           :w_ass * percent_rank() OVER (ORDER BY s.surface)      AS pr_ass,
-           :w_mar * percent_rank() OVER (ORDER BY s.rot_bati)     AS pr_mar,
-           round(:w_pot * percent_rank() OVER (ORDER BY s.sdp))::int          AS comp_potentiel,
-           round(:w_ass * percent_rank() OVER (ORDER BY s.surface))::int      AS comp_assiette,
-           round(:w_mar * percent_rank() OVER (ORDER BY s.rot_bati))::int     AS comp_marche
-    FROM seg s
+           -- M9 : le potentiel rank sur la SDP NETTE (contraintes déduites), plus sur la brute.
+           :w_pot * percent_rank() OVER (ORDER BY n.sdp_nette)      AS pr_pot,
+           :w_ass * percent_rank() OVER (ORDER BY n.surface)        AS pr_ass,
+           :w_mar * percent_rank() OVER (ORDER BY n.rot_bati)       AS pr_mar,
+           round(:w_pot * percent_rank() OVER (ORDER BY n.sdp_nette))::int    AS comp_potentiel,
+           round(:w_ass * percent_rank() OVER (ORDER BY n.surface))::int      AS comp_assiette,
+           round(:w_mar * percent_rank() OVER (ORDER BY n.rot_bati))::int     AS comp_marche
+    FROM netd n
 ),
 scored AS (
     -- RETOURS-11F M9 — score CONTINU (1 décimale) issu des percent_rank bruts : plus de plateau à 100.
@@ -198,10 +260,12 @@ scored AS (
 )
 INSERT INTO parcel_renouvellement
     (idu, renouv_score, comp_potentiel, comp_assiette, comp_marche,
-     code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune,
+     code_bati_origine, sdp_residuelle_m2, sdp_nette_m2, contrainte_pct,
+     surelevation_possible, niveaux_surelevation, surface_m2, zone_plu, commune,
      rang_segment, rang_commune, run_label)
 SELECT idu, score, comp_potentiel, comp_assiette, comp_marche,
-       code, nullif(sdp, 0), surface, zone_plu, commune,
+       code, nullif(sdp, 0), nullif(sdp_nette, 0), contrainte_pct,
+       surelevable, niveaux_sur, surface, zone_plu, commune,
        rank() OVER (ORDER BY score DESC, idu),
        rank() OVER (PARTITION BY commune ORDER BY score DESC, idu),
        :run
@@ -247,9 +311,12 @@ def build(session: Session, *, run_label: str | None = None,
     for stmt in sql_statements(DDL):
         if stmt.strip():
             session.execute(text(stmt))
+    cn = cfg["capacite_nette"]
     session.execute(text(_BUILD_SQL), {
         **params, "w_pot": poids["potentiel_residuel"], "w_ass": poids["assiette"],
-        "w_mar": poids["contexte_marche"]})
+        "w_mar": poids["contexte_marche"],
+        "pente_seuil": cn["pente_seuil_pct"], "f_pente": cn["facteur_pente_forte"],
+        "f_ravine": cn["facteur_ravine"], "f_mvt": cn["facteur_mvt"]})
 
     n = int(session.execute(text("SELECT count(*) FROM parcel_renouvellement")).scalar() or 0)
     # 4/5 mesurés après coup (différences successives, mêmes définitions que le build)
@@ -274,7 +341,8 @@ def top(session: Session, n: int = 20, commune: str | None = None) -> list[dict]
     return [dict(r) for r in session.execute(text(f"""
         SELECT idu, commune, renouv_score, rang_segment, rang_commune,
                comp_potentiel, comp_assiette, comp_marche,
-               code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu
+               code_bati_origine, sdp_residuelle_m2, sdp_nette_m2, contrainte_pct,
+               surelevation_possible, niveaux_surelevation, surface_m2, zone_plu
         FROM parcel_renouvellement {where}
         ORDER BY rang_segment LIMIT :n"""),
         {"n": n, "c": commune}).mappings().all()]

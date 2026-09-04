@@ -434,7 +434,25 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
               {/* M76 pt5 (arbitrage Vic) : lien violet « Annuaire PLU → » retiré — doublon de la porte
                   « Annuaire PLU de la commune » (grammaire officielle M60). Une action, une seule forme. */}
             </div>
-            {z.articles.length > 0 && (
+            {/* RETOURS-11F3 F4 — le TABLEAU des règles de la zone AVEC leurs VALEURS (hauteur, emprise,
+                reculs, pleine terre, stationnement), chacune avec sa source (article/page cliquable).
+                Remplace la liste d'articles nue (« références sans valeurs » de l'audit O1). « non
+                réglementé » (le PLU ne fixe pas de règle) et « à vérifier » sont dits, jamais comblés. */}
+            {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
+              <ul className="mt-1 flex flex-col gap-0.5">
+                {z.regles_valeurs.map((rv, j) => (
+                  <li key={j} className="flex items-baseline gap-2 text-[10.5px]">
+                    <span className="w-40 shrink-0 text-txt-dim">{rv.libelle}</span>
+                    <span className={rv.etat === 'chiffre' || rv.etat === 'texte' ? 'font-medium text-txt' : 'italic text-txt-dim'}>
+                      {rv.valeur}
+                    </span>
+                    {rv.reference && (rv.url
+                      ? <a href={rv.url} target="_blank" rel="noreferrer" className="ml-auto shrink-0 text-txt-dim hover:text-mint hover:underline" title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'} ↗</a>
+                      : <span className="ml-auto shrink-0 text-txt-dim" title={rv.reference}>{rv.reference.split(',')[0]}</span>)}
+                  </li>
+                ))}
+              </ul>
+            ) : z.articles.length > 0 && (
               <ul className="mt-1 flex flex-col gap-0.5">
                 {z.articles.slice(0, 6).map((a, j) => (
                   <li key={j} className="text-[10.5px] text-txt-mut">
@@ -2001,10 +2019,17 @@ export function Fiche({ idu }: { idu: string }) {
                         <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
                       </div>
                     ))}
+                    {/* RETOURS-11F M9 — capacité NETTE des contraintes : on sert la SDP réellement
+                        mobilisable (contraintes déduites), avec la brute + la part déduite en mots
+                        quand une contrainte s'applique ; jamais un chiffre brut trompeur. */}
                     <MicroTriple items={[
-                      f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
+                      f.renouvellement.sdp_nette_m2 != null && f.renouvellement.sdp_nette_m2 > 0
+                        ? `SDP nette ${fmtInt(f.renouvellement.sdp_nette_m2)} m²${f.renouvellement.contrainte_pct ? ` (−${f.renouvellement.contrainte_pct} % contraintes)` : ''}`
+                        : (f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —'),
                       f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
-                      `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
+                      f.renouvellement.surelevation_possible
+                        ? `surélévation ${f.renouvellement.niveaux_surelevation ? `+${f.renouvellement.niveaux_surelevation} niv.` : 'possible'}`
+                        : `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
                     ]} />
                     <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}</p>
                   </div>
@@ -2610,8 +2635,8 @@ export function Fiche({ idu }: { idu: string }) {
             {f.territoire_fiscal && (
               <RefDrawer id="territoire" icon={IC.marche} name="Dispositifs territoriaux"
                 context={f.territoire_fiscal.commune}
-                value={f.territoire_fiscal.zfang.regime === 'renforce'
-                  ? <span className="pill-mint">ZFANG renforcé</span> : 'ZFANG standard'}>
+                value={f.territoire_fiscal.zfang?.regime === 'renforce'
+                  ? <span className="pill-mint">ZFANG renforcé</span> : f.territoire_fiscal.zfang ? 'ZFANG standard' : undefined}>
                 <div className="flex flex-col gap-2.5" data-territoire-fiscal>
                   {/* M134 — les périmètres FINS qui touchent LA parcelle (QPV / bande TVA 500 m),
                       au-dessus des attributs de commune (ZFANG/FRR). Jamais un sigle nu. */}
@@ -2623,18 +2648,30 @@ export function Fiche({ idu }: { idu: string }) {
                     </div>
                   ))}
                   {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
-                     ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const).map(([titre, a]) => (
+                     ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const)
+                    .filter(([, a]) => !!a).map(([titre, a]) => (
                     <div key={titre}>
                       <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
-                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a.libelle}</p>
+                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
                       <p className="mt-0.5 text-[10.5px] text-txt-dim">
-                        {a.source_ref} · <a href={a.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a>
+                        {a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a>
                       </p>
                     </div>
                   ))}
-                  <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
-                    {f.territoire_fiscal.avertissement}
-                  </p>
+                  {/* RETOURS-11F3 F10 — dispositifs valables sur TOUTE La Réunion (zonage B1, TVA DOM
+                      8,5 % / 2,1 % LLS), rapatriés de Constructibilité. Repères, jamais un calcul fiscal. */}
+                  {(f.territoire_fiscal.dispositifs_dom ?? []).map((d) => (
+                    <div key={d.libelle} data-dispositif-dom>
+                      <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
+                      <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
+                      <p className="mt-0.5 text-[10.5px] text-txt-dim">{d.source}</p>
+                    </div>
+                  ))}
+                  {f.territoire_fiscal.avertissement && (
+                    <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
+                      {f.territoire_fiscal.avertissement}
+                    </p>
+                  )}
                 </div>
               </RefDrawer>
             )}
@@ -2658,6 +2695,19 @@ export function Fiche({ idu }: { idu: string }) {
                       {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
                       {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
                     </div>
+                    {/* RETOURS-11F3 F11 — carte d'identité publique (SIRENE) : activité, siège, création,
+                        état actif — faits publics d'entreprise, jamais une personne. */}
+                    {f.proprietaire_moral.identite && (
+                      <div data-proprio-identite className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5 text-[10.5px] text-txt-mut">
+                        {f.proprietaire_moral.identite.activite && <div><span className="text-txt-dim">Activité </span><span className="text-txt">{f.proprietaire_moral.identite.activite}</span>{f.proprietaire_moral.identite.ape && <span className="ml-1 font-mono text-txt-dim">({f.proprietaire_moral.identite.ape})</span>}</div>}
+                        {f.proprietaire_moral.identite.siege && <div><span className="text-txt-dim">Siège </span><span className="text-txt">{f.proprietaire_moral.identite.siege}</span></div>}
+                        <div className="flex gap-3">
+                          {f.proprietaire_moral.identite.date_creation && <span><span className="text-txt-dim">Créée </span>{f.proprietaire_moral.identite.date_creation}</span>}
+                          {f.proprietaire_moral.identite.actif != null && <span className={f.proprietaire_moral.identite.actif ? 'text-mint' : 'text-st-ecartee'}>{f.proprietaire_moral.identite.actif ? 'active' : 'cessée'}</span>}
+                        </div>
+                        <div className="text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.identite.source}</div>
+                      </div>
+                    )}
                     {/* RETOURS-11 F11 — lien vers l'Annuaire des entreprises (fiche INPI/INSEE publique). */}
                     {f.proprietaire_moral.siren && (
                       <a data-annuaire-entreprises target="_blank" rel="noreferrer noopener"
