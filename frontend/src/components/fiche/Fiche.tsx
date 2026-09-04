@@ -410,7 +410,11 @@ function ProjetButton({ idu }: { idu: string }) {
   const [open, setOpen] = useState(false)
   const [confirmMsg, setConfirmMsg] = useState<string | null>(null)
   const attache = useQuery({ queryKey: ['projets-parcelle', idu], queryFn: () => projetsPourParcelle(idu) })
-  const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets, enabled: open })
+  // RETOURS-12 J2 — le menu lit la liste À L'OUVERTURE, TOUJOURS FRAÎCHE : `staleTime 0` +
+  // `refetchOnMount:'always'` → un projet créé juste avant (ailleurs, sans invalidation garantie du
+  // cache) apparaît immédiatement, sans rechargement de page (bug « le projet n'apparaissait pas »).
+  const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets, enabled: open,
+    staleTime: 0, refetchOnMount: 'always' })
   const flash = (nom: string) => { setOpen(false); setConfirmMsg(nom); window.setTimeout(() => setConfirmMsg((m) => (m === nom ? null : m)), 2800) }
   const invalider = () => {
     qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })

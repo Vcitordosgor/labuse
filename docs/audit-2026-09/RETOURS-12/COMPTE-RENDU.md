@@ -288,5 +288,19 @@ intact (0 fichier scoring). Les 7 travaux O1-O7 sont livrés (O2 en commit dédi
 
 **Vérifs Lot O bloc 3** : tsc 0 · build OK · suite frontend 169/169 · backend `test_retours12_o8_sru` 3/3 ·
 recette navigateur chaque outil · golden intact (0 fichier scoring). O8-O13 livrés (O8 en commit dédié).
-## LOT J — Projets (commit 5) — À FAIRE
+## LOT J — Projets (commit 5)
+
+- **J1 — œil ambre : voir la parcelle sur la carte en ortho — FAIT.** À côté des gestes ✓/✗ de chaque
+  ligne de la colonne « à trier » (Kanban projet), un **œil en ambre** (couleur Projet) : au clic, la
+  carte zoome sur la parcelle et la délimite **en vue ORTHO** via `focusParcelle(idu, { ortho: true })` —
+  MÊME geste que O1/O12 (aucun second mécanisme). Le projet reste ouvert dans le store (`openProjet`
+  préservé) → revenir aux Projets restitue la liste intacte (état non perdu). Recette : 50 œils ambre,
+  clic → fond ortho + zoom 16 sur la parcelle (capture `J1-oeil-ambre-ortho`).
+- **J2 — un projet créé apparaît immédiatement — FAIT.** Cause : le menu « Projet » de la fiche lisait la
+  liste (`['projets']`) avec un cache qui pouvait être périmé (création ailleurs sans invalidation garantie)
+  → le nouveau projet n'apparaissait pas sans recharger. Correctif à la source : le menu lit la liste **à
+  l'ouverture, toujours fraîche** (`staleTime 0` + `refetchOnMount:'always'`). Recette : le menu liste les
+  9 projets actifs (frais) — tyty, LABUSTRE, JC, STEPH, LABUSE TEST 2… — sans rechargement de page.
+
+**Vérifs Lot J** : tsc 0 · build OK · suite frontend 169/169 · recette navigateur. Ne pas merger.
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
