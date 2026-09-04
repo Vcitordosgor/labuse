@@ -177,7 +177,17 @@ pareil, donc pré-existant, hors périmètre C3.
   l'endpoint) surmontée d'une **rosace d'orientation** (N/S/E/O, aiguille verte alignée sur l'azimut réel
   du bâti). Libellé « Pente du terrain » clarifié (RGE ALTI, pas la pente du toit). Recette : photo +
   rosace (azimut 140°) rendues (capture `O7-solaire-photo-rosace`).
-- **O4 — PLU compteurs+bug IDU — À FAIRE** · **O6 — Scan doublons — À FAIRE**
+- **O6 — « Scan patrimoine » / constructions : doublons supprimés — FAIT.** Mesuré : la cause n'est PAS
+  deux SIREN (CBO TERRITORIA = un seul siren 452038805, une dénomination) — c'était le LISTING qui servait
+  une carte **par OPÉRATION**, si bien qu'un promoteur à plusieurs opérations apparaissait plusieurs fois,
+  chaque carte répétant la même frise. Correctif : **regroupement par SIREN → une carte par promoteur**,
+  compteurs (opérations, permis, logements) = somme de SES opérations (même périmètre que la frise), ses
+  opérations listées dessous une fois chacune, ses programmes publiés dédoublonnés (par nom+url). Le
+  rattachement programme↔opération (par coordonnées SIREN+commune+année) n'est pas touché (pas cassé).
+  Recette : « Explorer toutes les opérations » → 154 cartes promoteur, **0 SIREN dupliqué** ; CBO une
+  seule carte (capture `O6-veille-regroupe`). Test `VeillePromoteurs.test.tsx` (2 opérations CBO → 1 carte,
+  compteurs sommés 41 permis / 123 logements, 2 sous-opérations listées).
+- **O4 — « PLU » : compteurs réconciliés + bug IDU — À FAIRE** (dernier de ce bloc)
 ## LOT O bloc 3 — outils O8-O13 (commit 4) — À FAIRE
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
