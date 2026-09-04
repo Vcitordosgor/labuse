@@ -69,6 +69,12 @@ _PURGES_TECH = [
     (re.compile(r"\s*\(pct_potentiel[^)]*\)"), ""),                # jeton interne « pct_potentiel ≥ 100 »
     (re.compile(r"\s*—\s*même chemin A4"), ""),                    # renvoi interne « même chemin A4 »
     (re.compile(r"\s*—\s*gisement\s*\(valorisation[^)]*\)"), ""),  # magnitude de scoring (surface)
+    # RETOURS-11F F4/S1 — JARGON DE SCORING au client : « (0 pt, anti-double-compte) » (SUP déjà
+    # couverte par une autre couche, cascade/layers/etage1.py). Le client n'a pas à lire la mécanique
+    # anti-double-compte du barème → purgée au point de service unique (écran + PDF). La SUP reste
+    # affichée, seule la parenthèse technique tombe.
+    (re.compile(r"\s*\(0\s*pt,?\s*anti-double-compte\)\.?"), ""),
+    (re.compile(r"\s*Catégorie déjà couverte par une autre couche\.?"), ""),
 ]
 
 # M125-1ter — FAUX CONSTAT DE NOM : filet de sécurité read-time sur les DÉTAILS DÉJÀ STOCKÉS (runs

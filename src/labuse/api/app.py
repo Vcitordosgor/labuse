@@ -3426,13 +3426,21 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "WHERE insee = substring(:idu FROM 1 FOR 5)"), {"idu": idu}).mappings().first()
     marche_secteur = None
     if carreau or rpls:
+        # RETOURS-11F F7 — « parc social 100,0 % en QPV » était FAUX : `pct_qpv` vaut 100,0 pour LES
+        # 24 communes (mesuré base réelle → champ non discriminant, mal ingéré). Doctrine : jamais un
+        # stat faux à l'écran. On ne sert PAS `pct_qpv` (l'écran/PDF gardent déjà `is not None`). Le
+        # vrai % QPV du parc social exige un croisement RPLS↔polygones QPV non disponible ici (noté).
+        rpls_dict = None
+        if rpls:
+            rpls_dict = {k: v for k, v in dict(rpls).items() if k != "pct_qpv"}
+            rpls_dict["millesime"] = "RPLS 01/01/2025"
         marche_secteur = {
             "filosofi_200m": ({**dict(carreau),
                                "taux_pauvrete_pct": round(100 * carreau["men_pauv"] / carreau["men"])
                                if carreau["men"] else None,
                                "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)"}
                               if carreau else None),
-            "rpls_commune": ({**dict(rpls), "millesime": "RPLS 01/01/2025"} if rpls else None),
+            "rpls_commune": rpls_dict,
         }
     # Score V (Vendabilité, Stage 3 additif) : score + panneau « Pourquoi ce score » (signaux
     # JSONB §5.4, lus tels quels) + badges spéciaux (public/bailleur/copro/partiel).

@@ -1575,7 +1575,11 @@ export function Fiche({ idu }: { idu: string }) {
   const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain')
   // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
   // propriétaire. Jamais d'identité de personne physique (boussole).
-  const proprioLines = ongletLines('proprio')
+  // RETOURS-11F F11 — 🔴 double en-tête : quand un propriétaire moral est connu (ex. « PACIFIC »),
+  // une ligne cascade résiduelle « propriétaire inconnu / non renseigné » ne doit PLUS coexister
+  // (deux affirmations contradictoires sur le même écran). On masque ces lignes-là dès qu'un PM est su.
+  const proprioLines = ongletLines('proprio').filter((l) =>
+    !(f?.proprietaire_moral && /inconnu|non renseign|non recens/i.test(l.detail ?? '')))
   const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
   const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
   // Règles : zone PLU + SDP résiduelle (données déjà chargées).
@@ -2718,10 +2722,13 @@ export function Fiche({ idu }: { idu: string }) {
                           <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap text-[10.5px] text-txt-mut">
                             {mill && <span className="tnum">{mill}</span>}
                             {/* M70 décision 4 — couleurs honnêtes : « suivie » (cataloguée + radar) en
-                                mint calme, « à confirmer » en ambre, le reste (estimée/déclarative) neutre. */}
-                            {s.fiabilite && (() => {
-                              const bg = s.fiabilite === 'suivie' ? '#5CE6A122' : s.fiabilite === 'à confirmer' ? '#e8b84d22' : '#8A968F22'
-                              const fg = s.fiabilite === 'suivie' ? '#5CE6A1' : s.fiabilite === 'à confirmer' ? '#e8b84d' : '#8A968F'
+                                mint calme, le reste (estimée/déclarative) neutre.
+                                RETOURS-11F F12 (doctrine 02/09) — « à confirmer » = licence à vérifier
+                                CÔTÉ VIC, PAS une information client → la chip n'est plus rendue au client
+                                (le client ne voit que « à jour / pas à jour » + date, ailleurs). */}
+                            {s.fiabilite && s.fiabilite !== 'à confirmer' && (() => {
+                              const bg = s.fiabilite === 'suivie' ? '#5CE6A122' : '#8A968F22'
+                              const fg = s.fiabilite === 'suivie' ? '#5CE6A1' : '#8A968F'
                               return <span className="rounded-full px-1.5" style={{ background: bg, color: fg }}>{s.fiabilite}</span>
                             })()}
                           </div>
