@@ -92,3 +92,86 @@ l'étiquette suive le pointeur vivant.
 - Tests : `MiseAJour.test.tsx` (5, réponse réelle capturée) + `Flux.circuit.test.tsx` (3) verts ;
   dossier admin **18/18**.
 - ⚠ Redémarrage serveur non nécessaire (aucun changement backend) ; branche `fix/donnees-2`, non mergée.
+
+---
+
+# DONNÉES-2 · Partie B (backend étape 2 + statuts + garde q_v12 + précédent vivant)
+
+Quatre chantiers, dans l'ordre du mandat. Aucune mécanique de scoring réécrite ; on RÉUTILISE le
+geste unique `rebuild_mvt_servies` (M48) et le pipeline existant.
+
+## B1 — la garde 5/6 sur q_v12 : cause & correction (bloquant pour la bascule)
+
+**Cause.** Trois tables SERVIES run-scopées — `parcel_flags`, `score_e`, `parcel_renouvellement` —
+ne portaient QUE `q_v11_m137`, pas `q_v12`. Le run q_v12 a été calculé par `flux-run` (cascade +
+score-v2), qui ne construit PAS ces tables : elles se montent par `build-mvt` (geste `rebuild_mvt_servies`,
+« un geste = tout ou rien »), jamais rejoué pour q_v12. Elles sont **mono-run** (DROP + rebuild) : on
+ne PEUT pas les pré-remplir pour q_v12 sans écraser celles du run servi (q_v11) → la garde du servi
+tomberait à son tour. Le seul moment correct de les bâtir pour q_v12, c'est **au moment où il devient
+servi** — ce que le commentaire de la garde appelait déjà « montent DANS le geste », jamais câblé.
+
+**Correction.** La bascule LANCE, **détachée**, `build-mvt --label <nouveau run>` (même geste que
+`labuse build-mvt`). En ligne c'est impossible : un `DROP TABLE` prend un verrou EXCLUSIF qui
+**DEADLOCK** avec les lectures de la garde (l'admin sonde `/admin/flux` en boucle) — constaté en base
+réelle. On borne donc l'attente de verrou (`SET lock_timeout='30s'`) et on **réessaie le geste entier**
+(transaction annulée → rien de partiel) : le rebuild finit par gagner. Pendant qu'il tourne, la garde
+reste honnêtement à 5/6 (tables encore sur l'ancien run) ; elle repasse **6/6** à la fin. L'UI l'annonce
+(« reconstruction des tables servies en cours… ») et poll jusqu'au vert.
+
+> Bug latent trouvé & corrigé au passage : `build-mvt` faisait `from .api.tiles import RUN` — `RUN`
+> n'existe pas dans `tiles` → la commande levait `ImportError` à chaque appel. Remplacé par
+> `runs.current()` (le run servi, lu vivant).
+
+**Recette réelle.** Bascule q_v11_m137 → **q_v12** : la garde passe 5/6 (périmées : les 3 tables)
+puis, le `build-mvt` détaché terminé (146 s, une tentative rejouée après un deadlock), **6/6 ✓** —
+`Run servi q_v12 · garde 6/6`. Retour arrière q_v12 → q_v11_m137 : idem, tables reconstruites,
+**6/6 ✓**. Pointeurs `config/` remis à l'identique (served=q_v11_m137, precedent=q_v10_m129).
+
+## B2 / D3 — le statut de chaque run
+
+Chaque run porte désormais un **statut** dérivé (dans `bascule_flux.runs_termines`) :
+`servi` (pointeur servi) · `retour_arriere` (= `config/run_precedent.txt`) · `termine` (complet, plus
+récent que le servi = candidat en avant, le recommandé) · `ancien` (complet mais plus vieux que le
+servi) · `en_cours` / `abandonne` (runs lancés, lus de l'état de progression). Les runs LANCÉS mais
+jamais terminés — **absents de `p_score_v2_runs`** — sont ajoutés à la liste. À l'étape 3, `termine`
+= recommandé, `retour_arriere` = « ancien run servi », le reste (`ancien` + `abandonne`) est masqué
+derrière « ▸ N runs anciens ou abandonnés ». **Un run « en cours » dont le processus a disparu passe
+« abandonné » au chargement** (`run_progress.reconcile`) ; les 3 runs tués du 03/09 (logs `/tmp`
+orphelins) sont récupérés « abandonné » — vérifié à l'écran.
+
+## B3 — backend de l'étape 2 : progression, arrêt, refus
+
+Nouveau module `run_progress.py` : un état JSON par run (`/tmp/labuse-run-<label>.json`), écrit par le
+process du run, lu par l'API.
+- **Le run écrit sa progression** : `flux-run` publie phase (cascade/scoring), **commune en cours**,
+  done/total et **%** — barre RÉELLE à l'étape 2 (plus de faux pourcentage).
+- **Arrêt propre** : `POST /admin/flux/run/arreter` envoie un `SIGTERM` au **groupe de process** (le run
+  est `start_new_session`) puis marque « abandonné ». Bouton « Arrêter » à l'étape 2.
+- **Refus** : `POST /admin/flux/run/lancer` réconcilie puis **refuse (409)** si un run tourne déjà
+  (« un seul run à la fois ») ; les boutons « Lancer » sont désactivés pendant.
+- `GET /admin/flux/run/etat` : poll léger (3 s) pour la barre.
+
+**Recette réelle.** « Candidat q_v12 → » lancé : l'étape 2 montre « En cours · cascade · Les Avirons »,
+barre réelle, `0/25 étapes`, « Arrêter » ; les boutons Lancer désactivés. Clic « Arrêter » → le run
+s'interrompt et repasse « abandonné » (disparaît de l'en-cours, réapparaît masqué à l'étape 3).
+
+## B4 — `run.precedent` lu vivant
+
+`run.precedent` de `/admin/flux` provenait d'une **constante de module**
+(`scoring.score_v_constants.RUN_PRECEDENT`, figée à l'import) → après une bascule elle désignait le
+mauvais « ancien run servi ». Nouveau `runs.precedent()` (lit `config/run_precedent.txt`, cache court,
+override `LABUSE_RUN_PRECEDENT`, invalidé à la bascule), et `RUN_PRECEDENT` rendu **dynamique** via
+`__getattr__` (comme `Q_A_RUN_LABEL`). `flux.py` et `accueil.py` (imports figés au module) convertis.
+La bascule lit le précédent AVANT de réécrire le pointeur (calcul du sens avant/arrière correct).
+
+## Vérifs
+
+- Backend : `test_run_progress.py` (8), `test_donnees2_precedent.py` (4), `test_flux`/`test_bascule_gardes`
+  verts ; sweep large **140 passed / 1 skipped** (QA distante).
+- Front : `tsc` 0 · `build` OK · `MiseAJour.test.tsx` (6, statut + en-cours + Arrêter) + admin **19/19**.
+- Captures Partie B : `captures-donnees-2/07`→`12` (statuts · abandonnés masqués · étape 2 en cours +
+  Arrêter · reconstruction après bascule · q_v12 6/6 · retour arrière q_v11 6/6).
+- ⚠ Piège branche (récurrent, cf. [[retours-7]]) : une session RETOURS-11 a `git checkout`é le dépôt
+  partagé sur `fix/retours-11bcd` en cours de Partie B et **stashé** mon travail ; récupéré (`git stash
+  apply`) sur `fix/donnees-2`, DB réparée (`build-mvt q_v11_m137`), recette rejouée. Branche
+  `fix/donnees-2`, non mergée.

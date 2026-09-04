@@ -1,22 +1,19 @@
 // DONNEES-2 — onglet « Mise à jour » : le cœur de la page Données, reconstruit selon
 // docs/audit-2026-09/maquette-admin-donnees-v2.html. TROIS ÉTAPES VERTICALES — Injecter · Calculer ·
 // Basculer — chacune porte SES informations et SES boutons : une action = un endroit, un chiffre =
-// une liste. Fini le bandeau « 3 gestes » condensé en haut de page (ses chiffres vivent désormais
-// dans le badge de l'onglet et dans les étapes) ; fini les commandes éparpillées dans le Circuit.
+// une liste. Fini le bandeau « 3 gestes » condensé ; fini les commandes éparpillées dans le Circuit.
 //
-// Aucune mécanique n'est réécrite : on lit /admin/flux (+ /admin/flux/runs en rendu progressif,
-// RETOURS-9 Q1) et on appelle les MÊMES endpoints que le Circuit (injecter · lancer · basculer) et
-// que le Catalogue (« Vérifier toutes les sources » = job sentinelle-sources). Honnêteté :
-//   • l'étape 2 « en cours » n'affiche QUE ce qu'on sait vraiment — le run qu'on vient de lancer
-//     tourne DÉTACHÉ (subprocess start_new_session, sans PID suivi) : il n'existe aucun endpoint
-//     d'arrêt et aucun registre de progression. On ne peint donc PAS de pourcentage inventé ni de
-//     bouton « Arrêter » qui ne ferait rien — on montre une barre indéterminée et on le dit.
-import { useMemo, useState } from 'react'
+// Partie B (D3 + backend étape 2) : chaque run porte un STATUT (en cours · terminé · servi · retour
+// arrière · abandonné · ancien) ; l'étape 2 lit la PROGRESSION RÉELLE d'un run en cours (barre + %,
+// commune) et sait l'ARRÊTER proprement ; « Lancer » refuse si un run tourne déjà. La bascule
+// reconstruit les tables servies run-scopées pour le nouveau run (détaché) — la garde repasse au vert
+// à la fin. Aucune mécanique réécrite : mêmes endpoints que le Circuit/Catalogue.
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  getAdminFlux, getAdminFluxRuns, postAdminFluxLancerRun, postAdminFluxBascule,
-  postAdminSourceVeilleInjecter, postAdminCronRun,
-  type AdminFlux, type FluxRunTermine,
+  getAdminFlux, getAdminFluxRuns, getAdminFluxRunEtat, postAdminFluxLancerRun, postAdminFluxBascule,
+  postAdminFluxArreterRun, postAdminSourceVeilleInjecter, postAdminCronRun,
+  type AdminFlux, type FluxRunTermine, type FluxRunStatut,
 } from '../../lib/api'
 
 const fmtReu = (iso?: string | null, avecHeure = false) => {
@@ -42,6 +39,16 @@ const MOTEUR_LBL: Record<string, string> = {
 }
 const alimente = (moteurs: string[]) =>
   moteurs.map((m) => MOTEUR_LBL[m] || m).join(' · ') || '—'
+
+// libellé + ton de la pastille de statut d'un run (D3)
+const STATUT: Record<FluxRunStatut, { txt: string; cls: string }> = {
+  en_cours: { txt: 'en cours', cls: 'bg-amber/10 text-amber' },
+  termine: { txt: 'terminé', cls: 'bg-mint/10 text-mint' },
+  servi: { txt: 'servi', cls: 'bg-mint/10 text-mint' },
+  retour_arriere: { txt: 'ancien run servi', cls: 'bg-white/5 text-txt-mut' },
+  abandonne: { txt: 'abandonné', cls: 'bg-coral/10 text-coral' },
+  ancien: { txt: 'ancien', cls: 'bg-white/5 text-txt-mut' },
+}
 
 type Tone = 'todo' | 'ok' | 'wait'
 // une étape : un numéro dans un rail vertical + une carte qui porte tout (titre, sous-titre, actions)
@@ -85,18 +92,26 @@ export function MiseAJour() {
   // RETOURS-9 (Q1) — rendu progressif : les runs terminés + écarts (calcul ~50 s en base réelle) sont
   // servis à part. L'étape 3 se remplit quand cette requête revient ; le reste rend tout de suite.
   const qRuns = useQuery({ queryKey: ['admin-flux-runs'], queryFn: getAdminFluxRuns, refetchInterval: 60_000 })
+  // DONNEES-2 (B3) — l'état du run EN COURS (barre + %), poll léger (3 s) pendant un run.
+  const qEtat = useQuery({ queryKey: ['admin-flux-run-etat'], queryFn: getAdminFluxRunEtat, refetchInterval: 3_000 })
+  const enCours = qEtat.data?.en_cours ?? null
 
-  // ce qu'on vient de lancer dans CETTE session (l'unique « en cours » qu'on connaisse honnêtement)
-  const [lance, setLance] = useState<{ label: string; estimation: string; heure: string } | null>(null)
   const [verifMsg, setVerifMsg] = useState<string | null>(null)
   const [voirAnciens, setVoirAnciens] = useState(false)
+  const [reconstruire, setReconstruire] = useState<string | null>(null)   // run dont les tables se reconstruisent
 
+  const invalider = () => {
+    qc.invalidateQueries({ queryKey: ['admin-flux'] })
+    qc.invalidateQueries({ queryKey: ['admin-flux-runs'] })
+    qc.invalidateQueries({ queryKey: ['admin-flux-run-etat'] })
+  }
   const lancer = useMutation({
     mutationFn: (recette: 'm36' | 'q_v12') => postAdminFluxLancerRun(recette),
-    onSuccess: (r) => {
-      if (r?.label) setLance({ label: r.label, estimation: r.estimation, heure: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) })
-      qc.invalidateQueries({ queryKey: ['admin-flux'] })
-    },
+    onSuccess: invalider,
+  })
+  const arreter = useMutation({
+    mutationFn: (label: string) => postAdminFluxArreterRun(label),
+    onSuccess: invalider,
   })
   const injecter = useMutation({
     mutationFn: (id: number) => postAdminSourceVeilleInjecter(id),
@@ -104,9 +119,9 @@ export function MiseAJour() {
   })
   const bascule = useMutation({
     mutationFn: (run: string) => postAdminFluxBascule(run),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-flux'] })
-      qc.invalidateQueries({ queryKey: ['admin-flux-runs'] })
+    onSuccess: (r) => {
+      if (r?.reconstruction?.lancee && r.nouveau) setReconstruire(r.nouveau)
+      invalider()
     },
   })
   const verifierToutes = useMutation({
@@ -121,14 +136,25 @@ export function MiseAJour() {
   const d: AdminFlux | undefined = q.data
   const runs = qRuns.data?.runs ?? []
 
-  // ── étape 3 : trier les runs (recommandé / retour arrière / anciens) ──
-  const { recommande, rollback, anciens } = useMemo(() => {
-    const precedent = d?.flux.run.precedent
-    const nonServis = runs.filter((r) => !r.servi)
-    const roll = precedent ? nonServis.find((r) => r.label === precedent) ?? null : null
-    const candidats = nonServis.filter((r) => r.label !== roll?.label)
-    return { recommande: candidats[0] ?? null, rollback: roll, anciens: candidats.slice(1) }
-  }, [runs, d])
+  // ── étape 3 : trier les runs par STATUT (D3) ──
+  const { recommande, rollback, masques } = useMemo(() => {
+    const reco = runs.find((r) => r.statut === 'termine') ?? null
+    const roll = runs.find((r) => r.statut === 'retour_arriere') ?? null
+    // masqués = anciens + abandonnés + tout « terminé » au-delà du recommandé ; jamais le run en cours.
+    const mask = runs.filter((r) => r !== reco && r !== roll && r.statut !== 'servi' && r.statut !== 'en_cours')
+    return { recommande: reco, rollback: roll, masques: mask }
+  }, [runs])
+
+  // DONNEES-2 (B1) — pendant la reconstruction des tables servies, on poll /admin/flux plus vite ; dès
+  // que la garde repasse au vert (6/6), la bannière disparaît.
+  const cohOk = d?.coherence.ok === true
+  useEffect(() => {
+    if (!reconstruire) return
+    if (cohOk) { setReconstruire(null); return }
+    const t = setInterval(invalider, 5000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reconstruire, cohOk])
 
   if (q.isError) return <div className="p-6 text-sm text-coral">Chargement impossible.</div>
   if (!d) return <div className="p-6 text-sm text-txt-dim">Chargement…</div>
@@ -139,10 +165,14 @@ export function MiseAJour() {
   const plusRecentes = comptes.plus_recentes_que_run
   const autresSources = comptes.total - injectables.length
 
-  // état (couleur du numéro) de chaque étape
   const t1: Tone = injectables.length > 0 ? 'todo' : 'ok'
-  const t2: Tone = plusRecentes > 0 ? 'todo' : (lance ? 'todo' : 'ok')
+  const t2: Tone = enCours ? 'todo' : (plusRecentes > 0 ? 'todo' : 'ok')
   const t3: Tone = recommande ? 'todo' : 'ok'
+
+  const pct = enCours?.pct ?? null
+  const phaseLbl = enCours?.phase === 'cascade' ? `cascade${enCours.commune ? ` · ${enCours.commune}` : ''}`
+    : enCours?.phase === 'scoring' ? 'scoring des parcelles'
+    : enCours?.phase || 'démarrage'
 
   return (
     <div className="pb-6">
@@ -196,37 +226,45 @@ export function MiseAJour() {
         </p>
         <Ligne action={
           <div className="flex items-center gap-2">
-            <button onClick={() => lancer.mutate('m36')} disabled={lancer.isPending}
+            <button onClick={() => lancer.mutate('m36')} disabled={lancer.isPending || !!enCours}
               className="rounded-lg bg-mint px-3.5 py-2 text-[12.5px] font-semibold text-mint-ink disabled:opacity-40">
               {lancer.isPending ? 'Lancement…' : 'Lancer un run →'}
             </button>
-            <button onClick={() => lancer.mutate('q_v12')} disabled={lancer.isPending}
+            <button onClick={() => lancer.mutate('q_v12')} disabled={lancer.isPending || !!enCours}
               title="Recette candidate SCORING-3 (artefact gelé q_v12), MÊME pipeline — jamais basculée automatiquement"
               className="rounded-lg border border-mint/40 bg-mint/10 px-3 py-2 text-[12px] font-medium text-mint disabled:opacity-40">
               Candidat q_v12 →
             </button>
           </div>}>
           <b className="text-txt">Lancer un nouveau run</b>
-          <small className="mt-0.5 block text-[11px] text-txt-mut">recette servie (m36) ou candidate (q_v12) · tourne de nuit de préférence · non servi tant que non basculé</small>
+          <small className="mt-0.5 block text-[11px] text-txt-mut">recette servie (m36) ou candidate (q_v12) · tourne de nuit de préférence · un seul run à la fois</small>
         </Ligne>
-        {/* EN COURS — uniquement le run qu'on vient de lancer (session courante). Détaché : ni % réel,
-            ni arrêt. On l'affiche honnêtement + on dit qu'il finit seul et apparaîtra à l'étape 3. */}
-        {lance && (
+        {lancer.isError && <div className="mt-2 text-[11.5px] text-coral">Un run est déjà en cours (ou un run identique existe) — arrêtez-le d'abord.</div>}
+
+        {/* EN COURS — progression RÉELLE lue de l'état du run (phase, commune, %) + arrêt propre (B3) */}
+        {enCours && (
           <div className="mt-2.5 rounded-lg border border-mint/30 bg-mint/[0.04] px-3 py-2.5">
             <div className="flex items-center justify-between gap-2 text-[12.5px]">
-              <span className="min-w-0"><span className="text-txt-dim">En cours : </span><span className="font-mono text-mint">{lance.label}</span></span>
-              <span className="shrink-0 text-[11px] text-txt-mut">lancé {lance.heure} · {lance.estimation}</span>
+              <span className="min-w-0"><span className="text-txt-dim">En cours : </span><span className="font-mono text-mint">{enCours.label}</span>
+                {' '}<span className="text-txt-mut">· {phaseLbl}</span></span>
+              <button onClick={() => arreter.mutate(enCours.label)} disabled={arreter.isPending}
+                className="shrink-0 rounded-lg border border-coral/40 bg-coral/5 px-2.5 py-1 text-[11.5px] font-medium text-coral disabled:opacity-40">
+                {arreter.isPending ? 'Arrêt…' : 'Arrêter'}
+              </button>
             </div>
-            {/* barre INDÉTERMINÉE (pas un pourcentage inventé) */}
+            {/* barre RÉELLE si % connu, sinon indéterminée (démarrage) */}
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-1">
-              <div className="h-full w-1/3 animate-pulse rounded-full bg-mint/70" />
+              {pct != null
+                ? <div className="h-full rounded-full bg-mint transition-[width] duration-500" style={{ width: `${Math.max(3, Math.min(100, pct))}%` }} />
+                : <div className="h-full w-1/3 animate-pulse rounded-full bg-mint/70" />}
             </div>
-            <div className="mt-1.5 text-[10.5px] leading-relaxed text-txt-mut">
-              Le run tourne en tâche de fond détachée : il finit seul (~{lance.estimation.replace(/^~?\s*/, '')}), puis apparaît à l'étape 3 pour bascule. Il ne peut pas être interrompu depuis l'écran.
+            <div className="mt-1.5 text-[10.5px] text-txt-mut">
+              {pct != null && <b className="text-txt-dim">{pct}% · </b>}
+              {enCours.done != null && enCours.total != null && <>{enCours.done}/{enCours.total} étapes · </>}
+              détaché — non servi tant que non basculé. « Arrêter » l'interrompt proprement (il passe « abandonné »).
             </div>
           </div>
         )}
-        {lancer.isError && <div className="mt-2 text-[11.5px] text-coral">Lancement refusé (un run identique existe peut-être déjà — réessayez dans une minute).</div>}
       </Etape>
 
       {/* ── ÉTAPE 3 · BASCULER ── */}
@@ -235,6 +273,12 @@ export function MiseAJour() {
         <p className="mt-1.5 text-[12.5px] leading-relaxed text-txt-dim">
           Lisez l'écart et la note de version, puis basculez. La garde de cohérence tourne aussitôt après.
         </p>
+
+        {reconstruire && !cohOk && (
+          <div className="mt-2 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2 text-[12px] text-amber">
+            ● Reconstruction des tables servies (carte + segments) pour <span className="font-mono">{reconstruire}</span> en cours — la garde de cohérence repasse au vert à la fin (~1–2 min).
+          </div>
+        )}
 
         {qRuns.isLoading && <div className="mt-2 text-[12px] text-txt-mut">Calcul des écarts au run servi en cours…</div>}
 
@@ -246,15 +290,15 @@ export function MiseAJour() {
         )}
 
         {rollback && (
-          <RunCard r={rollback} rollback onBascule={() => bascule.mutate(rollback.label)} pending={bascule.isPending} />
+          <RunCard r={rollback} onBascule={() => bascule.mutate(rollback.label)} pending={bascule.isPending} />
         )}
 
-        {anciens.length > 0 && (
+        {masques.length > 0 && (
           <div className="mt-2.5">
             <button onClick={() => setVoirAnciens((v) => !v)} className="text-[12px] text-txt-mut hover:text-txt">
-              {voirAnciens ? '▾' : '▸'} {anciens.length} run{anciens.length > 1 ? 's' : ''} ancien{anciens.length > 1 ? 's' : ''} ou abandonné{anciens.length > 1 ? 's' : ''} ({anciens.slice(0, 3).map((r) => r.label).join(', ')}{anciens.length > 3 ? '…' : ''})
+              {voirAnciens ? '▾' : '▸'} {masques.length} run{masques.length > 1 ? 's' : ''} ancien{masques.length > 1 ? 's' : ''} ou abandonné{masques.length > 1 ? 's' : ''} ({masques.slice(0, 3).map((r) => r.label).join(', ')}{masques.length > 3 ? '…' : ''})
             </button>
-            {voirAnciens && anciens.map((r) => (
+            {voirAnciens && masques.map((r) => (
               <RunCard key={r.label} r={r} onBascule={() => bascule.mutate(r.label)} pending={bascule.isPending} />
             ))}
           </div>
@@ -263,7 +307,7 @@ export function MiseAJour() {
         {bascule.data && (
           <div className={`mt-2.5 text-[12px] ${bascule.data.ok ? 'text-mint' : 'text-coral'}`}>
             {bascule.data.ok
-              ? `Bascule ${bascule.data.ancien} → ${bascule.data.nouveau} · ${bascule.data.caches_purges?.length ?? 0} caches purgés · garde relancée`
+              ? `Bascule ${bascule.data.ancien} → ${bascule.data.nouveau} · ${bascule.data.caches_purges?.length ?? 0} caches purgés · reconstruction lancée`
               : (bascule.data.motif || 'Bascule refusée')}
           </div>
         )}
@@ -292,23 +336,22 @@ export function MiseAJour() {
   )
 }
 
-// une carte de run (recommandé / retour arrière / ancien) avec écart, note de version et bouton
-function RunCard({ r, best, rollback, onBascule, pending }: {
-  r: FluxRunTermine; best?: boolean; rollback?: boolean; onBascule: () => void; pending: boolean
+// une carte de run (recommandé / retour arrière / ancien / abandonné) avec statut, écart, note et bouton
+function RunCard({ r, best, onBascule, pending }: {
+  r: FluxRunTermine; best?: boolean; onBascule: () => void; pending: boolean
 }) {
   const e = r.ecart
   const derive = e ? `${e.derive_promues_pct > 0 ? '+' : ''}${e.derive_promues_pct} %` : null
+  const st = STATUT[r.statut] ?? STATUT.ancien
+  const rollback = r.statut === 'retour_arriere'
   return (
-    <div className={`mt-2.5 rounded-lg border p-3 ${best ? 'border-mint/50 bg-mint/[0.03]' : 'border-line bg-surface-1'}`}>
+    <div className={`mt-2.5 rounded-lg border p-3 ${best ? 'border-mint/50 bg-mint/[0.03]' : 'border-line bg-surface-1'} ${r.statut === 'abandonne' ? 'opacity-70' : ''}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-2">
           <span className="font-mono text-[13.5px] text-txt">{r.label}</span>
           {r.recette === 'q_v12' && <span className="rounded border border-mint/40 px-1 py-px font-mono text-[10px] text-mint">q_v12</span>}
-          {r.complet
-            ? <span className="rounded-full bg-mint/10 px-2 py-0.5 text-[10.5px] text-mint">complet ✓</span>
-            : <span className="rounded-full bg-amber/10 px-2 py-0.5 text-[10.5px] text-amber" title={r.motif}>incomplet</span>}
+          <span className={`rounded-full px-2 py-0.5 text-[10.5px] ${st.cls}`} title={r.motif}>{st.txt}</span>
           {best && <span className="rounded-full bg-mint/10 px-2 py-0.5 text-[10.5px] text-mint">recommandé</span>}
-          {rollback && <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10.5px] text-txt-mut">ancien run servi</span>}
         </span>
         <button onClick={onBascule} disabled={!r.complet || pending}
           title={r.complet ? 'Basculer vers ce run' : r.motif}
@@ -319,10 +362,12 @@ function RunCard({ r, best, rollback, onBascule, pending }: {
         </button>
       </div>
       <div className="mt-1.5 text-[12px] text-txt-dim">
-        {r.calcule_le && <>calculé le {fmtReu(r.calcule_le)} · </>}
-        {e
-          ? <><b className="text-txt">{e.tiers_changes.toLocaleString('fr-FR')}</b> parcelles changent de palier · Priorité <b className="text-txt">{e.promues_servi.toLocaleString('fr-FR')} → {e.promues_candidat.toLocaleString('fr-FR')}</b>{derive && <> ({derive})</>}</>
-          : rollback ? <>c'est le retour arrière</> : <span className="text-txt-mut">écart non calculé (hors des runs affichés)</span>}
+        {r.calcule_le && <>{r.statut === 'abandonne' ? 'lancé le' : 'calculé le'} {fmtReu(r.calcule_le)} · </>}
+        {r.statut === 'abandonne'
+          ? <span className="text-txt-mut">{r.motif}</span>
+          : e
+            ? <><b className="text-txt">{e.tiers_changes.toLocaleString('fr-FR')}</b> parcelles changent de palier · Priorité <b className="text-txt">{e.promues_servi.toLocaleString('fr-FR')} → {e.promues_candidat.toLocaleString('fr-FR')}</b>{derive && <> ({derive})</>}</>
+            : rollback ? <>c'est le retour arrière</> : <span className="text-txt-mut">écart non calculé (hors des runs affichés)</span>}
       </div>
       {r.note_de_version && (
         <details className="mt-1.5">

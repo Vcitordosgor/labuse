@@ -22,7 +22,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from . import runs, sentinelle
-from .scoring.score_v_constants import RUN_PRECEDENT
 from .sources_catalog import WHERE_AFFICHEES, masquees_param
 
 # ─────────────────────────── LA MATRICE (M1 rendue exécutable) ───────────────────────────
@@ -140,7 +139,7 @@ def _run_courant(db: Session) -> dict:
     millesimes = params.get("source_millesimes")
     return {
         "label": runs.current(),
-        "precedent": RUN_PRECEDENT,
+        "precedent": runs.precedent(),   # DONNEES-2 (B4) — pointeur VIVANT, plus la constante figée
         "calcule_le": row["computed_at"].isoformat() if row and row["computed_at"] else None,
         "n_parcelles": (row["n_parcelles"] if row else None),
         "enregistre_sources": millesimes is not None,

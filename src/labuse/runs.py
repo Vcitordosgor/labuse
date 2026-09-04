@@ -19,22 +19,31 @@ import time
 from pathlib import Path
 
 _SERVED_FILE = Path(__file__).resolve().parents[2] / "config" / "served_run.txt"
+#: DONNEES-2 (B4) — le run servi PRÉCÉDENT (retour arrière), point de vérité versionné M80. Lu VIVANT
+#: ici (comme le servi), plus jamais figé dans une constante de module (`RUN_PRECEDENT` l'était et
+#: mentait après une bascule — la page Flux étiquetait le mauvais « ancien run servi »).
+_PRECEDENT_FILE = Path(__file__).resolve().parents[2] / "config" / "run_precedent.txt"
 
 #: cache court : un même handler de requête lit le run des dizaines de fois (une par étape SQL). On
 #: relit le fichier au plus une fois toutes les quelques secondes — assez pour qu'une bascule prenne
 #: effet « immédiatement » du point de vue humain, sans marteler le disque.
 _CACHE_TTL_S = 3.0
 _cache: dict = {"val": None, "at": 0.0}
+_cache_prec: dict = {"val": None, "at": 0.0}
+
+
+def _lire(fichier: Path, quoi: str) -> str:
+    """1ʳᵉ ligne non commentée d'un pointeur versionné (served_run.txt / run_precedent.txt)."""
+    for line in fichier.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if s and not s.startswith("#"):
+            return s
+    raise RuntimeError(f"{quoi} ne contient aucune valeur (uniquement des commentaires) : {fichier}")
 
 
 def _lire_fichier() -> str:
     """1ʳᵉ ligne non commentée de config/served_run.txt (le pointeur du run servi)."""
-    for line in _SERVED_FILE.read_text(encoding="utf-8").splitlines():
-        s = line.strip()
-        if s and not s.startswith("#"):
-            return s
-    raise RuntimeError(
-        f"config/served_run.txt ne contient aucune valeur (uniquement des commentaires) : {_SERVED_FILE}")
+    return _lire(_SERVED_FILE, "config/served_run.txt")
 
 
 def current() -> str:
@@ -52,8 +61,27 @@ def current() -> str:
     return val
 
 
+def precedent() -> str:
+    """DONNEES-2 (B4) — le run servi PRÉCÉDENT (cible du retour arrière), relu À LA REQUÊTE de
+    config/run_precedent.txt (cache court, comme `current()`). L'override DEV `LABUSE_RUN_PRECEDENT`
+    est prioritaire et non caché. Remplace la constante figée `score_v_constants.RUN_PRECEDENT`, qui
+    ne suivait pas la bascule (elle datait de l'import du process)."""
+    override = os.environ.get("LABUSE_RUN_PRECEDENT")
+    if override:
+        return override
+    now = time.monotonic()
+    if _cache_prec["val"] is not None and (now - _cache_prec["at"]) < _CACHE_TTL_S:
+        return _cache_prec["val"]
+    val = _lire(_PRECEDENT_FILE, "config/run_precedent.txt")
+    _cache_prec["val"] = val
+    _cache_prec["at"] = now
+    return val
+
+
 def invalidate() -> None:
-    """À appeler juste après une bascule (réécriture de served_run.txt) : la prochaine lecture relit
-    le fichier. Rend la bascule effective SANS redémarrage."""
+    """À appeler juste après une bascule (réécriture de served_run.txt ET run_precedent.txt) : la
+    prochaine lecture relit les DEUX pointeurs. Rend la bascule effective SANS redémarrage."""
     _cache["val"] = None
     _cache["at"] = 0.0
+    _cache_prec["val"] = None
+    _cache_prec["at"] = 0.0

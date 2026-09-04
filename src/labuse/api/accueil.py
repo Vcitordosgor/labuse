@@ -17,13 +17,12 @@ from sqlalchemy.orm import Session
 
 from .. import runs
 from .. import sources_catalog as _srccat
-from ..scoring.score_v_constants import RUN_PRECEDENT
 
 router = APIRouter(tags=["accueil"])
 
-# M80 — RUN_PRECEDENT n'est PLUS codé en dur ici : il est lu de config/run_precedent.txt (point de
-# vérité versionné, même mécanisme que served_run.txt), importé depuis score_v_constants. Un nom de
-# run hardcodé rendait la purge dangereuse (et c'était un chiffre en dur, interdit par la doctrine).
+# M80 / DONNEES-2 (B4) — le run précédent n'est PLUS codé en dur ni figé à l'import : il est lu VIVANT
+# de config/run_precedent.txt via `runs.precedent()` (même mécanisme que `runs.current()` pour le servi).
+# Un nom de run hardcodé rendait la purge dangereuse ; une constante figée mentait après une bascule.
 # Le diff des tiers entre les deux runs SERVIS successifs reste TOUJOURS calculé, jamais figé.
 
 #: fenêtre d'entraînement du modèle SERVI (m36-l2f — cf. /v2/modele provenance.train)
@@ -104,7 +103,7 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
             "JOIN parcel_p_score_v2 b ON b.parcelle_id = a.parcelle_id AND b.run_id = :cur "
             "WHERE a.run_id = :prev AND b.tier IN ('brulante','chaude') "
             "  AND (a.tier IS NULL OR a.tier NOT IN ('brulante','chaude'))",
-            {"cur": runs.current(), "prev": RUN_PRECEDENT}),
+            {"cur": runs.current(), "prev": runs.precedent()}),   # DONNEES-2 (B4) — pointeur vivant
         "run_label": runs.current(),
     }
     _cache.update(at=now, data=data)
