@@ -169,7 +169,15 @@ pareil, donc pré-existant, hors périmètre C3.
   redondant `onVoirOperations` retiré en mode fusion ; conservé hors fusion). Pagination par 200 déjà en
   place (« 200 / 1833 · Voir 200 de plus »). Recette : clic → bandeau replié + liste visible (capture
   `O5-scan-parcelles`).
-- **O4 — PLU compteurs+bug IDU — À FAIRE** · **O6 — Scan doublons — À FAIRE** · **O7 — Solaire pente+photo — À FAIRE**
+- **O7 — « Prospection solaire » : simple/double pente + photo du toit — FAIT (partiel assumé).** Mesuré :
+  `parcel_solar` porte l'azimut du bâti (Estimé) mais **aucune donnée de pente de toit ni de nombre de
+  pans / type de toiture** — la distinction **simple/double pente n'est PAS dérivable**. Conformément au
+  mandat, on ne l'invente pas : on le DIT et on affiche l'azimut + la pente MOYENNE. Ajouté : **photo
+  aérienne du toit** (ortho IGN, WMS GetMap centré sur le centroïde parcelle — lon/lat ajoutés à
+  l'endpoint) surmontée d'une **rosace d'orientation** (N/S/E/O, aiguille verte alignée sur l'azimut réel
+  du bâti). Libellé « Pente du terrain » clarifié (RGE ALTI, pas la pente du toit). Recette : photo +
+  rosace (azimut 140°) rendues (capture `O7-solaire-photo-rosace`).
+- **O4 — PLU compteurs+bug IDU — À FAIRE** · **O6 — Scan doublons — À FAIRE**
 ## LOT O bloc 3 — outils O8-O13 (commit 4) — À FAIRE
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE

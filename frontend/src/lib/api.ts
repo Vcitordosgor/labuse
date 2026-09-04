@@ -775,6 +775,7 @@ export interface SolaireFiche {
   ok: boolean; idu: string; message?: string; commune?: string
   productible?: number | null; prod_mensuel?: number[] | null; mois_optimal?: number | null
   azimut?: number | null; azimut_confiance?: string | null; pente?: number | null
+  lon?: number | null; lat?: number | null   // RETOURS-12 O7 — centroïde parcelle (photo ortho du toit)
   toit_m2?: number | null; piscine?: boolean; piscine_m2?: number | null; abf?: boolean
   ombrage?: boolean; proba_occ?: number | null; classement?: string; millesime?: string
 }

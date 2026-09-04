@@ -766,6 +766,7 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
         raise HTTPException(503, "données solaires indisponibles (table absente).")
     r = db.execute(text("""
         SELECT ps.idu, p.commune AS commune,
+               ST_X(ST_Centroid(p.geom)) AS lon, ST_Y(ST_Centroid(p.geom)) AS lat,  -- RETOURS-12 O7 : photo ortho du toit
                round(ps.prod_spec_kwh_kwc)::int AS productible,
                ps.prod_mensuel, ps.mois_optimal,
                round(ps.azimut_bati_deg)::int AS azimut, ps.azimut_confiance,
