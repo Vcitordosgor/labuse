@@ -742,6 +742,8 @@ export interface ProspectionSolaireResp {
 export interface SolaireFiltres {
   commune?: string | null; potentielMin?: number; probaOccMin?: number
   piscine?: 'tous' | 'oui' | 'non'; piscineSurfMin?: number; sort?: 'potentiel' | 'toiture' | 'proba'
+  // RETOURS-11F3 avenant — aligne le listing piscines sur le filtre confiance du compteur (agg).
+  inclureIncertaines?: boolean
 }
 const solaireQs = (f: SolaireFiltres) => {
   const p: Record<string, string | number> = {}
@@ -750,6 +752,7 @@ const solaireQs = (f: SolaireFiltres) => {
   if (f.probaOccMin) p.proba_occ_min = f.probaOccMin
   if (f.piscine && f.piscine !== 'tous') p.piscine = f.piscine
   if (f.piscineSurfMin) p.piscine_surf_min = f.piscineSurfMin
+  if (f.inclureIncertaines) p.inclure_incertaines = 'true'
   if (f.sort) p.sort = f.sort
   return qf(p)   // qf ajoute source=SOURCE (convention)
 }

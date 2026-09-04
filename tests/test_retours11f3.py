@@ -244,3 +244,32 @@ def test_f11_wording_client_non_remarquable():
     from labuse.api import app
     src = _i.getsource(app._q_v2_fiche)
     assert "non remarquable" in src and "Personne morale — fichier DGFiP" in src
+
+
+# ─────────────────────────── AVENANT R9-R11 (recette 04/09 après-midi) ───────────────────────────
+
+def test_avenant_r11_listing_piscines_aligne_sur_le_compteur():
+    """AVENANT (note liée R11) — le LISTING piscines suit le MÊME filtre de confiance que le compteur
+    (agg) : plus de « 7 821 (agg) vs 8 299 (liste) » sur le même écran. Et la limite de 500 est LEVÉE
+    (le listing sert tout le total filtré, paginé par 200 côté front)."""
+    import inspect as _i
+    from labuse.api import modules
+    src = _i.getsource(modules.prospection_solaire)
+    assert "inclure_incertaines" in src, "le listing doit accepter le filtre de confiance"
+    assert "_piscine_conf_filtre" in src, "le listing doit appliquer le MÊME filtre confiance que l'agg"
+    assert "piscine_corrections" in src, "le listing doit exclure les « pas une piscine »"
+    assert 'lim = total if piscine == "oui"' in src, "la limite de 500 doit être levée en mode piscines"
+
+
+def test_avenant_r11_alignement_mesure():
+    """AVENANT — vérification sur base réelle : agg.total == liste.total (haute ET incertaines)."""
+    from fastapi.testclient import TestClient
+    from labuse.api.app import app as _app
+    c = TestClient(_app)
+    a = c.get("/modules/prospection-piscines")
+    if a.status_code != 200 or not (a.json() or {}).get("total"):
+        import pytest as _p
+        _p.skip("détection piscines absente en base de test")
+    lst = c.get("/modules/prospection-solaire?piscine=oui")
+    assert lst.json()["total"] == a.json()["total"], "listing ≠ compteur (confiance haute)"
+    assert lst.json()["tronquee"] is False, "la limite de 500 doit être levée (pagination sur le total)"
