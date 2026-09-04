@@ -89,3 +89,35 @@ def test_m13_table_communes_lit_le_moteur_terrain_nu_unique():
     src = inspect.getsource(comparateur.raw_rows)
     assert "ligne2_terrain_zone" in src
     assert "prix_terrain_nu" in src
+
+
+# ─────────────────────────────── M9 — Densifier ───────────────────────────────
+
+def test_m9_score_renouvellement_est_continu_sans_plateau():
+    # Le plateau de tête (mesuré : top 50 = 2 scores distincts, 23 à 100) venait du `round()` PAR
+    # COMPOSANTE + `LEAST(100, …)`. Le score naît désormais des percent_rank BRUTS, arrondi UNE fois
+    # à la décimale — il discrimine. Ce test grave l'absence du clamp et de l'arrondi par composante
+    # dans la formule (une régression rouvrirait le plateau).
+    from labuse import renouvellement as R
+    sql = R._BUILD_SQL
+    assert "LEAST(100" not in sql, "le clamp LEAST(100,…) écrase la tête de liste — retiré (M9)"
+    # le score se calcule sur les percent_rank bruts (pr_pot/pr_ass/pr_mar), pas sur les comp_* arrondis
+    assert "pr_pot" in sql and "pr_ass" in sql and "pr_mar" in sql
+    assert "round((c.pr_pot + c.pr_ass + c.pr_mar)" in sql
+
+
+# ─────────────────────────────── M3 — prix de secteur ───────────────────────────────
+
+def test_m3_prix_secteur_une_seule_methode_fenetre_n():
+    # sector_price (fiche Marché / Étudier un bien / bilan) et _ref_local (référence locale Radar /
+    # Mon secteur) partagent LA MÊME méthode et LES MÊMES constantes — plus de « 2 365 vs 2 403 » nés
+    # de deux fenêtres/seuils divergents sur le même écran. On grave le partage des constantes SECTEUR-2.
+    from labuse.faisabilite import bilan
+    from labuse.pige import signaux
+    # _ref_local importe la robustification de bilan (méthode unique), il ne la recopie pas.
+    src = inspect.getsource(signaux._ref_local)
+    assert "from ..faisabilite.bilan import" in src
+    assert "trim_extremes_5pct" in src and "RAYONS_SECTEUR_M" in src
+    # même n minimum des deux côtés (le seuil local ne descend jamais sous le n secteur).
+    assert signaux.SEUIL_REF_LOCAL >= 1 and bilan.MIN_N_SECTEUR == 8
+    assert bilan.PERIODE_SECTEUR_ANS == 5   # fenêtre unique (années récentes), partagée

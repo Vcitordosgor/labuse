@@ -3777,7 +3777,8 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         # M47 (P2) : étiquette « source · millésime » (doctrine : toute couche servie porte la date
         # de sa source amont). Source = Analyse LABUSE (segment calculé) ; millésime = run servi + maj.
         "source": "Analyse LABUSE", "run_label": r["run_label"], "maj": r["maj"],
-        "renouv_score": r["renouv_score"],
+        # M9 — score CONTINU (1 décimale) exposé en float (JSON propre, plus de plateau à 100).
+        "renouv_score": float(r["renouv_score"]) if r["renouv_score"] is not None else None,
         "rang_segment": r["rang_segment"], "total_segment": r["total_segment"],
         "rang_commune": r["rang_commune"], "total_commune": r["total_commune"],
         "code_bati_origine": r["code_bati_origine"],
@@ -4623,7 +4624,8 @@ def renouvellement_geojson(commune: str | None = None,
         {"c": commune, "run": runs.current()}).mappings().first()
     total = int(meta["n"] or 0)
     feats = [{"type": "Feature", "geometry": json.loads(g),
-              "properties": {"idu": idu, "renouv_score": sc, "rang_segment": rg, "rang_commune": rc}}
+              "properties": {"idu": idu, "renouv_score": float(sc) if sc is not None else None,
+                             "rang_segment": rg, "rang_commune": rc}}
              for idu, sc, rg, rc, g in rows if g]
     # M47 (P2) : millésime/source de la couche servie (run servi + date de matérialisation).
     return {"type": "FeatureCollection", "features": feats, "total": total, "servis": len(feats),
