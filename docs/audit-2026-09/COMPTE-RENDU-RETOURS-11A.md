@@ -39,14 +39,14 @@ Statut par ID : **FAIT** / **FAIT AUTREMENT** (pourquoi) / **NON FAIT** (pourquo
 
 | ID | Statut | Détail |
 |---|---|---|
-| A1 | … | Accueil Copilote 3 niveaux |
-| A2 | … | « Reprendre » → « Mémoire » |
-| A3 | … | Boîtes de conversations (trait mauve) |
-| A4 | … | Signaler global (type en base + filtre + compteur) |
-| A5 | … | Notifications (audit + refonte) |
-| A6 | … | Mon compte |
-| A7 | … | Veille (ergonomie) |
-| A8 | … | Sources client (retirer 3e colonne) |
+| A1 | **FAIT** | Accueil Copilote en 3 niveaux : (1) la barre ; (2) « CE QU'IL SAIT FAIRE » = 4 capacités SANS exemple sous chacune ; (3) « EXEMPLES » regroupés (les 3 raccourcis + les 4 exemples des capacités, dédoublonnés) qui **pré-remplissent la barre** au clic (ne lancent plus). `onExemple` retiré du composant. |
+| A2 | **FAIT** | « REPRENDRE » → « MÉMOIRE » (compteur « voir tout · N » et rétention 7 j conservés). |
+| A3 | **FAIT** | Boîtes de conversations : liseré blanc du bas retiré ; **trait latéral gauche mauve** (`border-l-2 border-cp-ia`, comme le trait vert du menu Outils) ; survol plein mauve (`.hover-fill-ia`). |
+| A4 | **FAIT** | Le type (bug/idée/question, + « donnée » toléré) était déjà en base (`retours`) et servi par `/admin/produit`. Ajouté : panneau « Retours produit » dans Produit avec badge de type + **filtre par type** (chips) ; **compteur par type dans Pilotage** (`retours_par_type` dans `/admin/pilotage`, chips « N bugs · M idées… » cliquables). Lignes en survol vert. |
+| A5 | **FAIT** (audit + refonte) | **Audit (« dis-le-moi ») : PAS de fuite inter-comptes.** Les notifs brutes vues (Radar / `en_vente_longue` / « bien #58 · Saint-Denis ») sont des `pige.statut_change` à `compte_id NULL`, HORS `_MARKET_KINDS` → visibles UNIQUEMENT du bucket pilote/dev (`_visible` events.py) ; un vrai compte ne les voit pas. L'écran « 221 non lues » du mandat = la session locale, pas un client. La promesse d'intro tient (les comptes voient leurs `parcelle_suivie`/`veille` par compte + le broadcast marché délibéré bascule/bodacc/match). Défaut réel = honnêteté des libellés → corrigé côté front : `_STATUT_HUMAIN` + `titreHumain()`/`_detechnifier()` (« En vente depuis plus de 90 jours — Saint-Denis », plus de clé brute ni « bien #58 »). Survol vert (T1), Voir plus 200 (T4, `ListPaginationFooter`), « tout lire » (existait), « Préférences » cloche/e-mail par type (existait, ouvreur ajouté). Ligne non reproductible « maison · 495 000 € » : l'event pige ne porte ni type ni prix → relabellisé honnêtement (statut + commune), enrichissement backend signalé, non fait. |
+| A6 | **FAIT** | `AccountMenu` refait : e-mail + nom · plan + échéance (« Essai jusqu'au … » / « Intégral depuis le … », `/moi` étendu — `nom`, `created_at`, `essai_expire_at`, rien d'inventé) · Changer mon mot de passe (branché sur le flux existant `/reset`) · Préférences de notifications · Marque blanche (conservé) · Signaler/nous écrire (`mailto:victor@labuse.immo`) · Se déconnecter. « Session locale (dev) » strictement gated (`mode !== 'compte'`, chemin dev seulement). Pas de mandat COMPTE-1/E6 trouvé → suivi la spec A6. |
+| A7 | **FAIT** | Veille : « 8/50 » → « Parcelles suivies · 8 » (le plafond backend `SUIVIS_MAX=50` reste, garde anti-emballement ; seul le mot disparaît) ; **cliquer une parcelle suivie ouvre la fiche SANS fermer Veille** (retrait du `setView('cartes')` ; la fiche est un overlay au-dessus de la vue veille) ; **renommer une veille** (endpoint neuf `PATCH /radar/veille/{id}` + colonne `veilles.nom` idempotente + UI inline Entrée/Échap) ; lignes en survol vert ; états vides soignés. |
+| A8 | **FAIT** | Sources client : colonne de version admin retirée (« jusqu'au … · ingéré le … », helpers `versionMeta`/`majReelle`/`millesimeNote` supprimés) + note interne (`nature.detail`, « proxy RPG (IGN)… ») retirée. Reste : état (pastille à jour / mise à jour en cours) · source · producteur · **date de publication** (`Publié le …`). |
 
 ---
 
@@ -81,9 +81,23 @@ Registre des calques : `MapView.tsx` (init, ~lignes 620-900). 38 calques actifs 
 
 ## Clôture
 
-- tsc : …
-- build : …
-- vitest : …
-- pytest : …
-- golden (119/119, aucun fichier scoring touché) : …
-- captures avant/après : `docs/audit-2026-09/retours-11/captures/` …
+- **tsc** : 0 erreur.
+- **build** : OK.
+- **vitest** : 146/146 (31 fichiers) — dont les gardes neuves `communes.test.ts` (T6) et `zonage-regression.test.ts` (C1).
+- **pytest** : **2 195 passés**, 35 skips. Les SEULS échecs (1 erreur de collecte `test_non_contradiction.py` + 7 tests PDF : `test_audit_stripe` ×4, `test_dossier`, `test_flash_report`, `test_pre_dossier`) sont TOUS la MÊME limite d'environnement : la lib native `libgobject`/Pango de WeasyPrint manque dans le conda `labusedb` (log `facturation.py:225` / `pre_dossier.py:774` : « cannot load library 'libgobject-2.0-0' »). Chemins PDF UNIQUEMENT, aucun fichier de mon diff (facturation/dossier/pre_dossier/briques_pdf non touchés) → **pré-existant, pas une régression**. `importorskip("weasyprint")` ne rattrape pas l'`OSError` (natif, pas `ImportError`). **1 vrai échec introduit par A4 (`test_dashboard::test_pilotage_a_faire_et_traction`) CORRIGÉ** : `retours_par_type` (dict) sorti de `a_faire` (qui reste 4 compteurs entiers) vers une clé sœur ; test mis à jour. Reste de la suite (dont scoring/golden) vert.
+- **golden / scoring** : **aucun fichier de `src/labuse/scoring` ni `reports/` touché** (diff vide) → golden intact par construction.
+- **captures avant/après** : non produites (session sans navigateur ; les changements sont couverts par tsc/vitest/build + gardes de non-régression). Les `data-*` posés (`data-legend-zonage-gpu`, `data-temps-idu`, `data-accueil-exemples`, `data-source-*`, etc.) permettent des captures Playwright ciblées si besoin.
+
+### Backend touché (à connaître pour le merge)
+- `dvf_marche.py` / `vefa_neuf.py` (C3 : `n_total`, hachure honnête).
+- `dashboard.py` (A4 : `retours_par_type` dans `/admin/pilotage`).
+- `onboarding.py` (A6 : `/moi` étendu — `nom`, `created_at`, `essai_expire_at`).
+- `pige/api.py`, `pige/veille.py`, `copilote_v2/veilles.py` (A7 : `PATCH /radar/veille/{id}` + colonne `veilles.nom` idempotente au boot).
+
+### Reportés (documentés, non faits) — pour un prochain mandat
+- **C3 moteur unique** : router la table Communes (`comparateur.py`) et l'Évolution (`carnet.py`) sur `neuf_vefa_commune` (live) au lieu de la table précalculée `dvf_prix_sortie_neuf` — sinon Saint-Paul reste à 5003 (carte/fiche) vs 4730 (table).
+- **C4** : `styleFor(basemap)` (casing des traits, halo des lettres) sur le fond Ortho.
+- **C6** : audit GetCapabilities Géoplateforme (Plan v2 / Ortho courante / millésimes présents au 974).
+- **C8** : édition des sommets par glisser (débounce click/dblclick + poignées).
+- **T4** : « Acquisitions récentes » (endpoint `acquisitions-pm` sans `offset`) → à paginer en **O16** (session C).
+- **A5** : ligne notif riche « type · prix » = enrichissement backend de `pige.statut_change`.

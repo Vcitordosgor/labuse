@@ -647,14 +647,21 @@ def moi(request: Request, db: Session = Depends(get_db)):
     # RETOURS-1 R1 (Vic) : le menu affiche le VRAI statut — plan réel du compte connecté (colonne
     # comptes.plan, libellé/prix depuis la source unique offres.py) + e-mail du compte. Un compte
     # interne (admin/système) n'affiche jamais un prix.
+    # RETOURS-11 A6 (Vic) — le menu « Mon compte » montre aussi le NOM du compte et l'ÉCHÉANCE :
+    # « Intégral depuis le … » (created_at) ou « Essai jusqu'au … » (essai_expire_at). Champs lus
+    # de comptes ; aucune valeur inventée (essai_expire_at NULL = pas d'essai en cours → abonné).
     row = db.execute(text(
-        "SELECT u.email, c.plan FROM utilisateurs u JOIN comptes c ON c.id = u.compte_id"
-        " WHERE u.id = :i"), {"i": u["utilisateur_id"]}).mappings().first()
+        "SELECT u.email, c.plan, c.nom, c.created_at, c.essai_expire_at FROM utilisateurs u"
+        " JOIN comptes c ON c.id = u.compte_id WHERE u.id = :i"), {"i": u["utilisateur_id"]}).mappings().first()
     plan = (row["plan"] if row else None) or "integral"
     o = offre_integral()
     plan_label = {"integral": o["label"], PLAN_INTERNE: "Interne"}.get(plan, plan.capitalize())
+    _iso = lambda d: d.date().isoformat() if d is not None else None   # noqa: E731 — date seule (jour)
     return {"mode": "compte", "role": u["role"], "statut_compte": u["statut_compte"],
             "email": row["email"] if row else None,
+            "nom": row["nom"] if row else None,
+            "depuis": _iso(row["created_at"]) if row else None,
+            "essai_jusqu": _iso(row["essai_expire_at"]) if row else None,
             "plan": plan, "plan_label": plan_label,
             "plan_eur_mois": o["eur_mois"] if plan == "integral" else None,
             "plan_par_compte": True}

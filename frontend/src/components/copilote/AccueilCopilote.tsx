@@ -29,8 +29,10 @@ const EXEMPLES_R12 = [
   'Quels sont les pièges de la parcelle 97415000CV1186 ?',
 ]
 
+// RETOURS-11 A1 — `onExemple` (lancer un exemple) n'est plus utilisé : les exemples PRÉ-REMPLISSENT
+// la barre (via onChange). Le prop reste toléré dans le type pour ne pas casser l'appelant.
 export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
-  missions, retentionJours = 7, onReprendre, onExemple }: {
+  missions, retentionJours = 7, onReprendre }: {
   value: string
   onChange: (v: string) => void
   onSubmit: () => void
@@ -171,24 +173,11 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
           {occupe ? '…' : 'Envoyer'}
         </button>
       </div>
-      {/* RETOURS-10 (T5) — les deux phrases d'aide (« rien à choisir » / « nouveau fil ») sont RETIRÉES :
-          le champ + les exemples suffisent. Les trois exemples deviennent des chips DISCRÈTES sous le
-          champ (texte muet, contour ligne au repos ; plein mauve profond au survol via .hover-fill-ia).
-          Cliquer LANCE la question (raccourcis R12). */}
-      {!reponse && onExemple && (
-        <div data-accueil-exemples className="mb-9 flex flex-wrap justify-center gap-2">
-          {EXEMPLES_R12.map((ex) => (
-            <button key={ex} data-accueil-exemple onClick={() => onExemple(ex)} disabled={occupe}
-              className="hover-fill-ia rounded-full border border-cp-line px-3 py-1.5 text-[12px] text-cp-muted transition-colors duration-quick hover:border-transparent disabled:opacity-40">
-              {ex}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* RETOURS-11 A1 (03/09) — les exemples ne sont plus ici : ils forment le NIVEAU 3, sous les
+          capacités (regroupés), et PRÉ-REMPLISSENT la barre au clic (voir plus bas). */}
 
-      {/* M133 — CE QU'IL SAIT FAIRE : les 4 capacités en TEXTE (libellé + exemple réel entre
-          guillemets). NON cliquables — pas de bordure, pas de fond, pas d'état, pas de curseur.
-          Des exemples qui enseignent, pas un menu. */}
+      {/* M133 — CE QU'IL SAIT FAIRE (NIVEAU 2) : les 4 capacités en TEXTE. RETOURS-11 A1 — SANS l'exemple
+          sous chacune (les exemples sont regroupés au niveau 3). NON cliquables. */}
       {!reponse && meta && meta.capacites.length > 0 && (
         // RETOURS-7 Z2 — même marge (mb-8) que « Reprendre » ci-dessous.
         <div data-accueil-capacites className="mb-8">
@@ -204,10 +193,29 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
                   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{CAP_ICONS[c.cle] ?? CAP_ICON_FALLBACK}</svg>
                 </span>
                 <div className="min-w-0">
+                  {/* RETOURS-11 A1 — plus d'exemple sous la capacité (regroupés au niveau 3). */}
                   <div className="text-[13px] leading-[1.35] font-medium text-cp-txt">{c.libelle}</div>
-                  <div className="mt-[3px] text-[11.5px] leading-[1.35] text-cp-faint" title={c.exemple}>« {c.exemple} »</div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* RETOURS-11 A1 (03/09) — NIVEAU 3 : EXEMPLES regroupés (les 3 raccourcis + les 4 exemples des
+          capacités, dédoublonnés). Cliquer PRÉ-REMPLIT la barre (ne lance plus) : l'utilisateur ajuste
+          puis envoie. Survol plein mauve via .hover-fill-ia. */}
+      {!reponse && (
+        <div data-accueil-exemples className="mb-8">
+          <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">EXEMPLES</p>
+          <div className="flex flex-wrap gap-2">
+            {[...EXEMPLES_R12, ...(meta?.capacites ?? []).map((c) => c.exemple)]
+              .filter((e, i, a): e is string => !!e && a.indexOf(e) === i)
+              .map((ex) => (
+              <button key={ex} data-accueil-exemple onClick={() => { onChange(ex); ref.current?.focus() }}
+                className="hover-fill-ia rounded-full border border-cp-line px-3 py-1.5 text-[12px] text-cp-muted transition-colors duration-quick hover:border-transparent">
+                {ex}
+              </button>
             ))}
           </div>
         </div>
@@ -226,7 +234,7 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
           {/* RETOURS-10 (T5) — « voir tout · N » remonte dans l'EN-TÊTE de section (à droite), comme la
               maquette ; il n'y a plus de bouton séparé sous la liste. Toujours quatre fils au repos. */}
           <div className="mb-2.5 flex items-baseline justify-between font-mono text-[10px] tracking-[.12em] text-cp-faint">
-            <span>REPRENDRE</span>
+            <span>MÉMOIRE</span>
             {questions.length > 4 && (
               <button data-histo-tout onClick={() => setToutHisto((v) => !v)}
                 className="tracking-[.06em] text-cp-muted transition-colors duration-quick hover:text-cp-txt">
@@ -234,12 +242,12 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
               </button>
             )}
           </div>
-          <div className="flex flex-col">
-            {/* RETOURS-3 R12 / RETOURS-4 S8 — survol PLEIN mauve PROFOND (dégradé, texte inversé sombre) via
-                .hover-fill-ia, comme partout ; la date « il y a N j » ne se tronque jamais (whitespace-nowrap). */}
+          <div className="flex flex-col gap-1">
+            {/* RETOURS-11 A3 (03/09) — plus de liseré blanc sous chaque boîte ; TRAIT LATÉRAL GAUCHE MAUVE
+                (comme le trait vert des entrées du menu Outils) ; survol PLEIN mauve via .hover-fill-ia. */}
             {questionsVisibles.map((m) => (
               <button key={m.id} data-mission-reprendre onClick={() => onReprendre?.(m)}
-                className="hover-fill-ia flex items-center gap-3 rounded-[10px] border-b border-cp-line/60 px-3 py-2.5 text-left last:border-b-0 hover:border-transparent">
+                className="hover-fill-ia flex items-center gap-3 rounded-r-[10px] border-l-2 border-cp-ia px-3 py-2.5 text-left">
                 <span className="min-w-0 flex-1 truncate text-[14px] text-cp-txt">{m.titre}</span>
                 {m.run_id && <span className="shrink-0 rounded border border-cp-ia/30 px-1.5 py-px text-[9px] uppercase tracking-wide text-cp-ia">recherche</span>}
                 <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-cp-faint">{ilYA(m.updated_at)}</span>
