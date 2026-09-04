@@ -48,3 +48,61 @@ def test_m9_config_capacite_nette_chargee():
     # le score CONTINU (M9 F2) reste intact : pas de clamp, somme des rangs bruts
     assert "LEAST(100" not in R._BUILD_SQL
     assert "round((c.pr_pot + c.pr_ass + c.pr_mar)" in R._BUILD_SQL
+
+
+# ─────────────────────────── M13 — colonnes Comparer + sélecteur Évolution ───────────────────────────
+
+def test_m13_compare_row_colonnes_ajoutees():
+    """Comparer sert les colonnes O9 manquantes, TOUTES lues de la fiche servie (aucun second moteur) :
+    propriétaire, bâti existant %, gabarit max, logements, accès & réseaux (UN verdict), assainissement,
+    prix bâti secteur — sans jamais un « 0 » inventé (absent = None)."""
+    from labuse.api.app import _compare_row
+    qv2 = {
+        "idu": "97415000BS0086", "commune": "Saint-Paul", "surface_m2": 1000,
+        "score_v2": {"tier": "chaude", "rang": 12, "label": "À suivre", "fraction": "1/5", "pourquoi": []},
+        "etage0": False,
+        "proprietaire_moral": {"denomination": "PACIFIC", "siren": "484061601"},
+        "viabilisation": {"libelle": "Viabilisation probable"},
+        "anc": {"libelle": "Tout-à-l'égout (collectif)", "statut": "source"},
+        "dvf_parcelle": {"secteur": [
+            {"type_bien": "maison", "mediane_prix_m2": 2800, "n_ventes": 43},
+            {"type_bien": "terrain", "mediane_prix_m2": 480, "n_ventes": 12}]},
+        "lines": [{"result": "SOFT_FLAG", "detail": "Aléa inondation — niveau faible."}],
+    }
+    faisab = {"zone": "U", "constructible": True,
+              "fourchette": {"surface_plancher_m2": 800, "logements_au_sol": [2, 6], "logements_sous_sol": [1, 4]},
+              "residuel": {"disponible": True, "emprise_batie_m2": 150, "taux_emprise_pct": 20,
+                           "sdp_residuelle_m2": 600, "sous_densite": True, "niveaux_max": 3},
+              "bilan": {"charge_fonciere": {"par_m2_terrain": 250}}}
+    row = _compare_row(qv2, faisab)
+    assert row["proprietaire"] == "morale"                 # PM connue
+    assert row["bati_existant_pct"] == 15                  # 150 / 1000
+    assert row["gabarit_niveaux_max"] == 3
+    assert row["logements_possibles"] == 6                 # borne haute (au sol)
+    assert row["acces_reseaux"] == "Viabilisation probable"  # UN verdict
+    assert row["assainissement"] == "Tout-à-l'égout (collectif)"
+    assert row["prix_secteur_bati_m2"] == 2800            # bâti (maison), JAMAIS le terrain nu
+
+
+def test_m13_compare_row_particulier_et_absences_sans_zero_invente():
+    """Sans PM → particulier ; sans faisabilité/secteur → None (jamais un « 0 »)."""
+    from labuse.api.app import _compare_row
+    qv2 = {"idu": "97411000AT0710", "commune": "Saint-Denis", "surface_m2": None,
+           "score_v2": {}, "etage0": True, "proprietaire_moral": None, "lines": []}
+    row = _compare_row(qv2, None)
+    assert row["proprietaire"] == "particulier"
+    assert row["bati_existant_pct"] is None                # surface absente → None, pas 0
+    assert row["prix_secteur_bati_m2"] is None
+    assert row["logements_possibles"] is None
+
+
+def test_m13_evolution_barometre_accepte_commune():
+    """Évolution du marché : `_barometre_data` accepte un `insee` (sélecteur de commune) et le neuf
+    de la commune vient du moteur UNIQUE M1 (neuf_vefa_commune) — jamais un second calcul."""
+    import inspect
+    from labuse.api import moteurs
+    sig = inspect.signature(moteurs._barometre_data)
+    assert "insee" in sig.parameters, "le baromètre doit accepter un insee (sélecteur commune)"
+    src = inspect.getsource(moteurs._barometre_data)
+    assert "neuf_vefa_commune" in src, "le neuf commune doit venir du moteur unique M1"
+    assert "code_commune = :insee" in src, "la série terrain doit filtrer par commune"

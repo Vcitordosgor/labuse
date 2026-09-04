@@ -839,6 +839,11 @@ export interface CompareRow {
   charge_fonciere_m2?: number | null
   terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
   n_contraintes?: number; contraintes?: string[]
+  // RETOURS-11F M13 (O9) — colonnes ajoutées, toutes de la fiche servie / du bilan servi.
+  proprietaire?: string | null; bati_existant_pct?: number | null
+  gabarit_niveaux_max?: number | null; logements_possibles?: number | null
+  acces_reseaux?: string | null; assainissement?: string | null
+  prix_secteur_bati_m2?: number | null
 }
 export const getCompare = (idus: string[]) =>
   j<{ count: number; parcels: CompareRow[] }>(`/compare?idus=${encodeURIComponent(idus.join(','))}`)
@@ -1410,7 +1415,8 @@ export const motAssemblage = (idus: string[]) =>
   j<Record<string, any>>('/moteurs/assemblage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 export const motZan = () => j<Record<string, any>>('/moteurs/zan')
 export const zanParcelle = (idu: string) => j<Record<string, any>>(`/moteurs/zan/parcelle/${idu}`)
-export const motBarometre = () => j<Record<string, any>>('/moteurs/barometre')
+export const motBarometre = (insee?: string | null) =>
+  j<Record<string, any>>(`/moteurs/barometre${insee ? `?insee=${encodeURIComponent(insee)}` : ''}`)
 // M-U — bloc « Marché » par commune (9 lignes datées + market_signal DVF/Sitadel)
 export const motMarcheCommune = (commune: string) =>
   j<Record<string, any>>(`/moteurs/marche/${encodeURIComponent(commune)}`)

@@ -5175,6 +5175,28 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # M135 — la RAISON dominante = même point de calcul que la carte/la liste (raison_dominante,
     # chip court de la 1re contribution positive). `pourquoi` porte signe/feature/bin requis.
     raison = _raison_dom(s2.get("pourquoi"))
+    # RETOURS-11F M13 (O9) — colonnes manquantes de « Comparer », toutes lues de la fiche SERVIE
+    # (qv2) ou de la faisabilité du MÊME point de calcul (faisab) — jamais un second moteur.
+    # propriétaire : moral (PM connue) sinon particulier (doctrine fiche F11).
+    pm = qv2.get("proprietaire_moral") or {}
+    proprietaire = "morale" if pm.get("denomination") or pm.get("siren") else "particulier"
+    # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
+    surf = qv2.get("surface_m2") or 0
+    bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
+                if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
+    # logements possibles (borne haute de la fourchette servie, au sol ou sous-sol).
+    def _hi(pair):
+        return pair[1] if isinstance(pair, (list, tuple)) and len(pair) == 2 else None
+    log_hi = max([v for v in (_hi(fr.get("logements_au_sol")), _hi(fr.get("logements_sous_sol"))) if v is not None] or [None])
+    # accès & réseaux : UN verdict (le faisceau de viabilisation servi, F0/F8) ; assainissement à part.
+    via = qv2.get("viabilisation") or {}
+    anc = qv2.get("anc") or {}
+    # prix bâti du secteur : médiane DVF du type bâti le plus documenté (maison/appartement),
+    # jamais le terrain nu — même source que la fiche Marché (dvf_parcelle.secteur).
+    secteur = ((qv2.get("dvf_parcelle") or {}).get("secteur")) or []
+    bati_rows = [s for s in secteur if (s.get("type_bien") or "").lower() not in ("terrain", "terrain à bâtir")
+                 and s.get("mediane_prix_m2")]
+    prix_bati = max(bati_rows, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if bati_rows else None
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
         "surface_m2": qv2.get("surface_m2"),
@@ -5194,6 +5216,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
         "n_contraintes": len(contraintes),
         "contraintes": [c["detail"] for c in contraintes[:4]],
+        # RETOURS-11F M13 (O9) — colonnes ajoutées :
+        "proprietaire": proprietaire,                                   # moral / particulier
+        "bati_existant_pct": bati_pct,                                  # emprise bâtie ÷ terrain
+        "gabarit_niveaux_max": res.get("niveaux_max") if res.get("disponible") else None,  # hauteur max (R+N)
+        "logements_possibles": log_hi,                                  # borne haute fourchette
+        "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
+        "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
+        "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur
     }
 
 
