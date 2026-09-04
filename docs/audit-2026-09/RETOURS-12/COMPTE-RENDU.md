@@ -32,11 +32,13 @@ Prérequis vérifiés : RETOURS-11 (11a `0eeee93f` + 11b/c/d `cf4d6052`) et DEST
   Inventaire : `INVENTAIRE-T2`.
   - *Fait autrement* : le SIREN du **popup patrimoine** (ModulePanel `fiche` tuple `[string,string]`) et
     le badge **admin Programmes** (champ éditable) restent en texte — types/contexte non-JSX ; notés.
-- **T3 — rail latéral fixe — FAIT (vérifié, symptôme non reproduit).** Le shell (`App.tsx`) fixe déjà le
-  rail par flexbox : racine `h-screen w-screen overflow-hidden`, rail `shrink-0`, contenu dans un
-  conteneur `overflow-hidden` qui scrolle seul. Recette : le rail reste en place en vue Carte et CRM
-  (captures `T3-rail-*`). Le glissement au scroll n'a pas pu être reproduit dans le build actuel — la
-  structure est celle attendue par le mandat. Si un cas précis subsiste, il faudra le repro exact de Vic.
+- **T3 — rail latéral fixe — FAIT (correctif, retest post-mandat).** Le shell fixe le rail par flexbox,
+  mais le symptôme vu par Vic est réel sur **fenêtre de faible hauteur** : le rail restait fixe alors que
+  son **contenu défilait en interne** et faisait sortir Admin/Sources de la vue (mesuré : `sourcesVisible:false`
+  et `navScrolls:true` dès h ≤ 560 px). **Correctif** : la zone basse (Admin/Sources) sort du conteneur
+  `overflow-y-auto` et s'épingle en bas du rail (`shrink-0`) ; l'oiseau reste en haut ; seul le bloc des
+  catégories défile si nécessaire. Re-mesuré : Sources visible à h = 900 / 560 / 420. Capture
+  `T3-rail-fenetre-basse`. (Livré en correctif Lot T, commit dédié — Lot T était déjà commité.)
 - **T4 — en-têtes de tableau collants + opaques — FAIT.** Classe partagée `.thead-sticky` (fond opaque
   `--bg-3`, `z-20` — sous les overlays z-40, au-dessus des lignes). Appliquée à Densifier
   (`Renouvellement.tsx` — était sticky **sans z-index**, cause du chevauchement), Prospection solaire,

@@ -197,19 +197,22 @@ export function Rail() {
               </button>
             )
           })}
+        </div>
 
-          {/* RETOURS-4 S2 — ZONE BASSE épinglée (mt-auto + séparateur) : Admin juste au-dessus de Sources,
-              Sources tout en bas. Pour un client (sans Admin), Sources se retrouve seul en bas. */}
-          <div className="mt-auto flex w-full flex-col items-center gap-1.5 border-t border-line pt-3">
-            <AdminRailEntry />
-            <button data-rail="sources" onClick={() => openSources()}
-              aria-current={view === 'sources' && !outilsOpen ? 'page' : undefined}
-              className={`rail-item ${view === 'sources' && !outilsOpen ? 'active' : ''}`}
-              title={RAIL_TITLE.sources}>
-              <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS.sources}</svg>
-              <span className="rail-label">Sources</span>
-            </button>
-          </div>
+        {/* RETOURS-12 T3 — ZONE BASSE (Admin/Sources) SORTIE du scroller. Avant, elle était DANS le
+            conteneur `overflow-y-auto` avec `mt-auto` : sur une fenêtre de faible hauteur (< ~600 px),
+            le contenu du rail défilait en interne et Admin/Sources sortaient de la vue (symptôme « le
+            rail bouge » vu côté client). Désormais : seul le bloc des catégories défile si besoin ;
+            l'oiseau reste en haut, Admin/Sources restent épinglés en bas, toujours visibles. */}
+        <div className="flex w-full shrink-0 flex-col items-center gap-1.5 border-t border-line px-1.5 pb-3 pt-3">
+          <AdminRailEntry />
+          <button data-rail="sources" onClick={() => openSources()}
+            aria-current={view === 'sources' && !outilsOpen ? 'page' : undefined}
+            className={`rail-item ${view === 'sources' && !outilsOpen ? 'active' : ''}`}
+            title={RAIL_TITLE.sources}>
+            <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS.sources}</svg>
+            <span className="rail-label">Sources</span>
+          </button>
         </div>
       </nav>
 
