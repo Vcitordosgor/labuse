@@ -51,6 +51,10 @@ def ensure_tables(engine) -> None:
             " id serial PRIMARY KEY, ts timestamptz DEFAULT now(), compte_id integer,"
             " type varchar(12) NOT NULL, message text NOT NULL,"
             " statut varchar(12) NOT NULL DEFAULT 'nouveau', updated_at timestamptz DEFAULT now())"))
+        # RETOURS-11F M11 — un retour VENU DE LA FICHE (« donnée ») porte l'IDU et la SECTION d'origine,
+        # pour un lien cliquable vers la fiche dans Produit (le bandeau global reste sans contexte).
+        c.execute(text("ALTER TABLE retours ADD COLUMN IF NOT EXISTS idu varchar(14)"))
+        c.execute(text("ALTER TABLE retours ADD COLUMN IF NOT EXISTS section varchar(64)"))
         # ia_budget (D1) — attribution du coût IA au compte : colonne sur le ledger EXISTANT ia_log
         # (créé par ai.core._log_cost) ; ALTER d'abord au cas où la table précède cette colonne.
         c.execute(text(
@@ -96,19 +100,27 @@ def usage_event(body: UsageIn, request: Request) -> dict:
 
 
 class RetourIn(BaseModel):
-    type: str = Field(pattern="^(bug|idee|question)$")
+    # RETOURS-11F M11 — quatre types (Bug / Idée / Question / Donnée). « donnee » vient de la fiche et
+    # porte alors l'IDU + la section ; les trois autres viennent du bandeau global (sans contexte).
+    type: str = Field(pattern="^(bug|idee|question|donnee)$")
     message: str = Field(min_length=3, max_length=2000)
+    idu: str | None = None
+    section: str | None = None
 
 
 @router.post("/retours")
 def creer_retour(body: RetourIn, request: Request) -> dict:
-    """Bouton « Signaler » (app cliente, en haut à droite) : bug/idée/question + message."""
+    """Bouton « Signaler » (app cliente) : bug/idée/question/donnée + message. Un retour « donnée »
+    venu de la fiche porte l'IDU et la section d'origine (lien cliquable vers la fiche dans Produit)."""
     from ..db import engine
     cid = getattr(request.state, "compte_id", None)
+    idu = (body.idu or "").strip()[:14] or None
+    section = (body.section or "").strip()[:64] or None
     with engine().begin() as c:
         rid = c.execute(text(
-            "INSERT INTO retours (compte_id, type, message) VALUES (:c, :t, :m) RETURNING id"),
-            {"c": cid, "t": body.type, "m": body.message.strip()}).scalar_one()
+            "INSERT INTO retours (compte_id, type, message, idu, section) "
+            "VALUES (:c, :t, :m, :idu, :sec) RETURNING id"),
+            {"c": cid, "t": body.type, "m": body.message.strip(), "idu": idu, "sec": section}).scalar_one()
     # cloche admin best-effort (patron courrier_demande) — l'échec de la notif ne perd jamais le retour
     try:
         from ..db import session_scope
@@ -116,7 +128,7 @@ def creer_retour(body: RetourIn, request: Request) -> dict:
         with session_scope() as s:
             creer_notification(s, kind="systeme", compte_id=None, source="Retour",
                                titre=f"Nouveau retour client ({body.type})",
-                               detail=body.message[:280], lien="/admin",
+                               detail=body.message[:280], lien=(f"#idu={idu}" if idu else "/admin"),
                                dedup=f"retour:{rid}", permanent=True)
     except Exception:  # noqa: BLE001
         pass
@@ -147,6 +159,9 @@ def admin_signalements(request: Request, statut: str | None = None) -> dict:
     for r in rows:
         r["created_at"] = r["created_at"].isoformat() if r["created_at"] else None
         r["traite_at"] = r["traite_at"].isoformat() if r["traite_at"] else None
+        # RETOURS-11F M11 — lien cliquable vers la fiche (signalement d'erreur venu de la fiche) ;
+        # `champ` porte la section. Une annonce Radar (type='annonce') n'a pas de fiche parcelle.
+        r["fiche_lien"] = (f"#idu={r['parcelle_id']}" if r.get("type") == "fiche" and r.get("parcelle_id") else None)
     return {"signalements": rows, "n_ouverts": n_ouverts}
 
 
@@ -1432,11 +1447,13 @@ def admin_produit(request: Request, jours: int = 30) -> dict:
             " WHERE kind = 'outil' AND outil IS NOT NULL AND ts > now() - make_interval(days => :j)"
             " GROUP BY outil ORDER BY COUNT(*) DESC"), {"j": jours}).mappings()]
         retours = [dict(r) for r in c.execute(text(
-            "SELECT r.id, r.ts, r.type, r.message, r.statut, k.nom AS compte"
+            "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section, k.nom AS compte"
             " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"
             " ORDER BY r.ts DESC LIMIT 200")).mappings()]
     for r in retours:
         r["ts"] = r["ts"].isoformat() if r["ts"] else None
+        # RETOURS-11F M11 — lien cliquable vers la fiche d'origine (retour « donnée » posé depuis la fiche).
+        r["fiche_lien"] = (f"#idu={r['idu']}" if r.get("idu") else None)
     return {"usage": usage, "retours": retours, "jours": jours}
 
 

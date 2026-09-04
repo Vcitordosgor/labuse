@@ -1667,7 +1667,9 @@ export function Fiche({ idu }: { idu: string }) {
       <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
         <div className="head">
           <div className="head-top">
-            <div style={{ minWidth: 0 }}>
+            {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
+                qui tient alors sur UNE ligne (tronquée en … si vraiment trop longue, voir .addr). */}
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div className="eyebrow">PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</div>
               {/* IDU complet (mono) + copier sans cadre, collé à la référence. */}
               <div className="ref" data-fiche-idu>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
@@ -1675,7 +1677,7 @@ export function Fiche({ idu }: { idu: string }) {
               {/* M61 P5 — adresse COPIABLE : sélectionnable (aucun user-select:none) + icône copier
                   discrète (comme l'IDU). `.addr` passe en flex pour aligner texte + icône. */}
               <div className="addr" data-fiche-adresse>
-                <span style={{ userSelect: 'text', minWidth: 0 }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
+                <span style={{ userSelect: 'text', minWidth: 0 }} title={f?.adresse ?? undefined}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
                 {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
                 {!f?.adresse && (
                   <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>

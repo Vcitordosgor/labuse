@@ -340,8 +340,11 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 .fiche-v6 .eyebrow { font-size:9.5px; letter-spacing:.11em; color:var(--txt-off); }
 .fiche-v6 .ref { font-size:17px; font-weight:500; font-family:var(--mono); letter-spacing:-.02em; margin-top:5px; display:flex; align-items:center; gap:6px; }
-/* M61 P5 — .addr en flex (texte adresse + icône copier alignés) ; texte sélectionnable. */
-.fiche-v6 .addr { font-size:11.5px; color:var(--txt-dim); margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; user-select:text; }
+/* M61 P5 — .addr en flex (texte adresse + icône copier alignés) ; texte sélectionnable.
+   RETOURS-11 R3 — l'adresse tient sur UNE ligne : plus de flex-wrap, le texte prend la place
+   dispo (min-width:0) et tronque en … par la fin (jamais de retour à la ligne au milieu de la rue). */
+.fiche-v6 .addr { font-size:11.5px; color:var(--txt-dim); margin-top:4px; display:flex; align-items:center; gap:6px; user-select:text; min-width:0; }
+.fiche-v6 .addr > span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 /* M61 P5 — « Voir sur Pages Jaunes » : JAUNE de marque (--pj-jaune), visiblement cliquable
    (pointeur + soulignement au survol). Seul endroit de l'app où ce jaune est autorisé. */
 .fiche-v6 .addr-link { font-size:11px; color:var(--pj-jaune); margin-top:3px; text-decoration:none; display:inline-block; cursor:pointer; }

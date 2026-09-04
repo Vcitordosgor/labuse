@@ -130,7 +130,12 @@ def compute_medianes_secteur(session: Session) -> dict:
     return {"lignes": row[0], "secteurs": row[1], "ventes": int(row[2] or 0)}
 
 
-NEUF_VEFA_FENETRE_ANS = 3   # M101 B2 — même fenêtre que la référence secteur (dvf_profils.yaml)
+NEUF_VEFA_FENETRE_ANS = 5   # RETOURS-11F M2 — fenêtre élargie 36→60 mois (mesuré 04/09/2026 : sur 36 mois
+# 988 mutations VEFA dont 309 (31 %) à prix calculable ; à 60 mois 2 393 mutations dont 1 280 (53 %) — la
+# fenêtre à 5 ans QUADRUPLE presque l'effectif exploitable et stabilise la médiane, sans inventer de prix
+# (le €/m² reste la grandeur ; €/logement mélangerait les typologies). Au-delà de 60 mois le gain est
+# marginal (120 mois : 1 502, +17 % seulement). La couverture pleine île reste impossible — 14/24 communes
+# ont < 8 ventes VEFA même sur 5 ans : c'est l'état RÉEL du marché, pas un trou de données (hachure honnête).
 
 
 def neuf_vefa_commune(session: Session, insee: str) -> dict:

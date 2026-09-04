@@ -159,7 +159,11 @@ export function ProduitSection() {
                   <td className="px-4 py-2.5 font-mono text-xs text-txt-dim">{fmtReu(r.created_at)}</td>
                   <td className="px-4 py-2.5">{r.compte_nom ?? <span className="text-txt-dim">interne</span>}</td>
                   <td className="px-4 py-2.5"><Chip tone={tm.tone}>{tm.label}</Chip></td>
-                  <td className="max-w-[420px] px-4 py-2.5 text-txt-mut">« {r.commentaire ?? r.type_erreur} »</td>
+                  <td className="max-w-[420px] px-4 py-2.5 text-txt-mut">
+                    « {r.commentaire ?? r.type_erreur} »
+                    {/* RETOURS-11F M11 — IDU + section (`champ`) + lien cliquable vers la fiche d'origine. */}
+                    {r.fiche_lien && <a href={`/socle/${r.fiche_lien}`} className="ml-2 whitespace-nowrap text-[11px] text-mint hover:underline" title={`Ouvrir la fiche ${r.parcelle_id}${r.champ ? ` · ${r.champ}` : ''}`}>↗ fiche{r.champ ? ` · ${r.champ}` : ''}</a>}
+                  </td>
                   <td className="px-4 py-2.5 text-right">
                     {r.statut === 'nouveau'
                       ? <ActBtn tone="ghost" onClick={() => statut.mutate({ id: r.id, s: 'traite' })}>Traiter</ActBtn>
@@ -204,7 +208,11 @@ export function ProduitSection() {
                   <td className="px-4 py-2.5 font-mono text-xs text-txt-dim">{fmtReu(r.ts)}</td>
                   <td className="px-4 py-2.5">{r.compte ?? <span className="text-txt-dim">interne</span>}</td>
                   <td className="px-4 py-2.5"><Chip tone={tm.tone}>{tm.label}</Chip></td>
-                  <td className="max-w-[420px] px-4 py-2.5 text-txt-mut">« {r.message} »</td>
+                  <td className="max-w-[420px] px-4 py-2.5 text-txt-mut">
+                    « {r.message} »
+                    {/* RETOURS-11F M11 — un retour « donnée » venu de la fiche porte l'IDU + la section + le lien. */}
+                    {r.fiche_lien && <a href={`/socle/${r.fiche_lien}`} className="ml-2 whitespace-nowrap text-[11px] text-mint hover:underline" title={`Ouvrir la fiche ${r.idu}${r.section ? ` · ${r.section}` : ''}`}>↗ fiche{r.section ? ` · ${r.section}` : ''}</a>}
+                  </td>
                   <td className="px-4 py-2.5 text-right">
                     {r.statut === 'nouveau'
                       ? <ActBtn tone="ghost" onClick={() => retourStatut.mutate({ id: r.id, s: 'traite' })}>Traiter</ActBtn>
