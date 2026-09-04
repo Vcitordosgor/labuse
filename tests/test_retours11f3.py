@@ -125,3 +125,32 @@ def test_m3_reference_locale_est_dans_le_moteur_et_ref_local_delegue():
     assert "dvf_mutations" not in deleg, "plus aucune requête DVF recopiée hors du moteur"
     # constantes partagées (fenêtre/seuil uniques).
     assert bilan.MIN_N_SECTEUR == 8 and bilan.PERIODE_SECTEUR_ANS == 5
+
+
+# ─────────────────────────── A5 — préférences notifications : cloche / brief / e-mail ───────────────────────────
+
+def test_a5_prefs_trois_canaux_brief_applicable_chaines_1_2():
+    """Les préférences exposent TROIS canaux (cloche / brief / e-mail). Le brief n'est applicable
+    qu'aux chaînes 1+2 (parcelles suivies / secteurs) ; les chaînes 3 (annonce/maintenance) sont
+    marquées brief_na (envoi immédiat, jamais un brief)."""
+    from labuse.api import events
+    import inspect as _i
+    src = _i.getsource(events.prefs_compte)
+    assert '"brief"' in src and '"brief_na"' in src, "prefs_compte doit exposer brief + brief_na"
+    # set_pref accepte le canal brief ; le brief du matin le respecte (filtre dédié).
+    assert "brief" in _i.signature(events.set_pref).parameters
+    assert hasattr(events, "_brief_filter_sql")
+    bm = _i.getsource(events.brief_matin)
+    assert "_brief_filter_sql" in bm, "le brief du matin doit filtrer sur le canal brief"
+    # DDL : la colonne brief existe (idempotente pour les bases servies avant le mandat).
+    assert "ADD COLUMN IF NOT EXISTS brief" in events.DDL
+
+
+def test_a5_brief_na_pour_annonce_et_maintenance():
+    """annonce_produit et maintenance (chaîne 3) : brief NON applicable (immédiat) ; parcelle_suivie
+    et veille_zone (chaînes 1+2) : brief applicable."""
+    from labuse.notif_registry import meta
+    assert meta("parcelle_suivie")["chaine"] in (1, 2)
+    assert meta("veille_zone")["chaine"] in (1, 2)
+    assert meta("annonce_produit")["chaine"] == 3
+    assert meta("maintenance")["chaine"] == 3

@@ -449,25 +449,32 @@ function NotifBell() {
             {prefsOpen ? (
               <div data-notif-prefs className="shrink-0 border-b border-line bg-surface-2 px-4 py-3">
                 <p className="mb-2 text-[11px] font-medium text-txt">Que recevoir, et où ?</p>
-                <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-2 text-[11px]">
+                {/* RETOURS-11F3 A5 — TROIS canaux : cloche · brief (du matin) · e-mail, par type. */}
+                <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-x-4 gap-y-2 text-[11px]">
                   <span className="text-txt-dim">Type</span>
                   <span className="text-center text-txt-dim">Cloche</span>
+                  <span className="text-center text-txt-dim" title="Le résumé du matin (Copilote)">Brief</span>
                   <span className="text-center text-txt-dim">E-mail</span>
                   {(notifPrefs.data?.types ?? []).map((t) => (
                     <Fragment key={t.key}>
                       <span className="text-txt">{t.label}{t.verrou && <span className="text-txt-dim"> · toujours actif</span>}</span>
                       <input type="checkbox" checked={t.cloche} aria-label={`${t.label} — cloche`} data-pref={`${t.key}-cloche`}
-                        onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: e.target.checked, email: t.email })}
+                        onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: e.target.checked, email: t.email, brief: t.brief })}
                         className="mx-auto h-3.5 w-3.5 accent-mint" />
+                      {/* BRIEF — canal du matin, applicable aux chaînes 1+2 seulement (chaîne 3 = immédiat → grisé). */}
+                      <input type="checkbox" checked={t.brief && !t.brief_na} disabled={t.brief_na} aria-label={`${t.label} — brief`} data-pref={`${t.key}-brief`}
+                        title={t.brief_na ? 'Envoi immédiat — pas un brief du matin' : 'Apparaît dans le brief du matin'}
+                        onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: t.email, brief: e.target.checked })}
+                        className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-30" />
                       {/* M85-B — maintenance : e-mail VERROUILLÉ (non désactivable, conséquences réelles). */}
                       <input type="checkbox" checked={t.email} disabled={t.verrou} aria-label={`${t.label} — e-mail`} data-pref={`${t.key}-email`}
                         title={t.verrou ? 'Non désactivable — conséquences réelles (maintenance, compte)' : undefined}
-                        onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: e.target.checked })}
+                        onChange={(e) => setPref.mutate({ pref_type: t.key, cloche: t.cloche, email: e.target.checked, brief: t.brief })}
                         className="mx-auto h-3.5 w-3.5 accent-mint disabled:opacity-40" />
                     </Fragment>
                   ))}
                 </div>
-                <p className="mt-2 text-[10px] leading-snug text-txt-dim">L'e-mail est un résumé quotidien (7h, heure Réunion). Tout décocher = ne rien recevoir.</p>
+                <p className="mt-2 text-[10px] leading-snug text-txt-dim">La cloche est instantanée · le brief est le résumé du matin (Copilote) · l'e-mail est un résumé quotidien (7h, heure Réunion). Tout décocher = ne rien recevoir.</p>
               </div>
             ) : (
             /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle,

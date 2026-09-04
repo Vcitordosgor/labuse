@@ -1032,9 +1032,11 @@ export interface SuiviItem { idu: string; depuis: string; commune: string | null
 export const getSuivis = () => j<{ suivis: SuiviItem[]; plafond: number }>('/events/suivis')
 // M85 / M85-B — préférences par type (registre) et par canal (cloche / e-mail). `verrou` = non
 // désactivable (maintenance : e-mail toujours actif, conséquences réelles).
-export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean; verrou?: boolean }
+// RETOURS-11F3 A5 — 3 canaux : cloche · brief (du matin) · e-mail. `brief_na` = brief non applicable
+// (chaînes 3, envoi immédiat — la case est grisée). `verrou` = e-mail non désactivable (maintenance).
+export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean; brief: boolean; brief_na?: boolean; verrou?: boolean }
 export const getNotifPrefs = () => j<{ types: NotifPref[] }>('/events/prefs')
-export const patchNotifPref = (p: { pref_type: string; cloche: boolean; email: boolean }) =>
+export const patchNotifPref = (p: { pref_type: string; cloche: boolean; email: boolean; brief?: boolean }) =>
   j<{ ok: boolean }>('/events/prefs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
 export const getEventsCount = () => j<{ unread: number; par_parcelle: Record<string, number> }>('/events/count')
 export const markEventRead = (id: number) => j<{ ok: boolean }>(`/events/${id}/read`, { method: 'POST' })

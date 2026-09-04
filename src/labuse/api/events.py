@@ -119,8 +119,11 @@ CREATE TABLE IF NOT EXISTS notif_canaux (
   pref_type varchar(16) NOT NULL,       -- veille | suivi | marche
   cloche boolean NOT NULL DEFAULT true,
   email  boolean NOT NULL DEFAULT true,
+  brief  boolean NOT NULL DEFAULT true, -- RETOURS-11F3 A5 : 3e canal = le brief du matin (chaînes 1+2)
   PRIMARY KEY (compte_id, pref_type)
 );
+-- RETOURS-11F3 A5 — le canal « brief » s'ajoute aux bases servies avant ce mandat (idempotent).
+ALTER TABLE notif_canaux ADD COLUMN IF NOT EXISTS brief boolean NOT NULL DEFAULT true;
 -- M85-B — trace des ANNONCES (chaîne 3) : qui, quoi, quand, combien de destinataires, statut.
 CREATE TABLE IF NOT EXISTS annonces (
   id serial PRIMARY KEY, type varchar(20), titre text, corps text, lien text,
@@ -278,32 +281,49 @@ def _pref_type(kind: str, is_market: bool = False) -> str:
 
 
 def prefs_compte(db: Session, cid: int | None) -> dict:
-    """Préférences EFFECTIVES {type: {cloche, email, verrou, label}} : défauts du registre (tout activé),
-    écrasés par notif_canaux. `maintenance` : e-mail FORCÉ à True + verrou (jamais désactivable)."""
-    from ..notif_registry import REGISTRE, TYPES_CLIENT, canaux, desactivable
-    out = {t: {"cloche": "cloche" in canaux(t), "email": "mail" in canaux(t),
-               "verrou": not desactivable(t), "label": REGISTRE[t]["libelle"]} for t in TYPES_CLIENT}
+    """Préférences EFFECTIVES {type: {cloche, email, brief, brief_na, verrou, label}} : défauts du
+    registre (tout activé), écrasés par notif_canaux. `maintenance` : e-mail FORCÉ + verrou. Le BRIEF
+    (RETOURS-11F3 A5) n'est APPLICABLE qu'aux chaînes 1+2 (parcelles suivies / secteurs) — le brief du
+    matin ; les chaînes 3 (annonce/maintenance) sont des envois IMMÉDIATS, jamais un brief (brief_na)."""
+    from ..notif_registry import REGISTRE, TYPES_CLIENT, canaux, desactivable, meta
+    out = {}
+    for t in TYPES_CLIENT:
+        brief_ok = meta(t).get("chaine") in (1, 2)   # le brief ne concerne que les digests quotidiens
+        out[t] = {"cloche": "cloche" in canaux(t), "email": "mail" in canaux(t),
+                  "brief": brief_ok, "brief_na": not brief_ok,
+                  "verrou": not desactivable(t), "label": REGISTRE[t]["libelle"]}
     if cid is not None:
-        for r in db.execute(text("SELECT pref_type, cloche, email FROM notif_canaux WHERE compte_id=:c"),
+        for r in db.execute(text("SELECT pref_type, cloche, email, brief FROM notif_canaux WHERE compte_id=:c"),
                             {"c": cid}).mappings():
             if r["pref_type"] in out:
                 out[r["pref_type"]].update(cloche=bool(r["cloche"]), email=bool(r["email"]))
+                if not out[r["pref_type"]]["brief_na"]:   # jamais activer un brief sur une chaîne 3
+                    out[r["pref_type"]]["brief"] = bool(r["brief"])
     for t in out:                                    # maintenance : e-mail jamais coupable
         if out[t]["verrou"]:
             out[t]["email"] = True
     return out
 
 
-def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool) -> None:
-    from ..notif_registry import TYPES_CLIENT, desactivable
+def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool,
+             brief: bool | None = None) -> None:
+    from ..notif_registry import TYPES_CLIENT, desactivable, meta
     if pref_type not in TYPES_CLIENT:
         return
     if not desactivable(pref_type):                  # maintenance : e-mail non désactivable
         email = True
+    # RETOURS-11F3 A5 — le brief ne s'applique qu'aux chaînes 1+2 ; ailleurs il reste false (non concerné).
+    brief_ok = meta(pref_type).get("chaine") in (1, 2)
+    if brief is None:
+        # rétro-compat (appelants cloche/email seuls) : on conserve la valeur stockée, défaut = applicable.
+        prev = db.execute(text("SELECT brief FROM notif_canaux WHERE compte_id=:c AND pref_type=:p"),
+                          {"c": cid, "p": pref_type}).scalar()
+        brief = bool(prev) if prev is not None else brief_ok
+    brief = bool(brief) if brief_ok else False
     db.execute(text(
-        "INSERT INTO notif_canaux (compte_id, pref_type, cloche, email) VALUES (:c,:p,:cl,:em) "
-        "ON CONFLICT (compte_id, pref_type) DO UPDATE SET cloche=:cl, email=:em"),
-        {"c": cid, "p": pref_type, "cl": cloche, "em": email})
+        "INSERT INTO notif_canaux (compte_id, pref_type, cloche, email, brief) VALUES (:c,:p,:cl,:em,:br) "
+        "ON CONFLICT (compte_id, pref_type) DO UPDATE SET cloche=:cl, email=:em, brief=:br"),
+        {"c": cid, "p": pref_type, "cl": cloche, "em": email, "br": brief})
 
 
 def desabonner_email(db: Session, cid: int) -> None:
@@ -324,6 +344,18 @@ def _cloche_filter_sql(prefs: dict) -> str:
         if t in prefs and not prefs[t]["cloche"]:
             ks = ",".join(f"'{k}'" for k in kinds)
             excl.append(f"NOT (e.kind IN ({ks}) AND e.compte_id IS NOT DISTINCT FROM :cid)")
+    return (" AND " + " AND ".join(excl)) if excl else ""
+
+
+def _brief_filter_sql(prefs: dict, alias: str = "e", cid_param: str = "c") -> str:
+    """RETOURS-11F3 A5 — fragment WHERE excluant du BRIEF DU MATIN les types (chaînes 1+2) dont le
+    canal brief est coupé. Même patron que `_cloche_filter_sql` ; ne touche jamais les kinds hors
+    préférence (marché, systeme)."""
+    excl = []
+    for t, kinds in _KINDS_PAR_PREF.items():
+        if t in prefs and not prefs[t].get("brief_na") and not prefs[t].get("brief", True):
+            ks = ",".join(f"'{k}'" for k in kinds)
+            excl.append(f"NOT ({alias}.kind IN ({ks}) AND {alias}.compte_id IS NOT DISTINCT FROM :{cid_param})")
     return (" AND " + " AND ".join(excl)) if excl else ""
 
 
@@ -1057,10 +1089,15 @@ def brief_matin(db: Session, cid: int | None) -> dict:
     hier sur vos secteurs suivis » = nouveaux permis dans VOS communes, MÊME point de calcul que le bloc
     « cette semaine » de M83 (`sitadel_permits.date_depot`, aucun recalcul). HONNÊTE : si tout est à
     zéro (souvent, tant que les crons d'ingestion ne tournent pas), le brief le DIT et n'invente rien."""
+    # RETOURS-11F3 A5 — le brief respecte le canal « brief » des préférences (chaînes 1+2). Un type
+    # dont le brief est coupé ne remplit plus le brief du matin (ni la ligne veilles, ni les groupes).
+    prefs = prefs_compte(db, cid)
+    bf_veille = _brief_filter_sql(prefs, alias="event_log", cid_param="c")
     veilles = db.execute(text(
         "SELECT titre, detail, ts::text AS ts, lien, source FROM event_log "
         "WHERE kind='veille' AND compte_id IS NOT DISTINCT FROM :c AND ts >= now() - interval '24 hours' "
-        "ORDER BY ts DESC LIMIT 20"), {"c": cid}).mappings().all()
+        + bf_veille +
+        " ORDER BY ts DESC LIMIT 20"), {"c": cid}).mappings().all()
     communes = _mes_communes(db, cid)
     permis_max = db.execute(text("SELECT max(date_depot) FROM sitadel_permits")).scalar()
     permis_hier = 0
@@ -1085,7 +1122,8 @@ def brief_matin(db: Session, cid: int | None) -> dict:
         "FROM event_log e LEFT JOIN parcels p ON p.idu = e.idu "
         "WHERE e.ts >= now() - interval '24 hours' "
         "  AND e.compte_id IS NOT DISTINCT FROM :c AND e.kind = ANY(:perso) AND NOT e.demo "
-        "GROUP BY COALESCE(p.commune, '—') ORDER BY max(e.ts) DESC"),
+        + _brief_filter_sql(prefs, alias="e", cid_param="c") +
+        " GROUP BY COALESCE(p.commune, '—') ORDER BY max(e.ts) DESC"),
         {"c": cid, "perso": list(_PERSO_KINDS)}).mappings().all()
     n_evenements = sum(r["n"] for r in groupes) + int(permis_hier)
     vide = (len(veilles) == 0 and permis_hier == 0)
@@ -1474,15 +1512,17 @@ class PrefIn(BaseModel):
     pref_type: str
     cloche: bool
     email: bool
+    brief: bool | None = None   # RETOURS-11F3 A5 — 3e canal (brief du matin) ; None = inchangé (rétro-compat)
 
 
 @router.patch("/prefs")
 def prefs_patch(body: PrefIn, request: Request, db: Session = Depends(get_db)) -> dict:
-    """API in-app : régler un type/canal. Le pilote (compte NULL) ne persiste pas (défauts servis)."""
+    """API in-app : régler un type/canal (cloche / brief / e-mail). Le pilote (compte NULL) ne
+    persiste pas (défauts servis)."""
     from .tenant import current_compte
     cid = current_compte(request)
     if cid is None:
         return {"ok": False, "motif": "session pilote — préférences non persistées"}
-    set_pref(db, cid, body.pref_type, cloche=body.cloche, email=body.email)
+    set_pref(db, cid, body.pref_type, cloche=body.cloche, email=body.email, brief=body.brief)
     db.commit()
     return {"ok": True}
