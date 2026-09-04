@@ -1,0 +1,1142 @@
+meta:
+  insee: '97413'
+  commune: Saint-Leu
+  document: 97413_reglement_2007.pdf
+  document_gpu: '97413_20070226'
+  gpu_doc_id: null
+  url: https://www.saintleu.re/pdf/reglement-du-plu.pdf
+  md5: d74416f9b25fbe571505f084ab486b0a
+  millesime: '2007-02-26'
+  pages_total: 134
+  lu_le: '2026-09-03'
+  edition: « Règlement écrit actualisé — Août 2013 » (consolidation du PLU approuvé 26/02/2007 avec ses modifications,
+    cabinet Duteilh-Perrau) = LE texte opposable servi par la mairie. Le GPU ne sert PLUS aucun document pour 97413
+    (dépublication constatée sur pièces le 03/09). La révision arrêtée le 11/12/2025 n'est PAS approuvée → écartée.
+  structure: 'Ancien format R123 (SHON) : zones U à listes limitatives art. 1 + conditions art. 2 (silence = autorisé)
+    sauf UP (« toutes les occupations non mentionnées à l''article UP2 sont interdites ») et secteur UFe (« toute
+    construction est interdite ») ; secteurs régis par le chapitre de leur zone. Couverture : zones/secteurs énumérés
+    PAR LE RÈGLEMENT (liste des codes du zonage servi non consultable — DB indisponible).'
+zones:
+  UA:
+    silence: autorise
+    silence_src: 'Structure ancien format : art. UA1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
+      p. 18) et art. UA2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 19-20) ; ce qui ne figure dans aucune des
+      deux listes n''est ni interdit ni conditionné.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA1 (2)
+        page_pdf: 18
+        citation: « Les constructions à usage industriel et d'entrepôt »
+      entrepot:
+        statut: interdit
+        article: UA1 (2 et 11)
+        page_pdf: 18
+        citation: « Les constructions à usage industriel et d'entrepôt » ; « Les entrepôts et les commerces dont
+          la surface de réserve excède la surface de vente »
+      exploitation_agricole:
+        statut: interdit
+        article: UA1 (4, repris au 14)
+        page_pdf: 18
+        citation: « L'implantation et l'extension des constructions et installations à usage agricole »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UA1 (11)
+        page_pdf: 18
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+        note: « commerces » (nomenclature ancienne) → artisanat_commerce_detail + commerce_gros, citation commune
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UA1 (11)
+        page_pdf: 18
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques (centre-ville,
+          étang Saint-Leu et Piton Saint-Leu) : tout projet créant plus de 600 m² de SHON destinée à l''habitation
+          doit affecter au logement social au moins 20 % de la SHON d''habitation ; pour les opérations d''aménagement
+          (ZAC, lotissement) de plus de 1 200 m² de SHON, obligation appliquée globalement (le texte parle en SHON)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UA2 (2.2, 5)
+        page_pdf: 19
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Non rattachables aux 23 sous-destinations (relayés, non mappés) : installations classées (UA1-1, UA2
+      2.2-1 et 2), terrains de camping et caravaning (UA1-3), aires naturelles de camping (UA1-5), dépôts de ferrailles
+      et décharges (UA1-6), carrières (UA1-7), modes d''utilisation du sol R 442-2 §C (UA1-8), habitations légères
+      de loisirs (UA1-9), affouillements/exhaussements (UA2 2.1), travaux sur bâtiments protégés L.123-1 7° (UA2
+      2.2-4). Anomalie : la numérotation de UA1 saute de 11 à 14, et le 14 répète le 4 (agricole).'
+  UAt:
+    silence: autorise
+    silence_src: 'Secteur régi par le même chapitre : art. UA1 (liste limitative des interdictions, dont un alinéa
+      10 propre au secteur UAt, p. 18) et art. UA2 (conditions, dont un alinéa 3 propre au secteur UAt, p. 19) ;
+      ce qui n''y figure pas n''est ni interdit ni conditionné.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA1 (2 et 10)
+        page_pdf: 18
+        citation: « Les constructions à usage industriel et d'entrepôt » ; « En secteur UAt les créations et extensions
+          d'établissements industriels et artisanaux »
+      entrepot:
+        statut: interdit
+        article: UA1 (2 et 11)
+        page_pdf: 18
+        citation: « Les constructions à usage industriel et d'entrepôt »
+      exploitation_agricole:
+        statut: interdit
+        article: UA1 (4, repris au 14)
+        page_pdf: 18
+        citation: « L'implantation et l'extension des constructions et installations à usage agricole »
+      logement:
+        statut: sous_condition
+        condition: 'nouvelles constructions à usage d''habitation permanente interdites en UAt, sauf celles prévues
+          à l''article UA2 : « les locaux d''habitation du personnel indispensable au fonctionnement et au gardiennage
+          des établissements » ; s''ajoute la règle de la zone de déficit en logement social (UA2 2.2-5, plus de
+          600 m² de SHON → 20 % logement social)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UA1 (10) ; UA2 (2.2, 3 et 5)
+        page_pdf: 18
+        citation: « les nouvelles constructions à usage d'habitation permanente sauf celles prévues à l'article
+          UA2 II » (p. 18) ; « les locaux d'habitation du personnel indispensable au fonctionnement et au gardiennage
+          des établissements » (p. 19)
+      hotels:
+        statut: sous_condition
+        condition: constructions à usage d'hébergement touristique et de loisirs, sans hébergement permanent
+        article: UA2 (2.2, 3)
+        page_pdf: 19
+        citation: '« Dans le secteur UAt : - les constructions à usage d''hébergement touristique et de loisirs,
+          sans hébergement permanent »'
+        note: « hébergement touristique » (ligne unique ancienne) → hotels + autres_hebergements_touristiques, citation
+          commune
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: constructions à usage d'hébergement touristique et de loisirs, sans hébergement permanent
+        article: UA2 (2.2, 3)
+        page_pdf: 19
+        citation: '« Dans le secteur UAt : - les constructions à usage d''hébergement touristique et de loisirs,
+          sans hébergement permanent »'
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente (UA1-11) ; l'article UA2 admet
+          en UAt « les commerces liés à ces activités » (hébergement touristique et de loisirs)
+        article: UA1 (11) ; UA2 (2.2, 3)
+        page_pdf: 18
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente » (p. 18)
+          ; « les commerces liés à ces activités » (p. 19)
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente (UA1-11) ; l'article UA2 admet
+          en UAt « les commerces liés à ces activités » (hébergement touristique et de loisirs)
+        article: UA1 (11) ; UA2 (2.2, 3)
+        page_pdf: 18
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente » (p. 18)
+          ; « les commerces liés à ces activités » (p. 19)
+    note: 'UA1-10 interdit aussi les « établissements … artisanaux » : terme ne couvrant pas pleinement la sous-destination
+      artisanat_commerce_detail (qui inclut le commerce de détail) → non mappé au-delà de la citation. Anomalie
+      : UA1-10 renvoie à « l''article UA2 II », subdivision qui n''existe pas (UA2 est structuré en 2.1/2.2). Autres
+      occupations non rattachables : cf. note UA.'
+  UAa:
+    silence: autorise
+    silence_src: 'Secteur régi par le même chapitre UA (le chapeau p. 18 ne lui donne que des hauteurs plus importantes,
+      art. UA10-3 p. 24) : art. UA1 (liste limitative, p. 18) et UA2 (conditions, p. 19-20) s''appliquent ; ce qui
+      n''y figure pas n''est ni interdit ni conditionné.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA1 (2)
+        page_pdf: 18
+        citation: « Les constructions à usage industriel et d'entrepôt »
+      entrepot:
+        statut: interdit
+        article: UA1 (2 et 11)
+        page_pdf: 18
+        citation: « Les constructions à usage industriel et d'entrepôt »
+      exploitation_agricole:
+        statut: interdit
+        article: UA1 (4, repris au 14)
+        page_pdf: 18
+        citation: « L'implantation et l'extension des constructions et installations à usage agricole »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UA1 (11)
+        page_pdf: 18
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UA1 (11)
+        page_pdf: 18
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques : plus de 600
+          m² de SHON d''habitation → au moins 20 % de la SHON d''habitation en logement social (1 200 m² pour les
+          opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UA2 (2.2, 5)
+        page_pdf: 19
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Aucune règle de destination propre au secteur UAa (hauteurs seulement, UA10-3 p. 24). Occupations non
+      rattachables : cf. note UA.'
+  UB:
+    silence: autorise
+    silence_src: 'Structure ancien format : art. UB1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
+      p. 28) et art. UB2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 28-29) ; ce qui n''y figure pas n''est
+      ni interdit ni conditionné.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UB1 (2)
+        page_pdf: 28
+        citation: « Les constructions à usage industriel et d'entrepôt »
+      entrepot:
+        statut: interdit
+        article: UB1 (2 et 10)
+        page_pdf: 28
+        citation: « Les constructions à usage industriel et d'entrepôt » ; « Les entrepôts et les commerces dont
+          la surface de réserve excède la surface de vente »
+      exploitation_agricole:
+        statut: interdit
+        article: UB1 (4, repris au 11)
+        page_pdf: 28
+        citation: « L'implantation et l'extension des constructions et installations à usage agricole »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UB1 (10)
+        page_pdf: 28
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UB1 (10)
+        page_pdf: 28
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques (centre-ville,
+          étang Saint-Leu et Piton Saint-Leu) : plus de 600 m² de SHON d''habitation → au moins 20 % de la SHON
+          d''habitation en logement social (1 200 m² pour les opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UB2 (2.2, 4)
+        page_pdf: 29
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Non rattachables (relayés, non mappés) : installations classées (UB1-1, UB2 2.2-1 et 2), camping/caravaning
+      (UB1-3), aires naturelles de camping (UB1-5), dépôts de ferrailles et décharges (UB1-6), carrières (UB1-7),
+      R 442-2 §C (UB1-8), habitations légères de loisirs (UB1-9), affouillements (UB2 2.1), bâtiments protégés L.123-1
+      7° (UB2 2.2-3). Anomalie : UB1-4 et UB1-11 répètent la même interdiction agricole.'
+  UC:
+    silence: autorise
+    silence_src: 'Structure ancien format : art. UC1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
+      p. 38) et art. UC2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 38-39) ; ce qui n''y figure pas n''est
+      ni interdit ni conditionné.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: UC1 (3 et 8)
+        page_pdf: 38
+        citation: « Les bâtiments destinés uniquement à l'entreposage » ; « Les entrepôts et les commerces dont
+          la surface de réserve excède la surface de vente »
+      exploitation_agricole:
+        statut: interdit
+        article: UC1 (7)
+        page_pdf: 38
+        citation: « Les constructions ou installations à usage agricole, en dehors du secteur UCa »
+        note: interdiction écrite comme ne s'appliquant pas au secteur UCa
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UC1 (8)
+        page_pdf: 38
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UC1 (8)
+        page_pdf: 38
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques (centre-ville,
+          Etang Saint-Leu et Piton Saint-Leu) : plus de 600 m² de SHON d''habitation → au moins 20 % de la SHON
+          d''habitation en logement social (1 200 m² pour les opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UC2 (2.2, 5)
+        page_pdf: 39
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Pas d''interdiction industrielle écrite en UC (contrairement à UA/UB) : industrie non mentionnée → régie
+      par le silence. Non rattachables : installations classées (UC1-1, UC2 2.2-1 et 2), camping/caravaning (UC1-2),
+      aires naturelles (UC1-4), dépôts/décharges (UC1-5), carrières (UC1-6), affouillements (UC2 2.1), bâtiments
+      protégés (UC2 2.2-3). Anomalie : la numérotation de UC2 2.2 saute de 3 à 5 (pas d''alinéa 4).'
+  UCa:
+    silence: autorise
+    silence_src: 'Secteur régi par le même chapitre UC : art. UC1 (liste limitative, p. 38) et UC2 (conditions,
+      p. 38-39) ; ce qui n''y figure pas n''est ni interdit ni conditionné.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: autorise
+        article: UC1 (7)
+        page_pdf: 38
+        citation: '« Les constructions ou installations à usage agricole, en dehors du secteur UCa » — l''interdiction
+          est écrite comme ne s''appliquant pas au secteur UCa (chapeau p. 38 : « un secteur UCa dans lequel des
+          activités agricoles traditionnelles sont autorisées »)'
+      entrepot:
+        statut: interdit
+        article: UC1 (3 et 8)
+        page_pdf: 38
+        citation: « Les bâtiments destinés uniquement à l'entreposage »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UC1 (8)
+        page_pdf: 38
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UC1 (8)
+        page_pdf: 38
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques : plus de 600
+          m² de SHON d''habitation → au moins 20 % de la SHON d''habitation en logement social (1 200 m² pour les
+          opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UC2 (2.2, 5)
+        page_pdf: 39
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Occupations non rattachables : cf. note UC.'
+  UCc:
+    silence: autorise
+    silence_src: 'Secteur régi par le même chapitre UC (le chapeau p. 38 ne lui donne que des hauteurs limitées
+      « à rez-de-chaussée plus combles », règle portée par UC10-3 p. 44) : art. UC1 (liste limitative, p. 38) et
+      UC2 (conditions, p. 38-39) s''appliquent.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: UC1 (3 et 8)
+        page_pdf: 38
+        citation: « Les bâtiments destinés uniquement à l'entreposage »
+      exploitation_agricole:
+        statut: interdit
+        article: UC1 (7)
+        page_pdf: 38
+        citation: « Les constructions ou installations à usage agricole, en dehors du secteur UCa »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UC1 (8)
+        page_pdf: 38
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UC1 (8)
+        page_pdf: 38
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques : plus de 600
+          m² de SHON d''habitation → au moins 20 % de la SHON d''habitation en logement social (1 200 m² pour les
+          opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UC2 (2.2, 5)
+        page_pdf: 39
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Aucune règle de destination propre au secteur UCc (hauteurs seulement, UC10-3 p. 44). Occupations non
+      rattachables : cf. note UC.'
+  UD:
+    silence: autorise
+    silence_src: 'Structure ancien format : art. UD1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
+      p. 48) et art. UD2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 48-49) ; ce qui n''y figure pas n''est
+      ni interdit ni conditionné.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: UD1 (3 et 7)
+        page_pdf: 48
+        citation: « Les bâtiments destinés uniquement à l'entreposage » ; « Les entrepôts et les commerces dont
+          la surface de réserve excède la surface de vente »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UD1 (7)
+        page_pdf: 48
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UD1 (7)
+        page_pdf: 48
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques (centre-ville,
+          Etang Saint-Leu et Piton Saint-Leu) : plus de 600 m² de SHON d''habitation → au moins 20 % de la SHON
+          d''habitation en logement social (1 200 m² pour les opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UD2 (2.2, 4)
+        page_pdf: 49
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Ni l''industrie ni l''agricole ne figurent aux interdictions UD1 (contrairement à UA/UB/UC) : non mentionnés
+      → régis par le silence. Non rattachables : installations classées (UD1-1, UD2 2.2-1 et 2), camping/caravaning
+      (UD1-2), aires naturelles (UD1-4), dépôts/décharges (UD1-5), carrières (UD1-6), affouillements (UD2 2.1),
+      bâtiments protégés (UD2 2.2-3).'
+  UDp:
+    silence: autorise
+    silence_src: 'Secteur régi par le même chapitre UD (chapeau p. 48 : habitat précaire et insalubre du littoral
+      de Bois Blanc ; ses seules règles propres portent sur l''implantation, UD6-2 p. 52 et UD7-2 p. 53) : art.
+      UD1 (liste limitative, p. 48) et UD2 (conditions, p. 48-49) s''appliquent.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: UD1 (3 et 7)
+        page_pdf: 48
+        citation: « Les bâtiments destinés uniquement à l'entreposage »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UD1 (7)
+        page_pdf: 48
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UD1 (7)
+        page_pdf: 48
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques : plus de 600
+          m² de SHON d''habitation → au moins 20 % de la SHON d''habitation en logement social (1 200 m² pour les
+          opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UD2 (2.2, 4)
+        page_pdf: 49
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Aucune règle de destination propre au secteur UDp (implantation seulement). Occupations non rattachables
+      : cf. note UD.'
+  UDb:
+    silence: autorise
+    silence_src: 'Secteur régi par le même chapitre UD (chapeau p. 48 : « secteur UDb correspondant à la zone UD
+      de Stella – Quatre Robinets concernée par un recul spécifique de 45 m par rapport à la Route des Tamarins
+      ») : art. UD1 (liste limitative, p. 48) et UD2 (conditions, p. 48-49) s''appliquent.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: UD1 (3 et 7)
+        page_pdf: 48
+        citation: « Les bâtiments destinés uniquement à l'entreposage »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UD1 (7)
+        page_pdf: 48
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      commerce_gros:
+        statut: sous_condition
+        condition: interdits si la surface de réserve excède la surface de vente
+        article: UD1 (7)
+        page_pdf: 48
+        citation: « Les entrepôts et les commerces dont la surface de réserve excède la surface de vente »
+      logement:
+        statut: sous_condition
+        condition: 'dans la zone de déficit en logement social délimitée aux documents graphiques : plus de 600
+          m² de SHON d''habitation → au moins 20 % de la SHON d''habitation en logement social (1 200 m² pour les
+          opérations d''aménagement, obligation globale)'
+        seuil_m2: 600
+        seuil_type: surface_plancher
+        article: UD2 (2.2, 4)
+        page_pdf: 49
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+    note: 'Anomalie : le code UDb n''apparaît que dans le chapeau (p. 48) ; la règle de recul de 45 m est écrite
+      à l''article UD6-2 (5, p. 52) pour « la zone UD de Quatre Robinets » sans citer le code UDb. Aucune règle
+      de destination propre au secteur.'
+  UE:
+    silence: autorise
+    silence_src: 'Structure ancien format : art. UE1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
+      p. 58) et art. UE2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 58-59) ; ce qui n''y figure pas n''est
+      ni interdit ni conditionné (industrie, entrepôt, commerce, bureau… non mentionnés en UE).'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'constructions à usage d''habitation interdites, sauf : (1) celles destinées aux personnes dont
+          la présence est indispensable pour assurer le fonctionnement ou le gardiennage des activités autorisées,
+          maximum 30 m² de SHON ; (2) travaux d''aménagement et d''extension mineure (limitée à 20 m²) sur constructions
+          existantes à usage d''habitation principale non liée à une activité'
+        seuil_m2: 30
+        seuil_type: surface_plancher
+        article: UE1 (1) ; UE2 (2.2, 1 et 2)
+        page_pdf: 58
+        citation: « Les constructions à usage d'habitation, sauf celles visées à l'article UE 2.2 » (p. 58) ; «
+          à condition qu'ils soient destinés aux personnes dont la présence est indispensable pour assurer le fonctionnement
+          ou le gardiennage des activités autorisées (maximum 30m2 SHON) » ; « travaux d'aménagement et d'extension
+          mineure (limitée à 20 m2) » (p. 59)
+      exploitation_agricole:
+        statut: interdit
+        article: UE1 (3)
+        page_pdf: 58
+        citation: « L'implantation et l'extension des constructions et installations à usage agricole »
+    note: 'Non rattachables : camping/caravaning (UE1-2), aires naturelles (UE1-4), carrières (UE1-5), affouillements
+      (UE2 2.1), bâtiments protégés L.123-1 7° (UE2 2.2-3). Le seuil de 30 m² SHON vaut pour l''habitation de fonctionnement/gardiennage
+      ; 20 m² pour l''extension d''une habitation existante non liée à une activité (le texte parle en SHON).'
+  UF:
+    silence: autorise
+    silence_src: 'Structure ancien format : art. UF1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
+      p. 66) et art. UF2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 66-67) ; ce qui n''y figure pas n''est
+      ni interdit ni conditionné.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: UF1 (3)
+        page_pdf: 66
+        citation: « Les constructions et installations à usage agricole »
+      logement:
+        statut: sous_condition
+        condition: constructions à usage d'habitation interdites, autres que « les constructions, ouvrages et travaux
+          à usage d'habitation ainsi que leurs annexes, à condition qu'ils soient destinés aux personnes dont la
+          présence est indispensable pour assurer le fonctionnement ou le gardiennage des équipements autorisés
+          » (aucun seuil m² écrit en UF)
+        article: UF1 (7) ; UF2 (2.2)
+        page_pdf: 66
+        citation: « Les constructions à usage d'habitation, autres que celles prévues à l'article UF2 » (p. 66)
+          ; « destinés aux personnes dont la présence est indispensable pour assurer le fonctionnement ou le gardiennage
+          des équipements autorisés » (p. 67)
+      industrie:
+        statut: interdit
+        article: UF1 (8)
+        page_pdf: 66
+        citation: « Les constructions à usage industriel et artisanal »
+      bureau:
+        statut: interdit
+        article: UF1 (9)
+        page_pdf: 66
+        citation: « Les constructions à usage de bureaux et de services »
+    note: 'UF1-8 vise aussi l''« artisanal » et UF1-9 les « services » : termes ne couvrant pas pleinement les sous-destinations
+      artisanat_commerce_detail / activites_services_clientele (doctrine : douteux → non écrit) — relayés ici sans
+      mapping. UF1-1 interdit toutes les installations classées, sans renvoi à UF2 (contrairement aux autres zones
+      U). Autres non rattachables : camping/caravaning (UF1-2), aires naturelles (UF1-4), dépôts/décharges (UF1-5),
+      carrières (UF1-6), affouillements (UF2 2.1).'
+  UFe:
+    silence: interdit
+    silence_src: 'Art. UF1 (10), p. 66 : « Dans le secteur UFe, toute construction est interdite » — clause explicite
+      couvrant toute construction, quelle que soit la destination.'
+    sous_destinations: {}
+    note: 'Toute construction interdite (UF1-10) : aucune sous-destination n''est admise ; les interdictions et
+      conditions de la zone UF sont sans objet dans ce secteur.'
+  UP:
+    silence: interdit
+    silence_src: 'Art. UP1, p. 73 : « Sont interdites toutes les occupations ou utilisations non mentionnées à l''article
+      UP2 » — clause explicite « seules sont admises » inversée : le silence vaut interdiction.'
+    sous_destinations:
+      entrepot:
+        statut: sous_condition
+        condition: uniquement les « locaux de stockage » au titre des constructions ou aménagements nécessaires
+          aux activités de pêche et de nautisme et des aménagements liés au fonctionnement du port et à l'animation
+          commerciale et touristique
+        article: UP2 (2.2)
+        page_pdf: 74
+        citation: '« Les constructions ou aménagements nécessaires aux activités de pêche et de nautisme ainsi que
+          les aménagements liés au fonctionnement du port et à l''animation commerciale et touristique : - les locaux
+          de stockage, de réparation mécanique »'
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: uniquement les « locaux destinés à la vente des produits de la mer », au titre des aménagements
+          liés au fonctionnement du port et à l'animation commerciale et touristique
+        article: UP2 (2.2)
+        page_pdf: 74
+        citation: « les locaux destinés à la vente des produits de la mer »
+        note: « vente » sans précision détail/gros → mapping commun artisanat_commerce_detail + commerce_gros
+      commerce_gros:
+        statut: sous_condition
+        condition: uniquement les « locaux destinés à la vente des produits de la mer », au titre des aménagements
+          liés au fonctionnement du port et à l'animation commerciale et touristique
+        article: UP2 (2.2)
+        page_pdf: 74
+        citation: « les locaux destinés à la vente des produits de la mer »
+      restauration:
+        statut: sous_condition
+        condition: snacks, bars et locaux de restauration ouverts au public, dans la limite de 150 m² de SHON (le
+          texte parle en SHON), au titre des aménagements liés au fonctionnement du port et à l'animation commerciale
+          et touristique
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: UP2 (2.2)
+        page_pdf: 74
+        citation: « les snacks, bars, et locaux de restauration ouverts au public dans la limite de 150 m2 de SHON
+          »
+      logement:
+        statut: sous_condition
+        condition: uniquement les locaux d'hébergement liés au gardiennage des équipements, dans la limite de 30
+          m² de SHON (le texte parle en SHON)
+        seuil_m2: 30
+        seuil_type: surface_plancher
+        article: UP2 (2.2)
+        page_pdf: 74
+        citation: « Les locaux d'hébergement liés au gardiennage des équipement dans la limite de 30 m2 de SHON
+          »
+        note: le texte écrit « locaux d'hébergement » mais vise le gardiennage des équipements (logement de fonction)
+          ; ne relève pas de la sous-destination R151-28 « hébergement » (résidences avec services)
+    note: 'Également admis à UP2 2.2, non rattachables à une sous-destination sans déduction (relayés) : « les installations
+      frigorifiques », « les locaux de réparation mécanique », « les locaux liés aux activités tournées vers la
+      mer (clubs de plongées, centres nautiques...) », « la réhabilitation et l''extension des boxes existants ».
+      Zone assise sur le Domaine Public Maritime (chapeau p. 73).'
+  AU:
+    silence: interdit
+    silence_src: 'Art. AU 1 (p. 81) : « Toute construction ou utilisation du sol non prévue à l''article AU 2. »
+      — liste fermée d''autorisations : ce qui n''est pas prévu à AU 2 est interdit.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: dans toute la zone, uniquement les constructions à usage d'habitation nécessaires au gardiennage
+          ou à la surveillance des établissements publics structurants (AU 2.2 al. 6) ; voir aussi les conditions
+          propres à chaque secteur (entrées ci-dessous)
+        article: AU 2.2 (6)
+        page_pdf: 83
+        citation: « La construction d'établissements publics structurants ainsi que les constructions à usage d'habitation
+          à condition qu'elles soient nécessaires au gardiennage ou à la surveillance des établissements. »
+    note: 'La zone AU se décline en secteurs nommés au caractère de zone (p. 81) : AUa, AUa (slo), AUa-rc, AUb,
+      AUb (slo), AUb-rc, AUc, AUd, AUe, AUt, AUs — les destinations admises sont écrites PAR SECTEUR à l''article
+      AU 2.2 ; les alinéas sans mention de secteur valent pour toute la zone (structure de l''article). Non mappés
+      (termes ne recouvrant pleinement aucune sous-destination R151-28) : « établissements publics structurants
+      » (AU 2.2 al. 6, p. 83) ; installations classées inscrites sur la liste du titre I (al. 7, p. 83) ; travaux
+      sur bâtiments protégés L.123-1 7° (al. 8, p. 83) ; ouvrages liés à la prévention des risques (al. 9) ; extension
+      mineure pour mise aux normes sanitaires limitée à 20 m² sur constructions existantes hors opération d''ensemble
+      (al. 10, p. 83) ; reconstruction à l''identique après sinistre (al. 11) ; réseaux, voirie, stationnement,
+      énergie, télécommunications (al. 12). Obligation transversale logement social : hors zones AU à orientations
+      d''aménagement, dans la zone de déficit en logement social (centre-ville, Etang Saint-Leu, Piton Saint-Leu),
+      tout projet créant plus de 600 m² de SHON d''habitation doit affecter au moins 20 % de la SHON d''habitation
+      au logement social (AU 2.2 al. 15, p. 84). Anomalie : les dispositions générales (p. 8) annoncent une zone
+      AU « divisée en sept secteurs » mais n''en listent que six (AUs, AUa, AUb, AUc, AUe, AUt), sans AUd ni les
+      secteurs -rc et (slo) nommés au Titre III (p. 81).'
+  AUa:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: opérations d'ensemble comportant un minimum de 10 logements ou lots à usage d'habitation, densité
+          minimale de 30 log/ha, sauf dispositions particulières définies dans les Orientations d'Aménagement ;
+          équipements d'infrastructures indispensables à la charge exclusive de l'opérateur
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « Dans les secteurs AUa, AUa-rc, AUb, AUb-rc et AUc, les constructions à usage d'habitation, à
+          condition qu'elles s'insèrent dans des opérations d'ensemble comportant un minimum de 10 logements ou
+          lots à usage d'habitation avec une densité minimale de 30log/ha (secteurs AUa, AUa-rc, AUb et AUb, AUb-rc)
+          et 15 log/ha (secteur AUc) … ainsi que les commerces, services, bureaux, activités et équipements publics
+          compatibles. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'admis dans le cadre des opérations d''ensemble du secteur (mappage ancien format : « commerces
+          » → commerce de détail + commerce de gros)'
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'admis dans le cadre des opérations d''ensemble du secteur (mappage ancien format : « commerces
+          » → commerce de détail + commerce de gros)'
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      bureau:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (« bureaux »)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+    note: '« services », « activités » et « équipements publics compatibles » (AU 2.2 al. 1, p. 82) : termes trop
+      larges pour être mappés à une sous-destination R151-28 — non mappés, cités ici.'
+  AUa(slo):
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    note: 'Secteur écrit « AUa (slo) » (ZAC Saint-Leu Océan, caractère de zone p. 81). L''article AU 2 ne le nomme
+      que pour la règle de logement social : « En secteur AUa(slo) et AUb(slo), la surface de logement social s''applique
+      à la SHON de l''ensemble de la ZAC Saint-Leu Océan et non à la SHON de chaque permis de construire » (AU 2.2
+      al. 15, p. 84). Les listes de destinations d''AU 2.2 al. 1 visent « AUa, AUa-rc, AUb, AUb-rc et AUc » sans
+      citer les secteurs (slo), et aucun renvoi n''est écrit : aucune liste de destinations propre n''a été lue
+      pour ce secteur — anomalie signalée ; seuls valent les alinéas d''AU 2 applicables à toute la zone (voir entrée
+      AU).'
+  AUa-rc:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: opérations d'ensemble comportant un minimum de 10 logements ou lots à usage d'habitation, densité
+          minimale de 30 log/ha, sauf dispositions particulières des Orientations d'Aménagement ; équipements d'infrastructures
+          à la charge exclusive de l'opérateur
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « Dans les secteurs AUa, AUa-rc, AUb, AUb-rc et AUc, les constructions à usage d'habitation, à
+          condition qu'elles s'insèrent dans des opérations d'ensemble comportant un minimum de 10 logements … avec
+          une densité minimale de 30log/ha (secteurs AUa, AUa-rc, AUb et AUb, AUb-rc) … »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      commerce_gros:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      bureau:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (« bureaux »)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+    note: 'Anomalie rédactionnelle dans AU 2.2 al. 1 (p. 82) : « (secteurs AUa, AUa-rc, AUb et AUb, AUb-rc) » —
+      « AUb » écrit deux fois. « services », « activités », « équipements publics compatibles » non mappés (termes
+      trop larges).'
+  AUb:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: opérations d'ensemble comportant un minimum de 10 logements ou lots à usage d'habitation, densité
+          minimale de 30 log/ha, sauf dispositions particulières des Orientations d'Aménagement ; équipements d'infrastructures
+          à la charge exclusive de l'opérateur
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « Dans les secteurs AUa, AUa-rc, AUb, AUb-rc et AUc, les constructions à usage d'habitation, à
+          condition qu'elles s'insèrent dans des opérations d'ensemble comportant un minimum de 10 logements … ainsi
+          que les commerces, services, bureaux, activités et équipements publics compatibles. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      commerce_gros:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      bureau:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (« bureaux »)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+    note: « services », « activités », « équipements publics compatibles » non mappés (termes trop larges pour une
+      sous-destination R151-28).
+  AUb(slo):
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    note: 'Secteur écrit « AUb (slo) » (ZAC Saint-Leu Océan, caractère de zone p. 81). Même situation que AUa(slo)
+      : seul AU 2.2 al. 15 (p. 84) le nomme (logement social calculé sur la SHON de l''ensemble de la ZAC) ; les
+      listes de destinations d''AU 2.2 al. 1 ne le citent pas et aucun renvoi n''est écrit — aucune liste de destinations
+      propre lue, anomalie signalée ; seuls valent les alinéas d''AU 2 applicables à toute la zone (voir entrée
+      AU).'
+  AUb-rc:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: opérations d'ensemble comportant un minimum de 10 logements ou lots à usage d'habitation, densité
+          minimale de 30 log/ha, sauf dispositions particulières des Orientations d'Aménagement ; équipements d'infrastructures
+          à la charge exclusive de l'opérateur
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « Dans les secteurs AUa, AUa-rc, AUb, AUb-rc et AUc, les constructions à usage d'habitation, à
+          condition qu'elles s'insèrent dans des opérations d'ensemble comportant un minimum de 10 logements … avec
+          une densité minimale de 30log/ha … »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      commerce_gros:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      bureau:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (« bureaux »)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+    note: « services », « activités », « équipements publics compatibles » non mappés (termes trop larges pour une
+      sous-destination R151-28).
+  AUc:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: opérations d'ensemble comportant un minimum de 10 logements ou lots à usage d'habitation, densité
+          minimale de 15 log/ha (secteur AUc), sauf dispositions particulières des Orientations d'Aménagement ;
+          équipements d'infrastructures à la charge exclusive de l'opérateur
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « Dans les secteurs AUa, AUa-rc, AUb, AUb-rc et AUc, les constructions à usage d'habitation, à
+          condition qu'elles s'insèrent dans des opérations d'ensemble comportant un minimum de 10 logements … et
+          15 log/ha (secteur AUc) … ainsi que les commerces, services, bureaux, activités et équipements publics
+          compatibles. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      commerce_gros:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (mappage « commerces » → commerce de
+          détail + commerce de gros)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+      bureau:
+        statut: sous_condition
+        condition: admis dans le cadre des opérations d'ensemble du secteur (« bureaux »)
+        article: AU 2.2 (1)
+        page_pdf: 82
+        citation: « ainsi que les commerces, services, bureaux, activités et équipements publics compatibles »
+    note: « services », « activités », « équipements publics compatibles » non mappés (termes trop larges pour une
+      sous-destination R151-28).
+  AUd:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: équipements d'infrastructures indispensables à la réalisation de l'opération, internes ou externes,
+          à la charge exclusive de l'opérateur
+        article: AU 2.2 (2)
+        page_pdf: 82
+        citation: « Dans le secteur AUd, les constructions à usage d'habitation, à condition que les équipements
+          d'infrastructures indispensables à la réalisation de l'opération, qu'ils soient internes ou externes à
+          celle-ci, sont à la charge exclusive de l'opérateur. »
+    note: 'Secteur AUd absent de la liste des secteurs AU des dispositions générales (p. 8-9) — nommé seulement
+      au Titre III (caractère de zone p. 81 : « zones de faible densité (secteur des Camélias à La Chaloupe) »)
+      : anomalie signalée.'
+  AUe:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      industrie:
+        statut: sous_condition
+        condition: établissements industriels admis au titre de l'article AU 2 (occupations soumises à conditions
+          particulières) ; les installations classées, soumises à déclaration ou autorisation, sont admises en secteur
+          AUe (AU 2.2 al. 7, p. 83)
+        article: AU 2.2 (5)
+        page_pdf: 82
+        citation: « En secteur AUe, les établissements industriels, techniques, les activités artisanales, tertiaires,
+          ainsi que les constructions à usage d'habitation à condition qu'elles soient nécessaires au gardiennage
+          ou à la surveillance des établissements (maximum 30m2 SHON). »
+      logement:
+        statut: sous_condition
+        condition: uniquement si nécessaire au gardiennage ou à la surveillance des établissements, maximum 30 m²
+          de SHON
+        seuil_m2: 30
+        seuil_type: surface_plancher
+        article: AU 2.2 (5)
+        page_pdf: 82
+        citation: « les constructions à usage d'habitation à condition qu'elles soient nécessaires au gardiennage
+          ou à la surveillance des établissements (maximum 30m2 SHON) »
+    note: '« établissements techniques », « activités artisanales » et « tertiaires » (AU 2.2 al. 5, p. 82) : termes
+      ne recouvrant pleinement aucune sous-destination R151-28 (« activités artisanales » ne couvre pas tout artisanat_commerce_detail,
+      « tertiaires » est générique) — non mappés, cités ici. Seuil exprimé en SHON (surface hors œuvre nette, définie
+      en Annexe 4, p. 120-121) — rendu en surface_plancher.'
+  AUt:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: 'constructions à usage touristique, équipements d''infrastructures indispensables à la charge
+          exclusive de l''opérateur (mappage conservateur : l''hébergement hôtelier est couvert par « constructions
+          à usage touristique »)'
+        article: AU 2.2 (3)
+        page_pdf: 82
+        citation: « Dans le secteur AUt, les constructions à usage touristique, à condition que les équipements
+          d'infrastructures indispensables à la réalisation de l'opération, qu'ils soient internes ou externes à
+          celle-ci, sont à la charge exclusive de l'opérateur. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'constructions à usage touristique, équipements d''infrastructures indispensables à la charge
+          exclusive de l''opérateur (mappage conservateur : l''hébergement touristique est couvert par « constructions
+          à usage touristique »)'
+        article: AU 2.2 (3)
+        page_pdf: 82
+        citation: « Dans le secteur AUt, les constructions à usage touristique, à condition que les équipements
+          d'infrastructures indispensables à la réalisation de l'opération … sont à la charge exclusive de l'opérateur.
+          »
+    note: '« Constructions à usage touristique » au-delà de l''hébergement (loisirs, restauration…) : le règlement
+      ne détaille pas — pas d''autre mappage. Le caractère de zone (p. 81, « implantation d''équipements touristiques
+      ») est indicatif.'
+  AUs:
+    silence: interdit
+    silence_src: Art. AU 1 (p. 81) — liste fermée ; AU 2.2 al. 13 (p. 83) fixe pour ce secteur une liste propre,
+      exclusivement technique.
+    note: 'Aucune sous-destination R151-28 n''est prévue en AUs : l''alinéa AU 2.2 (13) (p. 83) n''admet QUE les
+      constructions/ouvrages liés à la prévention des risques naturels, les travaux d''aménagement et d''extension
+      mineure pour mise aux normes sanitaires limités à 30 m² sur constructions existantes à la date d''approbation
+      du PLU, les ouvrages liés aux réseaux/voirie/stationnement/énergie/télécommunications, et les affouillements-exhaussements
+      liés. Toutes les destinations relèvent donc du silence (interdit). Caractère de zone (p. 81, indicatif et
+      cohérent) : « Ces espaces non équipés sont inconstructibles. Ils ne pourront être ouverts à l''urbanisation
+      qu''à l''occasion d''une procédure de modification ou de révision du PLU. » Le renvoi « Les dispositions de
+      la zone AUs sont associées à celles de la zone AUd » ne figure qu''aux articles AU 4 à AU 13 (réseaux, implantations,
+      hauteurs, stationnement, espaces libres — p. 85-98), PAS aux articles AU 1/AU 2 (destinations) : il n''est
+      donc pas relayé ici.'
+  A:
+    silence: interdit
+    silence_src: 'Art. A 1 (p. 100) : « Sont interdites toutes les occupations et utilisations du sol non prévues
+      à l''article A2. » — liste fermée.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'bâtiments techniques et annexes agricoles liés et/ou nécessaires à une exploitation agricole
+          : hangars, serres, bâtiments d''élevage, chenils et fourrières assimilés à une activité agricole, locaux
+          de vente de produits agricoles d''une surface maximale de 20 m² en continuité avec les productions de
+          l''exploitation (A 2 al. 2 p. 100 et al. 5 p. 101) ; installations classées et ouvrages techniques nécessaires
+          à l''activité agricole de la zone (A 2 al. 9, p. 101)'
+        article: A 2 (2, 5, 9)
+        page_pdf: 100
+        citation: '« les bâtiments techniques à usage agricole, liés et /ou nécessaires à l''activité agricole :
+          - les hangars - les serres horticoles - les bâtiments d''élevage - les chenils et fourrières assimilés
+          à une activité agricole - les locaux de vente de produits agricoles, d''une surface maximale de 20m2,
+          en continuité avec les productions de l''exploitation agricole »'
+      logement:
+        statut: sous_condition
+        condition: 'hors secteurs Apf, Apf1 et Ad : UNE construction à usage d''habitation par exploitation agricole,
+          liée et nécessaire à ses besoins et correspondant aux normes de la SMI, dans la limite de 150 m² de SHON
+          (A 2 al. 1, p. 100) ; en outre, amélioration et extension pouvant aller jusqu''à la reconstruction des
+          bâtiments à usage d''habitation occupés, dans la limite de 150 m² de SHOB totale (A 2 al. 4, p. 101 —
+          alinéa sans exclusion de secteur)'
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: A 2 (1, 4)
+        page_pdf: 100
+        citation: « A l'exception des secteurs Apf, Apf1 et Ad, une construction à usage d'habitation par exploitation
+          agricole, à condition d'être liée et nécessaire aux besoins de celles-ci et correspondant aux normes de
+          la SMI, dans la limite de 150 m2 de SHON. »
+    note: 'A 1 (p. 100) interdit en outre « le changement de destination des bâtiments à usage agricole en bâtiments
+      à usage autre qu''agricole » (sous réserve de L.123-1). Non mappés : « activité agro-touristique » d''une
+      surface maximale de 150 m² de SHOB, en lien avec l''existence d''une exploitation agricole et d''une habitation,
+      hors Apf/Apf1/Ad (A 2 al. 6, p. 101 — terme sans équivalent plein dans la nomenclature R151-28) ; équipements
+      de traitement et d''acheminement des eaux et équipements d''infrastructures (al. 7, p. 101) ; bâtiments protégés
+      L.123-1 7° (al. 8) ; ouvrages liés aux risques, réseaux, gestion des déchets (al. 10). Bande de 100 m de part
+      et d''autre de l''axe de la Route des Tamarins, hors espaces urbanisés : constructions interdites à l''exception
+      des bâtiments d''exploitation agricole (al. 11, p. 101). Seuils exprimés en SHON/SHOB (Annexe 4, p. 120-121)
+      — rendus en surface_plancher. Anomalie rédactionnelle : les alinéas 2 (p. 100) et 5 (p. 101) listent deux
+      fois les mêmes annexes agricoles.'
+  Ad:
+    silence: interdit
+    silence_src: Art. A 1 (p. 100) — liste fermée, règle de la zone A
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement l'implantation ou l'extension limitée des installations techniques liées et nécessaires
+          à l'exercice de l'activité agricole, sous réserve que la localisation et l'aspect ne dénaturent pas le
+          caractère des sites et des paysages et que la localisation y soit rendue indispensable par des nécessités
+          techniques impératives ; les bâtiments agricoles des alinéas A 2 (1, 2, 5, 6) excluent expressément ce
+          secteur
+        article: A 2 (3)
+        page_pdf: 100
+        citation: « Dans les secteurs Apf, Apf1 et Ad, l'implantation ou l'extension limitée des installations techniques
+          liées et nécessaires à l'exercice de l'activité agricole est permise sous réserve que la localisation
+          et l'aspect de ces installations ne dénaturent pas le caractère des sites et des paysages et que la localisation
+          dans ces espaces soit rendue indispensable par des nécessités techniques impératives. »
+      logement:
+        statut: sous_condition
+        condition: 'construction neuve non prévue (A 2 al. 1 exclut expressément les secteurs Apf, Apf1 et Ad) ;
+          demeure seul, sans exclusion de secteur écrite : amélioration et extension pouvant aller jusqu''à la reconstruction
+          des bâtiments à usage d''habitation occupés, dans la limite de 150 m² de SHOB totale'
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: A 2 (4)
+        page_pdf: 101
+        citation: « L'amélioration et l'extension pouvant aller jusqu'à la reconstruction des bâtiments à usage
+          d'habitation occupés, dans la limite de 150m2 de SHOB totale. »
+    note: 'Caractère de zone (p. 100) : zones agricoles classées en coupure d''urbanisation au SAR ; les dispositions
+      générales (p. 9) ajoutent « où toute construction qu''elle quelle soit est interdite » — énoncé de caractère,
+      indicatif : la règle retenue est celle des articles A 1/A 2 (lu, pas supposé).'
+  Apf:
+    silence: interdit
+    silence_src: Art. A 1 (p. 100) — liste fermée, règle de la zone A
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement l'implantation ou l'extension limitée des installations techniques liées et nécessaires
+          à l'exercice de l'activité agricole (localisation/aspect ne dénaturant pas les sites, nécessités techniques
+          impératives) ; les bâtiments agricoles des alinéas A 2 (1, 2, 5, 6) excluent expressément ce secteur
+        article: A 2 (3)
+        page_pdf: 100
+        citation: « Dans les secteurs Apf, Apf1 et Ad, l'implantation ou l'extension limitée des installations techniques
+          liées et nécessaires à l'exercice de l'activité agricole est permise sous réserve … de nécessités techniques
+          impératives. »
+      logement:
+        statut: sous_condition
+        condition: 'construction neuve non prévue (A 2 al. 1 exclut expressément Apf) ; demeure seul, sans exclusion
+          de secteur écrite : amélioration et extension pouvant aller jusqu''à la reconstruction des bâtiments à
+          usage d''habitation occupés, dans la limite de 150 m² de SHOB totale'
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: A 2 (4)
+        page_pdf: 101
+        citation: « L'amélioration et l'extension pouvant aller jusqu'à la reconstruction des bâtiments à usage
+          d'habitation occupés, dans la limite de 150m2 de SHOB totale. »
+    note: 'Écart signalé : le caractère de zone (p. 100) annonce pour Apf des constructions à usage d''habitation
+      « strictement interdites », mais l''article A 2 al. 4 (amélioration/extension/reconstruction de l''existant)
+      ne comporte aucune exclusion de secteur — la valeur retenue est celle de l''article (lu, pas supposé).'
+  Apf1:
+    silence: interdit
+    silence_src: Art. A 1 (p. 100) — liste fermée, règle de la zone A
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement l'implantation ou l'extension limitée des installations techniques liées et nécessaires
+          à l'exercice de l'activité agricole (localisation/aspect ne dénaturant pas les sites, nécessités techniques
+          impératives) ; les bâtiments agricoles des alinéas A 2 (1, 2, 5, 6) excluent expressément ce sous-secteur
+        article: A 2 (3)
+        page_pdf: 100
+        citation: « Dans les secteurs Apf, Apf1 et Ad, l'implantation ou l'extension limitée des installations techniques
+          liées et nécessaires à l'exercice de l'activité agricole est permise sous réserve … de nécessités techniques
+          impératives. »
+      logement:
+        statut: sous_condition
+        condition: 'construction neuve non prévue (A 2 al. 1 exclut expressément Apf1) ; demeure seul, sans exclusion
+          de secteur écrite : amélioration et extension pouvant aller jusqu''à la reconstruction des bâtiments à
+          usage d''habitation occupés, dans la limite de 150 m² de SHOB totale'
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: A 2 (4)
+        page_pdf: 101
+        citation: « L'amélioration et l'extension pouvant aller jusqu'à la reconstruction des bâtiments à usage
+          d'habitation occupés, dans la limite de 150m2 de SHOB totale. »
+    note: 'Sous-secteur défini à l''aval du site de décollage des parapentes aux Colimaçons (caractère, p. 100).
+      Règle propre hors destinations : « En secteur Apf1, l''implantation d''essences végétales de haute futaie
+      (supérieure à 5m) est interdite » (A 13 al. 2, p. 106).'
+  N:
+    silence: interdit
+    silence_src: 'Art. N 1 (p. 108) : « Toute construction ou utilisation du sol non prévue à l''article N 2. »
+      — liste fermée.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires, limités
+          à 20 m² de SHOB, sur des constructions à usage d'habitation existantes à la date d'approbation du PLU
+        seuil_m2: 20
+        seuil_type: surface_plancher
+        article: N 2 (3)
+        page_pdf: 108
+        citation: « Les travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires (limités à
+          20m2 SHOB) réalisés sur des constructions à usage d'habitation existantes à la date d'approbation du PLU.
+          »
+    note: '« La règle de base est celle de la non constructibilité pour la préservation de ces espaces » (caractère,
+      p. 108 — indicatif, cohérent avec N 1). Non mappés : ouvrages liés à la prévention des risques, infrastructures
+      de réseaux, stockage ou traitement des eaux, équipements liés à la protection de l''environnement (déchetterie,
+      plateforme de compostage…) (N 2 al. 1, p. 108) ; réhabilitation ou extension des équipements publics existants
+      (al. 2) ; installations et travaux divers R.442-2 (al. 10, p. 109) ; travaux sur bâtiments protégés L.123-1
+      7° (al. 11, p. 109). Seuil exprimé en SHOB (Annexe 4, p. 120) — rendu en surface_plancher.'
+  Nh:
+    silence: interdit
+    silence_src: Art. N 1 (p. 108) — liste fermée, règle de la zone N
+    note: 'N 2 al. 4 (p. 108) : « En secteur Nh et Nc, les aménagements conservatoires et les extensions des bâtiments
+      existants dans la limite de 150m2 de SHOB. » — règle attachée aux bâtiments EXISTANTS sans destination visée
+      : non mappée à une sous-destination ; aucune construction neuve n''est prévue pour ce secteur. S''ajoute la
+      règle de zone N 2 al. 3 (extension sanitaire 20 m² SHOB des habitations existantes, voir entrée N). Caractère
+      (p. 108) : « permettant la réhabilitation des constructions existantes » (indicatif).'
+  Nb:
+    silence: interdit
+    silence_src: Art. N 1 (p. 108) — liste fermée, règle de la zone N
+    sous_destinations:
+      restauration:
+        statut: sous_condition
+        condition: 'rondavelles ou superstructures à rez-de-chaussée à vocation principale de restauration, de tourisme
+          et de loisirs, ouvertes au public, sans hébergement, permettant la libre circulation des piétons, dans
+          la limite de 100 m² d''emprise au sol (limite confirmée par N 9, p. 111 : « En secteur Nb, l''emprise
+          au sol des constructions est limitée à 100m2 »)'
+        seuil_m2: 100
+        seuil_type: emprise_sol
+        article: N 2 (7)
+        page_pdf: 109
+        citation: « En secteur Nb, la construction de rondavelles ou superstructures à rez-de-chaussée à vocation
+          principale de restauration, de tourisme et de loisirs, ouvert au public, sans hébergement permettant la
+          libre circulation des piétons dans la limite de 100m2 d'emprise au sol. »
+    note: '« sans hébergement » : aucun hébergement n''est prévu à N 2 pour ce secteur — les sous-destinations d''hébergement
+      relèvent du silence (interdit). « tourisme et de loisirs » au-delà de la restauration : termes non mappés
+      (pas d''équivalent plein R151-28).'
+  Nl:
+    silence: interdit
+    silence_src: Art. N 1 (p. 108) — liste fermée, règle de la zone N
+    note: 'N 2 al. 6 (p. 108-109) : seuls « les aménagements légers à vocation touristique et de loisirs ouverts
+      au public, sans hébergement, et permettant la libre circulation des piétons : points d''arrêts, points de
+      vue, kiosques, chemins piétons, mobilier urbain etc… correspondant aux aménagements autorisés par l''article
+      R 146-2 du code de l''urbanisme » — aménagements légers, aucune sous-destination R151-28 mappable ; aucun
+      hébergement prévu (silence = interdit).'
+  Nt:
+    silence: interdit
+    silence_src: Art. N 1 (p. 108) — liste fermée, règle de la zone N
+    note: 'N 2 al. 5 (p. 108) : « En secteur Nt, les équipements publics à vocation culturelle. » — terme ne recouvrant
+      pleinement aucune sous-destination unique (salles d''art et de spectacles ? autres équipements recevant du
+      public ?) : non mappé, cité ici. N 2 al. 10 (p. 109) : installations et travaux divers R.442-2 « tels que
+      … les aires de jeux et de sports ouvertes au public en secteur Nt » — aires (installations), pas l''ensemble
+      de la sous-destination équipements sportifs : non mappé, cité ici. Caractère (p. 108) : aménagement de l''espace
+      culturel de la Ravine Saint-Leu (indicatif).'
+  Nc:
+    silence: interdit
+    silence_src: Art. N 1 (p. 108) — liste fermée, règle de la zone N
+    note: 'N 2 al. 8 (p. 109) : « En secteur Nc, les prélèvements de matériaux et les installations strictement
+      nécessaires à l''activité d''extraction. » — l''extraction (carrière) est un usage du sol, pas une sous-destination
+      R151-28 : non mappé. N 2 al. 4 (p. 108) : aménagements conservatoires et extensions des bâtiments existants
+      dans la limite de 150 m² de SHOB (sans destination visée — non mappé). Anomalie : les dispositions générales
+      (p. 10) nomment ce secteur « Ne », le Titre V (p. 108) le nomme « Nc », avec la même définition (espaces carrières
+      recensés au Schéma Départemental des Carrières).'
+  Nsc:
+    silence: interdit
+    silence_src: Art. N 1 (p. 108) — liste fermée, règle de la zone N
+    note: 'N 2 al. 9 (p. 109) : « En secteur Nsc, les aménagements conservatoires et les extensions des bâtiments
+      existants dans la limite de 100m2 de SHOB. » — règle attachée aux bâtiments existants sans destination visée
+      : non mappée. Rappel du règlement : en site classé, toute modification de l''état des lieux est soumise à
+      l''autorisation spéciale du ministre chargé de l''environnement (préfet pour les travaux de moindre importance,
+      décret du 15/12/1998).'
