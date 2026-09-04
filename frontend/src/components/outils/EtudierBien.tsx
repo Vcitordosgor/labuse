@@ -37,8 +37,13 @@ export function EtudierBien() {
   // négatif ni un verdict d'opération que l'utilisateur n'a pas demandé.
   const [analyseOuverte, setAnalyseOuverte] = useState(false)
 
+  const focusParcelle = useApp((s) => s.focusParcelle)
   const m = useMutation({
     mutationFn: (arg: { q: string; id: string | null }) => scoreurAdresse(arg.q, null, arg.id, true),
+    // RETOURS-12 O1 — à la validation, la carte ZOOME sur la parcelle et la met en surbrillance
+    // (geste commun `focusParcelle`, réutilisé par Permis/Projets) — SANS ouvrir la fiche : l'outil
+    // garde son panneau, la parcelle pulse et se distingue de ses voisines.
+    onSuccess: (d) => { if (d?.idu) focusParcelle(d.idu) },
   })
   const lancer = (q: string, id: string | null) => { setVerdictMode('calibree'); setHypResult(null); setAnalyseOuverte(false); m.mutate({ q, id }) }
 

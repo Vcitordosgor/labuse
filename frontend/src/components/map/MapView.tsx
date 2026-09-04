@@ -576,7 +576,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
@@ -1641,11 +1641,14 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current || !m.getLayer('parcels-sel')) return
-    m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
-    m.setFilter('ile-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
-    // PING SYSTÉMATIQUE : toute sélection (liste, module, CRM, notification) recentre + pulse 2 s
-    if (!selectedIdu) return
-    const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === selectedIdu)
+    // RETOURS-12 O1/O12/J1 — la CIBLE du zoom+surbrillance = la parcelle sélectionnée (fiche ouverte)
+    // OU la parcelle mise au FOCUS par un outil (focusParcelle, SANS ouvrir la fiche). Même geste.
+    const cible = selectedIdu ?? focusIdu
+    m.setFilter('parcels-sel', ['==', ['get', 'idu'], cible ?? ''])
+    m.setFilter('ile-sel', ['==', ['get', 'idu'], cible ?? ''])
+    // PING SYSTÉMATIQUE : toute sélection/focus (liste, module, CRM, notification, outil) recentre + pulse
+    if (!cible) return
+    const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === cible)
     let cancelled = false
     const centroidReady = (c: [number, number] | null) => {
       if (!c || cancelled) return
@@ -1656,7 +1659,7 @@ export function MapView() {
       // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API.
       // CONTRAT (Vic, 07/07) : un clic dans la liste = je VOIS la parcelle pulser, où qu'elle
       // soit — le champ est `coords` [lon, lat] (le fallback lat/lon muet était le bug).
-      getFiche(selectedIdu).then((f) => {
+      getFiche(cible).then((f) => {
         const c = (f as unknown as { coords?: [number, number] }).coords
         if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]])
       }).catch(() => undefined)
@@ -1669,7 +1672,7 @@ export function MapView() {
         : { id: 'ile-ping', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
             filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 6, 'line-opacity': 0.9, 'line-blur': 3 } })
     }
-    m.setFilter(pingId, ['==', ['get', 'idu'], selectedIdu])
+    m.setFilter(pingId, ['==', ['get', 'idu'], cible])
     let t0: number | null = null
     let raf = 0
     const pulse = (ts: number) => {
@@ -1687,7 +1690,7 @@ export function MapView() {
     }
     raf = requestAnimationFrame(pulse)
     return () => { cancelAnimationFrame(raf); cancelled = true }
-  }, [selectedIdu, geo.data, mapReady])
+  }, [selectedIdu, focusIdu, focusNonce, geo.data, mapReady])
 
   // module actif → surlignage + géométries propres (les DEUX jeux de calques)
   useEffect(() => {

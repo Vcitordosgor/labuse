@@ -270,6 +270,12 @@ interface AppState {
   toggleOutils: () => void
   selectedIdu: string | null
   select: (idu: string | null) => void
+  // RETOURS-12 O1/O12/J1 — FOCUS PARCELLE : zoome + met en surbrillance la parcelle sur la carte
+  // SANS ouvrir la fiche (contrairement à `select`). Geste commun réutilisé par « Étudier un bien »,
+  // « Permis » et l'œil ambre des Projets. `ortho` : bascule le fond en orthophoto (J1).
+  focusIdu: string | null
+  focusNonce: number                    // ré-déclenche le zoom même si l'idu est identique
+  focusParcelle: (idu: string | null, opts?: { ortho?: boolean }) => void
   // M55-L point 5 — verdict À LA DEMANDE : la fiche s'ouvre sur un bouton « Demander l'analyse
   // LABUSE » ; au clic, le bloc verdict se déploie. Choix MÉMORISÉ PAR PARCELLE pour la SESSION
   // (jamais persisté) : rouvrir la même fiche ne redemande pas le clic ; nouvelle session = retour
@@ -602,6 +608,17 @@ export const useApp = create<AppState>((set) => ({
   // `String(undefined)` sur une feature sans propriété idu) n'ouvre JAMAIS la fiche. Elle
   // afficherait un titre « undefined » et un faux « serveur injoignable ». `null` ferme la fiche.
   select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
+  // RETOURS-12 O1/O12/J1 — focus SANS ouvrir la fiche (zoom + surbrillance sur la carte). Bascule
+  // sur 'cartes' pour que la carte soit visible ; option ortho (J1). `focusIdu` réamorcé même valeur.
+  focusIdu: null,
+  focusNonce: 0,
+  focusParcelle: (idu, opts) => set((s) => ({
+    focusIdu: idu === '' || idu === 'undefined' ? null : idu,
+    view: 'cartes', outilsOpen: false,
+    ...(opts?.ortho ? { basemap: 'ortho' as const } : {}),
+    // ré-déclencher l'effet carte même si l'idu est identique : un compteur nonce.
+    focusNonce: (s.focusNonce ?? 0) + 1,
+  })),
   verdictRevele: {},
   revelerVerdict: (idu) => set((s) => ({ verdictRevele: { ...s.verdictRevele, [idu]: true } })),
   analyseReplie: {},

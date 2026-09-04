@@ -147,8 +147,22 @@ pareil, donc pré-existant, hors périmètre C3.
   comparé (captures `O2-premier-niveau`, `O2-second-niveau-prix`). Tests `EtudierBien.test.tsx` réécrits
   (2 niveaux · charge plancher 0 · écart comparé sans « 719 » · bascule · alerte résiduel), 5/5.
 
-- **O1 — zoom parcelle — À FAIRE** · **O3 — Pièges encadré — À FAIRE** · **O4 — PLU compteurs+bug IDU — À FAIRE**
-  · **O5 — Scan patrimoine liste — À FAIRE** · **O6 — Scan doublons — À FAIRE** · **O7 — Solaire pente+photo — À FAIRE**
+- **O1 — « Étudier un bien » zoome et délimite la parcelle — FAIT.** Primitive COMMUNE `focusParcelle(idu)`
+  (store) : zoome (flyTo zoom 16) + met en surbrillance (filtre `parcels-sel`/`ile-sel` + ping) SANS
+  ouvrir la fiche — réutilise l'effet carte existant (généralisé à `selectedIdu ?? focusIdu`), pas un
+  second mécanisme. « Étudier un bien » l'appelle au résultat. Recette : zoom 9,9 → 16, parcelle
+  surlignée (distincte des voisines), fiche NON ouverte (capture `O1-etudier-zoom`). Réutilisable par
+  O12 (Permis) et J1 (œil ambre, option ortho).
+- **O3 — « Pièges & risques » : encadré « non couvert » retiré de la vue client — FAIT.** L'encadré
+  « NON COUVERT PAR LA BASE — À VÉRIFIER AILLEURS » quitte l'accueil ; son contenu vit désormais dans un
+  « Méthode & limites » **replié** (`<details>`, fermé par défaut). Bandeau d'intro rendu descriptif
+  (plus d'aveu d'ignorance en tête). Renvoi discret à l'outil PLU pour les procédures ; réserve SUP en
+  phrase courte (le CU reste la référence). Recette : ancien encadré absent (0), méthode repliée présente
+  et fermée (capture `O3-pieges-methode`). Trancher les 4 lignes : PEB aérodrome & canalisations TMD →
+  pas de jeu ouvert ingéré (limite descend en méthode, ingestion Géorisques/DEAL à chiffrer hors mandat) ;
+  procédures PLU en cours → servies par l'outil PLU (renvoi) ; SUP hors GPU → 417 SUP décodées, réserve
+  en méthode. *(Le contenu `non_couvert` vient du backend inchangé ; seule la présentation change.)*
+- **O4 — PLU compteurs+bug IDU — À FAIRE** · **O5 — Scan patrimoine liste — À FAIRE** · **O6 — Scan doublons — À FAIRE** · **O7 — Solaire pente+photo — À FAIRE**
 ## LOT O bloc 3 — outils O8-O13 (commit 4) — À FAIRE
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
