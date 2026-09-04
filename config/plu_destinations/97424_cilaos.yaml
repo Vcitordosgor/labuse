@@ -1,0 +1,353 @@
+meta:
+  insee: '97424'
+  commune: Cilaos
+  document: 97424_reglement_20240213.pdf
+  document_gpu: 97424_PLU_20240213
+  gpu_doc_id: cf474c28b88a6b7e76e3d02f64f885cc
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97424/cf474c28b88a6b7e76e3d02f64f885cc/97424_reglement_20240213.pdf
+  md5: 124d7e80e9c14db4194eedc021666062
+  millesime: '2024-02-13'
+  pages_total: 90
+  lu_le: '2026-09-03'
+  structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
+zones:
+  Ua:
+    silence: autorise
+    silence_src: 'Art. Ua 2.2, p. 19 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article Ua 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
+      fermée d''interdictions à l''art. Ua 1.2 (p. 18).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ua 1.2 (1)
+        page_pdf: 18
+        citation: « Les constructions, ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Ua 1.2 (1)
+        page_pdf: 18
+        citation: « Les constructions, ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt. »
+        note: L'interdit vise l'usage EXCLUSIF d'entrepôt (mot du texte).
+      exploitation_agricole:
+        statut: interdit
+        article: Ua 1.2 (2)
+        page_pdf: 18
+        citation: « Les constructions, ouvrages et travaux à usage agricole. »
+    note: 'Ua 2.2 (1), p. 19 : les « constructions à usage d''activités » (ICPE ou non) sont admises « à condition
+      qu''elles n''entraînent pour le voisinage aucune incommodité… » — terme générique non mappable sur une sous-destination
+      précise ; condition transversale sur les activités. « à usage agricole » ne dit rien de l''exploitation forestière
+      → non mentionnée (régie par le silence).'
+  Uah:
+    renvoi: Ua
+    renvoi_src: 'Caractère de la zone Ua, p. 18 : « Elle comporte un secteur UAh où les constructions sont limitées
+      à R+1+combles » ; Titre I art. 3, p. 6 : la règle générale de la zone s''applique aux secteurs sauf disposition
+      particulière. Seule disposition propre à UAh : la hauteur (art. Ua 10.2, p. 25) — rien sur les destinations.'
+  Ub:
+    silence: autorise
+    silence_src: 'Art. Ub 2.2, p. 31 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article Ub 1.2, ainsi, que celles ci-après… » — liste fermée d''interdictions à l''art. Ub 1.2 (p. 30).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Ub 1.2 (1)
+        page_pdf: 30
+        citation: « Les constructions, ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Ub 1.2 (1)
+        page_pdf: 30
+        citation: « Les constructions, ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt. »
+        note: Usage EXCLUSIF d'entrepôt.
+      exploitation_agricole:
+        statut: interdit
+        article: Ub 1.2 (2)
+        page_pdf: 30
+        citation: « Les constructions ouvrages et travaux à usage agricole. »
+    note: 'Ub 2.2 (1), p. 31 : même condition générique « constructions à usage d''activités » que Ua (incommodité/insalubrité)
+      — non mappée.'
+  Ub1:
+    etat: non_lu
+    note: 'Code servi introuvable au règlement : la zone Ub (p. 29-40) ne comporte aucun secteur et « Ub1 » n''apparaît
+      nulle part dans la pièce écrite (seul le secteur AUb1 de la zone AUindicée existe, p. 58). Probable code du
+      zonage GPU sans chapitre propre dans cette pièce.'
+  Uc:
+    silence: autorise
+    silence_src: 'Art. Uc 2.2, p. 43 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article Uc 1.2, ainsi, que celles ci-après… » — liste fermée d''interdictions à l''art. Uc 1.2 (p. 42).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: Uc 1.2 (2)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt. »
+      entrepot:
+        statut: interdit
+        article: Uc 1.2 (2)
+        page_pdf: 42
+        citation: « Les constructions, ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt. »
+        note: Usage EXCLUSIF d'entrepôt.
+    note: 'Pas d''interdit agricole en Uc (éco-village d''Îlet à Cordes, caractère p. 41). Surcharge graphique «
+      espaces cultivés » : Uc 1.2 (1), p. 42, tout y est interdit sauf Uc 2.2 (1), p. 43 : « travaux d''amélioration
+      et d''extension des constructions existantes sans que la surface globale de la construction n''excède 170
+      m² de SHOB » (emprise hors espaces cultivés, Uc 9.2, p. 48) — surcharge localisée au plan, pas une règle de
+      destination de la zone. Condition générique « à usage d''activités » (Uc 2.2 (2), p. 43) non mappée.'
+  AUst:
+    silence: interdit
+    silence_src: 'Art. AUst 1.2, p. 54 : « Toutes les occupations et utilisations du sol sont interdites à l''exception
+      de celles admises à l''article AUst 2.2 du présent règlement. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: Ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif,
+          si l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques, en limitant
+          la gêne et avec bonne intégration au site
+        article: AUst 2.2 (2)
+        page_pdf: 55
+        citation: « Les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques… »
+    note: 'Ouverture à l''urbanisation conditionnée à une modification du PLU (caractère, p. 53). AUst 2.2 admet
+      en outre (p. 54-55) : réseaux/voirie/stationnement/production-distribution d''énergie (1) ; travaux R.423-19
+      j) k) et R.423-23 e) f) liés aux occupations autorisées (3) ; reconstruction à l''identique après sinistre
+      (4) ; « travaux d''aménagement et d''extension mineure pour mise aux normes sanitaires et d''habitabilité
+      dans la limite de 20 m2 de SHON réalisés sur des constructions existantes » (5) — travaux et ouvrages non
+      assimilables à une sous-destination R151-28.'
+  AUb:
+    renvoi: Ub
+    renvoi_src: 'Caractère de la zone AUindicée, p. 58 : « il convient de se reporter en fonction de l''indice de
+      la zone AU considérée au règlement des zones urbaines correspondantes à savoir Ub pour AUb, etc. sauf spécification
+      contraire » ; art. AUindicée 1.2, p. 58 : « Pour les autres zones, se reporter au règlement de la zone U indiquée
+      en indice. »'
+    note: 'Condition supplémentaire propre aux AU (art. AUindicée 2.2, p. 59) : « Les constructions peuvent être
+      autorisées sous réserve de disposer des infrastructures suffisantes pour desservir le projet de construction
+      (voirie, réseaux, sécurité incendie, etc.). »'
+  AUb1:
+    renvoi: Ub
+    renvoi_src: 'Caractère de la zone AUindicée, p. 58 (« Ub pour AUb, etc. ») ; secteur AUb1 de la ZAC Roland Garros
+      (p. 58). Ses seules dispositions propres portent sur l''emprise au sol (AUindicée 9, p. 59), la hauteur (AUindicée
+      10, p. 60) et les espaces verts (AUindicée 13, p. 60) — rien sur les destinations : art. AUindicée 1.2/2.2,
+      « pour les autres zones, se reporter au règlement de la zone U indiquée en indice ».'
+    note: 'Condition supplémentaire AU (art. AUindicée 2.2, p. 59) : infrastructures suffisantes pour desservir
+      le projet.'
+  AUb2:
+    silence: autorise
+    silence_src: 'Par renvoi (caractère AUindicée, p. 58 : « Ub pour AUb ») la structure est celle de l''art. Ub
+      2.2, p. 31 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article Ub 1.2 »
+      ; AUb2 déroge nommément aux seuls industriel/entrepôt (AUindicée 1.2, p. 58).'
+    sous_destinations:
+      industrie:
+        statut: sous_condition
+        condition: Admis (dérogation expresse à l'interdit Ub 1.2), sous réserve de disposer des infrastructures
+          suffisantes pour desservir le projet (AUindicée 2.2)
+        article: AUindicée 1.2 et 2.2
+        page_pdf: 58
+        citation: « Toutefois, dans le secteur AUb2, les constructions, ouvrages et travaux à usage industriel et
+          à usage exclusif d'entrepôt ne sont pas interdits. » (1.2, p. 58) ; « Dans le secteur AUb2, les constructions,
+          ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt sont admis. » (2.2, p. 59)
+      entrepot:
+        statut: sous_condition
+        condition: Admis (dérogation expresse à l'interdit Ub 1.2), sous réserve de disposer des infrastructures
+          suffisantes pour desservir le projet (AUindicée 2.2)
+        article: AUindicée 1.2 et 2.2
+        page_pdf: 58
+        citation: « …les constructions, ouvrages et travaux à usage industriel et à usage exclusif d'entrepôt sont
+          admis. » (2.2, p. 59)
+      exploitation_agricole:
+        statut: interdit
+        article: Ub 1.2 (2) par renvoi (AUindicée 1.2, p. 58)
+        page_pdf: 30
+        citation: « Les constructions ouvrages et travaux à usage agricole. » — la dérogation AUb2 ne vise que l'industriel
+          et l'entrepôt exclusif.
+    note: Secteur de la ZAC Roland Garros (caractère, p. 58).
+  A:
+    silence: interdit
+    silence_src: 'Art. A 1.2, p. 64 : « A l''exception de ceux visés à l''article A 2, sont interdits les constructions,
+      ouvrages et travaux non liés et nécessaires à une exploitation agricole, ainsi que le changement de destination
+      des bâtiments à usage agricole en bâtiments à usage autre qu''agricole. »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: Implantation liée et nécessaire à une exploitation agricole (définition en annexe, p. 87) ; installations
+          classées admises si utiles à la production agricole et à l'élevage
+        article: A 2.2 (1) et (2)
+        page_pdf: 65
+        citation: « Les constructions, ouvrages et travaux à usage agricole (hangars, bâtiments d'élevage, séchoirs,
+          serres, réservoirs d'eau, atelier de réparation du matériel agricole, bâtiment de production, de stockage
+          et de vente de produits agricoles, etc.) sous réserve que leur implantation soit liée et nécessaire à
+          une exploitation agricole »
+      logement:
+        statut: sous_condition
+        condition: Un logement par exploitation agricole dans la limite de 170 m² de SHOB (texte), lié et nécessaire
+          aux besoins de l'exploitation (présence permanente et rapprochée) ; également travaux d'amélioration,
+          d'extension et de reconstruction des logements non agricoles existants (clos et couverts) à la date d'approbation
+          du SAR (1995), dans la même limite de 170 m² de SHOB
+        seuil_m2: 170
+        seuil_type: surface_plancher
+        article: A 2.2 (3) et (4)
+        page_pdf: 65
+        citation: « Un logement par exploitation agricole … dans la limite de 170 m² de SHOB, sous réserve que son
+          implantation soit liée et nécessaire aux besoins d'une exploitation agricole »
+      restauration:
+        statut: sous_condition
+        condition: Uniquement en complément de revenu d'une exploitation agricole conforme au schéma des structures
+          agricoles, dans la limite totale de 250 m² de SHOB (texte) par exploitation
+        seuil_m2: 250
+        seuil_type: surface_plancher
+        article: A 2.2 (5)
+        page_pdf: 65
+        citation: « Les constructions, ouvrages et travaux à usage touristique dès lors qu'ils sont le complément
+          de revenu d'une exploitation agricole … (locaux de vente de produits de la ferme, équipements d'accueil
+          et d'hébergement touristique ou de restauration, activités touristiques, etc.) dans la limite totale de
+          250 m² de SHOB par exploitation agricole. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: Uniquement en complément de revenu d'une exploitation agricole, dans la limite totale de 250
+          m² de SHOB (texte) par exploitation ; l'annexe (p. 87) cite chambres et tables d'hôtes, gîtes, fermes
+          auberges comme équipements d'accueil touristique ayant pour support l'exploitation
+        seuil_m2: 250
+        seuil_type: surface_plancher
+        article: A 2.2 (5)
+        page_pdf: 65
+        citation: « …équipements d'accueil et d'hébergement touristique ou de restauration… dans la limite totale
+          de 250 m² de SHOB par exploitation agricole. »
+    note: '« hébergement touristique » générique mappé sur autres_hebergements_touristiques seulement ; hôtels non
+      cités → régis par le silence (interdit). Sont aussi admis (travaux/ouvrages, non mappables) : réseaux, voirie,
+      production-distribution d''énergie (A 2.2 (6), p. 65) ; ouvrages techniques de service public si implantation
+      nécessaire (A 2.2 (7), p. 65) ; travaux R.423-19 j) k) / R.423-23 e) f) (A 2.2 (8), p. 66).'
+  Anc:
+    silence: interdit
+    silence_src: 'Règle générale de la zone A applicable au secteur (Titre I art. 3, p. 6 ; caractère p. 63 : «
+      Il existe un secteur Anc qui correspond à la zone NC du POS de 2001 ») : art. A 1.2, p. 64. Les admissions
+      propres au secteur s''y ajoutent (A 2.2, p. 66).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: Avis favorable préalable de la CDPENAF (L181-12 code rural) pour toute autorisation dans le secteur
+          ; installations classées et ouvrages techniques liés à l'activité agricole de la zone ; annexes agricoles
+          liées aux besoins d'une exploitation ; élevages de porcs à 100 m minimum d'une habitation, volailles à
+          80 m, sous réserve de préserver le caractère paysager ; camping à la ferme admis
+        article: A 2.2, secteur Anc
+        page_pdf: 66
+        citation: '« Les annexes agricoles liées aux besoins d''une exploitation agricole : hangars, bâtiments d''élevage,
+          séchoirs, serres, réservoirs d''eau, atelier de réparation du matériel agricole, etc… » ; « Le camping
+          à la ferme »'
+      logement:
+        statut: sous_condition
+        condition: Avis favorable CDPENAF ; un logement par unité foncière s'il est lié et nécessaire aux besoins
+          d'une exploitation agricole située dans la zone et de surface ≥ 1/4 de la SMI, surface de plancher max
+          100 m² ; entretien/extension/amélioration jusqu'à reconstruction des habitations occupées existantes à
+          l'approbation du POS, dans la limite de 100 m² de surface de plancher totale ; agrandissement de la résidence
+          principale jusqu'à 150 m² de surface de plancher en vue de créer des chambres d'hôtes (max 5)
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: A 2.2, secteur Anc
+        page_pdf: 66
+        citation: « Un logement par unité foncière s'il est lié et nécessaire aux besoins d'une exploitation agricole,
+          si elle est située dans la zone et si sa surface est égale ou supérieure au quart de la SMI … sans que
+          la surface de plancher maximum ne puisse dépasser 100 m². »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: Avis favorable CDPENAF ; chambres d'hôtes (max 5) dans l'agrandissement de la résidence principale
+          limité à 150 m² de surface de plancher ; gîtes liés à l'existence d'une exploitation agricole, max 3,
+          dans le cadre de 150 m² de surface de plancher totale affectée à cet usage ; camping à la ferme
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: A 2.2, secteur Anc
+        page_pdf: 66
+        citation: « La création de ferme auberge, de gîtes, liés à l'existence d'une exploitation agricole pour
+          un maximum de 3 gîtes et dans le cadre de 150 m² de surface de plancher totale affectée à cet usage. »
+      restauration:
+        statut: sous_condition
+        condition: Avis favorable CDPENAF ; ferme auberge liée à l'existence d'une exploitation agricole, dans le
+          cadre de 150 m² de surface de plancher totale affectée à cet usage
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: A 2.2, secteur Anc
+        page_pdf: 66
+        citation: « La création de ferme auberge, de gîtes, liés à l'existence d'une exploitation agricole … dans
+          le cadre de 150 m² de surface de plancher totale affectée à cet usage. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: Avis favorable CDPENAF ; équipements et installations techniques nécessaires au traitement et
+          à l'acheminement des eaux
+        article: A 2.2, secteur Anc
+        page_pdf: 66
+        citation: « Les équipements et installations techniques nécessaires au traitement et à l'acheminement des
+          eaux (station d'épuration, postes de relèvement, etc.). »
+    note: Toutes les admissions Anc sont subordonnées à « l'avis favorable de la Commission Départementale de Préservation
+      des Espaces Naturels, Agricoles et Forestiers (CDPENAF) … préalablement à la délivrance du permis par la municipalité
+      » (p. 66).
+  N:
+    silence: interdit
+    silence_src: 'Art. N 1.2, p. 74 : « Sont interdits les constructions, ouvrages et travaux non prévus à l''article
+      N 2, ainsi que ceux de nature à porter atteinte à la protection de la zone. »'
+    sous_destinations: {}
+    note: 'Ce que N 2.2 (p. 75) admet réellement en zone N de base — travaux et ouvrages, non assimilables à une
+      sous-destination nouvelle : (1) travaux d''aménagement et d''extension des constructions existantes à l''approbation
+      du SAR (06/11/1995), compatibles avec le caractère naturel, « dans la limite d''une SHOB totale de 150 m²
+      » ; (2) constructions liées à l''entretien et la gestion des sites (abris pour le matériel, local technique)
+      et aménagements à vocation touristique et de loisirs ouverts au public, SANS hébergement (points d''arrêts,
+      kiosques, mobilier urbain, terrains de jeux), SHOB 30 m² par bâtiment et 90 m² max par unité foncière ; (3)
+      réseaux, voirie, production-distribution d''énergie et ouvrages techniques d''infrastructure des services
+      publics ; (6) travaux R.423-19 j) k) / R.423-23 e) f). Aucune destination R151-28 n''y est autorisée en propre.'
+  Ndé:
+    silence: interdit
+    silence_src: 'Règle générale de la zone N applicable au secteur (Titre I art. 3, p. 6) : art. N 1.2, p. 74.
+      Caractère p. 74 : « Il existe un secteur Ndé couvrant la station d''épuration et destiné à accueillir une
+      déchetterie et une hélistation. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: Uniquement les installations et équipements nécessaires à l'exploitation et au fonctionnement
+          d'une déchetterie, d'une hélistation et de la station de traitement des eaux usées
+        article: N 2.2 (5)
+        page_pdf: 75
+        citation: « En secteur Ndé, les installations et équipements nécessaires à l'exploitation et au fonctionnement
+          d'une déchetterie, d'une hélistation et de la station de traitement des eaux usées. »
+  Nto:
+    silence: interdit
+    silence_src: 'Règle générale de la zone N applicable au secteur (Titre I art. 3, p. 6) : art. N 1.2, p. 74.
+      Caractère p. 74 : « Il existe un secteur Nto correspondant aux secteurs susceptibles d''accueillir une fréquentation
+      touristique et/ou de loisirs. »'
+    sous_destinations:
+      equipements_sportifs:
+        statut: sous_condition
+        condition: Constructions destinées à la pratique de sports, de loisirs et du tourisme, dès lors qu'elles
+          s'insèrent dans le milieu environnant ; SHOB (texte) max 60 m² par bâtiment sans pouvoir excéder 180 m²
+          par unité foncière
+        seuil_m2: 60
+        seuil_type: surface_plancher
+        article: N 2.2 (4)
+        page_pdf: 75
+        citation: « Dans le secteur Nto, les constructions, ouvrages et travaux destinés à la pratique de sports,
+          de loisirs et du tourisme ainsi que les équipements de proximité qui sont liées et nécessaires à leur
+          fonctionnement … dès lors qu'ils s'insèrent dans le milieu environnant. La SHOB totale admise est de 60
+          m² par bâtiment sans pouvoir excéder 180 m² par unité foncière. »
+      restauration:
+        statut: sous_condition
+        condition: Uniquement comme équipement de proximité lié et nécessaire au fonctionnement des activités de
+          sports/loisirs/tourisme du secteur ; SHOB (texte) max 60 m² par bâtiment, 180 m² par unité foncière
+        seuil_m2: 60
+        seuil_type: surface_plancher
+        article: N 2.2 (4)
+        page_pdf: 75
+        citation: « …ainsi que les équipements de proximité qui sont liées et nécessaires à leur fonctionnement
+          (accueil, local technique, sanitaires, restauration, hébergement permanent ou touristique)… »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: Uniquement comme équipement de proximité lié et nécessaire au fonctionnement des activités de
+          sports/loisirs/tourisme du secteur (« hébergement … touristique ») ; SHOB (texte) max 60 m² par bâtiment,
+          180 m² par unité foncière
+        seuil_m2: 60
+        seuil_type: surface_plancher
+        article: N 2.2 (4)
+        page_pdf: 75
+        citation: « …(accueil, local technique, sanitaires, restauration, hébergement permanent ou touristique)…
+          »
+    note: '« hébergement permanent » (même parenthèse, p. 75) : terme ambigu (logement ? hébergement ?) — douteux,
+      non mappé. « hébergement touristique » mappé sur autres_hebergements_touristiques seulement ; hôtels non cités
+      → régis par le silence (interdit).'
+  NtoPOS:
+    etat: non_lu
+    note: 'Code servi introuvable au règlement : « NtoPOS » n''apparaît nulle part dans la pièce écrite ; seul le
+      secteur Nto existe (p. 74-75). Probable code du zonage GPU (report POS ?) sans chapitre propre dans cette
+      pièce.'
