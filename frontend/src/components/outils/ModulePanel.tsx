@@ -408,6 +408,7 @@ export function M03() {
   const permitToOpen = useApp((s) => s.permitToOpen)
   const setPermitToOpen = useApp((s) => s.setPermitToOpen)
   const setFlyTo = useApp((s) => s.setFlyTo)
+  const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-12 O12.2 — zoom+surbrillance commun (O1)
   useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
@@ -517,11 +518,12 @@ export function M03() {
           VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
       <div>
         <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune, n° de permis ou parcelle…"
-          onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
+          onSelect={(sel) => { if (sel.idu) focusParcelle(iduComplet(sel.idu)); else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           onEnterRaw={(t) => {
             const v = iduComplet(t)
-            // IDU cadastral complet (14 car.) → cherche les permis de la parcelle (O17 g)
-            if (v.length === 14 && estIdu(v)) { setParcelIdu(v); return }
+            // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
+            // (focusParcelle, même geste que O1/J1) EN PLUS de chercher ses permis (O17 g).
+            if (v.length === 14 && estIdu(v)) { focusParcelle(v); setParcelIdu(v); return }
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
           }} />
@@ -540,9 +542,12 @@ export function M03() {
           (les autres filtres — période, type, commune, géocodage — se plient, eux, dans la boîte ci-dessous). */}
       <div data-permis-segment className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
         {([
-          ['cours', 'En cours', '#4ADE80', radarEntryTotal],
+          // RETOURS-12 O12.1 — libellés PRÉCIS. Sitadel 974 ne publie QUE les permis AUTORISÉS (aucune
+          // instruction déposée-non-autorisée en base) → « en cours » ne peut pas signifier « instruction ».
+          // « Chantier récent » = autorisé récemment (travaux en cours ou récemment achevés) ;
+          // « Chantier au point mort » = autorisé ancien SANS achèvement (DAACT absente).
+          ['cours', 'Chantier récent', '#4ADE80', radarEntryTotal],
           ['mort', 'Point mort', '#E2726A', pmEntryTotal],
-          // F2 — « Tous » = en cours + point mort (le compteur est la somme des deux jeux).
           ['tous', 'Tous', null, (radarEntryTotal != null && pmEntryTotal != null) ? radarEntryTotal + pmEntryTotal : null],
         ] as const).map(([k, label, dot, n], i) => (
           <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)}
@@ -553,6 +558,13 @@ export function M03() {
           </button>
         ))}
       </div>
+      {/* RETOURS-12 O12.1 — note honnête sur ce que Sitadel couvre au 974 : uniquement les permis
+          AUTORISÉS (pas l'instruction en cours). Le statut exact (chantier / achevé) est porté par
+          chaque permis (étiquette d'état, source unique). */}
+      <p className="-mt-1 px-0.5 text-[9.5px] leading-snug text-txt-dim">
+        Sitadel (974) ne publie que les permis <b className="text-txt-mut">autorisés</b> — pas l'instruction déposée.
+        « Chantier récent » = autorisé récemment · « Point mort » = autorisé ancien sans achèvement (DAACT).
+      </p>
 
       {/* ZONE 2 — FILTRES REPLIABLES (O17 a/f/i) : période · type · commune · géocodage. Un en-tête
           cliquable ouvre/ferme la boîte ; il porte le résumé des filtres actifs pour que rien ne soit

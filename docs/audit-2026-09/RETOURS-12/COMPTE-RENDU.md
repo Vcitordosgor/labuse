@@ -254,6 +254,16 @@ intact (0 fichier scoring). Les 7 travaux O1-O7 sont livrés (O2 en commit dédi
   (`2024→2025`) lisibles sur ligne survolée : `.chip chip-mint` (T6) → fond sombre + texte mint sur le vert
   plein. Infobulle « Ouvrir la parcelle 974… » retirée (T5) — le lien « parcelle {idu} → » est déjà sous la
   ligne. Livré au Lot T (fichier `Communes.tsx`), confirmé ici.
-- **O12 — À FAIRE** · **O13 — À FAIRE**
+- **O12 — Outil « Permis » : ambiguïté levée + zoom — FAIT.** **Mesuré** : `sitadel_permits` porte
+  `date` (autorisation, 50 540/50 540) + `date_depot` + `raw.etat`/`raw.daact` — **tous les permis en base
+  sont AUTORISÉS ; Sitadel 974 ne publie PAS l'instruction** (déposé-non-autorisé). Donc « en cours » ne
+  pouvait pas signifier « instruction » : pas de seconde entrée inventée (aucune donnée). Le segment
+  « En cours » est relabellé **« Chantier récent »** (autorisé récemment, travaux en cours ou récemment
+  achevés) ; « Point mort » = autorisé ancien sans achèvement (DAACT absente) ; note honnête sous le
+  segment (Sitadel = autorisés seuls). Le statut fin (chantier/achevé) reste porté par l'étiquette d'état
+  de chaque permis (`_ETAT_LABELS`, source unique tool+fiche). **Zoom** : à la recherche par IDU (ou
+  adresse rattachée), la carte zoome et délimite la parcelle via **`focusParcelle`** (même geste que O1/J1),
+  sans ouvrir la fiche. Recette : « Chantier récent 5 575 », IDU → zoom 9,9 → 16 (capture `O12-permis-zoom`).
+- **O13 — À FAIRE** (priorité haute — refonte Étude de zone)
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
