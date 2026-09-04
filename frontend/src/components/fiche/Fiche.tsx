@@ -387,7 +387,25 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
               {/* M76 pt5 (arbitrage Vic) : lien violet « Annuaire PLU → » retiré — doublon de la porte
                   « Annuaire PLU de la commune » (grammaire officielle M60). Une action, une seule forme. */}
             </div>
-            {z.articles.length > 0 && (
+            {/* RETOURS-11F3 F4 — le TABLEAU des règles de la zone AVEC leurs VALEURS (hauteur, emprise,
+                reculs, pleine terre, stationnement), chacune avec sa source (article/page cliquable).
+                Remplace la liste d'articles nue (« références sans valeurs » de l'audit O1). « non
+                réglementé » (le PLU ne fixe pas de règle) et « à vérifier » sont dits, jamais comblés. */}
+            {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
+              <ul className="mt-1 flex flex-col gap-0.5">
+                {z.regles_valeurs.map((rv, j) => (
+                  <li key={j} className="flex items-baseline gap-2 text-[10.5px]">
+                    <span className="w-40 shrink-0 text-txt-dim">{rv.libelle}</span>
+                    <span className={rv.etat === 'chiffre' || rv.etat === 'texte' ? 'font-medium text-txt' : 'italic text-txt-dim'}>
+                      {rv.valeur}
+                    </span>
+                    {rv.reference && (rv.url
+                      ? <a href={rv.url} target="_blank" rel="noreferrer" className="ml-auto shrink-0 text-txt-dim hover:text-mint hover:underline" title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'} ↗</a>
+                      : <span className="ml-auto shrink-0 text-txt-dim" title={rv.reference}>{rv.reference.split(',')[0]}</span>)}
+                  </li>
+                ))}
+              </ul>
+            ) : z.articles.length > 0 && (
               <ul className="mt-1 flex flex-col gap-0.5">
                 {z.articles.slice(0, 6).map((a, j) => (
                   <li key={j} className="text-[10.5px] text-txt-mut">

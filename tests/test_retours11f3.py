@@ -154,3 +154,35 @@ def test_a5_brief_na_pour_annonce_et_maintenance():
     assert meta("veille_zone")["chaine"] in (1, 2)
     assert meta("annonce_produit")["chaine"] == 3
     assert meta("maintenance")["chaine"] == 3
+
+
+# ─────────────────────────── Lot S / F4 — Urbanisme : règles de zone AVEC valeurs ───────────────────────────
+
+def test_f4_reglement_valeurs_de_zone_pas_seulement_references():
+    """F4 — le règlement PLU sert le TABLEAU des règles clés AVEC leurs VALEURS (hauteur, emprise,
+    reculs, pleine terre, stationnement), pas seulement des références d'articles. Les valeurs sont
+    LUES du YAML PLU (jamais inventées) ; « non réglementé » et « à vérifier » sont dits."""
+    from labuse.plu_reglement import resolve_reglement
+    r = resolve_reglement("Saint-Paul", "U1b", "97415")
+    assert r and r["calibree"]
+    rv = {x["cle"]: x for x in r["regles_valeurs"]}
+    # les cinq familles de règles sont présentes, chacune avec un état explicite
+    for cle in ("hauteur", "emprise", "recul_voirie", "recul_limites", "pleine_terre", "stationnement"):
+        assert cle in rv, f"règle {cle} absente du tableau"
+        assert rv[cle]["etat"] in ("chiffre", "texte", "absent", "a_verifier")
+    # U1b (parcelle des captures 97415000BS0086) : hauteur 16 m faîtage chiffrée + sa source article
+    assert rv["hauteur"]["etat"] == "chiffre" and "16 m" in rv["hauteur"]["valeur"]
+    assert rv["hauteur"]["reference"] and "Art. 10" in rv["hauteur"]["reference"]
+    # pleine terre 30 % chiffrée ; recul limites 3 m
+    assert "30 %" in rv["pleine_terre"]["valeur"]
+    assert "3 m" in rv["recul_limites"]["valeur"]
+    # jamais une valeur inventée : emprise non réglementée au PLU → dit « non réglementé »
+    assert rv["emprise"]["etat"] == "absent" and rv["emprise"]["valeur"] == "non réglementé"
+
+
+def test_f4_zone_non_outillee_pas_de_valeurs_fabriquees():
+    """Une commune/zone non calibrée ne fabrique AUCUNE valeur (regles_valeurs vide)."""
+    from labuse.plu_reglement import resolve_reglement
+    r = resolve_reglement(None, "UC", "97400")
+    assert r and not r["calibree"]
+    assert r.get("regles_valeurs", []) == []

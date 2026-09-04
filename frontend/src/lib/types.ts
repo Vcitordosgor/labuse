@@ -563,6 +563,9 @@ export interface ReglementZone {
   edition?: string | null
   idurba?: string | null
   articles: { regle: string; reference: string; page_imprimee: number | null; url: string | null }[]
+  // RETOURS-11F3 F4 — les règles clés de la zone AVEC leurs valeurs (hauteur, emprise, reculs,
+  // pleine terre, stationnement). etat : chiffre | texte | absent (« non réglementé ») | a_verifier.
+  regles_valeurs?: { cle: string; libelle: string; valeur: string | null; etat: string; reference: string | null; url: string | null }[]
   annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
 }
