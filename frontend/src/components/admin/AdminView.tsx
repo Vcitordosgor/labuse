@@ -99,6 +99,23 @@ function ActTuile({ n, label, onClick }: { n: number; label: string; onClick: ()
   )
 }
 
+// A4 — mini-compteur des retours « Signaler » ouverts, ventilés par type. Une puce par type présent
+// (bug/idée/question/donnée), cliquable → Produit. Un type inconnu s'affiche tel quel, jamais avalé.
+const RETOUR_TYPE_LABELS: Record<string, string> = { bug: 'bug', idee: 'idée', question: 'question', donnee: 'donnée' }
+const rtLabel = (n: number, t: string) => `${n} ${RETOUR_TYPE_LABELS[t] ?? t}${n > 1 ? 's' : ''}`
+function RetoursParType({ data, onClick }: { data?: Record<string, number>; onClick: () => void }) {
+  const entries = Object.entries(data ?? {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])
+  if (!entries.length) return null
+  return (
+    <div onClick={onClick} className="mt-2.5 flex cursor-pointer flex-wrap items-center gap-1.5 text-[11px] text-txt-mut hover:text-txt">
+      <span className="font-mono uppercase tracking-[0.12em] text-txt-dim">retours →</span>
+      {entries.map(([t, n]) => (
+        <Chip key={t} tone="warn">{rtLabel(n, t)}</Chip>
+      ))}
+    </div>
+  )
+}
+
 // ── sparkline CA (héros) ──
 function Spark({ mois }: { mois: Record<string, number> }) {
   const entries = Object.entries(mois).slice(-6)
@@ -205,6 +222,10 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
         <ActTuile n={data.a_faire?.manuelles_retard ?? 0}
           label="donnée(s) manuelle(s) en retard → Données" onClick={() => go('donnees')} />
       </div>
+
+      {/* A4 — ventilation PAR TYPE des retours « Signaler » ouverts (bug/idée/question/donnée). Petites
+          puces sous la rangée, cliquables → Produit. Absent/vide = « aucun retour ouvert ». */}
+      <RetoursParType data={data.retours_par_type} onClick={() => go('produit')} />
 
       <H2>Santé · traction</H2>
       <div className="grid grid-cols-4 gap-3.5 max-[1100px]:grid-cols-2">

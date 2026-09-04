@@ -10,6 +10,8 @@ import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { Tip } from '../Tip'
 import { TierBadge } from './TierBadge'
+import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
+import { trierCommunes } from '../../lib/communes'
 
 const fmt = fmtInt
 
@@ -497,10 +499,8 @@ export function M18() {
 
 /* ───────────── M-U — MARCHÉ PAR COMMUNE (Agent Prix) ───────────── */
 
-const MU_COMMUNES = ['Bras-Panon', 'Cilaos', 'Entre-Deux', "L'Étang-Salé", 'La Plaine-des-Palmistes',
-  'La Possession', 'Le Port', 'Le Tampon', 'Les Avirons', 'Les Trois-Bassins', 'Petite-Île',
-  'Saint-André', 'Saint-Benoît', 'Saint-Denis', 'Saint-Joseph', 'Saint-Leu', 'Saint-Louis',
-  'Saint-Paul', 'Saint-Philippe', 'Saint-Pierre', 'Sainte-Marie', 'Sainte-Rose', 'Sainte-Suzanne', 'Salazie']
+// RETOURS-11 T6 — dérivé du référentiel unique CP_COMMUNES, trié sans tenir compte de l'article.
+const MU_COMMUNES = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
 
 const MU_FIAB: Record<string, string> = { bonne: TOKENS.mint, moyenne: TOKENS.stCreuser,
   faible: TOKENS.txtMut, insuffisant: TOKENS.txtDim }

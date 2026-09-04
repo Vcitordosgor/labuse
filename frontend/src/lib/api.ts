@@ -717,11 +717,12 @@ export interface RenouvListe {
   source: string; run_label: string; maj: string | null
   libelle: string; composantes_libelles: Record<string, string>; avertissement: string
 }
-// le plafond vit côté serveur (config renouvellement.yaml, liste_max=400 PAR requête) → on n'envoie
-// PAS de `limit` (sinon la borne serveur min(limit,offset,cap) renvoie 0 à offset 0). DENSIFIER : on
-// pagine par `offset` (400 par page) pour atteindre les 67 214 sans jamais dépasser le cap par requête.
+// RETOURS-11 (T4) — pagination par 200 (doctrine SOCLE) : on envoie `limit=200` (le serveur borne à
+// min(limit, cap), donc 200 par page) et on pagine par `offset` pour atteindre les 67 214 sans jamais
+// tirer un bloc massif. Le plafond serveur (config renouvellement.yaml) reste une borne dure de sécurité.
+export const RENOUV_PAGE = 200
 export const getRenouvListe = (sort: string, communeNom?: string | null, offset = 0) =>
-  j<RenouvListe>(`/renouvellement/liste?sort=${sort}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
+  j<RenouvListe>(`/renouvellement/liste?sort=${sort}&limit=${RENOUV_PAGE}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
 
 // ── Prospection solaire (V1 restitution) — données gelées au 11/07/2026, masque solaire non calculé ──
 export interface SolaireItem {
@@ -909,7 +910,10 @@ export const getSourcesCouverture = () => j<SourcesCouverture>('/sources/couvert
 // ── Modules outils (Vague 1) ──
 // M129-C (Vic 19/08/2026) : modDivision retiré — division hors produit (endpoint dormant).
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
-export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
+// RETOURS-11 (T4) — liste PAGINÉE (limit/offset) : l'endpoint sert déjà des pages (géom calculée pour la
+// page seulement) ; le front tranche par 200 via « Voir plus » (jamais de dump). Défauts = 1re page 200.
+export const modPatrimoine = (siren: string, limit = 200, offset = 0) =>
+  j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}&limit=${limit}&offset=${offset}`)
 // GB-017/018 — export CSV du portefeuille d'une PM (raison sociale entière ; notice si plafond serveur).
 export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren=${encodeURIComponent(siren)}&fmt=csv`
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
@@ -990,7 +994,9 @@ export const askParcel = (idu: string, question: string) =>
 
 // ── Événements (Vague 3 : M11-M14) ──
 export interface LabuseEvent { id: number; date: string; ts?: string | null; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null; source?: string | null; lien?: string | null; commune?: string | null }
-export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')
+// RETOURS-11 A5 (T4) — limite paginable (200 par défaut) : la cloche affiche 200, « Voir plus »
+// remonte la limite. Le back paginant déjà (limit ≤ 1000), on grandit la fenêtre côté client.
+export const getEvents = (limit = 200) => j<{ unread: number; items: LabuseEvent[] }>(`/events?limit=${limit}`)
 // M87 P5 — libellés de l'en-tête de la cloche, dérivés du registre (jamais écrits à la main).
 export const getEnteteCloche = () => j<{ libelles: string[] }>('/events/entete')
 // M85 Phase 3 — le brief du matin (déterministe : veilles déclenchées + « depuis hier sur vos secteurs »).
@@ -1037,7 +1043,9 @@ export const veilleNL = (text: string) =>
 // compte) ou 'local' (session dev sans compte, fail-open) ; email + plan réel du compte connecté,
 // plan_eur_mois depuis offres.py (null pour 'interne' — jamais un prix sur un compte interne).
 // postSuggestion (« Proposer une amélioration ») retiré : doublon du bouton Signaler (postRetour).
-export interface Moi { mode: 'compte' | 'local'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string; email?: string | null; plan_eur_mois?: number | null }
+export interface Moi { mode: 'compte' | 'local'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string; email?: string | null; plan_eur_mois?: number | null;
+  // RETOURS-11 A6 — nom du compte + échéance (« Intégral depuis le … » via `depuis`, « Essai jusqu'au … » via `essai_jusqu` ; dates ISO ou null).
+  nom?: string | null; depuis?: string | null; essai_jusqu?: string | null }
 export const getMoi = () => j<Moi>('/moi')
 // DASHBOARD-V1 · D1 — bouton « Signaler » (en-tête) : bug/idée/question → table retours
 // (statuts suivis au dashboard admin).
@@ -1073,6 +1081,9 @@ export interface AdminPilotage {
   run: { label: string | null; carte_le: string | null }
   // ADMIN-1 (AD5) — rangée « À faire » (ambre) : un geste attendu par tuile.
   a_faire: { sources_nouvelle_version: number; essais_24h: number; signalements_ouverts: number; manuelles_retard: number }
+  // RETOURS-11 A4 — retours « Signaler » ouverts, ventilés par type (bug/idee/question/donnee), clé SŒUR
+  // de `a_faire` (qui reste 4 entiers). Clés absentes = 0.
+  retours_par_type?: Record<string, number>
   // ADMIN-1 (AD5) — rangée « Santé · traction » (vert).
   traction: { mrr_eur: number | null; veilles_7j: number; coherence: { ok: boolean | null; n_surfaces: number | null; verifie_le: string | null } }
   fil: Array<{ id: number; ts: string | null; kind: string; source: string | null; titre: string; detail: string | null; lien: string | null }>
@@ -1743,12 +1754,15 @@ export interface RadarSignaux {
 export const getRadarSignaux = (commune: string) => j<RadarSignaux>(`/radar/signaux/${encodeURIComponent(commune)}`)
 
 // veille Radar (P4)
-export interface RadarVeille { id: number; commune: string | null; criteria: Record<string, unknown>; created_at: string | null }
+export interface RadarVeille { id: number; nom: string | null; commune: string | null; criteria: Record<string, unknown>; created_at: string | null }
 export const getRadarVeilles = () => j<{ veilles: RadarVeille[] }>('/radar/veille')
 export const creerRadarVeille = (criteria: Record<string, unknown>) =>
   j<{ ok: boolean; veille_id: number }>('/radar/veille', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(criteria) })
 export const supprimerRadarVeille = (id: number) =>
   j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'DELETE' })
+// RETOURS-11 A7 — renommer une veille Radar (nom vide = retour au résumé des critères).
+export const renommerRadarVeille = (id: number, nom: string) =>
+  j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom }) })
 
 // CRON-2 (K7) — la page CRON de l'admin (état des jobs planifiés)
 export interface CronJob {

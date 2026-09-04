@@ -41,6 +41,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
 import { TierBadge } from './TierBadge'
+import { ListPaginationFooter } from '../ListPagination'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -136,9 +137,20 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m02Prefill, embedded])
   const sug = useQuery({ queryKey: ['m02s', q], queryFn: () => modPatrimoineSearch(q), enabled: q.length >= 2 && !siren })
-  const pat = useQuery({ queryKey: ['m02', siren], queryFn: () => modPatrimoine(siren!), enabled: !!siren })
-  const d = pat.data as Record<string, any> | undefined
-  const items = ((d?.['items'] ?? []) as Record<string, any>[])
+  // RETOURS-11 (T4) — la LISTE du patrimoine est paginée par 200 (« Voir plus »), plus jamais tronquée
+  // muettement. L'endpoint sert des pages (limit/offset) : la page 0 porte aussi les agrégats (`d`).
+  const M02_PAGE = 200
+  const pat = useInfiniteQuery({
+    queryKey: ['m02-liste', siren],
+    queryFn: ({ pageParam }) => modPatrimoine(siren!, M02_PAGE, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['tronquee'] ? pages.length * M02_PAGE : undefined,
+    enabled: !!siren,
+  })
+  const pages = (pat.data?.pages ?? []) as Record<string, any>[]
+  const d = pages[0]  // page 0 = agrégats (nom, n_parcelles, n_actionnables, sdp…) + 1re tranche d'items
+  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
+  const total = (d?.['n_parcelles'] as number) ?? 0
   useModuleMap(items.map((i) => i['idu'] as string), null, [pat.dataUpdatedAt])
   return (
     <>
@@ -223,11 +235,14 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
               </div>
             ))}
           </div>
-          {/* RETOURS-5 T4.3 — le « N affichées sur M » QUITTE l'encart : ligne discrète SOUS la liste, avec le tri. */}
-          <div className="shrink-0 text-center text-[11px] text-txt-off">
-            {d['tronquee'] === true
-              ? <>{fmt(items.length)} affichées sur {fmt(d['n_parcelles'] as number)} · triées par probabilité</>
-              : <>{fmt(items.length)} affichée{items.length > 1 ? 's' : ''} · triées par probabilité</>}
+          {/* RETOURS-11 T4 — pied de liste PARTAGÉ (SOCLE) : compteur exact « n / total affichées » +
+              « Voir 200 de plus » (jamais de dump, jamais de « Tout charger »). Trié par probabilité. */}
+          <div className="shrink-0">
+            <ListPaginationFooter shown={items.length} total={total} step={M02_PAGE}
+              onMore={() => pat.fetchNextPage()}>
+              {pat.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
+              <span className="text-txt-off">· triées par probabilité</span>
+            </ListPaginationFooter>
           </div>
         </>
       )}
@@ -359,14 +374,16 @@ export function M03() {
 
   // deux sources, une seule active à la fois (enabled) : RADAR = tous les permis ; POINT MORT = PC
   // anciens sans achèvement (l'endpoint /promesses renvoie désormais aussi la géom → des points).
+  // RETOURS-11 (T4) — pagination par 200 partout (doctrine SOCLE) : plus de pages de 300/1000.
+  const RADAR_PAGE = 200
   const qRadar = useInfiniteQuery({
     queryKey: ['m03', months, nature, commune],
-    queryFn: ({ pageParam }) => modPermis(months, nature || null, 300, pageParam as number),
+    queryFn: ({ pageParam }) => modPermis(months, nature || null, RADAR_PAGE, pageParam as number),
     initialPageParam: 0,
-    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 300 : undefined,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * RADAR_PAGE : undefined,
     enabled: !pointMort,
   })
-  const PM_PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
+  const PM_PAGE = 200  // RETOURS-11 (T4) — 1re page par 200 (SOCLE) → affichage rapide ; le reste en « voir plus »
   // F2 — le `months` du point mort mesure la DORMANCE (« PC plus vieux que N mois ») : sémantique
   // INVERSE du radar (« derniers N mois »). En « Tous », le radar élargit à 240 (tout), mais le point
   // mort DOIT garder sa fenêtre de caducité (36 mois) — sinon « plus vieux que 240 mois » = 0 résultat

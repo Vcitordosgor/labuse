@@ -9,6 +9,43 @@ import { estIdu, iduComplet } from '../../lib/format'
 const _NOM_KIND: Record<string, string> = {
   permis: 'permis', bascule: 'basculements de statut', bodacc: 'procédures BODACC',
   veille: 'alertes de vos secteurs et critères', parcelle_suivie: 'changements', veille_zone: 'alertes de vos secteurs et critères',
+  // RETOURS-11 A5 — les événements Radar (pige) portaient une clé brute (`pige.statut_change`) et un
+  // libellé technique ; on les regroupe sous des noms humains.
+  'pige.statut_change': 'changements d’annonce', 'pige.vendue_dvf': 'ventes constatées',
+  'pige.baisse_prix': 'baisses de prix', 'pige.nouvelle': 'nouvelles annonces',
+  'pige.signalement_client': 'signalements', match: 'correspondances de veille',
+}
+
+// RETOURS-11 A5 — HUMANISATION des libellés bruts servis à la cloche. Deux sources de « clés brutes » :
+//   · le STATUT interne du Radar (`en_vente_longue`, `a_reverifier`, `retiree_sans_vente`…) inséré tel
+//     quel dans le titre par pige/cycle.py (« Statut → en_vente_longue — bien #58 (Saint-Denis) ») ;
+//   · la RÉFÉRENCE technique « bien #58 » (id interne, aucun sens pour le client).
+// On traduit ce qu'on SAIT lire, sans rien inventer : le statut → phrase française, « bien #N » retiré.
+// La commune (entre parenthèses dans le titre d'origine, ou e.commune) est conservée quand présente.
+const _STATUT_HUMAIN: Record<string, string> = {
+  en_vente_longue: 'En vente depuis plus de 90 jours',
+  a_reverifier: 'Annonce à revérifier (plus de 60 jours sans confirmation)',
+  retiree_sans_vente: 'Retirée sans vente constatée',
+  retiree: 'Annonce retirée',
+  vendue: 'Vendue (mutation DVF constatée)',
+  active: 'Remise en vente',
+}
+// remplace toute clé brute résiduelle qui apparaîtrait dans un texte libre (défense en profondeur).
+const _CLE_BRUTE = /\b(en_vente_longue|retiree_sans_vente|a_reverifier|retiree|vendue|active)\b/g
+function _detechnifier(s: string): string {
+  // retire « bien #58 » et «  — bien #58 » (référence interne) puis toute clé brute restante.
+  return s.replace(/\s*[—-]?\s*bien\s*#\d+/gi, '').replace(_CLE_BRUTE, (k) => _STATUT_HUMAIN[k] ?? k).trim()
+}
+// Titre HUMAIN d'un événement : reconstruit les titres Radar « Statut → <clé> — bien #N (Commune) »
+// en « <phrase française> — <Commune> » ; sinon nettoie le titre existant (retrait clé/technique).
+function titreHumain(e: LabuseEvent): string {
+  const t = e.titre ?? ''
+  const m = t.match(/statut\s*[→:>-]+\s*([a-z_]+)/i)   // « Statut → en_vente_longue … »
+  if (m && _STATUT_HUMAIN[m[1]]) {
+    const commune = e.commune ?? (t.match(/\(([^)]+)\)\s*$/)?.[1] ?? '')
+    return commune ? `${_STATUT_HUMAIN[m[1]]} — ${commune}` : _STATUT_HUMAIN[m[1]]
+  }
+  return _detechnifier(t) || t
 }
 type Bloc =
   | { type: 'single'; e: LabuseEvent }
@@ -29,6 +66,7 @@ function grouperEvents(items: LabuseEvent[]): Bloc[] {
   return out
 }
 import { useApp } from '../../store/useApp'
+import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 
@@ -300,13 +338,22 @@ function tempsRelatif(iso: string): string {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
+// RETOURS-11 A6 — date ISO (jour) → « 4 septembre 2026 » (échéances du compte).
+function dateFr(iso: string): string {
+  const d = new Date(iso)
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 function NotifBell() {
   const [open, setOpen] = useState(false)
   // M104 P3 — la config des recherches sauvegardées (NL, exemples, liste) a déménagé dans la
   // section Surveillance (volet Critères) : la cloche affiche des événements, rien d'autre.
   const qc = useQueryClient()
   const { select, setView, openSources, openSurveillance } = useApp()
-  const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
+  // RETOURS-11 A5 (T4) — pagination par 200 (ListPaginationFooter). `limite` grandit au clic ; la
+  // clé de query l'inclut pour refetch. « Voir plus » n'apparaît que si la fenêtre est pleine.
+  const [limite, setLimite] = useState(PAGE_SIZE)
+  const ev = useQuery({ queryKey: ['events', limite], queryFn: () => getEvents(limite), refetchInterval: 60_000 })
   // M87 P5 — l'en-tête est DÉRIVÉ du registre (jamais écrit à la main) : on ne promet que le détectable.
   const entete = useQuery({ queryKey: ['entete-cloche'], queryFn: getEnteteCloche, enabled: open, staleTime: 3_600_000 })
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
@@ -314,7 +361,7 @@ function NotifBell() {
   const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
   // M87 P5.1 — la carte d'un événement, réutilisée en ligne seule ET dans un groupe déplié.
   const carte = (e: LabuseEvent) => (
-    <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-line-2 bg-bg-2'}`}>
+    <div key={e.id} className={`hover-fill rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-line-2 bg-bg-2'}`}>
       {/* DA §15 — non-lue en PORTE (fond bg-2) + pastille AMBRE ; lues estompées à 55 %. */}
       <div className="flex items-center gap-2">
         <span className="dot shrink-0" style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
@@ -331,10 +378,10 @@ function NotifBell() {
             }
             setOpen(false)
           }}
-          className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
+          className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{titreHumain(e)}</button>
         {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu" aria-label="Marquer comme lu">✓</button>}
       </div>
-      {e.detail && <p className="mt-0.5 whitespace-pre-line text-[11px] leading-snug text-txt-dim">{e.detail}</p>}
+      {e.detail && <p className="mt-0.5 whitespace-pre-line text-[11px] leading-snug text-txt-dim">{_detechnifier(e.detail)}</p>}
       <p className="mt-0.5 flex items-center gap-1.5 text-[9px] text-txt-dim">
         {e.source && <><span className="font-medium text-txt-mut">{e.source}</span><span>·</span></>}
         <span className="font-mono" title={e.date}>{tempsRelatif(e.ts ?? e.date)}</span>
@@ -355,6 +402,13 @@ function NotifBell() {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [open])
+  // RETOURS-11 A6 — « Préférences de notifications » (menu Mon compte) ouvre la cloche sur son volet
+  // Préférences (les réglages cloche/e-mail par type vivent ICI ; pas de duplication d'écran).
+  useEffect(() => {
+    const h = () => { setOpen(true); setPrefsOpen(true) }
+    window.addEventListener('labuse:open-notif-prefs', h)
+    return () => window.removeEventListener('labuse:open-notif-prefs', h)
+  }, [])
   return (
     <div className="relative">
       {/* RETOURS-9 (Q9) — la cloche OUVERTE devient pleine de sa couleur (vert, encre sombre), pas un liseré. */}
@@ -436,7 +490,7 @@ function NotifBell() {
                 const nonLus = b.items.filter((e) => !e.lu).length
                 return (
                   <div key={b.cle} className={`rounded-lg border ${nonLus ? 'border-line-2 bg-bg-2' : 'border-line-2 opacity-55'}`}>
-                    <div className="flex items-center gap-2 px-3 py-2">
+                    <div className="hover-fill flex items-center gap-2 rounded-lg px-3 py-2">
                       <span className="dot shrink-0" style={{ background: nonLus ? 'var(--amber)' : 'var(--line-3)' }} />
                       <span className="min-w-0 flex-1 truncate text-xs text-txt">
                         <b className="font-semibold">{b.items.length}</b> {b.nature} à {b.commune}
@@ -448,6 +502,13 @@ function NotifBell() {
                   </div>
                 )
               })}
+              {/* RETOURS-11 A5 (T4) — « Voir plus » par 200. Le back ne renvoie pas de total ; on
+                  n'affiche l'action QUE si la fenêtre est PLEINE (donc probablement d'autres après),
+                  et « Voir plus » remonte la limite d'un cran. Compteur honnête : N chargées. */}
+              {(ev.data?.items?.length ?? 0) >= limite && (
+                <ListPaginationFooter shown={ev.data?.items?.length ?? 0} total={(ev.data?.items?.length ?? 0) + PAGE_SIZE}
+                  onMore={() => setLimite((l) => l + PAGE_SIZE)} className="flex flex-wrap items-center gap-3 border-t border-line px-3 pt-2 text-[11px] text-txt-mut" />
+              )}
             </div>
             {/* M104 P3 — l'encart « Vos veilles — alertes sur mesure » a DÉMÉNAGÉ dans la section
                 Surveillance (volet Critères) : la cloche affiche des ÉVÉNEMENTS, rien d'autre.
@@ -543,36 +604,69 @@ function AccountMenu() {
               <MarqueForm />
             ) : (
               <div className="flex flex-col p-2 text-[12px]">
-                {/* ABONNEMENT — statut réel : compte interne sans prix, sinon plan + prix (offres.py) */}
+                {/* RETOURS-11 A6 — IDENTITÉ : e-mail + nom du compte. « Session locale (dev) » n'est
+                    montrée QUE si le back dit mode !== 'compte' (jamais en prod, où le rideau d'auth
+                    impose une session). */}
                 <div className="rounded-lg bg-surface-2 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wide text-txt-dim">Abonnement</p>
-                  {d?.plan === 'interne' ? (
-                    <p className="mt-0.5 text-txt">Compte interne</p>
-                  ) : (
-                    <p className="mt-0.5 text-txt">Plan <b className="text-mint">{d?.plan_label ?? '…'}</b>
-                      {d?.plan_eur_mois != null && <span className="text-txt-dim"> · {d.plan_eur_mois} €/mois</span>}</p>
-                  )}
-                </div>
-                {/* COMPTE — e-mail + rôle du compte connecté ; session locale (dev) dite telle quelle */}
-                <div className="mt-1.5 rounded-lg bg-surface-2 px-3 py-2">
                   <p className="text-[10px] uppercase tracking-wide text-txt-dim">Compte</p>
                   {d?.mode === 'compte' ? (
                     <>
                       {d.email && <p className="mt-0.5 truncate text-txt" title={d.email}>{d.email}</p>}
-                      <p className="mt-0.5 text-[10.5px] text-txt-dim">Rôle : {d.role}</p>
+                      {d.nom && d.nom !== d.email && <p className="mt-0.5 truncate text-[11px] text-txt-mut" title={d.nom}>{d.nom}</p>}
                     </>
-                  ) : (
+                  ) : d ? (
                     <p className="mt-0.5 text-txt-dim">Session locale (dev) — aucun compte connecté.</p>
+                  ) : (
+                    <p className="mt-0.5 text-txt-dim">…</p>
                   )}
                 </div>
-                {/* MARQUE BLANCHE (M54-EXPO-2 A6) — réservé aux comptes réels (les documents la portent) */}
+                {/* ABONNEMENT + ÉCHÉANCE — « Intégral depuis le … » (depuis) ou « Essai jusqu'au … »
+                    (essai_jusqu) ; compte interne sans prix. Dates lues du back, jamais inventées. */}
+                <div className="mt-1.5 rounded-lg bg-surface-2 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-txt-dim">Abonnement</p>
+                  {d?.plan === 'interne' ? (
+                    <p className="mt-0.5 text-txt">Compte interne</p>
+                  ) : (
+                    <>
+                      <p className="mt-0.5 text-txt">Plan <b className="text-mint">{d?.plan_label ?? '…'}</b>
+                        {d?.plan_eur_mois != null && <span className="text-txt-dim"> · {d.plan_eur_mois} €/mois</span>}</p>
+                      {d?.essai_jusqu
+                        ? <p className="mt-0.5 text-[10.5px] text-amber">Essai jusqu'au {dateFr(d.essai_jusqu)}</p>
+                        : d?.depuis
+                          ? <p className="mt-0.5 text-[10.5px] text-txt-dim">{d.plan_label ?? 'Abonné'} depuis le {dateFr(d.depuis)}</p>
+                          : null}
+                    </>
+                  )}
+                </div>
+                {/* ACTIONS — compte réel uniquement (mot de passe, préférences, marque blanche). */}
                 {d?.mode === 'compte' && (
-                  <button data-account-marque onClick={() => setMarqueOpen(true)}
-                    className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
-                    <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="3" y="4" width="14" height="12" rx="2" /><path d="M3 8h14M7 12h6" strokeLinecap="round" /></svg>
-                    Marque blanche <span className="ml-auto text-[10px] text-txt-dim">logo · coordonnées</span>
-                  </button>
+                  <>
+                    {/* CHANGER MON MOT DE PASSE — self-service existant (/reset envoie un lien) */}
+                    <a data-account-motdepasse href="/reset"
+                      className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
+                      <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="4" y="9" width="12" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" /></svg>
+                      Changer mon mot de passe
+                    </a>
+                    {/* PRÉFÉRENCES DE NOTIFICATIONS — ouvre la cloche sur son volet Préférences */}
+                    <button data-account-prefs onClick={() => { close(); window.dispatchEvent(new Event('labuse:open-notif-prefs')) }}
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
+                      <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M10 3a3.5 3.5 0 0 1 3.5 3.5v3l1.5 2.5h-10L6 9.5v-3A3.5 3.5 0 0 1 10 3Z" /><path d="M8.5 16a1.5 1.5 0 0 0 3 0" /></svg>
+                      Préférences de notifications
+                    </button>
+                    {/* MARQUE BLANCHE (M54-EXPO-2 A6) */}
+                    <button data-account-marque onClick={() => setMarqueOpen(true)}
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
+                      <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="3" y="4" width="14" height="12" rx="2" /><path d="M3 8h14M7 12h6" strokeLinecap="round" /></svg>
+                      Marque blanche <span className="ml-auto text-[10px] text-txt-dim">logo · coordonnées</span>
+                    </button>
+                  </>
                 )}
+                {/* SIGNALER / NOUS ÉCRIRE — mailto direct (le bouton « Signaler » de la barre reste). */}
+                <a data-account-ecrire href="mailto:victor@labuse.immo"
+                  className="mt-0.5 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
+                  <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="3" y="5" width="14" height="10" rx="1.5" /><path d="M3.5 6l6.5 5 6.5-5" /></svg>
+                  Signaler / nous écrire
+                </a>
                 {/* DÉCONNEXION */}
                 <a href="/logout" className="mt-0.5 flex items-center gap-2 rounded-lg px-3 py-2 text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">
                   <svg viewBox="0 0 20 20" className="h-4 w-4"><path d="M7 3H4v14h3M13 14l4-4-4-4M17 10H8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>

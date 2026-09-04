@@ -64,7 +64,7 @@ function AcquisitionsRecentes() {
             <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
               onClick={() => ouvrirParcelle(a.idu)}
               title={`Ouvrir la parcelle ${a.idu}`}
-              className="rounded-md border border-line-2 bg-surface-2 px-2.5 py-1.5 text-left text-[11px] leading-snug text-txt transition-colors duration-quick hover:border-mint/50 hover:bg-surface-3">
+              className="hover-fill rounded-md border border-line-2 bg-surface-2 px-2.5 py-1.5 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
               <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
               <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
               <span className="mx-1 text-txt-dim">→</span>

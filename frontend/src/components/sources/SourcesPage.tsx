@@ -7,27 +7,11 @@ import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
-// M86 (correction factuelle) — le millésime amont est LU depuis l'API (`data_sources.source_millesime`,
-// magasin centralisé) : plus AUCUNE date en dur au front. Repli sur l'année présente dans le nom (dérivé,
-// pas inventé). L'ancienne carte `MILLESIME_VERIFIE` (7 dates codées) a été supprimée.
-function millesimeNote(s: SourceInfo): string | null {
-  if (s.source_millesime) return s.source_millesime
-  const y = s.name.match(/\b(19|20)\d{2}\b/)
-  return y ? `millésime ${y[0]}` : null
-}
-
 // ── FIX-SOURCES S6 (corrige M6 Phase 2a) : la licence est DÉRIVÉE de legal_notes CÔTÉ SERVEUR
 // (`app._source_licence`) et servie dans `license_label` / `license_url`. Le front ne code PLUS aucune
 // licence ni aucune carte par nom : corriger la mention en base suffit, la vitrine suit. Défaut sûr
 // si un vieux cache n'a pas encore le champ : « Licence à confirmer » (jamais un libellé inventé).
 function licence(s: SourceInfo): string { return s.license_label || 'Licence à confirmer' }
-
-/** Date de mise à jour AFFICHÉE : la plus récente entre last_sync_at et la dernière ingestion tracée. */
-function majReelle(s: SourceInfo): string | null {
-  const a = s.last_sync_at, b = s.derniere_ingestion
-  if (a && b) return b > a ? b : a
-  return b ?? a
-}
 
 // RETOURS-9 (Q11.3) — les prédicats de MÉTHODE DE VEILLE (sondable/suiviManuel) ne servent plus côté
 // client : la « dernière colonne » (collecte manuelle/automatique) disparaît. Le client lit source ·
@@ -39,19 +23,8 @@ function majReelle(s: SourceInfo): string | null {
 // avance) NE SONT PLUS surfacés côté client : leur détail vit au dashboard admin (R1).
 const pasAJour = (s: SourceInfo) => s.etat_client === 'pas_a_jour'
 const aJour = (s: SourceInfo) => !pasAJour(s)
-/** FIX-SOURCES S7 — la version DISTINGUE les deux dates, comme les « i » des couches (Legend.fmtFraich :
- *  « millésime X (ingéré le Y) ») : `label` = la fraîcheur AMONT (jusqu'au / millésime), `ingere` = la
- *  date d'INGESTION en mention secondaire « ingéré le … ». Jamais fondues, jamais une date inventée.
- *  Quand seule l'ingestion existe (pas d'amont), elle EST la primaire — pas de « ingéré le » redondant. */
-function versionMeta(s: SourceInfo): { label: string; untracked: boolean; ingere: string | null } {
-  const ing = majReelle(s)
-  const ingLabel = ing ? `ingéré le ${new Date(ing).toLocaleDateString('fr-FR')}` : null
-  if (s.derniere_donnee) return { label: `jusqu'au ${new Date(s.derniere_donnee).toLocaleDateString('fr-FR')}`, untracked: false, ingere: ingLabel }
-  const mil = millesimeNote(s)
-  if (mil) return { label: mil, untracked: false, ingere: ingLabel }
-  if (ing) return { label: `donnée du ${new Date(ing).toLocaleDateString('fr-FR')}`, untracked: false, ingere: null }
-  return { label: 'millésime non tracé', untracked: true, ingere: null }
-}
+// RETOURS-11 A8 — `versionMeta`/`majReelle`/`millesimeNote` (fraîcheur amont + « ingéré le ») retirés :
+// la colonne de version n'est plus rendue côté client (information admin, elle vit dans Données).
 
 // FIX-SOURCES S4 — la FIABILITÉ (data_sources.reliability_level) était STOCKÉE mais jamais rendue
 // (champ mort). On la montre quand elle appelle une réserve honnête (« à confirmer » / convention /
@@ -81,7 +54,6 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => { if (focused) ref.current?.scrollIntoView({ block: 'center' }) }, [focused])
 
-  const meta = versionMeta(s)
   const majEnCours = pasAJour(s)
   const lic = licence(s)
   const fiab = fiabiliteBadge(s)
@@ -89,7 +61,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
 
   return (
     <div ref={ref} data-source-row
-      className={`grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 hover:bg-white/[0.018] md:grid-cols-[14px_1fr_190px_150px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
+      className={`grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 hover:bg-white/[0.018] md:grid-cols-[14px_1fr_190px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
       {/* RETOURS-8 (R2) — pastille JAMAIS rouge : mint (à jour) ou mint atténué (mise à jour en cours).
           Le client ne doit jamais croire que LABUSE est en retard. */}
       <span className="h-[7px] w-[7px] shrink-0 rounded-full"
@@ -117,8 +89,8 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
 
       {/* lien source officielle — col 3 sur mobile (1re ligne), col 5 en large */}
       {s.documentation_url
-        ? <a className="col-[3/4] row-start-1 text-right text-[13px] text-txt-dim hover:text-mint md:col-[5/6] md:row-auto" href={s.documentation_url} target="_blank" rel="noreferrer" title="Source officielle">↗</a>
-        : <span className="col-[3/4] row-start-1 md:col-[5/6] md:row-auto" />}
+        ? <a className="col-[3/4] row-start-1 text-right text-[13px] text-txt-dim hover:text-mint md:col-[4/5] md:row-auto" href={s.documentation_url} target="_blank" rel="noreferrer" title="Source officielle">↗</a>
+        : <span className="col-[3/4] row-start-1 md:col-[4/5] md:row-auto" />}
 
       {/* producteur · licence (lien vers le texte de licence — audit §1.11) */}
       <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4]">
@@ -128,14 +100,9 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
           : <span data-source-licence>{lic}</span>}
       </span>
 
-      {/* FIX-SOURCES S7 — deux dates DISTINCTES (comme les « i » des couches) : la fraîcheur AMONT en
-          service (mono), puis « ingéré le … » en mention secondaire — plus jamais fondues en une seule. */}
-      <span data-source-version
-        className={`col-[2/-1] min-w-0 truncate font-mono text-[11.5px] md:col-[4/5] md:whitespace-nowrap ${meta.untracked ? 'text-txt-dim' : 'text-txt-mut'}`}>
-        {meta.label}
-        {meta.ingere && <span data-source-ingere className="ml-1 text-txt-dim">· {meta.ingere}</span>}
-      </span>
-
+      {/* RETOURS-11 A8 (03/09) — la fraîcheur AMONT en service (« jusqu'au … · ingéré le … ») est de
+          l'information ADMIN : elle vit dans Données, plus côté client. Ne reste que la DATE de publication
+          par le producteur (ci-dessous). */}
       {/* RETOURS-8 (R2) — chaque ligne dit la DATE de publication par le producteur et sa cadence
           habituelle, À TITRE D'INFORMATION (jamais un jugement, jamais « retard »). */}
       {(s.publie_le || s.cadence_mention) && (
@@ -145,9 +112,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
           {s.cadence_mention && <>Le producteur publie habituellement {s.cadence_mention}.</>}
         </p>
       )}
-      {s.nature?.detail && (
-        <p data-source-nature-detail className="col-[2/-1] text-[12px] leading-snug text-txt-dim">{s.nature.detail}</p>
-      )}
+      {/* RETOURS-11 A8 — note interne (« proxy RPG (IGN) — RP… », etc.) retirée côté client (vit dans Données). */}
     </div>
   )
 }

@@ -137,7 +137,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
             <div className="flex flex-col gap-1">
               {(sug.data ?? []).slice(0, 8).map((s) => (
                 <button key={s.siren} data-scan-sug onClick={() => choisir(s.siren, s.nom)}
-                  className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt transition-colors duration-quick hover:border-mint/50">
+                  className="hover-fill flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt transition-colors duration-quick">
                   <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
                 </button>
               ))}

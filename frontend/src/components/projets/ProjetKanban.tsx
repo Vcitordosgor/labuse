@@ -386,7 +386,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                         const n = v === 'brulante' ? restant?.priorite : v === 'chaude' ? restant?.a_suivre : totalProp
                         return (
                           <button key={v || 'tous'} data-kanban-nav-tier={v || 'tous'} onClick={() => setNavTier(v || null)}
-                            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${on ? 'border-mint/45 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+                            className={`flex items-center gap-1.5 rounded-ctl border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${on ? 'border-mint/45 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
                             {dot && <span className="h-1.5 w-1.5 rounded-full" style={{ background: dot }} />}{l}{n != null ? ` ${n.toLocaleString('fr-FR')}` : ''}
                           </button>
                         )

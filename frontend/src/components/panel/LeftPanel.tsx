@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { getAccueilFraicheur } from '../../lib/api'
@@ -111,12 +111,10 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   // M55-A (fusion A) : couche PARCELLAIRE UNIQUE — colore d'emblée toutes les parcelles par famille
   // ET révèle le code exact au zoom / au clic (l'ancienne case « Colorisation » est fusionnée ici).
   { key: 'zonage_parcelle', label: 'Zonage PLU par parcelle (calibré)' },
-  // SECTEUR-2 (T5) : la couche « Zones du PLU officiel (brut) » (`zonage`) a QUITTÉ le menu — 9,9 %
-  // des parcelles sont réellement à cheval sur ≥ 2 zones (mesure : 42 648 / 431 663, 2 zones ≥ 10 %
-  // chacune ; 26,3 % en comptant les contacts de bord). Les aplats bruts, non rattachés au cadastre,
-  // se lisaient mal contre la couche calibrée. Elle devient une SOUS-OPTION « afficher les limites
-  // officielles » de la couche par parcelle (désactivée par défaut, cf. rendu plus bas). La clé de
-  // store `zonage` est conservée (MapView/Legend inchangés) ; seul son point d'entrée déménage.
+  // RETOURS-11 C5 (03/09) — REMPLACE la décision 31/08 (sous-option) : la couche officielle BRUTE du
+  // GPU (document opposable) redevient une couche de PREMIER NIVEAU, indépendante, au même retrait que
+  // les autres, avec sa légende. La clé de store `zonage` est inchangée (MapView/Legend l'écoutent déjà).
+  { key: 'zonage', label: 'Limites officielles PLU (GPU brut)' },
   { key: 'ppr', label: 'PPR multirisque' },
   // M106 P1 : les aléas DEAL séparés — la séparation inondation/mouvement de terrain n'existe
   // PAS dans le zonage réglementaire PPR (document multirisque) ; elle vit dans la carte d'aléas.
@@ -151,8 +149,12 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 // renouv) est retirée ; les 10 clés restantes sont couvertes une et une seule fois.
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
-  { famille: 'Les zonages', keys: ['zonage_parcelle'] },   // SECTEUR-2 (T5) : `zonage` → sous-option de `zonage_parcelle`
-  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'equipements', 'equipements_bpe', 'parc', 'znieff', 'cinquante_pas'] },
+  // RETOURS-11 C5 — `zonage` (GPU brut) redevient une couche de premier niveau, à côté de la calibrée.
+  { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
+  // RETOURS-11 C2 (g) — les ÉQUIPEMENTS ne sont pas des risques : ils quittent « Risques et protections »
+  // pour leur propre famille (OSM + INSEE BPE, étiquetés par source).
+  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas'] },
+  { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
   // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
   { famille: 'Accès et réseaux', keys: ['transport', 'axes', 'lignes_ht'] },
   // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
@@ -233,13 +235,11 @@ function LayersSection({ open, onToggle, fill, closable }: {
                     const info = LAYER_INFO[key] ?? ''
                     const label = LAYER_LABEL[key] ?? key
                     return (
-                      <Fragment key={key}>
-                      <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">
+                      <div key={key} className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">
                         <button
                           data-layer={key}
-                          // SECTEUR-2 (T5) — couper la couche par parcelle éteint aussi sa sous-option
-                          // « limites officielles » (jamais un aplat brut orphelin sans case pour l'ôter).
-                          onClick={() => { if (key === 'zonage_parcelle' && layers.zonage_parcelle && layers.zonage) toggleLayer('zonage'); toggleLayer(key) }}
+                          // RETOURS-11 C5 — `zonage` (GPU brut) est une couche indépendante : bascule simple.
+                          onClick={() => toggleLayer(key)}
                           className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
                         >
                           <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-3'}`}>
@@ -253,29 +253,6 @@ function LayersSection({ open, onToggle, fill, closable }: {
                         </button>
                         <LayerInfoPill info={info} />
                       </div>
-                      {/* SECTEUR-2 (T5) — sous-option de la couche par parcelle : afficher EN PLUS les
-                          limites officielles brutes du GPU (couche `zonage`). Visible seulement quand la
-                          couche calibrée est active ; DÉSACTIVÉE par défaut. */}
-                      {key === 'zonage_parcelle' && on && (
-                        <div className="border-b border-line px-3 py-2 pl-9 last:border-b-0">
-                          <button
-                            data-layer-sub="zonage"
-                            onClick={() => toggleLayer('zonage')}
-                            className="flex min-h-[22px] w-full items-center gap-2.5 text-left transition-colors duration-quick"
-                            title="Superposer les polygones bruts du document opposable (GPU) — non rattachés au cadastre"
-                          >
-                            <span className={`flex h-[12px] w-[12px] shrink-0 items-center justify-center rounded-[3px] ${layers.zonage ? 'bg-mint' : 'border border-line-3'}`}>
-                              {layers.zonage && (
-                                <svg viewBox="0 0 10 10" className="h-2 w-2">
-                                  <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06301A" strokeWidth="1.8" />
-                                </svg>
-                              )}
-                            </span>
-                            <span className={`text-[11px] ${layers.zonage ? 'text-txt-hi' : 'text-[#97A39B]'}`}>Afficher les limites officielles (GPU brut)</span>
-                          </button>
-                        </div>
-                      )}
-                      </Fragment>
                     )
                   })}
                 </div>
@@ -347,7 +324,7 @@ function VerdictHero() {
           {/* M55-J point 7 : « Masquer » → « Retour » — destination UNIQUE (store.retourFiltres) :
               sortir de la vue verdict et atterrir sur Filtres ouvert, jamais sur Couches. */}
           <button data-verdict-off onClick={retourFiltres}
-            className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
+            className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
             title="Retour — revenir aux filtres">
             Retour
           </button>
@@ -367,12 +344,12 @@ function VerdictHero() {
         {analyse && (
           <div className="flex gap-1.5">
             <button data-algo-open onClick={() => setAlgoModale('classement')}
-              className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
+              className="flex-1 whitespace-nowrap rounded-ctl border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
               title="La méthode : le tri, la fraction « 1/5 sous 1 an », la validation">
               {CLIENT.algo.bouton}
             </button>
             <button data-scoring-open onClick={() => setAlgoModale('scoring')}
-              className="flex-1 whitespace-nowrap rounded-full border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
+              className="flex-1 whitespace-nowrap rounded-ctl border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
               title="Le sens des paliers : Priorité, À suivre, Long terme, Neutre, Faible, Écartée">
               {CLIENT.algo.boutonScoring}
             </button>

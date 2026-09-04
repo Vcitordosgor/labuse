@@ -29,10 +29,10 @@ def creer(db: Session, *, compte_id: int | None, criteria: dict) -> int:
 
 def lister(db: Session, compte_id: int | None) -> list[dict]:
     rows = db.execute(text(
-        "SELECT id, commune, criteria, created_at FROM veilles "
+        "SELECT id, nom, commune, criteria, created_at FROM veilles "
         "WHERE type = :t AND actif AND compte_id IS NOT DISTINCT FROM :c ORDER BY id DESC"),
         {"t": TYPE_RADAR, "c": compte_id}).mappings().all()
-    return [{"id": r["id"], "commune": r["commune"], "criteria": r["criteria"] or {},
+    return [{"id": r["id"], "nom": r["nom"], "commune": r["commune"], "criteria": r["criteria"] or {},
              "created_at": r["created_at"].isoformat() if r["created_at"] else None} for r in rows]
 
 
@@ -41,6 +41,18 @@ def supprimer(db: Session, compte_id: int | None, veille_id: int) -> bool:
         "UPDATE veilles SET actif = false WHERE id = :i AND type = :t "
         "AND compte_id IS NOT DISTINCT FROM :c"),
         {"i": veille_id, "t": TYPE_RADAR, "c": compte_id}).rowcount
+    return bool(n)
+
+
+def renommer(db: Session, compte_id: int | None, veille_id: int, nom: str) -> bool:
+    """RETOURS-11 A7 — renomme une veille Radar (compte-scopé, même garde IDOR que supprimer).
+    Un nom vide efface l'étiquette (retour au résumé des critères). Retourne True si une ligne du
+    compte a bougé."""
+    val = (nom or "").strip()[:120] or None
+    n = db.execute(text(
+        "UPDATE veilles SET nom = :nom WHERE id = :i AND type = :t AND actif "
+        "AND compte_id IS NOT DISTINCT FROM :c"),
+        {"nom": val, "i": veille_id, "t": TYPE_RADAR, "c": compte_id}).rowcount
     return bool(n)
 
 

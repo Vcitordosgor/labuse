@@ -7,6 +7,7 @@ import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } fro
 import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
+import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
@@ -609,7 +610,9 @@ export function MapView() {
       useApp.getState().setMapPeint({
         parcelles: parcVis,
         equipements: layers.equipements && z >= 12,
-        zonage: zonageFill && parcVis,
+        // RETOURS-11 C1 — la légende du zonage suit l'aplat RÉELLEMENT peint (zonageFill au bon zoom),
+        // indépendamment de la couche « Limites parcelles ».
+        zonage: zonageFill && (!ile || z >= 10),
       })
     }
     upd()
@@ -1273,10 +1276,14 @@ export function MapView() {
     if (!m || !ready.current || !m.getLayer('parcels-fill')) return
     const vis = (on: boolean) => (on ? 'visible' : 'none')
     // deux jeux de calques (GeoJSON commune / MVT île) — un seul visible à la fois
-    m.setLayoutProperty('parcels-fill', 'visibility', vis(layers.parcelles && !ile))
+    // RETOURS-11 C1 (03/09) — le REMPLISSAGE des parcelles porte AUSSI l'aplat de zonage (par famille).
+    // Régression SECTEUR-2 (07d16986) : `parcels-fill` était gated sur `layers.parcelles` seul, donc
+    // « Zonage PLU par parcelle » coché SANS « Limites parcelles » n'affichait que les lettres, aplat perdu.
+    // Le fill est visible dès que les limites OU le zonage-par-parcelle (zonageFill) sont actifs.
+    m.setLayoutProperty('parcels-fill', 'visibility', vis((layers.parcelles || zonageFill) && !ile))
     m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile))
     m.setLayoutProperty('parcels-limites', 'visibility', vis(layers.limites && !ile))
-    m.setLayoutProperty('ile-fill', 'visibility', vis(layers.parcelles && ile))
+    m.setLayoutProperty('ile-fill', 'visibility', vis((layers.parcelles || zonageFill) && ile))
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile))
     m.setLayoutProperty('ile-limites', 'visibility', vis(layers.limites && ile))
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
@@ -1419,15 +1426,10 @@ export function MapView() {
     aggMarkers.current.forEach((mk) => mk.remove())
     aggMarkers.current = []
     if (!ile || !communes.data) return
-    // M65 P8 — pastilles de libellés de commune : INCHANGÉES entre les modes (annule l'adaptation
-    // « pastille claire à texte sombre » livrée en M64). Fond sombre + texte clair dans les DEUX
-    // modes → sur la terre claire elles deviennent des ancres fortes. Valeurs Sombre d'origine
-    // conservées (le hot/cold sémantique — menthe pour une commune à chaudes — est préservé).
-    const lab = {
-      borderHot: '#2E6B4F', borderCold: '#26302B',
-      bgHot: 'rgba(9,26,18,.92)', bgCold: 'rgba(10,14,12,.85)',
-      textHot: '#5CE6A1', textCold: '#8FA69A',
-    }
+    // RETOURS-11 T7 (03/09) — pastilles de commune UNIFORMES sur toutes les couches et tous les fonds :
+    // FOND VERT, liseré NOIR, nom en BLANC. Le vert est assez profond pour que le blanc reste lisible.
+    // Le hot (commune à chaudes, mode opinion) ne change plus la couleur — il garde juste une lueur.
+    const PAST_BG = '#0E7A43', PAST_BORDER = '#000000', PAST_TXT = '#FFFFFF'
     const updateVis = () => {
       const show = m.getZoom() < 10
       aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
@@ -1449,18 +1451,20 @@ export function MapView() {
       el.title = hot
         ? `${c.commune} — ${c.chaudes} parcelles prioritaires ou à suivre au classement servi · ouvrir la fiche commune`
         : `${c.commune} · ouvrir la fiche commune`
-      const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
+      // RETOURS-11 T6 (03/09) — l'article n'est élidé QUE pour les 21 autres communes ; « Le Port »,
+      // « Le Tampon », « La Possession » gardent leur article (référentiel unique lib/communes).
+      const name = communePastille(c.commune)
       // M62-P1 (e) : le libellé = le NOM SEUL (« · Fiche commune » retiré des 24). Le clic ouvre
       // toujours la fiche commune (inchangé) ; l'affordance reste dans le `title` au survol.
       el.innerHTML = `<span>${name}</span>`
-      const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
-      el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
+      // RETOURS-11 T8 — taille de police et padding +20 %.
+      const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0)) * 1.2
+      el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2.4px 10.8px;` +
         `display:inline-flex;align-items:center;gap:4px;` +
-        `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? lab.borderHot : lab.borderCold};` +
-        `background:${hot ? lab.bgHot : lab.bgCold};color:${hot ? lab.textHot : lab.textCold};` +
-        // M65 P8 — pastilles identiques au Sombre dans les deux modes : l'ombre menthe s'applique
-        // dès qu'une commune est « hot » (opinion + chaudes), quel que soit le fond.
-        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
+        `font:600 ${size}px Inter,sans-serif;border:1px solid ${PAST_BORDER};` +
+        `background:${PAST_BG};color:${PAST_TXT};` +
+        // le hot (opinion + chaudes) garde une lueur menthe pour rester une ancre forte.
+        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.30);' : '')
       // M55-C point 4 (décision Vic 10/08, remplace le comportement « fiche seule ») : cliquer le
       // nom de commune = TROIS effets en un — ouvrir la fiche, caler le périmètre sur la commune
       // (liste/compteurs/filtres suivent) ET recadrer la carte (l'effet de fit sur `commune` s'en
@@ -1643,8 +1647,9 @@ export function MapView() {
       })
     }
     const onDbl = (e: maplibregl.MapMouseEvent) => {
-      // ZONE-RECETTE LOT E : le double-clic est NEUTRALISÉ (preventDefault sur le zoom) — en mode 'zone'
-      // la fermeture passe UNIQUEMENT par Entrée (une seule voie de validation, pas deux en concurrence).
+      // ZONE-RECETTE LOT E + RETOURS-11 C8 (décision Vic 03/09) : le double-clic ne VALIDE plus rien
+      // (preventDefault sur le zoom) — la validation d'une forme passe UNIQUEMENT par Entrée (≥ 3 points),
+      // Échap annule. Le double-clic est libéré pour l'édition des points (glisser-déplacer : à venir).
       e.preventDefault()
       // distance/surface : le double-clic fige la mesure (l'outil reste actif pour recommencer)
       if (tool === 'distance' || tool === 'surface') setMeasure((s) => ({ ...s, pts: s.pts }))
@@ -1722,8 +1727,9 @@ export function MapView() {
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
-            : tool === 'zone' ? 'Cliquez pour poser les sommets — Entrée pour valider, Échap pour annuler'
-            : 'Cliquez pour mesurer — Échap pour quitter')}
+            /* RETOURS-11 C8 (03/09) — libellé exact : Entrée valide, Échap annule (le double-clic ne valide plus). */
+            : tool === 'zone' ? 'Cliquez pour placer les points · Entrée pour valider · Échap pour annuler'
+            : 'Cliquez pour placer les points · Échap pour quitter')}
         </div>
       )}
       {!tool && (

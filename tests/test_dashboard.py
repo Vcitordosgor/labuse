@@ -447,6 +447,10 @@ def test_pilotage_a_faire_et_traction(client):
     assert set(d["a_faire"]) == {"sources_nouvelle_version", "essais_24h",
                                  "signalements_ouverts", "manuelles_retard"}
     assert all(isinstance(v, int) for v in d["a_faire"].values())
+    # RETOURS-11 A4 — la ventilation par type des retours « Signaler » est une clé SŒUR (dict d'entiers),
+    # pas dans `a_faire` (qui reste 4 compteurs entiers).
+    assert isinstance(d["retours_par_type"], dict)
+    assert all(isinstance(v, int) for v in d["retours_par_type"].values())
     assert set(d["traction"]) == {"mrr_eur", "veilles_7j", "coherence"}
     assert set(d["traction"]["coherence"]) == {"ok", "n_surfaces", "verifie_le"}
 

@@ -4,8 +4,9 @@
 // (l'entrée n'a plus d'objet) ; l'entrée IA de la création de veille aussi (décision Vic). Back intact.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getSuivis, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
+import { creerRadarVeille, deleteSearch, getRadarVeilles, getSavedSearches, getSuivis, renommerRadarVeille, supprimerRadarVeille, toggleWatch, type RadarVeille } from '../../lib/api'
 import { CP_COMMUNES, FiltreLabuse } from '../panel/FiltreLabuse'
+import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
 import { iduCourt } from '../../lib/format'
@@ -95,11 +96,13 @@ function VeilleInterne() {
 
 // ── Volet PARCELLES : barre IDU+adresse pour suivre une parcelle + liste des suivis. ──
 function VoletParcelles() {
-  const { select, setView } = useApp()
+  // RETOURS-11 A7 — cliquer un suivi OUVRE la fiche SANS fermer la Veille : on pose simplement
+  // `select(idu)` (la fiche est un overlay rendu tant que `selectedIdu` est posé, même en vue 'veille'
+  // — cf. App.tsx). On NE change PAS de vue (`setView('cartes')` refermait le panneau).
+  const { select } = useApp()
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['suivis'], queryFn: getSuivis })
   const suivis = q.data?.suivis ?? []
-  const plafond = q.data?.plafond ?? 50
   const [msg, setMsg] = useState<string | null>(null)
   // RV2-V3 — toggleWatch : suit (ou dé-suit) une parcelle, cloisonné au compte (events.py).
   const suivre = useMutation({
@@ -114,15 +117,17 @@ function VoletParcelles() {
         onPick={(idu) => suivre.mutate(idu)}
         onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — précisez un IDU pour la suivre.")} />
       {msg && <p className="text-[10.5px] text-txt-mut">{msg}</p>}
-      <p className="label-caps mt-1">Parcelles suivies <span className="text-txt-dim">· {suivis.length}/{plafond}</span></p>
+      {/* RETOURS-11 A7 — plus de fraction « /50 » : on suit autant de parcelles qu'on veut (le back
+          garde un plafond de sécurité, sans le brandir ici). Simple décompte. */}
+      <p className="label-caps mt-1">Parcelles suivies <span className="text-txt-dim">· {suivis.length}</span></p>
       {suivis.length === 0 && (
-        <p className="p-1 text-[11.5px] leading-snug text-txt-dim">
+        <p className="rounded-lg border border-dashed border-line-2 p-3 text-[11.5px] leading-snug text-txt-dim">
           Aucune parcelle suivie. Ajoutez-en une ci-dessus, ou ouvrez une fiche et cliquez la <b className="text-txt">cloche « Suivre »</b>.
         </p>
       )}
       {suivis.map((s) => (
-        <div key={s.idu} data-suivi className="flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
-          <button onClick={() => { setView('cartes'); select(s.idu) }} className="min-w-0 flex-1 text-left transition-colors duration-quick hover:text-txt-hi">
+        <div key={s.idu} data-suivi className="hover-fill flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
+          <button onClick={() => select(s.idu)} className="min-w-0 flex-1 text-left">
             {/* RECETTE-2 LOT E : l'IDU (identifiant de ce qu'on suit) prend le style de TITRE ; la
                 commune passe en secondaire. Échange de CONTENUS — chaque position garde sa typo. */}
             <span className="text-xs font-medium text-txt">
@@ -169,10 +174,12 @@ function VoletCriteres() {
           <div className="flex flex-col gap-1.5">
             <p className="label-caps">Vos critères enregistrés <span className="text-txt-dim">· {liste.length}</span></p>
             {criteres.isLoading && <p className="text-[10.5px] text-txt-dim">Chargement…</p>}
-            {!criteres.isLoading && liste.length === 0 && <p className="text-[10.5px] leading-snug text-txt-dim">Aucun critère enregistré. Créez-en un avec le bouton ci-dessus.</p>}
+            {!criteres.isLoading && liste.length === 0 && (
+              <p className="rounded-lg border border-dashed border-line-2 p-3 text-[10.5px] leading-snug text-txt-dim">Aucun critère enregistré. Créez-en un avec le bouton ci-dessus.</p>
+            )}
             {liste.map((v) => (
-              <div key={v.id} data-critere className="flex items-center gap-2 rounded-lg border border-line-2 px-3 py-2 text-[11px]">
-                <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>
+              <div key={v.id} data-critere className="hover-fill flex items-center gap-2 rounded-lg border border-line-2 px-3 py-2 text-[11px]">
+                <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt" title={v.hash}>{v.nom}</a>
                 <button onClick={() => del.mutate(v.id)} aria-label="Supprimer le critère"
                   className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">×</button>
               </div>
@@ -197,7 +204,8 @@ function VoletCriteres() {
 }
 
 // ── Veille externe — les annonces Radar : créer + gérer ses veilles (back type 'radar' réutilisé). ──
-const V_COMMUNES = CP_COMMUNES.map(([, nom]) => nom).sort((a, b) => a.localeCompare(b, 'fr'))
+// RETOURS-11 T6 — tri sans tenir compte de l'article (« Le Port » se range à P).
+const V_COMMUNES = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
 const V_TYPES = [['', 'Tous types'], ['maison', 'Maison'], ['appartement', 'Appartement'], ['terrain', 'Terrain'], ['immeuble', 'Immeuble']] as const
 
 function resumeVeille(v: RadarVeille): string {
@@ -237,6 +245,14 @@ function VeilleExterne() {
     onSuccess: () => { inval(); reset(); setCreating(false) },
   })
   const suppr = useMutation({ mutationFn: (id: number) => supprimerRadarVeille(id), onSuccess: inval })
+  // RETOURS-11 A7 — renommer une veille en place : un seul champ édité à la fois (`renomId`).
+  const [renomId, setRenomId] = useState<number | null>(null)
+  const [renomVal, setRenomVal] = useState('')
+  const renommer = useMutation({
+    mutationFn: ({ id, nom }: { id: number; nom: string }) => renommerRadarVeille(id, nom),
+    onSuccess: () => { inval(); setRenomId(null) },
+  })
+  const ouvrirRenom = (v: RadarVeille) => { setRenomId(v.id); setRenomVal(v.nom ?? '') }
   const sel = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt'
 
   return (
@@ -256,16 +272,36 @@ function VeilleExterne() {
           <div className="flex flex-col gap-1.5">
             <p className="label-caps">Vos critères enregistrés <span className="text-txt-dim">· {veilles.length}</span></p>
             {q.isLoading && <p className="text-[11px] text-txt-dim">Chargement…</p>}
-            {!q.isLoading && veilles.length === 0 && <p className="text-[11px] leading-snug text-txt-dim">Aucune veille annonce. Créez-en une avec le bouton ci-dessus.</p>}
+            {!q.isLoading && veilles.length === 0 && (
+              <p className="rounded-lg border border-dashed border-line-2 p-3 text-[11px] leading-snug text-txt-dim">Aucune veille annonce. Créez-en une avec le bouton ci-dessus.</p>
+            )}
             {veilles.map((v) => (
-              <div key={v.id} data-veille-ext-item className="flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[12px] text-txt">{resumeVeille(v)}</div>
-                  {/* V3 — plus d'événements affichés : la veille suit tout événement du bien. */}
-                  <div className="mt-0.5 text-[10px] text-txt-dim">Tous les événements</div>
+              // RETOURS-11 A7 — quand on renomme, la ligne PLEINE reste neutre (formulaire) ; sinon
+              // survol vert (.hover-fill). Le nom donné prime, sinon le résumé des critères (toujours
+              // affiché en second pour ne pas perdre le sens de la veille).
+              renomId === v.id ? (
+                <div key={v.id} data-veille-ext-item className="flex flex-col gap-1.5 rounded-lg border border-line-3 bg-surface-2 px-3 py-2">
+                  <input autoFocus data-veille-ext-renom-champ value={renomVal} onChange={(e) => setRenomVal(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') renommer.mutate({ id: v.id, nom: renomVal }); if (e.key === 'Escape') setRenomId(null) }}
+                    placeholder="Nom de la veille" maxLength={120}
+                    className="h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt" />
+                  <div className="flex items-center gap-2">
+                    <button data-veille-ext-renom-ok disabled={renommer.isPending} onClick={() => renommer.mutate({ id: v.id, nom: renomVal })}
+                      className="rounded-md bg-mint px-3 py-1 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Renommer</button>
+                    <button onClick={() => setRenomId(null)} className="text-[11px] text-txt-mut hover:text-txt">annuler</button>
+                  </div>
                 </div>
-                <button onClick={() => suppr.mutate(v.id)} className="shrink-0 text-[11px] text-txt-mut hover:text-st-ecartee">supprimer</button>
-              </div>
+              ) : (
+                <div key={v.id} data-veille-ext-item className="hover-fill flex items-start gap-2 rounded-lg border border-line-2 px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[12px] text-txt">{v.nom || resumeVeille(v)}</div>
+                    {/* Le nom donné coiffe le résumé des critères ; sans nom, seul « Tous les événements ». */}
+                    <div className="mt-0.5 truncate text-[10px] text-txt-dim">{v.nom ? resumeVeille(v) : 'Tous les événements'}</div>
+                  </div>
+                  <button data-veille-ext-renom onClick={() => ouvrirRenom(v)} title="Renommer cette veille" className="shrink-0 text-[11px] text-txt-mut hover:text-txt">renommer</button>
+                  <button onClick={() => suppr.mutate(v.id)} className="shrink-0 text-[11px] text-txt-mut hover:text-st-ecartee">supprimer</button>
+                </div>
+              )
             ))}
           </div>
         </>

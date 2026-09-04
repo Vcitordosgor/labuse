@@ -4,7 +4,7 @@
 // `retours` n'alimente plus l'UI). Filtres par statut ET par compte.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { getAdminProduit, getAdminSignalements, postAdminSignalementStatut, postAdminSignalementsTraiterInternes, type Signalement } from '../../lib/api'
+import { getAdminProduit, getAdminSignalements, postAdminRetourStatut, postAdminSignalementStatut, postAdminSignalementsTraiterInternes, type Signalement } from '../../lib/api'
 import { MODULES } from '../outils/registry'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
 
@@ -24,6 +24,21 @@ const outilLabel = (k: string) => MODULES.find((m) => m.key === k)?.label ?? VUE
 
 const PERIODES = [7, 30, 90] as const
 
+// A4 — retours « Signaler » (table `retours`) : bug / idée / question, + « donnée » (posé depuis la fiche
+// dans un autre lot). Libellé + teinte par type ; un type inconnu reste affiché tel quel, jamais masqué.
+const RETOUR_TYPES = ['tous', 'bug', 'idee', 'question', 'donnee'] as const
+type RetourFiltre = (typeof RETOUR_TYPES)[number]
+const retourMeta = (t: string): { label: string; tone: 'ok' | 'err' | 'warn' | 'off' | 'ia' } => {
+  switch (t) {
+    case 'bug': return { label: 'bug', tone: 'err' }
+    case 'idee': return { label: 'idée', tone: 'ia' }
+    case 'question': return { label: 'question', tone: 'warn' }
+    case 'donnee': return { label: 'donnée', tone: 'ok' }
+    default: return { label: t, tone: 'off' }
+  }
+}
+const retourFiltreLabel = (f: RetourFiltre) => (f === 'tous' ? 'Tous' : retourMeta(f).label)
+
 export function ProduitSection() {
   const qc = useQueryClient()
   const [jours, setJours] = useState<7 | 30 | 90>(30)
@@ -32,6 +47,12 @@ export function ProduitSection() {
   const sig = useQuery({ queryKey: ['admin-signalements'], queryFn: () => getAdminSignalements(), refetchInterval: 120_000 })
   const [fStatut, setFStatut] = useState<'tous' | 'nouveau' | 'traite'>('tous')
   const [fCompte, setFCompte] = useState<string>('tous')
+  // A4 — filtre par TYPE sur les retours « Signaler » (bug/idée/question/donnée).
+  const [fType, setFType] = useState<RetourFiltre>('tous')
+  const retourStatut = useMutation({
+    mutationFn: ({ id, s }: { id: number; s: 'nouveau' | 'traite' }) => postAdminRetourStatut(id, s),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-produit'] }); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) },
+  })
   const statut = useMutation({
     mutationFn: ({ id, s }: { id: number; s: 'nouveau' | 'traite' }) => postAdminSignalementStatut(id, s),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-signalements'] }),
@@ -61,6 +82,8 @@ export function ProduitSection() {
   const max = Math.max(...d.usage.map((u) => u.n), 1)
   const signalements = (sig.data?.signalements ?? []).filter((r) =>
     (fStatut === 'tous' || r.statut === fStatut) && (fCompte === 'tous' || r.compte_nom === fCompte))
+  // A4 — retours « Signaler » (bug/idée/question/donnée), filtrables par type.
+  const retours = (d.retours ?? []).filter((r) => fType === 'tous' || r.type === fType)
   const typeMeta = (t: Signalement['type']) => t === 'fiche'
     ? { label: 'fiche', tone: 'warn' as const } : { label: 'annonce', tone: 'off' as const }
 
@@ -151,6 +174,51 @@ export function ProduitSection() {
         <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
           File UNIQUE des signalements (fiche + annonce), la même que la tuile « signalements ouverts » du Pilotage.
           Un clic sur « Traité ✓ » le repasse « nouveau ».
+        </div>
+      </Panel>
+
+      {/* A4 — retours produit « Signaler » (bug / idée / question / donnée), table `retours`, filtrables par type. */}
+      <Panel>
+        <PHead>
+          Retours produit
+          <span className="text-txt-dim">— bouton « Signaler » de l'app (bug · idée · question · donnée)</span>
+          <span className="ml-auto flex flex-wrap items-center gap-1.5">
+            {RETOUR_TYPES.map((f) => (
+              <Chip key={f} tone={fType === f ? 'ok' : 'off'} onClick={() => setFType(f)}>{retourFiltreLabel(f)}</Chip>
+            ))}
+          </span>
+        </PHead>
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr>
+              {['Date', 'Compte', 'Type', 'Message', 'Statut'].map((h, i) => (
+                <th key={h} className={`border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i === 4 ? 'text-right' : 'text-left'}`}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {retours.map((r) => {
+              const tm = retourMeta(r.type)
+              return (
+                <tr key={r.id} className="hover-fill border-b border-line last:border-b-0 hover:bg-surface-3">
+                  <td className="px-4 py-2.5 font-mono text-xs text-txt-dim">{fmtReu(r.ts)}</td>
+                  <td className="px-4 py-2.5">{r.compte ?? <span className="text-txt-dim">interne</span>}</td>
+                  <td className="px-4 py-2.5"><Chip tone={tm.tone}>{tm.label}</Chip></td>
+                  <td className="max-w-[420px] px-4 py-2.5 text-txt-mut">« {r.message} »</td>
+                  <td className="px-4 py-2.5 text-right">
+                    {r.statut === 'nouveau'
+                      ? <ActBtn tone="ghost" onClick={() => retourStatut.mutate({ id: r.id, s: 'traite' })}>Traiter</ActBtn>
+                      : <Chip tone="ok" onClick={() => retourStatut.mutate({ id: r.id, s: 'nouveau' })}>Traité ✓ — rouvrir</Chip>}
+                  </td>
+                </tr>
+              )
+            })}
+            {!retours.length && <tr><td colSpan={5} className="px-4 py-6 text-center text-xs text-txt-mut">Aucun retour {fType !== 'tous' ? `de type « ${retourMeta(fType).label} »` : ''} — le bouton « Signaler » vit en haut de l'app cliente.</td></tr>}
+          </tbody>
+        </table>
+        <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
+          Table <b className="text-txt">retours</b> — le « Signaler » global de l'app (bug / idée / question), plus « donnée » posé depuis la fiche.
+          Un clic sur « Traiter » le passe « traité » et met à jour le mini-compteur du Pilotage.
         </div>
       </Panel>
     </>
