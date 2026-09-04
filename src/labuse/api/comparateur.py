@@ -122,6 +122,7 @@ def raw_rows(db: Session) -> dict[str, dict]:
     def _c():
         from ..ingestion.dvf_marche import neuf_vefa_commune
         from ..marche_service import neuf_vefa_seuil
+        from ..faisabilite.marche_commune import ligne2_terrain_zone
         seuil = neuf_vefa_seuil()
         rows = [dict(r) for r in db.execute(text(_SQL), {"run": runs.current()}).mappings().all()]
         pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
@@ -134,6 +135,22 @@ def raw_rows(db: Session) -> dict[str, dict]:
             suffisant = v["n"] >= seuil and v["mediane_prix_m2_bati"] is not None
             r["prix_neuf"] = v["mediane_prix_m2_bati"] if suffisant else None
             r["prix_neuf_n"] = v["n"]
+            # RETOURS-11F M13 — €/m² TERRAIN NU DVF (« le chiffre du promoteur », O14) : MÊME moteur
+            # que la fiche (Marché) et la calculette — `ligne2_terrain_zone`, aucun calcul parallèle.
+            # Zone U de préférence, sinon AU ; sous le seuil de cellule → null (jamais un 0 trompeur).
+            try:
+                pz = (ligne2_terrain_zone(db, r["commune"]).get("valeurs") or {}).get("par_zone") or {}
+            except Exception:  # noqa: BLE001 — le terrain nu ne casse jamais le tableau
+                pz = {}
+            tn = None
+            for fam in ("U", "AU"):
+                cell = pz.get(fam) or {}
+                if cell.get("calculable") and cell.get("median_eur_m2"):
+                    tn = {"eur_m2": cell["median_eur_m2"], "n": cell.get("n"), "zone": fam}
+                    break
+            r["prix_terrain_nu"] = tn["eur_m2"] if tn else None
+            r["prix_terrain_nu_n"] = tn["n"] if tn else None
+            r["prix_terrain_nu_zone"] = tn["zone"] if tn else None
         return {r["commune"]: r for r in rows}
     return _mem_cached(("o6-raw",), 3600.0, _c)
 

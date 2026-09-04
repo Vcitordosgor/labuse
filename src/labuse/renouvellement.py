@@ -85,7 +85,11 @@ def load_config() -> dict:
 DDL = """
 CREATE TABLE IF NOT EXISTS parcel_renouvellement (
   idu                varchar(14) PRIMARY KEY,
-  renouv_score       int  NOT NULL,      -- 0-100, somme des 3 composantes
+  renouv_score       numeric(5,1) NOT NULL,  -- RETOURS-11F M9 : 0-100 CONTINU (1 décimale). L'ancien
+                                          -- int (round par composante + LEAST(100)) écrasait la tête de
+                                          -- liste sur un plateau (mesuré : top 50 = 2 scores distincts,
+                                          -- 23 à 100). Le score naît des percent_rank BRUTS (non arrondis
+                                          -- par composante) → il discrimine, y compris en tête.
   comp_potentiel     int  NOT NULL,      -- 0-47  : SDP résiduelle (percent_rank segment)
   comp_assiette      int  NOT NULL,      -- 0-29  : surface (percent_rank segment)
   comp_marche        int  NOT NULL,      -- 0-24  : rotation bâti secteur (percent_rank)
@@ -174,14 +178,22 @@ seg AS (
 ),
 comp AS (
     SELECT s.*,
+           -- percent_rank BRUTS (0-1) — la source de discrimination fine ; les composantes affichées
+           -- (points arrondis) restent des ENTIERS pour le « pourquoi », mais ne portent PLUS le score.
+           :w_pot * percent_rank() OVER (ORDER BY s.sdp)          AS pr_pot,
+           :w_ass * percent_rank() OVER (ORDER BY s.surface)      AS pr_ass,
+           :w_mar * percent_rank() OVER (ORDER BY s.rot_bati)     AS pr_mar,
            round(:w_pot * percent_rank() OVER (ORDER BY s.sdp))::int          AS comp_potentiel,
            round(:w_ass * percent_rank() OVER (ORDER BY s.surface))::int      AS comp_assiette,
            round(:w_mar * percent_rank() OVER (ORDER BY s.rot_bati))::int     AS comp_marche
     FROM seg s
 ),
 scored AS (
+    -- RETOURS-11F M9 — score CONTINU (1 décimale) issu des percent_rank bruts : plus de plateau à 100.
+    -- Les poids somment à 100 (config) → percent_rank ≤ 1 borne à 100 sans clamp (LEAST retiré : il ne
+    -- servait qu'à masquer un dépassement impossible ici, et cachait la vérité du score en tête).
     SELECT c.*,
-           LEAST(100, c.comp_potentiel + c.comp_assiette + c.comp_marche) AS score
+           round((c.pr_pot + c.pr_ass + c.pr_mar)::numeric, 1) AS score
     FROM comp c
 )
 INSERT INTO parcel_renouvellement

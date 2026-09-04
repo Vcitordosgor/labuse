@@ -146,3 +146,116 @@ sont en outre vérifiés en direct sur `window.__labuse_map`.
 - **pytest** : voir §résultat (suite complète relancée en clôture, Pango installé).
 - Commit sur `fix/retours-11f1` **avant** ce compte-rendu. **Merge = Vic.**
 - Aucun sous-agent n'a touché à git ; les deux agents de recette (carte / fiche) ont édité des fichiers disjoints.
+
+---
+
+# SESSION F2 — branche `fix/retours-11f2` (lot S + les 7 items M reportés par F1)
+
+**Étape 0** — `pwd` = `/Users/openclaw/Desktop/labuse` · branche `fix/retours-11f2` · arbre propre au départ ·
+**run servi = `q_v11_m137`** (inchangé à la fin — aucune bascule ; le segment Renouvellement rebuild est
+une table ADDITIVE, pas un run servi). Base RÉELLE `labuse` (431 663 parcelles) ; mesures =
+`scripts/mesures_retours11f2.py`. **Aucun sous-agent n'a touché à git** (les 2 explorers sont en lecture seule).
+
+## Les 7 items M reportés par F1
+
+**M3 — Moteur prix de secteur unique. FAIT (méthode unique gravée).** `sector_price` (fiche Marché /
+Étudier un bien / bilan) et `_ref_local` (référence locale Radar / Mon secteur) partagent DÉJÀ la même
+méthode SECTEUR-2 et les mêmes constantes (fenêtre **5 ans**, **n ≥ 8**, rayon adaptatif 500→1500 m,
+trim 5 %). Mesuré sur la parcelle des captures `97415000BS0086` : `_ref_local` maison **4 662** / appart
+**4 083** (rayon 500 m, 2025) ; `sector_price` **décline** (n=26 sans segment convergent) → jamais deux
+fenêtres/seuils divergents. Garde `test_m3_prix_secteur_une_seule_methode_fenetre_n` (rougit si `_ref_local`
+recopie la méthode au lieu de l'importer, ou si un seuil/fenêtre diverge). *La suppression du DOUBLE
+AFFICHAGE sur l'écran « Étudier un bien » (un seul €/m² bâti à l'écran) est un travail de présentation
+reporté — le fait unique est garanti côté moteur.*
+
+**M4 — Équipements + permis à proximité. VÉRIFIÉ single-source + garde.** Le bloc « À proximité »
+(`_proximites_equipements_block`) n'ajoute une catégorie QUE si `_plus_proche` renvoie une vraie distance
+→ **aucun « 0 m » inventé** (absent = omis). Les permis à proximité ont UN moteur (`site_voisinage.
+voisinage_proche`, 100 m / 36 mois). Garde `test_m4_pas_de_zero_metre_invente_ni_moteur_duplique`.
+*La consolidation d'AFFICHAGE des permis (aujourd'hui montrés dans Marché + Réseaux + Autour → un seul
+tableau dans Autour, F0) est un déplacement de sections, reporté avec le reste de la refonte Lot S.*
+
+**M7 — Étapes de capacité : une seule liste. VÉRIFIÉ (déjà unique) + garde.** Les DEUX écrans (fiche
+Constructibilité ET outil « Faisabilité par parcelle ») lisent le MÊME moteur `estimate_capacity`
+(via `faisabilite.db.parcel_faisabilite`) par le MÊME endpoint `/modules/faisabilite/{idu}` et exposent
+`f.steps` tel quel — il n'existe pas de seconde construction d'étapes pour une parcelle. Le « 13 vs 12 »
+était un artefact d'affichage (une étape conditionnelle rendue d'un côté). Garde
+`test_m7_une_seule_liste_d_etapes_de_capacite`.
+
+**M9 — Densifier : score discriminant. FAIT + segment reconstruit.** Mesuré : le score saturait en TÊTE
+(top 50 = **2 scores distincts**, **23 à 100**). Cause = `round()` PAR COMPOSANTE + `LEAST(100,…)`. Corrigé :
+le score naît des `percent_rank` **bruts** (non arrondis par composante), arrondi UNE fois → `numeric(5,1)`,
+**sans clamp** (les poids somment à 100 = borne naturelle). Segment `parcel_renouvellement` **reconstruit
+sur le run servi q_v11_m137** (67 260 parcelles, 60 s) : top 50 = **12 scores distincts, 0 à 100, max 99,7**.
+Garde `test_m9_score_renouvellement_est_continu_sans_plateau`. **Capacité NETTE** (déduction pente > 30 %,
+PPR rouge, reculs, emprise falaise/ravine) et **surélévation** (hauteur PLU − hauteur bâti BD TOPO) :
+**mesurées et reportées** — elles supposent de nouveaux joins d'entrée DANS le segment (données pente /
+PPR / hauteurs par idu) et une re-validation, hors du périmètre sûr de cette passe.
+
+**M10 — Cloche → Veille. FAIT.** La cloche de la fiche EST le pont, dans les DEUX sens : `toggleWatch`
+invalide `['suivis']` (la liste Veille › Parcelles reflète aussitôt) ET `['watch']` ; symétriquement,
+retirer depuis Veille invalide `['watch']` → **la cloche s'éteint**. Toast « Parcelle suivie — retrouvez-la
+dans Veille › Parcelles » / « Parcelle retirée du suivi ».
+
+**M12 — Piscines : confiance + corrections. FAIT.** Mesuré : 8 299 piscines, confiance stockée
+(`piscine_confiance`, moy 0,942, 0,44→1,0) — **haute (≥ 0,80) = 7 821**, moyenne (0,5-0,8) = 476, basse = 2.
+Le compteur/carte servent **la confiance haute par défaut** ; bascule « inclure les incertaines » →
+**8 299** (mesuré en direct : défaut 7 821 → 8 299). Chaque point GeoJSON porte sa **bande** (haute/moyenne/
+basse). Bouton **« pas une piscine »** → table **`piscine_corrections`** (NEUVE) : exclusion GLOBALE
+immédiate du compteur ET de la carte, reprise au prochain calcul. Gardes `test_m12_confiance_filtre_et_bascule`
++ `test_m12_pas_une_piscine_retire_du_service`.
+
+**M13 — Colonnes manquantes. FAIT (table Communes) ; le reste reporté.** Colonne **€/m² TERRAIN NU DVF**
+(« le chiffre du promoteur », O14) ajoutée au tableau Communes — MÊME moteur que la fiche
+(`ligne2_terrain_zone`, zone U de préférence sinon AU), **23/24 communes servables** (mesuré : Le Tampon U
+285 €/m² n=1106, La Possession U 436 n=444, L'Étang-Salé U 527 n=298…), « — » sinon. **Population RP** :
+**aucune table dédiée** en base (seul `commune_insee_logement.logements` existe) → colonne NON ajoutée
+(pas de zéro inventé) — noté. Garde `test_m13_table_communes_lit_le_moteur_terrain_nu_unique`. *Les colonnes
+additionnelles de « Comparer des parcelles » (proba de vente, propriétaire, bâti %, hauteur, logements,
+accès, réseaux, prix bâti, nb risques) et le sélecteur de commune d'« Évolution du marché » sont reportés.*
+
+## Lot S — les neuf sections (F0, F4→F12)
+
+Cette passe a landé les **corrections de DOCTRINE et de vérité client** que Vic a explicitement pointées
+(jargon, stat faux, double en-tête, chip interne) — celles qui font mentir la fiche aujourd'hui. La
+**restructuration complète des 9 sections** (tableaux de règles avec valeurs, 4 blocs Réseaux, déplacements
+de faits entre sections selon la table F0) reste le gros du chantier et est **reportée**, section par section
+ci-dessous.
+
+- **S1/F4 — Urbanisme. Jargon FAIT.** « (0 pt, anti-double-compte) » et « Catégorie déjà couverte par une
+  autre couche » purgés au point de service unique `nettoyer_libelle_client` (écran + PDF) — la SUP reste
+  affichée, propre. *Tableau des règles de la zone AVEC valeurs (hauteur/emprise/reculs/pleine terre/
+  stationnement), clé brute `declassement`, contradiction « rien à construire » vs 80 m² : reporté.*
+- **S3/F7 — Marché. Parc social QPV FAIT.** « parc social 100,0 % en QPV » était FAUX : `pct_qpv` vaut
+  **100,0 pour LES 24 communes** (mesuré → champ non discriminant, mal ingéré). La fiche ne sert plus
+  `pct_qpv` (le PDF s'aligne via son garde `is not None`). VEFA unique déjà réglé (M1, session F1). *Le
+  déplacement du socio-éco vers Autour et les annonces Radar dans le rayon : reportés.*
+- **S7/F11 — Propriétaire. Double en-tête 🔴 FAIT.** Quand un propriétaire moral est connu (« PACIFIC »),
+  les lignes cascade « propriétaire inconnu / non renseigné » sont filtrées au rendu → plus de double
+  affirmation. *« Personnes morales non remarquables » → formulation client, forme juridique / APE / siège /
+  date d'immatriculation : reportés (le `groupe_label` sert déjà d'étiquette).*
+- **S8/F12 — Données et méthode. Chips FAIT.** Les chips « à confirmer » (licences à vérifier CÔTÉ VIC,
+  doctrine 02/09) retirées de la vue client ; « suivie » et neutres restent. La section est déjà repliée,
+  groupée, avec « ce que LABUSE ne peut pas savoir » visible.
+- **S0/F0, S2/F6 (Risques), S4/F8 (Réseaux — un verdict d'accès, ensoleillement sorti, 4 blocs),
+  S5/F9 (Autour — moteur M4, Filosofi en Sourcé, permis rapatriés), S6/F10 (Dispositifs — bande TVA CGI,
+  B1, TVA 8,5/2,1 LLS) : REPORTÉS.** Ce sont des restructurations d'affichage (déplacements de faits,
+  tableaux neufs) qui demandent la refonte complète du composant `Fiche.tsx` ; les faire à moitié
+  rouvrirait des contradictions (doctrine F1 : « ne pas livrer une demi-unification »).
+
+## Tests ajoutés (F2)
+
+`tests/test_retours11f2.py` (9 gardes, toutes vertes) : M12 confiance/bascule + pas-une-piscine ·
+M13 moteur terrain nu unique · M9 score continu sans plateau · M3 constantes secteur partagées ·
+M7 liste d'étapes unique · M4 pas de « 0 m » inventé + moteur permis unique · F4 purge du jargon de
+barème · F7 `pct_qpv` non servi. Mesures : `scripts/mesures_retours11f2.py`.
+
+## Clôture F2
+
+- **tsc** 0 · **build** vert · **vitest** 152/152 · **golden** 119/119 (run servi `q_v11_m137` **inchangé**).
+- **pytest** : **2240 passed, 35 skipped, 0 failed** (135 s) — suite complète, base réelle disponible
+  (les 35 skips = tests gardant une base applicative/Saint-Denis absente du `labuse_test`, comme en F1).
+- 3 commits sur `fix/retours-11f2` (M10/M12/M13 · M9/M3 · Lot S doctrine) **avant** ce compte-rendu. **Merge = Vic.**
+- Périmètre tenu sur les items à fort levier + toutes les mesures ; les restructurations profondes de fiche
+  (Lot S sections complètes) et les extensions de moteur (M9 capacité nette, M13 Comparer/Évolution) sont
+  **mesurées et notées**, à reprendre en tête d'une F3.

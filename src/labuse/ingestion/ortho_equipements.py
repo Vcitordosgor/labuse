@@ -42,6 +42,26 @@ CREATE TABLE IF NOT EXISTS parcel_equipements (
 """
 
 
+# RETOURS-11F M12 — CORRECTIONS terrain « pas une piscine » : Vic a vu ~1 faux sur 4. Sans
+# re-détection (données FLAIR gelées 11/07/2026), un signal HUMAIN par idu qui EXCLUT la parcelle
+# du service (compteur, points carte) DÈS le signalement et sera repris au prochain calcul. Global
+# (une correction de qualité de donnée vaut pour tous), avec la trace de qui l'a signalée (audit).
+DDL_CORRECTIONS = """
+CREATE TABLE IF NOT EXISTS piscine_corrections (
+  idu         varchar(14) PRIMARY KEY,
+  motif       text,
+  compte_id   integer,
+  created_at  timestamptz DEFAULT now()
+);
+"""
+
+
+def ensure_corrections(session: Session) -> None:
+    """Idempotent — la table des corrections « pas une piscine » (M12). Appelée au boot et à la 1ʳᵉ
+    correction, comme les autres ensure_tables (events)."""
+    session.execute(text(DDL_CORRECTIONS))
+
+
 def _profil() -> dict[str, Any]:
     return load_yaml_config("detection_ortho")["materialisation"]["piscine_profil_strict"]
 
