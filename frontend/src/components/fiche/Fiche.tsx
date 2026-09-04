@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getOrthoEquipements, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
-import { fmtDistance as fmtDistanceM } from '../../lib/geo'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
@@ -13,14 +12,9 @@ import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes } from './liensExtern
 import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
-import { ViabilisationBlock } from './ViabilisationBlock'
-import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { BlocIndisponible } from './BlocIndisponible'
-import { DepotsBlock } from './DepotsBlock'
-import { GestionnairesBlock } from './GestionnairesBlock'
 import { CoproprietesBlock } from './CoproprietesBlock'
 import { ProprietaireHistorique } from './ProprietaireHistorique'
-import { AutourZoneBlock } from './AutourZoneBlock'
 import type { FicheLine, FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu } from '../../lib/types'
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
 import { useApp } from '../../store/useApp'
@@ -31,6 +25,8 @@ import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, Group
 import { ConstructibiliteSection } from './constructibilite'
 import { RisquesSection } from './risques'
 import { MarcheSection } from './marche'
+import { ReseauxSection } from './reseaux'
+import { AutourSection } from './autour'
 export { Calculette, FaisabiliteTab } from './constructibilite'
 export type { CalcResult } from './constructibilite'
 
@@ -510,35 +506,7 @@ function ProjetButton({ idu }: { idu: string }) {
 // en fiche, « 5 000 € » au copilote. On bascule sur `fmtEurCompact` (format.ts) — même dessin
 // partout. Le copilote l'utilisait déjà correctement.
 
-function EquipementsBadges({ idu }: { idu: string }) {
-  const { data: e } = useQuery({
-    queryKey: ['equip', idu], queryFn: () => getOrthoEquipements(idu), retry: false,
-  })
-  if (!e) return null
-  const b: [string, string, string][] = []
-  if (e['piscine']) b.push([`Piscine ~${e['piscine_m2']} m²`, '#4fc3d9',
-    `détection ortho — confiance ${e['piscine_confiance']}`])
-  // SOLAIRE M2 (renoncement) : badges « PV détecté » / « CES probable » RETIRÉS — la détection PV V0
-  // (colorimétrie) est abandonnée (précision 0 % mesurée, cf. qa/solaire/PV_PHASE1.md). Le back ne sert
-  // plus pv_detecte/pv_probable_ces ; aucun panneau n'est affirmé faute de détecteur fiable.
-  if (e['pente_moy_deg'] != null) b.push([`Pente ${Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}°`,
-    e['flag_terrassement_lourd'] ? '#e8734d' : 'var(--lab)',
-    `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}`])
-  if (!b.length) return null
-  return (
-    <div>
-      <div className="flex flex-wrap gap-1.5">
-        {b.map(([label, color, tip]) => (
-          <Tip key={label} tip={tip}>
-            <span className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{ background: `${color}22`, color }}>{label}</span>
-          </Tip>
-        ))}
-      </div>
-      <p className="mt-1 text-[9px] text-txt-dim">{String(e['source'] ?? '')}</p>
-    </div>
-  )
-}
+// RETOURS-11F4 (F8) : EquipementsBadges (piscine/pente) a déménagé dans `reseaux.tsx`.
 
 // EBC / ER (dette #10) — drapeaux d'INFORMATION dérivés des prescriptions PLU DÉJÀ calculées
 // par la cascade (layer 'prescription_plu', libellés servis). Lecture seule : ne filtre, n'exclut
@@ -1169,16 +1137,7 @@ export function Fiche({ idu }: { idu: string }) {
           const proprioPastilles = proprioLines.filter((l) => (l.weight ?? 0) > 0).slice(0, 3).map((l) => shorten(l.detail).slice(0, 26))
           // ALGO-1 item 2 : l'accent proprio ne dépend plus du Score V (retiré de l'affichage)
           const proprioAccent = !!proprioSignal
-          // M30 item 7 : la value dupliquait « Viabilisation » et écrasait le titre du tiroir en « V »
-          const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
-          // M55-O phase 3.5 : la valeur « Réseaux et accès » n'est VERTE que si l'état est confirmé
-          // (band confirmee) ; sinon gris (factuel). Le vert redevient un signal.
-          const viabColor = f.viabilisation?.band === 'confirmee' ? REF.ok : REF.gris
-          const viabConfirmee = f.viabilisation?.band === 'confirmee'
-          // M56-B2 · DA §4 — contexte Réseaux : les OPÉRATEURS (eau · assainissement · électricité).
-          const viabContext = f.gestionnaires
-            ? [f.gestionnaires.eau?.operateur, f.gestionnaires.assainissement?.operateur, f.gestionnaires.electricite?.gestionnaire].filter(Boolean).join(' · ') || null
-            : null
+          // RETOURS-11F4 (F8) : viabValue/viabColor/viabConfirmee/viabContext vivent dans `ReseauxSection`.
           // M56-B6 · DA-FICHE-v6 « pas de % nu » : la couverture ICD vit dans le sous-titre du
           // tiroir « Données et méthode » (plus de valeur % nue à droite) — `confianceValue` retiré.
           return (
@@ -1380,81 +1339,13 @@ export function Fiche({ idu }: { idu: string }) {
                 et permis déménagés vers Autour) → module `marche.tsx`. */}
             <MarcheSection f={f} idu={idu} />
 
-            {/* RÉSEAUX ET ACCÈS — accès, équipements, gestionnaires, permis */}
-            <RefDrawer id="viabilisation" icon={IC.viab} name="Réseaux et accès" context={viabContext}
-              value={viabConfirmee ? <span className="pill-mint">confirmée</span> : viabValue}
-              valueColor={viabConfirmee ? undefined : viabColor}>
-              <div className="flex flex-col gap-3">
-                {/* M55-O phase 2.2 — la jauge « Accessibilité » (a_score) est RETIRÉE de la fiche
-                    (même arbitrage que « Qualité » : une seule jauge de confiance, l'ICD). Champ back
-                    a_score intact (consommé ailleurs). */}
-                <EquipementsBadges idu={idu} />
-                {/* M106 P4 — PROXIMITÉ transport (distance, jamais un booléen) : arrêt, pôle
-                    d'échange (le statut DIT la source ; une discordance OSM↔GTFS se dit), Papang. */}
-                {f.proximites?.indisponible && <BlocIndisponible titre="Proximités (transport, axes)" />}
-                {f.proximites && !f.proximites.indisponible && (f.proximites.arret || f.proximites.pole || f.proximites.telepherique) && (
-                  <div data-proximites-transport className="flex flex-col gap-1 text-[11.5px] leading-snug text-txt">
-                    <p className="text-[12px] font-semibold text-txt-hi">Transport public — au plus proche</p>
-                    {f.proximites.arret && (
-                      <p>Arrêt « {f.proximites.arret.nom} » ({f.proximites.arret.reseau}) à ~{fmtDistanceM(f.proximites.arret.distance_m)}.</p>
-                    )}
-                    {f.proximites.pole && (
-                      <p>Pôle d’échange « {f.proximites.pole.nom} » à ~{fmtDistanceM(f.proximites.pole.distance_m)}{' '}
-                        <b className="text-txt-hi">{f.proximites.pole.statut}</b> ({f.proximites.pole.source}
-                        {f.proximites.pole.nb_lignes ? `, ${f.proximites.pole.nb_lignes} lignes` : ''})
-                        {f.proximites.pole.concordance === 'osm_seul' && <span className="text-txt-dim"> — la desserte GTFS ne confirme pas ce pôle (sources discordantes, dit tel quel)</span>}
-                        {f.proximites.pole.concordance === 'gtfs_seul' && <span className="text-txt-dim"> — aucune station OSM à proximité (sources discordantes, dit tel quel)</span>}.
-                      </p>
-                    )}
-                    {f.proximites.telepherique && (
-                      <p>Téléphérique Papang — station « {f.proximites.telepherique.station} » à ~{fmtDistanceM(f.proximites.telepherique.distance_m)} <span className="text-txt-dim">(tracé {f.proximites.telepherique.licence})</span>.</p>
-                    )}
-                  </div>
-                )}
-                {/* M106-B P3 — l'AXE STRUCTURANT le plus proche : le libellé porte LES DEUX
-                    FACES (accessibilité ET nuisance) — jamais un avantage nu. */}
-                {f.proximites?.axe && (
-                  <div data-proximite-axe className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
-                    <p className="text-[11.5px] leading-snug text-txt">{f.proximites.axe.libelle}</p>
-                    <p className="mt-0.5 text-[9.5px] text-txt-dim">{f.proximites.axe.source}</p>
-                  </div>
-                )}
-                {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
-                  <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
-                    <span aria-hidden className="text-st-creuser">▲</span>
-                    <p className="text-[11px] leading-snug text-st-creuser"><b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact.
-                      <span className="text-txt-mut"> Signal informatif, non pondéré : la BD TOPO trace les voies publiques.</span></p>
-                  </div>
-                )}
-                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} anc={f.anc} />}
-                {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
-                <PermitsProximityBlock idu={idu} />
-                {f.depots && <DepotsBlock d={f.depots} />}
-              </div>
-            </RefDrawer>
+            {/* RÉSEAUX ET ACCÈS — RETOURS-11F4 (F8) : 4 blocs (Accès/Réseaux/Viabilisation/Axes),
+                un seul verdict d'accès, permis & dépôts déménagés vers Autour → module `reseaux.tsx`. */}
+            <ReseauxSection f={f} idu={idu} />
 
-            {/* ÉTUDE DE ZONE Z3 — « Autour de cette parcelle » : un tiroir de plus, sous Réseaux ;
-                l'isochrone se dessine sur la carte (module-extra). Ne s'active (et n'appelle l'API
-                d'isochrones) qu'à l'OUVERTURE — RefDrawer ne monte les enfants que si le tiroir est ouvert.
-                RETOURS-9 (Q8.4) — la ligne « À proximité » (école · commerces · santé · bus) N'est plus
-                orpheline entre deux sections : elle entre ICI, en sous-ligne de « Autour de cette parcelle ». */}
-            <RefDrawer id="autour-zone" icon={IC.contexte} name="Autour de cette parcelle"
-              context="Qui vit et quels équipements dans la zone atteignable"
-              value={<span className="pill-mint">isochrone</span>}>
-              {f.proximites_equipements?.items && f.proximites_equipements.items.length > 0 && (
-                <div data-proximites-equip title={f.proximites_equipements.source ?? undefined}
-                  className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-line pb-2 text-[11.5px] text-txt-mut">
-                  <span className="label-caps text-txt-dim">À proximité</span>
-                  {f.proximites_equipements.items.map((e, i) => (
-                    <span key={i}><span className="text-txt">{e.cat}</span>{' '}
-                      <span className="tnum">{e.distance_m >= 1000
-                        ? `${(e.distance_m / 1000).toFixed(1).replace('.', ',')} km`
-                        : `${fmtInt(e.distance_m)} m`}</span></span>
-                  ))}
-                </div>
-              )}
-              <AutourZoneBlock idu={idu} />
-            </RefDrawer>
+            {/* AUTOUR DE CETTE PARCELLE — RETOURS-11F4 (F9) : équipements (un moteur), socio-éco
+                rapatrié de Marché, permis à proximité (un tableau), isochrone → module `autour.tsx`. */}
+            <AutourSection f={f} idu={idu} />
 
             {/* M106 P3 — DISPOSITIFS TERRITORIAUX (ZFANG / FRR ex-ZRR) : attribut de COMMUNE,
                 des états sourcés + lien vers le texte. JAMAIS un chiffre fiscal (ni taux, ni

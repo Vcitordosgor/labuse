@@ -21,7 +21,9 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
         {f && (
           <div className="text-[11px] leading-snug text-txt">
             <p>
+              {/* RETOURS-11F4 F9 — Filosofi = carreau INSEE 200 m : Sourcé (jamais « estimé »). */}
               Niveau de vie médian <b className="font-medium text-txt-hi">{eur(f.nivvie_moyen_eur)}</b>
+              <span className="ml-1.5 rounded bg-mint/12 px-1 py-px font-mono text-[8px] uppercase tracking-wide text-mint">sourcé</span>
               {partProp != null && <span className="text-txt-mut"> · {partProp} % propriétaires</span>}
               {f.taux_pauvrete_pct != null && <span className="text-txt-mut"> · pauvreté {f.taux_pauvrete_pct} %</span>}
             </p>

@@ -90,10 +90,12 @@ export function AutourZoneBlock({ idu }: { idu: string }) {
               <div className="grid grid-cols-2 gap-2">
                 <Stat v={nombre(data.population?.habitants)} k="habitants" />
                 <Stat v={nombre(data.population?.menages)} k="ménages" />
+                {/* RETOURS-11F4 F9 — le badge « estimé » ne s'affiche QUE si le revenu est IMPUTÉ ;
+                    un carreau INSEE Filosofi réel est Sourcé, jamais « estimé ». */}
                 <Stat v={data.population?.revenu_median_eur != null ? `${nombre(data.population.revenu_median_eur)} €` : '—'}
                   k={data.population?.revenu_majorite_imputee
                     ? `revenu médian / an · valeur approchée (${nombre(data.population.revenu_impute_n)}/${nombre(data.population.revenu_carreaux_n)} carreaux)`
-                    : 'revenu médian / an'} est />
+                    : 'revenu médian / an'} est={!!data.population?.revenu_majorite_imputee} />
                 <Stat v={data.population?.pct_moins_25 != null ? `${data.population.pct_moins_25} %` : '—'} k="moins de 25 ans" />
               </div>
             )}
