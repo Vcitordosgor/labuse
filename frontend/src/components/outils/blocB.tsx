@@ -43,9 +43,10 @@ export function O5Servitudes() {
   const d = q.data
   return (
     <>
-      <Banner>Les contraintes <b>dormantes</b> qui ne se voient pas sur la carte — servitudes
-        d'utilité publique, sols, bruit — ET ce que la base ne couvre pas (jamais un faux
-        « RAS »). La due diligence notariale reste indispensable.</Banner>
+      {/* RETOURS-11 O5(a) — intro reformulée (mandat). */}
+      <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
+        assainissement. Et, franchement, ce que nos données ne couvrent pas — pour que vous sachiez
+        quoi vérifier ailleurs.</Banner>
       {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
           carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
       <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse ou IDU (ou clic carte)" onPick={(id) => setIdu(id)} />

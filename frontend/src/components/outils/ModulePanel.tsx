@@ -9,7 +9,7 @@ import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
-import { iduComplet, iduCourt } from '../../lib/format'
+import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -1044,11 +1044,17 @@ export function M10() {
   // Le collage en masse reste offert (SECTION+NUMÉRO, une par ligne). Plus d'export PDF (retiré).
   const [lot, setLot] = useState<string[]>([])
   const [paste, setPaste] = useState('')
+  const [msg, setMsg] = useState<string | null>(null)
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
   const setModule = useApp((s) => s.setModule)
-  // ajout dédupliqué au lot (IDU résolu, SECTION+NUMÉRO ou adresse brute — le back résout, ou dit « introuvable »).
+  // O6(b) — n'ajoute QUE des références cadastrales résolues (IDU complet ou SECTION+NUMÉRO).
+  // Une adresse brute non rattachée à une parcelle NE DOIT JAMAIS entrer dans le lot comme chip :
+  // ParcelInput ne câble pas onAddress → l'adresse résolue arrive par onPick, l'adresse non résolue
+  // affiche son propre message (« aucune parcelle rattachée »). Le collage garde le même garde-fou.
   const ajouter = (v: string) => {
-    const t = (iduComplet(v) || v).trim().toUpperCase(); if (!t) return
+    const t = iduComplet(v).toUpperCase(); if (!t) return
+    if (!estIdu(t)) return   // pas une référence cadastrale (ex. adresse brute) → ignorée
+    setMsg(null)
     setLot((l) => l.includes(t) ? l : [...l, t])
   }
   const ajouterListe = () => {
@@ -1060,14 +1066,21 @@ export function M10() {
   const items = (run.data?.items ?? []) as Record<string, any>[]
   const iduxResolus = items.filter((i) => 'idu' in i).map((i) => i['idu'] as string)
   return (
-    <>
-      <Banner>Un lot au crible : risque, points de vigilance et propriétaire, par parcelle. Alimentez-le
-        par la <b>barre</b> ci-dessous (une parcelle à la fois), ou <b>collez une liste</b> (IDU ou
-        SECTION+NUMÉRO, une par ligne). Adressage/propriétaire particulier jamais nommé.</Banner>
+    // O6(c) — le PANNEAU ENTIER scrolle : le wrapper d'outil (ModulePanel) est overflow-hidden, donc
+    // M10 porte lui-même un unique conteneur défilant (flex-1 min-h-0 overflow-y-auto). Avant, seule la
+    // liste des items scrollait et le bouton « Préparer les courriers » + le bas étaient coupés.
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <Banner>Passez plusieurs parcelles au crible d'un coup : risques, points de vigilance,
+        propriétaire — parcelle par parcelle. Ajoutez-les en tapant une adresse ou un IDU dans la
+        barre, ou en cliquant les parcelles sur la carte.</Banner>
       {/* BARRE UNIQUE (SOCLE) + « + Ajouter » → chips du lot */}
       <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+        {/* O6(b) — onPick ajoute l'IDU RÉSOLU ; onAddress (adresse sans parcelle rattachée) ne pousse
+            JAMAIS la chaîne brute dans le lot : il affiche un message. Fin du chip « ELACITERNE,… ». */}
         <ParcelInput dataAttr="diligence-idu" placeholder="IDU, SECTION+NUMÉRO ou adresse — puis Entrée"
-          onPick={ajouter} onAddress={ajouter} />
+          onPick={ajouter}
+          onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — saisissez un IDU ou cliquez la parcelle sur la carte.")} />
+        {msg && <p data-diligence-msg className="text-[10.5px] leading-snug text-st-creuser">{msg}</p>}
         <details className="text-[10.5px] text-txt-dim">
           <summary className="cursor-pointer hover:text-txt-mut">ou collez une liste (une par ligne)</summary>
           <div className="mt-1.5 flex flex-col gap-1.5">
@@ -1099,7 +1112,10 @@ export function M10() {
       </button>
       {run.data && (
         <>
-          <p className="text-[11px] text-txt-dim">{run.data.n_trouvees}/{run.data.n_demandes} références trouvées</p>
+          {/* O6(d) — compteur COHÉRENT : dérivé des items réellement renvoyés (trouvées = items avec IDU,
+              demandées = nombre de lignes du résultat), plus des champs n_trouvees/n_demandes qui pouvaient
+              diverger du lot affiché. « 5/7 » contre « 6 références » disparaît. */}
+          <p className="text-[11px] text-txt-dim">{iduxResolus.length}/{items.length} référence{items.length > 1 ? 's' : ''} trouvée{iduxResolus.length > 1 ? 's' : ''}</p>
           {/* M137-T — NON COUVERT reporté sur le LOT : un lot sans flag cascade ne doit jamais être un
               « RAS » muet. Le bloc dit ce que la base ne couvre pas, à l'échelle des 60 parcelles. */}
           {(run.data.non_couvert ?? []).length > 0 && (
@@ -1110,7 +1126,7 @@ export function M10() {
               </div>
             </div>
           )}
-          <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+          <div className="flex flex-col gap-1.5">
             {items.map((i, k) => 'idu' in i ? (() => {
               const risque = i['risque'] as number
               const rColor = risque >= 100 ? TOKENS.stEcartee : risque >= 60 ? TOKENS.stEcartee : risque >= 30 ? TOKENS.stCreuser : TOKENS.mint
@@ -1168,7 +1184,7 @@ export function M10() {
           )}
         </>
       )}
-    </>
+    </div>
   )
 }
 

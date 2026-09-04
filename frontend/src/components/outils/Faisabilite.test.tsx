@@ -61,7 +61,8 @@ describe('FAISABILITE — pagination + programme épinglé', () => {
     expect(document.querySelector('[data-pagination-count]')?.textContent).toContain('2 / 5')
     ;(document.querySelector('[data-pagination-more]') as HTMLElement).click()
     await waitFor(() => expect(document.querySelectorAll('[data-prog-item]').length).toBe(4))
-    expect(document.querySelector('[data-prog-csv]')).toBeTruthy()
+    // RETOURS-11 O2(b) — l'export CSV a été RETIRÉ de la faisabilité par critères.
+    expect(document.querySelector('[data-prog-csv]')).toBeFalsy()
   })
 })
 

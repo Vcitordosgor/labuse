@@ -57,12 +57,13 @@ export function PluAnnuaire() {
               {/* OUTILS-1 A5 — le RNU n'est PAS une procédure (c'est l'ABSENCE de PLU) : le bandeau
                   distingue explicitement « en révision » (procédure) et « au RNU », chaque compte servi
                   par le backend depuis le statut réel de l'annuaire (jamais dérivé/figé au front). */}
-              <p className="mb-1.5 px-0.5 font-mono text-[9px] uppercase tracking-[.14em] text-txt-dim">
+              {/* O7(a) — bandeau sur UNE ligne (no-wrap), sans mention interne ; chaque compte servi
+                  par le backend depuis le statut réel de l'annuaire (jamais dérivé/figé au front). */}
+              <p className="mb-1.5 truncate whitespace-nowrap px-0.5 font-mono text-[9px] uppercase tracking-[.14em] text-txt-dim">
                 {communes.data.servables} PLU disponibles
                 {communes.data.n_revision > 0 && <> · {communes.data.n_revision} en révision</>}
                 {communes.data.n_rnu > 0 && <> · {communes.data.n_rnu} au RNU</>}
                 {communes.data.n_non_ingere > 0 && <> · {communes.data.n_non_ingere} non ingéré{communes.data.n_non_ingere > 1 ? 's' : ''}</>}
-                {' '}— dits, jamais masqués
               </p>
               <div className="grid grid-cols-2 gap-1.5">
                 {communes.data.communes.map((c) => {
@@ -167,32 +168,58 @@ export function PluAnnuaire() {
               <div className="text-[11px] text-txt-mut">
                 {d.n} extrait{d.n > 1 ? 's' : ''} — {nomInsee(insee)}
               </div>
+              {/* O7(c) — chaque extrait : titre d'article en tête, un aperçu court (≈ 4 lignes) du
+                  verbatim opposable, dépliable « voir l'article entier », puis les sources (page PDF,
+                  archive GPU). Le champ « titre d'article » n'existe pas dans le payload → on affiche
+                  la référence d'article (r.article_ref) comme titre ; l'aperçu est un simple
+                  troncage front (le backend ne renvoie pas d'offset de surlignage). */}
               {d.resultats.map((r: PluExtrait, i: number) => (
-                <div key={i} className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-                  <div className="flex flex-wrap items-baseline gap-x-2 text-[11px]">
-                    <span className="font-medium text-mint">{r.article_ref}</span>
-                    {r.zone && <span className="text-txt-mut">zone {r.zone}</span>}
-                    <span className="text-txt-mut">{r.commune}</span>
-                    <span className="text-txt-dim">p. PDF {r.page_pdf}</span>
-                    {r.doute && (
-                      <span className="rounded bg-st-ecartee/15 px-1 text-[9.5px] text-st-ecartee">
-                        doute — vérifier au PDF
-                      </span>
-                    )}
-                  </div>
-                  <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-[11px] leading-snug text-txt">{r.texte_verbatim}</pre>
-                  <div className="mt-1 flex flex-wrap gap-x-2 text-[10px] text-txt-dim">
-                    <span>{r.document}{r.millesime ? ` · ${r.millesime}` : ''}</span>
-                    <a href={r.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">archive GPU ↗</a>
-                    {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
-                  </div>
-                </div>
+                <PluExtraitCard key={i} r={r} />
               ))}
               {d.avis && <div className="text-[10px] text-txt-dim">{d.avis}</div>}
             </div>
           )}
         </>
       )}
+    </div>
+  )
+}
+
+// O7(c) — carte d'un extrait de règlement. Verbatim opposable montré en aperçu court (≈ 4 lignes),
+// dépliable en entier. Pas de surlignage : le backend ne renvoie ni offset d'occurrence ni titre
+// d'article distinct — on affiche donc la référence d'article comme titre et on tronque au front.
+const APERCU_MAX = 260   // caractères d'aperçu (≈ 4 lignes) avant « voir l'article entier »
+function PluExtraitCard({ r }: { r: PluExtrait }) {
+  const [ouvert, setOuvert] = useState(false)
+  const texte = r.texte_verbatim ?? ''
+  const long = texte.length > APERCU_MAX
+  const apercu = long && !ouvert ? texte.slice(0, APERCU_MAX).trimEnd() + '…' : texte
+  return (
+    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+      <div className="flex flex-wrap items-baseline gap-x-2 text-[11px]">
+        <span className="font-medium text-mint">{r.article_ref ?? 'Extrait du règlement'}</span>
+        {r.zone && <span className="text-txt-mut">zone {r.zone}</span>}
+        <span className="text-txt-mut">{r.commune}</span>
+        {r.doute && (
+          <span className="rounded bg-st-ecartee/15 px-1 text-[9.5px] text-st-ecartee">
+            doute — vérifier au PDF
+          </span>
+        )}
+      </div>
+      <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-[11px] leading-snug text-txt">{apercu}</pre>
+      {long && (
+        <button onClick={() => setOuvert((o) => !o)}
+          className="mt-0.5 text-[10.5px] text-mint hover:underline">
+          {ouvert ? '‹ replier l’article' : 'voir l’article entier →'}
+        </button>
+      )}
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[10px] text-txt-dim">
+        <span>{r.document}{r.millesime ? ` · ${r.millesime}` : ''}</span>
+        <a href={r.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">
+          page PDF {r.page_pdf} · archive GPU ↗
+        </a>
+        {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
+      </div>
     </div>
   )
 }

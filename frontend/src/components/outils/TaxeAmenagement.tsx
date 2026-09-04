@@ -114,13 +114,16 @@ export function TaxeAmenagement() {
 
   return (
     <div data-taxe-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* EN-TÊTE — source + année + note (estimation indicative) */}
+      {/* EN-TÊTE — intro (RETOURS-11 O4a, texte imposé) + lien source datée */}
       <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         <div>
-          Valeurs <b className="text-txt">{c.meta.annee}</b> ·{' '}
+          Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs 2026 (arrêté
+          officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire
+          hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis.
+        </div>
+        <div className="mt-1">
           <a href={c.meta.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{c.meta.source}</a>
         </div>
-        <div className="mt-1">{c.meta.note}</div>
       </div>
 
       {/* OUVERTURE DEPUIS UNE PARCELLE — si une parcelle est sélectionnée sur la carte/fiche. La surface
@@ -190,13 +193,20 @@ export function TaxeAmenagement() {
             placeholder={depDefaut != null ? String(depDefaut) : undefined}
             hint={`Plafond légal ${depDefaut != null ? depDefaut : '—'} % — à confirmer auprès du département.`} />
         </div>
-        {/* RV2-V2 — aide CONCRÈTE pour trouver le taux communal (pas d'open data exploitable). */}
-        <div data-taux-aide className="rounded-md border border-line-2 bg-surface-3/50 px-2.5 py-2 text-[10.5px] leading-snug text-txt-mut">
-          <b className="text-txt">Où trouver le taux communal ?</b> Dans la <b>délibération du conseil municipal
-          fixant le taux de la part communale de la taxe d’aménagement</b> (adoptée avant le 1<sup>er</sup> juillet
-          pour l’année suivante). À demander au <b>service urbanisme de la mairie</b>, ou sur le site de la commune
-          (recueil des actes administratifs). À défaut de délibération, le taux légal minimal est de 1 %.
-        </div>
+        {/* RV2-V2 — aide CONCRÈTE pour trouver le taux communal (pas d'open data exploitable).
+            RETOURS-11 O4b : repliée par défaut (accordéon <details>). */}
+        <details data-taux-aide className="group rounded-md border border-line-2 bg-surface-3/50 text-[10.5px] leading-snug text-txt-mut">
+          <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2.5 py-2 text-txt">
+            <span aria-hidden className="text-txt-dim transition-transform duration-quick group-open:rotate-90">›</span>
+            <b>Où trouver le taux communal ?</b>
+          </summary>
+          <div className="px-2.5 pb-2">
+            Dans la <b>délibération du conseil municipal fixant le taux de la part communale de la taxe
+            d’aménagement</b> (adoptée avant le 1<sup>er</sup> juillet pour l’année suivante). À demander au{' '}
+            <b>service urbanisme de la mairie</b>, ou sur le site de la commune (recueil des actes
+            administratifs). À défaut de délibération, le taux légal minimal est de 1 %.
+          </div>
+        </details>
       </div>
 
       {/* RÉSULTAT DÉTAILLÉ */}
@@ -263,8 +273,10 @@ export function TaxeAmenagement() {
             )}
           </div>
 
+          {/* RETOURS-11 O4c : le rappel « estimation indicative » (r.note) est déjà dit dans l'intro
+              en tête de page → on ne garde ici que la provenance datée (année + source), non redondante. */}
           <p className="text-[10px] leading-snug text-txt-dim">
-            {r.note} · Valeurs {r.annee} —{' '}
+            Valeurs {r.annee} —{' '}
             <a href={r.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{r.source}</a>
           </p>
         </div>

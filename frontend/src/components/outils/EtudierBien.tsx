@@ -99,9 +99,7 @@ export function EtudierBien() {
   return (
     <div data-etudier-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-        Seconde opinion avant d’offrir. Une <b>adresse</b> → les <b>prix du secteur</b> (médiane locale,
-        rayon effectif) ; une <b>parcelle</b> → l’<b>étude complète</b> (verdict + charge calibrée), puis
-        <b> vos hypothèses</b>.
+        Un bien vous intéresse ? Tapez son adresse. LABUSE vous donne les vrais prix du secteur (ventes actées DVF, annonces en cours) et, pour une parcelle, ce qu’on peut y construire et ce que le terrain vaut pour une opération.
       </div>
 
       {/* ENTRÉE UNIFIÉE (patron omnibox M137) — UN SEUL champ : adresse OU IDU + clic carte.
@@ -152,7 +150,7 @@ export function EtudierBien() {
                     {/* mandat point 3 : 123 m² est une SHAB, pas une SDP — libellé corrigé. O2-5 : périmètre. */}
                     LA BUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(c.sourced.shab_vendable_m2)} m²</b>
                     <span className="text-txt-dim"> ({PERIM_POTENTIEL})</span>
-                    {c.sourced.prix_sortie_median != null && <> · prix de sortie bâti <b className="tnum text-txt">{fmtInt(c.sourced.prix_sortie_median)} €/m²</b></>}
+                    {c.sourced.prix_sortie_median != null && <> · prix de sortie bâti <b className="tnum text-txt">{fmtInt(c.sourced.prix_sortie_median)} €/m²</b>{c.sourced.prix_neuf_label && <span className="text-txt-dim"> ({c.sourced.prix_neuf_label})</span>}</>}
                     {c.sourced.terrain_m2 != null && <> · terrain <b className="tnum text-txt">{fmtInt(c.sourced.terrain_m2)} m²</b></>}
                   </p>
                 )}
