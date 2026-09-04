@@ -199,7 +199,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
 
           <div className="flex min-h-0 flex-1 flex-col gap-1.5">
             {tab === 'possede'
-              ? <M02 embedded sirenProp={owner} onVoirOperations={(s) => { setOwner(s); setOwnerLabel(null); setTab('construit') }} />
+              ? <M02 embedded sirenProp={owner} />
               : <VeillePromoteurs embedded focusSiren={owner} onCount={setNConstruit} onVoirPatrimoine={(s) => { setOwner(s); setOwnerLabel(null); setTab('possede') }} />}
           </div>
         </>

@@ -162,7 +162,14 @@ pareil, donc pré-existant, hors périmètre C3.
   pas de jeu ouvert ingéré (limite descend en méthode, ingestion Géorisques/DEAL à chiffrer hors mandat) ;
   procédures PLU en cours → servies par l'outil PLU (renvoi) ; SUP hors GPU → 417 SUP décodées, réserve
   en méthode. *(Le contenu `non_couvert` vient du backend inchangé ; seule la présentation change.)*
-- **O4 — PLU compteurs+bug IDU — À FAIRE** · **O5 — Scan patrimoine liste — À FAIRE** · **O6 — Scan doublons — À FAIRE** · **O7 — Solaire pente+photo — À FAIRE**
+- **O5 — « Scan patrimoine » : la liste des parcelles s'ouvre — FAIT.** Bug : la liste était noyée sous
+  le bandeau (nom + 3 chiffres + détail + bouton). Correctif : bouton **« Voir ses parcelles → »** (en
+  fusion) qui **replie le bandeau en accordéon** (barre compacte rouvrable « nom · N parcelles · détail ▾ »)
+  → la liste prend toute la hauteur. Les opérations restent dans l'onglet « Construction » (le pont
+  redondant `onVoirOperations` retiré en mode fusion ; conservé hors fusion). Pagination par 200 déjà en
+  place (« 200 / 1833 · Voir 200 de plus »). Recette : clic → bandeau replié + liste visible (capture
+  `O5-scan-parcelles`).
+- **O4 — PLU compteurs+bug IDU — À FAIRE** · **O6 — Scan doublons — À FAIRE** · **O7 — Solaire pente+photo — À FAIRE**
 ## LOT O bloc 3 — outils O8-O13 (commit 4) — À FAIRE
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE

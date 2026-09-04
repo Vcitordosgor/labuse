@@ -124,14 +124,18 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
 // RETOURS-4 S7 — « Ce qu'ils POSSÈDENT », onglet 1 de la fusion Scan patrimoine. En mode `embedded`, la
 // barre de recherche interne DISPARAÎT (la fusion en fournit une seule, partagée) et le propriétaire vient
 // de `sirenProp` ; le pont « Voir ses opérations » devient une BASCULE D'ONGLET (`onVoirOperations`).
-export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: boolean; sirenProp?: string | null; onVoirOperations?: (siren: string) => void } = {}) {
+export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: string | null } = {}) {
   const { m02Prefill, setM02Prefill } = useApp()
   // RETOURS-3 R4.3 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
   const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
   const setModule = useApp((s) => s.setModule)
   const [q, setQ] = useState('')
   const [sirenState, setSiren] = useState<string | null>(null)
+  // RETOURS-12 O5 — le bandeau (nom + 3 chiffres + détail) est REPLIABLE en accordéon pour laisser
+  // toute la place à la liste des parcelles (bug : la liste ne s'ouvrait pas, noyée sous le bandeau).
+  const [bandeauReplie, setBandeauReplie] = useState(false)
   const siren = embedded ? (sirenProp ?? null) : sirenState
+  useEffect(() => { setBandeauReplie(false) }, [siren])   // nouveau propriétaire → bandeau déplié
   useEffect(() => {
     // en mode embarqué, le SIREN vient de la fusion (sirenProp) — on ne consomme pas m02Prefill (pas de course).
     if (!embedded && m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
@@ -193,37 +197,57 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
               ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
             </div>
           )}
-          <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-          {/* RETOURS-5 T4.1 — TROIS chiffres qui comptent, en grille de 3 cartes. Rien d'autre au 1er niveau. */}
-          <div className="grid grid-cols-3 gap-2">
-            {([['n_parcelles', 'parcelles'], ['n_actionnables', 'actionnables'], ['sdp_residuelle_m2', 'm² SDP résiduelle']] as const).map(([k, lbl]) => (
-              <div key={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
-                <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{fmt(d[k] as number)}</div>
-                <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{lbl}</div>
+          {/* RETOURS-12 O5 — BANDEAU repliable : replié, une barre compacte rouvrable ; déplié, le nom +
+              les 3 chiffres + le détail. Replier libère toute la hauteur pour la LISTE des parcelles. */}
+          {bandeauReplie ? (
+            <button data-scan-bandeau-rouvrir onClick={() => setBandeauReplie(false)}
+              className="flex w-full items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-left text-[11.5px] text-txt-dim transition-colors duration-quick hover:text-txt">
+              <span className="min-w-0 truncate"><b className="text-txt">{d['nom'] as string}</b> · {fmt(total)} parcelles</span>
+              <span className="shrink-0 text-txt-mut">détail ▾</span>
+            </button>
+          ) : (
+            <>
+              <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
+              {/* RETOURS-5 T4.1 — TROIS chiffres qui comptent, en grille de 3 cartes. Rien d'autre au 1er niveau. */}
+              <div className="grid grid-cols-3 gap-2">
+                {([['n_parcelles', 'parcelles'], ['n_actionnables', 'actionnables'], ['sdp_residuelle_m2', 'm² SDP résiduelle']] as const).map(([k, lbl]) => (
+                  <div key={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{fmt(d[k] as number)}</div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{lbl}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          {/* RETOURS-5 T4.2 — tout le reste REPLIÉ : détail des actionnables, valorisation, périmètre, nature. */}
-          <details className="text-xs">
-            <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
-            <div className="flex flex-col">
-              {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
-                  des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
-              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
-              {d['valorisation_nu_eur'] != null && (
-                <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
-              )}
-              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
-              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
-            </div>
-          </details>
-          {/* RETOURS-5 T4.4 — « Voir ses opérations → » : bouton PLEINE LARGEUR (survol plein) entre l'encart et la liste. */}
-          {d['siren'] != null && (
+              {/* RETOURS-5 T4.2 — tout le reste REPLIÉ : détail des actionnables, valorisation, périmètre, nature. */}
+              <details className="text-xs">
+                <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
+                <div className="flex flex-col">
+                  {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
+                      des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
+                  {d['valorisation_nu_eur'] != null && (
+                    <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
+                  )}
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
+                </div>
+              </details>
+            </>
+          )}
+          {/* RETOURS-12 O5 — en fusion (ScanPatrimoine), « Voir ses parcelles → » REPLIE le bandeau pour
+              ouvrir la liste (les opérations restent dans l'onglet « Construction »). Hors fusion (M02
+              seul), le pont historique « Voir ses opérations → » vers Veille promoteurs est conservé. */}
+          {d['siren'] != null && (embedded ? (
+            !bandeauReplie && (
+              <button data-scan-voir-parcelles onClick={() => setBandeauReplie(true)}
+                className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Replier le bandeau et voir la liste des parcelles">
+                Voir ses parcelles →</button>
+            )
+          ) : (
             <button data-m02-operations
-              onClick={() => { const s = String(d['siren']); if (embedded && onVoirOperations) onVoirOperations(s); else { setVeilleFocusSiren(s); setModule('veille-promoteurs') } }}
+              onClick={() => { const s = String(d['siren']); setVeilleFocusSiren(s); setModule('veille-promoteurs') }}
               className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Ce qu'il construit — ses opérations">
               Voir ses opérations →</button>
-          )}
+          ))}
           {/* liste — RETOURS-5 T4.5 : lignes en survol plein (hoverFull). */}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {items.map((i) => (
