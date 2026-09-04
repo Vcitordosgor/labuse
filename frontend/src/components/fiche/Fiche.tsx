@@ -26,10 +26,11 @@ import type { FicheLine, FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu }
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroSegments, MicroSpark, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil } from './primitives'
+import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroSpark, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil } from './primitives'
 // RETOURS-11F4 (F5) — la section Constructibilité + sa machinerie vivent dans `constructibilite.tsx`.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
 import { ConstructibiliteSection } from './constructibilite'
+import { RisquesSection } from './risques'
 export { Calculette, FaisabiliteTab } from './constructibilite'
 export type { CalcResult } from './constructibilite'
 
@@ -664,12 +665,7 @@ export function Fiche({ idu }: { idu: string }) {
     ...(!f.proprietaire_moral ? [{ quoi: 'Identité du propriétaire', pourquoi: 'personne physique — non automatisée (workflow SPF/CERFA)' }] : []),
   ] : []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
-  // M19 · valeurs fermées des tiroirs d'onglets (P1.3) — dérivées des données DÉJÀ chargées,
-  // aucun nouveau calcul ni requête. Risques : le NÉGATIF est AFFIRMÉ (« ✓ rien à signaler ·
-  // N couches vérifiées ») — c'est le point capital de la refonte.
-  const risquesLines = ongletLines('risques')
-  const risquesFlags = risquesLines.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
-  const risquesClean = risquesLines.filter((l) => l.result === 'PASS').length
+  // RETOURS-11F4 (F6) : les lignes Risques (vigilances/clean/compteur) vivent dans `RisquesSection`.
   // Marché : médiane €/m² structurée (dvf_parcelle.secteur) + nb de ventes — donnée propre.
   const marcheLines = ongletLines('marche')
   // M137-G — SECTEUR = prix du TERRAIN NU SEUL (mesuré : dvf_marche.py:107 `bati_m2=0`, médiane
@@ -1374,31 +1370,9 @@ export function Fiche({ idu }: { idu: string }) {
                 la section entière vit dans sections `constructibilite.tsx` (auto-suffisante). */}
             <ConstructibiliteSection f={f} idu={idu} />
 
-            {/* Risques et protections — clôt le groupe LE TERRAIN (M55-O phase 3.4). Valeur AMBRE
-                quand il y a des vigilances (le vert redevient un signal — phase 3.5). */}
-            <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
-              context={`${risquesClean} couche${risquesClean > 1 ? 's' : ''} évaluée${risquesClean > 1 ? 's' : ''}`}
-              value={risquesFlags.length === 0
-                ? <span className="pill-mint">rien à signaler</span>
-                : <span className="pill-amber">{risquesFlags.length} vigilance{risquesFlags.length > 1 ? 's' : ''}</span>}
-              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
-              {risquesLines.length
-                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
-                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-              {/* M106 P4 — ligne HT la plus proche : une CONTRAINTE (distance, jamais un booléen) ;
-                  le libellé dit que la servitude I4 n'est pas cartographiée (à vérifier gestionnaire). */}
-              {f.proximites?.ligne_ht && (
-                <div data-ligne-ht className="mt-1 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
-                  <p className="text-[11.5px] leading-snug text-txt">{f.proximites.ligne_ht.libelle}</p>
-                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{f.proximites.ligne_ht.source}</p>
-                </div>
-              )}
-              {/* M137-T — PORTE Risques : « Contrôle avant achat » et « Servitudes invisibles » fusionnés
-                  en un outil « Pièges et risques » (entrée « une parcelle » ouverte par défaut, lit selectedIdu). */}
-              <PorteOutil ico="⚑" data="risques" titre="Pièges et risques"
-                sous="Servitudes dormantes, risques et propriétaire — cette parcelle en détail, ou un lot au crible"
-                onClick={() => setModule('risques')} />
-            </RefDrawer>
+            {/* Risques et protections — clôt le groupe LE TERRAIN. RETOURS-11F4 (F6) : vigilances
+                d'abord, « sans objet » repliés, SUP rapatriées, compteur vrai → module `risques.tsx`. */}
+            <RisquesSection f={f} idu={idu} />
 
             {/* M55-O phase 3.4 — GROUPE SILENCIEUX « LE CONTEXTE » : Marché et secteur · Réseaux et
                 accès · Propriétaire · Données et méthode. */}

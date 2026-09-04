@@ -7,7 +7,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ASKBAR = (ROOT / "frontend/src/components/fiche/AskBar.tsx").read_text(encoding="utf-8")
-FICHE = (ROOT / "frontend/src/components/fiche/Fiche.tsx").read_text(encoding="utf-8")
+# RETOURS-11F4 — Fiche.tsx a été DÉCOUPÉE en modules par section (constructibilite/risques/marche/
+# reseaux/autour + primitives). Les gardes « marqueur dans le source » lisent tout le dossier fiche
+# pour rester valides quel que soit le module qui porte désormais le marqueur.
+_FICHE_DIR = ROOT / "frontend/src/components/fiche"
+FICHE = "\n".join(p.read_text(encoding="utf-8") for p in sorted(_FICHE_DIR.glob("*.tsx")))
 # Libellés client centralisés depuis M12/M19 (« texte client centralisé ») → lib/strings.ts (CLIENT.*).
 STRINGS = (ROOT / "frontend/src/lib/strings.ts").read_text(encoding="utf-8")
 
@@ -152,7 +156,7 @@ HEADER = (ROOT / "frontend/src/components/header/Header.tsx").read_text(encoding
 # ScoreurAdresse.tsx / CalculetteFonciere.tsx sont SUPPRIMÉS ; la logique vit dans EtudierBien.tsx.
 ETUDIER = (ROOT / "frontend/src/components/outils/EtudierBien.tsx").read_text(encoding="utf-8")
 MODULEPANEL = (ROOT / "frontend/src/components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
-FICHE_TSX = (ROOT / "frontend/src/components/fiche/Fiche.tsx").read_text(encoding="utf-8")
+FICHE_TSX = FICHE   # RETOURS-11F4 — tout le dossier fiche (découpe en modules par section)
 ANSWERING = (ROOT / "src/labuse/copilote_v2/answering.py").read_text(encoding="utf-8")
 POURQUOI = (ROOT / "frontend/src/components/fiche/PourquoiPas.tsx").read_text(encoding="utf-8")
 API = (ROOT / "frontend/src/lib/api.ts").read_text(encoding="utf-8")
