@@ -78,23 +78,14 @@ def __getattr__(name: str):
     if name == "Q_A_RUN_LABEL":
         from ..runs import current
         return current()
+    # DONNEES-2 (B4) — RUN_PRECEDENT devient DYNAMIQUE (comme Q_A_RUN_LABEL) : plus de constante
+    # figée à l'import (elle mentait après une bascule → la page Flux étiquetait le mauvais « ancien
+    # run servi »). Tout accès par ATTRIBUT et tout `from … import RUN_PRECEDENT` À L'INTÉRIEUR d'une
+    # fonction relit le pointeur vivant `config/run_precedent.txt` (via `runs.precedent()`).
+    if name == "RUN_PRECEDENT":
+        from ..runs import precedent
+        return precedent()
     raise AttributeError(f"module {__name__!r} n'a pas d'attribut {name!r}")
-
-
-def _run_precedent_versionne() -> str:
-    """M80 — Lit config/run_precedent.txt (1ʳᵉ ligne non commentée) : le run servi PRÉCÉDENT.
-    Même mécanisme que served_run.txt — plus jamais un nom de run codé en dur (interdit doctrine :
-    une constante hardcodée rend une purge dangereuse). À faire suivre AVEC served_run.txt à chaque bascule."""
-    f = Path(__file__).resolve().parents[3] / "config" / "run_precedent.txt"
-    for line in f.read_text(encoding="utf-8").splitlines():
-        s = line.strip()
-        if s and not s.startswith("#"):
-            return s
-    raise RuntimeError(f"config/run_precedent.txt ne contient aucune valeur : {f}")
-
-
-#: run servi PRÉCÉDENT (versionné, M80) — consommé par l'accueil pour le diff de bascule.
-RUN_PRECEDENT = _run_precedent_versionne()
 
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.

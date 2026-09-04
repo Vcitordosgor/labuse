@@ -613,37 +613,56 @@ def flux_run_cmd(
     (score-v2) sous le MÊME label. Le run ENREGISTRE sa photo des sources+millésimes (F2.2). Progression
     visible (une ligne par commune + le scoring). N'est PAS servi : la bascule reste un geste manuel
     (`labuse golden promote <label>` ou le bouton admin de la page Flux)."""
+    import os
     import time
 
+    from . import run_progress
     from .cascade import evaluate_parcels
     from .cascade.cablage import check_cablage_scoring
     from .ingestion.run_all import REUNION_COMMUNES
     from .scoring.p_v2.pipeline import run_score_v2
 
     t0 = time.time()
+    # DONNEES-2 (B3) — le run écrit sa PROGRESSION dans un fichier lu par l'API (barre + %, étape 2).
+    # `total` = 24 communes (cascade) + 1 pas de scoring. L'API a pu ouvrir l'état au lancement ; on le
+    # (ré)ouvre ici avec NOTRE pid (celui du process détaché) — c'est celui que « Arrêter » signalera.
+    total = len(REUNION_COMMUNES) + 1
+    run_progress.start(label, pid=os.getpid(), kind="run", recette=recette, total=total,
+                       log=f"/tmp/labuse-flux-run-{label}.log")
     with session_scope() as s:
         check_cablage_scoring(session=s)     # garde de câblage AVANT de démarrer (bloquante, nomme le fautif)
     # 1 — CASCADE par commune (tables dryrun_*), reprenable.
-    for insee, _ in REUNION_COMMUNES:
+    for i, (insee, _) in enumerate(REUNION_COMMUNES):
         nom = _resolve_commune(insee)
+        # DONNEES-2 (B3) — annonce la commune EN COURS de traitement AVANT de la calculer (une grosse
+        # commune prend du temps ; sinon la barre resterait « démarrage » plusieurs minutes).
+        run_progress.progress(label, phase="cascade", commune=nom, done=i, total=total,
+                              pct=round(i / total * 100))
         with session_scope() as s:
             ids = _parcel_ids(s, nom)
             if not ids:
                 typer.echo(f"  · {nom} ({insee}) : 0 parcelle, ignorée")
+                run_progress.progress(label, phase="cascade", commune=nom, done=i + 1,
+                                      total=total, pct=round((i + 1) / total * 100))
                 continue
             done: set[int] = set()
             if resume:
                 done = {r[0] for r in s.execute(text(
                     "SELECT parcel_id FROM dryrun_parcel_evaluations WHERE run_label=:r"), {"r": label}).all()}
-            todo = [i for i in ids if i not in done]
+            todo = [i2 for i2 in ids if i2 not in done]
             for k in range(0, len(todo), 2000):
                 evaluate_parcels(todo[k:k + 2000], s, persist=True, dryrun_label=label)
                 s.commit()
                 s.expunge_all()
             typer.echo(f"  ✓ {nom} : {len(todo)} évaluées ({time.time() - t0:.0f}s)")
+        run_progress.progress(label, phase="cascade", commune=nom, done=i + 1, total=total,
+                              pct=round((i + 1) / total * 100))
     # 2 — SCORING / tiers sous le MÊME label (enregistre les sources+millésimes, F2.2).
+    run_progress.progress(label, phase="scoring", commune=None, done=len(REUNION_COMMUNES),
+                          total=total, pct=round(len(REUNION_COMMUNES) / total * 100))
     with session_scope() as s:
         res = run_score_v2(s, run_id=label, rebuild=True, snapshot=True, recette=recette)
+    run_progress.finish(label, n_parcelles=res["n"])
     typer.echo(f"✓ FLUX-RUN [{label}] : {res['n']} parcelles scorées, tiers {res['tiers']} "
                f"({time.time() - t0:.0f}s total). NON servi — bascule manuelle.")
 
@@ -863,14 +882,38 @@ def build_mvt_cmd(
     À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
     # M48 : le geste tuiles est un POINT UNIQUE (`rebuild_mvt_servies`), partagé avec les bascules
     # (« un geste = tout ou rien ») — le CLI n'en est qu'un mince appelant.
-    from .api.tiles import RUN, rebuild_mvt_servies
+    import time as _t
 
-    label = label or RUN
-    with session_scope() as s:
-        res = rebuild_mvt_servies(s, label, log=typer.echo)
-    if label != RUN:
-        typer.echo(f"⚠ ATTENTION : tuiles matérialisées sur « {label} » ≠ run servi « {RUN} » "
-                   f"(Q_A_RUN_LABEL) — les fiches/listes et la carte raconteront deux mondes.")
+    from sqlalchemy.exc import OperationalError
+
+    from . import runs
+    from .api.tiles import rebuild_mvt_servies
+
+    # DONNEES-2 (B1) — défaut = run SERVI, lu VIVANT via runs.current() (l'ancien `from .api.tiles
+    # import RUN` était cassé : `RUN` n'existe pas dans tiles → `build-mvt` levait ImportError).
+    servi = runs.current()
+    label = label or servi
+    # DONNEES-2 (B1) — la reconstruction DROP/RENAME des tables servies prend un verrou EXCLUSIF qui
+    # peut DEADLOCK avec les lectures de la garde de cohérence (l'admin poll /admin/flux). On borne
+    # l'attente d'un verrou (lock_timeout) pour échouer VITE plutôt que d'entrer en deadlock, et on
+    # RÉESSAIE le geste entier (transaction annulée → rien de partiel persisté). Lancé détaché par la
+    # bascule ; en tâche isolée un `build-mvt` manuel garde le même comportement.
+    res = None
+    for tentative in range(3):
+        try:
+            with session_scope() as s:
+                s.execute(text("SET lock_timeout = '30s'"))
+                res = rebuild_mvt_servies(s, label, log=typer.echo)
+            break
+        except OperationalError as exc:
+            if tentative == 2:
+                raise
+            typer.echo(f"⚠ verrou/deadlock (tentative {tentative + 1}/3) : {type(exc).__name__} — "
+                       f"nouvelle tentative dans 6 s…")
+            _t.sleep(6)
+    if label != servi:
+        typer.echo(f"⚠ ATTENTION : tuiles matérialisées sur « {label} » ≠ run servi « {servi} » "
+                   f"— les fiches/listes et la carte raconteront deux mondes.")
     typer.echo(f"✓ mvt_parcels reconstruite : {res['n']} parcelles (label {label}).")
 
 

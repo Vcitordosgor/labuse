@@ -102,12 +102,31 @@ def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
     donc l'écart QUE pour les `limit_ecart` premiers runs non-servis — exactement ceux que la
     page affiche (elle en montre 4). Les autres sortent avec `ecart=None` (label + « basculable »
     restent disponibles). `limit_ecart=None` = tout calculer (compat/CLI)."""
-    from . import runs
+    from . import run_progress, runs
     from .golden_ops import comparer
     labels = [r[0] for r in db.execute(text(
         "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 12")).all()]
     out = []
     servi_run = runs.current()
+    # DONNEES-2 (B2) — le STATUT de chaque run (D3). Le précédent est lu VIVANT (B4), plus la constante.
+    precedent_run = runs.precedent()
+    servi_at = db.execute(text("SELECT computed_at FROM p_score_v2_runs WHERE run_id = :r"),
+                          {"r": servi_run}).scalar()
+    # réconcilie les états lancés : un run tué / un process disparu passe « abandonné » (D3).
+    complets_all = {r[0] for r in db.execute(text("SELECT run_id FROM p_score_v2_runs")).all()}
+    run_progress.reconcile(complets_all)
+
+    def _statut(lab: str, complet: bool, computed_at) -> str:
+        if lab == servi_run:
+            return "servi"
+        if lab == precedent_run:
+            return "retour_arriere"
+        if not complet:
+            return "abandonne"          # présent en base mais pas servable (rare) — traité comme les tués
+        if servi_at is not None and computed_at is not None and computed_at >= servi_at:
+            return "termine"            # complet et PLUS RÉCENT que le servi = candidat en avant (recommandé)
+        return "ancien"                 # complet mais plus ancien que le servi = retour arrière profond
+
     ecarts_calcules = 0
     for lab in labels:
         est_servi = (lab == servi_run)
@@ -139,12 +158,28 @@ def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
             "FROM p_score_v2_runs WHERE run_id = :r"),
             {"r": lab}).mappings().first()
         out.append({"label": lab, "servi": est_servi, "complet": complet, "motif": motif,
+                    "statut": _statut(lab, complet, row["computed_at"] if row else None),
                     "calcule_le": row["computed_at"].isoformat() if row and row["computed_at"] else None,
                     "n_parcelles": row["n_parcelles"] if row else None, "ecart": ecart,
                     # SCORING-3 (L1.3) — la note de version du candidat, lisible AVANT de basculer.
                     "modele": row["model_version"] if row else None,
                     "recette": (row["recette"] or row["model_version"]) if row else None,
                     "note_de_version": row["note_de_version"] if row else None})
+    # DONNEES-2 (B2/D3) — AJOUTE les runs LANCÉS mais non terminés (en cours / abandonnés) : ils
+    # n'existent pas dans p_score_v2_runs (aucune ligne écrite), seulement via leur état de progression.
+    connus = {r["label"] for r in out}
+    for st in run_progress.list_states():
+        lab = st.get("label")
+        if not lab or lab in connus or lab in complets_all or st.get("kind") != "run":
+            continue
+        statut = st.get("statut") or "abandonne"
+        out.append({"label": lab, "servi": False, "complet": False,
+                    "motif": st.get("error") or ("en cours" if statut == "en_cours" else "run abandonné"),
+                    "statut": statut, "calcule_le": st.get("started_at"),
+                    "n_parcelles": st.get("n_parcelles"), "ecart": None,
+                    "modele": None, "recette": st.get("recette"), "note_de_version": None,
+                    "progress": {"phase": st.get("phase"), "commune": st.get("commune"),
+                                 "pct": st.get("pct"), "done": st.get("done"), "total": st.get("total")}})
     return out
 
 
@@ -170,6 +205,9 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     from .golden_ops import promote
 
     ancien = runs.current()
+    # DONNEES-2 (B4) — le SENS (avant / retour arrière) se lit du pointeur VIVANT AVANT de le réécrire :
+    # « arrière » = on rebascule vers ce qui était le run précédent. La constante figée mentait ici.
+    ancien_precedent = runs.precedent()
     if nouveau_run == ancien:
         return {"ok": False, "motif": f"« {nouveau_run} » est déjà le run servi — rien à basculer."}
     complet, motif = _run_complet(db, nouveau_run)
@@ -183,13 +221,12 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     entete = ("# config/run_precedent.txt — run servi PRÉCÉDENT (M80). Suit served_run.txt à chaque\n"
               "# bascule (FLUX-1 F2.4 : le retour arrière est la bascule dans l'autre sens).\n")
     _RUN_PRECEDENT_FILE.write_text(entete + ancien + "\n", encoding="utf-8")
+    runs.invalidate()                   # DONNEES-2 (B4) — servi ET précédent relus au prochain appel
 
     caches = purger_caches_run()
-    from .scoring.score_v_constants import RUN_PRECEDENT
-    sens = "arriere" if nouveau_run == RUN_PRECEDENT else "avant"
+    sens = "arriere" if nouveau_run == ancien_precedent else "avant"
 
-    # garde de cohérence IMMÉDIATE, mesurée contre le NOUVEAU run (lu frais du fichier, pas la
-    # constante import-time encore chaude dans ce process).
+    # garde de cohérence IMMÉDIATE, mesurée contre le NOUVEAU run (lu frais du fichier).
     from . import coherence_flux
     coherence = coherence_flux.verifier(db, run=nouveau_run)
 
@@ -201,6 +238,6 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
          "c": _json.dumps(caches), "co": _json.dumps(coherence)})
 
     return {"ok": True, "ancien": ancien, "nouveau": nouveau_run, "caches_purges": caches,
-            "coherence": coherence,
-            "note": "Effectif au redémarrage du process API (le pointeur est versionné ; "
-                    "la constante Q_A_RUN_LABEL est relue au démarrage)."}
+            "sens": sens, "coherence": coherence,
+            "note": "Effective immédiatement (served_run.txt relu à la requête). Les tables servies "
+                    "run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}

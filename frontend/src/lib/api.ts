@@ -1300,12 +1300,27 @@ export interface FluxRadar {
 }
 export interface CoherenceCheck { libelle: string; ok: boolean; detail: string | null }
 export interface FluxCoherence { ok: boolean | null; run?: string; n_surfaces?: number; verifie_le?: string; checks: CoherenceCheck[]; erreur?: string }
+// DONNEES-2 (B2/D3) — le STATUT d'un run : en_cours · termine · servi · retour_arriere · abandonne · ancien.
+export type FluxRunStatut = 'en_cours' | 'termine' | 'servi' | 'retour_arriere' | 'abandonne' | 'ancien'
+export interface FluxRunProgress { phase?: string | null; commune?: string | null; pct?: number | null; done?: number | null; total?: number | null }
 export interface FluxRunTermine {
   label: string; servi: boolean; complet: boolean; motif: string; calcule_le: string | null; n_parcelles: number | null
+  statut: FluxRunStatut
   ecart: { tiers_changes: number; promues_candidat: number; promues_servi: number; derive_promues_pct: number } | null
   // SCORING-3 (L1.3) — recette du run (m36 | q_v12) + note de version du candidat, lisible avant de basculer.
   modele?: string | null; recette?: string | null; note_de_version?: string | null
+  // DONNEES-2 (B3) — progression d'un run en cours / abandonné (lue de l'état de progression).
+  progress?: FluxRunProgress | null
 }
+// DONNEES-2 (B3) — l'état du run EN COURS (barre + % de l'étape 2), poll léger pendant un run.
+export interface FluxRunEtat {
+  label: string; recette?: string | null; statut: FluxRunStatut; pid?: number | null
+  phase?: string | null; commune?: string | null; pct?: number | null; done?: number | null; total?: number | null
+  started_at?: string | null; log?: string | null
+}
+export const getAdminFluxRunEtat = () => j<{ en_cours: FluxRunEtat | null }>('/admin/flux/run/etat')
+export const postAdminFluxArreterRun = (label: string) =>
+  j<{ ok: boolean; tue?: boolean }>('/admin/flux/run/arreter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label }) })
 export interface FluxDerniereBascule { ts: string | null; ancien: string | null; nouveau: string; par: string | null; sens: string; caches_purges: string[] }
 export interface AdminFlux {
   flux: FluxFourmiliere; radar: FluxRadar; coherence: FluxCoherence
@@ -1321,7 +1336,9 @@ export const getAdminFluxRuns = () => j<{ runs: FluxRunTermine[]; derniere: Flux
 export const postAdminFluxLancerRun = (recette: 'm36' | 'q_v12' = 'm36') =>
   j<{ ok: boolean; label: string; estimation: string; log: string }>('/admin/flux/run/lancer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recette }) })
 export const postAdminFluxBascule = (run: string) =>
-  j<{ ok: boolean; ancien?: string; nouveau?: string; caches_purges?: string[]; coherence?: FluxCoherence; note?: string; motif?: string }>(
+  j<{ ok: boolean; ancien?: string; nouveau?: string; caches_purges?: string[]; coherence?: FluxCoherence; note?: string; motif?: string
+      // DONNEES-2 (B1) — reconstruction détachée des tables servies run-scopées après la bascule.
+      reconstruction?: { lancee: boolean; run?: string; log?: string; motif?: string } | null }>(
     '/admin/flux/bascule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run }) })
 // D7 — Produit
 export interface AdminProduit {

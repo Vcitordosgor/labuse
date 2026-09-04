@@ -1279,13 +1279,22 @@ def admin_flux_lancer_run(request: Request, body: LancerRunIn | None = None) -> 
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
+    from .. import run_progress
     from ..db import engine, session_scope
+    # DONNEES-2 (B3) — UN SEUL run à la fois : réconcilie l'état (les runs tués passent « abandonné »)
+    # puis REFUSE de lancer si un run est réellement EN COURS (process vivant). Sinon deux runs se
+    # marcheraient dessus (mêmes tables dryrun_*).
+    with engine().begin() as c:
+        complets = {r[0] for r in c.execute(text("SELECT run_id FROM p_score_v2_runs")).all()}
+    run_progress.reconcile(complets)
+    encours = run_progress.en_cours()
+    if encours:
+        raise HTTPException(409, f"Un run est déjà en cours ({encours.get('label')}) — arrêtez-le "
+                                 f"ou attendez sa fin avant d'en lancer un autre.")
     recette = body.recette if body else "m36"
     prefixe = "q_v12" if recette == "q_v12" else "q_flux"
     label = f"{prefixe}_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}"
-    with engine().begin() as c:
-        deja = c.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"), {"r": label}).scalar()
-    if deja:
+    if label in complets:
         raise HTTPException(409, f"Un run « {label} » existe déjà — réessayer dans une minute.")
     # SCORING-3 — `-m labuse.cli` (module exécutable), PAS `-m labuse` : le paquet n'a pas de
     # __main__.py, l'ancien argv échouait silencieusement dans le log (constaté au run q_v12).
@@ -1294,9 +1303,12 @@ def admin_flux_lancer_run(request: Request, body: LancerRunIn | None = None) -> 
     log_path = f"/tmp/labuse-flux-run-{label}.log"
     try:
         with open(log_path, "ab") as fh:
-            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
+            proc = subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    # DONNEES-2 (B3) — ouvre l'état AVEC le pid du process détaché (celui que « Arrêter » signalera) ;
+    # le process flux-run le ré-ouvrira avec sa progression réelle dès qu'il démarre.
+    run_progress.start(label, pid=proc.pid, kind="run", recette=recette, log=log_path)
     with session_scope() as s:
         estimation = _estimation_run(s)
         try:
@@ -1311,6 +1323,38 @@ def admin_flux_lancer_run(request: Request, body: LancerRunIn | None = None) -> 
     return {"ok": True, "label": label, "estimation": estimation, "log": log_path}
 
 
+class ArreterRunIn(BaseModel):
+    label: str = Field(min_length=1, max_length=80)
+
+
+@router.post("/admin/flux/run/arreter")
+def admin_flux_arreter_run(request: Request, body: ArreterRunIn) -> dict:
+    """DONNEES-2 (B3) — ARRÊT PROPRE d'un run en cours : SIGTERM au groupe de process (le run est
+    détaché, chef de son groupe), puis l'état passe « abandonné ». Geste humain, tracé."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import run_progress
+    res = run_progress.stop(body.label)
+    if not res.get("ok"):
+        raise HTTPException(404, res.get("motif", "run inconnu"))
+    return res
+
+
+@router.get("/admin/flux/run/etat")
+def admin_flux_run_etat(request: Request) -> dict:
+    """DONNEES-2 (B3) — l'ÉTAT du run en cours (phase, commune, %, pid), pour la barre de l'étape 2.
+    Léger : lu des fichiers d'état, réconcilié (un run mort n'apparaît plus « en cours »)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import run_progress
+    from ..db import engine
+    with engine().begin() as c:
+        complets = {r[0] for r in c.execute(text("SELECT run_id FROM p_score_v2_runs")).all()}
+    run_progress.reconcile(complets)
+    return {"en_cours": run_progress.en_cours()}
+
+
 class BasculeIn(BaseModel):
     run: str = Field(min_length=1, max_length=64)
 
@@ -1320,6 +1364,9 @@ def admin_flux_bascule(request: Request, body: BasculeIn) -> dict:
     """FLUX-1 (F2.3/F2.4) — BASCULE le run courant vers `run` (ou retour arrière si c'est le précédent).
     Refuse un run incomplet ; sinon promeut le pointeur, fait suivre le précédent, PURGE les caches A6,
     JOURNALISE (qui/quand/de/vers) et exécute la garde de cohérence immédiatement. Geste humain."""
+    import subprocess
+    import sys
+    from pathlib import Path
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
@@ -1340,6 +1387,22 @@ def admin_flux_bascule(request: Request, body: BasculeIn) -> dict:
                                lien="/admin", dedup=f"bascule:{res['nouveau']}:{datetime.now(tz=timezone.utc):%Y%m%d%H%M}")
         except Exception:  # noqa: BLE001
             pass
+    # DONNEES-2 (B1) — les tables SERVIES run-scopées (parcel_flags · parcel_renouvellement · score_e)
+    # et les tuiles carte ne « montent DANS le geste » que maintenant : la bascule LANCE, DÉTACHÉ, la
+    # reconstruction pour le NOUVEAU run (`build-mvt`, le geste unique M48). On ne la fait PAS en ligne :
+    # un DROP TABLE prend un verrou exclusif qui DEADLOCK avec les lectures de la garde (constaté). Tant
+    # qu'elle tourne, la garde reste à 5/6 (tables encore sur l'ancien run) ; elle repasse 6/6 à la fin.
+    reconstruction = None
+    try:
+        racine = Path(__file__).resolve().parents[3]
+        rlog = f"/tmp/labuse-build-mvt-{res['nouveau']}.log"
+        argv = [sys.executable, "-m", "labuse.cli", "build-mvt", "--label", res["nouveau"]]
+        with open(rlog, "ab") as fh:
+            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
+        reconstruction = {"lancee": True, "run": res["nouveau"], "log": rlog}
+    except Exception as exc:  # noqa: BLE001
+        reconstruction = {"lancee": False, "motif": f"{type(exc).__name__}"}
+    res["reconstruction"] = reconstruction
     return res
 
 
