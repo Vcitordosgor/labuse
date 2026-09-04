@@ -476,6 +476,29 @@ export interface ZoneEntreprises { total: number; familles: ZoneFamille[]; n_cha
 export interface ZoneGenerateur { label: string; source: string }
 export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }
 export type ZoneCouverture = 'servie' | 'non_couverte' | 'erreur'
+// DESTINATIONS-1 (X4.1) — verdict de la sous-destination choisie sur une zone PLU recouverte.
+// La `phrase` est SERVIE par le backend (même moteur que fiche/Copilote) — jamais reformulée au front.
+export type DestinationEtat = 'autorise' | 'sous_condition' | 'interdit' | 'en_cours_de_calibration'
+export interface DestinationCdac { seuil_m2: number; mention: string; source: string }
+export interface DestinationZoneVerdict {
+  zone: string | null; commune: string | null; part_pct: number | null
+  etat: DestinationEtat
+  statut?: string | null; condition?: string | null; seuil_m2?: number | null; seuil_type?: string | null
+  article?: string | null; page_pdf?: number | null; millesime?: string | null
+  etat_calibration?: string | null; cdac?: DestinationCdac | null; phrase: string
+}
+export interface EtudeZoneDestinations {
+  sous_destination?: string; libelle?: string
+  zones?: DestinationZoneVerdict[]
+  referentiel?: string; cdac_regle?: string
+  erreur?: string   // sous-destination inconnue (garde backend)
+}
+// Référentiel R151-27/28 servi pour le sélecteur d'activité (Étude de zone · Faisabilité).
+export interface DestinationRef { slug: string; libelle: string }
+export interface SousDestinationRef { slug: string; destination: string; libelle: string }
+export interface DestinationsReferentiel {
+  destinations: DestinationRef[]; sous_destinations: SousDestinationRef[]; source: string
+}
 export interface EtudeZoneResult {
   statut: string
   zone_disponible: boolean
@@ -499,6 +522,8 @@ export interface EtudeZoneResult {
   zone_demain?: { logements_autorises_36m: number | null; permis_36m: number | null; au_zones_n: number | null; au_zones_ha: number | null; source: string }
   contraintes_plu?: { zones: { zone: string; part_pct: number; commune: string | null; document: string | null }[]; cdac_vigilance?: string; note?: string }
   trafic?: { couverte: boolean; axes: { route: string; tmja: number; annee: number }[]; libelle?: string; vide?: boolean }
+  // DESTINATIONS-1 (X4.1) — présent quand `sous_destination` a été envoyée : verdict par zone PLU recouverte.
+  destinations?: EtudeZoneDestinations | null
   habitants_par_concurrent?: number | null
   note?: string
 }
@@ -560,6 +585,25 @@ export interface ReglementZone {
   articles: { regle: string; reference: string; page_imprimee: number | null; url: string | null }[]
   annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
+  // DESTINATIONS-1 (X4.2) — ligne « Destinations » de la zone : résumé + dépliable 23 sous-destinations
+  // sourcées. Commune non calibrée / zone non lue → `phrase` seule (jamais un vide).
+  destinations?: FicheZoneDestinations | null
+}
+// DESTINATIONS-1 (X4.2) — résumé destinations d'une zone (zone_resume backend).
+export interface FicheDestinationLigne {
+  sous_destination: string; libelle: string
+  statut?: string | null; statut_effectif?: string | null; condition?: string | null
+  seuil_m2?: number | null; seuil_type?: string | null; article?: string | null
+  page_pdf?: number | null; cdac?: DestinationCdac | null; phrase: string
+}
+export interface FicheZoneDestinations {
+  etat_calibration: string
+  zone?: string | null; millesime?: string | null; document?: string | null; url?: string | null
+  autorisees?: string[]; interdites?: string[]; sous_conditions?: string[]
+  seuil_commerce_m2?: number | null; seuil_commerce_type?: string | null
+  commerce_cdac?: DestinationCdac | null
+  lignes?: FicheDestinationLigne[]; referentiel?: string
+  phrase?: string   // non calibrée / zone non lue — affichée telle quelle
 }
 export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string }
 

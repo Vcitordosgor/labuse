@@ -312,8 +312,12 @@ export const nafFamilles = () =>
 export interface EtudeZoneInput {
   idu?: string | null; lon?: number | null; lat?: number | null
   geom?: unknown | null; naf?: string | null; minutes: number; mode: 'pied' | 'voiture'
+  sous_destination?: string | null   // DESTINATIONS-1 (X4.1) — slug R151-28 (verdict par zone PLU)
   titre?: string | null
 }
+// DESTINATIONS-1 (X4.1) — référentiel R151-27/28 (sélecteur « Activité (destination) », libellés officiels).
+export const etudeZoneDestinationsRef = () =>
+  j<import('./types').DestinationsReferentiel>('/outils/etude-zone/destinations')
 export const etudeZone = (body: EtudeZoneInput) =>
   j<EtudeZoneResult>('/outils/etude-zone', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -614,6 +618,10 @@ export interface CopiloteV2Reponse {
   prefill_idu?: string | null
   prefill_plu?: { insee: string; zone: string | null } | null
   prefill_programme?: Record<string, number> | null   // Q11 — pré-remplit la Faisabilité (bâtiments/niveaux/logements)
+  // DESTINATIONS-1 (X4.4) — outil destination_zone : la phrase SOURCÉE (servie telle quelle, jamais
+  // reformulée) + le préremplissage de l'Étude de zone (porte 'etude-zone').
+  destination_phrase?: string | null
+  prefill_etude_zone?: { idu?: string | null; commune?: string | null; zone?: string | null; sous_destination: string } | null
   partiel?: boolean
   sources?: string[]
   clarification?: boolean
@@ -1098,6 +1106,20 @@ export interface AdminPilotage {
   gels: Array<{ sujet: string; motif: string | null; ts: string | null }>
 }
 export const getAdminPilotage = () => j<AdminPilotage>('/admin/pilotage')
+
+// DESTINATIONS-1 (X5.3) — calibration destinations par commune (page admin « Destinations »).
+export interface AdminDestinationsCommune {
+  insee: string; commune: string
+  etat: 'calibree' | 'a_relire' | 'rnu' | 'non_calibree'
+  millesime: string | null; lu_le: string | null; document: string | null
+  url?: string | null; note?: string | null; zones?: string[]
+}
+export interface AdminDestinations {
+  communes: AdminDestinationsCommune[]
+  compte: { calibree: number; a_relire: number; rnu: number; non_calibree: number }
+  referentiel: string
+}
+export const getAdminDestinations = () => j<AdminDestinations>('/admin/destinations')
 export const getAdminStripe = () => j<StripeApercu>('/admin/stripe')
 export const postAdminDegeler = (sujet: string) =>
   j<{ ok: boolean; degele: boolean }>('/admin/degeler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sujet }) })

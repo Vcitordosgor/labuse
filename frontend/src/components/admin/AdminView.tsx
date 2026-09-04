@@ -14,11 +14,12 @@ import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { ContactsSection } from './Contacts'
+import { DestinationsSection } from './Destinations'
 
 // ADMIN-1 (AD2) — « sources »/« flux »/« cron » ne sont plus des sections de menu : elles sont
 // FUSIONNÉES dans « donnees » (onglets Catalogue/Circuit/Horloge). Les valeurs restent dans le type
 // pour REDIRIGER les anciens deep-links (voir `_rediriger` plus bas).
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'destinations' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
 
 // ADMIN-1 (AD2) — redirection des anciennes routes vers la page fusionnée « Données ».
 // LOT S1 — `programmes` n'a plus de section admin : le deep-link sort vers l'outil « Scan patrimoine »
@@ -319,6 +320,8 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'licences', label: 'Comptes', ic: '▣' },
   { key: 'ia', label: 'IA', ic: '✦', ia: true },
   { key: 'donnees', label: 'Données', ic: '☰' },
+  // DESTINATIONS-1 (X5.3) — la calibration destinations, à côté de Données (une page = une question).
+  { key: 'destinations', label: 'Destinations', ic: '⌂' },
   { key: 'produit', label: 'Produit', ic: '◫' },
   { key: 'courrier', label: 'Courrier', ic: '✉' },
   { key: 'radar', label: 'Radar', ic: '◎' },
@@ -333,6 +336,7 @@ const SOUS_TITRES: Partial<Record<AdminSection, string>> = {
   licences: 'que dois-je faire pour ce client, maintenant ?',
   ia: 'consommation, plafonds par compte, registre modèle',
   donnees: 'mes données sont-elles à jour ? — Catalogue · Circuit · CRON',
+  destinations: 'le verdict destination est-il calibré, commune par commune ?',
   produit: 'ce qui est utilisé · ce que les clients demandent',
   courrier: 'les demandes d’envoi — la page qui manquait',
   radar: 'la pige d’annonces — déposer, valider, re-vérifier',
@@ -438,6 +442,7 @@ export function AdminView() {
           {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <IaSection />}
           {section === 'donnees' && <DonneesSection />}
+          {section === 'destinations' && <DestinationsSection />}
           {section === 'produit' && <ProduitSection />}
           {section === 'courrier' && <CourrierSection />}
           {section === 'radar' && <RadarSection />}

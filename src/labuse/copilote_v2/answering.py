@@ -73,6 +73,13 @@ CATALOGUE = [
     {"nom": "compter_piscines", "desc": "Compter les PISCINES détectées (île entière ou une commune) — "
      "détection ortho/IA gelée. « combien de piscines à X », « piscines détectées ».",
      "params": {"commune": "str (absent = toute l'île)"}},
+    {"nom": "destination_zone", "desc": "PEUT-ON OUVRIR/IMPLANTER une activité (restaurant, hôtel, "
+     "commerce, bureau, entrepôt, usine…) sur une parcelle (IDU) ou dans une zone PLU d'une commune ? "
+     "Verdict autorisé / sous condition / interdit, sourcé au règlement PLU (article, page, millésime), "
+     "CDAC incluse. « peut-on ouvrir un restaurant sur cette parcelle », « le commerce est-il autorisé "
+     "en zone UE à Saint-Denis ».",
+     "params": {"idu": "str 14 car. (si parcelle)", "commune": "str (si zone donnée)",
+                "zone": "str (code zone PLU, ex. UE)", "activite": "l'activité, verbatim"}},
     {"nom": "recherche_web", "desc": "DERNIER RECOURS (M78-ter) — un fait PUBLIC de La Réunion sur le "
      "foncier/immobilier/urbanisme/collectivités et leurs acteurs (élu, organigramme d'une collectivité, "
      "actualité réglementaire, appel à projets, coordonnées d'un service) que AUCUN autre outil ne couvre.",
@@ -247,6 +254,7 @@ _ARG_SPEC = {
     "compter_permis": {"commune": str, "mois": int},
     "marche": {"commune": str},
     "compter_piscines": {"commune": str},
+    "destination_zone": {"idu": str, "commune": str, "zone": str, "activite": str},
     "recherche_web": {"question": str},
 }
 
@@ -300,10 +308,18 @@ def _reply_compte(db: Session, message: str, res, faits_fil, intent: str) -> dic
                       carte_filtre=_carte_depuis_compte(res),
                       _faits_tour=registre_faits.extraire_faits(res))
     text = _formuler(db, message, res, faits_fil)
+    # DESTINATIONS-1 (X4.4) — le verdict destination voyage jusqu'au front : la PHRASE SOURCÉE
+    # (servie telle quelle, jamais reformulée) + la porte « Étude de zone » préremplie (idu/commune/
+    # zone/sous_destination). Motif prefill dédié (etudeZonePrefill), même grammaire que M22/PLU.
+    extra: dict = {}
+    if res.tool == "destination_zone" and isinstance(res.data, dict):
+        extra = {"destination_phrase": res.data.get("phrase"),
+                 "porte": "etude-zone", "prefill": "etudeZonePrefill",
+                 "prefill_etude_zone": res.data.get("prefill")}
     return _reply(text, intent, refus=None, tool=res.tool, sources=[res.source],
                   partiel=res.partiel, criteres_non_appliques=cna,
                   criteres_appliques=labels, carte_filtre=_carte_depuis_compte(res),
-                  _faits_tour=registre_faits.extraire_faits(res))
+                  _faits_tour=registre_faits.extraire_faits(res), **extra)
 
 
 def _repli_lisible(res) -> str:

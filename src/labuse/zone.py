@@ -531,6 +531,7 @@ def zone_demain(session: Session, geom_geojson: dict) -> dict:
 
 def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,
                   geom_geojson: dict | None = None, naf: str | None = None,
+                  sous_destination: str | None = None,
                   client: httpx.Client | None = None, fetch=None) -> dict:
     """Agrégat complet d'une zone : isochrone (+ bandes pour dater les POI) → population, emplois,
     équipements, concurrents (si NAF), générateurs de flux, marché. `geom_geojson` force la géométrie
@@ -569,6 +570,16 @@ def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: 
         "contraintes_plu": contraintes_plu(session, zone),   # LOT 7 — zones PLU recouvertes (tableau)
         "trafic": trafic_zone(session, zone),        # LOT 5 — trafic RN traversant/bordant la zone
     }
+    # DESTINATIONS-1 (X4.1) — verdict de la sous-destination choisie sur chaque zone PLU
+    # recouverte : autorisé / sous condition / interdit / en cours de calibration. Lecture
+    # UNIQUE via plu.destinations (calibration citée article/page/millésime, CDAC L752-1).
+    if sous_destination:
+        from .plu.destinations import verdicts_zones_etude
+        try:
+            out["destinations"] = verdicts_zones_etude(
+                out["contraintes_plu"].get("zones", []), sous_destination)
+        except ValueError as e:
+            out["destinations"] = {"erreur": str(e)}
     # LOT A — concurrents : trois états distincts (servie+0 / non ingérée / erreur), jamais un faux zéro
     if naf:
         if not _source_peuplee(session, "sirene_etablissements"):

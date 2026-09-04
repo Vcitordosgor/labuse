@@ -962,6 +962,21 @@ def admin_sources(request: Request) -> dict:
                     and (now - r["last_sync_at"]).days > r["veille_cadence_attendue"]),
             },
         })
+    # DESTINATIONS-1 (X5.2) — la ligne PLU du Catalogue porte l'état de la calibration
+    # destinations (calibrées / à relire / non calibrées / RNU) : une nouvelle version de
+    # PLU passe la commune « à relire », visible ici sans changer d'écran.
+    try:
+        from ..plu.destinations import etats_ile
+        _etats_dest = etats_ile()
+        _chip = {"calibrees": sum(1 for e in _etats_dest if e["etat"] == "calibree"),
+                 "a_relire": sum(1 for e in _etats_dest if e["etat"] == "a_relire"),
+                 "rnu": sum(1 for e in _etats_dest if e["etat"] == "rnu"),
+                 "non_calibrees": sum(1 for e in _etats_dest if e["etat"] == "non_calibree")}
+        for s in sources:
+            if "plu" in s["name"].lower():
+                s["destinations"] = _chip
+    except Exception:  # noqa: BLE001 — la vitrine Catalogue ne casse jamais sur ce chip
+        pass
     # « à mettre à jour » d'abord (mandat), puis nom
     sources.sort(key=lambda s: (s["a_jour"] is not False, s["name"].lower()))
     for r in runs:
@@ -1596,3 +1611,21 @@ def etat_plafond_ia(compte_id: int | None, sujet: str, jour_iso: str, *, nl_defa
         return {"detail": f"Plafond IA du jour atteint ({_fmt_eur(budget)}/jour). Reprend à minuit.",
                 "budget_eur": round(budget, 2), "depense_eur": round(depense, 4), "gel_jusqua": "minuit"}
     return None
+
+
+# ═════════════════ DESTINATIONS-1 (X5.3) — calibration destinations par commune ═════════════════
+
+@router.get("/admin/destinations")
+def admin_destinations(request: Request) -> dict:
+    """Tableau commune × état de la calibration destinations (calibrée le … / à relire /
+    non calibrée / RNU), lien vers le règlement lu. Lecture seule, module unique
+    plu.destinations ; l'état « à relire » est directionnel (nouvelle version SERVIE
+    postérieure au document LU — X5.2)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..plu.destinations import REF_SOURCE, etats_ile
+    etats = etats_ile()
+    compte = {"calibree": 0, "a_relire": 0, "rnu": 0, "non_calibree": 0}
+    for e in etats:
+        compte[e["etat"]] = compte.get(e["etat"], 0) + 1
+    return {"communes": etats, "compte": compte, "referentiel": REF_SOURCE}

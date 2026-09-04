@@ -1,0 +1,1142 @@
+meta:
+  insee: '97410'
+  commune: Saint-Benoît
+  document: 97410_reglement_20200206.pdf
+  document_gpu: 97410_PLU_20200206
+  gpu_doc_id: 77260522306e0350ed054b54d35a35fa
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97410/77260522306e0350ed054b54d35a35fa/97410_reglement_20200206.pdf
+  md5: 900a6c13641a4fd39b5bb65b71914f70
+  millesime: '2020-02-06'
+  pages_total: 162
+  lu_le: '2026-09-03'
+  edition: PLU 2020 opposable servi par le GPU. Modifications postérieures éventuelles (n°2/n°3 évoquées au catalogue)
+    NON intégrées au GPU — incertitude consignée, non fabriquée (cf. note M40 de config/plu_millesimes.yaml).
+  structure: 'Règlement à chapitres groupés (ZONES U / ZONES AU / ZONES A / ZONES N) avec règles par famille et
+    par secteur à l''intérieur ; colonne « Règles » seule opposable (la colonne explicative est déclarée non opposable
+    p. 3). AU numérotées réglées par famille (fiches annexes n°01-19 = phasage, sans destinations) ; STECAL Ns/Nta/Ntb
+    réglés par famille au chapitre N + fiches n°53/55/57/59 propres (seuils surface_plancher et emprise_sol) ; CADUCITÉ
+    ELAN opposable (permis avant le 31/12/2021, N-3) reprise dans les conditions — STECAL largement éteints. A/N
+    : listes positives (silence = interdit) ; U/AU : silence = autorisé sauf Ut.'
+zones:
+  Ua:
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative d''interdictions,
+      pp. 5-7) puis Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause
+      « seules sont admises » ne vise la zone Ua : ce qui n''est ni interdit ni conditionné est autorisé.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: U-2 1°
+        page_pdf: 5
+        citation: '« 1° En zones Ua et Ub : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      exploitation_forestiere:
+        statut: interdit
+        article: U-2 1°
+        page_pdf: 5
+        citation: '« 1° En zones Ua et Ub : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      industrie:
+        statut: interdit
+        article: U-2 1°
+        page_pdf: 5
+        citation: « - Les constructions à usage industriel, sous réserve, pour la zone Ub, de l'article U 3. » (la
+          réserve ne vaut que pour Ub ; en Ua l'interdiction est sèche)
+      entrepot:
+        statut: sous_condition
+        condition: uniquement s'ils sont l'annexe d'un commerce ou d'une activité artisanale
+        article: U-3 2°
+        page_pdf: 7
+        citation: '« 2° En zone Ua : - Les entrepôts, ne sont autorisés que s''ils sont l''annexe d''un commerce
+          ou d''une activité artisanale. »'
+    notes:
+    - 'Interdiction générale non rattachable à une sous-destination : « Les occupations et utilisations du sol présentant
+      des caractéristiques incompatibles avec la proximité de l''habitat. » (Art. U-2 1°, p. 5) — s''applique en
+      Ua et Ub quelle que soit la destination.'
+    - 'ICPE (toutes destinations) : « Les installations classées pour la protection de l''environnement (ICPE) sont
+      autorisées sous réserve qu''elles correspondent à des services de proximité nécessaires aux habitants » (Art.
+      U-3 1°, p. 7 — zones Ua et Ub).'
+    - 'Servitude de projet (secteur au trait bleu, non liée à une destination) : « toute construction d''une superficie
+      supérieure à 20m² est interdite pendant un maximum de cinq ans […] à l''exception des travaux ayant pour objet
+      l''adaptation, le changement de destination, la réfection ou l''extension limitée des constructions existantes
+      » (Art. U-2 2°, p. 5).'
+  Uap:
+    silence: autorise
+    silence_src: 'Le secteur Uap relève du chapitre ZONES U : « Chaque bâti protégé fait l''objet d''une fiche d''immeuble
+      : […] comprenant les règles à respecter en complément du règlement de la zone U. » (Art. U-1, p. 3). Dans
+      ce chapitre, Art. U-2 « Sont interdites : » est une liste limitative (pp. 5-7) dont aucun alinéa ne vise le
+      secteur Uap : ce qui n''est ni interdit ni conditionné est autorisé.'
+    sous_destinations: {}
+    notes:
+    - 'ANOMALIE — Uap n''est pas dans le champ d''application de l''Art. U-1 (« Le présent règlement est applicable
+      dans les zones urbaines Ua, Ub, Ue, Up et Ut », p. 3) : c''est un secteur (« Il existe un secteur Uap, situé
+      le long de la RN de Saint-François à Petit-Saint-Pierre, correspondant au secteur patrimonial de Ste-Anne
+      », p. 3, colonne explicative). Les articles U-2/U-3 règlent les destinations zone par zone (Ua, Ub, Ue, Up,
+      Ut) sans jamais citer Uap, et le rattachement de Uap à Ua ou Ub n''est écrit nulle part → aucune interdiction/condition
+      de destination ne lui est textuellement rattachée (douteux → non écrit).'
+    - 'Le règlement ne mentionne Uap que pour la forme : hauteur (point bas, Art. U-4 II 1°, p. 10), toitures «
+      pente supérieure ou égale à 35° » (Art. U-8 2°, p. 12), protection du patrimoine bâti (Art. U-8 4°, p. 13).
+      Les fiches annexes n°60 à 82 (pp. 97 sq.) sont des fiches d''immeubles patrimoniales : aucune règle de destination.'
+  Ub:
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
+      Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
+      admises » ne vise la zone Ub.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: U-2 1°
+        page_pdf: 5
+        citation: '« 1° En zones Ua et Ub : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      exploitation_forestiere:
+        statut: interdit
+        article: U-2 1°
+        page_pdf: 5
+        citation: '« 1° En zones Ua et Ub : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      industrie:
+        statut: sous_condition
+        condition: emprise au sol n'excédant pas 250 m² et caractéristiques non incompatibles avec la proximité
+          de l'habitat
+        seuil_m2: 250
+        seuil_type: emprise_sol
+        article: U-3 3°
+        page_pdf: 8
+        citation: '« 3° En zone Ub : - Les constructions à usage industriel, dès lors que leur emprise au sol n''excède
+          pas 250 m² et que leurs caractéristiques ne sont pas incompatibles avec la proximité de l''habitat. »
+          (interdites par défaut : Art. U-2 1°, p. 5, « sous réserve, pour la zone Ub, de l''article U 3 »)'
+    notes:
+    - 'Interdiction générale non rattachable à une sous-destination : « Les occupations et utilisations du sol présentant
+      des caractéristiques incompatibles avec la proximité de l''habitat. » (Art. U-2 1°, p. 5).'
+    - 'ICPE : autorisées « sous réserve qu''elles correspondent à des services de proximité nécessaires aux habitants
+      » (Art. U-3 1°, p. 7 — zones Ua et Ub).'
+    - 'ANOMALIE — la colonne explicative (non opposable) annonce : « Les constructions destinées aux exploitations
+      agricoles ou forestières sont en revanche autorisées dans des secteurs spécifiques de la zone Ub. » (p. 5)
+      ; aucune règle opposable correspondante n''existe dans la colonne Règles du chapitre. L''interdiction opposable
+      reste sèche.'
+    - 'Règle spatiale (pas une destination) : « En zones Up et Ub, dans les espaces hachurés en vert sur le document
+      graphique, qui correspondent à un corridor écologique protégé (de part et d''autre de la ravine la Sourdine),
+      toute construction est interdite. » (Art. U-2 7°, p. 7).'
+  Ue:
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
+      Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
+      admises » ne vise la zone Ue en général — SAUF le secteur de la loupe L2 (Petit Saint-Pierre), voir notes
+      : le silence y vaut interdit.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: interdits, sauf 1) logements de gardiennage incorporés au bâtiment d'activité, 2) logements étudiants
+          de l'internat du CFPPA (zone d'activités de Beaulieu)
+        article: U-2 5°
+        page_pdf: 6
+        citation: '« 5° En zone Ue et Up : - Les constructions à usage d''habitation à l''exception : 1) des logements
+          de gardiennage incorporés au bâtiment d''activité, 2) des logements étudiants de l''internat du CFPPA
+          situé en zone Ue sur le secteur de la zone d''activités de Beaulieu. »'
+      hebergement:
+        statut: sous_condition
+        condition: interdits, sauf 1) logements de gardiennage incorporés au bâtiment d'activité, 2) logements étudiants
+          de l'internat du CFPPA (zone d'activités de Beaulieu)
+        article: U-2 5°
+        page_pdf: 6
+        citation: '« - Les constructions à usage d''habitation à l''exception : 1) des logements de gardiennage
+          incorporés au bâtiment d''activité, 2) des logements étudiants de l''internat du CFPPA situé en zone Ue
+          sur le secteur de la zone d''activités de Beaulieu. » (le terme « habitation » = destination R151-27 couvrant
+          logement + hébergement ; citation commune)'
+    sous_destinations_note: « constructions à usage d'habitation » est mappé aux deux sous-destinations de la destination
+      Habitation (logement, hebergement) ; les exceptions sont citées mot à mot.
+    notes:
+    - 'Loupe L1 — Ue de la distillerie « Rivière du Mât » (Beaufonds) : Art. U-2 3° (p. 6) : « les constructions
+      nouvelles sont interdites sur l''espace non aedificandi apparaissant dans l''annexe L1 du présent règlement
+      » ; annexe L1 (fiche N°L01, p. 51) : « Secteur de 5 mètres, à compter de la limite de propriété, où toute
+      construction est interdite. Seuls les aménagements de voirie sont autorisés. » — règle spatiale (espace non
+      aedificandi + écran végétalisé), AUCUNE règle de destination : l''entrée Ue n''est pas modifiée par L1.'
+    - 'Loupe L2 — Ue de Petit Saint-Pierre (Sainte-Anne) : Art. U-2 4° (p. 6) : « les règles qui s''appliquent sont
+      celles contenues dans l''annexe L2 du présent règlement » ; annexe L2 (fiche N°L02, p. 52) : « Dans la zone
+      Ue de Petit Saint-Pierre, sont autorisées : - les stations-services et leurs activités connexes (station de
+      lavage, vente de gaz, vérification de la pression des pneus, boutique de proximité…), - les logements de gardiennage
+      incorporés au bâtiment d''activité. » → dans CE secteur, liste fermée d''autorisations : le silence y vaut
+      interdit. « stations-services et leurs activités connexes » n''est pas rattachable en plein à une sous-destination
+      R151-28 (douteux → non écrit) ; secteur non servi comme code de zone distinct, régime consigné ici.'
+    - 'ICPE : Ue n''est pas visée par la condition « services de proximité » de l''Art. U-3 1° (limitée aux zones
+      Ua et Ub) ; la colonne explicative (non opposable, p. 5) confirme que les industries sont attendues en Ue,
+      mais aucune règle opposable de destination « industrie » n''est écrite pour Ue → non mentionnée (silence).'
+  Up:
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES U : Art. U-2 « Sont interdites : » (liste limitative, pp. 5-7) puis
+      Art. U-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 7). Aucune clause « seules sont
+      admises » ne vise la zone Up. (Le « caractère » de la zone p. 3, « commerces et services strictement limités
+      », est indicatif ; la limite opposable est l''Art. U-3 4°.)'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: interdits, sauf logements de gardiennage incorporés au bâtiment d'activité (l'exception CFPPA
+          est propre à la zone Ue)
+        article: U-2 5°
+        page_pdf: 6
+        citation: '« 5° En zone Ue et Up : - Les constructions à usage d''habitation à l''exception : 1) des logements
+          de gardiennage incorporés au bâtiment d''activité, 2) des logements étudiants de l''internat du CFPPA
+          situé en zone Ue sur le secteur de la zone d''activités de Beaulieu. »'
+      hebergement:
+        statut: sous_condition
+        condition: interdits, sauf logements de gardiennage incorporés au bâtiment d'activité
+        article: U-2 5°
+        page_pdf: 6
+        citation: '« - Les constructions à usage d''habitation à l''exception : 1) des logements de gardiennage
+          incorporés au bâtiment d''activité […] » (« habitation » = destination R151-27 couvrant logement + hébergement
+          ; citation commune)'
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: autorisés uniquement dans la limite de 5 % de la surface totale de la zone (limite en %, pas
+          de seuil en m²)
+        article: U-3 4°
+        page_pdf: 8
+        citation: '« 4° En zone Up : - les constructions et installations à destination de commerces et de services
+          ne sont autorisées que dans la limite de 5% de la surface totale de la zone. » (« commerce » → artisanat_commerce_detail
+          + commerce_gros)'
+      commerce_gros:
+        statut: sous_condition
+        condition: autorisés uniquement dans la limite de 5 % de la surface totale de la zone
+        article: U-3 4°
+        page_pdf: 8
+        citation: « les constructions et installations à destination de commerces et de services ne sont autorisées
+          que dans la limite de 5% de la surface totale de la zone. »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: autorisées uniquement dans la limite de 5 % de la surface totale de la zone
+        article: U-3 4°
+        page_pdf: 8
+        citation: « les constructions et installations à destination de commerces et de services ne sont autorisées
+          que dans la limite de 5% de la surface totale de la zone. » (« services » couvre pleinement les activités
+          de services où s'effectue l'accueil d'une clientèle)
+    notes:
+    - 'Mapping : « commerces et de services » (Art. U-3 4°) → artisanat_commerce_detail + commerce_gros (« commerce
+      ») et activites_services_clientele (« services ») ; restauration, cinéma, hôtels, bureaux, etc. ne sont pas
+      couverts en plein par ces termes → non écrits.'
+    - 'Règle spatiale : « En zones Up et Ub, dans les espaces hachurés en vert […] corridor écologique protégé (de
+      part et d''autre de la ravine la Sourdine), toute construction est interdite. » (Art. U-2 7°, p. 7).'
+  Ut:
+    silence: interdit
+    silence_src: 'Art. U-2 6° (p. 7) : « 6° En zone Ut : - Toutes les constructions à l''exception des équipements
+      et hébergements touristiques et des constructions affectées au logement du personnel travaillant sur le site.
+      » — tout ce qui n''est pas dans les exceptions est interdit.'
+    sous_destinations:
+      hotels:
+        statut: autorise
+        article: U-2 6°
+        page_pdf: 7
+        citation: « Toutes les constructions à l'exception des équipements et hébergements touristiques […] » («
+          hébergements touristiques » → hotels + autres_hebergements_touristiques, citation commune)
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: U-2 6°
+        page_pdf: 7
+        citation: « Toutes les constructions à l'exception des équipements et hébergements touristiques […] » (citation
+          commune avec hotels)
+      logement:
+        statut: sous_condition
+        condition: uniquement les constructions affectées au logement du personnel travaillant sur le site
+        article: U-2 6°
+        page_pdf: 7
+        citation: « […] et des constructions affectées au logement du personnel travaillant sur le site. »
+    notes:
+    - « équipements […] touristiques » (exception de l'Art. U-2 6°) n'est rattachable en plein à aucune sous-destination
+      R151-28 (douteux → non écrit) ; l'exception reste lisible dans silence_src.
+    - Le « caractère » de la zone (« une zone Ut aux Orangers, affectée au tourisme », p. 3, colonne explicative)
+      est indicatif, non opposable.
+  AUa:
+    famille: true
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES AU : Art. AU-2 « Sont interdites : » (liste limitative, pp. 21-22)
+      puis Art. AU-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 22). Aucune clause « seules
+      sont admises » ne vise les zones AUa.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: AU-2 1°
+        page_pdf: 21
+        citation: '« 1° En zones AUa et AUb : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      exploitation_forestiere:
+        statut: interdit
+        article: AU-2 1°
+        page_pdf: 21
+        citation: '« 1° En zones AUa et AUb : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      industrie:
+        statut: interdit
+        article: AU-2 1°
+        page_pdf: 21
+        citation: « - Les constructions à usage industriel, sous réserve, pour la zone AUb, de l'article AU- 3.
+          » (la réserve ne vaut que pour AUb ; en AUa l'interdiction est sèche)
+      entrepot:
+        statut: sous_condition
+        condition: uniquement s'ils sont l'annexe d'un commerce ou d'une activité artisanale
+        article: AU-3 2°
+        page_pdf: 22
+        citation: '« 2° En zone AUa : - Les entrepôts, ne sont autorisés que s''ils sont l''annexe d''un commerce
+          ou d''une activité artisanale. »'
+    notes:
+    - 'Interdiction générale non rattachable à une sous-destination : « Les occupations et utilisations du sol présentant
+      des caractéristiques incompatibles avec la proximité de l''habitat. » (Art. AU-2 1°, p. 21).'
+    - 'ICPE : « autorisées sous réserve qu''elles correspondent à des services de proximité nécessaires aux habitants
+      » (Art. AU-3 1°, p. 22 — zones AUa et AUb).'
+  AUb:
+    famille: true
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES AU : Art. AU-2 « Sont interdites : » (liste limitative, pp. 21-22)
+      puis Art. AU-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 22). Aucune clause « seules
+      sont admises » ne vise les zones AUb.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: AU-2 1°
+        page_pdf: 21
+        citation: '« 1° En zones AUa et AUb : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      exploitation_forestiere:
+        statut: interdit
+        article: AU-2 1°
+        page_pdf: 21
+        citation: '« 1° En zones AUa et AUb : […] - Les constructions destinées aux exploitations agricoles ou forestières.
+          »'
+      industrie:
+        statut: sous_condition
+        condition: emprise au sol n'excédant pas 250 m² et caractéristiques non incompatibles avec la proximité
+          de l'habitat
+        seuil_m2: 250
+        seuil_type: emprise_sol
+        article: AU-3 3°
+        page_pdf: 22
+        citation: '« 3° En zone AUb : - Les constructions à usage industriel, dès lors que leur emprise au sol n''excède
+          pas 250 m² et que leurs caractéristiques ne sont pas incompatibles avec la proximité de l''habitat. »
+          (interdites par défaut : Art. AU-2 1°, p. 21, « sous réserve, pour la zone AUb, de l''article AU- 3 »)'
+    notes:
+    - 'Interdiction générale non rattachable à une sous-destination : « Les occupations et utilisations du sol présentant
+      des caractéristiques incompatibles avec la proximité de l''habitat. » (Art. AU-2 1°, p. 21).'
+    - 'ICPE : condition « services de proximité nécessaires aux habitants » (Art. AU-3 1°, p. 22).'
+    - 'ANOMALIE — la colonne explicative (non opposable, p. 21) annonce : « Les constructions destinées aux exploitations
+      agricoles ou forestières sont en revanche autorisées dans des secteurs spécifiques de la zone AUb. » ; aucune
+      règle opposable correspondante n''est écrite (ni au chapitre, ni dans les fiches n°02, 06, 07, 10-17, 19).
+      L''interdiction opposable reste sèche.'
+  AUe:
+    famille: true
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES AU : Art. AU-2 « Sont interdites : » (liste limitative, pp. 21-22)
+      puis Art. AU-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 22). Aucune clause « seules
+      sont admises » ne vise la zone AUe.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: interdits, sauf logements de gardiennage incorporés au bâtiment d'activité
+        article: AU-2 2°
+        page_pdf: 21
+        citation: '« 2° En zone AUe et AUp : - Les constructions à usage d''habitation à l''exception des logements
+          de gardiennage incorporés au bâtiment d''activité. »'
+      hebergement:
+        statut: sous_condition
+        condition: interdits, sauf logements de gardiennage incorporés au bâtiment d'activité
+        article: AU-2 2°
+        page_pdf: 21
+        citation: « - Les constructions à usage d'habitation à l'exception des logements de gardiennage incorporés
+          au bâtiment d'activité. » (« habitation » = destination R151-27 couvrant logement + hébergement ; citation
+          commune)
+  AUp:
+    famille: true
+    silence: autorise
+    silence_src: 'Structure du chapitre ZONES AU : Art. AU-2 « Sont interdites : » (liste limitative, pp. 21-22)
+      puis Art. AU-3 « Sont autorisées, dans les conditions définies ci-après : » (p. 22). Aucune clause « seules
+      sont admises » ne vise la zone AUp. (Le « caractère » p. 19, « commerces et les services […] strictement limités
+      », est indicatif ; la limite opposable est l''Art. AU-3 4°.)'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: interdits, sauf logements de gardiennage incorporés au bâtiment d'activité
+        article: AU-2 2°
+        page_pdf: 21
+        citation: '« 2° En zone AUe et AUp : - Les constructions à usage d''habitation à l''exception des logements
+          de gardiennage incorporés au bâtiment d''activité. »'
+      hebergement:
+        statut: sous_condition
+        condition: interdits, sauf logements de gardiennage incorporés au bâtiment d'activité
+        article: AU-2 2°
+        page_pdf: 21
+        citation: « - Les constructions à usage d'habitation à l'exception des logements de gardiennage incorporés
+          au bâtiment d'activité. » (« habitation » = destination R151-27 couvrant logement + hébergement ; citation
+          commune)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: autorisés uniquement dans la limite de 5 % de la surface totale de la zone (limite en %, pas
+          de seuil en m²)
+        article: AU-3 4°
+        page_pdf: 22
+        citation: '« 4° En zone AUp : - les constructions et installations à destination de commerces et de services
+          ne sont autorisées que dans la limite de 5% de la surface totale de la zone. » (« commerce » → artisanat_commerce_detail
+          + commerce_gros)'
+      commerce_gros:
+        statut: sous_condition
+        condition: autorisés uniquement dans la limite de 5 % de la surface totale de la zone
+        article: AU-3 4°
+        page_pdf: 22
+        citation: « les constructions et installations à destination de commerces et de services ne sont autorisées
+          que dans la limite de 5% de la surface totale de la zone. »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: autorisées uniquement dans la limite de 5 % de la surface totale de la zone
+        article: AU-3 4°
+        page_pdf: 22
+        citation: « les constructions et installations à destination de commerces et de services ne sont autorisées
+          que dans la limite de 5% de la surface totale de la zone. » (« services » couvre pleinement les activités
+          de services où s'effectue l'accueil d'une clientèle)
+    notes:
+    - 'Mapping : « commerces et de services » → artisanat_commerce_detail + commerce_gros (« commerce ») et activites_services_clientele
+      (« services ») ; les autres sous-destinations de la destination « commerce et activités de service » (restauration,
+      cinéma, hôtels…) ne sont pas couvertes en plein → non écrites.'
+    - 'Règle spatiale : « 3° Dans l''espace hachuré en vert sur le document graphique, qui correspond à un corridor
+      écologique protégé (de part et d''autre de la ravine la Sourdine), toute construction est interdite. » (Art.
+      AU-2 3°, p. 22) ; l''Art. AU-1 (p. 19) situe cet espace « dans la zone AU n°1 (zone d''activités économiques
+      de Beauvallon) », c''est-à-dire AUp1.'
+  AUa5:
+    renvoi: AUa
+    renvoi_src: 'Fiche annexe n°05, p. 57 : « FICHE ANNEXE DU REGLEMENT N°05 – ZONE AUa Le Conardel – zone d''habitat
+      » (rattache la zone n°5 à la famille AUa) ; Art. AU-1, p. 19 : « Les 18 zones AU sont repérées au règlement
+      graphique et font chacune l''objet d''une fiche : - comprenant, le cas échéant, des règles qui viennent compléter
+      règlement général des zones AU ou se substituer à ce règlement général » — la fiche n°05 (pp. 57-58) ne contient
+      aucune règle de destination.'
+    notes:
+    - 'La fiche n°05 affecte des espaces (« Espace destiné à accueillir une opération d''ensemble de forte densité
+      (supérieure à 50 logts/ha) », « Espace destiné à accueillir des équipements et leurs parkings », p. 58) :
+      affectations spatiales internes à la zone, pas des statuts de sous-destination.'
+  AUa8:
+    renvoi: AUa
+    renvoi_src: 'Fiche annexe n°08, p. 61 : « FICHE ANNEXE DU REGLEMENT N°08 – ZONE AUa Le Cap les Bas, sentier
+      des Lataniers » ; Art. AU-1, p. 19 (fiches complétant ou se substituant au règlement général) — la fiche n°08
+      ne contient aucune règle de destination.'
+  AUa9:
+    renvoi: AUa
+    renvoi_src: 'Fiche annexe n°09, p. 62 : « FICHE ANNEXE DU REGLEMENT N°09 – ZONE AUa Le Cap les Bas, chemin des
+      Jonquilles » ; Art. AU-1, p. 19 — la fiche n°09 ne contient aucune règle de destination.'
+  AUa18:
+    renvoi: AUa
+    renvoi_src: 'Fiche annexe n°18, p. 71 : « FICHE ANNEXE DU REGLEMENT N°18 – ZONE AUa Petit Saint-Pierre – chemin
+      Impérial » ; Art. AU-1, p. 19 — la fiche n°18 ne contient aucune règle de destination.'
+  AUb2:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°02, p. 55 : « FICHE ANNEXE DU REGLEMENT N°02 – ZONE Aub Bourbier les Hauts – chemin
+      Montjol » (sic « Aub ») ; Art. AU-1, p. 19 — la fiche n°02 ne contient aucune règle de destination.'
+  AUb6:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°06, p. 59 : « FICHE ANNEXE DU REGLEMENT N°06 – ZONE AUb Bras-Canot – espace Sarda
+      Garriga » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb7:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°07, p. 60 : « FICHE ANNEXE DU REGLEMENT N°07 – ZONE AUb Bras-Canot - Prévoisy »
+      ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb10:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°10, p. 63 : « FICHE ANNEXE DU REGLEMENT N°10 – ZONE AUb Le Cap les Bas – allée des
+      Palmistes » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb11:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°11, p. 64 : « FICHE ANNEXE DU REGLEMENT N°11 – ZONE AUb Le Cap les Bas – Impasse
+      Louis Barnaval » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb12:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°12, p. 65 : « FICHE ANNEXE DU REGLEMENT N°12 – ZONE AUb Le Cap les Hauts, près du
+      Lot. Baies Roses » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb13:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°13, p. 66 : « FICHE ANNEXE DU REGLEMENT N°13 – ZONE AUb Le Cap les Hauts, impasse
+      Lee-Fong-Chi » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb14:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°14, p. 67 : « FICHE ANNEXE DU REGLEMENT N°14 – ZONE AUb Sainte-Anne, chemin Blémir
+      » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb15:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°15, p. 68 : « FICHE ANNEXE DU REGLEMENT N°15 – ZONE AUb Sainte-Anne – chemin Jacquemin
+      » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb16:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°16, p. 69 : « FICHE ANNEXE DU REGLEMENT N°16 – ZONE AUb Sainte-Anne – chemin Morange
+      » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb17:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°17, p. 70 : « FICHE ANNEXE DU REGLEMENT N°17 – ZONE AUb Petit Saint-Pierre – chemin
+      Gallias » ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUb19:
+    renvoi: AUb
+    renvoi_src: 'Fiche annexe n°19, p. 72 : « FICHE ANNEXE DU REGLEMENT N°19 – ZONE AUb Cambourg – chemin Baptiste
+      » (« Opération SEMAC Amaryllis II ») ; Art. AU-1, p. 19 — aucune règle de destination dans la fiche.'
+  AUe3:
+    renvoi: AUe
+    renvoi_src: 'Fiche annexe n°03, p. 56 : « FICHE ANNEXE DU REGLEMENT N°03 – ZONE AUe Beaulieu – zone commerciale
+      » ; Art. AU-1, p. 19 — la fiche n°03 (ER, phasage, PPR, boisements, voirie) ne contient aucune règle de destination.'
+    notes:
+    - Le titre de la fiche dit « zone commerciale » (intitulé, non opposable comme règle de destination) ; le régime
+      des destinations de AUe reste celui du chapitre ZONES AU (habitation interdite sauf gardiennage, Art. AU-2
+      2°, p. 21).
+  AUp1:
+    renvoi: AUp
+    renvoi_src: 'Fiche annexe n°01, p. 54 : « FICHE ANNEXE DU REGLEMENT N°01 – ZONE AUp Beauvallon – pôle d''activités
+      vocation régionale » ; Art. AU-1, p. 19 — la fiche n°01 (opération d''ensemble, PPR, boisements, patrimoine
+      bâti n°89/91/92, voirie) ne contient aucune règle de destination.'
+    notes:
+    - 'Le corridor écologique de la ravine la Sourdine (toute construction interdite dans l''espace hachuré vert,
+      Art. AU-2 3° p. 22) est situé « dans la zone AU n°1 » (Art. AU-1, p. 19) : il concerne cette zone (règle spatiale,
+      pas de destination).'
+  A:
+    silence: interdit
+    silence_src: 'Art. A-2, p. 34 : « Sont interdites : En zone A : toute construction nouvelle, à l''exception
+      des constructions et installations nécessaires à l''exploitation agricole, dans les limites définies à l''article
+      A-3 » — structure en liste positive d''exceptions : tout ce qui n''est pas excepté est interdit.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: seules échappent à l'interdiction générale les constructions et installations nécessaires à l'exploitation
+          agricole, dans les limites définies à l'article A-3 ; l'article A-3 3° (p. 34) admet en outre les constructions
+          et installations nécessaires à la transformation, au conditionnement et à la commercialisation des produits
+          agricoles lorsque ces activités constituent le prolongement de l'acte de production, à condition de ne
+          pas être incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière sur le terrain
+          et de ne pas porter atteinte à la sauvegarde des espaces naturels et des paysages
+        article: A-2 / A-3 3°
+        page_pdf: 34
+        citation: « toute construction nouvelle, à l'exception des constructions et installations nécessaires à
+          l'exploitation agricole, dans les limites définies à l'article A-3 » (A-2, p. 34)
+      logement:
+        statut: sous_condition
+        condition: '1) le logement de l''exploitant agricole est autorisé dès lors que la présence permanente de
+          l''exploitant sur le site de son exploitation est nécessaire à son fonctionnement (A-3 2°, p. 34) ; 2)
+          les bâtiments d''habitation existants à la date d''approbation du PLU peuvent faire l''objet d''annexes
+          et d''extensions limitées, sous réserve de la légalité du bâtiment existant, sans compromettre l''activité
+          agricole ni la qualité paysagère : surface de plancher totale (maison, annexes et extensions comprises)
+          ≤ 160 m² (A-3 4°, p. 35) ; portée à 300 m² au total lorsque les annexes ou extensions accueillent des
+          activités agrotouristiques (A-3 5°, p. 35) ; annexes et extensions à ≤ 20 m du bâtiment principal (A-7,
+          p. 38)'
+        seuil_m2: 160
+        seuil_type: surface_plancher
+        article: A-3 2°, 4° et 5°
+        page_pdf: 34
+        citation: « Le logement de l'exploitant agricole est autorisé dès lors que la présence permanente de l'exploitant
+          sur le site de son exploitation est nécessaire à son fonctionnement » (A-3 2°, p. 34) ; « La surface de
+          plancher totale autorisée pour ces constructions (maison d'habitation, annexes et extensions comprises)
+          ne peut pas excéder un total de 160 m² » (A-3 4°, p. 35)
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs ou à des services publics,
+          à condition de ne pas être incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière
+          dans l'unité foncière et de ne pas porter atteinte à la sauvegarde des espaces naturels et des paysages
+        article: A-3 1°
+        page_pdf: 34
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics sont autorisées, à condition qu'elles ne soient pas incompatibles avec l'exercice d'une activité
+          agricole, pastorale ou forestière dans l'unité foncière où elles sont implantées et qu'elles ne portent
+          pas atteinte à la sauvegarde des espaces naturels et des paysages » (citation commune aux 7 sous-destinations
+          de la destination « équipements d'intérêt collectif et services publics »)
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, A-3 1°)
+        article: A-3 1°
+        page_pdf: 34
+        citation: citation commune, voir locaux_bureaux_administrations
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, A-3 1°)
+        article: A-3 1°
+        page_pdf: 34
+        citation: citation commune, voir locaux_bureaux_administrations
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, A-3 1°)
+        article: A-3 1°
+        page_pdf: 34
+        citation: citation commune, voir locaux_bureaux_administrations
+      equipements_sportifs:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, A-3 1°)
+        article: A-3 1°
+        page_pdf: 34
+        citation: citation commune, voir locaux_bureaux_administrations
+      lieux_culte:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, A-3 1°)
+        article: A-3 1°
+        page_pdf: 34
+        citation: citation commune, voir locaux_bureaux_administrations
+      autres_equipements_public:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, A-3 1°)
+        article: A-3 1°
+        page_pdf: 34
+        citation: citation commune, voir locaux_bureaux_administrations
+    note: 'A-3 6° (p. 35) : les constructions repérées n°83 à 88, 112, 131 et 168 à 220 (liste en annexe n°8 du
+      règlement) peuvent changer de destination vers « exploitation agricole ou forestière, habitation, hébergement
+      touristique, activités non polluantes » seulement — régime propre aux bâtiments listés (déclaration préalable
+      + accord CDPENAF), pas une ouverture générale de la zone. « En zones A et Acu » (A-3, p. 36) : constructions
+      et installations nécessaires à l''extraction de matériaux de carrière et au concassage, ainsi que plateformes
+      de tri de déchets verts, dans les espaces du Schéma Départemental des Carrières reportés au document graphique,
+      hors périmètres d''irrigation — activité extractive sans slug R151-28 couvert pleinement, non mappée.'
+  Acu:
+    silence: interdit
+    silence_src: 'Art. A-2, p. 34 : « En zone Acu et Acor : toute construction nouvelle, à l''exception des aménagements
+      définis à l''article A-3 » — liste positive d''exceptions.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement l'extension limitée des constructions agricoles existantes, si celle-ci est nécessaire
+          à la mise aux normes de l'exploitation (aucune construction agricole nouvelle exceptée de l'interdiction
+          générale en Acu)
+        article: A-3 (En zones Acu et Acor, 1°)
+        page_pdf: 36
+        citation: « Les constructions agricoles peuvent faire l'objet d'une extension limitée, si celle-ci est nécessaire
+          à la mise aux normes de l'exploitation »
+    note: 'A-3 2° (p. 36) : changement de destination possible pour les seules constructions dont la liste figure
+      en annexe, sans compromettre l''activité agricole ni la qualité paysagère. A-3 3° (p. 36) : en Acu, dans les
+      espaces du Schéma Départemental des Carrières, extraction de matériaux et concassage autorisés hors périmètres
+      d''irrigation (activité extractive, non mappée). Le caractère de zone (A-1, p. 32, colonne non opposable)
+      décrit Acu comme coupure d''urbanisation « dans lesquelles toutes les constructions, même agricoles, sont
+      interdites » — la règle opposable est A-2/A-3.'
+  Acor:
+    silence: interdit
+    silence_src: 'Art. A-2, p. 34 : « En zone Acu et Acor : toute construction nouvelle, à l''exception des aménagements
+      définis à l''article A-3 » — liste positive d''exceptions.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement l'extension limitée des constructions agricoles existantes, si celle-ci est nécessaire
+          à la mise aux normes de l'exploitation
+        article: A-3 (En zones Acu et Acor, 1°)
+        page_pdf: 36
+        citation: « Les constructions agricoles peuvent faire l'objet d'une extension limitée, si celle-ci est nécessaire
+          à la mise aux normes de l'exploitation »
+    note: 'A-3 2° (p. 36) : changement de destination possible pour les seules constructions dont la liste figure
+      en annexe. Aucune autre exception écrite pour Acor.'
+  Ai:
+    silence: interdit
+    silence_src: 'Art. A-2, p. 34 : « En zone Ai : toute construction nouvelle, à l''exception des aménagements
+      définis à l''article A-3 » — liste positive d''exceptions ; A-1 (p. 32) précise que « tous travaux, constructions
+      et aménagements, même à vocation agricole y sont interdits » (colonne explicative).'
+    note: 'Seule exception écrite (A-3 « En zone Ai uniquement », p. 37) : « Les travaux d''aménagement et d''extension
+      mineure pour mise aux normes dans la limite de 20 m² de surface de plancher réalisés sur des constructions
+      existantes à la date d''approbation du PLU ou bénéficiant d''un permis de construire » — aucune destination
+      nommée, aucun slug mappé ; le seuil de 20 m² (surface de plancher) porte sur l''extension mineure de l''existant,
+      toutes destinations confondues.'
+  N:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 42 : « Sont interdites : En zone N : toute construction nouvelle, à l''exception
+      des constructions et installations nécessaires à l''exploitation agricole ou forestière, dans les limites
+      définies à l''article N-3 » — liste positive d''exceptions.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à l'exploitation agricole ou forestière, dans les
+          limites définies à l'article N-3 (citation commune avec exploitation_forestiere) ; N-3 3° (p. 43) admet
+          en outre transformation, conditionnement et commercialisation des produits agricoles dans le prolongement
+          de l'acte de production, sans incompatibilité avec l'activité agricole, pastorale ou forestière ni atteinte
+          aux espaces naturels et paysages ; interdit dans les corridors écologiques protégés (hachures vertes)
+          où « toute construction nouvelle est interdite » (N-2, p. 42)
+        article: N-2 / N-3 3°
+        page_pdf: 42
+        citation: « toute construction nouvelle, à l'exception des constructions et installations nécessaires à
+          l'exploitation agricole ou forestière, dans les limites définies à l'article N-3 »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à l'exploitation agricole ou forestière, dans les
+          limites définies à l'article N-3 (citation commune avec exploitation_agricole) ; interdit dans les corridors
+          écologiques protégés (hachures vertes, N-2, p. 42)
+        article: N-2
+        page_pdf: 42
+        citation: citation commune, voir exploitation_agricole
+      logement:
+        statut: sous_condition
+        condition: '1) logement de l''exploitant agricole si la présence permanente de l''exploitant sur le site
+          de son exploitation est nécessaire à son fonctionnement (N-3 2°, p. 43) ; 2) annexes et extensions limitées
+          des bâtiments d''habitation existants à la date d''approbation du PLU, sous réserve de la légalité du
+          bâtiment existant, sans compromettre l''activité agricole ni la qualité paysagère : surface de plancher
+          totale (maison, annexes et extensions comprises) ≤ 160 m² ; ces annexes et extensions peuvent accueillir
+          une activité agrotouristique (N-3 4°, p. 44) ; implantation à ≤ 20 m du bâtiment principal (N-8, p. 47)'
+        seuil_m2: 160
+        seuil_type: surface_plancher
+        article: N-3 2° et 4°
+        page_pdf: 43
+        citation: « La surface de plancher totale autorisée pour ces constructions (maison d'habitation, annexes
+          et extensions comprises) ne peut pas excéder un total de 160 m² » (N-3 4°, p. 44)
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: 'constructions et installations nécessaires à des équipements collectifs ou à des services publics,
+          sans atteinte à la sauvegarde des espaces naturels et des paysages — ⚠ le texte dit « à condition qu''elles
+          soient incompatibles avec l''exercice d''une activité agricole, pastorale ou forestière » (probable erreur
+          matérielle du règlement, relayée telle quelle : la version zone A dit « ne soient pas incompatibles »)'
+        article: N-3 1°
+        page_pdf: 43
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics sont autorisées, à condition qu'elles soient incompatibles avec l'exercice d'une activité agricole,
+          pastorale ou forestière dans l'unité foncière où elles sont implantées et qu'elles ne portent pas atteinte
+          à la sauvegarde des espaces naturels et des paysages » (citation commune aux 7 sous-destinations de la
+          destination « équipements d'intérêt collectif et services publics »)
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, N-3 1°)
+        article: N-3 1°
+        page_pdf: 43
+        citation: citation commune, voir locaux_bureaux_administrations
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, N-3 1°)
+        article: N-3 1°
+        page_pdf: 43
+        citation: citation commune, voir locaux_bureaux_administrations
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, N-3 1°)
+        article: N-3 1°
+        page_pdf: 43
+        citation: citation commune, voir locaux_bureaux_administrations
+      equipements_sportifs:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, N-3 1°)
+        article: N-3 1°
+        page_pdf: 43
+        citation: citation commune, voir locaux_bureaux_administrations
+      lieux_culte:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, N-3 1°)
+        article: N-3 1°
+        page_pdf: 43
+        citation: citation commune, voir locaux_bureaux_administrations
+      autres_equipements_public:
+        statut: sous_condition
+        condition: idem locaux_bureaux_administrations (équipements collectifs / services publics, N-3 1°)
+        article: N-3 1°
+        page_pdf: 43
+        citation: citation commune, voir locaux_bureaux_administrations
+    note: 'Corridors écologiques protégés (hachures vertes au document graphique, secteurs Rivière des Marsouins
+      et Bassin Bleu) : « toute construction nouvelle est interdite » (N-2, p. 42). N-3 5° (p. 44) : changement
+      de destination des seules constructions listées en annexe, vers « exploitation agricole ou forestière, habitation,
+      hébergement touristique, activités non polluantes » seulement (déclaration préalable + accord CDPENAF) — régime
+      propre à l''existant listé, non mappé.'
+  Npnr:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 42 : « En zone Npnr : tous travaux, constructions et installations, à l''exception
+      de ceux ayant reçus une autorisation spéciale de l''établissement public du Parc » — interdiction générale,
+      aucune destination exceptée par le règlement lui-même.'
+    note: 'Seule dérogation écrite : l''autorisation spéciale de l''établissement public du Parc national de La
+      Réunion (N-2, p. 42) — aucune sous-destination nommée, rien de mappé.'
+  Nerl:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 42 : « En zone Nerl : tous travaux, constructions et installations, à l''exception
+      des aménagements définis dans l''article N-3 » — liste positive d''exceptions.'
+    note: 'Exceptions écrites (N-3 « En zone Nerl », p. 45) : 1° travaux de conservation ou de protection des espaces
+      remarquables du littoral et de leurs milieux, admis après enquête publique ; 2° aménagements légers nécessaires
+      à leur gestion, à leur mise en valeur notamment économique ou, le cas échéant, à leur ouverture au public.
+      Aucune destination de construction nommée, aucun slug mappé.'
+  Np:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 42 : « En zone Np : toute construction nouvelle » [est interdite] — interdiction
+      totale, aucune exception écrite au règlement.'
+  Nci:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 42 : « En zone Nci : toute construction nouvelle, à l''exception des constructions,
+      ouvrages et travaux liés à la gestion des cimetières, dans la limite de 300 m² de surface de plancher » —
+      liste positive d''exceptions.'
+    note: 'Seule exception écrite : constructions, ouvrages et travaux liés à la gestion des cimetières, ≤ 300 m²
+      de surface de plancher (N-2, p. 42). « Gestion des cimetières » ne recouvre pleinement aucun slug R151-28
+      : non mappé, seuil porté ici.'
+  Ns20:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 42 : « Dans les zones Ns : toute construction nouvelle, à l''exception des constructions
+      à usage d''habitation, des hébergements touristiques et des activités non polluantes, constituant un hameau
+      intégré à l''environnement, dans le respect des prescriptions et orientations figurant dans la fiche annexe
+      au règlement concernée » — liste positive d''exceptions.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'constructions à usage d''habitation constituant un hameau intégré à l''environnement, dans le
+          respect de la fiche annexe concernée (N-2, p. 42) ; caducité ELAN : les constructions ne pouvaient être
+          autorisées que sur demande de permis déposée avant le 31/12/2021 (N-3 « En zones Ns et Nt », p. 45 ; règle
+          annexe, PDF 73 — Ns20 est en espace proche du rivage : constructions interdites à partir du 31/12/2021
+          dans l''ensemble de la zone)'
+        article: N-2 / N-3
+        page_pdf: 42
+        citation: « toute construction nouvelle, à l'exception des constructions à usage d'habitation, des hébergements
+          touristiques et des activités non polluantes, constituant un hameau intégré à l'environnement »
+      hotels:
+        statut: sous_condition
+        condition: « hébergements touristiques » constituant un hameau intégré à l'environnement, dans le respect
+          de la fiche annexe (N-2, p. 42) — le terme couvre hotels ET autres_hebergements_touristiques, citation
+          commune ; caducité ELAN (permis déposé avant le 31/12/2021, N-3 p. 45 et annexe PDF 73)
+        article: N-2 / N-3
+        page_pdf: 42
+        citation: citation commune, voir logement (« des hébergements touristiques »)
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: idem hotels (« hébergements touristiques », citation commune) ; caducité ELAN (permis déposé
+          avant le 31/12/2021)
+        article: N-2 / N-3
+        page_pdf: 42
+        citation: citation commune, voir logement (« des hébergements touristiques »)
+    note: '« Activités non polluantes » également exceptées (N-2, p. 42) : terme sans correspondance pleine avec
+      un slug R151-28, non mappé. Hauteur 4 m égout / 8 m faîtage (N-4, p. 46) et emprise au sol ≤ 70 % du terrain
+      (N-5, p. 46) en Ns. Caducité ELAN (annexe, PDF 73) : en espace proche du rivage (Ns 20, 21, 41, 42 à 46),
+      « les constructions seront interdites à partir du 31/12/2021 » dans toute la zone ; hors espace proche du
+      rivage (Ns 22 à 40), interdiction au 31/12/2021 dans la partie rouge (non bâtie) du schéma, la partie bleue
+      (déjà bâtie) restant autorisable après cette date « si le STECAL est pris en compte avant cette date par le
+      Préfet ou par le SCOT de la CIREST ». Les fiches annexes n°20 à 46 (PDF 74-81) ne portent que des périmètres.'
+  Ns21:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes « Dans les zones Ns » (N-2, p. 42)
+      ; fiche annexe n°20 et 21 (périmètre seul), PDF 74.'
+  Ns22:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes « Dans les zones Ns » (N-2, p. 42)
+      ; fiche annexe n°22 (périmètre seul), PDF 75 ; hors espace proche du rivage (annexe PDF 73).'
+  Ns23:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°23 à
+      25 (périmètre seul), PDF 76 ; hors espace proche du rivage (PDF 73).'
+  Ns24:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°23 à
+      25 (périmètre seul), PDF 76 ; hors espace proche du rivage (PDF 73).'
+  Ns25:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°23 à
+      25 (périmètre seul), PDF 76 ; hors espace proche du rivage (PDF 73).'
+  Ns26:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns27:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns28:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns29:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns30:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns31:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns32:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns33:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns34:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°26 à
+      34 (périmètre seul), PDF 77 ; hors espace proche du rivage (PDF 73).'
+  Ns35:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°35 et
+      36 (périmètre seul), PDF 78 ; hors espace proche du rivage (PDF 73).'
+  Ns36:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°35 et
+      36 (périmètre seul), PDF 78 ; hors espace proche du rivage (PDF 73).'
+  Ns37:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°37 à
+      40 (périmètre seul), PDF 79 ; hors espace proche du rivage (PDF 73).'
+  Ns38:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°37 à
+      40 (périmètre seul), PDF 79 ; hors espace proche du rivage (PDF 73).'
+  Ns39:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°37 à
+      40 (périmètre seul), PDF 79 ; hors espace proche du rivage (PDF 73).'
+  Ns40:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°37 à
+      40 (périmètre seul), PDF 79 ; hors espace proche du rivage (PDF 73).'
+  Ns41:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°41 (périmètre
+      seul), PDF 80 ; en espace proche du rivage : constructions interdites à partir du 31/12/2021 dans toute la
+      zone (annexe PDF 73).'
+  Ns42:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°42 à
+      46 (périmètre seul), PDF 81 ; en espace proche du rivage : constructions interdites à partir du 31/12/2021
+      dans toute la zone (annexe PDF 73).'
+  Ns43:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°42 à
+      46 (périmètre seul), PDF 81 ; en espace proche du rivage (PDF 73).'
+  Ns44:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°42 à
+      46 (périmètre seul), PDF 81 ; en espace proche du rivage (PDF 73).'
+  Ns45:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°42 à
+      46 (périmètre seul), PDF 81 ; en espace proche du rivage (PDF 73).'
+  Ns46:
+    renvoi: Ns20
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Ns : n°20 à 46 » — règles communes (N-2, p. 42) ; fiche annexe n°42 à
+      46 (périmètre seul), PDF 81 ; en espace proche du rivage (PDF 73).'
+  Nta47:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 43 : « En zone Nt : toute construction nouvelle, à l''exception des équipements et
+      hébergements touristiques, ainsi que des constructions affectées au logement du personnel travaillant sur
+      le site, constituant un hameau touristique intégré à l''environnement, dans le respect des prescriptions et
+      orientations figurant dans la fiche annexe au règlement concernée » — liste positive d''exceptions.'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: '« hébergements touristiques » constituant un hameau touristique intégré à l''environnement,
+          dans le respect de la fiche annexe (N-2, p. 43) — le terme couvre hotels ET autres_hebergements_touristiques,
+          citation commune ; caducité ELAN : permis déposé avant le 31/12/2021 (N-3 « En zones Ns et Nt », p. 45
+          ; annexe PDF 73, partie rouge/bleue du schéma)'
+        article: N-2 / N-3
+        page_pdf: 43
+        citation: « toute construction nouvelle, à l'exception des équipements et hébergements touristiques, ainsi
+          que des constructions affectées au logement du personnel travaillant sur le site, constituant un hameau
+          touristique intégré à l'environnement »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: idem hotels (« hébergements touristiques », citation commune) ; caducité ELAN (permis déposé
+          avant le 31/12/2021)
+        article: N-2 / N-3
+        page_pdf: 43
+        citation: citation commune, voir hotels
+      logement:
+        statut: sous_condition
+        condition: uniquement les constructions affectées au logement du personnel travaillant sur le site (N-2,
+          p. 43) ; caducité ELAN (permis déposé avant le 31/12/2021)
+        article: N-2 / N-3
+        page_pdf: 43
+        citation: « des constructions affectées au logement du personnel travaillant sur le site »
+    note: '« Équipements touristiques » également exceptés (N-2, p. 43) : terme sans correspondance pleine avec
+      un slug R151-28, non mappé. Hauteur 4 m égout / 8 m faîtage (N-4, p. 46) et emprise ≤ 70 % du terrain (N-5,
+      p. 46) en Nta (sauf n°53 : fiche). Caducité ELAN (annexe PDF 73) : Nta 47 à 54 sont hors espace proche du
+      rivage — interdiction au 31/12/2021 dans la partie rouge (non bâtie), partie bleue (déjà bâtie) autorisable
+      après si le STECAL est pris en compte par le Préfet ou le SCOT de la CIREST. Fiches n°47 (PDF 82), n°48 (PDF
+      83), n°49 à 52 (PDF 84) et n°54 (PDF 87) : périmètres schématiques seuls, aucune règle de destination ni seuil
+      m² par numéro.'
+  Nta48:
+    renvoi: Nta47
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Nta : n°47 à 54 » — règles communes « En zone Nt » (N-2, p. 43) ; fiche
+      annexe n°48 (périmètre seul), PDF 83.'
+  Nta49:
+    renvoi: Nta47
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Nta : n°47 à 54 » — règles communes « En zone Nt » (N-2, p. 43) ; fiche
+      annexe n°49 à 52 (périmètre seul), PDF 84.'
+  Nta50:
+    renvoi: Nta47
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Nta : n°47 à 54 » — règles communes « En zone Nt » (N-2, p. 43) ; fiche
+      annexe n°49 à 52 (périmètre seul), PDF 84.'
+  Nta51:
+    renvoi: Nta47
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Nta : n°47 à 54 » — règles communes « En zone Nt » (N-2, p. 43) ; fiche
+      annexe n°49 à 52 (périmètre seul), PDF 84.'
+  Nta52:
+    renvoi: Nta47
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Nta : n°47 à 54 » — règles communes « En zone Nt » (N-2, p. 43) ; fiche
+      annexe n°49 à 52 (périmètre seul), PDF 84.'
+  Nta54:
+    renvoi: Nta47
+    renvoi_src: 'Art. N-1, p. 40 : « Zones Nta : n°47 à 54 » — règles communes « En zone Nt » (N-2, p. 43) ; fiche
+      annexe n°54, « Domaine d''Imelda », Cambourg (périmètre seul), PDF 87.'
+  Nta53:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 43 : « En zone Nt : toute construction nouvelle, à l''exception… » (liste positive)
+      ; complété pour le n°53 : « Dans le secteur Nt n°53 uniquement, sont autorisés les parcs résidentiels de loisirs
+      et les constructions, ouvrages et travaux à destination d''hébergement touristique et annexes pouvant y être
+      admis, de type cabanes arboricoles entièrement démontables, constituant un hameau touristique nouveau intégré
+      à l''environnement » (N-2, p. 43 ; fiche n°53, PDF 86).'
+    sous_destinations:
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: parcs résidentiels de loisirs et constructions à destination d'hébergement touristique et annexes,
+          de type cabanes arboricoles entièrement démontables, constituant un hameau touristique nouveau intégré
+          à l'environnement, « dans la limite de 350 m² de surface de plancher par unité foncière, dès lors qu'ils
+          présentent une qualité environnementale et paysagère en accord avec le site » (fiche n°53, règles strictes,
+          PDF 86) ; emprise au sol ≤ 10 % de la superficie totale du terrain ; secteur de dépression humide non
+          constructible ; caducité ELAN (permis déposé avant le 31/12/2021, N-3 p. 45 et annexe PDF 73 — hors espace
+          proche du rivage, partie rouge/bleue)
+        seuil_m2: 350
+        seuil_type: surface_plancher
+        article: N-2 / fiche annexe n°53
+        page_pdf: 86
+        citation: '« Sont autorisés en secteur Nta n°53 uniquement, les parcs résidentiels de loisirs et les constructions,
+          ouvrages et travaux à destination d''hébergement touristique et annexes pouvant y être admis, de type
+          cabanes arboricoles entièrement démontables […] dans la limite de 350 m² de surface de plancher par unité
+          foncière » (« parcs résidentiels de loisirs » relève de autres_hebergements_touristiques ; « hébergement
+          touristique » au sens large : citation commune avec hotels)'
+      hotels:
+        statut: sous_condition
+        condition: 'au titre du régime général « En zone Nt » : « hébergements touristiques » constituant un hameau
+          touristique intégré à l''environnement, dans le respect de la fiche annexe (N-2, p. 43 — citation commune
+          avec autres_hebergements_touristiques) ; pour le n°53 la fiche ne décrit que des cabanes arboricoles démontables
+          et un PRL, plafonnés à 350 m² de surface de plancher par unité foncière ; caducité ELAN'
+        article: N-2 / fiche annexe n°53
+        page_pdf: 43
+        citation: citation commune, voir autres_hebergements_touristiques
+      logement:
+        statut: sous_condition
+        condition: uniquement les constructions affectées au logement du personnel travaillant sur le site (régime
+          général « En zone Nt », N-2, p. 43) ; caducité ELAN
+        article: N-2
+        page_pdf: 43
+        citation: « des constructions affectées au logement du personnel travaillant sur le site »
+    note: 'Fiche annexe n°53 (PDF 85-86), « Kanopea Forest Lodges », Grand Étang : projet de 6 cabanes ; hauteurs
+      propres (5 m plancher-faîtage / 10 m au sol pour les cabanes à plus de 3 m du terrain naturel, 8 m pour la
+      cabane d''accueil) ; hauteur et emprise en Nta n°53 renvoyées à la fiche par N-4 et N-5 (p. 46). Permis d''aménager
+      PA9741015LT001 délivré le 26/01/2016 (note de la fiche, PDF 85).'
+  Ntb55:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 43 : « En zone Nt : toute construction nouvelle, à l''exception des équipements et
+      hébergements touristiques, ainsi que des constructions affectées au logement du personnel travaillant sur
+      le site, constituant un hameau touristique intégré à l''environnement, dans le respect des prescriptions et
+      orientations figurant dans la fiche annexe au règlement concernée » — liste positive d''exceptions.'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: '« hébergements touristiques » du hameau (citation commune avec autres_hebergements_touristiques,
+          N-2 p. 43) ; la fiche n°55 (règles strictes, PDF 88) encadre l''ensemble : périmètre d''implantation ≤
+          1 ha, projet unique, emprise au sol totale ≤ 1700 m² répartie entre 1 bâtiment commun de restauration
+          et de services, 2 à 3 bâtiments à long pans destinés à l''hébergement touristique, 4 à 7 pavillons maximum
+          destinés à l''hébergement touristique et 1 pavillon d''observatoire naturaliste ; hauteur ≤ 10 m au faîtage
+          ; constructions impérativement en zone B2u du PPR (PDF 90) ; caducité ELAN (partie rouge non bâtie interdite
+          après le 31/12/2021, PDF 90)'
+        seuil_m2: 1700
+        seuil_type: emprise_sol
+        article: N-2 / fiche annexe n°55
+        page_pdf: 88
+        citation: '« L''emprise au sol totale des constructions ne pourra excéder 1700 m², répartis entre : - 1
+          bâtiment commun de restauration et de services, - 2 à 3 bâtiments à long pans destinés à l''hébergement
+          touristique, - 4 à 7 pavillons maximum destinés à l''hébergement touristique, - 1 pavillon destiné à l''accueil
+          d''un observatoire naturaliste » (seuil = emprise TOTALE partagée entre toutes les constructions du hameau
+          ; « hébergement touristique » : citation commune avec autres_hebergements_touristiques)'
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'idem hotels (« hébergement touristique », citation commune) : bâtiments à long pans et pavillons
+          d''hébergement touristique dans la limite d''une emprise au sol totale de 1700 m² pour l''ensemble du
+          hameau ; zone B2u du PPR obligatoire ; caducité ELAN'
+        seuil_m2: 1700
+        seuil_type: emprise_sol
+        article: N-2 / fiche annexe n°55
+        page_pdf: 88
+        citation: citation commune, voir hotels
+      restauration:
+        statut: sous_condition
+        condition: un seul « bâtiment commun de restauration et de services », compris dans l'emprise au sol totale
+          de 1700 m² du hameau (fiche n°55, PDF 88) ; caducité ELAN
+        article: fiche annexe n°55
+        page_pdf: 88
+        citation: « 1 bâtiment commun de restauration et de services »
+      logement:
+        statut: sous_condition
+        condition: uniquement les constructions affectées au logement du personnel travaillant sur le site (régime
+          général « En zone Nt », N-2, p. 43) ; caducité ELAN
+        article: N-2
+        page_pdf: 43
+        citation: « des constructions affectées au logement du personnel travaillant sur le site »
+    note: 'Fiche annexe n°55 (PDF 88-90), « Le Domaine Anamoutou », Bras-Madeleine : le « pavillon destiné à l''accueil
+      d''un observatoire naturaliste » et les « services » du bâtiment commun n''ont pas de correspondance pleine
+      avec un slug R151-28 (non mappés, compris dans les 1700 m²). Hauteur ≤ 10 m au faîtage (+2 m possibles pour
+      émergences de toitures en matériaux biosourcés). Hors espace proche du rivage (PDF 73) : partie bleue (déjà
+      bâtie) autorisable après le 31/12/2021 si le STECAL est pris en compte par le Préfet ou le SCOT de la CIREST
+      (PDF 90).'
+  Ntb57:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 43 : « En zone Nt : toute construction nouvelle, à l''exception des équipements et
+      hébergements touristiques, ainsi que des constructions affectées au logement du personnel travaillant sur
+      le site, constituant un hameau touristique intégré à l''environnement, dans le respect des prescriptions et
+      orientations figurant dans la fiche annexe au règlement concernée » — liste positive d''exceptions.'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: 'la fiche n°57 (règles strictes, PDF 91-92) distingue 3 espaces : périmètre de l''hôtel existant
+          et de son extension liée au SPA (2 ha, ancienne zone AUt du PLU 2006) — SPA constitué d''1 bâtiment principal
+          et de 5 bâtiments annexes maximum plus une piscine, emprise au sol ≤ 1075 m² dans le périmètre du SPA
+          ; hauteurs : hôtel existant 6 m égout / 10 m faîtage, SPA 9 m / 11 m (bâtiment principal) et 4,5 m / 6
+          m (annexes) ; caducité ELAN (partie rouge non bâtie interdite après le 31/12/2021, PDF 94)'
+        seuil_m2: 1075
+        seuil_type: emprise_sol
+        article: N-2 / fiche annexe n°57
+        page_pdf: 92
+        citation: '« Dans le périmètre d''implantation des constructions liées au SPA : 1075 m² d''emprise au sol
+          » (fiche n°57, PDF 92) ; hébergements touristiques admis en zone Nt : citation commune N-2, p. 43'
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'périmètre d''implantation du hameau touristique nouveau (≤ 7000 m², projet unique) : « 5 à 10
+          petits hébergements touristiques maximum, appelés « lodges » », sur pilotis, avec 500 m² de surface de
+          plancher (hors terrasses et passerelles) pour l''ensemble des lodges ; hauteur ≤ 4,5 m égout / 6 m faîtage
+          ; espacement entre lodges 3 à 15 m ; caducité ELAN (partie rouge non bâtie interdite après le 31/12/2021,
+          partie bleue déjà bâtie autorisable si prise en compte du STECAL, PDF 94) — « hébergements touristiques
+          » : citation commune avec hotels (N-2, p. 43)'
+        seuil_m2: 500
+        seuil_type: surface_plancher
+        article: N-2 / fiche annexe n°57
+        page_pdf: 92
+        citation: '« Dans le périmètre du hameau nouveau : 500 m² de surface de plancher (hors terrasses et passerelles)
+          pour l''ensemble des lodges » (fiche n°57, PDF 92)'
+      logement:
+        statut: sous_condition
+        condition: uniquement les constructions affectées au logement du personnel travaillant sur le site (régime
+          général « En zone Nt », N-2, p. 43) ; caducité ELAN
+        article: N-2
+        page_pdf: 43
+        citation: « des constructions affectées au logement du personnel travaillant sur le site »
+    note: Fiche annexe n°57 (PDF 91-94), « Diana Dea Lodge », Cambourg, chemin Helvetia (CI 186, 187, 215 et 218).
+      La zone boisée séparant les deux secteurs d'implantation est « un cœur vert à conserver dans son intégralité
+      » (PDF 91). Hors espace proche du rivage (PDF 73).
+  Ntb59:
+    silence: interdit
+    silence_src: 'Art. N-2, p. 43 : « En zone Nt : toute construction nouvelle, à l''exception des équipements et
+      hébergements touristiques, ainsi que des constructions affectées au logement du personnel travaillant sur
+      le site, constituant un hameau touristique intégré à l''environnement, dans le respect des prescriptions et
+      orientations figurant dans la fiche annexe au règlement concernée » — liste positive d''exceptions.'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: '« hébergements touristiques » du hameau (citation commune avec autres_hebergements_touristiques,
+          N-2 p. 43) ; fiche n°59 (règles strictes, PDF 95) : périmètre d''implantation ≤ 2,5 ha, projet unique,
+          30 bungalows maximum, emprise au sol de 35 m² (sans mezzanine) à 45 m² (avec mezzanine) par bungalow et
+          ≤ 1050 m² au total ; hauteur ≤ 6 m égout / 8 m faîtage ; ⚠ caducité ELAN renforcée : le STECAL est en
+          espace proche du rivage, « dans l''ensemble de la zone apparaissant en rouge sur le schéma, les constructions
+          seront interdites à partir du 31/12/2021 » (PDF 96)'
+        seuil_m2: 1050
+        seuil_type: emprise_sol
+        article: N-2 / fiche annexe n°59
+        page_pdf: 95
+        citation: '« Les bungalows auront une emprise au sol allant de 35 m² pour ceux ne disposant pas d''une mezzanine
+          à 45 m² pour ceux disposant d''une mezzanine. L''emprise au sol des constructions ne pourra donc pas excéder
+          1050 m² au total » (seuil total partagé ; « hébergements touristiques » : citation commune)'
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'idem hotels (« hébergements touristiques », citation commune) : 30 bungalows maximum, emprise
+          totale ≤ 1050 m² ; caducité ELAN renforcée (espace proche du rivage : toute la zone rouge interdite à
+          partir du 31/12/2021, PDF 96)'
+        seuil_m2: 1050
+        seuil_type: emprise_sol
+        article: N-2 / fiche annexe n°59
+        page_pdf: 95
+        citation: citation commune, voir hotels
+      logement:
+        statut: sous_condition
+        condition: uniquement les constructions affectées au logement du personnel travaillant sur le site (régime
+          général « En zone Nt », N-2, p. 43) ; caducité ELAN renforcée (espace proche du rivage)
+        article: N-2
+        page_pdf: 43
+        citation: « des constructions affectées au logement du personnel travaillant sur le site »
+    note: 'Fiche annexe n°59 (PDF 95-96), village touristique « Le Verger », Les Orangers, chemin Robespierre (BY
+      805, 807, 811 et 232). En espace proche du rivage selon le SAR de 2011 (PDF 73 et 96) : constructions interdites
+      dans l''ensemble de la zone rouge à partir du 31/12/2021 — tout dépôt d''autorisation devait intervenir avant
+      cette date.'

@@ -1,0 +1,2518 @@
+meta:
+  insee: '97405'
+  commune: Petite-Île
+  document: 97405_reglement_20230609.pdf
+  document_gpu: 97405_PLU_20230609
+  gpu_doc_id: 0b91a0d63909c727a863784113009109
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97405/0b91a0d63909c727a863784113009109/97405_reglement_20230609.pdf
+  md5: 19407563d46266104df408b837d67fc4
+  millesime: '2023-06-09'
+  pages_total: 169
+  lu_le: '2026-09-03'
+  structure: silence lu dans la structure de chaque zone et cité (voir notes des zones).
+zones:
+  UB:
+    silence: autorise
+    silence_src: 'Structure des art. UB.1 (liste limitative d''interdictions) et UB.2 (conditions), p. 23 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'UB.1 al. 4 (p. 23) : « Sont interdites dans le périmètre de 100 mètres autour des bâtiments d''élevage
+      (identifiés sur le plan de zonage) les nouvelles constructions à usage d''habitation » (restriction spatiale,
+      l''habitation reste par ailleurs non mentionnée → silence). UB.2 al. 2-3 (p. 23) : installations classées
+      nouvelles/existantes sous conditions.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UB.1 al. 1
+        page_pdf: 23
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: UB.1 al. 2
+        page_pdf: 23
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: UB.1 al. 3
+        page_pdf: 23
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UB.1 al. 3
+        page_pdf: 23
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UB.2 al. 1
+        page_pdf: 23
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que les nuisances et
+          dangers puissent être prévenus eu égard à l'environnement actuel ou prévu de la zone. »
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UB.2 al. 1
+        page_pdf: 23
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UB.2 al. 1
+        page_pdf: 23
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+  UC:
+    silence: autorise
+    silence_src: 'Structure des art. UC.1 (liste limitative d''interdictions) et UC.2 (conditions), p. 33 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'UC.1 al. 4 (p. 33) : nouvelles constructions à usage d''habitation interdites dans le périmètre de 100
+      m autour des bâtiments d''élevage identifiés au plan de zonage (restriction spatiale). UC.2 al. 2-3 (p. 33-34)
+      : installations classées nouvelles/existantes sous conditions.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UC.1 al. 1
+        page_pdf: 33
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: UC.1 al. 2
+        page_pdf: 33
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: UC.1 al. 3
+        page_pdf: 33
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UC.1 al. 3
+        page_pdf: 33
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UC.2 al. 1
+        page_pdf: 33
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que les nuisances et
+          dangers puissent être prévenus eu égard à l'environnement actuel ou prévu de la zone. »
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UC.2 al. 1
+        page_pdf: 33
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UC.2 al. 1
+        page_pdf: 33
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+  UCe:
+    silence: autorise
+    silence_src: 'Sous-secteur de la zone UC : « La zone UC comprend un sous-secteur : un sous-secteur UCe correspondant
+      au couloir réservé au doublement de la ligne haute tension Langevin — Bras de la Plaine » (caractère de la
+      zone UC, p. 33). Les art. UC.1/UC.2 (p. 33) régissent la zone UC, sous-secteur compris ; aucune disposition
+      propre à UCe en matière de destinations (seul l''art. UC.10 « Pour UCe », p. 38, vise la hauteur). Même structure
+      que UC → silence = autorise.'
+    note: Mêmes valeurs que UC (lues aux art. UC.1/UC.2, p. 33) ; UCe n'a pas d'article 1/2 propre.
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UC.1 al. 1
+        page_pdf: 33
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: UC.1 al. 2
+        page_pdf: 33
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: UC.1 al. 3
+        page_pdf: 33
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UC.1 al. 3
+        page_pdf: 33
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UC.2 al. 1
+        page_pdf: 33
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UC.2 al. 1
+        page_pdf: 33
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UC.2 al. 1
+        page_pdf: 33
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+  UD:
+    silence: autorise
+    silence_src: 'Structure des art. UD.1 (liste limitative d''interdictions) et UD.2 (conditions), p. 43 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'UD.1 al. 5 (p. 43) : nouvelles constructions à usage d''habitation interdites dans le périmètre de 100
+      m autour des bâtiments d''élevage identifiés au plan de zonage (restriction spatiale). UD.2 al. 2 (p. 43)
+      : « L''extension, l''amélioration et la reconstruction des bâtiments existants, habités et desservis, dans
+      la limite de la surface de plancher maximale autorisée » (bâtiments existants).'
+    sous_destinations:
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UD.2 al. 1
+        page_pdf: 43
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que les nuisances et
+          dangers puissent être prévenus eu égard à l'environnement actuel ou prévu de la zone. » (UD.1 al. 1, p.
+          43, interdit « Les constructions liées à l'artisanat sauf celles autorisées à l'article 2 » — l'exception
+          renvoie précisément à UD.2.)
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UD.2 al. 1
+        page_pdf: 43
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UD.2 al. 1
+        page_pdf: 43
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      industrie:
+        statut: interdit
+        article: UD.1 al. 2
+        page_pdf: 43
+        citation: « Les constructions liées l'industrie. » (sic)
+      entrepot:
+        statut: interdit
+        article: UD.1 al. 3
+        page_pdf: 43
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: UD.1 al. 4
+        page_pdf: 43
+        citation: '« Les constructions liées à l''exploitation agricole ou forestière. » — tempéré par UD.2 al.
+          3 (p. 43) : « Les annexes agricoles à condition qu''elles soient liées à une exploitation agricole déjà
+          existante » (les seules annexes, pas la sous-destination entière).'
+      exploitation_forestiere:
+        statut: interdit
+        article: UD.1 al. 4
+        page_pdf: 43
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  UDe:
+    silence: autorise
+    silence_src: 'Sous-secteur de la zone UD : « La zone UD comprend un sous-secteur : un sous-secteur UDe correspondant
+      au couloir réservé au doublement de la ligne haute tension Langevin — Bras de la Plaine » (caractère de la
+      zone UD, p. 43). Les art. UD.1/UD.2 (p. 43) régissent la zone UD, sous-secteur compris ; aucune disposition
+      propre à UDe en matière de destinations (seule la hauteur UD.10 vise UDe). Même structure que UD → silence
+      = autorise.'
+    note: Mêmes valeurs que UD (lues aux art. UD.1/UD.2, p. 43) ; UDe n'a pas d'article 1/2 propre.
+    sous_destinations:
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UD.2 al. 1
+        page_pdf: 43
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UD.2 al. 1
+        page_pdf: 43
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UD.2 al. 1
+        page_pdf: 43
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      industrie:
+        statut: interdit
+        article: UD.1 al. 2
+        page_pdf: 43
+        citation: « Les constructions liées l'industrie. » (sic)
+      entrepot:
+        statut: interdit
+        article: UD.1 al. 3
+        page_pdf: 43
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: UD.1 al. 4
+        page_pdf: 43
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. » (cf. UD.2 al. 3, annexes
+          agricoles)
+      exploitation_forestiere:
+        statut: interdit
+        article: UD.1 al. 4
+        page_pdf: 43
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  UE:
+    silence: autorise
+    silence_src: 'Structure des art. UE.1 (liste limitative d''interdictions) et UE.2 (conditions), p. 52 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (industrie, entrepôt,
+      commerce… non mentionnés).'
+    note: 'UE.1 al. 5 (p. 52) : nouvelles constructions à usage d''habitation interdites dans le périmètre de 100
+      m autour des bâtiments d''élevage. UE.2 al. 2 (p. 52) : installations classées sous conditions.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: destinées à du personnel indispensable au fonctionnement et au gardiennage des établissements,
+          dans la limite de 100 m² de surface de plancher
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: UE.2 al. 1
+        page_pdf: 52
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient destinées à du personnel
+          indispensable au fonctionnement et au gardiennage des établissements et qu''elles se situent dans la limite
+          de 100 m² de surface de plancher. » (UE.1 al. 1, p. 52 : habitation interdite « excepté celle indiquée
+          à l''article UE.2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: destinées à du personnel indispensable au fonctionnement et au gardiennage des établissements,
+          dans la limite de 100 m² de surface de plancher
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: UE.2 al. 1
+        page_pdf: 52
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      hotels:
+        statut: interdit
+        article: UE.1 al. 2
+        page_pdf: 52
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: UE.1 al. 2
+        page_pdf: 52
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      bureau:
+        statut: interdit
+        article: UE.1 al. 3
+        page_pdf: 52
+        citation: « Les constructions à usage de bureaux. »
+      exploitation_agricole:
+        statut: interdit
+        article: UE.1 al. 4
+        page_pdf: 52
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UE.1 al. 4
+        page_pdf: 52
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  UEa:
+    silence: autorise
+    silence_src: 'Structure des art. UEa.1 (liste limitative d''interdictions) et UEa.2 (conditions), p. 59 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'UEa.1 al. 5 (p. 59) : nouvelles constructions à usage d''habitation interdites dans le périmètre de 100
+      m autour des bâtiments d''élevage. Contrairement à UE.2, la condition d''habitation d''UEa.2 ne porte pas
+      de plafond en m².'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: UEa.2 al. 1
+        page_pdf: 59
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient exclusivement destinées
+          aux logements des employés, du personnel de gardiennage et de surveillance des équipements publics ou
+          privés. » (UEa.1 al. 1, p. 59 : habitation interdite « excepté celle indiquée à l''article UEa.2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: UEa.2 al. 1
+        page_pdf: 59
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      hotels:
+        statut: interdit
+        article: UEa.1 al. 2
+        page_pdf: 59
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: UEa.1 al. 2
+        page_pdf: 59
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      bureau:
+        statut: interdit
+        article: UEa.1 al. 3
+        page_pdf: 59
+        citation: « Les constructions à usage de bureaux. »
+      exploitation_agricole:
+        statut: interdit
+        article: UEa.1 al. 4
+        page_pdf: 59
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UEa.1 al. 4
+        page_pdf: 59
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  UF:
+    silence: autorise
+    silence_src: 'Structure des art. UF.1 (liste limitative d''interdictions, p. 66) et UF.2 (conditions, p. 67)
+      — aucune clause « seules sont admises » pour la zone UF hors sous-secteur UFcim : ce qui n''est ni interdit
+      ni conditionné est autorisé (les équipements publics/collectifs ne sont pas mentionnés).'
+    note: 'UF.1 al. 9-10 (p. 66) : démolition interdite et travaux soumis à déclaration préalable pour les constructions
+      à conserver au titre de l''art. L.151-19 CU repérées au plan de zonage. UF.1 al. 11 (p. 66) : nouvelles constructions
+      à usage d''habitation interdites dans le périmètre de 100 m autour des bâtiments d''élevage.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: UF.2
+        page_pdf: 67
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient exclusivement destinées
+          aux logements des employés, du personnel de gardiennage et de surveillance des équipements publics ou
+          privés. » (UF.1 al. 1, p. 66 : habitation interdite « excepté celle indiquée à l''article UF.2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: UF.2
+        page_pdf: 67
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      hotels:
+        statut: interdit
+        article: UF.1 al. 2
+        page_pdf: 66
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: UF.1 al. 2
+        page_pdf: 66
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: UF.1 al. 3 et 5
+        page_pdf: 66
+        citation: « Les constructions à usage de commerce. » + « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: UF.1 al. 3
+        page_pdf: 66
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: UF.1 al. 4
+        page_pdf: 66
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: UF.1 al. 6
+        page_pdf: 66
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: UF.1 al. 7
+        page_pdf: 66
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: UF.1 al. 8
+        page_pdf: 66
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UF.1 al. 8
+        page_pdf: 66
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  UFcim:
+    silence: interdit
+    silence_src: 'Art. UF.2, p. 67 : « Pour UFcim : Seuls sont autorisés les équipements et installations liées
+      aux activités et services funéraires. » — clause « seuls sont autorisés » : tout le reste est interdit. (Sous-secteur
+      : « La zone UF comprend un sous-secteur UFcim correspondant à l''emplacement du futur cimetière », caractère
+      de la zone UF, p. 66.)'
+    note: '« Équipements et installations liées aux activités et services funéraires » (UF.2, p. 67) : terme non
+      mappé sur un slug R151-28 unique (douteux → non écrit) ; seule autorisation écrite du sous-secteur. Les interdictions
+      UF.1 (p. 66) s''appliquent à la zone UF, sous-secteur compris.'
+    sous_destinations: {}
+  UT:
+    silence: autorise
+    silence_src: 'Structure des art. UT.1 (liste limitative d''interdictions) et UT.2 (conditions), p. 73 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'UT.1 al. 8 (p. 73) : nouvelles constructions à usage d''habitation interdites dans le périmètre de 100
+      m autour des bâtiments d''élevage. UT.2 al. 4 (p. 73) : « L''amélioration, l''extension et la reconstruction
+      des bâtiments à usage d''habitation à condition qu''elles ne dépassent pas la surface de plancher autorisée
+      » (bâtiments existants).'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: destinées à du personnel indispensable au fonctionnement et au gardiennage des établissements
+          touristiques et de loisirs, dans la limite de 100 m² de surface de plancher
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: UT.2 al. 1
+        page_pdf: 73
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient destinées à du personnel
+          indispensable au fonctionnement et au gardiennage des établissements touristiques et de loisirs et qu''elles
+          se situent dans la limite de 100 m² de surface de plancher. » (UT.1 al. 1, p. 73 : habitation interdite
+          « excepté celle indiquée à l''article UT.2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: destinées à du personnel indispensable au fonctionnement et au gardiennage des établissements
+          touristiques et de loisirs, dans la limite de 100 m² de surface de plancher
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: UT.2 al. 1
+        page_pdf: 73
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: liées à la vocation touristique
+        article: UT.2 al. 2
+        page_pdf: 73
+        citation: '« Les constructions à usage de commerces à condition qu''elles soient liées à la vocation touristique.
+          » (UT.1 al. 2, p. 73 : commerce interdit « excepté celle indiquée à l''article UT.2 » ; noter que UT.1
+          al. 4, p. 73, interdit par ailleurs « Les constructions liées à l''artisanat » — le volet artisanal de
+          la sous-destination reste interdit.)'
+      commerce_gros:
+        statut: sous_condition
+        condition: liées à la vocation touristique
+        article: UT.2 al. 2
+        page_pdf: 73
+        citation: « Les constructions à usage de commerces à condition qu'elles soient liées à la vocation touristique.
+          »
+      hotels:
+        statut: sous_condition
+        condition: opérations d'ensemble (complexes hôteliers, hôtels-restaurants, villages vacances…)
+        article: UT.2 al. 3
+        page_pdf: 73
+        citation: « Les constructions à vocation touristique à condition qu'il s'agisse d'opérations d'ensemble
+          telles que des complexes hôteliers, des hôtels-restaurants, des villages vacances… »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: opérations d'ensemble (complexes hôteliers, hôtels-restaurants, villages vacances…)
+        article: UT.2 al. 3
+        page_pdf: 73
+        citation: « Les constructions à vocation touristique à condition qu'il s'agisse d'opérations d'ensemble…
+          »
+      bureau:
+        statut: interdit
+        article: UT.1 al. 3
+        page_pdf: 73
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: UT.1 al. 5
+        page_pdf: 73
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: UT.1 al. 6
+        page_pdf: 73
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: UT.1 al. 7
+        page_pdf: 73
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UT.1 al. 7
+        page_pdf: 73
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  UZ:
+    silence: autorise
+    silence_src: 'Structure des art. UZ.1 (liste limitative d''interdictions) et UZ.2 (conditions), p. 81 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (l''habitation n''est
+      pas mentionnée → silence).'
+    note: 'CONTRADICTION INTERNE relayée non tranchée : UZ.1 al. 1-2 (p. 81) interdisent « Les constructions à usage
+      de bureaux » et « Les constructions liées à l''artisanat » (sans mention d''exception), tandis que UZ.2 al.
+      1 (p. 81) admet « Les constructions à usage de commerce, artisanat et bureau à condition que les nuisances
+      et dangers puissent être prévenus… ». Les deux textes sont cités sur chaque entrée. UZ.1 al. 6 (p. 81) : périmètre
+      100 m bâtiments d''élevage (habitation). UZ.2 al. 2 : ICPE sous conditions.'
+    sous_destinations:
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone (⚠ UZ.1 al.
+          2 interdit par ailleurs l'artisanat)
+        article: UZ.2 al. 1
+        page_pdf: 81
+        citation: '« Les constructions à usage de commerce, artisanat et bureau à condition que les nuisances et
+          dangers puissent être prévenus eu égard à l''environnement actuel ou prévu de la zone. » ⚠ contradiction
+          : UZ.1 al. 2, p. 81 : « Les constructions liées à l''artisanat. » (interdites)'
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: UZ.2 al. 1
+        page_pdf: 81
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… » (le commerce n'est
+          pas visé par UZ.1)
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone (⚠ UZ.1 al.
+          1 interdit par ailleurs les bureaux)
+        article: UZ.2 al. 1
+        page_pdf: 81
+        citation: '« Les constructions à usage de commerce, artisanat et bureau à condition que… » ⚠ contradiction
+          : UZ.1 al. 1, p. 81 : « Les constructions à usage de bureaux. » (interdites)'
+      industrie:
+        statut: interdit
+        article: UZ.1 al. 3
+        page_pdf: 81
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: UZ.1 al. 4
+        page_pdf: 81
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: UZ.1 al. 5
+        page_pdf: 81
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UZ.1 al. 5
+        page_pdf: 81
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  1AU:
+    silence: autorise
+    silence_src: 'Structure des art. 1 AU.1 (liste limitative d''interdictions, p. 88) et 1 AU.2 (conditions, p.
+      89) — aucune clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (l''habitation
+      n''est pas mentionnée pour 1AU hors sous-secteur 1AUa → silence).'
+    note: '1 AU.1 al. 4 (p. 88) : nouvelles constructions à usage d''habitation interdites dans le périmètre de
+      100 m autour des bâtiments d''élevage. 1 AU.2 al. 2-3 (p. 89) : ICPE nouvelles/existantes sous conditions.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: 1 AU.1 al. 1
+        page_pdf: 88
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: 1 AU.1 al. 2
+        page_pdf: 88
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: 1 AU.1 al. 3
+        page_pdf: 88
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: 1 AU.1 al. 3
+        page_pdf: 88
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: 1 AU.2 al. 1
+        page_pdf: 89
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que les nuisances et
+          dangers puissent être prévenus eu égard à l'environnement actuel ou prévu de la zone. »
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: 1 AU.2 al. 1
+        page_pdf: 89
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: 1 AU.2 al. 1
+        page_pdf: 89
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+  1AUa:
+    silence: autorise
+    silence_src: 'Sous-secteur de la zone 1AU : « La zone 1AU comprend deux sous-secteurs : un sous-secteur 1AUa
+      qui devra s''urbaniser sous forme d''opérations d''ensemble… » (caractère de la zone 1AU, p. 88). Les art.
+      1 AU.1 (p. 88) et 1 AU.2 (p. 89) régissent la zone, avec un alinéa propre « Pour 1AUa » dans 1 AU.2. Même
+      structure (liste limitative + conditions) → silence = autorise.'
+    note: Le caractère de zone (p. 88) annonce « deux sous-secteurs » mais un seul (1AUa) est défini — voir anomalies.
+      L'habitat y est expressément conditionné par 1 AU.2 « Pour 1AUa » (p. 89).
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: sous forme d'opérations d'ensemble, densité tendant vers les objectifs du SAR en tenant compte
+          des contraintes topographiques, géologiques, physiques et techniques
+        article: 1 AU.2, « Pour 1AUa »
+        page_pdf: 89
+        citation: « Les constructions à usage d'habitat à condition qu'elles se fassent sous forme d'opérations
+          d'ensemble et dont la densité devra tendre vers les objectifs du SAR tout en prenant en compte les contraintes
+          topographiques, géologiques, physiques et techniques (assainissement, réseaux divers, …). »
+      hebergement:
+        statut: sous_condition
+        condition: sous forme d'opérations d'ensemble, densité tendant vers les objectifs du SAR
+        article: 1 AU.2, « Pour 1AUa »
+        page_pdf: 89
+        citation: « Les constructions à usage d'habitat à condition que… » (« habitat » couvre logement + hébergement)
+      industrie:
+        statut: interdit
+        article: 1 AU.1 al. 1
+        page_pdf: 88
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: 1 AU.1 al. 2
+        page_pdf: 88
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: 1 AU.1 al. 3
+        page_pdf: 88
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: 1 AU.1 al. 3
+        page_pdf: 88
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: 1 AU.2 al. 1
+        page_pdf: 89
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: 1 AU.2 al. 1
+        page_pdf: 89
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus eu égard à l'environnement actuel ou prévu de la zone
+        article: 1 AU.2 al. 1
+        page_pdf: 89
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+  1AUz:
+    silence: autorise
+    silence_src: 'Structure des art. 1AUZ.1 (liste limitative d''interdictions) et 1AUZ.2 (conditions), p. 99 —
+      aucune clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'Le règlement écrit « 1AUZ » (p. 99) ; code servi « 1AUz ». Préambule de 1AUZ.2 (p. 99) : les occupations
+      soumises à condition doivent AUSSI respecter « les conditions définies par l''orientation d''aménagement et
+      de programmation liée au secteur ». 1AUZ.1 al. 4 (p. 99) : périmètre 100 m bâtiments d''élevage (habitation).
+      1AUZ.2 al. 2-3 : ICPE sous conditions.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: 1AUZ.1 al. 1
+        page_pdf: 99
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: 1AUZ.1 al. 2
+        page_pdf: 99
+        citation: « Les constructions à usage d'entrepôts. »
+      exploitation_agricole:
+        statut: interdit
+        article: 1AUZ.1 al. 3
+        page_pdf: 99
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: 1AUZ.1 al. 3
+        page_pdf: 99
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus de façon satisfaisante eu égard à l'environnement actuel ou prévu
+          de la zone ; respect des conditions de l'OAP du secteur
+        article: 1AUZ.2 al. 1
+        page_pdf: 99
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que les nuisances et
+          dangers puissent être prévenus de façon satisfaisante eu égard à l'environnement actuel ou prévu de la
+          zone. »
+      commerce_gros:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus de façon satisfaisante ; respect des conditions de l'OAP du secteur
+        article: 1AUZ.2 al. 1
+        page_pdf: 99
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+      bureau:
+        statut: sous_condition
+        condition: nuisances et dangers prévenus de façon satisfaisante ; respect des conditions de l'OAP du secteur
+        article: 1AUZ.2 al. 1
+        page_pdf: 99
+        citation: « Les constructions à usage de commerce, artisanat et bureau à condition que… »
+  2AU:
+    silence: autorise
+    silence_src: 'Structure de l''art. 2 AU.1 (liste limitative d''interdictions, p. 140) ; 2 AU.2 : « Sans objet.
+      » (p. 140) — aucune clause « seules sont admises » : formellement, ce qui n''est pas dans la liste d''interdictions
+      n''est pas interdit. ⚠ Voir note : la liste couvre toutes les destinations de l''ancienne nomenclature + les
+      services publics, et le caractère de zone (indicatif) annonce des possibilités de construire nulles.'
+    note: 'Caractère de la zone (p. 140, indicatif, jamais une règle) : « Dans cette attente les possibilités de
+      construire sont nulles » ; ouverture à l''urbanisation conditionnée (urbanisation des 1AU/1AUa, assainissement
+      collectif) après modification ou révision du PLU. Les art. 2 AU.3 et 2 AU.6 à 2AU.12 sont « Sans objet » (p.
+      141). Seules les sous-destinations non couvertes par l''ancienne nomenclature (restauration, activités de
+      services, cinéma, centre de congrès, cuisine vente en ligne) relèvent du silence.'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: 2 AU.1 al. 1
+        page_pdf: 140
+        citation: « Les constructions à usage d'habitation. »
+      hebergement:
+        statut: interdit
+        article: 2 AU.1 al. 1
+        page_pdf: 140
+        citation: « Les constructions à usage d'habitation. » (« habitation » couvre logement + hébergement)
+      hotels:
+        statut: interdit
+        article: 2 AU.1 al. 2
+        page_pdf: 140
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: 2 AU.1 al. 2
+        page_pdf: 140
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      bureau:
+        statut: interdit
+        article: 2 AU.1 al. 3
+        page_pdf: 140
+        citation: « Les constructions à usage de bureaux. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: 2 AU.1 al. 4 et 5
+        page_pdf: 140
+        citation: « Les constructions à usage de commerce. » + « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: 2 AU.1 al. 4
+        page_pdf: 140
+        citation: « Les constructions à usage de commerce. »
+      industrie:
+        statut: interdit
+        article: 2 AU.1 al. 6
+        page_pdf: 140
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: 2 AU.1 al. 7
+        page_pdf: 140
+        citation: « Les constructions liées ou à la fonction d'entrepôt. » (sic)
+      exploitation_agricole:
+        statut: interdit
+        article: 2 AU.1 al. 8
+        page_pdf: 140
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: 2 AU.1 al. 8
+        page_pdf: 140
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_bureaux_administrations:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          » (CINASPIC = destination équipements d'intérêt collectif et services publics)
+      locaux_techniques_administrations:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      salles_art_spectacles:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      equipements_sportifs:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      lieux_culte:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      autres_equipements_public:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+  2AUe:
+    silence: autorise
+    silence_src: 'Sous-secteur de la zone 2AU : « La zone 2AU comprend un sous-secteur 2AUe correspondant au couloir
+      réservé au doublement de la ligne haute tension Langevin — Bras de la Plaine » (caractère de la zone 2AU,
+      p. 140). Les art. 2 AU.1/2 AU.2 (p. 140) régissent la zone, sous-secteur compris ; aucune disposition propre
+      à 2AUe. Même structure que 2AU (voir la réserve de la note 2AU).'
+    note: Mêmes valeurs que 2AU (lues à l'art. 2 AU.1, p. 140) ; 2AUe n'a pas d'article 1/2 propre.
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: 2 AU.1 al. 1
+        page_pdf: 140
+        citation: « Les constructions à usage d'habitation. »
+      hebergement:
+        statut: interdit
+        article: 2 AU.1 al. 1
+        page_pdf: 140
+        citation: « Les constructions à usage d'habitation. »
+      hotels:
+        statut: interdit
+        article: 2 AU.1 al. 2
+        page_pdf: 140
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: 2 AU.1 al. 2
+        page_pdf: 140
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      bureau:
+        statut: interdit
+        article: 2 AU.1 al. 3
+        page_pdf: 140
+        citation: « Les constructions à usage de bureaux. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: 2 AU.1 al. 4 et 5
+        page_pdf: 140
+        citation: « Les constructions à usage de commerce. » + « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: 2 AU.1 al. 4
+        page_pdf: 140
+        citation: « Les constructions à usage de commerce. »
+      industrie:
+        statut: interdit
+        article: 2 AU.1 al. 6
+        page_pdf: 140
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: 2 AU.1 al. 7
+        page_pdf: 140
+        citation: « Les constructions liées ou à la fonction d'entrepôt. » (sic)
+      exploitation_agricole:
+        statut: interdit
+        article: 2 AU.1 al. 8
+        page_pdf: 140
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: 2 AU.1 al. 8
+        page_pdf: 140
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_bureaux_administrations:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      salles_art_spectacles:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      equipements_sportifs:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      lieux_culte:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+      autres_equipements_public:
+        statut: interdit
+        article: 2 AU.1 al. 9
+        page_pdf: 140
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          »
+  AUE:
+    silence: autorise
+    silence_src: 'Structure des art. AUE.1 (liste limitative d''interdictions) et AUE.2 (conditions), p. 109 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (industrie et entrepôt
+      non mentionnés).'
+    note: 'AUE.1 al. 5 (p. 109) : périmètre 100 m bâtiments d''élevage (habitation). AUE.2 al. 3 (p. 109) vise aussi
+      les « services » et « équipement d''intérêt collectif » — « services » seul n''est pas mappé sur un slug (douteux
+      → non écrit) ; les équipements d''intérêt collectif sont relayés ci-dessous. La limite « 5 % de la superficie
+      de la zone d''implantation » n''est pas un seuil en m² (pas de seuil_m2).'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: AUE.2 al. 1
+        page_pdf: 109
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient exclusivement destinées
+          aux logements des employés, du personnel de gardiennage et de surveillance des équipements publics ou
+          privés. » (AUE.1 al. 1, p. 109 : habitation interdite « excepté celle indiquée à l''article AUE.2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: AUE.2 al. 1
+        page_pdf: 109
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      hotels:
+        statut: interdit
+        article: AUE.1 al. 2
+        page_pdf: 109
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: AUE.1 al. 2
+        page_pdf: 109
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      bureau:
+        statut: interdit
+        article: AUE.1 al. 3
+        page_pdf: 109
+        citation: « Les constructions à usage de bureaux. »
+      exploitation_agricole:
+        statut: interdit
+        article: AUE.1 al. 4
+        page_pdf: 109
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: AUE.1 al. 4
+        page_pdf: 109
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « Les constructions à usage de commerces, de services et d'équipement d'intérêt collectif seulement
+          jusqu'à 5 % de la superficie de la zone d'implantation. »
+      commerce_gros:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « Les constructions à usage de commerces, de services et d'équipement d'intérêt collectif seulement
+          jusqu'à 5 %… »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « … et d'équipement d'intérêt collectif seulement jusqu'à 5 % de la superficie de la zone d'implantation.
+          »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « … et d'équipement d'intérêt collectif seulement jusqu'à 5 %… »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « … et d'équipement d'intérêt collectif seulement jusqu'à 5 %… »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « … et d'équipement d'intérêt collectif seulement jusqu'à 5 %… »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « … et d'équipement d'intérêt collectif seulement jusqu'à 5 %… »
+      lieux_culte:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « … et d'équipement d'intérêt collectif seulement jusqu'à 5 %… »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: seulement jusqu'à 5 % de la superficie de la zone d'implantation
+        article: AUE.2 al. 3
+        page_pdf: 109
+        citation: « … et d'équipement d'intérêt collectif seulement jusqu'à 5 %… »
+  AUF:
+    silence: autorise
+    silence_src: 'Structure des art. AUF.1 (liste limitative d''interdictions) et AUF.2 (conditions), p. 116 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé (les équipements publics/collectifs
+      ne sont pas mentionnés).'
+    note: 'AUF.1 al. 9 (p. 116) : nouvelles constructions à usage d''habitation interdites dans le périmètre de
+      100 m autour des bâtiments d''élevage.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: AUF.2
+        page_pdf: 116
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient exclusivement destinées
+          aux logements des employés, du personnel de gardiennage et de surveillance des équipements publics ou
+          privés. » (AUF.1 al. 1, p. 116 : habitation interdite « excepté celle indiquée à l''article AUF.2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des employés, du personnel de gardiennage et de surveillance
+          des équipements publics ou privés
+        article: AUF.2
+        page_pdf: 116
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      hotels:
+        statut: interdit
+        article: AUF.1 al. 2
+        page_pdf: 116
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: AUF.1 al. 2
+        page_pdf: 116
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: AUF.1 al. 3 et 5
+        page_pdf: 116
+        citation: « Les constructions à usage de commerce. » + « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: AUF.1 al. 3
+        page_pdf: 116
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: AUF.1 al. 4
+        page_pdf: 116
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: AUF.1 al. 6
+        page_pdf: 116
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: AUF.1 al. 7
+        page_pdf: 116
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: AUF.1 al. 8
+        page_pdf: 116
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: AUF.1 al. 8
+        page_pdf: 116
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  AUT:
+    silence: autorise
+    silence_src: 'Structure des art. AUT.1 (liste limitative d''interdictions) et AUT.2 (conditions), p. 132 — aucune
+      clause « seules sont admises » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'AUT.1 al. 8 (p. 132) : périmètre 100 m bâtiments d''élevage (habitation). AUT.2 al. 4 (p. 132) : « L''amélioration,
+      l''extension et la reconstruction des bâtiments à usage d''habitation à condition qu''elles ne dépassent pas
+      la surface de plancher autorisée » (bâtiments existants). Le folio imprimé en pied de page porte « 110 » par
+      erreur — la page PDF citée (132) fait foi.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: destinées à du personnel indispensable au fonctionnement et au gardiennage des établissements
+          touristiques et de loisirs, dans la limite de 100 m² de surface de plancher
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: AUT.2 al. 1
+        page_pdf: 132
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient destinées à du personnel
+          indispensable au fonctionnement et au gardiennage des établissements touristiques et de loisirs et qu''elles
+          se situent dans la limite de 100 m² de surface de plancher. » (AUT.1 al. 1, p. 132 : habitation interdite
+          « excepté celle indiquée à l''article AUT.2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: destinées à du personnel indispensable au fonctionnement et au gardiennage des établissements
+          touristiques et de loisirs, dans la limite de 100 m² de surface de plancher
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: AUT.2 al. 1
+        page_pdf: 132
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: liées à la vocation touristique
+        article: AUT.2 al. 2
+        page_pdf: 132
+        citation: '« Les constructions à usage de commerces à condition qu''elles soient liées à la vocation touristique.
+          » (AUT.1 al. 2, p. 132 : commerce interdit « excepté celle indiquée à l''article AUT.2 » ; noter que AUT.1
+          al. 4, p. 132, interdit par ailleurs « Les constructions liées à l''artisanat » — le volet artisanal de
+          la sous-destination reste interdit.)'
+      commerce_gros:
+        statut: sous_condition
+        condition: liées à la vocation touristique
+        article: AUT.2 al. 2
+        page_pdf: 132
+        citation: « Les constructions à usage de commerces à condition qu'elles soient liées à la vocation touristique.
+          »
+      hotels:
+        statut: sous_condition
+        condition: opérations d'ensemble (complexes hôteliers, hôtels-restaurants, villages vacances…)
+        article: AUT.2 al. 3
+        page_pdf: 132
+        citation: « Les constructions à vocation touristique à condition qu'il s'agisse d'opérations d'ensemble
+          telles que des complexes hôteliers, des hôtels-restaurants, des villages vacances… »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: opérations d'ensemble (complexes hôteliers, hôtels-restaurants, villages vacances…)
+        article: AUT.2 al. 3
+        page_pdf: 132
+        citation: « Les constructions à vocation touristique à condition qu'il s'agisse d'opérations d'ensemble…
+          »
+      bureau:
+        statut: interdit
+        article: AUT.1 al. 3
+        page_pdf: 132
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: AUT.1 al. 5
+        page_pdf: 132
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: AUT.1 al. 6
+        page_pdf: 132
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: AUT.1 al. 7
+        page_pdf: 132
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: AUT.1 al. 7
+        page_pdf: 132
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+  AUs:
+    silence: autorise
+    silence_src: 'Structure des art. AUS.1 (liste limitative d''interdictions, p. 122) et AUS.2 (« OCCUPATIONS ET
+      UTILISATIONS DU SOL AUTORISÉES OU SOUMISES À CONDITION », p. 122-123) — aucune clause « seules sont admises
+      » : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'Le règlement écrit « AUS » (p. 122) ; code servi « AUs ». AUS.1 al. 9 (p. 122) : périmètre 100 m bâtiments
+      d''élevage (habitation). AUS.2 (p. 123) vise aussi les « services » (« commerce de proximité et de services
+      ») — « services » seul n''est pas mappé sur un slug (douteux → non écrit).'
+    sous_destinations:
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions et installations nécessaires aux services publics et d'intérêt collectif sont
+          autorisée. » (sic)
+      locaux_techniques_administrations:
+        statut: autorise
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions et installations nécessaires aux services publics et d'intérêt collectif sont
+          autorisée. » (sic)
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions et installations nécessaires aux services publics et d'intérêt collectif sont
+          autorisée. » (sic)
+      salles_art_spectacles:
+        statut: autorise
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions et installations nécessaires aux services publics et d'intérêt collectif sont
+          autorisée. » (sic)
+      equipements_sportifs:
+        statut: autorise
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions et installations nécessaires aux services publics et d'intérêt collectif sont
+          autorisée. » (sic)
+      lieux_culte:
+        statut: autorise
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions et installations nécessaires aux services publics et d'intérêt collectif sont
+          autorisée. » (sic)
+      autres_equipements_public:
+        statut: autorise
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions et installations nécessaires aux services publics et d'intérêt collectif sont
+          autorisée. » (sic)
+      logement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des usagers des équipements de santé, sociaux et de formation
+          du site, et des employés, du personnel de gardiennage et de surveillance de ces équipements
+        article: AUS.2
+        page_pdf: 122
+        citation: '« Les constructions à usage d''habitation à condition qu''elles soient exclusivement destinées
+          aux logements des usagers des équipements de sante, sociaux et de formation du site, et des employés,
+          du personnel de gardiennage et de surveillance de ces équipements publics ou privés. » (sic) (AUS.1 al.
+          1, p. 122 : habitation interdite « excepté celle indiquée à l''article AUS2 »)'
+      hebergement:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des usagers des équipements de santé, sociaux et de formation
+          du site, et des employés, du personnel de gardiennage et de surveillance
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions à usage d'habitation à condition que… » (« habitation » couvre logement +
+          hébergement)
+      hotels:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des usagers des équipements de santé, sociaux et de formation
+          du site
+        article: AUS.2
+        page_pdf: 122
+        citation: '« Les constructions à usage d''hébergement hôtelier à condition qu''elles soient exclusivement
+          destinées aux logements des usagers des équipements de santé, sociaux et de formation du site. » (AUS.1
+          al. 2, p. 122 : hébergement hôtelier interdit « excepté celle indiquée à l''article AUS2 »)'
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: exclusivement destinées aux logements des usagers des équipements de santé, sociaux et de formation
+          du site
+        article: AUS.2
+        page_pdf: 122
+        citation: « Les constructions à usage d'hébergement hôtelier à condition que… »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'commerce de proximité et de services : ne pas dépasser 1 000 m² de surface de plancher au total
+          et s''implanter en rez-de-chaussée des constructions'
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        article: AUS.2
+        page_pdf: 123
+        citation: '« Les constructions à usage de commerce de proximité et de services à condition de ne pas dépasser
+          1 000 m² de surface de plancher au total ; de s''implanter en rez-de-chaussée des constructions. » (AUS.1
+          al. 3, p. 122 : commerce interdit « excepté celle indiquée à l''article AUS2 » ; noter que AUS.1 al. 5,
+          p. 122, interdit « Les constructions liées à l''artisanat » sans exception — le volet artisanal de la
+          sous-destination reste interdit.)'
+      commerce_gros:
+        statut: interdit
+        article: AUS.1 al. 3
+        page_pdf: 122
+        citation: '« Les constructions à usage de commerce, excepté celle indiquée à l''article AUS2 » — l''exception
+          d''AUS.2 (p. 123) ne vise que le « commerce de proximité et de services » : le commerce de gros reste
+          sous l''interdiction.'
+      bureau:
+        statut: sous_condition
+        condition: nécessairement liées à la gestion des équipements de santé, sociaux et de formation du site
+        article: AUS.2
+        page_pdf: 123
+        citation: '« Les constructions à usage de bureaux à condition qu''elles soient nécessairement liées à la
+          gestion des équipements de santé, sociaux et de formation du site. » (AUS.1 al. 4, p. 122 : bureaux interdits
+          « excepté celle indiquée à l''article AUS2 »)'
+      industrie:
+        statut: interdit
+        article: AUS.1 al. 6
+        page_pdf: 122
+        citation: « Les constructions liées à l'industrie. »
+      exploitation_agricole:
+        statut: interdit
+        article: AUS.1 al. 7
+        page_pdf: 122
+        citation: « Les constructions liées à l'exploitation agricole ou forestières. » (sic)
+      exploitation_forestiere:
+        statut: interdit
+        article: AUS.1 al. 7
+        page_pdf: 122
+        citation: « Les constructions liées à l'exploitation agricole ou forestières. » (sic)
+      entrepot:
+        statut: interdit
+        article: AUS.1 al. 8
+        page_pdf: 122
+        citation: « Les constructions à usage d'entrepôt. »
+  A:
+    silence: autorise
+    silence_src: 'Art. A.1, p. 143 : liste limitative de 8 occupations interdites + Art. A.2, p. 144-145 (conditions)
+      ; aucune clause « seules sont admises » — structure ancien format, le non-cité n''est ni interdit ni conditionné.
+      Le caractère de la zone (p. 143, finalité agricole) est indicatif, pas une règle.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'constructions nouvelles à usage d''habitation interdites (A.1 1°, p. 143) sauf : constructions
+          à usage d''habitation directement nécessaires à l''exploitation agricole, regroupées autour du siège d''exploitation,
+          ainsi que l''agrandissement ou la réhabilitation des habitations existantes et leurs annexes (A.2 1°,
+          p. 144) ; extensions liées à une habitation existante limitées à 80 m² de surface de plancher dans la
+          limite de 250 m² au total, habitation existante comprise (A.2 5°, p. 145) ; annexes liées à une habitation
+          existante limitées à 30 m² de surface de plancher (A.2 6°, p. 145) ; interdit dans le périmètre de 130
+          m autour des bâtiments d''élevage identifiés au zonage pour les extensions et annexes (A.1 « De plus »,
+          p. 144)'
+        article: A.1 1° ; A.2 1°, 5°, 6°
+        page_pdf: 143
+        citation: « Les constructions nouvelles à usage d'habitation excepté celles indiquées à l'article A.2. »
+          (p. 143) ; « les constructions à usage d'habitation, l'agrandissement ou la réhabilitation des habitations
+          existantes ainsi que les annexes qui leur sont complémentaires » (A.2 1°, p. 144)
+      exploitation_agricole:
+        statut: sous_condition
+        condition: bâtiments d'exploitation, installations ou ouvrages techniques nécessaires à la production agricole,
+          à condition d'être directement nécessaires à l'exploitation agricole, de respecter le caractère de la
+          zone et d'être regroupés autour du siège d'exploitation ; y compris constructions d'accueil journalier
+          des salariés jusqu'à 200 m² de surface de plancher et installations classées (A.2 1°, p. 144) ; vente
+          directe à la ferme → voir artisanat_commerce_detail (A.2 2°, p. 144)
+        article: A.2 1°
+        page_pdf: 144
+        citation: '« À condition qu''ils soient directement nécessaires à l''exploitation agricole en respectant
+          le caractère de la zone, et qu''ils soient regroupés autour du siège d''exploitation (…) : les bâtiments
+          d''exploitation, installations ou ouvrages techniques nécessaires à la production agricole »'
+      hotels:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. » (mappé hotels + autres_hebergements_touristiques,
+          doctrine ancien format)
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. » (mappé hotels + autres_hebergements_touristiques,
+          doctrine ancien format)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: interdit (« commerce » A.1 3°, « artisanat » A.1 5°, p. 143) sauf aménagement d'un local de vente
+          directe des produits de l'exploitation, à l'intérieur ou en extension d'un bâtiment technique existant
+          ou à construire nécessaire à l'exploitation (localisation dérogeable en cas d'impossibilité technique,
+          sanitaire, juridique ou économique dûment démontrée), surface affectée à la vente ≤ 50 m² de surface de
+          plancher (A.2 2°, p. 144)
+        seuil_m2: 50
+        seuil_type: surface_plancher
+        article: A.1 3° et 5° ; A.2 2°
+        page_pdf: 144
+        citation: « l'aménagement d'un local permettant la vente directe des produits de l'exploitation à l'intérieur
+          ou en extension d'un bâtiment technique (…), à condition que la surface affectée à l'activité de vente
+          directe n'excède pas 50 m² de surface de plancher »
+      commerce_gros:
+        statut: interdit
+        article: A.1 3°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. » (mappé artisanat_commerce_detail + commerce_gros, doctrine
+          ancien format ; seule la vente directe à la ferme est conditionnée, A.2 2°)
+      bureau:
+        statut: interdit
+        article: A.1 4°
+        page_pdf: 143
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: A.1 6°
+        page_pdf: 143
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: A.1 7°
+        page_pdf: 143
+        citation: « Les constructions à usage d'entrepôt. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: installations, constructions ou ouvrages techniques directement nécessaires aux constructions
+          et installations nécessaires aux services publics ou d'intérêt collectif, sous réserve de démontrer la
+          nécessité technique de leur implantation en zone agricole et de ne pas porter atteinte au caractère de
+          la zone (A.2 3°, p. 144) ; équipements et installations techniques nécessaires au traitement et à l'acheminement
+          des eaux et ouvrages nécessaires au renforcement et à l'extension des réseaux d'électricité et de télécommunication
+          (A.2 4°, p. 144)
+        article: A.2 3° et 4°
+        page_pdf: 144
+        citation: « Les équipements et installations techniques à condition qu'ils soient nécessaires au traitement
+          et à l'acheminement des eaux (station d'épuration, postes de relèvement ouvrages de stockage des eaux,
+          etc.), ainsi que les ouvrages nécessaires au renforcement et à l'extension des réseaux d'électricité et
+          de télécommunication. »
+    notes:
+    - A.1 8°, p. 143 interdit « Les constructions destinées au stockage et à la distribution de carburant » — aucun
+      slug R151-28 pleinement couvert → non mappé.
+    - « exploitation forestière » n'est visée qu'aux secteurs Acu/Ad/Ae (A.1 « De plus, pour Acu, Ad et Ae », p.
+      144) ; en A stricte elle est non mentionnée → relève du silence.
+    - 'A.2 7°, p. 145 : reconstruction à l''identique après sinistre d''un bâtiment non conforme aux règles de la
+      zone (toutes destinations, pas un statut de destination) ; A.2 8°, p. 145 : servitudes de captage prioritaires.'
+    - 'A.1 « De plus », p. 144 : dans le périmètre de 130 m autour des bâtiments d''élevage identifiés au plan de
+      zonage, les extensions et annexes d''habitations existantes sont interdites (restriction géographique intra-zone).'
+  Ac:
+    silence: autorise
+    silence_src: 'Le secteur Ac est réglé au chapitre zone A (mentions « Pour Ac » aux articles A.2 p. 145, A.8
+      p. 148, A.13 p. 151) : structure A.1 (liste limitative d''interdictions, p. 143) + A.2 (conditions) ; aucune
+      clause « seules sont admises ».'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'régime de la zone A (A.1 1° p. 143 ; A.2 1°, 5°, 6° p. 144-145 : nécessaire à l''exploitation,
+          extensions ≤ 80 m² SP / 250 m² total, annexes ≤ 30 m² SP) ; en outre pour Ac : « un logement pour le gardiennage
+          du site » des établissements de formation et d''insertion agricole (A.2 « Pour Ac », p. 145)'
+        article: A.1 1° ; A.2 1°, 5°, 6° et « Pour Ac »
+        page_pdf: 145
+        citation: « …ainsi qu'un logement pour le gardiennage du site. »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'régime de la zone A : directement nécessaires à l''exploitation agricole, regroupés autour du
+          siège (A.2 1°, p. 144)'
+        article: A.2 1°
+        page_pdf: 144
+        citation: « les bâtiments d'exploitation, installations ou ouvrages techniques nécessaires à la production
+          agricole »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: 'constructions, ouvrages ou travaux à condition qu''ils soient destinés au fonctionnement des
+          établissements de formation et d''insertion dans le domaine agricole : « les salles de cours, de rencontre
+          et de détente » (A.2 « Pour Ac », p. 145)'
+        article: A.2 « Pour Ac »
+        page_pdf: 145
+        citation: '« Les constructions, ouvrages ou travaux à condition qu''ils soient destinés au fonctionnement
+          des établissements de formation et d''insertion dans le domaine agricole, à savoir : (…) les salles de
+          cours, de rencontre et de détente »'
+      bureau:
+        statut: sous_condition
+        condition: interdit (A.1 4°, p. 143) sauf « les locaux administratifs (bureaux, salles de réunions, sanitaires)
+          » destinés au fonctionnement des établissements de formation et d'insertion dans le domaine agricole (A.2
+          « Pour Ac », p. 145)
+        article: A.1 4° ; A.2 « Pour Ac »
+        page_pdf: 145
+        citation: « …les locaux administratifs (bureaux, salles de réunions, sanitaires)… »
+      restauration:
+        statut: sous_condition
+        condition: uniquement « les locaux pour la confection des repas et la restauration » destinés au fonctionnement
+          des établissements de formation et d'insertion dans le domaine agricole (A.2 « Pour Ac », p. 145)
+        article: A.2 « Pour Ac »
+        page_pdf: 145
+        citation: « …les locaux pour la confection des repas et la restauration… »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: uniquement « les équipements pour la pratique d'activités ludiques et sportives ainsi que les
+          constructions associées à ces équipements (sanitaires, vestiaires, rangement de matériels,…) » destinés
+          au fonctionnement des établissements de formation et d'insertion dans le domaine agricole (A.2 « Pour
+          Ac », p. 145)
+        article: A.2 « Pour Ac »
+        page_pdf: 145
+        citation: « …les équipements pour la pratique d'activités ludiques et sportives ainsi que les constructions
+          associées à ces équipements (sanitaires, vestiaires, rangement de matériels,…)… »
+      hotels:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. » (mappé hotels + autres_hebergements_touristiques)
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. » (mappé hotels + autres_hebergements_touristiques)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'régime de la zone A : interdit (A.1 3° et 5°, p. 143) sauf vente directe des produits de l''exploitation
+          ≤ 50 m² de surface de plancher (A.2 2°, p. 144)'
+        seuil_m2: 50
+        seuil_type: surface_plancher
+        article: A.1 3° et 5° ; A.2 2°
+        page_pdf: 144
+        citation: « …la surface affectée à l'activité de vente directe n'excède pas 50 m² de surface de plancher
+          »
+      commerce_gros:
+        statut: interdit
+        article: A.1 3°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. »
+      industrie:
+        statut: interdit
+        article: A.1 6°
+        page_pdf: 143
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: A.1 7°
+        page_pdf: 143
+        citation: « Les constructions à usage d'entrepôt. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'régime de la zone A : ouvrages techniques nécessaires aux services publics ou d''intérêt collectif
+          (nécessité technique démontrée, A.2 3°) ; équipements eaux et réseaux électricité/télécommunication (A.2
+          4°, p. 144)'
+        article: A.2 3° et 4°
+        page_pdf: 144
+        citation: « Les équipements et installations techniques à condition qu'ils soient nécessaires au traitement
+          et à l'acheminement des eaux (…) ainsi que les ouvrages nécessaires au renforcement et à l'extension des
+          réseaux d'électricité et de télécommunication. »
+    notes:
+    - 'Le caractère du secteur (p. 143 : établissements de formation et d''insertion dans le domaine agricole) est
+      indicatif ; seule la liste « Pour Ac » de A.2, p. 145 fait règle.'
+    - 'A.1 8°, p. 143 (stockage/distribution de carburant) : interdit, non mappé (aucun slug pleinement couvert).'
+  Acu:
+    silence: interdit
+    silence_src: 'Art. A.2 1°, 2°, 5°, 6°, p. 144-145 : « excepté en zone Acu, Ad et Ae où toute construction est
+      interdite » ; Art. A.1 « De plus, pour Acu et Ad », p. 144 (même les CINASPIC sont interdits) ; concordant
+      avec le caractère p. 143 « toute construction, quelle qu''elle soit, est interdite, ainsi que les élevages
+      » (indicatif).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: A.1 « De plus, pour Acu, Ad et Ae »
+        page_pdf: 144
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: A.1 « De plus, pour Acu, Ad et Ae »
+        page_pdf: 144
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      logement:
+        statut: interdit
+        article: A.1 1° ; A.2 1°, 5°, 6°
+        page_pdf: 144
+        citation: '« Les constructions nouvelles à usage d''habitation… » (p. 143) ; les exceptions de A.2 excluent
+          expressément Acu : « excepté en zone Acu, Ad et Ae où toute construction est interdite » (p. 144-145)'
+      hotels:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: A.1 3° et 5° ; A.2 2°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. » ; la vente
+          directe A.2 2° exclut Acu (« excepté en zone Acu, Ad et Ae », p. 144)
+      commerce_gros:
+        statut: interdit
+        article: A.1 3°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: A.1 4°
+        page_pdf: 143
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: A.1 6°
+        page_pdf: 143
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: A.1 7°
+        page_pdf: 143
+        citation: « Les constructions à usage d'entrepôt. »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: A.1 « De plus, pour Acu et Ad »
+        page_pdf: 144
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          » (mappé locaux_techniques_administrations + autres_equipements_public)
+      autres_equipements_public:
+        statut: interdit
+        article: A.1 « De plus, pour Acu et Ad »
+        page_pdf: 144
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          » (mappé locaux_techniques_administrations + autres_equipements_public)
+    notes:
+    - 'ANOMALIE — A.2 4° (équipements eaux/réseaux, p. 144) ne comporte pas d''exception Acu/Ad/Ae alors que A.1
+      « De plus, pour Acu et Ad », p. 144 interdit les constructions et installations nécessaires aux services publics
+      ou d''intérêt collectif : contradiction interne ; lecture conservatrice relayée = interdit (l''interdiction
+      expresse du secteur prime).'
+    - A.2 7° (reconstruction après sinistre) et 8° (captages), p. 145, ne comportent pas d'exception Acu/Ad/Ae.
+  Ad:
+    silence: interdit
+    silence_src: 'Art. A.2 1°, 2°, 5°, 6°, p. 144-145 : « excepté en zone Acu, Ad et Ae où toute construction est
+      interdite » ; Art. A.1 « De plus, pour Acu et Ad », p. 144 ; concordant avec le caractère p. 143 « toute construction,
+      quelle qu''elle soit, est interdite, ainsi que les élevages » (indicatif).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: A.1 « De plus, pour Acu, Ad et Ae »
+        page_pdf: 144
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: A.1 « De plus, pour Acu, Ad et Ae »
+        page_pdf: 144
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      logement:
+        statut: interdit
+        article: A.1 1° ; A.2 1°, 5°, 6°
+        page_pdf: 144
+        citation: '« Les constructions nouvelles à usage d''habitation… » (p. 143) ; exceptions A.2 : « excepté
+          en zone Acu, Ad et Ae où toute construction est interdite » (p. 144-145)'
+      hotels:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: A.1 3° et 5° ; A.2 2°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. » ; la vente
+          directe A.2 2° exclut Ad (p. 144)
+      commerce_gros:
+        statut: interdit
+        article: A.1 3°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: A.1 4°
+        page_pdf: 143
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: A.1 6°
+        page_pdf: 143
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: A.1 7°
+        page_pdf: 143
+        citation: « Les constructions à usage d'entrepôt. »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: A.1 « De plus, pour Acu et Ad »
+        page_pdf: 144
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          » (mappé locaux_techniques_administrations + autres_equipements_public)
+      autres_equipements_public:
+        statut: interdit
+        article: A.1 « De plus, pour Acu et Ad »
+        page_pdf: 144
+        citation: « Les constructions et installations nécessaires aux services publics ou d'intérêt collectif.
+          » (mappé locaux_techniques_administrations + autres_equipements_public)
+    notes:
+    - 'Même anomalie que Acu : A.2 4° (eaux/réseaux, p. 144) sans exception Ad, contradictoire avec A.1 « De plus,
+      pour Acu et Ad » — lecture conservatrice relayée = interdit.'
+    - 'Caractère p. 143 : protection liée à la proximité du site de Grand Anse et aux projets touristiques de la
+      ZALM du SMVM (indicatif).'
+  Ae:
+    silence: interdit
+    silence_src: 'Art. A.2 1°, 2°, 5°, 6°, p. 144-145 : « excepté en zone Acu, Ad et Ae où toute construction est
+      interdite » ; concordant avec le caractère p. 143 « toute construction, quelle qu''elle soit, est interdite,
+      ainsi que les élevages, excepté les infrastructures d''intérêt collectif » (indicatif — l''exception d''intérêt
+      collectif est écrite en règle à A.2 3° et 4°, qui n''exceptent pas Ae).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: A.1 « De plus, pour Acu, Ad et Ae »
+        page_pdf: 144
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: A.1 « De plus, pour Acu, Ad et Ae »
+        page_pdf: 144
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      logement:
+        statut: interdit
+        article: A.1 1° ; A.2 1°, 5°, 6°
+        page_pdf: 144
+        citation: '« Les constructions nouvelles à usage d''habitation… » (p. 143) ; exceptions A.2 : « excepté
+          en zone Acu, Ad et Ae où toute construction est interdite » (p. 144-145)'
+      hotels:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: A.1 2°
+        page_pdf: 143
+        citation: « Les constructions à usage d'hébergement hôtelier. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: A.1 3° et 5° ; A.2 2°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. » ; la vente
+          directe A.2 2° exclut Ae (p. 144)
+      commerce_gros:
+        statut: interdit
+        article: A.1 3°
+        page_pdf: 143
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: A.1 4°
+        page_pdf: 143
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: A.1 6°
+        page_pdf: 143
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: A.1 7°
+        page_pdf: 143
+        citation: « Les constructions à usage d'entrepôt. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'A.2 3°, p. 144 n''excepte que « en zone Acu et Ad » (pas Ae) : ouvrages techniques directement
+          nécessaires aux CINASPIC sous réserve de nécessité technique démontrée ; A.2 4°, p. 144 (équipements eaux,
+          réseaux électricité/télécommunication) sans exception de secteur'
+        article: A.2 3° et 4°
+        page_pdf: 144
+        citation: '« À condition qu''ils soient directement nécessaires aux constructions et installations nécessaires
+          aux services publics ou d''intérêt collectif (excepté en zone Acu et Ad où toute construction est interdite)
+          : les installations, constructions ou ouvrages techniques (…) sous réserve de démontrer la nécessité technique
+          de leur implantation en zone agricole »'
+    notes:
+    - 'Caractère p. 143 : couloir réservé au doublement de la ligne haute tension Langevin — Bras de la Plaine ;
+      l''exception « infrastructures d''intérêt collectif » du caractère trouve sa traduction réglementaire dans
+      A.2 3°-4° (Ae non excepté).'
+  N:
+    silence: autorise
+    silence_src: 'Art. N.1, p. 153-154 : liste limitative de 11 occupations interdites ; chapeau N.2, p. 154 («
+      Les occupations et utilisations du sol suivantes ne sont admises que si elles respectent les conditions ci-après
+      ») ne conditionne que les occupations listées ; pas de clause « seules sont admises » en N stricte. Le caractère
+      (p. 153, espaces naturels à protéger) est indicatif.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'constructions à usage d''habitation interdites (N.1 1°, p. 153) sauf N.2, p. 154 : aménagement
+          et entretien des bâtiments existants hors zone à risque (3°) ; extensions hors zone à risques, liées à
+          une habitation existante, limitées à 80 m² de surface de plancher dans la limite de 200 m² au total, habitation
+          existante comprise (4°) ; annexes hors zone à risques, liées à une habitation existante, limitées à 30
+          m² de surface de plancher (5°) ; reconstruction à l''identique après sinistre (6°) — le tout « excepté
+          en zone Nce, Ncu, Ne et Np où toute construction est interdite » ; interdit dans le périmètre de 130 m
+          autour des bâtiments d''élevage identifiés au zonage pour les extensions et annexes (N.1 « De plus »,
+          p. 154)'
+        article: N.1 1° ; N.2 3°, 4°, 5°, 6°
+        page_pdf: 153
+        citation: « Les constructions à usage d'habitation excepté celles indiquées à l'article N.2. » (p. 153)
+          ; « Les extensions à condition (…) qu'elles soient limitées à 80 m² de surface de plancher et dans la
+          limite d'une surface de plancher maximale totale de 200 m² » (N.2 4°, p. 154)
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. » (l'exception ne joue qu'en Ntla ; mappé hotels + autres_hebergements_touristiques)
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. » (l'exception ne joue qu'en Ntla)
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » (p. 153) / « Les constructions liées à l'artisanat.
+          » (p. 154)
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » (mappé artisanat_commerce_detail + commerce_gros)
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8° et 11°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. » ; « Les activités agricoles
+          non compatibles avec la vocation naturelle de la zone. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations à condition qu'elles soient liées au bon fonctionnement des services
+          publics ou d'intérêt collectif, « excepté en zone Nce, Ncu et Np où toute construction est interdite »
+          (N.2 2°, p. 154)
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif excepté en zone Nce, Ncu et Np où toute construction est interdite.
+          » (clause CINASPIC générique, mappée locaux_techniques_administrations + autres_equipements_public)
+      autres_equipements_public:
+        statut: sous_condition
+        condition: constructions et installations à condition qu'elles soient liées au bon fonctionnement des services
+          publics ou d'intérêt collectif, « excepté en zone Nce, Ncu et Np » (N.2 2°, p. 154)
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif excepté en zone Nce, Ncu et Np où toute construction est interdite.
+          »
+    notes:
+    - 'N.2 1°, p. 154 (ouvrages permettant de réduire les risques naturels) et N.2 7°, p. 155 (confortement et extension
+      du bassin de baignade de Grande Anse) : pas de sous-destination R151-28 pleinement couverte → non mappés.'
+    - 'N.1 9° et 10°, p. 154 : démolition interdite / travaux soumis à déclaration préalable pour les constructions
+      à conserver au titre du L.151-19 (police du patrimoine, pas une destination) ; prescriptions à N.11 3°, p.
+      161.'
+    - 'N.2 2° vise génériquement les CINASPIC : mappage conservateur sur les deux slugs d''équipements publics ;
+      les autres sous-destinations de la destination « équipements d''intérêt collectif » (enseignement, salles
+      de spectacles, sport, culte) ne sont pas nommées → non mappées (douteux).'
+    - 'N.2 8°, p. 155 : servitudes de captage prioritaires (transversal).'
+  Na:
+    silence: interdit
+    silence_src: 'Art. N.2 « De plus, pour Na », p. 155 : « Seuls sont autorisés l''amélioration, la réfection et
+      la reconstruction des constructions à usage d''habitation existantes, dans la limite du bâti existant. » /
+      « Seuls sont autorisés l''amélioration, la réfection et la reconstruction des annexes existantes, dans la
+      limite du bâti existant. » (clause « seuls sont autorisés »).'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: uniquement l'amélioration, la réfection et la reconstruction des constructions à usage d'habitation
+          existantes et de leurs annexes, dans la limite du bâti existant (N.2 « De plus, pour Na », p. 155)
+        article: N.2 « De plus, pour Na » 1° et 2°
+        page_pdf: 155
+        citation: « Seuls sont autorisés l'amélioration, la réfection et la reconstruction des constructions à usage
+          d'habitation existantes, dans la limite du bâti existant. »
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+    notes:
+    - 'ANOMALIE d''articulation — les items généraux de N.2 (2° CINASPIC, 4°-5° extensions/annexes, p. 154) n''exceptent
+      pas Na, mais le bloc « De plus, pour Na » (p. 155) est rédigé en « Seuls sont autorisés » : lecture conservatrice
+      relayée = régime propre du secteur (silence interdit) ; en particulier l''extension au-delà de la limite du
+      bâti existant n''y est pas admise et le CINASPIC n''est pas mappé en Na.'
+    - 'Caractère p. 153 : « sites d''habitat situé sur la bande littoral(e), dans lequel est admis(e) la reconstruction
+      des bâtiments existants sous certaines conditions » (indicatif, concordant).'
+  Nb:
+    silence: autorise
+    silence_src: 'Le secteur Nb est réglé au chapitre zone N : Art. N.1, p. 153-154 (liste limitative d''interdictions)
+      + N.2 (conditions) ; aucune clause « seules sont admises » pour Nb.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'régime de la zone N (N.1 1° p. 153 ; N.2 3°-6° p. 154 : bâtiments existants, extensions ≤ 80
+          m² SP / 200 m² total, annexes ≤ 30 m² SP, hors zone à risques)'
+        article: N.1 1° ; N.2 3°-6°
+        page_pdf: 154
+        citation: « Les constructions à usage d'habitation excepté celles indiquées à l'article N.2. » (p. 153)
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: CINASPIC liées au bon fonctionnement des services publics ou d'intérêt collectif (N.2 2°, p.
+          154 — Nb non excepté)
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif… »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: CINASPIC liées au bon fonctionnement des services publics ou d'intérêt collectif (N.2 2°, p.
+          154 — Nb non excepté)
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif… »
+    notes:
+    - 'N.2 « De plus, pour Nb », p. 155 : « L''aménagement et l''extension des bâtiments existants dans la limite
+      d''une surface de plancher maximale de 500 m² (bâtiment existant et nouvelle extension comprise). » — clause
+      générique sur bâtiments existants, non rattachée à une destination → non mappée (seuil 500 m² surface_plancher
+      relayé ici).'
+    - 'Caractère p. 153 : site de Grand Anse pour la création d''un équipement public compatible avec le SMVM et
+      le SAR (indicatif — la création d''équipement neuf ne s''écrit en règle qu''à travers N.2 2°).'
+  Nce:
+    silence: interdit
+    silence_src: 'Art. N.2 2°, p. 154 : « excepté en zone Nce, Ncu et Np où toute construction est interdite » ;
+      N.2 4°, 5°, 6°, p. 154 : « excepté en zone Nce, Ncu, Ne et Np où toute construction est interdite » ; concordant
+      avec le caractère p. 153 « toute construction, quelle qu''elle soit, est interdite » (indicatif).'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: N.1 1° ; N.2 3°-6°
+        page_pdf: 154
+        citation: '« Les constructions à usage d''habitation… » (p. 153) ; les exceptions N.2 excluent Nce : « excepté
+          en zone Nce, Ncu, Ne et Np où toute construction est interdite » (p. 154)'
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: N.2 2°
+        page_pdf: 154
+        citation: « …excepté en zone Nce, Ncu et Np où toute construction est interdite. »
+      autres_equipements_public:
+        statut: interdit
+        article: N.2 2°
+        page_pdf: 154
+        citation: « …excepté en zone Nce, Ncu et Np où toute construction est interdite. »
+    notes:
+    - Toutes les autres destinations relèvent du silence interdit (« toute construction est interdite », N.2 2°
+      et 4°-6°, p. 154).
+  Ncu:
+    silence: interdit
+    silence_src: 'Art. N.2 2°, p. 154 : « excepté en zone Nce, Ncu et Np où toute construction est interdite » ;
+      N.2 4°, 5°, 6°, p. 154 : « excepté en zone Nce, Ncu, Ne et Np où toute construction est interdite » ; concordant
+      avec le caractère p. 153-154 « toute construction, quelle qu''elle soit, est interdite » (indicatif).'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: N.1 1° ; N.2 3°-6°
+        page_pdf: 154
+        citation: '« Les constructions à usage d''habitation… » (p. 153) ; exceptions N.2 : « excepté en zone Nce,
+          Ncu, Ne et Np où toute construction est interdite » (p. 154)'
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: N.2 2°
+        page_pdf: 154
+        citation: « …excepté en zone Nce, Ncu et Np où toute construction est interdite. »
+      autres_equipements_public:
+        statut: interdit
+        article: N.2 2°
+        page_pdf: 154
+        citation: « …excepté en zone Nce, Ncu et Np où toute construction est interdite. »
+    notes:
+    - Toutes les autres destinations relèvent du silence interdit (« toute construction est interdite », N.2 2°
+      et 4°-6°, p. 154).
+  Ne:
+    silence: interdit
+    silence_src: 'Art. N.2 4°, 5°, 6°, p. 154 : « excepté en zone Nce, Ncu, Ne et Np où toute construction est interdite
+      » ; concordant avec le caractère p. 153 « toute construction, qu''elle quelle soit, est interdite excepté
+      les infrastructures d''intérêt collectif » (indicatif — l''exception d''intérêt collectif est écrite en règle
+      à N.2 2°, qui n''excepte pas Ne).'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: N.1 1° ; N.2 3°-6°
+        page_pdf: 154
+        citation: '« Les constructions à usage d''habitation… » (p. 153) ; exceptions N.2 : « excepté en zone Nce,
+          Ncu, Ne et Np où toute construction est interdite » (p. 154)'
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'N.2 2°, p. 154 n''excepte que « en zone Nce, Ncu et Np » (pas Ne) : constructions et installations
+          liées au bon fonctionnement des services publics ou d''intérêt collectif'
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif excepté en zone Nce, Ncu et Np où toute construction est interdite.
+          »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: 'N.2 2°, p. 154 (Ne non excepté) : constructions et installations liées au bon fonctionnement
+          des services publics ou d''intérêt collectif'
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif excepté en zone Nce, Ncu et Np où toute construction est interdite.
+          »
+    notes:
+    - 'Caractère p. 153 : couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine ;
+      l''exception « infrastructures d''intérêt collectif » du caractère trouve sa traduction réglementaire dans
+      N.2 2° (Ne non excepté).'
+  Ntl:
+    silence: autorise
+    silence_src: 'Le secteur Ntl est réglé au chapitre zone N : Art. N.1, p. 153-154 (liste limitative d''interdictions)
+      + N.2 (conditions, dont « De plus, pour Ntl et Ntla », p. 155) ; aucune clause « seules sont admises » pour
+      Ntl.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'régime de la zone N (N.1 1° p. 153 ; N.2 3°-6° p. 154 : bâtiments existants, extensions ≤ 80
+          m² SP / 200 m² total, annexes ≤ 30 m² SP, hors zone à risques)'
+        article: N.1 1° ; N.2 3°-6°
+        page_pdf: 154
+        citation: « Les constructions à usage d'habitation excepté celles indiquées à l'article N.2. » (p. 153)
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. » (l'exception ne vise que Ntla, pas Ntl)
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier excepté celles indiquées à l'article N.2. pour
+          le sous-secteur Ntla. » (l'exception ne vise que Ntla, pas Ntl)
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: CINASPIC liées au bon fonctionnement des services publics ou d'intérêt collectif (N.2 2°, p.
+          154 — Ntl non excepté)
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif… »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: 'CINASPIC (N.2 2°, p. 154) ; en outre pour Ntl et Ntla : aménagement et extension des bâtiments
+          publics ou d''intérêt collectif existants dans la limite d''une surface de plancher maximale de 300 m²
+          (N.2 « De plus, pour Ntl et Ntla » 5°, p. 155)'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: N.2 2° ; N.2 « De plus, pour Ntl et Ntla » 5°
+        page_pdf: 155
+        citation: « L'aménagement et l'extension des bâtiments publics ou d'intérêt collectif existants dans la
+          limite d'une surface de plancher maximale de 300 m². »
+    notes:
+    - 'N.2 « De plus, pour Ntl et Ntla », p. 155, items non mappés (aucun slug pleinement couvert, douteux) : 1°
+      constructions nouvelles strictement nécessaires à l''entretien et au gardiennage des sites, intégrées à l''environnement
+      et à caractère d''intérêt public ; 2° réhabilitation des bâtiments anciens à caractère patrimonial remarquable
+      « en vue de l''accueil touristique » ; 3° aménagements légers à vocation touristique et de loisirs (points
+      d''arrêts, points de vue, kiosques, chemins piétons, mobilier urbain, aires de pique-nique) ; 4° équipements
+      et installations légères à vocation touristique et de loisirs bien intégrés au site (sanitaires, douches).'
+    - 'TRANSVERSALE — DG Article 6, p. 21 (Loi Barnier RN2) : bande inconstructible réduite à 30 m de part et d''autre
+      de l''axe de la RN2, aucune habitation dans cette bande, exception pour parkings, espaces de jeux de plein
+      air et bâtiments destinés au commerce ou à la formation autorisés dans les zones visées ; le caractère de
+      Ntl (p. 153) situe ce secteur le long de la RN2 (Anse les Bas, entrée Est).'
+    - 'Caractère p. 153 : sites destinés à des activités touristiques et de loisirs (indicatif, pas une règle d''autorisation).'
+  Ntla:
+    silence: autorise
+    silence_src: 'Le secteur Ntla est réglé au chapitre zone N (indice de Ntl, p. 153) : Art. N.1, p. 153-154 (liste
+      limitative d''interdictions) + N.2 (conditions, dont « De plus, pour Ntl et Ntla » et « De plus, pour Ntla
+      », p. 155) ; aucune clause « seules sont admises » pour Ntla.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'régime de la zone N (N.1 1° p. 153 ; N.2 3°-6° p. 154 : bâtiments existants, extensions ≤ 80
+          m² SP / 200 m² total, annexes ≤ 30 m² SP, hors zone à risques)'
+        article: N.1 1° ; N.2 3°-6°
+        page_pdf: 154
+        citation: « Les constructions à usage d'habitation excepté celles indiquées à l'article N.2. » (p. 153)
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'interdit (N.1 2°, p. 153) sauf, pour Ntla : « hébergement touristique de type aire naturelle
+          de camping, gîte d''une surface de plancher maximale de 150 m² par unité foncière, ou hébergement touristique
+          léger s''intégrant dans l''environnement et compatible avec la vocation naturelle de la zone » (N.2 «
+          De plus, pour Ntla », p. 155)'
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: N.1 2° ; N.2 « De plus, pour Ntla »
+        page_pdf: 155
+        citation: « L'hébergement touristique de type aire naturelle de camping, gîte d'une surface de plancher
+          maximale de 150 m² par unité foncière, ou hébergement touristique léger s'intégrant dans l'environnement
+          et compatible avec la vocation naturelle de la zone. »
+      hotels:
+        statut: interdit
+        article: N.1 2° ; N.2 « De plus, pour Ntla »
+        page_pdf: 153
+        citation: '« Les constructions à usage d''hébergement hôtelier excepté celles indiquées à l''article N.2.
+          pour le sous-secteur Ntla. » — l''exception Ntla (p. 155) ne vise que le camping, le gîte et l''hébergement
+          touristique léger, pas l''hôtel (mappage conservateur : interdit)'
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: CINASPIC liées au bon fonctionnement des services publics ou d'intérêt collectif (N.2 2°, p.
+          154 — Ntla non excepté)
+        article: N.2 2°
+        page_pdf: 154
+        citation: « Les constructions et installations à condition qu'elles soient liées au bon fonctionnement des
+          services publics ou d'intérêt collectif… »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: 'CINASPIC (N.2 2°, p. 154) ; en outre pour Ntl et Ntla : aménagement et extension des bâtiments
+          publics ou d''intérêt collectif existants ≤ 300 m² de surface de plancher (N.2 « De plus, pour Ntl et
+          Ntla » 5°, p. 155)'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: N.2 2° ; N.2 « De plus, pour Ntl et Ntla » 5°
+        page_pdf: 155
+        citation: « L'aménagement et l'extension des bâtiments publics ou d'intérêt collectif existants dans la
+          limite d'une surface de plancher maximale de 300 m². »
+    notes:
+    - 'Mêmes items non mappés que Ntl (N.2 « De plus, pour Ntl et Ntla » 1°-4°, p. 155 : gardiennage/entretien,
+      réhabilitation patrimoniale en vue de l''accueil touristique, aménagements légers, équipements et installations
+      légères).'
+    - 'ANOMALIE de rédaction — N.9 « Pour Ntla », p. 159 : « L''emprise au sol d''un gîte ne devra pas dépasser
+      une surface de plancher maximale de 150 m² par unité foncière » mélange emprise au sol et surface de plancher
+      ; concordant avec le seuil de 150 m² SP de N.2 (p. 155), relayé tel quel en surface_plancher.'
+    - 'Autres règles Ntla hors destinations : hauteur totale d''un gîte ≤ 4 m (N.10, p. 159) ; 1 place de stationnement
+      minimum par chambre ou gîte (N.12, p. 162).'
+  Np:
+    silence: interdit
+    silence_src: 'Art. N.2 2°, p. 154 : « excepté en zone Nce, Ncu et Np où toute construction est interdite » ;
+      N.2 4°/5°/6°, p. 154 : « excepté en zone Nce, Ncu, Ne et Np où toute construction est interdite » ; Np = cœur
+      de parc naturel régional, caractère p. 153 « toute construction interdite » (indicatif).'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: N.1 1° ; N.2 3°-6°
+        page_pdf: 154
+        citation: '« Les constructions à usage d''habitation… » (p. 153) ; les exceptions N.2 excluent Nce : « excepté
+          en zone Nce, Ncu, Ne et Np où toute construction est interdite » (p. 154)'
+      hotels:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: N.1 2°
+        page_pdf: 153
+        citation: « Les constructions à usage d'hébergement hôtelier… »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: N.1 3° et 5°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. » / « Les constructions liées à l'artisanat. »
+      commerce_gros:
+        statut: interdit
+        article: N.1 3°
+        page_pdf: 153
+        citation: « Les constructions à usage de commerce. »
+      bureau:
+        statut: interdit
+        article: N.1 4°
+        page_pdf: 153
+        citation: « Les constructions à usage de bureaux. »
+      industrie:
+        statut: interdit
+        article: N.1 6°
+        page_pdf: 154
+        citation: « Les constructions liées à l'industrie. »
+      entrepot:
+        statut: interdit
+        article: N.1 7°
+        page_pdf: 154
+        citation: « Les constructions à usage d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: N.1 8°
+        page_pdf: 154
+        citation: « Les constructions liées à l'exploitation agricole ou forestière. »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: N.2 2°
+        page_pdf: 154
+        citation: « …excepté en zone Nce, Ncu et Np où toute construction est interdite. »
+      autres_equipements_public:
+        statut: interdit
+        article: N.2 2°
+        page_pdf: 154
+        citation: « …excepté en zone Nce, Ncu et Np où toute construction est interdite. »
+    notes:
+    - Toutes les autres destinations relèvent du silence interdit (« toute construction est interdite », N.2 2°
+      et 4°-6°, p. 154).
+    note: secteur Np (cœur de parc) servi au zonage GPU ; calqué sur Nce/Ncu (toute construction interdite), citations
+      N.2 2°/4°/5°/6° p. 154.

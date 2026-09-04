@@ -143,3 +143,4 @@ qa/dashboard/out/
 # RADAR-RECETTE-1 D3 — archives locales des dépôts HTML en dev (jamais commitées)
 .local/
 reports/score-v2-arene/cache/
+data/reglements-plu/

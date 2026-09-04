@@ -1,0 +1,1407 @@
+meta:
+  insee: '97408'
+  commune: La Possession
+  document: 97408_reglement_20251217.pdf
+  document_gpu: 97408_PLU_20251217
+  gpu_doc_id: 3fa1dbaa347af47ed5b743696ea098f6
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97408/3fa1dbaa347af47ed5b743696ea098f6/97408_reglement_20251217.pdf
+  md5: 8b3bd9de4c9a3d23f91307c31c457007
+  millesime: '2025-12-17'
+  pages_total: 164
+  lu_le: '2026-09-03'
+  structure: 'Ancien format : zones U avec clause « sont admises toutes les occupations non citées à l''article
+    1.2 » (silence = autorisé) sauf UBpszc et UT/UTfr2 fermées (silence = interdit) ; AU indicée = renvoi ÉCRIT
+    (DG art. 3 2°, p. 7) vers la zone urbaine d''indice ; AUst fermée ; A/N/Npnr/Nr/Nli fermées ; Ni1/Ni2 (Mafate)
+    plafonds par destination en EMPRISE AU SOL par concession (N9). AUEm : chapitre annoncé par les DG mais absent
+    de la pièce écrite → non_lu (dit tel quel).'
+zones:
+  UA:
+    silence: autorise
+    silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
+    notes: 'Art. UA 2.2 3° (p. 11) admet « les constructions à destination d''activités, exceptées celles visées
+      à l''article 1-2 » sous réserve de n''entraîner « pour le voisinage ni incommodité et ni aggravation des risques
+      » — terme générique « activités » non mappable à des sous-destinations précises (douteux → non écrit) ; ICPE
+      autorisées sauf secteur UApsfr2. Art. UA 1.2 4° et 5° (p. 10) interdisent les terrains de camping et de caravaning,
+      les dépôts de ferrailles et les décharges (hors nomenclature R151-28, non mappés). Art. UA 2.2 1° (p. 11)
+      : régime propre aux cinquante pas géométriques délimités au document graphique (liste fermée d''occupations
+      autorisées dans ce sous-périmètre).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA 1.2 1°
+        page_pdf: 10
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UA 1.2 1°, p. 10) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+          (taux en %, pas de seuil en m²)
+        article: UA 1.2 1° et UA 2.2 4°
+        page_pdf: 11
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. En secteur UAm, ce taux est porté à 40%. »
+      exploitation_agricole:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+      logement:
+        statut: sous_condition
+        condition: admis (jamais interdit en UA hors secteur UAa) ; pour tout programme de logements de plus de
+          1 500 m² de surface de plancher, au minimum 20 % du programme affecté à des logements locatifs aidés (LLTS/LLS
+          ; PLS ou accession aidée PSLA, LES, PTZ)
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        article: UA 2.2 7°
+        page_pdf: 11
+        citation: « A l'exception des secteurs UAm et UAv, en cas de réalisation d'un programme de logements représentant
+          une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté à des
+          logement locatifs financés par un prêt aidé de l'État »
+  UAa:
+    silence: autorise
+    silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UA 1.2 » (secteur UAa de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
+    notes: 'Secteur UAa (« zone située le long de la RN1 », p. 10). Mêmes dispositions que la zone UA (industrie
+      interdite, entrepôt exclusif interdit/annexe ≤ 20 %, agricole-forestier interdit, « activités » génériques
+      sous condition de non-nuisance) PLUS interdiction des constructions à usage d''habitation (UA 1.2 3°). Anomalie
+      relevée : la clause de mixité sociale UA 2.2 7° (p. 11) ne dispense que les secteurs UAm et UAv — elle vise
+      donc littéralement UAa où l''habitation neuve est pourtant interdite.'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: UA 1.2 3°
+        page_pdf: 10
+        citation: '« Dans le secteur UAa, les constructions à usage d''habitation. » — tempéré par UA 2.2 5°, p.
+          11 : « Dans le secteur UAa, l''extension des bâtiments d''habitation existants est admise sous réserve
+          de ne pas augmenter la surface de plancher existante à la date d''approbation du PLU de plus de 30%, dans
+          la limite de 30m² et sans pouvoir excéder une surface totale finale de 120 m² par logement. »'
+      hebergement:
+        statut: interdit
+        article: UA 1.2 3°
+        page_pdf: 10
+        citation: '« Dans le secteur UAa, les constructions à usage d''habitation. » (destination habitation → logement
+          + hébergement ; extension de l''existant : voir UA 2.2 5°, p. 11)'
+      industrie:
+        statut: interdit
+        article: UA 1.2 1°
+        page_pdf: 10
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UA 1.2 1°, p. 10) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+        article: UA 1.2 1° et UA 2.2 4°
+        page_pdf: 11
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+  UAm:
+    silence: autorise
+    silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UA 1.2 » (secteur UAm de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
+    notes: 'Secteur UAm (« zone la plus dense de la ZAC Moulin Joli », p. 10). Mêmes dispositions que la zone UA
+      ; seule différence de destination lue : le plafond d''entrepôt annexe est porté à 40 % (UA 2.2 4°, p. 11)
+      et la clause de mixité sociale UA 2.2 7° ne s''y applique pas (« A l''exception des secteurs UAm et UAv »,
+      p. 11). « Activités » génériques sous condition de non-nuisance (UA 2.2 3°, p. 11), ICPE autorisées.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA 1.2 1°
+        page_pdf: 10
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UA 1.2 1°, p. 10) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 40 % de la surface de plancher totale de l'activité
+          en secteur UAm
+        article: UA 1.2 1° et UA 2.2 4°
+        page_pdf: 11
+        citation: « Elles ne peuvent pas représenter plus de 20% de la surface de plancher totale de l'activité.
+          En secteur UAm, ce taux est porté à 40%. »
+      exploitation_agricole:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+  UApsfr2:
+    silence: autorise
+    silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UA 1.2 » (secteur UApsfr2 de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
+    notes: 'Secteur UApsfr2 (périmètre de protection rapprochée du Puits Samy hors zone critique et/ou du forage
+      FR2, p. 10). Mêmes dispositions de destination que la zone UA ; seule différence lue : les ICPE n''y sont
+      PAS autorisées — UA 2.2 3°, p. 11 : « A l''exception du secteur UApsfr2, les constructions, ouvrages et travaux
+      soumis au régime des installations classées pour la protection de l''environnement sont autorisés. » Les prescriptions
+      des arrêtés de DUP de captage s''appliquent (UA 1.1 5°, p. 10).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA 1.2 1°
+        page_pdf: 10
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UA 1.2 1°, p. 10) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+        article: UA 1.2 1° et UA 2.2 4°
+        page_pdf: 11
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UA 1.2 2°
+        page_pdf: 10
+        citation: « A l'exception du secteur UAv, les constructions, ouvrages et travaux à destination agricole
+          et forestière. »
+      logement:
+        statut: sous_condition
+        condition: admis ; pour tout programme de logements de plus de 1 500 m² de surface de plancher, au minimum
+          20 % du programme affecté à des logements locatifs aidés (la dispense UA 2.2 7° ne vise que UAm et UAv)
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        article: UA 2.2 7°
+        page_pdf: 11
+        citation: « A l'exception des secteurs UAm et UAv, en cas de réalisation d'un programme de logements représentant
+          une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté à des
+          logement locatifs financés par un prêt aidé de l'État »
+  UAv:
+    silence: autorise
+    silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UA 1.2 » (secteur UAv de la zone UA, mêmes articles UA 1/UA 2, p. 10-11)'
+    notes: 'Secteur UAv (opération d''aménagement « Cœur de Ville », découpé en îlots opérationnels avec OAP, p.
+      10). L''interdiction agricole-forestière ne s''y applique pas (UA 1.2 2°, p. 10 : « A l''exception du secteur
+      UAv… ») → exploitation_agricole et exploitation_forestiere y sont non mentionnées (verdict par silence : autorisé).
+      La clause de mixité sociale UA 2.2 7° ne s''y applique pas. « Activités » génériques sous condition de non-nuisance
+      (UA 2.2 3°, p. 11), ICPE autorisées. Camping-caravaning, dépôts de ferrailles et décharges interdits (UA 1.2
+      4°-5°, p. 10, hors nomenclature).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UA 1.2 1°
+        page_pdf: 10
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UA 1.2 1°, p. 10) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+          (le taux de 40 % ne vise que le secteur UAm)
+        article: UA 1.2 1° et UA 2.2 4°
+        page_pdf: 11
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+  UB:
+    silence: autorise
+    silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UB 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
+    notes: Art. UB 2.2 1° (p. 27) admet « les constructions à destination d'activités » (terme générique non mappé)
+      sous réserve de non-nuisance pour le voisinage ; ICPE autorisées sauf secteurs UBpszc et UBpsfr2. Art. UB
+      1.2 3° et 4° (p. 26) interdisent les terrains de camping et de caravaning (« à l'exception du secteur UBb
+      ») et les dépôts de ferrailles/décharges (hors nomenclature R151-28, non mappés).
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UB 1.2 1°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UB 1.2 1°, p. 26) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+        article: UB 1.2 1° et UB 2.2 2°
+        page_pdf: 27
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      logement:
+        statut: sous_condition
+        condition: admis ; pour tout programme de logements de plus de 1 500 m² de surface de plancher, au minimum
+          20 % du programme affecté à des logements locatifs aidés (LLTS/LLS ; PLS ou accession aidée PSLA, LES,
+          PTZ)
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        article: UB 2.2 4°
+        page_pdf: 27
+        citation: « A l'exception des secteurs UBa, UBb et UBc, en cas de réalisation d'un programme de logements
+          représentant une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté
+          à des logement locatifs financés par un prêt aidé de l'État »
+  UBa:
+    silence: autorise
+    silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UB 1.2 » (secteur UBa de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
+    notes: 'Secteur UBa (lotissement Dodin, p. 26). Mêmes dispositions de destination que la zone UB ; seule différence
+      lue : la clause de mixité sociale UB 2.2 4° (p. 27) ne s''applique pas (« A l''exception des secteurs UBa,
+      UBb et UBc »). « Activités » génériques sous condition de non-nuisance, ICPE autorisées (UB 2.2 1°, p. 27).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UB 1.2 1°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UB 1.2 1°, p. 26) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+        article: UB 1.2 1° et UB 2.2 2°
+        page_pdf: 27
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+  UBb:
+    silence: autorise
+    silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UB 1.2 » (secteur UBb de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
+    notes: 'Secteur UBb (bourg de Dos d''Ane, p. 26). Mêmes dispositions de destination que la zone UB ; différences
+      lues : la clause de mixité sociale UB 2.2 4° ne s''applique pas, et l''interdiction des terrains de camping
+      et de caravaning ne s''applique pas (UB 1.2 3°, p. 26 : « A l''exception du secteur UBb » — occupation hors
+      nomenclature R151-28, non mappée). « Activités » génériques sous condition de non-nuisance, ICPE autorisées.'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UB 1.2 1°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UB 1.2 1°, p. 26) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+        article: UB 1.2 1° et UB 2.2 2°
+        page_pdf: 27
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+  UBc:
+    silence: autorise
+    silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UB 1.2 » (secteur UBc de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
+    notes: 'Secteur UBc (territoires ruraux habités des hauts de Ravine à Malheur, p. 26). Mêmes dispositions de
+      destination que la zone UB ; seule différence lue : la clause de mixité sociale UB 2.2 4° ne s''applique pas
+      (« A l''exception des secteurs UBa, UBb et UBc »). « Activités » génériques sous condition de non-nuisance,
+      ICPE autorisées (UB 2.2 1°).'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UB 1.2 1°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UB 1.2 1°, p. 26) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+        article: UB 1.2 1° et UB 2.2 2°
+        page_pdf: 27
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+  UBpsfr2:
+    silence: autorise
+    silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UB 1.2 » (secteur UBpsfr2 de la zone UB, mêmes articles UB 1/UB 2, p. 26-27)'
+    notes: 'Secteur UBpsfr2 (périmètre de protection rapprochée du Puits Samy hors zone critique et/ou du forage
+      FR2, p. 26). Mêmes dispositions de destination que la zone UB ; seule différence lue : les ICPE n''y sont
+      PAS autorisées — UB 2.2 1°, p. 27 : « A l''exception des secteurs UBpszc et UBpsfr2, les constructions, ouvrages
+      et travaux soumis au régime des installations classées pour la protection de l''environnement sont autorisés.
+      »'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: UB 1.2 1°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UB 1.2 1°, p. 26) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher totale de l'activité
+        article: UB 1.2 1° et UB 2.2 2°
+        page_pdf: 27
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      logement:
+        statut: sous_condition
+        condition: admis ; pour tout programme de logements de plus de 1 500 m² de surface de plancher, au minimum
+          20 % du programme affecté à des logements locatifs aidés (la dispense UB 2.2 4° ne vise que UBa, UBb et
+          UBc)
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        article: UB 2.2 4°
+        page_pdf: 27
+        citation: « A l'exception des secteurs UBa, UBb et UBc, en cas de réalisation d'un programme de logements
+          représentant une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté
+          à des logement locatifs financés par un prêt aidé de l'État »
+  UBpszc:
+    silence: interdit
+    silence_src: 'Art. UB 1.2 5°, p. 26 : « Dans le secteur UBpszc, à l''exception de ceux visés à l''article UB2.2.,
+      sont interdits toutes les constructions et tous les ouvrages et travaux. » (liste fermée : seul ce qui est
+      visé à UB 2.2 est admis)'
+    notes: 'Secteur UBpszc (zone critique du périmètre de protection rapprochée du Puits Samy, p. 26). Le renvoi
+      vers UB 2.2 est écrit (UB 1.2 5°). UB 2.2 vise notamment : 1° les « constructions à destination d''activités
+      » (terme générique non mappé aux sous-destinations) sous réserve de non-nuisance — ICPE INTERDITES en UBpszc
+      (« A l''exception des secteurs UBpszc et UBpsfr2 », p. 27) ; 2° l''entrepôt annexe ; 3° la reconstruction
+      après sinistre ; 4° la mixité sociale ; 5° l''habitation. Les interdictions générales UB 1.2 1°-2° (industrie,
+      entrepôt exclusif, agricole-forestier) restent écrites pour toute la zone UB.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: admis au titre de la liste de l'art. UB 2.2 (aucune condition propre énoncée au 5°) ; pour tout
+          programme de logements de plus de 1 500 m² de surface de plancher, au minimum 20 % du programme affecté
+          à des logements locatifs aidés (UB 2.2 4°, UBpszc non dispensé)
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        article: UB 2.2 5° et UB 2.2 4°
+        page_pdf: 27
+        citation: « Dans le secteur UBpszc, les constructions, ouvrages et travaux à usage d'habitation. »
+      hebergement:
+        statut: sous_condition
+        condition: admis au titre de la liste de l'art. UB 2.2 (aucune condition propre énoncée au 5° ; destination
+          habitation → logement + hébergement)
+        article: UB 2.2 5°
+        page_pdf: 27
+        citation: « Dans le secteur UBpszc, les constructions, ouvrages et travaux à usage d'habitation. »
+      industrie:
+        statut: interdit
+        article: UB 1.2 1°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UB 1.2 1°, p. 26) ; admis (visé à UB 2.2) si nécessaire au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux, dans la limite de 20 % de la surface de plancher
+          totale de l'activité
+        article: UB 1.2 1° et UB 2.2 2°
+        page_pdf: 27
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UB 1.2 2°
+        page_pdf: 26
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+  UE:
+    silence: autorise
+    silence_src: 'Art. UE 2, 2.2, p. 39 : « Sont admises toutes les occupations et utilisations du sol non citées
+      à l''article UE 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
+    notes: Zone d'activités économiques (production, transformation, conditionnement, distribution, recherche, formation,
+      enseignement — caractère indicatif, p. 38). Industrie et entrepôt ne sont PAS cités à l'art. UE 1.2 → non
+      mentionnés, verdict par silence (autorisé). UE 2.2 4° (p. 39) admet en outre « les travaux d'extension limitée
+      des constructions existantes, même si elles ne sont pas autorisées dans la zone, sous réserve de ne pas augmenter
+      la surface de plancher existante à la date d'approbation du PLU de plus de 30%, dans la limite de 50m² ».
+      Le terme « équipements publics ou d'intérêt collectif » (UE 1.2 3° / UE 2.2 1°) est mappé sur les 7 sous-destinations
+      de la destination « équipements d'intérêt collectif et services publics ».
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: UE 1.2 1°
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      exploitation_forestiere:
+        statut: interdit
+        article: UE 1.2 1°
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière. »
+      logement:
+        statut: sous_condition
+        condition: interdit (UE 1.2 2°, p. 38) sauf constructions à usage d'habitation dans la limite de 70 m² de
+          surface de plancher, exclusivement destinées et liées au gardiennage et à la surveillance des installations
+          autorisées dans la zone
+        seuil_m2: 70
+        seuil_type: surface_plancher
+        article: UE 1.2 2° et UE 2.2 2°
+        page_pdf: 39
+        citation: « Les constructions à usage d'habitation dans la limite de 70m² de surface de plancher à condition
+          qu'elles soient exclusivement destinées et liées au gardiennage et à la surveillance des installations
+          autorisées dans la zone. »
+      hebergement:
+        statut: sous_condition
+        condition: interdit (UE 1.2 2° « usage d'habitation » → logement + hébergement, p. 38) sauf la même dérogation
+          gardiennage/surveillance ≤ 70 m² de surface de plancher (UE 2.2 2°)
+        seuil_m2: 70
+        seuil_type: surface_plancher
+        article: UE 1.2 2° et UE 2.2 2°
+        page_pdf: 39
+        citation: « Les constructions, ouvrages et travaux à usage d'habitation à l'exception de ceux visés à l'article
+          UE2.2. » (p. 38)
+      hotels:
+        statut: interdit
+        article: UE 1.2 4°
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. » (hébergement
+          hôtelier → hotels + autres_hebergements_touristiques)
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: UE 1.2 4°
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. » (hébergement
+          hôtelier → hotels + autres_hebergements_touristiques)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « commerce ») sauf si l''emprise foncière totale cumulée de l''ensemble
+          des constructions de commerce, bureaux et équipements n''excède pas 5 % de la superficie de la zone d''implantation
+          (taux en %, pas de seuil en m²)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « Les constructions, ouvrages et travaux à destination de commerce, de bureaux, de services publics
+          et d'équipements d'intérêt collectif sont admis dès lors que l'emprise foncière totale cumulée de l'ensemble
+          de ces constructions n'excède pas 5% de la superficie de la zone d'implantation. »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « commerce » → artisanat_commerce_detail + commerce_gros) sauf
+          plafond d''emprise foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « Les constructions, ouvrages et travaux à destination de commerce, de bureaux et d'équipements
+          publics ou d'intérêt collectif sauf ceux visées à l'article UE 2.2. » (p. 38)
+      bureau:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « bureaux » → bureau) sauf plafond d''emprise foncière cumulée
+          de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …à destination de commerce, de bureaux, de services publics et d'équipements d'intérêt collectif
+          sont admis dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède
+          pas 5% de la superficie de la zone d'implantation. »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « équipements publics ou d''intérêt collectif ») sauf plafond d''emprise
+          foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …de services publics et d'équipements d'intérêt collectif sont admis dès lors que l'emprise
+          foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « équipements publics ou d''intérêt collectif ») sauf plafond d''emprise
+          foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …de services publics et d'équipements d'intérêt collectif sont admis dès lors que l'emprise
+          foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « équipements publics ou d''intérêt collectif ») sauf plafond d''emprise
+          foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …de services publics et d'équipements d'intérêt collectif sont admis dès lors que l'emprise
+          foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « équipements publics ou d''intérêt collectif ») sauf plafond d''emprise
+          foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …de services publics et d'équipements d'intérêt collectif sont admis dès lors que l'emprise
+          foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « équipements publics ou d''intérêt collectif ») sauf plafond d''emprise
+          foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …de services publics et d'équipements d'intérêt collectif sont admis dès lors que l'emprise
+          foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+      lieux_culte:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « équipements publics ou d''intérêt collectif ») sauf plafond d''emprise
+          foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …de services publics et d'équipements d'intérêt collectif sont admis dès lors que l'emprise
+          foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: 'interdit (UE 1.2 3°, p. 38 : « équipements publics ou d''intérêt collectif ») sauf plafond d''emprise
+          foncière cumulée de 5 % de la superficie de la zone d''implantation (UE 2.2 1°)'
+        article: UE 1.2 3° et UE 2.2 1°
+        page_pdf: 39
+        citation: « …de services publics et d'équipements d'intérêt collectif sont admis dès lors que l'emprise
+          foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+  UEm:
+    silence: autorise
+    silence_src: 'Art. UEm 2, p. 47 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article UEm 1.2 ainsi que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
+    notes: Zone du site d'activités diversifiées de la ZAC Moulin Joli (caractère indicatif, p. 47). Industrie NON
+      citée à l'art. UEm 1.2 → non mentionnée, verdict par silence (autorisé). UEm 2 1° (p. 47) admet « les constructions
+      à destination d'activités » (terme générique non mappé), « qu'elles soient soumises ou non au régime des installations
+      classées », sous réserve de non-nuisance pour le voisinage. UEm 1.2 3°-4° (p. 47) interdisent les terrains
+      de camping et de caravaning et les dépôts de ferrailles/décharges (hors nomenclature R151-28, non mappés).
+    sous_destinations:
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (UEm 1.2 1°, p. 47) ; admis si nécessaire au fonctionnement d'une activité
+          commerciale, artisanale ou de bureaux, dans la limite de 40 % de la surface de plancher totale de l'activité
+        article: UEm 1.2 1° et UEm 2 2°
+        page_pdf: 47
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 40% de
+          la surface de plancher totale de l'activité. »
+      exploitation_agricole:
+        statut: interdit
+        article: UEm 1.2 2°
+        page_pdf: 47
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière »
+      exploitation_forestiere:
+        statut: interdit
+        article: UEm 1.2 2°
+        page_pdf: 47
+        citation: « Les constructions, ouvrages et travaux à destination agricole et forestière »
+      logement:
+        statut: sous_condition
+        condition: admis uniquement si nécessaire au gardiennage ou à la surveillance des établissements (aucun
+          seuil en m² écrit, contrairement à la zone UE)
+        article: UEm 2 3°
+        page_pdf: 47
+        citation: « Les constructions à usage d'habitation à condition qu'elles soient nécessaires au gardiennage
+          ou à la surveillance des établissements. »
+      hebergement:
+        statut: sous_condition
+        condition: même clause que logement — « usage d'habitation » (→ logement + hébergement) admis uniquement
+          si nécessaire au gardiennage ou à la surveillance des établissements
+        article: UEm 2 3°
+        page_pdf: 47
+        citation: « Les constructions à usage d'habitation à condition qu'elles soient nécessaires au gardiennage
+          ou à la surveillance des établissements. »
+  UT:
+    silence: interdit
+    silence_src: 'Art. UT 1.2, p. 57 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
+      de ceux visés à l''article UT 2. » (liste fermée : seul ce qui est visé à UT 2 est admis)'
+    notes: 'Zone d''équipements touristiques et de loisirs (caractère indicatif, p. 57). L''article UT 2 est intitulé
+      « occupations et utilisations du sol soumises à des conditions particulières » mais ses 3° et 7° n''énoncent
+      aucune condition propre. UT 2 1° (p. 57) : régime propre aux cinquante pas géométriques (commerces, structures
+      artisanales, équipements touristiques et hôteliers, services publics, équipements collectifs, etc., dans ce
+      seul sous-périmètre délimité au document graphique). UT 2 4° (p. 57) admet les « constructions, ouvrages et
+      travaux destinés à la pratique de sports, de loisirs, de la détente et du tourisme (restauration, bar, spa,
+      thalasso, points d''arrêts, kiosques, mobilier urbain, terrains de jeux, etc.) ainsi que les équipements nécessaires
+      à leur fonctionnement (accueil, sanitaires, etc.) dès lors qu''ils s''insèrent dans le milieu environnant
+      » — seuls « restauration » et la pratique de sports sont mappables sans doute ; « bar, spa, thalasso… » non
+      mappés (douteux → non écrit). UT 2 6° (p. 58) admet les « activités en lien avec l''abri côtier, dont la pêche
+      » (non mappé). UT 2 2° et 8° : extensions/reconstructions encadrées (aléas littoraux, sinistre).'
+    sous_destinations:
+      hotels:
+        statut: autorise
+        article: UT 2 3°
+        page_pdf: 57
+        citation: « Les constructions à destination d'hébergement hôtelier et touristique. » (→ hotels + autres_hebergements_touristiques
+          ; admis au titre de la liste de l'art. UT 2, aucune condition propre énoncée)
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: UT 2 3°
+        page_pdf: 57
+        citation: « Les constructions à destination d'hébergement hôtelier et touristique. » (→ hotels + autres_hebergements_touristiques
+          ; admis au titre de la liste de l'art. UT 2, aucune condition propre énoncée)
+      restauration:
+        statut: sous_condition
+        condition: admis parmi les constructions destinées à la pratique de sports, loisirs, détente et tourisme,
+          « dès lors qu'ils s'insèrent dans le milieu environnant »
+        article: UT 2 4°
+        page_pdf: 57
+        citation: « Les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de la détente
+          et du tourisme (restauration, bar, spa, thalasso, points d'arrêts, kiosques, mobilier urbain, terrains
+          de jeux, etc.) … dès lors qu'ils s'insèrent dans le milieu environnant. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: admis au titre de UT 2 4° (pratique de sports, terrains de jeux) « dès lors qu'ils s'insèrent
+          dans le milieu environnant » ; également visé sans condition propre par UT 2 7° (équipement d'intérêt
+          collectif, p. 58)
+        article: UT 2 4° et UT 2 7°
+        page_pdf: 57
+        citation: '« Les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de la
+          détente et du tourisme … dès lors qu''ils s''insèrent dans le milieu environnant. » ; p. 58 : « Les constructions
+          à destination d''équipement d''intérêt collectif. »'
+      logement:
+        statut: sous_condition
+        condition: admis uniquement si exclusivement destiné et lié au gardiennage et à la surveillance des installations
+          autorisées dans la zone
+        article: UT 2 5°
+        page_pdf: 58
+        citation: « Les constructions à usage d'habitation, à condition qu'elles soient exclusivement destinées
+          et liées au gardiennage et à la surveillance des installations autorisées dans la zone. »
+      hebergement:
+        statut: sous_condition
+        condition: même clause que logement — « usage d'habitation » (→ logement + hébergement) admis uniquement
+          pour le gardiennage et la surveillance des installations autorisées dans la zone
+        article: UT 2 5°
+        page_pdf: 58
+        citation: « Les constructions à usage d'habitation, à condition qu'elles soient exclusivement destinées
+          et liées au gardiennage et à la surveillance des installations autorisées dans la zone. »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      locaux_techniques_administrations:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      salles_art_spectacles:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      lieux_culte:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      autres_equipements_public:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+  UTfr2:
+    silence: interdit
+    silence_src: 'Art. UT 1.2, p. 57 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
+      de ceux visés à l''article UT 2. » (secteur UTfr2 de la zone UT — « La zone UT comprend un secteur spécifique,
+      UTfr2 », p. 57 — mêmes articles UT 1/UT 2)'
+    notes: 'Secteur UTfr2 (périmètre de protection rapprochée du forage FR2, p. 57). Aucune règle de destination
+      propre au secteur n''est écrite aux articles UT 1 et UT 2 ; les seules différences lues sont hors destinations
+      (art. UT 13.1, p. 64 : 40 % d''espace perméable au lieu de 30 % ; espèces géo-épuratrices, p. 65). Contenu
+      identique à la zone UT.'
+    sous_destinations:
+      hotels:
+        statut: autorise
+        article: UT 2 3°
+        page_pdf: 57
+        citation: « Les constructions à destination d'hébergement hôtelier et touristique. » (→ hotels + autres_hebergements_touristiques
+          ; admis au titre de la liste de l'art. UT 2, aucune condition propre énoncée)
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: UT 2 3°
+        page_pdf: 57
+        citation: « Les constructions à destination d'hébergement hôtelier et touristique. » (→ hotels + autres_hebergements_touristiques
+          ; admis au titre de la liste de l'art. UT 2, aucune condition propre énoncée)
+      restauration:
+        statut: sous_condition
+        condition: admis parmi les constructions destinées à la pratique de sports, loisirs, détente et tourisme,
+          « dès lors qu'ils s'insèrent dans le milieu environnant »
+        article: UT 2 4°
+        page_pdf: 57
+        citation: « Les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de la détente
+          et du tourisme (restauration, bar, spa, thalasso, points d'arrêts, kiosques, mobilier urbain, terrains
+          de jeux, etc.) … dès lors qu'ils s'insèrent dans le milieu environnant. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: admis au titre de UT 2 4° (pratique de sports, terrains de jeux) « dès lors qu'ils s'insèrent
+          dans le milieu environnant » ; également visé sans condition propre par UT 2 7° (équipement d'intérêt
+          collectif, p. 58)
+        article: UT 2 4° et UT 2 7°
+        page_pdf: 57
+        citation: '« Les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs, de la
+          détente et du tourisme … dès lors qu''ils s''insèrent dans le milieu environnant. » ; p. 58 : « Les constructions
+          à destination d''équipement d''intérêt collectif. »'
+      logement:
+        statut: sous_condition
+        condition: admis uniquement si exclusivement destiné et lié au gardiennage et à la surveillance des installations
+          autorisées dans la zone
+        article: UT 2 5°
+        page_pdf: 58
+        citation: « Les constructions à usage d'habitation, à condition qu'elles soient exclusivement destinées
+          et liées au gardiennage et à la surveillance des installations autorisées dans la zone. »
+      hebergement:
+        statut: sous_condition
+        condition: même clause que logement — « usage d'habitation » (→ logement + hébergement) admis uniquement
+          pour le gardiennage et la surveillance des installations autorisées dans la zone
+        article: UT 2 5°
+        page_pdf: 58
+        citation: « Les constructions à usage d'habitation, à condition qu'elles soient exclusivement destinées
+          et liées au gardiennage et à la surveillance des installations autorisées dans la zone. »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      locaux_techniques_administrations:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      salles_art_spectacles:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      lieux_culte:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+      autres_equipements_public:
+        statut: autorise
+        article: UT 2 7°
+        page_pdf: 58
+        citation: « Les constructions à destination d'équipement d'intérêt collectif. » (admis au titre de la liste
+          de l'art. UT 2, aucune condition propre énoncée)
+  AUBm:
+    silence: autorise
+    silence_src: 'Art. AUBm 2, p.71 : « Sont admises toutes les occupations et utilisations du sol non citées à
+      l''article AUBm 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
+    sous_destinations:
+      industrie:
+        statut: interdit
+        article: AUBm 1.2 (1°)
+        page_pdf: 71
+        citation: « Les constructions, ouvrages et travaux à destination industrielle et à destination exclusive
+          d'entrepôt. »
+      entrepot:
+        statut: sous_condition
+        condition: interdit à titre exclusif (AUBm 1.2 1°) ; admis à condition d'être nécessaire au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux et de ne pas représenter plus de 20 % de la surface
+          de plancher totale de l'activité (seuil en pourcentage, pas en m²)
+        article: AUBm 1.2 (1°) et AUBm 2 (3°)
+        page_pdf: 71
+        citation: « Les constructions à destination d'entrepôt à condition qu'elles soient nécessaires au fonctionnement
+          d'une activité commerciale, artisanale ou de bureaux. Elles ne peuvent pas représenter plus de 20% de
+          la surface de plancher totale de l'activité. »
+    notes:
+    - AUBm 1.2 interdit aussi les terrains de camping/caravaning et les dépôts de ferrailles/décharges (p.71) —
+      usages, pas des sous-destinations R151-28.
+    - 'AUBm 2 (2°, p.71) soumet à condition les « constructions à destination d''activités » (hors 1.2) : ni incommodité
+      ni aggravation des risques pour le voisinage — terme générique, non mappé à des sous-destinations précises
+      (mappage conservateur).'
+    - 'AUBm 2 (5°, p.72) : densité minimale 30 logements/ha pour toutes constructions et opérations, appréciée à
+      l''échelle de la zone (équivalent logement = 80 m² de surface de plancher pour les destinations hors logement).'
+  AUst:
+    silence: interdit
+    silence_src: 'Art. AUst 1.2, p.81 : « Toutes les occupations et utilisations du sol sont interdites à l''exception
+      de celles admises à l''article AUst 2 du présent règlement. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif,
+          si l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques, gêne
+          limitée et bonne intégration au site
+        article: AUst 2 (2°)
+        page_pdf: 81
+        citation: « Les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques, sous
+          réserve de prendre les dispositions utiles pour limiter la gêne… »
+    notes:
+    - 'Régime fermé d''attente : ouverture à l''urbanisation conditionnée à une modification du PLU (caractère de
+      zone, p.81 ; DG art.3, p.7).'
+    - 'AUst 2 admet aussi (p.81) : 1° constructions/ouvrages/travaux liés aux réseaux, voirie, stationnement, production-distribution
+      d''énergie pour les besoins de l''urbanisation future ; 3° reconstruction à l''identique après sinistre ;
+      4° travaux d''aménagement et d''extension mineure pour mise aux normes sanitaires et d''habitabilité dans
+      la limite de 20 m² de surface de plancher sur constructions existantes — règles d''occupation attachées à
+      l''existant, pas des destinations nouvelles ouvertes.'
+    - 'Coquille du règlement : l''article 5 est intitulé « ARTICLE A AUST 5 » (p.82).'
+  AUAv:
+    renvoi: UAv
+    renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes » — indice Av → secteur UAv de la zone UA (« le secteur UAv,
+      pour l''opération d''aménagement Cœur de Ville », DG p.7)'
+  AUB:
+    renvoi: UB
+    renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes » — indice B → zone UB (DG p.7)'
+  AUBb:
+    renvoi: UBb
+    renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes » — indice Bb → secteur UBb de la zone UB (« le secteur UBb,
+      correspondant au bourg de Dos d''Ane », DG p.7)'
+  AUBpsfr2:
+    renvoi: UBpsfr2
+    renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes » — indice Bpsfr2 → secteur UBpsfr2 de la zone UB (périmètre
+      de protection Puits Samy / forage FR2, DG p.7)'
+  AUT:
+    renvoi: UT
+    renvoi_src: 'DG art.3 2°, p.7 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes » — indice T → zone UT (DG p.7)'
+  AUEm:
+    etat: non_lu
+    note: 'DG art.3 2°, p.7 : les dispositions règlementaires de AUBm et AUEm « font l''objet de chapitres spécifiques
+      » (pas de report possible au règlement des zones urbaines, dit le texte) — mais le chapitre AUEm ne figure
+      pas dans les pages fournies (p.71-80 = AUBm, p.81-84 = AUst) ; aucun renvoi écrit vers UEm : non lu.'
+  A:
+    silence: interdit
+    silence_src: 'Art. A1.2, p.85 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
+      constructions et tous les ouvrages et travaux. »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: bâtiments techniques agricoles, annexes, ouvrages et travaux nécessaires aux besoins d'une exploitation
+          agricole, justifiés au regard de la superficie de l'exploitation, de la nature de l'activité, du matériel
+          et des bâtiments existants, implantation adaptée au site ; ICPE et activités soumises au règlement sanitaire
+          départemental nécessaires à l'activité agricole (plan d'épandage exigé pour les bâtiments d'élevage)
+        article: A2.2 (1° et 2°)
+        page_pdf: 86
+        citation: « Les bâtiments techniques agricoles et leurs annexes ainsi que les ouvrages et travaux nécessaires
+          aux besoins d'une exploitation agricole. Ils doivent être justifiés au regard de la superficie de l'exploitation,
+          de la nature de l'activité, du matériel utilisé et des bâtiments existants… »
+      logement:
+        statut: sous_condition
+        condition: 'uniquement travaux d''amélioration ou d''extension des bâtiments d''habitation existants, sous
+          réserve de la régularité du bâti : pas plus de +30 % de la surface de plancher existante à la date d''approbation
+          du PLU, et surface totale finale (existant + extension) ≤ 120 m² — aucun logement neuf écrit'
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: A2.2 (3°)
+        page_pdf: 86
+        citation: « …ne pas augmenter la surface de plancher existante à la date d'approbation du plan local d'urbanisme
+          de plus de 30%, et sans que les constructions existantes et leur extension n'excèdent une surface totale
+          finale de 120m². »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'constructions destinées à la vente (diversification d''une exploitation agricole existante)
+          : sur le terrain d''assiette de l''exploitation, pour la découverte et la mise en valeur des produits
+          issus de l''exploitation, locaux aménagés dans l''enveloppe des bâtiments existants ou accolés à ceux-ci,
+          dans la limite de 30 m² de surface de plancher'
+        seuil_m2: 30
+        seuil_type: surface_plancher
+        article: A2.2 (4°)
+        page_pdf: 86
+        citation: « Les constructions à usage agritouristique ou destinées à la vente sont admises sur le terrain
+          d'assiette d'une exploitation existante… dans l'enveloppe des bâtiments existants ou bien accolés à ceux-ci
+          dans la limite de 30 m² de surface de plancher. »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'activité agricole, pastorale ou forestière de l'unité foncière, sans atteinte
+          aux espaces naturels et paysages, avec mesures éviter/réduire/compenser
+        article: A2.2 (5°)
+        page_pdf: 86
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale
+          ou forestière… » (terme générique couvrant la destination R151-28 « équipements d'intérêt collectif et
+          services publics »)
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (A2.2 5°) : non incompatibles avec l''exercice
+          d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte à la sauvegarde
+          des espaces naturels et des paysages'
+        article: A2.2 (5°)
+        page_pdf: 86
+        citation: citation commune A2.2 (5°), p.86
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (A2.2 5°) : non incompatibles avec l''exercice
+          d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte à la sauvegarde
+          des espaces naturels et des paysages'
+        article: A2.2 (5°)
+        page_pdf: 86
+        citation: citation commune A2.2 (5°), p.86
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (A2.2 5°) : non incompatibles avec l''exercice
+          d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte à la sauvegarde
+          des espaces naturels et des paysages'
+        article: A2.2 (5°)
+        page_pdf: 86
+        citation: citation commune A2.2 (5°), p.86
+      equipements_sportifs:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (A2.2 5°) : non incompatibles avec l''exercice
+          d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte à la sauvegarde
+          des espaces naturels et des paysages'
+        article: A2.2 (5°)
+        page_pdf: 86
+        citation: citation commune A2.2 (5°), p.86
+      lieux_culte:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (A2.2 5°) : non incompatibles avec l''exercice
+          d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte à la sauvegarde
+          des espaces naturels et des paysages'
+        article: A2.2 (5°)
+        page_pdf: 86
+        citation: citation commune A2.2 (5°), p.86
+      autres_equipements_public:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (A2.2 5°) : non incompatibles avec l''exercice
+          d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte à la sauvegarde
+          des espaces naturels et des paysages'
+        article: A2.2 (5°)
+        page_pdf: 86
+        citation: citation commune A2.2 (5°), p.86
+    notes:
+    - 'A1.1 (2°, p.85) : permis, DP, permis d''aménager/démolir et changements de destination soumis à l''avis favorable
+      de la CDPENAF préalablement à la délivrance.'
+    - '« Constructions à usage agritouristique » (A2.2 4°, p.86) : la part hébergement/accueil de l''agritourisme
+      n''est pas mappée à une sous-destination précise (douteux → non écrit) ; seule la vente des produits de l''exploitation
+      est mappée (artisanat_commerce_detail).'
+    - 'A2.2 admet aussi (p.86) : 6° constructions/ouvrages/travaux liés aux réseaux et à la voirie ; 7° reconstruction
+      à l''identique après sinistre — pas des destinations nouvelles.'
+  N:
+    silence: interdit
+    silence_src: 'Art. N1.2, p.93 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
+      constructions, ouvrages et travaux. »'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'uniquement extension des bâtiments d''habitation existants régulièrement édifiés (à l''exception
+          des secteurs Npnr, Nr et Nli) : pas plus de +30 % de la surface de plancher existante à l''approbation
+          du PLU, surface totale finale ≤ 120 m² — aucun logement neuf écrit en zone N générale'
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: N2.2 (4°)
+        page_pdf: 94
+        citation: « A l'exception des secteurs Npnr, Nr et Nli, l'extension des bâtiments d'habitation existants
+          est admise sous réserve de la régularité du bâti existant et de ne pas augmenter la surface de plancher
+          existante… de plus de 30%, et sans pouvoir excéder une surface totale finale de 120 m². »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: activités et constructions à destination agricole et d'élevages (à l'exception du secteur Nr),
+          dès lors qu'elles s'insèrent dans le milieu environnant et ne compromettent pas le caractère naturel de
+          la zone ; refus ou prescriptions spéciales possibles au titre du R.111-2 (risques naturels)
+        article: N2.2 (5°)
+        page_pdf: 94
+        citation: « A l'exception du secteur Nr, les activités et constructions à destination agricole et d'élevages
+          dès lors qu'elles s'insèrent dans le milieu environnant et qu'elles ne compromettent pas le caractère
+          naturel de la zone. »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs ou services publics (à
+          l'exception des secteurs Npnr, Nr et Nli), non incompatibles avec l'activité agricole, pastorale ou forestière
+          de l'unité foncière, sans atteinte aux espaces naturels et paysages
+        article: N2.2 (7°)
+        page_pdf: 94
+        citation: « A l'exception des secteurs Npnr, Nr et Nli, les constructions et installations nécessaires à
+          des équipements collectifs ou à des services publics… » (terme générique couvrant la destination R151-28
+          « équipements d'intérêt collectif et services publics »)
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: équipements collectifs/services publics (N2.2 7°, hors Npnr/Nr/Nli) ; en outre, constructions/ouvrages/travaux
+          liés à la production et distribution d'énergie (dont EnR) et installations et ouvrages techniques d'infrastructure
+          nécessaires au fonctionnement des services publics (N2.2 8°, hors Nr et Nli seulement), sans incompatibilité
+          agricole/pastorale/forestière ni atteinte aux espaces naturels et paysages
+        article: N2.2 (7° et 8°)
+        page_pdf: 94
+        citation: « …les constructions, ouvrages et travaux liés à la production et à la distribution d'énergie,
+          notamment les énergies renouvelables ainsi que les installations et ouvrages techniques d'infrastructure
+          nécessaires au fonctionnement des services publics… »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (N2.2 7°, hors Npnr/Nr/Nli) : non incompatibles
+          avec l''exercice d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte
+          à la sauvegarde des espaces naturels et des paysages ; voir aussi N2.2 3° (aménagements légers/terrains
+          de jeux, hors Nr ; régime R.121-5 en Nli)'
+        article: N2.2 (7°)
+        page_pdf: 94
+        citation: citation commune N2.2 (7°), p.94
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (N2.2 7°, hors Npnr/Nr/Nli) : non incompatibles
+          avec l''exercice d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte
+          à la sauvegarde des espaces naturels et des paysages ; voir aussi N2.2 3° (aménagements légers/terrains
+          de jeux, hors Nr ; régime R.121-5 en Nli)'
+        article: N2.2 (7°)
+        page_pdf: 94
+        citation: citation commune N2.2 (7°), p.94
+      equipements_sportifs:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (N2.2 7°, hors Npnr/Nr/Nli) : non incompatibles
+          avec l''exercice d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte
+          à la sauvegarde des espaces naturels et des paysages ; voir aussi N2.2 3° (aménagements légers/terrains
+          de jeux, hors Nr ; régime R.121-5 en Nli)'
+        article: N2.2 (7°)
+        page_pdf: 94
+        citation: citation commune N2.2 (7°), p.94
+      lieux_culte:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (N2.2 7°, hors Npnr/Nr/Nli) : non incompatibles
+          avec l''exercice d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte
+          à la sauvegarde des espaces naturels et des paysages ; voir aussi N2.2 3° (aménagements légers/terrains
+          de jeux, hors Nr ; régime R.121-5 en Nli)'
+        article: N2.2 (7°)
+        page_pdf: 94
+        citation: citation commune N2.2 (7°), p.94
+      autres_equipements_public:
+        statut: sous_condition
+        condition: '« équipements collectifs et services publics » (N2.2 7°, hors Npnr/Nr/Nli) : non incompatibles
+          avec l''exercice d''une activité agricole, pastorale ou forestière dans l''unité foncière, sans atteinte
+          à la sauvegarde des espaces naturels et des paysages ; voir aussi N2.2 3° (aménagements légers/terrains
+          de jeux, hors Nr ; régime R.121-5 en Nli)'
+        article: N2.2 (7°)
+        page_pdf: 94
+        citation: citation commune N2.2 (7°), p.94
+    notes:
+    - 'N2.2 admet aussi, sans destination R151-28 mappable : 2° constructions liées à l''entretien et la gestion
+      des sites (abris matériel, local technique) hors Nr et Nli ; 3° aménagements légers touristiques et de loisirs
+      ouverts au public SANS hébergement (points d''arrêts, kiosques, terrains de jeux…) hors Nr, et bassins de
+      baignade selon documents de rang supérieur ; 6° gestion des risques naturels PPR et sécurisation des voies
+      ; 9° réseaux, voirie, hélistations et hélisurfaces (Mafate et bas de la Rivière des Galets) ; 10° carrières
+      et installations d''exploitation dans les seuls secteurs R.123-11 délimités aux documents graphiques (p.95)
+      ; 12°-14° reconstructions après sinistre et cas trait de côte/submersion (p.95).'
+    - Le chapitre ZONE N s'achève p.100 (article N16) ; ANNEXES de p.100 (bas) à p.164.
+  Npnr:
+    silence: interdit
+    silence_src: 'Art. N1.2, p.93 (liste fermée : « sont interdits toutes les constructions, ouvrages et travaux
+      ») et N2.2 (1°), p.94 : « Dans le secteur Npnr, seuls les travaux, constructions et installations ayant reçus
+      une autorisation spéciale de l''établissement public du Parc national de la Réunion peuvent être admis. »'
+    notes:
+    - 'Aucune sous-destination nommée admise : toute construction suppose l''autorisation spéciale du Parc national
+      (N2.2 1°, p.94 ; caractère de zone p.93 « aucune construction n''est admise, sauf autorisation spéciale »).'
+    - Exclu expressément des extensions d'habitations (N2.2 4°) et des équipements collectifs/services publics (N2.2
+      7°), p.94.
+    - 'Tension interne du règlement : les alinéas 5° (agricole, hors Nr seulement), 8° (énergie, hors Nr/Nli) et
+      9° (réseaux/voirie) n''exceptent pas Npnr alors que le 1° dit « seuls… autorisation spéciale » — relevée telle
+      quelle, non tranchée.'
+  Nr:
+    silence: interdit
+    silence_src: 'Art. N1.2, p.93 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
+      constructions, ouvrages et travaux. »'
+    notes:
+    - 'Aucune sous-destination R151-28 admise : le secteur Nr est expressément excepté des alinéas N2.2 2° (gestion
+      des sites), 3° (aménagements légers), 4° (extensions d''habitations), 5° (agricole/élevages), 7° (équipements
+      collectifs) et 8° (énergie), p.94.'
+    - 'Restent admis sans exception de secteur (p.94-95) : 6° gestion des risques naturels PPR et sécurisation des
+      voies, 9° réseaux/voirie, 10° carrières dans les secteurs R.123-11 délimités, 12°-14° reconstructions après
+      sinistre — aucune destination nommée.'
+  Nli:
+    silence: interdit
+    silence_src: 'Art. N1.2, p.93 (liste fermée) ; N2.2 (3°), p.94 : « En secteur Nli, seuls sont admis les aménagements
+      légers prévus à l''article R121-5 du code de l''urbanisme » ; N2.2 (5°), p.94 : « En secteur Nli, seules sont
+      admises les constructions prévues à l''article R. 121-5 du code de l''urbanisme. »'
+    notes:
+    - Renvoi ÉCRIT au R.121-5 du code de l'urbanisme (aménagements légers des espaces remarquables du littoral)
+      — pas un renvoi à une autre zone du règlement.
+    - Exclu expressément des alinéas N2.2 2° (gestion des sites), 4° (extensions d'habitations), 7° (équipements
+      collectifs) et 8° (énergie), p.94.
+  Ni1:
+    silence: interdit
+    silence_src: 'Art. N1.2, p.93 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
+      constructions, ouvrages et travaux. »'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: constructions à usage d'habitation, rénovations et extensions, dans le cadre des concessions
+          délivrées par l'organisme gestionnaire ; emprise au sol ≤ 120 m² par concession pour les constructions
+          à usage d'habitation et leurs annexes (N9, p.97)
+        seuil_m2: 120
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: '« Dans le secteur Ni1, les constructions à usage d''habitation, les rénovations et extensions,
+          dans le cadre des concessions délivrées par l''organisme gestionnaire… » ; N9 p.97 : « 120 m² par concession
+          pour les constructions à usage d''habitation et leurs annexes »'
+      restauration:
+        statut: sous_condition
+        condition: création de ferme auberge, dans le cadre des concessions ; emprise au sol ≤ 400 m² par concession
+          pour les constructions à usage d'hébergement et de restauration touristique, avec un maximum de 81 m²
+          par module (N9, p.97)
+        seuil_m2: 400
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: '« …la création de ferme auberge et de gîtes… » ; N9 p.97 : « 400 m² par concession pour les constructions
+          à usage d''hébergement et de restauration touristique, avec un maximum de 81 m² par module »'
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: création de gîtes, dans le cadre des concessions ; emprise au sol ≤ 400 m² par concession (hébergement
+          et restauration touristique), maximum 81 m² par module (N9, p.97)
+        seuil_m2: 400
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: '« …la création de ferme auberge et de gîtes… » ; N9 p.97 : « 400 m² par concession pour les constructions
+          à usage d''hébergement et de restauration touristique, avec un maximum de 81 m² par module »'
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: commerces de proximité ; emprise au sol ≤ 50 m² par concession pour les constructions à usage
+          de commerces et services (N9, p.97)
+        seuil_m2: 50
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: '« …et les commerces et services de proximité. » ; N9 p.97 : « 50 m² par concession pour les constructions
+          à usage de commerces et services »'
+      activites_services_clientele:
+        statut: sous_condition
+        condition: services de proximité ; emprise au sol ≤ 50 m² par concession (commerces et services, N9, p.97)
+        seuil_m2: 50
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: '« …et les commerces et services de proximité. » ; N9 p.97 : « 50 m² par concession pour les constructions
+          à usage de commerces et services »'
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions à usage d'équipements d'intérêt collectif ; emprise au sol non réglementée pour
+          les services publics et équipements d'intérêt collectif (N9, p.97)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: « …les constructions à usage d'équipements d'intérêt collectif, techniques, touristiques ou liées
+          à la production et à la distribution d'énergie… » (terme générique couvrant la destination R151-28 « équipements
+          d'intérêt collectif et services publics »)
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions à usage d'équipements techniques ou liées à la production et à la distribution
+          d'énergie (N2.2 11°) ; emprise non réglementée pour services publics et équipements d'intérêt collectif
+          (N9, p.97)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif (N2.2 11°) ; emprise non réglementée (N9, p.97)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif (N2.2 11°) ; emprise non réglementée (N9, p.97)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      equipements_sportifs:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif (N2.2 11°) ; emprise non réglementée (N9, p.97)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      lieux_culte:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif (N2.2 11°) ; emprise non réglementée (N9, p.97)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      autres_equipements_public:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif (N2.2 11°) ; emprise non réglementée (N9, p.97)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+    notes:
+    - '« Commerces de proximité » : mappé à artisanat_commerce_detail seul (pas commerce_gros, la qualification
+      « de proximité » ne couvre pas le commerce de gros) ; « équipements touristiques » du 11° non mappés séparément
+      (douteux → non écrit) ; hotels non mentionnés → silence (interdit).'
+    - 'Hauteur Ni1/Ni2 : 3 m à l''égout, 4,5 m au faîtage (N10.1, p.98) ; espaces verts 45 % minimum (N13.1, p.99)
+      — règles de gabarit, hors destinations.'
+    - Reconstructions à Mafate après sinistre encadrées par N2.2 14° (p.95).
+  Ni2:
+    silence: interdit
+    silence_src: 'Art. N1.2, p.93 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
+      constructions, ouvrages et travaux. »'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: mêmes constructions et conditions qu'en Ni1 (N2.2 11°, emprise ≤ 120 m²/concession N9 p.97),
+          à condition en outre « que l'occupation de l'ensemble du secteur Ni1 de l'ilet concerné soit entreprise,
+          ou qu'il soit démontré la non possibilité d'occuper techniquement l'ensemble du secteur Ni1 de l'ilet
+          concerné »
+        seuil_m2: 120
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: « Dans le secteur Ni2, ces constructions sont également autorisées à condition que l'occupation
+          de l'ensemble du secteur Ni1 de l'ilet concerné soit entreprise, ou qu'il soit démontré la non possibilité
+          d'occuper techniquement l'ensemble du secteur Ni1 de l'ilet concerné. »
+      restauration:
+        statut: sous_condition
+        condition: ferme auberge, mêmes conditions qu'en Ni1 (emprise ≤ 400 m²/concession, 81 m²/module, N9 p.97)
+          + condition Ni2 d'occupation préalable du Ni1 de l'îlet (N2.2 11°)
+        seuil_m2: 400
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: gîtes, mêmes conditions qu'en Ni1 (emprise ≤ 400 m²/concession, 81 m²/module, N9 p.97) + condition
+          Ni2 d'occupation préalable du Ni1 de l'îlet (N2.2 11°)
+        seuil_m2: 400
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: commerces de proximité, mêmes conditions qu'en Ni1 (emprise ≤ 50 m²/concession, N9 p.97) + condition
+          Ni2 d'occupation préalable du Ni1 de l'îlet (N2.2 11°)
+        seuil_m2: 50
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      activites_services_clientele:
+        statut: sous_condition
+        condition: services de proximité, mêmes conditions qu'en Ni1 (emprise ≤ 50 m²/concession, N9 p.97) + condition
+          Ni2 d'occupation préalable du Ni1 de l'îlet (N2.2 11°)
+        seuil_m2: 50
+        seuil_type: emprise_sol
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, mêmes conditions qu'en Ni1 (emprise non réglementée, N9 p.97)
+          + condition Ni2 d'occupation préalable du Ni1 de l'îlet (N2.2 11°)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: équipements techniques ou liés à la production/distribution d'énergie, mêmes conditions qu'en
+          Ni1 + condition Ni2 d'occupation préalable du Ni1 de l'îlet (N2.2 11°)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, mêmes conditions qu'en Ni1 + condition Ni2 d'occupation préalable
+          du Ni1 de l'îlet (N2.2 11°)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, mêmes conditions qu'en Ni1 + condition Ni2 d'occupation préalable
+          du Ni1 de l'îlet (N2.2 11°)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      equipements_sportifs:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, mêmes conditions qu'en Ni1 + condition Ni2 d'occupation préalable
+          du Ni1 de l'îlet (N2.2 11°)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      lieux_culte:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, mêmes conditions qu'en Ni1 + condition Ni2 d'occupation préalable
+          du Ni1 de l'îlet (N2.2 11°)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+      autres_equipements_public:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif, mêmes conditions qu'en Ni1 + condition Ni2 d'occupation préalable
+          du Ni1 de l'îlet (N2.2 11°)
+        article: N2.2 (11°) et N9
+        page_pdf: 95
+        citation: citation commune N2.2 (11°), p.95
+    notes:
+    - 'Ni2 n''est ouvert qu''en second rang : « à condition que l''occupation de l''ensemble du secteur Ni1 de l''ilet
+      concerné soit entreprise, ou qu''il soit démontré la non possibilité d''occuper techniquement l''ensemble
+      du secteur Ni1 » (N2.2 11°, p.95).'
+    - 'Les seuils N9 (p.97) visent « les secteurs Ni1 et Ni2 » : mêmes plafonds d''emprise qu''en Ni1.'

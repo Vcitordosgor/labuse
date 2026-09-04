@@ -1,0 +1,3487 @@
+meta:
+  insee: '97416'
+  commune: Saint-Pierre
+  document: 97416_reglement_20240625.pdf
+  document_gpu: 97416_PLU_20240625
+  gpu_doc_id: 6c6320c68195297390a319acb951dc4b
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97416/6c6320c68195297390a319acb951dc4b/97416_reglement_20240625.pdf
+  md5: 8d65c791a716df53dfb42e62c5cc53a1
+  millesime: '2024-06-25'
+  pages_total: 227
+  lu_le: '2026-09-03'
+  edition: PLU approuvé 25/06/2024 (format moderne post-décret 2015, nomenclature 23 sous-destinations du décret
+    2023-195)
+  structure: 'Règlement moderne : par zone, « chapitre 1 — usage des sols et destination des constructions » avec
+    TABLEAU des 23 sous-destinations (V autorisé / V* sous condition / X interdit). Silence dit par le tableau lui-même
+    (« tous les usages… qui ne sont pas interdits ou autorisés sous conditions sont autorisés ») pour les zones
+    U ; zones AU0/A/N « seules sont autorisées… » (silence = interdit). Uea/Uemi (aéroport Pierrefonds, Armée) :
+    régime « toutes destinations nécessaires au fonctionnement » → 23 sous condition. Overlays hors nomenclature
+    en note (50 pas géométriques, linéaires RDC Ucv, carrières).'
+zones:
+  Ucv:
+    silence: autorise
+    silence_src: 'art. Ucv1, p. 60 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et
+      le tableau ci-dessous illustre, de manière non exhaustive, ceux qui se trouvent ainsi "autorisés". »'
+    note: 'Secteur des 50 pas géométriques (plan de zonage) : « seuls sont autorisés » services publics/équipements
+      collectifs, réaménagement de quartier/logement social/RHI, commerces-artisanat-tourisme justifiés par la proximité
+      de la mer, et adaptation/extension limitée (20 % emprise) de l''existant (art. Ucv1, p. 59-60). Art. Ucv2
+      (p. 62) : au sein des linéaires d''activités en RDC recensés au plan de zonage, le changement de destination
+      en vue de créer des logements est interdit et les RDC doivent comporter restauration/hôtellerie/artisanat/commerce
+      de détail. Interdits hors nomenclature (occupations du sol) : carrière, camping-caravaning (p. 61), ateliers
+      de réparation automobile, postes de peinture, stations-services (p. 62).'
+    sous_destinations:
+      logement:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 60
+        citation: « Logement V »
+      hebergement:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 60
+        citation: « Hébergement V »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas la surface de vente
+          sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 60
+        citation: '« Artisanat et commerce de détail V* — Condition : Les constructions nouvelles à destination
+          d''artisanat et commerce de détail sont autorisées, si la surface de stockage n''excède pas la surface
+          de vente sise sur l''unité foncière. »'
+      restauration:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 60
+        citation: « Restauration V »
+      commerce_gros:
+        statut: interdit
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 60
+        citation: « Commerce de gros X »
+      activites_services_clientele:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 60
+        citation: « Activités de services où s'effectue l'accueil d'une clientèle V »
+      hotels:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 60
+        citation: « Hôtel V »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Autres hébergements touristiques V »
+      cinema:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Cinéma V »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V »
+      salles_art_spectacles:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Salles d'art et de spectacles V »
+      equipements_sportifs:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Equipements sportifs V »
+      lieux_culte:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Lieux de culte V »
+      autres_equipements_public:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Autres équipements recevant du public V »
+      industrie:
+        statut: interdit
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Industrie X »
+      entrepot:
+        statut: interdit
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Entrepôts X »
+      bureau:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Bureau V »
+      centre_congres_exposition:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Centre de congrès et d'exposition V »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Cuisine dédiée à la vente en ligne V »
+      exploitation_agricole:
+        statut: interdit
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Exploitation agricole X »
+      exploitation_forestiere:
+        statut: interdit
+        article: zone Ucv, chap. 1, art. Ucv1 (tableau)
+        page_pdf: 61
+        citation: « Exploitation forestière X »
+  Ud:
+    silence: autorise
+    silence_src: 'art. Ud1, p. 77 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et
+      le tableau ci-dessous illustre, de manière non exhaustive, ceux qui se trouvent ainsi "autorisés". »'
+    note: 'Tableau art. Ud1 à trois colonnes « Ud / AUd », « Udl », « UdBO » (p. 78) : la colonne « Ud / AUd » vaut
+      pour Ud et AUd. Secteur des 50 pas géométriques (plan de zonage) : « seuls sont autorisés » services publics/équipements
+      collectifs, réaménagement de quartier/logement social/RHI, commerces-artisanat-tourisme justifiés par la proximité
+      de la mer, adaptation/extension limitée (20 % emprise) de l''existant (art. Ud1, p. 77). Interdits hors nomenclature
+      (occupations du sol) : carrière, camping-caravaning (p. 79).'
+    sous_destinations:
+      logement:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Logement V V V »
+      hebergement:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Hébergement V V V »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas 50 % de la surface
+          de plancher créée sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: '« Artisanat et commerce de détail V* — Condition : Les constructions nouvelles à destination
+          d''artisanat et commerce de détail sont autorisées, si la surface de stockage n''excède pas 50 % de la
+          surface de plancher créée sise sur l''unité foncière. »'
+      restauration:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Restauration V V V »
+      commerce_gros:
+        statut: interdit
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Commerce de gros X X X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas la surface de vente
+          sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: '« Activités de services où s''effectue l''accueil d''une clientèle V* — Condition : Les constructions
+          nouvelles à destination d''activités de services où s''effectue l''accueil d''une clientèle sont autorisées,
+          si la surface de stockage n''excède pas la surface de vente sise sur l''unité foncière. »'
+      hotels:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Hôtel V V V »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Autres hébergements touristiques V V V »
+      cinema:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Cinéma V V V »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 78
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V V V »
+      salles_art_spectacles:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Salles d'art et de spectacles V V V »
+      equipements_sportifs:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Equipements sportifs V V V »
+      lieux_culte:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Lieux de culte V V V »
+      autres_equipements_public:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Autres équipements recevant du public V V V »
+      industrie:
+        statut: interdit
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Industrie X X X »
+      entrepot:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas 40 % de la surface
+          de plancher créée sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: '« Entrepôts V* X X — Condition : Les constructions nouvelles à destination d''entrepôt sont autorisées,
+          si la surface de stockage n''excède pas 40 % de la surface de plancher créée sise sur l''unité foncière.
+          »'
+      bureau:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Bureau V V V »
+      centre_congres_exposition:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Centre de congrès et d'exposition V V V »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Cuisine dédiée à la vente en ligne V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Exploitation agricole X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: zones Ud et AUd, chap. 1, art. Ud1 (tableau, col. Ud / AUd)
+        page_pdf: 79
+        citation: « Exploitation forestière X X X »
+  Udl:
+    silence: autorise
+    silence_src: 'art. Ud1, p. 77 (le secteur Udl relève de la zone Ud, préambule p. 76 : « Elle comprend un secteur
+      Udl, sur le littoral ») : « Tous les usages et affectations des sols, types d''activités et catégories de
+      constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
+    note: 'Colonne « Udl » propre dans le tableau art. Ud1 (p. 78-79) : identique à Ud / AUd sauf entrepôt, interdit
+      en Udl. Les conditions V* (artisanat-commerce de détail, activités de services) figurent sous les lignes du
+      tableau et s''appliquent aux trois colonnes. Secteur des 50 pas géométriques : mêmes restrictions que zone
+      Ud (art. Ud1, p. 77).'
+    sous_destinations:
+      logement:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Logement V V V »
+      hebergement:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Hébergement V V V »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas 50 % de la surface
+          de plancher créée sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: '« Artisanat et commerce de détail V* V* V* — Condition : … la surface de stockage n''excède pas
+          50 % de la surface de plancher créée sise sur l''unité foncière. »'
+      restauration:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Restauration V V V »
+      commerce_gros:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Commerce de gros X X X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas la surface de vente
+          sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: '« Activités de services où s''effectue l''accueil d''une clientèle V* V* V* — Condition : … la
+          surface de stockage n''excède pas la surface de vente sise sur l''unité foncière. »'
+      hotels:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Hôtel V V V »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Autres hébergements touristiques V V V »
+      cinema:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Cinéma V V V »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 78
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V V V »
+      salles_art_spectacles:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Salles d'art et de spectacles V V V »
+      equipements_sportifs:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Equipements sportifs V V V »
+      lieux_culte:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Lieux de culte V V V »
+      autres_equipements_public:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Autres équipements recevant du public V V V »
+      industrie:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Industrie X X X »
+      entrepot:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: '« Entrepôts V* X X » (colonne Udl : X)'
+      bureau:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Bureau V V V »
+      centre_congres_exposition:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Centre de congrès et d'exposition V V V »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Cuisine dédiée à la vente en ligne V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Exploitation agricole X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. Udl)
+        page_pdf: 79
+        citation: « Exploitation forestière X X X »
+  UdBO:
+    silence: autorise
+    silence_src: 'art. Ud1, p. 77 (le secteur UdBO relève de la zone Ud, préambule p. 76 : « un secteur UdBO spécifique
+      au quartier de Bois d''Olives ») : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
+    note: 'Colonne « UdBO » propre dans le tableau art. Ud1 (p. 78-79) : identique à Ud / AUd sauf entrepôt, interdit
+      en UdBO. Les conditions V* s''appliquent aux trois colonnes. Secteur des 50 pas géométriques : mêmes restrictions
+      que zone Ud (art. Ud1, p. 77).'
+    sous_destinations:
+      logement:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Logement V V V »
+      hebergement:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Hébergement V V V »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas 50 % de la surface
+          de plancher créée sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: '« Artisanat et commerce de détail V* V* V* — Condition : … la surface de stockage n''excède pas
+          50 % de la surface de plancher créée sise sur l''unité foncière. »'
+      restauration:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Restauration V V V »
+      commerce_gros:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Commerce de gros X X X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de stockage n'excède pas la surface de vente
+          sise sur l'unité foncière (ratio, pas de seuil en m²)
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: '« Activités de services où s''effectue l''accueil d''une clientèle V* V* V* — Condition : … la
+          surface de stockage n''excède pas la surface de vente sise sur l''unité foncière. »'
+      hotels:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Hôtel V V V »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Autres hébergements touristiques V V V »
+      cinema:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Cinéma V V V »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 78
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V V V »
+      salles_art_spectacles:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Salles d'art et de spectacles V V V »
+      equipements_sportifs:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Equipements sportifs V V V »
+      lieux_culte:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Lieux de culte V V V »
+      autres_equipements_public:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Autres équipements recevant du public V V V »
+      industrie:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Industrie X X X »
+      entrepot:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: '« Entrepôts V* X X » (colonne UdBO : X)'
+      bureau:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Bureau V V V »
+      centre_congres_exposition:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Centre de congrès et d'exposition V V V »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Cuisine dédiée à la vente en ligne V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Exploitation agricole X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: zone Ud, chap. 1, art. Ud1 (tableau, col. UdBO)
+        page_pdf: 79
+        citation: « Exploitation forestière X X X »
+  AUdma:
+    silence: autorise
+    silence_src: 'art. Ud1, p. 77 : « En zone AUdma : non règlementé » — le règlement écrit ne règlemente pas les
+      destinations dans cette zone ; préambule p. 76 : « La zone AUdma est uniquement régie par les Orientations
+      d''Aménagement et Programmation » (au titre de l''article R151-8 du code de l''urbanisme).'
+    note: 'ATTENTION : le tableau des destinations de l''art. Ud1 ne s''applique PAS en AUdma (« non règlementé
+      », p. 77). Aucune sous-destination n''est donc portée ici : le sort réel des destinations relève des OAP annexées
+      à l''Eco-PLU (pièce non lue dans ce chapitre). Le « silence: autorise » traduit uniquement l''absence de règle
+      écrite dans le règlement — vérifier les OAP avant tout verdict. Tous les articles Ud2 à Ud8 portent aussi
+      « En zone AUdma : non règlementé » (p. 80, 81, 87, 91, 93, 96).'
+    sous_destinations: {}
+  Ug:
+    silence: autorise
+    silence_src: 'Art. Ug1, p. 98 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
+    note: 'Tableau unique « Ug / AUg » (p. 98). Régime dérogatoire dans le secteur des 50 pas géométriques (p. 98
+      : « seuls sont autorisés, sous réserve de la préservation des plages… ») — restriction de secteur graphique,
+      pas une colonne du tableau des destinations. Le tableau liste aussi « Carrière X » et « Terrain de camping
+      et de caravaning X » (occupations du sol, hors référentiel R151-28, p. 100).'
+    sous_destinations:
+      logement:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 98
+        citation: « Logement V »
+      hebergement:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 98
+        citation: « Hébergement V »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de plancher n'excède pas 1 000 m²
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Les constructions nouvelles à destination d'artisanat et le commerce de détail sont autorisées,
+          si la surface de plancher n'excède pas 1 000 m². »
+      restauration:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Restauration V »
+      commerce_gros:
+        statut: interdit
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Commerce de gros X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de plancher n'excède pas 1 000 m²
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Les constructions nouvelles à destination d'activités de services où s'effectue l'accueil d'une
+          clientèle sont autorisées, si la surface de plancher n'excède pas 1 000 m². »
+      hotels:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Hôtel V »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Autres hébergements touristiques V »
+      cinema:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Cinéma V »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V »
+      salles_art_spectacles:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Salles d'art et de spectacles V »
+      equipements_sportifs:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Equipements sportifs V »
+      lieux_culte:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Lieux de culte V »
+      autres_equipements_public:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Autres équipements recevant du public V »
+      industrie:
+        statut: interdit
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 99
+        citation: « Industrie X »
+      entrepot:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées sous réserve que leur surface de plancher n'excède pas 300
+          m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 100
+        citation: « Les constructions nouvelles à destination d'entrepôt sont autorisées sous réserve que leur surface
+          de plancher n'excède pas 300 m². » (V* p. 99)
+      bureau:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 100
+        citation: « Bureau V »
+      centre_congres_exposition:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 100
+        citation: « Centre de congrès et d'exposition V »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 100
+        citation: « Cuisine dédiée à la vente en ligne V »
+      exploitation_agricole:
+        statut: interdit
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 100
+        citation: « Exploitation agricole X »
+      exploitation_forestiere:
+        statut: interdit
+        article: ARTICLE Ug1 (tableau Ug/AUg)
+        page_pdf: 100
+        citation: « Exploitation forestière X »
+  AUg:
+    renvoi: Ug
+    renvoi_src: chapitre « Dispositions applicables à la zone Ug et AUg », p. 97, et tableau unique intitulé « Ug
+      / AUg », p. 98 — la zone AUg n'a aucune colonne ni condition propre au chapitre 1
+    note: L'urbanisation de la zone AUg n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble
+      (préambule, p. 97) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 97).
+  Uf:
+    silence: autorise
+    silence_src: 'Art. Uf1, p. 113 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
+    note: 'Tableau unique « Uf /UfCA / AUf / AUfGB » (p. 114). Régime dérogatoire dans le secteur des 50 pas géométriques
+      (p. 113 : « seuls sont autorisés, sous réserve de la préservation des plages… ») — restriction de secteur
+      graphique, pas une colonne du tableau. Le tableau liste aussi « Carrière X » (occupation du sol, hors référentiel,
+      p. 115) ; pas de ligne camping/caravaning (contrairement à Ug).'
+    sous_destinations:
+      logement:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Logement V »
+      hebergement:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Hébergement V »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si leur surface de plancher n'excède pas 400 m²
+        seuil_m2: 400
+        seuil_type: surface_plancher
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Les constructions nouvelles à destination d'artisanat et commerce de détail sont autorisées,
+          si leur surface de plancher n'excède pas 400 m². »
+      restauration:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Restauration V »
+      commerce_gros:
+        statut: interdit
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Commerce de gros X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si leur surface de plancher n'excède pas 400 m²
+        seuil_m2: 400
+        seuil_type: surface_plancher
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Les constructions nouvelles à destination d'activités de services où s'effectue l'accueil d'une
+          clientèle sont autorisées, si leur surface de plancher n'excède pas 400 m². »
+      hotels:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si leur surface de plancher n'excède pas 400 m²
+        seuil_m2: 400
+        seuil_type: surface_plancher
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques sont
+          autorisées, si leur surface de plancher n'excède pas 400 m². »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si leur surface de plancher n'excède pas 400 m²
+        seuil_m2: 400
+        seuil_type: surface_plancher
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques sont
+          autorisées, si leur surface de plancher n'excède pas 400 m². »
+      cinema:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 114
+        citation: « Cinéma V »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V »
+      salles_art_spectacles:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Salles d'art et de spectacles V »
+      equipements_sportifs:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Equipements sportifs V »
+      lieux_culte:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Lieux de culte V »
+      autres_equipements_public:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Autres équipements recevant du public V »
+      industrie:
+        statut: interdit
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Industrie X »
+      entrepot:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées sous réserve que leur surface de plancher n'excède pas 300
+          m²
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Les constructions nouvelles à destination d'entrepôt sont autorisées sous réserve que leur surface
+          de plancher n'excède pas 300 m². »
+      bureau:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Bureau V »
+      centre_congres_exposition:
+        statut: interdit
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Centre de congrès et d'exposition X »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Cuisine dédiée à la vente en ligne V »
+      exploitation_agricole:
+        statut: interdit
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Exploitation agricole X »
+      exploitation_forestiere:
+        statut: interdit
+        article: ARTICLE Uf1 (tableau Uf/UfCA/AUf/AUfGB)
+        page_pdf: 115
+        citation: « Exploitation forestière X »
+  UfCA:
+    renvoi: Uf
+    renvoi_src: tableau unique intitulé « Uf /UfCA / AUf / AUfGB », p. 114 — le secteur UfCA n'a aucune colonne
+      ni condition propre pour les destinations (il n'est distingué au chapitre 1 que pour les affouillements/exhaussements,
+      p. 113)
+    note: Secteur spécifique à la ZAC Cap Austral à Grand Bois (préambule, p. 112).
+  AUf:
+    renvoi: Uf
+    renvoi_src: chapitre « Dispositions applicables à la zone Uf et AUf », p. 112, et tableau unique intitulé «
+      Uf /UfCA / AUf / AUfGB », p. 114 — aucune colonne ni condition propre au chapitre 1
+    note: L'urbanisation des zones AUf et AUfGB n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble
+      (préambule, p. 112) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 112).
+  AUfGB:
+    renvoi: Uf
+    renvoi_src: 'tableau unique intitulé « Uf /UfCA / AUf / AUfGB », p. 114 — aucune colonne ni condition propre
+      au chapitre 1 (seule la hauteur diffère : art. Uf3, p. 119)'
+    note: L'urbanisation des zones AUf et AUfGB n'est possible qu'après réalisation d'opérations d'aménagement d'ensemble
+      (préambule, p. 112) ; OAP à respecter, le règlement prévaut en cas de conflit (p. 112).
+  Us:
+    silence: autorise
+    silence_src: 'Art. Us1, p. 130 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
+    note: 'Zone provisoirement gelée : « Provisoirement, elle n''accepte aucune nouvelle construction dans l''attente
+      de l''approbation de la modification du SCoT » (préambule, p. 129 — indicatif). Traduction réglementaire au
+      tableau : toute construction nouvelle privée y est interdite ou limitée aux extensions ; anomalie de forme
+      : le silence structurel reste « autorisé » (p. 130) alors que le tableau interdit quasi tout. Le tableau liste
+      aussi « Carrière X » (occupation du sol, hors référentiel, p. 131).'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: uniquement les extensions limitées à 25 % de la surface de plancher des constructions existantes
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: '« Logement V* » ; condition : « Uniquement les extensions limitées à 25 % de la surface de plancher
+          des constructions existantes »'
+      hebergement:
+        statut: sous_condition
+        condition: uniquement les extensions limitées à 25 % de la surface de plancher des constructions existantes
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: '« Hébergement V* » ; condition : « Uniquement les extensions limitées à 25 % de la surface de
+          plancher des constructions existantes »'
+      artisanat_commerce_detail:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Artisanat et commerce de détail X »
+      restauration:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Restauration X »
+      commerce_gros:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Commerce de gros X »
+      activites_services_clientele:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Activités de services où s'effectue l'accueil d'une clientèle X »
+      hotels:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Hôtel X »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Autres hébergements touristiques X »
+      cinema:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Cinéma X »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif et services publics admis seulement s'ils sont nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l'activité agricole/pastorale/forestière
+          et les paysages, conformes à la loi Littoral (L121-5, L121-5-1, L121-6), avec mesures éviter/réduire/compenser
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: '« Locaux et bureaux accueillant du public des administrations publiques et assimilées V* » ;
+          condition p. 131 : « … nécessaires à la réalisation, l''entretien et l''extension d''infrastructures et
+          des réseaux… qui ne sauraient être implantés en d''autres lieux »'
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif et services publics admis seulement s'ils sont nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l'activité agricole/pastorale/forestière
+          et les paysages, conformes à la loi Littoral (L121-5, L121-5-1, L121-6), avec mesures éviter/réduire/compenser
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V* » ; condition
+          p. 131
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif et services publics admis seulement s'ils sont nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l'activité agricole/pastorale/forestière
+          et les paysages, conformes à la loi Littoral (L121-5, L121-5-1, L121-6), avec mesures éviter/réduire/compenser
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 130
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V* » ; condition p. 131
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif et services publics admis seulement s'ils sont nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l'activité agricole/pastorale/forestière
+          et les paysages, conformes à la loi Littoral (L121-5, L121-5-1, L121-6), avec mesures éviter/réduire/compenser
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Salles d'art et de spectacles V* » ; condition p. 131
+      equipements_sportifs:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif et services publics admis seulement s'ils sont nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l'activité agricole/pastorale/forestière
+          et les paysages, conformes à la loi Littoral (L121-5, L121-5-1, L121-6), avec mesures éviter/réduire/compenser
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Equipements sportifs V* » ; condition p. 131
+      lieux_culte:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif et services publics admis seulement s'ils sont nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l'activité agricole/pastorale/forestière
+          et les paysages, conformes à la loi Littoral (L121-5, L121-5-1, L121-6), avec mesures éviter/réduire/compenser
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Lieux de culte V* » ; condition p. 131
+      autres_equipements_public:
+        statut: sous_condition
+        condition: équipements d'intérêt collectif et services publics admis seulement s'ils sont nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l'activité agricole/pastorale/forestière
+          et les paysages, conformes à la loi Littoral (L121-5, L121-5-1, L121-6), avec mesures éviter/réduire/compenser
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: '« Autres équipements recevant du public V* » ; condition p. 131 : « Les constructions et installations
+          à destination équipements d''intérêt collectif et services publics sont autorisée dès lors : Qu''elles
+          sont nécessaires à la réalisation, l''entretien et l''extension d''infrastructures et des réseaux de toute
+          nature… qui ne sauraient être implantés en d''autres lieux »'
+      industrie:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Industrie X »
+      entrepot:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Entrepôts X »
+      bureau:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Bureau X »
+      centre_congres_exposition:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Centre de congrès et d'exposition X »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Cuisine dédiée à la vente en ligne X »
+      exploitation_agricole:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Exploitation agricole X »
+      exploitation_forestiere:
+        statut: interdit
+        article: ARTICLE Us1 (tableau Us)
+        page_pdf: 131
+        citation: « Exploitation forestière X »
+  Up:
+    silence: autorise
+    silence_src: 'Art. Up1, p. 143 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
+    sous_destinations:
+      logement:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 143
+        citation: « Logement V »
+      hebergement:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 143
+        citation: « Hébergement V »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de plancher n'excède pas 1 000 m² pour les commerces
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        article: Up1 (tableau)
+        page_pdf: 143
+        citation: « Les constructions nouvelles à destination d'artisanat et le commerce de détail sont autorisées,
+          si leur surface de plancher n'excède pas 1 000 m² pour les commerces. »
+      restauration:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 143
+        citation: « Restauration V »
+      commerce_gros:
+        statut: interdit
+        article: Up1 (tableau)
+        page_pdf: 143
+        citation: « Commerce de gros X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de plancher n'excède pas 400 m²
+        seuil_m2: 400
+        seuil_type: surface_plancher
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Les constructions nouvelles à destination d'activités de services où s'effectue l'accueil d'une
+          clientèle sont autorisées, si leur surface de plancher n'excède pas 400 m². »
+      hotels:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de plancher n'excède pas 400 m²
+        seuil_m2: 400
+        seuil_type: surface_plancher
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques sont
+          autorisées, si leur surface de plancher n'excède pas 400 m². »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées si la surface de plancher n'excède pas 400 m²
+        seuil_m2: 400
+        seuil_type: surface_plancher
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques sont
+          autorisées, si leur surface de plancher n'excède pas 400 m². »
+      cinema:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Cinéma V »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V »
+      salles_art_spectacles:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Salles d'art et de spectacles V »
+      equipements_sportifs:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Equipements sportifs V »
+      lieux_culte:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Lieux de culte V »
+      autres_equipements_public:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Autres équipements recevant du public V »
+      industrie:
+        statut: interdit
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Industrie X »
+      entrepot:
+        statut: interdit
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Entrepôts X »
+      bureau:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Bureau V »
+      centre_congres_exposition:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Centre de congrès et d'exposition V »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: Up1 (tableau)
+        page_pdf: 144
+        citation: « Cuisine dédiée à la vente en ligne V »
+      exploitation_agricole:
+        statut: interdit
+        article: Up1 (tableau)
+        page_pdf: 145
+        citation: « Exploitation agricole X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Up1 (tableau)
+        page_pdf: 145
+        citation: « Exploitation forestière X »
+  Ut:
+    silence: autorise
+    silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. »'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: strictement à destination des personnes dont la présence permanente sur le site est nécessaire
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: '« En zone Ut, les constructions à destination de logements et hébergements sont autorisées si
+          elles sont strictement à destination des personnes dont la présence permanente sur le site est nécessaire.
+          » (tableau p. 157 : « Logement V* »)'
+      hebergement:
+        statut: sous_condition
+        condition: strictement à destination des personnes dont la présence permanente sur le site est nécessaire
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: '« En zone Ut, les constructions à destination de logements et hébergements sont autorisées si
+          elles sont strictement à destination des personnes dont la présence permanente sur le site est nécessaire.
+          » (tableau p. 157 : « Hébergement V* »)'
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination d'artisanat et commerce de détail
+          sont autorisées, sous réserve d'être en lien avec l'équipement touristique. »
+      restauration:
+        statut: sous_condition
+        condition: y compris les locaux techniques associés, sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination de restauration sont autorisées
+          y compris les locaux techniques associés, sous réserve d'être en lien avec l'équipement touristique. »
+      commerce_gros:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « Commerce de gros X X X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination d'activités de services où s'effectue
+          l'accueil d'une clientèle sont autorisées, sous réserve d'être en lien avec l'équipement touristique.
+          »
+      hotels:
+        statut: sous_condition
+        condition: y compris villages de gîtes, habitat insolite ou terrains de camping et locaux techniques nécessaires
+          à l'équipement, à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques (…)
+          sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans lequel ils s'inscrivent.
+          »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: y compris villages de gîtes, habitat insolite ou terrains de camping et locaux techniques nécessaires
+          à l'équipement, à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques (…)
+          sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans lequel ils s'inscrivent.
+          »
+      cinema:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « Cinéma X X X »
+      locaux_bureaux_administrations:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 158
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées X X X »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X »
+      lieux_culte:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Lieux de culte X X X »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination de salle d'art et de spectacle
+          sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans lequel ils s'inscrivent.
+          »
+      equipements_sportifs:
+        statut: autorise
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Equipements sportifs V V* X » (la condition écrite ne vise que la zone AUt1)
+      autres_equipements_public:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Autres équipements recevant du public X X X »
+      industrie:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Industrie X X X »
+      entrepot:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Entrepôts X X X »
+      bureau:
+        statut: sous_condition
+        condition: sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination de bureau sont autorisées, sous
+          réserve d'être en lien avec l'équipement touristique. »
+      centre_congres_exposition:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 159
+        citation: « Centre de congrès et d'exposition X V* X »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 160
+        citation: « Cuisine dédiée à la vente en ligne X X X »
+      exploitation_agricole:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 160
+        citation: « Exploitation agricole X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ut1 (tableau, col. Ut)
+        page_pdf: 160
+        citation: « Exploitation forestière X X X »
+  AUt1:
+    silence: autorise
+    silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
+      « Dispositions applicables à la zone Ut et AUt », p. 156 ; colonne AUt1 propre au tableau)'
+    note: 'Préambule p. 156 : « L''urbanisation des zones AUt1 et AUt2 n''est possible qu''après réalisation d''opérations
+      d''aménagement d''ensemble sur la totalité de la zone ou pour partie lorsqu''elles sont identifiées dans les
+      Orientations d''Aménagement et de Programmation. »'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 157
+        citation: « Logement V* X X »
+      hebergement:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 157
+        citation: « Hébergement V* X X »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination d'artisanat et commerce de détail
+          sont autorisées, sous réserve d'être en lien avec l'équipement touristique. »
+      restauration:
+        statut: sous_condition
+        condition: y compris les locaux techniques associés, sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination de restauration sont autorisées
+          y compris les locaux techniques associés, sous réserve d'être en lien avec l'équipement touristique. »
+      commerce_gros:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « Commerce de gros X X X »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination d'activités de services où s'effectue
+          l'accueil d'une clientèle sont autorisées, sous réserve d'être en lien avec l'équipement touristique.
+          »
+      hotels:
+        statut: sous_condition
+        condition: y compris villages de gîtes, habitat insolite ou terrains de camping et locaux techniques nécessaires
+          à l'équipement, à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques (…)
+          sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans lequel ils s'inscrivent.
+          »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: y compris villages de gîtes, habitat insolite ou terrains de camping et locaux techniques nécessaires
+          à l'équipement, à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « Les constructions nouvelles à destination d'hôtel et des autres hébergements touristiques (…)
+          sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans lequel ils s'inscrivent.
+          »
+      cinema:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « Cinéma X X X »
+      locaux_bureaux_administrations:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 158
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées X X X »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X »
+      lieux_culte:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « Lieux de culte X X X »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination de salle d'art et de spectacle
+          sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans lequel ils s'inscrivent.
+          »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « En zone AUt1, les constructions nouvelles à destination d'équipements sportifs sont autorisées,
+          sous réserve d'être en lien avec l'équipement touristique. »
+      autres_equipements_public:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « Autres équipements recevant du public X X X »
+      industrie:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « Industrie X X X »
+      entrepot:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « Entrepôts X X X »
+      bureau:
+        statut: sous_condition
+        condition: sous réserve d'être en lien avec l'équipement touristique
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « En zones Ut et AUt1, les constructions nouvelles à destination de bureau sont autorisées, sous
+          réserve d'être en lien avec l'équipement touristique. »
+      centre_congres_exposition:
+        statut: sous_condition
+        condition: à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 159
+        citation: « En zone AUt1, les constructions nouvelles à destination de centre de congrès et d'exposition
+          sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans lequel ils s'inscrivent.
+          »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 160
+        citation: « Cuisine dédiée à la vente en ligne X X X »
+      exploitation_agricole:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 160
+        citation: « Exploitation agricole X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt1)
+        page_pdf: 160
+        citation: « Exploitation forestière X X X »
+  AUt2:
+    silence: autorise
+    silence_src: 'Art. Ut1, p. 157 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
+      « Dispositions applicables à la zone Ut et AUt », p. 156 ; colonne AUt2 propre au tableau)'
+    note: 'Préambule p. 156 : « L''urbanisation des zones AUt1 et AUt2 n''est possible qu''après réalisation d''opérations
+      d''aménagement d''ensemble sur la totalité de la zone ou pour partie lorsqu''elles sont identifiées dans les
+      Orientations d''Aménagement et de Programmation. »'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 157
+        citation: « Logement V* X X »
+      hebergement:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 157
+        citation: « Hébergement V* X X »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Artisanat et commerce de détail V* V* X »
+      restauration:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Restauration V* V* X »
+      commerce_gros:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Commerce de gros X X X »
+      activites_services_clientele:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Activités de services où s'effectue l'accueil d'une clientèle V* V* X »
+      hotels:
+        statut: sous_condition
+        condition: y compris villages de gîtes, habitat insolite ou terrains de camping et locaux techniques nécessaires
+          à l'équipement, à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Hôtel V* V* V* » ; « Les constructions nouvelles à destination d'hôtel et des autres hébergements
+          touristiques (…) sont autorisées à condition qu'ils s'intègrent dans le milieu naturel ou urbain dans
+          lequel ils s'inscrivent. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: y compris villages de gîtes, habitat insolite ou terrains de camping et locaux techniques nécessaires
+          à l'équipement, à condition de s'intégrer dans le milieu naturel ou urbain
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Autres hébergements touristiques V* V* V* » ; « (…) autorisées à condition qu'ils s'intègrent
+          dans le milieu naturel ou urbain dans lequel ils s'inscrivent. »
+      cinema:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Cinéma X X X »
+      locaux_bureaux_administrations:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 158
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées X X X »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X »
+      lieux_culte:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Lieux de culte X X X »
+      salles_art_spectacles:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Salles d'art et de spectacles V* V* X »
+      equipements_sportifs:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Equipements sportifs V V* X »
+      autres_equipements_public:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Autres équipements recevant du public X X X »
+      industrie:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Industrie X X X »
+      entrepot:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Entrepôts X X X »
+      bureau:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Bureau V* V* X »
+      centre_congres_exposition:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 159
+        citation: « Centre de congrès et d'exposition X V* X »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 160
+        citation: « Cuisine dédiée à la vente en ligne X X X »
+      exploitation_agricole:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 160
+        citation: « Exploitation agricole X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ut1 (tableau, col. AUt2)
+        page_pdf: 160
+        citation: « Exploitation forestière X X X »
+  Uazp:
+    silence: autorise
+    silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
+      « Dispositions applicables à la zone Ua et AUa », p. 171)'
+    note: 'Art. Ua1, p. 173 : « Dans les secteurs Uazp, Uaza, Uazc, AUazc, Uazi et AUazi est autorisé, l''extension
+      des constructions existantes dont les destinations ne sont pas autorisées ci-dessous, dans la limite de 120
+      m² de surface de plancher supplémentaire maximum sauf pour les constructions à destination de logement ou
+      aucune extension n''est autorisée. » Légende du tableau p. 173 : les « X » interdisent nouvelles constructions
+      ET changement de destination.'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 173
+        citation: « Logement X X X X X »
+      hebergement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 173
+        citation: « Hébergement X X X X X »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 173
+        citation: « Artisanat et commerce de détail X V V* V V* »
+      restauration:
+        statut: sous_condition
+        condition: implantation des activités commerciales et de services limitée à 5 % de la superficie de la zone
+          d'activités à vocation régionale
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: '« Pour la zone Uazp, l''implantation des activités commerciales et de services est limitée à
+          5% de la superficie de la zone d''activités à vocation régionale. » (tableau p. 173 : « Restauration V*
+          »)'
+      commerce_gros:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 173
+        citation: « Commerce de gros X V V* V V* »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: implantation des activités commerciales et de services limitée à 5 % de la superficie de la zone
+          d'activités à vocation régionale
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: '« Pour la zone Uazp, l''implantation des activités commerciales et de services est limitée à
+          5% de la superficie de la zone d''activités à vocation régionale. » (tableau p. 173 : « Activités de services
+          où s''effectue l''accueil d''une clientèle V* »)'
+      hotels:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Hôtel X V X V X »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Autres hébergements touristiques X V X V X »
+      cinema:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Cinéma X V X V V* »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V V
+          V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X X X »
+      salles_art_spectacles:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Salles d'art et de spectacles X V X X X »
+      equipements_sportifs:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Equipements sportifs X X V V V »
+      lieux_culte:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Lieux de culte X X X X X »
+      autres_equipements_public:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Autres équipements recevant du public X V X X X »
+      industrie:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 174
+        citation: « Industrie V X X X V »
+      entrepot:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 175
+        citation: « Entrepôts V X V V V »
+      bureau:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 175
+        citation: « Bureau V V V V V »
+      centre_congres_exposition:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 175
+        citation: « Centre de congrès et d'exposition V V X V X »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 175
+        citation: « Cuisine dédiée à la vente en ligne V V V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 175
+        citation: « Exploitation agricole X X X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazp)
+        page_pdf: 175
+        citation: « Exploitation forestière X X X X X »
+  Uazpc:
+    silence: autorise
+    silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
+      « Dispositions applicables à la zone Ua et AUa », p. 171)'
+    note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120
+      m² de surface de plancher supplémentaire (aucune extension pour le logement) — le secteur Uazpc n''est PAS
+      cité dans cette phrase (secteurs cités : Uazp, Uaza, Uazc, AUazc, Uazi, AUazi). Légende du tableau p. 173
+      : les « X » interdisent nouvelles constructions ET changement de destination.'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 173
+        citation: « Logement X X X X X »
+      hebergement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 173
+        citation: « Hébergement X X X X X »
+      artisanat_commerce_detail:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 173
+        citation: « Artisanat et commerce de détail X V V* V V* »
+      restauration:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 173
+        citation: « Restauration V* V V* V V* »
+      commerce_gros:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 173
+        citation: « Commerce de gros X V V* V V* »
+      activites_services_clientele:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 173
+        citation: « Activités de services où s'effectue l'accueil d'une clientèle V* V V* V V* »
+      hotels:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Hôtel X V X V X »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Autres hébergements touristiques X V X V X »
+      cinema:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Cinéma X V X V V* »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V V
+          V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X X X »
+      salles_art_spectacles:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Salles d'art et de spectacles X V X X X »
+      equipements_sportifs:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Equipements sportifs X X V V V »
+      lieux_culte:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Lieux de culte X X X X X »
+      autres_equipements_public:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Autres équipements recevant du public X V X X X »
+      industrie:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 174
+        citation: « Industrie V X X X V »
+      entrepot:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 175
+        citation: « Entrepôts V X V V V »
+      bureau:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 175
+        citation: « Bureau V V V V V »
+      centre_congres_exposition:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 175
+        citation: « Centre de congrès et d'exposition V V X V X »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 175
+        citation: « Cuisine dédiée à la vente en ligne V V V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 175
+        citation: « Exploitation agricole X X X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazpc)
+        page_pdf: 175
+        citation: « Exploitation forestière X X X X X »
+  Uaza:
+    silence: autorise
+    silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
+      « Dispositions applicables à la zone Ua et AUa », p. 171 ; colonne du tableau intitulée « Uaza/AUaza »)'
+    note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120
+      m² de surface de plancher supplémentaire (aucune extension pour le logement). Légende du tableau p. 173 :
+      les « X » interdisent nouvelles constructions ET changement de destination.'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 173
+        citation: « Logement X X X X X »
+      hebergement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 173
+        citation: « Hébergement X X X X X »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités (aménagements à vocation commerciale compris) limitée à 5 % de la
+          superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Artisanat et commerce de détail V* »)'
+      restauration:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités limitée à 5 % de la superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Restauration V* »)'
+      commerce_gros:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités limitée à 5 % de la superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Commerce de gros V* »)'
+      activites_services_clientele:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités limitée à 5 % de la superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Activités de services où s''effectue l''accueil d''une clientèle V* »)'
+      hotels:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Hôtel X V X V X »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Autres hébergements touristiques X V X V X »
+      cinema:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Cinéma X V X V V* »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V V
+          V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X X X »
+      salles_art_spectacles:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Salles d'art et de spectacles X V X X X »
+      equipements_sportifs:
+        statut: autorise
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Equipements sportifs X X V V V »
+      lieux_culte:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Lieux de culte X X X X X »
+      autres_equipements_public:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Autres équipements recevant du public X V X X X »
+      industrie:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 174
+        citation: « Industrie V X X X V »
+      entrepot:
+        statut: autorise
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 175
+        citation: « Entrepôts V X V V V »
+      bureau:
+        statut: autorise
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 175
+        citation: « Bureau V V V V V »
+      centre_congres_exposition:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 175
+        citation: « Centre de congrès et d'exposition V V X V X »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 175
+        citation: « Cuisine dédiée à la vente en ligne V V V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 175
+        citation: « Exploitation agricole X X X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ua1 (tableau, col. Uaza/AUaza)
+        page_pdf: 175
+        citation: « Exploitation forestière X X X X X »
+  Uazc:
+    silence: autorise
+    silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
+      « Dispositions applicables à la zone Ua et AUa », p. 171 ; colonne du tableau intitulée « Uazc / AUazc »)'
+    note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120
+      m² de surface de plancher supplémentaire (aucune extension pour le logement). Légende du tableau p. 173 :
+      les « X » interdisent nouvelles constructions ET changement de destination.'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 173
+        citation: « Logement X X X X X »
+      hebergement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 173
+        citation: « Hébergement X X X X X »
+      artisanat_commerce_detail:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 173
+        citation: « Artisanat et commerce de détail X V V* V V* »
+      restauration:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 173
+        citation: « Restauration V* V V* V V* »
+      commerce_gros:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 173
+        citation: « Commerce de gros X V V* V V* »
+      activites_services_clientele:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 173
+        citation: « Activités de services où s'effectue l'accueil d'une clientèle V* V V* V V* »
+      hotels:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Hôtel X V X V X »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Autres hébergements touristiques X V X V X »
+      cinema:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Cinéma X V X V V* »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V V
+          V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X X X »
+      salles_art_spectacles:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Salles d'art et de spectacles X V X X X »
+      equipements_sportifs:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Equipements sportifs X X V V V »
+      lieux_culte:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Lieux de culte X X X X X »
+      autres_equipements_public:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Autres équipements recevant du public X V X X X »
+      industrie:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 174
+        citation: « Industrie V X X X V »
+      entrepot:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 175
+        citation: « Entrepôts V X V V V »
+      bureau:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 175
+        citation: « Bureau V V V V V »
+      centre_congres_exposition:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 175
+        citation: « Centre de congrès et d'exposition V V X V X »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 175
+        citation: « Cuisine dédiée à la vente en ligne V V V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 175
+        citation: « Exploitation agricole X X X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazc/AUazc)
+        page_pdf: 175
+        citation: « Exploitation forestière X X X X X »
+  AUazc:
+    renvoi: Uazc
+    renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazc / AUazc » (mêmes lignes et conditions
+      pour les deux secteurs) ; préambule p. 171 : « Uazc et AUazc sont créés pour n''autoriser que les activités
+      tertiaires et commerciales et industrie. »'
+  Uazi:
+    silence: autorise
+    silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
+      « Dispositions applicables à la zone Ua et AUa », p. 171 ; colonne du tableau intitulée « Uazi / AUazi »)'
+    note: 'Art. Ua1, p. 173 : extension des constructions existantes de destination non autorisée limitée à 120
+      m² de surface de plancher supplémentaire (aucune extension pour le logement). Légende du tableau p. 173 :
+      les « X » interdisent nouvelles constructions ET changement de destination. Occupation du sol « Carrière V*
+      » (p. 175) : autorisée dans le secteur de la ZI N°4 identifié au Schéma Départemental des carrières, sous
+      réserve de la remise en état du site après extraction (hors nomenclature des 23 sous-destinations).'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 173
+        citation: « Logement X X X X X »
+      hebergement:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 173
+        citation: « Hébergement X X X X X »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités (aménagements à vocation commerciale compris) limitée à 5 % de la
+          superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Artisanat et commerce de détail V* »)'
+      restauration:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités limitée à 5 % de la superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Restauration V* »)'
+      commerce_gros:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités limitée à 5 % de la superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Commerce de gros V* »)'
+      activites_services_clientele:
+        statut: sous_condition
+        condition: emprise au sol des constructions à destination de commerce et activité de service et emprise
+          d'occupation du sol par ces activités limitée à 5 % de la superficie de l'unité foncière
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: '« Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol des constructions à destination
+          de commerce et activité de service (…) est limitée à 5% de la superficie de l''unité foncière. » (tableau
+          p. 173 : « Activités de services où s''effectue l''accueil d''une clientèle V* »)'
+      hotels:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Hôtel X V X V X »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Autres hébergements touristiques X V X V X »
+      cinema:
+        statut: sous_condition
+        condition: 'condition portée pour l''ensemble de la destination commerce et activité de service : emprise
+          au sol limitée à 5 % de la superficie de l''unité foncière (zones Uazi, Uaza, AUazi, AUaza)'
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: '« Cinéma X V X V V* » ; « Condition pour l''ensemble de la destination commerce et activité de
+          service : Pour les zones Uazi, Uaza, AUazi et AUaza, l''emprise au sol (…) est limitée à 5% de la superficie
+          de l''unité foncière. »'
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V V V V
+          V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V V V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Etablissements d'enseignement, de santé et d'action sociale X X X X X »
+      salles_art_spectacles:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Salles d'art et de spectacles X V X X X »
+      equipements_sportifs:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Equipements sportifs X X V V V »
+      lieux_culte:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Lieux de culte X X X X X »
+      autres_equipements_public:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Autres équipements recevant du public X V X X X »
+      industrie:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 174
+        citation: « Industrie V X X X V »
+      entrepot:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 175
+        citation: « Entrepôts V X V V V »
+      bureau:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 175
+        citation: « Bureau V V V V V »
+      centre_congres_exposition:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 175
+        citation: « Centre de congrès et d'exposition V V X V X »
+      cuisine_vente_en_ligne:
+        statut: autorise
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 175
+        citation: « Cuisine dédiée à la vente en ligne V V V V V »
+      exploitation_agricole:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 175
+        citation: « Exploitation agricole X X X X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ua1 (tableau, col. Uazi/AUazi)
+        page_pdf: 175
+        citation: « Exploitation forestière X X X X X »
+  AUazi:
+    renvoi: Uazi
+    renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazi / AUazi » (mêmes lignes et conditions
+      pour les deux secteurs) ; préambule p. 171 : « AUazi et Uazi destinés à l''accueil d''activités industrielles
+      et artisanales (…) » ; p. 171 : « Les secteurs AUazc et AUazi font l''objet d''Orientations d''Aménagement
+      et de Programmation dont les prescriptions et principes d''aménagement sont à respecter. »'
+  Ue:
+    silence: autorise
+    silence_src: 'art. Ue1, p. 188 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. Le règlement et
+      le tableau ci-dessous illustre, de manière non exhaustive, ceux qui se trouvent ainsi "autorisés". »'
+    note: 'Les X du tableau visent les « Destinations interdites (nouvelles constructions) » (p. 188) ; l''extension
+      ou la transformation des constructions existantes dans leur destination actuelle reste admise sous conditions
+      (art. Ue1, p. 187). Secteur des 50 pas géométriques (plan de zonage) : « seuls sont autorisés » les services
+      publics/équipements d''intérêt collectif, les opérations de réaménagement de quartier/logement social/RHI,
+      les commerces, structures artisanales, équipements touristiques et hôteliers justifiés par la proximité de
+      la mer, et l''adaptation/changement de destination/réfection/extension limitée de l''existant (20 % de l''emprise
+      au sol) (p. 188). Autorisations nommées en Ue (p. 190) : Pôle Déchets Sud, station de traitement des eaux
+      usées de Pierrefonds, unités de tri, installations du port, de l''hôpital, hébergements liés au fonctionnement
+      des équipements (y compris étudiants d''un pôle de formation). Hors nomenclature des destinations : carrière
+      V* (zone de Pierrefonds, gisement identifié au Schéma départemental des carrières, remise en état pour activités
+      économiques, p. 191) ; terrain de camping et de caravaning X (p. 191). Art. Ue2 (p. 191) : mixité fonctionnelle
+      et sociale non réglementée.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: strictement à destination des personnes dont la présence permanente sur le site est nécessaire
+          ou liées et nécessaires au fonctionnement de l'équipement auquel elles se rattachent
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: '« Logement V* — Condition : Les constructions à destination de logements et hébergements sont
+          autorisées si elles sont strictement à destination des personnes dont la présence permanente sur le site
+          est nécessaire ou liées et nécessaires au fonctionnement de l''équipement auxquelles elles se rattachent.
+          »'
+      hebergement:
+        statut: sous_condition
+        condition: strictement à destination des personnes dont la présence permanente sur le site est nécessaire
+          ou liées et nécessaires au fonctionnement de l'équipement auquel elles se rattachent (y compris hébergements
+          d'étudiants en cas de pôle de formation, p. 190)
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: '« Hébergement V* » ; p. 190 : « Les équipements d''intérêt collectif et services publics dans
+          leur ensemble sont autorisés, ainsi que les hébergements liés à leur fonctionnement (y compris les étudiants
+          en cas de pôle de formation). »'
+      artisanat_commerce_detail:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Artisanat et commerce de détail X »
+      restauration:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Restauration X »
+      commerce_gros:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Commerce de gros X »
+      activites_services_clientele:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Activités de services où s'effectue l'accueil d'une clientèle V »
+      hotels:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Hôtel X »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Autres hébergements touristiques X »
+      cinema:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Cinéma X »
+      locaux_bureaux_administrations:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Locaux et bureaux accueillant du public des administrations publiques et assimilées V »
+      locaux_techniques_administrations:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V »
+      enseignement_sante_action_sociale:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Etablissements d'enseignement, de santé et d'action sociale V »
+      salles_art_spectacles:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Salles d'art et de spectacles V »
+      equipements_sportifs:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Equipements sportifs V »
+      lieux_culte:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Lieux de culte V »
+      autres_equipements_public:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 189
+        citation: « Autres équipements recevant du public V »
+      industrie:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 190
+        citation: « Industrie V »
+      entrepot:
+        statut: sous_condition
+        condition: constructions nouvelles et extensions autorisées sous réserve d'être nécessaires au fonctionnement
+          de constructions ou installations autorisées dans la zone
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 190
+        citation: '« Entrepôts V* — Condition : En zone Ue, les constructions nouvelles et l''extension des constructions
+          existantes à destination d''entrepôt sont autorisées sous réserve qu''elles soient nécessaires au fonctionnement
+          des constructions et installations à des constructions ou installations autorisées dans la zone. »'
+      bureau:
+        statut: sous_condition
+        condition: constructions nouvelles autorisées sous réserve d'être en lien avec les équipements autorisés
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 190
+        citation: '« Bureau V* — Condition : Les constructions nouvelles à destination de bureau sont autorisées,
+          sous réserve d''être en lien avec les équipements autorisés. »'
+      centre_congres_exposition:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 190
+        citation: « Centre de congrès et d'exposition X »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 190
+        citation: « Cuisine dédiée à la vente en ligne X »
+      exploitation_agricole:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 190
+        citation: « Exploitation agricole X »
+      exploitation_forestiere:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau)
+        page_pdf: 191
+        citation: « Exploitation forestière X »
+  Uea:
+    note: Secteur aérodrome de Pierrefonds. Une règle unique couvre toutes les destinations et sous-destinations
+      (aucun silence résiduel — le tableau Ue1 ne comporte que des colonnes Ue et Uep, pas de colonne Uea). Hauteurs
+      soumises au Plan de servitude aéronautique (art. Ue3, p. 193).
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      logement:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      hebergement:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      restauration:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      commerce_gros:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      cinema:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      hotels:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      lieux_culte:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      industrie:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      entrepot:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      bureau:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      centre_congres_exposition:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+      cuisine_vente_en_ligne:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uea)
+        page_pdf: 188
+        citation: « Dans le secteur Uea sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'aéroport de Pierrefonds. »
+  Uemi:
+    note: Secteur des activités militaires. Une règle unique couvre toutes les destinations et sous-destinations
+      (aucun silence résiduel — pas de colonne Uemi dans le tableau Ue1). Emprise au sol max 75 % comme en Ue (art.
+      Ue3, p. 192).
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      logement:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      hebergement:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      restauration:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      commerce_gros:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      cinema:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      hotels:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      lieux_culte:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      industrie:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      entrepot:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      bureau:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      centre_congres_exposition:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+      cuisine_vente_en_ligne:
+        statut: sous_condition
+        condition: uniquement si nécessaire à l'exploitation et au fonctionnement de l'Armée
+        article: zone Ue, chap. 1, art. Ue1 (secteur Uemi)
+        page_pdf: 188
+        citation: « Dans le secteur Uemi sont autorisées toutes les destinations et sous destinations nécessaires
+          à l'exploitation et au fonctionnement de l'Armée. »
+  Uep:
+    silence: autorise
+    silence_src: 'art. Ue1, p. 188 : « Tous les usages et affectations des sols, types d''activités et catégories
+      de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (le tableau
+      porte une colonne Uep dédiée qui fixe explicitement le sort de chaque ligne)'
+    note: 'Secteur parcs et espaces verts paysagers. p. 190 : « Sont autorisés en zone Uep : Les équipements sportifs
+      ou récréatifs de plein air, ainsi que les constructions et aménagements légers nécessaires à leur fonctionnement.
+      » Emprise au sol limitée à 20 m² par ha (art. Ue3, p. 192). Hors nomenclature : carrière X, terrain de camping
+      et de caravaning X (p. 191).'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Logement V* X » (colonne Uep : X)'
+      hebergement:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Hébergement V* X » (colonne Uep : X)'
+      artisanat_commerce_detail:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Artisanat et commerce de détail X X »
+      restauration:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Restauration X X »
+      commerce_gros:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Commerce de gros X X »
+      activites_services_clientele:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Activités de services où s''effectue l''accueil d''une clientèle V X » (colonne Uep : X)'
+      hotels:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Hôtel X X »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Autres hébergements touristiques X X »
+      cinema:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Cinéma X X »
+      locaux_bureaux_administrations:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Locaux et bureaux accueillant du public des administrations publiques et assimilées V X » (colonne
+          Uep : X)'
+      locaux_techniques_administrations:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Locaux techniques et industriels des administrations publiques et assimilées V V »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Etablissements d''enseignement, de santé et d''action sociale V X » (colonne Uep : X)'
+      salles_art_spectacles:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Salles d''art et de spectacles V X » (colonne Uep : X)'
+      equipements_sportifs:
+        statut: autorise
+        condition: 'p. 190 : équipements sportifs ou récréatifs de plein air, ainsi que les constructions et aménagements
+          légers nécessaires à leur fonctionnement'
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Equipements sportifs V V » ; p. 190 : « Sont autorisés en zone Uep : Les équipements sportifs
+          ou récréatifs de plein air, ainsi que les constructions et aménagements légers nécessaires à leur fonctionnement.
+          »'
+      lieux_culte:
+        statut: autorise
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: « Lieux de culte V V »
+      autres_equipements_public:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 189
+        citation: '« Autres équipements recevant du public V X » (colonne Uep : X)'
+      industrie:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 190
+        citation: '« Industrie V X » (colonne Uep : X)'
+      entrepot:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 190
+        citation: '« Entrepôts V* X » (colonne Uep : X)'
+      bureau:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 190
+        citation: '« Bureau V* X » (colonne Uep : X)'
+      centre_congres_exposition:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 190
+        citation: « Centre de congrès et d'exposition X X »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 190
+        citation: « Cuisine dédiée à la vente en ligne X X »
+      exploitation_agricole:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 190
+        citation: « Exploitation agricole X X »
+      exploitation_forestiere:
+        statut: interdit
+        article: zone Ue, chap. 1, art. Ue1 (tableau, colonne Uep)
+        page_pdf: 191
+        citation: « Exploitation forestière X X »
+  AU01:
+    silence: interdit
+    silence_src: 'art. AU01, p. 200 : « Sont interdites, dans l''ensemble des zones AU0, toute construction quelle
+      qu''elle soit. Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+      publics (réseaux, …) et l''extension des constructions existantes. »'
+    note: 'Zone à urbaniser insuffisamment équipée, non ouverte à l''urbanisation (ouverture par modification du
+      PLU). Échéancier : « Zones AU0-1/AU0c-1 : ouverture entre 2 et 6 ans à compter de la date d''approbation de
+      l''Eco-PLU » (p. 200). Extensions de l''existant limitées à 20 % de la surface de plancher existante à la
+      date d''approbation (p. 200).'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: uniquement les installations et ouvrages nécessaires au fonctionnement des services publics (réseaux,
+          …)
+        article: zone AU0, chap. 1, art. AU01
+        page_pdf: 200
+        citation: « Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+          publics (réseaux, …) et l'extension des constructions existantes. »
+  AU02:
+    silence: interdit
+    silence_src: 'art. AU01, p. 200 : « Sont interdites, dans l''ensemble des zones AU0, toute construction quelle
+      qu''elle soit. Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+      publics (réseaux, …) et l''extension des constructions existantes. »'
+    note: 'Mêmes règles que l''ensemble des zones AU0 (un seul article AU01 pour tous les indices). Échéancier :
+      « Zones AU0-2/AU0c-2 : ouverture entre 6 et 12 ans à compter de la date d''approbation de l''Eco-PLU » (p.
+      200). Extensions de l''existant limitées à 20 % de la surface de plancher existante (p. 200).'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: uniquement les installations et ouvrages nécessaires au fonctionnement des services publics (réseaux,
+          …)
+        article: zone AU0, chap. 1, art. AU01
+        page_pdf: 200
+        citation: « Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+          publics (réseaux, …) et l'extension des constructions existantes. »
+  AU03:
+    silence: interdit
+    silence_src: 'art. AU01, p. 200 : « Sont interdites, dans l''ensemble des zones AU0, toute construction quelle
+      qu''elle soit. Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+      publics (réseaux, …) et l''extension des constructions existantes. »'
+    note: 'Mêmes règles que l''ensemble des zones AU0 (un seul article AU01 pour tous les indices). Échéancier :
+      « Zones AUo-3/AU0c-3 : ouverture à plus de 12 ans à compter de la date d''approbation de l''Eco-PLU » (p.
+      200 — le préambule écrit « AUo-3 », coquille probable pour AU0-3). Extensions de l''existant limitées à 20
+      % de la surface de plancher existante (p. 200).'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: uniquement les installations et ouvrages nécessaires au fonctionnement des services publics (réseaux,
+          …)
+        article: zone AU0, chap. 1, art. AU01
+        page_pdf: 200
+        citation: « Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+          publics (réseaux, …) et l'extension des constructions existantes. »
+  AU0c-1:
+    silence: interdit
+    silence_src: 'art. AU01, p. 200 : « Sont interdites, dans l''ensemble des zones AU0, toute construction quelle
+      qu''elle soit. Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+      publics (réseaux, …) et l''extension des constructions existantes. »'
+    note: 'Secteur AU0c de Pierrefonds : en plus des règles AU0, « les carrières et activités connexes (installations
+      mobiles de traitement primaire des matériaux concassage, criblage, lavage) sont autorisées » à caractère précaire,
+      remise en état pour activités industrielles, engins mobiles à 30 m minimum des habitations (p. 200) — occupation
+      du sol hors nomenclature des 23 sous-destinations. « L''échéancier ne s''applique pas à l''ouverture des carrières
+      et ses activités connexes » (p. 200). Échéancier d''ouverture : entre 2 et 6 ans (AU0c-1, p. 200). Extensions
+      de l''existant limitées à 20 % de la surface de plancher existante (p. 200).'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: uniquement les installations et ouvrages nécessaires au fonctionnement des services publics (réseaux,
+          …)
+        article: zone AU0, chap. 1, art. AU01
+        page_pdf: 200
+        citation: « Seules sont autorisées les installations et ouvrages nécessaires au fonctionnement des services
+          publics (réseaux, …) et l'extension des constructions existantes. »
+  A:
+    silence: interdit
+    silence_src: 'art. A1, p. 202 : « Dans l''ensemble de la zone A, sont interdites toutes les occupations et utilisations
+      du sol qui ne sont pas mentionnées ci-après. »'
+    note: 'Sont également autorisées dans l''ensemble des zones A (sauf Acu/Acu1) : la reconstruction à l''identique
+      après sinistre (limite 10 ans, hors aléas PPR), la rénovation de l''existant dont la destination n''est plus
+      permise, et les constructions/ouvrages liés à la production et distribution d''énergies renouvelables compatibles
+      avec l''activité agricole (p. 202-203) — hors nomenclature des destinations. L''autorisation générique « équipements
+      d''intérêt collectif et services publics » est bornée par sa condition aux infrastructures et réseaux ne pouvant
+      être implantés ailleurs (p. 203) ; les autres sous-destinations d''équipements ne sont accessibles que par
+      changement de destination de bâtiments identifiés (p. 204). Extensions des habitations existantes : 25 % de
+      la surface de plancher, 15 % dans les 50 pas géométriques (p. 204). Art. A2 (p. 205) : mixité fonctionnelle
+      et sociale non réglementée.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'bâtiments techniques agricoles, annexes, ouvrages et travaux nécessaires aux besoins d''une
+          exploitation agricole, justifiés par la superficie de l''exploitation, la nature de l''activité, le matériel
+          et les bâtiments existants ; ICPE d''élevage et d''amélioration foncière agricole ; transformation/conditionnement/commercialisation
+          des produits agricoles dans le prolongement de l''acte de production (commercialisation : emprise au sol
+          max 20 m² par unité foncière, accord de l''État après avis CDNPS et CDPENAF)'
+        seuil_m2: 20
+        article: zone A, chap. 1, art. A1
+        page_pdf: 203
+        citation: « Les bâtiments techniques agricoles et leurs annexes ainsi que les ouvrages et travaux nécessaires
+          aux besoins d'une exploitation agricole » ; « Concernant les constructions et installations nécessaires
+          à la commercialisation, autorisées ci-avant, l'emprise ne pourra être supérieure à 20 m² par unité foncière.
+          » (p. 204)
+      logement:
+        statut: sous_condition
+        condition: strictement pour les agriculteurs ou exploitants agricoles dont la présence permanente est nécessaire
+          au fonctionnement de l'exploitation, un seul logement par exploitation, surface de plancher max 150 m²,
+          implantation à proximité de l'exploitation ou en limite d'une zone déjà construite ; extensions des habitations
+          existantes limitées à 25 % de la surface de plancher (15 % dans les 50 pas géométriques)
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: zone A, chap. 1, art. A1 (Logement des agriculteurs)
+        page_pdf: 204
+        citation: « Les constructions et changements de destination vers l'habitat sont autorisés strictement pour
+          les agriculteurs ou exploitants agricoles dont la présence permanente est nécessaire au fonctionnement
+          de l'exploitation […] dans la limite d'un seul logement par exploitation […] se limiter à une surface
+          de plancher maximale de 150 m². »
+      restauration:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens dont l'usage agricole a cessé,
+          identifiés au plan de zonage (L.151-11 I-2° et R.151-35), hors STECAL, sans compromettre l'activité agricole
+          ni la qualité paysagère du site — pas de construction nouvelle
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      hotels:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens dont l'usage agricole a cessé,
+          identifiés au plan de zonage (L.151-11 I-2° et R.151-35), hors STECAL, sans compromettre l'activité agricole
+          ni la qualité paysagère du site — pas de construction nouvelle (ligne unique « hébergement hôtelier et
+          touristique »)
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens dont l'usage agricole a cessé,
+          identifiés au plan de zonage (L.151-11 I-2° et R.151-35), hors STECAL, sans compromettre l'activité agricole
+          ni la qualité paysagère du site — pas de construction nouvelle (ligne unique « hébergement hôtelier et
+          touristique »)
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs uniquement si nécessaires
+          à la réalisation, l'entretien et l'extension d'infrastructures et de réseaux (stations de pompage, antennes
+          relais, transport ou distribution d'énergie ou d'eau…) ne pouvant être implantés en d'autres lieux, compatibles
+          avec l'activité agricole, la sauvegarde des espaces naturels et des paysages et la loi Littoral (L.121-5
+          et s.) ; également accessibles par changement de destination des bâtiments identifiés (p. 204)
+        article: zone A, chap. 1, art. A1 (équipements d'intérêt collectif et services publics)
+        page_pdf: 203
+        citation: '« Les constructions et installations nécessaires à des équipements collectifs dès lors : Qu''elles
+          sont nécessaires à la réalisation, l''entretien et l''extension d''infrastructures et des réseaux de toute
+          nature nécessaire au fonctionnement des services publics et d''intérêt collectif (stations de pompage,
+          antenne relais, transport ou distribution d''énergie ou d''eau, …) qui ne sauraient être implantés en
+          d''autres lieux »'
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens identifiés au plan de zonage (L.151-11
+          I-2° et R.151-35), hors STECAL, vers « équipements d'intérêt collectifs et services publics dans son ensemble
+          », sans compromettre l'activité agricole ni la qualité paysagère
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens identifiés au plan de zonage (L.151-11
+          I-2° et R.151-35), hors STECAL, vers « équipements d'intérêt collectifs et services publics dans son ensemble
+          », sans compromettre l'activité agricole ni la qualité paysagère
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens identifiés au plan de zonage (L.151-11
+          I-2° et R.151-35), hors STECAL, vers « équipements d'intérêt collectifs et services publics dans son ensemble
+          », sans compromettre l'activité agricole ni la qualité paysagère
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens identifiés au plan de zonage (L.151-11
+          I-2° et R.151-35), hors STECAL, vers « équipements d'intérêt collectifs et services publics dans son ensemble
+          », sans compromettre l'activité agricole ni la qualité paysagère
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      lieux_culte:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens identifiés au plan de zonage (L.151-11
+          I-2° et R.151-35), hors STECAL, vers « équipements d'intérêt collectifs et services publics dans son ensemble
+          », sans compromettre l'activité agricole ni la qualité paysagère
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: uniquement par changement de destination de bâtiments anciens identifiés au plan de zonage (L.151-11
+          I-2° et R.151-35), hors STECAL, vers « équipements d'intérêt collectifs et services publics dans son ensemble
+          », sans compromettre l'activité agricole ni la qualité paysagère
+        article: zone A, chap. 1, art. A1 (Changement de destination)
+        page_pdf: 204
+        citation: « Le changement de destination se fasse vers la destination hébergement hôtelier et touristique,
+          restauration et équipements d'intérêt collectifs et services publics dans son ensemble. »
+  Ac:
+    renvoi: A
+    renvoi_src: 'art. A1, p. 204 : « En zone Ac, sont autorisées, en plus des dispositions prévues pour la zone
+      A : … »'
+    note: 'Les ajouts propres à Ac sont hors nomenclature des destinations : locaux et installations techniques
+      liés à l''extraction/stockage/transport de matériaux pendant l''exploitation ICPE ; prélèvements de matériaux,
+      ouverture de carrières et entreposage de matériel, sous réserve que la remise en état permette la continuité
+      de l''activité agricole (p. 204). Hauteur max portée à 25 m en Ac/Ac1 (art. A3, p. 206).'
+  Ac1:
+    renvoi: Ac
+    renvoi_src: 'art. A1, p. 204 : « En zone Ac1, sont autorisées, en plus des dispositions prévues pour la zone
+      Ac : … »'
+    note: 'Ajout propre à Ac1, hors nomenclature des destinations : locaux et installations techniques liés au traitement
+      des matériaux par installations mobiles de traitement primaire (concassage, criblage, lavage), à caractère
+      précaire, remise en état permettant la continuité de l''activité agricole, engins mobiles à 30 m minimum des
+      constructions à usage d''habitation (p. 204-205).'
+  Acu:
+    silence: interdit
+    silence_src: 'art. A1, p. 202 : « Dans l''ensemble de la zone A, sont interdites toutes les occupations et utilisations
+      du sol qui ne sont pas mentionnées ci-après. » (les secteurs Acu et Acu1 sont expressément exclus de la liste
+      commune des autorisations de la zone A : « Dans l''ensemble des zones A y compris ces secteurs (Ac, Ac1 et
+      At) sauf les secteurs Acu et Acu1 », p. 202)'
+    note: 'Coupure d''urbanisation du SAR. Autorisés aussi (hors nomenclature) : la valorisation des coupures par
+      l''aménagement de zones destinées à la fréquentation touristique, aux loisirs ou à des pratiques sportives
+      ne nécessitant que des équipements légers, sans artificialisation ni imperméabilisation (p. 205) ; à titre
+      exceptionnel, infrastructures de transport de personnes/marchandises/énergie (p. 205).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: réhabilitation des bâtiments agricoles existants et extension uniquement si nécessaire à leur
+          mise aux normes avec impact environnemental et paysager réduit ; aménagements nécessaires à la mise en
+          culture, à l'exploitation agricole des terrains et à l'aquaculture, sous réserve d'intégration paysagère
+        article: zone A, chap. 1, art. A1 (zone Acu)
+        page_pdf: 205
+        citation: « La réhabilitation des bâtiments agricoles existants et leur extension dans le cas où celle-ci
+          est nécessaire à leur mise aux normes […] Les aménagements nécessaires à la mise en culture et à l'exploitation
+          agricole des terrains concernés, à l'aquaculture et à l'exploitation forestière, sous réserve de faire
+          l'objet d'une intégration paysagère. »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: aménagements nécessaires à l'exploitation forestière, sous réserve d'intégration paysagère
+        article: zone A, chap. 1, art. A1 (zone Acu)
+        page_pdf: 205
+        citation: « Les aménagements nécessaires à la mise en culture et à l'exploitation agricole des terrains
+          concernés, à l'aquaculture et à l'exploitation forestière, sous réserve de faire l'objet d'une intégration
+          paysagère. »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: uniquement l'aménagement de zones destinées à la fréquentation touristique, aux loisirs ou à
+          des pratiques sportives ne nécessitant que des équipements légers, compatibles avec l'intérêt écologique
+          de la zone, sans artificialisation des milieux ni imperméabilisation des sols, hors espaces exploités
+          ou destinés à l'agriculture
+        article: zone A, chap. 1, art. A1 (zone Acu)
+        page_pdf: 205
+        citation: « l'aménagement de zones destinées à la fréquentation touristique, aux loisirs ou à des pratiques
+          sportives ne nécessitant que des équipements légers, sous réserve que cet aménagement soit compatible
+          avec l'intérêt écologique de la zone »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'à titre exceptionnel : infrastructures de transport de personnes, de marchandises ou d''énergie,
+          et installations de distribution, de traitement ou de stockage de l''eau, sous réserve de compatibilité
+          avec l''activité agricole, d''absence d''alternative à coût supportable, de transparence écologique et
+          de mesures éviter/réduire/compenser'
+        article: zone A, chap. 1, art. A1 (zone Acu)
+        page_pdf: 205
+        citation: « À titre exceptionnel, peuvent être autorisées dans les coupures d'urbanisation […] La réalisation
+          d'infrastructures de transport de personnes, de marchandises ou d'énergie ; Les installations de distribution,
+          de traitement ou de stockage de l'eau »
+  Acu1:
+    renvoi: Acu
+    renvoi_src: 'art. A1, p. 205 : « En zone Acu1, sont autorisées, en plus des dispositions prévues pour la zone
+      Acu : … »'
+    note: 'Ajout propre à Acu1, hors nomenclature des destinations : ouverture et exploitation des carrières, locaux
+      et installations techniques liés à l''extraction/stockage/transport de matériaux, sous réserve que la remise
+      en état restaure le caractère naturel ou agricole initial de la coupure (p. 205).'
+  At:
+    silence: interdit
+    silence_src: 'art. A1, p. 202 : « Dans l''ensemble de la zone A, sont interdites toutes les occupations et utilisations
+      du sol qui ne sont pas mentionnées ci-après. »'
+    note: 'STECAL à vocation touristique : « En zone At sont autorisées, en plus des dispositions prévues pour la
+      zone A » (p. 205) — les entrées de la zone A (bâtiments agricoles, logement d''agriculteur 150 m², équipements
+      collectifs/réseaux, changements de destination) s''appliquent donc aussi en At ; ne sont reprises ci-dessous
+      que les entrées propres au secteur et celles de la zone A dont le statut est inchangé n''y sont pas dupliquées
+      : se reporter à la zone A pour exploitation_agricole, logement, locaux_techniques_administrations et les sous-destinations
+      ouvertes par changement de destination. Autorisés aussi (hors nomenclature stricte) : « Les espaces de manifestation,
+      d''accueil, dans la limite de 50 m² de surface de plancher » (p. 205). Emprise au sol limitée à 50 % (unité
+      foncière < 500 m²) ou 40 % (> 500 m²) (art. A3, p. 206) ; au moins 50 % du terrain végétalisé (art. A5, p.
+      210).'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: hébergement hôtelier touristique dans la limite de 150 m² de surface de plancher (ligne unique
+          « hébergement hôtelier touristique », appliquée aussi aux autres hébergements touristiques)
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: zone A, chap. 1, art. A1 (zone At)
+        page_pdf: 205
+        citation: « L'hébergement hôtelier touristique, et la restauration dans la limite de 150 m² de surface de
+          plancher. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: hébergement hôtelier touristique dans la limite de 150 m² de surface de plancher (ligne unique
+          « hébergement hôtelier touristique »)
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: zone A, chap. 1, art. A1 (zone At)
+        page_pdf: 205
+        citation: « L'hébergement hôtelier touristique, et la restauration dans la limite de 150 m² de surface de
+          plancher. »
+      restauration:
+        statut: sous_condition
+        condition: dans la limite de 150 m² de surface de plancher
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: zone A, chap. 1, art. A1 (zone At)
+        page_pdf: 205
+        citation: « L'hébergement hôtelier touristique, et la restauration dans la limite de 150 m² de surface de
+          plancher. »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'règles de la zone A applicables en At (« en plus des dispositions prévues pour la zone A »)
+          : bâtiments techniques agricoles et annexes nécessaires aux besoins d''une exploitation agricole, justifiés
+          ; commercialisation dans le prolongement de l''acte de production limitée à 20 m² d''emprise par unité
+          foncière'
+        article: zone A, chap. 1, art. A1
+        page_pdf: 203
+        citation: « En zone At sont autorisées, en plus des dispositions prévues pour la zone A » (p. 205) ; « Les
+          bâtiments techniques agricoles et leurs annexes ainsi que les ouvrages et travaux nécessaires aux besoins
+          d'une exploitation agricole » (p. 203)
+      logement:
+        statut: sous_condition
+        condition: 'règles de la zone A applicables en At : strictement pour les agriculteurs/exploitants dont la
+          présence permanente est nécessaire, un seul logement par exploitation, surface de plancher max 150 m²'
+        seuil_m2: 150
+        seuil_type: surface_plancher
+        article: zone A, chap. 1, art. A1 (Logement des agriculteurs)
+        page_pdf: 204
+        citation: « En zone At sont autorisées, en plus des dispositions prévues pour la zone A » (p. 205) ; « […]
+          dans la limite d'un seul logement par exploitation […] surface de plancher maximale de 150 m² » (p. 204)
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'règles de la zone A applicables en At : équipements collectifs uniquement si nécessaires aux
+          infrastructures et réseaux ne pouvant être implantés ailleurs, compatibles avec l''activité agricole et
+          la loi Littoral'
+        article: zone A, chap. 1, art. A1 (équipements d'intérêt collectif et services publics)
+        page_pdf: 203
+        citation: '« En zone At sont autorisées, en plus des dispositions prévues pour la zone A » (p. 205) ; «
+          Les constructions et installations nécessaires à des équipements collectifs dès lors : Qu''elles sont
+          nécessaires à la réalisation, l''entretien et l''extension d''infrastructures et des réseaux […] » (p.
+          203)'
+  N:
+    silence: interdit
+    silence_src: 'art. N1, p. 212 : « Dans l''ensemble de la zone N, à l''exception de la zone Npnr, sont interdites
+      toutes les occupations et utilisations du sol qui ne sont pas mentionnées ci-après. »'
+    note: 'Sont également autorisées dans l''ensemble des zones N y compris Nc, Np, Nge et Nci (sauf Ncu et Nr)
+      : reconstruction à l''identique après sinistre (limite 10 ans, hors aléas PPR), rénovation de l''existant
+      dont la destination n''est plus permise, constructions/ouvrages liés à la production et distribution d''énergies
+      renouvelables compatibles avec l''activité agricole (p. 212-213) — hors nomenclature. Extensions des habitations
+      existantes : 25 % de la surface de plancher (15 % dans les 50 pas géométriques), uniquement si rendues nécessaires
+      par mise aux normes ou accessibilité (p. 213). Art. N2 (p. 216) : mixité fonctionnelle et sociale non réglementée.'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs uniquement si nécessaires
+          à la réalisation, l'entretien et l'extension d'infrastructures et de réseaux (stations de pompage, antennes
+          relais, transport ou distribution d'énergie ou d'eau…) ne pouvant être implantés en d'autres lieux, compatibles
+          avec l'activité agricole, la sauvegarde des espaces naturels et des paysages et la loi Littoral (L.121-5
+          et s.)
+        article: zone N, chap. 1, art. N1 (équipements d'intérêt collectif et services publics)
+        page_pdf: 213
+        citation: '« Les constructions et installations nécessaires à des équipements collectifs dès lors : Qu''elles
+          sont nécessaires à la réalisation, l''entretien et l''extension d''infrastructures et des réseaux de toute
+          nature nécessaire au fonctionnement des services publics et d''intérêt collectif (stations de pompage,
+          antenne relais, transport ou distribution d''énergie ou d''eau, …) qui ne sauraient être implantés en
+          d''autres lieux »'
+      exploitation_agricole:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à l'exploitation agricole et pastorale, à condition
+          de ne pas porter atteinte à la sauvegarde des espaces naturels et des paysages
+        article: zone N, chap. 1, art. N1
+        page_pdf: 213
+        citation: « Les constructions et installations nécessaires à l'exploitation agricoles pastorales et forestières
+          à condition de ne pas porter atteinte à la sauvegarde des espaces naturels et des paysages. »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à l'exploitation forestière, à condition de ne pas
+          porter atteinte à la sauvegarde des espaces naturels et des paysages
+        article: zone N, chap. 1, art. N1
+        page_pdf: 213
+        citation: « Les constructions et installations nécessaires à l'exploitation agricoles pastorales et forestières
+          à condition de ne pas porter atteinte à la sauvegarde des espaces naturels et des paysages. »
+  Nc:
+    renvoi: N
+    renvoi_src: 'art. N1, p. 215 : « En zone Nc, sont autorisées, en plus des dispositions prévues pour la zone
+      N : … »'
+    note: 'Les ajouts propres à Nc sont hors nomenclature des destinations : locaux et installations techniques
+      liés à l''extraction/stockage/transport de matériaux pendant l''exploitation ICPE ; prélèvements de matériaux,
+      ouverture de carrières, entreposage de matériel ; installations mobiles de traitement primaire (concassage,
+      criblage, lavage) à caractère précaire, remise en état permettant la continuité de l''activité agricole, engins
+      mobiles à 30 m minimum des habitations (p. 215).'
+  Nci:
+    silence: interdit
+    silence_src: 'art. N1, p. 212 : « Dans l''ensemble de la zone N, à l''exception de la zone Npnr, sont interdites
+      toutes les occupations et utilisations du sol qui ne sont pas mentionnées ci-après. »'
+    note: 'Secteur cimetières. Bénéficie aussi de la liste commune des zones N (« y compris ces secteurs (Nc, Np,
+      Nge et Nci) », p. 212) : équipements collectifs/réseaux, énergies renouvelables, reconstruction après sinistre.'
+    sous_destinations:
+      autres_equipements_public:
+        statut: sous_condition
+        condition: constructions, aménagements légers et occupations du sol nécessaires au fonctionnement des cimetières,
+          sans atteinte à la qualité du paysage et aux activités agricoles avoisinantes
+        article: zone N, chap. 1, art. N1 (zone Nci)
+        page_pdf: 216
+        citation: « Les constructions, les aménagements légers et les occupations du sol nécessaires au fonctionnement
+          des cimetières et leurs activités connexes (pompes funèbres, marbrerie, fleuristes…), à condition que
+          les travaux et installations envisagés ne portent pas atteinte à la qualité du paysage et aux activités
+          agricoles avoisinantes. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: uniquement les activités connexes nécessaires au fonctionnement des cimetières (marbrerie, fleuristes),
+          sans atteinte au paysage ni aux activités agricoles avoisinantes
+        article: zone N, chap. 1, art. N1 (zone Nci)
+        page_pdf: 216
+        citation: « … et leurs activités connexes (pompes funèbres, marbrerie, fleuristes…) »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: uniquement les activités connexes nécessaires au fonctionnement des cimetières (pompes funèbres),
+          sans atteinte au paysage ni aux activités agricoles avoisinantes
+        article: zone N, chap. 1, art. N1 (zone Nci)
+        page_pdf: 216
+        citation: « … et leurs activités connexes (pompes funèbres, marbrerie, fleuristes…) »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'liste commune des zones N : équipements collectifs uniquement si nécessaires aux infrastructures
+          et réseaux ne pouvant être implantés ailleurs, compatibles avec l''activité agricole et la loi Littoral'
+        article: zone N, chap. 1, art. N1 (liste commune, applicable « y compris » au secteur Nci)
+        page_pdf: 213
+        citation: « Dans l'ensemble des zones N y compris ces secteurs (Nc, Np, Nge et Nci) […] Les constructions
+          et installations nécessaires à des équipements collectifs dès lors […] » (p. 212-213)
+  Ncu:
+    silence: interdit
+    silence_src: 'art. N1, p. 212 : « Dans l''ensemble de la zone N, à l''exception de la zone Npnr, sont interdites
+      toutes les occupations et utilisations du sol qui ne sont pas mentionnées ci-après. » (le secteur Ncu est
+      expressément exclu de la liste commune : « sauf les secteurs Ncu et Nr », p. 212)'
+    note: Coupure d'urbanisation du SAR. Seules les autorisations propres au secteur (p. 215-216) s'appliquent —
+      aménagements légers et, à titre exceptionnel, infrastructures.
+    sous_destinations:
+      equipements_sportifs:
+        statut: sous_condition
+        condition: uniquement l'aménagement de zones destinées à la fréquentation touristique, aux loisirs ou à
+          des pratiques sportives ne nécessitant que des équipements légers, compatibles avec l'intérêt écologique
+          de la zone, sans artificialisation des milieux ni imperméabilisation des sols, hors espaces exploités
+          ou destinés à l'agriculture
+        article: zone N, chap. 1, art. N1 (zone Ncu)
+        page_pdf: 215
+        citation: « l'aménagement de zones destinées à la fréquentation touristique, aux loisirs ou à des pratiques
+          sportives ne nécessitant que des équipements légers, sous réserve que cet aménagement soit compatible
+          avec l'intérêt écologique de la zone »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'à titre exceptionnel : infrastructures de transport de personnes, de marchandises ou d''énergie,
+          et installations de distribution, de traitement ou de stockage de l''eau, sous réserve de compatibilité
+          avec l''activité agricole, d''absence d''alternative à coût supportable, de transparence écologique et
+          de mesures éviter/réduire/compenser'
+        article: zone N, chap. 1, art. N1 (zone Ncu)
+        page_pdf: 216
+        citation: « À titre exceptionnel, peuvent être autorisées dans les coupures d'urbanisation […] La réalisation
+          d'infrastructures de transport de personnes, de marchandises ou d'énergie ; Les installations de distribution,
+          de traitement ou de stockage de l'eau » (p. 215-216)
+  Nge:
+    silence: interdit
+    silence_src: 'art. N1, p. 212 : « Dans l''ensemble de la zone N, à l''exception de la zone Npnr, sont interdites
+      toutes les occupations et utilisations du sol qui ne sont pas mentionnées ci-après. »'
+    note: Secteur golf/activités sportives et de loisirs de plein air « en lien avec le projet hôtelier touristique
+      sur le secteur de la Saline » (préambule, p. 212). Seuls des aménagements légers et occupations du sol sont
+      autorisés à ce titre — aucune construction hôtelière n'est admise en Nge par ce texte. Bénéficie aussi de
+      la liste commune des zones N (« y compris ces secteurs (Nc, Np, Nge et Nci) », p. 212).
+    sous_destinations:
+      equipements_sportifs:
+        statut: sous_condition
+        condition: uniquement des aménagements légers et occupations du sol, en relation avec les activités liées
+          au golf et/ou les activités sportives et de loisirs de plein air liées à l'équipement hôtelier touristique
+          du secteur de la Saline, sans atteinte à la qualité du paysage et aux activités agricoles avoisinantes
+        article: zone N, chap. 1, art. N1 (zone Nge)
+        page_pdf: 215
+        citation: « Les aménagements légers et les occupations du sol, en relation avec les activités liées au golf
+          et ou les activités sportives et de loisirs, de plein air, liées à l'équipement hôtelier touristique sur
+          le secteur de la saline »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'liste commune des zones N : équipements collectifs uniquement si nécessaires aux infrastructures
+          et réseaux ne pouvant être implantés ailleurs, compatibles avec l''activité agricole et la loi Littoral'
+        article: zone N, chap. 1, art. N1 (liste commune, applicable « y compris » au secteur Nge)
+        page_pdf: 213
+        citation: « Dans l'ensemble des zones N y compris ces secteurs (Nc, Np, Nge et Nci) […] Les constructions
+          et installations nécessaires à des équipements collectifs dès lors […] » (p. 212-213)
+  Np:
+    silence: interdit
+    silence_src: 'art. N1, p. 212 : « Dans l''ensemble de la zone N, à l''exception de la zone Npnr, sont interdites
+      toutes les occupations et utilisations du sol qui ne sont pas mentionnées ci-après. »'
+    note: Secteur parcs (valorisation sportive et culturelle). Constructions limitées à 50 m² d'emprise au sol par
+      hectare, portées à 150 m² par hectare pour les équipements publics d'intérêt collectif, en plus des surfaces
+      existantes, au prorata de l'unité foncière (p. 215) — plafonds en EMPRISE AU SOL, pas en surface de plancher/vente.
+      Bénéficie aussi de la liste commune des zones N (« y compris ces secteurs (Nc, Np, Nge et Nci) », p. 212).
+    sous_destinations:
+      equipements_sportifs:
+        statut: sous_condition
+        condition: constructions, aménagements légers et occupations du sol en relation avec la présence d'espaces
+          de nature (sentes, jardins partagés, cabanes de jardin, kiosques en bois…) et le développement d'équipements
+          sportifs ou récréatifs (aires de jeux, aires de pique-nique…), sans atteinte à la qualité du paysage et
+          aux activités agricoles ; constructions limitées à 50 m² d'emprise au sol par hectare (150 m² pour les
+          équipements publics d'intérêt collectif)
+        article: zone N, chap. 1, art. N1 (zone Np)
+        page_pdf: 215
+        citation: « Les constructions, les aménagements légers, les occupations du sol, en relation avec la présence
+          d'espaces de nature […] et le développement d'équipements sportifs ou récréatifs (aires de jeux, aires
+          de pique-nique, …) […] celles-ci seront limitées à 50 m², et 150 m² pour les équipements publics d'intérêts
+          collectifs, d'emprise au sol par hectare »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'liste commune des zones N : équipements collectifs uniquement si nécessaires aux infrastructures
+          et réseaux ne pouvant être implantés ailleurs, compatibles avec l''activité agricole et la loi Littoral'
+        article: zone N, chap. 1, art. N1 (liste commune, applicable « y compris » au secteur Np)
+        page_pdf: 213
+        citation: « Dans l'ensemble des zones N y compris ces secteurs (Nc, Np, Nge et Nci) […] Les constructions
+          et installations nécessaires à des équipements collectifs dès lors […] » (p. 212-213)
+  Npnr:
+    silence: interdit
+    silence_src: 'art. N1, p. 212 : « En zone Npnr sont interdis tous travaux, constructions et installations, à
+      l''exception de ceux ayant reçus une autorisation spéciale de l''établissement public du Parc. »'
+    note: 'Cœur du Parc national de la Réunion : « aucune construction n''est admise, sauf autorisation spéciale
+      » (préambule, p. 212). Aucune destination ni sous-destination n''est autorisée par le règlement lui-même —
+      la seule voie est l''autorisation spéciale de l''établissement public du Parc, hors nomenclature.'
+    sous_destinations: {}
+  Nr:
+    silence: interdit
+    silence_src: 'art. N1, p. 214 : « Seuls peuvent être implantés, dans les conditions définies ci-dessous, les
+      aménagements légers suivants … » (réglementation conforme à l''art. R121-5 du code de l''urbanisme ; le secteur
+      Nr est en outre exclu de la liste commune des zones N, p. 212)'
+    note: 'Espaces remarquables de la loi Littoral. Autorisés uniquement des aménagements légers (p. 214) : équipements
+      légers et démontables de préservation/restauration, cheminements piétonniers/cyclables et sentes équestres
+      ni cimentés ni bitumés, mobilier d''accueil/information, postes d''observation de la faune, sanitaires et
+      postes de secours démontables ; aires de stationnement indispensables non cimentées/bitumées sans accroissement
+      de capacité ; réfection des bâtiments existants et extension limitée des bâtiments nécessaires aux activités
+      économiques ; constructions liées à la pêche/cultures marines exigeant la proximité de l''eau ; canalisations
+      enfouies des services publics (emprise ≤ 5 m²) ; gestion du patrimoine bâti classé/inscrit ; équipements d''intérêt
+      général de sécurité des populations. Les aménagements 1°, 2°, 4° et les réfections/extensions du 3° doivent
+      permettre un retour du site à l''état naturel (p. 214).'
+    sous_destinations:
+      hebergement:
+        statut: interdit
+        article: zone N, chap. 1, art. N1 (zone Nr, 4°)
+        page_pdf: 214
+        citation: « A l'exclusion de toute forme d'hébergement et à condition qu'ils soient en harmonie avec le
+          site et les constructions existantes »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: uniquement les aménagements nécessaires à l'exercice des activités agricoles et pastorales dont
+          à la fois la surface de plancher et l'emprise au sol (R.420-1) n'excèdent pas 50 m², à l'exclusion de
+          toute forme d'hébergement, en harmonie avec le site ; constructions liées à la pêche/cultures marines
+          si la proximité immédiate de l'eau est techniquement indispensable ; conception permettant le retour du
+          site à l'état naturel
+        seuil_m2: 50
+        seuil_type: surface_plancher
+        article: zone N, chap. 1, art. N1 (zone Nr, 4° a et b)
+        page_pdf: 214
+        citation: « Les aménagements nécessaires à l'exercice des activités agricoles, pastorales et forestières
+          dont à la fois la surface de plancher et l'emprise au sol au sens de l'article R. 420-1 n'excèdent pas
+          50m². »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: uniquement les aménagements nécessaires à l'exercice des activités forestières dont à la fois
+          la surface de plancher et l'emprise au sol (R.420-1) n'excèdent pas 50 m², à l'exclusion de toute forme
+          d'hébergement, en harmonie avec le site ; conception permettant le retour du site à l'état naturel
+        seuil_m2: 50
+        seuil_type: surface_plancher
+        article: zone N, chap. 1, art. N1 (zone Nr, 4° a)
+        page_pdf: 214
+        citation: « Les aménagements nécessaires à l'exercice des activités agricoles, pastorales et forestières
+          dont à la fois la surface de plancher et l'emprise au sol au sens de l'article R. 420-1 n'excèdent pas
+          50m². »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: uniquement les canalisations nécessaires aux services publics ou aux activités économiques, si
+          leur localisation correspond à des nécessités techniques, enfouies, site laissé à l'état naturel après
+          enfouissement, emprise au sol des aménagements ≤ 5 m²
+        article: zone N, chap. 1, art. N1 (zone Nr, 4° c)
+        page_pdf: 214
+        citation: « les canalisations nécessaires aux services publics ou aux activités économiques, dès lors qu'elles
+          sont enfouies et qu'elles laissent le site dans son état naturel après enfouissement, et que l'emprise
+          au sol des aménagements réalisés n'excède pas 5m². »

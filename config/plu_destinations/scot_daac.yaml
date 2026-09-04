@@ -1,0 +1,215 @@
+meta:
+  lu_le: '2026-09-03'
+  note: 'Aucune géométrie ZACOM/DAAC publiée (GPU, data.gouv, AGORAH/PEIGEO — recensement 03/09). Extraction
+    PDF : liste des secteurs par commune avec page. Verdict servi : oui (secteur nommé) / non (DAAC en
+    vigueur, commune sans secteur) / non_localise (pas de DAAC en vigueur, ou secteurs non nommés par
+    commune).'
+  sources_pdf:
+    grand_sud:
+      fichier: data/reglements-plu/scot_grand_sud_doo_20240902.pdf
+      texte: data/reglements-plu/scot_grand_sud_doo_20240902.txt
+      pages_cles: 'DAAC intégré au DOO pages PDF 45-122. Liste des 7 ZPLC : pages 77-78. Fiches communales
+        « Identification des sites » (tableaux images, lues en OCR visuel) : Saint-Pierre 103, Saint-Louis
+        105, Cilaos 107, Les Avirons 109, L''Étang-Salé 111, Petite-Île 113, Le Tampon 115, Saint-Joseph
+        117, L''Entre-Deux 119, Saint-Philippe 121 (+ page carte suivante à chaque fois).'
+      limites: Les tableaux de hiérarchisation (pages 59-64), les pages de titre des 7 fiches ZPLC (81,
+        84, 87, 90, 93, 96, 99) et les cartes communales (pages paires 104-122) sont des images sans texte
+        extractible ; les fiches ZPLC individuelles (79-99) ne sont donc pas attribuables une à une. Les
+        tableaux communaux (103-121) ont été lus visuellement (rendu PNG) — colonnes emprise foncière
+        / surfaces de plancher vides (« - ») partout. La délimitation précise des ZPLC est renvoyée aux
+        PLU (page 71).
+    tco:
+      fichier: data/reglements-plu/scot_tco_doo_20221003.pdf
+      texte: data/reglements-plu/scot_tco_doo_20221003.txt
+      pages_cles: 'Section 4 « Les localisations préférentielles des équipements commerciaux… » : pages
+        PDF 52-56 (pages imprimées 50-54). Orientation commerce = O15 C/ pages 55-56.'
+      limites: 'Le DOO TCO ne nomme AUCUN secteur commercial par commune : l''orientation commerce (pages
+        55-56) renvoie aux « espaces urbains de référence » (O6) et à l''armature urbaine, sans liste
+        de sites. Les sites nommés de l''O15 (pages 53-54) concernent l''économie productive (ZI/PAEM/ARTIS)
+        et touristique, pas les équipements commerciaux. Pas de DAAC (0 occurrence DAAC/ZACOM dans le
+        texte).'
+scots:
+  grand_sud:
+    titre: SCoT Grand Sud (SMEP Grand Sud, CIVIS + CASUD)
+    approuve: '2020-02-18'
+    modifie: '2024-09-02'
+    document: DOO intégrant le DAAC — 7 ZPLC périphériques (ou ZACOM) + centralités urbaines, 57 sites
+      au total (page PDF 102)
+    url: https://data.geopf.fr/annexes/gpu/documents/scot_259741080/037177b7aa755c6c57c0d413591407d0/259741080_doo_20240902.pdf
+    daac: en_vigueur
+  tco:
+    titre: SCoT Ouest (TCO)
+    approuve: '2016-12-21'
+    modifie: '2022-10-03'
+    document: DOO — section 4, orientation O15 C/ « équipement commercial » (pages PDF 52-56)
+    url: https://data.geopf.fr/annexes/gpu/documents/scot_249740101/a116a438832f3346fc7c0adb5d92cf6a/249740101_doo_20221003.pdf
+    daac: absent
+    note: localisations préférentielles DOO §4 — principes seulement, aucun secteur commercial nommé par
+      commune
+  cinor:
+    daac: en_projet
+    note: DAACL en projet (révision SCoT), non opposable — 26/09/2024
+  cirest:
+    daac: aucun
+    note: SCoT 2004 abrogé, nouveau en élaboration
+communes:
+  '97401':
+    commune: Les Avirons
+    scot: grand_sud
+    verdict: non
+    note: 'Absente de la liste des 7 ZPLC (pages PDF 77-78). Fiche communale page 109 : 3 sites (centre-ville
+      historique, centre-ville Sud en projet, Le Tévelave), aucun classé ZPLC.'
+  '97402':
+    commune: Bras-Panon
+    scot: cirest
+    verdict: non_localise
+    note: Idem Saint-André — aucun DAAC.
+  '97403':
+    commune: Entre-Deux
+    scot: grand_sud
+    verdict: non
+    note: 'Absente de la liste des 7 ZPLC (pages PDF 77-78). Fiche communale page 119 : 3 sites (centre-ville,
+      secteur Le Serré, Plateau de Dimitile), aucun classé ZPLC.'
+  '97404':
+    commune: L'Étang-Salé
+    scot: grand_sud
+    verdict: non
+    note: 'Absente de la liste des 7 ZPLC (pages PDF 77-78). Fiche communale page 111 : 2 sites (centre-ville,
+      L''Étang-Salé-les-Bains), aucun classé ZPLC.'
+  '97405':
+    commune: Petite-Île
+    scot: grand_sud
+    verdict: non
+    note: 'Absente de la liste des 7 ZPLC (pages PDF 77-78). Fiche communale page 113 : 4 sites (centre-ville,
+      ZAC Cambrai en périphérie du centre-ville — pôle commercial secondaire en développement, Grande
+      Anse, La Ravine du Pont), aucun classé ZPLC.'
+  '97406':
+    commune: La Plaine-des-Palmistes
+    scot: cirest
+    verdict: non_localise
+    note: Idem Saint-André — aucun DAAC.
+  '97407':
+    commune: Le Port
+    scot: tco
+    verdict: non_localise
+    note: DOO TCO sans DAAC ; orientation commerce O15 C/ (pages PDF 55-56) = principes (espaces urbains
+      de référence, armature urbaine), aucun secteur commercial nommé.
+  '97408':
+    commune: La Possession
+    scot: tco
+    verdict: non_localise
+    note: Idem Le Port — aucun secteur commercial nommé par commune (pages PDF 55-56).
+  '97409':
+    commune: Saint-André
+    scot: cirest
+    verdict: non_localise
+    note: SCoT Est 2004 abrogé, nouveau SCoT non approuvé — aucun DAAC.
+  '97410':
+    commune: Saint-Benoît
+    scot: cirest
+    verdict: non_localise
+    note: Idem Saint-André — aucun DAAC.
+  '97411':
+    commune: Saint-Denis
+    scot: cinor
+    verdict: non_localise
+    note: SCoT 2013 sans DAAC en ligne ; DAACL de la révision = PROJET (26/09/2024), non opposable.
+  '97412':
+    commune: Saint-Joseph
+    scot: grand_sud
+    verdict: oui
+    secteurs:
+    - nom: ZAE des Grègues
+      type: ZPLC périphérique — pôle commercial secondaire
+      page_pdf: 78
+    note: Fiche communale page 117 (4 sites ; seul « ZAE Les Grègues » est marqué ZPLC périphérique ;
+      centre-ville (secteur du Butor), Langevin, Vicendo = centralités).
+  '97413':
+    commune: Saint-Leu
+    scot: tco
+    verdict: non_localise
+    note: Idem Le Port — aucun secteur commercial nommé par commune (pages PDF 55-56).
+  '97414':
+    commune: Saint-Louis
+    scot: grand_sud
+    verdict: oui
+    secteurs:
+    - nom: ZAE de Bel Air (y compris extension vers l'entrée Ouest de Saint-Louis)
+      type: ZPLC périphérique — pôle commercial majeur
+      page_pdf: 78
+    note: Fiche communale page 105 (8 sites ; seul « ZA du Bel Air » est marqué ZPLC périphérique ; centre-ville,
+      Centre Leclerc route de Cilaos, La Rivière, Bois des Nèfles-Coco, quartier du Gol, Plateau Goyaves,
+      Le Ouaki = centralités).
+  '97415':
+    commune: Saint-Paul
+    scot: tco
+    verdict: non_localise
+    note: Idem Le Port — aucun secteur commercial nommé par commune (pages PDF 55-56).
+  '97416':
+    commune: Saint-Pierre
+    scot: grand_sud
+    verdict: oui
+    secteurs:
+    - nom: Centre commercial Grand Large et ZI n°1
+      type: ZPLC périphérique — pôle commercial majeur
+      page_pdf: 77
+    - nom: Secteur Canabady-Casabona (existant et extension)
+      type: ZPLC périphérique — pôle commercial majeur
+      page_pdf: 77
+    - nom: Pôle commercial Auchan
+      type: ZPLC périphérique — pôle commercial majeur
+      page_pdf: 77
+    - nom: La Concession Condé
+      type: ZPLC périphérique — pôle commercial secondaire
+      page_pdf: 77
+    note: 'Liste des 7 ZPLC page PDF 77 ; fiche communale page 103 (16 sites, dont les 4 ZPLC ci-dessus
+      marquées « ZPLC périphérique », le reste en centralités urbaines : centre-ville, Ravine des Cabris,
+      Terre Sainte, Grand Bois, etc.).'
+  '97417':
+    commune: Saint-Philippe
+    scot: grand_sud
+    verdict: non
+    note: 'Absente de la liste des 7 ZPLC (pages PDF 77-78). Fiche communale page 121 : 2 sites (centre-bourg,
+      Le Baril Basse Vallée), aucun classé ZPLC.'
+  '97418':
+    commune: Sainte-Marie
+    scot: cinor
+    verdict: non_localise
+    note: Idem Saint-Denis — DAACL en projet seulement.
+  '97419':
+    commune: Sainte-Rose
+    scot: cirest
+    verdict: non_localise
+    note: Idem Saint-André — aucun DAAC.
+  '97420':
+    commune: Sainte-Suzanne
+    scot: cinor
+    verdict: non_localise
+    note: Idem Saint-Denis — DAACL en projet seulement.
+  '97421':
+    commune: Salazie
+    scot: cirest
+    verdict: non_localise
+    note: Idem Saint-André — aucun DAAC.
+  '97422':
+    commune: Le Tampon
+    scot: grand_sud
+    verdict: oui
+    secteurs:
+    - nom: Rue du Général de Gaulle prolongée
+      type: ZPLC périphérique — pôle commercial secondaire (axe)
+      page_pdf: 78
+    note: Fiche communale page 115 (12 sites ; seul « Axe rue du Général de Gaulle (prolongée) » est marqué
+      ZPLC périphérique ; centre-ville/Centre Leclerc, Trois Mares, La Châtoire/Géant Casino, Plaine des
+      Cafres, 12e/14e/17e km, Bras de Pontho, Bérive, Bourg Murat, Bois Court = centralités).
+  '97423':
+    commune: Trois-Bassins
+    scot: tco
+    verdict: non_localise
+    note: Idem Le Port — aucun secteur commercial nommé par commune (pages PDF 55-56).
+  '97424':
+    commune: Cilaos
+    scot: grand_sud
+    verdict: non
+    note: 'Absente de la liste des 7 ZPLC (pages PDF 77-78). Fiche communale page 107 : 2 sites (centre-ville,
+      La Mare Sèche), aucun classé ZPLC — centralités urbaines seulement.'

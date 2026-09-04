@@ -1,0 +1,2055 @@
+meta:
+  insee: '97415'
+  commune: Saint-Paul
+  document: 97415_reglement_20251217.pdf
+  document_gpu: 97415_PLU_20251217
+  gpu_doc_id: 0f717dab1a17e973d81fe6b5ea79fe22
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97415/0f717dab1a17e973d81fe6b5ea79fe22/97415_reglement_20251217.pdf
+  md5: 0aee72989399d6f6232aea7acf236376
+  millesime: '2025-12-17'
+  pages_total: 413
+  lu_le: '2026-09-03'
+  edition: PLU approuvé 27/09/2012, édition mars 2026 (byte-identique au règlement GPU 97415_PLU_20251217 — md5
+    gravé, cf. config/plu_saint_paul.yaml)
+  structure: 'Règlement en 7 livrets par bassin de vie (Titre II : Saint-Paul centre U1*/AU1*, Saint-Gilles U2*/AU2*,
+    Plateau Caillou U3*/AU3*, Plaine-Bois de Nèfles U4*/AU4*, La Saline U5*/AU5*, Guillaume U6*/AU6*, Mafate Ni/Ntol)
+    + Titre III zones A et N (le chapitre « Zone N » clôt le Titre III, pp. 342-351 ; le Titre IV est un glossaire).
+    Chapitres U/AU : article 1.2 = liste fermée d''interdictions (silence = autorisé, sauf zones fermées U2h/Usdu/AU*st
+    « toutes occupations interdites sauf article 2.2 »). Zones A/N/Ni/Ntol : régime fermé (silence = interdit).
+    Zone Usdu lue au livret 3 (mêmes règles constatées aux livrets 4/5/6). Plafonds Usdu/Ni par destination en EMPRISE
+    AU SOL (art. 9), rendus en condition.'
+zones:
+  U1a:
+    silence: autorise
+    silence_src: Art. 1, § 1.2 "Sont interdits" = liste fermée de 3 occupations (entrepôt exclusif, agricole, campeurs/caravanes),
+      p. 14 ; tout le reste n'est ni interdit ni conditionné par les articles 1 et 2.
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: Zones U1a à U1pso, Art. 1, § 1.2 (1)
+        page_pdf: 14
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: Zones U1a à U1pso, Art. 1, § 1.2 (2)
+        page_pdf: 14
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'Programme de logements >= 1 800 m² de surface de plancher : minimum 30 % de la programmation
+          en logements locatifs sociaux (LLTS, LLS, PLS) représentant au minimum 30 % de la SDP logements (p. 14).
+          Programme de 20 logements ou plus (SDP < 1 800 m²) ou SDP >= 1 500 m² et < 1 800 m² : 30 % du nombre de
+          logements en logements aidés ou accession sociale (PTZ, PSLA) ; terrain d''habitation > 6 000 m² : 30
+          % des logements en locatif social ou accession sociale (p. 15). Ne s''applique pas aux logements de fonction
+          de l''Administration publique (p. 15).'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: Zones U1a à U1pso, Art. 2, § 2.2 (3)
+        page_pdf: 14
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+  U1b:
+    renvoi: U1a
+    renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; les articles 1 et 2
+      (pp. 14-15) ne distinguent aucune sous-zone (zone mère U1 nue non servie, entrée complète portée par U1a).
+  U1c:
+    renvoi: U1a
+    renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
+      14-15) communs à toutes les sous-zones.
+  U1d:
+    renvoi: U1a
+    renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
+      14-15) communs à toutes les sous-zones.
+  U1f:
+    renvoi: U1a
+    renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
+      14-15) communs à toutes les sous-zones.
+  U1g:
+    renvoi: U1a
+    renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
+      14-15) communs à toutes les sous-zones.
+  U1pru:
+    renvoi: U1a
+    renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
+      14-15) communs à toutes les sous-zones.
+  U1pso:
+    renvoi: U1a
+    renvoi_src: Chapitre commun "ZONES U1a, U1b, U1c, U1d, U1f, U1g, U1pru, U1pso", p. 13 ; articles 1 et 2 (pp.
+      14-15) communs à toutes les sous-zones.
+  U1e:
+    silence: autorise
+    silence_src: Art. 1, § 1.2 "Sont interdits — en zones U1e" = liste fermée de 4 occupations (agricole, habitation,
+      campeurs/caravanes, hébergement hôtelier), p. 37.
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zones U1e (1)
+        page_pdf: 37
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zones U1e (2)
+        page_pdf: 37
+        citation: « Les constructions, ouvrages et travaux à destination d'habitation. »
+      hotels:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zones U1e (4)
+        page_pdf: 37
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zones U1e (4)
+        page_pdf: 37
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. »
+      industrie:
+        statut: sous_condition
+        condition: Admises (activités « industrie, artisanat, entrepôt, bureaux », ICPE ou non, et commerces) dès
+          lors que l'emprise foncière totale cumulée « de l'ensemble de ces dernières constructions » n'excède pas
+          5 % de la superficie de la zone d'implantation ; sous réserve de compatibilité avec les OAP le cas échéant.
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zones U1e (1)
+        page_pdf: 38
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux),
+          soumises ou non au régime des ICPE […] et les commerces, dès lors que l'emprise foncière totale cumulée
+          de l'ensemble de ces dernières constructions n'excède pas 5% de la superficie de la zone d'implantation.
+          »
+      entrepot:
+        statut: sous_condition
+        condition: Admis au titre des activités (industrie, artisanat, entrepôt, bureaux) sous la même condition
+          d'emprise foncière cumulée <= 5 % de la superficie de la zone d'implantation ; compatibilité OAP le cas
+          échéant.
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zones U1e (1)
+        page_pdf: 38
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux)
+          […] dès lors que l'emprise foncière totale cumulée […] n'excède pas 5% de la superficie de la zone d'implantation.
+          »
+      bureau:
+        statut: sous_condition
+        condition: Admis au titre des activités (industrie, artisanat, entrepôt, bureaux) sous la même condition
+          d'emprise foncière cumulée <= 5 % de la superficie de la zone d'implantation ; compatibilité OAP le cas
+          échéant.
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zones U1e (1)
+        page_pdf: 38
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux)
+          […] dès lors que l'emprise foncière totale cumulée […] n'excède pas 5% de la superficie de la zone d'implantation.
+          »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'Couvert par « artisanat » (activités) et « les commerces » du même alinéa : admis sous la condition
+          d''emprise foncière cumulée <= 5 % de la superficie de la zone d''implantation ; compatibilité OAP le
+          cas échéant.'
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zones U1e (1)
+        page_pdf: 38
+        citation: « […] (industrie, artisanat, entrepôt, bureaux) […] et les commerces, dès lors que l'emprise foncière
+          totale cumulée de l'ensemble de ces dernières constructions n'excède pas 5% de la superficie de la zone
+          d'implantation. »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'Couvert par « les commerces » : admis sous la condition d''emprise foncière cumulée <= 5 % de
+          la superficie de la zone d''implantation ; compatibilité OAP le cas échéant.'
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zones U1e (1)
+        page_pdf: 38
+        citation: « […] et les commerces, dès lors que l'emprise foncière totale cumulée de l'ensemble de ces dernières
+          constructions n'excède pas 5% de la superficie de la zone d'implantation. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: Ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          admis si leur implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques,
+          sous réserve de limiter la gêne et d'assurer une bonne intégration dans le site.
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zone U1e et U1l (3)
+        page_pdf: 39
+        citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+  U1l:
+    silence: autorise
+    silence_src: Art. 1, § 1.2 "Sont interdits — en zone U1l" = liste fermée de 7 postes (agricole, habitation sauf
+      2.2, campeurs/caravanes, commerces sauf 2.2, hébergement hôtelier sauf U1lec, artisanal/industriel/entrepôt,
+      bureau exclusif), p. 38.
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (1)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'Habitation interdite sauf exceptions de l''article 2.2 : seules sont admises les constructions
+          à usage d''habitation liées aux loisirs (compatibilité OAP le cas échéant).'
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (2) et Art. 2, § 2.2 en zone U1l (2)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination d'habitation à l'exception de ceux visés
+          à l'article 2.2. » ; « Les constructions à usage d'habitation liées aux loisirs. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'Les commerces sont interdits sauf ceux visés à l''article 2.2 : admis uniquement les commerces
+          liés aux loisirs. Attention : la destination artisanale est, elle, interdite (Art. 1, § 1.2 (6), p. 38
+          : « Les constructions, ouvrages et travaux à destination artisanale, industrielle, à fonction d''entrepôt
+          »).'
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (4) et Art. 2, § 2.2 en zone U1l (1)
+        page_pdf: 38
+        citation: « Les commerces, à l'exception de ceux visés à l'article 2.2 » ; « Les constructions et installations
+          à usage d'activités ou de commerces liées aux loisirs ; »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'Les commerces sont interdits sauf ceux visés à l''article 2.2 : admis uniquement les commerces
+          liés aux loisirs (compatibilité OAP le cas échéant).'
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (4) et Art. 2, § 2.2 en zone U1l (1)
+        page_pdf: 38
+        citation: « Les commerces, à l'exception de ceux visés à l'article 2.2 » ; « Les constructions et installations
+          à usage d'activités ou de commerces liées aux loisirs ; »
+      hotels:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (5)
+        page_pdf: 38
+        citation: « A l'exception de la zone U1lec, les constructions, ouvrages et travaux à destination d'hébergement
+          hôtelier »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (5)
+        page_pdf: 38
+        citation: « A l'exception de la zone U1lec, les constructions, ouvrages et travaux à destination d'hébergement
+          hôtelier »
+      industrie:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (6)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination artisanale, industrielle, à fonction d'entrepôt.
+          »
+      entrepot:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (6)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination artisanale, industrielle, à fonction d'entrepôt.
+          »
+      bureau:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (7)
+        page_pdf: 38
+        citation: « Les constructions à destination exclusive de bureau. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: Ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          admis si leur implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques,
+          sous réserve de limiter la gêne et d'assurer une bonne intégration dans le site.
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zone U1e et U1l (3)
+        page_pdf: 39
+        citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+  AU1b:
+    renvoi: U1b
+    renvoi_src: 'Chapitre ZONES AU1, p. 53 : « il convient de se reporter en fonction de l''indice de la zone AU
+      considérée au règlement des zones urbaines correspondantes à savoir U1a pour AU1a, U1b pour AU1b, U1c pour
+      AU1c... etc » ; Art. 1 et 2 : « Se reporter au règlement de la zone U1 ayant le même indice ». S''ajoute la
+      condition générale AU1 Art. 2, § 2.2 (1), p. 53 : « Disposer des infrastructures suffisantes pour desservir
+      le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
+  AU1e:
+    renvoi: U1e
+    renvoi_src: 'Chapitre ZONE AU1e, p. 55 : « il convient de se reporter au règlement de la zone U1e et de la zone
+      U1ec » ; Art. 1 et 2 : « Se reporter au règlement de la zone U1e. » S''ajoutent les conditions générales AU1e
+      Art. 2, § 2.2, pp. 55-56 : disposer des infrastructures suffisantes ; prélèvements de matériaux et ouverture
+      de carrières sous réserve de limiter la gêne et d''assurer une bonne intégration dans le site.'
+  AU1ec:
+    renvoi: U1e
+    renvoi_src: 'Chapitre ZONE AU1e, p. 55 : « Il existe un secteur AU1ec couvrant le pôle d''activités Henri Cornu
+      […] il convient de se reporter au règlement de la zone U1e et de la zone U1ec » (U1ec non servie ; au chapitre
+      U1e/U1l, la seule disposition propre à U1ec aux articles 1-2 est l''exigence d''« approche urbanistique et
+      architecturale soignée », Art. 2, § 2.2 (5), p. 39, sans effet sur les destinations).'
+  AU1lec:
+    silence: autorise
+    silence_src: 'Via renvoi p. 57 (« Se reporter au règlement de la zone U1lec. ») vers le chapitre U1e/U1l : Art.
+      1, § 1.2 "Sont interdits — en zone U1l" = liste fermée de 7 postes, p. 38.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (1) (via renvoi AU1lec, p. 57)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'Habitation interdite sauf exceptions de l''article 2.2 : seules sont admises les constructions
+          à usage d''habitation liées aux loisirs. S''ajoutent les conditions générales AU1lec Art. 2, § 2.2, p.
+          57 (infrastructures suffisantes ; carrières sous réserve).'
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (2) et Art. 2, § 2.2 en zone U1l (2) (via renvoi AU1lec,
+          p. 57)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination d'habitation à l'exception de ceux visés
+          à l'article 2.2. » ; « Les constructions à usage d'habitation liées aux loisirs. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: Commerces admis uniquement s'ils sont liés aux loisirs ; la destination artisanale est interdite
+          (Art. 1, § 1.2 (6), p. 38). Conditions générales AU1lec (p. 57) en sus.
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (4) et Art. 2, § 2.2 en zone U1l (1) (via renvoi AU1lec,
+          p. 57)
+        page_pdf: 38
+        citation: « Les commerces, à l'exception de ceux visés à l'article 2.2 » ; « Les constructions et installations
+          à usage d'activités ou de commerces liées aux loisirs ; »
+      commerce_gros:
+        statut: sous_condition
+        condition: Commerces admis uniquement s'ils sont liés aux loisirs. Conditions générales AU1lec (p. 57) en
+          sus.
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (4) et Art. 2, § 2.2 en zone U1l (1) (via renvoi AU1lec,
+          p. 57)
+        page_pdf: 38
+        citation: « Les commerces, à l'exception de ceux visés à l'article 2.2 » ; « Les constructions et installations
+          à usage d'activités ou de commerces liées aux loisirs ; »
+      hotels:
+        statut: sous_condition
+        condition: En U1lec (donc en AU1lec par renvoi), l'hébergement hôtelier échappe à l'interdiction de la zone
+          U1l et est admis sous condition (compatibilité OAP le cas échéant ; conditions générales AU1lec, p. 57,
+          en sus).
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (5) et Art. 2, § 2.2 en zone U1l (3) (via renvoi AU1lec,
+          p. 57)
+        page_pdf: 38
+        citation: « A l'exception de la zone U1lec, les constructions, ouvrages et travaux à destination d'hébergement
+          hôtelier » ; « En zone U1lec, les constructions à destination d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: En U1lec (donc en AU1lec par renvoi), l'hébergement hôtelier échappe à l'interdiction de la zone
+          U1l et est admis sous condition (compatibilité OAP le cas échéant ; conditions générales AU1lec, p. 57,
+          en sus).
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (5) et Art. 2, § 2.2 en zone U1l (3) (via renvoi AU1lec,
+          p. 57)
+        page_pdf: 38
+        citation: « A l'exception de la zone U1lec, les constructions, ouvrages et travaux à destination d'hébergement
+          hôtelier » ; « En zone U1lec, les constructions à destination d'hébergement hôtelier. »
+      industrie:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (6) (via renvoi AU1lec, p. 57)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination artisanale, industrielle, à fonction d'entrepôt.
+          »
+      entrepot:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (6) (via renvoi AU1lec, p. 57)
+        page_pdf: 38
+        citation: « Les constructions, ouvrages et travaux à destination artisanale, industrielle, à fonction d'entrepôt.
+          »
+      bureau:
+        statut: interdit
+        article: Zones U1e/U1l, Art. 1, § 1.2 en zone U1l (7) (via renvoi AU1lec, p. 57)
+        page_pdf: 38
+        citation: « Les constructions à destination exclusive de bureau. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: Ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          admis si leur implantation est rendue nécessaire pour des raisons techniques ou économiques, sous réserve
+          de limiter la gêne et d'assurer une bonne intégration dans le site.
+        article: Zones U1e/U1l, Art. 2, § 2.2 en zone U1e et U1l (3) (via renvoi AU1lec, p. 57)
+        page_pdf: 39
+        citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+  AU1st:
+    silence: interdit
+    silence_src: 'Art. 1, § 1.2, p. 59 : « Toutes les occupations et utilisations du sol sont interdites à l''exception
+      de celles admises à l''article 2.2 du présent règlement. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: Admis les ouvrages permettant de réduire les risques naturels, les constructions, ouvrages et
+          travaux liés aux différents réseaux et les ouvrages techniques nécessaires au fonctionnement d'un service
+          public ou d'intérêt collectif, si leur implantation est rendue nécessaire pour des raisons techniques
+          ou économiques, sous réserve de limiter la gêne et d'assurer une bonne intégration dans le site.
+        article: Zones AU1 st / AU1e st, Art. 2, § 2.2 (1)
+        page_pdf: 59
+        citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire »
+  AU1est:
+    renvoi: AU1st
+    renvoi_src: Chapitre commun "ZONES AU1 st et AU1e st", p. 59 ; les articles 1 et 2 (pp. 59-60) ne distinguent
+      pas les deux zones (la vocation « exclusivement de l'activité économique et de service » de AU1e st figure
+      au caractère de zone, donné à titre indicatif, p. 59).
+  U2a:
+    silence: autorise
+    silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
+      pas et n'est pas conditionné à l'Art. 2 est admis
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      bureau:
+        statut: sous_condition
+        condition: interdits s'ils ne sont pas liés à l'activité touristique et de loisirs, exception faite des
+          équipements publics
+        article: U2a-U2h, Art. 1.2 (en zone U2a)
+        page_pdf: 66
+        citation: « Les bureaux et activités tertiaires non liées à l'activité touristique et de loisirs, exception
+          faite des équipements publics »
+      logement:
+        statut: sous_condition
+        condition: 'programme ≥ 1 800 m² de surface de plancher : minimum 30 % de la programmation en logements
+          aidés (LLTS, LLS, PLS) ; programme de 20 logements ou plus (SDP < 1 800 m²) ou SDP entre 1 500 et 1 800
+          m² : 30 % du nombre de logements en logements aidés ou accession sociale (PTZ, PSLA) ; terrain d''habitation
+          > 6 000 m² : 30 % du nombre de logements en locatif social ou accession sociale'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: U2a-U2h, Art. 2.2
+        page_pdf: 67
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+  U2b:
+    silence: autorise
+    silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
+      pas et n'est pas conditionné à l'Art. 2 est admis
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'programme ≥ 1 800 m² de surface de plancher : minimum 30 % de la programmation en logements
+          aidés (LLTS, LLS, PLS) ; programme de 20 logements ou plus (SDP < 1 800 m²) ou SDP entre 1 500 et 1 800
+          m² : 30 % du nombre de logements en logements aidés ou accession sociale (PTZ, PSLA) ; terrain d''habitation
+          > 6 000 m² : 30 % du nombre de logements en locatif social ou accession sociale'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: U2a-U2h, Art. 2.2
+        page_pdf: 67
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+  U2c:
+    silence: autorise
+    silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
+      pas et n'est pas conditionné à l'Art. 2 est admis
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'programme ≥ 1 800 m² de surface de plancher : minimum 30 % de la programmation en logements
+          aidés (LLTS, LLS, PLS) ; programme de 20 logements ou plus (SDP < 1 800 m²) ou SDP entre 1 500 et 1 800
+          m² : 30 % du nombre de logements en logements aidés ou accession sociale (PTZ, PSLA) ; terrain d''habitation
+          > 6 000 m² : 30 % du nombre de logements en locatif social ou accession sociale'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: U2a-U2h, Art. 2.2
+        page_pdf: 67
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+  U2d:
+    silence: autorise
+    silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
+      pas et n'est pas conditionné à l'Art. 2 est admis
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'programme ≥ 1 800 m² de surface de plancher : minimum 30 % de la programmation en logements
+          aidés (LLTS, LLS, PLS) ; programme de 20 logements ou plus (SDP < 1 800 m²) ou SDP entre 1 500 et 1 800
+          m² : 30 % du nombre de logements en logements aidés ou accession sociale (PTZ, PSLA) ; terrain d''habitation
+          > 6 000 m² : 30 % du nombre de logements en locatif social ou accession sociale'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: U2a-U2h, Art. 2.2
+        page_pdf: 67
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+  U2h:
+    silence: interdit
+    silence_src: 'U2a-U2h, Art. 1.2 (en zone U2h), p. 66 : « Toutes les occupations et utilisations du sol à l''exception
+      de l''hébergement hôtelier et touristique, des activités touristiques et de loisirs, et d''une extension d''une
+      construction à usage d''habitation existante dans la limite de 30 mètres carré. » — régime fermé : tout est
+      interdit hors les exceptions listées'
+    sous_destinations:
+      hotels:
+        statut: autorise
+        article: U2a-U2h, Art. 1.2 (en zone U2h)
+        page_pdf: 66
+        citation: « …à l'exception de l'hébergement hôtelier et touristique, des activités touristiques et de loisirs…
+          »
+      autres_hebergements_touristiques:
+        statut: autorise
+        article: U2a-U2h, Art. 1.2 (en zone U2h)
+        page_pdf: 66
+        citation: « …à l'exception de l'hébergement hôtelier et touristique, des activités touristiques et de loisirs…
+          »
+      logement:
+        statut: sous_condition
+        condition: seule l'extension d'une construction à usage d'habitation existante est admise, dans la limite
+          de 30 m² (le règlement ne précise pas le type de surface)
+        seuil_m2: 30
+        article: U2a-U2h, Art. 1.2 (en zone U2h)
+        page_pdf: 66
+        citation: « …et d'une extension d'une construction à usage d'habitation existante dans la limite de 30 mètres
+          carré. »
+      entrepot:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: U2a-U2h, Art. 1.2 (sur l'ensemble des zones)
+        page_pdf: 66
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+  U2e:
+    silence: autorise
+    silence_src: U2e, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 88) ; ce qui n'y figure pas
+      et n'est pas conditionné à l'Art. 2 est admis
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: U2e, Art. 1.2
+        page_pdf: 88
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: interdit
+        article: U2e, Art. 1.2
+        page_pdf: 88
+        citation: '« Les constructions, ouvrages et travaux à destination d''habitation à l''exception. » (phrase
+          tronquée telle quelle dans le règlement : l''exception annoncée n''est pas énoncée)'
+      hotels:
+        statut: interdit
+        article: U2e, Art. 1.2
+        page_pdf: 88
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: U2e, Art. 1.2
+        page_pdf: 88
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier »
+      industrie:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions n'excédant pas 5 % de la superficie
+          de la zone d'implantation
+        article: U2e, Art. 2.2
+        page_pdf: 89
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)
+          […] dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5%
+          de la superficie de la zone d'implantation. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions n'excédant pas 5 % de la superficie
+          de la zone d'implantation
+        article: U2e, Art. 2.2
+        page_pdf: 89
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)
+          […] et les commerces dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions
+          n'excède pas 5% de la superficie de la zone d'implantation. »
+      commerce_gros:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions n'excédant pas 5 % de la superficie
+          de la zone d'implantation
+        article: U2e, Art. 2.2
+        page_pdf: 89
+        citation: « …et les commerces dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions
+          n'excède pas 5% de la superficie de la zone d'implantation. »
+      entrepot:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions n'excédant pas 5 % de la superficie
+          de la zone d'implantation
+        article: U2e, Art. 2.2
+        page_pdf: 89
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)
+          […] dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5%
+          de la superficie de la zone d'implantation. »
+      bureau:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions n'excédant pas 5 % de la superficie
+          de la zone d'implantation
+        article: U2e, Art. 2.2
+        page_pdf: 89
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)
+          […] dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5%
+          de la superficie de la zone d'implantation. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: insertion dans le milieu environnant
+        article: U2e, Art. 2.2
+        page_pdf: 89
+        citation: « Les équipements publics d'intérêt collectif ainsi que les constructions, ouvrages et travaux
+          liés aux différents réseaux, à la voirie, au stationnement, à la production et à la distribution d'énergie
+          […] dès lors qu'ils s'insèrent dans le milieu environnant. »
+  AU2c:
+    renvoi: U2c
+    renvoi_src: 'chapitre Zones AU2, p. 101 : « il convient de se reporter en fonction de l''indice de la zone AU
+      considérée au règlement des zones urbaines correspondantes à savoir U2a pour AU2a, U2b pour AU2b, U2c pour
+      AU2c... etc » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U2 ayant le même indice »'
+    note: 'AU2, Art. 2.2, p. 101 — condition supplémentaire préalable à toute construction : « 1. Disposer des infrastructures
+      suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
+  AU2h:
+    renvoi: U2h
+    renvoi_src: 'chapitre Zones AU2, p. 101 : « il convient de se reporter en fonction de l''indice de la zone AU
+      considérée au règlement des zones urbaines correspondantes à savoir U2a pour AU2a, U2b pour AU2b, U2c pour
+      AU2c... etc » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U2 ayant le même indice »'
+    note: 'AU2, Art. 2.2, p. 101 — condition supplémentaire préalable à toute construction : « 1. Disposer des infrastructures
+      suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
+  U3a:
+    silence: autorise
+    silence_src: Zones U3a-U3b-U3c-U3h, Art. 1.2 « Sont interdits » = liste fermée de 3 interdictions (entrepôt
+      exclusif, destination agricole, camping/caravanes), p. 106 ; ce qui n'y figure pas relève de l'art. 2 ou demeure
+      non mentionné
+    note: 'L''art. 2.2-1 (p. 106) conditionne « les constructions à usage d''activités soumises ou non au régime
+      des ICPE » à l''absence d''aggravation des « risques de nuisances pour le voisinage » — terme générique sans
+      liste de destinations, non mappé vers des sous-destinations (doctrine : douteux = non écrit).'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: Zones U3a-U3b-U3c-U3h, Art. 1.2
+        page_pdf: 106
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: Zones U3a-U3b-U3c-U3h, Art. 1.2
+        page_pdf: 106
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'obligations de mixité sociale par seuils : programme ≥ 1 800 m² de surface de plancher → minimum
+          30 % de logements aidés (LLTS, LLS, PLS) ; programme de 20 logements ou plus (SDP < 1 800 m²) ou SDP ≥
+          1 500 m² et < 1 800 m² → 30 % du nombre de logements en logements aidés ou accession sociale (PTZ, PSLA)
+          ; terrain à destination d''habitation > 6 000 m² → 30 % du nombre de logements en locatif social ou accession
+          sociale ; non applicable dans la ZAC Savane des Tamarins'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: Zones U3a-U3b-U3c-U3h, Art. 2.2-3
+        page_pdf: 106
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés » (pp. 106-107)
+  U3b:
+    renvoi: U3a
+    renvoi_src: chapitre unique « ZONES U3a, U3b, U3c, U3h », p. 105 ; les articles 1 (« Sont interdits », p. 106)
+      et 2 (« Sont admis sous condition », p. 106) ne distinguent pas U3b (seule U3h a un alinéa propre)
+  U3c:
+    renvoi: U3a
+    renvoi_src: chapitre unique « ZONES U3a, U3b, U3c, U3h », p. 105 ; les articles 1 (« Sont interdits », p. 106)
+      et 2 (« Sont admis sous condition », p. 106) ne distinguent pas U3c (seule U3h a un alinéa propre)
+  Usdu:
+    silence: interdit
+    silence_src: 'Usdu, Art. 1.2, p. 127 : « A l''exception de ceux visés à l''article 2.2, toute nouvelle construction
+      et tout nouvel ouvrage ou travaux. » — tout ce qui n''est pas admis à l''art. 2.2 est interdit'
+    note: 'Le chapitre Usdu figure aussi aux livrets 4, 5 et 6 avec les mêmes règles (calibration antérieure) ;
+      la présente entrée est lue dans le livret 3 (pp. 127-144). L''art. 2.2-4 (p. 128) admet aussi « les constructions
+      et installations nécessaires au services publics ou d''intérêt collectif » (plafond 200 m² d''emprise au sol,
+      Art. 9-3, p. 133) — catégorie générique non mappée vers une sous-destination. Les plafonds de l''Art. 9 sont
+      des emprises au sol (ni surface_vente ni surface_plancher) : seuil_type volontairement omis.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: admis « dès lors qu'elles ne sont pas de nature à porter atteinte à l'environnement naturel ou
+          urbain et aux paysages » (Art. 2.2, p. 128) ; plafond d'emprise au sol de 150 m² (Art. 9-1, p. 133) ;
+          en cas de réhabilitation ou changement de destination d'une construction régulièrement édifiée, l'emprise
+          existante peut être maintenue (p. 134)
+        seuil_m2: 150
+        article: Usdu, Art. 2.2-1 et Art. 9-1
+        page_pdf: 128
+        citation: « Les constructions à destination d'habitation » (p. 128) ; « Pour les constructions à destination
+          d'habitation et commerce, l'emprise au sol ne doit pas dépasser 150 m² » (Art. 9, p. 133)
+      hotels:
+        statut: sous_condition
+        condition: 'admis « dès lors qu''elles ne sont pas de nature à porter atteinte à l''environnement naturel
+          ou urbain et aux paysages » (Art. 2.2, p. 128) ; plafonds d''emprise au sol : module principal 150 m²,
+          modules secondaires 80 m², maximum 300 m² (Art. 9-4, p. 134)'
+        seuil_m2: 300
+        article: Usdu, Art. 2.2-2 et Art. 9-4
+        page_pdf: 128
+        citation: « Les constructions à destination d'hébergement hôtelier » (p. 128) ; « l'emprise au sol du module
+          principal ne doit pas dépasser 150 m², celle des modules secondaires 80 m², avec un maximum de 300 m²
+          » (Art. 9, p. 134)
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'admis « dès lors qu''elles ne sont pas de nature à porter atteinte à l''environnement naturel
+          ou urbain et aux paysages » (Art. 2.2, p. 128) ; plafonds d''emprise au sol : module principal 150 m²,
+          modules secondaires 80 m², maximum 300 m² (Art. 9-4, p. 134)'
+        seuil_m2: 300
+        article: Usdu, Art. 2.2-2 et Art. 9-4
+        page_pdf: 128
+        citation: « Les constructions à destination d'hébergement hôtelier » (p. 128) ; « l'emprise au sol du module
+          principal ne doit pas dépasser 150 m², celle des modules secondaires 80 m², avec un maximum de 300 m²
+          » (Art. 9, p. 134)
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: admis « dès lors qu'elles ne sont pas de nature à porter atteinte à l'environnement naturel ou
+          urbain et aux paysages » (Art. 2.2, p. 128) ; plafond d'emprise au sol de 150 m² (Art. 9-1, p. 133)
+        seuil_m2: 150
+        article: Usdu, Art. 2.2-3 et Art. 9-1
+        page_pdf: 128
+        citation: « Les constructions à destination de commerce » (p. 128) ; « Pour les constructions à destination
+          d'habitation et commerce, l'emprise au sol ne doit pas dépasser 150 m² » (Art. 9, p. 133)
+      commerce_gros:
+        statut: sous_condition
+        condition: admis « dès lors qu'elles ne sont pas de nature à porter atteinte à l'environnement naturel ou
+          urbain et aux paysages » (Art. 2.2, p. 128) ; plafond d'emprise au sol de 150 m² (Art. 9-1, p. 133)
+        seuil_m2: 150
+        article: Usdu, Art. 2.2-3 et Art. 9-1
+        page_pdf: 128
+        citation: « Les constructions à destination de commerce » (p. 128) ; « Pour les constructions à destination
+          d'habitation et commerce, l'emprise au sol ne doit pas dépasser 150 m² » (Art. 9, p. 133)
+  U3e:
+    silence: autorise
+    silence_src: U3e, Art. 1.2 « Sont interdits » = liste fermée de 4 interdictions (agricole, habitation, camping/caravanes,
+      hébergement hôtelier), p. 145 ; ce qui n'y figure pas relève de l'art. 2 ou demeure non mentionné
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: U3e, Art. 1.2
+        page_pdf: 145
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: interdit
+        article: U3e, Art. 1.2
+        page_pdf: 145
+        citation: « Les constructions, ouvrages et travaux à destination d'habitation »
+      hotels:
+        statut: interdit
+        article: U3e, Art. 1.2
+        page_pdf: 145
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: U3e, Art. 1.2
+        page_pdf: 145
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. »
+      industrie:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions limitée à 5 % de la superficie
+          de la zone d'implantation ; ICPE ou non
+        article: U3e, Art. 2.2-1
+        page_pdf: 146
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.),
+          soumises ou non au régime des ICPE […] dès lors que l'emprise foncière totale cumulée de l'ensemble de
+          ces constructions n'excède pas 5% de la superficie de la zone d'implantation. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions limitée à 5 % de la superficie
+          de la zone d'implantation (« artisanat » et « les commerces »)
+        article: U3e, Art. 2.2-1
+        page_pdf: 146
+        citation: « …à usage d'activités (industrie, artisanat, entrepôt, bureaux.) […] et les commerces dès lors
+          que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie
+          de la zone d'implantation. »
+      commerce_gros:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions limitée à 5 % de la superficie
+          de la zone d'implantation (« les commerces »)
+        article: U3e, Art. 2.2-1
+        page_pdf: 146
+        citation: « …et les commerces dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions
+          n'excède pas 5% de la superficie de la zone d'implantation. »
+      entrepot:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: U3e, Art. 2.2-1
+        page_pdf: 146
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)
+          […] dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5%
+          de la superficie de la zone d'implantation. »
+      bureau:
+        statut: sous_condition
+        condition: emprise foncière totale cumulée de l'ensemble de ces constructions limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: U3e, Art. 2.2-1
+        page_pdf: 146
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)
+          […] dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5%
+          de la superficie de la zone d'implantation. »
+  AU3a:
+    renvoi: U3a
+    renvoi_src: 'Zones AU3, p. 158 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes à savoir U3a pour AU3a, U3b pour AU3b, U3c pour AU3c... etc
+      » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U3 ayant le même indice »'
+    note: 'Condition supplémentaire propre aux AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes
+      pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
+  AU3b:
+    renvoi: U3b
+    renvoi_src: 'Zones AU3, p. 158 : « se reporter […] au règlement des zones urbaines correspondantes à savoir
+      U3a pour AU3a, U3b pour AU3b, U3c pour AU3c... etc »'
+    note: 'Condition supplémentaire propre aux AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes
+      pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
+  AU3c:
+    renvoi: U3c
+    renvoi_src: 'Zones AU3, p. 158 : « se reporter […] au règlement des zones urbaines correspondantes à savoir
+      U3a pour AU3a, U3b pour AU3b, U3c pour AU3c... etc »'
+    note: 'Condition supplémentaire propre aux AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes
+      pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). »'
+  AU3h:
+    silence: interdit
+    silence_src: 'Zones AU3, Art. 1.2, p. 158 : « Se reporter au règlement de la zone U3 ayant le même indice »
+      → zone U3h, Art. 1.2, p. 106 : « Toutes les occupations et utilisations du sol à l''exception de l''hébergement
+      hôtelier et touristique, des activités touristiques et de loisirs, et d''une extension d''une construction
+      à usage d''habitation existante dans la limite de 30 m². »'
+    note: 'S''ajoute la condition AU3 (Art. 2.2-1, p. 158) : « Disposer des infrastructures suffisantes pour desservir
+      le projet de construction (voirie, réseaux, sécurité incendie, etc.). » Les « activités touristiques et de
+      loisirs » (exception U3h) ne sont pas mappées : terme générique sans équivalent univoque parmi les sous-destinations.'
+    sous_destinations:
+      hotels:
+        statut: sous_condition
+        condition: seule exception au régime d'interdiction générale de la zone U3h (« hébergement hôtelier et touristique
+          ») ; en AU3, sous réserve de disposer des infrastructures suffisantes (AU3, Art. 2.2-1, p. 158)
+        article: Zones U3a-U3b-U3c-U3h, Art. 1.2 (en zone U3h) et AU3, Art. 2.2
+        page_pdf: 106
+        citation: « Toutes les occupations et utilisations du sol à l'exception de l'hébergement hôtelier et touristique,
+          des activités touristiques et de loisirs… » (p. 106)
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: seule exception au régime d'interdiction générale de la zone U3h (« hébergement hôtelier et touristique
+          ») ; en AU3, sous réserve de disposer des infrastructures suffisantes (AU3, Art. 2.2-1, p. 158)
+        article: Zones U3a-U3b-U3c-U3h, Art. 1.2 (en zone U3h) et AU3, Art. 2.2
+        page_pdf: 106
+        citation: « Toutes les occupations et utilisations du sol à l'exception de l'hébergement hôtelier et touristique,
+          des activités touristiques et de loisirs… » (p. 106)
+      logement:
+        statut: sous_condition
+        condition: toute construction nouvelle à usage d'habitation est interdite ; seule est admise « une extension
+          d'une construction à usage d'habitation existante dans la limite de 30 m² » ; en AU3, sous réserve de
+          disposer des infrastructures suffisantes (AU3, Art. 2.2-1, p. 158)
+        seuil_m2: 30
+        article: Zones U3a-U3b-U3c-U3h, Art. 1.2 (en zone U3h) et AU3, Art. 2.2
+        page_pdf: 106
+        citation: « …et d'une extension d'une construction à usage d'habitation existante dans la limite de 30 m².
+          » (p. 106)
+  AU3e:
+    renvoi: U3e
+    renvoi_src: 'Zone AU3e, p. 160 : « Pour appliquer le présent règlement, il convient de se reporter au règlement
+      de la zone U3e. » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U3e. »'
+    note: 'Conditions supplémentaires propres à AU3e (Art. 2.2, p. 160) : « Disposer des infrastructures suffisantes
+      pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). » et admission des «
+      prélèvements de matériaux et l''ouverture de carrières » sous réserve d''intégration (pas une destination
+      du référentiel, non mappé).'
+  AU3st:
+    silence: interdit
+    silence_src: 'AU3st, Art. 1.2, p. 162 : « Toutes les occupations et utilisations du sol sont interdites à l''exception
+      de celles admises à l''article 2.2 du présent règlement. »'
+    note: 'Régime fermé : l''Art. 2.2 (pp. 162-163) n''admet que des occupations sans équivalent parmi les sous-destinations
+      du référentiel (réseaux/voirie/stationnement/énergie, ouvrages de réduction des risques et ouvrages techniques
+      de service public, reconstruction à l''identique < 10 ans, « travaux d''aménagement léger, d''entretien, et
+      d''extension mineure pour mise aux normes sanitaires et d''habitabilité dans la limite de 30 m² de surface
+      de plancher réalisés sur des constructions existantes », p. 163) → aucune sous-destination mappée ; toute
+      construction nouvelle relève du silence: interdit. L''ouverture à l''urbanisation est conditionnée à une modification
+      du PLU (p. 162).'
+    sous_destinations: {}
+  U4a:
+    silence: autorise
+    silence_src: 'Art. 1.2 « Sont interdits » (p. 168) = liste fermée de trois interdictions (« 1. Les constructions,
+      ouvrages et travaux à destination exclusive d''entrepôt. 2. Les constructions ouvrages et travaux à destination
+      agricole. 3. L''aménagement de terrains destinés à l''accueil de campeurs et de caravanes… ») ; art. 2.2 «
+      Sont admis sous condition » (p. 168-169) : ce qui n''est ni interdit ni conditionné est autorisé.'
+    note: 'Art. 2.2-1 (p. 168) admet sous condition « Les constructions à usage d''activités soumises ou non au
+      régime des ICPE, lorsqu''elles ne sont pas susceptibles d''aggraver les risques de nuisances pour le voisinage
+      » : le terme « activités » est trop générique pour être mappé vers des sous-destinations précises — non mappé,
+      les sous-destinations d''activités demeurent non mentionnées (le chapeau de l''art. 2.2 ajoute « Sous réserve
+      d''être compatibles avec les orientations d''aménagement et de programmation le cas échéant »). Art. 1.2-3
+      interdit « L''aménagement de terrains destinés à l''accueil de campeurs et de caravanes » : vise les terrains
+      de camping seulement, ne couvre pas plainement la sous-destination autres_hebergements_touristiques — non
+      mappé.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        condition: interdiction limitée à la destination EXCLUSIVE d'entrepôt (l'entrepôt accessoire d'une autre
+          destination n'est pas visé par cette interdiction)
+        article: Zones U4a-U4b-U4c, Art. 1.2
+        page_pdf: 168
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+      exploitation_agricole:
+        statut: interdit
+        article: Zones U4a-U4b-U4c, Art. 1.2
+        page_pdf: 168
+        citation: « Les constructions ouvrages et travaux à destination agricole. »
+      logement:
+        statut: sous_condition
+        condition: 'mixité sociale — programme de logements ≥ 1 800 m² de surface de plancher : minimum 30 % de
+          la programmation en logements aidés (LLTS, LLS, PLS) ; programme de 20 logements ou plus (SDP < 1 800
+          m²) ou SDP ≥ 1 500 m² et < 1 800 m² : 30 % du nombre de logements en logements aidés ou en accession sociale
+          (PTZ, PSLA) ; terrain à destination d''habitation > 6 000 m² : 30 % du nombre de logements en locatif
+          social ou accession sociale ; ne s''applique pas dans la ZAC Marie Caze et la ZAC Sans Souci (calcul à
+          l''échelle de l''opération) ; sous réserve de compatibilité avec les OAP le cas échéant'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: Zones U4a-U4b-U4c, Art. 2.2
+        page_pdf: 168
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés de type logements locatifs sociaux (LLTS, LLS, PLS) »
+  U4b:
+    renvoi: U4a
+    renvoi_src: 'chapitre unique « ZONES U4a, U4b, U4c » (p. 167) : les articles 1 « Occupations et utilisations
+      du sol interdites » et 2 « Occupations et utilisations du sol soumises à des conditions particulières » (p.
+      167-169) sont communs aux trois zones et ne distinguent pas de règle propre à U4b ; la zone mère U4 nue n''étant
+      pas servie, l''entrée complète est portée par U4a.'
+  U4c:
+    renvoi: U4a
+    renvoi_src: 'chapitre unique « ZONES U4a, U4b, U4c » (p. 167) : les articles 1 « Occupations et utilisations
+      du sol interdites » et 2 « Occupations et utilisations du sol soumises à des conditions particulières » (p.
+      167-169) sont communs aux trois zones et ne distinguent pas de règle propre à U4c ; la zone mère U4 nue n''étant
+      pas servie, l''entrée complète est portée par U4a.'
+  AU4b:
+    renvoi: U4b
+    renvoi_src: 'caractère de la zone AU4, p. 206 : « il convient de se reporter en fonction de l''indice de la
+      zone AU considérée au règlement des zones urbaines correspondantes à savoir U4a pour AU4a, U4b pour AU4b,
+      U4c pour AU4c... etc » ; art. 1.1, 1.2 et 2.1 (p. 206) : « Se reporter au règlement de la zone U4 ayant le
+      même indice ».'
+    note: 'condition supplémentaire propre à AU4 — Art. 2.2 (p. 206) : « Les constructions peuvent être autorisées
+      sous réserve de respecter les dispositions suivantes par ordre d''importance : 1. Disposer des infrastructures
+      suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). 2. Se reporter
+      au règlement de la zone U ayant le même indice. » — s''ajoute aux règles U4b pour toute construction.'
+  AU4c:
+    renvoi: U4c
+    renvoi_src: 'caractère de la zone AU4, p. 206 : « il convient de se reporter en fonction de l''indice de la
+      zone AU considérée au règlement des zones urbaines correspondantes à savoir U4a pour AU4a, U4b pour AU4b,
+      U4c pour AU4c... etc » ; art. 1.1, 1.2 et 2.1 (p. 206) : « Se reporter au règlement de la zone U4 ayant le
+      même indice ».'
+    note: 'condition supplémentaire propre à AU4 — Art. 2.2 (p. 206) : « Les constructions peuvent être autorisées
+      sous réserve de respecter les dispositions suivantes par ordre d''importance : 1. Disposer des infrastructures
+      suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité incendie, etc.). 2. Se reporter
+      au règlement de la zone U ayant le même indice. » — s''ajoute aux règles U4c pour toute construction.'
+  U5a:
+    silence: autorise
+    silence_src: 'Zones U5a, U5b, U5c, Art. 1.2, p. 213 : liste fermée d''interdictions (« Sont interdits » — 3
+      postes : entrepôt exclusif, destination agricole, camping/caravanes) ; l''article 2.2 énumère les seules occupations
+      « admises sous condition » — ce qui n''est ni interdit ni conditionné relève du régime général de la zone
+      urbaine.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: U5a-U5c, Art. 1.2
+        page_pdf: 213
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d'entrepôt. »
+        condition: interdiction visant la destination EXCLUSIVE d'entrepôt (terme du règlement)
+      exploitation_agricole:
+        statut: interdit
+        article: U5a-U5c, Art. 1.2
+        page_pdf: 213
+        citation: « Les constructions ouvrages et travaux à destination agricole. »
+      industrie:
+        statut: sous_condition
+        condition: constructions à usage d'activités, soumises ou non au régime des ICPE, admises lorsqu'elles ne
+          sont pas susceptibles d'aggraver les risques de nuisances pour le voisinage (sous réserve de compatibilité
+          avec les OAP le cas échéant)
+        article: U5a-U5c, Art. 2.2
+        page_pdf: 214
+        citation: « Les constructions à usage d'activités soumises ou non au régime des ICPE, lorsqu'elles ne sont
+          pas susceptibles d'aggraver les risques de nuisances pour le voisinage. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions à usage d'activités, soumises ou non au régime des ICPE, admises lorsqu'elles ne
+          sont pas susceptibles d'aggraver les risques de nuisances pour le voisinage (sous réserve de compatibilité
+          avec les OAP le cas échéant)
+        article: U5a-U5c, Art. 2.2
+        page_pdf: 214
+        citation: « Les constructions à usage d'activités soumises ou non au régime des ICPE, lorsqu'elles ne sont
+          pas susceptibles d'aggraver les risques de nuisances pour le voisinage. »
+      logement:
+        statut: sous_condition
+        condition: 'mixité sociale imposée aux programmes de logements : SDP >= 1 800 m² -> minimum 30 % de la programmation
+          en logements aidés (LLTS, LLS, PLS) ; programme de 20 logements ou plus (SDP < 1 800 m²) OU programme
+          dont la SDP est >= 1 500 m² et < 1 800 m² -> 30 % du nombre de logements en logements aidés ou en accession
+          sociale (PTZ, PSLA) ; terrain à destination d''habitation de plus de 6 000 m² -> 30 % du nombre de logements
+          en locatif social ou accession sociale'
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        article: U5a-U5c, Art. 2.2
+        page_pdf: 214
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés de type logements locatifs sociaux (LLTS, LLS, PLS) »
+  U5b:
+    renvoi: U5a
+    renvoi_src: 'chapitre unique « ZONES U5a, U5b, U5c », p. 213 : les articles 1 (« Occupations et utilisations
+      du sol interdites ») et 2 (« soumises à des conditions particulières ») sont communs aux trois zones, sans
+      aucune règle propre à U5b.'
+  U5c:
+    renvoi: U5a
+    renvoi_src: 'chapitre unique « ZONES U5a, U5b, U5c », p. 213 : les articles 1 (« Occupations et utilisations
+      du sol interdites ») et 2 (« soumises à des conditions particulières ») sont communs aux trois zones, sans
+      aucune règle propre à U5c.'
+  AU5a:
+    renvoi: U5a
+    renvoi_src: 'Zone AU5, p. 252 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes à savoir U5a pour AU5a, U5b pour AU5b, U5c pour AU5c... »
+      ; Art. 1.1/1.2 et 2.1, p. 252 : « Se reporter au règlement de la zone U5 ayant le même indice. »'
+    condition_generale:
+      condition: 'condition supplémentaire propre aux zones AU5, préalable au renvoi : disposer des infrastructures
+        suffisantes pour desservir le projet de construction'
+      article: AU5, Art. 2.2
+      page_pdf: 252
+      citation: '« Les constructions peuvent être autorisées sous réserve de respecter les dispositions suivantes
+        par ordre d''importance : 1. Disposer des infrastructures suffisantes pour desservir le projet de construction
+        (voirie, réseaux, sécurité incendie, etc.). 2. Se reporter au règlement de la zone U5 ayant le même indice.
+        »'
+  AU5b:
+    renvoi: U5b
+    renvoi_src: 'Zone AU5, p. 252 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes à savoir U5a pour AU5a, U5b pour AU5b, U5c pour AU5c... »'
+    condition_generale:
+      condition: 'condition supplémentaire propre aux zones AU5, préalable au renvoi : disposer des infrastructures
+        suffisantes pour desservir le projet de construction'
+      article: AU5, Art. 2.2
+      page_pdf: 252
+      citation: « 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie,
+        réseaux, sécurité incendie, etc.). »
+  AU5c:
+    renvoi: U5c
+    renvoi_src: 'Zone AU5, p. 252 : « il convient de se reporter en fonction de l''indice de la zone AU considérée
+      au règlement des zones urbaines correspondantes à savoir U5a pour AU5a, U5b pour AU5b, U5c pour AU5c... »'
+    condition_generale:
+      condition: 'condition supplémentaire propre aux zones AU5, préalable au renvoi : disposer des infrastructures
+        suffisantes pour desservir le projet de construction'
+      article: AU5, Art. 2.2
+      page_pdf: 252
+      citation: « 1. Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie,
+        réseaux, sécurité incendie, etc.). »
+  AU5e:
+    silence: autorise
+    silence_src: 'Zone AU5e, Art. 1.2, p. 254 : liste fermée d''interdictions (« Sont interdits » — 4 postes : agricole,
+      habitation, camping/caravanes, hébergement hôtelier) ; l''article 2.2 énumère les occupations admises sous
+      condition — ce qui n''est ni interdit ni conditionné n''est pas visé par une interdiction.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: AU5e, Art. 1.2
+        page_pdf: 254
+        citation: « Les constructions, ouvrages et travaux à destination agricole. »
+      logement:
+        statut: interdit
+        article: AU5e, Art. 1.2
+        page_pdf: 254
+        citation: « Les constructions, ouvrages et travaux à destination d'habitation. »
+      hebergement:
+        statut: interdit
+        article: AU5e, Art. 1.2
+        page_pdf: 254
+        citation: « Les constructions, ouvrages et travaux à destination d'habitation. »
+      hotels:
+        statut: interdit
+        article: AU5e, Art. 1.2
+        page_pdf: 254
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: AU5e, Art. 1.2
+        page_pdf: 254
+        citation: « Les constructions, ouvrages et travaux à destination d'hébergement hôtelier. »
+      industrie:
+        statut: sous_condition
+        condition: 'activités (le règlement cite : industrie, artisanat, entrepôt, bureaux) et commerces admis dès
+          lors que l''emprise foncière totale cumulée de l''ensemble de ces constructions n''excède pas 5 % de la
+          superficie de la zone d''implantation (sous réserve de compatibilité avec les OAP le cas échéant)'
+        article: AU5e, Art. 2.2
+        page_pdf: 255
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.),
+          soumises ou non au régime des ICPE pour la protection de l'environnement et les commerces dès lors que
+          l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie
+          de la zone d'implantation. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'activités (le règlement cite : industrie, artisanat, entrepôt, bureaux) et commerces admis dès
+          lors que l''emprise foncière totale cumulée de l''ensemble de ces constructions n''excède pas 5 % de la
+          superficie de la zone d''implantation'
+        article: AU5e, Art. 2.2
+        page_pdf: 255
+        citation: « …à usage d'activités (industrie, artisanat, entrepôt, bureaux.)… et les commerces dès lors que
+          l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la superficie
+          de la zone d'implantation. »
+      commerce_gros:
+        statut: sous_condition
+        condition: commerces admis dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions
+          n'excède pas 5 % de la superficie de la zone d'implantation
+        article: AU5e, Art. 2.2
+        page_pdf: 255
+        citation: « …et les commerces dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions
+          n'excède pas 5% de la superficie de la zone d'implantation. »
+      entrepot:
+        statut: sous_condition
+        condition: 'activités (le règlement cite : industrie, artisanat, entrepôt, bureaux) admises dès lors que
+          l''emprise foncière totale cumulée de l''ensemble de ces constructions n''excède pas 5 % de la superficie
+          de la zone d''implantation'
+        article: AU5e, Art. 2.2
+        page_pdf: 255
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)…
+          dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la
+          superficie de la zone d'implantation. »
+      bureau:
+        statut: sous_condition
+        condition: 'activités (le règlement cite : industrie, artisanat, entrepôt, bureaux) admises dès lors que
+          l''emprise foncière totale cumulée de l''ensemble de ces constructions n''excède pas 5 % de la superficie
+          de la zone d''implantation'
+        article: AU5e, Art. 2.2
+        page_pdf: 255
+        citation: « Les constructions et installations à usage d'activités (industrie, artisanat, entrepôt, bureaux.)…
+          dès lors que l'emprise foncière totale cumulée de l'ensemble de ces constructions n'excède pas 5% de la
+          superficie de la zone d'implantation. »
+  AU5st:
+    silence: interdit
+    silence_src: 'Zone AU5st, Art. 1.2, p. 267 : « Toutes les occupations et utilisations du sol sont interdites
+      à l''exception de celles admises à l''article 2.2 du présent règlement. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages et constructions liés aux réseaux, à la voirie, au stationnement, à la production/distribution
+          d'énergie (dès lors qu'ils s'insèrent dans le milieu environnant) ; ouvrages techniques nécessaires au
+          fonctionnement d'un service public ou d'intérêt collectif dont l'implantation dans la zone est rendue
+          nécessaire pour des raisons techniques ou économiques
+        article: AU5st, Art. 2.2
+        page_pdf: 267
+        citation: « Les constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement,
+          à la production et à la distribution d'énergie, notamment les énergies renouvelables, dès lors qu'ils
+          s'insèrent dans le milieu environnant. »
+    condition_generale:
+      condition: 'sur constructions existantes seulement : aménagement léger, entretien, extension mineure pour
+        mise aux normes sanitaires et d''habitabilité dans la limite de 30 m² de surface de plancher ; reconstruction
+        à l''identique d''un bâtiment régulièrement édifié détruit depuis moins de 10 ans (hors secteur de risque
+        naturel élevé) également admise'
+      seuil_m2: 30
+      seuil_type: surface_plancher
+      article: AU5st, Art. 2.2
+      page_pdf: 268
+      citation: « Les travaux d'aménagement léger, d'entretien, et d'extension mineure pour mise aux normes sanitaires
+        et d'habitabilité dans la limite de 30 m2 de surface de plancher réalisés sur des constructions existantes.
+        »
+  U6a:
+    silence: autorise
+    silence_src: 'Art. 1, « 1.2 - Sont interdits » (p. 273) : liste fermée de 3 occupations (entrepôt exclusif,
+      destination agricole, terrains de campeurs/caravanes) ; Art. 2, « 2.2 - Sont admis sous condition » (p. 274).
+      Ce qui n''est ni interdit ni conditionné est admis.'
+    sous_destinations:
+      entrepot:
+        statut: interdit
+        article: Zones U6a-U6b-U6c, Art. 1.2
+        page_pdf: 273
+        citation: « Les constructions, ouvrages et travaux à destination exclusive d’entrepôt. »
+        note: l'interdiction vise la destination « exclusive » d'entrepôt
+      exploitation_agricole:
+        statut: interdit
+        article: Zones U6a-U6b-U6c, Art. 1.2
+        page_pdf: 273
+        citation: « Les constructions ouvrages et travaux à destination agricole. »
+      industrie:
+        statut: sous_condition
+        condition: constructions à usage d'activités (ICPE ou non) admises si elles ne sont pas susceptibles d'aggraver
+          les risques de nuisances pour le voisinage, sous réserve de compatibilité avec les OAP le cas échéant
+        article: Zones U6a-U6b-U6c, Art. 2.2
+        page_pdf: 274
+        citation: « Les constructions à usage d’activités soumises ou non au régime des ICPE, lorsqu’elles ne sont
+          pas susceptibles d’aggraver les risques de nuisances pour le voisinage. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: constructions à usage d'activités (ICPE ou non) admises si elles ne sont pas susceptibles d'aggraver
+          les risques de nuisances pour le voisinage, sous réserve de compatibilité avec les OAP le cas échéant
+        article: Zones U6a-U6b-U6c, Art. 2.2
+        page_pdf: 274
+        citation: « Les constructions à usage d’activités soumises ou non au régime des ICPE, lorsqu’elles ne sont
+          pas susceptibles d’aggraver les risques de nuisances pour le voisinage. »
+      logement:
+        statut: sous_condition
+        condition: 'mixité sociale : programme de logements ≥ 1 800 m² de surface de plancher → au minimum 30 %
+          de la programmation affectée à des logements aidés (LLTS, LLS, PLS) représentant au minimum 30 % du total
+          de la SDP logements ; programme de 20 logements ou plus (SDP < 1 800 m²) ou programme de 1 500 m² ≤ SDP
+          < 1 800 m² → 30 % du nombre de logements en logements aidés (LLTS, LLS, PLS) ou en accession sociale (PTZ,
+          PSLA) ; terrain à destination d''habitation de plus de 6 000 m² → 30 % du nombre de logements en locatif
+          social (LLTS, LLS, PLS) ou en collectif accession sociale (PTZ, PSLA)'
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        article: Zones U6a-U6b-U6c, Art. 2.2
+        page_pdf: 274
+        citation: « En cas de réalisation d’un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés de type logements locatifs sociaux (LLTS, LLS, PLS) »
+  U6b:
+    renvoi: U6a
+    renvoi_src: chapitre unique « ZONES U6a, U6b, U6c » (p. 273) ; les articles 1 (« 1.2 - Sont interdits », p.
+      273) et 2 (« 2.2 - Sont admis sous condition », p. 274) ne distinguent pas les sous-zones U6a/U6b/U6c
+  U6c:
+    renvoi: U6a
+    renvoi_src: chapitre unique « ZONES U6a, U6b, U6c » (p. 273) ; les articles 1 (« 1.2 - Sont interdits », p.
+      273) et 2 (« 2.2 - Sont admis sous condition », p. 274) ne distinguent pas les sous-zones U6a/U6b/U6c
+  AU6a:
+    renvoi: U6a
+    renvoi_src: 'Zones AU6, caractère et Art. 1/2 (p. 312) : « il convient de se reporter en fonction de l’indice
+      de la zone AU considérée au règlement des zones urbaines correspondantes à savoir U6a pour AU6a, U6b pour
+      AU6b et U6c pour AU6c » ; Art. 1.2 et 2.2 : « Se reporter au règlement de la zone U6 ayant le même indice
+      »'
+    note: 'condition supplémentaire propre à AU6 (Zones AU6, Art. 2.2, p. 312), applicable à toute construction
+      : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité
+      incendie, etc.). »'
+  AU6b:
+    renvoi: U6b
+    renvoi_src: 'Zones AU6, caractère et Art. 1/2 (p. 312) : « U6b pour AU6b » ; Art. 1.2 et 2.2 : « Se reporter
+      au règlement de la zone U6 ayant le même indice »'
+    note: 'condition supplémentaire propre à AU6 (Zones AU6, Art. 2.2, p. 312), applicable à toute construction
+      : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité
+      incendie, etc.). »'
+  AU6c:
+    renvoi: U6c
+    renvoi_src: 'Zones AU6, caractère et Art. 1/2 (p. 312) : « U6c pour AU6c » ; Art. 1.2 et 2.2 : « Se reporter
+      au règlement de la zone U6 ayant le même indice »'
+    note: 'condition supplémentaire propre à AU6 (Zones AU6, Art. 2.2, p. 312), applicable à toute construction
+      : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité
+      incendie, etc.). »'
+  AU6st:
+    silence: interdit
+    silence_src: 'Zone AU6st, Art. 1.2 (p. 314) : « Toutes les occupations et utilisations du sol sont interdites
+      à l’exception de celles admises à l’article 2.2 du présent règlement. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: 'ouvrages et réseaux techniques seulement : insertion dans le milieu environnant (réseaux, voirie,
+          stationnement, production/distribution d''énergie) ; implantation rendue nécessaire pour des raisons techniques
+          ou économiques, sous réserve de limiter la gêne et d''assurer une bonne intégration dans le site'
+        article: Zone AU6st, Art. 2.2
+        page_pdf: 314
+        citation: « les ouvrages techniques nécessaires au fonctionnement d’un service public ou d’intérêt collectif
+          dont l’implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+    note: 'autres admissions de l''Art. 2.2, non rattachables à une sous-destination : constructions/ouvrages/travaux
+      liés aux réseaux, à la voirie, au stationnement, à la production et distribution d''énergie (p. 314) ; ouvrages
+      permettant de réduire les risques naturels (p. 314) ; reconstruction à l''identique d''un bâtiment détruit
+      ou démoli depuis moins de dix ans régulièrement édifié (p. 315) ; « travaux d’aménagement léger, d’entretien,
+      et d’extension mineure pour mise aux normes sanitaires et d’habitabilité dans la limite de 30 m2 de surface
+      de plancher » sur constructions existantes (Art. 2.2 4., p. 315)'
+  A:
+    silence: interdit
+    silence_src: 'Zone A, Art. 1, « 1.2 - Sont interdits » (p. 333) : « A l''exception de ceux visés à l''article
+      2.2, toute nouvelle construction et tout nouvel ouvrage ou travaux. » — régime fermé : toute occupation non
+      admise à l''art. 2.2 est interdite.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: bâtiments techniques agricoles et annexes, ouvrages et travaux nécessaires aux besoins d'une
+          exploitation agricole, justifiés au regard de la superficie de l'exploitation, de la nature de l'activité
+          et des bâtiments existants ; implantation adaptée au site (insertion paysagère) ; constructions à usage
+          d'activités nécessaires à l'activité agricole soumises au régime ICPE ou au règlement sanitaire départemental
+          admises (plan d'épandage exigé pour les bâtiments d'élevage)
+        article: Zone A, Art. 2.2 (1 et 2)
+        page_pdf: 334
+        citation: « Les bâtiments techniques agricoles et leurs annexes ainsi que les ouvrages et travaux nécessaires
+          aux besoins d'une exploitation agricole. Ils doivent être justifiés au regard de la superficie de l'exploitation,
+          de la nature de l'activité et des bâtiments existants sur l'exploitation. »
+      logement:
+        statut: sous_condition
+        condition: 'uniquement travaux d''amélioration ou d''extension des bâtiments d''habitation existants régulièrement
+          édifiés : augmentation de la surface de plancher existante à la date d''approbation du PLU limitée à 30
+          %, dans la limite de 30 m², sans que existant + extension n''excèdent 130 m² au total ; sans compromettre
+          l''activité agricole ni la qualité paysagère du site — aucune habitation nouvelle n''est admise'
+        seuil_m2: 130
+        seuil_type: surface_plancher
+        article: Zone A, Art. 2.2 (3)
+        page_pdf: 334
+        citation: « Les travaux d'amélioration ou d'extension des bâtiments d'habitation existants est admise sous
+          réserve de la régularité du bâti existant et de ne pas augmenter la surface de plancher existante à la
+          date d'approbation du plan local d'urbanisme de plus de 30%, dans la limite de 30m² et sans que les constructions
+          existantes et leur extension n'excèdent une surface totale finale de 130m² »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: uniquement dans le cadre de l'activité agri-touristique (activité de diversification exercée
+          par un agriculteur), sur le site d'une exploitation agricole existante, visant à titre principal à faire
+          connaître et valoriser les produits de l'exploitation ; ensemble des constructions agri-touristiques limité
+          à 200 m² de surface de plancher par exploitation ; les locaux destinés à la vente des produits de l'exploitation
+          ne peuvent excéder 25 m² par exploitation (type de surface non précisé par le texte)
+        seuil_m2: 25
+        article: Zone A, Art. 2.2 (4)
+        page_pdf: 334
+        citation: « les locaux destinés à la vente des produits de l'exploitation devront avoir une superficie adaptée
+          à leur finalité, et ne pourront excéder une surface de 25 m² par exploitation agricole. »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière dans l'unité foncière
+          et ne portant pas atteinte à la sauvegarde des espaces naturels et des paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale
+          ou forestière dans l'unité foncière où elles sont implantées et qu'elles ne portent pas atteinte à la
+          sauvegarde des espaces naturels et des paysages. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics
+          (non incompatibles avec l'activité agricole, pastorale ou forestière, sans atteinte aux espaces naturels
+          et paysages) ; constructions, ouvrages et travaux liés aux différents réseaux et à la voirie admis dès
+          lors qu'ils s'insèrent dans le milieu environnant
+        article: Zone A, Art. 2.2 (5 et 6)
+        page_pdf: 334
+        citation: « Les constructions, ouvrages et travaux liés aux différents réseaux et à la voirie dès lors qu'ils
+          s'insèrent dans le milieu environnant. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière dans l'unité foncière
+          et ne portant pas atteinte à la sauvegarde des espaces naturels et des paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale
+          ou forestière […] »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière dans l'unité foncière
+          et ne portant pas atteinte à la sauvegarde des espaces naturels et des paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale
+          ou forestière […] »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière dans l'unité foncière
+          et ne portant pas atteinte à la sauvegarde des espaces naturels et des paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale
+          ou forestière […] »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'exercice d'une activité agricole, pastorale ou forestière dans l'unité foncière
+          et ne portant pas atteinte à la sauvegarde des espaces naturels et des paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale
+          ou forestière […] »
+    note: '« équipements collectifs et services publics » (Art. 2.2-5) = formule de la destination « équipements
+      d''intérêt collectif et services publics » ; mappée sur ses sous-destinations sauf lieux_culte (rattachement
+      jugé douteux, non écrit — reste au silence). Autres admissions non rattachables à une sous-destination : reconstruction
+      à l''identique d''un bâtiment détruit depuis moins de dix ans hors risque naturel élevé (Art. 2.2-7, p. 335)
+      ; travaux d''amélioration foncière agricole dont épierrage (Art. 2.1-2, p. 333). L''accueil à la journée sans
+      hébergement de l''agri-tourisme (25 m² max, p. 334) n''est pas rattaché.'
+  Acu:
+    silence: interdit
+    silence_src: 'Zone A, Art. 1, « 1.2 - Sont interdits » (p. 333) : « A l''exception de ceux visés à l''article
+      2.2, toute nouvelle construction et tout nouvel ouvrage ou travaux. » — régime fermé, commun à tout le chapitre
+      Zone A (Acu incluse).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'régime restreint : Acu est exclue des admissions générales de bâtiments techniques agricoles
+          neufs (Art. 2.2-1 et 2 : « A l''exception de la zone Acu ») ; sont admis en Acu la réhabilitation des
+          bâtiments agricoles existants et leur extension si nécessaire à leur mise aux normes (impact environnemental
+          et paysager réduit), les aménagements nécessaires à la mise en culture, à l''exploitation agricole des
+          terrains et à l''aquaculture (intégration paysagère), et les activités d''intérêt collectif à finalité
+          agricole dans des constructions préexistantes régulières, sans construction supplémentaire ni extension'
+        article: Zone A, Art. 2.2, « En zone Acu » (2, 3 et 4)
+        page_pdf: 335
+        citation: « La réhabilitation des bâtiments agricoles existants et leur extension dans le cas où celle-ci
+          est nécessaire à leur mise aux normes et que son impact environnemental et paysager soit réduit. »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: aménagements nécessaires à l'exploitation forestière des terrains concernés, sous réserve d'intégration
+          paysagère
+        article: Zone A, Art. 2.2, « En zone Acu » (3)
+        page_pdf: 335
+        citation: « Les aménagements nécessaires à la mise en culture et à l'exploitation agricole des terrains
+          concernés, à l'aquaculture et à l'exploitation forestière, sous réserve de faire l'objet d'une intégration
+          paysagère. »
+      logement:
+        statut: sous_condition
+        condition: 'uniquement travaux d''amélioration ou d''extension des bâtiments d''habitation existants régulièrement
+          édifiés : + 30 % max de la surface de plancher existante à l''approbation du PLU, dans la limite de 30
+          m², total final ≤ 130 m² ; sans compromettre l''activité agricole ni la qualité paysagère (règle commune
+          du chapitre, sans exception pour Acu)'
+        seuil_m2: 130
+        seuil_type: surface_plancher
+        article: Zone A, Art. 2.2 (3)
+        page_pdf: 334
+        citation: « Les travaux d'amélioration ou d'extension des bâtiments d'habitation existants est admise […]
+          sans que les constructions existantes et leur extension n'excèdent une surface totale finale de 130m²
+          »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'activité agricole, pastorale ou forestière, sans atteinte aux espaces naturels
+          et paysages (règle commune, sans exception Acu)
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et services publics (Art.
+          2.2-5) ; constructions, ouvrages et travaux liés aux différents réseaux et à la voirie, insérés dans le
+          milieu environnant (Art. 2.2-6)
+        article: Zone A, Art. 2.2 (5 et 6)
+        page_pdf: 334
+        citation: « Les constructions, ouvrages et travaux liés aux différents réseaux et à la voirie dès lors qu'ils
+          s'insèrent dans le milieu environnant. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'activité agricole, pastorale ou forestière, sans atteinte aux espaces naturels
+          et paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'activité agricole, pastorale ou forestière, sans atteinte aux espaces naturels
+          et paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'activité agricole, pastorale ou forestière, sans atteinte aux espaces naturels
+          et paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'activité agricole, pastorale ou forestière, sans atteinte aux espaces naturels
+          et paysages
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+    note: 'l''agri-tourisme (et donc la vente de produits de l''exploitation) est exclu en Acu : Art. 2.2-4, p.
+      334 : « A l''exception des zones Acu et An, les constructions nécessaires à l''exercice de l''activité agri-touristique
+      sont autorisées » → artisanat_commerce_detail reste au silence (interdit). Admissions Acu non rattachables
+      : travaux d''extraction de matériaux intégrant la protection des paysages dont le Piton Défaud (« En zone
+      Acu » 1, p. 335) ; reconstruction à l''identique (Art. 2.2-7, p. 335).'
+  An:
+    silence: interdit
+    silence_src: 'Zone A, Art. 1, « 1.2 - Sont interdits » (p. 333) : « A l''exception de ceux visés à l''article
+      2.2, toute nouvelle construction et tout nouvel ouvrage ou travaux. » — régime fermé, commun à tout le chapitre
+      Zone A (An incluse).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'bâtiments techniques agricoles et annexes, ouvrages et travaux nécessaires aux besoins d''une
+          exploitation agricole (justification, implantation adaptée — Art. 2.2-1) ; constructions ICPE/RSD nécessaires
+          à l''activité agricole (Art. 2.2-2) ; condition propre à An : l''implantation des constructions et la
+          réalisation des installations ne doivent pas porter atteinte à la biodiversité du site et s''intégrer
+          au mieux dans le paysage naturel environnant'
+        article: Zone A, Art. 2.2 (1, 2 et « En zone An »)
+        page_pdf: 334
+        citation: '« En zone An : L''implantation des constructions et la réalisation des installations ne doivent
+          pas porter atteinte à la biodiversité du site et s''intégrer au mieux dans le paysage naturel environnant.
+          » (p. 335)'
+      logement:
+        statut: sous_condition
+        condition: 'uniquement travaux d''amélioration ou d''extension des bâtiments d''habitation existants régulièrement
+          édifiés : + 30 % max de la surface de plancher existante à l''approbation du PLU, limite de 30 m², total
+          final ≤ 130 m² ; sans compromettre l''activité agricole ni la qualité paysagère ; en An, sans atteinte
+          à la biodiversité et intégration au paysage naturel (p. 335)'
+        seuil_m2: 130
+        seuil_type: surface_plancher
+        article: Zone A, Art. 2.2 (3)
+        page_pdf: 334
+        citation: « Les travaux d'amélioration ou d'extension des bâtiments d'habitation existants est admise […]
+          sans que les constructions existantes et leur extension n'excèdent une surface totale finale de 130m²
+          »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics,
+          non incompatibles avec l'activité agricole, pastorale ou forestière, sans atteinte aux espaces naturels
+          et paysages ; en An, sans atteinte à la biodiversité et intégration au paysage naturel (p. 335)
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: équipements collectifs et services publics (Art. 2.2-5) ; constructions, ouvrages et travaux
+          liés aux différents réseaux et à la voirie, insérés dans le milieu environnant (Art. 2.2-6) ; en An, sans
+          atteinte à la biodiversité (p. 335)
+        article: Zone A, Art. 2.2 (5 et 6)
+        page_pdf: 334
+        citation: « Les constructions, ouvrages et travaux liés aux différents réseaux et à la voirie dès lors qu'ils
+          s'insèrent dans le milieu environnant. »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics
+          (mêmes réserves) ; en An, sans atteinte à la biodiversité et intégration au paysage naturel
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics
+          (mêmes réserves) ; en An, sans atteinte à la biodiversité et intégration au paysage naturel
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics
+          (mêmes réserves) ; en An, sans atteinte à la biodiversité et intégration au paysage naturel
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs et à des services publics
+          (mêmes réserves) ; en An, sans atteinte à la biodiversité et intégration au paysage naturel
+        article: Zone A, Art. 2.2 (5)
+        page_pdf: 334
+        citation: « Les constructions et installations nécessaires à des équipements collectifs et à des services
+          publics […] »
+    note: 'l''agri-tourisme (vente de produits comprise) est exclu en An : Art. 2.2-4, p. 334 : « A l''exception
+      des zones Acu et An […] » → artisanat_commerce_detail reste au silence (interdit). Reconstruction à l''identique
+      admise (Art. 2.2-7, p. 335).'
+  Nrh:
+    silence: interdit
+    silence_src: 'Zone N (Titre III), Art. 1, « 1.2 - Sont interdits » (p. 342) : « Les constructions, ouvrages
+      et travaux non prévus à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone.
+      » — régime fermé, commun au chapitre Zone N (Nrh incluse).'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'constructions nouvelles à usage d''habitation admises sous réserve de s''intégrer dans le milieu
+          environnant sans le dénaturer ; plafond : 100 m² de surface de plancher (Zone N, Art. 14, « En zone Nrh
+          », p. 351) ; s''y ajoute la règle commune d''extension des habitations existantes (+ 30 % / 30 m² / total
+          130 m² — Art. 2.2-2, p. 343)'
+        seuil_m2: 100
+        seuil_type: surface_plancher
+        article: Zone N, Art. 2.2, « En zone Nrh »
+        page_pdf: 343
+        citation: « Sont admis les constructions nouvelles à usage d'habitation ou liées au tourisme (hébergement
+          ou restauration), sous réserve de s'intégrer dans le milieu environnant sans le dénaturer. »
+      hotels:
+        statut: sous_condition
+        condition: 'constructions nouvelles liées au tourisme (hébergement), sous réserve de s''intégrer dans le
+          milieu environnant sans le dénaturer ; plafond : les constructions à usage touristique ne doivent pas
+          dépasser 300 m² de surface de plancher (Zone N, Art. 14, « En zone Nrh », p. 351)'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Zone N, Art. 2.2, « En zone Nrh »
+        page_pdf: 343
+        citation: « Sont admis les constructions nouvelles à usage d'habitation ou liées au tourisme (hébergement
+          ou restauration) […] »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'constructions nouvelles liées au tourisme (hébergement), sous réserve d''intégration dans le
+          milieu environnant (plafond 300 m² de surface de plancher à usage touristique, Art. 14 p. 351) ; les campings
+          sont par ailleurs admis (Art. 2.2-8, p. 343, Nrh non exclue : « A l''exception des zones Ncu, Nerl et
+          Ncor, les campings »)'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Zone N, Art. 2.2, « En zone Nrh » et 2.2 (8)
+        page_pdf: 343
+        citation: « Sont admis les constructions nouvelles à usage d'habitation ou liées au tourisme (hébergement
+          ou restauration) […] »
+      restauration:
+        statut: sous_condition
+        condition: 'constructions nouvelles liées au tourisme (restauration), sous réserve de s''intégrer dans le
+          milieu environnant sans le dénaturer ; plafond des constructions à usage touristique : 300 m² de surface
+          de plancher (Art. 14, « En zone Nrh », p. 351)'
+        seuil_m2: 300
+        seuil_type: surface_plancher
+        article: Zone N, Art. 2.2, « En zone Nrh »
+        page_pdf: 343
+        citation: « Sont admis les constructions nouvelles à usage d'habitation ou liées au tourisme (hébergement
+          ou restauration) […] »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone (Art.
+          2.2-1) ; bâtiments agricoles sous réserve de s'intégrer au mieux dans le paysage naturel environnant (Art.
+          2.2-4, Nrh non exclue)
+        article: Zone N, Art. 2.2 (1 et 4)
+        page_pdf: 343
+        citation: « Les activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone.
+          » ; « A l'exception des zones Ncor et Ncu, les bâtiments agricoles sous réserve de s'intégrer au mieux
+          dans le paysage naturel environnant. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et ouvrages techniques liés à la voirie et aux réseaux nécessaires au fonctionnement
+          d'un service public ou d'intérêt collectif, non incompatibles avec l'activité agricole, pastorale ou forestière
+          du terrain, sans atteinte à la sauvegarde des espaces naturels et des paysages (Nrh non exclue — exceptions
+          Nerl et Ncor seulement)
+        article: Zone N, Art. 2.2 (6)
+        page_pdf: 343
+        citation: « A l'exception des zones Nerl et Ncor, les constructions, les ouvrages techniques liés à la voirie
+          et aux différents réseaux nécessaires au fonctionnement d'un service public ou d'intérêt collectif […]
+          »
+    note: 'Nrh est définie au chapitre « ZONE N » du Titre III (p. 342 : « espaces de taille et de capacité d''accueil
+      limitées dans lesquels des constructions nouvelles peuvent être autorisées ») — code absent de la liste du
+      Titre IV, produit ici. Admissions non rattachables : abris pour matériel et locaux techniques d''entretien/gestion
+      des sites (Art. 2.2-3, p. 343) ; aménagements légers touristiques et de loisirs ouverts au public, sans hébergement
+      (Art. 2.2-5, p. 343) ; reconstruction à l''identique (Art. 2.2-7, p. 343).'
+  Ni:
+    silence: interdit
+    silence_src: 'Zones Ni et Ntol (Livret 7), Art. 1, « 1.2 - Sont interdits » (p. 319) : « Sont interdits les
+      constructions, ouvrages et travaux non prévus à l''article 2.2, ainsi que ceux de nature à porter atteinte
+      à la protection de la zone. » — régime fermé.'
+    sous_destinations:
+      logement:
+        statut: sous_condition
+        condition: 'constructions neuves ou travaux de rénovation, modification, extension de constructions existantes
+          à destination d''habitation, dans le cadre des concessions délivrées par l''organisme gestionnaire et
+          dès lors qu''ils sont compatibles avec le caractère naturel de la zone ; plafond d''EMPRISE AU SOL (Art.
+          9.1, p. 325) : habitations et annexes limitées à 120 m², module principal 81 m² max (emprise au sol :
+          type hors énumération seuil_type, non encodé)'
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7)
+        page_pdf: 320
+        citation: « A l'exception de la zone Ntol, les constructions neuves ou les travaux de rénovation, de modification,
+          d'extension de constructions existantes à destination d'habitation, d'hébergement hôtelier, d'exploitation
+          agricole ou forestière ou de commerce, dans le cadre des concessions délivrées par l'organisme gestionnaire
+          et dès lors qu'ils sont compatibles avec le caractère naturel de la zone. »
+      hotels:
+        statut: sous_condition
+        condition: 'constructions neuves ou travaux sur l''existant à destination d''hébergement hôtelier, dans
+          le cadre des concessions délivrées par l''organisme gestionnaire, compatibles avec le caractère naturel
+          de la zone ; plafond d''EMPRISE AU SOL (Art. 9.2, p. 325) : 280 m², avec un maximum de 81 m² par module'
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7)
+        page_pdf: 320
+        citation: « les constructions neuves ou les travaux […] à destination d'habitation, d'hébergement hôtelier,
+          d'exploitation agricole ou forestière ou de commerce, dans le cadre des concessions délivrées par l'organisme
+          gestionnaire »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: hébergement hôtelier admis dans le cadre des concessions (Art. 2.2-7 ; emprise au sol limitée
+          à 280 m², 81 m² par module — Art. 9.2, p. 325) ; les aires naturelles de camping sont également admises
+          (Art. 2.2-9, p. 320)
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7 et 9)
+        page_pdf: 320
+        citation: « les constructions neuves ou les travaux […] à destination […] d'hébergement hôtelier […] » ;
+          « Les aires naturelles de camping. »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: 'constructions neuves ou travaux sur l''existant à destination de commerce, dans le cadre des
+          concessions délivrées par l''organisme gestionnaire, compatibles avec le caractère naturel de la zone
+          ; plafond d''EMPRISE AU SOL (Art. 9.3, p. 325) : 81 m²'
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7)
+        page_pdf: 320
+        citation: « les constructions neuves ou les travaux […] à destination […] de commerce, dans le cadre des
+          concessions délivrées par l'organisme gestionnaire »
+      commerce_gros:
+        statut: sous_condition
+        condition: 'constructions neuves ou travaux sur l''existant à destination de commerce, dans le cadre des
+          concessions délivrées par l''organisme gestionnaire, compatibles avec le caractère naturel de la zone
+          ; plafond d''EMPRISE AU SOL (Art. 9.3, p. 325) : 81 m²'
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7)
+        page_pdf: 320
+        citation: « les constructions neuves ou les travaux […] à destination […] de commerce, dans le cadre des
+          concessions délivrées par l'organisme gestionnaire »
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'constructions neuves ou travaux sur l''existant à destination d''exploitation agricole, dans
+          le cadre des concessions délivrées par l''organisme gestionnaire, compatibles avec le caractère naturel
+          de la zone ; plafond d''EMPRISE AU SOL (Art. 9.5, p. 325) : 280 m² au total par concession, 81 m² max
+          par module'
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7)
+        page_pdf: 320
+        citation: « les constructions neuves ou les travaux […] à destination d'habitation, d'hébergement hôtelier,
+          d'exploitation agricole ou forestière ou de commerce […] »
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: 'constructions neuves ou travaux sur l''existant à destination d''exploitation forestière, dans
+          le cadre des concessions délivrées par l''organisme gestionnaire, compatibles avec le caractère naturel
+          de la zone ; plafond d''EMPRISE AU SOL (Art. 9.5, p. 325) : 280 m² au total par concession, 81 m² max
+          par module'
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7)
+        page_pdf: 320
+        citation: « les constructions neuves ou les travaux […] à destination d'habitation, d'hébergement hôtelier,
+          d'exploitation agricole ou forestière ou de commerce […] »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques, sous
+          réserve de limiter la gêne et d'assurer une bonne intégration dans le site (avec les ouvrages liés aux
+          réseaux et de réduction des risques naturels)
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (4)
+        page_pdf: 320
+        citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+    note: 'Livret 7, chapitre « ZONES Ni et Ntol » (p. 319) — code aussi listé pour l''agent Titre IV : arbitrer
+      le doublon éventuel. Changement de destination d''une construction existante admis s''il ne compromet pas
+      la protection du milieu (Art. 2.2-1, p. 320). Non rattachables : aménagements légers touristiques sans hébergement
+      (2.2-3) ; reconstruction à l''identique (2.2-5) ; terrassements, soutènements, clôtures (2.2-6). Art. 9.4
+      (p. 325) : les bâtiments à usage de service public ne devront pas présenter de modules supérieurs à 81 m².
+      Le caractère indicatif (p. 319 : « Logement, gîte, commerce, camping ») n''est pas une règle. Art. 14 « En
+      zone Ni » (p. 330) : pas de règle de COS.'
+  Ntol:
+    silence: interdit
+    silence_src: 'Zones Ni et Ntol (Livret 7), Art. 1, « 1.2 - Sont interdits » (p. 319) : « Sont interdits les
+      constructions, ouvrages et travaux non prévus à l''article 2.2, ainsi que ceux de nature à porter atteinte
+      à la protection de la zone. » — régime fermé.'
+    sous_destinations:
+      logement:
+        statut: interdit
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7) et Art. 1.2
+        page_pdf: 320
+        citation: « A l'exception de la zone Ntol, les constructions neuves ou les travaux […] à destination d'habitation,
+          d'hébergement hôtelier, d'exploitation agricole ou forestière ou de commerce […] » — admission expressément
+          exclue en Ntol, donc interdite par l'Art. 1.2 (non prévue à l'article 2.2)
+      hotels:
+        statut: interdit
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7) et Art. 1.2
+        page_pdf: 320
+        citation: '« A l''exception de la zone Ntol, les constructions neuves ou les travaux […] à destination […]
+          d''hébergement hôtelier […] » — admission expressément exclue en Ntol (Art. 1.2 : interdit)'
+      artisanat_commerce_detail:
+        statut: interdit
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7) et Art. 1.2
+        page_pdf: 320
+        citation: '« A l''exception de la zone Ntol, les constructions neuves ou les travaux […] à destination […]
+          de commerce […] » — admission expressément exclue en Ntol (Art. 1.2 : interdit)'
+      commerce_gros:
+        statut: interdit
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7) et Art. 1.2
+        page_pdf: 320
+        citation: '« A l''exception de la zone Ntol, les constructions neuves ou les travaux […] à destination […]
+          de commerce […] » — admission expressément exclue en Ntol (Art. 1.2 : interdit)'
+      exploitation_agricole:
+        statut: interdit
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7) et Art. 1.2
+        page_pdf: 320
+        citation: '« A l''exception de la zone Ntol, les constructions neuves ou les travaux […] à destination […]
+          d''exploitation agricole ou forestière […] » — admission expressément exclue en Ntol (Art. 1.2 : interdit)'
+      exploitation_forestiere:
+        statut: interdit
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (7) et Art. 1.2
+        page_pdf: 320
+        citation: '« A l''exception de la zone Ntol, les constructions neuves ou les travaux […] à destination […]
+          d''exploitation agricole ou forestière […] » — admission expressément exclue en Ntol (Art. 1.2 : interdit)'
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: 'uniquement les aires naturelles de camping (Art. 2.2-9, sans exception pour Ntol) ; les constructions
+          neuves à destination d''hébergement hôtelier sont exclues en Ntol (Art. 2.2-7 : « A l''exception de la
+          zone Ntol »)'
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (9)
+        page_pdf: 320
+        citation: « Les aires naturelles de camping. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques, sous
+          réserve de limiter la gêne et d'assurer une bonne intégration dans le site
+        article: Zones Ni et Ntol (Livret 7), Art. 2.2 (4)
+        page_pdf: 320
+        citation: « les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
+          dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
+    note: 'Livret 7, chapitre « ZONES Ni et Ntol » (p. 319) — code aussi listé pour l''agent Titre IV : arbitrer
+      le doublon éventuel. Admission propre à Ntol non rattachable au référentiel : « A l''exception de la zone
+      Ni, les constructions, ouvrages et travaux destinés à la Station d''Observation de l''Atmosphère. » (Art.
+      2.2-8, p. 320 — équipement scientifique, aucune sous-destination retenue sans forcer le sens). Plafond global
+      toutes occupations (Art. 14 « En zone Ntol », p. 330) : « Les constructions autorisées ne doivent pas dépasser
+      1200 m² de surface de plancher. » Autres admissions : aménagements et extensions de l''existant, changement
+      de destination (2.2-1) ; entretien/gestion des sites (2.2-2) ; aménagements légers touristiques sans hébergement
+      (2.2-3) ; reconstruction à l''identique (2.2-5).'
+  N:
+    silence: interdit
+    silence_src: 'Zone N, Art. 1.2, p. 342 : « Sont interdits / Les constructions, ouvrages et travaux non prévus
+      à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone. » (liste fermée d''admissions
+      → le silence interdit)'
+    note: 'Plafond zone entière (Zone N, Art. 14 « En zone N », p. 351) : « La surface de plancher totale admise
+      ne doit pas dépasser 150 m² par unité foncière » ; pas de règle pour les constructions ou installations nécessaires
+      aux services publics ou d''intérêt collectif.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: activités agricoles admises sous réserve de maintenir le respect du caractère naturel de la zone
+          (Art. 2.2-1) ; bâtiments agricoles admis sous réserve de s'intégrer au mieux dans le paysage naturel environnant
+          (Art. 2.2-4)
+        article: Zone N, Art. 2.2
+        page_pdf: 343
+        citation: « Les activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone.
+          »
+      logement:
+        statut: sous_condition
+        condition: 'uniquement amélioration/extension des bâtiments d''habitation existants, sous réserve de la
+          régularité du bâti existant, sans augmenter la surface de plancher existante à la date d''approbation
+          du PLU de plus de 30 %, dans la limite de 30 m², total final ≤ 130 m² ; Art. 14 (p. 351) : « Les travaux
+          d''extension des logements clos et couverts existants sont limités à 30 m² de surface de plancher » —
+          aucun logement neuf prévu à l''Art. 2.2'
+        seuil_m2: 130
+        seuil_type: surface_plancher
+        article: Zone N, Art. 2.2-2
+        page_pdf: 343
+        citation: « les travaux d'amélioration ou d'extension des bâtiments d'habitation existants est admise […]
+          de plus de 30%, dans la limite de 30m² et sans que les constructions existantes et leur extension n'excèdent
+          une surface totale finale de 130m² »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages techniques liés à la voirie et aux réseaux nécessaires au fonctionnement d'un service
+          public ou d'intérêt collectif, dès lors qu'ils ne sont pas incompatibles avec l'exercice d'une activité
+          agricole, pastorale ou forestière et ne portent pas atteinte à la sauvegarde des espaces naturels et des
+          paysages
+        article: Zone N, Art. 2.2-6
+        page_pdf: 343
+        citation: « les constructions, les ouvrages techniques liés à la voirie et aux différents réseaux nécessaires
+          au fonctionnement d'un service public ou d'intérêt collectif »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: campings admis (Art. 2.2-8) ; régime général de l'article 2.2 (« Sont admis sous condition »)
+        article: Zone N, Art. 2.2-8
+        page_pdf: 343
+        citation: « A l'exception des zones Ncu, Nerl et Ncor, les campings. »
+  Nerl:
+    silence: interdit
+    silence_src: 'Zone N, Art. 1.2, p. 342 : « Sont interdits / Les constructions, ouvrages et travaux non prévus
+      à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone. » (chapitre unique
+      Zone N, exceptions nommées par sous-zone à l''Art. 2.2)'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: activités agricoles admises sous réserve de maintenir le respect du caractère naturel de la zone
+          (Art. 2.2-1) ; bâtiments agricoles admis sous réserve de s'intégrer au mieux dans le paysage naturel environnant
+          (Art. 2.2-4, Nerl non exceptée)
+        article: Zone N, Art. 2.2
+        page_pdf: 343
+        citation: « Les activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone.
+          »
+      logement:
+        statut: interdit
+        condition: même l'extension de l'habitat existant est exclue en Nerl ; rien d'autre n'est prévu à l'Art.
+          2.2
+        article: Zone N, Art. 2.2-2
+        page_pdf: 343
+        citation: « A l'exception des zone s Ncu, Nerl et Ncor, les travaux d'amélioration ou d'extension des bâtiments
+          d'habitation existants est admise »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: Zone N, Art. 2.2-6
+        page_pdf: 343
+        citation: « A l'exception des zones Nerl et Ncor, les constructions, les ouvrages techniques liés à la voirie
+          et aux différents réseaux »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Zone N, Art. 2.2-8
+        page_pdf: 343
+        citation: « A l'exception des zones Ncu, Nerl et Ncor, les campings. »
+  Ncu:
+    silence: interdit
+    silence_src: 'Zone N, Art. 1.2, p. 342 : « Sont interdits / Les constructions, ouvrages et travaux non prévus
+      à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone. » (chapitre unique
+      Zone N, exceptions nommées par sous-zone à l''Art. 2.2)'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'activités agricoles admises sous réserve de maintenir le respect du caractère naturel de la
+          zone (Art. 2.2-1) ; MAIS bâtiments agricoles exclus en Ncu (Art. 2.2-4 : « A l''exception des zones Ncor
+          et Ncu, les bâtiments agricoles »)'
+        article: Zone N, Art. 2.2
+        page_pdf: 343
+        citation: « Les activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone.
+          »
+      logement:
+        statut: interdit
+        condition: même l'extension de l'habitat existant est exclue en Ncu ; rien d'autre n'est prévu à l'Art.
+          2.2
+        article: Zone N, Art. 2.2-2
+        page_pdf: 343
+        citation: « A l'exception des zone s Ncu, Nerl et Ncor, les travaux d'amélioration ou d'extension des bâtiments
+          d'habitation existants est admise »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages techniques liés à la voirie et aux réseaux nécessaires au fonctionnement d'un service
+          public ou d'intérêt collectif (Ncu non exceptée à l'Art. 2.2-6)
+        article: Zone N, Art. 2.2-6
+        page_pdf: 343
+        citation: « les constructions, les ouvrages techniques liés à la voirie et aux différents réseaux nécessaires
+          au fonctionnement d'un service public ou d'intérêt collectif »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Zone N, Art. 2.2-8
+        page_pdf: 343
+        citation: « A l'exception des zones Ncu, Nerl et Ncor, les campings. »
+  Ncor:
+    silence: interdit
+    silence_src: 'Zone N, Art. 1.2, p. 342 : « Sont interdits / Les constructions, ouvrages et travaux non prévus
+      à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone. » (chapitre unique
+      Zone N, exceptions nommées par sous-zone à l''Art. 2.2)'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: 'activités agricoles admises sous réserve de maintenir le respect du caractère naturel de la
+          zone (Art. 2.2-1) ; MAIS bâtiments agricoles exclus en Ncor (Art. 2.2-4 : « A l''exception des zones Ncor
+          et Ncu, les bâtiments agricoles »)'
+        article: Zone N, Art. 2.2
+        page_pdf: 343
+        citation: « Les activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone.
+          »
+      logement:
+        statut: interdit
+        condition: même l'extension de l'habitat existant est exclue en Ncor ; rien d'autre n'est prévu à l'Art.
+          2.2
+        article: Zone N, Art. 2.2-2
+        page_pdf: 343
+        citation: « A l'exception des zone s Ncu, Nerl et Ncor, les travaux d'amélioration ou d'extension des bâtiments
+          d'habitation existants est admise »
+      locaux_techniques_administrations:
+        statut: interdit
+        article: Zone N, Art. 2.2-6
+        page_pdf: 343
+        citation: « A l'exception des zones Nerl et Ncor, les constructions, les ouvrages techniques liés à la voirie
+          et aux différents réseaux »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Zone N, Art. 2.2-8
+        page_pdf: 343
+        citation: « A l'exception des zones Ncu, Nerl et Ncor, les campings. »
+  Nto:
+    silence: interdit
+    silence_src: 'Zone N, Art. 1.2, p. 342 : « Sont interdits / Les constructions, ouvrages et travaux non prévus
+      à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone. » (chapitre unique
+      Zone N, exceptions nommées par sous-zone à l''Art. 2.2)'
+    note: 'Plafond zone entière (Zone N, Art. 14 « En zone Nto », p. 351) : « Les constructions ne doivent pas dépasser
+      250 m² de surface de plancher par unité foncière. »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: activités agricoles admises sous réserve de maintenir le respect du caractère naturel de la zone
+          (Art. 2.2-1) ; bâtiments agricoles admis sous réserve de s'intégrer au mieux dans le paysage naturel environnant
+          (Art. 2.2-4, Nto non exceptée)
+        article: Zone N, Art. 2.2
+        page_pdf: 343
+        citation: « Les activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone.
+          »
+      logement:
+        statut: sous_condition
+        condition: 'uniquement amélioration/extension des bâtiments d''habitation existants (Nto non exceptée à
+          l''Art. 2.2-2) : +30 % max, limite 30 m², total final ≤ 130 m² de surface de plancher ; l''admission spécifique
+          Nto/Ntoa exclut « l''hébergement permanent » (p. 344)'
+        seuil_m2: 130
+        seuil_type: surface_plancher
+        article: Zone N, Art. 2.2-2
+        page_pdf: 343
+        citation: « les travaux d'amélioration ou d'extension des bâtiments d'habitation existants est admise […]
+          sans que les constructions existantes et leur extension n'excèdent une surface totale finale de 130m²
+          »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: 'constructions destinées à la pratique de sports, de loisirs et de tourisme, dès lors qu''elles
+          s''insèrent dans le milieu environnant (p. 344) ; plafond Art. 14 : 250 m² de surface de plancher par
+          unité foncière (p. 351)'
+        article: Zone N, Art. 2.2 (En zones Nto et Ntoa)
+        page_pdf: 343
+        citation: « Les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs et de tourisme
+          ainsi que les équipements de proximité qui sont liées et nécessaires à leur fonctionnement »
+      restauration:
+        statut: sous_condition
+        condition: seulement comme équipement de proximité lié et nécessaire au fonctionnement des activités de
+          sports/loisirs/tourisme, dès lors qu'il s'insère dans le milieu environnant
+        article: Zone N, Art. 2.2 (En zones Nto et Ntoa)
+        page_pdf: 344
+        citation: « (accueil, local technique, sanitaires, restauration , à l'exception de l'hébergement permanent
+          ou touristique) dès lors qu'ils s'insèrent dans le milieu environnant »
+      hotels:
+        statut: interdit
+        condition: l'hébergement touristique est expressément exclu de l'admission Nto/Ntoa ; non prévu ailleurs
+          à l'Art. 2.2
+        article: Zone N, Art. 2.2 (En zones Nto et Ntoa)
+        page_pdf: 344
+        citation: « à l'exception de l'hébergement permanent ou touristique »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: campings admis (Art. 2.2-8, Nto non exceptée) ; en revanche l'hébergement touristique est exclu
+          de l'admission spécifique Nto/Ntoa (« à l'exception de l'hébergement permanent ou touristique », p. 344)
+        article: Zone N, Art. 2.2-8
+        page_pdf: 343
+        citation: « A l'exception des zones Ncu, Nerl et Ncor, les campings. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages techniques liés à la voirie et aux réseaux nécessaires au fonctionnement d'un service
+          public ou d'intérêt collectif (Nto non exceptée à l'Art. 2.2-6)
+        article: Zone N, Art. 2.2-6
+        page_pdf: 343
+        citation: « les constructions, les ouvrages techniques liés à la voirie et aux différents réseaux nécessaires
+          au fonctionnement d'un service public ou d'intérêt collectif »
+  Ntoa:
+    silence: interdit
+    silence_src: 'Zone N, Art. 1.2, p. 342 : « Sont interdits / Les constructions, ouvrages et travaux non prévus
+      à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone. » (chapitre unique
+      Zone N, exceptions nommées par sous-zone à l''Art. 2.2)'
+    note: 'Plafond zone entière (Zone N, Art. 14 « En zone Ntoa », p. 351) : « La somme de la surface de plancher
+      des constructions ne doit pas dépasser 1500 m². »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: activités agricoles admises sous réserve de maintenir le respect du caractère naturel de la zone
+          (Art. 2.2-1) ; bâtiments agricoles admis sous réserve de s'intégrer au mieux dans le paysage naturel environnant
+          (Art. 2.2-4, Ntoa non exceptée)
+        article: Zone N, Art. 2.2
+        page_pdf: 343
+        citation: « Les activités agricoles sous réserve de maintenir le respect du caractère naturel de la zone.
+          »
+      logement:
+        statut: sous_condition
+        condition: 'uniquement amélioration/extension des bâtiments d''habitation existants (Ntoa non exceptée à
+          l''Art. 2.2-2) : +30 % max, limite 30 m², total final ≤ 130 m² de surface de plancher ; l''admission spécifique
+          Nto/Ntoa exclut « l''hébergement permanent » (p. 344)'
+        seuil_m2: 130
+        seuil_type: surface_plancher
+        article: Zone N, Art. 2.2-2
+        page_pdf: 343
+        citation: « les travaux d'amélioration ou d'extension des bâtiments d'habitation existants est admise […]
+          sans que les constructions existantes et leur extension n'excèdent une surface totale finale de 130m²
+          »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: 'constructions destinées à la pratique de sports, de loisirs et de tourisme, dès lors qu''elles
+          s''insèrent dans le milieu environnant (p. 344) ; plafond Art. 14 : somme des surfaces de plancher ≤ 1500
+          m² (p. 351)'
+        article: Zone N, Art. 2.2 (En zones Nto et Ntoa)
+        page_pdf: 343
+        citation: « Les constructions, ouvrages et travaux destinés à la pratique de sports, de loisirs et de tourisme
+          ainsi que les équipements de proximité qui sont liées et nécessaires à leur fonctionnement »
+      restauration:
+        statut: sous_condition
+        condition: 'seulement comme équipement de proximité lié et nécessaire au fonctionnement des activités de
+          sports/loisirs/tourisme, dès lors qu''il s''insère dans le milieu environnant ; plafond Art. 14 Ntoa :
+          somme des surfaces de plancher ≤ 1500 m² (p. 351)'
+        article: Zone N, Art. 2.2 (En zones Nto et Ntoa)
+        page_pdf: 344
+        citation: « (accueil, local technique, sanitaires, restauration , à l'exception de l'hébergement permanent
+          ou touristique) dès lors qu'ils s'insèrent dans le milieu environnant »
+      hotels:
+        statut: interdit
+        condition: l'hébergement touristique est expressément exclu de l'admission Nto/Ntoa ; non prévu ailleurs
+          à l'Art. 2.2
+        article: Zone N, Art. 2.2 (En zones Nto et Ntoa)
+        page_pdf: 344
+        citation: « à l'exception de l'hébergement permanent ou touristique »
+      autres_hebergements_touristiques:
+        statut: sous_condition
+        condition: campings admis (Art. 2.2-8, Ntoa non exceptée) ; en revanche l'hébergement touristique est exclu
+          de l'admission spécifique Nto/Ntoa (« à l'exception de l'hébergement permanent ou touristique », p. 344)
+        article: Zone N, Art. 2.2-8
+        page_pdf: 343
+        citation: « A l'exception des zones Ncu, Nerl et Ncor, les campings. »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: ouvrages techniques liés à la voirie et aux réseaux nécessaires au fonctionnement d'un service
+          public ou d'intérêt collectif (Ntoa non exceptée à l'Art. 2.2-6)
+        article: Zone N, Art. 2.2-6
+        page_pdf: 343
+        citation: « les constructions, les ouvrages techniques liés à la voirie et aux différents réseaux nécessaires
+          au fonctionnement d'un service public ou d'intérêt collectif »

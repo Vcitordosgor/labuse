@@ -1,0 +1,1265 @@
+meta:
+  insee: '97407'
+  commune: Le Port
+  document: 97407_reglement_20241209.pdf
+  document_gpu: 97407_PLU_20241209
+  gpu_doc_id: 8cdd92497a52e883eddd7330b3836873
+  url: https://data.geopf.fr/annexes/gpu/documents/DU_97407/8cdd92497a52e883eddd7330b3836873/97407_reglement_20241209.pdf
+  md5: 5df6eb00bd505c3f29154ce7f1d72cd5
+  millesime: '2024-12-09'
+  pages_total: 319
+  lu_le: '2026-09-03'
+  edition: « Règlement — modification n°1 - 17/12/19 » en pied de page (pièce servie par le document GPU 97407_PLU_20241209
+    ; en-têtes mod. n°1/n°2 mêlés — trace d'assemblage du PDF)
+  structure: 'Format moderne à cases : par zone, article 1 « Sont interdits les éléments cochés » (checklist des
+    23 sous-destinations R151-28, nomenclature 2023 incluse), article 2 « Sont admises toutes les occupations non
+    cochées » (silence = autorisé, avec réserve générale de non-nuisance). Zone Uoap : renvoi intégral à l''OAP
+    Portes de l''Océan (pièce n°4 non réglementaire ici) → non_lu. PORTÉE JURIDIQUE : PLU partiellement annulé (TA
+    1900330 + CAA 22BX01470), annulation LIMITÉE au secteur portuaire Uppp/Up2 — notes portées sur Up/Uppp ; le
+    reste du PLU est intact (cf. config/plu_millesimes.yaml, statut annule_partiel).'
+zones:
+  Ua:
+    silence: autorise
+    silence_src: 'Art. Ua 2, p. 22 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Ua 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
+      le voisinage et l''environnement des nuisances ou des dangers » (liste fermée d''interdictions à l''art. Ua
+      1, p. 21, cases cochées).'
+    notes: 'L''art. Ua 1 (p. 21) interdit aussi des usages hors nomenclature R151-28 : « Terrain de camping, caravaning
+      » et « Dépôts de ferraille, matériaux, déchets ainsi que les dépôts de véhicules désaffectés ». Interdictions
+      supplémentaires dans les périmètres de protection rapprochés des forages d''eau potable (p. 22).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Exploitation agricole » (case cochée = interdit)
+      exploitation_forestiere:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Exploitation forestière » (case cochée = interdit)
+      commerce_gros:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Commerce de gros » (case cochée = interdit)
+      cinema:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Cinéma » (case cochée = interdit)
+      hotels:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Hôtels » (case cochée = interdit)
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Autres hébergements touristiques » (case cochée = interdit)
+      industrie:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Industrie » (case cochée = interdit)
+      entrepot:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Entrepôt » (case cochée = interdit)
+      bureau:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Bureau » (case cochée = interdit)
+      centre_congres_exposition:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Centre de congrès et d'exposition » (case cochée = interdit)
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Ua 1
+        page_pdf: 21
+        citation: « ☒ Cuisine dédiée à la vente en ligne » (case cochée = interdit)
+      restauration:
+        statut: sous_condition
+        condition: ne pas présenter pour le voisinage immédiat de nuisances particulières
+        article: Ua 2
+        page_pdf: 22
+        citation: « Les activités de restauration, d'artisanat ou de commerces de détail, d'activités de service
+          où s'effectue l'accueil d'une clientèle sous réserve qu'ils ne présentent pas pour le voisinage immédiat
+          de nuisances particulières »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: ne pas présenter pour le voisinage immédiat de nuisances particulières
+        article: Ua 2
+        page_pdf: 22
+        citation: « Les activités de restauration, d'artisanat ou de commerces de détail, d'activités de service
+          où s'effectue l'accueil d'une clientèle sous réserve qu'ils ne présentent pas pour le voisinage immédiat
+          de nuisances particulières »
+      activites_services_clientele:
+        statut: sous_condition
+        condition: ne pas présenter pour le voisinage immédiat de nuisances particulières
+        article: Ua 2
+        page_pdf: 22
+        citation: « Les activités de restauration, d'artisanat ou de commerces de détail, d'activités de service
+          où s'effectue l'accueil d'une clientèle sous réserve qu'ils ne présentent pas pour le voisinage immédiat
+          de nuisances particulières »
+  Ub:
+    silence: autorise
+    silence_src: 'Art. Ub 2, p. 36 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Ub 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
+      le voisinage et l''environnement des nuisances ou des dangers » (liste fermée d''interdictions à l''art. Ub
+      1, p. 35, cases cochées).'
+    notes: 'Art. Ub 3 (p. 37) : en rez-de-chaussée le long des voies « Linéaire commercial strict » repérées au
+      plan de zonage, seuls sont autorisés les changements de destination ou créations de locaux à destination de
+      commerce de détail, restauration, locaux et bureaux accueillant du public des administrations publiques et
+      assimilés ; le long des voies « Linéaire commercial souple » s''ajoutent activité de service où s''effectue
+      l''accueil d''une clientèle et bureaux (règle liée au repérage graphique, pas à toute la zone). L''art. Ub
+      1 (p. 35) interdit aussi des usages hors R151-28 (camping-caravaning, dépôts de ferraille) ; interdictions
+      supplémentaires dans les périmètres de protection des forages (p. 36).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Ub 1
+        page_pdf: 35
+        citation: « ☒ Exploitation agricole » (case cochée = interdit)
+      exploitation_forestiere:
+        statut: interdit
+        article: Ub 1
+        page_pdf: 35
+        citation: « ☒ Exploitation forestière » (case cochée = interdit)
+      commerce_gros:
+        statut: interdit
+        article: Ub 1
+        page_pdf: 35
+        citation: « ☒ Commerce de gros » (case cochée = interdit)
+      industrie:
+        statut: interdit
+        article: Ub 1
+        page_pdf: 35
+        citation: « ☒ Industrie » (case cochée = interdit)
+      entrepot:
+        statut: interdit
+        article: Ub 1
+        page_pdf: 35
+        citation: « ☒ Entrepôt » (case cochée = interdit)
+      centre_congres_exposition:
+        statut: interdit
+        article: Ub 1
+        page_pdf: 35
+        citation: « ☒ Centre de congrès et d'exposition » (case cochée = interdit)
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Ub 1
+        page_pdf: 35
+        citation: « ☒ Cuisine dédiée à la vente en ligne » (case cochée = interdit)
+  Uc:
+    silence: autorise
+    silence_src: 'Art. Uc 2, p. 51 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Uc 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
+      le voisinage et l''environnement des nuisances ou des dangers » (liste fermée d''interdictions à l''art. Uc
+      1, p. 50, cases cochées).'
+    notes: 'Art. Uc 3 (p. 52) : mêmes règles de « Linéaire commercial strict / souple » que Ub 3 (liste fermée de
+      destinations autorisées en rez-de-chaussée le long des voies repérées au plan de zonage). L''art. Uc 1 (p.
+      50) interdit aussi des usages hors R151-28 (camping-caravaning, dépôts de ferraille) ; interdictions supplémentaires
+      dans les périmètres de protection des forages (p. 51).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Uc 1
+        page_pdf: 50
+        citation: « ☒ Exploitation agricole » (case cochée = interdit)
+      exploitation_forestiere:
+        statut: interdit
+        article: Uc 1
+        page_pdf: 50
+        citation: « ☒ Exploitation forestière » (case cochée = interdit)
+      commerce_gros:
+        statut: interdit
+        article: Uc 1
+        page_pdf: 50
+        citation: « ☒ Commerce de gros » (case cochée = interdit)
+      industrie:
+        statut: interdit
+        article: Uc 1
+        page_pdf: 50
+        citation: « ☒ Industrie » (case cochée = interdit)
+      entrepot:
+        statut: interdit
+        article: Uc 1
+        page_pdf: 50
+        citation: « ☒ Entrepôt » (case cochée = interdit)
+      centre_congres_exposition:
+        statut: interdit
+        article: Uc 1
+        page_pdf: 50
+        citation: « ☒ Centre de congrès et d'exposition » (case cochée = interdit)
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Uc 1
+        page_pdf: 50
+        citation: « ☒ Cuisine dédiée à la vente en ligne » (case cochée = interdit)
+  Uca:
+    renvoi: Uc
+    renvoi_src: 'Caractère de la zone Uc, p. 50 : « Il existe un secteur spécifique : Le secteur Uca correspond
+      aux poches d''habitations individuelles, commerces et services de proximité comprises entre le triangle agricole
+      et les franges urbaines de la Possession. » Le secteur relève du chapitre Uc ; la Section 1 (articles Uc 1
+      à Uc 3, pp. 50-52) ne distingue pas Uca : mêmes destinations que Uc.'
+    notes: 'Uca n''est distingué qu''en Section 2/3 : emprise au sol 60 % au lieu de 80 % (art. Uc 7, p. 55), hauteur
+      maximale 6 m au lieu de 16 m (art. Uc 8, p. 55), assainissement semi-collectif admis dans l''attente du raccordement
+      au réseau collectif (art. Uc 14.3, p. 63) — rien sur les destinations.'
+  Ud:
+    silence: autorise
+    silence_src: 'Art. Ud 2, p. 66 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Ud 1 susceptibles de s''insérer dans le tissu urbain sous réserve qu''il n''en résulte pas pour
+      le voisinage et l''environnement des nuisances ou des dangers » (liste fermée d''interdictions à l''art. Ud
+      1, p. 65, cases cochées).'
+    notes: 'Contrairement à Ua/Ub/Uc, « Commerce de gros » n''est PAS coché à l''art. Ud 1 (p. 65) : il relève du
+      silence (autorisé). L''art. Ud 1 interdit aussi des usages hors R151-28 (camping-caravaning, dépôts de ferraille)
+      ; interdictions supplémentaires dans les périmètres de protection des forages (p. 66).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 65
+        citation: « ☒ Exploitation agricole » (case cochée = interdit)
+      exploitation_forestiere:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 65
+        citation: « ☒ Exploitation forestière » (case cochée = interdit)
+      industrie:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 65
+        citation: « ☒ Industrie » (case cochée = interdit)
+      entrepot:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 65
+        citation: « ☒ Entrepôt » (case cochée = interdit)
+      centre_congres_exposition:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 65
+        citation: « ☒ Centre de congrès et d'exposition » (case cochée = interdit)
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Ud 1
+        page_pdf: 65
+        citation: « ☒ Cuisine dédiée à la vente en ligne » (case cochée = interdit)
+  Ue:
+    silence: autorise
+    silence_src: 'Art. Ue 2, p. 80 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Ue 1 dès lors qu''elles respectent les conditions suivantes » (art. Ue 1, p. 79 : liste fermée
+      d''interdictions cochées)'
+    note: 'Art. Ue 1, p. 79 coche aussi (usages, hors sous-destinations R151-28) : « Terrain de camping, caravaning
+      » et « Dépôts de ferraille, matériaux, déchets ainsi que les dépôts de véhicules désaffectés non liés à une
+      activité ou à une déchetterie ».'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Exploitation agricole »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Exploitation forestière »
+      hebergement:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Hébergement »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Établissements d'enseignement, de santé et d'action sociale »
+      equipements_sportifs:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Équipements sportifs »
+      autres_equipements_public:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Autres équipements recevant du public »
+      lieux_culte:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Lieux de culte »
+      logement:
+        statut: sous_condition
+        condition: être utiles au fonctionnement ou à la surveillance des constructions ou installations présentes
+          sur l'unité foncière ; sans excéder un logement par unité foncière ; ne pas être isolées des autres constructions
+        article: Ue 2
+        page_pdf: 80
+        citation: '« Les constructions à destination de logement, sous conditions et dans les limites suivantes
+          : être utiles au fonctionnement ou à la surveillance des constructions ou installations présentes sur
+          l''unité foncière ; sans excéder un logement par unité foncière ; ne pas être isolées des autres constructions
+          »'
+      artisanat_commerce_detail: &id001
+        statut: sous_condition
+        condition: implantation des équipements et activités commerciales et de service limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: Ue 2
+        page_pdf: 80
+        citation: « L'implantation des équipements et activités commerciales et de service est limitée à 5% de la
+          superficie de la zone d'implantation » (s'applique à la destination « Commerce et activité de service
+          », non cochée à l'art. Ue 1)
+      restauration: *id001
+      commerce_gros: *id001
+      activites_services_clientele: *id001
+      cinema: *id001
+      hotels: *id001
+      autres_hebergements_touristiques: *id001
+  Uem:
+    silence: autorise
+    silence_src: 'Art. Ue 2, p. 80 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Ue 1 dès lors qu''elles respectent les conditions suivantes » (art. Ue 1, p. 79 : liste fermée
+      d''interdictions cochées)'
+    note: 'Le caractère de la zone (p. 79) dit du secteur Uem que « les activités industrielles sont interdites
+      », mais le caractère est indicatif : la règle lue est l''art. Ue 2 (p. 81) qui admet le maintien de l''industrie
+      sous condition (voir industrie). Usages cochés interdits à l''art. Ue 1, p. 79 : camping/caravaning, dépôts
+      de ferraille.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Exploitation agricole »
+      exploitation_forestiere:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Exploitation forestière »
+      hebergement:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Hébergement »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Établissements d'enseignement, de santé et d'action sociale »
+      equipements_sportifs:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Équipements sportifs »
+      autres_equipements_public:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Autres équipements recevant du public »
+      lieux_culte:
+        statut: interdit
+        article: Ue 1
+        page_pdf: 79
+        citation: coché ☒ « Lieux de culte »
+      logement:
+        statut: sous_condition
+        condition: être utiles au fonctionnement ou à la surveillance des constructions ou installations présentes
+          sur l'unité foncière ; sans excéder un logement par unité foncière ; ne pas être isolées des autres constructions
+        article: Ue 2
+        page_pdf: 80
+        citation: '« Les constructions à destination de logement, sous conditions et dans les limites suivantes
+          : … »'
+      industrie:
+        statut: sous_condition
+        condition: maintien des activités d'industrie admis uniquement dans les emprises des installations existantes
+          ; extensions visant à réduire les dangers et les nuisances autorisées
+        article: Ue 2
+        page_pdf: 81
+        citation: « En secteur Uem, le maintien des activités d'industrie, est admis sous réserve qu'il soit réalisé
+          dans les emprises des installations existantes. Les extensions visant à réduire les dangers et les nuisances
+          sont également autorisées. »
+      artisanat_commerce_detail: &id002
+        statut: sous_condition
+        condition: implantation des équipements et activités commerciales et de service limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: Ue 2
+        page_pdf: 80
+        citation: « L'implantation des équipements et activités commerciales et de service est limitée à 5% de la
+          superficie de la zone d'implantation »
+      restauration: *id002
+      commerce_gros: *id002
+      activites_services_clientele: *id002
+      cinema: *id002
+      hotels: *id002
+      autres_hebergements_touristiques: *id002
+  Umi:
+    silence: autorise
+    silence_src: 'Art. Umi 2, p. 92 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Umi 1 dès lors qu''elles respectent les conditions suivantes » (art. Umi 1, p. 91 : liste fermée
+      d''interdictions cochées)'
+    note: 'Condition générale portée par l''art. Umi 2 (p. 92) sur toute occupation admise : « Les constructions,
+      installations et aménagements à condition qu''ils soient destinés à la vocation militaire » (+ ICPE « à condition
+      qu''elles soient nécessaires aux activités militaires », p. 92). Le silence autorise donc sous cette réserve
+      de vocation militaire. Usages cochés interdits à l''art. Umi 1, p. 91 : camping/caravaning, dépôts de ferraille.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Exploitation agricole »
+      exploitation_forestiere:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Exploitation forestière »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Artisanat et commerce de détail »
+      restauration:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Restauration »
+      commerce_gros:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Commerce de gros »
+      activites_services_clientele:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Activité de service avec accueil d'une clientèle »
+      cinema:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Cinéma »
+      hotels:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Hôtels »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Autres hébergements touristiques »
+      industrie:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Industrie »
+      entrepot:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Entrepôt »
+      bureau:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Bureau »
+      centre_congres_exposition:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Centre de congrès et d'exposition »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Cuisine dédiée à la vente en ligne »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Établissements d'enseignement, de santé et d'action sociale »
+      salles_art_spectacles:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Salles d'art et de spectacle »
+      lieux_culte:
+        statut: interdit
+        article: Umi 1
+        page_pdf: 91
+        citation: coché ☒ « Lieux de culte »
+      logement:
+        statut: sous_condition
+        condition: exclusivement destinées au gardiennage ou à l'hébergement du personnel en caserne
+        article: Umi 2
+        page_pdf: 93
+        citation: « Les constructions à usage d'habitation sous réserve qu'elles soient exclusivement destinées
+          au gardiennage ou à l'hébergement du personnel en caserne. » (destination « Habitation » = logement +
+          hébergement, non cochées à l'art. Umi 1)
+      hebergement:
+        statut: sous_condition
+        condition: exclusivement destinées au gardiennage ou à l'hébergement du personnel en caserne
+        article: Umi 2
+        page_pdf: 93
+        citation: « Les constructions à usage d'habitation sous réserve qu'elles soient exclusivement destinées
+          au gardiennage ou à l'hébergement du personnel en caserne. » (destination « Habitation » = logement +
+          hébergement, non cochées à l'art. Umi 1)
+  Uoap:
+    etat: non_lu
+    renvoi_src: 'Art. Uoap 1, Uoap 2 et Uoap 3, p. 103 : « Se reporter à l''OAP Portes de l''Océan – pièce écrite
+      n°4 – Orientations d''Aménagement et de Programmation. »'
+    note: 'Le chapitre Uoap (p. 103-106) ne porte AUCUNE règle propre : chaque article renvoie intégralement à l''OAP
+      Portes de l''Océan (pièce écrite n°4, document distinct non fourni). Caractère de la zone, p. 103 : OAP de
+      secteur d''aménagement (art. R.151-8 CU) « dans laquelle l''OAP s''applique seule, en l''absence de dispositions
+      réglementaires dans le secteur ». Destinations non lisibles dans la pièce fournie → non_lu.'
+  Up:
+    silence: autorise
+    silence_src: 'Art. Up 2, p. 108 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Up 1 dès lors qu''elles respectent les conditions suivantes » (art. Up 1, p. 107 : liste fermée
+      d''interdictions cochées)'
+    note: 'portée juridique : annulation partielle du PLU limitée au secteur portuaire (TA 1900330, CAA 22BX01470)
+      — verdict à considérer avec cette réserve'
+    note_zone: 'Usages cochés interdits à l''art. Up 1, p. 107 : camping/caravaning, dépôts de ferraille. Le caractère
+      de la zone (p. 107, indicatif) restreint aux activités « liées à l''activité portuaire » ; la règle lue (art.
+      Up 2, p. 109) admet aussi : constructions et installations nécessaires aux services publics ou d''intérêt
+      collectif « à condition que leur fonctionnement ne soit pas incompatible avec celui des installations portuaires
+      », travaux d''entretien du trait de côte, ouvrages contre la mer.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Up 1
+        page_pdf: 107
+        citation: coché ☒ « Exploitation agricole »
+      exploitation_forestiere:
+        statut: interdit
+        article: Up 1
+        page_pdf: 107
+        citation: coché ☒ « Exploitation forestière »
+      hebergement:
+        statut: interdit
+        article: Up 1
+        page_pdf: 107
+        citation: coché ☒ « Hébergement »
+      logement:
+        statut: sous_condition
+        condition: être utiles au fonctionnement ou à la surveillance des constructions ou installations présentes
+          sur l'unité foncière
+        article: Up 2
+        page_pdf: 109
+        citation: « Les constructions à destination de logement, sous conditions d'être utiles au fonctionnement
+          ou à la surveillance des constructions ou installations présentes sur l'unité foncière »
+      artisanat_commerce_detail: &id003
+        statut: sous_condition
+        condition: implantation des équipements et activités commerciales et de service limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: Up 2
+        page_pdf: 109
+        citation: « L'implantation des équipements et activités commerciales et de service est limitée à 5% de la
+          superficie de la zone d'implantation » (s'applique à la destination « Commerce et activité de service
+          », non cochée à l'art. Up 1)
+      restauration: *id003
+      commerce_gros: *id003
+      activites_services_clientele: *id003
+      cinema: *id003
+      hotels: *id003
+      autres_hebergements_touristiques: *id003
+      industrie:
+        statut: autorise
+        article: Up 2
+        page_pdf: 109
+        citation: « A l'exception du secteur Uppp « plaisance et pêche », les activités portuaires, industrielles,
+          artisanales, de bureaux, de stockage et logistique » (admises hors Uppp ; non cochées à l'art. Up 1)
+      entrepot:
+        statut: autorise
+        article: Up 2
+        page_pdf: 109
+        citation: « A l'exception du secteur Uppp « plaisance et pêche », les activités portuaires, industrielles,
+          artisanales, de bureaux, de stockage et logistique » (« stockage et logistique » ; non cochée à l'art.
+          Up 1)
+      bureau:
+        statut: autorise
+        article: Up 2
+        page_pdf: 109
+        citation: « A l'exception du secteur Uppp « plaisance et pêche », les activités portuaires, industrielles,
+          artisanales, de bureaux, de stockage et logistique » (« de bureaux » ; non cochée à l'art. Up 1)
+  Uppp:
+    silence: autorise
+    silence_src: 'Art. Up 2, p. 108 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Up 1 dès lors qu''elles respectent les conditions suivantes » (art. Up 1, p. 107 : liste fermée
+      d''interdictions cochées)'
+    note: 'portée juridique : annulation partielle du PLU limitée au secteur portuaire (TA 1900330, CAA 22BX01470)
+      — verdict à considérer avec cette réserve'
+    note_zone: 'Art. Up 2, p. 109, spécifique Uppp : « les constructions à vocation d''activités économiques, touristiques
+      et de réparation navale » sont admises sous réserve de 3 conditions cumulatives (contribuer au fonctionnement
+      et au développement du port de plaisance et de la pêche ; compatibilité avec la préservation des milieux et
+      paysages ; aucune aggravation significative des risques, pollutions et nuisances) — termes trop larges («
+      activités économiques, touristiques ») pour être mappés à des sous-destinations précises sans supposer : non
+      écrit par sous-destination. Usages cochés interdits à l''art. Up 1, p. 107 : camping/caravaning, dépôts de
+      ferraille.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Up 1
+        page_pdf: 107
+        citation: coché ☒ « Exploitation agricole »
+      exploitation_forestiere:
+        statut: interdit
+        article: Up 1
+        page_pdf: 107
+        citation: coché ☒ « Exploitation forestière »
+      hebergement:
+        statut: interdit
+        article: Up 1
+        page_pdf: 107
+        citation: coché ☒ « Hébergement »
+      logement:
+        statut: sous_condition
+        condition: être utiles au fonctionnement ou à la surveillance des constructions ou installations présentes
+          sur l'unité foncière
+        article: Up 2
+        page_pdf: 109
+        citation: « Les constructions à destination de logement, sous conditions d'être utiles au fonctionnement
+          ou à la surveillance des constructions ou installations présentes sur l'unité foncière »
+      artisanat_commerce_detail: &id004
+        statut: sous_condition
+        condition: implantation des équipements et activités commerciales et de service limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: Up 2
+        page_pdf: 109
+        citation: « L'implantation des équipements et activités commerciales et de service est limitée à 5% de la
+          superficie de la zone d'implantation » (condition générale de zone, non exceptée pour Uppp)
+      restauration: *id004
+      commerce_gros: *id004
+      activites_services_clientele: *id004
+      cinema: *id004
+      hotels: *id004
+      autres_hebergements_touristiques: *id004
+      industrie: &id005
+        statut: sous_condition
+        condition: maintien ou remise aux normes uniquement dans les emprises bâties, avec possibilité d'extension
+          mesurée à la date d'approbation du PLU (l'admission générale de ces activités en zone Up est écartée «
+          à l'exception du secteur Uppp »)
+        article: Up 2
+        page_pdf: 109
+        citation: « Le maintien ou la remise aux normes des activités portuaires, industrielles, artisanales, de
+          bureaux, de stockage et logistique dans les emprises bâties avec possibilité d'extension mesurée à la
+          date d'approbation du PLU »
+      entrepot: *id005
+      bureau: *id005
+  Us:
+    silence: autorise
+    silence_src: 'Art. Us 2, p. 120 : « Sont admises toutes les occupations et utilisations du sol non cochées à
+      l''article Us 1 dès lors qu''elles respectent les conditions suivantes » (art. Us 1, p. 119 : liste fermée
+      d''interdictions cochées)'
+    note: 'Usages cochés interdits à l''art. Us 1, p. 119 : camping/caravaning, dépôts de ferraille. Art. Us 2 admet
+      aussi sous condition les affouillements/exhaussements (usages, p. 121).'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Exploitation agricole »
+      exploitation_forestiere:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Exploitation forestière »
+      industrie:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Industrie »
+      hebergement:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Hébergement »
+      locaux_bureaux_administrations:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Locaux et bureaux accueillant du public des administrations publiques et assimilés »
+      enseignement_sante_action_sociale:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Établissements d'enseignement, de santé et d'action sociale »
+      salles_art_spectacles:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Salles d'art et de spectacle »
+      equipements_sportifs:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Équipements sportifs »
+      autres_equipements_public:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Autres équipements recevant du public »
+      lieux_culte:
+        statut: interdit
+        article: Us 1
+        page_pdf: 119
+        citation: coché ☒ « Lieux de culte »
+      logement:
+        statut: sous_condition
+        condition: être utiles au fonctionnement ou à la surveillance des constructions ou installations présentes
+          sur l'unité foncière ; sans excéder un logement par unité foncière ; ne pas être isolées des autres constructions
+        article: Us 2
+        page_pdf: 120
+        citation: '« Les constructions à destination de logement, sous conditions et dans les limites suivantes
+          : Être utiles au fonctionnement ou à la surveillance… ; sans excéder un logement par unité foncière ;
+          ne pas être isolées des autres constructions » (p. 120-121)'
+      entrepot:
+        statut: sous_condition
+        condition: les locaux d'entreposage ne doivent pas représenter plus de 1/3 de la surface de plancher totale
+          du projet (fraction, pas un seuil en m²)
+        article: Us 2
+        page_pdf: 121
+        citation: « Les locaux d'entreposage sous réserve qu'ils ne pas représentent pas plus de 1/3 de la surface
+          de plancher totale du projet. » [sic]
+  Uv:
+    silence: autorise
+    silence_src: 'Art. Uv 1, p. 131 : liste fermée d''interdictions cochées (« Sont interdits les éléments cochés
+      ci-dessous »). ⚠ contrairement aux autres zones, l''art. Uv 2 (p. 132) n''ouvre PAS par « Sont admises toutes
+      les occupations non cochées… » mais par « Sont admis et soumis à des conditions particulières les occupations
+      et utilisations du sol suivantes » — silence lu de la seule structure en liste fermée de l''art. Uv 1.'
+    note: 'Art. Uv 2 admet sous conditions des occupations qui recoupent des interdictions de l''art. Uv 1, sans
+      mapping plein possible : « Les équipements ou services publics, ainsi que les locaux à usage de bureau, de
+      service, de gardiennage …, directement liées à leur fonctionnement ou à leur exploitation » (p. 132 — les
+      locaux annexes de bureau restent distincts de la sous-destination bureau, cochée interdite) ; « L''agriculture
+      urbaine sous réserve que les constructions ou installations qui lui sont liées soient compatibles avec le
+      caractère de la zone » (p. 133 — l''« agriculture urbaine » n''est pas assimilable pleinement à la sous-destination
+      exploitation_agricole, cochée interdite). Usages cochés interdits à l''art. Uv 1, p. 131 : camping/caravaning,
+      dépôts de ferraille.'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: 'coché ☒ « Exploitation agricole » (voir note de zone : « agriculture urbaine » admise sous réserve,
+          art. Uv 2, p. 133)'
+      exploitation_forestiere:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Exploitation forestière »
+      artisanat_commerce_detail:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Artisanat et commerce de détail »
+      restauration:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Restauration »
+      commerce_gros:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Commerce de gros »
+      activites_services_clientele:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Activité de service avec accueil d'une clientèle »
+      cinema:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Cinéma »
+      hotels:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Hôtels »
+      autres_hebergements_touristiques:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Autres hébergements touristiques »
+      industrie:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Industrie »
+      entrepot:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Entrepôt »
+      bureau:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: 'coché ☒ « Bureau » (voir note de zone : locaux annexes de bureau des équipements publics admis
+          sous réserve, art. Uv 2, p. 132)'
+      centre_congres_exposition:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Centre de congrès et d'exposition »
+      cuisine_vente_en_ligne:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Cuisine dédiée à la vente en ligne »
+      hebergement:
+        statut: interdit
+        article: Uv 1
+        page_pdf: 131
+        citation: coché ☒ « Hébergement »
+  1AUa:
+    renvoi: Ua
+    renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. » ; caractère de la zone, p. 142 :
+      « il convient de se reporter en fonction de l''indice de la zone AU considérée au règlement des zones urbaines
+      correspondantes »'
+    note: S'ajoutent les conditions générales de l'art. 1AUindicée 2, p. 144 (infrastructures suffisantes, principes
+      de desserte et densités des OAP). Recul 45 m de l'axe de la RN4a (art. 1AUindicée 4, p. 146 — règle d'implantation,
+      pas de destination).
+  1AUc:
+    renvoi: Uc
+    renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: S'ajoutent les conditions générales de l'art. 1AUindicée 2, p. 144 (infrastructures suffisantes, principes
+      de desserte et densités des OAP).
+  1AUe:
+    renvoi: Ue
+    renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: 'S''ajoutent les conditions générales de l''art. 1AUindicée 2, p. 144. Règle propre d''assainissement
+      art. 1AUindicée 14.3, p. 155-156 : « pour la zone 1AUe (Haut du Triangle Agricole) », assainissement semi-collectif
+      admis dans l''attente du réseau collectif.'
+  1AUem:
+    renvoi: Uem
+    renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. » — l''indice « em » désigne le secteur
+      Uem (DG, p. 6 : « Il existe un secteur Uem »), lu au chapitre Ue par un autre agent.'
+    note: S'ajoutent les conditions générales de l'art. 1AUindicée 2, p. 144 (infrastructures suffisantes, principes
+      de desserte et densités des OAP).
+  1AUm:
+    silence: autorise
+    silence_src: 'Art. 1AUindicée 1, p. 143 : « Dans la zone 1AUm sont interdits les éléments cochés ci-dessous
+      » — tableau à cocher en nomenclature complète des destinations : liste fermée d''interdictions ; les lignes
+      non cochées ne sont pas interdites. Art. 1AUindicée 2, p. 144 : « Outre les constructions destinées à l''habitat,
+      sont admises les occupations et utilisations du sol suivantes… »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: interdit
+        article: 1AUindicée 1
+        page_pdf: 143
+        citation: '« Dans la zone 1AUm sont interdits les éléments cochés ci-dessous : ☒ Exploitation agricole »'
+      exploitation_forestiere:
+        statut: interdit
+        article: 1AUindicée 1
+        page_pdf: 143
+        citation: « ☒ Exploitation forestière »
+      industrie:
+        statut: interdit
+        article: 1AUindicée 1
+        page_pdf: 143
+        citation: « ☒ Industrie »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: pas de risque pour la sécurité des voisins (incendie, explosion, circulations, stationnements…),
+          pas de nuisances inacceptables pour le voisinage, fonctionnement compatible avec les infrastructures existantes
+          ; implantation des équipements et activités commerciales et de service limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: 1AUindicée 2
+        page_pdf: 144
+        citation: '« Les constructions à usage d''activité commerciale, artisanale et les installations classées
+          non soumise à autorisation sous réserve que : … » ; « L''implantation des équipements et activités commerciales
+          et de service est limitée à 5% de la superficie de la zone d''implantation »'
+      commerce_gros:
+        statut: sous_condition
+        condition: mêmes conditions (mapping doctrine « activité commerciale » → artisanat_commerce_detail + commerce_gros)
+          ; implantation limitée à 5 % de la superficie de la zone d'implantation
+        article: 1AUindicée 2
+        page_pdf: 144
+        citation: '« Les constructions à usage d''activité commerciale, artisanale et les installations classées
+          non soumise à autorisation sous réserve que : … »'
+      activites_services_clientele:
+        statut: sous_condition
+        condition: implantation des équipements et activités commerciales et de service limitée à 5 % de la superficie
+          de la zone d'implantation
+        article: 1AUindicée 2
+        page_pdf: 144
+        citation: « L'implantation des équipements et activités commerciales et de service est limitée à 5% de la
+          superficie de la zone d'implantation »
+    note: 'Usages interdits (hors sous-destinations) p. 143 : « ☒ Terrain de camping, caravaning » ; « ☒ Dépôts
+      de ferraille, matériaux, déchets ainsi que les dépôts de véhicules désaffectés non liés à une activité ou
+      à une déchetterie ». Dans les périmètres de protection rapprochés des forages d''eau potable, liste d''interdictions
+      supplémentaires (ICPE, carburants, carrières, niveaux enterrés…), p. 143-144. Reconstruction à l''identique
+      après sinistre admise sauf disposition contraire du PPR (p. 144).'
+  1AUmut:
+    silence: interdit
+    silence_src: 'Art. 1AUindicée 1, p. 143 : « Dans la zone 1AUmut sont interdits toutes destinations, usages et
+      affectations des sols et types d''activités non indiqués dans l''article 1AUindicée 2. »'
+    sous_destinations:
+      industrie:
+        statut: sous_condition
+        condition: 'dans l''attente de l''ouverture à l''urbanisation : maintien ou remise aux normes des activités
+          existantes, dans les emprises bâties, avec possibilité d''extension mesurée à la date d''approbation du
+          PLU (extension mesurée = 30 % max de SDP, DG p. 19)'
+        article: 1AUindicée 2
+        page_pdf: 144
+        citation: « Le maintien ou la remise aux normes des activités portuaires, industrielles, artisanales, de
+          bureaux, de stockage et logistique dans les emprises bâties avec possibilité d'extension mesurée à la
+          date d'approbation du PLU »
+      entrepot:
+        statut: sous_condition
+        condition: maintien ou remise aux normes des activités de stockage et logistique existantes, dans les emprises
+          bâties, extension mesurée
+        article: 1AUindicée 2
+        page_pdf: 144
+        citation: « … de stockage et logistique dans les emprises bâties avec possibilité d'extension mesurée à
+          la date d'approbation du PLU »
+      artisanat_commerce_detail:
+        statut: sous_condition
+        condition: maintien ou remise aux normes des activités artisanales existantes, dans les emprises bâties,
+          extension mesurée
+        article: 1AUindicée 2
+        page_pdf: 144
+        citation: « Le maintien ou la remise aux normes des activités portuaires, industrielles, artisanales, de
+          bureaux… »
+      bureau:
+        statut: sous_condition
+        condition: maintien/remise aux normes et travaux d'aménagement + extension mesurée des constructions existantes
+          à destination de bureaux
+        article: 1AUindicée 2
+        page_pdf: 145
+        citation: « Les travaux d'aménagement et d'extension mesurée des constructions existantes ou découvertes
+          existantes à destination de bureaux »
+    note: '« Activités portuaires » citées au maintien (p. 144) : pas une sous-destination R.151-28, non mappé.
+      Également admis (p. 145) : travaux sur installations existantes réduisant dangers et nuisances ; dépôts de
+      matériaux, aires de stockage à l''air libre et constructions légères ou facilement démontables nécessaires
+      à l''activité, sous réserve d''écrans (construits ou végétaux) et d''absence de pollution incompatible avec
+      la vocation résidentielle future. Caractère p. 142 (indicatif) : secteur soumis à échéancier OAP « Centrale
+      EDF ».'
+  1AUs:
+    renvoi: Us
+    renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: S'ajoutent les conditions générales de l'art. 1AUindicée 2, p. 144. Recul 25 m de l'axe de la RN7 (art.
+      1AUindicée 4, p. 145 — règle d'implantation, pas de destination).
+  1AUv:
+    renvoi: Uv
+    renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
+      Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'
+    note: S'ajoutent les conditions générales de l'art. 1AUindicée 2, p. 144 (infrastructures suffisantes, principes
+      de desserte et densités des OAP).
+  2AUem:
+    silence: interdit
+    silence_src: 'Art. 2AU 1, p. 157 : « A l''exception de ceux visés à l''article 2AU 2, sont interdits toutes
+      les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions/ouvrages/travaux liés aux réseaux, à la voirie, au stationnement, à la production
+          et distribution d'énergie répondant aux besoins de l'urbanisation future ; ouvrages techniques de service
+          public ou d'intérêt collectif dont l'implantation est rendue nécessaire pour des raisons techniques ou
+          économiques, avec limitation de la gêne et bonne intégration au site
+        article: 2AU 2
+        page_pdf: 157
+        citation: « Les constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement,
+          à la production et à la distribution d'énergie répondant aux besoins de l'urbanisation future. » ; « Les
+          ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif dont l'implantation
+          dans la zone est rendue nécessaire… » (p. 158)
+      bureau:
+        statut: sous_condition
+        condition: 'constructions existantes à la date d''approbation du PLU uniquement : aménagement et extension
+          mesurée (30 % max de SDP, DG p. 19)'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Les travaux d'aménagement et d'extension mesurée des constructions existantes ou découvertes
+          existantes à destination de bureaux à la date d'approbation du PLU. »
+      industrie:
+        statut: sous_condition
+        condition: 'activités existantes uniquement : maintien ou remise aux normes dans les emprises bâties'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Le maintien ou la remise aux normes des activités industrielles et entrepôts existants dans
+          les emprises bâties. »
+      entrepot:
+        statut: sous_condition
+        condition: 'entrepôts existants uniquement : maintien ou remise aux normes dans les emprises bâties'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Le maintien ou la remise aux normes des activités industrielles et entrepôts existants dans
+          les emprises bâties. »
+    note: 'Zone fermée : ouverture à l''urbanisation conditionnée à une modification du PLU (caractère, p. 157).
+      Également admis p. 158 : travaux sur installations existantes réduisant dangers et nuisances.'
+  2AUmut:
+    silence: interdit
+    silence_src: 'Art. 2AU 1, p. 157 : « A l''exception de ceux visés à l''article 2AU 2, sont interdits toutes
+      les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions/ouvrages/travaux liés aux réseaux, voirie, stationnement, production-distribution
+          d'énergie pour les besoins de l'urbanisation future ; ouvrages techniques de service public ou d'intérêt
+          collectif rendus nécessaires pour raisons techniques ou économiques
+        article: 2AU 2
+        page_pdf: 157
+        citation: « Les constructions, ouvrages et travaux liés aux différents réseaux, à la voirie, au stationnement,
+          à la production et à la distribution d'énergie répondant aux besoins de l'urbanisation future. »
+      bureau:
+        statut: sous_condition
+        condition: 'constructions existantes à la date d''approbation du PLU uniquement : aménagement et extension
+          mesurée'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Les travaux d'aménagement et d'extension mesurée des constructions existantes ou découvertes
+          existantes à destination de bureaux à la date d'approbation du PLU. »
+      industrie:
+        statut: sous_condition
+        condition: 'activités existantes uniquement : maintien ou remise aux normes dans les emprises bâties'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Le maintien ou la remise aux normes des activités industrielles et entrepôts existants dans
+          les emprises bâties. »
+      entrepot:
+        statut: sous_condition
+        condition: 'entrepôts existants uniquement : maintien ou remise aux normes dans les emprises bâties'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Le maintien ou la remise aux normes des activités industrielles et entrepôts existants dans
+          les emprises bâties. »
+    note: 'Zone fermée : ouverture conditionnée à une modification du PLU (caractère, p. 157). Également admis p.
+      158 : travaux sur installations existantes réduisant dangers et nuisances.'
+  2AUp:
+    silence: interdit
+    silence_src: 'Art. 2AU 1, p. 157 : « A l''exception de ceux visés à l''article 2AU 2, sont interdits toutes
+      les constructions, ouvrages et travaux. »'
+    sous_destinations:
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions/ouvrages/travaux liés aux réseaux, voirie, stationnement, production-distribution
+          d'énergie pour les besoins de l'urbanisation future ; ouvrages techniques de service public ou d'intérêt
+          collectif rendus nécessaires pour raisons techniques ou économiques ; en 2AUp (arrière du Port Est), installations
+          et ouvrages techniques nécessaires à l'aménagement ou à l'exploitation de la zone
+        article: 2AU 2
+        page_pdf: 158
+        citation: '« Dans le sous-secteur 2AUp situé à l''arrière du Port Est : Les installations et ouvrages techniques
+          nécessaires à l''aménagement ou à l''exploitation de la zone »'
+      bureau:
+        statut: sous_condition
+        condition: 'constructions existantes à la date d''approbation du PLU uniquement : aménagement et extension
+          mesurée'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Les travaux d'aménagement et d'extension mesurée des constructions existantes ou découvertes
+          existantes à destination de bureaux à la date d'approbation du PLU. »
+      industrie:
+        statut: sous_condition
+        condition: 'activités existantes uniquement : maintien ou remise aux normes dans les emprises bâties'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Le maintien ou la remise aux normes des activités industrielles et entrepôts existants dans
+          les emprises bâties. »
+      entrepot:
+        statut: sous_condition
+        condition: 'entrepôts existants uniquement : maintien ou remise aux normes dans les emprises bâties'
+        article: 2AU 2
+        page_pdf: 158
+        citation: « Le maintien ou la remise aux normes des activités industrielles et entrepôts existants dans
+          les emprises bâties. »
+    note: 'En outre, « dans la mesure où la réalisation du projet d''aménagement portuaire… n''est pas compromise
+      » (p. 158) : affouillements/exhaussements en carrière et aire de stockage de carrière + installations temporaires
+      et exceptionnelles liées au chantier de la Nouvelle Route du Littoral, sous conditions cumulatives (compatibilité
+      milieux, aucune aggravation des risques/pollutions, remise en état). Usages, non mappés en sous-destinations.'
+  A:
+    silence: interdit
+    silence_src: 'Art. A 1, p. 162 : « A l''exception de ceux visés à l''article A 2., sont interdits toutes les
+      utilisations et occupations du sol ainsi que le changement de destination des bâtiments à usage agricole en
+      bâtiment à usage autre qu''agricole, sauf s''ils présentent un caractère architectural ou patrimonial particulier
+      et s''ils sont identifiés au document graphique du règlement (application du 2° de l''article R151-35 du Code
+      de l''urbanisme)… »'
+    sous_destinations:
+      exploitation_agricole:
+        statut: sous_condition
+        condition: bâtiments techniques agricoles, annexes, ouvrages et travaux nécessaires aux besoins d'une exploitation
+          agricole, justifiés (superficie de l'exploitation, nature de l'activité, matériel, bâtiments existants),
+          implantation adaptée au site ; ICPE (autorisation/déclaration) nécessaires à la production agricole et
+          travaux d'amélioration foncière admis
+        article: A 2
+        page_pdf: 163
+        citation: « Les bâtiments techniques agricoles et leurs annexes ainsi que les ouvrages et travaux nécessaires
+          aux besoins d'une exploitation agricole. Ils doivent être justifiés au regard de la superficie de l'exploitation,
+          de la nature de l'activité, du matériel utilisé et des bâtiments existants sur l'exploitation. »
+      logement:
+        statut: sous_condition
+        condition: 'bâtiments d''habitation existants et légaux uniquement : amélioration, extension mesurée et
+          reconstruction après démolition, sur l''emplacement du bâtiment préexistant (sauf contrainte PPR) ; extension
+          et reconstruction dans la limite totale de 120 m² de surface de plancher ; annexes (garage, piscine, cuisine
+          extérieure, abri de jardin…) sous réserve de ne pas compromettre l''activité agricole ou la qualité paysagère'
+        seuil_m2: 120
+        seuil_type: surface_plancher
+        article: A 2
+        page_pdf: 163
+        citation: « Sous réserve de la légalité du bâtiment existant en tant qu'habitation, l'amélioration, l'extension
+          mesurée et la reconstruction après démolition des bâtiments à usage d'habitation. … Les travaux d'extension
+          et de reconstruction peuvent se faire dans la limite totale de 120 m² de surface de plancher »
+      restauration:
+        statut: sous_condition
+        condition: 'au titre de l''agrotourisme : complément de revenu d''une exploitation agricole existante et
+          valorisation de ses produits ; les activités de restauration doivent être réalisées dans les bâtiments
+          à usage d''habitation existants (sous réserve de leur légalité)'
+        article: A 2
+        page_pdf: 163
+        citation: « Les activités de restauration et d'hébergement sur le site de l'exploitation doivent être réalisées
+          dans les bâtiments à usage d'habitation existants (sous réserve de leur légalité) »
+      locaux_bureaux_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs ou services publics,
+          implantation rendue nécessaire pour raisons techniques ou économiques, compatibles avec l'activité agricole/pastorale/forestière,
+          sans atteinte aux espaces naturels et paysages, emprise limitée au strict minimum (mapping via la destination
+          « Équipements d'intérêt collectif et services publics »)
+        article: A 2
+        page_pdf: 163
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics, dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques…
+          Leur emprise est limitée au strict minimum nécessaire »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: idem équipements collectifs/services publics (voir citation) ; en outre, constructions/ouvrages/travaux
+          liés aux réseaux et à la voirie admis dès lors qu'ils s'insèrent dans le milieu environnant
+        article: A 2
+        page_pdf: 163
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics… » ; « Les constructions, ouvrages et travaux liés aux différents réseaux et à la voirie dès lors
+          qu'ils s'insèrent dans le milieu environnant »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: idem équipements collectifs/services publics (voir citation)
+        article: A 2
+        page_pdf: 163
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics, dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques…
+          »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: idem équipements collectifs/services publics (voir citation)
+        article: A 2
+        page_pdf: 163
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics… »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: idem équipements collectifs/services publics (voir citation)
+        article: A 2
+        page_pdf: 163
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics… »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: idem équipements collectifs/services publics (voir citation)
+        article: A 2
+        page_pdf: 163
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics… »
+      lieux_culte:
+        statut: sous_condition
+        condition: idem équipements collectifs/services publics (voir citation)
+        article: A 2
+        page_pdf: 163
+        citation: « Les constructions et installations nécessaires à des équipements collectifs ou à des services
+          publics… »
+    note: 'Agrotourisme (p. 163) : « Les constructions et installations à usage agrotouristique, à l''exception
+      des constructions destinées à l''hébergement… sont admises dans la limite totale de 30 m² de surface de plancher
+      (par type de construction) » — terme non mappable en une sous-destination unique (douteux → non écrit hors
+      restauration, expressément nommée) ; « l''hébergement sur le site de l''exploitation » (gîte/chambre) ambigu
+      entre hebergement et autres_hebergements_touristiques → non mappé. Dans les périmètres de protection rapprochés
+      des forages : interdictions supplémentaires (ICPE, élevages, stockages toxiques, routes revêtues, captages),
+      p. 162. Avis CDPENAF rappelé p. 163 (information).'
+  N:
+    silence: interdit
+    silence_src: 'Art. N 1, p. 170 : « A l''exception de ceux visés à l''article N 2, sont interdits toutes les
+      constructions, ouvrages et travaux. »'
+    sous_destinations:
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: constructions, ouvrages et travaux nécessaires à l'exploitation forestière
+        article: N 2
+        page_pdf: 171
+        citation: « Les constructions, ouvrages et travaux nécessaires à l'exploitation forestière »
+      locaux_techniques_administrations:
+        statut: sous_condition
+        condition: constructions et installations nécessaires à des équipements collectifs, non incompatibles avec
+          l'activité forestière du terrain, sans atteinte aux espaces naturels et paysages (mapping via « équipements
+          collectifs » ; le terme ne cite pas les « services publics »)
+        article: N 2
+        page_pdf: 171
+        citation: « les constructions et installations nécessaires à des équipements collectifs dès lors qu'elles
+          ne sont pas incompatibles avec l'exercice d'une activité forestière du terrain sur lequel elles sont implantées
+          et qu'elles ne portent pas atteinte à la sauvegarde des espaces naturels et des paysages »
+      enseignement_sante_action_sociale:
+        statut: sous_condition
+        condition: idem équipements collectifs (voir citation)
+        article: N 2
+        page_pdf: 171
+        citation: « les constructions et installations nécessaires à des équipements collectifs… »
+      salles_art_spectacles:
+        statut: sous_condition
+        condition: idem équipements collectifs (voir citation)
+        article: N 2
+        page_pdf: 171
+        citation: « les constructions et installations nécessaires à des équipements collectifs… »
+      equipements_sportifs:
+        statut: sous_condition
+        condition: idem équipements collectifs (voir citation)
+        article: N 2
+        page_pdf: 171
+        citation: « les constructions et installations nécessaires à des équipements collectifs… »
+      autres_equipements_public:
+        statut: sous_condition
+        condition: idem équipements collectifs (voir citation)
+        article: N 2
+        page_pdf: 171
+        citation: « les constructions et installations nécessaires à des équipements collectifs… »
+      lieux_culte:
+        statut: sous_condition
+        condition: idem équipements collectifs (voir citation)
+        article: N 2
+        page_pdf: 171
+        citation: « les constructions et installations nécessaires à des équipements collectifs… »
+    note: 'locaux_bureaux_administrations NON mappé : N 2 cite « équipements collectifs » sans « services publics
+      » (contrairement à A 2). Également admis p. 171 (usages/installations, non mappés) : affouillements-exhaussements
+      liés à l''assainissement pluvial ou à l''aménagement paysager ; aménagements légers à vocation touristique
+      et de loisirs ouverts au public, SANS hébergement (points d''arrêts, kiosques, mobilier urbain, terrains de
+      jeux…), hors périmètres PPRT ; panneaux photovoltaïques au sol sous réserve d''étude d''impact favorable ;
+      installations/travaux de gestion du trait de côte et ouvrages contre la mer sous conditions. Défrichements
+      irrecevables en EBC (L.113-1, L.121-27), p. 170.'
+  Nerl:
+    silence: interdit
+    silence_src: 'Sous-secteur de la zone N (caractère, p. 170) ; art. N 1, p. 170 : « A l''exception de ceux visés
+      à l''article N 2, sont interdits toutes les constructions, ouvrages et travaux. » ; p. 172 : « Dans le secteur
+      Nerl, sont admis les aménagements légers suivants, à condition que… »'
+    sous_destinations:
+      exploitation_forestiere:
+        statut: sous_condition
+        condition: à l'exclusion de toute forme d'hébergement, en harmonie avec le site et les constructions existantes
+          ; surface de plancher ET emprise au sol n'excédant pas 50 m² ; localisation/aspect ne dénaturant pas les
+          sites ni les milieux
+        seuil_m2: 50
+        seuil_type: surface_plancher
+        article: N 2 (secteur Nerl)
+        page_pdf: 172
+        citation: « A l'exclusion de toute forme d'hébergement et à condition qu'ils soient en harmonie avec le
+          site et les constructions existantes, les aménagements nécessaires à l'exercice des activités forestières
+          dont à la fois la surface de plancher et l'emprise au sol n'excèdent pas cinquante mètres carrés. »
+    note: 'Le seuil de 50 m² porte cumulativement sur la surface de plancher ET l''emprise au sol (une seule valeur
+      seuil_type possible : surface_plancher retenue, l''emprise est dans la condition). Aménagements légers admis
+      en Nerl p. 172 (usages, non mappés) : cheminements piétonniers/cyclables et sentes équestres ni cimentés ni
+      bitumés, mobilier d''accueil/information, postes d''observation de la faune, sanitaires et postes de secours
+      démontables si fréquentation l''exige ; aires de stationnement indispensables, ni cimentées ni bitumées, sans
+      accroissement des capacités. Le régime général N 1/N 2 s''applique au sous-secteur (le texte ne dit pas «
+      seuls sont admis » pour la liste Nerl).'
