@@ -2025,8 +2025,52 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
         "SELECT payload, computed_at FROM commune_contexte_cache WHERE commune = :c"),
         {"c": commune}).mappings().first()
     if hit:
-        return {**hit["payload"], "cache_calcule_le": hit["computed_at"].isoformat()}
+        # RETOURS-12 O8 — les indicateurs PARTAGÉS avec le tableau des 24 communes (comparable :
+        # permis 5 ans, prix neuf, prix ancien, vélocité, stock · + SRU) sont resservis LIVE depuis
+        # le MÊME moteur (comparateur.raw_rows / commune_contexte_sru) que le tableau. Le cache
+        # nocturne les FIGEAIT → l'utilisateur voyait deux chiffres divergents (ex. St-Denis prix neuf
+        # 4 998 live vs 4 275 cache ; permis 5 ans décalés par la fenêtre glissante). Un seul moteur,
+        # deux écrans d'accord. Les blocs lourds/statiques (population, risques, ANRU…) restent cachés.
+        return {**_rafraichir_partages(db, commune, dict(hit["payload"])),
+                "cache_calcule_le": hit["computed_at"].isoformat()}
     return {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+
+
+def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
+    """RETOURS-12 O8 — réinjecte dans le payload caché les indicateurs PARTAGÉS avec le comparateur,
+    calculés LIVE (source unique raw_rows + commune_contexte_sru) → la fiche et le tableau ne peuvent
+    plus diverger. Idempotent, sans effet sur les blocs statiques."""
+    try:
+        from .fiche_commune import comparable as _comparable
+        live = _comparable(db, commune)
+        if live is not None:
+            payload["comparable"] = live
+            pb = payload.get("permis_bloc")
+            if isinstance(pb, dict):
+                payload["permis_bloc"] = {**pb, "permis_5a": live.get("permis_5a")}
+        # RETOURS-12 O8 — le SRU se lit par INSEE (comme le tableau), plus par NOM : le join par nom
+        # était sensible à la casse (« La Plaine-Des-Palmistes » en base SRU vs « …-des-… » côté parcels)
+        # → la fiche perdait le SRU d'une commune que le tableau, lui, servait. Repli nom si INSEE absent.
+        insee = payload.get("insee")
+        # RETOURS-12 O8 — le DÉFICIT (objectif − taux, en points) est calculé EN SQL (numeric), la MÊME
+        # arithmétique que la colonne « Déficit SRU (pts) » du tableau — sinon un arrondi float au point
+        # 0,05 (Saint-Louis 5,35) faisait diverger la fiche (5,4) du tableau (5,3). Servi, plus recalculé côté front.
+        # MÊME arithmétique que comparateur.py : greatest(...) EN SQL (numeric), puis round(float(x), 1)
+        # EN PYTHON — pas round() SQL (half-up) qui redonnerait 5,4 là où le tableau donne 5,3.
+        _sru_sql = "SELECT *, greatest(objectif_pct - taux_lls, 0) AS deficit_brut FROM commune_contexte_sru WHERE "
+        sru = None
+        if insee:
+            sru = db.execute(text(_sru_sql + "insee = :i"), {"i": insee}).mappings().first()
+        if not sru:
+            sru = db.execute(text(_sru_sql + "lower(commune) = lower(:c)"), {"c": commune}).mappings().first()
+        if sru:
+            d = dict(sru); d.pop("importe_le", None)
+            db_ = d.pop("deficit_brut", None)
+            d["deficit"] = round(float(db_), 1) if db_ is not None else None
+            payload["sru"] = d
+    except Exception:  # noqa: BLE001 — le rafraîchissement ne doit jamais casser la fiche
+        _FICHE_LOG.exception("fiche commune · rafraîchissement des indicateurs partagés (O8) impossible")
+    return payload
 
 
 # FICHE-COMMUNE-2 (C2) — SIGNAUX NOMMÉS. Le badge « signal : prudence » (retiré) venait de
@@ -2090,7 +2134,8 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
         r = db.execute(text(sql), p).mappings().first()
         return dict(r) if r else None
 
-    sru = _one("SELECT * FROM commune_contexte_sru WHERE commune = :c", {"c": commune})
+    # RETOURS-12 O8 — casse-insensible (« La Plaine-Des-Palmistes » en base SRU vs « …-des-… » parcels).
+    sru = _one("SELECT * FROM commune_contexte_sru WHERE lower(commune) = lower(:c)", {"c": commune})
     insee_log = _one("SELECT * FROM commune_insee_logement WHERE commune = :c", {"c": commune})
     anru = [dict(r) for r in db.execute(text(
         "SELECT nom, interet, code_qpv, source_nom, source_url FROM anru_quartiers"

@@ -261,7 +261,9 @@ export interface ContexteCommune {
   }
   // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
   classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null
-  sru: { taux_lls: number; objectif_pct: number; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
+  // RETOURS-12 O8 — `deficit` (objectif − taux, en points) servi par le backend, MÊME arithmétique que
+  // la colonne « Déficit SRU (pts) » du tableau des 24 communes (jamais recalculé au front → jamais divergent).
+  sru: { taux_lls: number; objectif_pct: number; deficit?: number | null; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
   anru: { nom: string; interet: string; code_qpv: string; source_nom: string; source_url: string }[]
   qpv: { nom: string; code: string }[]
   plh: { periode: string; statut: string; obj_logements_an: number | null; part_sociale_pct: number | null; refs: { doc: string; url?: string; page?: string | number }[] } | null

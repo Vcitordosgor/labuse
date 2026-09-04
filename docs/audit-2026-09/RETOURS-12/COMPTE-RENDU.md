@@ -206,6 +206,38 @@ pareil, donc pré-existant, hors périmètre C3.
 **Vérifs Lot O bloc 2** : tsc 0 · build OK · suite frontend 169/169 (+EtudierBien/VeillePromoteurs réécrits) ·
 backend `test_retours12_o4_plu` 3/3 + `test_retours12_c2_tcsp` 3/3 · recette navigateur chaque outil · golden
 intact (0 fichier scoring). Les 7 travaux O1-O7 sont livrés (O2 en commit dédié).
-## LOT O bloc 3 — outils O8-O13 (commit 4) — À FAIRE
+## LOT O bloc 3 — outils (O8-O13)
+
+- **O8 — « Communes » : SRU concordant + audit des 7 indicateurs — FAIT (priorité haute).**
+  **Cause racine mesurée** : la fiche commune est servie d'un **cache nocturne** (`commune_contexte_cache`,
+  calculé la nuit) qui FIGEAIT les indicateurs partagés avec le tableau des 24 communes, lequel les calcule
+  LIVE (`comparateur.raw_rows`) → deux chiffres divergents. **Audit empirique des 7 indicateurs × 24
+  communes** (tableau vs fiche), AVANT correction :
+
+  | Indicateur | Moteur tableau | Moteur fiche | Écarts /24 (avant) | Après |
+  |---|---|---|---|---|
+  | Parcelles à potentiel (stock) | `raw_rows.stock` (p_score_v2 run) | `comparable.stock` (idem) | 0 | 0 |
+  | Instruction (vélocité) | `raw_rows.velocite` (m10) | `comparable.delai` (idem) | 0 | 0 |
+  | Permis 5 ans | `raw_rows.permis` (SITADEL) | cache figé | **23** | 0 |
+  | Déficit SRU | `commune_contexte_sru` (SQL) | cache figé + join NOM | **2** | 0 |
+  | €/m² ancien | `raw_rows.prix_ancien` | `comparable` (idem) | 0 | 0 |
+  | €/m² neuf | `raw_rows.prix_neuf` (live VEFA) | cache figé | **10** | 0 |
+  | €/m² terrain nu | `ligne2_terrain_zone` | idem (fiche Marché) | 0 | 0 |
+
+  **Corrections** (un seul moteur, live) : (1) l'endpoint fiche resert les indicateurs PARTAGÉS
+  (`comparable` : permis/neuf/ancien/vélocité/stock + SRU) **live** via `_rafraichir_partages` (les blocs
+  lourds restent cachés) → permis & neuf concordent (ex. St-Denis neuf 4 998 des deux côtés, était
+  4 998/4 275). (2) **SRU** : le join se faisait par **NOM sensible à la casse** (« La Plaine-**Des**-
+  Palmistes » en base SRU vs « …-**des**-… » côté parcels) → la fiche perdait le SRU d'une commune ;
+  corrigé (lecture par INSEE + repli nom insensible à la casse). (3) **SRU déficit** servi par le backend
+  avec la MÊME arithmétique que le tableau (`greatest(obj−taux,0)` SQL puis `round(float,1)`) — plus de
+  recalcul float au front qui donnait 5,4 là où le tableau donne 5,3 (Saint-Louis). (4) **O8.1** : la fiche
+  NOMME explicitement « taux de logement social (SRU) » **et** affiche « — déficit N pts » (la grandeur du
+  tableau) : fini « 18 % » vs « 6,7 » qui semblaient se contredire. **Audit final : 0 écart sur les 7 × 24.**
+  Les « — » restent « — » (aucun zéro inventé). Recette : fiche « taux… — déficit 5,3 pts »
+  (capture `O8-fiche-commune-sru`). Tests `test_retours12_o8_sru.py` (déficit même arithmétique · join
+  casse-insensible · SRU absent → None).
+
+- **O9 — À FAIRE** · **O10 — À FAIRE** · **O11 — À FAIRE** · **O12 — À FAIRE** · **O13 — À FAIRE**
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
