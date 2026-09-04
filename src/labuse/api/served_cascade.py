@@ -51,13 +51,22 @@ def served_cascade_lines(db: Session, idu: str, run: str | None = None) -> list[
 
 
 #: rattachement couche → onglet. SOURCE UNIQUE (app.py importe ces deux-là — plus de duplication).
+# RETOURS-11F4 (F0 « un fait, une section ») :
+#  - `acces` quitte « marche » → pseudo-onglet « reseaux » : le VERDICT d'accès vit uniquement dans
+#    la section « Réseaux et accès » (qui lit `acces` via f.lines), plus dans Marché (doublon F0).
+#    Aucune section ne rend `ongletLines('reseaux')` → ces lignes ne réapparaissent nulle part ailleurs.
+#  - `friche` + `ocs_ge` (occupation du sol / artificialisation ZAN) quittent « marche » → « regles » :
+#    rapatriées dans Urbanisme (cible F4 : occupation/ZAN/friche). Marché ne porte plus que du PRIX.
+#  - `sup` (assiettes de SUP — PM1/AC1/I4/EL7…) rejoint « risques » (défaut « regles » sinon) :
+#    les servitudes d'utilité publique sont rapatriées d'Urbanisme vers « Risques et protections » (F6).
 _ONGLET = {
     "regles": {"zonage_plu_gpu", "prescription_plu", "foncier_public", "emprise_lineaire",
-               "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique"},
+               "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique",
+               "friche", "ocs_ge"},
     "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
-                "trait_de_cote", "abf", "ens", "eau", "bruit_route", "cinquante_pas"},
-    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region", "ocs_ge",
-               "friche", "acces"},
+                "trait_de_cote", "abf", "ens", "eau", "bruit_route", "cinquante_pas", "sup"},
+    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region"},
+    "reseaux": {"acces"},
     "proprio": {"proprietaire", "age_dirigeant", "bodacc", "assemblage"},
 }
 _LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}

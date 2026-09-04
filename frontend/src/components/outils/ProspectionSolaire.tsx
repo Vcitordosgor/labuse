@@ -1,6 +1,8 @@
 /**
  * Outil « Prospection solaire » — données solaire/piscines de `parcel_solar` / `parcel_equipements`,
- * GELÉES au 11/07/2026 (PVGIS v5.3 SARAH3, RGE ALTI, BD ORTHO 20 cm 2025, détection FLAIR). RGPD :
+ * GELÉES au 11/07/2026 (PVGIS v5.3 SARAH3, RGE ALTI, Ortho Express RVB 20 cm 2025, détection FLAIR).
+ * RETOURS-11F4 C6 : « BD ORTHO 20 cm 2025 » corrigé — le seul millésime 2025 servi au 974 par l'IGN est
+ * l'Ortho Express RVB (GetTile vérifié) ; « BD ORTHO 2025 » n'existe pas au 974. RGPD :
  * aucune donnée nominative — des parcelles et des caractéristiques, jamais des personnes.
  *
  * Mandat SOLAIRE (refonte 13 outils) — DEUX MÉTIERS, DEUX ENTRÉES (fini l'écran unique illisible) :
