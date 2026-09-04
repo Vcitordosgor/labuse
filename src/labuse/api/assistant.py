@@ -339,8 +339,11 @@ def explain_parcel(fiche: dict, *, timeout: float = 25.0) -> dict[str, Any]:
     facts = assistant_facts(fiche)
     if not core.has_key():
         return _no_key(facts)
-    # RETOURS-7 Z7 — défaut LU du registre par usage (model_for) ; l'override historique ENV_MODEL reste prioritaire.
-    model = os.environ.get(ENV_MODEL, "").strip() or core.model_for("explain")
+    # RETOURS-7 Z7 — défaut LU du registre par usage (model_for) ; l'override historique ENV_MODEL reste
+    # prioritaire. RETOURS-12 A1 — mais il passe DÉSORMAIS par check_model : un modèle retiré posé dans
+    # cet env (le vieux chemin qui contournait la garde) est refusé BRUYAMMENT, plus de dégradé muet.
+    _env_model = os.environ.get(ENV_MODEL, "").strip()
+    model = core.check_model(_env_model) if _env_model else core.model_for("explain")
     # M-T V1 — couche 2 (ancrage mécanique des chiffres). Le contexte devient STRUCTURÉ (dict `facts`)
     # car validate=True l'exige ; le SYSTEM impose déjà « UNIQUEMENT du JSON fourni ». require_sources
     # =False (ce prompt n'émet pas de marqueurs ⟨src:…⟩) ; seule la couche 2 s'applique.

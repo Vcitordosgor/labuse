@@ -303,4 +303,37 @@ recette navigateur chaque outil · golden intact (0 fichier scoring). O8-O13 liv
   9 projets actifs (frais) — tyty, LABUSTRE, JC, STEPH, LABUSE TEST 2… — sans rechargement de page.
 
 **Vérifs Lot J** : tsc 0 · build OK · suite frontend 169/169 · recette navigateur. Ne pas merger.
-## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
+## LOT A — IA (A1)
+
+- **A1 — l'IA rebranchée partout — FAIT.** **Inventaire d'abord** (`INVENTAIRE-A1-ia.md`) : 17 surfaces IA,
+  TOUTES via le point d'entrée UNIQUE `core.complete()` ; modèle par `ai_models.model_for(kind)` ; clé par
+  `ANTHROPIC_API_KEY` (source unique `has_key()`). **Cause du dégradé — les 3 priorités vérifiées** :
+  (1) **version client** : `anthropic==0.116.0` épinglé EXACT ET installé (conda + .venv) — le piège
+  « 1.1.0 refuse temperature → dégradé muet » était le VPS (corrigé H1 27/08 : pin + `test_anthropic_pin`
+  + vérif `deploy_vps.sh`) ; localement `/ia/status` = anthropic, raison null (l'IA marche) ;
+  (2) **source unique du modèle** : `ai_models.py` fail-closed (`RETIRED_MODELS` + `check_model` au boot
+  ET à l'appel, visible au dashboard admin) ; (3) **clé** : lue d'une source unique ; le VPS (VP-003, clé
+  LIVE invalide) reste à poser par Vic — le code le DIT honnêtement quand elle est refusée.
+  **Corrections apportées** : (a) le message client du Copilote (`erreur_infra()`) ne dit plus « réessayez
+  dans un instant » quand la cause est STRUCTURELLE (clé/modèle/permissions) — il nomme la cause et signale
+  que l'équipe est alertée (incident visible admin via `/ia/status` → `provider_status`) ; passager →
+  « réessayez » conservé ; (b) l'override d'env `LABUSE_ASSISTANT_MODEL`, qui CONTOURNAIT `check_model`
+  (un modèle retiré y serait passé en dégradé muet), passe désormais par la garde (A1.3 : plus de modèle
+  env-seul hors source unique). **Verrou anti-invention INTACT** : grounding liste blanche + `validate_output`
+  (sources obligatoires + chiffres vérifiés) — on rebranche, on n'assouplit pas. Tests
+  `test_retours12_a1_ia.py` (message structurel/passager · override guardé · modèle retiré refusé · pin 0.116).
+
+---
+
+# CASE À COCHER — les 29 travaux (état final)
+
+**Transversal (Lot T · `fec60ff7` + `cbbf1dab`)** — T1 ✓ · T2 ✓ · T3 ✓ · T4 ✓ · T5 ✓ · T6 ✓ · T7 ✓ (règle + libellés ; refonte structurelle Faisabilité en O2)
+**Carte (Lot C · `bb883e07` + `ca026e73`)** — C1 ✓ (HT ; MT sans source, documentée) · C2 ✓ (BAOBAB, rouvert) · C3 ✓ · C4 ✓ · C5 ✓ · C6 ✓
+**Outils bloc 2 (`9c9c27cb` `4695c0be` `18a89c4e` `78a65f1a` `8711e31a` `6fd4f2fd`)** — O1 ✓ · O2 ✓ · O3 ✓ · O4 ✓ · O5 ✓ · O6 ✓ · O7 ✓ (simple/double pente non dérivable, documentée)
+**Outils bloc 3 (`1df2f5e0` `5b5730e2` `5e1f856c` `ea6895b5`)** — O8 ✓ · O9 ✓ · O10 ✓ · O11 ✓ · O12 ✓ · O13 ✓
+**Projets (Lot J · `d2c155e4`)** — J1 ✓ · J2 ✓
+**IA (Lot A)** — A1 ✓
+
+**29 / 29 traités** (aucun « pas fait » sans motif : C1-MT et C2-source-brute documentés avec la mesure ;
+O7 simple/double pente non dérivable documentée). Branche `fix/retours-12`, jamais mergée, aucun `git add
+-A`, aucun sous-agent sur git. Inventaires T1/T2/T5/T7/A1 + diagnostic O2 + audit O8 + captures joints.
