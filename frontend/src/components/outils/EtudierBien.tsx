@@ -32,11 +32,15 @@ export function EtudierBien() {
   // Verdict UNIQUE à bascule : 'calibree' (constat servi) | 'hypotheses' (votre calculette).
   const [verdictMode, setVerdictMode] = useState<'calibree' | 'hypotheses'>('calibree')
   const [hypResult, setHypResult] = useState<CalcResult | null>(null)   // remonté par la calculette embarquée
+  // RETOURS-12 O2 — le raisonnement d'OPÉRATION (bilan, charge, marge) est un SECOND niveau, ouvert
+  // par un geste explicite. L'accueil de premier niveau est descriptif et neutre : jamais un nombre
+  // négatif ni un verdict d'opération que l'utilisateur n'a pas demandé.
+  const [analyseOuverte, setAnalyseOuverte] = useState(false)
 
   const m = useMutation({
     mutationFn: (arg: { q: string; id: string | null }) => scoreurAdresse(arg.q, null, arg.id, true),
   })
-  const lancer = (q: string, id: string | null) => { setVerdictMode('calibree'); setHypResult(null); m.mutate({ q, id }) }
+  const lancer = (q: string, id: string | null) => { setVerdictMode('calibree'); setHypResult(null); setAnalyseOuverte(false); m.mutate({ q, id }) }
 
   // PORTE (fiche / copilote) : un IDU pré-rempli → on résout le constat directement, sans saisie.
   useEffect(() => {
@@ -64,8 +68,11 @@ export function EtudierBien() {
   const chargeCourante = verdictMode === 'calibree' ? (cal?.central ?? null) : (hypResult?.central ?? null)
   const parM2Courant = verdictMode === 'calibree' ? (cal?.par_m2_terrain ?? null) : (hypResult?.par_m2_terrain ?? null)
   const chargeNeg = chargeCourante != null && chargeCourante < 0
-  const ecart = prix != null && chargeCourante != null ? prix - chargeCourante : null   // >0 : prix dépasse la charge
-  const provenanceCourt = verdictMode === 'calibree' ? 'la charge calibrée' : 'vos hypothèses'
+  // RETOURS-12 O2 — « ce qu'une opération pourrait payer » ne descend JAMAIS sous 0 : une charge
+  // négative signifie « rien pour le terrain », pas « moins que rien ». L'écart au prix demandé est
+  // COMPARÉ à cette valeur plancher (jamais un déficit cumulé prix + |charge| illisible).
+  const payable = chargeCourante == null ? null : Math.max(0, chargeCourante)
+  const ecart = prix != null && payable != null ? prix - payable : null   // >0 : prix dépasse ce qu'une opération peut payer
 
   return (
     <div data-etudier-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -117,113 +124,126 @@ export function EtudierBien() {
               </div>
               <p className="mt-0.5 text-[10.5px] text-txt-mut">{d.commune} · {fmtM2(d.surface_m2)} · <span className="font-mono">{d.idu}</span></p>
 
-              {/* LE CONSTAT — aux hypothèses CALIBRÉES (bilan servi par secteur, non réglable) */}
+              {/* ── PREMIER NIVEAU — DESCRIPTIF, sans hypothèse ni argent (O2/T7) : ce que porte la
+                  parcelle + les repères de marché. Utile à TOUS les métiers (agence, notaire,
+                  architecte, particulier), pas seulement à un promoteur. Aucun nombre négatif, aucun
+                  verdict d'opération à l'accueil — le raisonnement d'opération est un second niveau. ── */}
               <div data-etudier-constat className="mt-2 border-t border-line pt-2">
                 {c?.sourced && (
-                  <p className="text-[11px] text-txt-dim">
-                    {/* mandat point 3 : 123 m² est une SHAB, pas une SDP — libellé corrigé. O2-5 : périmètre. */}
-                    LA BUSE (sourcé) : SHAB vendable <b className="tnum text-txt">{fmtInt(c.sourced.shab_vendable_m2)} m²</b>
-                    <span className="text-txt-dim"> ({PERIM_POTENTIEL})</span>
-                    {c.sourced.prix_sortie_median != null && <> · prix de sortie bâti <b className="tnum text-txt">{fmtInt(c.sourced.prix_sortie_median)} €/m²</b>{c.sourced.prix_neuf_label && <span className="text-txt-dim"> ({c.sourced.prix_neuf_label})</span>}</>}
-                    {c.sourced.terrain_m2 != null && <> · terrain <b className="tnum text-txt">{fmtInt(c.sourced.terrain_m2)} m²</b></>}
-                  </p>
+                  <div data-etudier-porte className="flex flex-col gap-0.5 text-[11.5px] leading-snug text-txt">
+                    <p className="text-[11px] font-semibold text-txt-hi">Ce que porte la parcelle</p>
+                    {/* mandat point 3 : c'est une SHAB (habitable), pas une SDP — libellé exact. */}
+                    <p>Surface habitable constructible <b className="tnum text-txt-hi">{fmtInt(c.sourced.shab_vendable_m2)} m²</b>
+                      <span className="text-txt-dim"> ({PERIM_POTENTIEL})</span>
+                      {c.sourced.terrain_m2 != null && <> · terrain <b className="tnum text-txt">{fmtInt(c.sourced.terrain_m2)} m²</b></>}.</p>
+                  </div>
                 )}
 
                 {/* ALERTE DE COHÉRENCE — résiduel net du bâti vs SHAB vendue (relié à Pièges & risques). */}
                 {alerteResiduel && (
                   <div data-etudier-residuel className="mt-1.5 rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-2.5 py-1.5 text-[10.5px] leading-snug text-st-creuser">
                     <b>⚠ Bâti existant.</b> {PERIM_RESIDUEL} : <b className="tnum">{fmtInt(residuel)} m²</b> (Pièges &amp; risques) —
-                    la SHAB vendable ci-dessus est un {PERIM_POTENTIEL}.{' '}
+                    la SHAB constructible ci-dessus est un {PERIM_POTENTIEL}.{' '}
                     <button data-etudier-residuel-lien onClick={() => setModule('risques')}
                       className="font-medium text-mint hover:underline">voir Pièges &amp; risques →</button>
                   </div>
                 )}
 
-                {cal ? (
-                  <>
-                    {/* BASCULE — un seul verdict à la fois : la bascule change tout le bloc. */}
-                    <div data-etudier-bascule className="mt-2 flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
-                      {([['calibree', 'Calibrées LABUSE'], ['hypotheses', 'Vos hypothèses']] as const).map(([k, lbl]) => (
-                        <button key={k} data-etudier-mode={k} onClick={() => setVerdictMode(k)}
-                          className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${verdictMode === k ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>
-                          {lbl}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* LE VERDICT UNIQUE — charge (négative en rouge, jamais écrêtée) + écart.
-                        RETOURS-11 R7 — le liseré vert et la jauge horizontale sont retirés ; le bloc a une
-                        hauteur minimale (min-h) pour ne PLUS sauter quand le résultat change (charge ±,
-                        écart apparaît/disparaît). Fond neutre (surface-2), plus de bordure de couleur. */}
-                    {chargeCourante == null ? (
-                      <p className="mt-2 text-[11px] text-txt-mut">Calcul de vos hypothèses…</p>
-                    ) : (
-                      <div data-etudier-verdict className="mt-2 flex min-h-[104px] flex-col rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-                        <p className="text-[10px] uppercase tracking-wide text-txt-mut">{verdictMode === 'calibree' ? 'Hypothèses calibrées LABUSE' : 'Selon vos hypothèses'}</p>
-                        <p className="mt-0.5">
-                          <b data-etudier-charge className={`num-key text-lg ${chargeNeg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(chargeCourante)}</b>
-                          <span className="ml-1.5 text-[11px] text-txt-mut">de charge foncière{parM2Courant != null && <> ≈ {fmtInt(parM2Courant)} €/m² de terrain</>}</span>
-                        </p>
-                        {/* RETOURS-12 T7 — le résultat est présenté comme celui d'UN scénario d'opération
-                            aux hypothèses affichées, jamais comme un verdict sur la parcelle elle-même.
-                            Négatif : on le dit sobrement (« ne dégage rien pour le terrain ») sans conclure
-                            que la parcelle « ne vaut rien ». */}
-                        <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">
-                          {chargeNeg
-                            ? 'À ces hypothèses, une opération de ce type ne dégage rien pour le terrain — c’est le résultat d’un scénario, pas la valeur de la parcelle.'
-                            : 'Ce qu’une opération de ce type pourrait payer le terrain, à ces hypothèses.'}
-                        </p>
-                        {ecart != null && (
-                          <p data-etudier-ecart className={`mt-1.5 text-[11px] font-medium ${ecart >= 0 ? 'text-st-ecartee' : 'text-mint'}`}>
-                            {ecart >= 0
-                              ? <>Le prix demandé <b>{fmtEur(prix)}</b> dépasse de <b>{fmtEurCompact(ecart)}</b> ce que {provenanceCourt} supporte.</>
-                              : <>Le prix demandé <b>{fmtEur(prix)}</b> laisse une marge de <b>{fmtEurCompact(-ecart)}</b> sous {provenanceCourt}.</>}
-                          </p>
-                        )}
-                      </div>
+                {/* REPÈRES DE MARCHÉ — des FAITS à côté, jamais un verdict (O2 point 2). */}
+                {(c?.sourced?.prix_sortie_median != null || tz) && (
+                  <div className="mt-1.5 flex flex-col gap-0.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-dim">
+                    <p className="text-[10px] uppercase tracking-wide text-txt-mut">Repères de marché</p>
+                    {c?.sourced?.prix_sortie_median != null && (
+                      <p>Prix de sortie du neuf dans le secteur : <b className="tnum text-txt">{fmtInt(c.sourced.prix_sortie_median)} €/m²</b>{c.sourced.prix_neuf_label && <span> ({c.sourced.prix_neuf_label})</span>}.</p>
                     )}
-
-                    {/* RETOURS-12 T7 — français d'abord, terme technique entre parenthèses. */}
-                    {cal.ca_central != null && (
-                      <p className="mt-1.5 text-[11px] text-txt-dim">Chiffre d’affaires visé (CA) <b className="tnum text-txt-mut">{fmtEurCompact(cal.ca_central)}</b>{vendable != null && <> sur {fmtInt(vendable)} m² vendables</>}.</p>
-                    )}
-
-                    {/* PRIX DEMANDÉ (saisi à la main) — pilote l'écart du verdict, quel que soit le mode. */}
-                    <div className="mt-2 flex items-end gap-2">
-                      <label className="flex-1 text-[10.5px] text-txt-mut">
-                        Prix demandé du terrain
-                        <input data-etudier-prix type="number" min={0} value={prix ?? ''} placeholder="si connu"
-                          onChange={(e) => setPrix(e.target.value === '' ? null : Number(e.target.value))}
-                          title="Le prix affiché/demandé, saisi à la main — jamais scrapé."
-                          className="mt-0.5 w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-                      </label>
-                    </div>
-
-                    {/* Référentiel marché — terrain nu de zone (constat ET calculette lisent le même). */}
                     {tz && (
-                      <p data-etudier-terrain-zone className="mt-1.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-dim">
-                        Terrain nu dans la zone : <b className="tnum text-txt">{fmtInt(tz.eur_m2)} €/m²</b> <span className="text-txt-dim">(DVF terrains, fiabilité {tz.fiabilite})</span>.
-                        {parM2Courant != null && (parM2Courant >= tz.eur_m2 ? ' Votre charge couvre le prix du marché.' : ' Votre charge est sous le prix du marché — négociation ou densité à retrouver.')}
-                      </p>
+                      <p data-etudier-terrain-zone>Terrain nu dans la zone : <b className="tnum text-txt">{fmtInt(tz.eur_m2)} €/m²</b> (DVF terrains, fiabilité {tz.fiabilite}).</p>
                     )}
+                  </div>
+                )}
 
-                    {/* LES RÉGLAGES — la calculette (coût, marge, VRD) apparaît quand on passe en « Vos
-                        hypothèses » ; elle rend SES réglages et HISSE sa charge dans le verdict ci-dessus
-                        (hideResult → plus de second bandeau). */}
-                    {verdictMode === 'hypotheses' && resultIdu && (
-                      <div className="mt-2 border-t border-line pt-2">
-                        <Calculette idu={resultIdu} hideSource hideResult prixDemandeExterne={prix} onResult={setHypResult} />
+                {/* ── SECOND NIVEAU — le raisonnement d'OPÉRATION (bilan, charge, marge), OUVERT par un
+                    geste explicite (O2 point 3). Jamais l'accueil. ── */}
+                {cal ? (
+                  !analyseOuverte ? (
+                    <button data-etudier-analyser onClick={() => setAnalyseOuverte(true)}
+                      className="mt-2.5 w-full rounded-lg border border-mint/40 bg-mint/[0.06] py-1.5 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
+                      Analyser une opération sur cette parcelle →
+                    </button>
+                  ) : (
+                    <div data-etudier-operation className="mt-2.5 border-t border-line pt-2">
+                      <div className="mb-1 flex items-center justify-between">
+                        <p className="text-[11px] font-semibold text-txt-hi">Analyse d’une opération <span className="font-normal text-txt-dim">— selon des hypothèses</span></p>
+                        <button data-etudier-fermer-analyse onClick={() => setAnalyseOuverte(false)} className="text-[10.5px] text-txt-mut hover:text-txt">masquer</button>
                       </div>
-                    )}
-                  </>
+
+                      {/* BASCULE — un seul verdict à la fois : la bascule change tout le bloc. */}
+                      <div data-etudier-bascule className="mt-1 flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
+                        {([['calibree', 'Calibrées LABUSE'], ['hypotheses', 'Vos hypothèses']] as const).map(([k, lbl]) => (
+                          <button key={k} data-etudier-mode={k} onClick={() => setVerdictMode(k)}
+                            className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${verdictMode === k ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* LE CHIFFRE DE TÊTE — ce qu'une opération POURRAIT PAYER (jamais < 0) + écart au
+                          prix demandé, COMPARÉ jamais additionné (O2 points 4-5). */}
+                      {chargeCourante == null ? (
+                        <p className="mt-2 text-[11px] text-txt-mut">Calcul de vos hypothèses…</p>
+                      ) : (
+                        <div data-etudier-verdict className="mt-2 flex min-h-[104px] flex-col rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-wide text-txt-mut">{verdictMode === 'calibree' ? 'Hypothèses calibrées LABUSE' : 'Selon vos hypothèses'}</p>
+                          <p className="mt-0.5">
+                            <b data-etudier-charge className={`num-key text-lg ${chargeNeg ? 'text-txt-dim' : 'text-mint'}`}>{fmtEurCompact(payable)}</b>
+                            <span className="ml-1.5 text-[11px] text-txt-mut">{chargeNeg ? 'que peut payer une opération pour ce terrain' : <>que peut payer une opération pour ce terrain{parM2Courant != null && parM2Courant > 0 && <> ≈ {fmtInt(parM2Courant)} €/m²</>}</>}</span>
+                          </p>
+                          {/* T7 — résultat d'UN scénario aux hypothèses, jamais un verdict sur la parcelle. */}
+                          <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">
+                            {chargeNeg
+                              ? 'À ces hypothèses, une opération de ce type ne dégage rien pour le terrain — c’est le résultat d’un scénario, pas la valeur de la parcelle.'
+                              : 'Ce qu’une opération de ce type pourrait payer le terrain, à ces hypothèses.'}
+                          </p>
+                          {ecart != null && (
+                            <p data-etudier-ecart className={`mt-1.5 text-[11px] font-medium ${ecart > 0 ? 'text-st-ecartee' : 'text-mint'}`}>
+                              Prix demandé <b>{fmtEur(prix)}</b> · une opération pourrait en payer <b>{fmtEurCompact(payable)}</b> · <span className="text-txt-mut">écart</span> <b>{fmtEurCompact(Math.abs(ecart))}</b>{ecart < 0 ? ' en votre faveur' : ''}.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* T7 — français d'abord, terme technique entre parenthèses. */}
+                      {cal.ca_central != null && (
+                        <p className="mt-1.5 text-[11px] text-txt-dim">Chiffre d’affaires visé (CA) <b className="tnum text-txt-mut">{fmtEurCompact(cal.ca_central)}</b>{vendable != null && <> sur {fmtInt(vendable)} m² vendables</>}.</p>
+                      )}
+
+                      {/* PRIX DEMANDÉ (saisi à la main) — pilote l'écart, comparé jamais additionné. */}
+                      <div className="mt-2 flex items-end gap-2">
+                        <label className="flex-1 text-[10.5px] text-txt-mut">
+                          Prix demandé du terrain
+                          <input data-etudier-prix type="number" min={0} value={prix ?? ''} placeholder="si connu"
+                            onChange={(e) => setPrix(e.target.value === '' ? null : Number(e.target.value))}
+                            title="Le prix affiché/demandé, saisi à la main — jamais scrapé."
+                            className="mt-0.5 w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+                        </label>
+                      </div>
+
+                      {/* LES RÉGLAGES — la calculette apparaît en « Vos hypothèses » ; hisse sa charge ci-dessus. */}
+                      {verdictMode === 'hypotheses' && resultIdu && (
+                        <div className="mt-2 border-t border-line pt-2">
+                          <Calculette idu={resultIdu} hideSource hideResult prixDemandeExterne={prix} onResult={setHypResult} />
+                        </div>
+                      )}
+                      <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">Estimé — ni un prix ni une promesse ; l’analyse d’opération repose sur des hypothèses (calibrées LABUSE ou les vôtres). Même moteur que le document financier.</p>
+                    </div>
+                  )
                 ) : (
-                  <p className="mt-1.5 text-[11px] leading-snug text-st-creuser">
+                  <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
                     {c?.motif === 'prix_sortie_non_calculable'
-                      ? 'Prix de sortie non calculable ici (commune à dominante sociale) — charge foncière non chiffrée. Le verdict et les faits restent servis.'
-                      : 'Capacité constructible non résolue pour cette parcelle (zone non calibrée / non constructible) — charge foncière non calculable.'}
+                      ? 'Analyse d’opération non chiffrable ici (commune à dominante sociale, prix de sortie non calculable) — les faits ci-dessus et la fiche restent servis.'
+                      : 'Analyse d’opération non disponible (capacité constructible non résolue : zone non calibrée / non constructible) — les faits ci-dessus et la fiche restent servis.'}
                   </p>
                 )}
-                <p className="mt-1 text-[9px] leading-snug text-txt-dim">Estimé — ni un prix ni une promesse ; charge « aux hypothèses calibrées » = bilan par secteur (méthode documents). Réglez vos propres hypothèses via la bascule.</p>
               </div>
 
               {resultIdu && (

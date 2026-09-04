@@ -125,7 +125,30 @@ navigateur à 3 zooms · golden intact (0 fichier scoring). PIÈGE noté : le to
 peut ne pas re-render sur un double-clic programmatique rapide (artefact de recette headless du tiroir
 repliable) — le fetch et le rendu sont corrects en clic normal (prouvé) ; PPR non modifié se comporte
 pareil, donc pré-existant, hors périmètre C3.
-## LOT O bloc 2 — outils O1-O7 (commit 3) — À FAIRE
+## LOT O bloc 2 — outils (O1-O7)
+
+- **O2 — « Faisabilité / Étudier un bien » retapée — FAIT (commit dédié).** Diagnostic écrit AVANT le
+  code (`DIAGNOSTIC-O2-faisabilite.md`, ancré sur une parcelle réelle) : les −219 123 € = charge foncière
+  du bilan à rebours `CA×coef − construction − VRD` (négative car la VRD, proportionnelle au terrain,
+  mange le solde) ; −135 €/m² = charge/terrain ; 526 k€ = shab_vendable × prix_sortie ; 123 m² =
+  shab_vendable (faisabilité). **Hypothèse du mandat CONFIRMÉE** : le prix saisi était SOUSTRAIT d'une
+  charge déjà négative (`marge_a_ce_prix = charge − prix` = −219 − 500 = **−719 k€**), exact mais illisible.
+  **Refonte livrée** (`EtudierBien.tsx`) : (1) premier niveau DESCRIPTIF (« Ce que porte la parcelle » :
+  SDP constructible, terrain) + repères de marché (prix de sortie, terrain nu de zone) — **aucun nombre
+  négatif, aucun verdict d'opération à l'accueil** ; (2) le raisonnement d'opération (bilan, charge,
+  marge, calculette) derrière un geste explicite **« Analyser une opération sur cette parcelle → »** ;
+  (3) chiffre de tête = ce qu'une opération **pourrait payer, plancher 0** (jamais négatif) ; (4) prix
+  **COMPARÉ jamais additionné** : « Prix demandé 500 000 € · une opération pourrait en payer 0 € · écart
+  500 k€ ». **Point 8 (123 vs 127)** : mesuré — tous les consommateurs (écran, Flash, PDF) lisent le
+  MÊME `shab_vendable_m2` de la fourchette faisabilité, **aucun recalcul en double** (le 127 = variante
+  `shab_vendable_silo`, métrique distincte, ou deux parcelles). **Point 7** : moteur unique déjà partagé
+  (`bilan.py` `compute_bilan`/`compute_calculette` pour l'écran ET les PDF via `compute_bilan_servi`).
+  Recette navigateur : premier niveau sans verdict (vérifié), second niveau charge « 0 € » + écart
+  comparé (captures `O2-premier-niveau`, `O2-second-niveau-prix`). Tests `EtudierBien.test.tsx` réécrits
+  (2 niveaux · charge plancher 0 · écart comparé sans « 719 » · bascule · alerte résiduel), 5/5.
+
+- **O1 — zoom parcelle — À FAIRE** · **O3 — Pièges encadré — À FAIRE** · **O4 — PLU compteurs+bug IDU — À FAIRE**
+  · **O5 — Scan patrimoine liste — À FAIRE** · **O6 — Scan doublons — À FAIRE** · **O7 — Solaire pente+photo — À FAIRE**
 ## LOT O bloc 3 — outils O8-O13 (commit 4) — À FAIRE
 ## LOT J — Projets (commit 5) — À FAIRE
 ## LOT A — IA + compte-rendu final (commit 6) — À FAIRE
