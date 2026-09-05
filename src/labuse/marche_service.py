@@ -32,6 +32,22 @@ def _parcel_id(db: Session, idu: str) -> int | None:
     return db.execute(text("SELECT id FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
 
 
+def phrase_prix_ancien(sp: dict | None) -> str | None:
+    """EXPORTS-1 (1.3) — LA phrase client du prix de l'ancien (`sector_price` parcelle), avec n,
+    rayon EFFECTIF et période imprimés. Point de formulation UNIQUE partagé par la fiche PDF, le
+    Dossier et le Flash — plus jamais « n 11 » d'un côté et « 36 ventes » de l'autre.
+    None si l'échantillon est insuffisant (l'appelant omet la ligne, jamais un chiffre fragile)."""
+    if not sp or not sp.get("fiable") or sp.get("median") is None:
+        return None
+    per = sp.get("periode") or []
+    periode = f", ventes {per[0]}–{per[1]}" if len(per) == 2 else ""
+    rayon = ("commune entière" if sp.get("commune_fallback")
+             else f"rayon {int(sp['radius_m'])} m" if sp.get("radius_m") else "secteur")
+    med = f"{int(sp['median']):,}".replace(",", " ")
+    return (f"Prix ancien médian {med} €/m² ({sp.get('type_prix')}, {sp['n']} ventes, "
+            f"{rayon}{periode})")
+
+
 def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = None) -> dict | None:
     """Lecture DVF d'une parcelle, par le point d'appel UNIQUE. `profil` = préset de paramètres nommé
     (provisoire, MANDAT_DVF). Délègue au calcul existant — aucun recalcul, aucun chiffre changé ici."""

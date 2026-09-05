@@ -246,7 +246,7 @@ def collect(db: Session, idu: str) -> dict:
     # faisabilité (11 steps déterministes) + bilan promoteur + charge foncière
     try:
         from ..faisabilite.db import parcel_faisabilite
-        from ..faisabilite.bilan import sector_price, compute_bilan_servi
+        from ..faisabilite.bilan import compute_bilan_servi   # EXPORTS-1 (1.1) : marché via marche_service seul
         from ..faisabilite.engine import Hypotheses
         fa = parcel_faisabilite(db, pid)
         if fa:

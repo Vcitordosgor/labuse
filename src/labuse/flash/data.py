@@ -418,13 +418,23 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
 def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "dvf_mutations" not in avail:
         return None
-    # M54-AB C5 : bloc Marché COMMUNE (M-U) condensé — prix ancien, tendance, liquidité, chacun DATÉ.
-    # Calculé en tête pour figurer même sans comparable de proximité ; les comparables restent.
+    # M54-AB C5 : bloc Marché condensé — tendance et liquidité restent COMMUNE (M-U) ; le prix de
+    # l'ancien est désormais PARCELLAIRE (EXPORTS-1 1.3 : sector_price via marche_service, n +
+    # rayon effectif + période imprimés — la ligne1 « commune-centroïde » est supprimée, Q2).
     commune_marche: list = []
     commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     if commune:
         from ..api.marche_bloc import bloc_condense
-        commune_marche = bloc_condense(db, commune, ["prix_ancien_median", "tendance_12m", "liquidite"])
+        commune_marche = bloc_condense(db, commune, ["tendance_12m", "liquidite"])
+    try:
+        from .. import marche_service
+        _sp = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
+        _ph = marche_service.phrase_prix_ancien(_sp)
+        if _ph:
+            commune_marche.insert(0, {"cle": "prix_ancien_parcelle", "phrase": _ph,
+                                      "fiabilite": _sp.get("fiabilite")})
+    except Exception:  # noqa: BLE001 — le prix parcellaire ne casse jamais le bloc marché
+        pass
     stats = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT count(*) AS n,
@@ -498,8 +508,14 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
            # types, rayon fixe), DISTINCT du prix de sortie du bilan (sector_price : appartements,
            # rayon adaptatif 500→1500→commune). Les deux médianes peuvent légitimement différer —
            # la méthode l'explique, jamais un écart nu. M127-D6 : aberrants écartés des deux côtés.
-           "methode": (f"Médiane €/m² observée, tous types de biens, rayon {RAYON_MARCHE_M} m sur "
-                       f"{FENETRE_MARCHE_ANNEES} ans — indicateur de marché local, distinct du prix "
+           # EXPORTS-1 (1.5) : la médiane locale était calculée puis JAMAIS imprimée (audit A1.q5) —
+           # elle est désormais DANS la phrase de méthode, ou la phrase dit qu'elle n'est pas calculable.
+           "methode": ((f"Médiane observée : {_i(stats['med_m2_bati'])} €/m² bâti, tous types de "
+                        f"biens, rayon {RAYON_MARCHE_M} m sur {FENETRE_MARCHE_ANNEES} ans"
+                        if stats["med_m2_bati"] is not None else
+                        f"Médiane locale non calculable (rayon {RAYON_MARCHE_M} m sur "
+                        f"{FENETRE_MARCHE_ANNEES} ans)")
+                       + " — indicateur de marché local, distinct du prix "
                        "de sortie du bilan (appartements, rayon adaptatif). Ventes au prix/m² "
                        "aberrant écartées du tableau des comparables."),
            # MANDAT_DVF-B — la réserve de méthode DVF voyage avec le chiffre (helper unique).
@@ -518,6 +534,9 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
             "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
             "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()
         out["secteur"] = [dict(s) for s in sect]
+        # EXPORTS-1 (1.3) : ces médianes sont un indicateur SECONDAIRE (grain secteur cadastral),
+        # étiquetées comme telles — la tête de fiche et la synthèse = sector_price parcelle.
+        out["secteur_etiquette"] = "médianes du secteur cadastral — indicateur secondaire"
     out["commune_marche"] = commune_marche
     return out
 

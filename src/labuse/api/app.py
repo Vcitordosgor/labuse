@@ -3429,21 +3429,19 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
-        # M101 B2 — le NEUF (VEFA) de la commune, par le point d'appel unique (profil neuf_vefa,
-        # config dvf_profils.yaml). Sous le seuil : « échantillon insuffisant » AVEC la grandeur —
-        # l'absence est un état normal de ce profil (11/24 communes servables, mesuré).
-        from ..marche_service import DVF_NEUF_VEFA, marche_dvf as _marche_dvf
-        try:
-            neuf_vefa = _marche_dvf(db, idu, profil=DVF_NEUF_VEFA)
-        except Exception:  # noqa: BLE001 — le neuf VEFA ne casse jamais la fiche
-            neuf_vefa = None
+        # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
+        # (le prix de sortie du bilan). Le profil `neuf_vefa_commune` (VEFA déclaré à l'acte,
+        # 5 ans, M101 B2) SORT de la fiche : deux « neuf » sans définition côte à côte étaient
+        # la contradiction 4 730 vs 4 742 de l'audit A1.q3. Le profil reste vivant pour l'outil
+        # VEFA (/outils/vefa-neuf), qui l'étiquette.
         dvf_parcelle = {
             "derniere_mutation": ({**dict(dvf_last),
                                    "date_mutation": dvf_last["date_mutation"].isoformat()
                                    if dvf_last["date_mutation"] else None}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
-            "neuf_vefa": neuf_vefa,
+            # EXPORTS-1 (1.3) : grain dit — indicateur secondaire, jamais la tête de fiche.
+            "secteur_etiquette": "médianes du secteur cadastral — indicateur secondaire",
             "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
         }
     # LOT 9 (data-gap) : terrain (pente RGE ALTI 5 m) — hypothèses affichées, jamais un « 0 » muet.
@@ -3530,8 +3528,18 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
            WHERE a.kind = 'anru' AND ST_DWithin(p2.geom_2975, a.geom_2975, 100)
            ORDER BY ST_Intersects(p2.geom_2975, a.geom_2975) DESC LIMIT 1"""),
         {"idu": idu}).mappings().first()
+    # EXPORTS-1 (1.3, arbitrage Q1) : le prix de l'ancien de la TÊTE DE FICHE = sector_price
+    # PARCELLE (marche_service, point d'appel unique), n + rayon effectif + période — la même
+    # synthèse que les exports (le test doré compare écran ↔ PDF sur cette phrase).
+    try:
+        from .. import marche_service as _msvc
+        _prix_ancien = _msvc.marche_dvf(db, idu, profil=_msvc.DVF_BANQUIER_ADAPTATIF)
+        _marche_synthese = _msvc.phrase_prix_ancien(_prix_ancien)
+    except Exception:  # noqa: BLE001 — le marché ne casse jamais la fiche
+        _prix_ancien, _marche_synthese = None, None
     return {
         "idu": head["idu"], "commune": head["commune"],
+        "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
         # affiche « Adresse non disponible », jamais un champ vide)
         "adresse": _ban_adresse(db, idu),
@@ -4461,14 +4469,17 @@ def parcel_export_pdf(idu: str, source: str | None = None,
     # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
-    # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.
-    try:
-        from .marche_bloc import bloc_condense
-        _mc = {l["cle"]: l["phrase"] for l in
-               bloc_condense(db, fiche["commune"], ["prix_ancien_median", "tendance_12m"])}
-        fiche["marche_synthese"] = _mc.get("prix_ancien_median") or _mc.get("tendance_12m")
-    except Exception:  # noqa: BLE001
-        pass
+    # EXPORTS-1 (1.3) : la synthèse marché (sector_price PARCELLE, n + rayon effectif + période)
+    # est DÉJÀ servie par `_q_v2_fiche` (mêmes clés écran/PDF — le test doré compare dessus).
+    # Repli sur la tendance commune (M-U) quand l'échantillon parcellaire est insuffisant.
+    if not fiche.get("marche_synthese"):
+        try:
+            from .marche_bloc import bloc_condense
+            _mc = {l["cle"]: l["phrase"] for l in
+                   bloc_condense(db, fiche["commune"], ["tendance_12m"])}
+            fiche["marche_synthese"] = _mc.get("tendance_12m")
+        except Exception:  # noqa: BLE001
+            pass
     # M54-AB C7 : pente CLIENT = RGE ALTI (parcel_terrain), ° ET %, MÊME source que dossier/flash.
     try:
         from ..pente_fmt import pente_texte

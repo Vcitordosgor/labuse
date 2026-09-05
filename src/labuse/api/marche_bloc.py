@@ -23,13 +23,16 @@ def phrase_ligne(lg: dict) -> str | None:
     date = lg.get("date_amont")
     d = f" — {date}" if date else ""
     cle = lg["cle"]
-    if cle == "prix_ancien_median":
-        return f"Prix ancien médian {_grp(v['median_eur_m2'])} €/m² ({v.get('type_prix', '')}, n {v.get('n')}){d}"
+    # EXPORTS-1 (1.2) : la clé `prix_ancien_median` (ligne1, médiane autour du centroïde de la
+    # commune, « n 11 ») n'existe plus — le prix de l'ancien est parcellaire
+    # (`marche_service.phrase_prix_ancien`).
     if cle == "prix_sortie_neuf":
         return f"Prix de sortie neuf {_grp(v['prix_eur_m2'])} €/m² (niveau {v.get('niveau')}, n {v.get('n')}){d}"
     if cle == "tendance_12m":
+        # EXPORTS-1 (1.6) : « n 218/583 » n'était expliqué nulle part — les deux effectifs sont dits.
         return (f"Tendance {v['sens']} {v['delta_pct']:+.1f} % sur 12 mois "
-                f"({_grp(v['median_12m'])} vs {_grp(v['median_prec'])} €/m², n {v['n12']}/{v['nprev']}){d}")
+                f"({_grp(v['median_12m'])} vs {_grp(v['median_prec'])} €/m² — {v['n12']} ventes "
+                f"sur 12 mois, {v['nprev']} sur les 12 mois précédents){d}")
     if cle == "liquidite":
         dl = v.get("delta_pct_an")
         dtxt = f", {dl:+d} % vs an−1" if dl is not None else ""

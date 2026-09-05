@@ -349,16 +349,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_margins(14, 12, 14)
     pdf.add_page()
 
-    # ── M126 — valeurs d'en-tête, RÉPÉTÉES depuis des données DÉJÀ présentes ailleurs (aucun champ
-    #    ajouté) : zone PLU (règlement) et prix secteur (médiane DVF secteur / comparables).
+    # ── EXPORTS-1 (1.3, arbitrage Q1) — le prix d'en-tête = `sector_price` PARCELLE (servi dans
+    #    fiche["prix_ancien"], point d'appel unique marche_service), plus jamais la première
+    #    médiane du secteur cadastral (3 804 vs 3 818 de l'audit A1). Repli : médiane des
+    #    comparables affichés (mêmes ventes que la table), jamais un chiffre d'une 3e source.
     _rp0 = fiche.get("reglement_plu")
     _zones0 = _rp0.get("zones") if isinstance(_rp0, dict) else None
     zone_plu = ((_zones0[0].get("zone") if _zones0 and isinstance(_zones0[0], dict) else None) or "n/d")
     prix_sect = "n/d"
-    for _s in ((fiche.get("dvf_parcelle") or {}).get("secteur") or []):
-        if _s.get("mediane_prix_m2"):
-            prix_sect = f"{int(_s['mediane_prix_m2']):,} €/m²".replace(",", " ")
-            break
+    _pa = fiche.get("prix_ancien")
+    if isinstance(_pa, dict) and _pa.get("fiable") and _pa.get("median") is not None:
+        prix_sect = f"{int(_pa['median']):,} €/m²".replace(",", " ")
     if prix_sect == "n/d":
         _cps = [c["prix_m2"] for c in ((fiche.get("comparables") or {}).get("comparables") or [])
                 if isinstance(c.get("prix_m2"), (int, float)) and c["prix_m2"] > 0]
@@ -794,15 +795,21 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     dvfp = fiche.get("dvf_parcelle")
     if dvfp:
         lignes, dm = [], dvfp.get("derniere_mutation")
+        # EXPORTS-1 (1.3) : le prix de l'ancien (sector_price parcelle, n + rayon + période) ouvre
+        # la section — les médianes du secteur cadastral suivent, étiquetées SECONDAIRES.
+        if fiche.get("marche_synthese"):
+            lignes.append(fiche["marche_synthese"])
         if dm:
             base_m = f"Dernière mutation : {dm.get('date_mutation') or '?'}"
             lignes.append(base_m + (f" — {int(dm['valeur']):,} €".replace(",", " ") if dm.get("valeur") else ""))
+        _et = dvfp.get("secteur_etiquette")
+        if _et and (dvfp.get("secteur") or []):
+            lignes.append(f"({_et})")
         for s in (dvfp.get("secteur") or [])[:4]:
             lignes.append(f"Secteur — {s.get('type_bien', '')} : médiane {s.get('mediane_prix_m2') or '—'} €/m² "
                           f"({s.get('n_ventes', '?')} ventes, {s.get('fenetre', '')})")
-        nv = dvfp.get("neuf_vefa")
-        if isinstance(nv, dict) and nv.get("mediane_prix_m2_bati"):
-            lignes.append(f"Neuf VEFA : {nv['mediane_prix_m2_bati']} €/m² (n {nv.get('n', '?')})")
+        # EXPORTS-1 (1.4, Q3) : la ligne « Neuf VEFA » a quitté la fiche — un seul « neuf » servi,
+        # celui du bilan (resolve_prix_neuf_marche).
         _section(pdf, "MARCHÉ DVF — MUTATION & SECTEUR", lignes, source=dvfp.get("caveat"))
 
     ms = fiche.get("marche_secteur")
