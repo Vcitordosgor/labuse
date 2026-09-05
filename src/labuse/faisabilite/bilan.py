@@ -133,23 +133,19 @@ def distribution_secteur(prices: list[float]) -> dict:
             "median": round(med), "p75": round(q3), "max": round(max(prices))}
 
 
-def _trim_aberrants(sales: list[dict]) -> tuple[list[dict], int]:
+def _trim_aberrants(sales: list[dict]) -> tuple[list[dict], list[dict]]:
     """Garde-fou de domaine [1000 ; 12000] €/m² (bon sens réunionnais — sous 1 000 €/m² bâti, c'est
     quasi toujours un artefact DVF : lot annexe, vente familiale) PUIS exclusion des 5 % extrêmes
-    (SECTEUR-2 T1, `trim_extremes_5pct` — remplace l'ancien Tukey IQR pour aligner la méthode sur
-    l'état de l'art, partagée avec la référence Radar). Retourne (gardées, exclues).
+    (SECTEUR-2 T1). EXPORTS-1 (2.1) : délégué au filtre UNIQUE `marche_service.filtre_ventes`
+    (mêmes bornes, même trim — aucun chiffre changé, une implémentation pour les trois chemins).
+    Retourne (gardées, écartées AVEC motif — 2.5 : le nuage de l'argumentaire les dessine grisées).
 
     P2-48 — ÉCART ASSUMÉ avec le Baromètre (`api/moteurs._BAROMETRE_RETENUE`) : là, le €/m² est borné
     [100 ; 12000] (garde-fou anti-ratio-aberrant seulement). Ici on construit un ÉCHANTILLON DE
     COMPARABLES robuste (plancher €/m² serré à 1000). Les deux planchers sont voulus."""
-    dom = [s for s in sales if 1000.0 <= s["prix"] <= 12000.0]
-    if len(dom) < 4:
-        return dom, len(sales) - len(dom)
-    _kept, lo, hi = trim_extremes_5pct([s["prix"] for s in dom])
-    if lo is None:
-        return dom, len(sales) - len(dom)
-    kept = [s for s in dom if lo <= s["prix"] <= hi]
-    return kept, len(sales) - len(kept)
+    from .. import marche_service
+    return marche_service.filtre_ventes(sales, cle_prix="prix",
+                                        bornes=(1000.0, 12000.0), trim_pct=0.05)
 
 
 def _fiabilite(kept: list[dict], type_label: str, commune_fallback: bool, min_n: int) -> tuple[str, list[str]]:
@@ -247,18 +243,19 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
     for periode_label, an_min in (("récente", an_recent), ("élargie", 0)):
         for label, cats, r, commune in base_plans:
             sub = [s for s in sales if s["cat"] in cats and s["annee"] >= an_min and (commune or s["dist"] <= r)]
-            kept, nex = _trim_aberrants(sub)
+            kept, ecartees = _trim_aberrants(sub)
             if len(kept) >= min_n:
-                chosen = (label, kept, nex, r, commune, len(sub), periode_label)
+                chosen = (label, kept, ecartees, r, commune, len(sub), periode_label)
                 break
         if chosen:
             break
     if chosen is None:
         sub = sales
-        kept, nex = _trim_aberrants(sub)
-        chosen = ("mixte (appart+maison)", kept, nex, 1500.0, True, len(sub), "élargie")
+        kept, ecartees = _trim_aberrants(sub)
+        chosen = ("mixte (appart+maison)", kept, ecartees, 1500.0, True, len(sub), "élargie")
 
-    label, kept, nex, radius, commune, n_avant, periode_seg = chosen
+    label, kept, ecartees, radius, commune, n_avant, periode_seg = chosen
+    nex = len(ecartees)
     niveau, raisons = _fiabilite(kept, label, commune, min_n)
     # Distribution AVANT / APRÈS l'exclusion des 5 % extrêmes (transparence de la méthode T1).
     distribution = {"avant": distribution_secteur([s["prix"] for s in sub]),
@@ -281,6 +278,9 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             # M22-F C9 (additif) : les prix RETENUS, un par vente — la bande de points de
             # l'argumentaire les dessine tels quels (aucune agrégation nouvelle).
             "prix_points": sorted(round(p) for p in prices)[:120],
+            # EXPORTS-1 (2.5) : les prix ÉCARTÉS voyagent aussi — le nuage les montre grisés
+            # (retenues ET écartées), jamais une disparition muette.
+            "prix_points_ecartes": sorted(round(float(e["prix"])) for e in ecartees)[:120],
             **_marche_dynamique(kept, q1, med, q3, min_n),
             "comparables": _comparables(kept, min_n, niveau)}
 
@@ -542,6 +542,13 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
     if mixite:
         lib_sms = eco.get("mixite_libelle") or "logements aidés"
+        # EXPORTS-1 lot 5 (5.1) : bloc unique DEUX lignes — (1) la SERVITUDE, présente au zonage ;
+        # (2) son DÉCLENCHEMENT, seuils du règlement vs programme estimé. Les deux lisent LA même
+        # clause (_clause_mixite) — fin du « quota imposé » (fiche) vs « non déclenchée » (banquier)
+        # sans explication (audit A5).
+        steps.append(Step("Secteur de mixité sociale — servitude au zonage",
+                          lib_sms, "OUI — quota conditionné au programme (ligne suivante)",
+                          mixite_src, prov="derive"))
         if not declenchee:
             steps.append(Step("Clause de mixité sociale — non déclenchée",
                               clause["detail"], "pas de quota LLS sur ce programme",

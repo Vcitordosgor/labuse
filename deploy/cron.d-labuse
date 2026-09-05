@@ -53,3 +53,16 @@ MAILTO=root
 # ── K9 · ROBUSTESSE ──────────────────────────────────────────────────────────────────────────────
 # le 1er à 05:00 Réunion — restore-test : restaure le dernier dump dans une base jetable, vérifie, DROP.
 0 1 1 * *    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run restore-test'
+# ── CIRCUIT-1 lot 8.1 — les jobs qui MANQUAIENT au crontab wrapper ─────────────────────────────
+# BODACC entre au wrapper (quotidien, comme le legacy 02:30 UTC — procédures collectives J+2,
+# avant les notifications de 03:00 pour que le digest parle de la nuit).
+40 2 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run ingest-bodacc'
+# Copilote — purge des conversations au-delà de la rétention (03:30 Réunion). Jamais posé (constat CIRCUIT-0).
+30 23 * * *  labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run copilote-purge'
+# Sonde des endpoints MÉTIER avec DB (minutes 7 et 37). Jamais posé (constat CIRCUIT-0).
+7,37 * * * * labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sante-endpoints'
+# CIRCUIT-1 lot 4 — la sonde du circuit (fuites entre robinets + eau ancienne), 07:25 Réunion.
+25 3 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run coherence-robinets'
+# ingest-bdnb : RETIRÉ (lot 8.1) — l'amont BDNB ne couvre pas le 974 (SCORING-3 L3, constat mesuré
+# 03/09/2026). Le job disparaît aussi du registre jobs.py ; le CLI ingest-bdnb reste pour le jour
+# où le 974 entrera dans l'export.

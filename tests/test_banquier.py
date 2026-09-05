@@ -46,7 +46,11 @@ def _out_complet():
         "score_e": {"estimable": True, "marge_estimee": 250000, "charge_supportable": 350000,
                     "prix_probable": 100000, "niveau_prix": "secteur", "libelle_court": "…",
                     "detail": "Marge estimée …"},
-        "permits": {"n": 3, "items": [{"date": "2023-01", "type_label": "PC", "distance_m": 120, "statut": "accordé"}]},
+        # EXPORTS-1 lot 4 : fenêtre du PROFIL (24 mois) — date récente dynamique pour rester
+        # dans la fenêtre, nb_lgt présent (tri par significativité).
+        "permits": {"n": 3, "fenetre_mois": 24, "libelle_definition": "≤ 500 m · 24 mois",
+                    "items": [{"date": __import__("datetime").date.today().replace(day=1).isoformat(),
+                               "type_label": "PC", "nb_lgt": 4, "distance_m": 120, "statut": "accordé"}]},
         "zan": {"insee": "97411", "commune": "Saint-Denis", "conso_2011_2021_m2": 1_200_000,
                 "conso_2021_2024_m2": 300_000, "source_nom": "Cerema", "millesime": "2024"},
     }

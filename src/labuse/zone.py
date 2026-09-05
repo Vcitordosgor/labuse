@@ -86,8 +86,13 @@ def isochrone(session: Session, lon: float, lat: float, minutes: int, mode: str,
     fetch = fetch or fetch_isochrone
     ensure_tables(session)
     cle = _cle(lon, lat, minutes, mode)
-    row = session.execute(text("SELECT ST_AsGeoJSON(geom) AS gj FROM zone_isochrone_cache WHERE cache_key = :k"),
-                          {"k": cle}).mappings().first()
+    # CIRCUIT-1 lot 2.7 — TTL 30 jours : la voirie bouge, une isochrone figée à la 1re demande
+    # était de l'eau ancienne sans étiquette. Au-delà du TTL l'entrée est ignorée (ré-interrogation
+    # IGN, remplacement à l'écriture) ; la bascule purge aussi le cache (bascule_flux).
+    row = session.execute(text(
+        "SELECT ST_AsGeoJSON(geom) AS gj FROM zone_isochrone_cache "
+        "WHERE cache_key = :k AND created_at > now() - interval '30 days'"),
+        {"k": cle}).mappings().first()
     if row and row["gj"]:
         return {"statut": "cache", "geom_geojson": json.loads(row["gj"]), "minutes": minutes, "mode": mode}
     own = client is None
@@ -432,9 +437,14 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
             f"""SELECT count(*) FROM sitadel_permits s
                 WHERE s.geom IS NOT NULL AND s.date >= (now() - interval '36 months')
                   AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).scalar()
+    # EXPORTS-1 (5.5) : le compte d'annonces Radar n'est JAMAIS un compteur de marché — la pige
+    # est manuelle et partielle (audit B11 : 104 annonces, 12/24 communes, née fin août). Servi
+    # comme MINIMUM avec sa réserve, jamais un total.
     return {"ventes_12m": int(ventes or 0),
             "prix_m2_median_bati": int(prix) if prix is not None else None,
             "annonces_actives": int(annonces or 0),
+            "annonces_reserve": "annonces suivies par la pige LABUSE (collecte manuelle, "
+                                "couverture partielle) — un minimum, pas un total de marché",
             "permis_36m": int(permis or 0)}
 
 

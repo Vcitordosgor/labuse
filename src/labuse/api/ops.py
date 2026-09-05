@@ -18,27 +18,41 @@ from sqlalchemy.orm import Session
 log = logging.getLogger("labuse.ops")
 router = APIRouter(tags=["ops"])
 
-# Tâche cron → (source de trace, motif SQL, périodicité attendue en jours, note)
-# Alignées sur deploy/cron.d/* ; « attendu_jours » = période cron + marge (détection de cron mort).
-CRONS = {
-    "sitadel": {"trace": "ingestion_runs", "motif": "974 (SDES Sitadel3%", "attendu_jours": 35,
-                "note": "mensuel (le 5) — permis SDES/Dido"},
-    "ban": {"trace": "data_sources", "motif": "Base Adresse Nationale", "attendu_jours": 35,
-            "note": "mensuel (le 5) — adresses BAN (trace : data_sources.last_sync_at)"},
-    # (cron « catnat » retiré avec le spin-off « Vues » — M12 Lot C-bis : c'était le signal
-    #  CATNAT du moteur de segments.)
-    "abuse-scan": {"trace": "aucune", "motif": None, "attendu_jours": 2,
-                   "note": "quotidien — pas de trace DB dédiée (log fichier) ; vérifier /var/log/labuse"},
-    "backup": {"trace": "aucune", "motif": None, "attendu_jours": 2,
-               "note": "quotidien — vérifier LABUSE_BACKUP_DIR (backup_postgres.sh) côté système"},
-    # J+2 (post-M7) — la chaîne de fraîcheur
-    "bodacc": {"trace": "data_sources", "motif": "BODACC%", "attendu_jours": 2,
-               "note": "quotidien — procédures collectives (SIREN propriétaires)"},
-    "dvf": {"trace": "data_sources", "motif": "DVF / valeurs foncières", "attendu_jours": 10,
-            "note": "hebdo (détection Last-Modified ; livraison Etalab semestrielle)"},
-    "dpe": {"trace": "data_sources", "motif": "DPE ADEME%", "attendu_jours": 10,
-            "note": "hebdo — flux ADEME continu (upsert numero_dpe)"},
+# CIRCUIT-1 lot 8.2 — les cadences attendues viennent du REGISTRE des jobs (labuse.jobs.JOBS),
+# JAMAIS d'une table à la main : l'ancien dict recopiait les cadences des crons LEGACY
+# (deploy/cron.d/*, bodacc quotidien / dpe hebdo) et contredisait le wrapper (CIRCUIT-0 Q3.5).
+# Ici : une entrée par job du wrapper qui TOUCHE L'EAU + backup, `attendu_jours` dérivé de la
+# cadence déclarée du job (+ marge de détection de cron mort). La TRACE reste par source quand
+# elle existe (ingestion_runs / data_sources.last_sync_at), sinon l'état JSON du wrapper.
+
+#: cadence du registre → périodicité attendue en jours (cadence + marge).
+_CADENCE_JOURS = {"quotidien": 2, "15 min": 1, "hebdo (dim)": 9, "hebdo (lun)": 9,
+                  "mensuel (5)": 35, "mensuel (7)": 35, "mensuel (10)": 35, "mensuel (12)": 35,
+                  "mensuel (15)": 35, "mensuel (1er)": 35, "trimestriel (1er)": 100}
+
+#: job → où lire son dernier passage RÉEL en base (repli : état JSON du wrapper).
+_TRACES = {
+    "ingest-sitadel": ("ingestion_runs", "974 (SDES Sitadel3%"),
+    "ingest-bodacc": ("data_sources", "BODACC%"),
+    "ingest-dpe": ("data_sources", "DPE ADEME%"),
+    "ingest-sirene": ("data_sources", "SIRENE établissements%"),
 }
+
+
+def _crons_du_registre() -> dict:
+    from ..jobs import JOBS, TOUCHE_EAU
+    out = {}
+    for nom, job in JOBS.items():
+        if nom not in TOUCHE_EAU and nom != "backup-postgres":
+            continue
+        trace, motif = _TRACES.get(nom, ("etat_json", None))
+        out[nom] = {"trace": trace, "motif": motif,
+                    "attendu_jours": _CADENCE_JOURS.get(job.cadence, 9),
+                    "note": f"{job.cadence} — {job.titre}"}
+    return out
+
+
+CRONS = _crons_du_registre()
 
 
 def get_db():
@@ -56,7 +70,20 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
             out[nom] = {"statut": "non_trace_db", "note": c["note"]}
             continue
         try:
-            if c["trace"] == "data_sources":
+            if c["trace"] == "etat_json":
+                # CIRCUIT-1 lot 8.2 — jobs sans trace DB dédiée : l'état JSON du wrapper fait foi
+                # (jobs.py _ecrire_etat). Absent = le job n'a jamais tourné ICI (jamais_vu).
+                import json as _json
+                from pathlib import Path as _P
+                from ..config import get_settings as _gs
+                f = _P(_gs().jobs_state_dir) / f"{nom}.json"
+                if not f.exists():
+                    out[nom] = {"statut": "jamais_vu", "note": c["note"]}
+                    degrade = True
+                    continue
+                e = _json.loads(f.read_text(encoding="utf-8"))
+                dernier = e.get("fin") or e.get("debut")
+            elif c["trace"] == "data_sources":
                 dernier = db.execute(text(
                     "SELECT max(last_sync_at) FROM data_sources WHERE name ILIKE :m"),
                     {"m": c["motif"]}).scalar()

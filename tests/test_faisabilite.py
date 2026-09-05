@@ -91,8 +91,12 @@ def test_modulation_pente_forte_reduit():
 
 
 def test_recul_a_verifier_signale_et_prudent():
+    # EXPORTS-1 (3.4) : reculs NOMMÉS, wording client (« non calibré → hypothèse prudente ») —
+    # le jargon interne « à_vérifier » ne sort plus dans un texte servi.
     f = estimate_capacity(resolve_zone("U1a"), 1000)
-    assert any("recul voirie" in a.lower() and "à_vérifier" in a.lower() for a in f.avertissements)
+    assert any("recul voirie" in a.lower() and "non calibré" in a.lower()
+               and "hypothèse prudente" in a.lower() for a in f.avertissements)
+    assert not any("à_vérifier" in a for a in f.avertissements)
 
 
 def test_bandeau_et_hypotheses():

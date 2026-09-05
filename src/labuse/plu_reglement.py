@@ -109,10 +109,13 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
 
     articles = []
     if rules and rules.calibree and rules.sources:
+        from .api.export_commun import purger_marqueurs_internes
         for regle, reference in rules.sources.items():
             pi = _page_imprimee(reference)
             url_page = (f"{base_url}#page={pi + offset}" if base_url and pi else base_url)
-            articles.append({"regle": regle, "reference": reference,
+            # EXPORTS-1 lot 6 : les marqueurs de curation interne des YAML (« (page corrigée) »,
+            # « (doctrine a) »…) ne sortent pas dans un document client.
+            articles.append({"regle": regle, "reference": purger_marqueurs_internes(reference),
                              "page_imprimee": pi, "url": url_page})
         articles.sort(key=lambda a: (a["page_imprimee"] is None, a["page_imprimee"] or 0))
 

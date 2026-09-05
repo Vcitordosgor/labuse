@@ -1,0 +1,3188 @@
+{
+ "run_servi": "q_v11_m137",
+ "reservoirs": [
+  {
+   "id": "cadastre_api_carto",
+   "nom": "Cadastre (API Carto PCI)",
+   "famille": "cadastre",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "PCI Parcellaire Express (DGFiP) — « latest » ingérée",
+   "sentinelle": true
+  },
+  {
+   "id": "cadastre_etalab_bulk",
+   "nom": "Cadastre Etalab (bulk DGFiP/Etalab)",
+   "famille": "cadastre",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "Etalab cadastre — « latest » ingérée (DGFiP)",
+   "sentinelle": true
+  },
+  {
+   "id": "gpu_plu_api_carto",
+   "nom": "Urbanisme PLU/GPU (API Carto)",
+   "famille": "urbanisme",
+   "mode_remplissage": "en_direct",
+   "millesime_servi": "GPU/PLU par commune (révisions — détail en fiche)",
+   "sentinelle": false
+  },
+  {
+   "id": "georisques_api",
+   "nom": "Géorisques",
+   "famille": "risques",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "dvf",
+   "nom": "DVF / valeurs foncières",
+   "famille": "marche",
+   "mode_remplissage": "job_sur_clic",
+   "millesime_servi": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
+   "sentinelle": true
+  },
+  {
+   "id": "rge_alti",
+   "nom": "RGE ALTI (altimétrie)",
+   "famille": "topographie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "RGE ALTI® (IGN) — édition non enregistrée",
+   "sentinelle": true
+  },
+  {
+   "id": "parc_national_inpn",
+   "nom": "Parc National de La Réunion (INPN)",
+   "famille": "environnement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "millésime 2021",
+   "sentinelle": true
+  },
+  {
+   "id": "forets_onf_bdtopo",
+   "nom": "Forêts publiques (ONF)",
+   "famille": "environnement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "BD TOPO® V3 — forêt publique (IGN)",
+   "sentinelle": true
+  },
+  {
+   "id": "potentiel_foncier_region",
+   "nom": "Potentiel foncier Région (Région ODS)",
+   "famille": "urbanisme",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "rpg_proxy_ign",
+   "nom": "RPG — déclarations agricoles (IGN/ASP)",
+   "famille": "agricole",
+   "mode_remplissage": "en_direct",
+   "millesime_servi": "proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+   "sentinelle": true
+  },
+  {
+   "id": "region_ods_hub",
+   "nom": "Région Réunion Open Data (Opendatasoft)",
+   "famille": "hub",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "peigeo_hub",
+   "nom": "PEIGEO (hub régional)",
+   "famille": "hub",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "deal_wms_wfs",
+   "nom": "DEAL Réunion (WMS/WFS)",
+   "famille": "urbanisme",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "NPNRU — QP génération 2024 (DEAL/ANCT)",
+   "sentinelle": true
+  },
+  {
+   "id": "geoplateforme_hub",
+   "nom": "Géoplateforme IGN",
+   "famille": "hub",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "potentiel_foncier_ods",
+   "nom": "data.regionreunion.com — Potentiel foncier",
+   "famille": "potentiel",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "sitadel",
+   "nom": "SITADEL (autorisations d'urbanisme)",
+   "famille": "dynamique",
+   "mode_remplissage": "cron_mensuel",
+   "millesime_servi": "2026-07",
+   "sentinelle": true
+  },
+  {
+   "id": "bd_topo",
+   "nom": "BD TOPO IGN",
+   "famille": "topographie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "BD TOPO® V3 (IGN) — édition non enregistrée",
+   "sentinelle": true
+  },
+  {
+   "id": "ban",
+   "nom": "Base Adresse Nationale",
+   "famille": "acces",
+   "mode_remplissage": "job_sur_clic",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "osm_overpass",
+   "nom": "OpenStreetMap / Overpass",
+   "famille": "signal",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "bpe_insee",
+   "nom": "BPE INSEE",
+   "famille": "attractivite",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "millésime 2025 (géographie au 01/01/2025)",
+   "sentinelle": true
+  },
+  {
+   "id": "sirene_recherche_entreprises",
+   "nom": "SIRENE",
+   "famille": "economie",
+   "mode_remplissage": "en_direct",
+   "millesime_servi": "Sirene INSEE — état courant (non versionné)",
+   "sentinelle": true
+  },
+  {
+   "id": "bd_carto_ocs",
+   "nom": "IGN BD CARTO V5 — occupation du sol",
+   "famille": "occupation_sol",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "BD CARTO® V5 — occupation du sol (IGN, proxy)",
+   "sentinelle": true
+  },
+  {
+   "id": "abf_merimee",
+   "nom": "ABF / Monuments historiques",
+   "famille": "patrimoine",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "inpn_espaces_proteges",
+   "nom": "INPN / patrinat — espaces protégés",
+   "famille": "environnement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "INPN/patrinat espaces protégés — passe 05/07/2026",
+   "sentinelle": false
+  },
+  {
+   "id": "spanc_epci",
+   "nom": "VRD / assainissement (SPANC)",
+   "famille": "reseaux",
+   "mode_remplissage": "depot_manuel",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "fichiers_fonciers_cerema",
+   "nom": "Fichiers fonciers (Cerema)",
+   "famille": "proprietaire",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "erosion_cotiere_geolittoral",
+   "nom": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+   "famille": "risques",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "millésime 2018",
+   "sentinelle": true
+  },
+  {
+   "id": "bodacc",
+   "nom": "BODACC (procédures collectives)",
+   "famille": "economie",
+   "mode_remplissage": "job_sur_clic",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "deal_ppr",
+   "nom": "DEAL Réunion — PPR / aléas",
+   "famille": "risques",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)",
+   "sentinelle": true
+  },
+  {
+   "id": "inpi_rne",
+   "nom": "INPI RNE (dirigeants)",
+   "famille": "economie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "georisques_ssp",
+   "nom": "Géorisques — sites et sols pollués",
+   "famille": "risques",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "georisques_cavites",
+   "nom": "Géorisques — cavités souterraines",
+   "famille": "risques",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "georisques_icpe",
+   "nom": "Géorisques — ICPE",
+   "famille": "risques",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "cartofriches",
+   "nom": "Cartofriches (Cerema)",
+   "famille": "foncier",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "georisques_mvt",
+   "nom": "Géorisques — mouvements de terrain",
+   "famille": "risques",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "dpe_ademe",
+   "nom": "DPE ADEME (logements existants)",
+   "famille": "energie",
+   "mode_remplissage": "cron_mensuel",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "qpv_2024",
+   "nom": "QPV 2024 (ANCT)",
+   "famille": "fiscal",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "génération 2024",
+   "sentinelle": true
+  },
+  {
+   "id": "sru_dhup",
+   "nom": "Inventaire SRU (DHUP)",
+   "famille": "logement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "npnru",
+   "nom": "NPNRU (DEAL Réunion / ANCT)",
+   "famille": "logement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "insee_rp_logement",
+   "nom": "INSEE RP Logement 2023",
+   "famille": "logement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "plh_epci",
+   "nom": "PLH des 5 EPCI (extraction documentaire)",
+   "famille": "logement",
+   "mode_remplissage": "depot_manuel",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "rtaa_dom",
+   "nom": "RTAA DOM (textes réglementaires)",
+   "famille": "reglementaire",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "sup_gpu",
+   "nom": "SUP — assiettes GPU (API Carto)",
+   "famille": "reglement",
+   "mode_remplissage": "cron_mensuel",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "recherche_entreprises_dinum",
+   "nom": "Recherche d'entreprises (DINUM)",
+   "famille": "economie",
+   "mode_remplissage": "en_direct",
+   "millesime_servi": "Sirene INSEE / RNE INPI (api.gouv.fr) — courant",
+   "sentinelle": false
+  },
+  {
+   "id": "bruit_itt_cerema",
+   "nom": "Classement sonore ITT (Cerema)",
+   "famille": "reglement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "arrêtés déc. 2023",
+   "sentinelle": true
+  },
+  {
+   "id": "cinquante_pas_deal",
+   "nom": "50 pas géométriques — limite haute (DEAL)",
+   "famille": "reglement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "cadastre 1877 (géoréf. 2012/1950)",
+   "sentinelle": false
+  },
+  {
+   "id": "pvgis",
+   "nom": "PVGIS (Commission européenne)",
+   "famille": "energie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)",
+   "sentinelle": false
+  },
+  {
+   "id": "edf_sei_opendata",
+   "nom": "EDF SEI Réunion — open data",
+   "famille": "energie",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "odre_registre_installations",
+   "nom": "Registre national des installations (ODRÉ)",
+   "famille": "energie",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "parkings_osm_aper",
+   "nom": "Parkings OSM (loi APER)",
+   "famille": "energie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "filosofi_carreaux",
+   "nom": "Filosofi INSEE (carreaux 200 m)",
+   "famille": "attractivite",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "millésime 2021",
+   "sentinelle": true
+  },
+  {
+   "id": "bd_ortho",
+   "nom": "BD ORTHO 20 cm (IGN)",
+   "famille": "imagerie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "BD ORTHO IGN 974 — millésime 2025 (piscine, 90,7 %)",
+   "sentinelle": true
+  },
+  {
+   "id": "sudocuh",
+   "nom": "Sudocuh (procédures d'urbanisme)",
+   "famille": "urbanisme",
+   "mode_remplissage": "depot_manuel",
+   "millesime_servi": "Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)",
+   "sentinelle": false
+  },
+  {
+   "id": "gpu_zonage_assainissement",
+   "nom": "GPU — zonages d'assainissement",
+   "famille": "urbanisme",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+   "sentinelle": false
+  },
+  {
+   "id": "contours_iris",
+   "nom": "Contours IRIS (IGN/INSEE)",
+   "famille": "attractivite",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "Contours IRIS — géographie 2024 (IGN/INSEE)",
+   "sentinelle": true
+  },
+  {
+   "id": "rge_alti_5m",
+   "nom": "RGE ALTI 5 m (IGN)",
+   "famille": "terrain",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "RGE ALTI® 5 m (IGN) — édition non enregistrée",
+   "sentinelle": false
+  },
+  {
+   "id": "insee_rp2022_egoul",
+   "nom": "INSEE RP2022 — fichier détail Logements (EGOUL)",
+   "famille": "assainissement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)",
+   "sentinelle": true
+  },
+  {
+   "id": "gpu_assainissement_infosurf",
+   "nom": "GPU — zonages d'assainissement (info-surf typeinf 19)",
+   "famille": "assainissement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+   "sentinelle": false
+  },
+  {
+   "id": "office_eau_chroniques",
+   "nom": "Office de l'eau Réunion — Chroniques de l'eau",
+   "famille": "assainissement",
+   "mode_remplissage": "depot_manuel",
+   "millesime_servi": "Chronique n°149 — données 2023",
+   "sentinelle": false
+  },
+  {
+   "id": "bd_ortho_irc",
+   "nom": "BD ORTHO IRC (IGN)",
+   "famille": "imagerie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "lidar_hd_mnh",
+   "nom": "LiDAR HD — MNH 50 cm (IGN)",
+   "famille": "terrain",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)",
+   "sentinelle": true
+  },
+  {
+   "id": "dgfip_parcelles_pm",
+   "nom": "DGFiP — parcelles des personnes morales",
+   "famille": "proprietaire",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)",
+   "sentinelle": true
+  },
+  {
+   "id": "zfang",
+   "nom": "ZFANG — zone franche d'activité nouvelle génération (Légifrance)",
+   "famille": "fiscal",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)",
+   "sentinelle": false
+  },
+  {
+   "id": "frr_ex_zrr",
+   "nom": "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)",
+   "famille": "fiscal",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)",
+   "sentinelle": false
+  },
+  {
+   "id": "gtfs_pan",
+   "nom": "Transport public — GTFS (PAN, 7 réseaux)",
+   "famille": "acces",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "7 jeux PAN, màj 2025-12-29 → 2026-08-17",
+   "sentinelle": true
+  },
+  {
+   "id": "osm_transport",
+   "nom": "OSM — transport (pôles d'échange & téléphérique)",
+   "famille": "acces",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "extraction Overpass (base OSM vivante, ODbL)",
+   "sentinelle": false
+  },
+  {
+   "id": "znieff_inpn",
+   "nom": "ZNIEFF (INPN/MNHN)",
+   "famille": "environnement",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "INPN, mise à jour 29/08/2025",
+   "sentinelle": true
+  },
+  {
+   "id": "znieff_region_ods",
+   "nom": "ZNIEFF (INPN / Région)",
+   "famille": "environnement",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "cosia",
+   "nom": "CoSIA (couverture du sol IA, IGN)",
+   "famille": "occupation_sol",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "CoSIA 2025 (PVA juil.-août 2025, 20 cm)",
+   "sentinelle": true
+  },
+  {
+   "id": "radar_pige",
+   "nom": "Radar (pige d'annonces)",
+   "famille": "marche",
+   "mode_remplissage": "depot_manuel",
+   "millesime_servi": "Collecte manuelle — biens en vente (faits + lien)",
+   "sentinelle": false
+  },
+  {
+   "id": "sirene_etablissements",
+   "nom": "SIRENE établissements géolocalisés",
+   "famille": "economie",
+   "mode_remplissage": "cron_mensuel",
+   "millesime_servi": "SIRENE géolocalisé — publication mensuelle INSEE",
+   "sentinelle": true
+  },
+  {
+   "id": "mobpro",
+   "nom": "MOBPRO (mobilités domicile-travail, INSEE)",
+   "famille": "economie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "MOBPRO INSEE — fichier détail (millésime RP)",
+   "sentinelle": false
+  },
+  {
+   "id": "trafic_rn",
+   "nom": "Trafic RN (Région Réunion — SIR)",
+   "famille": "economie",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "Trafic RN Région — comptages (millésime porté par tronçon)",
+   "sentinelle": true
+  },
+  {
+   "id": "bdnb",
+   "nom": "BDNB",
+   "famille": "proprietaire",
+   "mode_remplissage": "absente",
+   "millesime_servi": "2026-02-a (métropole seule — 974 absent)",
+   "sentinelle": true
+  },
+  {
+   "id": "edf_hta",
+   "nom": "EDF Réunion — lignes moyenne tension HTA (open data)",
+   "famille": "acces",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "EDF géométrie ~02/2020 · publié 16/10/2025",
+   "sentinelle": true
+  },
+  {
+   "id": "tcsp_osm",
+   "nom": "TCSP — voies bus en site propre (OSM)",
+   "famille": "acces",
+   "mode_remplissage": "one_shot",
+   "millesime_servi": "extraction Overpass (OSM, ODbL) — voies bus 974",
+   "sentinelle": false
+  },
+  {
+   "id": "reunion_express_cndp",
+   "nom": "Réunion Express — hypothèses de tracé (débat public CNDP)",
+   "famille": "acces",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": true
+  },
+  {
+   "id": "ecln",
+   "nom": "ECLN (commercialisation des logements neufs, SDES)",
+   "famille": "aucune",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "lovac",
+   "nom": "LOVAC (logements vacants)",
+   "famille": "aucune",
+   "mode_remplissage": "absente",
+   "millesime_servi": "",
+   "sentinelle": false
+  },
+  {
+   "id": "labuse_interne",
+   "nom": "Tables internes LABUSE (event_log, comptes, projets…)",
+   "famille": "interne",
+   "mode_remplissage": "derivee",
+   "millesime_servi": "",
+   "sentinelle": false
+  }
+ ],
+ "moteurs": [
+  {
+   "id": "scoring_p_v2",
+   "nom": "Scoring Potentiel v2 (tiers brûlante→froide)",
+   "fichier": "src/labuse/scoring/p_v2/pipeline.py"
+  },
+  {
+   "id": "cascade",
+   "nom": "Cascade d'exclusion (17 couches, verdict par étage)",
+   "fichier": "src/labuse/cascade/engine.py"
+  },
+  {
+   "id": "residuel",
+   "nom": "Résiduel de faisabilité (SDP résiduelle, emprise)",
+   "fichier": "src/labuse/faisabilite/residuel.py"
+  },
+  {
+   "id": "sector_price",
+   "nom": "Prix de secteur (DVF fiabilisée €/m²)",
+   "fichier": "src/labuse/faisabilite/bilan.py"
+  },
+  {
+   "id": "zone",
+   "nom": "Étude de zone (isochrone + agrégats)",
+   "fichier": "src/labuse/zone.py"
+  },
+  {
+   "id": "marche_pige",
+   "nom": "Marché Radar (annonces : prix affiché, délais)",
+   "fichier": "src/labuse/pige/marche.py"
+  },
+  {
+   "id": "rattachement_pige",
+   "nom": "Rattachement bien→parcelle (GPS→BAN→DPE→morpho)",
+   "fichier": "src/labuse/pige/rattachement.py"
+  },
+  {
+   "id": "solaire",
+   "nom": "Potentiel solaire toiture (PVGIS + azimut bâti)",
+   "fichier": "src/labuse/ingestion/solaire.py"
+  },
+  {
+   "id": "score_e",
+   "nom": "Marge promoteur (score E)",
+   "fichier": "src/labuse/ingestion/score_e.py"
+  },
+  {
+   "id": "renouvellement",
+   "nom": "Signaux de renouvellement urbain",
+   "fichier": "src/labuse/renouvellement.py"
+  },
+  {
+   "id": "division_or",
+   "nom": "Divisibilité (division d'or)",
+   "fichier": "src/labuse/ingestion/division_or.py"
+  },
+  {
+   "id": "flags",
+   "nom": "Drapeaux parcelle (tuiles + filtres)",
+   "fichier": "src/labuse/cli.py (build-mvt)"
+  },
+  {
+   "id": "plu_destinations",
+   "nom": "Destinations PLU par zone",
+   "fichier": "src/labuse/plu/destinations.py"
+  },
+  {
+   "id": "taxe_amenagement",
+   "nom": "Calculette taxe d'aménagement",
+   "fichier": "src/labuse/taxe_amenagement.py"
+  },
+  {
+   "id": "v_score",
+   "nom": "Événements propriétaire (score V)",
+   "fichier": "src/labuse/ingestion/score_v_fetch.py"
+  },
+  {
+   "id": "marche_communes",
+   "nom": "Évolution du marché (outil Communes)",
+   "fichier": "src/labuse/marche_service.py"
+  },
+  {
+   "id": "bilan_promoteur",
+   "nom": "Bilan promoteur (faisabilité)",
+   "fichier": "src/labuse/faisabilite/bilan.py"
+  },
+  {
+   "id": "proprietaire_historique",
+   "nom": "Timeline propriétaire PM (versionné∪servi)",
+   "fichier": "src/labuse/proprietaire_historique.py"
+  },
+  {
+   "id": "cycle_pige",
+   "nom": "Cycle de vie d'une annonce Radar",
+   "fichier": "src/labuse/pige/cycle.py"
+  },
+  {
+   "id": "contexte_parcelle",
+   "nom": "Contexte de fiche (risques, réseaux, mairie…)",
+   "fichier": "src/labuse/cascade/context.py"
+  },
+  {
+   "id": "loyers",
+   "nom": "Loyers (estimation locative)",
+   "fichier": "src/labuse/loyers.py"
+  }
+ ],
+ "chiffres": [
+  {
+   "id": "acquisitions_pm_n",
+   "libelle": "Acquisitions récentes (PM)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": "proprietaire_historique"
+  },
+  {
+   "id": "annonces_actives_n",
+   "libelle": "Biens en vente",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": "marche_pige"
+  },
+  {
+   "id": "azimut_bati_deg",
+   "libelle": "Azimut (Estimé)",
+   "unite": "nombre",
+   "niveau": "parcelle",
+   "moteur": "solaire"
+  },
+  {
+   "id": "capacite_logements",
+   "libelle": "Capacité (logements)",
+   "unite": "logements",
+   "niveau": "parcelle",
+   "moteur": "residuel"
+  },
+  {
+   "id": "catnat_n",
+   "libelle": "Arrêtés CatNat",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "charge_fonciere_eur",
+   "libelle": "Charge foncière",
+   "unite": "€",
+   "niveau": "parcelle",
+   "moteur": "bilan_promoteur"
+  },
+  {
+   "id": "classe_residuel",
+   "libelle": "Densifier l'existant",
+   "unite": "classe",
+   "niveau": "parcelle",
+   "moteur": "residuel"
+  },
+  {
+   "id": "comparateur_composite",
+   "libelle": "Score composite",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "copilote_compte_parcelles",
+   "libelle": "Compte de parcelles (réponse)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "crm_cartes_n",
+   "libelle": "Cartes par colonne",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "deficit_sru_pts",
+   "libelle": "Déficit SRU (objectif − taux LLS, points)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "delai_vente_median_j",
+   "libelle": "Délai médian",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": "marche_pige"
+  },
+  {
+   "id": "depots_secteur_n",
+   "libelle": "Déposés/autorisés (Sitadel)",
+   "unite": "nombre",
+   "niveau": "zone",
+   "moteur": null
+  },
+  {
+   "id": "destination_statut",
+   "libelle": "Peut-on ouvrir une activité ? (verdict)",
+   "unite": "verdict",
+   "niveau": "parcelle",
+   "moteur": "plu_destinations"
+  },
+  {
+   "id": "distance_arret_m",
+   "libelle": "Transport public — au plus proche",
+   "unite": "m",
+   "niveau": "parcelle",
+   "moteur": null
+  },
+  {
+   "id": "divisible_classe",
+   "libelle": "Division (candidate)",
+   "unite": "classe",
+   "niveau": "parcelle",
+   "moteur": "division_or"
+  },
+  {
+   "id": "ecart_candidat_pct",
+   "libelle": "Écart candidat vs servi",
+   "unite": "%",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "ecart_demande_acte_pct",
+   "libelle": "Écart demandé/acté",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": "marche_pige"
+  },
+  {
+   "id": "emplois_fourchette",
+   "libelle": "Emplois (fourchette)",
+   "unite": "tranche",
+   "niveau": "zone",
+   "moteur": "zone"
+  },
+  {
+   "id": "habitants_n",
+   "libelle": "Habitants",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "ia_cout_eur",
+   "libelle": "Conso IA (€)",
+   "unite": "€",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "loyer_median_eur_m2",
+   "libelle": "Loyer médian",
+   "unite": "€/m²",
+   "niveau": "commune",
+   "moteur": "loyers"
+  },
+  {
+   "id": "mutations_12m_n",
+   "libelle": "Mutations 12 mois",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "n_a_faire",
+   "libelle": "À faire (pilotage)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_bascules_7j",
+   "libelle": "Bascules (7 jours)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_biens_du_jour",
+   "libelle": "Biens du jour (digest)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": "marche_pige"
+  },
+  {
+   "id": "n_biens_veille",
+   "libelle": "NB_BIENS (Brevo 13)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": "marche_pige"
+  },
+  {
+   "id": "n_communes_rnu",
+   "libelle": "au RNU",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_comptes_actifs",
+   "libelle": "Comptes actifs",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_concurrents_zone",
+   "libelle": "Concurrents (NAF)",
+   "unite": "nombre",
+   "niveau": "zone",
+   "moteur": "zone"
+  },
+  {
+   "id": "n_densifiables",
+   "libelle": "Parcelles densifiables",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": "renouvellement"
+  },
+  {
+   "id": "n_depots_a_verifier",
+   "libelle": "Dépôts à vérifier",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_extraits_plu",
+   "libelle": "extraits (règlement)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "n_notifications",
+   "libelle": "Notifications non lues",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_parcelles_commune",
+   "libelle": "N parcelles",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "n_parcelles_ile",
+   "libelle": "Parcelles (accueil)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_parcelles_pm",
+   "libelle": "Parcelles détenues",
+   "unite": "nombre",
+   "niveau": "proprietaire",
+   "moteur": null
+  },
+  {
+   "id": "n_permis_proximite",
+   "libelle": "Permis à proximité",
+   "unite": "nombre",
+   "niveau": "parcelle",
+   "moteur": null
+  },
+  {
+   "id": "n_piscines",
+   "libelle": "Piscines détectées",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "n_sources",
+   "libelle": "Sources (accueil)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_sources_surveillees",
+   "libelle": "sous veille (écran Circuit)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_veilles",
+   "libelle": "Veilles actives",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "n_vigilances",
+   "libelle": "Vigilances",
+   "unite": "nombre",
+   "niveau": "parcelle",
+   "moteur": "cascade"
+  },
+  {
+   "id": "part_zone_AU_pct",
+   "libelle": "Zonage — AU",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "part_zone_A_pct",
+   "libelle": "Zonage — A",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "part_zone_N_pct",
+   "libelle": "Zonage — N",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "part_zone_U_pct",
+   "libelle": "Zonage — U",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "pente_deg",
+   "libelle": "Pente",
+   "unite": "nombre",
+   "niveau": "parcelle",
+   "moteur": null
+  },
+  {
+   "id": "permis_12m_n",
+   "libelle": "Permis (12 mois)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "permis_5a_n",
+   "libelle": "Dynamisme permis (SITADEL, 5 ans)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "piscine_m2",
+   "libelle": "Piscine ~m²",
+   "unite": "m²",
+   "niveau": "parcelle",
+   "moteur": null
+  },
+  {
+   "id": "plh_objectif_logements_an",
+   "libelle": "Objectif logements/an",
+   "unite": "logements",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "point_mort_n",
+   "libelle": "Permis au point mort",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "population_zone",
+   "libelle": "Habitants (zone)",
+   "unite": "nombre",
+   "niveau": "zone",
+   "moteur": "zone"
+  },
+  {
+   "id": "ppr_pct",
+   "libelle": "PPR (part des parcelles)",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "pression_zan_ha",
+   "libelle": "Pression ZAN (ENAF consommé 2021-2024, ha)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "prix_ancien_median_eur_m2",
+   "libelle": "€/m² ancien",
+   "unite": "€/m²",
+   "niveau": "commune",
+   "moteur": "marche_communes"
+  },
+  {
+   "id": "prix_demande_eur",
+   "libelle": "Prix demandé",
+   "unite": "€",
+   "niveau": "annonce",
+   "moteur": null
+  },
+  {
+   "id": "prix_demande_median_eur_m2",
+   "libelle": "Prix demandé (médiane)",
+   "unite": "€/m²",
+   "niveau": "commune",
+   "moteur": "marche_pige"
+  },
+  {
+   "id": "prix_flash_eur",
+   "libelle": "Rapport Flash — 79 €",
+   "unite": "€",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "prix_neuf_vefa_eur_m2",
+   "libelle": "Prix de sortie neuf VEFA (DVF, €/m²)",
+   "unite": "€/m²",
+   "niveau": "commune",
+   "moteur": "marche_communes"
+  },
+  {
+   "id": "prix_sortie_bati_eur_m2",
+   "libelle": "Prix de sortie — bâti secteur",
+   "unite": "€/m²",
+   "niveau": "parcelle",
+   "moteur": "sector_price"
+  },
+  {
+   "id": "prix_terrain_secteur_eur_m2",
+   "libelle": "Terrain nu secteur",
+   "unite": "€/m²",
+   "niveau": "parcelle",
+   "moteur": "sector_price"
+  },
+  {
+   "id": "prix_terrain_zone_eur_m2",
+   "libelle": "Terrain nu (zone U / AU)",
+   "unite": "€/m²",
+   "niveau": "commune",
+   "moteur": "marche_communes"
+  },
+  {
+   "id": "prod_spec_kwh_kwc",
+   "libelle": "Productible",
+   "unite": "nombre",
+   "niveau": "parcelle",
+   "moteur": "solaire"
+  },
+  {
+   "id": "projet_cadrage_n",
+   "libelle": "Parcelles (cadrage)",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "projet_retenues_n",
+   "libelle": "Retenues",
+   "unite": "nombre",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "qpv_n",
+   "libelle": "QPV",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "rang_tier",
+   "libelle": "Rang (dans le tier)",
+   "unite": "nombre",
+   "niveau": "parcelle",
+   "moteur": "scoring_p_v2"
+  },
+  {
+   "id": "revenu_approche_eur",
+   "libelle": "Revenu (valeur approchée)",
+   "unite": "€",
+   "niveau": "zone",
+   "moteur": "zone"
+  },
+  {
+   "id": "run_label_servi",
+   "libelle": "Run servi (pied)",
+   "unite": "classe",
+   "niveau": "global",
+   "moteur": null
+  },
+  {
+   "id": "sdp_residuelle_m2",
+   "libelle": "SDP résiduelle",
+   "unite": "m²",
+   "niveau": "parcelle",
+   "moteur": "residuel"
+  },
+  {
+   "id": "simulplu_resultat",
+   "libelle": "Simuler un changement (parcelles gagnées)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": "cascade"
+  },
+  {
+   "id": "statut_plu",
+   "libelle": "Règles d'urbanisme (statut)",
+   "unite": "classe",
+   "niveau": "commune",
+   "moteur": "plu_destinations"
+  },
+  {
+   "id": "stock_opportunites",
+   "libelle": "Stock d'opportunités (brûlantes + chaudes)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": "scoring_p_v2"
+  },
+  {
+   "id": "surface_parcelle_m2",
+   "libelle": "Surface",
+   "unite": "m²",
+   "niveau": "parcelle",
+   "moteur": null
+  },
+  {
+   "id": "taux_lls_pct",
+   "libelle": "Taux LLS",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "taxe_amenagement_eur",
+   "libelle": "Taxe d'aménagement",
+   "unite": "€",
+   "niveau": "parcelle",
+   "moteur": "taxe_amenagement"
+  },
+  {
+   "id": "tier_opportunite",
+   "libelle": "Verdict · Classement servi",
+   "unite": "classe",
+   "niveau": "parcelle",
+   "moteur": "scoring_p_v2"
+  },
+  {
+   "id": "trafic_mja",
+   "libelle": "Trafic (MJA)",
+   "unite": "nombre",
+   "niveau": "zone",
+   "moteur": null
+  },
+  {
+   "id": "tranche_prix_vefa",
+   "libelle": "Prix du logement neuf (VEFA)",
+   "unite": "tranche",
+   "niveau": "commune",
+   "moteur": "marche_communes"
+  },
+  {
+   "id": "type_proprietaire",
+   "libelle": "Propriétaire (type)",
+   "unite": "classe",
+   "niveau": "proprietaire",
+   "moteur": null
+  },
+  {
+   "id": "vacance_pct",
+   "libelle": "Vacance",
+   "unite": "%",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "velocite_delai_median_mois",
+   "libelle": "Vélocité admin (délai médian dépôt→autorisation, mois)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "ventes_100m_n",
+   "libelle": "Ventes à moins de 100 m",
+   "unite": "nombre",
+   "niveau": "parcelle",
+   "moteur": null
+  },
+  {
+   "id": "verdict_icd",
+   "libelle": "Confiance données",
+   "unite": "verdict",
+   "niveau": "parcelle",
+   "moteur": "cascade"
+  },
+  {
+   "id": "zan_reste_ha",
+   "libelle": "Enveloppe ZAN (reste)",
+   "unite": "nombre",
+   "niveau": "commune",
+   "moteur": null
+  },
+  {
+   "id": "zone_plu_famille",
+   "libelle": "Zonage PLU (par type)",
+   "unite": "classe",
+   "niveau": "parcelle",
+   "moteur": null
+  }
+ ],
+ "robinets": [
+  {
+   "id": "fond_plan_ign",
+   "nom": "Plan IGN v2",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_ortho_actuelle",
+   "nom": "Actuelle · Ortho Express 2025",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_ortho_1950",
+   "nom": "1950-1965",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_ortho_2000",
+   "nom": "2000-2005",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_ortho_2006",
+   "nom": "2006-2010",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_ortho_2011",
+   "nom": "2011-2015",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_ortho_2016",
+   "nom": "2016-2020",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_ortho_2021",
+   "nom": "2021-2023",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_sombre",
+   "nom": "Sombre",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "fond_clair",
+   "nom": "Clair",
+   "categorie": "fond",
+   "parent": null
+  },
+  {
+   "id": "couche_verdict",
+   "nom": "Verdict · Classement servi",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_zonage_plu",
+   "nom": "Zonage PLU (par type)",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_gpu_brut",
+   "nom": "Limites officielles PLU (GPU brut)",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_cinquante_pas",
+   "nom": "50 pas géométriques",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_znieff",
+   "nom": "ZNIEFF — type I & II",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_bpe",
+   "nom": "Équipements (INSEE BPE)",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_alea_inondation",
+   "nom": "Aléa inondation",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_alea_mvt",
+   "nom": "Aléa mouvement de terrain",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_transport",
+   "nom": "Transport public",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_axes",
+   "nom": "Axes structurants",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_lignes_ht",
+   "nom": "Lignes haute tension",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_tcsp",
+   "nom": "Axe de transport structurant",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_dispositifs",
+   "nom": "Dispositifs et périmètres",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_vefa",
+   "nom": "Prix du logement neuf (VEFA)",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_densifier",
+   "nom": "Densifier l'existant",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "couche_equip_osm",
+   "nom": "Équipements (OSM)",
+   "categorie": "couche",
+   "parent": null
+  },
+  {
+   "id": "outil_etudier_bien",
+   "nom": "Étudier un bien",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_faisabilite",
+   "nom": "Faisabilité",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_taxe_amenagement",
+   "nom": "Taxe d'aménagement",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_pieges",
+   "nom": "Pièges et risques",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_plu",
+   "nom": "PLU",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_plu_procedure",
+   "nom": "Procédure & changement",
+   "categorie": "outil",
+   "parent": "outil_plu"
+  },
+  {
+   "id": "outil_plu_simuler",
+   "nom": "Simuler un changement",
+   "categorie": "outil",
+   "parent": "outil_plu"
+  },
+  {
+   "id": "outil_comparer_parcelles",
+   "nom": "Comparer des parcelles",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_assemblage",
+   "nom": "Assemblage",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_scan_patrimoine",
+   "nom": "Scan patrimoine",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_scan_possede",
+   "nom": "Possède",
+   "categorie": "outil",
+   "parent": "outil_scan_patrimoine"
+  },
+  {
+   "id": "outil_scan_construit",
+   "nom": "Ce qu'ils construisent",
+   "categorie": "outil",
+   "parent": "outil_scan_patrimoine"
+  },
+  {
+   "id": "outil_courrier",
+   "nom": "Courrier propriétaire",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_prospection_solaire",
+   "nom": "Prospection solaire",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_solaire_toits",
+   "nom": "Toits bien exposés",
+   "categorie": "outil",
+   "parent": "outil_prospection_solaire"
+  },
+  {
+   "id": "outil_solaire_piscines",
+   "nom": "Piscines",
+   "categorie": "outil",
+   "parent": "outil_prospection_solaire"
+  },
+  {
+   "id": "outil_communes",
+   "nom": "Communes",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_communes_comparaison",
+   "nom": "Comparaison communes",
+   "categorie": "outil",
+   "parent": "outil_communes"
+  },
+  {
+   "id": "outil_communes_evolution",
+   "nom": "Évolution du marché",
+   "categorie": "outil",
+   "parent": "outil_communes"
+  },
+  {
+   "id": "outil_communes_acquisitions",
+   "nom": "Acquisitions récentes",
+   "categorie": "outil",
+   "parent": "outil_communes"
+  },
+  {
+   "id": "outil_permis",
+   "nom": "Permis",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_permis_radar",
+   "nom": "Radar permis",
+   "categorie": "outil",
+   "parent": "outil_permis"
+  },
+  {
+   "id": "outil_permis_point_mort",
+   "nom": "Permis au point mort",
+   "categorie": "outil",
+   "parent": "outil_permis"
+  },
+  {
+   "id": "outil_densifier",
+   "nom": "Densifier l'existant",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_etude_zone",
+   "nom": "Étude de zone",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_remonter_temps",
+   "nom": "Remonter le temps",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_radar_client",
+   "nom": "Radar",
+   "categorie": "outil",
+   "parent": null
+  },
+  {
+   "id": "outil_radar_marche",
+   "nom": "Marché",
+   "categorie": "outil",
+   "parent": "outil_radar_client"
+  },
+  {
+   "id": "fiche_parcelle_score",
+   "nom": "Score d'opportunité (tier)",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_constructibilite",
+   "nom": "Constructibilité",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_risques",
+   "nom": "Risques et protections",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_marche",
+   "nom": "Marché et secteur",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_reseaux",
+   "nom": "Réseaux et accès",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_autour",
+   "nom": "Autour de cette parcelle",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_proprietaire",
+   "nom": "Propriétaire",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_confiance",
+   "nom": "Confiance données",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_solaire",
+   "nom": "Solaire (rosace, productible)",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_parcelle_division",
+   "nom": "Division (copropriétés/lots)",
+   "categorie": "fiche",
+   "parent": "fiche_parcelle"
+  },
+  {
+   "id": "fiche_commune_regles_urbanisme",
+   "nom": "Règles d'urbanisme",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_zan",
+   "nom": "Enveloppe ZAN",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_sru",
+   "nom": "Logement social — SRU",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_permis",
+   "nom": "Permis & délais",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_plh",
+   "nom": "Programme local — PLH",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_prix",
+   "nom": "Prix & tendance",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_terrain_nu",
+   "nom": "Terrain nu",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_annonces",
+   "nom": "Annonces en cours — Radar",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_loyers",
+   "nom": "Loyers",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_foncier",
+   "nom": "Foncier repéré",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_zonage",
+   "nom": "Zonage",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_risques",
+   "nom": "Risques",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_population",
+   "nom": "Population & logement",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_qpv",
+   "nom": "Quartiers prioritaires",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_commune_mairie",
+   "nom": "Mairie & service urbanisme",
+   "categorie": "fiche",
+   "parent": "fiche_commune"
+  },
+  {
+   "id": "fiche_annonce",
+   "nom": "Fiche bien (Radar)",
+   "categorie": "fiche",
+   "parent": null
+  },
+  {
+   "id": "fiche_proprietaire",
+   "nom": "Fiche propriétaire (timeline PM)",
+   "categorie": "fiche",
+   "parent": null
+  },
+  {
+   "id": "fiche_soleil",
+   "nom": "Fiche soleil (photo toit + rosace)",
+   "categorie": "fiche",
+   "parent": null
+  },
+  {
+   "id": "copilote_compter_parcelles",
+   "nom": "Compter des parcelles",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_compter_permis",
+   "nom": "Nombre de permis accordés",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_parcelles_entreprise",
+   "nom": "Parcelles détenues par une personne morale",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_fiche_parcelle",
+   "nom": "Données d'une parcelle (IDU)",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_stats_commune",
+   "nom": "Contexte d'une commune (SRU, marché)",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_delais_instruction",
+   "nom": "Délai médian d'instruction (commune)",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_marche",
+   "nom": "Marché immobilier d'une commune",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_compter_piscines",
+   "nom": "Compter les piscines détectées",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_destination_zone",
+   "nom": "Peut-on ouvrir une activité sur cette parcelle ?",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "copilote_recherche_web",
+   "nom": "Dernier recours — fait public La Réunion",
+   "categorie": "copilote",
+   "parent": "copilote"
+  },
+  {
+   "id": "veille_evaluations",
+   "nom": "Veilles (critères + déclenchements)",
+   "categorie": "veille",
+   "parent": null
+  },
+  {
+   "id": "projets_liste",
+   "nom": "Projets (cadrage · retenues · vivier)",
+   "categorie": "projets",
+   "parent": null
+  },
+  {
+   "id": "projets_compteur",
+   "nom": "Bandeau d'analyse (compteur projet)",
+   "categorie": "projets",
+   "parent": "projets_liste"
+  },
+  {
+   "id": "crm_kanban",
+   "nom": "Pipeline (kanban, cartes par colonne)",
+   "categorie": "crm",
+   "parent": null
+  },
+  {
+   "id": "crm_retour_terrain",
+   "nom": "Retour terrain (étiquettes de contact)",
+   "categorie": "crm",
+   "parent": "crm_kanban"
+  },
+  {
+   "id": "notif_cloche",
+   "nom": "Cloche (événements)",
+   "categorie": "notification",
+   "parent": null
+  },
+  {
+   "id": "notif_brief_matin",
+   "nom": "Brief du matin",
+   "categorie": "notification",
+   "parent": null
+  },
+  {
+   "id": "notif_digest_quotidien",
+   "nom": "Digest quotidien (mail)",
+   "categorie": "notification",
+   "parent": null
+  },
+  {
+   "id": "notif_radar_digest",
+   "nom": "Radar — digest quotidien (Brevo ID 12)",
+   "categorie": "notification",
+   "parent": null
+  },
+  {
+   "id": "notif_radar_alerte",
+   "nom": "Radar — alerte de veille (Brevo ID 13)",
+   "categorie": "notification",
+   "parent": null
+  },
+  {
+   "id": "pdf_flash",
+   "nom": "Rapport Flash",
+   "categorie": "pdf",
+   "parent": null
+  },
+  {
+   "id": "pdf_dossier_expert",
+   "nom": "Dossier parcelle",
+   "categorie": "pdf",
+   "parent": null
+  },
+  {
+   "id": "pdf_banquier",
+   "nom": "Dossier banquier",
+   "categorie": "pdf",
+   "parent": null
+  },
+  {
+   "id": "pdf_pre_dossier_pc",
+   "nom": "Pré-dossier PC (ZIP CERFA 13406*17)",
+   "categorie": "pdf",
+   "parent": null
+  },
+  {
+   "id": "pdf_lettre_zonage",
+   "nom": "Lettre de zonage",
+   "categorie": "pdf",
+   "parent": null
+  },
+  {
+   "id": "pdf_argumentaire",
+   "nom": "Argumentaire",
+   "categorie": "pdf",
+   "parent": null
+  },
+  {
+   "id": "page_accueil_chiffres",
+   "nom": "Accueil — bloc chiffres",
+   "categorie": "page_client",
+   "parent": null
+  },
+  {
+   "id": "page_accueil_semaine",
+   "nom": "Accueil — cette semaine",
+   "categorie": "page_client",
+   "parent": null
+  },
+  {
+   "id": "page_sources_client",
+   "nom": "Sources de données",
+   "categorie": "page_client",
+   "parent": null
+  },
+  {
+   "id": "page_sources_couverture",
+   "nom": "Couverture des sources",
+   "categorie": "page_client",
+   "parent": null
+  },
+  {
+   "id": "page_flash_publique",
+   "nom": "/flash (formulaire public)",
+   "categorie": "page_client",
+   "parent": null
+  },
+  {
+   "id": "admin_pilotage",
+   "nom": "Pilotage (KPI à faire / à jour)",
+   "categorie": "admin",
+   "parent": null
+  },
+  {
+   "id": "admin_catalogue_sources",
+   "nom": "Données › Catalogue (sources)",
+   "categorie": "admin",
+   "parent": "admin_donnees"
+  },
+  {
+   "id": "admin_flux_circuit",
+   "nom": "Données › Circuit (fourmilière + Radar + cohérence)",
+   "categorie": "admin",
+   "parent": "admin_donnees"
+  },
+  {
+   "id": "admin_mise_a_jour",
+   "nom": "Données › Mise à jour (Injecter·Calculer·Basculer)",
+   "categorie": "admin",
+   "parent": "admin_donnees"
+  },
+  {
+   "id": "admin_produit",
+   "nom": "Données produit (usage outils + retours)",
+   "categorie": "admin",
+   "parent": "admin_donnees"
+  },
+  {
+   "id": "admin_ia",
+   "nom": "IA & quotas Copilote",
+   "categorie": "admin",
+   "parent": null
+  },
+  {
+   "id": "admin_radar",
+   "nom": "Radar (dépôts à vérifier)",
+   "categorie": "admin",
+   "parent": null
+  },
+  {
+   "id": "admin_destinations",
+   "nom": "Destinations (calibration PLU)",
+   "categorie": "admin",
+   "parent": null
+  },
+  {
+   "id": "admin_licences",
+   "nom": "Licences (comptes, essais, quotas)",
+   "categorie": "admin",
+   "parent": null
+  }
+ ],
+ "aretes": {
+  "reservoir_vers_chiffre": [
+   [
+    "abf_merimee",
+    "n_vigilances"
+   ],
+   [
+    "bd_ortho",
+    "n_piscines"
+   ],
+   [
+    "bd_ortho",
+    "piscine_m2"
+   ],
+   [
+    "bd_topo",
+    "azimut_bati_deg"
+   ],
+   [
+    "bd_topo",
+    "capacite_logements"
+   ],
+   [
+    "bd_topo",
+    "classe_residuel"
+   ],
+   [
+    "bd_topo",
+    "prod_spec_kwh_kwc"
+   ],
+   [
+    "bd_topo",
+    "tier_opportunite"
+   ],
+   [
+    "cadastre_api_carto",
+    "charge_fonciere_eur"
+   ],
+   [
+    "cadastre_api_carto",
+    "classe_residuel"
+   ],
+   [
+    "cadastre_api_carto",
+    "copilote_compte_parcelles"
+   ],
+   [
+    "cadastre_api_carto",
+    "divisible_classe"
+   ],
+   [
+    "cadastre_api_carto",
+    "n_parcelles_commune"
+   ],
+   [
+    "cadastre_api_carto",
+    "n_parcelles_ile"
+   ],
+   [
+    "cadastre_api_carto",
+    "part_zone_AU_pct"
+   ],
+   [
+    "cadastre_api_carto",
+    "part_zone_A_pct"
+   ],
+   [
+    "cadastre_api_carto",
+    "part_zone_N_pct"
+   ],
+   [
+    "cadastre_api_carto",
+    "part_zone_U_pct"
+   ],
+   [
+    "cadastre_api_carto",
+    "prix_terrain_secteur_eur_m2"
+   ],
+   [
+    "cadastre_api_carto",
+    "surface_parcelle_m2"
+   ],
+   [
+    "cosia",
+    "capacite_logements"
+   ],
+   [
+    "cosia",
+    "classe_residuel"
+   ],
+   [
+    "cosia",
+    "comparateur_composite"
+   ],
+   [
+    "cosia",
+    "divisible_classe"
+   ],
+   [
+    "cosia",
+    "sdp_residuelle_m2"
+   ],
+   [
+    "cosia",
+    "stock_opportunites"
+   ],
+   [
+    "cosia",
+    "tier_opportunite"
+   ],
+   [
+    "deal_ppr",
+    "n_vigilances"
+   ],
+   [
+    "deal_ppr",
+    "ppr_pct"
+   ],
+   [
+    "dgfip_parcelles_pm",
+    "acquisitions_pm_n"
+   ],
+   [
+    "dgfip_parcelles_pm",
+    "n_parcelles_pm"
+   ],
+   [
+    "dgfip_parcelles_pm",
+    "type_proprietaire"
+   ],
+   [
+    "dvf",
+    "charge_fonciere_eur"
+   ],
+   [
+    "dvf",
+    "comparateur_composite"
+   ],
+   [
+    "dvf",
+    "ecart_demande_acte_pct"
+   ],
+   [
+    "dvf",
+    "mutations_12m_n"
+   ],
+   [
+    "dvf",
+    "prix_ancien_median_eur_m2"
+   ],
+   [
+    "dvf",
+    "prix_neuf_vefa_eur_m2"
+   ],
+   [
+    "dvf",
+    "prix_sortie_bati_eur_m2"
+   ],
+   [
+    "dvf",
+    "prix_terrain_secteur_eur_m2"
+   ],
+   [
+    "dvf",
+    "prix_terrain_zone_eur_m2"
+   ],
+   [
+    "dvf",
+    "stock_opportunites"
+   ],
+   [
+    "dvf",
+    "tier_opportunite"
+   ],
+   [
+    "dvf",
+    "tranche_prix_vefa"
+   ],
+   [
+    "dvf",
+    "ventes_100m_n"
+   ],
+   [
+    "filosofi_carreaux",
+    "habitants_n"
+   ],
+   [
+    "filosofi_carreaux",
+    "population_zone"
+   ],
+   [
+    "filosofi_carreaux",
+    "revenu_approche_eur"
+   ],
+   [
+    "filosofi_carreaux",
+    "tier_opportunite"
+   ],
+   [
+    "georisques_api",
+    "n_vigilances"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "capacite_logements"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "destination_statut"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "divisible_classe"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "n_extraits_plu"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "part_zone_AU_pct"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "part_zone_A_pct"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "part_zone_N_pct"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "part_zone_U_pct"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "prix_terrain_zone_eur_m2"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "sdp_residuelle_m2"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "simulplu_resultat"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "statut_plu"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "zone_plu_famille"
+   ],
+   [
+    "gtfs_pan",
+    "distance_arret_m"
+   ],
+   [
+    "insee_rp_logement",
+    "habitants_n"
+   ],
+   [
+    "insee_rp_logement",
+    "taux_lls_pct"
+   ],
+   [
+    "insee_rp_logement",
+    "vacance_pct"
+   ],
+   [
+    "labuse_interne",
+    "catnat_n"
+   ],
+   [
+    "labuse_interne",
+    "crm_cartes_n"
+   ],
+   [
+    "labuse_interne",
+    "ecart_candidat_pct"
+   ],
+   [
+    "labuse_interne",
+    "ia_cout_eur"
+   ],
+   [
+    "labuse_interne",
+    "loyer_median_eur_m2"
+   ],
+   [
+    "labuse_interne",
+    "n_a_faire"
+   ],
+   [
+    "labuse_interne",
+    "n_bascules_7j"
+   ],
+   [
+    "labuse_interne",
+    "n_comptes_actifs"
+   ],
+   [
+    "labuse_interne",
+    "n_densifiables"
+   ],
+   [
+    "labuse_interne",
+    "n_notifications"
+   ],
+   [
+    "labuse_interne",
+    "n_sources"
+   ],
+   [
+    "labuse_interne",
+    "n_sources_surveillees"
+   ],
+   [
+    "labuse_interne",
+    "n_veilles"
+   ],
+   [
+    "labuse_interne",
+    "pression_zan_ha"
+   ],
+   [
+    "labuse_interne",
+    "prix_flash_eur"
+   ],
+   [
+    "labuse_interne",
+    "projet_cadrage_n"
+   ],
+   [
+    "labuse_interne",
+    "projet_retenues_n"
+   ],
+   [
+    "labuse_interne",
+    "rang_tier"
+   ],
+   [
+    "labuse_interne",
+    "run_label_servi"
+   ],
+   [
+    "labuse_interne",
+    "taxe_amenagement_eur"
+   ],
+   [
+    "labuse_interne",
+    "verdict_icd"
+   ],
+   [
+    "labuse_interne",
+    "zan_reste_ha"
+   ],
+   [
+    "lidar_hd_mnh",
+    "prod_spec_kwh_kwc"
+   ],
+   [
+    "osm_transport",
+    "distance_arret_m"
+   ],
+   [
+    "plh_epci",
+    "plh_objectif_logements_an"
+   ],
+   [
+    "pvgis",
+    "prod_spec_kwh_kwc"
+   ],
+   [
+    "qpv_2024",
+    "qpv_n"
+   ],
+   [
+    "radar_pige",
+    "annonces_actives_n"
+   ],
+   [
+    "radar_pige",
+    "delai_vente_median_j"
+   ],
+   [
+    "radar_pige",
+    "ecart_demande_acte_pct"
+   ],
+   [
+    "radar_pige",
+    "n_biens_du_jour"
+   ],
+   [
+    "radar_pige",
+    "n_biens_veille"
+   ],
+   [
+    "radar_pige",
+    "n_depots_a_verifier"
+   ],
+   [
+    "radar_pige",
+    "prix_demande_eur"
+   ],
+   [
+    "radar_pige",
+    "prix_demande_median_eur_m2"
+   ],
+   [
+    "rge_alti",
+    "pente_deg"
+   ],
+   [
+    "sirene_etablissements",
+    "emplois_fourchette"
+   ],
+   [
+    "sirene_etablissements",
+    "n_concurrents_zone"
+   ],
+   [
+    "sirene_etablissements",
+    "population_zone"
+   ],
+   [
+    "sitadel",
+    "comparateur_composite"
+   ],
+   [
+    "sitadel",
+    "depots_secteur_n"
+   ],
+   [
+    "sitadel",
+    "n_permis_proximite"
+   ],
+   [
+    "sitadel",
+    "permis_12m_n"
+   ],
+   [
+    "sitadel",
+    "permis_5a_n"
+   ],
+   [
+    "sitadel",
+    "point_mort_n"
+   ],
+   [
+    "sitadel",
+    "stock_opportunites"
+   ],
+   [
+    "sitadel",
+    "tier_opportunite"
+   ],
+   [
+    "sitadel",
+    "tranche_prix_vefa"
+   ],
+   [
+    "sitadel",
+    "velocite_delai_median_mois"
+   ],
+   [
+    "sru_dhup",
+    "deficit_sru_pts"
+   ],
+   [
+    "sru_dhup",
+    "taux_lls_pct"
+   ],
+   [
+    "sudocuh",
+    "destination_statut"
+   ],
+   [
+    "sudocuh",
+    "n_communes_rnu"
+   ],
+   [
+    "sudocuh",
+    "n_extraits_plu"
+   ],
+   [
+    "sudocuh",
+    "statut_plu"
+   ],
+   [
+    "trafic_rn",
+    "trafic_mja"
+   ],
+   [
+    "znieff_inpn",
+    "n_vigilances"
+   ]
+  ],
+  "chiffre_vers_robinet": [
+   [
+    "acquisitions_pm_n",
+    "outil_communes_acquisitions"
+   ],
+   [
+    "annonces_actives_n",
+    "fiche_commune_annonces"
+   ],
+   [
+    "annonces_actives_n",
+    "outil_radar_marche"
+   ],
+   [
+    "azimut_bati_deg",
+    "outil_prospection_solaire"
+   ],
+   [
+    "capacite_logements",
+    "fiche_parcelle_constructibilite"
+   ],
+   [
+    "capacite_logements",
+    "outil_faisabilite"
+   ],
+   [
+    "catnat_n",
+    "fiche_commune_risques"
+   ],
+   [
+    "charge_fonciere_eur",
+    "fiche_parcelle_constructibilite"
+   ],
+   [
+    "charge_fonciere_eur",
+    "outil_faisabilite"
+   ],
+   [
+    "charge_fonciere_eur",
+    "pdf_banquier"
+   ],
+   [
+    "classe_residuel",
+    "couche_densifier"
+   ],
+   [
+    "comparateur_composite",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "copilote_compte_parcelles",
+    "copilote_compter_parcelles"
+   ],
+   [
+    "crm_cartes_n",
+    "crm_kanban"
+   ],
+   [
+    "deficit_sru_pts",
+    "fiche_commune_sru"
+   ],
+   [
+    "deficit_sru_pts",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "delai_vente_median_j",
+    "outil_radar_marche"
+   ],
+   [
+    "depots_secteur_n",
+    "fiche_parcelle_autour"
+   ],
+   [
+    "destination_statut",
+    "copilote_destination_zone"
+   ],
+   [
+    "distance_arret_m",
+    "fiche_parcelle_reseaux"
+   ],
+   [
+    "divisible_classe",
+    "fiche_parcelle_division"
+   ],
+   [
+    "ecart_candidat_pct",
+    "admin_mise_a_jour"
+   ],
+   [
+    "ecart_demande_acte_pct",
+    "fiche_commune_annonces"
+   ],
+   [
+    "ecart_demande_acte_pct",
+    "outil_radar_marche"
+   ],
+   [
+    "emplois_fourchette",
+    "outil_etude_zone"
+   ],
+   [
+    "habitants_n",
+    "fiche_commune_population"
+   ],
+   [
+    "ia_cout_eur",
+    "admin_ia"
+   ],
+   [
+    "loyer_median_eur_m2",
+    "fiche_commune_loyers"
+   ],
+   [
+    "mutations_12m_n",
+    "fiche_commune_prix"
+   ],
+   [
+    "mutations_12m_n",
+    "outil_communes_evolution"
+   ],
+   [
+    "n_a_faire",
+    "admin_pilotage"
+   ],
+   [
+    "n_bascules_7j",
+    "notif_brief_matin"
+   ],
+   [
+    "n_bascules_7j",
+    "page_accueil_semaine"
+   ],
+   [
+    "n_biens_du_jour",
+    "notif_digest_quotidien"
+   ],
+   [
+    "n_biens_du_jour",
+    "notif_radar_digest"
+   ],
+   [
+    "n_biens_veille",
+    "notif_radar_alerte"
+   ],
+   [
+    "n_communes_rnu",
+    "admin_destinations"
+   ],
+   [
+    "n_communes_rnu",
+    "outil_plu"
+   ],
+   [
+    "n_comptes_actifs",
+    "admin_licences"
+   ],
+   [
+    "n_concurrents_zone",
+    "outil_etude_zone"
+   ],
+   [
+    "n_densifiables",
+    "fiche_commune_foncier"
+   ],
+   [
+    "n_densifiables",
+    "outil_densifier"
+   ],
+   [
+    "n_depots_a_verifier",
+    "admin_radar"
+   ],
+   [
+    "n_extraits_plu",
+    "outil_plu"
+   ],
+   [
+    "n_notifications",
+    "notif_cloche"
+   ],
+   [
+    "n_parcelles_commune",
+    "fiche_commune_foncier"
+   ],
+   [
+    "n_parcelles_ile",
+    "page_accueil_chiffres"
+   ],
+   [
+    "n_parcelles_pm",
+    "copilote_parcelles_entreprise"
+   ],
+   [
+    "n_parcelles_pm",
+    "fiche_proprietaire"
+   ],
+   [
+    "n_parcelles_pm",
+    "outil_scan_patrimoine"
+   ],
+   [
+    "n_permis_proximite",
+    "fiche_parcelle_autour"
+   ],
+   [
+    "n_piscines",
+    "copilote_compter_piscines"
+   ],
+   [
+    "n_piscines",
+    "outil_solaire_piscines"
+   ],
+   [
+    "n_sources",
+    "admin_catalogue_sources"
+   ],
+   [
+    "n_sources",
+    "admin_flux_circuit"
+   ],
+   [
+    "n_sources",
+    "page_accueil_chiffres"
+   ],
+   [
+    "n_sources",
+    "page_sources_client"
+   ],
+   [
+    "n_sources_surveillees",
+    "admin_flux_circuit"
+   ],
+   [
+    "n_veilles",
+    "veille_evaluations"
+   ],
+   [
+    "n_vigilances",
+    "fiche_parcelle_risques"
+   ],
+   [
+    "n_vigilances",
+    "outil_pieges"
+   ],
+   [
+    "part_zone_AU_pct",
+    "fiche_commune_zonage"
+   ],
+   [
+    "part_zone_A_pct",
+    "fiche_commune_zonage"
+   ],
+   [
+    "part_zone_N_pct",
+    "fiche_commune_zonage"
+   ],
+   [
+    "part_zone_U_pct",
+    "fiche_commune_zonage"
+   ],
+   [
+    "pente_deg",
+    "fiche_parcelle_reseaux"
+   ],
+   [
+    "permis_12m_n",
+    "copilote_compter_permis"
+   ],
+   [
+    "permis_12m_n",
+    "fiche_commune_permis"
+   ],
+   [
+    "permis_12m_n",
+    "outil_permis"
+   ],
+   [
+    "permis_5a_n",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "piscine_m2",
+    "fiche_parcelle_reseaux"
+   ],
+   [
+    "plh_objectif_logements_an",
+    "fiche_commune_plh"
+   ],
+   [
+    "point_mort_n",
+    "fiche_commune_permis"
+   ],
+   [
+    "point_mort_n",
+    "outil_permis_point_mort"
+   ],
+   [
+    "population_zone",
+    "fiche_parcelle_autour"
+   ],
+   [
+    "population_zone",
+    "outil_etude_zone"
+   ],
+   [
+    "population_zone",
+    "pdf_flash"
+   ],
+   [
+    "ppr_pct",
+    "fiche_commune_risques"
+   ],
+   [
+    "pression_zan_ha",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "prix_ancien_median_eur_m2",
+    "copilote_marche"
+   ],
+   [
+    "prix_ancien_median_eur_m2",
+    "fiche_commune_prix"
+   ],
+   [
+    "prix_ancien_median_eur_m2",
+    "outil_communes_evolution"
+   ],
+   [
+    "prix_ancien_median_eur_m2",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "prix_demande_eur",
+    "fiche_annonce"
+   ],
+   [
+    "prix_demande_median_eur_m2",
+    "fiche_annonce"
+   ],
+   [
+    "prix_demande_median_eur_m2",
+    "fiche_commune_annonces"
+   ],
+   [
+    "prix_demande_median_eur_m2",
+    "outil_radar_marche"
+   ],
+   [
+    "prix_flash_eur",
+    "page_flash_publique"
+   ],
+   [
+    "prix_neuf_vefa_eur_m2",
+    "fiche_commune_prix"
+   ],
+   [
+    "prix_neuf_vefa_eur_m2",
+    "fiche_parcelle_marche"
+   ],
+   [
+    "prix_neuf_vefa_eur_m2",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "prix_sortie_bati_eur_m2",
+    "fiche_parcelle_marche"
+   ],
+   [
+    "prix_terrain_secteur_eur_m2",
+    "fiche_parcelle_marche"
+   ],
+   [
+    "prix_terrain_secteur_eur_m2",
+    "pdf_argumentaire"
+   ],
+   [
+    "prix_terrain_secteur_eur_m2",
+    "pdf_banquier"
+   ],
+   [
+    "prix_terrain_secteur_eur_m2",
+    "pdf_flash"
+   ],
+   [
+    "prix_terrain_zone_eur_m2",
+    "fiche_commune_terrain_nu"
+   ],
+   [
+    "prod_spec_kwh_kwc",
+    "fiche_parcelle_solaire"
+   ],
+   [
+    "prod_spec_kwh_kwc",
+    "fiche_soleil"
+   ],
+   [
+    "prod_spec_kwh_kwc",
+    "outil_prospection_solaire"
+   ],
+   [
+    "projet_cadrage_n",
+    "projets_compteur"
+   ],
+   [
+    "projet_cadrage_n",
+    "projets_liste"
+   ],
+   [
+    "projet_retenues_n",
+    "projets_liste"
+   ],
+   [
+    "qpv_n",
+    "fiche_commune_qpv"
+   ],
+   [
+    "rang_tier",
+    "fiche_parcelle_score"
+   ],
+   [
+    "revenu_approche_eur",
+    "outil_etude_zone"
+   ],
+   [
+    "run_label_servi",
+    "admin_flux_circuit"
+   ],
+   [
+    "run_label_servi",
+    "page_accueil_chiffres"
+   ],
+   [
+    "sdp_residuelle_m2",
+    "fiche_parcelle_constructibilite"
+   ],
+   [
+    "sdp_residuelle_m2",
+    "outil_densifier"
+   ],
+   [
+    "sdp_residuelle_m2",
+    "outil_faisabilite"
+   ],
+   [
+    "simulplu_resultat",
+    "outil_plu_simuler"
+   ],
+   [
+    "statut_plu",
+    "fiche_commune_regles_urbanisme"
+   ],
+   [
+    "stock_opportunites",
+    "fiche_commune_foncier"
+   ],
+   [
+    "stock_opportunites",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "surface_parcelle_m2",
+    "copilote_fiche_parcelle"
+   ],
+   [
+    "surface_parcelle_m2",
+    "outil_etudier_bien"
+   ],
+   [
+    "taux_lls_pct",
+    "copilote_stats_commune"
+   ],
+   [
+    "taux_lls_pct",
+    "fiche_commune_sru"
+   ],
+   [
+    "taxe_amenagement_eur",
+    "outil_taxe_amenagement"
+   ],
+   [
+    "tier_opportunite",
+    "couche_verdict"
+   ],
+   [
+    "tier_opportunite",
+    "fiche_parcelle_score"
+   ],
+   [
+    "tier_opportunite",
+    "outil_etudier_bien"
+   ],
+   [
+    "tier_opportunite",
+    "pdf_dossier_expert"
+   ],
+   [
+    "tier_opportunite",
+    "pdf_flash"
+   ],
+   [
+    "trafic_mja",
+    "outil_etude_zone"
+   ],
+   [
+    "tranche_prix_vefa",
+    "couche_vefa"
+   ],
+   [
+    "type_proprietaire",
+    "fiche_parcelle_proprietaire"
+   ],
+   [
+    "vacance_pct",
+    "fiche_commune_population"
+   ],
+   [
+    "velocite_delai_median_mois",
+    "copilote_delais_instruction"
+   ],
+   [
+    "velocite_delai_median_mois",
+    "fiche_commune_permis"
+   ],
+   [
+    "velocite_delai_median_mois",
+    "outil_comparer_parcelles"
+   ],
+   [
+    "velocite_delai_median_mois",
+    "outil_permis"
+   ],
+   [
+    "ventes_100m_n",
+    "fiche_parcelle_marche"
+   ],
+   [
+    "verdict_icd",
+    "fiche_parcelle_confiance"
+   ],
+   [
+    "zan_reste_ha",
+    "fiche_commune_zan"
+   ],
+   [
+    "zone_plu_famille",
+    "couche_zonage_plu"
+   ],
+   [
+    "zone_plu_famille",
+    "pdf_lettre_zonage"
+   ],
+   [
+    "zone_plu_famille",
+    "pdf_pre_dossier_pc"
+   ]
+  ],
+  "fuites": [
+   [
+    "gpu_plu_api_carto",
+    "fiche_commune_zonage",
+    "part_zone_A_pct",
+    "src/labuse/api/app.py:2436"
+   ],
+   [
+    "gpu_plu_api_carto",
+    "fiche_commune_zonage",
+    "part_zone_N_pct",
+    "src/labuse/api/app.py:2436"
+   ],
+   [
+    "labuse_interne",
+    "admin_flux_circuit",
+    "n_sources",
+    "src/labuse/flux.py:198"
+   ],
+   [
+    "dvf",
+    "fiche_parcelle_marche",
+    "prix_neuf_vefa_eur_m2",
+    "src/labuse/ingestion/score_e.py:59"
+   ]
+  ]
+ }
+}

@@ -55,7 +55,14 @@ def current() -> str:
     now = time.monotonic()
     if _cache["val"] is not None and (now - _cache["at"]) < _CACHE_TTL_S:
         return _cache["val"]
-    val = _lire_fichier()
+    # CIRCUIT-1 lot 3.1 — le MANIFESTE (config/served_manifest.json) fait foi quand il existe ;
+    # served_run.txt devient sa vue dérivée (écrite par bascule_flux seul). Tant qu'il n'est pas
+    # posé, l'ancien fichier fait foi. GARDE TESTS : le manifeste n'est consulté que s'il vit
+    # dans le MÊME dossier que _SERVED_FILE — un test qui pointe _SERVED_FILE vers un tmp
+    # retrouve le comportement fichier pur (attrapé par test_run_hot_swap_s3 à la 1re pose réelle).
+    from . import manifeste as _manifeste
+    m = _manifeste.lire() if _manifeste.chemin().parent == _SERVED_FILE.parent else None
+    val = (m or {}).get("scoring_run") or _lire_fichier()
     _cache["val"] = val
     _cache["at"] = now
     return val
@@ -72,16 +79,21 @@ def precedent() -> str:
     now = time.monotonic()
     if _cache_prec["val"] is not None and (now - _cache_prec["at"]) < _CACHE_TTL_S:
         return _cache_prec["val"]
-    val = _lire(_PRECEDENT_FILE, "config/run_precedent.txt")
+    from . import manifeste as _manifeste
+    m = _manifeste.lire() if _manifeste.chemin().parent == _PRECEDENT_FILE.parent else None
+    val = (((m or {}).get("precedent") or {}).get("scoring_run")
+           or _lire(_PRECEDENT_FILE, "config/run_precedent.txt"))
     _cache_prec["val"] = val
     _cache_prec["at"] = now
     return val
 
 
 def invalidate() -> None:
-    """À appeler juste après une bascule (réécriture de served_run.txt ET run_precedent.txt) : la
-    prochaine lecture relit les DEUX pointeurs. Rend la bascule effective SANS redémarrage."""
+    """À appeler juste après une bascule (réécriture du manifeste et de ses vues dérivées) : la
+    prochaine lecture relit tout. Rend la bascule effective SANS redémarrage."""
     _cache["val"] = None
     _cache["at"] = 0.0
     _cache_prec["val"] = None
     _cache_prec["at"] = 0.0
+    from . import manifeste as _manifeste
+    _manifeste.invalidate()

@@ -246,7 +246,7 @@ def collect(db: Session, idu: str) -> dict:
     # faisabilité (11 steps déterministes) + bilan promoteur + charge foncière
     try:
         from ..faisabilite.db import parcel_faisabilite
-        from ..faisabilite.bilan import sector_price, compute_bilan_servi
+        from ..faisabilite.bilan import compute_bilan_servi   # EXPORTS-1 (1.1) : marché via marche_service seul
         from ..faisabilite.engine import Hypotheses
         fa = parcel_faisabilite(db, pid)
         if fa:
@@ -320,6 +320,30 @@ def collect(db: Session, idu: str) -> dict:
         out["mode_b"] = compute_mode_b(db, idu)          # run=None → run servi (Q_A_RUN_LABEL)
     except Exception:  # noqa: BLE001
         pass
+    # CIRCUIT-2 lot 6 — LES EXPORTS SUR LE REGISTRE : la collecte attache des objets `Valeur`
+    # (valeur + tampon : run, réservoirs/millésimes, couverture) pour les données que les
+    # builders servent — l'origine de chaque donnée voyage avec elle. La mise en page reste
+    # INCHANGÉE (elle lit les mêmes clés) ; le redessin qui consommera `.valeur` partout est le
+    # chantier EXPORTS. Le prix du neuf ici est l'OBSERVÉ (resolve_prix_sortie_servi, jamais
+    # l'id VEFA à l'acte réservé au scoring — arbitrage Q3, verrouillé par test).
+    try:
+        from ..registre.valeur import valeurs_pour
+        brutes: dict = {"surface_parcelle_m2": out["parcelle"].get("surface_m2"),
+                        "parcelle_geometrie": bool(out["parcelle"].get("geojson"))}
+        couvertures: dict = {}
+        if out.get("prix_dvf"):
+            brutes["prix_terrain_secteur_eur_m2"] = out["prix_dvf"].get("median")
+        if out.get("bilan") is not None:
+            brutes["prix_neuf_observe_eur_m2"] = out.get("prix_neuf_label")
+        if out.get("permits"):
+            brutes["n_permis_proximite"] = out["permits"].get("n") or out["permits"].get("count")
+            couvertures["n_permis_proximite"] = {
+                "n": brutes["n_permis_proximite"], "non_couvert": brutes["n_permis_proximite"] is None}
+        out["_valeurs_registre"] = valeurs_pour(db, {k: v for k, v in brutes.items() if v is not None},
+                                                couvertures=couvertures)
+    except Exception as exc:  # noqa: BLE001 — le tampon ne casse jamais un export
+        log.warning("valeurs_registre %s : %s", idu, exc)
+        out["_valeurs_registre"] = {}
     return out
 
 
@@ -481,7 +505,10 @@ def faisabilite(out: dict) -> str:
             parts.append(f"surface vendable ~{fo['shab_vendable_m2']} m²")
         if fo.get("logements_au_sol"):
             lo, hi = fo["logements_au_sol"]
-            parts.append(f"~{lo} logements" if lo == hi else f"{lo} à {hi} logements")
+            # EXPORTS-1 (3.3) : LA fourchette servie, avec sa mention — l'étape intermédiaire
+            # « avant plafond » n'est plus imprimée comme fourchette.
+            parts.append((f"~{lo} logements" if lo == hi else f"{lo} à {hi} logements")
+                         + " (après plafond de densité et stationnement)")
         if fo.get("hauteur_m"):
             # M54-AB C6 : hauteur d'égout RETENUE (R+2), distincte de la hauteur totale de zone
             # (plafond PLU) citée en Identité — chaque valeur étiquetée par ce qu'elle mesure.
@@ -640,22 +667,30 @@ def comparables(out: dict) -> str:
         body += f"<p class='note'>{esc(reserve_methode())}</p>"
         comp = prix.get("comparables")
         if isinstance(comp, dict) and (comp.get("mediane_ancien") or comp.get("mediane_vefa")):
+            # EXPORTS-1 (5.5) : une médiane absente n'est pas un « — » muet — « échantillon
+            # insuffisant », le n reste dit (jamais un tiret sans couverture).
+            def _med_ou_motif(v):
+                return esc(v) if v else "échantillon insuffisant"
             body += (f"<table><tr><th>Segment</th><th class='n'>Ventes</th><th class='n'>Médiane €/m²</th></tr>"
                      f"<tr><td>Ancien</td><td class='n'>{esc(comp.get('n_ancien'))}</td>"
-                     f"<td class='n'>{esc(comp.get('mediane_ancien'))}</td></tr>"
+                     f"<td class='n'>{_med_ou_motif(comp.get('mediane_ancien'))}</td></tr>"
                      f"<tr><td>Neuf / VEFA</td><td class='n'>{esc(comp.get('n_vefa'))}</td>"
-                     f"<td class='n'>{esc(comp.get('mediane_vefa'))}</td></tr></table>"
+                     f"<td class='n'>{_med_ou_motif(comp.get('mediane_vefa'))}</td></tr></table>"
                      + (f"<p class='note'>Écart neuf / ancien : {esc(comp.get('ecart_vefa_ancien_pct'))} %.</p>"
                         if comp.get("ecart_vefa_ancien_pct") is not None else ""))
     if perm and perm.get("items"):
-        # M128-C8 : devant un financeur, les permis voisins sont filtrés à ≤ 5 ans — un dépôt de
-        # 2014-2018 n'est plus un signal de dynamique. Le compte « dynamique » du bloc reste, lui,
-        # borné en amont (nearby_permits) ; ici on borne la LISTE affichée.
+        # EXPORTS-1 lot 4 (4.2/4.3/4.4) : la fenêtre AFFICHÉE = celle du profil (libellé GÉNÉRÉ,
+        # plus de « ≤ 5 ans » en dur pendant que le compteur mesurait autre chose) ; les permis
+        # montrés = les plus SIGNIFICATIFS (logements décroissants, puis récence), plus les 5 plus
+        # proches ; la couverture SITADEL est imprimée à côté du compteur.
         from datetime import date as _date, timedelta as _td
-        _cut = (_date.today() - _td(days=5 * 365)).isoformat()
+        _mois = int(perm.get("fenetre_mois") or 24)
+        _cut = (_date.today() - _td(days=_mois * 30)).isoformat()
         recents = [it for it in perm["items"] if (it.get("date") or "") >= _cut]
+        recents.sort(key=lambda it: ((it.get("nb_lgt") or 0), it.get("date") or ""), reverse=True)
         if recents:
             rows = "".join(f"<tr><td>{esc(it.get('date'))}</td><td>{esc(it.get('type_label') or it.get('type'))}</td>"
+                           f"<td class='n'>{esc(it.get('nb_lgt') if it.get('nb_lgt') is not None else '—')}</td>"
                            f"<td class='n'>{esc(it.get('distance_m'))} m</td><td>{esc(it.get('statut') or '—')}</td></tr>"
                            for it in recents[:10])
             # M144 Lot 5.6 — plusieurs permis à la MÊME date = probablement une opération unique
@@ -664,8 +699,14 @@ def comparables(out: dict) -> str:
             _note = ("<p class='note'>Plusieurs permis à la même date proviennent probablement d'une "
                      "opération unique déposée en tranches, pas de projets distincts.</p>"
                      if len(_dates) != len(set(_dates)) else "")
-            body += (f"<h3>Permis de construire voisins (SITADEL, ≤ 5 ans) {s('S')}</h3>"
-                     f"<table><tr><th>Date</th><th>Type</th><th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>{_note}")
+            _dyn = perm.get("dynamique") or {}
+            _cov = (f"<p class='note'>Couverture SITADEL géolocalisée : {_dyn.get('couverture_pct')} % "
+                    f"des autorisations — les compteurs sont des minima.</p>"
+                    if _dyn.get("couverture_pct") is not None else "")
+            _lib = perm.get("libelle_definition") or f"≤ {_mois} mois"
+            body += (f"<h3>Permis voisins les plus significatifs (SITADEL, {esc(_lib)}) {s('S')}</h3>"
+                     f"<table><tr><th>Date</th><th>Type</th><th class='n'>Logts</th>"
+                     f"<th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>{_note}{_cov}")
     return body
 
 
@@ -711,7 +752,7 @@ def risques(out: dict) -> str:
                  f"<tr><td>2011–2021</td><td class='n'>{esc(_ha1)}</td></tr>"
                  f"<tr><td>2021–2024</td><td class='n'>{esc(_ha2)}</td></tr></table>"
                  f"<p class='note'>Source {esc(zan.get('source_nom'))} ({esc(zan.get('millesime'))}) · "
-                 f"objectif loi Climat/TRACE = −50 % de consommation d'ENAF. Voir la fiche commune pour budget/reste.</p>")
+                 f"objectif loi Climat/TRACE = −50 % de consommation d'ENAF. Détail budget/reste par commune dans LABUSE.</p>")
     return body
 
 

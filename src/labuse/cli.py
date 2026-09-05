@@ -760,6 +760,10 @@ def purge_runs_morts_cmd(
             if n:
                 touched.add(t)
                 typer.echo(f"  DELETE {t} : {n}")
+        # CIRCUIT-1 lot 3.6 — la purge entre au journal unifié (geste humain, jamais un cron).
+        from . import circuit_journal
+        circuit_journal.journaliser(s, "purger", ",".join(purgeables), "cli", "ok",
+                                    {"tables": sorted(touched)})
         s.commit()
     if vacuum and touched:
         typer.echo("VACUUM FULL (verrou exclusif) …")
@@ -1269,15 +1273,22 @@ def ingest_dpe_cmd(
     tot = {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0, "hors_reunion": 0}
     # M84 — trace ingestion_runs (running → ok | error) : un échec DPE devient VISIBLE (avant : aucune
     # trace → décrochage possible en silence). Session de trace dédiée ; les communes gardent la leur.
-    with session_scope() as _trace, fraicheur.trace_ingestion(_trace, "974 (DPE ADEME)", fraicheur.DS_NAMES["dpe"]):
+    # CIRCUIT-1 lot 0.3 — le saut des communes peuplées est un CHOIX EXPLICITE (rafraîchir = --force,
+    # à la cadence du cron DPE) et le tampon ne ment plus : si AUCUNE commune n'a été interrogée
+    # (tout sauté), `last_sync_at` reste INCHANGÉ (handle["tampon"]=False) — /healthz/crons ne peut
+    # plus afficher « ok » sur un passage à vide.
+    n_traitees = 0
+    with session_scope() as _trace, fraicheur.trace_ingestion(
+            _trace, "974 (DPE ADEME)", fraicheur.DS_NAMES["dpe"]) as _h:
         for insee, nom in targets:
             with session_scope() as s:
                 has = s.execute(text("SELECT count(*) FROM dpe_records WHERE code_insee=:c"), {"c": insee}).scalar()
                 if has and not force:
-                    typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté.")
+                    typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté (ré-ingérer : --force).")
                     continue
                 res = dpe.ingest_commune(s, insee, nom, connector=conn)
                 s.commit()
+                n_traitees += 1
                 for k in tot:
                     tot[k] += res.get(k, 0)
                 typer.echo(f"  ✓ {nom} : {res}")
@@ -1285,10 +1296,14 @@ def ingest_dpe_cmd(
             with session_scope() as s:
                 res = dpe.ingest_orphelins(s, connector=conn)
                 s.commit()
+                n_traitees += 1     # la passe orphelins interroge l'ADEME et upserte : traitement réel
                 tot["dpe"] += res["dpe"]
                 tot["rattaches_parcelle"] += res["rattaches_parcelle"]
                 tot["hors_reunion"] += res.get("hors_reunion", 0)
                 typer.echo(f"  ✓ orphelins (CP brut 974xx sans code_insee_ban) : {res}")
+        _h["tampon"] = n_traitees > 0
+        if not n_traitees:
+            typer.echo("  ⓘ aucune commune interrogée (toutes déjà peuplées) — last_sync_at INCHANGÉ.")
     typer.echo(f"✓ DPE île : {tot} ({time.time() - t0:.0f}s)")
     if tot["hors_reunion"]:
         typer.echo(f"  ⓘ {tot['hors_reunion']} lignes métropolitaines écartées (géocodage BAN "
@@ -3709,6 +3724,114 @@ def jobs_status_cmd() -> None:
                    f"{str(d.get('duree_s') or '—'):9s} {d.get('fin') or 'jamais'}")
 
 
+# ═══════════════════════ CIRCUIT-1 (lot 1.5) — registre : le miroir en base ═══════════════════════
+registre_app = typer.Typer(add_completion=False,
+                           help="Registre des chiffres/robinets (CIRCUIT-1) : le code est la vérité.")
+app.add_typer(registre_app, name="registre")
+
+
+@registre_app.command("sync")
+def registre_sync_cmd() -> None:
+    """Écrit le miroir `registre_chiffres` / `registre_robinets` / `registre_aretes` DEPUIS le code
+    (idempotent : truncate + insert). La page Circuit et la sonde lisent le miroir, jamais le code."""
+    from .registre import sync as registre_sync_mod
+    from .registre import verifier
+    pb = verifier()
+    if pb:
+        typer.echo(f"✗ registre incohérent ({len(pb)}) :")
+        for p in pb[:20]:
+            typer.echo(f"  · {p}")
+        raise typer.Exit(1)
+    with session_scope() as s:
+        n = registre_sync_mod.sync(s)
+        s.commit()
+    typer.echo(f"✓ miroir écrit : {n['chiffres']} chiffres · {n['robinets']} robinets · {n['aretes']} arêtes")
+
+
+@registre_app.command("fiche")
+def registre_fiche_cmd(cible: str = typer.Argument(..., help="parcelle | autres")) -> None:
+    """CIRCUIT-2 lot 2 — génère le document « la fiche, donnée par donnée » DEPUIS le registre
+    (docs/CIRCUIT/FICHE-PARCELLE-DONNEES.md ou FICHES-DONNEES.md). Relu à la main avant commit."""
+    from pathlib import Path
+
+    from .registre import fiche_doc
+    racine = Path(__file__).resolve().parents[2] / "docs" / "CIRCUIT"
+    with session_scope() as s:
+        if cible == "parcelle":
+            chemin = racine / "FICHE-PARCELLE-DONNEES.md"
+            chemin.write_text(fiche_doc.doc_fiche_parcelle(s))
+        elif cible == "autres":
+            chemin = racine / "FICHES-DONNEES.md"
+            chemin.write_text(fiche_doc.doc_autres_fiches(s))
+        else:
+            typer.echo("cible inconnue : parcelle | autres")
+            raise typer.Exit(1)
+    typer.echo(f"✓ écrit : {chemin}")
+
+
+# ═══════════════════ CIRCUIT-1 (lot 3.3) — la POMPE : Calculer un candidat COMPLET ═══════════════════
+pompe_app = typer.Typer(add_completion=False,
+                        help="La pompe (CIRCUIT-1) : Calculer un candidat complet — jamais servi tout seul.")
+app.add_typer(pompe_app, name="pompe")
+
+
+@pompe_app.command("calculer")
+def pompe_calculer_cmd(
+    label: str = typer.Option(..., help="Label du run candidat (ex. q_v13_20260906)."),
+    recette: str = typer.Option("m36", help="Recette scoring : m36 (servie) ou q_v12."),
+    par: str = typer.Option("cli", help="Qui lance (email admin) — entre au journal."),
+    sans_division: bool = typer.Option(False, help="Sauter division-or (déjà calculé pour ce label)."),
+) -> None:
+    """CALCULER (lot 3.3) — le candidat COMPLET sous un label : cascade+scoring (flux-run),
+    score É sur le neuf LIVE, division d'or POUR CE LABEL, note de version (registre), rapport
+    candidat. Jamais servi : Basculer reste un geste. Le résiduel n'est recalculé que si ses
+    entrées ont changé (sinon le manifeste candidat REPORTE le résiduel servi — lot 3.2)."""
+    import os
+    import subprocess
+    import sys
+
+    from . import bascule_flux, circuit_journal
+
+    with session_scope() as s:
+        circuit_journal.journaliser(s, "calculer", label, par, "lance", {"recette": recette})
+        s.commit()
+    # 1) cascade + scoring — la brique existante, en process (progression run_progress incluse).
+    flux_run_cmd(label=label, resume=True, recette=recette)
+    # 2) score É pour CE label (neuf LIVE — lot 2.2).
+    from .ingestion.score_e import build_score_e
+    with session_scope() as s:
+        build_score_e(s, run=label)
+        s.commit()
+    # 3) division d'or POUR CE LABEL (lot 2.3) : le builder tamponne runs.current() → on le lance
+    #    détaché-en-avant avec l'override d'env (le même mécanisme que les tests), jamais le servi.
+    if not sans_division:
+        env = {**os.environ, "LABUSE_SERVED_RUN": label}
+        subprocess.run([sys.executable, "-m", "labuse.cli", "division-or", "--all"],
+                       env=env, check=True)
+    # 4) résiduel : candidat SEULEMENT si ses entrées ont bougé (sinon reporté à la bascule).
+    with session_scope() as s:
+        dit = bascule_flux.residuel_entrees_changees(s)
+        if dit["changees"]:
+            typer.echo(f"⚠ résiduel : entrées plus récentes que le run servi ({dit['detail']}) — "
+                       f"calcule un candidat résiduel (chaîne residuel_runs) avant de basculer.")
+        else:
+            typer.echo("✓ résiduel : entrées inchangées — le manifeste candidat reportera le servi.")
+    # 5) note de version (registre) + rapport candidat (mail existant).
+    with session_scope() as s:
+        note = bascule_flux.note_version(s, label)
+        typer.echo("── NOTE DE VERSION ──")
+        typer.echo(f"réservoirs utilisés : {len(note['reservoirs'])} (millésimes portés)")
+        typer.echo(f"chiffres recalculés (portée run) : {', '.join(note['chiffres_recalcules'][:12])}"
+                   + (" …" if len(note["chiffres_recalcules"]) > 12 else ""))
+        if note.get("ecart_classement"):
+            typer.echo(f"écart de classement vs servi : {note['ecart_classement']}")
+        circuit_journal.journaliser(s, "calculer", label, par, "ok", {"note": note})
+        s.commit()
+    from . import golden_ops
+    golden_ops.rapport_candidat(dry_run=False)
+    typer.echo(f"✓ candidat « {label} » complet — Basculer reste un geste (page Circuit / labuse golden promote).")
+
+
 # ═══════════════════════════ CRON-1 (K5) — golden : candidat auto, bascule MANUELLE ═══════════════════════════
 golden_app = typer.Typer(add_completion=False, help="Golden : run candidat (jamais servi) + bascule manuelle (Vic).")
 app.add_typer(golden_app, name="golden")
@@ -3733,3 +3856,52 @@ def golden_candidat_cmd() -> None:
     servi : sortie informative seule (la bascule reste `golden promote`)."""
     from .golden_ops import candidat
     typer.echo(candidat())
+
+
+# ═══════════════════ CIRCUIT-1 (lot 6) — les AGENTS de source, à la demande ═══════════════════
+agent_app = typer.Typer(add_completion=False,
+                        help="Agents de veille amont (CIRCUIT-1) : constatent, ne téléchargent jamais.")
+app.add_typer(agent_app, name="agent")
+
+
+@agent_app.command("source")
+def agent_source_cmd(
+    source_id: int = typer.Argument(None, help="id data_sources d'UN réservoir."),
+    ids: str = typer.Option(None, "--ids", help="plusieurs ids, séparés par des virgules."),
+    tous: bool = typer.Option(False, "--tous", help="tous les réservoirs affichés non en_direct."),
+    par: str = typer.Option("cli", help="qui lance (email admin) — entre au journal."),
+) -> None:
+    """UN appel Claude par réservoir (surface agent_source, web_search natif, JSON strict) :
+    verdict a_jour|nouvelle|introuvable|vide AVEC preuve datée (sinon forcé introuvable — 6.2).
+    5 agents en parallèle au plus ; coût au ledger ia_log ; rapport en source_agent_rapports."""
+    from .agent_source import lancer_agents
+    from .db import session_scope
+
+    if tous:
+        with session_scope() as s:
+            from .sources_catalog import WHERE_AFFICHEES, masquees_param
+            cibles = [i for (i,) in s.execute(text(
+                f"SELECT id FROM data_sources WHERE {WHERE_AFFICHEES}"
+                " AND COALESCE(mode_remplissage,'') NOT IN ('en_direct','absente') ORDER BY id"),
+                {"masquees": masquees_param()}).all()]
+    elif ids:
+        cibles = [int(x) for x in ids.split(",") if x.strip()]
+    elif source_id is not None:
+        cibles = [source_id]
+    else:
+        typer.echo("✗ donner un id, --ids a,b,c ou --tous")
+        raise typer.Exit(1)
+    typer.echo(f"→ {len(cibles)} agent(s), 5 en parallèle au plus…")
+    rapports = lancer_agents(session_scope, cibles, par=par)
+    for r in rapports:
+        if not r.get("ok"):
+            typer.echo(f"  ✗ {r.get('motif')}")
+            continue
+        ligne = f"  {r['verdict']:12} {r['source']}"
+        if r.get("version_trouvee"):
+            ligne += f" → {r['version_trouvee']}"
+        if r.get("raison_forcage"):
+            ligne += f"  ({r['raison_forcage']})"
+        typer.echo(ligne)
+    n_nouv = sum(1 for r in rapports if r.get("verdict") == "nouvelle")
+    typer.echo(f"✓ terminé — {n_nouv} nouvelle(s) version(s) (la vanne apparaît sur la page Circuit).")

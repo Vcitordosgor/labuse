@@ -20,3 +20,93 @@ commandes:
   - motif: "Base Adresse Nationale%"
     label: ban
     argv: ["labuse", "ingest-ban", "--download"]
+
+  # ── CIRCUIT-1 lot 5.3 — LA VANNE ÉTENDUE : toute source à job d'ingestion identifiable
+  # (décision Vic n° 6). Motifs EXACTS (fnmatch sans joker : pas de collision entre les
+  # Géorisques). Les 5 motifs historiques ci-dessus gardent la priorité (premier match gagne).
+  # Sources SANS vanne (raison au compte-rendu lot 5) : hubs, en_direct, dépôts manuels
+  # (vanne « déposer un fichier » côté page), DOUBLON, imports à argument requis.
+  - motif: "Géorisques"
+    label: georisques_api
+    argv: ["labuse", "ingest-georisques"]
+  - motif: "OpenStreetMap / Overpass"
+    label: osm_overpass
+    argv: ["labuse", "ingest-amenites"]
+  - motif: "BPE INSEE"
+    label: bpe_insee
+    argv: ["labuse", "bpe-build"]
+  - motif: "ABF / Monuments historiques"
+    label: abf_merimee
+    argv: ["labuse", "ingest-abf"]
+  - motif: "INPI RNE (dirigeants)"
+    label: inpi_rne
+    argv: ["labuse", "ingest-inpi-rne"]
+  - motif: "Géorisques — sites et sols pollués"
+    label: georisques_ssp
+    argv: ["labuse", "ingest-georisques"]
+  - motif: "Géorisques — cavités souterraines"
+    label: georisques_cavites
+    argv: ["labuse", "ingest-georisques"]
+  - motif: "Géorisques — ICPE"
+    label: georisques_icpe
+    argv: ["labuse", "ingest-georisques"]
+  - motif: "Cartofriches (Cerema)"
+    label: cartofriches
+    argv: ["labuse", "ingest-cartofriches"]
+  - motif: "Géorisques — mouvements de terrain"
+    label: georisques_mvt
+    argv: ["labuse", "ingest-georisques"]
+  - motif: "QPV 2024 (ANCT)"
+    label: qpv_2024
+    argv: ["labuse", "ingest-qpv"]
+  - motif: "SUP — assiettes GPU (API Carto)"
+    label: sup_gpu
+    argv: ["labuse", "ingest-sup"]
+  - motif: "Classement sonore ITT (Cerema)"
+    label: bruit_itt_cerema
+    argv: ["labuse", "ingest-bruit-route"]
+  - motif: "50 pas géométriques — limite haute (DEAL)"
+    label: cinquante_pas_deal
+    argv: ["labuse", "ingest-cinquante-pas"]
+  - motif: "PVGIS (Commission européenne)"
+    label: pvgis
+    argv: ["labuse", "solaire-build"]
+  - motif: "BD ORTHO 20 cm (IGN)"
+    label: bd_ortho
+    argv: ["labuse", "ortho-detect-pv"]
+  - motif: "GPU — zonages d'assainissement"
+    label: gpu_zonage_assainissement
+    argv: ["labuse", "anc"]
+  - motif: "INSEE RP2022 — fichier détail Logements (EGOUL)"
+    label: insee_rp2022_egoul
+    argv: ["labuse", "anc"]
+  - motif: "BD ORTHO IRC (IGN)"
+    label: bd_ortho_irc
+    argv: ["labuse", "vegetation-irc"]
+  - motif: "DGFiP — parcelles des personnes morales"
+    label: dgfip_parcelles_pm
+    argv: ["labuse", "ingest-personnes-morales"]
+  - motif: "ZFANG — zone franche d'activité nouvelle génération (Légifrance)"
+    label: zfang
+    argv: ["labuse", "dispositifs-build"]
+  - motif: "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)"
+    label: frr_ex_zrr
+    argv: ["labuse", "dispositifs-build"]
+  - motif: "Transport public — GTFS (PAN, 7 réseaux)"
+    label: gtfs_pan
+    argv: ["labuse", "transport-reseaux"]
+  - motif: "OSM — transport (pôles d'échange & téléphérique)"
+    label: osm_transport
+    argv: ["labuse", "transport-reseaux"]
+  - motif: "ZNIEFF (INPN/MNHN)"
+    label: znieff_inpn
+    argv: ["labuse", "znieff-build"]
+  - motif: "CoSIA (couverture du sol IA, IGN)"
+    label: cosia
+    argv: ["labuse", "ingest-cosia"]
+  - motif: "SIRENE établissements géolocalisés"
+    label: sirene_etablissements
+    argv: ["labuse", "ingest-sirene-etab"]
+  - motif: "Trafic RN (Région Réunion — SIR)"
+    label: trafic_rn
+    argv: ["labuse", "ingest-trafic-rn"]

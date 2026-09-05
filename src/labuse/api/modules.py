@@ -475,13 +475,22 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
           AND s.date >= :dmax - (:m || ' months')::interval{eps}
         ORDER BY s.date DESC LIMIT :lim OFFSET :off"""),
         {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun, "lim": limit, "off": offset}).mappings().all()
-    counts = db.execute(text(
-        f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
-           FROM sitadel_permits
-           WHERE (CAST(:c AS text) IS NULL OR commune = :c)
-             AND (CAST(:nat AS text) IS NULL OR type = :nat)
-             AND date >= :dmax - (:m || ' months')::interval{ep}"""),
-        {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
+    # MERGE RETOURS×CIRCUIT-2 — les deux apports cohabitent :
+    #  · CIRCUIT-2 lot 1.6 : le count « nu » (sans filtre d'état) passe par le moteur nommé
+    #    `commune_compteurs` (id registre permis_12m_n) — source unique, ce robinet appelle, ne calcule plus ;
+    #  · RETOURS-17 : quand un état de cycle est filtré (recent/acheve/autre), le compte doit respecter
+    #    le prédicat `{ep}` que le moteur ne connaît pas → count inline (avec :run pour l'état « autre »).
+    if etat:
+        counts = db.execute(text(
+            f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+               FROM sitadel_permits
+               WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+                 AND (CAST(:nat AS text) IS NULL OR type = :nat)
+                 AND date >= :dmax - (:m || ' months')::interval{ep}"""),
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
+    else:
+        from ..registre.moteurs.commune import compte_permis_commune
+        counts = compte_permis_commune(db, commune, months, nature, dmax)
     true_total = int(counts["n"] or 0)
     geocodes_total = int(counts["geo"] or 0)
     # CARTE = TOUS les géocodés (décision Vic), chargée une seule fois (page 0), payload léger (geom seul).
@@ -630,17 +639,10 @@ def promesses(commune: str | None = None, months: int = 24,
     # Le COUNT(DISTINCT) est coûteux (~4 s) : DÉCOUPLÉ du chemin des lignes (appel parallèle count_only)
     # pour que la liste s'affiche vite et s'étoffe — décision Vic « rapide qui s'étoffe > 10 s ».
     if count_only:
-        return {"total": int(db.execute(text("""
-            SELECT count(DISTINCT s.id) FROM sitadel_permits s
-            JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
-            JOIN parcels p ON p.idu = c.idu
-            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-            WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-              AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
-              AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
-                              WHERE cr.run_label = :run AND cr.parcel_id = p.id
-                                AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
-            {"c": commune, "m": months, "run": runs.current()}).scalar() or 0)}
+        # CIRCUIT-2 lot 1.6 — le count vit au moteur nommé `commune_compteurs`
+        # (id registre point_mort_n) : ce robinet ne calcule plus, il appelle.
+        from ..registre.moteurs.commune import permis_point_mort
+        return {"total": permis_point_mort(db, commune, months, runs.current())}
     # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0 (28 s → 5 s) : la jointure
     # latérale lourde est calculée en bloc (hash joins) AVANT le tri+plafond.
     # §3 (23/08/2026) — la GÉOM du permis est RÉ-AJOUTÉE (ST_AsGeoJSON) : depuis la fusion Radar+Point
@@ -919,22 +921,11 @@ def prospection_piscines(commune: str | None = None,
         raise HTTPException(503, "détection équipements indisponible (table absente).")
     from ..ingestion.ortho_equipements import ensure_corrections
     ensure_corrections(db)   # idempotent — la table existe avant le NOT EXISTS
-    join_bati = "LEFT JOIN p_model_bati b ON b.idu = e.idu"
-    bati_cond = " AND coalesce(b.emprise_bati_m2, 0) > 0" if bati == "oui" \
-        else " AND coalesce(b.emprise_bati_m2, 0) = 0" if bati == "non" else ""
-    surf_cond = " AND e.piscine_surface_m2 >= :psmin" if piscine_surf_min else ""
-    conf_cond = _piscine_conf_filtre(inclure_incertaines)
-    corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = e.idu)"
-    where = ("WHERE e.piscine IS TRUE" + bati_cond + surf_cond + conf_cond + corr_cond
-             + (" AND p.commune = :c" if commune else ""))
-    params = {"c": commune, "psmin": piscine_surf_min, "cmin": SEUIL_PISCINE_HAUTE}
-    total = int(db.execute(text(
-        f"SELECT count(*) FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}"),
-        params).scalar() or 0)
-    communes = db.execute(text(f"""
-        SELECT p.commune AS commune, count(*)::int AS n
-        FROM parcel_equipements e JOIN parcels p ON p.idu = e.idu {join_bati} {where}
-        GROUP BY p.commune ORDER BY n DESC"""), params).mappings().all()
+    # CIRCUIT-2 lot 1.6 — total + par-commune calculés par le moteur nommé `commune_compteurs`
+    # (id registre n_piscines) : ce robinet ne calcule plus, il appelle (mêmes filtres).
+    from ..registre.moteurs.commune import compte_piscines
+    agregats = compte_piscines(db, commune, bati, piscine_surf_min, inclure_incertaines)
+    total, communes = agregats["total"], agregats["communes"]
     maj = db.execute(text("SELECT to_char(max(updated_at), 'YYYY-MM-DD') AS maj "
                           "FROM parcel_equipements WHERE piscine IS TRUE")).scalar()
     # Bandes de confiance (informatif, hors filtres commune/bâti/surface) : pour DIRE à l'écran combien
@@ -1442,7 +1433,7 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
     _check_idu(idu)   # M-K (P2-31)
     from ..faisabilite.au_ouverture import DELAISSE_MAX_M2
-    from ..faisabilite.bilan import sector_price, compute_bilan_servi
+    from ..faisabilite.bilan import compute_bilan_servi
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
 
@@ -1463,6 +1454,9 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     if fz:
         _ctx, f = fz
         out["capacite"] = {"zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
+                           # ZONE-1 : zone = DOMINANTE PAR SURFACE (la même que l'écran) ;
+                           # sur parcelle à cheval, drapeau + parts servis avec la capacité.
+                           "a_cheval": _ctx.a_cheval, "zone_parts": _ctx.zone_parts,
                            "fourchette": f.fourchette, "hypotheses": f.hypotheses,
                            "bandeau": f.bandeau,
                            # M11 Surface C : les 11 étapes TRACÉES du moteur, exposées telles quelles
@@ -1474,9 +1468,10 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
                            "avertissements": f.avertissements, "modulation": f.modulation}
     else:
         out["capacite"] = None
-    # Source unique (mandat hypothèses bilan, Vic 28/07/2026) : charger(), plus de défauts directs.
-    hyp = Hypotheses.charger()
-    prix = sector_price(db, row["id"], hyp)
+    # EXPORTS-1 (1.1) : le marché passe par marche_service (point d'appel unique — hypothèses
+    # résolues par charger() dans le profil), plus jamais sector_price en direct.
+    from .. import marche_service
+    prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
     out["marche"] = {k: prix.get(k) for k in ("type_prix", "median", "q1", "q3", "n", "fiabilite",
                                               "tendance", "volatilite", "radius_m") if k in prix}
     # P14 (dernière passe) : fraîcheur DVF — période RÉELLE couverte (SQL), pour que l'utilisateur
@@ -1542,7 +1537,6 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         CALCULETTE_VRD_DEFAUT_M2,
         compute_calculette,
         resolve_prix_sortie_servi,
-        sector_price,
     )
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
@@ -1567,7 +1561,8 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     if ps["non_calculable"]:
         return {"calculable": False, "raison": "prix_sortie_non_calculable", "defaults": defaults,
                 "message": ps["motif"]}
-    prix = sector_price(db, row["id"], Hypotheses.charger())        # comparables/fiabilité (marché)
+    from .. import marche_service                                    # EXPORTS-1 (1.1) : point d'appel unique
+    prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
     prix = {**prix, "q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"],   # prix de sortie NEUF
             "niveau_prix_neuf": ps["niveau"], "prix_neuf_label": ps["label"]}
     res = compute_calculette(float(shab), float(row["s"] or 0), prix,
@@ -1627,7 +1622,6 @@ def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
         CALCULETTE_COUT_DEFAUT_M2,
         CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
         compute_bilan_servi,
-        sector_price,
     )
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
@@ -1978,75 +1972,20 @@ def _plu_millesimes() -> dict:
 @router.get("/plu-annuaire/communes")
 def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
-    ou non ingéré. Réponse HONNÊTE (pas de trou masqué)."""
-    from ..ingestion.plu_ingest import corpus_status
-    from .. import veille_plu as V   # RETOURS-12 O4 — source UNIQUE des procédures (radar Sudocuh + registre)
-    ing = corpus_status(db)
-    _TYPE_PROC = {"revision_plu": "révision générale", "elaboration_plu": "élaboration", "modification_plu": "modification"}
-    out = []
-    for insee, c in sorted(_plu_millesimes().items()):
-        e = ing.get(insee)
-        if e:
-            out.append({"insee": insee, "commune": c["commune"], "statut": "servable",
-                        "idurba": e["idurba"], "millesime": e["millesime"], "extraits": e["extraits"],
-                        "doutes": e["doutes"], "pagination_ambigue": e["pagination_ambigue"],
-                        # M137-P — le « PLU intégral » = le pack officiel GPU (.zip) à télécharger ;
-                        # aucun PDF n'est stocké en base. document = nom du règlement PDF dans le pack.
-                        "source_url": e.get("source_url"), "document": e.get("documents")})
-        elif c["statut"] == "rnu":
-            out.append({"insee": insee, "commune": c["commune"], "statut": "rnu", "extraits": 0,
-                        "message": "RNU (règlement national d'urbanisme) — pas de règlement communal."})
-        elif c["statut"] == "opposabilite_en_attente":
-            out.append({"insee": insee, "commune": c["commune"], "statut": "revision", "extraits": 0,
-                        "idurba": c.get("idurba"),
-                        "message": "Révision en cours — règlement non servi par le GPU, vérifier en "
-                                   "mairie. Complétion automatique à l'approbation (veille trimestrielle "
-                                   "M41). On ne sert pas un règlement non réconcilié (garde idurba+sha)."})
-        else:
-            out.append({"insee": insee, "commune": c["commune"], "statut": "non_ingere",
-                        "idurba": c.get("idurba"), "extraits": 0,
-                        "message": "Règlement non ingéré pour cette commune."})
-    # OUTILS-1 A5 — le décompte par statut est CALCULÉ ici (source unique = statut réel de l'annuaire),
-    # jamais dérivé par soustraction ni figé au front : le RNU (ABSENCE de PLU) n'est pas une procédure et
-    # ne doit jamais être compté « en révision ». Si une commune passe en révision demain, le bandeau suit
-    # seul. `n_revision` = procédure de révision non réconciliée ; `n_rnu` = RNU ; `n_non_ingere` = corpus
-    # manquant. Somme des quatre = n_communes (invariant vérifié par test).
-    # RETOURS-12 O4 — RÉCONCILIATION : le compteur « en révision » de l'annuaire et le registre des
-    # procédures lisaient DEUX sources différentes (statut d'opposabilité GPU vs radar Sudocuh) → l'annuaire
-    # disait « 2 en révision » et ratait Les Trois-Bassins (révision prescrite le 02/06/2022, servie par le
-    # radar). Désormais les DEUX lisent `veille_plu` (source unique). On attache à chaque commune sa
-    # procédure ACTIVE (le fait), distincte de la disponibilité du règlement (statut GPU, conservé).
-    for c in out:
-        e_vp = V.entry(c["insee"])
-        if e_vp and V.procedure_active(e_vp) and e_vp["procedure"] in _TYPE_PROC:
-            c["procedure_active"] = _TYPE_PROC[e_vp["procedure"]]
-            c["procedure_date"] = e_vp.get("date_acte")
-        else:
-            c["procedure_active"] = None
-    servables = sum(1 for c in out if c["statut"] == "servable")
-    # `n_revision`/`n_rnu` restent la disponibilité du RÈGLEMENT (statut GPU) — inchangés (invariant test).
-    n_revision = sum(1 for c in out if c["statut"] == "revision")
-    n_rnu = sum(1 for c in out if c["statut"] == "rnu")
-    n_non_ingere = sum(1 for c in out if c["statut"] == "non_ingere")
-    # `procedures` = la LISTE réconciliée des procédures PLU en cours (radar Sudocuh), par état — la MÊME
-    # source que l'outil « Vérif procédure » et la fiche. C'est ce que le bandeau doit afficher.
-    procedures = {}
-    for c in out:
-        if c["procedure_active"]:
-            procedures[c["procedure_active"]] = procedures.get(c["procedure_active"], 0) + 1
-    n_procedures = sum(1 for c in out if c["procedure_active"])
-    # RETOURS-13 R22 — un PLU en RÉVISION reste EN VIGUEUR jusqu'à l'approbation du nouveau :
-    # le compteur dit désormais les PLU EXISTANTS (24 communes − RNU), et NOMME les trous de
-    # SOURCE (règlement en vigueur mais non servi par le GPU — Saint-André, Saint-Leu), au lieu
-    # de les cacher dans un « 21 disponibles » faux.
-    n_plu_vigueur = len(out) - n_rnu
-    non_servis = sorted(c["commune"] for c in out if c["statut"] in ("revision", "non_ingere"))
-    return {"n_communes": len(out), "servables": servables, "n_plu_vigueur": n_plu_vigueur,
-            "non_servis": non_servis,
-            "n_revision": n_revision, "n_rnu": n_rnu, "n_non_ingere": n_non_ingere,
-            # RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures (source unique veille_plu).
-            "n_procedures": n_procedures, "procedures_par_etat": procedures,
-            "communes": out}
+    ou non ingéré. Réponse HONNÊTE (pas de trou masqué).
+    MERGE RETOURS×CIRCUIT-2 — les deux apports cohabitent :
+      · CIRCUIT-2 lot 1.6 : le calcul (statuts, compteurs, réconciliation veille_plu RETOURS-12 O4)
+        vit au moteur nommé `commune_compteurs` (registre/moteurs/commune.py:etat_corpus_plu, ids
+        registre n_extraits_plu, n_communes_rnu) — source unique, ce robinet appelle ;
+      · RETOURS-13 R22 : le moteur ne renvoie PAS `n_plu_vigueur` (PLU EXISTANTS = communes − RNU, un
+        PLU en révision restant en vigueur) ni `non_servis` (les trous de SOURCE nommés) → on les
+        recalcule ICI depuis le résultat du moteur, sans redéfinir le reste (les statuts/compteurs
+        O4 restent la source unique du moteur)."""
+    from ..registre.moteurs.commune import etat_corpus_plu
+    res = etat_corpus_plu(db, _plu_millesimes())
+    res["n_plu_vigueur"] = res["n_communes"] - res["n_rnu"]
+    res["non_servis"] = sorted(c["commune"] for c in res["communes"] if c["statut"] in ("revision", "non_ingere"))
+    return res
 
 
 @router.get("/plu-annuaire/pack/{insee}")

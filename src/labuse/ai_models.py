@@ -82,6 +82,8 @@ SURFACES: dict[str, dict] = {
     "synthese-banquier": {"label": "Synthèse banquier",                  "model": MODEL_REASONING},
     "promo_collecte":    {"label": "Parseur programmes promoteur",       "model": MODEL_FACTUAL},
     "vision_pige":       {"label": "Radar — lecture d'image (PIGE)",     "model": MODEL_VISION},
+    # CIRCUIT-1 lot 6 — l'agent de veille d'une source (web_search natif, JSON strict 6.2).
+    "agent_source":      {"label": "Agent de source (veille amont)",      "model": MODEL_REASONING},
     "juge_vlm":          {"label": "Juge VLM (ML, hors service)",        "model": MODEL_VISION},
 }
 

@@ -67,16 +67,13 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     `spatial_layers` que l'outil Pièges & risques), + le nombre d'arrêtés CatNat (table `catnat_arretes`)
     et la présence du Parc National. Les libellés restent fidèles à la donnée : la couche `ppr` n'ayant
     pas de sous-type dans nos attributs, on n'invente pas « inondation » — on dit « PPR (risque naturel) »."""
+    # CIRCUIT-2 lot 1.6 — la part par couche est calculée par le moteur nommé `commune_compteurs`
+    # (id registre ppr_pct) : ce robinet ne calcule plus, il appelle (le total est calculé une fois).
+    from ..registre.moteurs.commune import pct_parcelles_couche
     tot = db.execute(text("SELECT count(*) FROM parcels WHERE commune = :c"), {"c": commune}).scalar() or 0
 
     def _pct_layer(kind: str) -> float | None:
-        if not tot:
-            return None
-        n = db.execute(text(
-            "SELECT count(DISTINCT p.idu) FROM parcels p JOIN spatial_layers sl ON sl.kind = :k "
-            "AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c"),
-            {"k": kind, "c": commune}).scalar() or 0
-        return round(100.0 * n / tot, 1)
+        return pct_parcelles_couche(db, commune, kind, tot)
 
     catnat = (db.execute(text("SELECT count(*) FROM catnat_arretes WHERE insee = :i"),
                          {"i": insee}).scalar() or 0) if insee else 0
@@ -114,13 +111,16 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
                      {"i": insee}).mappings().first() if insee else None
     logements = int(log["logements"]) if log and log["logements"] is not None else None
     vacants = int(log["vacants"]) if log and log["vacants"] is not None else None
+    # CIRCUIT-2 lot 1.6 — le taux de vacance est calculé par le moteur nommé `commune_compteurs`
+    # (id registre vacance_pct) : même arithmétique, un seul chemin.
+    from ..registre.moteurs.commune import vacance_pct
     return {
         "habitants": int(demo["hab"]) if demo.get("hab") is not None else None,
         "menages": int(demo["men"]) if demo.get("men") is not None else None,
         "niveau_vie_moyen_eur": int(demo["niveau_vie_moyen"]) if demo.get("niveau_vie_moyen") is not None else None,
         "logements": logements,
         "vacants": vacants,
-        "vacance_pct": round(100.0 * vacants / logements, 1) if (logements and vacants is not None) else None,
+        "vacance_pct": vacance_pct(logements, vacants),
         "source": "INSEE Filosofi 2021 (carreaux 200 m, agrégat commune) · INSEE RP (logements).",
     }
 

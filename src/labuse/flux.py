@@ -194,11 +194,15 @@ def construire_flux(db: Session) -> dict:
             "injection_lancee_at": r["injection_lancee_at"].isoformat() if r["injection_lancee_at"] else None,
         })
 
-    # ── comptages surveillance (64 · N surveillées) ──
-    total_sources = db.execute(text("SELECT count(*) FROM data_sources")).scalar() or 0
-    surveillees = db.execute(text(
-        "SELECT count(*) FROM source_veille WHERE methode = ANY(:m) AND COALESCE(actif, true)"),
-        {"m": list(_METHODES_SONDEES)}).scalar() or 0
+    # ── comptages surveillance — CIRCUIT-1 lot 0.2 : LE MÊME périmètre que la vitrine. Avant,
+    # `count(*)` brut (77) et un compte de source_veille toutes lignes (49) contredisaient la page
+    # Sources client et le Catalogue admin (66) — c'est le « 77 dont 49 » du constat Vic 05/09.
+    # Le total est le nombre de lignes AFFICHÉES (déjà filtrées WHERE_AFFICHEES ci-dessus) ; les
+    # surveillées sont les vraies sondes ACTIVES parmi elles (api/page/entete/temoin — un rappel
+    # manuel n'est pas une surveillance). Trois écrans, un seul nombre, par construction.
+    total_sources = len(sources)
+    surveillees = sum(1 for r in src_rows
+                      if r["methode"] in _METHODES_SONDEES and r["actif"] is not False)
 
     # ── MOTEURS : état = orange si une source amont est plus récente que le run, sinon vert ──
     src_par_moteur: dict[str, list[int]] = {m["key"]: [] for m in MOTEURS}

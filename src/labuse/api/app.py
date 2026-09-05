@@ -1061,34 +1061,11 @@ def sources_couverture(db: Session = Depends(get_db)) -> dict:
     """RETOURS-9 (Q11.5) — les chiffres de COUVERTURE qui parlent au client, LUS des données réelles :
     parcelles couvertes, communes (couvertes / total), transactions DVF analysées, annonces Radar
     suivies, et la date de la dernière analyse (run servi). Chaque valeur est gardée : une table absente
-    (base partielle) rend `null`, jamais un 500 ni un chiffre inventé."""
-    def _scal(sql: str):
-        try:
-            return db.execute(text(sql)).scalar()
-        except Exception:  # noqa: BLE001 — base partielle : la tuile dira « — », jamais un crash
-            return None
-    parcelles = _scal("SELECT count(*) FROM parcels")
-    communes = _scal("SELECT count(DISTINCT commune) FROM parcels")
-    dvf = _scal("SELECT count(*) FROM dvf_mutations")
-    radar = _scal("SELECT count(*) FROM pige_biens")
-    analyse_label, analyse_date = None, None
-    try:
-        from .. import runs as _runs
-        analyse_label = _runs.current()
-        if analyse_label:
-            d = db.execute(text("SELECT computed_at FROM p_score_v2_runs WHERE run_id = :r"),
-                           {"r": analyse_label}).scalar()
-            analyse_date = d.isoformat() if d else None
-    except Exception:  # noqa: BLE001
-        pass
-    return {
-        "parcelles": int(parcelles) if parcelles is not None else None,
-        "communes": int(communes) if communes is not None else None,
-        "communes_total": 24,   # les 24 communes de La Réunion (constante du référentiel radar)
-        "dvf_transactions": int(dvf) if dvf is not None else None,
-        "radar_annonces": int(radar) if radar is not None else None,
-        "analyse_label": analyse_label, "analyse_date": analyse_date,
-    }
+    (base partielle) rend `null`, jamais un 500 ni un chiffre inventé.
+    CIRCUIT-2 lot 1.6 — le calcul (bloc entier) vit au moteur nommé `commune_compteurs`
+    (registre/moteurs/commune.py:couverture_sources, id registre couverture_commune_pct)."""
+    from ..registre.moteurs.commune import couverture_sources
+    return couverture_sources(db)
 
 
 def _source_licence(legal_notes: str | None) -> dict:
@@ -1573,8 +1550,9 @@ def _q_v2_where(run_label: str,
         params["f_rang"] = rang_max
     if renouvellement:   # mutation : segment Renouvellement (run-scopé, vérifié live sur le run servi)
         conds.append("EXISTS (SELECT 1 FROM parcel_renouvellement rn WHERE rn.idu = p.idu AND rn.run_label = :runf)")
-    if division_or:   # mutation : segment Division en or (O12)
-        conds.append("EXISTS (SELECT 1 FROM division_or_candidates dor WHERE dor.idu = p.idu)")
+    if division_or:   # mutation : segment Division en or (O12) — CIRCUIT-1 2.3 : run servi SEUL
+        conds.append("EXISTS (SELECT 1 FROM division_or_candidates dor WHERE dor.idu = p.idu "
+                     "AND dor.run_label = :runf)")
     if proprietaire_type:
         # propriété : PM identifiée (SIREN) / bailleur (Office HLM ou SEM) / PP non déterminable (absence).
         pt = [x.strip() for x in proprietaire_type.split(",") if x.strip()]
@@ -1905,27 +1883,19 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     def scal(sql: str):
         return db.execute(text(sql), {"c": commune, "r": runs.current()}).scalar()
 
-    n_parcelles = scal("SELECT count(*) FROM parcels WHERE commune = :c") or 0
+    # CIRCUIT-2 lot 1.6 — le compte de parcelles est calculé par le moteur nommé `commune_compteurs`
+    # (id registre n_parcelles_commune) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.commune import compte_parcelles_commune
+    n_parcelles = compte_parcelles_commune(db, commune)
     surface_ha = db.execute(text(
         "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
         {"c": commune}).scalar()
-    # OUTILS-6 C1 — RÉPARTITION DU ZONAGE EN PARTS DE SURFACE (somme = 100 %). Les parts de PARCELLES
-    # (un compte) ne représentent pas le territoire : à La Réunion U domine en nombre mais A+N couvrent
-    # l'essentiel de l'aire. On agrège la surface cadastrée par famille (parcel_zone_plu porte UNE zone
-    # par parcelle, PK idu — donc jamais de double comptage), les parts somment à 100 % et le total en
-    # ha égale la surface communale servie ailleurs. On garde aussi le compte (n) par famille.
-    zon = {(r["fam"] or "").upper(): {"n": r["n"], "m2": float(r["m2"] or 0)} for r in db.execute(text(
-        "SELECT z.zone_fam AS fam, count(*) n, sum(p.surface_m2) m2 FROM parcels p JOIN parcel_zone_plu z "
-        "ON z.idu = p.idu WHERE p.commune = :c AND z.zone_fam IS NOT NULL GROUP BY 1"), {"c": commune}).mappings()}
-
-    def _bucket(pred):
-        return (sum(v["m2"] for k, v in zon.items() if pred(k)),
-                sum(v["n"] for k, v in zon.items() if pred(k)))
-    au_m2, au_n = _bucket(lambda k: k.startswith("AU"))
-    a_m2, a_n = _bucket(lambda k: k.startswith("A") and not k.startswith("AU"))
-    u_m2, u_n = _bucket(lambda k: k.startswith("U"))
-    n_m2, n_n = _bucket(lambda k: k.startswith("N"))
-    total_zone_m2 = u_m2 + au_m2 + a_m2 + n_m2
+    # OUTILS-6 C1 → CIRCUIT-1 lot 2.1 — la RÉPARTITION DU ZONAGE (parts de SURFACE, somme = 100 %)
+    # est désormais calculée par LE moteur unique registre/moteurs/zonage.py (ids part_zone_*_pct) :
+    # ce robinet ne calcule plus, il demande. La définition (les parts de parcelles ne représentent
+    # pas le territoire) vit dans le moteur.
+    from ..registre.moteurs.zonage import parts_zonage_surface
+    zonage = parts_zonage_surface(db, commune)
     evaluees = scal("SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu "
                     "WHERE p.commune = :c AND s.run_id = :r") or 0
     sans_zonage = scal("SELECT count(*) FROM parcels p WHERE p.commune = :c AND NOT EXISTS "
@@ -1934,10 +1904,9 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     # une fenêtre calendaire donnerait un volume partiel trompeur).
     # MANDAT_DVF-B — SIGNAL d'agrégat COMMUNE (un COMPTE de mutations, PAS un prix de parcelle) : reste
     # HORS marche_service et hors profils (ne pas mélanger deux grandeurs). Jamais lu comme un €/m².
-    mutations_12m = db.execute(text(
-        "SELECT count(*) FROM dvf_mutations WHERE commune = :c AND date_mutation > "
-        "(SELECT max(date_mutation) FROM dvf_mutations WHERE commune = :c) - interval '12 months'"),
-        {"c": commune}).scalar() or 0
+    # CIRCUIT-2 lot 1.6 — calculé par le moteur nommé `commune_compteurs` (id mutations_12m_n).
+    from ..registre.moteurs import commune as _moteur_commune
+    mutations_12m = _moteur_commune.mutations_12m(db, commune)
     terrain = ligne2_terrain_zone(db, commune)     # point de calcul M79 (réutilisé, pas recréé)
     offre = ligne6_offre_engagee(db, commune)      # permis 12 mois (Sitadel), réutilisé
     # OUTILS-6 C2 — STOCK FONCIER : parcelles brûlantes + chaudes du run servi, EN PARCELLES ET EN HA
@@ -1947,13 +1916,6 @@ def _foncier_commune(db: Session, commune: str) -> dict:
         "SELECT count(*) n, coalesce(sum(p.surface_m2), 0) m2 FROM parcel_p_score_v2 s "
         "JOIN parcels p ON p.idu = s.parcelle_id WHERE p.commune = :c AND s.run_id = :r "
         "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": runs.current()}).mappings().first()
-    zonage = None
-    if total_zone_m2:
-        def _fam(m2, nn):
-            return {"ha": round(m2 / 10000), "pct": round(100 * m2 / total_zone_m2, 1), "n": int(nn)}
-        zonage = {"base": "surface", "total_ha": round(total_zone_m2 / 10000),
-                  "familles": {"U": _fam(u_m2, u_n), "AU": _fam(au_m2, au_n),
-                               "A": _fam(a_m2, a_n), "N": _fam(n_m2, n_n)}}
     return {
         "n_parcelles": int(n_parcelles),
         "surface_ha": int(surface_ha) if surface_ha is not None else None,
@@ -2019,7 +1981,8 @@ def rafraichir_contexte_cache(db: Session, commune: str) -> None:
 
 
 @app.get("/communes/{commune}/contexte")
-def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
+def commune_contexte(commune: str, db: Session = Depends(get_db),
+                     request: Request = None, trace: int = 0) -> dict:
     """VOLET CONTEXTE COMMUNE — servi depuis le CACHE `commune_contexte_cache` (précalculé chaque nuit
     par le job `fiche-commune-cache`) : ouverture < 500 ms. `cache_calcule_le` = date du calcul (pied
     de fiche). Cache absent (base neuve, avant 1er job) → calcul EN DIRECT, lent mais jamais un faux
@@ -2035,9 +1998,20 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
         # nocturne les FIGEAIT → l'utilisateur voyait deux chiffres divergents (ex. St-Denis prix neuf
         # 4 998 live vs 4 275 cache ; permis 5 ans décalés par la fenêtre glissante). Un seul moteur,
         # deux écrans d'accord. Les blocs lourds/statiques (population, risques, ANRU…) restent cachés.
-        return {**_rafraichir_partages(db, commune, dict(hit["payload"])),
-                "cache_calcule_le": hit["computed_at"].isoformat()}
-    return {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+        payload = {**_rafraichir_partages(db, commune, dict(hit["payload"])),
+                   "cache_calcule_le": hit["computed_at"].isoformat()}
+    else:
+        payload = {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+    if trace:
+        # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : tampon de chaque chiffre
+        # déclaré pour les 15 cartes de la fiche commune (registre.robinets fiche_commune_*).
+        from .auth import exiger_admin
+        from .. import registre
+        exiger_admin(request)
+        cids = sorted({cid for rid, r in registre.ROBINETS.items()
+                       if rid.startswith("fiche_commune") for cid in r.chiffres})
+        payload["_trace"] = registre.tampons_pour(db, cids)
+    return payload
 
 
 def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
@@ -2144,9 +2118,10 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
     anru = [dict(r) for r in db.execute(text(
         "SELECT nom, interet, code_qpv, source_nom, source_url FROM anru_quartiers"
         " WHERE commune = :c ORDER BY nom"), {"c": commune}).mappings().all()]
-    qpv = [dict(r) for r in db.execute(text(
-        "SELECT name AS nom, attrs->>'code_qp' AS code FROM spatial_layers"
-        " WHERE kind = 'qpv' AND commune = :c ORDER BY name"), {"c": commune}).mappings().all()]
+    # CIRCUIT-2 lot 1.6 — les QPV de la commune sont lus par le moteur nommé `commune_compteurs`
+    # (id registre qpv_n) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.commune import autres_loges_pct as _autres_loges, qpv_commune
+    qpv = qpv_commune(db, commune)
     # rattachement EPCI (référentiel BANATIC, config/epci_974.yaml) + PLH
     epci_cfg = config.load_yaml_config("epci_974")["epci"]
     epci = next((k for k, v in epci_cfg.items() if commune in v["communes"]), None)
@@ -2154,6 +2129,14 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
     for d in (sru, insee_log, plh):
         if d:
             d.pop("importe_le", None)
+    # CIRCUIT-1 lot 2.4 — « autres logés gratuitement » CALCULÉ AU SERVEUR (id registre
+    # `autres_loges_pct`). Le front (ContextePanel:526) faisait 100 − locataires − propriétaires
+    # lui-même : le nombre affiché n'existait nulle part côté serveur. Même arithmétique —
+    # CIRCUIT-2 lot 1.6 : elle vit au moteur nommé `commune_compteurs` (un seul chemin).
+    if insee_log and insee_log.get("locataires_pct") is not None \
+            and insee_log.get("proprietaires_pct") is not None:
+        insee_log["autres_loges_pct"] = _autres_loges(
+            insee_log["locataires_pct"], insee_log["proprietaires_pct"])
     # M36 Lot D : le compteur du tier haut EN DUR sur la fiche commune — même point de
     # calcul (mémoïsé) que /communes : tiers du run servi, jamais figé, étiquette vraie.
     _cd = next((c for c in _communes_data(db, runs.current()) if c["commune"] == commune), None)
@@ -2434,25 +2417,15 @@ def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_d
     critère, un endroit) avec leur compte de parcelles CALCULÉ (jamais en dur : il suit les
     recalibrages PLU). Portée : l'île par défaut, les communes passées sinon — une zone à 0
     dans la portée est ABSENTE de la liste (comportement explicite : le front affiche la
-    portée en tête de liste). La fiche, elle, garde `zone_lib` (graphie officielle)."""
+    portée en tête de liste). La fiche, elle, garde `zone_lib` (graphie officielle).
+
+    CIRCUIT-1 lot 2.1 — ce compte est `parcelles_par_zone_n` au registre : un NOMBRE pour les
+    filtres (« parcelles en zone … »), JAMAIS servi ni affiché comme une « part » (les parts de
+    zonage sont les parts de SURFACE du moteur unique registre/moteurs/zonage.py). Le robinet
+    ne calcule plus : il demande au moteur."""
     coms = [x.strip() for x in (communes or "").split(",") if x.strip()]
-    join, where, params = "", "WHERE z.zone_filtre IS NOT NULL", {}
-    if coms:
-        join = "JOIN parcels p ON p.idu = z.idu"
-        where += " AND p.commune = ANY(:coms)"
-        params["coms"] = coms
-    rows = db.execute(text(
-        f"SELECT z.zone_fam AS fam, z.zone_filtre AS zone, count(*) AS n "
-        f"FROM parcel_zone_plu z {join} {where} GROUP BY 1, 2"), params).mappings().all()
-    fams: dict[str, dict] = {}
-    for r in rows:
-        f = fams.setdefault(r["fam"] or "autre", {"fam": r["fam"] or "autre", "n": 0, "zones": []})
-        f["n"] += r["n"]
-        f["zones"].append({"zone": r["zone"], "n": r["n"]})
-    familles = sorted(fams.values(), key=lambda f: -f["n"])
-    for f in familles:
-        f["zones"].sort(key=lambda z: (-z["n"], z["zone"]))
-    return {"portee": "commune" if coms else "ile", "communes": coms, "familles": familles}
+    from ..registre.moteurs.zonage import parcelles_par_zone
+    return parcelles_par_zone(db, coms or None)
 
 
 @app.get("/filtre")
@@ -2711,12 +2684,28 @@ def _qualite_commune(insee: str | None) -> dict | None:
 
 
 def _division_fiche(db: Session, idu: str, surface_m2: float | None) -> dict | None:
-    """M129-C P3 — la ligne « Division » de la fiche (un seul juge : division_or_candidates)."""
+    """M129-C P3 — la ligne « Division » de la fiche (un seul juge : division_or_candidates).
+
+    CIRCUIT-1 lot 2.3 — SCOPÉ AU RUN SERVI : les candidats d'un run mort (q_v10_m129 restait
+    servi 2 runs après sa bascule) ne sont PLUS montrés. Tant que le run courant n'a pas ses
+    candidats (recalcul au geste Calculer, lot 3), la fiche dit « divisibilité non recalculée
+    pour ce run » plutôt qu'une valeur d'un run mort. Lot 3.1 : le run lu est celui du
+    MANIFESTE (`manifeste.division_run()`, repli runs.current() tant qu'il n'est pas posé)."""
+    from .. import manifeste as _manifeste
+    run = _manifeste.division_run()
     r = db.execute(text(
         "SELECT residuel_m2, residuel_facade_m, type_division, "
         "       (coalesce(note_revue,'') <> '') AS revue "
-        "FROM division_or_candidates WHERE idu = :i"), {"i": idu}).mappings().first()
+        "FROM division_or_candidates WHERE idu = :i AND run_label = :r"),
+        {"i": idu, "r": run}).mappings().first()
     if not r:
+        # un candidat existe pour un AUTRE run → l'honnêteté : non recalculé, jamais la vieille valeur
+        autre = db.execute(text(
+            "SELECT 1 FROM division_or_candidates WHERE idu = :i LIMIT 1"), {"i": idu}).scalar()
+        if autre:
+            return {"lot_m2": None, "facade_m": None, "type": None, "statut_revue": None,
+                    "potentiel_lots": None, "potentiel_source": None, "non_recalcule": True,
+                    "ligne": "divisibilité non recalculée pour ce run"}
         return None
     try:
         from .. import config as _cfg
@@ -2742,21 +2731,35 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     couches cascade), avec millésime et fiabilité. Réutilise la table `data_sources` (0 nouvelle
     donnée). Requête EN begin_nested (contrat savepoint : requête ajoutée au build de fiche)."""
     with db.begin_nested():
+        # EXPORTS-1 (6.4, audit B13) : millésime COMPOSÉ — millésime amont, sinon date amont VUE
+        # par la sentinelle, sinon date d'ingestion ÉTIQUETÉE comme telle ; sinon cellule masquée.
+        _has_sv = bool(db.execute(text(
+            "SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
+        _sv_col = "sv.dernier_vu" if _has_sv else "NULL AS dernier_vu"
+        _sv_join = "LEFT JOIN source_veille sv ON sv.source_id = ds.id" if _has_sv else ""
         rows = db.execute(text(
-            """SELECT DISTINCT ds.name, ds.category, ds.provider,
-                      ds.source_millesime, ds.source_horizon_at, ds.reliability_level
+            f"""SELECT DISTINCT ds.name, ds.category, ds.provider,
+                      ds.source_millesime, ds.source_horizon_at, ds.reliability_level,
+                      {_sv_col}, ds.last_sync_at
                FROM dryrun_cascade_results cr JOIN data_sources ds ON ds.id = cr.data_source_id
+               {_sv_join}
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
                ORDER BY ds.category, ds.name"""),
             {"run": run_label, "pid": parcel_id}).mappings().all()
     # M70 décision 4 — « vérifiée » MENTAIT : source_checks est VIDE, aucune vérification amont ne
     # l'adosse (reliability_level = déclaration de catalogue). Libellé honnête = « suivie » (la
     # source est cataloguée + suivie par le radar, jamais « vérifiée à la dernière version »).
-    _FIAB = {"verifie": "suivie", "estime": "estimée", "declaratif": "déclarative",
+    _FIAB = {"verifie": "surveillée", "estime": "estimée", "declaratif": "déclarative",
              "a_confirmer": "à confirmer"}
     out = []
+    import re as _re_m
     for r in rows:
         mill = r["source_millesime"] or (str(r["source_horizon_at"].year) if r["source_horizon_at"] else None)
+        if not mill and r["dernier_vu"] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r["dernier_vu"])):
+            d = str(r["dernier_vu"])[:10]
+            mill = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
+        if not mill and r["last_sync_at"]:
+            mill = f"ingéré le {r['last_sync_at']:%d/%m/%Y} (date d'ingestion, millésime amont non publié)"
         out.append({
             "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
             "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
@@ -3421,6 +3424,14 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # fiche servie (premium/dossier/banquier/fiche écran lisent ces lignes arbitrées).
     from .risques_arbitrage import arbitrer_risques
     lines = arbitrer_risques(lines)
+    # EXPORTS-1 lot 5 (5.2/5.3/5.4) : les MÊMES gardes de lecture que les générateurs de
+    # documents (served_cascade._gardes_lot5) — accès voirie (test viabilisation, plus jamais
+    # l'intersection stricte), ICPE (alerte seulement si CLASSÉE), propriétaire (« non
+    # renseigné » rebranché sur le fichier PM). Écran = documents, un seul point de vérité.
+    from .served_cascade import _gardes_lot5
+    _garde = _gardes_lot5(db, idu, [{**l, "layer_name": l.get("layer_name") or l.get("layer")}
+                                    for l in lines])
+    lines = [{k: v for k, v in l.items() if k != "layer_name"} for l in _garde]
     flags = [l for l in lines
              if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 
@@ -3451,21 +3462,19 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
-        # M101 B2 — le NEUF (VEFA) de la commune, par le point d'appel unique (profil neuf_vefa,
-        # config dvf_profils.yaml). Sous le seuil : « échantillon insuffisant » AVEC la grandeur —
-        # l'absence est un état normal de ce profil (11/24 communes servables, mesuré).
-        from ..marche_service import DVF_NEUF_VEFA, marche_dvf as _marche_dvf
-        try:
-            neuf_vefa = _marche_dvf(db, idu, profil=DVF_NEUF_VEFA)
-        except Exception:  # noqa: BLE001 — le neuf VEFA ne casse jamais la fiche
-            neuf_vefa = None
+        # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
+        # (le prix de sortie du bilan). Le profil `neuf_vefa_commune` (VEFA déclaré à l'acte,
+        # 5 ans, M101 B2) SORT de la fiche : deux « neuf » sans définition côte à côte étaient
+        # la contradiction 4 730 vs 4 742 de l'audit A1.q3. Le profil reste vivant pour l'outil
+        # VEFA (/outils/vefa-neuf), qui l'étiquette.
         dvf_parcelle = {
             "derniere_mutation": ({**dict(dvf_last),
                                    "date_mutation": dvf_last["date_mutation"].isoformat()
                                    if dvf_last["date_mutation"] else None}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
-            "neuf_vefa": neuf_vefa,
+            # EXPORTS-1 (1.3) : grain dit — indicateur secondaire, jamais la tête de fiche.
+            "secteur_etiquette": "médianes du secteur cadastral — indicateur secondaire",
             "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
         }
     # LOT 9 (data-gap) : terrain (pente RGE ALTI 5 m) — hypothèses affichées, jamais un « 0 » muet.
@@ -3552,8 +3561,24 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
            WHERE a.kind = 'anru' AND ST_DWithin(p2.geom_2975, a.geom_2975, 100)
            ORDER BY ST_Intersects(p2.geom_2975, a.geom_2975) DESC LIMIT 1"""),
         {"idu": idu}).mappings().first()
+    # EXPORTS-1 (1.3, arbitrage Q1) : le prix de l'ancien de la TÊTE DE FICHE = sector_price
+    # PARCELLE (marche_service, point d'appel unique), n + rayon effectif + période — la même
+    # synthèse que les exports (le test doré compare écran ↔ PDF sur cette phrase).
+    try:
+        from .. import marche_service as _msvc
+        _prix_ancien = _msvc.marche_dvf(db, idu, profil=_msvc.DVF_BANQUIER_ADAPTATIF)
+        _marche_synthese = _msvc.phrase_prix_ancien(_prix_ancien)
+    except Exception:  # noqa: BLE001 — le marché ne casse jamais la fiche
+        _prix_ancien, _marche_synthese = None, None
+    # EXPORTS-1 (6.5, Q12) : drapeau « prescriptions non vérifiables » — point de vérité unique
+    # (zone_servie), lu par l'écran et tous les documents.
+    from ..faisabilite.zone_servie import prescriptions_verifiables as _presc_verif
+    _presc_ok, _presc_motif = _presc_verif(head["commune"])
     return {
         "idu": head["idu"], "commune": head["commune"],
+        "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
+        "prescriptions_verifiables": _presc_ok,
+        "prescriptions_non_verifiables_motif": _presc_motif,
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
         # affiche « Adresse non disponible », jamais un champ vide)
         "adresse": _ban_adresse(db, idu),
@@ -3687,19 +3712,10 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
     return {**(base or {}), "perimetres": perimetres, "dispositifs_dom": dispositifs_dom}
 
 
-def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -> dict | None:
-    """L'objet `kind` le plus proche de la parcelle (KNN geom_2975) + distance en mètres.
-    M106 : PROXIMITÉ, jamais appartenance — on sert la distance, le lecteur juge."""
-    row = db.execute(text(
-        "SELECT sl.name, sl.subtype, sl.attrs, round(ST_Distance(sl.geom_2975, p.geom_2975))::int AS d "
-        "FROM spatial_layers sl, parcels p WHERE p.idu = :idu AND sl.kind = :k "
-        "AND sl.geom_2975 IS NOT NULL AND (CAST(:st AS text) IS NULL OR sl.subtype = :st) "
-        "ORDER BY sl.geom_2975 <-> p.geom_2975 LIMIT 1"),
-        {"idu": idu, "k": kind, "st": subtype}).mappings().first()
-    if not row:
-        return None
-    return {"nom": row["name"], "subtype": row["subtype"],
-            "attrs": row["attrs"] or {}, "distance_m": row["d"]}
+# CIRCUIT-2 lot 1.6 — le KNN vit au moteur nommé `parcelle_proximites`
+# (registre/moteurs/parcelle.py:plus_proche, id registre distance_arret_m) : alias local conservé
+# pour les blocs de fiche (proximités, équipements) — même fonction, pas une copie.
+from ..registre.moteurs.parcelle import plus_proche as _plus_proche  # noqa: E402
 
 
 _FICHE_LOG = logging.getLogger("labuse.fiche")
@@ -4233,18 +4249,28 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
     pct_potentiel) et enrichi du signal SURÉLÉVATION (parcel_residuel_bati), qui n'est PAS
     couvert par le seul ratio SDP — cf. SYNTHESE-M9 (avant/après). None si aucune donnée
     résiduelle (repli propre : parcelle non bâtie / hors périmètre calcul)."""
+    # EXPORTS-1 lot 3 (3.1/3.2) : la lecture de `parcel_residuel_bati` (table ORPHELINE, surélévation
+    # au FAÎTAGE — le « ~6,6 m » de l'audit A3) est SUPPRIMÉE. La surélévation vient du moteur commun
+    # (faisabilite/potentiel.surelevation — hauteur à l'ÉGOUT, repli faîtage dit) ; la SDP servie
+    # passe par la garde de lecture ZONE-1 (dominante A/N → 0, cause dite).
     try:
         row = db.execute(text(
-            """SELECT r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite, r.capacite_estimee,
-                      rb.surelevation_possible, rb.hauteur_bati_m, rb.hauteur_max_m, rb.confiance
+            """SELECT p.id AS pid, r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite,
+                      r.capacite_estimee, zp.zone_fam, zp.zone_lib
                  FROM parcels p
                  LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
-                 LEFT JOIN parcel_residuel_bati rb ON rb.idu = p.idu
+                 LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
+        from ..faisabilite.potentiel import surelevation as _surelevation
+        sur = _surelevation(db, row["pid"]) if row else None
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
         return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
-    if not row or (row["pct_potentiel"] is None and row["surelevation_possible"] is None):
+    if not row or (row["pct_potentiel"] is None and (sur or {}).get("possible") is None):
         return None
+    from ..faisabilite.zone_servie import garde_sdp_residuelle
+    sdp_servie, _cause_zone = garde_sdp_residuelle(
+        float(row["sdp_residuelle_m2"]) if row["sdp_residuelle_m2"] is not None else None,
+        row["zone_fam"], row["zone_lib"])
     pct = row["pct_potentiel"]
     if pct is None:
         niveau, libelle = "indetermine", "Marge SDP non calculée"
@@ -4256,30 +4282,31 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         niveau, libelle = "faible", "Potentiel faible — parcelle proche de sa densité autorisée"
     else:
         niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
-    hauteur_marge = (round(row["hauteur_max_m"] - row["hauteur_bati_m"], 1)
-                     if row["hauteur_max_m"] is not None and row["hauteur_bati_m"] is not None
-                     else None)
+    sur = sur or {}
     return {
         "niveau": niveau, "libelle": libelle,
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
         "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
-        "sdp_residuelle_m2": row["sdp_residuelle_m2"],
+        "sdp_residuelle_m2": sdp_servie,
+        "cause": _cause_zone,                                 # ZONE-1 : dominante A/N → 0, cause dite
         "sous_densite": row["sous_densite"],
         "capacite_estimee": row["capacite_estimee"],
-        # Signal surélévation : NON couvert par le seul ratio SDP → conservé de l'outil Mutabilité.
-        "surelevation_possible": row["surelevation_possible"],
-        "hauteur_bati_m": row["hauteur_bati_m"], "hauteur_max_m": row["hauteur_max_m"],
-        "hauteur_marge_m": hauteur_marge,
-        "confiance": row["confiance"],
-        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + potentiel bâti "
-                  "résiduel (BD TOPO × règles PLU calibrées)",
+        # EXPORTS-1 (3.2) : surélévation au MOTEUR COMMUN — hauteur à l'ÉGOUT, base dite
+        # (repli faîtage seulement si l'égout n'est pas calibré, avec avertissement).
+        "surelevation_possible": sur.get("possible"),
+        "hauteur_bati_m": sur.get("hauteur_bati_m"), "hauteur_regle_m": sur.get("hauteur_regle_m"),
+        "hauteur_base": sur.get("base"), "hauteur_marge_m": sur.get("marge_m"),
+        "avertissement_surelevation": sur.get("avertissement"),
+        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
+                  "commun (règles PLU calibrées × bâti BD TOPO, hauteur à l'égout)",
         "note": "Remplace l'ancien mode carte « Mutabilité » : même donnée résiduelle, "
                 "à la parcelle, complétée du signal surélévation.",
     }
 
 
 @app.get("/parcels/{idu}")
-def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db)) -> dict:
+def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db),
+                 request: Request = None, trace: int = 0) -> dict:
     """Fiche « Tout ce que LA BUSE a trouvé » (§8).
 
     FIX-FICHE F3 : l'endpoint sert DÉSORMAIS TOUJOURS la fiche PREMIUM (`_q_v2_fiche`) — la seule
@@ -4290,7 +4317,17 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
     idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
     run = source if (source and source.startswith("q_v")) else runs.current()
-    return _q_v2_fiche(db, idu, run_label=run)
+    payload = _q_v2_fiche(db, idu, run_label=run)
+    if trace:
+        # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : le tampon de chaque
+        # chiffre déclaré pour les sections de la fiche parcelle (registre.robinets fiche_parcelle_*).
+        from .auth import exiger_admin
+        from .. import registre
+        exiger_admin(request)
+        cids = sorted({cid for rid, r in registre.ROBINETS.items()
+                       if rid.startswith("fiche_parcelle") for cid in r.chiffres})
+        payload["_trace"] = registre.tampons_pour(db, cids)
+    return payload
 
 
 @app.get("/parcels/{idu}/zone")
@@ -4492,14 +4529,17 @@ def parcel_export_pdf(idu: str, source: str | None = None,
     # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
-    # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.
-    try:
-        from .marche_bloc import bloc_condense
-        _mc = {l["cle"]: l["phrase"] for l in
-               bloc_condense(db, fiche["commune"], ["prix_ancien_median", "tendance_12m"])}
-        fiche["marche_synthese"] = _mc.get("prix_ancien_median") or _mc.get("tendance_12m")
-    except Exception:  # noqa: BLE001
-        pass
+    # EXPORTS-1 (1.3) : la synthèse marché (sector_price PARCELLE, n + rayon effectif + période)
+    # est DÉJÀ servie par `_q_v2_fiche` (mêmes clés écran/PDF — le test doré compare dessus).
+    # Repli sur la tendance commune (M-U) quand l'échantillon parcellaire est insuffisant.
+    if not fiche.get("marche_synthese"):
+        try:
+            from .marche_bloc import bloc_condense
+            _mc = {l["cle"]: l["phrase"] for l in
+                   bloc_condense(db, fiche["commune"], ["tendance_12m"])}
+            fiche["marche_synthese"] = _mc.get("tendance_12m")
+        except Exception:  # noqa: BLE001
+            pass
     # M54-AB C7 : pente CLIENT = RGE ALTI (parcel_terrain), ° ET %, MÊME source que dossier/flash.
     try:
         from ..pente_fmt import pente_texte
@@ -4525,6 +4565,21 @@ def parcel_export_pdf(idu: str, source: str | None = None,
         "SELECT source_millesime FROM data_sources WHERE name = 'BD ORTHO 20 cm (IGN)'")).scalar()
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
+    # CIRCUIT-2 lot 6 — la fiche premium attache AUSSI ses objets Valeur (origine portée ;
+    # saisies client en portée `projet`, tampon « saisi par le client le … »).
+    try:
+        from ..registre.valeur import valeurs_pour
+        _brutes = {"surface_parcelle_m2": fiche.get("surface_m2"),
+                   "prix_sortie_bati_eur_m2": fiche.get("marche_synthese"),
+                   "adresse_ban": fiche.get("adresse")}
+        if fiche.get("calculette"):
+            _brutes["cout_construction_saisi_eur_m2"] = cout_construction_m2
+            _brutes["marge_frais_saisie_pct"] = marge_frais_pct
+            _brutes["prix_demande_saisi_eur"] = prix_demande_eur
+        fiche["_valeurs_registre"] = valeurs_pour(
+            db, {k: v for k, v in _brutes.items() if v is not None})
+    except Exception:  # noqa: BLE001 — le tampon ne casse jamais un export
+        fiche["_valeurs_registre"] = {}
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
                     # M124-A4 — nom de fichier {IDU}-labuse.pdf (IDU d'abord : tri/recherche par parcelle).
                     headers={"Content-Disposition": f'inline; filename="{idu}-labuse.pdf"'})
@@ -4590,6 +4645,45 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
 # sport n'est de toute façon pas lu par le modèle (parcel_amenites n'a pas de colonne sport).
 _SPORT_KEEP_RE = r'(stade|gymnase|piscine|nautique|complexe|omnisport|palais des sports|halle des sports)'
 _SPORT_DROP_RE = r'city.?stade|citystade'
+
+
+@app.get("/map/couches-info")
+def map_couches_info(db: Session = Depends(get_db)) -> dict:
+    """CIRCUIT-2 lot 5.2 — le « i » d'une couche affiche SOURCE, MILLÉSIME et FABRICATION :
+    le traçage côté client, sobre, sans identifiant technique. Une entrée par clé de couche du
+    front (COUCHE_PAR_CLE_FRONT), lue du registre + data_sources — jamais saisi deux fois."""
+    from ..registre.couverture import COUCHE_PAR_CLE_FRONT
+    from ..registre.donnees import DONNEES
+    from ..registre.valeur import _millesimes
+    fabrications = {"build-mvt": "tuiles reconstruites à la bascule",
+                    "geom_simple": "table matérialisée", "vue": "vue dérivée",
+                    "requete": "lue en direct de la base", "wmts_distant": "tuiles IGN en direct"}
+    from ..registre.valeur import _RESERVOIR_NAME_ILIKE
+    out: dict = {}
+    noms: dict[str, tuple[str | None, str | None]] = {}
+    for rid in {r for cid in set(COUCHE_PAR_CLE_FRONT.values())
+                for r in DONNEES[cid].reservoirs if cid in DONNEES}:
+        motif = _RESERVOIR_NAME_ILIKE.get(rid)
+        if motif:
+            try:
+                row = db.execute(text(
+                    "SELECT name, source_millesime FROM data_sources WHERE name ILIKE :m LIMIT 1"),
+                    {"m": motif}).first()
+                noms[rid] = (row[0], row[1]) if row else (None, None)
+            except Exception:  # noqa: BLE001
+                noms[rid] = (None, None)
+    _ = _millesimes   # (même chemin de millésimes que le tampon — la jointure nom est ici)
+    for cle, cid in COUCHE_PAR_CLE_FRONT.items():
+        d = DONNEES.get(cid)
+        if d is None:
+            continue
+        sources = []
+        for rid in d.reservoirs:
+            nom, m = noms.get(rid, (None, None))
+            sources.append((nom or rid.replace("_", " ")) + (f" — millésime {m}" if m else ""))
+        out[cle] = {"source": " · ".join(sources) or "référentiel embarqué (seed)",
+                    "fabrication": fabrications.get(d.fabrication or "", d.fabrication)}
+    return out
 
 
 @app.get("/map/layers.geojson")

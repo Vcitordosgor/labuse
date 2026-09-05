@@ -109,8 +109,15 @@ def _sql(db: Session) -> str:
     else:
         ex_col = "NULL AS ex_motif_client, false AS ex_present"
         ex_join = ""
-    return (f"SELECT s.parcelle_id AS idu, s.tier, s.rang, rsd.sdp_residuelle_m2, {fb_cols}, {ex_col} "
-            f"FROM parcel_p_score_v2 s {fb_join} {ex_join}  "
+    # ZONE-1 pt2 : zone DOMINANTE de l'écran jointe pour la garde de lecture du résiduel.
+    has_zp = bool(db.execute(text(
+        "SELECT to_regclass('parcel_zone_plu') IS NOT NULL")).scalar())
+    zp_cols = ("zp.zone_fam AS zone_fam, zp.zone_lib AS zone_lib" if has_zp else
+               "NULL AS zone_fam, NULL AS zone_lib")
+    zp_join = "LEFT JOIN parcel_zone_plu zp ON zp.idu = s.parcelle_id" if has_zp else ""
+    return (f"SELECT s.parcelle_id AS idu, s.tier, s.rang, rsd.sdp_residuelle_m2, "
+            f"{zp_cols}, {fb_cols}, {ex_col} "
+            f"FROM parcel_p_score_v2 s {fb_join} {ex_join} {zp_join} "
             "LEFT JOIN parcels prc ON prc.idu = s.parcelle_id "
             "LEFT JOIN parcel_residuel rsd ON rsd.parcel_id = prc.id AND rsd.cause IS NULL "
             f"WHERE s.run_id = :run AND s.parcelle_id = ANY(:idus)")
@@ -128,6 +135,13 @@ def _label_bati(tier: str, row) -> str | None:
         return None
     if sdp is None:
         return None
+    # ZONE-1 pt2 — garde de lecture : en zone dominante A/N, la SDP servie vaut 0 par règle
+    # (le chiffre du run suivra à la prochaine bascule).
+    try:
+        from .faisabilite.zone_servie import garde_sdp_residuelle
+        sdp, _ = garde_sdp_residuelle(float(sdp), row["zone_fam"], row["zone_lib"])
+    except (KeyError, TypeError):
+        pass
     return ("Bâtie — on peut encore construire" if float(sdp) > 0
             else "Bâtie — construite au maximum")
 

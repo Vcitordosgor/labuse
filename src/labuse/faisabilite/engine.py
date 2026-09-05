@@ -12,7 +12,8 @@ On n'invente jamais d'emprise.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass, field, replace
 
 from .plu_rules import A_VERIFIER, EXEMPT, NON_MODELISABLE, ZoneRules
 
@@ -214,33 +215,43 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                     cause="habitat_interdit")
 
-    # reculs (avec hypothèse prudente si "a_verifier")
+    # EXPORTS-1 lot 6 — les références des YAML calibrés portent des marqueurs internes
+    # (« (doctrine a) »…) : purgés AU SERVICE, jamais dans les données de calibration.
+    _marqueurs_internes = re.compile(r"\s*\((?:doctrine|deja_bati|reglt)[^)]*\)")
+    rules = replace(rules, sources={k: _marqueurs_internes.sub("", v) if isinstance(v, str) else v
+                                    for k, v in (rules.sources or {}).items()})
+
+    # reculs (avec hypothèse prudente si non calibrés) — EXPORTS-1 (3.4) : reculs NOMMÉS,
+    # plus jamais le jargon interne « à_vérifier » dans un texte servi.
     if _is_num(rules.recul_voirie_m):
         recul_v, rv_src = float(rules.recul_voirie_m), rules.sources.get("recul_voirie", "Art. 6")
     else:
-        recul_v, rv_src = hyp.recul_voirie_defaut_m, "Art. 6 (à_vérifier → hypothèse)"
-        avert.append(f"Recul voirie « à_vérifier » pour {rules.code} → hypothèse prudente {recul_v:g} m.")
+        recul_v, rv_src = hyp.recul_voirie_defaut_m, "Art. 6 (non calibré → hypothèse prudente)"
+        avert.append(f"Recul voirie non calibré pour la zone {rules.code} → "
+                     f"hypothèse prudente {recul_v:g} m.")
     if _is_num(rules.recul_limites_sep_m):
         recul_l, rl_src = float(rules.recul_limites_sep_m), rules.sources.get("recul_limites", "Art. 7")
     else:
-        recul_l, rl_src = hyp.recul_limites_defaut_m, "Art. 7 (à_vérifier → hypothèse)"
-        avert.append(f"Recul limites « à_vérifier » pour {rules.code} → hypothèse {recul_l:g} m.")
+        recul_l, rl_src = hyp.recul_limites_defaut_m, "Art. 7 (non calibré → hypothèse prudente)"
+        avert.append(f"Recul limites séparatives non calibré pour la zone {rules.code} → "
+                     f"hypothèse prudente {recul_l:g} m.")
 
     # ---- Emprise constructible au sol ----
     if emprise_geo is not None:
         emprise, recul_used = emprise_geo
         if emprise < SEUIL_EXIGU_M2:
             steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
-                              f"contour cadastral inseté de {recul_used:g} m (ST_Buffer 2975)",
+                              f"contour cadastral réel inseté du recul limites séparatives ({recul_used:g} m)",
                               "≈ 0 m² (contour vidé)", f"{rl_src}"))
             return fini(False, f"Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — "
                         "non constructible en l'état (le contour inseté se vide).",
                         {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                         cause="terrain_exigu")
         steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
-                          f"contour cadastral réel inseté de {recul_used:g} m (ST_Buffer, EPSG:2975)",
+                          f"contour cadastral réel inseté du recul limites séparatives ({recul_used:g} m)",
                           f"~{emprise:.0f} m²", f"{rl_src} (séparatif) ; recul voirie en sus"))
-        hypotheses.append("Emprise = contour cadastral réel inseté du recul séparatif (géométrie EPSG:2975).")
+        hypotheses.append("Emprise = contour cadastral réel inseté du recul limites séparatives "
+                          "(géométrie réelle, projection métrique).")
         if _is_num(rules.recul_voirie_m) and rules.recul_voirie_m > recul_used:
             avert.append(f"Recul voirie {rules.recul_voirie_m:g} m s'applique en sus sur la façade sur "
                          "rue (bord rue non identifiable au cadastre → non déduit géométriquement).")
@@ -278,7 +289,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"emprise ≤ {surface_m2:.0f}×(1−{pt:g}%) = {cap_pt:.0f} m²",
                           f"~{emprise:.0f} m² retenu", rules.sources.get("pleine_terre", "Art. 13")))
     else:
-        avert.append(f"% pleine terre « à_vérifier » pour {rules.code} → non appliqué (Art. 13).")
+        avert.append(f"% pleine terre non calibré pour la zone {rules.code} → non appliqué (Art. 13).")
     emprise = max(0.0, emprise)
 
     # ---- Niveaux (hé prioritaire) ----
@@ -296,7 +307,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"hauteur d'égout non précisée → (hauteur faîtage {rules.hf_m:g}−{hyp.etage_m:g}) ÷ {hyp.etage_m:g} = {niveaux}",
                           f"R+{max(0, niveaux - 1)}", he_src))
     else:
-        return fini(False, "Hauteur non disponible (à_vérifier) — capacité non calculable.",
+        return fini(False, "Hauteur de zone non calibrée — capacité non calculable.",
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                     cause="hauteur_indispo")
     hypotheses.append(f"Hauteur d'étage supposée {hyp.etage_m:g} m ; niveaux comptés sur hé (égout), pas hf.")
@@ -337,10 +348,9 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
     floor_central = shab / logt_moyen
     floor_lo, floor_hi = shab / hyp.logement_m2_haut, shab / hyp.logement_m2_bas
-    # M58-P1 (Q1) : libellé — l'étape dit clairement qu'elle est AVANT le plafond de densité.
-    steps.append(Step("Logements — avant plafond de densité",
-                      f"{shab:.0f} m² ÷ {hyp.logement_m2_haut:g} à {hyp.logement_m2_bas:g} m²/logt",
-                      f"~{floor_lo:.0f} à {floor_hi:.0f}", "hypothèse surface logement"))
+    # EXPORTS-1 (3.3) : l'étape « avant plafond ~8 à 10 » n'est PLUS imprimée comme fourchette —
+    # elle se lisait comme LE résultat à côté du « 7 à 9 » retenu (audit A3). Seule la fourchette
+    # APRÈS plafond de densité et stationnement sort ; l'hypothèse de surface reste dite.
     hypotheses.append(f"Surface moyenne par logement supposée {hyp.logement_m2_bas:g}–{hyp.logement_m2_haut:g} m².")
 
     # ---- Plafond de DENSITÉ (filet de sécurité, remplace le COS) ----
@@ -352,7 +362,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     densite_cap = surface_ha * cap_logts_ha
     capped_lo, capped_hi = min(floor_lo, densite_cap), min(floor_hi, densite_cap)
     capped_central = min(floor_central, densite_cap)     # M128-5-§1 : le central subit le MÊME plafond
-    steps.append(Step(f"Logements — après plafond (≤ {densite_cap:.0f} logts)",
+    steps.append(Step(f"Logements — après plafond de densité (≤ {densite_cap:.0f} logts)",
                       f"{surface_ha:.2f} ha × {cap_logts_ha:.0f} logts/ha "
                       f"({hyp.densite_logts_ha_par_niveau:g}/niveau × {niveaux})",
                       f"~{capped_lo:.0f} à {capped_hi:.0f}", "hypothèse densité (ex-COS)"))
@@ -400,7 +410,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     else:
         regime = "non_applique"
         if ppl == A_VERIFIER:
-            avert.append(f"Stationnement « à_vérifier » pour {rules.code} → garde-fou non appliqué (Art. 12).")
+            avert.append(f"Stationnement non calibré pour la zone {rules.code} → garde-fou non appliqué (Art. 12).")
         elif ppl == NON_MODELISABLE:
             # M94 — norme PRÉSENTE mais pas par logement (par m² SDP / chambre / %SHON) : on le DIT,
             # jamais un défaut déguisé en local. Distinct de « absente » ci-dessous.

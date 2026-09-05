@@ -79,9 +79,10 @@ CATALOGUE = [
     {"nom": "compter_permis", "desc": "NOMBRE de permis accordés d'une commune sur une fenêtre de N mois "
      "(défaut 24). Pour « combien de permis (accordés/délivrés) à X », « permis sur 24 mois ». C'est un "
      "COMPTE, pas un délai.", "params": {"commune": "str", "mois": "int (défaut 24)"}},
-    {"nom": "marche", "desc": "Marché immobilier d'une commune : prix de l'ANCIEN (prix_ancien_median), "
-     "terrain nu (prix_terrain_nu_par_zone), NEUF (prix_sortie_neuf), tendance (tendance_12m), loyer "
-     "(loyer_median). Les grandeurs sont NOMMÉES dans data.valeurs — sers celle demandée.",
+    {"nom": "marche", "desc": "Marché immobilier d'une commune : terrain nu "
+     "(prix_terrain_nu_par_zone), NEUF (prix_sortie_neuf), tendance (tendance_12m), loyer "
+     "(loyer_median). Le prix de l'ANCIEN est PARCELLAIRE (sector_price — demander une parcelle), "
+     "plus une ligne commune. Les grandeurs sont NOMMÉES dans data.valeurs — sers celle demandée.",
      "params": {"commune": "str"}},
     {"nom": "compter_piscines", "desc": "Compter les PISCINES détectées (île entière ou une commune) — "
      "détection ortho/IA gelée. « combien de piscines à X », « piscines détectées ».",
@@ -147,8 +148,8 @@ question du client, UNIQUEMENT à partir du RÉSULTAT D'OUTIL fourni (JSON). Rè
 - N'invente AUCUN chiffre : tout nombre de ta réponse doit apparaître dans le résultat. Si une valeur
   manque, dis-le, ne la devine pas.
 - GRANDEUR DEMANDÉE (multi-valeurs) : si le résultat porte `valeurs` (grandeurs nommées, ex. marché :
-  prix_ancien_median, prix_terrain_nu_par_zone, prix_sortie_neuf, loyer_median, tendance_12m), sers CELLE
-  que la question demande (« prix de l'ancien » → prix_ancien_median). Ne réponds « non disponible » QUE
+  prix_terrain_nu_par_zone, prix_sortie_neuf, loyer_median, tendance_12m), sers CELLE
+  que la question demande. Ne réponds « non disponible » QUE
   si la valeur demandée est absente/None — jamais si elle est présente sous une autre clé.
 - Si un champ "faits_du_fil" est fourni (chiffres déjà servis plus tôt dans CETTE conversation), tu
   peux reprendre UNIQUEMENT un chiffre qui y figure, en citant sa source et son millésime. Un chiffre
@@ -739,11 +740,46 @@ PREPARE_SYSTEM = (
     "reste GÉNÉRIQUE (pas de chiffre). Pas de mise en contexte, va au script.")
 
 
+# CIRCUIT-1 lot 2.6 — GARDE FORMELLE de la voie B (réponse générale) : un NOMBRE PRÉCIS à unité
+# de donnée (€, €/m², m², parcelles, logements, %) qui n'est pas une FOURCHETTE assumée
+# (« entre X et Y », « X à Y », « environ », « ~ », « de l'ordre de ») est un chiffre que le
+# modèle ne peut PAS connaître sans outil : la phrase qui le porte est RETIRÉE et remplacée par
+# le renvoi aux outils. Déterministe (pas un 2e appel LLM), testée adversarialement sur 10
+# sorties pièges (tests/test_circuit1_lot2.py). La règle 4bis (ordres de grandeur de prestations,
+# en fourchette) reste permise par construction.
+import re as _re
+
+_CHIFFRE_DATA = _re.compile(
+    r"\d[\d\s .,]*\s*(?:€/m²|€/m2|€|m²|m2|parcelles?|logements?|%)", _re.IGNORECASE)
+_FOURCHETTE = _re.compile(
+    r"(?:entre\s+\d|de\s+\d[\d\s .,]*\s*(?:€|m²|m2|%|k€)?\s*(?:à|a)\s+\d|\d\s*(?:à|–|-)\s*\d"
+    r"|environ|~|ordre de grandeur|de l'ordre de|autour de|jusqu'à|quelques|fourchette)",
+    _re.IGNORECASE)
+_RENVOI_OUTILS = ("(chiffre retiré — les données chiffrées LABUSE passent par les outils du "
+                  "Copilote : repose la question avec la commune ou la parcelle.)")
+
+
+def garde_generale_sans_chiffre(txt: str) -> tuple[str, int]:
+    """Garde 2.6 sur une réponse libre : rend (texte gardé, nombre de phrases retirées)."""
+    phrases = _re.split(r"(?<=[.!?])\s+", txt)
+    gardees, retirees = [], 0
+    for ph in phrases:
+        if _CHIFFRE_DATA.search(ph) and not _FOURCHETTE.search(ph):
+            retirees += 1
+            continue
+        gardees.append(ph)
+    if not retirees:
+        return txt, 0
+    reste = " ".join(gardees).strip()
+    return (reste + ("\n" if reste else "") + _RENVOI_OUTILS), retirees
+
+
 def _general(db: Session, message: str, history: list[dict] | None = None) -> dict:
     """VOIE B (COPILOTE-REFONTE) — connaissance générale foncier/fiscalité/urbanisme/vocabulaire.
     Portée dans le FIL (l'historique résout l'anaphore « elle »). Réponse COURTE, honnête sur l'état
     du droit, badgée `voie="generale"` (le front l'annonce « Réponse générale — hors données LABUSE »).
-    Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé."""
+    Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé —
+    garde formelle `garde_generale_sans_chiffre` (CIRCUIT-1 lot 2.6) appliquée à toute réponse."""
     hist = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
             for m in (history or [])[-4:]]
     out = core.complete(db, kind="copilote-general", model=core.model_for("copilote-general"), max_tokens=300,
@@ -754,6 +790,8 @@ def _general(db: Session, message: str, history: list[dict] | None = None) -> di
     if not txt or txt.upper().startswith("HORS_DOMAINE"):
         telemetrie.refus(db, "hors_domaine", message, "EXPLIQUER")
         return _reply(HORS_SUJET, "HORS_SUJET", refus="hors_sujet")
+    # CIRCUIT-1 lot 2.6 — garde formelle : aucun chiffre précis hors outil ne sort de la voie B.
+    txt, _n_retires = garde_generale_sans_chiffre(txt)
     # `general=True` = le discriminant servi au front (badge « Réponse générale — hors données LABUSE »
     # + surface IA assumée) ; `tool="general"` reste pour la télémétrie. La promesse « sourcée/datée » de
     # l'en-tête ne vaut QUE pour la voie a. NB : distinct du champ `voie` (objet de NAVIGATION des refus).

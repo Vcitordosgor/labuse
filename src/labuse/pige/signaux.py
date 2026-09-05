@@ -98,17 +98,26 @@ def _dvf_terrain(db: Session, commune: str) -> dict:
 
 
 def _dvf_bati(db: Session, commune: str) -> dict:
-    """DVF acté bâti ancien (référentiel UNIQUE `ligne1_prix_ancien` / sector_price)."""
+    """DVF acté bâti ancien — référence de comparaison du Radar. EXPORTS-1 (1.2, arbitrage Q2) :
+    `ligne1_prix_ancien` est SUPPRIMÉE (sa médiane « commune » était un rayon autour du centroïde,
+    libellé faux). Le Radar garde la MÊME mesure (sector_price sur la parcelle la plus proche du
+    centroïde, via marche_service — point d'appel unique), assumée ICI comme approximation interne
+    de comparaison d'annonces — plus jamais servie comme « le marché de la commune » dans un export."""
     try:
-        from ..faisabilite.marche_commune import ligne1_prix_ancien
-        l = ligne1_prix_ancien(db, commune)
+        from .. import marche_service
+        from ..faisabilite.marche_commune import _dvf_millesime
+        idu = db.execute(text(
+            "SELECT idu FROM parcels WHERE commune = :c AND geom_2975 IS NOT NULL "
+            "ORDER BY centroid <-> (SELECT ST_Centroid(ST_Collect(centroid)) FROM parcels "
+            "WHERE commune = :c) LIMIT 1"), {"c": commune}).scalar()
+        sp = (marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
+              if idu else None)
+        mill = _dvf_millesime(db, commune)
     except Exception:  # noqa: BLE001
         return {"eur_m2": None, "n": 0, "millesime": None}
-    v = l.get("valeurs") or {}
-    if v.get("median_eur_m2"):
-        return {"eur_m2": float(v["median_eur_m2"]), "n": int(v.get("n") or 0),
-                "millesime": l.get("date_amont")}
-    return {"eur_m2": None, "n": 0, "millesime": l.get("date_amont")}
+    if sp and sp.get("fiable") and sp.get("median") is not None:
+        return {"eur_m2": float(sp["median"]), "n": int(sp.get("n") or 0), "millesime": mill}
+    return {"eur_m2": None, "n": 0, "millesime": mill}
 
 
 def _ecart(demande: float | None, n_dem: int, acte: dict) -> dict | None:

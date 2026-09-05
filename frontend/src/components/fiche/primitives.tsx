@@ -295,10 +295,16 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
         {label}
         {hint && <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
       </label>
-      <div className="mt-1 flex items-center rounded-lg border border-line-2 bg-surface-3 focus-within:border-mint">
+      {/* CIRCUIT-2 lot 1.7 — portée `projet` (DA v3) : une valeur SAISIE par le client s'affiche
+          en AMBRE (bord + texte) — on voit d'un coup d'œil ce qui vient de lui, pas de LABUSE.
+          Vide (placeholder = défaut serveur) : rendu neutre inchangé. */}
+      <div className={`mt-1 flex items-center rounded-lg border bg-surface-3 ${
+        value != null ? 'border-amber/60 focus-within:border-amber' : 'border-line-2 focus-within:border-mint'}`}>
         <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
           onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-          className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:outline-none" />
+          data-saisie-client={value != null || undefined}
+          className={`min-w-0 flex-1 bg-transparent px-2 py-1.5 text-xs placeholder:text-txt-dim focus:outline-none ${
+            value != null ? 'text-amber' : 'text-txt'}`} />
         <span className="shrink-0 px-2 text-[11px] text-txt-dim">{suffix}</span>
       </div>
     </div>
