@@ -5,6 +5,7 @@ import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { O6Comparateur } from './blocB'
 import { M18 } from './moteurs'
+import { RadarMarche } from './RadarMarche'
 
 // RETOURS-1 R3/R4 (Vic) — OUTIL « COMMUNES » RESTRUCTURÉ : un écran d'entrée à TROIS portes :
 //   1. Comparaison communes — le tableau comparatif (overlay plein écran, patron §4) ;
@@ -122,7 +123,7 @@ function AcquisitionsRecentes() {
                 {g.siren && (
                   <button data-acq-scan={g.siren} onClick={() => ouvrirScanPatrimoine(g.siren!)}
                     title={`Scan patrimoine de ${g.denomination ?? g.siren}`}
-                    className="shrink-0 text-[11px] text-mint hover:underline">Scan patrimoine →</button>
+                    className="hover-jaune shrink-0 px-1.5 py-0.5 text-[11px]">Scan patrimoine →</button>
                 )}
               </div>
               <div className="mt-1 flex flex-col gap-1">
@@ -197,6 +198,7 @@ function Porte({ dataAttr, titre, sous, onClick }: { dataAttr: string; titre: st
 export function Communes() {
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const setEvolutionTableOpen = useApp((s) => s.setEvolutionTableOpen)
+  const setRadarTableOpen = useApp((s) => s.setRadarTableOpen)
   const [vue, setVue] = useState<'accueil' | 'acquisitions'>('accueil')
   if (vue === 'accueil') {
     return (
@@ -204,11 +206,15 @@ export function Communes() {
         <Porte dataAttr="comparaison" titre="Comparaison communes"
           sous="Le tableau comparatif des 24 communes, en grand — indicateurs sourcés, tri par colonne."
           onClick={() => setCommunesTableOpen(true)} />
-        {/* RETOURS-13 R13 — même geste que la comparaison : la porte ouvre le TABLEAU EN GRAND
-            (modale plein écran partagée), plus un rendu à l'étroit dans le panneau. */}
-        <Porte dataAttr="evolution" titre="Évolution du marché"
-          sous="Ancien bâti, terrain nu et permis sur 8 trimestres (île entière) — tableau en grand."
+        {/* RETOURS-14 S1 — DEUX tableaux, DEUX noms (les sources ne se confondent plus) :
+            l'évolution = ventes ACTÉES (DVF) + permis, par trimestre ; le Radar = les annonces
+            collectées, nommé avec son compteur (la minceur s'explique par la source). */}
+        <Porte dataAttr="evolution" titre="Évolution du marché — ventes actées et permis"
+          sous="DVF ancien bâti, DVF terrain nu et permis Sitadel — une ligne par trimestre sur 8 trimestres."
           onClick={() => setEvolutionTableOpen(true)} />
+        <Porte dataAttr="radar-marche" titre="Marché des annonces (Radar)"
+          sous="Les biens en vente collectés par le Radar, par commune — compteur affiché dans le tableau."
+          onClick={() => setRadarTableOpen(true)} />
         <Porte dataAttr="acquisitions" titre="Acquisitions récentes"
           sous="Changements de propriétaire moral par commune (constat DGFiP, hors scoring)."
           onClick={() => setVue('acquisitions')} />
@@ -271,6 +277,37 @@ export function CommunesTablePanel() {
 }
 
 
+/** RETOURS-14 S1 — « Marché des annonces (Radar) » EN GRAND : le tableau par commune du Radar,
+ *  sous SON nom, avec SON compteur (101 biens collectés à la main — la minceur vient de la
+ *  source, elle est dite, pas subie). Même coquille plein écran que « Les 24 communes ». */
+export function RadarTablePanel() {
+  const module = useApp((s) => s.module)
+  const radarTableOpen = useApp((s) => s.radarTableOpen)
+  const setRadarTableOpen = useApp((s) => s.setRadarTableOpen)
+  const { data: rm } = useQuery({ queryKey: ['radar-marche'], queryFn: getRadarMarche, staleTime: 60_000, enabled: radarTableOpen })
+  if (module !== 'communes' || !radarTableOpen) return null
+  return (
+    <div data-radar-table-panel
+      className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6"
+      onClick={() => setRadarTableOpen(false)}>
+      <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+          <div>
+            <h2 className="text-sm font-medium text-txt-hi">
+              Marché des annonces (Radar){rm ? ` — ${fmtInt(rm.corpus_actif)} bien${rm.corpus_actif > 1 ? 's' : ''} collecté${rm.corpus_actif > 1 ? 's' : ''} à ce jour` : ''}
+            </h2>
+            <p className="text-[10.5px] text-txt-dim">Les biens en vente repérés par le Radar (collecte humaine), agrégés par commune. Une médiane ou un taux n'est servi qu'à partir de 5 biens — jamais de fausse précision.</p>
+          </div>
+          <button onClick={() => setRadarTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-3">
+          <RadarMarche />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /** RETOURS-13 R13 — « Évolution du marché » EN GRAND : la MÊME coquille plein écran que la table
  *  des 24 communes (overlay noir, carte `floating`, en-tête + croix), le MÊME moteur M18 dedans
  *  (tableau trimestriel, en-tête collant, légende sous le tableau). Aucune donnée nouvelle. */
@@ -286,8 +323,9 @@ export function EvolutionTablePanel() {
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div>
-            <h2 className="text-sm font-medium text-txt-hi">Évolution du marché</h2>
-            <p className="text-[10.5px] text-txt-dim">Ancien bâti, terrain nu et permis — 8 trimestres, une ligne par période.</p>
+            {/* RETOURS-14 S1 — le nom dit la SOURCE : ventes actées (DVF) + permis (Sitadel). */}
+            <h2 className="text-sm font-medium text-txt-hi">Évolution du marché — ventes actées et permis</h2>
+            <p className="text-[10.5px] text-txt-dim">DVF ancien bâti · DVF terrain nu · permis Sitadel — une ligne par trimestre sur 8 trimestres. Un trimestre sans vente reste « — ».</p>
           </div>
           <button onClick={() => setEvolutionTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
         </div>

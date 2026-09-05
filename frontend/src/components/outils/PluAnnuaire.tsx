@@ -76,14 +76,16 @@ export function PluAnnuaire() {
               <div className="grid grid-cols-1 gap-1.5">
                 {communes.data.communes.map((c) => {
                   const ok = c.statut === 'servable'
+                  // RETOURS-14 S3 — MÊME fond, MÊME texte pour les 24 (un PLU en révision est en
+                  // vigueur ; le RNU est cliquable — il mène au règlement national) : le BADGE
+                  // porte l'information, la carte ne s'éteint pas.
                   return (
                     <button key={c.insee} data-plu-commune={c.insee} onClick={() => entrer(c.insee)}
-                      className={`hover-fill flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left ${
-                        ok ? 'border-line bg-surface-2' : 'border-line/60 bg-surface-1'}`}>
+                      className="hover-fill flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-line bg-surface-2 px-2.5 py-2 text-left">
                       {/* RETOURS-13 R21 — le NOM DE COMMUNE d'abord, toujours visible ; le badge dit
                           « révision », UN MOT, à droite, sur une ligne (le détail vit dans le title).
                           R23 — nowrap partout : jamais un badge sur deux lignes. */}
-                      <span className={`min-w-0 flex-1 text-[11.5px] font-medium ${ok ? 'text-txt' : 'text-txt-dim'}`}>{c.commune}</span>
+                      <span className="min-w-0 flex-1 text-[11.5px] font-medium text-txt">{c.commune}</span>
                       {/* UN SEUL badge, UN MOT (« révision »), à droite, sur une ligne — le détail
                           (prescription, règlement non servi) vit dans le title + la note ambre. */}
                       <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
@@ -116,6 +118,15 @@ export function PluAnnuaire() {
       {insee && !servable && (
         <div data-plu-indispo className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11.5px] text-txt-mut">
           <span className="mr-1">🕓</span>{cur?.message ?? 'Règlement non disponible pour cette commune.'}
+          {/* RETOURS-14 S3 — le RNU est une VRAIE règle : la carte mène à son texte. */}
+          {cur?.statut === 'rnu' && (
+            <p className="mt-1.5">
+              <a data-plu-rnu-lien href="https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006074075/LEGISCTA000031720025/"
+                target="_blank" rel="noreferrer" className="text-mint hover:underline">
+                Lire le règlement national d'urbanisme (art. R111-1 s., Légifrance) ↗
+              </a>
+            </p>
+          )}
         </div>
       )}
 

@@ -339,20 +339,16 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
             l'inclinaison optimale n'est pas servie par la V1 → non affichée (jamais inventée). */}
         <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} />
+        {/* RETOURS-14 S11 — nature du toit DANS la grille des faits (visible sans clic), servie
+            seulement au-dessus du seuil de confiance (LiDAR) ; « non déterminée (LiDAR) » sinon. */}
+        <KPI k="Nature du toit" v={f.toiture ? f.toiture.libelle_court : '—'} />
         <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
+        <KPI k="Pente du toit (médiane)" v={f.toiture?.pente_mediane_deg == null ? '—' : `${String(f.toiture.pente_mediane_deg).replace('.', ',')}°`} />
       </div>
-      {/* RETOURS-13 R31 — NATURE DE LA TOITURE dérivée du LiDAR HD IGN (MNH 50 cm, méthode plans
-          de toiture — prototype contrôlé à l'œil, 81 %) : simple / double pente / croupe / plat,
-          statut Dérivé, incertitude DITE. Remplace le « non dérivable » d'O7 : la donnée existe. */}
       {f.toiture && (
-        <div data-solaire-toiture className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
-          <p className="text-[11px] text-txt">
-            Toiture : <b className="text-txt-hi">{f.toiture.libelle}</b>
-            {f.toiture.pente_mediane_deg != null && <> · pente médiane du toit <b className="tnum">{String(f.toiture.pente_mediane_deg).replace('.', ',')}°</b></>}
-            <span className="ml-1 text-[9.5px] text-txt-dim">({f.toiture.statut} — LiDAR HD IGN)</span>
-          </p>
-          <p className="mt-0.5 text-[9px] leading-snug text-txt-dim">{f.toiture.methode}</p>
-        </div>
+        <p data-solaire-toiture className="mt-1.5 text-[9px] leading-snug text-txt-dim">
+          Nature du toit : {f.toiture.statut} — {f.toiture.methode}
+        </p>
       )}
       {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. */}
       {f.lon != null && f.lat != null && (

@@ -304,7 +304,7 @@ function CommuneSelect() {
                 </button>
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
                   title="SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)"
-                  className="hover-jaune shrink-0 whitespace-nowrap px-2.5 py-1.5 text-[11px] text-mint transition-opacity duration-quick">
+                  className="hover-jaune shrink-0 whitespace-nowrap px-2.5 py-1.5 text-[11px] transition-opacity duration-quick">
                   voir la fiche →
                 </button>
               </div>

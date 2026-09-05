@@ -122,29 +122,33 @@ export function ProcedureChangement() {
           2. Simuler l’ouverture d’une zone AU
         </div>
         <CommuneScope commune={commune} onChange={setCommune} />
-        {/* RETOURS-13 R25 — les EXPLICATIONS passent dans un accordéon « Attention » REPLIÉ ;
-            seul le fait « procédure en cours » (quand il existe) reste visible d'emblée. */}
-        {commune && enProcedure ? (
+        {/* RETOURS-14 S10 — UN SEUL accordéon « Attention (2) », replié, qui contient LES DEUX
+            paragraphes (périmètre/simulation + recalcul à blanc) ; le fait « procédure en
+            cours » (quand il existe) reste visible d'emblée, hors accordéon. */}
+        {commune && enProcedure && (
           <div data-procchg-statut="en_cours" className="rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-3 py-2 text-[11px] text-txt">
             <b className="text-st-creuser">▲ {commune}</b> est en {enProcedure.type} (prescrite le {enProcedure.date_acte}).
             La simulation montre ce que la bascule AU→U y changerait.
           </div>
-        ) : (
-          <details data-procchg-attention className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
-            <summary className="cursor-pointer list-none py-0.5 font-medium text-txt marker:hidden">Attention ▾</summary>
-            {commune ? (
-              <p data-procchg-statut="hypothetique" className="mt-1">
-                <b className="text-txt">Aucune procédure PLU en cours</b> à {commune} au radar —
-                <b> simulation hypothétique</b> (« et si cette zone AU passait en U ? »).
-              </p>
-            ) : (
-              <p data-procchg-statut="ile" className="mt-1">
-                Périmètre : <b className="text-txt">toute l'île</b> — simulation hypothétique, aucune procédure ciblée.
-                Choisissez une commune ci-dessus pour la relier à sa procédure.
-              </p>
-            )}
-          </details>
         )}
+        <details data-procchg-attention className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
+          <summary className="cursor-pointer list-none py-0.5 font-medium text-txt marker:hidden">
+            Attention ({commune && enProcedure ? 1 : 2}) ▾</summary>
+          {!(commune && enProcedure) && (commune ? (
+            <p data-procchg-statut="hypothetique" className="mt-1">
+              <b className="text-txt">Aucune procédure PLU en cours</b> à {commune} au radar —
+              <b> simulation hypothétique</b> (« et si cette zone AU passait en U ? »).
+            </p>
+          ) : (
+            <p data-procchg-statut="ile" className="mt-1">
+              Périmètre : <b className="text-txt">toute l'île</b> — simulation hypothétique, aucune procédure ciblée.
+              Choisissez une commune ci-dessus pour la relier à sa procédure.
+            </p>
+          ))}
+          <p className="mt-1">Recalcul <b className="text-txt">à blanc</b> — rien n'est persisté. SDP estimée par
+            <b className="text-txt"> analogie</b> aux parcelles U de la commune (méthode affichée).
+            Le vrai recalcul règlementaire = prochain cycle.</p>
+        </details>
 
         {/* O8(b) — les zones AU réellement disponibles pour la commune sont listées explicitement à
             l'écran (dynamique, depuis le backend). Ex. Saint-Paul : AUc, AUs. */}

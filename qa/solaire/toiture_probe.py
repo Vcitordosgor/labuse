@@ -91,8 +91,16 @@ def classify(mnh: np.ndarray, mask: np.ndarray) -> tuple[str, dict]:
     pics = [i for i in range(16)
             if liss[i] >= 0.10 and liss[i] >= liss[(i - 1) % 16] and liss[i] > liss[(i + 1) % 16]]
     pics = sorted(pics, key=lambda i: -liss[i])[:4]
+    # RETOURS-14 S11 — CONFIANCE = « masse expliquée » : part de l'orientation des pixels pentus
+    # captée par les pans détectés (pic ± 1 secteur). Une croupe lue « monopente » laisse une
+    # masse orpheline dans les secteurs non expliqués → confiance basse → « non déterminée ».
+    expl = set()
+    for pi in pics:
+        expl.update({(pi - 1) % 16, pi, (pi + 1) % 16})
+    masse = float(sum(liss[i] for i in expl))
     meta = {"part_pentue": round(float(part_pentue), 2),
             "pics": [int(i * 22.5) for i in pics],
+            "confiance": round(masse, 3),
             "pente_mediane": round(float(np.median(slope[pentu])), 1)}
     if len(pics) <= 1:
         return "monopente", meta
@@ -153,7 +161,8 @@ def main(n=20):
         planche.paste(o, (0, 34)); planche.paste(m, (w*3 + 12, 34))
         d = ImageDraw.Draw(planche)
         d.text((6, 8), f"#{i:02d} bat {r['id']} {r['commune']} — {verdict} "
-                       f"(pentu {meta.get('part_pentue','?')}, pente méd {meta.get('pente_mediane','—')}°)",
+                       f"(pentu {meta.get('part_pentue','?')}, conf {meta.get('confiance','—')}, "
+                       f"pente méd {meta.get('pente_mediane','—')}°)",
                fill=(120, 230, 170))
         planche.save(os.path.join(OUT, f"toit_{i:02d}_{verdict}.png"))
         print(i, r["commune"], verdict, meta)

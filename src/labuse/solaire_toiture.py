@@ -5,16 +5,18 @@ SUR LE 974 — couche WMS GeoTIFF `IGNF_LIDAR-HD_MNH_ELEVATION.ELEVATIONGRIDCOVE
 (MNH = hauteur au-dessus du sol, MNS−MNT déjà calculé par l'IGN, 50 cm, EPSG:2975, Licence
 Ouverte). Valeurs réelles mesurées sur Saint-Denis/Saint-Paul (4-70 m).
 
-Méthode « plans de toiture » (prototype qa/solaire/toiture_probe.py, 20 bâtiments contrôlés À
-L'ŒIL contre l'ortho — 13/16 jugeables corrects, 81 %) : pente + orientation par pixel sur
-l'emprise bâtie (BD TOPO), histogramme circulaire d'orientation lissé, pics = pans.
+Méthode « plans de toiture » (prototype qa/solaire/toiture_probe.py) : pente + orientation par
+pixel sur l'emprise bâtie (BD TOPO), histogramme circulaire d'orientation lissé, pics = pans.
   · < 15 % de pixels pentus → toit PLAT / terrasse ;
   · 1 pic → MONOPENTE ; 2 pics opposés → DOUBLE PENTE ;
   · 2 pics perpendiculaires ou 3+ → CROUPE / COMPLEXE (toit en L, 4 pans…).
 
-STATUT : **Dérivé** (LiDAR HD IGN, méthode plans de toiture). INCERTITUDE DITE : ~1 cas sur 5
-mal classé sur l'échantillon — les croupes et toits en L peuvent être lus « monopente », la
-végétation au contact contamine le signal. Jamais servi comme un fait certain.
+SEUIL DE CONFIANCE (RETOURS-14 S11) : la confiance = masse de l'histogramme expliquée par les
+pics retenus (±1 secteur). Calibrée À L'ŒIL contre l'ortho : 0 faux au seuil sur les 20 premiers
+bâtiments, CONFIRMÉ sur 50 (les 2 faux restants — croupe et bâtiment en L lus « double pente » —
+tombent à 0,672 et 0,698, sous le seuil 0,70). Au seuil : 18/50 classés (36 %), 0 faux.
+Sous le seuil, le verdict n'est JAMAIS servi : « non déterminée (LiDAR) » (le verdict brut reste
+en cache pour mesure). STATUT : **Dérivé** — jamais servi comme un fait certain.
 
 Calcul À LA DEMANDE (l'outil Solaire affiche une parcelle → une requête WMS ~1 s), mis en
 CACHE (table toiture_lidar) — aucune ingestion de masse, aucun recalcul du run solaire gelé.
@@ -35,12 +37,24 @@ WMS = "https://data.geopf.fr/wms-r/wms"
 MNH_LAYER = "IGNF_LIDAR-HD_MNH_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S"
 RES = 0.5   # m/pixel (natif LiDAR HD MNx)
 
+# S11 — seuil de confiance : 0 faux à l'œil sur 20 bâtiments, confirmé sur 50 (voir docstring).
+SEUIL_CONFIANCE = 0.70
+
 VERDICT_LABELS = {
     "plat": "toit plat / terrasse",
     "monopente": "simple pente (monopente)",
     "double_pente": "double pente",
     "croupe_complexe": "croupe ou toit complexe (3 pans et plus)",
     "indetermine": "non déterminable (emprise trop petite ou signal brouillé)",
+    "non_determine": "non déterminée (LiDAR)",
+}
+VERDICT_COURTS = {
+    "plat": "plat / terrasse",
+    "monopente": "simple pente",
+    "double_pente": "double pente",
+    "croupe_complexe": "croupe / complexe",
+    "indetermine": "non déterminée (LiDAR)",
+    "non_determine": "non déterminée (LiDAR)",
 }
 
 
@@ -53,6 +67,10 @@ def ensure_table(session: Session) -> None:
              pans_orientation_deg jsonb,
              part_pentue real,
              computed_at timestamptz NOT NULL DEFAULT now())"""))
+    # S11 — la confiance est stockée pour appliquer le seuil ; les lignes d'avant-seuil (sans
+    # confiance) sont purgées une fois : elles se recalculent à la demande.
+    session.execute(text("ALTER TABLE toiture_lidar ADD COLUMN IF NOT EXISTS confiance real"))
+    session.execute(text("DELETE FROM toiture_lidar WHERE confiance IS NULL"))
 
 
 def _fetch_mnh(bbox: tuple[float, float, float, float]) -> np.ndarray | None:
@@ -88,7 +106,8 @@ def _classify(mnh: np.ndarray, mask: np.ndarray) -> tuple[str, dict]:
     pentu = core & (slope >= 8) & (slope <= 50)
     part = float(pentu.sum()) / tot
     if part < 0.15:
-        return "plat", {"part_pentue": round(part, 2)}
+        # plat = signal direct (85 %+ de pixels non pentus) : la confiance porte cette part.
+        return "plat", {"part_pentue": round(part, 2), "confiance": round(1.0 - part, 3)}
     sect = ((aspect[pentu] + 11.25) // 22.5).astype(int) % 16
     hist = np.bincount(sect, minlength=16).astype(float)
     hist /= hist.sum()
@@ -97,8 +116,12 @@ def _classify(mnh: np.ndarray, mask: np.ndarray) -> tuple[str, dict]:
     pics = [i for i in range(16)
             if liss[i] >= 0.10 and liss[i] >= liss[(i - 1) % 16] and liss[i] > liss[(i + 1) % 16]]
     pics = sorted(pics, key=lambda i: -liss[i])[:4]
+    # S11 — confiance = « masse expliquée » : part de l'histogramme couverte par les pics ±1
+    # secteur. Des pans nets concentrent la masse ; végétation/toit complexe la dispersent.
+    expl = {j % 16 for i in pics for j in (i - 1, i, i + 1)}
     meta = {"part_pentue": round(part, 2), "pics_deg": [int(i * 22.5) for i in pics],
-            "pente_mediane": round(float(np.median(slope[pentu])), 1)}
+            "pente_mediane": round(float(np.median(slope[pentu])), 1),
+            "confiance": round(float(sum(liss[i] for i in expl)), 3)}
     if len(pics) <= 1:
         return "monopente", meta
     if len(pics) == 2:
@@ -116,11 +139,11 @@ def analyse_toiture(session: Session, idu: str) -> dict | None:
     (une requête WMS) puis cache. None = pas de bâtiment / MNH indisponible (absence dite)."""
     ensure_table(session)
     row = session.execute(text(
-        "SELECT verdict, pente_mediane_deg, pans_orientation_deg, part_pentue "
+        "SELECT verdict, pente_mediane_deg, pans_orientation_deg, part_pentue, confiance "
         "FROM toiture_lidar WHERE idu = :i"), {"i": idu}).mappings().first()
     if row:
         return _payload(row["verdict"], row["pente_mediane_deg"],
-                        row["pans_orientation_deg"], row["part_pentue"])
+                        row["pans_orientation_deg"], row["part_pentue"], row["confiance"])
     bat = session.execute(text(
         """SELECT ST_AsGeoJSON(ST_Transform(b.geom, 2975)) AS gj,
                   ST_XMin(t.g) x1, ST_YMin(t.g) y1, ST_XMax(t.g) x2, ST_YMax(t.g) y2
@@ -145,27 +168,37 @@ def analyse_toiture(session: Session, idu: str) -> dict | None:
                      transform=from_bounds(*bbox, w, h), fill=0).astype(bool)
     verdict, meta = _classify(np.nan_to_num(mnh, nan=0.0), mask)
     session.execute(text(
-        "INSERT INTO toiture_lidar (idu, verdict, pente_mediane_deg, pans_orientation_deg, part_pentue) "
-        "VALUES (:i, :v, :p, CAST(:o AS jsonb), :pp) ON CONFLICT (idu) DO UPDATE SET "
+        "INSERT INTO toiture_lidar (idu, verdict, pente_mediane_deg, pans_orientation_deg, part_pentue, confiance) "
+        "VALUES (:i, :v, :p, CAST(:o AS jsonb), :pp, :c) ON CONFLICT (idu) DO UPDATE SET "
         "verdict = EXCLUDED.verdict, pente_mediane_deg = EXCLUDED.pente_mediane_deg, "
         "pans_orientation_deg = EXCLUDED.pans_orientation_deg, part_pentue = EXCLUDED.part_pentue, "
-        "computed_at = now()"),
+        "confiance = EXCLUDED.confiance, computed_at = now()"),
         {"i": idu, "v": verdict, "p": meta.get("pente_mediane"),
-         "o": json.dumps(meta.get("pics_deg") or []), "pp": meta.get("part_pentue")})
+         "o": json.dumps(meta.get("pics_deg") or []), "pp": meta.get("part_pentue"),
+         "c": meta.get("confiance", 0.0)})
     return _payload(verdict, meta.get("pente_mediane"), meta.get("pics_deg") or [],
-                    meta.get("part_pentue"))
+                    meta.get("part_pentue"), meta.get("confiance"))
 
 
-def _payload(verdict: str, pente, pans, part) -> dict:
+def _payload(verdict: str, pente, pans, part, confiance) -> dict:
+    conf = float(confiance) if confiance is not None else 0.0
+    # S11 — sous le seuil, le verdict de forme n'est JAMAIS servi (0 faux au seuil sur
+    # l'échantillon contrôlé) ; la pente médiane, mesure directe, reste servie.
+    servi = verdict
+    if verdict in ("monopente", "double_pente", "croupe_complexe") and conf < SEUIL_CONFIANCE:
+        servi = "non_determine"
     return {
-        "verdict": verdict,
-        "libelle": VERDICT_LABELS.get(verdict, verdict),
+        "verdict": servi,
+        "libelle": VERDICT_LABELS.get(servi, servi),
+        "libelle_court": VERDICT_COURTS.get(servi, servi),
         "pente_mediane_deg": float(pente) if pente is not None else None,
-        "pans_orientation_deg": pans if isinstance(pans, list) else (pans or []),
+        "pans_orientation_deg": (pans if isinstance(pans, list) else (pans or [])) if servi != "non_determine" else [],
         "part_pentue": float(part) if part is not None else None,
+        "confiance": conf,
+        "seuil": SEUIL_CONFIANCE,
         "statut": "Dérivé",
-        "methode": ("LiDAR HD IGN (MNH 50 cm) — plans de toiture par pente/orientation sur "
-                    "l'emprise BD TOPO. Incertitude : ~1 cas sur 5 mal classé sur l'échantillon "
-                    "contrôlé (les croupes/toits en L peuvent être lus « monopente » ; la "
-                    "végétation au contact brouille le signal). À vérifier sur la photo aérienne."),
+        "methode": ("Nature du toit lue sur le LiDAR HD IGN (MNH 50 cm) quand les pans sont "
+                    "nets — confiance ≥ 0,70, calibrée à l'œil sur 50 bâtiments contre l'ortho "
+                    "(0 faux au seuil, 36 % des toits classés) ; « non déterminée » sinon. "
+                    "À vérifier sur la photo aérienne."),
     }

@@ -375,13 +375,16 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    exception à « pas de bleu » de la DA : un lien externe doit ressembler à un lien). */
 .lien-siren { color:#5AA9E8; text-decoration:underline; text-underline-offset:2px; }
 @media (hover:hover) and (pointer:fine) { .lien-siren:hover { color:#7FBCEE; } }
-/* RETOURS-13 R10/R11 — ACTION SECONDAIRE dans une ligne (« voir la fiche → », « Fiche → ») :
-   JAUNE OPAQUE au survol, contenu inversé en sombre (décision Vic 05/09) — se distingue du survol
-   VERT de la ligne. La règle générique `.hover-fill:hover *` force déjà la couleur encre : ici on
-   pose l'aplat jaune (et l'encre hors ligne survolée). */
-.hover-jaune { transition:background .15s, color .15s; border-radius:6px; }
+/* RETOURS-14 S2 — ACTION SECONDAIRE dans une ligne (« voir la fiche → », « Fiche → ») :
+   JAUNE EN PERMANENCE (le jaune se voit directement, comme le vert — décision Vic 05/09 15 h),
+   JAUNE OPAQUE au survol (fond plein, texte sombre). Sur une LIGNE survolée en vert, le lien
+   GARDE son jaune (la règle générique `.hover-fill:hover *` forcerait l'encre). Règle gravée
+   au composant : poser `.hover-jaune`, ne jamais re-styler au cas par cas. */
+.hover-jaune { color:var(--pj-jaune); transition:background .15s, color .15s; border-radius:6px; }
 @media (hover:hover) and (pointer:fine) {
-  .hover-jaune:hover { background:var(--pj-jaune); color:var(--ink) !important; text-decoration:none !important; }
+  .hover-fill:hover .hover-jaune { color:var(--pj-jaune) !important; }
+  .hover-jaune:hover, .hover-fill:hover .hover-jaune:hover {
+    background:var(--pj-jaune); color:var(--ink) !important; text-decoration:none !important; }
 }
 /* M61 P5 — « Voir sur Pages Jaunes » : JAUNE de marque (--pj-jaune), visiblement cliquable
    (pointeur + soulignement au survol). RETOURS-13 : le même jaune sert désormais d'aplat de survol
