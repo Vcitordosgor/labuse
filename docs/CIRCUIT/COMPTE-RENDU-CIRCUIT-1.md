@@ -165,3 +165,25 @@ Sortie brute : `docs/CIRCUIT/VPS-CRONS-05-09.txt` (172 lignes, ssh lecture seule
 
 - Tests du lot : `tests/test_circuit1_lot4.py` (5) — dédup+réouverture, solde qui garde la ligne, solaire etiquete jamais ouvert, verdict écrit, job au registre.
 - Suite complète post-lot 4 : **2324 passed · 1 failed (le pré-existant test_r5) · 49 skipped** — aucun rouge nouveau, +5 verts vs lot 3.
+
+---
+
+## Lot 5 — La page Circuit : NON CLOS — point de reprise (session suivante : « continue CIRCUIT-1 »)
+
+État : lots 0-4 CLOS et poussés (`b5ab1502` → `c565e2a7`), arbre propre, suite 2324 verts / 1 rouge pré-existant. La session s'arrête au point de coupure naturel « après le 4 » (mandat, Ordre des lots).
+
+### Ce que la session suivante doit faire, dans l'ordre
+
+1. **5.1 `GET /admin/circuit`** (dashboard.py) — assembler EN UN APPEL : réservoirs (`data_sources`+`source_veille`+`mode_remplissage`/`cadence_attendue_jours`/`cadence_statut` posés au lot 1.7 + horloges = jobs de `jobs.py` par source + dernier rapport d'agent — table au lot 6), pompe (manifeste `manifeste.lire()` ou bootstrap, candidat = `bascule_flux.runs_termines`, `residuel_entrees_changees`), robinets/chiffres = miroir `registre_*` (relancer `labuse registre sync` avant), arêtes = `registre.aretes()`, fuites = `circuit_ecarts` statut ouvert, eau ancienne = `circuit_eau_ancienne` dernier passage, dernier contrôle = `circuit_controles` dernière ligne, compteurs du bandeau. Test de perf < 1 s (les briques sont déjà mémoïsées ; attention à `runs_termines` limit_ecart).
+2. **5.3 la vanne étendue** — `config/sources_ingestion.yaml` : ajouter toute source `mode_remplissage ∈ {job_sur_clic, cron_mensuel, one_shot}` à job identifiable. La correspondance source→CLI est DÉJÀ inventoriée : `docs/CIRCUIT/inventaire/reservoirs.csv` colonne `job_ingestion` (~40 commandes `labuse ingest-*`/`*-build`). `depot_manuel` (5) : vanne « déposer un fichier » ; `en_direct` (4) : mention sans vanne ; celles sans script → listées au compte-rendu.
+3. **5.2 `Circuit.tsx`** — la maquette `docs/CIRCUIT/maquette-circuit-v5.html` est AUTONOME : structure DATA lisible en tête de script (familles/tanks, categories/taps, rc/cr, fuites, compteurs), styles CSS complets (lignes 8-140), rendu (tankRow/tapRow/chk/clock, pipes SVG `#base/#plink/#lit`, sheet 3 colonnes, recherche `#q`, groupes repliables, pompe sticky `#pump`). Transposer en React dans `frontend/src/components/admin/Circuit.tsx`, données = `GET /admin/circuit`. Remplacer les onglets Flux + MiseAJour dans `AdminView.tsx` (MiseAJour.tsx disparaît, ses 3 endpoints réutilisés : injecter → 5.3, run/lancer → Faire tourner, bascule → Basculer avec note de version `bascule_flux.note_version` OUVERTE avant activation du bouton). DA : survol vert opaque inversé (`.cl:hover`), mauve = agents seulement, « Fiche → » jaune.
+4. **5.4/5.5** — boutons pompe (Faire tourner = `POST /admin/flux/run/lancer` existant ; Basculer = `POST /admin/flux/bascule` existant + note de version pré-affichée ; Revenir ; Purger = nouvel endpoint fin appelant `purge-runs-morts --apply` avec confirmation) ; « Vérifier que tout coule » = endpoint fin sur `sonde_circuit.controle(db, declencheur="bouton")` ; « Envoyer les agents » = lot 6.
+5. **5.6** — page Sources client : inchangée (déjà les mêmes objets depuis lot 0.2).
+6. **5.7 recette navigateur base LOCALE** — uvicorn :8000 (tuer l'ancien : `lsof -ti tcp:8000|xargs kill`) + vite (base /socle/, :5175) ; chromium local `chromium_headless_shell-1217` (chemin executablePath — cf. mémoire RECETTE-2/zone-recette) ; scénario : injecter BODACC → calculer (label court) → basculer → vérifier → REVENIR (base remise en état) ; captures avant/après dans `docs/CIRCUIT/RECETTE-CIRCUIT-1/`.
+7. Clore le lot : compte-rendu, suite complète (référence : ≥ 2324 verts, seul `test_r5` admis), commit « CIRCUIT-1 lot 5 — … », push. Puis lots 6 (agents — `SURFACES` d'ai_models.py à étendre avec `agent_source`, sortie JSON strict, table `source_agent_rapports`), 7 (traçage front `format.ts`), 8 (horloges : la VÉRITÉ VPS est dans `docs/CIRCUIT/VPS-CRONS-05-09.txt` — SEUL le legacy est posé ; 8.1 retire le legacy du deploy, pose le wrapper, BODACC quotidien au wrapper, bdnb retiré (974 absent), copilote-purge + sante-endpoints posés ; 8.2 healthz lit `jobs.py` ; 8.4 « à vérifier » sur cadence_attendue).
+
+### Rappels d'environnement (gagnés cette session)
+
+- `.env` local copié de `~/Desktop/labuse/.env` (LABUSE_DATABASE_URL=openclaw@localhost/labuse) ; suite : `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib pytest -q` (~3 min) ; JAMAIS deux pytest en parallèle (pollution labuse_test — déjà purgée une fois : p_score_v2_runs/pige_*).
+- `python -m labuse.cli` résout le worktree PRINCIPAL (install éditable) — utiliser `PYTHONPATH=$PWD/src python3 -c "...app()"` ou les tests.
+- Front : `cd frontend && npm install && ./node_modules/.bin/tsc -b` (OK cette session).
