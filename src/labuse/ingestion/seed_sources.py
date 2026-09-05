@@ -777,5 +777,6 @@ def appliquer_modes_cadences(session: Session) -> int:
             "UPDATE data_sources SET mode_remplissage = :m, cadence_attendue_jours = :j,"
             " cadence_statut = :s WHERE name = :n"),
             {"m": mode, "j": jours, "s": statut, "n": nom}).rowcount
-    session.flush()
+    if hasattr(session, "flush"):     # Session ORM ; une Connection brute (tests) n'a pas flush
+        session.flush()
     return n

@@ -1642,3 +1642,189 @@ def admin_destinations(request: Request) -> dict:
     for e in etats:
         compte[e["etat"]] = compte.get(e["etat"], 0) + 1
     return {"communes": etats, "compte": compte, "referentiel": REF_SOURCE}
+
+
+# ═══════════════════ CIRCUIT-1 lot 5.1 — LA PAGE CIRCUIT (un appel, tout le circuit) ═══════════════════
+
+@router.get("/admin/circuit")
+def admin_circuit(request: Request) -> dict:
+    """CIRCUIT-1 (lot 5.1) — LA structure de la page Circuit, calculée EN DIRECT et en UN appel :
+    réservoirs (catalogue + veille + mode/cadence lot 1.7 + vanne 5.3), pompe (manifeste lot 3 +
+    runs + garde résiduel), robinets/chiffres/arêtes (le REGISTRE, code = vérité), fuites ouvertes
+    (circuit_ecarts), eau ancienne, dernier contrôle (circuit_controles), compteurs du bandeau.
+    Remplace la fourmilière (/admin/flux) + l'onglet Mise à jour pour le front Circuit.tsx."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import bascule_flux, manifeste, registre, runs
+    from ..db import engine, session_scope
+    from ..registre import CHIFFRES, ROBINETS
+    from ..sources_catalog import WHERE_AFFICHEES, masquees_param
+
+    with engine().begin() as c:
+        # ── réservoirs : catalogue affiché + veille + mode/cadence (lot 1.7) + vanne (5.3) ──
+        rows = c.execute(text(
+            "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.last_sync_at,"
+            "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
+            "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
+            "       v.cadence_attendue_jours AS rappel_jours"
+            f" FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
+            f" WHERE {WHERE_AFFICHEES} ORDER BY COALESCE(d.category,'zzz'), d.name"),
+            {"masquees": masquees_param()}).mappings().all()
+        reservoirs = []
+        for r in rows:
+            vanne = _relance_pour(r["name"])
+            mode = r["mode_remplissage"] or "one_shot"
+            reservoirs.append({
+                "id": r["id"], "nom": r["name"], "producteur": r["provider"],
+                "famille": r["category"] or "aucune", "millesime": r["source_millesime"],
+                "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
+                "mode": mode, "cadence_jours": r["cadence_attendue_jours"],
+                "cadence_statut": r["cadence_statut"],
+                "vanne": ({"type": "injecter", "label": vanne["label"]} if vanne else
+                          {"type": "depot"} if mode == "depot_manuel" else
+                          {"type": "aucune", "motif": "interrogée en direct"} if mode == "en_direct" else
+                          {"type": "aucune", "motif": "aucun job d'ingestion identifié"}),
+                "veille": ({"methode": r["methode"], "statut": r["dernier_statut"],
+                            "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
+                            "vu": r["dernier_vu"], "actif": r["actif"],
+                            "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
+            })
+        # ── fuites ouvertes + eau ancienne + dernier contrôle (lot 4) ──
+        try:
+            fuites = [dict(x) for x in c.execute(text(
+                "SELECT chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b, cause, depuis"
+                " FROM circuit_ecarts WHERE statut = 'ouvert' ORDER BY depuis DESC")).mappings()]
+            soldes = c.execute(text(
+                "SELECT count(*) FROM circuit_ecarts WHERE statut = 'solde'")).scalar() or 0
+            eau = [dict(x) for x in c.execute(text(
+                "SELECT chiffre_id, robinet, tampon, attendu, mecanisme, statut FROM circuit_eau_ancienne"
+                " WHERE ts = (SELECT max(ts) FROM circuit_eau_ancienne) OR"
+                "       id IN (SELECT max(id) FROM circuit_eau_ancienne GROUP BY chiffre_id, robinet)"
+                " ORDER BY id DESC LIMIT 40")).mappings()]
+            controle = c.execute(text(
+                "SELECT ts, fuites_ouvertes, eau_ancienne, robinets_couverts, robinets_non_couverts,"
+                " duree_s FROM circuit_controles ORDER BY id DESC LIMIT 1")).mappings().first()
+        except Exception:  # noqa: BLE001 — tables de sonde pas encore créées (avant 1er passage)
+            fuites, soldes, eau, controle = [], 0, [], None
+        # ── journal récent (3.6) ──
+        try:
+            journal = [dict(x) for x in c.execute(text(
+                "SELECT ts, geste, cible, par, resultat FROM circuit_journal"
+                " ORDER BY id DESC LIMIT 12")).mappings()]
+        except Exception:  # noqa: BLE001
+            journal = []
+
+    # ── pompe : manifeste (lot 3) + runs + garde résiduel ──
+    with session_scope() as s:
+        m = manifeste.lire() or manifeste.construire_depuis_pointeurs(s)
+        runs_list = bascule_flux.runs_termines(s, limit_ecart=0)
+        residuel = bascule_flux.residuel_entrees_changees(s)
+
+    # ── robinets / chiffres / arêtes : LE REGISTRE (le code est la vérité) ──
+    aretes = registre.aretes()
+    chiffres = {cid: {"libelle": ch.libelle, "unite": ch.unite, "niveau": ch.niveau,
+                      "moteur": ch.moteur, "portee": ch.portee, "calcul": ch.calcul}
+                for cid, ch in CHIFFRES.items()}
+    robinets = [{"id": rid, "categorie": r.categorie, "nom": r.nom, "parent": r.parent,
+                 "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre}
+                for rid, r in ROBINETS.items()]
+
+    compteurs = {
+        "reservoirs": len(reservoirs),
+        "surveilles": sum(1 for r in reservoirs if r["veille"]
+                          and r["veille"]["methode"] in ("api", "page", "entete", "temoin")
+                          and r["veille"]["actif"] is not False),
+        "vannes": sum(1 for r in reservoirs if r["vanne"]["type"] == "injecter"),
+        "chiffres": len(chiffres), "robinets": len(robinets),
+        "fuites_ouvertes": len(fuites), "fuites_soldees": int(soldes),
+        "eau_ancienne_ouverte": sum(1 for x in eau if x["statut"] == "ouvert"),
+        "jamais_verifies": sum(1 for r in reservoirs if not r["veille"]),
+    }
+    return {
+        "run_servi": runs.current(), "manifeste": m,
+        "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
+        "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,
+        "dernier_controle": dict(controle) if controle else None,
+        "journal": journal, "runs": runs_list, "residuel": residuel,
+        "compteurs": compteurs,
+        "genere_le": datetime.now(tz=timezone.utc).isoformat(),
+    }
+
+
+@router.post("/admin/circuit/verifier")
+def admin_circuit_verifier(request: Request) -> dict:
+    """CIRCUIT-1 (5.5) — le bouton « Vérifier que tout coule » : lance la sonde (lot 4) en ligne
+    et rend son verdict. Le geste entre au journal."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_journal
+    from ..db import session_scope
+    from ..sonde_circuit import controle
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    with session_scope() as s:
+        res = controle(s, declencheur="bouton")
+        circuit_journal.journaliser(s, "job", "coherence-robinets (bouton)", str(qui), "ok",
+                                    {k: v for k, v in res.items() if isinstance(v, (int, float))})
+        s.commit()
+    return res
+
+
+@router.post("/admin/circuit/purger-runs")
+def admin_circuit_purger(request: Request) -> dict:
+    """CIRCUIT-1 (3.5/5.4) — le bouton « Purger les runs morts » : DRY-RUN d'abord (la page
+    affiche la liste), l'exécution réelle reste `labuse purge-runs-morts --apply` (app arrêtée —
+    un VACUUM FULL verrouille ; jamais depuis le process serveur). Le geste entre au journal."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_journal, runs
+    from ..db import session_scope
+    with session_scope() as s:
+        garder = set()
+        try:
+            from ..cli import _runs_a_garder
+            garder = set(_runs_a_garder(s))
+        except Exception:  # noqa: BLE001 — règle indisponible (base partielle) : repli minimal
+            s.rollback()                  # la transaction avortée doit être PURGÉE avant de relire
+            garder = {runs.current()}
+        tous = {r[0] for r in s.execute(text("SELECT run_id FROM p_score_v2_runs")).all()}
+        purgeables = sorted(tous - garder)
+        qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+        circuit_journal.journaliser(s, "purger", ",".join(purgeables) or "(rien)", str(qui),
+                                    "dry-run", {"garder": sorted(garder)})
+        s.commit()
+    return {"purgeables": purgeables, "garder": sorted(garder),
+            "note": "Dry-run. Exécution réelle : labuse purge-runs-morts --apply, app arrêtée "
+                    "(VACUUM FULL = verrou exclusif — jamais depuis le serveur)."}
+
+
+@router.get("/admin/circuit/note-version")
+def admin_circuit_note_version(request: Request, candidat: str) -> dict:
+    """CIRCUIT-1 (5.4) — LA NOTE DE VERSION du candidat (registre) : le bouton Basculer ne
+    s'active qu'après SA lecture. Réservoirs+millésimes, chiffres recalculés (portée run),
+    écart de classement — honnête sur un candidat partiel (motif, jamais un écart inventé)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import bascule_flux
+    from ..db import session_scope
+    with session_scope() as s:
+        return bascule_flux.note_version(s, candidat)
+
+
+@router.post("/admin/circuit/revenir")
+def admin_circuit_revenir(request: Request) -> dict:
+    """CIRCUIT-1 (5.4) — REVENIR : le précédent est calculé CÔTÉ SERVEUR (manifeste), jamais
+    depuis l'état client (la recette 5.7 a attrapé le cas : un front pas encore rafraîchi
+    renvoyait un précédent périmé). Restaure le manifeste précédent ENTIER (lot 3.2)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import bascule_flux, runs
+    from ..db import session_scope
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    with session_scope() as s:
+        cible = runs.precedent()
+        res = bascule_flux.basculer(s, cible, par=str(qui))
+        if not res.get("ok"):
+            raise HTTPException(409, res.get("motif", "retour arrière refusé"))
+        s.commit()
+    return res

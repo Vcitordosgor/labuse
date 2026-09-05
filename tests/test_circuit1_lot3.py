@@ -48,6 +48,10 @@ def test_31_manifeste_incomplet_refuse(manifeste_tmp):
 def test_31_runs_current_lit_le_manifeste(manifeste_tmp, monkeypatch):
     from labuse import runs
     monkeypatch.delenv("LABUSE_SERVED_RUN", raising=False)
+    # la garde tests de runs.current() exige que manifeste et served_run.txt vivent dans le
+    # MÊME dossier : on aligne les deux sur le tmp.
+    monkeypatch.setattr(runs, "_SERVED_FILE", manifeste_tmp.parent / "served_run.txt")
+    monkeypatch.setattr(runs, "_PRECEDENT_FILE", manifeste_tmp.parent / "run_precedent.txt")
     manifeste.ecrire({"scoring_run": "q_manifeste", "residuel_run_seq": None,
                       "mvt_run": "q_manifeste", "division_run": "q_manifeste",
                       "promoted_at": None, "par": "test", "precedent": {"scoring_run": "q_avant"}})

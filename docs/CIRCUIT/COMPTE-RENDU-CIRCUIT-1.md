@@ -187,3 +187,42 @@ Sortie brute : `docs/CIRCUIT/VPS-CRONS-05-09.txt` (172 lignes, ssh lecture seule
 - `.env` local copié de `~/Desktop/labuse/.env` (LABUSE_DATABASE_URL=openclaw@localhost/labuse) ; suite : `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib pytest -q` (~3 min) ; JAMAIS deux pytest en parallèle (pollution labuse_test — déjà purgée une fois : p_score_v2_runs/pige_*).
 - `python -m labuse.cli` résout le worktree PRINCIPAL (install éditable) — utiliser `PYTHONPATH=$PWD/src python3 -c "...app()"` ou les tests.
 - Front : `cd frontend && npm install && ./node_modules/.bin/tsc -b` (OK cette session).
+
+---
+
+## Lot 5 — La page Circuit : CLOS
+
+### Livré
+
+- **5.1 `GET /admin/circuit`** (dashboard.py) — TOUT le circuit en un appel : réservoirs (catalogue+veille+mode/cadence 1.7+vanne), pompe (manifeste, runs, garde résiduel), robinets/chiffres/arêtes (le REGISTRE, code=vérité), fuites ouvertes, eau ancienne, dernier contrôle, journal, compteurs. **Mesuré 0,55 s sur la base réelle** (< 1 s exigé). + `POST /admin/circuit/verifier` (sonde au bouton, journalisée), `POST /admin/circuit/purger-runs` (dry-run — l'exécution reste CLI app arrêtée : VACUUM FULL), `GET /admin/circuit/note-version`, `POST /admin/circuit/revenir`.
+- **5.2 `Circuit.tsx`** — conforme à la maquette v5 : bandeau « Tout coule, sauf : » à pastilles, trois colonnes réservoirs/pompe/robinets, tuyaux SVG (base + chemin allumé au clic), fiche du bas 3 colonnes, recherche, groupes repliables, pompe collante ; DA respectée (survol vert opaque inversé, mauve = agents seulement). **Remplace `Flux.tsx` et `MiseAJour.tsx` (supprimés avec leurs tests)** — l'onglet Données ouvre sur Circuit ; ses trois endpoints historiques sont réutilisés. tsc + build verts.
+- **5.3 la vanne étendue** — `sources_ingestion.yaml` : **33 commandes** (5 historiques + 28 ajoutées, motifs EXACTS fnmatch, générées depuis `reservoirs.csv`). Sans vanne, avec raison à l'écran : dépôts manuels (« déposer un fichier »), en_direct (« interrogée en direct »), et 24 sans script sûr (layers_ingest sans CLI dédiée, DOUBLON, imports à argument requis — dont `ingest-real` écarté : geste initial lourd, pas un rafraîchissement).
+- **5.4** — Basculer INACTIF tant que la note de version n'a pas été ouverte (état front `noteLue`) ; **Revenir = endpoint SERVEUR** (le précédent du manifeste calculé côté serveur).
+- **5.7 recette navigateur (base LOCALE)** — 8 captures dans `docs/CIRCUIT/RECETTE-CIRCUIT-1/` : Circuit avant → Injecter BODACC (vanne réelle, journal avec qui) → Calculer lancé PUIS ARRÊTÉ proprement (état « abandonné » conçu ; un flux-run complet dure des heures — décision n° 16) → note de version → **Basculer q_v11→q_v12 (première pose du manifeste)** → Vérifier → **Revenir q_v12→q_v11**. `run servi : q_v11_m137 → q_v12 → q_v11_m137` — **base remise dans son état de départ**, rebuilds détachés arrêtés (parcel_flags vérifié intact q_v11).
+
+### La recette a attrapé un vrai bug (et c'est son rôle)
+
+Premier passage : Revenir a servi **q_v10_m129** — le bouton lisait `manifeste.precedent` de l'ÉTAT CLIENT (pas encore rafraîchi après la bascule), lui-même issu du bootstrap sur un `run_precedent.txt` PÉRIMÉ (q_v10, figé fin août : la preuve vivante que les pointeurs-fichiers dérivés mentent). Correctif : `POST /admin/circuit/revenir` calcule le précédent CÔTÉ SERVEUR (manifeste). État local restauré par le geste réel (`basculer('q_v11_m137')`, garde verte 4/5 — division périmée connue/tolérée).
+
+### Décisions prises en autonomie (suite)
+
+16. **(5.7)** Calculer joué « lancé puis arrêté » (run q_flux_*, état abandonné) et bascule sur le candidat RÉEL q_v12 déjà en base : un flux-run complet (431 663 parcelles) dure des heures — hors recette. L'enchaînement complet Calculer→Basculer sera joué en production par Vic.
+17. **(5.3)** Motifs de vanne EXACTS (pas de jokers) : « Géorisques » ne peut pas capter « Géorisques — ICPE ». Les 5 motifs historiques gardent la priorité (premier match).
+18. **(5.2)** Le CSS de la maquette est embarqué scopé `.cx` dans le composant (pas de fichier global) : la page est autoportante, le reste de l'admin n'hérite de rien.
+
+### Non fait (avec raison) — lot 5
+
+- Pastilles « à purger / horloge qui ment / réservoir plein » du bandeau : les compteurs servis couvrent fuites/eau/jamais-vérifiés/vannes ; les trois manquants viennent avec les données du lot 8 (horloges) et de la purge — à câbler quand leurs sources existent.
+- Chemin allumé tank→robinets traverse les ids du registre (slugs) alors que les tanks affichés sont les lignes data_sources (noms) : l'allumage complet inter-colonnes attend le mapping slug↔nom (petit chantier, noté).
+
+### Attrapés par les tests/la recette (lot 5, en plus du bug Revenir)
+
+- **Verrou 600 s** : poser les colonnes 1.7 (`ALTER TABLE`) dans la transaction-savepoint du fixture `db_session` bloquait la connexion propre de l'endpoint (ACCESS EXCLUSIVE non relâché) — le test pose désormais sur une connexion autonome ; `appliquer_modes_cadences` tolère une Connection brute.
+- **Transaction avortée** : l'endpoint purger réutilisait la session après un échec de `_runs_a_garder` → `s.rollback()` avant le repli.
+- **Override DEV** : `manifeste.division_run()` honore `LABUSE_SERVED_RUN` en priorité (même doctrine que `runs.current()`) — attrapé quand la recette a posé le premier manifeste réel.
+- Tests CIRCUIT-1 complets : **39/39 verts en 4 s** (lots 0/2/3/4/5 + registre).
+
+### Suite (lot 5, verdict final)
+
+- Suite complète post-lot 5 : **2342 passed · 1 failed (le pré-existant test_r5) · 36 skipped** — aucun rouge nouveau, +18 verts vs lot 4. Les 4 rouges transitoires de `test_run_hot_swap_s3`/`test_donnees2_precedent` venaient de la PREMIÈRE pose réelle du manifeste (les tests patchaient `_SERVED_FILE` en tmp, le manifeste réel primait) → garde « même dossier » dans `runs.current()/precedent()` : un test en tmp retrouve le comportement fichier pur.
+- `config/served_manifest.json` est désormais POSÉ et versionné (première pose par la recette — même doctrine que served_run.txt).

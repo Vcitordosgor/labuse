@@ -99,7 +99,11 @@ def construire_depuis_pointeurs(db) -> dict:
 
 def division_run() -> str | None:
     """Le run des candidats division SERVI (lot 2.3 : les lecteurs lisent le manifeste ;
-    repli = scoring courant tant que le manifeste n'existe pas)."""
+    repli = scoring courant tant que le manifeste n'existe pas). L'override DEV
+    `LABUSE_SERVED_RUN` est PRIORITAIRE — même doctrine que runs.current() : aucune surprise
+    en test/dev (attrapé quand la recette 5.7 a posé le premier manifeste réel)."""
+    if os.environ.get("LABUSE_SERVED_RUN"):
+        return os.environ["LABUSE_SERVED_RUN"]
     m = lire()
     if m and m.get("division_run"):
         return m["division_run"]

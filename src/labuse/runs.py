@@ -57,9 +57,11 @@ def current() -> str:
         return _cache["val"]
     # CIRCUIT-1 lot 3.1 — le MANIFESTE (config/served_manifest.json) fait foi quand il existe ;
     # served_run.txt devient sa vue dérivée (écrite par bascule_flux seul). Tant qu'il n'est pas
-    # posé, l'ancien fichier fait foi : rien ne change avant la première pose.
+    # posé, l'ancien fichier fait foi. GARDE TESTS : le manifeste n'est consulté que s'il vit
+    # dans le MÊME dossier que _SERVED_FILE — un test qui pointe _SERVED_FILE vers un tmp
+    # retrouve le comportement fichier pur (attrapé par test_run_hot_swap_s3 à la 1re pose réelle).
     from . import manifeste as _manifeste
-    m = _manifeste.lire()
+    m = _manifeste.lire() if _manifeste.chemin().parent == _SERVED_FILE.parent else None
     val = (m or {}).get("scoring_run") or _lire_fichier()
     _cache["val"] = val
     _cache["at"] = now
@@ -78,7 +80,7 @@ def precedent() -> str:
     if _cache_prec["val"] is not None and (now - _cache_prec["at"]) < _CACHE_TTL_S:
         return _cache_prec["val"]
     from . import manifeste as _manifeste
-    m = _manifeste.lire()
+    m = _manifeste.lire() if _manifeste.chemin().parent == _PRECEDENT_FILE.parent else None
     val = (((m or {}).get("precedent") or {}).get("scoring_run")
            or _lire(_PRECEDENT_FILE, "config/run_precedent.txt"))
     _cache_prec["val"] = val
