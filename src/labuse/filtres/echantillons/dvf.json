@@ -1,0 +1,13 @@
+{
+  "source": "dvf",
+  "producteur": "DGFiP/Etalab — géo-DVF",
+  "table": "dvf_mutations",
+  "cle_colonne": "mutation_id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://api.cquest.org/dvf?code_commune=97411",
+  "raison_report": "API géo-DVF renvoie des LISTES par commune/parcelle ; l'appariement d'une disposition précise demande le fichier brut. Budget API.",
+  "proposition_cc": "Vérifier valeur_fonciere + surface d'une mutation sur une parcelle témoin contre géo-DVF.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

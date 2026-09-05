@@ -1,0 +1,13 @@
+{
+  "source": "dpe",
+  "producteur": "ADEME — Observatoire DPE",
+  "table": "dpe_records",
+  "cle_colonne": "numero_dpe",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://data.ademe.fr/data-fair/api/v1/datasets/dpe-v2-logements-existants/lines?q=<numero_dpe>",
+  "raison_report": "Faisable via l'API ADEME (par numéro DPE) ; la base LOCALE ne porte que 17 DPE — l'échantillon complet viendra avec l'ingestion DPE complète.",
+  "proposition_cc": "Comparer etiquette_dpe de 20 numéros DPE témoins contre l'API ADEME.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

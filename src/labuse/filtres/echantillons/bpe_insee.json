@@ -1,0 +1,13 @@
+{
+  "source": "bpe_insee",
+  "producteur": "INSEE — Base Permanente des Équipements",
+  "table": "spatial_layers",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://www.insee.fr/fr/statistiques/8217525",
+  "raison_report": "La BPE est un fichier annuel ; vérification par équipement = la ligne du fichier BPE brut.",
+  "proposition_cc": "Comparer 20 équipements témoins contre le fichier BPE du millésime servi.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

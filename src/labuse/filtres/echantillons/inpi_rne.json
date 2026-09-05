@@ -1,0 +1,13 @@
+{
+  "source": "inpi_rne",
+  "producteur": "INPI — Registre National des Entreprises",
+  "table": "pm_dirigeants",
+  "cle_colonne": "siren",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://registre-national-entreprises.inpi.fr/api/companies/<siren>",
+  "raison_report": "L'API RNE INPI est AUTHENTIFIÉE (compte INPI) — hors de portée sans identifiants.",
+  "proposition_cc": "Vérifier la présence/nom d'un dirigeant pour 20 SIREN témoins via l'API RNE INPI (clé requise).",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

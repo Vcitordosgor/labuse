@@ -1,0 +1,13 @@
+{
+  "source": "edf",
+  "producteur": "Enedis / RTE — Open Data",
+  "table": "spatial_layers",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://data.enedis.fr/",
+  "raison_report": "Les réseaux HTA/HTB s'apparient par géométrie ; vérification par tronçon = appariement géométrique.",
+  "proposition_cc": "Comparer la présence d'une ligne sur 20 emprises témoins contre l'open data Enedis/RTE.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

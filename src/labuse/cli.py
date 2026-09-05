@@ -1094,6 +1094,35 @@ def ingest_inpi_gigogne_cmd(
                f"({tot_e} gérants injoignables).")
 
 
+@app.command("ingest-catnat")
+def ingest_catnat_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    remplacer: bool = typer.Option(True, help="Vider catnat_arretes d'abord (solder la version tronquée)."),
+) -> None:
+    """CIRCUIT-3 lot 6.1 — arrêtés CatNat GASPAR (Géorisques), PAGINÉS (répare `catnat_n`, tronqué
+    à 10/commune). Réingère les 24 communes → catnat_arretes, puis rejoue le filtre de complétude."""
+    from .ingestion import catnat as catnat_mod
+    catnat_mod.ensure_tables(engine())
+    insee_list = [commune] if (commune and commune.isdigit()) else None
+    with session_scope() as s:
+        res = catnat_mod.ingest_catnat(s, insee_list=insee_list, remplacer=remplacer)
+        s.commit()
+    typer.echo(f"✓ CatNat : {res['arretes']} arrêté(s) sur {res['communes_ok']} commune(s).")
+    for insee, err in (res["erreurs"] or {}).items():
+        typer.echo(f"  ⚠ {insee} : {err}")
+    # rejoue le filtre de la source (complétude par commune) sur la nouvelle version.
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("catnat")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "catnat", "ingest-catnat",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre catnat : {v.verdict}")
+
+
 @app.command("ingest-georisques")
 def ingest_georisques_cmd(
     commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
@@ -3758,9 +3787,20 @@ def pompe_calculer_cmd(
     import subprocess
     import sys
 
-    from . import bascule_flux, circuit_journal
+    from . import bascule_flux, circuit_journal, filtres
 
     with session_scope() as s:
+        blocages = filtres.garde_pompe(s)
+        if blocages:
+            for b in blocages:
+                typer.echo(f"⛔ source `run` en quarantaine : {b['source']} [{b['version']}] — "
+                           f"contrôles bloquants KO : {', '.join(b['controles'])}")
+            circuit_journal.journaliser(s, "calculer", label, par, "refuse",
+                                        {"garde_pompe": blocages})
+            s.commit()
+            typer.echo("✗ Calculer refusé : une source à portée `run` a une version servie en "
+                       "quarantaine. Corrige la source (ou « servir quand même » sur la page Circuit).")
+            raise typer.Exit(1)
         circuit_journal.journaliser(s, "calculer", label, par, "lance", {"recette": recette})
         s.commit()
     # 1) cascade + scoring — la brique existante, en process (progression run_progress incluse).
@@ -3809,7 +3849,19 @@ app.add_typer(golden_app, name="golden")
 def golden_promote_cmd(run: str = typer.Argument(..., help="Label du run candidat à servir")) -> None:
     """LA BASCULE — un geste de Vic. Fait du run candidat le run SERVI aux clients. Aucune bascule
     automatique n'existe : le classement ne change que par cette commande (ou le bouton admin équivalent)."""
+    from . import circuit_journal, filtres
     from .golden_ops import promote
+    with session_scope() as s:
+        blocages = filtres.garde_pompe(s)
+        if blocages:
+            for b in blocages:
+                typer.echo(f"⛔ source `run` en quarantaine : {b['source']} [{b['version']}] — "
+                           f"contrôles bloquants KO : {', '.join(b['controles'])}")
+            circuit_journal.journaliser(s, "basculer", run, "cli", "refuse", {"garde_pompe": blocages})
+            s.commit()
+            typer.echo("✗ Bascule refusée : une source à portée `run` a une version servie en "
+                       "quarantaine (corrige la source ou « servir quand même » sur la page Circuit).")
+            raise typer.Exit(1)
     r = promote(run)
     if r.get("ok"):
         typer.echo(f"✓ Run servi = {run} (ancien : {r.get('ancien')}). Golden re-gravé sur le servi.")
@@ -3824,6 +3876,116 @@ def golden_candidat_cmd() -> None:
     servi : sortie informative seule (la bascule reste `golden promote`)."""
     from .golden_ops import candidat
     typer.echo(candidat())
+
+
+# ═══════════════════ CIRCUIT-3 — LE FILTRE : la qualité à l'intérieur de chaque source ═══════════════════
+filtre_app = typer.Typer(add_completion=False,
+                         help="Le filtre (CIRCUIT-3) : jouer les contrôles qualité d'une source sur sa version.")
+app.add_typer(filtre_app, name="filtre")
+
+
+@filtre_app.command("jouer")
+def filtre_jouer_cmd(
+    source: str = typer.Argument(..., help="Clé de la source (label de la vanne). 'toutes' = toutes les sources à job."),
+    version: str = typer.Option(None, "--version", help="Version explicite (défaut : la version servie)."),
+    par: str = typer.Option("cli", help="Qui joue le filtre — entre au journal."),
+) -> None:
+    """JOUER (lot 1.1) — les contrôles d'un filtre sur UNE version : écrit filtre_resultats +
+    filtre_versions, rend le verdict (ok / avertissements / QUARANTAINE si un bloquant KO)."""
+    from . import circuit_journal, filtres
+    cibles = filtres.sources() if source == "toutes" else [source]
+    if source != "toutes" and filtres.get_filtre(source) is None:
+        typer.echo(f"✗ source inconnue : {source} (voir `labuse filtre lister`).")
+        raise typer.Exit(1)
+    with session_scope() as s:
+        for cle in cibles:
+            f = filtres.get_filtre(cle)
+            if f is None:
+                continue
+            v = filtres.jouer(s, f, version=version)
+            s.commit()
+            circuit_journal.journaliser(s, "filtre", cle, par,
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"version": v.version, "verdict": v.verdict,
+                                         "bloquants_ko": v.bloquants_ko,
+                                         "avertissants_ko": v.avertissants_ko})
+            s.commit()
+            marque = {"ok": "✓", "avertissements": "⚠", "quarantaine": "⛔"}[v.verdict]
+            typer.echo(f"{marque} {cle} [{v.version}] : {v.verdict} — "
+                       f"{v.bloquants_ko} bloquant(s) KO, {v.avertissants_ko} avertissant(s) KO "
+                       f"({len(v.resultats)} contrôles)")
+            for r in v.resultats:
+                if r["verdict"] == "ko":
+                    typer.echo(f"    KO {r['severite']:<11} {r['controle']:<22} "
+                               f"valeur={r['valeur']}  seuil={r['seuil']}")
+
+
+@filtre_app.command("lister")
+def filtre_lister_cmd() -> None:
+    """Liste les sources et leur dernier verdict connu (run/live, propres/universels seuls)."""
+    from . import filtres
+    with session_scope() as s:
+        for cle in filtres.sources():
+            f = filtres.get_filtre(cle)
+            v = filtres.dernier_verdict(s, cle)
+            portee = ",".join([p for p, on in (("run", f.portee_run), ("live", f.live)) if on]) or "—"
+            propres = len(f.propres)
+            etat = f"{v['verdict']} [{v['version']}]" if v else "jamais joué"
+            typer.echo(f"{cle:<26} portée={portee:<8} propres={propres:<2} {etat}")
+
+
+@filtre_app.command("garde")
+def filtre_garde_cmd() -> None:
+    """Montre ce que la garde de la pompe (1.4) verrait : sources à portée `run` en quarantaine."""
+    from . import filtres
+    with session_scope() as s:
+        blocages = filtres.garde_pompe(s)
+    if not blocages:
+        typer.echo("✓ garde pompe : aucune source `run` en quarantaine.")
+        return
+    for b in blocages:
+        typer.echo(f"⛔ {b['source']} [{b['version']}] — contrôles bloquants KO : {', '.join(b['controles'])}")
+
+
+@filtre_app.command("echanger")
+def filtre_echanger_cmd(
+    source: str = typer.Argument(..., help="Source live dont l'ingestion a écrit <table>__attente."),
+    par: str = typer.Option("cli", help="Qui échange — entre au journal."),
+    servir_quand_meme: bool = typer.Option(False, "--servir-quand-meme",
+                                           help="Forcer l'échange malgré une quarantaine (geste de Vic)."),
+    motif: str = typer.Option(None, help="Motif du « servir quand même »."),
+) -> None:
+    """ÉCHANGE (lot 4.1) — joue le filtre sur `<table>__attente` ; si OK (ou --servir-quand-meme),
+    échange les tables (l'ancienne part en `<table>__precedente` pour un retour immédiat). Une
+    injection en QUARANTAINE ne se sert pas."""
+    from .filtres import quarantaine
+    with session_scope() as s:
+        r = quarantaine.echanger(s, source, par=par, force=servir_quand_meme, motif=motif)
+        s.commit()
+    if r.get("ok"):
+        typer.echo(f"✓ {source} : version d'attente servie (précédente sous {r['precedente']})"
+                   + (" — SERVIR QUAND MÊME" if r.get("force") else ""))
+    else:
+        typer.echo(f"⛔ {source} : échange refusé — {r.get('motif')}"
+                   + (f" ({r.get('bloquants_ko')} bloquant KO)" if r.get("motif") == "quarantaine" else ""))
+        raise typer.Exit(1)
+
+
+@filtre_app.command("revenir")
+def filtre_revenir_cmd(
+    source: str = typer.Argument(..., help="Source live à faire revenir à sa version précédente."),
+    par: str = typer.Option("cli", help="Qui revient — entre au journal."),
+) -> None:
+    """RETOUR (lot 4.3) — remet `<table>__precedente` en table servie (geste journalisé)."""
+    from .filtres import quarantaine
+    with session_scope() as s:
+        r = quarantaine.revenir(s, source, par=par)
+        s.commit()
+    if r.get("ok"):
+        typer.echo(f"✓ {source} : version précédente re-servie ({r['servie']}).")
+    else:
+        typer.echo(f"⛔ {source} : retour impossible — {r.get('motif')}")
+        raise typer.Exit(1)
 
 
 # ═══════════════════ CIRCUIT-1 (lot 6) — les AGENTS de source, à la demande ═══════════════════

@@ -505,6 +505,41 @@ def coherence_robinets(ctx: JobContext) -> None:
             lien="/admin", dedup=f"coherence_robinets:{_date.today().isoformat()}")
 
 
+def filtres_sources(ctx: JobContext) -> None:
+    """CIRCUIT-3 lot 5.1 — LE FILTRE DE NUIT : rejoue les contrôles de chaque filtre sur la version
+    SERVIE (dérive dans le temps). Résultats dans filtre_resultats / filtre_versions. Une NOUVELLE
+    quarantaine notifie l'admin (dédup jour)."""
+    from . import filtres
+    nouveaux_quarantaine = []
+    n_ok = n_avert = n_quar = 0
+    for cle in filtres.sources():
+        f = filtres.get_filtre(cle)
+        if f is None:
+            continue
+        try:
+            v = filtres.jouer(ctx.db, f)
+        except Exception as exc:  # noqa: BLE001 — une source ne fait pas tomber le job
+            log.error("filtres-sources : %s a levé (%s)", cle, exc)
+            continue
+        if v.verdict == "quarantaine":
+            n_quar += 1
+            nouveaux_quarantaine.append(cle)
+        elif v.verdict == "avertissements":
+            n_avert += 1
+        else:
+            n_ok += 1
+    ctx.compte(sources_ok=n_ok, sources_avertissements=n_avert, sources_quarantaine=n_quar)
+    if nouveaux_quarantaine:
+        from datetime import date as _date
+        from .api.events import creer_notification
+        creer_notification(
+            ctx.db, kind="systeme", compte_id=None, source="Circuit",
+            titre=f"Filtre de nuit : {n_quar} source(s) en quarantaine",
+            detail="Sources en quarantaine : " + ", ".join(nouveaux_quarantaine)
+                   + " (page Circuit — « servir quand même » ou corriger la source).",
+            lien="/admin", dedup=f"filtres_sources:{_date.today().isoformat()}")
+
+
 def ingest_bodacc(ctx: JobContext) -> None:
     """CIRCUIT-1 lot 8.1 — BODACC au wrapper (quotidien, reprend le legacy) : procédures
     collectives (upsert idempotent) PUIS la chaîne des dérivés légers (fraicheur-derives),

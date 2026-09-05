@@ -13,7 +13,7 @@ import { useApp } from '../../store/useApp'
 import {
   getAdminCircuit, getAdminCircuitNoteVersion, postAdminCircuitPurger,
   postAdminCircuitRevenir, postAdminCircuitVerifier, postAdminFluxBascule, postAdminFluxLancerRun,
-  postAdminSourceVeilleInjecter,
+  postAdminSourceVeilleInjecter, postAdminCircuitFiltreServir, postAdminCircuitFiltreRevenir,
 } from '../../lib/api'
 
 const CSS = `
@@ -90,6 +90,12 @@ const CSS = `
 .cx .chip.rouge{color:var(--rouge);border-color:var(--rouge)}.cx .chip.ambre{color:var(--ambre);border-color:var(--ambre)}
 .cx .chip.ia{color:var(--mauve);border-color:rgba(192,132,252,.5)}
 .cx .fiche-lien{color:var(--jaune)}
+.cx .ctrls{margin-top:6px;display:flex;flex-direction:column;gap:2px;max-height:190px;overflow:auto}
+.cx .ctrl{display:grid;grid-template-columns:14px 1fr auto auto;gap:6px;align-items:center;font-size:11.5px;padding:1px 0}
+.cx .ctrl .cv{text-align:center}
+.cx .ctrl.ko .cv{color:#f87171}.cx .ctrl.ok .cv{color:#4ADE80}.cx .ctrl.skip{opacity:.55}
+.cx .ctrl .cn{color:var(--muted)}.cx .ctrl .cval{font-variant-numeric:tabular-nums}
+.cx .ctrl .csev{color:#f87171;font-size:10px}
 .cx .dates{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:6px;font-size:12px}
 .cx .dates div:nth-child(odd){color:var(--muted)}
 .cx .muted{color:var(--muted)}
@@ -120,6 +126,8 @@ export function CircuitSection() {
     mutationFn: (run: string) => postAdminFluxBascule(run),
     onSuccess: () => { setNoteLue(null); setNote(null); qc.invalidateQueries({ queryKey: ['admin-circuit'] }) },
   })
+  const servirQuandMeme = useMutation({ mutationFn: (source: string) => postAdminCircuitFiltreServir(source, 'geste page Circuit'), onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-circuit'] }) })
+  const filtreRevenir = useMutation({ mutationFn: (source: string) => postAdminCircuitFiltreRevenir(source), onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-circuit'] }) })
   const injecter = useMutation({ mutationFn: (sourceId: number) => postAdminSourceVeilleInjecter(sourceId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-circuit'] }) })
 
@@ -208,6 +216,15 @@ export function CircuitSection() {
     if (v.statut === 'nouvelle_version') return <span className="chk warn">sonde {quand}, nouvelle version</span>
     return <span className="chk ok">sonde {quand}</span>
   }
+  // CIRCUIT-3 lot 5.2 — l'état du filtre d'un réservoir : « filtre OK / n KO / quarantaine / non filtré ».
+  const filtreBadge = (r: any) => {
+    const fl = r.filtre
+    if (!fl || fl.verdict === 'non_filtre') return <span className="chk">non filtré</span>
+    if (fl.verdict === 'jamais_joue') return <span className="chk">filtre jamais joué</span>
+    if (fl.verdict === 'quarantaine') return <span className="chk bad">filtre : {fl.bloquants_ko} bloquant KO — quarantaine</span>
+    if (fl.verdict === 'avertissements') return <span className="chk warn">filtre : {fl.avertissants_ko} KO</span>
+    return <span className="chk ok">filtre OK</span>
+  }
 
   return (
     <div className="cx">
@@ -223,6 +240,9 @@ export function CircuitSection() {
         {cpt.eau_ancienne_ouverte > 0 && <button className="pill ambre"><i />{cpt.eau_ancienne_ouverte} eau ancienne</button>}
         {cpt.jamais_verifies > 0 && <button className="pill gris"><i />{cpt.jamais_verifies} jamais vérifiés</button>}
         {cpt.a_verifier > 0 && <button className="pill ambre"><i />{cpt.a_verifier} à vérifier</button>}
+        {/* CIRCUIT-3 lot 5.2 — pastille propre pour les sources en quarantaine (filtre) */}
+        {(cpt.filtres_quarantaine ?? 0) > 0 && <button className="pill rouge"><i />{cpt.filtres_quarantaine} en quarantaine</button>}
+        {(cpt.filtres_avertissements ?? 0) > 0 && <button className="pill ambre"><i />{cpt.filtres_avertissements} filtre{cpt.filtres_avertissements > 1 ? 's' : ''} à voir</button>}
         <span className="pill mint"><i />{cpt.vannes} vannes · {cpt.surveilles} sondes</span>
         <span className="muted" style={{ marginLeft: 'auto', fontSize: 11.5 }}>
           {d.dernier_controle
@@ -268,6 +288,7 @@ export function CircuitSection() {
                   <span className="nm">{t.nom}</span>
                   {t.mode === 'cron_mensuel' && <span className="clock" title="se remplit seul (cron)">⟳</span>}
                   {chkTank(t)}
+                  {filtreBadge(t)}
                 </button>
               ))}
             </div>
@@ -378,8 +399,35 @@ export function CircuitSection() {
                 {chkTank(tankSel)}
               </div>
               <div>
-                <div className="k">Agent</div>
-                <button className="btn mauve" disabled title="Lot 6.">Envoyer un agent</button>
+                {/* CIRCUIT-3 lot 5.2 — le filtre : verdict + chaque contrôle (valeur/seuil/date). */}
+                <div className="k">Le filtre {tankSel.filtre?.portee_run ? '· portée run' : ''}{tankSel.filtre?.live ? ' · live' : ''}</div>
+                {(!tankSel.filtre || tankSel.filtre.verdict === 'non_filtre') && <span className="muted">non filtré</span>}
+                {tankSel.filtre?.verdict === 'quarantaine' && (
+                  <span className="chip rouge">en quarantaine — {tankSel.filtre.bloquants_ko} bloquant KO</span>)}
+                {tankSel.filtre?.verdict === 'avertissements' && (
+                  <span className="chip ambre">{tankSel.filtre.avertissants_ko} avertissant KO</span>)}
+                {tankSel.filtre?.verdict === 'ok' && <span className="chip mint">tout passe</span>}
+                {tankSel.filtre?.servir_quand_meme && <span className="chip">servi quand même</span>}
+                {(tankSel.filtre?.controles || []).length > 0 && (
+                  <div className="ctrls">
+                    {(tankSel.filtre.controles as any[]).map((ct) => (
+                      <div key={ct.controle} className={`ctrl ${ct.verdict}`} title={ct.seuil || ''}>
+                        <span className="cv">{ct.verdict === 'ko' ? '✗' : ct.verdict === 'skip' ? '·' : '✓'}</span>
+                        <span className="cn">{ct.controle}</span>
+                        <span className="cval">{ct.valeur}</span>
+                        <span className="csev">{ct.severite === 'bloquant' ? 'bloquant' : ''}</span>
+                      </div>
+                    ))}
+                    {tankSel.filtre.joue_le && <div className="muted" style={{ fontSize: 11 }}>filtré le {new Date(tankSel.filtre.joue_le).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>}
+                  </div>)}
+                {tankSel.filtre?.verdict === 'quarantaine' && !tankSel.filtre.servir_quand_meme && (
+                  <button className="btn ghost" style={{ marginTop: 8 }}
+                    onClick={() => { if (confirm(`Servir « ${tankSel.filtre.source} » malgré la quarantaine ?`)) servirQuandMeme.mutate(tankSel.filtre.source) }}
+                    disabled={servirQuandMeme.isPending}>Servir quand même</button>)}
+                {tankSel.filtre?.live && (
+                  <button className="btn ghost" style={{ marginTop: 6 }}
+                    onClick={() => { if (confirm(`Revenir à la version précédente de « ${tankSel.filtre.source} » ?`)) filtreRevenir.mutate(tankSel.filtre.source) }}
+                    disabled={filtreRevenir.isPending}>Revenir à la version précédente</button>)}
               </div>
             </>)}
             {tapSel && (<>

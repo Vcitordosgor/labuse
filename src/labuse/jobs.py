@@ -277,7 +277,7 @@ def _j(nom, titre, cadence, cron_utc, heure_reunion, *, timeout_s=900, envoie_ma
 TOUCHE_EAU = frozenset({
     "sources-fraicheur", "radar-cycle", "fiche-commune-cache", "ingest-bodacc", "ingest-sirene",
     "ingest-sitadel", "ingest-dpe", "sync-gpu", "sentinelle-sources", "radar-releves",
-    "coherence-run", "coherence-robinets",
+    "coherence-run", "coherence-robinets", "filtres-sources",
 })
 
 JOBS: dict[str, Job] = {j.nom: j for j in [
@@ -329,6 +329,11 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # d'accumulation se lit de radar_releves. Après le cycle Radar, avant les digests.
     _j("radar-releves", "Radar — relevé quotidien des compteurs (annonces, rattachées, paires DVF)",
        "quotidien", "0 13 * * *", "17:00", timeout_s=300),
+    # CIRCUIT-3 lot 5.1 — LE FILTRE DE NUIT : rejoue les contrôles des filtres sur les versions
+    # SERVIES (dérive dans le temps : une table modifiée par un correctif, un raster remplacé).
+    # 07:05, AVANT la sonde de cohérence (07:15/07:25) — même famille, jamais en même temps.
+    _j("filtres-sources", "Filtres des sources : rejoue les contrôles qualité sur les versions servies",
+       "quotidien", "5 3 * * *", "07:05", timeout_s=1800),
     # FLUX-1 (F4) — garde de cohérence quotidienne : personne ne lit une ancienne donnée. Après la
     # sentinelle (07:00), avant l'ouverture. Notifie l'admin à la divergence.
     _j("coherence-run", "Garde de cohérence : chaque surface lit le run courant (tier/date identiques)",

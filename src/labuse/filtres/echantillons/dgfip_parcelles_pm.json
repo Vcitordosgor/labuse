@@ -1,0 +1,13 @@
+{
+  "source": "dgfip_parcelles_pm",
+  "producteur": "INSEE Sirene / INPI",
+  "table": "parcelle_personne_morale",
+  "cle_colonne": "siren",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://recherche-entreprises.api.gouv.fr/search?q=<siren>",
+  "raison_report": "recherche-entreprises renvoie le NAF/dénomination du SIÈGE (ambigu pour un SIRET d'établissement) ; la vérité par SIRET exige l'API Sirene INSEE (authentifiée).",
+  "proposition_cc": "Vérifier denomination pour 20 SIREN témoins (siège) via recherche-entreprises ; SIRET-level via Sirene INSEE (clé).",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

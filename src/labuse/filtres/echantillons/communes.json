@@ -1,0 +1,224 @@
+{
+  "reference": "communes-974",
+  "producteur": "INSEE COG via geo.api.gouv.fr",
+  "lu_le": "2026-09-06",
+  "note": "Référence des 24 communes lue chez le producteur (nom officiel + population). Sert de témoin aux contrôles commune de toute source ; l'écart nom/INSEE serait un écart d'échantillon.",
+  "lignes": [
+    {
+      "insee": "97401",
+      "nom": "Les Avirons",
+      "population": 11536,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97401?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97402",
+      "nom": "Bras-Panon",
+      "population": 13012,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97402?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97403",
+      "nom": "Entre-Deux",
+      "population": 7176,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97403?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97404",
+      "nom": "L'Étang-Salé",
+      "population": 14464,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97404?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97405",
+      "nom": "Petite-Île",
+      "population": 13067,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97405?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97406",
+      "nom": "La Plaine-des-Palmistes",
+      "population": 6936,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97406?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97407",
+      "nom": "Le Port",
+      "population": 33969,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97407?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97408",
+      "nom": "La Possession",
+      "population": 36568,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97408?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97409",
+      "nom": "Saint-André",
+      "population": 58885,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97409?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97410",
+      "nom": "Saint-Benoît",
+      "population": 38604,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97410?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97411",
+      "nom": "Saint-Denis",
+      "population": 155634,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97411?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97412",
+      "nom": "Saint-Joseph",
+      "population": 39207,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97412?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97413",
+      "nom": "Saint-Leu",
+      "population": 36163,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97413?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97414",
+      "nom": "Saint-Louis",
+      "population": 54941,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97414?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97415",
+      "nom": "Saint-Paul",
+      "population": 108088,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97415?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97416",
+      "nom": "Saint-Pierre",
+      "population": 85038,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97416?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97417",
+      "nom": "Saint-Philippe",
+      "population": 5082,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97417?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97418",
+      "nom": "Sainte-Marie",
+      "population": 37093,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97418?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97419",
+      "nom": "Sainte-Rose",
+      "population": 6557,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97419?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97420",
+      "nom": "Sainte-Suzanne",
+      "population": 25551,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97420?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97421",
+      "nom": "Salazie",
+      "population": 7268,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97421?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97422",
+      "nom": "Le Tampon",
+      "population": 82579,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97422?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97423",
+      "nom": "Les Trois-Bassins",
+      "population": 7221,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97423?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    },
+    {
+      "insee": "97424",
+      "nom": "Cilaos",
+      "population": 5040,
+      "origine": {
+        "url": "https://geo.api.gouv.fr/communes/97424?fields=nom,code,population",
+        "champ": "nom, population"
+      }
+    }
+  ]
+}

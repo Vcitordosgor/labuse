@@ -1,0 +1,13 @@
+{
+  "source": "gtfs_pan",
+  "producteur": "Point d'Accès National — GTFS",
+  "table": "spatial_layers",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://transport.data.gouv.fr/",
+  "raison_report": "GTFS = fichiers zip par réseau ; vérification d'un arrêt = le stop_id dans le GTFS brut.",
+  "proposition_cc": "Comparer 20 arrêts témoins (stop_id) contre le GTFS du réseau servi.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

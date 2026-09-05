@@ -1,0 +1,13 @@
+{
+  "source": "gpu_plu",
+  "producteur": "IGN — API Carto GPU",
+  "table": "spatial_layers",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://apicarto.ign.fr/api/gpu/zone-urba?geom=...",
+  "raison_report": "GPU s'interroge PAR GÉOMÉTRIE (pas par id de zone) ; vérifier la lettre de zone d'une parcelle témoin est faisable mais coûteux (une requête géométrique par témoin).",
+  "proposition_cc": "Pour 20 parcelles témoins, comparer la famille de zone servie à celle renvoyée par /gpu/zone-urba sur la géométrie.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

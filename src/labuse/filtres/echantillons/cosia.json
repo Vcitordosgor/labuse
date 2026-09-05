@@ -1,0 +1,13 @@
+{
+  "source": "cosia",
+  "producteur": "IGN — CoSIA",
+  "table": "spatial_layers",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://geoservices.ign.fr/cosia",
+  "raison_report": "CoSIA est une couverture raster IA ; la vérification d'un bâtiment = YEUX HUMAINS sur la PVA (nature du polygone).",
+  "proposition_cc": "Échantillon À VALIDER par Stéphanie : 20 bâtiments CoSIA confirmés sur l'orthophoto.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

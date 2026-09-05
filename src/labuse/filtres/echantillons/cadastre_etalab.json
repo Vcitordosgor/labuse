@@ -1,0 +1,210 @@
+{
+  "source": "cadastre_etalab",
+  "producteur": "IGN — API Carto Cadastre (contenance cadastrale DGFiP)",
+  "table": "parcels",
+  "cle_colonne": "idu",
+  "lu_le": "2026-09-06",
+  "note": "Attendu = contenance cadastrale DGFiP lue en direct chez le producteur (API Carto). Notre surface_m2 est dérivée de la géométrie ; tolérance 10 % pour absorber l'écart géométrie/contenance. Un écart > 10 % signale une géométrie parcellaire à revoir.",
+  "lignes": [
+    {
+      "cle": "97415000BO0852",
+      "colonne": "surface_m2",
+      "attendu": 745,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97415&section=BO&numero=0852",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97401000AD0554",
+      "colonne": "surface_m2",
+      "attendu": 700,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97401&section=AD&numero=0554",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97416000DY0106",
+      "colonne": "surface_m2",
+      "attendu": 5391,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97416&section=DY&numero=0106",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97411000AV0110",
+      "colonne": "surface_m2",
+      "attendu": 690,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97411&section=AV&numero=0110",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97401000AB0001",
+      "colonne": "surface_m2",
+      "attendu": 169350,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97401&section=AB&numero=0001",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97402000AB0001",
+      "colonne": "surface_m2",
+      "attendu": 23330,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97402&section=AB&numero=0001",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97403000AH0341",
+      "colonne": "surface_m2",
+      "attendu": 168,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97403&section=AH&numero=0341",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97404000AC0011",
+      "colonne": "surface_m2",
+      "attendu": 150,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97404&section=AC&numero=0011",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97405000AB0001",
+      "colonne": "surface_m2",
+      "attendu": 7050,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97405&section=AB&numero=0001",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97406000AB0001",
+      "colonne": "surface_m2",
+      "attendu": 474825,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97406&section=AB&numero=0001",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97407000AB0009",
+      "colonne": "surface_m2",
+      "attendu": 1705,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97407&section=AB&numero=0009",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97408000AB0007",
+      "colonne": "surface_m2",
+      "attendu": 5650,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97408&section=AB&numero=0007",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97409000AB0011",
+      "colonne": "surface_m2",
+      "attendu": 295600,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97409&section=AB&numero=0011",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97410000AB0010",
+      "colonne": "surface_m2",
+      "attendu": 4470,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97410&section=AB&numero=0010",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97411000AB0006",
+      "colonne": "surface_m2",
+      "attendu": 14995,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97411&section=AB&numero=0006",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97412000AB0001",
+      "colonne": "surface_m2",
+      "attendu": 2841000,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97412&section=AB&numero=0001",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97413000AC0083",
+      "colonne": "surface_m2",
+      "attendu": 250,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97413&section=AC&numero=0083",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97414000CH0586",
+      "colonne": "surface_m2",
+      "attendu": 4781,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97414&section=CH&numero=0586",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97415000AC0253",
+      "colonne": "surface_m2",
+      "attendu": 1859,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97415&section=AC&numero=0253",
+        "champ": "features[0].properties.contenance"
+      }
+    },
+    {
+      "cle": "97416000CD0006",
+      "colonne": "surface_m2",
+      "attendu": 4750,
+      "tolerance_pct": 10.0,
+      "origine": {
+        "url": "https://apicarto.ign.fr/api/cadastre/parcelle?code_insee=97416&section=CD&numero=0006",
+        "champ": "features[0].properties.contenance"
+      }
+    }
+  ]
+}

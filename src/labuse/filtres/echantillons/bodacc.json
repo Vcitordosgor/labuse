@@ -1,0 +1,13 @@
+{
+  "source": "bodacc",
+  "producteur": "DILA — BODACC",
+  "table": "bodacc_procedures",
+  "cle_colonne": "annonce_id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://bodacc-datadila.opendatasoft.com/api/records/1.0/search/?dataset=annonces-commerciales&q=<siren>",
+  "raison_report": "Faisable via l'API BODACC ODS (par SIREN/annonce) — budget API.",
+  "proposition_cc": "Comparer type_procedure + date d'annonce de 20 annonces témoins contre l'API BODACC.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

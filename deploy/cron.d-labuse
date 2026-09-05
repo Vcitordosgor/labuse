@@ -45,6 +45,8 @@ MAILTO=root
 # détecte un nouveau millésime et alerte à la cloche admin (n'ingère RIEN). Généralise l'ancien
 # sentinelle-dvf-cadastre (mensuel), désormais deux lignes de source_veille.
 0 3 * * *    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run sentinelle-sources'
+# 07:05 Réunion (= 03:05 UTC) — CIRCUIT-3 lot 5.1 : le filtre de nuit (contrôles qualité sur les versions servies), avant la sonde de cohérence.
+5 3 * * *    labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run filtres-sources'
 # 07:15 Réunion (= 03:15 UTC) — FLUX-1 F4 : garde de cohérence (chaque surface lit le run courant).
 15 3 * * *   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run coherence-run'
 # 17:00 Réunion (= 13:00 UTC) — FLUX-1 F3.2 : relevé quotidien des compteurs Radar (courbe d'accumulation).

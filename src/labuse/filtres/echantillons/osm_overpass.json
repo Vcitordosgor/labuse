@@ -1,0 +1,13 @@
+{
+  "source": "osm_overpass",
+  "producteur": "OpenStreetMap — Overpass",
+  "table": "spatial_layers",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://overpass-api.de/api/interpreter",
+  "raison_report": "OSM est une base VIVANTE (change en continu) ; un id OSM sert de clé mais l'appariement exige une requête Overpass par objet.",
+  "proposition_cc": "Comparer 20 aménités témoins (par osm_id dans attrs) contre Overpass.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

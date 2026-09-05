@@ -1,0 +1,226 @@
+{
+  "source": "ban",
+  "producteur": "BAN — api-adresse.data.gouv.fr (reverse geocode)",
+  "table": "adresses",
+  "cle_colonne": "id_ban",
+  "lu_le": "2026-09-06",
+  "note": "Attendu = INSEE (citycode) retourné par le reverse-geocode du producteur sur nos coordonnées. Un écart = adresse mal rattachée à sa commune.",
+  "lignes": [
+    {
+      "cle": "97401_0001_00001",
+      "colonne": "insee",
+      "attendu": "97401",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.362173&lat=-21.213412",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97402_0002_00003",
+      "colonne": "insee",
+      "attendu": "97402",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.673964&lat=-20.994930",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97403_0001_00002",
+      "colonne": "insee",
+      "attendu": "97403",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.480323&lat=-21.239038",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97404_0002_00006",
+      "colonne": "insee",
+      "attendu": "97404",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.363978&lat=-21.250703",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97405_0003_00003",
+      "colonne": "insee",
+      "attendu": "97405",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.563395&lat=-21.326227",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97406_0011_00002",
+      "colonne": "insee",
+      "attendu": "97406",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.634082&lat=-21.132080",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97407_0004_00001",
+      "colonne": "insee",
+      "attendu": "97407",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.291848&lat=-20.940592",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97408_0001_00002",
+      "colonne": "insee",
+      "attendu": "97408",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.332860&lat=-20.944588",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97409_0001_00029",
+      "colonne": "insee",
+      "attendu": "97409",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.668754&lat=-20.952774",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97410_0001_00001",
+      "colonne": "insee",
+      "attendu": "97410",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.703093&lat=-21.064842",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97411_0010_00004",
+      "colonne": "insee",
+      "attendu": "97411",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.443884&lat=-20.876564",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97412_0001_00001",
+      "colonne": "insee",
+      "attendu": "97412",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.650085&lat=-21.380848",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97413_0001_00008",
+      "colonne": "insee",
+      "attendu": "97413",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.288382&lat=-21.177190",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97414_0010_00002",
+      "colonne": "insee",
+      "attendu": "97414",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.406597&lat=-21.282458",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97415_0006_00002",
+      "colonne": "insee",
+      "attendu": "97415",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.304955&lat=-21.045185",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97416_0001_00002",
+      "colonne": "insee",
+      "attendu": "97416",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.556775&lat=-21.316657",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97417_0002_00001",
+      "colonne": "insee",
+      "attendu": "97417",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.769754&lat=-21.360423",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97418_0001_00001",
+      "colonne": "insee",
+      "attendu": "97418",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.533990&lat=-20.948842",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97419_0001_00001",
+      "colonne": "insee",
+      "attendu": "97419",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.824422&lat=-21.165152",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97420_0001_00001",
+      "colonne": "insee",
+      "attendu": "97420",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.594526&lat=-20.915668",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97421_0001_00005",
+      "colonne": "insee",
+      "attendu": "97421",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.469974&lat=-21.041825",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97422_0002_00020",
+      "colonne": "insee",
+      "attendu": "97422",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.514394&lat=-21.299011",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97423_0003_00007",
+      "colonne": "insee",
+      "attendu": "97423",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.301601&lat=-21.119071",
+        "champ": "features[0].properties.citycode"
+      }
+    },
+    {
+      "cle": "97424_0001_00001",
+      "colonne": "insee",
+      "attendu": "97424",
+      "origine": {
+        "url": "https://api-adresse.data.gouv.fr/reverse/?lon=55.467763&lat=-21.142475",
+        "champ": "features[0].properties.citycode"
+      }
+    }
+  ]
+}

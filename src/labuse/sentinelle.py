@@ -497,6 +497,9 @@ SEED: list[dict] = [
 #: réels). Les 6 sources récupérées (DEAL PPR/WMS, Région ODS, Géorisques cavités/mvt/ssp) sont passées
 #: au SEED et retirées d'ici.
 RAISONS_NON_SURVEILLEES: dict[str, str] = {
+    # CIRCUIT-3 lot 6 — sources entrées par la vanne (Circuit), pas par la sentinelle amont.
+    "CatNat (arrêtés GASPAR / Géorisques)": "GASPAR interrogé EN DIRECT par commune (pas de millésime global) ; réingéré à la demande (`labuse ingest-catnat`, refresh mensuel) et contrôlé par son filtre (CIRCUIT-3 lot 6.1). La fraîcheur se lit sur la page Circuit, pas par une sonde amont.",
+    "Taxe d'aménagement — taux communaux (délibérations)": "Taux communaux issus des délibérations / base publique DGFiP — pas de flux à millésime à sonder ; la source est À INGÉRER (statut a_faire), sa couverture est suivie par le filtre `taxe_amenagement` (CIRCUIT-3 lot 6.2).",
     # API Carto GPU (Géoportail de l'urbanisme) — interrogée PAR GÉOMÉTRIE à l'usage, aucun millésime global.
     "Urbanisme PLU/GPU (API Carto)": "API Carto GPU interrogée par géométrie à l'usage. Y3 : le point d'entrée `/municipality` ne porte aucun millésime (gid/insee/is_rnu seulement), `/document` exige une géométrie, aucun jeu data.gouv « documents GPU » à `last_update` ; un témoin par parcelle détecterait un changement de PLU commune par commune, mais LABUSE interroge le GPU EN DIRECT (aucun snapshot ingéré à réinjecter).",
     "GPU — zonages d'assainissement": "API Carto GPU par géométrie (mêmes limites que « Urbanisme PLU/GPU » : pas de millésime global, interrogé en direct sans snapshot ingéré).",

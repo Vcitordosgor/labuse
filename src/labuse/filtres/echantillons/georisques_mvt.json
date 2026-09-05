@@ -1,0 +1,13 @@
+{
+  "source": "georisques_mvt",
+  "producteur": "BRGM — Géorisques",
+  "table": "spatial_layers",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://www.georisques.gouv.fr/api/v1/gaspar/risques?code_insee=97411",
+  "raison_report": "L'aléa mvt s'interroge par commune (pas par id de zone) ; la vérification par zone demande un appariement géométrique.",
+  "proposition_cc": "Pour chaque commune, vérifier la PRÉSENCE de l'aléa mvt via l'API Géorisques (le degré est déjà gardé par d_alea_non_retrograde).",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

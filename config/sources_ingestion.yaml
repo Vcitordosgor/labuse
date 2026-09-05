@@ -56,6 +56,10 @@ commandes:
   - motif: "Géorisques — mouvements de terrain"
     label: georisques_mvt
     argv: ["labuse", "ingest-georisques"]
+  # CIRCUIT-3 lot 6.1 — CatNat par la vanne (arrêtés GASPAR paginés).
+  - motif: "CatNat*"
+    label: catnat
+    argv: ["labuse", "ingest-catnat"]
   - motif: "QPV 2024 (ANCT)"
     label: qpv_2024
     argv: ["labuse", "ingest-qpv"]

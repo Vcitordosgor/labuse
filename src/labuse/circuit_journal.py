@@ -16,7 +16,7 @@ DDL = """
 CREATE TABLE IF NOT EXISTS circuit_journal (
   id bigserial PRIMARY KEY,
   ts timestamptz NOT NULL DEFAULT now(),
-  geste varchar(24) NOT NULL,      -- injecter | calculer | basculer | revenir | purger | agent | job
+  geste varchar(24) NOT NULL,      -- injecter | calculer | basculer | revenir | purger | agent | job | filtre
   cible text NOT NULL,             -- source, run, réservoir…
   par varchar(120),                -- qui (email admin, 'cron', 'cli')
   resultat varchar(24) NOT NULL,   -- lance | ok | echec | refuse
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS circuit_journal (
 )
 """
 
-GESTES = ("injecter", "calculer", "basculer", "revenir", "purger", "agent", "job")
+GESTES = ("injecter", "calculer", "basculer", "revenir", "purger", "agent", "job", "filtre")
 
 
 def ensure(db) -> None:

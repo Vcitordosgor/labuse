@@ -1,0 +1,13 @@
+{
+  "source": "trafic_rn",
+  "producteur": "Région Réunion — ODS",
+  "table": "trafic_rn",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://data.regionreunion.com/",
+  "raison_report": "Faisable via l'ODS Région (par tronçon) — budget API.",
+  "proposition_cc": "Comparer tmja de 20 tronçons témoins contre l'open data Région.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}
