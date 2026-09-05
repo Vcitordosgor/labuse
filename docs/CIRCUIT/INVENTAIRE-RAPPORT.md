@@ -320,3 +320,37 @@ Queue de table : 16 réservoirs ne touchent qu'1 à 3 robinets (trafic_rn, qpv_2
 - Validation : PASS (script, aucun id orphelin, chaque chiffre a ≥ 1 réservoir et ≥ 1 robinet).
 - `DOUTE` : 0 nouveau.
 - A bloqué : rien.
+
+---
+
+## Lot 7 — Agents et traçage (faisabilité, rien construit)
+
+Livrable : `docs/CIRCUIT/inventaire/agents_fiches.csv` (**34 réservoirs non surveillés** — le mandat en attendait 28 ; l'écart vient des lignes absentes/hors-vitrine comptées ici — dont 24 avec `page_rendue_en_js=DOUTE`, aucun appel réseau n'étant autorisé), généré par `scripts/inventaire/extrait_agents_fiches.py` depuis `reservoirs.csv`.
+
+### Q7.1 — Pile IA
+
+- **Modèles** : `src/labuse/ai_models.py` — routeur par tâche (`MODEL_FACTUAL`/`MODEL_VISION` = `claude-haiku-4-5-20251001`, `MODEL_REASONING` = `claude-sonnet-4-6`, ai_models.py:22-25), garde `RETIRED_MODELS`+`check_model()` (échec BRUYANT, ai_models.py:29-49), registre `SURFACES` de **22 usages** avec override env par surface (`ai_models.py:60-96`) — le tableau admin EST la vérité servie.
+- **SDK figé** : `anthropic==0.116.0` (`pyproject.toml:60`, garde `tests/test_anthropic_pin.py`).
+- **Où l'API est appelée** : Copilote v2 (routage/sélection/formulation/missions), recherche NL, synthèse fiche/banquier (`strict_numbers`), traducteur PLU, parseur programmes promoteur, **extraction pige** (`pige/extraction.py:98`, kind `vision_pige`), accroche du jour — tous via `ai/core.complete()` (façade unique, ledger `ia_log`).
+- **`ia_budget`** : **PAS sur main** — `ai/core.py:108` le dit : la porte budget/compte vit sur la branche `fix/ia-modele-budget` non mergée. Sur main : ledger `ia_log` + quotas Copilote (`quota.py`, réglages admin).
+- **LLM en job de fond** : le pattern existe — `pige/extraction.py` est appelé hors requête (traitement des dépôts Radar, cron `radar-cycle`) via la même façade ; aucun worker dédié, un `subprocess`/cron suffit aujourd'hui.
+- **Playwright / navigateur sur le VPS** : absent des requirements et du deploy (grep) ; le chromium local (`chromium_headless_shell-1217`) est un outil de dev pour captures. Un agent « page JS » devrait l'installer.
+- **Sortie réseau du VPS** : `deploy/scripts/ufw_setup.sh:25-27` — `default deny incoming, default allow outgoing` : **rien ne bloque un agent sortant**.
+
+### Q7.3 — Traçage : par où passe un chiffre avant l'écran
+
+- **Front** : un point de passage **quasi unique** existe — `frontend/src/lib/format.ts` (8 formateurs : fmtInt, fmtDec, fmtEur, fmtM2, fmtEurCompact, fmtPct, fmtDate, fmtDateNum ; **~225 appels** dans components/). Exceptions recensées : redéfinitions locales dans `ContextePanel.tsx`, `MarcheSecteurBlock.tsx`, `RadarMarche.tsx` (~58 usages inline) et des `toLocaleString` épars côté admin.
+- **Hors front, 4 chemins de rendu distincts** : templates Jinja2 du Flash (WeasyPrint, `flash/templates/rapport.html`), builders fpdf2 (`api/briques_pdf.py`, courrier, zone), HTML mail construit serveur (`pige/digests.py:carte_html`, `events.py:cartes_html`), pages serveur `coffre_ui`.
+- **Verdict** : PAS de point unique global. Pour équiper chaque nombre d'une étiquette de provenance : ~225 sites front via `format.ts` (1 chantier), + ~60-80 sites inline front, + 4 familles serveur (Jinja/fpdf2/mail/coffre) — estimation honnête : **~300-350 sites d'appel**, dont l'essentiel se factorise en étendant `format.ts` et un helper serveur unique.
+
+### Q7.4 — Journal des gestes
+
+- **Basculer / Revenir** : journalisés au complet — `run_bascule_journal` (ts, ancien, nouveau, **par** (email admin), sens avant/arrière, caches purgés, verdict cohérence — `bascule_flux.py:71,227` ; `dashboard.py:1414` passe `par=compte_email`) + notification `event_log`. **OUI (qui, quand, quoi).**
+- **Calculer** : notification système dédupliquée `flux-run:<label>` (event_log) + état `run_progress` (pid, phases) — **pas d'identité « qui »** dans le journal.
+- **Injecter** : trace `source_veille.injection_lancee_at/injection_vu` + notification admin + log fichier `/tmp/labuse-relance-<label>.log` — **pas d'identité « qui »** non plus. Les crons, eux, ne journalisent PAS event_log (commentaire `dashboard.py:863` : leur vraie trace est `ingestion_runs`/`last_sync_at`).
+
+### Point d'étape Lot 7
+
+- Compteurs : 34 fiches agents (24 js=DOUTE), produits par le script.
+- `DOUTE` : 24 `page_rendue_en_js` (interdiction d'appel réseau) + formats de millésime inconnus au code.
+- A bloqué : rien — la question « JS ou pas » exige un passage réseau, reporté aux agents eux-mêmes.
