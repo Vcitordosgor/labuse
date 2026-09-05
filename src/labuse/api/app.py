@@ -2571,18 +2571,26 @@ def taxe_amenagement_config() -> dict:
 
 @app.get("/outils/taxe-amenagement/prefill")
 def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
-    """Contexte d'une parcelle pour pré-remplir : zone PLU + surface du TERRAIN (référence — la
-    surface TAXABLE est la surface de plancher projetée, saisie par l'utilisateur, jamais devinée)."""
+    """Contexte d'une parcelle pour pré-remplir : zone PLU, surface du TERRAIN (référence) et —
+    RETOURS-13 R26 — la SDP CONSTRUCTIBLE AU GABARIT (résiduel du run servi) : LABUSE pré-remplit
+    la surface taxable avec ce qu'il SAIT (étiqueté « pré-rempli, modifiable ») ; la surface du
+    PROJET reste celle du client s'il la connaît — le champ reste éditable, rien n'est deviné
+    au-delà de ce que le moteur calcule déjà."""
     _check_idu(idu)
     row = db.execute(text(
-        "SELECT p.commune, round(p.surface_m2) AS surface_terrain_m2, z.zone_libelle, z.zone_fam"
-        " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu WHERE p.idu = :i"),
+        "SELECT p.commune, round(p.surface_m2) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
+        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2"
+        " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu"
+        " LEFT JOIN parcel_residuel r ON r.parcel_id = p.id"
+        " WHERE p.idu = :i"),
         {"i": idu}).mappings().first()
     if not row:
         raise HTTPException(404, "Parcelle inconnue")
+    sdp = row["sdp_gabarit_m2"]
     return {"idu": idu, "commune": row["commune"],
             "surface_terrain_m2": row["surface_terrain_m2"],
-            "zone_plu": row["zone_libelle"] or row["zone_fam"]}
+            "zone_plu": row["zone_libelle"] or row["zone_fam"],
+            "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None}
 
 
 @app.get("/outils/taxe-amenagement")

@@ -122,23 +122,28 @@ export function ProcedureChangement() {
           2. Simuler l’ouverture d’une zone AU
         </div>
         <CommuneScope commune={commune} onChange={setCommune} />
-        {commune ? (
-          enProcedure ? (
-            <div data-procchg-statut="en_cours" className="rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-3 py-2 text-[11px] text-txt">
-              <b className="text-st-creuser">▲ {commune}</b> est en {enProcedure.type} (prescrite le {enProcedure.date_acte}).
-              La simulation montre ce que la bascule AU→U y changerait.
-            </div>
-          ) : (
-            <div data-procchg-statut="hypothetique" className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
-              <span className="mr-1">🕓</span><b className="text-txt">Aucune procédure PLU en cours</b> à {commune} au radar —
-              <b> simulation hypothétique</b> (« et si cette zone AU passait en U ? »).
-            </div>
-          )
-        ) : (
-          <div data-procchg-statut="ile" className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
-            Périmètre : <b className="text-txt">toute l'île</b> — simulation hypothétique, aucune procédure ciblée.
-            Choisissez une commune ci-dessus pour la relier à sa procédure.
+        {/* RETOURS-13 R25 — les EXPLICATIONS passent dans un accordéon « Attention » REPLIÉ ;
+            seul le fait « procédure en cours » (quand il existe) reste visible d'emblée. */}
+        {commune && enProcedure ? (
+          <div data-procchg-statut="en_cours" className="rounded-lg border border-st-creuser/40 bg-st-creuser/[0.08] px-3 py-2 text-[11px] text-txt">
+            <b className="text-st-creuser">▲ {commune}</b> est en {enProcedure.type} (prescrite le {enProcedure.date_acte}).
+            La simulation montre ce que la bascule AU→U y changerait.
           </div>
+        ) : (
+          <details data-procchg-attention className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
+            <summary className="cursor-pointer list-none py-0.5 font-medium text-txt marker:hidden">Attention ▾</summary>
+            {commune ? (
+              <p data-procchg-statut="hypothetique" className="mt-1">
+                <b className="text-txt">Aucune procédure PLU en cours</b> à {commune} au radar —
+                <b> simulation hypothétique</b> (« et si cette zone AU passait en U ? »).
+              </p>
+            ) : (
+              <p data-procchg-statut="ile" className="mt-1">
+                Périmètre : <b className="text-txt">toute l'île</b> — simulation hypothétique, aucune procédure ciblée.
+                Choisissez une commune ci-dessus pour la relier à sa procédure.
+              </p>
+            )}
+          </details>
         )}
 
         {/* O8(b) — les zones AU réellement disponibles pour la commune sont listées explicitement à

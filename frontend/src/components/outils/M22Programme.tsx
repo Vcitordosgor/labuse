@@ -6,6 +6,7 @@ import { useApp } from '../../store/useApp'
 import { FaisabiliteTab } from '../fiche/Fiche'
 import { ListPaginationFooter } from '../ListPagination'
 import { CommuneScope } from './ModulePanel'
+import { Tip } from '../Tip'
 import { DestinationBadge, DestinationSelect, useDestinationsRef } from './DestinationSelect'
 import { ParcelPicker } from './ParcelPicker'
 import { TierBadge } from './TierBadge'
@@ -131,12 +132,15 @@ export function M22() {
 
       {mode === 'criteres' && (
         <>
-          <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-            Décrivez votre programme — bâtiments, hauteur, logements par bâtiment, surface par logement.
-            LABUSE calcule la surface de plancher nécessaire et trouve les parcelles où le PLU la permet.
-            Le Copilote peut remplir le formulaire pour vous : « 3 immeubles R+3 de 8 logements ».
+          {/* RETOURS-13 R20 — le paragraphe d'aide est RETIRÉ (demande Vic) : l'aide vit derrière
+              le « i » à côté du périmètre, plus en bloc permanent. */}
+          <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1"><CommuneScope commune={commune} onChange={setCommune} /></div>
+            <Tip side="bottom" tip="Décrivez votre programme — bâtiments, hauteur, logements par bâtiment, surface par logement. LABUSE calcule la surface de plancher nécessaire et trouve les parcelles où le PLU la permet. Le Copilote peut remplir le formulaire pour vous : « 3 immeubles R+3 de 8 logements ».">
+              <span role="button" tabIndex={0} aria-label="Aide"
+                className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
           </div>
-          <CommuneScope commune={commune} onChange={setCommune} />
           {/* LOT2 — grille 2 colonnes UNIQUE : les 5 champs s'alignent en colonnes (M²/UNITÉ et
               Circulations % ne décrochent plus sur une ligne à part). `items-end` aligne les inputs
               même quand un libellé passe sur 2 lignes. */}
@@ -159,7 +163,7 @@ export function M22() {
             <>
               {/* PROGRAMME ÉPINGLÉ (mandat) — le récap reste STICKY en tête pendant le scroll des résultats :
                   on sait toujours ce qu'on cherche. */}
-              <div data-prog-count className="sticky top-0 z-10 -mx-1 rounded-lg border border-mint/40 bg-surface-1/95 px-3 py-2 backdrop-blur">
+              <div data-prog-count className="sticky top-0 z-10 -mx-1 rounded-lg border border-line-2 bg-surface-1/95 px-3 py-2 backdrop-blur">
                 {/* FIX-INTEGRATION I1 — « SDP gabarit » = capacité constructible au gabarit PLU (R+N,
                     hauteur, coef circulations éditable ci-dessus). À NE PAS confondre avec la « SDP
                     estimée » de l'Assemblage (par analogie DVF) ni avec la « SHAB vendable » de la
@@ -229,7 +233,7 @@ export function M22() {
 
       {mode === 'parcelle' && (
         <>
-          <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+          <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
             Désignez une parcelle : sa <b>faisabilité complète</b> (capacité, calcul tracé, explication IA,
             charge foncière) — le même calcul que l'onglet Faisabilité de la fiche.
           </div>

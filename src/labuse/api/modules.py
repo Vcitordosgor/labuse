@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -461,6 +462,12 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
 
 
 # Libellés lisibles (nature d'autorisation + état d'avancement, codes source non documentés)
+# RETOURS-13 R30 — libellés OFFICIELS de DESTINATION_PRINCIPALE (dictionnaire Sitadel3, SDES —
+# « dictionnaire_variables locaux_permis_construire.xls », vérifié le 05/09/2026) : la fiche
+# permis dit désormais SA nature (un hôtel se lit « hôtels », plus un code muet).
+_DESTINATION_LABELS = {"1": "habitation", "2": "hôtels", "3": "bureaux", "4": "commerce",
+                       "6": "industrie", "7": "agriculture", "8": "entrepôt",
+                       "9": "service public ou d'intérêt collectif"}
 _NATURE_LABELS = {"PC": "Permis de construire", "DP": "Déclaration préalable",
                   "PA": "Permis d'aménager", "PD": "Permis de démolir"}
 _ETAT_LABELS = {"2": "Autorisé", "4": "Chantier ouvert", "5": "En cours",
@@ -475,6 +482,7 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         SELECT s.permit_id, s.type, s.commune, s.date::date::text AS date_autorisation,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'daact' AS daact, s.raw->>'destination' AS destination,
+               s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
                s.idu_codes,
                d.date_depot::text AS date_depot, d.valide AS delai_valide,
@@ -500,6 +508,11 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         "date_achevement": r["date_achevement"] or r["daact"],
         "delai_instruction": delai,
         "statut": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}"), "etat_code": r["etat"],
+        # R30 — la destination est SERVIE avec son libellé (hôtels, bureaux, commerce…) : le
+        # filtre implicite « logements » n'existe plus, toutes les destinations sont dites.
+        "destination": r["destination"],
+        "destination_libelle": _DESTINATION_LABELS.get(r["destination"] or ""),
+        "geoloc_note": r["geoloc"],
         "parcelles": list(r["idu_codes"]) if r["idu_codes"] else [],
         "geom": json.loads(r["g"]) if r["g"] else None,
         "source": "SITADEL (SDES/Dido) — autorisations d'urbanisme, dép. 974",
@@ -1948,7 +1961,14 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
         if c["procedure_active"]:
             procedures[c["procedure_active"]] = procedures.get(c["procedure_active"], 0) + 1
     n_procedures = sum(1 for c in out if c["procedure_active"])
-    return {"n_communes": len(out), "servables": servables,
+    # RETOURS-13 R22 — un PLU en RÉVISION reste EN VIGUEUR jusqu'à l'approbation du nouveau :
+    # le compteur dit désormais les PLU EXISTANTS (24 communes − RNU), et NOMME les trous de
+    # SOURCE (règlement en vigueur mais non servi par le GPU — Saint-André, Saint-Leu), au lieu
+    # de les cacher dans un « 21 disponibles » faux.
+    n_plu_vigueur = len(out) - n_rnu
+    non_servis = sorted(c["commune"] for c in out if c["statut"] in ("revision", "non_ingere"))
+    return {"n_communes": len(out), "servables": servables, "n_plu_vigueur": n_plu_vigueur,
+            "non_servis": non_servis,
             "n_revision": n_revision, "n_rnu": n_rnu, "n_non_ingere": n_non_ingere,
             # RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures (source unique veille_plu).
             "n_procedures": n_procedures, "procedures_par_etat": procedures,

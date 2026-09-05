@@ -218,9 +218,35 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
         "SELECT id, nom, commune, url, annee FROM programmes "
         "WHERE (promoteur_siren = :s OR (:s IS NULL AND promoteur_nom = :n)) AND rattachement_mode IS NULL "
         "ORDER BY commune NULLS LAST, nom"), {"s": siren, "n": denom}).mappings()]
+    # RETOURS-13 R29 — LE CHIFFRE DIT CE QU'IL COMPTE (doute Vic « CBO a que 20 opérations
+    # depuis 2013 ?? ») : les « opérations » ci-dessus = permis ≥ 1 logement sur les parcelles
+    # que la société POSSÈDE ENCORE (un promoteur revend après livraison → les opérations
+    # livrées SORTENT de ce compte ; les SCI/SNC d'opération n'y sont pas). En COMPLÉMENT :
+    # l'activité de PÉTITIONNAIRE (Sitadel 2013+, toutes destinations) au nom de la société,
+    # et celle de ses filiales IDENTIFIÉES par le lien de gérance INPI (pm_dirigeants.
+    # gerant_siren — jamais un rapprochement par adresse de siège : mesuré NON fiable,
+    # « La Mare » = un quartier entier). Jamais un total gonflé sans méthode.
+    petit = db.execute(text(
+        "SELECT count(*) AS n, sum(NULLIF(raw->>'nb_lgt','')::int) AS lgt "
+        "FROM sitadel_permits WHERE raw->>'petitioner_siren' = :s"), {"s": siren}).mappings().first()
+    filles = db.execute(text(
+        "SELECT d.siren, count(s.id) AS n, sum(NULLIF(s.raw->>'nb_lgt','')::int) AS lgt, "
+        "       max(s.raw->>'petitioner_name') AS nom "
+        "FROM pm_dirigeants d "
+        "JOIN sitadel_permits s ON s.raw->>'petitioner_siren' = d.siren "
+        "WHERE d.gerant_siren = :s AND COALESCE(d.actif, true) "
+        "GROUP BY d.siren HAVING count(s.id) > 0"), {"s": siren}).mappings().all()
     return {
         "siren": siren, "denomination": denom,
         "n_operations": len(ops), "n_logements": sum(o["nb_logements"] for o in ops),
+        # R29 — périmètre du compte (source unique de la phrase affichée).
+        "perimetre_note": ("permis ≥ 1 logement sur les parcelles que la société possède encore "
+                           "(fichier DGFiP) — les opérations livrées puis revendues sortent de ce compte"),
+        "petitionnaire": {"n_permis": int(petit["n"] or 0),
+                          "n_logements": int(petit["lgt"] or 0),
+                          "note": "permis Sitadel déposés au nom de la société (2013+), toutes destinations"},
+        "filiales_identifiees": [{"siren": f["siren"], "nom": f["nom"], "n_permis": int(f["n"]),
+                                  "n_logements": int(f["lgt"] or 0)} for f in filles],
         "frise": frise, "operations": ops_nommees,
         "programmes_publies": non_rattaches,   # « publiés sur leur site » (non rattachés à une opération)
         # renvoi vers Scan patrimoine (pas de duplication : le détail parcellaire vit là-bas).

@@ -18,7 +18,7 @@ const fmt = fmtInt
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+    <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
       {children}
     </div>
   )
@@ -64,8 +64,12 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
   return (
     // §1a — un seul conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
-      <Banner>Recalcul <b>à blanc</b> — rien n'est persisté. SDP estimée par <b>analogie</b> aux
-        parcelles U de la commune (méthode affichée). Le vrai recalcul règlementaire = prochain cycle.</Banner>
+      {/* RETOURS-13 R25 — l'explication passe en accordéon « Attention » replié (demande Vic). */}
+      <details data-m15-attention className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[10.5px] leading-relaxed text-txt-mut">
+        <summary className="cursor-pointer list-none py-0.5 text-[11px] font-medium text-txt marker:hidden">Attention ▾</summary>
+        <p className="mt-1">Recalcul <b>à blanc</b> — rien n'est persisté. SDP estimée par <b>analogie</b> aux
+        parcelles U de la commune (méthode affichée). Le vrai recalcul règlementaire = prochain cycle.</p>
+      </details>
       <div className="flex flex-wrap gap-1.5">
         {(zones.data ?? []).map((z) => (
           <button key={z.zone} onClick={() => setZone(z.zone)}

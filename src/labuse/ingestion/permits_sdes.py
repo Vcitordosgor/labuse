@@ -208,7 +208,19 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
                    "destination": rec.get("DESTINATION_PRINCIPALE"),
                    "daact": rec.get("DATE_REELLE_DAACT") or None,
                    "etat": rec.get(df["etat"]),
-                   "famille": key}
+                   "famille": key,
+                   "insee": insee}
+            # RETOURS-13 R30 — l'ADRESSE DU TERRAIN (colonnes ADR_* du flux) voyage dans raw :
+            # c'est le REPLI de géolocalisation quand la parcelle du permis a DISPARU du cadastre
+            # (division/remembrement — cas du PC hôtel 97441816A0077, parcelle BC0328 divisée :
+            # 10 799 permis sur 50 541 étaient sans geom, invisibles de la carte et des fiches).
+            adr_num = (rec.get("ADR_NUM_TER") or "").strip()
+            adr_voie = (rec.get("ADR_LIBVOIE_TER") or "").strip()
+            adr_lieudit = (rec.get("ADR_LIEUDIT_TER") or "").strip()
+            if adr_num or adr_voie or adr_lieudit:
+                raw["adr_num"] = adr_num or None
+                raw["adr_voie"] = adr_voie or None
+                raw["adr_lieudit"] = adr_lieudit or None
             denom, siren, siret = (rec.get("DENOM_DEM") or "").strip(), \
                 (rec.get("SIREN_DEM") or "").strip(), (rec.get("SIRET_DEM") or "").strip()
             if denom or siret or siren:   # personnes morales seulement (PP anonymisées → vides)
@@ -287,6 +299,111 @@ def geocode_missing(session: Session, log=print, cap_pairs: int = 400) -> dict:
     return {"avant": int(before), "ajoutes": n, "apres": int(after), "paires": len(pairs)}
 
 
+def geocode_par_adresse(session: Session, log=print) -> dict:
+    """RETOURS-13 R30 — REPLI ADRESSE → PARCELLE pour les permis SANS geom dont la parcelle a
+    disparu du cadastre (division/remembrement : ni `parcels`, ni l'API Carto ne la connaissent —
+    seul le repli adresse reste). Appariement PRUDENT sur la BAN interne (`adresses`) :
+    numéro + voie (insensible casse/accents) + commune EXACTS — jamais un « au plus proche »
+    (faux positif = péché cardinal). Le permis géolocalisé par adresse est MARQUÉ
+    (raw.geoloc = 'adresse') : la fiche peut dire que la position est celle de l'adresse."""
+    session.execute(text("CREATE EXTENSION IF NOT EXISTS unaccent"))
+    n = session.execute(text(
+        """UPDATE sitadel_permits s
+           SET geom = a.geom,
+               raw = s.raw || jsonb_build_object(
+                 'geoloc', 'adresse (BAN interne — parcelle du permis absente du cadastre courant)')
+           FROM adresses a
+           WHERE s.geom IS NULL
+             AND s.raw->>'adr_voie' IS NOT NULL AND s.raw->>'adr_num' IS NOT NULL
+             AND a.insee = s.raw->>'insee'
+             AND lower(unaccent(a.voie)) = lower(unaccent(s.raw->>'adr_voie'))
+             AND a.numero = s.raw->>'adr_num'
+             AND a.geom IS NOT NULL""")).rowcount
+    # 2e passe — ORTHOGRAPHE APPROCHÉE (le formulaire Cerfa écrit « ROLLAND GARROS », la BAN
+    # « Roland Garros ») : similarité trigram ≥ 0,8, numéro + commune toujours EXACTS, et
+    # UNIQUEMENT si UNE SEULE voie candidate dépasse le seuil (ambiguïté → on ne rattache pas).
+    session.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+    n2 = session.execute(text(
+        """WITH brut AS (
+             SELECT s.id AS sid, a.geom, lower(unaccent(a.voie)) AS voie_n,
+                    similarity(lower(unaccent(a.voie)), lower(unaccent(s.raw->>'adr_voie'))) AS sim
+             FROM sitadel_permits s
+             JOIN adresses a ON a.insee = s.raw->>'insee' AND a.numero = s.raw->>'adr_num'
+             WHERE s.geom IS NULL AND s.raw->>'adr_voie' IS NOT NULL AND s.raw->>'adr_num' IS NOT NULL
+               AND a.geom IS NOT NULL
+               AND similarity(lower(unaccent(a.voie)), lower(unaccent(s.raw->>'adr_voie'))) >= 0.8),
+           uniq AS (
+             SELECT sid FROM brut GROUP BY sid HAVING count(DISTINCT voie_n) = 1),
+           cand AS (
+             SELECT b.sid, b.geom,
+                    row_number() OVER (PARTITION BY b.sid ORDER BY b.sim DESC) AS rn
+             FROM brut b JOIN uniq u USING (sid))
+           UPDATE sitadel_permits s
+           SET geom = c.geom,
+               raw = s.raw || jsonb_build_object(
+                 'geoloc', 'adresse (BAN interne, orthographe approchée — parcelle absente du cadastre courant)')
+           FROM cand c
+           WHERE s.id = c.sid AND c.rn = 1""")).rowcount
+    n += int(n2)
+    # 3e passe — NUMÉRO ABSENT DE LA BAN (trous de numérotation : « 50 av. Roland Garros » à
+    # Sainte-Marie, la BAN saute de 20 à 62 — cas du PC hôtel 97441816A0077) : INTERPOLATION
+    # linéaire entre les deux numéros ENCADRANTS de la même voie (voie appariée en orthographe
+    # approchée sim ≥ 0,8, écart entre bornes ≤ 1 km). Position APPROXIMATIVE, marquée telle
+    # quelle — un permis localisé « quelque part sur la bonne voie » vaut mieux qu'un permis
+    # invisible, tant que la nature de la position est DITE.
+    n3 = session.execute(text(
+        """WITH cibles AS (
+             SELECT s.id AS sid, s.raw->>'insee' AS insee,
+                    lower(unaccent(s.raw->>'adr_voie')) AS voie_cible,
+                    (s.raw->>'adr_num')::int AS num
+             FROM sitadel_permits s
+             WHERE s.geom IS NULL AND s.raw->>'adr_voie' IS NOT NULL
+               AND s.raw->>'adr_num' ~ '^[0-9]+$'),
+           bornes AS (
+             SELECT c.sid, c.num,
+                    (SELECT a.geom FROM adresses a
+                      WHERE a.insee = c.insee AND a.geom IS NOT NULL AND a.numero ~ '^[0-9]+$'
+                        AND similarity(lower(unaccent(a.voie)), c.voie_cible) >= 0.8
+                        AND a.numero::int < c.num
+                      ORDER BY a.numero::int DESC LIMIT 1) AS g_bas,
+                    (SELECT a.numero::int FROM adresses a
+                      WHERE a.insee = c.insee AND a.geom IS NOT NULL AND a.numero ~ '^[0-9]+$'
+                        AND similarity(lower(unaccent(a.voie)), c.voie_cible) >= 0.8
+                        AND a.numero::int < c.num
+                      ORDER BY a.numero::int DESC LIMIT 1) AS n_bas,
+                    (SELECT a.geom FROM adresses a
+                      WHERE a.insee = c.insee AND a.geom IS NOT NULL AND a.numero ~ '^[0-9]+$'
+                        AND similarity(lower(unaccent(a.voie)), c.voie_cible) >= 0.8
+                        AND a.numero::int > c.num
+                      ORDER BY a.numero::int ASC LIMIT 1) AS g_haut,
+                    (SELECT a.numero::int FROM adresses a
+                      WHERE a.insee = c.insee AND a.geom IS NOT NULL AND a.numero ~ '^[0-9]+$'
+                        AND similarity(lower(unaccent(a.voie)), c.voie_cible) >= 0.8
+                        AND a.numero::int > c.num
+                      ORDER BY a.numero::int ASC LIMIT 1) AS n_haut
+             FROM cibles c),
+           interp AS (
+             SELECT sid,
+                    ST_LineInterpolatePoint(ST_MakeLine(g_bas, g_haut),
+                      (num - n_bas)::float / NULLIF(n_haut - n_bas, 0)) AS g
+             FROM bornes
+             WHERE g_bas IS NOT NULL AND g_haut IS NOT NULL AND n_haut > n_bas
+               AND ST_Distance(g_bas::geography, g_haut::geography) <= 1000)
+           UPDATE sitadel_permits s
+           SET geom = i.g,
+               raw = s.raw || jsonb_build_object(
+                 'geoloc', 'adresse interpolée entre numéros voisins de la voie (position approximative)')
+           FROM interp i WHERE s.id = i.sid AND i.g IS NOT NULL""")).rowcount
+    n += int(n3)
+    session.flush()
+    reste = session.execute(text(
+        "SELECT count(*) FROM sitadel_permits WHERE geom IS NULL")).scalar()
+    log(f"  géoloc par adresse : {n} permis rattachés (dont {n2} en orthographe approchée, "
+        f"{n3} interpolés entre numéros) · {reste} restent sans geom "
+        "(ni parcelle courante, ni adresse appariable — état de fait de la source, dit)")
+    return {"rattaches_adresse": int(n), "restants_sans_geom": int(reste)}
+
+
 def refresh_since(session: Session) -> str:
     """Borne du delta : max(date) en base − 3 mois (recouvrement états/DAACT tardifs)."""
     mx = session.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
@@ -310,6 +427,9 @@ def run(refresh: bool = False, geocode: bool = True, log=print) -> dict:
             stats = ingest_sdes(s, since=since, log=log)
             if geocode:
                 stats["geocode"] = geocode_missing(s, log=log)
+                # R30 — le repli ADRESSE passe APRÈS le repli cadastral (une parcelle disparue
+                # n'est ni dans parcels ni à l'API Carto ; seule l'adresse du permis la localise).
+                stats["geocode_adresse"] = geocode_par_adresse(s, log=log)
             s.execute(text(
                 "UPDATE ingestion_runs SET finished_at = now(), status = 'ok', "
                 "parcels_count = :n WHERE id = :id"), {"n": stats["upserts"], "id": run_id})

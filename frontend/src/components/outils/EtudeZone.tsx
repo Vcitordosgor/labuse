@@ -250,8 +250,10 @@ export function EtudeZone() {
           d'ACTIVITÉ → porte chalandise seulement. La zone particulière ne suppose aucune activité. */}
       {porteZone === 'chalandise' && <DestinationSelect dataAttr="etude-zone" value={sousDest} onChange={setSousDest} />}
 
+      {/* RETOURS-13 R28 — bouton d'ACTION PRINCIPALE : VERT OPAQUE, texte sombre (comme les autres
+          boutons principaux) — plus le fond terne bg-mint/20 qui le faisait passer pour inactif. */}
       <button onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}
-        className={`rounded-lg px-3 py-2 text-[12px] font-medium ${pretA && !mut.isPending ? 'bg-mint/20 text-txt-hi hover:bg-mint/30' : 'bg-surface-2 text-txt-dim'}`}>
+        className={`rounded-lg px-3 py-2 text-[12px] font-medium transition-[filter] duration-quick ${pretA && !mut.isPending ? 'bg-mint text-bg hover:brightness-110' : 'bg-surface-2 text-txt-dim'}`}>
         {mut.isPending ? 'Calcul de la zone…' : 'Lire la zone'}
       </button>
 

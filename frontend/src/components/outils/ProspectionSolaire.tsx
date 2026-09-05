@@ -341,9 +341,7 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
         <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} />
         <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
       </div>
-      {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. La nature
-          simple/double pente n'est PAS dérivable des données en base (aucun n° de pans / type de toiture) :
-          on ne l'invente pas — on montre la photo pour que le démarcheur la lise, avec l'orientation. */}
+      {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. */}
       {f.lon != null && f.lat != null && (
         <div data-solaire-photo className="mt-2">
           <div className="relative overflow-hidden rounded-lg border border-line-2">
@@ -353,7 +351,7 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
           </div>
           <p className="mt-1 text-[9px] leading-snug text-txt-dim">
             Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${f.azimut}°, Estimé)` : ' (orientation non estimée)'}.
-            La nature de la toiture (simple / double pente) n'est pas dérivable des données en base : à lire sur la photo.
+            La lecture LiDAR de la toiture (ci-dessus) se vérifie sur cette photo.
             « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
           </p>
         </div>

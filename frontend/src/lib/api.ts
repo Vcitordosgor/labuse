@@ -362,7 +362,7 @@ export interface PluCommune {
 export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
   j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
 export const pluAnnuaireCommunes = () =>
-  j<{ n_communes: number; servables: number; n_revision: number; n_rnu: number; n_non_ingere: number
+  j<{ n_communes: number; servables: number; n_plu_vigueur: number; non_servis: string[]; n_revision: number; n_rnu: number; n_non_ingere: number
       // RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures PLU en cours (source unique veille_plu).
       n_procedures: number; procedures_par_etat: Record<string, number>; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
 
@@ -512,6 +512,10 @@ export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; d
 export interface ProgrammePublie { id: number; nom: string; commune: string | null; url: string | null; annee: number | null }
 export interface PromoteurFrise {
   siren: string; denomination: string | null; n_operations: number; n_logements: number
+  // RETOURS-13 R29 — le chiffre dit ce qu'il compte + activité de pétitionnaire (Sitadel 2013+).
+  perimetre_note: string
+  petitionnaire: { n_permis: number; n_logements: number; note: string }
+  filiales_identifiees: { siren: string; nom: string | null; n_permis: number; n_logements: number }[]
   frise: { annee: number; n_operations: number; n_logements: number }[]
   operations: { annee: number | null; commune: string; nb_logements: number; libelle: string; programme?: ProgrammeLie | null }[]
   programmes_publies: ProgrammePublie[]
@@ -535,7 +539,7 @@ export const getPromoteurFrise = (siren: string) => j<PromoteurFrise>(`/outils/v
 export interface PromoteurAcquisitions { siren: string; denomination: string | null; n_parcelles: number; par_commune: { commune: string; n: number }[]; note: string }
 export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitions>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/acquisitions`)
 
-export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null }
+export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null }
 export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN

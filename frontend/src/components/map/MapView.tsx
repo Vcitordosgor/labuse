@@ -1740,18 +1740,25 @@ export function MapView() {
     if (!cible) return
     const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === cible)
     let cancelled = false
-    const centroidReady = (c: [number, number] | null) => {
+    // RETOURS-13 R27/R32 — ZOOM FRANC (Vic : « le zoom est un peu timide ») : la parcelle doit se
+    // lire COMME LA PARCELLE, pas comme un point dans un quartier. Cible selon la SURFACE : grande
+    // parcelle (> 1 ha) → 16,5 ; moyenne (> 2 500 m²) → 17 ; standard → 18. Primitive PARTAGÉE
+    // (Étudier un bien, Permis, œil ambre des Projets…) — le réglage vaut pour tous.
+    const zoomCible = (surface: number | null | undefined): number =>
+      surface != null && surface > 10_000 ? 16.5 : surface != null && surface > 2_500 ? 17 : 18
+    const centroidReady = (c: [number, number] | null, surface?: number | null) => {
       if (!c || cancelled) return
-      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), 16), duration: 800 })
+      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), duration: 800 })
     }
-    if (feat) centroidReady(roughCentroid(feat.geometry))
+    if (feat) centroidReady(roughCentroid(feat.geometry), (feat.properties as { surface_m2?: number }).surface_m2)
     else {
       // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API.
       // CONTRAT (Vic, 07/07) : un clic dans la liste = je VOIS la parcelle pulser, où qu'elle
       // soit — le champ est `coords` [lon, lat] (le fallback lat/lon muet était le bug).
       getFiche(cible).then((f) => {
         const c = (f as unknown as { coords?: [number, number] }).coords
-        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]])
+        const s = (f as unknown as { surface_m2?: number }).surface_m2
+        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]], s)
       }).catch(() => undefined)
     }
     const pingId = geo.data && feat ? 'parcels-ping' : 'ile-ping'

@@ -17,7 +17,7 @@ const jfetch = async <T,>(url: string): Promise<T> => {
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+    <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
       {children}
     </div>
   )

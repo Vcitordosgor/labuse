@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   getTaxeAmenagement, getTaxeConfig, getTaxePrefill,
@@ -77,6 +77,15 @@ export function TaxeAmenagement() {
     queryKey: ['taxe-prefill', prefillIdu], queryFn: () => getTaxePrefill(prefillIdu!),
     enabled: !!prefillIdu, retry: false,
   })
+  // RETOURS-13 R26 — LABUSE pré-remplit la surface taxable avec ce qu'il SAIT : la SDP
+  // CONSTRUCTIBLE AU GABARIT (résiduel du run servi). Étiquetée, MODIFIABLE — la surface du
+  // projet reste celle du client s'il la connaît ; toute retouche efface l'étiquette.
+  const [sdpPrefill, setSdpPrefill] = useState(false)
+  useEffect(() => {
+    const sdp = prefill.data?.sdp_gabarit_m2
+    if (sdp != null && surface == null) { setSurface(sdp); setSdpPrefill(true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefill.data])
 
   // Le taux départemental se pré-remplit avec le PLAFOND LÉGAL servi (part_departementale_defaut) dès
   // que la config arrive — étiqueté « à confirmer », car part_departementale_confirmee_974 est false.
@@ -115,7 +124,7 @@ export function TaxeAmenagement() {
   return (
     <div data-taxe-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* EN-TÊTE — intro (RETOURS-11 O4a, texte imposé) + lien source datée */}
-      <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+      <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         <div>
           Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs 2026 (arrêté
           officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire
@@ -147,6 +156,9 @@ export function TaxeAmenagement() {
               {prefill.data.surface_terrain_m2 != null && (
                 <span className="text-txt-dim">terrain : {fmtM2(prefill.data.surface_terrain_m2)} <span className="text-[9px]">(référence)</span></span>
               )}
+              {prefill.data.sdp_gabarit_m2 != null && (
+                <span className="text-txt-dim">SDP au gabarit : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
+              )}
               <button onClick={() => setPrefillIdu(null)} className="ml-auto text-[10px] text-mint hover:underline">retirer</button>
             </div>
           )}
@@ -155,9 +167,10 @@ export function TaxeAmenagement() {
 
       {/* SAISIE */}
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface} onChange={setSurface}
+        <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
+          onChange={(v) => { setSurface(v); setSdpPrefill(false) }}
           placeholder="ex. 120"
-          hint={`Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
+          hint={`${sdpPrefill ? 'Pré-rempli par LABUSE — SDP au gabarit, modifiable (la surface taxable est celle de VOTRE projet). ' : ''}Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
             c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
 
         <div className="flex flex-col gap-1.5">

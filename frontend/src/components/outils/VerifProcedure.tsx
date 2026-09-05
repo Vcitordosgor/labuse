@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { verifProcedure, type VerifProcedure as VP } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { ParcelInput } from '../ParcelInput'
 
 // M41 Phase 2.6 — OUTIL « VÉRIF PROCÉDURE » : un IDU → la commune a-t-elle une procédure PLU en
 // cours ? L'outil LIT le radar (point de calcul unique, mêmes libellés que la fiche) — il ne calcule
@@ -9,31 +10,24 @@ import { useApp } from '../../store/useApp'
 // M60 P1d — PORTE depuis la fiche : le champ IDU s'AMORCE de selectedIdu (préservé par setModule).
 export function VerifProcedure() {
   const selectedIdu = useApp((s) => s.selectedIdu)
-  const [idu, setIdu] = useState(selectedIdu ?? '')
-  useEffect(() => { if (selectedIdu) setIdu(selectedIdu) }, [selectedIdu])
-  const m = useMutation({ mutationFn: () => verifProcedure(idu.trim()) })
+  const m = useMutation({ mutationFn: (i: string) => verifProcedure(i.trim()) })
+  const lancer = (i: string) => { if (i.trim().length >= 10) m.mutate(i) }
+  useEffect(() => { if (selectedIdu) lancer(selectedIdu) }, [selectedIdu])   // porte fiche → amorce + run
   const d: VP | undefined = m.data
-  const run = () => { if (idu.trim().length >= 10) m.mutate() }
   const cons = d?.consequences
 
   return (
     <div data-verif-procedure className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <p className="text-[10.5px] leading-snug text-txt-mut">
-          Un identifiant de parcelle (IDU) → la commune est-elle en procédure PLU, et qu’en découle-t-il
+          Une parcelle → la commune est-elle en procédure PLU, et qu’en découle-t-il
           pour la parcelle. Radar Sudocuh + registre curaté ; jamais l’issue de la procédure.
         </p>
-        <div className="flex gap-2">
-          <input
-            data-verif-idu value={idu} onChange={(e) => setIdu(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') run() }}
-            placeholder="IDU (ex. 97413000CJ0096)"
-            className="flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt" />
-          <button onClick={run} disabled={idu.trim().length < 10 || m.isPending}
-            className="rounded-md border border-mint/50 bg-mint/15 px-3 py-1.5 text-[12px] font-medium text-mint disabled:opacity-40">
-            {m.isPending ? '…' : 'Vérifier'}
-          </button>
-        </div>
+        {/* RETOURS-13 R24 — la barre passe sur le MOTEUR UNIQUE (ParcelInput) : IDU 14, référence
+            cadastrale courte (« BZ1065 », désambiguïsation par commune), adresse. Le champ maison qui
+            n'acceptait que l'IDU brut est retiré (promesse T1 tenue sur TOUTES les barres). */}
+        <ParcelInput dataAttr="verif-idu" withCarte={false} onPick={(i) => lancer(i)}
+          placeholder="IDU, référence (ex. BZ1065) ou adresse" />
       </div>
 
       {m.isError && <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">Parcelle inconnue ou erreur.</div>}

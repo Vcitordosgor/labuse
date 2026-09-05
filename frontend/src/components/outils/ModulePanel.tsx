@@ -48,7 +48,7 @@ import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+    <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
       {children}
     </div>
   )
@@ -334,10 +334,14 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
               <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
             </div>
             <F label="Statut" value={d['statut']} />
+            {/* RETOURS-13 R30 — la DESTINATION est dite (hôtels, bureaux, commerce…) ; une position
+                estimée par l'adresse (parcelle du permis disparue du cadastre) est signalée. */}
+            <F label="Destination" value={d['destination_libelle']} />
             <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
             {d['porteur_siren'] && <F label="SIREN" value={<Siren value={String(d['porteur_siren'])} className="font-mono text-txt" />} />}
             <F label="Nombre de lots" value={d['nb_lots']} />
             <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
+            {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
             <F label="Date de dépôt" value={d['date_depot']} />
             <F label="Date d'autorisation" value={d['date_autorisation']} />
             <F label="Achèvement (DAACT)" value={d['date_achevement']} />
@@ -1157,7 +1161,7 @@ export function M09() {
             // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base, identique côté admin)
             // et renvoie vers le suivi. AUCUN état interne (imprimé/posté) côté client : décision Vic —
             // moins de surface, moins de bugs. Le suivi vit dans « Projets → Mes courriers ».
-            <div data-courrier-confirm className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[11px] leading-snug text-txt-mut">
+            <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
               <b className="text-mint">✓ Demande n° {demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
               impression, mise sous pli, affranchissement et suivi compris.
               <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>

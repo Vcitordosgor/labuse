@@ -81,7 +81,7 @@ export function EtudierBien() {
 
   return (
     <div data-etudier-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+      <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         {/* RETOURS-12 T7 — accueil DESCRIPTIF, neutre, utile à tous les métiers (agence, notaire,
             architecte, particulier), pas seulement à un promoteur : ce qu'est la parcelle et ce qu'elle
             porte. Le raisonnement d'opération (bilan, charge) est un second niveau, plus bas. */}
