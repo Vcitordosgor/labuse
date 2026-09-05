@@ -3803,3 +3803,52 @@ def golden_candidat_cmd() -> None:
     servi : sortie informative seule (la bascule reste `golden promote`)."""
     from .golden_ops import candidat
     typer.echo(candidat())
+
+
+# ═══════════════════ CIRCUIT-1 (lot 6) — les AGENTS de source, à la demande ═══════════════════
+agent_app = typer.Typer(add_completion=False,
+                        help="Agents de veille amont (CIRCUIT-1) : constatent, ne téléchargent jamais.")
+app.add_typer(agent_app, name="agent")
+
+
+@agent_app.command("source")
+def agent_source_cmd(
+    source_id: int = typer.Argument(None, help="id data_sources d'UN réservoir."),
+    ids: str = typer.Option(None, "--ids", help="plusieurs ids, séparés par des virgules."),
+    tous: bool = typer.Option(False, "--tous", help="tous les réservoirs affichés non en_direct."),
+    par: str = typer.Option("cli", help="qui lance (email admin) — entre au journal."),
+) -> None:
+    """UN appel Claude par réservoir (surface agent_source, web_search natif, JSON strict) :
+    verdict a_jour|nouvelle|introuvable|vide AVEC preuve datée (sinon forcé introuvable — 6.2).
+    5 agents en parallèle au plus ; coût au ledger ia_log ; rapport en source_agent_rapports."""
+    from .agent_source import lancer_agents
+    from .db import session_scope
+
+    if tous:
+        with session_scope() as s:
+            from .sources_catalog import WHERE_AFFICHEES, masquees_param
+            cibles = [i for (i,) in s.execute(text(
+                f"SELECT id FROM data_sources WHERE {WHERE_AFFICHEES}"
+                " AND COALESCE(mode_remplissage,'') NOT IN ('en_direct','absente') ORDER BY id"),
+                {"masquees": masquees_param()}).all()]
+    elif ids:
+        cibles = [int(x) for x in ids.split(",") if x.strip()]
+    elif source_id is not None:
+        cibles = [source_id]
+    else:
+        typer.echo("✗ donner un id, --ids a,b,c ou --tous")
+        raise typer.Exit(1)
+    typer.echo(f"→ {len(cibles)} agent(s), 5 en parallèle au plus…")
+    rapports = lancer_agents(session_scope, cibles, par=par)
+    for r in rapports:
+        if not r.get("ok"):
+            typer.echo(f"  ✗ {r.get('motif')}")
+            continue
+        ligne = f"  {r['verdict']:12} {r['source']}"
+        if r.get("version_trouvee"):
+            ligne += f" → {r['version_trouvee']}"
+        if r.get("raison_forcage"):
+            ligne += f"  ({r['raison_forcage']})"
+        typer.echo(ligne)
+    n_nouv = sum(1 for r in rapports if r.get("verdict") == "nouvelle")
+    typer.echo(f"✓ terminé — {n_nouv} nouvelle(s) version(s) (la vanne apparaît sur la page Circuit).")
