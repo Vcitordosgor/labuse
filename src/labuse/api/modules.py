@@ -814,6 +814,16 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
     mil = db.execute(text("SELECT max(source_millesime) AS mil FROM parcel_solar "
                           "WHERE prod_spec_kwh_kwc IS NOT NULL")).scalar()
     d["millesime"] = mil or "PVGIS SARAH3"
+    # RETOURS-13 R31 — NATURE DE LA TOITURE (simple / double pente / croupe / plat) dérivée du
+    # LiDAR HD IGN (MNH 50 cm, calcul à la demande + cache — voir solaire_toiture.py, prototype
+    # contrôlé à l'œil : 13/16 jugeables corrects, 81 %). Statut Dérivé, incertitude DITE dans la
+    # méthode. Un échec WMS / pas de bâtiment → champ null, jamais un 500 ni une invention (O7).
+    try:
+        from ..solaire_toiture import analyse_toiture
+        d["toiture"] = analyse_toiture(db, idu)
+    except Exception:  # noqa: BLE001 — dégradation propre, l'absence est dite côté front
+        logging.getLogger("labuse").exception("solaire · toiture LiDAR indisponible (erreur technique)")
+        d["toiture"] = None
     return d
 
 

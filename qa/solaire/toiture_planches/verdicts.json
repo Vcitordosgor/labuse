@@ -1,0 +1,213 @@
+[
+ {
+  "id": 64862,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.73,
+  "pics": [
+   157
+  ],
+  "pente_mediane": 27.8
+ },
+ {
+  "id": 64863,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.79,
+  "pics": [
+   135,
+   315
+  ],
+  "pente_mediane": 25.1
+ },
+ {
+  "id": 64864,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.8,
+  "pics": [
+   157
+  ],
+  "pente_mediane": 19.1
+ },
+ {
+  "id": 64865,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.8,
+  "pics": [
+   202
+  ],
+  "pente_mediane": 26.5
+ },
+ {
+  "id": 64866,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.74,
+  "pics": [
+   135
+  ],
+  "pente_mediane": 23.9
+ },
+ {
+  "id": 64867,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.74,
+  "pics": [
+   292
+  ],
+  "pente_mediane": 11.3
+ },
+ {
+  "id": 64869,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.68,
+  "pics": [
+   315,
+   135
+  ],
+  "pente_mediane": 18.0
+ },
+ {
+  "id": 64870,
+  "commune": "Saint-Paul",
+  "verdict": "croupe_complexe",
+  "part_pentue": 0.85,
+  "pics": [
+   247,
+   135
+  ],
+  "pente_mediane": 13.3
+ },
+ {
+  "id": 64871,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.76,
+  "pics": [
+   180
+  ],
+  "pente_mediane": 19.2
+ },
+ {
+  "id": 64872,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.96,
+  "pics": [
+   135,
+   292
+  ],
+  "pente_mediane": 28.9
+ },
+ {
+  "id": 64873,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.74,
+  "pics": [
+   112
+  ],
+  "pente_mediane": 27.7
+ },
+ {
+  "id": 64874,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.89,
+  "pics": [
+   292,
+   135
+  ],
+  "pente_mediane": 19.2
+ },
+ {
+  "id": 64876,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.64,
+  "pics": [
+   112
+  ],
+  "pente_mediane": 14.4
+ },
+ {
+  "id": 64877,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.79,
+  "pics": [
+   112,
+   292
+  ],
+  "pente_mediane": 18.2
+ },
+ {
+  "id": 64878,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.91,
+  "pics": [
+   45,
+   180
+  ],
+  "pente_mediane": 25.4
+ },
+ {
+  "id": 64880,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.79,
+  "pics": [
+   270,
+   135
+  ],
+  "pente_mediane": 29.8
+ },
+ {
+  "id": 64881,
+  "commune": "Saint-Paul",
+  "verdict": "croupe_complexe",
+  "part_pentue": 0.92,
+  "pics": [
+   135,
+   225
+  ],
+  "pente_mediane": 40.5
+ },
+ {
+  "id": 64882,
+  "commune": "Saint-Paul",
+  "verdict": "monopente",
+  "part_pentue": 0.83,
+  "pics": [
+   112
+  ],
+  "pente_mediane": 15.5
+ },
+ {
+  "id": 64883,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.95,
+  "pics": [
+   112,
+   292
+  ],
+  "pente_mediane": 33.5
+ },
+ {
+  "id": 64884,
+  "commune": "Saint-Paul",
+  "verdict": "double_pente",
+  "part_pentue": 0.87,
+  "pics": [
+   292,
+   135
+  ],
+  "pente_mediane": 19.7
+ }
+]

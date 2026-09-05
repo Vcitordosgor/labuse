@@ -341,6 +341,19 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
         <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} />
         <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
       </div>
+      {/* RETOURS-13 R31 — NATURE DE LA TOITURE dérivée du LiDAR HD IGN (MNH 50 cm, méthode plans
+          de toiture — prototype contrôlé à l'œil, 81 %) : simple / double pente / croupe / plat,
+          statut Dérivé, incertitude DITE. Remplace le « non dérivable » d'O7 : la donnée existe. */}
+      {f.toiture && (
+        <div data-solaire-toiture className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
+          <p className="text-[11px] text-txt">
+            Toiture : <b className="text-txt-hi">{f.toiture.libelle}</b>
+            {f.toiture.pente_mediane_deg != null && <> · pente médiane du toit <b className="tnum">{String(f.toiture.pente_mediane_deg).replace('.', ',')}°</b></>}
+            <span className="ml-1 text-[9.5px] text-txt-dim">({f.toiture.statut} — LiDAR HD IGN)</span>
+          </p>
+          <p className="mt-0.5 text-[9px] leading-snug text-txt-dim">{f.toiture.methode}</p>
+        </div>
+      )}
       {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. */}
       {f.lon != null && f.lat != null && (
         <div data-solaire-photo className="mt-2">

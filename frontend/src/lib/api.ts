@@ -788,6 +788,9 @@ export interface SolaireFiche {
   lon?: number | null; lat?: number | null   // RETOURS-12 O7 — centroïde parcelle (photo ortho du toit)
   toit_m2?: number | null; piscine?: boolean; piscine_m2?: number | null; abf?: boolean
   ombrage?: boolean; proba_occ?: number | null; classement?: string; millesime?: string
+  // RETOURS-13 R31 — nature de la toiture (Dérivé, LiDAR HD IGN — incertitude dite dans methode)
+  toiture?: { verdict: string; libelle: string; pente_mediane_deg: number | null
+              pans_orientation_deg: number[]; statut: string; methode: string } | null
 }
 export const getSolaireFiche = (idu: string) =>
   j<SolaireFiche>(`/modules/prospection-solaire/parcelle/${idu}`)
