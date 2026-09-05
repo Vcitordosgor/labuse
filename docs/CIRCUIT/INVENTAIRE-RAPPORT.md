@@ -289,3 +289,34 @@ Les 9 outils SQL passent chacun par le **point de calcul unique** du robinet éq
 - Compteurs ci-dessus (scripts). Ligne mandatée Saint-Paul : présente avec les deux valeurs et la cause.
 - `DOUTE` : 1 dans chiffres.csv (entrées loyers) ; écran exact du constat Vic ; ampleur prod de l'eau ancienne DPE ; garde copilote-general.
 - A bloqué : la mesure « deux chemins exécutés » n'était possible en local que pour zonage et n_sources (les autres candidates du groupby convergent en réalité vers la même fonction — notées candidates, pas mesurées comme fuites).
+
+---
+
+## Lot 6 — Le graphe
+
+Livrables : `docs/CIRCUIT/inventaire/circuit.json` construit PAR SCRIPT depuis les CSV des lots 1/2/4/5 (`scripts/inventaire/construit_circuit.py`) et validé par `scripts/inventaire/valide_circuit.py` : **OK — 80 réservoirs (79 + pseudo `labuse_interne` pour les tables internes event_log/comptes/projets), 21 moteurs, 88 chiffres, 122 robinets ; 124 arêtes réservoir→chiffre + 139 chiffre→robinet ; 4 fuites ; compteurs = tailles des CSV.**
+
+### Q6.1 — Impact par réservoir (« combien de produits récupèrent cette source »)
+
+Top de la table (sortie du script, tri par robinets touchés) :
+
+| réservoir | chiffres | robinets touchés |
+|---|---|---|
+| dvf | 13 | **19** (fiches parcelle/commune, comparateur, baromètre, Copilote, PDF Flash/banquier/argumentaire, couches VEFA/verdict…) |
+| cadastre_api_carto | 12 | 14 |
+| sitadel | 10 | 14 |
+| gpu_plu_api_carto | 13 | 13 |
+| cosia | 7 | 12 |
+| bd_topo | 5 | 11 |
+| filosofi_carreaux | 4 | 8 |
+| radar_pige | 8 | 7 (dont les deux mails Brevo) |
+| dgfip_parcelles_pm | 3 | 5 |
+| sudocuh | 4 | 4 |
+
+Queue de table : 16 réservoirs ne touchent qu'1 à 3 robinets (trafic_rn, qpv_2024, plh_epci, gtfs_pan, rge_alti…). La liste complète, robinets nommés, est dans la sortie du script (et rejouable : `python3 scripts/inventaire/construit_circuit.py`). Lecture directe pour CIRCUIT-1 : **une injection DVF touche 19 robinets ; une injection GPU/PLU en touche 13, dont la fuite de dénominateur du zonage.**
+
+### Point d'étape Lot 6
+
+- Validation : PASS (script, aucun id orphelin, chaque chiffre a ≥ 1 réservoir et ≥ 1 robinet).
+- `DOUTE` : 0 nouveau.
+- A bloqué : rien.
