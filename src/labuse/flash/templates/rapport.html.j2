@@ -350,7 +350,9 @@
   <h2><span class="num">06</span>Dynamique locale — autorisations d'urbanisme</h2>
   {% if d.rien %}
   <p>Aucune autorisation d'urbanisme géolocalisée (Sitadel) dans un rayon de
-     {{ d.rayon_m }} m sur les {{ d.mois }} derniers mois.</p>
+     {{ d.rayon_m }} m sur les {{ d.mois }} derniers mois{% if d.couverture_pct is not none %}
+     — couverture géolocalisée Sitadel : {{ d.couverture_pct }} % des autorisations
+     (un zéro est un minimum, pas une absence prouvée){% endif %}.</p>
   {% else %}
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Autorisations ({{ d.rayon_m }} m · {{ d.mois }} mois)</div>
@@ -358,6 +360,10 @@
     <div class="cartouche"><div class="titre">Logements autorisés (total)</div>
       <div class="valeur">{{ d.total_logements }}</div></div>
   </div>
+  {% if d.couverture_pct is not none %}
+  <p class="note">Couverture géolocalisée Sitadel : {{ d.couverture_pct }} % des autorisations —
+     les compteurs ci-dessus sont des minima.</p>
+  {% endif %}
   {% if d.plus_gros %}
   <h3>Plus gros projets autorisés</h3>
   <table class="donnees">

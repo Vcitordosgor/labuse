@@ -73,6 +73,18 @@ profils:
     n_affiche: 12                # EXPORTS-1 (2.4) : le nombre affiché est un PARAMÈTRE du profil
     raison: "500 m/3 ans = même référence de marché que le dossier ; comparables individuels tracés."
 
+  # EXPORTS-1 lot 4 (4.1/4.2) — LE profil permis client : 500 m · 24 mois (la définition unique).
+  # `marche_service.permits` TRANSMET ces paramètres au moteur (l'audit A4 a mesuré que le profil
+  # annonçait 500 m·24 mois mais exécutait les défauts 300 m·5 ans). Le libellé des documents est
+  # GÉNÉRÉ d'ici — toute autre fenêtre (cascade 400 m·5 ans, voisinage 100 m·36 mois) porte la
+  # sienne dans son propre libellé.
+  flash_500m:
+    question: "Quelle dynamique d'autorisations d'urbanisme autour de la parcelle ?"
+    rayon_m: 500
+    fenetre_mois: 24
+    grandeur: "autorisations SITADEL géolocalisées dans le rayon"
+    raison: "définition client unique des permis à proximité (EXPORTS-1 4.2) : 500 m · 24 mois."
+
 # EXPORTS-1 lot 2 (2.1/2.3) — LE filtre de comparables (marche_service.filtre_ventes), une
 # implémentation paramétrée pour les trois chemins (fiche, flash, sector_price). Le seuil de
 # vraisemblance par type écarte les agrégats multi-lots (« appartement 750 m² ») tant que le

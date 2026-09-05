@@ -279,9 +279,21 @@ def permits(db: Session, idu: str, *, profil: str) -> dict | None:
     """Lecture des permis (SITADEL) d'une parcelle, par le point d'appel UNIQUE. `profil` = préset de
     paramètres nommé (provisoire, MANDAT_DVF). Délègue au calcul existant — aucun recalcul."""
     if profil == PERMITS_FLASH_500M:
+        # EXPORTS-1 (4.1) : les paramètres du profil sont TRANSMIS au moteur — l'audit A4 a mesuré
+        # que ce chemin exécutait les défauts (300 m · 5 ans) sous un profil nommé « 500 m · 24 mois ».
         from .ingestion.permits import nearby_permits
         pid = _parcel_id(db, idu)
-        return nearby_permits(db, pid) if pid else None
+        if not pid:
+            return None
+        meta = profil_meta(profil)
+        rayon = float(meta.get("rayon_m") or 500.0)
+        mois = int(meta.get("fenetre_mois") or 24)
+        out = nearby_permits(db, pid, radius_m=rayon, fenetre_mois=mois)
+        if out is not None:
+            # 4.2 : le libellé de définition voyage avec les chiffres (généré du profil, jamais en dur)
+            out["fenetre_mois"] = mois
+            out["libelle_definition"] = f"≤ {int(rayon)} m · {mois} mois"
+        return out
     if profil == PERMITS_FICHE_36M:
         from .ingestion.permits import depots_recents
         pid = _parcel_id(db, idu)

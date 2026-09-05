@@ -562,7 +562,14 @@ def _dynamique(db: Session, idu: str, avail: set[str]) -> dict | None:
         {"idu": idu, "mois": FENETRE_PERMIS_MOIS, "r": RAYON_PERMIS_M}).mappings().first()
     n = int(agg["n"]) if agg else 0
     if not n:
-        return {"n": 0, "rien": True, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS}
+        # EXPORTS-1 (4.3) : même à zéro, la couverture est dite — un « 0 permis » sur une
+        # couverture partielle est un minimum, pas une absence prouvée.
+        cov0 = db.execute(text(
+            "SELECT count(*) FILTER (WHERE geom IS NOT NULL) AS g, count(*) AS t "
+            "FROM sitadel_permits")).mappings().first()
+        return {"n": 0, "rien": True, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS,
+                "couverture_pct": (round(100 * int(cov0["g"]) / int(cov0["t"]))
+                                   if cov0 and int(cov0["t"] or 0) else None)}
     # P3-8 : seuls les 3 plus gros projets sont AFFICHÉS → LIMIT côté SQL (borne le payload en
     # secteur dense, où le rayon pouvait ramener des centaines de permis sans raison). Les compteurs
     # ci-dessus restent exacts ; « cohérent avec l'affichage » = on ne rapatrie que ce qui est montré.
@@ -578,8 +585,16 @@ def _dynamique(db: Session, idu: str, avail: set[str]) -> dict | None:
              AND NULLIF(sp.raw->>'nb_lgt', '')::int > 0
            ORDER BY nb_lgt DESC NULLS LAST LIMIT 3"""),
         {"idu": idu, "mois": FENETRE_PERMIS_MOIS, "r": RAYON_PERMIS_M}).mappings().all()
+    # EXPORTS-1 (4.3) : la COUVERTURE géolocalisée SITADEL voyage avec chaque compteur —
+    # un « 0 permis » sur une couverture partielle est un minimum, jamais un zéro sec.
+    cov = db.execute(text(
+        "SELECT count(*) FILTER (WHERE geom IS NOT NULL) AS g, count(*) AS t "
+        "FROM sitadel_permits")).mappings().first()
+    couverture_pct = (round(100 * int(cov["g"]) / int(cov["t"]))
+                      if cov and int(cov["t"] or 0) else None)
     return {"n": n, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS,
             "total_logements": int(agg["total_lgt"]),
+            "couverture_pct": couverture_pct,
             "plus_gros": [dict(r) for r in rows]}
 
 

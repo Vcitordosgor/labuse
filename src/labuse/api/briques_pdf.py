@@ -651,14 +651,18 @@ def comparables(out: dict) -> str:
                      + (f"<p class='note'>Écart neuf / ancien : {esc(comp.get('ecart_vefa_ancien_pct'))} %.</p>"
                         if comp.get("ecart_vefa_ancien_pct") is not None else ""))
     if perm and perm.get("items"):
-        # M128-C8 : devant un financeur, les permis voisins sont filtrés à ≤ 5 ans — un dépôt de
-        # 2014-2018 n'est plus un signal de dynamique. Le compte « dynamique » du bloc reste, lui,
-        # borné en amont (nearby_permits) ; ici on borne la LISTE affichée.
+        # EXPORTS-1 lot 4 (4.2/4.3/4.4) : la fenêtre AFFICHÉE = celle du profil (libellé GÉNÉRÉ,
+        # plus de « ≤ 5 ans » en dur pendant que le compteur mesurait autre chose) ; les permis
+        # montrés = les plus SIGNIFICATIFS (logements décroissants, puis récence), plus les 5 plus
+        # proches ; la couverture SITADEL est imprimée à côté du compteur.
         from datetime import date as _date, timedelta as _td
-        _cut = (_date.today() - _td(days=5 * 365)).isoformat()
+        _mois = int(perm.get("fenetre_mois") or 24)
+        _cut = (_date.today() - _td(days=_mois * 30)).isoformat()
         recents = [it for it in perm["items"] if (it.get("date") or "") >= _cut]
+        recents.sort(key=lambda it: ((it.get("nb_lgt") or 0), it.get("date") or ""), reverse=True)
         if recents:
             rows = "".join(f"<tr><td>{esc(it.get('date'))}</td><td>{esc(it.get('type_label') or it.get('type'))}</td>"
+                           f"<td class='n'>{esc(it.get('nb_lgt') if it.get('nb_lgt') is not None else '—')}</td>"
                            f"<td class='n'>{esc(it.get('distance_m'))} m</td><td>{esc(it.get('statut') or '—')}</td></tr>"
                            for it in recents[:10])
             # M144 Lot 5.6 — plusieurs permis à la MÊME date = probablement une opération unique
@@ -667,8 +671,14 @@ def comparables(out: dict) -> str:
             _note = ("<p class='note'>Plusieurs permis à la même date proviennent probablement d'une "
                      "opération unique déposée en tranches, pas de projets distincts.</p>"
                      if len(_dates) != len(set(_dates)) else "")
-            body += (f"<h3>Permis de construire voisins (SITADEL, ≤ 5 ans) {s('S')}</h3>"
-                     f"<table><tr><th>Date</th><th>Type</th><th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>{_note}")
+            _dyn = perm.get("dynamique") or {}
+            _cov = (f"<p class='note'>Couverture SITADEL géolocalisée : {_dyn.get('couverture_pct')} % "
+                    f"des autorisations — les compteurs sont des minima.</p>"
+                    if _dyn.get("couverture_pct") is not None else "")
+            _lib = perm.get("libelle_definition") or f"≤ {_mois} mois"
+            body += (f"<h3>Permis voisins les plus significatifs (SITADEL, {esc(_lib)}) {s('S')}</h3>"
+                     f"<table><tr><th>Date</th><th>Type</th><th class='n'>Logts</th>"
+                     f"<th class='n'>Distance</th><th>Statut</th></tr>{rows}</table>{_note}{_cov}")
     return body
 
 
