@@ -259,7 +259,8 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # RETOURS-13 (R4/R5) — 65 → 68 : EDF Réunion HTA (SEED, en-tête du data-file), TCSP OSM
     # (raison : flux Overpass en direct) et Réunion Express (SEED, en-tête de la carte du
     # débat public — le tracé bougera après la clôture du 26/11/2026).
-    assert len(noms) == 68
+    # RETOURS-14 (S5) — 68 → 69 : cadastre d'époque (raison : archives immuables).
+    assert len(noms) == 69
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

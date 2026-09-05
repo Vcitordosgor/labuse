@@ -518,6 +518,8 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "OSM — transport (pôles d'échange & téléphérique)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
     # RETOURS-13 R5 — même famille OSM (extraction Overpass à la demande, CLI `labuse tcsp`).
     "TCSP — voies bus en site propre (OSM)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
+    # RETOURS-14 S5 — archives cadastrales FIGÉES (un millésime publié ne change jamais).
+    "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": "Archives immuables (millésimes cadastraux figés) — rien à surveiller : un millésime publié ne change jamais ; les millésimes NOUVEAUX ne servent qu'à de futures parcelles disparues.",
     "INPN / patrinat — espaces protégés": "Couches patrinat servies en WFS Géoplateforme ; pas de jeu data.gouv national « espaces protégés » à millésime trouvé, ni de requête témoin à agrégat stable.",
     # Portails / hubs
     "PEIGEO (hub régional)": "Y2 : peigeo.re répond désormais (200) mais c'est un site WordPress — plus de GeoNetwork/CSW ni d'API de catalogue à sonder (les chemins /geonetwork renvoient 404). Pas un jeu unique.",

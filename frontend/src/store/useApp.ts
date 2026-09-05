@@ -33,13 +33,12 @@ export interface LayerToggles {
   cinquante_pas: boolean // M6.1 : réserve des 50 pas géométriques (bande littorale outre-mer)
   alea_inondation: boolean // M106 P1 : aléa inondation DEAL (kind=georisque_alea, subtype dédié) —
   alea_mvt: boolean        // le zonage PPR réglementaire reste agrégé (multirisque insécable)
-  transport: boolean       // M106 P4 : transport public (tracés GTFS + Papang)
-  arrets: boolean          // RETOURS-13 R3/R9 : arrêts de transport en commun (GTFS) — entrée dédiée,
-                           // cliquable (bulle : nom + lignes + réseau)
-  lignes_ht: boolean       // M106 P4 : lignes haute tension HTB (BD TOPO, contrainte, tireté anthracite)
-  lignes_mt: boolean       // RETOURS-13 R4 : lignes moyenne tension HTA (EDF open data, tracé indicatif)
-  tcsp: boolean            // RETOURS-13 R5 : transport en commun en site propre (OSM en service +
-                           // stations dérivées) — la couche BAOBAB seule est retirée
+  transport: boolean       // RETOURS-14 S7 : transport public — LIGNES ET ARRÊTS ensemble (fusion,
+                           // demande Vic) ; les arrêts restent cliquables (bulle nom + lignes + réseau)
+  lignes_ht: boolean       // RETOURS-14 S9 : LIGNES ÉLECTRIQUES fusionnées — HTA (EDF open data) +
+                           // HTB (BD TOPO) sous une seule entrée, deux styles en légende
+  tcsp: boolean            // RETOURS-14 S8 : « Stationnement allégé — TCSP (art. L151-36) » —
+                           // zone 800 m + parcelles teintées + stations + voies en site propre
   axes: boolean            // M106-B P3 : axes structurants BD TOPO (importance IGN 1-2, ardoise)
   renouv: boolean     // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut
   couleurs_verdict: boolean // M55-G point 8 : palette des tiers en COUCHE activable — imposée
@@ -635,7 +634,7 @@ export const useApp = create<AppState>((set) => ({
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, arrets: false, lignes_ht: false, lignes_mt: false, tcsp: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false, vefa_neuf: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, tcsp: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false, vefa_neuf: false },
   // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
   // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
   // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».

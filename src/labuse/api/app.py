@@ -3827,15 +3827,16 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         # les stations dérivées ne couvrent que les voies en site propre).
         out["tcsp"] = {
             "station": tcsp["nom"], "distance_m": d, "sous_800m": proche,
+            # RETOURS-14 S8.4 — même français que le « i » de la couche : l'usage d'abord.
             "libelle": (
-                f"Station de transport collectif en site propre « {tcsp['nom']} » "
+                f"Station de transport en commun en site propre « {tcsp['nom']} » "
                 + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m (à vol d'oiseau)")
-                + (" — à moins de 800 m d'une station de transport collectif en site propre, le PLU "
-                   "ne peut pas exiger plus d'1 place de stationnement par logement (0,5 pour le "
-                   "logement locatif social), si la qualité de la desserte le permet "
-                   "(art. L151-36 et L151-35 du code de l'urbanisme, loi n° 2025-1129 du "
-                   "26/11/2025). Le plafond s'impose au PLU ; reste à instruire la qualité de la "
-                   "desserte." if proche else ".")),
+                + (" — à moins de 800 m d'une station, le PLU ne peut pas exiger plus d'une place "
+                   "de stationnement par logement (0,5 pour le logement social), si la desserte "
+                   "est de qualité. Moins de parking à construire = plus de surface vendable et "
+                   "un bilan plus léger. Source : code de l'urbanisme, art. L151-34 à 36 "
+                   "(loi n° 2025-1129 du 26/11/2025). Le plafond s'impose au PLU ; reste à "
+                   "instruire la qualité de la desserte." if proche else ".")),
             "source": ("stations dérivées : arrêts GTFS sur voie bus en site propre (OSM, ODbL) — "
                        "distance à vol d'oiseau depuis la station (CE 2022)"),
         }
@@ -4567,6 +4568,9 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # Vic : « je veux la couche TCSP, pas la ligne BAOBAB »). À la place : les
                     # tronçons en site propre (OSM) et les stations dérivées (arrêts GTFS ≤ 60 m).
                     "tcsp_troncon", "tcsp_station",
+                    # RETOURS-14 S8 — zone « stationnement allégé » matérialisée (rayon 800 m
+                    # autour des stations + union des parcelles couvertes, calculés par ingest_tcsp).
+                    "tcsp_zone",
                     # RETOURS-13 R4 — moyenne tension EDF (HTA aérien/souterrain, open data retrouvé).
                     "ligne_mt"}
 
@@ -4608,7 +4612,10 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                   sl.attrs->'lignes_noms' AS lignes_noms, sl.attrs->>'reseau' AS reseau,
                   sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
                   sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
-                  ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
+                  -- RETOURS-14 S6 : géométrie simplifiée MATÉRIALISÉE (geom_simple, entretenue par
+                  -- ensure_geom_2975) — la simplification à la volée coûtait ~11 s sur les aléas et
+                  -- la couche restait muette au premier clic. Repli à la volée si non peuplée.
+                  ST_AsGeoJSON(COALESCE(sl.geom_simple, ST_SimplifyPreserveTopology(sl.geom, 0.0002))) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
              -- M137-V : FILTRE D'AFFICHAGE SEUL — les arrêts de bus OSM (kind 'amenite', subtype

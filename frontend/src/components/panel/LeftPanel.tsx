@@ -134,15 +134,13 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'znieff', label: 'ZNIEFF — patrimoine naturel' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
-  // RETOURS-13 R3 — groupe « Réseaux » : entrées nommées EN CLAIR (demande Vic — « où sont
-  // passées les couches que j'avais demandé d'ajouter ?? »). BAOBAB seul est retiré (R5) :
-  // `tcsp` = la vraie couche Transport en commun en site propre (OSM en service + stations).
-  { key: 'transport', label: 'Transport public (lignes de bus)' },
-  { key: 'arrets', label: 'Arrêts de transport en commun' },
-  { key: 'tcsp', label: 'Transport en commun en site propre' },
+  // RETOURS-14 S7/S8/S9 — groupe « Réseaux » resserré (demandes Vic) : les arrêts FUSIONNÉS
+  // dans Transport public ; les lignes électriques HTA+HTB sous UNE entrée ; le TCSP renommé
+  // par son USAGE (« Stationnement allégé »), avec sa zone de 800 m dessinée.
+  { key: 'transport', label: 'Transport public (lignes et arrêts)' },
+  { key: 'tcsp', label: 'Stationnement allégé — TCSP (art. L151-36)' },
   { key: 'axes', label: 'Axes structurants' },
-  { key: 'lignes_ht', label: 'Lignes haute tension (HTB)' },
-  { key: 'lignes_mt', label: 'Lignes moyenne tension (HTA)' },
+  { key: 'lignes_ht', label: 'Lignes électriques (HTA / HTB)' },
   // M134 — couche « Dispositifs et périmètres ». Jamais un sigle nu : chaque libellé développe.
   { key: 'qpv', label: 'QPV — quartier prioritaire' },
   { key: 'tva_primo', label: 'TVA réduite primo-accédant (QPV + 500 m)' },
@@ -167,7 +165,7 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
   // RETOURS-13 R3 — la famille s'appelle « Réseaux » (demande Vic) : transport public, arrêts,
   // TCSP, axes, HTB, HTA — chaque entrée avec son « i » (source, millésime, couverture).
-  { famille: 'Réseaux', keys: ['transport', 'arrets', 'tcsp', 'axes', 'lignes_ht', 'lignes_mt'] },
+  { famille: 'Réseaux', keys: ['transport', 'tcsp', 'axes', 'lignes_ht'] },
   // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
   // fiscaux à la maille COMMUNE (ZFANG, FRR). L'ANRU quitte « Risques » pour ici (un seul endroit).
   { famille: 'Dispositifs et périmètres', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr'] },

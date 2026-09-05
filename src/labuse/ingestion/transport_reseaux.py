@@ -421,6 +421,29 @@ def ingest_tcsp(session: Session, run_id: int | None, sids: dict) -> dict:
                :sid, :run
         FROM agg a JOIN nommage n USING (grappe)
         RETURNING 1"""), {"sid": sid, "run": run_id}).rowcount
+    # RETOURS-14 S8 — ZONE « STATIONNEMENT ALLÉGÉ » matérialisée (kind='tcsp_zone') :
+    # (a) subtype='rayon' = union des cercles de 800 m autour des stations (c'est un RAYON à vol
+    # d'oiseau depuis la station — donc une pastille de 1,6 km de large) ; (b) subtype='parcelles'
+    # = union des parcelles réellement couvertes (leur teinte exacte à l'écran). Les COULOIRS bus
+    # ne génèrent PAS de zone (pas un site propre au sens de l'art. L151-36).
+    session.execute(text("DELETE FROM spatial_layers WHERE kind = 'tcsp_zone'"))
+    session.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id) "
+        "SELECT 'tcsp_zone', 'rayon', 'Zone stationnement allégé (800 m des stations TCSP)', "
+        "ST_Multi(ST_SimplifyPreserveTopology(ST_Union(ST_Buffer(geom::geography, 800)::geometry), 0.0001)), "
+        "jsonb_build_object('statut','Dérivé','rayon_m',800,'critere',"
+        "'rayon de 800 m à vol d''oiseau autour de chaque station en service (art. L151-36)'), :sid "
+        "FROM spatial_layers WHERE kind = 'tcsp_station'"), {"sid": sid})
+    session.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id) "
+        "SELECT 'tcsp_zone', 'parcelles', 'Parcelles à moins de 800 m d''une station TCSP', "
+        "ST_Multi(ST_SimplifyPreserveTopology(ST_Union(p.geom), 0.0001)), "
+        "jsonb_build_object('statut','Dérivé','n_parcelles', count(*)), :sid "
+        "FROM parcels p WHERE EXISTS (SELECT 1 FROM spatial_layers s "
+        "WHERE s.kind='tcsp_station' AND ST_DWithin(s.geom_2975, p.geom_2975, 800))"), {"sid": sid})
+    session.execute(text(
+        "UPDATE spatial_layers SET geom_simple = ST_SimplifyPreserveTopology(geom, 0.0002) "
+        "WHERE kind = 'tcsp_zone'"))
     session.execute(text("UPDATE data_sources SET source_millesime = :m, last_sync_at = now() "
                          "WHERE name = :n"),
                     {"m": "extraction Overpass (OSM, ODbL) — voies bus 974", "n": SRC_OSM_TCSP})

@@ -171,13 +171,9 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       {([['Car Jaune', 'cars interurbains (Région)'], ['Citalis', 'bus du Nord (CINOR) — et le téléphérique Papang, en tireté'], ["Kar'Ouest", 'bus de l’Ouest (TCO)'], ['Alternéo', 'bus du Sud-Ouest (CIVIS)'], ['Estival', 'bus de l’Est (CIREST)'], ['Carsud', 'bus du Sud (CASUD)']] as const).map(([r, d]) => (
         <span key={r} className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded" style={{ background: tTheme.transportReseaux[r] }} /><span><b>{r}</b> — {d}</span></span>
       ))}
+      {/* RETOURS-14 S7 — les arrêts sont dans la MÊME couche (fusion) : cliquables (nom + lignes + réseau). */}
+      <span className="mt-1 flex items-center gap-2"><span className="h-2 w-2 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.transportReseaux['Citalis'] }} />arrêt — cliquable (nom, lignes, réseau), visible en zoomant</span>
     </div>,
-  })
-  // RETOURS-13 R3/R9 — les arrêts ont leur entrée (et leur légende) dédiées, cliquables.
-  if (layers.arrets) groupes.push({
-    id: 'arrets', titre: 'Arrêts de transport en commun',
-    note: 'Les 9 956 quais des 7 réseaux (GTFS officiels, Licence Ouverte). Visibles à partir du zoom quartier ; couleur = réseau. Cliquez un arrêt : nom, ligne(s), réseau.',
-    body: <div data-legend-arrets className="flex items-center gap-2"><span className="h-2 w-2 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.transportReseaux['Citalis'] }} /><span className="text-[11px] text-txt">arrêt (cliquable — visible en zoomant)</span></div>,
   })
   if (layers.axes) groupes.push({
     id: 'axes', titre: 'Axes structurants',
@@ -188,27 +184,23 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.pole }} />pôle estimé — {critereDerive}</span>
     </div>,
   })
+  // RETOURS-14 S9 — UNE couche « Lignes électriques » : deux styles, deux sources citées.
   if (layers.lignes_ht) groupes.push({
-    id: 'ht', titre: 'Lignes haute tension (HTB)',
-    note: `Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI). BD TOPO IGN (Licence Ouverte)${fmtFraich(htQ)}`,
-    body: <div data-legend-ht className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} /><span className="text-[11px] text-txt">Réseau de transport 63/90 kV (aérien, tension indiquée)</span></div>,
-  })
-  // RETOURS-13 R4 — moyenne tension HTA (EDF open data) : tracé indicatif, jamais une DT-DICT.
-  if (layers.lignes_mt) groupes.push({
-    id: 'mt', titre: 'Lignes moyenne tension (HTA)',
-    note: 'Réseau de distribution HTA (~15-20 kV) — EDF Réunion open data, Licence Ouverte 2.0, géométrie ~02/2020 (republiée 16/10/2025). Tracé INDICATIF (contenu réduit par EDF pour sécurité publique) : ne remplace pas une DT-DICT avant travaux.',
-    body: <div data-legend-mt className="flex flex-col gap-1 text-[11px] text-txt">
-      <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.mt }} />HTA aérien &amp; souterrain (tireté fin)</span>
+    id: 'ht', titre: 'Lignes électriques (HTA / HTB)',
+    note: `HTA (moyenne tension ~15-20 kV, distribution) : EDF Réunion open data, LO 2.0, géométrie ~02/2020 republiée 16/10/2025 — tracé indicatif (sécurité publique), jamais une DT-DICT. HTB (63/90 kV, transport) : BD TOPO IGN (aérien, tension indiquée)${fmtFraich(htQ)}. Contrainte potentielle (servitudes, reculs) — à vérifier auprès d'EDF SEI.`,
+    body: <div data-legend-ht className="flex flex-col gap-1 text-[11px] text-txt">
+      <span className="flex items-center gap-2"><span className="h-[3px] w-4 rounded" style={{ background: tTheme.ht }} />haute tension HTB — trait épais tireté (BD TOPO IGN)</span>
+      <span className="flex items-center gap-2"><span className="h-px w-4 rounded" style={{ background: tTheme.mt }} />moyenne tension HTA — trait fin (EDF Réunion open data)</span>
     </div>,
   })
-  // RETOURS-13 R5 — la vraie couche TCSP : site propre / couloir / stations, états dits.
+  // RETOURS-14 S8 — « Stationnement allégé » : légende à TROIS entrées (zone · station · voie).
   if (layers.tcsp) groupes.push({
-    id: 'tcsp', titre: 'Transport en commun en site propre',
-    note: 'EN SERVICE : voies bus dédiées relevées dans OpenStreetMap (ODbL). À moins de 800 m d’une STATION, le PLU ne peut pas exiger plus d’1 place de stationnement par logement (0,5 en logement social), si la qualité de la desserte le permet — art. L151-36 (loi du 26/11/2025). EN TRAVAUX (Rico Carpaye, ESTI+) et EN PROJET (Réunion Express — débat public jusqu’au 26/11/2026) : aucun tracé public exploitable, rien n’est dessiné à la main.',
+    id: 'tcsp', titre: 'Stationnement allégé — TCSP',
+    note: 'Sur une parcelle à moins de 800 m d’une station de transport en commun en site propre (rayon à vol d’oiseau — la pastille fait 1,6 km de large), le PLU ne peut pas exiger plus d’une place de stationnement par logement (0,5 pour le logement social), si la desserte est de qualité. Moins de parking = plus de surface vendable, bilan plus léger. Un simple couloir bus ne compte pas. Source : code de l’urbanisme, art. L151-34 à 36 (loi 2025-1129) ; voies et stations relevées dans OpenStreetMap ; en travaux / en projet (Réunion Express, débat public jusqu’au 26/11/2026) : aucun tracé public, rien n’est dessiné à la main.',
     body: <div data-legend-tcsp className="flex flex-col gap-1 text-[11px] text-txt">
-      <span className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} />voie en site propre (en service)</span>
-      <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded opacity-75" style={{ background: tTheme.tcsp }} />couloir bus (pas un site propre au sens L151-36)</span>
-      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.tcsp }} />station desservie (dérivée des arrêts GTFS)</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tcsp, opacity: 0.45, borderColor: tTheme.tcsp }} />zone 800 m — parcelles au stationnement allégé</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.tcsp }} />station en service</span>
+      <span className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} />voie en site propre</span>
     </div>,
   })
   if (dispoActif) groupes.push({

@@ -414,6 +414,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     rows = db.execute(text("""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.commune,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
+               s.raw->>'geoloc' AS geoloc,   -- RETOURS-14 S5.1 : la liste DIT la localisation approximative
                d.date_depot::text AS depot, CASE WHEN d.valide THEN d.delai_mois END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
@@ -455,7 +456,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         # LOT11 (OUTILS-FINALE) — `etat_label` servi ici (source unique `_ETAT_LABELS`, comme la fiche) :
         # le front affichait le CODE Sitadel brut (« 2 ») orphelin en 2e ligne. Plus jamais un code nu.
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
-                                        "etat", "nb_lgt", "surf_hab")},
+                                        "etat", "nb_lgt", "surf_hab", "geoloc")},
                    "etat_label": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}") if r["etat"] else None,
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
     }

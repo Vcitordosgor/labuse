@@ -1293,6 +1293,22 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
             # Réparation de l'existant : geom_2975 déjà peuplé mais invalide (avant ce correctif).
             f"UPDATE parcels SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
             f"UPDATE spatial_layers SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
+            # RETOURS-14 S6 — GÉOMÉTRIE SIMPLIFIÉE MATÉRIALISÉE pour les couches carte : la
+            # simplification À LA VOLÉE de /map/layers.geojson coûtait ~11 s sur les aléas
+            # (993 polygones lourds) → au premier clic d'une couche, RIEN ne s'affichait avant
+            # la réponse et Vic décochait/recochait (le 2e clic touchait le cache react-query).
+            # Correction AU GESTIONNAIRE (même point d'entretien que geom_2975, appelé par
+            # toutes les CLI d'ingestion) : on ne simplifie qu'UNE fois, l'endpoint lit
+            # COALESCE(geom_simple, simplification à la volée) — même rendu, réponse < 1 s.
+            "ALTER TABLE spatial_layers ADD COLUMN IF NOT EXISTS geom_simple geometry",
+            # kinds SERVIS PAR LA CARTE seulement (miroir de _MAP_LAYER_KINDS hors points OSM/BPE —
+            # les points se simplifient à la volée sans coût) : jamais les 800 k bâtiments cascade.
+            f"UPDATE spatial_layers SET geom_simple = ST_SimplifyPreserveTopology(geom, 0.0002) "
+            f"WHERE geom_simple IS NULL AND geom IS NOT NULL{scope} AND kind IN ("
+            "'plu_gpu_zone','ppr','parc_national','anru','cinquante_pas','georisque_alea',"
+            "'transport_ligne','transport_arret','pole_echange','telepherique','ligne_ht',"
+            "'axe_structurant','qpv','tva_primo','zfang','frr','znieff','vefa_neuf',"
+            "'ligne_mt','tcsp_troncon','tcsp_station')",
         ]
     ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",

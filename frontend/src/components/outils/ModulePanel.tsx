@@ -684,8 +684,12 @@ export function M03() {
                 ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
                     title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
                 : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
+              {/* RETOURS-14 S5.1 — un permis à parcelle incertaine ne pose JAMAIS de point : la
+                  liste le dit (« localisation approximative (adresse) » si l'adresse est connue,
+                  « non localisé » sinon). */}
               {!i['geom'] && <span data-permis-badge-nongeo className="rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
-                title="Adresse non rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
+                title={String(i['geoloc'] ?? "Parcelle d'origine disparue du cadastre et adresse non rattachable — non localisable sur la carte.")}>
+                {i['geoloc'] ? 'localisation approximative (adresse)' : 'non localisé'}</span>}
             </span>
           </button>
           )

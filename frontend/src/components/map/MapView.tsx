@@ -348,9 +348,10 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
   set('ov-mt', 'line-color', t.mt)       // RETOURS-13 R4 — moyenne tension HTA
-  // RETOURS-13 R5 — TCSP : tronçons (site propre + couloirs) et stations suivent le thème
+  // RETOURS-14 S8 — TCSP : tronçons, stations et zone 800 m suivent le thème
   set('ov-tcsp', 'line-color', t.tcsp)
-  set('ov-tcsp-couloir', 'line-color', t.tcsp)
+  set('ov-tcsp-zone-parcelles', 'fill-color', t.tcsp)
+  set('ov-tcsp-zone-rayon', 'line-color', t.tcsp)
   set('ov-tcsp-st', 'circle-color', t.tcsp)
   set('ov-tcsp-st', 'circle-stroke-color', clair ? '#FFFFFF' : '#0A0F0C')
 
@@ -664,19 +665,20 @@ export function MapView() {
   const alea = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: layers.alea_inondation || layers.alea_mvt })
   // M106 P4 : transport public (tracés + pôles + Papang, 3 kinds servis île) et lignes HT
   const transLignes = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
-  // RETOURS-13 R3/R9 — les ARRÊTS ont leur entrée dédiée « Arrêts de transport en commun »
-  // (cliquables : nom + lignes + réseau) ; la couche Transport public (tracés) reste distincte.
-  const transArrets = useQuery({ queryKey: ['layer', 'transport_arret'], queryFn: () => getMapLayer('transport_arret', 20_000), enabled: layers.arrets })
+  // RETOURS-14 S7 — les ARRÊTS sont FUSIONNÉS dans « Transport public (lignes et arrêts) »
+  // (demande Vic) ; ils restent cliquables (bulle : nom + lignes + réseau — R9).
+  const transArrets = useQuery({ queryKey: ['layer', 'transport_arret'], queryFn: () => getMapLayer('transport_arret', 20_000), enabled: layers.transport })
   // M137-X — les pôles d'échange rejoignent « Axes structurants » (nœuds du réseau structurant).
   const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
   const tele = useQuery({ queryKey: ['layer', 'telepherique'], queryFn: () => getMapLayer('telepherique'), enabled: layers.transport })
   const lignesHt = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
-  // RETOURS-13 R5 — la VRAIE couche TCSP : tronçons en site propre / couloirs (OSM) + stations
-  // dérivées (arrêts GTFS ≤ 60 m d'un site propre). BAOBAB (tcsp_axe synthétique) est retirée.
+  // RETOURS-14 S8 — « Stationnement allégé — TCSP » : voies en site propre + stations + ZONE
+  // de 800 m matérialisée (rayon autour des stations + union des parcelles couvertes, teintées).
   const tcspTroncons = useQuery({ queryKey: ['layer', 'tcsp_troncon'], queryFn: () => getMapLayer('tcsp_troncon'), enabled: layers.tcsp })
   const tcspStations = useQuery({ queryKey: ['layer', 'tcsp_station'], queryFn: () => getMapLayer('tcsp_station'), enabled: layers.tcsp })
-  // RETOURS-13 R4 — lignes moyenne tension HTA (EDF open data, 19 480 tronçons, tracé indicatif).
-  const lignesMt = useQuery({ queryKey: ['layer', 'ligne_mt'], queryFn: () => getMapLayer('ligne_mt', 40_000), enabled: layers.lignes_mt })
+  const tcspZone = useQuery({ queryKey: ['layer', 'tcsp_zone'], queryFn: () => getMapLayer('tcsp_zone'), enabled: layers.tcsp })
+  // RETOURS-14 S9 — lignes électriques FUSIONNÉES : la HTA suit la même entrée que la HTB.
+  const lignesMt = useQuery({ queryKey: ['layer', 'ligne_mt'], queryFn: () => getMapLayer('ligne_mt', 40_000), enabled: layers.lignes_ht })
   // M106-B P3 : axes structurants (3 481 tronçons BD TOPO importance 1-2)
   const axes = useQuery({ queryKey: ['layer', 'axe_structurant'], queryFn: () => getMapLayer('axe_structurant', 5_000), enabled: layers.axes })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
@@ -885,7 +887,7 @@ export function MapView() {
       // pôle OSM (Sourcé) = disque plein NEUTRE · pôle dérivé (Estimé) = anneau ·
       // téléphérique = tireté couleur CINOR/Citalis. Plus les AXES STRUCTURANTS (BD TOPO,
       // importance IGN 1-2, trait plein ardoise) et les LIGNES HT (anthracite tireté).
-      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht', 'ov-mt', 'ov-tcsp', 'ov-tcsp-st']) {
+      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht', 'ov-mt', 'ov-tcsp', 'ov-tcsp-st', 'ov-tcsp-zone']) {
         m.addSource(src, { type: 'geojson', data: EMPTY_FC as never })
       }
       m.addLayer({ id: 'ov-axe', type: 'line', source: 'ov-axe', layout: { visibility: 'none' },
@@ -943,12 +945,18 @@ export function MapView() {
       // RETOURS-13 R5 — TCSP : trait PLEIN ÉPAIS pour les tronçons EN SITE PROPRE (la voie dédiée
       // se lit d'un coup) ; trait FIN TIRETÉ pour les simples couloirs bus (dits, jamais confondus) ;
       // STATIONS dérivées en disques (le drapeau < 800 m se mesure à la station, pas au tracé).
+      // RETOURS-14 S8 — la ZONE d'abord (sous les tronçons) : parcelles couvertes TEINTÉES
+      // (union exacte de leurs géométries) + contour du rayon de 800 m. Les couloirs bus ne
+      // s'affichent plus ici (pas un site propre L151-36 — légende à 3 entrées).
+      m.addLayer({ id: 'ov-tcsp-zone-parcelles', type: 'fill', source: 'ov-tcsp-zone',
+        filter: ['==', ['get', 'subtype'], 'parcelles'] as never, layout: { visibility: 'none' },
+        paint: { 'fill-color': T_SOMBRE.tcsp, 'fill-opacity': 0.22 } })
+      m.addLayer({ id: 'ov-tcsp-zone-rayon', type: 'line', source: 'ov-tcsp-zone',
+        filter: ['==', ['get', 'subtype'], 'rayon'] as never, layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': 1.6, 'line-dasharray': [3, 2], 'line-opacity': 0.85 } })
       m.addLayer({ id: 'ov-tcsp', type: 'line', source: 'ov-tcsp', layout: { visibility: 'none', 'line-cap': 'round' },
         filter: ['==', ['get', 'subtype'], 'site_propre'] as never,
         paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.5, 13, 4, 16, 6] as unknown as maplibregl.ExpressionSpecification, 'line-opacity': 0.95 } })
-      m.addLayer({ id: 'ov-tcsp-couloir', type: 'line', source: 'ov-tcsp', layout: { visibility: 'none' },
-        filter: ['==', ['get', 'subtype'], 'couloir'] as never,
-        paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': 1.4, 'line-dasharray': [2, 1.6], 'line-opacity': 0.75 } })
       m.addLayer({ id: 'ov-tcsp-st', type: 'circle', source: 'ov-tcsp-st', layout: { visibility: 'none' },
         paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3.5, 14, 6, 17, 9] as unknown as maplibregl.ExpressionSpecification,
                  'circle-color': T_SOMBRE.tcsp, 'circle-opacity': 0.95,
@@ -1366,7 +1374,7 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
-      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations],
+      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations], ['tcsp-zone', tcspZone],
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf]]   // M134 dispositifs · M137-U znieff · T4 vefa
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
@@ -1425,7 +1433,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1548,19 +1556,19 @@ export function MapView() {
       m.setLayoutProperty(id, 'visibility', vis(on))
       m.setLayoutProperty(`${id}-line`, 'visibility', vis(on))
     }
-    // M106 P4 / M106-B : transport public (tracés + Papang) — M137-X : les pôles d'échange
-    // ont quitté cette couche pour « Axes structurants » (leur vraie famille : nœuds du réseau).
-    // RETOURS-13 R3/R9 : les ARRÊTS ont leur entrée dédiée (cliquables).
-    for (const id of ['ov-trans-ligne', 'ov-tele', 'ov-tele-st']) {
+    // M106 P4 / M106-B : transport public — RETOURS-14 S7 : lignes ET arrêts ensemble.
+    for (const id of ['ov-trans-ligne', 'ov-trans-arret', 'ov-tele', 'ov-tele-st']) {
       m.setLayoutProperty(id, 'visibility', vis(layers.transport))
     }
-    m.setLayoutProperty('ov-trans-arret', 'visibility', vis(layers.arrets))
     m.setLayoutProperty('ov-axe', 'visibility', vis(layers.axes))
     m.setLayoutProperty('ov-pole', 'visibility', vis(layers.axes))   // M137-X — pôles sur « Axes structurants »
+    // RETOURS-14 S9 : lignes électriques fusionnées (HTB + HTA sous une entrée).
     m.setLayoutProperty('ov-ht', 'visibility', vis(layers.lignes_ht))
-    m.setLayoutProperty('ov-mt', 'visibility', vis(layers.lignes_mt))          // RETOURS-13 R4
-    m.setLayoutProperty('ov-tcsp', 'visibility', vis(layers.tcsp))             // RETOURS-13 R5
-    m.setLayoutProperty('ov-tcsp-couloir', 'visibility', vis(layers.tcsp))
+    m.setLayoutProperty('ov-mt', 'visibility', vis(layers.lignes_ht))
+    // RETOURS-14 S8 : « Stationnement allégé » = zone 800 m + parcelles teintées + stations + voies.
+    m.setLayoutProperty('ov-tcsp', 'visibility', vis(layers.tcsp))
+    m.setLayoutProperty('ov-tcsp-zone-parcelles', 'visibility', vis(layers.tcsp))
+    m.setLayoutProperty('ov-tcsp-zone-rayon', 'visibility', vis(layers.tcsp))
     m.setLayoutProperty('ov-tcsp-st', 'visibility', vis(layers.tcsp))
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))

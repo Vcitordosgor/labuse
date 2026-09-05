@@ -75,10 +75,11 @@ def test_fiche_drapeau_station_800m(db_session):
     assert tcsp["station"] == "__test_tcsp_station__"
     # base légale vérifiée sur Légifrance : 800 m · 1 place · 0,5 LLS · qualité de desserte ·
     # le plafond S'IMPOSE (jamais « peut moduler ») mais rien d'autre n'est promis.
+    # RETOURS-14 S8.4 — même français que le « i » de la couche (usage d'abord).
     assert "800 m" in tcsp["libelle"]
-    assert "1 place" in tcsp["libelle"]
+    assert "une place" in tcsp["libelle"]
     assert "0,5" in tcsp["libelle"]
-    assert "L151-36" in tcsp["libelle"]
+    assert "L151-34 à 36" in tcsp["libelle"]
     assert "qualité de la desserte" in tcsp["libelle"]
     assert "vol d'oiseau" in tcsp["source"]                # CE 2022 : depuis la station, à vol d'oiseau
 

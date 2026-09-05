@@ -76,6 +76,7 @@ KIND_SOURCE = {
     "ligne_mt": "EDF Réunion — lignes moyenne tension HTA (open data)",
     "tcsp_troncon": "TCSP — voies bus en site propre (OSM)",
     "tcsp_station": "TCSP — voies bus en site propre (OSM)",
+    "tcsp_zone": "TCSP — voies bus en site propre (OSM)",   # RETOURS-14 S8 — zone 800 m dérivée
     # M137-U — couches écrites hors layers_ingest (znieff.py, bpe.py) — déclarées pour la garde.
     "znieff": "ZNIEFF (INPN/MNHN)",
     "amenite_bpe": "BPE INSEE",
