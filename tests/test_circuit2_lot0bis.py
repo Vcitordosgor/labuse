@@ -102,8 +102,10 @@ def test_scission_neuf_deux_ids_deux_usages():
     assert "scoring" in acte.definition and "score_e" in acte.definition
     assert "bilan" in obs.definition and "exports" in obs.definition
     assert acte.libelle != obs.libelle, "jamais le même libellé pour deux origines"
-    assert resoudre("prix_neuf_vefa_eur_m2") == "prix_neuf_vefa_acte_eur_m2"
-    assert ALIAS_TRANSITION == {"prix_neuf_vefa_eur_m2": "prix_neuf_vefa_acte_eur_m2"}
+    # lot 6 : l'alias de transition a vécu UN lot (0-bis → lot 6) puis a été RETIRÉ —
+    # plus aucun lecteur de l'ancien id (le grep du registre et des robinets le verrouille).
+    assert ALIAS_TRANSITION == {}
+    assert resoudre("prix_neuf_vefa_acte_eur_m2") == "prix_neuf_vefa_acte_eur_m2"
 
 
 def test_scission_neuf_robinets_sans_melange():

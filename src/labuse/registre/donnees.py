@@ -970,11 +970,11 @@ DONNEES = {cid: (replace(d, type=_TYPE_PAR_UNITE.get(d.unite, "nombre")) if d.ty
 #: rétro-compatibilité CIRCUIT-1 — le registre des chiffres EST le registre des données
 CHIFFRES = DONNEES
 
-#: 0-bis (scission du neuf, transition UN lot puis retrait) : l'ancien id `prix_neuf_vefa_eur_m2`
-#: recouvrait DEUX définitions (VEFA à l'acte 5 003 €/m² vs neuf observé 4 730 €/m² à Saint-Paul —
-#: fuite mesurée de CIRCUIT-0, soldée par scission). Tout lecteur de l'ancien id résout vers le
-#: VEFA à l'acte ; le neuf observé a SON id. À RETIRER au prochain lot.
-ALIAS_TRANSITION: dict[str, str] = {"prix_neuf_vefa_eur_m2": "prix_neuf_vefa_acte_eur_m2"}
+#: 0-bis (scission du neuf) : l'ancien id `prix_neuf_vefa_eur_m2` recouvrait DEUX définitions
+#: (fuite mesurée de CIRCUIT-0, soldée par scission acte/observé). L'alias de transition a vécu
+#: UN lot comme prévu puis a été RETIRÉ (lot 6) : plus aucun lecteur de l'ancien id nulle part
+#: (vérifié par grep + test) — le dict reste comme mécanisme pour une prochaine scission.
+ALIAS_TRANSITION: dict[str, str] = {}
 
 
 def resoudre(chiffre_id: str) -> str:

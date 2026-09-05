@@ -103,6 +103,36 @@ def _millesimes(db, reservoir_ids: set[str]) -> dict[str, str | None]:
     return out
 
 
+def valeurs_pour(db, valeurs: dict[str, Any],
+                 couvertures: dict[str, dict] | None = None,
+                 etats: dict[str, str] | None = None) -> dict[str, "Valeur"]:
+    """CIRCUIT-2 lot 6 — L'API REGISTRE DES EXPORTS : les builders PDF reçoivent des objets
+    `Valeur` (valeur + tampon complet : run, réservoirs/millésimes, couverture, état) pour les
+    données qu'ils servent — la mise en page continue de lire `.valeur`, l'origine est portée.
+
+    `valeurs` : {donnee_id: valeur brute déjà calculée par le moteur} — seuls les ids fournis
+    reçoivent une Valeur (jamais une valeur inventée). `couvertures` : {id: {n, non_couvert}}
+    pour les compteurs (règle 0-bis). `etats` : {id: non_determinee|non_calculee} quand la
+    chaîne l'a dit."""
+    from .. import runs
+    voulus = [(cid, CHIFFRES[cid]) for cid in valeurs if cid in CHIFFRES]
+    mill = _millesimes(db, {r for _, c in voulus for r in c.reservoirs})
+    run_courant: str | None = None
+    if any(c.portee == "run" for _, c in voulus):
+        try:
+            run_courant = runs.current()
+        except Exception:  # noqa: BLE001
+            run_courant = None
+    quand = datetime.now(tz=timezone.utc).isoformat()
+    return {cid: Valeur(valeur=valeurs[cid], chiffre_id=cid, version_def=c.version_def,
+                        run=(run_courant if c.portee == "run" else None),
+                        reservoirs={r: mill.get(r) for r in c.reservoirs},
+                        calcule_le=quand,
+                        couverture=(couvertures or {}).get(cid),
+                        etat=(etats or {}).get(cid, "servie"))
+            for cid, c in voulus}
+
+
 def tampons_pour(db, chiffre_ids: list[str]) -> dict[str, dict]:
     """Le tampon de chaque chiffre demandé (pour `?trace=1`). Une lecture des millésimes,
     le run courant seulement si au moins un chiffre est à portée `run`."""

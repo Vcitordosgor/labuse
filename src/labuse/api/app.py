@@ -4534,6 +4534,21 @@ def parcel_export_pdf(idu: str, source: str | None = None,
         "SELECT source_millesime FROM data_sources WHERE name = 'BD ORTHO 20 cm (IGN)'")).scalar()
     if cout_construction_m2 is not None and marge_frais_pct is not None:
         fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
+    # CIRCUIT-2 lot 6 — la fiche premium attache AUSSI ses objets Valeur (origine portée ;
+    # saisies client en portée `projet`, tampon « saisi par le client le … »).
+    try:
+        from ..registre.valeur import valeurs_pour
+        _brutes = {"surface_parcelle_m2": fiche.get("surface_m2"),
+                   "prix_sortie_bati_eur_m2": fiche.get("marche_synthese"),
+                   "adresse_ban": fiche.get("adresse")}
+        if fiche.get("calculette"):
+            _brutes["cout_construction_saisi_eur_m2"] = cout_construction_m2
+            _brutes["marge_frais_saisie_pct"] = marge_frais_pct
+            _brutes["prix_demande_saisi_eur"] = prix_demande_eur
+        fiche["_valeurs_registre"] = valeurs_pour(
+            db, {k: v for k, v in _brutes.items() if v is not None})
+    except Exception:  # noqa: BLE001 — le tampon ne casse jamais un export
+        fiche["_valeurs_registre"] = {}
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
                     # M124-A4 — nom de fichier {IDU}-labuse.pdf (IDU d'abord : tri/recherche par parcelle).
                     headers={"Content-Disposition": f'inline; filename="{idu}-labuse.pdf"'})

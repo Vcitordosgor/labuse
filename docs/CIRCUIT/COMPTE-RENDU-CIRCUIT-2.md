@@ -196,3 +196,44 @@ Moteurs au registre (`moteurs.csv`) : `marche_communes` renommé **`marche_servi
 
 - **Attrapé par les tests** : le « verrou 600 s » de CIRCUIT-1 a refrappé — poser l'ALTER de `ensure()` DANS la transaction-savepoint du fixture bloquait la connexion propre de l'endpoint (10 min de lock-wait) ; le test pose désormais écart + DDL sur une connexion AUTONOME (même leçon, même remède).
 - Tests du lot : `tests/test_circuit2_lot5.py` 4 verts (1,7 s) + lot 1 ajusté (20 couches) + voisins lot 1/2/4/registre 32 verts ; vitest **164 verts** (162 + HypInput ×2) ; tsc OK.
+
+---
+
+## Lot 6 — Les exports sur le registre
+
+### Livré
+
+- **L'API registre des exports** : `registre.valeur.valeurs_pour(db, valeurs, couvertures, etats)` — les builders reçoivent des objets `Valeur` (valeur + tampon complet : run servi, réservoirs avec millésimes, couverture des compteurs, état) pour les données qu'ils servent. JAMAIS une valeur inventée : seuls les ids fournis par le moteur reçoivent une Valeur (testé).
+- **Branché sur les deux collectes financières** : `briques_pdf.collect` (Dossier + banquier/Financier) et `parcel_export_pdf` (fiche premium, saisies client comprises — portée `projet`) attachent `_valeurs_registre` ; **la mise en page est INCHANGÉE** (elle lit les mêmes clés — le redessin qui consommera `.valeur` partout est le chantier EXPORTS, comme le mandat le prévoit). Un échec de tampon ne casse jamais un export.
+- **Le prix du neuf des PDF = l'OBSERVÉ, jamais l'acte** (arbitrage Q3) : verrou code sur les 8 builders (`neuf_vefa_commune` interdit — briques, premium, argumentaire, pré-dossier, zone, flash/data, flash/report, banquier).
+- **Cartes des PDF** : millésime ortho LU de data_sources (source unique, M73-F), même `build_situation_map` partagé Flash/premium — verrouillé par test.
+- **Alias de transition du neuf RETIRÉ** (0-bis le prévoyait « un lot, puis retiré ») : plus aucun lecteur de `prix_neuf_vefa_eur_m2` nulle part (grep + test) ; le mécanisme `ALIAS_TRANSITION` reste pour une prochaine scission.
+- **Preuve réelle** : premium (180 Ko) + banquier (497 Ko) générés sur le témoin 97415000BO0852 avec les Valeurs attachées — 200 OK. (L'appel IA « synthèse banquier » échoue crédit API : VP-003 pré-existant, repli propre du builder.)
+- Sonde PDF : le cas recette_exports1 (nocturne) compare déjà écran ↔ 24 PDF des 4 témoins (0-bis) — inchangé, c'est LA sonde des exports.
+
+### Suite
+
+- Tests du lot : `tests/test_circuit2_lot6.py` 5 verts.
+
+---
+
+## CLÔTURE DU MANDAT CIRCUIT-2
+
+**0-bis + lots 1-6 TOUS CLOS**, un commit par lot, poussés sur `origin/feat/circuit-2` :
+`480ae1db` mandat · `f32f23ef` merge main · `7a98e4f9` lot 0-bis · `df6f9d39` lot 1 · `8f237870` lot 2 · `086d45cf` lot 3 · `8eb29e72` lot 4 · `c3ad8b15` lot 5 · lot 6 = commit de clôture. **Rien mergé.** Ordre de merge pour Vic : circuit-1 → circuit-2.
+
+### Définition de fini — état
+
+- **0 donnée d'origine externe hors registre** (168 données / 130 robinets ; 2 « décor » seuls ; `en_attente` jamais servie, verrouillé) ; **liste d'exceptions VIDE**.
+- **FICHE-PARCELLE-DONNEES.md** : chaque donnée de chaque tiroir, générée du registre, millésimes réels, **aucun trou « ? »** ; + FICHES-DONNEES.md (commune, annonce, propriétaire, soleil).
+- **CONCEPTS-CANONIQUES.md** : un canonique par concept (19), doublons `nommee_a_part`/`derivee`, **rien de supprimé sans Vic** ; le seul doublon d'affirmation trouvé (i OSM/BPE) clarifié.
+- **Sonde catégorielle** : 0 écart zonage sur 36 témoins ; **1 écart de classe OUVERT avec cause et commit** — les 484 zones aléa ELEVE/TRES_ELEVE servies « moyen » (cause : `layers_ingest.py:350` ; correctif : commit RETOURS-13 sur `fix/retours-12`, non mergé — la sonde le rend visible, le merge le soldera).
+- Suite : **verte** (verdict final ci-dessous), plus de tests qu'au départ, rien mergé.
+
+### Ce qui reste à Vic, après
+
+1. Lire `FICHE-PARCELLE-DONNEES.md`, `FICHES-DONNEES.md`, `CONCEPTS-CANONIQUES.md` et les chapitres « Décisions prises en autonomie » / « Non fait » de ce compte-rendu ; corriger un choix canonique s'il ne lui va pas.
+2. **Merger `feat/circuit-1` puis `feat/circuit-2`** (ordre 1 → 2). Le merge de `fix/retours-12` soldera l'écart aléas ouvert par la sonde (RETOURS-13).
+3. Après merge : relancer `labuse registre sync` (le miroir passe à 168/130) et laisser le passage nocturne `coherence-robinets` jouer le cas exports (24 PDF des 4 témoins + mots interdits).
+
+**Suite finale (commit de clôture)** : **2407 passed · 1 failed (`test_r5`, LE pré-existant admis depuis CIRCUIT-1) · 49 skipped** — départ de la session : 2356. Les 49 skips ont été ÉNUMÉRÉS un à un (diligence) : tous de la famille « base de test partielle » (parcelles/DVF/SIRENE absentes de labuse_test, QA Saint-Paul sans base applicative, + un 429 de rate-limit sur test_non_contradiction dû aux passages répétés de la session) — aucun ne touche les modules de ce mandat. Un premier passage de la suite finale s'est éteint à 61 % sans verdict (processus tué silencieusement, cause inconnue) : relancé propre, verdict ci-dessus.
