@@ -1040,6 +1040,8 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     from . import reglages as _reglages     # CONNEXIONS-2 Lot 7.1 : table app_reglages (toggles runtime)
     _reglages.ensure_reglages(engine)
     ensure_suggestions(engine)              # M16-C
+    from .filtres import cadre as _filtres_cadre  # CIRCUIT-3 lot 1.1 : filtre_resultats / filtre_versions
+    _filtres_cadre.ensure_tables(engine)
     ensure_promesses_index(engine)          # index partiel /promesses
     ensure_flags_probe_index(engine)        # M45 (P1)
     ensure_parcel_flags(engine)             # M45 (P2)

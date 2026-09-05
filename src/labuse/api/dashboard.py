@@ -1121,6 +1121,8 @@ def _lancer_ingestion(nom: str) -> dict:
     (réutilisé par « Relancer » et par « Injecter cette version », X6). Lève HTTPException si aucune
     commande n'est connue (404) ou si le lancement échoue (500). NE fait AUCUNE ingestion en propre :
     il délègue au job existant."""
+    import os
+    import shlex
     import subprocess
     import sys
     from pathlib import Path
@@ -1133,12 +1135,26 @@ def _lancer_ingestion(nom: str) -> dict:
         argv[0] = sys.executable          # le python du process (venv), jamais un python du PATH
     racine = Path(__file__).resolve().parents[3]
     log_path = f"/tmp/labuse-relance-{cmd['label']}.log"
+    # CIRCUIT-3 lot 1.3 — LA VANNE ENCHAÎNE : ingestion → filtre → verdict. Après l'ingestion (et
+    # seulement si elle réussit, `&&`), on joue le filtre de la MÊME source (label = clé du filtre)
+    # qui écrit filtre_versions ; la page lit ensuite le verdict. Le sous-process utilise le src du
+    # repo courant (worktree) pour jouer EXACTEMENT le code servi.
+    ingest = " ".join(shlex.quote(a) for a in argv)
+    # NB : l'entrée CLI est `app()` (le script console), PAS `python -m labuse.cli` — ce dernier
+    # heurte une garde `if __name__ == "__main__"` en milieu de cli.py et ignore les commandes
+    # tardives (dont `filtre`). On appelle donc `app()` directement.
+    filtre = (f"{shlex.quote(sys.executable)} -c 'from labuse.cli import app; app()' "
+              f"filtre jouer {shlex.quote(cmd['label'])} --par vanne")
+    wrapper = ["sh", "-c", f"{ingest} && {filtre}"]
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join(
+        [str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep)}
     try:
         with open(log_path, "ab") as fh:
-            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
+            subprocess.Popen(wrapper, cwd=str(racine), stdout=fh, stderr=fh,
+                             start_new_session=True, env=env)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
-    return {"label": cmd["label"], "log": log_path}
+    return {"label": cmd["label"], "log": log_path, "filtre_enchaine": True}
 
 
 @router.post("/admin/sources/{source_id}/relancer")
