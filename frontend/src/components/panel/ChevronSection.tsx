@@ -11,10 +11,15 @@ const BOITE = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-md bord
 // M55-H point 1 : le glyphe texte « ⌄ » portait un biais optique (ancré sur la ligne de
 // base, jamais vraiment centré une fois pivoté) → chevron DESSINÉ (SVG symétrique, centré
 // géométriquement = centré optiquement dans les deux états, trait arrondi).
+// RETOURS-19 — `chev-boite` : sur une barre survolée à FOND PLEIN (`.hover-fill` / -ia / -amber), la
+// boîte du chevron passe SANS fond ni bordure (règle CSS `index.css`), seul le glyphe reste — inversé en
+// encre sombre comme le texte de la barre (avant : `group-hover:bg-surface-3` peignait un carré sombre
+// sur le vert). Hors barre à fond plein, le hover reste inchangé (fond `surface-3`). Toutes les barres
+// qui utilisent ChevronSection en héritent.
 export function ChevronSection({ open }: { open: boolean }) {
   return (
     <span aria-hidden="true"
-      className={`${BOITE} group-hover:bg-surface-3 group-hover:text-txt-hi`}>
+      className={`chev-boite ${BOITE} group-hover:bg-surface-3 group-hover:text-txt-hi`}>
       <svg viewBox="0 0 12 12"
         className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${open ? '' : 'rotate-90'}`}>
         <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"

@@ -159,6 +159,16 @@
     .hover-fill-amber:hover { background:var(--fill-amber); border-color:#D99A2E; color:var(--ink); }
     .hover-fill-amber:hover * { color:var(--ink) !important; }
   }
+  /* RETOURS-19 — CHEVRON (ChevronSection) sur une barre survolée à FOND PLEIN : la boîte passe SANS fond
+     ni bordure sur l'aplat (vert / mauve / ambre) — seul le glyphe reste, déjà inversé en encre sombre par
+     les règles `* { color: … }` ci-dessus, exactement comme le texte de la barre. Avant, l'utilitaire
+     Tailwind `group-hover:bg-surface-3` peignait un carré sombre par-dessus le vert. Le `!important` bat cet
+     utilitaire. Hors barre à fond plein, le survol du chevron reste inchangé (fond `surface-3`). */
+  @media (hover:hover) and (pointer:fine) {
+    .hover-fill:hover .chev-boite,
+    .hover-fill-ia:hover .chev-boite,
+    .hover-fill-amber:hover .chev-boite { background:transparent !important; border-color:transparent !important; }
+  }
 
   /* RETOURS-11 T2 — tuile d'icône RÉUTILISABLE (composant IconTile, une seule copie). Au repos : tuile
      teintée (vert, ou mauve `.ia` sur l'IA). Au SURVOL de la carte cliquable qui la contient
