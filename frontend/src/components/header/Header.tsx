@@ -227,6 +227,15 @@ export function Omnibox() {
         data-omnibox
         onSelect={onPickAddress}
         onEnterRaw={onEnterRaw}
+        // RETOURS-16 V5 — l'omnibox propose les SIX grammaires à la frappe (suggest unifié) ;
+        // les types étendus atterrissent chacun chez eux (commune → périmètre, SIREN/propriétaire
+        // → Scan patrimoine état 2, projet → ouverture du projet).
+        grammaires={['adresse', 'cadastre', 'proprietaire', 'siren', 'commune', 'projet']}
+        onPick={(it) => {
+          if (it.type === 'commune' && it.commune) { setCommune(it.commune); setView('cartes') }
+          else if ((it.type === 'siren' || it.type === 'proprietaire') && it.siren) ouvrirScan(it.siren)
+          else if (it.type === 'projet' && it.projet_id != null) setOpenProjet({ id: it.projet_id, nom: it.label })
+        }}
         placeholder="Rechercher : IDU, SIREN, propriétaire, projet, adresse…"
         className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
       />

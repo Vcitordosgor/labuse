@@ -94,7 +94,9 @@ if (run('V4')) {
 if (run('V5')) {
   const suggest = async (nom, saisie, attente = 1200) => {
     await go()
-    const barre = page.locator('[data-suggest-input]').first()
+    // avant V5, la barre n'a pas encore data-suggest-input : on vise l'omnibox du header
+    const sel = (await page.locator('[data-suggest-input]').count()) ? '[data-suggest-input]' : '[data-omnibox]'
+    const barre = page.locator(sel).first()
     await barre.click()
     await barre.fill(saisie)
     await page.waitForTimeout(attente)
@@ -104,7 +106,7 @@ if (run('V5')) {
   report.V5_adresse = await suggest('adresse', '50 rue helene boucher')
   report.V5_cadastre = await suggest('cadastre', 'BZ1065')
   report.V5_proprietaire = await suggest('proprietaire', 'SCI')
-  report.V5_siren = await suggest('siren', '3801290')
+  report.V5_siren = await suggest('siren', '428173')
   report.V5_commune = await suggest('commune', 'saint-pa')
   report.V5_projet = await suggest('projet', 'projet')
   report.V5_vide = await suggest('zero', 'zzzzzzz')

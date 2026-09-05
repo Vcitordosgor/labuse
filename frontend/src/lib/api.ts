@@ -570,6 +570,21 @@ export async function banAutocomplete(q: string, signal?: AbortSignal): Promise<
   return r.features ?? []
 }
 
+// RETOURS-16 V5 — suggestion UNIFIÉE des barres de recherche (un endpoint, six grammaires,
+// groupées par type, 8 max). `types` = les grammaires que la barre appelante sait consommer.
+export type SuggestType = 'adresse' | 'cadastre' | 'proprietaire' | 'siren' | 'commune' | 'projet'
+export interface SuggestItem {
+  type: SuggestType; label: string; sub?: string
+  idu?: string | null; lon?: number; lat?: number
+  siren?: string; commune?: string; insee?: string; projet_id?: number
+}
+export interface SuggestReponse {
+  q: string; groupes: { type: SuggestType; items: Omit<SuggestItem, 'type'>[] }[]
+  total: number; ms: number; formats: string
+}
+export const rechercheSuggest = (q: string, types: SuggestType[], signal?: AbortSignal) =>
+  j<SuggestReponse>(`/api/recherche/suggest?q=${encodeURIComponent(q)}&types=${types.join(',')}`, { signal })
+
 // O3 · anti-fiche « pourquoi pas » : motifs d'écartement hiérarchisés, sourcés (cascade servie).
 export interface AntiFicheMotif { couche: string; motif: string; source: string }
 export interface AntiFiche {

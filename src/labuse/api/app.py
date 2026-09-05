@@ -158,6 +158,7 @@ async def _lifespan(app: FastAPI):
         from ..pige.tables import ensure_tables as _pige_ens
         # PROMO-1 · P1 — référentiel des programmes publiés par les promoteurs (table `programmes`)
         from ..promo.tables import ensure_tables as _promo_ens
+        from .recherche import ensure_index as _recherche_ens   # RETOURS-16 V5
         # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
         def _zone_ens():
             with session_scope() as _s:
@@ -202,6 +203,9 @@ async def _lifespan(app: FastAPI):
             # ÉTUDE DE ZONE Z1 — tables SIRENE établissements + MOBPRO (interrogées par le moteur de
             # zone même vides ; l'ingestion réelle vient des CLI ingest-sirene-etab / ingest-mobpro).
             ("zone", lambda: _zone_ens()),
+            # RETOURS-16 V5 — index (section, numéro) : la référence courte du suggest unifié
+            # se résout indexée (799 ms seq-scan → < 5 ms mesuré).
+            ("recherche", lambda: _recherche_ens(_engine())),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
@@ -6218,6 +6222,7 @@ from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .ortho import router as _ortho_router  # noqa: E402
 from .ortho_proxy import router as _ortho_proxy_router  # noqa: E402  (RETOURS-16 V1 — fonds ortho proxifiés)
+from .recherche import router as _recherche_router  # noqa: E402  (RETOURS-16 V5 — suggest unifié)
 from .tiles import router as _tiles_router  # noqa: E402
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
@@ -6263,6 +6268,7 @@ app.include_router(_ops_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ortho_proxy_router)
+app.include_router(_recherche_router)
 app.include_router(_ia_router)
 app.include_router(_events_router)
 app.include_router(_moteurs_router)

@@ -533,6 +533,10 @@ export function M03() {
           VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
       <div>
         <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune, n° de permis ou parcelle…"
+          // RETOURS-16 V5 — la barre permis accepte adresse + parcelle + COMMUNE : le suggest
+          // unifié propose les trois à la frappe ; choisir une commune pose le filtre commune.
+          grammaires={['adresse', 'cadastre', 'commune']}
+          onPick={(it) => { if (it.type === 'commune' && it.commune) setCommune(it.commune) }}
           onSelect={(sel) => { if (sel.idu) focusParcelle(iduComplet(sel.idu)); else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           onEnterRaw={(t) => {
             const v = iduComplet(t)
