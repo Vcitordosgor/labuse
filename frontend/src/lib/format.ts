@@ -85,6 +85,23 @@ export const iduCourt = (idu: string | null | undefined): string => {
  *  AddressAutocomplete (skip BAN) et ParcelInput (aiguillage IDU/adresse) — chemin unique. */
 export const estIdu = (s: string): boolean => /^\d{5}[0-9A-Za-z]{1,9}$/.test(iduComplet(s))
 
+/** RETOURS-12 T1 — RÉFÉRENCE CADASTRALE COURTE (section + numéro), « le chiffre que les pros
+ *  citent le plus ». Formes acceptées : `BW0917`, `BW 917`, `bw 0917`, `BW-917`. LE SEUL endroit
+ *  où vit cette règle (LOI-3). Distincte d'un IDU (qui commence par 5 chiffres) : ici 1–2 lettres
+ *  de section suivies de 1–4 chiffres de numéro. Sert d'aiguillage : sur une référence courte on
+ *  N'interroge PAS la BAN, on résout via /parcels/search (fin d'IDU) avec désambiguïsation commune. */
+export const estSectionNumero = (s: string): boolean =>
+  /^[A-Za-z]{1,2}[\s-]?\d{1,4}$/.test((s ?? '').trim())
+
+/** Normalise une référence courte : majuscules, sans espace ni tiret, numéro sur 4 chiffres
+ *  (zéros de tête) — la forme que /parcels/search matche en fin d'IDU (« BW0917 »). */
+export const normSectionNumero = (s: string): string => {
+  const m = (s ?? '').trim().toUpperCase().replace(/[\s-]/g, '').match(/^([A-Z]{1,2})(\d{1,4})$/)
+  if (!m) return (s ?? '').trim().toUpperCase().replace(/[\s-]/g, '')
+  const [, sec, num] = m
+  return `${sec.padStart(2, '0')}${num.padStart(4, '0')}`
+}
+
 /** B4 (BLOC B) — libellés BRUTS de source (PPR/Géorisques) : « INONDATION_MOUVEMENT_DE_TERRAIN »
  *  → « Inondation mouvement de terrain ». AFFICHAGE SEULEMENT, données intactes. Ne touche que
  *  les chaînes qui crient (tout-majuscules avec au moins un mot ≥ 4 lettres) ; les acronymes

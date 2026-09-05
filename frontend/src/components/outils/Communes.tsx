@@ -124,9 +124,11 @@ function AcquisitionsRecentes() {
                 {g.items.map((a) => (
                   <button key={`${a.idu}-${a.a_millesime}`} data-acq-ligne
                     onClick={() => ouvrirParcelle(a.idu)}
-                    title={`Ouvrir la parcelle ${a.idu}`}
+                    /* RETOURS-12 T5/O11 — infobulle « Ouvrir la parcelle {idu} » RETIRÉE : le lien
+                       « parcelle {idu} → » est déjà affiché sous la ligne (rien de non-affiché à ajouter). */
                     className="hover-fill rounded border border-line-2 bg-surface-3 px-2 py-1 text-left text-[11px] leading-snug text-txt transition-colors duration-quick">
-                    <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
+                    {/* RETOURS-12 T6 — .chip chip-mint : le millésime reste lisible (fond sombre, texte mint) quand la ligne passe en vert plein au survol. */}
+                    <span className="chip chip-mint mr-1.5 bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">{a.de_millesime}→{a.a_millesime}</span>
                     <span className="text-txt-mut">{a.denomination_avant ?? '—'}</span>
                     <span className="mx-1 text-txt-dim">→</span>
                     <span className="font-medium text-txt-hi">{a.denomination_apres ?? '—'}</span>

@@ -211,7 +211,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         <>
           <div className="min-h-0 flex-1 overflow-y-auto">
             <table className="w-full text-[11px]">
-              <thead className="sticky top-0 bg-surface-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
+              {/* RETOURS-12 T4 — .thead-sticky (fond opaque + z-20). */}
+              <thead className="thead-sticky on-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
                 <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Commune</th><th className="px-2 py-1.5" /></tr>
               </thead>
               <tbody>
@@ -284,6 +285,35 @@ function KPI({ k, v, u }: { k: string; v: string; u?: string }) {
   )
 }
 
+// RETOURS-12 O7 — PHOTO AÉRIENNE DU TOIT : vignette ortho IGN (WMS GetMap) centrée sur la parcelle,
+// ~60 m de côté. Nord en haut (ortho standard) ; la rosace ci-dessous porte l'aiguille de l'azimut.
+function orthoUrl(lon: number, lat: number): string {
+  const d = 0.00030   // ~33 m de demi-côté
+  const bbox = `${lat - d},${lon - d},${lat + d},${lon + d}`   // WMS 1.3.0 · EPSG:4326 = lat,lon
+  return 'https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap'
+    + '&LAYERS=ORTHOIMAGERY.ORTHOPHOTOS&STYLES=&CRS=EPSG:4326&FORMAT=image/jpeg'
+    + `&WIDTH=480&HEIGHT=320&BBOX=${bbox}`
+}
+
+// RETOURS-12 O7 — ROSACE d'orientation : cardinaux (N/S/E/O, N en haut) + aiguille sur l'azimut RÉEL
+// du bâti (0° = Nord, sens horaire). Sans azimut, la rosace montre les cardinaux sans aiguille.
+function Rosace({ azimut }: { azimut: number | null }) {
+  const rad = azimut == null ? null : (azimut * Math.PI) / 180
+  return (
+    <svg viewBox="0 0 60 60" className="pointer-events-none absolute right-1.5 top-1.5 h-14 w-14">
+      <circle cx="30" cy="30" r="18" fill="rgba(7,16,9,.5)" stroke="#fff" strokeWidth="1" />
+      <text x="30" y="15" textAnchor="middle" fontSize="8" fontWeight="700" fill="#fff">N</text>
+      <text x="30" y="53" textAnchor="middle" fontSize="7" fill="#fff">S</text>
+      <text x="48" y="33" textAnchor="middle" fontSize="7" fill="#fff">E</text>
+      <text x="12" y="33" textAnchor="middle" fontSize="7" fill="#fff">O</text>
+      {rad != null && (
+        <line x1="30" y1="30" x2={30 + 15 * Math.sin(rad)} y2={30 - 15 * Math.cos(rad)}
+          stroke="#4ADE80" strokeWidth="2.2" strokeLinecap="round" />
+      )}
+    </svg>
+  )
+}
+
 // FICHE SOLEIL — potentiel (unité), toiture, orientation, PROFIL MENSUEL (12 barres), limites.
 function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
   if (!f.ok) return <p className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">{f.message ?? 'Aucune donnée solaire pour cette parcelle.'}</p>
@@ -309,8 +339,25 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
             l'inclinaison optimale n'est pas servie par la V1 → non affichée (jamais inventée). */}
         <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} />
-        <KPI k="Pente terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
+        <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
       </div>
+      {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. La nature
+          simple/double pente n'est PAS dérivable des données en base (aucun n° de pans / type de toiture) :
+          on ne l'invente pas — on montre la photo pour que le démarcheur la lise, avec l'orientation. */}
+      {f.lon != null && f.lat != null && (
+        <div data-solaire-photo className="mt-2">
+          <div className="relative overflow-hidden rounded-lg border border-line-2">
+            <img src={orthoUrl(f.lon, f.lat)} alt="Vue aérienne du toit (ortho IGN)"
+              className="block h-36 w-full object-cover" loading="lazy" />
+            <Rosace azimut={f.azimut ?? null} />
+          </div>
+          <p className="mt-1 text-[9px] leading-snug text-txt-dim">
+            Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${f.azimut}°, Estimé)` : ' (orientation non estimée)'}.
+            La nature de la toiture (simple / double pente) n'est pas dérivable des données en base : à lire sur la photo.
+            « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
+          </p>
+        </div>
+      )}
       {/* O13b — croisement piscine sur la parcelle (champ déjà servi par la fiche) : signal métier
           (climatisation / bassin à chauffer). Surface piscine NON affichée (mesure aérienne fausse, O12a). */}
       {f.piscine && (

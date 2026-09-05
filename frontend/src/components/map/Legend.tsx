@@ -145,9 +145,12 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   ;(['alea_inondation', 'alea_mvt'] as const).forEach((k) => { if (layers[k]) groupes.push({
     id: k, titre: k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain',
     note: `DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)${fmtFraich(aleaQ)}`,
-    body: <div data-legend-alea={k} className="flex items-center gap-2">{(['faible', 'moyen', 'fort'] as const).map((n) => (
-      <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt, opacity: Math.min(1, tTheme.aleaOpacity[n] + 0.25), borderColor: k === 'alea_inondation' ? tTheme.aleaInondation : tTheme.aleaMvt }} /><span className="text-[10.5px] text-txt-dim">{n}</span></span>
-    ))}</div>,
+    /* RETOURS-12 C3 — légende par TRANCHES NOMMÉES à teintes distinctes (plus le camaïeu d'opacité) :
+       la couleur ordonne les niveaux (bleu→orange→rouge / beige→marron→rouge), le libellé officiel reste. */
+    body: <div data-legend-alea={k} className="flex items-center gap-2">{(['faible', 'moyen', 'fort'] as const).map((n) => {
+      const ramp = k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp
+      return <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: ramp[n], borderColor: ramp[n] }} /><span className="text-[10.5px] text-txt-dim">{n}</span></span>
+    })}</div>,
   }) })
   if (layers.transport) groupes.push({
     id: 'transport', titre: 'Transport public',
@@ -172,6 +175,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     id: 'ht', titre: 'Lignes haute tension',
     note: `Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI). BD TOPO IGN (Licence Ouverte)${fmtFraich(htQ)}`,
     body: <div data-legend-ht className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} /><span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span></div>,
+  })
+  if (layers.tcsp) groupes.push({
+    id: 'tcsp', titre: 'Axe de transport structurant',
+    note: 'BAOBAB Express (Citalis / CINOR) — desserte rapide EN SERVICE, corridor Saint-Denis ↔ Sainte-Marie. Source : GTFS (Licence Ouverte). À moins de 500 m, le règlement PEUT moduler l’exigence de stationnement — à vérifier au PLU (jamais promis).',
+    body: <div data-legend-tcsp className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} /><span className="text-[11px] text-txt">BAOBAB Express (axe structurant en service)</span></div>,
   })
   if (dispoActif) groupes.push({
     id: 'dispositifs', titre: 'Dispositifs et périmètres',

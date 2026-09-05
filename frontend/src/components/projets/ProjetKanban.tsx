@@ -87,19 +87,27 @@ function SignauxLigne({ signaux }: { signaux?: { label: string; fort: boolean }[
 
 /** PROJETS-V5 (E4) — LA LIGNE « À trier » : pastille · adresse (IDU + état/constructibilité mono) ·
  *  jusqu'à 2 signaux · surface (droite) · gestes ✓/✕. Plus de colonne « marché commune ». */
-function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche }: {
-  it: ParcoursItem; onDragStart: () => void; onRetenir: () => void; onEcarter: () => void; onFiche: () => void
+function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir }: {
+  it: ParcoursItem; onDragStart: () => void; onRetenir: () => void; onEcarter: () => void; onFiche: () => void; onVoir: () => void
 }) {
   return (
     <div draggable onDragStart={onDragStart} data-tri-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_66px] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2"
+      className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_96px] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2"
       title="Ouvrir la fiche · glisser pour décider">
       <span className="h-[7px] w-[7px] rounded-full" style={{ background: tierDot(it.tier) }} />
       <AdresseLigne it={it} mono={etatLabel(it.etat_bien)} />
       <SignauxLigne signaux={it.signaux} />
       <span className="text-right font-mono text-[11.5px] text-txt-mut">{it.surface_m2 != null ? fmtM2(it.surface_m2) : '—'}</span>
       <div className="flex justify-end gap-1.5">
+        {/* RETOURS-12 J1 — ŒIL AMBRE (couleur Projet) : voir la parcelle sur la carte EN ORTHO, délimitée,
+            sans quitter le projet ni perdre l'état de la liste (focusParcelle, même geste que O1/O12). */}
+        <button data-tri-voir onClick={onVoir} title="Voir sur la carte (vue aérienne)"
+          className="flex h-6 w-[26px] items-center justify-center rounded-md border border-cp-amber/40 text-cp-amber transition-colors duration-quick hover:bg-cp-amber/10">
+          <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" /><circle cx="10" cy="10" r="2.2" />
+          </svg>
+        </button>
         <button data-tri-retenir onClick={onRetenir} title="Retenir"
           className="flex h-6 w-[26px] items-center justify-center rounded-md border border-mint/40 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">✓</button>
         <button data-tri-ecarter onClick={onEcarter} title="Écarter"
@@ -190,7 +198,7 @@ function facetteLabels(c: Cadrage): { key: keyof Filters; label: string }[] {
 /** VUE PROJET V5 — quatre étages (identité · analyse · progression · tri), lisibles d'un coup d'œil. */
 export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const qc = useQueryClient()
-  const { setOpenProjet, select, algoModale, setAlgoModale } = useApp()
+  const { setOpenProjet, select, algoModale, setAlgoModale, focusParcelle } = useApp()
   const [drag, setDrag] = useState<{ idu: string; from: StatutParcelle } | null>(null)
   const [overCol, setOverCol] = useState<StatutParcelle | null>(null)
   const [editing, setEditing] = useState(false)
@@ -431,6 +439,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                       onDragStart={() => setDrag({ idu: it.idu, from: 'proposee' })}
                       onRetenir={() => decide.mutate({ idu: it.idu, statut: 'retenue' })}
                       onEcarter={() => decide.mutate({ idu: it.idu, statut: 'ecartee' })}
+                      onVoir={() => focusParcelle(it.idu, { ortho: true })}
                       onFiche={() => select(it.idu)} />
                   ) : (
                     <MiniLigne key={it.idu} it={it} col={col.key}

@@ -4,6 +4,7 @@
 // promoteur, commune, logements, dates, état. Par promoteur : une frise par année + lien vers son Scan
 // patrimoine (les deux se renvoient, ne se dupliquent pas). Chiffres = comptes SQL, millésime affiché.
 import { useEffect, useMemo, useState } from 'react'
+import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useQuery } from '@tanstack/react-query'
 import { getMoi, getProgrammes, getPromoteurFrise, getVeillePromoteurs, type OperationPromoteur } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
@@ -125,6 +126,30 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
   const anneeDepuis = d ? Math.min(...(d.operations.map((o) => (o.date_min ? new Date(o.date_min).getFullYear() : NaN)).filter((y) => !Number.isNaN(y)) as number[]), Infinity) : Infinity
   const sel = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt'
 
+  // RETOURS-12 O6 — UN PROPRIÉTAIRE MORAL = UNE CARTE. Le listing servait une carte PAR OPÉRATION, si
+  // bien qu'un promoteur à plusieurs opérations (ex. CBO TERRITORIA) apparaissait plusieurs fois, chaque
+  // carte répétant la même frise. On REGROUPE les opérations par SIREN : une carte par promoteur, ses
+  // compteurs (permis, logements) = somme de SES opérations (même périmètre que la frise), ses opérations
+  // listées dessous, ses programmes publiés dédoublonnés (une seule fois).
+  const promoteurs = useMemo(() => {
+    const m = new Map<string, {
+      siren: string | null; denomination: string | null; categorie: string
+      ops: OperationPromoteur[]; nb_logements: number; n_permis: number; radar: boolean
+      programmes: NonNullable<OperationPromoteur['programme']>[]
+    }>()
+    for (const o of d?.operations ?? []) {
+      const key = o.siren ?? `∅${o.denomination ?? ''}`
+      const g = m.get(key) ?? { siren: o.siren, denomination: o.denomination, categorie: o.categorie,
+        ops: [], nb_logements: 0, n_permis: 0, radar: false, programmes: [] }
+      g.ops.push(o); g.nb_logements += o.nb_logements; g.n_permis += o.n_permis
+      if (o.radar_cite) g.radar = true
+      if (o.programme && !g.programmes.some((p) => p.nom === o.programme!.nom && p.url === o.programme!.url)) g.programmes.push(o.programme)
+      m.set(key, g)
+    }
+    // ordre : plus d'opérations d'abord (les gros promoteurs en tête)
+    return [...m.values()].sort((a, b) => b.ops.length - a.ops.length || b.nb_logements - a.nb_logements)
+  }, [d])
+
   // SECTEUR-2 (T2) — pousse les OPÉRATIONS localisées sur la carte (kind='operation', ambre / menthe si
   // citée par une annonce Radar). Nettoie au démontage (jamais un pin fantôme d'un autre outil).
   const extra = useMemo(() => ({
@@ -210,38 +235,45 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 <p className="text-[10px] leading-snug text-txt-dim">{d.regle.phrase}.</p>
               </>}
           <div className="flex flex-col gap-1.5">
-            {d.operations.length === 0 && <p className="text-[11.5px] text-txt-dim">Aucune opération pour ce filtre.</p>}
-            {/* RETOURS-4 S5 — carte REMISE À PLAT : chaque valeur sur SA ligne, aucune ne se chevauche.
-                Nom (ellipse, title complet) · faits (Type · permis · logements) · Commune · période ·
-                IDU sur sa propre ligne monospace ellipse · SIREN discret · actions alignées en bas. */}
-            {d.operations.map((o: OperationPromoteur, i) => (
-              <div key={i} data-vp-operation className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
-                <b className="truncate text-[12.5px] text-txt-hi" title={o.denomination ?? undefined}>{o.denomination ?? '(propriétaire non nommé)'}</b>
-                <span className="text-[11px] text-txt-mut">{CAT_LABEL[o.categorie] ?? o.categorie} · <b className="text-txt">{o.n_permis}</b> permis · <b className="text-txt">{o.nb_logements}</b> logement{o.nb_logements > 1 ? 's' : ''}</span>
-                <span className="text-[10.5px] text-txt-dim">{o.commune}{o.date_min && o.date_max && o.date_min !== o.date_max ? ` · ${new Date(o.date_min).toLocaleDateString('fr-FR')} → ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : (o.date_max ? ` · ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : '')}{o.etat ? ` · ${o.etat}` : ''}</span>
-                {o.idus[0] && (
-                  <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))} title="Ouvrir la fiche parcelle"
-                    className="block truncate text-left font-mono text-[10.5px] text-mint hover:underline">{o.idus[0]} →</button>
-                )}
-                {o.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN {o.siren}</span>}
-                {o.radar_cite && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
+            {promoteurs.length === 0 && <p className="text-[11.5px] text-txt-dim">Aucune opération pour ce filtre.</p>}
+            {/* RETOURS-12 O6 — UNE CARTE PAR PROMOTEUR (regroupée par SIREN). En-tête : nom + total permis
+                + total logements (= somme de ses opérations, même périmètre que la frise). Ses opérations
+                sont listées dessous ; ses programmes publiés une seule fois ; sa frise une seule fois. */}
+            {promoteurs.map((g, i) => (
+              <div key={g.siren ?? i} data-vp-promoteur data-vp-siren={g.siren ?? ''} className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
+                <b className="truncate text-[12.5px] text-txt-hi" title={g.denomination ?? undefined}>{g.denomination ?? '(propriétaire non nommé)'}</b>
+                <span className="text-[11px] text-txt-mut">{CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{g.ops.length}</b> opération{g.ops.length > 1 ? 's' : ''} · <b className="text-txt">{g.n_permis}</b> permis · <b className="text-txt">{g.nb_logements}</b> logement{g.nb_logements > 1 ? 's' : ''}</span>
+                {g.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN <Siren value={g.siren} className="font-mono text-txt-off" /></span>}
+                {g.radar && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
 
-                {/* PROMO-1 (P4) — programme rattaché : un FAIT (nom) + un LIEN, jamais un visuel externe. */}
-                {o.programme && (
-                  <div data-vp-programme className="mt-0.5 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
-                    <b className="block truncate text-txt-hi" title={o.programme.nom}>{o.programme.nom}</b>
-                    {o.programme.url && <a data-vp-programme-lien href={o.programme.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {o.programme.promoteur_nom ?? 'ce promoteur'} →</a>}
+                {/* ses OPÉRATIONS (une sous-ligne chacune) — le détail sans répéter le nom du promoteur. */}
+                <div className="mt-0.5 flex flex-col gap-1 border-t border-line/60 pt-1">
+                  {g.ops.map((o: OperationPromoteur, k) => (
+                    <div key={k} data-vp-operation className="flex flex-col gap-0.5 rounded-md bg-surface-3 px-2 py-1">
+                      <span className="text-[10.5px] text-txt">{o.commune} · <b className="text-txt-hi">{o.nb_logements}</b> lgt · {o.n_permis} permis{o.date_max ? ` · ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : ''}{o.etat ? ` · ${o.etat}` : ''}</span>
+                      {o.idus[0] && (
+                        <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))}
+                          className="block truncate text-left font-mono text-[10px] text-mint hover:underline">{o.idus[0]} →</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* PROMO-1 (P4) — programmes rattachés (dédoublonnés) : FAIT (nom) + LIEN, jamais un visuel. */}
+                {g.programmes.map((p, k) => (
+                  <div key={k} data-vp-programme className="mt-0.5 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
+                    <b className="block truncate text-txt-hi" title={p.nom}>{p.nom}</b>
+                    {p.url && <a data-vp-programme-lien href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {p.promoteur_nom ?? 'ce promoteur'} →</a>}
                   </div>
-                )}
+                ))}
 
-                {/* RETOURS-4 S5.2 — ACTIONS alignées en bas, chacune insécable (jamais de retour au milieu d'un libellé). */}
-                {o.siren && (
+                {g.siren && (
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line/60 pt-1.5 text-[10.5px]">
-                    <button data-vp-patrimoine onClick={() => voirPatrimoine(o.siren!)} className="whitespace-nowrap text-mint hover:underline" title="Tout son foncier — Scan patrimoine">voir son patrimoine →</button>
-                    <button data-vp-frise onClick={() => setOpenSiren((s) => (s === o.siren ? null : o.siren))} className="whitespace-nowrap text-mint hover:underline">{openSiren === o.siren ? 'masquer sa frise' : 'sa frise ▾'}</button>
+                    <button data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap text-mint hover:underline" title="Tout son foncier — Scan patrimoine">voir son patrimoine →</button>
+                    <button data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="whitespace-nowrap text-mint hover:underline">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise ▾'}</button>
                   </div>
                 )}
-                {openSiren === o.siren && o.siren && <Frise siren={o.siren} />}
+                {openSiren === g.siren && g.siren && <Frise siren={g.siren} />}
               </div>
             ))}
           </div>

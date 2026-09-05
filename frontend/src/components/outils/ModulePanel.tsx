@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
@@ -123,14 +124,18 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
 // RETOURS-4 S7 — « Ce qu'ils POSSÈDENT », onglet 1 de la fusion Scan patrimoine. En mode `embedded`, la
 // barre de recherche interne DISPARAÎT (la fusion en fournit une seule, partagée) et le propriétaire vient
 // de `sirenProp` ; le pont « Voir ses opérations » devient une BASCULE D'ONGLET (`onVoirOperations`).
-export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: boolean; sirenProp?: string | null; onVoirOperations?: (siren: string) => void } = {}) {
+export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: string | null } = {}) {
   const { m02Prefill, setM02Prefill } = useApp()
   // RETOURS-3 R4.3 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
   const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
   const setModule = useApp((s) => s.setModule)
   const [q, setQ] = useState('')
   const [sirenState, setSiren] = useState<string | null>(null)
+  // RETOURS-12 O5 — le bandeau (nom + 3 chiffres + détail) est REPLIABLE en accordéon pour laisser
+  // toute la place à la liste des parcelles (bug : la liste ne s'ouvrait pas, noyée sous le bandeau).
+  const [bandeauReplie, setBandeauReplie] = useState(false)
   const siren = embedded ? (sirenProp ?? null) : sirenState
+  useEffect(() => { setBandeauReplie(false) }, [siren])   // nouveau propriétaire → bandeau déplié
   useEffect(() => {
     // en mode embarqué, le SIREN vient de la fusion (sirenProp) — on ne consomme pas m02Prefill (pas de course).
     if (!embedded && m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
@@ -192,37 +197,57 @@ export function M02({ embedded, sirenProp, onVoirOperations }: { embedded?: bool
               ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
             </div>
           )}
-          <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-          {/* RETOURS-5 T4.1 — TROIS chiffres qui comptent, en grille de 3 cartes. Rien d'autre au 1er niveau. */}
-          <div className="grid grid-cols-3 gap-2">
-            {([['n_parcelles', 'parcelles'], ['n_actionnables', 'actionnables'], ['sdp_residuelle_m2', 'm² SDP résiduelle']] as const).map(([k, lbl]) => (
-              <div key={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
-                <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{fmt(d[k] as number)}</div>
-                <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{lbl}</div>
+          {/* RETOURS-12 O5 — BANDEAU repliable : replié, une barre compacte rouvrable ; déplié, le nom +
+              les 3 chiffres + le détail. Replier libère toute la hauteur pour la LISTE des parcelles. */}
+          {bandeauReplie ? (
+            <button data-scan-bandeau-rouvrir onClick={() => setBandeauReplie(false)}
+              className="flex w-full items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-left text-[11.5px] text-txt-dim transition-colors duration-quick hover:text-txt">
+              <span className="min-w-0 truncate"><b className="text-txt">{d['nom'] as string}</b> · {fmt(total)} parcelles</span>
+              <span className="shrink-0 text-txt-mut">détail ▾</span>
+            </button>
+          ) : (
+            <>
+              <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
+              {/* RETOURS-5 T4.1 — TROIS chiffres qui comptent, en grille de 3 cartes. Rien d'autre au 1er niveau. */}
+              <div className="grid grid-cols-3 gap-2">
+                {([['n_parcelles', 'parcelles'], ['n_actionnables', 'actionnables'], ['sdp_residuelle_m2', 'm² SDP résiduelle']] as const).map(([k, lbl]) => (
+                  <div key={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{fmt(d[k] as number)}</div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{lbl}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          {/* RETOURS-5 T4.2 — tout le reste REPLIÉ : détail des actionnables, valorisation, périmètre, nature. */}
-          <details className="text-xs">
-            <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
-            <div className="flex flex-col">
-              {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
-                  des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
-              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
-              {d['valorisation_nu_eur'] != null && (
-                <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
-              )}
-              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
-              <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
-            </div>
-          </details>
-          {/* RETOURS-5 T4.4 — « Voir ses opérations → » : bouton PLEINE LARGEUR (survol plein) entre l'encart et la liste. */}
-          {d['siren'] != null && (
+              {/* RETOURS-5 T4.2 — tout le reste REPLIÉ : détail des actionnables, valorisation, périmètre, nature. */}
+              <details className="text-xs">
+                <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
+                <div className="flex flex-col">
+                  {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
+                      des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
+                  {d['valorisation_nu_eur'] != null && (
+                    <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
+                  )}
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
+                </div>
+              </details>
+            </>
+          )}
+          {/* RETOURS-12 O5 — en fusion (ScanPatrimoine), « Voir ses parcelles → » REPLIE le bandeau pour
+              ouvrir la liste (les opérations restent dans l'onglet « Construction »). Hors fusion (M02
+              seul), le pont historique « Voir ses opérations → » vers Veille promoteurs est conservé. */}
+          {d['siren'] != null && (embedded ? (
+            !bandeauReplie && (
+              <button data-scan-voir-parcelles onClick={() => setBandeauReplie(true)}
+                className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Replier le bandeau et voir la liste des parcelles">
+                Voir ses parcelles →</button>
+            )
+          ) : (
             <button data-m02-operations
-              onClick={() => { const s = String(d['siren']); if (embedded && onVoirOperations) onVoirOperations(s); else { setVeilleFocusSiren(s); setModule('veille-promoteurs') } }}
+              onClick={() => { const s = String(d['siren']); setVeilleFocusSiren(s); setModule('veille-promoteurs') }}
               className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Ce qu'il construit — ses opérations">
               Voir ses opérations →</button>
-          )}
+          ))}
           {/* liste — RETOURS-5 T4.5 : lignes en survol plein (hoverFull). */}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {items.map((i) => (
@@ -305,7 +330,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             </div>
             <F label="Statut" value={d['statut']} />
             <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
-            {d['porteur_siren'] && <F label="SIREN" value={<span className="font-mono">{d['porteur_siren']}</span>} />}
+            {d['porteur_siren'] && <F label="SIREN" value={<Siren value={String(d['porteur_siren'])} className="font-mono text-txt" />} />}
             <F label="Nombre de lots" value={d['nb_lots']} />
             <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
             <F label="Date de dépôt" value={d['date_depot']} />
@@ -383,6 +408,7 @@ export function M03() {
   const permitToOpen = useApp((s) => s.permitToOpen)
   const setPermitToOpen = useApp((s) => s.setPermitToOpen)
   const setFlyTo = useApp((s) => s.setFlyTo)
+  const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-12 O12.2 — zoom+surbrillance commun (O1)
   useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
@@ -492,11 +518,12 @@ export function M03() {
           VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
       <div>
         <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune, n° de permis ou parcelle…"
-          onSelect={(sel) => setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 })}
+          onSelect={(sel) => { if (sel.idu) focusParcelle(iduComplet(sel.idu)); else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           onEnterRaw={(t) => {
             const v = iduComplet(t)
-            // IDU cadastral complet (14 car.) → cherche les permis de la parcelle (O17 g)
-            if (v.length === 14 && estIdu(v)) { setParcelIdu(v); return }
+            // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
+            // (focusParcelle, même geste que O1/J1) EN PLUS de chercher ses permis (O17 g).
+            if (v.length === 14 && estIdu(v)) { focusParcelle(v); setParcelIdu(v); return }
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
           }} />
@@ -515,9 +542,12 @@ export function M03() {
           (les autres filtres — période, type, commune, géocodage — se plient, eux, dans la boîte ci-dessous). */}
       <div data-permis-segment className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
         {([
-          ['cours', 'En cours', '#4ADE80', radarEntryTotal],
+          // RETOURS-12 O12.1 — libellés PRÉCIS. Sitadel 974 ne publie QUE les permis AUTORISÉS (aucune
+          // instruction déposée-non-autorisée en base) → « en cours » ne peut pas signifier « instruction ».
+          // « Chantier récent » = autorisé récemment (travaux en cours ou récemment achevés) ;
+          // « Chantier au point mort » = autorisé ancien SANS achèvement (DAACT absente).
+          ['cours', 'Chantier récent', '#4ADE80', radarEntryTotal],
           ['mort', 'Point mort', '#E2726A', pmEntryTotal],
-          // F2 — « Tous » = en cours + point mort (le compteur est la somme des deux jeux).
           ['tous', 'Tous', null, (radarEntryTotal != null && pmEntryTotal != null) ? radarEntryTotal + pmEntryTotal : null],
         ] as const).map(([k, label, dot, n], i) => (
           <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)}
@@ -528,6 +558,13 @@ export function M03() {
           </button>
         ))}
       </div>
+      {/* RETOURS-12 O12.1 — note honnête sur ce que Sitadel couvre au 974 : uniquement les permis
+          AUTORISÉS (pas l'instruction en cours). Le statut exact (chantier / achevé) est porté par
+          chaque permis (étiquette d'état, source unique). */}
+      <p className="-mt-1 px-0.5 text-[9.5px] leading-snug text-txt-dim">
+        Sitadel (974) ne publie que les permis <b className="text-txt-mut">autorisés</b> — pas l'instruction déposée.
+        « Chantier récent » = autorisé récemment · « Point mort » = autorisé ancien sans achèvement (DAACT).
+      </p>
 
       {/* ZONE 2 — FILTRES REPLIABLES (O17 a/f/i) : période · type · commune · géocodage. Un en-tête
           cliquable ouvre/ferme la boîte ; il porte le résumé des filtres actifs pour que rien ne soit

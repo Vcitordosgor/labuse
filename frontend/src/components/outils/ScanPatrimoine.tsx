@@ -10,6 +10,7 @@
 // ramène à l'état 1), et LES ONGLETS APPARAISSENT — soulignés, pas des boutons pleins : ce sont des onglets,
 // pas des actions. La bascule d'onglet ne relance AUCUNE recherche (le propriétaire est partagé).
 import { useEffect, useState } from 'react'
+import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { banAutocomplete, getFiche, modPatrimoine, modPatrimoineSearch, parcelAt } from '../../lib/api'
 import { estIdu, iduComplet } from '../../lib/format'
@@ -164,7 +165,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           <div data-scan-owner className="flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
             <div className="min-w-0">
               <div className="truncate text-[13.5px] font-semibold text-txt-hi">{ownerNom ?? '…'}</div>
-              <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN {owner}</div>
+              <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
             </div>
             <button data-scan-changer onClick={changer} className="shrink-0 text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
           </div>
@@ -198,7 +199,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
 
           <div className="flex min-h-0 flex-1 flex-col gap-1.5">
             {tab === 'possede'
-              ? <M02 embedded sirenProp={owner} onVoirOperations={(s) => { setOwner(s); setOwnerLabel(null); setTab('construit') }} />
+              ? <M02 embedded sirenProp={owner} />
               : <VeillePromoteurs embedded focusSiren={owner} onCount={setNConstruit} onVoirPatrimoine={(s) => { setOwner(s); setOwnerLabel(null); setTab('possede') }} />}
           </div>
         </>

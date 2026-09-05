@@ -332,7 +332,9 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('parcels-brulantes', 'line-color', t.lisereBrulantes)
   // M106 : les deux couches d'aléa suivent le jeu du thème (teinte + gradation + trame + contour)
   for (const c of ALEA_COUCHES) {
-    set(c.id, 'fill-color', t[c.token]); set(c.id, 'fill-opacity', aleaOpacityExpr(t))
+    // RETOURS-12 C3 — teinte par NIVEAU (rampe du thème) + opacité constante ; le contour et la trame
+    // gardent la teinte d'IDENTITÉ de l'aléa (distinction inondation vs mouvement de terrain superposés).
+    set(c.id, 'fill-color', aleaColorExpr(t, c.ramp)); set(c.id, 'fill-opacity', t.aleaFillOpacity)
     set(`${c.id}-trame`, 'fill-pattern', `${c.trame}-${clair ? 'clair' : 'sombre'}`)
     set(`${c.id}-trame`, 'fill-opacity', t.aleaTrameOpacity)
     set(`${c.id}-line`, 'line-color', t[c.token]); set(`${c.id}-line`, 'line-width', t.aleaContourW)
@@ -347,6 +349,7 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
   set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
+  set('ov-tcsp', 'line-color', t.tcsp)   // RETOURS-12 C2 — axe structurant BAOBAB (teinte du thème)
 
   // ═══ RETOURS-11 C4 — VARIANT LISIBILITÉ « fond photo/clair » (Plan & Ortho) ═══
   // Ce bloc s'exécute EN DERNIER : il écrase, pour les seuls fonds photo, les propriétés posées
@@ -458,9 +461,12 @@ const DISPO_TRAMES = [
 ] as const
 // M106 : l'aplat des aléas est GRADUÉ par le niveau servi (faible/moyen/fort) — expression
 // partagée création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
-const aleaOpacityExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
+// RETOURS-12 C3 — l'aplat prend une TEINTE par niveau (bleu→orange→rouge / beige→marron→rouge),
+// franchement distinctes : on lit l'échelle de gravité sans deviner un camaïeu d'opacité. Le libellé
+// officiel de l'aléa reste la vérité ; la couleur ne fait qu'ordonner. Opacité désormais constante.
+const aleaColorExpr = (t: MapTokens, ramp: 'aleaInondationRamp' | 'aleaMvtRamp'): maplibregl.ExpressionSpecification => [
   'match', ['coalesce', ['get', 'niveau'], 'moyen'],
-  'faible', t.aleaOpacity.faible, 'fort', t.aleaOpacity.fort, t.aleaOpacity.moyen,
+  'faible', t[ramp].faible, 'fort', t[ramp].fort, t[ramp].moyen,
 ] as unknown as maplibregl.ExpressionSpecification
 // M106-B — LA COULEUR DIT LE RÉSEAU : expression match sur subtype (= réseau GTFS), tokens
 // par thème (mapTheme.transportReseaux) ; repli transportDefaut pour un réseau futur.
@@ -472,8 +478,8 @@ const reseauColorExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
 
 //: M106 — les deux couches d'aléa DEAL (id, subtype du flux, token de teinte, trame dédiée)
 const ALEA_COUCHES = [
-  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', trame: 'trame-alea-inond', orient: 'backslash' },
-  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', trame: 'trame-alea-mvt', orient: 'horiz' },
+  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', ramp: 'aleaInondationRamp', trame: 'trame-alea-inond', orient: 'backslash' },
+  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', ramp: 'aleaMvtRamp', trame: 'trame-alea-mvt', orient: 'horiz' },
 ] as const
 
 function makeEquipIcons(m: maplibregl.Map) {
@@ -570,7 +576,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
@@ -644,6 +650,8 @@ export function MapView() {
   const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
   const tele = useQuery({ queryKey: ['layer', 'telepherique'], queryFn: () => getMapLayer('telepherique'), enabled: layers.transport })
   const lignesHt = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
+  // RETOURS-12 C2 — axe de transport structurant (BAOBAB Express), couche synthétique dérivée du GTFS.
+  const tcspAxe = useQuery({ queryKey: ['layer', 'tcsp_axe'], queryFn: () => getMapLayer('tcsp_axe'), enabled: layers.tcsp })
   // M106-B P3 : axes structurants (3 481 tronçons BD TOPO importance 1-2)
   const axes = useQuery({ queryKey: ['layer', 'axe_structurant'], queryFn: () => getMapLayer('axe_structurant', 5_000), enabled: layers.axes })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
@@ -736,7 +744,9 @@ export function MapView() {
       // fonds de plan (tous chargés, visibilité pilotée par l'effet fond via activeBasemapKey —
       // FOND-SOMBRE : plus de fond visible à la création, le défaut « dark » n'a plus de raster)
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
-        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
+        // RETOURS-12 C6 — `bounds` sur les fonds ortho (emprise 974) : maplibre ne demande plus les
+        // tuiles no-data (blanches) au large → fini l'escalier de tuiles sur fond blanc en vue dézoomée.
+        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}), ...(src.bounds ? { bounds: src.bounds } : {}) })
         m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' } })
       }
       // M65 P8 — MASSE TERRESTRE (île dissoute) : la terre sans parcelle (cirques, forêt, volcan)
@@ -807,7 +817,7 @@ export function MapView() {
         makeTrame(m, `${c.trame}-sombre`, MAP_THEME.sombre[c.token], c.orient)
         makeTrame(m, `${c.trame}-clair`, MAP_THEME.clair[c.token], c.orient)
         m.addLayer({ id: c.id, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
-          paint: { 'fill-color': T_SOMBRE[c.token], 'fill-opacity': aleaOpacityExpr(T_SOMBRE) } })
+          paint: { 'fill-color': aleaColorExpr(T_SOMBRE, c.ramp), 'fill-opacity': T_SOMBRE.aleaFillOpacity } })
         m.addLayer({ id: `${c.id}-trame`, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
           paint: { 'fill-pattern': `${c.trame}-sombre`, 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
         m.addLayer({ id: `${c.id}-line`, type: 'line', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
@@ -828,16 +838,23 @@ export function MapView() {
       // pôle OSM (Sourcé) = disque plein NEUTRE · pôle dérivé (Estimé) = anneau ·
       // téléphérique = tireté couleur CINOR/Citalis. Plus les AXES STRUCTURANTS (BD TOPO,
       // importance IGN 1-2, trait plein ardoise) et les LIGNES HT (anthracite tireté).
-      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht']) {
+      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht', 'ov-tcsp']) {
         m.addSource(src, { type: 'geojson', data: EMPTY_FC as never })
       }
       m.addLayer({ id: 'ov-axe', type: 'line', source: 'ov-axe', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.axe, 'line-width': 2.2, 'line-opacity': 0.85 } })
       m.addLayer({ id: 'ov-trans-ligne', type: 'line', source: 'ov-trans-ligne', layout: { visibility: 'none' },
         paint: { 'line-color': reseauColorExpr(T_SOMBRE), 'line-width': 1.3, 'line-opacity': 0.75 } })
-      m.addLayer({ id: 'ov-trans-arret', type: 'circle', source: 'ov-trans-arret', minzoom: 12,
+      // RETOURS-12 C5 — arrêts NETTEMENT plus visibles : rayon proportionné au zoom (discret à
+      // l'échelle île, franc à l'échelle quartier) + contour sombre pour tenir sur fond clair comme
+      // sur ortho. Un arrêt se lit comme un arrêt, plus comme un pixel sur le trait.
+      m.addLayer({ id: 'ov-trans-arret', type: 'circle', source: 'ov-trans-arret', minzoom: 11,
         layout: { visibility: 'none' },
-        paint: { 'circle-radius': 2.2, 'circle-color': reseauColorExpr(T_SOMBRE), 'circle-opacity': 0.85 } })
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 3, 14, 5.5, 16, 8, 18, 10] as unknown as maplibregl.ExpressionSpecification,
+          'circle-color': reseauColorExpr(T_SOMBRE), 'circle-opacity': 0.9,
+          'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 16, 1.6] as unknown as maplibregl.ExpressionSpecification,
+        } })
       m.addLayer({ id: 'ov-tele', type: 'line', source: 'ov-tele', layout: { visibility: 'none' },
         filter: ['==', ['get', 'subtype'], 'ligne'] as never,
         paint: { 'line-color': T_SOMBRE.transportReseaux['Papang'], 'line-width': 2.4, 'line-dasharray': [1.6, 1.2], 'line-opacity': 0.95 } })
@@ -851,6 +868,10 @@ export function MapView() {
                  'circle-stroke-color': T_SOMBRE.pole, 'circle-stroke-width': 2 } })
       m.addLayer({ id: 'ov-ht', type: 'line', source: 'ov-ht', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.ht, 'line-width': 1.6, 'line-dasharray': [5, 2.5], 'line-opacity': 0.9 } })
+      // RETOURS-12 C2 — axe structurant BAOBAB : trait PLEIN ÉPAIS (la desserte rapide se lit d'un coup),
+      // teinte turquoise identitaire ; halo sombre pour tenir sur ortho comme sur fond clair.
+      m.addLayer({ id: 'ov-tcsp', type: 'line', source: 'ov-tcsp', layout: { visibility: 'none', 'line-cap': 'round' },
+        paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.5, 13, 4, 16, 6] as unknown as maplibregl.ExpressionSpecification, 'line-opacity': 0.95 } })
       // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
       // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
       m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
@@ -1264,7 +1285,7 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
-      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt],
+      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['tcsp', tcspAxe],
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf]]   // M134 dispositifs · M137-U znieff · T4 vefa
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
@@ -1323,7 +1344,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, tcspAxe.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1450,6 +1471,7 @@ export function MapView() {
     m.setLayoutProperty('ov-axe', 'visibility', vis(layers.axes))
     m.setLayoutProperty('ov-pole', 'visibility', vis(layers.axes))   // M137-X — pôles sur « Axes structurants »
     m.setLayoutProperty('ov-ht', 'visibility', vis(layers.lignes_ht))
+    m.setLayoutProperty('ov-tcsp', 'visibility', vis(layers.tcsp))   // RETOURS-12 C2
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
     m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))
@@ -1573,9 +1595,11 @@ export function MapView() {
       // en évidence ; le nombre de chaudes reste en INFO secondaire (survol).
       // M36 Lot A : depuis M35 `c.chaudes` = TIERS du run servi (brûlantes + chaudes) — l'ancienne
       // étiquette « (matrice Q×A) » était devenue FAUSSE. L'échelle thermique est la bonne (R3).
-      el.title = hot
-        ? `${c.commune} — ${c.chaudes} parcelles prioritaires ou à suivre au classement servi · ouvrir la fiche commune`
-        : `${c.commune} · ouvrir la fiche commune`
+      // RETOURS-12 T5 — infobulle réduite au FAIT NON AFFICHÉ. La pastille dit déjà le nom de la
+      // commune et le curseur dit qu'elle est cliquable : on ne répète ni l'un ni l'autre. Reste le
+      // seul fait absent de la pastille — le nombre de parcelles chaudes — et seulement quand il existe.
+      if (hot) el.title = `${c.chaudes} parcelles prioritaires ou à suivre au classement servi`
+      else el.removeAttribute('title')
       // RETOURS-11 T6 (03/09) — l'article n'est élidé QUE pour les 21 autres communes ; « Le Port »,
       // « Le Tampon », « La Possession » gardent leur article (référentiel unique lib/communes).
       const name = communePastille(c.commune)
@@ -1617,11 +1641,14 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current || !m.getLayer('parcels-sel')) return
-    m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
-    m.setFilter('ile-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
-    // PING SYSTÉMATIQUE : toute sélection (liste, module, CRM, notification) recentre + pulse 2 s
-    if (!selectedIdu) return
-    const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === selectedIdu)
+    // RETOURS-12 O1/O12/J1 — la CIBLE du zoom+surbrillance = la parcelle sélectionnée (fiche ouverte)
+    // OU la parcelle mise au FOCUS par un outil (focusParcelle, SANS ouvrir la fiche). Même geste.
+    const cible = selectedIdu ?? focusIdu
+    m.setFilter('parcels-sel', ['==', ['get', 'idu'], cible ?? ''])
+    m.setFilter('ile-sel', ['==', ['get', 'idu'], cible ?? ''])
+    // PING SYSTÉMATIQUE : toute sélection/focus (liste, module, CRM, notification, outil) recentre + pulse
+    if (!cible) return
+    const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === cible)
     let cancelled = false
     const centroidReady = (c: [number, number] | null) => {
       if (!c || cancelled) return
@@ -1632,7 +1659,7 @@ export function MapView() {
       // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API.
       // CONTRAT (Vic, 07/07) : un clic dans la liste = je VOIS la parcelle pulser, où qu'elle
       // soit — le champ est `coords` [lon, lat] (le fallback lat/lon muet était le bug).
-      getFiche(selectedIdu).then((f) => {
+      getFiche(cible).then((f) => {
         const c = (f as unknown as { coords?: [number, number] }).coords
         if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]])
       }).catch(() => undefined)
@@ -1645,7 +1672,7 @@ export function MapView() {
         : { id: 'ile-ping', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
             filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 6, 'line-opacity': 0.9, 'line-blur': 3 } })
     }
-    m.setFilter(pingId, ['==', ['get', 'idu'], selectedIdu])
+    m.setFilter(pingId, ['==', ['get', 'idu'], cible])
     let t0: number | null = null
     let raf = 0
     const pulse = (ts: number) => {
@@ -1663,7 +1690,7 @@ export function MapView() {
     }
     raf = requestAnimationFrame(pulse)
     return () => { cancelAnimationFrame(raf); cancelled = true }
-  }, [selectedIdu, geo.data, mapReady])
+  }, [selectedIdu, focusIdu, focusNonce, geo.data, mapReady])
 
   // module actif → surlignage + géométries propres (les DEUX jeux de calques)
   useEffect(() => {

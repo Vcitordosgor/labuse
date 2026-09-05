@@ -57,7 +57,9 @@ describe('ASSEMBLAGE — libellés + charge négative + pont Courrier', () => {
     const bloc = document.querySelector('[data-asm-charge]') as HTMLElement
     expect(bloc.getAttribute('data-neg')).toBe('1')
     expect(bloc.querySelector('.text-st-ecartee')).toBeTruthy()   // rouge (traitement ETUDIER)
-    expect(bloc.textContent).toContain('négative')
+    // RETOURS-12 T7 — résultat d'un scénario d'opération, jamais un verdict sur les parcelles.
+    expect(bloc.textContent).toContain('ne dégage rien pour le terrain')
+    expect(bloc.textContent).toContain('scénario')
     expect(bloc.textContent).toContain('479')                     // marché zone
   })
 

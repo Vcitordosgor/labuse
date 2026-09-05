@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
 import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getProjets, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
-import { estIdu, iduComplet } from '../../lib/format'
+import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
 // nature s'y produisent (« 8 nouveaux permis à Saint-Louis » + « Voir les 8 → »), au lieu de N lignes
@@ -135,6 +135,27 @@ export function Omnibox() {
 
       // 2. SIREN (9) / SIRET (14) → Scan patrimoine à l'état 2 (propriétaire posé)
       if (/^\d{9}$/.test(dg) || /^\d{14}$/.test(dg)) { ouvrirScan(dg.slice(0, 9)); return }
+
+      // 2bis. RÉFÉRENCE CADASTRALE COURTE (section + numéro, ex. « BW0917 ») — RETOURS-12 T1.
+      // Grammaire UNIQUE (estSectionNumero/normSectionNumero, LOI-3), résolue AVANT le nom de
+      // propriétaire (sinon « BW0917 » — qui contient des lettres — filerait en recherche d'owner).
+      // Jamais de choix au hasard : plusieurs communes → on présélectionne celle du contexte si elle
+      // correspond, sinon on nomme les communes et on demande de préciser (jamais muet).
+      if (estSectionNumero(val)) {
+        const needle = normSectionNumero(val)
+        const cands = (await searchParcels(needle, { ileEntiere: true }).catch(() => []))
+          .filter((r) => iduComplet(r.idu).toUpperCase().endsWith(needle))
+        if (cands.length === 1) { setView('cartes'); select(cands[0].idu); return }
+        if (cands.length > 1) {
+          const daccord = commune ? cands.find((c) => c.commune === commune) : undefined
+          if (daccord) { setView('cartes'); select(daccord.idu); return }
+          const comms = [...new Set(cands.map((c) => c.commune))]
+          setToast(`« ${val.toUpperCase()} » existe dans ${comms.length} communes (${comms.slice(0, 4).join(', ')}${comms.length > 4 ? '…' : ''}) — ouvrez la commune, puis ressaisissez la référence.`)
+          return
+        }
+        setToast(`Aucune parcelle « ${val.toUpperCase()} » (référence section + numéro) sur l'île.`)
+        return
+      }
 
       // 3. NOM de propriétaire → Scan patrimoine état 2 (réutilise la recherche de Scan patrimoine)
       if (/[a-zA-Zà-ÿ]/.test(val)) {

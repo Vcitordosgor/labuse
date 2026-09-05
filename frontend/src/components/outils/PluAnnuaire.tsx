@@ -54,14 +54,14 @@ export function PluAnnuaire() {
           </p>
           {communes.data && (
             <div data-plu-biblio>
-              {/* OUTILS-1 A5 — le RNU n'est PAS une procédure (c'est l'ABSENCE de PLU) : le bandeau
-                  distingue explicitement « en révision » (procédure) et « au RNU », chaque compte servi
-                  par le backend depuis le statut réel de l'annuaire (jamais dérivé/figé au front). */}
-              {/* O7(a) — bandeau sur UNE ligne (no-wrap), sans mention interne ; chaque compte servi
-                  par le backend depuis le statut réel de l'annuaire (jamais dérivé/figé au front). */}
+              {/* RETOURS-12 O4 — le bandeau lit désormais la SOURCE UNIQUE des procédures (veille_plu,
+                  la même que « Vérif procédure » et la fiche) : `n_procedures` = procédures PLU EN COURS
+                  (révision/élaboration prescrites, Sudocuh) — inclut Les Trois-Bassins, que l'ancien
+                  compteur (disponibilité du règlement GPU) ratait. Le RNU (absence de PLU) et le règlement
+                  non servi restent distincts. Plus jamais deux comptes qui se contredisent. */}
               <p className="mb-1.5 truncate whitespace-nowrap px-0.5 font-mono text-[9px] uppercase tracking-[.14em] text-txt-dim">
                 {communes.data.servables} PLU disponibles
-                {communes.data.n_revision > 0 && <> · {communes.data.n_revision} en révision</>}
+                {communes.data.n_procedures > 0 && <> · {communes.data.n_procedures} procédure{communes.data.n_procedures > 1 ? 's' : ''} en cours</>}
                 {communes.data.n_rnu > 0 && <> · {communes.data.n_rnu} au RNU</>}
                 {communes.data.n_non_ingere > 0 && <> · {communes.data.n_non_ingere} non ingéré{communes.data.n_non_ingere > 1 ? 's' : ''}</>}
               </p>
@@ -72,11 +72,16 @@ export function PluAnnuaire() {
                     <button key={c.insee} data-plu-commune={c.insee} onClick={() => entrer(c.insee)}
                       className={`hover-fill flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left ${
                         ok ? 'border-line bg-surface-2' : 'border-line/60 bg-surface-1'}`}>
-                      <span className={`truncate text-[11.5px] ${ok ? 'text-txt' : 'text-txt-dim'}`}>{c.commune}</span>
-                      {ok
-                        ? <span className="shrink-0 font-mono text-[8.5px] text-mint/70">à jour</span>
-                        : <span className="shrink-0 whitespace-nowrap font-mono text-[8px] text-cp-amber" title={c.message ?? ''}>
-                            {c.statut === 'rnu' ? 'RNU' : c.statut === 'revision' ? 'révision' : 'non ingéré'}</span>}
+                      <span className={`min-w-0 truncate text-[11.5px] ${ok ? 'text-txt' : 'text-txt-dim'}`}>{c.commune}</span>
+                      {/* RETOURS-12 O4 — badge PROCÉDURE (source unique) : une commune peut avoir un PLU
+                          servi ET une révision en cours (ex. Les Trois-Bassins) — on l'affiche, réconcilié. */}
+                      <span className="flex shrink-0 items-center gap-1">
+                        {c.procedure_active && <span data-plu-procedure={c.insee} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber" title={`${c.procedure_active} en cours${c.procedure_date ? ` (prescrite le ${new Date(c.procedure_date).toLocaleDateString('fr-FR')})` : ''}`}>{c.procedure_active}</span>}
+                        {ok
+                          ? <span className="font-mono text-[8.5px] text-mint/70">à jour</span>
+                          : <span className="whitespace-nowrap font-mono text-[8px] text-cp-amber" title={c.message ?? ''}>
+                              {c.statut === 'rnu' ? 'RNU' : c.statut === 'revision' ? 'règlement en attente' : 'non ingéré'}</span>}
+                      </span>
                     </button>
                   )
                 })}

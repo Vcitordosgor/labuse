@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fmtEurCompact, fmtInt } from '../../lib/format'
+import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { EtudierBien } from './EtudierBien'
 
-// Mandat ETUDIER — sur BZ 1065 : charge NÉGATIVE affichée (plus de « 0 € » écrêté), verdict UNIQUE à
-// bascule, libellé « SHAB vendable » (pas « SDP »), alerte de cohérence résiduel-bâti (26 < 123).
+// RETOURS-12 O2 — refonte « Étudier un bien » en DEUX niveaux : premier niveau DESCRIPTIF (ce que
+// porte la parcelle + repères de marché, AUCUN nombre négatif, AUCUN verdict d'opération), et le
+// raisonnement d'opération (bilan, charge, marge) derrière un geste explicite. Le prix demandé est
+// COMPARÉ à ce qu'une opération pourrait payer (plancher 0), jamais additionné à une charge négative.
+// Ancré sur BZ 1065 (charge calibrée −219 375 € = le cas de la capture de Vic).
 const CONSTAT = {
   ok: true, adresse: 'BZ 1065', idu: '97411000BZ1065', commune: 'Saint-Denis', surface_m2: 1625,
   verdict: { tier: 'neutre', libelle: 'Neutre', rang: null, percentile: null },
@@ -35,45 +38,63 @@ function renderEtudier() {
 
 const norm = (s: string) => s.replace(/\s/g, ' ')
 
-describe('ETUDIER — « Étudier un bien » (BZ 1065)', () => {
+describe('ETUDIER — refonte O2 deux niveaux (BZ 1065)', () => {
   beforeEach(() => {
     mockFetch()
     useApp.setState({ calcPrefill: '97411000BZ1065' })   // porte fiche → résout le constat au montage
   })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ calcPrefill: null }) })
 
-  it('la charge NÉGATIVE s\'affiche en négatif (jamais « 0 € »), en rouge', async () => {
+  it('PREMIER niveau descriptif : « ce que porte la parcelle », AUCUN verdict/charge à l\'accueil', async () => {
     renderEtudier()
-    await screen.findByText(/SHAB vendable/)
-    const chargeEl = document.querySelector('[data-etudier-charge]') as HTMLElement
+    const porte = await screen.findByText(/Ce que porte la parcelle/)
+    const box = porte.closest('[data-etudier-porte]') as HTMLElement
+    expect(norm(box.textContent ?? '')).toContain('Surface habitable constructible')
+    expect(norm(box.textContent ?? '')).toContain(`${fmtInt(123)} m²`)
+    expect(document.querySelector('[data-etudier-verdict]')).toBeNull()   // pas de charge à l'accueil
+    expect(document.querySelector('[data-etudier-analyser]')).toBeTruthy()   // le geste explicite
+  })
+
+  it('SECOND niveau (sur geste) : charge NÉGATIVE présentée « 0 € », jamais un nombre négatif de tête', async () => {
+    renderEtudier()
+    await screen.findByText(/Ce que porte la parcelle/)
+    fireEvent.click(document.querySelector('[data-etudier-analyser]') as HTMLElement)
+    const chargeEl = await screen.findByText('0 €', { selector: '[data-etudier-charge]' })
     expect(chargeEl).toBeTruthy()
-    expect(norm(chargeEl.textContent ?? '')).toBe(norm(fmtEurCompact(-219375)))   // « −219 k€ », pas « 0 € »
-    expect(chargeEl.textContent).not.toBe('0 €')
-    expect(chargeEl.className).toContain('text-st-ecartee')                        // rouge
+    expect(document.querySelector('[data-etudier-verdict]')).toBeTruthy()
+    expect(norm(document.querySelector('[data-etudier-verdict]')!.textContent ?? ''))
+      .toContain('ne dégage rien pour le terrain')
   })
 
-  it('libellé « SHAB vendable » — plus jamais « SDP vendable »', async () => {
+  it('prix demandé COMPARÉ, jamais additionné : « écart » = prix, pas un déficit cumulé', async () => {
     renderEtudier()
-    await screen.findByText(/SHAB vendable/)
-    expect(screen.queryByText(/SDP vendable/)).toBeNull()
+    await screen.findByText(/Ce que porte la parcelle/)
+    fireEvent.click(document.querySelector('[data-etudier-analyser]') as HTMLElement)
+    await screen.findByText('0 €', { selector: '[data-etudier-charge]' })
+    fireEvent.change(document.querySelector('[data-etudier-prix]') as HTMLElement, { target: { value: '500000' } })
+    const t = norm((document.querySelector('[data-etudier-ecart]') as HTMLElement).textContent ?? '')
+    expect(t).toContain('écart')
+    expect(t).toContain('une opération pourrait en payer')
+    expect(t).not.toContain('719')   // plus jamais le déficit cumulé charge − prix (−219 − 500 = −719)
   })
 
-  it('verdict UNIQUE à bascule [Calibrées LABUSE | Vos hypothèses]', async () => {
+  it('bascule [Calibrées LABUSE | Vos hypothèses] présente dans l\'analyse d\'opération', async () => {
     renderEtudier()
-    await screen.findByText(/SHAB vendable/)
+    await screen.findByText(/Ce que porte la parcelle/)
+    fireEvent.click(document.querySelector('[data-etudier-analyser]') as HTMLElement)
+    await screen.findByText('0 €', { selector: '[data-etudier-charge]' })
     expect(document.querySelector('[data-etudier-mode="calibree"]')).toBeTruthy()
     expect(document.querySelector('[data-etudier-mode="hypotheses"]')).toBeTruthy()
-    // un SEUL bloc-verdict
     expect(document.querySelectorAll('[data-etudier-verdict]')).toHaveLength(1)
   })
 
-  it('alerte de cohérence résiduel (26 m²) reliée à Pièges & risques — périmètre étiqueté (O2-5)', async () => {
+  it('alerte de cohérence résiduel (26 m²) reliée à Pièges & risques', async () => {
     renderEtudier()
-    // OUTILS-2 O2-5 : vocabulaire unique des périmètres — « résiduel, bâti conservé » (source lib/perimetres).
-    const alerte = await screen.findByText(/bâti conservé/)
+    await screen.findByText(/Ce que porte la parcelle/)
+    const alerte = await screen.findByText(/Bâti existant/)   // attend la résolution de la fiche (async)
     const box = alerte.closest('[data-etudier-residuel]') as HTMLElement
+    expect(box).toBeTruthy()
     expect(norm(box.textContent ?? '')).toContain(`${fmtInt(26)} m²`)
-    expect(norm(box.textContent ?? '')).toContain('terrain libéré')   // la SHAB vendable = potentiel
     expect(box.querySelector('[data-etudier-residuel-lien]')).toBeTruthy()
   })
 })

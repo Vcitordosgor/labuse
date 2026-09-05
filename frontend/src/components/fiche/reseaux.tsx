@@ -83,6 +83,15 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
               {trans.telepherique && <p>Téléphérique Papang — station « {trans.telepherique.station} » à ~{fmtDistanceM(trans.telepherique.distance_m)} <span className="text-txt-dim">(tracé {trans.telepherique.licence})</span>.</p>}
             </div>
           )}
+          {/* RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT (BAOBAB Express) : un fait qui peut changer
+              la valeur (modulation possible du stationnement < 500 m). Mis en avant quand < 500 m ;
+              formulation prudente (jamais une promesse), renvoi au PLU. */}
+          {trans && !trans.indisponible && trans.tcsp && (
+            <div data-proximite-tcsp className={`mt-1.5 rounded-lg border px-2.5 py-1.5 ${trans.tcsp.sous_500m ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>
+              <p className="text-[11.5px] leading-snug text-txt">{trans.tcsp.libelle}</p>
+              <p className="mt-0.5 text-[9.5px] text-txt-dim">{trans.tcsp.source}</p>
+            </div>
+          )}
         </div>
 
         {/* ② RÉSEAUX — gestionnaires eau · assainissement · élec (contact admin, DT-DICT). */}

@@ -203,7 +203,8 @@ export function DensifierTablePanel() {
           {q.isError && <ErrorState className="py-6" message="Segment momentanément indisponible." retry={() => q.refetch()} />}
           {!q.isLoading && !q.isError && (
             <table className="w-full text-[11px]">
-              <thead className="sticky top-0 bg-bg-3 text-left text-[10px] uppercase tracking-wide text-txt-dim">
+              {/* RETOURS-12 T4 — .thead-sticky : fond opaque + z-20 (l'en-tête se superposait aux lignes faute de z-index). */}
+              <thead className="thead-sticky text-left text-[10px] uppercase tracking-wide text-txt-dim">
                 <tr>
                   <th className="px-2 py-1.5">Parcelle</th>
                   {/* LOT12a — DEUX grandeurs DISTINCTES, étiquetées : le Classement est le tier canonique

@@ -56,6 +56,15 @@ export type MapTokens = {
   aleaOpacity: { faible: number; moyen: number; fort: number }
   aleaContourW: number
   aleaTrameOpacity: number
+  /** RETOURS-12 C3 — RAMPES par NIVEAU (teintes franchement distinctes, plus le camaïeu d'opacité).
+   *  Inondation : bleu (faible) → orange (moyen) → rouge (fort, le plus grave).
+   *  Mouvement de terrain : beige (faible) → marron (moyen) → rouge (fort). La couleur ORDONNE
+   *  les niveaux ; le libellé officiel reste la vérité. `aleaInondation`/`aleaMvt` gardent leur
+   *  rôle d'identité (contour + trame, distinction entre les deux aléas superposés). */
+  aleaInondationRamp: { faible: string; moyen: string; fort: string }
+  aleaMvtRamp: { faible: string; moyen: string; fort: string }
+  /** opacité d'aplat UNIQUE une fois la teinte porteuse du niveau (plus de gradient d'opacité). */
+  aleaFillOpacity: number
   /** M106-B — LA COULEUR DIT LE RÉSEAU (arbitrage : « tout en rose, on ne distingue rien »).
    *  Une teinte par réseau, critère M105-B dans les deux thèmes ; ni mint, ni mauve, ni
    *  #F5C518. Papang = couleur Citalis (même réseau CINOR), la FORME (tireté) dit le type. */
@@ -71,6 +80,9 @@ export type MapTokens = {
   /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
    *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
   ht: string
+  /** RETOURS-12 C2 — axe de transport structurant (BAOBAB Express) : trait PLEIN épais, teinte
+   *  identitaire forte distincte des réseaux de bus (ni rose Citalis, ni ardoise des axes routiers). */
+  tcsp: string
   /** M134 / M137-Y — couche « Dispositifs ». QPV orange · ANRU chartreuse · TVA cyan. Pour ZFANG et
    *  FRR, l'ÉTAT se lit à la COULEUR (une par état, ci-dessous) + hachures en second signal sur
    *  l'état moindre — plus une teinte déclinée en opacité (illisible à l'échelle île). */
@@ -109,11 +121,15 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     contourBrulante: TIER_V2_META.brulante.color,    // le liseré sombre suit la palette des tiers
     contourChaude: TIER_V2_META.chaude.color,
     lisereBrulantes: '#FF6B35',
-    aleaInondation: '#45B4C6',   // pétrole clair — 7,21 sur fond sombre
-    aleaMvt: '#D9A05B',          // ocre clair — 7,66 sur fond sombre
+    aleaInondation: '#45B4C6',   // pétrole clair — 7,21 sur fond sombre (identité/contour/trame)
+    aleaMvt: '#D9A05B',          // ocre clair — 7,66 sur fond sombre (identité/contour/trame)
     aleaOpacity: { faible: 0.14, moyen: 0.22, fort: 0.34 },
     aleaContourW: 0.8,
     aleaTrameOpacity: 0.4,
+    // C3 — teintes vives sur fond sombre, franchement distinctes (bleu→orange→rouge / beige→marron→rouge)
+    aleaInondationRamp: { faible: '#4EA8F0', moyen: '#F0913D', fort: '#E8564A' },
+    aleaMvtRamp: { faible: '#D9C08A', moyen: '#B5732E', fort: '#E8564A' },
+    aleaFillOpacity: 0.45,
     transportReseaux: {
       'Car Jaune': '#E3B93C',   // or — 9,46 sur fond sombre (≠ #F5C518 Pages Jaunes, moins saturé)
       'Citalis': '#E87BB0',     // rose — 6,62
@@ -127,6 +143,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#FF6DB3',            // M137-X — magenta vif : les pôles RESSORTENT sur l'axe gris — 8,9
     axe: '#8FA6C4',             // bleu-gris — 7,06
     ht: '#B9C4C0',              // 9,83 sur fond sombre
+    tcsp: '#3FE0C8',             // C2 — turquoise vif structurant (fond sombre)
     // M134 dispositifs (sombre = tints vifs, tous > 5:1 sur fond sombre)
     qpv: '#E8934A', qpvOpacity: 0.28,                     // orange (opérationnel)
     tvaPrimo: '#56C5D0', tvaPrimoOpacity: 0.24,           // cyan (fiscal, dérivé)
@@ -155,11 +172,15 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     contourBrulante: '#C23A28', // 4,77 ✓ (braise assombrie)
     contourChaude: '#A8720F',   // 3,69 ✓ (ambre assombri)
     lisereBrulantes: '#C1440E', // 4,57 ✓ (orange assombri)
-    aleaInondation: '#0F6B7A',  // pétrole profond — contour 5,51 ✓ ; aplats 1,29/1,51/1,83 ✓
-    aleaMvt: '#935F0C',         // ocre profond — contour 4,83 ✓ ; aplats 1,26/1,45/1,74 ✓
+    aleaInondation: '#0F6B7A',  // pétrole profond — contour 5,51 ✓ (identité/contour/trame)
+    aleaMvt: '#935F0C',         // ocre profond — contour 4,83 ✓ (identité/contour/trame)
     aleaOpacity: { faible: 0.18, moyen: 0.28, fort: 0.40 },
     aleaContourW: 1,
     aleaTrameOpacity: 0.5,
+    // C3 — teintes profondes sur terre claire, franchement distinctes (bleu→orange→rouge / beige→marron→rouge)
+    aleaInondationRamp: { faible: '#2563EB', moyen: '#D97706', fort: '#DC2626' },
+    aleaMvtRamp: { faible: '#B08A4A', moyen: '#8A4B12', fort: '#B91C1C' },
+    aleaFillOpacity: 0.55,
     transportReseaux: {
       'Car Jaune': '#8A6D08',   // or profond — 4,39 sur terre claire
       'Citalis': '#B01E63',     // rose — 5,84
@@ -173,6 +194,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#C21F7E',            // M137-X — magenta profond : ressort sur l'axe et l'ortho claire — 5,6
     axe: '#33506B',             // bleu-gris profond — 7,50
     ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓
+    tcsp: '#0E8F7E',             // C2 — turquoise profond structurant (terre claire)
     // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)
     qpv: '#C25E1B', qpvOpacity: 0.28,                     // orange — aplat 1,40 ✓ ; contour 3,82 ✓
     tvaPrimo: '#1487A0', tvaPrimoOpacity: 0.24,           // cyan — aplat 1,34 ✓ ; contour 3,75 ✓

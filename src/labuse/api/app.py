@@ -2025,8 +2025,52 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
         "SELECT payload, computed_at FROM commune_contexte_cache WHERE commune = :c"),
         {"c": commune}).mappings().first()
     if hit:
-        return {**hit["payload"], "cache_calcule_le": hit["computed_at"].isoformat()}
+        # RETOURS-12 O8 — les indicateurs PARTAGÉS avec le tableau des 24 communes (comparable :
+        # permis 5 ans, prix neuf, prix ancien, vélocité, stock · + SRU) sont resservis LIVE depuis
+        # le MÊME moteur (comparateur.raw_rows / commune_contexte_sru) que le tableau. Le cache
+        # nocturne les FIGEAIT → l'utilisateur voyait deux chiffres divergents (ex. St-Denis prix neuf
+        # 4 998 live vs 4 275 cache ; permis 5 ans décalés par la fenêtre glissante). Un seul moteur,
+        # deux écrans d'accord. Les blocs lourds/statiques (population, risques, ANRU…) restent cachés.
+        return {**_rafraichir_partages(db, commune, dict(hit["payload"])),
+                "cache_calcule_le": hit["computed_at"].isoformat()}
     return {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+
+
+def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
+    """RETOURS-12 O8 — réinjecte dans le payload caché les indicateurs PARTAGÉS avec le comparateur,
+    calculés LIVE (source unique raw_rows + commune_contexte_sru) → la fiche et le tableau ne peuvent
+    plus diverger. Idempotent, sans effet sur les blocs statiques."""
+    try:
+        from .fiche_commune import comparable as _comparable
+        live = _comparable(db, commune)
+        if live is not None:
+            payload["comparable"] = live
+            pb = payload.get("permis_bloc")
+            if isinstance(pb, dict):
+                payload["permis_bloc"] = {**pb, "permis_5a": live.get("permis_5a")}
+        # RETOURS-12 O8 — le SRU se lit par INSEE (comme le tableau), plus par NOM : le join par nom
+        # était sensible à la casse (« La Plaine-Des-Palmistes » en base SRU vs « …-des-… » côté parcels)
+        # → la fiche perdait le SRU d'une commune que le tableau, lui, servait. Repli nom si INSEE absent.
+        insee = payload.get("insee")
+        # RETOURS-12 O8 — le DÉFICIT (objectif − taux, en points) est calculé EN SQL (numeric), la MÊME
+        # arithmétique que la colonne « Déficit SRU (pts) » du tableau — sinon un arrondi float au point
+        # 0,05 (Saint-Louis 5,35) faisait diverger la fiche (5,4) du tableau (5,3). Servi, plus recalculé côté front.
+        # MÊME arithmétique que comparateur.py : greatest(...) EN SQL (numeric), puis round(float(x), 1)
+        # EN PYTHON — pas round() SQL (half-up) qui redonnerait 5,4 là où le tableau donne 5,3.
+        _sru_sql = "SELECT *, greatest(objectif_pct - taux_lls, 0) AS deficit_brut FROM commune_contexte_sru WHERE "
+        sru = None
+        if insee:
+            sru = db.execute(text(_sru_sql + "insee = :i"), {"i": insee}).mappings().first()
+        if not sru:
+            sru = db.execute(text(_sru_sql + "lower(commune) = lower(:c)"), {"c": commune}).mappings().first()
+        if sru:
+            d = dict(sru); d.pop("importe_le", None)
+            db_ = d.pop("deficit_brut", None)
+            d["deficit"] = round(float(db_), 1) if db_ is not None else None
+            payload["sru"] = d
+    except Exception:  # noqa: BLE001 — le rafraîchissement ne doit jamais casser la fiche
+        _FICHE_LOG.exception("fiche commune · rafraîchissement des indicateurs partagés (O8) impossible")
+    return payload
 
 
 # FICHE-COMMUNE-2 (C2) — SIGNAUX NOMMÉS. Le badge « signal : prudence » (retiré) venait de
@@ -2090,7 +2134,8 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
         r = db.execute(text(sql), p).mappings().first()
         return dict(r) if r else None
 
-    sru = _one("SELECT * FROM commune_contexte_sru WHERE commune = :c", {"c": commune})
+    # RETOURS-12 O8 — casse-insensible (« La Plaine-Des-Palmistes » en base SRU vs « …-des-… » parcels).
+    sru = _one("SELECT * FROM commune_contexte_sru WHERE lower(commune) = lower(:c)", {"c": commune})
     insee_log = _one("SELECT * FROM commune_insee_logement WHERE commune = :c", {"c": commune})
     anru = [dict(r) for r in db.execute(text(
         "SELECT nom, interet, code_qpv, source_nom, source_url FROM anru_quartiers"
@@ -2273,10 +2318,11 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     ban_join = _ban_lateral("s.idu") if ban_ok else ""
     rows = db.execute(text(
         f"""
-        SELECT s.idu, s.commune, s.status, s.tier_v2, s.rang_v2, s.etage0
+        SELECT s.idu, s.commune, s.surface_m2, s.status, s.tier_v2, s.rang_v2, s.etage0
                {ban_cols}
         FROM (
-            SELECT p.idu, p.commune, d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
+            SELECT p.idu, p.commune, p.surface_m2,  -- RETOURS-12 T1 : surface pour désambiguïser une réf. courte
+                   d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    {_ETAGE0_SQL} AS etage0,
                    CASE WHEN {_ETAGE0_SQL} THEN 5
@@ -2294,8 +2340,8 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
         ORDER BY s.ord, s.rang_v2 ASC NULLS LAST, s.idu
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit,
                "v2run": _score_v2_run_id(db)}).mappings().all()
-    return [{"idu": r["idu"], "commune": r["commune"], "status": r["status"],
-             "tier_v2": r["tier_v2"],
+    return [{"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+             "status": r["status"], "tier_v2": r["tier_v2"],
              "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
              "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
 
@@ -3680,10 +3726,20 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
         tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
         ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
+        # RETOURS-12 C2 — distance à l'AXE DE TRANSPORT STRUCTURANT : la ligne BAOBAB Express
+        # (Citalis/CINOR), desserte rapide EN SERVICE (GTFS, route_id 'BAO' — déjà en base). On mesure
+        # la distance à l'AXE (transport_ligne, route_id=BAO), pas à un arrêt de bus quelconque : c'est
+        # l'axe structurant qui ouvre la modulation possible du stationnement. Seuil de pertinence 1,5 km.
+        tcsp_m = db.execute(text(
+            "SELECT round(MIN(ST_Distance(l.geom_2975, p.geom_2975)))::int AS d "
+            "FROM spatial_layers l, parcels p "
+            "WHERE p.idu = :idu AND l.kind = 'transport_ligne' AND l.attrs->>'route_id' = 'BAO' "
+            "AND l.geom_2975 IS NOT NULL"), {"idu": idu}).scalar()
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
-    if not any((arret, pole, tele, ht)):
+    tcsp = {"distance_m": tcsp_m} if (tcsp_m is not None and tcsp_m <= 1500) else None
+    if not any((arret, pole, tele, ht, tcsp)):
         return None
     out: dict = {}
     if arret:
@@ -3745,6 +3801,22 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
                         "pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire "
                         "de réseau (EDF SEI)."),
             "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
+        }
+    if tcsp:
+        d = tcsp["distance_m"]
+        proche = d <= 500
+        # RETOURS-12 C2 — FORMULATION PRUDENTE : on ne PROMET jamais une réduction de stationnement ;
+        # on signale le point à instruire, en renvoyant au PLU (zone lue par le module destinations).
+        out["tcsp"] = {
+            "distance_m": d, "sous_500m": proche,
+            "libelle": (
+                "Axe de transport structurant — BAOBAB Express (Citalis / CINOR, ligne express en service) "
+                + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m")
+                + (" : à moins de 500 m d'un axe de transport structurant, le règlement de la zone PEUT "
+                   "moduler l'exigence de stationnement — à vérifier dans le PLU (règles de la zone). "
+                   "Rien n'est promis : c'est un point à instruire." if proche
+                   else ".")),
+            "source": "GTFS Citalis (CINOR) — Licence Ouverte (Point d'Accès National)",
         }
     return out
 
@@ -4469,7 +4541,11 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     "znieff", "amenite_bpe",
                     # SECTEUR-2 (T4) — prix du logement NEUF (VEFA acté DVF) en aplat COMMUNE ; subtype =
                     # tranche de prix (choropleth). ECLN écartée (métropole seule, N/A DOM) → jamais de stock.
-                    "vefa_neuf"}
+                    "vefa_neuf",
+                    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT : synthétique (pas un kind stocké),
+                    # dérivé de transport_ligne WHERE route_id='BAO' (BAOBAB Express, Citalis/CINOR). Voir
+                    # le cas particulier dans map_layers_geojson (jamais d'ingestion neuve : réutilise le GTFS).
+                    "tcsp_axe"}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
@@ -4491,6 +4567,22 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
     if kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
+    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT (couche synthétique) : le tracé de la ligne
+    # express BAOBAB (Citalis/CINOR), dérivé du GTFS déjà en base (transport_ligne, route_id='BAO').
+    # Aucune ingestion neuve → aucune traçabilité à recréer : on réutilise la source GTFS existante.
+    if kind == "tcsp_axe":
+        rows = db.execute(text(
+            "SELECT sl.id, sl.name, sl.attrs->>'reseau' AS reseau, sl.attrs->>'gtfs_maj' AS maj, "
+            "ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0001)) AS g "
+            "FROM spatial_layers sl WHERE sl.kind='transport_ligne' AND sl.attrs->>'route_id'='BAO'"
+        )).mappings().all()
+        feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
+                  "properties": {"id": r["id"], "name": "BAOBAB Express", "reseau": r["reseau"],
+                                 "subtype": "axe_structurant"}}
+                 for r in rows if r["g"]]
+        maj = rows[0]["maj"] if rows else None
+        return {"type": "FeatureCollection", "features": feats,
+                "millesime_integration": maj, "source_millesime": maj}
     # CONNEXIONS-2 Lot 6.3 (propagation M2) — si la SOURCE de cette couche est DÉSACTIVÉE au dashboard,
     # on sert une couche VIDE marquée « source désactivée » plutôt que des objets d'une source coupée.
     ds_off = db.execute(text(

@@ -43,10 +43,11 @@ export function O5Servitudes() {
   const d = q.data
   return (
     <>
-      {/* RETOURS-11 O5(a) — intro reformulée (mandat). */}
+      {/* RETOURS-12 O3 — intro DESCRIPTIVE : ce que l'outil montre. L'aveu « ce que nos données ne
+          couvrent pas » quitte l'accueil client ; la limite vit désormais dans « Méthode & limites »
+          (replié, plus bas). */}
       <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
-        assainissement. Et, franchement, ce que nos données ne couvrent pas — pour que vous sachiez
-        quoi vérifier ailleurs.</Banner>
+        assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
       {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
           carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
       <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse ou IDU (ou clic carte)" onPick={(id) => setIdu(id)} />
@@ -72,14 +73,23 @@ export function O5Servitudes() {
           ))}
           {d.servitudes.length === 0 && (
             <p className="rounded-lg bg-surface-2/60 px-3 py-2 text-[11px] text-txt-mut">
-              Aucune servitude détectée dans les couches ingérées — voir « non couvert » ci-dessous.</p>
+              Aucune servitude détectée dans les couches ingérées à cette parcelle.</p>
           )}
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-            <p className="label-caps text-[9.5px]">Non couvert par la base — à vérifier ailleurs</p>
-            <div className="mt-1 space-y-0.5">
-              {d.non_couvert.map((n, i) => <p key={i} className="text-[10.5px] text-txt-mut">○ {n}</p>)}
-            </div>
-          </div>
+          {/* RETOURS-12 O3 — l'encadré « NON COUVERT PAR LA BASE — À VÉRIFIER AILLEURS » quitte la vue
+              client : plus d'aveu d'ignorance en évidence. Ce qui reste (les limites de couverture)
+              vit ICI, dans une MÉTHODE repliée. Les procédures PLU renvoient discrètement à l'outil
+              PLU ; les 417 SUP décodées sont rappelées comme une réserve courte, pas une alarme. */}
+          {d.non_couvert?.length > 0 && (
+            <details data-o5-methode className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+              <summary className="cursor-pointer list-none text-[10.5px] text-txt-dim hover:text-txt">
+                Méthode &amp; limites — ce que la base ne voit pas <span className="text-txt-mut">(déplier)</span>
+              </summary>
+              <div className="mt-1.5 space-y-0.5 border-t border-line pt-1.5">
+                {d.non_couvert.map((n, i) => <p key={i} className="text-[10.5px] leading-snug text-txt-mut">· {n}</p>)}
+                <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Une servitude non publiée au Géoportail de l'urbanisme n'est pas vue — le certificat d'urbanisme reste la référence. Les procédures PLU en cours sont servies par l'outil « PLU ».</p>
+              </div>
+            </details>
+          )}
         </div>
       )}
       {!d && !q.isLoading && !q.isError && (
@@ -168,7 +178,8 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
       {q.isLoading && <Loading accent="mint" label="Chargement des communes…" />}
       {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className={`sticky top-0 z-10 grid ${O6_GRID} items-end border-b border-line-2 bg-bg-3 py-1.5`}>
+        {/* RETOURS-12 T4 — thead-sticky (z-20, fond opaque) : l'en-tête « 24 communes » ne glisse plus sur les lignes. */}
+        <div className={`thead-sticky grid ${O6_GRID} items-end border-b border-line-2 py-1.5`}>
           <span className="label-caps text-[10px] text-txt-mut">Commune</span>
           {O6_COLS.map((c) => (
             <span key={c.k} className="flex items-center justify-end gap-1">

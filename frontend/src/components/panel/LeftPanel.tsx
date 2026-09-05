@@ -101,8 +101,13 @@ export function ScoringExplainer({ onClose }: { onClose: () => void }) {
 //  9. anru            — périmètres de renouvellement, de niche
 // 10. cinquante_pas   — bande littorale, la plus rare (communes côtières uniquement)
 const LAYERS: { key: keyof LayerToggles; label: string }[] = [
-  { key: 'parcelles', label: 'Parcelles' },
-  { key: 'limites', label: 'Limites parcelles' },
+  // RETOURS-12 C4 — décision par la mesure : « Parcelles » (aplat) et « Limites parcelles » (contour)
+  // sont DISTINCTES et non redondantes avec le fond (le contour cadastral n'est PAS toujours présent —
+  // absent sur ortho/sombre). L'impression « ne sert à rien » venait du label nu « Parcelles » : en mode
+  // neutre l'aplat est discret ; sa valeur (la couleur du CLASSEMENT LABUSE) n'était pas dite. On renomme
+  // pour la rendre évidente, on ne retire pas.
+  { key: 'parcelles', label: 'Parcelles — classement LABUSE' },
+  { key: 'limites', label: 'Limites parcelles (contour cadastral)' },
   // M62-P1 (g) : les toggles « Verdict — toute l'île » (couleurs_verdict) et « Renouvellement »
   // (renouv) sont RETIRÉS du panneau (P5, diagnostic P0-3 : sûr — OFF par défaut, seuls setters =
   // ce panneau ; le filtre `renouvellement`, le module et le bloc fiche sont indépendants). Les clés
@@ -131,6 +136,8 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'cinquante_pas', label: '50 pas géométriques' },
   // M106 P4 : transport public (tracés + pôles + téléphérique) et lignes HT (contrainte)
   { key: 'transport', label: 'Transport public' },
+  // RETOURS-12 C2 — l'axe de transport structurant (BAOBAB Express, CINOR) : couche dédiée.
+  { key: 'tcsp', label: 'Axe structurant (BAOBAB Express)' },
   { key: 'axes', label: 'Axes structurants' },
   { key: 'lignes_ht', label: 'Lignes haute tension' },
   // M134 — couche « Dispositifs et périmètres ». Jamais un sigle nu : chaque libellé développe.
@@ -156,7 +163,7 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas'] },
   { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
   // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
-  { famille: 'Accès et réseaux', keys: ['transport', 'axes', 'lignes_ht'] },
+  { famille: 'Accès et réseaux', keys: ['transport', 'tcsp', 'axes', 'lignes_ht'] },
   // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
   // fiscaux à la maille COMMUNE (ZFANG, FRR). L'ANRU quitte « Risques » pour ici (un seul endroit).
   { famille: 'Dispositifs et périmètres', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr'] },

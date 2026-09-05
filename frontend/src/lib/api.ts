@@ -261,7 +261,9 @@ export interface ContexteCommune {
   }
   // M36 Lot D : le compteur du tier haut EN DUR (même point de calcul que /communes)
   classement: { tiers_hauts: number; dossiers: number; libelle: string; source: string } | null
-  sru: { taux_lls: number; objectif_pct: number; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
+  // RETOURS-12 O8 — `deficit` (objectif − taux, en points) servi par le backend, MÊME arithmétique que
+  // la colonne « Déficit SRU (pts) » du tableau des 24 communes (jamais recalculé au front → jamais divergent).
+  sru: { taux_lls: number; objectif_pct: number; deficit?: number | null; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
   anru: { nom: string; interet: string; code_qpv: string; source_nom: string; source_url: string }[]
   qpv: { nom: string; code: string }[]
   plh: { periode: string; statut: string; obj_logements_an: number | null; part_sociale_pct: number | null; refs: { doc: string; url?: string; page?: string | number }[] } | null
@@ -278,7 +280,7 @@ export const getContexteCommune = (commune: string) =>
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
-  j<{ idu: string; commune: string; status: string | null; q_score: number | null;
+  j<{ idu: string; commune: string; surface_m2: number | null; status: string | null; q_score: number | null;
       tier_v2: string | null; rang_v2: number | null; etage0: boolean;
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
@@ -354,11 +356,15 @@ export interface PluCommune {
   extraits: number; doutes?: number; pagination_ambigue?: boolean; message?: string
   // M137-P — le « PLU intégral » = pack officiel GPU (.zip) à télécharger (aucun PDF en base).
   source_url?: string | null; document?: string | null
+  // RETOURS-12 O4 — procédure PLU EN COURS (source unique veille_plu) : « révision générale »… ou null.
+  procedure_active?: string | null; procedure_date?: string | null
 }
 export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
   j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
 export const pluAnnuaireCommunes = () =>
-  j<{ n_communes: number; servables: number; n_revision: number; n_rnu: number; n_non_ingere: number; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
+  j<{ n_communes: number; servables: number; n_revision: number; n_rnu: number; n_non_ingere: number
+      // RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures PLU en cours (source unique veille_plu).
+      n_procedures: number; procedures_par_etat: Record<string, number>; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
 
 // M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
 export const getModeB = (idu: string, travauxM2?: number) =>
@@ -775,6 +781,7 @@ export interface SolaireFiche {
   ok: boolean; idu: string; message?: string; commune?: string
   productible?: number | null; prod_mensuel?: number[] | null; mois_optimal?: number | null
   azimut?: number | null; azimut_confiance?: string | null; pente?: number | null
+  lon?: number | null; lat?: number | null   // RETOURS-12 O7 — centroïde parcelle (photo ortho du toit)
   toit_m2?: number | null; piscine?: boolean; piscine_m2?: number | null; abf?: boolean
   ombrage?: boolean; proba_occ?: number | null; classement?: string; millesime?: string
 }

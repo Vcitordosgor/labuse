@@ -5,7 +5,13 @@ import type { OrthoYear } from '../../store/useApp'
 export const WMTS = (layer: string, format: string) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
 
-export type BasemapDef = { tiles: string[]; attribution: string; maxzoom?: number }
+export type BasemapDef = { tiles: string[]; attribution: string; maxzoom?: number; bounds?: [number, number, number, number] }
+
+// RETOURS-12 C6 — emprise du jeu ortho au 974 : hors de cette bbox, IGN ne sert que des tuiles
+// no-data (blanches) → en vue dézoomée la mer apparaissait « en escalier de tuiles bleues sur fond
+// blanc ». En bornant la source raster à l'île (+ marge mer), maplibre ne demande plus ces tuiles ;
+// au large, c'est le FOND DE CARTE continu (canvas sombre) qui reste, jamais du blanc.
+const REUNION_BOUNDS: [number, number, number, number] = [55.15, -21.45, 55.95, -20.80]
 
 export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
   // FOND-SOMBRE : le raster CARTO dark_nolabels (bm-carto) est RETIRÉ — CARTO exige désormais une
@@ -25,18 +31,18 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
   // Solaire (« 20 cm 2025 ») est désormais VRAI côté fond. Plan IGN v2 = couche courante (rien de plus récent).
   // Historiques : les 6 orthos-période servent au 974 ; 1965-1980 et 1980-1995 → 404 (métropole seule, exclus).
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme — Plan IGN v2' },
-  'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025', 'image/jpeg')], attribution: '© IGN Ortho Express RVB 2025 (20 cm) — millésime le plus récent au 974', maxzoom: 19 },
-  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
+  'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025', 'image/jpeg')], attribution: '© IGN Ortho Express RVB 2025 (20 cm) — millésime le plus récent au 974', maxzoom: 19, bounds: REUNION_BOUNDS },
+  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17, bounds: REUNION_BOUNDS },
   // le millésime 1950 s'arrête ~z15 : overzoom (maxzoom) plutôt que des tuiles NOIRES au-delà.
-  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
+  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965', maxzoom: 15, bounds: REUNION_BOUNDS },
   // TEMPS (refonte) — frise des millésimes : mosaïques-période IGN VÉRIFIÉES sur le 974 (GetTile réel,
   // 3 points de contrôle St-Denis/St-Paul/St-Pierre → dalles servies ; 1965-80 et 1980-95 s'arrêtent en
   // métropole → EXCLUES). maxzoom = un cran sous le dernier zoom servi (convention 2000-2005), pour de
   // l'overzoom au lieu de tuiles noires aux limites de mission.
-  'bm-ortho-2006': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2006-2010', 'image/jpeg')], attribution: '© IGN ortho 2006-2010', maxzoom: 17 },
-  'bm-ortho-2011': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2011-2015', 'image/jpeg')], attribution: '© IGN ortho 2011-2015', maxzoom: 17 },
-  'bm-ortho-2016': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2016-2020', 'image/jpeg')], attribution: '© IGN ortho 2016-2020', maxzoom: 18 },
-  'bm-ortho-2021': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2021-2023', 'image/jpeg')], attribution: '© IGN ortho 2021-2023', maxzoom: 18 },
+  'bm-ortho-2006': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2006-2010', 'image/jpeg')], attribution: '© IGN ortho 2006-2010', maxzoom: 17, bounds: REUNION_BOUNDS },
+  'bm-ortho-2011': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2011-2015', 'image/jpeg')], attribution: '© IGN ortho 2011-2015', maxzoom: 17, bounds: REUNION_BOUNDS },
+  'bm-ortho-2016': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2016-2020', 'image/jpeg')], attribution: '© IGN ortho 2016-2020', maxzoom: 18, bounds: REUNION_BOUNDS },
+  'bm-ortho-2021': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2021-2023', 'image/jpeg')], attribution: '© IGN ortho 2021-2023', maxzoom: 18, bounds: REUNION_BOUNDS },
 }
 
 // Frise des millésimes « avant » — ordre chronologique, tous vérifiés servant des dalles sur le 974.

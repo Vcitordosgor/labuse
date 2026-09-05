@@ -31,8 +31,21 @@ from .router import classify
 # ───────────────────────── Réponses fixes (issues 5, 3, 4) ─────────────────────────
 HORS_SUJET = ("Je suis le copilote foncier de LABUSE — je réponds sur l'immobilier et le foncier de "
               "La Réunion.")
-ERREUR_INFRA = ("Je ne peux pas instruire votre demande pour le moment (service d'analyse "
-                "indisponible). Réessayez dans un instant.")
+# RETOURS-12 A1 — message d'erreur HONNÊTE : quand la cause est STRUCTURELLE (clé invalide, modèle
+# retiré, permissions), on ne fait plus croire à un incident passager (« réessayez dans un instant »)
+# — l'utilisateur réessaierait 20 fois pour rien. On nomme la nature, on dit que l'équipe est alertée
+# (l'incident est visible côté admin via /ia/status → core.provider_status). Erreur VRAIMENT passagère
+# (réseau, surcharge) → l'invitation à réessayer reste légitime.
+def erreur_infra() -> str:
+    raison = core.last_error()
+    structurel = bool(raison) and any(k in raison for k in (
+        "clé", "modèle", "permission", "refusée", "retiré", "authentification", "absente"))
+    if structurel:
+        return ("Je ne peux pas instruire votre demande : le service d'analyse est indisponible "
+                f"({raison}). Ce n'est pas passager — l'équipe LABUSE est alertée. Inutile de réessayer "
+                "dans l'immédiat ; vos autres outils LABUSE restent disponibles.")
+    return ("Je ne peux pas instruire votre demande pour le moment (service d'analyse momentanément "
+            "indisponible). Réessayez dans un instant.")
 
 REFUS_PP = ("L'identité des propriétaires personnes physiques n'est pas une donnée ouverte en France. "
             "Elle s'obtient par une demande au service de la publicité foncière (SPF) — je peux vous "
@@ -550,7 +563,7 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
         route.intent = SCENARIOS[scenario]["intent"]
         route.clarification = None
     if route.degraded:
-        return _reply(ERREUR_INFRA, None, degraded=True)
+        return _reply(erreur_infra(), None, degraded=True)
     # GB-014 (Q30) — CRÉOLE RÉUNIONNAIS ON-TOPIC (« kosa i lé in kaz an tol ? ») : le routeur le classe
     # parfois HORS_SUJET faute de reconnaître la langue. Un mot d'habitat/foncier créole présent → c'est
     # une question de vocabulaire du bâti → voie b (connaissance générale), jamais un hors-domaine. Le
@@ -736,7 +749,7 @@ def _general(db: Session, message: str, history: list[dict] | None = None) -> di
     out = core.complete(db, kind="copilote-general", model=core.model_for("copilote-general"), max_tokens=300,
                         system=GENERAL_SYSTEM, history=hist, context={"question": message})
     if out.degraded:
-        return _reply(ERREUR_INFRA, "EXPLIQUER", degraded=True)
+        return _reply(erreur_infra(), "EXPLIQUER", degraded=True)
     txt = (out.text or "").strip()
     if not txt or txt.upper().startswith("HORS_DOMAINE"):
         telemetrie.refus(db, "hors_domaine", message, "EXPLIQUER")
@@ -1128,7 +1141,7 @@ def _preparer(db: Session, message: str, params: dict, contexte: dict | None) ->
     out = core.complete(db, kind="copilote-prepare", model=core.model_for("copilote-prepare"), max_tokens=420,
                         system=PREPARE_SYSTEM, context=ctx)
     if out.degraded or not (out.text or "").strip():
-        return _reply(ERREUR_INFRA, "PREPARER", degraded=True)
+        return _reply(erreur_infra(), "PREPARER", degraded=True)
     return _reply(out.text.strip(), "PREPARER", tool="prepare",
                   sources=(["fiche parcelle (faits sourcés)"] if faits else None))
 

@@ -167,8 +167,9 @@ describe('charges dégénérées — opération non viable (charge ≤ 0)', () =
     const nonViables = document.querySelectorAll('[data-charge-flag="non-viable"]')
     expect(nonViables).toHaveLength(2)
     const textes = [...nonViables].map((n) => normalise(n.textContent))
-    // valeur brute TOUJOURS visible, jamais un montant nu ni masqué
-    expect(textes.join(' ')).toContain('opération non viable')
+    // valeur brute TOUJOURS visible, jamais un montant nu ni masqué. RETOURS-12 T7 — le libellé ne
+    // rend plus un verdict « non viable » sur la parcelle : c'est le résultat d'un scénario aux hypothèses.
+    expect(textes.join(' ')).toContain('charge supportable ≤ 0 à ces hypothèses')
     expect(textes.join(' ')).toContain('0 €')
     expect(textes.join(' ')).toContain('-236 204 €')
     // les parcelles concernées restent restituées (règle 7 — information, pas filtre)

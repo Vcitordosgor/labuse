@@ -176,6 +176,29 @@
     .hover-fill-ia:hover .itile, .hover-fill-ia:hover .itile *, .hover-fill:hover .itile.ia, .hover-fill:hover .itile.ia * { color:var(--violet) !important; }
   }
 
+  /* RETOURS-12 T6 — CHIP/BADGE lisible sur une ligne survolée. Racine du bug : `.hover-fill:hover *`
+     force TOUT le contenu en encre sombre (--ink) sur l'aplat vert plein → une chip `bg-mint-bg text-mint`
+     devient vert-sur-vert, illisible (ex. millésime « 2024→2025 » d'Acquisitions). Correctif AU COMPOSANT :
+     poser `.chip` (+ variante de teinte) sur tout badge dans une surface survolable ; au survol la chip
+     bascule en FOND SOMBRE plein (--ink) et son texte reprend sa teinte via --chip-fg (contraste ≥ 4,5:1),
+     exactement comme `.itile`. Au repos, la chip garde l'apparence posée en Tailwind (aucun changement). */
+  .chip { --chip-fg:var(--txt-hi); border-radius:6px; }
+  .chip-mint { --chip-fg:var(--mint); }
+  .chip-amber { --chip-fg:var(--amber); }
+  .chip-coral { --chip-fg:var(--coral); }
+  @media (hover:hover) and (pointer:fine) {
+    .hover-fill:hover .chip { background:var(--ink) !important; border-color:var(--ink) !important; }
+    .hover-fill:hover .chip, .hover-fill:hover .chip * { color:var(--chip-fg) !important; }
+  }
+
+  /* RETOURS-12 T4 — en-tête de tableau RÉELLEMENT collant : fond OPAQUE (jamais translucide, sinon les
+     chiffres des lignes se lisent par-dessus les libellés) et z-index au-dessus des lignes mais sous les
+     overlays (z-40) du shell. Une seule règle pour toutes les tables longues (Communes, Densifier, PLU,
+     Scan patrimoine, Radar, Projets, admin). `.thead-sticky` se pose sur le <thead> (ou la ligne d'en-tête). */
+  .thead-sticky { position:sticky; top:0; z-index:20; background:var(--bg-3); }
+  .thead-sticky.on-2 { background:var(--bg-2); }
+  .thead-sticky.on-1 { background:var(--bg-1); }
+
   /* RETOURS-4 S3 — survol PLEIN sur des surfaces à STYLES INLINE (Projets : lignes de « Vos projets » et
      onglets Actifs/Archivés/Mes courriers). L'aplat mint et l'inversion du contenu passent par !important
      pour battre les couleurs inline des enfants. Borné à un vrai pointeur (@media hover), jamais sur l'onglet

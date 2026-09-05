@@ -562,9 +562,11 @@ export const CLIENT = {
         `Au-dessus de la charge supportable (${charge}) — dans votre budget, mais l’opération ne supporte pas ce prix.`,
       // décision produit (revue B) : charge ≤ 0 = information forte, jamais un montant nu.
       // La valeur brute reste visible, le sens est donné.
+      // RETOURS-12 T7 — résultat d'un scénario d'opération aux hypothèses du brief, jamais un
+      // verdict sur la parcelle elle-même (« non viable » tout court laissait croire à un défaut du bien).
       chargeNonViable: (charge: string) =>
-        `Opération non viable — la charge supportable est nulle ou négative (${charge}), même à foncier gratuit.`,
-      chargeNonViableCourt: (charge: string) => `opération non viable (${charge})`,
+        `À ces hypothèses, une opération de ce type ne dégage rien pour le terrain (charge supportable nulle ou négative : ${charge}) — c’est le résultat d’un scénario, pas la valeur de la parcelle.`,
+      chargeNonViableCourt: (charge: string) => `charge supportable ≤ 0 à ces hypothèses (${charge})`,
       chargeSupportableCourt: (charge: string) => `charge supportable ${charge}`,
       zeroTitre: 'Aucune parcelle ne satisfait ce besoin.',
       zeroNote: 'Aucun critère n’a été assoupli — l’entonnoir ci-dessus montre où le besoin s’est heurté au réel.',

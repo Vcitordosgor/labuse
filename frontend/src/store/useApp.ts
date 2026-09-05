@@ -35,6 +35,7 @@ export interface LayerToggles {
   alea_mvt: boolean        // le zonage PPR réglementaire reste agrégé (multirisque insécable)
   transport: boolean       // M106 P4 : transport public (tracés GTFS + pôles d'échange + Papang)
   lignes_ht: boolean       // M106 P4 : lignes haute tension BD TOPO (contrainte, tireté anthracite)
+  tcsp: boolean            // RETOURS-12 C2 : axe de transport structurant (BAOBAB Express, GTFS CINOR)
   axes: boolean            // M106-B P3 : axes structurants BD TOPO (importance IGN 1-2, ardoise)
   renouv: boolean     // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut
   couleurs_verdict: boolean // M55-G point 8 : palette des tiers en COUCHE activable — imposée
@@ -269,6 +270,12 @@ interface AppState {
   toggleOutils: () => void
   selectedIdu: string | null
   select: (idu: string | null) => void
+  // RETOURS-12 O1/O12/J1 — FOCUS PARCELLE : zoome + met en surbrillance la parcelle sur la carte
+  // SANS ouvrir la fiche (contrairement à `select`). Geste commun réutilisé par « Étudier un bien »,
+  // « Permis » et l'œil ambre des Projets. `ortho` : bascule le fond en orthophoto (J1).
+  focusIdu: string | null
+  focusNonce: number                    // ré-déclenche le zoom même si l'idu est identique
+  focusParcelle: (idu: string | null, opts?: { ortho?: boolean }) => void
   // M55-L point 5 — verdict À LA DEMANDE : la fiche s'ouvre sur un bouton « Demander l'analyse
   // LABUSE » ; au clic, le bloc verdict se déploie. Choix MÉMORISÉ PAR PARCELLE pour la SESSION
   // (jamais persisté) : rouvrir la même fiche ne redemande pas le clic ; nouvelle session = retour
@@ -601,6 +608,17 @@ export const useApp = create<AppState>((set) => ({
   // `String(undefined)` sur une feature sans propriété idu) n'ouvre JAMAIS la fiche. Elle
   // afficherait un titre « undefined » et un faux « serveur injoignable ». `null` ferme la fiche.
   select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
+  // RETOURS-12 O1/O12/J1 — focus SANS ouvrir la fiche (zoom + surbrillance sur la carte). Bascule
+  // sur 'cartes' pour que la carte soit visible ; option ortho (J1). `focusIdu` réamorcé même valeur.
+  focusIdu: null,
+  focusNonce: 0,
+  focusParcelle: (idu, opts) => set((s) => ({
+    focusIdu: idu === '' || idu === 'undefined' ? null : idu,
+    view: 'cartes', outilsOpen: false,
+    ...(opts?.ortho ? { basemap: 'ortho' as const } : {}),
+    // ré-déclencher l'effet carte même si l'idu est identique : un compteur nonce.
+    focusNonce: (s.focusNonce ?? 0) + 1,
+  })),
   verdictRevele: {},
   revelerVerdict: (idu) => set((s) => ({ verdictRevele: { ...s.verdictRevele, [idu]: true } })),
   analyseReplie: {},
@@ -609,7 +627,7 @@ export const useApp = create<AppState>((set) => ({
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false, vefa_neuf: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, tcsp: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false, vefa_neuf: false },
   // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
   // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
   // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».
