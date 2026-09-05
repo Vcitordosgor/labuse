@@ -178,6 +178,59 @@ aberrant brut ; aléa non rétrogradé bloquant = RETOURS-13 ; SIREN Luhn ; doma
 
 ---
 
-## Lots 3 à 6 — à venir
+## Lot 3 — L'échantillon vérifié contre le producteur — **CLOS**
+
+### Livré
+
+- **`src/labuse/filtres/echantillon.py`** : le contrôle `d_echantillon` (nature `echantillon`,
+  avertissant) — lit `filtres/echantillons/<source>.json`, rejoue chaque enregistrement (query de
+  NOTRE table) et le compare à l'attendu **lu chez le producteur** (numérique à tolérance,
+  sinon texte insensible casse/espaces). Tout écart = KO avertissant **avec les deux valeurs** et
+  l'origine producteur. Le contrôle est attaché automatiquement à un filtre **si** un fichier
+  existe pour sa source (`__init__._registre`), sinon rien.
+- **Vérifié EN DIRECT chez le producteur (réseau disponible dans la session)** :
+  - **cadastre_etalab** (`echantillons/cadastre_etalab.json`) : **20 parcelles** (4 témoins
+    CIRCUIT-2 + 16 golden, 1 par commune), contenance lue sur **IGN API Carto Cadastre**. Résultat
+    réel : **2 écarts / 20** — `97403000AH0341` (notre `surface_m2` 113,5 m² vs 168 cadastral) et
+    `97404000AC0011` (72 vs 150). Notre surface géométrique diverge > 10 % de la contenance DGFiP
+    sur 2 petites parcelles : **un vrai signal**, surfacé par la vérification producteur.
+  - **ban** (`echantillons/ban.json`) : **24 adresses** (1 par commune), INSEE lu par
+    **reverse-geocode api-adresse**. Résultat : **0 écart / 24** (le citycode producteur = le nôtre).
+  - **communes** (`echantillons/communes.json`) : référence des 24 communes (nom + population) lue
+    sur **geo.api.gouv.fr** (INSEE COG) — témoin partagé.
+- **`docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md`** : pour les 18 autres sources, un fichier squelette
+  `echantillons/<source>.json` (producteur, table, clé, URL, `a_valider:true`, **proposition de
+  CC**), et le contrôle **skip** proprement tant que les lignes ne sont pas remplies — **rien
+  n'attend**. Classé par ce qui manque : yeux humains (LiDAR 50 toits 0,70, CoSIA, FLAIR),
+  identifiants (Sirene INSEE, INPI RNE), ou budget d'appels (DPE ADEME, DVF, GPU, BODACC…).
+- **Chaque source du lot 2 a un fichier échantillon** (20/20, testé).
+
+### Décisions prises en autonomie (lot 3)
+
+1. **Deux échantillons vérifiés en direct suffisent à prouver le mécanisme sur données producteur
+   VIVES** (cadastre + BAN, deux producteurs différents, l'un révèle 2 écarts réels, l'autre 0).
+   Vérifier 20–50 enregistrements × 20 sources en direct dépassait le budget d'appels de la
+   session — les autres sont des squelettes datés avec proposition, à valider (3.3 : « rien n'attend »).
+2. **SIRENE NAF écarté de l'échantillon actif** : testé via `recherche-entreprises` (public), mais
+   l'API renvoie le NAF du **siège** (ambigu par SIRET — faux écarts siège/établissement + format
+   `47.11B` vs `4711Z`). La vérité par SIRET exige l'API Sirene INSEE (authentifiée) → À VALIDER,
+   pour ne pas peupler l'échantillon d'écarts trompeurs.
+3. **Tolérance cadastre 10 %** : notre `surface_m2` est dérivée de la géométrie, la contenance est
+   la déclaration cadastrale — 10 % absorbe le bruit géométrie/contenance et ne laisse remonter que
+   les vraies divergences (2/20, toutes deux > 30 %).
+
+### Tests — lot 3
+
+`tests/test_circuit3_lot3.py` **5 verts** (comparaison num/texte ; écart détecté avec les deux
+valeurs + origine ; squelette qui skip ; échantillons genuine avec origine producteur ; les 20
+sources ont un fichier). Total CIRCUIT-3 : **17 verts** (lots 1+2+3).
+
+### Commit
+
+`feat/circuit-3` — un commit lot 3, poussé. Rien mergé.
+
+---
+
+## Lots 4 à 6 — à venir
 
 (compte-rendu tenu à jour lot par lot)

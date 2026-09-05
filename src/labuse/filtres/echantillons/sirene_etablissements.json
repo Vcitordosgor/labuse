@@ -1,0 +1,13 @@
+{
+  "source": "sirene_etablissements",
+  "producteur": "INSEE Sirene",
+  "table": "sirene_etablissements",
+  "cle_colonne": "siret",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://api.insee.fr/entreprises/sirene/V3/siret/<siret>",
+  "raison_report": "Le NAF par SIRET exige l'API Sirene INSEE (authentifiée) ; recherche-entreprises renvoie le siège (ambigu — testé : plusieurs faux écarts siège/établissement, formats 4711B vs 47.11B).",
+  "proposition_cc": "Comparer NAF (normalisé sans point) de 20 SIRET témoins contre l'API Sirene INSEE.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

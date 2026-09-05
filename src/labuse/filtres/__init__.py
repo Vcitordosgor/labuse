@@ -16,6 +16,7 @@ import yaml
 
 from .cadre import (Controle, Filtre, Resultat, Verdict, dernier_verdict,  # noqa: F401
                     en_quarantaine, ensure_tables, jouer, ko, ok, skip, version_servie)
+from . import echantillon
 from .sources import FILTRES_RICHES
 
 _YAML = Path(__file__).resolve().parents[2].parent / "config" / "sources_ingestion.yaml"
@@ -52,7 +53,38 @@ def _registre() -> dict[str, Filtre]:
     # 2) les filtres RICHES (lot 2) remplacent le défaut et ajoutent des sources hors-vanne.
     for key, filtre in FILTRES_RICHES.items():
         reg[key] = filtre
+    # 3) le contrôle ÉCHANTILLON (lot 3) : un par filtre qui a un fichier producteur (sinon skip).
+    ech = echantillon.controle()
+    for filtre in reg.values():
+        if echantillon.chemin(filtre.source).exists() and \
+                not any(cc.id == "d_echantillon" for cc in filtre.propres):
+            filtre.propres.append(ech)
+    # 4) portée `live` (lot 4) — dérivée du REGISTRE : un filtre dont le réservoir alimente au moins
+    #    une donnée à portée `live` passe par la table d'attente (quarantaine avant service).
+    for cle in _cles_live():
+        if cle in reg:
+            reg[cle].live = True
     return reg
+
+
+# Alias réservoir (registre) → clé de filtre, quand ils diffèrent (partagé avec quarantaine.py).
+_ALIAS_RESERVOIR_FILTRE = {
+    "cadastre_api_carto": "cadastre_etalab",
+    "gpu_plu_api_carto": "gpu_plu",
+    "filosofi_carreaux": "filosofi",
+    "deal_ppr": "georisques_mvt",
+}
+
+
+def _cles_live() -> set[str]:
+    """Clés de filtre dont le réservoir alimente une donnée à portée `live` (registre = vérité)."""
+    try:
+        from ..registre.donnees import DONNEES
+    except Exception:  # pragma: no cover - registre indisponible
+        return set()
+    res = {r for d in DONNEES.values() if getattr(d, "portee", "") == "live"
+           for r in (d.reservoirs or ())}
+    return {_ALIAS_RESERVOIR_FILTRE.get(r, r) for r in res}
 
 
 def FILTRES() -> dict[str, Filtre]:

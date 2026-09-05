@@ -1,0 +1,13 @@
+{
+  "source": "lidar_hd",
+  "producteur": "IGN — LiDAR HD",
+  "table": "ortho_detections",
+  "cle_colonne": "idu",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://geoservices.ign.fr/lidarhd",
+  "raison_report": "LiDAR HD est servi EN DIRECT (WMS, pas de table) ; le seuil toits 0,70 (RETOURS-14 : 0 faux/50) = YEUX HUMAINS sur 50 toits.",
+  "proposition_cc": "Échantillon À VALIDER par Stéphanie : les 50 toits contrôlés au seuil 0,70 (0 faux attendu).",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

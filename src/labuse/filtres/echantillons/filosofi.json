@@ -1,0 +1,13 @@
+{
+  "source": "filosofi",
+  "producteur": "INSEE — Filosofi carreaux 200 m",
+  "table": "filosofi_carreaux_200m",
+  "cle_colonne": "idcar_200m",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://www.insee.fr/fr/statistiques/7655475",
+  "raison_report": "Vérification par carreau = la ligne du fichier Filosofi brut (i_est_200 secret statistique).",
+  "proposition_cc": "Comparer ind (population) de 20 carreaux témoins contre le fichier Filosofi 200 m.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}

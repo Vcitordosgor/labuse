@@ -1,0 +1,13 @@
+{
+  "source": "flair",
+  "producteur": "IGN — FLAIR",
+  "table": "ortho_detections",
+  "cle_colonne": "id",
+  "lu_le": null,
+  "a_valider": true,
+  "producteur_url": "https://ignf.github.io/FLAIR/",
+  "raison_report": "FLAIR est un modèle d'occupation du sol IA ; la vérité = YEUX HUMAINS sur la nature.",
+  "proposition_cc": "Échantillon À VALIDER : 20 détections confirmées.",
+  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
+  "lignes": []
+}
