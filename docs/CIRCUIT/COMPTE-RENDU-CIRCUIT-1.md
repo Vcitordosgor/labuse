@@ -274,3 +274,41 @@ Premier passage : Revenir a servi **q_v10_m129** — le bouton lisait `manifeste
 ### Suite (lots 8 + 6, verdict)
 
 - Suite complète : **2352 passed · 2 failed · 36 skipped** — les 2 rouges : `test_r5` (pré-existant) et `test_zone_donnees::test_lot1_sirene_jointure_diffusion_position` (instable d'ordre : PASSE isolé, avec ET sans les changements — stash-prouvé). Aucun rouge nouveau, +10 verts vs lot 5.
+
+---
+
+## Lot 7 — Le mode Traçage : CLOS
+
+### Livré
+
+- **7.2 front** : drapeau `tracage` au store (`useApp`), **interrupteur au bandeau Circuit** (admin) ; composant **`Trace`** (`lib/trace.tsx`) — éteint : rend STRICTEMENT les enfants (identité par construction, **testée par snapshot vitest** : innerHTML identique, aucun wrapper) ; allumé : étiquette jaune `data-chiffre` (mauve réservé aux agents — DA) + clic → **tiroir de trace** (`TraceTiroir`, monté dans App client ET admin) : id, libellé, définition, moteur, portée (run servi affiché pour la portée `run`) — lus du registre servi (`/admin/circuit`, champ `definition` ajouté).
+- **Étiquettes posées** : les **14 cartes à chiffres de la fiche commune** (`LigneCarte` prop `chiffre`, mairie hors registre) + le **tier de la fiche parcelle** (`ScoreV2Block`). `format.ts` : chaque formateur numérique accepte `chiffreId?` (NO-OP sur la chaîne — déclaration au point d'appel, le rendu éteint identique par construction).
+- **7.1 serveur** : `?trace=1` admin-seulement — test auth ACTIVE : refus (401/403 d'`exiger_admin`, ou 503 de la garde globale fail-closed), le tampon n'est JAMAIS servi hors admin ; sans `trace=1`, comportement public inchangé (testé).
+- **7.3** : PDF/mails hors traçage v1 (tampon dispo côté serveur, pas affiché) — conforme mandat.
+- Tests front : **162 verts (35 fichiers)** dont le snapshot ; tsc + build verts.
+
+### Non fait (avec raison) — lot 7
+
+- Migration des ~58 formateurs inline (`RadarMarche` 58, `MarcheSecteurBlock`, admin `toLocaleString`) vers `format.ts` : mécanique, sans effet visuel, reportée — la doctrine (formateurs à `chiffreId`, étiquette par `Trace`) est posée et couvre déjà les DEUX fiches mandatées.
+- « La même valeur sur chaque surface » dans le tiroir : viendra des passages de la sonde (lot 4) quand ils porteront les valeurs par robinet — le tiroir affiche déjà définition/moteur/portée/run.
+- L'étiquetage exhaustif des sections modulaires de la fiche parcelle (marche/constructibilite/…) : le patron `Trace` est posé (tier) ; extension mécanique par section.
+
+---
+
+## CLÔTURE DU MANDAT CIRCUIT-1
+
+**Lots 0-8 TOUS CLOS**, commits un par lot, poussés sur `origin/feat/circuit-1` :
+`74e57173` mandat+maquette · `b5ab1502` lot 0 · `d80d25ac` lot 1 · `ac00d916` lot 2 · `041473dc` lot 3 · `c565e2a7` lot 4 · `bdc75741` lot 5 · `5489ce53` lot 8 · `177e497c` lot 6 · lot 7 = commit final ci-dessous. Rien mergé, rien poussé sur main.
+
+**Définition de fini — état** : registre sync + verifier ✓ (98 chiffres/123 robinets, 0 orphelin) · garde 1.6 ✓ (exceptions justifiées au docstring) · fuite zonage soldée par construction + testée (Saint-Paul A 35,8 %/N 47,2 %) · eau ancienne : reste « solaire gelé, étiqueté » seul (+DPE structurel documenté, sonde le surveille) · UN pointeur (manifeste, première pose faite, bascule+retour JOUÉS en recette navigateur avec 8 captures) · vanne : 33 sources à job, la page dit pourquoi pour les autres · agents : mécanisme complet TESTÉ par fixtures ; envoi réel BLOQUÉ crédit API (commande prête) · traçage : allumé = étiquettes fiches commune (14) + tier parcelle, éteint = snapshot identique · un seul jeu de crons (garde deploy + cause racine fuseau corrigée), healthz aligné registre, DPE ne tamponne plus à vide · suite : **2352 verts** (départ 2295) — 2 rouges : `test_r5` pré-existant + 1 instable d'ordre stash-prouvé.
+
+### Ce qui reste à Vic (rien d'autre n'attend de lui)
+
+1. **Lire** les chapitres « Décisions prises en autonomie » (22) et « Non fait » de ce compte-rendu.
+2. **Merger** `feat/circuit-1` depuis labuse-merge (et `fix/retours-12` — le seed des sources 93-95 s'alignera).
+3. **Recharger le crédit API Anthropic** (l'erreur `credit balance too low` bloque agents et Copilote) puis envoyer les deux premiers agents : `labuse agent source --ids 30,68` (DEAL PPR, Office de l'eau) et lire les rapports sur la page Circuit.
+4. **Déployer** : `sudo sh deploy/scripts/retirer_crons_legacy.sh` (retrait explicite du legacy, sauvegardé) puis `sudo sh deploy.sh` (pose du wrapper 20 jobs, conversion fuseau automatique).
+5. **Basculer en production** depuis la page Circuit (note de version d'abord — le bouton l'exige) et **purger les runs morts** (bouton dry-run, exécution `labuse purge-runs-morts --apply` app arrêtée).
+6. **Corriger les cadences proposées** (57, `CADENCES-PROPOSEES.md`) depuis la page, à l'usage.
+
+**Suite finale (commit de clôture)** : **2355 passed · 1 failed (test_r5, pré-existant stash-prouvé) · 36 skipped** — le meilleur verdict du mandat (départ : 2295). Commit final = celui-ci.

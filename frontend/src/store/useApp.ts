@@ -171,6 +171,13 @@ export type OrthoYear = 'now' | '1950' | '2000' | '2006' | '2011' | '2016' | '20
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
 
 interface AppState {
+  // CIRCUIT-1 lot 7.2 — MODE TRAÇAGE (admin) : allumé, chaque nombre étiqueté (composant Trace)
+  // porte son chiffre_id et ouvre le tiroir de trace ; éteint, rendu STRICTEMENT identique.
+  tracage: boolean
+  setTracage: (on: boolean) => void
+  traceOuvert: string | null            // chiffre_id du tiroir de trace ouvert (null = fermé)
+  setTraceOuvert: (id: string | null) => void
+
   // Commune active — null = « Toute l'île » (défaut). Pilote carte, compteurs, liste, modules,
   // et vit dans l'URL (#…&c=…). Sélecteur dans le header.
   commune: string | null
@@ -484,6 +491,11 @@ const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTabl
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
 export const useApp = create<AppState>((set) => ({
+  tracage: false,
+  setTracage: (on) => set({ tracage: on, traceOuvert: null }),
+  traceOuvert: null,
+  setTraceOuvert: (id) => set({ traceOuvert: id }),
+
   commune: null,
   // changer de commune remet la zone dessinée à zéro (elle appartenait à l'ancienne emprise)
   // M55-D stage 6 : le MAÎTRE du périmètre est le filtre `filters.communes` (multi). `commune`

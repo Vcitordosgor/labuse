@@ -8,6 +8,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { useApp } from '../../store/useApp'
+
 import {
   getAdminCircuit, getAdminCircuitNoteVersion, postAdminCircuitPurger,
   postAdminCircuitRevenir, postAdminCircuitVerifier, postAdminFluxBascule, postAdminFluxLancerRun,
@@ -105,6 +107,8 @@ export function CircuitSection() {
   const [note, setNote] = useState<any>(null)
   const gridRef = useRef<HTMLDivElement>(null)
   const [pipes, setPipes] = useState<{ d: string; cls: string }[]>([])
+  const tracage = useApp((s) => s.tracage)
+  const setTracage = useApp((s) => s.setTracage)
 
   const d = q.data
   const verifier = useMutation({ mutationFn: postAdminCircuitVerifier, onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-circuit'] }) })
@@ -194,6 +198,7 @@ export function CircuitSection() {
         : r.mode === 'en_direct' ? 'direct'
           : r.mode === 'absente' ? 'vide' : ''
   const chkTank = (r: any) => {
+    if (r.a_verifier) return <span className="chk warn">à vérifier (cadence dépassée)</span>
     const v = r.veille
     if (!v) return <span className="chk warn">jamais vérifié</span>
     if (v.methode === 'rappel') return <span className="chk">rappel {v.rappel_jours ?? '—'} j</span>
@@ -214,6 +219,7 @@ export function CircuitSection() {
         {cpt.fuites_ouvertes > 0 && <button className="pill rouge"><i />{cpt.fuites_ouvertes} fuite{cpt.fuites_ouvertes > 1 ? 's' : ''}</button>}
         {cpt.eau_ancienne_ouverte > 0 && <button className="pill ambre"><i />{cpt.eau_ancienne_ouverte} eau ancienne</button>}
         {cpt.jamais_verifies > 0 && <button className="pill gris"><i />{cpt.jamais_verifies} jamais vérifiés</button>}
+        {cpt.a_verifier > 0 && <button className="pill ambre"><i />{cpt.a_verifier} à vérifier</button>}
         <span className="pill mint"><i />{cpt.vannes} vannes · {cpt.surveilles} sondes</span>
         <span className="muted" style={{ marginLeft: 'auto', fontSize: 11.5 }}>
           {d.dernier_controle
@@ -223,7 +229,14 @@ export function CircuitSection() {
         <button className="btn ghost" onClick={() => verifier.mutate()} disabled={verifier.isPending}>
           {verifier.isPending ? 'Vérification…' : 'Vérifier que tout coule'}
         </button>
-        <button className="btn mauve" disabled title="Les agents arrivent au lot 6.">Envoyer les agents</button>
+        <button className="btn mauve" disabled
+          title="Agents prêts (labuse agent source) — bouton câblé au premier crédit API.">Envoyer les agents</button>
+        {/* CIRCUIT-1 lot 7.2 — l'interrupteur du MODE TRAÇAGE (admin) : chaque nombre étiqueté
+            porte son chiffre_id sur les fiches ; éteint : rendu strictement identique. */}
+        <button className={tracage ? 'btn' : 'btn ghost'} onClick={() => setTracage(!tracage)}
+          style={tracage ? { borderColor: '#facc15', color: '#facc15' } : undefined}>
+          {tracage ? 'Traçage : allumé' : 'Traçage'}
+        </button>
       </div>
 
       <div className="legend">

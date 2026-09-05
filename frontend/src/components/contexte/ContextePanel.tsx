@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { deleteCommuneContact, getCommuneContacts, getContexteCommune, getMoi, motMarcheCommune, motRarete, postCommuneContact } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
+import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille partagée
@@ -164,9 +165,11 @@ function Shortcut({ label, onClick }: { label: string; onClick: () => void }) {
 // coins arrondis, icône à gauche, titre + sous-titre, valeur ou badge à droite, chevron). Fermée, elle dit
 // déjà l'essentiel ; un clic ouvre son détail (rien de perdu d'OUTILS-6). L'état ouvert/fermé est mémorisé.
 const TON_COL: Record<string, string> = { vert: TOKENS.mint, orange: TOKENS.stCreuser, rouge: TOKENS.stEcartee, violet: 'var(--iris)' }
-function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, children }: {
+function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, chiffre, children }: {
   id: string; ic: string; titre: string; sous?: string; val?: string | null
-  ton?: 'vert' | 'orange' | 'rouge' | 'violet'; badge?: boolean; defaultOpen?: boolean; children: React.ReactNode
+  ton?: 'vert' | 'orange' | 'rouge' | 'violet'; badge?: boolean; defaultOpen?: boolean
+  // CIRCUIT-1 lot 7.2 — chiffre_id du registre : traçage allumé, la valeur porte son étiquette.
+  chiffre?: string; children: React.ReactNode
 }) {
   const [open, setOpen] = useState(() => readAcc(id, !!defaultOpen))
   const col = ton ? TON_COL[ton] : undefined
@@ -184,9 +187,12 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, childre
           <b className="block text-[13px] font-semibold text-txt-hi">{titre}</b>
           {sous && <span className="block truncate text-[11px] text-txt-mut">{sous}</span>}
         </span>
-        {val != null && val !== '' && (badge
-          ? <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-medium" style={{ color: col, borderColor: `${col}55`, background: `${col}1a` }}>{val}</span>
-          : <span className="shrink-0 text-[12.5px] font-semibold" style={col ? { color: col } : undefined}>{val}</span>)}
+        {val != null && val !== '' && (() => {
+          const rendu = badge
+            ? <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-medium" style={{ color: col, borderColor: `${col}55`, background: `${col}1a` }}>{val}</span>
+            : <span className="shrink-0 text-[12.5px] font-semibold" style={col ? { color: col } : undefined}>{val}</span>
+          return chiffre ? <Trace id={chiffre}>{rendu}</Trace> : rendu
+        })()}
         <span className="shrink-0 text-[15px] text-txt-dim transition-transform group-open:rotate-90">›</span>
       </summary>
       <div className="mb-1 mt-1.5 rounded-lg border border-line-2 bg-surface-1 px-3 py-2.5">{children}</div>
@@ -324,7 +330,7 @@ export function ContextePanel() {
             <div className="px-5 pt-3">
               <GroupeLabel>Construire ici</GroupeLabel>
 
-              <LigneCarte id="regle-plu" ic="§" titre="Règles d'urbanisme"
+              <LigneCarte id="regle-plu" chiffre="statut_plu" ic="§" titre="Règles d'urbanisme"
                 sous={`PLU ${d.plu_statut.statut}${d.plu_statut.date_reglement ? ` · ${d.plu_statut.date_reglement}` : ''}`}
                 val={d.plu_statut.statut} badge ton={d.plu_statut.statut === 'RNU' ? 'orange' : 'vert'}>
                 {/* PROJETS-V5 (E10) — le statut RÉEL, jamais le stade technique brut (`libelle`, ex. « aucune »
@@ -338,7 +344,7 @@ export function ContextePanel() {
                 <Source nom={d.plu_statut.source ?? 'GPU'} />
               </LigneCarte>
 
-              <LigneCarte id="regle-zan" ic="◐" titre="Enveloppe ZAN"
+              <LigneCarte id="regle-zan" chiffre="zan_reste_ha" ic="◐" titre="Enveloppe ZAN"
                 sous={r ? `${fmtV(r['reste_zan_ha'], ' ha')} restants · ${fmtV(r['rythme_conso_ha_an'], ' ha/an')}` : 'horizon non projetable'}
                 val={r?.['horizon_epuisement_ans'] != null ? `${fmtDec(r['horizon_epuisement_ans'])} ans` : null} ton="orange">
                 <div className="flex flex-col gap-0.5 text-[12px]">
@@ -352,7 +358,7 @@ export function ContextePanel() {
               {d.sru && (() => {
                 const m = SRU_META[d.sru.statut] ?? SRU_META.conforme
                 return (
-                  <LigneCarte id="regle-sru" ic="⌂" titre="Logement social — SRU"
+                  <LigneCarte id="regle-sru" chiffre="taux_lls_pct" ic="⌂" titre="Logement social — SRU"
                     sous={`${d.sru.detail?.nb_lls != null ? `${fmt(d.sru.detail.nb_lls)} LLS · ` : ''}objectif ${Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %`}
                     val={m.label.toLowerCase()} badge ton={d.sru.statut === 'carencee' ? 'rouge' : d.sru.statut === 'deficitaire' ? 'orange' : d.sru.statut === 'conforme' ? 'vert' : undefined}>
                     <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
@@ -365,7 +371,7 @@ export function ContextePanel() {
                 )
               })()}
 
-              <LigneCarte id="construire" ic="▤" titre="Permis & délais"
+              <LigneCarte id="construire" chiffre="permis_12m_n" ic="▤" titre="Permis & délais"
                 sous={`${fmt(d.permis_bloc.permis_12m)} permis / 12 mois${d.permis_bloc.logements_12m != null ? ` · ${fmt(d.permis_bloc.logements_12m)} logts` : ''}`}
                 val={d.permis_bloc.delai_median_mois != null ? `${fmtDec(d.permis_bloc.delai_median_mois)} mois` : null}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
@@ -379,7 +385,7 @@ export function ContextePanel() {
               </LigneCarte>
 
               {d.plh && (
-                <LigneCarte id="regle-plh" ic="≡" titre="Programme local — PLH"
+                <LigneCarte id="regle-plh" chiffre="plh_objectif_logements_an" ic="≡" titre="Programme local — PLH"
                   sous={`${d.epci ?? ''}${d.plh.part_sociale_pct != null ? ` · ${Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} % part sociale` : ''}`}
                   val={d.plh.obj_logements_an != null ? `${fmt(d.plh.obj_logements_an)} logts/an` : null}>
                   <div className="flex flex-col gap-0.5 text-[12px]">
@@ -393,7 +399,7 @@ export function ContextePanel() {
               {/* ── LE MARCHÉ ── */}
               <GroupeLabel>Le marché</GroupeLabel>
 
-              <LigneCarte id="marche" ic="↗" titre="Prix &amp; tendance" defaultOpen
+              <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix &amp; tendance" defaultOpen
                 sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf ${fmt(d.comparable?.neuf_eur_m2)} €/m² · ${fmt(d.foncier?.mutations_12m)} mutations/12m`}
                 val={tend?.['pct'] != null ? `${Number(tend['pct']) > 0 ? '+' : ''}${fmtDec(tend['pct'])} %` : null}
                 ton={tend?.['pct'] != null && Number(tend['pct']) < 0 ? 'rouge' : 'vert'}>
@@ -407,7 +413,7 @@ export function ContextePanel() {
               </LigneCarte>
 
               {d.foncier?.prix_terrain_nu.par_zone && (
-                <LigneCarte id="terrain-nu" ic="▦" titre="Terrain nu"
+                <LigneCarte id="terrain-nu" chiffre="prix_terrain_zone_eur_m2" ic="▦" titre="Terrain nu"
                   sous={`zone U ${fmt(d.foncier.prix_terrain_nu.par_zone['U']?.n)} ventes · zone AU ${fmt(d.foncier.prix_terrain_nu.par_zone['AU']?.n)} ventes`}
                   val={`${fmt(d.foncier.prix_terrain_nu.par_zone['U']?.median_eur_m2)} · ${fmt(d.foncier.prix_terrain_nu.par_zone['AU']?.median_eur_m2)} €/m²`}>
                   <div className="flex gap-5">
@@ -423,7 +429,7 @@ export function ContextePanel() {
               )}
 
               {d.marche_annonces && (
-                <LigneCarte id="annonces" ic="◉" titre="Annonces en cours — Radar"
+                <LigneCarte id="annonces" chiffre="annonces_actives_n" ic="◉" titre="Annonces en cours — Radar"
                   sous={`${fmt(d.marche_annonces.biens)} biens en vente · écart demandé / acté`}
                   val={!d.marche_annonces.sous_seuil && d.marche_annonces.ecart_demande_acte_pct != null ? `${d.marche_annonces.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(d.marche_annonces.ecart_demande_acte_pct)} %` : null}
                   ton={d.marche_annonces.ecart_demande_acte_pct != null && d.marche_annonces.ecart_demande_acte_pct < 0 ? 'vert' : undefined}>
@@ -447,7 +453,7 @@ export function ContextePanel() {
               )}
 
               {d.loyer && (
-                <LigneCarte id="loyer" ic="€" titre="Loyers"
+                <LigneCarte id="loyer" chiffre="loyer_median_eur_m2" ic="€" titre="Loyers"
                   sous={`${d.loyer.type ?? 'logement'} · ${d.loyer.source}`}
                   val={d.loyer.median_eur_m2 != null ? `${fmtDec(d.loyer.median_eur_m2)} €/m²` : null}>
                   <div className="flex flex-col gap-0.5 text-[12px]">
@@ -461,7 +467,7 @@ export function ContextePanel() {
               <GroupeLabel>Le territoire</GroupeLabel>
 
               {d.foncier && (
-                <LigneCarte id="foncier" ic="◫" titre="Foncier repéré" defaultOpen
+                <LigneCarte id="foncier" chiffre="n_parcelles_commune" ic="◫" titre="Foncier repéré" defaultOpen
                   sous={`${fmt(d.foncier.stock_opportunites.n)} parcelles promues${d.densifiables?.parcelles != null ? ` · ${fmt(d.densifiables.parcelles)} densifiables` : ''}`}
                   val={`${fmt(d.foncier.stock_opportunites.ha)} ha`}>
                   <div className="mb-3 flex gap-5">
@@ -482,7 +488,7 @@ export function ContextePanel() {
               {d.foncier?.repartition_zonage && (() => {
                 const f = d.foncier.repartition_zonage.familles
                 return (
-                  <LigneCarte id="zonage" ic="▥" titre="Zonage"
+                  <LigneCarte id="zonage" chiffre="part_zone_U_pct" ic="▥" titre="Zonage"
                     sous={`U ${fmtDec(f.U.pct)} · AU ${fmtDec(f.AU.pct)} · A ${fmtDec(f.A.pct)} · N ${fmtDec(f.N.pct)} % de la surface`}
                     val="4 familles">
                     <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Répartition du zonage <span className="text-txt-mut">(parts de surface)</span>
@@ -498,7 +504,7 @@ export function ContextePanel() {
                 )
               })()}
 
-              <LigneCarte id="risques" ic="⚠" titre="Risques"
+              <LigneCarte id="risques" chiffre="ppr_pct" ic="⚠" titre="Risques"
                 sous="PPR · mouvement de terrain · CatNat"
                 val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % en PPR` : (d.risques.parc_national ? 'Parc National' : null)}
                 badge={d.risques.ppr_pct != null} ton="orange">
@@ -511,7 +517,7 @@ export function ContextePanel() {
                 <Source nom={d.risques.source} />
               </LigneCarte>
 
-              <LigneCarte id="population" ic="⚇" titre="Population &amp; logement"
+              <LigneCarte id="population" chiffre="habitants_n" ic="⚇" titre="Population &amp; logement"
                 sous={`${d.population.logements != null ? `${fmt(d.population.logements)} logts` : ''}${d.population.vacance_pct != null ? ` · ${fmtDec(d.population.vacance_pct)} % vacants` : ''} · INSEE`}
                 val={d.population.habitants != null ? `${fmt(d.population.habitants)} hab.` : null}>
                 <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
@@ -544,7 +550,7 @@ export function ContextePanel() {
               </LigneCarte>
 
               {(d.qpv.length > 0 || d.anru.length > 0) && (
-                <LigneCarte id="qpv" ic="◈" titre="Quartiers prioritaires" sous="ANCT · NPNRU"
+                <LigneCarte id="qpv" chiffre="qpv_n" ic="◈" titre="Quartiers prioritaires" sous="ANCT · NPNRU"
                   val={`${d.qpv.length} QPV`}>
                   <div className="flex flex-col gap-0.5 text-[12px]">
                     <RowT lbl="QPV" val={d.qpv.length > 0 ? `${d.qpv.length} quartier(s)` : 'aucun'} />
