@@ -2687,8 +2687,10 @@ def _division_fiche(db: Session, idu: str, surface_m2: float | None) -> dict | N
     CIRCUIT-1 lot 2.3 — SCOPÉ AU RUN SERVI : les candidats d'un run mort (q_v10_m129 restait
     servi 2 runs après sa bascule) ne sont PLUS montrés. Tant que le run courant n'a pas ses
     candidats (recalcul au geste Calculer, lot 3), la fiche dit « divisibilité non recalculée
-    pour ce run » plutôt qu'une valeur d'un run mort."""
-    run = runs.current()
+    pour ce run » plutôt qu'une valeur d'un run mort. Lot 3.1 : le run lu est celui du
+    MANIFESTE (`manifeste.division_run()`, repli runs.current() tant qu'il n'est pas posé)."""
+    from .. import manifeste as _manifeste
+    run = _manifeste.division_run()
     r = db.execute(text(
         "SELECT residuel_m2, residuel_facade_m, type_division, "
         "       (coalesce(note_revue,'') <> '') AS revue "

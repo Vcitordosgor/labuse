@@ -116,3 +116,31 @@ Sortie brute : `docs/CIRCUIT/VPS-CRONS-05-09.txt` (172 lignes, ssh lecture seule
 
 - Tests du lot : 16 verts (7 lot 2 + 6 score_e + 9 registre inchangés) ; tsc front OK.
 - Suite complète post-lot 2 : **2311 passed · 1 failed (le pré-existant test_r5) · 49 skipped** — aucun rouge nouveau, +8 verts vs lot 1.
+
+---
+
+## Lot 3 — La pompe unifiée
+
+### Livré
+
+- **3.1 Le manifeste** : `src/labuse/manifeste.py` — `config/served_manifest.json` `{scoring_run, residuel_run_seq, mvt_run, division_run, promoted_at, par, precedent}`, écrit ATOMIQUEMENT (tmp + `os.replace`), manifeste incomplet REFUSÉ (jamais un pointeur partiel). `runs.current()`/`precedent()` lisent le manifeste d'abord, repli sur `served_run.txt`/`run_precedent.txt` tant qu'il n'est pas posé — **aucun comportement ne change avant la première bascule** (migration douce). Bootstrap : `construire_depuis_pointeurs(db)`.
+- **3.2 Le résiduel dans le manifeste** : `basculer()` écrit LE manifeste (scoring+résiduel+mvt+division en un seul écrit) ; `residuel_runs.is_served` devient une VUE DÉRIVÉE (mise à jour par la bascule seule) ; **Revenir restaure le manifeste précédent ENTIER**. `residuel_entrees_changees(db)` compare les tampons (PLU/GPU, cadastre, CoSIA — `last_sync_at`) à `computed_at_max` du run résiduel servi : entrées inchangées → le candidat REPORTE le servi.
+- **3.3 Calculer** : `labuse pompe calculer --label L --recette R --par X` — chaîne flux-run (cascade+scoring, brique existante), score É pour L (neuf live), division d'or POUR L (env `LABUSE_SERVED_RUN=L` sur le builder — jamais le servi tamponné), garde résiduel, **note de version** puis `rapport_candidat`. La **note de version vient du registre** (`bascule_flux.note_version`) : réservoirs+millésimes (photo F2.2 du run si posée, sinon état courant), chiffres recalculés = portée `run` du registre, écart de classement (`golden_ops.comparer` — honnête sur un candidat inconnu : motif, jamais un écart inventé).
+- **3.6 `circuit_journal`** : table `(ts, geste, cible, par, resultat, details)` + `journaliser()` jamais bloquant. Branché : **Injecter** (dashboard, avec le « qui » = compte_email — comblé), **Calculer** (endpoint run/lancer avec « qui », + CLI pompe), **Basculer/Revenir** (`basculer()`, en plus de `run_bascule_journal`), **purge** (CLI). Agents : au lot 6.
+- **2.3→3.1** : `_division_fiche` lit désormais `manifeste.division_run()` (repli scoring courant).
+
+### Décisions prises en autonomie (suite)
+
+11. **(3.3)** division d'or « pour le label » : le builder tamponne `runs.current()` — plutôt que d'ajouter un paramètre de run à travers toute la chaîne, le CLI pompe le lance en sous-process avec `LABUSE_SERVED_RUN=L` (l'override d'env EXISTANT, prioritaire par construction). Alternative écartée : refactor du builder (plus propre mais plus risqué ; à faire quand la chaîne division passera au registre).
+12. **(3.4)** « tables préparées AVANT la bascule → garde 6/6 instantanée » : **non fait** — `build-mvt` fait un DROP à verrou exclusif (deadlock CONSTATÉ avec les lectures de la garde, commentaire dashboard.py:1428-1432) ; préparer sous le label candidat exigerait un build shadow+swap façon `_rebuild.py`. La bascule reste : pointeur instantané + reconstruction détachée (5/6 assumé pendant la reconstruction, comme avant). Ce qu'il faudrait : porter `build-mvt` sur `rebuild_swap` (chantier dédié).
+13. **(3.1)** Les vues dérivées (`served_run.txt` etc.) restent ÉCRITES à chaque bascule (pas encore retirées) : tout code non migré continue de lire juste. Leur retrait = après le lot 5 (page) et une bascule de recette réussie.
+
+### Non fait (avec raison) — lot 3
+
+- 3.4 partiel (ci-dessus, décision 12) ; le « contrôle après bascule » automatique arrive avec la sonde (lot 4.1, déclenchée par la bascule).
+- 3.5 (bouton Purger sur la page) : la page est le lot 5 ; le CLI journalisé est prêt.
+
+### Suite
+
+- Tests du lot : `tests/test_circuit1_lot3.py` (8) — manifeste atomique/incomplet refusé/lu par runs, division_run repli, bootstrap, journal (qui/quand/quoi), note de version honnête, garde résiduel honnête.
+- Suite complète post-lot 3 : **2319 passed · 1 failed (le pré-existant test_r5) · 49 skipped** — aucun rouge nouveau, +8 verts vs lot 2.

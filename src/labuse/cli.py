@@ -728,6 +728,10 @@ def purge_runs_morts_cmd(
             if n:
                 touched.add(t)
                 typer.echo(f"  DELETE {t} : {n}")
+        # CIRCUIT-1 lot 3.6 — la purge entre au journal unifié (geste humain, jamais un cron).
+        from . import circuit_journal
+        circuit_journal.journaliser(s, "purger", ",".join(purgeables), "cli", "ok",
+                                    {"tables": sorted(touched)})
         s.commit()
     if vacuum and touched:
         typer.echo("VACUUM FULL (verrou exclusif) …")
@@ -3710,6 +3714,69 @@ def registre_sync_cmd() -> None:
         n = registre_sync_mod.sync(s)
         s.commit()
     typer.echo(f"✓ miroir écrit : {n['chiffres']} chiffres · {n['robinets']} robinets · {n['aretes']} arêtes")
+
+
+# ═══════════════════ CIRCUIT-1 (lot 3.3) — la POMPE : Calculer un candidat COMPLET ═══════════════════
+pompe_app = typer.Typer(add_completion=False,
+                        help="La pompe (CIRCUIT-1) : Calculer un candidat complet — jamais servi tout seul.")
+app.add_typer(pompe_app, name="pompe")
+
+
+@pompe_app.command("calculer")
+def pompe_calculer_cmd(
+    label: str = typer.Option(..., help="Label du run candidat (ex. q_v13_20260906)."),
+    recette: str = typer.Option("m36", help="Recette scoring : m36 (servie) ou q_v12."),
+    par: str = typer.Option("cli", help="Qui lance (email admin) — entre au journal."),
+    sans_division: bool = typer.Option(False, help="Sauter division-or (déjà calculé pour ce label)."),
+) -> None:
+    """CALCULER (lot 3.3) — le candidat COMPLET sous un label : cascade+scoring (flux-run),
+    score É sur le neuf LIVE, division d'or POUR CE LABEL, note de version (registre), rapport
+    candidat. Jamais servi : Basculer reste un geste. Le résiduel n'est recalculé que si ses
+    entrées ont changé (sinon le manifeste candidat REPORTE le résiduel servi — lot 3.2)."""
+    import os
+    import subprocess
+    import sys
+
+    from . import bascule_flux, circuit_journal
+
+    with session_scope() as s:
+        circuit_journal.journaliser(s, "calculer", label, par, "lance", {"recette": recette})
+        s.commit()
+    # 1) cascade + scoring — la brique existante, en process (progression run_progress incluse).
+    flux_run_cmd(label=label, resume=True, recette=recette)
+    # 2) score É pour CE label (neuf LIVE — lot 2.2).
+    from .ingestion.score_e import build_score_e
+    with session_scope() as s:
+        build_score_e(s, run=label)
+        s.commit()
+    # 3) division d'or POUR CE LABEL (lot 2.3) : le builder tamponne runs.current() → on le lance
+    #    détaché-en-avant avec l'override d'env (le même mécanisme que les tests), jamais le servi.
+    if not sans_division:
+        env = {**os.environ, "LABUSE_SERVED_RUN": label}
+        subprocess.run([sys.executable, "-m", "labuse.cli", "division-or", "--all"],
+                       env=env, check=True)
+    # 4) résiduel : candidat SEULEMENT si ses entrées ont bougé (sinon reporté à la bascule).
+    with session_scope() as s:
+        dit = bascule_flux.residuel_entrees_changees(s)
+        if dit["changees"]:
+            typer.echo(f"⚠ résiduel : entrées plus récentes que le run servi ({dit['detail']}) — "
+                       f"calcule un candidat résiduel (chaîne residuel_runs) avant de basculer.")
+        else:
+            typer.echo("✓ résiduel : entrées inchangées — le manifeste candidat reportera le servi.")
+    # 5) note de version (registre) + rapport candidat (mail existant).
+    with session_scope() as s:
+        note = bascule_flux.note_version(s, label)
+        typer.echo("── NOTE DE VERSION ──")
+        typer.echo(f"réservoirs utilisés : {len(note['reservoirs'])} (millésimes portés)")
+        typer.echo(f"chiffres recalculés (portée run) : {', '.join(note['chiffres_recalcules'][:12])}"
+                   + (" …" if len(note["chiffres_recalcules"]) > 12 else ""))
+        if note.get("ecart_classement"):
+            typer.echo(f"écart de classement vs servi : {note['ecart_classement']}")
+        circuit_journal.journaliser(s, "calculer", label, par, "ok", {"note": note})
+        s.commit()
+    from . import golden_ops
+    golden_ops.rapport_candidat(dry_run=False)
+    typer.echo(f"✓ candidat « {label} » complet — Basculer reste un geste (page Circuit / labuse golden promote).")
 
 
 # ═══════════════════════════ CRON-1 (K5) — golden : candidat auto, bascule MANUELLE ═══════════════════════════

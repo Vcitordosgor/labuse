@@ -221,6 +221,32 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     entete = ("# config/run_precedent.txt — run servi PRÉCÉDENT (M80). Suit served_run.txt à chaque\n"
               "# bascule (FLUX-1 F2.4 : le retour arrière est la bascule dans l'autre sens).\n")
     _RUN_PRECEDENT_FILE.write_text(entete + ancien + "\n", encoding="utf-8")
+
+    # CIRCUIT-1 lot 3.1/3.2 — LE MANIFESTE : un seul écrit ATOMIQUE déplace scoring, résiduel,
+    # mvt et division (décision Vic n° 5). Revenir (nouveau == ancien précédent) restaure le
+    # manifeste PRÉCÉDENT ENTIER (résiduel et division compris) — une bascule scoring ne peut
+    # plus laisser le résiduel derrière. served_run.txt/run_precedent.txt (ci-dessus) et
+    # residuel_runs.is_served (ci-dessous) sont désormais des VUES DÉRIVÉES de cet écrit.
+    from . import manifeste as _manifeste
+    m_avant = _manifeste.lire() or _manifeste.construire_depuis_pointeurs(db)
+    if nouveau_run == ancien_precedent and m_avant.get("precedent"):
+        cible = dict(m_avant["precedent"])            # retour arrière : le manifeste entier
+    else:
+        cible = {"scoring_run": nouveau_run, "mvt_run": nouveau_run, "division_run": nouveau_run,
+                 "residuel_run_seq": m_avant.get("residuel_run_seq")}
+    from datetime import datetime as _dt, timezone as _tz
+    nouveau_manifeste = {**cible,
+                         "promoted_at": _dt.now(tz=_tz.utc).isoformat(), "par": par[:120],
+                         "precedent": {k: m_avant.get(k) for k in
+                                       ("scoring_run", "residuel_run_seq", "mvt_run", "division_run")}}
+    _manifeste.ecrire(nouveau_manifeste)
+    # vue dérivée résiduel : is_served suit le manifeste (jamais un autre chemin — lot 3.1).
+    if nouveau_manifeste.get("residuel_run_seq") is not None:
+        try:
+            from .faisabilite import residuel_runs as _rr
+            _rr.set_served(db, int(nouveau_manifeste["residuel_run_seq"]))
+        except Exception:  # noqa: BLE001 — chaîne résiduel absente (base de test) : la vue suit plus tard
+            pass
     runs.invalidate()                   # DONNEES-2 (B4) — servi ET précédent relus au prochain appel
 
     caches = purger_caches_run()
@@ -244,8 +270,69 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
         "VALUES (:a, :n, :p, :s, :c, :co)"),
         {"a": ancien, "n": nouveau_run, "p": par[:120], "s": sens,
          "c": _json.dumps(caches), "co": _json.dumps(coherence)})
+    # CIRCUIT-1 lot 3.6 — le journal UNIFIÉ des gestes (en plus du journal de bascule dédié).
+    from . import circuit_journal
+    circuit_journal.journaliser(
+        db, "revenir" if sens == "arriere" else "basculer", nouveau_run, par, "ok",
+        {"ancien": ancien, "manifeste": nouveau_manifeste, "coherence_ok": coherence.get("ok")})
 
     return {"ok": True, "ancien": ancien, "nouveau": nouveau_run, "caches_purges": caches,
             "sens": sens, "coherence": coherence,
             "note": "Effective immédiatement (served_run.txt relu à la requête). Les tables servies "
                     "run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}
+
+
+# ═══════════════ CIRCUIT-1 lot 3.3 — la NOTE DE VERSION (registre) + garde résiduel ═══════════════
+
+def residuel_entrees_changees(db: Session) -> dict:
+    """Lot 3.2 — les ENTRÉES du résiduel (PLU/GPU, cadastre, CoSIA) ont-elles bougé depuis le run
+    résiduel SERVI ? Comparaison par les tampons de data_sources (last_sync_at) contre la date de
+    calcul du run servi (residuel_runs.computed_at_max). Si oui : un candidat résiduel doit être
+    calculé AVANT la bascule (sinon le manifeste candidat reporte le servi, décision « au plus malin »)."""
+    try:
+        servi = db.execute(text(
+            "SELECT computed_at_max FROM residuel_runs WHERE is_served LIMIT 1")).scalar()
+    except Exception:  # noqa: BLE001 — chaîne résiduel absente (base de test)
+        return {"changees": False, "detail": "chaîne résiduel absente"}
+    if servi is None:
+        return {"changees": False, "detail": "aucun run résiduel servi"}
+    rows = db.execute(text(
+        "SELECT name, last_sync_at FROM data_sources WHERE (name ILIKE 'Urbanisme PLU/GPU%' "
+        "OR name ILIKE 'Cadastre (API Carto%' OR name ILIKE 'CoSIA%') AND last_sync_at IS NOT NULL"
+    )).mappings().all()
+    plus_recentes = [r["name"] for r in rows if r["last_sync_at"] and r["last_sync_at"] > servi]
+    return {"changees": bool(plus_recentes),
+            "detail": (", ".join(plus_recentes) or "aucune entrée plus récente que le run servi")}
+
+
+def note_version(db: Session, candidat: str) -> dict:
+    """Lot 3.3 — LA NOTE DE VERSION du candidat, produite PAR LE REGISTRE : réservoirs et
+    millésimes utilisés (photo du run F2.2 si enregistrée, sinon l'état courant de data_sources),
+    chiffres recalculés (portée `run` du registre), écart de classement vs servi (distribution
+    des tiers, golden_ops). Servie au bouton Basculer (lot 5) : on ne bascule qu'après lecture."""
+    from . import registre, runs
+    from .flux import snapshot_source_millesimes
+
+    try:
+        photo = db.execute(text(
+            "SELECT source_millesimes FROM p_score_v2_runs WHERE run_id = :r"), {"r": candidat}).scalar()
+    except Exception:  # noqa: BLE001 — colonne absente (photo F2.2 non posée sur cette base)
+        db.rollback()
+        photo = None
+    if photo:
+        import json as _json
+        reservoirs = photo if isinstance(photo, list) else _json.loads(photo)
+    else:
+        reservoirs = snapshot_source_millesimes(db)
+    chiffres_run = sorted(cid for cid, c in registre.CHIFFRES.items() if c.portee == "run")
+    ecart = None
+    try:
+        from .golden_ops import comparer
+        ecart = comparer(candidat, runs.current())
+    except Exception:  # noqa: BLE001 — pas de comparaison possible (run partiel) : la note le dit
+        ecart = None
+    return {"candidat": candidat, "servi": runs.current(),
+            "reservoirs": reservoirs, "chiffres_recalcules": chiffres_run,
+            "ecart_classement": ecart,
+            "note": "Basculer déplace scoring + résiduel + mvt + division en un seul écrit "
+                    "(manifeste) ; Revenir restaure le manifeste précédent entier."}

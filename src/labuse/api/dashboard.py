@@ -1209,9 +1209,14 @@ def admin_source_veille_injecter(source_id: int, request: Request) -> dict:
         raise HTTPException(404, "Cette source n'est pas surveillée (aucune ligne de veille).")
     nom, millesime = r["name"], r.get("dernier_vu")
     lance = _lancer_ingestion(nom)   # 404 si pas de commande connue → le front n'affiche pas le bouton
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
     with engine().begin() as c:      # trace du geste (suivi visible, X6)
         c.execute(text("UPDATE source_veille SET injection_lancee_at = now(), injection_vu = :v,"
                        " updated_at = now() WHERE source_id = :i"), {"v": millesime, "i": source_id})
+        # CIRCUIT-1 lot 3.6 — le « qui » d'Injecter entre au journal unifié (manquait, Q7.4).
+        from .. import circuit_journal
+        circuit_journal.journaliser(c, "injecter", nom, str(qui), "lance",
+                                    {"millesime": millesime, "job": lance["label"], "log": lance["log"]})
     try:
         from .events import creer_notification
         with session_scope() as s:
@@ -1353,6 +1358,11 @@ def admin_flux_lancer_run(request: Request, body: LancerRunIn | None = None) -> 
     run_progress.start(label, pid=proc.pid, kind="run", recette=recette, log=log_path)
     with session_scope() as s:
         estimation = _estimation_run(s)
+        # CIRCUIT-1 lot 3.6 — le « qui » de Calculer entre au journal unifié (manquait, Q7.4).
+        from .. import circuit_journal
+        _qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+        circuit_journal.journaliser(s, "calculer", label, str(_qui), "lance",
+                                    {"recette": recette, "pid": proc.pid, "log": log_path})
         try:
             from .events import creer_notification
             creer_notification(s, kind="systeme", compte_id=None, source="Flux",
