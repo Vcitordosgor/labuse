@@ -30,7 +30,7 @@ log = logging.getLogger("labuse.sonde_circuit")
 DDL = """
 CREATE TABLE IF NOT EXISTS circuit_ecarts (
   id bigserial PRIMARY KEY,
-  chiffre_id varchar(80) NOT NULL,
+  chiffre_id varchar(120) NOT NULL,
   cle text NOT NULL,
   robinet_a varchar(120) NOT NULL,
   valeur_a text,
@@ -70,16 +70,25 @@ def ensure(db) -> None:
     for stmt in DDL.split(";"):
         if stmt.strip():
             db.execute(text(stmt))
+    # CIRCUIT-2 lot 4 — la sonde devient CATÉGORIELLE : chaque écart porte le TYPE de la donnée
+    # (nombre · classe · geometrie · couche · texte · liste) ; la page et les pastilles comptent
+    # les types classe/geometrie comme les autres (5.3).
+    db.execute(text("ALTER TABLE circuit_ecarts ADD COLUMN IF NOT EXISTS "
+                    "type varchar(12) NOT NULL DEFAULT 'nombre'"))
+    db.execute(text("ALTER TABLE circuit_ecarts ALTER COLUMN chiffre_id TYPE varchar(120)"))
 
 
-def _upsert_ecart(db, chiffre_id: str, cle: str, ra: str, va, rb: str, vb, cause: str) -> None:
+def _upsert_ecart(db, chiffre_id: str, cle: str, ra: str, va, rb: str, vb, cause: str,
+                  type_donnee: str = "nombre") -> None:
     db.execute(text(
-        "INSERT INTO circuit_ecarts (chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b, cause) "
-        "VALUES (:c, :k, :ra, :va, :rb, :vb, :ca) "
+        "INSERT INTO circuit_ecarts (chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b,"
+        " cause, type) "
+        "VALUES (:c, :k, :ra, :va, :rb, :vb, :ca, :t) "
         "ON CONFLICT (chiffre_id, cle, robinet_a, robinet_b) DO UPDATE SET "
         " valeur_a = EXCLUDED.valeur_a, valeur_b = EXCLUDED.valeur_b, cause = EXCLUDED.cause, "
-        " statut = 'ouvert', solde_le = NULL"),
-        {"c": chiffre_id, "k": cle, "ra": ra, "va": str(va), "rb": rb, "vb": str(vb), "ca": cause})
+        " type = EXCLUDED.type, statut = 'ouvert', solde_le = NULL"),
+        {"c": chiffre_id, "k": cle, "ra": ra, "va": str(va), "rb": rb, "vb": str(vb),
+         "ca": cause, "t": type_donnee})
 
 
 def verifier_robinets(db) -> dict:
@@ -227,6 +236,7 @@ def verifier_chemins_reels(db) -> dict:
                                 res.valeur, "http:/parcels", surf_http, "table"))
         except Exception:  # noqa: BLE001
             db.rollback()
+    ensure(db)   # idem : le DDL a pu être annulé par un rollback interne
     for t in trouves:
         _upsert_ecart(db, *t)
     return {"ecarts_trouves": len(trouves), "mesures": mesures, "familles": familles}
@@ -275,6 +285,7 @@ def verifier_scission_neuf(db) -> dict:
                                 "grain secteur = précalcul divergent mort", "table"))
     except Exception:  # noqa: BLE001
         db.rollback()
+    ensure(db)   # idem : le DDL a pu être annulé par un rollback interne
     for t in trouves:
         _upsert_ecart(db, *t)
     return {"ecarts_trouves": len(trouves), "mesures": mesures}
@@ -319,6 +330,135 @@ def verifier_exports(db) -> dict:
                       "config/mots_interdits.yaml", "0 attendu", "autre")
     return {"n_erreurs_hors_mots": verdict.get("n_erreurs_hors_mots", 0),
             "n_mots_interdits": verdict.get("n_mots_interdits", 0)}
+
+
+def _temoins_golden(db) -> list[str]:
+    """Les parcelles témoins de la sonde catégorielle : les 4 EXPORTS-1 + les GOLDEN_IDUS de
+    qa/golden_check.py (même jeu, jamais deux listes — parsé du fichier ; repli : sélection
+    STABLE par idu si le fichier manque, le compte est dit dans le verdict)."""
+    import re
+    from pathlib import Path
+    idus = list(TEMOINS_PARCELLES)
+    golden = Path(__file__).resolve().parents[2] / "qa" / "golden_check.py"
+    if golden.exists():
+        m = re.search(r"GOLDEN_IDUS = \[(.*?)\]", golden.read_text(), re.S)
+        if m:
+            idus += re.findall(r'"(\d{5}0{3}[A-Z]{2}\d{4})"', m.group(1))
+    if len(idus) < 10:      # repli honnête : jeu stable, jamais un échantillon aléatoire
+        idus += [r for (r,) in db.execute(text(
+            "SELECT idu FROM parcels ORDER BY idu LIMIT 46")).all()]
+    return list(dict.fromkeys(idus))
+
+
+def verifier_categorielle(db) -> dict:
+    """CIRCUIT-2 lot 4 — LA SONDE CATÉGORIELLE : la sonde sait désormais dire « la fiche dit
+    zone A, la couche peint U ».
+
+    · 4.1 ZONAGE : famille servie (zone_dominante — la fiche) vs dominante CALCULÉE des parts
+      GPU vs table écran/couche `parcel_zone_plu`, sur les témoins golden. 0 écart attendu.
+    · 4.2 ALÉAS : contrôle de DISTRIBUTION du domaine — un degré DEAL ELEVE/TRES_ELEVE ne peut
+      pas être servi `niveau='moyen'` (la régression RETOURS-13 ne peut plus passer inaperçue).
+    · 4.3 PERMIS : un permis à géométrie APPROXIMATIVE (sitadel_permits.geom_approx) n'est
+      jamais un point sur une parcelle (RETOURS-14).
+    · 4.5 GÉOMÉTRIES : fiche/carte/PDF lisent la MÊME table cadastre ; si une table matérialisée
+      `…geom_simple…` existe, elle n'est jamais plus vieille que la source (sinon eau ancienne).
+    · 4.6 COUCHES : tuiles MVT fabriquées pour un AUTRE run que le servi ⇒ eau ancienne
+      (mécanisme build-mvt).
+    Les PDF de zonage (pré-dossier, lettre) sont confrontés par le cas recette_exports1
+    (nocturne) — jamais « non couverts »."""
+    trouves: list[tuple] = []
+    mesures = 0
+    # ── 4.1 zonage sur les témoins ──
+    temoins = _temoins_golden(db)
+    for idu in temoins:
+        pid = _parcel_id(db, idu)
+        if pid is None:
+            continue
+        try:
+            from .faisabilite.zone_servie import zone_dominante
+            zs = zone_dominante(db, pid)
+        except Exception:  # noqa: BLE001
+            db.rollback()
+            continue
+        mesures += 1
+        if zs.source == "parcel_zone_plu" and zs.parts and len(zs.parts) > 1:
+            fam_calc = zs.parts[0].get("fam")
+            if fam_calc and zs.zone_fam and fam_calc != zs.zone_fam:
+                trouves.append(("zone_plu_famille", idu, "couche:parcel_zone_plu", zs.zone_fam,
+                                "moteur:zone_servie (dominante calculée)", fam_calc,
+                                "table", "classe"))
+    # ── 4.2 aléas : distribution du domaine ──
+    try:
+        n_mal = db.execute(text(
+            "SELECT count(*) FROM spatial_layers WHERE kind = 'georisque_alea' "
+            "AND upper(COALESCE(attrs->>'degre','')) LIKE '%ELEVE%' "
+            "AND COALESCE(attrs->>'niveau','') <> 'fort'")).scalar() or 0
+        mesures += 1
+        if n_mal:
+            trouves.append(("alea_inondation_couche", "distribution",
+                            "attrs.degre (DEAL brut)", f"{n_mal} zones ELEVE/TRES_ELEVE",
+                            "attrs.niveau (servi)", "≠ fort — normalisées à tort",
+                            "table", "classe"))
+    except Exception:  # noqa: BLE001
+        db.rollback()
+    # ── 4.3 permis approximatifs ──
+    try:
+        if db.execute(text("SELECT to_regclass('sitadel_permits')")).scalar():
+            cols = {r[0] for r in db.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'sitadel_permits'")).all()}
+            mesures += 1
+            if "geom_approx" in cols:
+                n_pts = db.execute(text(
+                    "SELECT count(*) FROM sitadel_permits "
+                    "WHERE geom_approx IS TRUE AND geom IS NOT NULL")).scalar() or 0
+                if n_pts:
+                    trouves.append(("historique_permis_liste", "geom_approx",
+                                    "sitadel_permits (points servis)", f"{n_pts} permis approximatifs à géométrie",
+                                    "règle RETOURS-14", "jamais un point sur une parcelle",
+                                    "perimetre", "geometrie"))
+    except Exception:  # noqa: BLE001
+        db.rollback()
+    # ── 4.5 géométries : table matérialisée jamais plus vieille que la source ──
+    try:
+        simple = db.execute(text(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_name LIKE '%geom_simple%' LIMIT 1")).scalar()
+        if simple:
+            n_src = db.execute(text("SELECT count(*) FROM parcels")).scalar() or 0
+            n_mat = db.execute(text(f"SELECT count(*) FROM {simple}")).scalar() or 0  # noqa: S608
+            mesures += 1
+            if n_mat and abs(n_src - n_mat) > 0:
+                db.execute(text(
+                    "INSERT INTO circuit_eau_ancienne (chiffre_id, robinet, tampon, attendu,"
+                    " mecanisme, statut) VALUES (:c, :r, :t, :a, :m, 'ouvert')"),
+                    {"c": "parcelle_geometrie", "r": "carte (tuiles)",
+                     "t": f"{simple} : {n_mat} lignes", "a": f"parcels : {n_src}",
+                     "m": "geom_simple (table matérialisée en retard sur le cadastre)"})
+    except Exception:  # noqa: BLE001
+        db.rollback()
+    # ── 4.6 couches : tuiles d'un autre run que le servi ──
+    try:
+        if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
+            from . import runs
+            run_mvt = db.execute(text(
+                "SELECT value FROM mvt_meta WHERE key = 'run_label'")).scalar()
+            run_servi = runs.current()
+            mesures += 1
+            if run_mvt and run_servi and run_mvt != run_servi:
+                db.execute(text(
+                    "INSERT INTO circuit_eau_ancienne (chiffre_id, robinet, tampon, attendu,"
+                    " mecanisme, statut) VALUES (:c, :r, :t, :a, :m, 'ouvert')"),
+                    {"c": "verdict_couche", "r": "couche_verdict",
+                     "t": f"tuiles fabriquées pour {run_mvt}", "a": f"run servi {run_servi}",
+                     "m": "build-mvt (reconstruction détachée pas encore passée)"})
+    except Exception:  # noqa: BLE001
+        db.rollback()
+    ensure(db)   # un rollback interne peut avoir annulé le DDL posé dans la même transaction
+    for t in trouves:
+        _upsert_ecart(db, *t[:7], type_donnee=t[7])
+    return {"ecarts_trouves": len(trouves), "mesures": mesures, "temoins": len(temoins),
+            "pdf_zonage": "cas recette_exports1 (nocturne)"}
 
 
 def verifier_eau_ancienne(db) -> dict:
@@ -386,18 +526,24 @@ def controle(db, *, declencheur: str = "bouton", exports: bool | None = None) ->
     rob = verifier_robinets(db)
     chemins = verifier_chemins_reels(db)
     neuf = verifier_scission_neuf(db)
+    cat = verifier_categorielle(db)
     eau = verifier_eau_ancienne(db)
     jouer_exports = (declencheur == "cron") if exports is None else exports
     exp = verifier_exports(db) if jouer_exports else {"saute": "hors passage nocturne"}
     fuites_ouvertes = db.execute(text(
         "SELECT count(*) FROM circuit_ecarts WHERE statut = 'ouvert'")).scalar() or 0
+    # lot 5.3 — les pastilles comptent AUSSI par type (classe/geometrie comme les nombres)
+    par_type = dict(db.execute(text(
+        "SELECT type, count(*) FROM circuit_ecarts WHERE statut = 'ouvert' GROUP BY type")).all())
     duree = round(time.monotonic() - t0, 2)
     details = {"declencheur": declencheur, "robinets": rob, "eau": eau,
-               "chemins_reels": chemins, "scission_neuf": neuf, "exports": exp}
+               "chemins_reels": chemins, "scission_neuf": neuf, "categorielle": cat,
+               "ecarts_par_type": par_type, "exports": exp}
     db.execute(text(
         "INSERT INTO circuit_controles (fuites_ouvertes, eau_ancienne, robinets_couverts,"
         " robinets_non_couverts, duree_s, details) VALUES (:f, :e, :c, :n, :d, :j)"),
         {"f": fuites_ouvertes, "e": eau["ouvertes"], "c": rob["couverts"],
          "n": rob["non_couverts"], "d": duree, "j": json.dumps(details, ensure_ascii=False, default=str)})
     return {"fuites_ouvertes": fuites_ouvertes, "eau_ancienne_ouverte": eau["ouvertes"],
-            "eau_etiquetee": eau["etiquetees"], "duree_s": duree, **rob}
+            "eau_etiquetee": eau["etiquetees"], "ecarts_par_type": par_type,
+            "duree_s": duree, **rob}

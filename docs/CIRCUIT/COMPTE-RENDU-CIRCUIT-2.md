@@ -153,3 +153,26 @@ Moteurs au registre (`moteurs.csv`) : `marche_communes` renommé **`marche_servi
 ### Suite
 
 - Tests du lot 3/3 ; tsc OK. (Le seul code touché : deux textes « i » de layers.ts.)
+
+---
+
+## Lot 4 — La sonde catégorielle
+
+### Livré
+
+- **`circuit_ecarts.type`** (nombre · classe · texte · liste · geometrie · couche — ALTER idempotent) : la sonde sait dire « la fiche dit zone A, la couche peint U » ; `controle()` compte les écarts ouverts PAR TYPE (`ecarts_par_type`, consommé par les pastilles — 5.3).
+- **4.1 Zonage** : sur les témoins (les 4 EXPORTS-1 + les 32 GOLDEN_IDUS de qa/golden_check.py, parsés du MÊME fichier — jamais deux listes), famille servie (zone_dominante/écran) vs dominante CALCULÉE des parts GPU. **Mesuré sur la base réelle : 0 écart sur 36 témoins.** Les PDF de zonage (pré-dossier, lettre) sont confrontés par le cas recette_exports1 (nocturne).
+- **4.2 Aléas — contrôle de distribution du domaine** : un degré DEAL `ELEVE`/`TRES_ELEVE` servi `niveau='moyen'` ouvre un écart de type classe. **Sur la base réelle, la sonde a OUVERT l'écart : 484 zones ELEVE/TRES_ELEVE normalisées « moyen »** — c'est la régression RETOURS-13, VIVANTE sur cette branche : la cause est `layers_ingest.py:350` (le `else` du normaliseur avale ELEVE/TRES_ELEVE) et le correctif vit sur `fix/retours-12` (commit RETOURS-13, NON mergé). Décision d'autonomie : ne PAS dupliquer le correctif ici (conflit de merge garanti pour Vic) — la sonde le rend VISIBLE (écart ouvert sur la page, pastille classe), le merge de fix/retours-12 le soldera et la sonde le constatera. Domaine des couches aléa corrigé au registre (servi : faible/moyen/fort ; degré brut en attrs.degre).
+- **4.3 Permis** : un permis à géométrie APPROXIMATIVE (`sitadel_permits.geom_approx` — RETOURS-14) n'est jamais un point : contrôle posé (0 sur la base réelle : la colonne existe, aucun point approximatif servi).
+- **4.5 Géométries** : si une table matérialisée `…geom_simple…` existe (RETOURS-14, branche non mergée), son compte ne peut pas être en retard sur `parcels` (sinon `circuit_eau_ancienne`, mécanisme geom_simple) — absente sur cette branche, contrôle prêt.
+- **4.6 Couches** : tuiles MVT fabriquées pour un AUTRE run que le servi ⇒ eau ancienne (mécanisme build-mvt) — `mvt_meta` clé/valeur lu correctement ; sur la base réelle : tuiles = run servi, rien à ouvrir.
+
+### Attrapé par les tests du lot
+
+- Un `db.rollback()` interne annulait le DDL (`type`) posé par `ensure()` dans la MÊME transaction → écritures en échec au premier passage : `ensure()` re-joué avant chaque écriture (idempotent).
+- `mvt_meta` est une table CLÉ/VALEUR (la ligne `('run_label', 'q_v11_m137')` se lisait comme des colonnes) — lecteur corrigé, testé.
+
+### Suite
+
+- Tests du lot : `tests/test_circuit2_lot4.py` 6 verts (écart typé, distribution aléas = LE test qui aurait attrapé RETOURS-13, permis approximatif, tuiles d'un autre run, compteur par type, témoins = jeu qa) + lot 1-4 voisins verts (30/30 avec lot4 CIRCUIT-1 et 0-bis).
+- Passage réel joué (déclencheur bouton, 12 s) : **1 écart classe ouvert (aléas 484), 0 écart zonage/permis/couches** — verdict en base, la page l'affiche.

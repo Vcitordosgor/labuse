@@ -620,17 +620,20 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/api/app.py:map_layers_geojson (georisque_alea, subtype=inondation)",
     reservoirs=("deal_ppr",), portee="live",
     type="couche", table="spatial_layers (kind=georisque_alea)", fabrication="requete",
-    domaine=("faible", "moyen", "eleve", "tres_eleve"),
-    domaine_source="niveaux d'aléa de la cartographie DEAL (RETOURS-13 : élevé/très élevé "
-                   "ingérés un temps en « moyen » — le domaine verrouille la distribution)"),
+    domaine=("faible", "moyen", "fort"),
+    domaine_source="niveau NORMALISÉ servi (attrs.niveau — layers_ingest._normalise_alea) ; le "
+                   "degré DEAL brut (FAIBLE…TRES_ELEVE) voyage dans attrs.degre. RETOURS-13 : "
+                   "ELEVE/TRES_ELEVE normalisés en « moyen » = bug — la sonde 4.2 contrôle la "
+                   "distribution degre↔niveau"),
  "alea_mvt_couche": C("Aléa mouvement de terrain (couche)", "couche", "commune",
     "secteurs exposés à l'aléa mouvement de terrain avec leur NIVEAU (cartographie DEAL)",
     moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/app.py:map_layers_geojson (georisque_alea, subtype=mouvement_terrain)",
     reservoirs=("deal_ppr",), portee="live",
     type="couche", table="spatial_layers (kind=georisque_alea)", fabrication="requete",
-    domaine=("faible", "moyen", "eleve", "tres_eleve"),
-    domaine_source="niveaux d'aléa de la cartographie DEAL"),
+    domaine=("faible", "moyen", "fort"),
+    domaine_source="niveau normalisé servi (attrs.niveau) ; degré DEAL brut en attrs.degre — "
+                   "distribution contrôlée par la sonde 4.2"),
  "transport_couche": C("Transport public (couche)", "couche", "commune",
     "tracés et arrêts des 7 réseaux GTFS + téléphérique Papang (OSM)",
     moteur=None, calcul="passe_plat",
