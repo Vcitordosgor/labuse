@@ -29,11 +29,6 @@ from .plu_rules import resolve_zone
 _CTX = text("""
 SELECT p.idu, p.commune,
        ST_Area(p.geom_2975)                               AS surface_m2,
-       (SELECT COALESCE(z.attrs->>'libelle', z.subtype, z.name) FROM spatial_layers z
-          WHERE z.commune = p.commune AND z.kind ILIKE '%plu%'
-            AND z.kind NOT ILIKE '%prescription%'  -- les prescriptions (1.B) ne sont PAS des zones
-            AND ST_Contains(z.geom, p.centroid)
-          ORDER BY ST_Area(z.geom) ASC LIMIT 1)           AS zone,
        (SELECT max((pl.attrs->>'slope_pct')::float) FROM spatial_layers pl
           WHERE pl.commune = p.commune AND pl.kind = 'pente'
             AND ST_Intersects(pl.geom_2975, p.geom_2975))  AS pente_pct,
@@ -60,6 +55,11 @@ class ParcelContext:
     # Prescriptions à effet économique (mixité sociale, eaux pluviales) + ER déduits,
     # renseignées par parcel_faisabilite() pour alimenter badges fiche et bilan.
     prescriptions_eco: dict = field(default_factory=dict)
+    # ZONE-1 : zone DOMINANTE PAR SURFACE (la même que l'écran, cf. zone_servie.zone_dominante)
+    # + drapeau « à cheval » quand aucune zone n'atteint 90 % — parts servies au bilan/fiche.
+    zone_fam: str | None = None
+    a_cheval: bool = False
+    zone_parts: list = field(default_factory=list)
 
 
 def _layer_params(name: str) -> dict:
@@ -127,7 +127,13 @@ def parcel_context(session: Session, parcel_id: int) -> ParcelContext | None:
     )
     if r.safer:
         libelles.append("Parcelle déclarée agricole au RPG (usage agricole).")
-    return ParcelContext(parcel_id, r.idu, r.commune, float(r.surface_m2), r.zone, c)
+    # ZONE-1 : la zone vient de LA résolution unique (dominante par surface, la même que
+    # l'écran) — plus jamais de la zone du centroïde (deux vérités, verdicts en miroir sur
+    # les parcelles à cheval — audit EXPORTS A3/transverse).
+    from .zone_servie import zone_dominante
+    zs = zone_dominante(session, parcel_id)
+    return ParcelContext(parcel_id, r.idu, r.commune, float(r.surface_m2), zs.zone, c,
+                         zone_fam=zs.zone_fam, a_cheval=zs.a_cheval, zone_parts=zs.parts)
 
 
 # ── Hauteur PROSPECT (Ud/Uu) : L≥H, L = largeur de la voie desservante (BD TOPO) ──
@@ -239,10 +245,17 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
                 f"{label} — {m2:.0f} m² déduits de l'emprise constructible.")
     emprise = max(0.0, base - er_a)
 
+    # ZONE-1 : sur parcelle à cheval, le bilan LE DIT — parts servies (modulation + contexte éco).
+    if ctx.a_cheval and ctx.zone_parts:
+        from .zone_servie import libelle_a_cheval
+        ctx.contraintes.libelles.append(libelle_a_cheval(ctx.zone_parts))
+
     eco_types = ([str(t) for t in presc.get("mixite_sociale_typepsc", [])]
                  + [str(t) for t in presc.get("eaux_pluviales_typepsc", [])])
     mixite_set = {str(t) for t in presc.get("mixite_sociale_typepsc", [])}
     eco: dict = {"er_deduit_m2": round(er_a)}
+    if ctx.a_cheval and ctx.zone_parts:
+        eco["zones_a_cheval"] = ctx.zone_parts
     if eco_types:
         for r in session.execute(_ECO, {"pid": parcel_id, "pkind": pkind, "types": eco_types}):
             if r.subtype in mixite_set:
