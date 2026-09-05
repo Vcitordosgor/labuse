@@ -68,6 +68,10 @@ ml = [
   "pandas>=2.0",
   "openpyxl>=3.1",
 ]
+# RETOURS-13 R31 — lecture des rasters LiDAR HD (toiture simple/double pente à la demande).
+# Import PARESSEUX dans solaire_toiture.py : le serveur démarre sans, la fiche soleil dit
+# l'absence proprement — mais l'environnement servi doit les porter : `pip install -e .[lidar]`.
+lidar = ["rasterio>=1.3", "scipy>=1.11"]
 # Outils de dev / CI (tests + lint).
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
