@@ -90,6 +90,94 @@ Régression ciblée circuit + dashboard : **38 verts**. `DYLD_FALLBACK_LIBRARY_P
 
 ---
 
-## Lots 2 à 6 — à venir
+## Lot 2 — Les filtres des vingt sources qui pèsent — **CLOS**
+
+### Livré
+
+- **`src/labuse/filtres/controles.py`** : fabriques de contrôles propres réutilisables
+  (`compte_mauvais`, `domaine`, `couverture`, `part_max`, `siren_luhn` avec clé de Luhn en Python).
+- **`src/labuse/filtres/sources.py`** : un `Filtre` riche par source d'impact, **chaque seuil écrit
+  avec la mesure qui l'a fixé** (base servie `labuse`, 05/09/2026). Le cadre a gagné `insee_expr`,
+  `commune_nom_col` (les tables portent souvent un NOM de commune, pas l'INSEE — parcels/DVF) et
+  `where` (filtrer une couche `spatial_layers` par `kind`). Le contrôle géométrie transforme
+  systématiquement en 4326 (`ST_Transform`) — SRID-agnostique (les tables mêlent 4326 et 2975) — et
+  **chaque contrôle tourne dans un SAVEPOINT** : une erreur SQL roule sans empoisonner le filtre.
+- **39 filtres joués sur la base réelle** — `labuse filtre jouer toutes` : **28 ok · 10
+  avertissements · 1 quarantaine**. Les avertissants sont l'ÉTAT RÉEL des données, pas un échec.
+
+### Le tableau des vingt sources (verdict de la version servie au 05/09)
+
+| Source | Verdict | Version servie | Contrôle KO (état réel) |
+|---|---|---|---|
+| cadastre_etalab | ok | Etalab « latest » | — (431 663 parcelles, 0 surface≤0, IDU uniques, 0 géom invalide) |
+| dvf | avertissements | géo-DVF 2021–2025 | `d_prix_m2_aberrant_brut` : **7** Maison multi-lots >90 000 €/m² (écartées des comparables) |
+| gpu_plu | avertissements | GPU par commune | `u_communes` 23/24 (Saint-Philippe sans PLU servi) |
+| sitadel | avertissements | 2026-07 | `d_approx_jamais_point` : **57** permis approximatifs servis comme point |
+| dgfip_parcelles_pm (MAJIC) | ok | Panel 2019→2025 | — (SIREN Luhn 0 invalide ; 12,3 % SIREN mal formés < seuil 15 %) |
+| dpe | avertissements | sync 2026-08-18 | `u_communes` 7/24 (DPE LOCALE partielle — 17 enreg. ; état servi local honnête) |
+| georisques_mvt | **QUARANTAINE** | sync 2026-07-05 | `d_alea_non_retrograde` (**bloquant**) : **484** zones ELEVE/TRES_ELEVE servies « moyen » |
+| sirene_etablissements | avertissements | publication mensuelle | `u_dates_plausibles` : 18 date_creation implausibles (SIREN Luhn 0 invalide) |
+| bodacc | ok | sync 2026-09-05 | — |
+| inpi_rne | ok | sync 2026-07-06 | — (dirigeants `pm_dirigeants`) |
+| ban | ok | sync 2026-08-19 | — (339 915 adresses, 100 % géocodées, 24/24) |
+| cosia | ok | CoSIA 2025 | — (445 190 bâtiments) |
+| flair | avertissements | courante | `u_millesime` (FLAIR juge les détections ortho, pas de ligne data_sources dédiée) |
+| lidar_hd | ok | dalles 25/06/2025 | — (seuil toits 0,70 rejoué par l'ÉCHANTILLON, lot 3) |
+| edf | avertissements | courante | `u_millesime` (19 528 tronçons HTA/HTB, réservoir sans ligne data_sources) |
+| osm_overpass | ok | sync 2026-07-06 | — (50 760 aménités) |
+| osm_transport | ok | Overpass | — (188 objets TCSP) |
+| gtfs_pan | ok | màj 2026-08-17 | — |
+| bpe_insee | ok | millésime 2025 | — |
+| filosofi | ok | millésime 2021 | — (14 773 carreaux 200 m, geom 2975 transformée) |
+| georisques_api (synthèse) | avertissements | courante | `u_geom_emprise` (quelques géoms hors enveloppe), `u_millesime` |
+| trafic_rn | avertissements | par tronçon | `d_tmja_positif` : tronçons à TMJA ≤ 0 |
+
+### LE constat majeur — georisques_mvt en quarantaine
+
+**Le filtre attrape la vraie régression RETOURS-13** : 484 zones d'aléa mouvement de terrain de
+degré DEAL `ELEVE`/`TRES_ELEVE` sont servies `niveau = 'moyen'` sur `main` (le correctif vit sur
+`fix/retours-12`, **non mergé**). Le contrôle `d_alea_non_retrograde` (bloquant, comme le mandat le
+prescrit) met la source **en quarantaine**. Comme `georisques_mvt` est à portée `run`, **la garde de
+la pompe (1.4) refuserait de calculer/basculer** — c'est le système QUI FONCTIONNE : « une eau qui
+rate son filtre reste en quarantaine et ne se sert pas ». Vic solde en mergeant `fix/retours-12`
+(qui corrige les 484), ou par « servir quand même » sur la page (lot 5). C'est le même écart que la
+sonde catégorielle CIRCUIT-2 avait laissé OUVERT — le filtre le rend maintenant BLOQUANT.
+
+### Décisions prises en autonomie (lot 2)
+
+1. **DVF prix/m² : deux contrôles, pas un.** Le mandat veut « bloquant si > 90 000 ». Les 7 outliers
+   BRUTS (Maison multi-lots mal typées) n'atteignent JAMAIS un comparable servi — `marche_service.
+   filtre_ventes` (EXPORTS-1) borne à [1 000 ; 12 000] €/m². Donc : `d_comparable_plage`
+   **bloquant** mesuré **0** sur la population des comparables (le gardien nommé du mandat), et
+   `d_prix_m2_aberrant_brut` **avertissant** mesuré **7** (l'état réel, visible, non bloquant). Faire
+   le bloquant sur le brut aurait mis DVF en quarantaine pour 7 lignes que la pompe ne voit pas —
+   « un filtre trop sévère qui bloque une source saine est pire ».
+2. **Domaine des lettres de zone = la fonction canonique** `faisabilite.zone_norm.est_famille`
+   (U/AU/A/N, phasage/casse/accents ignorés), jamais une liste recopiée — les codes legacy POS
+   (NA/NB/NC/ND) classent, seul un radical vraiment inconnu sort. C'est « le référentiel du registre »
+   du mandat (donnees.py `zone_plu_famille` domaine=U/AU/A/N).
+3. **Plancher de dates universel élargi à 1900** (était 2000) : une date de création d'entreprise ou
+   une année de construction antérieure à 2000 est LÉGITIME. Le futur reste toujours KO.
+4. **Portée `run`** posée pour cadastre, DVF, GPU/PLU, Sitadel, Géorisques mvt, CoSIA (elles nourrissent
+   le scoring). Leur seul contrôle bloquant hérité est `u_non_vide` (toutes non vides aujourd'hui) —
+   plus, pour Géorisques, `d_alea_non_retrograde`. Aucune autre ne bloque la pompe au 05/09.
+5. **Sources sans table servie propre** (FLAIR juge les détections ortho ; LiDAR HD est un WMS en
+   direct sans table) : filtre léger + note ; le seuil 0,70 des toits LiDAR (RETOURS-14 : 0 faux/50)
+   est rejoué par l'ÉCHANTILLON du lot 3, pas ici. DPE local est partiel (17 enreg.) — le filtre
+   l'avertit honnêtement (7/24 communes), c'est l'état servi localement.
+
+### Tests — lot 2
+
+`tests/test_circuit3_lot2.py` **5 verts** (structure du registre ; DVF gardien comparables vs
+aberrant brut ; aléa non rétrogradé bloquant = RETOURS-13 ; SIREN Luhn ; domaine des zones via
+`est_famille`). Total CIRCUIT-3 : **12 verts** (lot 1 + lot 2).
+
+### Commit
+
+`feat/circuit-3` — un commit lot 2, poussé. Rien mergé.
+
+---
+
+## Lots 3 à 6 — à venir
 
 (compte-rendu tenu à jour lot par lot)

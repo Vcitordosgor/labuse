@@ -136,6 +136,9 @@ class Filtre:
     table: str | None = None          # table servie principale (pour les universels)
     cle: tuple[str, ...] = ()          # colonnes de la clé déclarée (doublon)
     insee_col: str | None = None      # colonne code INSEE (présence des 24 communes)
+    insee_expr: str | None = None     # expression SQL donnant l'INSEE (ex. substring(idu,1,5))
+    commune_nom_col: str | None = None  # colonne NOM de commune (si pas d'INSEE) — comparée aux 24 noms
+    where: str | None = None          # filtre SQL commun à tous les universels (ex. kind='plu_gpu_zone')
     geom_col: str | None = None       # colonne géométrie (validité + emprise)
     geom_srid: int = 4326             # SRID de la géométrie (transformée en 4326 pour l'emprise)
     date_cols: tuple[str, ...] = ()    # colonnes de date (plage plausible)
@@ -176,6 +179,15 @@ def _count(db, table: str, where: str = "") -> int:
     return int(db.execute(text(q)).scalar() or 0)
 
 
+def _et(*clauses: str | None) -> str:
+    """Assemble des clauses WHERE (None/'' ignorés) — sans le mot-clé WHERE."""
+    return " AND ".join(f"({c})" for c in clauses if c)
+
+
+# Les 24 noms officiels (pour les sources dont la colonne est un NOM, pas un INSEE).
+NOMS_24 = tuple(nom for _, nom in REUNION_COMMUNES)
+
+
 def _table_existe(db, table: str) -> bool:
     # table peut être « schema.name » ; on ne gère que public ici (regclass).
     return bool(db.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar())
@@ -198,28 +210,39 @@ def _lignes_version_precedente(db, source: str, version: str) -> int | None:
 # ─────────────────────────────── contrôles universels ───────────────────────────────
 
 def _u_communes(db, f: Filtre, version: str) -> Resultat:
-    if not (f.table and f.insee_col and _table_existe(db, f.table)):
-        return skip("pas de colonne INSEE ou table absente")
-    rows = db.execute(text(
-        f"SELECT DISTINCT {f.insee_col} FROM {f.table} "
-        f"WHERE {f.insee_col} IS NOT NULL")).scalars().all()
-    presents = {str(r).strip()[:5] for r in rows}
-    manquantes = [i for i in INSEE_24 if i not in presents]
-    d = {"presentes": len(INSEE_24) - len(manquantes), "attendues": 24, "manquantes": manquantes}
+    if not (f.table and _table_existe(db, f.table)):
+        return skip("table absente")
+    if f.insee_col or f.insee_expr:
+        expr = f.insee_expr or f.insee_col
+        w = _et(f.where, f"{expr} IS NOT NULL")
+        rows = db.execute(text(
+            f"SELECT DISTINCT {expr} FROM {f.table}" + (f" WHERE {w}" if w else ""))).scalars().all()
+        presents = {str(r).strip()[:5] for r in rows}
+        manquantes = [i for i in INSEE_24 if i not in presents]
+    elif f.commune_nom_col:
+        w = _et(f.where, f"{f.commune_nom_col} IS NOT NULL")
+        rows = db.execute(text(
+            f"SELECT DISTINCT {f.commune_nom_col} FROM {f.table}"
+            + (f" WHERE {w}" if w else ""))).scalars().all()
+        presents = {str(r).strip() for r in rows}
+        manquantes = [n for n in NOMS_24 if n not in presents]
+    else:
+        return skip("pas de colonne commune")
+    d = {"presentes": 24 - len(manquantes), "attendues": 24, "manquantes": manquantes}
     return ok(f"{24 - len(manquantes)}/24", d) if not manquantes else ko(f"{24 - len(manquantes)}/24", d)
 
 
 def _u_non_vide(db, f: Filtre, version: str) -> Resultat:
     if not (f.table and _table_existe(db, f.table)):
         return skip("table absente")
-    n = _count(db, f.table)
+    n = _count(db, f.table, _et(f.where))
     return ok(n, {"lignes": n}) if n > 0 else ko(0, {"lignes": 0})
 
 
 def _u_couloir_lignes(db, f: Filtre, version: str) -> Resultat:
     if not (f.table and _table_existe(db, f.table)):
         return skip("table absente")
-    n = _count(db, f.table)
+    n = _count(db, f.table, _et(f.where))
     prec = _lignes_version_precedente(db, f.source, version)
     if prec is None or prec == 0:
         # première version mesurée : on POSE la référence, on n'accuse pas.
@@ -233,9 +256,10 @@ def _u_doublon_cle(db, f: Filtre, version: str) -> Resultat:
     if not (f.table and f.cle and _table_existe(db, f.table)):
         return skip("pas de clé déclarée ou table absente")
     cols = ", ".join(f.cle)
+    w = _et(f.where)
     dup = int(db.execute(text(
-        f"SELECT count(*) FROM (SELECT {cols} FROM {f.table} "
-        f"GROUP BY {cols} HAVING count(*) > 1) t")).scalar() or 0)
+        f"SELECT count(*) FROM (SELECT {cols} FROM {f.table}" + (f" WHERE {w}" if w else "") +
+        f" GROUP BY {cols} HAVING count(*) > 1) t")).scalar() or 0)
     d = {"cle": list(f.cle), "clés_dupliquées": dup}
     return ok(0, d) if dup == 0 else ko(dup, d)
 
@@ -243,9 +267,8 @@ def _u_doublon_cle(db, f: Filtre, version: str) -> Resultat:
 def _u_geom_valide(db, f: Filtre, version: str) -> Resultat:
     if not (f.table and f.geom_col and _table_existe(db, f.table)):
         return skip("pas de géométrie ou table absente")
-    invalides = int(db.execute(text(
-        f"SELECT count(*) FROM {f.table} "
-        f"WHERE {f.geom_col} IS NOT NULL AND NOT ST_IsValid({f.geom_col})")).scalar() or 0)
+    w = _et(f.where, f"{f.geom_col} IS NOT NULL", f"NOT ST_IsValid({f.geom_col})")
+    invalides = int(db.execute(text(f"SELECT count(*) FROM {f.table} WHERE {w}")).scalar() or 0)
     d = {"invalides": invalides}
     return ok(0, d) if invalides == 0 else ko(invalides, d)
 
@@ -254,11 +277,12 @@ def _u_geom_emprise(db, f: Filtre, version: str) -> Resultat:
     if not (f.table and f.geom_col and _table_existe(db, f.table)):
         return skip("pas de géométrie ou table absente")
     lon0, lat0, lon1, lat1 = REUNION_BBOX_4326
-    g = f.geom_col if f.geom_srid == 4326 else f"ST_Transform({f.geom_col}, 4326)"
-    hors = int(db.execute(text(
-        f"SELECT count(*) FROM {f.table} WHERE {f.geom_col} IS NOT NULL "
-        f"AND NOT ST_Intersects({g}, ST_MakeEnvelope(:a,:b,:c,:d,4326))"),
-        {"a": lon0, "b": lat0, "c": lon1, "d": lat1}).scalar() or 0)
+    # ST_Transform vers 4326 systématique — SRID-agnostique (les tables mêlent 4326 et 2975).
+    g = f"ST_Transform({f.geom_col}, 4326)"
+    w = _et(f.where, f"{f.geom_col} IS NOT NULL",
+            f"NOT ST_Intersects({g}, ST_MakeEnvelope(:a,:b,:c,:d,4326))")
+    hors = int(db.execute(text(f"SELECT count(*) FROM {f.table} WHERE {w}"),
+                          {"a": lon0, "b": lat0, "c": lon1, "d": lat1}).scalar() or 0)
     d = {"hors_emprise": hors, "emprise": REUNION_BBOX_4326}
     return ok(0, d) if hors == 0 else ko(hors, d)
 
@@ -270,13 +294,13 @@ def _u_dates_plausibles(db, f: Filtre, version: str) -> Resultat:
     total_hors = 0
     detail: dict[str, int] = {}
     for col in f.date_cols:
-        n = int(db.execute(text(
-            f"SELECT count(*) FROM {f.table} WHERE {col} IS NOT NULL AND "
-            f"({col} < CAST('2000-01-01' AS date) OR {col} > CAST(:h AS date))"),
-            {"h": borne_haute}).scalar() or 0)
+        w = _et(f.where, f"{col} IS NOT NULL",
+                f"({col} < CAST('1900-01-01' AS date) OR {col} > CAST(:h AS date))")
+        n = int(db.execute(text(f"SELECT count(*) FROM {f.table} WHERE {w}"),
+                           {"h": borne_haute}).scalar() or 0)
         detail[col] = n
         total_hors += n
-    d = {"hors_plage": total_hors, "par_colonne": detail, "plage": ["2000-01-01", borne_haute]}
+    d = {"hors_plage": total_hors, "par_colonne": detail, "plage": ["1900-01-01", borne_haute]}
     return ok(0, d) if total_hors == 0 else ko(total_hors, d)
 
 
@@ -288,8 +312,8 @@ def _u_millesime(db, f: Filtre, version: str) -> Resultat:
 
 _UNIVERSELS: list[tuple[Controle, Callable[[Filtre], bool]]] = [
     (Controle("u_communes", "referentiel", "avertissant", "Présence des 24 communes",
-              "24/24 codes INSEE du référentiel embarqué", _u_communes),
-     lambda f: bool(f.insee_col)),
+              "24/24 communes du référentiel embarqué", _u_communes),
+     lambda f: bool(f.insee_col or f.insee_expr or f.commune_nom_col)),
     (Controle("u_non_vide", "completude", "bloquant", "Version non vide",
               "> 0 ligne (0 ligne = quarantaine)", _u_non_vide),
      lambda f: bool(f.table)),
@@ -306,7 +330,7 @@ _UNIVERSELS: list[tuple[Controle, Callable[[Filtre], bool]]] = [
               "0 géométrie hors emprise Réunion (55.0..55.95 / -21.45..-20.8)", _u_geom_emprise),
      lambda f: bool(f.geom_col)),
     (Controle("u_dates_plausibles", "plage", "avertissant", "Dates plausibles",
-              "aucune date < 2000-01-01 ni future", _u_dates_plausibles),
+              "aucune date < 1900-01-01 ni future", _u_dates_plausibles),
      lambda f: bool(f.date_cols)),
     (Controle("u_millesime", "completude", "avertissant", "Millésime déclaré",
               "source_millesime ou last_sync_at non nul", _u_millesime),
@@ -343,7 +367,10 @@ def jouer(db, filtre: Filtre, version: str | None = None) -> Verdict:
                {"s": filtre.source, "v": version})
     for c in filtre.controles_effectifs():
         try:
-            r = c.mesure(db, filtre, version)
+            # SAVEPOINT par contrôle : une erreur SQL (SRID mixte, colonne absente…) roule au
+            # savepoint sans EMPOISONNER la transaction ni les contrôles suivants.
+            with db.begin_nested():
+                r = c.mesure(db, filtre, version)
         except Exception as exc:  # noqa: BLE001
             log.error("filtre %s / contrôle %s : %s", filtre.source, c.id, exc)
             r = Resultat("erreur", "ko", {"exception": f"{type(exc).__name__}: {exc}"})
