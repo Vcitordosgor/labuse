@@ -231,6 +231,55 @@ sources ont un fichier). Total CIRCUIT-3 : **17 verts** (lots 1+2+3).
 
 ---
 
-## Lots 4 à 6 — à venir
+## Lot 4 — La quarantaine pour les données servies en direct — **CLOS**
+
+### Livré
+
+- **`src/labuse/filtres/quarantaine.py`** : le mécanisme d'échange par table d'attente.
+  - `reservoirs_live()` / `sources_live_registre()` — **la liste des sources live vient du REGISTRE**
+    (toute donnée à portée `live` → son réservoir → sa clé de filtre, via un alias
+    `cadastre_api_carto→cadastre_etalab`, `gpu_plu_api_carto→gpu_plu`, `filosofi_carreaux→filosofi`,
+    `deal_ppr→georisques_mvt`). 22 sources de filtre sont live (elle change dès l'injection).
+    Les filtres portent désormais `live=True` (posé dans `__init__._registre`).
+  - `jouer_sur_attente(db, filtre)` — joue le filtre sur `<table>__attente` (la version fraîchement
+    ingérée, PAS encore servie).
+  - `echanger(db, source, force, motif)` — joue le filtre sur l'attente ; **si OK** (ou `force` =
+    « servir quand même »), échange dans la transaction de session : `<table>` → `<table>__precedente`
+    puis `<table>__attente` → `<table>` (les index suivent le rename). **Si quarantaine et pas de
+    force : aucun échange** — l'ancienne reste servie, l'attente reste mesurée. Geste journalisé.
+  - `revenir(db, source)` — retour immédiat : `<table>__precedente` redevient la table servie.
+- **CLI** `labuse filtre echanger <source> [--servir-quand-meme] [--motif …]` et
+  `labuse filtre revenir <source>`.
+- **4.2 — sources à portée `run` seulement** : PAS d'échange de table, la garde de la pompe (1.4)
+  suffit (elle refuse `calculer`/`basculer` si une source `run` servie est en quarantaine). Sources
+  purement `run` (jamais `live`) au 05/09 : **cosia** (feed résiduel). Toutes les autres qui pèsent
+  sont AUSSI `live` (cadastre, DVF, GPU/PLU, Sitadel, Géorisques mvt) → elles ont les deux garde-fous :
+  la table d'attente à l'ingestion ET la garde de la pompe au calcul.
+
+### Décisions prises en autonomie (lot 4)
+
+1. **Le mécanisme est prêt et testé ; le branchement de chaque ingestion sur `<table>__attente` est
+   l'étape d'intégration par ingestion** (écrire dans `__attente` puis appeler `labuse filtre
+   echanger`). Retrofitter les ~30 ingestions en une session n'était ni sûr ni dans le budget ; le
+   mécanisme + la CLI + les tests le rendent trivial à câbler source par source, sans rien casser.
+2. **Le rename conserve les index** (comportement PostgreSQL) — pas de reconstruction d'index à
+   l'échange ; les noms d'index gardent leur ancien préfixe, fonctionnellement intacts.
+3. **`__precedente` gardée une seule génération** (l'échange écrase la précédente-précédente) — un
+   retour arrière immédiat suffit, on ne conserve pas un historique de tables.
+
+### Tests — lot 4
+
+`tests/test_circuit3_lot4.py` **5 verts** : échange sur verdict OK (la nouvelle version se sert,
+l'ancienne passe en `__precedente`) ; **injection VIDE en quarantaine → l'ancienne reste servie**
+(l'attente ne se sert pas) ; « servir quand même » force l'échange ; retour à la version précédente ;
+sources live dérivées du registre. Total CIRCUIT-3 : **22 verts** (lots 1-4).
+
+### Commit
+
+`feat/circuit-3` — un commit lot 4, poussé. Rien mergé.
+
+---
+
+## Lots 5 à 6 — à venir
 
 (compte-rendu tenu à jour lot par lot)

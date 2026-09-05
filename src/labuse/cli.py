@@ -3918,6 +3918,47 @@ def filtre_garde_cmd() -> None:
         typer.echo(f"⛔ {b['source']} [{b['version']}] — contrôles bloquants KO : {', '.join(b['controles'])}")
 
 
+@filtre_app.command("echanger")
+def filtre_echanger_cmd(
+    source: str = typer.Argument(..., help="Source live dont l'ingestion a écrit <table>__attente."),
+    par: str = typer.Option("cli", help="Qui échange — entre au journal."),
+    servir_quand_meme: bool = typer.Option(False, "--servir-quand-meme",
+                                           help="Forcer l'échange malgré une quarantaine (geste de Vic)."),
+    motif: str = typer.Option(None, help="Motif du « servir quand même »."),
+) -> None:
+    """ÉCHANGE (lot 4.1) — joue le filtre sur `<table>__attente` ; si OK (ou --servir-quand-meme),
+    échange les tables (l'ancienne part en `<table>__precedente` pour un retour immédiat). Une
+    injection en QUARANTAINE ne se sert pas."""
+    from .filtres import quarantaine
+    with session_scope() as s:
+        r = quarantaine.echanger(s, source, par=par, force=servir_quand_meme, motif=motif)
+        s.commit()
+    if r.get("ok"):
+        typer.echo(f"✓ {source} : version d'attente servie (précédente sous {r['precedente']})"
+                   + (" — SERVIR QUAND MÊME" if r.get("force") else ""))
+    else:
+        typer.echo(f"⛔ {source} : échange refusé — {r.get('motif')}"
+                   + (f" ({r.get('bloquants_ko')} bloquant KO)" if r.get("motif") == "quarantaine" else ""))
+        raise typer.Exit(1)
+
+
+@filtre_app.command("revenir")
+def filtre_revenir_cmd(
+    source: str = typer.Argument(..., help="Source live à faire revenir à sa version précédente."),
+    par: str = typer.Option("cli", help="Qui revient — entre au journal."),
+) -> None:
+    """RETOUR (lot 4.3) — remet `<table>__precedente` en table servie (geste journalisé)."""
+    from .filtres import quarantaine
+    with session_scope() as s:
+        r = quarantaine.revenir(s, source, par=par)
+        s.commit()
+    if r.get("ok"):
+        typer.echo(f"✓ {source} : version précédente re-servie ({r['servie']}).")
+    else:
+        typer.echo(f"⛔ {source} : retour impossible — {r.get('motif')}")
+        raise typer.Exit(1)
+
+
 # ═══════════════════ CIRCUIT-1 (lot 6) — les AGENTS de source, à la demande ═══════════════════
 agent_app = typer.Typer(add_completion=False,
                         help="Agents de veille amont (CIRCUIT-1) : constatent, ne téléchargent jamais.")
