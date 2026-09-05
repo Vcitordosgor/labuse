@@ -123,3 +123,18 @@ Moteurs au registre (`moteurs.csv`) : `marche_communes` renommé **`marche_servi
 
 - Tests du lot : `test_circuit2_lot1.py` 13 verts (+1 skip base de test sans parcelle, dit) · `test_circuit2_lot16.py` 8 verts · `test_registre.py` 9 verts adaptés · vitest HypInput 2 verts · tsc OK.
 - Suite complète post-lot 1 : **2398 passed · 1 failed (`test_r5`, pré-existant admis) · 37 skipped** — aucun rouge nouveau, +23 verts vs 0-bis.
+
+---
+
+## Lot 2 — La fiche, donnée par donnée
+
+### Livré
+
+- **`labuse registre fiche parcelle` / `autres`** (`registre/fiche_doc.py` + sous-commande CLI) : les documents sont GÉNÉRÉS du registre — jamais saisis deux fois. Chaque ligne : id, type (et domaine d'une classe), libellé, source(s) avec le MILLÉSIME réellement servi (lu de data_sources à la génération), chemin (moteur nommé ou passe-plat + table lue), portée, états possibles, et « où ailleurs » (dérivé des robinets — couches, outils, PDF, Copilote, mails).
+- **`docs/CIRCUIT/FICHE-PARCELLE-DONNEES.md`** — 13 tiroirs de la fiche parcelle, 41 données, générés sur la base locale (millésimes réels : CoSIA 2025, Sitadel 2026-07, Filosofi 2021…), RELU : lisible sans le code, une ligne par donnée en français.
+- **`docs/CIRCUIT/FICHES-DONNEES.md`** — fiche commune (16 tiroirs), fiche annonce, fiche propriétaire, fiche soleil (34 données), même format, plus court.
+- **Verrou** `tests/test_circuit2_lot2.py` (3 verts) : chaque donnée de chaque tiroir est dans le document ; les fichiers COMMITÉS contiennent chaque id du registre — un registre qui bouge sans régénération = rouge (jamais d'édition à la main).
+
+### Suite
+
+- Tests du lot 3/3 ; documents générés puis relus. (Suite complète au prochain passage de lot — aucun code de service touché par ce lot : générateur + CLI seuls.)

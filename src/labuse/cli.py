@@ -3716,6 +3716,27 @@ def registre_sync_cmd() -> None:
     typer.echo(f"✓ miroir écrit : {n['chiffres']} chiffres · {n['robinets']} robinets · {n['aretes']} arêtes")
 
 
+@registre_app.command("fiche")
+def registre_fiche_cmd(cible: str = typer.Argument(..., help="parcelle | autres")) -> None:
+    """CIRCUIT-2 lot 2 — génère le document « la fiche, donnée par donnée » DEPUIS le registre
+    (docs/CIRCUIT/FICHE-PARCELLE-DONNEES.md ou FICHES-DONNEES.md). Relu à la main avant commit."""
+    from pathlib import Path
+
+    from .registre import fiche_doc
+    racine = Path(__file__).resolve().parents[2] / "docs" / "CIRCUIT"
+    with session_scope() as s:
+        if cible == "parcelle":
+            chemin = racine / "FICHE-PARCELLE-DONNEES.md"
+            chemin.write_text(fiche_doc.doc_fiche_parcelle(s))
+        elif cible == "autres":
+            chemin = racine / "FICHES-DONNEES.md"
+            chemin.write_text(fiche_doc.doc_autres_fiches(s))
+        else:
+            typer.echo("cible inconnue : parcelle | autres")
+            raise typer.Exit(1)
+    typer.echo(f"✓ écrit : {chemin}")
+
+
 # ═══════════════════ CIRCUIT-1 (lot 3.3) — la POMPE : Calculer un candidat COMPLET ═══════════════════
 pompe_app = typer.Typer(add_completion=False,
                         help="La pompe (CIRCUIT-1) : Calculer un candidat complet — jamais servi tout seul.")
