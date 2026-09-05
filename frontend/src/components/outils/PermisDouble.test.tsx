@@ -26,6 +26,7 @@ function mockFetch() {
     if (u.includes('count_only')) return { ok: true, json: async () => ({ total: 412 }) }
     if (u.includes('/modules/promesses')) return { ok: true, json: async () => PROMESSES }
     if (u.includes('/modules/permis')) return { ok: true, json: async () => RADAR }
+    if (u.includes('/communes')) return { ok: true, json: async () => [] }   // RETOURS-18 — bloc Affiner rend CommunePermisSelect
     return { ok: true, json: async () => ({}) }
   }) as unknown as typeof fetch
 }
@@ -38,22 +39,38 @@ describe('PERMIS — double entrée + densité', () => {
   beforeEach(() => { mockFetch(); useApp.setState({ module: 'permis', commune: null, zone: null, permitHover: null, permitToOpen: null }) })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ module: null, permitHover: null }) })
 
+  // RETOURS-18 X1 — la liste vit dans le bloc d'accordéon « Voir les permis », replié par défaut :
+  // on l'ouvre avant d'attendre des lignes.
+  const ouvrirListe = () => fireEvent.click(document.querySelector('[data-permis-bloc-toggle="liste"]')!)
+
   it('segment avec compteurs RÉELS (en cours 5 613 / point mort 412)', async () => {
     renderM03()
+    // le bloc « Filtrer par état » est ouvert d'emblée : les compteurs sont visibles sans rien ouvrir.
     await waitFor(() => expect(document.querySelector('[data-permis-seg="cours"]')?.textContent).toContain('613'))
     expect(document.querySelector('[data-permis-seg="mort"]')?.textContent).toContain('412')
   })
 
-  it('lignes enrichies : commune + badge « non géocodé »', async () => {
+  it('lignes enrichies : commune + badge « non géocodé » (après ouverture du bloc liste)', async () => {
     const { container } = renderM03()
+    ouvrirListe()
     await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
     expect(container.textContent).toContain('Saint-Denis')
     expect(container.textContent).toContain('Sainte-Marie')
     expect(document.querySelector('[data-permis-badge-nongeo]')).toBeTruthy()   // le PC2 non géocodé
   })
 
+  it('la liste ne s\'affiche PAS d\'emblée (accordéon replié)', async () => {
+    renderM03()
+    // compteurs présents (bloc état ouvert) mais aucune ligne tant que « Voir les permis » est replié
+    await waitFor(() => expect(document.querySelector('[data-permis-seg="cours"]')).toBeTruthy())
+    expect(document.querySelectorAll('[data-permis-row]').length).toBe(0)
+    ouvrirListe()
+    await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
+  })
+
   it('survol d\'une ligne allume le point (permitHover), sortie l\'éteint', async () => {
     renderM03()
+    ouvrirListe()
     await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
     const row = document.querySelector('[data-permis-row]') as HTMLElement
     fireEvent.mouseEnter(row)
@@ -64,10 +81,35 @@ describe('PERMIS — double entrée + densité', () => {
 
   it('segment « Point mort » → liste point mort (badge « Sans DAACT · X ans »)', async () => {
     renderM03()
-    await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
     fireEvent.click(document.querySelector('[data-permis-seg="mort"]')!)
+    ouvrirListe()
     await waitFor(() => expect(document.querySelector('[data-permis-badge-mort]')).toBeTruthy())
     // ancienneté calculée depuis la date d'autorisation (2023 → « · N ans »)
     expect(document.querySelector('[data-permis-badge-mort]')?.textContent).toContain('Sans DAACT')
+  })
+
+  // RETOURS-18 X1 — accordéon : un seul bloc ouvert à la fois ; les barres repliées disent leur contenu.
+  it('accordéon : un seul bloc ouvert (ouvrir Affiner referme Filtrer par état)', async () => {
+    renderM03()
+    // état ouvert d'emblée : ses lignes sont là, ni le corps Affiner ni la liste
+    await waitFor(() => expect(document.querySelector('[data-permis-segment]')).toBeTruthy())
+    expect(document.querySelector('[data-permis-geo="geo"]')).toBeNull()       // Affiner replié
+    expect(document.querySelector('[data-permis-pied]')).toBeNull()            // liste repliée
+    // ouvrir Affiner → Filtrer par état se referme
+    fireEvent.click(document.querySelector('[data-permis-bloc-toggle="affiner"]')!)
+    await waitFor(() => expect(document.querySelector('[data-permis-geo="geo"]')).toBeTruthy())
+    expect(document.querySelector('[data-permis-segment]')).toBeNull()         // état refermé
+    // la barre repliée « Filtrer par état » DIT son état actif + compte (défaut permis = Récent)
+    const barreEtat = document.querySelector('[data-permis-bloc-toggle="etat"]')?.textContent
+    expect(barreEtat).toContain('Récent')
+    expect(barreEtat).toContain('613')
+  })
+
+  it('accordéon : Échap referme le bloc ouvert', async () => {
+    renderM03()
+    ouvrirListe()
+    await waitFor(() => expect(document.querySelector('[data-permis-pied]')).toBeTruthy())
+    fireEvent.keyDown(document.querySelector('[data-permis-bloc-toggle="liste"]')!, { key: 'Escape' })
+    await waitFor(() => expect(document.querySelector('[data-permis-pied]')).toBeNull())
   })
 })
