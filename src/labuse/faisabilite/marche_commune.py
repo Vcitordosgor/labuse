@@ -61,28 +61,20 @@ def _repr_parcel(db: Session, commune: str) -> int | None:
 
 
 def _dvf_millesime(db: Session, commune: str) -> str | None:
-    y = db.execute(text("SELECT max(extract(year FROM date_mutation))::int FROM dvf_mutations WHERE commune = :c"),
+    """EXPORTS-1 (1.6) — la VRAIE borne des ventes (« ventes jusqu'au JJ/MM/AAAA », depuis
+    max(date_mutation)), plus jamais « DVF {année} » : le millésime catalogue disait 2021-2025
+    quand la base portait des ventes d'août 2026 (audit A1.q6)."""
+    d = db.execute(text("SELECT max(date_mutation)::date FROM dvf_mutations WHERE commune = :c"),
                    {"c": commune}).scalar()
-    return f"DVF {y}" if y else None
+    return f"ventes jusqu'au {d:%d/%m/%Y}" if d else None
 
 
 # ── Groupe PRIX ────────────────────────────────────────────────────────────────────────────────
-
-def ligne1_prix_ancien(db: Session, commune: str) -> dict:
-    from .bilan import sector_price
-    from .engine import Hypotheses
-    pid = _repr_parcel(db, commune)
-    sp = sector_price(db, pid, Hypotheses.charger()) if pid else {}
-    if not sp or not sp.get("fiable") or sp.get("median") is None:
-        return _ligne("prix_ancien_median", "PRIX", valeurs={},
-                      source="DVF (sector_price)", date_amont=_dvf_millesime(db, commune),
-                      fiabilite="insuffisant", etiquette="Sourcé · DVF",
-                      calculable=False, motif="échantillon insuffisant (sector_price)")
-    return _ligne("prix_ancien_median", "PRIX",
-                  valeurs={"median_eur_m2": sp["median"], "q1": sp.get("q1"), "q3": sp.get("q3"),
-                           "n": sp.get("n"), "type_prix": sp.get("type_prix")},
-                  source="DVF (sector_price)", date_amont=_dvf_millesime(db, commune),
-                  fiabilite=sp.get("fiabilite", "moyenne"), etiquette="Sourcé · millésime DVF")
+# EXPORTS-1 (1.2, arbitrage Q2) : `ligne1_prix_ancien` est SUPPRIMÉE — sa médiane « commune »
+# était un rayon adaptatif autour du CENTROÏDE GÉOMÉTRIQUE de la commune (n 11 à Saint-Paul,
+# libellé faux — audit A1.q1). Le prix de l'ancien est désormais PARCELLAIRE partout
+# (`marche_service.marche_dvf` profil banquier_adaptatif + `phrase_prix_ancien`) ; la seule
+# ligne « commune » du bloc est la tendance (ligne4, commune entière, seuil n ≥ 30).
 
 
 def prix_terrain_nu_zone(db: Session, commune: str | None, zone: str | None) -> dict | None:
@@ -195,7 +187,7 @@ def ligne4_tendance(db: Session, commune: str) -> dict:
             or not r["med12"] or not r["medprev"]:
         return _ligne("tendance_12m", "DYNAMIQUE", valeurs={"n12": r["n12"] if r else 0,
                       "nprev": r["nprev"] if r else 0},
-                      source="DVF", date_amont=(f"DVF {r['yr']}" if r and r["yr"] else None),
+                      source="DVF", date_amont=_dvf_millesime(db, commune),
                       fiabilite="insuffisant", etiquette="Sourcé · DVF",
                       calculable=False, motif=f"tendance non calculable — n < {SEUIL_TENDANCE_N} par fenêtre")
     delta = (r["med12"] - r["medprev"]) / r["medprev"] * 100
@@ -206,7 +198,7 @@ def ligne4_tendance(db: Session, commune: str) -> dict:
                   valeurs={"delta_pct": round(delta, 1), "sens": sens,
                            "median_12m": round(r["med12"]), "median_prec": round(r["medprev"]),
                            "n12": r["n12"], "nprev": r["nprev"]},
-                  source="DVF", date_amont=f"DVF {r['yr']}", fiabilite="bonne",
+                  source="DVF", date_amont=_dvf_millesime(db, commune), fiabilite="bonne",
                   etiquette="Sourcé · fenêtres 12 m. glissantes affichées")
 
 
@@ -370,7 +362,7 @@ def build_marche_commune(db: Session, commune: str) -> dict:
     """Assemble le bloc « Marché » d'une commune — les 9 lignes, chacune avec sa date amont. Toutes
     les surfaces (outil, fiche, market_signal) lisent CE bloc : point de calcul unique."""
     lignes = [
-        ligne1_prix_ancien(db, commune), ligne2_terrain_zone(db, commune),
+        ligne2_terrain_zone(db, commune),
         ligne3_prix_neuf(db, commune), ligne4_tendance(db, commune),
         ligne5_liquidite(db, commune), ligne6_offre_engagee(db, commune),
         ligne7_gisement(db, commune), ligne8_pression_dpe(db, commune),

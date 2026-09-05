@@ -145,7 +145,8 @@ def render_zone_pdf(data: dict, *, titre: str | None = None) -> bytes:
     _minis(pdf, [
         (_nb(marche.get("ventes_12m")), "ventes / 12 mois"),
         (f"{_nb(marche.get('prix_m2_median_bati'))} €" if marche.get("prix_m2_median_bati") is not None else "—", "médian €/m² bâti"),
-        (_nb(marche.get("annonces_actives")), "annonces actives"),
+        # EXPORTS-1 (5.5) : le compte Radar est un MINIMUM (pige partielle), le libellé le dit
+        (_nb(marche.get("annonces_actives")), "annonces suivies (minimum, pige partielle)"),
         (_nb(marche.get("permis_36m")), "permis / 36 mois"),
     ])
 
@@ -157,9 +158,20 @@ def render_zone_pdf(data: dict, *, titre: str | None = None) -> bytes:
     pdf.ln(2)
     pdf.set_font(_fam(pdf, "inter"), size=6.2)
     pdf.set_text_color(*DIM)
+    # EXPORTS-1 (6.1) : sources RÉELLEMENT lues par les blocs rendus — plus de liste en dur
+    # (MOBPRO, écartée le 28/08, y figurait encore).
+    _srcs = ["INSEE Filosofi (carreaux 2021)"]
+    if data.get("concurrents") is not None:
+        _srcs.append("SIRENE (établissements actifs)")
+    if data.get("equipements") or data.get("plus_proches"):
+        _srcs.append("BPE")
+    if (data.get("marche") or {}).get("ventes_12m") is not None:
+        _srcs.append("DVF")
+    _srcs.append("IGN (isochrones — temps hors trafic)")
+    if (data.get("marche") or {}).get("annonces_actives"):
+        _srcs.append("pige LABUSE (minimum, collecte partielle)")
     pdf.multi_cell(0, 3, "* Revenu estimé — carreaux INSEE Filosofi 2021, valeurs lissées pour la "
-                         "confidentialité. Sources : INSEE (Filosofi, MOBPRO), SIRENE (établissements "
-                         "actifs), BPE 2025, DVF, IGN (isochrones — temps hors trafic), Radar LABUSE. "
+                         "confidentialité. Sources lues pour cette zone : " + ", ".join(_srcs) + ". "
                          "Aucune prévision de chiffre d'affaires — des faits sourcés et datés.",
                    new_x="LMARGIN", new_y="NEXT")
 

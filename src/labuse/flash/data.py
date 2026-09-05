@@ -160,16 +160,19 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
             _zdet = _zdet.replace("urbaine / à urbaniser", _famz)
         out["zonage_verdict"] = {"result": zline["result"], "detail": _zdet}
     if "spatial_layers" in avail:
-        zones = db.execute(text(
-            """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
-               SELECT sl.subtype AS classe, sl.attrs->>'libelle' AS libelle,
-                      sl.attrs->>'idurba' AS idurba,
-                      round((100 * ST_Area(ST_Intersection(sl.geom_2975, p.geom_2975))
-                             / NULLIF(ST_Area(p.geom_2975), 0))::numeric) AS pct
-               FROM spatial_layers sl, p
-               WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, p.geom_2975)
-               ORDER BY pct DESC"""), {"idu": idu}).mappings().all()
-        out["zones"] = [dict(z) for z in zones if z["pct"] and z["pct"] >= 1]
+        # EXPORTS-1 lot 3 (3.6) : le bloc zones lit LA résolution unique (zone_servie.zone_dominante,
+        # la même que l'écran et la faisabilité — ZONE-1) au lieu de recalculer ses propres parts.
+        try:
+            from ..faisabilite.zone_servie import zone_dominante
+            _pid_z = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            _zs = zone_dominante(db, _pid_z) if _pid_z else None
+            out["zones"] = ([{"classe": p["fam"], "libelle": p["zone"], "idurba": None,
+                              "pct": round(p["pct"])} for p in _zs.parts]
+                            if _zs and _zs.parts else [])
+            if _zs and _zs.a_cheval:
+                out["zones_a_cheval"] = True
+        except Exception:  # noqa: BLE001 — zone indisponible → bloc omis
+            out["zones"] = []
         presc = db.execute(text(
             """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
                SELECT DISTINCT sl.attrs->>'libelle' AS libelle, sl.attrs->>'txt' AS code
@@ -177,32 +180,42 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
                WHERE sl.kind = 'plu_gpu_prescription'
                  AND ST_Intersects(sl.geom_2975, p.geom_2975)"""),
             {"idu": idu}).mappings().all()
-        out["prescriptions"] = [dict(r) for r in presc if r["libelle"]]
-    if "parcel_residuel_bati" in avail:
-        r = db.execute(text(
-            "SELECT zone, emprise_max_m2, hauteur_max_m, confiance FROM parcel_residuel_bati "
-            "WHERE idu = :idu"), {"idu": idu}).mappings().first()
-        if r and (r["emprise_max_m2"] is not None or r["hauteur_max_m"] is not None):
-            out["regles"] = {"zone": r["zone"], "emprise_max_m2": _i(r["emprise_max_m2"])}
-            # M129-2 A : la HAUTEUR de zone vient du PLU CALIBRÉ (resolve_zone) — SOURCE UNIQUE, la
-            # même que le dossier banquier (M128-3), la lettre de zonage et le pack PC. On cesse de
-            # servir le `hauteur_max_m` GÉNÉRIQUE de parcel_residuel_bati (9 m sur 207 k parcelles,
-            # faux sur les communes calibrées). Égout et faîtage NOMMÉS distinctement (A.3).
-            _zc = next((z.get("libelle") or z.get("classe")
-                        for z in (out.get("zones") or []) if z.get("libelle") or z.get("classe")), None)
-            _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
-            try:
-                from ..faisabilite.plu_rules import resolve_zone
-                _zr = resolve_zone(_zc, _cm) if _zc else None
-            except Exception:  # noqa: BLE001
-                _zr = None
-            if _zr is not None:
-                _he, _hf = getattr(_zr, "he_m", None), getattr(_zr, "hf_m", None)
-                if isinstance(_he, (int, float)):
-                    out["regles"]["hauteur_egout_m"] = float(_he)
-                if isinstance(_hf, (int, float)):
-                    out["regles"]["hauteur_faitage_m"] = float(_hf)
-                out["regles"]["hauteur_source"] = (getattr(_zr, "sources", None) or {}).get("hauteur")
+        # EXPORTS-1 lot 6 : libellés GPU bruts nettoyés (« zone reglt Forte »…) — même hygiène
+        # que les lignes servies (nettoyer_libelle_client).
+        out["prescriptions"] = [{**dict(r),
+                                 "libelle": nettoyer_libelle_client("prescription_plu", r["libelle"])}
+                                for r in presc if r["libelle"]]
+        # EXPORTS-1 (6.5, Q12) : sur 4 communes, les prescriptions sont INVÉRIFIABLES au GPU
+        # (documents non téléversés) — silence ≠ absence, le drapeau est servi et le gabarit le dit.
+        try:
+            from ..faisabilite.zone_servie import prescriptions_verifiables
+            _cm_p = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            _ok_p, _motif_p = prescriptions_verifiables(_cm_p)
+            if not _ok_p:
+                out["prescriptions_non_verifiables"] = _motif_p
+        except Exception:  # noqa: BLE001
+            pass
+    # EXPORTS-1 lot 3 (3.1) : plus AUCUNE lecture de `parcel_residuel_bati` (table orpheline —
+    # son `emprise_max_m2` fabriquait les « 127 m² » de l'audit A3). Les hauteurs de zone restent
+    # servies depuis le PLU CALIBRÉ (resolve_zone, M129-2 A — même source que banquier/lettre/PC),
+    # la zone venant de LA résolution unique (out["zones"], zone_dominante).
+    _zc = next((z.get("libelle") or z.get("classe")
+                for z in (out.get("zones") or []) if z.get("libelle") or z.get("classe")), None)
+    if _zc:
+        _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        try:
+            from ..faisabilite.plu_rules import resolve_zone
+            _zr = resolve_zone(_zc, _cm) if _zc else None
+        except Exception:  # noqa: BLE001
+            _zr = None
+        if _zr is not None:
+            out["regles"] = {"zone": _zc}
+            _he, _hf = getattr(_zr, "he_m", None), getattr(_zr, "hf_m", None)
+            if isinstance(_he, (int, float)):
+                out["regles"]["hauteur_egout_m"] = float(_he)
+            if isinstance(_hf, (int, float)):
+                out["regles"]["hauteur_faitage_m"] = float(_hf)
+            out["regles"]["hauteur_source"] = (getattr(_zr, "sources", None) or {}).get("hauteur")
     return out
 
 
@@ -214,6 +227,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
     # l'argumentaire : `shab_vendable` au sol, plancher = vendable ÷ rendement (0,80, valeur testée de la
     # chaîne commune, AUCUNE constante propre à Flash). Deux dates via `_residuel_run_servi` (flag servi).
     pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    fa = None
     if pid:
         try:
             from ..api.projets import _residuel_run_servi
@@ -234,19 +248,18 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 }
         except Exception as exc:  # noqa: BLE001 — faisabilité indisponible → section sans héros de surface, jamais d'erreur
             log.warning("faisabilité commune %s : %s", idu, exc)
-    if "parcel_residuel_bati" in avail:
-        r = db.execute(text(
-            "SELECT emprise_batie_m2, hauteur_bati_m, emprise_max_m2, emprise_residuelle_m2, "
-            "       hauteur_max_m, surelevation_possible, confiance "
-            "FROM parcel_residuel_bati WHERE idu = :idu"), {"idu": idu}).mappings().first()
-        if r:
-            out["bati"] = {"emprise_batie_m2": _i(r["emprise_batie_m2"]),
-                           "hauteur_bati_m": _f(r["hauteur_bati_m"]),
-                           "emprise_max_m2": _i(r["emprise_max_m2"]),
-                           "emprise_residuelle_m2": _i(r["emprise_residuelle_m2"]),
-                           "hauteur_max_m": _f(r["hauteur_max_m"]),
-                           "surelevation_possible": r["surelevation_possible"],
-                           "confiance": r["confiance"]}
+    # EXPORTS-1 lot 3 (3.1, arbitrage Q4) : la lecture de `parcel_residuel_bati` est SUPPRIMÉE —
+    # table ORPHELINE (bâtisseur retiré du code actif le 24/07, spin-off Vues, données figées
+    # 10-11/07) qui servait les « 127 m² » et la surélévation au FAÎTAGE (audit A3). Le potentiel
+    # vient du bloc unique (moteur commun, 3.5) posé ci-dessous.
+    if pid:
+        try:
+            from ..faisabilite.potentiel import bloc_potentiel
+            _pot = bloc_potentiel(db, pid, fa)
+            if _pot:
+                out["potentiel"] = _pot
+        except Exception as exc:  # noqa: BLE001 — potentiel indisponible → section omise
+            log.warning("bloc potentiel %s : %s", idu, exc)
     # M145 — la lecture du résiduel BRUT plein gabarit (`parcel_residuel.sdp_residuelle_m2`) est
     # SUPPRIMÉE : elle pilotait le héros parallèle (9 844 m² + coefficient ~15 % local). Le potentiel
     # constructible vient désormais du moteur commun (`out["faisa"]`, en tête de fonction).
@@ -415,16 +428,36 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
             "rien": not (items or abf_note)}
 
 
+def _n_affiche_flash() -> int:
+    """EXPORTS-1 (2.4) — le nombre de comparables AFFICHÉS est un paramètre du profil
+    (dvf_profils.yaml, secteur_dossier.n_affiche), plus un `[:5]` en dur."""
+    try:
+        from .. import marche_service
+        return int(marche_service.profil_meta("secteur_dossier").get("n_affiche") or 5)
+    except Exception:  # noqa: BLE001 — config absente (base de test) → comportement historique
+        return 5
+
+
 def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "dvf_mutations" not in avail:
         return None
-    # M54-AB C5 : bloc Marché COMMUNE (M-U) condensé — prix ancien, tendance, liquidité, chacun DATÉ.
-    # Calculé en tête pour figurer même sans comparable de proximité ; les comparables restent.
+    # M54-AB C5 : bloc Marché condensé — tendance et liquidité restent COMMUNE (M-U) ; le prix de
+    # l'ancien est désormais PARCELLAIRE (EXPORTS-1 1.3 : sector_price via marche_service, n +
+    # rayon effectif + période imprimés — la ligne1 « commune-centroïde » est supprimée, Q2).
     commune_marche: list = []
     commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     if commune:
         from ..api.marche_bloc import bloc_condense
-        commune_marche = bloc_condense(db, commune, ["prix_ancien_median", "tendance_12m", "liquidite"])
+        commune_marche = bloc_condense(db, commune, ["tendance_12m", "liquidite"])
+    try:
+        from .. import marche_service
+        _sp = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
+        _ph = marche_service.phrase_prix_ancien(_sp)
+        if _ph:
+            commune_marche.insert(0, {"cle": "prix_ancien_parcelle", "phrase": _ph,
+                                      "fiabilite": _sp.get("fiabilite")})
+    except Exception:  # noqa: BLE001 — le prix parcellaire ne casse jamais le bloc marché
+        pass
     stats = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT count(*) AS n,
@@ -465,18 +498,14 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
            ORDER BY dm.date_mutation DESC LIMIT 15"""),
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().all()
     vivier = [dict(c) for c in comps]
-    _pm = [float(c["prix_m2_bati"]) for c in vivier
-           if c["prix_m2_bati"] is not None and float(c["prix_m2_bati"]) > 0]
-    _med = statistics.median(_pm) if len(_pm) >= 4 else None
-    _mad = (statistics.median([abs(x - _med) for x in _pm]) or 1e-9) if _med is not None else None
-
-    def _aberrant(c) -> bool:
-        v = c["prix_m2_bati"]
-        return (_med is not None and v is not None and float(v) > 0
-                and abs(0.6745 * (float(v) - _med) / _mad) > 3.5)
-
-    gardees = [c for c in vivier if not _aberrant(c)]
-    n_ecartees = len(vivier) - len(gardees)
+    # EXPORTS-1 (2.1) : LE filtre unique (marche_service.filtre_ventes) remplace le z-MAD local —
+    # mêmes bornes, même z-score, même seuil de vraisemblance par type que la fiche.
+    from .. import marche_service as _msvc
+    _fp = _msvc.filtre_params()
+    gardees, _ecartees = _msvc.filtre_ventes(
+        [dict(c) for c in vivier], cle_prix="prix_m2_bati", cle_type="type_local",
+        bornes=_fp["bornes"], z_mad=_fp["z_mad"], seuil_type_m2=_fp["seuil_type_m2"])
+    n_ecartees = len(_ecartees)
     # M145 B.2.3 — une surface de terrain < 10 m² est une anomalie DVF (terrain non renseigné / vente
     # de lot), pas une donnée : on ne la sert pas brute (« Maison · terrain 1 m² » muet). Le comparable
     # reste retenu (son €/m² BÂTI, lui, est valide et filtré des aberrants) — seul le terrain absurde
@@ -489,7 +518,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
                     "surface_terrain": _terr(c["surface_terrain"]),
                     "valeur_fonciere": _i(c["valeur_fonciere"]),
                     "prix_m2_bati": _i(c["prix_m2_bati"]),
-                    "mois": c["mois"]} for c in gardees[:5]]
+                    "mois": c["mois"]} for c in gardees[:_n_affiche_flash()]]
     out = {"n": int(stats["n"]), "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
            "med_m2_bati": _i(stats["med_m2_bati"]), "med_m2_terrain": _i(stats["med_m2_terrain"]),
            "comparables": comparables, "n_ecartees": n_ecartees,
@@ -498,8 +527,14 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
            # types, rayon fixe), DISTINCT du prix de sortie du bilan (sector_price : appartements,
            # rayon adaptatif 500→1500→commune). Les deux médianes peuvent légitimement différer —
            # la méthode l'explique, jamais un écart nu. M127-D6 : aberrants écartés des deux côtés.
-           "methode": (f"Médiane €/m² observée, tous types de biens, rayon {RAYON_MARCHE_M} m sur "
-                       f"{FENETRE_MARCHE_ANNEES} ans — indicateur de marché local, distinct du prix "
+           # EXPORTS-1 (1.5) : la médiane locale était calculée puis JAMAIS imprimée (audit A1.q5) —
+           # elle est désormais DANS la phrase de méthode, ou la phrase dit qu'elle n'est pas calculable.
+           "methode": ((f"Médiane observée : {_i(stats['med_m2_bati'])} €/m² bâti, tous types de "
+                        f"biens, rayon {RAYON_MARCHE_M} m sur {FENETRE_MARCHE_ANNEES} ans"
+                        if stats["med_m2_bati"] is not None else
+                        f"Médiane locale non calculable (rayon {RAYON_MARCHE_M} m sur "
+                        f"{FENETRE_MARCHE_ANNEES} ans)")
+                       + " — indicateur de marché local, distinct du prix "
                        "de sortie du bilan (appartements, rayon adaptatif). Ventes au prix/m² "
                        "aberrant écartées du tableau des comparables."),
            # MANDAT_DVF-B — la réserve de méthode DVF voyage avec le chiffre (helper unique).
@@ -518,6 +553,9 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
             "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
             "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()
         out["secteur"] = [dict(s) for s in sect]
+        # EXPORTS-1 (1.3) : ces médianes sont un indicateur SECONDAIRE (grain secteur cadastral),
+        # étiquetées comme telles — la tête de fiche et la synthèse = sector_price parcelle.
+        out["secteur_etiquette"] = "médianes du secteur cadastral — indicateur secondaire"
     out["commune_marche"] = commune_marche
     return out
 
@@ -538,7 +576,14 @@ def _dynamique(db: Session, idu: str, avail: set[str]) -> dict | None:
         {"idu": idu, "mois": FENETRE_PERMIS_MOIS, "r": RAYON_PERMIS_M}).mappings().first()
     n = int(agg["n"]) if agg else 0
     if not n:
-        return {"n": 0, "rien": True, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS}
+        # EXPORTS-1 (4.3) : même à zéro, la couverture est dite — un « 0 permis » sur une
+        # couverture partielle est un minimum, pas une absence prouvée.
+        cov0 = db.execute(text(
+            "SELECT count(*) FILTER (WHERE geom IS NOT NULL) AS g, count(*) AS t "
+            "FROM sitadel_permits")).mappings().first()
+        return {"n": 0, "rien": True, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS,
+                "couverture_pct": (round(100 * int(cov0["g"]) / int(cov0["t"]))
+                                   if cov0 and int(cov0["t"] or 0) else None)}
     # P3-8 : seuls les 3 plus gros projets sont AFFICHÉS → LIMIT côté SQL (borne le payload en
     # secteur dense, où le rayon pouvait ramener des centaines de permis sans raison). Les compteurs
     # ci-dessus restent exacts ; « cohérent avec l'affichage » = on ne rapatrie que ce qui est montré.
@@ -554,8 +599,16 @@ def _dynamique(db: Session, idu: str, avail: set[str]) -> dict | None:
              AND NULLIF(sp.raw->>'nb_lgt', '')::int > 0
            ORDER BY nb_lgt DESC NULLS LAST LIMIT 3"""),
         {"idu": idu, "mois": FENETRE_PERMIS_MOIS, "r": RAYON_PERMIS_M}).mappings().all()
+    # EXPORTS-1 (4.3) : la COUVERTURE géolocalisée SITADEL voyage avec chaque compteur —
+    # un « 0 permis » sur une couverture partielle est un minimum, jamais un zéro sec.
+    cov = db.execute(text(
+        "SELECT count(*) FILTER (WHERE geom IS NOT NULL) AS g, count(*) AS t "
+        "FROM sitadel_permits")).mappings().first()
+    couverture_pct = (round(100 * int(cov["g"]) / int(cov["t"]))
+                      if cov and int(cov["t"] or 0) else None)
     return {"n": n, "rayon_m": RAYON_PERMIS_M, "mois": FENETRE_PERMIS_MOIS,
             "total_logements": int(agg["total_lgt"]),
+            "couverture_pct": couverture_pct,
             "plus_gros": [dict(r) for r in rows]}
 
 
@@ -750,15 +803,27 @@ def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[d
     # M-P (P2-68) : synchro indexée par NOM (stable), plus par id serial (dépendant du seed).
     # M54-AB F9 : on LIT `source_millesime` (millésime AMONT réel). Priorité : statique → millésime
     # amont → motif honnête.
-    # M73 E : la date de SYNCHRO (last_sync_at) est une date d'INGESTION — la doctrine INTERDIT de la
-    # présenter comme un millésime. On ne bascule PLUS sur « synchronisé le … » : quand le millésime
-    # amont est NULL, on l'assume (« horizon amont non publié »). Le peuplement de source_millesime
-    # reste une dette data. La date de GÉNÉRATION du document reste, elle, légitime (en pied).
+    # EXPORTS-1 (6.4, audit B13) : millésime COMPOSÉ — source_millesime, sinon la date amont VUE
+    # par la sentinelle (dernier_vu, quand c'est une date), sinon la date d'ingestion ÉTIQUETÉE
+    # comme telle (jamais déguisée en millésime — doctrine M73 E respectée par le libellé).
+    # 26/31 sources sans millésime retrouvent ainsi une date ; les orphelines masquent la cellule.
+    import re as _re_m
     mill_amont: dict[str, str] = {}
     if "data_sources" in avail:
-        for r in db.execute(text("SELECT name, source_millesime FROM data_sources")):
+        _has_sv = bool(db.execute(text("SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
+        _q = ("SELECT ds.name, ds.source_millesime, sv.dernier_vu, ds.last_sync_at "
+              "FROM data_sources ds LEFT JOIN source_veille sv ON sv.source_id = ds.id"
+              if _has_sv else
+              "SELECT name, source_millesime, NULL AS dernier_vu, last_sync_at FROM data_sources")
+        for r in db.execute(text(_q)):
             if r[1]:
                 mill_amont[r[0]] = r[1]
+            elif r[2] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r[2])):
+                d = str(r[2])[:10]
+                mill_amont[r[0]] = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
+            elif r[3]:
+                mill_amont[r[0]] = (f"ingéré le {r[3]:%d/%m/%Y} (date d'ingestion, "
+                                    "millésime amont non publié)")
     out, vus = [], set()
     for section, label, src_name, statique in _SECTION_SOURCES:
         if section not in sections_rendues or label in vus:
@@ -769,9 +834,9 @@ def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[d
         elif src_name and mill_amont.get(src_name):
             millesime = mill_amont[src_name]
         else:
-            # GPU/PLU, Géorisques… n'exposent pas de millésime amont daté (NULL) — on le DIT, jamais
-            # un « — » muet ni une date d'ingestion déguisée en millésime. Même lexique que la fiche.
-            millesime = "millésime non renseigné"
+            # EXPORTS-1 (6.4) : plus aucune date nulle part (5 sources orphelines mesurées à
+            # l'audit B13) → cellule MASQUÉE (None), plus le pavé « millésime non renseigné ».
+            millesime = None
         out.append({"section": section, "source": label, "millesime": millesime})
     return out
 

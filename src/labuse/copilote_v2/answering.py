@@ -79,9 +79,10 @@ CATALOGUE = [
     {"nom": "compter_permis", "desc": "NOMBRE de permis accordés d'une commune sur une fenêtre de N mois "
      "(défaut 24). Pour « combien de permis (accordés/délivrés) à X », « permis sur 24 mois ». C'est un "
      "COMPTE, pas un délai.", "params": {"commune": "str", "mois": "int (défaut 24)"}},
-    {"nom": "marche", "desc": "Marché immobilier d'une commune : prix de l'ANCIEN (prix_ancien_median), "
-     "terrain nu (prix_terrain_nu_par_zone), NEUF (prix_sortie_neuf), tendance (tendance_12m), loyer "
-     "(loyer_median). Les grandeurs sont NOMMÉES dans data.valeurs — sers celle demandée.",
+    {"nom": "marche", "desc": "Marché immobilier d'une commune : terrain nu "
+     "(prix_terrain_nu_par_zone), NEUF (prix_sortie_neuf), tendance (tendance_12m), loyer "
+     "(loyer_median). Le prix de l'ANCIEN est PARCELLAIRE (sector_price — demander une parcelle), "
+     "plus une ligne commune. Les grandeurs sont NOMMÉES dans data.valeurs — sers celle demandée.",
      "params": {"commune": "str"}},
     {"nom": "compter_piscines", "desc": "Compter les PISCINES détectées (île entière ou une commune) — "
      "détection ortho/IA gelée. « combien de piscines à X », « piscines détectées ».",
@@ -147,8 +148,8 @@ question du client, UNIQUEMENT à partir du RÉSULTAT D'OUTIL fourni (JSON). Rè
 - N'invente AUCUN chiffre : tout nombre de ta réponse doit apparaître dans le résultat. Si une valeur
   manque, dis-le, ne la devine pas.
 - GRANDEUR DEMANDÉE (multi-valeurs) : si le résultat porte `valeurs` (grandeurs nommées, ex. marché :
-  prix_ancien_median, prix_terrain_nu_par_zone, prix_sortie_neuf, loyer_median, tendance_12m), sers CELLE
-  que la question demande (« prix de l'ancien » → prix_ancien_median). Ne réponds « non disponible » QUE
+  prix_terrain_nu_par_zone, prix_sortie_neuf, loyer_median, tendance_12m), sers CELLE
+  que la question demande. Ne réponds « non disponible » QUE
   si la valeur demandée est absente/None — jamais si elle est présente sous une autre clé.
 - Si un champ "faits_du_fil" est fourni (chiffres déjà servis plus tôt dans CETTE conversation), tu
   peux reprendre UNIQUEMENT un chiffre qui y figure, en citant sa source et son millésime. Un chiffre

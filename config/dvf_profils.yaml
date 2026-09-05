@@ -34,6 +34,7 @@ profils:
     fenetre_ans: 3
     grandeur: "médiane €/m² bâti ET €/m² terrain nu du secteur"
     seuil_effectif: 8      # référence de marché : sous 8 ventes, médiane instable (mesuré ±44 % à n=3)
+    n_affiche: 5           # EXPORTS-1 (2.4) : le nombre de comparables affichés est un PARAMÈTRE du profil
     raison: "500 m/3 ans = effectif stable pour une médiane de secteur (mesuré n=226 dense, n=74 littoral)."
 
   banquier_adaptatif:
@@ -69,4 +70,28 @@ profils:
     fenetre_ans: 3
     grandeur: "€/m² bâti par vente (date · distance · surface · prix)"
     seuil_effectif: 8            # référence : sous 8, on l'écrit, pas un tableau qui paraît solide
+    n_affiche: 12                # EXPORTS-1 (2.4) : le nombre affiché est un PARAMÈTRE du profil
     raison: "500 m/3 ans = même référence de marché que le dossier ; comparables individuels tracés."
+
+  # EXPORTS-1 lot 4 (4.1/4.2) — LE profil permis client : 500 m · 24 mois (la définition unique).
+  # `marche_service.permits` TRANSMET ces paramètres au moteur (l'audit A4 a mesuré que le profil
+  # annonçait 500 m·24 mois mais exécutait les défauts 300 m·5 ans). Le libellé des documents est
+  # GÉNÉRÉ d'ici — toute autre fenêtre (cascade 400 m·5 ans, voisinage 100 m·36 mois) porte la
+  # sienne dans son propre libellé.
+  flash_500m:
+    question: "Quelle dynamique d'autorisations d'urbanisme autour de la parcelle ?"
+    rayon_m: 500
+    fenetre_mois: 24
+    grandeur: "autorisations SITADEL géolocalisées dans le rayon"
+    raison: "définition client unique des permis à proximité (EXPORTS-1 4.2) : 500 m · 24 mois."
+
+# EXPORTS-1 lot 2 (2.1/2.3) — LE filtre de comparables (marche_service.filtre_ventes), une
+# implémentation paramétrée pour les trois chemins (fiche, flash, sector_price). Le seuil de
+# vraisemblance par type écarte les agrégats multi-lots (« appartement 750 m² ») tant que le
+# ré-étiquetage d'ingestion (type_local='Immeuble') n'a pas re-tourné partout.
+filtre_comparables:
+  borne_min_eur_m2: 1000
+  borne_max_eur_m2: 12000
+  z_mad_max: 3.5
+  seuil_type_m2:
+    appartement: 200

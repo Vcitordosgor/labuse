@@ -432,9 +432,14 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
             f"""SELECT count(*) FROM sitadel_permits s
                 WHERE s.geom IS NOT NULL AND s.date >= (now() - interval '36 months')
                   AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).scalar()
+    # EXPORTS-1 (5.5) : le compte d'annonces Radar n'est JAMAIS un compteur de marché — la pige
+    # est manuelle et partielle (audit B11 : 104 annonces, 12/24 communes, née fin août). Servi
+    # comme MINIMUM avec sa réserve, jamais un total.
     return {"ventes_12m": int(ventes or 0),
             "prix_m2_median_bati": int(prix) if prix is not None else None,
             "annonces_actives": int(annonces or 0),
+            "annonces_reserve": "annonces suivies par la pige LABUSE (collecte manuelle, "
+                                "couverture partielle) — un minimum, pas un total de marché",
             "permis_36m": int(permis or 0)}
 
 

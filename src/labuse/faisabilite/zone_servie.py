@@ -127,6 +127,24 @@ def garde_sdp_residuelle(sdp: float | None, zone_fam: str | None,
     return float(sdp), None
 
 
+#: EXPORTS-1 (6.5, arbitrage Q12 — sondes GPU de l'audit LOT C, 05/09/2026) : communes dont les
+#: prescriptions (ER, EBC, mixité…) sont INVÉRIFIABLES en donnée ouverte — silence ≠ absence.
+COMMUNES_PRESCRIPTIONS_NON_VERIFIABLES = {
+    "Saint-André": "aucun document d'urbanisme téléversé au Géoportail de l'urbanisme",
+    "Saint-Leu": "aucun document d'urbanisme téléversé au Géoportail de l'urbanisme",
+    "Saint-Philippe": "aucun document d'urbanisme téléversé au Géoportail de l'urbanisme",
+    "Petite-Île": "PLU téléversé sans ses prescriptions (emplacements réservés, EBC…)",
+}
+
+
+def prescriptions_verifiables(commune: str | None) -> tuple[bool, str | None]:
+    """(vérifiables, motif) — LE point de vérité du drapeau Q12, lu par tous les documents.
+    Non vérifiable ≠ « aucune prescription » : une parcelle grevée d'un emplacement réservé y
+    sortirait « constructible » quoi qu'on fasse côté GPU (audit C1) — on le DIT."""
+    motif = COMMUNES_PRESCRIPTIONS_NON_VERIFIABLES.get((commune or "").strip())
+    return (motif is None, motif)
+
+
 def zone_fam_ecran(session: Session, idu: str) -> tuple[str | None, str | None]:
     """(zone_fam, zone_lib) de l'ÉCRAN (`parcel_zone_plu`) pour un IDU — lecture bon marché
     pour la garde pt2 aux points de service. (None, None) si table absente ou parcelle inconnue."""

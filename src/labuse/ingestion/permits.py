@@ -232,12 +232,14 @@ def geocode_permits_via_cadastre(session, insee: str | None = None) -> dict:
 
 
 def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int = 12,
-                   dynamique_years: int = 5) -> dict:
+                   dynamique_years: int = 5, fenetre_mois: int | None = None) -> dict:
     """Historique des autorisations d'urbanisme à proximité (C4 + 1.B) — pour la fiche.
 
     Permis rattachés (par IDU) + géolocalisés dans le rayon, avec NATURE (logements/surface) et
     STATUT (autorisé/achevé). Plus un indicateur de DYNAMIQUE de secteur (nb d'autorisations
-    récentes dans le rayon). Lecture seule."""
+    récentes dans le rayon). Lecture seule. EXPORTS-1 (4.1) : `fenetre_mois` prime sur
+    `dynamique_years` quand fourni (le profil client est en mois : 500 m · 24 mois)."""
+    mois_dyn = int(fenetre_mois) if fenetre_mois else int(dynamique_years) * 12
     rows = session.execute(
         text(
             """
@@ -261,10 +263,14 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
               "date": r["date"].date().isoformat() if r["date"] else None,
               "rattache": bool(r["rattache"]),
               "distance_m": int(r["dist_m"]) if r["dist_m"] is not None else None,
+              # EXPORTS-1 (4.4) : le nb de logements voyage — les documents trient par
+              # SIGNIFICATIVITÉ (logements, récence), plus par simple proximité.
+              "nb_lgt": (int(r["raw"].get("nb_lgt")) if isinstance(r["raw"], dict)
+                         and str(r["raw"].get("nb_lgt") or "").isdigit() else None),
               "nature": _nature(r["raw"]), "statut": _statut(r["raw"], r["date"])}
              for r in rows]
 
-    # Dynamique de secteur : nb d'autorisations géolocalisées dans le rayon, < N ans + nb logements.
+    # Dynamique de secteur : nb d'autorisations géolocalisées dans le rayon, fenêtre en MOIS.
     dyn = session.execute(
         text(
             """WITH p AS (SELECT centroid FROM parcels WHERE id = :pid)
@@ -273,8 +279,8 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
                FROM sitadel_permits s, p
                WHERE s.geom IS NOT NULL
                  AND ST_DWithin(ST_Transform(p.centroid,2975), ST_Transform(s.geom,2975), :r)
-                 AND (s.date IS NULL OR s.date >= now() - (:yrs || ' years')::interval)"""
-        ), {"pid": parcel_id, "r": radius_m, "yrs": dynamique_years},
+                 AND (s.date IS NULL OR s.date >= now() - (:mois || ' months')::interval)"""
+        ), {"pid": parcel_id, "r": radius_m, "mois": mois_dyn},
     ).mappings().first()
     n_recent = int(dyn["n"]) if dyn else 0
     niveau = "actif" if n_recent >= 5 else "modéré" if n_recent >= 1 else "calme"
@@ -288,7 +294,7 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
             "items": items, "source": "SITADEL / Région ODS 974",
             "dynamique": {"niveau": niveau, "permis_recents": n_recent,
                           "logements_recents": int(dyn["logts"]) if dyn else 0,
-                          "annees": dynamique_years,
+                          "annees": round(mois_dyn / 12, 1), "fenetre_mois": mois_dyn,
                           # couverture : ne jamais lire « calme » sans la qualifier.
                           "couverture_pct": couverture_pct, "geolocalises": geoloc, "total": total,
                           "fiable": couverture_pct >= 60}}
