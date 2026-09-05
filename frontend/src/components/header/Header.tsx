@@ -282,7 +282,9 @@ function CommuneSelect() {
         title="Périmètre — zoome la carte et pré-coche la commune dans le filtre (vous gardez la main)"
         className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-colors duration-quick ${
           open || n > 0 ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt hover:border-mint/40'}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${open || n > 0 ? 'bg-mint-ink' : 'bg-txt-dim'}`} />
+        {/* pastille d'état SEULEMENT au repos (indicateur discret) ; quand la pastille est active, le
+            pill vert plein dit déjà l'état — le point (en encre) faisait une tache noire sur le vert. */}
+        {!(open || n > 0) && <span className="h-1.5 w-1.5 rounded-full bg-txt-dim" />}
         {label}
         <svg viewBox="0 0 10 10" className={`h-2.5 w-2.5 ${open || n > 0 ? 'text-mint-ink' : 'text-txt-dim'}`}><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>
