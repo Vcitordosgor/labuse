@@ -369,3 +369,27 @@ generate_flash_report(IDU, order_ref=f"AUDIT-{IDU[-6:]}", force=True)   # → fl
 Script complet conservé hors dépôt ; il appelle, pour chaque témoin, les moteurs listés au §A1/A2/A3/A4
 ci-dessus avec les mêmes imports que les exports, et écrit `audit_valeurs.json`. Toute valeur de la
 colonne « Valeurs » du LOT A en provient ou provient d'un `<doc>.txt` extrait par `pdftotext`.
+
+## §catalogue — vérification de SOURCES-CATALOGUE.md (05/09)
+
+```sql
+SELECT count(*) FROM data_sources;                                   -- 77
+SELECT count(*) FROM source_veille;                                  -- 49
+SELECT fraicheur_statut, count(*) FROM data_sources GROUP BY 1;      -- sans_echeance 62 · NULL 10 · a_jour 3 · en_retard 2
+SELECT status, count(*) FROM data_sources GROUP BY 1;                -- connecte 65 · a_faire 6 · manuel 4 · hub 2
+SELECT id, name FROM data_sources
+WHERE id IN (1,5,16,18,37,61,70,71,83,84,87,88,89,93,94,95);         -- 16/16 conformes au catalogue
+SELECT ds.id, ds.name, sv.dernier_statut, ds.fraicheur_statut
+FROM data_sources ds LEFT JOIN source_veille sv ON sv.source_id=ds.id
+WHERE ds.id IN (5,13,16) OR sv.dernier_statut <> 'ok';
+-- → 5 DVF en_retard · 13 DEAL injoignable · 16 SITADEL nouvelle_version
+-- sous-ensembles testés pour le « 44 » : sous veille+sans_echeance = 40 ; connectées+sans_echeance = 58 → aucun ne donne 44
+```
+
+```sh
+for kw in sudocuh egoul "plh" lidar mnh "réunion express" tcsp; do
+  grep -rniE "$kw" src/labuse/flash/ src/labuse/api/briques_pdf.py src/labuse/api/pdf_premium.py \
+    src/labuse/api/argumentaire.py src/labuse/api/banquier.py src/labuse/api/pre_dossier.py
+done
+# → 0 occurrence partout SAUF egoul : api/pre_dossier.py:563 (notice PCMI4, source ANC)
+```
