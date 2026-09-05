@@ -399,16 +399,31 @@ def patrimoine(siren: str, fmt: str = "json",
 @router.get("/permis")
 def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
            limit: int = Query(300, ge=1, le=2000), offset: int = Query(0, ge=0),  # GB-029 : ge=0 → 422, plus de 500
+           count_only: bool = False,   # RETOURS-16 V4 — compteur seul (ni lignes ni carte)
            db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
     # FIX-C6 (GB-049) — base NEUVE / sans permis : dmax NULL rendrait `date >= NULL - interval`
     # (operator does not exist: timestamp >= interval) = 500. On répond un état VIDE honnête.
     if dmax is None:
+        if count_only:   # RETOURS-16 V4 — même forme compteur, base vide comprise
+            return {"total": 0, "geocodes": 0, "donnees_jusqu_au": None}
         return {"commune": commune or "Toute l'île", "months": months, "nature": nature,
                 "total": 0, "affiches": 0, "has_more": False, "donnees_jusqu_au": None,
                 "geocodes": 0, "sans_localisation": 0, "pct_geocode": 0, "carte": [], "items": []}
     limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
+    # RETOURS-16 V4 — chemin compteur : le chip « Tous » du segment doit dire le TOTAL EN BASE
+    # (toute la profondeur), pas la somme de deux fenêtres. Un COUNT léger, jamais les 47k geoms.
+    if count_only:
+        c = db.execute(text(
+            """SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+               FROM sitadel_permits
+               WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+                 AND (CAST(:nat AS text) IS NULL OR type = :nat)
+                 AND date >= :dmax - (:m || ' months')::interval"""),
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().first()
+        return {"total": int(c["n"] or 0), "geocodes": int(c["geo"] or 0),
+                "donnees_jusqu_au": dmax.date().isoformat()}
     # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
     rows = db.execute(text("""
@@ -460,9 +475,14 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         "carte": carte,
         # LOT11 (OUTILS-FINALE) — `etat_label` servi ici (source unique `_ETAT_LABELS`, comme la fiche) :
         # le front affichait le CODE Sitadel brut (« 2 ») orphelin en 2e ligne. Plus jamais un code nu.
+        # RETOURS-16 V2 — l'état « 2 » (Autorisé) est MUET en liste : Sitadel 974 ne publie que des
+        # permis autorisés, l'information est constante — elle vit dans la phrase d'explication de
+        # l'outil ; la FICHE permis (permis_fiche) garde l'état complet. Les états 4/5/6 (chantier
+        # ouvert, en cours, achevés), eux, varient : ils restent servis.
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
                                         "etat", "nb_lgt", "surf_hab", "geoloc")},
-                   "etat_label": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}") if r["etat"] else None,
+                   "etat_label": (_ETAT_LABELS.get(r["etat"], f"état {r['etat']}")
+                                  if r["etat"] and r["etat"] != "2" else None),
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
     }
 

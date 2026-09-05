@@ -3,8 +3,8 @@ import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable P
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
-  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
-  modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
+  modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPatrimoineSearch, modPermis, modPermisCount,
+  modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
@@ -463,6 +463,11 @@ export function M03() {
   // libellé du segment changeait quand « Tous » élargissait la fenêtre radar.
   const qRadarEntry = useQuery({ queryKey: ['radar-entry', commune], queryFn: () => modPermis(24, null, 1, 0), staleTime: 60_000 })
   const radarEntryTotal = (qRadarEntry.data as Record<string, any> | undefined)?.['total'] as number | undefined
+  // RETOURS-16 V4 — le chip « Tous » disait la SOMME de deux fenêtres (Récent 24 m + Dormant 36 m+,
+  // « Tous 21 038 ») quand le bas d'écran comptait la base entière (50 544) : deux totaux différents
+  // sans périmètre dit (constat Vic). « Tous » = désormais le VRAI total en base (count_only, léger).
+  const qTousEntry = useQuery({ queryKey: ['tous-entry', commune], queryFn: () => modPermisCount(240), staleTime: 60_000 })
+  const tousEntryTotal = qTousEntry.data?.total
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
@@ -547,18 +552,19 @@ export function M03() {
         )}
       </div>
 
-      {/* STATUT — En cours (VERT) · Point mort (ROUGE) · Tous. Compteurs live sur chaque puce. C'est le
+      {/* STATUT — Récent (VERT) · Dormant (ROUGE) · Tous. Compteurs live sur chaque puce. C'est le
           commutateur PRIMAIRE (vert/rouge/tous) : il reste TOUJOURS visible au-dessus des filtres repliés
           (les autres filtres — période, type, commune, géocodage — se plient, eux, dans la boîte ci-dessous). */}
       <div data-permis-segment className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
         {([
-          // RETOURS-15 U3 — libellés COURTS (demande Vic) : « Récent » / « Au point mort » sur une
-          // seule ligne ; la phrase sous les compteurs porte les définitions (Sitadel = autorisés seuls).
-          ['cours', 'Récent', '#4ADE80', radarEntryTotal],
-          ['mort', 'Au point mort', '#E2726A', pmEntryTotal],
-          ['tous', 'Tous', null, (radarEntryTotal != null && pmEntryTotal != null) ? radarEntryTotal + pmEntryTotal : null],
-        ] as const).map(([k, label, dot, n], i) => (
-          <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)}
+          // RETOURS-15 U3 — libellés COURTS. RETOURS-16 V3 — « Dormant » (décision Vic) remplace
+          // « Au point mort » ; V4 — chaque chip DIT son périmètre (title) et « Tous » compte la
+          // base entière, plus la somme de deux fenêtres.
+          ['cours', 'Récent', '#4ADE80', radarEntryTotal, 'Permis autorisés dans les 24 derniers mois de données Sitadel.'],
+          ['mort', 'Dormant', '#E2726A', pmEntryTotal, 'PC autorisés depuis plus de 36 mois, sans achèvement déclaré (DAACT), parcelle toujours non bâtie.'],
+          ['tous', 'Tous', null, tousEntryTotal, 'Tous les permis en base (toute la profondeur Sitadel servie).'],
+        ] as const).map(([k, label, dot, n, titre], i) => (
+          <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} title={titre}
             className={`flex flex-1 basis-0 items-center justify-center gap-1.5 px-2 py-1.5 text-[11.5px] transition-colors duration-quick ${i > 0 ? 'border-l border-line-2' : ''} ${
               seg === k ? 'bg-mint/[0.10] font-medium text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>
             {dot && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: dot }} />}
@@ -567,11 +573,11 @@ export function M03() {
         ))}
       </div>
       {/* RETOURS-12 O12.1 — note honnête sur ce que Sitadel couvre au 974 : uniquement les permis
-          AUTORISÉS (pas l'instruction en cours). Le statut exact (chantier / achevé) est porté par
-          chaque permis (étiquette d'état, source unique). */}
+          AUTORISÉS (pas l'instruction en cours) — c'est ICI que vit cette information constante
+          (V2 : le chip « Autorisé » par ligne est retiré, il ne disait rien qui varie). */}
       <p className="-mt-1 px-0.5 text-[9.5px] leading-snug text-txt-dim">
         Sitadel (974) ne publie que les permis <b className="text-txt-mut">autorisés</b> — pas l'instruction déposée.
-        « Récent » = autorisé récemment · « Au point mort » = autorisé ancien sans achèvement (DAACT).
+        « Récent » = autorisé dans les 24 derniers mois · « Dormant » = autorisé ancien sans achèvement déclaré (DAACT).
       </p>
 
       {/* ZONE 2 — FILTRES REPLIABLES (O17 a/f/i) : période · type · commune · géocodage. Un en-tête
@@ -630,17 +636,18 @@ export function M03() {
         )}
       </div>
 
-      {/* LIGNE DE STATS — compteur liste/carte concis (la date est passée dans le sous-titre ci-dessous). */}
-      <p className="text-[11px] text-txt-dim">
+      {/* LIGNE DE STATS — RETOURS-16 V4 : chaque compteur DIT son périmètre (« 50 544 en base »
+          vs « 21 038 » nu, constat Vic — deux totaux différents sans que l'écran dise de quoi). */}
+      <p data-permis-pied className="text-[11px] text-txt-dim">
         {pointMort
-          ? <>{total != null ? fmt(total) : '…'} au point mort · {fmt(carte.length)} sur la carte{total != null && loaded < total
-              ? <> · <span data-permis-plafond title="Le point mort peut compter des milliers de PC : on charge d'abord les plus anciens (les plus dormants) ; affinez en zoomant/filtrant.">les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
-          : <>{zone ? `${items.length} permis dans la zone dessinée` : `${fmt(total ?? 0)} permis`} · {fmt(carte.length)} sur la carte
-              {zone && <span className="text-mint/70"> · outil Zone actif</span>}</>}
+          ? <>{total != null ? fmt(total) : '…'} PC dormants ({'>'}{months} mois sans DAACT) · {fmt(carte.length)} sur la carte{total != null && loaded < total
+              ? <> · <span data-permis-plafond title="Les dormants peuvent compter des milliers de PC : on charge d'abord les plus anciens (les plus dormants) ; affinez en zoomant/filtrant.">les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
+          : <>{fmt(total ?? 0)} {tous ? 'en base (toute la profondeur Sitadel)' : `sur ce filtre (${months} derniers mois${nature ? ` · ${NATURES.find(([v]) => v === nature)?.[1]}` : ''}${commune ? ` · ${commune}` : ''})`}
+              {head?.['geocodes'] != null ? <> · {fmt(head['geocodes'] as number)} localisés</> : null} · {fmt(carte.length)} sur la carte
+              {zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}</>}
         {/* O17 (e) — la DATE du millésime Sitadel remonte dans le sous-titre, plus dans une phrase-fleuve. */}
         {!pointMort && head?.['donnees_jusqu_au'] != null && (
-          <span className="text-txt-dim"> · données jusqu'au {String(head['donnees_jusqu_au'])}
-            {head?.['pct_geocode'] != null ? ` · géocodage ${String(head['pct_geocode'])} %` : ''}</span>
+          <span className="text-txt-dim"> · données jusqu'au {String(head['donnees_jusqu_au'])}</span>
         )}
       </p>
 
@@ -667,29 +674,33 @@ export function M03() {
             {/* RETOURS-11 R6 — puce sur UNE seule ligne (moitié moins haute) : pastille · type · date ·
                 lgt/surface · commune (tronquée) à gauche, badge d'état (Autorisé / Sans DAACT / non géocodé)
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
-            {/* O17 (h) — la pastille ROUGE = « point mort » : sa définition tient dans l'infobulle. */}
+            {/* O17 (h) — la pastille ROUGE = « dormant » : sa définition tient dans l'infobulle. */}
             <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: pointMort ? '#E2726A' : '#4ADE80' }}
-              title={pointMort ? 'Point mort — permis de construire daté de plus de N mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.' : 'Permis récent (radar)'} />
-            <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
+              title={pointMort ? 'Dormant — permis de construire daté de plus de N mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.' : 'Permis récent (radar)'} />
+            {/* RETOURS-16 V2.3 — chip type masqué en mode Dormant : l'endpoint ne sert QUE des PC
+                (WHERE type='PC'), la valeur ne varie jamais — une constante n'est pas une information. */}
+            {!pointMort && <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>}
             {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
             <span className="shrink-0 font-mono text-txt-mut" title="Date d'autorisation du permis">{i['date'] as string}</span>
             {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
             {pointMort && i['surface_m2'] != null && <span className="shrink-0 tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
             {/* commune / parcelle en clair — tronquée pour laisser la place au badge. */}
             {gaucheL2 && <span className="min-w-0 truncate text-txt-mut">{gaucheL2}</span>}
-            {/* badges (délai + état) poussés à droite, sur la même ligne. */}
+            {/* badges poussés à droite, sur la même ligne. RETOURS-16 V2 — la puce de LOCALISATION
+                passe EN PREMIER (elle s'affiche en entier, jamais tronquée — constat Vic « puce
+                coupée ») ; le chip « Autorisé » n'arrive plus (état 2 muet côté serveur : constant
+                au 974, l'information vit dans la phrase d'explication en tête d'outil). */}
             <span className={`flex shrink-0 items-center gap-1.5 ${gaucheL2 ? '' : 'ml-auto'}`}>
-              {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
-              {pointMort
-                ? <span data-permis-badge-mort className="rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
-                    title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
-                : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
               {/* RETOURS-14 S5.1 — un permis à parcelle incertaine ne pose JAMAIS de point : la
-                  liste le dit. RETOURS-15 U4 — libellé COURT (le long faisait déborder la ligne →
-                  barre horizontale) ; le libellé complet vit dans l'infobulle. */}
+                  liste le dit. RETOURS-15 U4 — libellé COURT, le complet vit dans l'infobulle. */}
               {!i['geom'] && <span data-permis-badge-nongeo className="whitespace-nowrap rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
                 title={String(i['geoloc'] ? `Localisation approximative (adresse) — ${i['geoloc']}` : "Parcelle d'origine disparue du cadastre et adresse non rattachable — non localisable sur la carte.")}>
                 {i['geoloc'] ? 'approx. (adresse)' : 'non localisé'}</span>}
+              {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }} title="Délai d'instruction">{String(i['delai_mois'])} m</span>}
+              {pointMort
+                ? <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
+                    title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
+                : i['etat_label'] && <span data-permis-etat className="whitespace-nowrap rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
             </span>
           </button>
           )

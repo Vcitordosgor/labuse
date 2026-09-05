@@ -969,6 +969,9 @@ export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
 export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0) =>
   j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}&limit=${limit}&offset=${offset}`)
+// RETOURS-16 V4 — compteur seul (ni lignes ni carte) : le chip « Tous » dit le total EN BASE.
+export const modPermisCount = (months: number) =>
+  j<{ total: number; geocodes?: number; donnees_jusqu_au?: string }>(`/modules/permis?${cq()}&months=${months}&count_only=true`)
 export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
 export const modParcellePermis = (idu: string) =>
