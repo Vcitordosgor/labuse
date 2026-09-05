@@ -41,12 +41,24 @@ describe('FIX-FONDS — fonds de carte', () => {
   // (jetées/ports en biseau, constat Vic 05/09). Nouveau contrat : AUCUN fond n'est borné (rien ne
   // découpe une orthophoto) ; la mer vient de la SOUS-COUCHE monde (mosaïque ORTHOPHOTOS, maxzoom
   // source 12 = mer photographiée aux petits zooms puis étirée — jamais de tuile blanche demandée).
-  it('U1 : aucun fond borné ; la sous-couche ortho monde porte la mer', () => {
+  it('U1 : aucun fond borné ; la sous-couche ortho monde porte la terre aux petits zooms', () => {
     for (const [key, def] of Object.entries(BASEMAP_SOURCES)) {
       expect((def as { bounds?: unknown }).bounds, `${key} ne doit pas être borné`).toBeUndefined()
     }
-    expect(ORTHO_MONDE.tiles[0]).toContain('LAYER=ORTHOIMAGERY.ORTHOPHOTOS&')   // la mosaïque, pas l'Express
+    expect(ORTHO_MONDE.tiles[0]).toContain('/map/tiles/ortho/monde/')   // la mosaïque, pas l'Express
     expect(ORTHO_MONDE.maxzoom).toBe(12)
+  })
+
+  // RETOURS-16 V1 — plus AUCUN fond ortho brut : toutes les sources ortho passent par le proxy
+  // backend /map/tiles/ortho/* (mer photo limitée à la bande côtière, fondu vers l'aplat unique,
+  // blanc no-data rogné). Constat Vic 05/09 (4e recette) : rectangles bleus en escalier au large.
+  it('V1 : toutes les sources ortho passent par le proxy backend', () => {
+    for (const [key, def] of Object.entries(BASEMAP_SOURCES)) {
+      if (!key.startsWith('bm-ortho')) continue
+      expect(def.tiles[0], `${key} doit passer par le proxy`).toContain('/map/tiles/ortho/')
+      expect(def.tiles[0]).not.toContain('data.geopf.fr')
+    }
+    expect(ORTHO_MONDE.tiles[0]).toContain('/map/tiles/ortho/monde/')
   })
 
   // FOND-SOMBRE : plus AUCUNE source CARTO (clé requise) — le Sombre est rendu sans raster.

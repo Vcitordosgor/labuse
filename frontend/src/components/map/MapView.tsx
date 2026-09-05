@@ -255,7 +255,12 @@ const SOMBRE_TERRE = '#080A09'  // terre Sombre MESURÉE (idem)
 // Bascules M64 CONSERVÉES (elles se posent maintenant sur de la terre claire) : traits achromatiques
 // (sélection/pulse/étiquette de zone) → valeur sombre. Pastilles de commune : INCHANGÉES (revert de
 // l'adaptation « pastille claire » M64, cf. leur effet) — un seul token diffère entre les modes.
-const SOMBRE_BG = '#060A08'   // canvas historique — mer du mode Clair (et sous les rasters Plan/Ortho).
+const SOMBRE_BG = '#060A08'   // canvas historique — mer du mode Clair (et sous les tuiles Plan).
+// RETOURS-16 V1 — APLAT DE MER des fonds ortho : UNE seule couleur, posée par le canvas sur
+// l'emprise entière (jamais par tuile). Bleu profond MESURÉ sur la mosaïque monde IGN au large
+// du 974 (moyenne rgb(10,59,89)) — même valeur que MER_HEX côté proxy (api/ortho_proxy.py).
+// Le proxy fond la photo vers cet aplat au-delà de la bande côtière : la mer est uniforme.
+const MER_ORTHO = '#0A3B59'
 // largeur des limites communes en Sombre (interpolée par zoom) — restaurée hors Clair.
 const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
 function applyClairMode(m: maplibregl.Map, basemap: string) {
@@ -269,7 +274,9 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
   const vis = (id: string, on: boolean) => { if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none') }
   // FOND-SOMBRE : la mer du Sombre = teinte mesurée du rendu raster d'avant ; Clair garde le noir.
-  set('bg', 'background-color', sombre ? SOMBRE_MER : SOMBRE_BG)
+  // V1 : sous un fond ORTHO, le canvas EST la mer (aplat unique MER_ORTHO — le proxy fond la
+  // photo vers lui au large) ; le Plan IGN dessine sa propre mer, Sombre/Clair gardent la leur.
+  set('bg', 'background-color', basemap === 'ortho' ? MER_ORTHO : sombre ? SOMBRE_MER : SOMBRE_BG)
   // TERRE : masse île dissoute — grise en Clair, terre mesurée en Sombre ; CACHÉE sous Plan/Ortho
   // (dans la pile elle est AU-DESSUS des rasters de fond, elle les recouvrirait).
   vis('ile-mass', clair || sombre)
@@ -778,13 +785,18 @@ export function MapView() {
       // rien ne découpe une orthophoto. Sous tout ça, le canvas sombre : jamais de blanc.
       m.addSource('bm-ortho-monde', { type: 'raster', tiles: ORTHO_MONDE.tiles, tileSize: 256,
         attribution: ORTHO_MONDE.attribution, maxzoom: ORTHO_MONDE.maxzoom })
-      m.addLayer({ id: 'bm-ortho-monde', type: 'raster', source: 'bm-ortho-monde', layout: { visibility: 'none' } })
+      // V1 — raster-fade-duration 0 sur les fonds ortho : le fondu d'apparition de MapLibre
+      // laissait voir le canvas au travers des tuiles pendant 300 ms (liserés aux jointures au
+      // moindre zoom) ; l'aplat de mer et le fondu du proxy suffisent, pas de crossfade.
+      m.addLayer({ id: 'bm-ortho-monde', type: 'raster', source: 'bm-ortho-monde',
+        layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 0 } })
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
         m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
         // U1 — bascule par zoom : l'Ortho Express (terre seule) n'apparaît qu'aux GRANDS zooms
-        // (minzoom 12) ; en dessous, la mosaïque monde seule peint (mer comprise) — sans ça, les
-        // tuiles côtières Express faisaient un liseré bleu vif en escalier autour de l'île.
+        // (minzoom 12) ; en dessous, la mosaïque monde seule peint — sans ça, les tuiles
+        // côtières Express faisaient un liseré bleu vif en escalier autour de l'île.
         m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' },
+          ...(id.startsWith('bm-ortho') ? { paint: { 'raster-fade-duration': 0 } } : {}),
           ...(id === 'bm-ortho-now' ? { minzoom: 12 } : {}) })
       }
       // M65 P8 — MASSE TERRESTRE (île dissoute) : la terre sans parcelle (cirques, forêt, volcan)

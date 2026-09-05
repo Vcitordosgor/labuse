@@ -7,18 +7,20 @@ export const WMTS = (layer: string, format: string) =>
 
 export type BasemapDef = { tiles: string[]; attribution: string; maxzoom?: number }
 
-// RETOURS-15 U1 — les `bounds` C6 et le masque de mer R1 sont RETIRÉS : rien ne découpe une
-// orthophoto (le masque tronquait jetées et ports en biseau — constat Vic 05/09). Le problème
-// d'origine (escalier de tuiles au large aux petits zooms) vient de l'EMPRISE de l'Ortho Express
-// (terre seule) : il se corrige par une SOUS-COUCHE générique, pas par un découpage.
-// Mesuré au GetTile (05/09/2026) : `ORTHOIMAGERY.ORTHOPHOTOS` sert la MER photographiée jusqu'à
-// z12 inclus (blanc/absent au-delà) ; l'Express sert la terre + la mer côtière (photo réelle
-// jusqu'à ~1-2 km au large), blanc sur une bande étroite (~2-4 km), rien au-delà.
+// RETOURS-16 V1 — TOUTES les sources ortho passent par le PROXY backend (api/ortho_proxy.py) :
+// aucune tuile ortho brute. Le proxy garde la photo sur la terre et une bande côtière (~700 m
+// pleine, fondu jusqu'à ~1,6 km — jetées et ports restent entiers), rogne le blanc no-data, et
+// répond 404 au large : la mer est l'APLAT UNIQUE du canvas (MER_ORTHO, MapView), jamais un
+// patchwork de tuiles. Constat Vic 05/09 (4e recette) : rectangles bleus en escalier au large —
+// c'était la mer PHOTO de l'Express (dalles) sur la mer de la mosaïque monde (autre bleu).
+export const ORTHO_PROXY = (couche: string) =>
+  `${window.location.origin}/map/tiles/ortho/${couche}/{z}/{x}/{y}`
+
 export const ORTHO_MONDE: BasemapDef = {
-  // sous-couche des fonds ortho : couverture complète (mer comprise, monde en fond) aux petits
-  // zooms ; maxzoom 12 = au-delà, MapLibre ÉTIRE les tuiles z12 (la mer reste continue sous
-  // l'Express, jamais de tuile blanche z13+ demandée à cette couche).
-  tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')],
+  // sous-couche des fonds ortho : la TERRE aux petits zooms (mer fondue vers l'aplat par le
+  // proxy) ; maxzoom 12 = au-delà, MapLibre ÉTIRE les tuiles z12 sous l'Express (jamais de
+  // tuile z13+ demandée à cette couche, l'IGN n'y sert plus la mosaïque).
+  tiles: [ORTHO_PROXY('monde')],
   attribution: '© IGN Géoplateforme — mosaïque ORTHOPHOTOS',
   maxzoom: 12,
 }
@@ -41,21 +43,21 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
   // Solaire (« 20 cm 2025 ») est désormais VRAI côté fond. Plan IGN v2 = couche courante (rien de plus récent).
   // Historiques : les 6 orthos-période servent au 974 ; 1965-1980 et 1980-1995 → 404 (métropole seule, exclus).
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme — Plan IGN v2' },
-  // RETOURS-15 U1 — l'Express passe par le PROXY backend /map/tiles/ortho-express : l'IGN sert
-  // des tuiles BLANC PUR sur la bande de mer côtière (z13-16) que MapLibre ne peut pas écarter ;
-  // le proxy les transforme en 404 → la sous-couche monde (mer) reste visible. Jamais de blanc.
-  'bm-ortho-now': { tiles: [`${window.location.origin}/map/tiles/ortho-express/{z}/{x}/{y}`], attribution: '© IGN Ortho Express RVB 2025 (20 cm) — millésime le plus récent au 974', maxzoom: 19 },
-  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
+  // V1 — l'Express (comme tous les fonds ortho) passe par le proxy : blanc no-data rogné en
+  // fondu, mer photo limitée à la bande côtière, aplat unique dessous. Jamais de blanc, jamais
+  // de marche de dalles.
+  'bm-ortho-now': { tiles: [ORTHO_PROXY('express')], attribution: '© IGN Ortho Express RVB 2025 (20 cm) — millésime le plus récent au 974', maxzoom: 19 },
+  'bm-ortho-2000': { tiles: [ORTHO_PROXY('2000')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
   // le millésime 1950 s'arrête ~z15 : overzoom (maxzoom) plutôt que des tuiles NOIRES au-delà.
-  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
+  'bm-ortho-1950': { tiles: [ORTHO_PROXY('1950')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
   // TEMPS (refonte) — frise des millésimes : mosaïques-période IGN VÉRIFIÉES sur le 974 (GetTile réel,
   // 3 points de contrôle St-Denis/St-Paul/St-Pierre → dalles servies ; 1965-80 et 1980-95 s'arrêtent en
   // métropole → EXCLUES). maxzoom = un cran sous le dernier zoom servi (convention 2000-2005), pour de
   // l'overzoom au lieu de tuiles noires aux limites de mission.
-  'bm-ortho-2006': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2006-2010', 'image/jpeg')], attribution: '© IGN ortho 2006-2010', maxzoom: 17 },
-  'bm-ortho-2011': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2011-2015', 'image/jpeg')], attribution: '© IGN ortho 2011-2015', maxzoom: 17 },
-  'bm-ortho-2016': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2016-2020', 'image/jpeg')], attribution: '© IGN ortho 2016-2020', maxzoom: 18 },
-  'bm-ortho-2021': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2021-2023', 'image/jpeg')], attribution: '© IGN ortho 2021-2023', maxzoom: 18 },
+  'bm-ortho-2006': { tiles: [ORTHO_PROXY('2006')], attribution: '© IGN ortho 2006-2010', maxzoom: 17 },
+  'bm-ortho-2011': { tiles: [ORTHO_PROXY('2011')], attribution: '© IGN ortho 2011-2015', maxzoom: 17 },
+  'bm-ortho-2016': { tiles: [ORTHO_PROXY('2016')], attribution: '© IGN ortho 2016-2020', maxzoom: 18 },
+  'bm-ortho-2021': { tiles: [ORTHO_PROXY('2021')], attribution: '© IGN ortho 2021-2023', maxzoom: 18 },
 }
 
 // Frise des millésimes « avant » — ordre chronologique, tous vérifiés servant des dalles sur le 974.
