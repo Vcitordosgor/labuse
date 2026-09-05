@@ -192,8 +192,8 @@ export interface AcquisitionsPm {
   n: number; n_total: number; tronquee: boolean
   acquisitions: { idu: string; de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
 }
-export const getCommuneAcquisitions = (commune: string) =>
-  j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm`)
+export const getCommuneAcquisitions = (commune: string, limit = 200) =>
+  j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm?limit=${limit}`)
 
 export interface ContexteCommune {
   commune: string; insee: string | null; epci: string | null; epci_nom: string | null
@@ -362,9 +362,15 @@ export interface PluCommune {
 export const pluAnnuaireSearch = (qy: string, insee?: string, zone?: string) =>
   j<PluSearch>(`/modules/plu-annuaire/search?q=${encodeURIComponent(qy)}${insee ? `&insee=${insee}` : ''}${zone ? `&zone=${encodeURIComponent(zone)}` : ''}`)
 export const pluAnnuaireCommunes = () =>
-  j<{ n_communes: number; servables: number; n_revision: number; n_rnu: number; n_non_ingere: number
+  j<{ n_communes: number; servables: number; n_plu_vigueur: number; non_servis: string[]; n_revision: number; n_rnu: number; n_non_ingere: number
       // RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures PLU en cours (source unique veille_plu).
       n_procedures: number; procedures_par_etat: Record<string, number>; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
+// RETOURS-15 U8 — pack .zip du PLU EN VIGUEUR résolu en direct sur le GPU (commune en révision
+// comprise). Trois issues distinctes : trouvé / GPU vide (mairie servie) / GPU injoignable.
+export interface PluPack { insee: string; disponible: boolean; erreur?: string | null; message?: string
+  idurba?: string; millesime?: string | null; statut_gpu?: string; url?: string
+  mairie?: { nom: string; telephone: string | null; email: string | null; site_officiel: string | null } | null }
+export const pluAnnuairePack = (insee: string) => j<PluPack>(`/modules/plu-annuaire/pack/${insee}`)
 
 // M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
 export const getModeB = (idu: string, travauxM2?: number) =>
@@ -512,6 +518,10 @@ export const getVeillePromoteurs = (p: { commune?: string; categorie?: string; d
 export interface ProgrammePublie { id: number; nom: string; commune: string | null; url: string | null; annee: number | null }
 export interface PromoteurFrise {
   siren: string; denomination: string | null; n_operations: number; n_logements: number
+  // RETOURS-13 R29 — le chiffre dit ce qu'il compte + activité de pétitionnaire (Sitadel 2013+).
+  perimetre_note: string
+  petitionnaire: { n_permis: number; n_logements: number; note: string }
+  filiales_identifiees: { siren: string; nom: string | null; n_permis: number; n_logements: number }[]
   frise: { annee: number; n_operations: number; n_logements: number }[]
   operations: { annee: number | null; commune: string; nb_logements: number; libelle: string; programme?: ProgrammeLie | null }[]
   programmes_publies: ProgrammePublie[]
@@ -535,7 +545,8 @@ export const getPromoteurFrise = (siren: string) => j<PromoteurFrise>(`/outils/v
 export interface PromoteurAcquisitions { siren: string; denomination: string | null; n_parcelles: number; par_commune: { commune: string; n: number }[]; note: string }
 export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitions>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/acquisitions`)
 
-export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null }
+// RETOURS-15 U6 — deja_batie : le chiffre pré-rempli est un RÉSIDUEL sur une parcelle bâtie, l'écran le nomme.
+export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null; deja_batie?: boolean }
 export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN
@@ -558,6 +569,21 @@ export async function banAutocomplete(q: string, signal?: AbortSignal): Promise<
     `/adresses/autocomplete?q=${encodeURIComponent(needle)}&limit=6`, { signal })
   return r.features ?? []
 }
+
+// RETOURS-16 V5 — suggestion UNIFIÉE des barres de recherche (un endpoint, six grammaires,
+// groupées par type, 8 max). `types` = les grammaires que la barre appelante sait consommer.
+export type SuggestType = 'adresse' | 'cadastre' | 'proprietaire' | 'siren' | 'commune' | 'projet'
+export interface SuggestItem {
+  type: SuggestType; label: string; sub?: string
+  idu?: string | null; lon?: number; lat?: number
+  siren?: string; commune?: string; insee?: string; projet_id?: number
+}
+export interface SuggestReponse {
+  q: string; groupes: { type: SuggestType; items: Omit<SuggestItem, 'type'>[] }[]
+  total: number; ms: number; formats: string
+}
+export const rechercheSuggest = (q: string, types: SuggestType[], signal?: AbortSignal) =>
+  j<SuggestReponse>(`/api/recherche/suggest?q=${encodeURIComponent(q)}&types=${types.join(',')}`, { signal })
 
 // O3 · anti-fiche « pourquoi pas » : motifs d'écartement hiérarchisés, sourcés (cascade servie).
 export interface AntiFicheMotif { couche: string; motif: string; source: string }
@@ -784,6 +810,11 @@ export interface SolaireFiche {
   lon?: number | null; lat?: number | null   // RETOURS-12 O7 — centroïde parcelle (photo ortho du toit)
   toit_m2?: number | null; piscine?: boolean; piscine_m2?: number | null; abf?: boolean
   ombrage?: boolean; proba_occ?: number | null; classement?: string; millesime?: string
+  // RETOURS-13 R31 / RETOURS-14 S11 — nature de la toiture (Dérivé, LiDAR HD IGN), servie
+  // seulement au-dessus du seuil de confiance ; « non déterminée (LiDAR) » sinon.
+  toiture?: { verdict: string; libelle: string; libelle_court: string
+              pente_mediane_deg: number | null; pans_orientation_deg: number[]
+              confiance: number; seuil: number; statut: string; methode: string } | null
 }
 export const getSolaireFiche = (idu: string) =>
   j<SolaireFiche>(`/modules/prospection-solaire/parcelle/${idu}`)
@@ -951,8 +982,13 @@ export const modPatrimoine = (siren: string, limit = 200, offset = 0) =>
 // GB-017/018 — export CSV du portefeuille d'une PM (raison sociale entière ; notice si plafond serveur).
 export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren=${encodeURIComponent(siren)}&fmt=csv`
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
-export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0) =>
-  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}&limit=${limit}&offset=${offset}`)
+// RETOURS-17 W2 — `etat` (recent|acheve|autre) affine la fenêtre par ÉTAT DE CYCLE ; le dormant garde
+// son endpoint /promesses (jointure parcelle+run). Sans `etat`, comportement d'avant (fenêtre `months`).
+export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0, etat?: string | null) =>
+  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}${etat ? `&etat=${etat}` : ''}&limit=${limit}&offset=${offset}`)
+// RETOURS-16 V4 — compteur seul (ni lignes ni carte) : le chip « Tous » dit le total EN BASE.
+export const modPermisCount = (months: number, etat?: string | null) =>
+  j<{ total: number; geocodes?: number; donnees_jusqu_au?: string }>(`/modules/permis?${cq()}&months=${months}${etat ? `&etat=${etat}` : ''}&count_only=true`)
 export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
 export const modParcellePermis = (idu: string) =>

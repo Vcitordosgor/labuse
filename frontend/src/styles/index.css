@@ -106,13 +106,15 @@
   .acc-entry.mauve .acc-arrow { color:var(--violet); }
   @media (hover:hover) and (pointer:fine) {
     .acc-entry.mint:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
-    /* RETOURS-11 T2 (03/09) — au survol : la TUILE passe en FOND SOMBRE, glyphe et contour VERTS
-       (mauve sur l'IA). Remplace le choix RETOURS-4 (tuile transparente, glyphe inversé en encre). */
-    .acc-entry.mint:hover .acc-tile { background:var(--ink); border-color:var(--mint); color:var(--mint); }
+    /* RETOURS-19 Y2 — au survol, l'ICÔNE suit la règle « fond opaque de sa couleur, contour et glyphe
+       en sombre » : la tuile n'a PLUS de fond sombre (le carré foncé sur le vert), elle laisse le vert de
+       la carte, contour + glyphe passent en encre. Annule RETOURS-11 T2 (03/09, tuile à fond sombre / glyphe
+       vert) — même geste que le chevron sans carré noir (RETOURS-19 Y1). */
+    .acc-entry.mint:hover .acc-tile { background:transparent; border-color:rgba(7,16,9,.30); color:var(--ink); }
     .acc-entry.mint:hover .acc-desc { color:rgba(7,16,9,.72); }
     .acc-entry.mint:hover .acc-arrow { color:var(--ink); transform:translateX(3px); }
     .acc-entry.mauve:hover { background:var(--fill-mauve); border-color:#8B6CF2; color:var(--mauve-ink); }
-    .acc-entry.mauve:hover .acc-tile { background:var(--mauve-ink); border-color:var(--violet); color:var(--violet); }
+    .acc-entry.mauve:hover .acc-tile { background:transparent; border-color:rgba(20,14,34,.34); color:var(--mauve-ink); }
     .acc-entry.mauve:hover .acc-desc { color:rgba(20,14,34,.72); }
     .acc-entry.mauve:hover .acc-arrow { color:var(--mauve-ink); transform:translateX(3px); }
   }
@@ -127,8 +129,11 @@
     padding:8px 4px; border-radius:10px; color:var(--txt-mut); cursor:pointer; border:none; background:none;
     transition:background .12s, color .12s; }
   .rail-item .rail-label { font-size:10.5px; }
-  .rail-item.active { background:var(--mint-bg); color:var(--mint); }
-  .rail-item.ia.active { background:var(--violet-bg); color:var(--violet); }
+  /* RETOURS-19 Y1 — ÉTAT ACTIF = VERT OPAQUE, contenu inversé sombre (avant : fond teinté `mint-bg` +
+     texte vert, MOINS marqué que le survol plein → l'actif « s'éteignait »). L'entrée Outils allumée quand
+     le menu Outils est ouvert suit cette règle, comme toutes les entrées du rail. Mauve opaque pour l'IA. */
+  .rail-item.active { background:var(--fill-mint); color:var(--ink); }
+  .rail-item.ia.active { background:var(--fill-mauve); color:var(--mauve-ink); }
   .rail-item:focus { outline:none; }
   .rail-item:focus-visible { outline:2px solid rgba(74,222,128,.55); outline-offset:2px; }
   @media (hover:hover) and (pointer:fine) {
@@ -159,21 +164,32 @@
     .hover-fill-amber:hover { background:var(--fill-amber); border-color:#D99A2E; color:var(--ink); }
     .hover-fill-amber:hover * { color:var(--ink) !important; }
   }
+  /* RETOURS-19 — CHEVRON (ChevronSection) sur une barre survolée à FOND PLEIN : la boîte passe SANS fond
+     ni bordure sur l'aplat (vert / mauve / ambre) — seul le glyphe reste, déjà inversé en encre sombre par
+     les règles `* { color: … }` ci-dessus, exactement comme le texte de la barre. Avant, l'utilitaire
+     Tailwind `group-hover:bg-surface-3` peignait un carré sombre par-dessus le vert. Le `!important` bat cet
+     utilitaire. Hors barre à fond plein, le survol du chevron reste inchangé (fond `surface-3`). */
+  @media (hover:hover) and (pointer:fine) {
+    .hover-fill:hover .chev-boite,
+    .hover-fill-ia:hover .chev-boite,
+    .hover-fill-amber:hover .chev-boite { background:transparent !important; border-color:transparent !important; }
+  }
 
-  /* RETOURS-11 T2 — tuile d'icône RÉUTILISABLE (composant IconTile, une seule copie). Au repos : tuile
-     teintée (vert, ou mauve `.ia` sur l'IA). Au SURVOL de la carte cliquable qui la contient
-     (`.hover-fill` / `.hover-fill-ia`), la tuile passe en FOND SOMBRE, glyphe et contour restent VERTS
-     (mauve sur l'IA) — décision Vic 03/09. Le `!important` bat la règle générique `.hover-fill:hover *`. */
+  /* RETOURS-11 T2 → RETOURS-19 Y2 — tuile d'icône RÉUTILISABLE (composant IconTile, une seule copie). Au
+     repos : tuile teintée (vert, ou mauve `.ia`). Au SURVOL de la carte cliquable qui la contient
+     (`.hover-fill` / `.hover-fill-ia`), l'icône suit la règle « fond opaque de sa couleur, contour et glyphe
+     en sombre » : la tuile laisse le vert (mauve) de la carte, contour + glyphe passent en encre. Annule le
+     FOND SOMBRE de T2 (03/09) — même geste que le chevron (Y1) et les tuiles d'accueil (acc-tile). */
   .itile { width:34px; height:34px; flex:none; border-radius:9px; display:flex; align-items:center;
     justify-content:center; border:1px solid rgba(74,222,128,.38); background:rgba(74,222,128,.14);
     color:var(--mint); transition:background .15s, color .15s, border-color .15s; }
   .itile svg { width:17px; height:17px; }
   .itile.ia { border-color:rgba(180,151,240,.42); background:rgba(180,151,240,.16); color:var(--violet); }
   @media (hover:hover) and (pointer:fine) {
-    .hover-fill:hover .itile:not(.ia) { background:var(--ink) !important; border-color:var(--mint) !important; }
-    .hover-fill:hover .itile:not(.ia), .hover-fill:hover .itile:not(.ia) * { color:var(--mint) !important; }
-    .hover-fill-ia:hover .itile, .hover-fill:hover .itile.ia { background:var(--mauve-ink) !important; border-color:var(--violet) !important; }
-    .hover-fill-ia:hover .itile, .hover-fill-ia:hover .itile *, .hover-fill:hover .itile.ia, .hover-fill:hover .itile.ia * { color:var(--violet) !important; }
+    .hover-fill:hover .itile:not(.ia) { background:transparent !important; border-color:rgba(7,16,9,.30) !important; }
+    .hover-fill:hover .itile:not(.ia), .hover-fill:hover .itile:not(.ia) * { color:var(--ink) !important; }
+    .hover-fill-ia:hover .itile, .hover-fill:hover .itile.ia { background:transparent !important; border-color:rgba(20,14,34,.34) !important; }
+    .hover-fill-ia:hover .itile, .hover-fill-ia:hover .itile *, .hover-fill:hover .itile.ia, .hover-fill:hover .itile.ia * { color:var(--mauve-ink) !important; }
   }
 
   /* RETOURS-12 T6 — CHIP/BADGE lisible sur une ligne survolée. Racine du bug : `.hover-fill:hover *`
@@ -308,9 +324,14 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
   border-bottom-color: #0F1A14;
 }
 .labuse-popup .maplibregl-popup-close-button { display: none; }
+/* RETOURS-19 Y4 — barre de défilement : style UNIQUE défini ici pour toute l'app (panneau Cartes, listes
+   déroulantes, panneau d'outil, page Sources…). Le pouce passe en VERT OPAQUE au survol, transition douce. */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; transition: background .15s; }
+::-webkit-scrollbar-thumb:hover { background: var(--mint); }
 ::-webkit-scrollbar-track { background: transparent; }
+/* Firefox (pas de :hover sur le pouce) : pouce discret par défaut, cohérent avec le repos WebKit. */
+* { scrollbar-color: var(--line-2) transparent; }
 
 /* Focus clavier visible (DA §1 : liseré 2px menthe à 45%) — jamais sur clic souris. */
 :focus-visible { outline: 2px solid rgba(74,222,128,.45); outline-offset: 1px; border-radius: 4px; }
@@ -367,12 +388,30 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    RETOURS-11 R3 — l'adresse tient sur UNE ligne : plus de flex-wrap, le texte prend la place
    dispo (min-width:0) et tronque en … par la fin (jamais de retour à la ligne au milieu de la rue). */
 .fiche-v6 .addr { font-size:11.5px; color:var(--txt-dim); margin-top:4px; display:flex; align-items:flex-start; gap:6px; user-select:text; min-width:0; }
-/* RETOURS-11F3 avenant R9 — l'adresse a toute la largeur (logos + cloche sont sur la ligne du haut) :
-   on NE TRONQUE PLUS en « … ». L'adresse complète (CP + commune compris) est visible ; une adresse
-   très longue passe sur DEUX lignes (line-clamp) plutôt qu'un point de suspension au milieu de la rue. */
-.fiche-v6 .addr > span { white-space:normal; overflow:hidden; min-width:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; line-height:1.3; }
+/* RETOURS-15 U7 — l'adresse a VRAIMENT toute la largeur : rangée .addr-row pleine largeur SOUS
+   le head-top (avant, elle partageait sa colonne avec les logos + cloche → coupée « à la
+   moitié » alors que la ligne avait la place). UNE ligne tant que ça tient ; sinon ellipse,
+   l'adresse complète au survol (title). */
+.fiche-v6 .addr > span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; line-height:1.3; }
+.fiche-v6 .addr-row { padding:0 14px 11px; margin-top:-4px; }
+/* RETOURS-13 R17 — SIREN/SIRET : BLEU et SOULIGNÉ, partout (décision Vic 05/09 — la SEULE
+   exception à « pas de bleu » de la DA : un lien externe doit ressembler à un lien). */
+.lien-siren { color:#5AA9E8; text-decoration:underline; text-underline-offset:2px; }
+@media (hover:hover) and (pointer:fine) { .lien-siren:hover { color:#7FBCEE; } }
+/* RETOURS-14 S2 — ACTION SECONDAIRE dans une ligne (« voir la fiche → », « Fiche → ») :
+   JAUNE EN PERMANENCE (le jaune se voit directement, comme le vert — décision Vic 05/09 15 h),
+   JAUNE OPAQUE au survol (fond plein, texte sombre). Sur une LIGNE survolée en vert, le lien
+   GARDE son jaune (la règle générique `.hover-fill:hover *` forcerait l'encre). Règle gravée
+   au composant : poser `.hover-jaune`, ne jamais re-styler au cas par cas. */
+.hover-jaune { color:var(--pj-jaune); transition:background .15s, color .15s; border-radius:6px; }
+@media (hover:hover) and (pointer:fine) {
+  .hover-fill:hover .hover-jaune { color:var(--pj-jaune) !important; }
+  .hover-jaune:hover, .hover-fill:hover .hover-jaune:hover {
+    background:var(--pj-jaune); color:var(--ink) !important; text-decoration:none !important; }
+}
 /* M61 P5 — « Voir sur Pages Jaunes » : JAUNE de marque (--pj-jaune), visiblement cliquable
-   (pointeur + soulignement au survol). Seul endroit de l'app où ce jaune est autorisé. */
+   (pointeur + soulignement au survol). RETOURS-13 : le même jaune sert désormais d'aplat de survol
+   des actions secondaires (.hover-jaune) — décision Vic 05/09. */
 .fiche-v6 .addr-link { font-size:11px; color:var(--pj-jaune); margin-top:3px; text-decoration:none; display:inline-block; cursor:pointer; }
 .fiche-v6 .addr-link:hover { text-decoration:underline; }
 .fiche-v6 .hbtns { display:flex; gap:4px; flex-shrink:0; }

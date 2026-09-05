@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -395,50 +396,119 @@ def patrimoine(siren: str, fmt: str = "json",
 
 # ───────────────────────── M03 — RADAR PERMIS ─────────────────────────
 
+def _permis_etat_pred(etat: str | None, a: str) -> str:
+    """RETOURS-17 W2 — prédicat SQL de l'ÉTAT DE CYCLE d'un permis. La base se partitionne EXACTEMENT
+    en quatre états dont la somme fait le total (constat Vic 05/09 : trois chips qui ne s'additionnaient
+    pas) : Récent (autorisé ≤ 24 mois) · Dormant (PC ancien sans achèvement, non bâti) · Achevé (DAACT
+    déclaré) · Autre (le reste). Le découpage « récent » (24 mois) est ancré sur :dmax = fin du flux
+    Sitadel (honnêteté : le flux s'arrête avant aujourd'hui). « dormant » garde son endpoint dédié
+    (/promesses : la jointure parcelle+run est coûteuse) ; ICI on sert récent/achevé/autre. `a` = préfixe
+    d'alias table (`''` pour count/carte, `'s.'` pour la liste). Mesuré le 05/09 (base locale, q_v11_m137,
+    dmax 2026-07-31) : récent 5 580 · dormant 15 466 · achevé 20 534 · autre 8 964 = 50 544 (= total base).
+    Whitelist fermée (etat ∈ {recent, acheve, autre}) — aucune valeur libre n'entre dans le SQL."""
+    rc = "(:dmax - interval '24 months')"
+    if etat == "recent":
+        return f" AND {a}date >= {rc}"
+    if etat == "acheve":
+        return f" AND {a}date < {rc} AND {a}raw->>'daact' IS NOT NULL"
+    if etat == "autre":
+        # non récent, sans DAACT, et surtout PAS un dormant : mêmes critères que /promesses
+        # (PC ancien de plus de 36 mois, rattaché à une parcelle notée du run, toujours non bâtie).
+        return (f" AND {a}date < {rc} AND {a}raw->>'daact' IS NULL"
+                f" AND NOT ({a}type = 'PC' AND {a}date < now() - interval '36 months'"
+                f" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text({a}idu_codes) _c(idu)"
+                f"   JOIN parcels _p ON _p.idu = _c.idu"
+                f"   JOIN dryrun_parcel_evaluations _d ON _d.parcel_id = _p.id AND _d.run_label = :run"
+                f"   WHERE NOT EXISTS (SELECT 1 FROM dryrun_cascade_results _cr"
+                f"     WHERE _cr.run_label = :run AND _cr.parcel_id = _p.id"
+                f"     AND _cr.layer_name = 'bati' AND _cr.result = 'HARD_EXCLUDE')))")
+    return ""
+
+
 @router.get("/permis")
 def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
            limit: int = Query(300, ge=1, le=2000), offset: int = Query(0, ge=0),  # GB-029 : ge=0 → 422, plus de 500
+           count_only: bool = False,   # RETOURS-16 V4 — compteur seul (ni lignes ni carte)
+           etat: str | None = None,    # RETOURS-17 W2 — état de cycle : recent|acheve|autre (dormant = /promesses)
            db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
     # FIX-C6 (GB-049) — base NEUVE / sans permis : dmax NULL rendrait `date >= NULL - interval`
     # (operator does not exist: timestamp >= interval) = 500. On répond un état VIDE honnête.
     if dmax is None:
+        if count_only:   # RETOURS-16 V4 — même forme compteur, base vide comprise
+            return {"total": 0, "geocodes": 0, "donnees_jusqu_au": None}
         return {"commune": commune or "Toute l'île", "months": months, "nature": nature,
                 "total": 0, "affiches": 0, "has_more": False, "donnees_jusqu_au": None,
                 "geocodes": 0, "sans_localisation": 0, "pct_geocode": 0, "carte": [], "items": []}
     limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
+    # RETOURS-17 W2 — prédicat d'état de cycle (récent/achevé/autre), whitelist fermée. `ep` sans alias
+    # (count + carte), `eps` avec alias `s.` (liste). :run n'est lu que par l'état « autre ».
+    if etat not in (None, "recent", "acheve", "autre"):
+        etat = None
+    ep, eps = _permis_etat_pred(etat, ""), _permis_etat_pred(etat, "s.")
+    prun = runs.current() if etat == "autre" else None
+    # RETOURS-16 V4 — chemin compteur : le chip « Tous » du segment doit dire le TOTAL EN BASE
+    # (toute la profondeur), pas la somme de deux fenêtres. Un COUNT léger, jamais les 47k geoms.
+    if count_only:
+        c = db.execute(text(
+            f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+               FROM sitadel_permits
+               WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+                 AND (CAST(:nat AS text) IS NULL OR type = :nat)
+                 AND date >= :dmax - (:m || ' months')::interval{ep}"""),
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
+        return {"total": int(c["n"] or 0), "geocodes": int(c["geo"] or 0),
+                "donnees_jusqu_au": dmax.date().isoformat()}
     # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
-    rows = db.execute(text("""
+    rows = db.execute(text(f"""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.commune,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
+               s.raw->>'geoloc' AS geoloc,   -- RETOURS-14 S5.1 : la liste DIT la localisation approximative
                d.date_depot::text AS depot, CASE WHEN d.valide THEN d.delai_mois END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM sitadel_permits s
         LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
         WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND (CAST(:nat AS text) IS NULL OR s.type = :nat)
-          AND s.date >= :dmax - (:m || ' months')::interval
+          AND s.date >= :dmax - (:m || ' months')::interval{eps}
         ORDER BY s.date DESC LIMIT :lim OFFSET :off"""),
-        {"c": commune, "m": months, "nat": nature, "dmax": dmax, "lim": limit, "off": offset}).mappings().all()
-    # CIRCUIT-2 lot 1.6 — le count est calculé par le moteur nommé `commune_compteurs`
-    # (id registre permis_12m_n) : ce robinet ne calcule plus, il appelle.
-    from ..registre.moteurs.commune import compte_permis_commune
-    counts = compte_permis_commune(db, commune, months, nature, dmax)
+        {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun, "lim": limit, "off": offset}).mappings().all()
+    # MERGE RETOURS×CIRCUIT-2 — les deux apports cohabitent :
+    #  · CIRCUIT-2 lot 1.6 : le count « nu » (sans filtre d'état) passe par le moteur nommé
+    #    `commune_compteurs` (id registre permis_12m_n) — source unique, ce robinet appelle, ne calcule plus ;
+    #  · RETOURS-17 : quand un état de cycle est filtré (recent/acheve/autre), le compte doit respecter
+    #    le prédicat `{ep}` que le moteur ne connaît pas → count inline (avec :run pour l'état « autre »).
+    if etat:
+        counts = db.execute(text(
+            f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+               FROM sitadel_permits
+               WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+                 AND (CAST(:nat AS text) IS NULL OR type = :nat)
+                 AND date >= :dmax - (:m || ' months')::interval{ep}"""),
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
+    else:
+        from ..registre.moteurs.commune import compte_permis_commune
+        counts = compte_permis_commune(db, commune, months, nature, dmax)
     true_total = int(counts["n"] or 0)
     geocodes_total = int(counts["geo"] or 0)
     # CARTE = TOUS les géocodés (décision Vic), chargée une seule fois (page 0), payload léger (geom seul).
+    # RETOURS-15 U2 — le plafond LIMIT 8000 (tri date DESC) SAUTE : en « Tous » (240 mois), il
+    # réduisait les 47 071 géocodés aux 8 000 plus récents → un PC 2016 rattaché par la géométrie
+    # (S5) n'apparaissait JAMAIS sur la carte île entière (« je ne les vois pas », Vic 05/09).
+    # Mesuré : 41 ms d'exécution pour la fenêtre pleine ; garde large 60 000 = borne de payload,
+    # pas un filtre (la fenêtre Sitadel entière tient dessous).
     carte = []
     if offset == 0:
-        crows = db.execute(text("""
+        crows = db.execute(text(f"""
             SELECT permit_id, type, date::date::text AS date, ST_AsGeoJSON(geom) AS g
             FROM sitadel_permits
             WHERE (CAST(:c AS text) IS NULL OR commune = :c)
               AND (CAST(:nat AS text) IS NULL OR type = :nat)
-              AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL
-            ORDER BY date DESC LIMIT 8000"""),
-            {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().all()
+              AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL{ep}
+            ORDER BY date DESC LIMIT 60000"""),
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().all()
         carte = [{"permit_id": r["permit_id"], "type": r["type"], "date": r["date"],
                   "geom": json.loads(r["g"])} for r in crows]
     return {
@@ -450,14 +520,25 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         "carte": carte,
         # LOT11 (OUTILS-FINALE) — `etat_label` servi ici (source unique `_ETAT_LABELS`, comme la fiche) :
         # le front affichait le CODE Sitadel brut (« 2 ») orphelin en 2e ligne. Plus jamais un code nu.
+        # RETOURS-16 V2 — l'état « 2 » (Autorisé) est MUET en liste : Sitadel 974 ne publie que des
+        # permis autorisés, l'information est constante — elle vit dans la phrase d'explication de
+        # l'outil ; la FICHE permis (permis_fiche) garde l'état complet. Les états 4/5/6 (chantier
+        # ouvert, en cours, achevés), eux, varient : ils restent servis.
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
-                                        "etat", "nb_lgt", "surf_hab")},
-                   "etat_label": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}") if r["etat"] else None,
+                                        "etat", "nb_lgt", "surf_hab", "geoloc")},
+                   "etat_label": (_ETAT_LABELS.get(r["etat"], f"état {r['etat']}")
+                                  if r["etat"] and r["etat"] != "2" else None),
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
     }
 
 
 # Libellés lisibles (nature d'autorisation + état d'avancement, codes source non documentés)
+# RETOURS-13 R30 — libellés OFFICIELS de DESTINATION_PRINCIPALE (dictionnaire Sitadel3, SDES —
+# « dictionnaire_variables locaux_permis_construire.xls », vérifié le 05/09/2026) : la fiche
+# permis dit désormais SA nature (un hôtel se lit « hôtels », plus un code muet).
+_DESTINATION_LABELS = {"1": "habitation", "2": "hôtels", "3": "bureaux", "4": "commerce",
+                       "6": "industrie", "7": "agriculture", "8": "entrepôt",
+                       "9": "service public ou d'intérêt collectif"}
 _NATURE_LABELS = {"PC": "Permis de construire", "DP": "Déclaration préalable",
                   "PA": "Permis d'aménager", "PD": "Permis de démolir"}
 _ETAT_LABELS = {"2": "Autorisé", "4": "Chantier ouvert", "5": "En cours",
@@ -472,6 +553,7 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         SELECT s.permit_id, s.type, s.commune, s.date::date::text AS date_autorisation,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'daact' AS daact, s.raw->>'destination' AS destination,
+               s.raw->>'geoloc' AS geoloc,
                s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
                s.idu_codes,
                d.date_depot::text AS date_depot, d.valide AS delai_valide,
@@ -497,6 +579,11 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         "date_achevement": r["date_achevement"] or r["daact"],
         "delai_instruction": delai,
         "statut": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}"), "etat_code": r["etat"],
+        # R30 — la destination est SERVIE avec son libellé (hôtels, bureaux, commerce…) : le
+        # filtre implicite « logements » n'existe plus, toutes les destinations sont dites.
+        "destination": r["destination"],
+        "destination_libelle": _DESTINATION_LABELS.get(r["destination"] or ""),
+        "geoloc_note": r["geoloc"],
         "parcelles": list(r["idu_codes"]) if r["idu_codes"] else [],
         "geom": json.loads(r["g"]) if r["g"] else None,
         "source": "SITADEL (SDES/Dido) — autorisations d'urbanisme, dép. 974",
@@ -791,6 +878,18 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
     mil = db.execute(text("SELECT max(source_millesime) AS mil FROM parcel_solar "
                           "WHERE prod_spec_kwh_kwc IS NOT NULL")).scalar()
     d["millesime"] = mil or "PVGIS SARAH3"
+    # RETOURS-13 R31 / RETOURS-15 U5 — NATURE DE LA TOITURE (LiDAR HD IGN, calcul à la demande +
+    # cache, seuil de confiance S11). TROIS états servis, jamais confondus : verdict (servi) ·
+    # non_determine (pans non nets) · indisponible (échec TECHNIQUE — WMS muet, dépendance
+    # absente… cause au journal). `null` = pas de bâtiment sur la parcelle (pas de toit), seul cas
+    # où l'écran peut montrer « — ». Un échec ne se déguise JAMAIS en absence de donnée.
+    try:
+        from ..solaire_toiture import analyse_toiture
+        d["toiture"] = analyse_toiture(db, idu)
+    except Exception as e:  # noqa: BLE001 — l'échec est DIT à l'écran, la cause au journal
+        logging.getLogger("labuse").exception("solaire · toiture LiDAR indisponible (erreur technique)")
+        from ..solaire_toiture import payload_indisponible
+        d["toiture"] = payload_indisponible(f"{type(e).__name__}: {e}")
     return d
 
 
@@ -1874,11 +1973,65 @@ def _plu_millesimes() -> dict:
 def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
     """M51 — état du corpus par commune : SERVABLE (n extraits), RNU, révision non réconciliée,
     ou non ingéré. Réponse HONNÊTE (pas de trou masqué).
-    CIRCUIT-2 lot 1.6 — le calcul (bloc entier : statuts, compteurs, réconciliation veille_plu)
-    vit au moteur nommé `commune_compteurs` (registre/moteurs/commune.py:etat_corpus_plu, ids
-    registre n_extraits_plu, n_communes_rnu) : ce robinet ne calcule plus, il appelle."""
+    MERGE RETOURS×CIRCUIT-2 — les deux apports cohabitent :
+      · CIRCUIT-2 lot 1.6 : le calcul (statuts, compteurs, réconciliation veille_plu RETOURS-12 O4)
+        vit au moteur nommé `commune_compteurs` (registre/moteurs/commune.py:etat_corpus_plu, ids
+        registre n_extraits_plu, n_communes_rnu) — source unique, ce robinet appelle ;
+      · RETOURS-13 R22 : le moteur ne renvoie PAS `n_plu_vigueur` (PLU EXISTANTS = communes − RNU, un
+        PLU en révision restant en vigueur) ni `non_servis` (les trous de SOURCE nommés) → on les
+        recalcule ICI depuis le résultat du moteur, sans redéfinir le reste (les statuts/compteurs
+        O4 restent la source unique du moteur)."""
     from ..registre.moteurs.commune import etat_corpus_plu
-    return etat_corpus_plu(db, _plu_millesimes())
+    res = etat_corpus_plu(db, _plu_millesimes())
+    res["n_plu_vigueur"] = res["n_communes"] - res["n_rnu"]
+    res["non_servis"] = sorted(c["commune"] for c in res["communes"] if c["statut"] in ("revision", "non_ingere"))
+    return res
+
+
+@router.get("/plu-annuaire/pack/{insee}")
+def plu_annuaire_pack(insee: str, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-15 U8 — le pack .zip du PLU EN VIGUEUR, résolu EN DIRECT sur le GPU (grid=insee) :
+    une commune en révision doit quand même proposer sa dernière version en date. TROIS issues
+    DISTINCTES, jamais confondues (même doctrine que U5) :
+      · trouvé      → url du zip + millésime (document EN_VIGUEUR, sinon le plus récent) ;
+      · GPU VIDE    → le GPU ne publie AUCUN document pour cette commune (vérifié à l'instant,
+                      cas mesuré le 05/09/2026 : Saint-André ET Saint-Leu → `[]`) — on le DIT et
+                      on donne la mairie (source K2) ;
+      · injoignable → erreur réseau, dite comme telle (jamais déguisée en « rien au GPU »)."""
+    import re as _re
+    if not _re.fullmatch(r"974\d\d", insee):
+        raise HTTPException(404, "Commune inconnue")
+    mairie = db.execute(text(
+        "SELECT nom, telephone, email, site_officiel FROM mairies WHERE insee = :i"),
+        {"i": insee}).mappings().first()
+    try:
+        import requests as _rq
+        r = _rq.get("https://www.geoportail-urbanisme.gouv.fr/api/document",
+                    params={"grid": insee}, headers={"User-Agent": "labuse/1.0"}, timeout=12)
+        r.raise_for_status()
+        docs = [d for d in r.json() if (d.get("documentType") or d.get("type")) in ("PLU", "POS", "PLUI")]
+    except Exception as e:  # noqa: BLE001 — l'échec réseau est DIT, jamais un faux « rien »
+        logging.getLogger("labuse").warning("plu-annuaire pack %s : GPU injoignable (%s)", insee, e)
+        return {"insee": insee, "disponible": False, "erreur": "gpu_injoignable",
+                "message": "Géoportail de l'Urbanisme injoignable à l'instant — réessayez.",
+                "mairie": dict(mairie) if mairie else None}
+    if not docs:
+        return {"insee": insee, "disponible": False, "erreur": None,
+                "message": ("Le Géoportail de l'Urbanisme ne publie aucun document pour cette "
+                            "commune (vérifié à l'instant). Le PLU en vigueur reste applicable — "
+                            "demandez-le en mairie."),
+                "mairie": dict(mairie) if mairie else None}
+    # EN_VIGUEUR d'abord ; sinon le plus récent (les originalName portent la date AAAAMMJJ).
+    docs.sort(key=lambda d: ((d.get("effectiveStatus") or d.get("status")) == "EN_VIGUEUR",
+                             str(d.get("originalName") or "")), reverse=True)
+    doc = docs[0]
+    idurba = str(doc.get("originalName") or "")
+    mdate = _re.search(r"(\d{4})(\d{2})(\d{2})$", idurba)
+    return {"insee": insee, "disponible": True,
+            "idurba": idurba,
+            "millesime": f"{mdate.group(3)}/{mdate.group(2)}/{mdate.group(1)}" if mdate else None,
+            "statut_gpu": doc.get("effectiveStatus") or doc.get("status"),
+            "url": f"https://www.geoportail-urbanisme.gouv.fr/api/document/{doc.get('id')}/download/{idurba}.zip"}
 
 
 @router.get("/plu-annuaire/search")

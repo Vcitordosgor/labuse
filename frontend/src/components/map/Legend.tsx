@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { BPE_DOM, CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { PERMIS_LEGENDE } from '../../lib/permisEtats'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { getMapLayer } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
@@ -91,6 +92,19 @@ export function Legend({ inline = false }: { inline?: boolean }) {
 
   // SECTEUR-1 (S4) — les GROUPES actifs, dans l'ordre. Seuls ceux des couches actives apparaissent.
   const groupes: { id: string; titre: ReactNode; note?: string; body: ReactNode }[] = []
+  // RETOURS-17 W3 — l'outil Permis peint des points colorés PAR ÉTAT : la légende dit les trois couleurs
+  // (Récent vert · Dormant corail · Achevé/Autre gris), MÊME source que les pastilles du panneau.
+  const moduleActif = useApp((s) => s.module)
+  if (moduleActif === 'permis' || moduleActif === 'promesses') groupes.push({
+    id: 'permis', titre: 'Permis (par état)',
+    note: 'Achevé et Autre partagent le même gris ; le panneau les distingue par leur compte.',
+    body: <div className="flex flex-col gap-1.5">{PERMIS_LEGENDE.map((e) => (
+      <div key={e.key} data-legend-permis={e.key} className="flex items-center gap-2">
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: e.color }} />
+        <span className="text-[11px] text-txt">{e.label}</span>
+      </div>
+    ))}</div>,
+  })
   if (verdictPeint) groupes.push({
     id: 'verdict',
     titre: v2 ? 'Verdict · Classement servi' : 'Verdict · Classement historique',
@@ -145,12 +159,24 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   ;(['alea_inondation', 'alea_mvt'] as const).forEach((k) => { if (layers[k]) groupes.push({
     id: k, titre: k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain',
     note: `DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)${fmtFraich(aleaQ)}`,
-    /* RETOURS-12 C3 — légende par TRANCHES NOMMÉES à teintes distinctes (plus le camaïeu d'opacité) :
-       la couleur ordonne les niveaux (bleu→orange→rouge / beige→marron→rouge), le libellé officiel reste. */
-    body: <div data-legend-alea={k} className="flex items-center gap-2">{(['faible', 'moyen', 'fort'] as const).map((n) => {
-      const ramp = k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp
-      return <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: ramp[n], borderColor: ramp[n] }} /><span className="text-[10.5px] text-txt-dim">{n}</span></span>
-    })}</div>,
+    /* RETOURS-13 R6 — la légende suit les CLASSES RÉELLEMENT SERVIES par le flux (dérivées des
+       données à l'écran, jamais promises d'avance) : inondation faible/moyen/fort ; mouvement de
+       terrain faible/moyen/élevé/très élevé — la classe LA PLUS GRAVE est ROUGE. */
+    body: (() => {
+      const sub = k === 'alea_inondation' ? 'inondation' : 'mouvement_terrain'
+      const ramp = (k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp) as unknown as Record<string, string>
+      const ORDRE = ['faible', 'moyen', 'fort', 'eleve', 'tres_eleve'] as const
+      const LAB: Record<string, string> = { faible: 'faible', moyen: 'moyen', fort: 'fort', eleve: 'élevé', tres_eleve: 'très élevé' }
+      const servies = new Set((aleaQ.data?.features ?? [])
+        .filter((f) => (f.properties as { subtype?: string }).subtype === sub)
+        .map((f) => String((f.properties as { classe?: string; niveau?: string }).classe
+          ?? (f.properties as { niveau?: string }).niveau ?? '')))
+      const classes = ORDRE.filter((c) => servies.has(c))
+      const shown = classes.length ? classes : (['faible', 'moyen', 'fort'] as unknown as typeof classes)
+      return <div data-legend-alea={k} className="flex flex-wrap items-center gap-2">{shown.map((n) => (
+        <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: ramp[n], borderColor: ramp[n] }} /><span className="text-[10.5px] text-txt-dim">{LAB[n]}</span></span>
+      ))}</div>
+    })(),
   }) })
   if (layers.transport) groupes.push({
     id: 'transport', titre: 'Transport public',
@@ -159,7 +185,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       {([['Car Jaune', 'cars interurbains (Région)'], ['Citalis', 'bus du Nord (CINOR) — et le téléphérique Papang, en tireté'], ["Kar'Ouest", 'bus de l’Ouest (TCO)'], ['Alternéo', 'bus du Sud-Ouest (CIVIS)'], ['Estival', 'bus de l’Est (CIREST)'], ['Carsud', 'bus du Sud (CASUD)']] as const).map(([r, d]) => (
         <span key={r} className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded" style={{ background: tTheme.transportReseaux[r] }} /><span><b>{r}</b> — {d}</span></span>
       ))}
-      <span className="mt-1 flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-txt-mut" />arrêt (visible en zoomant)</span>
+      {/* RETOURS-14 S7 — les arrêts sont dans la MÊME couche (fusion) : cliquables (nom + lignes + réseau). */}
+      <span className="mt-1 flex items-center gap-2"><span className="h-2 w-2 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.transportReseaux['Citalis'] }} />arrêt — cliquable (nom, lignes, réseau), visible en zoomant</span>
     </div>,
   })
   if (layers.axes) groupes.push({
@@ -171,15 +198,24 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.pole }} />pôle estimé — {critereDerive}</span>
     </div>,
   })
+  // RETOURS-14 S9 — UNE couche « Lignes électriques » : deux styles, deux sources citées.
   if (layers.lignes_ht) groupes.push({
-    id: 'ht', titre: 'Lignes haute tension',
-    note: `Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI). BD TOPO IGN (Licence Ouverte)${fmtFraich(htQ)}`,
-    body: <div data-legend-ht className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} /><span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span></div>,
+    id: 'ht', titre: 'Lignes électriques (HTA / HTB)',
+    note: `HTA (moyenne tension ~15-20 kV, distribution) : EDF Réunion open data, LO 2.0, géométrie ~02/2020 republiée 16/10/2025 — tracé indicatif (sécurité publique), jamais une DT-DICT. HTB (63/90 kV, transport) : BD TOPO IGN (aérien, tension indiquée)${fmtFraich(htQ)}. Contrainte potentielle (servitudes, reculs) — à vérifier auprès d'EDF SEI.`,
+    body: <div data-legend-ht className="flex flex-col gap-1 text-[11px] text-txt">
+      <span className="flex items-center gap-2"><span className="h-[3px] w-4 rounded" style={{ background: tTheme.ht }} />haute tension HTB — trait épais tireté (BD TOPO IGN)</span>
+      <span className="flex items-center gap-2"><span className="h-px w-4 rounded" style={{ background: tTheme.mt }} />moyenne tension HTA — trait fin (EDF Réunion open data)</span>
+    </div>,
   })
+  // RETOURS-14 S8 — « Stationnement allégé » : légende à TROIS entrées (zone · station · voie).
   if (layers.tcsp) groupes.push({
-    id: 'tcsp', titre: 'Axe de transport structurant',
-    note: 'BAOBAB Express (Citalis / CINOR) — desserte rapide EN SERVICE, corridor Saint-Denis ↔ Sainte-Marie. Source : GTFS (Licence Ouverte). À moins de 500 m, le règlement PEUT moduler l’exigence de stationnement — à vérifier au PLU (jamais promis).',
-    body: <div data-legend-tcsp className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} /><span className="text-[11px] text-txt">BAOBAB Express (axe structurant en service)</span></div>,
+    id: 'tcsp', titre: 'Stationnement allégé — TCSP',
+    note: 'Sur une parcelle à moins de 800 m d’une station de transport en commun en site propre (rayon à vol d’oiseau — la pastille fait 1,6 km de large), le PLU ne peut pas exiger plus d’une place de stationnement par logement (0,5 pour le logement social), si la desserte est de qualité. Moins de parking = plus de surface vendable, bilan plus léger. Un simple couloir bus ne compte pas. Source : code de l’urbanisme, art. L151-34 à 36 (loi 2025-1129) ; voies et stations relevées dans OpenStreetMap ; en travaux / en projet (Réunion Express, débat public jusqu’au 26/11/2026) : aucun tracé public, rien n’est dessiné à la main.',
+    body: <div data-legend-tcsp className="flex flex-col gap-1 text-[11px] text-txt">
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tcsp, opacity: 0.45, borderColor: tTheme.tcsp }} />zone 800 m — parcelles au stationnement allégé</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.tcsp }} />station en service</span>
+      <span className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} />voie en site propre</span>
+    </div>,
   })
   if (dispoActif) groupes.push({
     id: 'dispositifs', titre: 'Dispositifs et périmètres',

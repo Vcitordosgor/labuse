@@ -2,7 +2,8 @@
 // Règle : un SIREN = 9 chiffres, un SIRET = 14 chiffres. On lie toujours sur les 9 premiers
 // (la fiche entreprise Pappers). Un SIRET reste affiché en entier mais pointe l'entreprise.
 // Si la valeur n'a pas 9/14 chiffres valides, PAS de lien (jamais un lien mort) — texte brut.
-// Survol conforme à la doctrine (souligné, teinte lien) ; nouvelle fenêtre, rel="noopener".
+// RETOURS-13 R17 (Vic) : BLEU et SOULIGNÉ, partout — seule exception à « pas de bleu » de la DA
+// (un lien externe doit ressembler à un lien) ; nouvelle fenêtre, rel="noopener".
 
 type Props = {
   value: string | null | undefined
@@ -35,7 +36,7 @@ export function Siren({ value, fallback = '—', className = 'font-mono text-[10
   return (
     <a href={href} target="_blank" rel="noopener noreferrer"
       title={`Voir ${estSiret ? "l'établissement" : "l'entreprise"} sur Pappers (${siren9})`}
-      className={`${className} text-lien hover:underline`}>
+      className={`${className} lien-siren`}>
       {affiche}
     </a>
   )

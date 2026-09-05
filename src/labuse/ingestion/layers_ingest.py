@@ -71,6 +71,12 @@ KIND_SOURCE = {
     "telepherique": "OSM — transport (pôles d'échange & téléphérique)",
     "ligne_ht": "BD TOPO IGN",
     "axe_structurant": "BD TOPO IGN",   # M106-B P3 — importance IGN 1-2, jamais une hiérarchie inventée
+    # RETOURS-13 R4/R5 — moyenne tension EDF (HTA, open data retrouvé le 05/09/2026) et TCSP
+    # (voies bus en site propre OSM + stations dérivées des arrêts GTFS).
+    "ligne_mt": "EDF Réunion — lignes moyenne tension HTA (open data)",
+    "tcsp_troncon": "TCSP — voies bus en site propre (OSM)",
+    "tcsp_station": "TCSP — voies bus en site propre (OSM)",
+    "tcsp_zone": "TCSP — voies bus en site propre (OSM)",   # RETOURS-14 S8 — zone 800 m dérivée
     # M137-U — couches écrites hors layers_ingest (znieff.py, bpe.py) — déclarées pour la garde.
     "znieff": "ZNIEFF (INPN/MNHN)",
     "amenite_bpe": "BPE INSEE",
@@ -333,10 +339,32 @@ def ingest_ppr_sup(session, bbox, commune, run_id, sids) -> int:
 
 
 # Aléas DEAL : degré → (niveau cascade faible/moyen/fort, résiduel). Codes RÉELS validés (spike 2026-06).
+# RETOURS-13 R6 — la table des degrés RÉELS du flux mouvement de terrain (mesurée en base le
+# 05/09/2026) porte HUIT libellés : FAIBLE 96 · FAIBLE_A_MODERE 31 · MODERE 2 · MOYEN 299 ·
+# MOYEN_B2U 3 · MOYEN_SECURISABLE 2 · ELEVE 360 · TRES_ELEVE 124. L'ancien repli envoyait ELEVE
+# et TRES_ELEVE sur « moyen » (aucun mot-clé reconnu) → les 484 zones LES PLUS GRAVES étaient
+# servies comme moyennes, et la carte n'affichait jamais de rouge. Ils sont désormais EXPLICITES.
 _ALEA_NIVEAU = {
     "FAIBLE": ("faible", False), "MOYEN": ("moyen", False), "FORT": ("fort", False),
-    "RESIDUEL_MOYEN": ("moyen", True), "RESIDUEL_FORT": ("fort", True),
-    "RESIDUEL_FORT_AGGRAVE": ("fort", True),
+    "RESIDUEL_FAIBLE": ("faible", True), "RESIDUEL_MOYEN": ("moyen", True),
+    "RESIDUEL_FORT": ("fort", True), "RESIDUEL_FORT_AGGRAVE": ("fort", True),
+    # mouvement de terrain — codes réels hors triptyque : élevé/très élevé = la classe grave.
+    "FAIBLE_A_MODERE": ("faible", False), "MODERE": ("moyen", False),
+    "MOYEN_B2U": ("moyen", False), "MOYEN_SECURISABLE": ("moyen", False),
+    "ELEVE": ("fort", False), "TRES_ELEVE": ("fort", False),
+}
+
+# R6 — CLASSE D'AFFICHAGE (carte/légende) : plus fine que le niveau de cascade (3 états gravés
+# dans alea_severity_map) — le mouvement de terrain distingue élevé et très élevé, chacun sa
+# teinte, le plus grave en rouge. Le niveau de CASCADE reste le triptyque (scoring inchangé
+# tant qu'aucun nouveau run n'est créé ; la correction ELEVE/TRES_ELEVE→fort ci-dessus ne
+# s'applique qu'à la prochaine ré-ingestion + run, avec régénération du golden — documenté).
+_ALEA_CLASSE = {
+    "FAIBLE": "faible", "FAIBLE_A_MODERE": "faible", "RESIDUEL_FAIBLE": "faible",
+    "MODERE": "moyen", "MOYEN": "moyen", "MOYEN_B2U": "moyen", "MOYEN_SECURISABLE": "moyen",
+    "RESIDUEL_MOYEN": "moyen",
+    "FORT": "fort", "RESIDUEL_FORT": "fort", "RESIDUEL_FORT_AGGRAVE": "fort",
+    "ELEVE": "eleve", "TRES_ELEVE": "tres_eleve",
 }
 
 
@@ -349,6 +377,13 @@ def _normalise_alea(degre: str | None) -> tuple[str, bool]:
     residuel = d.startswith("RESIDUEL")
     niveau = "fort" if "FORT" in d else "moyen" if "MOYEN" in d else "faible" if "FAIBLE" in d else "moyen"
     return niveau, residuel
+
+
+def _classe_alea(degre: str | None) -> str:
+    """R6 — classe d'AFFICHAGE ∈ {faible, moyen, fort, eleve, tres_eleve} depuis le degré réel.
+    Un degré inconnu retombe sur le niveau de cascade (jamais un trou de légende)."""
+    d = (degre or "").strip().upper()
+    return _ALEA_CLASSE.get(d, _normalise_alea(d)[0])
 
 
 def _prop(props: dict, name: str):
@@ -410,7 +445,8 @@ def ingest_georisque_alea(session, bbox, commune, run_id, sids, insee) -> int:
             _insert_layer(session, "georisque_alea", subtype,
                           f"Aléa {subtype.replace('_', ' ')} — {degre.lower()}", f["geometry"],
                           sids.get(KIND_SOURCE["georisque_alea"]), commune, run_id,
-                          {"niveau": niveau, "degre": degre, "code_degre": _prop(p, "code_degre"),
+                          {"niveau": niveau, "classe": _classe_alea(degre),   # R6 — classe d'affichage
+                           "degre": degre, "code_degre": _prop(p, "code_degre"),
                            "residuel": residuel, "risque": _prop(p, "risque") or _prop(p, "theme"),
                            "code_insee": _prop(p, "code_insee"), "source": "DEAL Réunion — Lizmap"})
             n += 1

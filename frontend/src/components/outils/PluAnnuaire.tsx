@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { pluAnnuaireSearch, pluAnnuaireCommunes, type PluExtrait } from '../../lib/api'
+import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 
 // M51 / M82 puis M137-P (fusion outil PLU) — ANNUAIRE PLU en DEUX ÉTAPES : (1) les 24 communes, on
@@ -59,28 +59,40 @@ export function PluAnnuaire() {
                   (révision/élaboration prescrites, Sudocuh) — inclut Les Trois-Bassins, que l'ancien
                   compteur (disponibilité du règlement GPU) ratait. Le RNU (absence de PLU) et le règlement
                   non servi restent distincts. Plus jamais deux comptes qui se contredisent. */}
-              <p className="mb-1.5 truncate whitespace-nowrap px-0.5 font-mono text-[9px] uppercase tracking-[.14em] text-txt-dim">
-                {communes.data.servables} PLU disponibles
+              {/* RETOURS-13 R22 — un PLU en révision RESTE EN VIGUEUR : le compteur dit les PLU
+                  existants (24 − RNU), les procédures, et NOMME les trous de source (règlement en
+                  vigueur mais non servi par le GPU) au lieu d'un « 21 disponibles » faux. */}
+              <p className="mb-0.5 px-0.5 font-mono text-[9px] uppercase tracking-[.14em] text-txt-dim">
+                {communes.data.n_plu_vigueur ?? communes.data.servables} PLU en vigueur ({communes.data.n_communes} communes{communes.data.n_rnu > 0 && <>, {communes.data.n_rnu} au RNU</>})
                 {communes.data.n_procedures > 0 && <> · {communes.data.n_procedures} procédure{communes.data.n_procedures > 1 ? 's' : ''} en cours</>}
-                {communes.data.n_rnu > 0 && <> · {communes.data.n_rnu} au RNU</>}
-                {communes.data.n_non_ingere > 0 && <> · {communes.data.n_non_ingere} non ingéré{communes.data.n_non_ingere > 1 ? 's' : ''}</>}
               </p>
-              <div className="grid grid-cols-2 gap-1.5">
+              {(communes.data.non_servis?.length ?? 0) > 0 && (
+                <p data-plu-trous className="mb-1.5 px-0.5 text-[9.5px] leading-snug text-cp-amber">
+                  Règlement de {communes.data.non_servis.length} commune{communes.data.non_servis.length > 1 ? 's' : ''} non servi par le Géoportail ({communes.data.non_servis.join(', ')}) — PLU en vigueur, texte à consulter en mairie.
+                </p>
+              )}
+              {/* R21 — UNE COLONNE : le nom de commune est TOUJOURS entier (la grille à 2 colonnes
+                  écrasait « Saint-André » en « S… » dès qu'un badge s'ajoutait). */}
+              <div className="grid grid-cols-1 gap-1.5">
                 {communes.data.communes.map((c) => {
                   const ok = c.statut === 'servable'
+                  // RETOURS-14 S3 — MÊME fond, MÊME texte pour les 24 (un PLU en révision est en
+                  // vigueur ; le RNU est cliquable — il mène au règlement national) : le BADGE
+                  // porte l'information, la carte ne s'éteint pas.
                   return (
                     <button key={c.insee} data-plu-commune={c.insee} onClick={() => entrer(c.insee)}
-                      className={`hover-fill flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left ${
-                        ok ? 'border-line bg-surface-2' : 'border-line/60 bg-surface-1'}`}>
-                      <span className={`min-w-0 truncate text-[11.5px] ${ok ? 'text-txt' : 'text-txt-dim'}`}>{c.commune}</span>
-                      {/* RETOURS-12 O4 — badge PROCÉDURE (source unique) : une commune peut avoir un PLU
-                          servi ET une révision en cours (ex. Les Trois-Bassins) — on l'affiche, réconcilié. */}
-                      <span className="flex shrink-0 items-center gap-1">
-                        {c.procedure_active && <span data-plu-procedure={c.insee} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber" title={`${c.procedure_active} en cours${c.procedure_date ? ` (prescrite le ${new Date(c.procedure_date).toLocaleDateString('fr-FR')})` : ''}`}>{c.procedure_active}</span>}
-                        {ok
-                          ? <span className="font-mono text-[8.5px] text-mint/70">à jour</span>
-                          : <span className="whitespace-nowrap font-mono text-[8px] text-cp-amber" title={c.message ?? ''}>
-                              {c.statut === 'rnu' ? 'RNU' : c.statut === 'revision' ? 'règlement en attente' : 'non ingéré'}</span>}
+                      className="hover-fill flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-line bg-surface-2 px-2.5 py-2 text-left">
+                      {/* RETOURS-13 R21 — le NOM DE COMMUNE d'abord, toujours visible ; le badge dit
+                          « révision », UN MOT, à droite, sur une ligne (le détail vit dans le title).
+                          R23 — nowrap partout : jamais un badge sur deux lignes. */}
+                      <span className="min-w-0 flex-1 text-[11.5px] font-medium text-txt">{c.commune}</span>
+                      {/* UN SEUL badge, UN MOT (« révision »), à droite, sur une ligne — le détail
+                          (prescription, règlement non servi) vit dans le title + la note ambre. */}
+                      <span className="flex shrink-0 items-center gap-1 whitespace-nowrap">
+                        {c.procedure_active
+                          ? <span data-plu-procedure={c.insee} className="whitespace-nowrap rounded bg-cp-amber/15 px-1 font-mono text-[8px] text-cp-amber" title={`${c.procedure_active} en cours${c.procedure_date ? ` (prescrite le ${new Date(c.procedure_date).toLocaleDateString('fr-FR')})` : ''} — le PLU actuel reste en vigueur${!ok ? ' ; règlement non servi par le GPU, à consulter en mairie' : ''}`}>{(c.procedure_active || '').split(' ')[0]}</span>
+                          : !ok && <span className="whitespace-nowrap font-mono text-[8px] text-cp-amber" title={c.message ?? ''}>
+                              {c.statut === 'rnu' ? 'RNU' : 'non servi'}</span>}
                       </span>
                     </button>
                   )
@@ -106,6 +118,19 @@ export function PluAnnuaire() {
       {insee && !servable && (
         <div data-plu-indispo className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11.5px] text-txt-mut">
           <span className="mr-1">🕓</span>{cur?.message ?? 'Règlement non disponible pour cette commune.'}
+          {/* RETOURS-14 S3 — le RNU est une VRAIE règle : la carte mène à son texte. */}
+          {cur?.statut === 'rnu' && (
+            <p className="mt-1.5">
+              <a data-plu-rnu-lien href="https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006074075/LEGISCTA000031720025/"
+                target="_blank" rel="noreferrer" className="text-mint hover:underline">
+                Lire le règlement national d'urbanisme (art. R111-1 s., Légifrance) ↗
+              </a>
+            </p>
+          )}
+          {/* RETOURS-15 U8 — une commune en RÉVISION propose quand même son PLU EN VIGUEUR
+              (résolu en direct sur le GPU). GPU vide (cas mesuré : Saint-André, Saint-Leu) →
+              on le DIT et on donne la mairie ; GPU injoignable → dit comme tel. */}
+          {cur?.statut === 'revision' && <PackVigueur insee={insee} />}
         </div>
       )}
 
@@ -113,7 +138,7 @@ export function PluAnnuaire() {
       {insee && servable && mode === 'choix' && (
         <div data-plu-choix className="flex flex-col gap-2">
           <a data-plu-integral href={cur?.source_url ?? '#'} target="_blank" rel="noreferrer"
-            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2.5">
+            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
             <span className="text-[12.5px] font-medium text-mint">Télécharger le PLU intégral (.zip) ↓</span>
             <span className="text-[10px] leading-snug text-txt-dim">Pack officiel Géoportail de l’Urbanisme — règlement, zonage, annexes{cur?.document ? ` · contient ${cur.document}` : ''}</span>
           </a>
@@ -225,6 +250,45 @@ function PluExtraitCard({ r }: { r: PluExtrait }) {
         </a>
         {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
       </div>
+    </div>
+  )
+}
+
+// RETOURS-15 U8 — le PLU EN VIGUEUR d'une commune en révision, résolu EN DIRECT sur le GPU.
+// Trois issues DISTINCTES, jamais confondues : trouvé (lien .zip + millésime + mention « reste
+// applicable ») · GPU vide (dit, mairie servie — source K2) · GPU injoignable (dit comme tel).
+function PackVigueur({ insee }: { insee: string }) {
+  const pack = useQuery({ queryKey: ['plu-pack', insee], queryFn: () => pluAnnuairePack(insee), staleTime: 300_000 })
+  if (pack.isLoading) return <p className="mt-1.5 text-[10px] text-txt-dim">Recherche du PLU en vigueur sur le GPU…</p>
+  const p = pack.data
+  if (!p) return <p className="mt-1.5 text-[10px] text-st-creuser">Vérification GPU impossible — réessayez.</p>
+  if (p.disponible && p.url) {
+    return (
+      <div className="mt-2">
+        <a data-plu-pack-vigueur href={p.url} target="_blank" rel="noreferrer"
+          className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
+          <span className="text-[12px] font-medium text-mint">Télécharger le PLU en vigueur (.zip) ↓</span>
+          <span className="text-[10px] leading-snug text-txt-dim">
+            Pack officiel Géoportail de l'Urbanisme{p.millesime ? ` — version du ${p.millesime}` : ''}{p.idurba ? ` (${p.idurba})` : ''}
+          </span>
+        </a>
+        <p className="mt-1 text-[10px] leading-snug text-txt-dim">
+          Révision en cours — ce document reste applicable jusqu'à l'approbation du nouveau.
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div data-plu-pack-absent className="mt-2 text-[10.5px] leading-snug">
+      <p className={p.erreur === 'gpu_injoignable' ? 'text-st-creuser' : 'text-txt-mut'}>{p.message}</p>
+      {p.mairie && !p.erreur && (
+        <p className="mt-1 text-txt-dim">
+          {p.mairie.nom}{p.mairie.telephone ? ` · ${p.mairie.telephone}` : ''}{p.mairie.email ? ` · ${p.mairie.email}` : ''}
+          {p.mairie.site_officiel && (
+            <> · <a href={p.mairie.site_officiel} target="_blank" rel="noreferrer" className="text-mint hover:underline">site officiel ↗</a></>
+          )}
+        </p>
+      )}
     </div>
   )
 }

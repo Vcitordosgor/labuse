@@ -30,3 +30,23 @@ def params_pliage() -> dict:
     """Binds du pliage (:fold_a/:fold_b) — à joindre aux paramètres de la requête."""
     a, b = RECHERCHE_ACCENTS
     return {"fold_a": a, "fold_b": b}
+
+
+# ── RETOURS-16 V5 — le MÊME pliage, en variantes indexables ────────────────────────────────────
+def sql_plie_lit(expr: str) -> str:
+    """Pliage avec les tables de translittération EN LITTÉRAL (pas de bind) : la MÊME expression
+    sert à l'index GIN trigram (un index d'expression n'accepte pas de bind) et à la requête du
+    suggest — le planneur ne matche l'index que si les deux expressions sont identiques."""
+    ligatures = expr
+    for a, b in (("œ", "oe"), ("Œ", "OE"), ("æ", "ae"), ("Æ", "AE")):
+        ligatures = f"replace({ligatures}, '{a}', '{b}')"
+    a, b = (s.replace("'", "''") for s in RECHERCHE_ACCENTS)
+    return f"lower(translate({ligatures}, '{a}', '{b}'))"
+
+
+def plie(s: str) -> str:
+    """Miroir PYTHON de sql_plie — plier l'AIGUILLE côté application quand la colonne est déjà
+    pliée par l'expression indexée (doctrine M99-B : même pliage des deux côtés, un seul dessin)."""
+    for a, b in (("œ", "oe"), ("Œ", "OE"), ("æ", "ae"), ("Æ", "AE")):
+        s = s.replace(a, b)
+    return s.translate(str.maketrans(*RECHERCHE_ACCENTS)).lower()

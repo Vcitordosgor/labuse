@@ -48,7 +48,7 @@ export function ProspectionSolaire() {
 function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillement') => void }) {
   const Carte = ({ k, ic, titre, desc }: { k: 'piscines' | 'ensoleillement'; ic: string; titre: string; desc: string }) => (
     <button data-solaire-mode={k} onClick={() => onChoose(k)}
-      className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-3 text-left transition-colors duration-quick hover:border-mint/50 hover:bg-surface-3">
+      className="hover-fill flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-3 text-left transition-colors duration-quick">
       <span className="text-xl">{ic}</span>
       <span className="min-w-0 flex-1">
         <b className="text-[13px] text-txt">{titre}</b>
@@ -339,11 +339,18 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
             l'inclinaison optimale n'est pas servie par la V1 → non affichée (jamais inventée). */}
         <KPI k="Orientation du bâti" v={f.azimut == null ? '—' : `${f.azimut}°`} />
+        {/* RETOURS-14 S11 — nature du toit DANS la grille des faits (visible sans clic), servie
+            seulement au-dessus du seuil de confiance (LiDAR) ; « non déterminée (LiDAR) » sinon. */}
+        <KPI k="Nature du toit" v={f.toiture ? f.toiture.libelle_court : '—'} />
         <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
+        <KPI k="Pente du toit (médiane)" v={f.toiture?.pente_mediane_deg == null ? '—' : `${String(f.toiture.pente_mediane_deg).replace('.', ',')}°`} />
       </div>
-      {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. La nature
-          simple/double pente n'est PAS dérivable des données en base (aucun n° de pans / type de toiture) :
-          on ne l'invente pas — on montre la photo pour que le démarcheur la lise, avec l'orientation. */}
+      {f.toiture && (
+        <p data-solaire-toiture className="mt-1.5 text-[9px] leading-snug text-txt-dim">
+          Nature du toit : {f.toiture.statut} — {f.toiture.methode}
+        </p>
+      )}
+      {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. */}
       {f.lon != null && f.lat != null && (
         <div data-solaire-photo className="mt-2">
           <div className="relative overflow-hidden rounded-lg border border-line-2">
@@ -353,7 +360,7 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
           </div>
           <p className="mt-1 text-[9px] leading-snug text-txt-dim">
             Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${f.azimut}°, Estimé)` : ' (orientation non estimée)'}.
-            La nature de la toiture (simple / double pente) n'est pas dérivable des données en base : à lire sur la photo.
+            La lecture LiDAR de la toiture (ci-dessus) se vérifie sur cette photo.
             « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
           </p>
         </div>

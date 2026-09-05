@@ -82,6 +82,10 @@ class Settings(BaseSettings):
     # inclus au backup (mandat RADAR V0 §2). Surchargé par LABUSE_PIGE_CAPTURES_DIR en dev/tests.
     pige_captures_dir: str = "/srv/labuse/pige/captures"
 
+    # RETOURS-16 V1 — cache disque des tuiles ortho TRAITÉES par le proxy (fondu de côte + no-data).
+    # Purgeable sans risque (les tuiles se re-fabriquent à la demande) ; LABUSE_ORTHO_PROXY_CACHE_DIR.
+    ortho_proxy_cache_dir: str = ".local/ortho-proxy-cache"
+
     # Agent IA (post-cœur) — provider "stub" par défaut (aucun appel réseau). SECTEUR-1 (S6) : le nom du
     # modèle vient de ai/models.py (source unique) ; un env `LABUSE_AI_MODEL` retiré est REFUSÉ au démarrage
     # (validateur plus bas) — plus jamais un appel prod qui échoue en silence sur un modèle mort.

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   getTaxeAmenagement, getTaxeConfig, getTaxePrefill,
@@ -6,6 +6,8 @@ import {
 } from '../../lib/api'
 import { fmtEur, fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { ParcelInput } from '../ParcelInput'
+import { Tip } from '../Tip'
 import { Loading } from '../Loading'
 
 // K3 (rattrapage KelFoncier) — outil « Taxe d'aménagement » (calculette). 100 % piloté par le backend :
@@ -69,14 +71,30 @@ export function TaxeAmenagement() {
   const [tauxCommunal, setTauxCommunal] = useState<number | null>(null)   // OBLIGATOIRE — jamais de défaut
   const [tauxDepartemental, setTauxDepartemental] = useState<number | null>(null)
 
-  // contexte parcelle (référence : commune + zone + terrain). RETOURS-1 R5 (Vic) : ouvert depuis
-  // la fiche parcelle (porte « Taxe d'aménagement »), le contexte se charge D'EMBLÉE — commune
-  // pré-remplie, surface du terrain en référence (la surface TAXABLE reste saisie à la main).
+  // RETOURS-14 S4 — l'outil s'ouvre sur la BARRE UNIQUE (adresse / IDU / référence courte,
+  // moteur ParcelInput) + « ou cliquez une parcelle sur la carte » ; un clic carte pendant que
+  // l'outil est ouvert ADOPTE la parcelle (selectedIdu suivi en continu — avant, rien ne le
+  // disait). Changer de parcelle remet la saisie à zéro (le calcul suit la parcelle).
   const [prefillIdu, setPrefillIdu] = useState<string | null>(selectedIdu)
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== prefillIdu) {
+      setPrefillIdu(selectedIdu); setSurface(null); setSdpPrefill(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
   const prefill = useQuery({
     queryKey: ['taxe-prefill', prefillIdu], queryFn: () => getTaxePrefill(prefillIdu!),
     enabled: !!prefillIdu, retry: false,
   })
+  // RETOURS-13 R26 — LABUSE pré-remplit la surface taxable avec ce qu'il SAIT : la SDP
+  // CONSTRUCTIBLE AU GABARIT (résiduel du run servi). Étiquetée, MODIFIABLE — la surface du
+  // projet reste celle du client s'il la connaît ; toute retouche efface l'étiquette.
+  const [sdpPrefill, setSdpPrefill] = useState(false)
+  useEffect(() => {
+    const sdp = prefill.data?.sdp_gabarit_m2
+    if (sdp != null && surface == null) { setSurface(sdp); setSdpPrefill(true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefill.data])
 
   // Le taux départemental se pré-remplit avec le PLAFOND LÉGAL servi (part_departementale_defaut) dès
   // que la config arrive — étiqueté « à confirmer », car part_departementale_confirmee_974 est false.
@@ -114,26 +132,24 @@ export function TaxeAmenagement() {
 
   return (
     <div data-taxe-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* EN-TÊTE — intro (RETOURS-11 O4a, texte imposé) + lien source datée */}
-      <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-        <div>
-          Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs 2026 (arrêté
-          officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire
-          hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis.
-        </div>
-        <div className="mt-1">
-          <a href={c.meta.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{c.meta.source}</a>
-        </div>
+      {/* RETOURS-14 S4 — le PREMIER écran ne porte que la parcelle et le calcul : l'intro
+          (service-public, CGI…) vit derrière le « i ». */}
+      <div className="flex items-center gap-1.5">
+        <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Désignez la parcelle du projet :</p>
+        <Tip side="bottom" tip={`Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs 2026 (arrêté officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis. Source : ${c.meta.source}.`}>
+          <span role="button" tabIndex={0} aria-label="Méthode et sources"
+            className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+        </Tip>
       </div>
-
-      {/* OUVERTURE DEPUIS UNE PARCELLE — si une parcelle est sélectionnée sur la carte/fiche. La surface
-          TAXABLE reste saisie à la main : le terrain est une simple RÉFÉRENCE (jamais la surface taxable). */}
-      {selectedIdu && prefillIdu !== selectedIdu && (
-        <button data-taxe-prefill onClick={() => setPrefillIdu(selectedIdu)}
-          className="flex items-center justify-between gap-2 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2 text-left text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
-          <span>Depuis la parcelle <span className="font-mono text-[10.5px]">{selectedIdu}</span></span>
-          <span aria-hidden>→</span>
-        </button>
+      {/* barre UNIQUE (adresse / IDU / référence courte — moteur ParcelInput, comme Étudier un bien) */}
+      <ParcelInput dataAttr="taxe-parcelle" withCarte={false} onPick={(i: string) => setPrefillIdu(i)}
+        placeholder="Adresse, IDU ou référence (ex. BZ1065)" />
+      <p className="text-[10px] text-txt-dim">… ou cliquez une parcelle sur la carte : l'outil la reprend automatiquement.</p>
+      {!prefillIdu && (
+        <p data-taxe-attente className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
+          Le formulaire s'ouvrira quand une parcelle sera choisie — LABUSE préremplit alors la
+          surface taxable avec la SDP constructible au gabarit (modifiable).
+        </p>
       )}
       {prefillIdu && (
         <div data-taxe-contexte className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
@@ -147,17 +163,30 @@ export function TaxeAmenagement() {
               {prefill.data.surface_terrain_m2 != null && (
                 <span className="text-txt-dim">terrain : {fmtM2(prefill.data.surface_terrain_m2)} <span className="text-[9px]">(référence)</span></span>
               )}
+              {/* RETOURS-15 U6 — sur une parcelle DÉJÀ BÂTIE, ce chiffre est un RÉSIDUEL : le
+                  libellé le dit (« restante »), jamais « gabarit » nu (26 m² sur 1 625 m² en Uh
+                  se lisait comme un gabarit absurde). */}
+              {prefill.data.sdp_gabarit_m2 != null && (
+                <span className="text-txt-dim">{prefill.data.deja_batie
+                  ? <>SDP <b className="text-txt">restante</b> au gabarit <span className="text-[9px]">(parcelle déjà bâtie)</span> : </>
+                  : <>SDP au gabarit : </>}<b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
+              )}
               <button onClick={() => setPrefillIdu(null)} className="ml-auto text-[10px] text-mint hover:underline">retirer</button>
             </div>
           )}
         </div>
       )}
 
-      {/* SAISIE */}
+      {/* SAISIE — repliée tant qu'aucune parcelle n'est choisie (S4). */}
+      {prefillIdu && (
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface} onChange={setSurface}
-          placeholder="ex. 120"
-          hint={`Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
+        <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
+          onChange={(v) => { setSurface(v); setSdpPrefill(false) }}
+          hint={`${sdpPrefill
+            ? `Pré-rempli par LABUSE — SDP ${prefill.data?.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'}, modifiable (la surface taxable est celle de VOTRE projet). `
+            : (prefill.data && prefill.data.sdp_gabarit_m2 == null
+              ? `Gabarit non calculable${prefill.data.zone_plu ? ` en zone ${prefill.data.zone_plu}` : ''} — saisissez la surface de votre projet. `
+              : '')}Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
             c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
 
         <div className="flex flex-col gap-1.5">
@@ -208,9 +237,10 @@ export function TaxeAmenagement() {
           </div>
         </details>
       </div>
+      )}
 
       {/* RÉSULTAT DÉTAILLÉ */}
-      {!params && (
+      {prefillIdu && !params && (
         <p className="text-[11px] text-txt-dim">Saisissez une surface taxable pour estimer la taxe.</p>
       )}
       {calc.isLoading && <p className="text-[11px] text-txt-mut">Calcul…</p>}
@@ -246,7 +276,8 @@ export function TaxeAmenagement() {
             <div className="flex items-center justify-between gap-2">
               <span className="text-txt-mut">Part communale <span className="text-txt-dim">({r.taux_communal_pct != null ? `${r.taux_communal_pct} %` : '—'})</span></span>
               <span className="font-mono tabular-nums text-txt">
-                {r.part_communale_eur != null ? fmtEur(r.part_communale_eur) : <span className="text-txt-dim">en attente du taux communal</span>}
+                {/* RETOURS-15 U6 — la ligne DIT quoi faire, pas un état passif. */}
+                {r.part_communale_eur != null ? fmtEur(r.part_communale_eur) : <span className="text-txt-dim">taux non renseigné, saisissez-le ci-dessus</span>}
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">

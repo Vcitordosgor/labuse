@@ -167,6 +167,38 @@ def transport_reseaux_cmd() -> None:
     typer.echo("✓ geom_2975 backfillée (distances prêtes)")
 
 
+@app.command("reseaux-mt")
+def reseaux_mt_cmd() -> None:
+    """RETOURS-13 R4 — ingère les lignes MOYENNE TENSION (HTA aérien + souterrain) depuis
+    l'open data EDF Réunion (Licence Ouverte 2.0, tracé indicatif — sécurité publique).
+    kind='ligne_mt'. Échec bruyant si la source EDF a changé (jamais une couche vide muette)."""
+    from . import models
+    from .ingestion.reseaux_mt import ingest_lignes_mt
+
+    with session_scope() as s:
+        r = ingest_lignes_mt(s)
+        typer.echo(f"✓ ligne_mt : aérien {r['aerien']} · souterrain {r['souterrain']} tronçons")
+    models.ensure_geom_2975(engine())
+    typer.echo("✓ geom_2975 backfillée")
+
+
+@app.command("tcsp")
+def tcsp_cmd() -> None:
+    """RETOURS-13 R5 — ingère la couche TCSP « en service » (voies bus en site propre OSM +
+    couloirs, distinction dite) et dérive les STATIONS (arrêts GTFS ≤ 60 m d'un site propre —
+    support du drapeau < 800 m art. L151-36). Prérequis : transport-reseaux (arrêts GTFS)."""
+    from . import models
+    from .ingestion.layers_ingest import _source_ids
+    from .ingestion.transport_reseaux import ingest_tcsp
+
+    with session_scope() as s:
+        r = ingest_tcsp(s, None, _source_ids(s))
+        typer.echo(f"✓ TCSP : {r['site_propre']} tronçons en site propre · "
+                   f"{r['couloirs']} couloirs (dits) · {r['stations']} stations dérivées")
+    models.ensure_geom_2975(engine())
+    typer.echo("✓ geom_2975 backfillée")
+
+
 @app.command("territoire-fiscal")
 def territoire_fiscal_cmd() -> None:
     """M106 P3 — charge le seed des dispositifs fiscaux territoriaux (ZFANG / FRR ex-ZRR,

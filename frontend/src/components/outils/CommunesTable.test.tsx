@@ -51,6 +51,8 @@ describe('COMMUNES — O6Comparateur (table des 24 communes)', () => {
     renderO6()
     await screen.findByText('Saint-Paul')
     expect(screen.getAllByText('Fiche →')).toHaveLength(3)
+    // RETOURS-13 R11 — action SECONDAIRE : jaune opaque au survol (classe hover-jaune)
+    for (const el of screen.getAllByText('Fiche →')) expect(el.className).toContain('hover-jaune')
   })
 
   it('meilleure valeur en vert : stock MAX (318) et instruction MIN (8)', async () => {

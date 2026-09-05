@@ -351,6 +351,15 @@ def passer(db, *, source_ids=None, forcer: bool = False, http=None, notifier: bo
 #: Les DOUBLONS amont (Cadastre Etalab bulk ≡ PCI, RGE ALTI 5 m ≡ RGE ALTI) ne sont PAS re-semés : ils
 #: sont couverts par la veille de leur canonique (l'alerte vaut pour les deux). Cf. SENTINELLE-INVENTAIRE.md.
 SEED: list[dict] = [
+    # ── RETOURS-13 R4/R5 — réseaux et TCSP. EDF : le portail Koumoul n'expose pas de JSON de
+    #    version simple → en-tête du fichier data-fair (change quand EDF republie). Réunion
+    #    Express : la carte des hypothèses de tracé (landweb3d) — un changement d'en-tête dit
+    #    « la Région a mis à jour la carte » (le tracé bougera après le débat, clôture 26/11/2026).
+    {"name": "EDF Réunion — lignes moyenne tension HTA (open data)", "methode": "entete",
+     "url": ("https://opendata-reunion.edf.fr/data-fair/api/v1/datasets/"
+             "lihub-72mnuv47c249qzvlhv/data-files/lignes-haute-tension-hta-aerien.csv")},
+    {"name": "Réunion Express — hypothèses de tracé (débat public CNDP)", "methode": "entete",
+     "url": "https://client.landweb3d.com/cr-reunion/Reunion-Express_PC/index_jaune.html"},
     # ── Famille IGN Géoplateforme : jeu data.gouv officiel du produit → `last_update` (même amont IGN
     #    que les couches servies en WFS). Débloque 8 sources d'un coup (X2, gisement principal). ──
     {"name": "Cadastre (API Carto PCI)", "methode": "api",
@@ -510,6 +519,10 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",
     "Parkings OSM (loi APER)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
     "OSM — transport (pôles d'échange & téléphérique)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
+    # RETOURS-13 R5 — même famille OSM (extraction Overpass à la demande, CLI `labuse tcsp`).
+    "TCSP — voies bus en site propre (OSM)": "OSM en flux continu, interrogé en direct (cf. « OpenStreetMap / Overpass ») — témoin de comptage non représentatif ni actionnable.",
+    # RETOURS-14 S5 — archives cadastrales FIGÉES (un millésime publié ne change jamais).
+    "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": "Archives immuables (millésimes cadastraux figés) — rien à surveiller : un millésime publié ne change jamais ; les millésimes NOUVEAUX ne servent qu'à de futures parcelles disparues.",
     "INPN / patrinat — espaces protégés": "Couches patrinat servies en WFS Géoplateforme ; pas de jeu data.gouv national « espaces protégés » à millésime trouvé, ni de requête témoin à agrégat stable.",
     # Portails / hubs
     "PEIGEO (hub régional)": "Y2 : peigeo.re répond désormais (200) mais c'est un site WordPress — plus de GeoNetwork/CSW ni d'API de catalogue à sonder (les chemins /geonetwork renvoient 404). Pas un jeu unique.",

@@ -6,10 +6,11 @@ import { getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, g
 import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
+import { PERMIS_ETAT_COLOR } from '../../lib/permisEtats'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
-import { BASEMAP_SOURCES, activeBasemapKey } from './basemaps'
+import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
@@ -255,7 +256,12 @@ const SOMBRE_TERRE = '#080A09'  // terre Sombre MESURÉE (idem)
 // Bascules M64 CONSERVÉES (elles se posent maintenant sur de la terre claire) : traits achromatiques
 // (sélection/pulse/étiquette de zone) → valeur sombre. Pastilles de commune : INCHANGÉES (revert de
 // l'adaptation « pastille claire » M64, cf. leur effet) — un seul token diffère entre les modes.
-const SOMBRE_BG = '#060A08'   // canvas historique — mer du mode Clair (et sous les rasters Plan/Ortho).
+const SOMBRE_BG = '#060A08'   // canvas historique — mer du mode Clair (et sous les tuiles Plan).
+// RETOURS-16 V1 — APLAT DE MER des fonds ortho : UNE seule couleur, posée par le canvas sur
+// l'emprise entière (jamais par tuile). Bleu profond MESURÉ sur la mosaïque monde IGN au large
+// du 974 (moyenne rgb(10,59,89)) — même valeur que MER_HEX côté proxy (api/ortho_proxy.py).
+// Le proxy fond la photo vers cet aplat au-delà de la bande côtière : la mer est uniforme.
+const MER_ORTHO = '#0A3B59'
 // largeur des limites communes en Sombre (interpolée par zoom) — restaurée hors Clair.
 const COMMUNES_W_SOMBRE = ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8]
 function applyClairMode(m: maplibregl.Map, basemap: string) {
@@ -269,7 +275,9 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   const set = (id: string, prop: string, val: unknown) => { if (m.getLayer(id)) m.setPaintProperty(id, prop as never, val as never) }
   const vis = (id: string, on: boolean) => { if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none') }
   // FOND-SOMBRE : la mer du Sombre = teinte mesurée du rendu raster d'avant ; Clair garde le noir.
-  set('bg', 'background-color', sombre ? SOMBRE_MER : SOMBRE_BG)
+  // V1 : sous un fond ORTHO, le canvas EST la mer (aplat unique MER_ORTHO — le proxy fond la
+  // photo vers lui au large) ; le Plan IGN dessine sa propre mer, Sombre/Clair gardent la leur.
+  set('bg', 'background-color', basemap === 'ortho' ? MER_ORTHO : sombre ? SOMBRE_MER : SOMBRE_BG)
   // TERRE : masse île dissoute — grise en Clair, terre mesurée en Sombre ; CACHÉE sous Plan/Ortho
   // (dans la pile elle est AU-DESSUS des rasters de fond, elle les recouvrirait).
   vis('ile-mass', clair || sombre)
@@ -330,14 +338,12 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-50pas', 'fill-color', t.cinquantePas); set('ov-50pas', 'fill-opacity', t.cinquantePasFillOpacity)
   set('ov-50pas-line', 'line-color', t.cinquantePas)
   set('parcels-brulantes', 'line-color', t.lisereBrulantes)
-  // M106 : les deux couches d'aléa suivent le jeu du thème (teinte + gradation + trame + contour)
+  // M106 : les deux couches d'aléa suivent le jeu du thème (teinte + gradation + contour).
+  // RETOURS-13 R7 — plus de trame ; R8 — contour au ZOOM (mêmes expressions sur les 4 fonds).
   for (const c of ALEA_COUCHES) {
-    // RETOURS-12 C3 — teinte par NIVEAU (rampe du thème) + opacité constante ; le contour et la trame
-    // gardent la teinte d'IDENTITÉ de l'aléa (distinction inondation vs mouvement de terrain superposés).
     set(c.id, 'fill-color', aleaColorExpr(t, c.ramp)); set(c.id, 'fill-opacity', t.aleaFillOpacity)
-    set(`${c.id}-trame`, 'fill-pattern', `${c.trame}-${clair ? 'clair' : 'sombre'}`)
-    set(`${c.id}-trame`, 'fill-opacity', t.aleaTrameOpacity)
-    set(`${c.id}-line`, 'line-color', t[c.token]); set(`${c.id}-line`, 'line-width', t.aleaContourW)
+    set(`${c.id}-line`, 'line-color', t[c.token])
+    set(`${c.id}-line`, 'line-width', ALEA_LINE_W); set(`${c.id}-line`, 'line-opacity', ALEA_LINE_OP)
   }
   // M106 P4 / M106-B : la couleur dit le RÉSEAU (expression par subtype), la forme dit le type ;
   // pôles neutres ; Papang = couleur Citalis ; axes ardoise ; HT anthracite — tokens par thème
@@ -349,7 +355,13 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-pole', 'circle-color', t.pole); set('ov-pole', 'circle-stroke-color', t.pole)
   set('ov-axe', 'line-color', t.axe)
   set('ov-ht', 'line-color', t.ht)
-  set('ov-tcsp', 'line-color', t.tcsp)   // RETOURS-12 C2 — axe structurant BAOBAB (teinte du thème)
+  set('ov-mt', 'line-color', t.mt)       // RETOURS-13 R4 — moyenne tension HTA
+  // RETOURS-14 S8 — TCSP : tronçons, stations et zone 800 m suivent le thème
+  set('ov-tcsp', 'line-color', t.tcsp)
+  set('ov-tcsp-zone-parcelles', 'fill-color', t.tcsp)
+  set('ov-tcsp-zone-rayon', 'line-color', t.tcsp)
+  set('ov-tcsp-st', 'circle-color', t.tcsp)
+  set('ov-tcsp-st', 'circle-stroke-color', clair ? '#FFFFFF' : '#0A0F0C')
 
   // ═══ RETOURS-11 C4 — VARIANT LISIBILITÉ « fond photo/clair » (Plan & Ortho) ═══
   // Ce bloc s'exécute EN DERNIER : il écrase, pour les seuls fonds photo, les propriétés posées
@@ -392,9 +404,13 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
     // Risques (PPR + aléas DEAL) : aplat plus opaque + contour sombre — même gain de lisibilité.
     for (const id of ['ov-ppr', 'ovmvt-ppr']) set(id, 'fill-opacity', 0.30)
     for (const id of ['ov-ppr-line', 'ovmvt-ppr-line']) { set(id, 'line-color', '#0A0F0C'); set(id, 'line-width', 1.4) }
+    // RETOURS-13 R7/R8 — sur photo : aplat calibré (0,45, teintes par classe déjà vives) ; le
+    // contour garde sa COULEUR sombre (lisible sur la photo) mais suit la MÊME règle de zoom que
+    // les autres fonds (ALEA_LINE_W/OP) — fini la bouillie noire au zoom large sur ortho.
     for (const c of ALEA_COUCHES) {
-      set(c.id, 'fill-opacity', ['match', ['coalesce', ['get', 'niveau'], 'moyen'], 'faible', 0.30, 'fort', 0.5, 0.4] as unknown as maplibregl.ExpressionSpecification)
-      set(`${c.id}-line`, 'line-color', '#0A0F0C'); set(`${c.id}-line`, 'line-width', 1.4)
+      set(c.id, 'fill-opacity', 0.45)
+      set(`${c.id}-line`, 'line-color', '#0A0F0C')
+      set(`${c.id}-line`, 'line-width', ALEA_LINE_W); set(`${c.id}-line`, 'line-opacity', ALEA_LINE_OP)
     }
   }
 }
@@ -459,15 +475,25 @@ const DISPO_TRAMES = [
   ['ov-zfang', 'standard', 'zfangStandard', 'slash'],
   ['ov-frr', 'partie', 'frrPartie', 'backslash'],
 ] as const
-// M106 : l'aplat des aléas est GRADUÉ par le niveau servi (faible/moyen/fort) — expression
-// partagée création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
-// RETOURS-12 C3 — l'aplat prend une TEINTE par niveau (bleu→orange→rouge / beige→marron→rouge),
-// franchement distinctes : on lit l'échelle de gravité sans deviner un camaïeu d'opacité. Le libellé
-// officiel de l'aléa reste la vérité ; la couleur ne fait qu'ordonner. Opacité désormais constante.
-const aleaColorExpr = (t: MapTokens, ramp: 'aleaInondationRamp' | 'aleaMvtRamp'): maplibregl.ExpressionSpecification => [
-  'match', ['coalesce', ['get', 'niveau'], 'moyen'],
-  'faible', t[ramp].faible, 'fort', t[ramp].fort, t[ramp].moyen,
-] as unknown as maplibregl.ExpressionSpecification
+// M106 : l'aplat des aléas est GRADUÉ par la classe servie — expression partagée
+// création/bascule de thème (les valeurs vivent dans mapTheme, un seul endroit).
+// RETOURS-13 R6 — la couleur suit la CLASSE RÉELLE du jeu (`classe`, dérivée du degré DEAL —
+// repli `niveau` si absente) : le mouvement de terrain porte QUATRE classes (faible, moyen,
+// élevé, très élevé — 360 zones élevées + 124 très élevées étaient écrasées en « moyen » et le
+// rouge n'apparaissait jamais). Une teinte par classe, la plus grave en ROUGE. Le libellé
+// officiel de l'aléa reste la vérité ; la couleur ne fait qu'ordonner.
+const aleaColorExpr = (t: MapTokens, ramp: 'aleaInondationRamp' | 'aleaMvtRamp'): maplibregl.ExpressionSpecification => {
+  const r = t[ramp] as unknown as Record<string, string>
+  return ['match', ['coalesce', ['get', 'classe'], ['get', 'niveau'], 'moyen'],
+    ...Object.entries(r).flatMap(([k, c]) => [k, c]),
+    r.moyen] as unknown as maplibregl.ExpressionSpecification
+}
+// RETOURS-13 R8 — le CONTOUR des aléas est géré par le ZOOM : absent aux petits zooms (l'aplat
+// suffit, les contours faisaient une bouillie noire sur ortho), il apparaît en zoomant — MÊME
+// RÈGLE SUR LES 4 FONDS (sombre, clair, ortho, IGN) : expressions partagées, jamais re-décidées
+// par fond.
+const ALEA_LINE_W = ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.8, 16, 1.4] as unknown as maplibregl.ExpressionSpecification
+const ALEA_LINE_OP = ['interpolate', ['linear'], ['zoom'], 13, 0, 14, 0.5, 16, 0.9] as unknown as maplibregl.ExpressionSpecification
 // M106-B — LA COULEUR DIT LE RÉSEAU : expression match sur subtype (= réseau GTFS), tokens
 // par thème (mapTheme.transportReseaux) ; repli transportDefaut pour un réseau futur.
 const reseauColorExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
@@ -476,10 +502,12 @@ const reseauColorExpr = (t: MapTokens): maplibregl.ExpressionSpecification => [
   t.transportDefaut,
 ] as unknown as maplibregl.ExpressionSpecification
 
-//: M106 — les deux couches d'aléa DEAL (id, subtype du flux, token de teinte, trame dédiée)
+//: M106 — les deux couches d'aléa DEAL (id, subtype du flux, token de teinte).
+//: RETOURS-13 R7 — les TRAMES (hachures) d'aléa sont RETIRÉES (décision Vic : « enlève le
+//: hachurage », illisibles) : aplats pleins semi-transparents seuls, opacité calibrée par fond.
 const ALEA_COUCHES = [
-  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', ramp: 'aleaInondationRamp', trame: 'trame-alea-inond', orient: 'backslash' },
-  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', ramp: 'aleaMvtRamp', trame: 'trame-alea-mvt', orient: 'horiz' },
+  { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', ramp: 'aleaInondationRamp' },
+  { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', ramp: 'aleaMvtRamp' },
 ] as const
 
 function makeEquipIcons(m: maplibregl.Map) {
@@ -645,13 +673,20 @@ export function MapView() {
   const alea = useQuery({ queryKey: ['layer', 'georisque_alea', commune], queryFn: () => getMapLayer('georisque_alea'), enabled: layers.alea_inondation || layers.alea_mvt })
   // M106 P4 : transport public (tracés + pôles + Papang, 3 kinds servis île) et lignes HT
   const transLignes = useQuery({ queryKey: ['layer', 'transport_ligne'], queryFn: () => getMapLayer('transport_ligne'), enabled: layers.transport })
+  // RETOURS-14 S7 — les ARRÊTS sont FUSIONNÉS dans « Transport public (lignes et arrêts) »
+  // (demande Vic) ; ils restent cliquables (bulle : nom + lignes + réseau — R9).
   const transArrets = useQuery({ queryKey: ['layer', 'transport_arret'], queryFn: () => getMapLayer('transport_arret', 20_000), enabled: layers.transport })
   // M137-X — les pôles d'échange rejoignent « Axes structurants » (nœuds du réseau structurant).
   const poles = useQuery({ queryKey: ['layer', 'pole_echange'], queryFn: () => getMapLayer('pole_echange'), enabled: layers.axes })
   const tele = useQuery({ queryKey: ['layer', 'telepherique'], queryFn: () => getMapLayer('telepherique'), enabled: layers.transport })
   const lignesHt = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
-  // RETOURS-12 C2 — axe de transport structurant (BAOBAB Express), couche synthétique dérivée du GTFS.
-  const tcspAxe = useQuery({ queryKey: ['layer', 'tcsp_axe'], queryFn: () => getMapLayer('tcsp_axe'), enabled: layers.tcsp })
+  // RETOURS-14 S8 — « Stationnement allégé — TCSP » : voies en site propre + stations + ZONE
+  // de 800 m matérialisée (rayon autour des stations + union des parcelles couvertes, teintées).
+  const tcspTroncons = useQuery({ queryKey: ['layer', 'tcsp_troncon'], queryFn: () => getMapLayer('tcsp_troncon'), enabled: layers.tcsp })
+  const tcspStations = useQuery({ queryKey: ['layer', 'tcsp_station'], queryFn: () => getMapLayer('tcsp_station'), enabled: layers.tcsp })
+  const tcspZone = useQuery({ queryKey: ['layer', 'tcsp_zone'], queryFn: () => getMapLayer('tcsp_zone'), enabled: layers.tcsp })
+  // RETOURS-14 S9 — lignes électriques FUSIONNÉES : la HTA suit la même entrée que la HTB.
+  const lignesMt = useQuery({ queryKey: ['layer', 'ligne_mt'], queryFn: () => getMapLayer('ligne_mt', 40_000), enabled: layers.lignes_ht })
   // M106-B P3 : axes structurants (3 481 tronçons BD TOPO importance 1-2)
   const axes = useQuery({ queryKey: ['layer', 'axe_structurant'], queryFn: () => getMapLayer('axe_structurant', 5_000), enabled: layers.axes })
   // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
@@ -743,11 +778,27 @@ export function MapView() {
     m.on('load', () => {
       // fonds de plan (tous chargés, visibilité pilotée par l'effet fond via activeBasemapKey —
       // FOND-SOMBRE : plus de fond visible à la création, le défaut « dark » n'a plus de raster)
+      // RETOURS-15 U1 — SOUS-COUCHE ortho monde (mosaïque ORTHOPHOTOS, mer comprise), posée SOUS
+      // tous les fonds : aux petits zooms elle EST la mer (photographiée jusqu'à z12 mesuré) ; au
+      // delà, MapLibre étire ses tuiles z12 (source maxzoom 12) → la mer reste CONTINUE sous
+      // l'Ortho Express (qui ne couvre que la terre + la mer côtière). Le masque de mer R1 et les
+      // `bounds` C6 sont RETIRÉS : ils découpaient jetées et ports en biseau (constat Vic 05/09) —
+      // rien ne découpe une orthophoto. Sous tout ça, le canvas sombre : jamais de blanc.
+      m.addSource('bm-ortho-monde', { type: 'raster', tiles: ORTHO_MONDE.tiles, tileSize: 256,
+        attribution: ORTHO_MONDE.attribution, maxzoom: ORTHO_MONDE.maxzoom })
+      // V1 — raster-fade-duration 0 sur les fonds ortho : le fondu d'apparition de MapLibre
+      // laissait voir le canvas au travers des tuiles pendant 300 ms (liserés aux jointures au
+      // moindre zoom) ; l'aplat de mer et le fondu du proxy suffisent, pas de crossfade.
+      m.addLayer({ id: 'bm-ortho-monde', type: 'raster', source: 'bm-ortho-monde',
+        layout: { visibility: 'none' }, paint: { 'raster-fade-duration': 0 } })
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
-        // RETOURS-12 C6 — `bounds` sur les fonds ortho (emprise 974) : maplibre ne demande plus les
-        // tuiles no-data (blanches) au large → fini l'escalier de tuiles sur fond blanc en vue dézoomée.
-        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}), ...(src.bounds ? { bounds: src.bounds } : {}) })
-        m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' } })
+        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
+        // U1 — bascule par zoom : l'Ortho Express (terre seule) n'apparaît qu'aux GRANDS zooms
+        // (minzoom 12) ; en dessous, la mosaïque monde seule peint — sans ça, les tuiles
+        // côtières Express faisaient un liseré bleu vif en escalier autour de l'île.
+        m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' },
+          ...(id.startsWith('bm-ortho') ? { paint: { 'raster-fade-duration': 0 } } : {}),
+          ...(id === 'bm-ortho-now' ? { minzoom: 12 } : {}) })
       }
       // M65 P8 — MASSE TERRESTRE (île dissoute) : la terre sans parcelle (cirques, forêt, volcan)
       // prend l'aplat du thème — GRIS #C9C4B8 en Clair, terre mesurée SOMBRE_TERRE en Sombre
@@ -813,15 +864,12 @@ export function MapView() {
       m.addSource('ov-alea', { type: 'geojson', data: EMPTY_FC as never })
       for (const c of ALEA_COUCHES) {
         const filt = ['==', ['get', 'subtype'], c.sub] as unknown as maplibregl.FilterSpecification
-        // une image de trame PAR THÈME (la teinte y est peinte) — la bascule change le motif
-        makeTrame(m, `${c.trame}-sombre`, MAP_THEME.sombre[c.token], c.orient)
-        makeTrame(m, `${c.trame}-clair`, MAP_THEME.clair[c.token], c.orient)
+        // R7 — plus de trame : aplat plein semi-transparent seul. R8 — contour géré par le zoom
+        // (ALEA_LINE_W/OP, même règle sur les 4 fonds).
         m.addLayer({ id: c.id, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
           paint: { 'fill-color': aleaColorExpr(T_SOMBRE, c.ramp), 'fill-opacity': T_SOMBRE.aleaFillOpacity } })
-        m.addLayer({ id: `${c.id}-trame`, type: 'fill', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
-          paint: { 'fill-pattern': `${c.trame}-sombre`, 'fill-opacity': T_SOMBRE.aleaTrameOpacity } })
         m.addLayer({ id: `${c.id}-line`, type: 'line', source: 'ov-alea', filter: filt, layout: { visibility: 'none' },
-          paint: { 'line-color': T_SOMBRE[c.token], 'line-width': T_SOMBRE.aleaContourW, 'line-opacity': 0.9 } })
+          paint: { 'line-color': T_SOMBRE[c.token], 'line-width': ALEA_LINE_W, 'line-opacity': ALEA_LINE_OP } })
       }
       // M137-X — trame ZFANG/FRR : l'état « fort » (renforcée / en partie) se lit à la HACHURE
       // (aplat = état de base), texture catégorielle plutôt qu'un dégradé d'opacité ambigu.
@@ -838,7 +886,7 @@ export function MapView() {
       // pôle OSM (Sourcé) = disque plein NEUTRE · pôle dérivé (Estimé) = anneau ·
       // téléphérique = tireté couleur CINOR/Citalis. Plus les AXES STRUCTURANTS (BD TOPO,
       // importance IGN 1-2, trait plein ardoise) et les LIGNES HT (anthracite tireté).
-      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht', 'ov-tcsp']) {
+      for (const src of ['ov-trans-ligne', 'ov-trans-arret', 'ov-pole', 'ov-tele', 'ov-axe', 'ov-ht', 'ov-mt', 'ov-tcsp', 'ov-tcsp-st', 'ov-tcsp-zone']) {
         m.addSource(src, { type: 'geojson', data: EMPTY_FC as never })
       }
       m.addLayer({ id: 'ov-axe', type: 'line', source: 'ov-axe', layout: { visibility: 'none' },
@@ -855,6 +903,27 @@ export function MapView() {
           'circle-color': reseauColorExpr(T_SOMBRE), 'circle-opacity': 0.9,
           'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 16, 1.6] as unknown as maplibregl.ExpressionSpecification,
         } })
+      // RETOURS-13 R9 — arrêts CLIQUABLES : une bulle MINIMALE — nom de l'arrêt, ligne(s) qui le
+      // desservent, réseau. Rien d'autre (demande Vic). Les noms de lignes viennent de routes.txt
+      // (attrs.lignes_noms, backfillés + posés à l'ingestion) ; nested array → maplibre sérialise
+      // en chaîne JSON dans les properties, on la reparse.
+      const escHtml = (s: unknown) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c] as string))
+      m.on('click', 'ov-trans-arret', (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const p = f.properties as Record<string, unknown>
+        let lignes: string[] = []
+        try {
+          lignes = typeof p.lignes_noms === 'string' ? JSON.parse(p.lignes_noms) : ((p.lignes_noms as string[]) ?? [])
+        } catch { lignes = [] }
+        const html = `<div style="${POPUP_BOX_CSS}">`
+          + `<div style="font-weight:600">${escHtml(p.name)}</div>`
+          + (lignes.length ? `<div style="margin-top:4px">Ligne${lignes.length > 1 ? 's' : ''} ${escHtml(lignes.join(' · '))}</div>` : '')
+          + `<div style="margin-top:2px;color:#96A69C">${escHtml(p.reseau ?? p.subtype ?? '')}</div></div>`
+        new maplibregl.Popup({ closeButton: false, maxWidth: '300px' }).setLngLat(e.lngLat).setHTML(html).addTo(m)
+      })
+      m.on('mouseenter', 'ov-trans-arret', () => { m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', 'ov-trans-arret', () => { m.getCanvas().style.cursor = '' })
       m.addLayer({ id: 'ov-tele', type: 'line', source: 'ov-tele', layout: { visibility: 'none' },
         filter: ['==', ['get', 'subtype'], 'ligne'] as never,
         paint: { 'line-color': T_SOMBRE.transportReseaux['Papang'], 'line-width': 2.4, 'line-dasharray': [1.6, 1.2], 'line-opacity': 0.95 } })
@@ -868,10 +937,29 @@ export function MapView() {
                  'circle-stroke-color': T_SOMBRE.pole, 'circle-stroke-width': 2 } })
       m.addLayer({ id: 'ov-ht', type: 'line', source: 'ov-ht', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.ht, 'line-width': 1.6, 'line-dasharray': [5, 2.5], 'line-opacity': 0.9 } })
-      // RETOURS-12 C2 — axe structurant BAOBAB : trait PLEIN ÉPAIS (la desserte rapide se lit d'un coup),
-      // teinte turquoise identitaire ; halo sombre pour tenir sur ortho comme sur fond clair.
+      // RETOURS-13 R4 — moyenne tension HTA (EDF open data) : même famille de contrainte que la
+      // HTB mais tireté COURT et FIN (la forme et la valeur les séparent), teinte gris-sarcelle.
+      m.addLayer({ id: 'ov-mt', type: 'line', source: 'ov-mt', layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.mt, 'line-width': 1.1, 'line-dasharray': [2, 1.6], 'line-opacity': 0.85 } })
+      // RETOURS-13 R5 — TCSP : trait PLEIN ÉPAIS pour les tronçons EN SITE PROPRE (la voie dédiée
+      // se lit d'un coup) ; trait FIN TIRETÉ pour les simples couloirs bus (dits, jamais confondus) ;
+      // STATIONS dérivées en disques (le drapeau < 800 m se mesure à la station, pas au tracé).
+      // RETOURS-14 S8 — la ZONE d'abord (sous les tronçons) : parcelles couvertes TEINTÉES
+      // (union exacte de leurs géométries) + contour du rayon de 800 m. Les couloirs bus ne
+      // s'affichent plus ici (pas un site propre L151-36 — légende à 3 entrées).
+      m.addLayer({ id: 'ov-tcsp-zone-parcelles', type: 'fill', source: 'ov-tcsp-zone',
+        filter: ['==', ['get', 'subtype'], 'parcelles'] as never, layout: { visibility: 'none' },
+        paint: { 'fill-color': T_SOMBRE.tcsp, 'fill-opacity': 0.22 } })
+      m.addLayer({ id: 'ov-tcsp-zone-rayon', type: 'line', source: 'ov-tcsp-zone',
+        filter: ['==', ['get', 'subtype'], 'rayon'] as never, layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': 1.6, 'line-dasharray': [3, 2], 'line-opacity': 0.85 } })
       m.addLayer({ id: 'ov-tcsp', type: 'line', source: 'ov-tcsp', layout: { visibility: 'none', 'line-cap': 'round' },
+        filter: ['==', ['get', 'subtype'], 'site_propre'] as never,
         paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.5, 13, 4, 16, 6] as unknown as maplibregl.ExpressionSpecification, 'line-opacity': 0.95 } })
+      m.addLayer({ id: 'ov-tcsp-st', type: 'circle', source: 'ov-tcsp-st', layout: { visibility: 'none' },
+        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3.5, 14, 6, 17, 9] as unknown as maplibregl.ExpressionSpecification,
+                 'circle-color': T_SOMBRE.tcsp, 'circle-opacity': 0.95,
+                 'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': 1.4 } })
       // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
       // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
       m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
@@ -1033,9 +1121,15 @@ export function MapView() {
                    ['all', ['==', ['get', 'kind'], 'operation'], ['==', ['get', 'radar_cite'], true]], '#4ADE80',
                    ['==', ['get', 'kind'], 'operation'], '#E0A94F',
                    ['==', ['get', 'kind'], 'zone-origin'], '#4ADE80',
-                   // O2-1 (OUTILS-2) — permis au POINT MORT en ROUGE, en cours en VERT : l'œil sépare la
-                   // veille concurrentielle des opportunités dormantes sans changer d'écran.
-                   ['all', ['==', ['get', 'kind'], 'permis'], ['==', ['get', 'point_mort'], true]], '#E2726A',
+                   // RETOURS-17 W3 — la COULEUR DU POINT PERMIS SUIT SON ÉTAT (avant : tout en vert →
+                   // « 47 000 verts, lit 5 580 récents », Vic 05/09). Récent vert · Dormant corail ·
+                   // Achevé/Autre gris — MÊME source que les pastilles du panneau (lib/permisEtats).
+                   ['==', ['get', 'kind'], 'permis'],
+                     ['match', ['get', 'etat'],
+                       'recent', PERMIS_ETAT_COLOR.recent,
+                       'dormant', PERMIS_ETAT_COLOR.dormant,
+                       'gris', PERMIS_ETAT_COLOR.gris,
+                       PERMIS_ETAT_COLOR.recent],
                    ['==', ['get', 'kind'], 'radar'],
                    ['match', ['get', 'statut'],
                      'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#8FB4F0',
@@ -1285,7 +1379,7 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
-      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['tcsp', tcspAxe],
+      ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations], ['tcsp-zone', tcspZone],
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf]]   // M134 dispositifs · M137-U znieff · T4 vefa
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
@@ -1344,7 +1438,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, tcspAxe.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1386,6 +1480,11 @@ export function MapView() {
     const active = activeBasemapKey(basemap, orthoYear)
     for (const id of Object.keys(BASEMAP_SOURCES)) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
+    }
+    // RETOURS-15 U1 — la sous-couche monde accompagne TOUT fond ortho (mer continue à tous les
+    // zooms sous le millésime actif) ; Plan IGN dessine sa propre mer, Sombre/Clair n'ont pas de raster.
+    if (m.getLayer('bm-ortho-monde')) {
+      m.setLayoutProperty('bm-ortho-monde', 'visibility', active?.startsWith('bm-ortho') ? 'visible' : 'none')
     }
     applyClairMode(m, basemap)   // mer/terre du thème + traits achromatiques (aucune autre couleur touchée)
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
@@ -1457,21 +1556,25 @@ export function MapView() {
     m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-Y — hachure FRR en partie (moindre)
     m.setLayoutProperty('ov-vefa_neuf', 'visibility', vis(layers.vefa_neuf)) // SECTEUR-2 (T4) — prix du neuf VEFA
     m.setLayoutProperty('ov-vefa_neuf-trame', 'visibility', vis(layers.vefa_neuf)) // U1 — hachure sous-seuil
-    // M106 P1 : les deux couches d'aléa (aplat + trame + contour suivent leur toggle)
+    // M106 P1 : les deux couches d'aléa (aplat + contour suivent leur toggle — R7 : plus de trame)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))
-      m.setLayoutProperty(`${id}-trame`, 'visibility', vis(on))
       m.setLayoutProperty(`${id}-line`, 'visibility', vis(on))
     }
-    // M106 P4 / M106-B : transport public (tracés + arrêts + Papang) — M137-X : les pôles d'échange
-    // ont quitté cette couche pour « Axes structurants » (leur vraie famille : nœuds du réseau).
+    // M106 P4 / M106-B : transport public — RETOURS-14 S7 : lignes ET arrêts ensemble.
     for (const id of ['ov-trans-ligne', 'ov-trans-arret', 'ov-tele', 'ov-tele-st']) {
       m.setLayoutProperty(id, 'visibility', vis(layers.transport))
     }
     m.setLayoutProperty('ov-axe', 'visibility', vis(layers.axes))
     m.setLayoutProperty('ov-pole', 'visibility', vis(layers.axes))   // M137-X — pôles sur « Axes structurants »
+    // RETOURS-14 S9 : lignes électriques fusionnées (HTB + HTA sous une entrée).
     m.setLayoutProperty('ov-ht', 'visibility', vis(layers.lignes_ht))
-    m.setLayoutProperty('ov-tcsp', 'visibility', vis(layers.tcsp))   // RETOURS-12 C2
+    m.setLayoutProperty('ov-mt', 'visibility', vis(layers.lignes_ht))
+    // RETOURS-14 S8 : « Stationnement allégé » = zone 800 m + parcelles teintées + stations + voies.
+    m.setLayoutProperty('ov-tcsp', 'visibility', vis(layers.tcsp))
+    m.setLayoutProperty('ov-tcsp-zone-parcelles', 'visibility', vis(layers.tcsp))
+    m.setLayoutProperty('ov-tcsp-zone-rayon', 'visibility', vis(layers.tcsp))
+    m.setLayoutProperty('ov-tcsp-st', 'visibility', vis(layers.tcsp))
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
     m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))
@@ -1650,18 +1753,25 @@ export function MapView() {
     if (!cible) return
     const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === cible)
     let cancelled = false
-    const centroidReady = (c: [number, number] | null) => {
+    // RETOURS-13 R27/R32 — ZOOM FRANC (Vic : « le zoom est un peu timide ») : la parcelle doit se
+    // lire COMME LA PARCELLE, pas comme un point dans un quartier. Cible selon la SURFACE : grande
+    // parcelle (> 1 ha) → 16,5 ; moyenne (> 2 500 m²) → 17 ; standard → 18. Primitive PARTAGÉE
+    // (Étudier un bien, Permis, œil ambre des Projets…) — le réglage vaut pour tous.
+    const zoomCible = (surface: number | null | undefined): number =>
+      surface != null && surface > 10_000 ? 16.5 : surface != null && surface > 2_500 ? 17 : 18
+    const centroidReady = (c: [number, number] | null, surface?: number | null) => {
       if (!c || cancelled) return
-      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), 16), duration: 800 })
+      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), duration: 800 })
     }
-    if (feat) centroidReady(roughCentroid(feat.geometry))
+    if (feat) centroidReady(roughCentroid(feat.geometry), (feat.properties as { surface_m2?: number }).surface_m2)
     else {
       // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API.
       // CONTRAT (Vic, 07/07) : un clic dans la liste = je VOIS la parcelle pulser, où qu'elle
       // soit — le champ est `coords` [lon, lat] (le fallback lat/lon muet était le bug).
       getFiche(cible).then((f) => {
         const c = (f as unknown as { coords?: [number, number] }).coords
-        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]])
+        const s = (f as unknown as { surface_m2?: number }).surface_m2
+        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]], s)
       }).catch(() => undefined)
     }
     const pingId = geo.data && feat ? 'parcels-ping' : 'ile-ping'

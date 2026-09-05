@@ -256,9 +256,16 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     assert not reste, f"sources non classées (ni surveillées, ni raison, ni doublon couvert) : {reste}"
     # SCORING-3 (L3) — 64 → 65 : la BDNB entre au catalogue (surveillée par la sentinelle,
     # api data.gouv ; ingestion trimestrielle prête, amont sans le 974 au 03/09/2026).
-    # CIRCUIT-3 lot 6 — 65 → 67 : CatNat (arrêtés GASPAR) et Taxe d'aménagement (taux communaux)
+    # CIRCUIT-3 lot 6 — +2 : CatNat (arrêtés GASPAR) et Taxe d'aménagement (taux communaux)
     # entrent par la vanne (raisons non surveillées : interrogées en direct / source à ingérer).
-    assert len(noms) == 67
+    # RETOURS-13 (R4/R5) — +3 : EDF Réunion HTA (SEED, en-tête du data-file), TCSP OSM
+    # (raison : flux Overpass en direct) et Réunion Express (SEED, en-tête de la carte du
+    # débat public — le tracé bougera après la clôture du 26/11/2026).
+    # RETOURS-14 (S5) — +1 : cadastre d'époque (raison : archives immuables).
+    # FUSION fix/retours-12 → main : les deux jeux d'ajouts coexistent au catalogue
+    # (base 65 + CIRCUIT-3 2 + RETOURS-13/14 4 = 71) ; aucune source d'un côté ni de l'autre
+    # n'est perdue — mesuré sur l'arbre fusionné.
+    assert len(noms) == 71
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

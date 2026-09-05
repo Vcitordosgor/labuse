@@ -2,7 +2,6 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
-import { RadarMarche } from './RadarMarche'   // RADAR-CATÉGORIE (T5) — le Marché des annonces déménage ici
 import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
@@ -18,7 +17,7 @@ const fmt = fmtInt
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-mint/40 bg-mint/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+    <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
       {children}
     </div>
   )
@@ -64,8 +63,9 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
   return (
     // §1a — un seul conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
-      <Banner>Recalcul <b>à blanc</b> — rien n'est persisté. SDP estimée par <b>analogie</b> aux
-        parcelles U de la commune (méthode affichée). Le vrai recalcul règlementaire = prochain cycle.</Banner>
+      {/* RETOURS-14 S10 — le paragraphe « recalcul à blanc » vit désormais dans l'accordéon
+          UNIQUE « Attention (2) » de l'écran Procédures (ProcedureChangement) — plus deux
+          accordéons empilés. */}
       <div className="flex flex-wrap gap-1.5">
         {(zones.data ?? []).map((z) => (
           <button key={z.zone} onClick={() => setZone(z.zone)}
@@ -541,17 +541,10 @@ export function M18() {
           que la comparaison des communes. Les tendances /an restent en pied (légende). */}
       {d && <M18Tableau d={d} />}
 
-      {/* RADAR-CATÉGORIE (T5) — le « Marché des annonces (Radar) » a QUITTÉ le Radar : ses agrégats
-          par commune (pige/marche.py, réutilisé — socle R9) vivent ICI, sous les stats de marché.
-          Chaque mesure porte son n ; sous 5 = « échantillon insuffisant » ; état de démarrage digne. */}
-      <div className="mt-3 border-t border-line-2 pt-3">
-        <p className="label-caps text-[9.5px]">Marché des annonces (Radar)</p>
-        <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">
-          Les biens en vente repérés par le Radar, agrégés par commune. Faits bruts (compteurs) exacts
-          dès le premier ; une médiane ou un taux n’est servi qu’à partir de 5 biens — jamais de fausse précision.
-        </p>
-        <RadarMarche />
-      </div>
+      {/* RETOURS-14 S1 — le tableau du RADAR a QUITTÉ cet écran : deux sources confondues sous
+          un même titre (Vic voyait la table Radar par commune en croyant lire l'évolution DVF).
+          Il vit désormais dans SA modale nommée « Marché des annonces (Radar) — N biens
+          collectés » (Communes › porte dédiée). */}
     </div>
   )
 }

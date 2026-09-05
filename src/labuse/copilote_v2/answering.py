@@ -1461,9 +1461,9 @@ _CONCEPT_MAP = [
       "quels permis dans la commune"), ("permis", "Permis")),
     # Le « point mort » est désormais un FILTRE de l'outil Permis : la clé `promesses` reste (ALIASÉE) et
     # ouvre l'outil avec le filtre déjà actif. On GARDE tous les anciens mots-clés (« promesses mortes »…).
-    (("permis au point mort", "permis non lancés", "permis non lances", "promesses mortes",
+    (("permis dormants", "permis au point mort", "permis non lancés", "permis non lances", "promesses mortes",
       "permis jamais sortis", "permis jamais construits", "permis anciens jamais", "permis abandonnes"),
-     ("promesses", "Permis au point mort")),
+     ("promesses", "Permis dormants")),
     # 21/08/2026 — outil « Simulateur ZAN » retiré (DORMANT) : router vers lui = lien mort. L'enveloppe ZAN
     # (budget/reste/%) vit désormais dans l'outil « Communes » → la concept-route y mène.
     (("simulateur zan", "artificialisation", "contrainte d'artificialisation", "contrainte zan",

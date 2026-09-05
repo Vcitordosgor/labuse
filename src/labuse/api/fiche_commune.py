@@ -174,7 +174,7 @@ def permis_bloc(db: Session, commune: str) -> dict:
         "logements_12m": (offre.get("valeurs") or {}).get("logements_12m"),
         "delai_median_mois": cmp.get("delai_median_mois"),
         "point_mort": int(point_mort),
-        "source": "SITADEL (autorisations) · m10 (délais) · PC caducs (point mort, Estimé).",
+        "source": "SITADEL (autorisations) · m10 (délais) · PC caducs (dormants, Estimé).",
     }
 
 

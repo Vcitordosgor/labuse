@@ -24,7 +24,16 @@ function Frise({ siren }: { siren: string }) {
   const maxLgt = Math.max(1, ...f.frise.map((a) => a.n_logements))
   return (
     <div className="mt-1.5 rounded-md border border-line-2 bg-surface-2 p-2 text-[11px]">
-      <p className="text-txt-mut"><b className="text-txt">{f.n_operations}</b> opération{f.n_operations > 1 ? 's' : ''} · <b className="text-txt">{f.n_logements.toLocaleString('fr-FR')}</b> logements construits</p>
+      {/* RETOURS-13 R29 — le chiffre DIT ce qu'il compte (parcelles encore possédées) ; l'activité
+          de pétitionnaire (permis au nom de la société + filiales identifiées par la gérance INPI)
+          complète — jamais un total gonflé sans méthode. */}
+      <p className="text-txt-mut"><b className="text-txt">{f.n_operations}</b> opération{f.n_operations > 1 ? 's' : ''} · <b className="text-txt">{f.n_logements.toLocaleString('fr-FR')}</b> logements <span className="text-txt-dim">— {f.perimetre_note}</span></p>
+      {f.petitionnaire && f.petitionnaire.n_permis > 0 && (
+        <p data-frise-petitionnaire className="mt-0.5 text-[10.5px] text-txt-mut">
+          En pétitionnaire : <b className="text-txt">{f.petitionnaire.n_permis}</b> permis{f.petitionnaire.n_logements > 0 && <> · <b className="text-txt">{f.petitionnaire.n_logements.toLocaleString('fr-FR')}</b> logements</>} <span className="text-txt-dim">({f.petitionnaire.note})</span>
+          {(f.filiales_identifiees?.length ?? 0) > 0 && <> · +{f.filiales_identifiees.reduce((s, x) => s + x.n_permis, 0)} permis via {f.filiales_identifiees.length} filiale{f.filiales_identifiees.length > 1 ? 's' : ''} identifiée{f.filiales_identifiees.length > 1 ? 's' : ''} ({f.filiales_identifiees.map((x) => x.nom ?? x.siren).join(', ')})</>}
+        </p>
+      )}
       {/* frise par année (opérations, logements) */}
       <div className="mt-1.5 flex flex-col gap-1">
         {f.frise.map((a) => (

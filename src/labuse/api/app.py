@@ -158,6 +158,7 @@ async def _lifespan(app: FastAPI):
         from ..pige.tables import ensure_tables as _pige_ens
         # PROMO-1 · P1 — référentiel des programmes publiés par les promoteurs (table `programmes`)
         from ..promo.tables import ensure_tables as _promo_ens
+        from .recherche import ensure_index as _recherche_ens   # RETOURS-16 V5
         # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
         def _zone_ens():
             with session_scope() as _s:
@@ -202,6 +203,9 @@ async def _lifespan(app: FastAPI):
             # ÉTUDE DE ZONE Z1 — tables SIRENE établissements + MOBPRO (interrogées par le moteur de
             # zone même vides ; l'ingestion réelle vient des CLI ingest-sirene-etab / ingest-mobpro).
             ("zone", lambda: _zone_ens()),
+            # RETOURS-16 V5 — index (section, numéro) : la référence courte du suggest unifié
+            # se résout indexée (799 ms seq-scan → < 5 ms mesuré).
+            ("recherche", lambda: _recherche_ens(_engine())),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
@@ -2191,7 +2195,12 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
 
 
 @app.get("/communes/{commune}/acquisitions-pm")
-def commune_acquisitions_pm(commune: str, db: Session = Depends(get_db)) -> dict:
+def commune_acquisitions_pm(commune: str,
+                            # RETOURS-13 R14 — le plafond de 50 en dur (« 50 servis sur 773 » chez
+                            # Vic) devient une PAGINATION pilotée par le front (« Voir plus — N / M
+                            # chargés », par 200 — règle des listes longues).
+                            limit: int = Query(200, ge=1, le=5000),
+                            db: Session = Depends(get_db)) -> dict:
     """RETOURS-1 R3 (Vic) — LISTING des changements de propriétaire PM récents d'une commune
     (outil Communes › « Acquisitions récentes »). MÊME point de calcul que l'ex-bloc de la fiche
     contexte (acquisitions_recentes, KF-2 L1), borne élargie pour un listing. CONSTAT sourcé
@@ -2203,7 +2212,7 @@ def commune_acquisitions_pm(commune: str, db: Session = Depends(get_db)) -> dict
                 "n": 0, "n_total": 0, "tronquee": False, "acquisitions": [],
                 "source": None, "note": "Commune inconnue du référentiel — aucun constat servi."}
     from ..proprietaire_historique import acquisitions_recentes
-    out = acquisitions_recentes(db, insee, depuis_millesime=2022, limit=50)
+    out = acquisitions_recentes(db, insee, depuis_millesime=2022, limit=limit)
     out["commune"] = commune
     return out
 
@@ -2539,18 +2548,31 @@ def taxe_amenagement_config() -> dict:
 
 @app.get("/outils/taxe-amenagement/prefill")
 def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
-    """Contexte d'une parcelle pour pré-remplir : zone PLU + surface du TERRAIN (référence — la
-    surface TAXABLE est la surface de plancher projetée, saisie par l'utilisateur, jamais devinée)."""
+    """Contexte d'une parcelle pour pré-remplir : zone PLU, surface du TERRAIN (référence) et —
+    RETOURS-13 R26 — la SDP CONSTRUCTIBLE AU GABARIT (résiduel du run servi) : LABUSE pré-remplit
+    la surface taxable avec ce qu'il SAIT (étiqueté « pré-rempli, modifiable ») ; la surface du
+    PROJET reste celle du client s'il la connaît — le champ reste éditable, rien n'est deviné
+    au-delà de ce que le moteur calcule déjà."""
     _check_idu(idu)
+    # RETOURS-15 U6 — provenance VÉRIFIÉE : `parcel_residuel` est la VUE M135 sur
+    # parcel_residuel_runs WHERE is_served (run servi m135-run2-ile), PAS la table morte
+    # parcel_residuel_bati. `deja_batie` (emprise > 0) est servi pour que l'écran nomme le
+    # chiffre pour ce qu'il est : une SDP RESTANTE (résiduel), pas le gabarit entier.
     row = db.execute(text(
-        "SELECT p.commune, round(p.surface_m2) AS surface_terrain_m2, z.zone_libelle, z.zone_fam"
-        " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu WHERE p.idu = :i"),
+        "SELECT p.commune, round(p.surface_m2) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
+        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct"
+        " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu"
+        " LEFT JOIN parcel_residuel r ON r.parcel_id = p.id"
+        " WHERE p.idu = :i"),
         {"i": idu}).mappings().first()
     if not row:
         raise HTTPException(404, "Parcelle inconnue")
+    sdp = row["sdp_gabarit_m2"]
     return {"idu": idu, "commune": row["commune"],
             "surface_terrain_m2": row["surface_terrain_m2"],
-            "zone_plu": row["zone_libelle"] or row["zone_fam"]}
+            "zone_plu": row["zone_libelle"] or row["zone_fam"],
+            "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None,
+            "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0)}
 
 
 @app.get("/outils/taxe-amenagement")
@@ -3747,19 +3769,21 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
         tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
         ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
-        # RETOURS-12 C2 — distance à l'AXE DE TRANSPORT STRUCTURANT : la ligne BAOBAB Express
-        # (Citalis/CINOR), desserte rapide EN SERVICE (GTFS, route_id 'BAO' — déjà en base). On mesure
-        # la distance à l'AXE (transport_ligne, route_id=BAO), pas à un arrêt de bus quelconque : c'est
-        # l'axe structurant qui ouvre la modulation possible du stationnement. Seuil de pertinence 1,5 km.
-        tcsp_m = db.execute(text(
-            "SELECT round(MIN(ST_Distance(l.geom_2975, p.geom_2975)))::int AS d "
-            "FROM spatial_layers l, parcels p "
-            "WHERE p.idu = :idu AND l.kind = 'transport_ligne' AND l.attrs->>'route_id' = 'BAO' "
-            "AND l.geom_2975 IS NOT NULL"), {"idu": idu}).scalar()
+        # RETOURS-13 R5 — le fait BAOBAB (distance à l'axe, seuil 500 m) est REMPLACÉ : la distance
+        # se mesure À LA STATION TCSP EN SERVICE la plus proche (kind tcsp_station — arrêts GTFS sur
+        # une voie bus en site propre OSM), À VOL D'OISEAU (Conseil d'État 2022), jamais au tracé ni
+        # par la voirie. Seuil légal : 800 m (art. L151-36 c. urb., loi n° 2025-1129 du 26/11/2025,
+        # art. 20 — vérifié sur Légifrance le 05/09/2026). Seuil de pertinence d'affichage : 1,5 km.
+        tcsp_row = db.execute(text(
+            "SELECT s.name AS nom, round(ST_Distance(s.geom::geography, p.geom::geography))::int AS d "
+            "FROM spatial_layers s, parcels p "
+            "WHERE p.idu = :idu AND s.kind = 'tcsp_station' "
+            "ORDER BY s.geom <-> p.geom LIMIT 1"), {"idu": idu}).mappings().first()
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
-    tcsp = {"distance_m": tcsp_m} if (tcsp_m is not None and tcsp_m <= 1500) else None
+    tcsp = (dict(tcsp_row) if (tcsp_row and tcsp_row["d"] is not None and tcsp_row["d"] <= 1500)
+            else None)
     if not any((arret, pole, tele, ht, tcsp)):
         return None
     out: dict = {}
@@ -3824,20 +3848,27 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
             "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
         }
     if tcsp:
-        d = tcsp["distance_m"]
-        proche = d <= 500
-        # RETOURS-12 C2 — FORMULATION PRUDENTE : on ne PROMET jamais une réduction de stationnement ;
-        # on signale le point à instruire, en renvoyant au PLU (zone lue par le module destinations).
+        d = tcsp["d"]
+        proche = d <= 800
+        # RETOURS-13 R5 — le plafond de l'art. L151-36 S'IMPOSE au PLU (« nonobstant toute
+        # disposition du plan local d'urbanisme ») : ce n'est pas une faculté. Ce qui reste à
+        # instruire : la QUALITÉ DE LA DESSERTE (condition du texte) et la nature exacte de
+        # l'aménagement (BHNS/site propre oui ; un simple couloir bus ne déclenche jamais ce fait —
+        # les stations dérivées ne couvrent que les voies en site propre).
         out["tcsp"] = {
-            "distance_m": d, "sous_500m": proche,
+            "station": tcsp["nom"], "distance_m": d, "sous_800m": proche,
+            # RETOURS-14 S8.4 — même français que le « i » de la couche : l'usage d'abord.
             "libelle": (
-                "Axe de transport structurant — BAOBAB Express (Citalis / CINOR, ligne express en service) "
-                + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m")
-                + (" : à moins de 500 m d'un axe de transport structurant, le règlement de la zone PEUT "
-                   "moduler l'exigence de stationnement — à vérifier dans le PLU (règles de la zone). "
-                   "Rien n'est promis : c'est un point à instruire." if proche
-                   else ".")),
-            "source": "GTFS Citalis (CINOR) — Licence Ouverte (Point d'Accès National)",
+                f"Station de transport en commun en site propre « {tcsp['nom']} » "
+                + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m (à vol d'oiseau)")
+                + (" — à moins de 800 m d'une station, le PLU ne peut pas exiger plus d'une place "
+                   "de stationnement par logement (0,5 pour le logement social), si la desserte "
+                   "est de qualité. Moins de parking à construire = plus de surface vendable et "
+                   "un bilan plus léger. Source : code de l'urbanisme, art. L151-34 à 36 "
+                   "(loi n° 2025-1129 du 26/11/2025). Le plafond s'impose au PLU ; reste à "
+                   "instruire la qualité de la desserte." if proche else ".")),
+            "source": ("stations dérivées : arrêts GTFS sur voie bus en site propre (OSM, ODbL) — "
+                       "distance à vol d'oiseau depuis la station (CE 2022)"),
         }
     return out
 
@@ -4602,10 +4633,15 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # SECTEUR-2 (T4) — prix du logement NEUF (VEFA acté DVF) en aplat COMMUNE ; subtype =
                     # tranche de prix (choropleth). ECLN écartée (métropole seule, N/A DOM) → jamais de stock.
                     "vefa_neuf",
-                    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT : synthétique (pas un kind stocké),
-                    # dérivé de transport_ligne WHERE route_id='BAO' (BAOBAB Express, Citalis/CINOR). Voir
-                    # le cas particulier dans map_layers_geojson (jamais d'ingestion neuve : réutilise le GTFS).
-                    "tcsp_axe"}
+                    # RETOURS-13 R5 — la couche BAOBAB (tcsp_axe synthétique) est RETIRÉE (décision
+                    # Vic : « je veux la couche TCSP, pas la ligne BAOBAB »). À la place : les
+                    # tronçons en site propre (OSM) et les stations dérivées (arrêts GTFS ≤ 60 m).
+                    "tcsp_troncon", "tcsp_station",
+                    # RETOURS-14 S8 — zone « stationnement allégé » matérialisée (rayon 800 m
+                    # autour des stations + union des parcelles couvertes, calculés par ingest_tcsp).
+                    "tcsp_zone",
+                    # RETOURS-13 R4 — moyenne tension EDF (HTA aérien/souterrain, open data retrouvé).
+                    "ligne_mt"}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
@@ -4666,22 +4702,8 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
     if kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
-    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT (couche synthétique) : le tracé de la ligne
-    # express BAOBAB (Citalis/CINOR), dérivé du GTFS déjà en base (transport_ligne, route_id='BAO').
-    # Aucune ingestion neuve → aucune traçabilité à recréer : on réutilise la source GTFS existante.
-    if kind == "tcsp_axe":
-        rows = db.execute(text(
-            "SELECT sl.id, sl.name, sl.attrs->>'reseau' AS reseau, sl.attrs->>'gtfs_maj' AS maj, "
-            "ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0001)) AS g "
-            "FROM spatial_layers sl WHERE sl.kind='transport_ligne' AND sl.attrs->>'route_id'='BAO'"
-        )).mappings().all()
-        feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
-                  "properties": {"id": r["id"], "name": "BAOBAB Express", "reseau": r["reseau"],
-                                 "subtype": "axe_structurant"}}
-                 for r in rows if r["g"]]
-        maj = rows[0]["maj"] if rows else None
-        return {"type": "FeatureCollection", "features": feats,
-                "millesime_integration": maj, "source_millesime": maj}
+    # RETOURS-13 R5 — la couche synthétique BAOBAB (tcsp_axe) est retirée : le TCSP est désormais
+    # servi par les kinds STOCKÉS tcsp_troncon/tcsp_station (ingestion transport_reseaux.ingest_tcsp).
     # CONNEXIONS-2 Lot 6.3 (propagation M2) — si la SOURCE de cette couche est DÉSACTIVÉE au dashboard,
     # on sert une couche VIDE marquée « source désactivée » plutôt que des objets d'une source coupée.
     ds_off = db.execute(text(
@@ -4694,9 +4716,14 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                 "source_millesime": None}
     rows = db.execute(text(
         """SELECT sl.id, sl.subtype, sl.name, sl.attrs->>'niveau' AS niveau,
+                  sl.attrs->>'classe' AS classe, sl.attrs->>'etat' AS etat,
+                  sl.attrs->'lignes_noms' AS lignes_noms, sl.attrs->>'reseau' AS reseau,
                   sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
                   sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
-                  ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
+                  -- RETOURS-14 S6 : géométrie simplifiée MATÉRIALISÉE (geom_simple, entretenue par
+                  -- ensure_geom_2975) — la simplification à la volée coûtait ~11 s sur les aléas et
+                  -- la couche restait muette au premier clic. Repli à la volée si non peuplée.
+                  ST_AsGeoJSON(COALESCE(sl.geom_simple, ST_SimplifyPreserveTopology(sl.geom, 0.0002))) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
              -- M137-V : FILTRE D'AFFICHAGE SEUL — les arrêts de bus OSM (kind 'amenite', subtype
@@ -4714,9 +4741,13 @@ def map_layers_geojson(kind: str, commune: str | None = None,
          "sport_keep": _SPORT_KEEP_RE, "sport_drop": _SPORT_DROP_RE}).mappings().all()
     # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
     # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.
+    # RETOURS-13 : + `classe` (R6, classe d'affichage des aléas — le degré réel, jamais écrasé),
+    # `etat` (R5, tcsp en_service), `lignes_noms`/`reseau` (R9, bulle d'arrêt : nom + lignes + réseau).
     feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
               "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"],
-                             "niveau": r["niveau"], "critere": r["critere"],
+                             "niveau": r["niveau"], "classe": r["classe"], "etat": r["etat"],
+                             "lignes_noms": r["lignes_noms"], "reseau": r["reseau"],
+                             "critere": r["critere"],
                              "concordance": r["concordance"], "tension": r["tension"],
                              "nature": r["nature"]}}
              for r in rows if r["g"]]
@@ -4987,6 +5018,11 @@ def renouvellement_liste(commune: str | None = None,
             "avertissement": ("Parcelles occupées : potentiel physique et réglementaire de "
                               "densification — ni une mise en vente prévisible, ni une "
                               "opportunité qualifiée.")}
+
+
+# RETOURS-16 V1 — le proxy ortho vit dans son module (api/ortho_proxy.py) : TOUTES les sources
+# ortho y passent (Express, mosaïque monde, millésimes) — fondu de côte + rognage du no-data,
+# aplat de mer unique côté canvas, cache disque. Routeur inclus en bas de fichier.
 
 
 @app.get("/map/permits.geojson")
@@ -6284,6 +6320,8 @@ from .ops import router as _ops_router  # noqa: E402  (P4 — /healthz/crons)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .ortho import router as _ortho_router  # noqa: E402
+from .ortho_proxy import router as _ortho_proxy_router  # noqa: E402  (RETOURS-16 V1 — fonds ortho proxifiés)
+from .recherche import router as _recherche_router  # noqa: E402  (RETOURS-16 V5 — suggest unifié)
 from .tiles import router as _tiles_router  # noqa: E402
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
@@ -6328,6 +6366,8 @@ app.include_router(_rarete_router)
 app.include_router(_ops_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
+app.include_router(_ortho_proxy_router)
+app.include_router(_recherche_router)
 app.include_router(_ia_router)
 app.include_router(_events_router)
 app.include_router(_moteurs_router)

@@ -235,9 +235,12 @@ def test_omnibox_parcelinput_chemin_unique():
     AAC = (root / "components/AddressAutocomplete.tsx").read_text(encoding="utf-8")
     PP = (root / "components/outils/ParcelPicker.tsx").read_text(encoding="utf-8")
     O5 = (root / "components/outils/blocB.tsx").read_text(encoding="utf-8")
-    # 1) la règle IDU a UN seul foyer (format.ts), AddressAutocomplete la réutilise (pas de regex copiée)
+    # 1) la règle IDU a UN seul foyer PAR CÔTÉ : format.ts (front — ParcelInput l'applique à
+    # l'Entrée) et api/recherche.py (serveur — RETOURS-16 V5 : l'aiguillage du suggest unifié).
+    # AddressAutocomplete n'aiguille PLUS lui-même (aucune regex IDU recopiée) : il envoie la
+    # frappe telle quelle au suggest, qui décide par la forme.
     assert "export const estIdu" in FORMAT
-    assert "estIdu" in AAC and "d{5}[0-9A-Za-z]" not in AAC
+    assert "d{5}[0-9A-Za-z]" not in AAC and "rechercheSuggest" in AAC
     # 2) ParcelInput = AddressAutocomplete + aiguillage estIdu sur Entrée — le composant unique
     assert "AddressAutocomplete" in PI and "estIdu" in PI and "onEnterRaw" in PI
     # 3) chaque outil à saisie de parcelle passe par ParcelInput (plus de champ IDU séparé / onglet)

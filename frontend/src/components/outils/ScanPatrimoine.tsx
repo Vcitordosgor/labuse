@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-16 V5 — barre partagée
 import { banAutocomplete, getFiche, modPatrimoine, modPatrimoineSearch, parcelAt } from '../../lib/api'
 import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
@@ -59,12 +60,8 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   const ownerQ = useQuery({ queryKey: ['m02', owner], queryFn: () => modPatrimoine(owner!), enabled: !!owner })
   const ownerNom = (ownerQ.data as { nom?: string } | undefined)?.nom ?? ownerLabel
 
-  const digits = q.replace(/\s/g, '')
-  const looksSiren = /^\d{9}$/.test(digits) || /^\d{14}$/.test(digits)   // SIREN 9 / SIRET 14
-  const looksIdu = estIdu(q.trim())
-  // suggestions live par NOM (état 1 seulement, et tant que ce n'est ni un SIREN/SIRET ni un IDU)
-  const sug = useQuery({ queryKey: ['scan-search', q.trim()], queryFn: () => modPatrimoineSearch(q.trim()), enabled: q.trim().length >= 2 && !looksSiren && !looksIdu && !owner })
-
+  // RETOURS-16 V5 — la query de suggestions maison (`sug`, par nom) est retirée : le composant
+  // de barre partagé porte désormais la suggestion (propriétaire/SIREN/parcelle/adresse, typée).
   const choisir = (siren: string, nom?: string) => { setOwner(siren); setOwnerLabel(nom ?? null); setMsg(null) }
   const changer = () => { setOwner(null); setOwnerLabel(null); setQ(''); setMsg(null) }
   // résout l'IDU → propriétaire moral de la fiche (owner_siren) ; null si particulier / non renseigné.
@@ -123,27 +120,24 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       {!owner ? (
         /* ───────── ÉTAT 1 — aucun propriétaire : la recherche SEULE, pas d'onglets. ───────── */
         <>
-          {/* U1.1 — UN seul champ, celui de l'outil ; aucun renvoi vers une autre barre. */}
+          {/* U1.1 — UN seul champ, celui de l'outil ; aucun renvoi vers une autre barre.
+              RETOURS-16 V5 — la suggestion maison (liste `sug` par nom) est REMPLACÉE par le
+              composant partagé (suggest unifié) : propriétaire + SIREN + parcelle + adresse à la
+              frappe, types affichés. La résolution à l'Entrée (`resoudre`) reste celle de l'outil. */}
           <div className="flex items-center gap-1.5">
-            <input data-scan-search value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') resoudre() }}
-              placeholder="Nom, SIREN, IDU ou adresse" className={inp} />
+            <AddressAutocomplete data-scan-search placeholder="Nom, SIREN, IDU ou adresse"
+              grammaires={['proprietaire', 'siren', 'cadastre', 'adresse']}
+              onTextChange={setQ}
+              onPick={(it) => { if (it.siren) choisir(it.siren, it.type === 'proprietaire' ? it.label : undefined) }}
+              onSelect={(sel) => resoudre(sel.idu ?? sel.label)}
+              onEnterRaw={(t) => resoudre(t)}
+              className={inp} />
             <button data-scan-chercher onClick={() => resoudre()} disabled={q.trim().length < 2 || busy}
               className="shrink-0 rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-ink disabled:opacity-40">{busy ? '…' : 'Chercher'}</button>
           </div>
           {/* U1.3 — ligne d'aide sous le champ. */}
           <p className="text-[11px] leading-snug text-txt-off">Une société, une parcelle, une adresse — LABUSE remonte au propriétaire.</p>
           {msg && <p data-scan-msg className="text-[11px] leading-snug text-st-creuser">{msg}</p>}
-          {/* suggestions live par nom (tant qu'on frappe) */}
-          {q.trim().length >= 2 && !looksSiren && !looksIdu && (sug.data?.length ?? 0) > 0 && (
-            <div className="flex flex-col gap-1">
-              {(sug.data ?? []).slice(0, 8).map((s) => (
-                <button key={s.siren} data-scan-sug onClick={() => choisir(s.siren, s.nom)}
-                  className="hover-fill flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt transition-colors duration-quick">
-                  <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
-                </button>
-              ))}
-            </div>
-          )}
           {/* U1.4 — bloc EXEMPLES : à vide seulement (remplace le message d'attente ; montre ce que le champ accepte). */}
           {q.trim().length < 2 && (
             <div className="flex flex-col gap-1.5">
@@ -151,7 +145,9 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
               {EXEMPLES.map((e) => (
                 <button key={e.k} data-scan-exemple={e.k} onClick={() => resoudre(e.v)} disabled={busy}
                   className="hover-fill flex items-center gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left disabled:opacity-40">
-                  <span className="shrink-0 rounded bg-mint/10 px-1.5 py-0.5 font-mono text-[10px] text-mint">{e.k}</span>
+                  {/* RETOURS-13 R16 — mécanique T6 (.chip) : sur la ligne survolée en vert plein,
+                      le libellé de type garde un FOND SOMBRE PLEIN et un texte clair (contraste). */}
+                  <span className="chip chip-mint shrink-0 rounded bg-mint/10 px-1.5 py-0.5 font-mono text-[10px] text-mint">{e.k}</span>
                   <span className="truncate text-[12.5px] text-txt">{e.v}</span>
                 </button>
               ))}

@@ -62,7 +62,11 @@ export type MapTokens = {
    *  les niveaux ; le libellé officiel reste la vérité. `aleaInondation`/`aleaMvt` gardent leur
    *  rôle d'identité (contour + trame, distinction entre les deux aléas superposés). */
   aleaInondationRamp: { faible: string; moyen: string; fort: string }
-  aleaMvtRamp: { faible: string; moyen: string; fort: string }
+  /** RETOURS-13 R6 — le flux DEAL mouvement de terrain porte QUATRE classes réelles (élevé et
+   *  très élevé existent — 360 + 124 zones — et étaient écrasées en « moyen » : jamais de rouge
+   *  à l'écran). Une teinte par classe, la plus grave en ROUGE ; `fort` reste accepté en repli
+   *  (si la DEAL publiait un jour ce libellé) et pointe le rouge. */
+  aleaMvtRamp: { faible: string; moyen: string; eleve: string; tres_eleve: string; fort: string }
   /** opacité d'aplat UNIQUE une fois la teinte porteuse du niveau (plus de gradient d'opacité). */
   aleaFillOpacity: number
   /** M106-B — LA COULEUR DIT LE RÉSEAU (arbitrage : « tout en rose, on ne distingue rien »).
@@ -80,8 +84,11 @@ export type MapTokens = {
   /** M106 P4 — lignes haute tension : anthracite/argent NEUTRE (une CONTRAINTE d'infrastructure,
    *  pas une couleur d'opportunité), tireté long — distinct des limites parcellaires continues. */
   ht: string
-  /** RETOURS-12 C2 — axe de transport structurant (BAOBAB Express) : trait PLEIN épais, teinte
-   *  identitaire forte distincte des réseaux de bus (ni rose Citalis, ni ardoise des axes routiers). */
+  /** RETOURS-13 R4 — lignes moyenne tension HTA (EDF open data) : gris-sarcelle, tireté COURT et
+   *  FIN — même famille de contrainte que la HTB, la forme et la valeur les séparent. */
+  mt: string
+  /** RETOURS-13 R5 — transport en commun en site propre (tronçons OSM + stations) : trait PLEIN
+   *  épais, teinte identitaire forte distincte des réseaux de bus et des axes routiers. */
   tcsp: string
   /** M134 / M137-Y — couche « Dispositifs ». QPV orange · ANRU chartreuse · TVA cyan. Pour ZFANG et
    *  FRR, l'ÉTAT se lit à la COULEUR (une par état, ci-dessous) + hachures en second signal sur
@@ -128,7 +135,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaTrameOpacity: 0.4,
     // C3 — teintes vives sur fond sombre, franchement distinctes (bleu→orange→rouge / beige→marron→rouge)
     aleaInondationRamp: { faible: '#4EA8F0', moyen: '#F0913D', fort: '#E8564A' },
-    aleaMvtRamp: { faible: '#D9C08A', moyen: '#B5732E', fort: '#E8564A' },
+    aleaMvtRamp: { faible: '#D9C08A', moyen: '#B5732E', eleve: '#F0913D', tres_eleve: '#E8564A', fort: '#E8564A' },
     aleaFillOpacity: 0.45,
     transportReseaux: {
       'Car Jaune': '#E3B93C',   // or — 9,46 sur fond sombre (≠ #F5C518 Pages Jaunes, moins saturé)
@@ -143,6 +150,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#FF6DB3',            // M137-X — magenta vif : les pôles RESSORTENT sur l'axe gris — 8,9
     axe: '#8FA6C4',             // bleu-gris — 7,06
     ht: '#B9C4C0',              // 9,83 sur fond sombre
+    mt: '#7FA0A8',              // R4 — gris-sarcelle (HTA, tireté court fin)
     tcsp: '#3FE0C8',             // C2 — turquoise vif structurant (fond sombre)
     // M134 dispositifs (sombre = tints vifs, tous > 5:1 sur fond sombre)
     qpv: '#E8934A', qpvOpacity: 0.28,                     // orange (opérationnel)
@@ -179,7 +187,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaTrameOpacity: 0.5,
     // C3 — teintes profondes sur terre claire, franchement distinctes (bleu→orange→rouge / beige→marron→rouge)
     aleaInondationRamp: { faible: '#2563EB', moyen: '#D97706', fort: '#DC2626' },
-    aleaMvtRamp: { faible: '#B08A4A', moyen: '#8A4B12', fort: '#B91C1C' },
+    aleaMvtRamp: { faible: '#B08A4A', moyen: '#7A430E', eleve: '#D97706', tres_eleve: '#B91C1C', fort: '#B91C1C' },
     aleaFillOpacity: 0.55,
     transportReseaux: {
       'Car Jaune': '#8A6D08',   // or profond — 4,39 sur terre claire
@@ -194,6 +202,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pole: '#C21F7E',            // M137-X — magenta profond : ressort sur l'axe et l'ortho claire — 5,6
     axe: '#33506B',             // bleu-gris profond — 7,50
     ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓
+    mt: '#28606E',              // R4 — sarcelle profond (HTA)
     tcsp: '#0E8F7E',             // C2 — turquoise profond structurant (terre claire)
     // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)
     qpv: '#C25E1B', qpvOpacity: 0.28,                     // orange — aplat 1,40 ✓ ; contour 3,82 ✓

@@ -378,7 +378,7 @@ export function ContextePanel() {
                   <RowT lbl="Permis autorisés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
                   {d.permis_bloc.delai_median_mois != null && <RowT lbl="Délai d'instruction médian" val={`${fmtDec(d.permis_bloc.delai_median_mois)} mois`} />}
                   {d.permis_bloc.logements_12m != null && <RowT lbl="Offre engagée" val={`${fmt(d.permis_bloc.logements_12m)} logts / 12 mois`} />}
-                  <RowT lbl="Permis au point mort" val={fmt(d.permis_bloc.point_mort)} />
+                  <RowT lbl="Permis dormants" val={fmt(d.permis_bloc.point_mort)} />
                 </div>
                 <Shortcut label="Ouvrir Permis — cette commune" onClick={() => ouvrirOutil(commune, insee, 'permis')} />
                 <Source nom={d.permis_bloc.source} />

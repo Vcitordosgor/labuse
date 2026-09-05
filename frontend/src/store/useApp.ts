@@ -33,9 +33,12 @@ export interface LayerToggles {
   cinquante_pas: boolean // M6.1 : réserve des 50 pas géométriques (bande littorale outre-mer)
   alea_inondation: boolean // M106 P1 : aléa inondation DEAL (kind=georisque_alea, subtype dédié) —
   alea_mvt: boolean        // le zonage PPR réglementaire reste agrégé (multirisque insécable)
-  transport: boolean       // M106 P4 : transport public (tracés GTFS + pôles d'échange + Papang)
-  lignes_ht: boolean       // M106 P4 : lignes haute tension BD TOPO (contrainte, tireté anthracite)
-  tcsp: boolean            // RETOURS-12 C2 : axe de transport structurant (BAOBAB Express, GTFS CINOR)
+  transport: boolean       // RETOURS-14 S7 : transport public — LIGNES ET ARRÊTS ensemble (fusion,
+                           // demande Vic) ; les arrêts restent cliquables (bulle nom + lignes + réseau)
+  lignes_ht: boolean       // RETOURS-14 S9 : LIGNES ÉLECTRIQUES fusionnées — HTA (EDF open data) +
+                           // HTB (BD TOPO) sous une seule entrée, deux styles en légende
+  tcsp: boolean            // RETOURS-14 S8 : « Stationnement allégé — TCSP (art. L151-36) » —
+                           // zone 800 m + parcelles teintées + stations + voies en site propre
   axes: boolean            // M106-B P3 : axes structurants BD TOPO (importance IGN 1-2, ardoise)
   renouv: boolean     // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut
   couleurs_verdict: boolean // M55-G point 8 : palette des tiers en COUCHE activable — imposée
@@ -354,6 +357,13 @@ interface AppState {
   // écran (patron ex-Comparateur), pilotée par ce drapeau. La fiche commune et l'onglet « Évolution »
   // restent dans le panneau ; seule la table déborde en grand. Communes.tsx est le seul contrôleur.
   communesTableOpen: boolean
+  // RETOURS-13 R13 — « Évolution du marché » s'ouvre EN GRAND (même modale plein écran que la
+  // comparaison des 24 communes), plus dans le panneau étroit.
+  evolutionTableOpen: boolean
+  setEvolutionTableOpen: (v: boolean) => void
+  // RETOURS-14 S1 — le tableau du Radar (annonces) a SA modale, nommée avec son compteur.
+  radarTableOpen: boolean
+  setRadarTableOpen: (v: boolean) => void
   setCommunesTableOpen: (v: boolean) => void
   // DENSIFIER (refonte 13 outils) — l'outil « Densifier l'existant » ouvre son GRAND tableau
   // (67 214 parcelles) en overlay plein écran, même patron que Comparaison/Communes. Piloté par ce
@@ -486,7 +496,7 @@ interface AppState {
 // centralisé : il survivait à `setModule` (changement d'outil) faute d'y être remis. Ici, il tombe
 // avec les overlays plein écran à CHAQUE navigation. L'ouverture du tiroir (`openSourceDrawer`) NE
 // spread PAS CLOSE_OVERLAYS → aucun auto-fermeture.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, densifierTableOpen: false, sourceLine: null } as const
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null } as const
 // SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
@@ -741,6 +751,10 @@ export const useApp = create<AppState>((set) => ({
   setComparePicking: (comparePicking) => set({ comparePicking }),
   communesTableOpen: false,
   setCommunesTableOpen: (communesTableOpen) => set({ communesTableOpen }),
+  evolutionTableOpen: false,
+  setEvolutionTableOpen: (evolutionTableOpen) => set({ evolutionTableOpen }),
+  radarTableOpen: false,
+  setRadarTableOpen: (radarTableOpen) => set({ radarTableOpen }),
   densifierTableOpen: false,
   setDensifierTableOpen: (densifierTableOpen) => set({ densifierTableOpen }),
   // façon openCompare : ouvre le grand tableau ET ferme les autres overlays plein écran.

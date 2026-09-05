@@ -61,6 +61,11 @@ GTFS_RESEAUX: list[tuple[str, str]] = [
 SRC_GTFS = "Transport public — GTFS (PAN, 7 réseaux)"
 SRC_OSM_TRANSPORT = "OSM — transport (pôles d'échange & téléphérique)"
 SRC_BDTOPO = "BD TOPO IGN"
+#: RETOURS-13 R5 — la couche TCSP « en service » est extraite d'OSM (voies bus en site propre) :
+#: aucune source SIG publique d'axe TCSP n'existe au 974 (recherche du 05/09/2026, URL par URL au
+#: compte-rendu : PEIGEO/AGORAH 0 fiche, data.regionreunion 0 jeu, transecoexpress.re injoignable,
+#: EPCI sans SIG — le « SIG TCSP » CIVIS est un récolement paysager d'un tronçon, pas un axe).
+SRC_OSM_TCSP = "TCSP — voies bus en site propre (OSM)"
 
 
 def _config() -> dict:
@@ -160,10 +165,15 @@ def ingest_gtfs(session: Session, run_id: int | None, sids: dict) -> dict:
                 # réseau) — la dérivation des pôles CUMULE les réseaux d'une grappe spatiale,
                 # elle a besoin de l'union DISTINCTE, pas d'un simple compte par arrêt.
                 lignes = sorted(f"{reseau}:{rid}" for rid in par_arret.get(s["stop_id"], ()))
+                # RETOURS-13 R9 — les NOMS de lignes (route_short_name de routes.txt) voyagent
+                # aussi : la bulle d'un arrêt cliqué dit « ligne E3 », jamais un route_id opaque.
+                noms = sorted({(routes.get(rid, {}).get("route_short_name")
+                                or routes.get(rid, {}).get("route_long_name") or rid)
+                               for rid in par_arret.get(s["stop_id"], ())})
                 _insert_layer(session, "transport_arret", reseau, s.get("stop_name") or s["stop_id"],
                               {"type": "Point", "coordinates": [lon, lat]}, sid_gtfs, None, run_id,
                               {"reseau": reseau, "stop_id": s["stop_id"], "nb_lignes": len(lignes),
-                               "lignes": lignes, "gtfs_maj": updated})
+                               "lignes": lignes, "lignes_noms": noms, "gtfs_maj": updated})
                 bilan["arrets"] += 1
             # ── tracés par ligne (jusqu'à 4 variantes de shape, MultiLineString) ──
             shapes = _shapes(zf)
@@ -337,6 +347,107 @@ def ingest_telepherique(session: Session, run_id: int | None, sids: dict) -> dic
         "RETURNING s.name")).all()
     return {"lignes": n_lignes, "stations": n_stations - len(orphelines),
             "stations_ecartees": [r[0] for r in orphelines]}
+
+
+# ────────────────────────────── TCSP (RETOURS-13 R5) ──────────────────────────────
+
+def ingest_tcsp(session: Session, run_id: int | None, sids: dict) -> dict:
+    """RETOURS-13 R5 — la VRAIE couche TCSP « Transport en commun en site propre ».
+
+    EN SERVICE (le seul état avec une géométrie publique traçable) : les voies bus d'OSM sur le
+    974, en DEUX natures dites —
+    · subtype='site_propre' : `highway=busway` (chaussée dédiée aux bus — un site propre au sens
+      plein : boulevard sud de Saint-Denis, tronçons CIVIS livrés à Saint-Pierre…) ;
+    · subtype='couloir'     : `busway=lane/opposite_lane`, `lanes:psv`, `psv=designated` (couloir
+      réservé sur chaussée partagée — ce N'EST PAS un site propre au sens de l'art. L151-36 :
+      il ne déclenche JAMAIS le drapeau stationnement, la distinction voyage en attrs).
+    EN TRAVAUX (Rico Carpaye/TCO, ESTI+/CIREST) et EN PROJET (Réunion Express, débat public
+    19/08→26/11/2026) : AUCUNE géométrie publique (recherche URL par URL au compte-rendu) —
+    jamais un tracé numérisé à la main ; ces états vivent dans le « i » de la couche et à la
+    sentinelle (Réunion Express ré-ouvert après le débat).
+
+    Puis dérivation des STATIONS desservies : kind='tcsp_station' = grappes d'arrêts GTFS à
+    ≤ 60 m d'un tronçon en site propre (le drapeau fiche L151-36 se mesure À LA STATION,
+    à vol d'oiseau — Conseil d'État 2022 — jamais au tracé)."""
+    session.execute(text("DELETE FROM spatial_layers WHERE kind IN ('tcsp_troncon', 'tcsp_station')"))
+    q = ('[out:json][timeout:120];area["ISO3166-2"="FR-RE"]->.a;('
+         'way["highway"="busway"](area.a);'
+         'way["busway"~"lane|opposite_lane"](area.a);'
+         'way["lanes:psv"](area.a);'
+         'way["psv"="designated"]["highway"](area.a););out tags geom;')
+    n_sp = n_couloir = 0
+    sid = sids.get(SRC_OSM_TCSP)
+    for el in _overpass(q):
+        tags = el.get("tags") or {}
+        if tags.get("proposed") or tags.get("construction") or tags.get("highway") in ("proposed", "construction"):
+            continue   # jamais un tracé anticipé servi comme en service
+        coords = [[p["lon"], p["lat"]] for p in el.get("geometry") or []]
+        if len(coords) < 2:
+            continue
+        site_propre = tags.get("highway") == "busway"
+        nom = tags.get("name") or ("Voie bus en site propre" if site_propre else "Couloir bus")
+        _insert_layer(session, "tcsp_troncon", "site_propre" if site_propre else "couloir", nom,
+                      {"type": "LineString", "coordinates": coords}, sid, None, run_id,
+                      {"etat": "en_service", "osm_id": f"way/{el.get('id')}",
+                       "source_licence": "OSM (ODbL)",
+                       "nature": ("chaussée dédiée aux bus (site propre)" if site_propre
+                                  else "couloir réservé sur chaussée partagée — pas un site propre L151-36")})
+        n_sp += 1 if site_propre else 0
+        n_couloir += 0 if site_propre else 1
+    # STATIONS TCSP (Dérivé) : arrêts GTFS à ≤ 60 m d'un tronçon en SITE PROPRE, groupés en
+    # grappes (les quais aller/retour = une station), nommés par le quai le plus desservi.
+    n_st = session.execute(text("""
+        WITH quais AS (
+          SELECT a.id, a.name, a.geom, a.attrs,
+                 ST_ClusterDBSCAN(ST_Transform(a.geom, 2975), eps := 60, minpoints := 1) OVER () AS grappe
+          FROM spatial_layers a
+          WHERE a.kind = 'transport_arret' AND EXISTS (
+            SELECT 1 FROM spatial_layers t WHERE t.kind = 'tcsp_troncon'
+            AND t.subtype = 'site_propre'
+            AND ST_DWithin(t.geom::geography, a.geom::geography, 60))),
+        agg AS (
+          SELECT grappe, ST_Centroid(ST_Collect(DISTINCT geom)) AS centre,
+                 count(*) AS nb_quais
+          FROM quais GROUP BY grappe),
+        nommage AS (
+          SELECT DISTINCT ON (grappe) grappe, name,
+                 attrs->'lignes_noms' AS lignes_noms, attrs->>'reseau' AS reseau
+          FROM quais ORDER BY grappe, jsonb_array_length(COALESCE(attrs->'lignes', '[]'::jsonb)) DESC, name)
+        INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id, ingestion_run_id)
+        SELECT 'tcsp_station', 'en_service', initcap(n.name), a.centre,
+               jsonb_build_object('statut', 'Dérivé', 'nb_quais', a.nb_quais,
+                                  'reseau', n.reseau, 'lignes_noms', COALESCE(n.lignes_noms, '[]'::jsonb),
+                                  'critere', 'arrêt GTFS à ≤ 60 m d''une voie bus en site propre (OSM)'),
+               :sid, :run
+        FROM agg a JOIN nommage n USING (grappe)
+        RETURNING 1"""), {"sid": sid, "run": run_id}).rowcount
+    # RETOURS-14 S8 — ZONE « STATIONNEMENT ALLÉGÉ » matérialisée (kind='tcsp_zone') :
+    # (a) subtype='rayon' = union des cercles de 800 m autour des stations (c'est un RAYON à vol
+    # d'oiseau depuis la station — donc une pastille de 1,6 km de large) ; (b) subtype='parcelles'
+    # = union des parcelles réellement couvertes (leur teinte exacte à l'écran). Les COULOIRS bus
+    # ne génèrent PAS de zone (pas un site propre au sens de l'art. L151-36).
+    session.execute(text("DELETE FROM spatial_layers WHERE kind = 'tcsp_zone'"))
+    session.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id) "
+        "SELECT 'tcsp_zone', 'rayon', 'Zone stationnement allégé (800 m des stations TCSP)', "
+        "ST_Multi(ST_SimplifyPreserveTopology(ST_Union(ST_Buffer(geom::geography, 800)::geometry), 0.0001)), "
+        "jsonb_build_object('statut','Dérivé','rayon_m',800,'critere',"
+        "'rayon de 800 m à vol d''oiseau autour de chaque station en service (art. L151-36)'), :sid "
+        "FROM spatial_layers WHERE kind = 'tcsp_station'"), {"sid": sid})
+    session.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id) "
+        "SELECT 'tcsp_zone', 'parcelles', 'Parcelles à moins de 800 m d''une station TCSP', "
+        "ST_Multi(ST_SimplifyPreserveTopology(ST_Union(p.geom), 0.0001)), "
+        "jsonb_build_object('statut','Dérivé','n_parcelles', count(*)), :sid "
+        "FROM parcels p WHERE EXISTS (SELECT 1 FROM spatial_layers s "
+        "WHERE s.kind='tcsp_station' AND ST_DWithin(s.geom_2975, p.geom_2975, 800))"), {"sid": sid})
+    session.execute(text(
+        "UPDATE spatial_layers SET geom_simple = ST_SimplifyPreserveTopology(geom, 0.0002) "
+        "WHERE kind = 'tcsp_zone'"))
+    session.execute(text("UPDATE data_sources SET source_millesime = :m, last_sync_at = now() "
+                         "WHERE name = :n"),
+                    {"m": "extraction Overpass (OSM, ODbL) — voies bus 974", "n": SRC_OSM_TCSP})
+    return {"site_propre": n_sp, "couloirs": n_couloir, "stations": int(n_st)}
 
 
 # ────────────────────────────── BD TOPO — lignes HT ──────────────────────────────

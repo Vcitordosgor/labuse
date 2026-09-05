@@ -742,19 +742,9 @@ export function Fiche({ idu }: { idu: string }) {
               <div className="eyebrow">PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</div>
               {/* IDU complet (mono) + copier sans cadre, collé à la référence. */}
               <div className="ref" data-fiche-idu>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
-              {/* adresse ; absente → « i » explicatif. */}
-              {/* M61 P5 — adresse COPIABLE : sélectionnable (aucun user-select:none) + icône copier
-                  discrète (comme l'IDU). `.addr` passe en flex pour aligner texte + icône. */}
-              <div className="addr" data-fiche-adresse>
-                <span style={{ userSelect: 'text', minWidth: 0 }} title={f?.adresse ?? undefined}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
-                {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
-                {!f?.adresse && (
-                  <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
-                    <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
-                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, borderRadius: 999, border: '1px solid var(--line-3)', color: 'var(--txt-ghost)', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
-                  </Tip>
-                )}
-              </div>
+              {/* RETOURS-15 U7 — l'adresse QUITTE cette colonne (réduite par les logos + cloche à
+                  droite : elle y wrappait « à la moitié » alors que la pleine largeur est libre
+                  dessous) → rangée .addr-row pleine largeur sous le head-top. */}
               {/* RETOURS-8 (R7) — le lien « Pages jaunes » quitte l'adresse : il remonte en tête,
                   à côté de l'IDU, dans le trio Maps · Cadastre · Pages jaunes (voir .hbtns). */}
             </div>
@@ -799,6 +789,20 @@ export function Fiche({ idu }: { idu: string }) {
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
             </div>
+          </div>
+
+          {/* RETOURS-15 U7 — ADRESSE en rangée PLEINE LARGEUR (moins l'icône copier) : une ligne
+              tant que ça tient, ellipse avec l'adresse complète au survol (title) sinon. Elle ne
+              partage plus sa largeur avec les logos/cloche. M61 P5 — copiable (user-select). */}
+          <div className="addr addr-row" data-fiche-adresse>
+            <span style={{ userSelect: 'text', minWidth: 0 }} title={f?.adresse ?? undefined}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
+            {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
+            {!f?.adresse && (
+              <Tip side="top" tip={CLIENT.fiche.adresseAbsenteInfo}>
+                <span data-adresse-absente-i role="button" tabIndex={0} aria-label="Pourquoi l’adresse manque"
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, borderRadius: 999, border: '1px solid var(--line-3)', color: 'var(--txt-ghost)', fontSize: 9, fontWeight: 700, lineHeight: 1, cursor: 'help', verticalAlign: 'middle' }}>i</span>
+              </Tip>
+            )}
           </div>
 
         {/* RETOURS-11 F1 — les trois accès (Cadastre · Pages Jaunes · Google Maps) ont MONTÉ dans

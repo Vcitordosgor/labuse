@@ -47,8 +47,10 @@ export function MapToolbar() {
       <div className="relative">
         <button
           onClick={() => setBmOpen((o) => !o)}
+          /* RETOURS-19 Y1 — menu ouvert = ÉTAT ACTIF : vert opaque, contenu inversé sombre (avant : simple
+             contour vert sur fond sombre). */
           className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
-            bmOpen ? 'border-mint bg-surface-2 text-txt-hi' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
+            bmOpen ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
           title="Fond de plan"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4">
@@ -56,7 +58,7 @@ export function MapToolbar() {
             <polygon points="10,9.5 17,13.5 10,17.5 3,13.5" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.5" />
           </svg>
           {BASEMAPS.find((b) => b.key === basemap)?.label}
-          {basemap === 'ortho' && orthoYear !== 'now' && <span className="text-mint">· {ORTHO_YEARS.find((y) => y.an === orthoYear)?.label}</span>}
+          {basemap === 'ortho' && orthoYear !== 'now' && <span className={bmOpen ? 'text-mint-ink/80' : 'text-mint'}>· {ORTHO_YEARS.find((y) => y.an === orthoYear)?.label}</span>}
         </button>
         {bmOpen && (
           <>
@@ -66,7 +68,8 @@ export function MapToolbar() {
               <div className="mt-2 flex flex-col gap-1">
                 {BASEMAPS.map((b) => (
                   <button key={b.key} onClick={() => setBasemap(b.key)}
-                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${basemap === b.key ? 'bg-mint/10 text-mint' : 'text-txt hover:bg-surface-3'}`}>
+                    /* RETOURS-19 Y1 — entrée ACTIVE = vert opaque, contenu inversé sombre. */
+                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${basemap === b.key ? 'bg-mint font-medium text-mint-ink' : 'text-txt hover:bg-surface-3'}`}>
                     {b.label}
                   </button>
                 ))}
@@ -79,7 +82,7 @@ export function MapToolbar() {
                 {ORTHO_YEARS.map((y) => (
                   <button key={y.an} onClick={() => setOrthoYear(y.an)}
                     className={`rounded-md px-2 py-1 text-left text-[11px] transition-colors duration-quick ${
-                      basemap === 'ortho' && orthoYear === y.an ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                      basemap === 'ortho' && orthoYear === y.an ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
                     {y.label}
                   </button>
                 ))}

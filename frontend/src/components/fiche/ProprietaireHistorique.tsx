@@ -64,7 +64,7 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
           constaté — sinon il laissait croire à d'anciens propriétaires inexistants. */}
       {h.n_changements > 0 && (
         <button type="button" data-histo-toggle onClick={() => setOuvert((o) => !o)}
-          className="mt-2 w-full rounded-md border border-mint/40 bg-mint/[0.07] px-2.5 py-1.5 text-left text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
+          className="mt-2 w-full rounded-md border border-line-2 bg-mint/[0.05] px-2.5 py-1.5 text-left text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
           {ouvert
             ? 'Masquer les anciens propriétaires'
             : `Voir les anciens propriétaires — ${h.n_millesimes} millésimes (${premier.millesime}–${dernier.millesime})`}

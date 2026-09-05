@@ -132,9 +132,9 @@ export const MODULES: ModuleDef[] = [
   // (URL/QA/concept-route inchangés) mais ALIASÉE (hidden) → pas de 2ᵉ carte au menu ; elle ouvre le
   // filtre pré-actif.
   { key: 'permis', num: 'M03', group: 'marche', descSmall: true,
-    label: 'Permis', desc: 'Qui construit quoi, commune par commune — et les permis au point mort.' },
+    label: 'Permis', desc: 'Qui construit quoi, commune par commune — et les permis dormants.' },
   { key: 'promesses', num: 'M04', group: 'marche', hidden: true,
-    label: 'Permis', desc: 'Le « point mort » (PC accordés jamais réalisés) est un filtre de l’outil Permis' },
+    label: 'Permis', desc: 'Les « dormants » (PC accordés jamais réalisés) sont un filtre de l’outil Permis' },
   // §5 — renommé « Densifier l'existant » côté client ; clé interne `renouvellement` INCHANGÉE
   // (URL, QA, tests, endpoint, table). Même patron que Promesses mortes → Permis au point mort.
   { key: 'renouvellement', num: 'MR1', group: 'marche',

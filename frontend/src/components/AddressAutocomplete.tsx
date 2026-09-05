@@ -1,18 +1,21 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { banAutocomplete, type BanFeature } from '../lib/api'
-import { estIdu } from '../lib/format'
+import { rechercheSuggest, type SuggestItem, type SuggestType } from '../lib/api'
 
-// M12-D1 — COMPOSANT D'AUTOCOMPLÉTION D'ADRESSE RÉUTILISABLE (mutualisé D2 + D3).
-// CONNEXIONS-2 Lot 9.4 — commentaire périmé corrigé : les suggestions viennent de la TABLE INTERNE
-// `adresses` (endpoint `/adresses/autocomplete`, `banAutocomplete`), PAS d'un appel navigateur à
-// api-adresse.data.gouv.fr. L'IDU accompagne la suggestion (atterrissage direct sur la parcelle).
-// Sélectionner une suggestion renvoie TOUJOURS une adresse normalisée + coordonnées
-// (jamais une chaîne libre) via onSelect. Navigation clavier (↑ ↓ Entrée Échap) + a11y
-// (combobox / listbox ARIA). Debounce + annulation de la requête précédente.
+// M12-D1 — LE composant de barre de recherche PARTAGÉ (mutualisé D2 + D3).
+// RETOURS-16 V5 — il devient la SUGGESTION UNIFIÉE de l'app : un seul endpoint
+// (/api/recherche/suggest, api/recherche.py), six grammaires typées (adresse · cadastre — IDU et
+// référence courte · propriétaire · SIREN · commune · projet), groupées, 8 propositions max, le
+// type en libellé discret à gauche. Chaque barre déclare via `grammaires` ce qu'elle sait
+// consommer (défaut adresse+cadastre — les barres parcelle) ; AUCUNE barre ne garde son
+// autocomplétion maison. Déclenchement à 2 caractères, anti-rebond 200 ms, annulation de la
+// requête précédente. Navigation clavier (↑ ↓ Entrée Échap) + a11y (combobox/listbox ARIA).
+// La frappe RESTE ce que l'utilisateur a tapé : une proposition ne se substitue qu'au CLIC ou à
+// Entrée sur une ligne SÉLECTIONNÉE (l'auto-pick « Entrée → 1re suggestion » d'avant est retiré,
+// doctrine V5.5 « ne jamais deviner à la place de l'utilisateur »).
 
 export interface AddressSelection {
-  label: string  // adresse normalisée BAN
+  label: string  // adresse normalisée BAN (ou libellé de la proposition choisie)
   lon: number
   lat: number
   idu: string | null  // M13-B1 : parcelle rattachée (source interne) — landing direct
@@ -27,36 +30,41 @@ interface Props {
   onClear?: () => void
   /** Entrée sur le champ SANS suggestion active (l'appelant décide : ex. géocoder la 1re) */
   onEnterRaw?: (text: string) => void
+  /** V5 — grammaires que cette barre sait consommer (défaut : adresse + cadastre). */
+  grammaires?: SuggestType[]
+  /** V5 — sélection d'un type ÉTENDU (commune / propriétaire / SIREN / projet). Sans lui,
+   *  commune retombe sur onSelect (recadrage lon/lat) ; les autres types ne devraient pas être
+   *  demandés par une barre qui ne les gère pas. */
+  onPick?: (item: SuggestItem) => void
+  /** V5 — miroir de la frappe pour l'appelant (bouton « Chercher », blocs d'exemples…). */
+  onTextChange?: (text: string) => void
   'data-testid'?: string
 }
 
-// Un IDU cadastral (14 car. : INSEE 5 + préfixe 3 + section 2 + numéro 4) N'EST PAS une adresse : plusieurs
-// champs (omnibox carte, Contrôle avant achat, Permis…) acceptent l'IDU EN PLUS de l'adresse. On NE
-// lance PAS la recherche d'adresse dessus — sinon la BAN répond 0 et affiche « Aucune adresse trouvée »
-// alors que la recherche par IDU fonctionne. On reconnaît aussi l'IDU EN COURS de frappe (suite contiguë
-// commençant par ≥ 5 chiffres, sans espace, ≥ 6 car.) pour ne pas faire clignoter le bandeau à la saisie.
-// La règle vit dans format.ts (`estIdu`, LOI-3 : un dessin, un seul endroit) — partagée avec ParcelInput.
-const looksLikeIdu = estIdu
-// GB-009 : une référence cadastrale EN COURS de frappe (sans espace, mêlant lettres ET chiffres — ex.
-// « BZ1065 », « 97411000BZ ») n'est PAS une adresse → pas de recherche BAN, pas de bandeau « aucune
-// adresse ». estIdu ne l'attrape pas encore (< 5 chiffres contigus). Une adresse a des espaces (n° + rue).
-const looksLikePartialRef = (s: string) => /^\S+$/.test(s) && /[A-Za-z]/.test(s) && /\d/.test(s)
+const TYPE_LBL: Record<SuggestType, string> = {
+  adresse: 'adresse', cadastre: 'parcelle', proprietaire: 'propriétaire',
+  siren: 'SIREN', commune: 'commune', projet: 'projet',
+}
+const TYPE_FORMAT: Record<SuggestType, string> = {
+  adresse: 'adresse', cadastre: 'IDU ou référence courte (BZ1065)', proprietaire: 'nom de propriétaire',
+  siren: 'SIREN', commune: 'commune', projet: 'nom de projet',
+}
+const DEFAUT: SuggestType[] = ['adresse', 'cadastre']
 
 export function AddressAutocomplete({
   onSelect, placeholder = 'Saisissez une adresse…', autoFocus, className,
-  onClear, onEnterRaw, ...rest
+  onClear, onEnterRaw, grammaires = DEFAUT, onPick, onTextChange, ...rest
 }: Props) {
   const [text, setText] = useState('')
-  const [items, setItems] = useState<BanFeature[]>([])
+  const [items, setItems] = useState<SuggestItem[]>([])
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const [loading, setLoading] = useState(false)
-  // M55-B point 1 : la source a répondu 0 adresse → on le DIT (état vide honnête) au lieu du
-  // silence d'avant (menu simplement fermé), qui laissait croire à un composant inerte.
+  // M55-B point 1 : la source a répondu 0 proposition → on le DIT (état vide honnête, avec les
+  // formats acceptés — V5.6) au lieu du silence d'avant.
   const [noResults, setNoResults] = useState(false)
-  // M137-R (bug scoreur) : une SÉLECTION recopie le libellé normalisé dans `text`, ce qui relance
-  // l'effet de recherche — la BAN peut répondre 0 sur la chaîne complète (CP + commune) et rouvrait
-  // « Aucune adresse trouvée » PAR-DESSUS un résultat valide. On saute la recherche qu'un pick provoque.
+  // M137-R (bug scoreur) : une SÉLECTION recopie le libellé dans `text`, ce qui relance l'effet
+  // de recherche — on saute la recherche qu'un pick provoque.
   const skipSearchRef = useRef(false)
   const boxRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -80,23 +88,25 @@ export function AddressAutocomplete({
     return () => { window.removeEventListener('resize', h); window.removeEventListener('scroll', h, true) }
   }, [open, items])
 
-  // Debounce + annulation : on ne garde que le dernier appel en vol.
+  // Anti-rebond 200 ms + annulation : on ne garde que le dernier appel en vol. Le serveur
+  // aiguille par la FORME de la saisie (IDU/réf courte/SIREN/texte) — plus d'aiguillage local.
   useEffect(() => {
-    // Une sélection vient de recopier le libellé dans `text` : ne pas re-chercher ni rouvrir le menu.
     if (skipSearchRef.current) { skipSearchRef.current = false; return }
     const needle = text.trim()
-    // < 3 car. = trop court ; un IDU (ou IDU en cours) = pas une adresse → aucune recherche, aucun bandeau.
-    if (needle.length < 3 || looksLikeIdu(needle) || looksLikePartialRef(needle)) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
+    if (needle.length < 2) { setItems([]); setOpen(false); setLoading(false); setNoResults(false); return }
     const ctrl = new AbortController()
-    setLoading(true); setNoResults(false)
+    setLoading(true)
     const t = setTimeout(() => {
-      banAutocomplete(needle, ctrl.signal)
-        // M55-B point 1 : on OUVRE le menu même à 0 résultat (message « aucune adresse trouvée »).
-        .then((r) => { setItems(r); setNoResults(r.length === 0); setOpen(true); setActive(-1) })
+      rechercheSuggest(needle, grammaires, ctrl.signal)
+        .then((r) => {
+          const flat = r.groupes.flatMap((g) => g.items.map((i) => ({ ...i, type: g.type })))
+          setItems(flat); setNoResults(flat.length === 0); setOpen(true); setActive(-1)
+        })
         .catch(() => { /* abort ou réseau : on n'affiche pas d'erreur bloquante */ })
         .finally(() => setLoading(false))
-    }, 220)
+    }, 200)
     return () => { clearTimeout(t); ctrl.abort() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps — `grammaires` est une constante d'appelant
   }, [text])
 
   // clic à l'extérieur (hors champ ET hors liste portée) → ferme la liste
@@ -110,14 +120,24 @@ export function AddressAutocomplete({
     return () => window.removeEventListener('mousedown', h)
   }, [open])
 
-  const pick = (f: BanFeature) => {
+  const pick = (it: SuggestItem) => {
     skipSearchRef.current = true   // le setText ci-dessous ne doit PAS relancer la recherche
-    setText(f.label)
+    setText(it.label)
+    onTextChange?.(it.label)
     setItems([])
     setOpen(false)
     setActive(-1)
-    setNoResults(false)           // efface tout bandeau « aucune adresse » résiduel
-    onSelect({ label: f.label, lon: f.lon, lat: f.lat, idu: f.idu })
+    setNoResults(false)
+    // adresse + cadastre passent par onSelect (contrat historique : label/lon/lat/idu — tous les
+    // appelants parcelle le consomment déjà) ; les types étendus vont à onPick, avec un repli
+    // raisonnable pour commune (recadrage par coordonnées).
+    if (it.type === 'adresse' || it.type === 'cadastre') {
+      onSelect({ label: it.label, lon: it.lon ?? 0, lat: it.lat ?? 0, idu: it.idu ?? null })
+    } else if (onPick) {
+      onPick(it)
+    } else if (it.type === 'commune' && it.lon != null && it.lat != null) {
+      onSelect({ label: it.label, lon: it.lon, lat: it.lat, idu: null })
+    }
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -130,23 +150,27 @@ export function AddressAutocomplete({
       setActive((i) => Math.max(i - 1, 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
+      // V5.5 — Entrée ne valide qu'une ligne SÉLECTIONNÉE ; sinon la saisie brute part à
+      // l'appelant (résolution Entrée) : jamais la 1re suggestion à la place de l'utilisateur.
       if (open && active >= 0 && items[active]) pick(items[active])
-      else if (open && items[0]) pick(items[0])   // Entrée sans surlignage → 1re suggestion
       else if (onEnterRaw) onEnterRaw(text.trim())
     } else if (e.key === 'Escape') {
       if (open) { e.stopPropagation(); setOpen(false) }
     }
   }
 
+  const formats = grammaires.map((g) => TYPE_FORMAT[g]).join(', ')
   return (
     <div ref={boxRef} className="relative min-w-0 flex-1">
       <input
         {...rest}
+        data-suggest-input
         ref={inputRef}
         autoFocus={autoFocus}
         value={text}
         onChange={(e) => {
           setText(e.target.value)
+          onTextChange?.(e.target.value)
           if (e.target.value.trim() === '') onClear?.()
         }}
         onKeyDown={onKeyDown}
@@ -169,33 +193,35 @@ export function AddressAutocomplete({
           ref={listRef}
           id={listId}
           role="listbox"
-          style={{ position: 'fixed', left: pos.left, top: pos.top, minWidth: pos.width, maxWidth: Math.max(pos.width, 320) }}
-          className="floating z-[1000] max-h-64 w-max overflow-y-auto p-1"
+          style={{ position: 'fixed', left: pos.left, top: pos.top, minWidth: pos.width, maxWidth: Math.max(pos.width, 360) }}
+          className="floating z-[1000] max-h-72 w-max overflow-y-auto p-1"
         >
-          {/* M55-B point 1 : état vide explicite — la source ne connaît pas cette adresse. */}
+          {/* V5.6 — zéro proposition n'est pas muet : les formats ACCEPTÉS par cette barre. */}
           {noResults && (
-            <li role="option" aria-disabled className="whitespace-nowrap px-2.5 py-1.5 text-[11.5px] text-txt-dim">
-              Aucune adresse trouvée <span className="text-txt-dim/70">— vérifiez l’orthographe, ou tapez un IDU / une commune.</span>
+            <li role="option" aria-disabled data-suggest-vide className="max-w-[340px] px-2.5 py-1.5 text-[11.5px] leading-snug text-txt-dim">
+              Aucune correspondance pour « {text.trim()} » — formats acceptés : {formats}.
             </li>
           )}
-          {items.map((f, i) => (
+          {items.map((it, i) => (
             <li
-              key={`${f.lon},${f.lat},${i}`}
+              key={`${it.type}-${it.idu ?? it.siren ?? it.projet_id ?? it.label}-${i}`}
               id={`${listId}-${i}`}
               role="option"
               aria-selected={i === active}
-              onMouseDown={(e) => { e.preventDefault(); pick(f) }}
+              data-suggest-item={it.type}
+              onMouseDown={(e) => { e.preventDefault(); pick(it) }}
               onMouseEnter={() => setActive(i)}
-              className={`cursor-pointer whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11.5px] ${
-                i === active ? 'bg-mint/15 text-txt-hi' : 'text-txt hover:bg-surface-3'
+              // survol/actif : la règle de l'app — VERT OPAQUE, contenu inversé (V5.3).
+              className={`flex cursor-pointer items-baseline gap-2 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11.5px] ${
+                i === active ? 'bg-mint text-mint-ink' : 'text-txt'
               }`}
             >
-              <span>{f.label}</span>
-              {f.type && f.type !== 'housenumber' && (
-                <span className="ml-1.5 text-[9.5px] text-txt-dim">
-                  {f.type === 'street' ? 'voie' : f.type === 'municipality' ? 'commune' : f.type === 'locality' ? 'lieu-dit' : f.type}
-                </span>
-              )}
+              {/* le TYPE en libellé discret à gauche, l'essentiel en clair (V5.3) */}
+              <span className={`w-[74px] shrink-0 text-[9.5px] uppercase tracking-wide ${i === active ? 'text-mint-ink/70' : 'text-txt-dim'}`}>
+                {TYPE_LBL[it.type]}
+              </span>
+              <span className="min-w-0 truncate">{it.label}</span>
+              {it.sub && <span className={`text-[10px] ${i === active ? 'text-mint-ink/70' : 'text-txt-dim'}`}>{it.sub}</span>}
             </li>
           ))}
         </ul>,
