@@ -81,3 +81,72 @@ Créées fin août (avant le comptage du 01/09) : 84 Radar (28/08), 86 SIRENE é
 - Compteurs : ci-dessus, produits par le script.
 - Lignes `DOUTE` : 19 (essentiellement `tables_servies`/`job_ingestion` de couches ingérées par `layers_ingest.py` sans CLI dédiée : RGE ALTI, RPG, DEAL WMS, INPN espaces, SPANC, SRU, parkings APER, Filosofi, LiDAR MNH, RGE ALTI 5 m + licences « à confirmer »).
 - A bloqué : `ingestion_runs` non ventilée par source (data_source_id NULL) → `date_injection` = `data_sources.last_sync_at`, vide pour les one_shot anciens ; l'état JSON du wrapper de jobs n'existe pas en local (`.local/state` absent) → « derniers statuts » des jobs traités au Lot 3 comme DOUTE local.
+
+---
+
+## Lot 2 — La pompe : moteurs et runs
+
+Livrable : `docs/CIRCUIT/inventaire/moteurs.csv` (21 moteurs), généré par `scripts/inventaire/extrait_moteurs.py`. Compteurs (sortie du script) : **21 moteurs, 7 versionnés par run, 14 live, 1 DOUTE** (entrées de `loyers.py`).
+
+### Q2.1 — Le run servi : la constante unique est-elle le SEUL pointeur ?
+
+**Non — quatre pointeurs coexistent**, trois alignés, un en retard :
+
+| pointeur | valeur au 05/09 | qui l'écrit | qui le lit | aligné ? |
+|---|---|---|---|---|
+| `config/served_run.txt` (constante unique) | `q_v11_m137` | `golden_ops.promote()` (`golden_ops.py:120-134`) | `runs.current()` relu à la requête, cache 3 s (`src/labuse/runs.py:49-61`) — API, tuiles, gardes | référence |
+| `config/run_precedent.txt` | suit la bascule | `bascule_flux.basculer()` (`bascule_flux.py:221-223`) | `runs.precedent()` (`runs.py:64-78`) — cible du retour arrière | oui |
+| `mvt_meta key='run_label'` | `q_v11_m137` | build-mvt | tuiles (invalidation cache `api/tiles.py`) | **oui** (SELECT 05/09) |
+| `residuel_runs.is_served` (run_seq) | run_seq 2 « m135-run2-ile » | `residuel_runs.set_served()` (`residuel_runs.py:96-103`) | vue `parcel_residuel` | **pointeur séparé assumé** (nomenclature propre, garde anti-écriture `residuel_runs.py:87-93`) |
+| `division_or_candidates.run_label` | `q_v10_m129` | CLI division-or | fiche + filtre **sans filtre de run** (`app.py:1573,2692-2696`) | **NON — en retard d'un run**, toléré comme « workflow de revue par commune » (`bascule_gardes.py:663-665`) |
+
+Tables servies run-scopées alignées sur `q_v11_m137` (SELECT du 05/09) : `score_e` (285 781), `parcel_flags` (2 208 373), `parcel_renouvellement` (67 260).
+
+### Q2.2 — Les runs en base
+
+`p_score_v2_runs` (SELECT du 05/09) :
+
+| run | date | contenu | statut |
+|---|---|---|---|
+| q_v8_calibre_pre_pond / _pre_regle / _pre_m28 / _pre_m39 | 04-05/08 | 431 663 scores chacun | morts (lignée de calibrage) |
+| q_v8_calibre | 07/08 | 431 663 | mort (ancien servi) |
+| q_v10_m129 | 19/08 | 431 663 | mort — **mais `division_or_candidates` y est resté** |
+| q_v11_m137 | 27/08 | 431 663 | **SERVI** |
+| q_v12 | 03/09 | 431 663 | candidat (basculé puis retour arrière le 04/09, `run_bascule_journal`) |
+
+- `parcel_p_score_v2` garde **9 runs × ~431 663 lignes** (dont `q_v2_demo`, 8 lignes) ; la purge existe (`labuse purge-runs-morts --apply`, `cli.py:698-739`, garde la lignée `CHAINE_GESTES` + servi + précédent + démo + exceptions) mais n'a pas été passée.
+- `dryrun_parcel_evaluations` : 6 run_labels dont 2 mini-runs de recette `q_v12_20260903_*` (2 000 lignes).
+- **Tables de run encore lues alors que non servies** : `division_or_candidates` (q_v10_m129, lu par la fiche `app.py:2696`, le filtre `app.py:1573`, `division_review.py:38`, `verdict_servi.py:40`). Tables legacy `*_pre_v8`, `parcel_residuel_base_legacy`, `parcel_au_statut_pre_m32`, `m6_snapshot_*` : présentes en base, aucun lecteur trouvé côté API (grep) — mortes non lues, jamais supprimées (règle 7).
+
+### Q2.3 — « Calculer » aujourd'hui
+
+- **`labuse flux-run --label L --recette (m36|q_v12)`** (`cli.py:604-667`) — le geste complet : cascade + scoring → `dryrun_*` + `parcel_p_score_v2` sous le label candidat. Lancé détaché par la page admin (`POST /admin/flux/run/lancer`, `dashboard.py:1309-1362`, un seul run actif à la fois, progression `run_progress` JSON).
+- **Candidat automatique après Sitadel** : réel — `jobs_impl.py:360-370` enchaîne ingestion → veille foncière → `golden_ops.rapport_candidat()` (mail de comparaison, dry-run aware). La bascule reste manuelle.
+- Recalculs partiels : `labuse score-v2` (scoring seul), `labuse dryrun-evaluate` (cascade seule), résiduel par `residuel_runs` (geste séparé), `build-mvt` (tables servies + tuiles). Durées : non documentées dans le code → DOUTE (le mandat demandait mesurée ou estimée ; aucun job n'a été lancé, règle « lecture seule »).
+
+### Q2.4 — « Basculer » et « Revenir en arrière »
+
+`POST /admin/flux/bascule` (`dashboard.py:1401-1445`) → `bascule_flux.basculer()` :
+1. refuse un run incomplet (`_run_complet`, `bascule_flux.py:85`) ; 2. `golden_ops.promote()` réécrit `served_run.txt` (validation d'existence en base) ; 3. réécrit `run_precedent.txt` ; 4. `runs.invalidate()` (effet immédiat sans redémarrage) ; 5. purge les caches A6 (`purger_caches_run`, `bascule_flux.py:30-61`) ; 6. garde de cohérence immédiate (`coherence_flux.verifier`) ; 7. **journalise** dans `run_bascule_journal` (ts, ancien, nouveau, par, sens, caches_purges, coherence) + notification système (`event_log`, dedup `bascule:<run>:<minute>`) ; 8. lance détaché `build-mvt` pour reconstruire les tables run-scopées (pas en ligne : deadlock constaté, commentaire `dashboard.py:1428-1432`).
+**Atomicité** : la promotion du pointeur est un write de fichier unique ; mais les tables servies (`parcel_flags`…) **montent en différé** — pendant la reconstruction, la garde est à 5/6 (assumé, commenté). **Revenir** : même endpoint avec `run = précédent` → `sens='arriere'` (`bascule_flux.py:227`) ; exécuté en vrai le 04/09 (`run_bascule_journal` : q_v12 → q_v11_m137 arriere).
+
+### Q2.5 — Page Données › Mise à jour (DONNEES-2)
+
+**Implémentée et mergée** (`frontend/src/components/admin/MiseAJour.tsx` + `Flux.tsx` + `Donnees.tsx`, présents sur main ; tests `MiseAJour.test.tsx`, `Flux.circuit.test.tsx`).
+
+| étape | endpoint | commande | sync ? | event_log |
+|---|---|---|---|---|
+| Injecter | `POST /admin/sources/{id}/veille/injecter` (`dashboard.py:1186-1225`) | `config/sources_ingestion.yaml` (5 sources) via `subprocess.Popen` | asynchrone détachée, log `/tmp/labuse-relance-<label>.log` | oui — notification admin (`dashboard.py:1213-1222`) ; trace `source_veille.injection_lancee_at/injection_vu` |
+| Calculer | `POST /admin/flux/run/lancer` (`dashboard.py:1309-1362`) | `labuse flux-run --label … --recette …` détaché | asynchrone (pid + progression `run_progress`) | oui — notification dedup `flux-run:<label>` |
+| Basculer | `POST /admin/flux/bascule` (`dashboard.py:1401-1445`) | `bascule_flux.basculer()` en ligne + `build-mvt` détaché | bascule synchrone, reconstruction asynchrone | oui — `run_bascule_journal` (qui/quand/de/vers/sens) + notification |
+
+### Q2.6 — Chiffres liés au run vs lus en direct (définition d'« eau ancienne » par famille)
+
+- **Ne changent qu'à la bascule** (run-scopés) : tiers/score P (`parcel_p_score_v2`), verdicts cascade (`dryrun_*`), drapeaux (`parcel_flags`), renouvellement, score E, résiduel (pointeur propre), divisibilité (en retard), tuiles carte (mvt). Leur « eau ancienne » = réservoir réinjecté sans recalcul+bascule.
+- **Changent dès l'injection** (live) : prix de secteur et bilan (DVF), étude de zone (SIRENE/Filosofi/DVF/trafic), marché Radar et cycle, DPE affiché, contexte fiche (risques, mairies), destinations PLU, taxe, timeline PM, solaire (millésime gelé — change au re-build, pas à l'injection). Leur « eau ancienne » = cache non purgé (ex. `zone_isochrone_cache`, `fiche-commune-cache`) ou millésime gelé.
+
+### Point d'étape Lot 2
+
+- Compteurs : 21 moteurs (7 versionnés / 14 live), produits par le script.
+- Lignes `DOUTE` : 1 (entrées de `loyers.py`) + durées de calcul non documentées (Q2.3).
+- A bloqué : rien — mais la mesure des durées exigerait de lancer un run (interdit).
