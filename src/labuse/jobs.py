@@ -337,7 +337,9 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # ancienne par tampon → circuit_ecarts / circuit_eau_ancienne / circuit_controles. 07:25
     # (après coherence-run 07:15 — même famille, jamais en même temps sur les mêmes tables).
     _j("coherence-robinets", "Sonde du circuit : fuites entre robinets + eau ancienne (tampons)",
-       "quotidien", "25 3 * * *", "07:25", timeout_s=900),
+       # 0-bis : le passage nocturne joue AUSSI le cas recette_exports1 (24 PDF des 4 témoins,
+       # WeasyPrint + pdftotext) → timeout élargi.
+       "quotidien", "25 3 * * *", "07:25", timeout_s=3600),
     # CIRCUIT-1 lot 6.4 — agents-sources : le job MENSUEL EXISTE mais reste DÉSACTIVÉ (décision
     # Vic n° 8 : agents À LA DEMANDE, jamais en cron par défaut). Absent du crontab par
     # construction (test lot 8 : posés == registre − {agents-sources}).

@@ -56,10 +56,29 @@ class Valeur:
     run: str | None                       # run servi si portée run, sinon None
     reservoirs: dict = field(default_factory=dict)   # {reservoir_id: millésime servi}
     calcule_le: str = ""
+    #: 0-bis (garde de couverture EXPORTS-1 5.5, devenue règle du registre) : tout COMPTEUR
+    #: (unité « nombre ») porte {n servi, non_couvert} — la sonde refuse un compteur sans.
+    couverture: dict | None = None
+    #: 0-bis (portée `projet`) : ISO du moment de saisie client — « saisi par le client le … ».
+    saisi_le: str | None = None
 
     def tampon(self) -> dict:
-        return {"chiffre_id": self.chiffre_id, "version_def": self.version_def,
-                "run": self.run, "reservoirs": self.reservoirs, "calcule_le": self.calcule_le}
+        t = {"chiffre_id": self.chiffre_id, "version_def": self.version_def,
+             "run": self.run, "reservoirs": self.reservoirs, "calcule_le": self.calcule_le}
+        if self.couverture is not None:
+            t["couverture"] = self.couverture
+        if self.saisi_le is not None:
+            t["saisi_par_le_client_le"] = self.saisi_le
+        return t
+
+
+def probleme_couverture(v: Valeur) -> str | None:
+    """Règle 0-bis : une Valeur de type COMPTEUR (unité « nombre » au registre) doit porter sa
+    couverture ({n, non_couvert}). Rend le problème (str) ou None — la sonde refuse dessus."""
+    c = CHIFFRES.get(v.chiffre_id)
+    if c is not None and c.unite == "nombre" and v.couverture is None:
+        return f"compteur {v.chiffre_id} sans couverture (règle 0-bis, garde EXPORTS-1 5.5)"
+    return None
 
 
 def _millesimes(db, reservoir_ids: set[str]) -> dict[str, str | None]:
@@ -92,10 +111,13 @@ def tampons_pour(db, chiffre_ids: list[str]) -> dict[str, dict]:
         except Exception:  # noqa: BLE001
             run_courant = None
     quand = datetime.now(tz=timezone.utc).isoformat()
+    # portée `projet` (0-bis) : pas de réservoir, pas de run — le tampon dit « saisi par le
+    # client » (le moment réel de saisie est posé par le producteur quand il construit la Valeur).
     return {cid: Valeur(valeur=None, chiffre_id=cid, version_def=c.version_def,
                         run=(run_courant if c.portee == "run" else None),
                         reservoirs={r: mill.get(r) for r in c.reservoirs},
-                        calcule_le=quand).tampon() | {
+                        calcule_le=quand,
+                        saisi_le=("(à la saisie)" if c.portee == "projet" else None)).tampon() | {
                             "libelle": c.libelle, "unite": c.unite, "definition": c.definition,
                             "moteur": c.moteur, "portee": c.portee}
             for cid, c in voulus}

@@ -34,7 +34,7 @@ def test_un_chiffre_une_definition():
         assert c.definition.strip(), cid
         assert c.unite in unites, (cid, c.unite)
         assert c.niveau in niveaux, (cid, c.niveau)
-        assert c.portee in ("run", "live"), cid
+        assert c.portee in ("run", "live", "projet"), cid   # projet : saisie client (0-bis)
 
 
 def test_robinet_sans_chiffre_dit_pourquoi():

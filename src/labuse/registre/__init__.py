@@ -4,9 +4,9 @@ réservoir → chiffre → robinet est DÉRIVÉ ici, la base n'en est qu'un miro
 """
 from __future__ import annotations
 
-from .chiffres import CHIFFRES, Chiffre, VERSION_DEF     # noqa: F401
+from .chiffres import ALIAS_TRANSITION, CHIFFRES, Chiffre, VERSION_DEF, resoudre   # noqa: F401
 from .robinets import ROBINETS, Robinet                  # noqa: F401
-from .valeur import Valeur, tampons_pour                 # noqa: F401
+from .valeur import Valeur, probleme_couverture, tampons_pour     # noqa: F401
 
 
 def aretes() -> dict[str, list[tuple[str, str]]]:

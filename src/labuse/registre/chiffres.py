@@ -26,7 +26,8 @@ class Chiffre:
     calcul: str         # moteur · sql_propre · passe_plat · constante · front (front → à rapatrier, lot 2.4)
     fonction: str       # référence du producteur (fichier:fonction) — appelable au fil du lot 2.5
     reservoirs: tuple[str, ...] = field(default_factory=tuple)   # ids reservoirs.csv ; vide = interne
-    portee: str = "live"        # run | live
+    portee: str = "live"        # run | live | projet (0-bis : saisie client, pas de réservoir,
+                                # tampon « saisi par le client le … »)
     version_def: str = VERSION_DEF
 
 
@@ -38,29 +39,43 @@ CHIFFRES: dict[str, Chiffre] = {
     moteur="scoring_p_v2", calcul="moteur", fonction="src/labuse/cli.py (build-mvt) ; parcel_flags",
     reservoirs=("bd_topo", "cosia", "dvf", "filosofi_carreaux", "sitadel",), portee="run"),
  "zone_plu_famille": C("Zonage PLU (par type)", "classe", "parcelle",
-    "famille de zone (U/AU/A/N) portée par parcel_zone_plu, une zone par parcelle",
-    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (parcel_zone_plu)",
+    "famille (U/AU/A/N) de la zone DOMINANTE par surface de la parcelle (drapeau a_cheval, "
+    "zone_parts servies) — moteur zone_servie (ZONE-1) ; ≠ zonage_commune (parts d'une commune)",
+    moteur="zone_servie", calcul="moteur",
+    fonction="src/labuse/faisabilite/zone_servie.py:zone_dominante",
     reservoirs=("gpu_plu_api_carto",), portee="live"),
  "tranche_prix_vefa": C("Prix du logement neuf (VEFA)", "tranche", "commune",
     "tranche de prix médian VEFA 36 mois glissants, ≥10 ventes avec prix sinon hachure",
-    moteur="marche_communes", calcul="moteur", fonction="src/labuse/ingestion/vefa_neuf.py:118",
+    moteur="marche_service", calcul="moteur", fonction="src/labuse/ingestion/vefa_neuf.py:118",
     reservoirs=("dvf", "sitadel",), portee="live"),
  "classe_residuel": C("Densifier l'existant", "classe", "parcelle",
-    "classe de sous-densité issue de la vue parcel_residuel (run résiduel servi)",
-    moteur="residuel", calcul="moteur", fonction="src/labuse/faisabilite/residuel.py:80",
+    "classe de sous-densité du run résiduel servi, lue SOUS la garde de zone dominante "
+    "(bloc au sol du moteur potentiel — EXPORTS-1 lot 3)",
+    moteur="potentiel", calcul="moteur",
+    fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (au_sol, garde zone_servie)",
     reservoirs=("bd_topo", "cadastre_api_carto", "cosia",), portee="run"),
  "surface_parcelle_m2": C("Surface", "m²", "parcelle",
     "surface cadastrale parcels.surface_m2",
-    moteur=None, calcul="passe_plat", fonction="src/labuse/api/modules.py:scoreur_adresse",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/scoreur.py:scoreur_adresse",
     reservoirs=("cadastre_api_carto",), portee="live"),
  "capacite_logements": C("Capacité (logements)", "logements", "parcelle",
-    "capacité estimée depuis SDP résiduelle / taille moyenne logement",
-    moteur="residuel", calcul="moteur", fonction="src/labuse/api/modules.py:faisabilite_sens1",
+    "logements estimés du scénario table rase (après plafond de densité et stationnement) — "
+    "bloc potentiel (EXPORTS-1 lot 3)",
+    moteur="potentiel", calcul="moteur",
+    fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.logements)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
  "sdp_residuelle_m2": C("SDP résiduelle", "m²", "parcelle",
-    "max(0, SDP_max − SDP_existante)",
-    moteur="residuel", calcul="moteur", fonction="src/labuse/faisabilite/residuel.py:80",
+    "max(0, SDP_max − SDP_existante) du run servi, sous garde de lecture zone dominante "
+    "(A/N → 0 avec cause dite — ZONE-1)",
+    moteur="potentiel", calcul="moteur",
+    fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (au_sol.sdp_residuelle_m2)",
     reservoirs=("cosia", "gpu_plu_api_carto",), portee="run"),
+ "potentiel_verdict": C("Potentiel (verdict)", "verdict", "parcelle",
+    "phrase composée du bloc « au sol / en hauteur / table rase » (moteur potentiel) — "
+    "jamais un bloc creux (section omise si rien d'évaluable)",
+    moteur="potentiel", calcul="moteur",
+    fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (verdict)",
+    reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
  "charge_fonciere_eur": C("Charge foncière", "€", "parcelle",
     "prix de sortie × SDP − coûts − marge (bilan à rebours)",
     moteur="bilan_promoteur", calcul="moteur", fonction="src/labuse/faisabilite/bilan.py",
@@ -71,7 +86,8 @@ CHIFFRES: dict[str, Chiffre] = {
     reservoirs=(), portee="live"),
  "n_vigilances": C("Vigilances", "nombre", "parcelle",
     "compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE",
-    moteur="cascade", calcul="moteur", fonction="src/labuse/api/modules.py:risques_audit",
+    moteur="cascade", calcul="moteur",
+    fonction="src/labuse/api/anti_fiche.py (motifs RÉDHIBITOIRE/VIGILANCE de la cascade)",
     reservoirs=("abf_merimee", "deal_ppr", "georisques_api", "znieff_inpn",), portee="run"),
  "n_extraits_plu": C("extraits (règlement)", "nombre", "commune",
     "extraits de règlement servis par commune (corpus)",
@@ -97,8 +113,8 @@ CHIFFRES: dict[str, Chiffre] = {
     "percentile_cont(0.5) sur m10_permit_delais famille logements",
     moteur=None, calcul="sql_propre", fonction="src/labuse/api/comparateur.py:51-53",
     reservoirs=("sitadel",), portee="live"),
- "permis_5a_n": C("Dynamisme permis (SITADEL, 5 ans)", "nombre", "commune",
-    "count sitadel_permits date ≥ now−5 ans",
+ "permis_5a_n": C("Permis de la commune sur 5 ans (SITADEL)", "nombre", "commune",
+    "count sitadel_permits de la commune, fenêtre 5 ans, sans rayon (commune entière)",
     moteur=None, calcul="sql_propre", fonction="src/labuse/api/comparateur.py:54-56",
     reservoirs=("sitadel",), portee="live"),
  "deficit_sru_pts": C("Déficit SRU (objectif − taux LLS, points)", "nombre", "commune",
@@ -109,13 +125,24 @@ CHIFFRES: dict[str, Chiffre] = {
     "conso_2021_2024_m2 / 10000",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/comparateur.py:57",
     reservoirs=(), portee="live"),
- "prix_neuf_vefa_eur_m2": C("Prix de sortie neuf VEFA (DVF, €/m²)", "€/m²", "commune",
-    "médiane VEFA live, MÊME moteur que fiche et carte (divergence précalc corrigée)",
-    moteur="marche_communes", calcul="moteur", fonction="src/labuse/api/comparateur.py:139-141 (neuf_vefa_commune LIVE — RETOURS-11F M1)",
+ "prix_neuf_vefa_acte_eur_m2": C("Prix du neuf — VEFA à l'acte (€/m²)", "€/m²", "commune",
+    "médiane VEFA déclarée à l'acte (neuf_vefa_commune, live, 36 mois) — USAGE RÉSERVÉ : le "
+    "scoring (score_e) lit CET id ; affiché comparateur/communes/fiche commune sous libellé VEFA "
+    "(scission 0-bis : ≠ prix_neuf_observe_eur_m2, jamais l'un sous le libellé de l'autre)",
+    moteur="marche_service", calcul="moteur",
+    fonction="src/labuse/ingestion/dvf_marche.py:neuf_vefa_commune (via marche_service, profil neuf_vefa)",
+    reservoirs=("dvf",), portee="live"),
+ "prix_neuf_observe_eur_m2": C("Prix du neuf — observé (€/m²)", "€/m²", "commune",
+    "neuf observé ≤ 3 ans après achèvement (resolve_prix_neuf_marche : bassin sourcé > secteur > "
+    "commune > repli île) — USAGE RÉSERVÉ : bilan et exports (fiche, PDF) lisent CET id "
+    "(arbitrage Q3 ; scission 0-bis)",
+    moteur="marche_service", calcul="moteur",
+    fonction="src/labuse/ingestion/dvf_prix_neuf.py:resolve_prix_neuf_marche "
+             "(servi par faisabilite/bilan.py:resolve_prix_sortie_servi)",
     reservoirs=("dvf",), portee="live"),
  "prix_ancien_median_eur_m2": C("€/m² ancien", "€/m²", "commune",
     "médiane DVF ventes strictes, filtre de retenue du baromètre",
-    moteur="marche_communes", calcul="moteur", fonction="src/labuse/api/moteurs.py:prix_ancien_communes (partagé PDF baromètre)",
+    moteur="marche_service", calcul="moteur", fonction="src/labuse/api/moteurs.py:prix_ancien_communes (partagé PDF baromètre)",
     reservoirs=("dvf",), portee="live"),
  "n_parcelles_pm": C("Parcelles détenues", "nombre", "proprietaire",
     "count parcelle_personne_morale par SIREN (millésime 2025)",
@@ -141,8 +168,8 @@ CHIFFRES: dict[str, Chiffre] = {
     "diff CONSTAT entre millésimes PM, maille commune",
     moteur="proprietaire_historique", calcul="moteur", fonction="src/labuse/api/app.py:commune_acquisitions_pm",
     reservoirs=("dgfip_parcelles_pm",), portee="live"),
- "permis_12m_n": C("Permis (12 mois)", "nombre", "commune",
-    "count sitadel_permits fenêtre 12 mois",
+ "permis_12m_n": C("Permis de la commune sur 12 mois", "nombre", "commune",
+    "count sitadel_permits de la commune, fenêtre 12 mois, sans rayon (commune entière)",
     moteur=None, calcul="sql_propre", fonction="src/labuse/api/modules.py:permis",
     reservoirs=("sitadel",), portee="live"),
  "point_mort_n": C("Permis au point mort", "nombre", "commune",
@@ -151,7 +178,7 @@ CHIFFRES: dict[str, Chiffre] = {
     reservoirs=("sitadel",), portee="live"),
  "n_densifiables": C("Parcelles densifiables", "nombre", "commune",
     "count parcel_renouvellement au run servi",
-    moteur="renouvellement", calcul="moteur", fonction="src/labuse/api/modules.py:renouvellement",
+    moteur="renouvellement", calcul="moteur", fonction="src/labuse/api/app.py:renouvellement_liste",
     reservoirs=(), portee="run"),
  "population_zone": C("Habitants (zone)", "nombre", "zone",
     "somme carreaux Filosofi 200 m intersectant l'isochrone",
@@ -198,12 +225,14 @@ CHIFFRES: dict[str, Chiffre] = {
     moteur="sector_price", calcul="moteur", fonction="src/labuse/faisabilite/bilan.py (sector_price)",
     reservoirs=("cadastre_api_carto", "dvf",), portee="live"),
  "prix_sortie_bati_eur_m2": C("Prix de sortie — bâti secteur", "€/m²", "parcelle",
-    "médiane bâti secteur + tendance calculées côté front sur ventes serveur (Q5.4)",
-    moteur="sector_price", calcul="moteur", fonction="frontend/src/components/fiche/marche.tsx:19-90",
+    "sector_price PARCELLE (n, rayon effectif, période) servi AU SERVEUR par _q_v2_fiche — "
+    "même phrase écran et PDF (EXPORTS-1 1.3, plus de calcul front)",
+    moteur="sector_price", calcul="moteur",
+    fonction="src/labuse/api/app.py:_q_v2_fiche (sector_price via marche_service, phrase_prix_ancien)",
     reservoirs=("dvf",), portee="live"),
- "ventes_100m_n": C("Ventes à moins de 100 m", "nombre", "parcelle",
-    "count mutations à <100 m + médiane",
-    moteur=None, calcul="sql_propre", fonction="src/labuse/api/app.py:3283 (dvf_parcelle)",
+ "ventes_100m_n": C("Ventes à moins de 100 m (36 mois)", "nombre", "parcelle",
+    "count mutations DVF à <100 m sur 36 mois (profil voisinage_100m, config/dvf_profils.yaml) + médiane",
+    moteur=None, calcul="sql_propre", fonction="src/labuse/api/site_voisinage.py:voisinage_proche",
     reservoirs=("dvf",), portee="live"),
  "pente_deg": C("Pente", "nombre", "parcelle",
     "pente moyenne parcelle (RGE ALTI), flag terrassement",
@@ -217,17 +246,25 @@ CHIFFRES: dict[str, Chiffre] = {
     "plus proche arrêt/pôle (distance en m)",
     moteur=None, calcul="sql_propre", fonction="src/labuse/api/app.py:3283 (proximites)",
     reservoirs=("gtfs_pan", "osm_transport",), portee="live"),
- "n_permis_proximite": C("Permis à proximité", "nombre", "parcelle",
-    "permis Sitadel dans le rayon, avec distance et date",
-    moteur=None, calcul="sql_propre", fonction="src/labuse/api/app.py:3283",
+ "n_permis_proximite": C("Permis à 500 m sur 24 mois", "nombre", "parcelle",
+    "permis Sitadel dans le rayon 500 m, fenêtre 24 mois — LE profil client (arbitrage Q7), "
+    "paramètres TRANSMIS au moteur (EXPORTS-1 4.1, plus jamais les défauts 300 m · 5 ans)",
+    moteur=None, calcul="sql_propre",
+    fonction="src/labuse/marche_service.py:permits (profil flash_500m → nearby_permits)",
     reservoirs=("sitadel",), portee="live"),
- "depots_secteur_n": C("Déposés/autorisés (Sitadel)", "nombre", "zone",
-    "activité de dépôt par année dans le secteur",
-    moteur=None, calcul="sql_propre", fonction="src/labuse/api/app.py:3283",
+ "depots_secteur_n": C("Déposés sur le secteur (36 mois)", "nombre", "zone",
+    "dépôts Sitadel de la section cadastrale (préfixe IDU 10), fenêtre 36 mois "
+    "(DEPOTS_FENETRE_MOIS, profil fiche_36m)",
+    moteur=None, calcul="sql_propre",
+    fonction="src/labuse/ingestion/permits.py:depots_recents (via marche_service, profil fiche_36m)",
     reservoirs=("sitadel",), portee="live"),
  "type_proprietaire": C("Propriétaire (type)", "classe", "proprietaire",
-    "personne morale (dénomination) / personne physique non recensée — millésime 2025",
-    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:3283 (proprietaire_moral)",
+    "personne morale (dénomination) / personne physique non recensée — fichier PM "
+    "parcelle_personne_morale, millésime 2025 (même assiette que la carte — EXPORTS-1 5.4 : "
+    "la ligne « non renseigné » stockée au run est rebranchée sur le fichier PM à la lecture)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:3586 (proprietaire_moral, parcelle_personne_morale) ; "
+             "garde de lecture cascade/context.py (EXPORTS-1 5.4)",
     reservoirs=("dgfip_parcelles_pm",), portee="live"),
  "verdict_icd": C("Confiance données", "verdict", "parcelle",
     "verdict de complétude des couches + liste des manquants",
@@ -255,7 +292,7 @@ CHIFFRES: dict[str, Chiffre] = {
     reservoirs=("plh_epci",), portee="live"),
  "prix_terrain_zone_eur_m2": C("Terrain nu (zone U / AU)", "€/m²", "commune",
     "médiane DVF terrain nu par famille de zone, seuil 10 ventes",
-    moteur="marche_communes", calcul="moteur", fonction="src/labuse/faisabilite/marche_commune.py (ligne2_terrain_zone)",
+    moteur="marche_service", calcul="moteur", fonction="src/labuse/faisabilite/marche_commune.py:ligne2_terrain_zone",
     reservoirs=("dvf", "gpu_plu_api_carto",), portee="live"),
  "loyer_median_eur_m2": C("Loyer médian", "€/m²", "commune",
     "estimation locative loyers.py — entrées à confirmer (DOUTE)",
@@ -391,11 +428,11 @@ CHIFFRES: dict[str, Chiffre] = {
     reservoirs=("sudocuh",), portee="live"),
  "assemblage_parcelles_n": C("Parcelles assemblées", "nombre", "parcelle",
     "compte des parcelles retenues dans l'assemblage courant",
-    moteur=None, calcul="sql_propre", fonction="src/labuse/api/moteurs.py:moteurs_assemblage",
+    moteur=None, calcul="sql_propre", fonction="src/labuse/api/moteurs.py:assemblage",
     reservoirs=("cadastre_api_carto",), portee="live"),
  "assemblage_surface_m2": C("Surface assemblée", "m²", "parcelle",
     "somme des surfaces cadastrales des parcelles de l'assemblage",
-    moteur=None, calcul="sql_propre", fonction="src/labuse/api/moteurs.py:moteurs_assemblage",
+    moteur=None, calcul="sql_propre", fonction="src/labuse/api/moteurs.py:assemblage",
     reservoirs=("cadastre_api_carto",), portee="live"),
  "courrier_demandes_n": C("Courriers demandés", "nombre", "global",
     "compte des demandes de courrier propriétaire du compte",
@@ -424,5 +461,39 @@ CHIFFRES: dict[str, Chiffre] = {
  "usage_outil_n": C("Usage des outils (30 j)", "nombre", "global",
     "compte d'événements d'usage par outil sur la fenêtre choisie (7/30/90 j)",
     moteur=None, calcul="sql_propre", fonction="src/labuse/api/dashboard.py:1450",
-    reservoirs=(), portee="live"),
+    reservoirs=(), portee="live"), # ── 0-bis réconciliation EXPORTS-1/ZONE-1 (05/09) ──
+ "mixite_clause": C("Mixité sociale (clause)", "verdict", "parcelle",
+    "déclenchement de la clause de mixité Art. 2 : SDP ≥ seuil OU logements ≥ seuil OU terrain "
+    "> seuil (seuils des hypothèses de bilan, source déclarée sinon « Estimé ») — bloc unique "
+    "servitude + déclenchement (EXPORTS-1 5.1)",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py:_clause_mixite",
+    reservoirs=("gpu_plu_api_carto",), portee="live"),
+ "cout_construction_saisi_eur_m2": C("Coût de construction (saisi)", "€/m²", "parcelle",
+    "hypothèse SAISIE par le client dans la calculette du bilan — jamais un chiffre LABUSE",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:parcel_export_pdf (calculette — saisie client)",
+    reservoirs=(), portee="projet"),
+ "marge_frais_saisie_pct": C("Marge et frais (saisis)", "%", "parcelle",
+    "hypothèse SAISIE par le client dans la calculette du bilan — jamais un chiffre LABUSE",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:parcel_export_pdf (calculette — saisie client)",
+    reservoirs=(), portee="projet"),
+ "prix_demande_saisi_eur": C("Prix demandé (saisi)", "€", "parcelle",
+    "prix demandé SAISI par le client (écart au prix demandé calculé dessus) — jamais un "
+    "chiffre LABUSE ; ≠ prix_demande_eur (fait déclaré d'une annonce Radar)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:parcel_export_pdf (calculette — saisie client)",
+    reservoirs=(), portee="projet"),
 }
+
+#: 0-bis (scission du neuf, transition UN lot puis retrait) : l'ancien id `prix_neuf_vefa_eur_m2`
+#: recouvrait DEUX définitions (VEFA à l'acte 5 003 €/m² vs neuf observé 4 730 €/m² à Saint-Paul —
+#: fuite mesurée de CIRCUIT-0, soldée par scission). Tout lecteur de l'ancien id résout vers le
+#: VEFA à l'acte ; le neuf observé a SON id. À RETIRER au prochain lot.
+ALIAS_TRANSITION: dict[str, str] = {"prix_neuf_vefa_eur_m2": "prix_neuf_vefa_acte_eur_m2"}
+
+
+def resoudre(chiffre_id: str) -> str:
+    """Résout un id d'alias de transition vers l'id canonique (identité sinon)."""
+    return ALIAS_TRANSITION.get(chiffre_id, chiffre_id)

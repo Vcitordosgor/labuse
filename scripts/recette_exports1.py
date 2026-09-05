@@ -25,13 +25,26 @@ from pathlib import Path
 
 TEMOINS = ["97415000BO0852", "97401000AD0554", "97416000DY0106", "97411000AV0110"]
 
-#: recette pt 3 — zéro occurrence sur le TEXTE des 24 PDF (« Non ICPE » toléré dans le tableau
-#: ICPE seul — contrôle spécifique plus bas, pas dans ce balayage).
-MOTS_INTERDITS = ["run m1", "EPSG", "ST_Buffer", "à_vérifier", "deja_bati", "reglt",
-                  " pt)", "scoring", "fiabilité suivie", "doctrine", "page corrigée",
-                  "L'IA", "fiche commune", "parcours Flash", "MOBPRO", "n 11"]
+
+def _mots_interdits() -> list[str]:
+    """0-bis — la liste VERSIONNÉE (config/mots_interdits.yaml) ; repli embarqué si absente.
+    « Non ICPE » toléré dans le tableau ICPE seul — contrôle spécifique plus bas."""
+    p = Path(__file__).resolve().parents[1] / "config" / "mots_interdits.yaml"
+    if p.exists():
+        try:
+            import yaml
+            return list(yaml.safe_load(p.read_text())["mots"])
+        except Exception:  # noqa: BLE001 — repli embarqué, jamais un contrôle muet
+            pass
+    return ["run m1", "EPSG", "ST_Buffer", "à_vérifier", "deja_bati", "reglt",
+            " pt)", "scoring", "fiabilité suivie", "doctrine", "page corrigée",
+            "L'IA", "fiche commune", "parcours Flash", "MOBPRO", "n 11"]
+
+
+MOTS_INTERDITS = _mots_interdits()
 
 ERREURS: list[str] = []
+MOTS_TROUVES: list[str] = []    # 0-bis — contrôle distinct (sonde) : les hits « mots interdits »
 
 
 def ko(msg: str) -> None:
@@ -80,10 +93,11 @@ def verifier_temoin(idu: str, d: Path, fiche: dict) -> None:
     txts = {f.stem: f.read_text(encoding="utf-8", errors="replace") for f in d.glob("*.txt")}
     tout = "\n".join(txts.values())
 
-    # ── pt 3 : mots interdits ──
+    # ── pt 3 : mots interdits (liste versionnée — contrôle DISTINCT pour la sonde, 0-bis) ──
     for mot in MOTS_INTERDITS:
         for doc, t in txts.items():
             if mot in t:
+                MOTS_TROUVES.append(f"{idu}/{doc} : « {mot} »")
                 ko(f"{idu}/{doc} : mot interdit « {mot} »")
     # « Non ICPE » : toléré UNIQUEMENT dans le tableau ICPE (ligne portant une distance en m)
     for doc, t in txts.items():
@@ -165,6 +179,13 @@ def main() -> int:
         fiche = generer(idu, outdir)
         verifier_temoin(idu, outdir / idu, fiche)
     print(f"\n{'ÉCHEC — ' + str(len(ERREURS)) + ' divergence(s)' if ERREURS else 'RECETTE VERTE'}")
+    # 0-bis — sortie machine pour la sonde (cas nocturne coherence-robinets) : divergences et
+    # mots interdits SÉPARÉS (deux contrôles distincts du verdict).
+    if "--json" in sys.argv:
+        Path(sys.argv[sys.argv.index("--json") + 1]).write_text(json.dumps(
+            {"temoins": TEMOINS, "erreurs": ERREURS, "mots_interdits": MOTS_TROUVES,
+             "n_erreurs_hors_mots": len([e for e in ERREURS if "mot interdit" not in e]),
+             "n_mots_interdits": len(MOTS_TROUVES)}, ensure_ascii=False, indent=1))
     return 1 if ERREURS else 0
 
 

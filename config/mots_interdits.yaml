@@ -1,0 +1,22 @@
+# 0-bis (CIRCUIT-2) — LA liste versionnée des « mots interdits » dans les exports client.
+# Au terme d'EXPORTS-1 : 56 occurrences → 0 sur les 24 PDF des 4 témoins. Cette liste est LA
+# référence : scripts/recette_exports1.py la lit, la sonde coherence-robinets la rejoue comme
+# contrôle DISTINCT (verdict séparé des divergences de grandeurs). Toute évolution = commit ici.
+version: "2026-09-05"
+mots:
+  - "run m1"
+  - "EPSG"
+  - "ST_Buffer"
+  - "à_vérifier"
+  - "deja_bati"
+  - "reglt"
+  - " pt)"
+  - "scoring"
+  - "fiabilité suivie"
+  - "doctrine"
+  - "page corrigée"
+  - "L'IA"
+  - "fiche commune"
+  - "parcours Flash"
+  - "MOBPRO"
+  - "n 11"
