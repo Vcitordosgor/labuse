@@ -47,7 +47,17 @@ def served_cascade_lines(db: Session, idu: str, run: str | None = None) -> list[
             continue
         seen.add(k)
         out.append(dict(r))
-    return arbitrer_risques(out)
+    out = arbitrer_risques(out)
+    # ZONE-1 pt2 — garde DE LECTURE : la ligne `residuel_socle` stockée au run a pu être
+    # calculée sous l'ancienne zone du centroïde ; si la zone DOMINANTE (celle de l'écran)
+    # est A/N, la SDP servie vaut 0 par règle, cause affichée. Le dryrun n'est pas réécrit.
+    if any(l["layer_name"] == "residuel_socle" for l in out):
+        from ..faisabilite.zone_servie import ligne_residuel_gardee, zone_fam_ecran
+        fam, zlib = zone_fam_ecran(db, idu)
+        if fam in ("A", "N"):
+            out = [ligne_residuel_gardee(l, fam, zlib) if l["layer_name"] == "residuel_socle"
+                   else l for l in out]
+    return out
 
 
 #: rattachement couche → onglet. SOURCE UNIQUE (app.py importe ces deux-là — plus de duplication).

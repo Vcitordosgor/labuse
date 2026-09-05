@@ -92,6 +92,8 @@ def _ctx():
     c.parcel_id, c.idu, c.commune = 1, "97411000AB0001", "Saint-Denis"
     c.surface_m2, c.zone = 1000.0, "Ud"
     c.contraintes, c.prescriptions_eco = Contraintes(), {}
+    # ZONE-1 : champs de la résolution de zone unique (stub aligné sur ParcelContext)
+    c.zone_fam, c.a_cheval, c.zone_parts = "U", False, []
     return c
 
 

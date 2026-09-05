@@ -1376,6 +1376,9 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     if fz:
         _ctx, f = fz
         out["capacite"] = {"zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
+                           # ZONE-1 : zone = DOMINANTE PAR SURFACE (la même que l'écran) ;
+                           # sur parcelle à cheval, drapeau + parts servis avec la capacité.
+                           "a_cheval": _ctx.a_cheval, "zone_parts": _ctx.zone_parts,
                            "fourchette": f.fourchette, "hypotheses": f.hypotheses,
                            "bandeau": f.bandeau,
                            # M11 Surface C : les 11 étapes TRACÉES du moteur, exposées telles quelles
