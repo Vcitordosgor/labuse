@@ -230,3 +230,62 @@ Livrable : `docs/CIRCUIT/inventaire/robinets.csv` (**122 robinets**), généré 
 - Compteurs : 122 robinets, ventilation ci-dessus, produits par le script.
 - Lignes `DOUTE` : 2 (composants front Solaire fiche / fiche soleil).
 - A bloqué : rien. `nb_chiffres` sera rempli au Lot 5 (dépendance assumée du mandat).
+
+---
+
+## Lot 5 — Les chiffres
+
+Livrables : `chiffres.csv` (139 couples robinet×chiffre, 88 `chiffre_id` distincts — généré par `scripts/inventaire/extrait_chiffres.py`), `fuites_candidates.csv` (33, dérivées par groupby), `fuites_mesurees.csv` (49 lignes, 46 avec écart ≠ 0) et `eau_ancienne.csv` (6 lignes) — mesures par `scripts/inventaire/mesure_fuites.py` (SELECT seuls). `robinets.csv` a été régénéré avec `nb_chiffres` rempli.
+
+**Couverture assumée** : 139 couples couvrent les chiffres porteurs de 55 robinets ; 67 robinets restent à 0 ligne (fonds de carte sans nombre, couches de simple présence, sous-entrées redondantes, écrans admin secondaires). Le mandat attendait « plusieurs centaines de lignes » : l'estimation du reste à déclarer est au Lot 8.
+
+### Compteurs (sortie des scripts)
+
+| compteur | valeur |
+|---|---|
+| lignes chiffres.csv / chiffre_id distincts | 139 / 88 |
+| par calcul | moteur 64 · sql_propre 54 · passe_plat 16 · constante 3 · front 2 |
+| avec tampon ≠ rien | 58 |
+| fuites candidates / mesurées / avec écart ≠ 0 | 33 / 49 / 46 |
+| chiffres en eau ancienne | 6 familles |
+| DOUTE (chiffres.csv) | 1 |
+
+### Q5.1-5.2 — La fuite mandatée : « part RNU » de Saint-Paul
+
+Aucune métrique littérale « part RNU » n'existe dans le code (grep exhaustif — seule Saint-Philippe est RNU, `config/rnu_communes.yaml`). Les valeurs vues par Vic correspondent aux **parts de zonage** servies par DEUX dénominateurs :
+
+- chemin A — **part de SURFACE** : `_foncier_commune` (`app.py:1908-1955`), carte « Zonage » de la fiche commune ; le commentaire OUTILS-6 C1 y déclare l'intention (« les parts de parcelles ne représentent pas le territoire ») ;
+- chemin B — **comptes de PARCELLES** par famille : `/zones-plu` (`app.py:2436`).
+
+Mesuré sur Saint-Paul (les deux valeurs, cause `denominateur`) : **zone A = 35,8 % (surface) vs 17,8 % (parcelles)** ; **zone N = 47,2 % vs 6,8 %**. Le « 18 % vs 6 % » de Vic = les parts par parcelles de A et N (17,8 / 6,8). L'écran exact où chaque valeur lui est apparue reste `DOUTE` ; le chemin fidèle à l'intention est la **surface**. Mesure étendue aux 24 communes dans `fuites_mesurees.csv` (48 lignes A/N). S'y ajoutent : `n_sources` (66 vitrine vs 77 brut — cause `perimetre`, chemin fidèle WHERE_AFFICHEES) et `prix_neuf_vefa` (fuite historique 5 003 vs 4 730 €/m², corrigée pour comparateur/fiche/carte par RETOURS-11F M1, **mais le précalcul divergent `dvf_prix_sortie_neuf` est encore lu par score_e** — cause `table`).
+
+### Q5.3 — Eau ancienne (mesurée, `eau_ancienne.csv`)
+
+1. **DPE** (premier suspect confirmé) : base locale max(date_etablissement)=21/07, amont vu 02/09 ; mécanisme structurel — le cron saute les communes peuplées ET tamponne `last_sync_at` (volume prod ≠ local : DOUTE sur l'ampleur, pas sur le mécanisme).
+2. **Divisibilité** : `division_or_candidates` sur q_v10_m129, lu sans filtre de run (1 run de retard, toléré).
+3. **Solaire** : gel assumé et étiqueté (millésime en base).
+4. **Fiche commune** : cache nocturne ≤ 24 h, tamponné (« compteurs précalculés le … »).
+5. **Isochrones** : `zone_isochrone_cache` sans TTL (138 entrées) — géométrie figée à la 1re demande.
+6. **score_e** : lit le précalcul neuf divergent (cf. ci-dessus).
+
+### Q5.4 — Calculs côté navigateur (agent dédié, liste complète en annexe de l'agent)
+
+**95 sites** examinés : **9 `calcul_metier`** (le nombre affiché n'existe pas côté serveur — dont `ContextePanel.tsx:526` « autres logés gratuitement » = 100−locataires−propriétaires, `constructibilite.tsx:137` charge foncière bornée, `ProspectionSolaire.tsx:325-326` kWc et MWh/an dérivés au front, `MarcheSecteurBlock.tsx:16` % propriétaires, `blocB.tsx:358` % ZAN, `ProjetsPanel.tsx:53` % décidées, `Licences.tsx:26` heures restantes), **17 dérivations légères** (max/min de fourchettes, différences, durées), **69 formatage seul**. « Zéro recalcul au front » n'est PAS tenu hors des 15 outils vérifiés. Deux lignes de `chiffres.csv` portent `calcul=front` (charge foncière calculette, n_vigilances) ; les kWc/MWh solaire s'y ajoutent comme candidats au registre.
+
+### Q5.5 — Chiffres du Copilote
+
+Les 9 outils SQL passent chacun par le **point de calcul unique** du robinet équivalent (facette canonique du filtre pour compter_parcelles — égalité verrouillée par test ; `patrimoine()`, `velocite()` avec réserve Sitadel citée mot à mot, `build_marche_commune()`, `_q_v2_fiche()` lu du run servi, `plu.destinations` même moteur que la fiche). `recherche_web` sort du verrou par construction (texte ≤ 2 phrases, marqué web, jamais Sourcé). **DOUTE** : aucune garde formelle n'empêche la surface `copilote-general` (réponse libre) d'énoncer un nombre hors outils — à trancher pour le registre.
+
+### Q5.6 — Chiffres des PDF et des mails
+
+- **Flash / Dossier parcelle** : `flash/data.py:collect_report_data` consomme les moteurs (verdict run servi, sector_price, moteur zone via `_zone` — aucune recopie, F2) ; TEMPLATE_VERSION 1.4.
+- **Banquier** : `briques_pdf.py` + 11 étapes faisabilité ; la synthèse IA est contrainte `strict_numbers` (`banquier.py:87`).
+- **Pré-dossier PC / Lettre de zonage** : passe-plat du zonage GPU servi + références datées.
+- **Argumentaire** : faits chiffrés sourcés (correctif m143 `out.get('regime')` au passif).
+- **Brevo 12/13** : chiffres en paramètres nommés (`NB_BIENS`, `CARTES` HTML serveur, chaque valeur échappée) — zéro calcul dans le template (contrainte Brevo sans `{% for %}`).
+
+### Point d'étape Lot 5
+
+- Compteurs ci-dessus (scripts). Ligne mandatée Saint-Paul : présente avec les deux valeurs et la cause.
+- `DOUTE` : 1 dans chiffres.csv (entrées loyers) ; écran exact du constat Vic ; ampleur prod de l'eau ancienne DPE ; garde copilote-general.
+- A bloqué : la mesure « deux chemins exécutés » n'était possible en local que pour zonage et n_sources (les autres candidates du groupby convergent en réalité vers la même fonction — notées candidates, pas mesurées comme fuites).

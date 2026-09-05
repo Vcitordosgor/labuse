@@ -9,8 +9,8 @@ fond_ortho_2016;fond;2016-2020;;WMTS ORTHOIMAGERY.ORTHOPHOTOS2016-2020;basemaps.
 fond_ortho_2021;fond;2021-2023;;WMTS ORTHOIMAGERY.ORTHOPHOTOS2021-2023;basemaps.ts;tuiles;0;frontend/src/components/map/basemaps.ts:45
 fond_sombre;fond;Sombre;;canvas + couches;MapView.tsx:applyClairMode;json_puis_js;0;frontend/src/components/map/MapView.tsx:28-29
 fond_clair;fond;Clair;;canvas + couches;MapView.tsx:applyClairMode;json_puis_js;0;frontend/src/components/map/MapView.tsx:28-29
-couche_verdict;couche;Verdict · Classement servi;;tuiles MVT (run servi);cli.py:build-mvt (parcel_flags);tuiles;0;frontend/src/components/map/Legend.tsx:94-108
-couche_zonage_plu;couche;Zonage PLU (par type);;/map/layers.geojson?kind=plu_gpu_zone;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:109-114
+couche_verdict;couche;Verdict · Classement servi;;tuiles MVT (run servi);cli.py:build-mvt (parcel_flags);tuiles;1;frontend/src/components/map/Legend.tsx:94-108
+couche_zonage_plu;couche;Zonage PLU (par type);;/map/layers.geojson?kind=plu_gpu_zone;app.py:map_layers_geojson;json_puis_js;1;frontend/src/components/map/Legend.tsx:109-114
 couche_gpu_brut;couche;Limites officielles PLU (GPU brut);;/map/layers.geojson?kind=plu_gpu;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:116-120
 couche_cinquante_pas;couche;50 pas géométriques;;/map/layers.geojson?kind=cinquante_pas;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:121-125
 couche_znieff;couche;ZNIEFF — type I & II;;/map/layers.geojson?kind=znieff;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:126-130
@@ -22,102 +22,102 @@ couche_axes;couche;Axes structurants;;/map/layers.geojson?kind=axe_structurant,p
 couche_lignes_ht;couche;Lignes haute tension;;/map/layers.geojson?kind=ligne_ht;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:174-178
 couche_tcsp;couche;Axe de transport structurant;;/map/layers.geojson?kind=tcsp_axe;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:179-183
 couche_dispositifs;couche;Dispositifs et périmètres;;/map/layers.geojson?kind=qpv,tva_primo,anru,zfang,frr;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:184-194
-couche_vefa;couche;Prix du logement neuf (VEFA);;/map/layers.geojson?kind=vefa_neuf;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:197-210
-couche_densifier;couche;Densifier l'existant;;/map/layers.geojson (résiduel);app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:211-215
+couche_vefa;couche;Prix du logement neuf (VEFA);;/map/layers.geojson?kind=vefa_neuf;app.py:map_layers_geojson;json_puis_js;1;frontend/src/components/map/Legend.tsx:197-210
+couche_densifier;couche;Densifier l'existant;;/map/layers.geojson (résiduel);app.py:map_layers_geojson;json_puis_js;1;frontend/src/components/map/Legend.tsx:211-215
 couche_equip_osm;couche;Équipements (OSM);;/map/layers.geojson?kind=amenite;app.py:map_layers_geojson;json_puis_js;0;frontend/src/components/map/Legend.tsx:216-221
-outil_etudier_bien;outil;Étudier un bien;;/modules/scoreur-adresse;modules.py:scoreur_adresse;json_puis_js;0;frontend/src/components/outils/registry.ts:66-67
-outil_faisabilite;outil;Faisabilité;;/modules/faisabilite/{idu};modules.py:faisabilite_sens1;json_puis_js;0;frontend/src/components/outils/registry.ts:70-71
-outil_taxe_amenagement;outil;Taxe d'aménagement;;/modules/taxe-amenagement;modules.py:taxe_amenagement;json_puis_js;0;frontend/src/components/outils/registry.ts:74-75
-outil_pieges;outil;Pièges et risques;;/modules/risques;modules.py:risques_audit;json_puis_js;0;frontend/src/components/outils/registry.ts:81-82
-outil_plu;outil;PLU;;/modules/plu-annuaire;modules.py:plu_annuaire_search;json_puis_js;0;frontend/src/components/outils/registry.ts:86-87
+outil_etudier_bien;outil;Étudier un bien;;/modules/scoreur-adresse;modules.py:scoreur_adresse;json_puis_js;2;frontend/src/components/outils/registry.ts:66-67
+outil_faisabilite;outil;Faisabilité;;/modules/faisabilite/{idu};modules.py:faisabilite_sens1;json_puis_js;3;frontend/src/components/outils/registry.ts:70-71
+outil_taxe_amenagement;outil;Taxe d'aménagement;;/modules/taxe-amenagement;modules.py:taxe_amenagement;json_puis_js;1;frontend/src/components/outils/registry.ts:74-75
+outil_pieges;outil;Pièges et risques;;/modules/risques;modules.py:risques_audit;json_puis_js;1;frontend/src/components/outils/registry.ts:81-82
+outil_plu;outil;PLU;;/modules/plu-annuaire;modules.py:plu_annuaire_search;json_puis_js;2;frontend/src/components/outils/registry.ts:86-87
 outil_plu_procedure;outil;Procédure & changement;outil_plu;/moteurs/simulplu/procedures;moteurs.py:simulplu_procedures;json_puis_js;0;frontend/src/components/outils/ProcedureChangement.tsx
-outil_plu_simuler;outil;Simuler un changement;outil_plu;/moteurs/simulplu/zones;moteurs.py:simulplu_zones;json_puis_js;0;frontend/src/components/outils/moteurs.tsx
-outil_comparer_parcelles;outil;Comparer des parcelles;;/comparateur-communes;app.py:comparateur_communes;json_puis_js;0;frontend/src/components/outils/registry.ts:88-89
+outil_plu_simuler;outil;Simuler un changement;outil_plu;/moteurs/simulplu/zones;moteurs.py:simulplu_zones;json_puis_js;1;frontend/src/components/outils/moteurs.tsx
+outil_comparer_parcelles;outil;Comparer des parcelles;;/comparateur-communes;app.py:comparateur_communes;json_puis_js;8;frontend/src/components/outils/registry.ts:88-89
 outil_assemblage;outil;Assemblage;;/moteurs/assemblage;moteurs.py:moteurs_assemblage;json_puis_js;0;frontend/src/components/outils/registry.ts:90-91
-outil_scan_patrimoine;outil;Scan patrimoine;;/modules/patrimoine;modules.py:patrimoine;json_puis_js;0;frontend/src/components/outils/registry.ts:95-96
+outil_scan_patrimoine;outil;Scan patrimoine;;/modules/patrimoine;modules.py:patrimoine;json_puis_js;1;frontend/src/components/outils/registry.ts:95-96
 outil_scan_possede;outil;Possède;outil_scan_patrimoine;/modules/patrimoine?siren=…;modules.py:patrimoine;json_puis_js;0;frontend/src/components/outils/ScanPatrimoine.tsx
 outil_scan_construit;outil;Ce qu'ils construisent;outil_scan_patrimoine;/modules/patrimoine + permis;modules.py:patrimoine;json_puis_js;0;frontend/src/components/outils/ScanPatrimoine.tsx
 outil_courrier;outil;Courrier propriétaire;;/modules/courriers;modules.py:courriers;json_puis_js;0;frontend/src/components/outils/registry.ts:97-98
-outil_prospection_solaire;outil;Prospection solaire;;/modules/prospection-solaire;modules.py:prospection_solaire;json_puis_js;0;frontend/src/components/outils/registry.ts:101-102
+outil_prospection_solaire;outil;Prospection solaire;;/modules/prospection-solaire;modules.py:prospection_solaire;json_puis_js;2;frontend/src/components/outils/registry.ts:101-102
 outil_solaire_toits;outil;Toits bien exposés;outil_prospection_solaire;/modules/prospection-solaire;modules.py:prospection_solaire;json_puis_js;0;frontend/src/components/outils/ProspectionSolaire.tsx
-outil_solaire_piscines;outil;Piscines;outil_prospection_solaire;/modules/prospection-piscines;modules.py:prospection_piscines;json_puis_js;0;frontend/src/components/outils/ProspectionSolaire.tsx
+outil_solaire_piscines;outil;Piscines;outil_prospection_solaire;/modules/prospection-piscines;modules.py:prospection_piscines;json_puis_js;1;frontend/src/components/outils/ProspectionSolaire.tsx
 outil_communes;outil;Communes;;/communes;app.py:list_communes;json_puis_js;0;frontend/src/components/outils/registry.ts:109-110
 outil_communes_comparaison;outil;Comparaison communes;outil_communes;/comparateur-communes;api/comparateur.py;json_puis_js;0;frontend/src/components/outils/Communes.tsx:6
-outil_communes_evolution;outil;Évolution du marché;outil_communes;/moteurs/barometre;moteurs.py:barometres;json_puis_js;0;frontend/src/components/outils/moteurs.tsx
-outil_communes_acquisitions;outil;Acquisitions récentes;outil_communes;/communes/{commune}/acquisitions-pm;app.py:commune_acquisitions_pm;json_puis_js;0;frontend/src/components/outils/Communes.tsx:27
-outil_permis;outil;Permis;;/modules/permis;modules.py:permis;json_puis_js;0;frontend/src/components/outils/registry.ts:134-135
+outil_communes_evolution;outil;Évolution du marché;outil_communes;/moteurs/barometre;moteurs.py:barometres;json_puis_js;2;frontend/src/components/outils/moteurs.tsx
+outil_communes_acquisitions;outil;Acquisitions récentes;outil_communes;/communes/{commune}/acquisitions-pm;app.py:commune_acquisitions_pm;json_puis_js;1;frontend/src/components/outils/Communes.tsx:27
+outil_permis;outil;Permis;;/modules/permis;modules.py:permis;json_puis_js;2;frontend/src/components/outils/registry.ts:134-135
 outil_permis_radar;outil;Radar permis;outil_permis;/modules/permis;modules.py:permis;json_puis_js;0;frontend/src/components/outils/RadarMarche.tsx
-outil_permis_point_mort;outil;Permis au point mort;outil_permis;/modules/promesses;modules.py:promesses;json_puis_js;0;frontend/src/components/outils/RadarMarche.tsx
-outil_densifier;outil;Densifier l'existant;;/modules/renouvellement;modules.py:renouvellement;json_puis_js;0;frontend/src/components/outils/registry.ts:140-141
-outil_etude_zone;outil;Étude de zone;;/modules/etude-zone;modules.py:etude_zone (moteur zone.py);json_puis_js;0;frontend/src/components/outils/registry.ts:144-145
+outil_permis_point_mort;outil;Permis au point mort;outil_permis;/modules/promesses;modules.py:promesses;json_puis_js;1;frontend/src/components/outils/RadarMarche.tsx
+outil_densifier;outil;Densifier l'existant;;/modules/renouvellement;modules.py:renouvellement;json_puis_js;2;frontend/src/components/outils/registry.ts:140-141
+outil_etude_zone;outil;Étude de zone;;/modules/etude-zone;modules.py:etude_zone (moteur zone.py);json_puis_js;5;frontend/src/components/outils/registry.ts:144-145
 outil_remonter_temps;outil;Remonter le temps;;/ortho?an=…;app.py:ortho + ORTHO_YEARS;json_puis_js;0;frontend/src/components/outils/registry.ts:148-149
 outil_radar_client;outil;Radar;;/radar/biens;pige/client.py;json_puis_js;0;frontend/src/components/radar/RadarClient.tsx
-outil_radar_marche;outil;Marché;outil_radar_client;/radar/marche;pige/marche.py:stats;json_puis_js;0;frontend/src/components/outils/RadarMarche.tsx
-fiche_parcelle_score;fiche;Score d'opportunité (tier);fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (app.py:3283);json_puis_js;0;frontend/src/components/fiche/ScoreV2Block.tsx
-fiche_parcelle_constructibilite;fiche;Constructibilité;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche;json_puis_js;0;frontend/src/components/fiche/constructibilite.tsx:19-93
-fiche_parcelle_risques;fiche;Risques et protections;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche;json_puis_js;0;frontend/src/components/fiche/risques.tsx:16-30
-fiche_parcelle_marche;fiche;Marché et secteur;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (sector_price);json_puis_js;0;frontend/src/components/fiche/marche.tsx:19-90
-fiche_parcelle_reseaux;fiche;Réseaux et accès;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (viabilisation);json_puis_js;0;frontend/src/components/fiche/reseaux.tsx:46-100
-fiche_parcelle_autour;fiche;Autour de cette parcelle;fiche_parcelle;/parcels/{idu} + /parcels/{idu}/zone;app.py:_q_v2_fiche + parcel_zone (app.py:4265);json_puis_js;0;frontend/src/components/fiche/autour.tsx:21-68
-fiche_parcelle_proprietaire;fiche;Propriétaire;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (proprietaire_moral);json_puis_js;0;frontend/src/components/fiche/Fiche.tsx:645-651
-fiche_parcelle_confiance;fiche;Confiance données;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (bloc icd);json_puis_js;0;frontend/src/components/fiche/Fiche.tsx:35-70
-fiche_parcelle_solaire;fiche;Solaire (rosace, productible);fiche_parcelle;/parcels/{idu};parcel_solar (millésime gelé);json_puis_js;0;DOUTE composant exact — table parcel_solar servie à la fiche
-fiche_parcelle_division;fiche;Division (copropriétés/lots);fiche_parcelle;/parcels/{idu};app.py:2692-2696 (division_or_candidates — run q_v10_m129);json_puis_js;0;"frontend/src/components/fiche/CoproprietesBlock.tsx ; app.py:2692"
-fiche_commune_regles_urbanisme;fiche;Règles d'urbanisme;fiche_commune;/communes/{c}/contexte;fiche_commune.py:plu_statut (141);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:327-339
-fiche_commune_zan;fiche;Enveloppe ZAN;fiche_commune;/communes/{c}/contexte;fiche_commune.py (rarete);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:341-350
-fiche_commune_sru;fiche;Logement social — SRU;fiche_commune;/communes/{c}/contexte;fiche_commune.py (commune_contexte_sru);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:352-366
-fiche_commune_permis;fiche;Permis & délais;fiche_commune;/communes/{c}/contexte;fiche_commune.py:permis_bloc (Sitadel);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:368-379
-fiche_commune_plh;fiche;Programme local — PLH;fiche_commune;/communes/{c}/contexte;fiche_commune.py (plh_epci);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:381-391
-fiche_commune_prix;fiche;Prix & tendance;fiche_commune;/communes/{c}/contexte;fiche_commune.py:comparable (16-58, partagé comparateur);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:396-407
-fiche_commune_terrain_nu;fiche;Terrain nu;fiche_commune;/communes/{c}/contexte;fiche_commune.py (DVF par zone);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:409-423
-fiche_commune_annonces;fiche;Annonces en cours — Radar;fiche_commune;/communes/{c}/contexte;fiche_commune.py:marche_annonces (pige.marche.stats);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:425-447
-fiche_commune_loyers;fiche;Loyers;fiche_commune;/communes/{c}/contexte;fiche_commune.py:loyer;json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:449-458
-fiche_commune_foncier;fiche;Foncier repéré;fiche_commune;/communes/{c}/contexte;fiche_commune.py:build (cadastre + opportunités);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:463-479
-fiche_commune_zonage;fiche;Zonage;fiche_commune;/communes/{c}/contexte;fiche_commune.py:build (repartition_zonage);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:482-498
-fiche_commune_risques;fiche;Risques;fiche_commune;/communes/{c}/contexte;fiche_commune.py:risques (66-88, _pct_layer);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:501-512
-fiche_commune_population;fiche;Population & logement;fiche_commune;/communes/{c}/contexte;fiche_commune.py:population (Filosofi + RP, 123);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:514-540
-fiche_commune_qpv;fiche;Quartiers prioritaires;fiche_commune;/communes/{c}/contexte;fiche_commune.py:build (qpv/npnru);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:542-552
+outil_radar_marche;outil;Marché;outil_radar_client;/radar/marche;pige/marche.py:stats;json_puis_js;4;frontend/src/components/outils/RadarMarche.tsx
+fiche_parcelle_score;fiche;Score d'opportunité (tier);fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (app.py:3283);json_puis_js;2;frontend/src/components/fiche/ScoreV2Block.tsx
+fiche_parcelle_constructibilite;fiche;Constructibilité;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche;json_puis_js;3;frontend/src/components/fiche/constructibilite.tsx:19-93
+fiche_parcelle_risques;fiche;Risques et protections;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche;json_puis_js;1;frontend/src/components/fiche/risques.tsx:16-30
+fiche_parcelle_marche;fiche;Marché et secteur;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (sector_price);json_puis_js;4;frontend/src/components/fiche/marche.tsx:19-90
+fiche_parcelle_reseaux;fiche;Réseaux et accès;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (viabilisation);json_puis_js;3;frontend/src/components/fiche/reseaux.tsx:46-100
+fiche_parcelle_autour;fiche;Autour de cette parcelle;fiche_parcelle;/parcels/{idu} + /parcels/{idu}/zone;app.py:_q_v2_fiche + parcel_zone (app.py:4265);json_puis_js;3;frontend/src/components/fiche/autour.tsx:21-68
+fiche_parcelle_proprietaire;fiche;Propriétaire;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (proprietaire_moral);json_puis_js;1;frontend/src/components/fiche/Fiche.tsx:645-651
+fiche_parcelle_confiance;fiche;Confiance données;fiche_parcelle;/parcels/{idu};app.py:_q_v2_fiche (bloc icd);json_puis_js;1;frontend/src/components/fiche/Fiche.tsx:35-70
+fiche_parcelle_solaire;fiche;Solaire (rosace, productible);fiche_parcelle;/parcels/{idu};parcel_solar (millésime gelé);json_puis_js;1;DOUTE composant exact — table parcel_solar servie à la fiche
+fiche_parcelle_division;fiche;Division (copropriétés/lots);fiche_parcelle;/parcels/{idu};app.py:2692-2696 (division_or_candidates — run q_v10_m129);json_puis_js;1;"frontend/src/components/fiche/CoproprietesBlock.tsx ; app.py:2692"
+fiche_commune_regles_urbanisme;fiche;Règles d'urbanisme;fiche_commune;/communes/{c}/contexte;fiche_commune.py:plu_statut (141);json_puis_js;1;frontend/src/components/contexte/ContextePanel.tsx:327-339
+fiche_commune_zan;fiche;Enveloppe ZAN;fiche_commune;/communes/{c}/contexte;fiche_commune.py (rarete);json_puis_js;1;frontend/src/components/contexte/ContextePanel.tsx:341-350
+fiche_commune_sru;fiche;Logement social — SRU;fiche_commune;/communes/{c}/contexte;fiche_commune.py (commune_contexte_sru);json_puis_js;2;frontend/src/components/contexte/ContextePanel.tsx:352-366
+fiche_commune_permis;fiche;Permis & délais;fiche_commune;/communes/{c}/contexte;fiche_commune.py:permis_bloc (Sitadel);json_puis_js;3;frontend/src/components/contexte/ContextePanel.tsx:368-379
+fiche_commune_plh;fiche;Programme local — PLH;fiche_commune;/communes/{c}/contexte;fiche_commune.py (plh_epci);json_puis_js;1;frontend/src/components/contexte/ContextePanel.tsx:381-391
+fiche_commune_prix;fiche;Prix & tendance;fiche_commune;/communes/{c}/contexte;fiche_commune.py:comparable (16-58, partagé comparateur);json_puis_js;3;frontend/src/components/contexte/ContextePanel.tsx:396-407
+fiche_commune_terrain_nu;fiche;Terrain nu;fiche_commune;/communes/{c}/contexte;fiche_commune.py (DVF par zone);json_puis_js;1;frontend/src/components/contexte/ContextePanel.tsx:409-423
+fiche_commune_annonces;fiche;Annonces en cours — Radar;fiche_commune;/communes/{c}/contexte;fiche_commune.py:marche_annonces (pige.marche.stats);json_puis_js;3;frontend/src/components/contexte/ContextePanel.tsx:425-447
+fiche_commune_loyers;fiche;Loyers;fiche_commune;/communes/{c}/contexte;fiche_commune.py:loyer;json_puis_js;1;frontend/src/components/contexte/ContextePanel.tsx:449-458
+fiche_commune_foncier;fiche;Foncier repéré;fiche_commune;/communes/{c}/contexte;fiche_commune.py:build (cadastre + opportunités);json_puis_js;3;frontend/src/components/contexte/ContextePanel.tsx:463-479
+fiche_commune_zonage;fiche;Zonage;fiche_commune;/communes/{c}/contexte;fiche_commune.py:build (repartition_zonage);json_puis_js;4;frontend/src/components/contexte/ContextePanel.tsx:482-498
+fiche_commune_risques;fiche;Risques;fiche_commune;/communes/{c}/contexte;fiche_commune.py:risques (66-88, _pct_layer);json_puis_js;2;frontend/src/components/contexte/ContextePanel.tsx:501-512
+fiche_commune_population;fiche;Population & logement;fiche_commune;/communes/{c}/contexte;fiche_commune.py:population (Filosofi + RP, 123);json_puis_js;2;frontend/src/components/contexte/ContextePanel.tsx:514-540
+fiche_commune_qpv;fiche;Quartiers prioritaires;fiche_commune;/communes/{c}/contexte;fiche_commune.py:build (qpv/npnru);json_puis_js;1;frontend/src/components/contexte/ContextePanel.tsx:542-552
 fiche_commune_mairie;fiche;Mairie & service urbanisme;fiche_commune;/communes/{c}/contexte;fiche_commune.py:build (mairies + commune_contacts);json_puis_js;0;frontend/src/components/contexte/ContextePanel.tsx:554-569
-fiche_annonce;fiche;Fiche bien (Radar);;/radar/biens/{id};pige/client.py (biens validés seuls);json_puis_js;0;frontend/src/components/radar/RadarClient.tsx
-fiche_proprietaire;fiche;Fiche propriétaire (timeline PM);;/parcels/{idu} (bloc) + patrimoine;proprietaire_historique.py;json_puis_js;0;frontend/src/components/fiche/ProprietaireHistorique.tsx
-fiche_soleil;fiche;Fiche soleil (photo toit + rosace);;/modules/prospection-solaire (détail);parcel_solar + toiture_lidar;json_puis_js;0;DOUTE composant exact (RETOURS-12 O7 : photo du toit + rosace)
-copilote_compter_parcelles;copilote;Compter des parcelles;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:130;texte_llm;0;src/labuse/copilote_v2/outils.py:219
-copilote_compter_permis;copilote;Nombre de permis accordés;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:550;texte_llm;0;src/labuse/copilote_v2/outils.py:567
-copilote_parcelles_entreprise;copilote;Parcelles détenues par une personne morale;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:279;texte_llm;0;src/labuse/copilote_v2/outils.py:325
-copilote_fiche_parcelle;copilote;Données d'une parcelle (IDU);copilote;/api/copilote-v2/ask;copilote_v2/outils.py:333 (_q_v2_fiche, run servi);texte_llm;0;src/labuse/copilote_v2/outils.py:345
-copilote_stats_commune;copilote;Contexte d'une commune (SRU, marché);copilote;/api/copilote-v2/ask;copilote_v2/outils.py:350 (commune_contexte);texte_llm;0;src/labuse/copilote_v2/outils.py:365
-copilote_delais_instruction;copilote;Délai médian d'instruction (commune);copilote;/api/copilote-v2/ask;copilote_v2/outils.py:370 (velocite);texte_llm;0;src/labuse/copilote_v2/outils.py:389
-copilote_marche;copilote;Marché immobilier d'une commune;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:395 (build_marche_commune);texte_llm;0;src/labuse/copilote_v2/outils.py:418
-copilote_compter_piscines;copilote;Compter les piscines détectées;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:529 (prospection_piscines);texte_llm;0;src/labuse/copilote_v2/outils.py:545
-copilote_destination_zone;copilote;Peut-on ouvrir une activité sur cette parcelle ?;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:573 (plu.destinations — même moteur que fiche);texte_llm;0;src/labuse/copilote_v2/outils.py:599
+fiche_annonce;fiche;Fiche bien (Radar);;/radar/biens/{id};pige/client.py (biens validés seuls);json_puis_js;2;frontend/src/components/radar/RadarClient.tsx
+fiche_proprietaire;fiche;Fiche propriétaire (timeline PM);;/parcels/{idu} (bloc) + patrimoine;proprietaire_historique.py;json_puis_js;1;frontend/src/components/fiche/ProprietaireHistorique.tsx
+fiche_soleil;fiche;Fiche soleil (photo toit + rosace);;/modules/prospection-solaire (détail);parcel_solar + toiture_lidar;json_puis_js;1;DOUTE composant exact (RETOURS-12 O7 : photo du toit + rosace)
+copilote_compter_parcelles;copilote;Compter des parcelles;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:130;texte_llm;1;src/labuse/copilote_v2/outils.py:219
+copilote_compter_permis;copilote;Nombre de permis accordés;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:550;texte_llm;1;src/labuse/copilote_v2/outils.py:567
+copilote_parcelles_entreprise;copilote;Parcelles détenues par une personne morale;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:279;texte_llm;1;src/labuse/copilote_v2/outils.py:325
+copilote_fiche_parcelle;copilote;Données d'une parcelle (IDU);copilote;/api/copilote-v2/ask;copilote_v2/outils.py:333 (_q_v2_fiche, run servi);texte_llm;1;src/labuse/copilote_v2/outils.py:345
+copilote_stats_commune;copilote;Contexte d'une commune (SRU, marché);copilote;/api/copilote-v2/ask;copilote_v2/outils.py:350 (commune_contexte);texte_llm;1;src/labuse/copilote_v2/outils.py:365
+copilote_delais_instruction;copilote;Délai médian d'instruction (commune);copilote;/api/copilote-v2/ask;copilote_v2/outils.py:370 (velocite);texte_llm;1;src/labuse/copilote_v2/outils.py:389
+copilote_marche;copilote;Marché immobilier d'une commune;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:395 (build_marche_commune);texte_llm;1;src/labuse/copilote_v2/outils.py:418
+copilote_compter_piscines;copilote;Compter les piscines détectées;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:529 (prospection_piscines);texte_llm;1;src/labuse/copilote_v2/outils.py:545
+copilote_destination_zone;copilote;Peut-on ouvrir une activité sur cette parcelle ?;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:573 (plu.destinations — même moteur que fiche);texte_llm;1;src/labuse/copilote_v2/outils.py:599
 copilote_recherche_web;copilote;Dernier recours — fait public La Réunion;copilote;/api/copilote-v2/ask;copilote_v2/outils.py:474 (web_search natif, 2 phrases max);texte_llm;0;src/labuse/copilote_v2/outils.py:516
-veille_evaluations;veille;Veilles (critères + déclenchements);;/copilote-v2/veilles;copilote_v2/veilles.py:82-137 (evaluer → event_log);json_puis_js;0;src/labuse/copilote_v2/veilles.py:82-88
-projets_liste;projets;Projets (cadrage · retenues · vivier);;/projets;api/projets.py:622-640 (projets_list);json_puis_js;0;src/labuse/api/projets.py:606-640
-projets_compteur;projets;Bandeau d'analyse (compteur projet);projets_liste;/projets/compteur;api/projets.py:488-510 (_COMPTEUR_CACHE 600 s);json_puis_js;0;src/labuse/api/projets.py:488-510
-crm_kanban;crm;Pipeline (kanban, cartes par colonne);;/pipeline/columns;api/crm_columns.py:34+;json_puis_js;0;src/labuse/api/crm_columns.py:34
+veille_evaluations;veille;Veilles (critères + déclenchements);;/copilote-v2/veilles;copilote_v2/veilles.py:82-137 (evaluer → event_log);json_puis_js;1;src/labuse/copilote_v2/veilles.py:82-88
+projets_liste;projets;Projets (cadrage · retenues · vivier);;/projets;api/projets.py:622-640 (projets_list);json_puis_js;2;src/labuse/api/projets.py:606-640
+projets_compteur;projets;Bandeau d'analyse (compteur projet);projets_liste;/projets/compteur;api/projets.py:488-510 (_COMPTEUR_CACHE 600 s);json_puis_js;1;src/labuse/api/projets.py:488-510
+crm_kanban;crm;Pipeline (kanban, cartes par colonne);;/pipeline/columns;api/crm_columns.py:34+;json_puis_js;1;src/labuse/api/crm_columns.py:34
 crm_retour_terrain;crm;Retour terrain (étiquettes de contact);crm_kanban;/pipeline;app.py:2250+ (pipeline_entries);json_puis_js;0;frontend/src/components/fiche/Fiche.tsx:334-393
-notif_cloche;notification;Cloche (événements);;/events;api/events.py:163 (creer_notification) + :696;json_puis_js;0;src/labuse/api/events.py:163,696
-notif_brief_matin;notification;Brief du matin;;/brief;api/events.py:1086-1153 (brief_matin);json_puis_js;0;src/labuse/api/events.py:1086
-notif_digest_quotidien;notification;Digest quotidien (mail);;envoyer_digests (CLI digest);api/events.py:1160-1216;mail;0;src/labuse/api/events.py:1216
-notif_radar_digest;notification;Radar — digest quotidien (Brevo ID 12);;template Brevo 12 (PRENOM·DATE·NB_BIENS·LIEN_RADAR·CARTES);pige/digests.py:278-296;mail;0;src/labuse/pige/digests.py:278-296
-notif_radar_alerte;notification;Radar — alerte de veille (Brevo ID 13);;template Brevo 13 (PRENOM·VEILLE·NB_BIENS·CRITERES·CARTES·LIEN_RADAR·LIEN_VEILLE);pige/digests.py:303-313;mail;0;src/labuse/pige/digests.py:303-313
-pdf_flash;pdf;Rapport Flash;;/flash/telecharger (TEMPLATE_VERSION 1.4, WeasyPrint);flash/report.py:71 + flash/data.py (collect_report_data);pdf;0;src/labuse/flash/report.py:71
-pdf_dossier_expert;pdf;Dossier parcelle;;/dossier/{idu}.pdf (quota mensuel);api/dossier.py:65 (réutilise flash/report.py);pdf;0;src/labuse/api/dossier.py:65
-pdf_banquier;pdf;Dossier banquier;;/dossier-banquier/{idu}.pdf;api/banquier.py:283 (+_facts_synthese:87, briques_pdf.py);pdf;0;src/labuse/api/banquier.py:283
-pdf_pre_dossier_pc;pdf;Pré-dossier PC (ZIP CERFA 13406*17);;/pre-dossier/zip;api/pre_dossier.py:732;pdf;0;src/labuse/api/pre_dossier.py:732
-pdf_lettre_zonage;pdf;Lettre de zonage;;/pdf (courrier);courrier.py + api/briques_pdf.py + api/lettre_zonage.py;pdf;0;"src/labuse/courrier.py ; src/labuse/api/lettre_zonage.py"
-pdf_argumentaire;pdf;Argumentaire;;/argumentaire;api/argumentaire.py + briques_pdf.py;pdf;0;src/labuse/api/argumentaire.py
-page_accueil_chiffres;page_client;Accueil — bloc chiffres;;/accueil/chiffres (cache 1 h);api/accueil.py:57;json_puis_js;0;src/labuse/api/accueil.py:57
-page_accueil_semaine;page_client;Accueil — cette semaine;;/accueil/cette-semaine;api/accueil.py:116;json_puis_js;0;src/labuse/api/accueil.py:116
-page_sources_client;page_client;Sources de données;;/sources;api/app.py:912-1038 (WHERE_AFFICHEES → 66);json_puis_js;0;src/labuse/api/app.py:912-924
+notif_cloche;notification;Cloche (événements);;/events;api/events.py:163 (creer_notification) + :696;json_puis_js;1;src/labuse/api/events.py:163,696
+notif_brief_matin;notification;Brief du matin;;/brief;api/events.py:1086-1153 (brief_matin);json_puis_js;1;src/labuse/api/events.py:1086
+notif_digest_quotidien;notification;Digest quotidien (mail);;envoyer_digests (CLI digest);api/events.py:1160-1216;mail;1;src/labuse/api/events.py:1216
+notif_radar_digest;notification;Radar — digest quotidien (Brevo ID 12);;template Brevo 12 (PRENOM·DATE·NB_BIENS·LIEN_RADAR·CARTES);pige/digests.py:278-296;mail;1;src/labuse/pige/digests.py:278-296
+notif_radar_alerte;notification;Radar — alerte de veille (Brevo ID 13);;template Brevo 13 (PRENOM·VEILLE·NB_BIENS·CRITERES·CARTES·LIEN_RADAR·LIEN_VEILLE);pige/digests.py:303-313;mail;1;src/labuse/pige/digests.py:303-313
+pdf_flash;pdf;Rapport Flash;;/flash/telecharger (TEMPLATE_VERSION 1.4, WeasyPrint);flash/report.py:71 + flash/data.py (collect_report_data);pdf;3;src/labuse/flash/report.py:71
+pdf_dossier_expert;pdf;Dossier parcelle;;/dossier/{idu}.pdf (quota mensuel);api/dossier.py:65 (réutilise flash/report.py);pdf;1;src/labuse/api/dossier.py:65
+pdf_banquier;pdf;Dossier banquier;;/dossier-banquier/{idu}.pdf;api/banquier.py:283 (+_facts_synthese:87, briques_pdf.py);pdf;2;src/labuse/api/banquier.py:283
+pdf_pre_dossier_pc;pdf;Pré-dossier PC (ZIP CERFA 13406*17);;/pre-dossier/zip;api/pre_dossier.py:732;pdf;1;src/labuse/api/pre_dossier.py:732
+pdf_lettre_zonage;pdf;Lettre de zonage;;/pdf (courrier);courrier.py + api/briques_pdf.py + api/lettre_zonage.py;pdf;1;"src/labuse/courrier.py ; src/labuse/api/lettre_zonage.py"
+pdf_argumentaire;pdf;Argumentaire;;/argumentaire;api/argumentaire.py + briques_pdf.py;pdf;1;src/labuse/api/argumentaire.py
+page_accueil_chiffres;page_client;Accueil — bloc chiffres;;/accueil/chiffres (cache 1 h);api/accueil.py:57;json_puis_js;3;src/labuse/api/accueil.py:57
+page_accueil_semaine;page_client;Accueil — cette semaine;;/accueil/cette-semaine;api/accueil.py:116;json_puis_js;1;src/labuse/api/accueil.py:116
+page_sources_client;page_client;Sources de données;;/sources;api/app.py:912-1038 (WHERE_AFFICHEES → 66);json_puis_js;1;src/labuse/api/app.py:912-924
 page_sources_couverture;page_client;Couverture des sources;;/sources/couverture;api/app.py:1055;json_puis_js;0;src/labuse/api/app.py:1055
-page_flash_publique;page_client;/flash (formulaire public);;/flash (GET/POST) + /flash/statut;api/onboarding.py:717,833 (coffre_ui);template_serveur;0;src/labuse/api/onboarding.py:717
-admin_pilotage;admin;Pilotage (KPI à faire / à jour);;/admin/pilotage;api/dashboard.py:250;json_puis_js;0;src/labuse/api/dashboard.py:250
-admin_catalogue_sources;admin;Données › Catalogue (sources);admin_donnees;/admin/sources;api/dashboard.py:859-1011 (etats_sources);json_puis_js;0;src/labuse/api/dashboard.py:859
-admin_flux_circuit;admin;Données › Circuit (fourmilière + Radar + cohérence);admin_donnees;/admin/flux + /admin/flux/runs;api/dashboard.py:1231 (flux.construire_flux — compte 77 brut, flux.py:198);json_puis_js;0;"src/labuse/api/dashboard.py:1231 ; src/labuse/flux.py:198"
-admin_mise_a_jour;admin;Données › Mise à jour (Injecter·Calculer·Basculer);admin_donnees;/admin/flux/run/lancer + /admin/flux/bascule;api/dashboard.py:1309-1445;json_puis_js;0;frontend/src/components/admin/MiseAJour.tsx
+page_flash_publique;page_client;/flash (formulaire public);;/flash (GET/POST) + /flash/statut;api/onboarding.py:717,833 (coffre_ui);template_serveur;1;src/labuse/api/onboarding.py:717
+admin_pilotage;admin;Pilotage (KPI à faire / à jour);;/admin/pilotage;api/dashboard.py:250;json_puis_js;1;src/labuse/api/dashboard.py:250
+admin_catalogue_sources;admin;Données › Catalogue (sources);admin_donnees;/admin/sources;api/dashboard.py:859-1011 (etats_sources);json_puis_js;1;src/labuse/api/dashboard.py:859
+admin_flux_circuit;admin;Données › Circuit (fourmilière + Radar + cohérence);admin_donnees;/admin/flux + /admin/flux/runs;api/dashboard.py:1231 (flux.construire_flux — compte 77 brut, flux.py:198);json_puis_js;3;"src/labuse/api/dashboard.py:1231 ; src/labuse/flux.py:198"
+admin_mise_a_jour;admin;Données › Mise à jour (Injecter·Calculer·Basculer);admin_donnees;/admin/flux/run/lancer + /admin/flux/bascule;api/dashboard.py:1309-1445;json_puis_js;1;frontend/src/components/admin/MiseAJour.tsx
 admin_produit;admin;Données produit (usage outils + retours);admin_donnees;/admin/produit;api/dashboard.py:1450;json_puis_js;0;src/labuse/api/dashboard.py:1450
-admin_ia;admin;IA & quotas Copilote;;/admin/ia;api/dashboard.py:721 (ia_log + surfaces_table);json_puis_js;0;src/labuse/api/dashboard.py:721
-admin_radar;admin;Radar (dépôts à vérifier);;/admin/radar/*;pige/api.py + releves.bloc_radar;json_puis_js;0;frontend/src/components/admin/Radar.tsx
-admin_destinations;admin;Destinations (calibration PLU);;/admin/destinations;api/dashboard.py:1619;json_puis_js;0;src/labuse/api/dashboard.py:1619
-admin_licences;admin;Licences (comptes, essais, quotas);;/admin/licences;api/dashboard.py:462;json_puis_js;0;src/labuse/api/dashboard.py:462
+admin_ia;admin;IA & quotas Copilote;;/admin/ia;api/dashboard.py:721 (ia_log + surfaces_table);json_puis_js;1;src/labuse/api/dashboard.py:721
+admin_radar;admin;Radar (dépôts à vérifier);;/admin/radar/*;pige/api.py + releves.bloc_radar;json_puis_js;1;frontend/src/components/admin/Radar.tsx
+admin_destinations;admin;Destinations (calibration PLU);;/admin/destinations;api/dashboard.py:1619;json_puis_js;1;src/labuse/api/dashboard.py:1619
+admin_licences;admin;Licences (comptes, essais, quotas);;/admin/licences;api/dashboard.py:462;json_puis_js;1;src/labuse/api/dashboard.py:462
