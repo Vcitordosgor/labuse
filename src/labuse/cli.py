@@ -1094,6 +1094,35 @@ def ingest_inpi_gigogne_cmd(
                f"({tot_e} gérants injoignables).")
 
 
+@app.command("ingest-catnat")
+def ingest_catnat_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    remplacer: bool = typer.Option(True, help="Vider catnat_arretes d'abord (solder la version tronquée)."),
+) -> None:
+    """CIRCUIT-3 lot 6.1 — arrêtés CatNat GASPAR (Géorisques), PAGINÉS (répare `catnat_n`, tronqué
+    à 10/commune). Réingère les 24 communes → catnat_arretes, puis rejoue le filtre de complétude."""
+    from .ingestion import catnat as catnat_mod
+    catnat_mod.ensure_tables(engine())
+    insee_list = [commune] if (commune and commune.isdigit()) else None
+    with session_scope() as s:
+        res = catnat_mod.ingest_catnat(s, insee_list=insee_list, remplacer=remplacer)
+        s.commit()
+    typer.echo(f"✓ CatNat : {res['arretes']} arrêté(s) sur {res['communes_ok']} commune(s).")
+    for insee, err in (res["erreurs"] or {}).items():
+        typer.echo(f"  ⚠ {insee} : {err}")
+    # rejoue le filtre de la source (complétude par commune) sur la nouvelle version.
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("catnat")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "catnat", "ingest-catnat",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre catnat : {v.verdict}")
+
+
 @app.command("ingest-georisques")
 def ingest_georisques_cmd(
     commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),

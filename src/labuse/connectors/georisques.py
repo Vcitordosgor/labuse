@@ -114,8 +114,14 @@ class GeorisquesConnector(Connector):
         return self._get("gaspar/risques", {"code_insee": code_insee, "page": 1, "page_size": page_size})
 
     def catnat(self, code_insee: str) -> dict:
-        """Arrêtés de catastrophe naturelle. [✓ live]"""
+        """Arrêtés de catastrophe naturelle — UNE page (compat). [✓ live]"""
         return self._get("gaspar/catnat", {"code_insee": code_insee})
+
+    def catnat_arretes(self, code_insee: str) -> Iterator[dict]:
+        """CIRCUIT-3 lot 6.1 — TOUS les arrêtés CatNat d'une commune (paginé, PAGE_SIZE=100). Le
+        `catnat()` mono-page tronquait à 10/commune (bug `catnat_n`) ; ici on itère toutes les pages.
+        [✓ live 974 : Saint-Denis 21 arrêtés]."""
+        yield from self._paginate("gaspar/catnat", code_insee)
 
     def azi(self, code_insee: str) -> dict:
         """Atlas des Zones Inondables (proxy aléa inondation/littoral). [✓ live]"""

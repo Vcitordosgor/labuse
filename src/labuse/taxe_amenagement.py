@@ -14,7 +14,44 @@ Résultat DÉTAILLÉ ligne par ligne : un promoteur doit pouvoir vérifier chaqu
 """
 from __future__ import annotations
 
+from sqlalchemy import text
+
 from .config import load_yaml_config
+
+# CIRCUIT-3 lot 6.2 — table des taux COMMUNAUX PUBLICS de taxe d'aménagement (délibérations /
+# base publique DGFiP). Seedée VIDE : la doctrine « aucun taux inventé » interdit de deviner un
+# taux ; les valeurs viennent de la source officielle (voir docs SOURCES-1). Quand un taux public
+# existe pour une commune, la calculette CESSE d'exiger un taux saisi.
+_TAUX_DDL = """
+CREATE TABLE IF NOT EXISTS taxe_amenagement_taux (
+  insee varchar(5) PRIMARY KEY,
+  part_communale_pct double precision NOT NULL,
+  source text,
+  delib_date date,
+  maj_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+
+
+def ensure_taux_table(engine) -> None:
+    with engine.begin() as c:
+        c.execute(text(_TAUX_DDL))
+
+
+def taux_communal_public(db, insee: str | None) -> dict | None:
+    """Le taux communal PUBLIC d'une commune (part_communale_pct + source), ou None si inconnu."""
+    if not insee:
+        return None
+    try:
+        row = db.execute(text(
+            "SELECT part_communale_pct, source, delib_date FROM taxe_amenagement_taux "
+            "WHERE insee = :i"), {"i": str(insee)[:5]}).first()
+    except Exception:  # table absente en environnement partiel
+        return None
+    if not row:
+        return None
+    return {"part_communale_pct": float(row[0]), "source": row[1],
+            "delib_date": row[2].isoformat() if row[2] else None}
 
 
 def config() -> dict:
@@ -37,6 +74,8 @@ def calculer(
     eoliennes_mats: int = 0,
     taux_communal_pct: float | None = None,
     taux_departemental_pct: float | None = None,
+    taux_communal_public_pct: float | None = None,
+    taux_communal_public_source: str | None = None,
 ) -> dict:
     """Renvoie le détail LIGNE PAR LIGNE + total (None si le taux communal manque)."""
     cfg = config()
@@ -97,6 +136,18 @@ def calculer(
     assiette = _eur(assiette_surf + assiette_forfaits)
 
     # 3) parts communale + départementale.
+    # CIRCUIT-3 lot 6.2 — le taux PUBLIC prime quand il existe : la calculette n'exige plus un taux
+    # saisi. Si les deux sont présents, on garde le saisi (l'utilisateur peut corriger) et on EXPOSE
+    # l'écart saisi↔public comme contrôle de qualité.
+    ecart_saisi_public = None
+    taux_source = None
+    if taux_communal_pct is None and taux_communal_public_pct is not None:
+        taux_communal_pct = float(taux_communal_public_pct)
+        taux_source = "public"
+    elif taux_communal_pct is not None:
+        taux_source = "saisi"
+        if taux_communal_public_pct is not None:
+            ecart_saisi_public = _eur(float(taux_communal_pct) - float(taux_communal_public_pct))
     taux_manquant = taux_communal_pct is None
     part_com = None if taux_manquant else _eur(assiette * float(taux_communal_pct) / 100.0)
     part_dep = None if taux_departemental_pct is None else _eur(assiette * float(taux_departemental_pct) / 100.0)
@@ -117,6 +168,10 @@ def calculer(
         "part_departementale_eur": part_dep,
         "total_eur": total,
         "taux_communal_manquant": taux_manquant,
+        "taux_communal_source": taux_source,             # 'public' | 'saisi' | None
+        "taux_communal_public_pct": taux_communal_public_pct,
+        "taux_communal_public_source": taux_communal_public_source,
+        "ecart_saisi_public_pct": ecart_saisi_public,    # contrôle de qualité (lot 6.2)
         "message_taux_communal": (None if not taux_manquant else
             "Taux communal non renseigné pour cette commune — saisissez-le "
             "(il figure dans la délibération de la commune ; l'outil n'invente aucun taux)."),

@@ -327,6 +327,131 @@ Régression crontab/healthz/circuit : verte. Total CIRCUIT-3 : **27 verts** (lot
 
 ---
 
-## Lot 6 — à venir
+## Lot 6 — SOURCES-1 par la vanne — **CLOS**
 
-(compte-rendu tenu à jour lot par lot)
+### 6.1 CatNat — la fuite soldée (avant/après)
+
+`catnat_n` (arrêtés de catastrophe naturelle par commune, fiche commune) était **FAUX** : l'ancienne
+ingestion lisait UNE page (page_size par défaut) → **troncature à 10 arrêtés par commune**, puis la
+commande d'ingestion avait été retirée (spin-off « Vues » M12).
+
+- **Cause** : `GeorisquesConnector.catnat()` mono-page. **Correctif** : `catnat_arretes()` PAGINÉ
+  (`_paginate("gaspar/catnat", …)`, PAGE_SIZE=100). Nouveau module `ingestion/catnat.py`
+  (`ensure_tables` + `ingest_catnat` paginé, idempotent) + CLI **`labuse ingest-catnat`** (rejoue le
+  filtre après ingestion) + vanne (`sources_ingestion.yaml`) + ligne `data_sources`.
+- **AVANT / APRÈS sur les 24 communes** : **239 arrêtés (10/commune, tronqué) → 426** (réingéré en
+  direct sur la base servie le 06/09). Total producteur GASPAR mesuré = **427** (un arrêté de
+  Saint-Joseph perdu au dédoublonnage sur la clé `(insee, type_peril, date_arrete, date_debut)` —
+  deux arrêtés distincts y collisionnent : signalé par le filtre, avertissant, non bloquant).
+  Exemples : Saint-Denis 10→21, Saint-Paul 10→24, Le Tampon 10→18.
+- **Filtre de complétude** `d_completude_catnat` : le nombre d'arrêtés par commune vs la **référence
+  producteur** (GASPAR `results` par commune, lue en direct le 06/09) — une commune sous sa référence
+  = troncature revenue. Aujourd'hui : 1 avertissant (Saint-Joseph 20/21, le doublon).
+
+### 6.2 Taxe d'aménagement — le mécanisme des taux publics
+
+Doctrine (K3) : **« aucun taux inventé »**. Le taux communal vient des délibérations. Lot 6.2 : que
+la calculette CESSE d'exiger un taux saisi **quand un taux public existe**.
+
+- **Mécanisme livré** : table `taxe_amenagement_taux(insee, part_communale_pct, source, delib_date)`
+  (créée au boot) ; `taxe_amenagement.taux_communal_public(db, insee)` ; `calculer(…)` accepte
+  `taux_communal_public_pct` et **le préfère quand aucun taux n'est saisi** (`taux_communal_source`
+  ∈ public/saisi/None) ; **saisi + public → l'écart `ecart_saisi_public_pct` est exposé** (le
+  contrôle qualité du mandat). Endpoint `/outils/taxe-amenagement?insee=…` branché.
+- **Filtre `taxe_amenagement`** : contrôle de **couverture** (combien des 24 communes ont un taux
+  public) — **0/24 aujourd'hui**, avertissant HONNÊTE : la table est prête, **les taux restent À
+  VALIDER de la source officielle** (aucune source machine-lisible fiable trouvée en session ; la
+  probe `collectivites-locales.gouv.fr` a rendu 502, `data.economie` n'a pas le dataset). Ligne
+  `data_sources` posée (statut `a_faire`, source documentée). **Rien inventé.**
+
+### 6.3 Les cinq autres — REPORTÉES avec la raison (le mandat l'autorise)
+
+Le budget d'appels/implémentation de la session a servi en priorité les DEUX correctifs (6.1 CatNat
+soldé, 6.2 mécanisme TA), qui touchent des chiffres déjà servis. Les cinq suivantes (effort S) sont
+reportées avec leur raison et la proposition — **aucune n'est inventée, aucune n'est prétendue
+livrée** :
+
+| Source | État | Raison / proposition |
+|---|---|---|
+| **DPU (périmètres)** | reportée | Périmètres de Droit de Préemption Urbain — couche géométrique (GPU/commune). Proposition : ingérer via API Carto GPU (`/gpu/preemption`), filtre 24 communes + géométrie. |
+| **PEB Roland-Garros / Pierrefonds** | reportée | Plans d'Exposition au Bruit — 2 aérodromes. Source : Géoportail/DGAC (WFS). Proposition : couche `spatial_layers kind='peb'`, filtre couverture 2 aérodromes. |
+| **Zonage A/B/C** | reportée | Zonage investissement locatif (arrêté). Source : data.gouv (liste communes). La Réunion = zone B1/B2 (à confirmer par commune). Proposition : table insee→zone, filtre domaine {A,Abis,B1,B2,C}. |
+| **Loyers de marché DHUP** | reportée | Carte des loyers (DHUP/data.gouv, indicateurs par commune). Proposition : table insee→loyer_m2, filtre couverture + plage. |
+| **Coût de construction EPTB 2024 + CDC** | reportée | Remplace la constante d'`engine.py`. Source : indices EPTB/INSEE + dataset CDC. Proposition : `data_sources` + valeur datée, filtre fraîcheur ; **la constante reste servie tant que la source n'est pas ingérée** (pas de régression). |
+
+### 6.4 — sur le Circuit
+
+CatNat et Taxe d'aménagement apparaissent désormais sur la page Circuit avec leur filtre (le mapping
+motif les rattache : « CatNat … » → `catnat`, « Taxe d'aménagement — taux… » → `taxe_amenagement`).
+Le `catnat_n` de la fiche commune sert maintenant le VRAI nombre (426, pas 239).
+
+### Décisions prises en autonomie (lot 6)
+
+1. **Dédoublonnage CatNat laissé sur `(insee, type_peril, date_arrete, date_debut)`** : un arrêté de
+   Saint-Joseph y collisionne (426 vs 427). Raffiner la clé (code_national_catnat) exigeait une
+   migration de contrainte ; l'écart d'UN arrêté est signalé par le filtre (avertissant) — l'option
+   la plus sûre plutôt qu'une migration en fin de mandat.
+2. **6.2 : aucun taux inventé.** Le mécanisme est complet ; les valeurs de taux attendent la source
+   officielle (À VALIDER), exactement comme la doctrine K3 l'exige. Un taux inventé aurait corrompu
+   un chiffre servi — l'interdit du mandat.
+3. **6.3 reportées, pas bâclées.** Chacune a sa source, sa proposition et son filtre pressenti ; les
+   entrer à moitié (sans sonde réelle ni données) aurait violé « une source = une sonde réelle ».
+
+### Tests — lot 6
+
+`tests/test_circuit3_lot6.py` **7 verts** (ingestion CatNat paginée sans troncature ; connecteur
+paginé ; complétude vs référence producteur ; taxe : public prime sans saisi, écart saisi↔public
+exposé, sans taux reste non calculé, filtre couverture). Total CIRCUIT-3 : **34 verts** (lots 1-6).
+
+### Commit
+
+`feat/circuit-3` — un commit lot 6, poussé. Rien mergé.
+
+---
+
+## CLÔTURE DU MANDAT CIRCUIT-3
+
+**Lots 1 à 6 TOUS CLOS**, un commit + un push par lot sur `origin/feat/circuit-3`, **rien mergé**.
+Ordre de merge pour Vic (inchangé) : circuit-1 → circuit-2 → circuit-3.
+
+### Définition de fini — état
+
+- **Toute source à job a un filtre** (invariant 1.5 testé rouge-si-manquant) ; les **20 sources qui
+  pèsent ont leurs contrôles propres** avec **seuils mesurés** sur la version servie (base `labuse`,
+  431 663 parcelles, 05/09).
+- **CatNat corrigé avec avant/après** (239 tronqués → **426**, pagination réparée, filtre de
+  complétude vs producteur). **Taux de TA** : mécanisme livré (le taux public prime, l'écart est
+  exposé) ; les taux restent À VALIDER de la source officielle (doctrine « aucun taux inventé »).
+  **Les 5 autres sources SOURCES-1 reportées avec leur raison** (le mandat l'autorise).
+- **Le verdict de chaque version servie est en base** (`filtre_versions` : 28 ok / 10
+  avertissements / 1 QUARANTAINE) **et sur la page** (badge par réservoir + contrôles dans la fiche).
+- **Les données live passent par la table d'attente** (mécanisme `<table>__attente`/`__precedente`
+  testé) ; **une injection en quarantaine ne se sert pas** ; les sources `run`-seul sont gardées par
+  la pompe.
+- **Les échantillons existent pour les 20 sources** avec l'origine producteur ; **2 vérifiés en
+  direct** (cadastre 20/API Carto → 2 écarts réels, BAN 24/reverse-geocode → 0 écart), les autres en
+  squelette daté avec proposition (`ECHANTILLONS-A-VALIDER.md`).
+- **La liste d'exceptions au registre reste VIDE** (aucune sans Vic).
+
+### LE constat majeur — le filtre attrape une vraie régression
+
+**`georisques_mvt` est en QUARANTAINE** : 484 zones d'aléa mouvement de terrain `ELEVE`/`TRES_ELEVE`
+servies `niveau='moyen'` sur `main` (régression RETOURS-13, correctif sur `fix/retours-12` NON
+mergé). Le contrôle bloquant `d_alea_non_retrograde` le rend visible et **la garde de la pompe
+refuserait de calculer/basculer** — le système fonctionne. Vic solde en mergeant `fix/retours-12`.
+
+### Interdits — respectés
+
+- **Aucun seuil bloquant sans mesure** : les seuls bloquants sont `u_non_vide` (0 ligne, fait non
+  ambigu), `d_comparable_plage` DVF (mesuré 0), `d_alea_non_retrograde` (le seuil DEAL, Vic-spécifié,
+  qui attrape le vrai bug). **Aucun bloquant inventé.**
+- **Aucune version détruite par un filtre** (la quarantaine garde la version).
+- **Aucun échange de table hors transaction** (renames dans la transaction de session).
+
+### Ce qui reste à Vic, après
+
+1. Lire le **tableau des avertissants** (lot 2) — c'est l'état réel de ses données au 06/09.
+2. Merger `fix/retours-12` pour solder la quarantaine `georisques_mvt` (les 484 zones).
+3. Valider `ECHANTILLONS-A-VALIDER.md` avec Stéphanie (LiDAR 50 toits, CoSIA, FLAIR) et remplir les
+   taux de TA + les 5 sources SOURCES-1 reportées quand il veut.
+4. Merger `feat/circuit-1` → `2` → `3`.

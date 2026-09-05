@@ -71,6 +71,26 @@ SOURCES: list[dict] = [
          endpoint_url="https://www.georisques.gouv.fr/api/v1",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) ».",
          technical_notes="✓ live : gaspar/risques, gaspar/catnat, gaspar/azi, rga, zonage_sismique (HTTP 200). ⚠ pas d'endpoint /ppr en v1 (404)."),
+    # CIRCUIT-3 lot 6.1 — CatNat au registre : arrêtés de catastrophe naturelle GASPAR, PAGINÉS
+    # (répare `catnat_n`, tronqué à 10/commune). Ingestion `labuse ingest-catnat`, refresh mensuel.
+    dict(name="CatNat (arrêtés GASPAR / Géorisques)", category="risques", provider="BRGM / Géorisques (GASPAR)",
+         source_millesime="GASPAR — arrêtés CatNat 974 (paginés, 06/09/2026)",
+         access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="~1000 req/min/IP",
+         documentation_url="https://www.georisques.gouv.fr/doc-api",
+         endpoint_url="https://www.georisques.gouv.fr/api/v1/gaspar/catnat",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — GASPAR ».",
+         technical_notes="✓ live 974 : 426 arrêtés sur 24 communes (paginé PAGE_SIZE=100). Avant CIRCUIT-3 : 239 (tronqué à 10/commune, ingestion retirée)."),
+    # CIRCUIT-3 lot 6.2 — taux communaux de taxe d'aménagement (source publique : délibérations /
+    # base DGFiP). Table seedée VIDE (doctrine « aucun taux inventé ») ; les taux viennent de la
+    # source officielle. La calculette utilise le taux public dès qu'il existe (n'exige plus le saisi).
+    dict(name="Taxe d'aménagement — taux communaux (délibérations)", category="fiscalite",
+         provider="Communes / DGFiP", access_type="délibérations / CSV",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="taux à ingérer de la source officielle — 0/24 (06/09/2026)",
+         documentation_url="https://www.collectivites-locales.gouv.fr/finances-locales/taxe-damenagement",
+         endpoint_url="https://www.collectivites-locales.gouv.fr/finances-locales/taxe-damenagement",
+         legal_notes="Délibérations communales / base publique DGFiP — taux communaux de la part locale de la TA.",
+         technical_notes="CIRCUIT-3 lot 6.2 : table taxe_amenagement_taux prête (mécanisme livré). Rates À VALIDER — aucun taux inventé."),
     dict(name="Géorisques — sites et sols pollués", category="risques", provider="BRGM / Géorisques",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="~1000 req/min/IP",
          documentation_url="https://www.georisques.gouv.fr/doc-api",

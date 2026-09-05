@@ -372,6 +372,75 @@ _ajout(_f(
     ]))
 
 
+# ─────────────────────────────── CatNat (SOURCES-1 lot 6.1) ───────────────────────────────
+# Référence producteur (GASPAR /gaspar/catnat, champ `results` par commune) mesurée au 06/09/2026,
+# APRÈS réparation de la pagination. Le contrôle de complétude compare notre count par commune à
+# cette référence : une commune SOUS sa référence = arrêtés perdus (la troncature à 10 revenue).
+CATNAT_REFERENCE: dict[str, int] = {
+    "97401": 16, "97402": 17, "97403": 14, "97404": 21, "97405": 19, "97406": 12,
+    "97407": 11, "97408": 17, "97409": 17, "97410": 17, "97411": 21, "97412": 21,
+    "97413": 21, "97414": 23, "97415": 24, "97416": 20, "97417": 21, "97418": 22,
+    "97419": 10, "97420": 19, "97421": 19, "97422": 18, "97423": 11, "97424": 16,
+}  # total 427 (GASPAR `results` par commune, lu en direct le 06/09/2026)
+
+
+def _catnat_completude() -> Controle:
+    """Complétude CatNat : le nombre d'arrêtés par commune vs la référence producteur. Une commune
+    sous sa référence = troncature revenue. Mesuré/posé au 06/09 après réparation de la pagination."""
+    def m(db, f: Filtre, version: str):
+        if not f.table:
+            return skip("pas de table")
+        rows = dict(db.execute(text(
+            "SELECT insee, count(*) FROM catnat_arretes GROUP BY insee")).all())
+        manquants = []
+        for insee, ref in CATNAT_REFERENCE.items():
+            n = int(rows.get(insee, 0))
+            if n < ref:
+                manquants.append({"insee": insee, "nous": n, "reference": ref})
+        d = {"reference_producteur": "GASPAR results par commune (06/09)",
+             "sous_reference": manquants, "n_sous": len(manquants),
+             "total": sum(int(v) for v in rows.values())}
+        return ok(f"{sum(int(v) for v in rows.values())} arrêtés", d) if not manquants \
+            else ko(f"{len(manquants)} commune(s) sous la référence", d)
+    return Controle("d_completude_catnat", "completude", "avertissant",
+                    "Arrêtés CatNat par commune vs producteur",
+                    "chaque commune ≥ sa référence GASPAR (06/09) — sous la référence = troncature",
+                    m)
+
+
+_ajout(_f(
+    source="catnat", libelle="Arrêtés CatNat (GASPAR / Géorisques)", table="catnat_arretes",
+    cle=("insee", "type_peril", "date_arrete", "date_debut"), insee_col="insee",
+    date_cols=("date_arrete", "date_debut"), source_motif="CatNat%", portee_run=False,
+    propres=[_catnat_completude()]))
+
+
+# ─────────────────────── Taxe d'aménagement — taux communaux publics (SOURCES-1 lot 6.2) ───────────────────────
+# Le taux communal de TA vient des délibérations (source publique). La table est seedée VIDE
+# (doctrine « aucun taux inventé ») — le contrôle mesure la COUVERTURE : combien des 24 communes
+# ont un taux public. Aujourd'hui 0/24 (les taux sont à ingérer de la source officielle).
+def _ta_couverture() -> Controle:
+    def m(db, f: Filtre, version: str):
+        from .cadre import _table_existe
+        if not _table_existe(db, "taxe_amenagement_taux"):
+            return skip("table taxe_amenagement_taux absente")
+        n = int(db.execute(text("SELECT count(*) FROM taxe_amenagement_taux")).scalar() or 0)
+        d = {"communes_avec_taux_public": n, "attendues": 24}
+        return ok(f"{n}/24", d) if n >= 24 else ko(f"{n}/24", d)
+    return Controle("d_taux_public_couverture", "completude", "avertissant",
+                    "Couverture des taux communaux publics",
+                    "24/24 communes avec un taux public (aujourd'hui 0 — à ingérer de la source officielle)",
+                    m)
+
+
+# NB : pas de `table` déclarée — une table de taux VIDE est l'état PENDING attendu (doctrine « aucun
+# taux inventé »), pas une quarantaine. La couverture est mesurée par le contrôle propre seul.
+_ajout(_f(
+    source="taxe_amenagement", libelle="Taxe d'aménagement — taux communaux publics",
+    source_motif="Taxe d'aménagement — taux%", portee_run=False, a_job=False,
+    propres=[_ta_couverture()]))
+
+
 # ─────────────────────────────── trafic RN (bonus impact) ───────────────────────────────
 _ajout(_f(
     source="trafic_rn", libelle="Trafic RN (Région Réunion)", table="trafic_rn",

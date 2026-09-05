@@ -2558,15 +2558,20 @@ def taxe_amenagement(
     surface_taxable_m2: float = 0.0, residence_principale: bool = False, logement_aide: bool = False,
     piscine_m2: float = 0.0, pv_sol_m2: float = 0.0, stationnement_ext_places: int = 0,
     eoliennes_mats: int = 0, taux_communal_pct: float | None = None,
-    taux_departemental_pct: float | None = None) -> dict:
-    """Estimation INDICATIVE, détaillée ligne par ligne. Sans taux communal, le total n'est pas
-    calculé (l'écran demande le taux — l'outil n'invente aucun taux communal)."""
-    from ..taxe_amenagement import calculer
+    taux_departemental_pct: float | None = None, insee: str | None = None,
+    db: Session = Depends(get_db)) -> dict:
+    """Estimation INDICATIVE, détaillée ligne par ligne. CIRCUIT-3 lot 6.2 : si un taux communal
+    PUBLIC existe pour la commune (`insee`), la calculette l'utilise et N'EXIGE PLUS un taux saisi ;
+    saisi + public présents → l'écart est exposé. Sans aucun des deux, le total n'est pas calculé."""
+    from ..taxe_amenagement import calculer, taux_communal_public
+    pub = taux_communal_public(db, insee) if insee else None
     return calculer(
         surface_taxable_m2=surface_taxable_m2, residence_principale=residence_principale,
         logement_aide=logement_aide, piscine_m2=piscine_m2, pv_sol_m2=pv_sol_m2,
         stationnement_ext_places=stationnement_ext_places, eoliennes_mats=eoliennes_mats,
-        taux_communal_pct=taux_communal_pct, taux_departemental_pct=taux_departemental_pct)
+        taux_communal_pct=taux_communal_pct, taux_departemental_pct=taux_departemental_pct,
+        taux_communal_public_pct=(pub or {}).get("part_communale_pct"),
+        taux_communal_public_source=(pub or {}).get("source"))
 
 
 @app.get("/map/parcels.geojson")
