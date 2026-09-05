@@ -275,6 +275,14 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     circuit_journal.journaliser(
         db, "revenir" if sens == "arriere" else "basculer", nouveau_run, par, "ok",
         {"ancien": ancien, "manifeste": nouveau_manifeste, "coherence_ok": coherence.get("ok")})
+    # CIRCUIT-1 lot 4.3 — CONTRÔLE APRÈS BASCULE : la sonde du circuit tourne automatiquement
+    # (fuites entre robinets + eau ancienne par tampon). Best-effort : une sonde qui échoue
+    # n'annule jamais une bascule réussie (elle repassera au cron de 07:25).
+    try:
+        from .sonde_circuit import controle as _controle_circuit
+        _controle_circuit(db, declencheur="bascule")
+    except Exception:  # noqa: BLE001
+        pass
 
     return {"ok": True, "ancien": ancien, "nouveau": nouveau_run, "caches_purges": caches,
             "sens": sens, "coherence": coherence,

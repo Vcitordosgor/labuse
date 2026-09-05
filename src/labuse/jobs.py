@@ -312,6 +312,11 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # sentinelle (07:00), avant l'ouverture. Notifie l'admin à la divergence.
     _j("coherence-run", "Garde de cohérence : chaque surface lit le run courant (tier/date identiques)",
        "quotidien", "15 3 * * *", "07:15", timeout_s=600),
+    # CIRCUIT-1 (lot 4) — la sonde « Vérifier que tout coule » : fuites entre robinets + eau
+    # ancienne par tampon → circuit_ecarts / circuit_eau_ancienne / circuit_controles. 07:25
+    # (après coherence-run 07:15 — même famille, jamais en même temps sur les mêmes tables).
+    _j("coherence-robinets", "Sonde du circuit : fuites entre robinets + eau ancienne (tampons)",
+       "quotidien", "25 3 * * *", "07:25", timeout_s=900),
     # K9 — robustesse
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", timeout_s=3600, envoie_mail=True, besoin_db=False),

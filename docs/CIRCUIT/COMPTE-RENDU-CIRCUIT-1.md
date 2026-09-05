@@ -144,3 +144,24 @@ Sortie brute : `docs/CIRCUIT/VPS-CRONS-05-09.txt` (172 lignes, ssh lecture seule
 
 - Tests du lot : `tests/test_circuit1_lot3.py` (8) — manifeste atomique/incomplet refusé/lu par runs, division_run repli, bootstrap, journal (qui/quand/quoi), note de version honnête, garde résiduel honnête.
 - Suite complète post-lot 3 : **2319 passed · 1 failed (le pré-existant test_r5) · 49 skipped** — aucun rouge nouveau, +8 verts vs lot 2.
+
+---
+
+## Lot 4 — La sonde de cohérence « Vérifier que tout coule »
+
+### Livré
+
+- **`src/labuse/sonde_circuit.py`** : tables `circuit_ecarts` (dédup UNIQUE (chiffre, clé, robinet_a, robinet_b) ; réouverture si l'écart revient), `circuit_eau_ancienne` (statuts ouvert/etiquete/solde), `circuit_controles` (verdict par passage, lu par la page).
+- **4.1 `verifier_robinets`** : témoins v1 = parts de zonage ×24 communes (moteur vs chemin fiche — LA fuite de CIRCUIT-0, méthode de `mesure_fuites.py`) + compte de sources (Circuit vs arbitre). **4.4** : un écart re-mesuré sans divergence passe `solde` en GARDANT sa ligne (`solde_le`).
+- **4.2 `verifier_eau_ancienne`** : par tampon — division hors manifeste (etiquete : plus servie depuis 2.3, purge au geste), DPE (amont sonde vs max en base : OUVERT si retard), isochrones > TTL (etiquete : ignorées à la lecture), solaire gelé (etiquete, jamais ouvert — la seule admise par le mandat).
+- **4.3** : `controle()` écrit le verdict ; **job wrapper `coherence-robinets`** (quotidien 07:25, notification admin dédupliquée si fuite/eau ouverte — `jobs.py` passe à 20 jobs) ; **déclenché automatiquement après chaque bascule** (`bascule_flux.basculer`, best-effort — une sonde qui échoue n'annule jamais une bascule).
+
+### Décisions prises en autonomie (suite)
+
+14. **(4.1)** V1 : chemins comparés = FONCTIONS des robinets (les mêmes points d'entrée que les endpoints), pas encore l'appel HTTP `?trace=1`/builders PDF/outils Copilote — la générisation vient avec le lot 7.1 (tampon partout). Les chiffres multi-robinets NON couverts sont comptés et affichés dans le verdict (`non_couverts`) : la sonde dit elle-même ce qu'elle ne voit pas (règle no-silent-caps).
+15. **(4.3)** Horaire 07:25 (mandat : 07:15) — coherence-run (surfaces/run) tourne déjà à 07:15 ; même famille de contrôles, jamais en même temps sur les mêmes tables.
+
+### Suite
+
+- Tests du lot : `tests/test_circuit1_lot4.py` (5) — dédup+réouverture, solde qui garde la ligne, solaire etiquete jamais ouvert, verdict écrit, job au registre.
+- Suite complète post-lot 4 : **2324 passed · 1 failed (le pré-existant test_r5) · 49 skipped** — aucun rouge nouveau, +5 verts vs lot 3.
