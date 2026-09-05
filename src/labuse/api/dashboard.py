@@ -1671,10 +1671,23 @@ def admin_circuit(request: Request) -> dict:
             f" WHERE {WHERE_AFFICHEES} ORDER BY COALESCE(d.category,'zzz'), d.name"),
             {"masquees": masquees_param()}).mappings().all()
         reservoirs = []
+        from datetime import datetime as _dt, timezone as _tz
+        _now = _dt.now(tz=_tz.utc)
         for r in rows:
             vanne = _relance_pour(r["name"])
             mode = r["mode_remplissage"] or "one_shot"
+            # CIRCUIT-1 lot 8.4 — « À VÉRIFIER » : le dernier CONTRÔLE (sonde, agent, ou dépôt/
+            # ingestion) est plus vieux que la cadence attendue (déclarée/proposée au lot 1.7).
+            # La règle qui manquait tant que 71 sources n'avaient pas de cadence.
+            _derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
+            _dernier_controle = max(_derniers) if _derniers else None
+            _cad = r["cadence_attendue_jours"]
+            a_verifier = bool(_cad) and mode not in ("en_direct", "absente") and (
+                _dernier_controle is None
+                or (_now - _dernier_controle).days > int(_cad))
             reservoirs.append({
+                "a_verifier": a_verifier,
+                "dernier_controle": _dernier_controle.isoformat() if _dernier_controle else None,
                 "id": r["id"], "nom": r["name"], "producteur": r["provider"],
                 "famille": r["category"] or "aucune", "millesime": r["source_millesime"],
                 "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
@@ -1723,7 +1736,8 @@ def admin_circuit(request: Request) -> dict:
     # ── robinets / chiffres / arêtes : LE REGISTRE (le code est la vérité) ──
     aretes = registre.aretes()
     chiffres = {cid: {"libelle": ch.libelle, "unite": ch.unite, "niveau": ch.niveau,
-                      "moteur": ch.moteur, "portee": ch.portee, "calcul": ch.calcul}
+                      "moteur": ch.moteur, "portee": ch.portee, "calcul": ch.calcul,
+                      "definition": ch.definition}
                 for cid, ch in CHIFFRES.items()}
     robinets = [{"id": rid, "categorie": r.categorie, "nom": r.nom, "parent": r.parent,
                  "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre}
@@ -1739,6 +1753,7 @@ def admin_circuit(request: Request) -> dict:
         "fuites_ouvertes": len(fuites), "fuites_soldees": int(soldes),
         "eau_ancienne_ouverte": sum(1 for x in eau if x["statut"] == "ouvert"),
         "jamais_verifies": sum(1 for r in reservoirs if not r["veille"]),
+        "a_verifier": sum(1 for r in reservoirs if r.get("a_verifier")),
     }
     return {
         "run_servi": runs.current(), "manifeste": m,

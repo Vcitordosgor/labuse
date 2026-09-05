@@ -226,3 +226,51 @@ Premier passage : Revenir a servi **q_v10_m129** — le bouton lisait `manifeste
 
 - Suite complète post-lot 5 : **2342 passed · 1 failed (le pré-existant test_r5) · 36 skipped** — aucun rouge nouveau, +18 verts vs lot 4. Les 4 rouges transitoires de `test_run_hot_swap_s3`/`test_donnees2_precedent` venaient de la PREMIÈRE pose réelle du manifeste (les tests patchaient `_SERVED_FILE` en tmp, le manifeste réel primait) → garde « même dossier » dans `runs.current()/precedent()` : un test en tmp retrouve le comportement fichier pur.
 - `config/served_manifest.json` est désormais POSÉ et versionné (première pose par la recette — même doctrine que served_run.txt).
+
+---
+
+## Lot 8 — Les horloges honnêtes : CLOS
+
+### Livré
+
+- **8.1 UN SEUL JEU DE CRONS — et la CAUSE RACINE trouvée** : l'ancien `deploy.sh` REFUSAIT tout serveur non-UTC ; le VPS est passé en Indian/Reunion au mandat VPS (27/08) → le wrapper n'a JAMAIS pu être posé, seuls les legacy tournaient (constat lot 0.1 expliqué). Le nouveau `deploy.sh` : garde LEGACY (refus tant qu'un `/etc/cron.d/labuse-*` subsiste, fichiers nommés, retrait explicite par `deploy/scripts/retirer_crons_legacy.sh` — avec sauvegarde) + conversion AUTOMATIQUE UTC→Réunion (+4 h modulo 24, sûre : seuls des quotidiens franchissent minuit). `deploy/cron.d/` marqué OBSOLÈTE (`OBSOLETE.md`, fichiers conservés — règle 4).
+- **Crontab wrapper COMPLET (20/20)** : + `ingest-bodacc` (quotidien 06:40, reprend le legacy : bodacc + fraicheur-derives), + `copilote-purge`, + `sante-endpoints`, + `coherence-robinets` (lot 4). `ingest-bdnb` RETIRÉ du registre (amont 974 absent — SCORING-3 ; le CLI reste). Test : crontab posé == registre, exactement.
+- **8.2 healthz depuis le REGISTRE** : `ops.py` — `CRONS = _crons_du_registre()` (une entrée par job qui touche l'eau + backup, `attendu_jours` dérivé de la cadence du job ; trace par source quand elle existe, sinon l'état JSON du wrapper). Les mensonges de CIRCUIT-0 sont soldés : DPE attendu 35 j (mensuel, plus « hebdo »), BODACC surveillé sur le job du wrapper.
+- **8.3 trace des jobs qui touchent l'eau** : `TOUCHE_EAU` (12 jobs) dans jobs.py — chaque exécution laisse sa ligne `circuit_journal` (job, quand, résultat, compteurs), crons compris, jamais bloquant.
+- **8.4 « à vérifier »** : un réservoir dont le dernier contrôle (sonde OU ingestion) est plus vieux que sa `cadence_attendue_jours` (lot 1.7) passe `a_verifier` — servi par `/admin/circuit`, pastille ambre au bandeau + étiquette de ligne. La règle qui manquait tant que 71 sources n'avaient pas de cadence.
+
+### Décisions prises en autonomie (suite)
+
+19. **(8.1)** Conversion de fuseau AUTOMATIQUE dans deploy.sh (UTC→Réunion) plutôt que reconvertir le crontab source ou re-basculer le VPS en UTC : le crontab reste écrit en UTC (une seule vérité), le serveur garde son fuseau métier, et la pose ne peut plus échouer en silence. Autre fuseau → refus explicite.
+20. **(8.2)** `healthz/crons` ne surveille plus « ban »/« dvf »/« abuse » comme crons (ils n'ont pas de job wrapper : BAN/DVF = vanne sur clic + sonde sentinelle ; abuse legacy retiré). Leur fraîcheur de SOURCE reste portée par la page Circuit (cadence 1.7 + « à vérifier » 8.4) — au bon endroit.
+
+### Suite
+
+- Tests du lot : `tests/test_circuit1_lot8.py` (5) — registre bodacc/bdnb, crontab==registre exact, cadences healthz dérivées, trace journal, à_verifier sur cadence dépassée.
+- Suite complète : (verdict au commit).
+
+---
+
+## Lot 6 — Les agents : CLOS (envoi réel = geste Vic post-crédit)
+
+### Livré
+
+- **6.1 `src/labuse/agent_source.py`** + CLI `labuse agent source <id> | --ids a,b | --tous` : un appel Claude par réservoir — surface **`agent_source`** ajoutée au registre `SURFACES` (modèle raisonnement, override env), **outil web_search NATIF de l'API** (même patron que la recherche web du Copilote), entrée = fiche de recherche (catalogue + sonde : millésime servi, URL connue, dernier vu), sortie **JSON strict** (verdict/version/date/preuve{url,extrait}/cherche/sonde_proposee/page_js), coût au ledger `ia_log` (`core._log_cost`).
+- **6.2 anti-invention** : `a_jour`/`nouvelle` EXIGENT un extrait DATÉ (regex date) + URL — sinon verdict **forcé** `introuvable` avec la raison écrite au rapport. Un agent ne télécharge rien, n'ingère rien : il n'écrit que `source_agent_rapports` et, sur `nouvelle`, `source_veille.dernier_vu/dernier_statut` (la vanne apparaît). Un verdict forcé n'écrit JAMAIS la veille (testé).
+- **6.4** : `lancer_agents` — **5 en parallèle au plus** (ThreadPool, une session chacun) ; chaque passage entre au `circuit_journal` (geste `agent`, par, verdict). **Job `agents-sources` mensuel : EXISTE au registre, DÉSACTIVÉ** (jamais posé au crontab — verrouillé par le test lot 8 `posés == registre − {agents-sources}`).
+- **6.5** : `page_js: oui` sort tel quel du rapport (Playwright hors v1 — absent du VPS, noté au lot 7 de CIRCUIT-0).
+- **6.6 tests** (`tests/test_circuit1_lot6.py`, 5 verts, AUCUN réseau) : fixtures figées → `nouvelle` avec preuve datée (vanne posée), page SANS date → `introuvable` forcé, sortie non-JSON → introuvable, `vide`+page_js, surface/job désactivé.
+
+### Non fait (avec raison) — lot 6
+
+- **Envoi RÉEL sur DEAL PPR (id 30) et Office de l'eau (id 68)** : tenté — l'API répond `credit balance too low` (la clé locale/VPS n'a plus de crédit ; sa recharge est déjà dans les gestes Vic depuis le go-live). Dès le crédit rechargé : `labuse agent source --ids 30,68 --par vic@…` — les rapports tomberont dans `source_agent_rapports` et sur la page Circuit.
+- **6.3 « inscrire dans la sonde de nuit »** (bouton + test réel de la sonde proposée avant écriture) : exige un appel réseau réel par sonde — même blocage de principe en recette locale ; l'endpoint sera un petit POST qui rejoue `sentinelle.sonder_<methode>` sur l'URL proposée puis upsert `source_veille`. Prêt à câbler avec le premier rapport réel.
+
+### Décisions prises en autonomie (suite)
+
+21. **(6.1)** L'agent parle à l'API par le MÊME patron que `recherche_web` (client direct + web_search + `core._log_cost`) plutôt que d'étendre `core.complete` aux tools : zéro risque sur les 22 surfaces existantes ; l'unification viendra quand une 3e surface aura besoin des tools.
+22. **(commits)** L'entrée de registre `agents-sources` (lot 6) voyage dans le commit du lot 8 (même fichier jobs.py, éditions entrelacées) — artefact d'ordre sans effet.
+
+### Suite (lots 8 + 6, verdict)
+
+- Suite complète : **2352 passed · 2 failed · 36 skipped** — les 2 rouges : `test_r5` (pré-existant) et `test_zone_donnees::test_lot1_sirene_jointure_diffusion_position` (instable d'ordre : PASSE isolé, avec ET sans les changements — stash-prouvé). Aucun rouge nouveau, +10 verts vs lot 5.

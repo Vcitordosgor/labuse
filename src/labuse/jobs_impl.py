@@ -503,3 +503,11 @@ def coherence_robinets(ctx: JobContext) -> None:
                   f"{res.get('eau_ancienne_ouverte', 0)} eau(x) ancienne(s)",
             detail="Détail dans circuit_ecarts / circuit_eau_ancienne (page Circuit).",
             lien="/admin", dedup=f"coherence_robinets:{_date.today().isoformat()}")
+
+
+def ingest_bodacc(ctx: JobContext) -> None:
+    """CIRCUIT-1 lot 8.1 — BODACC au wrapper (quotidien, reprend le legacy) : procédures
+    collectives (upsert idempotent) PUIS la chaîne des dérivés légers (fraicheur-derives),
+    exactement ce que faisait /etc/cron.d/labuse-bodacc."""
+    _ingest_via_cli(ctx, "ingest-bodacc")
+    _ingest_via_cli(ctx, "fraicheur-derives")
