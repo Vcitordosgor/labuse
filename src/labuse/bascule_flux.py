@@ -224,6 +224,14 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     runs.invalidate()                   # DONNEES-2 (B4) — servi ET précédent relus au prochain appel
 
     caches = purger_caches_run()
+    # CIRCUIT-1 lot 2.7 — le cache spatial des isochrones se purge AUSSI à la bascule (en plus du
+    # TTL 30 j lu par zone.isochrone) : après un geste qui change le servi, plus aucune géométrie
+    # figée. Un cache qui refuse de se purger ne casse pas la bascule (même règle que les autres).
+    try:
+        n_iso = db.execute(text("DELETE FROM zone_isochrone_cache")).rowcount
+        caches.append(f"zone_isochrone_cache ({n_iso} entrées)")
+    except Exception:  # noqa: BLE001
+        pass
     sens = "arriere" if nouveau_run == ancien_precedent else "avant"
 
     # garde de cohérence IMMÉDIATE, mesurée contre le NOUVEAU run (lu frais du fichier).

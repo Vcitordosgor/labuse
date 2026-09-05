@@ -523,7 +523,11 @@ export function ContextePanel() {
                   <div className="flex flex-col gap-2.5">
                     {(() => {
                       const loc = Number(d.marche.locataires_pct); const prop = Number(d.marche.proprietaires_pct)
-                      const autres = Math.max(0, Math.round((100 - loc - prop) * 10) / 10)
+                      // CIRCUIT-1 lot 2.4 — le chiffre vient du SERVEUR (registre `autres_loges_pct`) ;
+                      // repli local identique tant qu'un vieux cache commune n'est pas recalculé.
+                      const autres = (d.marche as any).autres_loges_pct != null
+                        ? Number((d.marche as any).autres_loges_pct)
+                        : Math.max(0, Math.round((100 - loc - prop) * 10) / 10)
                       return <Bar parts={[
                         { label: 'locataires', pct: loc, color: TOKENS.vizCyan },
                         { label: 'propriétaires', pct: prop, color: TOKENS.mint },

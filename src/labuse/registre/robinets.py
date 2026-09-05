@@ -184,7 +184,8 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_commune_risques": _r("fiche", "Risques", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("ppr_pct", "catnat_n",)),
  "fiche_commune_population": _r("fiche", "Population & logement", "fiche_commune",
-    "/communes/{c}/contexte", "json_puis_js", chiffres=("habitants_n", "vacance_pct",)),
+    "/communes/{c}/contexte", "json_puis_js",
+    chiffres=("habitants_n", "vacance_pct", "autres_loges_pct")),
  "fiche_commune_qpv": _r("fiche", "Quartiers prioritaires", "fiche_commune",
     "/communes/{c}/contexte", "json_puis_js", chiffres=("qpv_n",)),
  "fiche_commune_mairie": _r("fiche", "Mairie & service urbanisme", "fiche_commune",
@@ -274,4 +275,7 @@ ROBINETS: dict[str, Robinet] = {
  "admin_destinations": _r("admin", "Destinations (calibration PLU)", None,
     "/admin/destinations", "json_puis_js", chiffres=("n_communes_rnu",)),
  "admin_licences": _r("admin", "Licences (comptes, essais, quotas)", None,
-    "/admin/licences", "json_puis_js", chiffres=("n_comptes_actifs",)),}
+    "/admin/licences", "json_puis_js", chiffres=("n_comptes_actifs",)), # ── CIRCUIT-1 lot 2.1 — le sélecteur de zones du panneau de filtres (compte, jamais une part) ──
+ "panel_filtres": _r("outil", "Filtres (sélecteur de zones PLU)", None,
+    "/zonage/zones", "json_puis_js", chiffres=("parcelles_par_zone_n",)),
+}

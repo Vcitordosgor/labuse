@@ -9,8 +9,9 @@ run SERVI (Q_A_RUN_LABEL). Tout est **Estimé** — jamais un prix ni une promes
 M44 Lot 0 : le défaut d'argument était `q_v7_defisc` (run mort) — aligné sur le point de vérité (served_run.txt).
 
 O0 (V2) — le prix de sortie n'est plus la médiane DVF de l'EXISTANT (~2 265 €/m², ancien dilué qui
-écrasait 90 % des marges) mais le **prix de sortie NEUF** reconstruit par `dvf_prix_sortie_neuf`
-(ventes ≤ 3 ans après achèvement d'un PC ; ~3 688 €/m² médian), avec repli secteur→commune→non estimable.
+écrasait 90 % des marges) mais le **prix de sortie NEUF**. CIRCUIT-1 lot 2.2 (décision Vic n° 7) :
+il vient du MOTEUR LIVE `neuf_vefa_commune` (le même que comparateur/fiche/carte — RETOURS-11F M1),
+plus jamais du précalcul `dvf_prix_sortie_neuf` (divergent : 4 730 vs 5 003 €/m² à Saint-Paul).
 Un promoteur vend du neuf : c'est le prix économiquement juste pour une charge foncière de promotion.
 
 Méthode (batch, hypothèses par DÉFAUT du bilan — cf. `faisabilite/bilan.py`) :
@@ -71,25 +72,29 @@ CREATE TABLE IF NOT EXISTS score_e (
 );
 """
 
-# non-écartées q_v7_defisc + SDP résiduelle + prix terrain sectoriel + prix de sortie NEUF (secteur→commune)
+# non-écartées q_v7_defisc + SDP résiduelle + prix terrain sectoriel + prix de sortie NEUF.
+# CIRCUIT-1 lot 2.2 (décision Vic n° 7) — le NEUF vient du MOTEUR LIVE `neuf_vefa_commune` (le
+# même que comparateur/fiche/carte depuis RETOURS-11F M1), passé en paramètre JSONB
+# {insee: €/m²} calculé par build_score_e. Le précalcul `dvf_prix_sortie_neuf` n'est PLUS LU ici
+# (il divergeait : 4 730 vs 5 003 €/m² à Saint-Paul, mesure RETOURS-11F). Le grain « secteur »
+# disparaît (il n'existait que dans le précalcul divergent) : niveau_prix = commune |
+# ile_validee | ile_sans_operation. Repli île = médiane des médianes communales LIVE (même
+# règle MANDAT COUVERTURE PRIX : jamais servi aux communes social-dominantes).
 _SELECT_RAW = """
 WITH med AS (
   SELECT secteur,
          max(mediane_prix_m2) FILTER (WHERE type_bien='terrain' AND n_ventes >= :nt) AS terrain
   FROM dvf_secteur_medianes GROUP BY secteur),
-neuf_sec AS (SELECT cle, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau='secteur'),
-neuf_com AS (SELECT cle, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau='commune'),
--- MANDAT COUVERTURE PRIX (Vic 28/07/2026) — REPLI ÎLE : médiane marché île (non indexée), servie
--- aux communes de MARCHÉ sans prix local ; les communes social-dominantes n'y accèdent pas.
-neuf_ile AS (SELECT prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau='ile' LIMIT 1)
+neuf_com AS (SELECT key AS cle, value::float AS prix_m2_neuf
+             FROM jsonb_each_text(CAST(:neuf_live AS jsonb))),
+neuf_ile AS (SELECT CAST(:neuf_ile AS float) AS prix_m2_neuf)
 SELECT p.idu,
        p.surface_m2,
        r.sdp_residuelle_m2 AS sdp,
        m.terrain,
-       COALESCE(ns.prix_m2_neuf, nc.prix_m2_neuf,
+       COALESCE(nc.prix_m2_neuf,
                 CASE WHEN left(p.idu,5) <> ALL(:social) THEN (SELECT prix_m2_neuf FROM neuf_ile) END) AS prix_vente,
-       CASE WHEN ns.prix_m2_neuf IS NOT NULL THEN 'secteur'
-            WHEN nc.prix_m2_neuf IS NOT NULL THEN 'commune'
+       CASE WHEN nc.prix_m2_neuf IS NOT NULL THEN 'commune'
             WHEN left(p.idu,5) <> ALL(:social) AND (SELECT prix_m2_neuf FROM neuf_ile) IS NOT NULL
                  THEN CASE WHEN left(p.idu,5) = ANY(:validees) THEN 'ile_validee' ELSE 'ile_sans_operation' END
             END AS niveau_prix
@@ -97,7 +102,6 @@ FROM parcel_p_score_v2 s
 JOIN parcels p ON p.idu = s.parcelle_id
 LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
 LEFT JOIN med m ON m.secteur = left(p.idu, 10)
-LEFT JOIN neuf_sec ns ON ns.cle = left(p.idu, 10)
 LEFT JOIN neuf_com nc ON nc.cle = left(p.idu, 5)
 WHERE s.run_id = :run AND s.tier <> 'ecartee';
 """
@@ -170,10 +174,30 @@ def build_score_e(session: Session, *, run: str | None = None,
     # M-O P2-59 — rebuild NON BLOQUANT (table lue en direct par division_or + scoreur d'adresse ;
     # ~13 s de build). SELECT + INSERT hors-ligne dans une shadow, swap ~ms (cf. _rebuild).
     from ._rebuild import rebuild_swap
+    # CIRCUIT-1 lot 2.2 — le NEUF LIVE par commune (même moteur que comparateur/fiche/carte) +
+    # repli île = médiane des médianes communales live. Une passe au build, jamais le précalcul.
+    import json as _json
+    import statistics as _stats
+    from ..marche_service import neuf_vefa_seuil
+    from .dvf_marche import neuf_vefa_commune
+    seuil = neuf_vefa_seuil()            # source unique du seuil : fiche = table = carte = score É
+    insee_list = [i for (i,) in session.execute(text(
+        "SELECT DISTINCT left(idu, 5) FROM parcels")).all()]
+    neuf_live: dict[str, float] = {}
+    for insee in insee_list:
+        try:
+            r = neuf_vefa_commune(session, insee)
+        except Exception:  # noqa: BLE001 — une commune sans données ne bloque pas le build
+            r = {}
+        v = r.get("mediane_prix_m2_bati")
+        if v and int(r.get("n") or 0) >= seuil:
+            neuf_live[insee] = float(v)
+    neuf_ile = round(_stats.median(neuf_live.values())) if neuf_live else None
 
     def _populate(target: str) -> dict:
         raw = session.execute(text(_SELECT_RAW),
                               {"run": run, "nt": N_MIN_TERRAIN, "nv": N_MIN_VENTE,
+                               "neuf_live": _json.dumps(neuf_live), "neuf_ile": neuf_ile,
                                "social": list(SOCIAL_DOMINANT_INSEE),
                                "validees": list(ILE_VALIDEES_INSEE)}).mappings().all()
         rows = [_row(r["idu"], r["surface_m2"], r["sdp"], r["terrain"], r["prix_vente"], r["niveau_prix"]) for r in raw]

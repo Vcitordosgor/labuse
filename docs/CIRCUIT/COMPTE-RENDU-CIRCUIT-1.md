@@ -84,3 +84,35 @@ Sortie brute : `docs/CIRCUIT/VPS-CRONS-05-09.txt` (172 lignes, ssh lecture seule
 - Tests du lot : 9/9 ; voisins (api, api_q_v2, mairies, flux, cache commune, plu_destinations, flash) : 79 verts.
 - Suite complète post-lot 1 : **2303 passed · 1 failed (le pré-existant test_r5) · 49 skipped · 1 error instable** (`test_dashboard::test_courrier_transitions_journalisees`, PASSE isolé — ordre de fixtures) — aucun rouge nouveau, +8 verts vs lot 0.
 - Au passage : la base `labuse_test` portait des RÉSIDUS de runs interrompus (`p_score_v2_runs` q_v11_m137, annonces pige) qui cassaient 6 tests de façon déterministe — purgés (DELETE/TRUNCATE sur labuse_test, la base bac à sable). Leçon : ne jamais lancer deux pytest en parallèle sur la même base de test.
+
+---
+
+## Lot 2 — Les rebranchements
+
+### Tableau des rebranchements livrés (chacun avec son test)
+
+| # | rebranchement | avant → après | test |
+|---|---|---|---|
+| 2.1 | **Zonage = surface partout, moteur unique** `registre/moteurs/zonage.py` : `parts_zonage_surface` (LA part, ids `part_zone_*_pct`) + `parcelles_par_zone` (le COMPTE des filtres, id `parcelles_par_zone_n`, « jamais une part »). `_foncier_commune` (app.py) et `/zonage/zones` ne calculent plus : ils demandent. | Saint-Paul servi INCHANGÉ (A 35,8 % / N 47,2 % — le chemin surface était déjà celui de la fiche) ; le chemin « comptes » ne peut plus être servi comme part, par construction | `test_21_*` (3) — dont LE test qui aurait attrapé la fuite : 3 petites U vs 1 grande N → la part servie est la surface |
+| 2.2 | **score_e → neuf LIVE** : `_SELECT_RAW` reçoit `:neuf_live` (JSONB {insee: €/m²} depuis `neuf_vefa_commune`, seuil source unique `neuf_vefa_seuil()`=8) + repli île = médiane des médianes live (même règle social-dominantes). Le grain « secteur » disparaît (il n'existait que dans le précalcul divergent). | Saint-Paul : le neuf de score_e devient 5 003 €/m² (celui du comparateur) au PROCHAIN run candidat (portée run) — avant : 4 730 (précalc) | `test_22_score_e_ne_lit_plus_le_precalcul` + `test_score_e` (6, seed VEFA live) |
+| 2.3 | **Division d'or run-scopée** : `_division_fiche` (app.py:2692), filtre `division_or` (app.py:1573), découpe `division_review.py:38` — run servi SEUL ; candidat d'un autre run → « divisibilité non recalculée pour ce run ». (`verdict_servi.py:40` était un commentaire, pas un lecteur.) | q_v10_m129 (33 lignes) N'EST PLUS SERVI nulle part ; la fiche le dit honnêtement en attendant le recalcul (geste Calculer, lot 3) | `test_23_*` (2) : run mort jamais servi · run courant servi normalement |
+| 2.4a | **« logés gratuitement » calculé au serveur** (`autres_loges_pct`, registre + `_compute_commune_contexte`) ; le front lit le serveur avec repli identique le temps des vieux caches. tsc OK. | même valeur (même arithmétique), mais elle EXISTE désormais côté serveur et porte un id | (couvert par la déclaration registre + tsc) |
+| 2.6 | **Garde formelle Copilote voie B** : `garde_generale_sans_chiffre` (answering.py) — un nombre PRÉCIS à unité de donnée (€, €/m², m², parcelles, logements, %) hors fourchette est retiré, phrase remplacée par le renvoi aux outils ; les fourchettes 4bis survivent. Déterministe, appliquée à toute réponse `copilote-general`. | — | `test_26_garde_generale_10_pieges_0_chiffre_invente` (10 pièges, 0 survivant ; 2 fourchettes conservées) |
+| 2.7 | **Caches** : `zone_isochrone_cache` TTL 30 j (lecture) + PURGE à la bascule (`bascule_flux.basculer`, jamais bloquant) ; le tampon fiche commune est celui du registre depuis 1.4. | l'eau ancienne « isochrone illimitée » de CIRCUIT-0 est soldée | (TTL lu dans zone.py ; purge listée dans caches_purges du journal de bascule) |
+
+### Décisions prises en autonomie (suite)
+
+8. **(2.2)** Le niveau « secteur » du prix neuf disparaît de score_e : il n'existait QUE dans le précalcul divergent ; le moteur live est communal (VEFA n'atteint le seuil que dans ~11/24 communes). `niveau_label("secteur")` reste pour les lignes historiques. Alternative écartée : reconstruire un neuf sectoriel live (nouvelle définition non mandatée, données insuffisantes — 32 % des VEFA seulement portent une surface).
+9. **(2.6)** La garde est DÉTERMINISTE (regex phrases), pas un 2e appel LLM : testable hors ligne, coût nul, zéro latence ajoutée ; la règle 4bis (fourchettes de prestations) survit par construction. Alternative écartée : juge LLM (coût/latence par réponse, non testable en CI).
+10. **(2.3)** Le message « non recalculée pour ce run » est servi dans le champ `ligne` existant (le front l'affiche tel quel, aucun changement front requis).
+
+### Non fait (avec raison) — lot 2
+
+- **2.4 (8 des 9 sites front)** : seul « autres logés » est rapatrié. Restants — charge foncière bornée (`constructibilite.tsx:137` : calculette interactive à curseurs, la valeur par défaut serveur existe déjà), kWc/MWh (`ProspectionSolaire.tsx:325-326`), % propriétaires (`MarcheSecteurBlock.tsx:16`), % ZAN (`blocB.tsx:358`), % décidées (`ProjetsPanel.tsx:53`), heures restantes (`Licences.tsx:26` — durée d'affichage, reclassable dérivation légère), n_vigilances (`risques.tsx:16-30`), + le 9e (ResultsSection compteurs max(0,…)). Raison : chaque site exige un aller-retour endpoint+composant spécifique ; l'inventaire précis avec fichier:ligne est posé, le registre les porte déjà (`calcul=front` → à rapatrier), reste ~2-4 h de travail mécanique. Ce qu'il faudrait : un mini-lot « front-serveur » dédié.
+- **2.5 (les 45 `sql_propre`)** : l'exemplaire est fait (zonage → `registre/moteurs/zonage.py`, LE cas à fuite mesurée) ; les 44 restantes sont chacune UN SEUL point de calcul aujourd'hui (vérifié au lot 1 : aucun chiffre `sql_propre` n'a deux chemins). Les déplacer toutes = pur déménagement à risque de régression sans gain de cohérence immédiat. Raison du report : le bénéfice vient avec la sonde (lot 4) qui comparera par les ENDPOINTS ; l'extraction mécanique peut suivre chiffre par chiffre. Ce qu'il faudrait : traiter chaque extraction au moment où sa fonction devient `fonction` appelable du registre.
+- **Lecteurs restants du précalcul neuf** (hors mandat 2.2 qui visait score_e) : `moteurs.py:526` (référence île du baromètre) et `app.py:1687` (filtre EXISTS) lisent encore `dvf_prix_sortie_neuf` — listés pour un correctif ultérieur ; le précalcul est marqué obsolète dans le docstring de score_e et du CLI.
+
+### Suite
+
+- Tests du lot : 16 verts (7 lot 2 + 6 score_e + 9 registre inchangés) ; tsc front OK.
+- Suite complète post-lot 2 : **2311 passed · 1 failed (le pré-existant test_r5) · 49 skipped** — aucun rouge nouveau, +8 verts vs lot 1.

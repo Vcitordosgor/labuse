@@ -1569,8 +1569,9 @@ def _q_v2_where(run_label: str,
         params["f_rang"] = rang_max
     if renouvellement:   # mutation : segment Renouvellement (run-scopé, vérifié live sur le run servi)
         conds.append("EXISTS (SELECT 1 FROM parcel_renouvellement rn WHERE rn.idu = p.idu AND rn.run_label = :runf)")
-    if division_or:   # mutation : segment Division en or (O12)
-        conds.append("EXISTS (SELECT 1 FROM division_or_candidates dor WHERE dor.idu = p.idu)")
+    if division_or:   # mutation : segment Division en or (O12) — CIRCUIT-1 2.3 : run servi SEUL
+        conds.append("EXISTS (SELECT 1 FROM division_or_candidates dor WHERE dor.idu = p.idu "
+                     "AND dor.run_label = :runf)")
     if proprietaire_type:
         # propriété : PM identifiée (SIREN) / bailleur (Office HLM ou SEM) / PP non déterminable (absence).
         pt = [x.strip() for x in proprietaire_type.split(",") if x.strip()]
@@ -1905,23 +1906,12 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     surface_ha = db.execute(text(
         "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
         {"c": commune}).scalar()
-    # OUTILS-6 C1 — RÉPARTITION DU ZONAGE EN PARTS DE SURFACE (somme = 100 %). Les parts de PARCELLES
-    # (un compte) ne représentent pas le territoire : à La Réunion U domine en nombre mais A+N couvrent
-    # l'essentiel de l'aire. On agrège la surface cadastrée par famille (parcel_zone_plu porte UNE zone
-    # par parcelle, PK idu — donc jamais de double comptage), les parts somment à 100 % et le total en
-    # ha égale la surface communale servie ailleurs. On garde aussi le compte (n) par famille.
-    zon = {(r["fam"] or "").upper(): {"n": r["n"], "m2": float(r["m2"] or 0)} for r in db.execute(text(
-        "SELECT z.zone_fam AS fam, count(*) n, sum(p.surface_m2) m2 FROM parcels p JOIN parcel_zone_plu z "
-        "ON z.idu = p.idu WHERE p.commune = :c AND z.zone_fam IS NOT NULL GROUP BY 1"), {"c": commune}).mappings()}
-
-    def _bucket(pred):
-        return (sum(v["m2"] for k, v in zon.items() if pred(k)),
-                sum(v["n"] for k, v in zon.items() if pred(k)))
-    au_m2, au_n = _bucket(lambda k: k.startswith("AU"))
-    a_m2, a_n = _bucket(lambda k: k.startswith("A") and not k.startswith("AU"))
-    u_m2, u_n = _bucket(lambda k: k.startswith("U"))
-    n_m2, n_n = _bucket(lambda k: k.startswith("N"))
-    total_zone_m2 = u_m2 + au_m2 + a_m2 + n_m2
+    # OUTILS-6 C1 → CIRCUIT-1 lot 2.1 — la RÉPARTITION DU ZONAGE (parts de SURFACE, somme = 100 %)
+    # est désormais calculée par LE moteur unique registre/moteurs/zonage.py (ids part_zone_*_pct) :
+    # ce robinet ne calcule plus, il demande. La définition (les parts de parcelles ne représentent
+    # pas le territoire) vit dans le moteur.
+    from ..registre.moteurs.zonage import parts_zonage_surface
+    zonage = parts_zonage_surface(db, commune)
     evaluees = scal("SELECT count(*) FROM parcels p JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu "
                     "WHERE p.commune = :c AND s.run_id = :r") or 0
     sans_zonage = scal("SELECT count(*) FROM parcels p WHERE p.commune = :c AND NOT EXISTS "
@@ -1943,13 +1933,6 @@ def _foncier_commune(db: Session, commune: str) -> dict:
         "SELECT count(*) n, coalesce(sum(p.surface_m2), 0) m2 FROM parcel_p_score_v2 s "
         "JOIN parcels p ON p.idu = s.parcelle_id WHERE p.commune = :c AND s.run_id = :r "
         "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": runs.current()}).mappings().first()
-    zonage = None
-    if total_zone_m2:
-        def _fam(m2, nn):
-            return {"ha": round(m2 / 10000), "pct": round(100 * m2 / total_zone_m2, 1), "n": int(nn)}
-        zonage = {"base": "surface", "total_ha": round(total_zone_m2 / 10000),
-                  "familles": {"U": _fam(u_m2, u_n), "AU": _fam(au_m2, au_n),
-                               "A": _fam(a_m2, a_n), "N": _fam(n_m2, n_n)}}
     return {
         "n_parcelles": int(n_parcelles),
         "surface_ha": int(surface_ha) if surface_ha is not None else None,
@@ -2162,6 +2145,14 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
     for d in (sru, insee_log, plh):
         if d:
             d.pop("importe_le", None)
+    # CIRCUIT-1 lot 2.4 — « autres logés gratuitement » CALCULÉ AU SERVEUR (id registre
+    # `autres_loges_pct`). Le front (ContextePanel:526) faisait 100 − locataires − propriétaires
+    # lui-même : le nombre affiché n'existait nulle part côté serveur. Même arithmétique.
+    if insee_log and insee_log.get("locataires_pct") is not None \
+            and insee_log.get("proprietaires_pct") is not None:
+        insee_log["autres_loges_pct"] = max(
+            0.0, round((100.0 - float(insee_log["locataires_pct"])
+                        - float(insee_log["proprietaires_pct"])) * 10) / 10)
     # M36 Lot D : le compteur du tier haut EN DUR sur la fiche commune — même point de
     # calcul (mémoïsé) que /communes : tiers du run servi, jamais figé, étiquette vraie.
     _cd = next((c for c in _communes_data(db, runs.current()) if c["commune"] == commune), None)
@@ -2437,25 +2428,15 @@ def zonage_zones(communes: str | None = Query(None), db: Session = Depends(get_d
     critère, un endroit) avec leur compte de parcelles CALCULÉ (jamais en dur : il suit les
     recalibrages PLU). Portée : l'île par défaut, les communes passées sinon — une zone à 0
     dans la portée est ABSENTE de la liste (comportement explicite : le front affiche la
-    portée en tête de liste). La fiche, elle, garde `zone_lib` (graphie officielle)."""
+    portée en tête de liste). La fiche, elle, garde `zone_lib` (graphie officielle).
+
+    CIRCUIT-1 lot 2.1 — ce compte est `parcelles_par_zone_n` au registre : un NOMBRE pour les
+    filtres (« parcelles en zone … »), JAMAIS servi ni affiché comme une « part » (les parts de
+    zonage sont les parts de SURFACE du moteur unique registre/moteurs/zonage.py). Le robinet
+    ne calcule plus : il demande au moteur."""
     coms = [x.strip() for x in (communes or "").split(",") if x.strip()]
-    join, where, params = "", "WHERE z.zone_filtre IS NOT NULL", {}
-    if coms:
-        join = "JOIN parcels p ON p.idu = z.idu"
-        where += " AND p.commune = ANY(:coms)"
-        params["coms"] = coms
-    rows = db.execute(text(
-        f"SELECT z.zone_fam AS fam, z.zone_filtre AS zone, count(*) AS n "
-        f"FROM parcel_zone_plu z {join} {where} GROUP BY 1, 2"), params).mappings().all()
-    fams: dict[str, dict] = {}
-    for r in rows:
-        f = fams.setdefault(r["fam"] or "autre", {"fam": r["fam"] or "autre", "n": 0, "zones": []})
-        f["n"] += r["n"]
-        f["zones"].append({"zone": r["zone"], "n": r["n"]})
-    familles = sorted(fams.values(), key=lambda f: -f["n"])
-    for f in familles:
-        f["zones"].sort(key=lambda z: (-z["n"], z["zone"]))
-    return {"portee": "commune" if coms else "ile", "communes": coms, "familles": familles}
+    from ..registre.moteurs.zonage import parcelles_par_zone
+    return parcelles_par_zone(db, coms or None)
 
 
 @app.get("/filtre")
@@ -2701,12 +2682,26 @@ def _qualite_commune(insee: str | None) -> dict | None:
 
 
 def _division_fiche(db: Session, idu: str, surface_m2: float | None) -> dict | None:
-    """M129-C P3 — la ligne « Division » de la fiche (un seul juge : division_or_candidates)."""
+    """M129-C P3 — la ligne « Division » de la fiche (un seul juge : division_or_candidates).
+
+    CIRCUIT-1 lot 2.3 — SCOPÉ AU RUN SERVI : les candidats d'un run mort (q_v10_m129 restait
+    servi 2 runs après sa bascule) ne sont PLUS montrés. Tant que le run courant n'a pas ses
+    candidats (recalcul au geste Calculer, lot 3), la fiche dit « divisibilité non recalculée
+    pour ce run » plutôt qu'une valeur d'un run mort."""
+    run = runs.current()
     r = db.execute(text(
         "SELECT residuel_m2, residuel_facade_m, type_division, "
         "       (coalesce(note_revue,'') <> '') AS revue "
-        "FROM division_or_candidates WHERE idu = :i"), {"i": idu}).mappings().first()
+        "FROM division_or_candidates WHERE idu = :i AND run_label = :r"),
+        {"i": idu, "r": run}).mappings().first()
     if not r:
+        # un candidat existe pour un AUTRE run → l'honnêteté : non recalculé, jamais la vieille valeur
+        autre = db.execute(text(
+            "SELECT 1 FROM division_or_candidates WHERE idu = :i LIMIT 1"), {"i": idu}).scalar()
+        if autre:
+            return {"lot_m2": None, "facade_m": None, "type": None, "statut_revue": None,
+                    "potentiel_lots": None, "potentiel_source": None, "non_recalcule": True,
+                    "ligne": "divisibilité non recalculée pour ce run"}
         return None
     try:
         from .. import config as _cfg
