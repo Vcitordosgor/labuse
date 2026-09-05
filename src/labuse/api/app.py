@@ -2720,21 +2720,35 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     couches cascade), avec millésime et fiabilité. Réutilise la table `data_sources` (0 nouvelle
     donnée). Requête EN begin_nested (contrat savepoint : requête ajoutée au build de fiche)."""
     with db.begin_nested():
+        # EXPORTS-1 (6.4, audit B13) : millésime COMPOSÉ — millésime amont, sinon date amont VUE
+        # par la sentinelle, sinon date d'ingestion ÉTIQUETÉE comme telle ; sinon cellule masquée.
+        _has_sv = bool(db.execute(text(
+            "SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
+        _sv_col = "sv.dernier_vu" if _has_sv else "NULL AS dernier_vu"
+        _sv_join = "LEFT JOIN source_veille sv ON sv.source_id = ds.id" if _has_sv else ""
         rows = db.execute(text(
-            """SELECT DISTINCT ds.name, ds.category, ds.provider,
-                      ds.source_millesime, ds.source_horizon_at, ds.reliability_level
+            f"""SELECT DISTINCT ds.name, ds.category, ds.provider,
+                      ds.source_millesime, ds.source_horizon_at, ds.reliability_level,
+                      {_sv_col}, ds.last_sync_at
                FROM dryrun_cascade_results cr JOIN data_sources ds ON ds.id = cr.data_source_id
+               {_sv_join}
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
                ORDER BY ds.category, ds.name"""),
             {"run": run_label, "pid": parcel_id}).mappings().all()
     # M70 décision 4 — « vérifiée » MENTAIT : source_checks est VIDE, aucune vérification amont ne
     # l'adosse (reliability_level = déclaration de catalogue). Libellé honnête = « suivie » (la
     # source est cataloguée + suivie par le radar, jamais « vérifiée à la dernière version »).
-    _FIAB = {"verifie": "suivie", "estime": "estimée", "declaratif": "déclarative",
+    _FIAB = {"verifie": "surveillée", "estime": "estimée", "declaratif": "déclarative",
              "a_confirmer": "à confirmer"}
     out = []
+    import re as _re_m
     for r in rows:
         mill = r["source_millesime"] or (str(r["source_horizon_at"].year) if r["source_horizon_at"] else None)
+        if not mill and r["dernier_vu"] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r["dernier_vu"])):
+            d = str(r["dernier_vu"])[:10]
+            mill = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
+        if not mill and r["last_sync_at"]:
+            mill = f"ingéré le {r['last_sync_at']:%d/%m/%Y} (date d'ingestion, millésime amont non publié)"
         out.append({
             "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
             "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
@@ -3545,9 +3559,15 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         _marche_synthese = _msvc.phrase_prix_ancien(_prix_ancien)
     except Exception:  # noqa: BLE001 — le marché ne casse jamais la fiche
         _prix_ancien, _marche_synthese = None, None
+    # EXPORTS-1 (6.5, Q12) : drapeau « prescriptions non vérifiables » — point de vérité unique
+    # (zone_servie), lu par l'écran et tous les documents.
+    from ..faisabilite.zone_servie import prescriptions_verifiables as _presc_verif
+    _presc_ok, _presc_motif = _presc_verif(head["commune"])
     return {
         "idu": head["idu"], "commune": head["commune"],
         "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
+        "prescriptions_verifiables": _presc_ok,
+        "prescriptions_non_verifiables_motif": _presc_motif,
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
         # affiche « Adresse non disponible », jamais un champ vide)
         "adresse": _ban_adresse(db, idu),

@@ -180,7 +180,21 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
                WHERE sl.kind = 'plu_gpu_prescription'
                  AND ST_Intersects(sl.geom_2975, p.geom_2975)"""),
             {"idu": idu}).mappings().all()
-        out["prescriptions"] = [dict(r) for r in presc if r["libelle"]]
+        # EXPORTS-1 lot 6 : libellés GPU bruts nettoyés (« zone reglt Forte »…) — même hygiène
+        # que les lignes servies (nettoyer_libelle_client).
+        out["prescriptions"] = [{**dict(r),
+                                 "libelle": nettoyer_libelle_client("prescription_plu", r["libelle"])}
+                                for r in presc if r["libelle"]]
+        # EXPORTS-1 (6.5, Q12) : sur 4 communes, les prescriptions sont INVÉRIFIABLES au GPU
+        # (documents non téléversés) — silence ≠ absence, le drapeau est servi et le gabarit le dit.
+        try:
+            from ..faisabilite.zone_servie import prescriptions_verifiables
+            _cm_p = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            _ok_p, _motif_p = prescriptions_verifiables(_cm_p)
+            if not _ok_p:
+                out["prescriptions_non_verifiables"] = _motif_p
+        except Exception:  # noqa: BLE001
+            pass
     # EXPORTS-1 lot 3 (3.1) : plus AUCUNE lecture de `parcel_residuel_bati` (table orpheline —
     # son `emprise_max_m2` fabriquait les « 127 m² » de l'audit A3). Les hauteurs de zone restent
     # servies depuis le PLU CALIBRÉ (resolve_zone, M129-2 A — même source que banquier/lettre/PC),
@@ -789,15 +803,27 @@ def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[d
     # M-P (P2-68) : synchro indexée par NOM (stable), plus par id serial (dépendant du seed).
     # M54-AB F9 : on LIT `source_millesime` (millésime AMONT réel). Priorité : statique → millésime
     # amont → motif honnête.
-    # M73 E : la date de SYNCHRO (last_sync_at) est une date d'INGESTION — la doctrine INTERDIT de la
-    # présenter comme un millésime. On ne bascule PLUS sur « synchronisé le … » : quand le millésime
-    # amont est NULL, on l'assume (« horizon amont non publié »). Le peuplement de source_millesime
-    # reste une dette data. La date de GÉNÉRATION du document reste, elle, légitime (en pied).
+    # EXPORTS-1 (6.4, audit B13) : millésime COMPOSÉ — source_millesime, sinon la date amont VUE
+    # par la sentinelle (dernier_vu, quand c'est une date), sinon la date d'ingestion ÉTIQUETÉE
+    # comme telle (jamais déguisée en millésime — doctrine M73 E respectée par le libellé).
+    # 26/31 sources sans millésime retrouvent ainsi une date ; les orphelines masquent la cellule.
+    import re as _re_m
     mill_amont: dict[str, str] = {}
     if "data_sources" in avail:
-        for r in db.execute(text("SELECT name, source_millesime FROM data_sources")):
+        _has_sv = bool(db.execute(text("SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
+        _q = ("SELECT ds.name, ds.source_millesime, sv.dernier_vu, ds.last_sync_at "
+              "FROM data_sources ds LEFT JOIN source_veille sv ON sv.source_id = ds.id"
+              if _has_sv else
+              "SELECT name, source_millesime, NULL AS dernier_vu, last_sync_at FROM data_sources")
+        for r in db.execute(text(_q)):
             if r[1]:
                 mill_amont[r[0]] = r[1]
+            elif r[2] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r[2])):
+                d = str(r[2])[:10]
+                mill_amont[r[0]] = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
+            elif r[3]:
+                mill_amont[r[0]] = (f"ingéré le {r[3]:%d/%m/%Y} (date d'ingestion, "
+                                    "millésime amont non publié)")
     out, vus = [], set()
     for section, label, src_name, statique in _SECTION_SOURCES:
         if section not in sections_rendues or label in vus:
@@ -808,9 +834,9 @@ def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[d
         elif src_name and mill_amont.get(src_name):
             millesime = mill_amont[src_name]
         else:
-            # GPU/PLU, Géorisques… n'exposent pas de millésime amont daté (NULL) — on le DIT, jamais
-            # un « — » muet ni une date d'ingestion déguisée en millésime. Même lexique que la fiche.
-            millesime = "millésime non renseigné"
+            # EXPORTS-1 (6.4) : plus aucune date nulle part (5 sources orphelines mesurées à
+            # l'audit B13) → cellule MASQUÉE (None), plus le pavé « millésime non renseigné ».
+            millesime = None
         out.append({"section": section, "source": label, "millesime": millesime})
     return out
 

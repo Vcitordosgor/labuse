@@ -296,9 +296,21 @@ def _reductions(out: dict) -> str:
         rows = "".join(f"<tr><td>{esc(m)}</td><td>{s('S') if 'PPR' in m or 'RPG' in m or 'agricole' in m or 'côte' in m or 'érosion' in m else s('E')}</td></tr>"
                        for m in modul)
         body += f"<table><tr><th>Facteur (appliqué au calcul)</th><th>Nature</th></tr>{rows}</table>"
-        body += ("<p class='note'>Sources : PPR/aléas (DEAL), potentiel foncier Région (indicatif), indicateur d'érosion (Cerema), "
-                 "pente (RGE ALTI 5 m) — telles qu'ingérées ; le détail figure dans la dérivation "
-                 "de la partie 3.</p>")
+        # EXPORTS-1 (6.1) : le pied cite les sources des facteurs RÉELLEMENT appliqués — plus une
+        # liste en dur qui citait des couches absentes du tableau.
+        _src_map = [("PPR", "PPR/aléas (DEAL)"), ("pente", "pente (RGE ALTI 5 m)"),
+                    ("RPG", "RPG (parcelle agricole)"), ("agricole", "RPG (parcelle agricole)"),
+                    ("côte", "indicateur d'érosion (Cerema)"), ("érosion", "indicateur d'érosion (Cerema)"),
+                    ("foncier Région", "potentiel foncier Région (indicatif)"),
+                    ("cheval", "zonage PLU (GPU)"), ("Zonage mixte", "zonage PLU (GPU)"),
+                    ("réservé", "emplacements réservés (GPU)")]
+        _cites = []
+        for mot, src in _src_map:
+            if any(mot.lower() in m.lower() for m in modul) and src not in _cites:
+                _cites.append(src)
+        body += ("<p class='note'>Sources des facteurs appliqués : "
+                 + (", ".join(_cites) if _cites else "hypothèses du moteur (détail partie 3)")
+                 + " — telles qu'ingérées ; le détail figure dans la dérivation de la partie 3.</p>")
     else:
         body += ("<p class='note'>Aucune réduction chiffrable appliquée par le moteur dans les "
                  "couches analysées — ce constat ne couvre pas les contraintes non modélisées "
@@ -316,7 +328,7 @@ def _bilan_rebours(out: dict) -> str:
     if not calc.get("calculable"):
         return body + ("<p class='note'>Non chiffrable : "
                        f"{esc(calc.get('raison') or 'données insuffisantes')} — aucun chiffre "
-                       "n'est fabriqué (doctrine).</p>")
+                       "n'est fabriqué.</p>")
     # M144 Lot 1 — le bilan NOMME le scénario qu'il chiffre (le RETENU, au sol) quand le stationnement
     # au sol plafonne réellement (silo > au sol), et mentionne le silo en PROSE — jamais chiffré sans
     # son coût de place enterrée (doctrine : pas de constante fabriquée). Une seule source de scénario.

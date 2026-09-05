@@ -123,7 +123,13 @@
      modifier ces valeurs.</p>
   {% endif %}
 
-  {% if ident.prescriptions %}
+  {% if ident.prescriptions_non_verifiables %}
+  {# EXPORTS-1 (6.5, Q12) : silence ≠ absence — sur ces communes, les prescriptions (emplacements
+     réservés, EBC…) ne sont PAS vérifiables en donnée ouverte, et le document le dit. #}
+  <p class="note"><b>Prescriptions non vérifiables sur cette commune</b> —
+     {{ ident.prescriptions_non_verifiables }}. Emplacements réservés, espaces boisés classés et
+     autres servitudes graphiques sont à vérifier au règlement papier (mairie).</p>
+  {% elif ident.prescriptions %}
   <h3>Prescriptions graphiques du PLU</h3>
   <ul class="liste">
     {% for pr in ident.prescriptions %}
@@ -185,7 +191,7 @@
     <div class="note-sdp">Scénario retenu : {{ c.faisa.logements_au_sol[0] }}{% if c.faisa.logements_au_sol[1] != c.faisa.logements_au_sol[0] %}–{{ c.faisa.logements_au_sol[1] }}{% endif %} logements, stationnement AU SOL (le stationnement plafonne la capacité).{% if c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
     {% endif %}
     {% if c.faisa.run and c.faisa.run.date %}
-    <div class="note-sdp">Valeurs au {{ c.faisa.run.date }} — run {{ c.faisa.run.label }}.</div>
+    <div class="note-sdp">Valeurs : analyse LABUSE arrêtée au {{ c.faisa.run.date }}.</div>
     {% endif %}
   </div>
   {% else %}
@@ -524,10 +530,10 @@
   {% endif %}
 
   {% if z.concurrence_absente %}
-  {# FZ-001 : le parcours Flash ne transmet pas l'activité (NAF) → pas de volet concurrence, jamais
+  {# FZ-001 : la commande Flash ne transmet pas l'activité (NAF) → pas de volet concurrence, jamais
      un défaut bricolé. L'outil « Étude de zone » fournit ce volet sur demande. #}
-  <p class="note">Analyse de la concurrence (par activité) non incluse : le parcours Flash ne précise
-     pas encore l'activité étudiée. L'outil « Étude de zone » la fournit sur demande.</p>
+  <p class="note">Analyse de la concurrence (par activité) non incluse : la commande ne précise
+     pas l'activité étudiée. L'outil « Étude de zone » la fournit sur demande.</p>
   {% endif %}
 
   {% if carte_zone %}
@@ -553,9 +559,15 @@
     </tr>
   </table>
 
+  {# EXPORTS-1 (6.1) : le pied cite les sources RÉELLEMENT lues par les blocs présents —
+     plus jamais une liste en dur (MOBPRO, écartée le 28/08, y figurait encore). #}
   <p class="note">* Revenu estimé — carreaux INSEE Filosofi 2021, valeurs lissées pour la
-     confidentialité. Temps de trajet « hors trafic ». Sources : INSEE (Filosofi, MOBPRO), SIRENE,
-     BPE 2025, DVF, IGN (isochrones), Radar LABUSE — détail en section Sources. Aucune prévision de
+     confidentialité. Temps de trajet « hors trafic ». Sources lues pour cette zone :
+     INSEE Filosofi{% if z.concurrents or not z.concurrence_absente %}, SIRENE{% endif %}{%
+     if z.equipements or z.plus_proches %}, BPE{% endif %}{%
+     if z.marche and z.marche.ventes_12m is not none %}, DVF{% endif %}, IGN (isochrones){%
+     if z.marche and z.marche.annonces_actives %}, pige LABUSE ({{ z.marche.annonces_reserve }}){% endif %}
+     — détail en section Sources. Aucune prévision de
      chiffre d'affaires ni note d'attractivité : des faits sourcés et datés.</p>
   {% endif %}
 </section>
@@ -570,7 +582,7 @@
     <tr><th>Section</th><th>Source</th><th>Millésime / synchronisation</th></tr>
     {% for s in data.sources %}
     <tr><td>{{ data.section_labels.get(s.section, s.section) }}</td>
-        <td>{{ s.source }}</td><td class="num-cell">{{ s.millesime }}</td></tr>
+        <td>{{ s.source }}</td><td class="num-cell">{{ s.millesime or "" }}</td></tr>
     {% endfor %}
   </table>
 

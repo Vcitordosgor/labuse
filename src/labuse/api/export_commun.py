@@ -115,6 +115,16 @@ _PROPRIO_NOM = [
 _PROXY_LAYERS = {"sar", "safer", "ocs_ge", "ens"}
 
 
+#: EXPORTS-1 lot 6 — marqueurs de CURATION interne des YAML calibrés (« (page corrigée) »,
+#: « (doctrine a) »…) : utiles au calibreur, jamais au client. Purgés AU SERVICE.
+_MARQUEURS_INTERNES = re.compile(r"\s*\((?:doctrine|page corrigée|deja_bati|reglt)[^)]*\)")
+
+
+def purger_marqueurs_internes(txt: str | None) -> str | None:
+    """Retire les marqueurs de curation interne d'une référence servie (règlement, sources)."""
+    return _MARQUEURS_INTERNES.sub("", txt) if txt else txt
+
+
 def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None:
     """Assainit UN détail de ligne cascade avant de le servir au client (fiche écran + pdf premium).
     Idempotent, sûr sur None. Anonymise la personne physique (couche ICPE), purge les codes
@@ -142,6 +152,7 @@ def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None
         "quota de logements aidés CONDITIONNEL — déclenché seulement si le programme franchit "
         "les seuils du règlement (voir le bilan ; pas d'effet sur la constructibilité)")
     d = re.sub(r"\bartificialise\b", "artificialisé", d)          # typo OCS (valeur code sans accent)
+    d = re.sub(r"\breglt\b", "réglementaire", d)   # EXPORTS-1 lot 6 — abréviation GPU brute (« zone reglt Forte »)
     d = re.sub(r"\s{2,}", " ", d)
     # M137-Z-fix — typographie FR : le point-virgule PREND un espace avant (contrairement à « . » et
     # « , »). L'ancienne classe [.,;] retirait cet espace (« 47 % ; » → « 47 %; »), fautif en français

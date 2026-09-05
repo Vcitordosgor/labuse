@@ -160,9 +160,10 @@ def _section(pdf: _Pdf, titre: str, lignes, source: str | None = None) -> None:
 
 
 def _millesime(m) -> str:
-    """M125 — fraîcheur HONNÊTE : le vrai millésime, sinon « millésime non renseigné ».
-    Jamais une date de run, jamais « non communiqué par la source »."""
-    return str(m) if m else "millésime non renseigné"
+    """M125/EXPORTS-1 (6.4) — fraîcheur HONNÊTE : le vrai millésime (éventuellement composé —
+    sentinelle ou date d'ingestion ÉTIQUETÉE) ; sans aucune date nulle part, cellule MASQUÉE
+    (chaîne vide), plus le pavé « millésime non renseigné »."""
+    return str(m) if m else ""
 
 
 def _titre_section(pdf: _Pdf, texte: str) -> None:
@@ -536,7 +537,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 3.6, "Sources : inventaire SRU DHUP (01/01/2024) · DEAL Réunion/ANCT (NPNRU) · "
-                         "INSEE RP 2023 — contexte informatif, hors scoring.", new_x="LMARGIN", new_y="NEXT")
+                         "INSEE RP 2023 — contexte informatif, sans effet sur le verdict.", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(2)
 
     # ── RTAA DOM (5bis) — rappel réglementaire de conception (vérifié Légifrance)
@@ -835,7 +836,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                           + (f" · {rp2['pct_qpv']} % en QPV" if rp2.get("pct_qpv") is not None else "")
                           + f" ({_millesime(rp2.get('millesime'))})")
         _section(pdf, "CONTEXTE SOCIO-ÉCONOMIQUE (secteur)", lignes,
-                 source="INSEE Filosofi · RPLS — contexte informatif, hors scoring.")
+                 source="INSEE Filosofi · RPLS — contexte informatif, sans effet sur le verdict.")
 
     dep = fiche.get("depots")
     if _is_indispo(dep):
@@ -871,7 +872,9 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         # M125-A — SEGMENT seul : le RANG (rang_segment/total_segment) est de l'ANALYSE → EXCLU (M124-A1).
         _section(pdf, "SEGMENT RENOUVELLEMENT URBAIN",
                  [ren.get("libelle"),
-                  (f"Bâti d'origine : {ren['code_bati_origine']}" if ren.get("code_bati_origine") else None),
+                  (f"Bâti d'origine : "
+                   f"{ {'deja_bati': 'déjà bâti', 'nu': 'terrain nu'}.get(ren['code_bati_origine'], ren['code_bati_origine']) }"
+                   if ren.get("code_bati_origine") else None),
                   (f"Zone PLU : {ren['zone_plu']}" if ren.get("zone_plu") else None),
                   (f"SDP résiduelle estimée : ~{ren['sdp_residuelle_m2']:,} m²".replace(",", " ") if ren.get("sdp_residuelle_m2") else None),
                   (f"Surface parcelle : {ren['surface_m2']:,} m²".replace(",", " ") if ren.get("surface_m2") else None)])
@@ -1027,7 +1030,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # Distincte de l'attribution générique du pied de page : ici, seulement ce qui a PRODUIT un constat.
     ds_list = fiche.get("data_sources") or []
     if ds_list:
-        lignes = [f"{d.get('nom', '')} — {_millesime(d.get('millesime'))}"
+        lignes = [f"{d.get('nom', '')}"
+                  + (f" — {_millesime(d.get('millesime'))}" if d.get("millesime") else "")
                   + (f" · fiabilité {d['fiabilite']}" if d.get("fiabilite") else "")
                   for d in ds_list]
         _section(pdf, "SOURCES UTILISÉES SUR CETTE FICHE", lignes)

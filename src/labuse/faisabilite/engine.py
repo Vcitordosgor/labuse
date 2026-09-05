@@ -12,7 +12,8 @@ On n'invente jamais d'emprise.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass, field, replace
 
 from .plu_rules import A_VERIFIER, EXEMPT, NON_MODELISABLE, ZoneRules
 
@@ -214,6 +215,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                     cause="habitat_interdit")
 
+    # EXPORTS-1 lot 6 — les références des YAML calibrés portent des marqueurs internes
+    # (« (doctrine a) »…) : purgés AU SERVICE, jamais dans les données de calibration.
+    _marqueurs_internes = re.compile(r"\s*\((?:doctrine|deja_bati|reglt)[^)]*\)")
+    rules = replace(rules, sources={k: _marqueurs_internes.sub("", v) if isinstance(v, str) else v
+                                    for k, v in (rules.sources or {}).items()})
+
     # reculs (avec hypothèse prudente si non calibrés) — EXPORTS-1 (3.4) : reculs NOMMÉS,
     # plus jamais le jargon interne « à_vérifier » dans un texte servi.
     if _is_num(rules.recul_voirie_m):
@@ -282,7 +289,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"emprise ≤ {surface_m2:.0f}×(1−{pt:g}%) = {cap_pt:.0f} m²",
                           f"~{emprise:.0f} m² retenu", rules.sources.get("pleine_terre", "Art. 13")))
     else:
-        avert.append(f"% pleine terre « à_vérifier » pour {rules.code} → non appliqué (Art. 13).")
+        avert.append(f"% pleine terre non calibré pour la zone {rules.code} → non appliqué (Art. 13).")
     emprise = max(0.0, emprise)
 
     # ---- Niveaux (hé prioritaire) ----
@@ -300,7 +307,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"hauteur d'égout non précisée → (hauteur faîtage {rules.hf_m:g}−{hyp.etage_m:g}) ÷ {hyp.etage_m:g} = {niveaux}",
                           f"R+{max(0, niveaux - 1)}", he_src))
     else:
-        return fini(False, "Hauteur non disponible (à_vérifier) — capacité non calculable.",
+        return fini(False, "Hauteur de zone non calibrée — capacité non calculable.",
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
                     cause="hauteur_indispo")
     hypotheses.append(f"Hauteur d'étage supposée {hyp.etage_m:g} m ; niveaux comptés sur hé (égout), pas hf.")
@@ -403,7 +410,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     else:
         regime = "non_applique"
         if ppl == A_VERIFIER:
-            avert.append(f"Stationnement « à_vérifier » pour {rules.code} → garde-fou non appliqué (Art. 12).")
+            avert.append(f"Stationnement non calibré pour la zone {rules.code} → garde-fou non appliqué (Art. 12).")
         elif ppl == NON_MODELISABLE:
             # M94 — norme PRÉSENTE mais pas par logement (par m² SDP / chambre / %SHON) : on le DIT,
             # jamais un défaut déguisé en local. Distinct de « absente » ci-dessous.

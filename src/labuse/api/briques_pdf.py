@@ -728,7 +728,7 @@ def risques(out: dict) -> str:
                  f"<tr><td>2011–2021</td><td class='n'>{esc(_ha1)}</td></tr>"
                  f"<tr><td>2021–2024</td><td class='n'>{esc(_ha2)}</td></tr></table>"
                  f"<p class='note'>Source {esc(zan.get('source_nom'))} ({esc(zan.get('millesime'))}) · "
-                 f"objectif loi Climat/TRACE = −50 % de consommation d'ENAF. Voir la fiche commune pour budget/reste.</p>")
+                 f"objectif loi Climat/TRACE = −50 % de consommation d'ENAF. Détail budget/reste par commune dans LABUSE.</p>")
     return body
 
 
