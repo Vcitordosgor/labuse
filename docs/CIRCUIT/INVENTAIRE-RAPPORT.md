@@ -7,7 +7,22 @@
 | base utilisée | locale, `postgresql:///labuse` (user openclaw), 242 tables | `psql -l` ; `SELECT count(*) FROM information_schema.tables WHERE table_schema='public'` → 242 |
 | date | 05/09/2026 | — |
 
-Le tableau final des compteurs (Lot 8) est produit par `scripts/inventaire/compte_rapport.py` à partir des CSV livrés.
+## Le tableau des compteurs (sortie de `scripts/inventaire/compte_rapport.py`, jamais tapé à la main)
+
+| compteur | valeur |
+|---|---|
+| réservoirs : total / job sur clic / cron mensuel / dépôt manuel / en direct / absents | 79 / 3 / 4 / 5 / 4 / 11 (one_shot 52 ; « dérivés » requalifiés en pompes, Q1.2) |
+| réservoirs surveillés / non / sans cadence / avec URL producteur | 45 / 34 / 71 / 75 |
+| moteurs / versionnés par run / live | 21 / 7 / 14 |
+| runs en base / servi / morts / tables de run en retard encore lues | 8 (p_score_v2_runs) / 1 (q_v11_m137) / 6 (q_v8×5 + q_v10) + 1 candidat (q_v12) / 2 (division_or_candidates q_v10 ; dvf_prix_sortie_neuf lu par score_e) |
+| jobs / qui touchent l'eau / avec trace en base cohérente | 32 (19 wrapper + 13 legacy) / 20 / 21 |
+| robinets : total, par catégorie | 122 — admin 9 · copilote 10 · couche 16 · crm 2 · fiche 28 · fond 10 · notification 5 · outil 28 · page_client 5 · pdf 6 · projets 2 · veille 1 |
+| chiffres : lignes / ids distincts / moteur / sql_propre / front / passe_plat / constante / avec tampon | 139 / 88 / 64 / 54 / 2 / 16 / 3 / 58 |
+| fuites candidates / mesurées / avec écart ≠ 0 | 33 / 49 / 46 |
+| chiffres en eau ancienne aujourd'hui | 6 familles |
+| lignes DOUTE (tous CSV) | 81 |
+
+Détail DOUTE par fichier : reservoirs 19 · moteurs 1 · jobs 32 · robinets 2 · chiffres 1 · eau_ancienne 1 · agents_fiches 25.
 
 ---
 
@@ -354,3 +369,52 @@ Livrable : `docs/CIRCUIT/inventaire/agents_fiches.csv` (**34 réservoirs non sur
 - Compteurs : 34 fiches agents (24 js=DOUTE), produits par le script.
 - `DOUTE` : 24 `page_rendue_en_js` (interdiction d'appel réseau) + formats de millésime inconnus au code.
 - A bloqué : rien — la question « JS ou pas » exige un passage réseau, reporté aux agents eux-mêmes.
+
+---
+
+## Lot 8 — Synthèse
+
+### Les 10 constats qui pèsent le plus (impact client)
+
+1. **La fuite de dénominateur du zonage** : la fiche commune sert des parts de SURFACE (`app.py:1908-1955`, l'intention documentée), un second chemin sert des comptes de PARCELLES (`app.py:2436`). Saint-Paul : A 35,8 % vs 17,8 %, N 47,2 % vs 6,8 % — un client qui voit les deux ne peut pas les réconcilier. Mesuré sur les 24 communes.
+2. **« 77 sources dont 49 sous veille » est un chiffre faux à l'écran Circuit** : `flux.py:198` compte le brut (77) là où la vitrine canonique en sert 66 ; les 49 mélangent sondes et lignes brutes (45 vraies sondes, 41 sur les affichées). Trois écrans, trois nombres.
+3. **score_e mange de l'eau ancienne** : il lit le précalcul `dvf_prix_sortie_neuf`, mesuré divergent du moteur live (4 730 vs 5 003 €/m² à Saint-Paul) que RETOURS-11F M1 a corrigé partout AILLEURS. La marge promoteur servie est calée sur un neuf faux.
+4. **La trace DPE ment par omission** : le cron saute les communes peuplées ET tamponne `last_sync_at` (`dpe.py:243`) — healthz peut dire « ok » sans donnée neuve ; l'amont a 6 semaines d'avance sur la base locale.
+5. **Deux jeux de crons coexistent dans le dépôt** (19 wrapper/16 posés vs 13 lignes legacy `deploy/cron.d/*`) avec des cadences contradictoires (bodacc quotidien legacy vs absent du wrapper ; dpe hebdo legacy vs mensuel wrapper) — et healthz attend les cadences LEGACY. Ce qui tourne réellement sur le VPS : indécidable en local.
+6. **La divisibilité est servie sur un run mort** : `division_or_candidates` = q_v10_m129, lu sans filtre de run par la fiche (`app.py:2696`), 2 runs derrière le servi (toléré comme workflow — mais rien ne l'affiche au client).
+7. **« Zéro recalcul au front » n'est pas tenu hors outils** : 9 calculs métier au navigateur (charge foncière bornée, % propriétaires, % autres logés, kWc/MWh solaire, % ZAN…) — des nombres que le serveur ne produit nulle part.
+8. **Le run résiduel vit sur un pointeur SÉPARÉ** (`residuel_runs.is_served`, nomenclature propre m135-run2-ile) : la « constante unique » ne gouverne pas tout ; une bascule scoring ne bascule pas le résiduel.
+9. **L'injection n'est branchée que pour 5 sources sur 79** (`config/sources_ingestion.yaml`) : partout ailleurs, « Injecter cette version » n'existe pas — le geste du circuit est incomplet par construction.
+10. **La base locale devance main** : les sources 93-95 (EDF HTA, TCSP, Réunion Express) existent en base mais leur code est sur `fix/retours-12` non mergée — l'inventaire du code et celui de la base ne coïncident pas tant que le merge n'est pas fait.
+
+### Les fuites mesurées
+
+`inventaire/fuites_mesurees.csv` — 49 lignes, 46 avec écart ≠ 0 : parts de zonage A et N × 24 communes (cause `denominateur`, chemin fidèle = surface), `n_sources` 66 vs 77 (cause `perimetre`, chemin fidèle = WHERE_AFFICHEES), `prix_neuf_vefa` 5 003 vs 4 730 €/m² (cause `table`, chemin fidèle = moteur live ; le précalc n'est plus lu que par score_e).
+
+### La liste des DOUTE (81) et ce qui permettrait de trancher
+
+- **jobs.csv (32)** : 19 « dernier_statut » wrapper (l'état JSON n'existe que sur le VPS) + 13 poses legacy → un `ls /etc/cron.d/ && cat /opt/labuse/state/jobs/*.json` sur le VPS tranche tout.
+- **agents_fiches.csv (25)** : 24 « page_rendue_en_js » + formats de millésime → un passage réseau par les agents eux-mêmes (interdit ici).
+- **reservoirs.csv (19)** : tables/jobs de couches sans CLI dédiée (RGE ALTI, RPG, DEAL WMS, INPN, SPANC, SRU, parkings, Filosofi, LiDAR) + licences « à confirmer » → 1 h de lecture ciblée de `layers_ingest.py`/scripts, et l'audit licences M6 §1.11 à terminer.
+- **Divers (5)** : entrées de `loyers.py` ; composants front Solaire/fiche soleil ; ampleur PROD de l'eau ancienne DPE ; garde anti-invention de `copilote-general` ; écran exact du « 18 %/6 % » de Vic.
+
+### Questions pour Vic
+
+1. Sur quels écrans précis as-tu lu « 18 % » et « 6 % » pour Saint-Paul ? (Les deux chemins existent et sont mesurés ; il reste à épingler l'écran de chaque valeur.)
+2. Quel jeu de crons est posé sur le VPS aujourd'hui — wrapper, legacy, ou les deux ? (Un `ls /etc/cron.d/` suffit.)
+3. La part de zonage doit-elle être servie en surface partout (l'intention du code) — et le chemin « comptes de parcelles » réservé aux filtres ?
+4. score_e doit-il basculer sur le moteur neuf live (comme comparateur/fiche/carte) au prochain run ?
+5. Le pointeur résiduel séparé est-il un choix durable ou doit-il rejoindre la constante unique à CIRCUIT-1 ?
+6. Faut-il étendre `config/sources_ingestion.yaml` au-delà des 5 sources branchées, et à quelles sources en premier ?
+
+### Taille du registre à écrire (estimation honnête)
+
+- **Chiffres à déclarer** : 88 ids recensés couvrant 55 robinets ; les 67 robinets restants (sous-entrées d'outils, couches, admin) portent une longue traîne estimée à **150-250 chiffres supplémentaires** → un registre complet ≈ **250-350 chiffres**.
+- **Robinets à rebrancher** (servir le moteur au lieu d'un chemin propre) : 2 chemins de zonage à unifier, 1 écran Flux (n_sources), score_e (neuf précalc), 9 calculs métier front à rapatrier côté serveur, 2 lecteurs de division_or à scoper au run → **~15 rebranchements**, plus l'équipement d'étiquette de provenance (~300-350 sites de formatage, factorisables via `lib/format.ts` + un helper serveur).
+
+### Clôture
+
+- **Commits** : mandat `d04b4960` · lot 1 `ef1709ea` · lot 2 `40ebdf6b` · lot 3 `19e92a72` · lot 4 `c037cc8f` · lot 5 `b0dd001d` · lot 6 `7367c6ac` · lot 7 `6b7a95e3` · lot 8 = commit courant (final).
+- **Lignes DOUTE** : 81 (détail en tête de rapport).
+- **Temps passé par lot** (horodatage des commits, exploration parallélisée par agents) : L1 ~14 min · L2 ~3 · L3 ~3 · L4 ~6 · L5 ~10 · L6 ~1 · L7 ~2 · L8 ~6.
+- **Ce qui n'a pas pu être fait, et pourquoi** : durées de « Calculer » (interdit de lancer un job) ; état JSON des jobs et crontab réellement posés (VPS seulement) ; `page_rendue_en_js` des amonts (aucun appel HTTP producteur) ; mesure des fuites candidates convergeant vers une même fonction (pas de deuxième chemin à exécuter) ; ampleur PROD de l'eau ancienne DPE (base locale n=17) ; exhaustivité des chiffres de la longue traîne (139 couples livrés, reste estimé ci-dessus).
