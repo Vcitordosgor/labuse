@@ -4210,18 +4210,28 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
     pct_potentiel) et enrichi du signal SURÉLÉVATION (parcel_residuel_bati), qui n'est PAS
     couvert par le seul ratio SDP — cf. SYNTHESE-M9 (avant/après). None si aucune donnée
     résiduelle (repli propre : parcelle non bâtie / hors périmètre calcul)."""
+    # EXPORTS-1 lot 3 (3.1/3.2) : la lecture de `parcel_residuel_bati` (table ORPHELINE, surélévation
+    # au FAÎTAGE — le « ~6,6 m » de l'audit A3) est SUPPRIMÉE. La surélévation vient du moteur commun
+    # (faisabilite/potentiel.surelevation — hauteur à l'ÉGOUT, repli faîtage dit) ; la SDP servie
+    # passe par la garde de lecture ZONE-1 (dominante A/N → 0, cause dite).
     try:
         row = db.execute(text(
-            """SELECT r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite, r.capacite_estimee,
-                      rb.surelevation_possible, rb.hauteur_bati_m, rb.hauteur_max_m, rb.confiance
+            """SELECT p.id AS pid, r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite,
+                      r.capacite_estimee, zp.zone_fam, zp.zone_lib
                  FROM parcels p
                  LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
-                 LEFT JOIN parcel_residuel_bati rb ON rb.idu = p.idu
+                 LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
+        from ..faisabilite.potentiel import surelevation as _surelevation
+        sur = _surelevation(db, row["pid"]) if row else None
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
         return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
-    if not row or (row["pct_potentiel"] is None and row["surelevation_possible"] is None):
+    if not row or (row["pct_potentiel"] is None and (sur or {}).get("possible") is None):
         return None
+    from ..faisabilite.zone_servie import garde_sdp_residuelle
+    sdp_servie, _cause_zone = garde_sdp_residuelle(
+        float(row["sdp_residuelle_m2"]) if row["sdp_residuelle_m2"] is not None else None,
+        row["zone_fam"], row["zone_lib"])
     pct = row["pct_potentiel"]
     if pct is None:
         niveau, libelle = "indetermine", "Marge SDP non calculée"
@@ -4233,23 +4243,23 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         niveau, libelle = "faible", "Potentiel faible — parcelle proche de sa densité autorisée"
     else:
         niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
-    hauteur_marge = (round(row["hauteur_max_m"] - row["hauteur_bati_m"], 1)
-                     if row["hauteur_max_m"] is not None and row["hauteur_bati_m"] is not None
-                     else None)
+    sur = sur or {}
     return {
         "niveau": niveau, "libelle": libelle,
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
         "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
-        "sdp_residuelle_m2": row["sdp_residuelle_m2"],
+        "sdp_residuelle_m2": sdp_servie,
+        "cause": _cause_zone,                                 # ZONE-1 : dominante A/N → 0, cause dite
         "sous_densite": row["sous_densite"],
         "capacite_estimee": row["capacite_estimee"],
-        # Signal surélévation : NON couvert par le seul ratio SDP → conservé de l'outil Mutabilité.
-        "surelevation_possible": row["surelevation_possible"],
-        "hauteur_bati_m": row["hauteur_bati_m"], "hauteur_max_m": row["hauteur_max_m"],
-        "hauteur_marge_m": hauteur_marge,
-        "confiance": row["confiance"],
-        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + potentiel bâti "
-                  "résiduel (BD TOPO × règles PLU calibrées)",
+        # EXPORTS-1 (3.2) : surélévation au MOTEUR COMMUN — hauteur à l'ÉGOUT, base dite
+        # (repli faîtage seulement si l'égout n'est pas calibré, avec avertissement).
+        "surelevation_possible": sur.get("possible"),
+        "hauteur_bati_m": sur.get("hauteur_bati_m"), "hauteur_regle_m": sur.get("hauteur_regle_m"),
+        "hauteur_base": sur.get("base"), "hauteur_marge_m": sur.get("marge_m"),
+        "avertissement_surelevation": sur.get("avertissement"),
+        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
+                  "commun (règles PLU calibrées × bâti BD TOPO, hauteur à l'égout)",
         "note": "Remplace l'ancien mode carte « Mutabilité » : même donnée résiduelle, "
                 "à la parcelle, complétée du signal surélévation.",
     }

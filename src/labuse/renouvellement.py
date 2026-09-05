@@ -211,12 +211,13 @@ seg AS (
              * CASE WHEN rav.idu IS NOT NULL THEN :f_ravine ELSE 1.0 END
              * CASE WHEN mvt.idu IS NOT NULL THEN :f_mvt   ELSE 1.0 END
            )) AS frac_net,
-           -- surélévation possible (hauteur PLU − hauteur bâti BD TOPO, parcel_residuel_bati déjà calculé) :
-           coalesce(rb.surelevation_possible, false) AS surelevable,
-           CASE WHEN rb.surelevation_possible
-                     AND rb.hauteur_max_m IS NOT NULL AND rb.hauteur_bati_m IS NOT NULL
-                THEN greatest(0, floor((rb.hauteur_max_m - rb.hauteur_bati_m) / 3.0))::int
-           END AS niveaux_sur
+           -- EXPORTS-1 lot 3 (3.1) : la lecture de parcel_residuel_bati (table ORPHELINE — bâtisseur
+           -- retiré du code actif, surélévation au FAÎTAGE) est SUPPRIMÉE. Le signal vivant est au
+           -- moteur commun (faisabilite/potentiel.surelevation, hauteur à l'ÉGOUT) — ce batch sera
+           -- rebranché dessus à sa prochaine reconstruction ; d'ici là, pas de signal plutôt qu'un
+           -- signal faux.
+           false AS surelevable,
+           NULL::int AS niveaux_sur
     FROM bati_x b
     JOIN p_model_ext_dataset d ON d.idu = b.idu AND d.annee = :annee
     LEFT JOIN p_model_ext_copro c ON c.idu = b.idu
@@ -224,7 +225,6 @@ seg AS (
     LEFT JOIN ravine_x rav ON rav.idu = b.idu
     LEFT JOIN mvt_x    mvt ON mvt.idu = b.idu
     LEFT JOIN parcel_terrain      t  ON t.idu  = b.idu
-    LEFT JOIN parcel_residuel_bati rb ON rb.idu = b.idu
     WHERE d.zone_plu IN ('U', 'AU')
       AND (d.sdp_residuelle_m2 > :sdp_min OR d.surface_m2 >= :surf_min)
       AND NOT coalesce(c.copro_rnic OR c.copro_dvf, false)

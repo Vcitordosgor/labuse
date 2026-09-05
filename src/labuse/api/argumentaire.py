@@ -268,8 +268,10 @@ def _synthese(out: dict, marque: dict | None = None) -> str:
     # donnée du run résiduel servi), pas seulement sa date d'édition (portée par la garde). Indéfendable
     # sinon, opposé à un vendeur trois semaines plus tard. Période DVF + millésimes PLU restent (part. 7).
     vr = out.get("valeurs_run") or {}
-    dates_note = (f"<p class='note'>Valeurs (surface constructible, résiduel) au {esc(vr['date'])} "
-                  f"— run {esc(vr['label'])}. Marché DVF et millésimes PLU : voir partie 7.</p>"
+    # EXPORTS-1 lot 3 — doctrine Z12 : le label interne de run (« m135-run2-île ») ne sort JAMAIS
+    # dans un document client ; seule la DATE d'arrêt des valeurs est dite.
+    dates_note = (f"<p class='note'>Valeurs (surface constructible, résiduel) : analyse LABUSE "
+                  f"arrêtée au {esc(vr['date'])}. Marché DVF et millésimes PLU : voir partie 7.</p>"
                   if vr.get("date") else "")
     return (f"<section class='garde'>"
             f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE, marque=marque)}"

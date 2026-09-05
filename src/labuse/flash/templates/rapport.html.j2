@@ -138,28 +138,26 @@
 {% if c %}
 <section>
   <h2><span class="num">02</span>Constructibilité</h2>
-  {% if c.bati and c.bati.emprise_batie_m2 %}
-  <h3>Parcelle bâtie — potentiel indicatif</h3>
+  {# EXPORTS-1 lot 3 (3.1/3.5) : l'ancien bloc « potentiel indicatif » lisait la table orpheline
+     parcel_residuel_bati (bâtisseur retiré, données figées — les « 127 m² » de l'audit A3).
+     Remplacé par LE bloc Potentiel unique (faisabilite/potentiel.bloc_potentiel — moteur commun). #}
+  {% if c.potentiel %}
+  <h3>Potentiel constructible</h3>
   <table class="donnees">
-    <tr><th>Indicateur</th><th>Valeur</th></tr>
-    <tr><td>Emprise bâtie constatée (BD TOPO)</td>
-        <td class="num-cell">{{ c.bati.emprise_batie_m2 }} m²</td></tr>
-    {% if c.bati.hauteur_bati_m %}
-    <tr><td>Hauteur du bâti existant</td>
-        <td class="num-cell">{{ "%.1f"|format(c.bati.hauteur_bati_m) }} m</td></tr>
-    {% endif %}
-    {% if c.bati.emprise_residuelle_m2 is not none %}
-    <tr><td>Emprise résiduelle constructible (potentiel indicatif)</td>
-        <td class="num-cell">{{ c.bati.emprise_residuelle_m2 }} m²</td></tr>
-    {% endif %}
-    {% if c.bati.surelevation_possible is not none %}
-    <tr><td>Surélévation (hauteur max − hauteur bâtie ≥ 2,8 m)</td>
-        <td>{% if c.bati.surelevation_possible %}<span class="chip">envisageable — potentiel indicatif</span>
-            {% else %}<span class="chip neutre">non identifiée</span>{% endif %}</td></tr>
-    {% endif %}
+    <tr><th>Scénario</th><th>Valeur</th></tr>
+    <tr><td>Au sol (SDP résiduelle du run servi)</td>
+        <td class="num-cell">{% if c.potentiel.au_sol.sdp_residuelle_m2 is not none
+          %}{{ c.potentiel.au_sol.sdp_residuelle_m2|round|int }} m²{% else %}non calculée{% endif %}</td></tr>
+    <tr><td>En hauteur (surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }})</td>
+        <td>{% if c.potentiel.en_hauteur.possible %}<span class="chip">envisageable —
+            marge ~{{ c.potentiel.en_hauteur.marge_m }} m</span>
+            {% elif c.potentiel.en_hauteur.possible is false %}<span class="chip neutre">non identifiée</span>
+            {% else %}<span class="chip neutre">non évaluable</span>{% endif %}</td></tr>
+    <tr><td>Table rase ({{ c.potentiel.table_rase.mention }})</td>
+        <td class="num-cell">{% if c.potentiel.table_rase.vendable_m2
+          %}~{{ c.potentiel.table_rase.vendable_m2|round|int }} m² vendables{% else %}non constructible{% endif %}</td></tr>
   </table>
-  <p class="note">Potentiel indicatif estimé : emprise maximale du zonage − emprise bâtie.
-     Ce n'est pas une étude de faisabilité réglementaire.</p>
+  <p class="note">{{ c.potentiel.verdict }}</p>
   {% endif %}
 
   {% if data.rnu %}

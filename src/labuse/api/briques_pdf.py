@@ -481,7 +481,10 @@ def faisabilite(out: dict) -> str:
             parts.append(f"surface vendable ~{fo['shab_vendable_m2']} m²")
         if fo.get("logements_au_sol"):
             lo, hi = fo["logements_au_sol"]
-            parts.append(f"~{lo} logements" if lo == hi else f"{lo} à {hi} logements")
+            # EXPORTS-1 (3.3) : LA fourchette servie, avec sa mention — l'étape intermédiaire
+            # « avant plafond » n'est plus imprimée comme fourchette.
+            parts.append((f"~{lo} logements" if lo == hi else f"{lo} à {hi} logements")
+                         + " (après plafond de densité et stationnement)")
         if fo.get("hauteur_m"):
             # M54-AB C6 : hauteur d'égout RETENUE (R+2), distincte de la hauteur totale de zone
             # (plafond PLU) citée en Identité — chaque valeur étiquetée par ce qu'elle mesure.

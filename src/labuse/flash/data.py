@@ -160,16 +160,19 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
             _zdet = _zdet.replace("urbaine / à urbaniser", _famz)
         out["zonage_verdict"] = {"result": zline["result"], "detail": _zdet}
     if "spatial_layers" in avail:
-        zones = db.execute(text(
-            """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
-               SELECT sl.subtype AS classe, sl.attrs->>'libelle' AS libelle,
-                      sl.attrs->>'idurba' AS idurba,
-                      round((100 * ST_Area(ST_Intersection(sl.geom_2975, p.geom_2975))
-                             / NULLIF(ST_Area(p.geom_2975), 0))::numeric) AS pct
-               FROM spatial_layers sl, p
-               WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, p.geom_2975)
-               ORDER BY pct DESC"""), {"idu": idu}).mappings().all()
-        out["zones"] = [dict(z) for z in zones if z["pct"] and z["pct"] >= 1]
+        # EXPORTS-1 lot 3 (3.6) : le bloc zones lit LA résolution unique (zone_servie.zone_dominante,
+        # la même que l'écran et la faisabilité — ZONE-1) au lieu de recalculer ses propres parts.
+        try:
+            from ..faisabilite.zone_servie import zone_dominante
+            _pid_z = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            _zs = zone_dominante(db, _pid_z) if _pid_z else None
+            out["zones"] = ([{"classe": p["fam"], "libelle": p["zone"], "idurba": None,
+                              "pct": round(p["pct"])} for p in _zs.parts]
+                            if _zs and _zs.parts else [])
+            if _zs and _zs.a_cheval:
+                out["zones_a_cheval"] = True
+        except Exception:  # noqa: BLE001 — zone indisponible → bloc omis
+            out["zones"] = []
         presc = db.execute(text(
             """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
                SELECT DISTINCT sl.attrs->>'libelle' AS libelle, sl.attrs->>'txt' AS code
@@ -178,31 +181,27 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
                  AND ST_Intersects(sl.geom_2975, p.geom_2975)"""),
             {"idu": idu}).mappings().all()
         out["prescriptions"] = [dict(r) for r in presc if r["libelle"]]
-    if "parcel_residuel_bati" in avail:
-        r = db.execute(text(
-            "SELECT zone, emprise_max_m2, hauteur_max_m, confiance FROM parcel_residuel_bati "
-            "WHERE idu = :idu"), {"idu": idu}).mappings().first()
-        if r and (r["emprise_max_m2"] is not None or r["hauteur_max_m"] is not None):
-            out["regles"] = {"zone": r["zone"], "emprise_max_m2": _i(r["emprise_max_m2"])}
-            # M129-2 A : la HAUTEUR de zone vient du PLU CALIBRÉ (resolve_zone) — SOURCE UNIQUE, la
-            # même que le dossier banquier (M128-3), la lettre de zonage et le pack PC. On cesse de
-            # servir le `hauteur_max_m` GÉNÉRIQUE de parcel_residuel_bati (9 m sur 207 k parcelles,
-            # faux sur les communes calibrées). Égout et faîtage NOMMÉS distinctement (A.3).
-            _zc = next((z.get("libelle") or z.get("classe")
-                        for z in (out.get("zones") or []) if z.get("libelle") or z.get("classe")), None)
-            _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
-            try:
-                from ..faisabilite.plu_rules import resolve_zone
-                _zr = resolve_zone(_zc, _cm) if _zc else None
-            except Exception:  # noqa: BLE001
-                _zr = None
-            if _zr is not None:
-                _he, _hf = getattr(_zr, "he_m", None), getattr(_zr, "hf_m", None)
-                if isinstance(_he, (int, float)):
-                    out["regles"]["hauteur_egout_m"] = float(_he)
-                if isinstance(_hf, (int, float)):
-                    out["regles"]["hauteur_faitage_m"] = float(_hf)
-                out["regles"]["hauteur_source"] = (getattr(_zr, "sources", None) or {}).get("hauteur")
+    # EXPORTS-1 lot 3 (3.1) : plus AUCUNE lecture de `parcel_residuel_bati` (table orpheline —
+    # son `emprise_max_m2` fabriquait les « 127 m² » de l'audit A3). Les hauteurs de zone restent
+    # servies depuis le PLU CALIBRÉ (resolve_zone, M129-2 A — même source que banquier/lettre/PC),
+    # la zone venant de LA résolution unique (out["zones"], zone_dominante).
+    _zc = next((z.get("libelle") or z.get("classe")
+                for z in (out.get("zones") or []) if z.get("libelle") or z.get("classe")), None)
+    if _zc:
+        _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        try:
+            from ..faisabilite.plu_rules import resolve_zone
+            _zr = resolve_zone(_zc, _cm) if _zc else None
+        except Exception:  # noqa: BLE001
+            _zr = None
+        if _zr is not None:
+            out["regles"] = {"zone": _zc}
+            _he, _hf = getattr(_zr, "he_m", None), getattr(_zr, "hf_m", None)
+            if isinstance(_he, (int, float)):
+                out["regles"]["hauteur_egout_m"] = float(_he)
+            if isinstance(_hf, (int, float)):
+                out["regles"]["hauteur_faitage_m"] = float(_hf)
+            out["regles"]["hauteur_source"] = (getattr(_zr, "sources", None) or {}).get("hauteur")
     return out
 
 
@@ -214,6 +213,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
     # l'argumentaire : `shab_vendable` au sol, plancher = vendable ÷ rendement (0,80, valeur testée de la
     # chaîne commune, AUCUNE constante propre à Flash). Deux dates via `_residuel_run_servi` (flag servi).
     pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    fa = None
     if pid:
         try:
             from ..api.projets import _residuel_run_servi
@@ -234,19 +234,18 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 }
         except Exception as exc:  # noqa: BLE001 — faisabilité indisponible → section sans héros de surface, jamais d'erreur
             log.warning("faisabilité commune %s : %s", idu, exc)
-    if "parcel_residuel_bati" in avail:
-        r = db.execute(text(
-            "SELECT emprise_batie_m2, hauteur_bati_m, emprise_max_m2, emprise_residuelle_m2, "
-            "       hauteur_max_m, surelevation_possible, confiance "
-            "FROM parcel_residuel_bati WHERE idu = :idu"), {"idu": idu}).mappings().first()
-        if r:
-            out["bati"] = {"emprise_batie_m2": _i(r["emprise_batie_m2"]),
-                           "hauteur_bati_m": _f(r["hauteur_bati_m"]),
-                           "emprise_max_m2": _i(r["emprise_max_m2"]),
-                           "emprise_residuelle_m2": _i(r["emprise_residuelle_m2"]),
-                           "hauteur_max_m": _f(r["hauteur_max_m"]),
-                           "surelevation_possible": r["surelevation_possible"],
-                           "confiance": r["confiance"]}
+    # EXPORTS-1 lot 3 (3.1, arbitrage Q4) : la lecture de `parcel_residuel_bati` est SUPPRIMÉE —
+    # table ORPHELINE (bâtisseur retiré du code actif le 24/07, spin-off Vues, données figées
+    # 10-11/07) qui servait les « 127 m² » et la surélévation au FAÎTAGE (audit A3). Le potentiel
+    # vient du bloc unique (moteur commun, 3.5) posé ci-dessous.
+    if pid:
+        try:
+            from ..faisabilite.potentiel import bloc_potentiel
+            _pot = bloc_potentiel(db, pid, fa)
+            if _pot:
+                out["potentiel"] = _pot
+        except Exception as exc:  # noqa: BLE001 — potentiel indisponible → section omise
+            log.warning("bloc potentiel %s : %s", idu, exc)
     # M145 — la lecture du résiduel BRUT plein gabarit (`parcel_residuel.sdp_residuelle_m2`) est
     # SUPPRIMÉE : elle pilotait le héros parallèle (9 844 m² + coefficient ~15 % local). Le potentiel
     # constructible vient désormais du moteur commun (`out["faisa"]`, en tête de fonction).

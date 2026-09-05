@@ -122,6 +122,26 @@ def verifier_temoin(idu: str, d: Path, fiche: dict) -> None:
         if re.search(r"Médiane €/m² observée,", t):
             ko(f"{idu}/{doc} : médiane locale annoncée sans sa valeur (1.5)")
 
+    # ── lot 3 : potentiel — la table orpheline ne fuit plus, écran = Dossier ──
+    if idu == "97415000BO0852":
+        for doc, t in txts.items():
+            if re.search(r"\b127(\.\d)?\s*m²", t):
+                ko(f"{idu}/{doc} : « 127 m² » (table orpheline parcel_residuel_bati) encore servi")
+    pt = fiche.get("potentiel_transformation") or {}
+    sdp_ecran = pt.get("sdp_residuelle_m2")
+    m3 = re.search(r"Au sol \(SDP résiduelle du run servi\)\s+(\d[\d ]*) m²", txts.get("dossier", ""))
+    if sdp_ecran is not None and m3:
+        if abs(_num(m3.group(1)) - round(float(sdp_ecran))) > 1:
+            ko(f"{idu} : SDP résiduelle écran {sdp_ecran} ≠ Dossier {m3.group(1)}")
+        else:
+            ok(f"SDP résiduelle écran = Dossier ({m3.group(1)} m²)")
+    if idu == "97416000DY0106":
+        if sdp_ecran not in (0, 0.0, None):
+            ko(f"{idu} : SDP écran devrait être 0 par garde (zone N), servie {sdp_ecran}")
+        if "zone_non_constructible" not in json.dumps(fiche, ensure_ascii=False) and \
+           "zone_non_constructible" not in txts.get("dossier", ""):
+            ko(f"{idu} : cause zone_non_constructible absente (T3)")
+
     # ── lot 2 : plus jamais un « appartement » à surface d'immeuble dans un tableau ──
     for doc, t in txts.items():
         for line in t.splitlines():
