@@ -192,3 +192,41 @@ Preuves dans le code de main : `sentinelle.py:496-498` (« second passage 2026-0
 - Compteurs : 32 lignes jobs (19+13), 20 touchent l'eau, 3 traces incohérentes/partielles ; source_veille 49 lignes.
 - Lignes `DOUTE` : 15 (les 19 `dernier_statut` wrapper sont un seul et même DOUTE local — état JSON absent ; 13 poses VPS legacy indécidables ; 1 table de trace abuse-scan ; ventilation fine 35→49).
 - A bloqué : l'état JSON du wrapper et le crontab réellement posé ne sont lisibles que sur le VPS — hors périmètre local, aucune connexion tentée (lecture seule).
+
+---
+
+## Lot 4 — Les robinets
+
+Livrable : `docs/CIRCUIT/inventaire/robinets.csv` (**122 robinets**), généré par `scripts/inventaire/extrait_robinets.py`. La colonne `nb_chiffres` est recalculée depuis `chiffres.csv` au Lot 5 (0 à ce stade — le script est relancé après).
+
+### Compteurs par catégorie (sortie du script)
+
+| catégorie | n | | catégorie | n |
+|---|---|---|---|---|
+| fond | 10 | | veille | 1 |
+| couche | 16 | | projets | 2 |
+| outil | 28 | | crm | 2 |
+| fiche | 28 | | notification | 5 |
+| copilote | 10 | | pdf | 6 |
+| page_client | 5 | | admin | 9 |
+| **total** | | | | **122** |
+
+### Écarts au périmètre attendu du mandat (constatés, avec preuve)
+
+- **« Les 5 fonds de carte »** : il y en a **10** — 8 fonds raster IGN (Plan IGN v2 + « Actuelle · Ortho Express 2025 » + 6 millésimes historiques 1950→2023, registre unique `frontend/src/components/map/basemaps.ts:33-45`) et 2 modes canvas (Sombre/Clair, `MapView.tsx:28-29`).
+- **« Le Copilote : ses 6 outils SQL »** : le registre v2 en compte **10** (`src/labuse/copilote_v2/outils.py` : compter_parcelles:130, parcelles_par_entreprise:279, fiche_parcelle:333, stats_commune:350, delais_instruction:370, marche:395, recherche_web:474, compter_piscines:529, compter_permis:550, destination_zone:573).
+- **Fiche commune : 15 cartes** — confirmé exactement (libellés `ContextePanel.tsx:327-569`, endpoint `/communes/{c}/contexte`, producteur `api/fiche_commune.py:build`).
+- Deux robinets restent `DOUTE` sur leur composant front exact : la section Solaire de la fiche parcelle et la « fiche soleil » (photo du toit + rosace, RETOURS-12 O7) — le back (`parcel_solar`, `toiture_lidar`) est identifié, le fichier front pas encore pointé ligne à ligne.
+
+### Ce que le tour des robinets confirme sur la plomberie
+
+- Le producteur dominant des fiches parcelle est **un point unique** : `_q_v2_fiche()` (`src/labuse/api/app.py:3283`), servi par `/parcels/{idu}` (`app.py:4250`) — 8 des 10 sections de la fiche y puisent ; « Autour de cette parcelle » y ajoute `/parcels/{idu}/zone` (`app.py:4265`, moteur `zone.py`).
+- La fiche commune est servie par `fiche_commune.py:build()` avec cache nocturne (`fiche-commune-cache`, 03:00) — ses chiffres partagés avec le comparateur passent par `comparable()` (`fiche_commune.py:16-58`), point à mesurer au Lot 5 (fuite RNU).
+- Les mails Radar (Brevo ID 12/13) reçoivent leurs chiffres en **paramètres nommés** (`NB_BIENS`, `CARTES` HTML construit serveur — `pige/digests.py:278-313`) : aucun calcul dans le template.
+- L'écran admin « Données › Circuit » est le robinet qui affiche le **77 brut** (`flux.py:198`, cf. Lot 1).
+
+### Point d'étape Lot 4
+
+- Compteurs : 122 robinets, ventilation ci-dessus, produits par le script.
+- Lignes `DOUTE` : 2 (composants front Solaire fiche / fiche soleil).
+- A bloqué : rien. `nb_chiffres` sera rempli au Lot 5 (dépendance assumée du mandat).
