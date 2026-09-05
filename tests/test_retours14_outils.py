@@ -25,7 +25,7 @@ def test_s11_sous_le_seuil_jamais_servi():
     # l'échantillon (croupe et bâtiment en L lus « double pente ») tombaient à 0,672 et 0,698
     p = _payload("double_pente", 15.0, [90, 270], 0.6, 0.698)
     assert p["verdict"] == "non_determine"
-    assert p["libelle"] == "non déterminée (LiDAR)"
+    assert "pans non nets" in p["libelle"]                    # RETOURS-15 U5 : état sous-seuil nommé
     assert p["pans_orientation_deg"] == []          # les pans incertains ne sortent pas
     assert p["pente_mediane_deg"] == 15.0           # la mesure directe, elle, reste servie
     assert p["seuil"] == SEUIL_CONFIANCE == 0.70
@@ -36,3 +36,16 @@ def test_s11_plat_confiance_directe():
     verdict, meta = _classify(np.full((40, 40), 6.0), np.ones((40, 40), bool))
     assert verdict == "plat"
     assert meta["confiance"] >= SEUIL_CONFIANCE
+
+
+def test_u5_echec_technique_jamais_deguise_en_absence():
+    # RETOURS-15 U5 — un WMS muet / une dépendance absente produit un état « non calculée —
+    # LiDAR indisponible » DIT à l'écran (cause au journal), jamais un None muet.
+    from labuse.solaire_toiture import payload_indisponible
+    p = payload_indisponible("ConnectError: réseau coupé (test)")
+    assert p["verdict"] == "indisponible"
+    assert "LiDAR indisponible" in p["libelle"]
+    assert p["confiance"] is None                     # pas un score : un échec technique
+    # les trois états sont distincts deux à deux
+    from labuse.solaire_toiture import VERDICT_COURTS
+    assert len({VERDICT_COURTS["double_pente"], VERDICT_COURTS["non_determine"], VERDICT_COURTS["indisponible"]}) == 3

@@ -365,6 +365,12 @@ export const pluAnnuaireCommunes = () =>
   j<{ n_communes: number; servables: number; n_plu_vigueur: number; non_servis: string[]; n_revision: number; n_rnu: number; n_non_ingere: number
       // RETOURS-12 O4 — compteur RÉCONCILIÉ des procédures PLU en cours (source unique veille_plu).
       n_procedures: number; procedures_par_etat: Record<string, number>; communes: PluCommune[] }>(`/modules/plu-annuaire/communes`)
+// RETOURS-15 U8 — pack .zip du PLU EN VIGUEUR résolu en direct sur le GPU (commune en révision
+// comprise). Trois issues distinctes : trouvé / GPU vide (mairie servie) / GPU injoignable.
+export interface PluPack { insee: string; disponible: boolean; erreur?: string | null; message?: string
+  idurba?: string; millesime?: string | null; statut_gpu?: string; url?: string
+  mairie?: { nom: string; telephone: string | null; email: string | null; site_officiel: string | null } | null }
+export const pluAnnuairePack = (insee: string) => j<PluPack>(`/modules/plu-annuaire/pack/${insee}`)
 
 // M33 — recalcul mode B avec le paramètre CLIENT travaux (état UI seulement, rien persisté)
 export const getModeB = (idu: string, travauxM2?: number) =>
@@ -539,7 +545,8 @@ export const getPromoteurFrise = (siren: string) => j<PromoteurFrise>(`/outils/v
 export interface PromoteurAcquisitions { siren: string; denomination: string | null; n_parcelles: number; par_commune: { commune: string; n: number }[]; note: string }
 export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitions>(`/outils/veille-promoteurs/${encodeURIComponent(siren)}/acquisitions`)
 
-export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null }
+// RETOURS-15 U6 — deja_batie : le chiffre pré-rempli est un RÉSIDUEL sur une parcelle bâtie, l'écran le nomme.
+export interface TaxePrefill { idu: string; commune: string; surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null; deja_batie?: boolean }
 export const getTaxePrefill = (idu: string) => j<TaxePrefill>(`/outils/taxe-amenagement/prefill?idu=${encodeURIComponent(idu)}`)
 
 // M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN

@@ -1993,6 +1993,52 @@ def plu_annuaire_communes(db: Session = Depends(get_db)) -> dict:
             "communes": out}
 
 
+@router.get("/plu-annuaire/pack/{insee}")
+def plu_annuaire_pack(insee: str, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-15 U8 — le pack .zip du PLU EN VIGUEUR, résolu EN DIRECT sur le GPU (grid=insee) :
+    une commune en révision doit quand même proposer sa dernière version en date. TROIS issues
+    DISTINCTES, jamais confondues (même doctrine que U5) :
+      · trouvé      → url du zip + millésime (document EN_VIGUEUR, sinon le plus récent) ;
+      · GPU VIDE    → le GPU ne publie AUCUN document pour cette commune (vérifié à l'instant,
+                      cas mesuré le 05/09/2026 : Saint-André ET Saint-Leu → `[]`) — on le DIT et
+                      on donne la mairie (source K2) ;
+      · injoignable → erreur réseau, dite comme telle (jamais déguisée en « rien au GPU »)."""
+    import re as _re
+    if not _re.fullmatch(r"974\d\d", insee):
+        raise HTTPException(404, "Commune inconnue")
+    mairie = db.execute(text(
+        "SELECT nom, telephone, email, site_officiel FROM mairies WHERE insee = :i"),
+        {"i": insee}).mappings().first()
+    try:
+        import requests as _rq
+        r = _rq.get("https://www.geoportail-urbanisme.gouv.fr/api/document",
+                    params={"grid": insee}, headers={"User-Agent": "labuse/1.0"}, timeout=12)
+        r.raise_for_status()
+        docs = [d for d in r.json() if (d.get("documentType") or d.get("type")) in ("PLU", "POS", "PLUI")]
+    except Exception as e:  # noqa: BLE001 — l'échec réseau est DIT, jamais un faux « rien »
+        logging.getLogger("labuse").warning("plu-annuaire pack %s : GPU injoignable (%s)", insee, e)
+        return {"insee": insee, "disponible": False, "erreur": "gpu_injoignable",
+                "message": "Géoportail de l'Urbanisme injoignable à l'instant — réessayez.",
+                "mairie": dict(mairie) if mairie else None}
+    if not docs:
+        return {"insee": insee, "disponible": False, "erreur": None,
+                "message": ("Le Géoportail de l'Urbanisme ne publie aucun document pour cette "
+                            "commune (vérifié à l'instant). Le PLU en vigueur reste applicable — "
+                            "demandez-le en mairie."),
+                "mairie": dict(mairie) if mairie else None}
+    # EN_VIGUEUR d'abord ; sinon le plus récent (les originalName portent la date AAAAMMJJ).
+    docs.sort(key=lambda d: ((d.get("effectiveStatus") or d.get("status")) == "EN_VIGUEUR",
+                             str(d.get("originalName") or "")), reverse=True)
+    doc = docs[0]
+    idurba = str(doc.get("originalName") or "")
+    mdate = _re.search(r"(\d{4})(\d{2})(\d{2})$", idurba)
+    return {"insee": insee, "disponible": True,
+            "idurba": idurba,
+            "millesime": f"{mdate.group(3)}/{mdate.group(2)}/{mdate.group(1)}" if mdate else None,
+            "statut_gpu": doc.get("effectiveStatus") or doc.get("status"),
+            "url": f"https://www.geoportail-urbanisme.gouv.fr/api/document/{doc.get('id')}/download/{idurba}.zip"}
+
+
 @router.get("/plu-annuaire/search")
 def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None,
                         limit: int = Query(25, ge=1, le=200),   # FIX-C5

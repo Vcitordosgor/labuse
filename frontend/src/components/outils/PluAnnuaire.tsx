@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { pluAnnuaireSearch, pluAnnuaireCommunes, type PluExtrait } from '../../lib/api'
+import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 
 // M51 / M82 puis M137-P (fusion outil PLU) — ANNUAIRE PLU en DEUX ÉTAPES : (1) les 24 communes, on
@@ -127,6 +127,10 @@ export function PluAnnuaire() {
               </a>
             </p>
           )}
+          {/* RETOURS-15 U8 — une commune en RÉVISION propose quand même son PLU EN VIGUEUR
+              (résolu en direct sur le GPU). GPU vide (cas mesuré : Saint-André, Saint-Leu) →
+              on le DIT et on donne la mairie ; GPU injoignable → dit comme tel. */}
+          {cur?.statut === 'revision' && <PackVigueur insee={insee} />}
         </div>
       )}
 
@@ -246,6 +250,45 @@ function PluExtraitCard({ r }: { r: PluExtrait }) {
         </a>
         {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
       </div>
+    </div>
+  )
+}
+
+// RETOURS-15 U8 — le PLU EN VIGUEUR d'une commune en révision, résolu EN DIRECT sur le GPU.
+// Trois issues DISTINCTES, jamais confondues : trouvé (lien .zip + millésime + mention « reste
+// applicable ») · GPU vide (dit, mairie servie — source K2) · GPU injoignable (dit comme tel).
+function PackVigueur({ insee }: { insee: string }) {
+  const pack = useQuery({ queryKey: ['plu-pack', insee], queryFn: () => pluAnnuairePack(insee), staleTime: 300_000 })
+  if (pack.isLoading) return <p className="mt-1.5 text-[10px] text-txt-dim">Recherche du PLU en vigueur sur le GPU…</p>
+  const p = pack.data
+  if (!p) return <p className="mt-1.5 text-[10px] text-st-creuser">Vérification GPU impossible — réessayez.</p>
+  if (p.disponible && p.url) {
+    return (
+      <div className="mt-2">
+        <a data-plu-pack-vigueur href={p.url} target="_blank" rel="noreferrer"
+          className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2.5">
+          <span className="text-[12px] font-medium text-mint">Télécharger le PLU en vigueur (.zip) ↓</span>
+          <span className="text-[10px] leading-snug text-txt-dim">
+            Pack officiel Géoportail de l'Urbanisme{p.millesime ? ` — version du ${p.millesime}` : ''}{p.idurba ? ` (${p.idurba})` : ''}
+          </span>
+        </a>
+        <p className="mt-1 text-[10px] leading-snug text-txt-dim">
+          Révision en cours — ce document reste applicable jusqu'à l'approbation du nouveau.
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div data-plu-pack-absent className="mt-2 text-[10.5px] leading-snug">
+      <p className={p.erreur === 'gpu_injoignable' ? 'text-st-creuser' : 'text-txt-mut'}>{p.message}</p>
+      {p.mairie && !p.erreur && (
+        <p className="mt-1 text-txt-dim">
+          {p.mairie.nom}{p.mairie.telephone ? ` · ${p.mairie.telephone}` : ''}{p.mairie.email ? ` · ${p.mairie.email}` : ''}
+          {p.mairie.site_officiel && (
+            <> · <a href={p.mairie.site_officiel} target="_blank" rel="noreferrer" className="text-mint hover:underline">site officiel ↗</a></>
+          )}
+        </p>
+      )}
     </div>
   )
 }

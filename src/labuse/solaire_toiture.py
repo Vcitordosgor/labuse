@@ -40,22 +40,44 @@ RES = 0.5   # m/pixel (natif LiDAR HD MNx)
 # S11 — seuil de confiance : 0 faux à l'œil sur 20 bâtiments, confirmé sur 50 (voir docstring).
 SEUIL_CONFIANCE = 0.70
 
+# RETOURS-15 U5 — TROIS ÉTATS DISTINCTS à l'écran, jamais confondus :
+#   servi (« simple pente ») · sous le seuil (« non déterminée — pans non nets ») ·
+#   erreur technique (« non calculée — LiDAR indisponible », cause au journal serveur).
+# Un échec technique ne se déguise JAMAIS en absence de donnée.
 VERDICT_LABELS = {
     "plat": "toit plat / terrasse",
     "monopente": "simple pente (monopente)",
     "double_pente": "double pente",
     "croupe_complexe": "croupe ou toit complexe (3 pans et plus)",
-    "indetermine": "non déterminable (emprise trop petite ou signal brouillé)",
-    "non_determine": "non déterminée (LiDAR)",
+    "indetermine": "non déterminée — emprise trop petite ou signal brouillé",
+    "non_determine": "non déterminée — pans non nets (sous le seuil de confiance)",
+    "indisponible": "non calculée — LiDAR indisponible",
 }
 VERDICT_COURTS = {
     "plat": "plat / terrasse",
     "monopente": "simple pente",
     "double_pente": "double pente",
     "croupe_complexe": "croupe / complexe",
-    "indetermine": "non déterminée (LiDAR)",
-    "non_determine": "non déterminée (LiDAR)",
+    "indetermine": "non déterminée — signal brouillé",
+    "non_determine": "non déterminée — pans non nets",
+    "indisponible": "non calculée (LiDAR indisponible)",
 }
+
+
+def payload_indisponible(cause: str) -> dict:
+    """État 3 (U5) — échec TECHNIQUE (WMS muet, dépendance absente…) : l'écran le dit, la cause
+    va au journal serveur. Rien n'est mis en cache (le prochain appel retente)."""
+    log.error("toiture_lidar : non calculée — LiDAR indisponible (%s)", cause)
+    return {
+        "verdict": "indisponible",
+        "libelle": VERDICT_LABELS["indisponible"],
+        "libelle_court": VERDICT_COURTS["indisponible"],
+        "pente_mediane_deg": None, "pans_orientation_deg": [], "part_pentue": None,
+        "confiance": None, "seuil": SEUIL_CONFIANCE, "statut": "Dérivé",
+        "methode": ("Le calcul n'a pas pu être fait (LiDAR HD IGN injoignable ou erreur "
+                    "technique) — ce n'est PAS une absence de donnée. Détail au journal serveur ; "
+                    "réessayez en rouvrant la fiche."),
+    }
 
 
 def ensure_table(session: Session) -> None:
@@ -73,7 +95,8 @@ def ensure_table(session: Session) -> None:
     session.execute(text("DELETE FROM toiture_lidar WHERE confiance IS NULL"))
 
 
-def _fetch_mnh(bbox: tuple[float, float, float, float]) -> np.ndarray | None:
+def _fetch_mnh(bbox: tuple[float, float, float, float]) -> "np.ndarray | str":
+    """MNH LiDAR par WMS. En échec technique, retourne la CAUSE (str) — jamais un None muet (U5)."""
     w = max(8, int((bbox[2] - bbox[0]) / RES))
     h = max(8, int((bbox[3] - bbox[1]) / RES))
     try:
@@ -88,9 +111,9 @@ def _fetch_mnh(bbox: tuple[float, float, float, float]) -> np.ndarray | None:
             a = ds.read(1).astype("float64")
         a[a < -100] = np.nan
         return a
-    except Exception as e:  # noqa: BLE001 — le WMS peut tomber : l'absence est dite, jamais un 500
+    except Exception as e:  # noqa: BLE001 — le WMS peut tomber : l'échec est DIT (U5), jamais un 500
         log.warning("toiture_lidar : WMS MNH indisponible (%s)", e)
-        return None
+        return f"{type(e).__name__}: {e}"
 
 
 def _classify(mnh: np.ndarray, mask: np.ndarray) -> tuple[str, dict]:
@@ -158,8 +181,9 @@ def analyse_toiture(session: Session, idu: str) -> dict | None:
     bbox = (float(bat["x1"]) - pad, float(bat["y1"]) - pad,
             float(bat["x2"]) + pad, float(bat["y2"]) + pad)
     mnh = _fetch_mnh(bbox)
-    if mnh is None:
-        return None
+    if isinstance(mnh, str):
+        # U5 — échec TECHNIQUE ≠ absence de donnée : l'écran le dira, rien n'entre au cache.
+        return payload_indisponible(mnh)
     from rasterio.features import rasterize
     from rasterio.transform import from_bounds
     from shapely.geometry import shape

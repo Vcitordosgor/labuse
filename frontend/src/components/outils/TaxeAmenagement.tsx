@@ -163,8 +163,13 @@ export function TaxeAmenagement() {
               {prefill.data.surface_terrain_m2 != null && (
                 <span className="text-txt-dim">terrain : {fmtM2(prefill.data.surface_terrain_m2)} <span className="text-[9px]">(référence)</span></span>
               )}
+              {/* RETOURS-15 U6 — sur une parcelle DÉJÀ BÂTIE, ce chiffre est un RÉSIDUEL : le
+                  libellé le dit (« restante »), jamais « gabarit » nu (26 m² sur 1 625 m² en Uh
+                  se lisait comme un gabarit absurde). */}
               {prefill.data.sdp_gabarit_m2 != null && (
-                <span className="text-txt-dim">SDP au gabarit : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
+                <span className="text-txt-dim">{prefill.data.deja_batie
+                  ? <>SDP <b className="text-txt">restante</b> au gabarit <span className="text-[9px]">(parcelle déjà bâtie)</span> : </>
+                  : <>SDP au gabarit : </>}<b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
               )}
               <button onClick={() => setPrefillIdu(null)} className="ml-auto text-[10px] text-mint hover:underline">retirer</button>
             </div>
@@ -178,7 +183,7 @@ export function TaxeAmenagement() {
         <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
           onChange={(v) => { setSurface(v); setSdpPrefill(false) }}
           hint={`${sdpPrefill
-            ? 'Pré-rempli par LABUSE — SDP au gabarit, modifiable (la surface taxable est celle de VOTRE projet). '
+            ? `Pré-rempli par LABUSE — SDP ${prefill.data?.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'}, modifiable (la surface taxable est celle de VOTRE projet). `
             : (prefill.data && prefill.data.sdp_gabarit_m2 == null
               ? `Gabarit non calculable${prefill.data.zone_plu ? ` en zone ${prefill.data.zone_plu}` : ''} — saisissez la surface de votre projet. `
               : '')}Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
@@ -271,7 +276,8 @@ export function TaxeAmenagement() {
             <div className="flex items-center justify-between gap-2">
               <span className="text-txt-mut">Part communale <span className="text-txt-dim">({r.taux_communal_pct != null ? `${r.taux_communal_pct} %` : '—'})</span></span>
               <span className="font-mono tabular-nums text-txt">
-                {r.part_communale_eur != null ? fmtEur(r.part_communale_eur) : <span className="text-txt-dim">en attente du taux communal</span>}
+                {/* RETOURS-15 U6 — la ligne DIT quoi faire, pas un état passif. */}
+                {r.part_communale_eur != null ? fmtEur(r.part_communale_eur) : <span className="text-txt-dim">taux non renseigné, saisissez-le ci-dessus</span>}
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">

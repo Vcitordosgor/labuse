@@ -43,7 +43,12 @@ def test_onglet_friche_et_occupation_rapatriees_urbanisme():
 # ── Fonds : « Actuelle » = Ortho Express RVB 2025 (millésime réel le plus récent au 974) ──────────
 def test_fond_actuelle_est_ortho_express_2025():
     bm = (ROOT / "frontend/src/components/map/basemaps.ts").read_text(encoding="utf-8")
-    assert "ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025" in bm
+    # RETOURS-15 U1 — la couche Express est désormais servie par le PROXY backend (les tuiles
+    # blanc-mer sont retirées côté serveur) : l'ID de couche IGN vit dans app.py, basemaps.ts
+    # pointe le proxy. L'intention (Actuelle = Express 2025, pas BD ORTHO 2022) est INCHANGÉE.
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert "ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025" in app
+    assert "/map/tiles/ortho-express/" in bm
     assert "Actuelle · Ortho Express 2025" in bm
     # le libellé « BD ORTHO 2022 » nu ne subsiste plus comme « Actuelle ».
     assert "Actuelle · BD ORTHO 2022" not in bm

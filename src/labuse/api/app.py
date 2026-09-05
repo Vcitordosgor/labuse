@@ -2577,9 +2577,13 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
     PROJET reste celle du client s'il la connaît — le champ reste éditable, rien n'est deviné
     au-delà de ce que le moteur calcule déjà."""
     _check_idu(idu)
+    # RETOURS-15 U6 — provenance VÉRIFIÉE : `parcel_residuel` est la VUE M135 sur
+    # parcel_residuel_runs WHERE is_served (run servi m135-run2-ile), PAS la table morte
+    # parcel_residuel_bati. `deja_batie` (emprise > 0) est servi pour que l'écran nomme le
+    # chiffre pour ce qu'il est : une SDP RESTANTE (résiduel), pas le gabarit entier.
     row = db.execute(text(
         "SELECT p.commune, round(p.surface_m2) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
-        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2"
+        "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct"
         " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu"
         " LEFT JOIN parcel_residuel r ON r.parcel_id = p.id"
         " WHERE p.idu = :i"),
@@ -2590,7 +2594,8 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
     return {"idu": idu, "commune": row["commune"],
             "surface_terrain_m2": row["surface_terrain_m2"],
             "zone_plu": row["zone_libelle"] or row["zone_fam"],
-            "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None}
+            "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None,
+            "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0)}
 
 
 @app.get("/outils/taxe-amenagement")
