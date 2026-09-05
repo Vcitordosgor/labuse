@@ -256,9 +256,11 @@ def admin_pilotage(request: Request) -> dict:
     from ..stripe_lecture import apercu
     stripe = apercu()
 
+    # CIRCUIT-2 lot 1.6 — compteurs calculés par le moteur nommé `plateforme_compteurs`
+    # (ids registre n_comptes_actifs, ia_cout_eur) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.plateforme import comptes_actifs, conso_ia_mois
     with engine().begin() as c:
-        licences_actives = c.execute(text(
-            "SELECT COUNT(*) FROM comptes WHERE statut = 'actif'")).scalar() or 0
+        licences_actives = comptes_actifs(c)
         # actifs 24 h = un login OU un capteur d'usage dans les dernières 24 h (par compte)
         actifs_24h = c.execute(text(
             "SELECT COUNT(*) FROM ("
@@ -268,9 +270,7 @@ def admin_pilotage(request: Request) -> dict:
             " SELECT DISTINCT compte_id FROM utilisateurs"
             "  WHERE dernier_login_at > now() - interval '24 hours' AND compte_id IS NOT NULL) t"
         )).scalar() or 0
-        ia = c.execute(text(
-            "SELECT COALESCE(SUM(cout_eur), 0) AS cout, COUNT(*) AS appels FROM ia_log"
-            " WHERE ts >= date_trunc('month', now())")).mappings().one()
+        ia = conso_ia_mois(c)
         # fil admin : les événements SYSTÈME (compte NULL = feed pilote/admin, patron existant)
         fil = [dict(r) for r in c.execute(text(
             "SELECT id, ts, kind, source, titre, detail, lien FROM event_log"
@@ -726,24 +726,13 @@ def admin_ia(request: Request) -> dict:
     exiger_admin(request)
     from .. import config
     from ..db import engine
+    # CIRCUIT-2 lot 1.6 — le ledger ia_log est lu par le moteur nommé `plateforme_compteurs`
+    # (id registre ia_cout_eur) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.plateforme import conso_ia_30j, conso_ia_mois
     with engine().begin() as c:
-        mois = c.execute(text(
-            "SELECT COALESCE(SUM(cout_eur), 0) AS cout, COUNT(*) AS appels FROM ia_log"
-            " WHERE ts >= date_trunc('month', now())")).mappings().one()
-        jours = [dict(r) for r in c.execute(text(
-            "SELECT date_trunc('day', ts)::date AS jour, ROUND(SUM(cout_eur), 4) AS cout,"
-            "       COUNT(*) AS appels"
-            " FROM ia_log WHERE ts > now() - interval '30 days'"
-            " GROUP BY 1 ORDER BY 1")).mappings()]
-        par_licence = [dict(r) for r in c.execute(text(
-            "SELECT l.compte_id, COALESCE(k.nom, 'Vous (admin/pilote)') AS nom,"
-            "       ROUND(SUM(l.cout_eur), 4) AS cout, COUNT(*) AS appels"
-            " FROM ia_log l LEFT JOIN comptes k ON k.id = l.compte_id"
-            " WHERE l.ts > now() - interval '30 days'"
-            " GROUP BY l.compte_id, k.nom ORDER BY SUM(l.cout_eur) DESC")).mappings()]
-        cout_7j = float(c.execute(text(
-            "SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log"
-            " WHERE ts > now() - interval '7 days'")).scalar() or 0)
+        mois = conso_ia_mois(c)
+        _c30 = conso_ia_30j(c)
+        jours, par_licence, cout_7j = _c30["jours"], _c30["par_licence"], _c30["cout_7j"]
         quotas = [dict(r) for r in c.execute(text(
             "SELECT id, nom, copilote_quota_jour, copilote_budget_eur FROM comptes"
             " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
@@ -1469,11 +1458,11 @@ def admin_produit(request: Request, jours: int = 30) -> dict:
     exiger_admin(request)
     from ..db import engine
     jours = jours if jours in (7, 30, 90) else 30
+    # CIRCUIT-2 lot 1.6 — l'usage par outil est calculé par le moteur nommé `plateforme_compteurs`
+    # (id registre usage_outil_n) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.plateforme import usage_par_outil
     with engine().begin() as c:
-        usage = [dict(r) for r in c.execute(text(
-            "SELECT outil, COUNT(*) AS n FROM usage_events"
-            " WHERE kind = 'outil' AND outil IS NOT NULL AND ts > now() - make_interval(days => :j)"
-            " GROUP BY outil ORDER BY COUNT(*) DESC"), {"j": jours}).mappings()]
+        usage = usage_par_outil(c, jours)
         retours = [dict(r) for r in c.execute(text(
             "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section, k.nom AS compte"
             " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"

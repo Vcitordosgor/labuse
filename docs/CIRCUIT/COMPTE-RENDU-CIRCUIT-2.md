@@ -18,7 +18,8 @@ Branche `feat/circuit-2` depuis `feat/circuit-1` (CIRCUIT-1 non mergé dans main
 
 ## Non fait (avec raison)
 
-- (rempli au fil des lots)
+- **(lot 1.5)** Le test de couverture qui rejoue l'endpoint réel `/parcels/{idu}` saute sur la base de TEST (aucune parcelle seedée) — il tourne en entier sur la base réelle et la carte `FICHE_PARCELLE_CLES` est verrouillée à sec (ids existants, internes motivés). Ce qu'il faudrait : une parcelle golden seedée dans labuse_test (petit chantier de fixtures).
+- **(lot 1.7)** L'ambre couvre les saisies de la calculette (HypInput — les trois hypothèses du Financier) ; démolition et VRD saisis n'existent pas encore comme champs (déclarés `en_attente`, chantier EXPORTS).
 
 ---
 
@@ -92,3 +93,33 @@ Moteurs au registre (`moteurs.csv`) : `marche_communes` renommé **`marche_servi
 
 - Tests du lot : `tests/test_circuit2_lot0bis.py` — **19 verts** (fonctions vivantes, moteurs réconciliés, scission complète, portée projet, couverture, sonde témoins/nocturne).
 - Suite complète post-0-bis : **2375 passed · 1 failed (`test_r5`, pré-existant admis) · 36 skipped** — aucun rouge nouveau, +19 verts vs post-merge (2356).
+
+---
+
+## Lot 1 — Le registre élargi
+
+### Livré
+
+- **1.1 `registre/donnees.py`** (ex-`chiffres.py`, git mv ; `chiffres.py` = alias de réexportation, AUCUN import ne casse) : dataclass `Donnee` (= `Chiffre`, alias) avec `type` ∈ {nombre, classe, texte, liste, geometrie, couche}, `domaine`/`domaine_source` (classe), `table`/`fabrication` (couche/géométrie/passe-plat), `en_attente` (donnée déclarée pour un chantier nommé, jamais servie tant que posé). Type dérivé de l'unité pour les déclarations historiques (`verdict` → texte : une phrase composée n'a pas de domaine énumérable) ; domaines posés sur les vraies classes : tiers du scoring (statuts.py), familles GPU U/AU/A/N, tranches VEFA (TRANCHE_LIBELLE), statuts PLU (_PLU_STATUT), sous-densité, division, type de propriétaire, niveaux d'aléa DEAL (verrou RETOURS-13 : « élevé/très élevé » ne peut plus s'ingérer en « moyen » sans écart de domaine).
+- **1.2 hors_registre VIDÉ** : les 25 entrées de CIRCUIT-1 → 23 déclarées (8 fonds IGN, 12 couches sans chiffre, mairie, réponse web Copilote), **2 reclassées « décor »** (fond Sombre / fond Clair : mode de rendu canvas, aucune source externe). `verifier()` refuse désormais tout hors_registre non préfixé « décor ».
+- **1.3 les 16 couches et 10 fonds** : chaque couche a sa donnée type `couche` (table/tuilage + fabrication : `build-mvt` pour le verdict, `vue` pour tcsp/vefa/densifier, `requete` pour les spatial_layers) ; les 8 fonds IGN déclarent le SERVICE et la VERSION de tuiles (`WMTS data.geopf.fr — LAYER=… VERSION=1.0.0, PM`), fabrication `wmts_distant` (sonde de disponibilité, pas de contenu).
+- **1.4 tampon non numérique** : `Valeur.etat` (`servie` · `non_determinee` · `non_calculee` — règle 4, un échec ne se déguise jamais en absence) ; `tampons_pour` renvoie type, table, fabrication et domaine avec la trace `?trace=1`.
+- **1.5 couverture élargie** : `registre/couverture.py` — CHAQUE clé de premier niveau du payload `/parcels/{idu}` est rattachée à ses données du registre ou classée `interne` avec raison (méta LABUSE, dérivations sans source propre) ; le test rejoue l'endpoint réel et échoue sur toute clé non rattachée. Blocs jusqu'ici sans id DÉCLARÉS : adresse (BAN), géométrie de la parcelle (cadastre), règlement PLU, historique permis, voisinage 100 m, mutations DVF, copropriétés (RNIC), viabilisation, équipements à proximité, événements propriétaire (BODACC), timeline PM, périmètres de dispositifs. Trois robinets de fiche ajoutés : en-tête, règlement d'urbanisme, dispositifs.
+- **1.7 portée `projet` en ambre (DA v3)** : `HypInput` (calculette du bilan) — une valeur SAISIE prend bord + texte ambre et `data-saisie-client` ; vide (défaut serveur en placeholder), rendu neutre inchangé. Vitest 2 verts ; tsc OK.
+- **1.6 un moteur nommé pour chaque chiffre — `calcul=sql_propre` = 0** (objectif du mandat atteint, sous-chantier mené par agent). **9 moteurs nommés** ajoutés à moteurs.csv : `zonage_commune` (zonage.py enfin nommé — parts + compte de zones), `commune_compteurs` (`registre/moteurs/commune.py`, EXTRACTIONS réelles : composite/indicateurs du comparateur, mutations 12 mois, ppr_pct, vacance, QPV, logés gratuitement, couverture sources, corpus PLU, permis commune, point mort, piscines), `parcelle_proximites` (`plus_proche` extrait d'app.py ; assemblage en délégation — bloc intriqué HTTP/config/privacy), `plateforme_compteurs` (comptes plateforme : parcelles île, bascules 7 j, comptes actifs, conso IA, usage outils, notifications, kanban, dépôts Radar…), `anc`, `bati_revele`, `flux`, `golden_ops`, `copilote_outils` (délégations vers les producteurs nommés — jamais une copie, une seule vérité). Les 3 ids permis/ventes déjà justes → `marche_service` ; n_parcelles_pm → `proprietaire_historique` (délégation patrimoine : un count parallèle = deux assiettes, refusé). Les passe-plats déclarent leur table.colonne ; les 3 saisies calculette = « corps de requête, aucune table » ; les 5 réglementaires `en_attente` restent sans table (pas d'invention). Corrections attrapées au passage : `n_bascules_7j` (la réf. events.py:1086 était périmée — c'est accueil/brief aujourd'hui) et `n_depots_a_verifier` (la file = `pige_faits.valide_at NULL`, pas pige_depots). Tests du sous-chantier : `tests/test_circuit2_lot16.py` 8/8.
+- **1.8** : ids des maquettes d'exports déclarés — servis quand le producteur existe (surface vendable/plancher, marge de surélévation, postes du bilan, ventes retenues/écartées, part égout EGOUL, écart au prix demandé) ; `en_attente` sinon (emprise/hauteur/nb bâtiments, sensibilité au coût, démolition) ; réglementaires ER/EBC/DPU/PEB/A-B-C déclarées `en_attente="réservoir CIRCUIT-3 lot 6"` — verrou : une donnée en_attente servie par un robinet fait échouer `verifier()`.
+
+### Compte-rendu du lot (chiffres demandés par le mandat)
+
+- **164 données** (mesuré) — par type : nombre 107 · couche 24 · classe 13 · texte 10 · liste 9 · geometrie 1 ; par calcul : **moteur 113 · passe_plat 48 · constante 3 · sql_propre 0**.
+- Robinets **123/123 déclarés** — 121 avec données, 2 « décor » (fonds Sombre/Clair). **Exceptions = 0.**
+- Données `en_attente` (jamais servies, verrouillé par test) : **10** (5 réglementaires CIRCUIT-3 + emprise/hauteur/nb bâtiments, sensibilité coût, démolition — chantier EXPORTS).
+
+### Attrapé en cours de lot
+
+- Deux pytest lancés en parallèle sur labuse_test (le mien + la suite de fond) → 7 erreurs de fixtures fantômes ; tués, relancé SEUL → tout vert. La leçon CIRCUIT-1 (« jamais deux pytest en parallèle ») reste la règle de la session.
+
+### Suite
+
+- Tests du lot : `test_circuit2_lot1.py` 13 verts (+1 skip base de test sans parcelle, dit) · `test_circuit2_lot16.py` 8 verts · `test_registre.py` 9 verts adaptés · vitest HypInput 2 verts · tsc OK.
+- Suite complète post-lot 1 : **2398 passed · 1 failed (`test_r5`, pré-existant admis) · 37 skipped** — aucun rouge nouveau, +23 verts vs 0-bis.

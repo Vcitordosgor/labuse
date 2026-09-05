@@ -1057,34 +1057,11 @@ def sources_couverture(db: Session = Depends(get_db)) -> dict:
     """RETOURS-9 (Q11.5) — les chiffres de COUVERTURE qui parlent au client, LUS des données réelles :
     parcelles couvertes, communes (couvertes / total), transactions DVF analysées, annonces Radar
     suivies, et la date de la dernière analyse (run servi). Chaque valeur est gardée : une table absente
-    (base partielle) rend `null`, jamais un 500 ni un chiffre inventé."""
-    def _scal(sql: str):
-        try:
-            return db.execute(text(sql)).scalar()
-        except Exception:  # noqa: BLE001 — base partielle : la tuile dira « — », jamais un crash
-            return None
-    parcelles = _scal("SELECT count(*) FROM parcels")
-    communes = _scal("SELECT count(DISTINCT commune) FROM parcels")
-    dvf = _scal("SELECT count(*) FROM dvf_mutations")
-    radar = _scal("SELECT count(*) FROM pige_biens")
-    analyse_label, analyse_date = None, None
-    try:
-        from .. import runs as _runs
-        analyse_label = _runs.current()
-        if analyse_label:
-            d = db.execute(text("SELECT computed_at FROM p_score_v2_runs WHERE run_id = :r"),
-                           {"r": analyse_label}).scalar()
-            analyse_date = d.isoformat() if d else None
-    except Exception:  # noqa: BLE001
-        pass
-    return {
-        "parcelles": int(parcelles) if parcelles is not None else None,
-        "communes": int(communes) if communes is not None else None,
-        "communes_total": 24,   # les 24 communes de La Réunion (constante du référentiel radar)
-        "dvf_transactions": int(dvf) if dvf is not None else None,
-        "radar_annonces": int(radar) if radar is not None else None,
-        "analyse_label": analyse_label, "analyse_date": analyse_date,
-    }
+    (base partielle) rend `null`, jamais un 500 ni un chiffre inventé.
+    CIRCUIT-2 lot 1.6 — le calcul (bloc entier) vit au moteur nommé `commune_compteurs`
+    (registre/moteurs/commune.py:couverture_sources, id registre couverture_commune_pct)."""
+    from ..registre.moteurs.commune import couverture_sources
+    return couverture_sources(db)
 
 
 def _source_licence(legal_notes: str | None) -> dict:
@@ -1902,7 +1879,10 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     def scal(sql: str):
         return db.execute(text(sql), {"c": commune, "r": runs.current()}).scalar()
 
-    n_parcelles = scal("SELECT count(*) FROM parcels WHERE commune = :c") or 0
+    # CIRCUIT-2 lot 1.6 — le compte de parcelles est calculé par le moteur nommé `commune_compteurs`
+    # (id registre n_parcelles_commune) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.commune import compte_parcelles_commune
+    n_parcelles = compte_parcelles_commune(db, commune)
     surface_ha = db.execute(text(
         "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
         {"c": commune}).scalar()
@@ -1920,10 +1900,9 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     # une fenêtre calendaire donnerait un volume partiel trompeur).
     # MANDAT_DVF-B — SIGNAL d'agrégat COMMUNE (un COMPTE de mutations, PAS un prix de parcelle) : reste
     # HORS marche_service et hors profils (ne pas mélanger deux grandeurs). Jamais lu comme un €/m².
-    mutations_12m = db.execute(text(
-        "SELECT count(*) FROM dvf_mutations WHERE commune = :c AND date_mutation > "
-        "(SELECT max(date_mutation) FROM dvf_mutations WHERE commune = :c) - interval '12 months'"),
-        {"c": commune}).scalar() or 0
+    # CIRCUIT-2 lot 1.6 — calculé par le moteur nommé `commune_compteurs` (id mutations_12m_n).
+    from ..registre.moteurs import commune as _moteur_commune
+    mutations_12m = _moteur_commune.mutations_12m(db, commune)
     terrain = ligne2_terrain_zone(db, commune)     # point de calcul M79 (réutilisé, pas recréé)
     offre = ligne6_offre_engagee(db, commune)      # permis 12 mois (Sitadel), réutilisé
     # OUTILS-6 C2 — STOCK FONCIER : parcelles brûlantes + chaudes du run servi, EN PARCELLES ET EN HA
@@ -2135,9 +2114,10 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
     anru = [dict(r) for r in db.execute(text(
         "SELECT nom, interet, code_qpv, source_nom, source_url FROM anru_quartiers"
         " WHERE commune = :c ORDER BY nom"), {"c": commune}).mappings().all()]
-    qpv = [dict(r) for r in db.execute(text(
-        "SELECT name AS nom, attrs->>'code_qp' AS code FROM spatial_layers"
-        " WHERE kind = 'qpv' AND commune = :c ORDER BY name"), {"c": commune}).mappings().all()]
+    # CIRCUIT-2 lot 1.6 — les QPV de la commune sont lus par le moteur nommé `commune_compteurs`
+    # (id registre qpv_n) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.commune import autres_loges_pct as _autres_loges, qpv_commune
+    qpv = qpv_commune(db, commune)
     # rattachement EPCI (référentiel BANATIC, config/epci_974.yaml) + PLH
     epci_cfg = config.load_yaml_config("epci_974")["epci"]
     epci = next((k for k, v in epci_cfg.items() if commune in v["communes"]), None)
@@ -2147,12 +2127,12 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             d.pop("importe_le", None)
     # CIRCUIT-1 lot 2.4 — « autres logés gratuitement » CALCULÉ AU SERVEUR (id registre
     # `autres_loges_pct`). Le front (ContextePanel:526) faisait 100 − locataires − propriétaires
-    # lui-même : le nombre affiché n'existait nulle part côté serveur. Même arithmétique.
+    # lui-même : le nombre affiché n'existait nulle part côté serveur. Même arithmétique —
+    # CIRCUIT-2 lot 1.6 : elle vit au moteur nommé `commune_compteurs` (un seul chemin).
     if insee_log and insee_log.get("locataires_pct") is not None \
             and insee_log.get("proprietaires_pct") is not None:
-        insee_log["autres_loges_pct"] = max(
-            0.0, round((100.0 - float(insee_log["locataires_pct"])
-                        - float(insee_log["proprietaires_pct"])) * 10) / 10)
+        insee_log["autres_loges_pct"] = _autres_loges(
+            insee_log["locataires_pct"], insee_log["proprietaires_pct"])
     # M36 Lot D : le compteur du tier haut EN DUR sur la fiche commune — même point de
     # calcul (mémoïsé) que /communes : tiers du run servi, jamais figé, étiquette vraie.
     _cd = next((c for c in _communes_data(db, runs.current()) if c["commune"] == commune), None)
@@ -3710,19 +3690,10 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
     return {**(base or {}), "perimetres": perimetres, "dispositifs_dom": dispositifs_dom}
 
 
-def _plus_proche(db: Session, idu: str, kind: str, subtype: str | None = None) -> dict | None:
-    """L'objet `kind` le plus proche de la parcelle (KNN geom_2975) + distance en mètres.
-    M106 : PROXIMITÉ, jamais appartenance — on sert la distance, le lecteur juge."""
-    row = db.execute(text(
-        "SELECT sl.name, sl.subtype, sl.attrs, round(ST_Distance(sl.geom_2975, p.geom_2975))::int AS d "
-        "FROM spatial_layers sl, parcels p WHERE p.idu = :idu AND sl.kind = :k "
-        "AND sl.geom_2975 IS NOT NULL AND (CAST(:st AS text) IS NULL OR sl.subtype = :st) "
-        "ORDER BY sl.geom_2975 <-> p.geom_2975 LIMIT 1"),
-        {"idu": idu, "k": kind, "st": subtype}).mappings().first()
-    if not row:
-        return None
-    return {"nom": row["name"], "subtype": row["subtype"],
-            "attrs": row["attrs"] or {}, "distance_m": row["d"]}
+# CIRCUIT-2 lot 1.6 — le KNN vit au moteur nommé `parcelle_proximites`
+# (registre/moteurs/parcelle.py:plus_proche, id registre distance_arret_m) : alias local conservé
+# pour les blocs de fiche (proximités, équipements) — même fonction, pas une copie.
+from ..registre.moteurs.parcelle import plus_proche as _plus_proche  # noqa: E402
 
 
 _FICHE_LOG = logging.getLogger("labuse.fiche")

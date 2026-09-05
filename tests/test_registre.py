@@ -28,7 +28,8 @@ def test_integrite_zero_probleme():
 
 def test_un_chiffre_une_definition():
     """Règle 1 du mandat : id unique, définition non vide, unité et niveau dans les énums."""
-    unites = {"%", "€", "€/m²", "m²", "logements", "classe", "verdict", "tranche", "date", "nombre", "m"}
+    unites = {"%", "€", "€/m²", "m²", "logements", "classe", "verdict", "tranche", "date", "nombre",
+              "m", "couche", "texte", "liste"}   # non numériques du lot 1 (CIRCUIT-2)
     niveaux = {"parcelle", "commune", "zone", "proprietaire", "annonce", "global"}
     for cid, c in registre.CHIFFRES.items():
         assert c.definition.strip(), cid

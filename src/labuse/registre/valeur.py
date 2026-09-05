@@ -45,6 +45,8 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "cosia": "CoSIA%", "radar_pige": "Radar (pige%", "sirene_etablissements": "SIRENE établissements%",
     "mobpro": "MOBPRO%", "trafic_rn": "Trafic RN%", "bdnb": "BDNB%",
     "edf_hta": "EDF Réunion — lignes moyenne%", "tcsp_osm": "TCSP — voies bus%",
+    "annuaire_service_public": "Annuaire de l'administration%",
+    "rnic_anah": "RNIC — copropriétés%",
 }
 
 
@@ -61,10 +63,15 @@ class Valeur:
     couverture: dict | None = None
     #: 0-bis (portée `projet`) : ISO du moment de saisie client — « saisi par le client le … ».
     saisi_le: str | None = None
+    #: lot 1.4 (règle 4 du mandat) : `servie` · `non_determinee` (la source ne dit pas) ·
+    #: `non_calculee` (la chaîne a échoué) — un échec technique ne se déguise JAMAIS en absence.
+    etat: str = "servie"
 
     def tampon(self) -> dict:
         t = {"chiffre_id": self.chiffre_id, "version_def": self.version_def,
              "run": self.run, "reservoirs": self.reservoirs, "calcule_le": self.calcule_le}
+        if self.etat != "servie":
+            t["etat"] = self.etat
         if self.couverture is not None:
             t["couverture"] = self.couverture
         if self.saisi_le is not None:
@@ -119,5 +126,10 @@ def tampons_pour(db, chiffre_ids: list[str]) -> dict[str, dict]:
                         calcule_le=quand,
                         saisi_le=("(à la saisie)" if c.portee == "projet" else None)).tampon() | {
                             "libelle": c.libelle, "unite": c.unite, "definition": c.definition,
-                            "moteur": c.moteur, "portee": c.portee}
+                            "moteur": c.moteur, "portee": c.portee, "type": c.type}
+                        # lot 1.4 — tampon non numérique : la table (classe/géométrie), la
+                        # fabrication (couche) et le domaine voyagent avec la trace
+                        | ({"table": c.table} if c.table else {})
+                        | ({"fabrication": c.fabrication} if c.fabrication else {})
+                        | ({"domaine": list(c.domaine)} if c.domaine else {})
             for cid, c in voulus}

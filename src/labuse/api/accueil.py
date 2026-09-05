@@ -68,14 +68,16 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
             return None
 
     golden_parcelles, golden_verifs = _golden_counts()
+    # CIRCUIT-2 lot 1.6 — deux compteurs calculés par le moteur nommé `plateforme_compteurs`
+    # (ids registre n_parcelles_ile, n_bascules_7j) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.plateforme import bascules_tiers_hauts, compte_parcelles_ile
     data = {
         # ── bloc 1 · « Je couvre tout » ──
         # RETOURS-10 (T2) — le nombre de parcelles du run servi est DÉJÀ matérialisé dans le registre
         # `p_score_v2_runs.n_parcelles` (avec sa date `computed_at`) : lecture par clé primaire, instantanée.
         # L'ancien `count(*) FROM parcel_p_score_v2 WHERE run_id` faisait un Parallel Seq Scan de 3 M lignes
         # (~2 s mesuré sur la base réelle). Repli sur le count vif si le registre ne connaît pas le run.
-        "parcelles": (one("SELECT n_parcelles FROM p_score_v2_runs WHERE run_id = :r", {"r": runs.current()})
-                      or one("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": runs.current()})),
+        "parcelles": compte_parcelles_ile(db, runs.current()),
         "communes": one("SELECT count(DISTINCT commune) FROM parcels"),
         # M71 F / M87 P0 : UN SEUL chiffre partout — définition CANONIQUE des sources affichées
         # (`sources_catalog.WHERE_AFFICHEES` : connecte, hors DOUBLON, hors masquées). accueil ET
@@ -98,12 +100,8 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
             "SELECT count(*) FROM (SELECT siren FROM parcelle_personne_morale "
             "WHERE groupe = 0 AND siren IS NOT NULL GROUP BY siren "
             "HAVING count(DISTINCT idu) >= 3) t"),
-        "bascules_tiers_hauts": one(
-            "SELECT count(*) FROM parcel_p_score_v2 a "
-            "JOIN parcel_p_score_v2 b ON b.parcelle_id = a.parcelle_id AND b.run_id = :cur "
-            "WHERE a.run_id = :prev AND b.tier IN ('brulante','chaude') "
-            "  AND (a.tier IS NULL OR a.tier NOT IN ('brulante','chaude'))",
-            {"cur": runs.current(), "prev": runs.precedent()}),   # DONNEES-2 (B4) — pointeur vivant
+        "bascules_tiers_hauts": bascules_tiers_hauts(
+            db, runs.current(), runs.precedent()),   # DONNEES-2 (B4) — pointeur vivant
         "run_label": runs.current(),
     }
     _cache.update(at=now, data=data)
