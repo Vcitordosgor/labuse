@@ -743,9 +743,10 @@ def ingest_dvf(session, insee, commune, run_id, sids) -> int:
             surface_terrain, nature_mutation, commune, geom, raw)
            VALUES (:mid, :dt, :val, :tl, :sb, :st, :nat, :com,
                    ST_SetSRID(ST_MakePoint(:lon, :lat), 4326), CAST(:raw AS jsonb))""")
-    params = [{**m, "com": commune,
+    params = [{**{k: v for k, v in m.items() if k != "n_lots"}, "com": commune,
                "raw": json.dumps({"source": "geo-dvf Etalab (data.gouv)",
-                                  "id_mutation": m["mid"], "vefa": m["vefa"]})}
+                                  "id_mutation": m["mid"], "vefa": m["vefa"],
+                                  "n_lots": m.get("n_lots", 1)})}
               for m in muts]
     session.execute(stmt, params)
     return len(params)
@@ -807,9 +808,15 @@ def _geo_dvf_aggregate(rows: list[dict]) -> list[dict]:
         if not vals or not coords:    # sans prix ou sans géolocalisation : inexploitable
             continue
         terr = next((float(r["surface_terrain"]) for r in rs if r.get("surface_terrain")), None)
+        # EXPORTS-1 (2.2, arbitrage Q8) : une mutation qui SOMME plusieurs lots n'est pas « un
+        # appartement de 750 m² » (audit A2, mutation 2025-1268771) — elle est typée 'Immeuble'
+        # (vente en bloc), n_lots tracé. Les populations appart/maison (sector_price, tendance,
+        # comparables) l'excluent par construction ; le €/m² agrégé reste juste pour l'immeuble.
+        n_lots = len(locs)
         out.append({
             "mid": mid, "dt": rs[0]["date_mutation"], "val": max(vals),
-            "tl": next(iter(types)),
+            "tl": next(iter(types)) if n_lots == 1 else "Immeuble",
+            "n_lots": n_lots,
             "sb": round(sum(float(r["surface_reelle_bati"]) for r in locs), 2),
             "st": terr, "nat": rs[0]["nature_mutation"], "insee": rs[0]["code_commune"],
             "lon": float(coords[0]), "lat": float(coords[1]),

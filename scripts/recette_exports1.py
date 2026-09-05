@@ -122,6 +122,13 @@ def verifier_temoin(idu: str, d: Path, fiche: dict) -> None:
         if re.search(r"Médiane €/m² observée,", t):
             ko(f"{idu}/{doc} : médiane locale annoncée sans sa valeur (1.5)")
 
+    # ── lot 2 : plus jamais un « appartement » à surface d'immeuble dans un tableau ──
+    for doc, t in txts.items():
+        for line in t.splitlines():
+            m2 = re.search(r"Appartement\s+(\d[\d ]*) m²", line)
+            if m2 and _num(m2.group(1)) > 200:
+                ko(f"{idu}/{doc} : « Appartement {m2.group(1)} m² » servi (agrégat multi-lots, 2.2/2.3)")
+
     # ── pt 4 : zéros ciblés ──
     # la ligne « Secteur — X : médiane — » doit porter l'étiquette secondaire à proximité
     if re.search(r"Secteur — .* : médiane — €/m²", txts.get("fiche", "")) and \

@@ -415,6 +415,16 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
             "rien": not (items or abf_note)}
 
 
+def _n_affiche_flash() -> int:
+    """EXPORTS-1 (2.4) — le nombre de comparables AFFICHÉS est un paramètre du profil
+    (dvf_profils.yaml, secteur_dossier.n_affiche), plus un `[:5]` en dur."""
+    try:
+        from .. import marche_service
+        return int(marche_service.profil_meta("secteur_dossier").get("n_affiche") or 5)
+    except Exception:  # noqa: BLE001 — config absente (base de test) → comportement historique
+        return 5
+
+
 def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     if "dvf_mutations" not in avail:
         return None
@@ -475,18 +485,14 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
            ORDER BY dm.date_mutation DESC LIMIT 15"""),
         {"idu": idu, "annees": FENETRE_MARCHE_ANNEES, "r": RAYON_MARCHE_M}).mappings().all()
     vivier = [dict(c) for c in comps]
-    _pm = [float(c["prix_m2_bati"]) for c in vivier
-           if c["prix_m2_bati"] is not None and float(c["prix_m2_bati"]) > 0]
-    _med = statistics.median(_pm) if len(_pm) >= 4 else None
-    _mad = (statistics.median([abs(x - _med) for x in _pm]) or 1e-9) if _med is not None else None
-
-    def _aberrant(c) -> bool:
-        v = c["prix_m2_bati"]
-        return (_med is not None and v is not None and float(v) > 0
-                and abs(0.6745 * (float(v) - _med) / _mad) > 3.5)
-
-    gardees = [c for c in vivier if not _aberrant(c)]
-    n_ecartees = len(vivier) - len(gardees)
+    # EXPORTS-1 (2.1) : LE filtre unique (marche_service.filtre_ventes) remplace le z-MAD local —
+    # mêmes bornes, même z-score, même seuil de vraisemblance par type que la fiche.
+    from .. import marche_service as _msvc
+    _fp = _msvc.filtre_params()
+    gardees, _ecartees = _msvc.filtre_ventes(
+        [dict(c) for c in vivier], cle_prix="prix_m2_bati", cle_type="type_local",
+        bornes=_fp["bornes"], z_mad=_fp["z_mad"], seuil_type_m2=_fp["seuil_type_m2"])
+    n_ecartees = len(_ecartees)
     # M145 B.2.3 — une surface de terrain < 10 m² est une anomalie DVF (terrain non renseigné / vente
     # de lot), pas une donnée : on ne la sert pas brute (« Maison · terrain 1 m² » muet). Le comparable
     # reste retenu (son €/m² BÂTI, lui, est valide et filtré des aberrants) — seul le terrain absurde
@@ -499,7 +505,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
                     "surface_terrain": _terr(c["surface_terrain"]),
                     "valeur_fonciere": _i(c["valeur_fonciere"]),
                     "prix_m2_bati": _i(c["prix_m2_bati"]),
-                    "mois": c["mois"]} for c in gardees[:5]]
+                    "mois": c["mois"]} for c in gardees[:_n_affiche_flash()]]
     out = {"n": int(stats["n"]), "rayon_m": RAYON_MARCHE_M, "annees": FENETRE_MARCHE_ANNEES,
            "med_m2_bati": _i(stats["med_m2_bati"]), "med_m2_terrain": _i(stats["med_m2_terrain"]),
            "comparables": comparables, "n_ecartees": n_ecartees,

@@ -32,6 +32,77 @@ def _parcel_id(db: Session, idu: str) -> int | None:
     return db.execute(text("SELECT id FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
 
 
+def filtre_ventes(ventes: list[dict], *, cle_prix: str = "prix_m2",
+                  cle_type: str | None = None,
+                  bornes: tuple[float, float] | None = (1000.0, 12000.0),
+                  z_mad: float | None = None, trim_pct: float | None = None,
+                  seuil_type_m2: dict | None = None) -> tuple[list[dict], list[dict]]:
+    """EXPORTS-1 lot 2 (2.1/2.3) — LE filtre de comparables, UNE implémentation paramétrée pour
+    les trois chemins (fiche `comparables`, flash `_marche`, `sector_price`). Renvoie
+    (gardées, écartées) — chaque écartée porte son `motif` (jamais une disparition muette).
+
+    Paramètres par profil :
+      - `bornes` : domaine €/m² de bon sens (artefacts DVF hors [1000 ; 12000]) ;
+      - `z_mad` : z-score modifié médiane/MAD (aberrance statistique, méthode flash M127-D6) ;
+      - `trim_pct` : exclusion des extrêmes en fraction (méthode sector_price SECTEUR-2 T1,
+        via `trim_extremes_5pct`) — z_mad et trim_pct sont exclusifs par profil ;
+      - `seuil_type_m2` : vraisemblance par type ({"appartement": 200}) — un « appartement »
+        de 750 m² est une mutation d'immeuble agrégée (2.2/2.3), écarté avec motif tant que
+        le ré-étiquetage d'ingestion n'a pas tourné partout."""
+    import statistics
+    gardees, ecartees = [], []
+    for v in ventes:
+        p = v.get(cle_prix)
+        if p is None:
+            gardees.append(v)
+            continue
+        p = float(p)
+        if bornes and not (bornes[0] <= p <= bornes[1]):
+            ecartees.append({**v, "motif": f"€/m² hors domaine [{int(bornes[0])} ; {int(bornes[1])}]"})
+            continue
+        if seuil_type_m2 and cle_type:
+            t = (v.get(cle_type) or "").strip().lower()
+            seuil = seuil_type_m2.get(t)
+            surf = v.get("surface_m2") or v.get("surface_reelle_bati")
+            if seuil and surf and float(surf) > float(seuil):
+                ecartees.append({**v, "motif": f"surface incompatible avec un {t} "
+                                               f"(> {int(seuil)} m²) — agrégat multi-lots probable"})
+                continue
+        gardees.append(v)
+    prix = [float(v[cle_prix]) for v in gardees if v.get(cle_prix) is not None]
+    if z_mad is not None and len(prix) >= 4:
+        med = statistics.median(prix)
+        mad = statistics.median([abs(x - med) for x in prix]) or 1e-9
+        aber_ids = {id(v) for v in gardees if v.get(cle_prix) is not None
+                    and abs(0.6745 * (float(v[cle_prix]) - med) / mad) > z_mad}
+        for v in gardees:
+            if id(v) in aber_ids:
+                ecartees.append({**v, "motif": "prix/m² aberrant (z-score médiane/MAD > "
+                                               f"{z_mad:g}) — mutation atypique probable"})
+        gardees = [v for v in gardees if id(v) not in aber_ids]
+    if trim_pct is not None and len(prix) >= 4:
+        from .faisabilite.bilan import trim_extremes_5pct
+        _kept, lo, hi = trim_extremes_5pct(prix)
+        if lo is not None:
+            aber_ids = {id(v) for v in gardees if v.get(cle_prix) is not None
+                        and not (lo <= float(v[cle_prix]) <= hi)}
+            for v in gardees:
+                if id(v) in aber_ids:
+                    ecartees.append({**v, "motif": f"extrême exclu ({trim_pct:.0%} de chaque queue)"})
+            gardees = [v for v in gardees if id(v) not in aber_ids]
+    return gardees, ecartees
+
+
+def filtre_params() -> dict:
+    """Paramètres du filtre unique, lus de config/dvf_profils.yaml (bloc `filtre_comparables`)."""
+    doc = (_profils_doc().get("filtre_comparables") or {})
+    return {"bornes": (float(doc.get("borne_min_eur_m2", 1000)),
+                       float(doc.get("borne_max_eur_m2", 12000))),
+            "z_mad": float(doc.get("z_mad_max", 3.5)),
+            "seuil_type_m2": {str(k).lower(): float(v)
+                              for k, v in (doc.get("seuil_type_m2") or {"appartement": 200}).items()}}
+
+
 def phrase_prix_ancien(sp: dict | None) -> str | None:
     """EXPORTS-1 (1.3) — LA phrase client du prix de l'ancien (`sector_price` parcelle), avec n,
     rayon EFFECTIF et période imprimés. Point de formulation UNIQUE partagé par la fiche PDF, le
@@ -171,9 +242,10 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
     rayon_m = float(meta.get("rayon_m") or 500.0)
     fenetre_ans = int(meta.get("fenetre_ans") or 3)
     seuil = int(meta.get("seuil_effectif") or 8)
+    n_affiche = int(meta.get("n_affiche") or 12)   # EXPORTS-1 (2.4) : paramètre du profil
     rows = db.execute(text(
         "WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu) "
-        "SELECT to_char(dm.date_mutation, 'YYYY-MM-DD') AS date, "
+        "SELECT to_char(dm.date_mutation, 'YYYY-MM-DD') AS date, dm.type_local, "
         "  round(ST_Distance(ST_Transform(dm.geom, 2975), p.geom_2975))::int AS distance_m, "
         "  round(dm.surface_reelle_bati)::int AS surface_m2, "
         "  round(dm.valeur_fonciere)::int AS prix_eur, "
@@ -184,11 +256,20 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
         "  AND dm.nature_mutation ILIKE 'vente%' AND dm.valeur_fonciere > 0 "
         "  AND dm.surface_reelle_bati >= 20 "
         "  AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r) "
-        "ORDER BY dm.date_mutation DESC LIMIT 12"),
+        "ORDER BY dm.date_mutation DESC LIMIT 60"),
         {"idu": idu, "ans": fenetre_ans, "r": rayon_m}).mappings().all()
-    n = len(rows)
+    # EXPORTS-1 (2.1) : le chemin SANS filtre de la fiche disparaît — mêmes gardes que le
+    # dossier (bornes + z-MAD + vraisemblance par type), écartées comptées avec motif.
+    fp = filtre_params()
+    gardees, ecartees = filtre_ventes([dict(r) for r in rows], cle_prix="prix_m2",
+                                      cle_type="type_local", bornes=fp["bornes"],
+                                      z_mad=fp["z_mad"], seuil_type_m2=fp["seuil_type_m2"])
+    montrees = gardees[:n_affiche]
+    n = len(montrees)
     return {"rayon_m": int(rayon_m), "fenetre_ans": fenetre_ans, "n": n,
-            "comparables": [dict(r) for r in rows],
+            "n_retenues": len(gardees), "n_ecartees": len(ecartees), "n_affiche": n_affiche,
+            "ecartees_motifs": sorted({e["motif"] for e in ecartees}),
+            "comparables": montrees,
             "seuil_effectif": seuil, "effectif_suffisant": n >= seuil,   # sous le seuil : « échantillon insuffisant »
             "grandeur": meta.get("grandeur"), "question": meta.get("question"),
             "reserve": reserve_methode()}

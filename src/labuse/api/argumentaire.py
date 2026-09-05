@@ -104,32 +104,39 @@ def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
 # ───────────────────────── dataviz C9 (SVG inline, DA existante) ─────────────────────────
 
 def _svg_bande_points(prix: dict) -> str:
-    """C9 — les ventes DVF en BANDE DE POINTS : chaque vente retenue = un point (aucune
-    agrégation nouvelle), médiane marquée. Inter, vert LABUSE, fond clair — DA existante."""
+    """C9 — les ventes DVF en BANDE DE POINTS : chaque vente retenue = un point vert, médiane
+    marquée. EXPORTS-1 (2.5) : les ventes ÉCARTÉES par le filtre sont dessinées GRISÉES sur la
+    même bande (retenues ET écartées — la méthode se voit, rien ne disparaît en silence).
+    Fonction réutilisable : ne lit que `prix_points` / `prix_points_ecartes` / `median`."""
     pts = prix.get("prix_points") or []
+    ecartes = prix.get("prix_points_ecartes") or []
     if len(pts) < 5:
         return ""
-    lo, hi = min(pts), max(pts)
+    lo, hi = min(pts + ecartes), max(pts + ecartes)
     if hi <= lo:
         return ""
     W, H, PAD = 640, 74, 34
     x = lambda v: PAD + (W - 2 * PAD) * (v - lo) / (hi - lo)  # noqa: E731
     med = prix.get("median")
+    cercles_ecartes = "".join(
+        f"<circle cx='{x(v):.1f}' cy='40' r='3.2' fill='#9AA6A0' fill-opacity='0.4'/>" for v in ecartes)
     cercles = "".join(
         f"<circle cx='{x(v):.1f}' cy='40' r='3.2' fill='#1E9E58' fill-opacity='0.45'/>" for v in pts)
     med_svg = (f"<line x1='{x(med):.1f}' y1='16' x2='{x(med):.1f}' y2='58' stroke='#111814' "
                f"stroke-width='1.6'/>"
                f"<text x='{x(med):.1f}' y='12' text-anchor='middle' font-family='Inter' "
                f"font-size='10' fill='#111814'>médiane {med} €/m²</text>") if med else ""
+    note_ecartes = (f", {len(ecartes)} écartée{'s' if len(ecartes) > 1 else ''} par le filtre "
+                    f"— points gris" if ecartes else "")
     return (f"<svg width='{W}' height='{H}' viewBox='0 0 {W} {H}' "
             f"style='background:#F4F8F6;border-radius:6px'>"
             f"<line x1='{PAD}' y1='40' x2='{W - PAD}' y2='40' stroke='#D8E2DC' stroke-width='1'/>"
-            f"{cercles}{med_svg}"
+            f"{cercles_ecartes}{cercles}{med_svg}"
             f"<text x='{PAD}' y='68' font-family='Inter' font-size='9' fill='#5F6C65'>{lo} €/m²</text>"
             f"<text x='{W - PAD}' y='68' text-anchor='end' font-family='Inter' font-size='9' "
             f"fill='#5F6C65'>{hi} €/m²</text></svg>"
-            f"<p class='note'>Chaque point est une vente DVF retenue dans le comparable "
-            f"({len(pts)} ventes) — aucune vente n'est fabriquée ni lissée.</p>")
+            f"<p class='note'>Chaque point vert est une vente DVF retenue dans le comparable "
+            f"({len(pts)} ventes{note_ecartes}) — aucune vente n'est fabriquée ni lissée.</p>")
 
 
 def _svg_cascade(calc: dict) -> str:
