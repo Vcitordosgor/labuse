@@ -351,6 +351,15 @@ def passer(db, *, source_ids=None, forcer: bool = False, http=None, notifier: bo
 #: Les DOUBLONS amont (Cadastre Etalab bulk ≡ PCI, RGE ALTI 5 m ≡ RGE ALTI) ne sont PAS re-semés : ils
 #: sont couverts par la veille de leur canonique (l'alerte vaut pour les deux). Cf. SENTINELLE-INVENTAIRE.md.
 SEED: list[dict] = [
+    # ── RETOURS-13 R4/R5 — réseaux et TCSP. EDF : le portail Koumoul n'expose pas de JSON de
+    #    version simple → en-tête du fichier data-fair (change quand EDF republie). Réunion
+    #    Express : la carte des hypothèses de tracé (landweb3d) — un changement d'en-tête dit
+    #    « la Région a mis à jour la carte » (le tracé bougera après le débat, clôture 26/11/2026).
+    {"name": "EDF Réunion — lignes moyenne tension HTA (open data)", "methode": "entete",
+     "url": ("https://opendata-reunion.edf.fr/data-fair/api/v1/datasets/"
+             "lihub-72mnuv47c249qzvlhv/data-files/lignes-haute-tension-hta-aerien.csv")},
+    {"name": "Réunion Express — hypothèses de tracé (débat public CNDP)", "methode": "entete",
+     "url": "https://client.landweb3d.com/cr-reunion/Reunion-Express_PC/index_jaune.html"},
     # ── Famille IGN Géoplateforme : jeu data.gouv officiel du produit → `last_update` (même amont IGN
     #    que les couches servies en WFS). Débloque 8 sources d'un coup (X2, gisement principal). ──
     {"name": "Cadastre (API Carto PCI)", "methode": "api",

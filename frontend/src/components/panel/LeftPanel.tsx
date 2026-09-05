@@ -101,12 +101,12 @@ export function ScoringExplainer({ onClose }: { onClose: () => void }) {
 //  9. anru            — périmètres de renouvellement, de niche
 // 10. cinquante_pas   — bande littorale, la plus rare (communes côtières uniquement)
 const LAYERS: { key: keyof LayerToggles; label: string }[] = [
-  // RETOURS-12 C4 — décision par la mesure : « Parcelles » (aplat) et « Limites parcelles » (contour)
-  // sont DISTINCTES et non redondantes avec le fond (le contour cadastral n'est PAS toujours présent —
-  // absent sur ortho/sombre). L'impression « ne sert à rien » venait du label nu « Parcelles » : en mode
-  // neutre l'aplat est discret ; sa valeur (la couleur du CLASSEMENT LABUSE) n'était pas dite. On renomme
-  // pour la rendre évidente, on ne retire pas.
-  { key: 'parcelles', label: 'Parcelles — classement LABUSE' },
+  // RETOURS-13 R2 — décision PAR LA CAPTURE (captures/R2-*-seule.png) : cochée seule, « Parcelles —
+  // classement LABUSE » ne montre RIEN de lisible en mode neutre (la trame cadastrale quasi éteinte —
+  // les couleurs du classement n'apparaissent qu'en mode ANALYSE, indépendamment de cette case).
+  // La différence avec « Limites parcelles » n'est pas évidente à l'œil en 2 s → la case SORT du menu
+  // (demande Vic). La clé de store `parcelles` est CONSERVÉE (défaut true) : l'aplat du classement en
+  // mode analyse et la trame neutre de fond continuent de fonctionner — même patron que M62-P1 (g).
   { key: 'limites', label: 'Limites parcelles (contour cadastral)' },
   // M62-P1 (g) : les toggles « Verdict — toute l'île » (couleurs_verdict) et « Renouvellement »
   // (renouv) sont RETIRÉS du panneau (P5, diagnostic P0-3 : sûr — OFF par défaut, seuls setters =
@@ -134,12 +134,15 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'znieff', label: 'ZNIEFF — patrimoine naturel' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
-  // M106 P4 : transport public (tracés + pôles + téléphérique) et lignes HT (contrainte)
-  { key: 'transport', label: 'Transport public' },
-  // RETOURS-12 C2 — l'axe de transport structurant (BAOBAB Express, CINOR) : couche dédiée.
-  { key: 'tcsp', label: 'Axe structurant (BAOBAB Express)' },
+  // RETOURS-13 R3 — groupe « Réseaux » : entrées nommées EN CLAIR (demande Vic — « où sont
+  // passées les couches que j'avais demandé d'ajouter ?? »). BAOBAB seul est retiré (R5) :
+  // `tcsp` = la vraie couche Transport en commun en site propre (OSM en service + stations).
+  { key: 'transport', label: 'Transport public (lignes de bus)' },
+  { key: 'arrets', label: 'Arrêts de transport en commun' },
+  { key: 'tcsp', label: 'Transport en commun en site propre' },
   { key: 'axes', label: 'Axes structurants' },
-  { key: 'lignes_ht', label: 'Lignes haute tension' },
+  { key: 'lignes_ht', label: 'Lignes haute tension (HTB)' },
+  { key: 'lignes_mt', label: 'Lignes moyenne tension (HTA)' },
   // M134 — couche « Dispositifs et périmètres ». Jamais un sigle nu : chaque libellé développe.
   { key: 'qpv', label: 'QPV — quartier prioritaire' },
   { key: 'tva_primo', label: 'TVA réduite primo-accédant (QPV + 500 m)' },
@@ -155,15 +158,16 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 // regroupement visuel est ajouté. M62-P1 (g) : la famille « L'analyse LABUSE » (couleurs_verdict +
 // renouv) est retirée ; les 10 clés restantes sont couvertes une et une seule fois.
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
-  { famille: 'Le fond', keys: ['parcelles', 'limites', 'communes'] },
+  { famille: 'Le fond', keys: ['limites', 'communes'] },   // R2 : 'parcelles' retirée (décision par capture)
   // RETOURS-11 C5 — `zonage` (GPU brut) redevient une couche de premier niveau, à côté de la calibrée.
   { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
   // RETOURS-11 C2 (g) — les ÉQUIPEMENTS ne sont pas des risques : ils quittent « Risques et protections »
   // pour leur propre famille (OSM + INSEE BPE, étiquetés par source).
   { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas'] },
   { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
-  // M106 P4 — nouvelle famille : l'accès (transport) et les réseaux contraignants (HT)
-  { famille: 'Accès et réseaux', keys: ['transport', 'tcsp', 'axes', 'lignes_ht'] },
+  // RETOURS-13 R3 — la famille s'appelle « Réseaux » (demande Vic) : transport public, arrêts,
+  // TCSP, axes, HTB, HTA — chaque entrée avec son « i » (source, millésime, couverture).
+  { famille: 'Réseaux', keys: ['transport', 'arrets', 'tcsp', 'axes', 'lignes_ht', 'lignes_mt'] },
   // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
   // fiscaux à la maille COMMUNE (ZFANG, FRR). L'ANRU quitte « Risques » pour ici (un seul endroit).
   { famille: 'Dispositifs et périmètres', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr'] },

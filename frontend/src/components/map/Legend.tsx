@@ -145,12 +145,24 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   ;(['alea_inondation', 'alea_mvt'] as const).forEach((k) => { if (layers[k]) groupes.push({
     id: k, titre: k === 'alea_inondation' ? 'Aléa inondation' : 'Aléa mouvement de terrain',
     note: `DEAL Réunion — cartographie des aléas (exposition au phénomène, pas la règle du PPR)${fmtFraich(aleaQ)}`,
-    /* RETOURS-12 C3 — légende par TRANCHES NOMMÉES à teintes distinctes (plus le camaïeu d'opacité) :
-       la couleur ordonne les niveaux (bleu→orange→rouge / beige→marron→rouge), le libellé officiel reste. */
-    body: <div data-legend-alea={k} className="flex items-center gap-2">{(['faible', 'moyen', 'fort'] as const).map((n) => {
-      const ramp = k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp
-      return <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: ramp[n], borderColor: ramp[n] }} /><span className="text-[10.5px] text-txt-dim">{n}</span></span>
-    })}</div>,
+    /* RETOURS-13 R6 — la légende suit les CLASSES RÉELLEMENT SERVIES par le flux (dérivées des
+       données à l'écran, jamais promises d'avance) : inondation faible/moyen/fort ; mouvement de
+       terrain faible/moyen/élevé/très élevé — la classe LA PLUS GRAVE est ROUGE. */
+    body: (() => {
+      const sub = k === 'alea_inondation' ? 'inondation' : 'mouvement_terrain'
+      const ramp = (k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp) as unknown as Record<string, string>
+      const ORDRE = ['faible', 'moyen', 'fort', 'eleve', 'tres_eleve'] as const
+      const LAB: Record<string, string> = { faible: 'faible', moyen: 'moyen', fort: 'fort', eleve: 'élevé', tres_eleve: 'très élevé' }
+      const servies = new Set((aleaQ.data?.features ?? [])
+        .filter((f) => (f.properties as { subtype?: string }).subtype === sub)
+        .map((f) => String((f.properties as { classe?: string; niveau?: string }).classe
+          ?? (f.properties as { niveau?: string }).niveau ?? '')))
+      const classes = ORDRE.filter((c) => servies.has(c))
+      const shown = classes.length ? classes : (['faible', 'moyen', 'fort'] as unknown as typeof classes)
+      return <div data-legend-alea={k} className="flex flex-wrap items-center gap-2">{shown.map((n) => (
+        <span key={n} className="flex items-center gap-1"><span className="h-2.5 w-4 rounded-sm border" style={{ background: ramp[n], borderColor: ramp[n] }} /><span className="text-[10.5px] text-txt-dim">{LAB[n]}</span></span>
+      ))}</div>
+    })(),
   }) })
   if (layers.transport) groupes.push({
     id: 'transport', titre: 'Transport public',
@@ -159,8 +171,13 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       {([['Car Jaune', 'cars interurbains (Région)'], ['Citalis', 'bus du Nord (CINOR) — et le téléphérique Papang, en tireté'], ["Kar'Ouest", 'bus de l’Ouest (TCO)'], ['Alternéo', 'bus du Sud-Ouest (CIVIS)'], ['Estival', 'bus de l’Est (CIREST)'], ['Carsud', 'bus du Sud (CASUD)']] as const).map(([r, d]) => (
         <span key={r} className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0 rounded" style={{ background: tTheme.transportReseaux[r] }} /><span><b>{r}</b> — {d}</span></span>
       ))}
-      <span className="mt-1 flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-txt-mut" />arrêt (visible en zoomant)</span>
     </div>,
+  })
+  // RETOURS-13 R3/R9 — les arrêts ont leur entrée (et leur légende) dédiées, cliquables.
+  if (layers.arrets) groupes.push({
+    id: 'arrets', titre: 'Arrêts de transport en commun',
+    note: 'Les 9 956 quais des 7 réseaux (GTFS officiels, Licence Ouverte). Visibles à partir du zoom quartier ; couleur = réseau. Cliquez un arrêt : nom, ligne(s), réseau.',
+    body: <div data-legend-arrets className="flex items-center gap-2"><span className="h-2 w-2 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.transportReseaux['Citalis'] }} /><span className="text-[11px] text-txt">arrêt (cliquable — visible en zoomant)</span></div>,
   })
   if (layers.axes) groupes.push({
     id: 'axes', titre: 'Axes structurants',
@@ -172,14 +189,27 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     </div>,
   })
   if (layers.lignes_ht) groupes.push({
-    id: 'ht', titre: 'Lignes haute tension',
+    id: 'ht', titre: 'Lignes haute tension (HTB)',
     note: `Contrainte potentielle (servitudes, reculs) — la servitude I4 n'est pas en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI). BD TOPO IGN (Licence Ouverte)${fmtFraich(htQ)}`,
-    body: <div data-legend-ht className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} /><span className="text-[11px] text-txt">Lignes haute tension (aériennes, tension indiquée)</span></div>,
+    body: <div data-legend-ht className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.ht }} /><span className="text-[11px] text-txt">Réseau de transport 63/90 kV (aérien, tension indiquée)</span></div>,
   })
+  // RETOURS-13 R4 — moyenne tension HTA (EDF open data) : tracé indicatif, jamais une DT-DICT.
+  if (layers.lignes_mt) groupes.push({
+    id: 'mt', titre: 'Lignes moyenne tension (HTA)',
+    note: 'Réseau de distribution HTA (~15-20 kV) — EDF Réunion open data, Licence Ouverte 2.0, géométrie ~02/2020 (republiée 16/10/2025). Tracé INDICATIF (contenu réduit par EDF pour sécurité publique) : ne remplace pas une DT-DICT avant travaux.',
+    body: <div data-legend-mt className="flex flex-col gap-1 text-[11px] text-txt">
+      <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: tTheme.mt }} />HTA aérien &amp; souterrain (tireté fin)</span>
+    </div>,
+  })
+  // RETOURS-13 R5 — la vraie couche TCSP : site propre / couloir / stations, états dits.
   if (layers.tcsp) groupes.push({
-    id: 'tcsp', titre: 'Axe de transport structurant',
-    note: 'BAOBAB Express (Citalis / CINOR) — desserte rapide EN SERVICE, corridor Saint-Denis ↔ Sainte-Marie. Source : GTFS (Licence Ouverte). À moins de 500 m, le règlement PEUT moduler l’exigence de stationnement — à vérifier au PLU (jamais promis).',
-    body: <div data-legend-tcsp className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} /><span className="text-[11px] text-txt">BAOBAB Express (axe structurant en service)</span></div>,
+    id: 'tcsp', titre: 'Transport en commun en site propre',
+    note: 'EN SERVICE : voies bus dédiées relevées dans OpenStreetMap (ODbL). À moins de 800 m d’une STATION, le PLU ne peut pas exiger plus d’1 place de stationnement par logement (0,5 en logement social), si la qualité de la desserte le permet — art. L151-36 (loi du 26/11/2025). EN TRAVAUX (Rico Carpaye, ESTI+) et EN PROJET (Réunion Express — débat public jusqu’au 26/11/2026) : aucun tracé public exploitable, rien n’est dessiné à la main.',
+    body: <div data-legend-tcsp className="flex flex-col gap-1 text-[11px] text-txt">
+      <span className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} />voie en site propre (en service)</span>
+      <span className="flex items-center gap-2"><span className="h-0.5 w-4 rounded opacity-75" style={{ background: tTheme.tcsp }} />couloir bus (pas un site propre au sens L151-36)</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.tcsp }} />station desservie (dérivée des arrêts GTFS)</span>
+    </div>,
   })
   if (dispoActif) groupes.push({
     id: 'dispositifs', titre: 'Dispositifs et périmètres',

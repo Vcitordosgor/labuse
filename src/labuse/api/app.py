@@ -3726,19 +3726,21 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
         tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
         ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
-        # RETOURS-12 C2 — distance à l'AXE DE TRANSPORT STRUCTURANT : la ligne BAOBAB Express
-        # (Citalis/CINOR), desserte rapide EN SERVICE (GTFS, route_id 'BAO' — déjà en base). On mesure
-        # la distance à l'AXE (transport_ligne, route_id=BAO), pas à un arrêt de bus quelconque : c'est
-        # l'axe structurant qui ouvre la modulation possible du stationnement. Seuil de pertinence 1,5 km.
-        tcsp_m = db.execute(text(
-            "SELECT round(MIN(ST_Distance(l.geom_2975, p.geom_2975)))::int AS d "
-            "FROM spatial_layers l, parcels p "
-            "WHERE p.idu = :idu AND l.kind = 'transport_ligne' AND l.attrs->>'route_id' = 'BAO' "
-            "AND l.geom_2975 IS NOT NULL"), {"idu": idu}).scalar()
+        # RETOURS-13 R5 — le fait BAOBAB (distance à l'axe, seuil 500 m) est REMPLACÉ : la distance
+        # se mesure À LA STATION TCSP EN SERVICE la plus proche (kind tcsp_station — arrêts GTFS sur
+        # une voie bus en site propre OSM), À VOL D'OISEAU (Conseil d'État 2022), jamais au tracé ni
+        # par la voirie. Seuil légal : 800 m (art. L151-36 c. urb., loi n° 2025-1129 du 26/11/2025,
+        # art. 20 — vérifié sur Légifrance le 05/09/2026). Seuil de pertinence d'affichage : 1,5 km.
+        tcsp_row = db.execute(text(
+            "SELECT s.name AS nom, round(ST_Distance(s.geom::geography, p.geom::geography))::int AS d "
+            "FROM spatial_layers s, parcels p "
+            "WHERE p.idu = :idu AND s.kind = 'tcsp_station' "
+            "ORDER BY s.geom <-> p.geom LIMIT 1"), {"idu": idu}).mappings().first()
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites")   # M125 — panne ≠ absence
-    tcsp = {"distance_m": tcsp_m} if (tcsp_m is not None and tcsp_m <= 1500) else None
+    tcsp = (dict(tcsp_row) if (tcsp_row and tcsp_row["d"] is not None and tcsp_row["d"] <= 1500)
+            else None)
     if not any((arret, pole, tele, ht, tcsp)):
         return None
     out: dict = {}
@@ -3803,20 +3805,26 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
             "source": "BD TOPO IGN (aérien seul — le souterrain n'y figure pas)",
         }
     if tcsp:
-        d = tcsp["distance_m"]
-        proche = d <= 500
-        # RETOURS-12 C2 — FORMULATION PRUDENTE : on ne PROMET jamais une réduction de stationnement ;
-        # on signale le point à instruire, en renvoyant au PLU (zone lue par le module destinations).
+        d = tcsp["d"]
+        proche = d <= 800
+        # RETOURS-13 R5 — le plafond de l'art. L151-36 S'IMPOSE au PLU (« nonobstant toute
+        # disposition du plan local d'urbanisme ») : ce n'est pas une faculté. Ce qui reste à
+        # instruire : la QUALITÉ DE LA DESSERTE (condition du texte) et la nature exacte de
+        # l'aménagement (BHNS/site propre oui ; un simple couloir bus ne déclenche jamais ce fait —
+        # les stations dérivées ne couvrent que les voies en site propre).
         out["tcsp"] = {
-            "distance_m": d, "sous_500m": proche,
+            "station": tcsp["nom"], "distance_m": d, "sous_800m": proche,
             "libelle": (
-                "Axe de transport structurant — BAOBAB Express (Citalis / CINOR, ligne express en service) "
-                + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m")
-                + (" : à moins de 500 m d'un axe de transport structurant, le règlement de la zone PEUT "
-                   "moduler l'exigence de stationnement — à vérifier dans le PLU (règles de la zone). "
-                   "Rien n'est promis : c'est un point à instruire." if proche
-                   else ".")),
-            "source": "GTFS Citalis (CINOR) — Licence Ouverte (Point d'Accès National)",
+                f"Station de transport collectif en site propre « {tcsp['nom']} » "
+                + ("au contact de la parcelle" if d <= 5 else f"à ~{d} m (à vol d'oiseau)")
+                + (" — à moins de 800 m d'une station de transport collectif en site propre, le PLU "
+                   "ne peut pas exiger plus d'1 place de stationnement par logement (0,5 pour le "
+                   "logement locatif social), si la qualité de la desserte le permet "
+                   "(art. L151-36 et L151-35 du code de l'urbanisme, loi n° 2025-1129 du "
+                   "26/11/2025). Le plafond s'impose au PLU ; reste à instruire la qualité de la "
+                   "desserte." if proche else ".")),
+            "source": ("stations dérivées : arrêts GTFS sur voie bus en site propre (OSM, ODbL) — "
+                       "distance à vol d'oiseau depuis la station (CE 2022)"),
         }
     return out
 
@@ -4542,10 +4550,12 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # SECTEUR-2 (T4) — prix du logement NEUF (VEFA acté DVF) en aplat COMMUNE ; subtype =
                     # tranche de prix (choropleth). ECLN écartée (métropole seule, N/A DOM) → jamais de stock.
                     "vefa_neuf",
-                    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT : synthétique (pas un kind stocké),
-                    # dérivé de transport_ligne WHERE route_id='BAO' (BAOBAB Express, Citalis/CINOR). Voir
-                    # le cas particulier dans map_layers_geojson (jamais d'ingestion neuve : réutilise le GTFS).
-                    "tcsp_axe"}
+                    # RETOURS-13 R5 — la couche BAOBAB (tcsp_axe synthétique) est RETIRÉE (décision
+                    # Vic : « je veux la couche TCSP, pas la ligne BAOBAB »). À la place : les
+                    # tronçons en site propre (OSM) et les stations dérivées (arrêts GTFS ≤ 60 m).
+                    "tcsp_troncon", "tcsp_station",
+                    # RETOURS-13 R4 — moyenne tension EDF (HTA aérien/souterrain, open data retrouvé).
+                    "ligne_mt"}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
@@ -4567,22 +4577,8 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
     if kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
-    # RETOURS-12 C2 — AXE DE TRANSPORT STRUCTURANT (couche synthétique) : le tracé de la ligne
-    # express BAOBAB (Citalis/CINOR), dérivé du GTFS déjà en base (transport_ligne, route_id='BAO').
-    # Aucune ingestion neuve → aucune traçabilité à recréer : on réutilise la source GTFS existante.
-    if kind == "tcsp_axe":
-        rows = db.execute(text(
-            "SELECT sl.id, sl.name, sl.attrs->>'reseau' AS reseau, sl.attrs->>'gtfs_maj' AS maj, "
-            "ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0001)) AS g "
-            "FROM spatial_layers sl WHERE sl.kind='transport_ligne' AND sl.attrs->>'route_id'='BAO'"
-        )).mappings().all()
-        feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
-                  "properties": {"id": r["id"], "name": "BAOBAB Express", "reseau": r["reseau"],
-                                 "subtype": "axe_structurant"}}
-                 for r in rows if r["g"]]
-        maj = rows[0]["maj"] if rows else None
-        return {"type": "FeatureCollection", "features": feats,
-                "millesime_integration": maj, "source_millesime": maj}
+    # RETOURS-13 R5 — la couche synthétique BAOBAB (tcsp_axe) est retirée : le TCSP est désormais
+    # servi par les kinds STOCKÉS tcsp_troncon/tcsp_station (ingestion transport_reseaux.ingest_tcsp).
     # CONNEXIONS-2 Lot 6.3 (propagation M2) — si la SOURCE de cette couche est DÉSACTIVÉE au dashboard,
     # on sert une couche VIDE marquée « source désactivée » plutôt que des objets d'une source coupée.
     ds_off = db.execute(text(
@@ -4595,6 +4591,8 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                 "source_millesime": None}
     rows = db.execute(text(
         """SELECT sl.id, sl.subtype, sl.name, sl.attrs->>'niveau' AS niveau,
+                  sl.attrs->>'classe' AS classe, sl.attrs->>'etat' AS etat,
+                  sl.attrs->'lignes_noms' AS lignes_noms, sl.attrs->>'reseau' AS reseau,
                   sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
                   sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
@@ -4615,9 +4613,13 @@ def map_layers_geojson(kind: str, commune: str | None = None,
          "sport_keep": _SPORT_KEEP_RE, "sport_drop": _SPORT_DROP_RE}).mappings().all()
     # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
     # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.
+    # RETOURS-13 : + `classe` (R6, classe d'affichage des aléas — le degré réel, jamais écrasé),
+    # `etat` (R5, tcsp en_service), `lignes_noms`/`reseau` (R9, bulle d'arrêt : nom + lignes + réseau).
     feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
               "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"],
-                             "niveau": r["niveau"], "critere": r["critere"],
+                             "niveau": r["niveau"], "classe": r["classe"], "etat": r["etat"],
+                             "lignes_noms": r["lignes_noms"], "reseau": r["reseau"],
+                             "critere": r["critere"],
                              "concordance": r["concordance"], "tension": r["tension"],
                              "nature": r["nature"]}}
              for r in rows if r["g"]]

@@ -542,6 +542,55 @@ SOURCES: list[dict] = [
                          "gtfs_seul) ; telepherique = le Papang EN SERVICE seul (gondola + "
                          "stations) — la ligne 2 « Zèl La Montagne » (2029) est EXCLUE : aucun "
                          "tracé publié, l'OSM proposed est une anticipation de contributeur."),
+    # RETOURS-13 R4 — la MOYENNE TENSION (HTA) retrouvée sur le portail EDF Réunion refondu
+    # (Koumoul/data-fair — l'ancien portail ODS répond 404/410, d'où le constat erroné de C1
+    # « couches retirées »). Les POSTES SOURCES, eux, sont bien VIDÉS (0 enregistrement,
+    # 24/12/2025, « sécurité publique ») : pas de couche postes, l'absence est dite.
+    dict(name="EDF Réunion — lignes moyenne tension HTA (open data)", category="acces",
+         provider="EDF SEI — open data La Réunion (portail Koumoul)",
+         access_type="CSV data-fair (GeoJSON)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://opendata-reunion.edf.fr/datasets/lignes-haute-tension-hta-aerien-run",
+         endpoint_url="https://opendata-reunion.edf.fr/datasets/lignes-haute-tension-hta-aerien-run",
+         source_millesime="EDF géométrie ~02/2020 · publié 16/10/2025",
+         legal_notes="Licence Ouverte v2.0 — attribution : « Source : EDF, open data La Réunion ». "
+                     "Données publiées « à titre purement indicatif », contenu réduit pour raison "
+                     "de sécurité publique (mention du portail).",
+         technical_notes="kind='ligne_mt' (subtype aérien 4 211 / souterrain 15 269 tronçons). "
+                         "HTA = MOYENNE tension de distribution (15-20 kV) dans le vocabulaire "
+                         "EDF — distinct de la HTB (ligne_ht, BD TOPO). Champs servis : statut + "
+                         "géométrie SEULS (ni tension exacte ni nom de départ). Tracé indicatif : "
+                         "ne remplace pas une DT-DICT. Postes sources : jeu VIDÉ au 24/12/2025."),
+    # RETOURS-13 R5 — TCSP « en service » : OSM (voies bus), faute de toute source SIG publique
+    # (recherche du 05/09/2026 : PEIGEO 0, Région 0, EPCI 0, transecoexpress.re injoignable).
+    dict(name="TCSP — voies bus en site propre (OSM)", category="acces",
+         provider="OpenStreetMap", access_type="Overpass/GeoJSON", status=S.CONNECTE,
+         reliability_level=R.A_CONFIRMER,
+         documentation_url="https://wiki.openstreetmap.org/wiki/Tag:highway%3Dbusway",
+         endpoint_url="https://overpass-api.de/api/interpreter",
+         legal_notes="ODbL 1.0 — attribution : « © les contributeurs d'OpenStreetMap ».",
+         technical_notes="kind='tcsp_troncon' : subtype='site_propre' (highway=busway, chaussée "
+                         "dédiée) vs 'couloir' (busway=lane, lanes:psv — PAS un site propre "
+                         "L151-36, jamais de drapeau stationnement). kind='tcsp_station' (Dérivé) : "
+                         "grappes d'arrêts GTFS à ≤ 60 m d'un tronçon en site propre — le drapeau "
+                         "fiche < 800 m (art. L151-36, loi 2025-1129 du 26/11/2025) se mesure à la "
+                         "STATION à vol d'oiseau (CE 2022), jamais au tracé. EN TRAVAUX (Rico "
+                         "Carpaye, ESTI+) et EN PROJET (Réunion Express, débat public 19/08→"
+                         "26/11/2026) : aucune géométrie publique — dits au « i », jamais dessinés."),
+    # RETOURS-13 R5 — le tracé du RÉUNION EXPRESS n'existe qu'en carte interactive de débat
+    # public (aucun export SIG) : source « à venir », suivie par la sentinelle — le tracé
+    # bougera après le débat (clôture 26/11/2026).
+    dict(name="Réunion Express — hypothèses de tracé (débat public CNDP)", category="acces",
+         provider="Région Réunion / CNDP", access_type="carte interactive (pas de SIG)",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         documentation_url="https://www.debatpublic.fr/projet-train-reunion-express",
+         endpoint_url="https://www.debatpublic.fr/projet-train-reunion-express",
+         legal_notes="Hypothèses de tracé et zones de variantes présentées au débat public "
+                     "(19/08 → 26/11/2026) — document d'intention, pas une donnée opposable.",
+         technical_notes="Tram-train ~140 km, 25 gares, Saint-Benoît → Saint-Joseph ; phase 1 "
+                         "Saint-Benoît–Saint-Paul visée 2035. Carte interactive : "
+                         "client.landweb3d.com/cr-reunion/Reunion-Express_PC (viewer 3D, pas de "
+                         "données téléchargeables). RIEN N'EST INGÉRÉ (on ne numérise pas une "
+                         "image) ; à ré-ouvrir après le débat si la Région publie un SIG."),
     dict(name="ZFANG — zone franche d'activité nouvelle génération (Légifrance)", category="fiscal",
          provider="Légifrance / DGOM", access_type="seed CSV (texte réglementaire)", status=S.CONNECTE,
          reliability_level=R.VERIFIE,
