@@ -51,7 +51,9 @@ def test_hors_registre_ne_reste_que_le_decor():
 def test_couches_et_fonds_tous_declares():
     couches = [rid for rid, r in registre.ROBINETS.items() if r.categorie == "couche"]
     fonds = [rid for rid, r in registre.ROBINETS.items() if r.categorie == "fond"]
-    assert len(couches) == 16 and len(fonds) == 10
+    # 16 de l'inventaire CIRCUIT-0 + 4 attrapées au lot 5 (ppr, parc national, limites, communes
+    # — affichées par le panneau mais absentes de robinets.csv : 0 donnée externe hors registre)
+    assert len(couches) == 20 and len(fonds) == 10
     # chaque robinet couche sert au moins une donnée de type couche
     for rid in couches:
         types = {DONNEES[cid].type for cid in registre.ROBINETS[rid].chiffres}

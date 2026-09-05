@@ -1694,7 +1694,8 @@ def admin_circuit(request: Request) -> dict:
         # ── fuites ouvertes + eau ancienne + dernier contrôle (lot 4) ──
         try:
             fuites = [dict(x) for x in c.execute(text(
-                "SELECT chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b, cause, depuis"
+                "SELECT chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b, cause, depuis,"
+                "       COALESCE(type, 'nombre') AS type"
                 " FROM circuit_ecarts WHERE statut = 'ouvert' ORDER BY depuis DESC")).mappings()]
             soldes = c.execute(text(
                 "SELECT count(*) FROM circuit_ecarts WHERE statut = 'solde'")).scalar() or 0
@@ -1724,9 +1725,15 @@ def admin_circuit(request: Request) -> dict:
 
     # ── robinets / chiffres / arêtes : LE REGISTRE (le code est la vérité) ──
     aretes = registre.aretes()
+    # lot 5.1 — chaque donnée porte son TYPE et son tampon de fabrication (table, fabrication,
+    # domaine, réservoirs, en_attente) : la fiche du bas groupe par type, une couche montre
+    # d'où viennent ses tuiles.
     chiffres = {cid: {"libelle": ch.libelle, "unite": ch.unite, "niveau": ch.niveau,
                       "moteur": ch.moteur, "portee": ch.portee, "calcul": ch.calcul,
-                      "definition": ch.definition}
+                      "definition": ch.definition, "type": ch.type, "table": ch.table,
+                      "fabrication": ch.fabrication,
+                      "domaine": list(ch.domaine) if ch.domaine else None,
+                      "reservoirs": list(ch.reservoirs), "en_attente": ch.en_attente}
                 for cid, ch in CHIFFRES.items()}
     robinets = [{"id": rid, "categorie": r.categorie, "nom": r.nom, "parent": r.parent,
                  "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre}
@@ -1740,6 +1747,9 @@ def admin_circuit(request: Request) -> dict:
         "vannes": sum(1 for r in reservoirs if r["vanne"]["type"] == "injecter"),
         "chiffres": len(chiffres), "robinets": len(robinets),
         "fuites_ouvertes": len(fuites), "fuites_soldees": int(soldes),
+        # lot 5.3 — les pastilles comptent AUSSI par type (classe/géométrie comme les nombres)
+        "fuites_classe": sum(1 for f in fuites if f.get("type") == "classe"),
+        "fuites_geometrie": sum(1 for f in fuites if f.get("type") == "geometrie"),
         "eau_ancienne_ouverte": sum(1 for x in eau if x["statut"] == "ouvert"),
         "jamais_verifies": sum(1 for r in reservoirs if not r["veille"]),
         "a_verifier": sum(1 for r in reservoirs if r.get("a_verifier")),

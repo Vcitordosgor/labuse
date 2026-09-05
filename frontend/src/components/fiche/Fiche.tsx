@@ -6,6 +6,7 @@ import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatu
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
+import { Trace } from '../../lib/trace'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
@@ -131,7 +132,10 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
         {rp.zones.map((z, i) => (
           <div key={i}>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-left">
-              <span className="rounded-md bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-txt">{z.zone}</span>
+              {/* CIRCUIT-2 lot 5.2 — la LETTRE DE ZONE porte l'étiquette de traçage (classe) */}
+              <Trace id="zone_plu_famille">
+                <span className="rounded-md bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-txt">{z.zone}</span>
+              </Trace>
               {z.url && <a data-plu-link href={z.url} target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline">
                 {z.calibree ? 'Voir l’article' : 'Voir le règlement'} ↗
               </a>}

@@ -217,6 +217,9 @@ export function CircuitSection() {
       <div className="status">
         <h1>{cpt.fuites_ouvertes === 0 && cpt.eau_ancienne_ouverte === 0 ? 'Tout coule.' : 'Tout coule, sauf :'}</h1>
         {cpt.fuites_ouvertes > 0 && <button className="pill rouge"><i />{cpt.fuites_ouvertes} fuite{cpt.fuites_ouvertes > 1 ? 's' : ''}</button>}
+        {/* lot 5.3 — les écarts de type classe et géométrie comptent comme les autres */}
+        {(cpt.fuites_classe ?? 0) > 0 && <button className="pill rouge"><i />{cpt.fuites_classe} écart{cpt.fuites_classe > 1 ? 's' : ''} de classe</button>}
+        {(cpt.fuites_geometrie ?? 0) > 0 && <button className="pill rouge"><i />{cpt.fuites_geometrie} écart{cpt.fuites_geometrie > 1 ? 's' : ''} de géométrie</button>}
         {cpt.eau_ancienne_ouverte > 0 && <button className="pill ambre"><i />{cpt.eau_ancienne_ouverte} eau ancienne</button>}
         {cpt.jamais_verifies > 0 && <button className="pill gris"><i />{cpt.jamais_verifies} jamais vérifiés</button>}
         {cpt.a_verifier > 0 && <button className="pill ambre"><i />{cpt.a_verifier} à vérifier</button>}
@@ -387,11 +390,36 @@ export function CircuitSection() {
                 <code style={{ fontSize: 11 }}>{tapSel.route}</code>
               </div>
               <div>
-                <div className="k">Chiffres servis ({(tapSel.chiffres || []).length})</div>
-                {(tapSel.chiffres || []).map((c: string) => (
-                  <span key={c} className="chip" title={d.chiffres[c]?.definition}>
-                    {d.chiffres[c]?.libelle || c}{d.chiffres[c]?.portee === 'run' ? ' · run' : ''}
-                  </span>))}
+                {/* CIRCUIT-2 lot 5.1 — la fiche du bas liste TOUTES les données du robinet, PAR TYPE,
+                    avec leur tampon ; une couche montre sa table/tuilage et sa fabrication. */}
+                <div className="k">Données servies ({(tapSel.chiffres || []).length})</div>
+                {(() => {
+                  const parType = new Map<string, string[]>()
+                  for (const c of (tapSel.chiffres || []) as string[]) {
+                    const t = d.chiffres[c]?.type || 'nombre'
+                    parType.set(t, [...(parType.get(t) || []), c])
+                  }
+                  return [...parType.entries()].map(([t, ids]) => (
+                    <div key={t} style={{ marginTop: 4 }}>
+                      <span className="muted" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em' }}>{t}</span>
+                      <div>
+                        {ids.map((c) => {
+                          const ch = d.chiffres[c]
+                          const tampon = [ch?.definition,
+                            ch?.table ? `table : ${ch.table}` : null,
+                            ch?.fabrication ? `fabrication : ${ch.fabrication}` : null,
+                            ch?.domaine ? `domaine : ${ch.domaine.join(', ')}` : null,
+                          ].filter(Boolean).join('\n')
+                          return (
+                            <span key={c} className="chip" title={tampon}>
+                              {ch?.libelle || c}{ch?.portee === 'run' ? ' · run' : ''}
+                              {ch?.type === 'couche' && ch?.fabrication ? ` · ${ch.fabrication}` : ''}
+                            </span>)
+                        })}
+                      </div>
+                    </div>
+                  ))
+                })()}
                 {tapSel.hors_registre && <div className="muted" style={{ marginTop: 6 }}>hors registre : {tapSel.hors_registre}</div>}
               </div>
               <div>

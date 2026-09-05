@@ -12,6 +12,7 @@
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroSegments, Line, PorteOutil } from './primitives'
+import { Trace } from '../../lib/trace'
 
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
@@ -34,12 +35,21 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
           <div>
             <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[0.18em] text-st-creuser">Vigilances</div>
             <div className="flex flex-col gap-1">
-              {vigilances.map((l, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span aria-hidden className="mt-2 shrink-0 text-st-creuser">▲</span>
-                  <div className="min-w-0 flex-1"><Line line={l} hideWeight hideDate /></div>
-                </div>
-              ))}
+              {vigilances.map((l, i) => {
+                // CIRCUIT-2 lot 5.2 — le NIVEAU D'ALÉA porte l'étiquette de traçage (classe) :
+                // les lignes « Aléa … — niveau … » ouvrent le tiroir de leur couche.
+                const detail = (l.detail || '') as string
+                const alea = detail.startsWith('Aléa')
+                  ? (detail.toLowerCase().includes('inondation') ? 'alea_inondation_couche' : 'alea_mvt_couche')
+                  : null
+                const ligne = <div className="min-w-0 flex-1"><Line line={l} hideWeight hideDate /></div>
+                return (
+                  <div key={i} className="flex items-start gap-2">
+                    <span aria-hidden className="mt-2 shrink-0 text-st-creuser">▲</span>
+                    {alea ? <Trace id={alea}>{ligne}</Trace> : ligne}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

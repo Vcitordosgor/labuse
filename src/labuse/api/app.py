@@ -4596,6 +4596,45 @@ _SPORT_KEEP_RE = r'(stade|gymnase|piscine|nautique|complexe|omnisport|palais des
 _SPORT_DROP_RE = r'city.?stade|citystade'
 
 
+@app.get("/map/couches-info")
+def map_couches_info(db: Session = Depends(get_db)) -> dict:
+    """CIRCUIT-2 lot 5.2 — le « i » d'une couche affiche SOURCE, MILLÉSIME et FABRICATION :
+    le traçage côté client, sobre, sans identifiant technique. Une entrée par clé de couche du
+    front (COUCHE_PAR_CLE_FRONT), lue du registre + data_sources — jamais saisi deux fois."""
+    from ..registre.couverture import COUCHE_PAR_CLE_FRONT
+    from ..registre.donnees import DONNEES
+    from ..registre.valeur import _millesimes
+    fabrications = {"build-mvt": "tuiles reconstruites à la bascule",
+                    "geom_simple": "table matérialisée", "vue": "vue dérivée",
+                    "requete": "lue en direct de la base", "wmts_distant": "tuiles IGN en direct"}
+    from ..registre.valeur import _RESERVOIR_NAME_ILIKE
+    out: dict = {}
+    noms: dict[str, tuple[str | None, str | None]] = {}
+    for rid in {r for cid in set(COUCHE_PAR_CLE_FRONT.values())
+                for r in DONNEES[cid].reservoirs if cid in DONNEES}:
+        motif = _RESERVOIR_NAME_ILIKE.get(rid)
+        if motif:
+            try:
+                row = db.execute(text(
+                    "SELECT name, source_millesime FROM data_sources WHERE name ILIKE :m LIMIT 1"),
+                    {"m": motif}).first()
+                noms[rid] = (row[0], row[1]) if row else (None, None)
+            except Exception:  # noqa: BLE001
+                noms[rid] = (None, None)
+    _ = _millesimes   # (même chemin de millésimes que le tampon — la jointure nom est ici)
+    for cle, cid in COUCHE_PAR_CLE_FRONT.items():
+        d = DONNEES.get(cid)
+        if d is None:
+            continue
+        sources = []
+        for rid in d.reservoirs:
+            nom, m = noms.get(rid, (None, None))
+            sources.append((nom or rid.replace("_", " ")) + (f" — millésime {m}" if m else ""))
+        out[cle] = {"source": " · ".join(sources) or "référentiel embarqué (seed)",
+                    "fabrication": fabrications.get(d.fabrication or "", d.fabrication)}
+    return out
+
+
 @app.get("/map/layers.geojson")
 def map_layers_geojson(kind: str, commune: str | None = None,
                        # FIX-COUCHES P1 : plafond relevé 20 000 → 40 000 pour servir la couche BPE

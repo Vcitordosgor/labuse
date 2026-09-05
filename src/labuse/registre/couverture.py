@@ -66,6 +66,24 @@ FICHE_PARCELLE_CLES: dict[str, tuple[str, ...] | tuple[str, str]] = {
 }
 
 
+#: lot 5.2 — clé de couche du FRONT (LayerToggles / LAYER_INFO) → donnée `couche` du registre.
+#: Sert le « i » des couches (source, millésime, fabrication — traçage côté client, sobre).
+COUCHE_PAR_CLE_FRONT: dict[str, str] = {
+    "zonage": "gpu_brut_couche", "zonage_parcelle": "zonage_plu_couche",
+    "parcelles": "verdict_couche", "couleurs_verdict": "verdict_couche",
+    "limites": "limites_parcelles_couche", "communes": "communes_couche",
+    "ppr": "ppr_couche", "alea_inondation": "alea_inondation_couche",
+    "alea_mvt": "alea_mvt_couche", "parc": "parc_national_couche",
+    "znieff": "znieff_couche", "cinquante_pas": "cinquante_pas_couche",
+    "equipements": "equip_osm_couche", "equipements_bpe": "bpe_couche",
+    "transport": "transport_couche", "tcsp": "tcsp_couche", "axes": "axes_couche",
+    "lignes_ht": "lignes_ht_couche", "qpv": "dispositifs_couche",
+    "tva_primo": "dispositifs_couche", "anru": "dispositifs_couche",
+    "zfang": "dispositifs_couche", "frr": "dispositifs_couche",
+    "vefa_neuf": "vefa_couche", "renouv": "densifier_couche",
+}
+
+
 def probleme_cles(cles_servies: set[str]) -> list[str]:
     """Confronte les clés réellement servies par l'endpoint à la carte ci-dessus.
     Rend les problèmes : clé servie non rattachée, id rattaché inconnu du registre."""

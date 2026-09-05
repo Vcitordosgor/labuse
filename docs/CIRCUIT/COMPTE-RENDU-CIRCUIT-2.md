@@ -176,3 +176,23 @@ Moteurs au registre (`moteurs.csv`) : `marche_communes` renommé **`marche_servi
 
 - Tests du lot : `tests/test_circuit2_lot4.py` 6 verts (écart typé, distribution aléas = LE test qui aurait attrapé RETOURS-13, permis approximatif, tuiles d'un autre run, compteur par type, témoins = jeu qa) + lot 1-4 voisins verts (30/30 avec lot4 CIRCUIT-1 et 0-bis).
 - Passage réel joué (déclencheur bouton, 12 s) : **1 écart classe ouvert (aléas 484), 0 écart zonage/permis/couches** — verdict en base, la page l'affiche.
+
+---
+
+## Lot 5 — Page et traçage
+
+### Livré
+
+- **5.1 fiche du bas par TYPE** (Circuit.tsx) : les données d'un robinet groupées par type (nombre/classe/liste/couche…), chaque puce porte son tampon en survol (définition, table lue, fabrication, domaine) ; une couche affiche sa fabrication (`build-mvt`, vue, requête…). Le payload `/admin/circuit` sert type/table/fabrication/domaine/réservoirs/en_attente par donnée.
+- **5.2 traçage des classes** : la LETTRE DE ZONE (Fiche.tsx, bloc Règlement PLU) et le NIVEAU D'ALÉA (risques.tsx, lignes « Aléa … ») portent l'étiquette `Trace` et ouvrent le tiroir (le snapshot vitest verrouille l'identité éteinte). Le « i » d'une couche affiche désormais **source, millésime et fabrication** en français (endpoint public `GET /map/couches-info`, construit du registre + data_sources — sobre, aucun identifiant technique) ; carte `COUCHE_PAR_CLE_FRONT` (clé du panneau → donnée couche).
+- **5.3 pastilles** : le bandeau compte les écarts de type `classe` et `geometrie` (pastilles rouges dédiées) — l'écart aléas du lot 4 (484) apparaît en pastille « 1 écart de classe ».
+- **Attrapé au passage (règle « 0 hors registre »)** : le panneau des couches affiche 4 couches ABSENTES de l'inventaire CIRCUIT-0 (PPR multirisque, Parc national, Limites parcelles, Limites communes) — déclarées (données + robinets, réservoirs DEAL/INPN/cadastre ; contours communes = référentiel embarqué au seed). Le registre passe à **168 données / 130 robinets**.
+
+### Non fait (avec raison) — lot 5
+
+- La classe DPE n'a pas d'étiquette : le bloc DPE de la fiche premium n'existe plus (`parcel_dpe` retirée — commentaire Fiche.tsx:1490) ; l'étiquette viendra avec le rétablissement du bloc (décision Vic notée là-bas). La passoire DPE de la cascade est couverte par les lignes de vigilance.
+
+### Suite
+
+- **Attrapé par les tests** : le « verrou 600 s » de CIRCUIT-1 a refrappé — poser l'ALTER de `ensure()` DANS la transaction-savepoint du fixture bloquait la connexion propre de l'endpoint (10 min de lock-wait) ; le test pose désormais écart + DDL sur une connexion AUTONOME (même leçon, même remède).
+- Tests du lot : `tests/test_circuit2_lot5.py` 4 verts (1,7 s) + lot 1 ajusté (20 couches) + voisins lot 1/2/4/registre 32 verts ; vitest **164 verts** (162 + HypInput ×2) ; tsc OK.

@@ -47,6 +47,7 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "edf_hta": "EDF Réunion — lignes moyenne%", "tcsp_osm": "TCSP — voies bus%",
     "annuaire_service_public": "Annuaire de l'administration%",
     "rnic_anah": "RNIC — copropriétés%",
+    "parc_national_inpn": "Parc National de La Réunion%",
 }
 
 
