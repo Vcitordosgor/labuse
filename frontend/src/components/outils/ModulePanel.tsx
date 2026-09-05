@@ -660,10 +660,12 @@ export function M03() {
         </p>
       </div>
 
-      {/* RETOURS-18 X1 — bandeau Sitadel PERMANENT (comme le bloc total au-dessus) : les définitions par
-          état vivent sur les lignes du bloc « Filtrer par état ». Style de note d'info existant. */}
-      <p className="shrink-0 -mt-0.5 px-0.5 text-[9.5px] leading-snug text-txt-dim">
-        Sitadel (974) ne publie que les permis <b className="text-txt-mut">autorisés</b> — l'instruction déposée n'y figure pas.
+      {/* RETOURS-18 X1 — bandeau Sitadel PERMANENT. RETOURS-19 Y5 — tient sur UNE ligne (phrase resserrée
+          + `whitespace-nowrap`) ; `overflow-hidden`/ellipse en garde-fou : la section ne défile JAMAIS
+          latéralement (l'infobulle porte la phrase entière si jamais elle était tronquée). */}
+      <p title="Sitadel (974) ne publie que les permis autorisés — l'instruction déposée n'y figure pas."
+        className="shrink-0 -mt-0.5 truncate px-0.5 text-[9.5px] leading-snug text-txt-dim">
+        Sitadel : les permis <b className="text-txt-mut">autorisés</b>, pas l'instruction en cours.
       </p>
 
       {/* RETOURS-18 X1/X2 — ACCORDÉON : un seul bloc ouvert à la fois (ouvrir l'un referme les autres).
@@ -707,7 +709,7 @@ export function M03() {
             <div className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
               {(pointMort ? MONTHS_PM : MONTHS_RADAR).map((m, i) => (
                 <button key={m} onClick={() => setMonths(m)}
-                  className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${months === m ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+                  className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${months === m ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
                   {!pointMort && m >= 240 ? 'Tout' : `${m} m${pointMort ? '+' : ''}`}
                 </button>
               ))}
@@ -718,7 +720,7 @@ export function M03() {
               <div className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
                 {NATURES.map(([v, l], i) => (
                   <button key={v || 'tout'} onClick={() => setNature(v)}
-                    className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${nature === v ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+                    className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${nature === v ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
                     {l}
                   </button>
                 ))}
@@ -732,7 +734,7 @@ export function M03() {
             <div className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
               {([['geo', 'Sur la carte'], ['nongeo', 'Non géocodés'], ['tous', 'Tous']] as const).map(([k, l], i) => (
                 <button key={k} data-permis-geo={k} onClick={() => setGeoFiltre(k)}
-                  className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${geoFiltre === k ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
+                  className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${geoFiltre === k ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
                   {l}
                 </button>
               ))}
@@ -1590,9 +1592,12 @@ export function ModulePanel() {
           <nav data-module-breadcrumb className="flex min-w-0 items-center gap-2 font-mono text-[10px] tracking-widest">
             {/* Fix cosmétique (point 27) : flèche retour PLUS VISIBLE — pastille bordée mauve, plus
                 grosse, zone de clic élargie + libellé « ← Outils » clair (avant : 10 px inline, on la cherchait). */}
+            {/* RETOURS-19 Y5 — infobulle « Revenir au menu Outils » retirée (le libellé le dit déjà).
+                Y1 : l'indicateur « menu Outils ouvert » = l'entrée Outils du rail (vert opaque, `.rail-item.active`) ;
+                ce fil d'Ariane est un RETOUR (jamais affiché quand le menu Outils est ouvert — ouvrir Outils
+                démonte le panneau), gardé en pastille mint bordée. */}
             <button data-module-retour onClick={toggleOutils}
-              className="flex shrink-0 items-center gap-1 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-mint transition-colors duration-quick hover:border-mint hover:bg-mint/15"
-              title="Revenir au menu Outils">
+              className="flex shrink-0 items-center gap-1 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-mint transition-colors duration-quick hover:border-mint hover:bg-mint/15">
               ← Outils
             </button>
             <span className="text-txt-dim">›</span>

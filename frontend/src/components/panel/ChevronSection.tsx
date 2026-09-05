@@ -4,7 +4,9 @@
 // `petit` h-6 disparaît), glyphe centré optiquement, hover franc (fond + glyphe éclairci).
 // Tous les contrôles sont flush à droite de leur entête → une même colonne verticale
 // (croix du panneau, chevrons Couches/Filtres/tiroirs, chevron de la légende Verdict).
-const BOITE = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-line-2/70 bg-surface-2/50 text-txt-dim transition-colors duration-quick'
+// RETOURS-19 Y1 — contour PLEIN (`border-line-2`, plus `/70`) : la boîte reste visible hors survol sur
+// tous les fonds (avant, à 70 % d'opacité elle disparaissait sur certaines surfaces claires/orthophoto).
+const BOITE = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-line-2 bg-surface-2/50 text-txt-dim transition-colors duration-quick'
 
 // Chevron de section repliable — seule la FLÈCHE tourne (fermé → gauche, ouvert → bas,
 // patron M55-A/C), la boîte reste stable. Le hover suit l'entête entière (via `group`).

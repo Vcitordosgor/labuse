@@ -276,12 +276,15 @@ function CommuneSelect() {
   const pick = (c: string | null) => { setCommune(c); setOpen(false) }
   return (
     <div className="relative shrink-0">
+      {/* RETOURS-19 Y1 — ÉTAT ACTIF (menu ouvert OU un périmètre choisi) = vert opaque, contenu inversé
+          sombre (avant : simple contour vert au survol). */}
       <button onClick={() => setOpen((o) => !o)} data-commune-select
         title="Périmètre — zoome la carte et pré-coche la commune dans le filtre (vous gardez la main)"
-        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
-        <span className={`h-1.5 w-1.5 rounded-full ${n > 0 ? 'bg-mint' : 'bg-txt-dim'}`} />
+        className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-colors duration-quick ${
+          open || n > 0 ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt hover:border-mint/40'}`}>
+        <span className={`h-1.5 w-1.5 rounded-full ${open || n > 0 ? 'bg-mint-ink' : 'bg-txt-dim'}`} />
         {label}
-        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+        <svg viewBox="0 0 10 10" className={`h-2.5 w-2.5 ${open || n > 0 ? 'text-mint-ink' : 'text-txt-dim'}`}><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>
       {open && (
         <>
@@ -305,15 +308,19 @@ function CommuneSelect() {
             {/* RETOURS-13 R10 — l'infobulle qui RÉPÉTAIT le nom (title={c.commune}) est retirée
                 (une infobulle n'existe que si elle apporte un fait non affiché) ; « voir la
                 fiche → » = action SECONDAIRE : jaune opaque au survol, distinct du vert de la ligne. */}
+            {/* RETOURS-19 Y3 — DEUX actions sur la ligne, DISSOCIÉES au survol : le `.hover-fill` (vert) est
+                sur la ZONE PRINCIPALE seule (plus sur toute la ligne → plus de bande verte continue), et
+                « voir la fiche → » garde sa zone jaune (`.hover-jaune`, opaque au survol). Un petit écart les
+                sépare, chaque zone a son arrondi : le survol dit lequel des deux se déclenchera. */}
             {(communes.data ?? []).map((c) => (
-              <div key={c.insee} className="hover-fill flex items-center rounded-md">
+              <div key={c.insee} className="flex items-center gap-0.5">
                 <button onClick={() => pick(c.commune)}
-                  className={`min-w-0 flex-1 truncate whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
+                  className={`hover-fill min-w-0 flex-1 truncate whitespace-nowrap rounded-md px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
                   {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
                   title="SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)"
-                  className="hover-jaune shrink-0 whitespace-nowrap px-2.5 py-1.5 text-[11px] transition-opacity duration-quick">
+                  className="hover-jaune shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px]">
                   voir la fiche →
                 </button>
               </div>
