@@ -150,3 +150,45 @@ Tables servies run-scopées alignées sur `q_v11_m137` (SELECT du 05/09) : `scor
 - Compteurs : 21 moteurs (7 versionnés / 14 live), produits par le script.
 - Lignes `DOUTE` : 1 (entrées de `loyers.py`) + durées de calcul non documentées (Q2.3).
 - A bloqué : rien — mais la mesure des durées exigerait de lancer un run (interdit).
+
+---
+
+## Lot 3 — Les horloges
+
+Livrables : `docs/CIRCUIT/inventaire/jobs.csv` (32 lignes : 19 jobs du wrapper + 13 lignes de crons hors wrapper) et `docs/CIRCUIT/inventaire/source_veille.csv` (49 lignes), générés par `scripts/inventaire/extrait_jobs.py`. Compteurs (script) : **20 touchent l'eau / 12 non ; 3 traces en base incohérentes ou partielles**.
+
+### Le constat qui change la lecture : DEUX jeux de crons coexistent dans le dépôt
+
+- **Le wrapper** (`scripts/jobs/run-job.sh` → `labuse jobs exec <nom>`) : registre de **19 jobs** (`src/labuse/jobs.py:263-318`), **16 posés** dans `deploy/cron.d-labuse` (écrit en UTC, heure Réunion en commentaire). 3 enregistrés mais **non posés** : `copilote-purge`, `ingest-bdnb`, `sante-endpoints`.
+- **Les anciens crons** `deploy/cron.d/*` (11 fichiers, 13 lignes actives, heures RÉUNION — converties avant pose, `docs/audit-2026-08/VPS/JOURNAL.md:139-140`) : bodacc QUOTIDIEN, dpe HEBDO mardi, dvf HEBDO mercredi, sitadel QUOTIDIEN delta, ban mensuel le 5, abuse-scan, notifications (évaluer-suivis/veilles + digest), radar-sources lundi, sessions, backup/maintenance shell.
+- **Lequel des deux jeux est posé sur le VPS aujourd'hui : DOUTE** (indécidable en local ; le JOURNAL VPS du go-live documente la pose des 13 anciens, `JOURNAL.md:140`, le mandat CRON-1/2 a versionné le wrapper ensuite). Le mandat attendait « 13 jobs du wrapper » : le compte réel est 19 enregistrés / 16 posés côté wrapper, + 13 lignes legacy.
+- Conséquence directe : les « contradictions healthz » s'expliquent — `/healthz/crons` (`src/labuse/api/ops.py:23-41`) attend **bodacc à 2 j** et **dpe à 10 j (note « hebdo »)**, c'est-à-dire les cadences des ANCIENS crons, pas celles du wrapper (dpe mensuel le 12, bodacc absent du wrapper).
+
+### Q3.1 — `source_veille`
+
+Schéma complet : 22 colonnes (`\d source_veille` du 05/09 — id, source_id, url_version, methode, selecteur, cadence_heures, dernier_passage_at, dernier_vu, dernier_statut, dernier_message, dernier_entete, actif, created_at, updated_at, dernier_notifie_vu, echecs_consecutifs, injection_lancee_at, injection_vu, cadence_attendue_jours, convention_echeance, mail_alerte, url_temoin_2). Dump : `inventaire/source_veille.csv` (49 lignes — méthodes : api 34, temoin 5, entete 5, rappel 4, page 1).
+
+### Q3.2 — Notifications de la sentinelle
+
+Détection (`sentinelle.py:314-330`) : une sonde `nouvelle_version` dont `dernier_vu ≠ dernier_notifie_vu` entre au digest du passage. **Cloche** : UN digest quotidien admin (`_emettre_digest`, `sentinelle.py:675-710`, kind `systeme`, lien `/sources`), dédup par signature des source_ids. **Mail** : seulement si la notif est neuve ET qu'une source annoncée porte `mail_alerte=true` (`_alerter_mail`, `sentinelle.py:713-731`). **Dédup permanente** : `dernier_notifie_vu` (un millésime déjà annoncé ne re-sonne jamais, `sentinelle.py:319-320`). Le morning brief n'est pas alimenté par la sentinelle (retrait des chiffres de surface au brief : mandat RECETTE-2 D).
+
+### Q3.3 — SENTINELLE-3 : exécuté et mergé
+
+Preuves dans le code de main : `sentinelle.py:496-498` (« second passage 2026-09-01, appels réels »), rappels manuels Y4 (`sentinelle.py:529-540`), et `source_veille.created_at` = **46 lignes créées le 01/09** (le passage a re-semé la table), +1 le 03/09 (BDNB, api), +2 le 05/09 (EDF HTA, Réunion Express — entete). Le passage 35→49 = +6 sources récupérées par sondes réelles (DEAL PPR/WMS, Région ODS, Géorisques cavités/mvt/ssp — `sentinelle.py:497-498`), +4 rappels manuels Y4 (Radar, SPANC, Fichiers fonciers, Office de l'eau — `sentinelle.py:535-540`), + créations postérieures (BDNB, EDF HTA, Réunion Express) ; le détail méthode par méthode est dans `source_veille.csv` (colonne methode). La ventilation exacte de chacune des 14 depuis SENTINELLE-2 : DOUTE partiel (les `created_at` d'avant le re-semis du 01/09 ont été écrasés).
+
+### Q3.4 — Candidat automatique après Sitadel : OUI
+
+`src/labuse/jobs_impl.py:360-370` — fin d'ingestion réussie → `veilles.evaluer_toutes()` puis `golden_ops.rapport_candidat(dry_run=…)` (comparaison candidat vs servi, mail). Ne touche jamais le run servi ; la bascule reste `labuse golden promote` / bouton admin.
+
+### Q3.5 — Contradictions connues : toujours là
+
+1. **DPE** : `_touch_source()` écrit `last_sync_at` même à 0 commune traitée (`dpe.py:243`) → `/healthz/crons` peut afficher « ok » sans donnée nouvelle. Toujours présent.
+2. **DPE hebdo vs mensuel** : healthz note « hebdo » (`ops.py:39-40`) = cadence de l'ancien cron (`deploy/cron.d/dpe`, mardi) ; le wrapper le pose mensuel le 12. Toujours présent.
+3. **BODACC** : attendu à 2 j par healthz, absent du wrapper — seul l'ancien cron quotidien le couvre. Toujours présent.
+4. **Radar** : healthz lit `etat_radar` (`ops.py:111-122`) tandis que l'ancien cron `radar-sources` (lundi) écrit son propre log — cohérence dépendante du jeu de crons posé (DOUTE VPS).
+
+### Point d'étape Lot 3
+
+- Compteurs : 32 lignes jobs (19+13), 20 touchent l'eau, 3 traces incohérentes/partielles ; source_veille 49 lignes.
+- Lignes `DOUTE` : 15 (les 19 `dernier_statut` wrapper sont un seul et même DOUTE local — état JSON absent ; 13 poses VPS legacy indécidables ; 1 table de trace abuse-scan ; ventilation fine 35→49).
+- A bloqué : l'état JSON du wrapper et le crontab réellement posé ne sont lisibles que sur le VPS — hors périmètre local, aucune connexion tentée (lecture seule).
