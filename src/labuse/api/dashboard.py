@@ -890,7 +890,10 @@ def admin_sources(request: Request) -> dict:
             " ORDER BY r.started_at DESC NULLS LAST LIMIT 10")).mappings()]
     sources = []
     for r in rows:
-        if not est_affichee(r["name"], r.get("technical_notes"), r["status"]):
+        # CIRCUIT-1 lot 0.2 — `affichage_desactive` est passé au prédicat : une source désactivée
+        # au dashboard sortait de la vitrine SQL mais restait listée ici (prédicat appelé sans le flag).
+        if not est_affichee(r["name"], r.get("technical_notes"), r["status"],
+                            r.get("affichage_desactive")):
             continue
         cad = _cadence_normalisee(r["source_cadence"])
         delai = CADENCES.get(cad) if cad else None

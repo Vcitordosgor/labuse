@@ -1237,15 +1237,22 @@ def ingest_dpe_cmd(
     tot = {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0, "hors_reunion": 0}
     # M84 — trace ingestion_runs (running → ok | error) : un échec DPE devient VISIBLE (avant : aucune
     # trace → décrochage possible en silence). Session de trace dédiée ; les communes gardent la leur.
-    with session_scope() as _trace, fraicheur.trace_ingestion(_trace, "974 (DPE ADEME)", fraicheur.DS_NAMES["dpe"]):
+    # CIRCUIT-1 lot 0.3 — le saut des communes peuplées est un CHOIX EXPLICITE (rafraîchir = --force,
+    # à la cadence du cron DPE) et le tampon ne ment plus : si AUCUNE commune n'a été interrogée
+    # (tout sauté), `last_sync_at` reste INCHANGÉ (handle["tampon"]=False) — /healthz/crons ne peut
+    # plus afficher « ok » sur un passage à vide.
+    n_traitees = 0
+    with session_scope() as _trace, fraicheur.trace_ingestion(
+            _trace, "974 (DPE ADEME)", fraicheur.DS_NAMES["dpe"]) as _h:
         for insee, nom in targets:
             with session_scope() as s:
                 has = s.execute(text("SELECT count(*) FROM dpe_records WHERE code_insee=:c"), {"c": insee}).scalar()
                 if has and not force:
-                    typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté.")
+                    typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté (ré-ingérer : --force).")
                     continue
                 res = dpe.ingest_commune(s, insee, nom, connector=conn)
                 s.commit()
+                n_traitees += 1
                 for k in tot:
                     tot[k] += res.get(k, 0)
                 typer.echo(f"  ✓ {nom} : {res}")
@@ -1253,10 +1260,14 @@ def ingest_dpe_cmd(
             with session_scope() as s:
                 res = dpe.ingest_orphelins(s, connector=conn)
                 s.commit()
+                n_traitees += 1     # la passe orphelins interroge l'ADEME et upserte : traitement réel
                 tot["dpe"] += res["dpe"]
                 tot["rattaches_parcelle"] += res["rattaches_parcelle"]
                 tot["hors_reunion"] += res.get("hors_reunion", 0)
                 typer.echo(f"  ✓ orphelins (CP brut 974xx sans code_insee_ban) : {res}")
+        _h["tampon"] = n_traitees > 0
+        if not n_traitees:
+            typer.echo("  ⓘ aucune commune interrogée (toutes déjà peuplées) — last_sync_at INCHANGÉ.")
     typer.echo(f"✓ DPE île : {tot} ({time.time() - t0:.0f}s)")
     if tot["hors_reunion"]:
         typer.echo(f"  ⓘ {tot['hors_reunion']} lignes métropolitaines écartées (géocodage BAN "
