@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LABUSE — fiche parcelle · accordéons (maquette visuelle)</title>
+<style>
+:root{
+  --page:#0B0E0C; --panel:#111512; --card:#161B17; --card2:#1B211C;
+  --line:rgba(255,255,255,.075); --line2:rgba(255,255,255,.13);
+  --t1:#E9EDE9; --t2:#A3ACA5; --t3:#6F7871;
+  --mint:#82E0A0; --mint-ink:#0C2416; --mint-soft:rgba(130,224,160,.12);
+  --amber:#E6B658; --amber-soft:rgba(230,182,88,.13);
+  --mauve:#B3A6F3; --mauve-soft:rgba(179,166,243,.14);
+  --coral:#EE8B73;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--page);color:var(--t1);font:13px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{display:grid;grid-template-columns:392px 1fr;gap:40px;max-width:1120px;margin:0 auto;padding:32px 24px 80px}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px}
+.aside{position:sticky;top:32px;align-self:start;color:var(--t2);font-size:12.5px;line-height:1.6}
+.aside h1{font:500 15px/1.3 var(--sans);color:var(--t1);margin:0 0 6px}
+.aside p{margin:0 0 12px}
+.aside .rule{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.aside .rule b{font-weight:500;color:var(--t1);display:block}
+.aside .n{font:11px var(--mono);color:var(--mint);padding-top:3px}
+
+/* ——— accordéon ——— */
+.acc{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.acc.open{border-color:rgba(130,224,160,.35)}
+.hd{display:grid;grid-template-columns:30px 1fr auto 18px;gap:12px;align-items:center;padding:12px 14px 12px 14px}
+.hd .ico{width:30px;height:30px;border-radius:9px;background:var(--mint-soft);color:var(--mint);display:grid;place-items:center;font:500 12px var(--mono)}
+.hd h2{margin:0;font:500 14px/1.25 var(--sans);color:var(--t1)}
+.hd .sub{margin:2px 0 0;font-size:12px;color:var(--t2)}
+.hd .chev{color:var(--t3);font-size:12px;text-align:right}
+.hd .num{font:500 13px var(--mono);color:var(--t1);font-variant-numeric:tabular-nums}
+.bd{padding:2px 14px 14px}
+
+/* chips & badges */
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:500;white-space:nowrap}
+.chip.mint{background:var(--mint-soft);color:var(--mint)}
+.chip.amber{background:var(--amber-soft);color:var(--amber)}
+.chip.grey{background:rgba(255,255,255,.06);color:var(--t2)}
+.chip.mauve{background:var(--mauve-soft);color:var(--mauve)}
+.b{display:inline-block;font:500 10px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:0 5px;border-radius:4px;border:1px solid;vertical-align:1px}
+.b.s{color:var(--mint);border-color:rgba(130,224,160,.45)}
+.b.e{color:var(--amber);border-color:rgba(230,182,88,.5)}
+.b.d{color:var(--t2);border-color:var(--line2)}
+.ref{color:var(--mint);font:11.5px var(--mono)}
+.ref:after{content:" ↗";opacity:.7}
+
+/* kicker */
+.k{margin:18px 0 6px;padding-top:14px;border-top:1px solid var(--line);font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.k.first{margin-top:6px;padding-top:0;border-top:0}
+.k .r{float:right;text-transform:none;letter-spacing:0;font:11.5px var(--mono);color:var(--mint)}
+
+/* fact row (ledger) */
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .l{color:var(--t2);font-size:13px}
+.row .v{color:var(--t1);font:500 13px var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .v small{font:11.5px var(--mono);color:var(--t2);font-weight:400}
+.row .src{grid-column:1/-1;font-size:11.5px;color:var(--t3);margin-top:-1px}
+.row .src .b{margin-right:4px}
+.row .v.warn{color:var(--amber)}
+.row .v.mute{color:var(--t3);font-weight:400}
+
+/* paragraphs */
+.p{margin:8px 0 0;font-size:12.5px;line-height:1.55;color:var(--t2)}
+.note{margin:8px 0 0;font-size:11.5px;line-height:1.5;color:var(--t3)}
+.call{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:var(--card2);font-size:12.5px;line-height:1.55;color:var(--t2)}
+.call b{color:var(--t1);font-weight:500}
+.call .src{display:block;margin-top:6px;font-size:11.5px;color:var(--t3)}
+
+/* vigilance */
+.vig{margin:10px 0 0;padding:2px 0 2px 12px;border-left:2px solid var(--amber)}
+.vig .t{font-size:13px;font-weight:500;color:var(--t1)}
+.vig .t em{font-style:normal;color:var(--amber);font:500 11px var(--mono);margin-left:6px}
+.vig .p{margin-top:2px}
+.vig .note{margin-top:4px}
+.ok{margin:14px 0 0;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--t2)}
+.ok .m{color:var(--mint);margin-right:6px}
+.ok a{color:var(--t3);font-size:12px}
+
+/* CTA rows */
+.ctas{margin-top:14px;display:grid;gap:6px}
+.cta{display:grid;grid-template-columns:32px 1fr 14px;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:transparent}
+.cta:hover{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+.cta:hover *{color:var(--mint-ink)!important}
+.cta:hover .i{background:rgba(0,0,0,.18)}
+.cta .i{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font:500 12px var(--mono);background:var(--mint-soft);color:var(--mint)}
+.cta.amb .i{background:var(--amber-soft);color:var(--amber)}
+.cta.amb:hover{background:var(--amber);border-color:var(--amber)}
+.cta .t{font-size:13px;font-weight:500;color:var(--t1)}
+.cta .d{font-size:11.5px;color:var(--t3);margin-top:1px}
+.cta .a{color:var(--t3);font-size:14px;text-align:right}
+.ia{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;height:36px;border-radius:10px;border:1px solid rgba(179,166,243,.45);color:var(--mauve);font-size:13px;font-weight:500}
+.ia:hover{background:var(--mauve);color:#1B1538;border-color:var(--mauve)}
+
+/* steps */
+.steps{margin:6px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:22px 1fr auto;gap:4px 10px;padding:7px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.steps li:last-child{border-bottom:0}
+.steps li:before{counter-increment:s;content:counter(s);font:11px var(--mono);color:var(--t3);grid-row:1/3}
+.steps .l{font-size:12.5px;color:var(--t1)}
+.steps .v{font:500 12.5px var(--mono);color:var(--t1);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.steps .src{grid-column:2/-1;font-size:11px;color:var(--t3)}
+.steps .src .b{margin-right:4px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.st{background:var(--card2);border-radius:10px;padding:10px 12px}
+.st .l{font-size:11px;color:var(--t3)}
+.st .v{font:500 17px/1.2 var(--mono);color:var(--t1);margin-top:2px;font-variant-numeric:tabular-nums}
+.st .v small{font-size:11px;color:var(--t2);font-weight:400;margin-left:2px}
+.stats.four{grid-template-columns:repeat(4,1fr)}
+.stats.four .st{padding:8px 10px}
+.stats.four .v{font-size:14px}
+
+/* lists */
+.tbl{margin-top:6px}
+.tr{display:grid;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:baseline}
+.tr:last-child{border-bottom:0}
+.tr .m{font:12px var(--mono);color:var(--t2);font-variant-numeric:tabular-nums}
+.tr .d{color:var(--t1)}
+.tr .r{text-align:right;font:12px var(--mono);color:var(--t2);font-variant-numeric:tabular-nums}
+.tr .tag{font:500 10.5px var(--mono);color:var(--t1);background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px}
+.pill{font:500 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mint);border:1px solid rgba(130,224,160,.4);border-radius:4px;padding:0 5px;line-height:16px}
+.pill.mute{color:var(--t3);border-color:var(--line2)}
+
+/* segmented */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:10px;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg span{padding:7px 0;text-align:center;font-size:12.5px;color:var(--t2)}
+.seg span.on{background:var(--mint);color:var(--mint-ink);font-weight:500}
+
+/* misc */
+.line{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12.5px;color:var(--t2);margin-top:8px}
+.line b{color:var(--t1);font-weight:500}
+.spark{margin:8px 0 2px;display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--t3)}
+.status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--t2);margin-top:6px}
+.status .dot{width:7px;height:7px;border-radius:50%;background:var(--mint)}
+.why li{display:grid;grid-template-columns:14px 1fr;gap:8px;font-size:12.5px;color:var(--t2);padding:5px 0}
+.why li b{color:var(--t1);font-weight:500}
+.why li i{color:var(--amber);font-style:normal}
+.why{list-style:none;padding:0;margin:4px 0 0}
+.gest{display:grid;grid-template-columns:118px 1fr;gap:6px 12px;font-size:12.5px;margin-top:6px}
+.gest .l{color:var(--t3)}
+.gest .v{color:var(--t1)}
+.gest .v small{color:var(--t3);font-size:11.5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.srcs{margin-top:6px;columns:1}
+.srcs .tr{grid-template-columns:1fr auto auto}
+.srcs .d{font-size:12.5px}
+.srcs .prod{font-size:11.5px;color:var(--t3);text-align:right}
+.more{display:block;margin-top:10px;font-size:12.5px;color:var(--mint)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="col">
+
+<!-- 1 — RÈGLEMENT ET ZONAGE -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">§</div>
+    <div><h2>Règlement et zonage</h2><p class="sub">Zone U6c · 27 % de SDP consommée</p></div>
+    <span class="chip mint">U6c</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="status"><span class="dot"></span>PLU approuvé le 17.12.2025 — document à jour du GPU, c'est celui qui fait foi.</div>
+    <a class="ia" href="#">✦ Demander à l'IA de traduire le PLU</a>
+
+    <div class="k">Règlement — zone U6c <a class="ref r" href="#">voir l'article</a></div>
+    <div class="row"><span class="l">Hauteur max</span><span class="v">9 m <small>faîtage</small> · 6 m <small>égout</small></span><span class="src"><span class="b s">Sourcé</span> art. 9</span></div>
+    <div class="row"><span class="l">Emprise au sol max</span><span class="v mute">non réglementé</span><span class="src"><span class="b s">Sourcé</span> art. 6</span></div>
+    <div class="row"><span class="l">Recul sur voie</span><span class="v">4 m</span><span class="src"><span class="b s">Sourcé</span> art. 6</span></div>
+    <div class="row"><span class="l">Recul limites séparatives</span><span class="v">3 m</span><span class="src"><span class="b s">Sourcé</span> art. 7.2</span></div>
+    <div class="row"><span class="l">Pleine terre min</span><span class="v">40 %</span><span class="src"><span class="b s">Sourcé</span> art. 13.1</span></div>
+    <div class="row"><span class="l">Stationnement</span><span class="v">2 <small>places / logement</small></span><span class="src"><span class="b s">Sourcé</span> art. 12.2</span></div>
+    <div class="row"><span class="l">Destinations autorisées</span><span class="v">18 <small>▸</small></span><span class="src">Exploitation forestière, Hébergement…</span></div>
+    <p class="note">Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.</p>
+
+    <div class="k">Situation</div>
+    <div class="row"><span class="l">Zonage PLU</span><span class="v">U <small>urbaine — constructible</small></span><span class="src">Urbanisme PLU/GPU (API Carto) · GPU/PLU par commune</span></div>
+    <div class="row"><span class="l">SDP résiduelle</span><span class="v">221 m²</span><span class="src">une maison — hors cible collectif</span></div>
+    <div class="row"><span class="l">Surface parcelle</span><span class="v">601 m²</span><span class="src">surface utile</span></div>
+    <div class="row"><span class="l">Parc national</span><span class="v">aire d'adhésion</span><span class="src">contraintes de charte · Parc national de La Réunion (INPN) · millésime 2021</span></div>
+    <div class="row"><span class="l">Occupation du sol</span><span class="v warn">naturel</span><span class="src">artificialisation à justifier — BD CARTO V5, grain grossier, précision limitée à la parcelle · IGN</span></div>
+
+    <div class="ctas">
+      <a class="cta" href="#"><span class="i">§</span><span><div class="t">Annuaire PLU de la commune</div><div class="d">Le règlement de la zone U6c — articles, prescriptions</div></span><span class="a">→</span></a>
+      <a class="cta" href="#"><span class="i">✉</span><span><div class="t">Lettre de vérification de zonage</div><div class="d">PDF de vérification de zonage — zone U6c de cette parcelle</div></span><span class="a">→</span></a>
+      <a class="cta" href="#"><span class="i">⟳</span><span><div class="t">Vérifier la procédure PLU</div><div class="d">Commune en procédure ? (zone U6c)</div></span><span class="a">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- 2 — CONSTRUCTIBILITÉ -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">⌂</div>
+    <div><h2>Constructibilité</h2><p class="sub">R+1 · SDP 304 m² · calcul tracé</p></div>
+    <span class="num">1–2 logts</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="row"><span class="l">Potentiel foncier</span><span class="v"><span class="chip mint">Fort</span></span><span class="src">parcelle en forte sous-densité</span></div>
+    <div class="row"><span class="l">SDP consommée / autorisée</span><span class="v">27 %</span></div>
+    <div class="row"><span class="l">SDP résiduelle estimée</span><span class="v">−221 m²</span><span class="src">bâti conservé</span></div>
+    <div class="row"><span class="l">Surélévation</span><span class="v">possible <small>marge −3,6 m</small></span></div>
+    <p class="note">Ratio SDP consommée/autorisée (bloc D du modèle P) + potentiel bâti résiduel (BD TOPO × règles PLU calibrées).</p>
+
+    <div class="k">Capacité constructible</div>
+    <div class="stats four">
+      <div class="st"><div class="l">Gabarit</div><div class="v">R+1<small>6 m</small></div></div>
+      <div class="st"><div class="l">SDP</div><div class="v">304<small>m²</small></div></div>
+      <div class="st"><div class="l">Logements</div><div class="v">1–2</div></div>
+      <div class="st"><div class="l">SHAB vendable</div><div class="v">~97<small>m²</small></div></div>
+    </div>
+    <p class="note">SHAB vendable = logements retenus au sol × surface moyenne/logement (fourchette après plafond de densité), terrain libéré. La SHAB brute est théorique, hors bâti existant. Pré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.</p>
+
+    <div class="k">Le calcul, étape par étape <span class="r" style="color:var(--t3)">13</span></div>
+    <ol class="steps">
+      <li><span class="l">Emprise au sol — reculs (géométrie réelle)</span><span class="v">−337 m²</span><span class="src"><span class="b s">Sourcé</span> art. 7.2, p.275-276 (séparatif) ; recul voirie…</span></li>
+      <li><span class="l">Emprise au sol — % réglementaire</span><span class="v">—</span><span class="src"><span class="b s">Sourcé</span> art. 9, p.277</span></li>
+      <li><span class="l">Contrainte pleine terre</span><span class="v">−337 m² retenu</span><span class="src"><span class="b s">Sourcé</span> art. 13.1, p.287-289 — « pourcentage minimal… »</span></li>
+      <li><span class="l">Niveaux constructibles</span><span class="v">R+1</span><span class="src"><span class="b s">Sourcé</span> zone U6c, art. 10.2, p.277-279</span></li>
+      <li><span class="l">Emprise bâtie (occupation du gabarit)</span><span class="v">−152 m²</span><span class="src"><span class="b e">Estimé</span> hypothèse occupation</span></li>
+      <li><span class="l">Surface de plancher brute</span><span class="v">−304 m²</span><span class="src"><span class="b d">Dérivé</span> occupation × hauteur</span></li>
+      <li><span class="l">Surface habitable (rendement)</span><span class="v">−243 m²</span><span class="src"><span class="b e">Estimé</span> hypothèse rendement</span></li>
+      <li><span class="l">Logements — avant plafond de densité</span><span class="v">−3 à 4</span><span class="src"><span class="b e">Estimé</span> hypothèse surface logement</span></li>
+      <li><span class="l">Logements — après plafond (≤ 4 logts)</span><span class="v">−3 à 4</span><span class="src"><span class="b e">Estimé</span> hypothèse densité (ex-COS)</span></li>
+      <li><span class="l">Stationnement — scénario au sol</span><span class="v">plafond au sol</span><span class="src"><span class="b s">Sourcé</span> art. 12</span></li>
+      <li><span class="l">Stationnement — scénario sous-sol/silo</span><span class="v">~3–4 logts</span><span class="src"><span class="b s">Sourcé</span> art. 12</span></li>
+      <li><span class="l">Logements retenus au sol</span><span class="v">~1 à 2</span><span class="src"><span class="b d">Dérivé</span></span></li>
+      <li><span class="l">SHAB vendable retenue</span><span class="v">~97 m²</span><span class="src"><span class="b d">Dérivé</span> logements retenus × surface moyenne/logement</span></li>
+    </ol>
+    <a class="ia" href="#">✦ Expliquer ce calcul en clair</a>
+
+    <div class="k">Prix de sortie retenu (bilan)</div>
+    <div class="row"><span class="l">Bâti secteur</span><span class="v">3 317 €/m²</span><span class="src">valeur retenue pour le calcul de charge foncière · détail du marché (échantillon, rayon, tendance, fraîcheur) dans « Marché et secteur »</span></div>
+
+    <div class="k">Fiscal et leviers</div>
+    <div class="row"><span class="l">QPV</span><span class="v mute">non</span></div>
+    <div class="row"><span class="l">TVA</span><span class="v">8,5 % <small>taux DOM</small></span><span class="src">2,1 % possible en LLS selon montage</span></div>
+    <div class="row"><span class="l">Taxe d'aménagement</span><span class="v warn">taux communal à confirmer</span><span class="src">non ingéré — part communale + part départementale, en mairie</span></div>
+
+    <div class="k">RTAA DOM — rappel réglementaire</div>
+    <p class="p">Construction neuve de logements : protection solaire, ventilation traversante, acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m). <a class="ref" href="#">10 exigences</a></p>
+
+    <div class="ctas">
+      <a class="cta" href="#"><span class="i">⊞</span><span><div class="t">Faisabilité</div><div class="d">La capacité constructible de ces 601 m² : SDP, hauteur PLU, calcul tracé</div></span><span class="a">→</span></a>
+      <a class="cta" href="#"><span class="i">€</span><span><div class="t">Calculette foncière</div><div class="d">Ce terrain de 601 m² : SDP, prix de sortie, votre coût et marge</div></span><span class="a">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- 3 — RISQUES ET PROTECTIONS -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">◇</div>
+    <div><h2>Risques et protections</h2><p class="sub">14 couches évaluées</p></div>
+    <span class="chip amber">2 vigilances</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="k first">Vigilances</div>
+    <div class="vig">
+      <div class="t">Pente forte <em>&gt; 30 %</em></div>
+      <p class="p">Terrassement et accès renforcés (majoration VRD du bilan), pas une exclusion.</p>
+      <p class="note">RGE ALTI (altimétrie) · RGE ALTI® (IGN) — édition non enregistrée</p>
+    </div>
+    <div class="vig">
+      <div class="t">Mouvement de terrain <em>niveau faible</em></div>
+      <p class="p">Aléa PPR, niveau faible.</p>
+      <p class="note">Géorisques</p>
+    </div>
+
+    <div class="k">À instruire</div>
+    <div class="row"><span class="l">ABF / Monuments</span><span class="v mute">inconnu</span><span class="src">abords MH ~500 m (tampon) — covisibilité à instruire · ABF / Monuments historiques</span></div>
+    <div class="call"><b>Ligne haute tension (90 kV) à ~486 m</b> — contrainte potentielle (servitudes, reculs). La servitude I4 n'est pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire de réseau (EDF SEI).<span class="src">BD TOPO IGN — aérien seul, le souterrain n'y figure pas</span></div>
+
+    <div class="ok"><span><span class="m">✓</span>11 couches sans objet</span><a href="#">déplier</a></div>
+
+    <div class="ctas">
+      <a class="cta" href="#"><span class="i">⚑</span><span><div class="t">Pièges et risques</div><div class="d">Servitudes dormantes, risques et propriétaire — cette parcelle en détail, ou un lot au crible</div></span><span class="a">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- 4 — MARCHÉ ET SECTEUR -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">↗</div>
+    <div><h2>Marché et secteur</h2><p class="sub">10 ventes secteur · DVF — jusqu'à déc. 2025</p></div>
+    <span class="num">230 €/m²</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="spark"><svg width="120" height="26" viewBox="0 0 120 26"><polyline points="2,20 22,18 42,21 62,14 82,10 102,12 118,6" fill="none" stroke="#82E0A0" stroke-width="1.5"/></svg>10 ventes secteur · DVF — jusqu'à déc. 2025</div>
+
+    <div class="k">Terrain</div>
+    <div class="row"><span class="l">Prix médian terrain</span><span class="v">230 €/m²</span><span class="src">10 ventes secteur cadastral 2021-2025 (millésimes géo-DVF disponibles) — contexte de marché favorable · DVF / valeurs foncières · géo-DVF Etalab 2021-2025 + archives</span></div>
+    <div class="row"><span class="l">Ventes à moins de 100 m</span><span class="v mute">1 vente</span><span class="src">échantillon insuffisant (&lt; 3 ventes) — &lt; 100 m, 36 mois · ventes et autorisations publiées uniquement ; dossiers en cours non publiés</span></div>
+    <div class="row"><span class="l">Potentiel foncier Région</span><span class="v mute">hors îlot</span><span class="src">data.regionreunion.com — Potentiel foncier</span></div>
+
+    <div class="k">Bâti</div>
+    <div class="row"><span class="l">Prix de sortie — bâti secteur</span><span class="v">3 317 €/m²</span><span class="src">appartement · 9 ventes ≤ 1 500 m (rayon adaptatif) · fiabilité faible · tendance indéterminée · DVF — jusqu'à déc. 2025</span></div>
+    <div class="row"><span class="l">Neuf (VEFA) — commune</span><span class="v">4 742 €/m²</span><span class="src">308 ventes / 5 ans</span></div>
+    <p class="note">Médiane €/m² bâti des ventes en l'état futur d'achèvement (VEFA — le neuf qui passe l'acte déclaré). Les ventes récentes restent 1 à 3 ans à apparaître dans DVF : les niveaux les plus récents sont provisoires, le classement reste fiable.</p>
+
+    <div class="k">Dynamique et proximité</div>
+    <div class="row"><span class="l">Permis SITADEL</span><span class="v">9 PC <small>≤ 400 m · 5 ans</small></span><span class="src">densité 60 % du plafond U — signal de zone · SITADEL (autorisations d'urbanisme) · 2026-07</span></div>
+    <div class="row"><span class="l">Commerces et services</span><span class="v">score 0,70</span><span class="src">école 479 m · commerce 420 m · santé 1 022 m · bus 1 259 m · OpenStreetMap / Overpass</span></div>
+
+    <div class="ctas">
+      <a class="cta" href="#"><span class="i">↗</span><span><div class="t">Voir le marché de Saint-Paul</div><div class="d">La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d'instruction</div></span><span class="a">→</span></a>
+      <a class="cta" href="#"><span class="i">€</span><span><div class="t">Taxe d'aménagement</div><div class="d">Estimation détaillée pour un projet ici (Saint-Paul) — barème officiel daté, taux jamais inventés</div></span><span class="a">→</span></a>
+      <a class="cta" href="#"><span class="i">2</span><span><div class="t">Priorité ou À suivre dans cette section</div><div class="d">2 parcelles (n° CI)</div></span><span class="a">→</span></a>
+      <a class="cta" href="#"><span class="i">⇄</span><span><div class="t">Comparer des parcelles</div><div class="d">Cette parcelle chargée — ajoutez-en d'autres à comparer</div></span><span class="a">→</span></a>
+      <a class="cta" href="#"><span class="i">◷</span><span><div class="t">Remonter le temps</div><div class="d">Ce terrain de 1950 à aujourd'hui (curseur avant/après)</div></span><span class="a">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- 5 — RÉSEAUX ET ACCÈS -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">⌁</div>
+    <div><h2>Réseaux et accès</h2><p class="sub">Régie La Créole (régie communautaire TCO)</p></div>
+    <span class="chip mint">confirmée</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="k first">Accès</div>
+    <div class="row"><span class="l">Accès voirie</span><span class="v warn">pas d'accès direct évident</span><span class="src">BD TOPO IGN · BD TOPO V3 — édition non enregistrée</span></div>
+    <div class="row"><span class="l">Transport public — au plus proche</span><span class="v">~45 m</span><span class="src">arrêt « Réservoir Bellemène » (Kar'Ouest)</span></div>
+
+    <div class="k">Gestionnaires (raccordement)</div>
+    <div class="gest">
+      <span class="l">Compétence</span><span class="v">TCO — Territoire de la Côte Ouest <small>tco.re</small></span>
+      <span class="l">Eau potable</span><span class="v">Régie La Créole <small>régie communautaire TCO</small> <span class="pill">confirmé</span></span>
+      <span class="l">Assainissement</span><span class="v">Régie La Créole <span class="pill">confirmé</span> <small>régie</small></span>
+      <span class="l">SPANC (ANC)</span><span class="v">La Créole (SPANC)</span>
+      <span class="l">Électricité</span><span class="v">EDF SEI <small>raccordement.reunion@edf.fr · edf.re</small></span>
+    </div>
+    <p class="note">Ex-régie communale transférée au TCO le 01.01.2020. Pas de délégataire. Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires et en DT-DICT (reseaux-et-canalisations.gouv.fr).</p>
+
+    <div class="k">Viabilisation (eau · assainissement) <span class="r"><span class="pill">confirmée par les faits</span></span></div>
+    <p class="p">Probabilité de viabilisation par faisceau de preuves — jamais une certitude.</p>
+    <ul class="why">
+      <li><i>▲</i><span><b>Permis accordés à proximité</b> — 4 permis autorisés &lt; 100 m · 3 depuis 2022 (secteur en développement actif)</span></li>
+      <li><i>▲</i><span><b>Façade sur voie publique urbanisée</b> — voie au contact + bâti riverain → réseaux enterrés sous voirie</span></li>
+      <li><i>▲</i><span><b>Zone urbaine (U)</b> — pondération de fond (zonage PLU)</span></li>
+      <li><i>▲</i><span><b>Adjacence au bâti existant</b> — bâti ≤ 10 m (le bâti voisin est raccordé)</span></li>
+    </ul>
+    <div class="call"><b>Raccordement a priori simple</b> : réseaux présumés en façade/voirie, secteur déjà desservi et construit. Zonage assainissement collectif sur ce secteur → raccordement au réseau à confirmer.</div>
+
+    <div class="k">Assainissement (zonage) <span class="r"><span class="b s">Sourcé</span></span></div>
+    <div class="row"><span class="l">Zonage à Saint-Paul</span><span class="v">tout-à-l'égout <small>collectif</small></span><span class="src">raccordement au tout-à-l'égout (collectif)</span></div>
+    <div class="row"><span class="l">Ensoleillement</span><span class="v">~1 350 <small>kWh/kWc/an</small></span><span class="src"><span class="b e">Estimé</span> favorable à une installation solaire — modèle SARAH3, hors gradient côtier local</span></div>
+    <p class="note">Indicateur de probabilité de viabilisation (faisceau de preuves), pas une certitude ni un droit à construire. Aucun tracé de réseau (donnée sensible). À confirmer auprès des gestionnaires et en DT-DICT.</p>
+  </div>
+</section>
+
+<!-- 6 — AUTOUR DE CETTE PARCELLE -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">◎</div>
+    <div><h2>Autour de cette parcelle</h2><p class="sub">Équipements, population et permis</p></div>
+    <span class="chip grey">isochrone</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="stats four">
+      <div class="st"><div class="l">École</div><div class="v">465<small>m</small></div></div>
+      <div class="st"><div class="l">Commerces</div><div class="v">461<small>m</small></div></div>
+      <div class="st"><div class="l">Santé</div><div class="v">149<small>m</small></div></div>
+      <div class="st"><div class="l">Bus</div><div class="v">45<small>m</small></div></div>
+    </div>
+
+    <div class="k">Contexte socio-économique (secteur)</div>
+    <div class="row"><span class="l">Niveau de vie médian</span><span class="v">22 862 €</span><span class="src"><span class="b s">Sourcé</span> 74 % propriétaires · pauvreté 41 % · Filosofi 2021 (INSEE, carreaux 200 m)</span></div>
+    <div class="row"><span class="l">Parc social</span><span class="v">7 265 <small>logements</small></span><span class="src">RPLS 01.01.2025</span></div>
+    <p class="note">Contexte informatif — hors scoring.</p>
+
+    <div class="seg"><span class="on">À pied · 15 min</span><span>Voiture · 5 min</span></div>
+    <div class="k">Qui vit dans la zone</div>
+    <div class="stats">
+      <div class="st"><div class="l">Habitants</div><div class="v">1 392</div></div>
+      <div class="st"><div class="l">Ménages</div><div class="v">487</div></div>
+      <div class="st"><div class="l">Revenu médian / an</div><div class="v">22 862<small>€</small></div></div>
+      <div class="st"><div class="l">Moins de 25 ans</div><div class="v">34<small>%</small></div></div>
+    </div>
+
+    <div class="k">Équipements et commerces</div>
+    <div class="tbl">
+      <div class="tr" style="grid-template-columns:1fr auto"><span class="d">Services aux particuliers <span class="m">— HERFORT COIF…</span></span><span class="r">2 min à pied</span></div>
+      <div class="tr" style="grid-template-columns:1fr auto"><span class="d">Santé et action sociale <span class="m">— BILLON PIERRE…</span></span><span class="r">4 min à pied</span></div>
+      <div class="tr" style="grid-template-columns:1fr auto"><span class="d">Commerces <span class="m">— MAGNAN DE BELLEVUE S…</span></span><span class="r">15 min à pied</span></div>
+      <div class="tr" style="grid-template-columns:1fr auto"><span class="d">Sports, loisirs et culture <span class="m">— SENTIER BERNI…</span></span><span class="r">15 min à pied</span></div>
+    </div>
+    <div class="call">Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.</div>
+    <p class="note">INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.</p>
+
+    <div class="k">Permis à proximité <span class="r" style="color:var(--t3)">4 à &lt; 200 m · 15 à &lt; 200 m</span></div>
+    <p class="note" style="margin-top:0">Permis autorisés géolocalisés &lt; 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.</p>
+    <div class="tbl">
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2015-12-21</span><span class="d">1 lgt</span><span class="r" style="color:var(--mint)">53 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2024-04-25</span><span class="d">2 lgt</span><span class="r" style="color:var(--mint)">57 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2024-06-05</span><span class="d">1 lgt</span><span class="r" style="color:var(--mint)">76 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2025-01-22</span><span class="d">1 lgt</span><span class="r" style="color:var(--mint)">87 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PA</span><span class="m">2021-11-11</span><span class="d"></span><span class="r">104 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2018-04-26</span><span class="d">1 lgt</span><span class="r">105 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2018-07-19</span><span class="d">1 lgt</span><span class="r">108 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2022-11-21</span><span class="d">1 lgt</span><span class="r">109 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2016-08-03</span><span class="d">1 lgt</span><span class="r">112 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2018-09-19</span><span class="d">1 lgt</span><span class="r">112 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2019-03-06</span><span class="d">1 lgt</span><span class="r">113 m</span></div>
+      <div class="tr" style="grid-template-columns:34px 86px 1fr auto"><span class="tag">PC</span><span class="m">2023-12-14</span><span class="d">1 lgt</span><span class="r">124 m</span></div>
+    </div>
+
+    <div class="k">Activité de dépôt de permis <span class="r"><span class="b s">Sourcé</span></span></div>
+    <div class="row"><span class="l">Sur le secteur</span><span class="v">8 dépôts <small>36 mois</small></span><span class="src">section cadastrale · dernier 2025-01-01 · Sitadel3 / SDES · permis aboutis — les refus et dossiers en cours ne sont pas publiés</span></div>
+  </div>
+</section>
+
+<!-- 7 — DISPOSITIFS TERRITORIAUX -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">▤</div>
+    <div><h2>Dispositifs territoriaux</h2><p class="sub">Saint-Paul</p></div>
+    <span class="chip grey">ZFANG standard</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="row"><span class="l">ZFANG — zone franche d'activité</span><span class="v">régime standard</span><span class="src">dispositif de plein droit dans les DOM (art. 44 quaterdecies CGI) : abattement d'environ 50 % sur les bénéfices · Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18) · <a class="ref" href="#">voir le texte</a></span></div>
+    <div class="row"><span class="l">FRR — France Ruralités Revitalisation (ex-ZRR)</span><span class="v warn">en partie</span><span class="src">la zone spéciale d'action rurale (les Hauts) est infra-communale : la situation dépend de la localisation exacte du terrain · ZSAR 1978 · FRR 01.07.2024 · arr. ZRR 2017 (Région) · <a class="ref" href="#">voir le texte</a></span></div>
+    <div class="row"><span class="l">Zonage d'investissement locatif</span><span class="v">B1</span><span class="src">éligibilité PTZ dans le neuf et plafonds des dispositifs outre-mer — s'applique à toute l'île · arrêté de zonage A/B/C (DHUP)</span></div>
+    <div class="row"><span class="l">TVA outre-mer</span><span class="v">8,5 % <small>· 2,1 % LLS</small></span><span class="src">taux normal DOM 8,5 % ; logements locatifs sociaux (LLS/LLTS) à 2,1 % — le montage conditionne le taux, pas la localisation · CGI (TVA DOM, art. 296 et 278 sexies)</span></div>
+    <p class="note">Fait territorial sourcé et daté. Les taux cités sont les taux légaux du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.</p>
+  </div>
+</section>
+
+<!-- 8 — PROPRIÉTAIRE -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">☺</div>
+    <div><h2>Propriétaire</h2><p class="sub">Personne physique ou non recensée</p></div>
+    <span class="chip grey">privé</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <p class="note" style="margin-top:4px">Personne physique ou non recensé au fichier des personnes morales — identité nominative : workflow SPF/CERFA, jamais automatisée.</p>
+    <div class="row"><span class="l">Propriétaire (personne morale)</span><span class="v mute">non renseigné</span><span class="src">DGFiP — parcelles des personnes morales · panel millésimes 2018-2025</span></div>
+    <div class="row"><span class="l">Âge du dirigeant</span><span class="v mute">inconnu</span><span class="src">PM sans dirigeant physique daté · INPI RNE (dirigeants)</span></div>
+    <div class="row"><span class="l">BODACC</span><span class="v mute">sans objet</span><span class="src">propriétaire non personne morale · BODACC (procédures collectives)</span></div>
+    <div class="ctas">
+      <a class="cta" href="#"><span class="i">✉</span><span><div class="t">Courrier SPF</div><div class="d">Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire</div></span><span class="a">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- 9 — DONNÉES ET MÉTHODE -->
+<section class="acc open">
+  <div class="hd">
+    <div class="ico">⊟</div>
+    <div><h2>Données et méthode</h2><p class="sub">27 sources sur cette fiche</p></div>
+    <span class="chip mint">confiance haute</span>
+    <span class="chev">▴</span>
+  </div>
+  <div class="bd">
+    <div class="k first">Sources utilisées</div>
+    <div class="tbl srcs">
+      <div class="tr"><span class="d">RPG — déclarations agricoles (IGN/ASP)</span><span class="prod">DAAF · proxy RPG/IGN</span><span class="pill mute">proxy</span></div>
+      <div class="tr"><span class="d">SITADEL (autorisations d'urbanisme)</span><span class="prod">SDES · 2026-07</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">BODACC (procédures collectives)</span><span class="prod">DILA · 2026</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">INPI RNE (dirigeants)</span><span class="prod">INPI</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Forêts publiques (ONF)</span><span class="prod">ONF / IGN (BD TOPO)</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">INPN / patrinat — espaces protégés</span><span class="prod">INPN/MNHN · ENS dép.</span><span class="pill mute">non public</span></div>
+      <div class="tr"><span class="d">Parc National de La Réunion (INPN)</span><span class="prod">INPN/MNHN · API Carto</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Cartofriches (Cerema)</span><span class="prod">Cerema / DGALN</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">DVF / valeurs foncières</span><span class="prod">DGFiP / Etalab — géo-DVF</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">IGN BD CARTO V5 — occupation du sol</span><span class="prod">IGN / Géoplateforme</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">ABF / Monuments historiques</span><span class="prod">Base Mérimée</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">data.regionreunion.com — Potentiel foncier</span><span class="prod">Région Réunion</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">DGFiP — parcelles des personnes morales</span><span class="prod">DGFiP</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">50 pas géométriques — limite haute (DEAL)</span><span class="prod">DEAL Réunion (Lizmap)</span><span class="pill mute">—</span></div>
+      <div class="tr"><span class="d">Classement sonore ITT (Cerema)</span><span class="prod">Cerema (Cartagène)</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">SUP — assiettes GPU (API Carto)</span><span class="prod">IGN (Géoportail de l'urbanisme)</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Cerema / GéoLittoral — érosion côtière</span><span class="prod">Cerema / GéoLittoral</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Géorisques</span><span class="prod">BRGM / MTE</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Géorisques — ICPE</span><span class="prod">BRGM / Géorisques</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Géorisques — cavités souterraines</span><span class="prod">BRGM / Géorisques</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Géorisques — mouvements de terrain</span><span class="prod">BRGM / Géorisques</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Géorisques — sites et sols pollués</span><span class="prod">BRGM / Géorisques</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">OpenStreetMap / Overpass</span><span class="prod">OSM</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">BD TOPO IGN</span><span class="prod">IGN / Géoplateforme</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">RGE ALTI (altimétrie)</span><span class="prod">IGN / Géoplateforme</span><span class="pill">suivie</span></div>
+      <div class="tr"><span class="d">Potentiel foncier Région (Région ODS)</span><span class="prod">Région Réunion / AGORAH</span><span class="pill mute">—</span></div>
+      <div class="tr"><span class="d">Urbanisme PLU/GPU (API Carto)</span><span class="prod">IGN / API Carto GPU</span><span class="pill">suivie</span></div>
+    </div>
+
+    <div class="k">Ce que LABUSE ne peut pas savoir sur cette parcelle <span class="r" style="color:var(--t3)">2</span></div>
+    <div class="row"><span class="l">Confiance données</span><span class="v"><span class="chip mint">confiance haute</span></span></div>
+  </div>
+</section>
+
+</div>
+
+<aside class="aside">
+  <h1>Fiche parcelle — grammaire des accordéons</h1>
+  <p>Même donnée, six blocs, une seule grille. Rien n'est ajouté ni retiré ; seul le dessin change.</p>
+  <div class="rule"><span class="n">01</span><div><b>En-tête</b>Icône 30 px · titre 14 · sous-titre 12 · à droite un seul objet : chiffre clé ou chip d'état · chevron.</div></div>
+  <div class="rule"><span class="n">02</span><div><b>Kicker</b>Une ligne mono 10,5 px, filet au-dessus. C'est le seul séparateur : plus de boîte dans la boîte.</div></div>
+  <div class="rule"><span class="n">03</span><div><b>Ligne de fait</b>Libellé à gauche en gris, valeur à droite en mono alignée, source en dessous en 11,5 px avec son badge. Toute la fiche s'aligne sur cette colonne de droite.</div></div>
+  <div class="rule"><span class="n">04</span><div><b>Badges</b>Trois seulement, même taille partout : Sourcé (vert), Estimé (ambre), Dérivé (gris). L'article de PLU est un lien mono ↗.</div></div>
+  <div class="rule"><span class="n">05</span><div><b>Vigilance et rappel</b>Une vigilance = filet ambre à gauche, pas de boîte. Un rappel = fond légèrement plus clair, sans bordure.</div></div>
+  <div class="rule"><span class="n">06</span><div><b>Actions</b>Toujours en bas de section, empilées, même hauteur : icône carrée · titre · description · flèche. Vert opaque au survol, ambre pour Projet, mauve pour l'IA.</div></div>
+  <div class="rule"><span class="n">—</span><div><b>Ce qui disparaît</b>Les boîtes imbriquées à bordures différentes, les cinq tailles de texte, les sources en fin de phrase, les valeurs en milieu de ligne, les paragraphes de méthode en plein texte (ils passent en note 11,5 px).</div></div>
+</aside>
+
+</div>
+</body>
+</html>
