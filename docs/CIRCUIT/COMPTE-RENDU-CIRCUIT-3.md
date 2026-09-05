@@ -455,3 +455,21 @@ refuserait de calculer/basculer** — le système fonctionne. Vic solde en merge
 3. Valider `ECHANTILLONS-A-VALIDER.md` avec Stéphanie (LiDAR 50 toits, CoSIA, FLAIR) et remplir les
    taux de TA + les 5 sources SOURCES-1 reportées quand il veut.
 4. Merger `feat/circuit-1` → `2` → `3`.
+
+### Suite finale
+
+**2441 passed · 1 failed · 49 skipped** (84 s, `OMP_NUM_THREADS=1 DYLD_FALLBACK_LIBRARY_PATH=
+/opt/homebrew/lib`). Départ du mandat : 2407 passed. **+34 tests CIRCUIT-3** (lots 1-6).
+
+- Le seul rouge est **`test_front_reliquats::test_r5`** — le **pré-existant admis depuis CIRCUIT-1**
+  (aucun lien avec ce mandat).
+- Une seule VRAIE régression a été introduite puis corrigée : `test_sentinelle` (le catalogue passe
+  de 65 à 67 sources avec CatNat + TA — le semis les classe en « raisons non surveillées »,
+  interrogées en direct / à ingérer).
+- PIÈGES d'environnement (macOS/conda, notés) : sans `OMP_NUM_THREADS=1`, l'import sklearn de
+  `test_scoring2_arene` **segfault** (crash natif OpenMP, hors mandat) ; et un passage a montré 4
+  faux rouges **flaky** (dpe/enrichment/ravine — `OperationalError` de connexion sous charge),
+  tous VERTS en isolation, en combinaison avec les tests circuit3, et au passage de confirmation
+  ci-dessus. `DYLD_*` obligatoire (WeasyPrint/libgobject) et **retiré par `nohup` via SIP** →
+  lancer sans nohup.
+- tsc + build frontend : verts.
