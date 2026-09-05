@@ -14,8 +14,9 @@ from pathlib import Path
 
 import yaml
 
-from .cadre import (Controle, Filtre, Resultat, Verdict, dernier_verdict,  # noqa: F401
-                    en_quarantaine, ensure_tables, jouer, ko, ok, skip, version_servie)
+from .cadre import (Controle, Filtre, Resultat, Verdict, _ensure_sur_session,  # noqa: F401
+                    dernier_verdict, en_quarantaine, ensure_tables, jouer, ko, ok, skip,
+                    version_servie)
 from . import echantillon
 from .sources import FILTRES_RICHES
 
@@ -107,6 +108,106 @@ def sources_run() -> list[str]:
 def sources_live() -> list[str]:
     """Sources dont le filtre alimente au moins une donnée à portée `live` (quarantaine 4.1)."""
     return sorted(k for k, f in _registre().items() if f.live)
+
+
+def etats_servis(db) -> dict[str, dict]:
+    """CIRCUIT-3 lot 5.2 — le dernier verdict + les contrôles de CHAQUE source, en 2 requêtes
+    (pour la page Circuit ; évite N requêtes par réservoir)."""
+    from sqlalchemy import text
+    _ensure_sur_session(db)
+    versions = {}
+    for row in db.execute(text(
+        "SELECT DISTINCT ON (source) source, version, verdict, bloquants_ko, avertissants_ko, "
+        "servir_quand_meme, joue_le FROM filtre_versions ORDER BY source, joue_le DESC")).all():
+        versions[row[0]] = {"version": row[1], "verdict": row[2], "bloquants_ko": row[3],
+                            "avertissants_ko": row[4], "servir_quand_meme": row[5],
+                            "joue_le": row[6].isoformat() if row[6] else None, "controles": []}
+    if versions:
+        for r in db.execute(text(
+            "SELECT source, version, controle, nature, severite, valeur, seuil, verdict, joue_le "
+            "FROM filtre_resultats ORDER BY source, "
+            "CASE severite WHEN 'bloquant' THEN 0 ELSE 1 END, controle")).all():
+            e = versions.get(r[0])
+            if e and r[1] == e["version"]:
+                e["controles"].append({"controle": r[2], "nature": r[3], "severite": r[4],
+                                       "valeur": r[5], "seuil": r[6], "verdict": r[7],
+                                       "joue_le": r[8].isoformat() if r[8] else None})
+    return versions
+
+
+def etat_pour_data_source(db, nom: str) -> dict | None:
+    """CIRCUIT-3 lot 5.2 — l'état du filtre d'un réservoir (ligne data_sources) : trouve le filtre
+    dont le motif matche le nom, rend son dernier verdict + les contrôles (valeur/seuil/date). Sert
+    la page Circuit : « filtre OK / n KO / non filtré » + la fiche du bas."""
+    from sqlalchemy import text
+    nom_l = (nom or "").lower()
+    cible = None
+    # motif le plus LONG d'abord (le plus spécifique gagne).
+    ordonnes = sorted(_registre().items(),
+                      key=lambda kv: len((kv[1].source_motif or "")), reverse=True)
+    for cle, f in ordonnes:
+        mot = (f.source_motif or "").lower().replace("%", "")
+        if mot and mot in nom_l:
+            cible = (cle, f)
+            break
+    if not cible:
+        return {"source": None, "verdict": "non_filtre"}
+    cle, f = cible
+    dv = dernier_verdict(db, cle)
+    if not dv:
+        return {"source": cle, "verdict": "jamais_joue", "portee_run": f.portee_run, "live": f.live}
+    controles = [dict(controle=r[0], nature=r[1], severite=r[2], valeur=r[3], seuil=r[4],
+                      verdict=r[5], joue_le=r[6].isoformat() if r[6] else None)
+                 for r in db.execute(text(
+        "SELECT controle, nature, severite, valeur, seuil, verdict, joue_le "
+        "FROM filtre_resultats WHERE source=:s AND version=:v ORDER BY "
+        "CASE severite WHEN 'bloquant' THEN 0 ELSE 1 END, controle"),
+        {"s": cle, "v": dv["version"]}).all()]
+    return {"source": cle, "verdict": dv["verdict"], "version": dv["version"],
+            "bloquants_ko": dv["bloquants_ko"], "avertissants_ko": dv["avertissants_ko"],
+            "servir_quand_meme": dv["servir_quand_meme"], "joue_le": dv["joue_le"],
+            "portee_run": f.portee_run, "live": f.live, "controles": controles}
+
+
+def servir_quand_meme(db, source: str, par: str, motif: str | None = None) -> dict:
+    """CIRCUIT-3 lot 5.2 — le geste de Vic : servir une version malgré sa quarantaine. Marque la
+    DERNIÈRE version du filtre (avec qui + pourquoi) ; lève la garde de la pompe et le blocage."""
+    from sqlalchemy import text
+    from .. import circuit_journal
+    _ensure_sur_session(db)
+    dv = dernier_verdict(db, source)
+    if not dv:
+        return {"ok": False, "motif": "aucune version filtrée pour cette source"}
+    db.execute(text(
+        "UPDATE filtre_versions SET servir_quand_meme = true, servi_par = :p, servi_motif = :m "
+        "WHERE source = :s AND version = :v"),
+        {"p": par[:120], "m": motif, "s": source, "v": dv["version"]})
+    circuit_journal.journaliser(db, "filtre", source, par, "ok",
+                                {"servir_quand_meme": True, "version": dv["version"], "motif": motif})
+    return {"ok": True, "source": source, "version": dv["version"]}
+
+
+def quarantaines_anciennes(db, jours: int = 7) -> list[dict]:
+    """CIRCUIT-3 lot 5.3 — les versions en QUARANTAINE depuis plus de `jours` jours (sans « servir
+    quand même »). Une source qui traîne en quarantaine est un avertissement (healthz)."""
+    from sqlalchemy import text
+    _ensure_sur_session(db)
+    rows = db.execute(text(
+        "SELECT DISTINCT ON (source) source, version, joue_le "
+        "FROM filtre_versions WHERE verdict='quarantaine' AND servir_quand_meme = false "
+        "ORDER BY source, joue_le DESC")).all()
+    vieux = []
+    from datetime import datetime, timezone, timedelta
+    seuil = datetime.now(timezone.utc) - timedelta(days=jours)
+    for source, version, joue_le in rows:
+        # ne garder que si le DERNIER verdict de la source est bien quarantaine (pas soldé depuis)
+        dv = dernier_verdict(db, source)
+        if not dv or dv["verdict"] != "quarantaine" or dv["servir_quand_meme"]:
+            continue
+        if joue_le and joue_le < seuil:
+            vieux.append({"source": source, "version": version,
+                          "depuis": joue_le.isoformat(), "jours_seuil": jours})
+    return vieux
 
 
 def garde_pompe(db) -> list[dict]:

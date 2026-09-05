@@ -1892,3 +1892,8 @@ export const postAdminCircuitPurger = () => j<any>('/admin/circuit/purger-runs',
 export const postAdminCircuitRevenir = () => j<any>('/admin/circuit/revenir', { method: 'POST' })
 export const getAdminCircuitNoteVersion = (candidat: string) =>
   j<any>(`/admin/circuit/note-version?candidat=${encodeURIComponent(candidat)}`)
+// CIRCUIT-3 lot 5.2 — gestes du filtre : servir quand même une quarantaine, revenir à la précédente.
+export const postAdminCircuitFiltreServir = (source: string, motif = '') =>
+  j<any>(`/admin/circuit/filtre/servir-quand-meme?source=${encodeURIComponent(source)}&motif=${encodeURIComponent(motif)}`, { method: 'POST' })
+export const postAdminCircuitFiltreRevenir = (source: string) =>
+  j<any>(`/admin/circuit/filtre/revenir?source=${encodeURIComponent(source)}`, { method: 'POST' })

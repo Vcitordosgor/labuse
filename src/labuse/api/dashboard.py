@@ -1678,6 +1678,28 @@ def admin_circuit(request: Request) -> dict:
         reservoirs = []
         from datetime import datetime as _dt, timezone as _tz
         _now = _dt.now(tz=_tz.utc)
+        # CIRCUIT-3 lot 5.2 — l'état du filtre par source (batch : 2 requêtes), + le mapping
+        # motif→source pour greffer sur chaque réservoir.
+        from .. import filtres as _filtres
+        _etats = _filtres.etats_servis(c)
+        _reg = _filtres.FILTRES()
+        # motif le plus LONG d'abord : « Géorisques — mouvements » l'emporte sur « Géorisques ».
+        _motifs = sorted([(cle, (f.source_motif or "").lower().replace("%", ""))
+                          for cle, f in _reg.items() if f.source_motif],
+                         key=lambda t: len(t[1]), reverse=True)
+
+        def _filtre_du(nom: str) -> dict:
+            nom_l = (nom or "").lower()
+            for cle, mot in _motifs:
+                if mot and mot in nom_l:
+                    e = _etats.get(cle)
+                    f = _reg[cle]
+                    if not e:
+                        return {"source": cle, "verdict": "jamais_joue",
+                                "portee_run": f.portee_run, "live": f.live}
+                    return {"source": cle, **e, "portee_run": f.portee_run, "live": f.live}
+            return {"source": None, "verdict": "non_filtre"}
+
         for r in rows:
             vanne = _relance_pour(r["name"])
             mode = r["mode_remplissage"] or "one_shot"
@@ -1706,6 +1728,7 @@ def admin_circuit(request: Request) -> dict:
                             "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
                             "vu": r["dernier_vu"], "actif": r["actif"],
                             "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
+                "filtre": _filtre_du(r["name"]),
             })
         # ── fuites ouvertes + eau ancienne + dernier contrôle (lot 4) ──
         try:
@@ -1769,6 +1792,11 @@ def admin_circuit(request: Request) -> dict:
         "eau_ancienne_ouverte": sum(1 for x in eau if x["statut"] == "ouvert"),
         "jamais_verifies": sum(1 for r in reservoirs if not r["veille"]),
         "a_verifier": sum(1 for r in reservoirs if r.get("a_verifier")),
+        # CIRCUIT-3 lot 5.2 — pastilles du filtre : sources en quarantaine / avec avertissements.
+        "filtres_quarantaine": sum(1 for r in reservoirs
+                                   if (r.get("filtre") or {}).get("verdict") == "quarantaine"),
+        "filtres_avertissements": sum(1 for r in reservoirs
+                                      if (r.get("filtre") or {}).get("verdict") == "avertissements"),
     }
     return {
         "run_servi": runs.current(), "manifeste": m,
@@ -1838,6 +1866,42 @@ def admin_circuit_note_version(request: Request, candidat: str) -> dict:
     from ..db import session_scope
     with session_scope() as s:
         return bascule_flux.note_version(s, candidat)
+
+
+@router.post("/admin/circuit/filtre/servir-quand-meme")
+def admin_circuit_filtre_servir(request: Request, source: str, motif: str = "") -> dict:
+    """CIRCUIT-3 lot 5.2 — « servir quand même » une source en quarantaine (geste de Vic, avec qui
+    et pourquoi, journalisé). Lève la garde de la pompe et le blocage de service."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import filtres
+    from ..db import session_scope
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    with session_scope() as s:
+        r = filtres.servir_quand_meme(s, source, str(qui), motif or None)
+        if not r.get("ok"):
+            raise HTTPException(404, r.get("motif", "source inconnue"))
+        s.commit()
+    return r
+
+
+@router.post("/admin/circuit/filtre/revenir")
+def admin_circuit_filtre_revenir(request: Request, source: str) -> dict:
+    """CIRCUIT-3 lot 4.3/5.2 — retour arrière d'une source LIVE : remet sa version précédente en
+    table servie (`<table>__precedente` → `<table>`), geste journalisé."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import session_scope
+    from ..filtres import quarantaine
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    with session_scope() as s:
+        r = quarantaine.revenir(s, source, par=str(qui))
+        if not r.get("ok"):
+            raise HTTPException(409, r.get("motif", "retour impossible"))
+        s.commit()
+    return r
 
 
 @router.post("/admin/circuit/revenir")

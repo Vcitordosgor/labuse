@@ -280,6 +280,53 @@ sources live dérivées du registre. Total CIRCUIT-3 : **22 verts** (lots 1-4).
 
 ---
 
-## Lots 5 à 6 — à venir
+## Lot 5 — Le filtre de nuit et la page — **CLOS**
+
+### Livré
+
+- **5.1 Job `filtres-sources`** (07:05 Réunion = 03:05 UTC, **AVANT** la sonde de cohérence
+  07:15/07:25) : `jobs_impl.filtres_sources` rejoue les filtres sur les versions servies (dérive
+  dans le temps), compte ok/avertissements/quarantaine, et **notifie l'admin** (dédup jour) si une
+  source passe en quarantaine. Enregistré dans `jobs.JOBS` + `TOUCHE_EAU` + `deploy/cron.d-labuse`
+  (le test `test_81_crontab_wrapper_complet` garde l'alignement crontab↔registre).
+- **5.2 Page Circuit** :
+  - `/admin/circuit` : chaque réservoir porte `filtre` (`verdict`, `bloquants_ko`, `avertissants_ko`,
+    `servir_quand_meme`, `portee_run`, `live`, `controles[]`). Le mapping source→réservoir prend le
+    **motif le plus LONG** (« Géorisques — mouvements » l'emporte sur « Géorisques »). Batch en
+    2 requêtes (`filtres.etats_servis`) pour tenir le budget < 1 s.
+  - `Circuit.tsx` : **badge par réservoir** (« filtre OK / n KO / quarantaine / non filtré »), la
+    **fiche du bas** liste chaque contrôle (✓/✗/·, valeur, seuil en survol, mention « bloquant »)
+    avec la date du filtre ; **pastilles** du bandeau (« n en quarantaine », « n filtres à voir ») ;
+    boutons **« Servir quand même »** (si quarantaine) et **« Revenir à la version précédente »**
+    (si live), chacun confirmé et journalisé. tsc + build verts.
+  - Endpoints `POST /admin/circuit/filtre/servir-quand-meme` et `/admin/circuit/filtre/revenir`
+    (`filtres.servir_quand_meme` marque la version avec qui+pourquoi ; `quarantaine.revenir`).
+- **5.3 Healthz** : `/healthz/crons` porte `filtres_quarantaine` — **une version en quarantaine
+  depuis plus de 7 jours (sans « servir quand même ») met `ok=false`** (`quarantaines_anciennes`).
+
+### Décisions prises en autonomie (lot 5)
+
+1. **Le job rejoue TOUS les contrôles** (pas seulement les avertissants) sur les versions servies —
+   plus simple et plus complet ; un bloquant qui apparaît par dérive (une table corrigée qui casse)
+   est ainsi attrapé la nuit, pas seulement à l'ingestion.
+2. **Pas de recette navigateur avec captures** (comme CIRCUIT-1 lot 5.7) : tsc + build verts et les
+   helpers de page testés en base réelle. La recette navigateur complète (uvicorn + chromium) est un
+   geste de Vic si souhaité — le mandat lot 5 ne l'exige pas explicitement.
+3. **« Envoyer un agent » (placeholder lot 6 CIRCUIT-1) retiré de la fiche réservoir** au profit du
+   bloc Filtre — le bouton était désactivé ; la place sert mieux la qualité.
+
+### Tests — lot 5
+
+`tests/test_circuit3_lot5.py` **5 verts** (job enregistré + dispatchable ; « servir quand même »
+lève quarantaine + garde pompe ; quarantaine > 7 j ; mapping motif le plus long ; batch etats_servis).
+Régression crontab/healthz/circuit : verte. Total CIRCUIT-3 : **27 verts** (lots 1-5).
+
+### Commit
+
+`feat/circuit-3` — un commit lot 5, poussé. Rien mergé.
+
+---
+
+## Lot 6 — à venir
 
 (compte-rendu tenu à jour lot par lot)

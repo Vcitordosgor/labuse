@@ -159,8 +159,19 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
                           "statut": "ok" if dernier else "jamais_vu"}
     except Exception:  # noqa: BLE001
         pass
+    # CIRCUIT-3 lot 5.3 — une version bloquée en quarantaine depuis plus de 7 jours = avertissement.
+    filtres_quarantaine = None
+    try:
+        from .. import filtres
+        vieux = filtres.quarantaines_anciennes(db, jours=7)
+        if vieux:
+            filtres_quarantaine = vieux
+            degrade = True
+    except Exception:  # noqa: BLE001
+        pass
     return {"ok": not degrade, "crons": out, "sources": sources, "retards": retards,
-            "dpe_reveil": dpe_reveil, "radar": radar, "stripe_webhook": stripe_webhook}
+            "dpe_reveil": dpe_reveil, "radar": radar, "stripe_webhook": stripe_webhook,
+            "filtres_quarantaine": filtres_quarantaine}
 
 
 # ═══════════════════════════ SECTEUR-1 (S2) — Contacts institutionnels (admin) ═══════════════════════════
