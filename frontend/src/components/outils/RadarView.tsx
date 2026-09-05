@@ -515,18 +515,18 @@ export function RadarView() {
               <div>
                 <div className="mb-1.5 text-[11px] text-txt-mut">Rattachement à la parcelle</div>
                 <Segment value={f.rattache ?? ''} onChange={(v) => setF((p) => ({ ...p, rattache: (v || undefined) as RadarFiltres['rattache'] }))}
-                  options={[['', 'Tous'], ['oui', 'Rattachés']]} data="radar-seg-ratt" />
+                  options={[['oui', 'Rattachés'], ['', 'Tous']]} data="radar-seg-ratt" />
               </div>
               <div>
                 <div className="mb-1.5 text-[11px] text-txt-mut">Vendeur</div>
                 <Segment value={f.particulier_pro ?? ''} onChange={(v) => setF((p) => ({ ...p, particulier_pro: (v || undefined) as RadarFiltres['particulier_pro'] }))}
-                  options={[['', 'Tous'], ['particulier', 'Particulier'], ['pro', 'Pro']]} data="radar-seg-pp" />
+                  options={[['particulier', 'Particulier'], ['pro', 'Pro'], ['', 'Tous']]} data="radar-seg-pp" />
               </div>
               <div>
                 <div className="mb-1.5 text-[11px] text-txt-mut">Prix face au marché</div>
                 {/* RADAR-DEPOT-2 D4 — attribut de l'annonce, pas un canal. */}
                 <Segment value={f.sous_marche ?? ''} onChange={(v) => setF((p) => ({ ...p, sous_marche: (v || undefined) as RadarFiltres['sous_marche'] }))}
-                  options={[['', 'Tous les prix'], ['oui', 'Sous le marché']]} data="radar-seg-sm" />
+                  options={[['oui', 'Sous le marché'], ['', 'Tous les prix']]} data="radar-seg-sm" />
               </div>
               <div className="flex justify-end gap-2 border-t border-line-2 pt-2.5">
                 <button onClick={effacerFiltres} className="rounded-lg border border-line-2 px-3 py-1.5 text-[12px] text-txt-mut hover:text-txt">Tout effacer</button>

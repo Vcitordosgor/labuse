@@ -434,6 +434,11 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     true_total = int(counts["n"] or 0)
     geocodes_total = int(counts["geo"] or 0)
     # CARTE = TOUS les géocodés (décision Vic), chargée une seule fois (page 0), payload léger (geom seul).
+    # RETOURS-15 U2 — le plafond LIMIT 8000 (tri date DESC) SAUTE : en « Tous » (240 mois), il
+    # réduisait les 47 071 géocodés aux 8 000 plus récents → un PC 2016 rattaché par la géométrie
+    # (S5) n'apparaissait JAMAIS sur la carte île entière (« je ne les vois pas », Vic 05/09).
+    # Mesuré : 41 ms d'exécution pour la fenêtre pleine ; garde large 60 000 = borne de payload,
+    # pas un filtre (la fenêtre Sitadel entière tient dessous).
     carte = []
     if offset == 0:
         crows = db.execute(text("""
@@ -442,7 +447,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
             WHERE (CAST(:c AS text) IS NULL OR commune = :c)
               AND (CAST(:nat AS text) IS NULL OR type = :nat)
               AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL
-            ORDER BY date DESC LIMIT 8000"""),
+            ORDER BY date DESC LIMIT 60000"""),
             {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().all()
         carte = [{"permit_id": r["permit_id"], "type": r["type"], "date": r["date"],
                   "geom": json.loads(r["g"])} for r in crows]
@@ -815,16 +820,18 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
     mil = db.execute(text("SELECT max(source_millesime) AS mil FROM parcel_solar "
                           "WHERE prod_spec_kwh_kwc IS NOT NULL")).scalar()
     d["millesime"] = mil or "PVGIS SARAH3"
-    # RETOURS-13 R31 — NATURE DE LA TOITURE (simple / double pente / croupe / plat) dérivée du
-    # LiDAR HD IGN (MNH 50 cm, calcul à la demande + cache — voir solaire_toiture.py, prototype
-    # contrôlé à l'œil : 13/16 jugeables corrects, 81 %). Statut Dérivé, incertitude DITE dans la
-    # méthode. Un échec WMS / pas de bâtiment → champ null, jamais un 500 ni une invention (O7).
+    # RETOURS-13 R31 / RETOURS-15 U5 — NATURE DE LA TOITURE (LiDAR HD IGN, calcul à la demande +
+    # cache, seuil de confiance S11). TROIS états servis, jamais confondus : verdict (servi) ·
+    # non_determine (pans non nets) · indisponible (échec TECHNIQUE — WMS muet, dépendance
+    # absente… cause au journal). `null` = pas de bâtiment sur la parcelle (pas de toit), seul cas
+    # où l'écran peut montrer « — ». Un échec ne se déguise JAMAIS en absence de donnée.
     try:
         from ..solaire_toiture import analyse_toiture
         d["toiture"] = analyse_toiture(db, idu)
-    except Exception:  # noqa: BLE001 — dégradation propre, l'absence est dite côté front
+    except Exception as e:  # noqa: BLE001 — l'échec est DIT à l'écran, la cause au journal
         logging.getLogger("labuse").exception("solaire · toiture LiDAR indisponible (erreur technique)")
-        d["toiture"] = None
+        from ..solaire_toiture import payload_indisponible
+        d["toiture"] = payload_indisponible(f"{type(e).__name__}: {e}")
     return d
 
 

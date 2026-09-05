@@ -282,7 +282,8 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
 
 /* ───────────────────────────── M03 — RADAR PERMIS ───────────────────────────── */
 
-const NATURES = [['', 'Tout'], ['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD']] as const
+// RETOURS-15 U3 — règle d'ordre : la case « Tout » / « Tous » est TOUJOURS la dernière à droite.
+const NATURES = [['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD'], ['', 'Tout']] as const
 
 /** Tiroir « fiche permis » (M10 lot 1.1) — s'ouvre au clic sur un permis, partagé radar/fiche. */
 export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
@@ -551,12 +552,10 @@ export function M03() {
           (les autres filtres — période, type, commune, géocodage — se plient, eux, dans la boîte ci-dessous). */}
       <div data-permis-segment className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
         {([
-          // RETOURS-12 O12.1 — libellés PRÉCIS. Sitadel 974 ne publie QUE les permis AUTORISÉS (aucune
-          // instruction déposée-non-autorisée en base) → « en cours » ne peut pas signifier « instruction ».
-          // « Chantier récent » = autorisé récemment (travaux en cours ou récemment achevés) ;
-          // « Chantier au point mort » = autorisé ancien SANS achèvement (DAACT absente).
-          ['cours', 'Chantier récent', '#4ADE80', radarEntryTotal],
-          ['mort', 'Point mort', '#E2726A', pmEntryTotal],
+          // RETOURS-15 U3 — libellés COURTS (demande Vic) : « Récent » / « Au point mort » sur une
+          // seule ligne ; la phrase sous les compteurs porte les définitions (Sitadel = autorisés seuls).
+          ['cours', 'Récent', '#4ADE80', radarEntryTotal],
+          ['mort', 'Au point mort', '#E2726A', pmEntryTotal],
           ['tous', 'Tous', null, (radarEntryTotal != null && pmEntryTotal != null) ? radarEntryTotal + pmEntryTotal : null],
         ] as const).map(([k, label, dot, n], i) => (
           <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)}
@@ -572,7 +571,7 @@ export function M03() {
           chaque permis (étiquette d'état, source unique). */}
       <p className="-mt-1 px-0.5 text-[9.5px] leading-snug text-txt-dim">
         Sitadel (974) ne publie que les permis <b className="text-txt-mut">autorisés</b> — pas l'instruction déposée.
-        « Chantier récent » = autorisé récemment · « Point mort » = autorisé ancien sans achèvement (DAACT).
+        « Récent » = autorisé récemment · « Au point mort » = autorisé ancien sans achèvement (DAACT).
       </p>
 
       {/* ZONE 2 — FILTRES REPLIABLES (O17 a/f/i) : période · type · commune · géocodage. Un en-tête
@@ -618,9 +617,9 @@ export function M03() {
             {/* COMMUNE (O17 f) — filtre commune, liste réelle, jamais tronqué (select). */}
             <CommunePermisSelect value={commune} onChange={setCommune} />
 
-            {/* GÉOCODAGE (O17 e) — « non géocodés » devient un filtre à part entière. */}
+            {/* GÉOCODAGE (O17 e) — « non géocodés » filtre à part entière ; U3 : « Tous » en dernier. */}
             <div className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
-              {([['tous', 'Tous'], ['geo', 'Sur la carte'], ['nongeo', 'Non géocodés']] as const).map(([k, l], i) => (
+              {([['geo', 'Sur la carte'], ['nongeo', 'Non géocodés'], ['tous', 'Tous']] as const).map(([k, l], i) => (
                 <button key={k} data-permis-geo={k} onClick={() => setGeoFiltre(k)}
                   className={`flex-1 basis-0 border-line-2 px-1.5 py-1 text-[11px] ${i > 0 ? 'border-l' : ''} ${geoFiltre === k ? 'bg-mint/[0.10] font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>
                   {l}
@@ -647,7 +646,8 @@ export function M03() {
 
       {pointMort && qPm.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      {/* RETOURS-15 U4 — la liste ne déborde JAMAIS en largeur : elle défile verticalement seule. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden">
         {items.map((i, k) => {
           // R6 — items sur UNE ligne : pastille · type · date · logements/surface · commune, puis le badge
           // d'état À DROITE de la même ligne. Pastille VERTE (en cours) / ROUGE (point mort) = même code que
@@ -685,11 +685,11 @@ export function M03() {
                     title="Aucune déclaration d'achèvement (DAACT) au fichier Sitadel — le commencement n'est pas tracé, ce n'est PAS une preuve de non-réalisation.">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
                 : i['etat_label'] && <span data-permis-etat className="rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
               {/* RETOURS-14 S5.1 — un permis à parcelle incertaine ne pose JAMAIS de point : la
-                  liste le dit (« localisation approximative (adresse) » si l'adresse est connue,
-                  « non localisé » sinon). */}
-              {!i['geom'] && <span data-permis-badge-nongeo className="rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
-                title={String(i['geoloc'] ?? "Parcelle d'origine disparue du cadastre et adresse non rattachable — non localisable sur la carte.")}>
-                {i['geoloc'] ? 'localisation approximative (adresse)' : 'non localisé'}</span>}
+                  liste le dit. RETOURS-15 U4 — libellé COURT (le long faisait déborder la ligne →
+                  barre horizontale) ; le libellé complet vit dans l'infobulle. */}
+              {!i['geom'] && <span data-permis-badge-nongeo className="whitespace-nowrap rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser"
+                title={String(i['geoloc'] ? `Localisation approximative (adresse) — ${i['geoloc']}` : "Parcelle d'origine disparue du cadastre et adresse non rattachable — non localisable sur la carte.")}>
+                {i['geoloc'] ? 'approx. (adresse)' : 'non localisé'}</span>}
             </span>
           </button>
           )
