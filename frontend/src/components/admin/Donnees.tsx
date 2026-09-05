@@ -8,12 +8,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getAdminFlux, getAdminFluxRuns } from '../../lib/api'
-import { MiseAJour } from './MiseAJour'
 import { SourcesSection } from './Sources'
-import { FluxSection } from './Flux'
+import { CircuitSection } from './Circuit'
 import { CronSection } from './Cron'
 
-type Onglet = 'maj' | 'catalogue' | 'circuit' | 'cron'
+type Onglet = 'catalogue' | 'circuit' | 'cron'
 
 // en-tête de page (commun aux onglets) + badge de l'onglet Mise à jour : LU du même endpoint que le
 // Circuit (/admin/flux) et des runs (/admin/flux/runs, rendu progressif). Le badge compte les ÉTAPES
@@ -30,7 +29,7 @@ function useMajEtat() {
 }
 
 export function DonneesSection() {
-  const [onglet, setOnglet] = useState<Onglet>('maj')
+  const [onglet, setOnglet] = useState<Onglet>('circuit')
   const { d, aFaire, nCatalogue } = useMajEtat()
 
   // en-tête « Mes données sont-elles à jour ? » (maquette v2) — run servi, garde, phrase surfaces.
@@ -69,19 +68,18 @@ export function DonneesSection() {
       )}
 
       <div className="mb-4 mt-4 flex gap-6 border-b border-line">
-        <Tab k="maj" badge={aFaire > 0
+        {/* CIRCUIT-1 lot 5 — le Circuit ABSORBE l'onglet Mise à jour (décision Vic n° 2). */}
+        <Tab k="circuit" badge={aFaire > 0
           ? <span className="rounded-full bg-amber/15 px-1.5 py-px font-mono text-[11px] font-semibold text-amber">{aFaire}</span>
-          : <span className="rounded-full bg-mint/10 px-1.5 py-px font-mono text-[11px] font-semibold text-mint">✓</span>}>Mise à jour</Tab>
+          : <span className="rounded-full bg-mint/10 px-1.5 py-px font-mono text-[11px] font-semibold text-mint">✓</span>}>Circuit</Tab>
         <Tab k="catalogue" badge={nCatalogue != null
           ? <span className="rounded-full bg-white/5 px-1.5 py-px font-mono text-[11px] text-txt-dim">{nCatalogue}</span>
           : undefined}>Catalogue</Tab>
-        <Tab k="circuit">Circuit</Tab>
         <Tab k="cron">CRON</Tab>
       </div>
 
-      {onglet === 'maj' && <MiseAJour />}
       {onglet === 'catalogue' && <SourcesSection />}
-      {onglet === 'circuit' && <FluxSection />}
+      {onglet === 'circuit' && <CircuitSection />}
       {onglet === 'cron' && <CronSection />}
 
       {/* pied « Qui fait quoi » — commun aux onglets. RETOURS-9 Q6 : « Horloge » = CRON ; Q2.5 : le

@@ -207,9 +207,12 @@ def radar_check(request: Request) -> dict:
     """Arbre de check quotidien : compteurs du rituel + drapeau intake vide depuis 48 h."""
     from ..api.auth import exiger_admin
     exiger_admin(request)
+    # CIRCUIT-2 lot 1.6 — la file d'extraction est comptée par le moteur nommé
+    # `plateforme_compteurs` (id registre n_depots_a_verifier) : ce robinet appelle.
+    from ..registre.moteurs.plateforme import depots_a_verifier
     with engine().begin() as c:
         q = lambda s: c.execute(text(s)).scalar() or 0
-        file_extraction = q("SELECT count(*) FROM pige_faits WHERE valide_at IS NULL")
+        file_extraction = depots_a_verifier(c)
         # RETOURS-8 (R5) — les deux chiffres de tête qui manquaient : annonces EN VIE (biens validés,
         # actifs) et à RATTACHER (validés, en piste, non tranchés à la main). Comptés ici, servis à
         # l'en-tête des onglets Radar.

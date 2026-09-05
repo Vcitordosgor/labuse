@@ -715,10 +715,11 @@ def list_events(request: Request, unread_only: bool = False,
         WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}{cf}
         ORDER BY {_seen('e')} ASC, e.ts DESC, e.id DESC LIMIT :lim OFFSET :off"""),
         {"lim": limit, "off": max(0, offset), "run": runs.current(), "cid": cid, "market": mk}).mappings().all()
-    unread = db.execute(text(
-        f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}{cf}"),
-        {"cid": cid, "market": mk}).scalar()
-    return {"unread": int(unread or 0), "items": [dict(r) for r in rows]}
+    # CIRCUIT-2 lot 1.6 — le compteur de non-lues est calculé par le moteur nommé
+    # `plateforme_compteurs` (id registre n_notifications) : ce robinet ne calcule plus, il appelle.
+    from ..registre.moteurs.plateforme import notifications_non_lues
+    unread = notifications_non_lues(db, cid, cloche_filter_sql=cf)
+    return {"unread": unread, "items": [dict(r) for r in rows]}
 
 
 @router.get("/count")
@@ -726,12 +727,13 @@ def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
     mk = list(_MARKET_KINDS)
-    n = db.execute(text(f"SELECT count(*) FROM event_log e WHERE {_visible('e')} AND NOT {_seen('e')}"),
-                   {"cid": cid, "market": mk}).scalar()
+    # CIRCUIT-2 lot 1.6 — même moteur `plateforme_compteurs` que list_events (n_notifications).
+    from ..registre.moteurs.plateforme import notifications_non_lues
+    n = notifications_non_lues(db, cid)
     per = db.execute(text(f"SELECT idu, count(*) FROM event_log e WHERE idu IS NOT NULL"
                           f" AND {_visible('e')} AND NOT {_seen('e')} GROUP BY idu"),
                      {"cid": cid, "market": mk}).all()
-    return {"unread": int(n or 0), "par_parcelle": {r[0]: r[1] for r in per}}
+    return {"unread": n, "par_parcelle": {r[0]: r[1] for r in per}}
 
 
 @router.post("/{event_id}/read")

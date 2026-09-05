@@ -484,3 +484,30 @@ def _envoyer_alerte(corps: str, *, sujet: str = "[LABUSE] alerte exploitation", 
     if ctx is not None and not r.sent:
         ctx.compte(mail=r.detail)   # « no-config » = dry-run, tracé dans l'état
     log.info("alerte exploitation envoyée=%s (%s)", r.sent, r.detail)
+
+
+def coherence_robinets(ctx: JobContext) -> None:
+    """CIRCUIT-1 lot 4 — LA SONDE « Vérifier que tout coule » : chiffres à ≥ 2 robinets mesurés
+    sur les témoins (écarts → circuit_ecarts, statut soldé conservé) + eau ancienne par tampon
+    (circuit_eau_ancienne) + verdict (circuit_controles, lu par la page Circuit). Une fuite
+    OUVERTE notifie l'admin (dédup jour). Tourne la nuit, après chaque bascule, et au bouton."""
+    from .sonde_circuit import controle
+    res = controle(ctx.db, declencheur="cron")
+    ctx.compte(**{k: v for k, v in res.items() if isinstance(v, (int, float))})
+    if res.get("fuites_ouvertes") or res.get("eau_ancienne_ouverte"):
+        from datetime import date as _date
+        from .api.events import creer_notification
+        creer_notification(
+            ctx.db, kind="systeme", compte_id=None, source="Circuit",
+            titre=f"Sonde du circuit : {res.get('fuites_ouvertes', 0)} fuite(s) ouverte(s), "
+                  f"{res.get('eau_ancienne_ouverte', 0)} eau(x) ancienne(s)",
+            detail="Détail dans circuit_ecarts / circuit_eau_ancienne (page Circuit).",
+            lien="/admin", dedup=f"coherence_robinets:{_date.today().isoformat()}")
+
+
+def ingest_bodacc(ctx: JobContext) -> None:
+    """CIRCUIT-1 lot 8.1 — BODACC au wrapper (quotidien, reprend le legacy) : procédures
+    collectives (upsert idempotent) PUIS la chaîne des dérivés légers (fraicheur-derives),
+    exactement ce que faisait /etc/cron.d/labuse-bodacc."""
+    _ingest_via_cli(ctx, "ingest-bodacc")
+    _ingest_via_cli(ctx, "fraicheur-derives")

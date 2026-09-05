@@ -267,8 +267,12 @@ def trace_ingestion(session: Session, label: str, ds_names: list[str] | None = N
         "INSERT INTO ingestion_runs (commune, status) VALUES (:c, 'running') RETURNING id"),
         {"c": label}).scalar()
     session.commit()
+    # CIRCUIT-1 lot 0.3 — le tampon ne doit plus MENTIR : un passage qui n'a RIEN interrogé
+    # (ex. DPE : toutes communes sautées car peuplées) ne pose pas `last_sync_at`. L'appelant le
+    # signale via `handle["tampon"] = False` ; défaut True (bodacc/géorisques ingèrent toujours).
+    handle: dict = {"id": rid, "tampon": True}
     try:
-        yield rid
+        yield handle
     except Exception:
         session.rollback()
         session.execute(text(
@@ -288,7 +292,7 @@ def trace_ingestion(session: Session, label: str, ds_names: list[str] | None = N
         raise
     session.execute(text(
         "UPDATE ingestion_runs SET finished_at = now(), status = 'ok' WHERE id = :id"), {"id": rid})
-    if ds_names:
+    if ds_names and handle["tampon"]:
         session.execute(text(
             "UPDATE data_sources SET last_sync_at = now() WHERE name = ANY(:names)"), {"names": ds_names})
     session.commit()

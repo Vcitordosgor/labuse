@@ -1,1 +1,3 @@
+# config/served_run.txt — POINT DE VÉRITÉ UNIQUE du run servi (backend + front).
+# Bascule via `labuse golden promote <run>` (geste de Vic). Une seule valeur active.
 q_v11_m137

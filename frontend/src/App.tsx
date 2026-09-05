@@ -23,6 +23,7 @@ import { useApplySearch } from './lib/useApplySearch'
 import { CopiloteView } from './components/copilote/CopiloteView'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { MODULES } from './components/outils/registry'   // GB-059 : valider #m= contre le registre
+import { TraceTiroir } from './lib/trace'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
 import { signalOutil, startHeartbeat } from './lib/usage'   // DASHBOARD-V1 · D1 — capteurs
 import { AdminView } from './components/admin/AdminView'    // DASHBOARD-V1 — Tour de contrôle
@@ -355,12 +356,15 @@ export default function App() {
       <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
         <AdminView />
         <Toast />
+        <TraceTiroir />
       </div>
     )
   }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
+      {/* CIRCUIT-1 lot 7.2 — le tiroir de trace (un seul, admin, invisible traçage éteint). */}
+      <TraceTiroir />
       <Rail />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <CompteBandeau />

@@ -320,6 +320,30 @@ def collect(db: Session, idu: str) -> dict:
         out["mode_b"] = compute_mode_b(db, idu)          # run=None → run servi (Q_A_RUN_LABEL)
     except Exception:  # noqa: BLE001
         pass
+    # CIRCUIT-2 lot 6 — LES EXPORTS SUR LE REGISTRE : la collecte attache des objets `Valeur`
+    # (valeur + tampon : run, réservoirs/millésimes, couverture) pour les données que les
+    # builders servent — l'origine de chaque donnée voyage avec elle. La mise en page reste
+    # INCHANGÉE (elle lit les mêmes clés) ; le redessin qui consommera `.valeur` partout est le
+    # chantier EXPORTS. Le prix du neuf ici est l'OBSERVÉ (resolve_prix_sortie_servi, jamais
+    # l'id VEFA à l'acte réservé au scoring — arbitrage Q3, verrouillé par test).
+    try:
+        from ..registre.valeur import valeurs_pour
+        brutes: dict = {"surface_parcelle_m2": out["parcelle"].get("surface_m2"),
+                        "parcelle_geometrie": bool(out["parcelle"].get("geojson"))}
+        couvertures: dict = {}
+        if out.get("prix_dvf"):
+            brutes["prix_terrain_secteur_eur_m2"] = out["prix_dvf"].get("median")
+        if out.get("bilan") is not None:
+            brutes["prix_neuf_observe_eur_m2"] = out.get("prix_neuf_label")
+        if out.get("permits"):
+            brutes["n_permis_proximite"] = out["permits"].get("n") or out["permits"].get("count")
+            couvertures["n_permis_proximite"] = {
+                "n": brutes["n_permis_proximite"], "non_couvert": brutes["n_permis_proximite"] is None}
+        out["_valeurs_registre"] = valeurs_pour(db, {k: v for k, v in brutes.items() if v is not None},
+                                                couvertures=couvertures)
+    except Exception as exc:  # noqa: BLE001 — le tampon ne casse jamais un export
+        log.warning("valeurs_registre %s : %s", idu, exc)
+        out["_valeurs_registre"] = {}
     return out
 
 

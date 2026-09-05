@@ -1,1 +1,3 @@
-q_v10_m129
+# config/run_precedent.txt — run servi PRÉCÉDENT (M80). Suit served_run.txt à chaque
+# bascule (FLUX-1 F2.4 : le retour arrière est la bascule dans l'autre sens).
+q_v12

@@ -86,8 +86,13 @@ def isochrone(session: Session, lon: float, lat: float, minutes: int, mode: str,
     fetch = fetch or fetch_isochrone
     ensure_tables(session)
     cle = _cle(lon, lat, minutes, mode)
-    row = session.execute(text("SELECT ST_AsGeoJSON(geom) AS gj FROM zone_isochrone_cache WHERE cache_key = :k"),
-                          {"k": cle}).mappings().first()
+    # CIRCUIT-1 lot 2.7 — TTL 30 jours : la voirie bouge, une isochrone figée à la 1re demande
+    # était de l'eau ancienne sans étiquette. Au-delà du TTL l'entrée est ignorée (ré-interrogation
+    # IGN, remplacement à l'écriture) ; la bascule purge aussi le cache (bascule_flux).
+    row = session.execute(text(
+        "SELECT ST_AsGeoJSON(geom) AS gj FROM zone_isochrone_cache "
+        "WHERE cache_key = :k AND created_at > now() - interval '30 days'"),
+        {"k": cle}).mappings().first()
     if row and row["gj"]:
         return {"statut": "cache", "geom_geojson": json.loads(row["gj"]), "minutes": minutes, "mode": mode}
     own = client is None

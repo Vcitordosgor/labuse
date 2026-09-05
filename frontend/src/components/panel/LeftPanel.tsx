@@ -198,6 +198,17 @@ function LayerInfoPill({ info }: { info: string }) {
 // ni résultats en dessous), elle occupe la hauteur restante (flex-1) et son tiroir remplit
 // (pas de plafond max-h) → plus de gros gap vide sous le contenu, le fond reste continu jusqu'en
 // bas. Sinon (accueil/résultats présents = eux flex-1), comportement plafonné inchangé.
+// CIRCUIT-2 lot 5.2 — le « i » d'une couche dit aussi SOURCE, MILLÉSIME, FABRICATION (traçage
+// côté client, sobre, sans identifiant technique) : lu du registre via /map/couches-info.
+function useCouchesInfo(): Record<string, { source: string; fabrication?: string }> {
+  const q = useQuery({
+    queryKey: ['couches-info'],
+    queryFn: async () => (await fetch('/map/couches-info')).json(),
+    staleTime: 3_600_000, retry: 1,
+  })
+  return q.data && typeof q.data === 'object' ? q.data : {}
+}
+
 function LayersSection({ open, onToggle, fill, closable }: {
   open: boolean
   onToggle: () => void
@@ -205,6 +216,7 @@ function LayersSection({ open, onToggle, fill, closable }: {
   closable?: boolean   // M55-M point 1 : un listing existe → la section ouverte peut se refermer (→ listing)
 }) {
   const { layers, toggleLayer } = useApp()
+  const couchesInfo = useCouchesInfo()
   const activeCount = LAYERS.reduce((n, { key }) => n + (layers[key] ? 1 : 0), 0)
   return (
     <div className={`px-5 pt-4 ${open && fill ? 'flex min-h-0 flex-1 flex-col' : 'shrink-0'}`}>
@@ -239,7 +251,9 @@ function LayersSection({ open, onToggle, fill, closable }: {
                 <div className="gcard">
                   {keys.map((key) => {
                     const on = layers[key]
-                    const info = LAYER_INFO[key] ?? ''
+                    const meta = couchesInfo[key]
+                    const info = (LAYER_INFO[key] ?? '')
+                      + (meta ? `\n\nSource : ${meta.source}${meta.fabrication ? ` · ${meta.fabrication}` : ''}` : '')
                     const label = LAYER_LABEL[key] ?? key
                     return (
                       <div key={key} className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">

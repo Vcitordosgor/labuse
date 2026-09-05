@@ -11,6 +11,7 @@
  * un 404 (parcelle absente du run v2 : copro non classée, hors périmètre) affiche un
  * état honnête « Non scorée » au lieu d'un bloc qui disparaît sans explication.
  */
+import { Trace } from '../../lib/trace'
 import { useQuery } from '@tanstack/react-query'
 import { ALL_TIER_META } from '../../lib/status'
 import { Tip } from '../Tip'
@@ -86,8 +87,11 @@ export function ScoreV2Block({ idu }: { idu: string }) {
     <div data-score-v2 className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-txt-hi">Probabilité de vente sous 1 an</span>
-        <span className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
-          style={{ backgroundColor: `${tier.color}22`, color: tier.color }}>{tier.label}</span>
+        {/* CIRCUIT-1 lot 7.2 — le tier porte son chiffre_id (traçage admin ; éteint : identique). */}
+        <Trace id="tier_opportunite">
+          <span className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
+            style={{ backgroundColor: `${tier.color}22`, color: tier.color }}>{tier.label}</span>
+        </Trace>
         {data.badges.copro && (
           <Tip tip="Copropriété — hors du classement foncier par défaut">
             <span className="rounded-full bg-[#2A2438] px-2 py-0.5 text-[10.5px] text-[#B7A8E0]">copro</span>

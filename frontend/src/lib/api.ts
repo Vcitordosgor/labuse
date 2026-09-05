@@ -1884,3 +1884,11 @@ export const getAdminCron = () => j<{ jobs: CronJob[]; note: string }>('/admin/c
 export const getAdminCronLog = (nom: string) => j<{ nom: string; lignes: string[]; note?: string }>(`/admin/cron/${encodeURIComponent(nom)}/log`)
 export const postAdminCronRun = (nom: string) =>
   j<{ ok: boolean; nom?: string; note?: string; motif?: string }>(`/admin/cron/${encodeURIComponent(nom)}/run`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+
+// ── CIRCUIT-1 lot 5 — la page Circuit (un appel) + ses gestes ──────────────────────────────
+export const getAdminCircuit = () => j<any>('/admin/circuit')
+export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
+export const postAdminCircuitPurger = () => j<any>('/admin/circuit/purger-runs', { method: 'POST' })
+export const postAdminCircuitRevenir = () => j<any>('/admin/circuit/revenir', { method: 'POST' })
+export const getAdminCircuitNoteVersion = (candidat: string) =>
+  j<any>(`/admin/circuit/note-version?candidat=${encodeURIComponent(candidat)}`)

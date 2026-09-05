@@ -166,6 +166,18 @@ def exec_one(nom: str) -> int:
     etat["duree_s"] = round((fin - debut).total_seconds(), 1)
     etat["compteurs"] = ctx.compteurs
     _ecrire_etat(nom, etat)
+    # CIRCUIT-1 lot 8.3 — trace UNIFIÉE des jobs qui touchent l'eau (crons compris) : une ligne
+    # circuit_journal (quoi, quand, résultat, compteurs). Jamais bloquant.
+    if nom in TOUCHE_EAU:
+        try:
+            from .circuit_journal import journaliser
+            from .db import session_scope
+            with session_scope() as _db:
+                journaliser(_db, "job", nom, "cron", etat["statut"],
+                            {"duree_s": etat["duree_s"], "compteurs": ctx.compteurs})
+                _db.commit()
+        except Exception:  # noqa: BLE001
+            log.error("trace circuit_journal impossible pour le job %s", nom)
     if not ok:
         _alerte_admin(job, etat)
     _ping_temoin(nom, ok)
@@ -260,6 +272,14 @@ def _j(nom, titre, cadence, cron_utc, heure_reunion, *, timeout_s=900, envoie_ma
                timeout_s=timeout_s, envoie_mail=envoie_mail, besoin_db=besoin_db)
 
 
+#: CIRCUIT-1 lot 8.3 — les jobs qui TOUCHENT L'EAU (ingèrent, sondent, calculent, contrôlent) :
+#: chacun laisse une ligne au journal unifié `circuit_journal` (quoi, quand, résultat, compteurs).
+TOUCHE_EAU = frozenset({
+    "sources-fraicheur", "radar-cycle", "fiche-commune-cache", "ingest-bodacc", "ingest-sirene",
+    "ingest-sitadel", "ingest-dpe", "sync-gpu", "sentinelle-sources", "radar-releves",
+    "coherence-run", "coherence-robinets",
+})
+
 JOBS: dict[str, Job] = {j.nom: j for j in [
     # K3 — quotidiens
     _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation)", "quotidien",
@@ -286,6 +306,10 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "0 0 * * 0", "04:00 dim", timeout_s=3600, besoin_db=False),
     _j("rapport-admin", "Rapport hebdomadaire d'exploitation (mail admin)", "hebdo (lun)",
        "15 2 * * 1", "06:15 lun", timeout_s=600, envoie_mail=True),
+    # CIRCUIT-1 lot 8.1 — BODACC entre au WRAPPER (quotidien, comme le legacy 02:30 UTC) : les
+    # procédures collectives J+2 arrivent avant les notifications de 03:00.
+    _j("ingest-bodacc", "BODACC quotidien (procédures collectives) + chaîne des dérivés légers",
+       "quotidien", "40 2 * * *", "06:40", timeout_s=1800),
     _j("ingest-sirene", "SIRENE mensuel (date_creation + date_dernier_traitement, refresh concurrents)",
        "mensuel (7)", "0 0 7 * *", "04:00 le 7", timeout_s=3600),
     _j("ingest-sitadel", "Permis SITADEL mensuel → événements de veille foncière + golden candidat",
@@ -293,12 +317,9 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     _j("ingest-dpe", "DPE ADEME mensuel", "mensuel (12)", "0 0 12 * *", "04:00 le 12", timeout_s=3600),
     _j("sync-gpu", "Diff PLU des 24 communes → événements de veille foncière + bandeau PLU",
        "mensuel (15)", "0 0 15 * *", "04:00 le 15", timeout_s=1800, envoie_mail=True),
-    # SCORING-3 (L3) — BDNB trimestriel (plan v2 §5 : « CRON calcule, Vic promeut »). L'export amont
-    # n'existe qu'en France entier (~39 Go depuis 2026-02) : l'ingestion streame l'archive et ne garde
-    # que le 974 (ingestion/bdnb.py), idempotente par millésime. Aucune variable au modèle sans banc K0.
-    _j("ingest-bdnb", "BDNB trimestriel (CSTB) — bâtiments : année, DPE, surfaces (stream filtré 974)",
-       "trimestriel (1er)", "0 1 1 1,4,7,10 *", "05:00 le 1er (jan/avr/juil/oct)",
-       timeout_s=14400, envoie_mail=True),
+    # CIRCUIT-1 lot 8.1 — `ingest-bdnb` RETIRÉ du registre : l'amont BDNB ne couvre pas le 974
+    # (SCORING-3 L3, constat mesuré 03/09/2026). Le CLI `labuse ingest-bdnb` reste pour le jour où
+    # le 974 entrera dans l'export ; aucun cron ne le pose plus.
     # SENTINELLE-1 (W3) — veille QUOTIDIENNE des sources amont (généralise l'ancien sentinelle-dvf-cadastre,
     # devenu deux lignes de source_veille). Sonde api/page/entete, alerte, n'ingère RIEN. envoie_mail=False :
     # la notification passe par la cloche admin (event_log systeme), pas par un mail (bruit quotidien évité).
@@ -312,6 +333,18 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # sentinelle (07:00), avant l'ouverture. Notifie l'admin à la divergence.
     _j("coherence-run", "Garde de cohérence : chaque surface lit le run courant (tier/date identiques)",
        "quotidien", "15 3 * * *", "07:15", timeout_s=600),
+    # CIRCUIT-1 (lot 4) — la sonde « Vérifier que tout coule » : fuites entre robinets + eau
+    # ancienne par tampon → circuit_ecarts / circuit_eau_ancienne / circuit_controles. 07:25
+    # (après coherence-run 07:15 — même famille, jamais en même temps sur les mêmes tables).
+    _j("coherence-robinets", "Sonde du circuit : fuites entre robinets + eau ancienne (tampons)",
+       # 0-bis : le passage nocturne joue AUSSI le cas recette_exports1 (24 PDF des 4 témoins,
+       # WeasyPrint + pdftotext) → timeout élargi.
+       "quotidien", "25 3 * * *", "07:25", timeout_s=3600),
+    # CIRCUIT-1 lot 6.4 — agents-sources : le job MENSUEL EXISTE mais reste DÉSACTIVÉ (décision
+    # Vic n° 8 : agents À LA DEMANDE, jamais en cron par défaut). Absent du crontab par
+    # construction (test lot 8 : posés == registre − {agents-sources}).
+    _j("agents-sources", "Agents de source (veille amont par IA) — DÉSACTIVÉ (à la demande seulement)",
+       "mensuel (désactivé)", "0 0 3 * *", "04:00 le 3 (JAMAIS posé)", timeout_s=3600),
     # K9 — robustesse
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", timeout_s=3600, envoie_mail=True, besoin_db=False),

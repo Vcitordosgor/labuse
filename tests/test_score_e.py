@@ -77,9 +77,16 @@ def _seed_parcelle(s, idu, surface):
 def _seed_medianes(s, secteur, terrain=200, neuf=5000):
     s.execute(text("INSERT INTO dvf_secteur_medianes (secteur, type_bien, n_ventes, mediane_prix_m2, fenetre) VALUES (:s,'terrain',10,:t,'test')"),
               {"s": secteur, "t": terrain})
-    # V2 : prix de sortie NEUF au niveau secteur (repli commune non seedé ici)
-    s.execute(text("INSERT INTO dvf_prix_sortie_neuf (cle, niveau, prix_m2_neuf, n) VALUES (:s,'secteur',:a,10)"),
-              {"s": secteur, "a": neuf})
+    # CIRCUIT-1 lot 2.2 — le NEUF vient du MOTEUR LIVE `neuf_vefa_commune` (plus jamais du
+    # précalcul dvf_prix_sortie_neuf, divergent — RETOURS-11F M1) : on sème des mutations VEFA
+    # RÉELLES de la commune ; le build calcule la médiane live lui-même (niveau 'commune').
+    insee = secteur[:5]
+    for i in range(8):   # seuil VEFA source unique = 8 (neuf_vefa_seuil)
+        s.execute(text(
+            "INSERT INTO dvf_mutations_parcelle (id_mutation, id_parcelle, code_commune, "
+            "nature_mutation, date_mutation, valeur_fonciere, surface_reelle_bati, millesime) VALUES "
+            "(:m, :p, :c, 'Vente en l''état futur d''achèvement', now()::date, :v, 100, '2025')"),
+            {"m": f"vefa-{secteur}-{i}", "p": f"{secteur}{i:04d}", "c": insee, "v": neuf * 100})
 
 
 @pytest.mark.db

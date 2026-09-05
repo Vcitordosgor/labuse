@@ -671,4 +671,112 @@ def seed(session: Session) -> int:
         else:
             session.add(DataSource(**row))
     session.flush()
+    appliquer_modes_cadences(session)   # CIRCUIT-1 lot 1.7 — modes + cadences déclarés
     return session.query(DataSource).count()
+
+
+# ═══════════════ CIRCUIT-1 lot 1.7 — mode de remplissage + cadence attendue DÉCLARÉS ═══════════════
+# Énum des modes (CIRCUIT-0) : job_sur_clic · cron_mensuel · depot_manuel · one_shot · en_direct ·
+# absente. `cadence_attendue_jours` : déclarée quand le producteur publie à cadence connue
+# (`declaree`), PROPOSÉE sinon (`proposee` — règle : mensuel pour un flux, 365 j pour un millésime,
+# spécifiques BAN 35 j / BODACC 3 j / Radar 7 j) ; `sans_objet` pour l'interrogé en direct et
+# l'absent. La liste des propositions est livrée dans docs/CIRCUIT/CADENCES-PROPOSEES.md — Vic les
+# corrige depuis la page Circuit, pas dans ce fichier.
+MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
+    "Cadastre (API Carto PCI)": ("one_shot", 365, "proposee"),
+    "Cadastre Etalab (bulk DGFiP/Etalab)": ("one_shot", 365, "proposee"),
+    "Urbanisme PLU/GPU (API Carto)": ("en_direct", None, "sans_objet"),
+    "Géorisques": ("one_shot", 365, "proposee"),
+    "DVF / valeurs foncières": ("job_sur_clic", 190, "declaree"),
+    "RGE ALTI (altimétrie)": ("one_shot", 365, "proposee"),
+    "Parc National de La Réunion (INPN)": ("one_shot", 365, "proposee"),
+    "Forêts publiques (ONF)": ("one_shot", 365, "proposee"),
+    "Potentiel foncier Région (Région ODS)": ("one_shot", 365, "proposee"),
+    "RPG — déclarations agricoles (IGN/ASP)": ("en_direct", None, "sans_objet"),
+    "Région Réunion Open Data (Opendatasoft)": ("absente", None, "sans_objet"),
+    "PEIGEO (hub régional)": ("absente", None, "sans_objet"),
+    "DEAL Réunion (WMS/WFS)": ("one_shot", 365, "proposee"),
+    "Géoplateforme IGN": ("absente", None, "sans_objet"),
+    "data.regionreunion.com — Potentiel foncier": ("one_shot", 365, "proposee"),
+    "SITADEL (autorisations d'urbanisme)": ("cron_mensuel", 35, "declaree"),
+    "BD TOPO IGN": ("one_shot", 365, "proposee"),
+    "Base Adresse Nationale": ("job_sur_clic", 35, "declaree"),
+    "OpenStreetMap / Overpass": ("one_shot", 365, "proposee"),
+    "BPE INSEE": ("one_shot", 365, "proposee"),
+    "SIRENE": ("en_direct", None, "sans_objet"),
+    "IGN BD CARTO V5 — occupation du sol": ("one_shot", 365, "proposee"),
+    "ABF / Monuments historiques": ("one_shot", 365, "proposee"),
+    "INPN / patrinat — espaces protégés": ("one_shot", 365, "proposee"),
+    "VRD / assainissement (SPANC)": ("depot_manuel", 365, "proposee"),
+    "Fichiers fonciers (Cerema)": ("absente", None, "sans_objet"),
+    "Cerema / GéoLittoral — indicateur d'érosion côtière": ("one_shot", 365, "proposee"),
+    "BODACC (procédures collectives)": ("job_sur_clic", 3, "proposee"),
+    "DEAL Réunion — PPR / aléas": ("one_shot", 365, "proposee"),
+    "INPI RNE (dirigeants)": ("one_shot", 365, "proposee"),
+    "Géorisques — sites et sols pollués": ("one_shot", 365, "proposee"),
+    "Géorisques — cavités souterraines": ("one_shot", 365, "proposee"),
+    "Géorisques — ICPE": ("one_shot", 365, "proposee"),
+    "Cartofriches (Cerema)": ("one_shot", 365, "proposee"),
+    "Géorisques — mouvements de terrain": ("one_shot", 365, "proposee"),
+    "DPE ADEME (logements existants)": ("cron_mensuel", 9, "declaree"),
+    "QPV 2024 (ANCT)": ("one_shot", 365, "proposee"),
+    "Inventaire SRU (DHUP)": ("one_shot", 365, "proposee"),
+    "NPNRU (DEAL Réunion / ANCT)": ("one_shot", 365, "proposee"),
+    "INSEE RP Logement 2023": ("one_shot", 365, "proposee"),
+    "PLH des 5 EPCI (extraction documentaire)": ("depot_manuel", 365, "proposee"),
+    "RTAA DOM (textes réglementaires)": ("one_shot", 365, "proposee"),
+    "SUP — assiettes GPU (API Carto)": ("cron_mensuel", 35, "proposee"),
+    "Recherche d'entreprises (DINUM)": ("en_direct", None, "sans_objet"),
+    "Classement sonore ITT (Cerema)": ("one_shot", 365, "proposee"),
+    "50 pas géométriques — limite haute (DEAL)": ("one_shot", 365, "proposee"),
+    "PVGIS (Commission européenne)": ("one_shot", 365, "proposee"),
+    "EDF SEI Réunion — open data": ("absente", None, "sans_objet"),
+    "Registre national des installations (ODRÉ)": ("absente", None, "sans_objet"),
+    "Parkings OSM (loi APER)": ("one_shot", 365, "proposee"),
+    "Filosofi INSEE (carreaux 200 m)": ("one_shot", 365, "proposee"),
+    "BD ORTHO 20 cm (IGN)": ("one_shot", 365, "proposee"),
+    "Sudocuh (procédures d'urbanisme)": ("depot_manuel", 365, "proposee"),
+    "GPU — zonages d'assainissement": ("one_shot", 365, "proposee"),
+    "Contours IRIS (IGN/INSEE)": ("one_shot", 365, "proposee"),
+    "RGE ALTI 5 m (IGN)": ("one_shot", 365, "proposee"),
+    "INSEE RP2022 — fichier détail Logements (EGOUL)": ("one_shot", 365, "proposee"),
+    "GPU — zonages d'assainissement (info-surf typeinf 19)": ("one_shot", 365, "proposee"),
+    "Office de l'eau Réunion — Chroniques de l'eau": ("depot_manuel", 365, "proposee"),
+    "BD ORTHO IRC (IGN)": ("one_shot", 365, "proposee"),
+    "LiDAR HD — MNH 50 cm (IGN)": ("one_shot", 365, "proposee"),
+    "DGFiP — parcelles des personnes morales": ("one_shot", 400, "declaree"),
+    "ZFANG — zone franche d'activité nouvelle génération (Légifrance)": ("one_shot", 365, "proposee"),
+    "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)": ("one_shot", 365, "proposee"),
+    "Transport public — GTFS (PAN, 7 réseaux)": ("one_shot", 365, "proposee"),
+    "OSM — transport (pôles d'échange & téléphérique)": ("one_shot", 365, "proposee"),
+    "ZNIEFF (INPN/MNHN)": ("one_shot", 365, "proposee"),
+    "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
+    "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
+    "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),
+    "SIRENE établissements géolocalisés": ("cron_mensuel", 35, "proposee"),
+    "MOBPRO (mobilités domicile-travail, INSEE)": ("one_shot", 365, "proposee"),
+    "Trafic RN (Région Réunion — SIR)": ("one_shot", 365, "proposee"),
+    "BDNB": ("absente", 100, "declaree"),
+    "EDF Réunion — lignes moyenne tension HTA (open data)": ("one_shot", 365, "proposee"),
+    "TCSP — voies bus en site propre (OSM)": ("one_shot", 365, "proposee"),
+    "Réunion Express — hypothèses de tracé (débat public CNDP)": ("absente", None, "sans_objet"),}
+
+
+def appliquer_modes_cadences(session: Session) -> int:
+    """Pose (idempotent) les trois colonnes déclarées sur data_sources et les remplit depuis
+    MODE_ET_CADENCE. Appelée par seed() ; ne touche jamais une autre colonne."""
+    for ddl in (
+        "ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS mode_remplissage varchar(16)",
+        "ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS cadence_attendue_jours integer",
+        "ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS cadence_statut varchar(12)",
+    ):
+        session.execute(text(ddl))
+    n = 0
+    for nom, (mode, jours, statut) in MODE_ET_CADENCE.items():
+        n += session.execute(text(
+            "UPDATE data_sources SET mode_remplissage = :m, cadence_attendue_jours = :j,"
+            " cadence_statut = :s WHERE name = :n"),
+            {"m": mode, "j": jours, "s": statut, "n": nom}).rowcount
+    if hasattr(session, "flush"):     # Session ORM ; une Connection brute (tests) n'a pas flush
+        session.flush()
+    return n

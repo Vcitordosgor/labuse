@@ -740,11 +740,46 @@ PREPARE_SYSTEM = (
     "reste GÉNÉRIQUE (pas de chiffre). Pas de mise en contexte, va au script.")
 
 
+# CIRCUIT-1 lot 2.6 — GARDE FORMELLE de la voie B (réponse générale) : un NOMBRE PRÉCIS à unité
+# de donnée (€, €/m², m², parcelles, logements, %) qui n'est pas une FOURCHETTE assumée
+# (« entre X et Y », « X à Y », « environ », « ~ », « de l'ordre de ») est un chiffre que le
+# modèle ne peut PAS connaître sans outil : la phrase qui le porte est RETIRÉE et remplacée par
+# le renvoi aux outils. Déterministe (pas un 2e appel LLM), testée adversarialement sur 10
+# sorties pièges (tests/test_circuit1_lot2.py). La règle 4bis (ordres de grandeur de prestations,
+# en fourchette) reste permise par construction.
+import re as _re
+
+_CHIFFRE_DATA = _re.compile(
+    r"\d[\d\s .,]*\s*(?:€/m²|€/m2|€|m²|m2|parcelles?|logements?|%)", _re.IGNORECASE)
+_FOURCHETTE = _re.compile(
+    r"(?:entre\s+\d|de\s+\d[\d\s .,]*\s*(?:€|m²|m2|%|k€)?\s*(?:à|a)\s+\d|\d\s*(?:à|–|-)\s*\d"
+    r"|environ|~|ordre de grandeur|de l'ordre de|autour de|jusqu'à|quelques|fourchette)",
+    _re.IGNORECASE)
+_RENVOI_OUTILS = ("(chiffre retiré — les données chiffrées LABUSE passent par les outils du "
+                  "Copilote : repose la question avec la commune ou la parcelle.)")
+
+
+def garde_generale_sans_chiffre(txt: str) -> tuple[str, int]:
+    """Garde 2.6 sur une réponse libre : rend (texte gardé, nombre de phrases retirées)."""
+    phrases = _re.split(r"(?<=[.!?])\s+", txt)
+    gardees, retirees = [], 0
+    for ph in phrases:
+        if _CHIFFRE_DATA.search(ph) and not _FOURCHETTE.search(ph):
+            retirees += 1
+            continue
+        gardees.append(ph)
+    if not retirees:
+        return txt, 0
+    reste = " ".join(gardees).strip()
+    return (reste + ("\n" if reste else "") + _RENVOI_OUTILS), retirees
+
+
 def _general(db: Session, message: str, history: list[dict] | None = None) -> dict:
     """VOIE B (COPILOTE-REFONTE) — connaissance générale foncier/fiscalité/urbanisme/vocabulaire.
     Portée dans le FIL (l'historique résout l'anaphore « elle »). Réponse COURTE, honnête sur l'état
     du droit, badgée `voie="generale"` (le front l'annonce « Réponse générale — hors données LABUSE »).
-    Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé."""
+    Hors-domaine (cuisine/météo) → refus d'UNE phrase. JAMAIS un chiffre LABUSE inventé —
+    garde formelle `garde_generale_sans_chiffre` (CIRCUIT-1 lot 2.6) appliquée à toute réponse."""
     hist = [{"role": str(m.get("role", "user")), "content": str(m.get("content", ""))[:600]}
             for m in (history or [])[-4:]]
     out = core.complete(db, kind="copilote-general", model=core.model_for("copilote-general"), max_tokens=300,
@@ -755,6 +790,8 @@ def _general(db: Session, message: str, history: list[dict] | None = None) -> di
     if not txt or txt.upper().startswith("HORS_DOMAINE"):
         telemetrie.refus(db, "hors_domaine", message, "EXPLIQUER")
         return _reply(HORS_SUJET, "HORS_SUJET", refus="hors_sujet")
+    # CIRCUIT-1 lot 2.6 — garde formelle : aucun chiffre précis hors outil ne sort de la voie B.
+    txt, _n_retires = garde_generale_sans_chiffre(txt)
     # `general=True` = le discriminant servi au front (badge « Réponse générale — hors données LABUSE »
     # + surface IA assumée) ; `tool="general"` reste pour la télémétrie. La promesse « sourcée/datée » de
     # l'en-tête ne vaut QUE pour la voie a. NB : distinct du champ `voie` (objet de NAVIGATION des refus).

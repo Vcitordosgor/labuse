@@ -18,98 +18,27 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import runs
 # communes-tableau — le « €/m² ancien » vient de la MÊME source que le Baromètre (DVF ventes strictes,
 # toutes mutations) : on réutilise le filtre de retenue du baromètre, point de vérité unique.
 from .moteurs import prix_ancien_communes
+# CIRCUIT-2 lot 1.6 — les calculs (SQL des indicateurs + composite) vivent au moteur nommé
+# `commune_compteurs` (registre/moteurs/commune.py) : ce robinet ne calcule plus, il appelle.
+# INDICATEURS y vit aussi (ré-importé ici pour les lecteurs existants — même objet, pas une copie).
+from ..registre.moteurs.commune import INDICATEURS, composite_communes, indicateurs_communes
+
+#: alias rétro-compatible (tests, lecteurs historiques) — la MÊME fonction, jamais une copie.
+_normalize = composite_communes
 
 log = logging.getLogger("labuse.comparateur")
 router = APIRouter(prefix="/comparateur-communes", tags=["comparateur-communes"])
-
-# Indicateur → (libellé, direction, poids par défaut, source, nature).
-# direction +1 = plus haut « mieux pour investir » ; -1 = plus bas mieux (on inverse à la normalisation).
-# NB communes-tableau : `prix_ancien` est une COLONNE d'affichage (pas un axe composite) — hors INDICATEURS.
-INDICATEURS = {
-    "stock":     ("Stock d'opportunités (brûlantes + chaudes)", +1, 0.30, "run servi", "Sourcé"),
-    "velocite":  ("Vélocité admin (délai médian dépôt→autorisation, mois)", -1, 0.15, "m10 / SITADEL", "Sourcé"),
-    "permis":    ("Dynamisme permis (SITADEL, 5 ans)", +1, 0.15, "SITADEL", "Sourcé"),
-    "deficit_sru": ("Déficit SRU (objectif − taux LLS, points)", +1, 0.15, "DHUP", "Sourcé"),
-    "pression_zan": ("Pression ZAN (ENAF consommé 2021-2024, ha)", -1, 0.10, "Cerema", "Sourcé"),
-    "prix_neuf": ("Prix de sortie neuf VEFA (DVF, €/m²)", +1, 0.15, "DVF", "Sourcé"),
-}
-
-_SQL = f"""
-WITH base AS (SELECT DISTINCT left(idu, 5) AS insee, commune FROM parcels),
-stock AS (
-  SELECT left(s.parcelle_id, 5) AS insee,
-         count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS n
-  FROM parcel_p_score_v2 s WHERE s.run_id = :run GROUP BY 1),
-velo AS (
-  SELECT commune, percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois) AS mois, count(*) AS n
-  FROM m10_permit_delais WHERE valide AND famille = 'logements' AND delai_mois >= 0 GROUP BY 1),
-permis AS (
-  SELECT commune, count(*) AS n FROM sitadel_permits
-  WHERE date >= (CURRENT_DATE - INTERVAL '5 years') GROUP BY 1),
-sru AS (SELECT insee, greatest(objectif_pct - taux_lls, 0) AS deficit, statut FROM commune_contexte_sru),
-zan AS (SELECT insee, conso_2021_2024_m2 / 10000.0 AS ha FROM commune_conso_enaf)
--- €/m² ANCIEN : SOURCE UNIQUE `prix_ancien_communes` (moteurs), mappée en Python (cf. _compute) —
--- plus de CTE recopiée : le tableau Communes et le PDF baromètre lisent la MÊME fonction (§1b).
--- RETOURS-11F M1 : le NEUF (prix_neuf) ne vient PLUS de `dvf_prix_sortie_neuf` (précalcul divergent —
--- mesuré Saint-Paul 97415 : précalc 4 730 vs live 5 003) mais du MÊME moteur live `neuf_vefa_commune`
--- que la fiche et la carte, calculé en Python dans `raw_rows` (fiche = table = carte, à l'euro près).
-SELECT b.insee, b.commune,
-       stock.n AS stock, velo.mois AS velocite, velo.n AS velocite_n, permis.n AS permis,
-       sru.deficit AS deficit_sru, sru.statut AS sru_statut,
-       zan.ha AS pression_zan
-FROM base b
-LEFT JOIN stock ON stock.insee = b.insee
-LEFT JOIN velo ON velo.commune = b.commune
-LEFT JOIN permis ON permis.commune = b.commune
-LEFT JOIN sru ON sru.insee = b.insee
-LEFT JOIN zan ON zan.insee = b.insee
-ORDER BY b.commune;
-"""
 
 
 def get_db():
     from .app import get_db as _g
     yield from _g()
-
-
-def _normalize(rows: list[dict], poids: dict) -> list[dict]:
-    """Normalise chaque indicateur min-max [0-100] selon sa direction ; composite = moyenne pondérée
-    des axes PRÉSENTS (renormalisation des poids présents pour ne pas pénaliser une donnée manquante)."""
-    keys = list(INDICATEURS)
-    bornes = {}
-    for k in keys:
-        vals = [r[k] for r in rows if r.get(k) is not None]
-        bornes[k] = (min(vals), max(vals)) if vals else (None, None)
-    for r in rows:
-        norm, wsum, wtot = {}, 0.0, 0.0
-        for k in keys:
-            direction = INDICATEURS[k][1]
-            lo, hi = bornes[k]
-            v = r.get(k)
-            if v is None or lo is None or hi == lo:
-                norm[k] = None if v is None else 50.0   # borne dégénérée → neutre
-            else:
-                frac = (v - lo) / (hi - lo)
-                norm[k] = round((frac if direction > 0 else 1 - frac) * 100, 1)
-            w = poids.get(k, 0.0)
-            wtot += w
-            if norm[k] is not None:
-                wsum += w * norm[k]
-                # cumul du poids réellement appliqué (axes présents)
-        present_w = sum(poids.get(k, 0.0) for k in keys if norm[k] is not None)
-        r["normalise"] = norm
-        r["score_composite"] = round(wsum / present_w, 1) if present_w > 0 else None
-    rows.sort(key=lambda r: (r["score_composite"] is not None, r["score_composite"] or 0), reverse=True)
-    for i, r in enumerate(rows, 1):
-        r["rang"] = i
-    return rows
 
 
 def raw_rows(db: Session) -> dict[str, dict]:
@@ -124,7 +53,7 @@ def raw_rows(db: Session) -> dict[str, dict]:
         from ..marche_service import neuf_vefa_seuil
         from ..faisabilite.marche_commune import ligne2_terrain_zone
         seuil = neuf_vefa_seuil()
-        rows = [dict(r) for r in db.execute(text(_SQL), {"run": runs.current()}).mappings().all()]
+        rows = indicateurs_communes(db, runs.current())   # 1.6 — moteur commune_compteurs
         pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
         for r in rows:
             r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")
@@ -165,7 +94,7 @@ def _compute(db: Session, poids: dict) -> dict:
             r["pression_zan"] = round(float(r["pression_zan"]), 1)
         if r.get("deficit_sru") is not None:
             r["deficit_sru"] = round(float(r["deficit_sru"]), 1)
-    rows = _normalize(rows, poids)
+    rows = composite_communes(rows, poids)   # 1.6 — moteur commune_compteurs (comparateur_composite)
     return {
         "communes": rows,
         "indicateurs": {k: {"libelle": v[0], "direction": "haut = mieux" if v[1] > 0 else "bas = mieux",

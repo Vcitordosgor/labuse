@@ -178,9 +178,10 @@ def list_columns(request: Request, db: Session = Depends(get_db)) -> dict:
     """Colonnes du tenant (semées au défaut LABUSE si aucune)."""
     cid = current_compte(request)
     cols = columns_for(db, cid)
-    counts = {r[0]: r[1] for r in db.execute(text(
-        "SELECT status, count(*) FROM pipeline_entries WHERE compte_id IS NOT DISTINCT FROM :cid"
-        " GROUP BY status"), {"cid": cid})}
+    # CIRCUIT-2 lot 1.6 — les compteurs par colonne sont calculés par le moteur nommé
+    # `plateforme_compteurs` (ids registre crm_cartes_n, pipeline_entrees_n).
+    from ..registre.moteurs.plateforme import cartes_par_colonne
+    counts = cartes_par_colonne(db, cid)
     for c in cols:
         c["cards"] = counts.get(c["key"], 0)
     return {"columns": cols}

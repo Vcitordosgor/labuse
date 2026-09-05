@@ -33,9 +33,11 @@ free AS (SELECT lg.geom g FROM p, sub
          CROSS JOIN LATERAL (SELECT gg.geom FROM ST_Dump(ST_Difference(p.geom_2975, ST_Buffer(sub.g,3))) gg
                              ORDER BY ST_Area(gg.geom) DESC LIMIT 1) lg),
 -- type 'decoupe' (O12-PARTIEL) : le lot AFFICHÉ est la découpe STOCKÉE par le détecteur,
--- jamais recalculée (fidélité au run) ; sinon le résiduel recalculé comme avant
+-- jamais recalculée (fidélité au run) ; sinon le résiduel recalculé comme avant.
+-- CIRCUIT-1 lot 2.3 : découpe du RUN SERVI seul (:run) — jamais celle d'un run mort.
 lotg AS (SELECT CASE WHEN :type = 'decoupe'
-                     THEN (SELECT dc.lot_geom FROM division_or_candidates dc WHERE dc.idu = :idu)
+                     THEN (SELECT dc.lot_geom FROM division_or_candidates dc
+                           WHERE dc.idu = :idu AND dc.run_label = :run)
                      ELSE (SELECT g FROM free) END g),
 voi AS (SELECT ST_Union(ST_Buffer(ST_Intersection(v.geom_2975, ST_Buffer(p.geom_2975, 30)), 1.5)) g
         FROM spatial_layers v, p WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, p.geom_2975, 30))
@@ -136,7 +138,9 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
     cards = []
     for i, c in enumerate(candidates, 1):
         type_div = c.get("type_division") or "libre"
-        geoms = session.execute(text(_GEOMS), {"idu": c["idu"], "type": type_div}).mappings().first()
+        from .. import runs as _runs
+        geoms = session.execute(text(_GEOMS), {"idu": c["idu"], "type": type_div,
+                                               "run": _runs.current()}).mappings().first()
         carte = (_tiles_and_shapes(geoms["parcelle"], geoms["bati"], geoms["lot"], cache_dir,
                                    demolir_gj=geoms["demolir"], voirie_gj=geoms["voirie"]) if geoms else None)
         # mandat O12-PARTIEL-2 C1 : la marge Score É n'apparaît plus sur les fiches (c'est la

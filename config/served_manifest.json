@@ -1,0 +1,14 @@
+{
+ "scoring_run": "q_v11_m137",
+ "residuel_run_seq": 2,
+ "mvt_run": "q_v11_m137",
+ "division_run": "q_v11_m137",
+ "promoted_at": "2026-09-05T17:42:44.772241+00:00",
+ "par": "admin",
+ "precedent": {
+  "scoring_run": "q_v12",
+  "residuel_run_seq": 2,
+  "mvt_run": "q_v12",
+  "division_run": "q_v12"
+ }
+}
