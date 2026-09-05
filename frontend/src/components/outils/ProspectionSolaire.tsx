@@ -48,7 +48,7 @@ export function ProspectionSolaire() {
 function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillement') => void }) {
   const Carte = ({ k, ic, titre, desc }: { k: 'piscines' | 'ensoleillement'; ic: string; titre: string; desc: string }) => (
     <button data-solaire-mode={k} onClick={() => onChoose(k)}
-      className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-3 text-left transition-colors duration-quick hover:border-mint/50 hover:bg-surface-3">
+      className="hover-fill flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-3 text-left transition-colors duration-quick">
       <span className="text-xl">{ic}</span>
       <span className="min-w-0 flex-1">
         <b className="text-[13px] text-txt">{titre}</b>

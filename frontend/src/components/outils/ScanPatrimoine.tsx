@@ -151,7 +151,9 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
               {EXEMPLES.map((e) => (
                 <button key={e.k} data-scan-exemple={e.k} onClick={() => resoudre(e.v)} disabled={busy}
                   className="hover-fill flex items-center gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left disabled:opacity-40">
-                  <span className="shrink-0 rounded bg-mint/10 px-1.5 py-0.5 font-mono text-[10px] text-mint">{e.k}</span>
+                  {/* RETOURS-13 R16 — mécanique T6 (.chip) : sur la ligne survolée en vert plein,
+                      le libellé de type garde un FOND SOMBRE PLEIN et un texte clair (contraste). */}
+                  <span className="chip chip-mint shrink-0 rounded bg-mint/10 px-1.5 py-0.5 font-mono text-[10px] text-mint">{e.k}</span>
                   <span className="truncate text-[12.5px] text-txt">{e.v}</span>
                 </button>
               ))}

@@ -192,8 +192,8 @@ export interface AcquisitionsPm {
   n: number; n_total: number; tronquee: boolean
   acquisitions: { idu: string; de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null }[]
 }
-export const getCommuneAcquisitions = (commune: string) =>
-  j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm`)
+export const getCommuneAcquisitions = (commune: string, limit = 200) =>
+  j<AcquisitionsPm>(`/communes/${encodeURIComponent(commune)}/acquisitions-pm?limit=${limit}`)
 
 export interface ContexteCommune {
   commune: string; insee: string | null; epci: string | null; epci_nom: string | null

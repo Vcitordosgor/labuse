@@ -14,7 +14,7 @@ import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { SurveillancePanel } from './components/surveillance/SurveillancePanel'
 import { ComparePanel } from './components/compare/ComparePanel'
-import { CommunesTablePanel } from './components/outils/Communes'
+import { CommunesTablePanel, EvolutionTablePanel } from './components/outils/Communes'
 import { DensifierTablePanel } from './components/outils/Renouvellement'
 import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
@@ -387,6 +387,8 @@ export default function App() {
               {/* §4 — la table des 24 communes de l'outil « Communes » s'ouvre en grand (patron
                   ex-Comparateur) ; le composant se rend lui-même selon `communesTableOpen`. */}
               <CommunesTablePanel />
+              {/* RETOURS-13 R13 — « Évolution du marché » en grand (même coquille plein écran). */}
+              <EvolutionTablePanel />
               {/* DENSIFIER — le grand tableau (67 214 parcelles) de l'outil « Densifier l'existant » ;
                   se rend lui-même selon `densifierTableOpen` (cycle de vie SOCLE). */}
               <DensifierTablePanel />

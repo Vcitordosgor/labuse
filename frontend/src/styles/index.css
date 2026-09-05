@@ -371,8 +371,21 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    on NE TRONQUE PLUS en « … ». L'adresse complète (CP + commune compris) est visible ; une adresse
    très longue passe sur DEUX lignes (line-clamp) plutôt qu'un point de suspension au milieu de la rue. */
 .fiche-v6 .addr > span { white-space:normal; overflow:hidden; min-width:0; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; line-height:1.3; }
+/* RETOURS-13 R17 — SIREN/SIRET : BLEU et SOULIGNÉ, partout (décision Vic 05/09 — la SEULE
+   exception à « pas de bleu » de la DA : un lien externe doit ressembler à un lien). */
+.lien-siren { color:#5AA9E8; text-decoration:underline; text-underline-offset:2px; }
+@media (hover:hover) and (pointer:fine) { .lien-siren:hover { color:#7FBCEE; } }
+/* RETOURS-13 R10/R11 — ACTION SECONDAIRE dans une ligne (« voir la fiche → », « Fiche → ») :
+   JAUNE OPAQUE au survol, contenu inversé en sombre (décision Vic 05/09) — se distingue du survol
+   VERT de la ligne. La règle générique `.hover-fill:hover *` force déjà la couleur encre : ici on
+   pose l'aplat jaune (et l'encre hors ligne survolée). */
+.hover-jaune { transition:background .15s, color .15s; border-radius:6px; }
+@media (hover:hover) and (pointer:fine) {
+  .hover-jaune:hover { background:var(--pj-jaune); color:var(--ink) !important; text-decoration:none !important; }
+}
 /* M61 P5 — « Voir sur Pages Jaunes » : JAUNE de marque (--pj-jaune), visiblement cliquable
-   (pointeur + soulignement au survol). Seul endroit de l'app où ce jaune est autorisé. */
+   (pointeur + soulignement au survol). RETOURS-13 : le même jaune sert désormais d'aplat de survol
+   des actions secondaires (.hover-jaune) — décision Vic 05/09. */
 .fiche-v6 .addr-link { font-size:11px; color:var(--pj-jaune); margin-top:3px; text-decoration:none; display:inline-block; cursor:pointer; }
 .fiche-v6 .addr-link:hover { text-decoration:underline; }
 .fiche-v6 .hbtns { display:flex; gap:4px; flex-shrink:0; }

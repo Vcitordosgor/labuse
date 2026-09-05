@@ -179,7 +179,7 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
       {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
       <div className="min-h-0 flex-1 overflow-y-auto">
         {/* RETOURS-12 T4 — thead-sticky (z-20, fond opaque) : l'en-tête « 24 communes » ne glisse plus sur les lignes. */}
-        <div className={`thead-sticky grid ${O6_GRID} items-end border-b border-line-2 py-1.5`}>
+        <div className={`thead-sticky grid ${O6_GRID} items-end border-b border-line-2 px-2 py-1.5`}>
           <span className="label-caps text-[10px] text-txt-mut">Commune</span>
           {O6_COLS.map((c) => (
             <span key={c.k} className="flex items-center justify-end gap-1">
@@ -196,12 +196,14 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
           {/* consigne d'affordance dans l'en-tête (dernière piste = « ouvrir ») */}
           <span className="text-right text-[9px] normal-case text-txt-dim">cliquez une ligne →</span>
         </div>
+        {/* RETOURS-13 R11 — l'infobulle qui répétait le nom (title) est RETIRÉE ; la ligne
+            survolée s'arrondit et respecte les marges (px-2 header + rangs, mêmes colonnes). */}
         {rows.map((c) => {
           const Cell = onSelect ? 'button' : 'div'
           return (
-            <Cell key={String(c['insee'])} data-o6-row title={String(c['commune'])}
+            <Cell key={String(c['insee'])} data-o6-row
               {...(onSelect ? { onClick: () => onSelect(String(c['commune'])) } : {})}
-              className={`group grid w-full ${O6_GRID} items-baseline border-b border-line py-2 text-left ${onSelect ? 'hover-fill transition-colors duration-quick' : ''}`}>
+              className={`group grid w-full ${O6_GRID} items-baseline rounded-md border-b border-line px-2 py-2 text-left ${onSelect ? 'hover-fill transition-colors duration-quick' : ''}`}>
               <span className="min-w-0 truncate text-[12px] font-medium text-txt group-hover:text-txt-hi">{String(c['commune'])}</span>
               {O6_COLS.map((col) => {
                 const isBest = best[col.k] != null && Number(c[col.k]) === best[col.k]
@@ -212,10 +214,10 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
                     {fmtFr(c[col.k])}</span>
                 )
               })}
-              {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne (plus au survol) : l'affordance est
-                  visible d'emblée, pas seulement quand la souris passe (et sur tactile, jamais de survol). */}
+              {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne. RETOURS-13 R11 — action
+                  SECONDAIRE : jaune opaque au survol (distinct du survol vert de la ligne). */}
               {onSelect && (
-                <span className="whitespace-nowrap text-right text-[11px] font-medium text-mint">Fiche →</span>
+                <span className="hover-jaune -my-0.5 justify-self-end whitespace-nowrap px-1.5 py-0.5 text-right text-[11px] font-medium text-mint">Fiche →</span>
               )}
             </Cell>
           )

@@ -12,6 +12,12 @@ describe('<Siren/> (T2)', () => {
     expect(a.getAttribute('rel')).toContain('noopener')
   })
 
+  it('RETOURS-13 R17 — le lien est BLEU et SOULIGNÉ (classe lien-siren), partout', () => {
+    render(<Siren value="552081317" />)
+    const a = screen.getByRole('link') as HTMLAnchorElement
+    expect(a.className).toContain('lien-siren')   // la seule exception « bleu » de la DA
+  })
+
   it('un SIRET (14 chiffres) s’affiche entier mais lie sur les 9 premiers (l’entreprise)', () => {
     render(<Siren value="55208131700024" />)
     const a = screen.getByRole('link') as HTMLAnchorElement

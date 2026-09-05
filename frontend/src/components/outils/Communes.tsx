@@ -27,11 +27,15 @@ import { M18 } from './moteurs'
 function AcquisitionsRecentes() {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const [commune, setCommune] = useState<string | null>(null)
-  const [millesime, setMillesime] = useState<number | null>(null)   // O16(b) — filtre année d'arrivée
+  // RETOURS-13 R14 — filtre par année MULTI-SÉLECTION (chips des années présentes) + pagination
+  // « Voir plus — N / M chargés » par 200 (le plafond de 50 en dur est levé côté serveur).
+  const [millesimes, setMillesimes] = useState<number[]>([])
+  const [limite, setLimite] = useState(200)
   const q = useQuery({
-    queryKey: ['commune-acquisitions', commune],
-    queryFn: () => getCommuneAcquisitions(commune!),
+    queryKey: ['commune-acquisitions', commune, limite],
+    queryFn: () => getCommuneAcquisitions(commune!, limite),
     enabled: !!commune,
+    placeholderData: (prev) => prev,   // « Voir plus » n'efface pas la liste pendant le rechargement
   })
   const d = q.data
   // O16(c) — la fiche parcelle s'ouvre en SUPERPOSITION (carte-overlay via `select`) : on ne touche
@@ -47,7 +51,8 @@ function AcquisitionsRecentes() {
   const anneesDispo = d
     ? [...new Set(d.acquisitions.map((a) => a.a_millesime))].sort((x, y) => y - x)
     : []
-  const lignes = (d?.acquisitions ?? []).filter((a) => millesime == null || a.a_millesime === millesime)
+  const toggleMillesime = (an: number) => setMillesimes((ms) => ms.includes(an) ? ms.filter((x) => x !== an) : [...ms, an])
+  const lignes = (d?.acquisitions ?? []).filter((a) => millesimes.length === 0 || millesimes.includes(a.a_millesime))
   // O16(e) — regroupement par acquéreur (SIREN d'arrivée). Sans SIREN → seau « acquéreur non identifié ».
   const parAcquereur = new Map<string, { siren: string | null; denomination: string | null; items: typeof lignes }>()
   for (const a of lignes) {
@@ -61,7 +66,7 @@ function AcquisitionsRecentes() {
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="shrink-0">
         <p className="label-caps text-[9.5px]">Commune</p>
-        <select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesime(null) }}
+        <select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesimes([]); setLimite(200) }}
           className="mt-1 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
           <option value="">Choisir une commune…</option>
           {(communes.data ?? []).map((c) => <option key={c.insee} value={c.commune}>{c.commune}</option>)}
@@ -77,13 +82,13 @@ function AcquisitionsRecentes() {
       {/* O16(b) — filtre par millésime d'arrivée (seulement les années effectivement présentes). */}
       {commune && anneesDispo.length > 1 && (
         <div data-acq-millesimes className="flex shrink-0 flex-wrap items-center gap-1.5 text-[11px]">
-          <button data-acq-millesime="" onClick={() => setMillesime(null)}
-            className={`rounded-full px-2 py-0.5 ${millesime == null ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
-            Tous
+          <button data-acq-millesime="" onClick={() => setMillesimes([])}
+            className={`rounded-full px-2 py-0.5 ${millesimes.length === 0 ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
+            Toutes
           </button>
           {anneesDispo.map((an) => (
-            <button key={an} data-acq-millesime={an} onClick={() => setMillesime(an)}
-              className={`rounded-full px-2 py-0.5 font-mono ${millesime === an ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
+            <button key={an} data-acq-millesime={an} onClick={() => toggleMillesime(an)}
+              className={`rounded-full px-2 py-0.5 font-mono ${millesimes.includes(an) ? 'bg-mint-bg text-mint' : 'text-txt-mut hover:text-txt'}`}>
               {an - 1}→{an}
             </button>
           ))}
@@ -103,8 +108,8 @@ function AcquisitionsRecentes() {
         <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
           <p className="shrink-0 text-[11px] text-txt-mut">
             {lignes.length} changement{lignes.length > 1 ? 's' : ''}
-            {millesime != null ? ` en ${millesime - 1}→${millesime}` : ''} · {groupes.length} acquéreur{groupes.length > 1 ? 's' : ''}
-            {d.tronquee ? ` (${d.n} servis sur ${d.n_total} depuis ${d.depuis_millesime})` : ` depuis ${d.depuis_millesime}`}.
+            {millesimes.length ? ` (années filtrées)` : ''} · {groupes.length} acquéreur{groupes.length > 1 ? 's' : ''}
+            {d.tronquee ? ` — ${d.n} / ${d.n_total} chargés depuis ${d.depuis_millesime}` : ` depuis ${d.depuis_millesime}`}.
           </p>
           {groupes.map((g) => (
             <div key={g.siren ?? '∅'} data-acq-groupe={g.siren ?? ''}
@@ -138,6 +143,13 @@ function AcquisitionsRecentes() {
               </div>
             </div>
           ))}
+          {/* R14 — « Voir plus — N / M chargés », par 200 (règle des listes longues). */}
+          {d.tronquee && (
+            <button data-acq-voir-plus onClick={() => setLimite((l) => l + 200)}
+              className="shrink-0 self-start rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-mint transition-colors duration-quick hover:border-mint">
+              Voir plus — {d.n} / {d.n_total} chargés
+            </button>
+          )}
           <p className="shrink-0 pb-1 text-[10px] leading-snug text-txt-dim italic">{d.note}</p>
         </div>
       )}
@@ -155,7 +167,9 @@ function MarcheAnnoncesRadar() {
   if (!d) return null   // bloc non critique : silencieux si la donnée n'est pas là
   return (
     <div data-communes-marche-radar className="mt-2 shrink-0 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[12px]">
-      <div className="flex items-center justify-between gap-2">
+      {/* RETOURS-13 R12 — le lien s'aligne sur la LIGNE DE BASE du libellé (items-baseline),
+          plus en haut du bloc pendant que le texte flotte au milieu. */}
+      <div className="flex items-baseline justify-between gap-2">
         <b className="label-caps text-[10px] tracking-[0.14em] text-txt-dim">Marché des annonces</b>
         <button data-marche-radar-lien onClick={() => setView('radar')} className="shrink-0 text-[11px] text-mint hover:underline">
           Ouvrir le Radar →
@@ -182,16 +196,19 @@ function Porte({ dataAttr, titre, sous, onClick }: { dataAttr: string; titre: st
 
 export function Communes() {
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
-  const [vue, setVue] = useState<'accueil' | 'evolution' | 'acquisitions'>('accueil')
+  const setEvolutionTableOpen = useApp((s) => s.setEvolutionTableOpen)
+  const [vue, setVue] = useState<'accueil' | 'acquisitions'>('accueil')
   if (vue === 'accueil') {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         <Porte dataAttr="comparaison" titre="Comparaison communes"
           sous="Le tableau comparatif des 24 communes, en grand — indicateurs sourcés, tri par colonne."
           onClick={() => setCommunesTableOpen(true)} />
+        {/* RETOURS-13 R13 — même geste que la comparaison : la porte ouvre le TABLEAU EN GRAND
+            (modale plein écran partagée), plus un rendu à l'étroit dans le panneau. */}
         <Porte dataAttr="evolution" titre="Évolution du marché"
-          sous="Ancien bâti, terrain nu et permis sur 8 trimestres (île entière)."
-          onClick={() => setVue('evolution')} />
+          sous="Ancien bâti, terrain nu et permis sur 8 trimestres (île entière) — tableau en grand."
+          onClick={() => setEvolutionTableOpen(true)} />
         <Porte dataAttr="acquisitions" titre="Acquisitions récentes"
           sous="Changements de propriétaire moral par commune (constat DGFiP, hors scoring)."
           onClick={() => setVue('acquisitions')} />
@@ -202,7 +219,7 @@ export function Communes() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       <button data-communes-retour onClick={() => setVue('accueil')}
         className="shrink-0 self-start text-[11px] text-mint hover:underline">‹ Communes</button>
-      {vue === 'evolution' ? <M18 /> : <AcquisitionsRecentes />}
+      <AcquisitionsRecentes />
     </div>
   )
 }
@@ -228,7 +245,7 @@ export function CommunesTablePanel() {
     <div data-communes-table-panel
       className={`absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6${contexteCommune ? ' hidden' : ''}`}
       onClick={() => setCommunesTableOpen(false)}>
-      <div className="floating flex max-h-full w-full max-w-[1100px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <div>
             <h2 className="text-sm font-medium text-txt-hi">Les 24 communes</h2>
@@ -238,13 +255,44 @@ export function CommunesTablePanel() {
         </div>
         {/* flex column bornée : O6Comparateur gère son propre scroll interne (rangs) + légende permanente.
             Pas d'overflow ICI (sinon double scroll + légende poussée hors écran). */}
-        <div className="flex min-h-0 flex-1 flex-col p-3">
+        {/* RETOURS-13 R11 — marges internes gauche/droite élargies (la ligne survolée ne colle
+            plus aux bords de la modale) ; largeur portée à 1240 px. */}
+        <div className="flex min-h-0 flex-1 flex-col px-6 py-3">
           {/* RETOURS-11 O14(c) — cliquer une commune OUVRE sa fiche (ContextePanel, panneau droit)
               en SUPERPOSITION : la table reste montée dessous (on ne la referme plus). Fermer la
               fiche fait donc RÉAPPARAÎTRE le tableau comparatif, sans le reconstruire ni perdre le tri. */}
           <O6Comparateur onSelect={(c) => setContexteCommune(c)} />
           {/* O2-3 — le marché des annonces (Radar) sous la table, seuil géré côté backend. */}
           <MarcheAnnoncesRadar />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+/** RETOURS-13 R13 — « Évolution du marché » EN GRAND : la MÊME coquille plein écran que la table
+ *  des 24 communes (overlay noir, carte `floating`, en-tête + croix), le MÊME moteur M18 dedans
+ *  (tableau trimestriel, en-tête collant, légende sous le tableau). Aucune donnée nouvelle. */
+export function EvolutionTablePanel() {
+  const module = useApp((s) => s.module)
+  const evolutionTableOpen = useApp((s) => s.evolutionTableOpen)
+  const setEvolutionTableOpen = useApp((s) => s.setEvolutionTableOpen)
+  if (module !== 'communes' || !evolutionTableOpen) return null
+  return (
+    <div data-evolution-table-panel
+      className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6"
+      onClick={() => setEvolutionTableOpen(false)}>
+      <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+          <div>
+            <h2 className="text-sm font-medium text-txt-hi">Évolution du marché</h2>
+            <p className="text-[10.5px] text-txt-dim">Ancien bâti, terrain nu et permis — 8 trimestres, une ligne par période.</p>
+          </div>
+          <button onClick={() => setEvolutionTableOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-3">
+          <M18 />
         </div>
       </div>
     </div>

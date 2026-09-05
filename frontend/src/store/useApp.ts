@@ -351,6 +351,10 @@ interface AppState {
   // écran (patron ex-Comparateur), pilotée par ce drapeau. La fiche commune et l'onglet « Évolution »
   // restent dans le panneau ; seule la table déborde en grand. Communes.tsx est le seul contrôleur.
   communesTableOpen: boolean
+  // RETOURS-13 R13 — « Évolution du marché » s'ouvre EN GRAND (même modale plein écran que la
+  // comparaison des 24 communes), plus dans le panneau étroit.
+  evolutionTableOpen: boolean
+  setEvolutionTableOpen: (v: boolean) => void
   setCommunesTableOpen: (v: boolean) => void
   // DENSIFIER (refonte 13 outils) — l'outil « Densifier l'existant » ouvre son GRAND tableau
   // (67 214 parcelles) en overlay plein écran, même patron que Comparaison/Communes. Piloté par ce
@@ -483,7 +487,7 @@ interface AppState {
 // centralisé : il survivait à `setModule` (changement d'outil) faute d'y être remis. Ici, il tombe
 // avec les overlays plein écran à CHAQUE navigation. L'ouverture du tiroir (`openSourceDrawer`) NE
 // spread PAS CLOSE_OVERLAYS → aucun auto-fermeture.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, densifierTableOpen: false, sourceLine: null } as const
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, densifierTableOpen: false, sourceLine: null } as const
 // SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
@@ -733,6 +737,8 @@ export const useApp = create<AppState>((set) => ({
   setComparePicking: (comparePicking) => set({ comparePicking }),
   communesTableOpen: false,
   setCommunesTableOpen: (communesTableOpen) => set({ communesTableOpen }),
+  evolutionTableOpen: false,
+  setEvolutionTableOpen: (evolutionTableOpen) => set({ evolutionTableOpen }),
   densifierTableOpen: false,
   setDensifierTableOpen: (densifierTableOpen) => set({ densifierTableOpen }),
   // façon openCompare : ouvre le grand tableau ET ferme les autres overlays plein écran.

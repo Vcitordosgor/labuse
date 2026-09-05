@@ -2208,7 +2208,12 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
 
 
 @app.get("/communes/{commune}/acquisitions-pm")
-def commune_acquisitions_pm(commune: str, db: Session = Depends(get_db)) -> dict:
+def commune_acquisitions_pm(commune: str,
+                            # RETOURS-13 R14 — le plafond de 50 en dur (« 50 servis sur 773 » chez
+                            # Vic) devient une PAGINATION pilotée par le front (« Voir plus — N / M
+                            # chargés », par 200 — règle des listes longues).
+                            limit: int = Query(200, ge=1, le=5000),
+                            db: Session = Depends(get_db)) -> dict:
     """RETOURS-1 R3 (Vic) — LISTING des changements de propriétaire PM récents d'une commune
     (outil Communes › « Acquisitions récentes »). MÊME point de calcul que l'ex-bloc de la fiche
     contexte (acquisitions_recentes, KF-2 L1), borne élargie pour un listing. CONSTAT sourcé
@@ -2220,7 +2225,7 @@ def commune_acquisitions_pm(commune: str, db: Session = Depends(get_db)) -> dict
                 "n": 0, "n_total": 0, "tronquee": False, "acquisitions": [],
                 "source": None, "note": "Commune inconnue du référentiel — aucun constat servi."}
     from ..proprietaire_historique import acquisitions_recentes
-    out = acquisitions_recentes(db, insee, depuis_millesime=2022, limit=50)
+    out = acquisitions_recentes(db, insee, depuis_millesime=2022, limit=limit)
     out["commune"] = commune
     return out
 

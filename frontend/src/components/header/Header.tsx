@@ -293,16 +293,18 @@ function CommuneSelect() {
                 pré-coche, bloc 3 inchangé) ; le lien ouvre la fiche de CETTE commune SANS
                 changer le périmètre (stopPropagation). RETOURS-5 T8 — la LIGNE ENTIÈRE reçoit
                 l'aplat plein vert (nom + code postal + « voir la fiche → » inversés en encre sombre). */}
+            {/* RETOURS-13 R10 — l'infobulle qui RÉPÉTAIT le nom (title={c.commune}) est retirée
+                (une infobulle n'existe que si elle apporte un fait non affiché) ; « voir la
+                fiche → » = action SECONDAIRE : jaune opaque au survol, distinct du vert de la ligne. */}
             {(communes.data ?? []).map((c) => (
               <div key={c.insee} className="hover-fill flex items-center rounded-md">
-                <button onClick={() => pick(c.commune)} title={c.commune}
+                <button onClick={() => pick(c.commune)}
                   className={`min-w-0 flex-1 truncate whitespace-nowrap px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
                   {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
-                {/* M62-P1 (k) : « voir la fiche → » FIXE et VERT sur chaque ligne (plus au survol seul). */}
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
-                  title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)`}
-                  className="shrink-0 whitespace-nowrap px-2.5 py-1.5 text-[11px] text-mint transition-opacity duration-quick hover:underline">
+                  title="SRU, ANRU, PLH, marché logement (n'affecte pas le périmètre)"
+                  className="hover-jaune shrink-0 whitespace-nowrap px-2.5 py-1.5 text-[11px] text-mint transition-opacity duration-quick">
                   voir la fiche →
                 </button>
               </div>

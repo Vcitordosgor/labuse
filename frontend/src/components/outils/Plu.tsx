@@ -34,9 +34,10 @@ export function Plu() {
   if (vue === 'accueil') {
     return (
       <div data-plu-accueil className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        {/* RETOURS-13 R15 — vert OPAQUE au survol (hover-fill), plus un simple contour vert. */}
         {VOIES.map((v) => (
           <button key={v.vue} data-plu-voie={v.vue} onClick={() => setVue(v.vue)}
-            className="flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3.5 py-3 text-left transition-colors duration-quick hover:border-mint/50">
+            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3.5 py-3 text-left transition-colors duration-quick">
             <span className="text-[13px] font-medium text-txt-hi">{v.titre}</span>
             <span className="text-[10.5px] leading-snug text-txt-dim">{v.sous}</span>
           </button>

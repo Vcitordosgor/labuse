@@ -248,7 +248,11 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               className="hover-fill w-full rounded-lg border border-mint/35 py-2 text-center text-[12.5px] text-mint" title="Ce qu'il construit — ses opérations">
               Voir ses opérations →</button>
           ))}
-          {/* liste — RETOURS-5 T4.5 : lignes en survol plein (hoverFull). */}
+          {/* liste — RETOURS-5 T4.5 : lignes en survol plein (hoverFull).
+              RETOURS-13 R18 — en fusion, UN SEUL ÉTAT à la fois : au chargement la liste est
+              REPLIÉE (bandeau déplié + bouton « Voir ses parcelles → ») ; le clic replie le
+              bandeau ET ouvre la liste. Plus de doublon bouton + liste déjà affichée. */}
+          {(!embedded || bandeauReplie) && (<>
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {items.map((i) => (
               <div key={i['idu'] as string} className="min-w-0">
@@ -269,6 +273,7 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               <span className="text-txt-off">· triées par probabilité</span>
             </ListPaginationFooter>
           </div>
+          </>)}
         </>
       )}
     </>
