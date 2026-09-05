@@ -160,9 +160,10 @@ def _section(pdf: _Pdf, titre: str, lignes, source: str | None = None) -> None:
 
 
 def _millesime(m) -> str:
-    """M125 — fraîcheur HONNÊTE : le vrai millésime, sinon « millésime non renseigné ».
-    Jamais une date de run, jamais « non communiqué par la source »."""
-    return str(m) if m else "millésime non renseigné"
+    """M125/EXPORTS-1 (6.4) — fraîcheur HONNÊTE : le vrai millésime (éventuellement composé —
+    sentinelle ou date d'ingestion ÉTIQUETÉE) ; sans aucune date nulle part, cellule MASQUÉE
+    (chaîne vide), plus le pavé « millésime non renseigné »."""
+    return str(m) if m else ""
 
 
 def _titre_section(pdf: _Pdf, texte: str) -> None:
@@ -349,16 +350,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_margins(14, 12, 14)
     pdf.add_page()
 
-    # ── M126 — valeurs d'en-tête, RÉPÉTÉES depuis des données DÉJÀ présentes ailleurs (aucun champ
-    #    ajouté) : zone PLU (règlement) et prix secteur (médiane DVF secteur / comparables).
+    # ── EXPORTS-1 (1.3, arbitrage Q1) — le prix d'en-tête = `sector_price` PARCELLE (servi dans
+    #    fiche["prix_ancien"], point d'appel unique marche_service), plus jamais la première
+    #    médiane du secteur cadastral (3 804 vs 3 818 de l'audit A1). Repli : médiane des
+    #    comparables affichés (mêmes ventes que la table), jamais un chiffre d'une 3e source.
     _rp0 = fiche.get("reglement_plu")
     _zones0 = _rp0.get("zones") if isinstance(_rp0, dict) else None
     zone_plu = ((_zones0[0].get("zone") if _zones0 and isinstance(_zones0[0], dict) else None) or "n/d")
     prix_sect = "n/d"
-    for _s in ((fiche.get("dvf_parcelle") or {}).get("secteur") or []):
-        if _s.get("mediane_prix_m2"):
-            prix_sect = f"{int(_s['mediane_prix_m2']):,} €/m²".replace(",", " ")
-            break
+    _pa = fiche.get("prix_ancien")
+    if isinstance(_pa, dict) and _pa.get("fiable") and _pa.get("median") is not None:
+        prix_sect = f"{int(_pa['median']):,} €/m²".replace(",", " ")
     if prix_sect == "n/d":
         _cps = [c["prix_m2"] for c in ((fiche.get("comparables") or {}).get("comparables") or [])
                 if isinstance(c.get("prix_m2"), (int, float)) and c["prix_m2"] > 0]
@@ -535,7 +537,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_font("inter", size=7)
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(0, 3.6, "Sources : inventaire SRU DHUP (01/01/2024) · DEAL Réunion/ANCT (NPNRU) · "
-                         "INSEE RP 2023 — contexte informatif, hors scoring.", new_x="LMARGIN", new_y="NEXT")
+                         "INSEE RP 2023 — contexte informatif, sans effet sur le verdict.", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(2)
 
     # ── RTAA DOM (5bis) — rappel réglementaire de conception (vérifié Légifrance)
@@ -794,15 +796,26 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     dvfp = fiche.get("dvf_parcelle")
     if dvfp:
         lignes, dm = [], dvfp.get("derniere_mutation")
+        # EXPORTS-1 (1.3) : le prix de l'ancien (sector_price parcelle, n + rayon + période) ouvre
+        # la section — les médianes du secteur cadastral suivent, étiquetées SECONDAIRES.
+        if fiche.get("marche_synthese"):
+            lignes.append(fiche["marche_synthese"])
         if dm:
             base_m = f"Dernière mutation : {dm.get('date_mutation') or '?'}"
             lignes.append(base_m + (f" — {int(dm['valeur']):,} €".replace(",", " ") if dm.get("valeur") else ""))
+        _et = dvfp.get("secteur_etiquette")
+        if _et and (dvfp.get("secteur") or []):
+            lignes.append(f"({_et})")
         for s in (dvfp.get("secteur") or [])[:4]:
-            lignes.append(f"Secteur — {s.get('type_bien', '')} : médiane {s.get('mediane_prix_m2') or '—'} €/m² "
+            # EXPORTS-1 (5.5) : une médiane NULL n'est pas un « — » muet — c'est un échantillon
+            # sous le seuil, et on le dit (jamais un zéro/tiret sans couverture).
+            _med = s.get("mediane_prix_m2")
+            _vmed = (f"médiane {_med} €/m²" if _med
+                     else "médiane sous seuil d'échantillon (non servie)")
+            lignes.append(f"Secteur — {s.get('type_bien', '')} : {_vmed} "
                           f"({s.get('n_ventes', '?')} ventes, {s.get('fenetre', '')})")
-        nv = dvfp.get("neuf_vefa")
-        if isinstance(nv, dict) and nv.get("mediane_prix_m2_bati"):
-            lignes.append(f"Neuf VEFA : {nv['mediane_prix_m2_bati']} €/m² (n {nv.get('n', '?')})")
+        # EXPORTS-1 (1.4, Q3) : la ligne « Neuf VEFA » a quitté la fiche — un seul « neuf » servi,
+        # celui du bilan (resolve_prix_neuf_marche).
         _section(pdf, "MARCHÉ DVF — MUTATION & SECTEUR", lignes, source=dvfp.get("caveat"))
 
     ms = fiche.get("marche_secteur")
@@ -823,7 +836,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                           + (f" · {rp2['pct_qpv']} % en QPV" if rp2.get("pct_qpv") is not None else "")
                           + f" ({_millesime(rp2.get('millesime'))})")
         _section(pdf, "CONTEXTE SOCIO-ÉCONOMIQUE (secteur)", lignes,
-                 source="INSEE Filosofi · RPLS — contexte informatif, hors scoring.")
+                 source="INSEE Filosofi · RPLS — contexte informatif, sans effet sur le verdict.")
 
     dep = fiche.get("depots")
     if _is_indispo(dep):
@@ -859,7 +872,9 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         # M125-A — SEGMENT seul : le RANG (rang_segment/total_segment) est de l'ANALYSE → EXCLU (M124-A1).
         _section(pdf, "SEGMENT RENOUVELLEMENT URBAIN",
                  [ren.get("libelle"),
-                  (f"Bâti d'origine : {ren['code_bati_origine']}" if ren.get("code_bati_origine") else None),
+                  (f"Bâti d'origine : "
+                   f"{ {'deja_bati': 'déjà bâti', 'nu': 'terrain nu'}.get(ren['code_bati_origine'], ren['code_bati_origine']) }"
+                   if ren.get("code_bati_origine") else None),
                   (f"Zone PLU : {ren['zone_plu']}" if ren.get("zone_plu") else None),
                   (f"SDP résiduelle estimée : ~{ren['sdp_residuelle_m2']:,} m²".replace(",", " ") if ren.get("sdp_residuelle_m2") else None),
                   (f"Surface parcelle : {ren['surface_m2']:,} m²".replace(",", " ") if ren.get("surface_m2") else None)])
@@ -1015,7 +1030,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # Distincte de l'attribution générique du pied de page : ici, seulement ce qui a PRODUIT un constat.
     ds_list = fiche.get("data_sources") or []
     if ds_list:
-        lignes = [f"{d.get('nom', '')} — {_millesime(d.get('millesime'))}"
+        lignes = [f"{d.get('nom', '')}"
+                  + (f" — {_millesime(d.get('millesime'))}" if d.get("millesime") else "")
                   + (f" · fiabilité {d['fiabilite']}" if d.get("fiabilite") else "")
                   for d in ds_list]
         _section(pdf, "SOURCES UTILISÉES SUR CETTE FICHE", lignes)

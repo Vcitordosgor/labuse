@@ -2729,21 +2729,35 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     couches cascade), avec millésime et fiabilité. Réutilise la table `data_sources` (0 nouvelle
     donnée). Requête EN begin_nested (contrat savepoint : requête ajoutée au build de fiche)."""
     with db.begin_nested():
+        # EXPORTS-1 (6.4, audit B13) : millésime COMPOSÉ — millésime amont, sinon date amont VUE
+        # par la sentinelle, sinon date d'ingestion ÉTIQUETÉE comme telle ; sinon cellule masquée.
+        _has_sv = bool(db.execute(text(
+            "SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
+        _sv_col = "sv.dernier_vu" if _has_sv else "NULL AS dernier_vu"
+        _sv_join = "LEFT JOIN source_veille sv ON sv.source_id = ds.id" if _has_sv else ""
         rows = db.execute(text(
-            """SELECT DISTINCT ds.name, ds.category, ds.provider,
-                      ds.source_millesime, ds.source_horizon_at, ds.reliability_level
+            f"""SELECT DISTINCT ds.name, ds.category, ds.provider,
+                      ds.source_millesime, ds.source_horizon_at, ds.reliability_level,
+                      {_sv_col}, ds.last_sync_at
                FROM dryrun_cascade_results cr JOIN data_sources ds ON ds.id = cr.data_source_id
+               {_sv_join}
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
                ORDER BY ds.category, ds.name"""),
             {"run": run_label, "pid": parcel_id}).mappings().all()
     # M70 décision 4 — « vérifiée » MENTAIT : source_checks est VIDE, aucune vérification amont ne
     # l'adosse (reliability_level = déclaration de catalogue). Libellé honnête = « suivie » (la
     # source est cataloguée + suivie par le radar, jamais « vérifiée à la dernière version »).
-    _FIAB = {"verifie": "suivie", "estime": "estimée", "declaratif": "déclarative",
+    _FIAB = {"verifie": "surveillée", "estime": "estimée", "declaratif": "déclarative",
              "a_confirmer": "à confirmer"}
     out = []
+    import re as _re_m
     for r in rows:
         mill = r["source_millesime"] or (str(r["source_horizon_at"].year) if r["source_horizon_at"] else None)
+        if not mill and r["dernier_vu"] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r["dernier_vu"])):
+            d = str(r["dernier_vu"])[:10]
+            mill = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
+        if not mill and r["last_sync_at"]:
+            mill = f"ingéré le {r['last_sync_at']:%d/%m/%Y} (date d'ingestion, millésime amont non publié)"
         out.append({
             "nom": r["name"], "categorie": r["category"], "fournisseur": r["provider"],
             "millesime": mill, "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
@@ -3408,6 +3422,14 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # fiche servie (premium/dossier/banquier/fiche écran lisent ces lignes arbitrées).
     from .risques_arbitrage import arbitrer_risques
     lines = arbitrer_risques(lines)
+    # EXPORTS-1 lot 5 (5.2/5.3/5.4) : les MÊMES gardes de lecture que les générateurs de
+    # documents (served_cascade._gardes_lot5) — accès voirie (test viabilisation, plus jamais
+    # l'intersection stricte), ICPE (alerte seulement si CLASSÉE), propriétaire (« non
+    # renseigné » rebranché sur le fichier PM). Écran = documents, un seul point de vérité.
+    from .served_cascade import _gardes_lot5
+    _garde = _gardes_lot5(db, idu, [{**l, "layer_name": l.get("layer_name") or l.get("layer")}
+                                    for l in lines])
+    lines = [{k: v for k, v in l.items() if k != "layer_name"} for l in _garde]
     flags = [l for l in lines
              if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 
@@ -3438,21 +3460,19 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
-        # M101 B2 — le NEUF (VEFA) de la commune, par le point d'appel unique (profil neuf_vefa,
-        # config dvf_profils.yaml). Sous le seuil : « échantillon insuffisant » AVEC la grandeur —
-        # l'absence est un état normal de ce profil (11/24 communes servables, mesuré).
-        from ..marche_service import DVF_NEUF_VEFA, marche_dvf as _marche_dvf
-        try:
-            neuf_vefa = _marche_dvf(db, idu, profil=DVF_NEUF_VEFA)
-        except Exception:  # noqa: BLE001 — le neuf VEFA ne casse jamais la fiche
-            neuf_vefa = None
+        # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
+        # (le prix de sortie du bilan). Le profil `neuf_vefa_commune` (VEFA déclaré à l'acte,
+        # 5 ans, M101 B2) SORT de la fiche : deux « neuf » sans définition côte à côte étaient
+        # la contradiction 4 730 vs 4 742 de l'audit A1.q3. Le profil reste vivant pour l'outil
+        # VEFA (/outils/vefa-neuf), qui l'étiquette.
         dvf_parcelle = {
             "derniere_mutation": ({**dict(dvf_last),
                                    "date_mutation": dvf_last["date_mutation"].isoformat()
                                    if dvf_last["date_mutation"] else None}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
-            "neuf_vefa": neuf_vefa,
+            # EXPORTS-1 (1.3) : grain dit — indicateur secondaire, jamais la tête de fiche.
+            "secteur_etiquette": "médianes du secteur cadastral — indicateur secondaire",
             "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
         }
     # LOT 9 (data-gap) : terrain (pente RGE ALTI 5 m) — hypothèses affichées, jamais un « 0 » muet.
@@ -3539,8 +3559,24 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
            WHERE a.kind = 'anru' AND ST_DWithin(p2.geom_2975, a.geom_2975, 100)
            ORDER BY ST_Intersects(p2.geom_2975, a.geom_2975) DESC LIMIT 1"""),
         {"idu": idu}).mappings().first()
+    # EXPORTS-1 (1.3, arbitrage Q1) : le prix de l'ancien de la TÊTE DE FICHE = sector_price
+    # PARCELLE (marche_service, point d'appel unique), n + rayon effectif + période — la même
+    # synthèse que les exports (le test doré compare écran ↔ PDF sur cette phrase).
+    try:
+        from .. import marche_service as _msvc
+        _prix_ancien = _msvc.marche_dvf(db, idu, profil=_msvc.DVF_BANQUIER_ADAPTATIF)
+        _marche_synthese = _msvc.phrase_prix_ancien(_prix_ancien)
+    except Exception:  # noqa: BLE001 — le marché ne casse jamais la fiche
+        _prix_ancien, _marche_synthese = None, None
+    # EXPORTS-1 (6.5, Q12) : drapeau « prescriptions non vérifiables » — point de vérité unique
+    # (zone_servie), lu par l'écran et tous les documents.
+    from ..faisabilite.zone_servie import prescriptions_verifiables as _presc_verif
+    _presc_ok, _presc_motif = _presc_verif(head["commune"])
     return {
         "idu": head["idu"], "commune": head["commune"],
+        "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
+        "prescriptions_verifiables": _presc_ok,
+        "prescriptions_non_verifiables_motif": _presc_motif,
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
         # affiche « Adresse non disponible », jamais un champ vide)
         "adresse": _ban_adresse(db, idu),
@@ -4211,18 +4247,28 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
     pct_potentiel) et enrichi du signal SURÉLÉVATION (parcel_residuel_bati), qui n'est PAS
     couvert par le seul ratio SDP — cf. SYNTHESE-M9 (avant/après). None si aucune donnée
     résiduelle (repli propre : parcelle non bâtie / hors périmètre calcul)."""
+    # EXPORTS-1 lot 3 (3.1/3.2) : la lecture de `parcel_residuel_bati` (table ORPHELINE, surélévation
+    # au FAÎTAGE — le « ~6,6 m » de l'audit A3) est SUPPRIMÉE. La surélévation vient du moteur commun
+    # (faisabilite/potentiel.surelevation — hauteur à l'ÉGOUT, repli faîtage dit) ; la SDP servie
+    # passe par la garde de lecture ZONE-1 (dominante A/N → 0, cause dite).
     try:
         row = db.execute(text(
-            """SELECT r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite, r.capacite_estimee,
-                      rb.surelevation_possible, rb.hauteur_bati_m, rb.hauteur_max_m, rb.confiance
+            """SELECT p.id AS pid, r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite,
+                      r.capacite_estimee, zp.zone_fam, zp.zone_lib
                  FROM parcels p
                  LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
-                 LEFT JOIN parcel_residuel_bati rb ON rb.idu = p.idu
+                 LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
+        from ..faisabilite.potentiel import surelevation as _surelevation
+        sur = _surelevation(db, row["pid"]) if row else None
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
         return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
-    if not row or (row["pct_potentiel"] is None and row["surelevation_possible"] is None):
+    if not row or (row["pct_potentiel"] is None and (sur or {}).get("possible") is None):
         return None
+    from ..faisabilite.zone_servie import garde_sdp_residuelle
+    sdp_servie, _cause_zone = garde_sdp_residuelle(
+        float(row["sdp_residuelle_m2"]) if row["sdp_residuelle_m2"] is not None else None,
+        row["zone_fam"], row["zone_lib"])
     pct = row["pct_potentiel"]
     if pct is None:
         niveau, libelle = "indetermine", "Marge SDP non calculée"
@@ -4234,23 +4280,23 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
         niveau, libelle = "faible", "Potentiel faible — parcelle proche de sa densité autorisée"
     else:
         niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
-    hauteur_marge = (round(row["hauteur_max_m"] - row["hauteur_bati_m"], 1)
-                     if row["hauteur_max_m"] is not None and row["hauteur_bati_m"] is not None
-                     else None)
+    sur = sur or {}
     return {
         "niveau": niveau, "libelle": libelle,
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
         "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
-        "sdp_residuelle_m2": row["sdp_residuelle_m2"],
+        "sdp_residuelle_m2": sdp_servie,
+        "cause": _cause_zone,                                 # ZONE-1 : dominante A/N → 0, cause dite
         "sous_densite": row["sous_densite"],
         "capacite_estimee": row["capacite_estimee"],
-        # Signal surélévation : NON couvert par le seul ratio SDP → conservé de l'outil Mutabilité.
-        "surelevation_possible": row["surelevation_possible"],
-        "hauteur_bati_m": row["hauteur_bati_m"], "hauteur_max_m": row["hauteur_max_m"],
-        "hauteur_marge_m": hauteur_marge,
-        "confiance": row["confiance"],
-        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + potentiel bâti "
-                  "résiduel (BD TOPO × règles PLU calibrées)",
+        # EXPORTS-1 (3.2) : surélévation au MOTEUR COMMUN — hauteur à l'ÉGOUT, base dite
+        # (repli faîtage seulement si l'égout n'est pas calibré, avec avertissement).
+        "surelevation_possible": sur.get("possible"),
+        "hauteur_bati_m": sur.get("hauteur_bati_m"), "hauteur_regle_m": sur.get("hauteur_regle_m"),
+        "hauteur_base": sur.get("base"), "hauteur_marge_m": sur.get("marge_m"),
+        "avertissement_surelevation": sur.get("avertissement"),
+        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
+                  "commun (règles PLU calibrées × bâti BD TOPO, hauteur à l'égout)",
         "note": "Remplace l'ancien mode carte « Mutabilité » : même donnée résiduelle, "
                 "à la parcelle, complétée du signal surélévation.",
     }
@@ -4480,15 +4526,18 @@ def parcel_export_pdf(idu: str, source: str | None = None,
     # M125-B : adresse UNIFIÉE — `_q_v2_fiche` a déjà posé `fiche["adresse"]` (résolveur unique de
     # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
-    fiche["contexte_commune"] = commune_contexte(fiche["commune"], db=db)
-    # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.
-    try:
-        from .marche_bloc import bloc_condense
-        _mc = {l["cle"]: l["phrase"] for l in
-               bloc_condense(db, fiche["commune"], ["prix_ancien_median", "tendance_12m"])}
-        fiche["marche_synthese"] = _mc.get("prix_ancien_median") or _mc.get("tendance_12m")
-    except Exception:  # noqa: BLE001
-        pass
+    fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
+    # EXPORTS-1 (1.3) : la synthèse marché (sector_price PARCELLE, n + rayon effectif + période)
+    # est DÉJÀ servie par `_q_v2_fiche` (mêmes clés écran/PDF — le test doré compare dessus).
+    # Repli sur la tendance commune (M-U) quand l'échantillon parcellaire est insuffisant.
+    if not fiche.get("marche_synthese"):
+        try:
+            from .marche_bloc import bloc_condense
+            _mc = {l["cle"]: l["phrase"] for l in
+                   bloc_condense(db, fiche["commune"], ["tendance_12m"])}
+            fiche["marche_synthese"] = _mc.get("tendance_12m")
+        except Exception:  # noqa: BLE001
+            pass
     # M54-AB C7 : pente CLIENT = RGE ALTI (parcel_terrain), ° ET %, MÊME source que dossier/flash.
     try:
         from ..pente_fmt import pente_texte

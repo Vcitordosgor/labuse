@@ -55,13 +55,47 @@ def test_friche_sans_projet_magnitude_reduite():
     assert v.magnitude == 0.6
 
 
+class _SessionIcpe:
+    """EXPORTS-1 (5.3) : IcpeLayer interroge désormais la base (filtre régime « Non ICPE ») —
+    stub minimal renvoyant l'installation CLASSÉE la plus proche."""
+
+    def __init__(self, row):
+        self._row = row
+
+    def execute(self, *_a, **_k):
+        row = self._row
+
+        class _R:
+            def mappings(self):
+                return self
+
+            def first(self):
+                return row
+        return _R()
+
+
 def test_icpe_severite_graduee():
     params = {"spatial_kind": "icpe", "bandes_m": {"fort": 50, "moyen": 150, "faible": 300},
               "detail": "ICPE"}
     for dist, sev in [(30, Severity.FORT), (100, Severity.MOYEN), (250, Severity.FAIBLE)]:
-        v = IcpeLayer().evaluate(_P(), _Ctx(nearest={"dist": dist, "id": 9, "name": "Usine"}), params)
+        ctx = _Ctx()
+        ctx.session = _SessionIcpe({"dist": dist, "id": 9, "name": "Usine", "subtype": "Autorisation"})
+        v = IcpeLayer().evaluate(_P(), ctx, params)
         assert v.result == CascadeVerdict.SOFT_FLAG and v.severity == sev
         assert v.extra["source_id"] == 9
+        assert "régime Autorisation" in v.detail     # 5.3 : le régime est DIT
+
+
+def test_icpe_non_classee_ne_declenche_pas():
+    # EXPORTS-1 (5.3, arbitrage Q9) : aucun site CLASSÉ à proximité (le stub simule le filtre
+    # régime NOT IN ('Non ICPE') qui ne renvoie rien) → PASS, jamais une alerte.
+    params = {"spatial_kind": "icpe", "bandes_m": {"fort": 50, "moyen": 150, "faible": 300},
+              "detail": "ICPE"}
+    ctx = _Ctx()
+    ctx.session = _SessionIcpe(None)
+    v = IcpeLayer().evaluate(_P(), ctx, params)
+    assert v.result == CascadeVerdict.PASS
+    assert "CLASSÉE" in v.detail
 
 
 def test_mvt_est_info_zero_point():

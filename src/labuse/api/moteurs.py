@@ -402,8 +402,8 @@ def prix_ancien_communes(db: Session, min_ventes: int = 100) -> dict[str, dict]:
     """SOURCE UNIQUE du « €/m² ancien » PAR COMMUNE (médiane DVF des ventes strictes `_BAROMETRE_RETENUE`,
     ≥ `min_ventes`). LUE par le tableau Communes (comparateur) ET le Rapport PDF (baromètre) → un seul
     chiffre par commune dans tout le produit, plus une formule recopiée. À NE PAS confondre avec le
-    `sector_price` de la fiche commune (ligne1_prix_ancien) : celui-là est un AUTRE métrique — des
-    comparables au RAYON d'une parcelle représentative (valorisation), pas un baromètre commune-entière.
+    `sector_price` parcellaire de la fiche (marche_service, EXPORTS-1) : celui-là est un AUTRE métrique —
+    des comparables au RAYON d'une parcelle (valorisation), pas un baromètre commune-entière.
     None (< min_ventes) → « — » à l'écran, jamais un zéro inventé."""
     rows = db.execute(text(f"""
         SELECT commune, count(*) AS n,

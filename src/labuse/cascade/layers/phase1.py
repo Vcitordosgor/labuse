@@ -12,6 +12,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from sqlalchemy import text
+
 from ...enums import Severity
 from ..base import Layer, Verdict, hard_exclude, passed, positive, register, soft_flag, unknown
 from ..context import EvalContext, ParcelRef
@@ -458,9 +460,14 @@ class PrescriptionPluLayer(Layer):
             # RÉELLES mais NON discriminantes → PASS informatif (recensé, tracé, AUCUNE pénalité,
             # pas de bruit dans la vigilance). L'impact mixité est porté par le bilan, pas le score.
             elif tp in mixite:
+                # EXPORTS-1 (5.1) : la servitude est PRÉSENTE, le quota est CONDITIONNEL — le
+                # déclenchement (seuils vs programme) se lit au bilan, même clause. Fin du
+                # « quota imposé » sec qui contredisait le « non déclenchée » du banquier.
                 verdicts.append(passed(
-                    self.name, f"Secteur de mixité sociale : {lib} — quota de logements aidés imposé "
-                    "(impacte le bilan, pas la constructibilité).", source=SRC_GPU))
+                    self.name, f"Secteur de mixité sociale : {lib} — quota de logements aidés "
+                    "CONDITIONNEL (déclenché seulement si le programme franchit les seuils du "
+                    "règlement — voir le bilan ; pas d'effet sur la constructibilité).",
+                    source=SRC_GPU))
             elif tp in oap:
                 verdicts.append(passed(
                     self.name, f"Orientation d'aménagement (OAP) : {lib} — secteur de projet encadré "
@@ -791,15 +798,25 @@ class AccesLayer(Layer):
     name = "acces"
 
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
-        kind = params["spatial_kind"]
-        if not ctx.kind_present(kind):
+        # EXPORTS-1 lot 5 (5.2) : le test à l'INTERSECTION STRICTE est RE-SPÉCIFIÉ — l'axe BD TOPO
+        # est une polyligne au milieu de la chaussée, elle ne touche quasi jamais le polygone
+        # parcellaire (audit A6 : « pas d'accès » sur une parcelle en façade de rue). LE test est
+        # celui de la viabilisation : voie publique à ≤ 10 m (demi-chaussée + trottoir).
+        row = ctx.session.execute(text(
+            """SELECT EXISTS(
+                 SELECT 1 FROM spatial_layers v, parcels p
+                 WHERE p.id = :pid AND v.kind = :kind AND v.commune = p.commune
+                   AND ST_DWithin(v.geom_2975, p.geom_2975, 10)) AS voie10"""),
+            {"pid": parcel.id, "kind": params["spatial_kind"]}).mappings().first()
+        if row is None or not ctx.kind_present(params["spatial_kind"]):
             return unknown(self.name, "Voirie (BD TOPO) non ingérée.", source=SRC_BDTOPO)
-        # voirie qui touche/intersecte directement la parcelle = accès direct
-        if any(i.coverage >= 0 for i in ctx.intersections(parcel.id, kind)):
+        if row["voie10"]:
             return positive(
-                self.name, "Accès direct à la voirie (tronçon au contact de la parcelle).", params.get("bonus_key", "acces_direct_voirie"), source=SRC_BDTOPO
-            )
-        return passed(self.name, "Pas d'accès direct évident à la voirie.", source=SRC_BDTOPO)
+                self.name, "Accès voirie : voie publique à ≤ 10 m de la parcelle "
+                "(largeur de voie comprise).", params.get("bonus_key", "acces_direct_voirie"),
+                source=SRC_BDTOPO)
+        return passed(self.name, "Aucune voie publique à moins de 10 m — accès à vérifier sur site.",
+                      source=SRC_BDTOPO)
 
 
 @register

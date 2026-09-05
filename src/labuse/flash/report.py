@@ -72,9 +72,13 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
                        watermark: str | None = None, with_map: bool = True,
                        produit: str = "Rapport Flash",
                        produit_sous_titre: str = "RAPPORT FLASH · parcelle à l'unité",
-                       marque: dict | None = None) -> str:
-    """Assemble les données et rend le HTML complet du rapport (CSS inliné)."""
-    data = collect_report_data(db, idu, adresse=adresse)
+                       marque: dict | None = None, data: dict | None = None) -> str:
+    """Assemble les données et rend le HTML complet du rapport (CSS inliné).
+
+    EXPORTS-1 (6.2) : `data` peut être FOURNI (archive JSON d'un document payé) — le rendu
+    est alors REPRODUIT depuis les données figées, sans relire la base (test doré de la
+    reproductibilité : même data → même HTML)."""
+    data = data if data is not None else collect_report_data(db, idu, adresse=adresse)
     # M23-A : marque CLIENT — documents ABONNÉ uniquement (dossier.py). Le FLASH 79 €
     # n'alimente JAMAIS ce champ : produit LABUSE, aucun logo client.
     if marque:
@@ -130,18 +134,29 @@ def generate_flash_report(idu: str, *, order_ref: str = "DEMO", adresse: str | N
         return target
 
     t0 = time.monotonic()
+    # EXPORTS-1 (6.2, arbitrage Q10) : les données sont COLLECTÉES UNE FOIS, rendues, puis
+    # ARCHIVÉES en JSON à côté du PDF — un document PAYÉ redevient reproductible
+    # (render_report_html(data=archive) → même contenu, sans relire la base).
     if db is not None:
+        data = collect_report_data(db, idu, adresse=adresse)
         html = render_report_html(db, idu, order_ref=order_ref, adresse=adresse,
-                                  watermark=watermark, with_map=with_map)
+                                  watermark=watermark, with_map=with_map, data=data)
     else:
         with session_scope() as session:
+            data = collect_report_data(session, idu, adresse=adresse)
             html = render_report_html(session, idu, order_ref=order_ref, adresse=adresse,
-                                      watermark=watermark, with_map=with_map)
+                                      watermark=watermark, with_map=with_map, data=data)
 
     from weasyprint import HTML  # import paresseux : lib système (pango) requise au rendu seulement
     tmp = target.with_suffix(".pdf.tmp")
     HTML(string=html, base_url=str(_TEMPLATES)).write_pdf(str(tmp))
     tmp.replace(target)  # écriture atomique : jamais de PDF tronqué servi à un client
+    try:                 # best-effort : un échec d'archive ne bloque jamais la livraison
+        import json as _json
+        target.with_suffix(".json").write_text(
+            _json.dumps(data, ensure_ascii=False, default=str), encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("flash %s : archive data JSON en échec (%s)", order_ref, exc)
     log.info("flash %s : rapport %s généré en %.1f s", order_ref, target.name,
              time.monotonic() - t0)
     return target

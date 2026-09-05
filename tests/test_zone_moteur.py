@@ -280,4 +280,5 @@ def test_endpoint_etude_zone_concurrents_et_ratio(monkeypatch):
     assert all(c["temps_min"] is not None for c in out["concurrents"]["items"]), "chaque concurrent porte son temps"
     # habitants / concurrents = 600 / 2 = 300
     assert out["habitants_par_concurrent"] == 300
-    assert set(out["marche"]) == {"ventes_12m", "prix_m2_median_bati", "annonces_actives", "permis_36m"}
+    assert set(out["marche"]) == {"ventes_12m", "prix_m2_median_bati", "annonces_actives",
+                              "annonces_reserve", "permis_36m"}   # EXPORTS-1 (5.5) : réserve pige servie

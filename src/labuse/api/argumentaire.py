@@ -104,32 +104,39 @@ def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
 # ───────────────────────── dataviz C9 (SVG inline, DA existante) ─────────────────────────
 
 def _svg_bande_points(prix: dict) -> str:
-    """C9 — les ventes DVF en BANDE DE POINTS : chaque vente retenue = un point (aucune
-    agrégation nouvelle), médiane marquée. Inter, vert LABUSE, fond clair — DA existante."""
+    """C9 — les ventes DVF en BANDE DE POINTS : chaque vente retenue = un point vert, médiane
+    marquée. EXPORTS-1 (2.5) : les ventes ÉCARTÉES par le filtre sont dessinées GRISÉES sur la
+    même bande (retenues ET écartées — la méthode se voit, rien ne disparaît en silence).
+    Fonction réutilisable : ne lit que `prix_points` / `prix_points_ecartes` / `median`."""
     pts = prix.get("prix_points") or []
+    ecartes = prix.get("prix_points_ecartes") or []
     if len(pts) < 5:
         return ""
-    lo, hi = min(pts), max(pts)
+    lo, hi = min(pts + ecartes), max(pts + ecartes)
     if hi <= lo:
         return ""
     W, H, PAD = 640, 74, 34
     x = lambda v: PAD + (W - 2 * PAD) * (v - lo) / (hi - lo)  # noqa: E731
     med = prix.get("median")
+    cercles_ecartes = "".join(
+        f"<circle cx='{x(v):.1f}' cy='40' r='3.2' fill='#9AA6A0' fill-opacity='0.4'/>" for v in ecartes)
     cercles = "".join(
         f"<circle cx='{x(v):.1f}' cy='40' r='3.2' fill='#1E9E58' fill-opacity='0.45'/>" for v in pts)
     med_svg = (f"<line x1='{x(med):.1f}' y1='16' x2='{x(med):.1f}' y2='58' stroke='#111814' "
                f"stroke-width='1.6'/>"
                f"<text x='{x(med):.1f}' y='12' text-anchor='middle' font-family='Inter' "
                f"font-size='10' fill='#111814'>médiane {med} €/m²</text>") if med else ""
+    note_ecartes = (f", {len(ecartes)} écartée{'s' if len(ecartes) > 1 else ''} par le filtre "
+                    f"— points gris" if ecartes else "")
     return (f"<svg width='{W}' height='{H}' viewBox='0 0 {W} {H}' "
             f"style='background:#F4F8F6;border-radius:6px'>"
             f"<line x1='{PAD}' y1='40' x2='{W - PAD}' y2='40' stroke='#D8E2DC' stroke-width='1'/>"
-            f"{cercles}{med_svg}"
+            f"{cercles_ecartes}{cercles}{med_svg}"
             f"<text x='{PAD}' y='68' font-family='Inter' font-size='9' fill='#5F6C65'>{lo} €/m²</text>"
             f"<text x='{W - PAD}' y='68' text-anchor='end' font-family='Inter' font-size='9' "
             f"fill='#5F6C65'>{hi} €/m²</text></svg>"
-            f"<p class='note'>Chaque point est une vente DVF retenue dans le comparable "
-            f"({len(pts)} ventes) — aucune vente n'est fabriquée ni lissée.</p>")
+            f"<p class='note'>Chaque point vert est une vente DVF retenue dans le comparable "
+            f"({len(pts)} ventes{note_ecartes}) — aucune vente n'est fabriquée ni lissée.</p>")
 
 
 def _svg_cascade(calc: dict) -> str:
@@ -261,8 +268,10 @@ def _synthese(out: dict, marque: dict | None = None) -> str:
     # donnée du run résiduel servi), pas seulement sa date d'édition (portée par la garde). Indéfendable
     # sinon, opposé à un vendeur trois semaines plus tard. Période DVF + millésimes PLU restent (part. 7).
     vr = out.get("valeurs_run") or {}
-    dates_note = (f"<p class='note'>Valeurs (surface constructible, résiduel) au {esc(vr['date'])} "
-                  f"— run {esc(vr['label'])}. Marché DVF et millésimes PLU : voir partie 7.</p>"
+    # EXPORTS-1 lot 3 — doctrine Z12 : le label interne de run (« m135-run2-île ») ne sort JAMAIS
+    # dans un document client ; seule la DATE d'arrêt des valeurs est dite.
+    dates_note = (f"<p class='note'>Valeurs (surface constructible, résiduel) : analyse LABUSE "
+                  f"arrêtée au {esc(vr['date'])}. Marché DVF et millésimes PLU : voir partie 7.</p>"
                   if vr.get("date") else "")
     return (f"<section class='garde'>"
             f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE, marque=marque)}"
@@ -287,9 +296,21 @@ def _reductions(out: dict) -> str:
         rows = "".join(f"<tr><td>{esc(m)}</td><td>{s('S') if 'PPR' in m or 'RPG' in m or 'agricole' in m or 'côte' in m or 'érosion' in m else s('E')}</td></tr>"
                        for m in modul)
         body += f"<table><tr><th>Facteur (appliqué au calcul)</th><th>Nature</th></tr>{rows}</table>"
-        body += ("<p class='note'>Sources : PPR/aléas (DEAL), potentiel foncier Région (indicatif), indicateur d'érosion (Cerema), "
-                 "pente (RGE ALTI 5 m) — telles qu'ingérées ; le détail figure dans la dérivation "
-                 "de la partie 3.</p>")
+        # EXPORTS-1 (6.1) : le pied cite les sources des facteurs RÉELLEMENT appliqués — plus une
+        # liste en dur qui citait des couches absentes du tableau.
+        _src_map = [("PPR", "PPR/aléas (DEAL)"), ("pente", "pente (RGE ALTI 5 m)"),
+                    ("RPG", "RPG (parcelle agricole)"), ("agricole", "RPG (parcelle agricole)"),
+                    ("côte", "indicateur d'érosion (Cerema)"), ("érosion", "indicateur d'érosion (Cerema)"),
+                    ("foncier Région", "potentiel foncier Région (indicatif)"),
+                    ("cheval", "zonage PLU (GPU)"), ("Zonage mixte", "zonage PLU (GPU)"),
+                    ("réservé", "emplacements réservés (GPU)")]
+        _cites = []
+        for mot, src in _src_map:
+            if any(mot.lower() in m.lower() for m in modul) and src not in _cites:
+                _cites.append(src)
+        body += ("<p class='note'>Sources des facteurs appliqués : "
+                 + (", ".join(_cites) if _cites else "hypothèses du moteur (détail partie 3)")
+                 + " — telles qu'ingérées ; le détail figure dans la dérivation de la partie 3.</p>")
     else:
         body += ("<p class='note'>Aucune réduction chiffrable appliquée par le moteur dans les "
                  "couches analysées — ce constat ne couvre pas les contraintes non modélisées "
@@ -307,7 +328,7 @@ def _bilan_rebours(out: dict) -> str:
     if not calc.get("calculable"):
         return body + ("<p class='note'>Non chiffrable : "
                        f"{esc(calc.get('raison') or 'données insuffisantes')} — aucun chiffre "
-                       "n'est fabriqué (doctrine).</p>")
+                       "n'est fabriqué.</p>")
     # M144 Lot 1 — le bilan NOMME le scénario qu'il chiffre (le RETENU, au sol) quand le stationnement
     # au sol plafonne réellement (silo > au sol), et mentionne le silo en PROSE — jamais chiffré sans
     # son coût de place enterrée (doctrine : pas de constante fabriquée). Une seule source de scénario.

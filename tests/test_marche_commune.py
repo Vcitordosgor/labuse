@@ -28,16 +28,20 @@ def _has_data(commune):
 
 
 @pytest.mark.skipif(not _has_data("Saint-Paul"), reason="base sans données DVF Saint-Paul")
-def test_commune_riche_9_lignes_sourcees_datees():
+def test_commune_riche_8_lignes_sourcees_datees():
     lignes, b = _bloc("Saint-Paul")
-    assert len(b["lignes"]) == 9
+    # EXPORTS-1 (1.2, arbitrage Q2) : ligne1 « prix ancien commune » (médiane autour du centroïde,
+    # « n 11 », libellé faux) SUPPRIMÉE — le prix de l'ancien est parcellaire (marche_service).
+    assert len(b["lignes"]) == 8
+    assert "prix_ancien_median" not in lignes
     # chaque ligne porte source + (si calculable) sa PROPRE date amont — jamais un millésime unique
     for l in b["lignes"]:
         assert l["source"] and l["etiquette"]
         assert set(l) >= {"cle", "groupe", "calculable", "valeurs", "source", "date_amont", "fiabilite"}
-    # Saint-Paul : prix ancien + terrain + tendance calculables
-    assert lignes["prix_ancien_median"]["calculable"] and lignes["prix_ancien_median"]["valeurs"]["median_eur_m2"] > 0
+    # Saint-Paul : terrain + tendance calculables
     assert lignes["tendance_12m"]["calculable"]
+    # EXPORTS-1 (1.6) : la date amont DVF dit la borne réelle, plus un millésime d'année
+    assert (lignes["tendance_12m"]["date_amont"] or "").startswith("ventes jusqu'au ")
     # ligne 2 : les DEUX cellules U/AU présentes (calculable ou motif), jamais omises
     pz = lignes["prix_terrain_nu_par_zone"]["valeurs"]["par_zone"]
     assert set(pz) == {"U", "AU"}

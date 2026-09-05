@@ -81,6 +81,21 @@ def test_generation_pdf_parcelle_pauvre(db_session, parcelle_seedee, tmp_path, m
         pdf2 = generate_flash_report(parcelle_seedee, order_ref="FL-TEST-1",
                                      db=db_session, with_map=False)
         assert pdf2 == pdf and pdf.stat().st_mtime_ns == mtime
+
+        # EXPORTS-1 (6.2, arbitrage Q10) — REPRODUCTIBILITÉ d'un document payé : le dict `data`
+        # est archivé en JSON à côté du PDF, et le re-rendu DEPUIS l'archive donne le même HTML
+        # (aucune relecture de base — le test doré de la recette EXPORTS-1).
+        import json
+        from labuse.flash.report import render_report_html
+        archive = pdf.with_suffix(".json")
+        assert archive.exists(), "le dict data du Flash doit être archivé à côté du PDF"
+        data_archive = json.loads(archive.read_text(encoding="utf-8"))
+        html_archive = render_report_html(db_session, parcelle_seedee, order_ref="FL-TEST-1",
+                                          with_map=False, data=data_archive)
+        html_rejoue = render_report_html(db_session, parcelle_seedee, order_ref="FL-TEST-1",
+                                         with_map=False, data=json.loads(archive.read_text(encoding="utf-8")))
+        assert html_archive == html_rejoue, "même archive → même HTML (reproductible)"
+        assert data_archive["parcelle"]["commune"] in html_archive
     finally:
         config.get_settings.cache_clear()
 

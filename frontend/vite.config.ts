@@ -67,6 +67,11 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   '/radar',
   // DASHBOARD-V1 — capteurs (usage/retours) + Tour de contrôle admin
   '/usage', '/retours', '/admin',
+  // EXPORTS-1 (6.3, audit D5) : routes backend qui MANQUAIENT encore au proxy dev — même famille
+  // que /bilan (M58) / /pre-dossier (M70). /argumentaire était le cas de départ de l'audit
+  // (l'export répondait 200 à :8000 mais 404 en dev). ⚠ TRAIN 8 Caddy : à router aussi.
+  '/argumentaire', '/lettre-zonage', '/pipeline-rarete', '/ortho', '/shortlist',
+  '/audit', '/feedback', '/readyz', '/protection',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({

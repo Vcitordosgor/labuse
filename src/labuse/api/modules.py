@@ -1355,7 +1355,7 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
     _check_idu(idu)   # M-K (P2-31)
     from ..faisabilite.au_ouverture import DELAISSE_MAX_M2
-    from ..faisabilite.bilan import sector_price, compute_bilan_servi
+    from ..faisabilite.bilan import compute_bilan_servi
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
 
@@ -1390,9 +1390,10 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
                            "avertissements": f.avertissements, "modulation": f.modulation}
     else:
         out["capacite"] = None
-    # Source unique (mandat hypothèses bilan, Vic 28/07/2026) : charger(), plus de défauts directs.
-    hyp = Hypotheses.charger()
-    prix = sector_price(db, row["id"], hyp)
+    # EXPORTS-1 (1.1) : le marché passe par marche_service (point d'appel unique — hypothèses
+    # résolues par charger() dans le profil), plus jamais sector_price en direct.
+    from .. import marche_service
+    prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
     out["marche"] = {k: prix.get(k) for k in ("type_prix", "median", "q1", "q3", "n", "fiabilite",
                                               "tendance", "volatilite", "radius_m") if k in prix}
     # P14 (dernière passe) : fraîcheur DVF — période RÉELLE couverte (SQL), pour que l'utilisateur
@@ -1458,7 +1459,6 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         CALCULETTE_VRD_DEFAUT_M2,
         compute_calculette,
         resolve_prix_sortie_servi,
-        sector_price,
     )
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
@@ -1483,7 +1483,8 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     if ps["non_calculable"]:
         return {"calculable": False, "raison": "prix_sortie_non_calculable", "defaults": defaults,
                 "message": ps["motif"]}
-    prix = sector_price(db, row["id"], Hypotheses.charger())        # comparables/fiabilité (marché)
+    from .. import marche_service                                    # EXPORTS-1 (1.1) : point d'appel unique
+    prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
     prix = {**prix, "q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"],   # prix de sortie NEUF
             "niveau_prix_neuf": ps["niveau"], "prix_neuf_label": ps["label"]}
     res = compute_calculette(float(shab), float(row["s"] or 0), prix,
@@ -1543,7 +1544,6 @@ def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
         CALCULETTE_COUT_DEFAUT_M2,
         CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
         compute_bilan_servi,
-        sector_price,
     )
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
