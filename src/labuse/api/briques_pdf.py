@@ -643,11 +643,15 @@ def comparables(out: dict) -> str:
         body += f"<p class='note'>{esc(reserve_methode())}</p>"
         comp = prix.get("comparables")
         if isinstance(comp, dict) and (comp.get("mediane_ancien") or comp.get("mediane_vefa")):
+            # EXPORTS-1 (5.5) : une médiane absente n'est pas un « — » muet — « échantillon
+            # insuffisant », le n reste dit (jamais un tiret sans couverture).
+            def _med_ou_motif(v):
+                return esc(v) if v else "échantillon insuffisant"
             body += (f"<table><tr><th>Segment</th><th class='n'>Ventes</th><th class='n'>Médiane €/m²</th></tr>"
                      f"<tr><td>Ancien</td><td class='n'>{esc(comp.get('n_ancien'))}</td>"
-                     f"<td class='n'>{esc(comp.get('mediane_ancien'))}</td></tr>"
+                     f"<td class='n'>{_med_ou_motif(comp.get('mediane_ancien'))}</td></tr>"
                      f"<tr><td>Neuf / VEFA</td><td class='n'>{esc(comp.get('n_vefa'))}</td>"
-                     f"<td class='n'>{esc(comp.get('mediane_vefa'))}</td></tr></table>"
+                     f"<td class='n'>{_med_ou_motif(comp.get('mediane_vefa'))}</td></tr></table>"
                      + (f"<p class='note'>Écart neuf / ancien : {esc(comp.get('ecart_vefa_ancien_pct'))} %.</p>"
                         if comp.get("ecart_vefa_ancien_pct") is not None else ""))
     if perm and perm.get("items"):

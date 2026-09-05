@@ -134,6 +134,13 @@ def nettoyer_libelle_client(layer: str | None, detail: str | None) -> str | None
     if layer == "proprietaire":          # M125-C6 — plus de « Fichiers fonciers » (source non branchée)
         for rx, repl in _PROPRIO_NOM:
             d = rx.sub(repl, d)
+    # EXPORTS-1 (5.1) : la ligne mixité STOCKÉE au run disait « quota imposé » — le quota est
+    # CONDITIONNEL (déclenchement selon le programme, même clause que le bilan). Réécrit à la
+    # lecture jusqu'au prochain re-run cascade (le fix de source vit dans phase1.py).
+    d = d.replace(
+        "quota de logements aidés imposé (impacte le bilan, pas la constructibilité)",
+        "quota de logements aidés CONDITIONNEL — déclenché seulement si le programme franchit "
+        "les seuils du règlement (voir le bilan ; pas d'effet sur la constructibilité)")
     d = re.sub(r"\bartificialise\b", "artificialisé", d)          # typo OCS (valeur code sans accent)
     d = re.sub(r"\s{2,}", " ", d)
     # M137-Z-fix — typographie FR : le point-virgule PREND un espace avant (contrairement à « . » et

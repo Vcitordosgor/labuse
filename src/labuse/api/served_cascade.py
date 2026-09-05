@@ -57,6 +57,79 @@ def served_cascade_lines(db: Session, idu: str, run: str | None = None) -> list[
         if fam in ("A", "N"):
             out = [ligne_residuel_gardee(l, fam, zlib) if l["layer_name"] == "residuel_socle"
                    else l for l in out]
+    # EXPORTS-1 lot 5 — trois gardes de lecture supplémentaires (mêmes principes : le dryrun
+    # n'est jamais réécrit, la ligne servie est corrigée au point de service unique).
+    out = _gardes_lot5(db, idu, out)
+    return out
+
+
+def _gardes_lot5(db: Session, idu: str, lignes: list[dict]) -> list[dict]:
+    """EXPORTS-1 lot 5 (5.2/5.3/5.4) — gardes de lecture des lignes servies.
+
+    - `acces` (5.2) : la couche cascade testait l'INTERSECTION STRICTE avec l'axe BD TOPO —
+      une polyligne au milieu de la chaussée ne touche quasi jamais un polygone parcellaire
+      (audit A6 : « pas d'accès » sur une parcelle en façade de la Chaussée Royale). LE test
+      servi est celui de la viabilisation (voie à ≤ 10 / ≤ 75 m) ; sans donnée de
+      viabilisation, la ligne est OMISE (jamais servie telle quelle).
+    - `icpe` (5.3, arbitrage Q9) : l'alerte ne vaut que pour une installation CLASSÉE —
+      un recensement Géorisques « Non ICPE » (cessation/antériorité) n'alerte plus ; le
+      tableau détaillé, lui, garde tout avec le régime.
+    - `proprietaire` (5.4) : « non renseigné » stocké au run alors que le fichier PM (la
+      même assiette que la carte propriétaire) porte une dénomination → ligne rebranchée."""
+    out = []
+    for l in lignes:
+        nom = l["layer_name"]
+        if nom == "acces":
+            v = db.execute(text(
+                "SELECT voie10, voie75 FROM parcel_viabilisation "
+                "WHERE idu = :i"), {"i": idu}).mappings().first() if db.execute(text(
+                "SELECT to_regclass('parcel_viabilisation') IS NOT NULL")).scalar() else None
+            if v is None:
+                continue     # pas de faisceau viabilisation → la ligne intersection-stricte est omise
+            l = dict(l)
+            if v["voie10"]:
+                l.update(result="PASS", severity="INFO", weight_applied=0.0,
+                         detail="Accès voirie : voie publique à ≤ 10 m de la parcelle "
+                                "(faisceau viabilisation — le test au contact strict de l'axe "
+                                "BD TOPO est retiré).")
+            elif v["voie75"]:
+                l.update(result="SOFT_FLAG", severity="INFO", weight_applied=0.0,
+                         detail="Accès voirie : voie publique à ≤ 75 m mais pas au droit de la "
+                                "parcelle — accès à vérifier sur site (faisceau viabilisation).")
+            else:
+                l.update(result="SOFT_FLAG", severity="INFO",
+                         detail="Accès voirie : aucune voie publique détectée à moins de 75 m "
+                                "(faisceau viabilisation) — enclavement possible, à vérifier.")
+        elif nom == "icpe" and l["result"] not in ("PASS",):
+            classee = db.execute(text(
+                """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :i)
+                   SELECT sl.name, sl.subtype,
+                          round(ST_Distance(sl.geom_2975, p.geom_2975))::int AS dist_m
+                   FROM spatial_layers sl, p
+                   WHERE sl.kind = 'icpe'
+                     AND COALESCE(sl.subtype, '') NOT IN ('Non ICPE', '')
+                     AND ST_DWithin(sl.geom_2975, p.geom_2975, 500)
+                   ORDER BY dist_m LIMIT 1"""), {"i": idu}).mappings().first()
+            l = dict(l)
+            if classee is None:
+                l.update(result="PASS", severity="INFO", weight_applied=0.0,
+                         detail="Aucune installation CLASSÉE (ICPE) à moins de 500 m — des sites "
+                                "recensés Géorisques non classés peuvent exister (voir tableau, "
+                                "avec leur régime).")
+            else:
+                l.update(detail=f"Installation classée (ICPE) à proximité — {classee['name']}, "
+                                f"régime {classee['subtype']}, {classee['dist_m']} m.")
+        elif nom == "proprietaire" and "non renseigné" in (l.get("detail") or ""):
+            pm = db.execute(text(
+                "SELECT denomination FROM parcelle_personne_morale WHERE idu = :i LIMIT 1"),
+                {"i": idu}).scalar() if db.execute(text(
+                "SELECT to_regclass('parcelle_personne_morale') IS NOT NULL")).scalar() else None
+            if pm:
+                l = dict(l)
+                l.update(result="PASS", severity="INFO",
+                         detail=f"Propriétaire personne morale : {pm} (fichier DGFiP — même "
+                                "assiette que la carte propriétaire).")
+        out.append(l)
     return out
 
 

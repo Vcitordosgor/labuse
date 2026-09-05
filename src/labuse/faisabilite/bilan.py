@@ -542,6 +542,13 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
     if mixite:
         lib_sms = eco.get("mixite_libelle") or "logements aidés"
+        # EXPORTS-1 lot 5 (5.1) : bloc unique DEUX lignes — (1) la SERVITUDE, présente au zonage ;
+        # (2) son DÉCLENCHEMENT, seuils du règlement vs programme estimé. Les deux lisent LA même
+        # clause (_clause_mixite) — fin du « quota imposé » (fiche) vs « non déclenchée » (banquier)
+        # sans explication (audit A5).
+        steps.append(Step("Secteur de mixité sociale — servitude au zonage",
+                          lib_sms, "OUI — quota conditionné au programme (ligne suivante)",
+                          mixite_src, prov="derive"))
         if not declenchee:
             steps.append(Step("Clause de mixité sociale — non déclenchée",
                               clause["detail"], "pas de quota LLS sur ce programme",

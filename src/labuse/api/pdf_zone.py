@@ -145,7 +145,8 @@ def render_zone_pdf(data: dict, *, titre: str | None = None) -> bytes:
     _minis(pdf, [
         (_nb(marche.get("ventes_12m")), "ventes / 12 mois"),
         (f"{_nb(marche.get('prix_m2_median_bati'))} €" if marche.get("prix_m2_median_bati") is not None else "—", "médian €/m² bâti"),
-        (_nb(marche.get("annonces_actives")), "annonces actives"),
+        # EXPORTS-1 (5.5) : le compte Radar est un MINIMUM (pige partielle), le libellé le dit
+        (_nb(marche.get("annonces_actives")), "annonces suivies (minimum, pige partielle)"),
         (_nb(marche.get("permis_36m")), "permis / 36 mois"),
     ])
 

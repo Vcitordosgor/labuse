@@ -8,6 +8,8 @@ Non branché au scoring live — évalué en dry-run (tables dryrun_*).
 """
 from __future__ import annotations
 
+from sqlalchemy import text
+
 from ...enums import Severity
 from ..base import Layer, Verdict, passed, positive, register, soft_flag, unknown
 from ..context import EvalContext, ParcelRef
@@ -216,8 +218,39 @@ class MvtLayer(_NearestFlagLayer):
 
 @register
 class IcpeLayer(_NearestFlagLayer):
+    """EXPORTS-1 lot 5 (5.3, arbitrage Q9) : l'alerte ne vaut que pour une installation CLASSÉE.
+    Géorisques recense aussi des sites « Non ICPE » (cessation/antériorité — l'ingestion les
+    stocke, régime en `subtype`) : l'audit A7 a mesuré une alerte « installation classée à
+    proximité » sur un site que le tableau de la même page déclarait « Non ICPE ». Le tableau
+    détaillé garde TOUT avec le régime ; la couche d'alerte filtre."""
+
     name = "icpe"
     src = SRC_ICPE
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, f"Couche {kind} non ingérée.", source=self.src)
+        np = ctx.session.execute(text(
+            """WITH p AS (SELECT geom_2975 FROM parcels WHERE id = :pid)
+               SELECT sl.id, sl.name, sl.subtype,
+                      ST_Distance(sl.geom_2975, p.geom_2975) AS dist
+               FROM spatial_layers sl, p
+               WHERE sl.kind = :kind
+                 AND COALESCE(sl.subtype, '') NOT IN ('Non ICPE', '')
+                 AND ST_DWithin(sl.geom_2975, p.geom_2975, :cap)
+               ORDER BY dist LIMIT 1"""),
+            {"pid": parcel.id, "kind": kind,
+             "cap": float(params.get("cap_m") or params.get("bandes_m", {}).get("faible", 300))}
+        ).mappings().first()
+        if np is None:
+            return passed(self.name, "Aucune installation CLASSÉE recensée à proximité "
+                          "(les sites non classés restent listés au tableau, avec leur régime).",
+                          source=self.src)
+        sev = self._severity(float(np["dist"]), params)
+        detail = (f"{params['detail']} ({np['name']}, régime {np['subtype']}, "
+                  f"{float(np['dist']):.0f} m)")
+        return _trace(soft_flag(self.name, detail, sev, source=self.src), "spatial_layers", np["id"])
 
     def _severity(self, dist: float, params: dict) -> Severity:
         b = params["bandes_m"]                        # {fort:50, moyen:150, faible:300}

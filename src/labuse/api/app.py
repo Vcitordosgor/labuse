@@ -3399,6 +3399,14 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # fiche servie (premium/dossier/banquier/fiche écran lisent ces lignes arbitrées).
     from .risques_arbitrage import arbitrer_risques
     lines = arbitrer_risques(lines)
+    # EXPORTS-1 lot 5 (5.2/5.3/5.4) : les MÊMES gardes de lecture que les générateurs de
+    # documents (served_cascade._gardes_lot5) — accès voirie (test viabilisation, plus jamais
+    # l'intersection stricte), ICPE (alerte seulement si CLASSÉE), propriétaire (« non
+    # renseigné » rebranché sur le fichier PM). Écran = documents, un seul point de vérité.
+    from .served_cascade import _gardes_lot5
+    _garde = _gardes_lot5(db, idu, [{**l, "layer_name": l.get("layer_name") or l.get("layer")}
+                                    for l in lines])
+    lines = [{k: v for k, v in l.items() if k != "layer_name"} for l in _garde]
     flags = [l for l in lines
              if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 

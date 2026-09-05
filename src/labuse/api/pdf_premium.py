@@ -806,7 +806,12 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         if _et and (dvfp.get("secteur") or []):
             lignes.append(f"({_et})")
         for s in (dvfp.get("secteur") or [])[:4]:
-            lignes.append(f"Secteur — {s.get('type_bien', '')} : médiane {s.get('mediane_prix_m2') or '—'} €/m² "
+            # EXPORTS-1 (5.5) : une médiane NULL n'est pas un « — » muet — c'est un échantillon
+            # sous le seuil, et on le dit (jamais un zéro/tiret sans couverture).
+            _med = s.get("mediane_prix_m2")
+            _vmed = (f"médiane {_med} €/m²" if _med
+                     else "médiane sous seuil d'échantillon (non servie)")
+            lignes.append(f"Secteur — {s.get('type_bien', '')} : {_vmed} "
                           f"({s.get('n_ventes', '?')} ventes, {s.get('fenetre', '')})")
         # EXPORTS-1 (1.4, Q3) : la ligne « Neuf VEFA » a quitté la fiche — un seul « neuf » servi,
         # celui du bilan (resolve_prix_neuf_marche).
