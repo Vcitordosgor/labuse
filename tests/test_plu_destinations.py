@@ -240,6 +240,11 @@ def test_module_unique_aucune_autre_lecture():
     src = Path(__file__).resolve().parents[1] / "src"
     out = subprocess.run(["grep", "-rl", "plu_destinations", str(src)],
                          capture_output=True, text=True).stdout.split()
+    # CIRCUIT-1 lot 1 — le REGISTRE (src/labuse/registre/) DÉCLARE l'id du moteur
+    # `plu_destinations` (chiffres.py) ; il ne lit jamais la calibration YAML. L'intention de la
+    # garde (les surfaces passent par le module, jamais par les YAML) reste entière.
+    registre_dir = str(Path("src") / "labuse" / "registre")
     offenders = [p for p in out
-                 if Path(p).name != "destinations.py" and "__pycache__" not in p]
+                 if Path(p).name != "destinations.py" and "__pycache__" not in p
+                 and registre_dir not in p]
     assert not offenders, f"lectures hors module unique : {offenders}"

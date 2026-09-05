@@ -3688,6 +3688,30 @@ def jobs_status_cmd() -> None:
                    f"{str(d.get('duree_s') or '—'):9s} {d.get('fin') or 'jamais'}")
 
 
+# ═══════════════════════ CIRCUIT-1 (lot 1.5) — registre : le miroir en base ═══════════════════════
+registre_app = typer.Typer(add_completion=False,
+                           help="Registre des chiffres/robinets (CIRCUIT-1) : le code est la vérité.")
+app.add_typer(registre_app, name="registre")
+
+
+@registre_app.command("sync")
+def registre_sync_cmd() -> None:
+    """Écrit le miroir `registre_chiffres` / `registre_robinets` / `registre_aretes` DEPUIS le code
+    (idempotent : truncate + insert). La page Circuit et la sonde lisent le miroir, jamais le code."""
+    from .registre import sync as registre_sync_mod
+    from .registre import verifier
+    pb = verifier()
+    if pb:
+        typer.echo(f"✗ registre incohérent ({len(pb)}) :")
+        for p in pb[:20]:
+            typer.echo(f"  · {p}")
+        raise typer.Exit(1)
+    with session_scope() as s:
+        n = registre_sync_mod.sync(s)
+        s.commit()
+    typer.echo(f"✓ miroir écrit : {n['chiffres']} chiffres · {n['robinets']} robinets · {n['aretes']} arêtes")
+
+
 # ═══════════════════════════ CRON-1 (K5) — golden : candidat auto, bascule MANUELLE ═══════════════════════════
 golden_app = typer.Typer(add_completion=False, help="Golden : run candidat (jamais servi) + bascule manuelle (Vic).")
 app.add_typer(golden_app, name="golden")

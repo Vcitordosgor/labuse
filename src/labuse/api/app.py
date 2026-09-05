@@ -2015,7 +2015,8 @@ def rafraichir_contexte_cache(db: Session, commune: str) -> None:
 
 
 @app.get("/communes/{commune}/contexte")
-def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
+def commune_contexte(commune: str, db: Session = Depends(get_db),
+                     request: Request = None, trace: int = 0) -> dict:
     """VOLET CONTEXTE COMMUNE — servi depuis le CACHE `commune_contexte_cache` (précalculé chaque nuit
     par le job `fiche-commune-cache`) : ouverture < 500 ms. `cache_calcule_le` = date du calcul (pied
     de fiche). Cache absent (base neuve, avant 1er job) → calcul EN DIRECT, lent mais jamais un faux
@@ -2031,9 +2032,20 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
         # nocturne les FIGEAIT → l'utilisateur voyait deux chiffres divergents (ex. St-Denis prix neuf
         # 4 998 live vs 4 275 cache ; permis 5 ans décalés par la fenêtre glissante). Un seul moteur,
         # deux écrans d'accord. Les blocs lourds/statiques (population, risques, ANRU…) restent cachés.
-        return {**_rafraichir_partages(db, commune, dict(hit["payload"])),
-                "cache_calcule_le": hit["computed_at"].isoformat()}
-    return {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+        payload = {**_rafraichir_partages(db, commune, dict(hit["payload"])),
+                   "cache_calcule_le": hit["computed_at"].isoformat()}
+    else:
+        payload = {**_compute_commune_contexte(db, commune), "cache_calcule_le": None}
+    if trace:
+        # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : tampon de chaque chiffre
+        # déclaré pour les 15 cartes de la fiche commune (registre.robinets fiche_commune_*).
+        from .auth import exiger_admin
+        from .. import registre
+        exiger_admin(request)
+        cids = sorted({cid for rid, r in registre.ROBINETS.items()
+                       if rid.startswith("fiche_commune") for cid in r.chiffres})
+        payload["_trace"] = registre.tampons_pour(db, cids)
+    return payload
 
 
 def _rafraichir_partages(db: Session, commune: str, payload: dict) -> dict:
@@ -4248,7 +4260,8 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
 
 
 @app.get("/parcels/{idu}")
-def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db)) -> dict:
+def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db),
+                 request: Request = None, trace: int = 0) -> dict:
     """Fiche « Tout ce que LA BUSE a trouvé » (§8).
 
     FIX-FICHE F3 : l'endpoint sert DÉSORMAIS TOUJOURS la fiche PREMIUM (`_q_v2_fiche`) — la seule
@@ -4259,7 +4272,17 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
     idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
     run = source if (source and source.startswith("q_v")) else runs.current()
-    return _q_v2_fiche(db, idu, run_label=run)
+    payload = _q_v2_fiche(db, idu, run_label=run)
+    if trace:
+        # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : le tampon de chaque
+        # chiffre déclaré pour les sections de la fiche parcelle (registre.robinets fiche_parcelle_*).
+        from .auth import exiger_admin
+        from .. import registre
+        exiger_admin(request)
+        cids = sorted({cid for rid, r in registre.ROBINETS.items()
+                       if rid.startswith("fiche_parcelle") for cid in r.chiffres})
+        payload["_trace"] = registre.tampons_pour(db, cids)
+    return payload
 
 
 @app.get("/parcels/{idu}/zone")
@@ -4460,7 +4483,7 @@ def parcel_export_pdf(idu: str, source: str | None = None,
     # M125-B : adresse UNIFIÉE — `_q_v2_fiche` a déjà posé `fiche["adresse"]` (résolveur unique de
     # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
-    fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
+    fiche["contexte_commune"] = commune_contexte(fiche["commune"], db=db)
     # M54-AB C5 : UNE ligne de synthèse marché DVF datée (bloc M-U), pas les 9 lignes.
     try:
         from .marche_bloc import bloc_condense
