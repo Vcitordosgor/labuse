@@ -9,7 +9,7 @@ import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
-import { BASEMAP_SOURCES, activeBasemapKey } from './basemaps'
+import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
@@ -770,37 +770,23 @@ export function MapView() {
     m.on('load', () => {
       // fonds de plan (tous chargés, visibilité pilotée par l'effet fond via activeBasemapKey —
       // FOND-SOMBRE : plus de fond visible à la création, le défaut « dark » n'a plus de raster)
+      // RETOURS-15 U1 — SOUS-COUCHE ortho monde (mosaïque ORTHOPHOTOS, mer comprise), posée SOUS
+      // tous les fonds : aux petits zooms elle EST la mer (photographiée jusqu'à z12 mesuré) ; au
+      // delà, MapLibre étire ses tuiles z12 (source maxzoom 12) → la mer reste CONTINUE sous
+      // l'Ortho Express (qui ne couvre que la terre + la mer côtière). Le masque de mer R1 et les
+      // `bounds` C6 sont RETIRÉS : ils découpaient jetées et ports en biseau (constat Vic 05/09) —
+      // rien ne découpe une orthophoto. Sous tout ça, le canvas sombre : jamais de blanc.
+      m.addSource('bm-ortho-monde', { type: 'raster', tiles: ORTHO_MONDE.tiles, tileSize: 256,
+        attribution: ORTHO_MONDE.attribution, maxzoom: ORTHO_MONDE.maxzoom })
+      m.addLayer({ id: 'bm-ortho-monde', type: 'raster', source: 'bm-ortho-monde', layout: { visibility: 'none' } })
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
-        // RETOURS-12 C6 — `bounds` sur les fonds ortho (emprise 974) : maplibre ne demande plus les
-        // tuiles no-data (blanches) au large → fini l'escalier de tuiles sur fond blanc en vue dézoomée.
-        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}), ...(src.bounds ? { bounds: src.bounds } : {}) })
-        m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' } })
+        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
+        // U1 — bascule par zoom : l'Ortho Express (terre seule) n'apparaît qu'aux GRANDS zooms
+        // (minzoom 12) ; en dessous, la mosaïque monde seule peint (mer comprise) — sans ça, les
+        // tuiles côtières Express faisaient un liseré bleu vif en escalier autour de l'île.
+        m.addLayer({ id, type: 'raster', source: id, layout: { visibility: 'none' },
+          ...(id === 'bm-ortho-now' ? { minzoom: 12 } : {}) })
       }
-      // RETOURS-13 R1 — MASQUE DE MER sous les fonds ORTHO : les bounds C6 ne suffisaient pas —
-      // les tuiles jpeg qui INTERSECTENT l'emprise sont quand même servies, et leur no-data est
-      // BLANC OPAQUE → au cadrage « île entière » la mer restait un escalier de tuiles bleues sur
-      // fond blanc (constat Vic, 04 ET 05/09). Le masque = un polygone monde TROUÉ par le contour
-      // dissous de l'île (ile974.geojson), peint couleur de mer sombre AU-DESSUS des rasters ortho :
-      // la mer est CONTINUE jusqu'aux bords, quel que soit ce qu'IGN sert. Visible sur les fonds
-      // ortho seulement (Plan IGN dessine sa propre mer ; Sombre/Clair n'ont pas de raster).
-      m.addSource('mer-mask', { type: 'geojson', data: EMPTY_FC as never })
-      m.addLayer({ id: 'mer-mask', type: 'fill', source: 'mer-mask', layout: { visibility: 'none' },
-        paint: { 'fill-color': SOMBRE_BG, 'fill-opacity': 1 } })
-      fetch(`${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}ile974.geojson`)
-        .then((r) => r.json())
-        .then((fc: { features: { geometry: { type: string; coordinates: unknown } }[] }) => {
-          const holes: unknown[] = []
-          for (const f of fc.features ?? []) {
-            const g = f.geometry
-            if (g?.type === 'Polygon') holes.push((g.coordinates as unknown[])[0])
-            else if (g?.type === 'MultiPolygon') for (const poly of g.coordinates as unknown[][]) holes.push(poly[0])
-          }
-          const world = [[54.0, -22.5], [57.5, -22.5], [57.5, -19.8], [54.0, -19.8], [54.0, -22.5]]
-          const srcMask = m.getSource('mer-mask') as maplibregl.GeoJSONSource | undefined
-          srcMask?.setData({ type: 'Feature', properties: {},
-            geometry: { type: 'Polygon', coordinates: [world, ...holes] } } as never)
-        })
-        .catch(() => { /* masque absent = comportement C6 (dégradé, jamais bloquant) */ })
       // M65 P8 — MASSE TERRESTRE (île dissoute) : la terre sans parcelle (cirques, forêt, volcan)
       // prend l'aplat du thème — GRIS #C9C4B8 en Clair, terre mesurée SOMBRE_TERRE en Sombre
       // (FOND-SOMBRE ; applyClairMode pose teinte et visibilité). Posée TOUT EN BAS de la pile
@@ -1476,10 +1462,10 @@ export function MapView() {
     for (const id of Object.keys(BASEMAP_SOURCES)) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
     }
-    // RETOURS-13 R1 — le masque de mer n'existe que sur les fonds ORTHO (tuiles jpeg au no-data
-    // blanc) ; Plan IGN, Sombre et Clair gèrent leur propre mer.
-    if (m.getLayer('mer-mask')) {
-      m.setLayoutProperty('mer-mask', 'visibility', active?.startsWith('bm-ortho') ? 'visible' : 'none')
+    // RETOURS-15 U1 — la sous-couche monde accompagne TOUT fond ortho (mer continue à tous les
+    // zooms sous le millésime actif) ; Plan IGN dessine sa propre mer, Sombre/Clair n'ont pas de raster.
+    if (m.getLayer('bm-ortho-monde')) {
+      m.setLayoutProperty('bm-ortho-monde', 'visibility', active?.startsWith('bm-ortho') ? 'visible' : 'none')
     }
     applyClairMode(m, basemap)   // mer/terre du thème + traits achromatiques (aucune autre couleur touchée)
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre

@@ -4912,6 +4912,71 @@ def renouvellement_liste(commune: str | None = None,
                               "opportunité qualifiée.")}
 
 
+# RETOURS-15 U1 — PROXY de l'Ortho Express : l'IGN SERT des tuiles BLANC PUR sur une bande de mer
+# côtière (mesuré au GetTile : blanc à ~300 m-4 km du rivage selon le zoom, rien au-delà). Un
+# raster MapLibre ne peut pas écarter une tuile servie côté client, et le masque de mer est
+# INTERDIT (il découpait jetées et ports — constat Vic 05/09). Ici : tuile quasi blanche → 404
+# (la sous-couche monde + le fond sombre restent visibles = la mer), sinon relais tel quel.
+# Chemin /map/tiles/* exprès : régime carto du rate-limit (quota jour), jamais le 60/min.
+_ORTHO_EXPRESS_WMTS = ("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0"
+                       "&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}"
+                       "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025&FORMAT=image/jpeg")
+_tuiles_blanches: dict[tuple[int, int, int], bool] = {}   # verdict mémorisé (immuable par tuile)
+
+
+@app.get("/map/tiles/ortho-express/{z}/{x}/{y}")
+def ortho_express_tile(z: int, x: int, y: int) -> Response:
+    if not (0 <= z <= 19 and 0 <= x < 2 ** z and 0 <= y < 2 ** z):
+        raise HTTPException(404, "Tuile hors grille")
+    if _tuiles_blanches.get((z, x, y)):
+        raise HTTPException(404, "Tuile no-data (mer)")
+    import requests as _rq
+    try:
+        r = _rq.get(_ORTHO_EXPRESS_WMTS.format(z=z, x=x, y=y),
+                    headers={"User-Agent": "labuse/1.0"}, timeout=15)
+    except Exception as e:  # noqa: BLE001 — WMTS muet : pas de tuile, la mer du dessous reste
+        logging.getLogger("labuse").warning("ortho-express %s/%s/%s : WMTS muet (%s)", z, x, y, e)
+        raise HTTPException(404, "WMTS indisponible") from None
+    if r.status_code != 200 or not r.headers.get("content-type", "").startswith("image/"):
+        raise HTTPException(404, "Tuile absente")
+    # La bande blanche n'existe qu'aux zooms moyens (mesuré z13-16) : au-delà, relais direct.
+    # L'emprise Express s'arrête EN PLEIN MILIEU de tuiles (mesuré : x=5352 z13 = moitié photo /
+    # moitié blanc) → le no-data se retire PIXEL PAR PIXEL : blanc quasi pur CONNECTÉ AU BORD de
+    # la tuile → transparent (un nuage/toit blanc isolé au centre n'est JAMAIS touché). 3 ms/tuile.
+    if z <= 16:
+        try:
+            import io as _io
+
+            import numpy as _np
+            from PIL import Image as _Img
+            from scipy.ndimage import binary_dilation as _dil
+            from scipy.ndimage import label as _label
+            a = _np.asarray(_Img.open(_io.BytesIO(r.content)).convert("RGB"))
+            blanc = (a >= 245).all(axis=2)        # 245 : le JPEG halote le blanc pur sur 2-3 px
+            if blanc.all():                       # tuile entièrement no-data
+                _tuiles_blanches[(z, x, y)] = True
+                raise HTTPException(404, "Tuile no-data (mer)")
+            if blanc.any():
+                lab, _n = _label(blanc)
+                bord = (set(lab[0, :].tolist()) | set(lab[-1, :].tolist())
+                        | set(lab[:, 0].tolist()) | set(lab[:, -1].tolist())) - {0}
+                if bord:
+                    mask = _np.isin(lab, list(bord))
+                    # manger le halo résiduel : dilatation bornée aux pixels encore blanchâtres
+                    mask = _dil(mask, iterations=2) & (a >= 232).all(axis=2)
+                    rgba = _np.dstack([a, _np.where(mask, 0, 255).astype("uint8")])
+                    buf = _io.BytesIO()
+                    _Img.fromarray(rgba, "RGBA").save(buf, "PNG")
+                    return Response(buf.getvalue(), media_type="image/png",
+                                    headers={"Cache-Control": "public, max-age=86400"})
+        except HTTPException:
+            raise
+        except Exception:  # noqa: BLE001 — analyse impossible → on relaye (jamais bloquant)
+            pass
+    return Response(r.content, media_type="image/jpeg",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/map/permits.geojson")
 def permits_geojson(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Marqueurs SITADEL (Lot C4) : autorisations d'urbanisme géolocalisées (point = parcelle
