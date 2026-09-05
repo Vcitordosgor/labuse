@@ -114,6 +114,46 @@ def zone_dominante(session: Session, parcel_id: int) -> ZoneServie:
                       parts, pct_constructible, source)
 
 
+def garde_sdp_residuelle(sdp: float | None, zone_fam: str | None,
+                         zone: str | None = None) -> tuple[float | None, str | None]:
+    """ZONE-1 pt2 — garde DE LECTURE : en zone dominante A ou N, la SDP résiduelle servie
+    vaut 0 PAR RÈGLE, avec la cause `zone_non_constructible:<zone>`. Le run n'est pas
+    recalculé (le chiffre stocké suivra à la prochaine bascule) ; la garde s'applique à
+    l'écran comme aux exports. Renvoie (valeur_servie, cause | None)."""
+    if sdp is None:
+        return None, None
+    if zone_fam in ("A", "N"):
+        return 0.0, f"zone_non_constructible:{zone or zone_fam}"
+    return float(sdp), None
+
+
+def zone_fam_ecran(session: Session, idu: str) -> tuple[str | None, str | None]:
+    """(zone_fam, zone_lib) de l'ÉCRAN (`parcel_zone_plu`) pour un IDU — lecture bon marché
+    pour la garde pt2 aux points de service. (None, None) si table absente ou parcelle inconnue."""
+    if not _table_ecran_existe(session):
+        return None, None
+    r = session.execute(text(
+        "SELECT zone_fam, zone_lib FROM parcel_zone_plu WHERE idu = :idu"),
+        {"idu": idu}).one_or_none()
+    return (r.zone_fam, r.zone_lib) if r else (None, None)
+
+
+def ligne_residuel_gardee(line: dict, zone_fam: str | None, zone: str | None) -> dict:
+    """Réécriture DE LECTURE de la ligne servie `residuel_socle` quand la zone dominante est
+    A/N : le chiffre du run (calculé sous l'ancienne zone du centroïde) ne doit plus sortir.
+    Copie modifiée ; la ligne d'origine (dryrun) n'est pas touchée."""
+    _, cause = garde_sdp_residuelle(1.0, zone_fam, zone)   # 1.0 : sonde — seul `cause` compte
+    if cause is None:
+        return line
+    out = dict(line)
+    out["result"] = "SOFT_FLAG"
+    out["severity"] = "INFO"
+    out["weight_applied"] = 0.0
+    out["detail"] = (f"SDP résiduelle servie : 0 m² — {cause} (zone dominante « {zone} » non "
+                     "constructible ; le chiffre du run sera recalculé à la prochaine bascule).")
+    return out
+
+
 def libelle_a_cheval(parts: list) -> str:
     """Phrase servie (fiche, bilan, exports) quand la parcelle est à cheval."""
     detail = " + ".join(f"« {p['zone']} » {p['pct']:g} %" for p in parts)
