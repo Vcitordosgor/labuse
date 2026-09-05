@@ -33,6 +33,7 @@ export const TOKENS = {
   stSurveiller: '#4ADE96',
   stCreuser: '#E8B44C',
   stEcartee: '#E8695A',
+  stExclue: '#6B7A72',   // gris neutre DA (= tailwind st-exclue) — état « écartée/hors entonnoir »
   stNone: '#39463F',
   txtMut: '#6B776F',
   txtDim: '#8A968F',

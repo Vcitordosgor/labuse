@@ -6,6 +6,7 @@ import { getCommunes, getFiche, getFiltreIdus, getMapLayer, getParcelsGeojson, g
 import { ALL_TIER_META, BPE_DOM, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME, type MapTokens } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
+import { PERMIS_ETAT_COLOR } from '../../lib/permisEtats'
 import { fmtArea, fmtDistance, haversine, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
@@ -1120,9 +1121,15 @@ export function MapView() {
                    ['all', ['==', ['get', 'kind'], 'operation'], ['==', ['get', 'radar_cite'], true]], '#4ADE80',
                    ['==', ['get', 'kind'], 'operation'], '#E0A94F',
                    ['==', ['get', 'kind'], 'zone-origin'], '#4ADE80',
-                   // O2-1 (OUTILS-2) — permis au POINT MORT en ROUGE, en cours en VERT : l'œil sépare la
-                   // veille concurrentielle des opportunités dormantes sans changer d'écran.
-                   ['all', ['==', ['get', 'kind'], 'permis'], ['==', ['get', 'point_mort'], true]], '#E2726A',
+                   // RETOURS-17 W3 — la COULEUR DU POINT PERMIS SUIT SON ÉTAT (avant : tout en vert →
+                   // « 47 000 verts, lit 5 580 récents », Vic 05/09). Récent vert · Dormant corail ·
+                   // Achevé/Autre gris — MÊME source que les pastilles du panneau (lib/permisEtats).
+                   ['==', ['get', 'kind'], 'permis'],
+                     ['match', ['get', 'etat'],
+                       'recent', PERMIS_ETAT_COLOR.recent,
+                       'dormant', PERMIS_ETAT_COLOR.dormant,
+                       'gris', PERMIS_ETAT_COLOR.gris,
+                       PERMIS_ETAT_COLOR.recent],
                    ['==', ['get', 'kind'], 'radar'],
                    ['match', ['get', 'statut'],
                      'active', '#4ADE80', 'en_vente_longue', '#E0A94F', 'a_reverifier', '#8FB4F0',

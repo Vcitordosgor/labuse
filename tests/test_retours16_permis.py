@@ -63,10 +63,10 @@ def test_v2_puce_localisation_avant_les_autres_chips():
 
 
 def test_v3_dormant_partout_plus_de_point_mort_visible():
-    """Les chaînes VISIBLES disent « Dormant » ; la définition (autorisé ancien sans achèvement
-    déclaré) reste dans la phrase d'explication. « point mort » ne survit qu'en commentaire."""
+    """Les chaînes VISIBLES disent « Dormant » ; la définition (ancien PC sans achèvement) vit
+    désormais SUR la ligne de l'état (RETOURS-17 W2). « point mort » ne survit qu'en commentaire."""
     assert "'mort', 'Dormant'" in MP
-    assert "« Dormant » = autorisé ancien sans achèvement déclaré (DAACT)" in MP
+    assert "ancien PC sans achèvement" in MP   # RETOURS-17 : la définition est sur la LIGNE de l'état
     assert "'Au point mort'" not in MP and "au point mort ·" not in MP
     assert "'Dormant — permis de construire" in MP or "Dormant — permis de construire" in MP
     reg = (ROOT / "frontend/src/components/outils/registry.ts").read_text(encoding="utf-8")
@@ -95,11 +95,15 @@ def test_v4_count_only_et_chip_tous_en_base(client):
 
 
 def test_v4_ligne_du_bas_nomme_ses_perimetres():
-    """Le pied de liste dit « en base » / « sur ce filtre » / « localisés » — plus un nombre nu."""
-    assert "en base (toute la profondeur Sitadel)" in MP
-    assert "sur ce filtre" in MP
-    assert "localisés" in MP
-    assert "PC dormants" in MP
-    # chaque chip du segment porte son périmètre (title)
-    assert "Tous les permis en base (toute la profondeur Sitadel servie)." in MP
-    assert "24 derniers mois de données Sitadel" in MP
+    """RETOURS-17 W2 — le TOTAL nomme son périmètre dans le BLOC EN TÊTE (« permis autorisés en base »,
+    « toute la profondeur Sitadel », localisés + date) ; la DÉFINITION de chaque état vit sur sa ligne ;
+    le pied ne dit plus que le vivant de la vue (carte, chargés). Plus jamais un nombre nu sans périmètre."""
+    assert "permis autorisés en base" in MP
+    assert "toute la profondeur Sitadel" in MP
+    assert "localisés sur la carte" in MP
+    assert "dormants sur la carte" in MP
+    # chaque état porte sa DÉFINITION COURTE sur sa ligne
+    assert "autorisé ≤ 24 mois" in MP
+    assert "travaux déclarés (DAACT)" in MP
+    # « Tous » compte toujours la base entière (count_only léger)
+    assert "modPermisCount(240)" in MP

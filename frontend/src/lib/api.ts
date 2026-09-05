@@ -982,11 +982,13 @@ export const modPatrimoine = (siren: string, limit = 200, offset = 0) =>
 // GB-017/018 — export CSV du portefeuille d'une PM (raison sociale entière ; notice si plafond serveur).
 export const modPatrimoineCsvUrl = (siren: string) => `/modules/patrimoine?siren=${encodeURIComponent(siren)}&fmt=csv`
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
-export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0) =>
-  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}&limit=${limit}&offset=${offset}`)
+// RETOURS-17 W2 — `etat` (recent|acheve|autre) affine la fenêtre par ÉTAT DE CYCLE ; le dormant garde
+// son endpoint /promesses (jointure parcelle+run). Sans `etat`, comportement d'avant (fenêtre `months`).
+export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0, etat?: string | null) =>
+  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}${etat ? `&etat=${etat}` : ''}&limit=${limit}&offset=${offset}`)
 // RETOURS-16 V4 — compteur seul (ni lignes ni carte) : le chip « Tous » dit le total EN BASE.
-export const modPermisCount = (months: number) =>
-  j<{ total: number; geocodes?: number; donnees_jusqu_au?: string }>(`/modules/permis?${cq()}&months=${months}&count_only=true`)
+export const modPermisCount = (months: number, etat?: string | null) =>
+  j<{ total: number; geocodes?: number; donnees_jusqu_au?: string }>(`/modules/permis?${cq()}&months=${months}${etat ? `&etat=${etat}` : ''}&count_only=true`)
 export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
 export const modParcellePermis = (idu: string) =>

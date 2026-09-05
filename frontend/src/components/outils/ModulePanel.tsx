@@ -13,6 +13,7 @@ import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
+import { carteEtat, etatColor, type PermisEtat, type PermisEtatCarte } from '../../lib/permisEtats'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { EtudierBien } from './EtudierBien'
@@ -285,6 +286,17 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
 // RETOURS-15 U3 — règle d'ordre : la case « Tout » / « Tous » est TOUJOURS la dernière à droite.
 const NATURES = [['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD'], ['', 'Tout']] as const
 
+// RETOURS-17 W3 — coupure « récent » (24 mois avant la fin du flux Sitadel), format 'AAAA-MM-JJ'.
+// Le serveur ancre récent sur `date >= dmax - interval '24 months'` ; ici on reproduit la MÊME coupure
+// pour colorer chaque point de la carte (comparaison lexicographique de dates ISO = comparaison réelle).
+const minus24m = (iso?: string): string => {
+  if (!iso) return '9999-99-99'   // pas de date → jamais « récent » (sécurité : reste gris)
+  const [y, m, d] = iso.split('-')
+  return `${Number(y) - 2}-${m}-${d}`
+}
+// 'AAAA-MM-JJ' → 'JJ.MM.AAAA' (format daté du bloc total, W2).
+const frDate = (iso?: string): string => (iso ? iso.split('-').reverse().join('.') : '')
+
 /** Tiroir « fiche permis » (M10 lot 1.1) — s'ouvre au clic sur un permis, partagé radar/fiche. */
 export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
   const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
@@ -393,15 +405,18 @@ function CommunePermisSelect({ value, onChange }: { value: string | null; onChan
 
 export function M03() {
   const moduleKey = useApp((s) => s.module)
-  // O2-1 (OUTILS-2) — SEGMENT à 3 états : « En cours » (radar récent, VERT) · « Point mort » (PC sans
-  // DAACT, ROUGE) · « Tous » (toute la profondeur Sitadel servie). `pointMort` en est DÉRIVÉ (source
-  // unique) — c'est lui qui pilote couleur, endpoint et badges. La couleur sépare la veille
-  // concurrentielle des opportunités dormantes SANS changer d'écran (demande centrale Vic).
-  const [seg, setSeg] = useState<'cours' | 'mort' | 'tous'>(moduleKey === 'promesses' ? 'mort' : 'cours')
+  // RETOURS-17 W2 — SEGMENT à CINQ états qui PARTITIONNENT la base (somme = total ; constat Vic 05/09 :
+  // trois chips lues comme une répartition alors que deux étaient des fenêtres de temps et la 3e un total) :
+  //   Tous · Récent (autorisé ≤ 24 mois) · Dormant (PC ancien sans achèvement) · Achevé (DAACT) · Autre.
+  // `pointMort` = le Dormant (endpoint /promesses, jointure parcelle+run) ; `etatSeg` = le paramètre serveur
+  // recent|acheve|autre pour les états servis par /permis. La couleur sépare la veille des opportunités.
+  const [seg, setSeg] = useState<'cours' | 'mort' | 'tous' | 'acheve' | 'autre'>(moduleKey === 'promesses' ? 'mort' : 'cours')
   const pointMort = seg === 'mort'
-  // F2 (OUTILS-3) — « Tous » = en cours (radar, VERT) ∪ point mort (ROUGE) SUPERPOSÉS sur la carte :
-  // les deux jeux coexistent, chacun sa couleur (avant, seuls les en cours s'affichaient).
+  // F2 (OUTILS-3) — « Tous » = tous les états SUPERPOSÉS sur la carte, chacun sa couleur (récent vert,
+  // dormant corail, achevé/autre gris) — avant, tout était peint en vert (« 47 000 verts, lit 5 580 »).
   const tous = seg === 'tous'
+  // RETOURS-17 W2 — état de cycle servi par /permis (dormant reste sur /promesses).
+  const etatSeg = seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : null
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
   const [nature, setNature] = useState('')
   const [open, setOpen] = useState<string | null>(null)
@@ -426,15 +441,19 @@ export function M03() {
 
   const MONTHS_RADAR = [12, 24, 48, 72, 240]   // 240 = « Tout » (≈ toute la profondeur Sitadel servie)
   const MONTHS_PM = [24, 36, 48, 60]   // point mort : 36 = caducité légale du PC (défaut à l'ouverture)
-  const choisirSeg = (s: 'cours' | 'mort' | 'tous') => { setSeg(s); setMonths(s === 'mort' ? 36 : s === 'tous' ? 240 : 24) }
+  // RETOURS-17 — Dormant garde sa fenêtre de caducité (36 mois) ; Récent = 24 mois ; Tous/Achevé/Autre
+  // travaillent sur toute la profondeur (240 mois), l'état de cycle fait le tri côté serveur.
+  const choisirSeg = (s: 'cours' | 'mort' | 'tous' | 'acheve' | 'autre') => {
+    setSeg(s); setMonths(s === 'mort' ? 36 : s === 'cours' ? 24 : 240)
+  }
 
   // deux sources, une seule active à la fois (enabled) : RADAR = tous les permis ; POINT MORT = PC
   // anciens sans achèvement (l'endpoint /promesses renvoie désormais aussi la géom → des points).
   // RETOURS-11 (T4) — pagination par 200 partout (doctrine SOCLE) : plus de pages de 300/1000.
   const RADAR_PAGE = 200
   const qRadar = useInfiniteQuery({
-    queryKey: ['m03', months, nature, commune],
-    queryFn: ({ pageParam }) => modPermis(months, nature || null, RADAR_PAGE, pageParam as number),
+    queryKey: ['m03', months, nature, commune, etatSeg],
+    queryFn: ({ pageParam }) => modPermis(months, nature || null, RADAR_PAGE, pageParam as number, etatSeg),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * RADAR_PAGE : undefined,
     enabled: !pointMort,
@@ -468,6 +487,18 @@ export function M03() {
   // sans périmètre dit (constat Vic). « Tous » = désormais le VRAI total en base (count_only, léger).
   const qTousEntry = useQuery({ queryKey: ['tous-entry', commune], queryFn: () => modPermisCount(240), staleTime: 60_000 })
   const tousEntryTotal = qTousEntry.data?.total
+  // RETOURS-17 W1 — mesuré : 70 % des « autres » sont des permis ACHEVÉS (DAACT) — 40 % de la base entière.
+  // Ils méritent leur propre ligne (décision Vic 05/09) plutôt que d'être noyés dans « Autres ». Compteur léger.
+  const qAcheveEntry = useQuery({ queryKey: ['acheve-entry', commune], queryFn: () => modPermisCount(240, 'acheve'), staleTime: 60_000 })
+  const acheveEntryTotal = qAcheveEntry.data?.total
+  const pmEntryTotal = qPmEntry.data?.total
+  // RETOURS-17 W2 — « Autre » DÉRIVÉ = total − récent − dormant − achevé : garantit que la somme des états
+  // fait TOUJOURS le total (partition exacte), sans payer le COUNT « autre » (≈ 560 ms) à chaque montage.
+  const autreEntryTotal = (tousEntryTotal != null && radarEntryTotal != null && pmEntryTotal != null && acheveEntryTotal != null)
+    ? Math.max(0, tousEntryTotal - radarEntryTotal - pmEntryTotal - acheveEntryTotal) : undefined
+  // base : localisés + date du millésime (bloc total en tête), lus du compteur « Tous ».
+  const baseLocalises = qTousEntry.data?.geocodes
+  const baseJusquAu = qTousEntry.data?.donnees_jusqu_au
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
@@ -490,7 +521,6 @@ export function M03() {
   const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
   const head = pages[0]  // radar : carte (tous géocodés) + compteurs viennent de la page 0
-  const pmEntryTotal = qPmEntry.data?.total
   const inZone = (i: Record<string, any>) => {
     if (!zone || !i['geom']) return true   // non géocodé → toujours listé
     return pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
@@ -500,26 +530,29 @@ export function M03() {
   // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre les géocodés
   const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone).filter(passeGeo)
   const geomInZone = (i: Record<string, any>) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
-  // CARTE = points cliquables. F2 : trois cas —
-  //   • en cours → radar (carte page 0, plafond 8 000), VERT ;
-  //   • point mort → les PC dormants géocodés, ROUGE ;
-  //   • Tous → les DEUX superposés (le rouge par-dessus le vert : un PC au point mort reste rouge).
-  // O17 (d/i) — le filtre « non géocodés seuls » vide la carte (aucun point à poser) : liste et carte
-  // suivent le MÊME filtre géocodage, comme les mêmes commune/zone. Les points mort suivent donc bien
-  // les filtres partagés (commune, zone, géocodage) — seule leur FENÊTRE reste la caducité (F2 ci-dessus).
+  // CARTE = points cliquables. RETOURS-17 W3 : la COULEUR SUIT L'ÉTAT (avant, tout radar était peint
+  // en vert → « 47 000 verts, lit 5 580 récents », constat Vic). carteRadar = les points servis par
+  // /permis (leur état dépend du segment/date) ; cartePm = les dormants (corail), superposés en « Tous ».
+  // O17 (d/i) — le filtre « non géocodés seuls » vide la carte ; liste et carte suivent les mêmes filtres.
   const carteRadar = (pointMort || geoFiltre === 'nongeo' ? [] : ((head?.['carte'] ?? []) as Record<string, any>[])).filter(geomInZone)
   const cartePm = ((pointMort || tous) && geoFiltre !== 'nongeo'
     ? (qPm.data?.pages ?? []).flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => i['geom'])
     : []).filter(geomInZone)
-  const carte = [...carteRadar, ...cartePm]
-  const _feat = (i: Record<string, any>, pm: boolean) => ({ type: 'Feature' as const, geometry: i['geom'],
-    properties: { kind: 'permis', point_mort: pm, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } })
+  // RETOURS-17 W3 — état de PANNEAU d'une ligne/point radar : Récent (≤ 24 mois) vert · Achevé/Autre gris.
+  // Le segment fixe l'état sauf en « Tous » où la coupure 24 mois (cut24) distingue récent du reste.
+  const cut24 = minus24m(baseJusquAu ?? donneesJusquAu)
+  const radarEtat = (i: Record<string, any>): PermisEtat =>
+    seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre'
+    : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
+  const _feat = (i: Record<string, any>, etat: PermisEtatCarte) => ({ type: 'Feature' as const, geometry: i['geom'],
+    properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } })
   useModuleMap([],
-    // O2-1 — `point_mort` voyage dans les properties : la carte colore VERT (en cours) / ROUGE (point
-    // mort). En « Tous », le rouge est posé APRÈS le vert → il prime visuellement.
-    featureCollection([...carteRadar.map((i) => _feat(i, false)), ...cartePm.map((i) => _feat(i, true))]),
+    // W3 — `etat` (recent|dormant|gris) voyage dans les properties ; la carte peint depuis la MÊME source
+    // de couleurs que les pastilles (lib/permisEtats). En « Tous », le corail dormant est posé APRÈS le
+    // gris/vert → il prime visuellement (un PC dormant reste corail même sous un point gris).
+    featureCollection([...carteRadar.map((i) => _feat(i, carteEtat(radarEtat(i)))), ...cartePm.map((i) => _feat(i, 'dormant'))]),
     // O17 (i) — `geoFiltre` en dép. : le filtre géocodage resynchronise la carte avec la liste.
-    [pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre])
+    [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre])
   const total = pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
   const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
 
@@ -556,32 +589,53 @@ export function M03() {
         )}
       </div>
 
-      {/* STATUT — Récent (VERT) · Dormant (ROUGE) · Tous. Compteurs live sur chaque puce. C'est le
-          commutateur PRIMAIRE (vert/rouge/tous) : il reste TOUJOURS visible au-dessus des filtres repliés
-          (les autres filtres — période, type, commune, géocodage — se plient, eux, dans la boîte ci-dessous). */}
-      <div data-permis-segment className="flex flex-wrap overflow-hidden rounded-lg border border-line-2">
-        {([
-          // RETOURS-15 U3 — libellés COURTS. RETOURS-16 V3 — « Dormant » (décision Vic) remplace
-          // « Au point mort » ; V4 — chaque chip DIT son périmètre (title) et « Tous » compte la
-          // base entière, plus la somme de deux fenêtres.
-          ['cours', 'Récent', '#4ADE80', radarEntryTotal, 'Permis autorisés dans les 24 derniers mois de données Sitadel.'],
-          ['mort', 'Dormant', '#E2726A', pmEntryTotal, 'PC autorisés depuis plus de 36 mois, sans achèvement déclaré (DAACT), parcelle toujours non bâtie.'],
-          ['tous', 'Tous', null, tousEntryTotal, 'Tous les permis en base (toute la profondeur Sitadel servie).'],
-        ] as const).map(([k, label, dot, n, titre], i) => (
-          <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} title={titre}
-            className={`flex flex-1 basis-0 items-center justify-center gap-1.5 px-2 py-1.5 text-[11.5px] transition-colors duration-quick ${i > 0 ? 'border-l border-line-2' : ''} ${
-              seg === k ? 'bg-mint/[0.10] font-medium text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>
-            {dot && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: dot }} />}
-            <span>{label}{n != null ? ` ${fmt(n)}` : ''}</span>
-          </button>
-        ))}
+      {/* RETOURS-17 W2 — BLOC TOTAL en tête : le total sort des chips (constat Vic 05/09 : « 50k » lu
+          comme une part alors que c'est le total). Nombre 24px + « permis autorisés en base » ; dessous,
+          les localisés + la profondeur + la date du millésime servi. */}
+      <div data-permis-total className="rounded-lg border border-line-2 bg-surface-1 px-3 py-2">
+        <div className="flex items-baseline gap-2">
+          <span className="tnum text-[24px] font-semibold leading-none text-txt-hi">{tousEntryTotal != null ? fmt(tousEntryTotal) : '…'}</span>
+          <span className="text-[12px] text-txt-mut">permis autorisés en base</span>
+        </div>
+        <p className="mt-1 text-[12px] leading-snug text-txt-dim">
+          {baseLocalises != null ? `${fmt(baseLocalises)} localisés sur la carte` : 'localisation en cours'}
+          {' · toute la profondeur Sitadel'}{baseJusquAu ? `, jusqu'au ${frDate(baseJusquAu)}` : ''}
+        </p>
       </div>
-      {/* RETOURS-12 O12.1 — note honnête sur ce que Sitadel couvre au 974 : uniquement les permis
-          AUTORISÉS (pas l'instruction en cours) — c'est ICI que vit cette information constante
-          (V2 : le chip « Autorisé » par ligne est retiré, il ne disait rien qui varie). */}
-      <p className="-mt-1 px-0.5 text-[9.5px] leading-snug text-txt-dim">
-        Sitadel (974) ne publie que les permis <b className="text-txt-mut">autorisés</b> — pas l'instruction déposée.
-        « Récent » = autorisé dans les 24 derniers mois · « Dormant » = autorisé ancien sans achèvement déclaré (DAACT).
+
+      {/* RETOURS-17 W2 — « Filtrer par état » : QUATRE états empilés (+ Tous) dont la somme fait le total
+          (partition exacte, mesurée en W1). Chaque ligne : pastille (= couleur de carte, source unique
+          lib/permisEtats) · nom · définition courte · compte. Un seul actif (fond accent), les autres en
+          contour hairline. Achevé/Autre = même gris sur la carte, distincts ici par nom/définition/compte. */}
+      <div className="text-[11px] font-medium text-txt-mut">Filtrer par état</div>
+      <div data-permis-segment className="flex flex-col gap-1">
+        {([
+          ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
+          ['cours', 'Récent', 'recent', radarEntryTotal, 'autorisé ≤ 24 mois'],
+          ['mort', 'Dormant', 'dormant', pmEntryTotal, 'ancien PC sans achèvement'],
+          ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
+          ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
+        ] as const).map(([k, label, etat, n, def]) => {
+          const actif = seg === k
+          return (
+            <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} aria-pressed={actif}
+              className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
+                actif ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
+              {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
+              {etat
+                ? <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
+                : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
+              <span className="shrink-0 text-[12px] font-medium">{label}</span>
+              <span className={`min-w-0 flex-1 truncate text-[11px] ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>
+              <span className="shrink-0 tnum text-[12px] font-medium">{n != null ? fmt(n) : '…'}</span>
+            </button>
+          )
+        })}
+      </div>
+      {/* RETOURS-17 W2 — bandeau d'avertissement COURT (style de note d'info existant, pas de fond coloré
+          inédit). Les définitions de Récent/Dormant/… vivent désormais SUR les lignes ci-dessus. */}
+      <p className="-mt-0.5 px-0.5 text-[9.5px] leading-snug text-txt-dim">
+        Sitadel (974) ne publie que les permis <b className="text-txt-mut">autorisés</b> — l'instruction déposée n'y figure pas.
       </p>
 
       {/* ZONE 2 — FILTRES REPLIABLES (O17 a/f/i) : période · type · commune · géocodage. Un en-tête
@@ -590,7 +644,7 @@ export function M03() {
       <div className="rounded-lg border border-line-2">
         <button data-permis-filtres-toggle onClick={() => setFiltersOpen((o) => !o)}
           className="hover-fill flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[11px] text-txt-mut">
-          <span className="font-medium text-txt">Filtres</span>
+          <span className="font-medium text-txt">Affiner</span>
           <span className="min-w-0 flex-1 truncate text-txt-dim">
             {!pointMort && months >= 240 ? 'Tout' : `${months} m${pointMort ? '+' : ''}`}
             {!pointMort && nature ? ` · ${NATURES.find(([v]) => v === nature)?.[1]}` : ''}
@@ -640,19 +694,16 @@ export function M03() {
         )}
       </div>
 
-      {/* LIGNE DE STATS — RETOURS-16 V4 : chaque compteur DIT son périmètre (« 50 544 en base »
-          vs « 21 038 » nu, constat Vic — deux totaux différents sans que l'écran dise de quoi). */}
+      {/* RETOURS-17 W2 — le total, les localisés et la date vivent dans le BLOC EN TÊTE ; ce pied ne dit
+          plus que le vivant de la vue active : ce qui est posé sur la carte, la zone dessinée, le chargement
+          (le compte de l'état, lui, est sur sa ligne « Filtrer par état »). */}
       <p data-permis-pied className="text-[11px] text-txt-dim">
         {pointMort
-          ? <>{total != null ? fmt(total) : '…'} PC dormants ({'>'}{months} mois sans DAACT) · {fmt(carte.length)} sur la carte{total != null && loaded < total
+          ? <>{fmt(cartePm.length)} dormants sur la carte{total != null && loaded < total
               ? <> · <span data-permis-plafond title="Les dormants peuvent compter des milliers de PC : on charge d'abord les plus anciens (les plus dormants) ; affinez en zoomant/filtrant.">les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
-          : <>{fmt(total ?? 0)} {tous ? 'en base (toute la profondeur Sitadel)' : `sur ce filtre (${months} derniers mois${nature ? ` · ${NATURES.find(([v]) => v === nature)?.[1]}` : ''}${commune ? ` · ${commune}` : ''})`}
-              {head?.['geocodes'] != null ? <> · {fmt(head['geocodes'] as number)} localisés</> : null} · {fmt(carte.length)} sur la carte
-              {zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}</>}
-        {/* O17 (e) — la DATE du millésime Sitadel remonte dans le sous-titre, plus dans une phrase-fleuve. */}
-        {!pointMort && head?.['donnees_jusqu_au'] != null && (
-          <span className="text-txt-dim"> · données jusqu'au {String(head['donnees_jusqu_au'])}</span>
-        )}
+          : <>{fmt(carteRadar.length)} sur la carte
+              {total != null && loaded < total ? <> · {fmt(loaded)} / {fmt(total)} chargés</> : null}</>}
+        {zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}
       </p>
 
       {pointMort && qPm.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="mint" label="Analyse en cours…" big /></div>}
@@ -670,17 +721,23 @@ export function M03() {
           const commuLbl = (i['commune'] as string) || ''
           const iduLbl = i['idu'] ? iduCourt(i['idu'] as string) : ''
           const gaucheL2 = commuLbl || (iduLbl ? `Parcelle ${iduLbl}` : '')
+          // RETOURS-17 W3 — la pastille de la LIGNE = la couleur de son ÉTAT (source unique lib/permisEtats),
+          // la MÊME que le point sur la carte : Récent vert · Dormant corail · Achevé/Autre gris.
+          const et: PermisEtat = pointMort ? 'dormant' : radarEtat(i)
+          const etTitre = { recent: 'Récent — autorisé dans les 24 derniers mois.',
+            dormant: 'Dormant — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
+            acheve: 'Achevé — travaux déclarés terminés (DAACT).',
+            autre: 'Autre — ni récent, ni dormant, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
           return (
-          <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'}
+          <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
             onClick={() => setOpen(i['permit_id'] as string)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
             className={`flex w-full items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
             {/* RETOURS-11 R6 — puce sur UNE seule ligne (moitié moins haute) : pastille · type · date ·
                 lgt/surface · commune (tronquée) à gauche, badge d'état (Autorisé / Sans DAACT / non géocodé)
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
-            {/* O17 (h) — la pastille ROUGE = « dormant » : sa définition tient dans l'infobulle. */}
-            <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: pointMort ? '#E2726A' : '#4ADE80' }}
-              title={pointMort ? 'Dormant — permis de construire daté de plus de N mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.' : 'Permis récent (radar)'} />
+            {/* RETOURS-17 W3 — pastille = couleur d'état (source unique) ; sa définition tient dans l'infobulle. */}
+            <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: etatColor(et) }} title={etTitre} />
             {/* RETOURS-16 V2.3 — chip type masqué en mode Dormant : l'endpoint ne sert QUE des PC
                 (WHERE type='PC'), la valeur ne varie jamais — une constante n'est pas une information. */}
             {!pointMort && <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>}

@@ -396,10 +396,40 @@ def patrimoine(siren: str, fmt: str = "json",
 
 # ───────────────────────── M03 — RADAR PERMIS ─────────────────────────
 
+def _permis_etat_pred(etat: str | None, a: str) -> str:
+    """RETOURS-17 W2 — prédicat SQL de l'ÉTAT DE CYCLE d'un permis. La base se partitionne EXACTEMENT
+    en quatre états dont la somme fait le total (constat Vic 05/09 : trois chips qui ne s'additionnaient
+    pas) : Récent (autorisé ≤ 24 mois) · Dormant (PC ancien sans achèvement, non bâti) · Achevé (DAACT
+    déclaré) · Autre (le reste). Le découpage « récent » (24 mois) est ancré sur :dmax = fin du flux
+    Sitadel (honnêteté : le flux s'arrête avant aujourd'hui). « dormant » garde son endpoint dédié
+    (/promesses : la jointure parcelle+run est coûteuse) ; ICI on sert récent/achevé/autre. `a` = préfixe
+    d'alias table (`''` pour count/carte, `'s.'` pour la liste). Mesuré le 05/09 (base locale, q_v11_m137,
+    dmax 2026-07-31) : récent 5 580 · dormant 15 466 · achevé 20 534 · autre 8 964 = 50 544 (= total base).
+    Whitelist fermée (etat ∈ {recent, acheve, autre}) — aucune valeur libre n'entre dans le SQL."""
+    rc = "(:dmax - interval '24 months')"
+    if etat == "recent":
+        return f" AND {a}date >= {rc}"
+    if etat == "acheve":
+        return f" AND {a}date < {rc} AND {a}raw->>'daact' IS NOT NULL"
+    if etat == "autre":
+        # non récent, sans DAACT, et surtout PAS un dormant : mêmes critères que /promesses
+        # (PC ancien de plus de 36 mois, rattaché à une parcelle notée du run, toujours non bâtie).
+        return (f" AND {a}date < {rc} AND {a}raw->>'daact' IS NULL"
+                f" AND NOT ({a}type = 'PC' AND {a}date < now() - interval '36 months'"
+                f" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text({a}idu_codes) _c(idu)"
+                f"   JOIN parcels _p ON _p.idu = _c.idu"
+                f"   JOIN dryrun_parcel_evaluations _d ON _d.parcel_id = _p.id AND _d.run_label = :run"
+                f"   WHERE NOT EXISTS (SELECT 1 FROM dryrun_cascade_results _cr"
+                f"     WHERE _cr.run_label = :run AND _cr.parcel_id = _p.id"
+                f"     AND _cr.layer_name = 'bati' AND _cr.result = 'HARD_EXCLUDE')))")
+    return ""
+
+
 @router.get("/permis")
 def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
            limit: int = Query(300, ge=1, le=2000), offset: int = Query(0, ge=0),  # GB-029 : ge=0 → 422, plus de 500
            count_only: bool = False,   # RETOURS-16 V4 — compteur seul (ni lignes ni carte)
+           etat: str | None = None,    # RETOURS-17 W2 — état de cycle : recent|acheve|autre (dormant = /promesses)
            db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
@@ -412,21 +442,27 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                 "total": 0, "affiches": 0, "has_more": False, "donnees_jusqu_au": None,
                 "geocodes": 0, "sans_localisation": 0, "pct_geocode": 0, "carte": [], "items": []}
     limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
+    # RETOURS-17 W2 — prédicat d'état de cycle (récent/achevé/autre), whitelist fermée. `ep` sans alias
+    # (count + carte), `eps` avec alias `s.` (liste). :run n'est lu que par l'état « autre ».
+    if etat not in (None, "recent", "acheve", "autre"):
+        etat = None
+    ep, eps = _permis_etat_pred(etat, ""), _permis_etat_pred(etat, "s.")
+    prun = runs.current() if etat == "autre" else None
     # RETOURS-16 V4 — chemin compteur : le chip « Tous » du segment doit dire le TOTAL EN BASE
     # (toute la profondeur), pas la somme de deux fenêtres. Un COUNT léger, jamais les 47k geoms.
     if count_only:
         c = db.execute(text(
-            """SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+            f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
                FROM sitadel_permits
                WHERE (CAST(:c AS text) IS NULL OR commune = :c)
                  AND (CAST(:nat AS text) IS NULL OR type = :nat)
-                 AND date >= :dmax - (:m || ' months')::interval"""),
-            {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().first()
+                 AND date >= :dmax - (:m || ' months')::interval{ep}"""),
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
         return {"total": int(c["n"] or 0), "geocodes": int(c["geo"] or 0),
                 "donnees_jusqu_au": dmax.date().isoformat()}
     # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
-    rows = db.execute(text("""
+    rows = db.execute(text(f"""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.commune,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'geoloc' AS geoloc,   -- RETOURS-14 S5.1 : la liste DIT la localisation approximative
@@ -436,16 +472,16 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
         WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND (CAST(:nat AS text) IS NULL OR s.type = :nat)
-          AND s.date >= :dmax - (:m || ' months')::interval
+          AND s.date >= :dmax - (:m || ' months')::interval{eps}
         ORDER BY s.date DESC LIMIT :lim OFFSET :off"""),
-        {"c": commune, "m": months, "nat": nature, "dmax": dmax, "lim": limit, "off": offset}).mappings().all()
+        {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun, "lim": limit, "off": offset}).mappings().all()
     counts = db.execute(text(
-        """SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+        f"""SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
            FROM sitadel_permits
            WHERE (CAST(:c AS text) IS NULL OR commune = :c)
              AND (CAST(:nat AS text) IS NULL OR type = :nat)
-             AND date >= :dmax - (:m || ' months')::interval"""),
-        {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().first()
+             AND date >= :dmax - (:m || ' months')::interval{ep}"""),
+        {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
     true_total = int(counts["n"] or 0)
     geocodes_total = int(counts["geo"] or 0)
     # CARTE = TOUS les géocodés (décision Vic), chargée une seule fois (page 0), payload léger (geom seul).
@@ -456,14 +492,14 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     # pas un filtre (la fenêtre Sitadel entière tient dessous).
     carte = []
     if offset == 0:
-        crows = db.execute(text("""
+        crows = db.execute(text(f"""
             SELECT permit_id, type, date::date::text AS date, ST_AsGeoJSON(geom) AS g
             FROM sitadel_permits
             WHERE (CAST(:c AS text) IS NULL OR commune = :c)
               AND (CAST(:nat AS text) IS NULL OR type = :nat)
-              AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL
+              AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL{ep}
             ORDER BY date DESC LIMIT 60000"""),
-            {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().all()
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().all()
         carte = [{"permit_id": r["permit_id"], "type": r["type"], "date": r["date"],
                   "geom": json.loads(r["g"])} for r in crows]
     return {
