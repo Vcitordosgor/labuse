@@ -138,3 +138,18 @@ Moteurs au registre (`moteurs.csv`) : `marche_communes` renommé **`marche_servi
 ### Suite
 
 - Tests du lot 3/3 ; documents générés puis relus. (Suite complète au prochain passage de lot — aucun code de service touché par ce lot : générateur + CLI seuls.)
+
+---
+
+## Lot 3 — Un concept, une source
+
+### Livré
+
+- **3.0** : `zone_servie` et `potentiel` étaient au registre depuis le 0-bis (testé) — confirmé en tête de `CONCEPTS-CANONIQUES.md` ; `zone_servie` ≠ `zonage_commune`, les deux nommés.
+- **3.1/3.2 `docs/CIRCUIT/CONCEPTS-CANONIQUES.md`** : les 19 concepts du mandat, une ligne chacun — ce qui existe au registre, la source canonique (règle de défaut : celle que la fiche sert par le moteur), et le devenir des autres (`derivee` : TVA primo buffer des QPV ; `nommee_a_part` : GPU brut, OCS grain grossier, Papang OSM, BPE vs OSM, aléa vs PPR ; **`retiree` : aucune** — rien n'est supprimé sans Vic).
+- **Le doublon d'affirmation trouvé et corrigé** : le « i » de la couche « Équipements (OSM) » prétendait encore alimenter les distances de la fiche — c'est la BPE depuis RETOURS-7 Z5 (le payload le dit). Les deux « i » (OSM et BPE) disent désormais qui nourrit quoi : BPE → ligne « À proximité » de la fiche, OSM → amenités du modèle. Rien de supprimé, deux libellés clarifiés.
+- **3.3 doublons de définition, MESURÉS sur les 4 témoins** : prix secteur (3 811/2 308/3 103/3 118 €/m²) ≠ ancien commune (4 278/3 041/3 015/2 469) ≠ VEFA acte (4 742/—/4 916/4 998) — trois définitions réelles, 0 fusion ; le seul vrai doublon (le neuf) était déjà soldé par scission au 0-bis. Verrou : `test_jamais_le_meme_libelle_pour_deux_origines` (0 libellé partagé sur 164 données).
+
+### Suite
+
+- Tests du lot 3/3 ; tsc OK. (Le seul code touché : deux textes « i » de layers.ts.)
