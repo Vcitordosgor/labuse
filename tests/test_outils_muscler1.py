@@ -85,3 +85,55 @@ def test_successions_sdp_min_exclut_les_inconnues(db_session):
         assert out["total"] == 0     # pas de store → aucune SDP prouvable au seuil
     else:
         assert all((i["sdp_residuelle_m2"] or 0) >= 100000 for i in out["items"])
+
+
+def test_assemblage_voisines_premier_anneau(db_session):
+    """1ᵉʳ anneau seulement : la contiguë est servie, la distante non ; « même propriétaire » =
+    même SIREN (PM), servie EN TÊTE ; depart_pm dit si la comparaison est décidable."""
+    from labuse.api.moteurs import assemblage_voisines
+    _p(db_session, "ASMV0001",
+       "POLYGON((55.85 -21.45,55.8503 -21.45,55.8503 -21.4497,55.85 -21.4497,55.85 -21.45))", 600)
+    _p(db_session, "ASMV0002",   # adjacente (côté commun)
+       "POLYGON((55.8503 -21.45,55.8506 -21.45,55.8506 -21.4497,55.8503 -21.4497,55.8503 -21.45))", 650)
+    _p(db_session, "ASMV0003",   # adjacente aussi (au nord de la 1)
+       "POLYGON((55.85 -21.4497,55.8503 -21.4497,55.8503 -21.4494,55.85 -21.4494,55.85 -21.4497))", 400)
+    _p(db_session, "ASMV0009",   # distante (~1 km) — jamais servie
+       "POLYGON((55.86 -21.46,55.8603 -21.46,55.8603 -21.4597,55.86 -21.4597,55.86 -21.46))", 500)
+    _pm(db_session, "ASMV0001", "SCI ANNEAU", "999888777")
+    _pm(db_session, "ASMV0002", "SCI ANNEAU", "999888777")     # même SIREN que le départ
+    _pm(db_session, "ASMV0003", "AUTRE FONCIERE", "111000111")  # PM différente
+    out = assemblage_voisines(idu="ASMV0001", db=db_session)
+    assert out["depart_pm"] is True
+    idus = [i["idu"] for i in out["items"]]
+    assert set(idus) == {"ASMV0002", "ASMV0003"} and "ASMV0009" not in idus
+    assert out["n"] == 2 and out["n_meme_proprietaire"] == 1
+    assert idus[0] == "ASMV0002"                               # même propriétaire EN TÊTE
+    par = {i["idu"]: i for i in out["items"]}
+    assert par["ASMV0002"]["meme_proprietaire"] is True
+    assert par["ASMV0003"]["meme_proprietaire"] is False
+    assert par["ASMV0003"]["proprio"]["denomination"] == "AUTRE FONCIERE"
+    assert "sdp_residuelle_m2" in par["ASMV0002"]              # Estimé — None si store absent
+
+
+def test_assemblage_voisines_depart_particulier_indecidable(db_session):
+    """Départ SANS personne morale (particulier) : aucune voisine n'est déclarée « même
+    propriétaire » (aucune identité de personne physique en base — dit, pas inventé)."""
+    from labuse.api.moteurs import assemblage_voisines
+    _p(db_session, "ASMV0011",
+       "POLYGON((55.87 -21.47,55.8703 -21.47,55.8703 -21.4697,55.87 -21.4697,55.87 -21.47))", 600)
+    _p(db_session, "ASMV0012",
+       "POLYGON((55.8703 -21.47,55.8706 -21.47,55.8706 -21.4697,55.8703 -21.4697,55.8703 -21.47))", 650)
+    _pm(db_session, "ASMV0012", "SCI VOISINE", "222333444")
+    out = assemblage_voisines(idu="ASMV0011", db=db_session)
+    assert out["depart_pm"] is False
+    assert out["n_meme_proprietaire"] == 0
+    assert all(i["meme_proprietaire"] is False for i in out["items"])
+
+
+def test_assemblage_voisines_parcelle_inconnue_404(db_session):
+    from fastapi import HTTPException
+
+    from labuse.api.moteurs import assemblage_voisines
+    with pytest.raises(HTTPException) as e:
+        assemblage_voisines(idu="ZZ00000000", db=db_session)
+    assert e.value.status_code == 404

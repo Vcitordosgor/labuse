@@ -262,6 +262,65 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     }
 
 
+# OUTILS-MUSCLER-1 Lot B (B2) — les VOISINES CONTIGUËS d'une parcelle, servies à l'utilisateur
+# (le moteur ST_DWithin/union-find suivait la sélection ; il la propose désormais). Premier anneau
+# seulement : contact cadastral ADJ_BUFFER_M (0,5 m) sur `parcels` — le domaine public NON CADASTRÉ
+# (voirie…) est absent de la table et coupe l'anneau par construction (une route > 0,5 m sépare).
+# « Même propriétaire » = ÉGALITÉ DE SIREN (fichiers PM DGFiP), jamais un match par nom (doctrine
+# Scan patrimoine) ; deux particuliers ne sont JAMAIS déclarés « même propriétaire » (aucune
+# identité de personne physique en base — dit plutôt qu'inventé).
+
+@router.get("/assemblage/voisines")
+def assemblage_voisines(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Voisines contiguës (1ᵉʳ anneau) de la parcelle `idu` : surface/zonage Sourcés, SDP
+    résiduelle Estimée (même grandeur que la fiche — p_model_ext_dataset à l'année de scoring),
+    propriétaire sous la règle privacy de l'assemblage. Tri : même propriétaire d'abord."""
+    from ..assemblage import ADJ_BUFFER_M
+    from .app import _check_idu
+    _check_idu(idu)
+    ref = db.execute(text("SELECT p.id, pm.siren FROM parcels p "
+                          "LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu "
+                          "WHERE p.idu = :i"), {"i": idu.strip().upper()}).mappings().first()
+    if not ref:
+        raise HTTPException(404, "Parcelle inconnue")
+    # `p_model_ext_dataset` (feature store, non-ORM) peut manquer sur une base neuve — même garde
+    # que models.py : la SDP est alors servie inconnue, jamais un 500.
+    has_ext = bool(db.execute(text("SELECT to_regclass('p_model_ext_dataset') IS NOT NULL")).scalar())
+    annee = db.execute(text("SELECT max(annee) FROM p_model_ext_dataset")).scalar() if has_ext else None
+    join_ext = "LEFT JOIN p_model_ext_dataset d ON d.idu = b.idu AND d.annee = :annee" if has_ext else ""
+    sdp_expr = "round(d.sdp_residuelle_m2)::int" if has_ext else "NULL::int"
+    ordre = ("meme_proprietaire DESC, d.sdp_residuelle_m2 DESC NULLS LAST, b.idu" if has_ext
+             else "meme_proprietaire DESC, b.idu")
+    rows = db.execute(text(f"""
+        SELECT b.idu, round(b.surface_m2)::int AS surface_m2,
+               coalesce(z.zone_lib, z.zone_fam) AS zone,
+               {sdp_expr} AS sdp_residuelle_m2,
+               pm.denomination, pm.siren,
+               (pm.siren IS NOT NULL AND pm.siren = CAST(:siren AS text)) AS meme_proprietaire
+        FROM parcels a
+        JOIN parcels b ON b.id <> a.id AND ST_DWithin(a.geom_2975, b.geom_2975, :buf)
+        LEFT JOIN parcel_zone_plu z ON z.idu = b.idu
+        {join_ext}
+        LEFT JOIN parcelle_personne_morale pm ON pm.idu = b.idu
+        WHERE a.id = :pid
+        ORDER BY {ordre}"""),
+        {"pid": ref["id"], "buf": ADJ_BUFFER_M, "annee": annee,
+         "siren": ref["siren"]}).mappings().all()
+    items = []
+    for r in rows:
+        d_ = dict(r)
+        d_["meme_proprietaire"] = bool(r["meme_proprietaire"])
+        # MÊME règle privacy que l'assemblage : PM = dénomination + SIREN ; particulier jamais nommé.
+        d_["proprio"] = ({"type": "personne_morale", "denomination": r["denomination"],
+                          "siren": r["siren"]} if r["denomination"] else {"type": "particulier"})
+        d_.pop("denomination", None); d_.pop("siren", None)
+        items.append(d_)
+    return {"idu": idu.strip().upper(), "n": len(items),
+            "n_meme_proprietaire": sum(1 for i in items if i["meme_proprietaire"]),
+            "depart_pm": ref["siren"] is not None,   # départ = particulier → « même propriétaire » indécidable, dit à l'écran
+            "items": items}
+
+
 # ───────────────────────── M17 — SIMULATEUR ZAN ─────────────────────────
 
 # Point 41 — RÈGLE D'OR : distinction Sourcé (observé) / Estimé (dérivé) stricte, caveat systématique.
