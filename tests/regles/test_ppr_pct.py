@@ -25,6 +25,8 @@ def test_part_intersection_temoin(engine):
             " ST_GeomFromText('POLYGON((55 -22, 56 -22, 56 -21, 55 -21, 55 -22))', 4326),"
             " ST_Transform(ST_GeomFromText('POLYGON((55 -22, 56 -22, 56 -21, 55 -21, 55 -22))', 4326), 2975))"))
         pct = pct_parcelles_couche(c, "TemoinPPR-C4", "c4_ppr_temoin", total_parcelles=4)
+        c.execute(text("DELETE FROM spatial_layers WHERE kind = 'c4_ppr_temoin'"))
+        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinPPR-C4'"))
     # recompte indépendant : 3 points sur 4 dans le polygone → 75,0 %
     dedans = sum(1 for (x, y) in pts if 55 <= x <= 56 and -22 <= y <= -21)
     assert pct == round(100.0 * dedans / 4, 1) == 75.0

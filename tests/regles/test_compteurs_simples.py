@@ -67,6 +67,7 @@ def test_mutations_12m_fenetre_donnees(engine):
             c.execute(text("INSERT INTO dvf_mutations (commune, date_mutation, geom) VALUES "
                            "('TemoinDvf-C4', :d, ST_GeomFromText('POINT(55.5 -21.1)', 4326))"), {"d": d})
         n = mutations_12m(c, "TemoinDvf-C4")
+        c.execute(text("DELETE FROM dvf_mutations WHERE commune = 'TemoinDvf-C4'"))
     assert n == 3                              # recompte à la main (2024-05-31 hors fenêtre)
 
 
@@ -79,6 +80,7 @@ def test_qpv_commune(engine):
                        "('qpv', 'QPV Témoin', 'TemoinQpv-C4', '{\"code_qp\": \"QP974C4\"}',"
                        " ST_GeomFromText('POINT(55.5 -21.1)', 4326))"))
         out = qpv_commune(c, "TemoinQpv-C4")
+        c.execute(text("DELETE FROM spatial_layers WHERE kind = 'qpv' AND commune = 'TemoinQpv-C4'"))
     assert out == [{"nom": "QPV Témoin", "code": "QP974C4"}]
 
 
@@ -93,12 +95,13 @@ def test_couverture_nulls_gardes(engine):
 
 @pytest.mark.db
 def test_piscines_corrections_excluses(engine):
+    from labuse.ingestion.ortho_equipements import DDL_CORRECTIONS
     from labuse.registre.moteurs.commune import compte_piscines
     with engine.begin() as c:
-        c.execute(text("CREATE TABLE IF NOT EXISTS parcel_equipements (idu varchar(14) PRIMARY KEY,"
-                       " piscine boolean, piscine_surface_m2 double precision,"
-                       " piscine_confiance double precision)"))
-        c.execute(text("CREATE TABLE IF NOT EXISTS piscine_corrections (idu varchar(14) PRIMARY KEY)"))
+        # DDL RÉELLES (leçon d'isolation : jamais une table minimale rivale qui masque la vraie)
+        from labuse.ingestion.ortho_equipements import DDL as DDL_EQUIPEMENTS
+        c.execute(text(DDL_EQUIPEMENTS))
+        c.execute(text(DDL_CORRECTIONS))
         c.execute(text("DELETE FROM parcel_equipements WHERE idu LIKE 'C4PIS%'"))
         c.execute(text("DELETE FROM piscine_corrections WHERE idu LIKE 'C4PIS%'"))
         c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinPis-C4'"))
@@ -130,7 +133,9 @@ def test_comptes_actifs(engine):
 
 @pytest.mark.db
 def test_conso_ia_somme(engine):
+    from labuse.api.ia import ensure_tables as _ia_ens
     from labuse.registre.moteurs.plateforme import conso_ia_mois
+    _ia_ens(engine)
     with engine.begin() as c:
         c.execute(text("DELETE FROM ia_log WHERE model = 'c4-temoin'"))
         avant = conso_ia_mois(c)
@@ -145,7 +150,9 @@ def test_conso_ia_somme(engine):
 
 @pytest.mark.db
 def test_usage_par_outil(engine):
+    from labuse.api.dashboard import ensure_tables as _dash_ens
     from labuse.registre.moteurs.plateforme import usage_par_outil
+    _dash_ens(engine)
     with engine.begin() as c:
         c.execute(text("DELETE FROM usage_events WHERE outil = 'c4-outil-temoin'"))
         for _ in range(3):

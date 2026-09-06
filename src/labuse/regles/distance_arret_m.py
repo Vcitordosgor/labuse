@@ -8,11 +8,11 @@ declarer(FicheRegle(
         "p.geom_2975 LIMIT 1), distance = round(ST_Distance(geom_2975, geom_2975))::int en MÈTRES "
         "(projection métrique EPSG:2975) — distance euclidienne plane « à vol d'oiseau ». Doctrine "
         "M106 : PROXIMITÉ servie, jamais une appartenance. Le drapeau « stationnement allégé » "
-        "(app.py) est dérivé de CETTE distance : sous_800m = (d <= 800)."),
+        "(app.py) est dérivé de CETTE distance : sous_800m = (d < 800), STRICT comme le texte."),
     entrees=("spatial_layers (kind, subtype, geom_2975)", "parcels.geom_2975"),
     classe="methode_standard",
     fonction="src/labuse/registre/moteurs/parcelle.py:plus_proche (+ api/app.py drapeau sous_800m)",
-    verdict="ecart",
+    verdict="conforme",
     reference=Reference(
         titre="Code de l'urbanisme — plafond de stationnement près des transports",
         article="art. L151-36 (mod. loi n° 2025-1129 du 26/11/2025, art. 20) ; art. L151-35 (0,5 aire)",
@@ -28,13 +28,12 @@ declarer(FicheRegle(
                  "0,5 aire de stationnement par logement » pour les logements aidés/résidences "
                  "des 1° à 3° de L151-34."),
         lu_le="2026-09-06"),
-    ecart=("SEUIL COMPARÉ LARGEMENT AU LIEU DE STRICTEMENT : le texte dit « situées à MOINS de "
-           "huit cents mètres » (strict, d < 800) ; le code app.py pose `proche = d <= 800` "
-           "(d = 800 exactement serait servi « sous 800 m » à tort). Erreur d'arithmétique pure "
-           "(catégorie du lot 6) — correction prévue avec test ; impact : uniquement d = 800 m "
-           "exact (distance entière). L'interprétation « à vol d'oiseau » (euclidienne) est un "
-           "choix dit — le texte ne précise pas le mode de mesure."),
+    choix=("CORRIGÉ AU LOT 6 (E1, arithmétique pure) : le code posait `d <= 800` (large) quand le "
+           "texte dit « à MOINS de » (strict) — désormais `d < 800`, témoin épinglé "
+           "(test_drapeau_800_strict). L'interprétation « à vol d'oiseau » (euclidienne plane "
+           "2975) est un choix dit — le texte ne précise pas le mode de mesure."),
     exemple_temoin="tests/regles/test_distance_knn.py::test_distance_euclidienne_temoin",
+    valide_par="cc",
     verifie_le="2026-09-06",
     moteur_fonctions=("parcelle.plus_proche",),
 ))

@@ -33,14 +33,14 @@ def test_compte_vigilances(engine):
 
 @pytest.mark.db
 def test_segment_renouvellement(engine):
+    """Sémantique count-au-run du segment, sur une table SCRATCH (jamais le nom réel
+    parcel_renouvellement : son DDL riche appartient à renouvellement.py — leçon d'isolation)."""
     with engine.begin() as c:
-        c.execute(text("CREATE TABLE IF NOT EXISTS parcel_renouvellement"
-                       " (parcel_id int, run_label text)"))
-        c.execute(text("DELETE FROM parcel_renouvellement WHERE run_label = 'c4_ren'"))
+        c.execute(text("DROP TABLE IF EXISTS c4_renouv_temoin"))
+        c.execute(text("CREATE TABLE c4_renouv_temoin (parcel_id int, run_label text)"))
         for pid in (1, 2, 3):
-            c.execute(text("INSERT INTO parcel_renouvellement (parcel_id, run_label)"
-                           " VALUES (:p, 'c4_ren')"), {"p": pid})
-        n = c.execute(text("SELECT count(*) FROM parcel_renouvellement"
+            c.execute(text("INSERT INTO c4_renouv_temoin VALUES (:p, 'c4_ren')"), {"p": pid})
+        n = c.execute(text("SELECT count(*) FROM c4_renouv_temoin"
                            " WHERE run_label = 'c4_ren'")).scalar()
-        c.execute(text("DELETE FROM parcel_renouvellement WHERE run_label = 'c4_ren'"))
+        c.execute(text("DROP TABLE c4_renouv_temoin"))
     assert n == 3                               # n_densifiables = count au run (recompté)

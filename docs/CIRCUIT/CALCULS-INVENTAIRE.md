@@ -1,4 +1,4 @@
-# CALCULS-INVENTAIRE — CIRCUIT-4 (lot 1, verdicts mis à jour lots 2-3)
+# CALCULS-INVENTAIRE — CIRCUIT-4 (lot 1, verdicts finaux lots 2-6)
 
 L'inventaire EXHAUSTIF des calculs servis : les 113 données du registre avec
 `calcul == "moteur"` (52 passe-plats et 3 constantes n'ont pas de formule — pas de fiche),
@@ -6,6 +6,8 @@ regroupées par CALCUL (une fiche = un calcul, `src/labuse/regles/<donnee>.py`),
 Généré depuis le registre + les fiches (source : le code). Garde :
 `tests/test_circuit4_lot1.py` refuse toute donnée moteur sans fiche et toute fonction de
 `registre/moteurs/` non couverte.
+
+Verdicts : {'choix_assume': 33, 'reference_introuvable': 8, 'conforme': 17, 'partiel': 5, 'modele_valide': 1}
 
 ## Règles externes (loi, code, barème, arrêté) — 16 calculs, 31 données
 
@@ -34,7 +36,7 @@ Généré depuis le registre + les fiches (source : le code). Garde :
 |---|---|---|---|---|
 | `charge_fonciere_eur` | `charge_fonciere_eur`, `bilan_ca_eur`, `bilan_cout_construction_eur`, `bilan_frais_eur`, `bilan_marge_eur`, `bilan_vrd_eur`, `bilan_demolition_eur`, `ecart_prix_demande_pct`, `sensibilite_cout_construction` | Bilan à rebours classique : CA = SHAB vendable × prix de sortie observé (fiche prix_sortie_bati_eur_m2) ; coût construction = SDP × coût/m² (SDP ≈ SHAB × 1,15 — circulations/gaines… | sector_price (prix de sortie); faisabilité (SHAB/SDP); Hypotheses/bilan_params (coûts, marge 9 %, frais 12 %, plancher×1 | reference_introuvable |
 | `comparateur_composite` | `comparateur_composite` | Normalisation min-max de chaque indicateur présent sur [0;100] selon sa direction (direction −1 → 1−frac), avec frac = (v − min) ÷ (max − min) sur les 24 communes ; borne dégénérée… | indicateurs_communes (stock, velocite, permis, deficit_sru, pression_zan, prix_neuf); poids (réglables, défauts INDICATE | conforme |
-| `distance_arret_m` | `distance_arret_m` | Objet `kind` le plus proche de la parcelle par KNN PostGIS (ORDER BY sl.geom_2975 <-> p.geom_2975 LIMIT 1), distance = round(ST_Distance(geom_2975, geom_2975))::int en MÈTRES (proj… | spatial_layers (kind, subtype, geom_2975); parcels.geom_2975 | ecart |
+| `distance_arret_m` | `distance_arret_m` | Objet `kind` le plus proche de la parcelle par KNN PostGIS (ORDER BY sl.geom_2975 <-> p.geom_2975 LIMIT 1), distance = round(ST_Distance(geom_2975, geom_2975))::int en MÈTRES (proj… | spatial_layers (kind, subtype, geom_2975); parcels.geom_2975 | conforme |
 | `ecart_demande_acte_pct` | `ecart_demande_acte_pct` | ecart = 100 × (médiane_demandé − médiane_acté) ÷ médiane_acté, servi seulement si les DEUX côtés tiennent n ≥ 5 (SEUIL_N), avec les deux n et les deux millésimes. Référence du MÊME… | pige_biens/pige_faits (prix affichés, types, paires vendues); DVF acté via marche_service (référence locale/commune) | conforme |
 | `emprise_batie_m2` | `emprise_batie_m2`, `n_batiments` | Par parcelle : emprise = aire de l'intersection géométrique des bâtiments (BD TOPO kind=batiment) avec la parcelle, COMPLÉTÉE par l'emprise CoSIA (couverture du sol IA) là où BD TO… | spatial_layers kind=batiment (BD TOPO); CoSIA (emprise_cosia_m2); parcels.geom_2975 | reference_introuvable |
 | `hauteur_bati_m` | `hauteur_bati_m` | h = max(hauteur des bâtiments BD TOPO intersectant la parcelle) en mètres (attrs->>'hauteur' de spatial_layers kind=batiment) ; NULL si aucune hauteur ingérée — jamais une inventio… | spatial_layers kind=batiment (attrs->hauteur, geom_2975); parcels.geom_2975 | reference_introuvable |

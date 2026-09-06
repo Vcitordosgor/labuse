@@ -36,6 +36,9 @@ def test_hauteur_max_batiments(engine):
                 {"n": nom, "a": f'{{"hauteur": "{h}"}}'})
     with session_scope() as s:
         h = _hauteur_bati_m(s, pid)
+    with engine.begin() as c:   # nettoyage : aucun legs (bâtiments fantômes)
+        c.execute(text("DELETE FROM spatial_layers WHERE kind = 'batiment' AND name LIKE 'c4-bat%'"))
+        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinSur-C4'"))
     assert h == 7.0                             # max(4,5 ; 7,0) — recompté à la main
 
 

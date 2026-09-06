@@ -34,6 +34,10 @@ def test_dominante_par_surface(engine):
                 {"n": nom, "st": st, "a": '{"libelle": "%s"}' % lib, "w": wkt})
     with session_scope() as s:
         z = zone_dominante(s, pid)
+    with engine.begin() as c:   # nettoyage : aucun legs (zones fantômes) dans la base partagée
+        c.execute(text("DELETE FROM spatial_layers WHERE kind = 'plu_gpu_zone'"
+                       " AND name IN ('U1 c4', 'N c4')"))
+        c.execute(text("DELETE FROM parcels WHERE commune = 'TemoinZone-C4'"))
     # recalcul indépendant : la coupe 4326 à 60 % de la largeur → parts ~60/40 (projection
     # localement conforme, tolérance 1 pt d'arrondi)
     assert z.zone == "U1" and z.zone_fam == "U"
