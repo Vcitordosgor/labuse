@@ -5505,10 +5505,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     surf = qv2.get("surface_m2") or 0
     bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
                 if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
-    # logements possibles (borne haute de la fourchette servie, au sol ou sous-sol).
-    def _hi(pair):
-        return pair[1] if isinstance(pair, (list, tuple)) and len(pair) == 2 else None
-    log_hi = max([v for v in (_hi(fr.get("logements_au_sol")), _hi(fr.get("logements_sous_sol"))) if v is not None] or [None])
+    # logements possibles — OUTILS-FIX-2 D3 : la fourchette COMPLÈTE (deux bornes), plus seulement la
+    # borne haute. On retient la fourchette (au sol ou sous-sol) dont la borne haute est la plus grande.
+    def _pair(pair):
+        return tuple(pair) if isinstance(pair, (list, tuple)) and len(pair) == 2 else None
+    _cands = [p for p in (_pair(fr.get("logements_au_sol")), _pair(fr.get("logements_sous_sol"))) if p is not None]
+    _best = max(_cands, key=lambda p: p[1]) if _cands else None
+    log_lo = _best[0] if _best else None
+    log_hi = _best[1] if _best else None
     # accès & réseaux : UN verdict (le faisceau de viabilisation servi, F0/F8) ; assainissement à part.
     via = qv2.get("viabilisation") or {}
     anc = qv2.get("anc") or {}
@@ -5541,6 +5545,7 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "proprietaire": proprietaire,                                   # moral / particulier
         "bati_existant_pct": bati_pct,                                  # emprise bâtie ÷ terrain
         "gabarit_niveaux_max": res.get("niveaux_max") if res.get("disponible") else None,  # hauteur max (R+N)
+        "logements_min": log_lo,                                        # D3 — borne BASSE de la fourchette
         "logements_possibles": log_hi,                                  # borne haute fourchette
         "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
         "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
