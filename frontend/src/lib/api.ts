@@ -1924,6 +1924,10 @@ export const postAdminCronRun = (nom: string) =>
 // ── CIRCUIT-1 lot 5 — la page Circuit (un appel) + ses gestes ──────────────────────────────
 export const getAdminCircuit = () => j<any>('/admin/circuit')
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
+// CIRCUIT-P2 (lot 3.2/3.3) — tâches longues : lancer les agents (ou un seul), suivre la progression.
+export const postAdminCircuitAgents = (sourceId?: number) =>
+  j<any>(`/admin/circuit/agents${sourceId != null ? `?source_id=${sourceId}` : ''}`, { method: 'POST' })
+export const getAdminCircuitTaches = () => j<any>('/admin/circuit/taches')
 export const postAdminCircuitPurger = () => j<any>('/admin/circuit/purger-runs', { method: 'POST' })
 export const postAdminCircuitRevenir = () => j<any>('/admin/circuit/revenir', { method: 'POST' })
 export const getAdminCircuitNoteVersion = (candidat: string) =>
@@ -1933,3 +1937,18 @@ export const postAdminCircuitFiltreServir = (source: string, motif = '') =>
   j<any>(`/admin/circuit/filtre/servir-quand-meme?source=${encodeURIComponent(source)}&motif=${encodeURIComponent(motif)}`, { method: 'POST' })
 export const postAdminCircuitFiltreRevenir = (source: string) =>
   j<any>(`/admin/circuit/filtre/revenir?source=${encodeURIComponent(source)}`, { method: 'POST' })
+// CIRCUIT-P — journal filtrable/paginé + pages de détail (un appel chacun).
+export const getAdminCircuitJournal = (p: { type?: string; depuis?: string; page?: number; taille?: number } = {}) => {
+  const q = new URLSearchParams()
+  if (p.type) q.set('type', p.type)
+  if (p.depuis) q.set('depuis', p.depuis)
+  if (p.page) q.set('page', String(p.page))
+  if (p.taille) q.set('taille', String(p.taille))
+  const s = q.toString()
+  return j<any>(`/admin/circuit/journal${s ? '?' + s : ''}`)
+}
+// CIRCUIT-P2 (lot 2.2) — la page de détail du compteur de réservoirs (68 par état + non servies).
+export const getAdminCircuitCompteur = () => j<any>('/admin/circuit/compteur')
+export const getAdminCircuitReservoir = (id: number) => j<any>(`/admin/circuit/reservoir/${id}`)
+export const getAdminCircuitRobinet = (id: string) => j<any>(`/admin/circuit/robinet/${encodeURIComponent(id)}`)
+export const getAdminCircuitPompe = () => j<any>('/admin/circuit/pompe')

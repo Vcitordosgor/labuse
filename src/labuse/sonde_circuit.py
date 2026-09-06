@@ -516,19 +516,37 @@ def verifier_eau_ancienne(db) -> dict:
             "etiquetees": sum(1 for x in lignes if x[5] == "etiquete")}
 
 
-def controle(db, *, declencheur: str = "bouton", exports: bool | None = None) -> dict:
+def controle(db, *, declencheur: str = "bouton", exports: bool | None = None,
+             progres=None) -> dict:
     """4.3 — LE passage complet : robinets + eau ancienne + chemins réels (0-bis) + scission du
     neuf (0-bis) + verdict (une ligne circuit_controles). La page Circuit lit la dernière ligne.
     `exports` (0-bis) : le cas recette_exports1 (24 PDF des 4 témoins + mots interdits) est joué
-    au passage NOCTURNE seulement (déclencheur cron), jamais au bouton — sauf override explicite."""
+    au passage NOCTURNE seulement (déclencheur cron), jamais au bouton — sauf override explicite.
+    CIRCUIT-P2 (lot 3.2) : `progres(fait, total, label)` est appelé avant chaque phase pour la ligne
+    de progression sous les onglets (jamais bloquant si None)."""
     t0 = time.monotonic()
     ensure(db)
-    rob = verifier_robinets(db)
-    chemins = verifier_chemins_reels(db)
-    neuf = verifier_scission_neuf(db)
-    cat = verifier_categorielle(db)
-    eau = verifier_eau_ancienne(db)
     jouer_exports = (declencheur == "cron") if exports is None else exports
+    phases = ["Robinets (témoins)", "Chemins réels sur parcelles", "Scission du neuf",
+              "Cohérence catégorielle", "Eau ancienne"]
+    if jouer_exports:
+        phases.append("Exports (24 PDF)")
+    total = len(phases)
+
+    def _p(i):
+        if progres:
+            try:
+                progres(i, total, phases[i])
+            except Exception:  # noqa: BLE001 — la progression ne doit jamais casser le contrôle
+                pass
+
+    _p(0); rob = verifier_robinets(db)
+    _p(1); chemins = verifier_chemins_reels(db)
+    _p(2); neuf = verifier_scission_neuf(db)
+    _p(3); cat = verifier_categorielle(db)
+    _p(4); eau = verifier_eau_ancienne(db)
+    if jouer_exports:
+        _p(5)
     exp = verifier_exports(db) if jouer_exports else {"saute": "hors passage nocturne"}
     fuites_ouvertes = db.execute(text(
         "SELECT count(*) FROM circuit_ecarts WHERE statut = 'ouvert'")).scalar() or 0

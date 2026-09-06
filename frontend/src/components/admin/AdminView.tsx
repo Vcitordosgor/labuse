@@ -15,18 +15,23 @@ import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { ContactsSection } from './Contacts'
 import { DestinationsSection } from './Destinations'
+import { CronSection } from './Cron'
 
-// ADMIN-1 (AD2) — « sources »/« flux »/« cron » ne sont plus des sections de menu : elles sont
-// FUSIONNÉES dans « donnees » (onglets Catalogue/Circuit/Horloge). Les valeurs restent dans le type
-// pour REDIRIGER les anciens deep-links (voir `_rediriger` plus bas).
+// ADMIN-1 (AD2) — « sources »/« flux » ne sont plus des sections de menu : elles sont FUSIONNÉES
+// dans « donnees » (= le Circuit). CIRCUIT-P2 (lot 1.2) — « cron » redevient une page à part
+// (lien dans Pilotage). Les valeurs restent dans le type pour REDIRIGER les anciens deep-links
+// (voir `_rediriger` plus bas).
 export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'destinations' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
 
 // ADMIN-1 (AD2) — redirection des anciennes routes vers la page fusionnée « Données ».
 // LOT S1 — `programmes` n'a plus de section admin : le deep-link sort vers l'outil « Scan patrimoine »
 // (traité dans le useEffect avec setView/setModule). Ici on retombe sur « pilotage » pour que le shell
 // admin ne rende jamais une section morte le temps de la bascule.
+// CIRCUIT-P2 (lot 1.2) — le CRON a quitté « Données » : c'est de nouveau une page à part
+// (`/admin/cron`, CronSection inchangée), son lien vit dans Pilotage. Les vieux deep-links
+// sources/flux atterrissent toujours sur « donnees » (= le Circuit).
 const _rediriger = (s: AdminSection): AdminSection =>
-  s === 'sources' || s === 'flux' || s === 'cron' ? 'donnees' : s === 'programmes' ? 'pilotage' : s
+  s === 'sources' || s === 'flux' ? 'donnees' : s === 'programmes' ? 'pilotage' : s
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -281,6 +286,11 @@ function PilotageSection({ data, go }: { data: AdminPilotage | undefined; go: (s
         </div>
       </div>
 
+      {/* CIRCUIT-P2 (lot 1.2) — le CRON a quitté « Données » ; son lien vit ici, dans Pilotage. */}
+      <div className="mt-4 text-[13px]">
+        <button onClick={() => go('cron')} className="text-mint hover:underline">Horloge — les jobs planifiés (CRON) →</button>
+      </div>
+
       {/* fil : activité récente (event_log admin) + gels actifs avec Dégeler */}
       <H2>Activité récente</H2>
       <Panel>
@@ -335,7 +345,8 @@ const SOUS_TITRES: Partial<Record<AdminSection, string>> = {
   pilotage: 'comment va LABUSE ce matin ?',
   licences: 'que dois-je faire pour ce client, maintenant ?',
   ia: 'consommation, plafonds par compte, registre modèle',
-  donnees: 'mes données sont-elles à jour ? — Catalogue · Circuit · CRON',
+  donnees: 'le circuit de la donnée : d’où elle vient, où elle va, ce qui cloche',
+  cron: 'les jobs planifiés — dernier passage, prochain, lancer maintenant',
   destinations: 'le verdict destination est-il calibré, commune par commune ?',
   produit: 'ce qui est utilisé · ce que les clients demandent',
   courrier: 'les demandes d’envoi — la page qui manquait',
@@ -427,7 +438,7 @@ export function AdminView() {
       <div className="min-w-0 overflow-y-auto px-9 py-7">
         <div className="mx-auto max-w-[1120px]">
           <header className="mb-6 flex flex-wrap items-baseline gap-3.5">
-            <h1 className="font-display text-2xl font-semibold tracking-tight text-txt-hi">{SECTIONS.find((s) => s.key === section)?.label}</h1>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-txt-hi">{SECTIONS.find((s) => s.key === section)?.label ?? (section === 'cron' ? 'Horloge' : '')}</h1>
             <span className="text-[13px] text-txt-dim">{SOUS_TITRES[section]}</span>
             <span className="ml-auto flex items-center gap-2">
               {section === 'pilotage' && d?.stripe.maj && <Chip>màj {fmtReu(d.stripe.maj)}</Chip>}
@@ -442,6 +453,7 @@ export function AdminView() {
           {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <IaSection />}
           {section === 'donnees' && <DonneesSection />}
+          {section === 'cron' && <CronSection />}
           {section === 'destinations' && <DestinationsSection />}
           {section === 'produit' && <ProduitSection />}
           {section === 'courrier' && <CourrierSection />}

@@ -1,0 +1,349 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshots des onglets > Circuit (diagramme) 1`] = `
+<div
+  class="cbar"
+>
+  <input
+    placeholder="Chercher un réservoir, un robinet, un chiffre…"
+    value=""
+  />
+  <button
+    class="sw on"
+  >
+    <span>
+      Ne montrer que ce qui cloche
+    </span>
+    <span
+      class="tr"
+    >
+      <i />
+    </span>
+  </button>
+  <div
+    class="legend"
+  >
+    <span>
+      <i
+        style="background: var(--mint);"
+      />
+      ça coule
+    </span>
+    <span>
+      <i
+        style="background: var(--ambre);"
+      />
+      à regarder
+    </span>
+    <span>
+      <i
+        style="background: var(--rouge);"
+      />
+      bloqué ou fuite
+    </span>
+    <span>
+      <i
+        style="background: var(--gris);"
+      />
+      vide, manuel
+    </span>
+    <span>
+      <i
+        style="background: var(--mauve);"
+      />
+      agent
+    </span>
+  </div>
+</div>
+`;
+
+exports[`snapshots des onglets > Journal 1`] = `
+<div>
+  <div
+    class="jf"
+  >
+    <button
+      class="on"
+    >
+      tous
+    </button>
+    <button
+      class=""
+    >
+      vanne
+    </button>
+    <button
+      class=""
+    >
+      cron
+    </button>
+  </div>
+  <div
+    class="jl h"
+  >
+    <span>
+      quand
+    </span>
+    <span>
+      geste
+    </span>
+    <span>
+      cible
+    </span>
+    <span>
+      par
+    </span>
+    <span>
+      résultat
+    </span>
+  </div>
+  <div
+    class="jl"
+  >
+    <span
+      class="muted"
+    >
+      06/09 09:15
+    </span>
+    <span
+      class="g"
+    >
+      <i
+        class=""
+      />
+      cron
+    </span>
+    <span>
+      <span>
+        coherence-robinets
+      </span>
+    </span>
+    <span
+      class="muted"
+    >
+      système
+    </span>
+    <span
+      class="r "
+    >
+      ok
+    </span>
+  </div>
+  <div
+    class="jpage"
+  >
+    <button
+      class="btn"
+      disabled=""
+    >
+      ← Précédent
+    </button>
+    <span>
+      page 
+      1
+       / 
+      1
+       · 
+      1
+       passage
+    </span>
+    <button
+      class="btn"
+      disabled=""
+    >
+      Suivant →
+    </button>
+  </div>
+</div>
+`;
+
+exports[`snapshots des onglets > Résumé 1`] = `
+<div
+  class="res"
+>
+  <h1>
+    <b>
+      1
+    </b>
+     chose
+     à regarder
+  </h1>
+  <div
+    class="sub"
+  >
+    Tout le reste est branché sur le moteur, sert la dernière version et dit la même chose partout.
+     Dernier contrôle 06/09 09:15.
+  </div>
+  <div
+    class="kpis"
+  >
+    <button
+      class="kpi lien"
+      title="Voir les réservoirs par état, et les lignes en base non servies"
+    >
+      <div
+        class="v"
+      >
+        1
+        <small>
+          / 
+          2
+        </small>
+      </div>
+      <div
+        class="l"
+      >
+        réservoirs à jour et vérifiés
+         →
+      </div>
+    </button>
+    <div
+      class="kpi"
+    >
+      <div
+        class="v"
+      >
+        1
+        <small>
+          / 
+          2
+        </small>
+      </div>
+      <div
+        class="l"
+      >
+        robinets sans rien à signaler
+      </div>
+    </div>
+    <div
+      class="kpi"
+    >
+      <div
+        class="v"
+      >
+        2
+      </div>
+      <div
+        class="l"
+      >
+        chiffres définis une fois
+      </div>
+    </div>
+    <div
+      class="kpi"
+    >
+      <div
+        class="v"
+      >
+        <code>
+          q_v11_m137
+        </code>
+      </div>
+      <div
+        class="l"
+      >
+        run servi
+         · candidat 
+        aucun
+      </div>
+    </div>
+  </div>
+  <div>
+    <div
+      class="sect"
+    >
+      <h2>
+        À faire, un geste de toi
+      </h2>
+      <span>
+        1
+      </span>
+    </div>
+    <button
+      class="item ambre"
+    >
+      <span
+        class="num"
+      >
+        1
+      </span>
+      <span>
+        <span
+          class="t"
+        >
+          réservoir plein, à injecter
+        </span>
+        <span
+          class="d"
+        >
+          SITADEL
+        </span>
+      </span>
+      <span
+        class="go"
+      >
+        Injecter
+         →
+      </span>
+    </button>
+  </div>
+  <div>
+    <div
+      class="sect"
+    >
+      <h2>
+        À corriger, un mandat pour CC
+      </h2>
+      <span>
+        0
+      </span>
+    </div>
+    <div
+      class="okline"
+    >
+      <i />
+      <b>
+        Rien.
+      </b>
+    </div>
+  </div>
+  <div>
+    <div
+      class="sect"
+    >
+      <h2>
+        À décider, quand tu veux
+      </h2>
+      <span>
+        0
+      </span>
+    </div>
+    <div
+      class="okline"
+    >
+      <i />
+      <b>
+        Rien.
+      </b>
+    </div>
+  </div>
+  <div
+    class="okline"
+    style="margin-top: 22px;"
+  >
+    <i />
+    <span>
+      <b>
+        2
+         réservoirs · 
+        2
+         robinets · 
+        2
+         chiffres
+      </b>
+       
+      — tout ce qui n'est pas listé ci-dessus va bien.
+    </span>
+  </div>
+</div>
+`;
