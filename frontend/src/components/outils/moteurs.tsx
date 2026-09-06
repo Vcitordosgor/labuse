@@ -1,8 +1,9 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
-import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
+import { ParcelInput } from '../ParcelInput'   // OUTILS-MUSCLER-1 B1 — entrée par parcelle (omnibox)
+import { addProfile, getAssemblageVoisines, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -126,13 +127,39 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 
 export function M16() {
   const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, setModule, setCourrierPrefillIdus } = useApp()
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-MUSCLER-1 B5 — fil de retour
+  const setM02Prefill = useApp((s) => s.setM02Prefill)       // B5 — pont Scan patrimoine (SIREN PM)
   const run = useMutation({ mutationFn: () => motAssemblage(msel) })
+  // OUTILS-MUSCLER-1 B1/B2/B4 — parcelles de DÉPART : chaque départ tire son 1ᵉʳ anneau de voisines
+  // contiguës (moteur ST_DWithin 0,5 m servi À l'utilisateur, plus seulement derrière lui). Un départ
+  // désigné à l'omnibox REMPLACE la proposition ; « ses voisines → » sur une cochée l'ÉTEND d'un
+  // anneau (jamais de recherche automatique au-delà — B4).
+  const [rings, setRings] = useState<string[]>([])
+  const addDepart = (idu: string) => {
+    const i = idu.trim().toUpperCase()
+    setMsel(msel.includes(i) ? msel : [...msel, i])
+    setRings((r) => (r.includes(i) ? r : [i]))
+  }
+  const etendreRing = (idu: string) => setRings((r) => (r.includes(idu) ? r : [...r, idu]))
+  const ringQs = useQueries({ queries: rings.map((r) => ({
+    queryKey: ['asm-voisines', r], queryFn: () => getAssemblageVoisines(r), staleTime: 60_000, retry: false })) })
   // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
   // partagé, consommation-puis-reset) ; l'utilisateur agrège les contiguës au clic-carte.
+  // OUTILS-MUSCLER-1 B2 — la porte (fiche, Successions « Assembler → ») fait AUSSI de la parcelle le
+  // départ : ses voisines contiguës sont proposées dès l'ouverture.
   useEffect(() => {
-    if (parcelPrefill) { setMsel([parcelPrefill]); setParcelPrefill(null) }
+    if (parcelPrefill) { setMsel([parcelPrefill]); setRings([parcelPrefill]); setParcelPrefill(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parcelPrefill])
+  // B5 — retour du Scan patrimoine : la sélection d'assiette revient par PREFILL consommé (idiome
+  // parcelPrefill — survit à la double-invocation StrictMode, contrairement à un msel posé d'avance
+  // que le cleanup GB-010 effacerait au montage).
+  const mselPrefill = useApp((s) => s.mselPrefill)
+  const setMselPrefill = useApp((s) => s.setMselPrefill)
+  useEffect(() => {
+    if (mselPrefill?.length) { setMsel(mselPrefill); setMselPrefill(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mselPrefill])
   useEffect(() => {
     setModuleMap({ idus: msel, extra: null })
     return () => setModuleMap({ idus: [], extra: null })
@@ -156,7 +183,10 @@ export function M16() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
       {/* M15 A1 : la cause du « ne fonctionne pas » = à l'échelle de l'île aucune parcelle n'est
           chargée ni cliquable. On guide explicitement : ZOOMER d'abord fait apparaître les contours. */}
-      <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer), puis lancez l'analyse.</Banner>
+      <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer) — ou désignez une parcelle de départ : ses voisines contiguës vous sont proposées.</Banner>
+      {/* OUTILS-MUSCLER-1 B1 — entrée PAR PARCELLE (omnibox SOCLE : IDU · adresse · référence
+          courte), en plus du clic-carte. La parcelle désignée devient la parcelle de DÉPART. */}
+      <ParcelInput dataAttr="asm-depart" placeholder="Adresse, IDU ou référence — la parcelle de départ" onPick={addDepart} />
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
@@ -176,6 +206,80 @@ export function M16() {
           <button onClick={() => setMsel([])} className="rounded-lg border border-line-2 px-2 text-[11px] text-txt-dim hover:text-txt">vider</button>
         )}
       </div>
+      {/* OUTILS-MUSCLER-1 B2/B3/B4/B5 — VOISINES PROPOSÉES, en cartes empilées, même propriétaire
+          en tête (tri serveur). Cocher = entrer dans l'assemblage (msel — même style carte que le
+          clic, via moduleMap) ; rien n'est coché d'office. Aucun badge de score : l'analyse de
+          l'assiette n'a pas encore été demandée. */}
+      {rings.map((ring, k) => {
+        const rq = ringQs[k]
+        const rd = rq?.data
+        return (
+          <div key={ring} data-asm-ring={ring} className="flex flex-col gap-1">
+            {rq?.isLoading && <Loading label="Voisines contiguës…" />}
+            {rq?.isError && <p className="text-[11px] text-st-ecartee">Voisines de {ring.slice(8)} indisponibles — parcelle inconnue ?</p>}
+            {rd && rd.n === 0 && (
+              <p data-asm-ring-vide className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
+                Aucune voisine contiguë au cadastre pour <span className="font-mono">{ring.slice(8)}</span> —
+                la voirie et le domaine public (non cadastrés) coupent l'anneau.
+              </p>
+            )}
+            {rd && rd.n > 0 && (
+              <>
+                {/* bandeau B2 : « N voisines contiguës, dont M du même propriétaire » */}
+                <div data-asm-ring-bandeau className="text-[10.5px] leading-snug text-txt-mut">
+                  <b className="tnum text-txt">{rd.n}</b> voisine{rd.n > 1 ? 's' : ''} contiguë{rd.n > 1 ? 's' : ''}
+                  {rings.length > 1 ? <> de <span className="font-mono">{ring.slice(8)}</span></> : null},
+                  dont <b className="tnum text-txt">{rd.n_meme_proprietaire}</b> du même propriétaire
+                  {!rd.depart_pm && <span className="text-txt-dim"> (départ chez un particulier : « même propriétaire » indécidable — aucune identité de personne physique en base)</span>}
+                </div>
+                {rd.items.map((v) => {
+                  const coche = msel.includes(v.idu)
+                  const pr = v.proprio
+                  return (
+                    <div key={v.idu} data-asm-voisine={v.idu} className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
+                      <div className="flex items-center gap-2">
+                        {/* B3 — cocher = entrer dans l'assemblage (recalcul au geste « Analyser », comme aujourd'hui) */}
+                        <input type="checkbox" data-asm-voisine-sel className="h-3 w-3 shrink-0 accent-mint" checked={coche}
+                          onChange={() => setMsel(coche ? msel.filter((x) => x !== v.idu) : [...msel, v.idu])} />
+                        <span className="font-mono text-[11px] text-txt-hi">{v.idu.slice(8)}</span>
+                        {v.meme_proprietaire && (
+                          <span className="rounded-full bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint"
+                            title={`Même propriétaire que ${ring.slice(8)} (même SIREN — fichiers PM DGFiP)`}>même propriétaire</span>
+                        )}
+                        <span className="ml-auto tnum text-[11px] text-txt" title="SDP résiduelle — Estimé, moteur de la fiche">{v.sdp_residuelle_m2 == null ? '—' : `${fmt(v.sdp_residuelle_m2)} m²`}</span>
+                        <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
+                        <span className="shrink-0 text-txt-dim">{fmt(v.surface_m2)} m²</span>
+                        {v.zone && <><span className="text-txt-dim">·</span><span className="shrink-0 text-txt-dim">{v.zone}</span></>}
+                        <span className="text-txt-dim">·</span>
+                        <span className="min-w-0 flex-1 truncate">
+                          {pr.type === 'personne_morale'
+                            ? <span className="text-txt" title={pr.siren ? `SIREN ${pr.siren}` : undefined}>{pr.denomination}</span>
+                            : <span className="italic text-txt-dim">particulier — non nommé</span>}
+                        </span>
+                        {/* B4 — sur une voisine COCHÉE : étendre la proposition d'un anneau depuis elle */}
+                        {coche && (
+                          <button data-asm-ses-voisines onClick={() => etendreRing(v.idu)}
+                            title="Proposer aussi les voisines contiguës de cette parcelle (anneau suivant)"
+                            className="shrink-0 text-[10px] font-medium text-mint hover:underline">ses voisines →</button>
+                        )}
+                        {/* B5 — pont Scan patrimoine sur une voisine PM (le retour restaure la sélection) */}
+                        {pr.type === 'personne_morale' && pr.siren && (
+                          <button data-asm-voisine-scan
+                            onClick={() => { setM02Prefill(pr.siren!); setModule('patrimoine'); pushOutilRetour({ module: 'assemblage', label: 'Assemblage', restore: { mselPrefill: [...msel] } }) }}
+                            title="Ouvrir le Scan patrimoine de ce propriétaire (personne morale)"
+                            className="shrink-0 text-[10px] font-medium text-mint hover:underline">Scan patrimoine →</button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </>
+            )}
+          </div>
+        )
+      })}
       {run.isError && <p className="text-[11px] text-st-ecartee">Erreur — au moins 2 parcelles valides ?</p>}
       {d && (
         <>

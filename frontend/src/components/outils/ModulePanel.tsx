@@ -43,6 +43,7 @@ import { EtudeZone } from './EtudeZone'
 import { TaxeAmenagement } from './TaxeAmenagement'
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
+import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
 import { TierBadge } from './TierBadge'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 
@@ -1677,6 +1678,9 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // recouvre l'Analyse LABUSE. Composant ScoringV2Module + endpoints /v2/* conservés au dépôt.
   renouvellement: RenouvellementModule,
   'prospection-solaire': ProspectionSolaire,
+  // OUTILS-MUSCLER-1 Lot A — « Successions » (parcel_veille_succession, succession PROBABLE jamais
+  // « en succession »). Ponts : Courrier/Comparer sur sélection, « Assembler → » par carte (Lot B).
+  successions: Successions,
   // ÉTUDE DE ZONE Z4 — l'outil de chalandise (isochrones IGN + INSEE/SIRENE/BPE).
   'etude-zone': EtudeZone,
   // FUSION « Étudier un bien » (Vic 21/08/2026) : les DEUX clés résolvent le MÊME composant fusionné

@@ -191,6 +191,12 @@ export type OutilRetour = {
     calcPrefill?: string | null
     solairePrefill?: string | null
     parcelPrefill?: string | null
+    // OUTILS-MUSCLER-1 Lot B (B5) — pont Assemblage → Scan patrimoine : le retour restaure la
+    // sélection d'assiette via un PREFILL consommé au montage (idiome parcelPrefill), PAS `msel`
+    // directement : le cleanup GB-010 (`setMsel([])`) rejoue au montage sous React.StrictMode
+    // (double-invocation dev) et effacerait une valeur posée d'avance — le prefill, lui, survit
+    // (la closure de l'effet garde la valeur à la ré-invocation).
+    mselPrefill?: string[] | null
   }
 }
 
@@ -450,6 +456,9 @@ interface AppState {
   setPermitHover: (g: unknown | null) => void
   msel: string[] // sélection multi-parcelles (module assemblage M16)
   setMsel: (m: string[]) => void
+  // OUTILS-MUSCLER-1 B5 — restauration de la sélection d'assemblage au retour (consommé-puis-reset).
+  mselPrefill: string[] | null
+  setMselPrefill: (m: string[] | null) => void
   m22Prefill: Record<string, unknown> | null // copilote → formulaire programme (M22)
   setM22Prefill: (p: Record<string, unknown> | null) => void
   m02Prefill: string | null // fiche → scan patrimoine du propriétaire (SIREN)
@@ -853,6 +862,8 @@ export const useApp = create<AppState>((set) => ({
   setPermitHover: (permitHover) => set({ permitHover }),
   msel: [],
   setMsel: (msel) => set({ msel }),
+  mselPrefill: null,
+  setMselPrefill: (mselPrefill) => set({ mselPrefill }),
   m22Prefill: null,
   setM22Prefill: (m22Prefill) => set({ m22Prefill }),
   m02Prefill: null,

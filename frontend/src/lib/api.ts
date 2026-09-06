@@ -845,6 +845,40 @@ export const postPasUnePiscine = (idu: string, motif?: string) =>
   j<{ ok: boolean; idu: string; corrigees_total: number }>(`/modules/prospection-piscines/pas-une-piscine`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu, motif: motif ?? null }),
   })
+// ── OUTILS-MUSCLER-1 Lot A — outil « Successions » (radar patrimonial Score V v1.3). Le signal est
+// une succession PROBABLE (dirigeant ≥ 70 ans / SCI dormante), JAMAIS « en succession » (A0) ; le
+// propriétaire est une PM nommée par construction (SIREN confirmé exigé par le critère).
+export interface SuccessionItem {
+  idu: string; commune: string; surface_m2: number | null; zone: string | null
+  sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
+  dirigeant_age: number | null; sci_dormante: boolean
+  proprio: SolaireProprio
+}
+export interface SuccessionsResp {
+  total: number; n: number; items: SuccessionItem[]
+  maj: string | null       // date du calcul Score V — le millésime du signal
+  rne_sync: string | null  // date amont RNE (âges dirigeants)
+  source: string; avertissement: string
+}
+export const SUCCESSIONS_PAGE = 200
+export const getSuccessions = (communeNom?: string | null, sdpMin = 0, offset = 0) =>
+  j<SuccessionsResp>(`/modules/successions?limit=${SUCCESSIONS_PAGE}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${sdpMin ? `&sdp_min=${sdpMin}` : ''}${offset ? `&offset=${offset}` : ''}`)
+
+// OUTILS-MUSCLER-1 Lot B (B2) — voisines contiguës (1ᵉʳ anneau cadastral) proposées par l'Assemblage.
+export interface VoisineItem {
+  idu: string; surface_m2: number | null; zone: string | null
+  sdp_residuelle_m2: number | null   // Estimé — même grandeur que la fiche
+  meme_proprietaire: boolean         // égalité de SIREN avec la parcelle de départ (jamais par nom)
+  proprio: SolaireProprio
+}
+export interface VoisinesResp {
+  idu: string; n: number; n_meme_proprietaire: number
+  depart_pm: boolean   // départ particulier → « même propriétaire » indécidable (dit à l'écran)
+  items: VoisineItem[]
+}
+export const getAssemblageVoisines = (idu: string) =>
+  j<VoisinesResp>(`/moteurs/assemblage/voisines?idu=${encodeURIComponent(idu)}`)
+
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {
