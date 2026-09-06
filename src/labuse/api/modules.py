@@ -712,6 +712,21 @@ def _classement_court(tier_v2: str | None, etage0: bool) -> str:
     return TIER_LABELS.get(tier_v2 or "", "—") if tier_v2 else "—"
 
 
+def _solaire_proprio(r: dict) -> dict:
+    """Type de propriétaire (A2) — MÊME règle privacy que l'Assemblage (api/moteurs.py) : personne
+    morale = dénomination + SIREN (donnée publique DGFiP) ; particulier = JAMAIS nommé."""
+    if r.get("denomination"):
+        return {"type": "personne_morale", "denomination": r["denomination"], "siren": r.get("siren")}
+    return {"type": "particulier"}   # aucune identité — non communiqué (RGPD)
+
+
+def _proprio_csv(pr: dict) -> str:
+    """Le propriétaire en UNE colonne CSV (A3) : PM nommée (+ SIREN) ou « particulier non nommé »."""
+    if pr.get("type") == "personne_morale":
+        return f"{pr['denomination']}" + (f" (SIREN {pr['siren']})" if pr.get("siren") else "")
+    return "Particulier — non nommé"
+
+
 @router.get("/prospection-solaire")
 def prospection_solaire(commune: str | None = None,
                         potentiel_min: int = 0, proba_occ_min: int = 0,
@@ -735,7 +750,9 @@ def prospection_solaire(commune: str | None = None,
     # En arrondissant comme l'écran, les « 51 lignes à 1 597 » forment un vrai palier que la toiture classe.
     orders = {"potentiel": "round(ps.prod_spec_kwh_kwc) DESC NULLS LAST, b.emprise_bati_m2 DESC NULLS LAST, ps.idu",
               "toiture": "b.emprise_bati_m2 DESC NULLS LAST, round(ps.prod_spec_kwh_kwc) DESC NULLS LAST, ps.idu",
-              "proba": "ps.proba_proprio_occupant DESC NULLS LAST, ps.idu"}
+              "proba": "ps.proba_proprio_occupant DESC NULLS LAST, ps.idu",
+              # A2 (mode Piscines) — tri par commune puis potentiel (en-têtes cliquables au front).
+              "commune": "p.commune, round(ps.prod_spec_kwh_kwc) DESC NULLS LAST, ps.idu"}
     order = orders.get(sort, orders["potentiel"])
     # piscine : « oui » = détectée ; « non » = non détectée (⚠ l'absence n'est pas VÉRIFIÉE hors des
     # zones scannées — dit au « i » ; pas un « zéro » affirmé).
@@ -761,7 +778,8 @@ def prospection_solaire(commune: str | None = None,
         JOIN parcels p ON p.idu = ps.idu
         LEFT JOIN parcel_terrain t ON t.idu = ps.idu
         LEFT JOIN p_model_bati b ON b.idu = ps.idu
-        LEFT JOIN parcel_equipements e ON e.idu = ps.idu"""
+        LEFT JOIN parcel_equipements e ON e.idu = ps.idu
+        LEFT JOIN parcelle_personne_morale pm ON pm.idu = ps.idu"""
     params = {"c": commune, "pmin": potentiel_min, "prmin": proba_occ_min, "psmin": piscine_surf_min,
               "cmin": SEUIL_PISCINE_HAUTE}
     total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
@@ -777,6 +795,7 @@ def prospection_solaire(commune: str | None = None,
                (e.piscine IS TRUE) AS piscine, round(e.piscine_surface_m2)::int AS piscine_m2,
                ps.flag_abf AS abf,
                ps.proba_proprio_occupant AS proba_occ,
+               pm.denomination, pm.siren,
                s2.tier AS tier_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         {base}
@@ -790,6 +809,8 @@ def prospection_solaire(commune: str | None = None,
         d = dict(r)
         d["etage0"] = bool(r["etage0"])
         d["classement"] = _classement_court(r["tier_v2"], d["etage0"])
+        d["proprio"] = _solaire_proprio(r)   # A2 — type de propriétaire (PM nommée / particulier)
+        d.pop("denomination", None); d.pop("siren", None)   # servis via `proprio`, pas en brut
         items.append(d)
     # SOLAIRE M1 — millésime LU en base (source_millesime, posé par le builder ingestion/solaire.py) :
     # le bandeau suit la donnée fraîche au lieu d'une date en dur. L'horizon topographique est intégré
@@ -801,17 +822,13 @@ def prospection_solaire(commune: str | None = None,
     bandeau = (f"Données {mil} · horizon topographique intégré (PVGIS), ombrage de proximité "
                f"(bâti, arbres) non modélisé · potentiel théorique à confirmer sur site.")
     if fmt == "csv":
-        # export démarchage : MÊMES colonnes que l'écran, mention Sourcé/Estimé en en-tête (mandat).
+        # export démarchage (A3) — MÊMES colonnes que la liste Piscines (A2) : parcelle, commune,
+        # potentiel, type de propriétaire ; mentions Sourcé/Estimé en en-tête. Surface piscine
+        # volontairement absente (mesure aérienne jugée fausse, décision O12a maintenue).
         cols = [("idu", "Parcelle (IDU)"),
-                ("classement", "Classement [Analyse LABUSE]"),
-                ("productible", "Productible kWh/kWc/an [Sourcé — PVGIS/SARAH3]"),
-                ("azimut", "Azimut bâti ° [Estimé — élongation]"),
-                ("pente", "Pente ° [Sourcé — RGE ALTI 5 m]"),
-                ("toit_m2", "Toiture m² emprise [Estimé — proxy]"),
-                ("piscine", "Piscine détectée [Estimé — ortho 2025]"),
-                ("piscine_m2", "Piscine surface m² [Estimé — ortho 2025]"),
-                ("abf", "Périmètre ABF [Sourcé]"),
-                ("proba_occ", "Proba propriétaire-occupant % [Estimé — statistique]")]
+                ("commune", "Commune"),
+                ("productible", "Potentiel kWh/kWc/an [Sourcé — PVGIS/SARAH3]"),
+                ("proprietaire", "Propriétaire [Sourcé — DGFiP · PM nommée / particulier non nommé]")]
         buf = io.StringIO()
         buf.write("﻿")  # BOM → accents corrects à l'ouverture Excel
         w = csv.writer(buf, delimiter=";")
@@ -820,10 +837,10 @@ def prospection_solaire(commune: str | None = None,
                         "affinez les filtres pour un export complet."])
         w.writerow([h for _, h in cols])
         for it in items:
-            def _cell(k: str):
+            def _cell(k: str, it=it):
+                if k == "proprietaire":
+                    return _proprio_csv(it["proprio"])
                 v = it.get(k)
-                if k in ("piscine", "abf"):   # « oui » ou vide — jamais un « non/False » affirmé
-                    return "oui" if v else ""
                 return "" if v is None else v
             w.writerow([_cell(k) for k, _ in cols])
         return Response(buf.getvalue(), media_type="text/csv; charset=utf-8",

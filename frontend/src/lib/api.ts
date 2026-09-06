@@ -767,13 +767,17 @@ export const RENOUV_PAGE = 200
 export const getRenouvListe = (sort: string, communeNom?: string | null, offset = 0) =>
   j<RenouvListe>(`/renouvellement/liste?sort=${sort}&limit=${RENOUV_PAGE}${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}${offset ? `&offset=${offset}` : ''}`)
 
-// ── Prospection solaire (V1 restitution) — données gelées au 11/07/2026, masque solaire non calculé ──
+// ── Prospection solaire (V1 restitution) — données PVGIS/SARAH3 servies, masque solaire non calculé ──
+// A2 — type de propriétaire (PM nommée / particulier non nommé), même règle privacy que l'Assemblage.
+export type SolaireProprio =
+  | { type: 'personne_morale'; denomination: string; siren: string | null }
+  | { type: 'particulier' }
 export interface SolaireItem {
   idu: string; commune: string; productible: number | null
   azimut: number | null; azimut_confiance: string | null
   pente: number | null; toit_m2: number | null
   piscine: boolean; piscine_m2: number | null; abf: boolean; proba_occ: number | null
-  tier_v2: string | null; etage0: boolean; classement: string
+  tier_v2: string | null; etage0: boolean; classement: string; proprio: SolaireProprio
 }
 export interface ProspectionSolaireResp {
   total: number; n: number; cap: number; tronquee: boolean
@@ -781,7 +785,7 @@ export interface ProspectionSolaireResp {
 }
 export interface SolaireFiltres {
   commune?: string | null; potentielMin?: number; probaOccMin?: number
-  piscine?: 'tous' | 'oui' | 'non'; piscineSurfMin?: number; sort?: 'potentiel' | 'toiture' | 'proba'
+  piscine?: 'tous' | 'oui' | 'non'; piscineSurfMin?: number; sort?: 'potentiel' | 'toiture' | 'proba' | 'commune'
   // RETOURS-11F3 avenant — aligne le listing piscines sur le filtre confiance du compteur (agg).
   inclureIncertaines?: boolean
 }
@@ -810,6 +814,9 @@ export interface SolaireFiche {
   lon?: number | null; lat?: number | null   // RETOURS-12 O7 — centroïde parcelle (photo ortho du toit)
   toit_m2?: number | null; piscine?: boolean; piscine_m2?: number | null; abf?: boolean
   ombrage?: boolean; proba_occ?: number | null; classement?: string; millesime?: string
+  // A6 — dimensionnement servi par le back (plus de calcul au front) : kWc = toit × kwc_par_m2 ;
+  // production annuelle = kWc × productible. A1 — inclinaison = paramètre réel du calcul PVGIS.
+  kwc?: number | null; prod_annuel?: number | null; kwc_par_m2?: number; inclinaison_deg?: number
   // RETOURS-13 R31 / RETOURS-14 S11 — nature de la toiture (Dérivé, LiDAR HD IGN), servie
   // seulement au-dessus du seuil de confiance ; « non déterminée (LiDAR) » sinon.
   toiture?: { verdict: string; libelle: string; libelle_court: string

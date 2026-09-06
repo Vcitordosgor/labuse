@@ -18,6 +18,8 @@ function mkItem(i: number, ecartee = false) {
     azimut: 12, azimut_confiance: 'basse', pente: 5, toit_m2: 140, piscine: true, piscine_m2: 32,
     abf: false, proba_occ: 60, tier_v2: ecartee ? null : 'neutre', etage0: ecartee,
     classement: ecartee ? 'Écartée' : 'Neutre',
+    // A2 — type de propriétaire : i=0 PM nommée, i=1 particulier non nommé
+    proprio: i === 0 ? { type: 'personne_morale', denomination: 'SCI SOLEIL', siren: '123456789' } : { type: 'particulier' },
   }
 }
 const LIST = {
@@ -29,6 +31,8 @@ const FICHE = {
   prod_mensuel: [88, 84, 78, 64, 52, 46, 48, 56, 68, 78, 84, 90], mois_optimal: 12,
   azimut: 12, azimut_confiance: 'basse', pente: 5, toit_m2: 140, piscine: true, piscine_m2: 32,
   abf: false, ombrage: false, proba_occ: 60, classement: 'Neutre', millesime: 'PVGIS v5.3 SARAH3',
+  // A6 — dimensionnement servi par le back ; A1 — inclinaison réelle du calcul PVGIS (config, 15°).
+  kwc: 28, prod_annuel: 44744, kwc_par_m2: 0.2, inclinaison_deg: 15,
 }
 
 function mockFetch() {
@@ -55,7 +59,9 @@ describe('SOLAIRE — deux modes', () => {
     renderTool()
     expect(document.querySelector('[data-solaire-mode="piscines"]')).toBeTruthy()
     expect(document.querySelector('[data-solaire-mode="ensoleillement"]')).toBeTruthy()
-    expect(screen.getByText(/données gelées 11\/07\/2026/)).toBeTruthy()
+    // A1 — les sources restent affichées, mais plus de date « gelée » en dur (millésime servi ailleurs).
+    expect(screen.getByText(/PVGIS v5\.3 SARAH3/)).toBeTruthy()
+    expect(screen.queryByText(/gelées 11\/07\/2026/)).toBeNull()
   })
 
   it('mode Piscines : la STAT d\'abord (compteur agrégat île + par commune)', async () => {
@@ -84,5 +90,42 @@ describe('SOLAIRE — deux modes', () => {
     await screen.findByText(/Profil mensuel/)
     expect(document.querySelectorAll('[data-solaire-bar]')).toHaveLength(12)          // profil mensuel
     expect(document.querySelector('[data-solaire-fiche]')?.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité
+  })
+
+  it('A1 — le pied dit l\'inclinaison RÉELLE du calcul PVGIS (15°), jamais « 65 » en dur', async () => {
+    useApp.setState({ solairePrefill: '97411000AP0000' })
+    renderTool()
+    await screen.findByText(/Profil mensuel/)
+    const fiche = document.querySelector('[data-solaire-fiche]')!
+    expect(fiche.textContent).toContain('inclinés à 15°')
+    expect(fiche.textContent).not.toContain('65°')
+    // A1 — plus de date « gelée » en dur dans le pied de page
+    expect(fiche.textContent).not.toContain('gelées 11/07/2026')
+  })
+
+  it('A6 — puissance installable + production servies par le back, ratio kWc/m² écrit', async () => {
+    useApp.setState({ solairePrefill: '97411000AP0000' })
+    renderTool()
+    await screen.findByText(/Profil mensuel/)
+    const fiche = document.querySelector('[data-solaire-fiche]')!
+    expect(fiche.textContent).toContain('28')          // kWc servi (pas recalculé au front)
+    expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
+  })
+
+  it('A2/A3/A5 — liste Piscines : potentiel, type propriétaire, CSV et pont Courrier', async () => {
+    renderTool()
+    fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
+    const body = document.body.textContent ?? ''
+    expect(body).toContain('SCI SOLEIL')                 // A2 — PM nommée
+    expect(body).toContain('particulier — non nommé')    // A2 — particulier jamais nommé
+    expect(body.replace(/\s/g, '')).toContain('1598')    // A2 — potentiel servi (fmtInt insère une espace)
+    expect(document.querySelector('[data-piscines-csv]')).toBeTruthy()        // A3 — export CSV branché
+    // A5 — sélectionner une ligne active le pont Courrier
+    const cb = document.querySelector('[data-piscines-sel]') as HTMLInputElement
+    fireEvent.click(cb)
+    const courrier = document.querySelector('[data-piscines-courrier]') as HTMLButtonElement
+    expect(courrier.disabled).toBe(false)
+    expect(courrier.textContent).toContain('(1)')
   })
 })

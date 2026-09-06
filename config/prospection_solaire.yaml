@@ -1,3 +1,6 @@
 # Outil « Prospection solaire » (V1 restitution) — cap de la liste servie.
 # EN CONFIG, jamais un LIMIT muet : l'écran DIT « les N premières sur M » (leçon M120-B).
 liste_max: 500
+# A6 — ratio puissance installable par m² de toiture (kWc/m²), hypothèse métier ÉCRITE à l'écran.
+# Sert le calcul de dimensionnement côté back (plus de constante recopiée au front).
+kwc_par_m2: 0.2
