@@ -39,6 +39,36 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   )
 }
 
+// ── FICHE-1 lot 5 — Taxe d'aménagement ESTIMÉE (scénario table rase) ──────────────────────────
+// Montant, assiette, taux communal + départemental avec leur source. Si le taux communal n'est
+// pas connu (table publique vide, chantier SOURCES-1) : « taux communal non renseigné », JAMAIS
+// un taux inventé (doctrine CIRCUIT-3 lot 6.2) — le total n'est alors pas affiché.
+function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']> }) {
+  return (
+    <div data-taxe-amenagement>
+      <GroupLabel>Taxe d'aménagement estimée</GroupLabel>
+      <p className="mt-1 text-[11px] leading-snug text-txt-mut">Scénario table rase — {t.scenario}.</p>
+      <FactRow label="Assiette (surface de plancher)" value={<>{fmtInt(t.assiette_m2)} <small>m²</small></>} />
+      {t.taux_communal_manquant ? (
+        <FactRow label="Taux communal" tone="mute" value="non renseigné — à saisir" />
+      ) : (
+        <FactRow label="Taux communal" value={<>{t.taux_communal_pct} <small>%</small></>}
+          src={t.taux_communal_source === 'public' ? 'délibération communale (public)' : undefined} />
+      )}
+      <FactRow label="Taux départemental"
+        value={t.taux_departemental_pct != null ? <>{t.taux_departemental_pct} <small>%</small></> : '—'}
+        src={t.taux_departemental_confirme ? 'confirmé' : 'plafond légal 2,5 % — à confirmer'} />
+      {t.total_eur != null ? (
+        <FactRow label="Taxe estimée" value={<>{fmtEurCompact(t.total_eur)}</>} />
+      ) : (
+        <FactRow label="Taxe estimée" tone="mute"
+          value={t.message_taux_communal ? 'total non calculable sans le taux communal' : '—'} />
+      )}
+      <FactNote>Barème {t.annee} — {t.source}. Estimation ; changez les hypothèses (résidence principale, logement aidé, piscine…) dans l'outil.</FactNote>
+    </div>
+  )
+}
+
 // ── DESTINATIONS-1 (X4.2) — ligne « Destinations » d'une zone du règlement PLU ──────────────────
 // Résumé (principales autorisées / interdites / seuil commerce) + dépliable (chevron) : les 23
 // sous-destinations R151-28 avec leur PHRASE SOURCÉE (servie telle quelle — jamais reformulée).
@@ -716,6 +746,14 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
           {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
           <FaisabiliteTab idu={idu} />
           {!delaisse && <BilanTab idu={idu} />}
+          {/* FICHE-1 lot 5 — taxe d'aménagement estimée (table rase) + lien vers l'outil pour
+              changer les hypothèses. Omise si pas de scénario constructible (f.taxe_amenagement null). */}
+          {f.taxe_amenagement && <TaxeAmenagementBlock t={f.taxe_amenagement} />}
+          {f.taxe_amenagement && (
+            <PorteOutil ico="€" data="taxe-amenagement-outil" titre="Taxe d'aménagement"
+              sous="Changer les hypothèses (résidence principale, logement aidé, piscine, taux communal)"
+              onClick={() => { setParcelPrefill(idu); setModule('taxe-amenagement') }} />
+          )}
           <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
             sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
             onClick={() => { setParcelPrefill(idu); setModule('programme') }} />

@@ -70,6 +70,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *surface de plancher du scénario table rase (moteur commun) — distincte de capacite_logements* | | | | | |
 | `marge_surelevation_m` | nombre | Marge de surélévation (à l'égout) | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `potentiel` · src/labuse/faisabilite/potentiel.py:surelevation | run | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *hauteur restante sous la règle de hauteur à l'égout de la zone (moteur commun, EXPORTS-1 3.2)* | | | | | |
+| `taxe_amenagement_estimee_eur` | nombre | Taxe d'aménagement estimée (table rase) | interne (aucun réservoir) | moteur `taxe_amenagement` · src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *estimation de la taxe pour le scénario table rase du potentiel (assiette = surface de plancher créée) ; taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; taux départemental plafond 2,5 % à confirmer* | | | | | |
 
 ## Le bien
 

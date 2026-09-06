@@ -115,6 +115,15 @@ DONNEES: dict[str, Donnee] = {
     "calcul ligne-à-ligne, taux communal SAISI obligatoire, jamais un défaut",
     moteur="taxe_amenagement", calcul="moteur", fonction="src/labuse/taxe_amenagement.py",
     reservoirs=(), portee="live"),
+ # FICHE-1 lot 5 — estimation servie DANS la fiche (Constructibilité) pour le scénario table
+ # rase du potentiel ; distincte de taxe_amenagement_eur (outil, taux SAISI) : ici taux PUBLIC.
+ "taxe_amenagement_estimee_eur": C("Taxe d'aménagement estimée (table rase)", "€", "parcelle",
+    "estimation de la taxe pour le scénario table rase du potentiel (assiette = surface de "
+    "plancher créée) ; taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; "
+    "taux départemental plafond 2,5 % à confirmer",
+    moteur="taxe_amenagement", calcul="moteur",
+    fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer)",
+    reservoirs=(), portee="live"),
  "n_vigilances": C("Vigilances", "nombre", "parcelle",
     "compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE",
     moteur="cascade", calcul="moteur",

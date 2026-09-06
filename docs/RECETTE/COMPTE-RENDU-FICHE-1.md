@@ -63,3 +63,13 @@ Dans « Risques et protections », la fiche ne servait qu'un compte (`n_vigilanc
 - Le bloc porte déjà tout ce que demande le mandat : **dans le rayon** (sous_800m), **distance** à vol d'oiseau, **station nommée**, **plafond** (1 place/logement, 0,5 en social), **référence d'article** (L151-34 à 36, loi n° 2025-1129). Seuil **800 m strict** (`d < 800`, correction E1 CIRCUIT-4), distance depuis la station (CE 2022).
 - **Front** : pastille « dans le rayon 800 m » / « hors rayon » + station + distance en tête, le libellé (plafond + article) conservé dessous.
 - **Vérifs** : `circuit verrous` 16/16 vert (177 données) · tsc 0 · vitest 187 · `test_fiche1_tcsp.py` + `test_distance_knn` 3/3 · doc régénéré. Vérifié en base : 97415000AB0790 → station « Karting » à 120 m, sous_800m=vrai, plafond L151-36 servi.
+
+### Lot 5 — La taxe d'aménagement estimée ✅
+
+Servie dans « Constructibilité » pour le scénario table rase du potentiel.
+
+- **Producteur** `_taxe_amenagement_block(db, idu, parcel_id)` : assiette = **surface de plancher du scénario table rase** (`bloc_potentiel.table_rase.plancher_m2`), passée au moteur `taxe_amenagement.calculer` (aucun calcul dans l'endpoint). Sert : assiette (m² + €), taux communal + départemental (avec source), total, lien vers l'outil.
+- **Doctrine « aucun taux inventé »** (CIRCUIT-3 lot 6.2) : la table `taxe_amenagement_taux` est seedée VIDE → le taux communal PUBLIC est inconnu → **« taux communal non renseigné »**, le **total n'est pas calculé** (jamais un taux deviné). Le taux départemental = plafond légal 2,5 % « à confirmer ». Dès que SOURCES-1 ingère les délibérations, le total s'affiche.
+- **Omise** si le scénario table rase n'est pas constructible (pas d'assiette → `null` → bloc absent).
+- **Distincte** de `taxe_amenagement_eur` (outil, taux SAISI) : nouvelle donnée `taxe_amenagement_estimee_eur` (taux PUBLIC), définition différente (V5a OK), mono-robinet `fiche_parcelle_constructibilite`. Lien `PorteOutil` vers l'outil taxe (prefill parcelle) pour changer les hypothèses.
+- **Vérifs** : `circuit verrous` 16/16 vert (178 données) · tsc 0 · vitest 187 · `test_fiche1_taxe.py` 3/3 · doc régénéré. Vérifié en base : 97415000BH0057 → assiette 10 084 m², total « non calculable sans taux communal ».

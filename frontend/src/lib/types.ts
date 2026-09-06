@@ -430,6 +430,15 @@ export interface Fiche {
     etiquette: string; etiquette_ges?: string | null; date?: string | null
     annee?: number | null; type_batiment?: string | null; n: number; source: string
   } | null
+  // FICHE-1 lot 5 — taxe d'aménagement estimée (scénario table rase). null → pas d'estimation.
+  taxe_amenagement?: {
+    assiette_m2: number; assiette_eur: number; total_eur: number | null
+    part_communale_eur: number | null; part_departementale_eur: number | null
+    taux_communal_pct: number | null; taux_communal_source: string | null
+    taux_departemental_pct: number | null; taux_departemental_confirme: boolean
+    taux_communal_manquant: boolean; message_taux_communal: string | null
+    annee: string | number; source: string; url: string; scenario: string
+  } | null
   // FICHE-1 lot 3 — aléas en détail (dérivés de la cascade servie, accord avec Pièges et risques).
   aleas?: {
     n: number

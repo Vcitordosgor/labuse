@@ -3663,6 +3663,49 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # FICHE-1 lot 3 — aléas EN DÉTAIL (nature, niveau, part, réf. PPR) dérivés des MÊMES lignes
         # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
         "aleas": _aleas_block(db, idu, lines),
+        # FICHE-1 lot 5 — taxe d'aménagement estimée pour le scénario table rase du potentiel
+        # (moteur taxe_amenagement). None si pas de scénario constructible. Taux communal PUBLIC
+        # si connu, sinon « non renseigné » — jamais un taux inventé (CIRCUIT-3 lot 6.2).
+        "taxe_amenagement": _taxe_amenagement_block(db, idu, head["id"]),
+    }
+
+
+def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | None:
+    """FICHE-1 lot 5 — estimation de la taxe d'aménagement pour le scénario TABLE RASE du bloc
+    potentiel (assiette = surface de plancher créée). Moteur `taxe_amenagement.calculer` (jamais
+    un calcul dans l'endpoint). Taux communal PUBLIC (`taxe_amenagement_taux`) si connu, sinon
+    total non calculé + « taux communal non renseigné » — jamais un taux inventé (CIRCUIT-3 6.2).
+    None si le scénario table rase n'est pas constructible (pas d'assiette → pas d'estimation)."""
+    try:
+        from ..faisabilite.potentiel import bloc_potentiel
+        pot = bloc_potentiel(db, parcel_id)
+    except Exception:  # noqa: BLE001 — jamais un 500 sur la fiche
+        return None
+    tr = (pot or {}).get("table_rase") or {}
+    plancher = tr.get("plancher_m2")
+    if not tr.get("constructible") or not plancher or float(plancher) <= 0:
+        return None
+    from .. import taxe_amenagement as _tax
+    pub = _tax.taux_communal_public(db, idu[:5])
+    res = _tax.calculer(
+        surface_taxable_m2=float(plancher),
+        taux_communal_public_pct=(pub["part_communale_pct"] if pub else None),
+        taux_communal_public_source=(pub["source"] if pub else None),
+    )
+    return {
+        "assiette_m2": round(float(plancher)),
+        "assiette_eur": res["assiette_eur"],
+        "total_eur": res["total_eur"],
+        "part_communale_eur": res["part_communale_eur"],
+        "part_departementale_eur": res["part_departementale_eur"],
+        "taux_communal_pct": res["taux_communal_pct"],
+        "taux_communal_source": res["taux_communal_source"],      # 'public' | None
+        "taux_departemental_pct": res["taux_departemental_pct"],
+        "taux_departemental_confirme": res["part_departementale_confirmee"],
+        "taux_communal_manquant": res["taux_communal_manquant"],
+        "message_taux_communal": res["message_taux_communal"],
+        "annee": res["annee"], "source": res["source"], "url": res["url"],
+        "scenario": "table rase — surface de plancher du potentiel",
     }
 
 
