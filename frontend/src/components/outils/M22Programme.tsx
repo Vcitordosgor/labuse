@@ -23,6 +23,7 @@ export function M22() {
   // OUTILS-FIX-2 A5 — pont Faisabilité par critères → Comparer (sélection ; limite 3 côté Comparer).
   const addToCompare = useApp((s) => s.addToCompare)
   const openCompare = useApp((s) => s.openCompare)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   const [selCmp, setSelCmp] = useState<Set<string>>(new Set())
   const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
@@ -193,7 +194,7 @@ export function M22() {
               {/* A5 — pont Comparer sur la sélection (même geste/compteur que Courrier). */}
               {selCmp.size > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <button data-prog-comparer onClick={() => { [...selCmp].slice(0, 3).forEach(addToCompare); openCompare() }}
+                  <button data-prog-comparer onClick={() => { [...selCmp].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'programme', label: 'Faisabilité' }) }}
                     className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
                     Comparer ({Math.min(selCmp.size, 3)}) →
                   </button>

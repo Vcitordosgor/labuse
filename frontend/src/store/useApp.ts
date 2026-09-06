@@ -173,6 +173,27 @@ const readBasemap = (): Basemap => 'dark'
 export type OrthoYear = 'now' | '1950' | '2000' | '2006' | '2011' | '2016' | '2021'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
 
+// OUTILS-FIX-3 Lot D — FIL DE RETOUR ENTRE OUTILS. Une pile (`outilRetour`) empilée par les ponts
+// FIX-2 (Scan→Courrier, Densifier→Faisabilité, Étudier→Faisabilité/Assemblage, Permis→Scan,
+// listes→Comparer, Solaire→Courrier). Chaque entrée décrit l'outil de DÉPART : son `module`, son
+// `label` (« Densifier », « Permis »…) et le `restore` = les champs store à réappliquer pour le
+// rouvrir dans son état (overlay déplié, prefill de parcelle/SIREN/permis). Le composant unique
+// <RetourOutil/> (en tête de l'outil cible) dépile via `retourOutil()`. La pile est VIDÉE par toute
+// navigation manuelle (elle est incluse dans CLOSE_OVERLAYS, spreadé par setModule/openCompare/…) :
+// un outil ouvert depuis le menu n'a donc jamais de retour. Les ponts empilent APRÈS avoir navigué.
+export type OutilRetour = {
+  module: string
+  label: string
+  restore?: {
+    densifierTableOpen?: boolean
+    m02Prefill?: string | null
+    permitToOpen?: string | null
+    calcPrefill?: string | null
+    solairePrefill?: string | null
+    parcelPrefill?: string | null
+  }
+}
+
 interface AppState {
   // CIRCUIT-1 lot 7.2 — MODE TRAÇAGE (admin) : allumé, chaque nombre étiqueté (composant Trace)
   // porte son chiffre_id et ouvre le tiroir de trace ; éteint, rendu STRICTEMENT identique.
@@ -390,6 +411,10 @@ interface AppState {
   // ── Modules outils (filtres savants, accent violet) ──
   module: string | null
   setModule: (m: string | null) => void
+  // OUTILS-FIX-3 Lot D — pile de retour entre outils (posée par les ponts, vidée par la nav manuelle).
+  outilRetour: OutilRetour[]
+  pushOutilRetour: (e: OutilRetour) => void
+  retourOutil: () => void
   // M15 D1 : comparateur « Remonter le temps » — les DEUX fonds choisis vivent dans le store
   // pour que les sélecteurs soient rendus dans le BANDEAU GAUCHE (M08), pas en surimpression carte.
   cmpLeft: string
@@ -496,7 +521,10 @@ interface AppState {
 // centralisé : il survivait à `setModule` (changement d'outil) faute d'y être remis. Ici, il tombe
 // avec les overlays plein écran à CHAQUE navigation. L'ouverture du tiroir (`openSourceDrawer`) NE
 // spread PAS CLOSE_OVERLAYS → aucun auto-fermeture.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null } as const
+// OUTILS-FIX-3 Lot D — `outilRetour: []` rejoint le cleanup centralisé : TOUTE navigation (setModule,
+// openCompare, setView, toggleOutils…) vide la pile de retour, donc un outil ouvert depuis le menu n'a
+// jamais de « ← ». Les ponts empilent APRÈS avoir navigué ; `retourOutil` réécrit la pile après ce spread.
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[] } as const
 // SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
@@ -783,6 +811,26 @@ export const useApp = create<AppState>((set) => ({
   // d'Étude de zone : le pointillé restait sur la carte). Les veilles enregistrées vivent au serveur,
   // pas ici — elles ne sont pas touchées.
   setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, ...CLOSE_OVERLAYS }),
+  // OUTILS-FIX-3 Lot D — fil de retour entre outils. `pushOutilRetour` est appelé par un pont APRÈS sa
+  // navigation (la nav a déjà vidé la pile via CLOSE_OVERLAYS) → il ne reste que l'entrée de départ.
+  outilRetour: [],
+  pushOutilRetour: (e) => set((s) => ({ outilRetour: [...s.outilRetour, e] })),
+  // `retourOutil` rouvre l'outil de départ (comme setModule, mais SANS re-vider la pile) : on dépile la
+  // dernière entrée, on applique son `restore` (overlay/prefill) APRÈS CLOSE_OVERLAYS, on garde le reste.
+  retourOutil: () => set((s) => {
+    const stack = s.outilRetour
+    if (!stack.length) return {}
+    const top = stack[stack.length - 1]
+    return {
+      module: top.module, view: 'cartes' as const, outilsOpen: false,
+      moduleMap: { idus: [], extra: null }, moduleFiche: {},
+      parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false,
+      zone: null, tool: null,
+      ...CLOSE_OVERLAYS,                 // ferme les overlays ET vide outilRetour…
+      ...(top.restore ?? {}),            // …puis rouvre l'état de départ (densifierTableOpen, prefill…)
+      outilRetour: stack.slice(0, -1),   // …et on ne garde que le reste de la pile (ponts chaînés)
+    }
+  }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   zoneSeg: 0,

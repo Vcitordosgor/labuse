@@ -167,6 +167,7 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
   const addToCompare = useApp((s) => s.addToCompare)
   const openCompare = useApp((s) => s.openCompare)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [q, setQ] = useState('')
   const [sirenState, setSiren] = useState<string | null>(null)
@@ -307,11 +308,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {/* OUTILS-FIX-2 A1/A5 — sur sélection : pont Courrier (IDU du propriétaire résolu) + pont Comparer. */}
           {sel.size > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              <button data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers') }}
+              {/* OUTILS-FIX-3 Lot D — fil de retour : le Courrier/Comparer cible affiche « ← Scan patrimoine »,
+                  qui rouvre ce propriétaire (m02Prefill = SIREN résolu). */}
+              <button data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}
                 className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
                 ✉ Préparer les courriers ({sel.size})
               </button>
-              <button data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare() }}
+              <button data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}
                 className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
                 Comparer ({Math.min(sel.size, 3)}) →
               </button>
@@ -376,6 +379,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
   // OUTILS-FIX-2 A4 — pont Permis → Scan patrimoine (SIREN du porteur → m02Prefill, consommé par ScanPatrimoine).
   const setModule = useApp((s) => s.setModule)
   const setM02Prefill = useApp((s) => s.setM02Prefill)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   // géom du permis (centroïde parcelle) : présente ssi géocodé ; sinon on ne peut pas localiser.
   const geom = d?.['geom'] as { coordinates?: [number, number] } | null | undefined
   const parcelle = (d?.['parcelles'] as string[] | undefined)?.[0]
@@ -432,7 +436,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
                 source SITADEL n'exposerait qu'un SIRET. */}
             {d['porteur_siren'] && (
               <button data-permis-scan-patrimoine
-                onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose() }}
+                onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: permitId } }) }}
                 className="hover-fill mt-1.5 w-full rounded-lg border border-mint/35 py-1.5 text-center text-[11px] text-mint" title="Voir tout ce que ce porteur possède">
                 Scan patrimoine du porteur →</button>
             )}
@@ -1613,6 +1617,22 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // (catégorie plein écran, RadarView). Ancien composant RadarClient supprimé.
 }
 
+// OUTILS-FIX-3 Lot D — fil de retour UNIQUE entre outils : rendu en tête de CHAQUE outil (un seul
+// composant, un seul mécanisme = la pile `outilRetour`). N'apparaît QUE si l'outil a été ouvert par un
+// pont FIX-2 (la pile est vidée à toute nav manuelle) ; le clic rouvre l'outil de DÉPART dans son état.
+function RetourOutil() {
+  const stack = useApp((s) => s.outilRetour)
+  const retourOutil = useApp((s) => s.retourOutil)
+  if (!stack.length) return null
+  const top = stack[stack.length - 1]
+  return (
+    <button data-outil-retour onClick={retourOutil} title={`Revenir à ${top.label}`}
+      className="hover-fill flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick">
+      ← {top.label}
+    </button>
+  )
+}
+
 export function ModulePanel() {
   const { module, setModule, toggleOutils } = useApp()
   const def = MODULES.find((m) => m.key === module)
@@ -1666,6 +1686,7 @@ export function ModulePanel() {
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
+        <RetourOutil />
         <Body />
       </div>
     </aside>

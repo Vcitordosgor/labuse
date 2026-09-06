@@ -152,6 +152,9 @@ export function DensifierTablePanel() {
   // OUTILS-FIX-2 A5 — pont Listes → Comparer (même geste/compteur que Courrier ; limite 3 côté Comparer).
   const addToCompare = useApp((s) => s.addToCompare)
   const openCompare = useApp((s) => s.openCompare)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
+  // OUTILS-FIX-3 Lot D — l'outil cible affiche « ← Densifier » ; le retour rouvre le grand tableau.
+  const RETOUR_DENSIFIER = { module: 'renouvellement', label: 'Densifier', restore: { densifierTableOpen: true } } as const
   const [sort, setSort] = useState<(typeof SORTS)[number]['key']>('score')
   const [inclure, setInclure] = useState(false)   // LOT12b — écartées MASQUÉES par défaut (comme Solaire)
   const [sel, setSel] = useState<Set<string>>(new Set())   // A5 — sélection pour Comparer
@@ -273,7 +276,7 @@ export function DensifierTablePanel() {
                     <td className="px-2 py-1.5 text-right text-txt-mut">{it.rang_commune}</td>
                     {/* A2 — pont Faisabilité par parcelle (ouvre M22 mode « par parcelle » pré-rempli). */}
                     <td className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false) }}
+                      <button data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false); pushOutilRetour(RETOUR_DENSIFIER) }}
                         className="whitespace-nowrap text-[10px] font-medium text-mint hover:underline" title="Ouvrir la faisabilité détaillée de cette parcelle">Faisabilité →</button>
                     </td>
                   </tr>
@@ -289,7 +292,7 @@ export function DensifierTablePanel() {
           {sel.size > 0 && (
             <div className="mb-1.5">
               <button data-densifier-comparer
-                onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare() }}
+                onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour(RETOUR_DENSIFIER) }}
                 className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
                 Comparer ({Math.min(sel.size, 3)}) →
               </button>

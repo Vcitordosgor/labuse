@@ -106,6 +106,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   // OUTILS-FIX-2 A5 — pont Solaire piscines → Comparer (même sélection ; limite 3 côté Comparer).
   const addToCompare = useApp((s) => s.addToCompare)
   const openCompare = useApp((s) => s.openCompare)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
+  const RETOUR_SOLAIRE = { module: 'prospection-solaire', label: 'Prospection solaire' } as const
   const qc = useQueryClient()
   const [commune, setCommune] = useState<string | null>(null)
   // RETOURS-11F M12 — bascule « inclure les incertaines » : par défaut seule la confiance HAUTE (≥ 0,80)
@@ -239,14 +241,15 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         <>
           {/* A3/A5 — barre d'actions : export CSV (même bouton que Scan patrimoine) + pont Courrier. */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* OUTILS-FIX-3 Lot D — la cible affiche « ← Prospection solaire » (le retour rouvre l'outil). */}
             <button data-piscines-courrier disabled={sel.size === 0}
-              onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers') }}
+              onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour(RETOUR_SOLAIRE) }}
               className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
               ✉ Préparer les courriers ({sel.size}) → Courrier propriétaire
             </button>
             {/* OUTILS-FIX-2 A5 — pont Comparer (limite 3 côté Comparer). */}
             <button data-piscines-comparer disabled={sel.size === 0}
-              onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare() }}
+              onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour(RETOUR_SOLAIRE) }}
               className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
               Comparer ({Math.min(sel.size, 3)}) →
             </button>
