@@ -7,13 +7,11 @@ import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
-import { verdictMeta, type TierV2 } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
 
-function verdict(r: CompareRow) {
-  return verdictMeta((r.status ?? null) as never, (r.tier_v2 ?? null) as TierV2 | null, !!r.etage0)
-}
+// OUTILS-FIX-3 C1 — le verdict de scoring (verdictMeta) n'est plus affiché dans Comparer (badge « Faible »
+// retiré : on n'impose pas l'Analyse LABUSE sur cet écran). Import + helper `verdict` supprimés.
 
 // lignes du tableau (libellé, valeur) — resserrées : les doublons fiche (Capacité, CA estimé) retirés ;
 // ajoutés : prix terrain nu/zone (M79) + contrainte majeure explicite.
@@ -223,19 +221,21 @@ export function ComparePanel() {
                 <tr>
                   <th className="w-[150px] p-2" />
                   {parcels.map((r) => {
-                    const v = verdict(r)
                     return (
                       <th key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
                         <div className="flex items-center justify-between gap-2">
                           <button onClick={() => select(r.idu)} className="font-mono text-[11px] tracking-tight text-txt-hi hover:underline">{r.idu}</button>
                           <button onClick={() => removeFromCompare(r.idu)} title="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-1">
-                          {/* puce d'ACTION servie (M137) — dérivée de tier_v2 + étage 0, plus « Classement historique » */}
-                          <span className="inline-block rounded-full px-2 py-0.5 text-[10px]" style={{ color: v.color, border: `1px solid ${v.color}55` }}>{v.label}</span>
-                          {/* raison dominante M135 (chip court), comme sur la carte/la liste */}
-                          {r.raison && <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>}
-                        </div>
+                        {/* OUTILS-FIX-3 C1 — la puce de scoring (tier « Faible / Neutre / Priorité »… dérivée de
+                            tier_v2) est RETIRÉE : l'Analyse LABUSE n'a pas été demandée sur cet écran, on ne
+                            l'impose pas. Le chip « secteur qui bouge » (raison dominante M135) reste — c'est un
+                            fait de marché, pas un score. */}
+                        {r.raison && (
+                          <div className="mt-1 flex flex-wrap items-center gap-1">
+                            <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>
+                          </div>
+                        )}
                         {/* O9(a) — commune · fraction M135 (« 1/5 sous 1 an »). Le rang GLOBAL servi (ex.
                             « rang 271 141 » sur 431 663) ne veut rien dire pour l'utilisateur ; l'action
                             utile (le tier) est déjà portée par la puce ci-dessus. Un rang DANS LA COMMUNE
