@@ -265,7 +265,9 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # FUSION fix/retours-12 → main : les deux jeux d'ajouts coexistent au catalogue
     # (base 65 + CIRCUIT-3 2 + RETOURS-13/14 4 = 71) ; aucune source d'un côté ni de l'autre
     # n'est perdue — mesuré sur l'arbre fusionné.
-    assert len(noms) == 71
+    # CIRCUIT-5b lot 1 — +4 : les quatre « à rattacher » de CIRCUIT-5 (annuaire DILA, RNIC/Anah,
+    # RPLS/SDES, conso ENAF/Cerema) entrent au catalogue avec leur raison de non-surveillance.
+    assert len(noms) == 75
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

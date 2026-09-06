@@ -540,6 +540,13 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Office de l'eau Réunion — Chroniques de l'eau": "Seed CSV extrait à la main d'un PDF (chronique numérotée) — chaque édition = nouvelle URL, non surveillable proprement. Y4 : rappel de rafraîchissement posé.",
     # Autre
     "PVGIS (Commission européenne)": "API de CALCUL (v5.3 dans l'URL) — pas de jeu à millésime, le service ne versionne pas de données à comparer ; aucune requête témoin actionnable (réponse dérivée d'un modèle, pas d'une donnée ingérée).",
+    # CIRCUIT-5b lot 1 — les quatre « à rattacher » entrent au catalogue : millésimes annuels/mensuels
+    # SANS témoin amont à empreinte stable (pas de sonde réellement câblée) ; la fraîcheur est suivie par
+    # la cadence déclarée (rappel) et la page Circuit, jamais par une fausse veille.
+    "Annuaire de l'administration (service-public.fr / DILA)": "Annuaire DILA ingéré à la demande (24 mairies, OUTILS K2) ; le jeu ODS n'expose pas de millésime global à comparer sur l'emprise 974 (agrégat de fiches). Cadence mensuelle suivie par la page Circuit, pas par une sonde amont.",
+    "RNIC — registre national des copropriétés (Anah)": "Extraction annuelle data.gouv du registre Anah — pas de témoin amont à empreinte stable pour le 974 identifié ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
+    "RPLS — répertoire des logements locatifs sociaux (SDES)": "Publication annuelle SDES (millésime au 1ᵉʳ janvier) — pas de flux à empreinte stable à sonder ; la fraîcheur (millésime annuel) se lit sur la page Circuit.",
+    "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": "Portail national de l'artificialisation (Cerema) — millésime annuel, pas de témoin amont à empreinte stable identifié ; la fraîcheur se lit sur la page Circuit.",
 }
 
 #: SENTINELLE-3 (Y4) — les sources MANUELLES (alimentées par Vic, aucun amont public) reçoivent un RAPPEL

@@ -705,6 +705,41 @@ SOURCES: list[dict] = [
                          "un millésime couvrant La Réunion. La sentinelle surveille (api data.gouv, "
                          "last_update) ; le CRON calcule ; Vic promeut. AUCUNE variable au modèle sans "
                          "banc K0 (L3.2)."),
+    # ── CIRCUIT-5b lot 1 — les quatre « à rattacher » de CIRCUIT-5 entrent au catalogue ──
+    # Tables déjà servies (mairies, rnic_coproprietes, rpls_commune, commune_conso_enaf), slug déjà
+    # à la carte (RESERVOIR_TABLES) et lues par le registre ; il ne leur manquait que leur ligne
+    # data_sources. Chacune : producteur, mode d'accès, mode+cadence (MODE_ET_CADENCE) et une raison
+    # de non-surveillance (RAISONS_NON_SURVEILLEES) — millésimes annuels/mensuels sans témoin amont
+    # à empreinte stable, suivis par le rappel de cadence et la page Circuit.
+    dict(name="Annuaire de l'administration (service-public.fr / DILA)", category="acces",
+         provider="DILA (service-public.fr)", access_type="API/JSON",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="annuaire service-public.fr — 24 mairies (OUTILS K2)",
+         documentation_url="https://api-lannuaire.service-public.fr/",
+         endpoint_url="https://api-lannuaire.service-public.fr/api/explore/v2.1/catalog/datasets/api-lannuaire-administration/records",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DILA — Annuaire de l'administration (service-public.fr) ».",
+         technical_notes="OUTILS K2 : 24 mairies (adresse, téléphone, courriel, horaires, service urbanisme) ingérées depuis l'annuaire de l'administration. Table `mairies`, bloc MAIRIE du ContextePanel — un champ manquant reste ABSENT, jamais inventé. Cadence mensuelle."),
+    dict(name="RNIC — registre national des copropriétés (Anah)", category="logement",
+         provider="Anah (registre national d'immatriculation des copropriétés)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="RNIC (ANAH) — registre des copropriétés (extraction annuelle)",
+         documentation_url="https://www.data.gouv.fr/fr/datasets/registre-national-dimmatriculation-des-coproprietes/",
+         legal_notes="Licence Ouverte — attribution : « Source : Anah — Registre national d'immatriculation des copropriétés (RNIC) ».",
+         technical_notes="Table `rnic_coproprietes`. Copropriétés immatriculées rattachées à la parcelle (lots, syndic), servies à la fiche parcelle. Extraction annuelle data.gouv, filtre 974."),
+    dict(name="RPLS — répertoire des logements locatifs sociaux (SDES)", category="logement",
+         provider="SDES (répertoire des logements locatifs des bailleurs sociaux)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="RPLS — millésime 01/01/2025 (SDES)",
+         documentation_url="https://www.statistiques.developpement-durable.gouv.fr/le-repertoire-des-logements-locatifs-des-bailleurs-sociaux-rpls",
+         legal_notes="Licence Ouverte — attribution : « Source : SDES — Répertoire des logements locatifs des bailleurs sociaux (RPLS) ».",
+         technical_notes="Table `rpls_commune` (parc social par commune : nb_logements, construction médiane). Servi au contexte marché de la fiche commune, au Flash et au PDF premium. `pct_qpv` NON servi (valeur non discriminante — 100 % pour les 24 communes, RETOURS-11F). Millésime 01/01/2025."),
+    dict(name="Consommation d'espaces NAF (Cerema — portail de l'artificialisation)", category="urbanisme",
+         provider="Cerema (portail national de l'artificialisation des sols)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="conso ENAF 2021-2024 (portail artificialisation, Cerema)",
+         documentation_url="https://artificialisation.developpement-durable.gouv.fr/les-donnees/donnees-de-consommation-despaces",
+         legal_notes="Licence Ouverte — attribution : « Source : Cerema — portail national de l'artificialisation des sols ».",
+         technical_notes="Table `commune_conso_enaf` (consommation d'espaces NAF par commune, période 2021-2024). Lue par la pression ZAN et l'enveloppe ZAN restante (fiche commune, comparateur). Millésime annuel."),
 ]
 
 
@@ -788,6 +823,12 @@ RETRAITS: dict[str, str] = {
         "jamais branché, aucun usage identifié (audit M66/M71)",
     "ZNIEFF (INPN / Région)":
         "canal Région jamais alimenté (endpoint vivant, 0 donnée) — canonique : ZNIEFF (INPN/MNHN)",
+    # CIRCUIT-5b lot 2 — MOBPRO abandonné par ZONE-DONNÉES (emplois de zone servis par les tranches
+    # SIRENE) ; son unique lecteur, zone.emplois_communes, n'a plus aucun appelant (code mort vérifié
+    # par grep). Table mobpro_commune conservée (aucun DROP) ; réservoir marqué RETIRÉ dans la carte.
+    "MOBPRO (mobilités domicile-travail, INSEE)":
+        "abandonnée par ZONE-DONNÉES (emplois de zone = tranches d'effectif SIRENE) ; lecteur "
+        "zone.emplois_communes sans appelant (code mort) — table conservée, plus rien de servi",
 }
 
 HUBS: tuple[str, ...] = (
@@ -930,6 +971,11 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "CatNat (arrêtés GASPAR / Géorisques)": ("job_sur_clic", 190, "proposee"),
     "Taxe d'aménagement — taux communaux (délibérations)": ("depot_manuel", 365, "proposee"),
     "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": ("one_shot", 365, "proposee"),
+    # CIRCUIT-5b lot 1 — les quatre « à rattacher » entrent au catalogue avec leur cadence :
+    "Annuaire de l'administration (service-public.fr / DILA)": ("cron_mensuel", 35, "proposee"),
+    "RNIC — registre national des copropriétés (Anah)": ("one_shot", 365, "proposee"),
+    "RPLS — répertoire des logements locatifs sociaux (SDES)": ("one_shot", 365, "proposee"),
+    "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": ("one_shot", 365, "proposee"),
 }
 
 

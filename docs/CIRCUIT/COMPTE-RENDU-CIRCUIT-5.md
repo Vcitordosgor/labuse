@@ -403,3 +403,187 @@ Lues dans COMPTE-RENDU-CIRCUIT-1→4 et P (P3 surtout), vérifiées dans le code
   (`Donnee.reservoirs`) sont ceux de ce CSV.
 - **Référentiel 24 communes** : `ingestion/run_all.py:REUNION_COMMUNES` (97401→97424),
   exposé `INSEE_24`/`NOMS_24` dans `filtres/cadre.py`.
+
+---
+
+# 5b — Les restes tranchés (CIRCUIT-5b, 06/09/2026)
+
+*Branche `feat/circuit-5b`, depuis `main` (CIRCUIT-5 mergé, `18261fc9`). Cinq lots, un commit
+et un push chacun, rien mergé. Décisions prises par Vic le 06/09/2026 ; CC les applique et
+vérifie avec `labuse circuit verrous --complet` en fin de chaque lot.*
+
+**Repère « avant » (base locale, main).** `labuse circuit verrous --complet` : **16 verrous
+joués, 0 cassé, 3 à décider** — V1c (2 orphelines `p_model_static_pre_v8`,
+`parcel_residuel_pre_v8`), V1d (**8 réservoirs sans lecteur** : bd_ortho_irc, cadastre_epoque,
+inpi_rne, lidar_hd_mnh, mobpro, office_eau_chroniques, parkings_osm_aper,
+recherche_entreprises_dinum), V4a (1 ligne SIRENE hors référentiel, contrainte NOT VALID).
+V2a : **68 = 68 = 68**.
+
+## Lot 1 — les quatre « à rattacher » entrent au catalogue
+
+Les quatre tables servies sans ligne `data_sources` (RATTACHEMENTS_A_DECIDER de CIRCUIT-5)
+sont désormais des **sources de première classe**. Pour chacune : une ligne `data_sources`
+complète (`ingestion/seed_sources.py`), une entrée `MODE_ET_CADENCE`, une raison de
+non-surveillance (`sentinelle.RAISONS_NON_SURVEILLEES` — millésimes annuels/mensuels sans
+témoin amont à empreinte stable, suivis par la cadence et la page Circuit), un slug au pont
+(`circuit_etats.NOM_VERS_SLUG`), sa place à la carte (`registre/tables.py:RESERVOIR_TABLES`)
+et ses lecteurs déclarés au registre (`registre/donnees.py`) :
+
+| Table | Slug | Producteur | Cadence | Lecteur(s) déclaré(s) |
+|---|---|---|---|---|
+| `mairies` | `annuaire_service_public` | DILA (service-public.fr) | mensuelle | `mairie_coordonnees` (déjà déclaré) |
+| `rnic_coproprietes` | `rnic_anah` | Anah (RNIC) | annuelle | `coproprietes_liste` (déjà déclaré) |
+| `rpls_commune` | `rpls_sdes` | SDES (RPLS) | annuelle | **`parc_social_rpls_logements`** (nouvelle donnée, robinet `fiche_parcelle_marche`) |
+| `commune_conso_enaf` | `enaf_cerema` | Cerema (artificialisation) | annuelle | `pression_zan_ha`, `zan_reste_ha` (réservoir déclaré) |
+
+`rpls_commune` et `commune_conso_enaf` quittent `TABLES_EXPLOITATION` (elles étaient marquées
+« servie sans réservoir ») pour `RESERVOIR_TABLES` ; `annuaire_service_public` et `rnic_anah`
+y étaient déjà (leurs lecteurs aussi). `RATTACHEMENTS_A_DECIDER` est désormais **vide**.
+
+**Doute écrit (décision : option la plus sûre).** Le mandat dit que RPLS « porte les données
+`taux_lls_pct` et voisines ». Le code sert en réalité `taux_lls_pct` depuis l'inventaire SRU
+(`commune_contexte_sru` → réservoir `sru_dhup`, source « Inventaire SRU (DHUP) »), tandis que
+`rpls_commune` porte le **parc social** (nb_logements, construction médiane) servi au contexte
+marché de la fiche parcelle, au Flash et au PDF (`api/app.py` marche_secteur, `flash/data.py`,
+`pdf_premium.py`). Repointer `taux_lls_pct` sur RPLS aurait **changé une valeur servie** (le
+taux LLS vient bien du SRU). Choix : ne rien déplacer de servi ; déclarer le vrai lecteur de
+RPLS — une donnée neuve `parc_social_rpls_logements` (parc social RPLS, millésime 01/01/2025).
+
+**Résultat.** V2a : **72 = 72 = 72** (vitrine SQL, prédicat Python, page) ; 66 tables de
+réservoir, une génération chacune (V3a). `labuse circuit verrous --complet` : 0 cassé, 3 à
+décider inchangées (V1c, V1d, V4a — lots 2/3/4). Tests : `tests/verrous/` +
+`tests/test_sentinelle.py` (couverture 71 → **75** sources) + `tests/test_registre.py`
+(MODE_ET_CADENCE 80 → **84**) verts. `VERROUS.md` mis à 72.
+
+## Lot 2 — les huit réservoirs muets
+
+Avant tout retrait, `grep` sur les lecteurs (moteurs, ingestion, couches, jobs) de chaque
+table. **Verdict : sept réservoirs ont un lecteur vivant → rattachés ; un seul est mort →
+retiré.** La règle du mandat (« s'il trouve un lecteur, rattacher au lieu de retirer ») a donc
+requalifié quatre des cinq candidats au retrait.
+
+| Réservoir | Table(s) | Lecteur trouvé (preuve) | Décision |
+|---|---|---|---|
+| `cadastre_epoque` | cadastre_historique | rattachement géométrique des permis orphelins — `ingestion/cadastre_historique.py:248` (JOIN → `sitadel_permits.geom`, RETOURS-14) | **rattaché** → `historique_permis_liste` |
+| `inpi_rne` | pm_dirigeants | Scan patrimoine — `api/modules.py:271` (`inpi_sans_dirigeant`), `modules.py:1159` (dirigeant inactif) | **rattaché** → nouvelle donnée `dirigeant_pm_signal` (robinet `outil_scan_patrimoine`) |
+| `lidar_hd_mnh` | toiture_lidar | fiche soleil — `solaire_toiture.py:166` (SELECT), via `api/modules.py:prospection_solaire` | **rattaché** → `prod_spec_kwh_kwc` |
+| `bd_ortho_irc` | parcel_vegetation | ombrage végétal (canopée NDVI×MNH) — `flash/data.py:650` (ombrage_pct servi), `ingestion/solaire.py:311`, `scoring/icd.py` | **rattaché** → `prod_spec_kwh_kwc` |
+| `office_eau_chroniques` | anc_office_eau_commune | ANC commune — `anc_service.py:59` (SELECT, communes 100 % ANC servies depuis M95) | **rattaché** → `part_logements_egout_pct` |
+| `parkings_osm_aper` | parkings_aper | note obligation ombrières APER — `faisabilite/viabilisation_build.py:174` (SELECT, servi à la fiche) | **rattaché** → `viabilisation_verdict` |
+| `recherche_entreprises_dinum` | owner_enrichment, owner_denom_lookup | Score V — `scoring/score_v.py:90,98` (SELECT), facettes propriétaire `api/app.py:1580` | **rattaché** → `evenements_proprietaire_liste` |
+| `mobpro` | mobpro_commune | **AUCUN vivant** : seul lecteur `zone.emplois_communes`, sans aucun appelant (grep) ; `emplois_zone` (SIRENE) l'a remplacé | **retiré** (statut `retiree`, 06/09/2026) + note RETIRÉ à la carte |
+
+**Doute écrit (décision Vic tranchée à l'inverse par la preuve).** Le mandat rangeait
+`bd_ortho_irc`, `office_eau_chroniques`, `parkings_osm_aper` et `recherche_entreprises_dinum`
+en « à retirer » (supposés muets). Le grep prouve un lecteur vivant SERVI pour chacun (cf.
+tableau) : la règle explicite du lot impose de les **rattacher**, pas de les retirer. Seul
+MOBPRO n'a plus de lecteur (`emplois_communes` est du code mort) et est retiré.
+
+**Conséquence sur le compte.** MOBPRO était SERVIE (statut `manuel`) : la retirer fait passer
+V2a de 72 à **71 = 71 = 71** (les sept rattachements ne changent pas la vitrine, seulement le
+registre). Aucun DROP : `mobpro_commune` reste en base, réservoir marqué RETIRÉ.
+
+**Résultat.** V1d : **plus aucun réservoir muet** (« chaque réservoir servi est lu »). Nouvelle
+donnée `dirigeant_pm_signal` servie par un seul robinet → mono-robinet (V5c). `labuse circuit
+verrous --complet` : 16 verrous, **0 cassé, 2 à décider** (V1c orphelines, V4a SIRENE — lots 3/4).
+Tests `tests/verrous/` + `test_registre` + `test_sentinelle` : 104 passés.
+
+## Lot 3 — la ligne SIRENE au code INSEE invalide
+
+V4a signalait UNE ligne héritée hors référentiel dans `sirene_etablissements` :
+
+| siret | siren | naf | adresse | insee | coordonnées |
+|---|---|---|---|---|---|
+| 83939934200147 | 839399342 | 9499Z | 133 JULES REYDELLET | **97454** (inexistant) | POINT(55.4904 −20.9365) |
+
+**Coquille identifiable** (donc corrigée, pas supprimée) : la rue Jules Reydellet est à
+Saint-Denis, et le point est à **3 m des parcelles 97411** (`ST_Distance` sur le cadastre servi ;
+aucune parcelle des 24 autres communes plus proche). Le code correct est **97411** (Saint-Denis)
+— 97454 est hors du référentiel 97401→97424.
+
+Correction codifiée dans `referentiel_communes.CORRECTIONS_INSEE_HERITEES` (clé `siret` + ancien
+code `97454` → idempotente) et appliquée par `poser_fks()` AVANT la validation : `insee` 97454 →
+97411, `commune` → « Saint-Denis ». Aucun DELETE (règle « aucune source effacée »). Une coquille
+NON identifiable resterait fautive (NOT VALID, nommée par V4a) pour le geste de Vic.
+
+**Résultat.** `VALIDATE CONSTRAINT fk_sirene_etablissements_commune` réussit → V4a passe de
+« not_valid » à **valide** (« 24 tables sous clé étrangère, toutes validées »). `labuse circuit
+verrous --complet` : **0 cassé, 1 à décider** (V1c orphelines — lot 4). Tests `test_lot4_communes` : 12 passés.
+
+## Lot 4 — `bascule_gardes` débranchée des photos pré-v8
+
+La 3ᵉ brique de `bascule_gardes` (`ensure_backups`) figeait deux tables-PHOTO avant chaque
+bascule — `parcel_residuel_pre_v8` (`CREATE TABLE … AS SELECT * FROM parcel_residuel`) et
+`p_model_static_pre_v8` — comme filet de retour arrière. Or le **manifeste (CIRCUIT-1 lot 3)**
+retient DÉJÀ le run servi ET le précédent : le résiduel de chaque run vit dans
+`parcel_residuel_runs` (jamais écrasé, `residuel_runs` marque le servi), les scores dans
+`parcel_p_score_v2` (`p_score_v2_runs` les registre), et `runs.current()` / `runs.precedent()`
+nomment les deux runs. La photo était donc redondante.
+
+**Réécriture.** Nouvelle garde `verify_rollback_manifeste(candidate=None)` :
+1. **rollback possible SANS photo** — `residuel_runs` retient ≥ 2 runs (servi + antérieur) et
+   `p_score_v2_runs` retient le run servi ET le précédent ; sinon `RollbackImpossibleError`
+   (le filet manquant est CRIÉ avant la bascule, plus jamais un silence) ;
+2. **comparaison au manifeste** — si un `candidate` est fourni, son volume `parcel_p_score_v2`
+   est comparé AU RUN SERVI ET AU PRÉCÉDENT (jamais à une photo) : candidat vide → bloquant,
+   écart > 20 % → alerte bruyante non bloquante.
+
+`ensure_backups` reste un **shim déprécié** (ne fige plus rien, délègue à la nouvelle garde) :
+les six scripts de bascule historiques (`bascule_v8_calibre`, `bascule_m28/m32/m39`,
+`bascule_bati_revele`, `bascule_ponderation`) continuent de s'importer et de tourner sans
+recréer de photo. `bascule_gardes` ne lit ni n'écrit plus AUCUNE table `*_pre_v8`.
+
+**Résultat.** `parcel_residuel_pre_v8` et `p_model_static_pre_v8` redeviennent des **orphelines
+ordinaires** : listées par `labuse tables purger` (79,1 Mo + 17,2 Mo, action « archiver »),
+elles attendent le geste de Vic (`--apply` → schéma `poubelle`, jamais un DROP). Test
+`test_bascule_gardes` : 10 passés (dont une garde qui PROUVE qu'aucune photo pré-v8 n'est lue —
+le SQL est refusé si le nom contient `pre_v8`). Verrous : 0 cassé, V1c liste les 2 orphelines.
+
+## Lot 5 — vérification
+
+`labuse circuit verrous --complet` sur la base locale servie : **16 verrous joués, 0 cassé,
+1 à décider**.
+
+```
+✓ V1a  6 modules moteur + 171 données passés au crible
+✓ V1b  10 tables touchées pendant la sonde, toutes dans la carte
+… V1c  2 orpheline(s) à purger/archiver : p_model_static_pre_v8 · parcel_residuel_pre_v8
+✓ V1d  chaque réservoir servi est lu par au moins une donnée du registre
+✓ V2a  71 = 71 = 71 (vitrine SQL, prédicat, page) ; 71 sources servies toutes dans la carte
+✓ V2b  toutes les lignes hors vitrine disent pourquoi
+✓ V3a  66 tables de réservoir, une génération servie chacune
+✓ V3b  aucune eau ouverte (2 gels assumés étiquetés)
+✓ V3c  écarts et eau ancienne attribuables (ids du registre)
+✓ V4a  24 tables sous clé étrangère, toutes validées
+✓ V4b  Saint-Benoît et Sainte-Marie servent chacune SES valeurs
+✓ V4c  3 parcelles frontière : commune et document PLU de LEUR commune
+✓ V4d  15 cartes × 24 communes : un attendu ou un à-valider partout
+✓ V5a  171 données, aucun libellé ni définition en double hors 2 groupes assumés
+✓ V5b  171 données : une fonction chacune, sql_propre = 0, front = 0
+✓ V5c  8 couples sondés · 112 raisonnés · 120 mono-robinet
+— 16 verrou(s) joué(s) · 0 cassé(s) · 1 à décider
+```
+
+**Capture du Résumé (`synthese_pour_page`) — avant / après CIRCUIT-5b :**
+
+| Repère | Avant (main) | Après (feat/circuit-5b) |
+|---|---|---|
+| verrous cassés | 0 | 0 |
+| **réservoirs sans lecteur (V1d)** | **8** (bd_ortho_irc, cadastre_epoque, inpi_rne, lidar_hd_mnh, mobpro, office_eau_chroniques, parkings_osm_aper, recherche_entreprises_dinum) | **0** |
+| **rattachements à décider** | **4** (mairies, rnic_coproprietes, rpls_commune, commune_conso_enaf) | **0** |
+| lignes commune fautives (V4a) | 1 (sirene 97454) | 0 (corrigée → 97411, contrainte validée) |
+| sources servies (V2a) | 68 = 68 = 68 | 71 = 71 = 71 (+4 catalogue −1 MOBPRO) |
+| orphelines (V1c, geste de Vic) | 2 (photos pré-v8, lues par bascule_gardes) | 2 (photos pré-v8, **débranchées** — orphelines ordinaires) |
+
+Le « à décider » est désormais **réduit aux seules orphelines** (`p_model_static_pre_v8`,
+`parcel_residuel_pre_v8`) qui attendent le geste de Vic (`labuse tables purger --apply`).
+
+**Tests.** `pytest -m verrous` : 65 passés. Modules touchés (`test_registre`, `test_sentinelle`,
+`test_bascule_gardes`, `test_mr_gardes`, `test_flux`, `test_sources_fix`, `test_golden_run_servi`,
+`test_coherence_tables_run`) : 80 passés. `VERROUS.md` à jour. (Collection `test_non_contradiction`
+ignorée : `OSError libgobject` WeasyPrint = FZ-002 pré-existant, indépendant de CIRCUIT-5b.)
+
+**Bilan CIRCUIT-5b.** Les quatre « à rattacher » sont des sources au catalogue ; les huit
+réservoirs muets sont tranchés (sept rattachés par leur lecteur vivant, MOBPRO retirée) ; la
+coquille INSEE SIRENE est corrigée et la contrainte validée ; `bascule_gardes` compare au
+manifeste, plus à une photo. Il ne reste au Résumé que deux orphelines pour le geste de Vic.

@@ -1,6 +1,6 @@
 # FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)
 
-*Généré du registre le 2026-09-05 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
+*Généré du registre le 2026-09-06 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
 
 # Fiche commune
 
@@ -19,7 +19,7 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `zan_reste_ha` | nombre | Enveloppe ZAN (reste) | interne (aucun réservoir) | moteur `commune_compteurs` · src/labuse/api/rarete.py:compute_rarete (reste_zan_ha — producteur nommé, délégation) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `zan_reste_ha` | nombre | Enveloppe ZAN (reste) | enaf_cerema | moteur `commune_compteurs` · src/labuse/api/rarete.py:compute_rarete (reste_zan_ha — producteur nommé, délégation) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *enveloppe restante estimée depuis conso ENAF* | | | | | |
 
 ## Logement social — SRU
@@ -166,7 +166,7 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `mairie_coordonnees` | texte | Mairie & service urbanisme (coordonnées) | annuaire_service_public | passe-plat · src/labuse/ingestion/mairies.py (bloc MAIRIE) — table lue : mairies | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| `mairie_coordonnees` | texte | Mairie & service urbanisme (coordonnées) | annuaire_service_public (annuaire service-public.fr — 24 mairies (OUTILS K2)) | passe-plat · src/labuse/ingestion/mairies.py (bloc MAIRIE) — table lue : mairies | live | servie · non déterminée · non calculée | nulle part ailleurs |
 | | | *adresse, téléphone, courriel et horaires de la mairie — champ manquant = ABSENT, jamais inventé* | | | | | |
 
 # Fiche annonce (Radar)
@@ -201,5 +201,5 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)) | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Solaire (rosace, productible) » |
+| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Solaire (rosace, productible) » |
 | | | *productible PVGIS SARAH3 gelé au run du builder (parcel_solar)* | | | | | |

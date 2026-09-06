@@ -108,7 +108,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "insee_rp_logement": Rt(("commune_insee_logement",)),
     "insee_rp2022_egoul": Rt(("anc_maille_taux",), millesime="RP2022 — fichier détail Logements (16/10/2025)"),
     "filosofi_carreaux": Rt(("filosofi_carreaux_200m", "p_model_filo"), millesime="millésime 2021"),
-    "mobpro": Rt(("mobpro_commune",), millesime="MOBPRO INSEE — fichier détail (millésime RP)"),
+    "mobpro": Rt(("mobpro_commune",), millesime="MOBPRO INSEE — fichier détail (millésime RP)",
+                 note="RETIRÉ 06/09/2026 (CIRCUIT-5b) — abandonné par ZONE-DONNÉES ; lecteur "
+                      "zone.emplois_communes sans appelant (code mort). Table conservée, plus lue."),
     "bpe_insee": Rt(("spatial_layers",), couches=("amenite_bpe",),
                     millesime="millésime 2025 (géographie au 01/01/2025)"),
     "contours_iris": Rt(("spatial_layers",), couches=("iris_insee",),
@@ -118,6 +120,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "annuaire_service_public": Rt(("mairies",),
                                   millesime="annuaire service-public.fr — 24 mairies (OUTILS K2)"),
     "rnic_anah": Rt(("rnic_coproprietes",), millesime="RNIC (ANAH) — registre des copropriétés"),
+    "rpls_sdes": Rt(("rpls_commune",), millesime="RPLS — millésime 01/01/2025 (SDES)"),
+    "enaf_cerema": Rt(("commune_conso_enaf",),
+                      millesime="conso ENAF 2021-2024 (portail artificialisation, Cerema)"),
     # ── géographie physique / imagerie ─────────────────────────────────────────────
     "bd_topo": Rt(("spatial_layers",), couches=("batiment", "voirie", "water", "ravine"),
                   millesime="BD TOPO® V3 (IGN)"),
@@ -326,8 +331,9 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "entite_acronyme": "référentiel des acronymes",
     "lettre_zonage_refs": "références lettre de zonage",
     "piscine_corrections": "curation humaine (piscines)",
-    "rpls_commune": "RPLS logement social — donnée servie sans réservoir (voir RATTACHEMENTS_A_DECIDER)",
-    "commune_conso_enaf": "conso ENAF — donnée servie sans réservoir (voir RATTACHEMENTS_A_DECIDER)",
+    # CIRCUIT-5b lot 1 — rpls_commune (→ rpls_sdes) et commune_conso_enaf (→ enaf_cerema) sont
+    # désormais des RÉSERVOIRS de première classe (voir RESERVOIR_TABLES), plus des tables
+    # d'exploitation « servies sans réservoir » : une source = une ligne data_sources.
 }
 
 #: Relations système PostGIS — jamais orphelines, jamais purgées.
@@ -338,12 +344,11 @@ POSTGIS: frozenset[str] = frozenset({
 #: Tables SERVIES par un écran mais sans ligne `data_sources` (ou sans slug réservoir) — la
 #: question est pour Vic : créer la ligne au catalogue, ou rattacher à une ligne existante.
 #: Elles apparaissent au Résumé sous « à décider » (lot 1.4) — PAS des orphelines.
-RATTACHEMENTS_A_DECIDER: dict[str, str] = {
-    "mairies": "slug registre annuaire_service_public SANS ligne data_sources — créer la ligne catalogue ?",
-    "rnic_coproprietes": "slug registre rnic_anah SANS ligne data_sources — créer la ligne catalogue ?",
-    "rpls_commune": "RPLS (logement social) servi au Flash/PDF — ni slug registre ni ligne catalogue",
-    "commune_conso_enaf": "conso d'espaces NAF (passe-plat pression_zan_ha) — ni slug ni ligne catalogue",
-}
+#: CIRCUIT-5b lot 1 — les quatre « à rattacher » de CIRCUIT-5 sont TRANCHÉS : ce sont des
+#: sources, entrées au catalogue (data_sources), au pont (NOM_VERS_SLUG) et à la carte
+#: (RESERVOIR_TABLES : annuaire_service_public, rnic_anah, rpls_sdes, enaf_cerema). Plus aucun
+#: rattachement en attente — le dict reste (le Résumé le lit) mais vide.
+RATTACHEMENTS_A_DECIDER: dict[str, str] = {}
 
 #: Action proposée pour les orphelines CONNUES (curation CIRCUIT-5 — la purge reste le geste
 #: de Vic, `labuse tables purger --apply`). Une orpheline hors de ce dict = « à décider ».
@@ -363,11 +368,11 @@ ACTIONS_PROPOSEES: dict[str, str] = {
     "ortho_verdicts_quarantaine": "archiver (quarantaine ortho historique)",
     "p_model_bati_features": "purger (features d'essai modèle P)",
     "p_model_scores_2026": "archiver (scores modèle P 2026 — photo)",
-    "p_model_static_pre_v8": "archiver (photo pré-v8 — lue par bascule_gardes, à débrancher d'abord)",
+    "p_model_static_pre_v8": "archiver (photo pré-v8 — débranchée de bascule_gardes, CIRCUIT-5b lot 4 ; orpheline ordinaire, purge au geste de Vic)",
     "parcel_adjacence": "archiver (adjacence — plus aucun lecteur)",
     "parcel_au_statut_pre_m32": "purger (photo pré-M32, CIRCUIT-0)",
     "parcel_au_statut_prebascule": "purger (photo pré-bascule)",
-    "parcel_residuel_pre_v8": "archiver (photo pré-v8 — lue par bascule_gardes, à débrancher d'abord)",
+    "parcel_residuel_pre_v8": "archiver (photo pré-v8 — débranchée de bascule_gardes, CIRCUIT-5b lot 4 ; orpheline ordinaire, purge au geste de Vic)",
     "parcel_residuel_rerun": "purger (rerun d'essai)",
     "parcel_vue_mer": "archiver (vue mer — plus aucun lecteur)",
     "parcel_zone_plu_prebascule": "purger (photo pré-bascule)",

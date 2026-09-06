@@ -1,6 +1,6 @@
 # FICHE PARCELLE — donnée par donnée
 
-*Généré du registre le 2026-09-05 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
+*Généré du registre le 2026-09-06 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
 
 Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient (source et millésime servis), par quel chemin (moteur nommé ou passe-plat), sa portée (`run` = change à la bascule · `live` = à l'injection · `projet` = saisie du client), ses états possibles, et où ailleurs elle s'affiche.
 
@@ -98,6 +98,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *ventes DVF écartées par le filtre de comparables, avec motif (couverture visible)* | | | | | |
 | `dvf_parcelle_liste` | liste | Mutations de la parcelle (DVF) | dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020) | moteur `marche_service` · src/labuse/api/app.py:_q_v2_fiche (dvf_parcelle) — table lue : v_parcel_dvf_last + dvf_secteur_medianes | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *dernière mutation de la parcelle + médianes du secteur cadastral (indicateur secondaire, étiqueté — EXPORTS-1 1.3)* | | | | | |
+| `parc_social_rpls_logements` | nombre | Parc social (logements RPLS) | rpls_sdes | passe-plat · src/labuse/api/app.py (marche_secteur — rpls_commune) — table lue : rpls_commune (nb_logements, construct_median) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring* | | | | | |
 
 ## Réseaux et accès
 
@@ -111,9 +113,9 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *surface détectée parcel_equipements (BD ORTHO 2025)* | | | | | |
 | `distance_arret_m` | nombre | Transport public — au plus proche | gtfs_pan (7 jeux PAN, màj 2025-12-29 → 2026-08-17), osm_transport (extraction Overpass (base OSM vivante, ODbL)) | moteur `parcelle_proximites` · src/labuse/registre/moteurs/parcelle.py:plus_proche | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *plus proche arrêt/pôle (distance en m)* | | | | | |
-| `part_logements_egout_pct` | nombre | Logements raccordés à l'égout | insee_rp2022_egoul (RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)) | moteur `anc` · src/labuse/anc_service.py:statut_anc (producteur nommé, délégation) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| `part_logements_egout_pct` | nombre | Logements raccordés à l'égout | insee_rp2022_egoul (RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)), office_eau_chroniques (Chronique n°149 — données 2023) | moteur `anc` · src/labuse/anc_service.py:statut_anc (producteur nommé, délégation) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *part des logements raccordés au tout-à-l'égout (INSEE RP2022 EGOUL, maille IRIS, repli commune) — le TAUX, jamais un verdict* | | | | | |
-| `viabilisation_verdict` | texte | Viabilisation (faisceau) | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), rge_alti (RGE ALTI® (IGN) — édition non enregistrée) | passe-plat · src/labuse/api/app.py:_viabilisation_block — table lue : parcel_viabilisation (faisceau) | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| `viabilisation_verdict` | texte | Viabilisation (faisceau) | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), rge_alti (RGE ALTI® (IGN) — édition non enregistrée), parkings_osm_aper | passe-plat · src/labuse/api/app.py:_viabilisation_block — table lue : parcel_viabilisation (faisceau) | live | servie · non déterminée · non calculée | nulle part ailleurs |
 | | | *indicateur de viabilisation par faisceau de preuves (accès, réseaux) + gestionnaires — jamais un booléen inventé* | | | | | |
 
 ## Autour de cette parcelle
@@ -128,7 +130,7 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *permis Sitadel dans le rayon 500 m, fenêtre 24 mois — LE profil client (arbitrage Q7), paramètres TRANSMIS au moteur (EXPORTS-1 4.1, plus jamais les défauts 300 m · 5 ans)* | | | | | |
 | `depots_secteur_n` | nombre | Déposés sur le secteur (36 mois) | sitadel (2026-07) | moteur `marche_service` · src/labuse/ingestion/permits.py:depots_recents (via marche_service, profil fiche_36m) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *dépôts Sitadel de la section cadastrale (préfixe IDU 10), fenêtre 36 mois (DEPOTS_FENETRE_MOIS, profil fiche_36m)* | | | | | |
-| `historique_permis_liste` | liste | Sur cette parcelle (permis) | sitadel (2026-07) | moteur `marche_service` · src/labuse/api/app.py:_historique_site — table lue : sitadel_permits | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| `historique_permis_liste` | liste | Sur cette parcelle (permis) | sitadel (2026-07), cadastre_epoque | moteur `marche_service` · src/labuse/api/app.py:_historique_site — table lue : sitadel_permits | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *permis déposés/autorisés sur la parcelle (Sitadel) + caducité — chaque ligne datée* | | | | | |
 | `voisinage_100m_liste` | liste | Autour, à moins de 100 m | dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020), sitadel (2026-07) | moteur `marche_service` · src/labuse/api/site_voisinage.py:voisinage_proche — table lue : dvf_mutations_parcelle + sitadel_permits (buffer 100 m) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *ventes DVF + permis récents (36 mois) dans le buffer 100 m, site exclu (doctrine M38)* | | | | | |
@@ -145,7 +147,7 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *personne morale (dénomination) / personne physique non recensée — fichier PM parcelle_personne_morale, millésime 2025 (même assiette que la carte — EXPORTS-1 5.4 : la ligne « non renseigné » stockée au run est rebranchée sur le fichier PM à la lecture)* | | | | | |
 | `proprietaire_timeline_liste` | liste | Historique propriétaire (millésimes PM) | dgfip_parcelles_pm (Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)) | moteur `proprietaire_historique` · src/labuse/proprietaire_historique.py:historique — table lue : pm_proprietaires_millesimes ∪ parcelle_personne_morale | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *timeline unifiée versionné∪servi du fichier PM (2019→2025), diff CONSTAT — servi jamais écrasé* | | | | | |
-| `evenements_proprietaire_liste` | liste | Événements propriétaire (BODACC) | bodacc, sirene_etablissements (SIRENE géolocalisé — publication mensuelle INSEE) | moteur `v_score` · src/labuse/api/app.py:_q_v2_fiche (score_v, evenement) — table lue : parcel_v_score + bodacc_* | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| `evenements_proprietaire_liste` | liste | Événements propriétaire (BODACC) | bodacc, sirene_etablissements (SIRENE géolocalisé — publication mensuelle INSEE), recherche_entreprises_dinum | moteur `v_score` · src/labuse/api/app.py:_q_v2_fiche (score_v, evenement) — table lue : parcel_v_score + bodacc_* | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *événements datés du score V (procédures, radiations) — faits publics, chacun sourcé* | | | | | |
 
 ## Confiance données
@@ -163,7 +165,7 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)) | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Fiche soleil (photo toit + rosace) » |
+| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Fiche soleil (photo toit + rosace) » |
 | | | *productible PVGIS SARAH3 gelé au run du builder (parcel_solar)* | | | | | |
 
 ## Division (copropriétés/lots)

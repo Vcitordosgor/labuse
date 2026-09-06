@@ -110,7 +110,9 @@ def test_modes_cadences_declares(db_session):
     from labuse.ingestion.seed_sources import MODE_ET_CADENCE, appliquer_modes_cadences
     # 77 → 80 : CIRCUIT-5 lot 2.3, verifier_catalogue() a attrapé CatNat, Taxe
     # d'aménagement et Cadastre d'époque sans mode ni cadence — déclarés depuis.
-    assert len(MODE_ET_CADENCE) == 80
+    # 80 → 84 : CIRCUIT-5b lot 1, les quatre « à rattacher » (annuaire DILA, RNIC/Anah,
+    # RPLS/SDES, conso ENAF/Cerema) entrent au catalogue avec leur mode + cadence.
+    assert len(MODE_ET_CADENCE) == 84
     modes = {m for m, _, _ in MODE_ET_CADENCE.values()}
     assert modes <= {"job_sur_clic", "cron_mensuel", "depot_manuel", "one_shot", "en_direct", "absente"}
     statuts = {s for _, _, s in MODE_ET_CADENCE.values()}
