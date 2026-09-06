@@ -72,6 +72,7 @@ ml = [
   "segmentation-models-pytorch>=0.3",
   "pandas>=2.0",
   "openpyxl>=3.1",
+  "py7zr>=0.21",   # ingestion cadastre historique (archives .7z DGFiP) — hors-ligne, jamais servi en prod
 ]
 # RETOURS-15 U5 — l'extra `lidar` (R31) est SUPPRIMÉ : rasterio/scipy sont des dépendances de
 # série (voir dependencies) — l'optionnel, que rien n'installait, rendait la toiture muette.
