@@ -46,3 +46,39 @@ déjà éprouvés par CIRCUIT-1 et couverts par les tests backend ; seule la coq
 PYTHONPATH=src DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib uvicorn labuse.api.app:app --port 8010
 BASE=http://127.0.0.1:8010 node qa/circuit_p_recette.mjs
 ```
+
+---
+
+## 3. Recette CIRCUIT-P2 (retours de recette du 06/09) — `qa/circuit_p2_captures.mjs`
+
+Même harnais (`frontend/circuit-harness.html`, Chrome `chromium_headless_shell-1217`, 1440×900),
+fixtures RÉELLES capturées de la base dans `qa/fixtures/circuit_p2/*.json` (run servi `q_v11_m137`,
+82 réservoirs, 130 robinets, journal avec un passage groupé de filtres). **Aucune base touchée.**
+Les tâches longues (contrôle, agents) sont simulées par une petite machine à états dans le stub
+(progression → message ; agents **sans crédit** → message clair).
+
+Rejeu :
+```
+cd frontend && npm run dev            # vite (base /socle/) — écoute sur localhost:5173
+BASE=http://localhost:5173 node qa/circuit_p2_captures.mjs
+```
+
+Captures (`P2-01`→`P2-13`) :
+
+| # | vue |
+|---|-----|
+| P2-01 | Résumé **sans enrobage** (3 onglets, 2 boutons, aucun bandeau « à jour ? ») |
+| P2-02 | repère « N / 68 » → **page du compteur** (réservoirs par état + lignes non servies) |
+| P2-03 | Circuit — interrupteur **ALLUMÉ** (seulement ce qui cloche) |
+| P2-04 | Circuit — interrupteur **ÉTEINT** (tout ; même titre de colonne) |
+| P2-05 | « Vérifier que tout coule » → **ligne de progression** sous les onglets |
+| P2-06 | contrôle terminé → **message** + Résumé rafraîchi |
+| P2-07 | « Envoyer les agents » **sans crédit** → message clair, rien lancé (jamais grisé) |
+| P2-08 | page de détail d'un **réservoir** (« Envoyer un agent » actif) |
+| P2-09 | page de détail d'un **robinet** (passe-plat neutre, hors moteur ambre) |
+| P2-10 | page de détail de la **pompe** |
+| P2-11 | **journal** — un passage groupé sur une ligne |
+| P2-12 | journal — passage groupé **déplié** source par source (noms affichés, cliquables) |
+| P2-13 | filtre de catégorie **« sonde » présent même vide** |
+
+Le parcours couvre le lot 5.1 du mandat CIRCUIT-P2.

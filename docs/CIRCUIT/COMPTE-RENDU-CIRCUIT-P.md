@@ -212,3 +212,136 @@ Ouvrir la page, cliquer partout cinq minutes, dire ce qui gêne. Merger. « Ne m
 - Badges de règle du robinet → `Detail.tsx` (bloc « La règle derrière ces calculs »).
 - Ligne « écarts à la règle » du Résumé → `circuit_resume.composer(regles_ecart=…)` ; l'état
   `écart à la règle` du robinet → `etat_robinet(ctx={ecart_regle_robinets})`.
+
+---
+
+# P2 — retours de recette du 06/09 (mandat MANDAT-CIRCUIT-P2.md)
+
+Branche : `feat/circuit-page` (la même), worktree `~/Desktop/labuse-audit`. Rien n'est mergé.
+Reprise : « continue CIRCUIT-P2 depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-P.md ».
+Commits (non mergés, un par lot) : mandat · lot 1 · lot 2 · lot 3 · lot 4 · lot 5.
+
+## Décisions appliquées (Vic + Fable, 06/09) — sans les rediscuter
+- La page **Données = le Circuit** : l'enrobage a disparu, le Catalogue n'existe plus, le CRON est
+  reparti dans Pilotage. Un `passe_plat` est **neutre** (« hors moteur » = `sql_propre`/`front`
+  seulement). Un **seul nombre de réservoirs partout**, calculé (68 en prod ; 82 sur la base de test).
+
+## Lot 1 — Le ménage ✅ (commit « CIRCUIT-P2 lot 1 »)
+- `Donnees.tsx` ne rend plus que `<CircuitSection/>`. Tout l'enrobage supprimé : bandeau « Mes
+  données sont-elles à jour ? », ligne run/garde/surfaces, onglets Catalogue/CRON, paragraphes
+  « Qui fait quoi » et « Les autres onglets sont des vues ». `grep` vide sur ces libellés (hors
+  commentaires documentant le retrait).
+- **Catalogue retiré** : `admin/Sources.tsx` (`Catalogue`/`SourcesSection`) + `Sources.veille.test.tsx`
+  **supprimés** (code + test morts, plus aucun import). La **page Sources côté client**
+  (`components/sources/SourcesPage.tsx`) reste intacte.
+- **CRON hors Données** : `_rediriger` ne renvoie plus `cron` vers `donnees` ; `cron` redevient une
+  page (CronSection inchangée) au rendu de l'admin, son **lien vit dans Pilotage** (« Horloge — les
+  jobs planifiés (CRON) → »). `/admin/cron` inchangé.
+- Onglet **« Journal »** sans « aujourd'hui · N » : le compteur du jour vit dans l'onglet, en petit,
+  seulement s'il est > 0 (`Journal 78`).
+- Snapshot vitest `Donnees.test.tsx` : un seul composant racine (`.cxp`), sans enrobage.
+
+## Lot 2 — Les nombres ✅ (commit « CIRCUIT-P2 lot 2 »)
+- `circuit_etats` : `passe_plat` **neutre** ; `HORS_MOTEUR_PREFIXES = (sql_propre, front)` +
+  `est_hors_moteur()` ; `hors_moteur_de` recompté (0 live attendu depuis CIRCUIT-2). Test mis à jour.
+- **`circuit_etats.compteurs()`** : la fonction UNIQUE des nombres — réservoirs + partition
+  (à jour / à regarder / vides), **invariant testé `a_jour + a_regarder + vides = réservoirs`**,
+  robinets. Le Résumé (kpis), l'en-tête de colonne du Circuit, la ligne de fin et l'en-tête
+  « Robinets » LISENT cette fonction (plus de recalcul au front).
+- Les lignes du Résumé sont dérivées du **libellé d'état** (source unique) : un réservoir = un état
+  = une ligne ; ajout de la ligne « producteurs injoignables » (réciprocité). Test 2.4
+  (`test_resume_circuit_coherents`) : chaque ligne pointe des « à regarder », et chaque « à
+  regarder » a sa ligne (aller-retour).
+- **`GET /admin/circuit/compteur`** + front `DetailCompteur` : le repère « N / 68 » (cliquable)
+  ouvre la page — réservoirs par état, **définition « à jour et vérifiés »** (2.3), et « N lignes en
+  base non servies » (retirées/doublons/hubs dormants).
+- Détail robinet : tag **passe-plat neutre**, « hors moteur » (ambre) réservé à `sql_propre`/`front`.
+- **Nombres non codés en dur** (68/130/11 = valeurs live) : tout est calculé — décision écrite ici,
+  la base de test montre 82/130/10, la prod montrera 68/130/11.
+
+## Lot 3 — Les commandes qui répondent ✅ (commit « CIRCUIT-P2 lot 3 »)
+- **Interrupteur « Ne montrer que ce qui cloche »** : il filtrait déjà ; prouvé par test vitest
+  (fixture 3 réservoirs, ON=2 lignes / OFF=3), et le **titre de colonne** lit désormais les
+  compteurs → identique dans les deux positions (« 82, 72 à regarder »).
+- **`circuit_taches.py`** : état/progression **file-based** (cross-worker, comme `run_progress`) des
+  tâches longues (`verifier`, `agents`) + `reservoirs_en_route()`.
+- **« Vérifier que tout coule »** : tâche détachée (`sonde_circuit.controle` + callback `progres`) ;
+  le bouton passe « Contrôle en cours… » (désactivé), une **ligne de progression** apparaît sous les
+  onglets (« Eau ancienne — 3 / 5 »), **reste visible en changeant d'onglet** (elle vit dans le
+  conteneur), à la fin le **Résumé se rafraîchit seul**, un **message** dit le résultat, une ligne
+  entre au journal (geste « contrôle », avec qui).
+- **« Envoyer les agents »** (et « Envoyer un agent » en détail) : **jamais grisé sans mot**. Trois
+  cas — sans crédit API (`ai.core.has_key`) → message « Crédit API épuisé — recharge, puis
+  relance. », rien lancé ; en cours → « k / n agents revenus » + état **mauve « agent en route »**
+  par réservoir dans le Circuit + Résumé (ligne « agents en route ») rafraîchis ; normal → agents
+  sur les réservoirs dont le **contrôle manque** (jamais vérifié / à vérifier / injoignable, pas les
+  68), journal alimenté. L'action concrète par réservoir : la **sonde amont réelle** (sentinelle) —
+  décision écrite : l'agent LLM (crédit) viendra sur ce point d'accroche, la substance déterministe
+  (aller lire chez le producteur) est déjà là ; un réservoir sans sonde amont journalise
+  « sans_sonde » (agent LLM requis).
+- Tests : `circuit_taches` (cycle, en_route), vérifier (tâche + journal), agents sans/avec crédit,
+  mauve peint par `en_route`. Les gestes pré-existants (vanne/calcul/bascule/revenir/servir) écrivent
+  déjà leur ligne de journal avec « qui » (code vérifié) et sont rejoués par la recette CIRCUIT-1.
+
+## Lot 4 — Le journal lisible ✅ (commit « CIRCUIT-P2 lot 4 »)
+- `circuit_journal` : colonne **`lot`** (passage groupé) + ALTER idempotent ; **catégories FR en
+  ordre fixe** (vanne·calcul·bascule·agent·contrôle·filtre·sonde·cron), `GESTE_CATEGORIE`, `par_nom`
+  (`cli`→système, `admin`→Vic, noms propres gardés), `nouveau_lot()`.
+- Les batchs marquent un `lot` : `filtre toutes` (CLI) et la volée d'agents.
+- **`GET /admin/circuit/journal` réécrit** : groupe par `lot` — un job de filtres sur N sources ou
+  une volée d'agents tient sur **une ligne dépliable** (« filtre · 5 cibles · 3 ok, 1 avertissements,
+  1 quarantaine · système »), un geste isolé reste une ligne. La cible porte son **nom affiché**
+  (jamais l'identifiant technique), cliquable → détail. Filtre par **catégorie**, **50 lignes
+  groupées/page**, Précédent/Suivant.
+- `Journal.tsx` : filtres de catégorie (tous d'abord, présents même vides), lignes groupées
+  dépliables, cibles cliquables par nom.
+- Tests : mappings purs (catégories, `par_nom`), endpoint groupé + isolé + filtre (DB), `Journal.tsx`.
+
+## Lot 5 — Vérification de bout en bout ✅ (commit « CIRCUIT-P2 lot 5 »)
+- **5.2** `test_circuit_p2_lot5.py` : parcourt TOUS les endpoints — `/admin/circuit`, `/compteur`,
+  `/journal`, `/pompe`, `/taches`, la page de détail de **chaque** réservoir (82) et **chaque**
+  robinet (130) — chacun 200, sans erreur, **< 1 s**. + « un seul nombre de réservoirs partout ».
+- **5.1** recette navigateur `qa/circuit_p2_captures.mjs` (fixtures réelles `qa/fixtures/circuit_p2`,
+  **zéro base touchée**), **13 captures P2-01→P2-13** dans `RECETTE-CIRCUIT-P/` : Résumé sans
+  enrobage → repère 31/68 → compteur → Circuit (interrupteur 2 positions) → Vérifier (progression →
+  message) → Agents sans crédit → détail réservoir/robinet/pompe (+ Échap) → journal groupé
+  (dépliage, filtre vide). **Regardées** : conformes ; le journal groupé, la progression, le message
+  de crédit et le compteur unique s'affichent comme demandé.
+
+## Bilan des suites
+- Backend circuit : **71 passed** (`test_circuit_p2_lot2/3/4/5` neufs + circuit 1/2/3/P, 0 régression) ;
+  modules liés (filtres/sentinelle/flux/bascule) 57 passed.
+- Frontend : **173 vitest passed**, **tsc vert**.
+- Pré-existant hors mandat : `test_non_contradiction.py` échoue en COLLECTION (WeasyPrint
+  `libgobject` — contourné par `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib`), sans rapport.
+
+## Décisions prises en autonomie (récapitulatif)
+1. **Nombres calculés, jamais codés en dur** — 68/130/11 sont des valeurs live ; le code calcule
+   (base de test = 82/130/10). Un seul compteur nourrit tout.
+2. **Catalogue supprimé** (code + test admin morts) — la page Sources CLIENT reste ; la couverture
+   veille du catalogue admin est retirée (composant disparu).
+3. **CRON** : redevient une page d'admin à part (rendue au clic d'un lien Pilotage), pas dans le rail
+   — le mandat dit « son lien va dans Pilotage », pas « ajoute-le au menu ».
+4. **Agents = sonde amont réelle** par réservoir (substance déterministe), gatés par `has_key()`
+   comme demandé ; l'agent LLM branchera sur ce point quand le crédit sera là (sources sans sonde →
+   « sans_sonde », journalisé).
+5. **Progression du contrôle = par PHASE** (Robinets/Chemins/Neuf/Catégorielle/Eau ancienne, +
+   Exports au nocturne), pas robinet-par-robinet : la sonde tourne par phase — représentation
+   honnête (« Eau ancienne — 3 / 5 »).
+6. **`revenir` (filtre)** rangé en catégorie « filtre » ; `purger`/`job` (crons) en « cron » ;
+   « sonde » reste une catégorie présente même vide (les sondes par source n'écrivent pas encore
+   au journal du circuit).
+7. **`par` : `admin` → « Vic »** (app à un seul admin), `cli`/`cron`/vide → « système », e-mails et
+   noms de jobs gardés tels quels.
+
+## Ce qui n'a pas pu être fait / limites
+- La recette des **gestes réels sur app bootée** (vanne→calcul→bascule→revenir) reste rejouable mais
+  non jouée ici (piège `PYTHONPATH=src` : l'env conda importe un `labuse` installé sans les endpoints
+  CIRCUIT-P2). Les gestes appellent les mêmes endpoints, couverts par les tests backend.
+- Un **agent LLM** (lecture de la page producteur par le modèle) n'est pas branché : la substance
+  actuelle est la sonde amont déterministe ; le point d'accroche est en place (crédit + volée +
+  journal + mauve).
+- La résolution **cible → nom affiché** est au mieux : une clé de filtre qui ne correspond à aucun
+  slug de réservoir retombe sur la clé brute (best-effort, jamais une erreur).
+
+« Ne merge pas » respecté.
