@@ -46,6 +46,17 @@ BASE_PCI = "https://cadastre.data.gouv.fr/data/dgfip-pci-vecteur"
 MILLESIMES_ETALAB = ["2017-07-06", "2019-07-01", "2021-07-01", "2023-01-01", "2025-09-01"]
 MILLESIME_PCI = "2017-02-13"
 
+#: RETOURS-21 B — BD PARCELLAIRE VECTEUR IGN, édition 974 du 27/06/2008 (archive opendatarchives,
+#: SHP en RGR92 UTM 40S = EPSG:2975). C'est le SEUL millésime cadastral vecteur ANTÉRIEUR à 2017-02
+#: qu'on ait trouvé après avoir regardé (PCI DGFiP ne remonte pas plus tôt ; BD PARCELLAIRE vecteur
+#: gelée 2018 est POSTÉRIEURE, sans intérêt ; les couches image 2008-2013/2013-2018 sont raster,
+#: sans géométrie exploitable). L'édition 2008 récupère les parcelles disparues entre 2008 et 2017
+#: — MESURÉ : 1 041 des 2 391 IDU orphelins y figurent (majorité des permis 2013-2016).
+BDPARC_2008_URL = ("https://files.opendatarchives.fr/professionnels.ign.fr/parcellaire-express/"
+                   "BDPARCELLAIRE_1-2_VECTEUR/"
+                   "BDPARCELLAIRE_1-2_VECTEUR_SHP_RGR92UTM40S_D974_2008-06-27.7z")
+MILLESIME_BDPARC = "2008-06-27"
+
 SRC_NAME = "Cadastre d'époque (Etalab / PCI vecteur DGFiP)"
 
 
@@ -165,6 +176,64 @@ def _pass_pci_edigeo(session: Session, cibles: dict[str, set[str]], log_fn=print
     return n
 
 
+def _pass_bdparcellaire_2008(session: Session, cibles: dict[str, set[str]], log_fn=print) -> int:
+    """Reliquat pré-2008 → BD PARCELLAIRE vecteur IGN, édition 974 du 27/06/2008 (EPSG:2975).
+
+    Une seule archive départementale (SHP). L'IDU d'une parcelle se reconstitue depuis les champs
+    du fichier PARCELLE : CODE_DEP + CODE_COM + COM_ABS(préfixe) + SECTION(2) + NUMERO(4). On ne
+    garde QUE les parcelles dont l'IDU est une cible (permis sans géométrie), reprojetées en 4326
+    par ogr2ogr. Échec BRUYANT : si l'archive ou l'outil manque, on le DIT (on ne récupère pas moins
+    en silence)."""
+    import csv as _csv
+    reste = {i for idus in cibles.values() for i in idus}
+    if not reste:
+        return 0
+    n = 0
+    with tempfile.TemporaryDirectory() as td:
+        arch = Path(td) / "bdparc.7z"
+        try:
+            with httpx.Client(follow_redirects=True, timeout=600) as c:
+                r = c.get(BDPARC_2008_URL)
+                r.raise_for_status()
+                arch.write_bytes(r.content)
+        except Exception as e:  # noqa: BLE001
+            log_fn(f"  BD PARCELLAIRE 2008 : archive INDISPONIBLE ({e}) — reliquat non traité, dit.")
+            return 0
+        try:
+            import py7zr
+            base = ("BDPARCELLAIRE_1-2_VECTEUR_SHP_RGR92UTM40S_D974_2008-06-27/BDPARCELLAIRE/"
+                    "1_DONNEES_LIVRAISON_2020-01-00247/BDPV_1-2_SHP_RGR92UTM40S_D974/")
+            with py7zr.SevenZipFile(arch, "r") as z:
+                z.extract(path=td, targets=[base + "PARCELLE." + e for e in ("SHP", "SHX", "DBF", "PRJ", "CPG")])
+            shp = Path(td) / base / "PARCELLE.SHP"
+            gj = Path(td) / "parc.geojson"
+            # reprojection 2975 → 4326 par ogr2ogr (le module s'appuie déjà sur ogr2ogr pour l'EDIGEO).
+            subprocess.run(["ogr2ogr", "-f", "GeoJSON", "-t_srs", "EPSG:4326", str(gj), str(shp)],
+                           check=True, capture_output=True, timeout=600)
+            fc = json.load(open(gj))
+        except Exception as e:  # noqa: BLE001
+            log_fn(f"  BD PARCELLAIRE 2008 : illisible ({type(e).__name__}: {e}) — reliquat non traité, dit.")
+            return 0
+        for ft in fc.get("features", []):
+            p = ft.get("properties") or {}
+            insee = f"{p.get('CODE_DEP','')}{p.get('CODE_COM','')}"
+            pref = (p.get("COM_ABS") or "000")
+            sec = (p.get("SECTION") or "").strip().rjust(2, "0")
+            num = (p.get("NUMERO") or "").rjust(4, "0")
+            idu = f"{insee}{pref}{sec}{num}"
+            if idu in reste and ft.get("geometry"):
+                session.execute(text(
+                    "INSERT INTO cadastre_historique (idu, millesime, geom) VALUES "
+                    "(:i, :m, ST_Force2D(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326)))) "
+                    "ON CONFLICT DO NOTHING"),
+                    {"i": idu, "m": MILLESIME_BDPARC, "g": json.dumps(ft["geometry"])})
+                reste.discard(idu)
+                n += 1
+        session.flush()
+    log_fn(f"  BD PARCELLAIRE 2008 : {n} parcelles d'origine retrouvées (reliquat pré-2017)")
+    return n
+
+
 def rattacher_par_geometrie(session: Session, log_fn=print) -> dict:
     """Rattache les permis cibles à la géométrie de leur parcelle d'origine.
 
@@ -226,6 +295,22 @@ def demoter_adresses_restantes(session: Session, log_fn=print) -> int:
     return int(n)
 
 
+def marquer_reliquat_sans_localisation(session: Session, log_fn=print) -> int:
+    """RETOURS-21 B — le reliquat vraiment non localisable (ni géométrie, ni repli d'adresse) DOIT
+    le DIRE dans la liste (mandat S5/étape 4) : jamais un point, mais jamais muet non plus. Les
+    permis restés `geom IS NULL` SANS `geoloc` (ceux que ni le cadastre d'époque ni la BD
+    PARCELLAIRE 2008 n'ont pu localiser) reçoivent une mention honnête. Idempotent."""
+    n = session.execute(text(
+        """UPDATE sitadel_permits
+           SET raw = raw || jsonb_build_object('geoloc',
+                 'sans localisation — parcelle d''origine absente des cadastres disponibles '
+                 '(2008 et 2017→2025), non affichée en point')
+           WHERE geom IS NULL AND (raw->>'geoloc') IS NULL""")).rowcount
+    session.flush()
+    log_fn(f"  reliquat sans localisation marqué : {n} permis (mention en liste, jamais un point)")
+    return int(n)
+
+
 def run(log_fn=print) -> dict:
     from ..db import session_scope
     stats: dict = {}
@@ -237,9 +322,11 @@ def run(log_fn=print) -> dict:
         for m in MILLESIMES_ETALAB:
             stats[f"etalab_{m}"] = _pass_etalab(s, m, cibles, log_fn)
         stats["pci_2017_02"] = _pass_pci_edigeo(s, cibles, log_fn)
+        stats["bdparcellaire_2008"] = _pass_bdparcellaire_2008(s, cibles, log_fn)  # RETOURS-21 B
         stats["irrecuperables"] = sum(len(v) for v in cibles.values())
         stats.update(rattacher_par_geometrie(s, log_fn))
         stats["adresses_demises"] = demoter_adresses_restantes(s, log_fn)
+        stats["reliquat_marque"] = marquer_reliquat_sans_localisation(s, log_fn)  # RETOURS-21 B
     log_fn(f"✓ S5 : {json.dumps(stats, ensure_ascii=False)}")
     return stats
 

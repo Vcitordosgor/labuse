@@ -460,8 +460,11 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    sur un tiroir ouvert, ni sur un tiroir non cliquable). !important bat les couleurs inline (valueColor/accent). */
 @media (hover:hover) and (pointer:fine) {
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover { background:var(--fill-mint); border-color:#2FBE66; }
-  /* RETOURS-11 T2 (03/09) — tuile en fond SOMBRE, glyphe et contour VERTS au survol de la section. */
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:var(--ink); border:1px solid var(--mint); color:var(--mint); }
+  /* RETOURS-21 Z4 — au survol, la tuile d'icône suit EXACTEMENT les 4 icônes d'accueil (`.acc-entry`
+     Y2) : fond TRANSPARENT, contour et glyphe en encre sombre. Annule RETOURS-11 T2 (fond `--ink`
+     sombre + glyphe vert), le « carré sombre sur la barre verte » que Vic pointait. Ce traitement
+     est celui du bloc « en-tête » (Z1) → il vaut pour les neuf accordéons de la fiche. */
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:transparent; border:1px solid rgba(7,16,9,.30); color:var(--ink); }
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-title,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-sub,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,

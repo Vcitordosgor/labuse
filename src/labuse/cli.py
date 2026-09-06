@@ -1216,6 +1216,19 @@ def ingest_georisques_cmd(
     typer.echo(f"✓ Géorisques île : {tot} ({time.time() - t0:.0f}s)")
 
 
+@app.command("alea-reclassifier")
+def alea_reclassifier_cmd() -> None:
+    """RETOURS-21 A — réaligne le `niveau` servi des aléas `georisque_alea` sur le mapping corrigé
+    (R6) SANS re-tirer le WFS : recalcule niveau/classe/residuel depuis le `degre` stocké avec les
+    fonctions d'ingestion (source de vérité). Idempotent. Nomme ce qui bouge. À faire suivre d'un
+    `labuse filtre jouer georisques_mvt` (lève la quarantaine si OK) puis d'un run candidat."""
+    from .ingestion.layers_ingest import reclassifier_alea_niveau
+    with session_scope() as s:
+        res = reclassifier_alea_niveau(s, log_fn=typer.echo)
+        s.commit()
+    typer.echo(f"✓ {res['zones_realignees']} zones réalignées.")
+
+
 @app.command("ingest-cartofriches")
 def ingest_cartofriches_cmd(
     commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
