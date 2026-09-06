@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import type { Fiche } from '../../lib/types'
+import { GroupLabel, FactNote } from './primitives'
 
 type Histo = NonNullable<Fiche['proprietaire_historique']>
 
@@ -30,8 +31,9 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
   const dernier = h.millesimes[h.millesimes.length - 1]
 
   return (
-    <div data-proprietaire-historique className="card-elev px-3 py-2.5">
-      <p className="label-caps">Historique du propriétaire (DGFiP)</p>
+    <div data-proprietaire-historique>
+      {/* RETOURS-23 Z3 — plus de card-elev : kicker + faits à plat. */}
+      <GroupLabel>Historique du propriétaire (DGFiP)</GroupLabel>
 
       {h.n_changements > 0 ? (
         <div className="mt-1.5 flex flex-col gap-1.5">
@@ -82,7 +84,7 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
         </div>
       )}
 
-      <p className="mt-2 text-[10px] leading-snug text-txt-dim italic">{h.note}</p>
+      <FactNote>{h.note}</FactNote>
     </div>
   )
 }

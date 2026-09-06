@@ -481,6 +481,45 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .pill-amber { font-size:11.5px; color:var(--amber); background:var(--amber-bg); padding:3px 8px; border-radius:20px; white-space:nowrap; }
 .fiche-v6 .pill-mint { font-size:11.5px; color:var(--mint); background:var(--mint-bg); padding:3px 8px; border-radius:20px; white-space:nowrap; }
 
+/* ════════ RETOURS-20 Z1 — grammaire partagée des accordéons (maquette-fiche-parcelle-accordeons.html).
+   Structure/espacements de la maquette ; couleurs & police = tokens de l'app (aucun hex recopié). ════════ */
+/* Z1·02 — KICKER : slot droit optionnel (renvoi d'article / badge d'état). Le filet <i> (flex:1) pousse
+   le slot à droite. Le libellé garde ses capitales ; le slot droit reprend une casse normale. */
+.fiche-v6 .sec > .sec-r { text-transform:none; letter-spacing:0; font-weight:400; display:flex; align-items:center; gap:7px; }
+/* Z1·03 — LIGNE DE FAIT : libellé gauche (gris) · valeur mono à droite (chiffres tabulaires, unité en
+   petit) · source SOUS la ligne avec son badge · filet entre lignes. Absente = gris atténué ; à
+   vérifier = ambre. Remplace les tableaux dans une boîte. Toute la fiche s'aligne sur sa colonne droite. */
+.fiche-v6 .f-row { display:grid; grid-template-columns:1fr auto; gap:3px 14px; align-items:baseline; padding:8px 0; border-bottom:0.5px solid var(--line); }
+.fiche-v6 .f-row:last-child { border-bottom:0; }
+.fiche-v6 .f-row > .l { font-size:13px; color:var(--txt-dim); min-width:0; }
+.fiche-v6 .f-row > .v { font-family:var(--mono); font-size:13px; color:var(--txt-hi); text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fiche-v6 .f-row > .v small { font-family:var(--mono); font-size:11.5px; color:var(--txt-dim); font-weight:400; }
+.fiche-v6 .f-row > .v.warn { color:var(--amber); }
+.fiche-v6 .f-row > .v.mute { color:var(--txt-faint); }
+.fiche-v6 .f-row > .src { grid-column:1/-1; font-size:11.5px; line-height:1.45; color:var(--txt-mut); }
+.fiche-v6 .f-row > .src .b { margin-right:5px; }
+/* Z1·04 — BADGES : trois seulement (Sourcé/Estimé/Dérivé), même taille partout, mono 10 px, contour
+   (pas d'aplat). Renvoi d'article = lien mono ↗. Bordures dérivées des tokens (color-mix), jamais un hex. */
+.fiche-v6 .b { display:inline-block; font-family:var(--mono); font-size:10px; line-height:16px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:0 5px; border-radius:4px; border:1px solid; white-space:nowrap; }
+.fiche-v6 .b.s { color:var(--mint); border-color:color-mix(in srgb, var(--mint) 45%, transparent); }
+.fiche-v6 .b.e { color:var(--amber); border-color:color-mix(in srgb, var(--amber) 50%, transparent); }
+.fiche-v6 .b.d { color:var(--txt-dim); border-color:var(--line-2); }
+.fiche-v6 .f-ref { font-family:var(--mono); font-size:11.5px; color:var(--mint); white-space:nowrap; }
+.fiche-v6 a.f-ref:hover { text-decoration:underline; }
+.fiche-v6 .f-ref:after { content:" ↗"; opacity:.7; }
+/* Z1·05 — VIGILANCE (filet ambre à gauche, pas de boîte) et RAPPEL (fond un cran plus clair, sans
+   bordure). La note de méthode passe en 11,5 px sous la ligne, elle n'est plus un paragraphe plein. */
+.fiche-v6 .f-vig { margin-top:10px; padding:2px 0 2px 12px; border-left:2px solid var(--amber); }
+.fiche-v6 .f-vig > .t { font-size:13px; font-weight:500; color:var(--txt-hi); }
+.fiche-v6 .f-vig > .p { margin-top:2px; font-size:12.5px; line-height:1.55; color:var(--txt); }
+.fiche-v6 .f-rappel { margin-top:10px; padding:10px 12px; border-radius:10px; background:var(--bg-3); font-size:12.5px; line-height:1.55; color:var(--txt); }
+.fiche-v6 .f-rappel b { color:var(--txt-hi); font-weight:500; }
+.fiche-v6 .f-rappel > .src { display:block; margin-top:6px; font-size:11.5px; color:var(--txt-mut); }
+.fiche-v6 .f-note { margin-top:8px; font-size:11.5px; line-height:1.5; color:var(--txt-mut); }
+/* Z1·01 — STATUT : une ligne d'état (puce + phrase), pas une boîte (maquette .status). */
+.fiche-v6 .f-status { display:flex; align-items:baseline; gap:8px; margin-top:8px; font-size:12.5px; line-height:1.5; color:var(--txt); }
+.fiche-v6 .f-status > .dot { flex:none; width:7px; height:7px; border-radius:50%; align-self:center; }
+
 /* actions de pied */
 .fiche-v6 .actions { display:flex; gap:7px; margin-top:20px; }
 .fiche-v6 .act { flex:1; min-height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }

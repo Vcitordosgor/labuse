@@ -238,7 +238,11 @@ def test_module_unique_aucune_autre_lecture():
     import subprocess
     from pathlib import Path
     src = Path(__file__).resolve().parents[1] / "src"
-    out = subprocess.run(["grep", "-rl", "plu_destinations", str(src)],
+    # La garde vise les LECTURES du code : on ne scanne que les sources Python. `--include=*.py`
+    # écarte le manifeste de packaging `labuse.egg-info/SOURCES.txt` (généré par l'install éditable,
+    # il liste ce fichier de test dont le nom contient « plu_destinations ») — un artefact de build,
+    # au même titre que les `__pycache__` déjà filtrés, jamais une lecture de la calibration.
+    out = subprocess.run(["grep", "-rl", "--include=*.py", "plu_destinations", str(src)],
                          capture_output=True, text=True).stdout.split()
     # CIRCUIT-1 lot 1 — le REGISTRE (src/labuse/registre/) DÉCLARE l'id du moteur
     # `plu_destinations` (chiffres.py) ; il ne lit jamais la calibration YAML. L'intention de la

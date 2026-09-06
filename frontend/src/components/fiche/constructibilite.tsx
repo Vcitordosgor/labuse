@@ -17,28 +17,24 @@ import { renderRich } from './AskBar'
 import { BlocIndisponible } from './BlocIndisponible'
 import type { Fiche, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
-import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput } from './primitives'
+import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
-function PtRow({ k, v }: { k: string; v: string }) {
-  return (<div className="flex justify-between gap-3"><span className="text-txt-dim">{k}</span><span className="text-right text-txt">{v}</span></div>)
-}
 function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
+  // RETOURS-20 Z3 — plus de card-elev : kicker (titre + badge d'état à droite), les lignes
+  // chiffrées deviennent des FactRow (valeur mono à droite), la source passe en FactNote.
   return (
-    <div data-transformation className="card-elev px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-txt">Potentiel de transformation</span>
-        <span className="ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
-      </div>
+    <div data-transformation>
+      <GroupLabel right={
+        <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
+      }>Potentiel de transformation</GroupLabel>
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
-      <div className="mt-1.5 flex flex-col gap-0.5 text-[11px]">
-        {pt.pct_consomme != null && <PtRow k="SDP consommée / autorisée" v={`${pt.pct_consomme} %`} />}
-        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} v={`~${fmtInt(pt.sdp_residuelle_m2)} m²`} />}
-        {pt.surelevation_possible != null && <PtRow k="Surélévation" v={pt.surelevation_possible ? `possible${pt.hauteur_marge_m != null ? ` (marge ~${pt.hauteur_marge_m} m)` : ''}` : 'non'} />}
-      </div>
-      <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{pt.source}</p>
+      {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
+      {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <FactRow label={`SDP résiduelle estimée · ${PERIM_RESIDUEL_COURT}`} value={<>~{fmtInt(pt.sdp_residuelle_m2)} <small>m²</small></>} />}
+      {pt.surelevation_possible != null && <FactRow label="Surélévation" value={pt.surelevation_possible ? <>possible{pt.hauteur_marge_m != null ? <> <small>(marge ~{pt.hauteur_marge_m} m)</small></> : ''}</> : 'non'} tone={pt.surelevation_possible ? undefined : 'mute'} />}
+      <FactNote>{pt.source}</FactNote>
     </div>
   )
 }
@@ -352,10 +348,12 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
   return (
     <div className="flex flex-col gap-3">
       {/* ── LE RÉSULTAT (bloc capacité UNIQUE — M58-P1 b) ── */}
+      {/* RETOURS-20 Z3 — plus de boîte bordée mint : kicker « Capacité constructible » (verdict à
+          droite) + les 4 tuiles de stat (autorisées par la maquette). La phrase de méthode passe en
+          FactNote ; la zone non calibrée en Vigilance. */}
       {cap ? (
-        <div className="rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2.5">
-          <p className="label-caps mb-1">Capacité constructible</p>
-          <div className="text-sm font-medium text-txt-hi">{cap.verdict}</div>
+        <div>
+          <GroupLabel right={<span className="text-[13px] font-medium text-txt-hi normal-case">{cap.verdict}</span>}>Capacité constructible</GroupLabel>
           {/* M58-P1 (c) : jamais « 0–0 » / « ( m) » / « ~— » — on n'affiche la grille que si la
               capacité est réelle ; chaque champ retombe sur « — » plutôt qu'un zéro/vide trompeur. */}
           {capaciteReelle ? (
@@ -369,36 +367,40 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
               </div>
               {/* FAISABILITE (mandat) : dire pourquoi la SHAB vendable (~123) < SHAB brute — c'est le
                   nombre de logements RETENUS reconverti en surface, pas un plafond sur la brute (théorique). */}
-              <div className="mt-1 text-[10.5px] text-txt-dim">SHAB vendable = logements retenus au sol × surface moyenne/logement (fourchette après plafond de densité). La SHAB brute est théorique, hors bâti existant.</div>
+              <FactNote>SHAB vendable = logements retenus au sol × surface moyenne/logement (fourchette après plafond de densité). La SHAB brute est théorique, hors bâti existant.</FactNote>
             </>
           ) : (
             <div className="mt-1.5 text-[11px] text-txt-faint">Capacité logements non calculable pour cette parcelle.</div>
           )}
           {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
-          <div className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
+          <FactNote>{cap.bandeau}</FactNote>
         </div>
       ) : (
-        <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
+        <p className="text-[11px] text-txt-mut">
           Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).
-        </div>
+        </p>
       )}
 
-      {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) — §1e : encadré mis en valeur, ouvert par défaut ── */}
+      {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) — §1e : ouvert par défaut ── */}
+      {/* RETOURS-20 Z3 — plus de boîte bordée mint autour : le bouton de repli sert d'en-tête, la
+          liste d'étapes (ol.steps + StepProv) garde sa structure (rule 7, conforme maquette). */}
       {stepsAff.length > 0 && (
-        <div className="rounded-lg border border-mint/40 bg-mint/[0.05] p-2">
+        <div>
           <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
             <span>▾ Le calcul, étape par étape ({stepsAff.length})</span>
             <span>{showSteps ? '−' : '+'}</span>
           </button>
           {showSteps && (
-            <ol data-faisa-steps className="card-elev overflow-hidden">
+            // RETOURS-23 Z3 — plus de boîte striée (card-elev + bg alternés) : filets entre étapes,
+            // valeur mono alignée à droite, badge de provenance sous la ligne (grammaire de la maquette).
+            <ol data-faisa-steps>
               {stepsAff.map((s, i) => (
-                <li key={i} className={`flex items-start gap-2 px-3 py-1.5 text-[11px] ${i % 2 ? 'bg-surface-2' : 'bg-surface-1'}`}>
+                <li key={i} className="flex items-start gap-2 border-b border-line/60 py-1.5 text-[11px] last:border-0">
                   <span className="shrink-0 font-mono text-[9px] text-txt-dim">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-txt">{s.label}</span>
-                      <b className="shrink-0 text-txt-hi">{s.valeur}</b>
+                      <b className="shrink-0 font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5">
                       <StepProv prov={s.prov} />
@@ -449,12 +451,6 @@ function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
   if (isError || !b) return <ErrorState message="Bilan indisponible." retry={() => refetch()} />
-  const Sec = ({ t, children }: { t: string; children: React.ReactNode }) => (
-    <div>
-      <p className="label-caps mb-1">{t}</p>
-      <div className="card-elev px-3 py-2 text-[11px] leading-relaxed text-txt">{children}</div>
-    </div>
-  )
   return (
     <div className="flex flex-col gap-3">
       {/* M58-P1 (b) : le bloc « Capacité » vivait ICI ET dans FaisabiliteTab (même b.capacite) —
@@ -463,19 +459,22 @@ function BilanTab({ idu }: { idu: string }) {
       {/* RETOURS-11F4 F5/F0 — le PRIX DE SORTIE bâti vit désormais dans « Marché et secteur » (fait
           unique). La Constructibilité ne montre QUE le prix RETENU pour le bilan + un renvoi ; plus de
           fiche de marché rivale ici (le détail — n ventes, rayon, tendance, fraîcheur — est dans Marché). */}
+      {/* RETOURS-20 Z3 — les Sec (card-elev) deviennent kicker + FactRow/FactNote (plus de boîte). */}
       {b.marche?.median != null && (
-        <Sec t="Prix de sortie retenu (bilan)">
-          <span className="tnum">{fmtInt(Number(b.marche.median))} €/m² bâti</span>
-          <span className="text-txt-mut"> — valeur retenue pour le calcul de charge foncière.</span>
-          <div className="mt-1 text-[11px] text-txt-dim">Détail du marché (échantillon, rayon, tendance, fraîcheur) → section « Marché et secteur ».</div>
-        </Sec>
+        <div>
+          <GroupLabel>Prix de sortie retenu (bilan)</GroupLabel>
+          <FactRow label="Prix de sortie retenu" value={<>{fmtInt(Number(b.marche.median))} <small>€/m² bâti</small></>} />
+          <FactNote>Valeur retenue pour le calcul de charge foncière. Détail du marché (échantillon, rayon, tendance, fraîcheur) → section « Marché et secteur ».</FactNote>
+        </div>
       )}
       {/* M58-P1 : note « la charge foncière est dans Faisabilité » RETIRÉE — elle pointait vers la
           calculette rendue juste au-dessus (FaisabiliteTab), dans le MÊME tiroir : redondante. */}
-      <Sec t="Fiscal & leviers">
-        <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
-        <div className="mt-1 text-[11px] text-txt-dim">{b.fiscal.ta_note}</div>
-      </Sec>
+      <div>
+        <GroupLabel>Fiscal &amp; leviers</GroupLabel>
+        <FactRow label="QPV" value={<span className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</span>} tone={b.fiscal.qpv ? undefined : 'mute'} />
+        <FactRow label="TVA" value={b.fiscal.tva} />
+        <FactNote>{b.fiscal.ta_note}</FactNote>
+      </div>
       {b.rtaa && <RtaaBlock rtaa={b.rtaa} />}
     </div>
   )
@@ -621,34 +620,34 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
   const [open, setOpen] = useState(false)
   const VOLET_COLOR: Record<string, string> = { cadre: '#8FA69A', thermique: '#E8B44C', acoustique: '#B497F0', aeration: '#7DE8E0', ecs: '#5CE6A1' }
   return (
+    // RETOURS-20 Z3 — plus de card-elev ni de tuiles bg-surface-3 : kicker + note, chaque exigence
+    // à plat (badge volet + phrase + renvoi d'article RefLink), séparée par le filet des lignes.
     <div data-rtaa-block>
-      <p className="label-caps mb-1">RTAA DOM — rappel réglementaire</p>
-      <div className="card-elev px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
+      <GroupLabel>RTAA DOM — rappel réglementaire</GroupLabel>
+      <p className="mt-1 text-[10.5px] leading-snug text-txt-mut">
         Construction neuve de logements : protection solaire, ventilation traversante,
         acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).
         <button onClick={() => setOpen((o) => !o)} className="ml-1.5 text-mint hover:underline">
           {open ? 'replier' : `${rtaa.exigences.length} exigences →`}
         </button>
-      </div>
+      </p>
       {open && (
-        <div className="mt-1.5 flex flex-col gap-1.5">
+        <div className="mt-1.5 flex flex-col">
           {rtaa.exigences.map((e, i) => (
-            <div key={i} className="rounded-lg bg-surface-3 px-3 py-2">
+            <div key={i} className="border-b border-line/60 py-2 last:border-0">
               <span className="rounded-full px-1.5 py-0.5 font-mono text-[8.5px] font-semibold uppercase"
                 style={{ color: VOLET_COLOR[e.volet] ?? '#8FA69A', background: `${VOLET_COLOR[e.volet] ?? '#8FA69A'}18` }}>
                 {e.volet}
               </span>
               <p className="mt-1 text-[10.5px] leading-snug text-txt">{e.exigence}</p>
               {e.condition_altitude && <p className="mt-0.5 text-[11px] text-st-creuser">altitude : {e.condition_altitude}</p>}
-              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[11px] text-mint hover:underline">
-                {e.reference} ↗
-              </a>
+              <div className="mt-0.5"><RefLink href={e.url}>{e.reference}</RefLink></div>
             </div>
           ))}
-          <p className="text-[9px] leading-snug text-txt-dim">
+          <FactNote>
             {rtaa.meta.champ} — rappel de conception, ne
             remplace pas l'étude réglementaire du maître d'œuvre.
-          </p>
+          </FactNote>
         </div>
       )}
     </div>
@@ -702,11 +701,10 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
           ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
           : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
         <div className="flex flex-col gap-3">
+          {/* RETOURS-20 Z5 — l'alerte « délaissé » (boîte bordée creuser) devient une Vigilance
+              (filet ambre à gauche, sans boîte). Libellé inchangé. */}
           {delaisse && (
-            <div data-delaisse className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
-              <span aria-hidden className="text-st-creuser">▲</span>
-              <p className="text-[11px] leading-snug text-txt">{delaisse.libelle}</p>
-            </div>
+            <div data-delaisse><Vigilance title={delaisse.libelle} /></div>
           )}
           {/* capacité + SDP + potentiel de transformation (SDP consommée/résiduelle/surélévation) reçu d'Urbanisme */}
           {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
