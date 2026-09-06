@@ -1,5 +1,5 @@
-"""Fiche de règle — statistiques du marché Radar (annonces). CIRCUIT-4."""
-from . import FicheRegle, declarer
+"""Fiche de règle — statistiques du marché Radar. CIRCUIT-4 (lot 3 : méthode citée)."""
+from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
     donnees=("prix_demande_median_eur_m2", "delai_vente_median_j", "annonces_actives_n",
@@ -14,9 +14,19 @@ declarer(FicheRegle(
     entrees=("pige_biens (statut, type_bien, dates)", "pige_faits (prix, surfaces, valide_at)"),
     classe="methode_standard",
     fonction="src/labuse/pige/marche.py:stats",
-    verdict="reference_introuvable",
+    verdict="conforme",
+    reference=Reference(
+        titre="Médiane — PostgreSQL percentile_cont (interpolation linéaire)",
+        article="Ordered-Set Aggregate Functions",
+        url="https://www.postgresql.org/docs/current/functions-aggregate.html",
+        version="documentation current (consultée 2026-09-06)",
+        extrait=("« Computes the continuous percentile, a value corresponding to the specified "
+                 "fraction within the ordered set of aggregated argument values. This will "
+                 "interpolate between adjacent input items if needed. »"),
+        lu_le="2026-09-06"),
     choix=("Seuil 5 : honnêteté statistique gravée (jamais une médiane sur trois valeurs) ; les "
            "annonces à-qualifier n'entrent JAMAIS dans une statistique (RADAR-HTML)."),
     exemple_temoin="tests/regles/test_marche_pige.py::test_seuil5_et_medianes",
+    valide_par="cc",
     verifie_le="2026-09-06",
 ))

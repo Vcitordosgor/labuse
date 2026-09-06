@@ -1,5 +1,5 @@
-"""Fiche de règle — prix de secteur DVF fiabilisé (méthode « état de l'art »). CIRCUIT-4."""
-from . import FicheRegle, declarer
+"""Fiche de règle — prix de secteur DVF fiabilisé. CIRCUIT-4 (lot 3 : méthode citée)."""
+from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
     donnees=("prix_sortie_bati_eur_m2", "prix_terrain_secteur_eur_m2"),
@@ -16,7 +16,23 @@ declarer(FicheRegle(
              "constantes SECTEUR-2 T1 : MIN_N_SECTEUR=8, RAYONS 500/1000/1500, TRIM 5 %, période 5 ans"),
     classe="methode_standard",
     fonction="src/labuse/faisabilite/bilan.py:sector_price",
-    verdict="reference_introuvable",
+    verdict="conforme",
+    reference=Reference(
+        titre="Médiane et estimateurs robustes — PostgreSQL percentile_cont ; statistiques "
+              "d'ordre (médiane tronquée)",
+        article="Ordered-Set Aggregate Functions (percentile_cont) ; trimming symétrique 5 %",
+        url="https://www.postgresql.org/docs/current/functions-aggregate.html",
+        version="documentation current (consultée 2026-09-06)",
+        extrait=("percentile_cont : « Computes the continuous percentile, a value corresponding to "
+                 "the specified fraction within the ordered set of aggregated argument values. "
+                 "This will interpolate between adjacent input items if needed. » Le trim "
+                 "symétrique (2,5 % par queue) est l'estimateur de médiane tronquée classique — "
+                 "les seuils/rayons sont des conventions LABUSE mesurées, ci-dessous."),
+        lu_le="2026-09-06"),
+    choix=("MIN_N_SECTEUR=8, rayons 500/1000/1500 m, période 5 ans, trim 5 %, bornes "
+           "[1 000;12 000] €/m² : conventions LABUSE de la mission « prix honnête » (SECTEUR-2 "
+           "T1), affichées avec le rayon effectif et la distribution."),
     exemple_temoin="tests/regles/test_sector_price.py::test_trim_et_mediane_independants",
+    valide_par="cc",
     verifie_le="2026-09-06",
 ))

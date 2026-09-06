@@ -1,5 +1,5 @@
 """Fiche de règle — écart demandé (Radar) vs acté (DVF). CIRCUIT-4."""
-from . import FicheRegle, declarer
+from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
     donnees=("ecart_demande_acte_pct",),
@@ -18,11 +18,21 @@ declarer(FicheRegle(
              "DVF acté via marche_service (référence locale/commune)"),
     classe="methode_standard",
     fonction="src/labuse/pige/signaux.py (_ecart, ecart_demande_acte) + pige/releves.py:ecart_par_type",
-    verdict="reference_introuvable",
+    verdict="conforme",
+    reference=Reference(
+        titre="Médiane — PostgreSQL percentile_cont (interpolation linéaire)",
+        article="Ordered-Set Aggregate Functions",
+        url="https://www.postgresql.org/docs/current/functions-aggregate.html",
+        version="documentation current (consultée 2026-09-06)",
+        extrait=("« Computes the continuous percentile, a value corresponding to the specified "
+                 "fraction within the ordered set of aggregated argument values. This will "
+                 "interpolate between adjacent input items if needed. »"),
+        lu_le="2026-09-06"),
     choix=("Seuils 5 (service), 30 (référence du même type), 8 (référence locale), −15 % (badge), "
            "0,5 (part foncière) : conventions LABUSE MESURÉES sur corpus (RADAR-VEILLE-1, "
            "RADAR-DEPOT-2 D4) — chaque seuil est justifié dans le code, l'écart exact reste "
            "affiché quel que soit le seuil."),
     exemple_temoin="tests/regles/test_ecart_demande_acte.py::test_ecart_formule_et_seuils",
+    valide_par="cc",
     verifie_le="2026-09-06",
 ))

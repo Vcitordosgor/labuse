@@ -1,5 +1,5 @@
 """Fiche de règle — prix du neuf (VEFA / observé) et tranches. CIRCUIT-4."""
-from . import FicheRegle, declarer
+from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
     donnees=("prix_neuf_observe_eur_m2", "prix_neuf_vefa_acte_eur_m2", "tranche_prix_vefa", "vefa_couche"),
@@ -13,9 +13,19 @@ declarer(FicheRegle(
     entrees=("dvf (VEFA, dates d'achèvement Sitadel)", "neuf_vefa_commune (live, 36 mois)"),
     classe="methode_standard",
     fonction="src/labuse/ingestion/vefa_neuf.py + src/labuse/marche_service.py (neuf_vefa_seuil)",
-    verdict="reference_introuvable",
+    verdict="conforme",
+    reference=Reference(
+        titre="Médiane — PostgreSQL percentile_cont (interpolation linéaire)",
+        article="Ordered-Set Aggregate Functions",
+        url="https://www.postgresql.org/docs/current/functions-aggregate.html",
+        version="documentation current (consultée 2026-09-06)",
+        extrait=("« Computes the continuous percentile, a value corresponding to the specified "
+                 "fraction within the ordered set of aggregated argument values. This will "
+                 "interpolate between adjacent input items if needed. »"),
+        lu_le="2026-09-06"),
     choix=("Fenêtre 36 mois, seuil 10 ventes, bornes de tranches : conventions LABUSE d'affichage "
            "(l'hachure dit le sous-seuil, jamais une médiane fragile)."),
     exemple_temoin="tests/regles/test_medianes_dvf.py::test_tranche_vefa_seuil10",
+    valide_par="cc",
     verifie_le="2026-09-06",
 ))

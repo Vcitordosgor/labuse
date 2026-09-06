@@ -1,0 +1,67 @@
+# CHOIX-LABUSE — CIRCUIT-4 (lot 3.2)
+
+Toutes les DÉFINITIONS À NOUS (paliers, seuils, fenêtres, dénominateurs, exclusions),
+écrites — jamais cachées. Une ligne par choix, lisible sans le code : la définition, le
+pourquoi (quand il est documenté : mandat, décision de Vic, mesure sur corpus), et l'état de
+validation. `valide_par = vic` : décision déjà actée dans docs/ ; `cc` : justifié et cité par
+CC ; `en_attente` : **à confirmer par Vic** (rien n'est bloqué en attendant).
+
+| donnée(s) | le choix (définition + pourquoi) | classe | validation |
+|---|---|---|---|
+| `parcelles_par_zone_n` | Le compte de parcelles par zone survit UNIQUEMENT dans les filtres, sous un autre nom — décision Vic 05/09/2026 : le mot « part » n'y apparaît jamais (voir part_zone_U_pct). | choix_labuse | **vic** |
+| `part_zone_U_pct`, `part_zone_AU_pct`, `part_zone_A_pct`, `part_zone_N_pct` | LA part de zonage est la part de SURFACE, jamais la part de parcelles — décision Vic du 05/09/2026 (CIRCUIT-1 lot 2.1) : les parts de parcelles ne représentent pas le territoire (à La Réunion U domine en nombre mais A+N couvrent l'essentiel de l'aire ; Saint-Paul : A = 35,8 % en surface vs 17,8 % en parcelles). Dénominateur = surface cadastrée ZONÉE (les parcelles sans zone n'y entrent pas). | choix_labuse | **vic** |
+| `comparateur_composite` | Poids par défaut (0,30 stock · 0,15 vélocité · 0,15 permis · 0,15 SRU · 0,10 ZAN · 0,15 prix neuf), inversion de direction et renormalisation des poids présents : conventions LABUSE du comparateur, réglables à l'écran. | methode_standard | **cc** |
+| `ecart_demande_acte_pct` | Seuils 5 (service), 30 (référence du même type), 8 (référence locale), −15 % (badge), 0,5 (part foncière) : conventions LABUSE MESURÉES sur corpus (RADAR-VEILLE-1, RADAR-DEPOT-2 D4) — chaque seuil est justifié dans le code, l'écart exact reste affiché quel que soit le seuil. | methode_standard | **cc** |
+| `population_zone`, `revenu_approche_eur` | Un carreau INTERSECTANT compte ENTIER (pas de prorata) : prudence sur une maille déjà floutée — la proratisation simulerait une précision que la source n'a pas. | regle_externe | **cc** |
+| `prix_demande_median_eur_m2`, `delai_vente_median_j`, `annonces_actives_n`, `n_biens_du_jour`, `n_biens_veille` | Seuil 5 : honnêteté statistique gravée (jamais une médiane sur trois valeurs) ; les annonces à-qualifier n'entrent JAMAIS dans une statistique (RADAR-HTML). | methode_standard | **cc** |
+| `prix_neuf_observe_eur_m2`, `prix_neuf_vefa_acte_eur_m2`, `tranche_prix_vefa`, `vefa_couche` | Fenêtre 36 mois, seuil 10 ventes, bornes de tranches : conventions LABUSE d'affichage (l'hachure dit le sous-seuil, jamais une médiane fragile). | methode_standard | **cc** |
+| `prix_sortie_bati_eur_m2`, `prix_terrain_secteur_eur_m2` | MIN_N_SECTEUR=8, rayons 500/1000/1500 m, période 5 ans, trim 5 %, bornes [1 000;12 000] €/m² : conventions LABUSE de la mission « prix honnête » (SECTEUR-2 T1), affichées avec le rayon effectif et la distribution. | methode_standard | **cc** |
+| `taxe_amenagement_eur` | Doctrine « aucun taux inventé » : le taux communal vient d'une délibération ou du client, jamais d'un défaut. ERRATA DOCUMENTAIRES consignés (REGLES-ECARTS) : le mandat cite « art. L331-10 s. » (code de l'urbanisme), ABROGÉ depuis l'ord. 2022-883 — la base en vigueur est le CGI ; et les commentaires du YAML INVERSENT H et I (valeurs forfaitaires attribuées à I, abattement à H) — les VALEURS, elles, sont exactes. | regle_externe | **cc** |
+| `ventes_retenues_n`, `ventes_ecartees_n`, `dvf_parcelle_liste`, `voisinage_100m_liste`, `ventes_100m_n` | Bornes de bon sens et rayons de profils = conventions LABUSE déclarées (YAML) ; les champs lus (nature de mutation, valeur foncière, dispositions) sont ceux du fichier DGFiP — La Réunion est couverte (DOM, hors exclusions Alsace-Moselle-Mayotte). | regle_externe | **cc** |
+| `zone_plu_famille`, `zonage_plu_couche` | Zone DOMINANTE PAR SURFACE (jamais le centroïde) : décision ZONE-1 après l'audit EXPORTS ; seuil a_cheval 90 % = convention LABUSE d'affichage, les parts restent servies. Les familles U/AU/A/N sont la partition réglementaire des PLU. | regle_externe | **cc** |
+| `assemblage_parcelles_n`, `assemblage_surface_m2` | Surface d'assemblage = somme des surfaces CADASTRALES (pas une union géométrique dédoublonnée) : les parcelles cadastrales sont disjointes par construction. | choix_labuse | **en_attente** |
+| `autres_loges_pct` | Plancher 0 : des parts INSEE arrondies peuvent sommer à > 100 ; on ne sert jamais un complément négatif. | regle_externe | **en_attente** |
+| `charge_fonciere_eur`, `bilan_ca_eur`, `bilan_cout_construction_eur`, `bilan_frais_eur`, `bilan_marge_eur`, `bilan_vrd_eur`, `bilan_demolition_eur`, `ecart_prix_demande_pct`, `sensibilite_cout_construction` | Tous les pourcentages (marge 9 %, frais 12 %, coefficient plancher 1,15, coûts 2 300-2 800 €/m²) sont des HYPOTHÈSES LABUSE affichées avec le bilan et réglables (YAML) — l'estimation est bandée « indicative, ne remplace pas un bilan professionnel ». | methode_standard | **en_attente** |
+| `copilote_compte_parcelles` | Une seule facette pour l'écran et le Copilote (jamais deux vérités). | choix_labuse | **en_attente** |
+| `courrier_demandes_n` | Compte brut par périmètre de compte. | choix_labuse | **en_attente** |
+| `couverture_commune_pct` | Périmètre d'affichage marketing honnête : les comptes de la base SERVIE, datés du run — pas des chiffres de communication figés. | choix_labuse | **en_attente** |
+| `crm_cartes_n`, `pipeline_entrees_n` | Périmètre strict du compte (IS NOT DISTINCT FROM : le pilote voit les siennes, NULL). | choix_labuse | **en_attente** |
+| `divisible_classe` | Heuristique LABUSE assumée (candidates À REVOIR, jamais « divisible » certifié) ; le run q_v10 en retard est une dette connue du catalogue des moteurs (toléré par la garde, workflow de revue). | choix_labuse | **en_attente** |
+| `ecart_candidat_pct` | Mesure d'aide à la bascule (l'écart alerte, l'humain tranche via la note de version). | choix_labuse | **en_attente** |
+| `evenements_proprietaire_liste` | La SÉLECTION des types d'événements retenus (procédures, radiations, ventes) est un choix LABUSE ; chaque fait affiché reste un passe-plat sourcé de sa source. | choix_labuse | **en_attente** |
+| `ia_cout_eur` | Coût = somme du ledger interne (tarifs indicatifs par modèle posés dans ai/core.PRICE), pas la facture Anthropic — l'écart éventuel est celui des tarifs catalogue. | choix_labuse | **en_attente** |
+| `marge_surelevation_m` | Seuil 2,8 m = un niveau habitable (convention LABUSE, affichée avec le verdict). | regle_externe | **en_attente** |
+| `mutations_12m_n` | Fenêtre « 12 derniers mois DE DONNÉES » : DVF est publié avec ~6 mois de retard ; une fenêtre calendaire afficherait un effondrement artificiel du marché. Choix documenté dans le code (CIRCUIT-2 lot 1.6). | choix_labuse | **en_attente** |
+| `n_a_faire` | Un « geste attendu » = un état de source qui appelle un clic (arbitre unique RETOURS-8 R1). | choix_labuse | **en_attente** |
+| `n_bascules_7j` | « Tiers hauts » = brûlante + chaude (paliers du modèle, voir fiche tier_opportunite) ; l'intitulé « 7 j » vaut « depuis le run précédent » (cadence de calcul réelle). | choix_labuse | **en_attente** |
+| `n_comptes_actifs` | Actif = statut applicatif 'actif' (suspendu/essai expiré exclus). | choix_labuse | **en_attente** |
+| `n_densifiables`, `densifier_couche` | « Densifiable » = définition LABUSE de segment (bâti + résiduel positif + non exclu cascade) — un angle de lecture du stock, pas une qualification réglementaire. | choix_labuse | **en_attente** |
+| `n_depots_a_verifier` | La validation humaine est la porte du Radar (doctrine P0) : le compteur mesure la file. | choix_labuse | **en_attente** |
+| `n_extraits_plu`, `n_communes_rnu`, `n_procedures_plu` | Le RNU (absence de PLU) n'est jamais compté « en révision » ; on ne sert pas un règlement non réconcilié (garde idurba+sha). Ce sont des règles d'inventaire LABUSE, pas une définition externe. | choix_labuse | **en_attente** |
+| `n_notifications` | Visibilité = sémantique applicative events.py (kinds marché, cloison par compte). | choix_labuse | **en_attente** |
+| `n_parcelles_commune` | Périmètre = les parcelles INGÉRÉES (cadastre Etalab, 24 communes) — un compte de base servie, pas un chiffre officiel DGFiP (le cadastre bouge ; le nôtre est daté par l'ingestion). | choix_labuse | **en_attente** |
+| `n_parcelles_ile` | Le chiffre affiché est celui du RUN SERVI (mesuré à la bascule), pas un count vif : l'accueil ne bouge pas entre deux bascules (RETOURS-10 T2). | choix_labuse | **en_attente** |
+| `n_parcelles_pm` | Assiette = parcelles du SIREN PRÉSENTES dans la base servie (jointure parcels) — pas le fichier DGFiP brut : un droit sur une parcelle hors périmètre ingéré ne compte pas. | choix_labuse | **en_attente** |
+| `n_permis_proximite`, `depots_secteur_n`, `historique_permis_liste` | Rayon 500 m / fenêtres 24 et 36 mois : conventions LABUSE de profil (déclarées, transmises au front). | regle_externe | **en_attente** |
+| `n_piscines` | Détection GELÉE (BD ORTHO 2025, seuil de confiance mesuré ~90,7 % — RETOURS-14 : seuil toiture 0,70 = 0 faux positif sur 50 contrôles) ; les corrections humaines priment toujours la détection. | choix_labuse | **en_attente** |
+| `n_sources`, `n_sources_surveillees` | Le périmètre « affichées » est le prédicat canonique unique (FIX-SOURCES S1). | choix_labuse | **en_attente** |
+| `n_veilles` | Compte brut par périmètre de compte. | choix_labuse | **en_attente** |
+| `n_vigilances`, `verdict_icd`, `simulplu_resultat` | La PARTITION en 17 étages, l'ordre, et la sévérité (HARD/SOFT) par couche sont des choix LABUSE d'instruction (dits à l'écran étage par étage) ; les PÉRIMÈTRES des couches sont réglementaires (passe-plats sourcés). | choix_labuse | **en_attente** |
+| `permis_5a_n`, `permis_12m_n` | Fenêtre 12 mois ancrée sur la fin des données (pas calendaire) : choix LABUSE d'honnêteté sur une source publiée avec retard. | regle_externe | **en_attente** |
+| `point_mort_n` | « Point mort » n'est PAS une définition SDES : c'est une définition LABUSE explicite (mandat CIRCUIT-4, attendu Sitadel) — permis autorisé + pas de DAACT + parcelle toujours nue au run servi. Le mot est à nous ; Sitadel définit « autorisé/commencé/terminé », pas « mort ». Fenêtre paramétrée par l'appelant. | choix_labuse | **en_attente** |
+| `ppr_pct` | Dénominateur = TOUTES les parcelles de la commune (pas la surface) ; numérateur = toute parcelle TOUCHÉE (une intersection même marginale compte). C'est une part d'EXPOSITION parcellaire, pas une part de territoire — le niveau d'aléa lui-même est un passe-plat du règlement DEAL (domaine de classes au registre). | choix_labuse | **en_attente** |
+| `projet_cadrage_n`, `projet_retenues_n` | Comptes bruts par appartenance au projet (statut retenu = décision client). | choix_labuse | **en_attente** |
+| `proprietaire_timeline_liste`, `acquisitions_pm_n` | « Acquisition » = apparition dans le fichier PM entre deux millésimes — un CONSTAT de diff, pas un acte daté (DVF seul date une vente). Doctrine posée au mandat rattrapage-KF-2 (septembre 2026). | choix_labuse | **en_attente** |
+| `qpv_n` | Le périmètre QPV lui-même est réglementaire (décret QPV 2024, ANCT — passe-plat de la couche) ; le COMPTE par commune est un simple rattachement LABUSE via la colonne commune de l'ingestion. | choix_labuse | **en_attente** |
+| `sdp_residuelle_m2`, `classe_residuel` | Seuil de sous-densité 40 % du taux d'emprise et niveaux par défaut 1,0 : conventions LABUSE prudentes, affichées. | regle_externe | **en_attente** |
+| `statut_plu` | La préséance RNU-d'abord est une règle d'affichage LABUSE : l'ABSENCE de PLU prime tout statut de procédure (une élaboration en cours ne rend pas un règlement opposable). | choix_labuse | **en_attente** |
+| `surface_plancher_m2`, `capacite_logements`, `surface_vendable_m2`, `potentiel_verdict` | Les coefficients 0,45 / 3,0 m / 0,80 / 65-80 m² / 30 logts/ha/niveau sont des HYPOTHÈSES LABUSE de modélisation, affichées avec le résultat. | regle_externe | **en_attente** |
+| `usage_outil_n` | Un « usage » = un événement d'ouverture d'outil émis par le front (capteur usage_events). | choix_labuse | **en_attente** |
+
+Total : 49 choix écrits (2 déjà actés par Vic, 9 justifiés/cités par CC, 38 en attente de confirmation).
+
+## Choix transverses (hors fiche unique)
+
+- **Isochrones (étude de zone)** : moteur = service isochrone IGN Géoplateforme (connectors/isochrone_ign), modes voiture/piéton, minutes choisies par l'utilisateur ; cache spatial sans TTL (zone_isochrone_cache) ; DÉGRADÉ HONNÊTE : jamais un cercle si le service ne répond pas (statut `indisponible` affiché). Choix documenté au mandat feat/etude-zone. — en_attente (à confirmer par Vic).
+- **Hypothèses de faisabilité** (Hypotheses, YAML par commune) : étage 3,0 m ; occupation du gabarit 0,45 ; rendement SDP→SHAB 0,80 ; 65-80 m²/logement ; densité 30 logts/ha/niveau ; reculs par défaut 5/3 m ; coûts 2 300-2 800 €/m² (prudent Réunion) ; marge 9 % ; frais 12 % ; plancher = habitable × 1,15 ; VRD 90 €/m². Toutes affichées avec les résultats. — en_attente (jamais actées formellement par Vic en un seul endroit).
+- **Cadences attendues des sources** (data_sources.cadence_attendue_jours, statut `proposee`) : rythmes devinés, à valider — DÉJÀ portés par la ligne « cadences proposées à valider » du Résumé du Circuit (CIRCUIT-P).

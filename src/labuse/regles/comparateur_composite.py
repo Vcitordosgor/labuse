@@ -1,5 +1,5 @@
-"""Fiche de règle — score composite du comparateur des 24 communes. CIRCUIT-4."""
-from . import FicheRegle, declarer
+"""Fiche de règle — score composite du comparateur. CIRCUIT-4 (lot 3 : méthode citée)."""
+from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
     donnees=("comparateur_composite",),
@@ -13,8 +13,21 @@ declarer(FicheRegle(
              "poids (réglables, défauts INDICATEURS)"),
     classe="methode_standard",
     fonction="src/labuse/registre/moteurs/commune.py:composite_communes",
-    verdict="reference_introuvable",
+    verdict="conforme",
+    reference=Reference(
+        titre="Normalisation min-max (feature scaling) — scikit-learn, MinMaxScaler",
+        article="sklearn.preprocessing.MinMaxScaler (formule de transformation)",
+        url="https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MinMaxScaler.html",
+        version="documentation stable (consultée 2026-09-06)",
+        extrait=("« X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0)) ; "
+                 "X_scaled = X_std * (max - min) + min » — la même transformation min-max, ici "
+                 "portée sur [0;100] avec inversion pour les axes « plus bas = mieux »."),
+        lu_le="2026-09-06"),
+    choix=("Poids par défaut (0,30 stock · 0,15 vélocité · 0,15 permis · 0,15 SRU · 0,10 ZAN · "
+           "0,15 prix neuf), inversion de direction et renormalisation des poids présents : "
+           "conventions LABUSE du comparateur, réglables à l'écran."),
     exemple_temoin="tests/regles/test_comparateur_composite.py::test_composite_temoin",
+    valide_par="cc",
     verifie_le="2026-09-06",
     moteur_fonctions=("commune.composite_communes",),
 ))
