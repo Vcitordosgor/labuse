@@ -90,14 +90,22 @@ verdict OK est persisté dans `filtre_versions`.
 
 ### Run candidat (non servi)
 
-Lancé `labuse flux-run --label q_v11_r21_alea` (cascade 24 communes + score-v2, sur la donnée
-aléa corrigée). Débit mesuré ~33 parcelles/s → **~3,6 h** sur 431 663 parcelles ; résumable
-(`--resume`), progression `/tmp/labuse-flux-run-q_v11_r21_alea.log`, écrit `dryrun_*` +
-`parcel_p_score_v2` sous le label candidat. **NON servi** — la bascule reste manuelle
-(`labuse golden promote q_v11_r21_alea`), après lecture de la note de version. La garde pompe
-étant verte, la bascule n'est plus bloquée.
-> État à la remise : run en cours (le compte-rendu sera complété du diff de tiers candidat vs
-> `q_v11_m137` quand il termine ; l'impact palier attendu est petit — cf. les 13 chaudes ci-dessus).
+`labuse flux-run --label q_v11_r21_alea` (cascade 24 communes + score-v2, sur la donnée aléa
+corrigée) : débit mesuré ~33 parcelles/s → **~3,6 h** sur 431 663 parcelles ; résumable
+(`--resume`), écrit `dryrun_*` + `parcel_p_score_v2` sous le label candidat. **NON servi** — la
+bascule reste manuelle (`labuse golden promote q_v11_r21_alea`), après note de version. La garde
+pompe étant verte, la bascule n'est plus bloquée.
+
+> **État à la remise : run à compléter (~15 % fait, dryrun conservé pour `--resume`).** Deux
+> tentatives interrompues dans la fenêtre de session : (1) double lancement de ma part (deux
+> process concurrents → collision `uq_dryrun_eval`, nettoyé) ; (2) backend Postgres terminé
+> côté serveur (`AdminShutdown`) à ~63 816 parcelles, cause externe non identifiée (Postgres lui
+> n'a PAS redémarré — la base est saine). Un run de 3 h ne tient pas de façon fiable dans cette
+> session. **À reprendre dans une fenêtre dédiée** : `labuse flux-run --label q_v11_r21_alea
+> --resume` (repart des 63 816 déjà évaluées). Le **diff de tiers candidat vs `q_v11_m137`**
+> (compte exact des changements de palier) se lira à la fin du run ; l'impact attendu est petit —
+> cf. les ~13 chaudes ci-dessus. La correction de la donnée et la levée de quarantaine, elles,
+> sont FAITES et indépendantes de ce run.
 
 ### Golden
 
