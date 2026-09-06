@@ -16,7 +16,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesPoints, getProspectionSolaire, getSolaireFiche,
-  postPasUnePiscine, type SolaireFiche, type SolaireFiltres } from '../../lib/api'
+  postPasUnePiscine, prospectionSolaireCsvUrl, type SolaireFiche, type SolaireFiltres,
+  type SolaireItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -24,8 +25,11 @@ import { ParcelInput } from '../ParcelInput'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
+import { Siren } from '../shared/Siren'
 
-const SOURCES_PIED = 'Détection FLAIR sur ortho · PVGIS v5.3 SARAH3 · RGE ALTI · données gelées 11/07/2026'
+// A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
+// (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
+const SOURCES_PIED = 'Détection FLAIR sur ortho · PVGIS v5.3 SARAH3 · RGE ALTI'
 const MOIS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 const num = (v: number | null | undefined, unit = '') => (v == null ? '—' : `${fmtInt(v)}${unit}`)
 
@@ -77,6 +81,18 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   )
 }
 
+// A2 — cellule propriétaire : PM = dénomination (+ SIREN public, cliquable Pappers) ; particulier
+// JAMAIS nommé (même règle privacy que l'Assemblage).
+function ProprioCell({ p }: { p: SolaireItem['proprio'] }) {
+  if (p.type === 'personne_morale')
+    return (
+      <span className="text-txt" title={p.siren ? `SIREN ${p.siren}` : undefined}>
+        {p.denomination}{p.siren ? <> · <Siren value={p.siren} className="font-mono text-[10px] text-txt-dim" /></> : null}
+      </span>
+    )
+  return <span className="italic text-txt-dim">particulier — non nommé</span>
+}
+
 // ── MODE PISCINES — la stat d'abord, puis carte + listing ──
 // LOT8 (OUTILS-FINALE) : le mode Piscines IGNORE le classement (toutes les piscines listées, pas de
 // pied « écartées ») ; PAS de sélecteur Périmètre (toute l'île d'office, la ventilation par commune
@@ -85,18 +101,25 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
+  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)   // A5 — pont Courrier
+  const setModule = useApp((s) => s.setModule)
   const qc = useQueryClient()
   const [commune, setCommune] = useState<string | null>(null)
   // RETOURS-11F M12 — bascule « inclure les incertaines » : par défaut seule la confiance HAUTE (≥ 0,80)
   // est comptée/cartographiée ; la bascule ajoute les bandes moyenne/basse (Vic a vu ~1 faux sur 4).
   const [inclureIncertaines, setInclureIncertaines] = useState(false)
+  // A2 — tri de la liste : commune (défaut) puis potentiel, en-têtes cliquables (tri SERVEUR).
+  const [sortPisc, setSortPisc] = useState<'commune' | 'potentiel'>('commune')
+  // A5 — sélection de lignes pour le pont Courrier (« Préparer les courriers (N) »).
+  const [sel, setSel] = useState<Set<string>>(new Set())
 
   const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureIncertaines], queryFn: () => getPiscinesAgregat(commune, 0, inclureIncertaines), staleTime: 60_000 })
-  // O12a (RETOURS-11) — la surface piscine (mesure vue du ciel) était FAUSSE : plus de filtre ni de
-  // colonne surface. Le pisciniste veut la parcelle et la commune, pas un m² inventé.
+  // O12a (RETOURS-11) — la surface piscine (mesure vue du ciel) est FAUSSE : ni filtre ni colonne
+  // surface (décision maintenue en OUTILS-FIX-1). A2 : la liste porte parcelle · commune · potentiel
+  // solaire · type de propriétaire (PM nommée / particulier non nommé).
   // RETOURS-11F3 avenant (note liée) — le LISTING suit le MÊME filtre de confiance que le compteur.
-  const filtres: SolaireFiltres = { commune, piscine: 'oui', inclureIncertaines }
-  const list = useQuery({ queryKey: ['piscines-list', commune, inclureIncertaines], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
+  const filtres: SolaireFiltres = { commune, piscine: 'oui', inclureIncertaines, sort: sortPisc }
+  const list = useQuery({ queryKey: ['piscines-list', commune, inclureIncertaines, sortPisc], queryFn: () => getProspectionSolaire(filtres), staleTime: 60_000 })
   // « pas une piscine » — retire la parcelle du service et rafraîchit compteur/carte/listing.
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
   const signalerPasPiscine = async (idu: string) => {
@@ -119,7 +142,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const [comptageReplie, setComptageReplie] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
   // Changer de commune (ou revenir à l'île) invalide les points posés : on repart « Voir sur la carte ».
-  useEffect(() => { setCarteAffichee(false); setComptageReplie(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
+  useEffect(() => { setCarteAffichee(false); setComptageReplie(false); setSel(new Set()); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
   // LOT8b — « Voir sur la carte » = TOUTES les piscines en marqueurs (pas le listing capé à 500) :
   // on charge les points GeoJSON et on les pose dans module-extra (couche module-pts, kind='piscine').
   const voirCarte = async () => {
@@ -205,35 +228,69 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
             : `💧 Voir sur la carte${agg.data ? ` (${fmtInt(agg.data.total)})` : ''}`}
       </button>
 
-      {/* LISTING piscines — 2 colonnes (Parcelle · Commune), surface retirée (O12a). */}
+      {/* A2 — liste actionnable : Parcelle · Commune · Potentiel solaire · Type de propriétaire
+          (PM nommée / particulier non nommé). Surface piscine volontairement absente (mesure
+          aérienne fausse, O12a). A3 export CSV · A5 pont Courrier sur la sélection. */}
       {list.isLoading && <Loading label="Parcelles…" />}
       {list.data && (
         <>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <table className="w-full text-[11px]">
-              {/* RETOURS-12 T4 — .thead-sticky (fond opaque + z-20). */}
-              <thead className="thead-sticky on-2 text-left text-[10px] uppercase tracking-wide text-txt-dim">
-                <tr><th className="px-2 py-1.5">Parcelle</th><th className="px-2 py-1.5">Commune</th><th className="px-2 py-1.5" /></tr>
-              </thead>
-              <tbody>
-                {items.slice(0, page.shown).map((it) => {
-                  const retiree = pasPiscine.has(it.idu)
-                  return (
-                  <tr key={it.idu} data-piscines-row className={`border-t border-line ${retiree ? 'opacity-40' : 'hover-fill cursor-pointer'}`} onClick={() => !retiree && select(it.idu)}>
-                    <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
-                    <td className="px-2 py-1.5 text-txt-mut">{it.commune}</td>
-                    {/* RETOURS-11F M12 — « pas une piscine » : signal humain, retire du service (compteur/carte). */}
-                    <td className="px-2 py-1.5 text-right">
-                      {retiree ? <span className="text-[9.5px] text-txt-dim">retirée</span> : (
-                        <button data-piscines-pas onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
-                          title="Signaler que cette parcelle n'a pas de piscine — la retire du compteur et de la carte"
-                          className="text-[9.5px] text-txt-dim hover:text-mint">pas une piscine</button>
-                      )}
-                    </td>
-                  </tr>
-                )})}
-              </tbody>
-            </table>
+          {/* A3/A5 — barre d'actions : export CSV (même bouton que Scan patrimoine) + pont Courrier. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button data-piscines-courrier disabled={sel.size === 0}
+              onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers') }}
+              className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+              ✉ Préparer les courriers ({sel.size}) → Courrier propriétaire
+            </button>
+            <a data-piscines-csv href={prospectionSolaireCsvUrl(filtres)}
+              className="ml-auto self-center rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</a>
+          </div>
+          {/* A2 — le panneau outil fait 320 px : une table à 6 colonnes déborderait (colonnes propriétaire
+              masquées). On sert des CARTES empilées (patron Assemblage/Programme), lisibles, avec une
+              barre de tri CLIQUABLE (commune | potentiel) qui pilote le tri SERVEUR + une case « tout
+              sélectionner ». */}
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
+            <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+              checked={(() => { const v = items.slice(0, page.shown).filter((i) => !pasPiscine.has(i.idu)); return v.length > 0 && v.every((i) => sel.has(i.idu)) })()}
+              onChange={(e) => setSel(() => {
+                const v = items.slice(0, page.shown).filter((i) => !pasPiscine.has(i.idu)).map((i) => i.idu)
+                return e.target.checked ? new Set(v) : new Set()
+              })} />
+            <span>Trier</span>
+            {([['commune', 'Commune'], ['potentiel', 'Potentiel']] as const).map(([k, lbl]) => (
+              <button key={k} data-piscines-sort={k} onClick={() => setSortPisc(k)}
+                className={`inline-flex items-center gap-0.5 uppercase tracking-wide hover:text-mint ${sortPisc === k ? 'text-mint' : 'text-txt-dim'}`}>
+                {lbl}{sortPisc === k && <span aria-hidden>▾</span>}
+              </button>
+            ))}
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+            {items.slice(0, page.shown).map((it) => {
+              const retiree = pasPiscine.has(it.idu)
+              const coche = sel.has(it.idu)
+              return (
+              <div key={it.idu} data-piscines-row
+                className={`rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 ${retiree ? 'opacity-40' : 'hover-fill cursor-pointer'}`}
+                onClick={() => !retiree && select(it.idu)}>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" data-piscines-sel className="h-3 w-3 shrink-0 accent-mint" disabled={retiree} checked={coche}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
+                  <span className="font-mono text-[11px] text-txt-hi">{it.idu.slice(8)}</span>
+                  <span className="ml-auto tnum text-[11px] text-txt">{it.productible == null ? '—' : fmtInt(it.productible)}<span className="ml-1 text-[9px] text-txt-dim">kWh/kWc/an</span></span>
+                </div>
+                <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
+                  <span className="shrink-0 text-txt-mut">{it.commune}</span>
+                  <span className="text-txt-dim">·</span>
+                  <span className="min-w-0 flex-1 truncate"><ProprioCell p={it.proprio} /></span>
+                  {/* RETOURS-11F M12 — « pas une piscine » : signal humain, retire du service (compteur/carte). */}
+                  {retiree ? <span className="shrink-0 text-[9.5px] text-txt-dim">retirée</span> : (
+                    <button data-piscines-pas onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
+                      title="Signaler que cette parcelle n'a pas de piscine — la retire du compteur et de la carte"
+                      className="shrink-0 text-[9.5px] text-txt-dim hover:text-mint">pas une piscine</button>
+                  )}
+                </div>
+              </div>
+            )})}
           </div>
           {/* R8(b) — COMPTEUR HONNÊTE. Le listing est plafonné par le serveur (`cap`, ex. 500) alors que
               la détection compte ~8 299 piscines (`total`). On paginait 200 par 200 SUR les lignes chargées,
@@ -319,11 +376,11 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
   if (!f.ok) return <p className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">{f.message ?? 'Aucune donnée solaire pour cette parcelle.'}</p>
   const pm = f.prod_mensuel ?? []
   const max = Math.max(...pm, 1)
-  // O13b (RETOURS-11) — dimensionnement dérivé des champs déjà servis (jamais inventé) :
-  //   kWc installable = emprise toit × part réellement exploitable (0,2 kWc/m², règle métier) ;
-  //   production annuelle = kWc × productible PVGIS (kWh/kWc/an). Absents → « — » (pas de zéro fabriqué).
-  const kwc = f.toit_m2 == null ? null : Math.round(f.toit_m2 * 0.2 * 10) / 10
-  const prodAn = kwc == null || f.productible == null ? null : Math.round(kwc * f.productible)
+  // A6 — dimensionnement SERVI PAR LE BACK (plus de calcul métier au front) : puissance installable
+  // (kWc) et production annuelle sont lues telles quelles ; le ratio kWc/m² est servi et écrit à l'écran.
+  const kwc = f.kwc ?? null
+  const prodAn = f.prod_annuel ?? null
+  const kwcParM2 = f.kwc_par_m2   // hypothèse (kWc/m²) écrite à côté du résultat
   return (
     <div data-solaire-fiche className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}55` }}>
       <div className="flex items-center justify-between gap-2">
@@ -333,7 +390,7 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         <KPI k="Potentiel" v={num(f.productible)} u="kWh/kWc/an" />
         <KPI k="Toiture (emprise)" v={num(f.toit_m2, ' m²')} />
-        {/* O13b — puissance installable + production annuelle estimées, dérivées des mesures servies. */}
+        {/* A6 — puissance installable + production annuelle SERVIES par le back ; ratio kWc/m² écrit ci-dessous. */}
         <KPI k="Puissance installable" v={kwc == null ? '—' : String(kwc).replace('.', ',')} u="kWc" />
         <KPI k="Production annuelle" v={num(prodAn)} u="kWh/an" />
         {/* orientation = azimut DU BÂTI (Estimé), pas une orientation « optimale » (non calculée) ;
@@ -345,6 +402,12 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
         <KPI k="Pente du terrain" v={f.pente == null ? '—' : `${f.pente}°`} />
         <KPI k="Pente du toit (médiane)" v={f.toiture?.pente_mediane_deg == null ? '—' : `${String(f.toiture.pente_mediane_deg).replace('.', ',')}°`} />
       </div>
+      {/* A6 — l'hypothèse de dimensionnement (ratio kWc/m²) est ÉCRITE à côté du résultat, servie de la config. */}
+      {kwcParM2 != null && kwc != null && (
+        <p data-solaire-kwc-hyp className="mt-1 text-[9px] leading-snug text-txt-dim">
+          Puissance installable = emprise toit × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
+        </p>
+      )}
       {f.toiture && (
         <p data-solaire-toiture className="mt-1.5 text-[9px] leading-snug text-txt-dim">
           Nature du toit : {f.toiture.statut} — {f.toiture.methode}
@@ -390,9 +453,10 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
       <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">
         Productible estimé à la <b className="text-txt-mut">maille PVGIS (~400 m)</b> — commun aux parcelles voisines, pas une mesure au toit. · Ombrage de proximité (bâti, arbres) non modélisé · panneaux existants non détectés — vérif photo aérienne avant démarchage.{f.millesime ? ` · ${f.millesime}` : ''}
       </p>
-      {/* O13b — explication en clair de la maille et de l'orientation de référence (jargon → phrase). */}
+      {/* A1 — explication en clair : l'inclinaison est le PARAMÈTRE RÉEL du calcul PVGIS (servi de la
+          config), plus un « 65° » recopié en dur. Plein nord = aspect 180° (hémisphère sud). */}
       <p className="mt-1 text-[9px] leading-snug text-txt-dim">
-        En clair : le potentiel est calculé sur un carré d’environ 400 m de côté (une même valeur pour toutes les parcelles du carré), pour des panneaux exposés plein nord et inclinés à 65° — l’orientation qui capte le mieux le soleil à La Réunion.
+        En clair : le potentiel est calculé sur un carré d’environ 400 m de côté (une même valeur pour toutes les parcelles du carré), pour des panneaux exposés plein nord{f.inclinaison_deg != null ? ` et inclinés à ${f.inclinaison_deg}°` : ''} — le paramétrage du modèle PVGIS pour La Réunion.
       </p>
       <button data-solaire-fiche-ouvrir onClick={onOpen} className="mt-1 text-[11px] font-medium text-mint hover:underline">Ouvrir la fiche complète →</button>
     </div>

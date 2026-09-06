@@ -3934,7 +3934,7 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
     r = db.execute(text(
         "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, "
         "       code_bati_origine, sdp_residuelle_m2, sdp_nette_m2, contrainte_pct, "
-        "       surelevation_possible, niveaux_surelevation, surface_m2, zone_plu, commune, "
+        "       surface_m2, zone_plu, commune, "
         "       rang_segment, rang_commune, "
         # M47 (P2) : millésime/source de la couche servie — run servi + date de matérialisation.
         "       run_label, to_char(computed_at, 'YYYY-MM-DD') AS maj, "
@@ -3960,12 +3960,11 @@ def _renouvellement_block(db: Session, idu: str) -> dict | None:
         "code_bati_origine": r["code_bati_origine"],
         "zone_plu": r["zone_plu"],
         "sdp_residuelle_m2": r["sdp_residuelle_m2"], "surface_m2": r["surface_m2"],
-        # RETOURS-11F M9 — capacité NETTE des contraintes + surélévation (données servies du run,
-        # jamais inventées). sdp_nette < sdp_brute quand PPR rouge / pente > 30 % / ravine touchent
-        # la parcelle ; contrainte_pct = part déduite ; surélévation = hauteur PLU − hauteur bâti.
+        # RETOURS-11F M9 — capacité NETTE des contraintes (données servies du run, jamais inventées).
+        # sdp_nette < sdp_brute quand PPR rouge / pente > 30 % / ravine touchent la parcelle ;
+        # contrainte_pct = part déduite. OUTILS-FIX-1 C1 : la surélévation n'est plus servie ici
+        # (batch débranché) — le signal vivant reste au moteur faisabilite/potentiel (onglet Faisabilité).
         "sdp_nette_m2": r["sdp_nette_m2"], "contrainte_pct": r["contrainte_pct"],
-        "surelevation_possible": bool(r["surelevation_possible"]) if r["surelevation_possible"] is not None else None,
-        "niveaux_surelevation": r["niveaux_surelevation"],
         "composantes": [
             {"cle": k, "points": r[k], "max": m, "libelle": LIBELLES_COMPOSANTES[k]}
             for k, m in (("comp_potentiel", 47), ("comp_assiette", 29),
@@ -4995,7 +4994,7 @@ def renouvellement_liste(commune: str | None = None,
         SELECT r.idu, p.commune AS commune_nom, r.commune AS commune_insee, r.renouv_score,
                r.comp_potentiel, r.comp_assiette, r.comp_marche,
                r.code_bati_origine, r.sdp_residuelle_m2, r.sdp_nette_m2, r.contrainte_pct,
-               r.surelevation_possible, r.niveaux_surelevation, r.surface_m2, r.zone_plu,
+               r.surface_m2, r.zone_plu,
                r.rang_segment, r.rang_commune,
                s2.tier AS tier_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0

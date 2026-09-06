@@ -26,14 +26,17 @@ def test_m9_capacite_nette_deduit_les_contraintes():
     assert "greatest(0.0" in sql
 
 
-def test_m9_surelevation_lue_de_parcel_residuel_bati():
-    """La surélévation possible (hauteur PLU − hauteur bâti BD TOPO) est lue de la table déjà
-    calculée `parcel_residuel_bati` — jamais recalculée, jamais inventée."""
+def test_m9_surelevation_debranchee_du_batch():
+    """OUTILS-FIX-1 C1 (décision Vic 06/09) — la surélévation n'est PLUS calculée ni écrite par le
+    batch : elle servait une valeur périmée depuis EXPORTS-1 (VERIF-1 Q3). Le signal vivant vit au
+    moteur commun faisabilite/potentiel (onglet Faisabilité de la fiche). Les colonnes de la table
+    sont conservées SANS migration (supprimées au prochain rebuild de schéma)."""
     from labuse import renouvellement as R
     sql = R._BUILD_SQL
-    assert "parcel_residuel_bati" in sql
-    assert "surelevation_possible" in sql and "niveaux_sur" in sql
-    # DDL : les colonnes existent bien dans la table servie
+    # plus aucune écriture de surélévation : ni alias SELECT, ni colonne d'INSERT
+    assert "AS surelevable" not in sql and "AS niveaux_sur" not in sql
+    assert "surelevation_possible" not in sql and "niveaux_surelevation" not in sql
+    # SDP nette conservée ; DDL garde les colonnes surélévation (pas de migration)
     assert "sdp_nette_m2" in R.DDL and "surelevation_possible" in R.DDL and "niveaux_surelevation" in R.DDL
 
 

@@ -87,18 +87,12 @@ export function M22() {
     if (/^\d*AU\w*ST$/.test(c)) return true                  // AU fermée (secteur de transition)
     return false
   }
-  const filtres = inclureAgriNat ? brut : brut.filter((i) => !estAgriNat(i.zone))
-  // RETOURS-11 (O2c) — tri par ADÉQUATION : la parcelle la mieux ajustée d'abord (marge ×1 à ×3), les
-  // très gros dépassements (grosses parcelles, ×>3) ensuite. Ne réordonne que les lignes DÉJÀ chargées.
-  const bienAjuste = (m: number) => m >= 1 && m <= 3
-  const items = [...filtres].sort((a, b) => {
-    const ma = a.marge_capacite as number, mb = b.marge_capacite as number
-    const aj = Number(bienAjuste(mb)) - Number(bienAjuste(ma))
-    if (aj !== 0) return aj                                   // les ×1-×3 remontent en tête
-    return ma - mb                                            // puis marge croissante (le plus ajusté d'abord)
-  })
+  // B1 — le tri par ADÉQUATION est fait par le SERVEUR (écart au programme croissant) AVANT la
+  // troncature : la page servie EST déjà celle des mieux ajustées. Le front n'y touche plus (le
+  // re-tri des seules lignes chargées masquait le vrai classement — VERIF-1 Q2). On garde l'ordre servi.
+  const items = inclureAgriNat ? brut : brut.filter((i) => !estAgriNat(i.zone))
   const total = meta?.n ?? 0
-  const masquees = brut.length - filtres.length              // lignes agri/nat masquées (honnêteté compteur)
+  const masquees = brut.length - items.length                // lignes agri/nat masquées (honnêteté compteur)
   // RETOURS-10 (T3) — plus de « Tout charger » : « Voir 200 de plus » seul, jamais de tir massif.
   // carte : résultats en mode critères (accumulés), parcelle désignée en mode parcelle
   useEffect(() => {
@@ -172,7 +166,9 @@ export function M22() {
                   <b className="num-key text-mint">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} · <b className="text-txt">{meta.criteres.unites}</b> unités → <span title="Capacité constructible au gabarit PLU (R+N, hauteur), coef circulations appliqué — pas la SDP estimée de l'Assemblage ni la SHAB vendable de la Faisabilité">SDP gabarit</span> ≥ <b className="tnum text-mint">{fmtInt(meta.criteres.sdp_min_m2)} m²</b>
                   <span className="text-txt-dim">{commune ? ` · ${commune}` : ' · toute l’île'}</span>
                 </p>
-                <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">{meta.criteres.hauteur_regle} · triées par adéquation (les parcelles ajustées au programme d’abord).</p>
+                {/* B2 — compte et liste sur le MÊME ensemble : le tri « adéquation » est désormais fait
+                    côté serveur avant la troncature, donc « les mieux ajustées d'abord » est vrai. */}
+                <p className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">{meta.criteres.hauteur_regle} · <b className="text-txt-mut">{fmtInt(items.length)}</b> affichée{items.length > 1 ? 's' : ''} sur {fmtInt(total)}, les mieux ajustées au programme d’abord.</p>
                 {/* RETOURS-11 (O2c) — le zonage agricole/naturel est masqué par défaut ; case pour le réafficher. */}
                 <label className="mt-1 flex cursor-pointer items-center gap-1.5 text-[9.5px] text-txt-dim hover-fill rounded px-1 py-0.5">
                   <input type="checkbox" checked={inclureAgriNat} onChange={(e) => setInclureAgriNat(e.target.checked)}

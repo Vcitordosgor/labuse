@@ -217,8 +217,8 @@ export function DensifierTablePanel() {
                   <th className="px-2 py-1.5 text-right" title="SDP résiduelle NETTE des contraintes physiques (PPR zone rouge, pente > 30 %, ravine). C'est la capacité réellement mobilisable — et ce qui classe la parcelle.">SDP nette</th>
                   <th className="px-2 py-1.5 text-right">Surface</th>
                   <th className="px-2 py-1.5">Bâti existant</th>
-                  {/* RETOURS-11F M9 — surélévation : hauteur PLU − hauteur du bâti (BD TOPO). */}
-                  <th className="px-2 py-1.5" title="Surélévation possible : la hauteur autorisée au PLU dépasse la hauteur du bâti existant (BD TOPO) — un ou plusieurs niveaux gagnables.">Surélévation</th>
+                  {/* OUTILS-FIX-1 C1 — colonne « Surélévation » retirée : le batch servait une valeur
+                      périmée (débranchée depuis EXPORTS-1). Le signal vivant vit dans l'onglet Faisabilité. */}
                   <th className="px-2 py-1.5">Zone</th>
                   {/* LOT12c — rang DANS la commune par score de densification (1 = meilleure de la commune) */}
                   <th className="px-2 py-1.5 text-right" title="Rang de la parcelle dans sa commune par score de densification (1 = la meilleure de la commune).">Rang commune</th>
@@ -247,13 +247,7 @@ export function DensifierTablePanel() {
                         parcel_renouvellement) — on sert le TYPE d'occupation (déjà bâtie / ensemble bâti),
                         jamais un m² inventé. */}
                     <td className="px-2 py-1.5 text-txt-dim">{CODE_LABEL[it.code_bati_origine] ?? it.code_bati_origine}</td>
-                    {/* Surélévation possible → « +N niveau(x) » (ou « possible » si le nombre de niveaux
-                        n'est pas connu) ; « — » si non / donnée absente (jamais un « non » inventé). */}
-                    <td className="px-2 py-1.5 text-txt-mut">
-                      {it.surelevation_possible
-                        ? <span className="rounded bg-mint/12 px-1 text-[10px] text-mint">{it.niveaux_surelevation ? `+${it.niveaux_surelevation} niv.` : 'possible'}</span>
-                        : <span className="text-txt-dim">—</span>}
-                    </td>
+                    {/* OUTILS-FIX-1 C1 — colonne « Surélévation » retirée (batch débranché, valeur périmée). */}
                     <td className="px-2 py-1.5 text-txt-mut">{it.zone_plu ?? '—'}</td>
                     <td className="px-2 py-1.5 text-right text-txt-mut">{it.rang_commune}</td>
                   </tr>

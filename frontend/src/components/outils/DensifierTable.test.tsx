@@ -50,9 +50,10 @@ describe('DENSIFIER — DensifierTablePanel (grand tableau)', () => {
     expect(document.querySelector('[data-pagination-count]')?.textContent).toContain('3 / 7')
     expect(document.querySelectorAll('[data-densifier-row]')).toHaveLength(CAP)
     // colonnes du mandat, dont « Bâti existant » (certains libellés existent aussi en chip de tri → getAll).
-    // RETOURS-11F M9 : « SDP résiduelle » → « SDP nette » (des contraintes), + colonne « Surélévation ».
-    for (const h of ['Parcelle', 'Classement', 'SDP nette', 'Surface', 'Bâti existant', 'Surélévation', 'Zone', 'Rang commune'])
+    // OUTILS-FIX-1 C1 : la colonne « Surélévation » est RETIRÉE (batch débranché, valeur périmée).
+    for (const h of ['Parcelle', 'Classement', 'SDP nette', 'Surface', 'Bâti existant', 'Zone', 'Rang commune'])
       expect(screen.getAllByText(h).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Surélévation')).toBeNull()
   })
 
   it('« Bâti existant » sert le TYPE d\'occupation (jamais un m² inventé)', async () => {
