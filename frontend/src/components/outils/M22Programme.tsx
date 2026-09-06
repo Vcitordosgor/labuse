@@ -261,7 +261,13 @@ export function M22() {
                 <button data-faisa-changer onClick={() => setPicked(null)}
                   className="ml-auto rounded border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt">changer</button>
               </div>
-              <div data-faisa-parcelle className="pr-0.5">
+              {/* OUTILS-FIX-3 A1 — le bloc « Capacité constructible » (et tout FaisabiliteTab) sortait de la
+                  DA quand on l'ouvrait par le pont Densifier : son titre (GroupLabel → `.sec`) et ses filets
+                  sont stylés SOUS `.fiche-v6` (`.fiche-v6 .sec > span { font-size:10px … }`) — hors de ce
+                  conteneur (ici, dans l'outil) la classe retombait au défaut navigateur (~16 px), « nettement
+                  plus gros ». On rend donc FaisabiliteTab dans le MÊME contexte `.fiche-v6` que la fiche : mêmes
+                  classes, même typographie, contenu identique (A2 : cause = classes CSS scopées `.fiche-v6`). */}
+              <div data-faisa-parcelle className="fiche-v6 pr-0.5">
                 <FaisabiliteTab idu={picked} />
               </div>
             </>
