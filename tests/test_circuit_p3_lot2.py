@@ -91,6 +91,29 @@ def test_egalite_robinets_a_regarder(client, engine):
 
 
 @pytest.mark.db
+def test_detail_robinet_coherent_avec_liste(client, engine):
+    """La page de détail d'un robinet dit le MÊME état que la liste du Circuit (recette P3 : le détail
+    disait « cohérent » quand la liste disait « fuite », car il joignait par libellé, pas par chiffre)."""
+    from labuse import sonde_circuit
+    from labuse.ingestion.seed_sources import appliquer_modes_cadences
+    (cid_fuite, rob_fuite), _ = _deux_chiffres_avec_robinets()
+    with engine.begin() as c:
+        appliquer_modes_cadences(c)
+        sonde_circuit.ensure(c)
+        c.execute(text("DELETE FROM circuit_ecarts"))
+        c.execute(text(
+            "INSERT INTO circuit_ecarts (chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b,"
+            " cause, type, statut) VALUES (:cid, 'p3', 'libellé (brut)', '1', 'libellé (servi)', '2',"
+            " 'test P3', 'nombre', 'ouvert')"), {"cid": cid_fuite})
+    circ = client.get("/admin/circuit").json()
+    for rid in rob_fuite:
+        etat_liste = next(rb["etat"] for rb in circ["robinets"] if rb["id"] == rid)
+        detail = client.get(f"/admin/circuit/robinet/{rid}").json()
+        assert detail["robinet"]["etat"] == etat_liste          # le détail == la liste
+        assert etat_liste[1] == "fuite mesurée"                 # et c'est bien une fuite
+
+
+@pytest.mark.db
 def test_reservoirs_a_regarder_sans_doublon(client, engine):
     """2.3 — « n à regarder » à gauche = les ids de réservoirs des lignes du Résumé, SANS doublon
     (un réservoir dans deux lignes ne compte qu'une fois)."""

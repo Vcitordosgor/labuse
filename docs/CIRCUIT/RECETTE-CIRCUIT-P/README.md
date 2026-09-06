@@ -82,3 +82,34 @@ Captures (`P2-01`→`P2-13`) :
 | P2-13 | filtre de catégorie **« sonde » présent même vide** |
 
 Le parcours couvre le lot 5.1 du mandat CIRCUIT-P2.
+
+---
+
+## 4. Recette CIRCUIT-P3 (deux lectures qui se contredisent) — `qa/circuit_p3_captures.mjs`
+
+Sur la BASE LOCALE RÉELLE (`labuse`) : la page (`circuit-harness.html`, servie par vite) et ses
+appels `/admin/*` PROXIFIÉS vers une instance uvicorn de CE code branchée sur la vraie base
+(`API=http://127.0.0.1:8010`). Aucune fixture — données réelles, correctifs P3 en place.
+
+Rejeu :
+```
+PYTHONPATH=src python -m uvicorn labuse.api.app:app --port 8010     # branché sur labuse (.env)
+(cd frontend && npm run dev)                                         # vite, base /socle/
+BASE=http://localhost:5173 API=http://127.0.0.1:8010 node qa/circuit_p3_captures.mjs
+```
+
+Captures (`P3-01`→`P3-06`) :
+
+| # | vue |
+|---|-----|
+| P3-01 | Journal : ses entrées rendues (fini « 0 passage ») + un **lot déplié** source par source |
+| P3-02 | Journal filtré sur **« filtre »** |
+| P3-03 | Journal filtré sur **« vanne »** |
+| P3-04 | Circuit : colonne **Robinets « n à regarder » non nul** (fini « 130, 0 ») |
+| P3-05 | un **robinet en fuite** ouvert depuis le Circuit (détail = liste : « fuite mesurée ») |
+| P3-06 | le **Résumé** : ses nombres = ceux du Circuit (même `ko`) |
+
+P3-05 a été re-joué contre l'endpoint corrigé sur la base seedée (uvicorn :8011 sur `labuse_test`)
+parce que la base locale était momentanément verrouillée par un run externe suspendu (13 min, locks
+sur `parcels`) qu'on ne devait pas interrompre ; le correctif du détail est aussi couvert par
+`test_detail_robinet_coherent_avec_liste`.

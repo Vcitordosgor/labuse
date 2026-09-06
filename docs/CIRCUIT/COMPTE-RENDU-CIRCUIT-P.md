@@ -345,3 +345,110 @@ Commits (non mergés, un par lot) : mandat · lot 1 · lot 2 · lot 3 · lot 4 �
   slug de réservoir retombe sur la clé brute (best-effort, jamais une erreur).
 
 « Ne merge pas » respecté.
+
+---
+
+# P3 — deux lectures qui se contredisent (mandat MANDAT-CIRCUIT-P3.md)
+
+Branche : `feat/circuit-page`, worktree `~/Desktop/labuse-audit`. Rien mergé. Un commit + un push par
+lot. Reprise : « continue CIRCUIT-P3 depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-P.md ».
+
+## Les DEUX causes trouvées (en français)
+
+1. **Le Journal affichait « 0 passage » sur une table de 90 lignes.** La base locale (créée avant
+   CIRCUIT-P2) n'avait pas la colonne `circuit_journal.lot`, ajoutée en P2 par `ensure()` mais jamais
+   rejouée sur cette base. L'endpoint groupe par `COALESCE(lot, …)` → la requête levait « column lot
+   does not exist » → l'ancien `except` la rattrapait et renvoyait `total=0, entrees=[]`. Un ÉCHEC
+   MASQUÉ. Prouvé : `psql labuse -c "SELECT COALESCE(lot,…) …"` → `ERROR: column "lot" does not exist`.
+2. **Le Résumé disait « 2 fuites, 2 robinets » / « 1 eau ancienne » quand le Circuit disait « 130, 0
+   à regarder ».** Les colonnes `circuit_ecarts.robinet_a/robinet_b` et `circuit_eau_ancienne.robinet`
+   ne contiennent PAS des ids de robinet du registre mais des LIBELLÉS d'affichage (`attrs.degre (DEAL
+   brut)`, `attrs.niveau (servi)`, `fiche parcelle / filtres`). Le Résumé comptait ces chaînes brutes ;
+   l'état des robinets matchait les ids du registre → aucun ne ressortait. Le vrai lien passe par le
+   `chiffre_id` (un robinet est touché s'il SERT un chiffre en fuite/eau). Prouvé (test -m local avant
+   correctif) : « Résumé cite le robinet 'attrs.degre (DEAL brut)' / 'attrs.niveau (servi)' /
+   'fiche parcelle / filtres' que le Circuit dit OK ».
+
+Et une TROISIÈME, trouvée en recette (P3-05) : la **page de détail d'un robinet** disait « cohérent »
+quand la liste disait « fuite », car elle aussi joignait `circuit_ecarts` par `:rid IN (robinet_a,
+robinet_b)` (libellés). Corrigée par le même join `chiffre_id`.
+
+## Lot 1 — Le journal ✅ (commit « CIRCUIT-P3 lot 1 »)
+- `admin_circuit_journal` appelle `circuit_journal.ensure(c)` (ALTER `lot` idempotent) AVANT la
+  requête, et NE MASQUE PLUS les erreurs (l'`except` fourre-tout retiré). Compteur du jour = jour de
+  La Réunion (`ts AT TIME ZONE 'Indian/Reunion'`). Aucun filtre de date par défaut.
+- Tests : rend vanne + lot de 39 filtres (une ligne) + bascule sur tous/vanne/filtre ; **self-heal**
+  (DROP COLUMN lot → l'endpoint la rétablit et rend les lignes = la régression EXACTE) ; entrée
+  d'il y a un an comptée (aucun filtre de date).
+
+## Lot 2 — L'état des robinets ✅ (commit « CIRCUIT-P3 lot 2 »)
+- `circuit_etats.robinets_touches(fuites, eau, chiffres_par_robinet)` rattache fuite/eau au robinet
+  REGISTRE par le `chiffre_id`. UNE dérivation, partagée par l'état des robinets (ctx `etat_robinet`)
+  ET le Résumé (`composer(fuite_robinets=…, eau_robinets=…)`) → les deux comptent les mêmes robinets.
+  Les paramètres `fuites`/`eau_ancienne` (label-based) retirés du composer.
+- **Le test d'égalité 2.4 refait pour de bon** (`test_circuit_p3_lot2.py`) : part des tables
+  (`circuit_ecarts`, `circuit_eau_ancienne`, registre), construit l'ensemble attendu « à regarder » et
+  exige l'ÉGALITÉ STRICTE avec `/admin/circuit` (aucun en trop, aucun en moins). L'ancien test
+  synthétique P2 (`test_resume_circuit_coherents`, qui passait sur une page fausse) est **supprimé**.
+- 2.3 réservoirs : `a_regarder` (gauche) = les réservoirs DISTINCTS des lignes ko du Résumé, sans
+  doublon (un réservoir compté dans deux lignes — p.ex. « jamais vérifié » + « cadence proposée » —
+  n'entre qu'une fois dans « à regarder » ; les lignes grises « À décider » ne comptent pas).
+- 2.4 pastilles : un bloc « tout va bien » ne porte aucune pastille ambre/rouge/mauve, et
+  réciproquement (test vitest `pastilles.test.tsx`).
+- Détail robinet corrigé (join `chiffre_id`) + `test_detail_robinet_coherent_avec_liste`.
+
+## Lot 3 — Une seule source de vérité ✅ (commit « CIRCUIT-P3 lot 3 »)
+- Le serveur décide « à regarder » UNE fois : `/admin/circuit` pose `ko` sur chaque réservoir /
+  robinet. Le front LIT `ko` ; **`koTank`/`koTap` (réimplémentation front de la même règle) SUPPRIMÉS**
+  de `diagram.ts` et `CircuitDiagram` (compteur de colonne + compte par bloc + interrupteur lisent le
+  même `ko`). Plus de chemin parallèle qui puisse diverger.
+- Test 3.2 de cohérence globale sur la BASE RÉELLE (`pytest -m local`, marqueur enregistré). PREUVE
+  AVANT / APRÈS :
+  * AVANT (sans colonne lot) : `AssertionError: journal vide sur une base pleine (0 > 0)`.
+  * AVANT (colonne lot présente) : `incohérences Résumé ↔ Circuit : Résumé cite le robinet
+    'attrs.degre (DEAL brut)' / 'attrs.niveau (servi)' / 'fiche parcelle / filtres' que le Circuit dit OK`.
+  * APRÈS : `1 passed`.
+- Test 3.1 (db) : chaque élément porte `ko`, et les compteurs de colonne SONT ces `ko`.
+
+## Lot 4 — Recette ✅ (commit « CIRCUIT-P3 lot 4 »)
+- Captures **P3-01 → P3-06** sur la base locale (`qa/circuit_p3_captures.mjs`, harness vite +
+  `/admin/*` proxifié vers uvicorn de ce code sur `labuse`) : Journal avec ses entrées + un lot déplié ·
+  Journal filtré « filtre » · « vanne » · Circuit « n à regarder » non nul à droite · un robinet en
+  fuite ouvert (détail = liste) · Résumé aux mêmes nombres que le Circuit. Regardées.
+- Vérifié en direct sur `labuse` (uvicorn :8010, ce code) : Journal **90** (était 0),
+  `robinets_a_regarder` **1** (était 0), 68 réservoirs — les deux lectures coïncident.
+
+## Ce qui a été SUPPRIMÉ
+- L'`except` fourre-tout de l'endpoint journal (masquait « column lot does not exist »).
+- Les paramètres `fuites`/`eau_ancienne` du `composer` (comptage robinet par libellé) — remplacés par
+  `fuite_robinets`/`eau_robinets` dérivés par `chiffre_id`.
+- `koTank`/`koTap` (front) — la classification « à regarder » n'existe plus qu'au serveur (`ko`).
+- Le test synthétique `test_resume_circuit_coherents` (P2) — remplacé par l'égalité stricte P3.
+
+## Décisions prises en autonomie
+1. **Le join fuite/eau → robinet passe par `chiffre_id`** (les colonnes `robinet_*` sont des libellés).
+   Conséquence assumée : une eau ancienne enregistrée avec un `chiffre_id` NON registre
+   (`(chiffres DPE)` sur la base locale) ne se rattache à aucun robinet → 0 robinet « eau ancienne »
+   (Résumé et Circuit d'accord). C'est une donnée à re-taguer côté sonde (dette écrite ci-dessous),
+   pas un correctif d'affichage.
+2. **Le serveur est seul juge du « à regarder »** (`ko`) ; le front ne reclasse plus (koTank/koTap
+   supprimés) — la seule façon d'empêcher deux lectures de diverger.
+3. **P3-05 re-joué sur la base seedée** (uvicorn `labuse_test`) : la base locale était verrouillée
+   par un run externe suspendu (13 min, locks `parcels`) qu'on ne devait pas tuer ; l'endpoint
+   corrigé y rend « fuite mesurée », conforme, et le correctif est couvert par test.
+
+## Dette / limites écrites
+- **Sonde** : `circuit_ecarts.robinet_a/robinet_b` et `circuit_eau_ancienne.robinet` devraient porter
+  un `chiffre_id` (ou un id de robinet) plutôt qu'un libellé ; et l'eau DPE utilise le placeholder
+  `(chiffres DPE)`. Tant que ce n'est pas corrigé côté écriture, une eau non attribuable à un chiffre
+  registre reste invisible au niveau robinet (par construction, pour que les deux lectures coïncident).
+- La CLI `labuse filtre …` est enregistrée APRÈS le garde `if __name__ == "__main__"` de `cli.py`
+  (pré-existant) → inatteignable via `python -m labuse.cli` ; le lot de démonstration P3 a été produit
+  par le MÊME chemin de code appelé directement.
+
+## Bilan des suites
+- Backend circuit : **78 passed** (P3 lots 1/2/3 neufs + P1/P2, 0 régression) ; `-m local` : 1 passed
+  sur la base réelle. Frontend : **173 vitest passed**, **tsc vert**.
+- Pré-existant hors mandat : `test_non_contradiction.py` échoue en COLLECTION (WeasyPrint `libgobject`).
+
+« Ne merge pas » respecté.

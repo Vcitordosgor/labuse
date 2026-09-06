@@ -2264,17 +2264,22 @@ def admin_circuit_robinet(request: Request, rid: str) -> dict:
     if not rb:
         raise HTTPException(404, "robinet inconnu")
     r2c, c2r, slug_nom = _graphe()
+    # CIRCUIT-P3 (lot 2.1) — fuite/eau se rattachent au robinet par le CHIFFRE (les colonnes
+    # robinet_* / robinet des tables sont des libellés). La page de détail lit donc les mêmes sources
+    # que le Circuit : sinon le détail dit « cohérent » quand la liste dit « fuite » (contradiction
+    # constatée en recette P3).
+    _cids = list(rb.chiffres)
     with engine().begin() as c:
         try:
             fuites = [dict(x) for x in c.execute(text(
                 "SELECT chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b, cause, depuis,"
                 " COALESCE(type,'nombre') AS type FROM circuit_ecarts"
-                " WHERE statut='ouvert' AND (:rid IN (robinet_a, robinet_b))"
-                " ORDER BY depuis DESC"), {"rid": rid}).mappings()]
+                " WHERE statut='ouvert' AND chiffre_id = ANY(:cids)"
+                " ORDER BY depuis DESC"), {"cids": _cids}).mappings()]
             eau = [dict(x) for x in c.execute(text(
                 "SELECT chiffre_id, robinet, tampon, attendu, mecanisme, statut FROM circuit_eau_ancienne"
-                " WHERE robinet = :rid AND statut='ouvert' ORDER BY id DESC LIMIT 20"),
-                {"rid": rid}).mappings()]
+                " WHERE statut='ouvert' AND chiffre_id = ANY(:cids) ORDER BY id DESC LIMIT 20"),
+                {"cids": _cids}).mappings()]
             controle = c.execute(text(
                 "SELECT ts, robinets_couverts, robinets_non_couverts FROM circuit_controles"
                 " ORDER BY id DESC LIMIT 1")).mappings().first()
