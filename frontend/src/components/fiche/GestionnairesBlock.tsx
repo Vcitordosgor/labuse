@@ -8,15 +8,16 @@
  * Additif : rendu depuis la charge utile de la fiche (aucun fetch).
  */
 import { BlocIndisponible } from './BlocIndisponible'
-import { TOKENS } from '../../lib/tokens'
 import type { Gestionnaires, GestOperateur } from '../../lib/types'
+import { GroupLabel, FactNote } from './primitives'
 
+// RETOURS-20 Z2 — la confiance devient une pastille standard (tokens) : confirmé = mint,
+// à confirmer / incertain = ambre. Plus de couleur composée à la main (TOKENS.viab* + alpha).
 function Conf({ c }: { c?: GestOperateur['confidence'] }) {
   if (!c) return null
-  const meta = { high: { t: 'confirmé', color: TOKENS.viabConfirmee }, med: { t: 'à confirmer', color: TOKENS.viabIncertaine },
-                 low: { t: 'incertain', color: TOKENS.viabLourde } }[c]
-  return <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[9.5px]"
-    style={{ backgroundColor: `${meta.color}1A`, color: meta.color }}>{meta.t}</span>
+  const meta = { high: { t: 'confirmé', cls: 'pill-mint' }, med: { t: 'à confirmer', cls: 'pill-amber' },
+                 low: { t: 'incertain', cls: 'pill-amber' } }[c]
+  return <span className={`ml-1.5 ${meta.cls}`}>{meta.t}</span>
 }
 
 function Row({ icon, label, op, extra }: { icon: string; label: string; op: GestOperateur | null; extra?: string | null }) {
@@ -36,15 +37,12 @@ function Row({ icon, label, op, extra }: { icon: string; label: string; op: Gest
 export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
   if (g.indisponible) return <BlocIndisponible titre="Gestionnaires (raccordement)" />   // M125 — panne ≠ absence
   return (
-    <div data-gestionnaires className="card-elev px-3 py-2.5">
-      {/* M70 point 4 — la date « à jour {millésime} » est retirée du bloc (bruit ; la donnée reste
-          en base, dans les exports et l'écran Sources). Le disclaimer « à revérifier annuellement »
-          reste porté par le pied du bloc. */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-txt-hi">Gestionnaires (raccordement)</span>
-      </div>
-
-      <div className="mt-2 flex flex-col gap-1">
+    <div data-gestionnaires>
+      {/* RETOURS-20 Z1·02 / Z3 — le titre encadré (card-elev) devient un KICKER : texte + filet,
+          plus de boîte dans la boîte. Lignes, note et disclaimer inchangés (données identiques).
+          M70 point 4 — la date « à jour {millésime} » reste retirée du bloc (bruit). */}
+      <GroupLabel>Gestionnaires (raccordement)</GroupLabel>
+      <div className="mt-1 flex flex-col gap-1">
         {g.epci.nom && (
           <Row icon="◆" label="Compétence" op={{ operateur: `${g.epci.code} — ${g.epci.nom}`, type: g.epci.contact ?? undefined }} />
         )}
@@ -56,8 +54,9 @@ export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
         )}
       </div>
 
-      {g.note && <p className="mt-2 text-[11px] leading-snug text-st-creuser">{g.note}</p>}
-      {g.disclaimer && <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{g.disclaimer}</p>}
+      {/* Z3 — les paragraphes de méthode passent en NOTE 11,5 px sous les lignes (plus de plein texte). */}
+      {g.note && <FactNote>{g.note}</FactNote>}
+      {g.disclaimer && <FactNote>{g.disclaimer}</FactNote>}
     </div>
   )
 }

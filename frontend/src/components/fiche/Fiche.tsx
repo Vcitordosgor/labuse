@@ -21,7 +21,7 @@ import type { FicheLine, FicheZoneDestinations, IcdBlock, Onglet, ReglementPlu }
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil } from './primitives'
+import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, MicroTriple, RateLimit429, Line, EligibiliteReplie, icdColor, PorteOutil, FactRow, RefLink, FactNote } from './primitives'
 // RETOURS-11F4 (F5) — la section Constructibilité + sa machinerie vivent dans `constructibilite.tsx`.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
 import { ConstructibiliteSection } from './constructibilite'
@@ -123,61 +123,50 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   const notes = rp.zones.map((z) => z.note).filter(Boolean) as string[]
   const noteCommune = notes.length === rp.zones.length && notes.every((n) => n === notes[0]) ? notes[0] : null
   return (
-    <div data-reglement-plu className="card-elev px-3 py-2.5">
-      <p className="label-caps">Règlement PLU</p>
-      {/* M62-P1 (j) : tout aligné à gauche, UNE ligne par zone — pastille + zone + liens
-          (Voir l'article ↗ · Annuaire PLU →) sur la même ligne ; la phrase d'explication dessous,
-          en gris, une seule fois si elle est identique pour les deux zones. */}
-      <div className="mt-1.5 flex flex-col gap-1.5">
-        {rp.zones.map((z, i) => (
-          <div key={i}>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-left">
-              {/* CIRCUIT-2 lot 5.2 — la LETTRE DE ZONE porte l'étiquette de traçage (classe) */}
-              <Trace id="zone_plu_famille">
-                <span className="rounded-md bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-txt">{z.zone}</span>
-              </Trace>
-              {z.url && <a data-plu-link href={z.url} target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline">
-                {z.calibree ? 'Voir l’article' : 'Voir le règlement'} ↗
-              </a>}
-              {/* M76 pt5 (arbitrage Vic) : lien violet « Annuaire PLU → » retiré — doublon de la porte
-                  « Annuaire PLU de la commune » (grammaire officielle M60). Une action, une seule forme. */}
+    // RETOURS-20 Z2/Z3 — la boîte « RÈGLEMENT PLU » (card-elev) disparaît : chaque zone est un
+    // KICKER « Règlement — zone X » (renvoi « voir l'article » à droite) suivi de LIGNES DE FAIT
+    // (libellé · valeur mono à droite · renvoi d'article ↗ sous la ligne). Données inchangées :
+    // mêmes règles, mêmes valeurs, « non réglementé » / « à vérifier » dits et jamais comblés.
+    <div data-reglement-plu>
+      {rp.zones.map((z, i) => (
+        <div key={i}>
+          {/* Z1·02 — kicker : le titre porte la zone (Trace = classe CIRCUIT-2) ; le renvoi d'article
+              va dans le slot droit (Z1·04, lien mono ↗). M76 pt5 : « Annuaire PLU » reste une porte. */}
+          <GroupLabel right={z.url
+            ? <a data-plu-link className="f-ref" href={z.url} target="_blank" rel="noreferrer">{z.calibree ? 'voir l’article' : 'voir le règlement'}</a>
+            : undefined}>
+            Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>
+          </GroupLabel>
+          {/* RETOURS-11F3 F4 — les règles de la zone AVEC leurs valeurs (hauteur, emprise, reculs…),
+              chacune avec son article/page cliquable. Z1·03 : ligne de fait ; valeur « non réglementé »
+              / « à vérifier » en gris atténué (etat ≠ chiffre/texte → tone mute). */}
+          {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
+            <div>
+              {z.regles_valeurs.map((rv, j) => (
+                <FactRow key={j} label={rv.libelle} value={rv.valeur}
+                  tone={rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'mute'}
+                  src={rv.reference
+                    ? <RefLink href={rv.url} title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'}</RefLink>
+                    : undefined} />
+              ))}
             </div>
-            {/* RETOURS-11F3 F4 — le TABLEAU des règles de la zone AVEC leurs VALEURS (hauteur, emprise,
-                reculs, pleine terre, stationnement), chacune avec sa source (article/page cliquable).
-                Remplace la liste d'articles nue (« références sans valeurs » de l'audit O1). « non
-                réglementé » (le PLU ne fixe pas de règle) et « à vérifier » sont dits, jamais comblés. */}
-            {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
-              <ul className="mt-1 flex flex-col gap-0.5">
-                {z.regles_valeurs.map((rv, j) => (
-                  <li key={j} className="flex items-baseline gap-2 text-[10.5px]">
-                    <span className="w-40 shrink-0 text-txt-dim">{rv.libelle}</span>
-                    <span className={rv.etat === 'chiffre' || rv.etat === 'texte' ? 'font-medium text-txt' : 'italic text-txt-dim'}>
-                      {rv.valeur}
-                    </span>
-                    {rv.reference && (rv.url
-                      ? <a href={rv.url} target="_blank" rel="noreferrer" className="ml-auto shrink-0 text-txt-dim hover:text-mint hover:underline" title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'} ↗</a>
-                      : <span className="ml-auto shrink-0 text-txt-dim" title={rv.reference}>{rv.reference.split(',')[0]}</span>)}
-                  </li>
-                ))}
-              </ul>
-            ) : z.articles.length > 0 && (
-              <ul className="mt-1 flex flex-col gap-0.5">
-                {z.articles.slice(0, 6).map((a, j) => (
-                  <li key={j} className="text-[10.5px] text-txt-mut">
-                    <a href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title={a.reference}>{a.reference}</a>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
-            {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}
-            {/* note par zone UNIQUEMENT si elles diffèrent (sinon rendue une fois plus bas) */}
-            {z.note && !noteCommune && <p className="mt-0.5 text-[10px] text-txt-dim">{z.note}</p>}
-          </div>
-        ))}
-      </div>
-      {noteCommune && <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{noteCommune}</p>}
-      <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{rp.disclaimer}</p>
+          ) : z.articles.length > 0 && (
+            <ul className="mt-1 flex flex-col gap-0.5">
+              {z.articles.slice(0, 6).map((a, j) => (
+                <li key={j} className="text-[11.5px]">
+                  <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer" title={a.reference}>{a.reference}</a>
+                </li>
+              ))}
+            </ul>
+          )}
+          {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
+          {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}
+          {/* note par zone UNIQUEMENT si elles diffèrent (sinon rendue une fois plus bas) */}
+          {z.note && !noteCommune && <FactNote>{z.note}</FactNote>}
+        </div>
+      ))}
+      {noteCommune && <FactNote>{noteCommune}</FactNote>}
+      <FactNote>{rp.disclaimer}</FactNote>
     </div>
   )
 }
@@ -1235,8 +1224,10 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
                     réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
                     que les exports). « potentiellement concerné », jamais « soumis à ». */}
+                {/* RETOURS-20 Z3 — plus de boîte bordée : filet ambre à gauche (grammaire .vig),
+                    contenu inchangé. */}
                 {f.aper && (
-                  <div data-aper className="rounded-lg border border-amber/40 bg-amber-bg px-3 py-2 text-[11px] leading-snug text-txt">
+                  <div data-aper className="border-l-2 border-amber py-0.5 pl-3 text-[11px] leading-snug text-txt">
                     <span className="mr-1" aria-hidden>🅿</span>{f.aper.note}
                     <span className="ml-1 text-[10px] text-txt-dim">{f.aper.etat}.</span>
                   </div>
@@ -1244,12 +1235,14 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* M32 §2 + M40 : source qui fait foi. Les 3 choses distinctes, jamais mélangées :
                     (1) quel document LABUSE sert · (2) qu'il fait foi à ce jour · (3) ce qui est en
                     cours et non servi. + action « vérifier en mairie ». Couleur d'alerte hors « à jour ». */}
+                {/* RETOURS-20 Z3 — de-boxé : filet gauche (mint « à jour » / ambre sinon), plus de
+                    boîte bordée. Contenu (document servi, fait foi, en cours, action) inchangé. */}
                 {f.plu_fraicheur?.libelle && (
                   <div data-plu-fraicheur={f.plu_fraicheur.statut}
-                    className={`rounded-lg border px-3 py-2 text-[11px] leading-snug ${
+                    className={`border-l-2 py-0.5 pl-3 text-[11px] leading-snug ${
                       f.plu_fraicheur.statut === 'a_jour'
-                        ? 'border-line-2 text-txt-mut'
-                        : 'border-st-creuser/40 bg-st-creuser/10 text-txt'}`}>
+                        ? 'border-mint text-txt-mut'
+                        : 'border-st-creuser text-txt'}`}>
                     <span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>
                     {f.plu_fraicheur.document_servi ? (
                       <>
@@ -1283,7 +1276,7 @@ export function Fiche({ idu }: { idu: string }) {
                     (veille AU ; sursis si armé). Jamais l'issue de la procédure. */}
                 {f.radar_procedure?.indisponible && <BlocIndisponible titre="Radar procédures PLU" />}
                 {f.radar_procedure?.synthese?.etat && (
-                  <div data-radar-procedure className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-txt">
+                  <div data-radar-procedure className="border-l-2 border-st-creuser py-0.5 pl-3 text-[11px] leading-snug text-txt">
                     <span className="mr-1">📡</span>{f.radar_procedure.synthese.etat}
                     {f.radar_procedure.veille_au && (
                       <span className="block text-[10px] text-mint mt-1">Veille AU — {f.radar_procedure.veille_au}</span>

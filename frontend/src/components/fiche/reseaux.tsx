@@ -18,7 +18,7 @@ import { Tip } from '../Tip'
 import { BlocIndisponible } from './BlocIndisponible'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
-import { REF, IC, RefDrawer, Line } from './primitives'
+import { REF, IC, RefDrawer, Line, GroupLabel, Rappel } from './primitives'
 
 function EquipementsBadges({ idu }: { idu: string }) {
   const { data: e } = useQuery({ queryKey: ['equip', idu], queryFn: () => getOrthoEquipements(idu), retry: false })
@@ -61,9 +61,9 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
         {/* caractéristiques du terrain (piscine / pente) — informatif. */}
         <EquipementsBadges idu={idu} />
 
-        {/* ① ACCÈS — un verdict + transport le plus proche. */}
+        {/* ① ACCÈS — un verdict + transport le plus proche. RETOURS-20 Z1·02 : sous-titre → kicker. */}
         <div data-bloc-acces>
-          <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[0.18em] text-txt-dim">Accès</div>
+          <GroupLabel>Accès</GroupLabel>
           {accesLignes.length > 0
             ? <div className="flex flex-col gap-1">{accesLignes.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
             : <p className="text-[11px] text-txt-dim">Accès non évalué sur cette parcelle.</p>}
@@ -86,10 +86,11 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
           {/* RETOURS-13 R5 — STATION TCSP : le plafond de stationnement de l'art. L151-36 (800 m
               depuis la STATION, à vol d'oiseau) s'impose au PLU — un fait qui change la valeur.
               Mis en avant quand < 800 m ; ce qui reste à instruire (qualité de la desserte) est dit. */}
+          {/* RETOURS-20 Z3 — la boîte bordée TCSP devient un RAPPEL (fond un cran plus clair, sans
+              bordure) ; libellé et source inchangés. */}
           {trans && !trans.indisponible && trans.tcsp && (
-            <div data-proximite-tcsp className={`mt-1.5 rounded-lg border px-2.5 py-1.5 ${trans.tcsp.sous_800m ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>
-              <p className="text-[11.5px] leading-snug text-txt">{trans.tcsp.libelle}</p>
-              <p className="mt-0.5 text-[9.5px] text-txt-dim">{trans.tcsp.source}</p>
+            <div data-proximite-tcsp className="mt-1.5">
+              <Rappel src={trans.tcsp.source}>{trans.tcsp.libelle}</Rappel>
             </div>
           )}
         </div>
@@ -100,14 +101,12 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
         {/* ③ VIABILISATION — indicateur + faisceau de preuves (accordéon) + ANC. */}
         {f.viabilisation && <ViabilisationBlock via={f.viabilisation} anc={f.anc} />}
 
-        {/* ④ AXES ET NUISANCES — l'axe structurant le plus proche (les deux faces). */}
+        {/* ④ AXES ET NUISANCES — l'axe structurant le plus proche (les deux faces). RETOURS-20 Z1·02 /
+            Z3 : sous-titre → kicker, la boîte bordée → rappel. Libellé et source inchangés. */}
         {f.proximites?.axe && (
           <div data-proximite-axe>
-            <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[0.18em] text-txt-dim">Axes et nuisances</div>
-            <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
-              <p className="text-[11.5px] leading-snug text-txt">{f.proximites.axe.libelle}</p>
-              <p className="mt-0.5 text-[9.5px] text-txt-dim">{f.proximites.axe.source}</p>
-            </div>
+            <GroupLabel>Axes et nuisances</GroupLabel>
+            <Rappel src={f.proximites.axe.source}>{f.proximites.axe.libelle}</Rappel>
           </div>
         )}
       </div>

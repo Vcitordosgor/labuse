@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RETOURS-20 — après (Règlement · Réseaux)</title>
+<!-- CSS RÉEL COMPILÉ de l'app (dist/assets/index-*.css) : tokens :root + utilitaires Tailwind + les
+     classes .fiche-v6 (dont la grammaire Z1 neuve). Aucune couleur inventée ici. Le chemin absolu est
+     réécrit par le script de capture avant le screenshot. -->
+<link rel="stylesheet" href="__CSS__">
+<style>
+  html,body{margin:0;background:var(--bg-0)}
+  /* le panneau réel de la fiche : aside .fiche-v6 w-[400px] border-l */
+  .panel{width:400px;background:var(--bg-1);border-left:1px solid var(--line);padding:12px}
+  .caps{height:8px}
+</style>
+</head>
+<body>
+<div class="panel fiche-v6">
+
+<!-- ═══════════ SECTION 1 — RÈGLEMENT ET ZONAGE (tiroir « Urbanisme », ouvert) ═══════════ -->
+<div>
+  <div class="tiroir is-open">
+    <div class="t-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M6 6l6-1l6 1"/><path d="M12 3v17"/><path d="M9 12 6 6l-3 6a3 3 0 0 0 6 0"/><path d="M21 12l-3-6l-3 6a3 3 0 0 0 6 0"/></svg></div>
+    <div class="t-body"><div class="t-title">Urbanisme</div><div class="t-sub">zone U4c · 87 % SDP consommée</div></div>
+    <div class="t-right"><span class="t-val">6 m max</span><span class="chev">⌃</span></div>
+  </div>
+  <div class="t-open">
+    <div style="padding-top:12px">
+      <div class="flex flex-col gap-3">
+        <!-- traducteur IA (bouton mauve existant) -->
+        <div class="ia"><button class="ia-btn">✦ Demander à l'IA de traduire le PLU</button></div>
+
+        <!-- plu_fraicheur — Z3 de-boxé : filet gauche mint (« à jour »), plus de boîte -->
+        <div data-plu-fraicheur="a_jour" class="border-l-2 border-mint py-0.5 pl-3 text-[11px] leading-snug text-txt-mut">
+          🕓 PLU approuvé le 2025-12-17
+          <span class="block text-[10px] text-txt-dim mt-0.5">✓ Document à jour du GPU — c'est celui qui fait foi.</span>
+        </div>
+
+        <!-- ReglementPluBlock — Z2/Z3 : kicker + lignes de fait, plus de card-elev -->
+        <div data-reglement-plu>
+          <div class="sec"><span>Règlement — zone U4c</span><i></i><a class="f-ref" href="#">voir l'article</a></div>
+          <div>
+            <div class="f-row"><span class="l">Hauteur max</span><span class="v">9 m <small>faîtage</small> · 6 m <small>égout</small></span><span class="src"><a class="f-ref" href="#">Zone U4c</a></span></div>
+            <div class="f-row"><span class="l">Emprise au sol max</span><span class="v mute">non réglementé</span><span class="src"><a class="f-ref" href="#">Art. 9</a></span></div>
+            <div class="f-row"><span class="l">Recul sur voie</span><span class="v">4 m</span><span class="src"><a class="f-ref" href="#">Art. 6</a></span></div>
+            <div class="f-row"><span class="l">Recul limites séparatives</span><span class="v">3 m</span><span class="src"><a class="f-ref" href="#">Art. 7.2</a></span></div>
+            <div class="f-row"><span class="l">Pleine terre min</span><span class="v">40 %</span><span class="src"><a class="f-ref" href="#">Art. 13.1</a></span></div>
+            <div class="f-row"><span class="l">Stationnement</span><span class="v">2 <small>places / logement</small></span><span class="src"><a class="f-ref" href="#">Art. 12.2</a></span></div>
+          </div>
+          <!-- ligne « Destinations » (ZoneDestinationsLigne, résumé) -->
+          <div class="mt-1 flex items-baseline gap-2 text-[11.5px]"><span class="text-txt-dim">Destinations</span><span class="text-txt">20 autorisées</span><span class="text-txt-mut">— Exploitation forestière, Hébergement…</span></div>
+          <p class="f-note">Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.</p>
+        </div>
+
+        <!-- lignes de cascade PLU (non-PASS) — primitive Line, inchangée -->
+        <div class="flex flex-col gap-1">
+          <div class="flex gap-3 border-b border-line/60 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">SDP résiduelle</div><div class="text-[11px] leading-snug text-txt-mut">46 m² — rien à construire (bâti conservé)</div></div></div>
+          <div class="flex gap-3 border-b border-line/60 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Parc national</div><div class="text-[11px] leading-snug text-txt-mut">Aire d'adhésion — contraintes de charte</div><div class="mt-0.5 text-[11px] text-txt-dim">Parc National de La Réunion (INPN) · millésime 2021</div></div></div>
+          <div class="flex gap-3 border-b border-line/60 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Zonage PLU</div><div class="text-[11px] leading-snug text-txt-mut">Zone PLU « U » (urbaine — constructible)</div><div class="mt-0.5 text-[11px] text-txt-dim">Urbanisme PLU/GPU (API Carto)</div></div></div>
+          <div class="flex gap-3 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Surface parcelle</div><div class="text-[11px] leading-snug text-txt-mut">Surface utile 761 m²</div></div></div>
+        </div>
+
+        <!-- portes d'outil (pied de section) — inchangées -->
+        <button class="porte-outil"><span class="po-ico">§</span><span style="min-width:0"><span class="po-t block">Annuaire PLU de la commune</span><span class="po-s block">Le règlement de la zone U4c — articles, prescriptions</span></span><span class="po-arrow">→</span></button>
+        <button class="porte-outil"><span class="po-ico">✉</span><span style="min-width:0"><span class="po-t block">Lettre de vérification de zonage</span><span class="po-s block">PDF de vérification de zonage — zone U4c de cette parcelle</span></span><span class="po-arrow">→</span></button>
+        <button class="porte-outil"><span class="po-ico">⚖</span><span style="min-width:0"><span class="po-t block">Vérif procédure PLU</span><span class="po-s block">Commune en procédure ? (zone U4c)</span></span><span class="po-arrow">→</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="height:16px"></div>
+
+<!-- ═══════════ SECTION 2 — RÉSEAUX ET ACCÈS (tiroir, ouvert) ═══════════ -->
+<div>
+  <div class="tiroir is-open">
+    <div class="t-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6"/><path d="M8 9h8l-1 5a3 3 0 0 1-6 0z"/><path d="M12 17v4"/></svg></div>
+    <div class="t-body"><div class="t-title">Réseaux et accès</div><div class="t-sub">Régie La Créole (régie communautaire TCO)</div></div>
+    <div class="t-right"><span class="pill-mint">confirmée</span><span class="chev">⌃</span></div>
+  </div>
+  <div class="t-open">
+    <div style="padding-top:12px">
+      <div class="flex flex-col gap-3">
+        <!-- caractéristiques terrain (pente) -->
+        <div><div class="flex flex-wrap gap-1.5"><span class="rounded-full px-2 py-0.5 text-[11px] font-medium" style="background:rgba(232,115,77,.13);color:#e8734d">Pente 10°</span></div></div>
+
+        <!-- ① ACCÈS — kicker + verdict (Line) + transport -->
+        <div data-bloc-acces>
+          <div class="sec"><span>Accès</span><i></i></div>
+          <div class="flex gap-3 border-b border-line/60 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Accès voirie</div><div class="text-[11px] leading-snug text-txt-mut">Voie publique à ≤ 10 m de la parcelle</div><div class="mt-0.5 text-[11px] text-txt-dim">BD TOPO IGN · BD TOPO V3 (IGN)</div></div></div>
+          <div class="mt-1.5 flex flex-col gap-1 text-[11.5px] leading-snug text-txt">
+            <p class="text-[11px] font-semibold text-txt-hi">Transport public — au plus proche</p>
+            <p>Arrêt « Augustine JB » (Kar'Ouest) à ~28 m.</p>
+            <p>Pôle d'échange « 4×4 » à ~2,00 km <b class="text-txt-hi">Sourcé</b> (station OSM).</p>
+          </div>
+        </div>
+
+        <!-- ② GESTIONNAIRES — Z3 de-boxé : kicker + lignes -->
+        <div data-gestionnaires>
+          <div class="sec"><span>Gestionnaires (raccordement)</span><i></i></div>
+          <div class="mt-1 flex flex-col gap-1">
+            <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">◆</span><span class="w-24 shrink-0 text-txt-dim">Compétence</span><span class="text-txt"><b class="font-medium text-txt-hi">TCO — Territoire de la Côte Ouest</b></span></div>
+            <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">≈</span><span class="w-24 shrink-0 text-txt-dim">Eau potable</span><span class="text-txt"><b class="font-medium text-txt-hi">Régie La Créole</b><span class="pill-mint ml-1.5">confirmé</span></span></div>
+            <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">∿</span><span class="w-24 shrink-0 text-txt-dim">Assainissement</span><span class="text-txt"><b class="font-medium text-txt-hi">Régie La Créole</b><span class="pill-mint ml-1.5">confirmé</span></span></div>
+            <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">◇</span><span class="w-24 shrink-0 text-txt-dim">SPANC (ANC)</span><span class="text-txt"><b class="font-medium text-txt-hi">La Créole (SPANC)</b></span></div>
+            <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">↯</span><span class="w-24 shrink-0 text-txt-dim">Électricité</span><span class="text-txt"><b class="font-medium text-txt-hi">EDF SEI</b><span class="text-txt-dim"> · raccordement.reunion@edf.fr</span></span></div>
+          </div>
+          <p class="f-note">Ex-régie communale transférée au TCO le 01/01/2020. Pas de délégataire. Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement.</p>
+          <p class="f-note">Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilisation à confirmer en DT-DICT.</p>
+        </div>
+
+        <!-- ③ VIABILISATION — Z3 de-boxé : kickers + faisceau + rappel -->
+        <div data-viabilisation>
+          <div class="sec"><span>Viabilisation (eau · assainissement · élec)</span><i></i><span class="sec-r"><span data-viab-band="confirmee" class="shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold" style="background:rgba(74,222,128,.14);color:#4ade80">confirmée par les faits</span></span></div>
+          <p class="f-note">Probabilité de viabilisation par faisceau de preuves (jamais une certitude).</p>
+          <div class="sec"><span>Pourquoi cet indicateur</span><i></i></div>
+          <ul class="mt-1 flex flex-col gap-0.5">
+            <li class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-st-chaude">▲</span><span class="text-txt"><b class="font-medium text-txt-hi">Permis accordés à proximité</b><span class="text-txt-dim"> — 4 permis autorisés &lt; 100 m · 3 depuis 2022</span></span></li>
+            <li class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-st-chaude">▲</span><span class="text-txt"><b class="font-medium text-txt-hi">Façade sur voie publique urbanisée</b><span class="text-txt-dim"> — réseaux enterrés sous voirie</span></span></li>
+            <li class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-st-chaude">▲</span><span class="text-txt"><b class="font-medium text-txt-hi">Zone urbaine (U)</b><span class="text-txt-dim"> — pondération de fond (zonage PLU)</span></span></li>
+            <li class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-st-chaude">▲</span><span class="text-txt"><b class="font-medium text-txt-hi">Adjacence au bâti existant</b><span class="text-txt-dim"> — bâti ≤ 10 m (voisin raccordé)</span></span></li>
+          </ul>
+          <div class="sec"><span>Raccordement (qualitatif)</span><i></i></div>
+          <p class="mt-1 text-[11.5px] leading-snug text-txt">Raccordement a priori simple : réseaux présumés en façade/voirie, secteur déjà desservi.</p>
+          <p class="f-note">Zonage assainissement collectif sur ce secteur → raccordement au réseau à confirmer.</p>
+          <div data-anc>
+            <div class="sec"><span>Assainissement (zonage)</span><i></i><span class="sec-r"><span class="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase bg-mint/15 text-mint">Sourcé</span></span></div>
+            <p class="mt-1 text-[11.5px] font-medium leading-snug text-txt-hi">Zonage à Saint-Paul : tout-à-l'égout (collectif)</p>
+            <p class="mt-0.5 text-[11px] leading-snug text-txt-dim">Raccordement au tout-à-l'égout (collectif).</p>
+          </div>
+          <p class="f-note">Indicateur de probabilité de viabilisation (faisceau de preuves), pas une certitude. Aucun tracé de réseau. À confirmer en DT-DICT.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
