@@ -110,7 +110,7 @@ ROBINETS: dict[str, Robinet] = {
  "outil_assemblage": _r("outil", "Assemblage", None,
     "/moteurs/assemblage", "json_puis_js", chiffres=("assemblage_parcelles_n", "assemblage_surface_m2",)),
  "outil_scan_patrimoine": _r("outil", "Scan patrimoine", None,
-    "/modules/patrimoine", "json_puis_js", chiffres=("n_parcelles_pm",)),
+    "/modules/patrimoine", "json_puis_js", chiffres=("n_parcelles_pm", "dirigeant_pm_signal",)),
  "outil_scan_possede": _r("outil", "Possède", "outil_scan_patrimoine",
     "/modules/patrimoine?siren=…", "json_puis_js", chiffres=("n_parcelles_pm",)),
  "outil_scan_construit": _r("outil", "Ce qu'ils construisent", "outil_scan_patrimoine",

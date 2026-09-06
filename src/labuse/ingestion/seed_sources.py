@@ -823,6 +823,12 @@ RETRAITS: dict[str, str] = {
         "jamais branché, aucun usage identifié (audit M66/M71)",
     "ZNIEFF (INPN / Région)":
         "canal Région jamais alimenté (endpoint vivant, 0 donnée) — canonique : ZNIEFF (INPN/MNHN)",
+    # CIRCUIT-5b lot 2 — MOBPRO abandonné par ZONE-DONNÉES (emplois de zone servis par les tranches
+    # SIRENE) ; son unique lecteur, zone.emplois_communes, n'a plus aucun appelant (code mort vérifié
+    # par grep). Table mobpro_commune conservée (aucun DROP) ; réservoir marqué RETIRÉ dans la carte.
+    "MOBPRO (mobilités domicile-travail, INSEE)":
+        "abandonnée par ZONE-DONNÉES (emplois de zone = tranches d'effectif SIRENE) ; lecteur "
+        "zone.emplois_communes sans appelant (code mort) — table conservée, plus rien de servi",
 }
 
 HUBS: tuple[str, ...] = (

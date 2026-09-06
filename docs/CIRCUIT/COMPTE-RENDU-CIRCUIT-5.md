@@ -454,3 +454,36 @@ réservoir, une génération chacune (V3a). `labuse circuit verrous --complet` :
 décider inchangées (V1c, V1d, V4a — lots 2/3/4). Tests : `tests/verrous/` +
 `tests/test_sentinelle.py` (couverture 71 → **75** sources) + `tests/test_registre.py`
 (MODE_ET_CADENCE 80 → **84**) verts. `VERROUS.md` mis à 72.
+
+## Lot 2 — les huit réservoirs muets
+
+Avant tout retrait, `grep` sur les lecteurs (moteurs, ingestion, couches, jobs) de chaque
+table. **Verdict : sept réservoirs ont un lecteur vivant → rattachés ; un seul est mort →
+retiré.** La règle du mandat (« s'il trouve un lecteur, rattacher au lieu de retirer ») a donc
+requalifié quatre des cinq candidats au retrait.
+
+| Réservoir | Table(s) | Lecteur trouvé (preuve) | Décision |
+|---|---|---|---|
+| `cadastre_epoque` | cadastre_historique | rattachement géométrique des permis orphelins — `ingestion/cadastre_historique.py:248` (JOIN → `sitadel_permits.geom`, RETOURS-14) | **rattaché** → `historique_permis_liste` |
+| `inpi_rne` | pm_dirigeants | Scan patrimoine — `api/modules.py:271` (`inpi_sans_dirigeant`), `modules.py:1159` (dirigeant inactif) | **rattaché** → nouvelle donnée `dirigeant_pm_signal` (robinet `outil_scan_patrimoine`) |
+| `lidar_hd_mnh` | toiture_lidar | fiche soleil — `solaire_toiture.py:166` (SELECT), via `api/modules.py:prospection_solaire` | **rattaché** → `prod_spec_kwh_kwc` |
+| `bd_ortho_irc` | parcel_vegetation | ombrage végétal (canopée NDVI×MNH) — `flash/data.py:650` (ombrage_pct servi), `ingestion/solaire.py:311`, `scoring/icd.py` | **rattaché** → `prod_spec_kwh_kwc` |
+| `office_eau_chroniques` | anc_office_eau_commune | ANC commune — `anc_service.py:59` (SELECT, communes 100 % ANC servies depuis M95) | **rattaché** → `part_logements_egout_pct` |
+| `parkings_osm_aper` | parkings_aper | note obligation ombrières APER — `faisabilite/viabilisation_build.py:174` (SELECT, servi à la fiche) | **rattaché** → `viabilisation_verdict` |
+| `recherche_entreprises_dinum` | owner_enrichment, owner_denom_lookup | Score V — `scoring/score_v.py:90,98` (SELECT), facettes propriétaire `api/app.py:1580` | **rattaché** → `evenements_proprietaire_liste` |
+| `mobpro` | mobpro_commune | **AUCUN vivant** : seul lecteur `zone.emplois_communes`, sans aucun appelant (grep) ; `emplois_zone` (SIRENE) l'a remplacé | **retiré** (statut `retiree`, 06/09/2026) + note RETIRÉ à la carte |
+
+**Doute écrit (décision Vic tranchée à l'inverse par la preuve).** Le mandat rangeait
+`bd_ortho_irc`, `office_eau_chroniques`, `parkings_osm_aper` et `recherche_entreprises_dinum`
+en « à retirer » (supposés muets). Le grep prouve un lecteur vivant SERVI pour chacun (cf.
+tableau) : la règle explicite du lot impose de les **rattacher**, pas de les retirer. Seul
+MOBPRO n'a plus de lecteur (`emplois_communes` est du code mort) et est retiré.
+
+**Conséquence sur le compte.** MOBPRO était SERVIE (statut `manuel`) : la retirer fait passer
+V2a de 72 à **71 = 71 = 71** (les sept rattachements ne changent pas la vitrine, seulement le
+registre). Aucun DROP : `mobpro_commune` reste en base, réservoir marqué RETIRÉ.
+
+**Résultat.** V1d : **plus aucun réservoir muet** (« chaque réservoir servi est lu »). Nouvelle
+donnée `dirigeant_pm_signal` servie par un seul robinet → mono-robinet (V5c). `labuse circuit
+verrous --complet` : 16 verrous, **0 cassé, 2 à décider** (V1c orphelines, V4a SIRENE — lots 3/4).
+Tests `tests/verrous/` + `test_registre` + `test_sentinelle` : 104 passés.

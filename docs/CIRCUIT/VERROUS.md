@@ -5,9 +5,13 @@ par les tests (`pytest -m verrous`), par la sonde chaque nuit (résultat au Jour
 Circuit), et par `deploy.sh` qui **refuse de déployer** si un verrou casse. Un déploiement qui
 passe la porte est la preuve que tout tient.*
 
-*CIRCUIT-5b, 06/09/2026 — les restes tranchés. Les quatre « à rattacher » sont entrés au
-catalogue : **72 sources servies** (68 + annuaire DILA, RNIC/Anah, RPLS/SDES, conso ENAF/Cerema),
-chacune avec sa ligne `data_sources`, son slug au registre et ses lecteurs déclarés.*
+*CIRCUIT-5b, 06/09/2026 — les restes tranchés. Lot 1 : les quatre « à rattacher » entrent au
+catalogue (68 + annuaire DILA, RNIC/Anah, RPLS/SDES, conso ENAF/Cerema = **72 servies**),
+chacune avec sa ligne `data_sources`, son slug au registre et ses lecteurs déclarés. Lot 2 : les
+huit réservoirs muets tranchés — sept rattachés (un lecteur vivant trouvé par grep : permis
+d'époque, dirigeants INPI, toiture LiDAR, ombrage végétal, viabilisation APER, ANC Office de
+l'eau, enrichissement DINUM du Score V) et **MOBPRO retirée** (lecteur mort) → **71 servies**.
+V1d ne signale plus aucun réservoir muet.*
 
 Trois verdicts : **vert** (la phrase est vraie), **cassé** (la commande sort en erreur, le
 déploiement refuse, la ligne rouge apparaît au Résumé), **à décider** (rien de cassé — une
@@ -17,17 +21,17 @@ question t'attend, sans urgence, jamais bloquante).
 
 | | La phrase | Ce qui le garantit | Où ça se lit |
 |---|---|---|---|
-| **V1a** | Aucun moteur ne lit une table hors de la carte table → réservoir. | La carte est déclarée dans le code (`registre/tables.py`) ; les requêtes des moteurs et les passe-plats sont passés au crible à chaque passage. | Détail du repère « 72 » (la carte, réservoir par réservoir). |
+| **V1a** | Aucun moteur ne lit une table hors de la carte table → réservoir. | La carte est déclarée dans le code (`registre/tables.py`) ; les requêtes des moteurs et les passe-plats sont passés au crible à chaque passage. | Détail du repère « 71 » (la carte, réservoir par réservoir). |
 | **V1b** | Pendant un passage de la sonde, aucune table hors carte n'est touchée. | Le journal des requêtes de la session capture TOUT ce que la sonde lit vraiment. | Journal (passage de nuit). |
 | **V1c** | Toute table du schéma est dans la carte, ou orpheline LISTÉE avec son action. | Les orphelines sont CALCULÉES (le schéma moins la carte) — une table nouvelle inconnue sort orpheline toute seule ; sans action proposée, le verrou casse. | Résumé « tables orphelines à purger » · TABLES-ORPHELINES.md · `labuse tables purger` (déplace vers `poubelle`, jamais un DROP — ton geste). |
 | **V1d** | Aucun réservoir muet ne dort dans la vitrine. | Chaque réservoir servi doit être lu par une donnée du registre ; sinon la question « source à retirer, ou lecteur manquant ? » est posée. | Résumé « réservoirs sans lecteur » (à décider). |
 
-## Lot 2 — les sources : 72, pas une de plus
+## Lot 2 — les sources : le même compte partout (71 servies après CIRCUIT-5b)
 
 | | La phrase | Ce qui le garantit | Où ça se lit |
 |---|---|---|---|
-| **V2a** | Le nombre de sources servies est LE MÊME partout : vitrine SQL, prédicat Python, page — et chacune a sa place dans la carte. | Une égalité de comptes (jamais un 72 écrit en dur) mesurée à chaque passage. | Le repère « N / 72 » du Résumé. |
-| **V2b** | Toute ligne du catalogue hors vitrine dit pourquoi : alias (sa cible en vitrine), retirée (date + raison), hub, ou chantier nommé. | Les statuts sont de PREMIÈRE CLASSE en base (plus un préfixe de note) ; un doublon caché casse le verrou. Le seed refuse une source sans id, producteur, mode, cadence et sonde. | Détail du repère « 72 », « lignes en base non servies » (chaque ligne dit sa raison). |
+| **V2a** | Le nombre de sources servies est LE MÊME partout : vitrine SQL, prédicat Python, page — et chacune a sa place dans la carte. | Une égalité de comptes (jamais un nombre écrit en dur) mesurée à chaque passage. | Le repère « N / total » du Résumé. |
+| **V2b** | Toute ligne du catalogue hors vitrine dit pourquoi : alias (sa cible en vitrine), retirée (date + raison), hub, ou chantier nommé. | Les statuts sont de PREMIÈRE CLASSE en base (plus un préfixe de note) ; un doublon caché casse le verrou. Le seed refuse une source sans id, producteur, mode, cadence et sonde. | Détail du repère « 71 », « lignes en base non servies » (chaque ligne dit sa raison). |
 
 ## Lot 3 — les versions : une seule servie, partout
 
@@ -58,7 +62,7 @@ question t'attend, sans urgence, jamais bloquante).
 
 - « Le PLU affiché sur Saint-Paul est celui de Saint-Paul » — V4a (la base refuse), V4c (témoins en limite).
 - « Si Sitadel 2026 est en base, tout l'app lit Sitadel 2026 » — V3a (une génération), V3b (zéro eau), V1b (aucune lecture hors carte).
-- « Les outils n'écoutent que les 72 sources » — V2a (72 = 72 partout), V2b (le reste dit pourquoi), V1a (les moteurs ne lisent que la carte).
+- « Les outils n'écoutent que les sources du catalogue » — V2a (le même compte partout), V2b (le reste dit pourquoi), V1a (les moteurs ne lisent que la carte).
 - « Une même donnée donne le même résultat partout » — V5a (un id), V5b (une fonction), V5c (comparé ou raisonné), la sonde chaque nuit.
 - « Tout le monde écoute le même moteur » — V5b, V1a, et la porte de `deploy.sh` : rien ne part si un verrou casse.
 

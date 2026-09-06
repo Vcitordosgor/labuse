@@ -190,7 +190,10 @@ DONNEES: dict[str, Donnee] = {
  "prod_spec_kwh_kwc": C("Productible", "nombre", "parcelle",
     "productible PVGIS SARAH3 gelé au run du builder (parcel_solar)",
     moteur="solaire", calcul="moteur", fonction="src/labuse/api/modules.py:prospection_solaire",
-    reservoirs=("bd_topo", "pvgis",), portee="run"),
+    # CIRCUIT-5b lot 2 — le module solaire lit AUSSI la toiture LiDAR (toiture_lidar,
+    # solaire_toiture.py) et l'ombrage végétal (parcel_vegetation, canopée NDVI×MNH,
+    # solaire.py) : lidar_hd_mnh et bd_ortho_irc y sont donc rattachés (lecteurs déclarés).
+    reservoirs=("bd_topo", "pvgis", "lidar_hd_mnh", "bd_ortho_irc",), portee="run"),
  "azimut_bati_deg": C("Azimut (Estimé)", "nombre", "parcelle",
     "azimut du bâti principal, Estimé",
     moteur="solaire", calcul="moteur", fonction="src/labuse/ingestion/solaire.py (ST_OrientedEnvelope)",
@@ -801,7 +804,10 @@ DONNEES: dict[str, Donnee] = {
     "permis déposés/autorisés sur la parcelle (Sitadel) + caducité — chaque ligne datée",
     moteur="marche_service", calcul="moteur",
     fonction="src/labuse/api/app.py:_historique_site",
-    reservoirs=("sitadel",), portee="live", type="liste", table="sitadel_permits"),
+    # CIRCUIT-5b lot 2 — la géométrie des permis orphelins est rattachée via le cadastre
+    # d'époque (RETOURS-14, cadastre_historique JOIN → sitadel_permits.geom) : cadastre_epoque
+    # est donc un réservoir des permis (lecteur déclaré).
+    reservoirs=("sitadel", "cadastre_epoque",), portee="live", type="liste", table="sitadel_permits"),
  "voisinage_100m_liste": C("Autour, à moins de 100 m", "liste", "parcelle",
     "ventes DVF + permis récents (36 mois) dans le buffer 100 m, site exclu (doctrine M38)",
     moteur="marche_service", calcul="moteur",
@@ -822,7 +828,9 @@ DONNEES: dict[str, Donnee] = {
     "indicateur de viabilisation par faisceau de preuves (accès, réseaux) + gestionnaires — "
     "jamais un booléen inventé",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:_viabilisation_block",
-    reservoirs=("bd_topo", "rge_alti",), portee="live", type="texte",
+    # CIRCUIT-5b lot 2 — le bloc viabilisation lit AUSSI parkings_aper (grand parking →
+    # note obligation ombrières loi APER, viabilisation_build.py) : parkings_osm_aper rattaché.
+    reservoirs=("bd_topo", "rge_alti", "parkings_osm_aper",), portee="live", type="texte",
     table="parcel_viabilisation (faisceau)"),
  "equipements_proximite_liste": C("À proximité (équipements)", "liste", "parcelle",
     "équipements du quotidien nommés + distance (moteur BPE, couverture partielle DITE)",
@@ -833,8 +841,20 @@ DONNEES: dict[str, Donnee] = {
  "evenements_proprietaire_liste": C("Événements propriétaire (BODACC)", "liste", "proprietaire",
     "événements datés du score V (procédures, radiations) — faits publics, chacun sourcé",
     moteur="v_score", calcul="moteur", fonction="src/labuse/api/app.py:_q_v2_fiche (score_v, evenement)",
-    reservoirs=("bodacc", "sirene_etablissements",), portee="live", type="liste",
+    # CIRCUIT-5b lot 2 — le Score V lit le cache d'enrichissement DINUM (owner_enrichment /
+    # owner_denom_lookup, score_v.py : état admin, NAF, dirigeants) : recherche_entreprises_dinum
+    # y est rattaché (lecteur déclaré).
+    reservoirs=("bodacc", "sirene_etablissements", "recherche_entreprises_dinum",), portee="live", type="liste",
     table="parcel_v_score + bodacc_*"),
+ # CIRCUIT-5b lot 2 — INPI RNE (dirigeants) entre au registre par son lecteur déclaré : le
+ # Scan patrimoine lit pm_dirigeants (société sans dirigeant connu / dirigeant inactif =
+ # signal d'approche). Un seul robinet (outil_scan_patrimoine) → mono-robinet (V5c).
+ "dirigeant_pm_signal": C("Dirigeant de la société (INPI RNE)", "texte", "proprietaire",
+    "présence et activité du dirigeant d'une société propriétaire (INPI RNE) — signal d'approche "
+    "factuel (société sans dirigeant connu, ou dirigeant inactif), jamais un export nominatif de masse",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/modules.py (Scan patrimoine — inpi_sans_dirigeant / dirigeant_inactif)",
+    reservoirs=("inpi_rne",), portee="live", type="texte", table="pm_dirigeants"),
  "proprietaire_timeline_liste": C("Historique propriétaire (millésimes PM)", "liste", "proprietaire",
     "timeline unifiée versionné∪servi du fichier PM (2019→2025), diff CONSTAT — servi jamais écrasé",
     moteur="proprietaire_historique", calcul="moteur",
@@ -869,7 +889,9 @@ DONNEES: dict[str, Donnee] = {
     "commune) — le TAUX, jamais un verdict",
     moteur="anc", calcul="moteur",
     fonction="src/labuse/anc_service.py:statut_anc (producteur nommé, délégation)",
-    reservoirs=("insee_rp2022_egoul",), portee="live"),
+    # CIRCUIT-5b lot 2 — le moteur ANC lit AUSSI la chronique de l'Office de l'eau
+    # (anc_office_eau_commune, communes 100 % ANC servies depuis M95) : office_eau_chroniques rattaché.
+    reservoirs=("insee_rp2022_egoul", "office_eau_chroniques",), portee="live"),
  "ventes_retenues_n": C("Ventes retenues (nuage)", "nombre", "parcelle",
     "ventes DVF retenues par le filtre de comparables (couverture VISIBLE — EXPORTS-1 lot 2)",
     moteur="marche_service", calcul="moteur",
