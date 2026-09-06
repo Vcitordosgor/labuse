@@ -1,0 +1,2 @@
+variable,n_labels_1,n_vendues_avant_approbation_plu_servi,pct,note,preuve
+"zone_plu (GPU, zonage SERVI = dernier approuvé)",58810,13475,22.9,BORNE HAUTE : ces ventes sont apprises avec un zonage approuvé APRÈS la vente ; le flip parcelle par parcelle est immesurable (aucune archive GPU par parcelle en base — cf. A2),sudocuh_procedures.approbation_opp × date de vente
