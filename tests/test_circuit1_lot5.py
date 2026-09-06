@@ -49,8 +49,12 @@ def test_53_vanne_etendue_33_commandes():
 
 
 def test_55_verifier_bouton(client):
+    # CIRCUIT-P2 (lot 3.2) — le bouton lance une TÂCHE détachée : la réponse dit « lancé » (ou
+    # « déjà en cours »), le résultat/verdict arrive via /admin/circuit/taches.
     d = client.post("/admin/circuit/verifier").json()
-    assert "fuites_ouvertes" in d and "duree_s" in d
+    assert d["ok"] and (d.get("lance") or d.get("deja"))
+    t = client.get("/admin/circuit/taches").json()
+    assert "verifier" in t
 
 
 def test_54_purger_dry_run(client):

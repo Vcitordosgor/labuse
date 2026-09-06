@@ -1888,6 +1888,10 @@ export const postAdminCronRun = (nom: string) =>
 // ── CIRCUIT-1 lot 5 — la page Circuit (un appel) + ses gestes ──────────────────────────────
 export const getAdminCircuit = () => j<any>('/admin/circuit')
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
+// CIRCUIT-P2 (lot 3.2/3.3) — tâches longues : lancer les agents (ou un seul), suivre la progression.
+export const postAdminCircuitAgents = (sourceId?: number) =>
+  j<any>(`/admin/circuit/agents${sourceId != null ? `?source_id=${sourceId}` : ''}`, { method: 'POST' })
+export const getAdminCircuitTaches = () => j<any>('/admin/circuit/taches')
 export const postAdminCircuitPurger = () => j<any>('/admin/circuit/purger-runs', { method: 'POST' })
 export const postAdminCircuitRevenir = () => j<any>('/admin/circuit/revenir', { method: 'POST' })
 export const getAdminCircuitNoteVersion = (candidat: string) =>

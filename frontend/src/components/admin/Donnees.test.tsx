@@ -8,6 +8,8 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('../../lib/api', () => ({
   getAdminCircuit: () => new Promise(() => {}),       // reste en « chargement » (rendu déterministe)
   postAdminCircuitVerifier: vi.fn(),
+  postAdminCircuitAgents: vi.fn(),
+  getAdminCircuitTaches: () => Promise.resolve({ verifier: null, agents: null }),
   getAdminCircuitJournal: vi.fn(),
 }))
 

@@ -11,8 +11,8 @@ import { useEffect, useState } from 'react'
 import {
   getAdminCircuitCompteur, getAdminCircuitNoteVersion, getAdminCircuitPompe,
   getAdminCircuitReservoir, getAdminCircuitRobinet,
-  postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir, postAdminCircuitRevenir,
-  postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
+  postAdminCircuitAgents, postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir,
+  postAdminCircuitRevenir, postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
 } from '../../../lib/api'
 
 import type { CircuitData, Couleur } from './types'
@@ -80,6 +80,15 @@ function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir })
 function DetailReservoir({ id, data, back, onOpen, rafraichir }:
   { id: number; data: CircuitData; back: JSX.Element; onOpen: Ouvrir; rafraichir: () => void }) {
   const q = useQuery({ queryKey: ['circuit-detail', 'reservoir', id], queryFn: () => getAdminCircuitReservoir(id) })
+  const [msgAgent, setMsgAgent] = useState<string | null>(null)
+  // CIRCUIT-P2 (lot 3.3) — « Envoyer un agent » : jamais grisé sans mot (sans crédit → message).
+  const agent = useMutation({
+    mutationFn: () => postAdminCircuitAgents(id),
+    onSuccess: (r: any) => {
+      if (r && r.ok === false) setMsgAgent(r.message || 'Crédit API indisponible.')
+      else { setMsgAgent(r?.message || 'Agent envoyé — le retour arrive au journal.'); rafraichir() }
+    },
+  })
   const injecter = useMutation({ mutationFn: () => postAdminSourceVeilleInjecter(id), onSuccess: rafraichir })
   const servir = useMutation({ mutationFn: (src: string) => postAdminCircuitFiltreServir(src, 'geste page Circuit'), onSuccess: rafraichir })
   const filtreRevenir = useMutation({ mutationFn: (src: string) => postAdminCircuitFiltreRevenir(src), onSuccess: rafraichir })
@@ -110,7 +119,8 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
               <div>Dernier contrôle</div><div>{r.dernier_controle ? dateFr(r.dernier_controle) : <span style={{ color: 'var(--ambre)' }}>jamais</span>}</div>
             </div>
             <div className="actions">
-              <button className="btn mauve" disabled title="Agents prêts — bouton câblé au premier crédit API.">Envoyer un agent</button>
+              <button className="btn mauve" disabled={agent.isPending}
+                onClick={() => agent.mutate()}>{agent.isPending ? 'Agent en route…' : 'Envoyer un agent'}</button>
               {r.vanne?.type === 'injecter' && <button className="btn ambre" disabled={injecter.isPending}
                 onClick={() => injecter.mutate()}>Ouvrir la vanne, injecter</button>}
               {f.verdict === 'quarantaine' && <>
@@ -120,6 +130,7 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
                   onClick={() => { if (confirm(`Revenir à la version précédente de « ${f.source} » ?`)) filtreRevenir.mutate(f.source) }}>Revenir à la précédente</button>}
               </>}
             </div>
+            {msgAgent && <div className="muted" style={{ marginTop: 8 }}>{msgAgent}</div>}
           </div>
           <div className="card"><h3>Filtre à l'entrée</h3>
             {!f.source || f.verdict === 'non_filtre' ? <div className="muted">Pas encore de filtre pour ce réservoir.</div> : <>

@@ -1786,19 +1786,22 @@ def admin_circuit(request: Request) -> dict:
 
     # ── CIRCUIT-P (lot 1) — familles/catégories d'affichage, état unique (couleur+libellé),
     #    ce que chaque réservoir alimente (via son slug registre) : le front ne recalcule rien. ──
-    from .. import circuit_etats as _etats
+    from .. import circuit_etats as _etats, circuit_taches as _taches
     _r2c: dict[str, list[str]] = {}
     _c2r: dict[str, list[str]] = {}
     for _res_slug, _cid in aretes["reservoir_vers_chiffre"]:
         _r2c.setdefault(_res_slug, []).append(_cid)
     for _cid, _rid in aretes["chiffre_vers_robinet"]:
         _c2r.setdefault(_cid, []).append(_rid)
+    # CIRCUIT-P2 (lot 3.3) — les réservoirs qu'un agent visite en ce moment passent mauve.
+    _en_route = _taches.reservoirs_en_route()
     for r in reservoirs:
         slug = _etats.slug_reservoir(r["nom"])
         r["slug"] = slug
         _cids = _r2c.get(slug or "", [])
         r["chiffres_ids"] = sorted(set(_cids))
         r["taps"] = sorted({rid for cid in _cids for rid in _c2r.get(cid, [])})
+        r["agent_en_cours"] = r["id"] in _en_route
         r["etat"] = list(_etats.etat_reservoir(r))
     _ctx = {"fuite_robinets": {f[k] for f in fuites for k in ("robinet_a", "robinet_b") if f.get(k)},
             "eau_ancienne_robinets": {e["robinet"] for e in eau if e.get("statut") == "ouvert"},
@@ -1861,22 +1864,131 @@ def admin_circuit(request: Request) -> dict:
     }
 
 
-@router.post("/admin/circuit/verifier")
-def admin_circuit_verifier(request: Request) -> dict:
-    """CIRCUIT-1 (5.5) — le bouton « Vérifier que tout coule » : lance la sonde (lot 4) en ligne
-    et rend son verdict. Le geste entre au journal."""
-    from .auth import exiger_admin
-    exiger_admin(request)
-    from .. import circuit_journal
+def _executer_controle(par: str) -> dict:
+    """CIRCUIT-P2 (lot 3.2) — LE contrôle, exécuté (thread détaché ou appel direct de test) avec
+    progression écrite au fil des phases, message + ligne de journal (geste « contrôle ») à la fin."""
+    from .. import circuit_journal, circuit_taches
     from ..db import session_scope
     from ..sonde_circuit import controle
+    try:
+        with session_scope() as s:
+            def _prog(fait, total, label):
+                circuit_taches.avancer("verifier", fait=fait, message=f"{label} — {fait} / {total}")
+            res = controle(s, declencheur="bouton", progres=_prog)
+            ecarts = sum((res.get("ecarts_par_type") or {}).values())
+            msg = (f"Contrôle terminé : {res['fuites_ouvertes']} fuite(s), "
+                   f"{res['eau_ancienne_ouverte']} eau ancienne, {ecarts} écart(s) ouverts.")
+            circuit_journal.journaliser(s, "controle", "Vérifier que tout coule", par, "ok",
+                                        {k: v for k, v in res.items() if isinstance(v, (int, float))})
+            s.commit()
+        circuit_taches.terminer("verifier", message=msg, resultat=res)
+        return res
+    except Exception as exc:  # noqa: BLE001 — la tâche note son échec, jamais un crash muet
+        from .. import circuit_taches as _ct
+        _ct.echouer("verifier", message=f"Contrôle interrompu ({type(exc).__name__}).")
+        raise
+
+
+@router.post("/admin/circuit/verifier")
+def admin_circuit_verifier(request: Request) -> dict:
+    """CIRCUIT-P2 (lot 3.2) — le bouton « Vérifier que tout coule » : lance le contrôle en TÂCHE
+    détachée (progression suivie, l'écran peut changer d'onglet), rend la main tout de suite. Le
+    résultat, le message et la ligne de journal arrivent à la fin (lus via /admin/circuit/taches)."""
+    import threading
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_taches
     qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
-    with session_scope() as s:
-        res = controle(s, declencheur="bouton")
-        circuit_journal.journaliser(s, "job", "coherence-robinets (bouton)", str(qui), "ok",
-                                    {k: v for k, v in res.items() if isinstance(v, (int, float))})
-        s.commit()
-    return res
+    if circuit_taches.en_cours("verifier"):
+        return {"ok": True, "lance": False, "deja": True, "tache": circuit_taches.lire("verifier")}
+    circuit_taches.demarrer("verifier", total=5, par=str(qui), message="Contrôle en cours…")
+    threading.Thread(target=_executer_controle, args=(str(qui),), daemon=True).start()
+    return {"ok": True, "lance": True}
+
+
+def _cibles_agents(reservoirs: list[dict]) -> list[dict]:
+    """Les réservoirs dont le contrôle MANQUE (jamais vérifié / à vérifier / injoignable) — pas les
+    68, seulement ceux à envoyer voir. L'état est déjà posé (etat_reservoir)."""
+    manque = {"jamais vérifié", "à vérifier", "producteur injoignable"}
+    return [r for r in reservoirs if (r.get("etat") or ["", ""])[1] in manque]
+
+
+def _executer_agents(par: str, ids: list[int], noms: dict) -> None:
+    """CIRCUIT-P2 (lot 3.3) — LES agents, un par réservoir : chacun va lire chez le producteur
+    (sonde amont réelle), journalise son retour (geste « agent »), fait avancer la progression et
+    la liste « en route » (état mauve). Un réservoir sans sonde amont attend l'agent LLM (crédit)."""
+    from .. import circuit_journal, circuit_taches, sentinelle
+    from ..db import session_scope
+    total = len(ids)
+    try:
+        fait = 0
+        for sid in ids:
+            reste = ids[fait:]
+            circuit_taches.avancer("agents", fait=fait, en_route=reste,
+                                   message=f"{fait} / {total} agents revenus")
+            with session_scope() as s:
+                surveillee = s.execute(text(
+                    "SELECT 1 FROM source_veille WHERE source_id = :i"
+                    " AND methode IN ('api', 'page', 'entete', 'temoin')"), {"i": sid}).scalar()
+                if surveillee:
+                    recap = sentinelle.passer(s, source_ids=[sid], forcer=True, notifier=True, delai_s=0)
+                    detail = (recap.get("details") or [{}])[0]
+                    resultat, msg = detail.get("statut") or "ok", detail.get("message") or ""
+                else:
+                    resultat, msg = "sans_sonde", "pas de sonde amont — agent LLM requis (crédit)"
+                circuit_journal.journaliser(s, "agent", noms.get(sid, str(sid)), par, resultat,
+                                            {"message": msg})
+                s.commit()
+            fait += 1
+            circuit_taches.avancer("agents", fait=fait, en_route=ids[fait:],
+                                   message=f"{fait} / {total} agents revenus")
+        circuit_taches.terminer("agents", message=f"{fait} agent(s) revenu(s).", resultat={"n": fait})
+    except Exception as exc:  # noqa: BLE001
+        circuit_taches.echouer("agents", message=f"Agents interrompus ({type(exc).__name__}).")
+        raise
+
+
+@router.post("/admin/circuit/agents")
+def admin_circuit_agents(request: Request, source_id: int | None = None) -> dict:
+    """CIRCUIT-P2 (lot 3.3) — « Envoyer les agents » (ou un agent, `source_id`). JAMAIS grisé sans
+    mot : sans crédit API → un message clair, rien de lancé ; sinon → tâche détachée sur les
+    réservoirs dont le contrôle manque, progression + état mauve + journal."""
+    import threading
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_etats as _etats, circuit_taches
+    from ..ai import core as _ai
+    from ..db import engine
+    qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+    if not _ai.has_key():
+        return {"ok": False, "credit": False,
+                "message": "Crédit API épuisé — recharge, puis relance."}
+    if circuit_taches.en_cours("agents"):
+        return {"ok": True, "lance": False, "deja": True, "tache": circuit_taches.lire("agents")}
+    with engine().begin() as c:
+        reservoirs = _assembler_reservoirs(c, only_id=source_id)
+        for r in reservoirs:
+            r["etat"] = list(_etats.etat_reservoir(r))
+    cibles = reservoirs if source_id is not None else _cibles_agents(reservoirs)
+    if not cibles:
+        return {"ok": True, "lance": False,
+                "message": "Aucun réservoir sans contrôle récent — rien à envoyer."}
+    ids = [r["id"] for r in cibles]
+    noms = {r["id"]: r["nom"] for r in cibles}
+    circuit_taches.demarrer("agents", total=len(ids), par=str(qui),
+                            message=f"0 / {len(ids)} agents revenus")
+    threading.Thread(target=_executer_agents, args=(str(qui), ids, noms), daemon=True).start()
+    return {"ok": True, "lance": True, "n": len(ids)}
+
+
+@router.get("/admin/circuit/taches")
+def admin_circuit_taches(request: Request) -> dict:
+    """CIRCUIT-P2 (lot 3.2/3.3) — l'état des tâches longues (contrôle, agents) : la ligne de
+    progression sous les onglets la lit, le front rafraîchit le Résumé à la fin."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_taches
+    return circuit_taches.etats()
 
 
 @router.post("/admin/circuit/purger-runs")

@@ -55,6 +55,7 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
     jamais = [r for r in reservoirs if lib(r) == "jamais vérifié"]
     reverif = [r for r in reservoirs if lib(r) == "à vérifier"]
     injoign = [r for r in reservoirs if lib(r) == "producteur injoignable"]
+    agents_route = [r for r in reservoirs if lib(r) == "agent en route"]
     eau_rob = sorted({e["robinet"] for e in eau_ancienne if e.get("statut") == "ouvert"})
     eau_nouvelle = bool(residuel and residuel.get("changees"))
 
@@ -81,6 +82,9 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
         _ligne(len(injoign), "ambre", "producteurs injoignables",
                f"{_noms(injoign)} — la dernière sonde n'a pas pu joindre le producteur.",
                "Vérifier", "reservoir", [r["id"] for r in injoign]),
+        _ligne(len(agents_route), "mauve", "agents en route",
+               f"{_noms(agents_route)} — un agent lit chez le producteur, le résultat arrive.",
+               "Voir", "reservoir", [r["id"] for r in agents_route]),
     ]
 
     # ── groupe 2 — À corriger, un mandat pour CC ─────────────────────────────────────────────

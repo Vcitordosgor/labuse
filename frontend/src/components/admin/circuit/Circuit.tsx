@@ -1,11 +1,14 @@
-// CIRCUIT-P (lot 2) — LE CONTENEUR : trois onglets (Résumé par défaut, Circuit, Journal), deux
-// boutons à droite (« Envoyer les agents sur tout », « Vérifier que tout coule »), rien d'autre en
-// haut. Les pastilles de l'ancien bandeau ont disparu : elles sont devenues les lignes du Résumé.
-// Une ligne du Résumé emmène vers l'onglet Circuit, sur sa cible (détail ou groupe).
+// CIRCUIT-P (lot 2) / CIRCUIT-P2 (lot 3) — LE CONTENEUR : trois onglets (Résumé, Circuit, Journal),
+// deux boutons à droite. « Vérifier que tout coule » et « Envoyer les agents » lancent des TÂCHES
+// détachées ; une ligne de progression apparaît sous les onglets et RESTE visible quel que soit
+// l'onglet (elle vit dans le conteneur). À la fin, le Résumé se rafraîchit seul et un message dit
+// le résultat. « Envoyer les agents » n'est JAMAIS grisé : sans crédit API, un clic dit pourquoi.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-import { getAdminCircuit, postAdminCircuitVerifier } from '../../../lib/api'
+import {
+  getAdminCircuit, getAdminCircuitTaches, postAdminCircuitAgents, postAdminCircuitVerifier,
+} from '../../../lib/api'
 
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
@@ -26,11 +29,43 @@ export function CircuitSection() {
   const [detail, setDetail] = useState<Detail>(null)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
   const [nJour, setNJour] = useState<number | null>(null)
+  const [msgLocal, setMsgLocal] = useState<string | null>(null)   // crédit absent / rien à envoyer
+  const [ferme, setFerme] = useState<string | null>(null)         // message de fin déjà refermé
+
+  // CIRCUIT-P2 (lot 3.2/3.3) — suit les tâches longues ; ne sonde que tant qu'une tourne.
+  const taches = useQuery({
+    queryKey: ['circuit-taches'], queryFn: getAdminCircuitTaches,
+    refetchInterval: (query) => {
+      const d = query.state.data as any
+      return d && (d.verifier?.etat === 'en_cours' || d.agents?.etat === 'en_cours') ? 1500 : false
+    },
+  })
+  const tv = taches.data?.verifier as any
+  const ta = taches.data?.agents as any
 
   const verifier = useMutation({
     mutationFn: postAdminCircuitVerifier,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-circuit'] }),
+    onSuccess: () => { setMsgLocal(null); setFerme(null); taches.refetch() },
   })
+  const agents = useMutation({
+    mutationFn: () => postAdminCircuitAgents(),
+    onSuccess: (r: any) => {
+      if (r && r.ok === false) setMsgLocal(r.message || 'Crédit API indisponible.')
+      else if (r && r.lance === false) setMsgLocal(r.message || null)
+      else { setMsgLocal(null); setFerme(null); taches.refetch() }
+    },
+  })
+
+  // à la fin d'une tâche (en_cours → autre), le Résumé se rafraîchit seul.
+  const prevEtat = useRef<{ v?: string; a?: string }>({})
+  useEffect(() => {
+    const v = tv?.etat, a = ta?.etat
+    if ((prevEtat.current.v === 'en_cours' && v !== 'en_cours') ||
+        (prevEtat.current.a === 'en_cours' && a !== 'en_cours')) {
+      qc.invalidateQueries({ queryKey: ['admin-circuit'] })
+    }
+    prevEtat.current = { v, a }
+  }, [tv?.etat, ta?.etat, qc])
 
   const d = q.data as CircuitData | undefined
 
@@ -64,6 +99,17 @@ export function CircuitSection() {
   if (q.isLoading) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit — chargement…</div></div>
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
 
+  // ── la ligne de progression / message, sous les onglets (visible quel que soit l'onglet) ──
+  const enCours = tv?.etat === 'en_cours' ? tv : ta?.etat === 'en_cours' ? ta : null
+  const finie = [tv, ta].filter((t: any) => t && (t.etat === 'termine' || t.etat === 'echec'))
+    .sort((a: any, b: any) => (a.maj < b.maj ? 1 : -1))[0]
+  let barre: { ton: string; txt: string; pct?: number; fermable?: boolean } | null = null
+  if (msgLocal) barre = { ton: 'info', txt: msgLocal, fermable: true }
+  else if (enCours) barre = { ton: 'run', txt: enCours.message || 'En cours…',
+    pct: enCours.total ? Math.round((enCours.fait / enCours.total) * 100) : undefined }
+  else if (finie && finie.message !== ferme) barre = {
+    ton: finie.etat === 'echec' ? 'echec' : 'ok', txt: finie.message, fermable: true }
+
   return (
     <div className="cxp">
       <style>{CIRCUIT_CSS}</style>
@@ -77,16 +123,24 @@ export function CircuitSection() {
           Journal{nJour ? <span className="n">{nJour}</span> : ''}
         </button>
         <div className="actions">
-          <button className="btn mauve" disabled
-            title="Agents prêts (labuse agent source) — bouton câblé au premier crédit API.">
-            Envoyer les agents sur tout
+          <button className="btn mauve" disabled={agents.isPending || ta?.etat === 'en_cours'}
+            onClick={() => { agents.mutate(); setOnglet('circuit') }}>
+            {ta?.etat === 'en_cours' ? `${ta.fait} / ${ta.total} agents…` : 'Envoyer les agents sur tout'}
           </button>
-          <button className="btn mint" disabled={verifier.isPending}
+          <button className="btn mint" disabled={verifier.isPending || tv?.etat === 'en_cours'}
             onClick={() => { verifier.mutate(); setOnglet('circuit') }}>
-            {verifier.isPending ? 'Vérification…' : 'Vérifier que tout coule'}
+            {tv?.etat === 'en_cours' ? 'Contrôle en cours…' : 'Vérifier que tout coule'}
           </button>
         </div>
       </div>
+
+      {barre && (
+        <div className={`tbar ${barre.ton}`}>
+          {barre.pct != null && <span className="pct"><i style={{ width: `${barre.pct}%` }} /></span>}
+          <span className="tx">{barre.txt}</span>
+          {barre.fermable && <button className="x" onClick={() => { setMsgLocal(null); if (finie) setFerme(finie.message) }}>✕</button>}
+        </div>
+      )}
 
       <section className={`tab ${onglet === 'resume' ? 'on' : ''}`}>
         <Resume data={d} onCible={allerVersCircuit} />

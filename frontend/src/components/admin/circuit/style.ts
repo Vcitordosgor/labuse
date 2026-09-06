@@ -31,6 +31,10 @@ export const CIRCUIT_CSS = `
 .cxp .res{max-width:1000px}
 .cxp .res h1{font-size:28px;font-weight:650;letter-spacing:-.02em;margin:4px 0 4px} .cxp .res h1 b{color:var(--ambre);font-weight:650}
 .cxp .res .sub{color:var(--muted);margin-bottom:18px;font-size:14px}
+.cxp .tbar{display:flex;align-items:center;gap:12px;margin:-6px 0 16px;padding:9px 13px;border-radius:8px;font-size:12.5px;border:1px solid var(--line);background:var(--panel)}
+.cxp .tbar.run{border-color:var(--mint);color:var(--text)} .cxp .tbar.ok{border-color:var(--mint);color:var(--text)} .cxp .tbar.echec{border-color:var(--rouge);color:var(--text)} .cxp .tbar.info{border-color:var(--ambre);color:var(--text)}
+.cxp .tbar .pct{flex:0 0 120px;height:6px;border-radius:3px;background:var(--line);overflow:hidden} .cxp .tbar .pct i{display:block;height:100%;background:var(--mint)}
+.cxp .tbar .tx{flex:1} .cxp .tbar .x{flex:0 0 auto;color:var(--muted);font-size:13px;padding:0 4px} .cxp .tbar .x:hover{color:var(--text)}
 .cxp .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 26px}
 .cxp .kpi{padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .cxp .kpi .v{font-size:20px;font-weight:650;letter-spacing:-.02em} .cxp .kpi .v small{font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
