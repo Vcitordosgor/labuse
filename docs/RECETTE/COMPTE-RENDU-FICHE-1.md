@@ -54,3 +54,12 @@ Dans « Risques et protections », la fiche ne servait qu'un compte (`n_vigilanc
 - **Contrôle d'accord ajouté** (`test_fiche1_aleas.py`) : le nombre d'aléas de la fiche = le nombre de lignes `risques` servies à Pièges et risques, pour toute parcelle du run — les deux écrans ne peuvent pas se contredire. Vérifié en base : 97416000EV1725 → fiche 3 = Pièges 3 (PPR 7 % + réf. arrêtés PPR 2016 / PPRL 2018, Inondation fort, Mvt terrain moyen).
 - **Registre** : `aleas_parcelle_liste` (moteur cascade) ajouté au robinet `fiche_parcelle_risques` (mono-robinet → auto-pass V5c).
 - **Vérifs** : `circuit verrous` 16/16 vert (176 données) · tsc 0 · vitest 187 · tests cascade/risques 30/30 · doc régénéré.
+
+### Lot 4 — Le stationnement allégé (TCSP) ✅
+
+**Constat affiné** : le bloc TCSP L151-36 était **déjà calculé et affiché** (`_proximites_block` → `f.proximites.tcsp`, rendu dans Réseaux) mais **hors registre** (aucune donnée déclarée — violation de « rien ne s'affiche hors registre »). Lot 4 = fermer le trou + rendre le fait scannable.
+
+- **Registre** : donnée `tcsp_stationnement_allege` (classe, domaine sous_800m/au_dela/aucune_station) déclarée dans `fiche_parcelle_reseaux`, moteur `parcelle_proximites`, fonction `_proximites_block` (drapeau `sous_800m` STRICT). Mono-robinet → auto-pass V5c.
+- Le bloc porte déjà tout ce que demande le mandat : **dans le rayon** (sous_800m), **distance** à vol d'oiseau, **station nommée**, **plafond** (1 place/logement, 0,5 en social), **référence d'article** (L151-34 à 36, loi n° 2025-1129). Seuil **800 m strict** (`d < 800`, correction E1 CIRCUIT-4), distance depuis la station (CE 2022).
+- **Front** : pastille « dans le rayon 800 m » / « hors rayon » + station + distance en tête, le libellé (plafond + article) conservé dessous.
+- **Vérifs** : `circuit verrous` 16/16 vert (177 données) · tsc 0 · vitest 187 · `test_fiche1_tcsp.py` + `test_distance_knn` 3/3 · doc régénéré. Vérifié en base : 97415000AB0790 → station « Karting » à 120 m, sous_800m=vrai, plafond L151-36 servi.

@@ -304,6 +304,17 @@ DONNEES: dict[str, Donnee] = {
     moteur="parcelle_proximites", calcul="moteur",
     fonction="src/labuse/registre/moteurs/parcelle.py:plus_proche",
     reservoirs=("gtfs_pan", "osm_transport",), portee="live"),
+ # FICHE-1 lot 4 — stationnement allégé L151-36 : la parcelle est-elle à moins de 800 m d'une
+ # station de transport en site propre (plafond d'une place/logement, 0,5 en social).
+ "tcsp_stationnement_allege": C("Stationnement allégé (TCSP, L151-36)", "classe", "parcelle",
+    "la parcelle est-elle à MOINS de 800 m (à vol d'oiseau) d'une station de transport en site "
+    "propre — plafond d'une aire de stationnement par logement (0,5 pour le logement social), "
+    "opposable au PLU (art. L151-34 à 36) ; distance et station nommées",
+    moteur="parcelle_proximites", calcul="moteur",
+    fonction="src/labuse/api/app.py:_proximites_block (drapeau sous_800m, L151-36 strict)",
+    reservoirs=("gtfs_pan", "osm_transport",), portee="live", type="classe",
+    domaine=("sous_800m", "au_dela", "aucune_station"),
+    domaine_source="art. L151-36 c. urb. (loi n° 2025-1129 du 26/11/2025) — seuil 800 m strict"),
  "n_permis_proximite": C("Permis à 500 m sur 24 mois", "nombre", "parcelle",
     "permis Sitadel dans le rayon 500 m, fenêtre 24 mois — LE profil client (arbitrage Q7), "
     "paramètres TRANSMIS au moteur (EXPORTS-1 4.1, plus jamais les défauts 300 m · 5 ans)",
