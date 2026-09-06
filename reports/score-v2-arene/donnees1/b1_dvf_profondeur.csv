@@ -1,0 +1,25 @@
+tab,annee,n,n_parcelles
+dvf_mutations_histo,2014,11541,6320
+dvf_mutations_histo,2015,12031,6686
+dvf_mutations_histo,2016,13549,7360
+dvf_mutations_histo,2017,15597,8021
+dvf_mutations_histo,2018,16631,7962
+dvf_mutations_histo,2019,19171,8448
+dvf_mutations_histo,2020,21957,8281
+dvf_mutations_parcelle,2021,24198,9784
+dvf_mutations_parcelle,2022,23580,9763
+dvf_mutations_parcelle,2023,20999,8681
+dvf_mutations_parcelle,2024,19251,7596
+dvf_mutations_parcelle,2025,14523,7657
+p_model_ext_mut_all (source tenure q_v12),2014,7366,6320
+p_model_ext_mut_all (source tenure q_v12),2015,7940,6686
+p_model_ext_mut_all (source tenure q_v12),2016,8922,7360
+p_model_ext_mut_all (source tenure q_v12),2017,9915,8021
+p_model_ext_mut_all (source tenure q_v12),2018,9713,7962
+p_model_ext_mut_all (source tenure q_v12),2019,10398,8448
+p_model_ext_mut_all (source tenure q_v12),2020,10369,8281
+p_model_ext_mut_all (source tenure q_v12),2021,12388,9784
+p_model_ext_mut_all (source tenure q_v12),2022,12548,9763
+p_model_ext_mut_all (source tenure q_v12),2023,11006,8681
+p_model_ext_mut_all (source tenure q_v12),2024,9342,7596
+p_model_ext_mut_all (source tenure q_v12),2025,9207,7657
