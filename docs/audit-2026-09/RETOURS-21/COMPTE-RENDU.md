@@ -96,16 +96,28 @@ corrigée) : débit mesuré ~33 parcelles/s → **~3,6 h** sur 431 663 parcelles
 bascule reste manuelle (`labuse golden promote q_v11_r21_alea`), après note de version. La garde
 pompe étant verte, la bascule n'est plus bloquée.
 
-> **État à la remise : run à compléter (~15 % fait, dryrun conservé pour `--resume`).** Deux
-> tentatives interrompues dans la fenêtre de session : (1) double lancement de ma part (deux
-> process concurrents → collision `uq_dryrun_eval`, nettoyé) ; (2) backend Postgres terminé
-> côté serveur (`AdminShutdown`) à ~63 816 parcelles, cause externe non identifiée (Postgres lui
-> n'a PAS redémarré — la base est saine). Un run de 3 h ne tient pas de façon fiable dans cette
-> session. **À reprendre dans une fenêtre dédiée** : `labuse flux-run --label q_v11_r21_alea
-> --resume` (repart des 63 816 déjà évaluées). Le **diff de tiers candidat vs `q_v11_m137`**
-> (compte exact des changements de palier) se lira à la fin du run ; l'impact attendu est petit —
-> cf. les ~13 chaudes ci-dessus. La correction de la donnée et la levée de quarantaine, elles,
-> sont FAITES et indépendantes de ce run.
+> **État à la remise : run À LANCER FRAIS dans une fenêtre dédiée — PAS `--resume`.** Le run a
+> été tenté 4× dans la fenêtre de session, jamais mené au bout, pour des causes distinctes : (1)
+> double lancement de ma part (2 process concurrents → collision `uq_dryrun_eval`) ; (2)+(3)
+> `AdminShutdown` d'un backend quand le heal de schéma de l'app de captures a terminé le backend
+> que le run tenait (verrou sur `parcels`) ; (4) `--resume` → `UniqueViolation uq_dryrun_eval` :
+> l'état `dryrun_*` partiel laissé par les tentatives interrompues rend la REPRISE incohérente
+> (elle ré-insère une parcelle déjà écrite). **Leçon : le `--resume` de `flux-run` n'est fiable
+> que sur un état partiel PROPRE ; après des interruptions multiples, il faut repartir de zéro.**
+> J'ai donc **purgé complètement** le label (`dryrun_parcel_evaluations` + `dryrun_cascade_results`
+> pour `q_v11_r21_alea` = 0 ligne) : l'état est net.
+>
+> **À faire (Vic ou fenêtre dédiée), DB au calme, aucun autre client :**
+> `labuse flux-run --label q_v11_r21_alea` (frais, ~3,6 h, `caffeinate -i` pour empêcher la veille).
+> **NE PAS** relancer d'app/monitoring pendant : le heal de schéma d'un `labuse api` concurrent
+> termine le backend du run (cause de (2)/(3)). À la fin : `labuse golden candidat` puis, si la note
+> de version convient, `labuse golden promote q_v11_r21_alea` (bascule = geste de Vic). Le **diff de
+> tiers candidat vs `q_v11_m137`** (compte exact des changements de palier) se lira alors ; l'impact
+> attendu est petit — cf. les ~13 chaudes ci-dessus.
+>
+> **Ce qui NE dépend PAS de ce run et est FAIT :** la donnée aléa corrigée à la source (484 zones),
+> la quarantaine `georisques_mvt` levée, et l'impact mesuré déterministiquement (73 179 parcelles,
+> delta médian −5 pts). Le run ne sert qu'à produire le classement candidat pour la revue de Vic.
 
 ### Golden
 
