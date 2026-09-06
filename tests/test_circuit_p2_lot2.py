@@ -38,77 +38,24 @@ def test_compteurs_robinets():
     assert c["robinets_coherents"] == 2
 
 
-# ── 2.4 — Résumé ↔ Circuit : chaque ligne → des « à regarder », et réciproquement ─────────────
-def _reservoir(i, etat, **kw):
-    r = {"id": i, "nom": f"res{i}", "etat": list(etat)}
-    r.update(kw)
-    return r
-
-
-def _fixture():
-    """Des réservoirs couvrant tous les états ko atteignables en live, + des non-ko."""
-    reservoirs = [
-        _reservoir(1, ("rouge", "en quarantaine"), filtre={"verdict": "quarantaine"}),
-        _reservoir(2, ("ambre", "nouvelle version à injecter"),
-                   veille={"statut": "nouvelle_version"}),
-        _reservoir(3, ("ambre", "jamais vérifié")),                       # pas de veille
-        _reservoir(4, ("ambre", "à vérifier"), a_verifier=True, veille={"statut": "ok"}),
-        _reservoir(5, ("ambre", "producteur injoignable"), veille={"statut": "injoignable"}),
-        _reservoir(6, ("ambre", "filtre avec des KO"), filtre={"verdict": "avertissements"}),
-        _reservoir(7, ("mint", "à jour"), veille={"statut": "ok"}),       # non ko
-        _reservoir(8, ("gris", "vide"), mode="absente"),                  # non ko
-    ]
-    robinets = [
-        {"id": "rob_fuite", "etat": ["rouge", "fuite mesurée"], "chiffres": ["c1"], "hors_moteur": 0},
-        {"id": "rob_eau", "etat": ["ambre", "eau ancienne"], "chiffres": ["c2"], "hors_moteur": 0},
-        {"id": "rob_hm", "etat": ["ambre", "1 hors moteur"], "chiffres": ["c3"], "hors_moteur": 1},
-        {"id": "rob_choix", "etat": ["gris", "choix à confirmer"], "chiffres": ["c4"], "hors_moteur": 0},
-        {"id": "rob_ok", "etat": ["mint", "cohérent"], "chiffres": ["c5"], "hors_moteur": 0},
-    ]
-    # une fuite mesurée sur un seul robinet (robinet_b absent) — le témoin n'est pas un robinet.
-    fuites = [{"chiffre_id": "c1", "robinet_a": "rob_fuite", "robinet_b": None}]
-    eau = [{"robinet": "rob_eau", "statut": "ouvert"}]
-    return reservoirs, robinets, fuites, eau
-
-
-def test_resume_circuit_coherents():
-    reservoirs, robinets, fuites, eau = _fixture()
-    cpt = E.compteurs(reservoirs, robinets)
-    cpt["chiffres"] = 5
-    resume = R.composer(reservoirs, robinets, compteurs=cpt, residuel=None,
-                        run_servi="q1", candidat=None, fuites=fuites, eau_ancienne=eau,
-                        regles_choix=["rob_choix"])
-    res_par_id = {r["id"]: r for r in reservoirs}
-    rob_par_id = {rb["id"]: rb for rb in robinets}
-
-    # forward — chaque id d'une ligne pointe un élément « à regarder »
-    cibles_res, cibles_rob = set(), set()
-    for g in resume["groupes"]:
-        for li in g["lignes"]:
-            t, ids = li["cible"]["type"], li["cible"]["ids"]
-            for i in ids:
-                if t == "reservoir":
-                    cibles_res.add(i)
-                    assert E.ko_reservoir(*res_par_id[i]["etat"]), f"ligne pointe un réservoir non-ko {i}"
-                elif t == "robinet":
-                    cibles_rob.add(i)
-                    assert E.ko_robinet(*rob_par_id[i]["etat"]), f"ligne pointe un robinet non-ko {i}"
-
-    # backward — chaque élément « à regarder » a une ligne
-    for r in reservoirs:
-        if E.ko_reservoir(*r["etat"]):
-            assert r["id"] in cibles_res, f"réservoir à regarder sans ligne : {r['id']}"
-    for rb in robinets:
-        if E.ko_robinet(*rb["etat"]):
-            assert rb["id"] in cibles_rob, f"robinet à regarder sans ligne : {rb['id']}"
+# NB : le test de RÉCIPROCITÉ Résumé ↔ Circuit (règle 2.4) a été REFAIT pour de bon en P3 — il part
+# des tables (`circuit_ecarts`, `circuit_eau_ancienne`, registre) et exige l'égalité stricte avec
+# `/admin/circuit` : voir tests/test_circuit_p3_lot2.py. L'ancien test synthétique (qui validait des
+# états posés à la main, pas les vraies sources) est supprimé, pas ajusté.
 
 
 def test_kpis_lus_des_compteurs():
-    reservoirs, robinets, fuites, eau = _fixture()
-    cpt = E.compteurs(reservoirs, robinets)
-    cpt["chiffres"] = 5
+    reservoirs = [
+        {"id": 1, "nom": "a", "etat": ["mint", "à jour"]},
+        {"id": 2, "nom": "b", "etat": ["ambre", "jamais vérifié"]},
+    ]
+    robinets = [
+        {"id": "r1", "etat": ["mint", "cohérent"]},
+        {"id": "r2", "etat": ["ambre", "eau ancienne"]},
+    ]
+    cpt = {**E.compteurs(reservoirs, robinets), "chiffres": 5}
     resume = R.composer(reservoirs, robinets, compteurs=cpt, residuel=None,
-                        run_servi="q1", candidat=None, fuites=fuites, eau_ancienne=eau)
+                        run_servi="q1", candidat=None)
     k0, k1 = resume["kpis"][0], resume["kpis"][1]
     assert k0["valeur"] == cpt["a_jour"] and k0["sur"] == cpt["reservoirs"]
     assert k0["detail"] == "compteur"                       # le repère est cliquable

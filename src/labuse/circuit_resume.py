@@ -36,11 +36,15 @@ def _ligne(n, couleur, titre, phrase, verbe, cible_type, ids):
 
 def composer(reservoirs: list[dict], robinets: list[dict], *,
              compteurs: dict, residuel: dict | None, run_servi: str, candidat: str | None,
-             fuites: list[dict], eau_ancienne: list[dict],
+             fuite_robinets=(), eau_robinets=(),
              regles_ecart: list[str] = (), regles_choix: list[str] = (),
              horloges: list[str] = ()) -> dict:
     """Compose le bloc `resume`. Chaque réservoir / robinet porte déjà son `etat` ([couleur, lib])
-    (posé par l'endpoint via circuit_etats) : le résumé n'invente pas d'état, il regroupe."""
+    (posé par l'endpoint via circuit_etats) : le résumé n'invente pas d'état, il regroupe.
+    CIRCUIT-P3 (lot 2) : `fuite_robinets` / `eau_robinets` sont les ids de robinets REGISTRE dérivés
+    par `circuit_etats.robinets_touches` (via le chiffre_id) — les MÊMES que ceux dont l'état passe
+    « fuite »/« eau ancienne » dans le Circuit. Le Résumé et le Circuit comptent donc à l'identique
+    (fini le « 2 fuites » à gauche / « 0 à regarder » à droite)."""
     # ── groupe 1 — À faire, un geste de toi ──────────────────────────────────────────────────
     # CIRCUIT-P2 (lot 2.4) — les lignes du Résumé sont dérivées du LIBELLÉ d'état déjà calculé
     # (etat_reservoir), source unique de vérité : un réservoir a un seul état, donc une seule ligne.
@@ -56,7 +60,7 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
     reverif = [r for r in reservoirs if lib(r) == "à vérifier"]
     injoign = [r for r in reservoirs if lib(r) == "producteur injoignable"]
     agents_route = [r for r in reservoirs if lib(r) == "agent en route"]
-    eau_rob = sorted({e["robinet"] for e in eau_ancienne if e.get("statut") == "ouvert"})
+    eau_rob = sorted(eau_robinets)          # ids REGISTRE (via chiffre_id), pas les libellés de table
     eau_nouvelle = bool(residuel and residuel.get("changees"))
 
     g1 = [
@@ -88,7 +92,7 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
     ]
 
     # ── groupe 2 — À corriger, un mandat pour CC ─────────────────────────────────────────────
-    fuite_rob = sorted({f[k] for f in fuites for k in ("robinet_a", "robinet_b") if f.get(k)})
+    fuite_rob = sorted(fuite_robinets)      # ids REGISTRE (via chiffre_id), pas les libellés de table
     warn = [r for r in reservoirs if lib(r) == "filtre avec des KO"]
     hm_rob = [rb for rb in robinets if rb.get("hors_moteur")]
     ecart_ids = list(regles_ecart)

@@ -264,6 +264,28 @@ def partition_reservoirs(reservoirs: list[dict]) -> dict:
             "a_regarder": a_regarder, "vides": vides}
 
 
+def robinets_touches(fuites: list[dict], eau_ancienne: list[dict],
+                     chiffres_par_robinet: dict) -> tuple[set, set]:
+    """CIRCUIT-P3 (lot 2.1) — les ids de robinets REGISTRE touchés par une fuite / une eau ancienne.
+    Les colonnes `robinet_a`/`robinet_b` de circuit_ecarts et `robinet` de circuit_eau_ancienne sont
+    des LIBELLÉS d'affichage (« attrs.degre (DEAL brut) », « fiche parcelle / filtres »), pas des ids
+    de robinet — les compter tels quels donnait au Résumé des robinets que le Circuit ne connaissait
+    pas (« 2 fuites, 2 robinets » à gauche, « 0 à regarder » à droite). Le vrai lien passe par le
+    `chiffre_id` : un robinet est touché s'il SERT un chiffre qui a une fuite / une eau ouverte.
+    `chiffres_par_robinet` = {id_robinet: [chiffres servis]}."""
+    fuite_chiffres = {f.get("chiffre_id") for f in fuites if f.get("chiffre_id")}
+    eau_chiffres = {e.get("chiffre_id") for e in eau_ancienne
+                    if e.get("statut") == "ouvert" and e.get("chiffre_id")}
+    fuite_rob, eau_rob = set(), set()
+    for rid, chiffres in chiffres_par_robinet.items():
+        cs = set(chiffres or [])
+        if cs & fuite_chiffres:
+            fuite_rob.add(rid)
+        if cs & eau_chiffres:
+            eau_rob.add(rid)
+    return fuite_rob, eau_rob
+
+
 def compteurs(reservoirs: list[dict], robinets: list[dict]) -> dict:
     """Le SEUL point de vérité des nombres de la page (règle 2.2). Le Résumé, l'en-tête de colonne
     du Circuit, la ligne de fin et l'en-tête « Robinets » lisent CECI, jamais un calcul refait.

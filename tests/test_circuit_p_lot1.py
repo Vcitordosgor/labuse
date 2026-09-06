@@ -97,7 +97,7 @@ def test_resume_tout_coule():
     robinets = [{"id": "r", "etat": ["mint", "cohérent"], "chiffres": ["a"]}]
     cpt = {**E.compteurs(reservoirs, robinets), "chiffres": 1}   # les compteurs uniques (lot 2.2)
     res = R.composer(reservoirs, robinets, compteurs=cpt, residuel={"changees": False},
-                     run_servi="q_v11", candidat=None, fuites=[], eau_ancienne=[])
+                     run_servi="q_v11", candidat=None)
     assert res["total"] == 0
     assert all(g["lignes"] == [] for g in res["groupes"])
     assert res["kpis"][0]["valeur"] == 1 and res["kpis"][3]["valeur"] == "q_v11"
@@ -127,8 +127,7 @@ def test_resume_une_ligne_par_type():
     res = R.composer(
         reservoirs, robinets, compteurs={"chiffres": 2},
         residuel={"changees": True, "detail": "2 entrées"}, run_servi="q_v11", candidat="q_v12",
-        fuites=[{"robinet_a": "rf", "robinet_b": None}],
-        eau_ancienne=[{"robinet": "re", "statut": "ouvert"}],
+        fuite_robinets=["rf"], eau_robinets=["re"],   # ids REGISTRE dérivés (CIRCUIT-P3 lot 2)
         regles_ecart=["rf"], regles_choix=["rc"], horloges=[3])
     L = _lignes(res)
     # groupe 1

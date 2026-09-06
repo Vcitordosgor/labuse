@@ -1803,9 +1803,12 @@ def admin_circuit(request: Request) -> dict:
         r["taps"] = sorted({rid for cid in _cids for rid in _c2r.get(cid, [])})
         r["agent_en_cours"] = r["id"] in _en_route
         r["etat"] = list(_etats.etat_reservoir(r))
-    _ctx = {"fuite_robinets": {f[k] for f in fuites for k in ("robinet_a", "robinet_b") if f.get(k)},
-            "eau_ancienne_robinets": {e["robinet"] for e in eau if e.get("statut") == "ouvert"},
-            "chiffres": chiffres}
+    # CIRCUIT-P3 (lot 2.1) — fuite/eau se rattachent au robinet par le CHIFFRE (les colonnes
+    # robinet_* des tables sont des libellés, pas des ids). Une SEULE dérivation, partagée par l'état
+    # des robinets ET par le Résumé → les deux comptent exactement les mêmes robinets.
+    _chiffres_par_rob = {rb["id"]: rb["chiffres"] for rb in robinets}
+    _fuite_rob, _eau_rob = _etats.robinets_touches(fuites, eau, _chiffres_par_rob)
+    _ctx = {"fuite_robinets": _fuite_rob, "eau_ancienne_robinets": _eau_rob, "chiffres": chiffres}
     for rb in robinets:
         rb["hors_moteur"] = _etats.hors_moteur_de(rb, chiffres)
         rb["etat"] = list(_etats.etat_robinet(rb, _ctx))
@@ -1851,7 +1854,7 @@ def admin_circuit(request: Request) -> dict:
                       and rr.get("label") != runs.current()), None)
     resume = _resume.composer(reservoirs, robinets, compteurs=compteurs, residuel=residuel,
                               run_servi=runs.current(), candidat=_candidat,
-                              fuites=fuites, eau_ancienne=eau)
+                              fuite_robinets=_fuite_rob, eau_robinets=_eau_rob)
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
