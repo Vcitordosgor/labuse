@@ -176,7 +176,35 @@ def _constat_servi(db: Session, idu: str, commune: str | None) -> dict:
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
     from ..faisabilite.marche_commune import prix_terrain_nu_zone
-    out: dict = {"charge_calibree": None, "sourced": None, "terrain_zone": None, "motif": None}
+    out: dict = {"charge_calibree": None, "sourced": None, "terrain_zone": None, "motif": None,
+                 "dernieres_ventes": []}
+    # OUTILS-FIX-4 B3 — DERNIÈRES VENTES DE CETTE PARCELLE : l'historique DVF de la parcelle (mutations
+    # actées portant SON idu) existe en base (dvf_mutations_parcelle) mais l'écran ne servait que les
+    # médianes de secteur. On le sert — date, prix, surface(s) — servi tel quel (Sourcé, ventes actées),
+    # borné aux 6 plus récentes. Hors du try du bilan : l'historique s'affiche même sur une parcelle non
+    # constructible (motif capacite_non_resolue), avec un état vide honnête côté écran quand la liste est
+    # vide. Aucune médiane, aucun calcul : les lignes brutes de la mutation.
+    try:
+        out["dernieres_ventes"] = [
+            {"date": r["date_mutation"].isoformat() if r["date_mutation"] else None,
+             "prix": float(r["valeur_fonciere"]) if r["valeur_fonciere"] is not None else None,
+             "surface_bati_m2": round(r["surface_reelle_bati"]) if r["surface_reelle_bati"] else None,
+             "surface_terrain_m2": round(r["surface_terrain"]) if r["surface_terrain"] else None,
+             "type": r["type_local"], "nature": r["nature_mutation"]}
+            for r in db.execute(text(
+                # UNE ligne par MUTATION (une vente), pas par type_local : une même vente porte souvent
+                # plusieurs lignes DVF (Maison + Dépendance…) — DISTINCT ON garde la plus « bâtie » (le
+                # local principal), sinon la vente s'afficherait deux fois. Puis tri par date décroissante.
+                "SELECT date_mutation, valeur_fonciere, surface_reelle_bati, surface_terrain, "
+                "       type_local, nature_mutation FROM ("
+                "  SELECT DISTINCT ON (id_mutation) date_mutation, valeur_fonciere, surface_reelle_bati, "
+                "         surface_terrain, type_local, nature_mutation FROM dvf_mutations_parcelle "
+                "  WHERE id_parcelle = :i "
+                "  ORDER BY id_mutation, surface_reelle_bati DESC NULLS LAST) m "
+                "ORDER BY date_mutation DESC NULLS LAST LIMIT 6"),
+                {"i": idu}).mappings().all()]
+    except Exception:  # noqa: BLE001 — l'historique parcelle est un bonus, jamais un 500
+        out["dernieres_ventes"] = []
     try:
         pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
         fa = parcel_faisabilite(db, pid) if pid else None

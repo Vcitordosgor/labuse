@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getFiche, scoreurAdresse, type ScoreurResult } from '../../lib/api'
-import { fmtEur, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
+import { fmtEur, fmtEurCompact, fmtInt, fmtM2, fmtDateNum } from '../../lib/format'
 import { PERIM_POTENTIEL, PERIM_RESIDUEL } from '../../lib/perimetres'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'
@@ -21,6 +21,16 @@ import { SecteurResultats } from './MonSecteur'   // RETOURS-3 R5 — fusion : l
 // RETOURS-11 R7 — la JAUGE horizontale (barre situant charge/zéro/prix) est RETIRÉE du bloc-verdict :
 // le liseré coloré et la barre disparaissent, le bloc garde une hauteur stable (min-h). Le chiffre de
 // charge et la phrase d'écart suffisent ; plus rien ne fait sauter la hauteur du bloc au changement.
+
+// OUTILS-FIX-4 B2 — badge Sourcé / Estimé sur les champs servis hors bloc secteur, comme la fiche
+// parcelle dont l'outil reprend le moteur. « Sourcé » = donnée actée/mesurée (cadastre, DVF) ; « Estimé »
+// = sortie de moteur (potentiel de transformation, prix de sortie neuf projeté). Pill Tailwind aux tokens
+// de la DA (mint = Sourcé, st-creuser = Estimé) : « Étudier un bien » n'est pas dans un conteneur .fiche-v6,
+// on ne peut donc pas réutiliser le badge fiche (grammaire .b) sans casser la typo — même sens, même couleur.
+function Statut({ kind }: { kind: 'sourced' | 'estime' }) {
+  const cls = kind === 'sourced' ? 'border-mint/40 bg-mint/10 text-mint' : 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser'
+  return <span data-etudier-statut={kind} className={`ml-1 inline-block shrink-0 rounded-sm border px-1 text-[8.5px] font-medium align-middle ${cls}`}>{kind === 'sourced' ? 'Sourcé' : 'Estimé'}</span>
+}
 
 export function EtudierBien() {
   const calcPrefill = useApp((s) => s.calcPrefill)         // porte fiche/copilote (IDU pré-rempli)
@@ -141,10 +151,12 @@ export function EtudierBien() {
                 {c?.sourced && (
                   <div data-etudier-porte className="flex flex-col gap-0.5 text-[11.5px] leading-snug text-txt">
                     <p className="text-[11px] font-semibold text-txt-hi">Ce que porte la parcelle</p>
-                    {/* mandat point 3 : c'est une SHAB (habitable), pas une SDP — libellé exact. */}
-                    <p>Surface habitable constructible <b className="tnum text-txt-hi">{fmtInt(c.sourced.shab_vendable_m2)} m²</b>
+                    {/* mandat point 3 : c'est une SHAB (habitable), pas une SDP — libellé exact.
+                        OUTILS-FIX-4 B2 — chaque fait servi porte son statut : la SHAB constructible est ESTIMÉE
+                        (potentiel de transformation, moteur), la surface de terrain est SOURCÉE (cadastre). */}
+                    <p>Surface habitable constructible <b className="tnum text-txt-hi">{fmtInt(c.sourced.shab_vendable_m2)} m²</b><Statut kind="estime" />
                       <span className="text-txt-dim"> ({PERIM_POTENTIEL})</span>
-                      {c.sourced.terrain_m2 != null && <> · terrain <b className="tnum text-txt">{fmtInt(c.sourced.terrain_m2)} m²</b></>}.</p>
+                      {c.sourced.terrain_m2 != null && <> · terrain <b className="tnum text-txt">{fmtInt(c.sourced.terrain_m2)} m²</b><Statut kind="sourced" /></>}.</p>
                   </div>
                 )}
 
@@ -162,11 +174,37 @@ export function EtudierBien() {
                 {(c?.sourced?.prix_sortie_median != null || tz) && (
                   <div className="mt-1.5 flex flex-col gap-0.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-dim">
                     <p className="text-[10px] uppercase tracking-wide text-txt-mut">Repères de marché</p>
+                    {/* OUTILS-FIX-4 B2 — le prix de sortie du neuf est une projection (ESTIMÉ, cf. son propre
+                        libellé « Estimé — médiane locale ») ; le prix du terrain nu de zone est une médiane de
+                        ventes ACTÉES (SOURCÉ, DVF terrains). */}
                     {c?.sourced?.prix_sortie_median != null && (
-                      <p>Prix de sortie du neuf dans le secteur : <b className="tnum text-txt">{fmtInt(c.sourced.prix_sortie_median)} €/m²</b>{c.sourced.prix_neuf_label && <span> ({c.sourced.prix_neuf_label})</span>}.</p>
+                      <p>Prix de sortie du neuf dans le secteur : <b className="tnum text-txt">{fmtInt(c.sourced.prix_sortie_median)} €/m²</b><Statut kind="estime" />{c.sourced.prix_neuf_label && <span> ({c.sourced.prix_neuf_label})</span>}.</p>
                     )}
                     {tz && (
-                      <p data-etudier-terrain-zone>Terrain nu dans la zone : <b className="tnum text-txt">{fmtInt(tz.eur_m2)} €/m²</b> (DVF terrains, fiabilité {tz.fiabilite}).</p>
+                      <p data-etudier-terrain-zone>Terrain nu dans la zone : <b className="tnum text-txt">{fmtInt(tz.eur_m2)} €/m²</b><Statut kind="sourced" /> (DVF terrains, fiabilité {tz.fiabilite}).</p>
+                    )}
+                  </div>
+                )}
+
+                {/* OUTILS-FIX-4 B3 — DERNIÈRES VENTES DE CETTE PARCELLE : l'historique DVF de la parcelle
+                    consultée existe en base ; il n'était jamais montré (seules les médianes de secteur
+                    l'étaient). On l'ajoute — date, prix, surface — Sourcé (ventes actées), et un état vide
+                    HONNÊTE quand il n'y en a pas (jamais un blanc muet lu comme « cassé »). */}
+                {c && (
+                  <div data-etudier-ventes-parcelle className="mt-1.5 flex flex-col gap-0.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-dim">
+                    <p className="text-[10px] uppercase tracking-wide text-txt-mut">Dernières ventes de cette parcelle <Statut kind="sourced" /></p>
+                    {(c.dernieres_ventes ?? []).length === 0 ? (
+                      <p className="text-txt-dim">Aucune vente DVF enregistrée sur cette parcelle (ventes actées 2021-2025).</p>
+                    ) : (
+                      (c.dernieres_ventes ?? []).map((v, i) => (
+                        <p key={i} data-etudier-vente>
+                          <b className="text-txt">{fmtDateNum(v.date)}</b>
+                          {v.prix != null && <> · <b className="tnum text-txt">{fmtEurCompact(v.prix)}</b></>}
+                          {v.surface_bati_m2 != null && v.surface_bati_m2 > 0 && <> · {fmtInt(v.surface_bati_m2)} m² bâti</>}
+                          {(v.surface_bati_m2 == null || v.surface_bati_m2 === 0) && v.surface_terrain_m2 != null && v.surface_terrain_m2 > 0 && <> · {fmtInt(v.surface_terrain_m2)} m² terrain</>}
+                          {v.type && <span className="text-txt-off"> · {v.type}</span>}
+                        </p>
+                      ))
                     )}
                   </div>
                 )}

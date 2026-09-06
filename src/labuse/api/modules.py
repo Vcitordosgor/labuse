@@ -267,6 +267,15 @@ def patrimoine(siren: str, fmt: str = "json",
         {"s": siren}).mappings().first()
     nom = db.execute(text(
         "SELECT max(denomination) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar()
+    # OUTILS-FIX-4 A1 — MILLÉSIME MAJIC servi (fichiers fonciers DGFiP) : lu EN BASE
+    # (parcelle_personne_morale.millesime, situation servie ; uniforme '2025' sur toute la table). L'onglet
+    # Possession ne disait jamais de quelle année datent les parcelles détenues — on le sert désormais, au
+    # même vocabulaire de fraîcheur que le reste de l'app. On lit le millésime DU siren ; repli global si
+    # (cas limite) ce siren n'en porte pas. Jamais inventé : None si la colonne est vide.
+    millesime_majic = db.execute(text(
+        "SELECT max(millesime) FROM parcelle_personne_morale WHERE siren = :s AND millesime IS NOT NULL"),
+        {"s": siren}).scalar() or db.execute(text(
+        "SELECT max(millesime) FROM parcelle_personne_morale WHERE millesime IS NOT NULL")).scalar()
     # #4 SIGNAL INPI (brique dormante de « Foncier fantôme ») : société ABSENTE du registre des
     # dirigeants = signal d'approche fort (succession / société en sommeil). Libellé FACTUEL.
     # OUTILS-FIX-3 B3 — l'interprétation (« succession / sommeil probable ») ne se tire QUE d'une
@@ -382,6 +391,7 @@ def patrimoine(siren: str, fmt: str = "json",
         {"i": [r["idu"] for r in page]}).all()} if page else {}
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
+        "millesime_majic": millesime_majic,   # OUTILS-FIX-4 A1 — fraîcheur des fichiers fonciers servis
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
         "hors_ecartees_par_vous": bool(ecartees_par_vous),
@@ -1323,6 +1333,33 @@ class DueDiligenceIn(BaseModel):
 
 
 _SEV_RISK = {"fort": 70, "moyen": 50, "faible": 30, "info": 10}
+# OUTILS-FIX-4 C1 — les deux valeurs SPÉCIALES du barème de risque, hissées en constantes (point de vérité
+# unique) pour être SERVIES au tiroir « Comment ce score est calculé » (jamais réécrites en dur au front).
+_RISQUE_HARD = 100              # HARD_EXCLUDE (contrainte bloquante) → risque bloquant
+_RISQUE_BONUS_PARTICULIER = 10  # propriétaire particulier : accès via SPF (démarche +), plafonné à 100
+
+
+def _seuils_crible() -> dict:
+    """OUTILS-FIX-4 C1 — les SEUILS qui font le score du crible, LUS DE LA CONFIG (jamais réécrits au
+    front) : le barème sévérité→risque (`_SEV_RISK` + les deux constantes ci-dessus) et les seuils
+    géométriques de la couche `risques`/proximités (`config/cascade_rules.yaml`, via `cascade_rules()`).
+    Un seul point de lecture ; le front n'affiche que ce qu'il reçoit."""
+    from ..config import cascade_rules
+    layers = {l.get("name"): (l.get("params") or {}) for l in (cascade_rules().get("layers") or [])}
+    risq = layers.get("risques", {})
+    return {
+        "bareme_risque": {
+            "bloquant": _RISQUE_HARD, "fort": _SEV_RISK["fort"], "moyen": _SEV_RISK["moyen"],
+            "faible": _SEV_RISK["faible"], "info": _SEV_RISK["info"],
+            "bonus_particulier": _RISQUE_BONUS_PARTICULIER,
+        },
+        "ppr_pct": {"marginal": risq.get("ppr_red_marginal_pct"), "exclusion": risq.get("ppr_red_exclude_pct"),
+                    "couverture_min": risq.get("min_coverage_pct")},
+        "proximite_m": {"cavite": (layers.get("cavite", {}) or {}).get("proximite_m"),
+                        "mouvement_terrain": (layers.get("mvt", {}) or {}).get("proximite_m"),
+                        "icpe": (layers.get("icpe", {}) or {}).get("bandes_m")},
+        "source": "config/cascade_rules.yaml (couches risques/cavite/icpe/mvt) + barème api/modules.py",
+    }
 
 
 def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
@@ -1338,6 +1375,23 @@ def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
         {"run": runs.current(), "pid": parcel_id}).mappings().all()
     checklist = [{"layer": c["layer_name"], "severity": c["severity"], "result": c["result"],
                   "detail": c["detail"]} for c in concerns]
+    # OUTILS-FIX-4 C3 — DÉDUPLICATION des lignes IDENTIQUES. Vérifié sur 97415000AC0024 : la couche
+    # `risques` émet un SOFT_FLAG par polygone d'aléa intersecté (georisque_alea DEAL, souvent FRAGMENTÉ),
+    # si bien que deux fragments de MÊME niveau produisent deux fois « Aléa mouvement_terrain — niveau
+    # moyen » — même couche, même sévérité, même texte : le MÊME fait, affiché deux fois. Ce n'est PAS
+    # deux risques distincts (le score consolidé prend le MAX, il n'était donc pas gonflé) mais du bruit
+    # de présentation. On replie les lignes strictement identiques (layer+severity+result+detail), en
+    # gardant l'ordre. Deux zonages, un même niveau → une seule ligne. (Correctif au point de LECTURE du
+    # crible ; l'engine de cascade n'est pas touché — le run golden servi reste intact.)
+    _vus: set[tuple] = set()
+    _uniq = []
+    for c in checklist:
+        k = (c["layer"], c["severity"], c["result"], c["detail"])
+        if k in _vus:
+            continue
+        _vus.add(k)
+        _uniq.append(c)
+    checklist = _uniq
     # M137-U — ZNIEFF : contrainte HORS CASCADE (ne remonte pas dans dryrun_cascade_results) ; on la
     # lit géométriquement dans spatial_layers pour qu'elle apparaisse AUSSI dans l'entrée « lot »
     # (comme dans l'entrée « parcelle » / servitudes). Vigilance, jamais un blocage (severity faible).
@@ -1352,13 +1406,27 @@ def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
                     {"i": idu}).mappings().first()
     proprio = ({"type": "personne_morale", "denomination": pm["denomination"], "siren": pm["siren"]}
                if pm and pm["denomination"] else {"type": "particulier"})
+    # OUTILS-FIX-4 C2 — CATNAT dans le crible : les arrêtés de catastrophe naturelle (table catnat_arretes,
+    # GASPAR / Géorisques) sont lus par la fiche mais pas par le crible de lot — or c'est exactement ce
+    # qu'on veut cribler avant d'acheter. Comme la fiche (fiche_commune : count par insee), la donnée est
+    # AU GRAIN COMMUNE (un arrêté couvre la commune) : on la sert par commune de la parcelle (idu[:5]) —
+    # nombre d'arrêtés + le plus récent (date + type de péril). Sourcé ; jamais un verdict, une vigilance.
+    catnat = {"n": 0, "dernier": None, "dernier_peril": None}
+    if db.execute(text("SELECT to_regclass('catnat_arretes')")).scalar() is not None:
+        cat = db.execute(text(
+            "SELECT count(*) AS n, to_char(max(date_arrete), 'YYYY-MM-DD') AS dernier, "
+            "  (SELECT type_peril FROM catnat_arretes c2 WHERE c2.insee = :ins "
+            "     ORDER BY date_arrete DESC NULLS LAST LIMIT 1) AS dernier_peril "
+            "FROM catnat_arretes WHERE insee = :ins"), {"ins": idu[:5]}).mappings().first()
+        if cat:
+            catnat = {"n": int(cat["n"] or 0), "dernier": cat["dernier"], "dernier_peril": cat["dernier_peril"]}
     if any(c["result"] == "HARD_EXCLUDE" for c in checklist):
-        risque = 100
+        risque = _RISQUE_HARD
     else:
         risque = max([_SEV_RISK.get(c["severity"], 20) for c in checklist if c["result"] == "SOFT_FLAG"] or [0])
-    if proprio["type"] == "particulier" and risque < 100:   # accès proprio via SPF (démarche +)
-        risque = min(100, risque + 10)
-    return {"checklist": checklist, "risque": risque, "proprio": proprio}
+    if proprio["type"] == "particulier" and risque < _RISQUE_HARD:   # accès proprio via SPF (démarche +)
+        risque = min(_RISQUE_HARD, risque + _RISQUE_BONUS_PARTICULIER)
+    return {"checklist": checklist, "risque": risque, "proprio": proprio, "catnat": catnat}
 
 
 @router.post("/duediligence")
@@ -1395,7 +1463,10 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
     # la base ne couvre pas, à l'échelle des 60 parcelles comme sur une seule.
     from .servitudes import NON_COUVERT
     return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items,
-            "non_couvert": NON_COUVERT}
+            "non_couvert": NON_COUVERT,
+            # OUTILS-FIX-4 C1 — les seuils qui font le score, servis pour le tiroir « Comment ce score est
+            # calculé » (valeurs lues de la config, jamais réécrites au front).
+            "seuils": _seuils_crible()}
 
 
 # ───────────────── M22 + BILAN — ÉTUDE DE FAISABILITÉ BIDIRECTIONNELLE ─────────────────

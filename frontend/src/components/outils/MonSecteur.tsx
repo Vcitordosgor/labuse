@@ -34,8 +34,12 @@ function Cell({ l, v, sub }: { l: string; v: string; sub?: string }) {
 }
 
 function typeCell(titre: string, m: LocalMed | null) {
+  // OUTILS-FIX-4 B1 — chaque cellule DIT son périmètre (rayon) en plus de son n et de son millésime :
+  // ce détail par type est mesuré sur un RAYON adaptatif autour de la parcelle (mono-type, toutes années),
+  // là où le « Prix du secteur » ci-dessus est bâti multi-type sur 5 ans récents. C'est pourquoi les deux
+  // chiffres appartement diffèrent — l'écart est désormais lisible (fenêtre + périmètre à l'écran).
   return <Cell l={titre} v={m ? `${fmtInt(m.eur_m2)} €/m²` : '—'}
-    sub={m ? `${m.n} vente${(m.n ?? 0) > 1 ? 's' : ''}${m.millesime ? ` · ${m.millesime}` : ''}` : 'échantillon < 5'} />
+    sub={m ? `${m.n} vente${(m.n ?? 0) > 1 ? 's' : ''}${m.rayon_m != null ? ` · ${fmtInt(m.rayon_m)} m` : ''}${m.millesime ? ` · ${m.millesime}` : ''}` : 'échantillon < 5'} />
 }
 
 // RETOURS-3 R5 — le CŒUR « prix du secteur » extrait en composant réutilisable : « Mon secteur » l'enveloppe
@@ -89,6 +93,11 @@ export function SecteurResultats({ idu, embedded }: { idu: string; embedded?: bo
               type — même moteur (reference_locale), même méthode. Le titre le dit clairement. */}
           <div>
             <p className="label-caps mb-1 text-txt-dim">Détail par type <span className="normal-case text-txt-dim">(dont terrain nu)</span></p>
+            {/* OUTILS-FIX-4 B1 — l'écart lisible entre les deux médianes : le « Prix du secteur — bâti »
+                ci-dessus est MULTI-TYPE sur les 5 années récentes ; ce détail est MONO-TYPE sur TOUTES les
+                années disponibles, au rayon indiqué. Deux méthodes → deux chiffres, ce n'est pas une
+                contradiction. Chaque cellule porte son n, son rayon et son millésime. */}
+            {sb && <p className="mb-1 text-[9.5px] leading-snug text-txt-dim">Par type : médiane mono-type sur toutes les années au rayon indiqué — le « Prix du secteur » ci-dessus est multi-type sur 5 ans récents. D'où un chiffre différent.</p>}
             <div className="stats" data-secteur-par-type>
               {typeCell('Maison', d.par_type?.maison ?? null)}
               {typeCell('Appartement', d.par_type?.appartement ?? null)}

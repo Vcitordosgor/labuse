@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
+  courrierPdf, getCommunes, getCourrierDemandes, getCourrierStatut, getFiche, modBailleur,
   modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPatrimoineSearch, modPermis, modPermisCount,
   modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
@@ -237,6 +237,12 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
       )}
       {d && (d['n_parcelles'] as number) > 0 && (
         <>
+          {/* OUTILS-FIX-4 A1 — MILLÉSIME MAJIC en tête de l'onglet Possession : ces parcelles sont celles
+              détenues d'après les fichiers fonciers DGFiP d'une année donnée — on la dit (fraîcheur), au
+              même vocabulaire que le reste de l'app. Servi par la base (millesime_majic) ; jamais inventé. */}
+          {d['millesime_majic'] && (
+            <p data-m02-millesime className="text-[10px] text-txt-dim">Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
+          )}
           {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
               sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
           {d['bodacc'] != null && (
@@ -260,26 +266,38 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           ) : (
             <>
               <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-              {/* RETOURS-5 T4.1 — TROIS chiffres qui comptent, en grille de 3 cartes. Rien d'autre au 1er niveau. */}
-              <div className="grid grid-cols-3 gap-2">
-                {([['n_parcelles', 'parcelles'], ['n_actionnables', 'actionnables'], ['sdp_residuelle_m2', 'm² SDP résiduelle']] as const).map(([k, lbl]) => (
-                  <div key={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
-                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{fmt(d[k] as number)}</div>
-                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{lbl}</div>
+              {/* RETOURS-5 T4.1 — les chiffres qui comptent, en grille de cartes. Rien d'autre au 1er niveau.
+                  OUTILS-FIX-4 A2 — la VALORISATION du foncier nu (valorisation_nu_eur, calculée par le moteur)
+                  n'était servie que dans le tiroir « Détail » : on la remonte dans le bloc de synthèse, À CÔTÉ
+                  de « m² SDP résiduelle », avec son statut (Estimé). 3 cartes si pas de valorisation (hors
+                  U/AU ou sans marché), 4 si présente — jamais un « 0 € » trompeur (la carte disparaît). */}
+              <div className={`grid gap-2 ${d['valorisation_nu_eur'] != null ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {[
+                  { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
+                  { v: fmt(d['n_actionnables'] as number), lbl: 'actionnables' },
+                  { v: fmt(d['sdp_residuelle_m2'] as number), lbl: 'm² SDP résiduelle' },
+                  ...(d['valorisation_nu_eur'] != null
+                    ? [{ v: fmtEurCompact(d['valorisation_nu_eur'] as number), lbl: 'valorisation foncier nu', estime: true }]
+                    : []),
+                ].map((c) => (
+                  <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
+                    <div className="mt-0.5 flex items-baseline gap-1 text-[10px] leading-tight text-txt-mut">
+                      <span>{c.lbl}</span>
+                      {c.estime && <span data-m02-valo-estime className="shrink-0 rounded-sm border border-st-creuser/40 bg-st-creuser/10 px-1 text-[8.5px] font-medium text-st-creuser">Estimé</span>}
+                    </div>
                   </div>
                 ))}
               </div>
-              {/* RETOURS-5 T4.2 — tout le reste REPLIÉ : détail des actionnables, valorisation, périmètre, nature. */}
+              {/* RETOURS-5 T4.2 — le reste REPLIÉ : détail des actionnables, périmètre, nature (la valorisation
+                  a rejoint le bloc de synthèse ci-dessus, OUTILS-FIX-4 A2 — on ne la répète pas ici). */}
               <details className="text-xs">
                 <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
                 <div className="flex flex-col">
                   {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
                       des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
                   <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
-                  {d['valorisation_nu_eur'] != null && (
-                    <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
-                  )}
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre valorisation</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
                   <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
                 </div>
               </details>
@@ -1250,6 +1268,9 @@ export function M09() {
     return Object.entries(c).map(([k, n]) => `${k} ×${n}`).join(' · ')
   }
 
+  // OUTILS-FIX-4 D1/D2 — l'état du service (disponible/indisponible) et le plafond du jour (avec le reste)
+  // sont lus À L'OUVERTURE, affichés avant toute saisie — plus seulement découverts au moment d'envoyer.
+  const statut = useQuery({ queryKey: ['courrier-statut'], queryFn: getCourrierStatut, staleTime: 60_000 })
   const demandes = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes, enabled: step === 3 })
   const envoyer = useMutation({
     mutationFn: () => postCourrierDemande(dest.map((d) => d.idu), corps, modele, recapCommunes(), rattach ?? undefined),
@@ -1270,6 +1291,19 @@ export function M09() {
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + rédaction), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
         de propriétaire particulier.</Banner>
+      {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie. */}
+      {statut.data && (
+        <div data-courrier-etat className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px]">
+          <span className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statut.data.disponible ? 'bg-mint' : 'bg-st-creuser'}`} />
+            <span className={statut.data.disponible ? 'text-mint' : 'text-st-creuser'}>{statut.data.disponible ? 'Service d’envoi disponible' : 'Envoi automatique indisponible'}</span>
+            {!statut.data.disponible && statut.data.raison && <span className="text-txt-dim">— {statut.data.raison}</span>}
+          </span>
+          {statut.data.plafond_jour != null && (
+            <span data-courrier-plafond className="whitespace-nowrap text-txt-mut">Plafond du jour : <b className="tnum text-txt">{statut.data.reste_jour}</b>/{statut.data.plafond_jour} restant{(statut.data.reste_jour ?? 0) > 1 ? 's' : ''}</span>
+          )}
+        </div>
+      )}
       {/* stepper 3 étapes */}
       <div className="flex items-center gap-1 text-[10px]">
         {STEPS.map(([n, l], i) => (
@@ -1389,6 +1423,7 @@ export function M10() {
   const [lot, setLot] = useState<string[]>([])
   const [paste, setPaste] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
+  const [showSeuils, setShowSeuils] = useState(false)   // OUTILS-FIX-4 C1 — tiroir « Comment ce score est calculé »
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
   const setModule = useApp((s) => s.setModule)
   // O6(b) — n'ajoute QUE des références cadastrales résolues (IDU complet ou SECTION+NUMÉRO).
@@ -1460,6 +1495,41 @@ export function M10() {
               demandées = nombre de lignes du résultat), plus des champs n_trouvees/n_demandes qui pouvaient
               diverger du lot affiché. « 5/7 » contre « 6 références » disparaît. */}
           <p className="text-[11px] text-txt-dim">{iduxResolus.length}/{items.length} référence{items.length > 1 ? 's' : ''} trouvée{iduxResolus.length > 1 ? 's' : ''}</p>
+          {/* OUTILS-FIX-4 C1 — TIROIR « Comment ce score est calculé » : les seuils qui font le résultat
+              (barème 70/50/30, emprise PPR 2 %/50 %, distances 50 m) étaient invisibles. On les EXPOSE,
+              repliés par défaut, VALEURS LUES DE LA CONFIG (run.data.seuils) — jamais réécrites en dur au
+              front. Même geste de tiroir que « Le calcul, étape par étape » de Faisabilité. */}
+          {run.data.seuils && (
+            <div>
+              <button data-diligence-seuils-toggle onClick={() => setShowSeuils((s) => !s)}
+                className="mb-1 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
+                <span>▾ Comment ce score est calculé</span>
+                <span>{showSeuils ? '−' : '+'}</span>
+              </button>
+              {showSeuils && (() => {
+                const s = run.data.seuils!
+                const b = s.bareme_risque
+                const icpe = s.proximite_m.icpe
+                return (
+                  <div data-diligence-seuils className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
+                    <div>
+                      <p className="font-medium text-txt">Barème du risque (0–100)</p>
+                      <p>Le score = la plus forte vigilance de la parcelle : contrainte bloquante <b className="text-txt">{b.bloquant}</b> · fort <b className="text-txt">{b.fort}</b> · moyen <b className="text-txt">{b.moyen}</b> · faible <b className="text-txt">{b.faible}</b> · informatif <b className="text-txt">{b.info}</b>. Propriétaire particulier : <b className="text-txt">+{b.bonus_particulier}</b> (accès via SPF, démarche en plus).</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-txt">PPR (part de surface en zone rouge)</p>
+                      <p>Liseré marginal &lt; <b className="text-txt">{s.ppr_pct.marginal}</b> % : information · au-delà : vigilance forte · ≥ <b className="text-txt">{s.ppr_pct.exclusion}</b> % : écartée. Couverture minimale d’un périmètre pour compter : <b className="text-txt">{s.ppr_pct.couverture_min}</b> %.</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-txt">Distances de proximité</p>
+                      <p>Cavité ≤ <b className="text-txt">{s.proximite_m.cavite}</b> m · mouvement de terrain ≤ <b className="text-txt">{s.proximite_m.mouvement_terrain}</b> m{icpe ? <> · ICPE ≤ <b className="text-txt">{icpe.fort}</b> m fort / <b className="text-txt">{icpe.moyen}</b> m moyen / <b className="text-txt">{icpe.faible}</b> m faible</> : ''}.</p>
+                    </div>
+                    <p className="text-[9.5px] text-txt-dim">Valeurs lues de {s.source}.</p>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
           {/* M137-T — NON COUVERT reporté sur le LOT : un lot sans flag cascade ne doit jamais être un
               « RAS » muet. Le bloc dit ce que la base ne couvre pas, à l'échelle des 60 parcelles. */}
           {(run.data.non_couvert ?? []).length > 0 && (
@@ -1495,6 +1565,20 @@ export function M10() {
                     {proprio['type'] === 'personne_morale' ? proprio['denomination'] : 'propriétaire particulier'}
                   </span>
                 </div>
+                {/* OUTILS-FIX-4 C2 — CATNAT (arrêtés de catastrophe naturelle, GASPAR/Géorisques) : lu par la
+                    fiche, désormais aussi par le crible. Grain COMMUNE (un arrêté couvre la commune) : nombre
+                    + le plus récent (date + péril). Sourcé, vigilance jamais verdict. */}
+                {(() => {
+                  const cat = i['catnat'] as { n: number; dernier: string | null; dernier_peril: string | null } | undefined
+                  if (!cat) return null
+                  return (
+                    <p data-diligence-catnat className="mt-1 text-[10.5px] leading-snug text-txt-mut">
+                      <span className="text-txt-dim">CATNAT (commune)</span> · {cat.n > 0 ? (
+                        <><b className="text-txt">{cat.n}</b> arrêté{cat.n > 1 ? 's' : ''} de catastrophe naturelle{cat.dernier ? <> · dernier {new Date(cat.dernier).toLocaleDateString('fr-FR')}{cat.dernier_peril ? ` (${cat.dernier_peril})` : ''}</> : ''} <span className="text-txt-off">· Sourcé</span></>
+                      ) : <span className="text-txt-dim">aucun arrêté recensé</span>}
+                    </p>
+                  )
+                })()}
                 {/* checklist — points à vérifier avant achat (facteurs cascade existants) */}
                 {checklist.length > 0 && (
                   <div className="mt-1.5 flex flex-col gap-0.5">

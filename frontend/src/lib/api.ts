@@ -401,6 +401,9 @@ export interface ScoreurResult {
                terrain_m2: number | null; prix_sortie_median: number | null; prix_neuf_label: string | null } | null
     terrain_zone: { eur_m2: number; fiabilite: string; n: number } | null
     motif: string | null
+    // OUTILS-FIX-4 B3 — l'historique DVF de LA parcelle (ventes actées portant son idu), 6 plus récentes.
+    dernieres_ventes?: { date: string | null; prix: number | null; surface_bati_m2: number | null
+                         surface_terrain_m2: number | null; type: string | null; nature: string | null }[]
   }
 }
 export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null,
@@ -496,7 +499,7 @@ export interface ProgrammeLie { nom: string; url: string | null; promoteur_nom: 
 export interface OperationPromoteur {
   siren: string; denomination: string | null; categorie: string; commune: string
   nb_logements: number; n_permis: number; date_min: string | null; date_max: string | null
-  annee: number | null; etat: string | null; lon: number | null; lat: number | null
+  annee: number | null; etat: string | null; etat_libelle: string | null; lon: number | null; lat: number | null
   idus: string[]; libelle: string; radar_bien_id: number | null; radar_cite: boolean
   programme?: ProgrammeLie | null
 }
@@ -859,7 +862,11 @@ export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
 // M54-EXPO-2 Volet C — statuts servis là où les boutons existent (dossier : dispo+quota ; courrier).
 export interface DossierStatut { disponible: boolean; raison: string | null; plan: string; illimite: boolean; quota_mois: number | null; utilises_mois: number; restants: number | null }
 export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')
-export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null }
+export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null
+  // OUTILS-FIX-4 D2 — plafond d'envoi quotidien (celui qui déclenche le 422) + ce qui reste.
+  plafond_jour?: number; envoyes_jour?: number; reste_jour?: number }
+// OUTILS-FIX-4 D1/D2 — état du service + plafond du jour, lus à l'ouverture de l'outil Courrier.
+export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
 export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
 
 // M54-EXPO-2 A7 — shortlist : « sujets à traiter aujourd'hui » du run servi (top parcelles).
@@ -1050,8 +1057,15 @@ export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/co
 export const postCourrierClientStatut = (id: number, statut: 'repondu' | 'sans_reponse') =>
   j<{ ok: boolean; statut: string }>(`/courrier/demandes/${id}/statut`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+// OUTILS-FIX-4 C1 — les seuils qui font le score, servis pour le tiroir « Comment ce score est calculé ».
+export interface CribleSeuils {
+  bareme_risque: { bloquant: number; fort: number; moyen: number; faible: number; info: number; bonus_particulier: number }
+  ppr_pct: { marginal: number | null; exclusion: number | null; couverture_min: number | null }
+  proximite_m: { cavite: number | null; mouvement_terrain: number | null; icpe: Record<string, number> | null }
+  source: string
+}
 export const modDueDiligence = (refs: string) =>
-  j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[] }>('/modules/duediligence', {
+  j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[]; seuils?: CribleSeuils }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
 
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──

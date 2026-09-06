@@ -10,7 +10,7 @@ import { getMoi, getProgrammes, getPromoteurFrise, getVeillePromoteurs, type Ope
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
-import { iduComplet } from '../../lib/format'
+import { iduComplet, fmtDateSitadel } from '../../lib/format'
 import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2 — recherche adresse/IDU commune
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 
@@ -259,7 +259,10 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                 <div className="mt-0.5 flex flex-col gap-1 border-t border-line/60 pt-1">
                   {g.ops.map((o: OperationPromoteur, k) => (
                     <div key={k} data-vp-operation className="flex flex-col gap-0.5 rounded-md bg-surface-3 px-2 py-1">
-                      <span className="text-[10.5px] text-txt">{o.commune} · <b className="text-txt-hi">{o.nb_logements}</b> lgt · {o.n_permis} permis{o.date_max ? ` · ${new Date(o.date_max).toLocaleDateString('fr-FR')}` : ''}{o.etat ? ` · ${o.etat}` : ''}</span>
+                      {/* OUTILS-FIX-4 A3 — date Sit@del : année seule si seule l'année est connue (fmtDateSitadel),
+                          plus jamais un « 01/01/2024 » qui ment sur la précision. A4 — le nombre nu final était
+                          le CODE d'état Sit@del brut (etat_dau) : on affiche son LIBELLÉ servi (autorisé/achevé). */}
+                      <span className="text-[10.5px] text-txt">{o.commune} · <b className="text-txt-hi">{o.nb_logements}</b> lgt · {o.n_permis} permis{o.date_max ? ` · ${fmtDateSitadel(o.date_max)}` : ''}{o.etat_libelle ? ` · ${o.etat_libelle}` : ''}</span>
                       {o.idus[0] && (
                         <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))}
                           className="block truncate text-left font-mono text-[10px] text-mint hover:underline">{o.idus[0]} →</button>

@@ -51,6 +51,17 @@ export const fmtDateNum = (d: string | Date | null | undefined): string => {
   return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('fr-FR')
 }
 
+/** OUTILS-FIX-4 A3 — date Sit@del à granularité VARIABLE : la source ne connaît souvent que l'ANNÉE,
+ *  stockée « AAAA-01-01 » (83 % des permits). La rendre « 01/01/2024 » ment sur la précision. Quand la
+ *  date tombe au 1ᵉʳ janvier (= année seule connue), on affiche l'ANNÉE (« 2024 ») ; sinon la date réelle
+ *  (jour/mois de mesure, format numérique). Présentation pure — aucune valeur inventée. */
+export const fmtDateSitadel = (d: string | Date | null | undefined): string => {
+  if (!d) return '—'
+  const dt = typeof d === 'string' ? new Date(d) : d
+  if (Number.isNaN(dt.getTime())) return '—'
+  return dt.getMonth() === 0 && dt.getDate() === 1 ? String(dt.getFullYear()) : dt.toLocaleDateString('fr-FR')
+}
+
 /** Date relative FR courte : « à l'instant », « il y a 5 min », « il y a 2 h », « il y a 3 j »,
  *  au-delà d'une semaine la date. Pour l'historique du Copilote (M78-quater #2). */
 export const ilYA = (d: string | Date | null | undefined): string => {

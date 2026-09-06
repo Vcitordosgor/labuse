@@ -36,12 +36,25 @@ def ensure_tables(engine) -> None:
 
 
 @router.get("/statut")
-def courrier_statut(db: Session = Depends(get_db)) -> dict:
-    """Disponibilité + tarif — le front n'affiche le bouton QUE si disponible=true."""
+def courrier_statut(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Disponibilité + tarif — le front n'affiche le bouton QUE si disponible=true.
+    OUTILS-FIX-4 D1/D2 — le front interroge ce statut À L'OUVERTURE de l'outil Courrier : l'état du
+    service (disponible/indisponible) et le PLAFOND du jour (avec ce qu'il reste) sont désormais connus
+    AVANT toute saisie, plus seulement à travers l'erreur 422 au moment d'envoyer. Le plafond quotidien
+    (`courrier_max_jour`, celui qui déclenche le 422) et le nombre déjà envoyé aujourd'hui pour ce sujet
+    sont le POINT DE VÉRITÉ back — le front n'affiche que ce qu'il reçoit."""
+    from .protection import sujet_de
+    from ..config import get_settings
     prov = courrier.provider_actif()
+    plafond = max(1, int(get_settings().courrier_max_jour))
+    try:
+        envoyes = courrier.envois_du_jour(db, sujet_de(request))
+    except Exception:  # noqa: BLE001 — le plafond est informatif, jamais un 500
+        envoyes = 0
     return {"disponible": prov != "stub", "provider": prov, "tarif": courrier.tarif(),
             "raison": None if prov != "stub" else
-            "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}
+            "L'envoi postal n'est pas encore disponible — la demande est enregistrée.",
+            "plafond_jour": plafond, "envoyes_jour": envoyes, "reste_jour": max(0, plafond - envoyes)}
 
 
 class EnvoiIn(BaseModel):
