@@ -1651,6 +1651,75 @@ def admin_destinations(request: Request) -> dict:
 
 # ═══════════════════ CIRCUIT-1 lot 5.1 — LA PAGE CIRCUIT (un appel, tout le circuit) ═══════════════════
 
+def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
+    """CIRCUIT-1 (5.1) / CIRCUIT-P (1.3) — construit la liste des réservoirs (catalogue + veille +
+    mode/cadence + vanne + filtre). Extrait pour être partagé par l'endpoint circuit ET les pages
+    de détail (un appel focalisé sur une source, `only_id`, reste rapide)."""
+    from datetime import datetime as _dt, timezone as _tz
+    from .. import filtres as _filtres
+    from ..sources_catalog import WHERE_AFFICHEES, masquees_param
+    _now = _dt.now(tz=_tz.utc)
+    where = WHERE_AFFICHEES + (" AND d.id = :only_id" if only_id is not None else "")
+    params = {"masquees": masquees_param()}
+    if only_id is not None:
+        params["only_id"] = only_id
+    rows = c.execute(text(
+        "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.last_sync_at,"
+        "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
+        "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
+        "       v.cadence_attendue_jours AS rappel_jours"
+        f" FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
+        f" WHERE {where} ORDER BY COALESCE(d.category,'zzz'), d.name"), params).mappings().all()
+    _etats = _filtres.etats_servis(c)
+    _reg = _filtres.FILTRES()
+    # motif le plus LONG d'abord : « Géorisques — mouvements » l'emporte sur « Géorisques ».
+    _motifs = sorted([(cle, (f.source_motif or "").lower().replace("%", ""))
+                      for cle, f in _reg.items() if f.source_motif],
+                     key=lambda t: len(t[1]), reverse=True)
+
+    def _filtre_du(nom: str) -> dict:
+        nom_l = (nom or "").lower()
+        for cle, mot in _motifs:
+            if mot and mot in nom_l:
+                e = _etats.get(cle)
+                f = _reg[cle]
+                if not e:
+                    return {"source": cle, "verdict": "jamais_joue",
+                            "portee_run": f.portee_run, "live": f.live}
+                return {"source": cle, **e, "portee_run": f.portee_run, "live": f.live}
+        return {"source": None, "verdict": "non_filtre"}
+
+    reservoirs = []
+    for r in rows:
+        vanne = _relance_pour(r["name"])
+        mode = r["mode_remplissage"] or "one_shot"
+        # « À VÉRIFIER » (lot 8.4) : le dernier CONTRÔLE (sonde/agent/dépôt) plus vieux que la cadence.
+        _derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
+        _dernier_controle = max(_derniers) if _derniers else None
+        _cad = r["cadence_attendue_jours"]
+        a_verifier = bool(_cad) and mode not in ("en_direct", "absente") and (
+            _dernier_controle is None or (_now - _dernier_controle).days > int(_cad))
+        reservoirs.append({
+            "a_verifier": a_verifier,
+            "dernier_controle": _dernier_controle.isoformat() if _dernier_controle else None,
+            "id": r["id"], "nom": r["name"], "producteur": r["provider"],
+            "famille": r["category"] or "aucune", "millesime": r["source_millesime"],
+            "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
+            "mode": mode, "cadence_jours": r["cadence_attendue_jours"],
+            "cadence_statut": r["cadence_statut"],
+            "vanne": ({"type": "injecter", "label": vanne["label"]} if vanne else
+                      {"type": "depot"} if mode == "depot_manuel" else
+                      {"type": "aucune", "motif": "interrogée en direct"} if mode == "en_direct" else
+                      {"type": "aucune", "motif": "aucun job d'ingestion identifié"}),
+            "veille": ({"methode": r["methode"], "statut": r["dernier_statut"],
+                        "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
+                        "vu": r["dernier_vu"], "actif": r["actif"],
+                        "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
+            "filtre": _filtre_du(r["name"]),
+        })
+    return reservoirs
+
+
 @router.get("/admin/circuit")
 def admin_circuit(request: Request) -> dict:
     """CIRCUIT-1 (lot 5.1) — LA structure de la page Circuit, calculée EN DIRECT et en UN appel :
@@ -1663,73 +1732,10 @@ def admin_circuit(request: Request) -> dict:
     from .. import bascule_flux, manifeste, registre, runs
     from ..db import engine, session_scope
     from ..registre import CHIFFRES, ROBINETS
-    from ..sources_catalog import WHERE_AFFICHEES, masquees_param
 
     with engine().begin() as c:
-        # ── réservoirs : catalogue affiché + veille + mode/cadence (lot 1.7) + vanne (5.3) ──
-        rows = c.execute(text(
-            "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.last_sync_at,"
-            "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
-            "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
-            "       v.cadence_attendue_jours AS rappel_jours"
-            f" FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
-            f" WHERE {WHERE_AFFICHEES} ORDER BY COALESCE(d.category,'zzz'), d.name"),
-            {"masquees": masquees_param()}).mappings().all()
-        reservoirs = []
-        from datetime import datetime as _dt, timezone as _tz
-        _now = _dt.now(tz=_tz.utc)
-        # CIRCUIT-3 lot 5.2 — l'état du filtre par source (batch : 2 requêtes), + le mapping
-        # motif→source pour greffer sur chaque réservoir.
-        from .. import filtres as _filtres
-        _etats = _filtres.etats_servis(c)
-        _reg = _filtres.FILTRES()
-        # motif le plus LONG d'abord : « Géorisques — mouvements » l'emporte sur « Géorisques ».
-        _motifs = sorted([(cle, (f.source_motif or "").lower().replace("%", ""))
-                          for cle, f in _reg.items() if f.source_motif],
-                         key=lambda t: len(t[1]), reverse=True)
-
-        def _filtre_du(nom: str) -> dict:
-            nom_l = (nom or "").lower()
-            for cle, mot in _motifs:
-                if mot and mot in nom_l:
-                    e = _etats.get(cle)
-                    f = _reg[cle]
-                    if not e:
-                        return {"source": cle, "verdict": "jamais_joue",
-                                "portee_run": f.portee_run, "live": f.live}
-                    return {"source": cle, **e, "portee_run": f.portee_run, "live": f.live}
-            return {"source": None, "verdict": "non_filtre"}
-
-        for r in rows:
-            vanne = _relance_pour(r["name"])
-            mode = r["mode_remplissage"] or "one_shot"
-            # CIRCUIT-1 lot 8.4 — « À VÉRIFIER » : le dernier CONTRÔLE (sonde, agent, ou dépôt/
-            # ingestion) est plus vieux que la cadence attendue (déclarée/proposée au lot 1.7).
-            # La règle qui manquait tant que 71 sources n'avaient pas de cadence.
-            _derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
-            _dernier_controle = max(_derniers) if _derniers else None
-            _cad = r["cadence_attendue_jours"]
-            a_verifier = bool(_cad) and mode not in ("en_direct", "absente") and (
-                _dernier_controle is None
-                or (_now - _dernier_controle).days > int(_cad))
-            reservoirs.append({
-                "a_verifier": a_verifier,
-                "dernier_controle": _dernier_controle.isoformat() if _dernier_controle else None,
-                "id": r["id"], "nom": r["name"], "producteur": r["provider"],
-                "famille": r["category"] or "aucune", "millesime": r["source_millesime"],
-                "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
-                "mode": mode, "cadence_jours": r["cadence_attendue_jours"],
-                "cadence_statut": r["cadence_statut"],
-                "vanne": ({"type": "injecter", "label": vanne["label"]} if vanne else
-                          {"type": "depot"} if mode == "depot_manuel" else
-                          {"type": "aucune", "motif": "interrogée en direct"} if mode == "en_direct" else
-                          {"type": "aucune", "motif": "aucun job d'ingestion identifié"}),
-                "veille": ({"methode": r["methode"], "statut": r["dernier_statut"],
-                            "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
-                            "vu": r["dernier_vu"], "actif": r["actif"],
-                            "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
-                "filtre": _filtre_du(r["name"]),
-            })
+        # ── réservoirs : catalogue affiché + veille + mode/cadence + vanne + filtre (helper) ──
+        reservoirs = _assembler_reservoirs(c)
         # ── fuites ouvertes + eau ancienne + dernier contrôle (lot 4) ──
         try:
             fuites = [dict(x) for x in c.execute(text(
@@ -1778,6 +1784,42 @@ def admin_circuit(request: Request) -> dict:
                  "route": r.route, "chiffres": list(r.chiffres), "hors_registre": r.hors_registre}
                 for rid, r in ROBINETS.items()]
 
+    # ── CIRCUIT-P (lot 1) — familles/catégories d'affichage, état unique (couleur+libellé),
+    #    ce que chaque réservoir alimente (via son slug registre) : le front ne recalcule rien. ──
+    from .. import circuit_etats as _etats
+    _r2c: dict[str, list[str]] = {}
+    _c2r: dict[str, list[str]] = {}
+    for _res_slug, _cid in aretes["reservoir_vers_chiffre"]:
+        _r2c.setdefault(_res_slug, []).append(_cid)
+    for _cid, _rid in aretes["chiffre_vers_robinet"]:
+        _c2r.setdefault(_cid, []).append(_rid)
+    for r in reservoirs:
+        slug = _etats.slug_reservoir(r["nom"])
+        r["slug"] = slug
+        _cids = _r2c.get(slug or "", [])
+        r["chiffres_ids"] = sorted(set(_cids))
+        r["taps"] = sorted({rid for cid in _cids for rid in _c2r.get(cid, [])})
+        r["etat"] = list(_etats.etat_reservoir(r))
+    _ctx = {"fuite_robinets": {f[k] for f in fuites for k in ("robinet_a", "robinet_b") if f.get(k)},
+            "eau_ancienne_robinets": {e["robinet"] for e in eau if e.get("statut") == "ouvert"},
+            "chiffres": chiffres}
+    for rb in robinets:
+        rb["hors_moteur"] = _etats.hors_moteur_de(rb, chiffres)
+        rb["etat"] = list(_etats.etat_robinet(rb, _ctx))
+    _fam: dict[str, list] = {}
+    for r in reservoirs:
+        _fam.setdefault(_etats.famille_affichage(r["famille"]), []).append(r["id"])
+    familles = [{"nom": nom, "ids": _fam[nom]} for nom in _etats.FAMILLES_ORDRE if nom in _fam]
+    familles += [{"nom": nom, "ids": ids} for nom, ids in _fam.items()
+                 if nom not in _etats.FAMILLES_ORDRE]
+    _cat: dict[str, list] = {}
+    for rb in robinets:
+        _cat.setdefault(rb["categorie"], []).append(rb["id"])
+    categories = [{"slug": s, "nom": lib, "ids": _cat[s]} for s, lib in _etats.CATEGORIES_ORDRE
+                  if s in _cat]
+    categories += [{"slug": s, "nom": _etats.categorie_affichage(s), "ids": ids}
+                   for s, ids in _cat.items() if s not in _etats.CATEGORIE_LIBELLE]
+
     compteurs = {
         "reservoirs": len(reservoirs),
         "surveilles": sum(1 for r in reservoirs if r["veille"]
@@ -1798,9 +1840,17 @@ def admin_circuit(request: Request) -> dict:
         "filtres_avertissements": sum(1 for r in reservoirs
                                       if (r.get("filtre") or {}).get("verdict") == "avertissements"),
     }
+    # ── CIRCUIT-P (lot 1.1) — le RÉSUMÉ, composé côté serveur (le front ne recalcule rien) ──
+    from .. import circuit_resume as _resume
+    _candidat = next((rr["label"] for rr in runs_list if rr.get("statut") == "termine"
+                      and rr.get("label") != runs.current()), None)
+    resume = _resume.composer(reservoirs, robinets, compteurs=compteurs, residuel=residuel,
+                              run_servi=runs.current(), candidat=_candidat,
+                              fuites=fuites, eau_ancienne=eau)
     return {
-        "run_servi": runs.current(), "manifeste": m,
+        "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
+        "familles": familles, "categories": categories, "resume": resume,
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,
         "dernier_controle": dict(controle) if controle else None,
         "journal": journal, "runs": runs_list, "residuel": residuel,
@@ -1922,3 +1972,191 @@ def admin_circuit_revenir(request: Request) -> dict:
             raise HTTPException(409, res.get("motif", "retour arrière refusé"))
         s.commit()
     return res
+
+
+@router.get("/admin/circuit/journal")
+def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
+                          page: int = 1, taille: int = 50) -> dict:
+    """CIRCUIT-P (lot 1.2) — LE JOURNAL : `circuit_journal` porte DÉJÀ, en une table, les passages
+    de sonde/contrôle (geste `job`), de filtres (`filtre`), d'agents (`agent`), les crons qui
+    touchent l'eau (`job`, par « cron ») et les gestes humains (injecter/calculer/basculer/revenir/
+    purger). Filtrable par type de geste, par date `depuis` (AAAA-MM-JJ), paginé. Le « qui »
+    toujours présent (null → « système »)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..db import engine
+    taille = max(1, min(int(taille), 200))
+    page = max(1, int(page))
+    conds, params = ["1=1"], {"lim": taille, "off": (page - 1) * taille}
+    if type:
+        conds.append("geste = :geste"); params["geste"] = type
+    if depuis:
+        conds.append("ts >= :depuis"); params["depuis"] = depuis
+    where = " AND ".join(conds)
+    with engine().begin() as c:
+        try:
+            total = c.execute(text(f"SELECT count(*) FROM circuit_journal WHERE {where}"),
+                              params).scalar() or 0
+            rows = [dict(x) for x in c.execute(text(
+                "SELECT ts, geste, cible, par, resultat, details FROM circuit_journal"
+                f" WHERE {where} ORDER BY id DESC LIMIT :lim OFFSET :off"), params).mappings()]
+            aujourdhui = c.execute(text(
+                "SELECT count(*) FROM circuit_journal WHERE ts::date = now()::date")).scalar() or 0
+            gestes = [r[0] for r in c.execute(text(
+                "SELECT DISTINCT geste FROM circuit_journal ORDER BY geste")).all()]
+        except Exception:  # noqa: BLE001 — table pas encore créée (avant 1er geste)
+            total, rows, aujourdhui, gestes = 0, [], 0, []
+    for r in rows:
+        r["par"] = r.get("par") or "système"
+        r["ts"] = r["ts"].isoformat() if hasattr(r["ts"], "isoformat") else r["ts"]
+    return {"entrees": rows, "page": page, "taille": taille, "total": int(total),
+            "aujourdhui": int(aujourdhui), "gestes": gestes}
+
+
+def _graphe():
+    """(r2c, c2r, slug→nom) depuis le registre + le pont d'inventaire."""
+    from .. import circuit_etats as _etats, registre
+    aretes = registre.aretes()
+    r2c: dict[str, list[str]] = {}
+    c2r: dict[str, list[str]] = {}
+    for res_slug, cid in aretes["reservoir_vers_chiffre"]:
+        r2c.setdefault(res_slug, []).append(cid)
+    for cid, rid in aretes["chiffre_vers_robinet"]:
+        c2r.setdefault(cid, []).append(rid)
+    slug_nom = {v: k for k, v in _etats.NOM_VERS_SLUG.items()}
+    return r2c, c2r, slug_nom
+
+
+@router.get("/admin/circuit/reservoir/{sid}")
+def admin_circuit_reservoir(request: Request, sid: int) -> dict:
+    """CIRCUIT-P (lot 1.3) — le bloc de la page de détail d'un RÉSERVOIR (un appel focalisé)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_etats as _etats
+    from ..db import engine
+    from ..registre import CHIFFRES, ROBINETS
+    r2c, c2r, _ = _graphe()
+    with engine().begin() as c:
+        resv = _assembler_reservoirs(c, only_id=sid)
+        if not resv:
+            raise HTTPException(404, "réservoir inconnu")
+        r = resv[0]
+        try:
+            rap = c.execute(text(
+                "SELECT ts, resultat, details FROM circuit_journal WHERE geste = 'agent'"
+                " AND cible = :nom ORDER BY id DESC LIMIT 1"), {"nom": r["nom"]}).mappings().first()
+        except Exception:  # noqa: BLE001
+            rap = None
+    slug = _etats.slug_reservoir(r["nom"])
+    r["slug"] = slug
+    cids = sorted(set(r2c.get(slug or "", [])))
+    r["chiffres_ids"] = cids
+    r["etat"] = list(_etats.etat_reservoir(r))
+    taps = sorted({rid for cid in cids for rid in c2r.get(cid, [])})
+    robinets = []
+    for rid in taps:
+        rb = ROBINETS.get(rid)
+        if rb:
+            robinets.append({"id": rid, "nom": rb.nom, "categorie": rb.categorie,
+                             "categorie_nom": _etats.categorie_affichage(rb.categorie)})
+    chiffres = [{"id": cid, "libelle": (CHIFFRES[cid].libelle if cid in CHIFFRES else cid),
+                 "robinets": len(c2r.get(cid, []))} for cid in cids]
+    return {"reservoir": r,
+            "alimente": {"robinets": robinets, "n_chiffres": len(cids), "n_robinets": len(taps)},
+            "chiffres": chiffres,
+            "rapport_agent": ({"ts": rap["ts"].isoformat() if hasattr(rap["ts"], "isoformat")
+                               else rap["ts"], "resultat": rap["resultat"],
+                               "details": rap["details"]} if rap else None)}
+
+
+@router.get("/admin/circuit/robinet/{rid}")
+def admin_circuit_robinet(request: Request, rid: str) -> dict:
+    """CIRCUIT-P (lot 1.3) — le bloc de la page de détail d'un ROBINET (fuites/eau ancienne en tête,
+    ce qu'il affiche + badges moteur/hors-moteur, alimenté par, dernier contrôle)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_etats as _etats
+    from ..db import engine
+    from ..registre import CHIFFRES, ROBINETS
+    rb = ROBINETS.get(rid)
+    if not rb:
+        raise HTTPException(404, "robinet inconnu")
+    r2c, c2r, slug_nom = _graphe()
+    with engine().begin() as c:
+        try:
+            fuites = [dict(x) for x in c.execute(text(
+                "SELECT chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b, cause, depuis,"
+                " COALESCE(type,'nombre') AS type FROM circuit_ecarts"
+                " WHERE statut='ouvert' AND (:rid IN (robinet_a, robinet_b))"
+                " ORDER BY depuis DESC"), {"rid": rid}).mappings()]
+            eau = [dict(x) for x in c.execute(text(
+                "SELECT chiffre_id, robinet, tampon, attendu, mecanisme, statut FROM circuit_eau_ancienne"
+                " WHERE robinet = :rid AND statut='ouvert' ORDER BY id DESC LIMIT 20"),
+                {"rid": rid}).mappings()]
+            controle = c.execute(text(
+                "SELECT ts, robinets_couverts, robinets_non_couverts FROM circuit_controles"
+                " ORDER BY id DESC LIMIT 1")).mappings().first()
+        except Exception:  # noqa: BLE001
+            fuites, eau, controle = [], [], None
+    chiffres_map = {cid: {"libelle": ch.libelle, "unite": ch.unite, "niveau": ch.niveau,
+                          "moteur": ch.moteur, "portee": ch.portee, "calcul": ch.calcul,
+                          "type": ch.type, "table": ch.table, "fabrication": ch.fabrication,
+                          "definition": ch.definition,
+                          "domaine": list(ch.domaine) if ch.domaine else None}
+                   for cid, ch in CHIFFRES.items()}
+    robinet = {"id": rid, "categorie": rb.categorie,
+               "categorie_nom": _etats.categorie_affichage(rb.categorie), "nom": rb.nom,
+               "parent": rb.parent, "route": rb.route, "chiffres": list(rb.chiffres),
+               "hors_registre": rb.hors_registre}
+    robinet["hors_moteur"] = _etats.hors_moteur_de(robinet, chiffres_map)
+    ctx = {"fuite_robinets": {rid} if fuites else set(),
+           "eau_ancienne_robinets": {rid} if eau else set(), "chiffres": chiffres_map}
+    robinet["etat"] = list(_etats.etat_robinet(robinet, ctx))
+    chiffres = []
+    for cid in rb.chiffres:
+        ch = chiffres_map.get(cid, {})
+        chiffres.append({"id": cid, **ch,
+                         "hors_moteur": (ch.get("calcul") or "").split(":")[0] == "passe_plat"})
+    amont_slugs = sorted({s for cid in rb.chiffres for s in
+                          [x for x, cs in r2c.items() if cid in cs]})
+    amont = [{"slug": s, "nom": slug_nom.get(s, s)} for s in amont_slugs]
+    return {"robinet": robinet, "chiffres": chiffres, "amont": amont,
+            "fuites": [{**f, "depuis": f["depuis"].isoformat() if hasattr(f["depuis"], "isoformat")
+                        else f["depuis"]} for f in fuites],
+            "eau_ancienne": eau,
+            "dernier_controle": ({"ts": controle["ts"].isoformat(),
+                                  "robinets_couverts": controle["robinets_couverts"],
+                                  "robinets_non_couverts": controle["robinets_non_couverts"]}
+                                 if controle else None)}
+
+
+@router.get("/admin/circuit/pompe")
+def admin_circuit_pompe(request: Request) -> dict:
+    """CIRCUIT-P (lot 1.3) — le bloc de la page de détail de la POMPE : run servi + candidat, ce
+    qui attend (résiduel), moteurs et pointeurs, horloges qui touchent l'eau."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import bascule_flux, manifeste, runs
+    from ..db import session_scope
+    from ..jobs import TOUCHE_EAU
+    from ..registre import CHIFFRES
+    with session_scope() as s:
+        m = manifeste.lire() or manifeste.construire_depuis_pointeurs(s)
+        runs_list = bascule_flux.runs_termines(s, limit_ecart=0)
+        residuel = bascule_flux.residuel_entrees_changees(s)
+    servi = runs.current()
+    candidat = next((r["label"] for r in runs_list if r.get("statut") == "termine"
+                     and r.get("label") != servi), None)
+    moteurs = sorted({c.moteur for c in CHIFFRES.values() if c.moteur})
+    # pointeurs de run : tant qu'ils ne sont pas un seul (le manifeste), on le dit (règle 3.2).
+    pointeurs = {k: m.get(k) for k in ("scoring_run", "mvt_run", "division_run",
+                                       "residuel_run_seq") if m and m.get(k)}
+    distincts = {v for k, v in pointeurs.items() if k != "residuel_run_seq" and v}
+    return {"run_servi": servi, "candidat": candidat, "manifeste": m, "residuel": residuel,
+            "precedent": (m or {}).get("precedent"),
+            "moteurs": [{"nom": x} for x in moteurs], "n_moteurs": len(moteurs),
+            "n_chiffres": len(CHIFFRES), "pointeurs": pointeurs,
+            "pointeurs_multiples": len(distincts) > 1,
+            "jobs_eau": sorted(TOUCHE_EAU)}

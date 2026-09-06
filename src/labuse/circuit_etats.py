@@ -1,0 +1,232 @@
+"""CIRCUIT-P (lot 1.4) — LA FONCTION D'ÉTAT UNIQUE, côté serveur.
+
+Un réservoir et un robinet portent chacun UNE couleur et UN libellé court, calculés ICI et nulle
+part ailleurs : le front ne recalcule rien (règle 1.4). C'est la transposition fidèle de
+`tankEtat` / `tapEtat` de `docs/CIRCUIT/maquette-circuit-v8.html` (la référence visuelle validée
+par Vic le 06/09/2026) sur les VRAIES données de l'endpoint `/admin/circuit`.
+
+Cinq couleurs, une par sens (règle 6) :
+  · mint  — ça coule       · ambre — à regarder
+  · rouge — bloqué / fuite  · gris — vide / manuel   · mauve — agent / IA
+
+Ce module porte aussi les DEUX regroupements d'affichage : la famille d'affichage d'un réservoir
+(la colonne `category` de `data_sources` est fine — 28 valeurs ; la maquette les range en
+familles lisibles) et la catégorie d'affichage d'un robinet (le champ `categorie` du registre est
+un slug court). L'ORDRE est celui de la maquette.
+
+Divergences avec la maquette, tranchées par l'option la plus sûre et écrites (règle d'autonomie) :
+  · la maquette a des états qu'AUCUNE donnée live ne porte encore — `horloge qui ment`,
+    `écart à la règle`, `choix LABUSE`, `agent en route`. On les GARDE dans la grammaire (couleur +
+    libellé), déclenchés par un champ que le live ne remplit pas encore ; CIRCUIT-4 (règles) et un
+    détecteur d'horloge les brancheront (accroche notée au compte-rendu). Live : 0 faux positif.
+  · `à vérifier (cadence dépassée)` (le drapeau réel `a_verifier`) n'existe pas dans la maquette :
+    on l'ajoute en ambre (« à regarder »), dans la même grammaire.
+  · « hors moteur » = un chiffre dont le `calcul` n'est pas `moteur:` — en pratique `passe_plat`
+    (un chemin unique, pas encore un moteur nommé). `constante` est délibéré, jamais compté.
+"""
+from __future__ import annotations
+
+# ── familles d'affichage : slug fin (data_sources.category) → famille lisible, DANS L'ORDRE ──
+FAMILLES_ORDRE = [
+    "Parcelles et propriété",
+    "Urbanisme et règles",
+    "Risques, nature, patrimoine",
+    "Marché, logement, permis",
+    "Énergie, réseaux, assainissement",
+    "Économie, équipements, accès",
+    "Terrain, sol, imagerie",
+    "Hubs et catalogues",
+    "Voulues, absentes",
+    "LABUSE interne",
+]
+FAMILLE_DE_CATEGORIE = {
+    "cadastre": "Parcelles et propriété", "potentiel": "Parcelles et propriété",
+    "proprietaire": "Parcelles et propriété", "foncier": "Parcelles et propriété",
+    "urbanisme": "Urbanisme et règles", "fiscal": "Urbanisme et règles",
+    "reglementaire": "Urbanisme et règles", "reglement": "Urbanisme et règles",
+    "risques": "Risques, nature, patrimoine", "environnement": "Risques, nature, patrimoine",
+    "agricole": "Risques, nature, patrimoine", "patrimoine": "Risques, nature, patrimoine",
+    "signal": "Risques, nature, patrimoine",
+    "marche": "Marché, logement, permis", "dynamique": "Marché, logement, permis",
+    "logement": "Marché, logement, permis",
+    "reseaux": "Énergie, réseaux, assainissement", "energie": "Énergie, réseaux, assainissement",
+    "assainissement": "Énergie, réseaux, assainissement",
+    "acces": "Économie, équipements, accès", "attractivite": "Économie, équipements, accès",
+    "economie": "Économie, équipements, accès",
+    "topographie": "Terrain, sol, imagerie", "occupation_sol": "Terrain, sol, imagerie",
+    "imagerie": "Terrain, sol, imagerie", "terrain": "Terrain, sol, imagerie",
+    "hub": "Hubs et catalogues",
+    "aucune": "Voulues, absentes",
+    "interne": "LABUSE interne", "labuse": "LABUSE interne",
+}
+
+def famille_affichage(categorie: str | None) -> str:
+    """La famille lisible d'un réservoir depuis sa `category` fine ; défaut : « Autres »."""
+    return FAMILLE_DE_CATEGORIE.get((categorie or "aucune"), "Autres")
+
+
+# ── catégories d'affichage des robinets : slug registre → libellé lisible, DANS L'ORDRE ──
+CATEGORIES_ORDRE = [
+    ("fond", "Fonds de carte"), ("couche", "Couches"), ("outil", "Outils"),
+    ("fiche", "Fiches"), ("copilote", "Copilote"), ("veille", "Veille"),
+    ("projets", "Projets"), ("crm", "CRM"), ("notification", "Notifications"),
+    ("pdf", "PDF"), ("page_client", "Pages client"), ("admin", "Admin"),
+]
+CATEGORIE_LIBELLE = dict(CATEGORIES_ORDRE)
+
+def categorie_affichage(slug: str | None) -> str:
+    return CATEGORIE_LIBELLE.get(slug or "", (slug or "?").capitalize())
+
+
+# ── pont nom → slug de réservoir (reservoirs.csv, inventaire validé) : relie une ligne
+#    data_sources (id numérique + nom) au slug du registre, pour allumer réservoir → catégories.
+#    Un réservoir absent de ce pont s'allume seul (comportement d'avant CIRCUIT-P), sans erreur. ──
+NOM_VERS_SLUG = {
+    'Cadastre (API Carto PCI)': 'cadastre_api_carto',
+    'Cadastre Etalab (bulk DGFiP/Etalab)': 'cadastre_etalab_bulk',
+    'Urbanisme PLU/GPU (API Carto)': 'gpu_plu_api_carto',
+    'Géorisques': 'georisques_api',
+    'DVF / valeurs foncières': 'dvf',
+    'RGE ALTI (altimétrie)': 'rge_alti',
+    'Parc National de La Réunion (INPN)': 'parc_national_inpn',
+    'Forêts publiques (ONF)': 'forets_onf_bdtopo',
+    'Potentiel foncier Région (Région ODS)': 'potentiel_foncier_region',
+    'RPG — déclarations agricoles (IGN/ASP)': 'rpg_proxy_ign',
+    'Région Réunion Open Data (Opendatasoft)': 'region_ods_hub',
+    'PEIGEO (hub régional)': 'peigeo_hub',
+    'DEAL Réunion (WMS/WFS)': 'deal_wms_wfs',
+    'Géoplateforme IGN': 'geoplateforme_hub',
+    'data.regionreunion.com — Potentiel foncier': 'potentiel_foncier_ods',
+    "SITADEL (autorisations d'urbanisme)": 'sitadel',
+    'BD TOPO IGN': 'bd_topo',
+    'Base Adresse Nationale': 'ban',
+    'OpenStreetMap / Overpass': 'osm_overpass',
+    'BPE INSEE': 'bpe_insee',
+    'SIRENE': 'sirene_recherche_entreprises',
+    'IGN BD CARTO V5 — occupation du sol': 'bd_carto_ocs',
+    'ABF / Monuments historiques': 'abf_merimee',
+    'INPN / patrinat — espaces protégés': 'inpn_espaces_proteges',
+    'VRD / assainissement (SPANC)': 'spanc_epci',
+    'Fichiers fonciers (Cerema)': 'fichiers_fonciers_cerema',
+    "Cerema / GéoLittoral — indicateur d'érosion côtière": 'erosion_cotiere_geolittoral',
+    'BODACC (procédures collectives)': 'bodacc',
+    'DEAL Réunion — PPR / aléas': 'deal_ppr',
+    'INPI RNE (dirigeants)': 'inpi_rne',
+    'Géorisques — sites et sols pollués': 'georisques_ssp',
+    'Géorisques — cavités souterraines': 'georisques_cavites',
+    'Géorisques — ICPE': 'georisques_icpe',
+    'Cartofriches (Cerema)': 'cartofriches',
+    'Géorisques — mouvements de terrain': 'georisques_mvt',
+    'DPE ADEME (logements existants)': 'dpe_ademe',
+    'QPV 2024 (ANCT)': 'qpv_2024',
+    'Inventaire SRU (DHUP)': 'sru_dhup',
+    'NPNRU (DEAL Réunion / ANCT)': 'npnru',
+    'INSEE RP Logement 2023': 'insee_rp_logement',
+    'PLH des 5 EPCI (extraction documentaire)': 'plh_epci',
+    'RTAA DOM (textes réglementaires)': 'rtaa_dom',
+    'SUP — assiettes GPU (API Carto)': 'sup_gpu',
+    "Recherche d'entreprises (DINUM)": 'recherche_entreprises_dinum',
+    'Classement sonore ITT (Cerema)': 'bruit_itt_cerema',
+    '50 pas géométriques — limite haute (DEAL)': 'cinquante_pas_deal',
+    'PVGIS (Commission européenne)': 'pvgis',
+    'EDF SEI Réunion — open data': 'edf_sei_opendata',
+    'Registre national des installations (ODRÉ)': 'odre_registre_installations',
+    'Parkings OSM (loi APER)': 'parkings_osm_aper',
+    'Filosofi INSEE (carreaux 200 m)': 'filosofi_carreaux',
+    'BD ORTHO 20 cm (IGN)': 'bd_ortho',
+    "Sudocuh (procédures d'urbanisme)": 'sudocuh',
+    "GPU — zonages d'assainissement": 'gpu_zonage_assainissement',
+    'Contours IRIS (IGN/INSEE)': 'contours_iris',
+    'RGE ALTI 5 m (IGN)': 'rge_alti_5m',
+    'INSEE RP2022 — fichier détail Logements (EGOUL)': 'insee_rp2022_egoul',
+    "GPU — zonages d'assainissement (info-surf typeinf 19)": 'gpu_assainissement_infosurf',
+    "Office de l'eau Réunion — Chroniques de l'eau": 'office_eau_chroniques',
+    'BD ORTHO IRC (IGN)': 'bd_ortho_irc',
+    'LiDAR HD — MNH 50 cm (IGN)': 'lidar_hd_mnh',
+    'DGFiP — parcelles des personnes morales': 'dgfip_parcelles_pm',
+    "ZFANG — zone franche d'activité nouvelle génération (Légifrance)": 'zfang',
+    "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)": 'frr_ex_zrr',
+    'Transport public — GTFS (PAN, 7 réseaux)': 'gtfs_pan',
+    "OSM — transport (pôles d'échange & téléphérique)": 'osm_transport',
+    'ZNIEFF (INPN/MNHN)': 'znieff_inpn',
+    'ZNIEFF (INPN / Région)': 'znieff_region_ods',
+    'CoSIA (couverture du sol IA, IGN)': 'cosia',
+    "Radar (pige d'annonces)": 'radar_pige',
+    'SIRENE établissements géolocalisés': 'sirene_etablissements',
+    'MOBPRO (mobilités domicile-travail, INSEE)': 'mobpro',
+    'Trafic RN (Région Réunion — SIR)': 'trafic_rn',
+    'BDNB': 'bdnb',
+    'EDF Réunion — lignes moyenne tension HTA (open data)': 'edf_hta',
+    'TCSP — voies bus en site propre (OSM)': 'tcsp_osm',
+    'Réunion Express — hypothèses de tracé (débat public CNDP)': 'reunion_express_cndp',
+    'ECLN (commercialisation des logements neufs, SDES)': 'ecln',
+    'LOVAC (logements vacants)': 'lovac',
+}
+
+def slug_reservoir(nom: str | None) -> str | None:
+    return NOM_VERS_SLUG.get(nom or "")
+
+
+# ── L'ÉTAT D'UN RÉSERVOIR (couleur, libellé) — ordre de la maquette (tankEtat) ──────────────
+def etat_reservoir(r: dict) -> tuple[str, str]:
+    filtre = r.get("filtre") or {}
+    veille = r.get("veille")
+    mode = r.get("mode") or "one_shot"
+    if filtre.get("verdict") == "quarantaine":
+        return ("rouge", "en quarantaine")
+    if r.get("horloge_ment"):                       # détecteur non branché live (accroche)
+        return ("rouge", "horloge qui ment")
+    if mode == "absente":
+        return ("gris", "vide")
+    if veille and veille.get("statut") == "nouvelle_version":
+        return ("ambre", "nouvelle version à injecter")
+    if r.get("agent_en_cours"):                     # transitoire, non exposé live (accroche)
+        return ("mauve", "agent en route")
+    if filtre.get("verdict") == "avertissements":
+        return ("ambre", "filtre avec des KO")
+    if not veille:
+        return ("ambre", "jamais vérifié")
+    if r.get("a_verifier"):                          # divergence assumée : cadence dépassée
+        return ("ambre", "à vérifier")
+    if veille.get("statut") == "injoignable":
+        return ("ambre", "producteur injoignable")
+    if mode == "depot_manuel":
+        return ("gris", "dépôt manuel")
+    return ("mint", "à jour")
+
+
+# ── L'ÉTAT D'UN ROBINET (couleur, libellé) — ordre de la maquette (tapEtat) ──────────────────
+def hors_moteur_de(robinet: dict, chiffres: dict) -> int:
+    """Combien de chiffres de ce robinet sont servis HORS d'un moteur nommé (`passe_plat`)."""
+    n = 0
+    for cid in robinet.get("chiffres") or []:
+        calcul = (chiffres.get(cid) or {}).get("calcul") or ""
+        if calcul.split(":")[0] == "passe_plat":
+            n += 1
+    return n
+
+def etat_robinet(robinet: dict, ctx: dict) -> tuple[str, str]:
+    rid = robinet.get("id")
+    if rid in ctx.get("fuite_robinets", ()):
+        return ("rouge", "fuite mesurée")
+    if rid in ctx.get("eau_ancienne_robinets", ()):
+        return ("ambre", "eau ancienne")
+    if rid in ctx.get("ecart_regle_robinets", ()):   # CIRCUIT-4 (accroche), 0 live
+        return ("rouge", "écart à la règle")
+    hm = hors_moteur_de(robinet, ctx.get("chiffres", {}))
+    if hm:
+        return ("ambre", f"{hm} hors moteur")
+    if rid in ctx.get("choix_robinets", ()):         # CIRCUIT-4 (accroche), 0 live
+        return ("gris", "choix à confirmer")
+    if not (robinet.get("chiffres") or []):
+        return ("gris", "aucun chiffre")
+    return ("mint", "cohérent")
+
+
+def ko_reservoir(couleur: str, _libelle: str = "") -> bool:
+    """« à regarder » : tout sauf mint et gris (comme koTank de la maquette)."""
+    return couleur not in ("mint", "gris")
+
+def ko_robinet(couleur: str, libelle: str = "") -> bool:
+    """comme koTap : tout sauf mint/gris, PLUS « choix à confirmer » (gris mais à trancher)."""
+    return couleur not in ("mint", "gris") or libelle == "choix à confirmer"
