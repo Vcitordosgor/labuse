@@ -267,6 +267,15 @@ def patrimoine(siren: str, fmt: str = "json",
         {"s": siren}).mappings().first()
     nom = db.execute(text(
         "SELECT max(denomination) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar()
+    # OUTILS-FIX-4 A1 — MILLÉSIME MAJIC servi (fichiers fonciers DGFiP) : lu EN BASE
+    # (parcelle_personne_morale.millesime, situation servie ; uniforme '2025' sur toute la table). L'onglet
+    # Possession ne disait jamais de quelle année datent les parcelles détenues — on le sert désormais, au
+    # même vocabulaire de fraîcheur que le reste de l'app. On lit le millésime DU siren ; repli global si
+    # (cas limite) ce siren n'en porte pas. Jamais inventé : None si la colonne est vide.
+    millesime_majic = db.execute(text(
+        "SELECT max(millesime) FROM parcelle_personne_morale WHERE siren = :s AND millesime IS NOT NULL"),
+        {"s": siren}).scalar() or db.execute(text(
+        "SELECT max(millesime) FROM parcelle_personne_morale WHERE millesime IS NOT NULL")).scalar()
     # #4 SIGNAL INPI (brique dormante de « Foncier fantôme ») : société ABSENTE du registre des
     # dirigeants = signal d'approche fort (succession / société en sommeil). Libellé FACTUEL.
     # OUTILS-FIX-3 B3 — l'interprétation (« succession / sommeil probable ») ne se tire QUE d'une
@@ -382,6 +391,7 @@ def patrimoine(siren: str, fmt: str = "json",
         {"i": [r["idu"] for r in page]}).all()} if page else {}
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
+        "millesime_majic": millesime_majic,   # OUTILS-FIX-4 A1 — fraîcheur des fichiers fonciers servis
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
         "hors_ecartees_par_vous": bool(ecartees_par_vous),

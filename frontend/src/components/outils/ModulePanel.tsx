@@ -237,6 +237,12 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
       )}
       {d && (d['n_parcelles'] as number) > 0 && (
         <>
+          {/* OUTILS-FIX-4 A1 — MILLÉSIME MAJIC en tête de l'onglet Possession : ces parcelles sont celles
+              détenues d'après les fichiers fonciers DGFiP d'une année donnée — on la dit (fraîcheur), au
+              même vocabulaire que le reste de l'app. Servi par la base (millesime_majic) ; jamais inventé. */}
+          {d['millesime_majic'] && (
+            <p data-m02-millesime className="text-[10px] text-txt-dim">Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
+          )}
           {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
               sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
           {d['bodacc'] != null && (
@@ -260,26 +266,38 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           ) : (
             <>
               <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-              {/* RETOURS-5 T4.1 — TROIS chiffres qui comptent, en grille de 3 cartes. Rien d'autre au 1er niveau. */}
-              <div className="grid grid-cols-3 gap-2">
-                {([['n_parcelles', 'parcelles'], ['n_actionnables', 'actionnables'], ['sdp_residuelle_m2', 'm² SDP résiduelle']] as const).map(([k, lbl]) => (
-                  <div key={k} className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
-                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{fmt(d[k] as number)}</div>
-                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{lbl}</div>
+              {/* RETOURS-5 T4.1 — les chiffres qui comptent, en grille de cartes. Rien d'autre au 1er niveau.
+                  OUTILS-FIX-4 A2 — la VALORISATION du foncier nu (valorisation_nu_eur, calculée par le moteur)
+                  n'était servie que dans le tiroir « Détail » : on la remonte dans le bloc de synthèse, À CÔTÉ
+                  de « m² SDP résiduelle », avec son statut (Estimé). 3 cartes si pas de valorisation (hors
+                  U/AU ou sans marché), 4 si présente — jamais un « 0 € » trompeur (la carte disparaît). */}
+              <div className={`grid gap-2 ${d['valorisation_nu_eur'] != null ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {[
+                  { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
+                  { v: fmt(d['n_actionnables'] as number), lbl: 'actionnables' },
+                  { v: fmt(d['sdp_residuelle_m2'] as number), lbl: 'm² SDP résiduelle' },
+                  ...(d['valorisation_nu_eur'] != null
+                    ? [{ v: fmtEurCompact(d['valorisation_nu_eur'] as number), lbl: 'valorisation foncier nu', estime: true }]
+                    : []),
+                ].map((c) => (
+                  <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
+                    <div className="mt-0.5 flex items-baseline gap-1 text-[10px] leading-tight text-txt-mut">
+                      <span>{c.lbl}</span>
+                      {c.estime && <span data-m02-valo-estime className="shrink-0 rounded-sm border border-st-creuser/40 bg-st-creuser/10 px-1 text-[8.5px] font-medium text-st-creuser">Estimé</span>}
+                    </div>
                   </div>
                 ))}
               </div>
-              {/* RETOURS-5 T4.2 — tout le reste REPLIÉ : détail des actionnables, valorisation, périmètre, nature. */}
+              {/* RETOURS-5 T4.2 — le reste REPLIÉ : détail des actionnables, périmètre, nature (la valorisation
+                  a rejoint le bloc de synthèse ci-dessus, OUTILS-FIX-4 A2 — on ne la répète pas ici). */}
               <details className="text-xs">
                 <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
                 <div className="flex flex-col">
                   {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
                       des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
                   <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
-                  {d['valorisation_nu_eur'] != null && (
-                    <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Valorisation du foncier nu</span><span><b className="tnum text-txt">{fmtEurCompact(d['valorisation_nu_eur'] as number)}</b></span></div>
-                  )}
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
+                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre valorisation</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
                   <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
                 </div>
               </details>

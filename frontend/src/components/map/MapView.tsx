@@ -1180,7 +1180,8 @@ export function MapView() {
           const cat = catLbl[String(props.categorie)] || String(props.categorie || '')
           const np = Number(props.n_permis) || 0
           const per = (() => {
-            const fmtD = (s: string) => { const t = new Date(s); return Number.isNaN(t.getTime()) ? '' : t.toLocaleDateString('fr-FR') }
+            // OUTILS-FIX-4 A3 — date Sit@del : année seule au 1ᵉʳ janvier (année seule connue), sinon date réelle.
+            const fmtD = (s: string) => { const t = new Date(s); return Number.isNaN(t.getTime()) ? '' : (t.getMonth() === 0 && t.getDate() === 1 ? String(t.getFullYear()) : t.toLocaleDateString('fr-FR')) }
             const a = props.date_min ? fmtD(String(props.date_min)) : '', b = props.date_max ? fmtD(String(props.date_max)) : ''
             return a && b && a !== b ? `${a} → ${b}` : (b || a)
           })()

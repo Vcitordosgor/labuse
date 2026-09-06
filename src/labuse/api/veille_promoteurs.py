@@ -78,7 +78,7 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
     # un rang par permis (le propriétaire moral majoritaire de ses parcelles), avec centroïde.
     rows = db.execute(text(
         f"SELECT DISTINCT ON (s.id) s.id, s.permit_id, s.commune, s.date_depot, "
-        f"  (s.raw->>'nb_lgt')::int AS nb_lgt, s.raw->>'etat' AS etat, "
+        f"  (s.raw->>'nb_lgt')::int AS nb_lgt, s.raw->>'etat' AS etat, s.raw->>'daact' AS daact, "
         f"  ST_X(ST_Centroid(s.geom)) AS lon, ST_Y(ST_Centroid(s.geom)) AS lat, "
         f"  j.idu, pm.denomination, pm.siren, pm.groupe "
         f"FROM sitadel_permits s "
@@ -118,6 +118,14 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
             annee = max(dates).year if dates else None
             commune_op = recent["commune"]
             idus = sorted({m["idu"] for m in membres})
+            # OUTILS-FIX-4 A4 — le champ `etat` servi à l'écran était le CODE Sit@del brut (ETAT_DAU : 2,4,5,6)
+            # rendu comme un nombre nu (« · 5 », « · 2 ») que rien ne libelle. Ce n'est PAS un compte (ni
+            # logements ni permis) — c'est l'état administratif du dossier. La doctrine du dépôt ne décode PAS
+            # ce code partout : elle dérive l'achèvement de la DAACT (permits.py:187 « autorisé le … · travaux
+            # achevés si DAACT » ; pc_caducs : etat=6 OU DAACT ⇒ réalisé). On sert donc le libellé BINAIRE que
+            # l'app affirme déjà — « achevé » (DAACT présente ou etat_dau=6) sinon « autorisé » — jamais un mot
+            # inventé pour les codes 2/4/5 (dont la nomenclature n'est pas dans le dépôt).
+            acheve = any((m.get("daact") or "").strip() or str(m.get("etat") or "") == "6" for m in membres)
             operations.append({
                 "siren": siren, "denomination": membres[0]["denomination"],
                 "categorie": _GROUPE_CAT.get(membres[0]["groupe"], "promoteur"),
@@ -125,6 +133,7 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
                 "date_min": min(dates).isoformat() if dates else None,
                 "date_max": max(dates).isoformat() if dates else None,
                 "annee": annee, "etat": recent["etat"],
+                "etat_libelle": "achevé" if acheve else "autorisé",   # OUTILS-FIX-4 A4
                 "lon": round(sum(lons) / len(lons), 6) if lons else None,
                 "lat": round(sum(lats) / len(lats), 6) if lats else None,
                 "idus": idus,

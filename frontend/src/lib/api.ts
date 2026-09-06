@@ -496,7 +496,7 @@ export interface ProgrammeLie { nom: string; url: string | null; promoteur_nom: 
 export interface OperationPromoteur {
   siren: string; denomination: string | null; categorie: string; commune: string
   nb_logements: number; n_permis: number; date_min: string | null; date_max: string | null
-  annee: number | null; etat: string | null; lon: number | null; lat: number | null
+  annee: number | null; etat: string | null; etat_libelle: string | null; lon: number | null; lat: number | null
   idus: string[]; libelle: string; radar_bien_id: number | null; radar_cite: boolean
   programme?: ProgrammeLie | null
 }
