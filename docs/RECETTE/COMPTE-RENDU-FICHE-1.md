@@ -82,3 +82,14 @@ Dans « Marché et secteur », la **liste des annonces Radar rattachées** à la
 - **Écart demandé/acté** : pour une annonce **en cours** avec une **mutation DVF** sur la parcelle, l'écart prix demandé vs acté (sur €/m² si dispo, sinon total). **Décision tranchée** (écrite) : je réutilise le **concept `ecart_demande_acte_pct`** à la maille parcelle **dans l'item de liste** (champ `ecart_demande_acte_pct`), sans créer un id parcelle-grain dupliqué ni rattacher la donnée commune-médiane (grain différent) au robinet parcelle — V5a préservé.
 - **Restructuration** : l'ancien bloc `radar_bien` (un seul bien, dans Propriétaire, **lien portail seulement**, et **hors registre**) est retiré ; la liste complète (tous statuts, **lien fiche annonce interne**) le remplace dans Marché et est **déclarée** (`radar_annonces_liste` → `fiche_parcelle_marche`, mono-robinet).
 - **Vérifs** : `circuit verrous` 16/16 vert (179 données) · tsc 0 · vitest 187 · `test_fiche1_radar.py` 3/3 (écart +25 % €/m², retirée → pas d'écart) · doc régénéré. Vérifié en base : 97411000AE0568 → maison 417 500 €, en cours, lien annonce leboncoin.
+
+### Lot 7 — Ce qui attend une source ✅
+
+Les 5 données réglementaires demandées par Vic **existaient déjà** au registre (CIRCUIT-3 lot 6, `en_attente`). FICHE-1 lot 7 les qualifie explicitement en **« non calculée — source absente »**, nomme la **source attendue**, et référence le chantier **SOURCES-1** (en gardant « CIRCUIT-3 » pour le garde-fou). Aucune n'est servie tant que son réservoir n'est pas ingéré → le trou est visible et se comblera tout seul à l'ingestion. Une ligne par donnée :
+
+- **`er_emplacement_reserve`** — Emplacement réservé (ER) : la parcelle est-elle grevée (destination, bénéficiaire). Source attendue : **prescriptions surfaciques du GPU** (emplacements réservés, API Carto).
+- **`ebc_classe`** — Espace boisé classé (EBC) : intersection avec un EBC du PLU. Source attendue : **prescriptions surfaciques du GPU** (espaces boisés classés, API Carto).
+- **`dpu_perimetre`** — Droit de préemption urbain (DPU simple/renforcé). Source attendue : **périmètres DPU** (GPU / délibérations communales).
+- **`peb_zone`** — Plan d'exposition au bruit (PEB, zones A/B/C/D). Source attendue : **PEB de Roland-Garros / Pierrefonds** (arrêté préfectoral).
+- **`zonage_abc_logement`** — Zonage A/B/C (logement locatif), maille commune. Source attendue : **arrêté de zonage A/B/C**.
+- **Vérifs** : `test_fiche1_sources_attendues.py` 2/2 (source absente + source nommée + jamais servies) · guard `test_reglementaires_circuit3_declarees` vert · `circuit verrous` 16/16 vert.

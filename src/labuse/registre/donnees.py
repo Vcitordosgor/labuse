@@ -1020,37 +1020,44 @@ DONNEES: dict[str, Donnee] = {
     moteur="solaire", calcul="moteur",
     fonction="src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche)",
     reservoirs=("lidar_hd_mnh",), portee="live"),
- # réglementaires nouvelles : DÉCLARÉES ici, réservoirs par CIRCUIT-3 lot 6 (mandat 1.8)
+ # réglementaires nouvelles : DÉCLARÉES ici, réservoirs à ingérer (CIRCUIT-3 lot 6 → SOURCES-1).
+ # FICHE-1 lot 7 — état « non calculée — source absente », source ATTENDUE nommée : elles
+ # apparaîtront dès l'ingestion (l'en_attente est levée) et Vic voit le trou d'ici là.
  "er_emplacement_reserve": C("Emplacement réservé (ER)", "classe", "parcelle",
     "la parcelle est-elle grevée d'un emplacement réservé du PLU (destination, bénéficiaire)",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU prescriptions)",
     reservoirs=(), portee="live", type="classe",
     domaine=("grevee", "non_grevee"), domaine_source="prescriptions surfaciques du GPU",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
+               "prescriptions surfaciques du GPU (emplacements réservés, API Carto)"),
  "ebc_classe": C("Espace boisé classé (EBC)", "classe", "parcelle",
     "la parcelle intersecte-t-elle un espace boisé classé du PLU",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU prescriptions)",
     reservoirs=(), portee="live", type="classe",
     domaine=("intersecte", "hors"), domaine_source="prescriptions surfaciques du GPU",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
+               "prescriptions surfaciques du GPU (espaces boisés classés, API Carto)"),
  "dpu_perimetre": C("Droit de préemption urbain (DPU)", "classe", "parcelle",
     "la parcelle est-elle dans un périmètre de préemption (DPU simple/renforcé)",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU / délibérations)",
     reservoirs=(), portee="live", type="classe",
     domaine=("simple", "renforce", "hors"), domaine_source="périmètres DPU (GPU/délibérations)",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
+               "périmètres DPU (GPU / délibérations communales)"),
  "peb_zone": C("Plan d'exposition au bruit (PEB)", "classe", "parcelle",
     "zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — PEB Roland-Garros/Pierrefonds)",
     reservoirs=(), portee="live", type="classe",
     domaine=("A", "B", "C", "D", "hors"), domaine_source="zones du PEB (arrêté préfectoral)",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend le PEB "
+               "de Roland-Garros / Pierrefonds (arrêté préfectoral)"),
  "zonage_abc_logement": C("Zonage A/B/C (logement)", "classe", "commune",
     "zone A/B/C du dispositif d'investissement locatif pour la commune",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — arrêté zonage ABC)",
     reservoirs=(), portee="live", type="classe",
     domaine=("A", "B1", "B2", "C"), domaine_source="arrêté de zonage A/B/C (logement)",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend l'arrêté "
+               "de zonage A/B/C (logement locatif)"),
 }
 
 #: 1.1 — le type des déclarations « auto » est dérivé de l'unité (les entrées historiques de
