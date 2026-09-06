@@ -131,9 +131,47 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
 
 // M56-B6 · DA-FICHE-v6 — libellé de groupe (LE TERRAIN / LE CONTEXTE) : plus de conteneur,
 // juste un TEXTE + un FILET horizontal (.sec). `first` retiré (l'écart .sec est fixe : 20px avant).
-const GroupLabel = ({ children }: { children: ReactNode; first?: boolean }) => (
-  <div className="sec"><span>{children}</span><i /></div>
+// RETOURS-20 Z1·02 — le kicker accepte un slot DROIT optionnel (renvoi d'article ou badge d'état) :
+// le filet (flex:1) le pousse à droite, il reprend une casse normale.
+const GroupLabel = ({ children, right }: { children: ReactNode; first?: boolean; right?: ReactNode }) => (
+  <div className="sec"><span>{children}</span><i />{right != null && <span className="sec-r">{right}</span>}</div>
 )
+
+// RETOURS-20 Z1·03 — LIGNE DE FAIT partagée (maquette .row) : libellé gauche gris, valeur mono à
+// droite (unité en <small>), source SOUS la ligne (badge fourni par l'appelant : <StepProv/> ou
+// <b class="s|e|d">). `tone` : 'warn' (ambre, à vérifier) | 'mute' (gris atténué, absent/inconnu).
+function FactRow({ label, value, tone, src }: {
+  label: ReactNode; value: ReactNode; tone?: 'warn' | 'mute'; src?: ReactNode
+}) {
+  return (
+    <div className="f-row">
+      <span className="l">{label}</span>
+      <span className={`v${tone ? ' ' + tone : ''}`}>{value}</span>
+      {src != null && <span className="src">{src}</span>}
+    </div>
+  )
+}
+
+// Z1·04 — renvoi d'article : lien mono ↗ (href) ou texte mono discret (sans url → pas de flèche).
+function RefLink({ href, children, title }: { href?: string | null; children: ReactNode; title?: string }) {
+  if (!href) return <span className="font-mono text-[11.5px] text-txt-mut" title={title}>{children}</span>
+  return <a className="f-ref" href={href} target="_blank" rel="noreferrer" title={title}>{children}</a>
+}
+
+// Z1·01 — ligne de STATUT (puce + phrase), jamais une boîte (maquette .status).
+function StatusLine({ tone = 'mint', children }: { tone?: 'mint' | 'amber'; children: ReactNode }) {
+  return <div className="f-status"><span className="dot" style={{ background: tone === 'amber' ? 'var(--amber)' : 'var(--mint)' }} />{children}</div>
+}
+
+// Z1·05 — VIGILANCE (filet ambre à gauche, pas de boîte) · RAPPEL (fond un cran plus clair, sans
+// bordure) · NOTE de méthode 11,5 px sous la ligne (plus un paragraphe plein).
+function Vigilance({ title, children }: { title: ReactNode; children?: ReactNode }) {
+  return <div className="f-vig"><div className="t">{title}</div>{children != null && <div className="p">{children}</div>}</div>
+}
+function Rappel({ children, src }: { children: ReactNode; src?: ReactNode }) {
+  return <div className="f-rappel">{children}{src != null && <span className="src">{src}</span>}</div>
+}
+const FactNote = ({ children }: { children: ReactNode }) => <p className="f-note">{children}</p>
 
 // micro-preuves (spec) ──────────────────────────────────────────────────────
 // M55-N point 6 : `tip` optionnel — la jauge DIT ce qu'elle mesure (au survol). Sans tip, une
@@ -311,14 +349,14 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
   )
 }
 
+// RETOURS-20 Z1·04 — badge Sourcé/Estimé/Dérivé aligné sur la grammaire unique (.b : mono 10 px,
+// contour, même taille partout). Une seule forme de badge sur toute la fiche.
 function StepProv({ prov }: { prov?: string }) {
   const map: Record<string, [string, string]> = {
-    sourcee: ['Sourcé', 'border-mint/40 bg-mint/10 text-mint'],
-    estimee: ['Estimé', 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser'],
-    derive: ['Dérivé', 'border-line-2 bg-surface-2 text-txt-dim'],
+    sourcee: ['Sourcé', 's'], estimee: ['Estimé', 'e'], derive: ['Dérivé', 'd'],
   }
-  const [label, cls] = map[prov ?? ''] ?? ['—', 'border-line-2 bg-surface-2 text-txt-dim']
-  return <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${cls}`}>{label}</span>
+  const [label, cls] = map[prov ?? ''] ?? ['—', 'd']
+  return <span className={`b ${cls}`}>{label}</span>
 }
 
 /** M60 P1c — LA PORTE D'OUTIL (gabarit .porte-outil de docs/DA-FICHE-v6.html, recopié TEL QUEL).
@@ -339,4 +377,4 @@ function PorteOutil({ ico, titre, sous, onClick, data, compacte }: {
   )
 }
 
-export { SEV_COLOR, REF, RENOUV, RENOUV_CODE_LABEL, drSvg, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroSegments, MicroSpark, MicroPastilles, MicroTriple, RateLimit429, Weight, SourceRef, Line, EligibiliteReplie, ICD_COLORS, icdColor, HypInput, StepProv, PorteOutil }
+export { SEV_COLOR, REF, RENOUV, RENOUV_CODE_LABEL, drSvg, IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroSegments, MicroSpark, MicroPastilles, MicroTriple, RateLimit429, Weight, SourceRef, Line, EligibiliteReplie, ICD_COLORS, icdColor, HypInput, StepProv, PorteOutil, FactRow, RefLink, StatusLine, Vigilance, Rappel, FactNote }

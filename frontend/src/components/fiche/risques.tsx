@@ -11,7 +11,7 @@
  */
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
-import { IC, RefDrawer, MicroSegments, Line, PorteOutil } from './primitives'
+import { IC, RefDrawer, MicroSegments, Line, PorteOutil, GroupLabel, Rappel } from './primitives'
 import { Trace } from '../../lib/trace'
 
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
@@ -30,10 +30,11 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         : <span className="pill-amber">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</span>}
       micro={<MicroSegments n={evaluees} label={`${evaluees} couches`} />}>
       <div className="flex flex-col gap-3">
-        {/* VIGILANCES D'ABORD — chaque ligne marquée d'une puce ambre (SUP incluses, par famille). */}
+        {/* VIGILANCES D'ABORD — chaque ligne marquée d'une puce ambre (SUP incluses, par famille).
+            RETOURS-20 Z1·02 — le titre encadré (font-mono caps) devient un KICKER partagé (GroupLabel). */}
         {vigilances.length > 0 && (
           <div>
-            <div className="mb-1 font-mono text-[9.5px] uppercase tracking-[0.18em] text-st-creuser">Vigilances</div>
+            <GroupLabel>Vigilances</GroupLabel>
             <div className="flex flex-col gap-1">
               {vigilances.map((l, i) => {
                 // CIRCUIT-2 lot 5.2 — le NIVEAU D'ALÉA porte l'étiquette de traçage (classe) :
@@ -62,9 +63,8 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         {/* M106 P4 — ligne HT la plus proche : une CONTRAINTE (distance, jamais un booléen). La servitude
             I4 n'est pas cartographiée (à vérifier gestionnaire). Seuil de pertinence appliqué en amont (F0). */}
         {f.proximites?.ligne_ht && (
-          <div data-ligne-ht className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
-            <p className="text-[11.5px] leading-snug text-txt">{f.proximites.ligne_ht.libelle}</p>
-            <p className="mt-0.5 text-[9.5px] text-txt-dim">{f.proximites.ligne_ht.source}</p>
+          <div data-ligne-ht>
+            <Rappel src={f.proximites.ligne_ht.source}>{f.proximites.ligne_ht.libelle}</Rappel>
           </div>
         )}
         {/* « rien à signaler » REPLIÉ — ne noie plus les vraies alertes. */}

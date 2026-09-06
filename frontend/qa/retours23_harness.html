@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RETOURS-23 — après (9 sections)</title>
+<!-- CSS RÉEL COMPILÉ de l'app (dist/assets/index-*.css) : tokens :root + utilitaires + classes
+     .fiche-v6 (grammaire Z1). Chemin réécrit par le script de capture. Aucune couleur inventée. -->
+<link rel="stylesheet" href="__CSS__">
+<style>
+  html,body{margin:0;background:var(--bg-0)}
+  .panel{width:400px;background:var(--bg-1);border-left:1px solid var(--line);padding:12px}
+  .gap{height:14px}
+  /* aide de rendu : dans le vrai tiroir ouvert le corps a padding-top:12px */
+  .t-open > .body{padding-top:12px}
+</style>
+</head>
+<body>
+<div class="panel fiche-v6">
+
+<!-- ══════════ 1 · RÈGLEMENT ET ZONAGE (Urbanisme) — zone U calibrée ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">§</div><div class="t-body"><div class="t-title">Urbanisme</div><div class="t-sub">zone U1b · 27 % SDP consommée</div></div><div class="t-right"><span class="t-val">R+1 · 16 m</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div class="ia"><button class="ia-btn">✦ Demander à l'IA de traduire le PLU</button></div>
+    <div class="border-l-2 border-mint py-0.5 pl-3 text-[11px] leading-snug text-txt-mut">🕓 PLU approuvé le 2025-12-17<span class="block text-[10px] text-txt-dim mt-0.5">✓ Document à jour du GPU — c'est celui qui fait foi.</span></div>
+    <div data-reglement-plu>
+      <div class="sec"><span>Règlement — zone U1b</span><i></i><a class="f-ref" href="#">voir l'article</a></div>
+      <div class="f-row"><span class="l">Hauteur max</span><span class="v">16 m <small>faîtage</small> · 12 m <small>égout</small></span><span class="src"><a class="f-ref" href="#">Zone U1b</a></span></div>
+      <div class="f-row"><span class="l">Emprise au sol max</span><span class="v mute">non réglementé</span><span class="src"><a class="f-ref" href="#">Art. 9</a></span></div>
+      <div class="f-row"><span class="l">Recul sur voie</span><span class="v warn">à vérifier</span><span class="src"><a class="f-ref" href="#">Art. 6</a></span></div>
+      <div class="f-row"><span class="l">Recul limites séparatives</span><span class="v">3 m</span><span class="src"><a class="f-ref" href="#">Art. 7.2</a></span></div>
+      <div class="f-row"><span class="l">Pleine terre min</span><span class="v">30 %</span><span class="src"><a class="f-ref" href="#">Art. 13.1</a></span></div>
+      <div class="f-row"><span class="l">Stationnement</span><span class="v">2 <small>places / logement</small></span><span class="src"><a class="f-ref" href="#">Art. 12.2</a></span></div>
+      <p class="f-note">Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.</p>
+    </div>
+    <div class="sec"><span>Situation</span><i></i></div>
+    <div class="flex flex-col gap-1">
+      <div class="flex gap-3 border-b border-line/60 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Zonage PLU</div><div class="text-[11px] leading-snug text-txt-mut">Zone PLU « U » (urbaine — constructible)</div><div class="mt-0.5 text-[11px] text-txt-dim">Urbanisme PLU/GPU (API Carto)</div></div></div>
+      <div class="flex gap-3 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Surface parcelle</div><div class="text-[11px] leading-snug text-txt-mut">Surface utile 601 m²</div></div></div>
+    </div>
+    <button class="porte-outil"><span class="po-ico">§</span><span style="min-width:0"><span class="po-t block">Annuaire PLU de la commune</span><span class="po-s block">Le règlement de la zone U1b — articles, prescriptions</span></span><span class="po-arrow">→</span></button>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 2 · CONSTRUCTIBILITÉ ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">⌂</div><div class="t-body"><div class="t-title">Constructibilité</div><div class="t-sub">R+1 · SDP 304 m² · calcul tracé</div></div><div class="t-right"><span class="t-val">1–2 logts</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div class="f-row"><span class="l">Potentiel foncier</span><span class="v"><span class="pill-mint">Fort</span></span><span class="src">parcelle en forte sous-densité</span></div>
+    <div class="f-row"><span class="l">SDP consommée / autorisée</span><span class="v">27 <small>%</small></span></div>
+    <div class="f-row"><span class="l">SDP résiduelle estimée</span><span class="v">221 <small>m²</small></span><span class="src">bâti conservé</span></div>
+    <p class="f-note">Ratio SDP consommée/autorisée (bloc D du modèle P) + potentiel bâti résiduel (BD TOPO × règles PLU).</p>
+    <div class="sec"><span>Capacité constructible</span><i></i><span class="sec-r"><span class="pill-mint">1–2 logts</span></span></div>
+    <div class="stats four">
+      <div class="st"><div class="l">Gabarit</div><div class="v">R+1<small>16 m</small></div></div>
+      <div class="st"><div class="l">SDP</div><div class="v">304<small>m²</small></div></div>
+      <div class="st"><div class="l">Logements</div><div class="v">1–2</div></div>
+      <div class="st"><div class="l">SHAB vend.</div><div class="v">~97<small>m²</small></div></div>
+    </div>
+    <div class="sec"><span>Le calcul, étape par étape</span><i></i><span class="sec-r font-mono text-[11.5px] text-txt-dim">13</span></div>
+    <ol class="steps">
+      <li><span class="l">Emprise au sol — reculs (géométrie réelle)</span><span class="v">−337 m²</span><span class="src"><span class="b s">Sourcé</span> art. 7.2, p.275-276</span></li>
+      <li><span class="l">Surface de plancher brute</span><span class="v">−304 m²</span><span class="src"><span class="b d">Dérivé</span> occupation × hauteur</span></li>
+      <li><span class="l">Logements — après plafond de densité</span><span class="v">−3 à 4</span><span class="src"><span class="b e">Estimé</span> hypothèse densité</span></li>
+    </ol>
+    <div class="sec"><span>Fiscal et leviers</span><i></i></div>
+    <div class="f-row"><span class="l">QPV</span><span class="v mute">non</span></div>
+    <div class="f-row"><span class="l">TVA</span><span class="v">8,5 <small>% · taux DOM</small></span><span class="src">2,1 % possible en LLS selon montage</span></div>
+    <div class="f-row"><span class="l">Taxe d'aménagement</span><span class="v warn">taux communal à confirmer</span><span class="src">non ingéré — part communale + départementale, en mairie</span></div>
+    <button class="porte-outil"><span class="po-ico">⊞</span><span style="min-width:0"><span class="po-t block">Faisabilité</span><span class="po-s block">La capacité constructible de ces 601 m² : SDP, hauteur PLU, calcul tracé</span></span><span class="po-arrow">→</span></button>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 3 · RISQUES ET PROTECTIONS ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">◇</div><div class="t-body"><div class="t-title">Risques et protections</div><div class="t-sub">14 couches évaluées</div></div><div class="t-right"><span class="pill-amber">2 vigilances</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div class="sec"><span>Vigilances</span><i></i></div>
+    <div class="flex gap-3 border-b border-line/60 py-2"><span class="shrink-0 text-amber">▲</span><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Pente forte <span class="font-mono text-[11px] text-amber">&gt; 30 %</span></div><div class="text-[11px] leading-snug text-txt-mut">Terrassement et accès renforcés (majoration VRD), pas une exclusion.</div><div class="mt-0.5 text-[11px] text-txt-dim">RGE ALTI® (IGN)</div></div></div>
+    <div class="flex gap-3 py-2"><span class="shrink-0 text-amber">▲</span><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Mouvement de terrain <span class="font-mono text-[11px] text-txt-dim">niveau faible</span></div><div class="text-[11px] leading-snug text-txt-mut">Aléa PPR, niveau faible.</div><div class="mt-0.5 text-[11px] text-txt-dim">Géorisques</div></div></div>
+    <div class="sec"><span>À instruire</span><i></i></div>
+    <div class="f-row"><span class="l">ABF / Monuments</span><span class="v mute">inconnu</span><span class="src">abords MH ~500 m (tampon) — covisibilité à instruire</span></div>
+    <div class="f-rappel"><b>Ligne haute tension (90 kV) à ~486 m</b> — contrainte potentielle (servitudes, reculs). La servitude I4 n'est pas cartographiée en donnée ouverte : à vérifier auprès du gestionnaire (EDF SEI).<span class="src">BD TOPO IGN — aérien seul</span></div>
+    <div class="ok flex justify-between items-center text-[12.5px] text-txt-mut mt-3.5"><span><span class="text-mint mr-1.5">✓</span>11 couches sans objet</span><a class="text-txt-faint text-[12px]" href="#">déplier</a></div>
+    <button class="porte-outil"><span class="po-ico">⚑</span><span style="min-width:0"><span class="po-t block">Pièges et risques</span><span class="po-s block">Servitudes dormantes, risques et propriétaire — cette parcelle en détail</span></span><span class="po-arrow">→</span></button>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 4 · MARCHÉ ET SECTEUR ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">↗</div><div class="t-body"><div class="t-title">Marché et secteur</div><div class="t-sub">10 ventes secteur · DVF — jusqu'à déc. 2025</div></div><div class="t-right"><span class="t-val">230 €/m²</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div class="sec"><span>Terrain</span><i></i></div>
+    <div class="f-row"><span class="l">Prix médian terrain</span><span class="v">230 <small>€/m²</small></span><span class="src">10 ventes secteur cadastral 2021-2025 · géo-DVF Etalab</span></div>
+    <div class="f-row"><span class="l">Ventes à moins de 100 m</span><span class="v mute">1 vente</span><span class="src">échantillon insuffisant (&lt; 3 ventes) — &lt; 100 m, 36 mois</span></div>
+    <div class="sec"><span>Bâti</span><i></i></div>
+    <div class="f-row"><span class="l">Prix de sortie — bâti secteur</span><span class="v">3 317 <small>€/m²</small></span><span class="src">appartement · 9 ventes ≤ 1 500 m · fiabilité faible</span></div>
+    <div class="f-row"><span class="l">Neuf (VEFA) — commune</span><span class="v">4 742 <small>€/m²</small></span><span class="src">308 ventes / 5 ans</span></div>
+    <p class="f-note">Médiane €/m² bâti des ventes en VEFA. Les ventes récentes restent 1 à 3 ans à apparaître dans DVF ; le classement reste fiable.</p>
+    <div class="sec"><span>Dynamique et proximité</span><i></i></div>
+    <div class="f-row"><span class="l">Permis SITADEL</span><span class="v">9 <small>PC · ≤ 400 m · 5 ans</small></span><span class="src">densité 60 % du plafond U · SITADEL 2026-07</span></div>
+    <div class="f-row"><span class="l">Commerces et services</span><span class="v">0,70</span><span class="src">école 479 m · commerce 420 m · santé 1 022 m · OSM</span></div>
+    <button class="porte-outil"><span class="po-ico">↗</span><span style="min-width:0"><span class="po-t block">Voir le marché de Saint-Paul</span><span class="po-s block">La fiche commune — marché, rareté et horizon ZAN, rythme d'instruction</span></span><span class="po-arrow">→</span></button>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 5 · RÉSEAUX ET ACCÈS ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">⌁</div><div class="t-body"><div class="t-title">Réseaux et accès</div><div class="t-sub">eau · assainissement · élec</div></div><div class="t-right"><span class="pill-mint">confirmée</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div data-terrain>
+      <div class="sec"><span>Terrain</span><i></i></div>
+      <div class="f-row"><span class="l">Pente</span><span class="v">4<small>°</small></span><span class="src">pente moyenne hors bâti (RGE ALTI 5 m)</span></div>
+    </div>
+    <div data-bloc-acces>
+      <div class="sec"><span>Accès</span><i></i></div>
+      <div class="flex gap-3 border-b border-line/60 py-2"><div class="min-w-0 flex-1"><div class="text-xs font-medium text-txt">Accès voirie</div><div class="text-[11px] leading-snug text-txt-mut">Voie publique à ≤ 10 m de la parcelle</div><div class="mt-0.5 text-[11px] text-txt-dim">BD TOPO IGN · BD TOPO V3 (IGN)</div></div></div>
+      <div class="mt-1.5 flex flex-col gap-1 text-[11.5px] leading-snug text-txt"><p class="text-[11px] font-semibold text-txt-hi">Transport public — au plus proche</p><p>Arrêt « Augustine JB » (Kar'Ouest) à ~28 m.</p></div>
+    </div>
+    <div data-gestionnaires>
+      <div class="sec"><span>Gestionnaires (raccordement)</span><i></i></div>
+      <div class="mt-1 flex flex-col gap-1">
+        <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">◆</span><span class="w-24 shrink-0 text-txt-dim">Compétence</span><span class="text-txt"><b class="font-medium text-txt-hi">TCO — Côte Ouest</b></span></div>
+        <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">≈</span><span class="w-24 shrink-0 text-txt-dim">Eau potable</span><span class="text-txt"><b class="font-medium text-txt-hi">Régie La Créole</b><span class="pill-mint ml-1.5">confirmé</span></span></div>
+        <div class="flex items-baseline gap-1.5 text-[11.5px]"><span class="shrink-0 text-txt-mut">↯</span><span class="w-24 shrink-0 text-txt-dim">Électricité</span><span class="text-txt"><b class="font-medium text-txt-hi">EDF SEI</b></span></div>
+      </div>
+      <p class="f-note">Contact administratif uniquement — aucun tracé de réseau. Viabilisation à confirmer en DT-DICT.</p>
+    </div>
+    <div data-viabilisation>
+      <div class="sec"><span>Viabilisation (eau · assainissement · élec)</span><i></i><span class="sec-r"><span class="shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold" style="background:rgba(74,222,128,.14);color:#4ade80">confirmée par les faits</span></span></div>
+      <p class="f-note">Probabilité de viabilisation par faisceau de preuves (jamais une certitude).</p>
+      <div class="sec"><span>Assainissement (zonage)</span><i></i><span class="sec-r"><span class="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase bg-mint/15 text-mint">Sourcé</span></span></div>
+      <p class="mt-1 text-[11.5px] font-medium leading-snug text-txt-hi">Zonage à Saint-Paul : tout-à-l'égout (collectif)</p>
+    </div>
+    <div data-proximite-axe>
+      <div class="sec"><span>Axes et nuisances</span><i></i></div>
+      <p class="text-[11.5px] leading-snug text-txt">RN1 à ~140 m — nuisance sonore potentielle côté est.</p>
+      <p class="f-note">Classement sonore ITT (Cerema)</p>
+    </div>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 6 · AUTOUR DE CETTE PARCELLE ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">◎</div><div class="t-body"><div class="t-title">Autour de cette parcelle</div><div class="t-sub">Équipements, population et permis</div></div><div class="t-right"><span class="pill-mint">isochrone</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div class="sec"><span>À proximité</span><i></i></div>
+    <div class="stats four">
+      <div class="st"><div class="l">École</div><div class="v">465<small>m</small></div></div>
+      <div class="st"><div class="l">Commerces</div><div class="v">461<small>m</small></div></div>
+      <div class="st"><div class="l">Santé</div><div class="v">149<small>m</small></div></div>
+      <div class="st"><div class="l">Bus</div><div class="v">45<small>m</small></div></div>
+    </div>
+    <div class="sec"><span>Contexte socio-économique (secteur)</span><i></i></div>
+    <div class="f-row"><span class="l">Niveau de vie médian</span><span class="v">22 862 <small>€</small></span><span class="src"><span class="b s">Sourcé</span> 74 % propriétaires · Filosofi 2021</span></div>
+    <div class="f-row"><span class="l">Parc social</span><span class="v">7 265 <small>lgts</small></span><span class="src">RPLS 01.01.2025</span></div>
+    <p class="f-note">Contexte informatif — hors scoring.</p>
+    <div class="sec"><span>Permis à proximité</span><i></i><span class="sec-r font-mono text-[11.5px] text-txt-mut">4 à &lt; 200 m</span></div>
+    <div class="tbl">
+      <div class="tr" style="display:grid;grid-template-columns:34px 86px 1fr auto;gap:10px;padding:7px 0;border-bottom:.5px solid var(--line);align-items:baseline"><span class="tag" style="font:500 10.5px var(--mono);color:var(--txt-hi);background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px">PC</span><span class="font-mono text-[12px] text-txt-mut">2024-04-25</span><span class="text-txt text-[12.5px]">2 lgt</span><span class="font-mono text-[12px] text-mint">57 m</span></div>
+      <div class="tr" style="display:grid;grid-template-columns:34px 86px 1fr auto;gap:10px;padding:7px 0;align-items:baseline"><span class="tag" style="font:500 10.5px var(--mono);color:var(--txt-hi);background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px">PC</span><span class="font-mono text-[12px] text-txt-mut">2018-04-26</span><span class="text-txt text-[12.5px]">1 lgt</span><span class="font-mono text-[12px] text-txt-mut">105 m</span></div>
+    </div>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 7 · DISPOSITIFS TERRITORIAUX ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">▤</div><div class="t-body"><div class="t-title">Dispositifs territoriaux</div><div class="t-sub">Saint-Paul</div></div><div class="t-right"><span class="pill-mint">ZFANG standard</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div class="border-l-2 border-mint pl-3"><p class="text-[12px] font-semibold text-txt-hi">QPV — quartier prioritaire <span class="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span></p><p class="mt-0.5 text-[11.5px] leading-snug text-txt">La parcelle est à ~180 m d'un QPV (abattement TFPB possible).</p><p class="f-note">ANCT / SIG Ville · 2024</p></div>
+    <div style="margin-top:10px"><p class="text-[12px] font-semibold text-txt-hi">ZFANG — zone franche d'activité</p><p class="mt-0.5 text-[11.5px] leading-snug text-txt">Régime standard — dispositif de plein droit dans les DOM (art. 44 quaterdecies CGI).</p><p class="f-note">Décret n° 2026-421 · <a href="#" class="underline hover:text-mint">voir le texte</a></p></div>
+    <div style="margin-top:10px"><p class="text-[12px] font-semibold text-txt-hi">TVA outre-mer</p><p class="mt-0.5 text-[11.5px] leading-snug text-txt">8,5 % ; logements locatifs sociaux à 2,1 % — le montage conditionne le taux.</p><p class="f-note">CGI (TVA DOM, art. 296 et 278 sexies)</p></div>
+    <p class="f-note">Fait territorial sourcé et daté. Les taux cités sont les taux légaux du dispositif, pas un calcul de votre avantage.</p>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 8 · PROPRIÉTAIRE ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">☺</div><div class="t-body"><div class="t-title">Propriétaire</div><div class="t-sub">personne physique</div></div><div class="t-right"><span class="pill-mint">privé</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <p class="f-note">Propriétaire : personne physique ou non recensé au fichier des personnes morales (identité nominative : workflow SPF/CERFA, jamais automatisée).</p>
+    <div>
+      <div class="sec"><span>Historique du propriétaire (DGFiP)</span><i></i></div>
+      <div class="mt-1 text-[11px] text-txt-mut">Même propriétaire moral 2019 → 2025 (aucun changement constaté).</div>
+      <p class="f-note">Millésimes DGFiP 2019–2025 (Licence Ouverte 2.0, situation au 1ᵉʳ janvier).</p>
+    </div>
+    <button class="porte-outil"><span class="po-ico">✉</span><span style="min-width:0"><span class="po-t block">Courrier SPF</span><span class="po-s block">Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire</span></span><span class="po-arrow">→</span></button>
+  </div></div>
+</section>
+<div class="gap"></div>
+
+<!-- ══════════ 9 · DONNÉES ET MÉTHODE ══════════ -->
+<section>
+  <div class="tiroir is-open"><div class="t-ico">⊟</div><div class="t-body"><div class="t-title">Données et méthode</div><div class="t-sub">27 sources sur cette fiche</div></div><div class="t-right"><span class="pill-mint">confiance haute</span><span class="chev">⌃</span></div></div>
+  <div class="t-open"><div class="body">
+    <div data-data-sources>
+      <div class="sec"><span>Sources utilisées sur cette fiche</span><i></i></div>
+      <div class="flex flex-col gap-1">
+        <div class="flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5"><div class="min-w-0"><span class="text-xs text-txt">DVF / valeurs foncières</span><span class="ml-1 text-[10.5px] text-txt-dim">· DGFiP / Etalab</span></div><div class="flex shrink-0 items-baseline gap-2 text-[10.5px] text-txt-mut"><span class="tnum">2025</span><span class="rounded-full px-1.5" style="background:#5CE6A122;color:#5CE6A1">suivie</span></div></div>
+        <div class="flex items-baseline justify-between gap-3 border-b border-line/60 py-1.5"><div class="min-w-0"><span class="text-xs text-txt">Urbanisme PLU/GPU (API Carto)</span><span class="ml-1 text-[10.5px] text-txt-dim">· IGN</span></div><div class="flex shrink-0 items-baseline gap-2 text-[10.5px] text-txt-mut"><span class="rounded-full px-1.5" style="background:#5CE6A122;color:#5CE6A1">suivie</span></div></div>
+        <div class="flex items-baseline justify-between gap-3 py-1.5"><div class="min-w-0"><span class="text-xs text-txt">Géorisques</span><span class="ml-1 text-[10.5px] text-txt-dim">· BRGM / MTE</span></div><div class="flex shrink-0 items-baseline gap-2 text-[10.5px] text-txt-mut"><span class="rounded-full px-1.5" style="background:#5CE6A122;color:#5CE6A1">suivie</span></div></div>
+      </div>
+    </div>
+    <details data-donnees-absentes><summary class="label-caps cursor-pointer list-none select-none">Ce que LABUSE ne peut pas savoir sur cette parcelle <span class="text-txt-dim">(2)</span></summary></details>
+  </div></div>
+</section>
+
+</div>
+</body>
+</html>

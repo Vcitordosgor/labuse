@@ -4,6 +4,7 @@
  * seulement si au moins une copropriété est rattachée. Aucun fetch (charge utile de la fiche).
  */
 import type { Copropriete } from '../../lib/types'
+import { GroupLabel, FactNote } from './primitives'
 
 function detail(c: Copropriete): string {
   const bouts: string[] = []
@@ -22,11 +23,10 @@ function detail(c: Copropriete): string {
 export function CoproprietesBlock({ copros }: { copros: Copropriete[] }) {
   if (!copros || copros.length === 0) return null
   return (
-    <div data-coproprietes className="card-elev px-3 py-2.5">
-      <span className="text-xs font-medium text-txt-hi">
-        Copropriété{copros.length > 1 ? 's' : ''} rattachée{copros.length > 1 ? 's' : ''}
-      </span>
-      <div className="mt-2 flex flex-col gap-1.5">
+    <div data-coproprietes>
+      {/* RETOURS-23 Z3 — plus de card-elev : kicker + faits à plat. */}
+      <GroupLabel>Copropriété{copros.length > 1 ? 's' : ''} rattachée{copros.length > 1 ? 's' : ''}</GroupLabel>
+      <div className="mt-1 flex flex-col gap-1.5">
         {copros.map((c) => (
           <div key={c.numero_immatriculation} className="text-[11px] leading-snug text-txt">
             <b className="font-medium text-txt-hi">{c.nom_usage || c.numero_immatriculation}</b>
@@ -35,9 +35,7 @@ export function CoproprietesBlock({ copros }: { copros: Copropriete[] }) {
           </div>
         ))}
       </div>
-      <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">
-        Source : RNIC (registre national des copropriétés) — information, jamais un verdict.
-      </p>
+      <FactNote>Source : RNIC (registre national des copropriétés) — information, jamais un verdict.</FactNote>
     </div>
   )
 }

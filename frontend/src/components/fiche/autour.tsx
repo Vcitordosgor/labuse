@@ -16,7 +16,7 @@ import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { DepotsBlock } from './DepotsBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
-import { IC, RefDrawer } from './primitives'
+import { IC, RefDrawer, GroupLabel, FactNote } from './primitives'
 
 export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
   const eq = f.proximites_equipements
@@ -24,17 +24,19 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
     <RefDrawer id="autour-zone" icon={IC.contexte} name="Autour de cette parcelle"
       context="Équipements, population et permis du voisinage"
       value={<span className="pill-mint">isochrone</span>}>
-      {/* ÉQUIPEMENTS — UN moteur (BPE+OSM dédoublonnés, distance à pied). Absent = omis (jamais « 0 m »). */}
+      {/* ÉQUIPEMENTS — UN moteur (BPE+OSM dédoublonnés, distance à pied). Absent = omis (jamais « 0 m »).
+          Z1·02 — le label-caps « À proximité » devient un kicker ; les tuiles de distance (maquette) restent. */}
       {eq?.items && eq.items.length > 0 && (
-        <div data-proximites-equip title={eq.source ?? undefined}
-          className="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-line pb-2 text-[11.5px] text-txt-mut">
-          <span className="label-caps text-txt-dim">À proximité</span>
-          {eq.items.map((e, i) => (
-            <span key={i}><span className="text-txt">{e.cat}</span>{' '}
-              <span className="tnum">{e.distance_m >= 1000
-                ? `${(e.distance_m / 1000).toFixed(1).replace('.', ',')} km`
-                : `${fmtInt(e.distance_m)} m`}</span></span>
-          ))}
+        <div data-proximites-equip title={eq.source ?? undefined}>
+          <GroupLabel>À proximité</GroupLabel>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11.5px] text-txt-mut">
+            {eq.items.map((e, i) => (
+              <span key={i}><span className="text-txt">{e.cat}</span>{' '}
+                <span className="tnum">{e.distance_m >= 1000
+                  ? `${(e.distance_m / 1000).toFixed(1).replace('.', ',')} km`
+                  : `${fmtInt(e.distance_m)} m`}</span></span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -48,9 +50,10 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* Historique permis DE la parcelle (rapatrié de Marché). */}
       {f.historique_site?.indisponible && <div className="mt-2"><BlocIndisponible titre="Sur cette parcelle (historique)" /></div>}
       {f.historique_site && !f.historique_site.indisponible && (f.historique_site.permis.length > 0 || f.historique_site.caducite) && (
-        <div data-historique-site className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-          <div className="font-medium text-txt">🏗️ {f.historique_site.titre}</div>
-          <ul className="mt-1 list-disc pl-4 text-txt-mut">
+        <div data-historique-site>
+          {/* Z1·02 / Z3 — la boîte (rounded border bg) devient un kicker + liste ; note → FactNote. */}
+          <GroupLabel>🏗️ {f.historique_site.titre}</GroupLabel>
+          <ul className="mt-1 list-disc pl-4 text-[11px] leading-snug text-txt-mut">
             {f.historique_site.permis.slice(0, 6).map((pm, i) => (
               <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}</li>
             ))}
@@ -58,7 +61,7 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
               <li className="text-st-ecartee">PC {f.historique_site.caducite.pc_annee ?? ''} — {f.historique_site.caducite.libelle_court ?? 'caduc'}</li>
             )}
           </ul>
-          <div className="mt-0.5 text-[10px] text-txt-dim">{f.historique_site.honnetete}</div>
+          <FactNote>{f.historique_site.honnetete}</FactNote>
         </div>
       )}
 

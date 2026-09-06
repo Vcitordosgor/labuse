@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getParcelleZone } from '../../lib/api'
 import type { ParcelleZone } from '../../lib/types'
 import { useApp } from '../../store/useApp'
+import { GroupLabel, FactRow, FactNote, Rappel, StepProv } from './primitives'
 
 const SEGMENTS = [
   { mode: 'pied' as const, minutes: 15, label: 'À pied · 15 min' },
@@ -58,7 +59,7 @@ export function AutourZoneBlock({ idu }: { idu: string }) {
 
   return (
     <div data-autour-zone className="flex flex-col gap-3">
-      {/* segment à pied / voiture */}
+      {/* segment à pied / voiture — le contrôle segmenté (.seg) reste. */}
       <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
         {SEGMENTS.map((s, i) => (
           <button key={s.mode} onClick={() => setZoneSeg(i)}
@@ -71,41 +72,45 @@ export function AutourZoneBlock({ idu }: { idu: string }) {
 
       {q.isLoading && <p className="text-xs text-txt-dim">Calcul de la zone atteignable…</p>}
 
-      {/* échec isochrone → dégradé honnête et NOMMÉ (jamais un cercle substitué) */}
+      {/* échec isochrone → dégradé honnête et NOMMÉ (jamais un cercle substitué). Z3 la boîte → note. */}
       {data && !data.disponible && (
-        <div data-zone-indisponible className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
-          Zone atteignable indisponible — {data.detail ?? 'le service d’isochrones IGN n’a pas répondu'}.
-          <span className="text-txt-dim"> Aucun cercle approximatif n’est affiché à la place.</span>
-        </div>
+        <FactNote>
+          <span data-zone-indisponible>
+            Zone atteignable indisponible — {data.detail ?? 'le service d’isochrones IGN n’a pas répondu'}.
+            <span className="text-txt-dim"> Aucun cercle approximatif n’est affiché à la place.</span>
+          </span>
+        </FactNote>
       )}
 
       {data?.disponible && (
         <>
-          {/* QUI VIT DANS LA ZONE — 4 stats */}
+          {/* QUI VIT DANS LA ZONE — Z1·02 sous-titre → kicker ; Z1·03 les stats numériques → FactRow. */}
           <div>
-            <div className="mb-1.5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-txt-dim">Qui vit dans la zone</div>
+            <GroupLabel>Qui vit dans la zone</GroupLabel>
             {data.population?.inhabitee ? (
               <p className="text-[11px] text-txt-mut">Zone peu ou pas habitée — aucun carreau INSEE peuplé ici.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <Stat v={nombre(data.population?.habitants)} k="habitants" />
-                <Stat v={nombre(data.population?.menages)} k="ménages" />
+              <div>
+                <FactRow label="habitants" value={nombre(data.population?.habitants)} />
+                <FactRow label="ménages" value={nombre(data.population?.menages)} />
                 {/* RETOURS-11F4 F9 — le badge « estimé » ne s'affiche QUE si le revenu est IMPUTÉ ;
                     un carreau INSEE Filosofi réel est Sourcé, jamais « estimé ». */}
-                <Stat v={data.population?.revenu_median_eur != null ? `${nombre(data.population.revenu_median_eur)} €` : '—'}
-                  k={data.population?.revenu_majorite_imputee
+                <FactRow
+                  label={data.population?.revenu_majorite_imputee
                     ? `revenu médian / an · valeur approchée (${nombre(data.population.revenu_impute_n)}/${nombre(data.population.revenu_carreaux_n)} carreaux)`
-                    : 'revenu médian / an'} est={!!data.population?.revenu_majorite_imputee} />
-                <Stat v={data.population?.pct_moins_25 != null ? `${data.population.pct_moins_25} %` : '—'} k="moins de 25 ans" />
+                    : 'revenu médian / an'}
+                  value={data.population?.revenu_median_eur != null ? <>{nombre(data.population.revenu_median_eur)} <small>€</small></> : '—'}
+                  src={data.population?.revenu_majorite_imputee ? <StepProv prov="estimee" /> : <StepProv prov="sourcee" />} />
+                <FactRow label="moins de 25 ans" value={data.population?.pct_moins_25 != null ? <>{data.population.pct_moins_25} <small>%</small></> : '—'} />
               </div>
             )}
           </div>
 
-          {/* ÉQUIPEMENTS & COMMERCES — avec leur temps */}
+          {/* ÉQUIPEMENTS & COMMERCES — avec leur temps. Z1·02 sous-titre → kicker. */}
           {data.equipements && data.equipements.length > 0 && (
             <div>
-              <div className="mb-1.5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-txt-dim">Équipements &amp; commerces</div>
-              <div className="flex flex-col gap-1">
+              <GroupLabel>Équipements &amp; commerces</GroupLabel>
+              <div className="mt-1 flex flex-col gap-1">
                 {data.equipements.map((e, i) => (
                   <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
                     <span className="truncate text-txt">
@@ -118,23 +123,11 @@ export function AutourZoneBlock({ idu }: { idu: string }) {
             </div>
           )}
 
-          {/* renvoi (zéro doublon) + note de sources */}
-          <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">{data.renvoi}</p>
-          <p className="text-[10px] leading-snug text-txt-dim">{data.note}</p>
+          {/* renvoi (zéro doublon) → Rappel + note de sources → FactNote. */}
+          <Rappel>{data.renvoi}</Rappel>
+          <FactNote>{data.note}</FactNote>
         </>
       )}
-    </div>
-  )
-}
-
-function Stat({ v, k, est }: { v: string; k: string; est?: boolean }) {
-  return (
-    <div className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
-      <div className="flex items-center gap-1.5 text-[13px] font-semibold text-txt-hi">
-        <span>{v}</span>
-        {est && <span className="rounded bg-mint/12 px-1 py-px font-mono text-[8px] uppercase tracking-wide text-mint">estimé</span>}
-      </div>
-      <div className="mt-0.5 text-[10px] text-txt-mut">{k}</div>
     </div>
   )
 }
