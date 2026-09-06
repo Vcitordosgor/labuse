@@ -862,7 +862,11 @@ export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
 // M54-EXPO-2 Volet C — statuts servis là où les boutons existent (dossier : dispo+quota ; courrier).
 export interface DossierStatut { disponible: boolean; raison: string | null; plan: string; illimite: boolean; quota_mois: number | null; utilises_mois: number; restants: number | null }
 export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')
-export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null }
+export interface CourrierStatut { disponible: boolean; provider: string; tarif: unknown; raison: string | null
+  // OUTILS-FIX-4 D2 — plafond d'envoi quotidien (celui qui déclenche le 422) + ce qui reste.
+  plafond_jour?: number; envoyes_jour?: number; reste_jour?: number }
+// OUTILS-FIX-4 D1/D2 — état du service + plafond du jour, lus à l'ouverture de l'outil Courrier.
+export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
 export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
 
 // M54-EXPO-2 A7 — shortlist : « sujets à traiter aujourd'hui » du run servi (top parcelles).

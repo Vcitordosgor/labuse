@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierPdf, getCommunes, getCourrierDemandes, getFiche, modBailleur,
+  courrierPdf, getCommunes, getCourrierDemandes, getCourrierStatut, getFiche, modBailleur,
   modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPatrimoineSearch, modPermis, modPermisCount,
   modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande,
 } from '../../lib/api'
@@ -1268,6 +1268,9 @@ export function M09() {
     return Object.entries(c).map(([k, n]) => `${k} ×${n}`).join(' · ')
   }
 
+  // OUTILS-FIX-4 D1/D2 — l'état du service (disponible/indisponible) et le plafond du jour (avec le reste)
+  // sont lus À L'OUVERTURE, affichés avant toute saisie — plus seulement découverts au moment d'envoyer.
+  const statut = useQuery({ queryKey: ['courrier-statut'], queryFn: getCourrierStatut, staleTime: 60_000 })
   const demandes = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes, enabled: step === 3 })
   const envoyer = useMutation({
     mutationFn: () => postCourrierDemande(dest.map((d) => d.idu), corps, modele, recapCommunes(), rattach ?? undefined),
@@ -1288,6 +1291,19 @@ export function M09() {
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + rédaction), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
         de propriétaire particulier.</Banner>
+      {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie. */}
+      {statut.data && (
+        <div data-courrier-etat className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px]">
+          <span className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statut.data.disponible ? 'bg-mint' : 'bg-st-creuser'}`} />
+            <span className={statut.data.disponible ? 'text-mint' : 'text-st-creuser'}>{statut.data.disponible ? 'Service d’envoi disponible' : 'Envoi automatique indisponible'}</span>
+            {!statut.data.disponible && statut.data.raison && <span className="text-txt-dim">— {statut.data.raison}</span>}
+          </span>
+          {statut.data.plafond_jour != null && (
+            <span data-courrier-plafond className="whitespace-nowrap text-txt-mut">Plafond du jour : <b className="tnum text-txt">{statut.data.reste_jour}</b>/{statut.data.plafond_jour} restant{(statut.data.reste_jour ?? 0) > 1 ? 's' : ''}</span>
+          )}
+        </div>
+      )}
       {/* stepper 3 étapes */}
       <div className="flex items-center gap-1 text-[10px]">
         {STEPS.map(([n, l], i) => (
