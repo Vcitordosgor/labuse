@@ -125,6 +125,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *dernière mutation de la parcelle + médianes du secteur cadastral (indicateur secondaire, étiqueté — EXPORTS-1 1.3)* | | | | | |
 | `parc_social_rpls_logements` | nombre | Parc social (logements RPLS) | rpls_sdes | passe-plat · src/labuse/api/app.py (marche_secteur — rpls_commune) — table lue : rpls_commune (nb_logements, construct_median) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring* | | | | | |
+| `radar_annonces_liste` | liste | Annonces Radar de la parcelle | radar_pige (Collecte manuelle — biens en vente (faits + lien)), dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020) | moteur `marche_pige` · src/labuse/api/app.py:_radar_annonces_block (pige_biens ⋈ pige_faits + v_parcel_dvf_last) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *annonces Radar VALIDÉES rattachées à la parcelle (date, prix demandé, statut en cours/retirée/vendue, lien fiche annonce) ; pour une annonce en cours avec mutation DVF, l'écart prix demandé vs acté (concept ecart_demande_acte_pct, maille parcelle)* | | | | | |
 
 ## Réseaux et accès
 

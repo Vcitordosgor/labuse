@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -1476,24 +1476,8 @@ export function Fiche({ idu }: { idu: string }) {
                 <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
-                {/* RADAR P3 (C3) — un bien du Radar en vente sur cette parcelle : discret, fait + lien. */}
-                {f.radar_bien && (
-                  <div data-radar-bien>
-                    <GroupLabel>Radar — bien en vente</GroupLabel>
-                    <div className="mt-1 flex items-center gap-2 text-xs">
-                      <b className="text-txt-hi">{f.radar_bien.prix != null ? f.radar_bien.prix.toLocaleString('fr-FR') + ' €' : '—'}</b>
-                      {f.radar_bien.type_bien && <span className="text-txt-mut">{f.radar_bien.type_bien}</span>}
-                      <span className="rounded-full bg-surface-3 px-1.5 text-[10px] text-txt-mut">
-                        {f.radar_bien.statut === 'en_vente_longue' ? 'en vente longue' : 'en vente'}
-                      </span>
-                    </div>
-                    <a href={f.radar_bien.url_sortante} target="_blank" rel="noopener noreferrer"
-                      onClick={() => { radarClic(f.radar_bien!.bien_id).catch(() => {}) }}
-                      className="mt-1.5 inline-block text-[11px] text-mint underline decoration-dotted">
-                      Voir l’annonce sur {f.radar_bien.portail} ↗
-                    </a>
-                  </div>
-                )}
+                {/* FICHE-1 lot 6 — les annonces Radar rattachées ont DÉMÉNAGÉ vers « Marché et
+                    secteur » (MarcheSection), en liste datée avec statut + lien fiche annonce. */}
                 {/* FICHE-1 lot 2 — DPE RÉTABLI : la fiche premium sert désormais `dpe_connu`
                     (_dpe_connu_block lit `dpe_records`), affiché dans le tiroir « Le bien »
                     (LeBienSection). M71 B1 : info fiche seule, jamais un signal de classement. */}

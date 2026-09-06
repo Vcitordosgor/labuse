@@ -73,3 +73,12 @@ Servie dans « Constructibilité » pour le scénario table rase du potentiel.
 - **Omise** si le scénario table rase n'est pas constructible (pas d'assiette → `null` → bloc absent).
 - **Distincte** de `taxe_amenagement_eur` (outil, taux SAISI) : nouvelle donnée `taxe_amenagement_estimee_eur` (taux PUBLIC), définition différente (V5a OK), mono-robinet `fiche_parcelle_constructibilite`. Lien `PorteOutil` vers l'outil taxe (prefill parcelle) pour changer les hypothèses.
 - **Vérifs** : `circuit verrous` 16/16 vert (178 données) · tsc 0 · vitest 187 · `test_fiche1_taxe.py` 3/3 · doc régénéré. Vérifié en base : 97415000BH0057 → assiette 10 084 m², total « non calculable sans taux communal ».
+
+### Lot 6 — Les annonces Radar ✅
+
+Dans « Marché et secteur », la **liste des annonces Radar rattachées** à la parcelle.
+
+- **Producteur** `_radar_annonces_block(db, idu)` : biens VALIDÉS rattachés (`f.valide_at IS NOT NULL`, RADAR P3), datés, avec prix demandé, type, **statut lisible** (en cours / retirée / vendue), lien **fiche annonce interne** (`setRadarToOpen(bien_id) + openRadar()`) et lien portail secondaire (clic logué `radarClic`).
+- **Écart demandé/acté** : pour une annonce **en cours** avec une **mutation DVF** sur la parcelle, l'écart prix demandé vs acté (sur €/m² si dispo, sinon total). **Décision tranchée** (écrite) : je réutilise le **concept `ecart_demande_acte_pct`** à la maille parcelle **dans l'item de liste** (champ `ecart_demande_acte_pct`), sans créer un id parcelle-grain dupliqué ni rattacher la donnée commune-médiane (grain différent) au robinet parcelle — V5a préservé.
+- **Restructuration** : l'ancien bloc `radar_bien` (un seul bien, dans Propriétaire, **lien portail seulement**, et **hors registre**) est retiré ; la liste complète (tous statuts, **lien fiche annonce interne**) le remplace dans Marché et est **déclarée** (`radar_annonces_liste` → `fiche_parcelle_marche`, mono-robinet).
+- **Vérifs** : `circuit verrous` 16/16 vert (179 données) · tsc 0 · vitest 187 · `test_fiche1_radar.py` 3/3 (écart +25 % €/m², retirée → pas d'écart) · doc régénéré. Vérifié en base : 97411000AE0568 → maison 417 500 €, en cours, lien annonce leboncoin.

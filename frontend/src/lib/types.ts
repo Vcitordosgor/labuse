@@ -430,6 +430,16 @@ export interface Fiche {
     etiquette: string; etiquette_ges?: string | null; date?: string | null
     annee?: number | null; type_batiment?: string | null; n: number; source: string
   } | null
+  // FICHE-1 lot 6 — annonces Radar rattachées à la parcelle (Marché et secteur). null → aucune.
+  radar_annonces?: {
+    n: number; dvf_date: string | null
+    liste: {
+      bien_id: number; date: string | null; prix_demande_eur: number | null
+      type_bien: string | null; statut: string; en_cours: boolean
+      portail: string | null; url_sortante: string | null
+      ecart_demande_acte_pct: number | null
+    }[]
+  } | null
   // FICHE-1 lot 5 — taxe d'aménagement estimée (scénario table rase). null → pas d'estimation.
   taxe_amenagement?: {
     assiette_m2: number; assiette_eur: number; total_eur: number | null

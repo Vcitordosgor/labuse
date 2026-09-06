@@ -124,6 +124,15 @@ DONNEES: dict[str, Donnee] = {
     moteur="taxe_amenagement", calcul="moteur",
     fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer)",
     reservoirs=(), portee="live"),
+ # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
+ # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.
+ "radar_annonces_liste": C("Annonces Radar de la parcelle", "liste", "parcelle",
+    "annonces Radar VALIDÉES rattachées à la parcelle (date, prix demandé, statut en cours/"
+    "retirée/vendue, lien fiche annonce) ; pour une annonce en cours avec mutation DVF, l'écart "
+    "prix demandé vs acté (concept ecart_demande_acte_pct, maille parcelle)",
+    moteur="marche_pige", calcul="moteur",
+    fonction="src/labuse/api/app.py:_radar_annonces_block (pige_biens ⋈ pige_faits + v_parcel_dvf_last)",
+    reservoirs=("radar_pige", "dvf",), portee="live", type="liste"),
  "n_vigilances": C("Vigilances", "nombre", "parcelle",
     "compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE",
     moteur="cascade", calcul="moteur",

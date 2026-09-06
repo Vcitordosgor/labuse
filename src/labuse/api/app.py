@@ -3667,7 +3667,69 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # (moteur taxe_amenagement). None si pas de scénario constructible. Taux communal PUBLIC
         # si connu, sinon « non renseigné » — jamais un taux inventé (CIRCUIT-3 lot 6.2).
         "taxe_amenagement": _taxe_amenagement_block(db, idu, head["id"]),
+        # FICHE-1 lot 6 — les annonces Radar RATTACHÉES à la parcelle (validées), datées, avec prix
+        # demandé, statut (en cours / retirée / vendue), lien fiche annonce + écart demandé/acté.
+        "radar_annonces": _radar_annonces_block(db, idu),
     }
+
+
+_RADAR_STATUT_LIBELLE = {
+    "active": "en cours", "en_vente_longue": "en cours (longue)",
+    "retiree": "retirée", "retiree_sans_vente": "retirée (sans vente)",
+    "vendue": "vendue",
+}
+
+
+def _radar_annonces_block(db: Session, idu: str) -> dict | None:
+    """FICHE-1 lot 6 — annonces Radar VALIDÉES rattachées à la parcelle (RADAR P3 : validées seules).
+
+    Chaque annonce : date, prix demandé, type, statut lisible, lien vers la fiche annonce (interne).
+    Pour une annonce EN COURS avec une mutation DVF sur la parcelle : l'écart prix demandé vs prix
+    acté (concept `ecart_demande_acte_pct`, ici à la maille parcelle). None si aucune annonce."""
+    rows = db.execute(text(
+        "SELECT b.bien_id, b.statut, b.rattachement_niveau, "
+        "       COALESCE(b.date_publication, b.date_premiere_saisie) AS date_annonce, "
+        "       f.prix, f.prix_m2, f.type_bien, f.surface_hab, b.vendue_valeur, b.vendue_le, b.retiree_le, "
+        "       a.portail, a.url_sortante "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "LEFT JOIN LATERAL (SELECT portail, url_sortante FROM pige_annonces WHERE bien_id = b.bien_id "
+        "                   ORDER BY date_saisie DESC LIMIT 1) a ON true "
+        "WHERE b.idu = :idu AND f.valide_at IS NOT NULL "
+        "ORDER BY COALESCE(b.date_publication, b.date_premiere_saisie) DESC NULLS LAST"),
+        {"idu": idu}).mappings().all()
+    if not rows:
+        return None
+    # prix acté de référence : dernière mutation DVF de la parcelle (Sourcé), pour l'écart.
+    dvf = db.execute(text(
+        "SELECT valeur, prix_m2_bati, date_mutation FROM v_parcel_dvf_last WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    liste: list[dict] = []
+    for r in rows:
+        en_cours = r["statut"] in ("active", "en_vente_longue")
+        ecart_pct = None
+        if en_cours and dvf and r["prix"]:
+            # écart sur €/m² si disponible des deux côtés (plus comparable), sinon sur le prix total.
+            if r["prix_m2"] and dvf["prix_m2_bati"]:
+                dem, act = float(r["prix_m2"]), float(dvf["prix_m2_bati"])
+            elif dvf["valeur"]:
+                dem, act = float(r["prix"]), float(dvf["valeur"])
+            else:
+                dem = act = None
+            if act and act > 0:
+                ecart_pct = round(100 * (dem - act) / act)
+        liste.append({
+            "bien_id": r["bien_id"],
+            "date": r["date_annonce"].isoformat() if r["date_annonce"] else None,
+            "prix_demande_eur": int(r["prix"]) if r["prix"] is not None else None,
+            "type_bien": r["type_bien"],
+            "statut": _RADAR_STATUT_LIBELLE.get(r["statut"], r["statut"]),
+            "en_cours": en_cours,
+            "portail": r["portail"],
+            "url_sortante": r["url_sortante"],
+            "ecart_demande_acte_pct": ecart_pct,     # None si pas d'annonce en cours + DVF
+        })
+    return {"n": len(liste), "liste": liste,
+            "dvf_date": dvf["date_mutation"].isoformat() if dvf and dvf["date_mutation"] else None}
 
 
 def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | None:
