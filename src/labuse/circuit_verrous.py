@@ -632,6 +632,28 @@ VERROUS: tuple[Verrou, ...] = (
 )
 
 
+def synthese_pour_page(db) -> dict:
+    """CIRCUIT-5 lot 6.2 — ce que le Résumé montre, à COÛT PAGE (jamais V1b ni la sonde) :
+    le dernier passage `labuse circuit verrous` journalisé (verrous cassés), les orphelines
+    (différence schéma − carte, immédiate), les réservoirs sans lecteur (pur registre) et
+    les rattachements à décider."""
+    from .registre import tables as T
+
+    dernier = db.execute(text(
+        "SELECT ts, details FROM circuit_journal WHERE geste = 'controle' AND cible = 'verrous' "
+        "ORDER BY id DESC LIMIT 1")).first()
+    details = (dernier[1] or {}) if dernier else {}
+    return {
+        "dernier_ts": dernier[0].isoformat() if dernier else None,
+        "casses": list(details.get("casses") or []),
+        "phrases": {vid: PHRASES.get(vid, "") for vid in (details.get("casses") or [])},
+        "jamais_joues": dernier is None,
+        "orphelines": sorted(T.orphelines(relations_schema(db))),
+        "muets": list(verrou_reservoirs_sans_lecteur().details),
+        "rattachements": sorted(T.RATTACHEMENTS_A_DECIDER),
+    }
+
+
 def jouer_tous(db, *, arret_premier: bool = False) -> list[ResultatVerrou]:
     """Joue tous les verrous dans l'ordre des lots. `arret_premier` : sort au premier cassé
     (comportement CLI/deploy) ; sinon joue tout (page Circuit, rapport complet)."""

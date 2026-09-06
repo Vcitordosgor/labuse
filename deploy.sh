@@ -19,6 +19,25 @@ set -eu
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
 
+# ── CIRCUIT-5 (lot 6.1) — LA PORTE : les verrous d'abord, le déploiement ensuite. ──────────
+# `labuse circuit verrous` joue TOUS les verrous (lots 1 à 5) et sort en erreur au premier
+# cassé : un déploiement qui passe cette porte est la preuve que tout tient. Aucun
+# contournement : binaire introuvable = refus (on ne déploie pas sans vérifier).
+LABUSE_BIN="${LABUSE_BIN:-$(command -v labuse || echo /opt/labuse/venv/bin/labuse)}"
+echo "→ Porte des verrous : $LABUSE_BIN circuit verrous…"
+if [ ! -x "$LABUSE_BIN" ]; then
+  echo "✗ REFUS : binaire labuse introuvable ($LABUSE_BIN) — on ne déploie pas sans jouer les verrous." >&2
+  exit 1
+fi
+if ! "$LABUSE_BIN" circuit verrous --par deploy; then
+  cat >&2 <<MSG
+✗ REFUS : un verrou est cassé (détail ci-dessus, phrases dans docs/CIRCUIT/VERROUS.md).
+  Corriger, rejouer « labuse circuit verrous », puis relancer ce déploiement.
+MSG
+  exit 1
+fi
+echo "  ✓ tous les verrous tiennent"
+
 echo "→ Garde legacy : /etc/cron.d/labuse-* doit être vide…"
 legacy="$(ls /etc/cron.d/labuse-* 2>/dev/null || true)"
 if [ -n "$legacy" ]; then

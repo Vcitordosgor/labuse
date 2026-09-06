@@ -1,0 +1,1579 @@
+{
+ "compteurs": {
+  "reservoirs": 68,
+  "a_jour": 32,
+  "a_regarder": 35,
+  "vides": 1
+ },
+ "definition": "Un réservoir est « à jour et vérifié » quand sa version chez le producteur est celle de son réservoir, que son dernier contrôle est plus récent que sa cadence, et que son filtre est passé sans bloquant. Un réservoir sous sentinelle mais jamais contrôlé n'est pas « à jour » — il est « à vérifier ».",
+ "groupes": [
+  {
+   "cle": "a_jour",
+   "titre": "À jour et vérifiés",
+   "reservoirs": [
+    {
+     "id": 18,
+     "nom": "Base Adresse Nationale",
+     "producteur": "DINUM / IGN",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 74,
+     "nom": "Transport public — GTFS (PAN, 7 réseaux)",
+     "producteur": "AOM Réunion (Région, CINOR, TCO, CIVIS, CIREST, CASUD) via transport.data.gouv.fr",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 10,
+     "nom": "RPG — déclarations agricoles (IGN/ASP)",
+     "producteur": "DAAF (propre non public) · proxy RPG/IGN",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 66,
+     "nom": "INSEE RP2022 — fichier détail Logements (EGOUL)",
+     "producteur": "INSEE",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 20,
+     "nom": "BPE INSEE",
+     "producteur": "INSEE",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 64,
+     "nom": "Contours IRIS (IGN/INSEE)",
+     "producteur": "IGN / INSEE",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 52,
+     "nom": "Filosofi INSEE (carreaux 200 m)",
+     "producteur": "INSEE",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 1,
+     "nom": "Cadastre (API Carto PCI)",
+     "producteur": "IGN / API Carto",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 29,
+     "nom": "BODACC (procédures collectives)",
+     "producteur": "DILA (Opendatasoft)",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 21,
+     "nom": "SIRENE",
+     "producteur": "INSEE / annuaire-entreprises",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 8,
+     "nom": "Forêts publiques (ONF)",
+     "producteur": "ONF / IGN (BD TOPO)",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 7,
+     "nom": "Parc National de La Réunion (INPN)",
+     "producteur": "INPN/MNHN · API Carto · Région ODS",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 76,
+     "nom": "ZNIEFF (INPN/MNHN)",
+     "producteur": "INPN/MNHN · PatriNat",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 38,
+     "nom": "QPV 2024 (ANCT)",
+     "producteur": "ANCT (Agence nationale cohésion des territoires)",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 35,
+     "nom": "Cartofriches (Cerema)",
+     "producteur": "Cerema / DGALN",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 61,
+     "nom": "BD ORTHO 20 cm (IGN)",
+     "producteur": "IGN / Géoplateforme",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 83,
+     "nom": "CoSIA (couverture du sol IA, IGN)",
+     "producteur": "IGN / Géoplateforme",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 22,
+     "nom": "IGN BD CARTO V5 — occupation du sol",
+     "producteur": "IGN / Géoplateforme",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 24,
+     "nom": "ABF / Monuments historiques",
+     "producteur": "Base Mérimée (Ministère Culture)",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 15,
+     "nom": "data.regionreunion.com — Potentiel foncier",
+     "producteur": "Région Réunion (Opendatasoft)",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 71,
+     "nom": "DGFiP — parcelles des personnes morales",
+     "producteur": "DGFiP",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 46,
+     "nom": "Classement sonore ITT (Cerema)",
+     "producteur": "Cerema (Cartagène)",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 28,
+     "nom": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+     "producteur": "Cerema / GéoLittoral",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 30,
+     "nom": "DEAL Réunion — PPR / aléas",
+     "producteur": "DEAL Réunion (Lizmap)",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 34,
+     "nom": "Géorisques — ICPE",
+     "producteur": "BRGM / Géorisques",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 33,
+     "nom": "Géorisques — cavités souterraines",
+     "producteur": "BRGM / Géorisques",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 36,
+     "nom": "Géorisques — mouvements de terrain",
+     "producteur": "BRGM / Géorisques",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 32,
+     "nom": "Géorisques — sites et sols pollués",
+     "producteur": "BRGM / Géorisques",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 70,
+     "nom": "LiDAR HD — MNH 50 cm (IGN)",
+     "producteur": "IGN / Géoplateforme",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 17,
+     "nom": "BD TOPO IGN",
+     "producteur": "IGN / Géoplateforme",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 6,
+     "nom": "RGE ALTI (altimétrie)",
+     "producteur": "IGN / Géoplateforme",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    },
+    {
+     "id": 9,
+     "nom": "Potentiel foncier Région (Région ODS)",
+     "producteur": "Région Réunion / AGORAH",
+     "etat": [
+      "mint",
+      "à jour"
+     ]
+    }
+   ]
+  },
+  {
+   "cle": "a_regarder",
+   "titre": "À regarder",
+   "reservoirs": [
+    {
+     "id": 93,
+     "nom": "EDF Réunion — lignes moyenne tension HTA (open data)",
+     "producteur": "EDF SEI — open data La Réunion (portail Koumoul)",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 75,
+     "nom": "OSM — transport (pôles d'échange & téléphérique)",
+     "producteur": "OpenStreetMap",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 94,
+     "nom": "TCSP — voies bus en site propre (OSM)",
+     "producteur": "OpenStreetMap",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 68,
+     "nom": "Office de l'eau Réunion — Chroniques de l'eau",
+     "producteur": "Office de l'eau Réunion",
+     "etat": [
+      "ambre",
+      "à vérifier"
+     ]
+    },
+    {
+     "id": 16,
+     "nom": "SITADEL (autorisations d'urbanisme)",
+     "producteur": "SDES (Dido)",
+     "etat": [
+      "ambre",
+      "nouvelle version à injecter"
+     ]
+    },
+    {
+     "id": 31,
+     "nom": "INPI RNE (dirigeants)",
+     "producteur": "INPI (Registre National des Entreprises)",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 87,
+     "nom": "MOBPRO (mobilités domicile-travail, INSEE)",
+     "producteur": "INSEE (RP)",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 45,
+     "nom": "Recherche d'entreprises (DINUM)",
+     "producteur": "DINUM (api.gouv.fr)",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 86,
+     "nom": "SIRENE établissements géolocalisés",
+     "producteur": "INSEE / data.gouv",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 88,
+     "nom": "Trafic RN (Région Réunion — SIR)",
+     "producteur": "Région Réunion (Système d'Information Routier)",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 37,
+     "nom": "DPE ADEME (logements existants)",
+     "producteur": "ADEME",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 48,
+     "nom": "PVGIS (Commission européenne)",
+     "producteur": "CE / JRC",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 51,
+     "nom": "Parkings OSM (loi APER)",
+     "producteur": "OpenStreetMap",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 25,
+     "nom": "INPN / patrinat — espaces protégés",
+     "producteur": "INPN/MNHN (espaces protégés) · ENS dép. non public",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 73,
+     "nom": "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)",
+     "producteur": "Légifrance / Région Réunion",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 72,
+     "nom": "ZFANG — zone franche d'activité nouvelle génération (Légifrance)",
+     "producteur": "Légifrance / DGOM",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 69,
+     "nom": "BD ORTHO IRC (IGN)",
+     "producteur": "IGN / Géoplateforme",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 41,
+     "nom": "INSEE RP Logement 2023",
+     "producteur": "INSEE",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 39,
+     "nom": "Inventaire SRU (DHUP)",
+     "producteur": "Ministère Transition écologique — DHUP",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 40,
+     "nom": "NPNRU (DEAL Réunion / ANCT)",
+     "producteur": "DEAL Réunion (WFS Carmen) · ANCT (liste)",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 42,
+     "nom": "PLH des 5 EPCI (extraction documentaire)",
+     "producteur": "EPCI 974 · DEAL Réunion (CDHH)",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 5,
+     "nom": "DVF / valeurs foncières",
+     "producteur": "DGFiP / Etalab — géo-DVF",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 84,
+     "nom": "Radar (pige d'annonces)",
+     "producteur": "LABUSE — collecte humaine",
+     "etat": [
+      "ambre",
+      "à vérifier"
+     ]
+    },
+    {
+     "id": 47,
+     "nom": "50 pas géométriques — limite haute (DEAL)",
+     "producteur": "DEAL Réunion (Lizmap)",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 44,
+     "nom": "SUP — assiettes GPU (API Carto)",
+     "producteur": "IGN (Géoportail de l'urbanisme)",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 43,
+     "nom": "RTAA DOM (textes réglementaires)",
+     "producteur": "Légifrance — CCH R.192-1 à R.192-4 + arrêtés 17/04/2009 modifiés 11/01/2016",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 26,
+     "nom": "VRD / assainissement (SPANC)",
+     "producteur": "EPCI",
+     "etat": [
+      "ambre",
+      "à vérifier"
+     ]
+    },
+    {
+     "id": 97,
+     "nom": "CatNat (arrêtés GASPAR / Géorisques)",
+     "producteur": "BRGM / Géorisques (GASPAR)",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 4,
+     "nom": "Géorisques",
+     "producteur": "BRGM / MTE",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    },
+    {
+     "id": 19,
+     "nom": "OpenStreetMap / Overpass",
+     "producteur": "OSM",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 96,
+     "nom": "Cadastre d'époque (Etalab / PCI vecteur DGFiP)",
+     "producteur": "Etalab / DGFiP via cadastre.data.gouv.fr",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 13,
+     "nom": "DEAL Réunion (WMS/WFS)",
+     "producteur": "DEAL Réunion",
+     "etat": [
+      "ambre",
+      "producteur injoignable"
+     ]
+    },
+    {
+     "id": 63,
+     "nom": "GPU — zonages d'assainissement",
+     "producteur": "IGN / Géoportail de l'urbanisme",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 62,
+     "nom": "Sudocuh (procédures d'urbanisme)",
+     "producteur": "Ministère Cohésion des territoires / DGALN",
+     "etat": [
+      "ambre",
+      "jamais vérifié"
+     ]
+    },
+    {
+     "id": 3,
+     "nom": "Urbanisme PLU/GPU (API Carto)",
+     "producteur": "IGN / API Carto GPU",
+     "etat": [
+      "ambre",
+      "filtre avec des KO"
+     ]
+    }
+   ]
+  },
+  {
+   "cle": "vides",
+   "titre": "Vides ou manuels",
+   "reservoirs": [
+    {
+     "id": 27,
+     "nom": "Fichiers fonciers (Cerema)",
+     "producteur": "DGFiP / Cerema",
+     "etat": [
+      "gris",
+      "vide"
+     ]
+    }
+   ]
+  }
+ ],
+ "non_servies": [
+  {
+   "id": 89,
+   "nom": "BDNB",
+   "producteur": "CSTB",
+   "raison": "chantier nommé (a_faire)"
+  },
+  {
+   "id": 2,
+   "nom": "Cadastre Etalab (bulk DGFiP/Etalab)",
+   "producteur": "DGFiP / Etalab",
+   "raison": "alias de « Cadastre (API Carto PCI) »"
+  },
+  {
+   "id": 49,
+   "nom": "EDF SEI Réunion — open data",
+   "producteur": "EDF SEI",
+   "raison": "retirée — amont 410 Gone — jeu retiré par EDF SEI (~2026), plus rien à sonder"
+  },
+  {
+   "id": 67,
+   "nom": "GPU — zonages d'assainissement (info-surf typeinf 19)",
+   "producteur": "IGN / Géoportail de l'urbanisme",
+   "raison": "alias de « GPU — zonages d'assainissement »"
+  },
+  {
+   "id": 14,
+   "nom": "Géoplateforme IGN",
+   "producteur": "IGN",
+   "raison": "hub (portail, jamais un réservoir)"
+  },
+  {
+   "id": 12,
+   "nom": "PEIGEO (hub régional)",
+   "producteur": "AGORAH",
+   "raison": "hub (portail, jamais un réservoir)"
+  },
+  {
+   "id": 65,
+   "nom": "RGE ALTI 5 m (IGN)",
+   "producteur": "IGN / Géoplateforme",
+   "raison": "alias de « RGE ALTI (altimétrie) »"
+  },
+  {
+   "id": 50,
+   "nom": "Registre national des installations (ODRÉ)",
+   "producteur": "ODRÉ / data.gouv.fr",
+   "raison": "retirée — jamais branché, aucun usage identifié (audit M66/M71)"
+  },
+  {
+   "id": 11,
+   "nom": "Région Réunion Open Data (Opendatasoft)",
+   "producteur": "Région Réunion (Opendatasoft)",
+   "raison": "hub (portail, jamais un réservoir)"
+  },
+  {
+   "id": 95,
+   "nom": "Réunion Express — hypothèses de tracé (débat public CNDP)",
+   "producteur": "Région Réunion / CNDP",
+   "raison": "chantier nommé (a_faire)"
+  },
+  {
+   "id": 98,
+   "nom": "Taxe d'aménagement — taux communaux (délibérations)",
+   "producteur": "Communes / DGFiP",
+   "raison": "chantier nommé (a_faire)"
+  },
+  {
+   "id": 80,
+   "nom": "ZNIEFF (INPN / Région)",
+   "producteur": "INPN/MNHN · Région ODS",
+   "raison": "retirée — canal Région jamais alimenté (endpoint vivant, 0 donnée) — canonique : ZNIEFF (INPN/MNHN)"
+  }
+ ],
+ "carte": [
+  {
+   "id": 47,
+   "nom": "50 pas géométriques — limite haute (DEAL)",
+   "slug": "cinquante_pas_deal",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "cinquante_pas"
+   ],
+   "millesime": "cadastre 1877 (géoréf. 2012/1950)",
+   "note": null
+  },
+  {
+   "id": 24,
+   "nom": "ABF / Monuments historiques",
+   "slug": "abf_merimee",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "abf"
+   ],
+   "millesime": "Monuments historiques Mérimée (POP) — périmètres ABF",
+   "note": null
+  },
+  {
+   "id": 61,
+   "nom": "BD ORTHO 20 cm (IGN)",
+   "slug": "bd_ortho",
+   "tables": [
+    "ortho_tiles",
+    "ortho_detections",
+    "parcel_equipements"
+   ],
+   "couches": [],
+   "millesime": "BD ORTHO IGN 974 — millésime 2025",
+   "note": null
+  },
+  {
+   "id": 69,
+   "nom": "BD ORTHO IRC (IGN)",
+   "slug": "bd_ortho_irc",
+   "tables": [
+    "ortho_detections",
+    "parcel_vegetation",
+    "vegetation_zonal_acc"
+   ],
+   "couches": [],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 17,
+   "nom": "BD TOPO IGN",
+   "slug": "bd_topo",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "batiment",
+    "voirie",
+    "water",
+    "ravine"
+   ],
+   "millesime": "BD TOPO® V3 (IGN)",
+   "note": null
+  },
+  {
+   "id": 29,
+   "nom": "BODACC (procédures collectives)",
+   "slug": "bodacc",
+   "tables": [
+    "bodacc_sondages",
+    "bodacc_procedures",
+    "bodacc_annonces_owner",
+    "annonces"
+   ],
+   "couches": [],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 20,
+   "nom": "BPE INSEE",
+   "slug": "bpe_insee",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "amenite_bpe"
+   ],
+   "millesime": "millésime 2025 (géographie au 01/01/2025)",
+   "note": null
+  },
+  {
+   "id": 18,
+   "nom": "Base Adresse Nationale",
+   "slug": "ban",
+   "tables": [
+    "adresses",
+    "adresse_parcelles"
+   ],
+   "couches": [],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 1,
+   "nom": "Cadastre (API Carto PCI)",
+   "slug": "cadastre_api_carto",
+   "tables": [
+    "parcels"
+   ],
+   "couches": [],
+   "millesime": "PCI Parcellaire Express (DGFiP) — « latest » ingérée",
+   "note": null
+  },
+  {
+   "id": 96,
+   "nom": "Cadastre d'époque (Etalab / PCI vecteur DGFiP)",
+   "slug": "cadastre_epoque",
+   "tables": [
+    "cadastre_historique"
+   ],
+   "couches": [],
+   "millesime": "PCI vecteur Etalab — millésimes 2019→2025 (cadastre d'époque)",
+   "note": null
+  },
+  {
+   "id": 35,
+   "nom": "Cartofriches (Cerema)",
+   "slug": "cartofriches",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "friche"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 97,
+   "nom": "CatNat (arrêtés GASPAR / Géorisques)",
+   "slug": "catnat_gaspar",
+   "tables": [
+    "catnat_arretes"
+   ],
+   "couches": [],
+   "millesime": "GASPAR — 426 arrêtés sur 24 communes",
+   "note": null
+  },
+  {
+   "id": 28,
+   "nom": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+   "slug": "erosion_cotiere_geolittoral",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "trait_de_cote"
+   ],
+   "millesime": "millésime 2018",
+   "note": null
+  },
+  {
+   "id": 46,
+   "nom": "Classement sonore ITT (Cerema)",
+   "slug": "bruit_itt_cerema",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "bruit_route"
+   ],
+   "millesime": "arrêtés déc. 2023",
+   "note": null
+  },
+  {
+   "id": 83,
+   "nom": "CoSIA (couverture du sol IA, IGN)",
+   "slug": "cosia",
+   "tables": [
+    "spatial_layers",
+    "p_model_bati_cosia",
+    "qa_cosia_bati"
+   ],
+   "couches": [
+    "batiment_cosia"
+   ],
+   "millesime": "CoSIA 2025 (PVA juil.-août 2025, 20 cm)",
+   "note": null
+  },
+  {
+   "id": 64,
+   "nom": "Contours IRIS (IGN/INSEE)",
+   "slug": "contours_iris",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "iris_insee"
+   ],
+   "millesime": "Contours IRIS — géographie 2024 (IGN/INSEE)",
+   "note": null
+  },
+  {
+   "id": 13,
+   "nom": "DEAL Réunion (WMS/WFS)",
+   "slug": "deal_wms_wfs",
+   "tables": [],
+   "couches": [],
+   "millesime": null,
+   "note": "canal servi par proxys — les tables sont portées par qpv_2024/npnru"
+  },
+  {
+   "id": 30,
+   "nom": "DEAL Réunion — PPR / aléas",
+   "slug": "deal_ppr",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "ppr"
+   ],
+   "millesime": "PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)",
+   "note": null
+  },
+  {
+   "id": 71,
+   "nom": "DGFiP — parcelles des personnes morales",
+   "slug": "dgfip_parcelles_pm",
+   "tables": [
+    "parcelle_personne_morale",
+    "pm_proprietaires_millesimes"
+   ],
+   "couches": [],
+   "millesime": "Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)",
+   "note": null
+  },
+  {
+   "id": 37,
+   "nom": "DPE ADEME (logements existants)",
+   "slug": "dpe_ademe",
+   "tables": [
+    "dpe_records"
+   ],
+   "couches": [],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 5,
+   "nom": "DVF / valeurs foncières",
+   "slug": "dvf",
+   "tables": [
+    "dvf_mutations",
+    "dvf_mutations_parcelle",
+    "dvf_mutations_histo",
+    "dvf_secteur_medianes",
+    "dvf_prix_sortie_neuf",
+    "spatial_layers"
+   ],
+   "couches": [
+    "vefa_neuf"
+   ],
+   "millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
+   "note": null
+  },
+  {
+   "id": 93,
+   "nom": "EDF Réunion — lignes moyenne tension HTA (open data)",
+   "slug": "edf_hta",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "ligne_mt",
+    "ligne_ht"
+   ],
+   "millesime": "EDF géométrie ~02/2020 · publié 16/10/2025",
+   "note": null
+  },
+  {
+   "id": 73,
+   "nom": "FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)",
+   "slug": "frr_ex_zrr",
+   "tables": [
+    "spatial_layers",
+    "territoire_fiscal_commune"
+   ],
+   "couches": [
+    "frr"
+   ],
+   "millesime": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017",
+   "note": null
+  },
+  {
+   "id": 27,
+   "nom": "Fichiers fonciers (Cerema)",
+   "slug": "fichiers_fonciers_cerema",
+   "tables": [],
+   "couches": [],
+   "millesime": null,
+   "note": "manuel — convention DGFiP non instruite, aucune table"
+  },
+  {
+   "id": 52,
+   "nom": "Filosofi INSEE (carreaux 200 m)",
+   "slug": "filosofi_carreaux",
+   "tables": [
+    "filosofi_carreaux_200m",
+    "p_model_filo"
+   ],
+   "couches": [],
+   "millesime": "millésime 2021",
+   "note": null
+  },
+  {
+   "id": 8,
+   "nom": "Forêts publiques (ONF)",
+   "slug": "forets_onf_bdtopo",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "foret_publique"
+   ],
+   "millesime": "BD TOPO® V3 — forêt publique (IGN)",
+   "note": null
+  },
+  {
+   "id": 63,
+   "nom": "GPU — zonages d'assainissement",
+   "slug": "gpu_zonage_assainissement",
+   "tables": [
+    "spatial_layers",
+    "parcel_anc"
+   ],
+   "couches": [
+    "zonage_assainissement"
+   ],
+   "millesime": "GPU — idurba par commune ; SIG 4/24 au 11/07/2026",
+   "note": null
+  },
+  {
+   "id": 4,
+   "nom": "Géorisques",
+   "slug": "georisques_api",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "georisque_alea"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 34,
+   "nom": "Géorisques — ICPE",
+   "slug": "georisques_icpe",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "icpe"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 33,
+   "nom": "Géorisques — cavités souterraines",
+   "slug": "georisques_cavites",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "cavite"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 36,
+   "nom": "Géorisques — mouvements de terrain",
+   "slug": "georisques_mvt",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "mvt"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 32,
+   "nom": "Géorisques — sites et sols pollués",
+   "slug": "georisques_ssp",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "sol_pollue"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 22,
+   "nom": "IGN BD CARTO V5 — occupation du sol",
+   "slug": "bd_carto_ocs",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "ocs_ge"
+   ],
+   "millesime": "BD CARTO® V5 — occupation du sol (IGN, proxy)",
+   "note": null
+  },
+  {
+   "id": 31,
+   "nom": "INPI RNE (dirigeants)",
+   "slug": "inpi_rne",
+   "tables": [
+    "pm_dirigeants",
+    "pm_dirigeant_gigogne"
+   ],
+   "couches": [],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 25,
+   "nom": "INPN / patrinat — espaces protégés",
+   "slug": "inpn_espaces_proteges",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "ens"
+   ],
+   "millesime": "INPN/patrinat espaces protégés — passe 05/07/2026",
+   "note": null
+  },
+  {
+   "id": 41,
+   "nom": "INSEE RP Logement 2023",
+   "slug": "insee_rp_logement",
+   "tables": [
+    "commune_insee_logement"
+   ],
+   "couches": [],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 66,
+   "nom": "INSEE RP2022 — fichier détail Logements (EGOUL)",
+   "slug": "insee_rp2022_egoul",
+   "tables": [
+    "anc_maille_taux"
+   ],
+   "couches": [],
+   "millesime": "RP2022 — fichier détail Logements (16/10/2025)",
+   "note": null
+  },
+  {
+   "id": 39,
+   "nom": "Inventaire SRU (DHUP)",
+   "slug": "sru_dhup",
+   "tables": [
+    "commune_contexte_sru"
+   ],
+   "couches": [],
+   "millesime": "inventaire LLS — CSV v2 du 18/12/2025",
+   "note": null
+  },
+  {
+   "id": 70,
+   "nom": "LiDAR HD — MNH 50 cm (IGN)",
+   "slug": "lidar_hd_mnh",
+   "tables": [
+    "toiture_lidar"
+   ],
+   "couches": [],
+   "millesime": "LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)",
+   "note": null
+  },
+  {
+   "id": 87,
+   "nom": "MOBPRO (mobilités domicile-travail, INSEE)",
+   "slug": "mobpro",
+   "tables": [
+    "mobpro_commune"
+   ],
+   "couches": [],
+   "millesime": "MOBPRO INSEE — fichier détail (millésime RP)",
+   "note": null
+  },
+  {
+   "id": 40,
+   "nom": "NPNRU (DEAL Réunion / ANCT)",
+   "slug": "npnru",
+   "tables": [
+    "anru_quartiers",
+    "spatial_layers"
+   ],
+   "couches": [
+    "anru"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 75,
+   "nom": "OSM — transport (pôles d'échange & téléphérique)",
+   "slug": "osm_transport",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "telepherique",
+    "pole_echange"
+   ],
+   "millesime": "extraction Overpass (base OSM vivante, ODbL)",
+   "note": null
+  },
+  {
+   "id": 68,
+   "nom": "Office de l'eau Réunion — Chroniques de l'eau",
+   "slug": "office_eau_chroniques",
+   "tables": [
+    "anc_office_eau_commune"
+   ],
+   "couches": [],
+   "millesime": "Chronique n°149 — données 2023",
+   "note": null
+  },
+  {
+   "id": 19,
+   "nom": "OpenStreetMap / Overpass",
+   "slug": "osm_overpass",
+   "tables": [
+    "parcel_amenites",
+    "spatial_layers"
+   ],
+   "couches": [
+    "amenite",
+    "osm_faux_positif"
+   ],
+   "millesime": "extraction Overpass (base OSM vivante, ODbL)",
+   "note": null
+  },
+  {
+   "id": 42,
+   "nom": "PLH des 5 EPCI (extraction documentaire)",
+   "slug": "plh_epci",
+   "tables": [
+    "plh_epci"
+   ],
+   "couches": [],
+   "millesime": "extraction documentaire 07/07/2026",
+   "note": null
+  },
+  {
+   "id": 48,
+   "nom": "PVGIS (Commission européenne)",
+   "slug": "pvgis",
+   "tables": [
+    "solar_grid",
+    "parcel_solar"
+   ],
+   "couches": [],
+   "millesime": "PVGIS v5.3 · modèle SARAH3",
+   "note": null
+  },
+  {
+   "id": 7,
+   "nom": "Parc National de La Réunion (INPN)",
+   "slug": "parc_national_inpn",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "parc_national"
+   ],
+   "millesime": "millésime 2021",
+   "note": null
+  },
+  {
+   "id": 51,
+   "nom": "Parkings OSM (loi APER)",
+   "slug": "parkings_osm_aper",
+   "tables": [
+    "parkings_aper"
+   ],
+   "couches": [],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 9,
+   "nom": "Potentiel foncier Région (Région ODS)",
+   "slug": "potentiel_foncier_region",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "potentiel_foncier",
+    "sar"
+   ],
+   "millesime": null,
+   "note": null
+  },
+  {
+   "id": 38,
+   "nom": "QPV 2024 (ANCT)",
+   "slug": "qpv_2024",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "qpv"
+   ],
+   "millesime": "génération 2024",
+   "note": null
+  },
+  {
+   "id": 6,
+   "nom": "RGE ALTI (altimétrie)",
+   "slug": "rge_alti",
+   "tables": [
+    "rgealti_pente_5m",
+    "spatial_layers"
+   ],
+   "couches": [
+    "pente"
+   ],
+   "millesime": "RGE ALTI® (IGN)",
+   "note": null
+  },
+  {
+   "id": 10,
+   "nom": "RPG — déclarations agricoles (IGN/ASP)",
+   "slug": "rpg_proxy_ign",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "safer"
+   ],
+   "millesime": "proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+   "note": null
+  },
+  {
+   "id": 43,
+   "nom": "RTAA DOM (textes réglementaires)",
+   "slug": "rtaa_dom",
+   "tables": [],
+   "couches": [],
+   "millesime": null,
+   "note": "règles portées par le code (aucune table)"
+  },
+  {
+   "id": 84,
+   "nom": "Radar (pige d'annonces)",
+   "slug": "radar_pige",
+   "tables": [
+    "pige_annonces",
+    "pige_biens",
+    "pige_faits",
+    "pige_depots",
+    "pige_captures",
+    "pige_clics",
+    "pige_prix_historique",
+    "pige_interets_agence",
+    "radar_releves"
+   ],
+   "couches": [],
+   "millesime": "collecte manuelle — biens en vente (faits + lien)",
+   "note": null
+  },
+  {
+   "id": 45,
+   "nom": "Recherche d'entreprises (DINUM)",
+   "slug": "recherche_entreprises_dinum",
+   "tables": [
+    "owner_denom_lookup",
+    "owner_enrichment"
+   ],
+   "couches": [],
+   "millesime": "Sirene INSEE / RNE INPI (api.gouv.fr) — courant",
+   "note": null
+  },
+  {
+   "id": 21,
+   "nom": "SIRENE",
+   "slug": "sirene_recherche_entreprises",
+   "tables": [],
+   "couches": [],
+   "millesime": null,
+   "note": "API INSEE interrogée à la requête (aucune table)"
+  },
+  {
+   "id": 86,
+   "nom": "SIRENE établissements géolocalisés",
+   "slug": "sirene_etablissements",
+   "tables": [
+    "sirene_etablissements"
+   ],
+   "couches": [],
+   "millesime": "SIRENE géolocalisé — publication mensuelle INSEE",
+   "note": null
+  },
+  {
+   "id": 16,
+   "nom": "SITADEL (autorisations d'urbanisme)",
+   "slug": "sitadel",
+   "tables": [
+    "sitadel_permits",
+    "via_permits_geo"
+   ],
+   "couches": [],
+   "millesime": "2026-07",
+   "note": null
+  },
+  {
+   "id": 44,
+   "nom": "SUP — assiettes GPU (API Carto)",
+   "slug": "sup_gpu",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "sup"
+   ],
+   "millesime": "assiettes SUP GPU (API Carto)",
+   "note": null
+  },
+  {
+   "id": 62,
+   "nom": "Sudocuh (procédures d'urbanisme)",
+   "slug": "sudocuh",
+   "tables": [
+    "sudocuh_procedures"
+   ],
+   "couches": [],
+   "millesime": "Sudocuh — état au 31/12/2024",
+   "note": null
+  },
+  {
+   "id": 94,
+   "nom": "TCSP — voies bus en site propre (OSM)",
+   "slug": "tcsp_osm",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "tcsp_troncon",
+    "tcsp_station",
+    "tcsp_zone"
+   ],
+   "millesime": "extraction Overpass (OSM, ODbL) — voies bus 974",
+   "note": null
+  },
+  {
+   "id": 88,
+   "nom": "Trafic RN (Région Réunion — SIR)",
+   "slug": "trafic_rn",
+   "tables": [
+    "trafic_rn"
+   ],
+   "couches": [],
+   "millesime": "Trafic RN Région — millésime porté par tronçon",
+   "note": null
+  },
+  {
+   "id": 74,
+   "nom": "Transport public — GTFS (PAN, 7 réseaux)",
+   "slug": "gtfs_pan",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "transport_arret",
+    "transport_ligne",
+    "pole_echange",
+    "axe_structurant"
+   ],
+   "millesime": "7 jeux PAN, màj 2025-12-29 → 2026-08-17",
+   "note": null
+  },
+  {
+   "id": 3,
+   "nom": "Urbanisme PLU/GPU (API Carto)",
+   "slug": "gpu_plu_api_carto",
+   "tables": [
+    "spatial_layers",
+    "plu_reglement_extrait"
+   ],
+   "couches": [
+    "plu_gpu_zone",
+    "plu_gpu_prescription"
+   ],
+   "millesime": "GPU/PLU par commune (révisions — détail en fiche)",
+   "note": null
+  },
+  {
+   "id": 26,
+   "nom": "VRD / assainissement (SPANC)",
+   "slug": "spanc_epci",
+   "tables": [],
+   "couches": [],
+   "millesime": null,
+   "note": "manuel — collectif/non collectif saisi, aucune table dédiée"
+  },
+  {
+   "id": 72,
+   "nom": "ZFANG — zone franche d'activité nouvelle génération (Légifrance)",
+   "slug": "zfang",
+   "tables": [
+    "spatial_layers",
+    "territoire_fiscal_commune"
+   ],
+   "couches": [
+    "zfang",
+    "tva_primo"
+   ],
+   "millesime": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)",
+   "note": null
+  },
+  {
+   "id": 76,
+   "nom": "ZNIEFF (INPN/MNHN)",
+   "slug": "znieff_inpn",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "znieff"
+   ],
+   "millesime": "INPN, mise à jour 29/08/2025",
+   "note": null
+  },
+  {
+   "id": 15,
+   "nom": "data.regionreunion.com — Potentiel foncier",
+   "slug": "potentiel_foncier_ods",
+   "tables": [
+    "spatial_layers"
+   ],
+   "couches": [
+    "potentiel_foncier"
+   ],
+   "millesime": null,
+   "note": null
+  }
+ ]
+}

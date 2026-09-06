@@ -11,7 +11,9 @@ Reprise : « continue CIRCUIT-5 depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-5.md »
 - [x] Lot 3 — verrou des versions
 - [x] Lot 4 — verrou des communes
 - [x] Lot 5 — verrou des concepts et des moteurs
-- [ ] Lot 6 — commande, porte, page, VERROUS.md
+- [x] Lot 6 — commande, porte, page, VERROUS.md
+
+**MANDAT TERMINÉ le 06/09/2026 — 16 verrous, 0 cassé, rien mergé.**
 
 ## Étape 0 — baseline (06/09/2026)
 
@@ -321,6 +323,54 @@ libellé normalisé posé → casse ; définition partagée non assumée → cas
 réintroduit → casse ; donnée sans fonction → casse ; chiffre retiré de NON_SONDES (silence
 posé) → casse en nommant le couple ; tirage tournant déterministe, borné, et vide si rien
 n'a été consulté la veille.
+
+## Lot 6 — la commande, la porte, la page (livré)
+
+**6.1 — une commande, trois joueurs** :
+- `labuse circuit verrous` joue les 16 verrous (lots 1-5), une ligne chacun (phrase,
+  verdict, preuve), sort en erreur au premier cassé, journalise (geste `controle`, cible
+  `verrous`). PIÈGE : passer par le binaire `labuse` (garde `__main__` en milieu de cli.py).
+- **pytest** : marque `verrous` — `tests/verrous/` (65 tests, 5 fichiers), plus `-m local`
+  qui rejoue tout sur la base réelle.
+- **la sonde de nuit** : le job `coherence-robinets` joue AUSSI les verrous après le
+  contrôle (résultat au Journal + notification admin dédupliquée si cassé).
+- **`deploy.sh`** : la PORTE, jouée AVANT toute pose — binaire introuvable = refus, verrou
+  cassé = refus, aucun contournement (vérifié par test).
+
+**6.2 — la page** (aucun nouvel onglet) :
+- le Résumé reçoit trois lignes composées CÔTÉ SERVEUR (`composer(verrous=…)`) depuis la
+  synthèse à coût page (`synthese_pour_page` : dernier passage journalisé + orphelines et
+  muets immédiats — jamais V1b rejoué au chargement) : **« verrous cassés »** (rouge, À
+  corriger), **« tables orphelines à purger »** et **« réservoirs sans lecteur, données
+  sans réservoir »** (gris, À décider). Sans synthèse, le Résumé d'avant est inchangé
+  (testé).
+- le détail du repère « 68 » montre **la carte table → réservoir** (68 réservoirs, tables +
+  couches + millésime — la déclaration de `registre/tables.py`), et les « lignes en base
+  non servies » disent désormais leur statut de PREMIÈRE CLASSE (« alias de … »,
+  « retirée — raison », hub, chantier).
+- **captures** : `docs/CIRCUIT/RECETTE-CIRCUIT-5/` (harnais CIRCUIT-P réutilisé, fixtures
+  RÉELLES du 06/09, zéro base touchée — `qa/circuit5_captures.mjs`) : 01 avant · 02 après
+  (lignes à décider) · 03 verrou cassé (ligne rouge V3b/V4b, variante composée par le VRAI
+  composer) · 04 la carte au détail du 68.
+
+**6.3 — VERROUS.md** : une page pour Vic, un verrou par ligne (la phrase, ce qui le
+garantit, où ça se lit), les cinq phrases du mandat rattachées à leurs verrous, et les
+gestes qui restent. Un test vérifie que chaque verrou y a sa ligne.
+
+## Définition de fini — l'état
+
+- `labuse circuit verrous` existe, joue les 16 verrous des lots 1-5, **passe sur la base
+  locale (0 cassé, 3 à décider)** ; `deploy.sh` le joue en porte. ✔
+- Chaque verrou prouvé cassé sur un cas construit puis vert — preuves REJOUABLES dans
+  `tests/verrous/` (65 tests), citées lot par lot ci-dessus. ✔
+- **68 = 68 = 68** partout (vitrine SQL, prédicat, page) ; aucune table lue hors carte
+  (statique + exécution) ; TABLES-ORPHELINES.md livré (32, 1,56 Go) avec `labuse tables
+  purger` — rien de supprimé. ✔
+- 15 cartes × 24 communes : population et CatNat à attendus producteur RÉELS, 13 cartes
+  « à valider » avec proposition. ✔
+- VERROUS.md se lit sans le code. ✔
+- Suites : pytest **2680 passed** (4 échecs = la baseline d'accumulation, inchangés),
+  vitest 181, tsc 0. Rien mergé, branche poussée. ✔
 
 ## Preuves des verrous (cassé → vert)
 
