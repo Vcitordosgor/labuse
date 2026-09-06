@@ -453,6 +453,43 @@ def ingest_georisque_alea(session, bbox, commune, run_id, sids, insee) -> int:
     return n
 
 
+def reclassifier_alea_niveau(session, log_fn=print) -> dict:
+    """RETOURS-21 A — aligner la donnée SERVIE sur le mapping corrigé (R6), sans re-tirer le WFS.
+
+    Les zones `georisque_alea` ingérées AVANT le correctif R6 portent un `niveau` faux (les degrés
+    ELEVE/TRES_ELEVE avaient été rangés « moyen » par l'ancien repli) ; la classe d'AFFICHAGE avait
+    été corrigée (R6), mais le `niveau` de cascade — celui qui pilote le score — est resté périmé.
+    Le mandat demande de corriger à la SOURCE (le mapping), l'affichage lisant la donnée corrigée.
+    Comme le mapping (`_normalise_alea`/`_classe_alea`) est déjà juste dans le code, on RECALCULE
+    `niveau`/`classe`/`residuel` de chaque zone à partir de son `degre` STOCKÉ, avec ces mêmes
+    fonctions : le résultat est identique à une ré-ingestion, mais déterministe, hors réseau, et
+    idempotent (rejouer ne change plus rien une fois aligné). N'écrit QUE les zones dont le niveau
+    diffère du mapping — on nomme ce qui bouge."""
+    rows = session.execute(text(
+        "SELECT DISTINCT attrs->>'degre' AS degre, attrs->>'niveau' AS niveau, attrs->>'classe' AS classe "
+        "FROM spatial_layers WHERE kind='georisque_alea' AND attrs ? 'degre'")).mappings().all()
+    change: dict[str, int] = {}
+    for r in rows:
+        degre = r["degre"]
+        if not degre:
+            continue
+        niveau, residuel = _normalise_alea(degre)
+        classe = _classe_alea(degre)
+        if r["niveau"] == niveau and r["classe"] == classe:
+            continue   # déjà aligné sur le mapping — on n'y touche pas
+        n = session.execute(text(
+            "UPDATE spatial_layers SET attrs = attrs || jsonb_build_object("
+            "  'niveau', CAST(:niv AS text), 'classe', CAST(:cls AS text), 'residuel', CAST(:res AS boolean)) "
+            "WHERE kind='georisque_alea' AND attrs->>'degre' = :deg"),
+            {"niv": niveau, "cls": classe, "res": residuel, "deg": degre}).rowcount
+        change[degre] = n
+        log_fn(f"  {degre}: {r['niveau']}→{niveau} (classe {r['classe']}→{classe}) · {n} zones")
+    session.flush()
+    total = sum(change.values())
+    log_fn(f"✓ reclassification aléas : {total} zones réalignées sur le mapping ({len(change)} degrés)")
+    return {"zones_realignees": total, "par_degre": change}
+
+
 def ingest_parc_national(session, commune, run_id, sids) -> int:
     """Parc National (Région ODS pnrun_2021) → subtype 'coeur' | 'adhesion'.
 
