@@ -179,24 +179,6 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | `evenements_proprietaire_liste` | liste | Événements propriétaire (BODACC) | bodacc, sirene_etablissements (SIRENE géolocalisé — publication mensuelle INSEE), recherche_entreprises_dinum | moteur `v_score` · src/labuse/api/app.py:_q_v2_fiche (score_v, evenement) — table lue : parcel_v_score + bodacc_* | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *événements datés du score V (procédures, radiations) — faits publics, chacun sourcé* | | | | | |
 
-## Confiance données
-
-*Robinet `fiche_parcelle_confiance` — route `/parcels/{idu}`*
-
-| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
-|---|---|---|---|---|---|---|---|
-| `verdict_icd` | texte | Confiance données | interne (aucun réservoir) | moteur `cascade` · src/labuse/api/app.py:3283 (bloc icd) | run | servie · non déterminée · non calculée | nulle part ailleurs |
-| | | *verdict de complétude des couches + liste des manquants* | | | | | |
-
-## Solaire (rosace, productible)
-
-*Robinet `fiche_parcelle_solaire` — route `/parcels/{idu}`*
-
-| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
-|---|---|---|---|---|---|---|---|
-| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Fiche soleil (photo toit + rosace) » |
-| | | *productible PVGIS SARAH3 gelé au run du builder (parcel_solar)* | | | | | |
-
 ## Division (copropriétés/lots)
 
 *Robinet `fiche_parcelle_division` — route `/parcels/{idu}`*
@@ -207,3 +189,21 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *présence dans division_or_candidates — run figé q_v10, workflow de revue* | | | | | |
 | `coproprietes_liste` | liste | Copropriétés (RNIC) | rnic_anah | passe-plat · src/labuse/api/app.py:_q_v2_fiche (coproprietes) — table lue : rnic_coproprietes | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *copropriétés immatriculées rattachées à la parcelle (lots, syndic) — RNIC/ANAH* | | | | | |
+
+## Solaire (rosace, productible)
+
+*Robinet `fiche_parcelle_solaire` — route `/parcels/{idu}`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Fiche soleil (photo toit + rosace) » |
+| | | *productible PVGIS SARAH3 gelé au run du builder (parcel_solar)* | | | | | |
+
+## Confiance données
+
+*Robinet `fiche_parcelle_confiance` — route `/parcels/{idu}`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `verdict_icd` | texte | Confiance données | interne (aucun réservoir) | moteur `cascade` · src/labuse/api/app.py:3283 (bloc icd) | run | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *verdict de complétude des couches + liste des manquants* | | | | | |

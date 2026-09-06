@@ -11,7 +11,10 @@ from labuse import regles
 
 #: gaps ASSUMÉS (documentés au CR lot 4) : témoin non constructible sans le builder gelé / la
 #: source réseau — la fiche reste honnête (choix écrit), le témoin viendra avec son chantier.
-SANS_TEMOIN_ASSUME = {"divisible_classe", "ecart_candidat_pct", "evenements_proprietaire_liste"}
+SANS_TEMOIN_ASSUME = {"divisible_classe", "ecart_candidat_pct", "evenements_proprietaire_liste",
+                      # FICHE-1 lot 1 — classification toiture calibrée à l'œil (RETOURS-15) : le
+                      # témoin numérique exige le raster MNH LiDAR (source réseau), pas constructible.
+                      "nature_toit"}
 
 
 def test_tout_conforme_ou_choix_a_son_temoin():

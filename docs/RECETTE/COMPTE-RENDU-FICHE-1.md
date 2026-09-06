@@ -93,3 +93,24 @@ Les 5 données réglementaires demandées par Vic **existaient déjà** au regis
 - **`peb_zone`** — Plan d'exposition au bruit (PEB, zones A/B/C/D). Source attendue : **PEB de Roland-Garros / Pierrefonds** (arrêté préfectoral).
 - **`zonage_abc_logement`** — Zonage A/B/C (logement locatif), maille commune. Source attendue : **arrêté de zonage A/B/C**.
 - **Vérifs** : `test_fiche1_sources_attendues.py` 2/2 (source absente + source nommée + jamais servies) · guard `test_reglementaires_circuit3_declarees` vert · `circuit verrous` 16/16 vert.
+
+### Lot 8 — Recette ✅
+
+**Ordre des tiroirs (canonique / registre)** aligné exactement sur le mandat : identité, urbanisme, dispositifs, score, constructibilité, **le bien**, risques, marché, réseaux, autour, propriétaire, division, solaire, confiance (robinets.py réordonné, doc `FICHE-PARCELLE-DONNEES.md` régénéré — vérifié section par section). Le front rend son sous-ensemble dans ses deux groupes UX (« Le terrain » / « Le contexte ») cohérents avec cet ordre ; **un tiroir vide ne s'affiche pas** (chaque section s'auto-omet : `le_bien=null`, `aleas` absent, `taxe_amenagement=null`, etc.).
+
+**Fiches de règle CIRCUIT-4** (régression attrapée par la suite complète — `test_toute_donnee_moteur_a_sa_fiche`) : toute donnée `calcul="moteur"` doit avoir sa fiche. Ajoutées : `taxe_amenagement_estimee_eur` → fiche `taxe_amenagement_eur.py` (même calculer), `tcsp_stationnement_allege` → fiche `distance_arret_m.py` (même drapeau L151-36) ; 4 fiches neuves (`nature_toit`+`pente_toit_deg`, `surface_libre_sol_m2`, `aleas_parcelle_liste`, `radar_annonces_liste`), chacune adossée à sa référence/son choix et à un témoin (le toit, calibré à l'œil, exempté via `SANS_TEMOIN_ASSUME`). CIRCUIT-4 19/19.
+
+**Captures avant/après** — `docs/RECETTE/FICHE-1/{avant,apres}/`, 3 parcelles :
+- **97411000AC0079** (bâtie, DPE, PPR) : « Le bien » (emprise 399 m², 1 bâtiment, hauteur 18,2 m, surface libre 718 m², **DPE D / GES B 2026**) ; « Risques » (aléas détaillés + réf. PPR) ; Constructibilité (taxe) ; Marché.
+- **97401000AI0073** (nue) : « Le bien » = terrain nu.
+- **97415000AB0790** (rayon TCSP) : « Réseaux » avec **Stationnement allégé (TCSP) — dans le rayon 800 m · Karting · 120 m** + plafond L151-34 à 36.
+- Avant : les mêmes tiroirs SANS « Le bien », sans DPE, sans aléas détaillés, sans badge TCSP, sans taxe, sans annonces Radar (frontend `origin/main` monté le temps de la capture, puis restauré). Harnais `frontend/qa/fiche1_captures.mjs`.
+- **PIÈGE rencontré (écrit)** : des serveurs périmés d'AUTRES worktrees squattaient `:8000` (API sans mes champs) et `:5173` (vite `labuse-s1b`) → la fiche se chargeait sans les nouveaux tiroirs. Résolu en tuant les deux ports et en relançant l'API (`PYTHONPATH=src`) + vite depuis `labuse-audit`.
+
+### Suites finales & rien mergé
+
+- `labuse circuit verrous` : **16/16 vert**, 0 cassé (178 données, +7 vs départ 171).
+- `labuse registre fiche parcelle` : régénéré, ordre conforme.
+- **vitest** : 187 passed (43 fichiers) — inchangé vs départ.
+- **pytest** (complet) : **2716 passed, 4 failed, 40 skipped** — les 4 échecs sont EXACTEMENT les 4 pré-existants (courrier_boucle ×2, dashboard, front_reliquats) ; **0 régression** (+27 tests neufs vs 2689 au départ). Une régression a été attrapée puis corrigée en cours de route : les 7 données `moteur` neuves manquaient leur fiche CIRCUIT-4 (voir ci-dessus) — `test_toute_donnee_moteur_a_sa_fiche` de nouveau vert.
+- Rien mergé : `feat/fiche-1`, 9 commits (mandat + 8 lots), poussés, main intacte.

@@ -2,7 +2,9 @@
 from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
-    donnees=("taxe_amenagement_eur",),
+    # FICHE-1 lot 5 — taxe_amenagement_estimee_eur (fiche parcelle) partage CE calcul : même
+    # calculer(), assiette = surface de plancher du scénario table rase, taux communal PUBLIC.
+    donnees=("taxe_amenagement_eur", "taxe_amenagement_estimee_eur",),
     formule_codee=(
         "Assiette = surface_taxable × valeur forfaitaire de l'année (892 €/m² hors IdF, millésime "
         "2026 du YAML daté) + forfaits d'installations (piscine 251 €/m², PV au sol 10 €/m², "
