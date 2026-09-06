@@ -137,3 +137,7 @@ commandes:
   - motif: "AZI / TRI — inondation*"
     label: azi_tri
     argv: ["labuse", "ingest-azi-tri"]
+  # ── SOURCES-1 lot 3 — sols et bruit ──
+  - motif: "DEAL — cartes de bruit stratégiques*"
+    label: bruit_cartes
+    argv: ["labuse", "ingest-bruit-cartes"]

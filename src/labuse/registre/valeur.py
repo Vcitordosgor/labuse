@@ -55,6 +55,10 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "peb_dgac": "PEB — plans d'exposition%",
     "zonage_abc_dhup": "Zonage ABC des communes%",
     "zppa_culture": "ZPPA — zones de présomption%",
+    # SOURCES-1 lot 3 — sols et bruit
+    "georisques_sis": "Géorisques — secteurs d'information%",
+    "georisques_casias": "Géorisques — CASIAS%",
+    "deal_bruit_cartes": "DEAL — cartes de bruit%",
     # SOURCES-1 lot 2 — nature et eau
     "deal_dpf_dpe": "Ravines — domaine public fluvial%",
     "deal_zones_humides": "Zones humides — inventaires DEAL%",

@@ -101,9 +101,43 @@ Cinq sources. **Découverte qui change le lot** : le WFS Carmen du nœud 29 (`DE
 - Front : familles « Contraintes » (+ Ravines et reculs) et **« Nature » neuve** (Zones humides, Espaces naturels protégés, Cultures déclarées), DPF en trait d'eau, thème sombre/clair, légende, « i » complets, toast « secteurs partiels » pour les ZH. Fiche commune : ligne « Inondation (AZI/TRI) » au bloc Risques.
 - Tests `tests/test_sources1_lot2.py` (12) ; compteurs figés mis à jour (MODE_ET_CADENCE 94, sentinelle 85, couches 29). Variable candidate scoring NOTÉE (part RPG canne / friche possible — banc K0, jamais branchée sans banc).
 
+## Lot 3 — Les sols et le bruit (clos)
+
+Trois sources, dont deux DÉJÀ à moitié en base (découverte) : le canal Géorisques SSP
+(`/api/v1/ssp`) ingérait déjà SIS et CASIAS dans le kind `sol_pollue` — le lot les fait entrer
+comme SOURCES à part entière (réservoirs logiques, doctrine ER/EBC du lot 1). **Verrous : 16/16.**
+
+### Ce qui est entré
+
+| Source | Réservoir | Données réelles (mesurées 07/09) | État |
+|---|---|---|---|
+| Géorisques — SIS | `georisques_sis` (logique, `sol_pollue`/sis) | **4 périmètres MultiPolygon** (Le Port, Saint-Benoît, Saint-Louis, Sainte-Marie) ; id_sis absent 1/4 (dit au filtre) | servie |
+| Géorisques — CASIAS | `georisques_casias` (logique, `sol_pollue`/casias+instruction) | **453 CASIAS + 56 instructions** (480 points géocodés, 29 emprises — part dite) | servie |
+| DEAL — cartes de bruit stratégiques | `deal_bruit_cartes` (kind `bruit_carte`) | **6 zones de dépassement** type c (Lden 68/Ln 62, RN/RD/VC — WFS Carmen vivant) | servie |
+| Classement sonore ITT (existante, mise d'équerre) | `bruit_itt_cerema` | 1 004 bandes cat1-5, largeur réglementaire `sect_bruit_m` (flux Cerema RÉEL, pas une reconstruction BD TOPO) | servie |
+
+- **SIS/CASIAS sans API dédiée** (vérifié : /api/v1/sis et /api/v1/casias → 404 ; pages Géorisques sans lien d'export lisible) — le canal réel est `/api/v1/ssp`, déjà sondé (témoin bi-commune). Réservoirs LOGIQUES, aucune table dupliquée.
+- **Classement sonore : meilleur que le mandat.** Le mandat prévoyait des tampons BD TOPO « reconstitués » ; la réalité en base est le flux Cerema Cartagène (axes classés + largeur réglementaire `sect_bruit_m` par tronçon, arrêtés 14-15/12/2023) — les bandes sont matérialisées depuis la donnée d'origine, rien à reconstituer. La couche carte manquait : branchée (violet gradué cat 1→5).
+- **Cartes de bruit stratégiques** : type c ingérées (dépassements) ; **type b NON ingérées (doublon vérifié des bandes sect_bruit)** ; type a (isophones) écartées (exposition, pas d'effet réglementaire propre). Le « i » dit « ≠ classement sonore réglementaire ».
+- **Coût d'isolation au bilan : PAS de chiffre.** L'arrêté fixe des exigences d'isolement (DnT,A,tr), pas un coût €/m² — aucun montant sourcé disponible → le coût reste porté par la VIGILANCE (motif cascade + fiche), jamais un chiffre inventé.
+
+### La mécanique (un commit)
+
+- **Catalogue 97 sources** ; vanne `bruit_cartes` ; ingestion neuve `bruit_cartes.py` (WFS Carmen → ogr2ogr) ; RAISONS sentinelle ×3 (canal SSP déjà sondé ; Carmen sans en-tête).
+- **Cascade** (effet au prochain run candidat) : SIS `severity_sis` moyen → **FORT**, motif citant **L556-2 ET L125-7** (information écrite de l'acheteur/locataire) ; CASIAS : motif « inventaire historique, **pas une pollution avérée** » ; sources des verdicts = lignes SIS/CASIAS propres (SRC_SIS/SRC_CASIAS).
+- **Fiche de règle** `regles/sis_information_sols.py` — **L125-7 CE lu sur Légifrance, extrait cité** (« le vendeur ou le bailleur… est tenu d'en informer par écrit l'acquéreur ou le locataire »), version 25/08/2021.
+- **Registre** : `sis_classe`, `casias_statut`, `sols_parcelle` + 4 couches (`sis_couche`, `casias_couche`, `bruit_couche`, `bruit_carte_couche`) ; robinets `couche_sis/casias/bruit/bruit_carte` + `fiche_parcelle_sols` ; carte table→réservoir, pont slug, reservoirs.csv (93 lignes).
+- **Servi** : fiche parcelle clé `sols` (`_sols_block` — prouvé sur base réelle : 97407000AT0063, Le Port : SIS « SOC INDUSTRIELLE DE BOURBON » + instruction clôturée SUR PLACE) ; PDF Dossier section « SOLS (SIS/CASIAS) » ; carte : kinds virtuels `sis`/`casias` (sol_pollue filtré) + `bruit_route` + `bruit_carte`, famille « Contraintes » (bruit) et « Risques et protections » (sols), légende groupe « Sols », thème sombre/clair.
+- **Filtres joués** : bruit_itt_cerema **ok**, bruit_cartes **ok**, sis/casias **avertissements** (id_sis 1/4 absent ; 94 % de points sans emprise — l'état réel, dit).
+- **Tests** : `tests/test_sources1_lot3.py` (8) ; compteurs figés 94→97 (modes), 85→88 (sentinelle), 29→33 (couches).
+
 ## Décisions prises en autonomie
 
 - Étape 0 : `main` local étant extrait dans un autre worktree, la branche part de `origin/main` (strictement identique, `ea6fd161`).
+- Lot 3 · SIS/CASIAS : réservoirs LOGIQUES sur le kind `sol_pollue` (canal SSP existant) — pas de table dupliquée ; les endpoints dédiés /api/v1/sis et /api/v1/casias n'existent pas (404 vérifié), les pages d'export Géorisques n'exposent aucun lien lisible ; le canal SSP est déjà sondé (témoin bi-commune), pas de seconde sonde sur le même flux.
+- Lot 3 · CBS : type b (« secteurs affectés ») NON ingérées — doublon vérifié des bandes `sect_bruit_m` du classement Cerema ; type a (isophones) écartées (cartographie d'exposition sans effet réglementaire propre) ; type c (dépassements) seules servies, « ≠ classement » dit partout.
+- Lot 3 · coût d'isolation acoustique : AUCUN montant au bilan promoteur — l'arrêté du classement fixe des exigences d'isolement, pas un coût ; le renchérissement reste porté par la vigilance (motif cascade + fiche), conformément à « aucun seuil sans référence ni mesure ».
+- Lot 3 · réservoir « deal_classement_sonore » du mandat : l'identifiant canonique EXISTANT `bruit_itt_cerema` est conservé (renommer un slug de la carte churne data_sources/reservoirs/pont sans rien servir de plus) — le mandat est satisfait par la mise d'équerre de la ligne existante.
 - Lot 1 · ER ≥ 50 % : le mandat (« RÉDHIBITOIRE au-delà de 50 % ») CONTREDIT M129 P1.1 (« l'ER n'exclut plus », soft fort). Le mandat étant l'instruction la plus récente de Vic, l'exclusion est rétablie ; le motif conserve « servitude levable » ; le test M129 est mis à jour et la réversion est écrite dans la fiche de règle.
 - Lot 1 · inventaire SUP par « flux Atom » : le flux Atom `download-feed` n'est pas filtrable par territoire ; l'inventaire catégoriel passe par l'API JSON du MÊME service (`api/document?documentType[]=SUP&grid=974`), sondée en `temoin`. C'est le même amont, en lisible.
 - Lot 1 · réservoirs ER/EBC : réservoirs LOGIQUES sur la table existante `spatial_layers(plu_gpu_prescription)` (familles typepsc 05/01), remplis par le canal GPU existant — pas de table dupliquée pour la même donnée ; la couche carte les sert par kinds virtuels `er`/`ebc` (filtre subtype). La famille ER de la CASCADE inclut le rescue par libellé ; la couche carte affiche le standard (05), l'écart (6 ER de Saint-Louis codés 02) est mesuré au filtre.

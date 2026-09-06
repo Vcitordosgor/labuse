@@ -272,7 +272,8 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # temoin) ; ABC entre au SEED (api data.gouv).
     # SOURCES-1 lot 2 — +4 : DPF/zones humides/ENP compléments (raisons : WFS Carmen sans
     # en-tête de version) + AZI/TRI (SEED temoin GASPAR, deux chef-lieux).
-    assert len(noms) == 85
+    # SOURCES-1 lot 3 — +3 raisons (SIS/CASIAS canal SSP, CBS Carmen sans en-tête).
+    assert len(noms) == 88
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

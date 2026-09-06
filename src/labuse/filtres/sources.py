@@ -690,3 +690,87 @@ _ajout(_f(
                      "100 % (mesuré 38 460/38 460 au 07/09 — CSA 12 464)",
                      "(attrs->>'code_cultu') IS NOT NULL", 99.0),
     ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 3 — les sols et le bruit ══════════════════════════
+# Mesures 07/09/2026 : sol_pollue = 4 SIS (MultiPolygon, id_sis présent 3/4), 453 CASIAS
+# (435 points + 18 emprises) + 56 instructions ; bruit_route = 1 004 bandes cat1-5 ;
+# bruit_carte = 6 zones de dépassement (type c, RN/RD/VC × Lden/Ln).
+
+# ── SIS (réservoir logique georisques_sis sur sol_pollue/sis) ──
+_ajout(_f(
+    source="georisques_sis", libelle="Géorisques — SIS",
+    table="spatial_layers", where="kind = 'sol_pollue' AND subtype = 'sis'",
+    cle=("id",), geom_col="geom",
+    source_motif="Géorisques — secteurs d'information%", portee_run=True, a_job=False,
+    propres=[
+        # un SIS est un PÉRIMÈTRE réglementaire : une géométrie ponctuelle serait une anomalie.
+        c.compte_mauvais(
+            "d_sis_polygone", "distribution", "bloquant",
+            "SIS non surfacique",
+            "0 SIS ponctuel/linéaire (périmètre réglementaire — mesuré 0/4 au 07/09)",
+            "ST_Dimension(geom) <> 2"),
+        # id_sis officiel absent sur 1/4 (Le Port, fiche infosols sans identifiant) — état réel.
+        c.compte_mauvais(
+            "d_sis_id", "completude", "avertissant",
+            "SIS sans identifiant officiel (id_sis)",
+            "≤ 1 (mesuré 1/4 au 07/09 — fiche infosols sans id_sis)",
+            "(attrs->>'id_sis') IS NULL OR (attrs->>'id_sis') = ''"),
+    ]))
+
+# ── CASIAS (réservoir logique georisques_casias sur sol_pollue/casias+instruction) ──
+_ajout(_f(
+    source="georisques_casias", libelle="Géorisques — CASIAS",
+    table="spatial_layers", where="kind = 'sol_pollue' AND subtype IN ('casias', 'instruction')",
+    cle=("id",), geom_col="geom",
+    source_motif="Géorisques — CASIAS%", portee_run=True, a_job=False,
+    propres=[
+        # l'identifiant SSP trace chaque site vers sa fiche Géorisques — jamais nul.
+        c.couverture("d_casias_identifiant", "completude", "bloquant",
+                     "Part des sites avec identifiant SSP",
+                     "≥ 99 % (mesuré 509/509 au 07/09)",
+                     "(attrs->>'identifiant_ssp') IS NOT NULL", 99.0),
+        # la part d'emprises réelles (vs points géocodés) est DITE — état réel, pas un seuil.
+        c.part_max("d_casias_points", "distribution", "avertissant",
+                   "Part des sites en point géocodé (sans emprise)",
+                   "≤ 97 % (mesuré ~94 % au 07/09 — 480 points / 29 emprises)",
+                   "ST_Dimension(geom) < 2", 97.0),
+    ]))
+
+# ── Classement sonore (réservoir bruit_itt_cerema — filtre riche, label vanne existant) ──
+# NB : pas de commune_nom_col — le flux Cerema porte SES libellés (majuscules sans accents,
+# « SAINT JOSEPH »/« SAINT-JOSEPH ») ; le rattachement aux 24 se lit par insee_comm (contrôle propre).
+_ajout(_f(
+    source="bruit_itt_cerema", libelle="Classement sonore ITT (Cerema)",
+    table="spatial_layers", where="kind = 'bruit_route'",
+    cle=("id",), geom_col="geom",
+    source_motif="Classement sonore ITT%", portee_run=True, a_job=False,
+    propres=[
+        c.domaine("d_bruit_categories", "subtype", ("cat1", "cat2", "cat3", "cat4", "cat5"),
+                  "bloquant", "Catégories du classement (1-5)",
+                  "catégories de l'arrêté seulement (R571-32 CE)"),
+        # chaque bande est matérialisée par la largeur réglementaire sect_bruit_m (> 0).
+        c.compte_mauvais(
+            "d_bruit_bande", "plage", "bloquant",
+            "Bande sans largeur réglementaire",
+            "0 bande sans sect_bruit_m > 0 (mesuré 0/1 004 au 07/09)",
+            "COALESCE((attrs->>'sect_bruit_m')::float, 0) <= 0"),
+        # code INSEE 974xx présent sur chaque bande (rattachement commune du flux).
+        c.couverture("d_bruit_insee", "rattachement", "bloquant",
+                     "Part des bandes rattachées à une commune (insee_comm)",
+                     "≥ 99 % (mesuré 1 004/1 004 au 07/09)",
+                     "(attrs->>'insee_comm') LIKE '974%'", 99.0),
+    ]))
+
+# ── Cartes de bruit stratégiques (réservoir deal_bruit_cartes, label vanne bruit_cartes) ──
+_ajout(_f(
+    source="bruit_cartes", libelle="DEAL — cartes de bruit stratégiques (CBS)",
+    table="spatial_layers", where="kind = 'bruit_carte'",
+    cle=("id",), geom_col="geom",
+    source_motif="DEAL — cartes de bruit%", portee_run=False,
+    propres=[
+        c.domaine("d_cbs_subtypes", "subtype",
+                  ("rn_lden", "rn_ln", "rd_lden", "rd_ln", "vc_lden", "vc_ln"),
+                  "bloquant", "Couches type c (dépassements Lden/Ln, RN/RD/VC)",
+                  "6 sous-couches fixées à l'ingestion — type b/a jamais servies (doublon/exposition)"),
+    ]))

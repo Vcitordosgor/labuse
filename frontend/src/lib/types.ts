@@ -469,6 +469,13 @@ export interface Fiche {
     peb: { zone: string; part_pct?: number; libelle?: string | null; detail?: string }
     sup: { categorie: string; libelle: string | null; part_pct: number }[] | null
   } | null
+  // SOURCES-1 lot 3 — « Sols » (SIS / CASIAS), producteur _sols_block. null = couche non ingérée.
+  sols?: {
+    sis: { nom: string | null; part_pct: number; identifiant_ssp: string | null; fiche_risque: string | null } | null
+    sis_classe: 'dans' | 'hors'
+    casias: { nom: string | null; subtype: string; statut: string | null; distance_m: number; sur_place: boolean; fiche_risque: string | null } | null
+    casias_statut: 'sur_place' | 'proche_100m' | 'hors'
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

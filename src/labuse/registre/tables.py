@@ -79,6 +79,17 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                                     "site_inscrit/reserve_naturelle — purge par subtype)"),
     "georisques_azi_tri": Rt(("azi_communes",),
                              millesime="GASPAR azi+tri par commune (07/09/2026)"),
+    # ── SOURCES-1 lot 3 — les sols et le bruit ──────────────────────────────────────
+    "georisques_sis": Rt(("spatial_layers",), couches=("sol_pollue",),
+                         millesime="4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026",
+                         note="réservoir LOGIQUE sur le subtype sis du kind sol_pollue "
+                              "(même canal que georisques_ssp)"),
+    "georisques_casias": Rt(("spatial_layers",), couches=("sol_pollue",),
+                            millesime="453 CASIAS + 56 instructions (canal SSP, 07/09/2026)",
+                            note="réservoir LOGIQUE sur les subtypes casias/instruction du kind "
+                                 "sol_pollue (même canal que georisques_ssp)"),
+    "deal_bruit_cartes": Rt(("spatial_layers",), couches=("bruit_carte",),
+                            millesime="CBS 2022 — dépassements Lden/Ln (type c, RN/RD/VC)"),
     "sudocuh": Rt(("sudocuh_procedures",), millesime="Sudocuh — état au 31/12/2024"),
     "sitadel": Rt(("sitadel_permits", "via_permits_geo"), millesime="2026-07"),
     "qpv_2024": Rt(("spatial_layers",), couches=("qpv",), millesime="génération 2024"),

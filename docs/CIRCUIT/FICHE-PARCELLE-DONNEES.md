@@ -4,6 +4,19 @@
 
 Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient (source et millésime servis), par quel chemin (moteur nommé ou passe-plat), sa portée (`run` = change à la bascule · `live` = à l'injection · `projet` = saisie du client), ses états possibles, et où ailleurs elle s'affiche.
 
+## Sols (SIS / CASIAS)
+
+*Robinet `fiche_parcelle_sols` — route `/parcels/{idu} (clé sols)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `sols_parcelle` | liste | Sols (SIS/CASIAS, parcelle) | georisques_sis (4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026), georisques_casias (453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026) | passe-plat · src/labuse/api/app.py:_sols_block — table lue : spatial_layers (kind=sol_pollue) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *l'état des sols de la parcelle : périmètre SIS intersecté, site CASIAS/instruction le plus proche (≤ 100 m) — intersections live des couches servies, mêmes règles que la cascade sol_pollue* | | | | | |
+| `sis_classe` | classe — domaine : dans, hors | Secteur d'information sur les sols (SIS) | georisques_sis (4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026) | passe-plat · src/labuse/api/app.py:_sols_block (sis) — table lue : spatial_layers (kind=sol_pollue, subtype=sis) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle dans un périmètre SIS (étude de sols obligatoire au changement d'usage L556-2 CE ; information écrite de l'acheteur/locataire obligatoire L125-7 CE)* | | | | | |
+| `casias_statut` | classe — domaine : sur_place, proche_100m, hors | Ancien site industriel (CASIAS) | georisques_casias (453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026) | passe-plat · src/labuse/api/app.py:_sols_block (casias) — table lue : spatial_layers (kind=sol_pollue, subtypes casias/instruction) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *site CASIAS/instruction sur la parcelle ou à moins de 100 m — inventaire historique, pas une pollution avérée (le libellé le dit)* | | | | | |
+
 ## Dispositifs et périmètres (droit des sols)
 
 *Robinet `fiche_parcelle_droit_sols` — route `/parcels/{idu} (clé dispositifs)`*

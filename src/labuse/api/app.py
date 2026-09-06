@@ -3671,11 +3671,59 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # FICHE-1 lot 6 — les annonces Radar RATTACHÉES à la parcelle (validées), datées, avec prix
         # demandé, statut (en cours / retirée / vendue), lien fiche annonce + écart demandé/acté.
         "radar_annonces": _radar_annonces_block(db, idu),
+        # SOURCES-1 lot 3 — « Sols » : périmètre SIS intersecté (obligations L556-2/L125-7
+        # dites), site CASIAS/instruction le plus proche (≤ 100 m) — mêmes règles que la
+        # cascade sol_pollue. None si couche non ingérée.
+        "sols": _sols_block(db, idu),
         # SOURCES-1 lot 1 — « Dispositifs et périmètres » : ER (part), EBC (part), DPU, zone PEB,
         # SUP par catégorie — intersections live des couches servies, mêmes familles/typepsc que
         # la cascade (source unique cascade_rules.yaml). None si aucune couche ingérée.
         "dispositifs": _dispositifs_block(db, idu),
     }
+
+
+_SOLS_SQL = text("""
+SELECT sl.subtype, coalesce(sl.attrs->>'statut', '') AS statut, sl.name,
+       sl.attrs->>'identifiant_ssp' AS identifiant_ssp,
+       sl.attrs->>'fiche_risque' AS fiche_risque,
+       ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
+         / NULLIF(ST_Area(p.geom_2975), 0) AS part,
+       ST_Distance(p.geom_2975, sl.geom_2975) AS dist
+FROM parcels p
+JOIN spatial_layers sl
+  ON sl.kind = 'sol_pollue' AND ST_DWithin(p.geom_2975, sl.geom_2975, 100)
+WHERE p.idu = :idu
+ORDER BY ST_Distance(p.geom_2975, sl.geom_2975)
+""")
+
+
+def _sols_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 3 — l'état des sols de la parcelle (registre `sols_parcelle`).
+
+    SIS : périmètre intersecté → obligations DITES (étude de sols au changement d'usage
+    L556-2 CE, information écrite de l'acheteur/locataire L125-7 CE). CASIAS/instruction :
+    le site le plus proche ≤ 100 m (même rayon que la cascade sol_pollue) — inventaire
+    historique, pas une pollution avérée. None si le kind n'est pas ingéré."""
+    present = db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE kind = 'sol_pollue')")).scalar()
+    if not present:
+        return None
+    rows = db.execute(_SOLS_SQL, {"idu": idu}).mappings().all()
+    sis = None
+    casias = None
+    for r in rows:
+        if r["subtype"] == "sis" and float(r["part"] or 0) > 0 and sis is None:
+            sis = {"nom": r["name"], "part_pct": round(float(r["part"]) * 100, 1),
+                   "identifiant_ssp": r["identifiant_ssp"], "fiche_risque": r["fiche_risque"]}
+        elif r["subtype"] in ("casias", "instruction") and casias is None:
+            d = float(r["dist"] or 0)
+            casias = {"nom": r["name"], "subtype": r["subtype"],
+                      "statut": r["statut"] or None, "distance_m": round(d),
+                      "sur_place": d < 0.5, "fiche_risque": r["fiche_risque"]}
+    return {"sis": sis, "sis_classe": "dans" if sis else "hors",
+            "casias": casias,
+            "casias_statut": ("sur_place" if casias and casias["sur_place"] else
+                              "proche_100m" if casias else "hors")}
 
 
 _DISPOSITIFS_SQL = text("""
@@ -4948,7 +4996,11 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # cf. _VIRTUAL_MAP_KINDS) — jamais un kind stocké de plus pour la même donnée.
                     "dpu", "peb", "sup",
                     # SOURCES-1 lot 2 — nature et eau : DPF (marchepied), zones humides.
-                    "dpf", "zone_humide"}
+                    "dpf", "zone_humide",
+                    # SOURCES-1 lot 3 — classement sonore (bandes sect_bruit réglementaires) et
+                    # cartes de bruit stratégiques (dépassements Lden/Ln — ≠ classement). SIS et
+                    # CASIAS sont servis par les kinds VIRTUELS 'sis'/'casias' (sol_pollue filtré).
+                    "bruit_route", "bruit_carte"}
 
 # SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
 # subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
@@ -4960,6 +5012,9 @@ _VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...] | None]] = {
     "ebc": ("plu_gpu_prescription", ("01",)),
     "enp": ("ens", None),
     "rpg": ("safer", None),
+    # Lot 3 : sols — périmètres SIS et sites CASIAS/instructions du kind sol_pollue.
+    "sis": ("sol_pollue", ("sis",)),
+    "casias": ("sol_pollue", ("casias", "instruction")),
 }
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran

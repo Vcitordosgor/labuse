@@ -23,6 +23,9 @@ export const LAYER_LABEL: Record<string, string> = {
   zone_humide: 'Zones humides',
   enp: 'Espaces naturels protégés',
   rpg: 'Cultures déclarées (RPG)',
+  sis: 'Secteurs d’information sur les sols',
+  casias: 'Anciens sites industriels (CASIAS)',
+  bruit_carte: 'Cartes de bruit — dépassements',
   // risques
   risques: 'Risques PPR',
   sol_pollue: 'Sols pollués',
@@ -35,7 +38,7 @@ export const LAYER_LABEL: Record<string, string> = {
   abf: 'ABF / Monuments',
   ens: 'Espace protégé réglementaire (INPN)',
   eau: 'Eau',
-  bruit_route: 'Bruit routier',
+  bruit_route: 'Classement sonore (bruit routier)',
   // marché
   dvf: 'Marché DVF',
   sitadel: 'Permis SITADEL',
@@ -150,6 +153,14 @@ export const LAYER_INFO: Record<string, string> = {
     'Les espaces naturels protégés, un type par teinte d’entité : réserves naturelles (dont la Réserve marine et l’Étang Saint-Paul zoné), arrêtés de protection de biotope, réserves biologiques, terrains du Conservatoire du littoral, site Ramsar, sites classés et inscrits. OPPOSABLES (sauf Ramsar : engagement international, indication). Sources : INPN/patrinat (espaces protégés) + DEAL Carmen (Ramsar, sites, réserves zonées — dont la Réserve marine absente du jeu INPN). Dans l’analyse LABUSE : réserves et APB rédhibitoires, conservatoire vigilance, sites portés par la servitude AC2.',
   rpg:
     'Les parcelles agricoles déclarées à la PAC (registre parcellaire graphique, proxy IGN — 38 460 déclarations, canne à sucre dominante). INDICATION d’usage, pas une servitude : la déclaration dit ce qui est cultivé, pas ce qui est constructible. Source : RPG (IGN/ASP), millésime RPG.LATEST. Dans l’analyse LABUSE : en zone A du PLU, une sole cannière exploitée (≥ 50 % déclaré canne) est rédhibitoire ; une zone A sans déclaration est signalée « friche possible » (à vérifier sur le terrain).',
+  sis:
+    'Les secteurs d’information sur les sols (SIS) — 4 périmètres réglementaires au 974 (Le Port, Saint-Benoît, Saint-Louis, Sainte-Marie). OPPOSABLE : étude de sols obligatoire au changement d’usage (article L556-2 du code de l’environnement) et information ÉCRITE de l’acheteur ou du locataire obligatoire à la vente/location (article L125-7). Source : Géorisques (BRGM/MTE), canal sites et sols pollués — millésime de la dernière ingestion.',
+  casias:
+    'Les anciens sites industriels et activités de service (CASIAS, ex-BASIAS) : 453 sites + 56 instructions en cours au 974, pour l’essentiel des POINTS géocodés (l’emprise exacte n’est pas diffusée). C’est un INVENTAIRE HISTORIQUE — pas une pollution avérée : il dit « une activité potentiellement polluante a existé ici ». Source : Géorisques (BRGM/MTE). LABUSE signale un site à moins de 100 m de la parcelle.',
+  bruit_route:
+    'Le classement sonore des infrastructures de transports terrestres : les BANDES des secteurs affectés par le bruit, matérialisées par la largeur réglementaire de chaque axe (10 à 300 m selon la catégorie 1-5 — article R571-32 du code de l’environnement). OPPOSABLE : isolement acoustique renforcé obligatoire pour construire dans la bande. Source : Cerema (flux Cartagène, étude 2022), classement EN VIGUEUR par arrêtés préfectoraux des 14-15 décembre 2023.',
+  bruit_carte:
+    'Les cartes de bruit stratégiques (directive 2002/49/CE, échéance 2022) : les zones où les valeurs limites sont DÉPASSÉES (Lden 68 dB(A) jour, Ln 62 dB(A) nuit) le long des routes nationales, départementales et communales. INDICATION d’exposition — ce n’est PAS le classement sonore réglementaire (couche dédiée) et ce n’est pas opposable à un permis. Source : DEAL Réunion (WFS Carmen).',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

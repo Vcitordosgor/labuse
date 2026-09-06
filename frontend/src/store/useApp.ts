@@ -58,6 +58,10 @@ export interface LayerToggles {
   // SOURCES-1 lot 2 — la nature et l'eau (DEAL Carmen, RPG)
   dpf: boolean         // ravines et reculs — domaine public fluvial (marchepied 3,25 m)
   zone_humide: boolean // zones humides (inventaires DEAL par secteurs)
+  sis: boolean         // secteurs d'information sur les sols (périmètres réglementaires)
+  casias: boolean      // anciens sites industriels (inventaire historique)
+  bruit_route: boolean // classement sonore : bandes des secteurs affectés (cat 1-5)
+  bruit_carte: boolean // cartes de bruit stratégiques : dépassements Lden/Ln
   enp: boolean         // espaces naturels protégés (réserves, APB, conservatoire, Ramsar, sites)
   rpg: boolean         // cultures déclarées (RPG — canne CSA dominante)
 }
@@ -697,7 +701,7 @@ export const useApp = create<AppState>((set) => ({
   setFicheTiroir: (idu, tiroir) => set((s) => ({ ficheTiroir: { ...s.ficheTiroir, [idu]: tiroir } })),
   // M55-A (fusion A) : plus de `zonage_colorise` — la couche parcellaire unique `zonage_parcelle`
   // colore d'emblée toutes les parcelles ET révèle le code au zoom/clic.
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, tcsp: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false, vefa_neuf: false, er: false, ebc: false, dpu: false, peb: false, sup: false, dpf: false, zone_humide: false, enp: false, rpg: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, znieff: false, limites: true, anru: false, equipements: false, equipements_bpe: false, communes: true, cinquante_pas: false, alea_inondation: false, alea_mvt: false, transport: false, lignes_ht: false, tcsp: false, axes: false, renouv: false, couleurs_verdict: false, qpv: false, tva_primo: false, zfang: false, frr: false, vefa_neuf: false, er: false, ebc: false, dpu: false, peb: false, sup: false, dpf: false, zone_humide: false, enp: false, rpg: false, sis: false, casias: false, bruit_route: false, bruit_carte: false },
   // M55-B point 6 : la couche « Zonage par parcelle » COLORE la couche Parcelles (elle repeint
   // parcels-fill). L'activer seule ne montrait RIEN si « Parcelles » était décochée. On active
   // donc automatiquement sa dépendance (parcelles) au clic — dépendance technique, dite dans le « i ».

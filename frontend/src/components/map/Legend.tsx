@@ -90,7 +90,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const equipPeint = peint.equipements
   const dispoActif = layers.qpv || layers.tva_primo || layers.anru || layers.zfang || layers.frr
   // SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP)
-  const contraintesActif = layers.er || layers.ebc || layers.dpu || layers.peb || layers.sup
+  const contraintesActif = layers.er || layers.ebc || layers.dpu || layers.peb || layers.sup || layers.bruit_route || layers.bruit_carte
 
   // SECTEUR-1 (S4) — les GROUPES actifs, dans l'ordre. Seuls ceux des couches actives apparaissent.
   const groupes: { id: string; titre: ReactNode; note?: string; body: ReactNode }[] = []
@@ -235,6 +235,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       </>}
       {layers.sup && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.sup, opacity: tTheme.supOpacity + 0.35, borderColor: tTheme.sup }} />Servitude d’utilité publique (catégorie au clic)</span>}
       {layers.dpf && <span className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0" style={{ background: tTheme.dpf }} />Domaine public fluvial (marchepied 3,25 m — L2131-2)</span>}
+      {layers.bruit_route && <>
+        <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.bruitRamp.cat1, borderColor: tTheme.bruitRamp.cat1, opacity: 0.85 }} />Classement sonore cat. 1-2 (bandes 250-300 m — isolement renforcé R571-32)</span>
+        <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.bruitRamp.cat4, borderColor: tTheme.bruitRamp.cat4, opacity: 0.85 }} />Classement sonore cat. 3-5 (bandes 10-100 m)</span>
+      </>}
+      {layers.bruit_carte && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.bruitCarte, opacity: tTheme.bruitCarteOpacity + 0.35, borderColor: tTheme.bruitCarte }} />Dépassement des valeurs limites (CBS 2022 — ≠ classement)</span>}
     </div>,
   })
   // SOURCES-1 lot 2 — groupe « Nature » : zones humides, espaces protégés, cultures déclarées.
@@ -246,6 +251,16 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       {layers.zone_humide && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zoneHumide, opacity: tTheme.zoneHumideOpacity + 0.35, borderColor: tTheme.zoneHumide }} />Zone humide inventoriée (loi sur l’eau — vigilance forte)</span>}
       {layers.enp && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.enp, opacity: tTheme.enpOpacity + 0.35, borderColor: tTheme.enp }} />Espace naturel protégé (réserves/APB rédhibitoires)</span>}
       {layers.rpg && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.rpg, opacity: tTheme.rpgOpacity + 0.35, borderColor: tTheme.rpg }} />Culture déclarée (RPG — canne : sole exploitée)</span>}
+    </div>,
+  })
+  // SOURCES-1 lot 3 — groupe « Sols » : SIS (périmètres réglementaires) et CASIAS (inventaire).
+  const solsActif = layers.sis || layers.casias
+  if (solsActif) groupes.push({
+    id: 'sols', titre: 'Sols (SIS / CASIAS)',
+    note: 'SIS : secteurs d’information sur les sols (4 au 974) — étude de sols obligatoire au changement d’usage (L556-2), information écrite de l’acheteur/locataire obligatoire (L125-7). CASIAS : inventaire HISTORIQUE des activités industrielles — pas une pollution avérée.',
+    body: <div data-legend-sols className="flex flex-col gap-1.5 text-[11px] text-txt">
+      {layers.sis && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.sis, opacity: tTheme.sisOpacity + 0.35, borderColor: tTheme.sis }} />Secteur d’information sur les sols (réglementaire)</span>}
+      {layers.casias && <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border" style={{ background: tTheme.casias, borderColor: tTheme.casias }} />Ancien site industriel (CASIAS — inventaire)</span>}
     </div>,
   })
   if (dispoActif) groupes.push({

@@ -128,6 +128,15 @@ export type MapTokens = {
   enpOpacity: number
   rpg: string
   rpgOpacity: number
+  /** SOURCES-1 lot 3 — sols (SIS brun, CASIAS ocre point) et bruit (classement violet
+   *  gradué par catégorie, cartes de bruit prune). */
+  sis: string
+  sisOpacity: number
+  casias: string
+  bruitRamp: { cat1: string; cat2: string; cat3: string; cat4: string; cat5: string }
+  bruitOpacity: number
+  bruitCarte: string
+  bruitCarteOpacity: number
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -194,6 +203,12 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zoneHumide: '#2E9E8F', zoneHumideOpacity: 0.30,       // sarcelle — zones humides
     enp: '#1E8F4E', enpOpacity: 0.26,                     // vert profond — espaces protégés
     rpg: '#C9B458', rpgOpacity: 0.22,                     // paille — cultures déclarées
+    // SOURCES-1 lot 3 — sols et bruit (fond sombre)
+    sis: '#A0522D', sisOpacity: 0.34,                     // brun sol — SIS (4 périmètres)
+    casias: '#D9973B',                                    // ocre — sites CASIAS (points)
+    bruitRamp: { cat1: '#8E4DD1', cat2: '#9B6BD6', cat3: '#A98BD9', cat4: '#B8A8DC', cat5: '#C9C2DE' },
+    bruitOpacity: 0.26,                                   // violet gradué — classement sonore
+    bruitCarte: '#B03A6B', bruitCarteOpacity: 0.22,       // prune — dépassements CBS
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -260,6 +275,12 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zoneHumide: '#1F7A6E', zoneHumideOpacity: 0.30,
     enp: '#136B39', enpOpacity: 0.26,
     rpg: '#8F7E2E', rpgOpacity: 0.22,
+    // SOURCES-1 lot 3 — sols et bruit (thème clair : mêmes teintes assombries)
+    sis: '#7A3C1E', sisOpacity: 0.34,
+    casias: '#A66E1F',
+    bruitRamp: { cat1: '#6B32A8', cat2: '#7A4AB5', cat3: '#8A66BE', cat4: '#9A85C4', cat5: '#ABA0C9' },
+    bruitOpacity: 0.28,
+    bruitCarte: '#8A2450', bruitCarteOpacity: 0.24,
   },
 }
 

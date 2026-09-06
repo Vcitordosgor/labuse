@@ -734,6 +734,24 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                      source="Géoportail de l'urbanisme (prescriptions et informations des PLU) · "
                             "PEB DGAC via annexes GPU — millésime : PLU de la commune")
 
+    # ── SOURCES-1 lot 3 — SOLS (SIS / CASIAS) : même bloc que la fiche écran (_sols_block).
+    sols = fiche.get("sols")
+    if sols and (sols.get("sis") or sols.get("casias")):
+        lignes = []
+        sis = sols.get("sis")
+        if sis:
+            lignes.append(f"Secteur d'information sur les sols : {sis.get('nom') or 'SIS'} — "
+                          f"{sis.get('part_pct')} % de la parcelle ; étude de sols obligatoire au "
+                          "changement d'usage (L556-2 CE) et information ÉCRITE de l'acheteur ou du "
+                          "locataire obligatoire à la vente/location (L125-7 CE).")
+        cas = sols.get("casias")
+        if cas:
+            ou = "sur la parcelle" if cas.get("sur_place") else f"à {cas.get('distance_m')} m"
+            lignes.append(f"Ancien site industriel (CASIAS) : {cas.get('nom') or 'site'} — {ou}. "
+                          "Inventaire historique, pas une pollution avérée.")
+        _section(pdf, "SOLS (SIS / CASIAS)", lignes,
+                 source="Géorisques (BRGM/MTE) — sites et sols pollués, SIS et CASIAS")
+
     tf = fiche.get("territoire_fiscal")
     if tf:
         lignes, zf, frr = [], tf.get("zfang") or {}, tf.get("frr") or {}

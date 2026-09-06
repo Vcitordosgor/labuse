@@ -66,6 +66,8 @@ FICHE_PARCELLE_CLES: dict[str, tuple[str, ...] | tuple[str, str]] = {
     # SOURCES-1 lot 1 — bloc « Dispositifs et périmètres » (ER, EBC, DPU, PEB, SUP)
     "dispositifs": ("dispositifs_parcelle", "er_emplacement_reserve", "ebc_classe",
                     "dpu_perimetre", "peb_zone"),
+    # SOURCES-1 lot 3 — bloc « Sols » (SIS, CASIAS)
+    "sols": ("sols_parcelle", "sis_classe", "casias_statut"),
 }
 
 
@@ -87,6 +89,9 @@ COUCHE_PAR_CLE_FRONT: dict[str, str] = {
     # SOURCES-1 lot 1 — droit des sols (groupe « Contraintes »)
     "er": "er_couche", "ebc": "ebc_couche", "dpu": "dpu_couche",
     "peb": "peb_couche", "sup": "sup_couche",
+    # SOURCES-1 lot 3 — sols et bruit
+    "sis": "sis_couche", "casias": "casias_couche",
+    "bruit_route": "bruit_couche", "bruit_carte": "bruit_carte_couche",
     # SOURCES-1 lot 2 — nature et eau (groupes « Contraintes » / « Nature »)
     "dpf": "dpf_couche", "zone_humide": "zone_humide_couche",
     "enp": "enp_couche", "rpg": "rpg_couche",

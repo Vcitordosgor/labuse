@@ -355,8 +355,12 @@ layers:
       spatial_kind: sol_pollue
       proximite_m: 100          # LOT 2 data-gap : CASIAS sur la parcelle ou < 100 m (etait 50)
       severity: faible          # CASIAS/instruction : malus leger
-      severity_sis: moyen       # LOT 2 : parcelle DANS un perimetre SIS -> malus Stage 1 moyen
-      detail: "Site pollué recensé (CASIAS/instruction) à proximité — étude de sol à prévoir, coût de dépollution potentiel."
+      # SOURCES-1 lot 3 (mandat) : parcelle DANS un périmètre SIS → VIGILANCE FORTE (étude de
+      # sols obligatoire au changement d'usage L556-2 + information de l'acheteur L125-7 CE —
+      # motifs cités par la couche). Fiche de règle : regles/sis_information_sols.py.
+      severity_sis: fort
+      # SOURCES-1 lot 3 : le motif CASIAS dit « inventaire historique, pas une pollution avérée ».
+      detail: "Ancien site industriel recensé (CASIAS/instruction) à proximité — inventaire historique, pas une pollution avérée ; étude de sol à prévoir en cas de projet sensible."
   - name: sup             # LOT 4 data-gap : assiettes de servitudes d'utilité publique (GPU)
     phase: 1
     enabled: true

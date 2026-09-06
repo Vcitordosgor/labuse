@@ -882,6 +882,51 @@ SOURCES: list[dict] = [
                          "quand l'Atlas répond — la sentinelle surveille la page DAC. Rien d'ingéré, "
                          "rien d'inventé ; couche + fiche + VIGILANCE brancheront à la première "
                          "version réelle."),
+    # ── SOURCES-1 lot 3 — les sols et le bruit ──
+    # SIS et CASIAS : réservoirs LOGIQUES sur le kind sol_pollue (subtypes sis/casias), déjà
+    # rempli par le canal Géorisques SSP existant (/api/v1/ssp groupe sis+casias+instructions,
+    # ingest-georisques) — pas de table dupliquée, l'anti-doublon est la doctrine (cf. ER/EBC).
+    dict(name="Géorisques — secteurs d'information sur les sols (SIS)", category="risques",
+         provider="BRGM / MTE (Géorisques — infosols)", access_type="REST",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026",
+         documentation_url="https://www.georisques.gouv.fr/donnees/bases-de-donnees/secteurs-dinformations-sur-les-sols-sis",
+         endpoint_url="https://www.georisques.gouv.fr/api/v1/ssp",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — SIS ». "
+                     "Obligation d'information de l'acquéreur/locataire : art. L125-7 du code de l'environnement.",
+         technical_notes="SOURCES-1 lot 3 — réservoir georisques_sis : spatial_layers "
+                         "kind='sol_pollue' subtype='sis' (périmètres réglementaires MultiPolygon, "
+                         "4 au 974 : Le Port, Saint-Benoît, Saint-Louis, Sainte-Marie). Rempli par "
+                         "le canal SSP existant (labuse ingest-georisques). Cascade : VIGILANCE "
+                         "FORTE (étude de sols au changement d'usage L556-2, information de "
+                         "l'acheteur L125-7 — motifs cités). Couche carte kind virtuel 'sis'."),
+    dict(name="Géorisques — CASIAS (anciens sites industriels)", category="risques",
+         provider="BRGM / MTE (Géorisques — CASIAS, ex-BASIAS)", access_type="REST",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026",
+         documentation_url="https://www.georisques.gouv.fr/donnees/bases-de-donnees/inventaire-historique-de-sites-industriels-et-activites-de-service",
+         endpoint_url="https://www.georisques.gouv.fr/api/v1/ssp",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — CASIAS ». "
+                     "Un site CASIAS est un INVENTAIRE HISTORIQUE, pas une pollution avérée.",
+         technical_notes="SOURCES-1 lot 3 — réservoir georisques_casias : spatial_layers "
+                         "kind='sol_pollue' subtypes 'casias' (453) + 'instruction' (56), rempli "
+                         "par le canal SSP existant. Cascade : VIGILANCE (faible, ≤ 100 m) — le "
+                         "motif dit « inventaire historique, pas une pollution avérée ». Couche "
+                         "carte kind virtuel 'casias'."),
+    dict(name="DEAL — cartes de bruit stratégiques (CBS)", category="risques",
+         provider="DEAL Réunion (directive 2002/49/CE, échéance 4)", access_type="WFS/GML",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="CBS 2022 — 6 zones de dépassement Lden/Ln (RN/RD/VC)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/8-consultation-des-donnees-a62.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/Cartes_bruit_strategiques",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — cartes de bruit stratégiques ».",
+         technical_notes="SOURCES-1 lot 3 — réservoir deal_bruit_cartes : spatial_layers "
+                         "kind='bruit_carte' (type c = dépassements des valeurs limites Lden 68 / "
+                         "Ln 62 dB(A), 6 entités). ≠ classement sonore réglementaire (kind "
+                         "bruit_route, arrêtés 14-15/12/2023) — les type b (secteurs affectés) ne "
+                         "sont PAS ingérés (doublon vérifié des bandes sect_bruit Cerema), les "
+                         "type a (isophones) écartés (exposition, pas d'effet réglementaire). "
+                         "`labuse ingest-bruit-cartes`."),
 ]
 
 
@@ -1132,6 +1177,10 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)":
         ("job_sur_clic", 365, "proposee"),
     "AZI / TRI — inondation (Géorisques GASPAR)": ("job_sur_clic", 365, "proposee"),
+    # ── SOURCES-1 lot 3 — sols et bruit ──
+    "Géorisques — secteurs d'information sur les sols (SIS)": ("en_direct", None, "sans_objet"),
+    "Géorisques — CASIAS (anciens sites industriels)": ("en_direct", None, "sans_objet"),
+    "DEAL — cartes de bruit stratégiques (CBS)": ("job_sur_clic", 365, "proposee"),
 }
 
 

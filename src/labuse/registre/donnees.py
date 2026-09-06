@@ -1137,6 +1137,56 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("gpu_prescriptions_er", "gpu_prescriptions_ebc", "dpu_perimetres",
                 "peb_dgac", "sup_gpu",), portee="live", type="liste",
     table="spatial_layers (kinds plu_gpu_prescription/dpu/peb/sup)"),
+ # ══ SOURCES-1 lot 3 — les sols et le bruit ══
+ "sis_classe": C("Secteur d'information sur les sols (SIS)", "classe", "parcelle",
+    "la parcelle est-elle dans un périmètre SIS (étude de sols obligatoire au changement "
+    "d'usage L556-2 CE ; information écrite de l'acheteur/locataire obligatoire L125-7 CE)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_sols_block (sis)",
+    reservoirs=("georisques_sis",), portee="live", type="classe",
+    table="spatial_layers (kind=sol_pollue, subtype=sis)",
+    domaine=("dans", "hors"), domaine_source="périmètres SIS Géorisques (L125-6 CE)"),
+ "casias_statut": C("Ancien site industriel (CASIAS)", "classe", "parcelle",
+    "site CASIAS/instruction sur la parcelle ou à moins de 100 m — inventaire historique, "
+    "pas une pollution avérée (le libellé le dit)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_sols_block (casias)",
+    reservoirs=("georisques_casias",), portee="live", type="classe",
+    table="spatial_layers (kind=sol_pollue, subtypes casias/instruction)",
+    domaine=("sur_place", "proche_100m", "hors"),
+    domaine_source="CASIAS/instructions Géorisques (canal SSP)"),
+ "sis_couche": C("Secteurs d'information sur les sols (couche)", "couche", "commune",
+    "périmètres SIS réglementaires (4 au 974 : Le Port, Saint-Benoît, Saint-Louis, "
+    "Sainte-Marie)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (sol_pollue/sis)",
+    reservoirs=("georisques_sis",), portee="live",
+    type="couche", table="spatial_layers (kind=sol_pollue, subtype=sis)", fabrication="requete"),
+ "casias_couche": C("Anciens sites industriels (couche)", "couche", "commune",
+    "sites CASIAS et instructions en cours (inventaire historique, pas une pollution avérée)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (sol_pollue/casias)",
+    reservoirs=("georisques_casias",), portee="live",
+    type="couche", table="spatial_layers (kind=sol_pollue, subtypes casias/instruction)",
+    fabrication="requete"),
+ "bruit_couche": C("Classement sonore (couche)", "couche", "commune",
+    "bandes des secteurs affectés par le bruit (largeur réglementaire sect_bruit par axe, "
+    "catégories 1-5 — arrêtés préfectoraux des 14-15/12/2023, R571-32 CE)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (bruit_route)",
+    reservoirs=("bruit_itt_cerema",), portee="live",
+    type="couche", table="spatial_layers (kind=bruit_route)", fabrication="requete"),
+ "bruit_carte_couche": C("Cartes de bruit — dépassements (couche)", "couche", "global",
+    "zones de dépassement des valeurs limites Lden 68 / Ln 62 dB(A) des cartes de bruit "
+    "stratégiques 2022 (RN/RD/VC) — ≠ classement sonore réglementaire",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (bruit_carte)",
+    reservoirs=("deal_bruit_cartes",), portee="live",
+    type="couche", table="spatial_layers (kind=bruit_carte)", fabrication="requete"),
+ "sols_parcelle": C("Sols (SIS/CASIAS, parcelle)", "liste", "parcelle",
+    "l'état des sols de la parcelle : périmètre SIS intersecté, site CASIAS/instruction le "
+    "plus proche (≤ 100 m) — intersections live des couches servies, mêmes règles que la "
+    "cascade sol_pollue",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_sols_block",
+    reservoirs=("georisques_sis", "georisques_casias",), portee="live", type="liste",
+    table="spatial_layers (kind=sol_pollue)"),
 }
 
 #: 1.1 — le type des déclarations « auto » est dérivé de l'unité (les entrées historiques de

@@ -26,6 +26,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   // 'risques') : nature, niveau, part, référence PPR. Les AUTRES vigilances (accès, sol, SUP…)
   // restent affichées telles quelles. Même moteur que Pièges et risques (cascade servie).
   const aleas = f.aleas?.liste ?? []
+  const sols = f.sols
   const autresVig = vigilances.filter((l) => l.layer !== 'risques')
   return (
     <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
@@ -62,6 +63,45 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+        {/* SOURCES-1 lot 3 — SOLS (SIS / CASIAS) : live, mêmes règles que la cascade sol_pollue.
+            SIS = obligations DITES (L556-2, L125-7). CASIAS = inventaire, pas une pollution avérée. */}
+        {sols && (sols.sis || sols.casias) && (
+          <div data-sols>
+            <GroupLabel>Sols (SIS / CASIAS)</GroupLabel>
+            <div className="flex flex-col gap-1.5 text-[12.5px]">
+              {sols.sis && (
+                <div className="flex items-start gap-2">
+                  <span aria-hidden className="mt-1.5 shrink-0 text-st-creuser">▲</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold">Secteur d’information sur les sols</span>
+                    {sols.sis.nom && <span> — {sols.sis.nom}</span>}
+                    <span className="text-txt-mut"> · {sols.sis.part_pct} % de la parcelle</span>
+                    <div className="text-[11.5px] text-txt-mut">
+                      Étude de sols obligatoire au changement d’usage (L556-2) · information écrite de
+                      l’acheteur/locataire obligatoire à la vente ou location (L125-7).
+                    </div>
+                  </div>
+                </div>
+              )}
+              {sols.casias && (
+                <div className="flex items-start gap-2">
+                  <span aria-hidden className="mt-1.5 shrink-0 text-txt-dim">▲</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold">Ancien site industriel (CASIAS)</span>
+                    {sols.casias.nom && <span> — {sols.casias.nom}</span>}
+                    <span className="text-txt-mut">
+                      {sols.casias.sur_place ? ' · sur la parcelle' : ` · à ${sols.casias.distance_m} m`}
+                    </span>
+                    <div className="text-[11.5px] text-txt-mut">
+                      Inventaire historique — pas une pollution avérée ; étude de sol à prévoir pour un
+                      projet sensible.
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

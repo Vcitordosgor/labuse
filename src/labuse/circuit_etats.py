@@ -188,6 +188,10 @@ NOM_VERS_SLUG = {
     "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": 'peb_dgac',
     'Zonage ABC des communes (DHUP)': 'zonage_abc_dhup',
     'ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)': 'zppa_culture',
+    # SOURCES-1 lot 3 — sols et bruit :
+    "Géorisques — secteurs d'information sur les sols (SIS)": 'georisques_sis',
+    'Géorisques — CASIAS (anciens sites industriels)': 'georisques_casias',
+    'DEAL — cartes de bruit stratégiques (CBS)': 'deal_bruit_cartes',
     # SOURCES-1 lot 2 — nature et eau :
     'Ravines — domaine public fluvial (DEAL Carmen)': 'deal_dpf_dpe',
     'Zones humides — inventaires DEAL (Carmen)': 'deal_zones_humides',

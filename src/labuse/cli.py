@@ -1252,6 +1252,31 @@ def ingest_deal_carmen_cmd() -> None:
             typer.echo(f"  filtre {label} : {v.verdict}")
 
 
+@app.command("ingest-bruit-cartes")
+def ingest_bruit_cartes_cmd() -> None:
+    """SOURCES-1 lot 3 — cartes de bruit stratégiques DEAL (WFS Carmen, type c = dépassements
+    Lden/Ln) → kind bruit_carte. ≠ classement sonore réglementaire (kind bruit_route)."""
+    from . import models
+    from .ingestion import bruit_cartes
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": bruit_cartes.SOURCE_NAME}).scalar()
+        res = bruit_cartes.ingest_bruit_cartes(s, source_id=sid)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ CBS : {sum(res.values())} entité(s) — {res}")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("bruit_cartes")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "bruit_cartes", "ingest-bruit-cartes",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre bruit_cartes : {v.verdict}")
+
+
 @app.command("ingest-azi-tri")
 def ingest_azi_tri_cmd() -> None:
     """SOURCES-1 lot 2 — AZI/TRI par commune (Géorisques GASPAR) → azi_communes (fait

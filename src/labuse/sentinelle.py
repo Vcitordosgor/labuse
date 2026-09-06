@@ -542,6 +542,10 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Carmen sans en-tête de version (ni ETag ni Last-Modified, vérifié 07/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
     "Zones humides — inventaires DEAL (Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
     "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) — réingéré à la demande avec les zones humides.",
+    # SOURCES-1 lot 3 — sols et bruit :
+    "Géorisques — secteurs d'information sur les sols (SIS)": "Réservoir logique sur le canal SSP (kind sol_pollue, subtype sis) — même amont que « Géorisques — sites et sols pollués », déjà sondé en témoin bi-commune (97411+97410) ; pas de seconde sonde sur le même flux.",
+    "Géorisques — CASIAS (anciens sites industriels)": "Réservoir logique sur le canal SSP (subtypes casias/instruction) — même amont que « Géorisques — sites et sols pollués », témoin bi-commune existant.",
+    "DEAL — cartes de bruit stratégiques (CBS)": "WFS Carmen sans en-tête de version (même service que les couches DEAL lot 2, vérifié 07/09/2026) ; CBS = échéance quinquennale (directive 2002/49/CE) — réingéré à la demande (`labuse ingest-bruit-cartes`), fraîcheur au Circuit.",
     "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",
     "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
     "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
