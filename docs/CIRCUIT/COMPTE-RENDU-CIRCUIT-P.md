@@ -97,9 +97,32 @@ Reprise : « continue CIRCUIT-P depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-P.md »
   groupe) ; chaque type de ligne rend son verbe et clique vers sa cible. tsc vert.
 - Vitest : **166 passed** (164 + 2). tsc : vert.
 
-## Lots 3→6 — à venir
+## Lot 3 — Le circuit par familles ✅ (commit `CIRCUIT-P lot 3`)
 
-- Lot 3 — Le circuit par familles (`CircuitDiagram.tsx`, tuyaux `familles + catégories + 2`).
+- `circuit/diagram.ts` — la logique **sans le DOM** (donc testable) : `koTank`/`koTap`,
+  `construireMaps` (famille d'un réservoir, robinets→réservoirs), `nbConduits` (= familles +
+  catégories + 2), `cheminsAllumes` (survol → familles + catégories du chemin).
+- `circuit/CircuitDiagram.tsx` — blocs famille (gauche) / catégorie (droite) + pompe au centre ;
+  pastilles (une par élément, colorée hors mint) + « n à regarder » / « tout va bien » ; accordéon
+  **un bloc ouvert par colonne** ; deux lignes par élément (nom ; version · contrôle · cadence),
+  **aucun nom tronqué** ; interrupteur « Ne montrer que ce qui cloche » (ON par défaut) ; recherche
+  qui déplie les blocs contenant un résultat ; **survol** allume le chemin (famille → pompe →
+  catégories) et estompe le reste. **Tuyaux SVG** : un stub par bloc + le collecteur→pompe et le
+  distributeur→pompe **d'un seul trait chacun** → exactement `familles + catégories + 2` (règle
+  3.3). Fuites en pointillé rouge, agrégées une par couple famille↔catégorie (famille retrouvée via
+  `chiffre.reservoirs` → slug → famille). Redessin sur `resize` / `scroll` / `ResizeObserver` /
+  dépliage.
+- **La pompe** (3.2) : bloc collant, run servi + candidat, ce qui attend (résiduel), alerte rouge
+  « N pointeurs de run au lieu d'un » tant que le manifeste n'est pas seul.
+- Conteneur `Circuit.tsx` : gère `detail` (ouvert au clic d'une ligne — page au lot 4) et `groupe`
+  (déplié depuis une ligne du Résumé à cibles multiples). Le clic sur une ligne / la pompe appelle
+  `onOpen` (détail).
+- **Test vitest** `CircuitDiagram.test.tsx` (3.3) : tuyaux = familles + catégories + 2 ; survol d'un
+  réservoir/robinet allume les bons blocs (fixture de deux réservoirs) ; règles ko.
+- Vitest : **170 passed** (+4). tsc : vert.
+
+## Lots 4→6 — à venir
+
 - Lot 4 — Les pages de détail (`Detail.tsx`, deep-link hash).
 - Lot 5 — Le journal (`Journal.tsx`).
 - Lot 6 — Recette navigateur + retrait de l'ancien rendu + snapshots.

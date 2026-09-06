@@ -7,17 +7,20 @@ import { useState } from 'react'
 
 import { getAdminCircuit, postAdminCircuitVerifier } from '../../../lib/api'
 
+import { CircuitDiagram } from './CircuitDiagram'
 import { Resume } from './Resume'
 import { CIRCUIT_CSS } from './style'
-import { focusDeCible, type Cible, type CircuitData, type Focus } from './types'
+import { focusDeCible, type Cible, type CircuitData } from './types'
 
 type Onglet = 'resume' | 'circuit' | 'journal'
+type Detail = { type: 'reservoir' | 'robinet' | 'pompe'; id: number | string } | null
 
 export function CircuitSection() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 60_000 })
   const [onglet, setOnglet] = useState<Onglet>('resume')
-  const [focus, setFocus] = useState<Focus>(null)
+  const [detail, setDetail] = useState<Detail>(null)
+  const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
 
   const verifier = useMutation({
     mutationFn: postAdminCircuitVerifier,
@@ -26,7 +29,16 @@ export function CircuitSection() {
 
   const d = q.data as CircuitData | undefined
 
-  const allerVersCircuit = (c: Cible) => { setFocus(focusDeCible(c)); setOnglet('circuit') }
+  const allerVersCircuit = (c: Cible) => {
+    const f = focusDeCible(c)
+    if (f?.kind === 'detail') { setDetail({ type: f.type, id: f.id }); setGroupe(null) }
+    else if (f?.kind === 'groupe') { setGroupe(f.ids); setDetail(null) }
+    setOnglet('circuit')
+  }
+  const ouvrirDetail = (type: 'reservoir' | 'robinet' | 'pompe', id: number | string) => {
+    setDetail({ type, id }); setGroupe(null); setOnglet('circuit')
+  }
+  const fermerDetail = () => setDetail(null)
 
   if (q.isLoading) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit — chargement…</div></div>
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
@@ -60,8 +72,13 @@ export function CircuitSection() {
       </section>
 
       <section className={`tab ${onglet === 'circuit' ? 'on' : ''}`}>
-        {/* lot 3 — le circuit par familles + lot 4 — les pages de détail. */}
-        <div className="muted">Le circuit — lot 3 (diagramme par familles) et lot 4 (pages de détail).{focus ? ` Cible : ${JSON.stringify(focus)}` : ''}</div>
+        {detail
+          ? <div className="detail on">
+              <button className="back" onClick={fermerDetail}>← Retour au circuit</button>
+              {/* lot 4 — la page de détail (réservoir / robinet / pompe). */}
+              <div className="muted">Détail {detail.type} {String(detail.id)} — lot 4.</div>
+            </div>
+          : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} />}
       </section>
 
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>
