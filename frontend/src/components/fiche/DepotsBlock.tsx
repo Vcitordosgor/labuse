@@ -9,6 +9,7 @@
  * Le bloc n'est pas rendu hors couverture (payload `depots` = null).
  */
 import { BlocIndisponible } from './BlocIndisponible'
+import { GroupLabel, FactNote } from './primitives'
 
 type Ligne = { count: number; dernier: string | null; maille?: string }
 type Depots = {
@@ -29,14 +30,15 @@ export function DepotsBlock({ d }: { d: Depots }) {
   if (!d || (!d.parcelle && !d.secteur)) return null
   const mois = d.fenetre_mois
   return (
-    <div data-depots className="card-elev px-3 py-2.5">
-      <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className="text-xs font-semibold text-txt">Activité de dépôt de permis</span>
+    <div data-depots>
+      {/* Z1·02 / Z3 — la boîte (card-elev) devient un KICKER + badge de source à droite ; plus de
+          boîte dans la boîte. Les deux lignes et la note de méthode (→ FactNote) sont inchangées. */}
+      <GroupLabel right={
         <span className="rounded-full border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10px] font-semibold text-mint">
           {d.sourcage} {d.source}
         </span>
-      </div>
-      <div className="flex flex-col gap-1">
+      }>Activité de dépôt de permis</GroupLabel>
+      <div className="mt-1 flex flex-col gap-1">
         {d.parcelle && (
           <p className="text-[11px] leading-snug text-txt">
             <span className="text-txt-dim">Sur cette parcelle :</span>{' '}
@@ -53,7 +55,7 @@ export function DepotsBlock({ d }: { d: Depots }) {
           </p>
         )}
       </div>
-      <p className="mt-2 text-[10px] leading-snug text-txt-mut">{d.libelle}.</p>
+      <FactNote>{d.libelle}.</FactNote>
     </div>
   )
 }

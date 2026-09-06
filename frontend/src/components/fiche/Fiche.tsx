@@ -1305,8 +1305,10 @@ export function Fiche({ idu }: { idu: string }) {
                     substantielles (non-PASS) restent — fini le mur de lignes « sans objet ». */}
                 {/* M57-P1 (Q4) : points signés RETIRÉS ici (hideWeight) — le fait, la source et la
                     date restent. « Pourquoi ce score » (bloc Analyse) garde ses contributions. */}
+                {/* RETOURS-23 — les faits de situation (zonage, SDP résiduelle, surface, parc…) sous un
+                    kicker « Situation », comme la maquette ; primitive Line inchangée (détail + source). */}
                 {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS'); return rl.length > 0
-                  ? <div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div> : null })()}
+                  ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
                 {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
                     REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
                 {/* M137-P — les 3 outils PLU fusionnés dans le hub « plu » : la porte Annuaire ouvre le
@@ -1362,13 +1364,15 @@ export function Fiche({ idu }: { idu: string }) {
                 value={f.territoire_fiscal.zfang?.regime === 'renforce'
                   ? <span className="pill-mint">ZFANG renforcé</span> : f.territoire_fiscal.zfang ? 'ZFANG standard' : undefined}>
                 <div className="flex flex-col gap-2.5" data-territoire-fiscal>
-                  {/* M134 — les périmètres FINS qui touchent LA parcelle (QPV / bande TVA 500 m),
-                      au-dessus des attributs de commune (ZFANG/FRR). Jamais un sigle nu. */}
+                  {/* RETOURS-23 Z3 — plus de boîtes : chaque dispositif est un fait à plat (titre ferré
+                      à gauche · détail · source en note 11,5 px). Le périmètre fin qui touche LA parcelle
+                      (QPV / bande TVA 500 m) garde un filet gauche mint (marqueur, pas un cadre). Données
+                      inchangées (mêmes libellés, mêmes sources, mêmes liens). */}
                   {(f.territoire_fiscal.perimetres ?? []).map((p) => (
-                    <div key={p.libelle} data-fiche-perimetre className="rounded-lg border border-mint/30 bg-mint/5 px-3 py-2">
+                    <div key={p.libelle} data-fiche-perimetre className="border-l-2 border-mint pl-3">
                       <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
                       <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
-                      <p className="mt-0.5 text-[10.5px] text-txt-dim">{p.source}</p>
+                      <FactNote>{p.source}</FactNote>
                     </div>
                   ))}
                   {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
@@ -1377,9 +1381,7 @@ export function Fiche({ idu }: { idu: string }) {
                     <div key={titre}>
                       <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
                       <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
-                      <p className="mt-0.5 text-[10.5px] text-txt-dim">
-                        {a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a>
-                      </p>
+                      <FactNote>{a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a></FactNote>
                     </div>
                   ))}
                   {/* RETOURS-11F3 F10 — dispositifs valables sur TOUTE La Réunion (zonage B1, TVA DOM
@@ -1388,13 +1390,11 @@ export function Fiche({ idu }: { idu: string }) {
                     <div key={d.libelle} data-dispositif-dom>
                       <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
                       <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
-                      <p className="mt-0.5 text-[10.5px] text-txt-dim">{d.source}</p>
+                      <FactNote>{d.source}</FactNote>
                     </div>
                   ))}
                   {f.territoire_fiscal.avertissement && (
-                    <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
-                      {f.territoire_fiscal.avertissement}
-                    </p>
+                    <FactNote>{f.territoire_fiscal.avertissement}</FactNote>
                   )}
                 </div>
               </RefDrawer>
@@ -1412,8 +1412,9 @@ export function Fiche({ idu }: { idu: string }) {
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-2">
                 {f.proprietaire_moral ? (
-                  <div className="card-elev px-3 py-2.5">
-                    <p className="label-caps">Propriétaire (DGFiP)</p>
+                  <div>
+                    {/* RETOURS-23 Z3 — plus de card-elev : kicker + fait à plat. */}
+                    <GroupLabel>Propriétaire (DGFiP)</GroupLabel>
                     <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
                     <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
                       {f.proprietaire_moral.siren && <span className="font-mono">SIREN <Siren value={f.proprietaire_moral.siren} className="font-mono text-txt-mut" /></span>}
@@ -1455,12 +1456,12 @@ export function Fiche({ idu }: { idu: string }) {
                         la PORTE Scan patrimoine est au pied du tiroir (voir plus bas). */}
                   </div>
                 ) : (
-                  <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
+                  <FactNote>
                     Propriétaire : personne physique ou non recensé au fichier des personnes morales
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
                     {/* M70 point 7a — le lien texte SPF devient une PORTE-OUTIL en pied de tiroir
                         (voir plus bas). L'outil courrier (M09, pré-rempli sur la parcelle) est inchangé. */}
-                  </div>
+                  </FactNote>
                 )}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
                 {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors
@@ -1471,8 +1472,8 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
                 {/* RADAR P3 (C3) — un bien du Radar en vente sur cette parcelle : discret, fait + lien. */}
                 {f.radar_bien && (
-                  <div data-radar-bien className="card-elev px-3 py-2.5">
-                    <p className="label-caps">Radar — bien en vente</p>
+                  <div data-radar-bien>
+                    <GroupLabel>Radar — bien en vente</GroupLabel>
                     <div className="mt-1 flex items-center gap-2 text-xs">
                       <b className="text-txt-hi">{f.radar_bien.prix != null ? f.radar_bien.prix.toLocaleString('fr-FR') + ' €' : '—'}</b>
                       {f.radar_bien.type_bien && <span className="text-txt-mut">{f.radar_bien.type_bien}</span>}
@@ -1530,7 +1531,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* Sources utilisées sur cette fiche — nom · fournisseur · millésime · fiabilité. */}
                 {f.data_sources && f.data_sources.length > 0 && (
                   <div data-data-sources>
-                    <p className="label-caps mb-1.5">Sources utilisées sur cette fiche</p>
+                    <GroupLabel>Sources utilisées sur cette fiche</GroupLabel>
                     <div className="flex flex-col gap-1">
                       {f.data_sources.map((s, i) => {
                         // millésime affiché seulement s'il est une date propre (AAAA / AAAA-MM) — les

@@ -10,35 +10,35 @@
  * et l'activité de dépôt DÉMÉNAGENT vers « Autour » (un seul tableau, F0). Piscine/pente restent en
  * tête (caractéristiques du terrain). Auto-suffisante ; cycle-free.
  */
+import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getOrthoEquipements } from '../../lib/api'
 import { fmtDistance as fmtDistanceM } from '../../lib/geo'
 import type { Fiche } from '../../lib/types'
-import { Tip } from '../Tip'
 import { BlocIndisponible } from './BlocIndisponible'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
-import { REF, IC, RefDrawer, Line, GroupLabel, Rappel } from './primitives'
+import { REF, IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primitives'
 
+// RETOURS-23 — les caractéristiques du terrain (piscine / pente) vivent SOUS un kicker « Terrain »
+// comme les autres faits : valeur chiffrée à droite en mono, source sous la ligne (pente en ambre
+// quand terrassement lourd probable). Donnée inchangée (mêmes chiffres, même source ortho).
 function EquipementsBadges({ idu }: { idu: string }) {
   const { data: e } = useQuery({ queryKey: ['equip', idu], queryFn: () => getOrthoEquipements(idu), retry: false })
   if (!e) return null
-  const b: [string, string, string][] = []
-  if (e['piscine']) b.push([`Piscine ~${e['piscine_m2']} m²`, '#4fc3d9', `détection ortho — confiance ${e['piscine_confiance']}`])
-  if (e['pente_moy_deg'] != null) b.push([`Pente ${Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}°`,
-    e['flag_terrassement_lourd'] ? '#e8734d' : 'var(--lab)',
-    `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}`])
-  if (!b.length) return null
+  const rows: { label: string; value: ReactNode; tone?: 'warn'; src?: string }[] = []
+  if (e['piscine']) rows.push({ label: 'Piscine', value: <>~{e['piscine_m2']} <small>m²</small></>,
+    src: `détection ortho — confiance ${e['piscine_confiance']}` })
+  if (e['pente_moy_deg'] != null) rows.push({ label: 'Pente',
+    value: <>{Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}<small>°</small></>,
+    tone: e['flag_terrassement_lourd'] ? 'warn' : undefined,
+    src: `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}` })
+  if (!rows.length) return null
   return (
-    <div>
-      <div className="flex flex-wrap gap-1.5">
-        {b.map(([label, color, tip]) => (
-          <Tip key={label} tip={tip}>
-            <span className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: `${color}22`, color }}>{label}</span>
-          </Tip>
-        ))}
-      </div>
-      <p className="mt-1 text-[9px] text-txt-dim">{String(e['source'] ?? '')}</p>
+    <div data-terrain>
+      <GroupLabel>Terrain</GroupLabel>
+      {rows.map((r) => <FactRow key={r.label} label={r.label} value={r.value} tone={r.tone} src={r.src} />)}
+      {e['source'] ? <FactNote>{String(e['source'])}</FactNote> : null}
     </div>
   )
 }
@@ -47,9 +47,10 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
   const viabValue = f.viabilisation?.libelle?.replace(/^Viabilisation\s+/i, '') ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
   const viabColor = f.viabilisation?.band === 'confirmee' ? REF.ok : REF.gris
   const viabConfirmee = f.viabilisation?.band === 'confirmee'
-  const viabContext = f.gestionnaires
-    ? [f.gestionnaires.eau?.operateur, f.gestionnaires.assainissement?.operateur, f.gestionnaires.electricite?.gestionnaire].filter(Boolean).join(' · ') || null
-    : null
+  // RETOURS-23 — l'en-tête ne répète plus le CORPS : le sous-titre nommait l'opérateur d'eau
+  // (« CISE Réunion (SAUR)… », tronqué) alors que le gestionnaire est détaillé trois lignes plus bas.
+  // On donne la PORTÉE de la section (catégories), pas une valeur re-dite dans les gestionnaires.
+  const viabContext = (f.gestionnaires || f.viabilisation) ? 'eau · assainissement · élec' : null
   // ① ACCÈS — le VERDICT vient du moteur `acces` (source unique). Plus de phrase codée en dur.
   const accesLignes = f.lines.filter((l) => l.layer === 'acces')
   const trans = f.proximites
@@ -86,11 +87,12 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
           {/* RETOURS-13 R5 — STATION TCSP : le plafond de stationnement de l'art. L151-36 (800 m
               depuis la STATION, à vol d'oiseau) s'impose au PLU — un fait qui change la valeur.
               Mis en avant quand < 800 m ; ce qui reste à instruire (qualité de la desserte) est dit. */}
-          {/* RETOURS-20 Z3 — la boîte bordée TCSP devient un RAPPEL (fond un cran plus clair, sans
-              bordure) ; libellé et source inchangés. */}
+          {/* RETOURS-23 — plus aucun cadre : fait à plat (phrase + source en note), le kicker « Accès »
+              sépare déjà. Libellé et source inchangés. */}
           {trans && !trans.indisponible && trans.tcsp && (
             <div data-proximite-tcsp className="mt-1.5">
-              <Rappel src={trans.tcsp.source}>{trans.tcsp.libelle}</Rappel>
+              <p className="text-[11.5px] leading-snug text-txt">{trans.tcsp.libelle}</p>
+              <FactNote>{trans.tcsp.source}</FactNote>
             </div>
           )}
         </div>
@@ -101,12 +103,13 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
         {/* ③ VIABILISATION — indicateur + faisceau de preuves (accordéon) + ANC. */}
         {f.viabilisation && <ViabilisationBlock via={f.viabilisation} anc={f.anc} />}
 
-        {/* ④ AXES ET NUISANCES — l'axe structurant le plus proche (les deux faces). RETOURS-20 Z1·02 /
-            Z3 : sous-titre → kicker, la boîte bordée → rappel. Libellé et source inchangés. */}
+        {/* ④ AXES ET NUISANCES — l'axe structurant le plus proche (les deux faces). RETOURS-23 : plus
+            de cadre (le pavé gardait sa boîte) — kicker + fait à plat + source en note. Inchangé. */}
         {f.proximites?.axe && (
           <div data-proximite-axe>
             <GroupLabel>Axes et nuisances</GroupLabel>
-            <Rappel src={f.proximites.axe.source}>{f.proximites.axe.libelle}</Rappel>
+            <p className="text-[11.5px] leading-snug text-txt">{f.proximites.axe.libelle}</p>
+            <FactNote>{f.proximites.axe.source}</FactNote>
           </div>
         )}
       </div>

@@ -14,7 +14,7 @@ import { getFaisabilite } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
-import { IC, RefDrawer, MicroSpark, Line, PorteOutil } from './primitives'
+import { IC, RefDrawer, MicroSpark, Line, PorteOutil, GroupLabel, FactRow, FactNote } from './primitives'
 
 export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
@@ -37,49 +37,51 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
         : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
       {/* RETOURS-11F4 F7/F0 — PRIX DE SORTIE bâti secteur : le fait vit ICI (la Constructibilité y renvoie).
-          Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé. */}
+          Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé.
+          RETOURS-20 Z1·03 — plus de boîte : FactRow (valeur mono à droite), méthode en FactNote. */}
       {mb?.median != null && (
-        <div data-prix-sortie className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px]">
-          <span className="font-medium text-txt">Prix de sortie — bâti secteur : {fmtInt(Number(mb.median))} €/m²</span>
-          <span className="font-normal text-txt-mut"> · {mb.type_prix}, {mb.n} ventes ≤ {Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité {mb.fiabilite}{mb.tendance ? ` · tendance ${mb.tendance}` : ''}</span>
-          {horizon && <p className="mt-0.5 text-[9px] text-txt-dim">DVF — {horizon}</p>}
+        <div data-prix-sortie>
+          <FactRow label="Prix de sortie — bâti secteur" value={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
+          <FactNote>{mb.type_prix}, {mb.n} ventes ≤ {Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité {mb.fiabilite}{mb.tendance ? ` · tendance ${mb.tendance}` : ''}{horizon ? ` · DVF — ${horizon}` : ''}</FactNote>
         </div>
       )}
       {/* NEUF (VEFA) commune — grandeur nommée, effectif, fenêtre ; sous le seuil : « échantillon insuffisant ». */}
       {(() => { const nv = f.dvf_parcelle?.neuf_vefa
         return nv ? (
-          <div data-fiche-neuf-vefa className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px]">
+          <div data-fiche-neuf-vefa>
             {nv.effectif_suffisant && nv.mediane_prix_m2_bati != null ? (
-              <span className="font-medium text-txt">
-                Neuf (VEFA) — commune : {fmtInt(nv.mediane_prix_m2_bati)} €/m² bâti
-                <span className="font-normal text-txt-mut"> · {nv.n} ventes / {nv.fenetre_ans} ans</span>
-              </span>
+              <FactRow label="Neuf (VEFA) — commune" value={<>{fmtInt(nv.mediane_prix_m2_bati)} <small>€/m² bâti</small></>}
+                src={<>{nv.n} ventes / {nv.fenetre_ans} ans</>} />
             ) : (
-              <span className="text-txt-mut">Neuf (VEFA) — commune : {nv.insuffisant_libelle}</span>
+              <FactRow label="Neuf (VEFA) — commune" tone="mute" value={nv.insuffisant_libelle} />
             )}
-            <p className="mt-0.5 text-[9px] text-txt-dim">{nv.grandeur} · {nv.reserve}</p>
+            <FactNote>{nv.grandeur} · {nv.reserve}</FactNote>
           </div>
         ) : null })()}
       {/* signal de marché condensé (DVF actes + Sitadel) — jamais un mot nu. */}
       {(() => { const sig = (f as unknown as { market_signal?: Record<string, any> }).market_signal
         return sig?.disponible ? (
-          <div data-fiche-market-signal className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px]">
-            <span className="font-medium text-txt">Signal de marché : {sig.label}</span>
+          <div data-fiche-market-signal>
+            <GroupLabel>Signal de marché : {sig.label}</GroupLabel>
             {(sig.composantes as Record<string, any>[]).map((c, i) => (
-              <div key={i} className="mt-0.5 text-[10px] text-txt-mut">{c.sens} {c.cle} — {c.valeur}</div>
+              <FactRow key={i} label={<>{c.sens} {c.cle}</>} value={c.valeur} />
             ))}
-            <p className="mt-0.5 text-[9px] text-txt-dim">{sig.source} · outil « Marché » pour le détail commune</p>
+            <FactNote>{sig.source} · outil « Marché » pour le détail commune</FactNote>
           </div>
         ) : null })()}
       {/* Ventes < 100 m (proximité) — RETOURS-11F4 F7/F0 : le NOMBRE DE PERMIS est retiré ici (les permis
           à proximité vivent dans « Autour », un seul tableau). Marché ne garde que les VENTES. */}
       {f.voisinage_proche && !f.voisinage_proche.indisponible && f.voisinage_proche.ventes_dvf > 0 && (
-        <div data-voisinage-proche className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug">
-          <div className="font-medium text-txt">📍 Ventes à moins de 100 m</div>
-          <div className="mt-1 text-txt-mut">
-            {f.voisinage_proche.ventes_dvf} vente(s){f.voisinage_proche.prix_median_eur ? ` · prix médian ~${Math.round(f.voisinage_proche.prix_median_eur / 1000)} k€` : f.voisinage_proche.prix_note ? ` · ${f.voisinage_proche.prix_note}` : ''} <span className="text-txt-dim">(&lt; 100 m, 36 mois)</span>
-          </div>
-          <div className="mt-0.5 text-[10px] text-txt-dim">{f.voisinage_proche.honnetete}</div>
+        <div data-voisinage-proche>
+          <GroupLabel>📍 Ventes à moins de 100 m</GroupLabel>
+          <FactRow label={<>Ventes <span className="text-txt-dim">(&lt; 100 m, 36 mois)</span></>}
+            value={<>{f.voisinage_proche.ventes_dvf} <small>vente(s)</small></>}
+            src={f.voisinage_proche.honnetete} />
+          {(f.voisinage_proche.prix_median_eur || f.voisinage_proche.prix_note) && (
+            <FactRow label="Prix médian"
+              value={f.voisinage_proche.prix_median_eur ? <>~{Math.round(f.voisinage_proche.prix_median_eur / 1000)} <small>k€</small></> : f.voisinage_proche.prix_note}
+              tone={f.voisinage_proche.prix_median_eur ? undefined : 'mute'} />
+          )}
         </div>
       )}
       {/* PORTES — Voir marché commune, Taxe, secteur opportunités, Comparer, Remonter le temps. */}
@@ -100,13 +102,16 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
             if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 })
             st.setView('cartes'); select(null)
           }}
-          className="card-elev flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors duration-quick hover:border-mint/50"
+          className="porte-outil"
           title={`Voir les ${f.secteur_opportunites.n} parcelles Priorité ou À suivre de la section ${f.secteur_opportunites.section} sur la carte`}>
-          <span className="text-[11px] leading-snug text-txt">
-            <b className="tnum text-mint">{f.secteur_opportunites.n}</b> parcelle{f.secteur_opportunites.n > 1 ? 's' : ''}{' '}
-            <b>Priorité</b> ou <b>À suivre</b> dans cette section
-            <span className="text-txt-dim"> (n° {f.secteur_opportunites.section.slice(8)})</span></span>
-          <span className="shrink-0 text-mint">→</span>
+          <span className="po-ico">◈</span>
+          <span style={{ minWidth: 0 }}>
+            <span className="po-t block">
+              <b className="tnum text-mint">{f.secteur_opportunites.n}</b> parcelle{f.secteur_opportunites.n > 1 ? 's' : ''}{' '}
+              <b>Priorité</b> ou <b>À suivre</b> dans cette section
+              <span className="text-txt-dim"> (n° {f.secteur_opportunites.section.slice(8)})</span></span>
+          </span>
+          <span className="po-arrow">→</span>
         </button>
       )}
       <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
