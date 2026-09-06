@@ -13,13 +13,13 @@ export type Reservoir = {
   id: number; nom: string; producteur: string; famille: string; slug: string | null
   millesime: string | null; ingere_le: string | null; mode: string
   cadence_jours: number | null; cadence_statut: string | null; a_verifier: boolean
-  dernier_controle: string | null; etat: Etat; taps: string[]; chiffres_ids: string[]
+  dernier_controle: string | null; etat: Etat; ko: boolean; taps: string[]; chiffres_ids: string[]
   vanne: { type: string; label?: string; motif?: string }
   veille: any | null; filtre: any
 }
 export type Robinet = {
   id: string; categorie: string; nom: string; parent: string | null; route: string
-  chiffres: string[]; hors_registre: string | null; etat: Etat; hors_moteur: number
+  chiffres: string[]; hors_registre: string | null; etat: Etat; ko: boolean; hors_moteur: number
 }
 export type Famille = { nom: string; ids: number[] }
 export type Categorie = { slug: string; nom: string; ids: string[] }

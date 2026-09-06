@@ -18,12 +18,12 @@ const data = {
   run_servi: 'q_v11_m137', candidat: null, manifeste: { scoring_run: 'q_v11_m137' },
   dernier_controle: { ts: '2026-09-06T07:15:00Z' },
   reservoirs: [
-    { id: 1, nom: 'Cadastre', producteur: 'IGN', etat: ['mint', 'à jour'], slug: 'cadastre', taps: ['fiche_parcelle'], millesime: 'PCI', dernier_controle: null, cadence_jours: null },
-    { id: 2, nom: 'SITADEL', producteur: 'DGFiP', etat: ['ambre', 'nouvelle version à injecter'], slug: 'sitadel', taps: ['outil_marche'], millesime: '2026-07', dernier_controle: null, cadence_jours: 180 },
+    { id: 1, nom: 'Cadastre', producteur: 'IGN', etat: ['mint', 'à jour'], ko: false, slug: 'cadastre', taps: ['fiche_parcelle'], millesime: 'PCI', dernier_controle: null, cadence_jours: null },
+    { id: 2, nom: 'SITADEL', producteur: 'DGFiP', etat: ['ambre', 'nouvelle version à injecter'], ko: true, slug: 'sitadel', taps: ['outil_marche'], millesime: '2026-07', dernier_controle: null, cadence_jours: 180 },
   ],
   robinets: [
-    { id: 'fiche_parcelle', nom: 'Fiche parcelle', categorie: 'fiche', chiffres: ['a'], etat: ['mint', 'cohérent'], parent: null },
-    { id: 'outil_marche', nom: 'Marché', categorie: 'outil', chiffres: ['b'], etat: ['ambre', '1 hors moteur'], parent: null },
+    { id: 'fiche_parcelle', nom: 'Fiche parcelle', categorie: 'fiche', chiffres: ['a'], etat: ['mint', 'cohérent'], ko: false, parent: null },
+    { id: 'outil_marche', nom: 'Marché', categorie: 'outil', chiffres: ['b'], etat: ['ambre', '1 hors moteur'], ko: true, parent: null },
   ],
   familles: [{ nom: 'Parcelles et propriété', ids: [1] }, { nom: 'Marché, logement, permis', ids: [2] }],
   categories: [{ slug: 'fiche', nom: 'Fiches', ids: ['fiche_parcelle'] }, { slug: 'outil', nom: 'Outils', ids: ['outil_marche'] }],

@@ -1803,6 +1803,9 @@ def admin_circuit(request: Request) -> dict:
         r["taps"] = sorted({rid for cid in _cids for rid in _c2r.get(cid, [])})
         r["agent_en_cours"] = r["id"] in _en_route
         r["etat"] = list(_etats.etat_reservoir(r))
+        # CIRCUIT-P3 (lot 3.1) — le « à regarder » est décidé UNE fois, ici (ko_reservoir) ; le front
+        # ne reclasse plus de son côté (il lit `ko`). Plus de chemin parallèle qui puisse diverger.
+        r["ko"] = _etats.ko_reservoir(*r["etat"])
     # CIRCUIT-P3 (lot 2.1) — fuite/eau se rattachent au robinet par le CHIFFRE (les colonnes
     # robinet_* des tables sont des libellés, pas des ids). Une SEULE dérivation, partagée par l'état
     # des robinets ET par le Résumé → les deux comptent exactement les mêmes robinets.
@@ -1812,6 +1815,7 @@ def admin_circuit(request: Request) -> dict:
     for rb in robinets:
         rb["hors_moteur"] = _etats.hors_moteur_de(rb, chiffres)
         rb["etat"] = list(_etats.etat_robinet(rb, _ctx))
+        rb["ko"] = _etats.ko_robinet(*rb["etat"])      # décidé une fois (source unique, lot 3.1)
     _fam: dict[str, list] = {}
     for r in reservoirs:
         _fam.setdefault(_etats.famille_affichage(r["famille"]), []).append(r["id"])

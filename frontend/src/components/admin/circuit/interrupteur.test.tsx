@@ -10,9 +10,9 @@ import type { CircuitData } from './types'
 const data = {
   run_servi: 'q_v11', candidat: null, manifeste: {}, residuel: { changees: false },
   reservoirs: [
-    { id: 1, nom: 'Cadastre', etat: ['mint', 'à jour'], slug: 'c', taps: [], millesime: 'PCI', dernier_controle: null, cadence_jours: null },
-    { id: 2, nom: 'DVF', etat: ['ambre', 'jamais vérifié'], slug: 'd', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
-    { id: 3, nom: 'SITADEL', etat: ['rouge', 'en quarantaine'], slug: 's', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
+    { id: 1, nom: 'Cadastre', etat: ['mint', 'à jour'], ko: false, slug: 'c', taps: [], millesime: 'PCI', dernier_controle: null, cadence_jours: null },
+    { id: 2, nom: 'DVF', etat: ['ambre', 'jamais vérifié'], ko: true, slug: 'd', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
+    { id: 3, nom: 'SITADEL', etat: ['rouge', 'en quarantaine'], ko: true, slug: 's', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
   ],
   robinets: [],
   familles: [{ nom: 'Parcelles et propriété', ids: [1, 2, 3] }],

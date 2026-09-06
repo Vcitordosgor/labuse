@@ -9,10 +9,10 @@ import type { CircuitData } from './types'
 const data = {
   run_servi: 'q_v11', candidat: null, manifeste: {}, residuel: { changees: false },
   reservoirs: [
-    { id: 1, nom: 'Cadastre', etat: ['mint', 'à jour'], slug: 'c', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
-    { id: 2, nom: 'DVF', etat: ['gris', 'dépôt manuel'], slug: 'd', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
-    { id: 3, nom: 'SITADEL', etat: ['ambre', 'nouvelle version à injecter'], slug: 's', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
-    { id: 4, nom: 'Géorisques', etat: ['rouge', 'en quarantaine'], slug: 'g', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
+    { id: 1, nom: 'Cadastre', etat: ['mint', 'à jour'], ko: false, slug: 'c', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
+    { id: 2, nom: 'DVF', etat: ['gris', 'dépôt manuel'], ko: false, slug: 'd', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
+    { id: 3, nom: 'SITADEL', etat: ['ambre', 'nouvelle version à injecter'], ko: true, slug: 's', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
+    { id: 4, nom: 'Géorisques', etat: ['rouge', 'en quarantaine'], ko: true, slug: 'g', taps: [], millesime: null, dernier_controle: null, cadence_jours: null },
   ],
   robinets: [],
   familles: [

@@ -1,11 +1,8 @@
 // CIRCUIT-P (lot 3) — la logique du diagramme SANS le DOM : quels chemins s'allument au survol,
-// combien de tuyaux, quels réservoirs/robinets sont « à regarder ». Testable sans navigateur.
-import type { CircuitData, Etat, Reservoir, Robinet } from './types'
-
-// « à regarder » — mêmes règles que côté serveur (circuit_etats.ko_*).
-export const koTank = (e: Etat | undefined) => !!e && !['mint', 'gris'].includes(e[0])
-export const koTap = (e: Etat | undefined) =>
-  !!e && (!['mint', 'gris'].includes(e[0]) || e[1] === 'choix à confirmer')
+// combien de tuyaux. Testable sans navigateur.
+// CIRCUIT-P3 (lot 3.1) — « à regarder » n'est PLUS reclassé ici : le serveur décide (`ko` sur
+// chaque réservoir/robinet, via circuit_etats.ko_*), le front le lit. Un seul juge, jamais deux.
+import type { CircuitData, Reservoir, Robinet } from './types'
 
 export type Maps = {
   reservoirById: Map<number, Reservoir>

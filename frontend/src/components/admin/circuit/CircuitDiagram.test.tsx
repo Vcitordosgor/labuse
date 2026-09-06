@@ -2,7 +2,7 @@
 // bonnes catégories (fixture de deux réservoirs).
 import { describe, expect, it } from 'vitest'
 
-import { cheminsAllumes, construireMaps, koTank, koTap, nbConduits } from './diagram'
+import { cheminsAllumes, construireMaps, nbConduits } from './diagram'
 import type { CircuitData } from './types'
 
 // deux réservoirs, deux robinets, deux familles, deux catégories.
@@ -40,11 +40,7 @@ describe('CircuitDiagram — logique', () => {
     expect(new Set(lit.familles)).toEqual(new Set(['Parcelles et propriété', 'Marché, logement, permis']))
   })
 
-  it('ko : ambre/rouge « à regarder », mint/gris non ; « choix à confirmer » compte', () => {
-    expect(koTank(['ambre', 'jamais vérifié'])).toBe(true)
-    expect(koTank(['mint', 'à jour'])).toBe(false)
-    expect(koTank(['gris', 'vide'])).toBe(false)
-    expect(koTap(['gris', 'choix à confirmer'])).toBe(true)
-    expect(koTap(['gris', 'aucun chiffre'])).toBe(false)
-  })
+  // CIRCUIT-P3 (lot 3.1) — le classement « à regarder » n'est plus reproduit au front (koTank/koTap
+  // supprimés) : le serveur décide (`ko`), le front le lit. La règle est testée côté serveur
+  // (tests/test_circuit_p3_lot2.py + circuit_etats.ko_*).
 })

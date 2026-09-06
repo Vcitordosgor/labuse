@@ -7,7 +7,7 @@
 // (deux lignes par élément). Redessin sur redimensionnement, dépliage, défilement.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
-import { cheminsAllumes, construireMaps, koTank, koTap } from './diagram'
+import { cheminsAllumes, construireMaps } from './diagram'
 import type { CircuitData, Reservoir, Robinet } from './types'
 
 type Hover = { type: 'reservoir'; id: number } | { type: 'robinet'; id: string } | null
@@ -43,12 +43,12 @@ export function CircuitDiagram({ data, groupe, onOpen }:
   const tankVisible = (t: Reservoir) => {
     if (q) return (t.nom + ' ' + (t.producteur || '')).toLowerCase().includes(q)
     if (enGroupe) return idsGroupe.has(String(t.id))
-    return koOnly ? koTank(t.etat) : true
+    return koOnly ? t.ko : true
   }
   const tapVisible = (t: Robinet) => {
     if (q) return (t.nom + ' ' + t.id + ' ' + (t.chiffres || []).join(' ')).toLowerCase().includes(q)
     if (enGroupe) return idsGroupe.has(String(t.id))
-    return koOnly ? koTap(t.etat) : true
+    return koOnly ? t.ko : true
   }
 
   // ── tuyaux SVG (au niveau des blocs) : stubs + collecteur→pompe + distributeur→pompe ──
@@ -157,7 +157,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
             {data.familles.map((f) => {
               const tanks = f.ids.map((id) => maps.reservoirById.get(id)).filter(Boolean) as Reservoir[]
               const visibles = tanks.filter(tankVisible)
-              const ko = tanks.filter((t) => koTank(t.etat)).length
+              const ko = tanks.filter((t) => t.ko).length
               const open = famOuverte(f.nom, visibles.length > 0)
               const dim = hover ? !lit.familles.has(f.nom) : false
               return (
@@ -207,7 +207,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
             {data.categories.map((c) => {
               const taps = c.ids.map((id) => maps.robinetById.get(id)).filter(Boolean) as Robinet[]
               const visibles = taps.filter(tapVisible)
-              const ko = taps.filter((t) => koTap(t.etat)).length
+              const ko = taps.filter((t) => t.ko).length
               const open = catOuverte(c.slug, visibles.length > 0)
               const dim = hover ? !lit.categories.has(c.slug) : false
               return (
