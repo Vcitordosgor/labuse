@@ -70,7 +70,7 @@ export function CircuitSection() {
         </button>
         <button className={onglet === 'circuit' ? 'on' : ''} onClick={() => setOnglet('circuit')}>Circuit</button>
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
-          Journal<span className="n">aujourd'hui{nJour != null ? ` · ${nJour}` : ''}</span>
+          Journal{nJour ? <span className="n">{nJour}</span> : ''}
         </button>
         <div className="actions">
           <button className="btn mauve" disabled
