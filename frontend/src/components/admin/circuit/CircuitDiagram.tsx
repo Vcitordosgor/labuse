@@ -152,7 +152,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
         {/* réservoirs */}
         <div>
           <div className="colh"><b>Réservoirs</b>
-            <span>{data.reservoirs.length}, {data.reservoirs.filter((r) => koTank(r.etat)).length} à regarder</span></div>
+            <span>{data.compteurs.reservoirs}, {data.compteurs.a_regarder} à regarder</span></div>
           <div ref={tanksRef}>
             {data.familles.map((f) => {
               const tanks = f.ids.map((id) => maps.reservoirById.get(id)).filter(Boolean) as Reservoir[]
@@ -202,7 +202,7 @@ export function CircuitDiagram({ data, groupe, onOpen }:
         {/* robinets */}
         <div>
           <div className="colh"><b>Robinets</b>
-            <span>{data.robinets.length}, {data.robinets.filter((r) => koTap(r.etat)).length} à regarder</span></div>
+            <span>{data.compteurs.robinets}, {data.compteurs.robinets_a_regarder} à regarder</span></div>
           <div ref={tapsRef}>
             {data.categories.map((c) => {
               const taps = c.ids.map((id) => maps.robinetById.get(id)).filter(Boolean) as Robinet[]

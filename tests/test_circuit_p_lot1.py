@@ -55,8 +55,18 @@ def test_etat_robinet_ecart_regle():
 
 
 def test_etat_robinet_hors_moteur():
-    ctx = _ctx(chiffres={"a": {"calcul": "passe_plat"}, "b": {"calcul": "moteur"}})
+    # CIRCUIT-P2 (lot 2.1) — « hors moteur » = sql_propre/front ; un passe_plat NE compte plus.
+    ctx = _ctx(chiffres={"a": {"calcul": "sql_propre"}, "b": {"calcul": "moteur"}})
     assert E.etat_robinet({"id": "x", "chiffres": ["a", "b"]}, ctx) == ("ambre", "1 hors moteur")
+
+
+def test_etat_robinet_passe_plat_neutre():
+    # un robinet dont les chiffres sont moteur + passe_plat est COHÉRENT (passe_plat = neutre).
+    ctx = _ctx(chiffres={"a": {"calcul": "passe_plat"}, "b": {"calcul": "moteur"}})
+    assert E.etat_robinet({"id": "x", "chiffres": ["a", "b"]}, ctx) == ("mint", "cohérent")
+    assert E.hors_moteur_de({"chiffres": ["a"]}, {"a": {"calcul": "passe_plat"}}) == 0
+    assert E.est_hors_moteur("sql_propre") and E.est_hors_moteur("front")
+    assert not E.est_hors_moteur("passe_plat") and not E.est_hors_moteur("moteur:x")
 
 
 def test_etat_robinet_choix():
@@ -83,10 +93,11 @@ def test_familles_categories_affichage():
 
 # ── 1.1 — le résumé : zéro problème → « Tout coule. » et chaque ligne rend son verbe ──────────
 def test_resume_tout_coule():
-    res = R.composer([{"id": 1, "nom": "x", "etat": ["mint", "à jour"], "veille": {"statut": "ok"}}],
-                     [{"id": "r", "etat": ["mint", "cohérent"], "chiffres": ["a"]}],
-                     compteurs={"chiffres": 1}, residuel={"changees": False}, run_servi="q_v11",
-                     candidat=None, fuites=[], eau_ancienne=[])
+    reservoirs = [{"id": 1, "nom": "x", "etat": ["mint", "à jour"], "veille": {"statut": "ok"}}]
+    robinets = [{"id": "r", "etat": ["mint", "cohérent"], "chiffres": ["a"]}]
+    cpt = {**E.compteurs(reservoirs, robinets), "chiffres": 1}   # les compteurs uniques (lot 2.2)
+    res = R.composer(reservoirs, robinets, compteurs=cpt, residuel={"changees": False},
+                     run_servi="q_v11", candidat=None, fuites=[], eau_ancienne=[])
     assert res["total"] == 0
     assert all(g["lignes"] == [] for g in res["groupes"])
     assert res["kpis"][0]["valeur"] == 1 and res["kpis"][3]["valeur"] == "q_v11"

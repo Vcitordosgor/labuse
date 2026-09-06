@@ -21,10 +21,21 @@ Divergences avec la maquette, tranchées par l'option la plus sûre et écrites 
     détecteur d'horloge les brancheront (accroche notée au compte-rendu). Live : 0 faux positif.
   · `à vérifier (cadence dépassée)` (le drapeau réel `a_verifier`) n'existe pas dans la maquette :
     on l'ajoute en ambre (« à regarder »), dans la même grammaire.
-  · « hors moteur » = un chiffre dont le `calcul` n'est pas `moteur:` — en pratique `passe_plat`
-    (un chemin unique, pas encore un moteur nommé). `constante` est délibéré, jamais compté.
+  · CIRCUIT-P2 (lot 2.1) — « hors moteur » ne désigne QUE `sql_propre` et `front` (un chiffre qui
+    court-circuite le moteur : SQL brut servi ou calcul fait au front) ; ceux-là doivent être à 0
+    depuis CIRCUIT-2. Un `passe_plat` (une valeur brute d'un réservoir servie telle quelle, déclarée
+    au registre) est NEUTRE, pas « hors moteur ». `constante` est délibéré. Seuls `moteur` et
+    `passe_plat` alimentent normalement un robinet ; `sql_propre`/`front` sont la régression à voir.
 """
 from __future__ import annotations
+
+# ── CIRCUIT-P2 (lot 2.1) — les préfixes de `calcul` qui court-circuitent le moteur (à rebrancher).
+#    Un `passe_plat` (valeur brute déclarée) et une `constante` ne comptent PAS : état neutre. ──
+HORS_MOTEUR_PREFIXES = ("sql_propre", "front")
+
+def est_hors_moteur(calcul: str | None) -> bool:
+    """Un chiffre est-il servi HORS moteur ? (SQL brut ou calcul au front — jamais un passe-plat.)"""
+    return (calcul or "").split(":")[0] in HORS_MOTEUR_PREFIXES
 
 # ── familles d'affichage : slug fin (data_sources.category) → famille lisible, DANS L'ORDRE ──
 FAMILLES_ORDRE = [
@@ -197,11 +208,11 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
 
 # ── L'ÉTAT D'UN ROBINET (couleur, libellé) — ordre de la maquette (tapEtat) ──────────────────
 def hors_moteur_de(robinet: dict, chiffres: dict) -> int:
-    """Combien de chiffres de ce robinet sont servis HORS d'un moteur nommé (`passe_plat`)."""
+    """Combien de chiffres de ce robinet court-circuitent le moteur (`sql_propre`/`front`).
+    CIRCUIT-P2 (lot 2.1) : un `passe_plat` ne compte plus — c'est un état neutre, pas « hors moteur »."""
     n = 0
     for cid in robinet.get("chiffres") or []:
-        calcul = (chiffres.get(cid) or {}).get("calcul") or ""
-        if calcul.split(":")[0] == "passe_plat":
+        if est_hors_moteur((chiffres.get(cid) or {}).get("calcul")):
             n += 1
     return n
 
@@ -230,3 +241,35 @@ def ko_reservoir(couleur: str, _libelle: str = "") -> bool:
 def ko_robinet(couleur: str, libelle: str = "") -> bool:
     """comme koTap : tout sauf mint/gris, PLUS « choix à confirmer » (gris mais à trancher)."""
     return couleur not in ("mint", "gris") or libelle == "choix à confirmer"
+
+
+# ── CIRCUIT-P2 (lot 2.2) — LES COMPTEURS, calculés UNE seule fois, côté serveur ──────────────
+def partition_reservoirs(reservoirs: list[dict]) -> dict:
+    """La partition CANONIQUE des réservoirs par état (un réservoir dans une seule case) :
+      · à jour et vérifiés (mint)  · à regarder (ambre/rouge/mauve)  · vides ou manuels (gris)
+    Invariant garanti et testé : a_jour + a_regarder + vides = réservoirs (règle 2.2).
+    « À jour et vérifiés » (règle 2.3) = version producteur == version réservoir, contrôle plus
+    récent que la cadence, filtre passé sans bloquant — soit exactement l'état mint d'etat_reservoir
+    (un réservoir sous sentinelle mais jamais contrôlé sort ambre « à vérifier », pas mint)."""
+    a_jour = a_regarder = vides = 0
+    for r in reservoirs:
+        couleur = (r.get("etat") or ["", ""])[0]
+        if couleur == "mint":
+            a_jour += 1
+        elif couleur == "gris":
+            vides += 1
+        else:
+            a_regarder += 1
+    return {"reservoirs": len(reservoirs), "a_jour": a_jour,
+            "a_regarder": a_regarder, "vides": vides}
+
+
+def compteurs(reservoirs: list[dict], robinets: list[dict]) -> dict:
+    """Le SEUL point de vérité des nombres de la page (règle 2.2). Le Résumé, l'en-tête de colonne
+    du Circuit, la ligne de fin et l'en-tête « Robinets » lisent CECI, jamais un calcul refait.
+    Les clés fuites/eau/chiffres sont ajoutées par l'appelant (données hors état de base)."""
+    part = partition_reservoirs(reservoirs)
+    rob_ko = sum(1 for rb in robinets if ko_robinet(*(rb.get("etat") or ["mint", ""])))
+    return {**part,
+            "robinets": len(robinets), "robinets_a_regarder": rob_ko,
+            "robinets_coherents": len(robinets) - rob_ko}

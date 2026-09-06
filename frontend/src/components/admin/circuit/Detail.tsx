@@ -9,15 +9,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import {
-  getAdminCircuitNoteVersion, getAdminCircuitPompe, getAdminCircuitReservoir, getAdminCircuitRobinet,
+  getAdminCircuitCompteur, getAdminCircuitNoteVersion, getAdminCircuitPompe,
+  getAdminCircuitReservoir, getAdminCircuitRobinet,
   postAdminCircuitFiltreRevenir, postAdminCircuitFiltreServir, postAdminCircuitRevenir,
   postAdminFluxBascule, postAdminFluxLancerRun, postAdminSourceVeilleInjecter,
 } from '../../../lib/api'
 
 import type { CircuitData, Couleur } from './types'
 
-type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe', id: number | string) => void
-type Props = { type: 'reservoir' | 'robinet' | 'pompe'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir }
+type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe' | 'compteur', id: number | string) => void
+type Props = { type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir }
 
 const dateFr = (s: string | null | undefined) =>
   s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
@@ -40,7 +41,39 @@ export function Detail({ type, id, data, onClose, onOpen }: Props) {
 
   if (type === 'reservoir') return <DetailReservoir id={Number(id)} data={data} back={back} onOpen={onOpen} rafraichir={rafraichir} />
   if (type === 'robinet') return <DetailRobinet id={String(id)} data={data} back={back} onOpen={onOpen} rafraichir={rafraichir} />
+  if (type === 'compteur') return <DetailCompteur back={back} onOpen={onOpen} />
   return <DetailPompe back={back} rafraichir={rafraichir} />
+}
+
+// ── COMPTEUR (lot 2.2) — les réservoirs par état + les lignes en base non servies ──────────────
+function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir }) {
+  const q = useQuery({ queryKey: ['circuit-detail', 'compteur'], queryFn: getAdminCircuitCompteur })
+  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
+  const { compteurs: cpt, definition, groupes, non_servies } = q.data
+  return (
+    <div className="detail on">
+      {back}
+      <div className="dh">
+        <div><h1>{cpt.reservoirs} réservoirs</h1>
+          <div className="m">{cpt.a_jour} à jour et vérifiés · {cpt.a_regarder} à regarder · {cpt.vides} vides ou manuels</div></div>
+      </div>
+      <div className="card"><h3>« À jour et vérifiés », c'est quoi ?</h3><div className="muted">{definition}</div></div>
+      {groupes.map((g: any) => (
+        <div key={g.cle} className="card"><h3>{g.titre} · {g.reservoirs.length}</h3>
+          {g.reservoirs.length ? <div>{g.reservoirs.map((r: any) => (
+            <span key={r.id} className={`chip ${['mint', 'gris'].includes(r.etat[0]) ? '' : r.etat[0]}`}
+              title={`${r.producteur || ''} — ${r.etat[1]}`} onClick={() => onOpen('reservoir', r.id)}>{r.nom}</span>
+          ))}</div> : <div className="muted">aucun</div>}
+        </div>
+      ))}
+      <div className="card"><h3>{non_servies.length} ligne{non_servies.length > 1 ? 's' : ''} en base non servie{non_servies.length > 1 ? 's' : ''}</h3>
+        <div className="muted" style={{ marginBottom: 8 }}>Ces lignes de <code>data_sources</code> ne sont pas des réservoirs (retirées, doublons, hubs dormants) : elles n'entrent dans aucun compteur.</div>
+        {non_servies.length ? <ul className="list">{non_servies.map((n: any) => (
+          <li key={n.id}><span>{n.nom}</span><span className="muted">{n.raison}</span></li>
+        ))}</ul> : <div className="muted">aucune</div>}
+      </div>
+    </div>
+  )
 }
 
 // ── RÉSERVOIR ────────────────────────────────────────────────────────────────────────────────
@@ -169,15 +202,19 @@ function DetailRobinet({ id, data, back, onOpen }:
           <div className="card"><h3>Ce qu'il affiche · {(r.chiffres || []).length} chiffre{(r.chiffres || []).length > 1 ? 's' : ''}</h3>
             {(r.chiffres || []).length ? <ul className="list">{chiffres.map((ch: any) => {
               const prefixe = (ch.calcul || '').split(':')[0]
+              // CIRCUIT-P2 (lot 2.1) — « hors moteur » = sql_propre/front (ch.hors_moteur, ambre) ;
+              // un passe-plat est NEUTRE (valeur brute déclarée), une constante aussi.
+              const label = prefixe === 'moteur' ? 'moteur' : ch.hors_moteur ? 'hors moteur'
+                : prefixe === 'passe_plat' ? 'passe-plat' : prefixe
               return (
                 <li key={ch.id}><span title={ch.definition}>{ch.libelle}</span>
                   <span>
-                    <span className={`tag ${prefixe === 'moteur' ? 'mint' : 'ambre'}`}>{prefixe === 'moteur' ? 'moteur' : prefixe === 'passe_plat' ? 'hors moteur' : prefixe}</span>
+                    <span className={`tag ${prefixe === 'moteur' ? 'mint' : ch.hors_moteur ? 'ambre' : ''}`}>{label}</span>
                     {ch.portee === 'run' ? <span className="tag">run</span> : null}
                   </span></li>
               )
             })}</ul> : <div className="muted">Aucun chiffre : tuiles ou géométries seulement, hors registre.</div>}
-            {r.hors_moteur ? <div style={{ color: 'var(--ambre)', marginTop: 10 }}>{r.hors_moteur} calculé{r.hors_moteur > 1 ? 's' : ''} hors moteur, à rebrancher.</div> : null}
+            {r.hors_moteur ? <div style={{ color: 'var(--ambre)', marginTop: 10 }}>{r.hors_moteur} calculé{r.hors_moteur > 1 ? 's' : ''} hors moteur (SQL brut ou front), à rebrancher.</div> : null}
           </div>
           {/* CIRCUIT-4 (accroche) — « La règle derrière ces calculs » : badges de règle par chiffre. */}
         </div>

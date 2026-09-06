@@ -20,9 +20,6 @@ compte-rendu comme accroche) : « écarts à la règle » et « choix LABUSE » 
 """
 from __future__ import annotations
 
-from .circuit_etats import ko_robinet
-
-
 def _noms(items: list[dict], limite: int = 4) -> str:
     noms = [i.get("nom") or str(i.get("id")) for i in items]
     if len(noms) <= limite:
@@ -44,14 +41,20 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
              horloges: list[str] = ()) -> dict:
     """Compose le bloc `resume`. Chaque réservoir / robinet porte déjà son `etat` ([couleur, lib])
     (posé par l'endpoint via circuit_etats) : le résumé n'invente pas d'état, il regroupe."""
-    def fil(r):  # verdict du filtre
-        return (r.get("filtre") or {}).get("verdict")
-
     # ── groupe 1 — À faire, un geste de toi ──────────────────────────────────────────────────
-    quar = [r for r in reservoirs if fil(r) == "quarantaine"]
-    neuf = [r for r in reservoirs if (r.get("veille") or {}).get("statut") == "nouvelle_version"]
-    jamais = [r for r in reservoirs if not r.get("veille")]
-    reverif = [r for r in reservoirs if r.get("a_verifier") and r.get("veille")]
+    # CIRCUIT-P2 (lot 2.4) — les lignes du Résumé sont dérivées du LIBELLÉ d'état déjà calculé
+    # (etat_reservoir), source unique de vérité : un réservoir a un seul état, donc une seule ligne.
+    # Cela garantit l'aller (chaque id d'une ligne est « à regarder ») ET le retour (chaque réservoir
+    # « à regarder » a sa ligne) — un `absente` sans veille sort « vide » (gris), jamais « jamais
+    # vérifié ». Un réservoir non couvert (« horloge qui ment », « agent en route ») est transitoire
+    # ou 0 live ; sa ligne arrive via un paramètre dédié (horloges) ou un lot ultérieur.
+    def lib(r):
+        return (r.get("etat") or ["", ""])[1]
+    quar = [r for r in reservoirs if lib(r) == "en quarantaine"]
+    neuf = [r for r in reservoirs if lib(r) == "nouvelle version à injecter"]
+    jamais = [r for r in reservoirs if lib(r) == "jamais vérifié"]
+    reverif = [r for r in reservoirs if lib(r) == "à vérifier"]
+    injoign = [r for r in reservoirs if lib(r) == "producteur injoignable"]
     eau_rob = sorted({e["robinet"] for e in eau_ancienne if e.get("statut") == "ouvert"})
     eau_nouvelle = bool(residuel and residuel.get("changees"))
 
@@ -75,11 +78,14 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
         _ligne(len(reverif), "ambre", "réservoirs à revérifier",
                "Le dernier contrôle est plus vieux que la cadence attendue.",
                "Vérifier", "reservoir", [r["id"] for r in reverif]),
+        _ligne(len(injoign), "ambre", "producteurs injoignables",
+               f"{_noms(injoign)} — la dernière sonde n'a pas pu joindre le producteur.",
+               "Vérifier", "reservoir", [r["id"] for r in injoign]),
     ]
 
     # ── groupe 2 — À corriger, un mandat pour CC ─────────────────────────────────────────────
     fuite_rob = sorted({f[k] for f in fuites for k in ("robinet_a", "robinet_b") if f.get(k)})
-    warn = [r for r in reservoirs if fil(r) == "avertissements"]
+    warn = [r for r in reservoirs if lib(r) == "filtre avec des KO"]
     hm_rob = [rb for rb in robinets if rb.get("hors_moteur")]
     ecart_ids = list(regles_ecart)
     horloge_ids = list(horloges)
@@ -122,12 +128,14 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
     ]
     total = sum(len(g["lignes"]) for g in groupes)
 
-    # ── quatre repères ───────────────────────────────────────────────────────────────────────
-    a_jour = sum(1 for r in reservoirs if (r.get("etat") or ["", ""])[0] == "mint")
-    coh = sum(1 for rb in robinets if not ko_robinet(*(rb.get("etat") or ["mint", ""])))
+    # ── quatre repères — LUS des compteurs uniques (règle 2.2), jamais recalculés ──────────────
+    a_jour = compteurs.get("a_jour", 0)
+    n_res = compteurs.get("reservoirs", len(reservoirs))
+    coh = compteurs.get("robinets_coherents", 0)
+    n_rob = compteurs.get("robinets", len(robinets))
     kpis = [
-        {"valeur": a_jour, "sur": len(reservoirs), "libelle": "réservoirs à jour et vérifiés"},
-        {"valeur": coh, "sur": len(robinets), "libelle": "robinets sans rien à signaler"},
+        {"valeur": a_jour, "sur": n_res, "libelle": "réservoirs à jour et vérifiés", "detail": "compteur"},
+        {"valeur": coh, "sur": n_rob, "libelle": "robinets sans rien à signaler"},
         {"valeur": compteurs.get("chiffres", len({c for rb in robinets for c in rb.get('chiffres') or []})),
          "libelle": "chiffres définis une fois"},
         {"valeur": run_servi, "candidat": candidat, "libelle": "run servi"},
@@ -136,6 +144,6 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
         "total": total,
         "kpis": kpis,
         "groupes": groupes,
-        "reste": {"reservoirs": len(reservoirs), "robinets": len(robinets),
+        "reste": {"reservoirs": n_res, "robinets": n_rob,
                   "chiffres": compteurs.get("chiffres", 0)},
     }

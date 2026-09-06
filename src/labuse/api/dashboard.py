@@ -1820,13 +1820,15 @@ def admin_circuit(request: Request) -> dict:
     categories += [{"slug": s, "nom": _etats.categorie_affichage(s), "ids": ids}
                    for s, ids in _cat.items() if s not in _etats.CATEGORIE_LIBELLE]
 
+    # CIRCUIT-P2 (lot 2.2) — les nombres de base (réservoirs 68 + partition, robinets) viennent de
+    # la fonction UNIQUE circuit_etats.compteurs() ; on y ajoute les compteurs dérivés des données.
     compteurs = {
-        "reservoirs": len(reservoirs),
+        **_etats.compteurs(reservoirs, robinets),
         "surveilles": sum(1 for r in reservoirs if r["veille"]
                           and r["veille"]["methode"] in ("api", "page", "entete", "temoin")
                           and r["veille"]["actif"] is not False),
         "vannes": sum(1 for r in reservoirs if r["vanne"]["type"] == "injecter"),
-        "chiffres": len(chiffres), "robinets": len(robinets),
+        "chiffres": len(chiffres),
         "fuites_ouvertes": len(fuites), "fuites_soldees": int(soldes),
         # lot 5.3 — les pastilles comptent AUSSI par type (classe/géométrie comme les nombres)
         "fuites_classe": sum(1 for f in fuites if f.get("type") == "classe"),
@@ -2118,7 +2120,7 @@ def admin_circuit_robinet(request: Request, rid: str) -> dict:
     for cid in rb.chiffres:
         ch = chiffres_map.get(cid, {})
         chiffres.append({"id": cid, **ch,
-                         "hors_moteur": (ch.get("calcul") or "").split(":")[0] == "passe_plat"})
+                         "hors_moteur": _etats.est_hors_moteur(ch.get("calcul"))})
     amont_slugs = sorted({s for cid in rb.chiffres for s in
                           [x for x, cs in r2c.items() if cid in cs]})
     amont = [{"slug": s, "nom": slug_nom.get(s, s)} for s in amont_slugs]
@@ -2160,3 +2162,63 @@ def admin_circuit_pompe(request: Request) -> dict:
             "n_chiffres": len(CHIFFRES), "pointeurs": pointeurs,
             "pointeurs_multiples": len(distincts) > 1,
             "jobs_eau": sorted(TOUCHE_EAU)}
+
+
+#: CIRCUIT-P2 (lot 2.3) — « à jour et vérifiés », défini UNE fois, en français, ici.
+_DEF_A_JOUR = ("Un réservoir est « à jour et vérifié » quand sa version chez le producteur est celle "
+               "de son réservoir, que son dernier contrôle est plus récent que sa cadence, et que "
+               "son filtre est passé sans bloquant. Un réservoir sous sentinelle mais jamais "
+               "contrôlé n'est pas « à jour » — il est « à vérifier ».")
+
+
+@router.get("/admin/circuit/compteur")
+def admin_circuit_compteur(request: Request) -> dict:
+    """CIRCUIT-P2 (lot 2.2) — la page de détail du repère « N / 68 » : les réservoirs servis rangés
+    par état (à jour / à regarder / vides ou manuels), la définition de « à jour et vérifiés »
+    (règle 2.3), et les lignes de `data_sources` NON servies (retirées, doublons, hubs dormants),
+    listées une seule fois sous « N lignes en base non servies »."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_etats as _etats
+    from ..db import engine
+    from ..sources_catalog import SOURCES_MASQUEES
+    with engine().begin() as c:
+        reservoirs = _assembler_reservoirs(c)
+        for r in reservoirs:
+            r["etat"] = list(_etats.etat_reservoir(r))
+        rows = c.execute(text(
+            "SELECT id, name, provider, status, COALESCE(technical_notes, '') AS tn,"
+            " COALESCE(affichage_desactive, false) AS off FROM data_sources ORDER BY name")
+        ).mappings().all()
+    servis_ids = {r["id"] for r in reservoirs}
+    non_servies = []
+    for row in rows:
+        if row["id"] in servis_ids:
+            continue
+        tn = row["tn"]
+        raison = ("retirée" if tn.startswith("RETIRÉ") else
+                  "doublon" if tn.startswith("DOUBLON") else
+                  "dormante (jamais servie)" if tn.startswith("DORMANT") else
+                  "désactivée au dashboard" if row["off"] else
+                  "masquée" if row["name"] in SOURCES_MASQUEES else
+                  "hors vitrine")
+        non_servies.append({"id": row["id"], "nom": row["name"],
+                            "producteur": row["provider"], "raison": raison})
+    part = _etats.partition_reservoirs(reservoirs)
+
+    def _bloc(pred):
+        return [{"id": r["id"], "nom": r["nom"], "producteur": r["producteur"], "etat": r["etat"]}
+                for r in reservoirs if pred(r)]
+    return {
+        "compteurs": part,
+        "definition": _DEF_A_JOUR,
+        "groupes": [
+            {"cle": "a_jour", "titre": "À jour et vérifiés",
+             "reservoirs": _bloc(lambda r: r["etat"][0] == "mint")},
+            {"cle": "a_regarder", "titre": "À regarder",
+             "reservoirs": _bloc(lambda r: r["etat"][0] not in ("mint", "gris"))},
+            {"cle": "vides", "titre": "Vides ou manuels",
+             "reservoirs": _bloc(lambda r: r["etat"][0] == "gris")},
+        ],
+        "non_servies": non_servies,
+    }

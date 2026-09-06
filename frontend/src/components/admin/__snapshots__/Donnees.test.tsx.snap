@@ -38,6 +38,7 @@ exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 .cxp .kpi{padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .cxp .kpi .v{font-size:20px;font-weight:650;letter-spacing:-.02em} .cxp .kpi .v small{font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
 .cxp .kpi .l{color:var(--muted);font-size:12px;margin-top:2px}
+.cxp button.kpi.lien{display:block;width:100%;transition:border-color .12s} .cxp button.kpi.lien:hover{border-color:var(--mint)} .cxp button.kpi.lien:hover .l{color:var(--text)}
 .cxp .sect{display:flex;align-items:baseline;gap:10px;margin:24px 0 8px}
 .cxp .sect h2{margin:0;font-size:13px;font-weight:600;color:var(--text)} .cxp .sect span{color:var(--faint);font-size:12px}
 .cxp .item{display:grid;grid-template-columns:44px 1fr auto;gap:0 14px;align-items:center;padding:12px 14px 12px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-bottom:6px;width:100%}

@@ -28,7 +28,8 @@ const data = {
   familles: [{ nom: 'Parcelles et propriété', ids: [1] }, { nom: 'Marché, logement, permis', ids: [2] }],
   categories: [{ slug: 'fiche', nom: 'Fiches', ids: ['fiche_parcelle'] }, { slug: 'outil', nom: 'Outils', ids: ['outil_marche'] }],
   chiffres: { a: { moteur: 'x', calcul: 'moteur' }, b: { moteur: 'y', calcul: 'passe_plat' } },
-  compteurs: { chiffres: 2 }, residuel: { changees: false }, fuites: [],
+  compteurs: { chiffres: 2, reservoirs: 2, a_jour: 1, a_regarder: 1, vides: 0, robinets: 2, robinets_a_regarder: 1, robinets_coherents: 1 },
+  residuel: { changees: false }, fuites: [],
   resume: {
     total: 1, reste: { reservoirs: 2, robinets: 2, chiffres: 2 },
     kpis: [

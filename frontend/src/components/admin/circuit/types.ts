@@ -3,9 +3,10 @@
 export type Couleur = 'mint' | 'ambre' | 'rouge' | 'gris' | 'mauve'
 export type Etat = [Couleur, string]
 
-export type Cible = { type: 'reservoir' | 'robinet' | 'pompe'; ids: (number | string)[] }
+export type CibleType = 'reservoir' | 'robinet' | 'pompe' | 'compteur'
+export type Cible = { type: CibleType; ids: (number | string)[] }
 export type Ligne = { n: number; couleur: Couleur; titre: string; phrase: string; verbe: string; cible: Cible }
-export type Kpi = { valeur: number | string; sur?: number; libelle: string; candidat?: string | null }
+export type Kpi = { valeur: number | string; sur?: number; libelle: string; candidat?: string | null; detail?: string }
 export type Resume = { total: number; kpis: Kpi[]; groupes: { titre: string; lignes: Ligne[] }[]; reste: { reservoirs: number; robinets: number; chiffres: number } }
 
 export type Reservoir = {
@@ -35,12 +36,13 @@ export type CircuitData = {
 // La cible d'une ligne du résumé, portée vers l'onglet Circuit : ouvrir un détail (une seule cible)
 // ou déplier le circuit sur des ids (plusieurs).
 export type Focus =
-  | { kind: 'detail'; type: 'reservoir' | 'robinet' | 'pompe'; id: number | string }
+  | { kind: 'detail'; type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string }
   | { kind: 'groupe'; type: 'reservoir' | 'robinet'; ids: (number | string)[] }
   | null
 
 export function focusDeCible(c: Cible): Focus {
   if (c.type === 'pompe') return { kind: 'detail', type: 'pompe', id: 'pompe' }
+  if (c.type === 'compteur') return { kind: 'detail', type: 'compteur', id: 'compteur' }
   if (c.ids.length === 1) return { kind: 'detail', type: c.type, id: c.ids[0] }
   return { kind: 'groupe', type: c.type, ids: c.ids }
 }

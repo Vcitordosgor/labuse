@@ -19,7 +19,10 @@ export function Resume({ data, onCible }: { data: CircuitData; onCible: (c: Cibl
       </div>
 
       <div className="kpis">
-        <div className="kpi"><div className="v">{k0.valeur}<small>/ {k0.sur}</small></div><div className="l">{k0.libelle}</div></div>
+        {/* CIRCUIT-P2 (lot 2.2) — le repère « N / 68 » ouvre au clic la page de détail du compteur. */}
+        <button className="kpi lien" onClick={() => onCible({ type: 'compteur', ids: [] })}
+          title="Voir les réservoirs par état, et les lignes en base non servies">
+          <div className="v">{k0.valeur}<small>/ {k0.sur}</small></div><div className="l">{k0.libelle} →</div></button>
         <div className="kpi"><div className="v">{k1.valeur}<small>/ {k1.sur}</small></div><div className="l">{k1.libelle}</div></div>
         <div className="kpi"><div className="v">{k2.valeur}</div><div className="l">{k2.libelle}</div></div>
         <div className="kpi"><div className="v"><code>{k3.valeur}</code></div><div className="l">{k3.libelle} · candidat {k3.candidat || 'aucun'}</div></div>

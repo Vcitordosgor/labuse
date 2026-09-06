@@ -16,7 +16,8 @@ import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type Cible, type CircuitData } from './types'
 
 type Onglet = 'resume' | 'circuit' | 'journal'
-type Detail = { type: 'reservoir' | 'robinet' | 'pompe'; id: number | string } | null
+type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur'
+type Detail = { type: DetailType; id: number | string } | null
 
 export function CircuitSection() {
   const qc = useQueryClient()
@@ -42,7 +43,10 @@ export function CircuitSection() {
   }, [])
   // reflète le détail ouvert dans le hash (fusion, sans écraser les autres paramètres).
   useEffect(() => {
-    const suivant = ecrireCx(window.location.hash, detail)
+    // le compteur n'est pas deep-linké (page transitoire d'agrégat) : il ne s'écrit pas au hash.
+    const cx = detail && detail.type !== 'compteur'
+      ? (detail as { type: 'reservoir' | 'robinet' | 'pompe'; id: number | string }) : null
+    const suivant = ecrireCx(window.location.hash, cx)
     if (suivant !== window.location.hash) window.history.replaceState(null, '', suivant || window.location.pathname + window.location.search)
   }, [detail])
 
@@ -52,7 +56,7 @@ export function CircuitSection() {
     else if (f?.kind === 'groupe') { setGroupe(f.ids); setDetail(null) }
     setOnglet('circuit')
   }
-  const ouvrirDetail = (type: 'reservoir' | 'robinet' | 'pompe', id: number | string) => {
+  const ouvrirDetail = (type: DetailType, id: number | string) => {
     setDetail({ type, id }); setGroupe(null); setOnglet('circuit')
   }
   const fermerDetail = () => setDetail(null)

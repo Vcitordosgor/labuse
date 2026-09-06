@@ -1907,6 +1907,8 @@ export const getAdminCircuitJournal = (p: { type?: string; depuis?: string; page
   const s = q.toString()
   return j<any>(`/admin/circuit/journal${s ? '?' + s : ''}`)
 }
+// CIRCUIT-P2 (lot 2.2) — la page de détail du compteur de réservoirs (68 par état + non servies).
+export const getAdminCircuitCompteur = () => j<any>('/admin/circuit/compteur')
 export const getAdminCircuitReservoir = (id: number) => j<any>(`/admin/circuit/reservoir/${id}`)
 export const getAdminCircuitRobinet = (id: string) => j<any>(`/admin/circuit/robinet/${encodeURIComponent(id)}`)
 export const getAdminCircuitPompe = () => j<any>('/admin/circuit/pompe')

@@ -170,8 +170,9 @@ exports[`snapshots des onglets > Résumé 1`] = `
   <div
     class="kpis"
   >
-    <div
-      class="kpi"
+    <button
+      class="kpi lien"
+      title="Voir les réservoirs par état, et les lignes en base non servies"
     >
       <div
         class="v"
@@ -186,8 +187,9 @@ exports[`snapshots des onglets > Résumé 1`] = `
         class="l"
       >
         réservoirs à jour et vérifiés
+         →
       </div>
-    </div>
+    </button>
     <div
       class="kpi"
     >
