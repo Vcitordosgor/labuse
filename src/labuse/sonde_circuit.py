@@ -76,19 +76,73 @@ def ensure(db) -> None:
     db.execute(text("ALTER TABLE circuit_ecarts ADD COLUMN IF NOT EXISTS "
                     "type varchar(12) NOT NULL DEFAULT 'nombre'"))
     db.execute(text("ALTER TABLE circuit_ecarts ALTER COLUMN chiffre_id TYPE varchar(120)"))
+    # CIRCUIT-5 lot 3.3 — la sonde écrit des IDS, plus seulement des libellés (dette P3) :
+    # `robinet_*_id` = id du registre quand le côté EST un robinet (NULL sinon : moteur, SQL,
+    # règle — le libellé reste). Backfill des lignes d'avant la migration.
+    db.execute(text("ALTER TABLE circuit_ecarts ADD COLUMN IF NOT EXISTS robinet_a_id varchar(120)"))
+    db.execute(text("ALTER TABLE circuit_ecarts ADD COLUMN IF NOT EXISTS robinet_b_id varchar(120)"))
+    db.execute(text("ALTER TABLE circuit_eau_ancienne ADD COLUMN IF NOT EXISTS robinet_id varchar(120)"))
+    _backfill_ids(db)
+
+
+#: lot 3.3 — libellés descriptifs de la sonde → id de robinet du registre (quand le côté est
+#: bien un robinet servi ; un côté moteur/SQL/règle n'a PAS d'id et garde son libellé seul).
+CORRESPONDANCES_ROBINETS: dict[str, str] = {
+    "http:/parcels": "fiche_parcelle_entete",
+    "copilote:fiche_parcelle": "copilote_fiche_parcelle",
+    "attrs.niveau (servi)": "couche_alea_inondation",
+    "sitadel_permits (points servis)": "couche_permis",
+    "payload fiche (bloc dpe_connu, non affiché)": "",   # servi par AUCUN robinet (Fiche.tsx:1492)
+    "fiche parcelle / filtres": "",                       # ancien libellé DPE (backfill)
+}
+
+
+def robinet_id_de(libelle: str | None) -> str | None:
+    """L'id de robinet du registre pour un libellé de la sonde — le libellé lui-même s'il EST
+    un id, la correspondance déclarée sinon, None quand le côté n'est pas un robinet."""
+    if not libelle:
+        return None
+    from .registre import ROBINETS
+    if libelle in ROBINETS:
+        return libelle
+    return CORRESPONDANCES_ROBINETS.get(libelle) or None
+
+
+def _backfill_ids(db) -> None:
+    """lot 3.3 — pose les ids sur les lignes écrites avant la migration (idempotent)."""
+    # l'eau DPE historique : chiffre HORS registre « (chiffres DPE) » → `dpe_connu` (donnée du
+    # registre, attribuable), et SOLDÉE — le contrôle a été corrigé (last_sync_at, plus le max
+    # des dates de contenu) et la source ré-ingérée --force le 06/09/2026 : l'eau a été bue.
+    db.execute(text(
+        "UPDATE circuit_eau_ancienne SET chiffre_id = 'dpe_connu', statut = 'solde' "
+        "WHERE chiffre_id = '(chiffres DPE)'"))
+    for table, cols in (("circuit_ecarts", ("robinet_a", "robinet_b")),
+                        ("circuit_eau_ancienne", ("robinet",))):
+        suffixe = "_id" if table == "circuit_eau_ancienne" else None
+        for col in cols:
+            cible = f"{col}{suffixe}" if suffixe else f"{col}_id"
+            rows = db.execute(text(
+                f"SELECT DISTINCT {col} FROM {table} WHERE {cible} IS NULL")).scalars().all()  # noqa: S608
+            for lib in rows:
+                rid = robinet_id_de(lib)
+                if rid:
+                    db.execute(text(
+                        f"UPDATE {table} SET {cible} = :rid WHERE {col} = :lib AND {cible} IS NULL"),  # noqa: S608
+                        {"rid": rid, "lib": lib})
 
 
 def _upsert_ecart(db, chiffre_id: str, cle: str, ra: str, va, rb: str, vb, cause: str,
                   type_donnee: str = "nombre") -> None:
     db.execute(text(
         "INSERT INTO circuit_ecarts (chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b,"
-        " cause, type) "
-        "VALUES (:c, :k, :ra, :va, :rb, :vb, :ca, :t) "
+        " cause, type, robinet_a_id, robinet_b_id) "
+        "VALUES (:c, :k, :ra, :va, :rb, :vb, :ca, :t, :ra_id, :rb_id) "
         "ON CONFLICT (chiffre_id, cle, robinet_a, robinet_b) DO UPDATE SET "
         " valeur_a = EXCLUDED.valeur_a, valeur_b = EXCLUDED.valeur_b, cause = EXCLUDED.cause, "
-        " type = EXCLUDED.type, statut = 'ouvert', solde_le = NULL"),
+        " type = EXCLUDED.type, robinet_a_id = EXCLUDED.robinet_a_id, "
+        " robinet_b_id = EXCLUDED.robinet_b_id, statut = 'ouvert', solde_le = NULL"),
         {"c": chiffre_id, "k": cle, "ra": ra, "va": str(va), "rb": rb, "vb": str(vb),
-         "ca": cause, "t": type_donnee})
+         "ca": cause, "t": type_donnee, "ra_id": robinet_id_de(ra), "rb_id": robinet_id_de(rb)})
 
 
 def verifier_robinets(db) -> dict:
@@ -332,6 +386,117 @@ def verifier_exports(db) -> dict:
             "n_mots_interdits": verdict.get("n_mots_interdits", 0)}
 
 
+#: CIRCUIT-5 lot 5.2 — CE QUE LA SONDE COMPARE chaque nuit, couple par couple :
+#: chiffre_id → les robinets du registre dont le chemin est mesuré. La vérité du code,
+#: vérifiée par le verrou V5c contre les couples déclarés du registre.
+SONDE_COUVRE: dict[str, tuple[str, ...]] = {
+    "part_zone_U_pct": ("fiche_commune_zonage",),
+    "part_zone_AU_pct": ("fiche_commune_zonage",),
+    "part_zone_A_pct": ("fiche_commune_zonage",),
+    "part_zone_N_pct": ("fiche_commune_zonage",),
+    "n_sources": ("admin_flux_circuit", "page_sources_client"),
+    "surface_parcelle_m2": ("copilote_fiche_parcelle",),
+    "sdp_residuelle_m2": ("fiche_parcelle_constructibilite",),
+    "prix_neuf_observe_eur_m2": ("fiche_parcelle_constructibilite",),
+    "zone_plu_famille": ("fiche_parcelle_urbanisme",),
+    "alea_inondation_couche": ("couche_alea_inondation",),
+    "historique_permis_liste": ("fiche_parcelle_autour",),
+    "divisible_classe": ("fiche_parcelle_division",),
+    "prod_spec_kwh_kwc": ("outil_prospection_solaire",),
+    "population_zone": ("outil_etude_zone",),
+    "dpe_connu": (),          # en_attente : aucun robinet ne l'affiche (eau ancienne seule)
+    "verdict_couche": ("couche_verdict",),
+    "parcelle_geometrie": (),  # eau ancienne 4.5 (geom_simple) — pas une comparaison de robinets
+}
+
+#: lot 5.2 — les couples multi-robinets que la sonde ne compare PAS ENCORE, chacun avec sa
+#: raison (un couple silencieux = verrou V5c cassé, jamais un « non couvert »). Raison par
+#: chiffre (elle vaut pour tous ses couples non couverts).
+NON_SONDES: dict[str, str] = {
+    "tier_opportunite": "reconstruit à la bascule (portée run) — vérité tenue par le golden servi "
+                        "(qa/golden_check, GOLDEN-REGEN) sur les 119 parcelles",
+    "run_label_servi": "pointeur du manifeste — tenu par V3a (tuiles = run servi) et le golden",
+    "prix_neuf_vefa_acte_eur_m2": "scission 0-bis mesurée par verifier_scission_neuf (grain "
+                                  "score_e) — la comparaison robinet à robinet viendra avec "
+                                  "l'extension sonde (chantier à décider Vic)",
+    "annonces_actives_n": "Radar : compte recontrôlé par recomptage humain (échantillon 4.4 "
+                          "carte annonces) — pas de second chemin machine",
+    "azimut_bati_deg": "OUTILS-FIX-1 A2 : servi liste + carte du même moteur solaire — un seul "
+                       "producteur, comparaison sans objet tant que le front ne recalcule pas",
+    "capacite_logements": "fiche + PDF lisent le MÊME bloc potentiel (EXPORTS-1) — couverts par "
+                          "le cas recette_exports1 (nocturne), pas par la sonde au bouton",
+    "charge_fonciere_eur": "idem potentiel/bilan — cas recette_exports1 (nocturne)",
+    "surface_vendable_m2": "idem potentiel/bilan — cas recette_exports1 (nocturne)",
+    "potentiel_verdict": "idem potentiel — cas recette_exports1 (nocturne)",
+    "comparateur_composite": "comparateur : composite d'affichage (moteur commune.composite) — "
+                             "extension sonde à décider Vic",
+    "deficit_sru_pts": "fiche commune + comparateur lisent commune_contexte_sru — couvert par "
+                       "l'échantillon producteur SRU (4.4, à valider) puis extension sonde",
+    "taux_lls_pct": "idem SRU — échantillon producteur 4.4 + identité du bloc (V4b)",
+    "ecart_demande_acte_pct": "Radar marché : n<5 déjà gardé ; extension sonde à décider Vic",
+    "mixite_clause": "règle L111 servie fiche+PDF du même moteur — cas recette_exports1",
+    "mutations_12m_n": "fiche commune + comparateur (moteur commune.indicateurs) — échantillon "
+                       "producteur DVF (4.4, à valider)",
+    "n_bascules_7j": "compteur d'exploitation (page Circuit seule) — pas un chiffre client",
+    "n_biens_du_jour": "digest Radar : recompté par le dedup event_log (RADAR-DIGESTS lot 4)",
+    "n_communes_rnu": "corpus PLU : garde etat_corpus_plu (CIRCUIT-4) — un seul producteur",
+    "n_densifiables": "fiche commune + couche lisent parcel_renouvellement du run servi — "
+                      "tenu par V3a (une génération) et le golden",
+    "n_parcelles_pm": "fiche propriétaire + contexte commune (proprietaire_historique, une "
+                      "assiette) — KF-2 lot 1, extension sonde à décider Vic",
+    "n_piscines": "détection ortho : QA humaine (piscine_corrections) fait foi — pas de second "
+                  "chemin machine",
+    "n_vigilances": "compteur d'affichage front (CIRCUIT-2 : portée front à rapatrier — dette "
+                    "déjà écrite au registre)",
+    "permis_12m_n": "fiche commune + comparateur (moteur commune) — échantillon producteur "
+                    "Sitadel (4.4, à valider)",
+    "permis_5a_n": "idem permis_12m_n",
+    "point_mort_n": "idem permis (vélocité) — moteur commune.indicateurs",
+    "pression_zan_ha": "passe-plat commune_conso_enaf (rattachement à décider, lot 1) — "
+                       "échantillon producteur ZAN (4.4, à valider)",
+    "prix_ancien_median_eur_m2": "fiche commune + comparateur (marche_service) — échantillon "
+                                 "producteur DVF (4.4, à valider)",
+    "prix_demande_median_eur_m2": "Radar (affiché vs acté) : n<5 gardé, recomptage humain",
+    "prix_terrain_secteur_eur_m2": "parcelle-secteur (marche_service, témoins CONCEPTS 3.3 "
+                                   "mesurés) — extension sonde à décider Vic",
+    "projet_cadrage_n": "CRM projets : compteur interne (event_log) — pas un chiffre source",
+    "stock_opportunites": "fiche commune + accueil lisent le run servi — golden + V3a",
+    "velocite_delai_median_mois": "moteur commune.indicateurs — échantillon Sitadel (4.4)",
+    "zonage_plu_couche": "couche calée cadastre vs zone_servie : comparés par la catégorielle "
+                         "4.1 sur les témoins (couple couvert via zone_plu_famille)",
+    "n_sources": "quatre lectures TENUES par V2a (68 = 68 partout, même WHERE_AFFICHEES) ; "
+                 "la sonde en compare deux",
+    "population_zone": "fiche « autour » et PDF Flash CONSOMMENT le moteur etude_de_zone "
+                       "(FLASH-ZONE F2, aucune recopie) ; le cache isochrones est gardé par "
+                       "l'eau 3 (TTL 30 j)",
+    "prod_spec_kwh_kwc": "outil, fiche soleil et toits lisent le MÊME builder solaire (gel "
+                         "étiqueté, eau 4) — pas de second calcul à comparer",
+    "sdp_residuelle_m2": "outils densifier/faisa et PDF lisent le même bloc potentiel — "
+                         "PDF couverts par recette_exports1 (nocturne)",
+    "surface_parcelle_m2": "outil_etudier_bien lit le même passe-plat parcels.surface_m2 — "
+                           "la sonde compare déjà HTTP/SQL/Copilote (chemins réels 0-bis)",
+    "zone_plu_famille": "couche comparée par la catégorielle 4.1 ; PDF zonage par "
+                        "recette_exports1 (nocturne)",
+    "prix_neuf_observe_eur_m2": "PDF banquier couvert par recette_exports1 ; la scission du "
+                                "neuf est mesurée par verifier_scission_neuf",
+}
+
+
+def temoins_tournants(db, n: int = 50) -> list[str]:
+    """CIRCUIT-5 lot 5.3 — l'échantillon TOURNANT : n parcelles tirées parmi celles
+    CONSULTÉES la veille (journal d'usage `consultation_log.idu`), tirage DÉTERMINISTE du
+    jour (md5(idu || date du jour)) — rejouable dans la nuit, différent chaque jour, pour
+    qu'un écart hors témoins fixes finisse par être vu."""
+    try:
+        return [r for (r,) in db.execute(text(
+            "SELECT idu FROM (SELECT DISTINCT idu FROM consultation_log "
+            " WHERE idu IS NOT NULL AND ts >= (CURRENT_DATE - INTERVAL '1 day')) t "
+            "ORDER BY md5(idu || CURRENT_DATE::text) LIMIT :n"), {"n": n}).all()]
+    except Exception:  # noqa: BLE001 — pas de journal d'usage : échantillon vide, dit au verdict
+        db.rollback()
+        return []
+
+
 def _temoins_golden(db) -> list[str]:
     """Les parcelles témoins de la sonde catégorielle : les 4 EXPORTS-1 + les GOLDEN_IDUS de
     qa/golden_check.py (même jeu, jamais deux listes — parsé du fichier ; repli : sélection
@@ -368,8 +533,10 @@ def verifier_categorielle(db) -> dict:
     (nocturne) — jamais « non couverts »."""
     trouves: list[tuple] = []
     mesures = 0
-    # ── 4.1 zonage sur les témoins ──
-    temoins = _temoins_golden(db)
+    # ── 4.1 zonage sur les témoins : les FIXES (golden) + le TOURNANT du jour (lot 5.3 :
+    #    50 parcelles consultées la veille, tirage déterministe) ──
+    tournants = temoins_tournants(db)
+    temoins = list(dict.fromkeys(_temoins_golden(db) + tournants))
     for idu in temoins:
         pid = _parcel_id(db, idu)
         if pid is None:
@@ -458,12 +625,14 @@ def verifier_categorielle(db) -> dict:
     for t in trouves:
         _upsert_ecart(db, *t[:7], type_donnee=t[7])
     return {"ecarts_trouves": len(trouves), "mesures": mesures, "temoins": len(temoins),
+            "temoins_tournants": len(tournants),
             "pdf_zonage": "cas recette_exports1 (nocturne)"}
 
 
-def verifier_eau_ancienne(db) -> dict:
-    """4.2 — par tampon : run ≠ manifeste, millésime servi < réservoir. Les six familles de
-    CIRCUIT-0 sont contrôlées ; « solaire gelé » sort `etiquete` (assumé), jamais `ouvert`."""
+def eau_lignes(db) -> list[tuple[str, str, str, str, str, str]]:
+    """4.2 (extrait CIRCUIT-5 lot 3) — les lignes d'eau ancienne MESURÉES maintenant, sans
+    écrire : (chiffre_id, robinet, tampon, attendu, mecanisme, statut). Utilisé par
+    `verifier_eau_ancienne` (qui les journalise) ET par le verrou V3b (état, sans doublon)."""
     from . import manifeste
 
     lignes: list[tuple[str, str, str, str, str, str]] = []
@@ -478,16 +647,23 @@ def verifier_eau_ancienne(db) -> dict:
                        f"runs en base : {sorted(autres)}", f"run servi : {run_div}",
                        "lignes d'anciens runs en base (non servies — scope lot 2.3) ; purge au geste",
                        "etiquete"))
-    # 2) DPE : l'amont vu par la sonde est-il plus récent que la donnée en base ?
+    # 2) DPE : l'amont a-t-il publié une version APRÈS notre dernière ingestion ?
+    # CIRCUIT-5 lot 3.3 — le comparant est `last_sync_at` (notre geste), plus le max des dates
+    # de contenu : l'ancien contrôle (`dernier_vu > max(date_etablissement)`) restait « ouvert »
+    # même base à jour, car le dernier DPE authentique 974 date du 21/07 quand l'amont republie
+    # le JEU chaque semaine — un faux signal permanent, constaté au rafraîchissement --force du
+    # 06/09 (16 DPE, max inchangé). Et la ligne devient ATTRIBUABLE : chiffre_id = `dpe_connu`
+    # (donnée du registre, en_attente — le bloc payload existe, plus aucun robinet ne l'affiche).
     try:
-        vu = db.execute(text(
-            "SELECT v.dernier_vu FROM source_veille v JOIN data_sources d ON d.id = v.source_id "
-            "WHERE d.name ILIKE 'DPE ADEME%'")).scalar()
-        maxi = db.execute(text("SELECT max(date_etablissement)::text FROM dpe_records")).scalar()
-        if vu and maxi and str(vu)[:10] > str(maxi)[:10]:
-            lignes.append(("(chiffres DPE)", "fiche parcelle / filtres",
-                           f"max(date_etablissement)={maxi}", f"amont vu {str(vu)[:10]}",
-                           "cron DPE : saut des communes peuplées (--force pour rafraîchir)", "ouvert"))
+        vu, sync = db.execute(text(
+            "SELECT v.dernier_vu, d.last_sync_at FROM source_veille v "
+            "JOIN data_sources d ON d.id = v.source_id "
+            "WHERE d.name ILIKE 'DPE ADEME%'")).first() or (None, None)
+        if vu and (sync is None or str(vu)[:10] > str(sync)[:10]):
+            lignes.append(("dpe_connu", "payload fiche (bloc dpe_connu, non affiché)",
+                           f"dernière ingestion {str(sync)[:10] if sync else 'jamais'}",
+                           f"amont vu {str(vu)[:10]}",
+                           "cron DPE : ré-ingérer (--force) pour boire la nouvelle version", "ouvert"))
     except Exception:  # noqa: BLE001
         db.rollback()
     # 3) isochrones : entrées au-delà du TTL 30 j (plus jamais SERVIES — lot 2.7 — mais à purger)
@@ -505,12 +681,20 @@ def verifier_eau_ancienne(db) -> dict:
     lignes.append(("prod_spec_kwh_kwc", "outil_prospection_solaire",
                    "millésime gelé porté en base (bandeau)", "recalcul au geste solaire-build",
                    "gel ASSUMÉ et étiqueté (CIRCUIT-0, famille 3)", "etiquete"))
+    return lignes
 
+
+def verifier_eau_ancienne(db) -> dict:
+    """4.2 — par tampon : run ≠ manifeste, millésime servi < réservoir. Les six familles de
+    CIRCUIT-0 sont contrôlées ; « solaire gelé » sort `etiquete` (assumé), jamais `ouvert`.
+    lot 3.3 : chaque ligne porte aussi `robinet_id` (id du registre, NULL si aucun robinet)."""
+    lignes = eau_lignes(db)
     for (cid, rob, tampon, attendu, meca, statut) in lignes:
         db.execute(text(
-            "INSERT INTO circuit_eau_ancienne (chiffre_id, robinet, tampon, attendu, mecanisme, statut) "
-            "VALUES (:c, :r, :t, :a, :m, :s)"),
-            {"c": cid, "r": rob, "t": tampon, "a": attendu, "m": meca, "s": statut})
+            "INSERT INTO circuit_eau_ancienne (chiffre_id, robinet, robinet_id, tampon, attendu,"
+            " mecanisme, statut) VALUES (:c, :r, :rid, :t, :a, :m, :s)"),
+            {"c": cid, "r": rob, "rid": robinet_id_de(rob), "t": tampon, "a": attendu,
+             "m": meca, "s": statut})
     ouvertes = sum(1 for x in lignes if x[5] == "ouvert")
     return {"lignes": len(lignes), "ouvertes": ouvertes,
             "etiquetees": sum(1 for x in lignes if x[5] == "etiquete")}

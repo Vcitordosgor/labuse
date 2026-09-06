@@ -494,6 +494,27 @@ def coherence_robinets(ctx: JobContext) -> None:
     from .sonde_circuit import controle
     res = controle(ctx.db, declencheur="cron")
     ctx.compte(**{k: v for k, v in res.items() if isinstance(v, (int, float))})
+    # CIRCUIT-5 (lot 6.1) — la sonde de nuit joue AUSSI les verrous : une ligne par verrou au
+    # journal (geste « controle », cible « verrous »), lue par le Résumé — la même vérité que
+    # `labuse circuit verrous` et que la porte de deploy.sh. La sonde vient de tourner : V1b
+    # a déjà son passage frais dans la même session.
+    from . import circuit_journal, circuit_verrous
+    resultats = circuit_verrous.jouer_tous(ctx.db)
+    casses = [r.id for r in resultats if r.verdict == "casse"]
+    circuit_journal.journaliser(
+        ctx.db, "controle", "verrous", "cron", "echec" if casses else "ok",
+        {"joues": len(resultats), "casses": casses,
+         "a_decider": [r.id for r in resultats if r.verdict == "a_decider"],
+         "preuves": {r.id: r.preuve for r in resultats}})
+    ctx.compte(verrous_joues=len(resultats), verrous_casses=len(casses))
+    if casses:
+        from datetime import date as _date
+        from .api.events import creer_notification
+        creer_notification(
+            ctx.db, kind="systeme", compte_id=None, source="Circuit",
+            titre=f"Verrous cassés : {', '.join(casses)}",
+            detail="Le déploiement refusera tant que ça tient. Détail : labuse circuit verrous.",
+            lien="/admin", dedup=f"verrous:{_date.today().isoformat()}")
     if res.get("fuites_ouvertes") or res.get("eau_ancienne_ouverte"):
         from datetime import date as _date
         from .api.events import creer_notification

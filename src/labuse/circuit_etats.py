@@ -172,6 +172,10 @@ NOM_VERS_SLUG = {
     'Réunion Express — hypothèses de tracé (débat public CNDP)': 'reunion_express_cndp',
     'ECLN (commercialisation des logements neufs, SDES)': 'ecln',
     'LOVAC (logements vacants)': 'lovac',
+    # CIRCUIT-5 lot 2 — le pont était incomplet (sources arrivées après CIRCUIT-P) :
+    "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": 'cadastre_epoque',
+    'CatNat (arrêtés GASPAR / Géorisques)': 'catnat_gaspar',
+    "Taxe d'aménagement — taux communaux (délibérations)": 'taxe_amenagement',
 }
 
 def slug_reservoir(nom: str | None) -> str | None:

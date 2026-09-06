@@ -1865,13 +1865,23 @@ def admin_circuit(request: Request) -> dict:
     from .. import circuit_resume as _resume
     _candidat = next((rr["label"] for rr in runs_list if rr.get("statut") == "termine"
                       and rr.get("label") != runs.current()), None)
+    # CIRCUIT-5 (lot 6.2) — la synthèse des verrous à coût page (dernier passage journalisé
+    # + orphelines/muets immédiats) : le Résumé la REND, jamais il ne rejoue les verrous.
+    from .. import circuit_verrous as _verrous_mod
+    try:
+        with engine().begin() as _c2:
+            _verrous = _verrous_mod.synthese_pour_page(_c2)
+    except Exception:  # noqa: BLE001 — page jamais bloquée par la synthèse
+        _verrous = None
     resume = _resume.composer(reservoirs, robinets, compteurs=compteurs, residuel=residuel,
                               run_servi=runs.current(), candidat=_candidat,
                               fuite_robinets=_fuite_rob, eau_robinets=_eau_rob,
                               regles_ecart=sorted(_verdicts_rob["ecart"]),
-                              regles_choix=sorted(_verdicts_rob["choix"]))
+                              regles_choix=sorted(_verdicts_rob["choix"]),
+                              verrous=_verrous)
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
+        "verrous": _verrous,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
         "familles": familles, "categories": categories, "resume": resume,
         "aretes": aretes, "fuites": fuites, "eau_ancienne": eau,
@@ -2389,15 +2399,23 @@ def admin_circuit_compteur(request: Request) -> dict:
             r["etat"] = list(_etats.etat_reservoir(r))
         rows = c.execute(text(
             "SELECT id, name, provider, status, COALESCE(technical_notes, '') AS tn,"
-            " COALESCE(affichage_desactive, false) AS off FROM data_sources ORDER BY name")
+            " COALESCE(affichage_desactive, false) AS off, alias_de, retiree_raison"
+            " FROM data_sources ORDER BY name")
         ).mappings().all()
     servis_ids = {r["id"] for r in reservoirs}
+    noms_par_id = {row["id"]: row["name"] for row in rows}
     non_servies = []
     for row in rows:
         if row["id"] in servis_ids:
             continue
-        tn = row["tn"]
-        raison = ("retirée" if tn.startswith("RETIRÉ") else
+        # CIRCUIT-5 lot 2 — le STATUT de première classe fait foi (le préfixe de note reste
+        # en ceinture) : alias (avec sa cible), retirée (avec sa raison), hub, chantier.
+        statut, tn = (row["status"] or "").lower(), row["tn"]
+        raison = (f"alias de « {noms_par_id.get(row['alias_de'], '?')} »" if statut == "alias" else
+                  f"retirée — {row['retiree_raison'] or 'raison en note'}" if statut == "retiree" else
+                  "hub (portail, jamais un réservoir)" if statut == "hub" else
+                  "chantier nommé (a_faire)" if statut == "a_faire" else
+                  "retirée" if tn.startswith("RETIRÉ") else
                   "doublon" if tn.startswith("DOUBLON") else
                   "dormante (jamais servie)" if tn.startswith("DORMANT") else
                   "désactivée au dashboard" if row["off"] else
@@ -2406,6 +2424,21 @@ def admin_circuit_compteur(request: Request) -> dict:
         non_servies.append({"id": row["id"], "nom": row["name"],
                             "producteur": row["provider"], "raison": raison})
     part = _etats.partition_reservoirs(reservoirs)
+    # CIRCUIT-5 lot 6.2 — la CARTE table → réservoir (lot 1.1) se lit ICI, sur le détail du
+    # repère « 68 » : pour chaque réservoir servi, ses tables (et couches spatial_layers) et
+    # son millésime — la déclaration de registre/tables.py, jamais recalculée ailleurs.
+    from ..registre import tables as _tables
+    carte = []
+    for r in sorted(reservoirs, key=lambda x: x["nom"]):
+        slug = _etats.slug_reservoir(r["nom"])
+        rt = _tables.RESERVOIR_TABLES.get(slug or "")
+        carte.append({
+            "id": r["id"], "nom": r["nom"], "slug": slug,
+            "tables": list(rt.tables) if rt else [],
+            "couches": list(rt.couches) if rt else [],
+            "millesime": (rt.millesime or None) if rt else None,
+            "note": (rt.note if rt else "ABSENT de la carte (registre/tables.py)"),
+        })
 
     def _bloc(pred):
         return [{"id": r["id"], "nom": r["nom"], "producteur": r["producteur"], "etat": r["etat"]}
@@ -2422,4 +2455,5 @@ def admin_circuit_compteur(request: Request) -> dict:
              "reservoirs": _bloc(lambda r: r["etat"][0] == "gris")},
         ],
         "non_servies": non_servies,
+        "carte": carte,
     }

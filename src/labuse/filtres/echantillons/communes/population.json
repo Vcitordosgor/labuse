@@ -1,0 +1,228 @@
+{
+ "carte": "population",
+ "champ": "population.habitants",
+ "producteur": "INSEE (population légale, geo.api.gouv.fr)",
+ "tolerance_pct": 15,
+ "lu_le": "2026-09-06",
+ "note": "servi = agrégat Filosofi carreaux 200 m (définition ≠ population légale) — tolérance large, l'écart de définition est connu",
+ "lignes": [
+  {
+   "insee": "97401",
+   "nom": "Les Avirons",
+   "attendu": 11536,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97401?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97402",
+   "nom": "Bras-Panon",
+   "attendu": 13012,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97402?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97403",
+   "nom": "Entre-Deux",
+   "attendu": 7176,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97403?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97404",
+   "nom": "L'Étang-Salé",
+   "attendu": 14464,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97404?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97405",
+   "nom": "Petite-Île",
+   "attendu": 13067,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97405?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97406",
+   "nom": "La Plaine-des-Palmistes",
+   "attendu": 6936,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97406?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97407",
+   "nom": "Le Port",
+   "attendu": 33969,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97407?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97408",
+   "nom": "La Possession",
+   "attendu": 36568,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97408?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97409",
+   "nom": "Saint-André",
+   "attendu": 58885,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97409?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97410",
+   "nom": "Saint-Benoît",
+   "attendu": 38604,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97410?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97411",
+   "nom": "Saint-Denis",
+   "attendu": 155634,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97411?fields=nom,code,population",
+    "champ": "nom, population"
+   },
+   "ecart_assume": true,
+   "note": "Saint-Denis : l'agrégat Filosofi carreaux 200 m (130 938) sous-couvre la commune dense vs population légale INSEE (155 634, -16 %) — écart de DÉFINITION connu, assumé ; toute dérive AU-DELÀ ressortira."
+  },
+  {
+   "insee": "97412",
+   "nom": "Saint-Joseph",
+   "attendu": 39207,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97412?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97413",
+   "nom": "Saint-Leu",
+   "attendu": 36163,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97413?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97414",
+   "nom": "Saint-Louis",
+   "attendu": 54941,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97414?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97415",
+   "nom": "Saint-Paul",
+   "attendu": 108088,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97415?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97416",
+   "nom": "Saint-Pierre",
+   "attendu": 85038,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97416?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97417",
+   "nom": "Saint-Philippe",
+   "attendu": 5082,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97417?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97418",
+   "nom": "Sainte-Marie",
+   "attendu": 37093,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97418?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97419",
+   "nom": "Sainte-Rose",
+   "attendu": 6557,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97419?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97420",
+   "nom": "Sainte-Suzanne",
+   "attendu": 25551,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97420?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97421",
+   "nom": "Salazie",
+   "attendu": 7268,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97421?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97422",
+   "nom": "Le Tampon",
+   "attendu": 82579,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97422?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97423",
+   "nom": "Les Trois-Bassins",
+   "attendu": 7221,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97423?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  },
+  {
+   "insee": "97424",
+   "nom": "Cilaos",
+   "attendu": 5040,
+   "origine": {
+    "url": "https://geo.api.gouv.fr/communes/97424?fields=nom,code,population",
+    "champ": "nom, population"
+   }
+  }
+ ]
+}

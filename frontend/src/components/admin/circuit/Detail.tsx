@@ -49,7 +49,7 @@ export function Detail({ type, id, data, onClose, onOpen }: Props) {
 function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir }) {
   const q = useQuery({ queryKey: ['circuit-detail', 'compteur'], queryFn: getAdminCircuitCompteur })
   if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
-  const { compteurs: cpt, definition, groupes, non_servies } = q.data
+  const { compteurs: cpt, definition, groupes, non_servies, carte } = q.data
   return (
     <div className="detail on">
       {back}
@@ -72,6 +72,31 @@ function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir })
           <li key={n.id}><span>{n.nom}</span><span className="muted">{n.raison}</span></li>
         ))}</ul> : <div className="muted">aucune</div>}
       </div>
+      {/* CIRCUIT-5 (lot 6.2) — LA CARTE table → réservoir : ce que chaque réservoir sert
+          physiquement en base (registre/tables.py, la même déclaration que le verrou V1). */}
+      {Array.isArray(carte) && carte.length > 0 && (
+        <div className="card"><h3>La carte : chaque réservoir, ses tables</h3>
+          <div className="muted" style={{ marginBottom: 8 }}>
+            Ce que chaque réservoir sert en base (tables, couches <code>spatial_layers</code>, millésime) —
+            la déclaration que les verrous font respecter : aucun moteur ne lit une table hors de cette carte.
+          </div>
+          <ul className="list">{carte.map((r: any) => (
+            <li key={r.id}>
+              <span>{r.nom}</span>
+              <span className="muted">
+                {r.tables.length
+                  ? r.tables.map((t: string) => (
+                    <code key={t} style={{ marginRight: 6 }}>
+                      {t}{t === 'spatial_layers' && r.couches.length ? `(${r.couches.join(', ')})` : ''}
+                    </code>
+                  ))
+                  : (r.note || 'aucune table')}
+                {r.millesime ? ` · ${r.millesime}` : ''}
+              </span>
+            </li>
+          ))}</ul>
+        </div>
+      )}
     </div>
   )
 }

@@ -84,10 +84,17 @@ def _parcels_bbox(session) -> tuple[float, float, float, float]:
 
 @app.command("init-db")
 def init_db() -> None:
-    """Crée l'extension PostGIS et toutes les tables."""
+    """Crée l'extension PostGIS et toutes les tables (+ référentiel des 24 communes et clés
+    étrangères de maille commune — CIRCUIT-5 lot 4.1)."""
     ensure_postgis()
     models.create_all(engine())
-    typer.echo("✓ Schéma PostGIS prêt.")
+    from .referentiel_communes import poser_fks
+    with session_scope() as s:
+        r = poser_fks(s)
+        s.commit()
+    if r["non_validees"]:
+        typer.echo(f"⚠ FK non validées (lignes héritées) : {sorted(r['non_validees'])}")
+    typer.echo("✓ Schéma PostGIS prêt (référentiel communes + FK posés).")
 
 
 @app.command("suggestions")
@@ -4083,3 +4090,96 @@ def agent_source_cmd(
         typer.echo(ligne)
     n_nouv = sum(1 for r in rapports if r.get("verdict") == "nouvelle")
     typer.echo(f"✓ terminé — {n_nouv} nouvelle(s) version(s) (la vanne apparaît sur la page Circuit).")
+
+
+# ═══════════════════ CIRCUIT-5 — LES VERROUS : une commande, une porte ═══════════════════
+circuit_app = typer.Typer(add_completion=False,
+                          help="Le circuit (CIRCUIT-5) : jouer les verrous — la porte du déploiement.")
+app.add_typer(circuit_app, name="circuit")
+
+
+@circuit_app.command("verrous")
+def circuit_verrous_cmd(
+    par: str = typer.Option("cli", help="Qui joue (email admin, 'cron') — entre au journal."),
+    complet: bool = typer.Option(False, "--complet", help="Jouer TOUS les verrous même après un cassé."),
+    sans_journal: bool = typer.Option(False, "--sans-journal", help="Ne pas écrire au journal du circuit."),
+) -> None:
+    """CIRCUIT-5 lot 6.1 — joue TOUS les verrous (lots 1 à 5), une ligne par verrou (phrase,
+    verdict, preuve), sort en erreur au premier cassé. Jouée par pytest (marque `verrous`),
+    par la sonde de nuit, et par deploy.sh qui refuse de déployer si un verrou casse."""
+    from . import circuit_journal, circuit_verrous
+
+    with session_scope() as s:
+        resultats = circuit_verrous.jouer_tous(s, arret_premier=not complet)
+        casses = [r for r in resultats if r.verdict == "casse"]
+        a_decider = [r for r in resultats if r.verdict == "a_decider"]
+        for r in resultats:
+            pictos = {"ok": "✓", "casse": "✗", "a_decider": "…"}
+            typer.echo(f"{pictos[r.verdict]} {r.id:4} {r.phrase}")
+            typer.echo(f"       {r.preuve}")
+            for d in r.details[:10]:
+                typer.echo(f"       · {d}")
+            if len(r.details) > 10:
+                typer.echo(f"       · … et {len(r.details) - 10} autres")
+        if not sans_journal:
+            circuit_journal.journaliser(
+                s, "controle", "verrous", par, "echec" if casses else "ok",
+                {"joues": len(resultats), "casses": [r.id for r in casses],
+                 "a_decider": [r.id for r in a_decider],
+                 "preuves": {r.id: r.preuve for r in resultats}})
+            s.commit()
+    typer.echo(f"— {len(resultats)} verrou(s) joué(s) · {len(casses)} cassé(s) · "
+               f"{len(a_decider)} à décider")
+    if casses:
+        raise typer.Exit(1)
+
+
+tables_app = typer.Typer(add_completion=False,
+                         help="Les tables du schéma (CIRCUIT-5) : orphelines, purge vers `poubelle`.")
+app.add_typer(tables_app, name="tables")
+
+
+@tables_app.command("purger")
+def tables_purger_cmd(
+    apply: bool = typer.Option(False, "--apply", help="DÉPLACER les orphelines (schéma poubelle). "
+                               "Sans ce drapeau : lister seulement. Geste de Vic."),
+    par: str = typer.Option("cli", help="Qui purge — entre au journal."),
+) -> None:
+    """CIRCUIT-5 lot 1.3 — les tables orphelines (hors carte, hors exploitation) : les lister
+    avec leur action proposée ; `--apply` les DÉPLACE dans le schéma `poubelle` (JAMAIS un
+    DROP — retour possible par ALTER TABLE ... SET SCHEMA public). Réservé au geste de Vic."""
+    from . import circuit_journal, circuit_verrous
+    from .registre import tables as T
+
+    with session_scope() as s:
+        orph = sorted(T.orphelines(circuit_verrous.relations_schema(s)))
+        if not orph:
+            typer.echo("✓ aucune table orpheline.")
+            return
+        lignes = s.execute(text(
+            "SELECT c.relname, c.relkind, pg_total_relation_size(c.oid) "
+            "FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname='public' "
+            "WHERE c.relname = ANY(:noms)"), {"noms": orph}).all()
+        genres = {r[0]: r[1] for r in lignes}
+        tailles = {r[0]: int(r[2]) for r in lignes}
+        for t in orph:
+            mo = tailles.get(t, 0) / 1_048_576
+            typer.echo(f"  {t:44} {mo:8.1f} Mo  → {T.ACTIONS_PROPOSEES.get(t, 'À DÉCIDER')}")
+        if not apply:
+            typer.echo(f"— {len(orph)} orpheline(s). Rien déplacé (relancer avec --apply).")
+            return
+        s.execute(text("CREATE SCHEMA IF NOT EXISTS poubelle"))
+        deplacees = []
+        for t in orph:
+            genre = genres.get(t)
+            if genre == "v":
+                s.execute(text(f'ALTER VIEW public."{t}" SET SCHEMA poubelle'))
+            elif genre == "m":
+                s.execute(text(f'ALTER MATERIALIZED VIEW public."{t}" SET SCHEMA poubelle'))
+            else:
+                s.execute(text(f'ALTER TABLE public."{t}" SET SCHEMA poubelle'))
+            deplacees.append(t)
+        circuit_journal.journaliser(s, "purger", "tables orphelines", par, "ok",
+                                    {"deplacees": deplacees, "schema": "poubelle"})
+        s.commit()
+    typer.echo(f"✓ {len(deplacees)} table(s) déplacée(s) vers le schéma poubelle (aucun DROP).")

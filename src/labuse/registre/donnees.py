@@ -758,6 +758,13 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/ingestion/mairies.py (bloc MAIRIE)",
     reservoirs=("annuaire_service_public",), portee="live",
     type="texte", table="mairies"),
+ "dpe_connu": C("DPE connu (étiquette, année)", "texte", "parcelle",
+    "dernier DPE rattaché à la parcelle (etiquette_dpe, année, type_batiment) — info fiche "
+    "SEULE, jamais un signal scoring (M71 B1 : 16 DPE authentiques 974)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:5312 (dpe_connu_block)",
+    reservoirs=("dpe_ademe",), portee="live", type="texte", table="dpe_records",
+    en_attente="CIRCUIT-5 lot 3 — bloc payload construit mais plus affiché (Fiche.tsx:1492, "
+               "rétablissement premium = décision Vic) ; porte l'eau ancienne DPE de la sonde"),
  "copilote_texte_web": C("Réponse web (Copilote, dernier recours)", "texte", "global",
     "texte libre ≤ 2 phrases MARQUÉ « web » (fait public La Réunion) — jamais un chiffre Sourcé "
     "(garde 2.6), jamais servi sans son marquage",
@@ -980,3 +987,17 @@ ALIAS_TRANSITION: dict[str, str] = {}
 def resoudre(chiffre_id: str) -> str:
     """Résout un id d'alias de transition vers l'id canonique (identité sinon)."""
     return ALIAS_TRANSITION.get(chiffre_id, chiffre_id)
+
+
+#: CIRCUIT-5 lot 5.1 — les SEULES définitions partagées assumées (deux ids, même phrase de
+#: définition) : chaque groupe est motivé ici et dans CONCEPTS-CANONIQUES.md ; toute autre
+#: collision de libellé normalisé ou de définition casse le verrou V5a (un concept = un id).
+DEFINITIONS_PARTAGEES_ASSUMEES: tuple[frozenset[str], ...] = (
+    # deux HYPOTHÈSES saisies par le client dans la calculette : même phrase (« jamais un
+    # chiffre LABUSE »), deux grandeurs distinctes (coût €/m² · marge %).
+    frozenset({"cout_construction_saisi_eur_m2", "marge_frais_saisie_pct"}),
+    # cinq mosaïques ortho IGN d'époques différentes : même définition générique, la PÉRIODE
+    # est dans l'id et le libellé.
+    frozenset({"tuiles_ortho_2000_2005", "tuiles_ortho_2006_2010", "tuiles_ortho_2011_2015",
+               "tuiles_ortho_2016_2020", "tuiles_ortho_2021_2023"}),
+)

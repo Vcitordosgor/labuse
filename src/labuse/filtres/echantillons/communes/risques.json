@@ -1,0 +1,228 @@
+{
+ "carte": "risques",
+ "champ": "risques.catnat_arretes",
+ "producteur": "GASPAR — arrêtés CatNat par commune (georisques.gouv.fr)",
+ "tolerance_pct": 0,
+ "lu_le": "2026-09-06",
+ "note": null,
+ "lignes": [
+  {
+   "insee": "97401",
+   "nom": "Les Avirons",
+   "attendu": 16,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97401&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97402",
+   "nom": "Bras-Panon",
+   "attendu": 17,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97402&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97403",
+   "nom": "Entre-Deux",
+   "attendu": 14,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97403&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97404",
+   "nom": "L'Étang-Salé",
+   "attendu": 21,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97404&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97405",
+   "nom": "Petite-Île",
+   "attendu": 19,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97405&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97406",
+   "nom": "La Plaine-des-Palmistes",
+   "attendu": 12,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97406&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97407",
+   "nom": "Le Port",
+   "attendu": 11,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97407&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97408",
+   "nom": "La Possession",
+   "attendu": 17,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97408&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97409",
+   "nom": "Saint-André",
+   "attendu": 17,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97409&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97410",
+   "nom": "Saint-Benoît",
+   "attendu": 17,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97410&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97411",
+   "nom": "Saint-Denis",
+   "attendu": 21,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97411&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97412",
+   "nom": "Saint-Joseph",
+   "attendu": 21,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97412&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   },
+   "ecart_assume": true,
+   "note": "GASPAR publie un doublon strict (Inondations 17/01/2014, début 02/01/2014, deux codes nationaux) ; LABUSE dédoublonne par contrainte unique (insee, péril, dates) → 20 servi pour 21 lignes producteur. Écart assumé."
+  },
+  {
+   "insee": "97413",
+   "nom": "Saint-Leu",
+   "attendu": 21,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97413&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97414",
+   "nom": "Saint-Louis",
+   "attendu": 23,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97414&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97415",
+   "nom": "Saint-Paul",
+   "attendu": 24,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97415&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97416",
+   "nom": "Saint-Pierre",
+   "attendu": 20,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97416&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97417",
+   "nom": "Saint-Philippe",
+   "attendu": 21,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97417&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97418",
+   "nom": "Sainte-Marie",
+   "attendu": 22,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97418&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97419",
+   "nom": "Sainte-Rose",
+   "attendu": 10,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97419&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97420",
+   "nom": "Sainte-Suzanne",
+   "attendu": 19,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97420&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97421",
+   "nom": "Salazie",
+   "attendu": 19,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97421&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97422",
+   "nom": "Le Tampon",
+   "attendu": 18,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97422&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97423",
+   "nom": "Les Trois-Bassins",
+   "attendu": 11,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97423&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  },
+  {
+   "insee": "97424",
+   "nom": "Cilaos",
+   "attendu": 16,
+   "origine": {
+    "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97424&page=1&page_size=1",
+    "champ": "results (nombre d'arrêtés CatNat)"
+   }
+  }
+ ]
+}

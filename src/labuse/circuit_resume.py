@@ -38,7 +38,7 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
              compteurs: dict, residuel: dict | None, run_servi: str, candidat: str | None,
              fuite_robinets=(), eau_robinets=(),
              regles_ecart: list[str] = (), regles_choix: list[str] = (),
-             horloges: list[str] = ()) -> dict:
+             horloges: list[str] = (), verrous: dict | None = None) -> dict:
     """Compose le bloc `resume`. Chaque réservoir / robinet porte déjà son `etat` ([couleur, lib])
     (posé par l'endpoint via circuit_etats) : le résumé n'invente pas d'état, il regroupe.
     CIRCUIT-P3 (lot 2) : `fuite_robinets` / `eau_robinets` sont les ids de robinets REGISTRE dérivés
@@ -114,6 +114,13 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
         _ligne(len(hm_rob), "ambre", "affichages calculés hors moteur",
                f"Dans {len(hm_rob)} robinets : un chemin unique, pas encore un moteur nommé.",
                "Voir", "robinet", [rb["id"] for rb in hm_rob]),
+        # CIRCUIT-5 (lot 6.2) — les VERROUS cassés remontent en rouge : la même vérité que
+        # `labuse circuit verrous` (dernier passage journalisé), jamais recalculée ici.
+        _ligne(len((verrous or {}).get("casses", [])), "rouge", "verrous cassés",
+               "Le dernier passage de « labuse circuit verrous » a cassé : "
+               + ", ".join((verrous or {}).get("casses", [])) + ". Le déploiement refuse tant "
+               "que ça tient. Chaque verrou a sa phrase dans VERROUS.md.",
+               "Voir", "compteur", []),
     ]
 
     # ── groupe 3 — À décider, quand tu veux ──────────────────────────────────────────────────
@@ -127,6 +134,17 @@ def composer(reservoirs: list[dict], robinets: list[dict], *,
         _ligne(len(cadences), "gris", "cadences proposées à valider",
                "Les rythmes de publication devinés pour ces sources. Corrige ceux qui ne collent "
                "pas.", "Voir", "reservoir", [r["id"] for r in cadences]),
+        # CIRCUIT-5 (lot 6.2) — les tables orphelines et les réservoirs muets attendent le
+        # geste de Vic : listés, jamais supprimés en autonomie.
+        _ligne(len((verrous or {}).get("orphelines", [])), "gris", "tables orphelines à purger",
+               "Hors carte, hors exploitation — chacune avec son action proposée "
+               "(TABLES-ORPHELINES.md). « labuse tables purger --apply » les déplace vers le "
+               "schéma poubelle, jamais un DROP.", "Voir", "compteur", []),
+        _ligne(len((verrous or {}).get("muets", [])) + len((verrous or {}).get("rattachements", [])),
+               "gris", "réservoirs sans lecteur, données sans réservoir",
+               "Source à retirer, ou lecteur manquant ? Et des tables servies sans ligne au "
+               "catalogue. La question est posée dans TABLES-ORPHELINES.md.",
+               "Voir", "compteur", []),
     ]
 
     groupes = [
