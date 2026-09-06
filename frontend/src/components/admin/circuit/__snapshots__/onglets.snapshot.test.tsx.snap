@@ -70,7 +70,12 @@ exports[`snapshots des onglets > Journal 1`] = `
     <button
       class=""
     >
-      job
+      vanne
+    </button>
+    <button
+      class=""
+    >
+      cron
     </button>
   </div>
   <div
@@ -106,15 +111,17 @@ exports[`snapshots des onglets > Journal 1`] = `
       <i
         class=""
       />
-      job
+      cron
     </span>
     <span>
-      coherence-robinets
+      <span>
+        coherence-robinets
+      </span>
     </span>
     <span
       class="muted"
     >
-      cron
+      système
     </span>
     <span
       class="r "
@@ -138,7 +145,7 @@ exports[`snapshots des onglets > Journal 1`] = `
       1
        · 
       1
-       entrée
+       passage
     </span>
     <button
       class="btn"

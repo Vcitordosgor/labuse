@@ -131,6 +131,9 @@ exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 .cxp button.jl:hover{background:var(--panel-2)}
 .cxp .jl .g{display:inline-flex;align-items:center;gap:7px} .cxp .jl .g i{width:7px;height:7px;border-radius:50%;background:var(--mint)} .cxp .jl .g i.ambre{background:var(--ambre)} .cxp .jl .g i.rouge{background:var(--rouge)} .cxp .jl .g i.mauve{background:var(--mauve)} .cxp .jl .g i.gris{background:var(--gris)}
 .cxp .jl .r{color:var(--muted)} .cxp .jl .r.rouge{color:var(--rouge)} .cxp .jl .r.ambre{color:var(--ambre)}
+.cxp button.jl.grp{width:100%} .cxp .jl.grp .chev{color:var(--faint);margin-left:4px}
+.cxp .jl.sub{background:var(--panel);border-bottom:1px solid var(--line-2);font-size:12.5px} .cxp .jl.sub .muted{opacity:.85}
+.cxp .jl .lienc{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-3);text-underline-offset:2px} .cxp .jl .lienc:hover{text-decoration-color:var(--mint)}
 .cxp .jpage{display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--muted);font-size:12.5px}
 .cxp .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--mint);padding:10px 14px;border-radius:6px;z-index:30;max-width:90vw}
 .cxp :focus-visible{outline:2px solid var(--jaune);outline-offset:2px}

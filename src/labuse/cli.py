@@ -3897,6 +3897,9 @@ def filtre_jouer_cmd(
     if source != "toutes" and filtres.get_filtre(source) is None:
         typer.echo(f"✗ source inconnue : {source} (voir `labuse filtre lister`).")
         raise typer.Exit(1)
+    # CIRCUIT-P2 (lot 4.1) — un passage de filtres sur plusieurs sources = UN lot (une ligne
+    # groupée au journal, dépliable source par source). Un filtre isolé n'est pas groupé.
+    lot = circuit_journal.nouveau_lot() if len(cibles) > 1 else None
     with session_scope() as s:
         for cle in cibles:
             f = filtres.get_filtre(cle)
@@ -3908,7 +3911,7 @@ def filtre_jouer_cmd(
                                         "refuse" if v.verdict == "quarantaine" else "ok",
                                         {"version": v.version, "verdict": v.verdict,
                                          "bloquants_ko": v.bloquants_ko,
-                                         "avertissants_ko": v.avertissants_ko})
+                                         "avertissants_ko": v.avertissants_ko}, lot=lot)
             s.commit()
             marque = {"ok": "✓", "avertissements": "⚠", "quarantaine": "⛔"}[v.verdict]
             typer.echo(f"{marque} {cle} [{v.version}] : {v.verdict} — "

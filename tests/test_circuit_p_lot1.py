@@ -196,10 +196,11 @@ def test_circuit_enrichi_resume_familles_etat(client, engine):
 @pytest.mark.db
 def test_journal_filtrable_pagine(client):
     d = client.get("/admin/circuit/journal?taille=5").json()
-    assert {"entrees", "page", "taille", "total", "aujourdhui", "gestes"} <= set(d)
+    # CIRCUIT-P2 (lot 4) — la réponse porte les CATÉGORIES fixes (plus la liste brute des gestes).
+    assert {"entrees", "page", "taille", "total", "aujourdhui", "categories"} <= set(d)
     assert d["taille"] == 5
     for e in d["entrees"]:
-        assert e["par"]  # le « qui » toujours présent
+        assert e["par_nom"]  # le « qui » (nom) toujours présent
 
 
 @pytest.mark.db

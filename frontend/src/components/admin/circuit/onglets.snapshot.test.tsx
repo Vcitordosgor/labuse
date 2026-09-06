@@ -49,8 +49,11 @@ const data = {
 
 describe('snapshots des onglets', () => {
   beforeEach(() => getJournal.mockResolvedValue({
-    entrees: [{ ts: '2026-09-06T07:15:00Z', geste: 'job', cible: 'coherence-robinets', par: 'cron', resultat: 'ok' }],
-    page: 1, taille: 50, total: 1, aujourdhui: 1, gestes: ['job'],
+    entrees: [{ gk: 'row:1', n: 1, categorie: 'cron', categorie_label: 'cron', geste: 'job',
+      cible: 'coherence-robinets', cible_nom: 'coherence-robinets', par_nom: 'système',
+      ts: '2026-09-06T07:15:00Z', resultat: 'ok', verdicts: {}, resultats: { ok: 1 }, membres: [] }],
+    page: 1, taille: 50, total: 1, aujourdhui: 1,
+    categories: [{ slug: 'vanne', label: 'vanne' }, { slug: 'cron', label: 'cron' }],
   }))
 
   it('Résumé', () => {

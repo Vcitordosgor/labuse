@@ -1920,6 +1920,9 @@ def _executer_agents(par: str, ids: list[int], noms: dict) -> None:
     from .. import circuit_journal, circuit_taches, sentinelle
     from ..db import session_scope
     total = len(ids)
+    # CIRCUIT-P2 (lot 4.1) — une volée d'agents = UN lot (une ligne groupée au journal) ; un agent
+    # seul (page de détail) reste une ligne.
+    lot = circuit_journal.nouveau_lot() if total > 1 else None
     try:
         fait = 0
         for sid in ids:
@@ -1937,7 +1940,7 @@ def _executer_agents(par: str, ids: list[int], noms: dict) -> None:
                 else:
                     resultat, msg = "sans_sonde", "pas de sonde amont — agent LLM requis (crédit)"
                 circuit_journal.journaliser(s, "agent", noms.get(sid, str(sid)), par, resultat,
-                                            {"message": msg})
+                                            {"message": msg}, lot=lot)
                 s.commit()
             fait += 1
             circuit_taches.avancer("agents", fait=fait, en_route=ids[fait:],
@@ -2091,40 +2094,92 @@ def admin_circuit_revenir(request: Request) -> dict:
 @router.get("/admin/circuit/journal")
 def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
                           page: int = 1, taille: int = 50) -> dict:
-    """CIRCUIT-P (lot 1.2) — LE JOURNAL : `circuit_journal` porte DÉJÀ, en une table, les passages
-    de sonde/contrôle (geste `job`), de filtres (`filtre`), d'agents (`agent`), les crons qui
-    touchent l'eau (`job`, par « cron ») et les gestes humains (injecter/calculer/basculer/revenir/
-    purger). Filtrable par type de geste, par date `depuis` (AAAA-MM-JJ), paginé. Le « qui »
-    toujours présent (null → « système »)."""
+    """CIRCUIT-P2 (lot 4) — LE JOURNAL LISIBLE : les passages GROUPÉS (un job de filtres sur 39
+    sources, une volée d'agents = même `lot`) tiennent sur UNE ligne dépliable ; un geste isolé
+    reste une ligne. Chaque cible porte son NOM affiché (jamais l'identifiant technique), « par »
+    dit un nom (jamais « cli »/« admin »). Filtrable par CATÉGORIE (vanne/calcul/…/cron), 50 lignes
+    groupées par page. Le « qui » toujours présent (null → « système »)."""
     from .auth import exiger_admin
     exiger_admin(request)
+    from .. import circuit_etats as _etats, circuit_journal as _cj
     from ..db import engine
+    from ..registre import ROBINETS
     taille = max(1, min(int(taille), 200))
     page = max(1, int(page))
+    # filtre par CATÉGORIE → l'ensemble des gestes stockés qui y tombent (lot 4.3).
     conds, params = ["1=1"], {"lim": taille, "off": (page - 1) * taille}
-    if type:
-        conds.append("geste = :geste"); params["geste"] = type
+    if type and type != "tous":
+        gestes_cat = _cj.gestes_de_categorie(type)
+        conds.append("geste = ANY(:gestes)"); params["gestes"] = gestes_cat
     if depuis:
         conds.append("ts >= :depuis"); params["depuis"] = depuis
     where = " AND ".join(conds)
+    # la clé de groupe : le `lot` s'il existe, sinon la ligne elle-même (chaque geste isolé = 1 groupe).
+    gk = "COALESCE(lot, 'row:' || id::text)"
+    slug_nom = {v: k for k, v in _etats.NOM_VERS_SLUG.items()}
+
+    def _nom(cible: str) -> str:
+        if cible in slug_nom:
+            return slug_nom[cible]
+        rb = ROBINETS.get(cible)
+        return rb.nom if rb else cible
+
     with engine().begin() as c:
         try:
-            total = c.execute(text(f"SELECT count(*) FROM circuit_journal WHERE {where}"),
-                              params).scalar() or 0
-            rows = [dict(x) for x in c.execute(text(
-                "SELECT ts, geste, cible, par, resultat, details FROM circuit_journal"
-                f" WHERE {where} ORDER BY id DESC LIMIT :lim OFFSET :off"), params).mappings()]
+            total = c.execute(text(
+                f"SELECT count(*) FROM (SELECT {gk} AS gk FROM circuit_journal WHERE {where}"
+                f" GROUP BY gk) x"), params).scalar() or 0
+            # la PAGE de groupes (ordonnés par le passage le plus récent)
+            groupes_page = [dict(x) for x in c.execute(text(
+                f"SELECT {gk} AS gk, max(ts) AS ts, count(*) AS n, min(geste) AS geste,"
+                f" min(par) AS par FROM circuit_journal WHERE {where}"
+                f" GROUP BY gk ORDER BY max(ts) DESC LIMIT :lim OFFSET :off"), params).mappings()]
+            gks = [g["gk"] for g in groupes_page]
+            membres = []
+            if gks:
+                params2 = {**params, "gks": gks}
+                membres = [dict(x) for x in c.execute(text(
+                    f"SELECT {gk} AS gk, ts, geste, cible, par, resultat, details"
+                    f" FROM circuit_journal WHERE {gk} = ANY(:gks) ORDER BY id DESC"),
+                    params2).mappings()]
             aujourdhui = c.execute(text(
                 "SELECT count(*) FROM circuit_journal WHERE ts::date = now()::date")).scalar() or 0
-            gestes = [r[0] for r in c.execute(text(
-                "SELECT DISTINCT geste FROM circuit_journal ORDER BY geste")).all()]
         except Exception:  # noqa: BLE001 — table pas encore créée (avant 1er geste)
-            total, rows, aujourdhui, gestes = 0, [], 0, []
-    for r in rows:
-        r["par"] = r.get("par") or "système"
-        r["ts"] = r["ts"].isoformat() if hasattr(r["ts"], "isoformat") else r["ts"]
-    return {"entrees": rows, "page": page, "taille": taille, "total": int(total),
-            "aujourdhui": int(aujourdhui), "gestes": gestes}
+            total, groupes_page, membres, aujourdhui = 0, [], [], 0
+
+    par_gk: dict[str, list] = {}
+    for m in membres:
+        m["cible_nom"] = _nom(m["cible"])
+        m["par_nom"] = _cj.par_nom(m.get("par"))
+        m["ts"] = m["ts"].isoformat() if hasattr(m["ts"], "isoformat") else m["ts"]
+        par_gk.setdefault(m["gk"], []).append(m)
+
+    entrees = []
+    for g in groupes_page:
+        membs = par_gk.get(g["gk"], [])
+        cat = _cj.categorie_de(g["geste"])
+        # répartition : par verdict (filtre) si présent, sinon par résultat.
+        verdicts: dict[str, int] = {}
+        resultats: dict[str, int] = {}
+        for m in membs:
+            v = (m.get("details") or {}).get("verdict")
+            if v:
+                verdicts[v] = verdicts.get(v, 0) + 1
+            resultats[m["resultat"]] = resultats.get(m["resultat"], 0) + 1
+        entrees.append({
+            "gk": g["gk"], "n": int(g["n"]),
+            "categorie": cat, "categorie_label": _cj.CATEGORIE_LABEL.get(cat, cat),
+            "geste": g["geste"], "par_nom": _cj.par_nom(g.get("par")),
+            "ts": g["ts"].isoformat() if hasattr(g["ts"], "isoformat") else g["ts"],
+            "resultat": membs[0]["resultat"] if membs else "ok",
+            "cible": membs[0]["cible"] if len(membs) == 1 else None,
+            "cible_nom": membs[0]["cible_nom"] if len(membs) == 1 else None,
+            "verdicts": verdicts, "resultats": resultats,
+            "membres": membs if int(g["n"]) > 1 else [],
+        })
+    return {"entrees": entrees, "page": page, "taille": taille, "total": int(total),
+            "aujourdhui": int(aujourdhui),
+            "categories": [{"slug": s, "label": lab} for s, lab in _cj.CATEGORIES]}
 
 
 def _graphe():
