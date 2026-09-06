@@ -2125,27 +2125,31 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
         return rb.nom if rb else cible
 
     with engine().begin() as c:
-        try:
-            total = c.execute(text(
-                f"SELECT count(*) FROM (SELECT {gk} AS gk FROM circuit_journal WHERE {where}"
-                f" GROUP BY gk) x"), params).scalar() or 0
-            # la PAGE de groupes (ordonnés par le passage le plus récent)
-            groupes_page = [dict(x) for x in c.execute(text(
-                f"SELECT {gk} AS gk, max(ts) AS ts, count(*) AS n, min(geste) AS geste,"
-                f" min(par) AS par FROM circuit_journal WHERE {where}"
-                f" GROUP BY gk ORDER BY max(ts) DESC LIMIT :lim OFFSET :off"), params).mappings()]
-            gks = [g["gk"] for g in groupes_page]
-            membres = []
-            if gks:
-                params2 = {**params, "gks": gks}
-                membres = [dict(x) for x in c.execute(text(
-                    f"SELECT {gk} AS gk, ts, geste, cible, par, resultat, details"
-                    f" FROM circuit_journal WHERE {gk} = ANY(:gks) ORDER BY id DESC"),
-                    params2).mappings()]
-            aujourdhui = c.execute(text(
-                "SELECT count(*) FROM circuit_journal WHERE ts::date = now()::date")).scalar() or 0
-        except Exception:  # noqa: BLE001 — table pas encore créée (avant 1er geste)
-            total, groupes_page, membres, aujourdhui = 0, [], [], 0
+        # CIRCUIT-P3 (lot 1.1) — la table (et sa colonne `lot`, ajoutée en P2) DOIT exister avant la
+        # requête : sans ce `ensure`, une base d'avant-P2 n'a pas `lot`, la requête `COALESCE(lot,…)`
+        # lève « column lot does not exist », et l'ancien `except` renvoyait « 0 passage » sur une
+        # table pleine. On garantit le schéma ici (ALTER idempotent) — plus aucun échec masqué.
+        _cj.ensure(c)
+        total = c.execute(text(
+            f"SELECT count(*) FROM (SELECT {gk} AS gk FROM circuit_journal WHERE {where}"
+            f" GROUP BY gk) x"), params).scalar() or 0
+        # la PAGE de groupes (ordonnés par le passage le plus récent)
+        groupes_page = [dict(x) for x in c.execute(text(
+            f"SELECT {gk} AS gk, max(ts) AS ts, count(*) AS n, min(geste) AS geste,"
+            f" min(par) AS par FROM circuit_journal WHERE {where}"
+            f" GROUP BY gk ORDER BY max(ts) DESC LIMIT :lim OFFSET :off"), params).mappings()]
+        gks = [g["gk"] for g in groupes_page]
+        membres = []
+        if gks:
+            params2 = {**params, "gks": gks}
+            membres = [dict(x) for x in c.execute(text(
+                f"SELECT {gk} AS gk, ts, geste, cible, par, resultat, details"
+                f" FROM circuit_journal WHERE {gk} = ANY(:gks) ORDER BY id DESC"),
+                params2).mappings()]
+        # 1.3 — le compteur de l'onglet compte les entrées du JOUR de La Réunion (pas l'UTC serveur).
+        aujourdhui = c.execute(text(
+            "SELECT count(*) FROM circuit_journal WHERE (ts AT TIME ZONE 'Indian/Reunion')::date"
+            " = (now() AT TIME ZONE 'Indian/Reunion')::date")).scalar() or 0
 
     par_gk: dict[str, list] = {}
     for m in membres:
