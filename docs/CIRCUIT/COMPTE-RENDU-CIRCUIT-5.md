@@ -538,3 +538,52 @@ ordinaires** : listées par `labuse tables purger` (79,1 Mo + 17,2 Mo, action «
 elles attendent le geste de Vic (`--apply` → schéma `poubelle`, jamais un DROP). Test
 `test_bascule_gardes` : 10 passés (dont une garde qui PROUVE qu'aucune photo pré-v8 n'est lue —
 le SQL est refusé si le nom contient `pre_v8`). Verrous : 0 cassé, V1c liste les 2 orphelines.
+
+## Lot 5 — vérification
+
+`labuse circuit verrous --complet` sur la base locale servie : **16 verrous joués, 0 cassé,
+1 à décider**.
+
+```
+✓ V1a  6 modules moteur + 171 données passés au crible
+✓ V1b  10 tables touchées pendant la sonde, toutes dans la carte
+… V1c  2 orpheline(s) à purger/archiver : p_model_static_pre_v8 · parcel_residuel_pre_v8
+✓ V1d  chaque réservoir servi est lu par au moins une donnée du registre
+✓ V2a  71 = 71 = 71 (vitrine SQL, prédicat, page) ; 71 sources servies toutes dans la carte
+✓ V2b  toutes les lignes hors vitrine disent pourquoi
+✓ V3a  66 tables de réservoir, une génération servie chacune
+✓ V3b  aucune eau ouverte (2 gels assumés étiquetés)
+✓ V3c  écarts et eau ancienne attribuables (ids du registre)
+✓ V4a  24 tables sous clé étrangère, toutes validées
+✓ V4b  Saint-Benoît et Sainte-Marie servent chacune SES valeurs
+✓ V4c  3 parcelles frontière : commune et document PLU de LEUR commune
+✓ V4d  15 cartes × 24 communes : un attendu ou un à-valider partout
+✓ V5a  171 données, aucun libellé ni définition en double hors 2 groupes assumés
+✓ V5b  171 données : une fonction chacune, sql_propre = 0, front = 0
+✓ V5c  8 couples sondés · 112 raisonnés · 120 mono-robinet
+— 16 verrou(s) joué(s) · 0 cassé(s) · 1 à décider
+```
+
+**Capture du Résumé (`synthese_pour_page`) — avant / après CIRCUIT-5b :**
+
+| Repère | Avant (main) | Après (feat/circuit-5b) |
+|---|---|---|
+| verrous cassés | 0 | 0 |
+| **réservoirs sans lecteur (V1d)** | **8** (bd_ortho_irc, cadastre_epoque, inpi_rne, lidar_hd_mnh, mobpro, office_eau_chroniques, parkings_osm_aper, recherche_entreprises_dinum) | **0** |
+| **rattachements à décider** | **4** (mairies, rnic_coproprietes, rpls_commune, commune_conso_enaf) | **0** |
+| lignes commune fautives (V4a) | 1 (sirene 97454) | 0 (corrigée → 97411, contrainte validée) |
+| sources servies (V2a) | 68 = 68 = 68 | 71 = 71 = 71 (+4 catalogue −1 MOBPRO) |
+| orphelines (V1c, geste de Vic) | 2 (photos pré-v8, lues par bascule_gardes) | 2 (photos pré-v8, **débranchées** — orphelines ordinaires) |
+
+Le « à décider » est désormais **réduit aux seules orphelines** (`p_model_static_pre_v8`,
+`parcel_residuel_pre_v8`) qui attendent le geste de Vic (`labuse tables purger --apply`).
+
+**Tests.** `pytest -m verrous` : 65 passés. Modules touchés (`test_registre`, `test_sentinelle`,
+`test_bascule_gardes`, `test_mr_gardes`, `test_flux`, `test_sources_fix`, `test_golden_run_servi`,
+`test_coherence_tables_run`) : 80 passés. `VERROUS.md` à jour. (Collection `test_non_contradiction`
+ignorée : `OSError libgobject` WeasyPrint = FZ-002 pré-existant, indépendant de CIRCUIT-5b.)
+
+**Bilan CIRCUIT-5b.** Les quatre « à rattacher » sont des sources au catalogue ; les huit
+réservoirs muets sont tranchés (sept rattachés par leur lecteur vivant, MOBPRO retirée) ; la
+coquille INSEE SIRENE est corrigée et la contrainte validée ; `bascule_gardes` compare au
+manifeste, plus à une photo. Il ne reste au Résumé que deux orphelines pour le geste de Vic.
