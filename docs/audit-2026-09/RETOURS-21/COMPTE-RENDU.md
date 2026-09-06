@@ -202,8 +202,30 @@ seule, règle S5) et le pied de liste dit le reliquat (`sans_localisation`). Ex�
 
 ## Lot C — accordéons de la fiche parcelle
 
-> `docs/audit-2026-09/RETOURS-20/MANDAT-RETOURS-20.md` est **introuvable** : le commit `dddbfb96`
-> (« docs: mandat RETOURS-20 + maquette ») n'a en réalité committé que la maquette HTML (530 l.),
-> jamais le fichier de mandat. Le Lot C (Z1-Z4) est reconstruit depuis l'inline du mandat
-> RETOURS-21 + la maquette `maquette-fiche-parcelle-accordeons.html`. À suivre.
+**Bloqué : `MANDAT-RETOURS-20.md` absent du dépôt.** Vérifié (06/09, après `git fetch`) :
+`git ls-tree origin/main docs/audit-2026-09/RETOURS-20/` ne rend QUE
+`maquette-fiche-parcelle-accordeons.html` ; `git log --all -- '**/MANDAT-RETOURS-20*'` est vide —
+le blob n'existe dans AUCUNE ref. Le commit `dddbfb96` (« docs: mandat RETOURS-20 + maquette »)
+n'a committé que la maquette (530 l.), jamais le mandat. Le fichier est probablement resté en
+local non-committé, ou sur une autre machine.
+
+Ce qui est reconstructible sans le mandat :
+- **Z1 — les six composants partagés** : entièrement spécifiés par le panneau `aside` de la
+  maquette (règles 01→06 : En-tête · Kicker · Ligne de fait · Badges · Vigilance/rappel · Actions),
+  plus la règle « — » (ce qui disparaît).
+- **Z2 — deux sections** : *Règlement et zonage* (§1) et *Réseaux et accès* (§5), nommées dans
+  l'inline RETOURS-21. Structure et espacements fixés par la maquette.
+
+Ce qui N'EST PAS reconstructible (le mandat seul tranche) :
+- **Z3** : étape nommée « puis Z3 sur ces deux-là » — aucune description nulle part.
+- **Z4** : l'inline dit « icônes d'accordéon en **fond vert / contour et glyphe noirs** », mais la
+  maquette peint les icônes en `mint-soft` / `mint` (`.hd .ico`) — divergence non résolue ; et
+  l'`ChevronSection.tsx` actuel (contour plein `border-line-2`, glyphe qui s'éclaircit au survol,
+  inversion encre sur barre à fond plein) implémente déjà une grammaire dont Z4 semble vouloir
+  s'écarter. Sans le mandat, on ne sait pas dans quel sens.
+
+**Décision** : Lot C non entamé (un refactor de la fiche parcelle est un commit atomique — une
+fiche à moitié refaite ne se livre pas ; et les captures avant/après exigent l'app lancée). En
+attente du contenu du mandat (au minimum Z3 + l'intention exacte de Z4). Lots A et B livrés et
+commités indépendamment.
 
