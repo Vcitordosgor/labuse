@@ -1,0 +1,6 @@
+objet,existence,asof,preuve
+emplacements réservés,OUI — 741 polygones GPU (sur 10490 prescriptions surfaciques),"NON (un seul millésime GPU) → documenté, pas mesuré","spatial_layers kind='plu_gpu_prescription', attrs.libelle"
+OAP,ABSENTES des couches en base,—,"kinds spatial_layers : abf, amenite, amenite_bpe, anru, axe_structurant, batiment, batiment_cosia, bruit_route, cavite, cinquante_pas, ens, foret_publique, friche, frr, georisque_alea, icpe, iris_insee, …"
+ZAC,"ABSENTES des couches en base (le SAR et le potentiel foncier existent, pas les périmètres ZAC)",—,même liste de kinds
+changement de zonage entre millésimes GPU,IMPOSSIBLE : aucune archive de zonage géométrique (cf. Lot A2) ; plu_reglement_extrait = textes seulement,—,a2_inventaire_asof.csv
+commune en procédure (outil Procédure),"sudocuh_procedures : 24 communes, 11 en procédure (prescription datée), approbation du PLU servi datée pour 23 (2007-02-26 → 2024-12-06) ; + registre humain config/veille_plu.yaml (dates d'acte, débat PADD)",PARTIEL : les procédures CLOSES n'ont pas d'historique → « en procédure au 01/01/Y » irreconstructible ; l'ANCIENNETÉ du PLU approuvé est elle proprement as-of → mesurée au K0,sudocuh_procedures.prescription_proc / approbation_opp
