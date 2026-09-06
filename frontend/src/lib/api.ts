@@ -1053,8 +1053,15 @@ export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/co
 export const postCourrierClientStatut = (id: number, statut: 'repondu' | 'sans_reponse') =>
   j<{ ok: boolean; statut: string }>(`/courrier/demandes/${id}/statut`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+// OUTILS-FIX-4 C1 — les seuils qui font le score, servis pour le tiroir « Comment ce score est calculé ».
+export interface CribleSeuils {
+  bareme_risque: { bloquant: number; fort: number; moyen: number; faible: number; info: number; bonus_particulier: number }
+  ppr_pct: { marginal: number | null; exclusion: number | null; couverture_min: number | null }
+  proximite_m: { cavite: number | null; mouvement_terrain: number | null; icpe: Record<string, number> | null }
+  source: string
+}
 export const modDueDiligence = (refs: string) =>
-  j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[] }>('/modules/duediligence', {
+  j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[]; non_couvert: string[]; seuils?: CribleSeuils }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
 
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──
