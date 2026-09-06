@@ -1,0 +1,6 @@
+source,contenu,cle,asof
+parcel_veille_succession,"7129 parcelles (dirigeant_age, sci_dormante), computed_at 2026",parcelle_id,NON (état calculé 2026) — contenu recalculé as-of ici
+bodacc_annonces_owner,1418 annonces 2008-02-03 → 2026-07-09 (pcl/radiation/vente_cession),siren × date_annonce,OUI (annonces datées)
+owner_enrichment (recherche-entreprises),"9730 SIREN, 9700 avec date de création",siren,PARTIEL : date_creation OUI ; date_mise_a_jour_rne = état 2026 (NON)
+pm_dirigeants (RNE),"27146 dirigeants, 19852 avec date de naissance",siren,OUI (âge recalculable à toute date)
+pm_proprietaires_millesimes,"461570 liens, millésimes 2019-2024",idu × millesime × siren,OUI (01/01 de chaque année)
