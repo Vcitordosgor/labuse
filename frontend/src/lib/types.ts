@@ -423,6 +423,63 @@ export interface Fiche {
   // fiche-secteur — compte d'opportunités de la SECTION cadastrale (ex-carnet) : parcelles des tiers
   // « Priorité » (brulante) + « À suivre » (chaude) du run servi. Cliquable → carte sur la section.
   secteur_opportunites?: { section: string; n: number } | null
+  // FICHE-1 lot 1 — « Le bien » : le bâtiment existant. null (ou disponible=false) → tiroir omis.
+  le_bien?: LeBien | null
+  // FICHE-1 lot 2 — DPE du bâtiment rattaché (rendu dans « Le bien »). null → « non déterminée ».
+  dpe_connu?: {
+    etiquette: string; etiquette_ges?: string | null; date?: string | null
+    annee?: number | null; type_batiment?: string | null; n: number; source: string
+  } | null
+  // FICHE-1 lot 6 — annonces Radar rattachées à la parcelle (Marché et secteur). null → aucune.
+  radar_annonces?: {
+    n: number; dvf_date: string | null
+    liste: {
+      bien_id: number; date: string | null; prix_demande_eur: number | null
+      type_bien: string | null; statut: string; en_cours: boolean
+      portail: string | null; url_sortante: string | null
+      ecart_demande_acte_pct: number | null
+    }[]
+  } | null
+  // FICHE-1 lot 5 — taxe d'aménagement estimée (scénario table rase). null → pas d'estimation.
+  taxe_amenagement?: {
+    assiette_m2: number; assiette_eur: number; total_eur: number | null
+    part_communale_eur: number | null; part_departementale_eur: number | null
+    taux_communal_pct: number | null; taux_communal_source: string | null
+    taux_departemental_pct: number | null; taux_departemental_confirme: boolean
+    taux_communal_manquant: boolean; message_taux_communal: string | null
+    annee: string | number; source: string; url: string; scenario: string
+  } | null
+  // FICHE-1 lot 3 — aléas en détail (dérivés de la cascade servie, accord avec Pièges et risques).
+  aleas?: {
+    n: number
+    liste: {
+      nature: string; niveau: string | null; libelle: string
+      part_pct: number | null; redhibitoire: boolean
+      source: string | null; millesime: string | null
+      ppr: { document: string; approbation: string | null }[] | null
+    }[]
+  } | null
+}
+
+// FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).
+export interface LeBien {
+  disponible: boolean
+  code?: string | null
+  occupation_label?: string | null
+  emprise_batie_m2: number
+  emprise_source: string
+  cosia_detecte_m2?: number | null   // CoSIA « détecté non cartographié » (dit à part), sinon null
+  nb_batiments: number | null
+  hauteur_bati_m: number | null
+  surface_libre_m2: number | null
+  surface_parcelle_m2: number | null
+  source_bati: string
+  // toit LiDAR HD (cache seul) — null = non encore relevé ; sinon 3 états U5 (verdict).
+  toit?: {
+    verdict: string; libelle: string; libelle_court: string
+    pente_mediane_deg: number | null; pans_orientation_deg: number[]
+    part_pentue: number | null; confiance: number | null; seuil: number; statut: string; methode: string
+  } | null
 }
 
 // M125-2 — copropriété immatriculée (RNIC) rattachée à la parcelle. Information, jamais un verdict.

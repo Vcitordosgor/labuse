@@ -141,3 +141,61 @@ def fiche_block(session: Session, parcel_id: int, surface_m2: float | None) -> d
             "code": cls["code"], "label": cls["label"],
             "ratio_pct": round(100 * ratio), "nb_batiments": count,
             "plus_grand_m2": round(max_m2) if max_m2 else 0}
+
+
+def le_bien_block(session: Session, idu: str) -> dict | None:
+    """FICHE-1 lot 1 — bloc « Le bien » : le bâtiment EXISTANT de la parcelle, une fois pour la
+    fiche (le tiroir consomme ce producteur unique, aucun calcul au front).
+
+    Sert : emprise bâtie au sol (BD TOPO au sol + CoSIA — l'emprise détectée l'emporte), nombre
+    de bâtiments (BD TOPO), hauteur du bâti (potentiel._hauteur_bati_m), surface au sol libre
+    restante (surface parcelle − emprise), et la nature/pente du toit (LiDAR HD, cache seul).
+
+    Trois états, jamais confondus : servie · « non déterminée » (la couche ne dit pas) · « non
+    calculée » (chaîne en échec). Renvoie None si RIEN n'est évaluable (couche bâtiments non
+    ingérée) → le front OMET le tiroir (jamais un bloc creux)."""
+    head = session.execute(text(
+        "SELECT id, round(surface_m2) AS surface_m2 FROM parcels WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if head is None:
+        return None
+    # Couche bâtiments absente → on ne peut RIEN affirmer sur le bâti : tiroir omis (pas un faux « nu »).
+    if not layer_available(session):
+        return None
+    pid = head["id"]
+    surface = float(head["surface_m2"]) if head["surface_m2"] is not None else None
+    bloc = fiche_block(session, pid, surface)
+    nb = bloc.get("nb_batiments")
+    # Emprise au sol du bâti = empreinte VECTEUR BD TOPO (SUM des intersections) — cohérente avec
+    # le nombre de bâtiments. CoSIA (raster) sur-détecte à la maille parcelle (surfaces
+    # imperméables non bâties) : on ne l'utilise PAS comme emprise, on le SERT à part comme
+    # « détecté, non cartographié » quand BD TOPO ne voit rien mais que CoSIA en signale (le
+    # front le dit honnêtement, jamais mélangé à l'emprise).
+    emprise_bdtopo = session.execute(text(
+        "SELECT COALESCE(SUM(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
+        "FROM spatial_layers b JOIN parcels p ON p.id = :pid "
+        "WHERE b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)"),
+        {"pid": pid}).scalar()
+    emprise = float(emprise_bdtopo or 0.0)
+    emprise_m2 = round(emprise) if emprise > 0 else 0
+    emprise_cosia = session.execute(text(
+        "SELECT emprise_cosia_m2 FROM parcel_bati_revele WHERE idu = :i"), {"i": idu}).scalar()
+    # CoSIA « détecté non cartographié » : seulement s'il dépasse nettement BD TOPO (≥ 50 m² de plus).
+    cosia_m2 = round(float(emprise_cosia)) if emprise_cosia and float(emprise_cosia) > emprise + 50 else None
+    from .faisabilite.potentiel import _hauteur_bati_m
+    hauteur = _hauteur_bati_m(session, pid)
+    surface_libre = (max(0, round(surface - emprise)) if surface is not None else None)
+    from . import solaire_toiture
+    toit = solaire_toiture.toiture_depuis_cache(session, idu)
+    return {
+        "disponible": True,
+        "code": bloc.get("code"), "occupation_label": bloc.get("label"),
+        "emprise_batie_m2": emprise_m2, "emprise_source": "BD TOPO IGN",
+        "cosia_detecte_m2": cosia_m2,   # None sauf sur-détection CoSIA hors BD TOPO (dit à part)
+        "nb_batiments": nb,
+        "hauteur_bati_m": round(float(hauteur), 1) if hauteur is not None else None,
+        "surface_libre_m2": surface_libre,
+        "surface_parcelle_m2": round(surface) if surface is not None else None,
+        "toit": toit,          # None = toit non encore relevé (LiDAR non chauffé), sinon 3 états U5
+        "source_bati": "BD TOPO® V3 (IGN) + CoSIA 2025",
+    }

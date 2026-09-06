@@ -35,6 +35,7 @@ from sqlalchemy.exc import DataError as _SA_DataError   # FIX-C5 — handler glo
 from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
+from .. import bati as _bati   # FICHE-1 lot 1 — bloc « Le bien » (producteur unique)
 from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import FeedbackVerdict
@@ -3652,6 +3653,213 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "proximites_equipements": _proximites_equipements_block(db, idu),
         # M125-2 — activité de dépôt récente (Sitadel3), branchée à la premium (était legacy-only).
         "depots": _depots_block(db, head["id"]),
+        # FICHE-1 lot 1 — « Le bien » : le bâtiment existant (emprise, hauteur, nombre, surface
+        # libre) + nature/pente du toit (LiDAR, cache seul). None si couche bâtiments non ingérée
+        # (le front omet le tiroir). Producteur unique bati.le_bien_block, aucun calcul au front.
+        "le_bien": _bati.le_bien_block(db, idu),
+        # FICHE-1 lot 2 — DPE rétabli dans « Le bien » : dernier DPE connu du BÂTIMENT rattaché
+        # (M71 B1 : info fiche SEULE, jamais un signal de classement). None → « non déterminée ».
+        "dpe_connu": _dpe_connu_block(db, idu),
+        # FICHE-1 lot 3 — aléas EN DÉTAIL (nature, niveau, part, réf. PPR) dérivés des MÊMES lignes
+        # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
+        "aleas": _aleas_block(db, idu, lines),
+        # FICHE-1 lot 5 — taxe d'aménagement estimée pour le scénario table rase du potentiel
+        # (moteur taxe_amenagement). None si pas de scénario constructible. Taux communal PUBLIC
+        # si connu, sinon « non renseigné » — jamais un taux inventé (CIRCUIT-3 lot 6.2).
+        "taxe_amenagement": _taxe_amenagement_block(db, idu, head["id"]),
+        # FICHE-1 lot 6 — les annonces Radar RATTACHÉES à la parcelle (validées), datées, avec prix
+        # demandé, statut (en cours / retirée / vendue), lien fiche annonce + écart demandé/acté.
+        "radar_annonces": _radar_annonces_block(db, idu),
+    }
+
+
+_RADAR_STATUT_LIBELLE = {
+    "active": "en cours", "en_vente_longue": "en cours (longue)",
+    "retiree": "retirée", "retiree_sans_vente": "retirée (sans vente)",
+    "vendue": "vendue",
+}
+
+
+def _radar_annonces_block(db: Session, idu: str) -> dict | None:
+    """FICHE-1 lot 6 — annonces Radar VALIDÉES rattachées à la parcelle (RADAR P3 : validées seules).
+
+    Chaque annonce : date, prix demandé, type, statut lisible, lien vers la fiche annonce (interne).
+    Pour une annonce EN COURS avec une mutation DVF sur la parcelle : l'écart prix demandé vs prix
+    acté (concept `ecart_demande_acte_pct`, ici à la maille parcelle). None si aucune annonce."""
+    rows = db.execute(text(
+        "SELECT b.bien_id, b.statut, b.rattachement_niveau, "
+        "       COALESCE(b.date_publication, b.date_premiere_saisie) AS date_annonce, "
+        "       f.prix, f.prix_m2, f.type_bien, f.surface_hab, b.vendue_valeur, b.vendue_le, b.retiree_le, "
+        "       a.portail, a.url_sortante "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "LEFT JOIN LATERAL (SELECT portail, url_sortante FROM pige_annonces WHERE bien_id = b.bien_id "
+        "                   ORDER BY date_saisie DESC LIMIT 1) a ON true "
+        "WHERE b.idu = :idu AND f.valide_at IS NOT NULL "
+        "ORDER BY COALESCE(b.date_publication, b.date_premiere_saisie) DESC NULLS LAST"),
+        {"idu": idu}).mappings().all()
+    if not rows:
+        return None
+    # prix acté de référence : dernière mutation DVF de la parcelle (Sourcé), pour l'écart.
+    dvf = db.execute(text(
+        "SELECT valeur, prix_m2_bati, date_mutation FROM v_parcel_dvf_last WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    liste: list[dict] = []
+    for r in rows:
+        en_cours = r["statut"] in ("active", "en_vente_longue")
+        ecart_pct = None
+        if en_cours and dvf and r["prix"]:
+            # écart sur €/m² si disponible des deux côtés (plus comparable), sinon sur le prix total.
+            if r["prix_m2"] and dvf["prix_m2_bati"]:
+                dem, act = float(r["prix_m2"]), float(dvf["prix_m2_bati"])
+            elif dvf["valeur"]:
+                dem, act = float(r["prix"]), float(dvf["valeur"])
+            else:
+                dem = act = None
+            if act and act > 0:
+                ecart_pct = round(100 * (dem - act) / act)
+        liste.append({
+            "bien_id": r["bien_id"],
+            "date": r["date_annonce"].isoformat() if r["date_annonce"] else None,
+            "prix_demande_eur": int(r["prix"]) if r["prix"] is not None else None,
+            "type_bien": r["type_bien"],
+            "statut": _RADAR_STATUT_LIBELLE.get(r["statut"], r["statut"]),
+            "en_cours": en_cours,
+            "portail": r["portail"],
+            "url_sortante": r["url_sortante"],
+            "ecart_demande_acte_pct": ecart_pct,     # None si pas d'annonce en cours + DVF
+        })
+    return {"n": len(liste), "liste": liste,
+            "dvf_date": dvf["date_mutation"].isoformat() if dvf and dvf["date_mutation"] else None}
+
+
+def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | None:
+    """FICHE-1 lot 5 — estimation de la taxe d'aménagement pour le scénario TABLE RASE du bloc
+    potentiel (assiette = surface de plancher créée). Moteur `taxe_amenagement.calculer` (jamais
+    un calcul dans l'endpoint). Taux communal PUBLIC (`taxe_amenagement_taux`) si connu, sinon
+    total non calculé + « taux communal non renseigné » — jamais un taux inventé (CIRCUIT-3 6.2).
+    None si le scénario table rase n'est pas constructible (pas d'assiette → pas d'estimation)."""
+    try:
+        from ..faisabilite.potentiel import bloc_potentiel
+        pot = bloc_potentiel(db, parcel_id)
+    except Exception:  # noqa: BLE001 — jamais un 500 sur la fiche
+        return None
+    tr = (pot or {}).get("table_rase") or {}
+    plancher = tr.get("plancher_m2")
+    if not tr.get("constructible") or not plancher or float(plancher) <= 0:
+        return None
+    from .. import taxe_amenagement as _tax
+    pub = _tax.taux_communal_public(db, idu[:5])
+    res = _tax.calculer(
+        surface_taxable_m2=float(plancher),
+        taux_communal_public_pct=(pub["part_communale_pct"] if pub else None),
+        taux_communal_public_source=(pub["source"] if pub else None),
+    )
+    return {
+        "assiette_m2": round(float(plancher)),
+        "assiette_eur": res["assiette_eur"],
+        "total_eur": res["total_eur"],
+        "part_communale_eur": res["part_communale_eur"],
+        "part_departementale_eur": res["part_departementale_eur"],
+        "taux_communal_pct": res["taux_communal_pct"],
+        "taux_communal_source": res["taux_communal_source"],      # 'public' | None
+        "taux_departemental_pct": res["taux_departemental_pct"],
+        "taux_departemental_confirme": res["part_departementale_confirmee"],
+        "taux_communal_manquant": res["taux_communal_manquant"],
+        "message_taux_communal": res["message_taux_communal"],
+        "annee": res["annee"], "source": res["source"], "url": res["url"],
+        "scenario": "table rase — surface de plancher du potentiel",
+    }
+
+
+_ALEA_NIVEAU_RANG = {"fort": 3, "moyen": 2, "faible": 1}
+
+
+def _alea_nature(detail: str) -> str:
+    """Nature lisible de l'aléa, lue sur le libellé déjà arbitré (jamais un recalcul géométrique)."""
+    d = (detail or "").lower()
+    if d.startswith("ppr"):
+        return "PPR — zonage réglementaire"
+    if "inondation" in d:
+        return "Inondation"
+    if "mouvement de terrain" in d:
+        return "Mouvement de terrain"
+    if "submersion" in d or "houle" in d or "recul du trait" in d or "littoral" in d:
+        return "Submersion marine / littoral"
+    if "incendie" in d or "feu de for" in d:
+        return "Feux de forêt"
+    return "Aléa naturel"
+
+
+def _ppr_reference_commune(db: Session, insee: str) -> list[dict] | None:
+    """Référence RÉGLEMENTAIRE de commune : l'arrêté d'approbation du PPR (document + date), par
+    type de document, le plus récent. Ce n'est PAS une décision d'aléa (celle-ci vient de la
+    cascade servie — M73) : seulement la citation de l'arrêté communal, adossée à l'aléa déjà
+    retenu (esprit CIRCUIT-4 « chaque calcul adossé à sa référence »)."""
+    rows = db.execute(text(
+        "SELECT attrs->>'document' AS document, max(attrs->>'approbation') AS approbation "
+        "FROM spatial_layers WHERE kind = 'ppr' AND attrs->>'code_insee' = :i "
+        "AND attrs->>'approbation' IS NOT NULL GROUP BY attrs->>'document' ORDER BY 1"),
+        {"i": insee}).mappings().all()
+    return [{"document": r["document"], "approbation": r["approbation"]} for r in rows] or None
+
+
+def _aleas_block(db: Session, idu: str, lines: list[dict]) -> dict | None:
+    """FICHE-1 lot 3 — la LISTE des aléas touchant la parcelle, dérivée des lignes de cascade
+    SERVIES (`layer == 'risques'`, arbitrées) — exactement celles que sert « Pièges et risques ».
+    Aucune relecture de spatial_layers pour DÉCIDER un aléa (M73). Chaque aléa porte : nature,
+    niveau, part de la parcelle concernée (lue sur le libellé arbitré, None si la source ne la
+    dit pas), et pour un PPR la référence de l'arrêté communal. None si aucun aléa."""
+    import re as _re
+    ali = [l for l in lines if l.get("layer") == "risques"
+           and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    if not ali:
+        return None
+    ppr_ref = None
+    items: list[dict] = []
+    for l in ali:
+        detail = l["detail"] or ""
+        is_ppr = detail.lower().startswith("ppr")
+        m = _re.search(r"(\d+)\s*%", detail)
+        if is_ppr and ppr_ref is None:
+            ppr_ref = _ppr_reference_commune(db, idu[:5])
+        items.append({
+            "nature": _alea_nature(detail),
+            "niveau": l.get("severity"),
+            "libelle": detail,
+            "part_pct": int(m.group(1)) if m else None,   # None = la source ne dit pas la part
+            "redhibitoire": l["result"] == "HARD_EXCLUDE",
+            "source": l.get("source"),
+            "millesime": l.get("millesime_amont"),
+            "ppr": ppr_ref if is_ppr else None,
+        })
+    items.sort(key=lambda a: (not a["redhibitoire"],
+                              -_ALEA_NIVEAU_RANG.get((a["niveau"] or "").lower(), 0)))
+    return {"n": len(items), "liste": items}
+
+
+def _dpe_connu_block(db: Session, idu: str) -> dict | None:
+    """FICHE-1 lot 2 — DPE rattaché à la parcelle (passe-plat de `dpe_records`, jamais un calcul).
+
+    Sert le PLUS RÉCENT (classe énergétique, classe GES, date, type de bâtiment) et le NOMBRE de
+    DPE connus. C'est le dernier DPE du BÂTIMENT (rattachement adresse/BAN → parcelle), pas de la
+    parcelle. None si aucun DPE ne se rattache (le front dit « non déterminée »). M71 B1 : info de
+    fiche uniquement, jamais un signal de classement (l'amont DPE est neuf en DROM)."""
+    rows = db.execute(text(
+        "SELECT etiquette_dpe, etiquette_ges, date_etablissement, type_batiment "
+        "FROM dpe_records WHERE parcelle_idu = :i AND etiquette_dpe IS NOT NULL "
+        "ORDER BY date_etablissement DESC NULLS LAST"), {"i": idu}).mappings().all()
+    if not rows:
+        return None
+    top = rows[0]
+    d = top["date_etablissement"]
+    return {
+        "etiquette": top["etiquette_dpe"],
+        "etiquette_ges": top["etiquette_ges"],
+        "date": d.isoformat() if d else None,
+        "annee": d.year if d else None,
+        "type_batiment": top["type_batiment"],
+        "n": len(rows),                         # combien de DPE connus (le plus récent est servi)
+        "source": "DPE ADEME",
     }
 
 

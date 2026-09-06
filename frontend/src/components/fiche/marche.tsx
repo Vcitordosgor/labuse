@@ -10,7 +10,7 @@
  * Auto-suffisante : re-dérive dvfSecteur + marcheLines depuis `f` ; bilan via queryKey ['bilan',idu].
  */
 import { useQuery } from '@tanstack/react-query'
-import { getFaisabilite } from '../../lib/api'
+import { getFaisabilite, radarClic } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
@@ -21,6 +21,9 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const setParcelPrefill = useApp((s) => s.setParcelPrefill)
   const setFlyTo = useApp((s) => s.setFlyTo)
   const select = useApp((s) => s.select)
+  const setRadarToOpen = useApp((s) => s.setRadarToOpen)
+  const openRadar = useApp((s) => s.openRadar)
+  const annonces = f.radar_annonces?.liste ?? []
   const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
   // SECTEUR = prix du TERRAIN NU SEUL (dvf_marche `bati_m2=0`) — jamais moyenné avec le bâti (M137-G).
   const dvfSecteur = f.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain')
@@ -82,6 +85,44 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
               value={f.voisinage_proche.prix_median_eur ? <>~{Math.round(f.voisinage_proche.prix_median_eur / 1000)} <small>k€</small></> : f.voisinage_proche.prix_note}
               tone={f.voisinage_proche.prix_median_eur ? undefined : 'mute'} />
           )}
+        </div>
+      )}
+      {/* FICHE-1 lot 6 — ANNONCES RADAR rattachées à la parcelle : datées, prix demandé, statut,
+          lien vers la fiche annonce (interne). Écart demandé/acté pour une annonce en cours + DVF. */}
+      {annonces.length > 0 && (
+        <div data-radar-annonces>
+          <GroupLabel>Annonces Radar ({annonces.length})</GroupLabel>
+          <div className="flex flex-col gap-1.5">
+            {annonces.map((a) => (
+              <div key={a.bien_id} className="text-[12px]">
+                <div className="flex items-center gap-2">
+                  <b className="text-txt-hi">{a.prix_demande_eur != null ? a.prix_demande_eur.toLocaleString('fr-FR') + ' €' : '—'}</b>
+                  {a.type_bien && <span className="text-txt-mut">{a.type_bien}</span>}
+                  <span className="rounded-full bg-surface-3 px-1.5 text-[10px] text-txt-mut">{a.statut}</span>
+                  {a.date && <span className="text-[10.5px] text-txt-dim">{a.date}</span>}
+                </div>
+                {a.ecart_demande_acte_pct != null && (
+                  <div className="text-[11px] text-txt-mut">
+                    écart demandé / dernière vente : {a.ecart_demande_acte_pct > 0 ? '+' : ''}{a.ecart_demande_acte_pct} %
+                  </div>
+                )}
+                <div className="mt-0.5 flex gap-3">
+                  <button type="button" className="text-[11px] text-mint underline decoration-dotted"
+                    onClick={() => { setRadarToOpen(a.bien_id); openRadar() }}>
+                    Voir la fiche annonce
+                  </button>
+                  {a.url_sortante && (
+                    <a href={a.url_sortante} target="_blank" rel="noopener noreferrer"
+                      onClick={() => { radarClic(a.bien_id).catch(() => {}) }}
+                      className="text-[11px] text-txt-dim underline decoration-dotted">
+                      annonce sur {a.portail} ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <FactNote>Annonces rattachées à cette parcelle (Radar). Prix demandés — jamais un prix LABUSE.</FactNote>
         </div>
       )}
       {/* PORTES — Voir marché commune, Taxe, secteur opportunités, Comparer, Remonter le temps. */}

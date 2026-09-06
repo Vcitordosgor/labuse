@@ -115,11 +115,38 @@ DONNEES: dict[str, Donnee] = {
     "calcul ligne-à-ligne, taux communal SAISI obligatoire, jamais un défaut",
     moteur="taxe_amenagement", calcul="moteur", fonction="src/labuse/taxe_amenagement.py",
     reservoirs=(), portee="live"),
+ # FICHE-1 lot 5 — estimation servie DANS la fiche (Constructibilité) pour le scénario table
+ # rase du potentiel ; distincte de taxe_amenagement_eur (outil, taux SAISI) : ici taux PUBLIC.
+ "taxe_amenagement_estimee_eur": C("Taxe d'aménagement estimée (table rase)", "€", "parcelle",
+    "estimation de la taxe pour le scénario table rase du potentiel (assiette = surface de "
+    "plancher créée) ; taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; "
+    "taux départemental plafond 2,5 % à confirmer",
+    moteur="taxe_amenagement", calcul="moteur",
+    fonction="src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer)",
+    reservoirs=(), portee="live"),
+ # FICHE-1 lot 6 — les annonces Radar rattachées à la parcelle (validées), servies dans « Marché
+ # et secteur » : date, prix demandé, statut, lien fiche annonce, écart demandé/acté par annonce.
+ "radar_annonces_liste": C("Annonces Radar de la parcelle", "liste", "parcelle",
+    "annonces Radar VALIDÉES rattachées à la parcelle (date, prix demandé, statut en cours/"
+    "retirée/vendue, lien fiche annonce) ; pour une annonce en cours avec mutation DVF, l'écart "
+    "prix demandé vs acté (concept ecart_demande_acte_pct, maille parcelle)",
+    moteur="marche_pige", calcul="moteur",
+    fonction="src/labuse/api/app.py:_radar_annonces_block (pige_biens ⋈ pige_faits + v_parcel_dvf_last)",
+    reservoirs=("radar_pige", "dvf",), portee="live", type="liste"),
  "n_vigilances": C("Vigilances", "nombre", "parcelle",
     "compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE",
     moteur="cascade", calcul="moteur",
     fonction="src/labuse/api/anti_fiche.py (motifs RÉDHIBITOIRE/VIGILANCE de la cascade)",
     reservoirs=("abf_merimee", "deal_ppr", "georisques_api", "znieff_inpn",), portee="run"),
+ # FICHE-1 lot 3 — le DÉTAIL des aléas (nature/niveau/part/réf. PPR), dérivé des mêmes lignes
+ # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
+ "aleas_parcelle_liste": C("Aléas de la parcelle", "liste", "parcelle",
+    "liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté "
+    "PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et "
+    "risques",
+    moteur="cascade", calcul="moteur",
+    fonction="src/labuse/api/app.py:_aleas_block (lignes servies layer='risques')",
+    reservoirs=("deal_ppr", "georisques_api",), portee="run", type="liste"),
  "n_extraits_plu": C("extraits (règlement)", "nombre", "commune",
     "extraits de règlement servis par commune (corpus)",
     moteur="commune_compteurs", calcul="moteur",
@@ -295,6 +322,17 @@ DONNEES: dict[str, Donnee] = {
     moteur="parcelle_proximites", calcul="moteur",
     fonction="src/labuse/registre/moteurs/parcelle.py:plus_proche",
     reservoirs=("gtfs_pan", "osm_transport",), portee="live"),
+ # FICHE-1 lot 4 — stationnement allégé L151-36 : la parcelle est-elle à moins de 800 m d'une
+ # station de transport en site propre (plafond d'une place/logement, 0,5 en social).
+ "tcsp_stationnement_allege": C("Stationnement allégé (TCSP, L151-36)", "classe", "parcelle",
+    "la parcelle est-elle à MOINS de 800 m (à vol d'oiseau) d'une station de transport en site "
+    "propre — plafond d'une aire de stationnement par logement (0,5 pour le logement social), "
+    "opposable au PLU (art. L151-34 à 36) ; distance et station nommées",
+    moteur="parcelle_proximites", calcul="moteur",
+    fonction="src/labuse/api/app.py:_proximites_block (drapeau sous_800m, L151-36 strict)",
+    reservoirs=("gtfs_pan", "osm_transport",), portee="live", type="classe",
+    domaine=("sous_800m", "au_dela", "aucune_station"),
+    domaine_source="art. L151-36 c. urb. (loi n° 2025-1129 du 26/11/2025) — seuil 800 m strict"),
  "n_permis_proximite": C("Permis à 500 m sur 24 mois", "nombre", "parcelle",
     "permis Sitadel dans le rayon 500 m, fenêtre 24 mois — LE profil client (arbitrage Q7), "
     "paramètres TRANSMIS au moteur (EXPORTS-1 4.1, plus jamais les défauts 300 m · 5 ans)",
@@ -768,13 +806,13 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/ingestion/mairies.py (bloc MAIRIE)",
     reservoirs=("annuaire_service_public",), portee="live",
     type="texte", table="mairies"),
+ # FICHE-1 lot 2 — RÉTABLI dans « Le bien » (était en_attente CIRCUIT-5, bloc construit mais
+ # plus affiché) : dernier DPE du BÂTIMENT rattaché + nombre. Info fiche SEULE (M71 B1).
  "dpe_connu": C("DPE connu (étiquette, année)", "texte", "parcelle",
-    "dernier DPE rattaché à la parcelle (etiquette_dpe, année, type_batiment) — info fiche "
-    "SEULE, jamais un signal scoring (M71 B1 : 16 DPE authentiques 974)",
-    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:5312 (dpe_connu_block)",
-    reservoirs=("dpe_ademe",), portee="live", type="texte", table="dpe_records",
-    en_attente="CIRCUIT-5 lot 3 — bloc payload construit mais plus affiché (Fiche.tsx:1492, "
-               "rétablissement premium = décision Vic) ; porte l'eau ancienne DPE de la sonde"),
+    "dernier DPE connu du bâtiment rattaché (étiquette énergie/GES, date, type de bâtiment) + "
+    "nombre de DPE — info fiche SEULE, jamais un signal scoring (M71 B1 : DPE neuf en DROM)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:_dpe_connu_block",
+    reservoirs=("dpe_ademe",), portee="live", type="texte", table="dpe_records"),
  "copilote_texte_web": C("Réponse web (Copilote, dernier recours)", "texte", "global",
     "texte libre ≤ 2 phrases MARQUÉ « web » (fait public La Réunion) — jamais un chiffre Sourcé "
     "(garde 2.6), jamais servi sans son marquage",
@@ -945,57 +983,81 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/faisabilite/bilan.py (dérivable de compute_calculette)",
     reservoirs=(), portee="live",
     en_attente="maquettes d'exports — servie au chantier EXPORTS (Financier)"),
+ # FICHE-1 lot 1 — tiroir « Le bien » : le bâti EXISTANT servi à la fiche (était en_attente
+ # « maquettes d'exports »). Producteur unique bati.le_bien_block (aucun calcul au front).
  "emprise_batie_m2": C("Emprise bâtie", "m²", "parcelle",
-    "emprise au sol du bâti de la parcelle (BD TOPO + CoSIA)",
+    "emprise au sol du bâti — empreinte vecteur BD TOPO (somme des intersections), cohérente avec "
+    "le nombre de bâtiments ; CoSIA servi À PART quand il détecte du bâti hors BD TOPO",
     moteur="bati_revele", calcul="moteur",
-    fonction="src/labuse/faisabilite/bati_revele.py:build_parcel_bati_revele "
-             "(producteur nommé, délégation)",
-    reservoirs=("bd_topo", "cosia",), portee="run",
-    en_attente="maquettes d'exports — servie au chantier EXPORTS"),
+    fonction="src/labuse/bati.py:le_bien_block (BD TOPO au sol ; CoSIA parcel_bati_revele en note)",
+    reservoirs=("bd_topo", "cosia",), portee="live"),
  "hauteur_bati_m": C("Hauteur du bâti", "m", "parcelle",
-    "hauteur du bâti principal (BD TOPO, médiane des bâtiments intersectants)",
+    "hauteur du bâti principal (BD TOPO, max des bâtiments intersectants)",
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:_hauteur_bati_m",
-    reservoirs=("bd_topo",), portee="live",
-    en_attente="maquettes d'exports — servie au chantier EXPORTS"),
+    reservoirs=("bd_topo",), portee="live"),
  "n_batiments": C("Nombre de bâtiments", "nombre", "parcelle",
-    "compte des bâtiments de la parcelle (BD TOPO + CoSIA)",
+    "compte des bâtiments de la parcelle (BD TOPO, intersection ≥ 10 m²)",
     moteur="bati_revele", calcul="moteur",
-    fonction="src/labuse/faisabilite/bati_revele.py:build_parcel_bati_revele "
-             "(producteur nommé, délégation)",
-    reservoirs=("bd_topo", "cosia",), portee="run",
-    en_attente="maquettes d'exports — servie au chantier EXPORTS"),
- # réglementaires nouvelles : DÉCLARÉES ici, réservoirs par CIRCUIT-3 lot 6 (mandat 1.8)
+    fonction="src/labuse/bati.py:le_bien_block (bati.fiche_block — BD TOPO)",
+    reservoirs=("bd_topo",), portee="live"),
+ "surface_libre_sol_m2": C("Surface au sol libre", "m²", "parcelle",
+    "surface au sol non bâtie restante (surface parcelle − emprise bâtie), plancher à 0",
+    moteur="bati_revele", calcul="moteur",
+    fonction="src/labuse/bati.py:le_bien_block (surface parcelle − emprise bâtie)",
+    reservoirs=("bd_topo", "cosia", "cadastre_api_carto",), portee="live"),
+ "nature_toit": C("Nature du toit", "classe", "parcelle",
+    "forme du toit du plus grand bâtiment lue sur le LiDAR HD (MNH), servie ≥ 0,70 de confiance "
+    "sinon « non déterminée — pans non nets » (RETOURS-15 U5)",
+    moteur="solaire", calcul="moteur",
+    fonction="src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche)",
+    reservoirs=("lidar_hd_mnh", "bd_topo",), portee="live", type="classe",
+    domaine=("plat", "monopente", "double_pente", "croupe_complexe"),
+    domaine_source="classification LiDAR HD (solaire_toiture, seuil 0,70)"),
+ "pente_toit_deg": C("Pente du toit", "nombre", "parcelle",
+    "pente médiane du toit du plus grand bâtiment (degrés), mesure directe LiDAR HD (MNH) — "
+    "servie même sous le seuil de forme",
+    moteur="solaire", calcul="moteur",
+    fonction="src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche)",
+    reservoirs=("lidar_hd_mnh",), portee="live"),
+ # réglementaires nouvelles : DÉCLARÉES ici, réservoirs à ingérer (CIRCUIT-3 lot 6 → SOURCES-1).
+ # FICHE-1 lot 7 — état « non calculée — source absente », source ATTENDUE nommée : elles
+ # apparaîtront dès l'ingestion (l'en_attente est levée) et Vic voit le trou d'ici là.
  "er_emplacement_reserve": C("Emplacement réservé (ER)", "classe", "parcelle",
     "la parcelle est-elle grevée d'un emplacement réservé du PLU (destination, bénéficiaire)",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU prescriptions)",
     reservoirs=(), portee="live", type="classe",
     domaine=("grevee", "non_grevee"), domaine_source="prescriptions surfaciques du GPU",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
+               "prescriptions surfaciques du GPU (emplacements réservés, API Carto)"),
  "ebc_classe": C("Espace boisé classé (EBC)", "classe", "parcelle",
     "la parcelle intersecte-t-elle un espace boisé classé du PLU",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU prescriptions)",
     reservoirs=(), portee="live", type="classe",
     domaine=("intersecte", "hors"), domaine_source="prescriptions surfaciques du GPU",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
+               "prescriptions surfaciques du GPU (espaces boisés classés, API Carto)"),
  "dpu_perimetre": C("Droit de préemption urbain (DPU)", "classe", "parcelle",
     "la parcelle est-elle dans un périmètre de préemption (DPU simple/renforcé)",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU / délibérations)",
     reservoirs=(), portee="live", type="classe",
     domaine=("simple", "renforce", "hors"), domaine_source="périmètres DPU (GPU/délibérations)",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
+               "périmètres DPU (GPU / délibérations communales)"),
  "peb_zone": C("Plan d'exposition au bruit (PEB)", "classe", "parcelle",
     "zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — PEB Roland-Garros/Pierrefonds)",
     reservoirs=(), portee="live", type="classe",
     domaine=("A", "B", "C", "D", "hors"), domaine_source="zones du PEB (arrêté préfectoral)",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend le PEB "
+               "de Roland-Garros / Pierrefonds (arrêté préfectoral)"),
  "zonage_abc_logement": C("Zonage A/B/C (logement)", "classe", "commune",
     "zone A/B/C du dispositif d'investissement locatif pour la commune",
     moteur=None, calcul="passe_plat", fonction="(réservoir à venir — arrêté zonage ABC)",
     reservoirs=(), portee="live", type="classe",
     domaine=("A", "B1", "B2", "C"), domaine_source="arrêté de zonage A/B/C (logement)",
-    en_attente="réservoir CIRCUIT-3 lot 6"),
+    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend l'arrêté "
+               "de zonage A/B/C (logement locatif)"),
 }
 
 #: 1.1 — le type des déclarations « auto » est dérivé de l'unité (les entrées historiques de

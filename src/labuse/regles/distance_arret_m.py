@@ -2,7 +2,9 @@
 from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
-    donnees=("distance_arret_m",),
+    # FICHE-1 lot 4 — tcsp_stationnement_allege (fiche parcelle) est le MÊME drapeau sous_800m
+    # (station de transport en site propre, L151-36), servi comme classe : même règle, même calcul.
+    donnees=("distance_arret_m", "tcsp_stationnement_allege",),
     formule_codee=(
         "Objet `kind` le plus proche de la parcelle par KNN PostGIS (ORDER BY sl.geom_2975 <-> "
         "p.geom_2975 LIMIT 1), distance = round(ST_Distance(geom_2975, geom_2975))::int en MÈTRES "

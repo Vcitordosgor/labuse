@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, radarClic, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -25,6 +25,7 @@ import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, Group
 // RETOURS-11F4 (F5) — la section Constructibilité + sa machinerie vivent dans `constructibilite.tsx`.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
 import { ConstructibiliteSection } from './constructibilite'
+import { LeBienSection } from './leBien'
 import { RisquesSection } from './risques'
 import { MarcheSection } from './marche'
 import { ReseauxSection } from './reseaux'
@@ -1331,6 +1332,11 @@ export function Fiche({ idu }: { idu: string }) {
                 la section entière vit dans sections `constructibilite.tsx` (auto-suffisante). */}
             <ConstructibiliteSection f={f} idu={idu} />
 
+            {/* FICHE-1 lot 1 — « Le bien » : le bâtiment existant (emprise, hauteur, nombre, surface
+                libre) + nature/pente du toit (LiDAR). Placé après Constructibilité ; s'omet si rien
+                d'évaluable (couche bâtiments non ingérée). */}
+            <LeBienSection f={f} idu={idu} />
+
             {/* Risques et protections — clôt le groupe LE TERRAIN. RETOURS-11F4 (F6) : vigilances
                 d'abord, « sans objet » repliés, SUP rapatriées, compteur vrai → module `risques.tsx`. */}
             <RisquesSection f={f} idu={idu} />
@@ -1470,30 +1476,11 @@ export function Fiche({ idu }: { idu: string }) {
                 <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
-                {/* RADAR P3 (C3) — un bien du Radar en vente sur cette parcelle : discret, fait + lien. */}
-                {f.radar_bien && (
-                  <div data-radar-bien>
-                    <GroupLabel>Radar — bien en vente</GroupLabel>
-                    <div className="mt-1 flex items-center gap-2 text-xs">
-                      <b className="text-txt-hi">{f.radar_bien.prix != null ? f.radar_bien.prix.toLocaleString('fr-FR') + ' €' : '—'}</b>
-                      {f.radar_bien.type_bien && <span className="text-txt-mut">{f.radar_bien.type_bien}</span>}
-                      <span className="rounded-full bg-surface-3 px-1.5 text-[10px] text-txt-mut">
-                        {f.radar_bien.statut === 'en_vente_longue' ? 'en vente longue' : 'en vente'}
-                      </span>
-                    </div>
-                    <a href={f.radar_bien.url_sortante} target="_blank" rel="noopener noreferrer"
-                      onClick={() => { radarClic(f.radar_bien!.bien_id).catch(() => {}) }}
-                      className="mt-1.5 inline-block text-[11px] text-mint underline decoration-dotted">
-                      Voir l’annonce sur {f.radar_bien.portail} ↗
-                    </a>
-                  </div>
-                )}
-                {/* FIX-FICHE F2 — bloc « DPE connu » RETIRÉ : la fiche premium (_q_v2_fiche, celle que
-                    l'UI reçoit) ne sert JAMAIS `dpe_connu` (construit seulement par le builder legacy
-                    `_build_fiche`), et la table `parcel_dpe` n'existe plus en base → le bloc ne pouvait
-                    pas s'afficher. L'INTENTION M71 B1 (« DPE en info seule, sans effet sur le
-                    classement ») reste tracée dans le builder legacy ; la ressusciter suppose de servir
-                    `dpe_connu` en premium ET de rétablir `parcel_dpe` (décision Vic). */}
+                {/* FICHE-1 lot 6 — les annonces Radar rattachées ont DÉMÉNAGÉ vers « Marché et
+                    secteur » (MarcheSection), en liste datée avec statut + lien fiche annonce. */}
+                {/* FICHE-1 lot 2 — DPE RÉTABLI : la fiche premium sert désormais `dpe_connu`
+                    (_dpe_connu_block lit `dpe_records`), affiché dans le tiroir « Le bien »
+                    (LeBienSection). M71 B1 : info fiche seule, jamais un signal de classement. */}
                 {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
                     propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
                 {f.proprietaire_moral?.siren && (

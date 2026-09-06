@@ -91,7 +91,16 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
               sépare déjà. Libellé et source inchangés. */}
           {trans && !trans.indisponible && trans.tcsp && (
             <div data-proximite-tcsp className="mt-1.5">
-              <p className="text-[11.5px] leading-snug text-txt">{trans.tcsp.libelle}</p>
+              {/* FICHE-1 lot 4 — « dans le rayon » scannable : pastille + station + distance ; le
+                  plafond L151-36 et la référence d'article restent dans le libellé en dessous. */}
+              <div className="text-[13px]">
+                <span className="font-semibold">Stationnement allégé (TCSP)</span>
+                {trans.tcsp.sous_800m
+                  ? <span className="pill-mint ml-1.5">dans le rayon 800 m</span>
+                  : <span className="ml-1.5 text-[11.5px] text-txt-mut">hors rayon</span>}
+                <span className="text-txt-mut"> · {trans.tcsp.station} · {trans.tcsp.distance_m} m</span>
+              </div>
+              <p className="text-[11.5px] leading-snug text-txt mt-0.5">{trans.tcsp.libelle}</p>
               <FactNote>{trans.tcsp.source}</FactNote>
             </div>
           )}

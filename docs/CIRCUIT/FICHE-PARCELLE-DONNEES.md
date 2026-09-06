@@ -70,6 +70,29 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *surface de plancher du scénario table rase (moteur commun) — distincte de capacite_logements* | | | | | |
 | `marge_surelevation_m` | nombre | Marge de surélévation (à l'égout) | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `potentiel` · src/labuse/faisabilite/potentiel.py:surelevation | run | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *hauteur restante sous la règle de hauteur à l'égout de la zone (moteur commun, EXPORTS-1 3.2)* | | | | | |
+| `taxe_amenagement_estimee_eur` | nombre | Taxe d'aménagement estimée (table rase) | interne (aucun réservoir) | moteur `taxe_amenagement` · src/labuse/api/app.py:_taxe_amenagement_block (taxe_amenagement.calculer) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *estimation de la taxe pour le scénario table rase du potentiel (assiette = surface de plancher créée) ; taux communal PUBLIC si connu, sinon « non renseigné » (jamais inventé) ; taux départemental plafond 2,5 % à confirmer* | | | | | |
+
+## Le bien
+
+*Robinet `fiche_parcelle_le_bien` — route `/parcels/{idu}`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `emprise_batie_m2` | nombre | Emprise bâtie | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), cosia (CoSIA 2025 (PVA juil.-août 2025, 20 cm)) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (BD TOPO au sol ; CoSIA parcel_bati_revele en note) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *emprise au sol du bâti — empreinte vecteur BD TOPO (somme des intersections), cohérente avec le nombre de bâtiments ; CoSIA servi À PART quand il détecte du bâti hors BD TOPO* | | | | | |
+| `hauteur_bati_m` | nombre | Hauteur du bâti | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée) | moteur `potentiel` · src/labuse/faisabilite/potentiel.py:_hauteur_bati_m | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *hauteur du bâti principal (BD TOPO, max des bâtiments intersectants)* | | | | | |
+| `n_batiments` | nombre | Nombre de bâtiments | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (bati.fiche_block — BD TOPO) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *compte des bâtiments de la parcelle (BD TOPO, intersection ≥ 10 m²)* | | | | | |
+| `surface_libre_sol_m2` | nombre | Surface au sol libre | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), cosia (CoSIA 2025 (PVA juil.-août 2025, 20 cm)), cadastre_api_carto (PCI Parcellaire Express (DGFiP) — « latest » ingérée) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (surface parcelle − emprise bâtie) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *surface au sol non bâtie restante (surface parcelle − emprise bâtie), plancher à 0* | | | | | |
+| `nature_toit` | classe — domaine : plat, monopente, double_pente, croupe_complexe | Nature du toit | lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée) | moteur `solaire` · src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *forme du toit du plus grand bâtiment lue sur le LiDAR HD (MNH), servie ≥ 0,70 de confiance sinon « non déterminée — pans non nets » (RETOURS-15 U5)* | | | | | |
+| `pente_toit_deg` | nombre | Pente du toit | lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)) | moteur `solaire` · src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *pente médiane du toit du plus grand bâtiment (degrés), mesure directe LiDAR HD (MNH) — servie même sous le seuil de forme* | | | | | |
+| `dpe_connu` | texte | DPE connu (étiquette, année) | dpe_ademe | passe-plat · src/labuse/api/app.py:_dpe_connu_block — table lue : dpe_records | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *dernier DPE connu du bâtiment rattaché (étiquette énergie/GES, date, type de bâtiment) + nombre de DPE — info fiche SEULE, jamais un signal scoring (M71 B1 : DPE neuf en DROM)* | | | | | |
 
 ## Risques et protections
 
@@ -79,6 +102,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 |---|---|---|---|---|---|---|---|
 | `n_vigilances` | nombre | Vigilances | abf_merimee, deal_ppr (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)), georisques_api, znieff_inpn (INPN, mise à jour 29/08/2025) | moteur `cascade` · src/labuse/api/anti_fiche.py (motifs RÉDHIBITOIRE/VIGILANCE de la cascade) | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Pièges et risques » |
 | | | *compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE* | | | | | |
+| `aleas_parcelle_liste` | liste | Aléas de la parcelle | deal_ppr (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)), georisques_api | moteur `cascade` · src/labuse/api/app.py:_aleas_block (lignes servies layer='risques') | run | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et risques* | | | | | |
 
 ## Marché et secteur
 
@@ -100,6 +125,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *dernière mutation de la parcelle + médianes du secteur cadastral (indicateur secondaire, étiqueté — EXPORTS-1 1.3)* | | | | | |
 | `parc_social_rpls_logements` | nombre | Parc social (logements RPLS) | rpls_sdes | passe-plat · src/labuse/api/app.py (marche_secteur — rpls_commune) — table lue : rpls_commune (nb_logements, construct_median) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring* | | | | | |
+| `radar_annonces_liste` | liste | Annonces Radar de la parcelle | radar_pige (Collecte manuelle — biens en vente (faits + lien)), dvf (géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020) | moteur `marche_pige` · src/labuse/api/app.py:_radar_annonces_block (pige_biens ⋈ pige_faits + v_parcel_dvf_last) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *annonces Radar VALIDÉES rattachées à la parcelle (date, prix demandé, statut en cours/retirée/vendue, lien fiche annonce) ; pour une annonce en cours avec mutation DVF, l'écart prix demandé vs acté (concept ecart_demande_acte_pct, maille parcelle)* | | | | | |
 
 ## Réseaux et accès
 
@@ -113,6 +140,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *surface détectée parcel_equipements (BD ORTHO 2025)* | | | | | |
 | `distance_arret_m` | nombre | Transport public — au plus proche | gtfs_pan (7 jeux PAN, màj 2025-12-29 → 2026-08-17), osm_transport (extraction Overpass (base OSM vivante, ODbL)) | moteur `parcelle_proximites` · src/labuse/registre/moteurs/parcelle.py:plus_proche | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *plus proche arrêt/pôle (distance en m)* | | | | | |
+| `tcsp_stationnement_allege` | classe — domaine : sous_800m, au_dela, aucune_station | Stationnement allégé (TCSP, L151-36) | gtfs_pan (7 jeux PAN, màj 2025-12-29 → 2026-08-17), osm_transport (extraction Overpass (base OSM vivante, ODbL)) | moteur `parcelle_proximites` · src/labuse/api/app.py:_proximites_block (drapeau sous_800m, L151-36 strict) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle à MOINS de 800 m (à vol d'oiseau) d'une station de transport en site propre — plafond d'une aire de stationnement par logement (0,5 pour le logement social), opposable au PLU (art. L151-34 à 36) ; distance et station nommées* | | | | | |
 | `part_logements_egout_pct` | nombre | Logements raccordés à l'égout | insee_rp2022_egoul (RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)), office_eau_chroniques (Chronique n°149 — données 2023) | moteur `anc` · src/labuse/anc_service.py:statut_anc (producteur nommé, délégation) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *part des logements raccordés au tout-à-l'égout (INSEE RP2022 EGOUL, maille IRIS, repli commune) — le TAUX, jamais un verdict* | | | | | |
 | `viabilisation_verdict` | texte | Viabilisation (faisceau) | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), rge_alti (RGE ALTI® (IGN) — édition non enregistrée), parkings_osm_aper | passe-plat · src/labuse/api/app.py:_viabilisation_block — table lue : parcel_viabilisation (faisceau) | live | servie · non déterminée · non calculée | nulle part ailleurs |
@@ -150,24 +179,6 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | `evenements_proprietaire_liste` | liste | Événements propriétaire (BODACC) | bodacc, sirene_etablissements (SIRENE géolocalisé — publication mensuelle INSEE), recherche_entreprises_dinum | moteur `v_score` · src/labuse/api/app.py:_q_v2_fiche (score_v, evenement) — table lue : parcel_v_score + bodacc_* | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *événements datés du score V (procédures, radiations) — faits publics, chacun sourcé* | | | | | |
 
-## Confiance données
-
-*Robinet `fiche_parcelle_confiance` — route `/parcels/{idu}`*
-
-| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
-|---|---|---|---|---|---|---|---|
-| `verdict_icd` | texte | Confiance données | interne (aucun réservoir) | moteur `cascade` · src/labuse/api/app.py:3283 (bloc icd) | run | servie · non déterminée · non calculée | nulle part ailleurs |
-| | | *verdict de complétude des couches + liste des manquants* | | | | | |
-
-## Solaire (rosace, productible)
-
-*Robinet `fiche_parcelle_solaire` — route `/parcels/{idu}`*
-
-| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
-|---|---|---|---|---|---|---|---|
-| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Fiche soleil (photo toit + rosace) » |
-| | | *productible PVGIS SARAH3 gelé au run du builder (parcel_solar)* | | | | | |
-
 ## Division (copropriétés/lots)
 
 *Robinet `fiche_parcelle_division` — route `/parcels/{idu}`*
@@ -178,3 +189,21 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *présence dans division_or_candidates — run figé q_v10, workflow de revue* | | | | | |
 | `coproprietes_liste` | liste | Copropriétés (RNIC) | rnic_anah | passe-plat · src/labuse/api/app.py:_q_v2_fiche (coproprietes) — table lue : rnic_coproprietes | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *copropriétés immatriculées rattachées à la parcelle (lots, syndic) — RNIC/ANAH* | | | | | |
+
+## Solaire (rosace, productible)
+
+*Robinet `fiche_parcelle_solaire` — route `/parcels/{idu}`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `prod_spec_kwh_kwc` | nombre | Productible | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), pvgis (PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)), lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_ortho_irc | moteur `solaire` · src/labuse/api/modules.py:prospection_solaire | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Prospection solaire » · outil « Toits bien exposés » · fiche « Fiche soleil (photo toit + rosace) » |
+| | | *productible PVGIS SARAH3 gelé au run du builder (parcel_solar)* | | | | | |
+
+## Confiance données
+
+*Robinet `fiche_parcelle_confiance` — route `/parcels/{idu}`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `verdict_icd` | texte | Confiance données | interne (aucun réservoir) | moteur `cascade` · src/labuse/api/app.py:3283 (bloc icd) | run | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *verdict de complétude des couches + liste des manquants* | | | | | |
