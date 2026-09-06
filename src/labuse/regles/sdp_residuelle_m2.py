@@ -33,6 +33,6 @@ declarer(FicheRegle(
            "(« estimé ») ; proposition au REGLES-ECARTS (libellé « SDP estimée »)."),
     choix=("Seuil de sous-densité 40 % du taux d'emprise et niveaux par défaut 1,0 : conventions "
            "LABUSE prudentes, affichées."),
-    exemple_temoin="tests/regles/test_sdp_residuelle.py::test_residuel_formule_independante",
+    exemple_temoin=None,
     verifie_le="2026-09-06",
 ))

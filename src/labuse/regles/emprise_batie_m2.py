@@ -13,6 +13,6 @@ declarer(FicheRegle(
     classe="methode_standard",
     fonction="src/labuse/faisabilite/bati_revele.py:build_parcel_bati_revele",
     verdict="reference_introuvable",
-    exemple_temoin="tests/regles/test_bati_revele.py::test_max_bdtopo_cosia",
+    exemple_temoin=None,
     verifie_le="2026-09-06",
 ))

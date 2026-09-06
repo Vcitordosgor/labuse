@@ -13,6 +13,6 @@ declarer(FicheRegle(
     classe="methode_standard",
     fonction="src/labuse/ingestion/solaire.py:build_grid/build_solar",
     verdict="reference_introuvable",
-    exemple_temoin="tests/regles/test_solaire.py::test_azimut_rectangle_oriente",
+    exemple_temoin=None,
     verifie_le="2026-09-06",
 ))

@@ -24,6 +24,6 @@ declarer(FicheRegle(
     choix=("Tous les pourcentages (marge 9 %, frais 12 %, coefficient plancher 1,15, coûts 2 300-"
            "2 800 €/m²) sont des HYPOTHÈSES LABUSE affichées avec le bilan et réglables (YAML) — "
            "l'estimation est bandée « indicative, ne remplace pas un bilan professionnel »."),
-    exemple_temoin="tests/regles/test_bilan_promoteur.py::test_bilan_a_rebours_independant",
+    exemple_temoin=None,
     verifie_le="2026-09-06",
 ))
