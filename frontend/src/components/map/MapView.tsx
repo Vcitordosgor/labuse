@@ -207,9 +207,20 @@ const vefaColorExpr = ['match', ['get', 'subtype'],
   '#3B4046'] as unknown as maplibregl.ExpressionSpecification
 // opacité : aplat lisible pour les tranches peintes, plus discret pour le gris sous-seuil (la hachure porte).
 const vefaOpacityExpr = ['match', ['get', 'subtype'], 'sous_seuil', 0.28, 0.55] as unknown as maplibregl.ExpressionSpecification
+// SOURCES-1 lot 1 — PEB : la COULEUR dit la zone (A rouge → D gris), expression data-driven par
+// subtype (comme vefa). Une zone inconnue prend le gris D (le back n'ingère que a/b/c/d, garde filtre).
+const pebColorExpr = (t: MapTokens) => ['match', ['get', 'subtype'],
+  'a', t.pebRamp.a, 'b', t.pebRamp.b, 'c', t.pebRamp.c, 'd', t.pebRamp.d,
+  t.pebRamp.d] as unknown as maplibregl.ExpressionSpecification
 const OVERLAYS = {
   // SECTEUR-2b (U1) — prix du neuf VEFA (aplat commune) : teinte par tranche + gris pour sous_seuil.
   vefa_neuf: { paint: { 'fill-color': vefaColorExpr, 'fill-outline-color': '#0b0f14', 'fill-opacity': vefaOpacityExpr } },
+  // SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP), aplat + contour teinte.
+  er: { paint: { 'fill-color': T_SOMBRE.er, 'fill-opacity': T_SOMBRE.erOpacity, 'fill-outline-color': T_SOMBRE.er } },
+  ebc: { paint: { 'fill-color': T_SOMBRE.ebc, 'fill-opacity': T_SOMBRE.ebcOpacity, 'fill-outline-color': T_SOMBRE.ebc } },
+  dpu: { paint: { 'fill-color': T_SOMBRE.dpu, 'fill-opacity': T_SOMBRE.dpuOpacity, 'fill-outline-color': T_SOMBRE.dpu } },
+  peb: { paint: { 'fill-color': pebColorExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.pebOpacity, 'fill-outline-color': pebColorExpr(T_SOMBRE) } },
+  sup: { paint: { 'fill-color': T_SOMBRE.sup, 'fill-opacity': T_SOMBRE.supOpacity, 'fill-outline-color': T_SOMBRE.sup } },
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
@@ -331,6 +342,12 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   // M137-X — aplat plein (une opacité) + hachure sur l'état « fort » ; le motif suit le thème.
   set('ov-zfang', 'fill-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-outline-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-opacity', t.dispoFillOpacity)
   set('ov-frr', 'fill-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-outline-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-opacity', t.dispoFillOpacity)
+  // SOURCES-1 lot 1 — contraintes du droit des sols : teinte + opacité suivent le thème.
+  set('ov-er', 'fill-color', t.er); set('ov-er', 'fill-opacity', t.erOpacity); set('ov-er', 'fill-outline-color', t.er)
+  set('ov-ebc', 'fill-color', t.ebc); set('ov-ebc', 'fill-opacity', t.ebcOpacity); set('ov-ebc', 'fill-outline-color', t.ebc)
+  set('ov-dpu', 'fill-color', t.dpu); set('ov-dpu', 'fill-opacity', t.dpuOpacity); set('ov-dpu', 'fill-outline-color', t.dpu)
+  set('ov-peb', 'fill-color', pebColorExpr(t)); set('ov-peb', 'fill-opacity', t.pebOpacity); set('ov-peb', 'fill-outline-color', pebColorExpr(t))
+  set('ov-sup', 'fill-color', t.sup); set('ov-sup', 'fill-opacity', t.supOpacity); set('ov-sup', 'fill-outline-color', t.sup)
   for (const [src, , tok] of DISPO_TRAMES) {
     set(`${src}-trame`, 'fill-pattern', `trame-${tok}-${clair ? 'clair' : 'sombre'}`)
     set(`${src}-trame`, 'fill-opacity', t.aleaTrameOpacity)
@@ -658,6 +675,13 @@ export function MapView() {
   const frr = useQuery({ queryKey: ['layer', 'frr', commune], queryFn: () => getMapLayer('frr'), enabled: layers.frr })
   // SECTEUR-2 (T4) — prix du neuf VEFA (aplat commune), choropleth par tranche.
   const vefaNeuf = useQuery({ queryKey: ['layer', 'vefa_neuf', commune], queryFn: () => getMapLayer('vefa_neuf'), enabled: layers.vefa_neuf })
+  // SOURCES-1 lot 1 — contraintes du droit des sols. er/ebc = kinds VIRTUELS résolus côté back
+  // (plu_gpu_prescription filtré typepsc 05/01) ; dpu par commune ; peb/sup légers, servis île.
+  const erQ = useQuery({ queryKey: ['layer', 'er', commune], queryFn: () => getMapLayer('er', 10_000), enabled: layers.er })
+  const ebcQ = useQuery({ queryKey: ['layer', 'ebc', commune], queryFn: () => getMapLayer('ebc', 10_000), enabled: layers.ebc })
+  const dpuQ = useQuery({ queryKey: ['layer', 'dpu', commune], queryFn: () => getMapLayer('dpu'), enabled: layers.dpu })
+  const pebQ = useQuery({ queryKey: ['layer', 'peb', commune], queryFn: () => getMapLayer('peb'), enabled: layers.peb })
+  const supQ = useQuery({ queryKey: ['layer', 'sup', commune], queryFn: () => getMapLayer('sup'), enabled: layers.sup })
   // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
@@ -1381,7 +1405,8 @@ export function MapView() {
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
       ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations], ['tcsp-zone', tcspZone],
-      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf]]   // M134 dispositifs · M137-U znieff · T4 vefa
+      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf],   // M134 dispositifs · M137-U znieff · T4 vefa
+      ['er', erQ], ['ebc', ebcQ], ['dpu', dpuQ], ['peb', pebQ], ['sup', supQ]]   // SOURCES-1 lot 1 — droit des sols
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
     if (equipBpe.data) {
@@ -1417,6 +1442,24 @@ export function MapView() {
       useApp.getState().setToast(commune ? `Aucune bande TVA réduite (QPV + 500 m) sur ${commune}.`
                                          : 'Aucune bande TVA réduite (QPV + 500 m) sur ce cadrage.')
     }
+    // SOURCES-1 lot 1 — couches activées mais vides : le dire, avec la BONNE raison (règle 3 du
+    // mandat : une commune qui n'a pas publié n'est pas un zéro — le DPU est dit « non publié »).
+    if (layers.dpu && dpuQ.data && dpuQ.data.features.length === 0) {
+      useApp.getState().setToast(commune
+        ? `Aucun périmètre DPU publié au Géoportail de l'urbanisme pour ${commune} — non publié par la commune, pas forcément inexistant.`
+        : 'Aucun périmètre DPU publié au GPU sur ce cadrage.')
+    }
+    if (layers.peb && pebQ.data && pebQ.data.features.length === 0) {
+      useApp.getState().setToast('Aucune zone PEB sur ce cadrage — Roland-Garros est servi (annexes GPU) ; le PEB de Pierrefonds n’est pas publié au GPU.')
+    }
+    if (layers.er && erQ.data && erQ.data.features.length === 0) {
+      useApp.getState().setToast(commune ? `Aucun emplacement réservé publié au GPU sur ${commune}.`
+                                         : 'Aucun emplacement réservé sur ce cadrage.')
+    }
+    if (layers.ebc && ebcQ.data && ebcQ.data.features.length === 0) {
+      useApp.getState().setToast(commune ? `Aucun espace boisé classé publié au GPU sur ${commune}.`
+                                         : 'Aucun espace boisé classé sur ce cadrage.')
+    }
     // M6.1 item 2 : 50 pas — servis île entière (commune NULL en base) ; en mode commune,
     // même pattern honnête que l'ANRU : commune SANS littoral → toast, jamais un silence.
     // M-RENOUV : calque Renouvellement — si le serveur tronque (top rangs), le DIRE (toast),
@@ -1439,7 +1482,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1557,6 +1600,12 @@ export function MapView() {
     m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-Y — hachure FRR en partie (moindre)
     m.setLayoutProperty('ov-vefa_neuf', 'visibility', vis(layers.vefa_neuf)) // SECTEUR-2 (T4) — prix du neuf VEFA
     m.setLayoutProperty('ov-vefa_neuf-trame', 'visibility', vis(layers.vefa_neuf)) // U1 — hachure sous-seuil
+    // SOURCES-1 lot 1 — contraintes du droit des sols
+    m.setLayoutProperty('ov-er', 'visibility', vis(layers.er))
+    m.setLayoutProperty('ov-ebc', 'visibility', vis(layers.ebc))
+    m.setLayoutProperty('ov-dpu', 'visibility', vis(layers.dpu))
+    m.setLayoutProperty('ov-peb', 'visibility', vis(layers.peb))
+    m.setLayoutProperty('ov-sup', 'visibility', vis(layers.sup))
     // M106 P1 : les deux couches d'aléa (aplat + contour suivent leur toggle — R7 : plus de trame)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))

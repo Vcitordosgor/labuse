@@ -63,6 +63,9 @@ FICHE_PARCELLE_CLES: dict[str, tuple[str, ...] | tuple[str, str]] = {
     "calculette": ("cout_construction_saisi_eur_m2", "marge_frais_saisie_pct",
                    "prix_demande_saisi_eur", "ecart_prix_demande_pct"),
     "_trace": ("interne", "le tampon lui-même (?trace=1, admin)"),
+    # SOURCES-1 lot 1 — bloc « Dispositifs et périmètres » (ER, EBC, DPU, PEB, SUP)
+    "dispositifs": ("dispositifs_parcelle", "er_emplacement_reserve", "ebc_classe",
+                    "dpu_perimetre", "peb_zone"),
 }
 
 
@@ -81,6 +84,9 @@ COUCHE_PAR_CLE_FRONT: dict[str, str] = {
     "tva_primo": "dispositifs_couche", "anru": "dispositifs_couche",
     "zfang": "dispositifs_couche", "frr": "dispositifs_couche",
     "vefa_neuf": "vefa_couche", "renouv": "densifier_couche",
+    # SOURCES-1 lot 1 — droit des sols (groupe « Contraintes »)
+    "er": "er_couche", "ebc": "ebc_couche", "dpu": "dpu_couche",
+    "peb": "peb_couche", "sup": "sup_couche",
 }
 
 

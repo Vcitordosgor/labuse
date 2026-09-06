@@ -114,3 +114,13 @@ commandes:
   - motif: "Trafic RN (Région Réunion — SIR)"
     label: trafic_rn
     argv: ["labuse", "ingest-trafic-rn"]
+  # ── SOURCES-1 lot 1 — droit des sols ──
+  - motif: "GPU — droit de préemption urbain*"
+    label: dpu
+    argv: ["labuse", "ingest-gpu-infos"]
+  - motif: "PEB — plans d'exposition au bruit*"
+    label: peb
+    argv: ["labuse", "ingest-gpu-infos"]
+  - motif: "Zonage ABC des communes (DHUP)"
+    label: zonage_abc
+    argv: ["labuse", "ingest-zonage-abc"]

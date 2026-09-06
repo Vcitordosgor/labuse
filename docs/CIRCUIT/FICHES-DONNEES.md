@@ -1,8 +1,17 @@
 # FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)
 
-*Généré du registre le 2026-09-06 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
+*Généré du registre le 2026-09-07 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
 
 # Fiche commune
+
+## Zonage A/B/C (logement)
+
+*Robinet `fiche_commune_zonage_abc` — route `/communes/{commune} (clé zonage_abc)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `zonage_abc_logement` | classe — domaine : Abis, A, B1, B2, C | Zonage A/B/C (logement) | zonage_abc_dhup (arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)) | passe-plat · src/labuse/ingestion/zonage_abc.py:zonage_commune — table lue : commune_zonage_abc | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *zone A/B/C du dispositif d'investissement locatif pour la commune (arrêté du 23/06/2026, en vigueur 26/06/2026 — passe-plat, jamais recalculé)* | | | | | |
 
 ## Règles d'urbanisme
 

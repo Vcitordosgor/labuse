@@ -207,6 +207,19 @@ def loyer(db: Session, commune: str) -> dict | None:
             "source": lg.get("etiquette") or lg.get("source") or "DHUP (carte des loyers)"}
 
 
+def zonage_abc(db: Session, insee: str | None) -> dict | None:
+    """SOURCES-1 lot 1 — zone A/B/C de la commune (arrêté DHUP, passe-plat sourcé + daté).
+    None si non ingérée (jamais devinée) — le front dit « non déterminée »."""
+    if not insee:
+        return None
+    from ..ingestion.zonage_abc import zonage_commune
+    z = zonage_commune(db, insee)
+    if z is None:
+        return None
+    return {"zone": z["zone"], "millesime": z["millesime"],
+            "source": "DHUP — zonage ABC (arrêté du 1er août 2014 modifié, D. 304-1 CCH)"}
+
+
 # ───────────────────────────── C6 — les compteurs des passerelles ─────────────────────────────
 def outils_counters(db: Session, commune: str, insee: str | None,
                     blocs: dict) -> dict:
@@ -243,6 +256,7 @@ log = logging.getLogger("labuse.fiche_commune")
 # le bloc concerné SANS casser la fiche entière (« introuvable = null, jamais un zéro menteur »).
 _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
+    "zonage_abc": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "parc_national": False, "source": "Géorisques · GASPAR · BD TOPO"},
     "population": {"habitants": None, "menages": None, "niveau_vie_moyen_eur": None,
@@ -280,6 +294,8 @@ def build(db: Session, commune: str, insee: str | None) -> dict:
         "permis": _safe(db, "permis", lambda: permis_bloc(db, commune)),
         "densifiables": _safe(db, "densifiables", lambda: densifiables(db, commune)),
         "loyer": _safe(db, "loyer", lambda: loyer(db, commune)),
+        # SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté.
+        "zonage_abc": _safe(db, "zonage_abc", lambda: zonage_abc(db, insee)),
     }
     blocs["outils"] = _safe(db, "outils", lambda: outils_counters(db, commune, insee, blocs))
     return blocs

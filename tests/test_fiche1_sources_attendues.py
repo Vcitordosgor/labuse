@@ -1,30 +1,34 @@
-"""FICHE-1 lot 7 — les données réglementaires qui ATTENDENT une source (SOURCES-1).
+"""FICHE-1 lot 7 → SOURCES-1 lot 1 — les données réglementaires qui ATTENDAIENT une source.
 
-Emplacement réservé, EBC, DPU, PEB, zonage A/B/C : demandées par Vic mais leur source n'est pas
-ingérée. Déclarées avec l'état « non calculée — source absente » et la source attendue nommée —
-JAMAIS servies (aucun robinet) tant que le réservoir n'est pas là, pour que le trou soit visible
-et se comble tout seul à l'ingestion.
-"""
+Emplacement réservé, EBC, DPU, PEB, zonage A/B/C étaient déclarées « non calculée — source
+absente » et JAMAIS servies. SOURCES-1 lot 1 a ingéré leurs réservoirs : l'en_attente est
+LEVÉE, chaque donnée est rattachée à son réservoir réel et servie par un robinet nommé —
+le mécanisme du trou visible a fonctionné (déclaré → ingéré → servi)."""
 from __future__ import annotations
 
 from labuse.registre import ROBINETS
 from labuse.registre.donnees import DONNEES
 
-ATTENDUES = ("er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone",
-             "zonage_abc_logement")
+ARRIVEES = {
+    "er_emplacement_reserve": "gpu_prescriptions_er",
+    "ebc_classe": "gpu_prescriptions_ebc",
+    "dpu_perimetre": "dpu_perimetres",
+    "peb_zone": "peb_dgac",
+    "zonage_abc_logement": "zonage_abc_dhup",
+}
 
 
-def test_declarees_source_absente_et_nommee():
-    for cid in ATTENDUES:
+def test_en_attente_levee_et_reservoir_reel():
+    for cid, reservoir in ARRIVEES.items():
         d = DONNEES[cid]
-        assert d.en_attente, cid
-        # état « non calculée — source absente » + chantiers nommés (CIRCUIT-3 requis par le guard)
-        assert "source absente" in d.en_attente, cid
-        assert "CIRCUIT-3" in d.en_attente and "SOURCES-1" in d.en_attente, cid
-        # la source attendue est nommée (domaine_source)
+        assert d.en_attente is None, cid
+        assert reservoir in d.reservoirs, cid
         assert d.domaine_source, cid
+        # producteur RÉEL nommé, plus jamais un « réservoir à venir »
+        assert "à venir" not in d.fonction, cid
 
 
-def test_jamais_servies_tant_que_source_absente():
+def test_servies_par_un_robinet():
     servies = {c for r in ROBINETS.values() for c in r.chiffres}
-    assert not (set(ATTENDUES) & servies)
+    manquantes = set(ARRIVEES) - servies
+    assert not manquantes, manquantes

@@ -740,6 +740,87 @@ SOURCES: list[dict] = [
          documentation_url="https://artificialisation.developpement-durable.gouv.fr/les-donnees/donnees-de-consommation-despaces",
          legal_notes="Licence Ouverte — attribution : « Source : Cerema — portail national de l'artificialisation des sols ».",
          technical_notes="Table `commune_conso_enaf` (consommation d'espaces NAF par commune, période 2021-2024). Lue par la pression ZAN et l'enveloppe ZAN restante (fiche commune, comparateur). Millésime annuel."),
+    # ── SOURCES-1 lot 1 — les prescriptions et périmètres du droit des sols ──
+    # Deux réservoirs LOGIQUES sur la même table servie par le canal GPU existant (API Carto
+    # prescriptions, réservoir gpu_plu_api_carto) : les codes CNIG typepsc VÉRIFIÉS dans les
+    # données des 24 communes (06/09/2026) sont 05 = emplacement réservé (2 250 + 6 ER réels
+    # codés « 02 » à Saint-Louis, rescue M8a) et 01 = espace boisé classé (1 782).
+    dict(name="GPU — emplacements réservés (prescriptions CNIG)", category="urbanisme",
+         provider="IGN / Géoportail de l'urbanisme (prescriptions des PLU)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU — prescriptions typepsc 05 (idurba par commune)",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/prescription-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), prescriptions des documents d'urbanisme ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir gpu_prescriptions_er sur spatial_layers "
+                         "kind='plu_gpu_prescription' (famille ER : typepsc 05 + rescue/veto libellé, "
+                         "source unique cascade_rules.yaml). Rempli par le canal GPU existant "
+                         "(prescriptions par commune). Cascade : VIGILANCE, RÉDHIBITOIRE ≥ 50 % "
+                         "(seuil regles/), surface ER déduite de l'emprise (pré-faisabilité)."),
+    dict(name="GPU — espaces boisés classés (prescriptions CNIG)", category="urbanisme",
+         provider="IGN / Géoportail de l'urbanisme (prescriptions des PLU)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU — prescriptions typepsc 01 (idurba par commune)",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/prescription-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), prescriptions des documents d'urbanisme ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir gpu_prescriptions_ebc sur spatial_layers "
+                         "kind='plu_gpu_prescription' (typepsc 01, Art. L113-1 CU). Rempli par le "
+                         "canal GPU existant. Cascade : VIGILANCE dès non nul, RÉDHIBITOIRE ≥ 80 % "
+                         "(seuil regles/), part EBC SOUSTRAITE de l'assiette du bloc potentiel."),
+    dict(name="GPU — droit de préemption urbain (info-surf)", category="urbanisme",
+         provider="IGN / Géoportail de l'urbanisme (informations des PLU)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU typeinf 04 — partiel, non-publiées listées",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/info-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), informations des documents d'urbanisme ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir dpu_perimetres : spatial_layers kind='dpu' "
+                         "(typeinf CNIG 04, subtype dpu/dpu_renforce), attribution stricte par "
+                         "partition DU_<insee>. `labuse ingest-gpu-infos`. Une commune sans typeinf 04 "
+                         "n'a PAS publié son DPU au GPU (état « non publié », listée au rapport "
+                         "d'ingestion pour la demande de Vic aux communes/SIG communaux). Cascade : "
+                         "VIGILANCE (la préemption pèse sur la transaction, pas sur la constructibilité)."),
+    dict(name="PEB — plans d'exposition au bruit (DGAC via annexes GPU)", category="risques",
+         provider="DGAC / DEAL (PEB approuvés) — republication annexes GPU",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="Roland-Garros B/C/D (GPU) ; Pierrefonds non publié",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/info-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : DGAC (plans d'exposition au bruit), via le Géoportail de l'urbanisme ». Référence : art. L112-10 du code de l'urbanisme.",
+         technical_notes="SOURCES-1 lot 1 — réservoir peb_dgac : spatial_layers kind='peb' "
+                         "(typeinf CNIG 27, zone A/B/C/D dans txt, dédoublonné à l'île). VÉRIFIÉ "
+                         "06/09/2026 : Roland-Garros servi en B/C/D par les annexes GPU des communes "
+                         "concernées ; Pierrefonds ABSENT du GPU (0 typeinf 27 sur la bbox de "
+                         "Saint-Pierre) — couverture partielle DITE, aucune géométrie inventée. "
+                         "`labuse ingest-gpu-infos`. Cascade : zones A/B RÉDHIBITOIRES, C/D VIGILANCE "
+                         "(L112-10 CU)."),
+    dict(name="Zonage ABC des communes (DHUP)", category="logement",
+         provider="DHUP / Ministère de la Transition écologique (arrêté national)",
+         access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)",
+         documentation_url="https://www.data.gouv.fr/datasets/liste-des-communes-selon-le-zonage-abc",
+         endpoint_url="https://static.data.gouv.fr/resources/liste-des-communes-selon-le-zonage-abc/20260703-091314/liste-ensemble-des-communes-zonage-abc-en-vigueur-26-juin-2026.csv",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DHUP — zonage ABC (arrêté du 1er août 2014 modifié, art. D. 304-1 CCH) ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir zonage_abc_dhup : table commune_zonage_abc "
+                         "(classe par commune, passe-plat de l'arrêté). VÉRIFIÉ 06/09/2026 : 24/24 "
+                         "communes (A : Les Avirons, L'Étang-Salé, Saint-Leu, Saint-Paul ; B1 : les "
+                         "20 autres). `labuse ingest-zonage-abc`. Pas de couche carte, pas de cascade "
+                         "(régime d'aides, pas de constructibilité)."),
+    dict(name="ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
+         category="patrimoine", provider="Ministère de la Culture / DAC de La Réunion",
+         access_type="WFS/shp", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="aucune donnée — Atlas injoignable (06/09/2026)",
+         documentation_url="https://www.culture.gouv.fr/regions/dac-de-la-reunion/la-direction-des-affaires-culturelles-de-la-reunion/patrimoine-architecture-environnement/archeologie/Zones-de-presomption-de-prescription-archeologique-ZPPA",
+         endpoint_url="https://atlas.patrimoines.culture.fr/",
+         legal_notes="Licence : libre sous mention de la source et de la date (Atlas des patrimoines). Une ZPPA n'est PAS une servitude — indication (saisine préfet, diagnostic archéologique).",
+         technical_notes="SOURCES-1 lot 1 — réservoir zppa_culture ATTENDU : atlas.patrimoines."
+                         "culture.fr injoignable au test du 06/09/2026 (timeout, aucune réponse HTTP) "
+                         "et aucun jeu national/974 sur data.gouv (recherche du 06/09/2026 : couches "
+                         "locales hors 974 seulement). Couverture 974 à confirmer AU TÉLÉCHARGEMENT "
+                         "quand l'Atlas répond — la sentinelle surveille la page DAC. Rien d'ingéré, "
+                         "rien d'inventé ; couche + fiche + VIGILANCE brancheront à la première "
+                         "version réelle."),
 ]
 
 
@@ -976,6 +1057,14 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "RNIC — registre national des copropriétés (Anah)": ("one_shot", 365, "proposee"),
     "RPLS — répertoire des logements locatifs sociaux (SDES)": ("one_shot", 365, "proposee"),
     "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": ("one_shot", 365, "proposee"),
+    # ── SOURCES-1 lot 1 — droit des sols ──
+    "GPU — emplacements réservés (prescriptions CNIG)": ("en_direct", None, "sans_objet"),
+    "GPU — espaces boisés classés (prescriptions CNIG)": ("en_direct", None, "sans_objet"),
+    "GPU — droit de préemption urbain (info-surf)": ("job_sur_clic", 190, "proposee"),
+    "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": ("job_sur_clic", 365, "proposee"),
+    "Zonage ABC des communes (DHUP)": ("job_sur_clic", 365, "declaree"),
+    "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)":
+        ("absente", None, "sans_objet"),
 }
 
 

@@ -463,6 +463,19 @@ export function ContextePanel() {
                 </LigneCarte>
               )}
 
+              {/* SOURCES-1 lot 1 — zonage A/B/C (DHUP) : la classe logement de la commune,
+                  passe-plat sourcé + daté ; absente → « non déterminée », jamais devinée. */}
+              <LigneCarte id="zonage-abc" chiffre="zonage_abc_logement" ic="◈" titre="Zonage logement (ABC)"
+                sous={d.zonage_abc ? d.zonage_abc.millesime : 'non déterminée'}
+                val={d.zonage_abc ? `zone ${d.zonage_abc.zone}` : null}>
+                <div className="flex flex-col gap-0.5 text-[12px]">
+                  {d.zonage_abc
+                    ? <RowT lbl="Classe de la commune" val={`zone ${d.zonage_abc.zone}`} strong />
+                    : <p className="text-[12px] text-txt-dim">Non déterminée — zonage ABC non ingéré.</p>}
+                </div>
+                {d.zonage_abc && <Source nom={d.zonage_abc.source} />}
+              </LigneCarte>
+
               {/* ── LE TERRITOIRE ── */}
               <GroupeLabel>Le territoire</GroupeLabel>
 

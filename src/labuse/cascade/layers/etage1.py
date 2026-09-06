@@ -110,7 +110,15 @@ SUP_SEVERITES = {
     "i4": "moyen",                                       # lignes électriques HT/THT
     "i1": "moyen", "i1bis": "moyen", "i3": "moyen",      # hydrocarbures / gaz
     "pm1": "info", "pm2": "info", "pm3": "info",         # PPR — déjà scoré (risques)
-    "ac1": "info", "ac2": "info",                        # MH / sites — déjà scoré (abf)
+    "ac1": "info",                                       # MH — déjà scoré (abf)
+    # SOURCES-1 lot 1 (mandat) : AC2 sites classés/inscrits → VIGILANCE FORTE (l'ancien
+    # « info ×0, déjà scoré abf » confondait Mérimée-MH et sites classés — deux régimes) ;
+    # PT1/PT2 radioélectriques → VIGILANCE (moyen) ; AS1 captages → FORT en attendant la
+    # publication (non publiée au 974 le 06/09/2026 — le périmètre IMMÉDIAT sera RÉDHIBITOIRE
+    # à la première version réelle, cf. regles/sup_categories.py).
+    "ac2": "fort",
+    "pt1": "moyen", "pt2": "moyen",
+    "as1": "fort",
     "el10": "info",                                      # parc national — déjà scoré
 }
 SUP_DEFAUT = "faible"

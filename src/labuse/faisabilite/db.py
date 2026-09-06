@@ -82,15 +82,31 @@ uau AS (SELECT ST_Union(z.geom_2975) AS u
 er AS (SELECT ST_Union(e.geom_2975) AS u
        FROM spatial_layers e, p
        WHERE e.kind = :pkind AND e.commune = p.commune
-         AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, p.g))
+         AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, p.g)),
+-- SOURCES-1 lot 1 : la part EBC est SOUSTRAITE de l'assiette (L113-1 CU — emprise boisée
+-- inconstructible). Union ER+EBC pour la soustraction (jamais de double-compte au chevauchement).
+ebc AS (SELECT ST_Union(e.geom_2975) AS u
+        FROM spatial_layers e, p
+        WHERE e.kind = :pkind AND e.commune = p.commune
+          AND e.subtype = ANY(:ebc_types) AND ST_Intersects(e.geom_2975, p.g))
 SELECT ST_Area(p.b) AS full_area,
        CASE WHEN uau.u IS NULL THEN NULL
             ELSE ST_Area(ST_Intersection(p.b, uau.u)) END AS uau_area,
        CASE WHEN er.u IS NULL THEN 0.0
             ELSE ST_Area(ST_Intersection(
                    CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END,
-                   er.u)) END AS er_area
-FROM p LEFT JOIN uau ON TRUE LEFT JOIN er ON TRUE
+                   er.u)) END AS er_area,
+       CASE WHEN ebc.u IS NULL THEN 0.0
+            ELSE ST_Area(ST_Intersection(
+                   CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END,
+                   ebc.u)) END AS ebc_area,
+       CASE WHEN er.u IS NULL AND ebc.u IS NULL THEN 0.0
+            ELSE ST_Area(ST_Intersection(
+                   CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END,
+                   ST_Union(COALESCE(er.u, ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975)),
+                            COALESCE(ebc.u, ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975)))))
+       END AS greve_area
+FROM p LEFT JOIN uau ON TRUE LEFT JOIN er ON TRUE LEFT JOIN ebc ON TRUE
 """)
 
 _ER_DETAILS = text("""
@@ -216,14 +232,17 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
     presc = _layer_params("prescription_plu")
     pkind = presc.get("spatial_kind", "plu_gpu_prescription")
     er_types = [str(t) for t in presc.get("emplacement_reserve_typepsc", ["05"])]
+    ebc_types = [str(t) for t in presc.get("boise_classe_typepsc", ["01"])]
     args = {"pid": parcel_id, "d": recul,
             "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
             "uau_pats": [f"{p}%" for p in zonage.get("positive_prefixes", ["U", "AU"])],
-            "pkind": pkind, "er_types": er_types}
+            "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types}
     row = session.execute(_EMPRISE, args).one()
     full_a = float(row.full_area or 0.0)
     uau_a = float(row.uau_area) if row.uau_area is not None else None
     er_a = float(row.er_area or 0.0)
+    ebc_a = float(row.ebc_area or 0.0)
+    greve_a = float(row.greve_area or 0.0)
 
     base = full_a if uau_a is None else min(full_a, uau_a)
     plancher = float(zonage.get("an_mixte_min_pct", 5)) / 100.0
@@ -243,7 +262,13 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
                 (f"{r.txt} : {r.libelle}" if r.txt and r.txt != r.libelle else (r.libelle or "ER"))
             ctx.contraintes.libelles.append(
                 f"{label} — {m2:.0f} m² déduits de l'emprise constructible.")
-    emprise = max(0.0, base - er_a)
+    # SOURCES-1 lot 1 : la part EBC est soustraite de l'assiette (L113-1 CU) — union ER+EBC
+    # (greve_a) pour ne jamais soustraire deux fois un chevauchement.
+    if ebc_a >= 0.5:
+        ctx.contraintes.libelles.append(
+            f"Espace boisé classé — {ebc_a:.0f} m² soustraits de l'assiette constructible "
+            "(Art. L113-1 CU, aucune construction sur l'emprise boisée).")
+    emprise = max(0.0, base - greve_a)
 
     # ZONE-1 : sur parcelle à cheval, le bilan LE DIT — parts servies (modulation + contexte éco).
     if ctx.a_cheval and ctx.zone_parts:
@@ -253,7 +278,7 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
     eco_types = ([str(t) for t in presc.get("mixite_sociale_typepsc", [])]
                  + [str(t) for t in presc.get("eaux_pluviales_typepsc", [])])
     mixite_set = {str(t) for t in presc.get("mixite_sociale_typepsc", [])}
-    eco: dict = {"er_deduit_m2": round(er_a)}
+    eco: dict = {"er_deduit_m2": round(er_a), "ebc_deduit_m2": round(ebc_a)}
     if ctx.a_cheval and ctx.zone_parts:
         eco["zones_a_cheval"] = ctx.zone_parts
     if eco_types:

@@ -1,8 +1,25 @@
 # FICHE PARCELLE — donnée par donnée
 
-*Généré du registre le 2026-09-06 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
+*Généré du registre le 2026-09-07 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
 
 Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient (source et millésime servis), par quel chemin (moteur nommé ou passe-plat), sa portée (`run` = change à la bascule · `live` = à l'injection · `projet` = saisie du client), ses états possibles, et où ailleurs elle s'affiche.
+
+## Dispositifs et périmètres (droit des sols)
+
+*Robinet `fiche_parcelle_droit_sols` — route `/parcels/{idu} (clé dispositifs)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `dispositifs_parcelle` | liste | Dispositifs et périmètres (parcelle) | gpu_prescriptions_er (GPU — prescriptions typepsc 05 (idurba par commune)), gpu_prescriptions_ebc (GPU — prescriptions typepsc 01 (idurba par commune)), dpu_perimetres (GPU typeinf 04 — partiel, non-publiées listées), peb_dgac (Roland-Garros B/C/D (GPU) ; Pierrefonds non publié), sup_gpu | passe-plat · src/labuse/api/app.py:_dispositifs_block — table lue : spatial_layers (kinds plu_gpu_prescription/dpu/peb/sup) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *liste des dispositifs du droit des sols touchant la parcelle (ER avec part, EBC avec part, DPU, zone PEB, SUP par catégorie) — intersections live des couches servies, mêmes seuils que la cascade (source unique cascade_rules.yaml)* | | | | | |
+| `er_emplacement_reserve` | classe — domaine : grevee, non_grevee | Emplacement réservé (ER) | gpu_prescriptions_er (GPU — prescriptions typepsc 05 (idurba par commune)) | passe-plat · src/labuse/api/app.py:_dispositifs_block (er) — table lue : spatial_layers (kind=plu_gpu_prescription, famille ER) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle grevée d'un emplacement réservé du PLU (destination, part de la parcelle) — famille ER = typepsc 05 + rescue/veto libellé (source unique cascade_rules)* | | | | | |
+| `ebc_classe` | classe — domaine : intersecte, hors | Espace boisé classé (EBC) | gpu_prescriptions_ebc (GPU — prescriptions typepsc 01 (idurba par commune)) | passe-plat · src/labuse/api/app.py:_dispositifs_block (ebc) — table lue : spatial_layers (kind=plu_gpu_prescription, typepsc 01) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle intersecte-t-elle un espace boisé classé du PLU (part de la parcelle ; part soustraite de l'assiette du bloc potentiel — L113-1 CU)* | | | | | |
+| `dpu_perimetre` | classe — domaine : simple, renforce, hors, non_publie | Droit de préemption urbain (DPU) | dpu_perimetres (GPU typeinf 04 — partiel, non-publiées listées) | passe-plat · src/labuse/api/app.py:_dispositifs_block (dpu) — table lue : spatial_layers (kind=dpu) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle dans un périmètre de préemption publié (DPU simple/renforcé) — les communes sans DPU publié au GPU sont « non déterminée — non publié par la commune »* | | | | | |
+| `peb_zone` | classe — domaine : A, B, C, D, hors | Plan d'exposition au bruit (PEB) | peb_dgac (Roland-Garros B/C/D (GPU) ; Pierrefonds non publié) | passe-plat · src/labuse/api/app.py:_dispositifs_block (peb) — table lue : spatial_layers (kind=peb) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est — Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU (couverture partielle dite)* | | | | | |
 
 ## En-tête (adresse, géométrie)
 

@@ -48,6 +48,13 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "annuaire_service_public": "Annuaire de l'administration%",
     "rnic_anah": "RNIC — copropriétés%",
     "parc_national_inpn": "Parc National de La Réunion%",
+    # SOURCES-1 lot 1 — droit des sols
+    "gpu_prescriptions_er": "GPU — emplacements réservés%",
+    "gpu_prescriptions_ebc": "GPU — espaces boisés%",
+    "dpu_perimetres": "GPU — droit de préemption%",
+    "peb_dgac": "PEB — plans d'exposition%",
+    "zonage_abc_dhup": "Zonage ABC des communes%",
+    "zppa_culture": "ZPPA — zones de présomption%",
 }
 
 

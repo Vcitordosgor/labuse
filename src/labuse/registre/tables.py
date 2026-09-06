@@ -47,7 +47,26 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "gpu_plu_api_carto": Rt(("spatial_layers", "plu_reglement_extrait"),
                             couches=("plu_gpu_zone", "plu_gpu_prescription"),
                             millesime="GPU/PLU par commune (révisions — détail en fiche)"),
-    "sup_gpu": Rt(("spatial_layers",), couches=("sup",), millesime="assiettes SUP GPU (API Carto)"),
+    "sup_gpu": Rt(("spatial_layers",), couches=("sup",),
+                  millesime="assiettes SUP GPU (API Carto) — inventaire catégoriel 974 sondé "
+                            "(9 en vigueur ; T5/PT1/PT2 restreintes ; AS1 non publiée)"),
+    # ── SOURCES-1 lot 1 — droit des sols ────────────────────────────────────────────
+    "gpu_prescriptions_er": Rt(("spatial_layers",), couches=("plu_gpu_prescription",),
+                               millesime="GPU — prescriptions typepsc 05 (idurba par commune)",
+                               note="réservoir LOGIQUE sur la famille ER du kind plu_gpu_prescription "
+                                    "(typepsc 05 + rescue libellé — même canal que gpu_plu_api_carto)"),
+    "gpu_prescriptions_ebc": Rt(("spatial_layers",), couches=("plu_gpu_prescription",),
+                                millesime="GPU — prescriptions typepsc 01 (idurba par commune)",
+                                note="réservoir LOGIQUE sur les EBC (typepsc 01) du kind "
+                                     "plu_gpu_prescription — même canal que gpu_plu_api_carto"),
+    "dpu_perimetres": Rt(("spatial_layers",), couches=("dpu",),
+                         millesime="GPU typeinf 04 — 4/24 communes publiées (06/09/2026)"),
+    "peb_dgac": Rt(("spatial_layers",), couches=("peb",),
+                   millesime="Roland-Garros A/B/C/D (annexes GPU) ; Pierrefonds non publié"),
+    "zonage_abc_dhup": Rt(("commune_zonage_abc",),
+                          millesime="arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)"),
+    "zppa_culture": Rt((), note="aucune donnée — Atlas des patrimoines injoignable au 06/09/2026, "
+                                "rappel sentinelle 180 j (SOURCES-1 lot 1)"),
     "sudocuh": Rt(("sudocuh_procedures",), millesime="Sudocuh — état au 31/12/2024"),
     "sitadel": Rt(("sitadel_permits", "via_permits_geo"), millesime="2026-07"),
     "qpv_2024": Rt(("spatial_layers",), couches=("qpv",), millesime="génération 2024"),

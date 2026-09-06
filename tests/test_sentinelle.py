@@ -267,7 +267,10 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # n'est perdue — mesuré sur l'arbre fusionné.
     # CIRCUIT-5b lot 1 — +4 : les quatre « à rattacher » de CIRCUIT-5 (annuaire DILA, RNIC/Anah,
     # RPLS/SDES, conso ENAF/Cerema) entrent au catalogue avec leur raison de non-surveillance.
-    assert len(noms) == 75
+    # SOURCES-1 lot 1 — +6 : ER/EBC/DPU/PEB (raisons : canal GPU par commune), ZPPA (Atlas
+    # injoignable, rappel 180 j) en RAISONS ; SUP passe de RAISONS au SEED (sonde catégorielle
+    # temoin) ; ABC entre au SEED (api data.gouv).
+    assert len(noms) == 81
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

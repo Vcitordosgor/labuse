@@ -53,7 +53,8 @@ def test_couches_et_fonds_tous_declares():
     fonds = [rid for rid, r in registre.ROBINETS.items() if r.categorie == "fond"]
     # 16 de l'inventaire CIRCUIT-0 + 4 attrapées au lot 5 (ppr, parc national, limites, communes
     # — affichées par le panneau mais absentes de robinets.csv : 0 donnée externe hors registre)
-    assert len(couches) == 20 and len(fonds) == 10
+    # + 5 SOURCES-1 lot 1 (er, ebc, dpu, peb, sup — groupe « Contraintes »)
+    assert len(couches) == 25 and len(fonds) == 10
     # chaque robinet couche sert au moins une donnée de type couche
     for rid in couches:
         types = {DONNEES[cid].type for cid in registre.ROBINETS[rid].chiffres}
@@ -80,9 +81,11 @@ def test_en_attente_jamais_servie():
 
 
 def test_reglementaires_circuit3_declarees():
+    # SOURCES-1 lot 1 : les cinq réglementaires ne sont PLUS en attente — servies avec
+    # réservoir réel (garde détaillée : tests/test_fiche1_sources_attendues.py).
     for cid in ("er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone",
                 "zonage_abc_logement"):
-        assert DONNEES[cid].en_attente and "CIRCUIT-3" in DONNEES[cid].en_attente, cid
+        assert DONNEES[cid].en_attente is None and DONNEES[cid].reservoirs, cid
 
 
 # ─────────────────── 1.4 — tampon non numérique ───────────────────

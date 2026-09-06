@@ -200,6 +200,37 @@ def _regles_et_pieces(db: Session, idu: str) -> bytes:
         servitudes.append(f"{it['label']} : {it['detail'] or 'parcelle concernée'}")
     for it in (risq or {}).get("couches", []):
         servitudes.append(f"{it['label']} : {it['detail'] or 'parcelle concernée'}")
+    # SOURCES-1 lot 1 — les dispositifs du droit des sols (ER/EBC/DPU/PEB) entrent au pré-dossier
+    # PC : MÊME bloc que la fiche écran (_dispositifs_block, import au call-time — le routeur est
+    # monté par app, pas l'inverse). Chaque absence typée est dite, jamais un zéro.
+    try:
+        from .app import _dispositifs_block
+        dispo = _dispositifs_block(db, idu)
+    except Exception:   # noqa: BLE001 — un bloc indisponible ne casse pas le pré-dossier
+        dispo = None
+    if dispo:
+        for e in (dispo.get("er") or []):
+            servitudes.append(f"Emplacement réservé : {e.get('libelle') or 'ER'} — "
+                              f"{e.get('part_pct')} % de la parcelle (surface déduite de "
+                              "l'emprise constructible)")
+        for e in (dispo.get("ebc") or []):
+            servitudes.append(f"Espace boisé classé : {e.get('libelle') or 'EBC'} — "
+                              f"{e.get('part_pct')} % de la parcelle (construction interdite "
+                              "sur l'emprise boisée, art. L113-1 CU)")
+        dpu = dispo.get("dpu") or {}
+        if dpu.get("etat") == "servi":
+            servitudes.append(("Droit de préemption urbain renforcé" if dpu.get("statut") == "renforce"
+                               else "Droit de préemption urbain")
+                              + " — la commune peut préempter à la vente (DIA, ~2 mois)")
+        elif dpu.get("etat") == "non_determinee":
+            servitudes.append(f"DPU : non déterminé — {dpu.get('detail')}")
+        peb = dispo.get("peb") or {}
+        if peb.get("zone") in ("A", "B", "C", "D"):
+            effet = ("constructions d'habitation interdites" if peb["zone"] in ("A", "B")
+                     else "isolement acoustique renforcé obligatoire" if peb["zone"] == "C"
+                     else "zone d'information sur le bruit")
+            servitudes.append(f"Plan d'exposition au bruit — zone {peb['zone']} : {effet} "
+                              "(art. L112-10 CU)")
     serv_html = "".join(f"<li>{s}</li>" for s in servitudes) or \
                 "<li>Aucune servitude connue dans les couches analysées.</li>"
     pieces = "".join(f"<tr><td>{c}</td><td>{lib}</td><td>{etat}</td></tr>"

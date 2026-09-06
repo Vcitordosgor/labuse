@@ -693,6 +693,47 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                    else "Hors enveloppe urbanisée (PAU) — estimation." if rnu.get("dans_pau") is False else None),
                   rnu.get("avertissement_pau")])
 
+    # ── SOURCES-1 lot 1 — DISPOSITIFS ET PÉRIMÈTRES du droit des sols (même bloc que la fiche
+    #    écran : _dispositifs_block — ER avec part, EBC avec part, DPU typé, zone PEB, SUP). Chaque
+    #    absence est TYPÉE (« non déterminée — non publié par la commune »), jamais un zéro.
+    dispo = fiche.get("dispositifs")
+    if dispo:
+        lignes = []
+        for e in (dispo.get("er") or []):
+            lignes.append(f"Emplacement réservé : {e.get('libelle') or 'ER'} — "
+                          f"{e.get('part_pct')} % de la parcelle"
+                          + (" (emprise majoritairement grevée)" if (e.get("part_pct") or 0) >= 50 else "")
+                          + " ; surface déduite de l'emprise constructible.")
+        for e in (dispo.get("ebc") or []):
+            lignes.append(f"Espace boisé classé : {e.get('libelle') or 'EBC'} — "
+                          f"{e.get('part_pct')} % de la parcelle ; construction interdite sur "
+                          "l'emprise boisée (art. L113-1 CU), part soustraite de l'assiette du potentiel.")
+        dpu = dispo.get("dpu") or {}
+        if dpu.get("etat") == "servi":
+            lignes.append(("Droit de préemption urbain RENFORCÉ" if dpu.get("statut") == "renforce"
+                           else "Droit de préemption urbain")
+                          + " — la commune peut préempter à la vente (DIA, ~2 mois).")
+        elif dpu.get("etat") == "hors":
+            lignes.append("DPU : hors périmètre de préemption publié.")
+        elif dpu.get("etat") == "non_determinee":
+            lignes.append(f"DPU : non déterminé — {dpu.get('detail')}.")
+        peb = dispo.get("peb") or {}
+        if peb.get("zone") in ("A", "B", "C", "D"):
+            effet = ("constructions d'habitation interdites" if peb["zone"] in ("A", "B")
+                     else "isolement acoustique renforcé obligatoire" if peb["zone"] == "C"
+                     else "zone d'information sur le bruit")
+            lignes.append(f"Plan d'exposition au bruit : zone {peb['zone']} — {effet} "
+                          "(art. L112-10 CU).")
+        elif peb.get("zone") == "hors":
+            lignes.append("PEB : hors zones publiées"
+                          + (f" — {peb['detail']}" if peb.get("detail") else "") + ".")
+        for s_ in (dispo.get("sup") or []):
+            lignes.append(f"Servitude {s_.get('categorie')} : {s_.get('libelle') or 'servitude'}.")
+        if lignes:
+            _section(pdf, "DISPOSITIFS ET PÉRIMÈTRES (DROIT DES SOLS)", lignes,
+                     source="Géoportail de l'urbanisme (prescriptions et informations des PLU) · "
+                            "PEB DGAC via annexes GPU — millésime : PLU de la commune")
+
     tf = fiche.get("territoire_fiscal")
     if tf:
         lignes, zf, frr = [], tf.get("zfang") or {}, tf.get("frr") or {}

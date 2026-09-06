@@ -89,6 +89,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const zonagePeint = peint.zonage
   const equipPeint = peint.equipements
   const dispoActif = layers.qpv || layers.tva_primo || layers.anru || layers.zfang || layers.frr
+  // SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP)
+  const contraintesActif = layers.er || layers.ebc || layers.dpu || layers.peb || layers.sup
 
   // SECTEUR-1 (S4) — les GROUPES actifs, dans l'ordre. Seuls ceux des couches actives apparaissent.
   const groupes: { id: string; titre: ReactNode; note?: string; body: ReactNode }[] = []
@@ -215,6 +217,23 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tcsp, opacity: 0.45, borderColor: tTheme.tcsp }} />zone 800 m — parcelles au stationnement allégé</span>
       <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.tcsp }} />station en service</span>
       <span className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} />voie en site propre</span>
+    </div>,
+  })
+  // SOURCES-1 lot 1 — groupe « Contraintes » : chaque entrée avec sa couleur ; le « i » dit la
+  // source (GPU), l'opposabilité et la couverture partielle (DPU non publié, Pierrefonds absent).
+  if (contraintesActif) groupes.push({
+    id: 'contraintes', titre: 'Contraintes',
+    note: 'Servitudes et périmètres opposables des PLU, déposés au Géoportail de l’urbanisme (millésime = le PLU de chaque commune). DPU : une commune absente n’a pas publié son périmètre au GPU (pas une preuve d’absence). PEB : Roland-Garros servi, Pierrefonds non publié au GPU. SUP : T5/PT1/PT2 restreintes au téléchargement, AS1 non publiée pour le 974.',
+    body: <div data-legend-contraintes className="flex flex-col gap-1.5 text-[11px] text-txt">
+      {layers.er && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.er, opacity: tTheme.erOpacity + 0.35, borderColor: tTheme.er }} />Emplacement réservé (déduit de l’emprise)</span>}
+      {layers.ebc && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.ebc, opacity: tTheme.ebcOpacity + 0.35, borderColor: tTheme.ebc }} />Espace boisé classé (L113-1 — construction interdite)</span>}
+      {layers.dpu && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.dpu, opacity: tTheme.dpuOpacity + 0.35, borderColor: tTheme.dpu }} />Droit de préemption urbain (pèse sur la vente)</span>}
+      {layers.peb && <>
+        <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.pebRamp.a, borderColor: tTheme.pebRamp.a, opacity: 0.8 }} />PEB zone A/B — habitations interdites (L112-10)</span>
+        <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.pebRamp.c, borderColor: tTheme.pebRamp.c, opacity: 0.8 }} />PEB zone C — isolement acoustique renforcé</span>
+        <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.pebRamp.d, borderColor: tTheme.pebRamp.d, opacity: 0.8 }} />PEB zone D — information</span>
+      </>}
+      {layers.sup && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.sup, opacity: tTheme.supOpacity + 0.35, borderColor: tTheme.sup }} />Servitude d’utilité publique (catégorie au clic)</span>}
     </div>,
   })
   if (dispoActif) groupes.push({

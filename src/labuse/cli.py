@@ -1162,6 +1162,67 @@ def ingest_catnat_cmd(
         typer.echo(f"  filtre catnat : {v.verdict}")
 
 
+@app.command("ingest-gpu-infos")
+def ingest_gpu_infos_cmd() -> None:
+    """SOURCES-1 lot 1 — DPU (typeinf 04, par commune) et PEB (typeinf 27, zones A/B/C/D, île)
+    depuis les informations du GPU (API Carto info-surf). Purge kinds dpu/peb, réingère,
+    liste les communes SANS DPU publié, rejoue les filtres des deux sources."""
+    from . import models
+    from .ingestion import gpu_infos
+    with session_scope() as s:
+        sid_dpu = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                            {"n": gpu_infos.SOURCE_DPU}).scalar()
+        sid_peb = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                            {"n": gpu_infos.SOURCE_PEB}).scalar()
+        res = gpu_infos.ingest_gpu_infos(s, source_id_dpu=sid_dpu, source_id_peb=sid_peb)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ DPU : {res['dpu']} périmètre(s) sur {len(res['dpu_communes'])} commune(s) ; "
+               f"PEB : {res['peb']} zone(s) {res['peb_zones']}.")
+    if res["dpu_non_publie"]:
+        typer.echo(f"  DPU non publié au GPU ({len(res['dpu_non_publie'])} communes) : "
+                   + ", ".join(res["dpu_non_publie"]))
+    if res.get("peb_illisibles"):
+        typer.echo(f"  ⚠ PEB : {res['peb_illisibles']} zone(s) illisible(s) écartée(s)")
+    from . import circuit_journal, filtres
+    for label in ("dpu", "peb"):
+        f = filtres.get_filtre(label)
+        if f is not None:
+            with session_scope() as s:
+                v = filtres.jouer(s, f)
+                circuit_journal.journaliser(s, "filtre", label, "ingest-gpu-infos",
+                                            "refuse" if v.verdict == "quarantaine" else "ok",
+                                            {"verdict": v.verdict})
+                s.commit()
+            typer.echo(f"  filtre {label} : {v.verdict}")
+
+
+@app.command("ingest-zonage-abc")
+def ingest_zonage_abc_cmd() -> None:
+    """SOURCES-1 lot 1 — zonage A/B/C des communes (arrêté DHUP, CSV data.gouv). Upsert
+    commune_zonage_abc (24 communes attendues), rejoue le filtre."""
+    from .ingestion import zonage_abc as abc_mod
+    abc_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = abc_mod.ingest_zonage_abc(s)
+        s.commit()
+    typer.echo(f"✓ Zonage ABC : {res['n']} commune(s) {res['zones']}.")
+    if res["manquantes"]:
+        typer.echo(f"  ⚠ absentes du CSV national : {', '.join(res['manquantes'])}")
+    if res["hors_domaine"]:
+        typer.echo(f"  ⚠ zones hors domaine écartées : {res['hors_domaine']}")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("zonage_abc")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "zonage_abc", "ingest-zonage-abc",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre zonage_abc : {v.verdict}")
+
+
 @app.command("ingest-georisques")
 def ingest_georisques_cmd(
     commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),

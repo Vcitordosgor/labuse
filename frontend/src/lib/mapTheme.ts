@@ -105,6 +105,20 @@ export type MapTokens = {
   frrTotalite: string     // émeraude (avantageux, aplat plein)
   frrPartie: string       // améthyste
   dispoFillOpacity: number
+  /** SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP).
+   *  ER or foncé (emprise grevée), EBC vert forêt (boisement, ≠ mint des statuts),
+   *  DPU bleu moyen (transaction), SUP framboise (≠ améthyste FRR). PEB gradué par
+   *  zone : A rouge (interdite) → B orange → C jaune-ocre → D gris (information). */
+  er: string
+  erOpacity: number
+  ebc: string
+  ebcOpacity: number
+  dpu: string
+  dpuOpacity: number
+  pebRamp: { a: string; b: string; c: string; d: string }
+  pebOpacity: number
+  sup: string
+  supOpacity: number
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -159,6 +173,13 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zfangRenforce: '#3E74F0', zfangStandard: '#C6B08A',   // bleu roi 1,33 · sable 1,62
     frrTotalite: '#17B26A', frrPartie: '#9B6BE0',         // émeraude 1,48 · améthyste 1,37
     dispoFillOpacity: 0.24,
+    // SOURCES-1 lot 1 — contraintes du droit des sols (tints vifs, fond sombre)
+    er: '#D4A017', erOpacity: 0.30,                       // or foncé — emprise grevée (ER)
+    ebc: '#38A169', ebcOpacity: 0.28,                     // vert forêt — boisement classé
+    dpu: '#6B8FD4', dpuOpacity: 0.22,                     // bleu moyen — préemption (transaction)
+    pebRamp: { a: '#E8564A', b: '#F0913D', c: '#E3C13C', d: '#9AA0A6' },
+    pebOpacity: 0.28,
+    sup: '#C05884', supOpacity: 0.24,                     // framboise — servitudes SUP
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -212,6 +233,13 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zfangRenforce: '#2A54C8', zfangStandard: '#8A7A52',   // bleu roi 1,43 · sable foncé 1,31
     frrTotalite: '#0C8A50', frrPartie: '#6E3FB5',         // émeraude 1,35 · améthyste 1,44
     dispoFillOpacity: 0.24,
+    // SOURCES-1 lot 1 — contraintes du droit des sols (teintes profondes, terre claire)
+    er: '#8A6D08', erOpacity: 0.30,                       // or profond
+    ebc: '#1E6B43', ebcOpacity: 0.28,                     // vert forêt profond
+    dpu: '#2D4FA0', dpuOpacity: 0.22,                     // bleu profond
+    pebRamp: { a: '#B91C1C', b: '#D97706', c: '#A8720F', d: '#6B7280' },
+    pebOpacity: 0.30,
+    sup: '#8E2F5C', supOpacity: 0.24,                     // framboise profonde
   },
 }
 

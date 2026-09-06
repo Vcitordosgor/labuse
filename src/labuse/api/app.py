@@ -2185,6 +2185,7 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "permis_bloc": blocs["permis"],             # C5 — construire ici + permis au point mort
             "densifiables": blocs["densifiables"],      # C5 — gisement de densification
             "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
+            "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
             "outils": blocs["outils"],                  # C6 — compteurs des passerelles
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
@@ -3670,6 +3671,94 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # FICHE-1 lot 6 — les annonces Radar RATTACHÉES à la parcelle (validées), datées, avec prix
         # demandé, statut (en cours / retirée / vendue), lien fiche annonce + écart demandé/acté.
         "radar_annonces": _radar_annonces_block(db, idu),
+        # SOURCES-1 lot 1 — « Dispositifs et périmètres » : ER (part), EBC (part), DPU, zone PEB,
+        # SUP par catégorie — intersections live des couches servies, mêmes familles/typepsc que
+        # la cascade (source unique cascade_rules.yaml). None si aucune couche ingérée.
+        "dispositifs": _dispositifs_block(db, idu),
+    }
+
+
+_DISPOSITIFS_SQL = text("""
+SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
+       sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
+       ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
+         / NULLIF(ST_Area(p.geom_2975), 0) AS part
+FROM parcels p
+JOIN spatial_layers sl
+  ON ST_Intersects(p.geom_2975, sl.geom_2975)
+ AND (sl.kind IN ('dpu', 'peb', 'sup')
+      OR (sl.kind = 'plu_gpu_prescription' AND sl.subtype IN ('01', '05')))
+WHERE p.idu = :idu
+""")
+
+
+def _dispositifs_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols, à la parcelle.
+
+    ER (part de parcelle, seuil cascade 50 %), EBC (part, seuil 80 %, part soustraite de
+    l'assiette du potentiel), DPU (simple/renforcé — « non déterminée — non publié par la
+    commune » si la commune n'a rien au GPU), zone PEB (A/B/C/D — couverture partielle dite),
+    SUP par catégorie. Intersections LIVE des couches servies (registre `dispositifs_parcelle`),
+    mêmes familles/typepsc que la cascade. None si aucune des couches n'est ingérée."""
+    rows = db.execute(_DISPOSITIFS_SQL, {"idu": idu}).mappings().all()
+    kinds_presents = {k for (k,) in db.execute(text(
+        "SELECT DISTINCT kind FROM spatial_layers "
+        "WHERE kind IN ('dpu', 'peb', 'sup', 'plu_gpu_prescription')")).all()}
+    if not kinds_presents:
+        return None
+    er: list[dict] = []
+    ebc: list[dict] = []
+    sup: list[dict] = []
+    dpu: dict | None = None
+    peb: dict | None = None
+    for r in rows:
+        part = round(float(r["part"] or 0.0) * 100, 1)
+        if r["kind"] == "plu_gpu_prescription":
+            if part < 0.1:
+                continue
+            item = {"libelle": r["libelle"], "part_pct": part}
+            (er if r["subtype"] == "05" else ebc).append(item)
+        elif r["kind"] == "dpu":
+            renforce = (r["subtype"] == "dpu_renforce")
+            if dpu is None or renforce:
+                dpu = {"statut": "renforce" if renforce else "simple", "libelle": r["libelle"]}
+        elif r["kind"] == "peb":
+            z = (r["peb_zone"] or (r["subtype"] or "").upper())
+            # zone la plus contraignante si multi-zones (A < B < C < D)
+            if peb is None or z < peb["zone"]:
+                peb = {"zone": z, "libelle": r["libelle"], "part_pct": part}
+        elif r["kind"] == "sup":
+            sup.append({"categorie": (r["subtype"] or "?").upper(),
+                        "libelle": r["nomsuplitt"] or r["libelle"], "part_pct": part})
+    # DPU : distinguer « hors périmètre publié » de « commune non publiée » (règle 3 du mandat).
+    dpu_etat: dict
+    if dpu is not None:
+        dpu_etat = {"etat": "servi", **dpu}
+    else:
+        commune_a_publie = bool(db.execute(text(
+            "SELECT 1 FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+            "WHERE sl.kind = 'dpu' AND sl.commune = p.commune LIMIT 1"), {"idu": idu}).first())
+        dpu_etat = ({"etat": "hors"} if commune_a_publie else
+                    {"etat": "non_determinee",
+                     "detail": "non publié par la commune (GPU) — périmètre DPU non diffusé"})
+    er.sort(key=lambda x: -x["part_pct"])
+    ebc.sort(key=lambda x: -x["part_pct"])
+    sup.sort(key=lambda x: (x["categorie"], -x["part_pct"]))
+    # dédoublonnage SUP (une assiette peut être subdivisée en plusieurs entités)
+    sup_vus: set[tuple] = set()
+    sup = [s for s in sup
+           if (cle := (s["categorie"], s["libelle"])) not in sup_vus and not sup_vus.add(cle)]
+    return {
+        "er": er or None,
+        "ebc": ebc or None,
+        "dpu": dpu_etat,
+        "peb": ({"zone": peb["zone"], "part_pct": peb["part_pct"], "libelle": peb["libelle"]}
+                if peb else
+                ({"zone": "hors",
+                  "detail": "Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU"}
+                 if "peb" in kinds_presents else
+                 {"zone": "non_determinee", "detail": "PEB non ingéré"})),
+        "sup": sup or None,
     }
 
 
@@ -4852,7 +4941,20 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # autour des stations + union des parcelles couvertes, calculés par ingest_tcsp).
                     "tcsp_zone",
                     # RETOURS-13 R4 — moyenne tension EDF (HTA aérien/souterrain, open data retrouvé).
-                    "ligne_mt"}
+                    "ligne_mt",
+                    # SOURCES-1 lot 1 — droit des sols : DPU (typeinf 04), PEB (typeinf 27, zones
+                    # A-D en subtype), SUP (assiettes par catégorie en subtype). ER/EBC sont servis
+                    # par les KINDS VIRTUELS 'er'/'ebc' (plu_gpu_prescription filtré par famille,
+                    # cf. _VIRTUAL_MAP_KINDS) — jamais un kind stocké de plus pour la même donnée.
+                    "dpu", "peb", "sup"}
+
+# SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
+# subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
+# le rescue libellé ; la couche affiche le standard CNIG, l'écart est dit au filtre) ; EBC = 01.
+_VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "er": ("plu_gpu_prescription", ("05",)),
+    "ebc": ("plu_gpu_prescription", ("01",)),
+}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
@@ -4911,7 +5013,11 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     """Couches carte (zonage PLU, PPR, Parc national) — géométries simplifiées pour l'overlay.
 
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
-    if kind not in _MAP_LAYER_KINDS:
+    # SOURCES-1 lot 1 — kinds virtuels (er/ebc) : kind stocké + filtre subtype, même chemin.
+    subtypes: tuple[str, ...] | None = None
+    if kind in _VIRTUAL_MAP_KINDS:
+        kind, subtypes = _VIRTUAL_MAP_KINDS[kind]
+    elif kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
     # RETOURS-13 R5 — la couche synthétique BAOBAB (tcsp_axe) est retirée : le TCSP est désormais
     # servi par les kinds STOCKÉS tcsp_troncon/tcsp_station (ingestion transport_reseaux.ingest_tcsp).
@@ -4937,6 +5043,8 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                   ST_AsGeoJSON(COALESCE(sl.geom_simple, ST_SimplifyPreserveTopology(sl.geom, 0.0002))) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
+             -- SOURCES-1 lot 1 : filtre subtype des kinds virtuels (er/ebc), NULL ailleurs
+             AND (CAST(:st AS text[]) IS NULL OR sl.subtype = ANY(:st))
              -- M137-V : FILTRE D'AFFICHAGE SEUL — les arrêts de bus OSM (kind 'amenite', subtype
              -- 'tcsp') sont à 93 % un doublon visible de la couche GTFS dédiée « Transport public ».
              -- On les MASQUE de la couche Équipements, on NE SUPPRIME AUCUNE LIGNE : le modèle lit
@@ -4948,7 +5056,7 @@ def map_layers_geojson(kind: str, commune: str | None = None,
              AND NOT (sl.kind = 'amenite' AND sl.subtype = 'sport'
                       AND NOT (COALESCE(sl.name, '') ~* :sport_keep AND COALESCE(sl.name, '') !~* :sport_drop))
            LIMIT :lim"""),
-        {"k": kind, "c": commune, "lim": limit,
+        {"k": kind, "c": commune, "lim": limit, "st": list(subtypes) if subtypes else None,
          "sport_keep": _SPORT_KEEP_RE, "sport_drop": _SPORT_DROP_RE}).mappings().all()
     # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
     # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.

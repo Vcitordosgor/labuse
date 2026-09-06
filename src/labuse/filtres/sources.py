@@ -451,3 +451,163 @@ _ajout(_f(
             "0 tronçon à TMJA ≤ 0 (mesuré au 05/09)",
             "tmja IS NOT NULL AND tmja <= 0"),
     ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 1 — droit des sols ══════════════════════════
+# Mesures 06/09/2026 (base servie) : plu_gpu_prescription typepsc 05 = 2 250 ER (+6 ER réels
+# codés « 02 » à Saint-Louis, rescue M8a), typepsc 01 = 1 782 EBC. DPU/PEB : ingérés par
+# `labuse ingest-gpu-infos` (info-surf GPU, typeinf 04/27). ABC : 24/24 communes (4 A, 20 B1).
+
+def _communes_couvertes(cid: str, libelle: str, seuil_txt: str, kind: str,
+                        subtype_in: tuple[str, ...] | None = None,
+                        attendu: int = 24, bloquant: bool = False) -> Controle:
+    """Combien des 24 communes ont AU MOINS une entité de ce kind (et subtypes) — l'état réel de
+    publication, les manquantes LISTÉES (jamais un zéro silencieux)."""
+    def m(db, f: Filtre, version: str):
+        w = "kind = :k" + (" AND subtype = ANY(:st)" if subtype_in else "")
+        p: dict = {"k": kind}
+        if subtype_in:
+            p["st"] = list(subtype_in)
+        rows = db.execute(text(
+            f"SELECT DISTINCT commune FROM spatial_layers WHERE {w} "
+            "AND commune IS NOT NULL"), p).scalars().all()
+        from ..ingestion.run_all import REUNION_COMMUNES
+        toutes = {nom for _, nom in REUNION_COMMUNES}
+        vues = {r for r in rows if r in toutes}
+        manquantes = sorted(toutes - vues)
+        d = {"communes_couvertes": len(vues), "attendues": attendu, "manquantes": manquantes}
+        return ok(f"{len(vues)}/{attendu}", d) if len(vues) >= attendu else \
+            ko(f"{len(vues)}/{attendu}", d)
+    return Controle(cid, "completude", "bloquant" if bloquant else "avertissant",
+                    libelle, seuil_txt, m)
+
+
+# ── Emplacements réservés (réservoir gpu_prescriptions_er) ──
+def _er_hors_code() -> Controle:
+    """La famille ER réelle inclut le rescue par libellé (codes hétérogènes entre communes, M8a) —
+    ce contrôle mesure les ER RECONNAISSABLES codés HORS 05 (hors du `where` du filtre, exprès) :
+    l'état réel, visible, jamais bloquant (le rescue de la cascade les capte)."""
+    def m(db, f: Filtre, version: str):
+        n = int(db.execute(text(
+            "SELECT count(*) FROM spatial_layers WHERE kind = 'plu_gpu_prescription' "
+            "AND subtype <> '05' "
+            "AND (attrs->>'libelle') ~* '(emp[al]{1,4}cement\\s*r[ée]serv)'")).scalar() or 0)
+        d = {"n_hors_code": n, "attendu_0609": 6}
+        return ok(str(n), d) if n <= 6 else ko(str(n), d)
+    return Controle("d_er_hors_code", "distribution", "avertissant",
+                    "ER reconnaissables codés hors typepsc 05",
+                    "≤ 6 (Saint-Louis, codes « 02 » — rescue M8a, mesuré 6 au 06/09)", m)
+
+
+_ajout(_f(
+    source="gpu_prescriptions_er", libelle="GPU — emplacements réservés",
+    table="spatial_layers", where="kind = 'plu_gpu_prescription' AND subtype = '05'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="GPU — emplacements réservés%", portee_run=True, a_job=False,
+    propres=[
+        _er_hors_code(),
+        _communes_couvertes(
+            "d_er_communes", "Communes avec ≥ 1 emplacement réservé publié",
+            "état réel de publication GPU (manquantes listées — l'absence peut être réelle)",
+            "plu_gpu_prescription", ("05",)),
+    ]))
+
+# ── Espaces boisés classés (réservoir gpu_prescriptions_ebc) ──
+_ajout(_f(
+    source="gpu_prescriptions_ebc", libelle="GPU — espaces boisés classés",
+    table="spatial_layers", where="kind = 'plu_gpu_prescription' AND subtype = '01'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="GPU — espaces boisés%", portee_run=True, a_job=False,
+    propres=[
+        # un « EBC » sans libellé reconnaissable est servi tel quel mais compté (état réel).
+        c.part_max(
+            "d_ebc_libelle", "completude", "avertissant",
+            "Part des EBC sans libellé boisé reconnaissable",
+            "≤ 10 % (libellés « EBC / espace boisé » mesurés dominants au 06/09)",
+            "(attrs->>'libelle') IS NULL OR (attrs->>'libelle') !~* '(bois|EBC)'", 10.0),
+        _communes_couvertes(
+            "d_ebc_communes", "Communes avec ≥ 1 EBC publié",
+            "état réel de publication GPU (manquantes listées — l'absence peut être réelle)",
+            "plu_gpu_prescription", ("01",)),
+    ]))
+
+# ── Droit de préemption urbain (réservoir dpu_perimetres, label vanne `dpu`) ──
+_ajout(_f(
+    source="dpu", libelle="GPU — droit de préemption urbain",
+    table="spatial_layers", where="kind = 'dpu'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="GPU — droit de préemption%", portee_run=True,
+    propres=[
+        c.domaine("d_dpu_subtypes", "subtype", ("dpu", "dpu_renforce"), "bloquant",
+                  "Sous-types DPU connus", "dpu | dpu_renforce (fixés à l'ingestion)"),
+        # une commune sans DPU au GPU n'a pas publié — listée pour la demande de Vic
+        # (SIG communaux), jamais un zéro silencieux.
+        _communes_couvertes(
+            "d_dpu_communes", "Communes avec DPU publié au GPU",
+            "état réel (communes non publiées listées pour la demande aux SIG communaux)",
+            "dpu"),
+    ]))
+
+# ── PEB (réservoir peb_dgac, label vanne `peb`) — couche d'ÎLE (commune = NULL) ──
+def _peb_aerodromes() -> Controle:
+    """Roland-Garros ET Pierrefonds attendus À TERME ; au 06/09/2026 seul Roland-Garros est
+    republié au GPU (Pierrefonds absent, vérifié) — l'écart est l'état réel, listé."""
+    def m(db, f: Filtre, version: str):
+        libs = db.execute(text(
+            "SELECT DISTINCT lower(coalesce(attrs->>'libelle', name)) FROM spatial_layers "
+            "WHERE kind = 'peb'")).scalars().all()
+        rg = any("roland" in (x or "") for x in libs)
+        pf = any("pierrefonds" in (x or "") for x in libs)
+        d = {"roland_garros": rg, "pierrefonds": pf,
+             "note": "Pierrefonds NON publié au GPU (vérifié 06/09/2026)" if not pf else None}
+        return ok("2/2", d) if (rg and pf) else ko(("1/2" if rg or pf else "0/2"), d)
+    return Controle("d_peb_aerodromes", "completude", "avertissant",
+                    "Aérodromes couverts (Roland-Garros, Pierrefonds)",
+                    "2/2 à terme — 1/2 au 06/09/2026 (Pierrefonds non publié au GPU)", m)
+
+
+_ajout(_f(
+    source="peb", libelle="PEB — plans d'exposition au bruit",
+    table="spatial_layers", where="kind = 'peb'",
+    cle=("id",), geom_col="geom",
+    source_motif="PEB — plans d'exposition%", portee_run=True,
+    propres=[
+        c.domaine("d_peb_zones", "subtype", ("a", "b", "c", "d"), "bloquant",
+                  "Zones PEB lisibles (A/B/C/D)",
+                  "zones du L112-10 CU seulement — une zone illisible est écartée à l'ingestion, jamais devinée"),
+        _peb_aerodromes(),
+    ]))
+
+# ── Zonage ABC (réservoir zonage_abc_dhup, label vanne `zonage_abc`) ──
+_ajout(_f(
+    source="zonage_abc", libelle="Zonage ABC des communes (DHUP)",
+    table="commune_zonage_abc", cle=("insee",), insee_col="insee",
+    source_motif="Zonage ABC%", portee_run=False,
+    propres=[
+        c.domaine("d_abc_domaine", "zone", ("Abis", "A", "B1", "B2", "C"), "bloquant",
+                  "Domaine des classes ABC", "classes de l'arrêté D. 304-1 CCH seulement"),
+        c.couverture("d_abc_couverture", "completude", "bloquant",
+                     "Les 24 communes classées", "24/24 (arrêté national — mesuré 24/24 au 06/09)",
+                     "zone IS NOT NULL", 100.0),
+    ]))
+
+# ── SUP — assiettes GPU (label vanne `sup_gpu`) : filtre riche (l'inventaire catégoriel
+# amont vit dans la sonde sentinelle ; ici, l'état de la table servie) ──
+_ajout(_f(
+    source="sup_gpu", libelle="SUP — assiettes GPU (API Carto)",
+    table="spatial_layers", where="kind = 'sup'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="SUP — assiettes%", portee_run=True,
+    propres=[
+        # domaine OUVERT (une nouvelle catégorie publiée doit ENTRER, pas être bloquée) — le
+        # contrôle liste ce qui est en base hors des catégories déjà vues au 06/09 : visible.
+        c.compte_mauvais(
+            "d_sup_geo", "completude", "avertissant",
+            "Assiettes sans genre géométrique tracé",
+            "0 assiette sans attrs.geo (s|l|p) — mesuré 0 au 06/09",
+            "(attrs->>'geo') IS NULL OR (attrs->>'geo') NOT IN ('s','l','p')"),
+        _communes_couvertes(
+            "d_sup_communes", "Communes avec ≥ 1 assiette SUP",
+            "état réel (la publication SUP est inégale par catégorie et par commune — fiche 1 du rapport)",
+            "sup"),
+    ]))

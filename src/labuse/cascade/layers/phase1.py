@@ -24,6 +24,12 @@ SRC_PARC = "Parc National de La Réunion (INPN)"
 SRC_FORET = "Forêts publiques (ONF)"
 SRC_SAR = "Potentiel foncier Région (Région ODS)"
 SRC_GPU = "Urbanisme PLU/GPU (API Carto)"
+# SOURCES-1 lot 1 — les prescriptions ER/EBC et les informations DPU/PEB ont leur ligne
+# data_sources PROPRE (réservoirs gpu_prescriptions_er/ebc, dpu_perimetres, peb_dgac) :
+SRC_ER = "GPU — emplacements réservés (prescriptions CNIG)"
+SRC_EBC = "GPU — espaces boisés classés (prescriptions CNIG)"
+SRC_DPU = "GPU — droit de préemption urbain (info-surf)"
+SRC_PEB = "PEB — plans d'exposition au bruit (DGAC via annexes GPU)"
 SRC_SAFER = "RPG — déclarations agricoles (IGN/ASP)"
 SRC_GEORISQUES = "Géorisques"
 # M-G (P2) : les deux FLUX réels du kind='ppr' — le zoné rouge/bleu vient de DEAL Lizmap ; l'assiette
@@ -433,25 +439,38 @@ class PrescriptionPluLayer(Layer):
             if is_er:
                 num, objet = _er_split(lib)
                 if i.coverage >= er_seuil:
-                    # M129 P1.1 (arbitrage découpes) : l'ER N'EXCLUT PLUS — une servitude LEVABLE
-                    # n'est pas une impossibilité légale définitive. FAIT AFFICHÉ, flag FORT
-                    # (vigilance réelle : l'emprise est majoritairement grevée tant que l'ER vit).
+                    # SOURCES-1 lot 1 (mandat 06/09/2026) : l'ER ≥ seuil REDEVIENT RÉDHIBITOIRE
+                    # (« ER → VIGILANCE, RÉDHIBITOIRE au-delà de 50 % ») — annule M129 P1.1.
+                    # Le motif garde la nature LEVABLE de la servitude (à réévaluer si abandon).
                     titre = f"Emplacement réservé {num}" if num else "Emplacement réservé"
-                    verdicts.append(soft_flag(
+                    verdicts.append(hard_exclude(
                         self.name,
-                        f"{titre} : {objet} ({i.coverage * 100:.0f} %) — emprise majoritairement "
-                        "grevée au profit d'un projet public (servitude levable : à réévaluer si "
-                        "l'ER est abandonné).",
-                        Severity.FORT, source=SRC_GPU))
+                        f"{titre} : {objet} ({i.coverage * 100:.0f} % de la parcelle) — emprise "
+                        "majoritairement grevée au profit d'un projet public (servitude levable : "
+                        "à réévaluer si l'ER est abandonné).",
+                        kind="exclue", source=SRC_ER))
                 else:
                     verdicts.append(soft_flag(
                         self.name, f"Emplacement réservé : {lib}{pct} — emprise grevée au profit "
                         "d'un projet public ; surface ER déduite de l'emprise constructible "
-                        "(pré-faisabilité).", Severity.MOYEN, source=SRC_GPU))
+                        "(pré-faisabilité).", Severity.MOYEN, source=SRC_ER))
             elif tp in ebc:
-                verdicts.append(soft_flag(
-                    self.name, f"Espace boisé classé (EBC) : {lib}{pct} — toute construction interdite "
-                    "sur l'emprise boisée (Art. L113-1 CU).", Severity.FORT, source=SRC_GPU))
+                ebc_seuil = float(params.get("ebc_hard_exclude_pct", 80)) / 100.0
+                if i.coverage >= ebc_seuil:
+                    # SOURCES-1 lot 1 : EBC couvrant ≥ 80 % → RÉDHIBITOIRE (toute construction
+                    # interdite sur l'emprise boisée, L113-1 CU — l'assiette restante est résiduelle).
+                    verdicts.append(hard_exclude(
+                        self.name,
+                        f"Espace boisé classé (EBC) : {lib} ({i.coverage * 100:.0f} % de la "
+                        "parcelle) — toute construction interdite sur l'emprise boisée "
+                        "(Art. L113-1 CU), assiette restante résiduelle.",
+                        kind="exclue", source=SRC_EBC))
+                else:
+                    verdicts.append(soft_flag(
+                        self.name, f"Espace boisé classé (EBC) : {lib}{pct} — toute construction "
+                        "interdite sur l'emprise boisée (Art. L113-1 CU) ; part EBC soustraite de "
+                        "l'assiette du bloc potentiel (pré-faisabilité).",
+                        Severity.FORT, source=SRC_EBC))
             elif tp in patrimoine:
                 verdicts.append(soft_flag(
                     self.name, f"Élément bâti protégé (Art. L151-19 CU) : {lib} — démolition/modification "
@@ -481,6 +500,90 @@ class PrescriptionPluLayer(Layer):
                     self.name, f"Prescription PLU : {lib}{pct} — à vérifier au règlement.",
                     Severity.FAIBLE, source=SRC_GPU))
         return verdicts
+
+
+@register
+class PebLayer(Layer):
+    """SOURCES-1 lot 1 — plan d'exposition au bruit (kind='peb', zones A/B/C/D via annexes GPU).
+
+    L112-10 CU : en zones A et B, les constructions à usage d'habitation sont interdites (hors
+    exceptions étroites) → HARD_EXCLUDE si la part de parcelle dépasse `hard_min_pct` (liseré
+    en deçà = information). Zones C/D → SOFT_FLAG gradué (isolation renforcée / information).
+    Couverture partielle DITE : Pierrefonds absent du GPU → les parcelles hors zones ingérées
+    rendent PASS (la donnée EST présente à l'île), le manque est porté par la source/filtre."""
+
+    name = "peb"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> list[Verdict]:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return [unknown(self.name, "PEB non ingéré (annexes GPU).", source=SRC_PEB)]
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return [passed(self.name, "Hors zones du plan d'exposition au bruit.", source=SRC_PEB)]
+        hard = {str(z).lower() for z in params.get("hard_zones", ["a", "b"])}
+        flags = {str(k).lower(): v for k, v in (params.get("flag_zones") or {}).items()}
+        hard_min = float(params.get("hard_min_pct", 2)) / 100.0
+        verdicts: list[Verdict] = []
+        pire = max(inter, key=lambda x: x.coverage)
+        for i in sorted(inter, key=lambda x: -x.coverage):
+            zone = (i.subtype or "").lower()
+            zlab = zone.upper() or "?"
+            nom = (i.attrs or {}).get("libelle") or i.name or "PEB"
+            pct = i.coverage * 100
+            if zone in hard:
+                if i.coverage >= hard_min:
+                    verdicts.append(hard_exclude(
+                        self.name,
+                        f"Zone {zlab} du {nom} ({pct:.0f} % de la parcelle) — constructions "
+                        "d'habitation interdites (art. L112-10 du code de l'urbanisme).",
+                        kind="exclue", source=SRC_PEB))
+                else:
+                    verdicts.append(soft_flag(
+                        self.name,
+                        f"Liseré de zone {zlab} du {nom} ({pct:.1f} %) — L112-10 CU, "
+                        "intersection marginale (information).", Severity.FORT, source=SRC_PEB))
+            elif zone in flags:
+                detail = (f"Zone {zlab} du {nom}{f' ({pct:.0f} %)' if pct >= 1 else ''} — "
+                          + ("isolement acoustique renforcé obligatoire, information des "
+                             "acquéreurs (L112-10 CU)." if zone == "c" else
+                             "zone d'information sur le bruit (L112-10 CU)."))
+                verdicts.append(soft_flag(self.name, detail, Severity(flags[zone]),
+                                          source=SRC_PEB))
+        if not verdicts:
+            verdicts.append(passed(
+                self.name, f"Zone PEB {(pire.subtype or '?').upper()} sans effet mesuré.",
+                source=SRC_PEB))
+        return verdicts
+
+
+@register
+class DpuLayer(Layer):
+    """SOURCES-1 lot 1 — droit de préemption urbain (kind='dpu', GPU info-surf typeinf 04).
+
+    VIGILANCE seulement (mandat) : la préemption pèse sur la TRANSACTION (la commune peut se
+    substituer à l'acquéreur — délais DIA ~2 mois, négociation possible du prix), jamais sur la
+    constructibilité. Une commune sans DPU publié au GPU n'est PAS un zéro : la couverture est
+    portée par la source (communes non publiées listées à l'ingestion)."""
+
+    name = "dpu"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Périmètres DPU non ingérés (GPU info-surf).", source=SRC_DPU)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name,
+                          "Hors périmètre de préemption urbaine publié (les communes sans DPU "
+                          "publié au GPU sont listées à la source).", source=SRC_DPU)
+        renforce = any((i.subtype or "") == "dpu_renforce" for i in inter)
+        sev = params.get("severity_renforce", "moyen") if renforce else params.get("severity", "faible")
+        lib = "Droit de préemption urbain renforcé" if renforce else "Droit de préemption urbain"
+        return soft_flag(
+            self.name,
+            f"{lib} — la commune peut préempter à la vente (DIA obligatoire, ~2 mois ; pèse sur "
+            "la transaction, pas sur la constructibilité).", Severity(sev), source=SRC_DPU)
 
 
 @register

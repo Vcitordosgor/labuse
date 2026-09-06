@@ -112,7 +112,8 @@ def test_modes_cadences_declares(db_session):
     # d'aménagement et Cadastre d'époque sans mode ni cadence — déclarés depuis.
     # 80 → 84 : CIRCUIT-5b lot 1, les quatre « à rattacher » (annuaire DILA, RNIC/Anah,
     # RPLS/SDES, conso ENAF/Cerema) entrent au catalogue avec leur mode + cadence.
-    assert len(MODE_ET_CADENCE) == 84
+    # 84 → 90 : SOURCES-1 lot 1, les six du droit des sols (ER, EBC, DPU, PEB, ABC, ZPPA).
+    assert len(MODE_ET_CADENCE) == 90
     modes = {m for m, _, _ in MODE_ET_CADENCE.values()}
     assert modes <= {"job_sur_clic", "cron_mensuel", "depot_manuel", "one_shot", "en_direct", "absente"}
     statuts = {s for _, _, s in MODE_ET_CADENCE.values()}

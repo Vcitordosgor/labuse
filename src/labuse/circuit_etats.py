@@ -181,6 +181,13 @@ NOM_VERS_SLUG = {
     'RNIC — registre national des copropriétés (Anah)': 'rnic_anah',
     'RPLS — répertoire des logements locatifs sociaux (SDES)': 'rpls_sdes',
     "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": 'enaf_cerema',
+    # SOURCES-1 lot 1 — droit des sols :
+    'GPU — emplacements réservés (prescriptions CNIG)': 'gpu_prescriptions_er',
+    'GPU — espaces boisés classés (prescriptions CNIG)': 'gpu_prescriptions_ebc',
+    'GPU — droit de préemption urbain (info-surf)': 'dpu_perimetres',
+    "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": 'peb_dgac',
+    'Zonage ABC des communes (DHUP)': 'zonage_abc_dhup',
+    'ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)': 'zppa_culture',
 }
 
 def slug_reservoir(nom: str | None) -> str | None:

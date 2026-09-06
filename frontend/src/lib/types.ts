@@ -459,6 +459,16 @@ export interface Fiche {
       ppr: { document: string; approbation: string | null }[] | null
     }[]
   } | null
+  // SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols (ER, EBC, DPU, PEB, SUP).
+  // null → aucune couche ingérée (le front omet le bloc). Chaque absence est TYPÉE (jamais un zéro).
+  dispositifs?: {
+    er: { libelle: string; part_pct: number }[] | null
+    ebc: { libelle: string; part_pct: number }[] | null
+    dpu: { etat: 'servi'; statut: 'simple' | 'renforce'; libelle?: string | null }
+       | { etat: 'hors' } | { etat: 'non_determinee'; detail: string }
+    peb: { zone: string; part_pct?: number; libelle?: string | null; detail?: string }
+    sup: { categorie: string; libelle: string | null; part_pct: number }[] | null
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

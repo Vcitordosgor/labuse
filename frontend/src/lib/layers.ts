@@ -124,6 +124,18 @@ export const LAYER_INFO: Record<string, string> = {
   // le dit). En mode analyse (couche décochée), la palette suit le résultat courant.
   couleurs_verdict:
     'Les couleurs du classement LABUSE (Priorité → Écartée) sur TOUTES les parcelles de l’île, indépendamment des filtres actifs. En mode analyse, la carte ne colore que le résultat courant — cochez cette couche pour voir le classement entier.',
+  // SOURCES-1 lot 1 — contraintes du droit des sols. Chaque « i » : ce que montre la couche ·
+  // sa source et son millésime · sa fabrication · OPPOSABLE ou non · sa couverture réelle.
+  er:
+    'Les emplacements réservés des PLU : des emprises gelées au profit d’un projet public (voirie, équipement, logement social) — le propriétaire ne peut pas y construire son propre projet tant que la réserve vit. Servitude OPPOSABLE du PLU. Source : prescriptions des documents d’urbanisme déposés au Géoportail de l’urbanisme (code CNIG 05), millésime = le PLU de chaque commune. Dans l’analyse LABUSE : vigilance dès qu’un ER touche la parcelle, rédhibitoire au-delà de 50 % de recouvrement ; la surface réservée est déduite de l’emprise constructible.',
+  ebc:
+    'Les espaces boisés classés des PLU : toute construction et tout défrichement y sont interdits (article L113-1 du code de l’urbanisme) — le classement protège le boisement. Servitude OPPOSABLE du PLU. Source : prescriptions du Géoportail de l’urbanisme (code CNIG 01), millésime = le PLU de chaque commune. Dans l’analyse LABUSE : vigilance dès qu’un EBC touche la parcelle, rédhibitoire au-delà de 80 % ; la part boisée classée est soustraite de l’assiette du potentiel constructible.',
+  dpu:
+    'Les périmètres du droit de préemption urbain : à la vente, la commune peut s’y substituer à l’acquéreur (déclaration d’intention d’aliéner, ~2 mois). OPPOSABLE à la TRANSACTION — pas à la constructibilité : on peut y construire, mais la vente peut être préemptée. Source : informations des PLU déposées au Géoportail de l’urbanisme (code CNIG 04), millésime = le PLU de chaque commune. Couverture PARTIELLE et dite : une commune absente de la couche n’a pas publié son DPU au GPU — ce n’est pas une preuve d’absence de DPU.',
+  peb:
+    'Les zones A, B, C et D des plans d’exposition au bruit des aérodromes (couleur du rouge A au gris D). OPPOSABLE : en zones A et B les constructions d’habitation sont interdites, en zone C elles sont encadrées avec isolement acoustique renforcé, la zone D est d’information (article L112-10 du code de l’urbanisme). Source : PEB approuvés (DGAC), republiés par les annexes des PLU au Géoportail de l’urbanisme. Couverture partielle DITE : Roland-Garros est servi ; le PEB de Pierrefonds n’est pas publié au GPU — son absence à l’écran n’est pas une preuve.',
+  sup:
+    'Les assiettes des servitudes d’utilité publique publiées pour La Réunion sur le Géoportail de l’urbanisme, par catégorie : AC1 monuments historiques, AC2 sites classés et inscrits, AC4, PM1/PM2/PM3 (risques, installations classées), EL10 (parc national). OPPOSABLES. Trois catégories sont publiées mais restreintes au téléchargement par leur gestionnaire (T5 dégagement aéronautique, PT1/PT2 radioélectriques) et AS1 (protection des captages d’eau) n’est pas publiée pour le 974 — LABUSE surveille leur publication, rien n’est inventé. Millésime : document SUP de chaque gestionnaire (AAAAMMJJ).',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

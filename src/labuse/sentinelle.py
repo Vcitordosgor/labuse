@@ -497,6 +497,18 @@ SEED: list[dict] = [
     {"name": "Géorisques — sites et sols pollués", "methode": "temoin",
      "url": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97411&page=1&page_size=200",
      "url2": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97410&page=1&page_size=200", "selecteur": None},
+    # ── SOURCES-1 lot 1 — la SONDE CATÉGORIELLE des SUP 974 : l'API JSON du service de
+    # téléchargement du GPU (le même service que le flux Atom, qui n'est pas filtrable par
+    # territoire) rend les documents SUP du département — catégorie, gestionnaire, millésime
+    # AAAAMMJJ, statut. Une publication (ex. AS1 captages, absente au 06/09/2026), un retrait
+    # ou un nouveau millésime change l'empreinte → « la donnée amont a changé ».
+    {"name": "SUP — assiettes GPU (API Carto)", "methode": "temoin",
+     "url": "https://www.geoportail-urbanisme.gouv.fr/api/document?documentType%5B%5D=SUP&grid=974",
+     "selecteur": None},
+    # ── SOURCES-1 lot 1 — zonage ABC : jeu data.gouv DHUP (arrêté national) → last_update.
+    {"name": "Zonage ABC des communes (DHUP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/liste-des-communes-selon-le-zonage-abc/",
+     "selecteur": "last_update"},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
@@ -513,7 +525,13 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Urbanisme PLU/GPU (API Carto)": "API Carto GPU interrogée par géométrie à l'usage. Y3 : le point d'entrée `/municipality` ne porte aucun millésime (gid/insee/is_rnu seulement), `/document` exige une géométrie, aucun jeu data.gouv « documents GPU » à `last_update` ; un témoin par parcelle détecterait un changement de PLU commune par commune, mais LABUSE interroge le GPU EN DIRECT (aucun snapshot ingéré à réinjecter).",
     "GPU — zonages d'assainissement": "API Carto GPU par géométrie (mêmes limites que « Urbanisme PLU/GPU » : pas de millésime global, interrogé en direct sans snapshot ingéré).",
     "GPU — zonages d'assainissement (info-surf typeinf 19)": "Doublon du GPU assainissement (canal info-surf) — même amont, non re-surveillé.",
-    "SUP — assiettes GPU (API Carto)": "API Carto GPU (assiette-sup-s) par géométrie — pas de millésime global lisible ; interrogé en direct.",
+    # SOURCES-1 lot 1 — les SUP ont désormais leur sonde catégorielle (SEED, temoin sur l'API
+    # documents du GPU grid=974) ; la raison d'absence est retirée.
+    "GPU — emplacements réservés (prescriptions CNIG)": "Prescriptions servies par le canal GPU existant (API Carto par commune, millésime = idurba du PLU) — même amont que « Urbanisme PLU/GPU (API Carto) », non re-surveillé (une republication de PLU se voit à la re-ingestion des prescriptions de la commune).",
+    "GPU — espaces boisés classés (prescriptions CNIG)": "Même canal que les emplacements réservés (prescriptions GPU par commune) — même amont que « Urbanisme PLU/GPU (API Carto) », non re-surveillé.",
+    "GPU — droit de préemption urbain (info-surf)": "Informations GPU (typeinf 04) interrogées par géométrie via API Carto — pas de millésime global (millésime = idurba par commune) ; réingéré par `labuse ingest-gpu-infos` (cadence semestrielle proposée), communes non publiées listées au rapport d'ingestion.",
+    "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": "Republication GPU (typeinf 27) des PEB approuvés — pas de flux DGAC versionné pour le 974 (vérifié data.gouv 06/09/2026) ; réingéré par `labuse ingest-gpu-infos`, couverture partielle dite (Pierrefonds non publié au GPU).",
+    "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",
     "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
     "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
     "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",
@@ -560,6 +578,9 @@ RAPPELS_MANUELS: list[dict] = [
     {"name": "VRD / assainissement (SPANC)", "cadence_jours": 365, "convention_echeance": None},
     {"name": "Fichiers fonciers (Cerema)", "cadence_jours": 365, "convention_echeance": None},
     {"name": "Office de l'eau Réunion — Chroniques de l'eau", "cadence_jours": 365, "convention_echeance": None},
+    # SOURCES-1 lot 1 — re-tester l'Atlas des patrimoines (ZPPA 974) : injoignable au 06/09/2026.
+    {"name": "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
+     "cadence_jours": 180, "convention_echeance": None},
 ]
 
 

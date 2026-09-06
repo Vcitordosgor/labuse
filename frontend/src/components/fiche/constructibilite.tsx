@@ -697,6 +697,88 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
 // M19 : la barre d'onglets a été retirée (fiche = pile de tiroirs) ; `tab` subsiste comme
 // état interne toujours à 'synthese' (le contenu unique), gardé pour un diff minimal.
 
+// ── SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols (ER, EBC, DPU, PEB, SUP).
+// Tiroir DISTINCT sous Constructibilité : ces servitudes commandent l'emprise (ER déduite, EBC
+// soustraite de l'assiette) et la transaction (DPU). N'affiche QUE ce que le payload donne ;
+// chaque absence est TYPÉE (« non déterminée — non publié par la commune »), jamais un zéro.
+const PEB_PHRASES: Record<string, string> = {
+  A: 'constructions d’habitation interdites (art. L112-10 CU)',
+  B: 'constructions d’habitation interdites (art. L112-10 CU)',
+  C: 'isolement acoustique renforcé obligatoire (art. L112-10 CU)',
+  D: 'zone d’information sur le bruit (art. L112-10 CU)',
+}
+
+function DispositifsDrawer({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
+  const nEls = (d.er?.length ?? 0) + (d.ebc?.length ?? 0) + (d.sup?.length ?? 0)
+    + (d.dpu.etat === 'servi' ? 1 : 0) + (['A', 'B', 'C', 'D'].includes(d.peb.zone) ? 1 : 0)
+  return (
+    <RefDrawer id="dispositifs" icon={IC.faisa} name="Dispositifs et périmètres"
+      context="ER · EBC · DPU · PEB · SUP"
+      value={nEls > 0
+        ? <span className="pill-amber">{nEls} périmètre{nEls > 1 ? 's' : ''}</span>
+        : <span className="pill-mint">rien à signaler</span>}>
+      <div className="flex flex-col gap-3">
+        {d.er && d.er.length > 0 && (
+          <div data-dispositifs-er>
+            <GroupLabel>Emplacements réservés</GroupLabel>
+            <div className="flex flex-col gap-1">
+              {d.er.map((e, i) => (
+                <FactRow key={i} label={e.libelle || 'Emplacement réservé'}
+                  value={`${e.part_pct} % de la parcelle${e.part_pct >= 50 ? ' — emprise majoritairement grevée' : ''}`}
+                  tone={e.part_pct >= 50 ? 'warn' : undefined} />
+              ))}
+            </div>
+            <FactNote>Surface réservée déduite de l’emprise constructible (pré-faisabilité). Source : prescriptions des PLU (Géoportail de l’urbanisme).</FactNote>
+          </div>
+        )}
+        {d.ebc && d.ebc.length > 0 && (
+          <div data-dispositifs-ebc>
+            <GroupLabel>Espaces boisés classés</GroupLabel>
+            <div className="flex flex-col gap-1">
+              {d.ebc.map((e, i) => (
+                <FactRow key={i} label={e.libelle || 'Espace boisé classé'} value={`${e.part_pct} % de la parcelle`} />
+              ))}
+            </div>
+            <FactNote>Construction interdite sur l’emprise boisée (art. L113-1 CU) — part soustraite de l’assiette du potentiel. Source : prescriptions des PLU (GPU).</FactNote>
+          </div>
+        )}
+        <div data-dispositifs-dpu>
+          <GroupLabel>Droit de préemption urbain</GroupLabel>
+          {d.dpu.etat === 'servi' && (
+            <FactRow label={d.dpu.statut === 'renforce' ? 'DPU renforcé' : 'DPU simple'}
+              value="la commune peut préempter à la vente (DIA, ~2 mois)" />
+          )}
+          {d.dpu.etat === 'hors' && <FactNote>Hors périmètre de préemption publié.</FactNote>}
+          {d.dpu.etat === 'non_determinee' && <FactNote>Non déterminée — {d.dpu.detail}.</FactNote>}
+        </div>
+        <div data-dispositifs-peb>
+          <GroupLabel>Plan d'exposition au bruit</GroupLabel>
+          {['A', 'B', 'C', 'D'].includes(d.peb.zone) ? (
+            <FactRow label={`Zone ${d.peb.zone}${d.peb.libelle ? ` — ${d.peb.libelle}` : ''}`}
+              value={PEB_PHRASES[d.peb.zone]}
+              tone={['A', 'B'].includes(d.peb.zone) ? 'warn' : undefined} />
+          ) : d.peb.zone === 'hors' ? (
+            <FactNote>Hors zones PEB{d.peb.detail ? ` — ${d.peb.detail}` : ''}.</FactNote>
+          ) : (
+            <FactNote>Non déterminée{d.peb.detail ? ` — ${d.peb.detail}` : ''}.</FactNote>
+          )}
+        </div>
+        {d.sup && d.sup.length > 0 && (
+          <div data-dispositifs-sup>
+            <GroupLabel>Servitudes d'utilité publique</GroupLabel>
+            <div className="flex flex-col gap-1">
+              {d.sup.map((sv, i) => (
+                <FactRow key={i} label={sv.categorie} value={sv.libelle || 'servitude'} />
+              ))}
+            </div>
+            <FactNote>Assiettes publiées au GPU. T5/PT1/PT2 : publiées mais restreintes au téléchargement ; AS1 (captages) non publiée pour le 974 — publication surveillée.</FactNote>
+          </div>
+        )}
+      </div>
+    </RefDrawer>
+  )
+}
+
 // ── RETOURS-11F4 (F5) — la SECTION « Constructibilité » (RefDrawer + Mode B), auto-suffisante :
 // re-dérive ses locaux depuis `f` + le bilan (queryKey ['bilan', idu] partagée, 0 requête en plus).
 export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
@@ -765,6 +847,8 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
             onClick={() => { setParcelPrefill(idu); setModule('assemblage') }} />
         </div>
       </RefDrawer>
+      {/* SOURCES-1 lot 1 — Dispositifs et périmètres (ER/EBC/DPU/PEB/SUP), tiroir distinct. */}
+      {f.dispositifs && <DispositifsDrawer d={f.dispositifs} />}
       {/* Mode B — Réhabilitation, rattaché à la Constructibilité (tiroir distinct, accordéon exclusif). */}
       {f.mode_b?.indisponible
         ? <BlocIndisponible titre="Réhabilitation (Mode B)" />

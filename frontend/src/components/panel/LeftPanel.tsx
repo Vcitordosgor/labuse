@@ -149,6 +149,12 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'frr', label: 'FRR — France Ruralités Revitalisation' },
   // SECTEUR-2 (T4) — prix du logement neuf (VEFA acté), aplat commune choropleth.
   { key: 'vefa_neuf', label: 'Prix du logement neuf (VEFA)' },
+  // SOURCES-1 lot 1 — contraintes du droit des sols. Jamais un sigle nu : chaque libellé développe.
+  { key: 'er', label: 'Emplacements réservés' },
+  { key: 'ebc', label: 'Espaces boisés classés' },
+  { key: 'dpu', label: 'Droit de préemption (DPU)' },
+  { key: 'peb', label: 'Plan d’exposition au bruit (PEB)' },
+  { key: 'sup', label: 'Servitudes d’utilité publique (SUP)' },
 ]
 
 // M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
@@ -162,6 +168,9 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   // RETOURS-11 C2 (g) — les ÉQUIPEMENTS ne sont pas des risques : ils quittent « Risques et protections »
   // pour leur propre famille (OSM + INSEE BPE, étiquetés par source).
   { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas'] },
+  // SOURCES-1 lot 1 — les contraintes du droit des sols (servitudes et périmètres opposables du
+  // PLU/GPU), entre les zonages et les risques : ER, EBC, DPU, PEB, SUP.
+  { famille: 'Contraintes', keys: ['er', 'ebc', 'dpu', 'peb', 'sup'] },
   { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
   // RETOURS-13 R3 — la famille s'appelle « Réseaux » (demande Vic) : transport public, arrêts,
   // TCSP, axes, HTB, HTA — chaque entrée avec son « i » (source, millésime, couverture).

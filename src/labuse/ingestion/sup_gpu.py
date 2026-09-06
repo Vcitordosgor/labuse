@@ -34,6 +34,60 @@ SOURCE_NAME = "SUP — assiettes GPU (API Carto)"
 ENDPOINTS = {"s": "assiette-sup-s", "l": "assiette-sup-l", "p": "assiette-sup-p"}
 CAP_API = 1000
 
+# ── SOURCES-1 lot 1 — inventaire catégoriel des documents SUP publiés pour le 974 ──
+# L'API du service de téléchargement du GPU (le même service que le flux Atom
+# `atom/download-feed`, non filtrable par territoire — décision : on interroge son API JSON)
+# rend les documents SUP du département : catégorie, gestionnaire, millésime AAAAMMJJ, statut.
+# Vérifié live 06/09/2026 : 9 catégories EN VIGUEUR (AC1, AC2, AC4, PM1, PM2, PM3, PT1, PT2,
+# T5), dont 3 RESTREINTES au téléchargement (T5, PT1, PT2 — HTTP 403 volontaire du
+# gestionnaire). Les autres catégories du standard (AS1 captages, A4/A5, EL3/EL7, I3, T1, T7,
+# AC3) ne sont PAS publiées pour le 974 — listées « non publiées », surveillées par la sonde.
+URL_INVENTAIRE_974 = ("https://www.geoportail-urbanisme.gouv.fr/api/document"
+                      "?documentType%5B%5D=SUP&grid=974")
+#: catégories suivies par le mandat SOURCES-1 (inventaire catégorie par catégorie)
+CATEGORIES_SUIVIES = ("AC1", "AC2", "AC3", "AC4", "AS1", "A4", "A5", "EL3", "EL7",
+                      "I3", "I4", "PM1", "PM2", "PM3", "PT1", "PT2", "T1", "T5", "T7")
+
+
+def inventaire_974(client: httpx.Client | None = None) -> dict:
+    """Inventaire RÉEL des documents SUP 974 (sonde catégorielle). Rend, par catégorie
+    suivie : {"etat": "publiee"|"non_publiee", "millesime": AAAAMMJJ|None,
+    "gestionnaires": [idGest…]}. Appelle vraiment l'API — lève en cas d'échec réseau
+    (l'appelant note « injoignable », jamais un inventaire deviné)."""
+    own = client is None
+    c = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 60.0),
+                               headers={"User-Agent": constants.USER_AGENT},
+                               follow_redirects=True)
+    try:
+        r = c.get(URL_INVENTAIRE_974)
+        r.raise_for_status()
+        docs = r.json()
+    finally:
+        if own:
+            c.close()
+    publiees: dict[str, dict] = {}
+    for d in docs if isinstance(docs, list) else []:
+        if d.get("effectiveStatus") != "EN_VIGUEUR" or d.get("status") != "document.production":
+            continue
+        cat = ((d.get("supCategory") or {}).get("name") or "").upper()
+        if not cat:
+            continue
+        nom = d.get("originalName") or ""
+        millesime = nom[-8:] if nom[-8:].isdigit() else None
+        gest = (d.get("name") or "").split("_")[0]
+        e = publiees.setdefault(cat, {"millesime": None, "gestionnaires": []})
+        if gest and gest not in e["gestionnaires"]:
+            e["gestionnaires"].append(gest)
+        if millesime and (e["millesime"] is None or millesime > e["millesime"]):
+            e["millesime"] = millesime
+    out: dict[str, dict] = {}
+    for cat in sorted(set(CATEGORIES_SUIVIES) | set(publiees)):
+        if cat in publiees:
+            out[cat] = {"etat": "publiee", **publiees[cat]}
+        else:
+            out[cat] = {"etat": "non_publiee", "millesime": None, "gestionnaires": []}
+    return out
+
 
 def _bbox_geom(session: Session, commune: str) -> dict | None:
     row = session.execute(text(
