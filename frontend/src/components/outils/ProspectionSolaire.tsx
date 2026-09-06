@@ -16,7 +16,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesPoints, getProspectionSolaire, getSolaireFiche,
-  postPasUnePiscine, prospectionSolaireCsvUrl, type SolaireFiche, type SolaireFiltres,
+  postPasUnePiscine, type SolaireFiche, type SolaireFiltres,
   type SolaireItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -239,7 +239,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       {list.isLoading && <Loading label="Parcelles…" />}
       {list.data && (
         <>
-          {/* A3/A5 — barre d'actions : export CSV (même bouton que Scan patrimoine) + pont Courrier. */}
+          {/* A5 — barre d'actions : ponts Courrier + Comparer sur la sélection.
+              OUTILS-FIX-3 Lot E — export CSV (⬇ CSV) retiré (aucun export dans l'app pour l'instant). */}
           <div className="flex flex-wrap items-center gap-2">
             {/* OUTILS-FIX-3 Lot D — la cible affiche « ← Prospection solaire » (le retour rouvre l'outil). */}
             <button data-piscines-courrier disabled={sel.size === 0}
@@ -253,8 +254,6 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
               Comparer ({Math.min(sel.size, 3)}) →
             </button>
-            <a data-piscines-csv href={prospectionSolaireCsvUrl(filtres)}
-              className="ml-auto self-center rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</a>
           </div>
           {/* A2 — le panneau outil fait 320 px : une table à 6 colonnes déborderait (colonnes propriétaire
               masquées). On sert des CARTES empilées (patron Assemblage/Programme), lisibles, avec une

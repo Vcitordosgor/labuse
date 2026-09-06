@@ -927,8 +927,7 @@ export function M05() {
             {l}
           </button>
         ))}
-        <a href={`/modules/velocite?fmt=csv${nature ? `&nature=${nature}` : ''}`}
-          className="ml-auto self-center rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</a>
+        {/* OUTILS-FIX-3 Lot E — lien ⬇ CSV (/modules/velocite?fmt=csv) retiré côté écran ; l'endpoint back reste. */}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="sticky top-0 grid grid-cols-[1fr_64px_60px] gap-1 bg-surface-1 py-1 text-[11px] tracking-wide text-txt-dim">

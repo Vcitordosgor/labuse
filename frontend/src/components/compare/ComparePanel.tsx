@@ -169,18 +169,9 @@ export function ComparePanel() {
   const q = useQuery({ queryKey: ['compare', compareIdus.join(',')], queryFn: () => getCompare(compareIdus), enabled: compareIdus.length > 0 })
   const parcels = q.data?.parcels ?? []
 
-  // OUTILS-FIX-2 D4 — export CSV du tableau comparé (mêmes valeurs que l'écran, provenance en en-tête).
-  // Généré côté client (le tableau tient en mémoire) ; BOM + ';' pour Excel, comme les autres exports.
-  const exporterCsv = () => {
-    const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`
-    const head = ['Donnée', ...parcels.map((p) => p.idu)]
-    const lignes = ROWS.map((row) => [`${row.label} [${row.prov === 'source' ? 'Sourcé' : 'Estimé'}]`, ...parcels.map((p) => row.val(p))])
-    const contr = ['Détail contraintes', ...parcels.map((p) => (p.contraintes ?? []).join(' · ') || '—')]
-    const csv = '﻿' + [head, ...lignes, contr].map((r) => r.map(esc).join(';')).join('\r\n')
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    const a = document.createElement('a'); a.href = url; a.download = 'comparaison_parcelles.csv'; a.click()
-    URL.revokeObjectURL(url)
-  }
+  // OUTILS-FIX-3 Lot E — l'export CSV du tableau (bouton + générateur client `exporterCsv`) est RETIRÉ
+  // (décision Vic 06/09 : aucun export CSV dans l'app pour l'instant). Aucune capacité back touchée —
+  // le tableau reste consultable à l'écran.
 
   // Échap ferme LE TABLEAU (retour carte + panneau) — capture, pour passer AVANT le handler « Échap =
   // fermer le module » de ModulePanel (qui, lui, ignore Échap tant que le tableau est ouvert).
@@ -196,11 +187,7 @@ export function ComparePanel() {
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <p className="label-caps">Comparer les parcelles ({compareIdus.length}/3)</p>
           <div className="flex items-center gap-3 text-[11px]">
-            {/* OUTILS-FIX-2 D4 — export CSV (même bouton ⬇ CSV que Scan patrimoine). */}
-            {parcels.length > 0 && (
-              <button data-compare-csv onClick={exporterCsv}
-                className="rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</button>
-            )}
+            {/* OUTILS-FIX-3 Lot E — bouton ⬇ CSV retiré (aucun export CSV dans l'app pour l'instant). */}
             {/* retour à la carte pour continuer le picking (le panneau + la sélection restent) */}
             <button data-compare-carte onClick={() => setCompareOpen(false)} className="text-mint hover:underline">◉ Retour à la carte</button>
             <button onClick={clearCompare} className="text-txt-mut hover:text-txt">Tout vider</button>
