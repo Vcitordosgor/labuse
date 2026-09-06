@@ -146,8 +146,15 @@ export function DensifierTablePanel() {
   const setOpen = useApp((s) => s.setDensifierTableOpen)
   const select = useApp((s) => s.select)
   const commune = useApp((s) => s.commune)
+  // OUTILS-FIX-2 A2 — pont Densifier → Faisabilité par parcelle (parcelPrefill, consommé par M22).
+  const setParcelPrefill = useApp((s) => s.setParcelPrefill)
+  const setModule = useApp((s) => s.setModule)
+  // OUTILS-FIX-2 A5 — pont Listes → Comparer (même geste/compteur que Courrier ; limite 3 côté Comparer).
+  const addToCompare = useApp((s) => s.addToCompare)
+  const openCompare = useApp((s) => s.openCompare)
   const [sort, setSort] = useState<(typeof SORTS)[number]['key']>('score')
   const [inclure, setInclure] = useState(false)   // LOT12b — écartées MASQUÉES par défaut (comme Solaire)
+  const [sel, setSel] = useState<Set<string>>(new Set())   // A5 — sélection pour Comparer
 
   const q = useInfiniteQuery({
     queryKey: ['renouv-table', sort, commune],
@@ -206,6 +213,12 @@ export function DensifierTablePanel() {
               {/* RETOURS-12 T4 — .thead-sticky : fond opaque + z-20 (l'en-tête se superposait aux lignes faute de z-index). */}
               <thead className="thead-sticky text-left text-[10px] uppercase tracking-wide text-txt-dim">
                 <tr>
+                  {/* A5 — case de sélection (Comparer) */}
+                  <th className="w-6 px-2 py-1.5">
+                    <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
+                      checked={visibles.length > 0 && visibles.every((i) => sel.has(i.idu))}
+                      onChange={(e) => setSel(e.target.checked ? new Set(visibles.map((i) => i.idu)) : new Set())} />
+                  </th>
                   <th className="px-2 py-1.5">Parcelle</th>
                   {/* LOT12a — DEUX grandeurs DISTINCTES, étiquetées : le Classement est le tier canonique
                       (parcel_p_score_v2, même partout) ; le Score est la note de densification (0-100,
@@ -222,12 +235,20 @@ export function DensifierTablePanel() {
                   <th className="px-2 py-1.5">Zone</th>
                   {/* LOT12c — rang DANS la commune par score de densification (1 = meilleure de la commune) */}
                   <th className="px-2 py-1.5 text-right" title="Rang de la parcelle dans sa commune par score de densification (1 = la meilleure de la commune).">Rang commune</th>
+                  {/* A2 — pont par ligne vers Faisabilité */}
+                  <th className="px-2 py-1.5" />
                 </tr>
               </thead>
               <tbody>
                 {visibles.map((it) => (
                   <tr key={it.idu} data-densifier-row className="hover-fill cursor-pointer border-t border-line"
                     onClick={() => { select(it.idu); setOpen(false) }}>
+                    {/* A5 — sélection (Comparer), n'ouvre pas la fiche */}
+                    <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" data-densifier-sel className="h-3 w-3 accent-mint"
+                        checked={sel.has(it.idu)}
+                        onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
+                    </td>
                     <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
                     <td className="px-2 py-1.5">
                       {(() => { const v = verdictMeta(null, it.tier_v2, it.etage0); return (
@@ -250,6 +271,11 @@ export function DensifierTablePanel() {
                     {/* OUTILS-FIX-1 C1 — colonne « Surélévation » retirée (batch débranché, valeur périmée). */}
                     <td className="px-2 py-1.5 text-txt-mut">{it.zone_plu ?? '—'}</td>
                     <td className="px-2 py-1.5 text-right text-txt-mut">{it.rang_commune}</td>
+                    {/* A2 — pont Faisabilité par parcelle (ouvre M22 mode « par parcelle » pré-rempli). */}
+                    <td className="px-2 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <button data-densifier-faisabilite onClick={() => { setParcelPrefill(it.idu); setModule('programme'); setOpen(false) }}
+                        className="whitespace-nowrap text-[10px] font-medium text-mint hover:underline" title="Ouvrir la faisabilité détaillée de cette parcelle">Faisabilité →</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -259,6 +285,17 @@ export function DensifierTablePanel() {
 
         {/* pied : écartées (LOT12b) + pagination SOCLE (200 par 200, « Voir plus » seul) */}
         <div className="border-t border-line px-4 py-2">
+          {/* A5 — pont Comparer sur la sélection (limite 3 côté Comparer). */}
+          {sel.size > 0 && (
+            <div className="mb-1.5">
+              <button data-densifier-comparer
+                onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare() }}
+                className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+                Comparer ({Math.min(sel.size, 3)}) →
+              </button>
+              {sel.size > 3 && <span className="ml-2 text-[10px] text-txt-dim">Comparer se limite à 3 parcelles.</span>}
+            </div>
+          )}
           {(nHidden > 0 || inclure) && (
             <div className="mb-1.5 flex items-center gap-2 text-[10px] text-txt-dim">
               <span>{inclure ? 'écartées incluses' : `${fmtInt(nHidden)} écartée${nHidden > 1 ? 's' : ''} masquée${nHidden > 1 ? 's' : ''}`}</span>
