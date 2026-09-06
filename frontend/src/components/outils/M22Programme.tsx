@@ -250,8 +250,8 @@ export function M22() {
       {mode === 'parcelle' && (
         <>
           <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-            Désignez une parcelle : sa <b>faisabilité complète</b> (capacité, calcul tracé, explication IA,
-            charge foncière) — le même calcul que l'onglet Faisabilité de la fiche.
+            Désignez une parcelle : sa <b>faisabilité complète</b> (capacité, calcul tracé, charge
+            foncière) — le même calcul que l'onglet Faisabilité de la fiche.
           </div>
           {!picked ? (
             <ParcelPicker onPick={setPicked} picked={picked} />
@@ -269,7 +269,8 @@ export function M22() {
                   plus gros ». On rend donc FaisabiliteTab dans le MÊME contexte `.fiche-v6` que la fiche : mêmes
                   classes, même typographie, contenu identique (A2 : cause = classes CSS scopées `.fiche-v6`). */}
               <div data-faisa-parcelle className="fiche-v6 pr-0.5">
-                <FaisabiliteTab idu={picked} />
+                {/* OUTILS-FIX-3 Lot F — `embedded` cantonne l'IA (explication du calcul) à la fiche parcelle. */}
+                <FaisabiliteTab idu={picked} embedded />
               </div>
             </>
           )}
