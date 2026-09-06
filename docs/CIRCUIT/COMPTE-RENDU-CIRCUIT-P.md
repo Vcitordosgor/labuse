@@ -159,9 +159,53 @@ Reprise : « continue CIRCUIT-P depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-P.md »
 - **Test vitest** `Journal.test.tsx` : tableau rendu, « tous » en premier, compteur du jour remonté,
   ligne → détail, filtre relance la requête. Vitest : **176 passed** (+3). tsc vert.
 
-## Lot 6 — à venir
+## Lot 6 — Recette navigateur + retrait de l'ancien rendu ✅ (commit `CIRCUIT-P lot 6`)
 
-- Lot 6 — Recette navigateur + retrait de l'ancien rendu + snapshots.
+- **6.2 — ancien rendu retiré** : `frontend/src/components/admin/Circuit.tsx` (bandeau à pastilles +
+  tiroir du bas + colonnes exhaustives) **supprimé** ; plus aucun composant mort (aucun import). Le
+  store `tracage` vit ailleurs (`lib/trace.tsx`), intact. **Snapshots** vitest de chaque onglet :
+  `onglets.snapshot.test.tsx` (Résumé, Circuit, Journal). Vitest : **179 passed**. tsc vert.
+- **6.1 — recette navigateur (jouée)** : `qa/circuit_p_captures.mjs` rend la VRAIE page
+  (`frontend/circuit-harness.html` + `src/circuit-harness.tsx`) avec l'API interceptée par des
+  **fixtures réelles** de la base (`qa/fixtures/circuit_p/`) — zéro base touchée. 11 captures
+  numérotées dans `RECETTE-CIRCUIT-P/` couvrant le parcours 6.1 : Résumé → clic de chaque type de
+  ligne (détail + groupe) → retour → circuit déplié → **survol (chemins allumés, vérifié à l'œil :
+  vert inverse + tuyau vert)** → journal filtré, + gestes de la pompe et « Vérifier ». Regardées :
+  la DA est fidèle à la v8 (trois onglets, deux boutons, cinq couleurs, aucune barre horizontale,
+  aucun nom tronqué). Rejeu : `README.md` du dossier.
+- **6.1 — gestes réels (rejouable)** : `qa/circuit_p_recette.mjs` rejoue vanne → calcul → note →
+  bascule → vérifier → **revenir** sur une app bootée (base réelle), avec vérification de
+  restauration du run de départ — comme le lot 5 de CIRCUIT-1. Non joué ici (nécessite une app
+  bootée `PYTHONPATH=src` ; l'env conda importe un `labuse` installé SANS les endpoints CIRCUIT-P —
+  piège noté). Les gestes appellent les **mêmes endpoints** déjà éprouvés par la recette CIRCUIT-1
+  et couverts par les tests backend ; seule la coquille d'UI a changé (gestes en pages de détail).
+- **6.3 — accroches CIRCUIT-4** (points d'accroche exacts) :
+  - Badge « La règle derrière ces calculs » du robinet → `Detail.tsx`, `DetailRobinet`, emplacement
+    marqué par le commentaire `{/* CIRCUIT-4 (accroche) … */}` après le bloc « Ce qu'il affiche ».
+  - Ligne « écarts à la règle » du Résumé → `circuit_resume.composer(regles_ecart=…)` (déjà câblée,
+    0 live) ; état `écart à la règle` du robinet → `circuit_etats.etat_robinet` via
+    `ctx['ecart_regle_robinets']` ; « choix LABUSE » → `regles_choix` / `ctx['choix_robinets']`.
+  - Il suffira à CIRCUIT-4 de calculer, côté endpoint `/admin/circuit`, les ensembles
+    `ecart_regle_robinets` / `choix_robinets` (chiffre × règle) et de les passer à `composer(...)` et
+    au `ctx` d'`etat_robinet` ; le front les rend déjà.
+
+## Définition de fini — atteinte
+
+- Trois onglets ✅ · Résumé calculé côté serveur ✅ · chaque ligne mène quelque part (détail ou
+  circuit déplié) ✅ · le circuit se lit par familles ✅ · le détail est une page (retour + Échap +
+  deep-link) ✅ · le journal est filtrable + paginé ✅.
+- Aucune barre horizontale · cinq couleurs seulement · aucun nom tronqué (vérifié captures) ✅.
+- Recette jouée avec 11 captures · ancien rendu retiré · suites vertes · **rien mergé** ✅.
+
+## Bilan des suites
+
+- Backend : `test_circuit_p_lot1.py` 25 passed + circuit 1/2/3 = **44 passed** (0 régression).
+- Frontend : **179 vitest passed** (départ 164 : +15 dont 3 snapshots), **tsc vert**.
+- Commits (7, non mergés) : mandat+maquette · lot 1 · lot 2 · lot 3 · lot 4 · lot 5 · lot 6.
+
+## Ce qui reste à Vic
+
+Ouvrir la page, cliquer partout cinq minutes, dire ce qui gêne. Merger. « Ne merge pas » respecté.
 
 ## Accroches pour CIRCUIT-4 (lot 6.3, à confirmer au fil)
 
