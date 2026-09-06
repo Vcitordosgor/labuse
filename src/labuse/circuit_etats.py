@@ -176,6 +176,11 @@ NOM_VERS_SLUG = {
     "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": 'cadastre_epoque',
     'CatNat (arrêtés GASPAR / Géorisques)': 'catnat_gaspar',
     "Taxe d'aménagement — taux communaux (délibérations)": 'taxe_amenagement',
+    # CIRCUIT-5b lot 1 — les quatre « à rattacher » entrent au catalogue :
+    "Annuaire de l'administration (service-public.fr / DILA)": 'annuaire_service_public',
+    'RNIC — registre national des copropriétés (Anah)': 'rnic_anah',
+    'RPLS — répertoire des logements locatifs sociaux (SDES)': 'rpls_sdes',
+    "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": 'enaf_cerema',
 }
 
 def slug_reservoir(nom: str | None) -> str | None:

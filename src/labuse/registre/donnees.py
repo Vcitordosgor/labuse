@@ -161,7 +161,7 @@ DONNEES: dict[str, Donnee] = {
  "pression_zan_ha": C("Pression ZAN (ENAF consommé 2021-2024, ha)", "nombre", "commune",
     "conso_2021_2024_m2 / 10000",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/comparateur.py:57",
-    reservoirs=(), portee="live", table="commune_conso_enaf.conso_2021_2024_m2"),
+    reservoirs=("enaf_cerema",), portee="live", table="commune_conso_enaf.conso_2021_2024_m2"),
  "prix_neuf_vefa_acte_eur_m2": C("Prix du neuf — VEFA à l'acte (€/m²)", "€/m²", "commune",
     "médiane VEFA déclarée à l'acte (neuf_vefa_commune, live, 36 mois) — USAGE RÉSERVÉ : le "
     "scoring (score_e) lit CET id ; affiché comparateur/communes/fiche commune sous libellé VEFA "
@@ -335,7 +335,7 @@ DONNEES: dict[str, Donnee] = {
     "enveloppe restante estimée depuis conso ENAF",
     moteur="commune_compteurs", calcul="moteur",
     fonction="src/labuse/api/rarete.py:compute_rarete (reste_zan_ha — producteur nommé, délégation)",
-    reservoirs=(), portee="live"),
+    reservoirs=("enaf_cerema",), portee="live"),
  "taux_lls_pct": C("Taux LLS", "%", "commune",
     "taux LLS de l'inventaire SRU",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (commune_contexte_sru)",
@@ -344,6 +344,13 @@ DONNEES: dict[str, Donnee] = {
     "objectif PLH, chaque chiffre porte sa référence doc+page",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (plh_epci)",
     reservoirs=("plh_epci",), portee="live", table="plh_epci (objectif logements/an, par EPCI)"),
+ # CIRCUIT-5b lot 1 — RPLS (SDES) entre au catalogue : ce passe-plat en est le lecteur déclaré.
+ # NB : le taux LLS servi vient, lui, de l'inventaire SRU (sru_dhup → taux_lls_pct), pas du RPLS.
+ "parc_social_rpls_logements": C("Parc social (logements RPLS)", "logements", "commune",
+    "nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — "
+    "contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py (marche_secteur — rpls_commune)",
+    reservoirs=("rpls_sdes",), portee="live", table="rpls_commune (nb_logements, construct_median)"),
  "prix_terrain_zone_eur_m2": C("Terrain nu (zone U / AU)", "€/m²", "commune",
     "médiane DVF terrain nu par famille de zone, seuil 10 ventes",
     moteur="marche_service", calcul="moteur", fonction="src/labuse/faisabilite/marche_commune.py:ligne2_terrain_zone",

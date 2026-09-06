@@ -1,4 +1,5 @@
-"""CIRCUIT-5 lot 2 — le verrou des sources : 68, pas un de plus.
+"""CIRCUIT-5 lot 2 — le verrou des sources : le même compte partout (68 à CIRCUIT-5, 72
+depuis CIRCUIT-5b lot 1 — les quatre « à rattacher » entrées au catalogue).
 
 Chaque garde est prouvée CASSÉE sur un cas construit (doublon caché, alias sans cible,
 retirée sans raison, source sans cadence au seed) puis VERTE sur le catalogue réel.
@@ -64,7 +65,7 @@ def test_v2b_une_servie_ne_peut_pas_etre_un_alias():
     assert any("contradiction" in p for p in CV.analyse_catalogue(rows))
 
 
-# ── V2a — 68 = 68 partout ───────────────────────────────────────────────────────────────
+# ── V2a — le même compte partout (72 depuis CIRCUIT-5b lot 1) ───────────────────────────
 
 @pytest.mark.local
 def test_v2a_68_partout_sur_la_base_reelle(monkeypatch):

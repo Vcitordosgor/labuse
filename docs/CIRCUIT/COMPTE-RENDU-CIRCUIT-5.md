@@ -403,3 +403,54 @@ Lues dans COMPTE-RENDU-CIRCUIT-1→4 et P (P3 surtout), vérifiées dans le code
   (`Donnee.reservoirs`) sont ceux de ce CSV.
 - **Référentiel 24 communes** : `ingestion/run_all.py:REUNION_COMMUNES` (97401→97424),
   exposé `INSEE_24`/`NOMS_24` dans `filtres/cadre.py`.
+
+---
+
+# 5b — Les restes tranchés (CIRCUIT-5b, 06/09/2026)
+
+*Branche `feat/circuit-5b`, depuis `main` (CIRCUIT-5 mergé, `18261fc9`). Cinq lots, un commit
+et un push chacun, rien mergé. Décisions prises par Vic le 06/09/2026 ; CC les applique et
+vérifie avec `labuse circuit verrous --complet` en fin de chaque lot.*
+
+**Repère « avant » (base locale, main).** `labuse circuit verrous --complet` : **16 verrous
+joués, 0 cassé, 3 à décider** — V1c (2 orphelines `p_model_static_pre_v8`,
+`parcel_residuel_pre_v8`), V1d (**8 réservoirs sans lecteur** : bd_ortho_irc, cadastre_epoque,
+inpi_rne, lidar_hd_mnh, mobpro, office_eau_chroniques, parkings_osm_aper,
+recherche_entreprises_dinum), V4a (1 ligne SIRENE hors référentiel, contrainte NOT VALID).
+V2a : **68 = 68 = 68**.
+
+## Lot 1 — les quatre « à rattacher » entrent au catalogue
+
+Les quatre tables servies sans ligne `data_sources` (RATTACHEMENTS_A_DECIDER de CIRCUIT-5)
+sont désormais des **sources de première classe**. Pour chacune : une ligne `data_sources`
+complète (`ingestion/seed_sources.py`), une entrée `MODE_ET_CADENCE`, une raison de
+non-surveillance (`sentinelle.RAISONS_NON_SURVEILLEES` — millésimes annuels/mensuels sans
+témoin amont à empreinte stable, suivis par la cadence et la page Circuit), un slug au pont
+(`circuit_etats.NOM_VERS_SLUG`), sa place à la carte (`registre/tables.py:RESERVOIR_TABLES`)
+et ses lecteurs déclarés au registre (`registre/donnees.py`) :
+
+| Table | Slug | Producteur | Cadence | Lecteur(s) déclaré(s) |
+|---|---|---|---|---|
+| `mairies` | `annuaire_service_public` | DILA (service-public.fr) | mensuelle | `mairie_coordonnees` (déjà déclaré) |
+| `rnic_coproprietes` | `rnic_anah` | Anah (RNIC) | annuelle | `coproprietes_liste` (déjà déclaré) |
+| `rpls_commune` | `rpls_sdes` | SDES (RPLS) | annuelle | **`parc_social_rpls_logements`** (nouvelle donnée, robinet `fiche_parcelle_marche`) |
+| `commune_conso_enaf` | `enaf_cerema` | Cerema (artificialisation) | annuelle | `pression_zan_ha`, `zan_reste_ha` (réservoir déclaré) |
+
+`rpls_commune` et `commune_conso_enaf` quittent `TABLES_EXPLOITATION` (elles étaient marquées
+« servie sans réservoir ») pour `RESERVOIR_TABLES` ; `annuaire_service_public` et `rnic_anah`
+y étaient déjà (leurs lecteurs aussi). `RATTACHEMENTS_A_DECIDER` est désormais **vide**.
+
+**Doute écrit (décision : option la plus sûre).** Le mandat dit que RPLS « porte les données
+`taux_lls_pct` et voisines ». Le code sert en réalité `taux_lls_pct` depuis l'inventaire SRU
+(`commune_contexte_sru` → réservoir `sru_dhup`, source « Inventaire SRU (DHUP) »), tandis que
+`rpls_commune` porte le **parc social** (nb_logements, construction médiane) servi au contexte
+marché de la fiche parcelle, au Flash et au PDF (`api/app.py` marche_secteur, `flash/data.py`,
+`pdf_premium.py`). Repointer `taux_lls_pct` sur RPLS aurait **changé une valeur servie** (le
+taux LLS vient bien du SRU). Choix : ne rien déplacer de servi ; déclarer le vrai lecteur de
+RPLS — une donnée neuve `parc_social_rpls_logements` (parc social RPLS, millésime 01/01/2025).
+
+**Résultat.** V2a : **72 = 72 = 72** (vitrine SQL, prédicat Python, page) ; 66 tables de
+réservoir, une génération chacune (V3a). `labuse circuit verrous --complet` : 0 cassé, 3 à
+décider inchangées (V1c, V1d, V4a — lots 2/3/4). Tests : `tests/verrous/` +
+`tests/test_sentinelle.py` (couverture 71 → **75** sources) + `tests/test_registre.py`
+(MODE_ET_CADENCE 80 → **84**) verts. `VERROUS.md` mis à 72.
