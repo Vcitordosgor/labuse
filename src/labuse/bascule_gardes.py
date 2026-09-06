@@ -7,7 +7,11 @@ historique (n° = date d'ajout) :
 
   1. check_run_absent      — ANTI-ÉCRASEMENT : refuse de reconstruire un run déjà matérialisé.
   2. check_disque          — DISQUE : refuse de démarrer si la marge d'espace manque.
-  3. ensure_backups        — SAUVEGARDE : fige les features pré-bascule (rollback possible).
+  3. verify_rollback_manifeste — RETOUR ARRIÈRE : le manifeste (CIRCUIT-1 lot 3) retient déjà le
+     run servi ET le précédent (`residuel_runs`, `p_score_v2_runs`) ; le rollback est un
+     basculement du manifeste, plus une table-photo `*_pre_v8` (CIRCUIT-5b lot 4). La garde
+     vérifie que le filet existe et compare le candidat au servi et au précédent — jamais à une
+     photo. `ensure_backups` reste un shim déprécié (ne fige plus rien).
   4. verify_completude     — COMPLÉTUDE : un run incomplet est plus dangereux qu'un run qui échoue.
   5. check_peremption      — PÉREMPTION : refuse de servir des déclassées AU périmées (> seuil).
   6. check_golden_regenere — GOLDEN (Vic 04/08) : toute bascule régénère le golden DANS LE MÊME
@@ -15,7 +19,7 @@ historique (n° = date d'ajout) :
      un incident : 46 FAIL permanents masquaient toute vraie régression. La bascule n'est pas
      complète tant que le golden ne cite pas le run servi.
 
-Lecture seule / idempotentes sauf ensure_backups (écrit une fois, jamais écrasé).
+Lecture seule / idempotentes (CIRCUIT-5b lot 4 : plus aucune garde n'écrit de table-photo).
 """
 from __future__ import annotations
 
@@ -295,14 +299,108 @@ def check_disque(target: str = TARGET, marge: float = 1.25, session=None) -> dic
             f"puis VACUUM, ou --skip-disk-check si réutilisation certaine.")
     return rep
 
-def ensure_backups() -> None:
-    """Sauvegardes features pré-bascule (créées une seule fois ; jamais écrasées)."""
-    with engine().begin() as c:
-        for src, bak in [("parcel_residuel", "parcel_residuel_pre_v8"),
-                         ("p_model_static", "p_model_static_pre_v8")]:
-            if not c.execute(text("SELECT to_regclass(:b)"), {"b": bak}).scalar():
-                c.execute(text(f"CREATE TABLE {bak} AS SELECT * FROM {src}"))
-                print(f"  backup créé : {bak}", flush=True)
+class RollbackImpossibleError(RuntimeError):
+    """3ᵉ garde (réécrite CIRCUIT-5b lot 4) : le manifeste ne retient pas de run précédent — un
+    retour arrière serait impossible. À l'inverse d'une table-photo qui pouvait manquer en silence,
+    l'absence de filet est CRIÉE avant la bascule."""
+
+
+#: au-delà de cet écart de volume (%) vs le run servi ET le précédent, la garde ALERTE
+#: (bruyant, non bloquant) : un candidat qui perd ou double ses lignes est suspect.
+SEUIL_ECART_VOLUME_PCT = 20.0
+
+
+def _ecart_pct(candidat: int | None, reference: int | None) -> float | None:
+    """Écart relatif |candidat − référence| / référence, en % (arrondi 0,1). None si non mesurable
+    (l'un des deux nul/absent). Cœur PUR de la comparaison — testable sans base."""
+    if not candidat or not reference:
+        return None
+    return round(abs(candidat - reference) / reference * 100.0, 1)
+
+
+def verify_rollback_manifeste(candidate: str | None = None, session=None) -> dict:
+    """3ᵉ brique — RÉÉCRITE (CIRCUIT-5b lot 4) : la bascule est réversible SANS PHOTO.
+
+    Le manifeste (CIRCUIT-1 lot 3) retient DÉJÀ le run servi ET le précédent — `residuel_runs`
+    (le résiduel de chaque run vit dans `parcel_residuel_runs`, jamais écrasé) et `p_score_v2_runs`
+    (les scores de chaque run dans `parcel_p_score_v2`). Le retour arrière est un BASCULEMENT du
+    manifeste (`set_served` / `run_precedent.txt`), plus une restauration d'une table-photo
+    `parcel_residuel_pre_v8` / `p_model_static_pre_v8` (retirées : elles redeviennent orphelines).
+
+    La garde REMPLACE `ensure_backups` (qui figeait ces photos) :
+      1. rollback possible — `residuel_runs` retient ≥ 2 runs (servi + un antérieur) ET
+         `p_score_v2_runs` retient le run servi ET le précédent (`runs.current`/`precedent`) ;
+      2. comparaison — si `candidate` est fourni et matérialisé, son volume de scores est comparé
+         AU RUN SERVI ET AU PRÉCÉDENT (jamais à une photo) : un candidat VIDE bloque
+         (`RollbackImpossibleError`), un écart > `SEUIL_ECART_VOLUME_PCT` alerte (bruyant).
+    Lecture seule. INDÉTERMINÉE si le manifeste n'est pas encore migré (base de test)."""
+    from labuse import runs
+
+    def _run(conn) -> dict:
+        def _reg(t: str) -> bool:
+            return bool(conn.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar())
+        if not (_reg("residuel_runs") and _reg("p_score_v2_runs")):
+            print(f"{_ts()} · rollback manifeste [INDÉTERMINÉ] — manifeste non migré "
+                  "(residuel_runs / p_score_v2_runs absents). Garde non applicable.", flush=True)
+            return {"statut": "INDETERMINE"}
+        servi, precedent = runs.current(), runs.precedent()
+        n_resid_runs = conn.execute(text("SELECT count(*) FROM residuel_runs")).scalar() or 0
+        score_runs = {r for (r,) in conn.execute(text("SELECT run_id FROM p_score_v2_runs"))}
+        servi_present = servi in score_runs
+        precedent_present = precedent in score_runs
+        rollback_ok = n_resid_runs >= 2 and precedent_present
+        if not rollback_ok:
+            raise RollbackImpossibleError(
+                f"ROLLBACK IMPOSSIBLE via le manifeste : residuel_runs={n_resid_runs} run(s) "
+                f"(≥2 requis), run précédent « {precedent} » "
+                f"{'présent' if precedent_present else 'ABSENT'} de p_score_v2_runs. Le filet de "
+                f"retour arrière n'existe pas — poser le run précédent au manifeste avant de basculer.")
+        n_servi = conn.execute(text(
+            "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id=:r"), {"r": servi}).scalar() or 0
+        n_precedent = conn.execute(text(
+            "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id=:r"), {"r": precedent}).scalar() or 0
+        rep = {"statut": "OK", "servi": servi, "precedent": precedent,
+               "n_servi": n_servi, "n_precedent": n_precedent,
+               "residuel_runs": n_resid_runs, "servi_present": servi_present}
+        if candidate:
+            n_cand = conn.execute(text(
+                "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id=:r"), {"r": candidate}).scalar() or 0
+            rep["candidate"], rep["n_candidate"] = candidate, n_cand
+            if n_cand == 0:
+                raise RollbackImpossibleError(
+                    f"CANDIDAT VIDE : « {candidate} » n'a aucune ligne parcel_p_score_v2 — rien à "
+                    "comparer, rien à servir (échec bruyant, jamais un run vide servi).")
+            e_servi = _ecart_pct(n_cand, n_servi)
+            e_prec = _ecart_pct(n_cand, n_precedent)
+            rep["ecart_servi_pct"], rep["ecart_precedent_pct"] = e_servi, e_prec
+            suspect = [f"servi {n_servi} ({e_servi} %)" for _ in (1,) if e_servi and e_servi > SEUIL_ECART_VOLUME_PCT]
+            suspect += [f"précédent {n_precedent} ({e_prec} %)" for _ in (1,) if e_prec and e_prec > SEUIL_ECART_VOLUME_PCT]
+            if suspect:
+                rep["statut"] = "ECART"
+                print(f"{_ts()} ⚠ rollback manifeste [ÉCART] — candidat « {candidate} » {n_cand} "
+                      f"lignes s'écarte de {', '.join(suspect)} (> {SEUIL_ECART_VOLUME_PCT} %). "
+                      "Comparaison au manifeste — NON bloquant, à voir.", flush=True)
+            else:
+                print(f"{_ts()} ✓ rollback manifeste : candidat « {candidate} » {n_cand} lignes, "
+                      f"cohérent avec servi {n_servi} / précédent {n_precedent}.", flush=True)
+        else:
+            print(f"{_ts()} ✓ rollback manifeste : {n_resid_runs} runs résiduels retenus, "
+                  f"servi « {servi} » + précédent « {precedent} » au manifeste (retour arrière possible).",
+                  flush=True)
+        return rep
+
+    if session is not None:
+        return _run(session)
+    with _connect() as c:
+        return _run(c)
+
+
+# Compat historique : l'ancien nom crée une PHOTO (retiré CIRCUIT-5b lot 4). Les scripts de bascule
+# appellent désormais `verify_rollback_manifeste()` (comparaison au manifeste, jamais une photo).
+def ensure_backups() -> None:  # noqa: D401 — shim déprécié
+    """DÉPRÉCIÉ (CIRCUIT-5b lot 4) — ne fige plus de photo `*_pre_v8` : délègue à la garde de
+    rollback par le manifeste. Conservé pour les scripts de bascule historiques."""
+    verify_rollback_manifeste()
 
 
 def verify_completude(target: str, n_expected_cascade: int, n_expected_scores: int, session=None) -> dict:

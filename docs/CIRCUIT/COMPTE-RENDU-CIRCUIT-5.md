@@ -509,3 +509,32 @@ NON identifiable resterait fautive (NOT VALID, nommée par V4a) pour le geste de
 **Résultat.** `VALIDATE CONSTRAINT fk_sirene_etablissements_commune` réussit → V4a passe de
 « not_valid » à **valide** (« 24 tables sous clé étrangère, toutes validées »). `labuse circuit
 verrous --complet` : **0 cassé, 1 à décider** (V1c orphelines — lot 4). Tests `test_lot4_communes` : 12 passés.
+
+## Lot 4 — `bascule_gardes` débranchée des photos pré-v8
+
+La 3ᵉ brique de `bascule_gardes` (`ensure_backups`) figeait deux tables-PHOTO avant chaque
+bascule — `parcel_residuel_pre_v8` (`CREATE TABLE … AS SELECT * FROM parcel_residuel`) et
+`p_model_static_pre_v8` — comme filet de retour arrière. Or le **manifeste (CIRCUIT-1 lot 3)**
+retient DÉJÀ le run servi ET le précédent : le résiduel de chaque run vit dans
+`parcel_residuel_runs` (jamais écrasé, `residuel_runs` marque le servi), les scores dans
+`parcel_p_score_v2` (`p_score_v2_runs` les registre), et `runs.current()` / `runs.precedent()`
+nomment les deux runs. La photo était donc redondante.
+
+**Réécriture.** Nouvelle garde `verify_rollback_manifeste(candidate=None)` :
+1. **rollback possible SANS photo** — `residuel_runs` retient ≥ 2 runs (servi + antérieur) et
+   `p_score_v2_runs` retient le run servi ET le précédent ; sinon `RollbackImpossibleError`
+   (le filet manquant est CRIÉ avant la bascule, plus jamais un silence) ;
+2. **comparaison au manifeste** — si un `candidate` est fourni, son volume `parcel_p_score_v2`
+   est comparé AU RUN SERVI ET AU PRÉCÉDENT (jamais à une photo) : candidat vide → bloquant,
+   écart > 20 % → alerte bruyante non bloquante.
+
+`ensure_backups` reste un **shim déprécié** (ne fige plus rien, délègue à la nouvelle garde) :
+les six scripts de bascule historiques (`bascule_v8_calibre`, `bascule_m28/m32/m39`,
+`bascule_bati_revele`, `bascule_ponderation`) continuent de s'importer et de tourner sans
+recréer de photo. `bascule_gardes` ne lit ni n'écrit plus AUCUNE table `*_pre_v8`.
+
+**Résultat.** `parcel_residuel_pre_v8` et `p_model_static_pre_v8` redeviennent des **orphelines
+ordinaires** : listées par `labuse tables purger` (79,1 Mo + 17,2 Mo, action « archiver »),
+elles attendent le geste de Vic (`--apply` → schéma `poubelle`, jamais un DROP). Test
+`test_bascule_gardes` : 10 passés (dont une garde qui PROUVE qu'aucune photo pré-v8 n'est lue —
+le SQL est refusé si le nom contient `pre_v8`). Verrous : 0 cassé, V1c liste les 2 orphelines.
