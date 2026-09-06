@@ -100,6 +100,11 @@ export const MODULES: ModuleDef[] = [
   // pente RGE ALTI, piscine ortho, proba occupant), gelée au 11/07/2026 ; export CSV de démarchage.
   { key: 'prospection-solaire', num: 'M26', group: 'agir',
     label: 'Prospection solaire', desc: 'Les toits bien exposés, les piscines à équiper.' },
+  // OUTILS-MUSCLER-1 Lot A — « Successions » : le tag radar patrimonial (Score V v1.3,
+  // parcel_veille_succession) servi en outil. La desc ne dit JAMAIS « est en succession » (A0 :
+  // aucun acte, aucun décès constaté — dirigeant ≥ 70 ans ou SCI dormante, horizon 3-7 ans).
+  { key: 'successions', num: 'M28', group: 'agir',
+    label: 'Successions', desc: 'Le foncier dont le propriétaire approche une succession.' },
 
   // ── 3. Lire le marché et le territoire ──
   // M137-Z — outil « Communes » : fusion de Marché (MU1) · Comparateur (O6) · Vélocité (M05) ·

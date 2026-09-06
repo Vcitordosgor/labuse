@@ -938,6 +938,78 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
     return d
 
 
+# ═══ OUTILS-MUSCLER-1 Lot A — outil « Successions » ═══
+# Sert le tag radar patrimonial `parcel_veille_succession` (Score V v1.3) : PM à SIREN confirmé
+# ∧ (dirigeant ≥ 70 ans OU SCI dormante ≥ 20 ans sans mise à jour RNE < 5 ans). Ce n'est PAS une
+# succession ouverte (aucun acte, aucun décès constaté) — l'écran dit « succession probable
+# (radar 3-7 ans) », jamais « en succession » (A0-successions-donnee.md). Par construction, tout
+# propriétaire servi est une PM NOMMÉE (le critère exige le SIREN confirmé) ; le repli particulier
+# de `_solaire_proprio` reste en ceinture. Aucun tier/score servi : l'analyse n'a pas été demandée.
+
+@router.get("/successions")
+def successions_liste(commune: str | None = None,
+                      sdp_min: int = Query(0, ge=0),
+                      limit: int = Query(200, ge=1, le=500), offset: int = Query(0, ge=0),
+                      db: Session = Depends(get_db)) -> dict:
+    """Parcelles au tag veille_succession, triées par SDP résiduelle décroissante (Estimé — même
+    grandeur que la fiche : `p_model_ext_dataset.sdp_residuelle_m2` à l'année de scoring, cf. fiche
+    de règle regles/sdp_residuelle_m2.py). Surface/zonage Sourcés ; propriétaire = PM DGFiP (public).
+    Le millésime du signal (date du calcul Score V) et la date amont RNE voyagent au bandeau."""
+    if not db.execute(text("SELECT to_regclass('parcel_veille_succession') IS NOT NULL")).scalar():
+        raise HTTPException(503, "signal succession non calculé (table absente).")
+    # `p_model_ext_dataset` n'est PAS une table ORM (bâtie par le feature store) : elle peut manquer
+    # sur une base neuve (même garde que models.py) — la SDP est alors servie inconnue, jamais un 500.
+    has_ext = bool(db.execute(text("SELECT to_regclass('p_model_ext_dataset') IS NOT NULL")).scalar())
+    annee = db.execute(text("SELECT max(annee) FROM p_model_ext_dataset")).scalar() if has_ext else None
+    join_ext = ("LEFT JOIN p_model_ext_dataset d ON d.idu = v.parcelle_id AND d.annee = :annee"
+                if has_ext else "")
+    sdp_expr = "round(d.sdp_residuelle_m2)::int" if has_ext else "NULL::int"
+    ordre = "d.sdp_residuelle_m2 DESC NULLS LAST, v.parcelle_id" if has_ext else "v.parcelle_id"
+    # Filtre « résiduel minimum » : sans seuil, les SDP inconnues (NULL — hors PLU) restent listées
+    # (triées en queue) ; avec un seuil, une SDP inconnue ne peut pas le prouver → exclue.
+    where = ("WHERE 1=1" + (" AND p.commune = :c" if commune else "")
+             + ((" AND d.sdp_residuelle_m2 >= :smin" if has_ext else " AND false") if sdp_min else ""))
+    base = f"""
+        FROM parcel_veille_succession v
+        JOIN parcels p ON p.idu = v.parcelle_id
+        {join_ext}
+        LEFT JOIN parcel_zone_plu z ON z.idu = v.parcelle_id
+        LEFT JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id"""
+    params = {"c": commune, "smin": sdp_min, "annee": annee}
+    total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
+    rows = db.execute(text(f"""
+        SELECT v.parcelle_id AS idu, p.commune AS commune,
+               round(p.surface_m2)::int AS surface_m2,
+               coalesce(z.zone_lib, z.zone_fam) AS zone,
+               {sdp_expr} AS sdp_residuelle_m2,
+               v.dirigeant_age, v.sci_dormante,
+               pm.denomination, pm.siren
+        {base} {where}
+        ORDER BY {ordre}
+        LIMIT :lim OFFSET :off"""),
+        {**params, "lim": limit, "off": offset}).mappings().all()
+    items = []
+    for r in rows:
+        d_ = dict(r)
+        d_["sci_dormante"] = bool(r["sci_dormante"])
+        d_["proprio"] = _solaire_proprio(r)   # MÊME règle privacy que Solaire/Assemblage
+        d_.pop("denomination", None); d_.pop("siren", None)
+        items.append(d_)
+    # Millésime du SIGNAL = date du calcul Score V (globale — la table est un snapshot mono-run) ;
+    # il est servi même quand le filtre rend 0 ligne (l'état vide honnête le cite).
+    maj = db.execute(text(
+        "SELECT to_char(max(computed_at), 'DD/MM/YYYY') FROM parcel_veille_succession")).scalar()
+    # Date amont RNE (âges dirigeants) — lue du catalogue, jamais en dur.
+    rne = db.execute(text("SELECT to_char(max(last_sync_at), 'DD/MM/YYYY') FROM data_sources "
+                          "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
+    return {"total": total, "n": len(items), "items": items,
+            "maj": maj, "rne_sync": rne,
+            "source": "RNE INPI (dirigeants) · Recherche d'entreprises (DINUM) · fichiers PM DGFiP",
+            "avertissement": ("Radar patrimonial (horizon 3-7 ans) : dirigeant âgé ou SCI dormante — "
+                              "une succession PROBABLE, pas une succession ouverte ni un décès "
+                              "constaté. Aucune date par parcelle : le signal est daté du calcul.")}
+
+
 # RETOURS-11F M12 — bande de CONFIANCE par piscine. La détection retient déjà juge FLAIR ≥ 0,30 ×
 # probe ≥ 0,50, mais `piscine_confiance` va de 0,44 à 1,0 (mesuré). On sert « haute » (≥ 0,80,
 # 7 821 piscines) par défaut ; la bascule « inclure les incertaines » ajoute la bande « moyenne »
