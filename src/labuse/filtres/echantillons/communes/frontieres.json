@@ -1,0 +1,28 @@
+{
+ "reference": "parcelles-frontiere",
+ "note": "CIRCUIT-5 lot 4.3 — trois parcelles témoins choisies AU CONTACT d'une limite communale (distance 0 à une parcelle de la commune voisine, requête ST_DWithin du 06/09/2026). Pour chacune : la commune de rattachement servie et la zone PLU au centroïde doivent être celles de SA commune (partition GPU DU_<insee>) — une couche de la commune voisine collée par erreur casse le verrou V4c.",
+ "choisies_le": "2026-09-06",
+ "lignes": [
+  {
+   "idu": "97410000CE0039",
+   "commune_attendue": "Saint-Benoît",
+   "insee_attendu": "97410",
+   "voisine": "Sainte-Rose",
+   "zone_libelle_2026_09": "Npnr"
+  },
+  {
+   "idu": "97415000AM0169",
+   "commune_attendue": "Saint-Paul",
+   "insee_attendu": "97415",
+   "voisine": "Les Trois-Bassins",
+   "zone_libelle_2026_09": "N"
+  },
+  {
+   "idu": "97418000AK0061",
+   "commune_attendue": "Sainte-Marie",
+   "insee_attendu": "97418",
+   "voisine": "Sainte-Suzanne",
+   "zone_libelle_2026_09": "A"
+  }
+ ]
+}

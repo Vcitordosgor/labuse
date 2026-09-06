@@ -385,6 +385,125 @@ def verrou_sonde_ids(db) -> ResultatVerrou:
                           "écarts et eau ancienne attribuables (ids du registre)")
 
 
+# ── LOT 4 — le verrou des communes : la bonne ligne pour la bonne commune ───────────────
+
+
+def verrou_communes_fk(db) -> ResultatVerrou:
+    """V4a — chaque table à la maille commune porte sa clé étrangère sur le référentiel des
+    24 : un code hors référentiel ne peut plus ENTRER. Contrainte absente = cassé ; contrainte
+    NOT VALID (lignes fautives héritées) = à décider, les lignes sont comptées."""
+    from . import referentiel_communes as RC
+
+    etat = RC.etat_fks(db)
+    absentes = [f"{t} : {e}" for t, e in etat.items() if e == "absente"]
+    heritees = [f"{t} : {e}" for t, e in etat.items() if e.startswith("not_valid")]
+    if absentes:
+        return ResultatVerrou("V4a", PHRASES["V4a"], "casse",
+                              f"{len(absentes)} table(s) sans clé étrangère commune", absentes)
+    if heritees:
+        return ResultatVerrou("V4a", PHRASES["V4a"], "a_decider",
+                              "l'entrée est verrouillée partout ; lignes fautives HÉRITÉES à corriger",
+                              heritees)
+    return ResultatVerrou("V4a", PHRASES["V4a"], "ok",
+                          f"{len(etat)} tables sous clé étrangère, toutes validées")
+
+
+#: lot 4.2 — les deux communes témoins de la permutation (choisies dans l'échantillon : le
+#: producteur les distingue nettement sur CatNat — 17 vs 22 arrêtés).
+COMMUNES_PERMUTATION: tuple[tuple[str, str], ...] = (
+    ("97410", "Saint-Benoît"), ("97418", "Sainte-Marie"))
+
+
+def _payload_contexte(db, insee: str, nom: str) -> dict:
+    """Le payload que la page sert : le cache `commune_contexte_cache` (c'est LUI l'écran —
+    lu par la session du verrou, jamais par un TestClient qui pointerait une autre base)."""
+    row = db.execute(text(
+        "SELECT payload FROM commune_contexte_cache WHERE insee = :i OR commune = :n "
+        "ORDER BY computed_at DESC LIMIT 1"), {"i": insee, "n": nom}).scalar()
+    return row or {}
+
+
+def verrou_communes_permutation(db=None, *, payloads: dict[str, dict] | None = None) -> ResultatVerrou:
+    """V4b — pour chaque donnée à la maille commune : la valeur servie pour Saint-Benoît et
+    Sainte-Marie est CELLE ATTENDUE pour chacune (identité du bloc SRU + attendus producteur
+    de l'échantillon), pas seulement différente. Une jointure décalée d'une ligne ou un
+    « première ligne » par défaut casse le verrou."""
+    from .filtres import echantillon_communes as EC
+
+    pbs: list[str] = []
+    charge = payloads or {}
+    for insee, nom in COMMUNES_PERMUTATION:
+        p = charge.get(insee) or _payload_contexte(db, insee, nom)
+        charge[insee] = p
+        if not p:
+            pbs.append(f"{nom} : aucun payload servi (cache fiche commune vide)")
+            continue
+        sru = p.get("sru") or {}
+        if sru.get("insee") and sru["insee"] != insee:
+            pbs.append(f"{nom} : le bloc SRU servi porte insee={sru['insee']} (attendu {insee}) "
+                       "— ligne d'une autre commune")
+        if sru.get("commune") and sru["commune"] != nom:
+            pbs.append(f"{nom} : le bloc SRU servi porte commune={sru['commune']!r}")
+    for r in EC.rejouer(charge):
+        if r["verdict"] == "ecart":
+            pbs.append(f"carte {r['carte']} · {r['insee']} : servi {r['servi']} ≠ attendu "
+                       f"producteur {r['attendu']}")
+    if pbs:
+        return ResultatVerrou("V4b", PHRASES["V4b"], "casse", f"{len(pbs)} valeur(s) déplacée(s)", pbs)
+    return ResultatVerrou("V4b", PHRASES["V4b"], "ok",
+                          "Saint-Benoît et Sainte-Marie servent chacune SES valeurs "
+                          "(identité SRU + attendus producteur)")
+
+
+def verrou_communes_frontiere(db, *, temoins: dict | None = None) -> ResultatVerrou:
+    """V4c — trois parcelles témoins AU CONTACT d'une limite communale : la commune de
+    rattachement et la zone PLU au centroïde sont celles de LEUR commune (partition GPU
+    DU_<insee>) — une couche de la commune voisine collée par erreur casse le verrou.
+    `temoins` est injectable par le test de preuve (attendus décalés → cassé)."""
+    from .filtres.echantillon_communes import DOSSIER
+    import json as _json
+
+    doc = temoins if temoins is not None else _json.loads(
+        (DOSSIER / "frontieres.json").read_text(encoding="utf-8"))
+    pbs: list[str] = []
+    mesures = 0
+    for l in doc["lignes"]:
+        row = db.execute(text(
+            "SELECT p.commune,"
+            " (SELECT sl.attrs->>'partition' FROM spatial_layers sl"
+            "  WHERE sl.kind = 'plu_gpu_zone' AND ST_Contains(sl.geom, ST_Centroid(p.geom))"
+            "  LIMIT 1)"
+            " FROM parcels p WHERE p.idu = :i"), {"i": l["idu"]}).first()
+        if row is None:
+            pbs.append(f"{l['idu']} : parcelle témoin absente du cadastre servi")
+            continue
+        mesures += 1
+        commune, partition = row
+        if commune != l["commune_attendue"]:
+            pbs.append(f"{l['idu']} : rattachée à {commune!r} (attendu {l['commune_attendue']!r}, "
+                       f"voisine {l['voisine']})")
+        if partition and partition != f"DU_{l['insee_attendu']}":
+            pbs.append(f"{l['idu']} : zone PLU du document {partition} (attendu "
+                       f"DU_{l['insee_attendu']}) — couche d'une autre commune sous le centroïde")
+    if pbs:
+        return ResultatVerrou("V4c", PHRASES["V4c"], "casse", f"{len(pbs)} témoin(s) déplacé(s)", pbs)
+    return ResultatVerrou("V4c", PHRASES["V4c"], "ok",
+                          f"{mesures} parcelles frontière : commune et document PLU de LEUR commune")
+
+
+def verrou_communes_echantillons(db=None) -> ResultatVerrou:
+    """V4d — l'échantillon producteur couvre TOUTE la fiche commune : 15 cartes × 24
+    communes, chacune avec un attendu lu chez le producteur OU une ligne à valider motivée
+    (ECHANTILLONS-A-VALIDER.md) — jamais un trou silencieux."""
+    from .filtres.echantillon_communes import CARTES, problemes_structure
+
+    pbs = problemes_structure()
+    if pbs:
+        return ResultatVerrou("V4d", PHRASES["V4d"], "casse", f"{len(pbs)} trou(s) d'échantillon", pbs)
+    return ResultatVerrou("V4d", PHRASES["V4d"], "ok",
+                          f"{len(CARTES)} cartes × 24 communes : un attendu ou un à-valider partout")
+
+
 # ── le registre des verrous (complété lot par lot) ──────────────────────────────────────
 
 PHRASES: dict[str, str] = {
@@ -397,6 +516,10 @@ PHRASES: dict[str, str] = {
     "V3a": "Chaque réservoir n'a qu'une version servie : ses seules générations sont la table, son __attente et sa __precedente — et les tuiles servent le run du manifeste.",
     "V3b": "Après une bascule, zéro eau ancienne : rien d'ouvert hors « gelé, étiqueté » — sinon le verrou nomme la donnée et le robinet.",
     "V3c": "La sonde écrit des ids, plus des libellés : chaque écart et chaque eau ancienne sont attribuables à leur donnée et à leur robinet du registre.",
+    "V4a": "Toute table à la maille commune porte une clé étrangère sur le référentiel des 24 — un code hors référentiel ne peut plus entrer.",
+    "V4b": "Saint-Benoît sert les valeurs de Saint-Benoît, Sainte-Marie celles de Sainte-Marie — celles attendues chez le producteur, pas seulement différentes.",
+    "V4c": "Sur les parcelles frontière, la commune de rattachement et la zone PLU au centroïde sont celles de LEUR commune, jamais de la voisine.",
+    "V4d": "Chacune des 15 cartes de la fiche commune a, pour chacune des 24 communes, son attendu producteur ou sa ligne à valider — jamais un trou silencieux.",
 }
 
 VERROUS: tuple[Verrou, ...] = (
@@ -409,6 +532,10 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V3a", 3, PHRASES["V3a"], verrou_versions_generations),
     Verrou("V3b", 3, PHRASES["V3b"], verrou_eau_ancienne),
     Verrou("V3c", 3, PHRASES["V3c"], verrou_sonde_ids),
+    Verrou("V4a", 4, PHRASES["V4a"], verrou_communes_fk),
+    Verrou("V4b", 4, PHRASES["V4b"], verrou_communes_permutation),
+    Verrou("V4c", 4, PHRASES["V4c"], verrou_communes_frontiere),
+    Verrou("V4d", 4, PHRASES["V4d"], verrou_communes_echantillons),
 )
 
 

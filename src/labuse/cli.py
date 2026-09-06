@@ -84,10 +84,17 @@ def _parcels_bbox(session) -> tuple[float, float, float, float]:
 
 @app.command("init-db")
 def init_db() -> None:
-    """Crée l'extension PostGIS et toutes les tables."""
+    """Crée l'extension PostGIS et toutes les tables (+ référentiel des 24 communes et clés
+    étrangères de maille commune — CIRCUIT-5 lot 4.1)."""
     ensure_postgis()
     models.create_all(engine())
-    typer.echo("✓ Schéma PostGIS prêt.")
+    from .referentiel_communes import poser_fks
+    with session_scope() as s:
+        r = poser_fks(s)
+        s.commit()
+    if r["non_validees"]:
+        typer.echo(f"⚠ FK non validées (lignes héritées) : {sorted(r['non_validees'])}")
+    typer.echo("✓ Schéma PostGIS prêt (référentiel communes + FK posés).")
 
 
 @app.command("suggestions")

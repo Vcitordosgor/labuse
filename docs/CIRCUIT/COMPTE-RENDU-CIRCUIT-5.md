@@ -9,7 +9,7 @@ Reprise : « continue CIRCUIT-5 depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-5.md »
 - [x] Lot 1 — verrou des tables
 - [x] Lot 2 — verrou des sources (68 = 68)
 - [x] Lot 3 — verrou des versions
-- [ ] Lot 4 — verrou des communes
+- [x] Lot 4 — verrou des communes
 - [ ] Lot 5 — verrou des concepts et des moteurs
 - [ ] Lot 6 — commande, porte, page, VERROUS.md
 
@@ -80,6 +80,20 @@ Règle tenue pendant tout le mandat : zéro échec NOUVEAU par rapport à cette 
   date de contenu) — corrigé par comparaison à `last_sync_at`, ET l'eau réellement bue
   (`ingest-dpe --force`) avant de solder les lignes : jamais un test ajusté pour passer,
   le rafraîchissement a eu lieu.
+- D4-1 : la ligne SIRENE `insee='97454'` (code inexistant) n'est PAS supprimée — la FK reste
+  NOT VALID sur cette table, l'entrée est bloquée, la ligne est nommée par V4a « à
+  décider » ; la correction viendra d'une ré-ingestion SIRENE ou d'un geste de Vic.
+- D4-2 : le test géographique ne couvre pas les aléas — les couches Géorisques/DEAL sont
+  ingérées À L'ÎLE (jamais découpées par commune) : le scénario « couche de la commune
+  voisine collée » n'existe que pour les documents GPU (partition `DU_<insee>`), couvert.
+  L'intégrité aléa reste tenue par la sonde catégorielle 4.2 (degré non rétrogradé).
+- D4-3 : les écarts « Saint-Denis population » et « Saint-Joseph CatNat » sont marqués
+  `ecart_assume` AVEC leur raison dans les fichiers d'échantillon plutôt que tolérés en
+  silence (faux vert) ou laissés en avertissement éternel (bruit) — une dérive NOUVELLE
+  au-delà sortira `ecart`.
+- D4-4 : le cache fiche commune rafraîchi (24 communes) après la trouvaille CatNat — la
+  racine (cache jamais invalidé à l'ingestion) reste une dette nommée, le filet est
+  désormais le rejeu producteur (V4b/avertissant) qui verra toute rechute.
 
 ## Lot 1 — verrou des tables (livré)
 
@@ -220,6 +234,52 @@ LIVE : servie à l'injection, sans calculer/basculer (décision D3-2).
 posée → casse en nommant donnée+robinet, étiquetée → ok ; écart écrit à l'ancienne (id NULL)
 → casse, `ensure()` backfille → vert ; `chiffre_id` fantôme → casse ; upsert pose les ids ;
 `-m local` : V3a/V3b/V3c verts sur la base réelle.
+
+## Lot 4 — verrou des communes : la bonne ligne pour la bonne commune (livré)
+
+**4.1 — la clé étrangère partout** (`src/labuse/referentiel_communes.py`) :
+`communes_referentiel` (24 lignes, seedée depuis `REUNION_COMMUNES` — le code est la vérité)
+et une FK par table à maille commune (24 tables relevées à l'information_schema, orphelines
+exclues). Posées `NOT VALID` (l'ENTRÉE est bloquée immédiatement) puis validées : **23/24
+validées** ; `sirene_etablissements` garde sa FK NOT VALID pour UNE ligne héritée
+(`insee='97454'`, code inexistant — nommée, jamais supprimée en autonomie). Preuve vivante :
+`INSERT … insee='97499'` → `Key (insee)=(97499) is not present in table
+"communes_referentiel"`. Branché dans `labuse init-db` pour les bases neuves.
+
+**4.2 — la permutation** (V4b) : Saint-Benoît (97410) et Sainte-Marie (97418) — le
+producteur les distingue nettement sur CatNat (17 vs 22). Le verrou lit le payload que la
+page sert (`commune_contexte_cache`, PAR la session du verrou — jamais un TestClient qui
+pointerait une autre base), vérifie l'IDENTITÉ du bloc SRU (`sru.insee`, `sru.commune`) et
+rejoue les attendus producteur de l'échantillon. Preuves : jointure décalée (payload de B
+servi sous A) → cassé par l'identité ET par CatNat ; « première ligne par défaut » (même
+valeur partout) → cassé.
+
+**4.3 — les parcelles frontière** (V4c) : 3 témoins AU CONTACT d'une limite (requête
+ST_DWithin du 06/09) — `97410000CE0039` (St-Benoît/Ste-Rose), `97415000AM0169`
+(St-Paul/Trois-Bassins), `97418000AK0061` (Ste-Marie/Ste-Suzanne), épinglés dans
+`filtres/echantillons/communes/frontieres.json`. Vérifiés : commune de rattachement servie
++ partition GPU de la zone au centroïde (`DU_<insee>` — une couche de la commune voisine
+collée casserait). Preuve : attendus permutés vers la voisine → 3 témoins cassés.
+
+**4.4 — l'échantillon producteur, 15 cartes × 24 communes**
+(`filtres/echantillon_communes.py` + `filtres/echantillons/communes/*.json`, verrou V4d
+structurel : une ligne par carte × commune sinon cassé) :
+- **population** : 24 attendus INSEE réels (geo.api.gouv.fr, relevé CIRCUIT-3 06/09) ;
+- **risques (CatNat)** : 24 attendus GASPAR réels lus à l'API le 06/09 — **et ce relevé a
+  mordu le jour même** : (1) le cache fiche commune du 31/08 servait encore `catnat=10`
+  TRONQUÉ (le bug d'avant la réparation CIRCUIT-3 — la table était réparée, l'écran servait
+  le cache d'avant) → cache des 24 rafraîchi ; (2) un arrêté GASPAR nouveau à Saint-Joseph
+  → `ingest-catnat` rejoué (427 lignes producteur) ;
+- 13 cartes `a_valider` avec proposition par carte (ECHANTILLONS-A-VALIDER.md § communes) ;
+- 2 écarts de définition ASSUMÉS et notés dans les fichiers (verdict `assume`, jamais un
+  faux vert ni un warning éternel) : Saint-Denis population (Filosofi carreaux sous-couvre
+  la commune dense, −16 % vs légale) ; Saint-Joseph CatNat (doublon strict GASPAR
+  dédoublonné par notre contrainte unique : 20 servi / 21 producteur).
+
+**Preuves cassé → vert** (`tests/verrous/test_lot4_communes.py`, 11 tests) : code fantôme
+rejeté par Postgres ; contrainte absente → cassé ; lignes héritées → à décider ; jointure
+décalée → cassé ; première-ligne-partout → cassé ; frontières permutées → 3 cassés ; trou
+d'échantillon posé → cassé ; `ecart`/`assume` distingués (une dérive NOUVELLE sort `ecart`).
 
 ## Preuves des verrous (cassé → vert)
 

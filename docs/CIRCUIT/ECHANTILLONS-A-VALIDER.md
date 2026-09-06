@@ -56,3 +56,38 @@ skip proprement) — **rien n'attend**.
    `attendu` **lu chez le producteur**, jamais dans nos tables ; passer `a_valider` à `false`, dater `lu_le`.
 2. `labuse filtre jouer <source>` — le contrôle `d_echantillon` rejoue l'échantillon ; tout écart
    = KO avertissant avec les deux valeurs.
+
+## CIRCUIT-5 lot 4.4 — la fiche commune (15 cartes × 24 communes)
+
+`filtres/echantillons/communes/<carte>.json` : une ligne par commune, rejouée comme contrôle
+AVERTISSANT (`filtres/echantillon_communes.py:rejouer`) et couverte structurellement par le
+verrou **V4d** (une ligne par carte × commune — attendu ou à-valider — sinon verrou cassé).
+
+**Attendus producteur DÉJÀ lus (06/09/2026)** :
+- **population** : les 24, INSEE via geo.api.gouv.fr. Écart ASSUMÉ : Saint-Denis (l'agrégat
+  Filosofi carreaux 200 m servi sous-couvre la commune dense de −16 % vs population légale —
+  écart de définition, noté dans le fichier).
+- **risques (CatNat)** : les 24, API GASPAR (`/gaspar/catnat`, champ `results`). Ce relevé a
+  attrapé DEUX choses le jour même : le cache fiche commune du 31/08 servait encore le
+  `catnat=10` tronqué d'avant la réparation CIRCUIT-3 (cache rafraîchi, 24 communes) ; et un
+  arrêté GASPAR nouveau à Saint-Joseph (ré-ingéré). Écart ASSUMÉ restant : Saint-Joseph 20
+  servi pour 21 producteur — GASPAR publie un doublon strict (même risque, mêmes dates, deux
+  codes) que notre contrainte unique dédoublonne (note dans le fichier).
+
+**À valider (13 cartes, `a_valider: true` avec proposition dans chaque fichier)** :
+- **sru** : taux LLS par commune — CSV DHUP v2 du 18/12/2025.
+- **qpv** : compte de QPV par commune — liste ANCT génération 2024 (sig.ville.gouv.fr).
+- **regles_urbanisme** : état de procédure — export Sudocuh 31/12/2024.
+- **zan** : conso ENAF 2021-2024 — portail artificialisation (Cerema).
+- **permis** : autorisations 12 mois — Sitadel (SDES, data.gouv.fr).
+- **plh** : objectif logements/an — les 5 PLH publiés (EPCI).
+- **prix / terrain_nu** : médianes €/m² — app.dvf.etalab.gouv.fr.
+- **annonces** : recomptage humain de la pige (le producteur EST notre collecte Radar).
+- **loyers** : indicateur par commune — carte des loyers DHUP (data.gouv.fr).
+- **foncier** : compte de parcelles — PCI (cadastre.data.gouv.fr).
+- **zonage** : part U par commune — zonages GPU (geoportail-urbanisme.gouv.fr).
+- **mairie** : téléphone — lannuaire.service-public.fr.
+
+Les parcelles frontière du verrou V4c sont dans `communes/frontieres.json` (3 témoins au
+contact d'une limite, choisis par requête du 06/09 — attendu = leur commune et leur document
+GPU `DU_<insee>`).

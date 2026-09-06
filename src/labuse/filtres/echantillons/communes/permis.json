@@ -1,0 +1,274 @@
+{
+ "carte": "permis",
+ "champ": "permis_bloc.permis_12m",
+ "producteur": "SDES Sitadel (autorisations d'urbanisme, data.gouv.fr)",
+ "tolerance_pct": 10,
+ "lu_le": null,
+ "note": null,
+ "lignes": [
+  {
+   "insee": "97401",
+   "nom": "Les Avirons",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97402",
+   "nom": "Bras-Panon",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97403",
+   "nom": "Entre-Deux",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97404",
+   "nom": "L'Étang-Salé",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97405",
+   "nom": "Petite-Île",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97406",
+   "nom": "La Plaine-des-Palmistes",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97407",
+   "nom": "Le Port",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97408",
+   "nom": "La Possession",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97409",
+   "nom": "Saint-André",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97410",
+   "nom": "Saint-Benoît",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97411",
+   "nom": "Saint-Denis",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97412",
+   "nom": "Saint-Joseph",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97413",
+   "nom": "Saint-Leu",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97414",
+   "nom": "Saint-Louis",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97415",
+   "nom": "Saint-Paul",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97416",
+   "nom": "Saint-Pierre",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97417",
+   "nom": "Saint-Philippe",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97418",
+   "nom": "Sainte-Marie",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97419",
+   "nom": "Sainte-Rose",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97420",
+   "nom": "Sainte-Suzanne",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97421",
+   "nom": "Salazie",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97422",
+   "nom": "Le Tampon",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97423",
+   "nom": "Les Trois-Bassins",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  },
+  {
+   "insee": "97424",
+   "nom": "Cilaos",
+   "attendu": null,
+   "a_valider": true,
+   "origine": {
+    "url": null,
+    "champ": "permis_bloc.permis_12m",
+    "proposition": "compter les autorisations 12 mois par commune dans Sitadel (SDES, data.gouv.fr)"
+   }
+  }
+ ]
+}

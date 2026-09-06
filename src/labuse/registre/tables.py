@@ -249,6 +249,7 @@ TABLES_FABRIQUEES: dict[str, str] = {
 #: événements, sessions, IA, CRM, paiement…). valeur = rôle (lisible).
 TABLES_EXPLOITATION: dict[str, str] = {
     "data_sources": "catalogue des sources",
+    "communes_referentiel": "référentiel des 24 communes (cible des clés étrangères, CIRCUIT-5 lot 4)",
     "ingestion_runs": "journal d'ingestion",
     "source_veille": "sentinelle des sources",
     "source_checks": "contrôles de sources",
