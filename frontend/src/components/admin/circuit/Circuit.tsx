@@ -3,11 +3,13 @@
 // haut. Les pastilles de l'ancien bandeau ont disparu : elles sont devenues les lignes du Résumé.
 // Une ligne du Résumé emmène vers l'onglet Circuit, sur sa cible (détail ou groupe).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { getAdminCircuit, postAdminCircuitVerifier } from '../../../lib/api'
 
 import { CircuitDiagram } from './CircuitDiagram'
+import { Detail as DetailPage } from './Detail'
+import { ecrireCx, parseCx } from './hash'
 import { Resume } from './Resume'
 import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type Cible, type CircuitData } from './types'
@@ -28,6 +30,19 @@ export function CircuitSection() {
   })
 
   const d = q.data as CircuitData | undefined
+
+  // deep-link : ouvre le détail porté par le hash (#…&cx=reservoir:42) au montage et sur hashchange.
+  useEffect(() => {
+    const lire = () => { const c = parseCx(window.location.hash); if (c) { setDetail(c); setOnglet('circuit') } }
+    lire()
+    window.addEventListener('hashchange', lire)
+    return () => window.removeEventListener('hashchange', lire)
+  }, [])
+  // reflète le détail ouvert dans le hash (fusion, sans écraser les autres paramètres).
+  useEffect(() => {
+    const suivant = ecrireCx(window.location.hash, detail)
+    if (suivant !== window.location.hash) window.history.replaceState(null, '', suivant || window.location.pathname + window.location.search)
+  }, [detail])
 
   const allerVersCircuit = (c: Cible) => {
     const f = focusDeCible(c)
@@ -73,11 +88,7 @@ export function CircuitSection() {
 
       <section className={`tab ${onglet === 'circuit' ? 'on' : ''}`}>
         {detail
-          ? <div className="detail on">
-              <button className="back" onClick={fermerDetail}>← Retour au circuit</button>
-              {/* lot 4 — la page de détail (réservoir / robinet / pompe). */}
-              <div className="muted">Détail {detail.type} {String(detail.id)} — lot 4.</div>
-            </div>
+          ? <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />
           : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} />}
       </section>
 

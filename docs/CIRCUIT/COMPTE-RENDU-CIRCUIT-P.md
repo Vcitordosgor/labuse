@@ -121,9 +121,33 @@ Reprise : « continue CIRCUIT-P depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-P.md »
   réservoir/robinet allume les bons blocs (fixture de deux réservoirs) ; règles ko.
 - Vitest : **170 passed** (+4). tsc : vert.
 
-## Lots 4→6 — à venir
+## Lot 4 — Les pages de détail ✅ (commit `CIRCUIT-P lot 4`)
 
-- Lot 4 — Les pages de détail (`Detail.tsx`, deep-link hash).
+- `circuit/Detail.tsx` — une PAGE (pas un tiroir) qui remplace le dessin, alimentée par les
+  endpoints 1.3 (`useQuery` par `circuit-detail`). Trois variantes conformes à la v8 :
+  - **Réservoir** : Versions (dans le réservoir / chez le producteur / dernier contrôle) ; gestes
+    (Envoyer un agent — gardé désactivé, en attente crédit API ; Ouvrir la vanne = `injecter` ;
+    Servir quand même / Revenir à la précédente si quarantaine) ; Filtre à l'entrée (verdict +
+    contrôles) ; Rapport de l'agent ; « Ce qu'il alimente » (chips robinets) ; « Les chiffres qu'il
+    nourrit ».
+  - **Robinet** : fuites (deux valeurs face-à-face + cause) et eau ancienne EN TÊTE ; « Ce qu'il
+    affiche » (badges moteur / hors moteur, portée run) ; « Alimenté par » (chips réservoirs) ;
+    dernier contrôle. Emplacement « La règle derrière ces calculs » réservé (accroche CIRCUIT-4).
+  - **Pompe** : ce qui attend (résiduel / candidat / précédent / pointeurs) ; gestes (Faire tourner
+    = calculer, Basculer — **gaté par la lecture de la note de version**, Revenir) ; note de version ;
+    moteurs ; horloges qui touchent l'eau.
+- **Retour** par bouton « ← Retour au circuit » ET par **Échap** (listener clavier).
+- **Deep-link** (4.1) : `circuit/hash.ts` (`parseCx`/`ecrireCx`) porte l'élément ouvert dans le hash
+  `#…&cx=reservoir:42` (namespacé, **fusionné** sans écraser les filtres de l'app cliente). Lu au
+  montage + sur `hashchange` ; écrit en `replaceState` à l'ouverture/fermeture. La navigation interne
+  (journal, chips) passe par callbacks, jamais par le hash.
+- **Chips navigables** (4.2) : « alimente » → robinet, « alimenté par » → réservoir (slug→id résolu
+  via `data.reservoirs`), couleur = l'état de la cible.
+- **Test vitest** `Detail.test.tsx` : parse/écrit `cx` sans écraser les autres paramètres ; rend
+  nom/état/chip/bouton vanne ; retour + Échap ferment ; chip navigue. Vitest : **173 passed** (+3).
+
+## Lots 5→6 — à venir
+
 - Lot 5 — Le journal (`Journal.tsx`).
 - Lot 6 — Recette navigateur + retrait de l'ancien rendu + snapshots.
 
