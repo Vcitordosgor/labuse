@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getAdminFlux, getAdminFluxRuns } from '../../lib/api'
 import { SourcesSection } from './Sources'
-import { CircuitSection } from './Circuit'
+import { CircuitSection } from './circuit/Circuit'
 import { CronSection } from './Cron'
 
 type Onglet = 'catalogue' | 'circuit' | 'cron'

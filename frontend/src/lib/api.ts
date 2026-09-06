@@ -1897,3 +1897,16 @@ export const postAdminCircuitFiltreServir = (source: string, motif = '') =>
   j<any>(`/admin/circuit/filtre/servir-quand-meme?source=${encodeURIComponent(source)}&motif=${encodeURIComponent(motif)}`, { method: 'POST' })
 export const postAdminCircuitFiltreRevenir = (source: string) =>
   j<any>(`/admin/circuit/filtre/revenir?source=${encodeURIComponent(source)}`, { method: 'POST' })
+// CIRCUIT-P — journal filtrable/paginé + pages de détail (un appel chacun).
+export const getAdminCircuitJournal = (p: { type?: string; depuis?: string; page?: number; taille?: number } = {}) => {
+  const q = new URLSearchParams()
+  if (p.type) q.set('type', p.type)
+  if (p.depuis) q.set('depuis', p.depuis)
+  if (p.page) q.set('page', String(p.page))
+  if (p.taille) q.set('taille', String(p.taille))
+  const s = q.toString()
+  return j<any>(`/admin/circuit/journal${s ? '?' + s : ''}`)
+}
+export const getAdminCircuitReservoir = (id: number) => j<any>(`/admin/circuit/reservoir/${id}`)
+export const getAdminCircuitRobinet = (id: string) => j<any>(`/admin/circuit/robinet/${encodeURIComponent(id)}`)
+export const getAdminCircuitPompe = () => j<any>('/admin/circuit/pompe')

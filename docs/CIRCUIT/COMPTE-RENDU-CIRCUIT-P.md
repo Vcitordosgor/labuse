@@ -77,9 +77,28 @@ Reprise : « continue CIRCUIT-P depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-P.md »
 **Tests** : `tests/test_circuit_p_lot1.py` — 25 passed (21 unitaires + 4 DB). Existants circuit :
 19 passed (aucune régression).
 
-## Lots 2→6 — à venir
+## Lot 2 — Résumé et onglets ✅ (commit `CIRCUIT-P lot 2`)
 
-- Lot 2 — Résumé et onglets (`Circuit.tsx` conteneur + `Resume.tsx`).
+- Nouveau dossier `frontend/src/components/admin/circuit/` :
+  - `style.ts` — la feuille de style, **portée fidèlement** de la v8, scopée sous `.cxp` ; cinq
+    couleurs d'état, `--jaune` réservé au focus clavier ; `@media` réduit sans barre horizontale.
+  - `types.ts` — les types du payload + `focusDeCible()` (une seule cible → détail ; plusieurs →
+    groupe déplié).
+  - `Resume.tsx` — rend le bloc `resume` serveur : titre (`N choses à regarder` ou « Tout coule. »),
+    quatre repères, trois groupes, ligne de fin. Chaque ligne appelle `onCible`.
+  - `Circuit.tsx` — **le conteneur** : trois onglets (Résumé par défaut, Circuit, Journal) + deux
+    boutons à droite (« Envoyer les agents sur tout » — gardé désactivé, geste existant en attente
+    de crédit API ; « Vérifier que tout coule » — geste réel `postAdminCircuitVerifier`). Les deux
+    basculent sur l'onglet Circuit (2.2). Une ligne du Résumé pose le `focus` et bascule sur Circuit.
+- `Donnees.tsx` importe désormais `./circuit/Circuit` (l'ancien `admin/Circuit.tsx` n'est plus
+  référencé ; il est retiré au lot 6).
+- Onglets Circuit / Journal : marqueurs « lot 3 / lot 5 » en attendant leur contenu (branche verte).
+- **Test vitest** `Resume.test.tsx` (2.3) : zéro problème → « Tout coule. » (+ un « Rien. » par
+  groupe) ; chaque type de ligne rend son verbe et clique vers sa cible. tsc vert.
+- Vitest : **166 passed** (164 + 2). tsc : vert.
+
+## Lots 3→6 — à venir
+
 - Lot 3 — Le circuit par familles (`CircuitDiagram.tsx`, tuyaux `familles + catégories + 2`).
 - Lot 4 — Les pages de détail (`Detail.tsx`, deep-link hash).
 - Lot 5 — Le journal (`Journal.tsx`).
