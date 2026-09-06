@@ -55,6 +55,24 @@ export function TraceTiroir() {
             <span style={{ color: '#94a099' }}>moteur</span><span>{c.moteur || `(${c.calcul})`}</span>
             <span style={{ color: '#94a099' }}>portée</span>
             <span>{c.portee === 'run' ? `run — ne change qu'à la bascule (servi : ${q.data?.run_servi})` : "live — change à l'injection"}</span>
+            {/* CIRCUIT-4 (lot 5.2) — la RÈGLE de la donnée, dans le tiroir de trace. */}
+            {c.regle && (<>
+              <span style={{ color: '#94a099' }}>règle</span>
+              <span style={{ color: c.regle.verdict === 'conforme' ? '#4ade80'
+                : c.regle.verdict === 'ecart' ? '#e2726a'
+                  : c.regle.verdict === 'choix_assume' ? '#94a099'
+                    : c.regle.verdict === 'modele_valide' ? '#c084fc' : '#e0a94f' }}
+                title={c.regle.choix || c.regle.ecart || ''}>
+                {c.regle.verdict === 'conforme' ? 'conforme' : c.regle.verdict === 'ecart' ? 'écart à la règle'
+                  : c.regle.verdict === 'partiel' ? 'partiel' : c.regle.verdict === 'choix_assume' ? 'choix LABUSE'
+                    : c.regle.verdict === 'modele_valide' ? 'modèle validé' : 'référence introuvable'}
+                {c.regle.reference?.url?.startsWith('http') && (
+                  <> · <a href={c.regle.reference.url} target="_blank" rel="noreferrer"
+                    style={{ color: 'inherit' }}
+                    title={`${c.regle.reference.titre} — ${c.regle.reference.article}`}>référence ↗</a></>
+                )}
+              </span>
+            </>)}
           </div>
         </>
       ) : (

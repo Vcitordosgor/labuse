@@ -3849,7 +3849,11 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
         }
     if tcsp:
         d = tcsp["d"]
-        proche = d <= 800
+        # CIRCUIT-4 lot 6 (correction E1, arithmétique pure) — L151-36 : « situées à MOINS de
+        # huit cents mètres » = STRICT. L'ancien `d <= 800` servait « sous 800 m » pour d = 800
+        # exactement, à tort. Avant/après : seul d = 800 change (distance entière) — témoin
+        # tests/regles/test_distance_knn.py::test_drapeau_800_strict (ex-xfail, levé ici).
+        proche = d < 800
         # RETOURS-13 R5 — le plafond de l'art. L151-36 S'IMPOSE au PLU (« nonobstant toute
         # disposition du plan local d'urbanisme ») : ce n'est pas une faculté. Ce qui reste à
         # instruire : la QUALITÉ DE LA DESSERTE (condition du texte) et la nature exacte de

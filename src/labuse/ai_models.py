@@ -84,6 +84,9 @@ SURFACES: dict[str, dict] = {
     "vision_pige":       {"label": "Radar — lecture d'image (PIGE)",     "model": MODEL_VISION},
     # CIRCUIT-1 lot 6 — l'agent de veille d'une source (web_search natif, JSON strict 6.2).
     "agent_source":      {"label": "Agent de source (veille amont)",      "model": MODEL_REASONING},
+    # CIRCUIT-4 lot 2 — l'agent « règle » : va lire la référence d'un calcul (Légifrance, INSEE,
+    # service-public, ADEME, DEAL…) et ramène l'extrait daté ; même anti-invention qu'agent_source.
+    "agent_regle":       {"label": "Agent de règle (références des calculs)", "model": MODEL_REASONING},
     "juge_vlm":          {"label": "Juge VLM (ML, hors service)",        "model": MODEL_VISION},
 }
 

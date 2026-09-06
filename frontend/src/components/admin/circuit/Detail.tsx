@@ -227,7 +227,39 @@ function DetailRobinet({ id, data, back, onOpen }:
             })}</ul> : <div className="muted">Aucun chiffre : tuiles ou géométries seulement, hors registre.</div>}
             {r.hors_moteur ? <div style={{ color: 'var(--ambre)', marginTop: 10 }}>{r.hors_moteur} calculé{r.hors_moteur > 1 ? 's' : ''} hors moteur (SQL brut ou front), à rebrancher.</div> : null}
           </div>
-          {/* CIRCUIT-4 (accroche) — « La règle derrière ces calculs » : badges de règle par chiffre. */}
+          {/* CIRCUIT-4 (lot 5.2) — LA RÈGLE DERRIÈRE CES CALCULS : un badge par donnée —
+              conforme (mint) · écart (rouge) · référence introuvable / partiel (ambre) ·
+              choix LABUSE (gris, définition au survol) · modèle (mauve) — et le lien vers
+              l'extrait de référence. */}
+          {(chiffres || []).some((ch: any) => ch.regle) && (
+            <div className="card"><h3>La règle derrière ces calculs</h3>
+              <ul className="list">{chiffres.filter((ch: any) => ch.regle).map((ch: any) => {
+                const rg = ch.regle
+                const badge = rg.verdict === 'conforme' ? ['mint', 'conforme']
+                  : rg.verdict === 'ecart' ? ['rouge', 'écart à la règle']
+                    : rg.verdict === 'partiel' ? ['ambre', 'partiel']
+                      : rg.verdict === 'reference_introuvable' ? ['ambre', 'référence introuvable']
+                        : rg.verdict === 'choix_assume' ? ['gris', 'choix LABUSE']
+                          : ['mauve', 'modèle validé']
+                const ref = rg.reference
+                return (
+                  <li key={ch.id}>
+                    <span title={rg.choix || rg.ecart || ''}>{ch.libelle}</span>
+                    <span>
+                      <span className={`tag ${badge[0] === 'mint' ? 'mint' : badge[0]}`}
+                        title={(rg.ecart || rg.choix || '') + (ref ? `\n— ${ref.titre}, ${ref.article} (${ref.version})` : '')}>
+                        {badge[1]}</span>
+                      {ref?.url?.startsWith('http') && (
+                        <a className="tag" href={ref.url} target="_blank" rel="noreferrer"
+                          title={`${ref.titre} — ${ref.article} · ${ref.version}\n« ${(ref.extrait || '').slice(0, 300)}… »`}>
+                          référence ↗</a>
+                      )}
+                    </span>
+                  </li>
+                )
+              })}</ul>
+            </div>
+          )}
         </div>
         <div>
           <div className="card"><h3>Alimenté par · {amont.length} réservoirs</h3>
