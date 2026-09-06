@@ -240,7 +240,7 @@ export interface ContexteCommune {
     prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
     ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; source: string
   } | null
-  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; parc_national: boolean; source: string }
+  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string

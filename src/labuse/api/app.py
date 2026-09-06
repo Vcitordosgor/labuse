@@ -4946,14 +4946,20 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # A-D en subtype), SUP (assiettes par catégorie en subtype). ER/EBC sont servis
                     # par les KINDS VIRTUELS 'er'/'ebc' (plu_gpu_prescription filtré par famille,
                     # cf. _VIRTUAL_MAP_KINDS) — jamais un kind stocké de plus pour la même donnée.
-                    "dpu", "peb", "sup"}
+                    "dpu", "peb", "sup",
+                    # SOURCES-1 lot 2 — nature et eau : DPF (marchepied), zones humides.
+                    "dpf", "zone_humide"}
 
 # SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
 # subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
 # le rescue libellé ; la couche affiche le standard CNIG, l'écart est dit au filtre) ; EBC = 01.
-_VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...]]] = {
+# Lot 2 : enp = kind ens entier (tous types) ; rpg = kind safer (cultures déclarées) —
+# subtypes None = pas de filtre, le kind stocké entier.
+_VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...] | None]] = {
     "er": ("plu_gpu_prescription", ("05",)),
     "ebc": ("plu_gpu_prescription", ("01",)),
+    "enp": ("ens", None),
+    "rpg": ("safer", None),
 }
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
@@ -5037,6 +5043,8 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                   sl.attrs->'lignes_noms' AS lignes_noms, sl.attrs->>'reseau' AS reseau,
                   sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
                   sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
+                  -- SOURCES-1 lot 2 : code culture RPG (couche « Cultures déclarées »)
+                  sl.attrs->>'code_cultu' AS code_cultu,
                   -- RETOURS-14 S6 : géométrie simplifiée MATÉRIALISÉE (geom_simple, entretenue par
                   -- ensure_geom_2975) — la simplification à la volée coûtait ~11 s sur les aléas et
                   -- la couche restait muette au premier clic. Repli à la volée si non peuplée.
@@ -5068,7 +5076,7 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                              "lignes_noms": r["lignes_noms"], "reseau": r["reseau"],
                              "critere": r["critere"],
                              "concordance": r["concordance"], "tension": r["tension"],
-                             "nature": r["nature"]}}
+                             "nature": r["nature"], "code_cultu": r["code_cultu"]}}
              for r in rows if r["g"]]
     # M106 : millésime SERVI, jamais en dur (doctrine M86). FIX-COUCHES P3 : on distingue désormais
     # deux dates — le MILLÉSIME AMONT (data_sources.source_millesime, la vraie fraîcheur de la donnée,

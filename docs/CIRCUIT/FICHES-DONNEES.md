@@ -4,6 +4,15 @@
 
 # Fiche commune
 
+## AZI / TRI (inondation)
+
+*Robinet `fiche_commune_azi_tri` — route `/communes/{commune} (bloc risques)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `azi_tri_commune` | liste | AZI / TRI de la commune | georisques_azi_tri (GASPAR azi+tri par commune (07/09/2026)) | passe-plat · src/labuse/ingestion/azi_tri.py:azi_tri_commune — table lue : azi_communes | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *atlas des zones inondables et TRI couvrant la commune (GASPAR : libellé, risques, date) — fait documentaire ; la géométrie d'aléa reste servie par georisque_alea* | | | | | |
+
 ## Zonage A/B/C (logement)
 
 *Robinet `fiche_commune_zonage_abc` — route `/communes/{commune} (clé zonage_abc)`*

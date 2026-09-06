@@ -18,6 +18,11 @@ export const LAYER_LABEL: Record<string, string> = {
   foret_publique: 'Forêt publique',
   cinquante_pas: '50 pas géométriques',
   sup: 'Servitudes (SUP)',
+  // SOURCES-1 lot 2 — nature et eau
+  dpf: 'Ravines et reculs (DPF)',
+  zone_humide: 'Zones humides',
+  enp: 'Espaces naturels protégés',
+  rpg: 'Cultures déclarées (RPG)',
   // risques
   risques: 'Risques PPR',
   sol_pollue: 'Sols pollués',
@@ -136,6 +141,15 @@ export const LAYER_INFO: Record<string, string> = {
     'Les zones A, B, C et D des plans d’exposition au bruit des aérodromes (couleur du rouge A au gris D). OPPOSABLE : en zones A et B les constructions d’habitation sont interdites, en zone C elles sont encadrées avec isolement acoustique renforcé, la zone D est d’information (article L112-10 du code de l’urbanisme). Source : PEB approuvés (DGAC), republiés par les annexes des PLU au Géoportail de l’urbanisme. Couverture partielle DITE : Roland-Garros est servi ; le PEB de Pierrefonds n’est pas publié au GPU — son absence à l’écran n’est pas une preuve.',
   sup:
     'Les assiettes des servitudes d’utilité publique publiées pour La Réunion sur le Géoportail de l’urbanisme, par catégorie : AC1 monuments historiques, AC2 sites classés et inscrits, AC4, PM1/PM2/PM3 (risques, installations classées), EL10 (parc national). OPPOSABLES. Trois catégories sont publiées mais restreintes au téléchargement par leur gestionnaire (T5 dégagement aéronautique, PT1/PT2 radioélectriques) et AS1 (protection des captages d’eau) n’est pas publiée pour le 974 — LABUSE surveille leur publication, rien n’est inventé. Millésime : document SUP de chaque gestionnaire (AAAAMMJJ).',
+  // SOURCES-1 lot 2 — la nature et l'eau.
+  dpf:
+    'Le domaine public fluvial de La Réunion : 275 tronçons de cours d’eau et 6 plans d’eau domaniaux (arrêté préfectoral n°06-3077/SG/DRCTV du 21 août 2006). Le lit est inaliénable et les propriétés riveraines sont grevées d’une servitude de marchepied de 3,25 m (article L2131-2 CGPPP) — OPPOSABLE, rédhibitoire dans l’analyse LABUSE ; la bande de 10 m du code forestier (R.174-2) reste portée par la couche des ravines. Source : DEAL Réunion, WFS Carmen (DEAL_REUNION_2020). Le domaine privé de l’État (~1 700 km d’affluents) n’est pas diffusé — demandé à la DEAL.',
+  zone_humide:
+    'Les zones humides inventoriées par la DEAL : cartographie d’habitats 2011, inventaires 2009 (et espaces fonctionnels), 2003, zones humides de basse altitude 2019. INVENTAIRES PAR SECTEURS : l’absence d’inventaire n’est pas une preuve d’absence, et un habitat de zone humide n’est pas la délimitation réglementaire — indication FORTE (loi sur l’eau, éviter-réduire-compenser : souvent rédhibitoire à l’instruction). Source : DEAL Réunion, WFS Carmen. Dans l’analyse LABUSE : vigilance forte.',
+  enp:
+    'Les espaces naturels protégés, un type par teinte d’entité : réserves naturelles (dont la Réserve marine et l’Étang Saint-Paul zoné), arrêtés de protection de biotope, réserves biologiques, terrains du Conservatoire du littoral, site Ramsar, sites classés et inscrits. OPPOSABLES (sauf Ramsar : engagement international, indication). Sources : INPN/patrinat (espaces protégés) + DEAL Carmen (Ramsar, sites, réserves zonées — dont la Réserve marine absente du jeu INPN). Dans l’analyse LABUSE : réserves et APB rédhibitoires, conservatoire vigilance, sites portés par la servitude AC2.',
+  rpg:
+    'Les parcelles agricoles déclarées à la PAC (registre parcellaire graphique, proxy IGN — 38 460 déclarations, canne à sucre dominante). INDICATION d’usage, pas une servitude : la déclaration dit ce qui est cultivé, pas ce qui est constructible. Source : RPG (IGN/ASP), millésime RPG.LATEST. Dans l’analyse LABUSE : en zone A du PLU, une sole cannière exploitée (≥ 50 % déclaré canne) est rédhibitoire ; une zone A sans déclaration est signalée « friche possible » (à vérifier sur le terrain).',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

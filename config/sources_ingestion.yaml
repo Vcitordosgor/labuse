@@ -124,3 +124,16 @@ commandes:
   - motif: "Zonage ABC des communes (DHUP)"
     label: zonage_abc
     argv: ["labuse", "ingest-zonage-abc"]
+  # ── SOURCES-1 lot 2 — nature et eau ──
+  - motif: "Ravines — domaine public fluvial*"
+    label: deal_dpf
+    argv: ["labuse", "ingest-deal-carmen"]
+  - motif: "Zones humides — inventaires DEAL*"
+    label: zones_humides
+    argv: ["labuse", "ingest-deal-carmen"]
+  - motif: "Espaces protégés complémentaires*"
+    label: enp_complements
+    argv: ["labuse", "ingest-deal-carmen"]
+  - motif: "AZI / TRI — inondation*"
+    label: azi_tri
+    argv: ["labuse", "ingest-azi-tri"]

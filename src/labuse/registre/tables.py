@@ -67,6 +67,18 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                           millesime="arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)"),
     "zppa_culture": Rt((), note="aucune donnée — Atlas des patrimoines injoignable au 06/09/2026, "
                                 "rappel sentinelle 180 j (SOURCES-1 lot 1)"),
+    # ── SOURCES-1 lot 2 — la nature et l'eau ────────────────────────────────────────
+    "deal_dpf_dpe": Rt(("spatial_layers",), couches=("dpf",),
+                       millesime="DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans",
+                       note="le DPE (domaine privé de l'État) n'est pas diffusé — demande DEAL (lot 7)"),
+    "deal_zones_humides": Rt(("spatial_layers",), couches=("zone_humide",),
+                             millesime="inventaires DEAL 2003/2009/2011/2019 par secteurs"),
+    "enp_complements_deal": Rt(("spatial_layers",), couches=("ens",),
+                               millesime="Ramsar 1 · sites classés/inscrits 7 · RN 3 (Carmen 07/09/2026)",
+                               note="complète le kind ens de l'INPN (subtypes ramsar/site_classe/"
+                                    "site_inscrit/reserve_naturelle — purge par subtype)"),
+    "georisques_azi_tri": Rt(("azi_communes",),
+                             millesime="GASPAR azi+tri par commune (07/09/2026)"),
     "sudocuh": Rt(("sudocuh_procedures",), millesime="Sudocuh — état au 31/12/2024"),
     "sitadel": Rt(("sitadel_permits", "via_permits_geo"), millesime="2026-07"),
     "qpv_2024": Rt(("spatial_layers",), couches=("qpv",), millesime="génération 2024"),
@@ -160,7 +172,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "potentiel_foncier_region": Rt(("spatial_layers",), couches=("potentiel_foncier", "sar")),
     "potentiel_foncier_ods": Rt(("spatial_layers",), couches=("potentiel_foncier",)),
     "rpg_proxy_ign": Rt(("spatial_layers",), couches=("safer",),
-                        millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée"),
+                        millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+                        note="SOURCES-1 lot 2 : code_cultu servi (CSA canne 12 464/38 460) — "
+                             "couche carte « Cultures déclarées » + cascade zone A/canne"),
     # ── adresses / réseaux / transport ─────────────────────────────────────────────
     "ban": Rt(("adresses", "adresse_parcelles")),
     "osm_overpass": Rt(("parcel_amenites", "spatial_layers"), couches=("amenite", "osm_faux_positif"),

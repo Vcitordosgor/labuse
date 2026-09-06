@@ -807,6 +807,67 @@ SOURCES: list[dict] = [
                          "communes (A : Les Avirons, L'Étang-Salé, Saint-Leu, Saint-Paul ; B1 : les "
                          "20 autres). `labuse ingest-zonage-abc`. Pas de couche carte, pas de cascade "
                          "(régime d'aides, pas de constructibilité)."),
+    # ── SOURCES-1 lot 2 — la nature et l'eau ──
+    dict(name="Ravines — domaine public fluvial (DEAL Carmen)", category="risques",
+         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
+         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/domaine-public-fluvial-dpf-et-domaine-prive-de-l-a285.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — domaine public fluvial (arrêté préfectoral n°06-3077/SG/DRCTV du 21/08/2006) ».",
+         technical_notes="SOURCES-1 lot 2 — réservoir deal_dpf_dpe : spatial_layers kind='dpf' "
+                         "(cours_eau 275, plan_eau 6), couches Cours_d_eau_DPF + Plan_d_eau_DPF du "
+                         "WFS Carmen 29 (GML EPSG:2975 → ogr2ogr, vérifié live 07/09/2026 — la "
+                         "fiche Sextant du rapport n'offre AUCUNE distribution, WMS de "
+                         "visualisation seul). `labuse ingest-deal-carmen`. Cascade : marchepied "
+                         "3,25 m RÉDHIBITOIRE (L2131-2 CGPPP), bande 10 m = vigilance (portée par "
+                         "la couche ravine BD TOPO, anti-double-compte). Le DPE (domaine privé de "
+                         "l'État, ~1 700 km) n'est PAS diffusé sur ce WFS — demande DEAL (lot 7)."),
+    dict(name="Zones humides — inventaires DEAL (Carmen)", category="environnement",
+         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
+         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="inventaires 2003/2009/2011/2019 par secteurs (partiels)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/les-cartographies-d-habitats-a320.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — inventaires des zones humides ».",
+         technical_notes="SOURCES-1 lot 2 — réservoir deal_zones_humides : spatial_layers "
+                         "kind='zone_humide' (habitats_2011 1 507 · inventaire_2009 187 · "
+                         "espace_fonctionnel_2009 30 · inventaire_2003 49 · basse_altitude_2019 "
+                         "1 349 — vérifié live 07/09/2026). Couverture PAR SECTEURS dite, jamais "
+                         "une preuve d'absence (habitats ≠ zones humides réglementaires). "
+                         "`labuse ingest-deal-carmen`. Cascade : VIGILANCE forte (loi sur l'eau, "
+                         "séquence ERC)."),
+    dict(name="Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)",
+         category="environnement",
+         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
+         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="Ramsar 1 · sites classés/inscrits 7 · RN 3 (07/09/2026)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/informations-geographiques-r104.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion (Carmen) — Ramsar, sites classés et inscrits, réserves naturelles ».",
+         technical_notes="SOURCES-1 lot 2 — complète l'ENP INPN (kind='ens') avec les types "
+                         "absents du jeu INPN local : ramsar (Étang Saint-Paul), site_classe/"
+                         "site_inscrit (7, attribut Type), reserve_naturelle (RNN zonée A/B + "
+                         "RÉSERVE MARINE, absente du jeu INPN local — chevauche l'entité RNN INPN "
+                         "sur l'Étang, dit). Purge par SUBTYPE seulement, les subtypes INPN "
+                         "restent. Forêts de protection = SUP A7 : NON publiée pour le 974 "
+                         "(inventaire GPU sondé, lot 1). Cascade : réserves/APB RÉDHIBITOIRES, "
+                         "sites = info ×0 (anti-double-compte SUP AC2), ramsar = vigilance."),
+    dict(name="AZI / TRI — inondation (Géorisques GASPAR)", category="risques",
+         provider="BRGM / Géorisques (GASPAR)",
+         access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GASPAR azi+tri par commune (07/09/2026)",
+         rate_limit="~1000 req/min/IP",
+         documentation_url="https://www.georisques.gouv.fr/doc-api",
+         endpoint_url="https://www.georisques.gouv.fr/api/v1/gaspar/azi",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — GASPAR ».",
+         technical_notes="SOURCES-1 lot 2 — réservoir georisques_azi_tri : table azi_communes "
+                         "(FAIT documentaire par commune — ex. 97411 : AZI « La Montagne » 2004, "
+                         "TRI Saint-Denis/Sainte-Marie 2013, vérifié live 07/09/2026). La "
+                         "GÉOMÉTRIE d'aléa inondation n'est PAS ré-ingérée : l'ALEA_INONDATION "
+                         "Carmen (75) est un doublon vérifié de georisque_alea/inondation (76, "
+                         "DEAL Lizmap) déjà servi par la couche cascade risques. "
+                         "`labuse ingest-azi-tri`."),
     dict(name="ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
          category="patrimoine", provider="Ministère de la Culture / DAC de La Réunion",
          access_type="WFS/shp", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
@@ -1065,6 +1126,12 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Zonage ABC des communes (DHUP)": ("job_sur_clic", 365, "declaree"),
     "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)":
         ("absente", None, "sans_objet"),
+    # ── SOURCES-1 lot 2 — nature et eau ──
+    "Ravines — domaine public fluvial (DEAL Carmen)": ("job_sur_clic", 365, "proposee"),
+    "Zones humides — inventaires DEAL (Carmen)": ("job_sur_clic", 365, "proposee"),
+    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)":
+        ("job_sur_clic", 365, "proposee"),
+    "AZI / TRI — inondation (Géorisques GASPAR)": ("job_sur_clic", 365, "proposee"),
 }
 
 

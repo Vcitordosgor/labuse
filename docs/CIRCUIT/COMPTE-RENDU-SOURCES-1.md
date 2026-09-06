@@ -75,6 +75,32 @@ Sept sources entrées par la porte du Circuit. **Verrous : 16/16 verts** après 
 - **Servi** : fiche parcelle clé `dispositifs` (`_dispositifs_block` : ER/EBC avec parts, DPU avec l'état « non déterminée — non publié par la commune », PEB, SUP par catégorie — prouvé sur base réelle : 97402000AE0048 ER 5 % + EBC 4,5 % + SUP PM1 33 % ; 97411000BM0004 PEB zone B + DPU servi) ; fiche commune clé `zonage_abc` ; carte kinds `dpu`/`peb`/`sup` + kinds VIRTUELS `er`/`ebc` (filtre subtype dans `/map/layers.geojson`).
 - **Tests** : `tests/test_sources1_lot1.py` (14) ; `test_decisions_1_3.py::test_d3a_er_majoritaire…` mis à jour (le mandat annule M129 P1.1).
 
+## Lot 2 — La nature et l'eau (clos)
+
+Cinq sources. **Découverte qui change le lot** : le WFS Carmen du nœud 29 (`DEAL_REUNION_2020`, MapServer 1.0.0, GML EPSG:2975, 187 couches) **répond** — contrairement à la réserve du rapport (« probablement migré Lizmap »). Les géométries OFFICIELLES du DPF et des zones humides sont servables : **pas de repli BD TOPO**. Verrous : **16/16 verts**.
+
+### Ce qui est entré (ingéré en base réelle, filtres joués)
+
+| Source | Réservoir | Données réelles | État |
+|---|---|---|---|
+| Ravines — domaine public fluvial (DEAL Carmen) | `deal_dpf_dpe` (kind `dpf`) | **275 tronçons + 6 plans d'eau** (arrêté 06-3077 du 21/08/2006) | servie ; DPE non diffusé → demande DEAL (lot 7) |
+| Zones humides — inventaires DEAL (Carmen) | `deal_zones_humides` (kind `zone_humide`) | **3 122 entités, 5 inventaires** (habitats 2011 : 1 507 · 2009 : 187 + 30 · 2003 : 49 · basse altitude 2019 : 1 349) | servie, par secteurs DITE |
+| Espaces protégés complémentaires (DEAL Carmen) | `enp_complements_deal` (kind `ens`, purge par subtype) | Ramsar 1 · sites classés/inscrits 7 · **réserves naturelles 3 dont la RÉSERVE MARINE (absente du jeu INPN local)** | servie |
+| AZI / TRI (Géorisques GASPAR) | `georisques_azi_tri` (table `azi_communes`) | **30 AZI (22 communes) + 9 TRI (9 communes)** ; sans document : Les Avirons, Les Trois-Bassins | servie (fait par commune) |
+| RPG (existante, mise d'équerre) | `rpg_proxy_ign` (kind `safer`) | 38 460 déclarations, `code_cultu` 100 % servi — **CSA (canne) 12 464** | servie + couche + cascade |
+
+- **AZI : géométrie NON dupliquée** — l'`ALEA_INONDATION` Carmen (75 zones) est un doublon vérifié de `georisque_alea/inondation` (76, DEAL Lizmap) déjà servi par la couche cascade `risques` ; l'AZI/TRI entre comme FAIT documentaire par commune (fiche commune, bloc Risques).
+- **INPN** : la source existante reste le canal des types apb/réserve biologique/conservatoire/RNN ; le canal Carmen COMPLÈTE (subtypes `ramsar`, `site_classe`, `site_inscrit`, `reserve_naturelle`) avec purge par subtype — chevauchement RNN Étang Saint-Paul dit. Forêts de protection = SUP A7, non publiée pour le 974 (inventaire lot 1).
+- La fiche Sextant du rapport (DPF) n'offre AUCUNE distribution (WMS de visualisation seul, vérifié dans le XML) — c'est le WFS Carmen qui sert.
+
+### La mécanique
+
+- Catalogue 94 sources (+4), vanne (`deal_dpf`/`zones_humides`/`enp_complements` → `labuse ingest-deal-carmen` ; `azi_tri` → `labuse ingest-azi-tri`), ingestions neuves `deal_carmen.py` (GML → ogr2ogr → spatial_layers, purge ciblée) et `azi_tri.py` (GASPAR → `azi_communes`).
+- **Cascade** (effet au prochain run candidat seulement) : couche `dpf` neuve — **marchepied 3,25 m RÉDHIBITOIRE** (L2131-2 CGPPP **lu sur Légifrance et cité**), bande 10 m portée par la couche `ravine` (anti-double-compte, R.174-2 cité en commentaire) ; couche `zone_humide` neuve — VIGILANCE FORTE, inventaire et part dits ; `ens` durcie — **réserves naturelles (dont marine) + réserves biologiques + APB RÉDHIBITOIRES**, conservatoire moyen, Ramsar faible, sites classés/inscrits info ×0 (anti-double-compte SUP AC2) ; `safer` (RPG) — **zone A × canne CSA ≥ 50 % RÉDHIBITOIRE**, zone A sans RPG → VIGILANCE « friche possible » (AU jamais happée par le préfixe A, testé) ; `context.py` prime la distance dpf.
+- Fiches de règle : `dpf_recul` (L2131-2 conforme, extrait cité), `zones_humides_vigilance`, `enp_protections`, `rpg_cultures` (choix assumés). Registre : 5 données (+robinets couches, azi commune), carte tables, pont, réservoirs.csv, `_MAP_LAYER_KINDS` += dpf/zone_humide + kinds virtuels `enp`→ens, `rpg`→safer, `code_cultu` servi à la couche.
+- Front : familles « Contraintes » (+ Ravines et reculs) et **« Nature » neuve** (Zones humides, Espaces naturels protégés, Cultures déclarées), DPF en trait d'eau, thème sombre/clair, légende, « i » complets, toast « secteurs partiels » pour les ZH. Fiche commune : ligne « Inondation (AZI/TRI) » au bloc Risques.
+- Tests `tests/test_sources1_lot2.py` (12) ; compteurs figés mis à jour (MODE_ET_CADENCE 94, sentinelle 85, couches 29). Variable candidate scoring NOTÉE (part RPG canne / friche possible — banc K0, jamais branchée sans banc).
+
 ## Décisions prises en autonomie
 
 - Étape 0 : `main` local étant extrait dans un autre worktree, la branche part de `origin/main` (strictement identique, `ea6fd161`).
@@ -84,5 +110,11 @@ Sept sources entrées par la porte du Circuit. **Verrous : 16/16 verts** après 
 - Lot 1 · SUP « un réservoir par catégorie » : UNE ligne de carte `sup_gpu` avec les catégories en sous-couches (subtype) + inventaire catégoriel dans le millésime et la sonde — 9 lignes de réservoir quasi identiques auraient dilué la carte sans rien servir de plus.
 - Lot 1 · PEB via GPU : les PEB ne sont diffusés pour le 974 que par la republication GPU (annexes des PLU). Zone lue du champ `txt` UNIQUEMENT (3 entités sans lettre écartées et comptées). AS1/T5 sans géométrie servable : la règle rédhibitoire est ÉCRITE (fiche de règle) et s'armera à la première version réelle publiée.
 - Lot 1 · DPU : VIGILANCE faible (renforcé : moyen) — la préemption pèse sur la transaction, pas la constructibilité ; « hors périmètre » n'est dit que si la commune A publié ; sinon « non déterminée — non publié par la commune » (règle 3 du mandat).
+
+- Lot 2 · Carmen vivant : le rapport doutait du nœud Carmen 29 (« probablement migré Lizmap ») — testé, il RÉPOND (Cartes_bruit puis DEAL_REUNION_2020, 187 couches). Les données officielles DEAL (DPF, ZH, Ramsar, sites, RN) sont ingérées de là ; le repli BD TOPO prévu par le mandat n'a pas été nécessaire.
+- Lot 2 · AZI sans doublon : le mandat demandait une couche AZI « là où le PPR est absent » — la géométrie d'aléa inondation DEAL est DÉJÀ servie (georisque_alea/inondation, couche cascade risques, couche carte aléa inondation). Créer un kind `azi` aurait dupliqué la même emprise sous deux couches : l'AZI/TRI entre comme fait documentaire par commune (GASPAR), la cascade inondation reste portée par `risques`.
+- Lot 2 · bande des 10 m : le RÉDHIBITOIRE du marchepied (3,25 m) est porté par la couche `dpf` (DPF officiel seul) ; la VIGILANCE de la bande de 10 m reste portée par la couche `ravine` existante (BD TOPO, TOUTES les ravines, buffer 10 m) — deux couches complémentaires, jamais deux flags pour la même bande.
+- Lot 2 · réserves biologiques : le mandat dit « réserves » rédhibitoires — les réserves biologiques (ONF, 37 entités) sont incluses (protection forte de même nature que les RNN), documenté dans la fiche de règle.
+- Lot 2 · canne = CSA : le code culture RPG de la canne à sucre retenu est CSA (12 464 déclarations, culture dominante mesurée en base) ; seuil 50 % de couverture parcelle, choix non calibré, écrit en fiche de règle.
 
 *(chapitres suivants à venir)*

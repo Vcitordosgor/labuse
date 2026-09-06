@@ -137,6 +137,14 @@ layers:
       spatial_kind: safer
       severity: moyen
       detail: "Parcelle déclarée agricole au RPG (déclarations PAC) — usage agricole, à vérifier au PLU."
+      # SOURCES-1 lot 2 (mandat RPG) : en ZONE A du PLU, une parcelle cultivée en CANNE
+      # (code RPG CSA, couverture ≥ seuil) → RÉDHIBITOIRE (sole cannière exploitée — aucune
+      # perspective de mutation) ; une zone A ABSENTE du RPG → VIGILANCE « friche possible »
+      # (signal, pas une preuve). Seuil = choix LABUSE (regles/rpg_cultures.py), non calibré.
+      plu_kind: plu_gpu_zone
+      zone_a_prefixes: [A]
+      canne_codes: [CSA]
+      canne_hard_pct: 50
 
   - name: risques
     phase: 1
@@ -171,7 +179,10 @@ layers:
     enabled: true
     params:
       spatial_kind: ravine
-      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer NON CALIBRÉ (défaut Vic 10 m — M129 P1.4) :
+      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer NON CALIBRÉ (défaut Vic 10 m — M129 P1.4).
+      # SOURCES-1 lot 2 : la bande de 10 m rejoint l'interdiction de défricher/exploiter du
+      # code forestier (R.174-2, ravines à pente > 27°) — le RÉDHIBITOIRE du marchepied
+      # 3,25 m sur le DPF officiel est porté par la couche `dpf` (DEAL Carmen), pas ici.
       buffer_m: 10
       severity: moyen
       # 2.C — quand une SURFACE en eau existe (ravine large), on mesure au BORD (berge), plus proche
@@ -180,6 +191,24 @@ layers:
       # rayon de garde du précalcul batch (doit être ≥ buffer_m ; couvre un réglage à la hausse) :
       search_cap_m: 60
 
+  - name: dpf             # SOURCES-1 lot 2 : domaine public fluvial (DEAL Carmen, kind dpf)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: dpf
+      # L2131-2 CGPPP : servitude de marchepied de 3,25 m le long du DPF → RÉDHIBITOIRE
+      # (bande inconstructible, passage public). La bande de 10 m (R.174-2 code forestier)
+      # reste portée par la couche `ravine` (BD TOPO, TOUTES les ravines) — anti-double-compte.
+      # Fiche : regles/dpf_recul.py.
+      marchepied_m: 3.25
+      search_cap_m: 60
+  - name: zone_humide     # SOURCES-1 lot 2 : inventaires DEAL par secteurs (kind zone_humide)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: zone_humide
+      # VIGILANCE FORTE, jamais une exclusion seule (inventaires partiels, habitats ≠
+      # réglementaire) — loi sur l'eau / ERC. Fiche : regles/zones_humides_vigilance.py.
   - name: trait_de_cote
     phase: 1
     enabled: true
@@ -230,6 +259,16 @@ layers:
       spatial_kind: ens
       severity: moyen
       detail: "Espace protégé réglementaire (réserve / APB / conservatoire…) — restriction."
+      # SOURCES-1 lot 2 (mandat) : RÉDHIBITOIRE en réserves naturelles et APB (le cœur de
+      # parc est déjà HARD via la couche parc_national) ; VIGILANCE ailleurs. Les sites
+      # classés/inscrits sont INFO ×0 (anti-double-compte : SUP AC2 les porte en fort,
+      # lot 1) ; Ramsar = indication internationale → faible. Fiche : regles/enp_protections.py.
+      hard_subtypes: [réserve_naturelle_nationale, reserve_naturelle, réserve_biologique, apb]
+      severites:
+        conservatoire_du_littoral: moyen
+        ramsar: faible
+        site_classe: info
+        site_inscrit: info
 
   - name: ocs_ge
     phase: 1

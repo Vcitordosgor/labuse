@@ -87,6 +87,9 @@ COUCHE_PAR_CLE_FRONT: dict[str, str] = {
     # SOURCES-1 lot 1 — droit des sols (groupe « Contraintes »)
     "er": "er_couche", "ebc": "ebc_couche", "dpu": "dpu_couche",
     "peb": "peb_couche", "sup": "sup_couche",
+    # SOURCES-1 lot 2 — nature et eau (groupes « Contraintes » / « Nature »)
+    "dpf": "dpf_couche", "zone_humide": "zone_humide_couche",
+    "enp": "enp_couche", "rpg": "rpg_couche",
 }
 
 

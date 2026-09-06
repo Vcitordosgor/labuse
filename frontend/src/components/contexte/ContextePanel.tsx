@@ -525,6 +525,14 @@ export function ContextePanel() {
                   <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
                   <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
                   <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
+                  {/* SOURCES-1 lot 2 — le fait AZI/TRI (GASPAR) : quels documents inondation couvrent la commune */}
+                  {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
+                    <RowT lbl="Inondation (AZI / TRI)"
+                      val={[...(d.risques.azi_tri.azi ?? []).map((x: { libelle?: string }) => `AZI ${x.libelle ?? ''}`),
+                            ...(d.risques.azi_tri.tri ?? []).map((x: { libelle?: string }) => `TRI ${x.libelle ?? ''}`)].join(' · ')} />
+                  ) : d.risques.azi_tri ? (
+                    <RowT lbl="Inondation (AZI / TRI)" val="aucun document recensé (GASPAR)" />
+                  ) : null}
                   <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national ? 'oui' : 'non'} />
                 </div>
                 <Source nom={d.risques.source} />

@@ -80,12 +80,23 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     parc = db.execute(text(
         "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
         "AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"), {"c": commune}).scalar()
+    # SOURCES-1 lot 2 — le fait AZI/TRI de la commune (GASPAR, table azi_communes) : quels
+    # documents inondation couvrent la commune. None si la source n'est pas ingérée.
+    azi_tri = None
+    if insee:
+        try:
+            from ..ingestion.azi_tri import azi_tri_commune
+            azi_tri = azi_tri_commune(db, insee)
+        except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
+            db.rollback()
+            azi_tri = None
     return {
         "ppr_pct": _pct_layer("ppr"),
         "mouvement_terrain_pct": _pct_layer("mvt"),
         "catnat_arretes": int(catnat),
         "parc_national": bool(parc),
-        "source": "Géorisques (PPR, mouvement de terrain) · GASPAR (arrêtés CatNat) · BD TOPO (Parc National).",
+        "azi_tri": azi_tri,
+        "source": "Géorisques (PPR, mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
     }
 
 
@@ -258,7 +269,7 @@ _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
     "zonage_abc": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
-                "parc_national": False, "source": "Géorisques · GASPAR · BD TOPO"},
+                "parc_national": False, "azi_tri": None, "source": "Géorisques · GASPAR · BD TOPO"},
     "population": {"habitants": None, "menages": None, "niveau_vie_moyen_eur": None,
                    "logements": None, "vacants": None, "vacance_pct": None,
                    "source": "INSEE Filosofi · INSEE RP"},

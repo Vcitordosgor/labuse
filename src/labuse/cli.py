@@ -1223,6 +1223,60 @@ def ingest_zonage_abc_cmd() -> None:
         typer.echo(f"  filtre zonage_abc : {v.verdict}")
 
 
+@app.command("ingest-deal-carmen")
+def ingest_deal_carmen_cmd() -> None:
+    """SOURCES-1 lot 2 — couches DEAL Carmen (WFS DEAL_REUNION_2020) : ravines DPF (kind dpf),
+    zones humides (kind zone_humide), Ramsar + sites classés/inscrits (kind ens, subtypes du
+    module). GML → ogr2ogr → spatial_layers, purge ciblée, filtres rejoués."""
+    from . import models
+    from .ingestion import deal_carmen
+    with session_scope() as s:
+        sids = {n: s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                             {"n": n}).scalar()
+                for n in (deal_carmen.SOURCE_DPF, deal_carmen.SOURCE_ZH,
+                          deal_carmen.SOURCE_ENP_C)}
+        res = deal_carmen.ingest_deal_carmen(s, source_ids=sids)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ DEAL Carmen : {sum(res.values())} entité(s) — {res}")
+    from . import circuit_journal, filtres
+    for label in ("deal_dpf", "zones_humides", "enp_complements"):
+        f = filtres.get_filtre(label)
+        if f is not None:
+            with session_scope() as s:
+                v = filtres.jouer(s, f)
+                circuit_journal.journaliser(s, "filtre", label, "ingest-deal-carmen",
+                                            "refuse" if v.verdict == "quarantaine" else "ok",
+                                            {"verdict": v.verdict})
+                s.commit()
+            typer.echo(f"  filtre {label} : {v.verdict}")
+
+
+@app.command("ingest-azi-tri")
+def ingest_azi_tri_cmd() -> None:
+    """SOURCES-1 lot 2 — AZI/TRI par commune (Géorisques GASPAR) → azi_communes (fait
+    documentaire ; la géométrie d'aléa inondation reste servie par georisque_alea)."""
+    from .ingestion import azi_tri as azi_mod
+    azi_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = azi_mod.ingest_azi_tri(s)
+        s.commit()
+    typer.echo(f"✓ AZI/TRI : {res['azi']} AZI ({res['communes_azi']} communes), "
+               f"{res['tri']} TRI ({res['communes_tri']} communes).")
+    if res["communes_sans_document"]:
+        typer.echo("  sans AZI ni TRI : " + ", ".join(res["communes_sans_document"]))
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("azi_tri")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "azi_tri", "ingest-azi-tri",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre azi_tri : {v.verdict}")
+
+
 @app.command("ingest-georisques")
 def ingest_georisques_cmd(
     commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),

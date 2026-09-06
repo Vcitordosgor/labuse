@@ -611,3 +611,82 @@ _ajout(_f(
             "état réel (la publication SUP est inégale par catégorie et par commune — fiche 1 du rapport)",
             "sup"),
     ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 2 — la nature et l'eau ══════════════════════════
+# Mesures 07/09/2026 (WFS Carmen DEAL_REUNION_2020, GML EPSG:2975 → ogr2ogr) : DPF 275
+# tronçons + 6 plans d'eau · zones humides 5 inventaires (1 507 + 187 + 30 + 49 + 1 349) ·
+# ENP compléments (Ramsar 1, sites 7, RN 3 dont réserve marine) · AZI/TRI GASPAR par commune.
+
+_ajout(_f(
+    source="deal_dpf", libelle="Ravines — domaine public fluvial (DEAL Carmen)",
+    table="spatial_layers", where="kind = 'dpf'",
+    cle=("id",), geom_col="geom",
+    source_motif="Ravines — domaine public fluvial%", portee_run=True,
+    propres=[
+        c.domaine("d_dpf_subtypes", "subtype", ("cours_eau", "plan_eau"), "bloquant",
+                  "Sous-types DPF connus", "cours_eau | plan_eau (fixés à l'ingestion)"),
+        c.couverture("d_dpf_toponymes", "completude", "avertissant",
+                     "Part des tronçons DPF avec toponyme",
+                     "≥ 80 % (mesuré ~93 % au 07/09 — Rivière du Mât, Bras de la Plaine…)",
+                     "(attrs->>'toponyme') IS NOT NULL", 80.0),
+    ]))
+
+_ajout(_f(
+    source="zones_humides", libelle="Zones humides — inventaires DEAL",
+    table="spatial_layers", where="kind = 'zone_humide'",
+    cle=("id",), geom_col="geom",
+    source_motif="Zones humides — inventaires DEAL%", portee_run=True,
+    propres=[
+        c.domaine("d_zh_inventaires", "subtype",
+                  ("habitats_2011", "inventaire_2009", "espace_fonctionnel_2009",
+                   "inventaire_2003", "basse_altitude_2019"), "bloquant",
+                  "Inventaires DEAL connus",
+                  "les 5 inventaires par secteurs (2003→2019) — la couverture partielle est DITE"),
+    ]))
+
+_ajout(_f(
+    source="enp_complements", libelle="Espaces protégés complémentaires (DEAL Carmen)",
+    table="spatial_layers",
+    where="kind = 'ens' AND subtype IN ('ramsar','site_classe','site_inscrit','reserve_naturelle')",
+    cle=("id",), geom_col="geom",
+    source_motif="Espaces protégés complémentaires%", portee_run=True,
+    propres=[
+        # la réserve marine DOIT être là (absente du jeu INPN local — c'est LE gain du canal)
+        c.compte_mauvais(
+            "d_enp_reserve_marine", "completude", "bloquant",
+            "Réserve marine présente",
+            "≥ 1 entité « Réserve Nationale Marine » (le gain vérifié du canal Carmen)",
+            "NOT EXISTS (SELECT 1 FROM spatial_layers s2 WHERE s2.kind = 'ens' "
+            "AND s2.subtype = 'reserve_naturelle' AND s2.name ILIKE '%marine%')",
+            extra_where="id = (SELECT min(id) FROM spatial_layers WHERE kind = 'ens')"),
+    ]))
+
+_ajout(_f(
+    source="azi_tri", libelle="AZI / TRI — inondation (GASPAR)",
+    table="azi_communes", cle=("insee", "type_doc", "code_national"), insee_col="insee",
+    source_motif="AZI / TRI — inondation%", portee_run=False,
+    propres=[
+        c.domaine("d_azi_types", "type_doc", ("azi", "tri"), "bloquant",
+                  "Types de document connus", "azi | tri (GASPAR)"),
+        # l'AZI/TRI ne couvre PAS les 24 communes (état réel GASPAR) — les non couvertes
+        # sont listées à l'ingestion, jamais un zéro silencieux.
+        c.couverture("d_azi_libelles", "completude", "avertissant",
+                     "Part des documents avec libellé",
+                     "≥ 90 % (GASPAR sert le libellé — mesuré au 07/09)",
+                     "libelle IS NOT NULL AND libelle <> ''", 90.0),
+    ]))
+
+# RPG : la source existe (en_direct, proxy IGN) — filtre riche sur la table servie.
+_ajout(_f(
+    source="rpg_ign", libelle="RPG — déclarations agricoles (couche servie)",
+    table="spatial_layers", where="kind = 'safer'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="RPG — déclarations agricoles%", portee_run=True, a_job=False,
+    propres=[
+        # le code culture est LE gain du lot 2 (cascade zone A/canne) : jamais nul.
+        c.couverture("d_rpg_code_cultu", "completude", "bloquant",
+                     "Part des déclarations avec code culture",
+                     "100 % (mesuré 38 460/38 460 au 07/09 — CSA 12 464)",
+                     "(attrs->>'code_cultu') IS NOT NULL", 99.0),
+    ]))

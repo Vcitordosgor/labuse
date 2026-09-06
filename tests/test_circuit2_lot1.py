@@ -54,7 +54,8 @@ def test_couches_et_fonds_tous_declares():
     # 16 de l'inventaire CIRCUIT-0 + 4 attrapées au lot 5 (ppr, parc national, limites, communes
     # — affichées par le panneau mais absentes de robinets.csv : 0 donnée externe hors registre)
     # + 5 SOURCES-1 lot 1 (er, ebc, dpu, peb, sup — groupe « Contraintes »)
-    assert len(couches) == 25 and len(fonds) == 10
+    # + 4 SOURCES-1 lot 2 (dpf, zone_humide, enp, rpg — « Contraintes » / « Nature »)
+    assert len(couches) == 29 and len(fonds) == 10
     # chaque robinet couche sert au moins une donnée de type couche
     for rid in couches:
         types = {DONNEES[cid].type for cid in registre.ROBINETS[rid].chiffres}

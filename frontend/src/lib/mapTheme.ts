@@ -119,6 +119,15 @@ export type MapTokens = {
   pebOpacity: number
   sup: string
   supOpacity: number
+  /** SOURCES-1 lot 2 — nature et eau : DPF (trait d'eau), zones humides (sarcelle),
+   *  ENP (vert profond ≠ parc marron), RPG (paille — sole agricole). */
+  dpf: string
+  zoneHumide: string
+  zoneHumideOpacity: number
+  enp: string
+  enpOpacity: number
+  rpg: string
+  rpgOpacity: number
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -180,6 +189,11 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pebRamp: { a: '#E8564A', b: '#F0913D', c: '#E3C13C', d: '#9AA0A6' },
     pebOpacity: 0.28,
     sup: '#C05884', supOpacity: 0.24,                     // framboise — servitudes SUP
+    // SOURCES-1 lot 2 — nature et eau (fond sombre)
+    dpf: '#4FC3E8',                                       // trait d'eau vif — DPF (ligne)
+    zoneHumide: '#2E9E8F', zoneHumideOpacity: 0.30,       // sarcelle — zones humides
+    enp: '#1E8F4E', enpOpacity: 0.26,                     // vert profond — espaces protégés
+    rpg: '#C9B458', rpgOpacity: 0.22,                     // paille — cultures déclarées
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -240,6 +254,12 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     pebRamp: { a: '#B91C1C', b: '#D97706', c: '#A8720F', d: '#6B7280' },
     pebOpacity: 0.30,
     sup: '#8E2F5C', supOpacity: 0.24,                     // framboise profonde
+
+    // SOURCES-1 lot 2 — nature et eau (thème clair : mêmes teintes assombries)
+    dpf: '#1A7FA8',
+    zoneHumide: '#1F7A6E', zoneHumideOpacity: 0.30,
+    enp: '#136B39', enpOpacity: 0.26,
+    rpg: '#8F7E2E', rpgOpacity: 0.22,
   },
 }
 

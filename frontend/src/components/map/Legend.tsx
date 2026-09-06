@@ -234,6 +234,18 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.pebRamp.d, borderColor: tTheme.pebRamp.d, opacity: 0.8 }} />PEB zone D — information</span>
       </>}
       {layers.sup && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.sup, opacity: tTheme.supOpacity + 0.35, borderColor: tTheme.sup }} />Servitude d’utilité publique (catégorie au clic)</span>}
+      {layers.dpf && <span className="flex items-center gap-2"><span className="h-0.5 w-4 shrink-0" style={{ background: tTheme.dpf }} />Domaine public fluvial (marchepied 3,25 m — L2131-2)</span>}
+    </div>,
+  })
+  // SOURCES-1 lot 2 — groupe « Nature » : zones humides, espaces protégés, cultures déclarées.
+  const natureActif = layers.zone_humide || layers.enp || layers.rpg
+  if (natureActif) groupes.push({
+    id: 'nature', titre: 'Nature',
+    note: 'Zones humides : inventaires DEAL PAR SECTEURS (2003→2019) — l’absence d’inventaire n’est pas une preuve. Espaces protégés : INPN + compléments DEAL Carmen (Réserve marine, Ramsar, sites classés/inscrits). RPG : déclarations PAC (indication d’usage, pas une servitude).',
+    body: <div data-legend-nature className="flex flex-col gap-1.5 text-[11px] text-txt">
+      {layers.zone_humide && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zoneHumide, opacity: tTheme.zoneHumideOpacity + 0.35, borderColor: tTheme.zoneHumide }} />Zone humide inventoriée (loi sur l’eau — vigilance forte)</span>}
+      {layers.enp && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.enp, opacity: tTheme.enpOpacity + 0.35, borderColor: tTheme.enp }} />Espace naturel protégé (réserves/APB rédhibitoires)</span>}
+      {layers.rpg && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.rpg, opacity: tTheme.rpgOpacity + 0.35, borderColor: tTheme.rpg }} />Culture déclarée (RPG — canne : sole exploitée)</span>}
     </div>,
   })
   if (dispoActif) groupes.push({

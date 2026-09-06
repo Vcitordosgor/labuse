@@ -1096,6 +1096,38 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (sup)",
     reservoirs=("sup_gpu",), portee="live",
     type="couche", table="spatial_layers (kind=sup, subtype=catégorie)", fabrication="requete"),
+ # ── SOURCES-1 lot 2 — la nature et l'eau ──
+ "dpf_couche": C("Ravines et reculs — DPF (couche)", "couche", "global",
+    "domaine public fluvial DEAL (275 tronçons + 6 plans d'eau, arrêté 06-3077 du 21/08/2006) "
+    "— servitude de marchepied 3,25 m rédhibitoire (L2131-2 CGPPP)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (dpf)",
+    reservoirs=("deal_dpf_dpe",), portee="live",
+    type="couche", table="spatial_layers (kind=dpf)", fabrication="requete"),
+ "zone_humide_couche": C("Zones humides (couche)", "couche", "global",
+    "inventaires DEAL par secteurs (2003, 2009 + espaces fonctionnels, habitats 2011, basse "
+    "altitude 2019) — couverture partielle dite, l'absence n'est pas une preuve",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (zone_humide)",
+    reservoirs=("deal_zones_humides",), portee="live",
+    type="couche", table="spatial_layers (kind=zone_humide)", fabrication="requete"),
+ "enp_couche": C("Espaces naturels protégés (couche)", "couche", "global",
+    "ENP par type (réserves naturelles dont marine, APB, conservatoire du littoral, réserves "
+    "biologiques, Ramsar, sites classés/inscrits) — INPN + compléments DEAL Carmen",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (ens)",
+    reservoirs=("inpn_espaces_proteges", "enp_complements_deal",), portee="live",
+    type="couche", table="spatial_layers (kind=ens, subtype=type)", fabrication="requete"),
+ "rpg_couche": C("Cultures déclarées — RPG (couche)", "couche", "commune",
+    "déclarations agricoles RPG (38 460, code culture — canne CSA dominante) ; en zone A : "
+    "canne ≥ 50 % rédhibitoire, absence de déclaration = friche possible (vigilance)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (safer)",
+    reservoirs=("rpg_proxy_ign",), portee="live",
+    type="couche", table="spatial_layers (kind=safer)", fabrication="requete"),
+ "azi_tri_commune": C("AZI / TRI de la commune", "liste", "commune",
+    "atlas des zones inondables et TRI couvrant la commune (GASPAR : libellé, risques, date) "
+    "— fait documentaire ; la géométrie d'aléa reste servie par georisque_alea",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/azi_tri.py:azi_tri_commune",
+    reservoirs=("georisques_azi_tri",), portee="live", type="liste",
+    table="azi_communes"),
  "dispositifs_parcelle": C("Dispositifs et périmètres (parcelle)", "liste", "parcelle",
     "liste des dispositifs du droit des sols touchant la parcelle (ER avec part, EBC avec "
     "part, DPU, zone PEB, SUP par catégorie) — intersections live des couches servies, mêmes "

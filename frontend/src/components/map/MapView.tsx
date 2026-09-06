@@ -221,6 +221,10 @@ const OVERLAYS = {
   dpu: { paint: { 'fill-color': T_SOMBRE.dpu, 'fill-opacity': T_SOMBRE.dpuOpacity, 'fill-outline-color': T_SOMBRE.dpu } },
   peb: { paint: { 'fill-color': pebColorExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.pebOpacity, 'fill-outline-color': pebColorExpr(T_SOMBRE) } },
   sup: { paint: { 'fill-color': T_SOMBRE.sup, 'fill-opacity': T_SOMBRE.supOpacity, 'fill-outline-color': T_SOMBRE.sup } },
+  // SOURCES-1 lot 2 — nature et eau (aplats ; le DPF est une LIGNE, couche dédiée ov-dpf).
+  zone_humide: { paint: { 'fill-color': T_SOMBRE.zoneHumide, 'fill-opacity': T_SOMBRE.zoneHumideOpacity, 'fill-outline-color': T_SOMBRE.zoneHumide } },
+  enp: { paint: { 'fill-color': T_SOMBRE.enp, 'fill-opacity': T_SOMBRE.enpOpacity, 'fill-outline-color': T_SOMBRE.enp } },
+  rpg: { paint: { 'fill-color': T_SOMBRE.rpg, 'fill-opacity': T_SOMBRE.rpgOpacity, 'fill-outline-color': T_SOMBRE.rpg } },
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
@@ -348,6 +352,11 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-dpu', 'fill-color', t.dpu); set('ov-dpu', 'fill-opacity', t.dpuOpacity); set('ov-dpu', 'fill-outline-color', t.dpu)
   set('ov-peb', 'fill-color', pebColorExpr(t)); set('ov-peb', 'fill-opacity', t.pebOpacity); set('ov-peb', 'fill-outline-color', pebColorExpr(t))
   set('ov-sup', 'fill-color', t.sup); set('ov-sup', 'fill-opacity', t.supOpacity); set('ov-sup', 'fill-outline-color', t.sup)
+  // SOURCES-1 lot 2 — nature et eau : teinte + opacité suivent le thème.
+  set('ov-dpf', 'line-color', t.dpf)
+  set('ov-zone_humide', 'fill-color', t.zoneHumide); set('ov-zone_humide', 'fill-opacity', t.zoneHumideOpacity); set('ov-zone_humide', 'fill-outline-color', t.zoneHumide)
+  set('ov-enp', 'fill-color', t.enp); set('ov-enp', 'fill-opacity', t.enpOpacity); set('ov-enp', 'fill-outline-color', t.enp)
+  set('ov-rpg', 'fill-color', t.rpg); set('ov-rpg', 'fill-opacity', t.rpgOpacity); set('ov-rpg', 'fill-outline-color', t.rpg)
   for (const [src, , tok] of DISPO_TRAMES) {
     set(`${src}-trame`, 'fill-pattern', `trame-${tok}-${clair ? 'clair' : 'sombre'}`)
     set(`${src}-trame`, 'fill-opacity', t.aleaTrameOpacity)
@@ -682,6 +691,12 @@ export function MapView() {
   const dpuQ = useQuery({ queryKey: ['layer', 'dpu', commune], queryFn: () => getMapLayer('dpu'), enabled: layers.dpu })
   const pebQ = useQuery({ queryKey: ['layer', 'peb', commune], queryFn: () => getMapLayer('peb'), enabled: layers.peb })
   const supQ = useQuery({ queryKey: ['layer', 'sup', commune], queryFn: () => getMapLayer('sup'), enabled: layers.sup })
+  // SOURCES-1 lot 2 — nature et eau. dpf/zone_humide/enp = couches d'île (commune NULL) ;
+  // rpg = kind virtuel (safer, 38 460 déclarations) par commune, plafond relevé.
+  const dpfQ = useQuery({ queryKey: ['layer', 'dpf'], queryFn: () => getMapLayer('dpf'), enabled: layers.dpf })
+  const zhQ = useQuery({ queryKey: ['layer', 'zone_humide'], queryFn: () => getMapLayer('zone_humide', 10_000), enabled: layers.zone_humide })
+  const enpQ = useQuery({ queryKey: ['layer', 'enp'], queryFn: () => getMapLayer('enp'), enabled: layers.enp })
+  const rpgQ = useQuery({ queryKey: ['layer', 'rpg', commune], queryFn: () => getMapLayer('rpg', 40_000), enabled: layers.rpg })
   // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
@@ -965,6 +980,10 @@ export function MapView() {
       // HTB mais tireté COURT et FIN (la forme et la valeur les séparent), teinte gris-sarcelle.
       m.addLayer({ id: 'ov-mt', type: 'line', source: 'ov-mt', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.mt, 'line-width': 1.1, 'line-dasharray': [2, 1.6], 'line-opacity': 0.85 } })
+      // SOURCES-1 lot 2 — DPF : trait d'eau PLEIN (domaine public fluvial, marchepied 3,25 m).
+      m.addSource('ov-dpf', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-dpf', type: 'line', source: 'ov-dpf', layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.dpf, 'line-width': 2.0, 'line-opacity': 0.9 } })
       // RETOURS-13 R5 — TCSP : trait PLEIN ÉPAIS pour les tronçons EN SITE PROPRE (la voie dédiée
       // se lit d'un coup) ; trait FIN TIRETÉ pour les simples couloirs bus (dits, jamais confondus) ;
       // STATIONS dérivées en disques (le drapeau < 800 m se mesure à la station, pas au tracé).
@@ -1406,7 +1425,8 @@ export function MapView() {
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
       ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations], ['tcsp-zone', tcspZone],
       ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf],   // M134 dispositifs · M137-U znieff · T4 vefa
-      ['er', erQ], ['ebc', ebcQ], ['dpu', dpuQ], ['peb', pebQ], ['sup', supQ]]   // SOURCES-1 lot 1 — droit des sols
+      ['er', erQ], ['ebc', ebcQ], ['dpu', dpuQ], ['peb', pebQ], ['sup', supQ],   // SOURCES-1 lot 1 — droit des sols
+      ['dpf', dpfQ], ['zone_humide', zhQ], ['enp', enpQ], ['rpg', rpgQ]]   // SOURCES-1 lot 2 — nature et eau
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
     if (equipBpe.data) {
@@ -1456,6 +1476,9 @@ export function MapView() {
       useApp.getState().setToast(commune ? `Aucun emplacement réservé publié au GPU sur ${commune}.`
                                          : 'Aucun emplacement réservé sur ce cadrage.')
     }
+    if (layers.zone_humide && zhQ.data && zhQ.data.features.length === 0) {
+      useApp.getState().setToast('Aucune zone humide inventoriée sur ce cadrage — les inventaires DEAL couvrent des SECTEURS (2003→2019) : l’absence d’inventaire n’est pas une preuve d’absence.')
+    }
     if (layers.ebc && ebcQ.data && ebcQ.data.features.length === 0) {
       useApp.getState().setToast(commune ? `Aucun espace boisé classé publié au GPU sur ${commune}.`
                                          : 'Aucun espace boisé classé sur ce cadrage.')
@@ -1482,7 +1505,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, dpfQ.data, zhQ.data, enpQ.data, rpgQ.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, layers.dpf, layers.zone_humide, layers.enp, layers.rpg, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1606,6 +1629,11 @@ export function MapView() {
     m.setLayoutProperty('ov-dpu', 'visibility', vis(layers.dpu))
     m.setLayoutProperty('ov-peb', 'visibility', vis(layers.peb))
     m.setLayoutProperty('ov-sup', 'visibility', vis(layers.sup))
+    // SOURCES-1 lot 2 — nature et eau
+    m.setLayoutProperty('ov-dpf', 'visibility', vis(layers.dpf))
+    m.setLayoutProperty('ov-zone_humide', 'visibility', vis(layers.zone_humide))
+    m.setLayoutProperty('ov-enp', 'visibility', vis(layers.enp))
+    m.setLayoutProperty('ov-rpg', 'visibility', vis(layers.rpg))
     // M106 P1 : les deux couches d'aléa (aplat + contour suivent leur toggle — R7 : plus de trame)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))

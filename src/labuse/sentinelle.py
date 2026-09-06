@@ -509,6 +509,11 @@ SEED: list[dict] = [
     {"name": "Zonage ABC des communes (DHUP)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/liste-des-communes-selon-le-zonage-abc/",
      "selecteur": "last_update"},
+    # ── SOURCES-1 lot 2 — AZI/TRI : même famille que les témoins Géorisques (deux chef-lieux).
+    {"name": "AZI / TRI — inondation (Géorisques GASPAR)", "methode": "temoin",
+     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/azi?code_insee=97411&page=1&page_size=100",
+     "url2": "https://www.georisques.gouv.fr/api/v1/gaspar/azi?code_insee=97410&page=1&page_size=100",
+     "selecteur": None},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
@@ -531,6 +536,12 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "GPU — espaces boisés classés (prescriptions CNIG)": "Même canal que les emplacements réservés (prescriptions GPU par commune) — même amont que « Urbanisme PLU/GPU (API Carto) », non re-surveillé.",
     "GPU — droit de préemption urbain (info-surf)": "Informations GPU (typeinf 04) interrogées par géométrie via API Carto — pas de millésime global (millésime = idurba par commune) ; réingéré par `labuse ingest-gpu-infos` (cadence semestrielle proposée), communes non publiées listées au rapport d'ingestion.",
     "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": "Republication GPU (typeinf 27) des PEB approuvés — pas de flux DGAC versionné pour le 974 (vérifié data.gouv 06/09/2026) ; réingéré par `labuse ingest-gpu-infos`, couverture partielle dite (Pierrefonds non publié au GPU).",
+    # SOURCES-1 lot 2 — WFS Carmen (nœud 29) : ni ETag ni Last-Modified sur GetCapabilities
+    # (vérifié 07/09/2026), capabilities XML (le témoin sentinelle exige du JSON) — réingestion
+    # à la demande (`labuse ingest-deal-carmen`), fraîcheur lue sur la page Circuit.
+    "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Carmen sans en-tête de version (ni ETag ni Last-Modified, vérifié 07/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
+    "Zones humides — inventaires DEAL (Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
+    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) — réingéré à la demande avec les zones humides.",
     "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",
     "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
     "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",

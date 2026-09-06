@@ -155,6 +155,11 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'dpu', label: 'Droit de préemption (DPU)' },
   { key: 'peb', label: 'Plan d’exposition au bruit (PEB)' },
   { key: 'sup', label: 'Servitudes d’utilité publique (SUP)' },
+  // SOURCES-1 lot 2 — la nature et l'eau.
+  { key: 'dpf', label: 'Ravines et reculs (DPF)' },
+  { key: 'zone_humide', label: 'Zones humides' },
+  { key: 'enp', label: 'Espaces naturels protégés' },
+  { key: 'rpg', label: 'Cultures déclarées (RPG)' },
 ]
 
 // M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
@@ -170,7 +175,9 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas'] },
   // SOURCES-1 lot 1 — les contraintes du droit des sols (servitudes et périmètres opposables du
   // PLU/GPU), entre les zonages et les risques : ER, EBC, DPU, PEB, SUP.
-  { famille: 'Contraintes', keys: ['er', 'ebc', 'dpu', 'peb', 'sup'] },
+  { famille: 'Contraintes', keys: ['er', 'ebc', 'dpu', 'peb', 'sup', 'dpf'] },
+  // SOURCES-1 lot 2 — la nature et l'eau (protections et usages du sol vivant).
+  { famille: 'Nature', keys: ['zone_humide', 'enp', 'rpg'] },
   { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
   // RETOURS-13 R3 — la famille s'appelle « Réseaux » (demande Vic) : transport public, arrêts,
   // TCSP, axes, HTB, HTA — chaque entrée avec son « i » (source, millésime, couverture).

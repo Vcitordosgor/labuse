@@ -30,6 +30,9 @@ SRC_ER = "GPU — emplacements réservés (prescriptions CNIG)"
 SRC_EBC = "GPU — espaces boisés classés (prescriptions CNIG)"
 SRC_DPU = "GPU — droit de préemption urbain (info-surf)"
 SRC_PEB = "PEB — plans d'exposition au bruit (DGAC via annexes GPU)"
+# SOURCES-1 lot 2 — la nature et l'eau (DEAL Carmen) :
+SRC_DPF_DEAL = "Ravines — domaine public fluvial (DEAL Carmen)"
+SRC_ZH_DEAL = "Zones humides — inventaires DEAL (Carmen)"
 SRC_SAFER = "RPG — déclarations agricoles (IGN/ASP)"
 SRC_GEORISQUES = "Géorisques"
 # M-G (P2) : les deux FLUX réels du kind='ppr' — le zoné rouge/bleu vient de DEAL Lizmap ; l'assiette
@@ -588,15 +591,50 @@ class DpuLayer(Layer):
 
 @register
 class SaferLayer(Layer):
+    """RPG (déclarations agricoles). SOURCES-1 lot 2 : lecture croisée avec la ZONE PLU —
+    en zone A, une sole cannière exploitée (code CSA ≥ `canne_hard_pct`) → RÉDHIBITOIRE ;
+    une zone A ABSENTE du RPG → VIGILANCE « friche possible » (signal, pas une preuve).
+    Hors zone A : flag inchangé (usage agricole, à vérifier au PLU)."""
+
     name = "safer"
 
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
             return unknown(self.name, "RPG (déclarations agricoles) non ingéré.", source=SRC_SAFER)
-        inter = ctx.intersections(parcel.id, kind)
-        if any(i.coverage > 0 for i in inter):
-            return soft_flag(self.name, params["detail"], Severity(params.get("severity", "moyen")), source=SRC_SAFER)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        # zone A dominante ? (préfixe A strict — AU commence par « A » mais est urbanisable :
+        # même précaution d'ordre que zonage_plu_gpu, U/AU testés d'abord)
+        zk = params.get("plu_kind", "plu_gpu_zone")
+        prefixes_a = tuple(params.get("zone_a_prefixes", ["A"]))
+        en_zone_a = False
+        if ctx.kind_present(zk):
+            for z in ctx.intersections(parcel.id, zk):
+                nom = (z.name or "").strip().upper()
+                if z.coverage >= 0.5 and nom.startswith(prefixes_a) and not nom.startswith("AU"):
+                    en_zone_a = True
+                    break
+        if inter:
+            canne = {str(c) for c in params.get("canne_codes", ["CSA"])}
+            part_canne = sum(i.coverage for i in inter
+                             if ((i.attrs or {}).get("code_cultu") or "") in canne)
+            if en_zone_a and part_canne * 100 >= float(params.get("canne_hard_pct", 50)):
+                return hard_exclude(
+                    self.name,
+                    f"Zone A du PLU cultivée en canne à sucre ({part_canne * 100:.0f} % de la "
+                    "parcelle déclarée CSA au RPG) — sole cannière exploitée, aucune "
+                    "perspective de mutation foncière.",
+                    kind="exclue", source=SRC_SAFER)
+            cult = (inter[0].attrs or {}).get("code_cultu")
+            detail = params["detail"] + (f" Culture déclarée : {cult}." if cult else "")
+            return soft_flag(self.name, detail, Severity(params.get("severity", "moyen")),
+                             source=SRC_SAFER)
+        if en_zone_a:
+            return soft_flag(
+                self.name,
+                "Zone A du PLU SANS déclaration RPG — friche agricole possible (signal à "
+                "vérifier sur le terrain, l'absence de déclaration n'est pas une preuve).",
+                Severity.MOYEN, source=SRC_SAFER)
         return passed(self.name, "Hors parcelle agricole déclarée (RPG).", source=SRC_SAFER)
 
 
@@ -730,6 +768,75 @@ class RavineLayer(Layer):
 
 
 @register
+class DpfLayer(Layer):
+    """SOURCES-1 lot 2 — domaine public fluvial (DEAL Carmen, kind='dpf').
+
+    L2131-2 CGPPP : servitude de marchepied de 3,25 m le long du DPF → RÉDHIBITOIRE
+    (bande inconstructible grevée d'un passage public ; le lit lui-même est domaine public,
+    inaliénable). La bande de 10 m du code forestier (R.174-2) reste portée par la couche
+    `ravine` (BD TOPO, toutes les ravines) — anti-double-compte documenté."""
+
+    name = "dpf"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Domaine public fluvial (DEAL) non ingéré.", source=SRC_DPF_DEAL)
+        marchepied = float(params.get("marchepied_m", 3.25))
+        d = ctx.min_distance_m(parcel.id, kind)
+        if d is None or d > marchepied:
+            return passed(self.name, "Hors servitude de marchepied du domaine public fluvial.",
+                          source=SRC_DPF_DEAL)
+        ou = "parcelle traversée par le DPF" if d < 0.5 else f"DPF à ~{d:.1f} m"
+        return hard_exclude(
+            self.name,
+            f"Domaine public fluvial ({ou}) — servitude de marchepied de 3,25 m "
+            "(art. L2131-2 CGPPP) : bande grevée d'un passage public, inconstructible ; "
+            "lit du cours d'eau domanial inaliénable (arrêté préfectoral n°06-3077 du "
+            "21/08/2006).",
+            kind="exclue", source=SRC_DPF_DEAL)
+
+
+@register
+class ZoneHumideLayer(Layer):
+    """SOURCES-1 lot 2 — zones humides (inventaires DEAL, kind='zone_humide').
+
+    VIGILANCE FORTE, jamais une exclusion seule : les inventaires sont PARTIELS (par
+    secteurs, 2003→2019) et « habitats de zones humides » ≠ zones humides réglementaires —
+    mais la loi sur l'eau (séquence éviter-réduire-compenser) rend le sujet souvent
+    rédhibitoire À L'INSTRUCTION. Couverture par secteurs DITE dans le motif."""
+
+    name = "zone_humide"
+
+    _INVENTAIRES = {"habitats_2011": "cartographie d'habitats 2011",
+                    "inventaire_2009": "inventaire 2009",
+                    "espace_fonctionnel_2009": "espace fonctionnel (2009)",
+                    "inventaire_2003": "inventaire 2003",
+                    "basse_altitude_2019": "zones humides de basse altitude 2019"}
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Inventaires zones humides (DEAL) non ingérés.",
+                           source=SRC_ZH_DEAL)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name,
+                          "Hors zone humide inventoriée (inventaires DEAL par secteurs — "
+                          "l'absence d'inventaire n'est pas une preuve d'absence).",
+                          source=SRC_ZH_DEAL)
+        pire = max(inter, key=lambda i: i.coverage)
+        inv = self._INVENTAIRES.get(pire.subtype or "", pire.subtype or "inventaire DEAL")
+        return soft_flag(
+            self.name,
+            f"Zone humide inventoriée ({inv}) : {pire.name or 'sans nom'} "
+            f"({pire.coverage * 100:.0f} % de la parcelle) — loi sur l'eau, séquence "
+            "éviter-réduire-compenser : contrainte souvent rédhibitoire à l'instruction, "
+            "étude zone humide à prévoir.",
+            Severity.FORT, source=SRC_ZH_DEAL)
+
+
+@register
 class TraitDeCoteLayer(Layer):
     name = "trait_de_cote"
 
@@ -829,9 +936,30 @@ class EnsLayer(Layer):
         # NÉGATIF : on ne conclut pas l'absence à partir d'une couche vide → UNKNOWN.
         if not ctx.kind_present_commune(kind, parcel.commune):
             return unknown(self.name, "Donnée espaces protégés (INPN) non disponible sur cette commune.", source=SRC_ENS)
-        if any(i.coverage > 0 for i in ctx.intersections(parcel.id, kind)):
-            return soft_flag(self.name, params["detail"], Severity(params.get("severity", "moyen")), source=SRC_ENS)
-        return passed(self.name, "Hors espace protégé (INPN).", source=SRC_ENS)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Hors espace protégé (INPN).", source=SRC_ENS)
+        # SOURCES-1 lot 2 (mandat) : réserves naturelles et APB → RÉDHIBITOIRE (protection
+        # réglementaire forte, construction exclue) ; sévérité PAR SUBTYPE ailleurs (sites
+        # classés/inscrits = info ×0, anti-double-compte SUP AC2 ; Ramsar = indication).
+        hard = {str(x) for x in params.get("hard_subtypes", [])}
+        sev_par_subtype = {str(k): str(v) for k, v in (params.get("severites") or {}).items()}
+        pire = max(inter, key=lambda i: i.coverage)
+        for i in inter:
+            if (i.subtype or "") in hard:
+                nom = i.name or i.subtype or "espace protégé"
+                return hard_exclude(
+                    self.name,
+                    f"Espace protégé à protection forte : {nom} ({(i.subtype or '').replace('_', ' ')}, "
+                    f"{i.coverage * 100:.0f} % de la parcelle) — construction exclue "
+                    "(réserve naturelle / arrêté de protection de biotope).",
+                    kind="exclue", source=SRC_ENS)
+        sev = sev_par_subtype.get(pire.subtype or "", params.get("severity", "moyen"))
+        detail = params["detail"]
+        if sev == "info":
+            detail = (f"Espace protégé : {pire.name or pire.subtype} — déjà porté par la "
+                      "servitude AC2 (0 pt, anti-double-compte).")
+        return soft_flag(self.name, detail, Severity(sev), source=SRC_ENS)
 
 
 @register

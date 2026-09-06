@@ -270,7 +270,9 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # SOURCES-1 lot 1 — +6 : ER/EBC/DPU/PEB (raisons : canal GPU par commune), ZPPA (Atlas
     # injoignable, rappel 180 j) en RAISONS ; SUP passe de RAISONS au SEED (sonde catégorielle
     # temoin) ; ABC entre au SEED (api data.gouv).
-    assert len(noms) == 81
+    # SOURCES-1 lot 2 — +4 : DPF/zones humides/ENP compléments (raisons : WFS Carmen sans
+    # en-tête de version) + AZI/TRI (SEED temoin GASPAR, deux chef-lieux).
+    assert len(noms) == 85
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():
