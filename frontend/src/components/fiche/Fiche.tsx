@@ -25,6 +25,7 @@ import { REF, RENOUV, RENOUV_CODE_LABEL, IC, FicheAccordionCtx, RefDrawer, Group
 // RETOURS-11F4 (F5) — la section Constructibilité + sa machinerie vivent dans `constructibilite.tsx`.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par EtudierBien / M22Programme / le test).
 import { ConstructibiliteSection } from './constructibilite'
+import { LeBienSection } from './leBien'
 import { RisquesSection } from './risques'
 import { MarcheSection } from './marche'
 import { ReseauxSection } from './reseaux'
@@ -1330,6 +1331,11 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ③ ÉCONOMIE — Constructibilité (capacité/bilan/calcul tracé) + Mode B. RETOURS-11F4 (F5) :
                 la section entière vit dans sections `constructibilite.tsx` (auto-suffisante). */}
             <ConstructibiliteSection f={f} idu={idu} />
+
+            {/* FICHE-1 lot 1 — « Le bien » : le bâtiment existant (emprise, hauteur, nombre, surface
+                libre) + nature/pente du toit (LiDAR). Placé après Constructibilité ; s'omet si rien
+                d'évaluable (couche bâtiments non ingérée). */}
+            <LeBienSection f={f} idu={idu} />
 
             {/* Risques et protections — clôt le groupe LE TERRAIN. RETOURS-11F4 (F6) : vigilances
                 d'abord, « sans objet » repliés, SUP rapatriées, compteur vrai → module `risques.tsx`. */}

@@ -71,6 +71,25 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | `marge_surelevation_m` | nombre | Marge de surélévation (à l'égout) | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `potentiel` · src/labuse/faisabilite/potentiel.py:surelevation | run | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *hauteur restante sous la règle de hauteur à l'égout de la zone (moteur commun, EXPORTS-1 3.2)* | | | | | |
 
+## Le bien
+
+*Robinet `fiche_parcelle_le_bien` — route `/parcels/{idu}`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `emprise_batie_m2` | nombre | Emprise bâtie | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), cosia (CoSIA 2025 (PVA juil.-août 2025, 20 cm)) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (BD TOPO au sol ; CoSIA parcel_bati_revele en note) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *emprise au sol du bâti — empreinte vecteur BD TOPO (somme des intersections), cohérente avec le nombre de bâtiments ; CoSIA servi À PART quand il détecte du bâti hors BD TOPO* | | | | | |
+| `hauteur_bati_m` | nombre | Hauteur du bâti | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée) | moteur `potentiel` · src/labuse/faisabilite/potentiel.py:_hauteur_bati_m | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *hauteur du bâti principal (BD TOPO, max des bâtiments intersectants)* | | | | | |
+| `n_batiments` | nombre | Nombre de bâtiments | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (bati.fiche_block — BD TOPO) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *compte des bâtiments de la parcelle (BD TOPO, intersection ≥ 10 m²)* | | | | | |
+| `surface_libre_sol_m2` | nombre | Surface au sol libre | bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée), cosia (CoSIA 2025 (PVA juil.-août 2025, 20 cm)), cadastre_api_carto (PCI Parcellaire Express (DGFiP) — « latest » ingérée) | moteur `bati_revele` · src/labuse/bati.py:le_bien_block (surface parcelle − emprise bâtie) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *surface au sol non bâtie restante (surface parcelle − emprise bâtie), plancher à 0* | | | | | |
+| `nature_toit` | classe — domaine : plat, monopente, double_pente, croupe_complexe | Nature du toit | lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)), bd_topo (BD TOPO® V3 (IGN) — édition non enregistrée) | moteur `solaire` · src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *forme du toit du plus grand bâtiment lue sur le LiDAR HD (MNH), servie ≥ 0,70 de confiance sinon « non déterminée — pans non nets » (RETOURS-15 U5)* | | | | | |
+| `pente_toit_deg` | nombre | Pente du toit | lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)) | moteur `solaire` · src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *pente médiane du toit du plus grand bâtiment (degrés), mesure directe LiDAR HD (MNH) — servie même sous le seuil de forme* | | | | | |
+
 ## Risques et protections
 
 *Robinet `fiche_parcelle_risques` — route `/parcels/{idu}`*

@@ -204,6 +204,25 @@ def analyse_toiture(session: Session, idu: str) -> dict | None:
                     meta.get("part_pentue"), meta.get("confiance"))
 
 
+def toiture_depuis_cache(session: Session, idu: str) -> dict | None:
+    """FICHE-1 lot 1 — lecture CACHE SEULE (`toiture_lidar`), JAMAIS de requête WMS : la fiche
+    parcelle se charge souvent, un fetch LiDAR de 60 s à chaque ouverture est exclu. Le cache est
+    chauffé par la fiche soleil (analyse_toiture) et le builder de nuit. None = non encore relevé
+    (le tiroir « Le bien » n'affiche alors pas les lignes toit) — ce n'est ni un état ni un échec,
+    seulement l'absence de relevé ; les trois états U5 (servi · non déterminée · non calculée)
+    voyagent dans le payload dès que le cache existe."""
+    try:
+        row = session.execute(text(
+            "SELECT verdict, pente_mediane_deg, pans_orientation_deg, part_pentue, confiance "
+            "FROM toiture_lidar WHERE idu = :i"), {"i": idu}).mappings().first()
+    except Exception:  # noqa: BLE001 — table pas encore créée (base nue) : pas de relevé, pas d'échec
+        return None
+    if not row:
+        return None
+    return _payload(row["verdict"], row["pente_mediane_deg"],
+                    row["pans_orientation_deg"], row["part_pentue"], row["confiance"])
+
+
 def _payload(verdict: str, pente, pans, part, confiance) -> dict:
     conf = float(confiance) if confiance is not None else 0.0
     # S11 — sous le seuil, le verdict de forme n'est JAMAIS servi (0 faux au seuil sur

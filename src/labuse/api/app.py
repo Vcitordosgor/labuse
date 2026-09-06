@@ -35,6 +35,7 @@ from sqlalchemy.exc import DataError as _SA_DataError   # FIX-C5 — handler glo
 from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
+from .. import bati as _bati   # FICHE-1 lot 1 — bloc « Le bien » (producteur unique)
 from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import FeedbackVerdict
@@ -3652,6 +3653,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "proximites_equipements": _proximites_equipements_block(db, idu),
         # M125-2 — activité de dépôt récente (Sitadel3), branchée à la premium (était legacy-only).
         "depots": _depots_block(db, head["id"]),
+        # FICHE-1 lot 1 — « Le bien » : le bâtiment existant (emprise, hauteur, nombre, surface
+        # libre) + nature/pente du toit (LiDAR, cache seul). None si couche bâtiments non ingérée
+        # (le front omet le tiroir). Producteur unique bati.le_bien_block, aucun calcul au front.
+        "le_bien": _bati.le_bien_block(db, idu),
     }
 
 

@@ -423,6 +423,29 @@ export interface Fiche {
   // fiche-secteur — compte d'opportunités de la SECTION cadastrale (ex-carnet) : parcelles des tiers
   // « Priorité » (brulante) + « À suivre » (chaude) du run servi. Cliquable → carte sur la section.
   secteur_opportunites?: { section: string; n: number } | null
+  // FICHE-1 lot 1 — « Le bien » : le bâtiment existant. null (ou disponible=false) → tiroir omis.
+  le_bien?: LeBien | null
+}
+
+// FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).
+export interface LeBien {
+  disponible: boolean
+  code?: string | null
+  occupation_label?: string | null
+  emprise_batie_m2: number
+  emprise_source: string
+  cosia_detecte_m2?: number | null   // CoSIA « détecté non cartographié » (dit à part), sinon null
+  nb_batiments: number | null
+  hauteur_bati_m: number | null
+  surface_libre_m2: number | null
+  surface_parcelle_m2: number | null
+  source_bati: string
+  // toit LiDAR HD (cache seul) — null = non encore relevé ; sinon 3 états U5 (verdict).
+  toit?: {
+    verdict: string; libelle: string; libelle_court: string
+    pente_mediane_deg: number | null; pans_orientation_deg: number[]
+    part_pentue: number | null; confiance: number | null; seuil: number; statut: string; methode: string
+  } | null
 }
 
 // M125-2 — copropriété immatriculée (RNIC) rattachée à la parcelle. Information, jamais un verdict.
