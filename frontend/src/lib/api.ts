@@ -748,9 +748,9 @@ export interface RenouvItem {
   idu: string; commune_nom: string; commune_insee: string; renouv_score: number
   comp_potentiel: number; comp_assiette: number; comp_marche: number
   code_bati_origine: string; sdp_residuelle_m2: number | null; surface_m2: number | null
-  // RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine) + surélévation.
+  // RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine).
+  // OUTILS-FIX-1 C1 — surélévation retirée (batch débranché) : le signal vivant vit dans la Faisabilité.
   sdp_nette_m2: number | null; contrainte_pct: number | null
-  surelevation_possible: boolean | null; niveaux_surelevation: number | null
   zone_plu: string | null; rang_segment: number; rang_commune: number
   // puce d'action (verdictMeta) : tier v2 servi + étage 0 du run servi — jamais « Classement historique »
   tier_v2: string | null; etage0: boolean

@@ -552,11 +552,10 @@ export interface Renouvellement {
   code_bati_origine: string
   zone_plu: string | null
   sdp_residuelle_m2: number | null
-  // RETOURS-11F M9 — capacité NETTE des contraintes + surélévation (données servies du run).
+  // RETOURS-11F M9 — capacité NETTE des contraintes (données servies du run).
+  // OUTILS-FIX-1 C1 — surélévation retirée du segment (batch débranché) ; vivante dans la Faisabilité.
   sdp_nette_m2: number | null
   contrainte_pct: number | null
-  surelevation_possible: boolean | null
-  niveaux_surelevation: number | null
   surface_m2: number | null
   composantes: { cle: string; points: number; max: number; libelle: string }[]
 }

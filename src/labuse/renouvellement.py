@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS parcel_renouvellement (
                                           -- (pente > 30 %, PPR rouge %, ravine/mvt). C'est ELLE qui
                                           -- alimente comp_potentiel — une parcelle contrainte descend.
   contrainte_pct     int,                -- part déduite (0-100) = 100 × (1 − sdp_nette/sdp_brute)
-  surelevation_possible boolean,         -- RETOURS-11F M9 : hauteur PLU − hauteur bâti (BD TOPO)
-  niveaux_surelevation  int,             -- niveaux gagnables (~3 m/niveau) si surélévation possible
+  surelevation_possible boolean,         -- OUTILS-FIX-1 C1 : PLUS ALIMENTÉE (surélévation débranchée) —
+  niveaux_surelevation  int,             -- colonnes conservées sans migration, à SUPPRIMER au prochain rebuild de schéma
   surface_m2         int,
   zone_plu           text,
   commune            varchar(5) NOT NULL,
@@ -210,14 +210,14 @@ seg AS (
                          > :pente_seuil THEN :f_pente ELSE 1.0 END
              * CASE WHEN rav.idu IS NOT NULL THEN :f_ravine ELSE 1.0 END
              * CASE WHEN mvt.idu IS NOT NULL THEN :f_mvt   ELSE 1.0 END
-           )) AS frac_net,
-           -- EXPORTS-1 lot 3 (3.1) : la lecture de parcel_residuel_bati (table ORPHELINE — bâtisseur
-           -- retiré du code actif, surélévation au FAÎTAGE) est SUPPRIMÉE. Le signal vivant est au
-           -- moteur commun (faisabilite/potentiel.surelevation, hauteur à l'ÉGOUT) — ce batch sera
-           -- rebranché dessus à sa prochaine reconstruction ; d'ici là, pas de signal plutôt qu'un
-           -- signal faux.
-           false AS surelevable,
-           NULL::int AS niveaux_sur
+           )) AS frac_net
+           -- OUTILS-FIX-1 C1 (décision Vic 06/09) : la surélévation N'EST PLUS calculée ici. EXPORTS-1
+           -- lot 3 avait débranché la table orpheline (parcel_residuel_bati, faîtage) en écrivant
+           -- false/NULL en dur ; la colonne servie restait donc périmée jusqu'au prochain rebuild
+           -- (VERIF-1 Q3). On cesse d'alimenter surelevable/niveaux_sur : « pas de signal plutôt qu'un
+           -- signal périmé ». Le signal VIVANT reste au moteur commun (faisabilite/potentiel.surelevation,
+           -- hauteur à l'égout), servi par la fiche. Les colonnes de parcel_renouvellement seront
+           -- supprimées au prochain rebuild de schéma (pas de migration ici).
     FROM bati_x b
     JOIN p_model_ext_dataset d ON d.idu = b.idu AND d.annee = :annee
     LEFT JOIN p_model_ext_copro c ON c.idu = b.idu
@@ -261,11 +261,11 @@ scored AS (
 INSERT INTO parcel_renouvellement
     (idu, renouv_score, comp_potentiel, comp_assiette, comp_marche,
      code_bati_origine, sdp_residuelle_m2, sdp_nette_m2, contrainte_pct,
-     surelevation_possible, niveaux_surelevation, surface_m2, zone_plu, commune,
+     surface_m2, zone_plu, commune,
      rang_segment, rang_commune, run_label)
 SELECT idu, score, comp_potentiel, comp_assiette, comp_marche,
        code, nullif(sdp, 0), nullif(sdp_nette, 0), contrainte_pct,
-       surelevable, niveaux_sur, surface, zone_plu, commune,
+       surface, zone_plu, commune,
        rank() OVER (ORDER BY score DESC, idu),
        rank() OVER (PARTITION BY commune ORDER BY score DESC, idu),
        :run
@@ -342,7 +342,7 @@ def top(session: Session, n: int = 20, commune: str | None = None) -> list[dict]
         SELECT idu, commune, renouv_score, rang_segment, rang_commune,
                comp_potentiel, comp_assiette, comp_marche,
                code_bati_origine, sdp_residuelle_m2, sdp_nette_m2, contrainte_pct,
-               surelevation_possible, niveaux_surelevation, surface_m2, zone_plu
+               surface_m2, zone_plu
         FROM parcel_renouvellement {where}
         ORDER BY rang_segment LIMIT :n"""),
         {"n": n, "c": commune}).mappings().all()]

@@ -1017,9 +1017,9 @@ export function Fiche({ idu }: { idu: string }) {
                         ? `SDP nette ${fmtInt(f.renouvellement.sdp_nette_m2)} m²${f.renouvellement.contrainte_pct ? ` (−${f.renouvellement.contrainte_pct} % contraintes)` : ''}`
                         : (f.renouvellement.sdp_residuelle_m2 != null && f.renouvellement.sdp_residuelle_m2 > 0 ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —'),
                       f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
-                      f.renouvellement.surelevation_possible
-                        ? `surélévation ${f.renouvellement.niveaux_surelevation ? `+${f.renouvellement.niveaux_surelevation} niv.` : 'possible'}`
-                        : `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
+                      // OUTILS-FIX-1 C1 — la surélévation n'est plus servie par le segment (batch débranché) ;
+                      // le signal vivant reste dans l'onglet Faisabilité. Ici : rang île.
+                      `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
                     ]} />
                     <p style={{ margin: 0, fontSize: 10, color: REF.dim }}>{f.renouvellement.source}</p>
                   </div>
