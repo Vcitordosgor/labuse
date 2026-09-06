@@ -134,3 +134,40 @@ def couverture_moteurs_pkg() -> dict[str, list[str]]:
         for f in fiche.moteur_fonctions:
             couverture.setdefault(f, []).append(fiche.donnees[0])
     return couverture
+
+
+def pour_api(cid: str) -> dict | None:
+    """CIRCUIT-4 lot 5 — la règle d'une donnée, au format servi (page Circuit, tiroir de trace,
+    miroir base). None si la donnée n'a pas de fiche (passe-plat/constante)."""
+    charger()
+    f = FICHES.get(cid)
+    if f is None:
+        return None
+    r = f.reference
+    return {
+        "classe": f.classe, "verdict": f.verdict, "valide_par": f.valide_par,
+        "verifie_le": f.verifie_le, "choix": f.choix, "ecart": f.ecart,
+        "reference": ({"titre": r.titre, "article": r.article, "url": r.url,
+                       "version": r.version, "extrait": r.extrait, "lu_le": r.lu_le}
+                      if r else None),
+    }
+
+
+def robinets_par_verdict(robinets_chiffres: dict) -> dict:
+    """CIRCUIT-4 lot 5.3 — {ecart: {ids robinets}, choix: {ids robinets}} : un robinet est en
+    « écart à la règle » s'il SERT une donnée d'une fiche verdict == ecart ; « choix à
+    confirmer » s'il sert une donnée choix_labuse encore valide_par == en_attente.
+    `robinets_chiffres` = {id_robinet: [chiffres servis]}."""
+    charger()
+    ecart_donnees = {d for f in TOUTES if f.verdict == "ecart" for d in f.donnees}
+    choix_donnees = {d for f in TOUTES
+                     if f.classe == "choix_labuse" and f.valide_par == "en_attente"
+                     for d in f.donnees}
+    out = {"ecart": set(), "choix": set()}
+    for rid, chiffres in robinets_chiffres.items():
+        cs = set(chiffres or [])
+        if cs & ecart_donnees:
+            out["ecart"].add(rid)
+        if cs & choix_donnees:
+            out["choix"].add(rid)
+    return out

@@ -546,3 +546,21 @@ def ingest_bodacc(ctx: JobContext) -> None:
     exactement ce que faisait /etc/cron.d/labuse-bodacc."""
     _ingest_via_cli(ctx, "ingest-bodacc")
     _ingest_via_cli(ctx, "fraicheur-derives")
+
+
+def regles_references(ctx) -> None:
+    """CIRCUIT-4 lot 5.4 — renvoie les agents « règle » sur les fiches dont la référence date de
+    plus de six mois ; chaque rapport atterrit dans regle_agent_rapports + circuit_journal (jamais
+    d'écriture dans les fiches — un humain relit). Job DÉSACTIVÉ par défaut (jamais posé au
+    crontab) : ne tourne qu'à la main (`labuse jobs run regles-references`)."""
+    from . import agent_regle
+    from .db import session_scope
+    cibles = agent_regle.fiches_a_reverifier(plus_de_jours=180)
+    verdicts: dict[str, int] = {}
+    for did in cibles:
+        with session_scope() as s:
+            out = agent_regle.lancer_agent(s, did, par="cron")
+            s.commit()
+        v = out.get("verdict", "erreur")
+        verdicts[v] = verdicts.get(v, 0) + 1
+    ctx.compte(fiches_a_reverifier=len(cibles), **{f"verdict_{k}": n for k, n in verdicts.items()})

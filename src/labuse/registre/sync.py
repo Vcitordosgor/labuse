@@ -22,8 +22,18 @@ CREATE TABLE IF NOT EXISTS registre_chiffres (
   reservoirs text[] NOT NULL DEFAULT '{}',
   portee varchar(8) NOT NULL,
   version_def varchar(12) NOT NULL,
+  classe_regle varchar(20),
+  verdict_regle varchar(24),
+  valide_par varchar(12),
+  verifie_le varchar(12),
+  reference_regle jsonb,
   sync_le timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE registre_chiffres ADD COLUMN IF NOT EXISTS classe_regle varchar(20);
+ALTER TABLE registre_chiffres ADD COLUMN IF NOT EXISTS verdict_regle varchar(24);
+ALTER TABLE registre_chiffres ADD COLUMN IF NOT EXISTS valide_par varchar(12);
+ALTER TABLE registre_chiffres ADD COLUMN IF NOT EXISTS verifie_le varchar(12);
+ALTER TABLE registre_chiffres ADD COLUMN IF NOT EXISTS reference_regle jsonb;
 CREATE TABLE IF NOT EXISTS registre_robinets (
   id varchar(80) PRIMARY KEY,
   categorie varchar(20) NOT NULL,
@@ -50,14 +60,24 @@ def sync(db) -> dict:
         if stmt.strip():
             db.execute(text(stmt))
     db.execute(text("TRUNCATE registre_chiffres, registre_robinets, registre_aretes"))
+    # CIRCUIT-4 lot 5.1 — le miroir porte la RÈGLE de chaque donnée (classe, verdict, référence,
+    # valide_par, verifie_le), lue des fiches (le code est la vérité).
+    import json as _json
+
+    from .. import regles as _regles
     for cid, c in CHIFFRES.items():
+        rg = _regles.pour_api(cid) or {}
         db.execute(text(
             "INSERT INTO registre_chiffres (id, libelle, unite, niveau, definition, moteur, calcul,"
-            " fonction, reservoirs, portee, version_def) VALUES (:i, :l, :u, :n, :d, :m, :c, :f,"
-            " :r, :p, :v)"),
+            " fonction, reservoirs, portee, version_def, classe_regle, verdict_regle, valide_par,"
+            " verifie_le, reference_regle) VALUES (:i, :l, :u, :n, :d, :m, :c, :f,"
+            " :r, :p, :v, :cr, :vr, :vp, :vl, :rr)"),
             {"i": cid, "l": c.libelle, "u": c.unite, "n": c.niveau, "d": c.definition,
              "m": c.moteur, "c": c.calcul, "f": c.fonction, "r": list(c.reservoirs),
-             "p": c.portee, "v": c.version_def})
+             "p": c.portee, "v": c.version_def,
+             "cr": rg.get("classe"), "vr": rg.get("verdict"), "vp": rg.get("valide_par"),
+             "vl": rg.get("verifie_le"),
+             "rr": _json.dumps(rg.get("reference"), ensure_ascii=False) if rg.get("reference") else None})
     for rid, r in ROBINETS.items():
         db.execute(text(
             "INSERT INTO registre_robinets (id, categorie, nom, parent, route, mode_rendu,"

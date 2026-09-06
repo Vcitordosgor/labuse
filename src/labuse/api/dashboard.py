@@ -1811,7 +1811,16 @@ def admin_circuit(request: Request) -> dict:
     # des robinets ET par le Résumé → les deux comptent exactement les mêmes robinets.
     _chiffres_par_rob = {rb["id"]: rb["chiffres"] for rb in robinets}
     _fuite_rob, _eau_rob = _etats.robinets_touches(fuites, eau, _chiffres_par_rob)
-    _ctx = {"fuite_robinets": _fuite_rob, "eau_ancienne_robinets": _eau_rob, "chiffres": chiffres}
+    # CIRCUIT-4 (lot 5.2/5.3) — chaque donnée porte sa RÈGLE (classe, verdict, référence) lue des
+    # fiches ; les robinets en « écart à la règle » entrent dans l'état (rouge) ET au Résumé ; les
+    # « choix à confirmer » n'alimentent QUE la ligne grise « À décider » (décision d'autonomie :
+    # ne pas griser la moitié du diagramme pour des choix non bloquants — écrite au CR).
+    from .. import regles as _regles
+    for _cid in chiffres:
+        chiffres[_cid]["regle"] = _regles.pour_api(_cid)
+    _verdicts_rob = _regles.robinets_par_verdict(_chiffres_par_rob)
+    _ctx = {"fuite_robinets": _fuite_rob, "eau_ancienne_robinets": _eau_rob,
+            "ecart_regle_robinets": _verdicts_rob["ecart"], "chiffres": chiffres}
     for rb in robinets:
         rb["hors_moteur"] = _etats.hors_moteur_de(rb, chiffres)
         rb["etat"] = list(_etats.etat_robinet(rb, _ctx))
@@ -1858,7 +1867,9 @@ def admin_circuit(request: Request) -> dict:
                       and rr.get("label") != runs.current()), None)
     resume = _resume.composer(reservoirs, robinets, compteurs=compteurs, residuel=residuel,
                               run_servi=runs.current(), candidat=_candidat,
-                              fuite_robinets=_fuite_rob, eau_robinets=_eau_rob)
+                              fuite_robinets=_fuite_rob, eau_robinets=_eau_rob,
+                              regles_ecart=sorted(_verdicts_rob["ecart"]),
+                              regles_choix=sorted(_verdicts_rob["choix"]))
     return {
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "reservoirs": reservoirs, "robinets": robinets, "chiffres": chiffres,
@@ -2296,14 +2307,21 @@ def admin_circuit_robinet(request: Request, rid: str) -> dict:
                "parent": rb.parent, "route": rb.route, "chiffres": list(rb.chiffres),
                "hors_registre": rb.hors_registre}
     robinet["hors_moteur"] = _etats.hors_moteur_de(robinet, chiffres_map)
+    # CIRCUIT-4 (lot 5.2) — le détail dit le MÊME état que la liste : les écarts à la règle du
+    # robinet (fiches verdict=ecart, join par chiffre) entrent dans le ctx, et chaque chiffre
+    # porte sa règle (classe, verdict, référence + extrait) pour les badges.
+    from .. import regles as _regles
+    _v = _regles.robinets_par_verdict({rid: list(rb.chiffres)})
     ctx = {"fuite_robinets": {rid} if fuites else set(),
-           "eau_ancienne_robinets": {rid} if eau else set(), "chiffres": chiffres_map}
+           "eau_ancienne_robinets": {rid} if eau else set(),
+           "ecart_regle_robinets": _v["ecart"], "chiffres": chiffres_map}
     robinet["etat"] = list(_etats.etat_robinet(robinet, ctx))
     chiffres = []
     for cid in rb.chiffres:
         ch = chiffres_map.get(cid, {})
         chiffres.append({"id": cid, **ch,
-                         "hors_moteur": _etats.est_hors_moteur(ch.get("calcul"))})
+                         "hors_moteur": _etats.est_hors_moteur(ch.get("calcul")),
+                         "regle": _regles.pour_api(cid)})
     amont_slugs = sorted({s for cid in rb.chiffres for s in
                           [x for x, cs in r2c.items() if cid in cs]})
     amont = [{"slug": s, "nom": slug_nom.get(s, s)} for s in amont_slugs]

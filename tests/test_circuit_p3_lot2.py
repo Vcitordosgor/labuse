@@ -73,10 +73,13 @@ def test_egalite_robinets_a_regarder(client, engine):
 
     circ = client.get("/admin/circuit").json()
 
-    # attendu, construit DES TABLES + REGISTRE (la même logique que robinets_touches)
+    # attendu, construit DES TABLES + REGISTRE + FICHES DE RÈGLE (le code est la vérité)
+    from labuse import regles as R4
     hm_rob = {rid for rid, rb in ROBINETS.items()
               if any(E.est_hors_moteur(CHIFFRES[cid].calcul) for cid in rb.chiffres if cid in CHIFFRES)}
-    attendu_ko = set(rob_fuite) | set(rob_eau) | hm_rob
+    # CIRCUIT-4 (lot 5.3) — les robinets servant une donnée d'une fiche verdict=ecart sont rouges
+    ecart_rob = R4.robinets_par_verdict({rid: list(rb.chiffres) for rid, rb in ROBINETS.items()})["ecart"]
+    attendu_ko = set(rob_fuite) | set(rob_eau) | hm_rob | ecart_rob
 
     # rendu par /admin/circuit
     rendu_ko = {rb["id"] for rb in circ["robinets"] if E.ko_robinet(*rb["etat"])}

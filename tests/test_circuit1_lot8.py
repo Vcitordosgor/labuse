@@ -26,7 +26,7 @@ def test_81_crontab_wrapper_complet():
         if "jobs run" in l and not l.strip().startswith("#"):
             poses.add(l.split("jobs run ")[1].split("'")[0].strip())
     # agents-sources : EXISTE au registre mais reste DÉSACTIVÉ (jamais posé — décision Vic n° 8)
-    attendu = set(JOBS) - {"agents-sources"}
+    attendu = set(JOBS) - {"agents-sources", "regles-references"}  # CIRCUIT-4 5.4 : désactivé aussi
     assert poses == attendu, f"écart crontab/registre : {poses ^ attendu}"
 
 

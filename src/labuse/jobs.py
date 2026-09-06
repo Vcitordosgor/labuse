@@ -350,6 +350,12 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # construction (test lot 8 : posés == registre − {agents-sources}).
     _j("agents-sources", "Agents de source (veille amont par IA) — DÉSACTIVÉ (à la demande seulement)",
        "mensuel (désactivé)", "0 0 3 * *", "04:00 le 3 (JAMAIS posé)", timeout_s=3600),
+    # CIRCUIT-4 lot 5.4 — regles-references : renvoie les agents « règle » sur les références
+    # datées de plus de six mois (un texte peut changer) et signale toute version nouvelle.
+    # EXISTE au registre mais reste DÉSACTIVÉ (même doctrine que agents-sources : IA à la
+    # demande, jamais en cron par défaut — absent du crontab par construction, test lot 8).
+    _j("regles-references", "Agents de règle (références des calculs > 6 mois) — DÉSACTIVÉ",
+       "mensuel (désactivé)", "0 0 4 * *", "04:00 le 4 (JAMAIS posé)", timeout_s=3600),
     # K9 — robustesse
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", timeout_s=3600, envoie_mail=True, besoin_db=False),
