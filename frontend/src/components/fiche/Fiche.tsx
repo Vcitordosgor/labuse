@@ -1494,12 +1494,9 @@ export function Fiche({ idu }: { idu: string }) {
                     </a>
                   </div>
                 )}
-                {/* FIX-FICHE F2 — bloc « DPE connu » RETIRÉ : la fiche premium (_q_v2_fiche, celle que
-                    l'UI reçoit) ne sert JAMAIS `dpe_connu` (construit seulement par le builder legacy
-                    `_build_fiche`), et la table `parcel_dpe` n'existe plus en base → le bloc ne pouvait
-                    pas s'afficher. L'INTENTION M71 B1 (« DPE en info seule, sans effet sur le
-                    classement ») reste tracée dans le builder legacy ; la ressusciter suppose de servir
-                    `dpe_connu` en premium ET de rétablir `parcel_dpe` (décision Vic). */}
+                {/* FICHE-1 lot 2 — DPE RÉTABLI : la fiche premium sert désormais `dpe_connu`
+                    (_dpe_connu_block lit `dpe_records`), affiché dans le tiroir « Le bien »
+                    (LeBienSection). M71 B1 : info fiche seule, jamais un signal de classement. */}
                 {/* M60 P1c — PORTE en pied de Propriétaire : Scan patrimoine PRÉ-REMPLI (SIREN du
                     propriétaire). Accroche contextualisée (dénomination + SIREN), jamais générique. */}
                 {f.proprietaire_moral?.siren && (

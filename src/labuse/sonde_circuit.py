@@ -404,7 +404,7 @@ SONDE_COUVRE: dict[str, tuple[str, ...]] = {
     "divisible_classe": ("fiche_parcelle_division",),
     "prod_spec_kwh_kwc": ("outil_prospection_solaire",),
     "population_zone": ("outil_etude_zone",),
-    "dpe_connu": (),          # en_attente : aucun robinet ne l'affiche (eau ancienne seule)
+    "dpe_connu": (),          # FICHE-1 lot 2 : servi par fiche_parcelle_le_bien (mono-robinet, golden)
     "verdict_couche": ("couche_verdict",),
     "parcelle_geometrie": (),  # eau ancienne 4.5 (geom_simple) — pas une comparaison de robinets
 }

@@ -425,6 +425,11 @@ export interface Fiche {
   secteur_opportunites?: { section: string; n: number } | null
   // FICHE-1 lot 1 — « Le bien » : le bâtiment existant. null (ou disponible=false) → tiroir omis.
   le_bien?: LeBien | null
+  // FICHE-1 lot 2 — DPE du bâtiment rattaché (rendu dans « Le bien »). null → « non déterminée ».
+  dpe_connu?: {
+    etiquette: string; etiquette_ges?: string | null; date?: string | null
+    annee?: number | null; type_batiment?: string | null; n: number; source: string
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

@@ -33,3 +33,13 @@ Nouveau tiroir « Le bien », placé après « Constructibilité » (front + reg
 - **Tiroir omis** si couche bâtiments non ingérée (`le_bien=null`) — jamais un bloc creux.
 - **Registre** : `emprise_batie_m2`, `hauteur_bati_m`, `n_batiments` sortis d'`en_attente` (« maquettes d'exports ») et servis ; 3 nouvelles données `surface_libre_sol_m2`, `nature_toit`, `pente_toit_deg`. Robinet `fiche_parcelle_le_bien` ajouté. Les 6 sont **mono-robinet** → auto-pass V5c.
 - **Vérifs** : `circuit verrous` 16/16 vert (174 données) · tsc 0 · vitest 187 · `test_fiche1_le_bien.py` 4/4 · doc registre régénéré (+19 lignes, tiroir « Le bien »).
+
+### Lot 2 — Le DPE, rétabli ✅
+
+`dpe_connu` était `en_attente` (« bloc payload construit mais plus affiché », Fiche.tsx:1492) : la fiche premium (`_q_v2_fiche`) ne le servait pas. Rétabli dans le tiroir « Le bien ».
+
+- **Producteur** `_dpe_connu_block(db, idu)` (passe-plat de `dpe_records`, table déjà dans la carte) : sert le **plus récent** (étiquette énergie + GES, date, type de bâtiment) et le **nombre** de DPE connus. Rattachement adresse/BAN → parcelle, donc c'est le DPE du **bâtiment**, pas de la parcelle — le libellé le dit (« DPE du bâtiment »).
+- **Plusieurs DPE** → le plus récent servi + « N DPE connus, le plus récent » en source.
+- **Aucun DPE** → `null` → le front dit **« non déterminée — aucun DPE rattaché »** (affiché seulement quand il y a du bâti ; jamais sur un terrain nu).
+- **Registre** : `dpe_connu` sorti d'`en_attente`, fonction repointée `_dpe_connu_block`, ajouté au robinet `fiche_parcelle_le_bien` (mono-robinet → auto-pass V5c). Test guard `test_eau_dpe_attribuable_au_registre` mis à jour (rétabli, plus en_attente, dpe_ademe non muet). Commentaire mort Fiche.tsx (F2) remplacé.
+- **Vérifs** : `circuit verrous` 16/16 vert · tsc 0 · vitest 187 · tests registre/verrous 41/41 · doc régénéré. Vérifié en base : 97411000AC0079 → D/GES B (2026), 97408000AO1568 → E/E (2022), 97411000BD0080 → aucun.

@@ -3657,6 +3657,35 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # libre) + nature/pente du toit (LiDAR, cache seul). None si couche bâtiments non ingérée
         # (le front omet le tiroir). Producteur unique bati.le_bien_block, aucun calcul au front.
         "le_bien": _bati.le_bien_block(db, idu),
+        # FICHE-1 lot 2 — DPE rétabli dans « Le bien » : dernier DPE connu du BÂTIMENT rattaché
+        # (M71 B1 : info fiche SEULE, jamais un signal de classement). None → « non déterminée ».
+        "dpe_connu": _dpe_connu_block(db, idu),
+    }
+
+
+def _dpe_connu_block(db: Session, idu: str) -> dict | None:
+    """FICHE-1 lot 2 — DPE rattaché à la parcelle (passe-plat de `dpe_records`, jamais un calcul).
+
+    Sert le PLUS RÉCENT (classe énergétique, classe GES, date, type de bâtiment) et le NOMBRE de
+    DPE connus. C'est le dernier DPE du BÂTIMENT (rattachement adresse/BAN → parcelle), pas de la
+    parcelle. None si aucun DPE ne se rattache (le front dit « non déterminée »). M71 B1 : info de
+    fiche uniquement, jamais un signal de classement (l'amont DPE est neuf en DROM)."""
+    rows = db.execute(text(
+        "SELECT etiquette_dpe, etiquette_ges, date_etablissement, type_batiment "
+        "FROM dpe_records WHERE parcelle_idu = :i AND etiquette_dpe IS NOT NULL "
+        "ORDER BY date_etablissement DESC NULLS LAST"), {"i": idu}).mappings().all()
+    if not rows:
+        return None
+    top = rows[0]
+    d = top["date_etablissement"]
+    return {
+        "etiquette": top["etiquette_dpe"],
+        "etiquette_ges": top["etiquette_ges"],
+        "date": d.isoformat() if d else None,
+        "annee": d.year if d else None,
+        "type_batiment": top["type_batiment"],
+        "n": len(rows),                         # combien de DPE connus (le plus récent est servi)
+        "source": "DPE ADEME",
     }
 
 

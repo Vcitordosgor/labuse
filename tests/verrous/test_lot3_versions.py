@@ -106,13 +106,14 @@ def test_upsert_ecart_ecrit_les_ids_a_l_insertion(db_session):
 
 
 def test_eau_dpe_attribuable_au_registre():
-    """La dette « eau DPE non attribuable » est soldée : `dpe_connu` existe au registre
-    (en_attente — bloc payload construit, plus affiché), lit le réservoir dpe_ademe, et le
-    réservoir n'est plus muet (V1d)."""
+    """FICHE-1 lot 2 — `dpe_connu` RÉTABLI : servi par le tiroir « Le bien »
+    (fiche_parcelle_le_bien), plus en_attente, lit le réservoir dpe_ademe (non muet, V1d)."""
+    from labuse.registre import ROBINETS
     from labuse.registre.donnees import DONNEES
     d = DONNEES["dpe_connu"]
     assert d.reservoirs == ("dpe_ademe",)
-    assert d.en_attente and "Fiche.tsx" in d.en_attente
+    assert d.en_attente is None       # rétabli : n'attend plus le chantier premium
+    assert "dpe_connu" in ROBINETS["fiche_parcelle_le_bien"].chiffres
     r = CV.verrou_reservoirs_sans_lecteur()
     assert "dpe_ademe" not in r.details
 

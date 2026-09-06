@@ -89,6 +89,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *forme du toit du plus grand bâtiment lue sur le LiDAR HD (MNH), servie ≥ 0,70 de confiance sinon « non déterminée — pans non nets » (RETOURS-15 U5)* | | | | | |
 | `pente_toit_deg` | nombre | Pente du toit | lidar_hd_mnh (LiDAR HD MNH — dalles publiées 25/06/2025 (IGN)) | moteur `solaire` · src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *pente médiane du toit du plus grand bâtiment (degrés), mesure directe LiDAR HD (MNH) — servie même sous le seuil de forme* | | | | | |
+| `dpe_connu` | texte | DPE connu (étiquette, année) | dpe_ademe | passe-plat · src/labuse/api/app.py:_dpe_connu_block — table lue : dpe_records | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *dernier DPE connu du bâtiment rattaché (étiquette énergie/GES, date, type de bâtiment) + nombre de DPE — info fiche SEULE, jamais un signal scoring (M71 B1 : DPE neuf en DROM)* | | | | | |
 
 ## Risques et protections
 
