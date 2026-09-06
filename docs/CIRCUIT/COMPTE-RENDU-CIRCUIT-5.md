@@ -10,7 +10,7 @@ Reprise : « continue CIRCUIT-5 depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-5.md »
 - [x] Lot 2 — verrou des sources (68 = 68)
 - [x] Lot 3 — verrou des versions
 - [x] Lot 4 — verrou des communes
-- [ ] Lot 5 — verrou des concepts et des moteurs
+- [x] Lot 5 — verrou des concepts et des moteurs
 - [ ] Lot 6 — commande, porte, page, VERROUS.md
 
 ## Étape 0 — baseline (06/09/2026)
@@ -94,6 +94,15 @@ Règle tenue pendant tout le mandat : zéro échec NOUVEAU par rapport à cette 
 - D4-4 : le cache fiche commune rafraîchi (24 communes) après la trouvaille CatNat — la
   racine (cache jamais invalidé à l'ingestion) reste une dette nommée, le filet est
   désormais le rejeu producteur (V4b/avertissant) qui verra toute rechute.
+- D5-1 : le mandat dit « un couple jamais sondé est un verrou cassé » — le prendre au pied
+  de la lettre aujourd'hui bloquerait tout déploiement (la sonde compare 8 couples sur 120
+  multi). L'option sûre retenue : le CASSÉ sanctionne le SILENCE — chaque couple est sondé,
+  mono-robinet (golden/règles font foi), ou porte sa raison NOMMÉE dans `NON_SONDES` (dont
+  « extension sonde à décider Vic » quand c'est la seule vérité). Rien n'est un « non
+  couvert » muet ; étendre la sonde couple par couple est un chantier listé, pas un verrou
+  menti.
+- D5-2 : les groupes assumés de V5a vivent dans le CODE (pas parsés du .md — un document ne
+  peut pas être une garde) ; CONCEPTS-CANONIQUES.md les documente pour Vic.
 
 ## Lot 1 — verrou des tables (livré)
 
@@ -280,6 +289,38 @@ structurel : une ligne par carte × commune sinon cassé) :
 rejeté par Postgres ; contrainte absente → cassé ; lignes héritées → à décider ; jointure
 décalée → cassé ; première-ligne-partout → cassé ; frontières permutées → 3 cassés ; trou
 d'échantillon posé → cassé ; `ecart`/`assume` distingués (une dérive NOUVELLE sort `ecart`).
+
+## Lot 5 — verrou des concepts et des moteurs (livré)
+
+**V5a — un concept = un id** : libellés et définitions NORMALISÉS (casse, accents, espaces)
+sur les 168 données — zéro collision hors DEUX groupes assumés, déclarés dans le code
+(`DEFINITIONS_PARTAGEES_ASSUMEES`) et motivés dans CONCEPTS-CANONIQUES.md (les deux
+hypothèses saisies de la calculette ; les 5 mosaïques ortho par période). La revue
+CIRCUIT-2 est rejouée par construction : le verrou balaie TOUT le registre (fiches, outils,
+PDF, couches) à chaque passage.
+
+**V5b — une donnée = une fonction** : chaque id porte un producteur nommé ; `sql_propre = 0`
+et `front = 0` (les gardes CIRCUIT-2, réunies dans les verrous) ; l'intégrité du registre
+(`verifier()`) est jouée dans le même verrou. Mesure réelle : 113 moteur · 53 passe_plat ·
+3 constantes.
+
+**V5c — zéro couple silencieux** : les 238 couples (donnée, robinet) déclarés sont ventilés
+— 8 sondés (`SONDE_COUVRE`, la vérité de ce que la sonde compare, vérité CROISÉE avec le
+registre par test), 112 raisonnés (`NON_SONDES` : chaque chiffre multi-robinets non comparé
+porte SA raison — golden, recette_exports1, V2a, recomptage humain, ou « extension sonde à
+décider Vic »), 118 mono-robinet (aucun partenaire de comparaison : golden/règles font foi).
+Un couple sans rien = cassé, jamais un « non couvert ».
+
+**5.3 — témoins tournants** : `sonde_circuit.temoins_tournants(db)` — 50 parcelles tirées
+parmi celles CONSULTÉES la veille (`consultation_log.idu`), tirage déterministe du jour
+(`md5(idu || date)` — rejouable dans la nuit, différent chaque jour), ajoutées aux témoins
+fixes dans `verifier_categorielle` (compte `temoins_tournants` au verdict).
+
+**Preuves cassé → vert** (`tests/verrous/test_lot5_concepts.py`, 10 tests) : doublon de
+libellé normalisé posé → casse ; définition partagée non assumée → casse ; `sql_propre`
+réintroduit → casse ; donnée sans fonction → casse ; chiffre retiré de NON_SONDES (silence
+posé) → casse en nommant le couple ; tirage tournant déterministe, borné, et vide si rien
+n'a été consulté la veille.
 
 ## Preuves des verrous (cassé → vert)
 

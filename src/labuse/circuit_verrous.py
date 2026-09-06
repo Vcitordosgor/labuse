@@ -504,6 +504,93 @@ def verrou_communes_echantillons(db=None) -> ResultatVerrou:
                           f"{len(CARTES)} cartes × 24 communes : un attendu ou un à-valider partout")
 
 
+# ── LOT 5 — le verrou des concepts et des moteurs ───────────────────────────────────────
+
+
+def _normaliser_texte(s: str) -> str:
+    import unicodedata
+    s = unicodedata.normalize("NFKD", s.lower()).encode("ascii", "ignore").decode()
+    return " ".join(s.split())
+
+
+def verrou_concepts(db=None) -> ResultatVerrou:
+    """V5a — un concept = un id : deux données au libellé normalisé ou à la définition
+    identiques ne peuvent pas coexister avec deux ids ; les seules exceptions sont les
+    groupes ASSUMÉS (DEFINITIONS_PARTAGEES_ASSUMEES, motivés dans CONCEPTS-CANONIQUES.md)."""
+    from collections import defaultdict
+
+    from .registre.donnees import DEFINITIONS_PARTAGEES_ASSUMEES, DONNEES
+
+    pbs: list[str] = []
+    for champ in ("libelle", "definition"):
+        groupes: dict[str, list[str]] = defaultdict(list)
+        for cid, d in DONNEES.items():
+            groupes[_normaliser_texte(getattr(d, champ))].append(cid)
+        for texte, ids in groupes.items():
+            if len(ids) < 2:
+                continue
+            if any(set(ids) <= assume for assume in DEFINITIONS_PARTAGEES_ASSUMEES):
+                continue
+            pbs.append(f"{champ} partagé par {sorted(ids)} : {texte[:80]!r}")
+    if pbs:
+        return ResultatVerrou("V5a", PHRASES["V5a"], "casse", f"{len(pbs)} concept(s) en double", pbs)
+    return ResultatVerrou("V5a", PHRASES["V5a"], "ok",
+                          f"{len(_donnees_count())} données, aucun libellé ni définition en double "
+                          f"hors {len(DEFINITIONS_PARTAGEES_ASSUMEES)} groupes assumés")
+
+
+def _donnees_count():
+    from .registre.donnees import DONNEES
+    return DONNEES
+
+
+def verrou_une_donnee_une_fonction(db=None) -> ResultatVerrou:
+    """V5b — une donnée = une fonction : chaque id porte UN producteur nommé ; plus aucun
+    `sql_propre` ni `front` (les gardes CIRCUIT-2, réunies ici) ; le registre est intègre."""
+    from .registre import verifier
+    from .registre.donnees import DONNEES
+
+    pbs = [f"donnée {cid} : calcul {d.calcul} (interdit — à rapatrier au moteur)"
+           for cid, d in DONNEES.items() if d.calcul in ("sql_propre", "front")]
+    pbs += [f"donnée {cid} : sans fonction productrice"
+            for cid, d in DONNEES.items() if not (d.fonction or "").strip()]
+    pbs += [f"registre : {p}" for p in verifier()]
+    if pbs:
+        return ResultatVerrou("V5b", PHRASES["V5b"], "casse", f"{len(pbs)} donnée(s) sans fonction unique", pbs)
+    return ResultatVerrou("V5b", PHRASES["V5b"], "ok",
+                          f"{len(DONNEES)} données : une fonction chacune, sql_propre = 0, front = 0")
+
+
+def verrou_couples_sondes(db=None) -> ResultatVerrou:
+    """V5c — zéro couple silencieux : chaque couple (donnée, robinet) déclaré est comparé par
+    la sonde (SONDE_COUVRE), ou mono-robinet (aucune comparaison possible — vérité tenue par
+    golden/règles), ou porte sa raison nommée (NON_SONDES). Un couple sans rien = cassé."""
+    from .registre import ROBINETS
+    from .sonde_circuit import NON_SONDES, SONDE_COUVRE
+
+    robs_par_chiffre: dict[str, set[str]] = {}
+    for rid, r in ROBINETS.items():
+        for c in r.chiffres:
+            robs_par_chiffre.setdefault(c, set()).add(rid)
+    couverts = raisonnes = monos = 0
+    pbs: list[str] = []
+    for c, robs in sorted(robs_par_chiffre.items()):
+        for r in sorted(robs):
+            if len(robs) == 1:
+                monos += 1              # pas de partenaire de comparaison : golden/règles font foi
+            elif r in SONDE_COUVRE.get(c, ()):
+                couverts += 1
+            elif c in NON_SONDES:
+                raisonnes += 1
+            else:
+                pbs.append(f"couple silencieux : ({c}, {r}) — ni sondé, ni raison déclarée")
+    if pbs:
+        return ResultatVerrou("V5c", PHRASES["V5c"], "casse", f"{len(pbs)} couple(s) silencieux", pbs)
+    return ResultatVerrou("V5c", PHRASES["V5c"], "ok",
+                          f"{couverts} couples sondés · {raisonnes} raisonnés (NON_SONDES) · "
+                          f"{monos} mono-robinet (golden/règles)")
+
+
 # ── le registre des verrous (complété lot par lot) ──────────────────────────────────────
 
 PHRASES: dict[str, str] = {
@@ -520,6 +607,9 @@ PHRASES: dict[str, str] = {
     "V4b": "Saint-Benoît sert les valeurs de Saint-Benoît, Sainte-Marie celles de Sainte-Marie — celles attendues chez le producteur, pas seulement différentes.",
     "V4c": "Sur les parcelles frontière, la commune de rattachement et la zone PLU au centroïde sont celles de LEUR commune, jamais de la voisine.",
     "V4d": "Chacune des 15 cartes de la fiche commune a, pour chacune des 24 communes, son attendu producteur ou sa ligne à valider — jamais un trou silencieux.",
+    "V5a": "Un concept = un id : deux données au libellé ou à la définition identiques n'existent pas, hors synonymes assumés et motivés.",
+    "V5b": "Une donnée = une fonction : chaque id porte un producteur nommé, plus aucun sql_propre ni front, et le registre est intègre.",
+    "V5c": "Zéro couple silencieux : chaque couple (donnée, robinet) est sondé, mono-robinet (golden/règles), ou porte sa raison nommée.",
 }
 
 VERROUS: tuple[Verrou, ...] = (
@@ -536,6 +626,9 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V4b", 4, PHRASES["V4b"], verrou_communes_permutation),
     Verrou("V4c", 4, PHRASES["V4c"], verrou_communes_frontiere),
     Verrou("V4d", 4, PHRASES["V4d"], verrou_communes_echantillons),
+    Verrou("V5a", 5, PHRASES["V5a"], verrou_concepts),
+    Verrou("V5b", 5, PHRASES["V5b"], verrou_une_donnee_une_fonction),
+    Verrou("V5c", 5, PHRASES["V5c"], verrou_couples_sondes),
 )
 
 

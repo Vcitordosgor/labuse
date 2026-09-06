@@ -987,3 +987,17 @@ ALIAS_TRANSITION: dict[str, str] = {}
 def resoudre(chiffre_id: str) -> str:
     """Résout un id d'alias de transition vers l'id canonique (identité sinon)."""
     return ALIAS_TRANSITION.get(chiffre_id, chiffre_id)
+
+
+#: CIRCUIT-5 lot 5.1 — les SEULES définitions partagées assumées (deux ids, même phrase de
+#: définition) : chaque groupe est motivé ici et dans CONCEPTS-CANONIQUES.md ; toute autre
+#: collision de libellé normalisé ou de définition casse le verrou V5a (un concept = un id).
+DEFINITIONS_PARTAGEES_ASSUMEES: tuple[frozenset[str], ...] = (
+    # deux HYPOTHÈSES saisies par le client dans la calculette : même phrase (« jamais un
+    # chiffre LABUSE »), deux grandeurs distinctes (coût €/m² · marge %).
+    frozenset({"cout_construction_saisi_eur_m2", "marge_frais_saisie_pct"}),
+    # cinq mosaïques ortho IGN d'époques différentes : même définition générique, la PÉRIODE
+    # est dans l'id et le libellé.
+    frozenset({"tuiles_ortho_2000_2005", "tuiles_ortho_2006_2010", "tuiles_ortho_2011_2015",
+               "tuiles_ortho_2016_2020", "tuiles_ortho_2021_2023"}),
+)

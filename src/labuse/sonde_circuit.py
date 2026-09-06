@@ -386,6 +386,117 @@ def verifier_exports(db) -> dict:
             "n_mots_interdits": verdict.get("n_mots_interdits", 0)}
 
 
+#: CIRCUIT-5 lot 5.2 — CE QUE LA SONDE COMPARE chaque nuit, couple par couple :
+#: chiffre_id → les robinets du registre dont le chemin est mesuré. La vérité du code,
+#: vérifiée par le verrou V5c contre les couples déclarés du registre.
+SONDE_COUVRE: dict[str, tuple[str, ...]] = {
+    "part_zone_U_pct": ("fiche_commune_zonage",),
+    "part_zone_AU_pct": ("fiche_commune_zonage",),
+    "part_zone_A_pct": ("fiche_commune_zonage",),
+    "part_zone_N_pct": ("fiche_commune_zonage",),
+    "n_sources": ("admin_flux_circuit", "page_sources_client"),
+    "surface_parcelle_m2": ("copilote_fiche_parcelle",),
+    "sdp_residuelle_m2": ("fiche_parcelle_constructibilite",),
+    "prix_neuf_observe_eur_m2": ("fiche_parcelle_constructibilite",),
+    "zone_plu_famille": ("fiche_parcelle_urbanisme",),
+    "alea_inondation_couche": ("couche_alea_inondation",),
+    "historique_permis_liste": ("fiche_parcelle_autour",),
+    "divisible_classe": ("fiche_parcelle_division",),
+    "prod_spec_kwh_kwc": ("outil_prospection_solaire",),
+    "population_zone": ("outil_etude_zone",),
+    "dpe_connu": (),          # en_attente : aucun robinet ne l'affiche (eau ancienne seule)
+    "verdict_couche": ("couche_verdict",),
+    "parcelle_geometrie": (),  # eau ancienne 4.5 (geom_simple) — pas une comparaison de robinets
+}
+
+#: lot 5.2 — les couples multi-robinets que la sonde ne compare PAS ENCORE, chacun avec sa
+#: raison (un couple silencieux = verrou V5c cassé, jamais un « non couvert »). Raison par
+#: chiffre (elle vaut pour tous ses couples non couverts).
+NON_SONDES: dict[str, str] = {
+    "tier_opportunite": "reconstruit à la bascule (portée run) — vérité tenue par le golden servi "
+                        "(qa/golden_check, GOLDEN-REGEN) sur les 119 parcelles",
+    "run_label_servi": "pointeur du manifeste — tenu par V3a (tuiles = run servi) et le golden",
+    "prix_neuf_vefa_acte_eur_m2": "scission 0-bis mesurée par verifier_scission_neuf (grain "
+                                  "score_e) — la comparaison robinet à robinet viendra avec "
+                                  "l'extension sonde (chantier à décider Vic)",
+    "annonces_actives_n": "Radar : compte recontrôlé par recomptage humain (échantillon 4.4 "
+                          "carte annonces) — pas de second chemin machine",
+    "azimut_bati_deg": "OUTILS-FIX-1 A2 : servi liste + carte du même moteur solaire — un seul "
+                       "producteur, comparaison sans objet tant que le front ne recalcule pas",
+    "capacite_logements": "fiche + PDF lisent le MÊME bloc potentiel (EXPORTS-1) — couverts par "
+                          "le cas recette_exports1 (nocturne), pas par la sonde au bouton",
+    "charge_fonciere_eur": "idem potentiel/bilan — cas recette_exports1 (nocturne)",
+    "surface_vendable_m2": "idem potentiel/bilan — cas recette_exports1 (nocturne)",
+    "potentiel_verdict": "idem potentiel — cas recette_exports1 (nocturne)",
+    "comparateur_composite": "comparateur : composite d'affichage (moteur commune.composite) — "
+                             "extension sonde à décider Vic",
+    "deficit_sru_pts": "fiche commune + comparateur lisent commune_contexte_sru — couvert par "
+                       "l'échantillon producteur SRU (4.4, à valider) puis extension sonde",
+    "taux_lls_pct": "idem SRU — échantillon producteur 4.4 + identité du bloc (V4b)",
+    "ecart_demande_acte_pct": "Radar marché : n<5 déjà gardé ; extension sonde à décider Vic",
+    "mixite_clause": "règle L111 servie fiche+PDF du même moteur — cas recette_exports1",
+    "mutations_12m_n": "fiche commune + comparateur (moteur commune.indicateurs) — échantillon "
+                       "producteur DVF (4.4, à valider)",
+    "n_bascules_7j": "compteur d'exploitation (page Circuit seule) — pas un chiffre client",
+    "n_biens_du_jour": "digest Radar : recompté par le dedup event_log (RADAR-DIGESTS lot 4)",
+    "n_communes_rnu": "corpus PLU : garde etat_corpus_plu (CIRCUIT-4) — un seul producteur",
+    "n_densifiables": "fiche commune + couche lisent parcel_renouvellement du run servi — "
+                      "tenu par V3a (une génération) et le golden",
+    "n_parcelles_pm": "fiche propriétaire + contexte commune (proprietaire_historique, une "
+                      "assiette) — KF-2 lot 1, extension sonde à décider Vic",
+    "n_piscines": "détection ortho : QA humaine (piscine_corrections) fait foi — pas de second "
+                  "chemin machine",
+    "n_vigilances": "compteur d'affichage front (CIRCUIT-2 : portée front à rapatrier — dette "
+                    "déjà écrite au registre)",
+    "permis_12m_n": "fiche commune + comparateur (moteur commune) — échantillon producteur "
+                    "Sitadel (4.4, à valider)",
+    "permis_5a_n": "idem permis_12m_n",
+    "point_mort_n": "idem permis (vélocité) — moteur commune.indicateurs",
+    "pression_zan_ha": "passe-plat commune_conso_enaf (rattachement à décider, lot 1) — "
+                       "échantillon producteur ZAN (4.4, à valider)",
+    "prix_ancien_median_eur_m2": "fiche commune + comparateur (marche_service) — échantillon "
+                                 "producteur DVF (4.4, à valider)",
+    "prix_demande_median_eur_m2": "Radar (affiché vs acté) : n<5 gardé, recomptage humain",
+    "prix_terrain_secteur_eur_m2": "parcelle-secteur (marche_service, témoins CONCEPTS 3.3 "
+                                   "mesurés) — extension sonde à décider Vic",
+    "projet_cadrage_n": "CRM projets : compteur interne (event_log) — pas un chiffre source",
+    "stock_opportunites": "fiche commune + accueil lisent le run servi — golden + V3a",
+    "velocite_delai_median_mois": "moteur commune.indicateurs — échantillon Sitadel (4.4)",
+    "zonage_plu_couche": "couche calée cadastre vs zone_servie : comparés par la catégorielle "
+                         "4.1 sur les témoins (couple couvert via zone_plu_famille)",
+    "n_sources": "quatre lectures TENUES par V2a (68 = 68 partout, même WHERE_AFFICHEES) ; "
+                 "la sonde en compare deux",
+    "population_zone": "fiche « autour » et PDF Flash CONSOMMENT le moteur etude_de_zone "
+                       "(FLASH-ZONE F2, aucune recopie) ; le cache isochrones est gardé par "
+                       "l'eau 3 (TTL 30 j)",
+    "prod_spec_kwh_kwc": "outil, fiche soleil et toits lisent le MÊME builder solaire (gel "
+                         "étiqueté, eau 4) — pas de second calcul à comparer",
+    "sdp_residuelle_m2": "outils densifier/faisa et PDF lisent le même bloc potentiel — "
+                         "PDF couverts par recette_exports1 (nocturne)",
+    "surface_parcelle_m2": "outil_etudier_bien lit le même passe-plat parcels.surface_m2 — "
+                           "la sonde compare déjà HTTP/SQL/Copilote (chemins réels 0-bis)",
+    "zone_plu_famille": "couche comparée par la catégorielle 4.1 ; PDF zonage par "
+                        "recette_exports1 (nocturne)",
+    "prix_neuf_observe_eur_m2": "PDF banquier couvert par recette_exports1 ; la scission du "
+                                "neuf est mesurée par verifier_scission_neuf",
+}
+
+
+def temoins_tournants(db, n: int = 50) -> list[str]:
+    """CIRCUIT-5 lot 5.3 — l'échantillon TOURNANT : n parcelles tirées parmi celles
+    CONSULTÉES la veille (journal d'usage `consultation_log.idu`), tirage DÉTERMINISTE du
+    jour (md5(idu || date du jour)) — rejouable dans la nuit, différent chaque jour, pour
+    qu'un écart hors témoins fixes finisse par être vu."""
+    try:
+        return [r for (r,) in db.execute(text(
+            "SELECT idu FROM (SELECT DISTINCT idu FROM consultation_log "
+            " WHERE idu IS NOT NULL AND ts >= (CURRENT_DATE - INTERVAL '1 day')) t "
+            "ORDER BY md5(idu || CURRENT_DATE::text) LIMIT :n"), {"n": n}).all()]
+    except Exception:  # noqa: BLE001 — pas de journal d'usage : échantillon vide, dit au verdict
+        db.rollback()
+        return []
+
+
 def _temoins_golden(db) -> list[str]:
     """Les parcelles témoins de la sonde catégorielle : les 4 EXPORTS-1 + les GOLDEN_IDUS de
     qa/golden_check.py (même jeu, jamais deux listes — parsé du fichier ; repli : sélection
@@ -422,8 +533,10 @@ def verifier_categorielle(db) -> dict:
     (nocturne) — jamais « non couverts »."""
     trouves: list[tuple] = []
     mesures = 0
-    # ── 4.1 zonage sur les témoins ──
-    temoins = _temoins_golden(db)
+    # ── 4.1 zonage sur les témoins : les FIXES (golden) + le TOURNANT du jour (lot 5.3 :
+    #    50 parcelles consultées la veille, tirage déterministe) ──
+    tournants = temoins_tournants(db)
+    temoins = list(dict.fromkeys(_temoins_golden(db) + tournants))
     for idu in temoins:
         pid = _parcel_id(db, idu)
         if pid is None:
@@ -512,6 +625,7 @@ def verifier_categorielle(db) -> dict:
     for t in trouves:
         _upsert_ecart(db, *t[:7], type_donnee=t[7])
     return {"ecarts_trouves": len(trouves), "mesures": mesures, "temoins": len(temoins),
+            "temoins_tournants": len(tournants),
             "pdf_zonage": "cas recette_exports1 (nocturne)"}
 
 

@@ -52,3 +52,19 @@ hauteur / table rase — EXPORTS-1) sont AU REGISTRE depuis le 0-bis, distincts 
    couche BPE dit qu'elle nourrit la ligne « À proximité » de la fiche. Rien de supprimé.
 2. Aucun autre renommage nécessaire : les secondes sources légitimes étaient déjà nommées avec
    leur origine (BPE vs OSM, GPU brut vs zonage par parcelle, aléa vs PPR, ancien vs VEFA).
+
+## CIRCUIT-5 lot 5.1 — le verrou (V5a) et les définitions partagées assumées
+
+Le tableau ci-dessus est désormais TENU par un verrou : deux données au libellé normalisé ou
+à la définition identiques ne peuvent plus coexister avec deux ids (`verrou_concepts`, joué
+par `labuse circuit verrous`, pytest `-m verrous`, la nuit et le deploy). Les SEULES
+exceptions sont déclarées dans le code (`registre/donnees.py:DEFINITIONS_PARTAGEES_ASSUMEES`) :
+
+| groupe | pourquoi c'est assumé |
+|---|---|
+| `cout_construction_saisi_eur_m2` · `marge_frais_saisie_pct` | deux HYPOTHÈSES saisies par le client dans la calculette — même phrase (« jamais un chiffre LABUSE »), deux grandeurs distinctes (coût €/m² · marge %) |
+| `tuiles_ortho_2000_2005` → `2021_2023` (5 mosaïques) | mosaïques IGN d'époques différentes — même définition générique, la période est dans l'id et le libellé |
+
+Revue rejouée le 06/09/2026 sur l'intégralité du registre (168 données — fiches parcelle et
+commune, outils, PDF, couches) : **zéro libellé en double, zéro définition en double** hors
+ces deux groupes.
