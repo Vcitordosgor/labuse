@@ -7,7 +7,7 @@ Reprise : « continue CIRCUIT-5 depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-5.md »
 
 - [x] Étape 0 — branche, baseline, lecture des comptes-rendus
 - [x] Lot 1 — verrou des tables
-- [ ] Lot 2 — verrou des sources (68 = 68)
+- [x] Lot 2 — verrou des sources (68 = 68)
 - [ ] Lot 3 — verrou des versions
 - [ ] Lot 4 — verrou des communes
 - [ ] Lot 5 — verrou des concepts et des moteurs
@@ -59,6 +59,15 @@ Règle tenue pendant tout le mandat : zéro échec NOUVEAU par rapport à cette 
 - D1-5 : les 9 « réservoirs sans lecteur » et les 4 « à rattacher » ne sont PAS corrigés en
   autonomie (pas de donnée inventée au registre, pas de ligne catalogue créée) — listés
   pour le Résumé « à décider » (lot 6).
+- D2-1 : BDNB, Réunion Express et Taxe d'aménagement restent `a_faire` (chantier nommé) —
+  le mandat dit « morte ou essai → retiree », or aucune des trois n'est morte par notre
+  choix : l'amont peut couvrir, le débat public suit son cours, les taux attendent Vic.
+  Retirer serait mentir ; V2b exige leur chantier en note.
+- D2-2 : la migration des statuts est appliquée sur la base locale par
+  `appliquer_statuts_circuit` seul (pas un `seed()` complet, qui ré-upserterait 71 lignes
+  et leurs notes) ; le seed l'appelle pour les bases futures.
+- D2-3 : `retiree_le` = date du GESTE de retrait (posée une fois, `COALESCE`), pas une date
+  d'historien : les notes gardent l'histoire, la colonne garde le geste.
 
 ## Lot 1 — verrou des tables (livré)
 
@@ -115,6 +124,44 @@ en milieu de fichier) → passer par le binaire `labuse` (PYTHONPATH sur le work
   `rpls_commune` et `commune_conso_enaf`, servies sans slug ni ligne).
 - `spatial_layers` porte une couche archivée `plu_gpu_zone__archive_m40` (3 lignes) —
   relevée dans TABLES-ORPHELINES.md, pas une table à purger.
+
+## Lot 2 — verrou des sources : 68, pas un de plus (livré)
+
+**Les 12 lignes hors vitrine traitées une par une** (`seed_sources.appliquer_statuts_circuit`,
+idempotent, appelé par `seed()` ; colonnes `alias_de`/`retiree_le`/`retiree_raison` posées ;
+enum `DataSourceStatus` élargi de `alias` et `retiree` — colonne varchar, pas d'enum PG,
+aucune migration de type) :
+- **doublon → alias** (l'ancien id reste, `alias_de` pointe la canonique) : 2 Cadastre Etalab
+  → 1 ; 65 RGE ALTI 5 m → 6 ; 67 GPU info-surf → 63.
+- **morte/essai → retiree** (date posée une fois + raison) : 49 EDF SEI (amont 410 Gone),
+  50 ODRÉ (jamais branché), 80 ZNIEFF Région (canal jamais alimenté, canonique INPN).
+- **hub** : 11 Région ODS, 14 Géoplateforme (déjà hub), 12 PEIGEO (était a_faire).
+- **a_faire gardés** (chantier nommé dans la note — décision D2-1) : 89 BDNB (amont
+  métropole seule, peut couvrir 974 un jour), 95 Réunion Express (débat public), 98 Taxe
+  d'aménagement (mécanisme CIRCUIT-3 prêt, taux à saisir). Rien n'est effacé.
+
+**Les verrous** :
+- **V2a** : `68 = 68 = 68` — vitrine SQL (`WHERE_AFFICHEES`), prédicat Python
+  (`est_affichee`), page (`flux.construire_flux`, ce que sert `/admin/circuit`) ; et chaque
+  source servie a son slug dans le pont `NOM_VERS_SLUG` ET dans la carte table → réservoir.
+  Mesuré vert sur la base locale. (Le « 68 » n'est jamais un littéral : égalité de comptes.)
+- **V2b** : toute ligne hors vitrine porte un statut de première classe motivé — alias avec
+  cible en vitrine, retirée datée et motivée, hub, a_faire avec chantier, ou masquée d'un
+  geste admin (`affichage_desactive`, CONNEXIONS-2). Un doublon caché (statut de vitrine +
+  note DOUBLON) = cassé.
+- **2.3, le seed refuse** : `verifier_catalogue()` — name, producteur, mode d'accès,
+  mode de remplissage + cadence (MODE_ET_CADENCE), sonde ou raison d'absence
+  (RAISONS_NON_SURVEILLEES) ; `seed()` lève AVANT toute écriture.
+  **La garde a mordu à sa pose** : CatNat, Taxe d'aménagement et Cadastre d'époque
+  n'avaient ni mode ni cadence — déclarés (77 → 80 dans MODE_ET_CADENCE, épingle de
+  `test_modes_cadences_declares` mise à jour avec la raison).
+
+**Preuves cassé → vert** (`tests/verrous/test_lot2_sources.py`, 11 tests) : doublon caché →
+casse ; alias sans cible / vers une ligne hors vitrine → casse ; retirée sans date-raison →
+casse ; a_faire sans chantier → casse ; servie ET alias → contradiction ; catalogue
+discipliné → [] ; seed avec ligne fantôme → ValueError avant toute écriture ; catalogue
+réel → garde verte ; `-m local` : V2a/V2b verts sur la base réelle, et V2a prouvé cassé
+quand la page ment (flux monkeypatché → « comptes divergents : SQL 68 · Python 68 · page 0 »).
 
 ## Preuves des verrous (cassé → vert)
 

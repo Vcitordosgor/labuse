@@ -62,6 +62,9 @@ class DataSourceStatus(StrEnum):
     MANUEL = "manuel"         # fallback champ manuel
     A_FAIRE = "a_faire"       # à connecter plus tard
     HUB = "hub"               # portail/agrégateur : pas une source de données en soi (M71 A2)
+    # CIRCUIT-5 lot 2 — statuts de PREMIÈRE CLASSE (plus un préfixe de technical_notes) :
+    ALIAS = "alias"           # doublon fusionné : `alias_de` pointe la ligne canonique, rien ne se perd
+    RETIREE = "retiree"       # morte/essai abandonné : `retiree_le` + `retiree_raison` obligatoires
 
 
 class ReliabilityLevel(StrEnum):

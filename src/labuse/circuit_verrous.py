@@ -215,6 +215,96 @@ def verrou_reservoirs_sans_lecteur(db=None) -> ResultatVerrou:
                           "chaque réservoir servi est lu par au moins une donnée du registre")
 
 
+# ── LOT 2 — le verrou des sources : 68, pas un de plus ─────────────────────────────────
+
+
+def analyse_catalogue(rows: list[dict]) -> list[str]:
+    """Discipline des statuts (pur, testable sans base) : chaque ligne de `data_sources` est
+    soit SERVIE (vitrine), soit porte un statut de première classe qui dit pourquoi elle n'y
+    est pas — alias (avec sa cible en vitrine), retiree (avec date et raison), hub, a_faire
+    (avec son chantier en note), ou masquée d'un geste au dashboard (`affichage_desactive`).
+    Un doublon caché (statut vitrine + note DOUBLON) est une violation."""
+    from .sources_catalog import est_affichee
+
+    par_id = {r.get("id"): r for r in rows}
+    pbs: list[str] = []
+    for r in rows:
+        nom, statut = r.get("name") or "?", (r.get("status") or "").lower()
+        affichee = est_affichee(nom, r.get("technical_notes"), r.get("status"),
+                                r.get("affichage_desactive"))
+        if affichee:
+            if r.get("alias_de"):
+                pbs.append(f"{nom} : en vitrine ET alias_de={r['alias_de']} (contradiction)")
+            continue
+        if r.get("affichage_desactive"):
+            continue        # masquée d'un geste admin (CONNEXIONS-2) — raison vivante en base
+        if statut == "alias":
+            cible = par_id.get(r.get("alias_de"))
+            if not cible:
+                pbs.append(f"{nom} : alias sans cible (alias_de manquant ou inconnu)")
+            elif not est_affichee(cible.get("name"), cible.get("technical_notes"),
+                                  cible.get("status"), cible.get("affichage_desactive")):
+                pbs.append(f"{nom} : alias d'une ligne HORS vitrine ({cible.get('name')})")
+        elif statut == "retiree":
+            if not (r.get("retiree_le") and r.get("retiree_raison")):
+                pbs.append(f"{nom} : retirée sans date ou sans raison")
+        elif statut == "hub":
+            pass
+        elif statut == "a_faire":
+            if not (r.get("technical_notes") or "").strip():
+                pbs.append(f"{nom} : a_faire sans chantier nommé (note vide)")
+        else:
+            pbs.append(f"{nom} : hors vitrine avec un statut de vitrine ({statut or 'vide'}) "
+                       "— doublon caché ou note-préfixe sans statut de première classe")
+    return pbs
+
+
+def _lignes_catalogue(db) -> list[dict]:
+    return [dict(r) for r in db.execute(text(
+        "SELECT id, name, status, technical_notes, affichage_desactive,"
+        " alias_de, retiree_le, retiree_raison FROM data_sources")).mappings().all()]
+
+
+def verrou_sources_statuts(db) -> ResultatVerrou:
+    """V2b — chaque ligne hors vitrine porte un statut de première classe motivé."""
+    pbs = analyse_catalogue(_lignes_catalogue(db))
+    if pbs:
+        return ResultatVerrou("V2b", PHRASES["V2b"], "casse", f"{len(pbs)} ligne(s) indisciplinée(s)", pbs)
+    return ResultatVerrou("V2b", PHRASES["V2b"], "ok", "toutes les lignes hors vitrine disent pourquoi")
+
+
+def verrou_sources_comptes(db) -> ResultatVerrou:
+    """V2a — le même nombre partout : vitrine SQL (`WHERE_AFFICHEES`), prédicat Python
+    (`est_affichee`), page (`flux.construire_flux` — ce que sert /admin/circuit), et carte
+    (chaque source servie a son slug dans le pont ET dans la carte table → réservoir)."""
+    from . import flux
+    from .circuit_etats import NOM_VERS_SLUG
+    from .registre import tables as T
+    from .sources_catalog import WHERE_AFFICHEES, est_affichee, masquees_param
+
+    n_sql = db.execute(text(f"SELECT count(*) FROM data_sources WHERE {WHERE_AFFICHEES}"),
+                       {"masquees": masquees_param()}).scalar() or 0
+    rows = _lignes_catalogue(db)
+    servies = [r for r in rows if est_affichee(r["name"], r["technical_notes"], r["status"],
+                                               r["affichage_desactive"])]
+    n_py = len(servies)
+    n_page = len(flux.construire_flux(db)["sources"])
+    pbs: list[str] = []
+    for r in servies:
+        slug = NOM_VERS_SLUG.get(r["name"])
+        if not slug:
+            pbs.append(f"{r['name']} : servie mais absente du pont NOM_VERS_SLUG")
+        elif slug not in T.RESERVOIR_TABLES:
+            pbs.append(f"{r['name']} : slug {slug} absent de la carte table → réservoir")
+    if n_sql == n_py == n_page and not pbs:
+        return ResultatVerrou("V2a", PHRASES["V2a"], "ok",
+                              f"{n_sql} = {n_py} = {n_page} (vitrine SQL, prédicat, page) ; "
+                              f"{len(servies)} sources servies toutes dans la carte")
+    if n_sql != n_py or n_sql != n_page:
+        pbs.insert(0, f"comptes divergents : SQL {n_sql} · Python {n_py} · page {n_page}")
+    return ResultatVerrou("V2a", PHRASES["V2a"], "casse", pbs[0], pbs)
+
+
 # ── le registre des verrous (complété lot par lot) ──────────────────────────────────────
 
 PHRASES: dict[str, str] = {
@@ -222,6 +312,8 @@ PHRASES: dict[str, str] = {
     "V1b": "Pendant un passage de la sonde sur les témoins, aucune table hors carte n'est touchée.",
     "V1c": "Toute table du schéma appartient à la carte, ou est une orpheline listée qui attend le geste de Vic.",
     "V1d": "Chaque réservoir servi est lu par au moins une donnée — aucun réservoir muet ne dort dans la vitrine.",
+    "V2a": "Le nombre de sources servies est LE MÊME partout : vitrine SQL, prédicat Python, page — et chacune a sa place dans la carte.",
+    "V2b": "Toute ligne du catalogue hors vitrine dit pourquoi : alias (cible en vitrine), retirée (date + raison), hub, ou chantier nommé.",
 }
 
 VERROUS: tuple[Verrou, ...] = (
@@ -229,6 +321,8 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V1b", 1, PHRASES["V1b"], verrou_tables_execution),
     Verrou("V1c", 1, PHRASES["V1c"], verrou_tables_orphelines),
     Verrou("V1d", 1, PHRASES["V1d"], verrou_reservoirs_sans_lecteur),
+    Verrou("V2a", 2, PHRASES["V2a"], verrou_sources_comptes),
+    Verrou("V2b", 2, PHRASES["V2b"], verrou_sources_statuts),
 )
 
 

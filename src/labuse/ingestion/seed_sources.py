@@ -746,8 +746,86 @@ def _migrer_renommages(session: Session) -> None:
     session.flush()
 
 
+def verifier_catalogue(rows: list[dict] | None = None) -> list[str]:
+    """CIRCUIT-5 lot 2.3 — une source ne peut plus ENTRER qu'avec un id (name), un producteur,
+    un mode d'accès, un mode de remplissage + une cadence (MODE_ET_CADENCE), et une sonde OU la
+    raison de son absence (RAISONS_NON_SURVEILLEES, ou une URL amont que la sentinelle sait
+    sonder). Rend la liste des problèmes — `seed()` REFUSE si elle n'est pas vide."""
+    from ..sentinelle import RAISONS_NON_SURVEILLEES
+    pbs: list[str] = []
+    for row in (SOURCES if rows is None else rows):
+        nom = row.get("name") or "(sans nom)"
+        if not row.get("name"):
+            pbs.append("source sans name (id de catalogue)")
+        if not row.get("provider"):
+            pbs.append(f"{nom} : sans producteur (provider)")
+        if not row.get("access_type"):
+            pbs.append(f"{nom} : sans mode d'accès (access_type)")
+        if row.get("name") and nom not in MODE_ET_CADENCE:
+            pbs.append(f"{nom} : sans mode de remplissage ni cadence (MODE_ET_CADENCE)")
+        sondable = bool(row.get("endpoint_url") or row.get("documentation_url"))
+        if row.get("name") and not sondable and nom not in RAISONS_NON_SURVEILLEES:
+            pbs.append(f"{nom} : sans sonde (aucune URL amont) ni raison d'absence "
+                       "(RAISONS_NON_SURVEILLEES)")
+    return pbs
+
+
+#: CIRCUIT-5 lot 2.1 — les statuts de première classe posés sur les lignes HORS VITRINE
+#: (le préfixe de technical_notes reste en ceinture, le statut fait foi). Par NOM (les ids
+#: peuvent varier d'une base à l'autre). Doublon → alias de la ligne canonique ; morte ou
+#: essai → retiree (date + raison) ; hub → hub. Les a_faire légitimes (chantier nommé dans
+#: la note : BDNB, Réunion Express, taxe d'aménagement) restent a_faire.
+ALIAS_CANONIQUES: dict[str, str] = {
+    "Cadastre Etalab (bulk DGFiP/Etalab)": "Cadastre (API Carto PCI)",
+    "RGE ALTI 5 m (IGN)": "RGE ALTI (altimétrie)",
+    "GPU — zonages d'assainissement (info-surf typeinf 19)": "GPU — zonages d'assainissement",
+}
+
+RETRAITS: dict[str, str] = {
+    "EDF SEI Réunion — open data":
+        "amont 410 Gone — jeu retiré par EDF SEI (~2026), plus rien à sonder",
+    "Registre national des installations (ODRÉ)":
+        "jamais branché, aucun usage identifié (audit M66/M71)",
+    "ZNIEFF (INPN / Région)":
+        "canal Région jamais alimenté (endpoint vivant, 0 donnée) — canonique : ZNIEFF (INPN/MNHN)",
+}
+
+HUBS: tuple[str, ...] = (
+    "Région Réunion Open Data (Opendatasoft)", "PEIGEO (hub régional)", "Géoplateforme IGN",
+)
+
+
+def appliquer_statuts_circuit(session: Session) -> None:
+    """Pose (idempotent) les colonnes CIRCUIT-5 (`alias_de`, `retiree_le`, `retiree_raison`)
+    et les statuts de première classe. `retiree_le` n'est posé qu'une fois (premier passage) —
+    la date du retrait ne bouge plus ensuite. RIEN n'est effacé : les notes restent."""
+    for ddl in (
+        "ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS alias_de integer REFERENCES data_sources(id)",
+        "ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS retiree_le date",
+        "ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS retiree_raison text",
+    ):
+        session.execute(text(ddl))
+    for nom, canonique in ALIAS_CANONIQUES.items():
+        session.execute(text(
+            "UPDATE data_sources SET status = 'alias',"
+            " alias_de = (SELECT id FROM data_sources WHERE name = :canonique)"
+            " WHERE name = :nom"), {"nom": nom, "canonique": canonique})
+    for nom, raison in RETRAITS.items():
+        session.execute(text(
+            "UPDATE data_sources SET status = 'retiree', retiree_raison = :raison,"
+            " retiree_le = COALESCE(retiree_le, CURRENT_DATE) WHERE name = :nom"),
+            {"nom": nom, "raison": raison})
+    for nom in HUBS:
+        session.execute(text("UPDATE data_sources SET status = 'hub' WHERE name = :nom"),
+                        {"nom": nom})
+
+
 def seed(session: Session) -> int:
-    """Upsert idempotent du catalogue. Renvoie le nombre de sources présentes."""
+    """Upsert idempotent du catalogue. Renvoie le nombre de sources présentes.
+    CIRCUIT-5 lot 2.3 : REFUSE un catalogue incomplet (id, producteur, mode, cadence, sonde)."""
+    pbs = verifier_catalogue()
+    if pbs:
+        raise ValueError("seed refusé (CIRCUIT-5 lot 2.3) : " + " ; ".join(pbs))
     _migrer_renommages(session)   # M125-1ter — rename EN PLACE avant l'upsert (sinon doublon)
     existing = {name for (name,) in session.execute(select(DataSource.name)).all()}
     for row in SOURCES:
@@ -759,6 +837,7 @@ def seed(session: Session) -> int:
             session.add(DataSource(**row))
     session.flush()
     appliquer_modes_cadences(session)   # CIRCUIT-1 lot 1.7 — modes + cadences déclarés
+    appliquer_statuts_circuit(session)  # CIRCUIT-5 lot 2.1 — alias/retiree/hub de première classe
     return session.query(DataSource).count()
 
 
@@ -846,7 +925,12 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "BDNB": ("absente", 100, "declaree"),
     "EDF Réunion — lignes moyenne tension HTA (open data)": ("one_shot", 365, "proposee"),
     "TCSP — voies bus en site propre (OSM)": ("one_shot", 365, "proposee"),
-    "Réunion Express — hypothèses de tracé (débat public CNDP)": ("absente", None, "sans_objet"),}
+    "Réunion Express — hypothèses de tracé (débat public CNDP)": ("absente", None, "sans_objet"),
+    # CIRCUIT-5 lot 2.3 — attrapées par verifier_catalogue() (entrées sans mode ni cadence) :
+    "CatNat (arrêtés GASPAR / Géorisques)": ("job_sur_clic", 190, "proposee"),
+    "Taxe d'aménagement — taux communaux (délibérations)": ("depot_manuel", 365, "proposee"),
+    "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": ("one_shot", 365, "proposee"),
+}
 
 
 def appliquer_modes_cadences(session: Session) -> int:
