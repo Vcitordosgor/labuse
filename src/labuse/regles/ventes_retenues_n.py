@@ -1,5 +1,5 @@
-"""Fiche de règle — comparables DVF : filtre de retenue + profils. CIRCUIT-4."""
-from . import FicheRegle, declarer
+"""Fiche de règle — comparables DVF : filtre + profils. CIRCUIT-4 (lot 2 : extrait daté)."""
+from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
     donnees=("ventes_retenues_n", "ventes_ecartees_n", "dvf_parcelle_liste", "voisinage_100m_liste",
@@ -14,10 +14,24 @@ declarer(FicheRegle(
     entrees=("dvf_mutations_parcelle (nature, prix, surfaces, geom)", "config/dvf_profils.yaml"),
     classe="regle_externe",
     fonction="src/labuse/marche_service.py:filtre_ventes (+ profils)",
-    verdict="reference_introuvable",
+    verdict="conforme",
+    reference=Reference(
+        titre="DGFiP — jeu de données « Demandes de valeurs foncières » (DVF)",
+        article="description officielle du jeu (data.gouv.fr) et décret fondateur",
+        url="https://www.data.gouv.fr/datasets/demandes-de-valeurs-foncieres",
+        version="décret n° 2018-1350 du 28/12/2018 ; dernière mise à jour du jeu : 07/04/2026",
+        extrait=("« Le présent jeu de données “Demandes de valeurs foncières”, publié et produit "
+                 "par la direction générale des finances publiques, permet de connaître les "
+                 "transactions immobilières intervenues au cours des cinq dernières années sur le "
+                 "territoire métropolitain et les DOM-TOM, à l'exception de l'Alsace, de la "
+                 "Moselle et de Mayotte » — « Conformément au décret n° 2018-1350 du 28 décembre "
+                 "2018 relatif à la publication sous forme électronique des informations portant "
+                 "sur les valeurs foncières déclarées à l'occasion des mutations immobilières »."),
+        lu_le="2026-09-06"),
     choix=("Bornes de bon sens et rayons de profils = conventions LABUSE déclarées (YAML) ; les "
-           "DÉFINITIONS des champs lus (mutation, disposition, nature, valeur foncière) sont "
-           "celles de DGFiP (lot 2)."),
+           "champs lus (nature de mutation, valeur foncière, dispositions) sont ceux du fichier "
+           "DGFiP — La Réunion est couverte (DOM, hors exclusions Alsace-Moselle-Mayotte)."),
     exemple_temoin="tests/regles/test_medianes_dvf.py::test_filtre_motifs_visibles",
+    valide_par="cc",
     verifie_le="2026-09-06",
 ))
