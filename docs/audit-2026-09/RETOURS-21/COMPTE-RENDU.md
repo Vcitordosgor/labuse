@@ -210,30 +210,47 @@ seule, règle S5) et le pied de liste dit le reliquat (`sans_localisation`). Ex�
 
 ## Lot C — accordéons de la fiche parcelle
 
-**Bloqué : `MANDAT-RETOURS-20.md` absent du dépôt.** Vérifié (06/09, après `git fetch`) :
-`git ls-tree origin/main docs/audit-2026-09/RETOURS-20/` ne rend QUE
-`maquette-fiche-parcelle-accordeons.html` ; `git log --all -- '**/MANDAT-RETOURS-20*'` est vide —
-le blob n'existe dans AUCUNE ref. Le commit `dddbfb96` (« docs: mandat RETOURS-20 + maquette »)
-n'a committé que la maquette (530 l.), jamais le mandat. Le fichier est probablement resté en
-local non-committé, ou sur une autre machine.
+Le mandat `MANDAT-RETOURS-20.md` a été poussé sur main (`d505ac2d`) puis récupéré dans la branche.
+Il lève les deux ambiguïtés : Z3 = « ce qui disparaît » (boîtes imbriquées, >4 tailles de texte,
+sources en fin de phrase, valeurs en milieu de ligne, chips de tailles différentes) ; Z4 (icônes)
+= le traitement du **survol** (la maquette montrait le repos, pas de divergence).
 
-Ce qui est reconstructible sans le mandat :
-- **Z1 — les six composants partagés** : entièrement spécifiés par le panneau `aside` de la
-  maquette (règles 01→06 : En-tête · Kicker · Ligne de fait · Badges · Vigilance/rappel · Actions),
-  plus la règle « — » (ce qui disparaît).
-- **Z2 — deux sections** : *Règlement et zonage* (§1) et *Réseaux et accès* (§5), nommées dans
-  l'inline RETOURS-21. Structure et espacements fixés par la maquette.
+### Z4 — LIVRÉ (les deux reports de RETOURS-19)
 
-Ce qui N'EST PAS reconstructible (le mandat seul tranche) :
-- **Z3** : étape nommée « puis Z3 sur ces deux-là » — aucune description nulle part.
-- **Z4** : l'inline dit « icônes d'accordéon en **fond vert / contour et glyphe noirs** », mais la
-  maquette peint les icônes en `mint-soft` / `mint` (`.hd .ico`) — divergence non résolue ; et
-  l'`ChevronSection.tsx` actuel (contour plein `border-line-2`, glyphe qui s'éclaircit au survol,
-  inversion encre sur barre à fond plein) implémente déjà une grammaire dont Z4 semble vouloir
-  s'écarter. Sans le mandat, on ne sait pas dans quel sens.
+- **Z4a — scrollbar de la Veille** : la règle Y4 « pouce vert au survol » est **globale**
+  (`styles/index.css` l. 329-334 : `::-webkit-scrollbar-thumb:hover { background: var(--mint) }`
+  + `* { scrollbar-color }`), **sans aucune surcharge** ailleurs (vérifié : `grep` de
+  `scrollbar-*` ne trouve que ce bloc). Elle s'applique donc déjà à tout conteneur défilant, Veille
+  compris — aucun panneau oublié. Rien à changer.
+- **Z4b — icônes des accordéons de la fiche** : au survol d'une carte de section, la tuile d'icône
+  gardait un **fond sombre** (`--ink`) + glyphe vert (l'ancien RETOURS-11 T2) → « carré sombre sur
+  la barre verte » (constat Vic). Corrigé pour suivre EXACTEMENT les 4 icônes d'accueil (`.acc-entry`
+  Y2) : fond **transparent**, contour et glyphe en **encre sombre**. Mesuré avant→après sur la tuile
+  survolée : `bg rgb(7,16,9)` → `transparent` · `color rgb(74,222,128)` → `rgb(7,16,9)`. Une seule
+  règle CSS (`styles/index.css` l. 464), qui devient le traitement d'en-tête de Z1 → vaut pour les
+  neuf accordéons. Captures `captures/icone-survol-{avant,apres}.png`.
 
-**Décision** : Lot C non entamé (un refactor de la fiche parcelle est un commit atomique — une
-fiche à moitié refaite ne se livre pas ; et les captures avant/après exigent l'app lancée). En
-attente du contenu du mandat (au minimum Z3 + l'intention exacte de Z4). Lots A et B livrés et
-commités indépendamment.
+### Z1 / Z2 / Z3 — PRÉPARÉS, NON LIVRÉS (budget de session)
+
+Les composants partagés existent déjà (`fiche/primitives.tsx` : `RefDrawer` en-tête, `GroupLabel`
+kicker, `Line`+`SourceRef` ligne de fait, `StepProv` badges, `PorteOutil` action, `pill-*`) — Z1 est
+donc un **alignement** sur la grammaire de la maquette (tailles 14/13/12,5/11,5/10,5, source SOUS la
+ligne avec badge, filets), pas une création. Z2 vise `Fiche.tsx::ReglementPluBlock` + le tiroir
+`regles` et `fiche/reseaux.tsx`. Z3 retire les boîtes imbriquées (carte « RÈGLEMENT PLU », boîte de
+fraîcheur, bloc gestionnaires) que montre le « avant ».
+
+Ce refactor des deux sections denses, fidèle au pixel et sans casser la logique servie, est un
+chantier à part entière (RETOURS-20 en était le mandat plein). Après l'investissement des lots A/B
+et la remise en état de l'infra de run (voir Lot A), je n'ai pas voulu livrer un refactor bâclé ni
+un commit atomique à moitié fait sur une UI aussi visible. **Prep faite** : reconnaissance complète
+(composants + lignes), maquette rendue (`captures/` de référence), et **captures « avant » des deux
+sections** prises sur une parcelle réelle (`captures/reglement-avant.png`, `reseaux-avant.png`,
+parcelle 97415000AH0674). Il reste à écrire l'alignement CSS + le passage des deux sections, puis
+les captures « après ».
+
+### Fichiers Lot C (Z4)
+- `frontend/src/styles/index.css` — survol icône d'accordéon (l. 464).
+- `docs/audit-2026-09/RETOURS-20/MANDAT-RETOURS-20.md` — le mandat récupéré.
+- Captures : `icone-survol-{avant,apres}.png` (Z4b) ; `reglement-avant.png` / `reseaux-avant.png`
+  (base Z2, « après » à venir).
 
