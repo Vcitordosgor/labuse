@@ -138,6 +138,7 @@ def mesurer(tag: str, extra_specs: list[FeatureSpec],
     coefs = {s.name: float(m.base.coefs.get(s.name, float("nan")))
              for s in extra_specs}
     row["coefs_candidates"] = json.dumps(coefs, ensure_ascii=False)
+    _ETAT["modele"], _ETAT["df_mesure"] = m, df  # pour le top-50 (Lot G)
     table = enregistrer_d1(row)
     log(f"[{tag}] terminé — AUC {row['auc_global']:.4f}, "
         f"préc@100 {row['prec@100_commune_mediane']:.3f}, "

@@ -1,0 +1,12 @@
+candidat,verdict,chiffres,prec_priorite,n_priorite
+A_nu_asof,gain,"préc@100 0.080→0.080, lift 2.271→2.271, AUC 0.6201→0.6232, ECE 0.0021",0.074,95
+A_pct_bati_secteur_asof,gain,"préc@100 0.080→0.080, lift 2.271→2.297, AUC 0.6201→0.6195, ECE 0.0021",0.072,83
+C_dp_parcelle_36m,neutre,"préc@100 0.080→0.075, lift 2.271→2.275, AUC 0.6201→0.6201, ECE 0.0021",0.073,82
+C_pc_caduc_asof,neutre,"préc@100 0.080→0.080, lift 2.271→2.275, AUC 0.6201→0.6195, ECE 0.0022",0.074,81
+C_pc_pm_sur_parcelle_pp_36m,gain,"préc@100 0.080→0.080, lift 2.271→2.268, AUC 0.6201→0.6209, ECE 0.0022",0.301,83
+E_anciennete_plu_annees,gain,"préc@100 0.080→0.080, lift 2.271→2.297, AUC 0.6201→0.6199, ECE 0.0020",0.072,83
+D_dirigeant_age_max_asof,écartée (couverture < 5 %),"AUC PM 0.6726→0.6664, ECE PM 0.0049",0.095,84
+D_sci_agee_asof,neutre,"AUC PM 0.6726→0.6742, ECE PM 0.0049",0.074,81
+D_bodacc_36m,neutre,"AUC PM 0.6726→0.6726, ECE PM 0.0048",0.074,81
+D_pm_entree_recente,écartée (couverture < 5 %),"AUC PM 0.6726→0.6677, ECE PM 0.0063",0.076,92
+D_ventes_pm_secteur_36m,neutre (ECE dégradé),"AUC PM 0.6726→0.6732, ECE PM 0.0054",0.059,85
