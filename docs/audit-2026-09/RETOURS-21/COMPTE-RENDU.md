@@ -110,3 +110,100 @@ régression. **Aucune régénération silencieuse** : le diff sera listé au mom
 - `src/labuse/ingestion/layers_ingest.py` — `reclassifier_alea_niveau()`.
 - `src/labuse/cli.py` — commande `alea-reclassifier`.
 - `tests/test_retours21_lotA.py` — réalignement + idempotence.
+
+---
+
+## Lot B — les 2 894 permis sans localisation
+
+### Caractérisation (mesurée avant de coder)
+
+Les **2 894** permis `geom IS NULL` sans repli d'adresse (à distinguer des 580 démis-adresse de
+RETOURS-14, qui portent `geoloc='localisation approximative…'`). Motif :
+
+- **Référence : tous bien formés.** 2 894 / 2 894 ont un IDU de 14 caractères, INSEE `974xx`
+  valide. **Aucune** référence vide, hors-974, ou de longueur anormale. Aucun IDU n'est dans
+  `cadastre_historique` (donc jamais retrouvé dans les millésimes 2017-02→2025-09 de RETOURS-14).
+  → le motif « référence illisible » est **quasi nul** ; l'essentiel = parcelle introuvable.
+- **Par année du permis** (le millésime disponible commence en 2017-02) :
+
+  | année | permis | | année | permis |
+  |-------|-------:|-|-------|-------:|
+  | 2013  | 664 | | 2020 | 110 |
+  | 2014  | 595 | | 2021 |  72 |
+  | 2015  | 514 | | 2022 |  72 |
+  | 2016  | 363 | | 2023 |  57 |
+  | 2017  |  91 | | 2024 |  55 |
+  | 2018  |  65 | | 2025 |  63 |
+  | 2019  |  90 | | 2026 |  83 |
+
+  → **2 136 (74 %) sont 2013-2016**, antérieurs au premier cadastre archivé (2017-02) : parcelle
+  disparue AVANT. Les 758 de 2017+ référencent une parcelle absente de TOUS les millésimes
+  2017→2025 → référence erronée (parcelle inexistante) ou parcelle éphémère entre deux millésimes.
+
+- **Par commune** (top) : 97416 (363), 97422 (280), 97418 (255), 97415 (239), 97411 (194)…
+
+### Pistes de millésime < 2017-02 (ouvertes une par une)
+
+1. **PCI vecteur DGFiP** (`cadastre.data.gouv.fr/data/dgfip-pci-vecteur/`) : millésime le plus
+   ancien = **2017-02-13**. Aucune édition antérieure. → **absence confirmée après avoir regardé.**
+2. **BD PARCELLAIRE vecteur, version gelée 2018** (WFS `parcelle`) : postérieure à 2017-02, donc
+   inutile (une parcelle disparue avant 2017 en est déjà absente). → écartée après avoir regardé.
+3. **BD PARCELLAIRE couches image 2008-2013 / 2013-2018** (WMTS) : **raster**, sans géométrie
+   vectorielle ni IDU exploitable pour rattacher une parcelle. → écartée après avoir regardé.
+4. **BD PARCELLAIRE VECTEUR, édition 974 du 27/06/2008** (archive opendatarchives, SHP en
+   RGR92 UTM 40S = EPSG:2975) : **la seule source vecteur antérieure à 2017-02 trouvée.** 334 873
+   parcelles ; l'IDU se reconstitue depuis `CODE_DEP+CODE_COM+COM_ABS+SECTION+NUMERO`.
+   **MESURÉ : 1 041 des 2 391 IDU orphelins distincts y figurent** (majorité des permis 2013-2016 :
+   433/664, 348/595, 295/514, 176/363 ; quasi rien après 2021, ce qui confirme les refs erronées).
+
+### Récupération sûre (BD PARCELLAIRE 2008)
+
+`cadastre_historique.py::_pass_bdparcellaire_2008()` (câblée dans `run()`, après le PCI EDIGEO) :
+télécharge l'archive, reconstitue l'IDU, insère la géométrie 2008 (reprojetée 4326) des parcelles
+CIBLES dans `cadastre_historique` (millésime `2008-06-27`), puis `rattacher_par_geometrie` pose le
+permis sur `ST_PointOnSurface` de la parcelle d'origine et le rattache aux parcelles actuelles
+(≥10 % de couverture) — **exactement la méthode RETOURS-14** (IDU exact dans un cadastre d'époque
+→ récupération sûre ; jamais deviné). Exécuté :
+
+```
+BD PARCELLAIRE 2008 : 1262 parcelles d'origine retrouvées (reliquat pré-2017)
+rattachement géométrique : 1587 permis posés sur leur parcelle d'origine · 1887 encore sans geom
+```
+
+**Bilan permis** (avant → après) :
+
+| état | avant | après |
+|------|------:|------:|
+| localisés (geom présente) | 47 071 | **48 658** (+1 587) |
+| sans geom, « approximative (adresse) » | 580 | 309 |
+| sans geom, muets (geoloc NULL) | 2 894 | **0** |
+| sans geom, « sans localisation » (mention neuve) | 0 | 1 578 |
+
+1 587 permis récupérés (dont ~271 qui n'avaient qu'un repli d'adresse et ont désormais une
+géométrie exacte). Le reliquat vraiment non localisable = **1 578** (parcelle absente des cadastres
+2008 ET 2017→2025 : créée après 2008 puis disparue avant 2017, ou référence erronée).
+
+### Le reliquat n'est jamais muet
+
+`cadastre_historique.py::marquer_reliquat_sans_localisation()` (câblée dans `run()`) : tout permis
+resté `geom IS NULL` SANS `geoloc` reçoit une mention honnête (« sans localisation — parcelle
+d'origine absente des cadastres disponibles (2008 et 2017→2025), non affichée en point »).
+La liste (`api/modules.py`) affiche déjà ces permis sans jamais de point (`carte` = geom présente
+seule, règle S5) et le pied de liste dit le reliquat (`sans_localisation`). Exécuté : 1 578 marqués
+→ **0 permis muet restant.**
+
+### Fichiers Lot B
+- `src/labuse/ingestion/cadastre_historique.py` — `_pass_bdparcellaire_2008()`,
+  `marquer_reliquat_sans_localisation()`, câblage `run()`.
+- `tests/test_retours21_lotB.py` — reliquat jamais muet.
+- Dépendance : `py7zr` (lecture archive .7z IGN) ; `ogr2ogr` (reprojection, déjà utilisé).
+
+---
+
+## Lot C — accordéons de la fiche parcelle
+
+> `docs/audit-2026-09/RETOURS-20/MANDAT-RETOURS-20.md` est **introuvable** : le commit `dddbfb96`
+> (« docs: mandat RETOURS-20 + maquette ») n'a en réalité committé que la maquette HTML (530 l.),
+> jamais le fichier de mandat. Le Lot C (Z1-Z4) est reconstruit depuis l'inline du mandat
+> RETOURS-21 + la maquette `maquette-fiche-parcelle-accordeons.html`. À suivre.
+
