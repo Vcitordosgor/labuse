@@ -120,6 +120,15 @@ DONNEES: dict[str, Donnee] = {
     moteur="cascade", calcul="moteur",
     fonction="src/labuse/api/anti_fiche.py (motifs RÉDHIBITOIRE/VIGILANCE de la cascade)",
     reservoirs=("abf_merimee", "deal_ppr", "georisques_api", "znieff_inpn",), portee="run"),
+ # FICHE-1 lot 3 — le DÉTAIL des aléas (nature/niveau/part/réf. PPR), dérivé des mêmes lignes
+ # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
+ "aleas_parcelle_liste": C("Aléas de la parcelle", "liste", "parcelle",
+    "liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté "
+    "PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et "
+    "risques",
+    moteur="cascade", calcul="moteur",
+    fonction="src/labuse/api/app.py:_aleas_block (lignes servies layer='risques')",
+    reservoirs=("deal_ppr", "georisques_api",), portee="run", type="liste"),
  "n_extraits_plu": C("extraits (règlement)", "nombre", "commune",
     "extraits de règlement servis par commune (corpus)",
     moteur="commune_compteurs", calcul="moteur",

@@ -22,6 +22,11 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const sansObjet = lignes.filter((l) => l.result === 'PASS')
   // compteur VRAI : toutes les couches réellement évaluées (vigilance + sans objet + inconnu).
   const evaluees = vigilances.length + sansObjet.length + inconnues.length
+  // FICHE-1 lot 3 — les ALÉAS en détail (f.aleas) remplacent les lignes brutes « risques » (layer
+  // 'risques') : nature, niveau, part, référence PPR. Les AUTRES vigilances (accès, sol, SUP…)
+  // restent affichées telles quelles. Même moteur que Pièges et risques (cascade servie).
+  const aleas = f.aleas?.liste ?? []
+  const autresVig = vigilances.filter((l) => l.layer !== 'risques')
   return (
     <RefDrawer id="risques" icon={IC.risques} name="Risques et protections"
       context={`${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`}
@@ -30,13 +35,43 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         : <span className="pill-amber">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</span>}
       micro={<MicroSegments n={evaluees} label={`${evaluees} couches`} />}>
       <div className="flex flex-col gap-3">
-        {/* VIGILANCES D'ABORD — chaque ligne marquée d'une puce ambre (SUP incluses, par famille).
+        {/* FICHE-1 lot 3 — ALÉAS EN DÉTAIL : nature · niveau · part de la parcelle · référence PPR.
+            Compte n_vigilances au-dessus (dans le value du tiroir). Dérivé de la cascade servie. */}
+        {aleas.length > 0 && (
+          <div data-aleas-detail>
+            <GroupLabel>Aléas ({aleas.length})</GroupLabel>
+            <div className="flex flex-col gap-1.5">
+              {aleas.map((a, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span aria-hidden className={`mt-2 shrink-0 ${a.redhibitoire ? 'text-st-ecartee' : 'text-st-creuser'}`}>▲</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px]">
+                      <span className="font-semibold">{a.nature}</span>
+                      {a.niveau && <span className="text-txt-mut"> — niveau {a.niveau}</span>}
+                      {a.part_pct != null && <span className="text-txt-mut"> · {a.part_pct} % de la parcelle</span>}
+                      {a.redhibitoire && <span className="pill-amber ml-1.5">rédhibitoire</span>}
+                    </div>
+                    {a.ppr && a.ppr.length > 0 && (
+                      <div className="text-[11.5px] text-txt-mut">
+                        {a.ppr.map((p) => `${p.document}${p.approbation ? ` approuvé le ${p.approbation}` : ''}`).join(' · ')}
+                      </div>
+                    )}
+                    <div className="text-[11.5px] text-txt-dim">
+                      {a.source}{a.millesime ? ` · ${a.millesime}` : ''}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* AUTRES VIGILANCES (hors aléas structurés) — chaque ligne marquée d'une puce ambre.
             RETOURS-20 Z1·02 — le titre encadré (font-mono caps) devient un KICKER partagé (GroupLabel). */}
-        {vigilances.length > 0 && (
+        {autresVig.length > 0 && (
           <div>
             <GroupLabel>Vigilances</GroupLabel>
             <div className="flex flex-col gap-1">
-              {vigilances.map((l, i) => {
+              {autresVig.map((l, i) => {
                 // CIRCUIT-2 lot 5.2 — le NIVEAU D'ALÉA porte l'étiquette de traçage (classe) :
                 // les lignes « Aléa … — niveau … » ouvrent le tiroir de leur couche.
                 const detail = (l.detail || '') as string

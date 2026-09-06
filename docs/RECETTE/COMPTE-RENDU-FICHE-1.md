@@ -43,3 +43,14 @@ Nouveau tiroir « Le bien », placé après « Constructibilité » (front + reg
 - **Aucun DPE** → `null` → le front dit **« non déterminée — aucun DPE rattaché »** (affiché seulement quand il y a du bâti ; jamais sur un terrain nu).
 - **Registre** : `dpe_connu` sorti d'`en_attente`, fonction repointée `_dpe_connu_block`, ajouté au robinet `fiche_parcelle_le_bien` (mono-robinet → auto-pass V5c). Test guard `test_eau_dpe_attribuable_au_registre` mis à jour (rétabli, plus en_attente, dpe_ademe non muet). Commentaire mort Fiche.tsx (F2) remplacé.
 - **Vérifs** : `circuit verrous` 16/16 vert · tsc 0 · vitest 187 · tests registre/verrous 41/41 · doc régénéré. Vérifié en base : 97411000AC0079 → D/GES B (2026), 97408000AO1568 → E/E (2022), 97411000BD0080 → aucun.
+
+### Lot 3 — Les aléas en détail ✅
+
+Dans « Risques et protections », la fiche ne servait qu'un compte (`n_vigilances`). Ajout de la **liste des aléas** en détail.
+
+- **Producteur** `_aleas_block(db, idu, lines)` : dérivé des **mêmes lignes de cascade servies** (`layer == 'risques'`, arbitrées) que « Pièges et risques » — **doctrine M73 respectée** (aucune relecture de `spatial_layers` pour DÉCIDER un aléa ; la cascade servie est le point de vérité unique). Chaque aléa porte : **nature** (Inondation / Mouvement de terrain / PPR / …, lue sur le libellé arbitré), **niveau** (severity), **part de la parcelle concernée** (lue sur le libellé, `null` = la source ne la dit pas — honnête, jamais un faux 0).
+- **Document + date d'approbation du PPR** : **décision tranchée** — la part et la décision d'aléa viennent de la cascade (M73) ; le document + date d'approbation est une **référence réglementaire de commune** (l'arrêté qui a approuvé le PPR/PPRL communal), lue via `_ppr_reference_commune` — une **citation adossée à l'aléa déjà retenu** (esprit CIRCUIT-4), PAS une seconde décision d'aléa. Cohérent avec les lecture-gardes existantes de `served_cascade` qui lisent déjà `spatial_layers`.
+- **`n_vigilances` reste** au-dessus (dans le compteur du tiroir). Les aléas structurés **remplacent** les lignes brutes `risques` ; les autres vigilances (accès, sol, SUP…) restent affichées telles quelles.
+- **Contrôle d'accord ajouté** (`test_fiche1_aleas.py`) : le nombre d'aléas de la fiche = le nombre de lignes `risques` servies à Pièges et risques, pour toute parcelle du run — les deux écrans ne peuvent pas se contredire. Vérifié en base : 97416000EV1725 → fiche 3 = Pièges 3 (PPR 7 % + réf. arrêtés PPR 2016 / PPRL 2018, Inondation fort, Mvt terrain moyen).
+- **Registre** : `aleas_parcelle_liste` (moteur cascade) ajouté au robinet `fiche_parcelle_risques` (mono-robinet → auto-pass V5c).
+- **Vérifs** : `circuit verrous` 16/16 vert (176 données) · tsc 0 · vitest 187 · tests cascade/risques 30/30 · doc régénéré.

@@ -160,7 +160,7 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_parcelle_le_bien": _r("fiche", "Le bien", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu",)),
  "fiche_parcelle_risques": _r("fiche", "Risques et protections", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("n_vigilances",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("n_vigilances", "aleas_parcelle_liste",)),
  "fiche_parcelle_marche": _r("fiche", "Marché et secteur", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("prix_terrain_secteur_eur_m2", "prix_sortie_bati_eur_m2", "ventes_100m_n", "ventes_retenues_n", "ventes_ecartees_n", "dvf_parcelle_liste", "parc_social_rpls_logements",)),
  "fiche_parcelle_reseaux": _r("fiche", "Réseaux et accès", "fiche_parcelle",

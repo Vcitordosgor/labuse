@@ -100,6 +100,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 |---|---|---|---|---|---|---|---|
 | `n_vigilances` | nombre | Vigilances | abf_merimee, deal_ppr (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)), georisques_api, znieff_inpn (INPN, mise à jour 29/08/2025) | moteur `cascade` · src/labuse/api/anti_fiche.py (motifs RÉDHIBITOIRE/VIGILANCE de la cascade) | run | servie · non couverte (n sous seuil, dit) · non calculée | outil « Pièges et risques » |
 | | | *compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE* | | | | | |
+| `aleas_parcelle_liste` | liste | Aléas de la parcelle | deal_ppr (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)), georisques_api | moteur `cascade` · src/labuse/api/app.py:_aleas_block (lignes servies layer='risques') | run | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et risques* | | | | | |
 
 ## Marché et secteur
 

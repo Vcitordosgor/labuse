@@ -430,6 +430,16 @@ export interface Fiche {
     etiquette: string; etiquette_ges?: string | null; date?: string | null
     annee?: number | null; type_batiment?: string | null; n: number; source: string
   } | null
+  // FICHE-1 lot 3 — aléas en détail (dérivés de la cascade servie, accord avec Pièges et risques).
+  aleas?: {
+    n: number
+    liste: {
+      nature: string; niveau: string | null; libelle: string
+      part_pct: number | null; redhibitoire: boolean
+      source: string | null; millesime: string | null
+      ppr: { document: string; approbation: string | null }[] | null
+    }[]
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

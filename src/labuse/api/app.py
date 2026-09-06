@@ -3660,7 +3660,76 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # FICHE-1 lot 2 — DPE rétabli dans « Le bien » : dernier DPE connu du BÂTIMENT rattaché
         # (M71 B1 : info fiche SEULE, jamais un signal de classement). None → « non déterminée ».
         "dpe_connu": _dpe_connu_block(db, idu),
+        # FICHE-1 lot 3 — aléas EN DÉTAIL (nature, niveau, part, réf. PPR) dérivés des MÊMES lignes
+        # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
+        "aleas": _aleas_block(db, idu, lines),
     }
+
+
+_ALEA_NIVEAU_RANG = {"fort": 3, "moyen": 2, "faible": 1}
+
+
+def _alea_nature(detail: str) -> str:
+    """Nature lisible de l'aléa, lue sur le libellé déjà arbitré (jamais un recalcul géométrique)."""
+    d = (detail or "").lower()
+    if d.startswith("ppr"):
+        return "PPR — zonage réglementaire"
+    if "inondation" in d:
+        return "Inondation"
+    if "mouvement de terrain" in d:
+        return "Mouvement de terrain"
+    if "submersion" in d or "houle" in d or "recul du trait" in d or "littoral" in d:
+        return "Submersion marine / littoral"
+    if "incendie" in d or "feu de for" in d:
+        return "Feux de forêt"
+    return "Aléa naturel"
+
+
+def _ppr_reference_commune(db: Session, insee: str) -> list[dict] | None:
+    """Référence RÉGLEMENTAIRE de commune : l'arrêté d'approbation du PPR (document + date), par
+    type de document, le plus récent. Ce n'est PAS une décision d'aléa (celle-ci vient de la
+    cascade servie — M73) : seulement la citation de l'arrêté communal, adossée à l'aléa déjà
+    retenu (esprit CIRCUIT-4 « chaque calcul adossé à sa référence »)."""
+    rows = db.execute(text(
+        "SELECT attrs->>'document' AS document, max(attrs->>'approbation') AS approbation "
+        "FROM spatial_layers WHERE kind = 'ppr' AND attrs->>'code_insee' = :i "
+        "AND attrs->>'approbation' IS NOT NULL GROUP BY attrs->>'document' ORDER BY 1"),
+        {"i": insee}).mappings().all()
+    return [{"document": r["document"], "approbation": r["approbation"]} for r in rows] or None
+
+
+def _aleas_block(db: Session, idu: str, lines: list[dict]) -> dict | None:
+    """FICHE-1 lot 3 — la LISTE des aléas touchant la parcelle, dérivée des lignes de cascade
+    SERVIES (`layer == 'risques'`, arbitrées) — exactement celles que sert « Pièges et risques ».
+    Aucune relecture de spatial_layers pour DÉCIDER un aléa (M73). Chaque aléa porte : nature,
+    niveau, part de la parcelle concernée (lue sur le libellé arbitré, None si la source ne la
+    dit pas), et pour un PPR la référence de l'arrêté communal. None si aucun aléa."""
+    import re as _re
+    ali = [l for l in lines if l.get("layer") == "risques"
+           and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    if not ali:
+        return None
+    ppr_ref = None
+    items: list[dict] = []
+    for l in ali:
+        detail = l["detail"] or ""
+        is_ppr = detail.lower().startswith("ppr")
+        m = _re.search(r"(\d+)\s*%", detail)
+        if is_ppr and ppr_ref is None:
+            ppr_ref = _ppr_reference_commune(db, idu[:5])
+        items.append({
+            "nature": _alea_nature(detail),
+            "niveau": l.get("severity"),
+            "libelle": detail,
+            "part_pct": int(m.group(1)) if m else None,   # None = la source ne dit pas la part
+            "redhibitoire": l["result"] == "HARD_EXCLUDE",
+            "source": l.get("source"),
+            "millesime": l.get("millesime_amont"),
+            "ppr": ppr_ref if is_ppr else None,
+        })
+    items.sort(key=lambda a: (not a["redhibitoire"],
+                              -_ALEA_NIVEAU_RANG.get((a["niveau"] or "").lower(), 0)))
+    return {"n": len(items), "liste": items}
 
 
 def _dpe_connu_block(db: Session, idu: str) -> dict | None:
