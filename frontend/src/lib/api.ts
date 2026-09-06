@@ -401,6 +401,9 @@ export interface ScoreurResult {
                terrain_m2: number | null; prix_sortie_median: number | null; prix_neuf_label: string | null } | null
     terrain_zone: { eur_m2: number; fiabilite: string; n: number } | null
     motif: string | null
+    // OUTILS-FIX-4 B3 — l'historique DVF de LA parcelle (ventes actées portant son idu), 6 plus récentes.
+    dernieres_ventes?: { date: string | null; prix: number | null; surface_bati_m2: number | null
+                         surface_terrain_m2: number | null; type: string | null; nature: string | null }[]
   }
 }
 export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null, idu?: string | null,
