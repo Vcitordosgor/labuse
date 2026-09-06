@@ -146,9 +146,21 @@ Reprise : « continue CIRCUIT-P depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-P.md »
 - **Test vitest** `Detail.test.tsx` : parse/écrit `cx` sans écraser les autres paramètres ; rend
   nom/état/chip/bouton vanne ; retour + Échap ferment ; chip navigue. Vitest : **173 passed** (+3).
 
-## Lots 5→6 — à venir
+## Lot 5 — Le journal ✅ (commit `CIRCUIT-P lot 5`)
 
-- Lot 5 — Le journal (`Journal.tsx`).
+- `circuit/Journal.tsx` — tableau (quand · geste · cible · par · résultat) alimenté par
+  `/admin/circuit/journal`. Filtres par type de geste avec **« tous » en premier à gauche** (filtre
+  de journal, pas groupe de tri). Pagination simple (← / →, page X/Y, total). Couleur du point =
+  résultat (ok mint, dry-run/lancé ambre, échec/refus rouge). **Une ligne dont la cible existe est
+  un lien** vers sa page de détail (5.1) : cible résolue en réservoir (par nom/slug) ou robinet (par
+  id/nom) via `data`.
+- **Compteur de l'onglet** (5.2) : le Journal remonte `aujourdhui` au conteneur (`onAujourdhui`), qui
+  affiche « aujourd'hui · N ».
+- **Test vitest** `Journal.test.tsx` : tableau rendu, « tous » en premier, compteur du jour remonté,
+  ligne → détail, filtre relance la requête. Vitest : **176 passed** (+3). tsc vert.
+
+## Lot 6 — à venir
+
 - Lot 6 — Recette navigateur + retrait de l'ancien rendu + snapshots.
 
 ## Accroches pour CIRCUIT-4 (lot 6.3, à confirmer au fil)

@@ -10,6 +10,7 @@ import { getAdminCircuit, postAdminCircuitVerifier } from '../../../lib/api'
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
+import { Journal } from './Journal'
 import { Resume } from './Resume'
 import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type Cible, type CircuitData } from './types'
@@ -23,6 +24,7 @@ export function CircuitSection() {
   const [onglet, setOnglet] = useState<Onglet>('resume')
   const [detail, setDetail] = useState<Detail>(null)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
+  const [nJour, setNJour] = useState<number | null>(null)
 
   const verifier = useMutation({
     mutationFn: postAdminCircuitVerifier,
@@ -68,7 +70,7 @@ export function CircuitSection() {
         </button>
         <button className={onglet === 'circuit' ? 'on' : ''} onClick={() => setOnglet('circuit')}>Circuit</button>
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
-          Journal<span className="n">aujourd'hui</span>
+          Journal<span className="n">aujourd'hui{nJour != null ? ` · ${nJour}` : ''}</span>
         </button>
         <div className="actions">
           <button className="btn mauve" disabled
@@ -93,8 +95,7 @@ export function CircuitSection() {
       </section>
 
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>
-        {/* lot 5 — le journal (tableau, filtres, pagination). */}
-        <div className="muted">Le journal — lot 5.</div>
+        <Journal data={d} onOpen={ouvrirDetail} onAujourdhui={setNJour} />
       </section>
     </div>
   )
