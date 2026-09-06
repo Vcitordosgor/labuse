@@ -167,6 +167,7 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
   const addToCompare = useApp((s) => s.addToCompare)
   const openCompare = useApp((s) => s.openCompare)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [q, setQ] = useState('')
   const [sirenState, setSiren] = useState<string | null>(null)
@@ -222,7 +223,19 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
         </div>
       )}
       {embedded && !siren && <p className="text-[11px] leading-snug text-txt-dim">Cherchez un propriétaire (nom, SIREN/SIRET, IDU ou adresse) dans la barre du haut pour voir ce qu'il possède.</p>}
-      {d && (
+      {/* OUTILS-FIX-3 B2 — donnée réellement vide : on le DIT, au lieu d'aligner trois zéros (0 parcelle ·
+          0 actionnable · 0 m² SDP) doublés d'un encart d'interprétation. Le SIREN est bien résolu (le
+          pont/la recherche a rendu un résultat), l'entreprise ne détient simplement rien à La Réunion —
+          cas fréquent d'un pétitionnaire de permis basé hors de l'île (constat Vic, SIREN 392801130). */}
+      {d && (d['n_parcelles'] as number) === 0 && (
+        <div data-m02-aucune-parcelle className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
+          {d['nom'] ? <b className="text-txt">{d['nom'] as string}</b> : <>Cette entreprise (<span className="font-mono">{d['siren'] as string}</span>)</>}
+          {' '}ne détient <b>aucune parcelle à La Réunion</b> dans les fichiers fonciers (DGFiP). Ces fichiers
+          ne recensent que les personnes morales détentrices de foncier sur l'île — une société qui n'y possède
+          rien n'y figure pas.
+        </div>
+      )}
+      {d && (d['n_parcelles'] as number) > 0 && (
         <>
           {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
               sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
@@ -295,11 +308,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {/* OUTILS-FIX-2 A1/A5 — sur sélection : pont Courrier (IDU du propriétaire résolu) + pont Comparer. */}
           {sel.size > 0 && (
             <div className="flex flex-wrap items-center gap-2">
-              <button data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers') }}
+              {/* OUTILS-FIX-3 Lot D — fil de retour : le Courrier/Comparer cible affiche « ← Scan patrimoine »,
+                  qui rouvre ce propriétaire (m02Prefill = SIREN résolu). */}
+              <button data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}
                 className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
                 ✉ Préparer les courriers ({sel.size})
               </button>
-              <button data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare() }}
+              <button data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}
                 className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
                 Comparer ({Math.min(sel.size, 3)}) →
               </button>
@@ -364,6 +379,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
   // OUTILS-FIX-2 A4 — pont Permis → Scan patrimoine (SIREN du porteur → m02Prefill, consommé par ScanPatrimoine).
   const setModule = useApp((s) => s.setModule)
   const setM02Prefill = useApp((s) => s.setM02Prefill)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   // géom du permis (centroïde parcelle) : présente ssi géocodé ; sinon on ne peut pas localiser.
   const geom = d?.['geom'] as { coordinates?: [number, number] } | null | undefined
   const parcelle = (d?.['parcelles'] as string[] | undefined)?.[0]
@@ -413,10 +429,14 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             <F label="Destination" value={d['destination_libelle']} />
             <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
             {d['porteur_siren'] && <F label="SIREN" value={<Siren value={String(d['porteur_siren'])} className="font-mono text-txt" />} />}
-            {/* OUTILS-FIX-2 A4 — pont Scan patrimoine (porteur avec SIREN seulement ; rien pour un particulier). */}
+            {/* OUTILS-FIX-2 A4 — pont Scan patrimoine (porteur avec SIREN seulement ; rien pour un particulier).
+                OUTILS-FIX-3 B2 — on TRONQUE à la source aux 9 chiffres du SIREN : Scan interroge
+                parcelle_personne_morale.siren (9 chiffres) ; un SIRET (14) passé tel quel ne matcherait jamais
+                (zéro muet). `porteur_siren` est déjà un SIREN aujourd'hui — la garde couvre le jour où la
+                source SITADEL n'exposerait qu'un SIRET. */}
             {d['porteur_siren'] && (
               <button data-permis-scan-patrimoine
-                onClick={() => { setM02Prefill(String(d['porteur_siren'])); setModule('patrimoine'); onClose() }}
+                onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: permitId } }) }}
                 className="hover-fill mt-1.5 w-full rounded-lg border border-mint/35 py-1.5 text-center text-[11px] text-mint" title="Voir tout ce que ce porteur possède">
                 Scan patrimoine du porteur →</button>
             )}
@@ -907,8 +927,7 @@ export function M05() {
             {l}
           </button>
         ))}
-        <a href={`/modules/velocite?fmt=csv${nature ? `&nature=${nature}` : ''}`}
-          className="ml-auto self-center rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</a>
+        {/* OUTILS-FIX-3 Lot E — lien ⬇ CSV (/modules/velocite?fmt=csv) retiré côté écran ; l'endpoint back reste. */}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="sticky top-0 grid grid-cols-[1fr_64px_60px] gap-1 bg-surface-1 py-1 text-[11px] tracking-wide text-txt-dim">
@@ -1597,6 +1616,22 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // (catégorie plein écran, RadarView). Ancien composant RadarClient supprimé.
 }
 
+// OUTILS-FIX-3 Lot D — fil de retour UNIQUE entre outils : rendu en tête de CHAQUE outil (un seul
+// composant, un seul mécanisme = la pile `outilRetour`). N'apparaît QUE si l'outil a été ouvert par un
+// pont FIX-2 (la pile est vidée à toute nav manuelle) ; le clic rouvre l'outil de DÉPART dans son état.
+function RetourOutil() {
+  const stack = useApp((s) => s.outilRetour)
+  const retourOutil = useApp((s) => s.retourOutil)
+  if (!stack.length) return null
+  const top = stack[stack.length - 1]
+  return (
+    <button data-outil-retour onClick={retourOutil} title={`Revenir à ${top.label}`}
+      className="hover-fill flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick">
+      ← {top.label}
+    </button>
+  )
+}
+
 export function ModulePanel() {
   const { module, setModule, toggleOutils } = useApp()
   const def = MODULES.find((m) => m.key === module)
@@ -1650,6 +1685,7 @@ export function ModulePanel() {
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
+        <RetourOutil />
         <Body />
       </div>
     </aside>

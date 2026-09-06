@@ -80,3 +80,21 @@ describe('FAISABILITE — étape 12 (SHAB vendable retenue)', () => {
     expect(last.textContent).toContain('123')
   })
 })
+
+describe('OUTILS-FIX-3 Lot F — l\'IA est cantonnée : hors fiche (embedded), pas de bouton « Expliquer »', () => {
+  beforeEach(mockFetch)
+  afterEach(() => vi.restoreAllMocks())
+
+  it('fiche (non embedded) : le bouton IA « Expliquer ce calcul » est présent', async () => {
+    render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" /></QueryClientProvider>)
+    await waitFor(() => { if (!document.querySelector('[data-faisa-steps]')) throw new Error('no steps') })
+    expect(document.querySelector('[data-faisa-explain-btn]')).toBeTruthy()
+  })
+
+  it('outil Faisabilité (embedded) : AUCUN point d\'entrée IA', async () => {
+    render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" embedded /></QueryClientProvider>)
+    await waitFor(() => { if (!document.querySelector('[data-faisa-steps]')) throw new Error('no steps') })
+    expect(document.querySelector('[data-faisa-explain]')).toBeFalsy()
+    expect(document.querySelector('[data-faisa-explain-btn]')).toBeFalsy()
+  })
+})

@@ -11,6 +11,7 @@ beforeEach(() => {
   useApp.setState({
     compareIdus: [], compareOpen: false, comparePicking: false, compareTouchedAt: null,
     communesTableOpen: false, densifierTableOpen: false, outilsOpen: false, module: null, view: 'cartes',
+    outilRetour: [], permitToOpen: null, m02Prefill: null,
   })
 })
 afterEach(() => vi.restoreAllMocks())
@@ -71,6 +72,44 @@ describe('cleanup on-leave centralisé', () => {
     useApp.setState({ compareOpen: true })
     st().toggleSurveillance()
     expect(st().compareOpen).toBe(false)
+  })
+})
+
+describe('OUTILS-FIX-3 Lot D — fil de retour entre outils', () => {
+  it('un pont empile un retour ; retourOutil rouvre l\'outil de départ dans son état', () => {
+    // simulation du pont Densifier → Faisabilité : setModule puis pushOutilRetour (ordre du pont).
+    st().setModule('programme')
+    st().pushOutilRetour({ module: 'renouvellement', label: 'Densifier', restore: { densifierTableOpen: true } })
+    expect(st().outilRetour).toHaveLength(1)
+    expect(st().outilRetour[0].label).toBe('Densifier')
+    st().retourOutil()
+    expect(st().module).toBe('renouvellement')      // rouvre l'outil de départ
+    expect(st().densifierTableOpen).toBe(true)      // …dans son état (grand tableau rouvert)
+    expect(st().outilRetour).toHaveLength(0)         // dépilé
+  })
+
+  it('une navigation manuelle (setModule menu) VIDE la pile : pas de « ← » sur un outil ouvert au menu', () => {
+    st().pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: 'PC-42' } })
+    expect(st().outilRetour).toHaveLength(1)
+    st().setModule('communes')                      // ouverture depuis le menu
+    expect(st().outilRetour).toHaveLength(0)         // vidée par CLOSE_OVERLAYS
+  })
+
+  it('retourOutil restaure un prefill (Permis → drawer, Scan → SIREN) et openCompare vide aussi la pile', () => {
+    st().pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: 'PC-42' } })
+    st().retourOutil()
+    expect(st().module).toBe('permis')
+    expect(st().permitToOpen).toBe('PC-42')          // le drawer se rouvre (consommé par M03)
+    // openCompare (menu ou pont) vide la pile ; le pont ré-empile APRÈS
+    st().pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: '123456789' } })
+    st().openCompare()
+    expect(st().outilRetour).toHaveLength(0)
+  })
+
+  it('retourOutil sans pile ne fait rien (garde)', () => {
+    useApp.setState({ outilRetour: [], module: 'communes' })
+    st().retourOutil()
+    expect(st().module).toBe('communes')
   })
 })
 

@@ -269,7 +269,14 @@ def patrimoine(siren: str, fmt: str = "json",
         "SELECT max(denomination) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar()
     # #4 SIGNAL INPI (brique dormante de « Foncier fantôme ») : société ABSENTE du registre des
     # dirigeants = signal d'approche fort (succession / société en sommeil). Libellé FACTUEL.
-    inpi_sans_dirigeant = bool(siren) and not db.execute(text(
+    # OUTILS-FIX-3 B3 — l'interprétation (« succession / sommeil probable ») ne se tire QUE d'une
+    # entreprise RÉSOLUE comme propriétaire réunionnais : ≥ 1 parcelle au fichier foncier ET raison
+    # sociale connue. Sur une entreprise ABSENTE de parcelle_personne_morale (ex. le pétitionnaire d'un
+    # permis qui ne détient rien à La Réunion — cas SIREN 392801130), l'absence de ligne pm_dirigeants
+    # est un ANGLE MORT (INPI non résolu chez nous), pas une preuve d'absence de dirigeant : on ne
+    # l'affiche donc pas. Sans cette garde, un simple « 0 parcelle » se doublait d'un encart d'approche
+    # trompeur. (bool(siren) restait vrai même sur une entreprise inconnue → faux signal.)
+    inpi_sans_dirigeant = bool(rows) and bool(nom) and not db.execute(text(
         "SELECT EXISTS (SELECT 1 FROM pm_dirigeants WHERE siren = :s)"), {"s": siren}).scalar()
     # #2 l'agrégat dit l'ACTIONNABLE. « Écartées » de base = étage 0 cascade (exclues/faux positif).
     # CONNEXIONS-2 Lot 4 (KO-10) : si le COMPTE courant a explicitement ÉCARTÉ des parcelles dans un

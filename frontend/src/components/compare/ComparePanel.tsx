@@ -7,13 +7,11 @@ import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
-import { verdictMeta, type TierV2 } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
 
-function verdict(r: CompareRow) {
-  return verdictMeta((r.status ?? null) as never, (r.tier_v2 ?? null) as TierV2 | null, !!r.etage0)
-}
+// OUTILS-FIX-3 C1 — le verdict de scoring (verdictMeta) n'est plus affiché dans Comparer (badge « Faible »
+// retiré : on n'impose pas l'Analyse LABUSE sur cet écran). Import + helper `verdict` supprimés.
 
 // lignes du tableau (libellé, valeur) — resserrées : les doublons fiche (Capacité, CA estimé) retirés ;
 // ajoutés : prix terrain nu/zone (M79) + contrainte majeure explicite.
@@ -171,18 +169,9 @@ export function ComparePanel() {
   const q = useQuery({ queryKey: ['compare', compareIdus.join(',')], queryFn: () => getCompare(compareIdus), enabled: compareIdus.length > 0 })
   const parcels = q.data?.parcels ?? []
 
-  // OUTILS-FIX-2 D4 — export CSV du tableau comparé (mêmes valeurs que l'écran, provenance en en-tête).
-  // Généré côté client (le tableau tient en mémoire) ; BOM + ';' pour Excel, comme les autres exports.
-  const exporterCsv = () => {
-    const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`
-    const head = ['Donnée', ...parcels.map((p) => p.idu)]
-    const lignes = ROWS.map((row) => [`${row.label} [${row.prov === 'source' ? 'Sourcé' : 'Estimé'}]`, ...parcels.map((p) => row.val(p))])
-    const contr = ['Détail contraintes', ...parcels.map((p) => (p.contraintes ?? []).join(' · ') || '—')]
-    const csv = '﻿' + [head, ...lignes, contr].map((r) => r.map(esc).join(';')).join('\r\n')
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    const a = document.createElement('a'); a.href = url; a.download = 'comparaison_parcelles.csv'; a.click()
-    URL.revokeObjectURL(url)
-  }
+  // OUTILS-FIX-3 Lot E — l'export CSV du tableau (bouton + générateur client `exporterCsv`) est RETIRÉ
+  // (décision Vic 06/09 : aucun export CSV dans l'app pour l'instant). Aucune capacité back touchée —
+  // le tableau reste consultable à l'écran.
 
   // Échap ferme LE TABLEAU (retour carte + panneau) — capture, pour passer AVANT le handler « Échap =
   // fermer le module » de ModulePanel (qui, lui, ignore Échap tant que le tableau est ouvert).
@@ -198,11 +187,7 @@ export function ComparePanel() {
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <p className="label-caps">Comparer les parcelles ({compareIdus.length}/3)</p>
           <div className="flex items-center gap-3 text-[11px]">
-            {/* OUTILS-FIX-2 D4 — export CSV (même bouton ⬇ CSV que Scan patrimoine). */}
-            {parcels.length > 0 && (
-              <button data-compare-csv onClick={exporterCsv}
-                className="rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</button>
-            )}
+            {/* OUTILS-FIX-3 Lot E — bouton ⬇ CSV retiré (aucun export CSV dans l'app pour l'instant). */}
             {/* retour à la carte pour continuer le picking (le panneau + la sélection restent) */}
             <button data-compare-carte onClick={() => setCompareOpen(false)} className="text-mint hover:underline">◉ Retour à la carte</button>
             <button onClick={clearCompare} className="text-txt-mut hover:text-txt">Tout vider</button>
@@ -223,19 +208,21 @@ export function ComparePanel() {
                 <tr>
                   <th className="w-[150px] p-2" />
                   {parcels.map((r) => {
-                    const v = verdict(r)
                     return (
                       <th key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
                         <div className="flex items-center justify-between gap-2">
                           <button onClick={() => select(r.idu)} className="font-mono text-[11px] tracking-tight text-txt-hi hover:underline">{r.idu}</button>
                           <button onClick={() => removeFromCompare(r.idu)} title="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-1">
-                          {/* puce d'ACTION servie (M137) — dérivée de tier_v2 + étage 0, plus « Classement historique » */}
-                          <span className="inline-block rounded-full px-2 py-0.5 text-[10px]" style={{ color: v.color, border: `1px solid ${v.color}55` }}>{v.label}</span>
-                          {/* raison dominante M135 (chip court), comme sur la carte/la liste */}
-                          {r.raison && <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>}
-                        </div>
+                        {/* OUTILS-FIX-3 C1 — la puce de scoring (tier « Faible / Neutre / Priorité »… dérivée de
+                            tier_v2) est RETIRÉE : l'Analyse LABUSE n'a pas été demandée sur cet écran, on ne
+                            l'impose pas. Le chip « secteur qui bouge » (raison dominante M135) reste — c'est un
+                            fait de marché, pas un score. */}
+                        {r.raison && (
+                          <div className="mt-1 flex flex-wrap items-center gap-1">
+                            <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>
+                          </div>
+                        )}
                         {/* O9(a) — commune · fraction M135 (« 1/5 sous 1 an »). Le rang GLOBAL servi (ex.
                             « rang 271 141 » sur 431 663) ne veut rien dire pour l'utilisateur ; l'action
                             utile (le tier) est déjà portée par la puce ci-dessus. Un rang DANS LA COMMUNE

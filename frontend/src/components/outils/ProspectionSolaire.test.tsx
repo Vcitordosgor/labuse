@@ -112,7 +112,7 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
   })
 
-  it('A2/A3/A5 — liste Piscines : potentiel, type propriétaire, CSV et pont Courrier', async () => {
+  it('A2/A5 — liste Piscines : potentiel, type propriétaire, pont Courrier (CSV retiré FIX-3 E)', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
@@ -120,7 +120,7 @@ describe('SOLAIRE — deux modes', () => {
     expect(body).toContain('SCI SOLEIL')                 // A2 — PM nommée
     expect(body).toContain('particulier — non nommé')    // A2 — particulier jamais nommé
     expect(body.replace(/\s/g, '')).toContain('1598')    // A2 — potentiel servi (fmtInt insère une espace)
-    expect(document.querySelector('[data-piscines-csv]')).toBeTruthy()        // A3 — export CSV branché
+    expect(document.querySelector('[data-piscines-csv]')).toBeFalsy()        // OUTILS-FIX-3 E — export CSV retiré
     // A5 — sélectionner une ligne active le pont Courrier
     const cb = document.querySelector('[data-piscines-sel]') as HTMLInputElement
     fireEvent.click(cb)

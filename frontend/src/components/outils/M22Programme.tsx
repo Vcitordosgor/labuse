@@ -23,6 +23,7 @@ export function M22() {
   // OUTILS-FIX-2 A5 — pont Faisabilité par critères → Comparer (sélection ; limite 3 côté Comparer).
   const addToCompare = useApp((s) => s.addToCompare)
   const openCompare = useApp((s) => s.openCompare)
+  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
   const [selCmp, setSelCmp] = useState<Set<string>>(new Set())
   const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
@@ -193,7 +194,7 @@ export function M22() {
               {/* A5 — pont Comparer sur la sélection (même geste/compteur que Courrier). */}
               {selCmp.size > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <button data-prog-comparer onClick={() => { [...selCmp].slice(0, 3).forEach(addToCompare); openCompare() }}
+                  <button data-prog-comparer onClick={() => { [...selCmp].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'programme', label: 'Faisabilité' }) }}
                     className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
                     Comparer ({Math.min(selCmp.size, 3)}) →
                   </button>
@@ -249,8 +250,8 @@ export function M22() {
       {mode === 'parcelle' && (
         <>
           <div className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-            Désignez une parcelle : sa <b>faisabilité complète</b> (capacité, calcul tracé, explication IA,
-            charge foncière) — le même calcul que l'onglet Faisabilité de la fiche.
+            Désignez une parcelle : sa <b>faisabilité complète</b> (capacité, calcul tracé, charge
+            foncière) — le même calcul que l'onglet Faisabilité de la fiche.
           </div>
           {!picked ? (
             <ParcelPicker onPick={setPicked} picked={picked} />
@@ -261,8 +262,15 @@ export function M22() {
                 <button data-faisa-changer onClick={() => setPicked(null)}
                   className="ml-auto rounded border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt">changer</button>
               </div>
-              <div data-faisa-parcelle className="pr-0.5">
-                <FaisabiliteTab idu={picked} />
+              {/* OUTILS-FIX-3 A1 — le bloc « Capacité constructible » (et tout FaisabiliteTab) sortait de la
+                  DA quand on l'ouvrait par le pont Densifier : son titre (GroupLabel → `.sec`) et ses filets
+                  sont stylés SOUS `.fiche-v6` (`.fiche-v6 .sec > span { font-size:10px … }`) — hors de ce
+                  conteneur (ici, dans l'outil) la classe retombait au défaut navigateur (~16 px), « nettement
+                  plus gros ». On rend donc FaisabiliteTab dans le MÊME contexte `.fiche-v6` que la fiche : mêmes
+                  classes, même typographie, contenu identique (A2 : cause = classes CSS scopées `.fiche-v6`). */}
+              <div data-faisa-parcelle className="fiche-v6 pr-0.5">
+                {/* OUTILS-FIX-3 Lot F — `embedded` cantonne l'IA (explication du calcul) à la fiche parcelle. */}
+                <FaisabiliteTab idu={picked} embedded />
               </div>
             </>
           )}

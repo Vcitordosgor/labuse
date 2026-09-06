@@ -314,7 +314,11 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
 // Badges ÉQUIPEMENTS (mandat wave-ortho Lot 6) : piscine / PV / CES / pente — dans la
 // synthèse, sourcés « ortho IGN 2025, fiabilité statistique, non contractuelle ».
 
-export function FaisabiliteTab({ idu }: { idu: string }) {
+// OUTILS-FIX-3 Lot F — `embedded` : FaisabiliteTab est partagé entre la FICHE (garde l'IA) et l'OUTIL
+// Faisabilité (M22, mode « par parcelle »). Hors fiche, on cantonne l'IA : le bouton « Expliquer ce
+// calcul en clair » (faisabiliteExplain) et l'encart AvisIA ne s'affichent QUE dans la fiche. Le calcul
+// tracé, la capacité et la charge foncière restent — l'outil ne perd pas son contenu utile (F3).
+export function FaisabiliteTab({ idu, embedded }: { idu: string; embedded?: boolean }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   // §1e — le calcul étape par étape est OUVERT par défaut (on passait à côté quand il était replié) ;
   // mis en valeur dans un encadré dédié « Le calcul, étape par étape » plutôt qu'un accordéon discret.
@@ -415,8 +419,10 @@ export function FaisabiliteTab({ idu }: { idu: string }) {
       )}
 
       {/* ── EXPLIQUER CE CALCUL EN CLAIR (IA, sur clic) — M58-P1 (e) : SEULEMENT s'il y a un
-          calcul à expliquer (steps > 0). Sur une parcelle non calculable (0 step), pas de bouton. ── */}
-      {cap && steps.length > 0 && (
+          calcul à expliquer (steps > 0). Sur une parcelle non calculable (0 step), pas de bouton.
+          OUTILS-FIX-3 Lot F — l'IA est cantonnée à la fiche parcelle et au Copilote : `!embedded`
+          (l'outil Faisabilité, qui embarque ce composant, n'affiche donc pas ce point d'entrée IA). ── */}
+      {!embedded && cap && steps.length > 0 && (
         <div data-faisa-explain>
           {!ex && !explain.isPending && (
             <button onClick={() => explain.mutate()} data-faisa-explain-btn
