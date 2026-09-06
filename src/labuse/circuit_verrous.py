@@ -305,6 +305,86 @@ def verrou_sources_comptes(db) -> ResultatVerrou:
     return ResultatVerrou("V2a", PHRASES["V2a"], "casse", pbs[0], pbs)
 
 
+# ── LOT 3 — le verrou des versions : une seule version servie, partout ─────────────────
+
+
+def verrou_versions_generations(db=None, *, schema: set[str] | None = None) -> ResultatVerrou:
+    """V3a — pour chaque table servie d'un réservoir, les seules générations admises dans le
+    schéma sont `x`, `x__attente` (échange en cours) et `x__precedente` (retour possible) ;
+    et les tuiles servies sont fabriquées pour LE run du manifeste. Un `x__2025`, un
+    `x__essai`, deux millésimes côte à côte = verrou cassé."""
+    from .registre import tables as T
+
+    if schema is None and db is not None:
+        schema = relations_schema(db)
+    if schema is None:
+        return ResultatVerrou("V3a", PHRASES["V3a"], "casse", "injouable sans schéma")
+    pbs: list[str] = []
+    for base in sorted(T.tables_reservoirs()):
+        for rel in schema:
+            if rel.startswith(base + "__") and rel not in (base + "__attente", base + "__precedente"):
+                pbs.append(f"{base} : génération inattendue {rel}")
+    if db is not None:
+        try:
+            from . import runs
+            run_mvt = db.execute(text(
+                "SELECT value FROM mvt_meta WHERE key = 'run_label'")).scalar() \
+                if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar() else None
+            run_servi = runs.current()
+            if run_mvt and run_servi and run_mvt != run_servi:
+                pbs.append(f"tuiles fabriquées pour {run_mvt}, manifeste sert {run_servi}")
+        except Exception as e:  # noqa: BLE001
+            pbs.append(f"pointeurs du manifeste illisibles : {e.__class__.__name__}")
+    if pbs:
+        return ResultatVerrou("V3a", PHRASES["V3a"], "casse", f"{len(pbs)} génération(s) en trop", pbs)
+    return ResultatVerrou("V3a", PHRASES["V3a"], "ok",
+                          f"{len(T.tables_reservoirs())} tables de réservoir, une génération servie chacune")
+
+
+def verrou_eau_ancienne(db) -> ResultatVerrou:
+    """V3b — mesurée MAINTENANT (pas les archives du journal) : aucune eau ancienne ouverte
+    hors « gelé, étiqueté ». S'il en reste une, le verrou nomme la donnée et le robinet."""
+    from . import sonde_circuit
+
+    lignes = sonde_circuit.eau_lignes(db)
+    ouvertes = [x for x in lignes if x[5] == "ouvert"]
+    etiquetees = [x for x in lignes if x[5] == "etiquete"]
+    if ouvertes:
+        return ResultatVerrou("V3b", PHRASES["V3b"], "casse",
+                              f"{len(ouvertes)} eau(x) ancienne(s) ouverte(s)",
+                              [f"{c} → {r} ({m})" for (c, r, _t, _a, m, _s) in ouvertes])
+    return ResultatVerrou("V3b", PHRASES["V3b"], "ok",
+                          f"aucune eau ouverte ({len(etiquetees)} gel(s) assumé(s) étiqueté(s))")
+
+
+def verrou_sonde_ids(db) -> ResultatVerrou:
+    """V3c — la sonde écrit des ids (dette CIRCUIT-P3) : toute ligne d'écart ou d'eau dont le
+    côté correspond à un robinet du registre porte son `robinet_id`, et tout `chiffre_id`
+    écrit appartient au registre."""
+    from .registre import CHIFFRES, ROBINETS
+
+    pbs: list[str] = []
+    for table, lib, cible in (("circuit_ecarts", "robinet_a", "robinet_a_id"),
+                              ("circuit_ecarts", "robinet_b", "robinet_b_id"),
+                              ("circuit_eau_ancienne", "robinet", "robinet_id")):
+        rows = db.execute(text(
+            f"SELECT DISTINCT {lib} FROM {table} WHERE {cible} IS NULL")).scalars().all()  # noqa: S608
+        for v in rows:
+            if v in ROBINETS:
+                pbs.append(f"{table}.{lib} = {v!r} : robinet du registre SANS robinet_id")
+    chiffres = db.execute(text(
+        "SELECT DISTINCT chiffre_id FROM circuit_ecarts "
+        "UNION SELECT DISTINCT chiffre_id FROM circuit_eau_ancienne")).scalars().all()
+    admis_hors_registre = {"exports_recette", "mots_interdits"}   # cas de la recette PDF (0-bis)
+    for c in chiffres:
+        if c not in CHIFFRES and c not in admis_hors_registre:
+            pbs.append(f"chiffre_id hors registre dans la sonde : {c!r}")
+    if pbs:
+        return ResultatVerrou("V3c", PHRASES["V3c"], "casse", f"{len(pbs)} ligne(s) non attribuable(s)", pbs)
+    return ResultatVerrou("V3c", PHRASES["V3c"], "ok",
+                          "écarts et eau ancienne attribuables (ids du registre)")
+
+
 # ── le registre des verrous (complété lot par lot) ──────────────────────────────────────
 
 PHRASES: dict[str, str] = {
@@ -314,6 +394,9 @@ PHRASES: dict[str, str] = {
     "V1d": "Chaque réservoir servi est lu par au moins une donnée — aucun réservoir muet ne dort dans la vitrine.",
     "V2a": "Le nombre de sources servies est LE MÊME partout : vitrine SQL, prédicat Python, page — et chacune a sa place dans la carte.",
     "V2b": "Toute ligne du catalogue hors vitrine dit pourquoi : alias (cible en vitrine), retirée (date + raison), hub, ou chantier nommé.",
+    "V3a": "Chaque réservoir n'a qu'une version servie : ses seules générations sont la table, son __attente et sa __precedente — et les tuiles servent le run du manifeste.",
+    "V3b": "Après une bascule, zéro eau ancienne : rien d'ouvert hors « gelé, étiqueté » — sinon le verrou nomme la donnée et le robinet.",
+    "V3c": "La sonde écrit des ids, plus des libellés : chaque écart et chaque eau ancienne sont attribuables à leur donnée et à leur robinet du registre.",
 }
 
 VERROUS: tuple[Verrou, ...] = (
@@ -323,6 +406,9 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V1d", 1, PHRASES["V1d"], verrou_reservoirs_sans_lecteur),
     Verrou("V2a", 2, PHRASES["V2a"], verrou_sources_comptes),
     Verrou("V2b", 2, PHRASES["V2b"], verrou_sources_statuts),
+    Verrou("V3a", 3, PHRASES["V3a"], verrou_versions_generations),
+    Verrou("V3b", 3, PHRASES["V3b"], verrou_eau_ancienne),
+    Verrou("V3c", 3, PHRASES["V3c"], verrou_sonde_ids),
 )
 
 

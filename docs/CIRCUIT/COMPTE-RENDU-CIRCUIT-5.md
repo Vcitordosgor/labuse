@@ -8,7 +8,7 @@ Reprise : « continue CIRCUIT-5 depuis docs/CIRCUIT/COMPTE-RENDU-CIRCUIT-5.md »
 - [x] Étape 0 — branche, baseline, lecture des comptes-rendus
 - [x] Lot 1 — verrou des tables
 - [x] Lot 2 — verrou des sources (68 = 68)
-- [ ] Lot 3 — verrou des versions
+- [x] Lot 3 — verrou des versions
 - [ ] Lot 4 — verrou des communes
 - [ ] Lot 5 — verrou des concepts et des moteurs
 - [ ] Lot 6 — commande, porte, page, VERROUS.md
@@ -68,6 +68,18 @@ Règle tenue pendant tout le mandat : zéro échec NOUVEAU par rapport à cette 
   et leurs notes) ; le seed l'appelle pour les bases futures.
 - D2-3 : `retiree_le` = date du GESTE de retrait (posée une fois, `COALESCE`), pas une date
   d'historien : les notes gardent l'histoire, la colonne garde le geste.
+- D3-1 : `dpe_connu` déclarée au registre n'est PAS une invention (interdit D1-5) : le bloc
+  est construit et servi au payload (`app.py:5312`), c'est le registre qui avait un trou —
+  la déclaration est `en_attente` (aucun robinet ne l'affiche), fidèle à l'écran.
+- D3-2 : le trio « injecter, calculer, basculer » du 3.2 est joué sur BODACC en réel pour
+  l'injection ; « calculer/basculer » ne s'appliquent pas (source LIVE, servie à
+  l'injection — le cycle pompe complet coûterait des heures de scoring et changerait l'état
+  servi local). Le verrou V3b tient l'invariant EN CONTINU (sonde de nuit + deploy), ce qui
+  est plus fort qu'un drill unique.
+- D3-3 : l'eau DPE « ouverte » depuis CIRCUIT-4 était un FAUX SIGNAL (publication amont vs
+  date de contenu) — corrigé par comparaison à `last_sync_at`, ET l'eau réellement bue
+  (`ingest-dpe --force`) avant de solder les lignes : jamais un test ajusté pour passer,
+  le rafraîchissement a eu lieu.
 
 ## Lot 1 — verrou des tables (livré)
 
@@ -162,6 +174,52 @@ casse ; a_faire sans chantier → casse ; servie ET alias → contradiction ; ca
 discipliné → [] ; seed avec ligne fantôme → ValueError avant toute écriture ; catalogue
 réel → garde verte ; `-m local` : V2a/V2b verts sur la base réelle, et V2a prouvé cassé
 quand la page ment (flux monkeypatché → « comptes divergents : SQL 68 · Python 68 · page 0 »).
+
+## Lot 3 — verrou des versions : une seule version servie, partout (livré)
+
+**Les verrous** :
+- **V3a** : pour chaque table servie d'un réservoir, les seules générations admises dans le
+  schéma sont `x`, `x__attente`, `x__precedente` (échange CIRCUIT-3) ; les tuiles servent le
+  run du manifeste (`mvt_meta.run_label == runs.current()`). Vert : 64 tables, une
+  génération chacune.
+- **V3b** : zéro eau ancienne ouverte hors « gelé, étiqueté », mesurée MAINTENANT
+  (`sonde_circuit.eau_lignes`, extrait pur de `verifier_eau_ancienne` — le verrou lit l'état,
+  jamais les archives du journal). S'il en reste une, le détail nomme la donnée et le robinet.
+- **V3c** : la sonde écrit des ids (la dette CIRCUIT-P3) — un libellé qui EST un robinet du
+  registre sans son `robinet_id`, ou un `chiffre_id` hors registre, casse le verrou
+  (exceptions admises : `exports_recette`/`mots_interdits`, les cas recette PDF du 0-bis).
+
+**La migration 3.3** (`sonde_circuit.ensure()`, idempotente, backfill compris) :
+- `circuit_ecarts.robinet_a_id/robinet_b_id`, `circuit_eau_ancienne.robinet_id` ;
+- `robinet_id_de()` : l'id du registre si le libellé en est un, `CORRESPONDANCES_ROBINETS`
+  sinon (`http:/parcels` → `fiche_parcelle_entete`, `attrs.niveau (servi)` →
+  `couche_alea_inondation`…), None quand le côté n'est pas un robinet (moteur, SQL, règle) —
+  le libellé reste ;
+- `_upsert_ecart` et l'insert d'eau posent les ids À l'écriture.
+
+**L'eau DPE — la dette soldée, et un FAUX SIGNAL corrigé** :
+- l'ancien contrôle comparait `source_veille.dernier_vu` (date de PUBLICATION du jeu amont)
+  au `max(date_etablissement)` (date de CONTENU) → « ouvert » permanent même base à jour.
+  Prouvé par le rafraîchissement réel : `labuse ingest-dpe --force` du 06/09 → 16 DPE
+  authentiques 974, max de contenu INCHANGÉ (21/07) — le dernier DPE réunionnais date de
+  juillet, l'amont republie le JEU chaque semaine. Nouveau comparant : `last_sync_at`
+  (notre geste d'ingestion).
+- la ligne devient attribuable : donnée **`dpe_connu` déclarée au registre** (passe-plat
+  `app.py:5312`, réservoir `dpe_ademe`, `en_attente` : le bloc payload est construit mais
+  plus AFFICHÉ — commentaire `Fiche.tsx:1492`, rétablissement premium = décision Vic).
+  → `dpe_ademe` n'est plus un réservoir muet (V1d passe de 9 à 8).
+- les 9 lignes historiques `(chiffres DPE)` : migrées `dpe_connu` + soldées (l'eau a été bue).
+
+**Le geste 3.2 joué sur la base locale** : `labuse ingest-bodacc` réel (9 733 SIREN
+interrogés, 680 procédures, dernière annonce 21/08) puis V3b rejoué → **ok, zéro eau
+ouverte après l'injection** (2 gels étiquetés : solaire, division). BODACC est une source
+LIVE : servie à l'injection, sans calculer/basculer (décision D3-2).
+
+**Preuves cassé → vert** (`tests/verrous/test_lot3_versions.py`, 9 tests) : génération
+`dvf_mutations__essai` posée → casse ; `__attente`/`__precedente` admises → ok ; eau ouverte
+posée → casse en nommant donnée+robinet, étiquetée → ok ; écart écrit à l'ancienne (id NULL)
+→ casse, `ensure()` backfille → vert ; `chiffre_id` fantôme → casse ; upsert pose les ids ;
+`-m local` : V3a/V3b/V3c verts sur la base réelle.
 
 ## Preuves des verrous (cassé → vert)
 

@@ -76,19 +76,73 @@ def ensure(db) -> None:
     db.execute(text("ALTER TABLE circuit_ecarts ADD COLUMN IF NOT EXISTS "
                     "type varchar(12) NOT NULL DEFAULT 'nombre'"))
     db.execute(text("ALTER TABLE circuit_ecarts ALTER COLUMN chiffre_id TYPE varchar(120)"))
+    # CIRCUIT-5 lot 3.3 — la sonde écrit des IDS, plus seulement des libellés (dette P3) :
+    # `robinet_*_id` = id du registre quand le côté EST un robinet (NULL sinon : moteur, SQL,
+    # règle — le libellé reste). Backfill des lignes d'avant la migration.
+    db.execute(text("ALTER TABLE circuit_ecarts ADD COLUMN IF NOT EXISTS robinet_a_id varchar(120)"))
+    db.execute(text("ALTER TABLE circuit_ecarts ADD COLUMN IF NOT EXISTS robinet_b_id varchar(120)"))
+    db.execute(text("ALTER TABLE circuit_eau_ancienne ADD COLUMN IF NOT EXISTS robinet_id varchar(120)"))
+    _backfill_ids(db)
+
+
+#: lot 3.3 — libellés descriptifs de la sonde → id de robinet du registre (quand le côté est
+#: bien un robinet servi ; un côté moteur/SQL/règle n'a PAS d'id et garde son libellé seul).
+CORRESPONDANCES_ROBINETS: dict[str, str] = {
+    "http:/parcels": "fiche_parcelle_entete",
+    "copilote:fiche_parcelle": "copilote_fiche_parcelle",
+    "attrs.niveau (servi)": "couche_alea_inondation",
+    "sitadel_permits (points servis)": "couche_permis",
+    "payload fiche (bloc dpe_connu, non affiché)": "",   # servi par AUCUN robinet (Fiche.tsx:1492)
+    "fiche parcelle / filtres": "",                       # ancien libellé DPE (backfill)
+}
+
+
+def robinet_id_de(libelle: str | None) -> str | None:
+    """L'id de robinet du registre pour un libellé de la sonde — le libellé lui-même s'il EST
+    un id, la correspondance déclarée sinon, None quand le côté n'est pas un robinet."""
+    if not libelle:
+        return None
+    from .registre import ROBINETS
+    if libelle in ROBINETS:
+        return libelle
+    return CORRESPONDANCES_ROBINETS.get(libelle) or None
+
+
+def _backfill_ids(db) -> None:
+    """lot 3.3 — pose les ids sur les lignes écrites avant la migration (idempotent)."""
+    # l'eau DPE historique : chiffre HORS registre « (chiffres DPE) » → `dpe_connu` (donnée du
+    # registre, attribuable), et SOLDÉE — le contrôle a été corrigé (last_sync_at, plus le max
+    # des dates de contenu) et la source ré-ingérée --force le 06/09/2026 : l'eau a été bue.
+    db.execute(text(
+        "UPDATE circuit_eau_ancienne SET chiffre_id = 'dpe_connu', statut = 'solde' "
+        "WHERE chiffre_id = '(chiffres DPE)'"))
+    for table, cols in (("circuit_ecarts", ("robinet_a", "robinet_b")),
+                        ("circuit_eau_ancienne", ("robinet",))):
+        suffixe = "_id" if table == "circuit_eau_ancienne" else None
+        for col in cols:
+            cible = f"{col}{suffixe}" if suffixe else f"{col}_id"
+            rows = db.execute(text(
+                f"SELECT DISTINCT {col} FROM {table} WHERE {cible} IS NULL")).scalars().all()  # noqa: S608
+            for lib in rows:
+                rid = robinet_id_de(lib)
+                if rid:
+                    db.execute(text(
+                        f"UPDATE {table} SET {cible} = :rid WHERE {col} = :lib AND {cible} IS NULL"),  # noqa: S608
+                        {"rid": rid, "lib": lib})
 
 
 def _upsert_ecart(db, chiffre_id: str, cle: str, ra: str, va, rb: str, vb, cause: str,
                   type_donnee: str = "nombre") -> None:
     db.execute(text(
         "INSERT INTO circuit_ecarts (chiffre_id, cle, robinet_a, valeur_a, robinet_b, valeur_b,"
-        " cause, type) "
-        "VALUES (:c, :k, :ra, :va, :rb, :vb, :ca, :t) "
+        " cause, type, robinet_a_id, robinet_b_id) "
+        "VALUES (:c, :k, :ra, :va, :rb, :vb, :ca, :t, :ra_id, :rb_id) "
         "ON CONFLICT (chiffre_id, cle, robinet_a, robinet_b) DO UPDATE SET "
         " valeur_a = EXCLUDED.valeur_a, valeur_b = EXCLUDED.valeur_b, cause = EXCLUDED.cause, "
-        " type = EXCLUDED.type, statut = 'ouvert', solde_le = NULL"),
+        " type = EXCLUDED.type, robinet_a_id = EXCLUDED.robinet_a_id, "
+        " robinet_b_id = EXCLUDED.robinet_b_id, statut = 'ouvert', solde_le = NULL"),
         {"c": chiffre_id, "k": cle, "ra": ra, "va": str(va), "rb": rb, "vb": str(vb),
-         "ca": cause, "t": type_donnee})
+         "ca": cause, "t": type_donnee, "ra_id": robinet_id_de(ra), "rb_id": robinet_id_de(rb)})
 
 
 def verifier_robinets(db) -> dict:
@@ -461,9 +515,10 @@ def verifier_categorielle(db) -> dict:
             "pdf_zonage": "cas recette_exports1 (nocturne)"}
 
 
-def verifier_eau_ancienne(db) -> dict:
-    """4.2 — par tampon : run ≠ manifeste, millésime servi < réservoir. Les six familles de
-    CIRCUIT-0 sont contrôlées ; « solaire gelé » sort `etiquete` (assumé), jamais `ouvert`."""
+def eau_lignes(db) -> list[tuple[str, str, str, str, str, str]]:
+    """4.2 (extrait CIRCUIT-5 lot 3) — les lignes d'eau ancienne MESURÉES maintenant, sans
+    écrire : (chiffre_id, robinet, tampon, attendu, mecanisme, statut). Utilisé par
+    `verifier_eau_ancienne` (qui les journalise) ET par le verrou V3b (état, sans doublon)."""
     from . import manifeste
 
     lignes: list[tuple[str, str, str, str, str, str]] = []
@@ -478,16 +533,23 @@ def verifier_eau_ancienne(db) -> dict:
                        f"runs en base : {sorted(autres)}", f"run servi : {run_div}",
                        "lignes d'anciens runs en base (non servies — scope lot 2.3) ; purge au geste",
                        "etiquete"))
-    # 2) DPE : l'amont vu par la sonde est-il plus récent que la donnée en base ?
+    # 2) DPE : l'amont a-t-il publié une version APRÈS notre dernière ingestion ?
+    # CIRCUIT-5 lot 3.3 — le comparant est `last_sync_at` (notre geste), plus le max des dates
+    # de contenu : l'ancien contrôle (`dernier_vu > max(date_etablissement)`) restait « ouvert »
+    # même base à jour, car le dernier DPE authentique 974 date du 21/07 quand l'amont republie
+    # le JEU chaque semaine — un faux signal permanent, constaté au rafraîchissement --force du
+    # 06/09 (16 DPE, max inchangé). Et la ligne devient ATTRIBUABLE : chiffre_id = `dpe_connu`
+    # (donnée du registre, en_attente — le bloc payload existe, plus aucun robinet ne l'affiche).
     try:
-        vu = db.execute(text(
-            "SELECT v.dernier_vu FROM source_veille v JOIN data_sources d ON d.id = v.source_id "
-            "WHERE d.name ILIKE 'DPE ADEME%'")).scalar()
-        maxi = db.execute(text("SELECT max(date_etablissement)::text FROM dpe_records")).scalar()
-        if vu and maxi and str(vu)[:10] > str(maxi)[:10]:
-            lignes.append(("(chiffres DPE)", "fiche parcelle / filtres",
-                           f"max(date_etablissement)={maxi}", f"amont vu {str(vu)[:10]}",
-                           "cron DPE : saut des communes peuplées (--force pour rafraîchir)", "ouvert"))
+        vu, sync = db.execute(text(
+            "SELECT v.dernier_vu, d.last_sync_at FROM source_veille v "
+            "JOIN data_sources d ON d.id = v.source_id "
+            "WHERE d.name ILIKE 'DPE ADEME%'")).first() or (None, None)
+        if vu and (sync is None or str(vu)[:10] > str(sync)[:10]):
+            lignes.append(("dpe_connu", "payload fiche (bloc dpe_connu, non affiché)",
+                           f"dernière ingestion {str(sync)[:10] if sync else 'jamais'}",
+                           f"amont vu {str(vu)[:10]}",
+                           "cron DPE : ré-ingérer (--force) pour boire la nouvelle version", "ouvert"))
     except Exception:  # noqa: BLE001
         db.rollback()
     # 3) isochrones : entrées au-delà du TTL 30 j (plus jamais SERVIES — lot 2.7 — mais à purger)
@@ -505,12 +567,20 @@ def verifier_eau_ancienne(db) -> dict:
     lignes.append(("prod_spec_kwh_kwc", "outil_prospection_solaire",
                    "millésime gelé porté en base (bandeau)", "recalcul au geste solaire-build",
                    "gel ASSUMÉ et étiqueté (CIRCUIT-0, famille 3)", "etiquete"))
+    return lignes
 
+
+def verifier_eau_ancienne(db) -> dict:
+    """4.2 — par tampon : run ≠ manifeste, millésime servi < réservoir. Les six familles de
+    CIRCUIT-0 sont contrôlées ; « solaire gelé » sort `etiquete` (assumé), jamais `ouvert`.
+    lot 3.3 : chaque ligne porte aussi `robinet_id` (id du registre, NULL si aucun robinet)."""
+    lignes = eau_lignes(db)
     for (cid, rob, tampon, attendu, meca, statut) in lignes:
         db.execute(text(
-            "INSERT INTO circuit_eau_ancienne (chiffre_id, robinet, tampon, attendu, mecanisme, statut) "
-            "VALUES (:c, :r, :t, :a, :m, :s)"),
-            {"c": cid, "r": rob, "t": tampon, "a": attendu, "m": meca, "s": statut})
+            "INSERT INTO circuit_eau_ancienne (chiffre_id, robinet, robinet_id, tampon, attendu,"
+            " mecanisme, statut) VALUES (:c, :r, :rid, :t, :a, :m, :s)"),
+            {"c": cid, "r": rob, "rid": robinet_id_de(rob), "t": tampon, "a": attendu,
+             "m": meca, "s": statut})
     ouvertes = sum(1 for x in lignes if x[5] == "ouvert")
     return {"lignes": len(lignes), "ouvertes": ouvertes,
             "etiquetees": sum(1 for x in lignes if x[5] == "etiquete")}
