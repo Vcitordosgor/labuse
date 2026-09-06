@@ -97,3 +97,27 @@ def test_patrimoine_ne_leve_pas_et_ménage_vestiges(db_session, monkeypatch):
     for it in out["items"]:
         assert "tier_v2" in it and "sdp" in it
         assert "q_score" not in it and "a_score" not in it and "completeness_score" not in it and "statut" not in it
+
+
+def test_patrimoine_entreprise_sans_foncier_pas_de_signal_inpi(db_session, monkeypatch):
+    """OUTILS-FIX-3 B3 — une entreprise ABSENTE du fichier foncier (0 parcelle à La Réunion, ex. le
+    pétitionnaire d'un permis basé hors de l'île) ne doit PAS déclencher l'encart « aucun dirigeant
+    INPI → succession / sommeil probable » : l'absence de ligne pm_dirigeants y est un angle mort
+    (INPI non résolu), pas une preuve. L'endpoint ne lève pas et rend n_parcelles=0, nom=None."""
+    monkeypatch.setattr("labuse.api.app._score_v2_run_id", lambda _db: Q_A_RUN_LABEL)
+    from labuse.api.modules import patrimoine
+    out = patrimoine(siren="392801130", limit=200, offset=0, db=db_session)   # jamais seedée
+    assert out["n_parcelles"] == 0 and out["nom"] is None
+    assert out["inpi_sans_dirigeant"] is False                                # plus de faux signal
+
+
+def test_patrimoine_signal_inpi_sur_proprietaire_resolu(db_session, monkeypatch):
+    """OUTILS-FIX-3 B3 — le signal RESTE pour une entreprise RÉSOLUE (≥ 1 parcelle + raison sociale)
+    sans dirigeant au registre : c'est le vrai « foncier fantôme ». Avec un dirigeant seedé, il tombe."""
+    monkeypatch.setattr("labuse.api.app._score_v2_run_id", lambda _db: Q_A_RUN_LABEL)
+    from labuse.api.modules import patrimoine
+    _seed(db_session, "97499000FZ0001", _WKT[0], "121212121", "SCI FONCIER FANTOME")
+    assert patrimoine(siren="121212121", limit=200, offset=0, db=db_session)["inpi_sans_dirigeant"] is True
+    db_session.execute(text(
+        "INSERT INTO pm_dirigeants (siren, nom) VALUES ('121212121', 'DUPONT')"))
+    assert patrimoine(siren="121212121", limit=200, offset=0, db=db_session)["inpi_sans_dirigeant"] is False

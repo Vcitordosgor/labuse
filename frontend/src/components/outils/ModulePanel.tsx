@@ -222,7 +222,19 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
         </div>
       )}
       {embedded && !siren && <p className="text-[11px] leading-snug text-txt-dim">Cherchez un propriétaire (nom, SIREN/SIRET, IDU ou adresse) dans la barre du haut pour voir ce qu'il possède.</p>}
-      {d && (
+      {/* OUTILS-FIX-3 B2 — donnée réellement vide : on le DIT, au lieu d'aligner trois zéros (0 parcelle ·
+          0 actionnable · 0 m² SDP) doublés d'un encart d'interprétation. Le SIREN est bien résolu (le
+          pont/la recherche a rendu un résultat), l'entreprise ne détient simplement rien à La Réunion —
+          cas fréquent d'un pétitionnaire de permis basé hors de l'île (constat Vic, SIREN 392801130). */}
+      {d && (d['n_parcelles'] as number) === 0 && (
+        <div data-m02-aucune-parcelle className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
+          {d['nom'] ? <b className="text-txt">{d['nom'] as string}</b> : <>Cette entreprise (<span className="font-mono">{d['siren'] as string}</span>)</>}
+          {' '}ne détient <b>aucune parcelle à La Réunion</b> dans les fichiers fonciers (DGFiP). Ces fichiers
+          ne recensent que les personnes morales détentrices de foncier sur l'île — une société qui n'y possède
+          rien n'y figure pas.
+        </div>
+      )}
+      {d && (d['n_parcelles'] as number) > 0 && (
         <>
           {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
               sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
@@ -413,10 +425,14 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             <F label="Destination" value={d['destination_libelle']} />
             <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
             {d['porteur_siren'] && <F label="SIREN" value={<Siren value={String(d['porteur_siren'])} className="font-mono text-txt" />} />}
-            {/* OUTILS-FIX-2 A4 — pont Scan patrimoine (porteur avec SIREN seulement ; rien pour un particulier). */}
+            {/* OUTILS-FIX-2 A4 — pont Scan patrimoine (porteur avec SIREN seulement ; rien pour un particulier).
+                OUTILS-FIX-3 B2 — on TRONQUE à la source aux 9 chiffres du SIREN : Scan interroge
+                parcelle_personne_morale.siren (9 chiffres) ; un SIRET (14) passé tel quel ne matcherait jamais
+                (zéro muet). `porteur_siren` est déjà un SIREN aujourd'hui — la garde couvre le jour où la
+                source SITADEL n'exposerait qu'un SIRET. */}
             {d['porteur_siren'] && (
               <button data-permis-scan-patrimoine
-                onClick={() => { setM02Prefill(String(d['porteur_siren'])); setModule('patrimoine'); onClose() }}
+                onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose() }}
                 className="hover-fill mt-1.5 w-full rounded-lg border border-mint/35 py-1.5 text-center text-[11px] text-mint" title="Voir tout ce que ce porteur possède">
                 Scan patrimoine du porteur →</button>
             )}
