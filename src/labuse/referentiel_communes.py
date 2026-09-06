@@ -8,7 +8,13 @@ l'avertissaient, le verrou l'interdit).
 Les FK sont posées `NOT VALID` (bloquent l'ENTRÉE immédiatement, sans juger le passé) puis
 VALIDÉES si la table est propre ; une table qui refuse la validation garde sa contrainte
 NOT VALID et ses lignes fautives sont NOMMÉES par le verrou V4a — jamais supprimées en
-autonomie (constat 06/09 : UNE ligne, sirene_etablissements insee='97454', code inexistant).
+autonomie.
+
+CIRCUIT-5b lot 3 — la SEULE ligne fautive héritée (sirene_etablissements insee='97454', code
+inexistant) est une COQUILLE identifiable : adresse « 133 Jules Reydellet » (Saint-Denis) et
+point à 3 m des parcelles 97411. Elle est CORRIGÉE (97454 → 97411) avant la validation, jamais
+supprimée (`CORRECTIONS_INSEE_HERITEES`). Une coquille NON identifiable resterait fautive
+(NOT VALID, nommée par V4a) pour le geste de Vic.
 """
 from __future__ import annotations
 
@@ -50,6 +56,38 @@ def nom_contrainte(table: str) -> str:
     return f"fk_{table}_commune"
 
 
+#: CIRCUIT-5b lot 3 — coquilles INSEE héritées, CORRIGÉES (jamais supprimées) avant validation.
+#: Chaque entrée identifie la ligne par une clé stable (siret…) ET l'ancien code (idempotence :
+#: rejouée, elle ne touche plus rien une fois corrigée), et porte le motif de l'identification.
+CORRECTIONS_INSEE_HERITEES: tuple[dict, ...] = (
+    {"table": "sirene_etablissements", "cle_col": "siret", "cle": "83939934200147",
+     "col": "insee", "de": "97454", "vers": "97411", "commune": "Saint-Denis",
+     "motif": "adresse « 133 Jules Reydellet » (Saint-Denis) + point à 3 m des parcelles 97411 ; "
+              "97454 hors référentiel (97401→97424)"},
+)
+
+
+def corriger_coquilles_heritees(db) -> list[str]:
+    """CIRCUIT-5b lot 3 — corrige (idempotent) les coquilles INSEE identifiables AVANT la
+    validation des FK. Rend la liste des corrections réellement appliquées (rowcount > 0)."""
+    faites: list[str] = []
+    for c in CORRECTIONS_INSEE_HERITEES:
+        if not db.execute(text("SELECT to_regclass(:t)"), {"t": f"public.{c['table']}"}).scalar():
+            continue
+        sets = f'"{c["col"]}" = :vers'
+        params = {"vers": c["vers"], "de": c["de"], "cle": c["cle"]}
+        if c.get("commune"):
+            sets += ", commune = :commune"
+            params["commune"] = c["commune"]
+        n = db.execute(text(
+            f'UPDATE public."{c["table"]}" SET {sets} '
+            f'WHERE "{c["cle_col"]}" = :cle AND "{c["col"]}" = :de'), params).rowcount
+        if n:
+            faites.append(f"{c['table']} {c['cle_col']}={c['cle']} : {c['de']} → {c['vers']} "
+                          f"({c['motif']})")
+    return faites
+
+
 def ensure_referentiel(db) -> None:
     """Pose (idempotent) la table référentiel et la remplit depuis le code."""
     db.execute(text(
@@ -66,6 +104,7 @@ def poser_fks(db) -> dict:
     """Pose les FK (NOT VALID) sur chaque table déclarée, puis tente la VALIDATION.
     Rend {posees, validees, non_validees: {table: raison}} — idempotent, jamais un DELETE."""
     ensure_referentiel(db)
+    corrections = corriger_coquilles_heritees(db)   # CIRCUIT-5b lot 3 — coquilles avant validation
     posees, validees, non_validees = [], [], {}
     for table, col in TABLES_MAILLE_COMMUNE.items():
         if not db.execute(text("SELECT to_regclass(:t)"), {"t": f"public.{table}"}).scalar():
@@ -87,7 +126,8 @@ def poser_fks(db) -> dict:
                 validees.append(table)
             except Exception as e:  # noqa: BLE001 — lignes fautives : la FK reste NOT VALID
                 non_validees[table] = str(e).splitlines()[0][:160]
-    return {"posees": posees, "validees": validees, "non_validees": non_validees}
+    return {"posees": posees, "validees": validees, "non_validees": non_validees,
+            "corrections": corrections}
 
 
 def etat_fks(db) -> dict:

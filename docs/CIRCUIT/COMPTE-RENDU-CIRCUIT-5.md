@@ -487,3 +487,25 @@ registre). Aucun DROP : `mobpro_commune` reste en base, réservoir marqué RETIR
 donnée `dirigeant_pm_signal` servie par un seul robinet → mono-robinet (V5c). `labuse circuit
 verrous --complet` : 16 verrous, **0 cassé, 2 à décider** (V1c orphelines, V4a SIRENE — lots 3/4).
 Tests `tests/verrous/` + `test_registre` + `test_sentinelle` : 104 passés.
+
+## Lot 3 — la ligne SIRENE au code INSEE invalide
+
+V4a signalait UNE ligne héritée hors référentiel dans `sirene_etablissements` :
+
+| siret | siren | naf | adresse | insee | coordonnées |
+|---|---|---|---|---|---|
+| 83939934200147 | 839399342 | 9499Z | 133 JULES REYDELLET | **97454** (inexistant) | POINT(55.4904 −20.9365) |
+
+**Coquille identifiable** (donc corrigée, pas supprimée) : la rue Jules Reydellet est à
+Saint-Denis, et le point est à **3 m des parcelles 97411** (`ST_Distance` sur le cadastre servi ;
+aucune parcelle des 24 autres communes plus proche). Le code correct est **97411** (Saint-Denis)
+— 97454 est hors du référentiel 97401→97424.
+
+Correction codifiée dans `referentiel_communes.CORRECTIONS_INSEE_HERITEES` (clé `siret` + ancien
+code `97454` → idempotente) et appliquée par `poser_fks()` AVANT la validation : `insee` 97454 →
+97411, `commune` → « Saint-Denis ». Aucun DELETE (règle « aucune source effacée »). Une coquille
+NON identifiable resterait fautive (NOT VALID, nommée par V4a) pour le geste de Vic.
+
+**Résultat.** `VALIDATE CONSTRAINT fk_sirene_etablissements_commune` réussit → V4a passe de
+« not_valid » à **valide** (« 24 tables sous clé étrangère, toutes validées »). `labuse circuit
+verrous --complet` : **0 cassé, 1 à décider** (V1c orphelines — lot 4). Tests `test_lot4_communes` : 12 passés.
