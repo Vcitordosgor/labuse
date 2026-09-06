@@ -774,3 +774,54 @@ _ajout(_f(
                   "bloquant", "Couches type c (dépassements Lden/Ln, RN/RD/VC)",
                   "6 sous-couches fixées à l'ingestion — type b/a jamais servies (doublon/exposition)"),
     ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 4 — le cadre régional ══════════════════════════
+# Le potentiel foncier Région (îlots non urbanisés — ESTIMATION du producteur, jamais servie
+# comme donnée LABUSE) devient un CONTRÔLE DE COMPARAISON avec notre analyse : la part des
+# parcelles couvertes par un îlot que NOTRE run servi juge « à potentiel » (tiers hauts).
+# Mesuré au 07/09/2026 (run q_v11_m137) : 15 776 parcelles dans 2 453 îlots (2 607 ha) ;
+# 7 043 en tiers hauts (44,6 %) ; 277 de nos 1 478 brûlantes/chaudes en îlot (18,7 % — notre
+# tête valorise AUSSI la densification du bâti, hors du champ « îlots non urbanisés »).
+def _potentiel_region_recouvrement() -> Controle:
+    def m(db, f: Filtre, version: str):
+        from .cadre import _table_existe
+        if not _table_existe(db, "parcel_p_score_v2"):
+            return skip("parcel_p_score_v2 absente (pas de run servi en base)")
+        run = db.execute(text(
+            "SELECT run_id FROM parcel_p_score_v2 GROUP BY run_id ORDER BY count(*) DESC LIMIT 1"
+        )).scalar()
+        if not run:
+            return skip("aucun run de score en base")
+        row = db.execute(text("""
+            WITH dans AS (
+              SELECT DISTINCT p.id, s.tier
+              FROM parcels p
+              JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
+              JOIN spatial_layers il ON il.kind = 'potentiel_foncier'
+                AND ST_Intersects(p.geom_2975, il.geom_2975))
+            SELECT count(*) AS total,
+                   count(*) FILTER (WHERE tier IN ('brulante','chaude','a_creuser')) AS hauts
+            FROM dans"""), {"run": run}).mappings().first()
+        total = int(row["total"] or 0)
+        hauts = int(row["hauts"] or 0)
+        pct = round(100.0 * hauts / total, 1) if total else None
+        d = {"run": run, "parcelles_dans_ilots": total, "tiers_hauts": hauts, "pct_hauts": pct,
+             "mesure_0709": {"total": 15776, "hauts": 7043, "pct": 44.6}}
+        if total == 0:
+            return ko("0 parcelle dans les îlots", d)
+        # avertit si la convergence s'effondre (< 25 % — moitié de la mesure de référence) :
+        return ok(f"{pct} % de tiers hauts dans les îlots", d) if (pct or 0) >= 25.0 else \
+            ko(f"{pct} %", d)
+    return Controle("d_potfoncier_convergence", "referentiel", "avertissant",
+                    "Convergence îlots Région ↔ analyse LABUSE",
+                    "≥ 25 % des parcelles en îlot jugées à potentiel par le run servi "
+                    "(mesuré 44,6 % au 07/09/2026 — seuil = moitié de la référence)", m)
+
+
+_ajout(_f(
+    source="potentiel_foncier_region", libelle="Potentiel foncier Région (contrôle de comparaison)",
+    table="spatial_layers", where="kind = 'potentiel_foncier'",
+    cle=("id",), geom_col="geom",
+    source_motif="Potentiel foncier Région%", portee_run=False, a_job=False,
+    propres=[_potentiel_region_recouvrement()]))

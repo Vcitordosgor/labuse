@@ -273,7 +273,9 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # SOURCES-1 lot 2 — +4 : DPF/zones humides/ENP compléments (raisons : WFS Carmen sans
     # en-tête de version) + AZI/TRI (SEED temoin GASPAR, deux chef-lieux).
     # SOURCES-1 lot 3 — +3 raisons (SIS/CASIAS canal SSP, CBS Carmen sans en-tête).
-    assert len(noms) == 88
+    # SOURCES-1 lot 4 — +2 : SAR (rappel 180 j, couche officielle non diffusée + SAR 2050) et
+    # DVF Région (raison : hub ODS déjà surveillé, jeu figé — échantillon producteur).
+    assert len(noms) == 90
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

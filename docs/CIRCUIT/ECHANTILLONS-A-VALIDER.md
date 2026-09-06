@@ -38,8 +38,12 @@ skip proprement) — **rien n'attend**.
 
 - **dpe** : API ADEME par numéro DPE (faisable) ; la base LOCALE ne porte que 17 DPE — l'échantillon
   complet viendra avec l'ingestion DPE complète. *Proposition* : 20 numéros DPE témoins → `etiquette_dpe`.
-- **dvf** : géo-DVF renvoie des listes par commune/parcelle ; apparier une disposition = budget.
-  *Proposition* : `valeur_fonciere` + surface d'une mutation sur une parcelle témoin.
+- **dvf** : ~~géo-DVF renvoie des listes par commune/parcelle ; apparier une disposition = budget~~
+  **RÉSOLU (SOURCES-1 lot 4)** : échantillon AGRÉGÉ contre le producteur RÉGIONAL (DVF Réunion,
+  data.regionreunion.com — DV3F public figé 2014→mi-2021) : comptes de mutations distinctes par
+  fenêtre commune×année (2019 / 2020 / Saint-Paul 2020), tolérance 5 %, joué 3/3 conformes le
+  07/09/2026 (écarts réels 1,5–3,1 %). L'appariement par mutation reste impossible (ids Région =
+  empreintes md5 sans correspondance Etalab — vérifié).
 - **gpu_plu** : /gpu/zone-urba s'interroge par géométrie (une requête par témoin). *Proposition* :
   la famille de zone servie de 20 parcelles témoins vs le GPU.
 - **georisques_mvt** : /gaspar/risques par commune (le degré est déjà gardé bloquant par

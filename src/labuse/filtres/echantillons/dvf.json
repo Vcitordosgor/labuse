@@ -1,13 +1,43 @@
 {
   "source": "dvf",
-  "producteur": "DGFiP/Etalab — géo-DVF",
-  "table": "dvf_mutations",
-  "cle_colonne": "mutation_id",
-  "lu_le": null,
-  "a_valider": true,
-  "producteur_url": "https://api.cquest.org/dvf?code_commune=97411",
-  "raison_report": "API géo-DVF renvoie des LISTES par commune/parcelle ; l'appariement d'une disposition précise demande le fichier brut. Budget API.",
-  "proposition_cc": "Vérifier valeur_fonciere + surface d'une mutation sur une parcelle témoin contre géo-DVF.",
-  "note": "Squelette lot 3 : l'échantillon vit SANS lignes tant que la vérification producteur n'est pas faite (voir docs/CIRCUIT/ECHANTILLONS-A-VALIDER.md). Le contrôle skip proprement.",
-  "lignes": []
+  "producteur": "Région Réunion — DVF Réunion (DV3F public, data.regionreunion.com)",
+  "table": "(SELECT 'ile-'||extract(year from date_mutation)::int AS fenetre, count(DISTINCT id_mutation) AS n FROM dvf_mutations_histo GROUP BY extract(year from date_mutation) UNION ALL SELECT code_commune||'-'||extract(year from date_mutation)::int, count(DISTINCT id_mutation) FROM dvf_mutations_histo GROUP BY code_commune, extract(year from date_mutation)) t",
+  "cle_colonne": "fenetre",
+  "lu_le": "2026-09-07",
+  "note": "SOURCES-1 lot 4 — le DVF Région entre comme ÉCHANTILLON PRODUCTEUR (mandat : pas de nouvelle donnée servie). Comptes de mutations DISTINCTES par fenêtre commune×année, comparés au producteur régional (jeu DV3F public FIGÉ 2014→mi-2021 chez la Région — seules les années pleines 2019/2020 sont comparables ; 2021 Région est partielle, jamais comparée). Tolérance 5 % : périmètres DV3F (Région) et géo-DVF/archives DGFiP (LABUSE) diffèrent légèrement par nature (écarts mesurés 1,5–3,1 % au 07/09/2026). Remplace le squelette CIRCUIT-3 lot 3 (a_valider) : l'appariement PAR MUTATION est impossible (ids Région = empreintes md5 idmutinvar/idopendata, sans correspondance avec id_mutation Etalab — vérifié 07/09/2026), l'échantillon est donc agrégé par fenêtre.",
+  "lignes": [
+    {
+      "cle": "ile-2019",
+      "colonne": "n",
+      "attendu": 8224,
+      "tolerance_pct": 5.0,
+      "origine": {
+        "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records?select=year(anneemut)%20as%20an,count(*)%20as%20n&group_by=year(anneemut)",
+        "champ": "results[year=2019].n",
+        "lu_le": "2026-09-07"
+      }
+    },
+    {
+      "cle": "ile-2020",
+      "colonne": "n",
+      "attendu": 7886,
+      "tolerance_pct": 5.0,
+      "origine": {
+        "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records?select=year(anneemut)%20as%20an,count(*)%20as%20n&group_by=year(anneemut)",
+        "champ": "results[year=2020].n",
+        "lu_le": "2026-09-07"
+      }
+    },
+    {
+      "cle": "97415-2020",
+      "colonne": "n",
+      "attendu": 1108,
+      "tolerance_pct": 5.0,
+      "origine": {
+        "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records?where=l_codinsee%3D%2297415%22%20and%20year(anneemut)%3D2020&limit=1",
+        "champ": "total_count",
+        "lu_le": "2026-09-07"
+      }
+    }
+  ]
 }

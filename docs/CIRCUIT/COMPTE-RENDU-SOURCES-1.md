@@ -131,6 +131,51 @@ comme SOURCES à part entière (réservoirs logiques, doctrine ER/EBC du lot 1).
 - **Filtres joués** : bruit_itt_cerema **ok**, bruit_cartes **ok**, sis/casias **avertissements** (id_sis 1/4 absent ; 94 % de points sans emprise — l'état réel, dit).
 - **Tests** : `tests/test_sources1_lot3.py` (8) ; compteurs figés 94→97 (modes), 85→88 (sentinelle), 29→33 (couches).
 
+## Lot 4 — Le cadre régional (clos)
+
+Deux sources. **Verrous : 16/16 verts** après le lot. Catalogue : 99 sources.
+
+### Ce qui est entré
+
+| Source (data_sources) | Réservoir | État |
+|---|---|---|
+| SAR — schéma d'aménagement régional (Région/DEAL) | `sar_region` (LOGIQUE sur le proxy kind `sar`) | **`a_faire` — couche SIG officielle NON diffusée** ; rappel sentinelle 180 j (+ suivi SAR 2050) |
+| DVF Réunion (Région, data.regionreunion.com) | `region_dvf` (aucune table) | servie comme **échantillon producteur** du filtre DVF — aucune donnée servie (mandat) |
+| Potentiel foncier Région (existante, mise d'équerre) | `potentiel_foncier_region`/`potentiel_foncier_ods` | filtre riche neuf + **contrôle de comparaison** avec notre analyse ; millésime déclaré |
+
+### Le SAR officiel n'est diffusé nulle part en vecteur (recherche du 07/09/2026)
+
+- **Carmen 29** : 187 couches de `DEAL_REUNION_2020` lues une à une — 0 couche SAR (pas de coupures d'urbanisation, pas d'ENR littoral SAR, pas de zones préférentielles). Services `SAR*`/`DEAL_REUNION*` : 404.
+- **Lizmap DEAL** : 5 dépôts (carto générale, risques SPRINR, SHLS, CBS, tache urbaine) — 0 projet SAR ; le dépôt « carto générale » (projet `deal_reunion`, 91 couches WFS) n'en a pas non plus.
+- **Sextant** : 2 fiches SAR trouvées — « Espaces Naturels Remarquables du Littoral (SAR/SMVM) » et « Extrait du SAR du TCO (GIML) » — mais **WMS IMAGE seulement** (`DCE_POLMAR_RUN_ERLAP_SAR2010_P` ; le WFS `polmar_reunion` n'existe pas — 404 ; le WFS `ocean_indien` (18 couches) n'a aucune couche SAR).
+- **ODS Région** : 283 jeux scannés — 0 jeu SAR.
+
+→ La source entre `a_faire` avec réservoir logique sur le PROXY de vocations (doctrine D2 conservée : zéro pouvoir d'exclusion, divergence en warning, AU remonté en vigilance) ; la couche officielle est demandée à la Région (lot 7) ; fiche de règle `regles/sar_indication.py` (règle 5 verrouillée : indication, jamais rédhibitoire seule) ; donnée `sar_divergence` au registre (servie par les vigilances de la fiche).
+
+### DVF Région → échantillon producteur (filtre DVF)
+
+Le jeu Région est un **DV3F public FIGÉ 2014→mi-2021** (54 449 mutations — bornes mesurées à l'API) ; les ids sont des empreintes md5 sans correspondance Etalab (appariement par mutation IMPOSSIBLE, vérifié). L'échantillon (`filtres/echantillons/dvf.json`, remplace le squelette CIRCUIT-3 `a_valider`) compare les comptes de mutations DISTINCTES par fenêtre, tolérance 5 % :
+
+| Fenêtre | Région (producteur) | LABUSE | Écart |
+|---|---|---|---|
+| Île 2019 | 8 224 | 7 969 | −3,1 % |
+| Île 2020 | 7 886 | 7 733 | −1,9 % |
+| Saint-Paul 2020 | 1 108 | 1 125 | +1,5 % |
+
+Joué le 07/09/2026 : **3/3 conformes** (contrôle `d_echantillon` du filtre dvf).
+
+### Potentiel foncier Région → contrôle de comparaison (rapport)
+
+Mesuré le 07/09/2026 sur le run servi (2 453 îlots, 2 607 ha) : **15 776 parcelles** intersectent un îlot ; **7 043 (44,6 %)** sont en tiers hauts LABUSE (brûlante/chaude/à creuser) — convergence réelle sur le non-urbanisé. En sens inverse, **277 de nos 1 478 brûlantes/chaudes (18,7 %)** seulement sont en îlot : notre tête valorise AUSSI la densification du bâti, hors du champ « îlots non urbanisés » du producteur — écart de PÉRIMÈTRE, pas de désaccord. Contrôle permanent : `d_potfoncier_convergence` (filtre `potentiel_foncier_region`, avertissant, plancher 25 % = moitié de la référence) — joué **ok (44,7 %)**.
+
+### La mécanique (un commit)
+
+- Catalogue : 2 lignes neuves + millésime déclaré sur « Potentiel foncier Région » (levait le KO `u_millesime`) ; `MODE_ET_CADENCE` 99 ; seed vert.
+- Sentinelle : rappel 180 j SAR (couche officielle + SAR 2050) ; raisons écrites (DVF Région couvert par la sonde témoin du hub ODS).
+- Filtres : échantillon producteur DVF rempli (3 fenêtres) ; filtre riche `potentiel_foncier_region` (universels + convergence) — joués réellement.
+- Registre : donnée `sar_divergence` (moteur cascade, robinet Risques de la fiche), fiche de règle `sar_indication` ; carte table→réservoir, pont NOM_VERS_SLUG, reservoirs.csv (95 lignes).
+- Tests : `tests/test_sources1_lot4.py` (7) ; compteurs figés 97→99 (MODE_ET_CADENCE) et 88→90 (sentinelle).
+
 ## Décisions prises en autonomie
 
 - Étape 0 : `main` local étant extrait dans un autre worktree, la branche part de `origin/main` (strictement identique, `ea6fd161`).
@@ -150,5 +195,10 @@ comme SOURCES à part entière (réservoirs logiques, doctrine ER/EBC du lot 1).
 - Lot 2 · bande des 10 m : le RÉDHIBITOIRE du marchepied (3,25 m) est porté par la couche `dpf` (DPF officiel seul) ; la VIGILANCE de la bande de 10 m reste portée par la couche `ravine` existante (BD TOPO, TOUTES les ravines, buffer 10 m) — deux couches complémentaires, jamais deux flags pour la même bande.
 - Lot 2 · réserves biologiques : le mandat dit « réserves » rédhibitoires — les réserves biologiques (ONF, 37 entités) sont incluses (protection forte de même nature que les RNN), documenté dans la fiche de règle.
 - Lot 2 · canne = CSA : le code culture RPG de la canne à sucre retenu est CSA (12 464 déclarations, culture dominante mesurée en base) ; seuil 50 % de couverture parcelle, choix non calibré, écrit en fiche de règle.
+
+- Lot 4 · SAR : la couche officielle étant introuvable en vecteur (4 canaux testés), le proxy de vocations n'est PAS affiché comme couche « SAR » sur la carte (mensonge d'étiquette) — la source entre `a_faire`, réservoir logique, doctrine D2 conservée ; la VIGILANCE simple s'armera à la couche officielle (fiche de règle).
+- Lot 4 · DVF Région : appariement par mutation impossible (ids md5 producteur) → échantillon producteur AGRÉGÉ par fenêtres commune×année, limité aux années pleines du jeu figé (2019-2020) ; tolérance 5 % (écarts de périmètre DV3F/géo-DVF mesurés 1,5-3,1 %).
+- Lot 4 · potentiel foncier : la comparaison est un CONTRÔLE avertissant (plancher 25 % = moitié de la convergence mesurée 44,6 %) — jamais une quarantaine : une divergence avec une ESTIMATION du producteur ne bloque pas nos données.
+- Lot 4 · pas de nouvelle donnée servie (mandat) : ni le DVF Région ni le potentiel foncier n'alimentent une fiche/couche/cascade — contrôles seulement.
 
 *(chapitres suivants à venir)*

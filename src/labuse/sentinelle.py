@@ -547,6 +547,9 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Géorisques — CASIAS (anciens sites industriels)": "Réservoir logique sur le canal SSP (subtypes casias/instruction) — même amont que « Géorisques — sites et sols pollués », témoin bi-commune existant.",
     "DEAL — cartes de bruit stratégiques (CBS)": "WFS Carmen sans en-tête de version (même service que les couches DEAL lot 2, vérifié 07/09/2026) ; CBS = échéance quinquennale (directive 2002/49/CE) — réingéré à la demande (`labuse ingest-bruit-cartes`), fraîcheur au Circuit.",
     "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",
+    # SOURCES-1 lot 4 — cadre régional :
+    "SAR — schéma d'aménagement régional (Région/DEAL)": "Couche SIG officielle NON diffusée (Carmen 29, Lizmap DEAL, Sextant — WMS image seule —, ODS Région : 0 vecteur au 07/09/2026) ; demandée à la Région (lot 7). Rappel périodique 180 j (RAPPELS_MANUELS) : re-chercher la couche + suivre la révision SAR 2050.",
+    "DVF Réunion (Région, data.regionreunion.com)": "Jeu FIGÉ chez le producteur (2014→mi-2021, vérifié 07/09/2026) servant d'échantillon producteur du filtre DVF — le hub ODS Région est déjà surveillé par la sonde témoin de son catalogue (total_count) ; une republication du jeu s'y verrait.",
     "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
     "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
     "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",
@@ -595,6 +598,11 @@ RAPPELS_MANUELS: list[dict] = [
     {"name": "Office de l'eau Réunion — Chroniques de l'eau", "cadence_jours": 365, "convention_echeance": None},
     # SOURCES-1 lot 1 — re-tester l'Atlas des patrimoines (ZPPA 974) : injoignable au 06/09/2026.
     {"name": "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
+     "cadence_jours": 180, "convention_echeance": None},
+    # SOURCES-1 lot 4 — SAR : re-chercher la couche SIG officielle (demandée à la Région) et
+    # suivre la révision SAR 2050 (engagée — fiche 3 du rapport ; page DEAL sans millésime
+    # exploitable pour une sonde page, vérifié 07/09/2026).
+    {"name": "SAR — schéma d'aménagement régional (Région/DEAL)",
      "cadence_jours": 180, "convention_echeance": None},
 ]
 

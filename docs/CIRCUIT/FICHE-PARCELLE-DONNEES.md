@@ -134,6 +134,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE* | | | | | |
 | `aleas_parcelle_liste` | liste | Aléas de la parcelle | deal_ppr (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)), georisques_api | moteur `cascade` · src/labuse/api/app.py:_aleas_block (lignes servies layer='risques') | run | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et risques* | | | | | |
+| `sar_divergence` | texte | Divergence SAR (indication) | sar_region (couche SIG officielle NON diffusée (recherche 07/09/2026)) | moteur `cascade` · src/labuse/cascade/layers/phase1.py:SarLayer | run | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *warning « zone PLU U/AU ∩ vocation naturelle/agricole du proxy de vocations Région » — indication non opposable (le SAR officiel n'est pas diffusé en vecteur), jamais un malus* | | | | | |
 
 ## Marché et secteur
 

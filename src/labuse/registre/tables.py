@@ -67,6 +67,15 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                           millesime="arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)"),
     "zppa_culture": Rt((), note="aucune donnée — Atlas des patrimoines injoignable au 06/09/2026, "
                                 "rappel sentinelle 180 j (SOURCES-1 lot 1)"),
+    # ── SOURCES-1 lot 4 — le cadre régional ────────────────────────────────────────
+    "sar_region": Rt(("spatial_layers",), couches=("sar",),
+                     millesime="PROXY vocations (Potentiel foncier Région) — SAR officiel non diffusé",
+                     note="réservoir LOGIQUE sur le proxy kind sar (doctrine D2 : zéro effet, "
+                          "divergence en warning) — couche SIG officielle demandée à la Région "
+                          "(lot 7), rappel sentinelle 180 j (SOURCES-1 lot 4)"),
+    "region_dvf": Rt((), note="aucune donnée servie — échantillon producteur du filtre DVF "
+                              "(filtres/echantillons/dvf.json, fenêtres 2019-2020 ; jeu Région "
+                              "figé à mi-2021, SOURCES-1 lot 4)"),
     # ── SOURCES-1 lot 2 — la nature et l'eau ────────────────────────────────────────
     "deal_dpf_dpe": Rt(("spatial_layers",), couches=("dpf",),
                        millesime="DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans",

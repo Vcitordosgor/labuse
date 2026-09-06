@@ -140,6 +140,14 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("abf_merimee", "deal_ppr", "georisques_api", "znieff_inpn",), portee="run"),
  # FICHE-1 lot 3 — le DÉTAIL des aléas (nature/niveau/part/réf. PPR), dérivé des mêmes lignes
  # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
+ # SOURCES-1 lot 4 — la divergence SAR (proxy de vocations) servie dans les vigilances de la
+ # fiche (warning PASS de la couche cascade sar, doctrine D2 — jamais un malus).
+ "sar_divergence": C("Divergence SAR (indication)", "verdict", "parcelle",
+    "warning « zone PLU U/AU ∩ vocation naturelle/agricole du proxy de vocations Région » — "
+    "indication non opposable (le SAR officiel n'est pas diffusé en vecteur), jamais un malus",
+    moteur="cascade", calcul="moteur",
+    fonction="src/labuse/cascade/layers/phase1.py:SarLayer",
+    reservoirs=("sar_region",), portee="run", type="texte"),
  "aleas_parcelle_liste": C("Aléas de la parcelle", "liste", "parcelle",
     "liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté "
     "PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et "

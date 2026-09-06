@@ -188,6 +188,9 @@ NOM_VERS_SLUG = {
     "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": 'peb_dgac',
     'Zonage ABC des communes (DHUP)': 'zonage_abc_dhup',
     'ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)': 'zppa_culture',
+    # SOURCES-1 lot 4 — cadre régional :
+    "SAR — schéma d'aménagement régional (Région/DEAL)": 'sar_region',
+    'DVF Réunion (Région, data.regionreunion.com)': 'region_dvf',
     # SOURCES-1 lot 3 — sols et bruit :
     "Géorisques — secteurs d'information sur les sols (SIS)": 'georisques_sis',
     'Géorisques — CASIAS (anciens sites industriels)': 'georisques_casias',

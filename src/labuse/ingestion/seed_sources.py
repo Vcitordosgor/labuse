@@ -158,6 +158,9 @@ SOURCES: list[dict] = [
                          "dedup à passer (dette BACKLOG). ✓ intégré auto : régime forestier ; toponyme « domaniale » "
                          "→ HARD_EXCLUDE, sinon flag fort."),
     dict(name="Potentiel foncier Région (Région ODS)", category="urbanisme", provider="Région Réunion / AGORAH",
+         # SOURCES-1 lot 4 — millésime déclaré (levait le seul KO u_millesime du filtre neuf) :
+         # le jeu ODS n'est pas versionné chez le producteur, l'étiquette le dit.
+         source_millesime="îlots non urbanisés — estimation Région (ODS, non versionné)",
          access_type="import", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://peigeo.re", endpoint_url=None,
          legal_notes="Licence à confirmer (jeu Région ODS « potentiel foncier » — audit M6 §1.11 R8). Proxy de vocation INDICATIF ; ce n'est pas le zonage régional officiel (introuvable en open data), aucune portée réglementaire ni hiérarchie sur le PLU.",
@@ -927,6 +930,43 @@ SOURCES: list[dict] = [
                          "sont PAS ingérés (doublon vérifié des bandes sect_bruit Cerema), les "
                          "type a (isophones) écartés (exposition, pas d'effet réglementaire). "
                          "`labuse ingest-bruit-cartes`."),
+    # ── SOURCES-1 lot 4 — le cadre régional ──
+    dict(name="SAR — schéma d'aménagement régional (Région/DEAL)", category="urbanisme",
+         provider="Région Réunion (élaboration) / État (décret 22/11/2011)",
+         access_type="WMS (image seule)", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="couche SIG officielle NON diffusée (recherche 07/09/2026)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/schema-d-amenagement-regional-sar-r76.html",
+         endpoint_url="https://sextant.ifremer.fr/services/wms/polmar_reunion",
+         legal_notes="SAR approuvé par décret en Conseil d'État du 22/11/2011. NON OPPOSABLE aux "
+                     "tiers ni aux autorisations (sauf dispositions valant SMVM) — indication, "
+                     "jamais une règle (règle 5 du mandat SOURCES-1).",
+         technical_notes="SOURCES-1 lot 4 — réservoir sar_region : la couche SIG officielle du SAR "
+                         "(ENR littoral, coupures d'urbanisation, continuités, zones préférentielles "
+                         "d'urbanisation, espaces agricoles) n'est diffusée NULLE PART en vecteur au "
+                         "07/09/2026 : Carmen 29 (187 couches lues) = 0 couche SAR ; Lizmap DEAL "
+                         "(5 dépôts) = 0 projet SAR ; Sextant = WMS IMAGE seulement "
+                         "(DCE_POLMAR_RUN_ERLAP_SAR2010_P + extrait TCO GIML, pas de WFS) ; ODS "
+                         "Région (283 jeux scannés) = 0. En attendant : réservoir LOGIQUE sur le "
+                         "PROXY de vocations (kind sar, Potentiel foncier Région — doctrine D2 : "
+                         "zéro pouvoir d'exclusion, warning de divergence), écart DIT à la couche. "
+                         "Couche officielle DEMANDÉE à la Région (lot 7) ; SAR 2050 au rappel "
+                         "sentinelle (révision en cours)."),
+    dict(name="DVF Réunion (Région, data.regionreunion.com)", category="marche",
+         provider="Région Réunion (Opendatasoft) — DV3F public",
+         access_type="REST/JSON (ODS v2.1)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="jeu figé 2014→mi-2021 (54 449 mutations) — contrôle producteur",
+         documentation_url="https://data.regionreunion.com/explore/dataset/demande-de-valeurs-foncierespublic/",
+         endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records",
+         legal_notes="Licence Ouverte / ODbL (portail Région) — attribution : « Source : Région "
+                     "Réunion — demandes de valeurs foncières (DV3F) ».",
+         technical_notes="SOURCES-1 lot 4 — réservoir region_dvf : AUCUNE donnée servie (mandat). "
+                         "Le jeu Région entre comme ÉCHANTILLON PRODUCTEUR du filtre DVF "
+                         "(filtres/echantillons/dvf.json) : comptes de mutations par fenêtre "
+                         "commune×année comparés aux nôtres (2019 : 8 224 Région vs 7 969 LABUSE "
+                         "−3,1 % ; 2020 : 7 886 vs 7 733 −1,9 % ; Saint-Paul 2020 : 1 108 vs "
+                         "1 125 +1,5 % — périmètres DV3F/géo-DVF proches, mesuré 07/09/2026). "
+                         "Jeu FIGÉ à mi-2021 chez le producteur (fenêtres 2019-2020 seules "
+                         "comparables)."),
 ]
 
 
@@ -1181,6 +1221,9 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Géorisques — secteurs d'information sur les sols (SIS)": ("en_direct", None, "sans_objet"),
     "Géorisques — CASIAS (anciens sites industriels)": ("en_direct", None, "sans_objet"),
     "DEAL — cartes de bruit stratégiques (CBS)": ("job_sur_clic", 365, "proposee"),
+    # ── SOURCES-1 lot 4 — cadre régional ──
+    "SAR — schéma d'aménagement régional (Région/DEAL)": ("absente", None, "sans_objet"),
+    "DVF Réunion (Région, data.regionreunion.com)": ("en_direct", None, "sans_objet"),
 }
 
 
