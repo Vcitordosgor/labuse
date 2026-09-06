@@ -9,6 +9,7 @@ import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
 import { verdictMeta, type TierV2 } from '../../lib/status'
 import { useApp } from '../../store/useApp'
+import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
 
 function verdict(r: CompareRow) {
   return verdictMeta((r.status ?? null) as never, (r.tier_v2 ?? null) as TierV2 | null, !!r.etage0)
@@ -26,29 +27,43 @@ type Row = {
   num?: (r: CompareRow) => number | null
   best?: 'hi' | 'lo'
   title?: string
+  // OUTILS-FIX-2 D2 — provenance (comme la fiche) : « source » = donnée observée (cadastre, PLU, DVF,
+  // DGFiP, aléas) ; « estime » = valeur dérivée/calculée (SDP, charge foncière, logements, sous-densité).
+  prov: 'source' | 'estime'
 }
 const ROWS: Row[] = [
-  { label: 'Surface', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
-  { label: 'Zone PLU', val: (r) => r.zone || '—' },
-  { label: 'Constructible', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
+  { label: 'Surface', prov: 'source', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
+  { label: 'Zone PLU', prov: 'source', val: (r) => r.zone || '—' },
+  { label: 'Constructible', prov: 'source', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
-  { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
-  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—', num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
-  { label: 'Emprise au sol max', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'hi', title: 'Part maximale du terrain que le PLU autorise à couvrir au sol.' },
-  { label: 'Sous-densité', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
-  { label: 'Charge foncière /m²', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'lo', title: 'Coût du foncier ramené au m² de surface de plancher constructible — plus bas = plus intéressant.' },
-  { label: 'Prix terrain nu zone', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Prix moyen du terrain nu observé dans la zone — plus bas = plus intéressant.' },
+  { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
+  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime', val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—', num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
+  { label: 'Emprise au sol max', prov: 'source', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'hi', title: 'Part maximale du terrain que le PLU autorise à couvrir au sol.' },
+  { label: 'Sous-densité', prov: 'estime', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
+  { label: 'Charge foncière /m²', prov: 'estime', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'lo', title: 'Coût du foncier ramené au m² de surface de plancher constructible — plus bas = plus intéressant.' },
+  { label: 'Prix terrain nu zone', prov: 'source', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Prix moyen du terrain nu observé dans la zone — plus bas = plus intéressant.' },
   // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
-  { label: 'Prix bâti secteur', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur — même source que la fiche Marché.' },
-  { label: 'Logements possibles', val: (r) => r.logements_possibles != null ? `${fmtInt(r.logements_possibles)}` : '—', num: (r) => r.logements_possibles ?? null, best: 'hi', title: 'Borne haute de la fourchette de logements estimée (au sol ou sous-sol).' },
-  { label: 'Bâti existant', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
-  { label: 'Gabarit max', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
-  { label: 'Accès & réseaux', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
-  { label: 'Assainissement', val: (r) => r.assainissement ?? '—' },
-  { label: 'Propriétaire', val: (r) => r.proprietaire === 'morale' ? 'personne morale' : r.proprietaire === 'particulier' ? 'particulier' : '—', title: 'Personne morale (société) ou particulier — issu du fichier DGFiP.' },
-  { label: 'Contrainte majeure', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
+  { label: 'Prix bâti secteur', prov: 'source', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur — même source que la fiche Marché.' },
+  // OUTILS-FIX-2 D3 — la fourchette de logements affiche ses DEUX bornes (avant : borne haute seule).
+  { label: 'Logements possibles', prov: 'estime',
+    val: (r) => { const hi = r.logements_possibles, lo = r.logements_min
+      return hi == null ? '—' : (lo != null && lo !== hi ? `${fmtInt(lo)}–${fmtInt(hi)}` : `${fmtInt(hi)}`) },
+    num: (r) => r.logements_possibles ?? null, best: 'hi', title: 'Fourchette de logements estimée (au sol ou sous-sol).' },
+  { label: 'Bâti existant', prov: 'source', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
+  { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
+  { label: 'Accès & réseaux', prov: 'source', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
+  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ?? '—' },
+  { label: 'Propriétaire', prov: 'source', val: (r) => r.proprietaire === 'morale' ? 'personne morale' : r.proprietaire === 'particulier' ? 'particulier' : '—', title: 'Personne morale (société) ou particulier — issu du fichier DGFiP.' },
+  { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
+
+// OUTILS-FIX-2 D2 — petit badge de provenance (mêmes couleurs que partout : Sourcé = mint, Estimé = ambre).
+function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
+  return prov === 'source'
+    ? <span className="ml-1 rounded bg-mint/15 px-1 text-[8.5px] font-medium normal-case text-mint" title="Donnée observée (cadastre, PLU, DVF, DGFiP, aléas)">Sourcé</span>
+    : <span className="ml-1 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium normal-case text-amber-500" title="Valeur dérivée / estimée (même moteur que la fiche)">Estimé</span>
+}
 
 // O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
 // Ne renvoie rien si < 2 valeurs numériques (rien à comparer) : on ne surligne pas un « gagnant » seul.
@@ -92,6 +107,15 @@ export function CompareModule() {
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-medium text-txt">Cliquez les parcelles sur la carte</p>
             <p className="text-[10px] text-txt-dim">la carte reste visible à droite — ou depuis une fiche → « Comparer »</p>
+            {/* OUTILS-FIX-2 D1 — saisie clavier (IDU / adresse / référence courte), même composant que partout ;
+                le clic-carte reste actif en parallèle. Limite 3 côté Comparer. */}
+            {n < 3 && (
+              <div className="mt-1.5">
+                <ParcelInput dataAttr="compare-idu" withCarte={false}
+                  placeholder="… ou tapez un IDU, une adresse, une référence (BZ1065)"
+                  onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
+              </div>
+            )}
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {compareIdus.map((i, k) => (
                 <span key={i} data-compare-chip className="flex items-center gap-1.5 rounded-lg border border-mint/50 bg-surface-2 px-2 py-1 font-mono text-[11px] text-txt">
@@ -147,6 +171,19 @@ export function ComparePanel() {
   const q = useQuery({ queryKey: ['compare', compareIdus.join(',')], queryFn: () => getCompare(compareIdus), enabled: compareIdus.length > 0 })
   const parcels = q.data?.parcels ?? []
 
+  // OUTILS-FIX-2 D4 — export CSV du tableau comparé (mêmes valeurs que l'écran, provenance en en-tête).
+  // Généré côté client (le tableau tient en mémoire) ; BOM + ';' pour Excel, comme les autres exports.
+  const exporterCsv = () => {
+    const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`
+    const head = ['Donnée', ...parcels.map((p) => p.idu)]
+    const lignes = ROWS.map((row) => [`${row.label} [${row.prov === 'source' ? 'Sourcé' : 'Estimé'}]`, ...parcels.map((p) => row.val(p))])
+    const contr = ['Détail contraintes', ...parcels.map((p) => (p.contraintes ?? []).join(' · ') || '—')]
+    const csv = '﻿' + [head, ...lignes, contr].map((r) => r.map(esc).join(';')).join('\r\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const a = document.createElement('a'); a.href = url; a.download = 'comparaison_parcelles.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // Échap ferme LE TABLEAU (retour carte + panneau) — capture, pour passer AVANT le handler « Échap =
   // fermer le module » de ModulePanel (qui, lui, ignore Échap tant que le tableau est ouvert).
   useEffect(() => {
@@ -161,6 +198,11 @@ export function ComparePanel() {
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <p className="label-caps">Comparer les parcelles ({compareIdus.length}/3)</p>
           <div className="flex items-center gap-3 text-[11px]">
+            {/* OUTILS-FIX-2 D4 — export CSV (même bouton ⬇ CSV que Scan patrimoine). */}
+            {parcels.length > 0 && (
+              <button data-compare-csv onClick={exporterCsv}
+                className="rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</button>
+            )}
             {/* retour à la carte pour continuer le picking (le panneau + la sélection restent) */}
             <button data-compare-carte onClick={() => setCompareOpen(false)} className="text-mint hover:underline">◉ Retour à la carte</button>
             <button onClick={clearCompare} className="text-txt-mut hover:text-txt">Tout vider</button>
@@ -213,6 +255,7 @@ export function ComparePanel() {
                         {row.title
                           ? <span title={row.title} className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
                           : row.label}
+                        <ProvBadge prov={row.prov} />
                       </td>
                       {parcels.map((r, i) => {
                         const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)

@@ -101,8 +101,11 @@ function ProprioCell({ p }: { p: SolaireItem['proprio'] }) {
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const select = useApp((s) => s.select)
   const setModuleMap = useApp((s) => s.setModuleMap)
-  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)   // A5 — pont Courrier
+  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)   // FIX-1 — pont Courrier
   const setModule = useApp((s) => s.setModule)
+  // OUTILS-FIX-2 A5 — pont Solaire piscines → Comparer (même sélection ; limite 3 côté Comparer).
+  const addToCompare = useApp((s) => s.addToCompare)
+  const openCompare = useApp((s) => s.openCompare)
   const qc = useQueryClient()
   const [commune, setCommune] = useState<string | null>(null)
   // RETOURS-11F M12 — bascule « inclure les incertaines » : par défaut seule la confiance HAUTE (≥ 0,80)
@@ -240,6 +243,12 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers') }}
               className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
               ✉ Préparer les courriers ({sel.size}) → Courrier propriétaire
+            </button>
+            {/* OUTILS-FIX-2 A5 — pont Comparer (limite 3 côté Comparer). */}
+            <button data-piscines-comparer disabled={sel.size === 0}
+              onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare() }}
+              className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+              Comparer ({Math.min(sel.size, 3)}) →
             </button>
             <a data-piscines-csv href={prospectionSolaireCsvUrl(filtres)}
               className="ml-auto self-center rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</a>

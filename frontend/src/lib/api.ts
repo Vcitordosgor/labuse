@@ -897,7 +897,7 @@ export interface CompareRow {
   n_contraintes?: number; contraintes?: string[]
   // RETOURS-11F M13 (O9) — colonnes ajoutées, toutes de la fiche servie / du bilan servi.
   proprietaire?: string | null; bati_existant_pct?: number | null
-  gabarit_niveaux_max?: number | null; logements_possibles?: number | null
+  gabarit_niveaux_max?: number | null; logements_possibles?: number | null; logements_min?: number | null
   acces_reseaux?: string | null; assainissement?: string | null
   prix_secteur_bati_m2?: number | null
 }

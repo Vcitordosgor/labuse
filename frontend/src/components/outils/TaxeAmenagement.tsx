@@ -78,7 +78,7 @@ export function TaxeAmenagement() {
   const [prefillIdu, setPrefillIdu] = useState<string | null>(selectedIdu)
   useEffect(() => {
     if (selectedIdu && selectedIdu !== prefillIdu) {
-      setPrefillIdu(selectedIdu); setSurface(null); setSdpPrefill(false)
+      setPrefillIdu(selectedIdu); setSurface(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
@@ -86,15 +86,9 @@ export function TaxeAmenagement() {
     queryKey: ['taxe-prefill', prefillIdu], queryFn: () => getTaxePrefill(prefillIdu!),
     enabled: !!prefillIdu, retry: false,
   })
-  // RETOURS-13 R26 — LABUSE pré-remplit la surface taxable avec ce qu'il SAIT : la SDP
-  // CONSTRUCTIBLE AU GABARIT (résiduel du run servi). Étiquetée, MODIFIABLE — la surface du
-  // projet reste celle du client s'il la connaît ; toute retouche efface l'étiquette.
-  const [sdpPrefill, setSdpPrefill] = useState(false)
-  useEffect(() => {
-    const sdp = prefill.data?.sdp_gabarit_m2
-    if (sdp != null && surface == null) { setSurface(sdp); setSdpPrefill(true) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefill.data])
+  // OUTILS-FIX-2 B1 — la surface taxable n'est JAMAIS pré-remplie d'office (décision recette) : elle
+  // reste VIDE. La SDP restante au gabarit reste affichée à côté du champ comme repère, avec un geste
+  // « reprendre » pour la copier si l'utilisateur le veut (voir ci-dessous). Jamais copiée d'office.
 
   // Le taux départemental se pré-remplit avec le PLAFOND LÉGAL servi (part_departementale_defaut) dès
   // que la config arrive — étiqueté « à confirmer », car part_departementale_confirmee_974 est false.
@@ -163,15 +157,9 @@ export function TaxeAmenagement() {
               {prefill.data.surface_terrain_m2 != null && (
                 <span className="text-txt-dim">terrain : {fmtM2(prefill.data.surface_terrain_m2)} <span className="text-[9px]">(référence)</span></span>
               )}
-              {/* RETOURS-15 U6 — sur une parcelle DÉJÀ BÂTIE, ce chiffre est un RÉSIDUEL : le
-                  libellé le dit (« restante »), jamais « gabarit » nu (26 m² sur 1 625 m² en Uh
-                  se lisait comme un gabarit absurde). */}
-              {prefill.data.sdp_gabarit_m2 != null && (
-                <span className="text-txt-dim">{prefill.data.deja_batie
-                  ? <>SDP <b className="text-txt">restante</b> au gabarit <span className="text-[9px]">(parcelle déjà bâtie)</span> : </>
-                  : <>SDP au gabarit : </>}<b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
-              )}
-              <button onClick={() => setPrefillIdu(null)} className="ml-auto text-[10px] text-mint hover:underline">retirer</button>
+              {/* OUTILS-FIX-2 B1 — la SDP au gabarit n'est plus ici : elle sert de repère « reprendre »
+                  à côté du champ Surface taxable (source unique). B2 — plus de « retirer » : l'omnibox
+                  en tête reste permanente, choisir une autre parcelle remplace. */}
             </div>
           )}
         </div>
@@ -181,13 +169,20 @@ export function TaxeAmenagement() {
       {prefillIdu && (
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
-          onChange={(v) => { setSurface(v); setSdpPrefill(false) }}
-          hint={`${sdpPrefill
-            ? `Pré-rempli par LABUSE — SDP ${prefill.data?.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'}, modifiable (la surface taxable est celle de VOTRE projet). `
-            : (prefill.data && prefill.data.sdp_gabarit_m2 == null
-              ? `Gabarit non calculable${prefill.data.zone_plu ? ` en zone ${prefill.data.zone_plu}` : ''} — saisissez la surface de votre projet. `
-              : '')}Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
+          onChange={(v) => setSurface(v)}
+          hint={`${prefill.data && prefill.data.sdp_gabarit_m2 == null
+            ? `Gabarit non calculable${prefill.data.zone_plu ? ` en zone ${prefill.data.zone_plu}` : ''} — saisissez la surface de votre projet. `
+            : ''}Surface de VOTRE projet. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
             c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
+        {/* OUTILS-FIX-2 B1 — repère « SDP restante au gabarit » À CÔTÉ du champ + geste « reprendre »
+            (copie dans le champ sur demande), jamais d'office. */}
+        {prefill.data?.sdp_gabarit_m2 != null && (
+          <div data-taxe-repere className="-mt-0.5 flex items-center gap-2 text-[10.5px] leading-snug text-txt-dim">
+            <span>SDP {prefill.data.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'} : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
+            <button data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
+              className="shrink-0 text-mint hover:underline" title="Copier la SDP restante au gabarit dans la surface taxable">reprendre</button>
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <CheckField dataAttr="residence" label="Résidence principale"

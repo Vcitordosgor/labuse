@@ -162,13 +162,19 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
   // RETOURS-3 R4.3 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
   const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
   const setModule = useApp((s) => s.setModule)
+  // OUTILS-FIX-2 A1 — pont Scan patrimoine → Courrier ; A5 — pont Listes → Comparer. Le propriétaire
+  // est déjà résolu : le Courrier reçoit les IDU (jamais les noms). Comparer se limite à 3 côté outil.
+  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
+  const addToCompare = useApp((s) => s.addToCompare)
+  const openCompare = useApp((s) => s.openCompare)
+  const [sel, setSel] = useState<Set<string>>(new Set())
   const [q, setQ] = useState('')
   const [sirenState, setSiren] = useState<string | null>(null)
   // RETOURS-12 O5 — le bandeau (nom + 3 chiffres + détail) est REPLIABLE en accordéon pour laisser
   // toute la place à la liste des parcelles (bug : la liste ne s'ouvrait pas, noyée sous le bandeau).
   const [bandeauReplie, setBandeauReplie] = useState(false)
   const siren = embedded ? (sirenProp ?? null) : sirenState
-  useEffect(() => { setBandeauReplie(false) }, [siren])   // nouveau propriétaire → bandeau déplié
+  useEffect(() => { setBandeauReplie(false); setSel(new Set()) }, [siren])   // nouveau propriétaire → bandeau déplié + sélection vidée
   useEffect(() => {
     // en mode embarqué, le SIREN vient de la fusion (sirenProp) — on ne consomme pas m02Prefill (pas de course).
     if (!embedded && m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
@@ -286,16 +292,36 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               REPLIÉE (bandeau déplié + bouton « Voir ses parcelles → ») ; le clic replie le
               bandeau ET ouvre la liste. Plus de doublon bouton + liste déjà affichée. */}
           {(!embedded || bandeauReplie) && (<>
+          {/* OUTILS-FIX-2 A1/A5 — sur sélection : pont Courrier (IDU du propriétaire résolu) + pont Comparer. */}
+          {sel.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers') }}
+                className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+                ✉ Préparer les courriers ({sel.size})
+              </button>
+              <button data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare() }}
+                className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+                Comparer ({Math.min(sel.size, 3)}) →
+              </button>
+              {sel.size > 3 && <span className="text-[10px] text-txt-dim">Comparer se limite à 3.</span>}
+            </div>
+          )}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-            {items.map((i) => (
-              <div key={i['idu'] as string} className="min-w-0">
-                <Row idu={i['idu'] as string} hoverFull
+            {items.map((i) => {
+              const idu = i['idu'] as string
+              return (
+              <div key={idu} className="flex min-w-0 items-center gap-2">
+                <input type="checkbox" data-scan-parc-sel className="h-3 w-3 shrink-0 accent-mint" checked={sel.has(idu)}
+                  onChange={() => setSel((s) => { const n = new Set(s); n.has(idu) ? n.delete(idu) : n.add(idu); return n })} />
+                <div className="min-w-0 flex-1">
+                <Row idu={idu} hoverFull
                   sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
                   right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={null} />}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
+                </div>
               </div>
-            ))}
+            )})}
           </div>
           {/* RETOURS-11 T4 — pied de liste PARTAGÉ (SOCLE) : compteur exact « n / total affichées » +
               « Voir 200 de plus » (jamais de dump, jamais de « Tout charger »). Trié par probabilité. */}
@@ -335,6 +361,9 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
   const d = q.data as Record<string, any> | undefined
   const select = useApp((s) => s.select)      // Fix LOT 2 : localiser la parcelle du permis
   const setFlyTo = useApp((s) => s.setFlyTo)
+  // OUTILS-FIX-2 A4 — pont Permis → Scan patrimoine (SIREN du porteur → m02Prefill, consommé par ScanPatrimoine).
+  const setModule = useApp((s) => s.setModule)
+  const setM02Prefill = useApp((s) => s.setM02Prefill)
   // géom du permis (centroïde parcelle) : présente ssi géocodé ; sinon on ne peut pas localiser.
   const geom = d?.['geom'] as { coordinates?: [number, number] } | null | undefined
   const parcelle = (d?.['parcelles'] as string[] | undefined)?.[0]
@@ -384,6 +413,13 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             <F label="Destination" value={d['destination_libelle']} />
             <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
             {d['porteur_siren'] && <F label="SIREN" value={<Siren value={String(d['porteur_siren'])} className="font-mono text-txt" />} />}
+            {/* OUTILS-FIX-2 A4 — pont Scan patrimoine (porteur avec SIREN seulement ; rien pour un particulier). */}
+            {d['porteur_siren'] && (
+              <button data-permis-scan-patrimoine
+                onClick={() => { setM02Prefill(String(d['porteur_siren'])); setModule('patrimoine'); onClose() }}
+                className="hover-fill mt-1.5 w-full rounded-lg border border-mint/35 py-1.5 text-center text-[11px] text-mint" title="Voir tout ce que ce porteur possède">
+                Scan patrimoine du porteur →</button>
+            )}
             <F label="Nombre de lots" value={d['nb_lots']} />
             <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
             {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}

@@ -27,6 +27,9 @@ export function EtudierBien() {
   const setCalcPrefill = useApp((s) => s.setCalcPrefill)
   const select = useApp((s) => s.select)
   const setModule = useApp((s) => s.setModule)
+  // OUTILS-FIX-2 A3 — ponts vers Faisabilité (par parcelle) et Assemblage : parcelPrefill est consommé
+  // au montage par M22 (mode parcelle) OU par M16 (setMsel[idu]), selon le module ciblé.
+  const setParcelPrefill = useApp((s) => s.setParcelPrefill)
 
   const [prix, setPrix] = useState<number | null>(null)    // prix demandé, SAISI à la main — jamais scrapé
   // Verdict UNIQUE à bascule : 'calibree' (constat servi) | 'hypotheses' (votre calculette).
@@ -252,8 +255,16 @@ export function EtudierBien() {
               </div>
 
               {resultIdu && (
-                <button data-etudier-fiche onClick={() => { select(resultIdu); setModule(null) }}
-                  className="mt-2 min-h-7 text-[11px] font-medium text-mint hover:underline">Ouvrir la fiche complète →</button>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <button data-etudier-fiche onClick={() => { select(resultIdu); setModule(null) }}
+                    className="min-h-7 text-[11px] font-medium text-mint hover:underline">Ouvrir la fiche complète →</button>
+                  {/* A3 — pont Faisabilité détaillée (M22 par parcelle) */}
+                  <button data-etudier-faisabilite onClick={() => { setParcelPrefill(resultIdu); setModule('programme') }}
+                    className="min-h-7 text-[11px] font-medium text-mint hover:underline">Faisabilité détaillée →</button>
+                  {/* A3 — pont Assemblage (cet IDU comme première parcelle) */}
+                  <button data-etudier-assembler onClick={() => { setParcelPrefill(resultIdu); setModule('assemblage') }}
+                    className="min-h-7 text-[11px] font-medium text-mint hover:underline">Assembler avec les voisines →</button>
+                </div>
               )}
             </>
           )}

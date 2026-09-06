@@ -32,6 +32,9 @@ export function ProcedureChangement() {
   // périmètre explicite de l'outil — amorcé sur le filtre global, puis piloté ICI.
   const [commune, setCommune] = useState<string | null>(globalCommune)
   const [openProc, setOpenProc] = useState(false)   // §5 — bandeau replié par défaut (compact)
+  // OUTILS-FIX-2 C1 — deux onglets (même patron que Scan patrimoine) : « Par parcelle » (VerifProcedure)
+  // et « Simuler l'ouverture » (radar procédures + simulation AU→U). Contenu de chaque onglet inchangé.
+  const [tab, setTab] = useState<'parcelle' | 'simuler'>('parcelle')
   const proc = useQuery({ queryKey: ['simulplu-procedures'], queryFn: motSimulPluProcedures })
   // O8(b) — zones AU réellement proposées pour la commune choisie (dynamique, jamais figé au front).
   const zonesQ = useQuery({
@@ -54,9 +57,20 @@ export function ProcedureChangement() {
 
   return (
     <div data-plu-procchg className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* 1. COMMUNES EN PROCÉDURE (radar) — §5 : REPLIÉES sous un BANDEAU cliquable « ⚠ N communes en
-          procédure PLU » (compact par défaut). Le déplié garde TOUT (type/état, date, source, bouton
-          Simuler). 0 procédure → message factuel, pas de bandeau ; loading/erreur inchangés. */}
+      {/* OUTILS-FIX-2 C1 — onglets (même patron que Scan patrimoine possède/construit). */}
+      <div className="flex gap-6 border-b border-line-2" role="tablist">
+        {([['parcelle', 'Par parcelle'], ['simuler', "Simuler l’ouverture"]] as const).map(([k, label]) => (
+          <button key={k} data-procchg-tab={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={`-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-[13px] transition-colors ${tab === k ? 'border-mint font-medium text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ONGLET « Simuler l'ouverture » — 1. COMMUNES EN PROCÉDURE (radar) — §5 : REPLIÉES sous un
+          BANDEAU cliquable « ⚠ N communes en procédure PLU » (compact par défaut). Le déplié garde TOUT
+          (type/état, date, source, bouton Simuler). 0 procédure → message factuel, pas de bandeau. */}
+      {tab === 'simuler' && (
       <div className="flex flex-col gap-1.5">
         {proc.isLoading && <div className="py-3"><Loading accent="mint" label="Radar procédures…" /></div>}
         {proc.isError && (
@@ -102,24 +116,28 @@ export function ProcedureChangement() {
           </>
         )}
       </div>
+      )}
 
-      {/* O8(a) — ENTRÉE 1 (en haut) : « Cette parcelle est-elle concernée par une procédure ? »
-          (IDU / adresse) = VerifProcedure, l'entrée principale au grain parcelle (sursis, veille AU). */}
-      <div data-procchg-entree="1" className="flex flex-col gap-1.5 border-t border-line-2 pt-2">
+      {/* ONGLET « Par parcelle » — « Cette parcelle est-elle concernée par une procédure ? »
+          (IDU / adresse) = VerifProcedure, au grain parcelle (sursis, veille AU). Contenu inchangé. */}
+      {tab === 'parcelle' && (
+      <div data-procchg-entree="1" className="flex flex-col gap-1.5">
         <div className="text-[12px] font-medium text-txt-hi">
-          1. Cette parcelle est-elle concernée par une procédure ?
+          Cette parcelle est-elle concernée par une procédure ?
         </div>
         <p className="text-[10.5px] leading-snug text-txt-mut">
           Saisissez un IDU ou une adresse — sursis à statuer, veille AU.
         </p>
         <VerifProcedure />
       </div>
+      )}
 
-      {/* O8(a) — ENTRÉE 2 (en dessous) : « Simuler l'ouverture d'une zone AU ». Périmètre explicite
-          (CommuneScope) + statut procédure, puis la simulation M15 (réutilisée, aucun calcul touché). */}
+      {/* ONGLET « Simuler l'ouverture » (suite) — « Simuler l'ouverture d'une zone AU ». Périmètre
+          explicite (CommuneScope) + statut procédure, puis la simulation M15 (réutilisée, calcul intact). */}
+      {tab === 'simuler' && (
       <div ref={simRef} data-procchg-entree="2" className="flex flex-col gap-1.5 border-t border-line-2 pt-2">
         <div className="text-[12px] font-medium text-txt-hi">
-          2. Simuler l’ouverture d’une zone AU
+          Simuler l’ouverture d’une zone AU
         </div>
         <CommuneScope commune={commune} onChange={setCommune} />
         {/* RETOURS-14 S10 — UN SEUL accordéon « Attention (2) », replié, qui contient LES DEUX
@@ -164,6 +182,7 @@ export function ProcedureChangement() {
           <M15 communeOverride={commune} />
         </div>
       </div>
+      )}
     </div>
   )
 }

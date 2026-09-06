@@ -20,6 +20,10 @@ import { TierBadge } from './TierBadge'
 
 export function M22() {
   const { m22Prefill, setM22Prefill, parcelPrefill, setParcelPrefill, setModuleMap, select } = useApp()
+  // OUTILS-FIX-2 A5 — pont Faisabilité par critères → Comparer (sélection ; limite 3 côté Comparer).
+  const addToCompare = useApp((s) => s.addToCompare)
+  const openCompare = useApp((s) => s.openCompare)
+  const [selCmp, setSelCmp] = useState<Set<string>>(new Set())
   const [mode, setMode] = useState<'criteres' | 'parcelle'>('criteres')
   const [commune, setCommune] = useState<string | null>(null)   // RG1 : périmètre saisi dans l'outil
   const [picked, setPicked] = useState<string | null>(null)     // mode « par parcelle »
@@ -186,10 +190,24 @@ export function M22() {
                   </p>
                 )}
               </div>
+              {/* A5 — pont Comparer sur la sélection (même geste/compteur que Courrier). */}
+              {selCmp.size > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button data-prog-comparer onClick={() => { [...selCmp].slice(0, 3).forEach(addToCompare); openCompare() }}
+                    className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20">
+                    Comparer ({Math.min(selCmp.size, 3)}) →
+                  </button>
+                  {selCmp.size > 3 && <span className="text-[10px] text-txt-dim">Comparer se limite à 3.</span>}
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 {items.map((i) => (
-                  <button key={i.idu} data-prog-item onClick={() => select(i.idu)}
-                    className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-mint/50">
+                  <div key={i.idu} data-prog-item
+                    className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2 transition-colors duration-quick hover:border-mint/50">
+                    {/* A5 — case de sélection (Comparer), n'ouvre pas la fiche */}
+                    <input type="checkbox" data-prog-sel className="h-3 w-3 shrink-0 accent-mint" checked={selCmp.has(i.idu)}
+                      onChange={() => setSelCmp((s) => { const n = new Set(s); n.has(i.idu) ? n.delete(i.idu) : n.add(i.idu); return n })} />
+                    <button onClick={() => select(i.idu)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                     <div className="min-w-0 flex-1">
                       <div className="font-mono text-xs text-txt-hi">{i.idu.slice(8, 10)} {i.idu.slice(10)}
                         {!commune && i.commune && <span className="ml-1.5 font-sans text-[11px] text-txt-dim">{i.commune}</span>}
@@ -212,7 +230,8 @@ export function M22() {
                         <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
                       </div>
                     </div>
-                  </button>
+                    </button>
+                  </div>
                 ))}
               </div>
               {/* PAGINATION SOCLE — 200 par 200, jamais de tir massif ni d'export. */}
