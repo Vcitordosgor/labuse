@@ -159,6 +159,25 @@ const ILE_BOUNDS: [number, number, number, number] = [55.20, -21.42, 55.87, -20.
 const REUNION_MAXBOUNDS: [number, number, number, number] = [55.00, -21.62, 56.07, -20.65]
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const
 
+// COUCHES-1 lot 1 (E2) — remonte des POLYGONES en POINTS (centroïde du bbox) pour les couches
+// dont les emprises sont trop petites pour être vues en aplat à l'échelle île (cas SIS : 4 périmètres
+// de 0,6 à 1,4 ha). Le marqueur reste visible à toute échelle ; l'aplat sert au zoom parcelle.
+function centroidsFC(fc: { features?: Array<{ geometry?: { coordinates?: unknown }; properties?: unknown }> } | undefined) {
+  const walk = (c: unknown, acc: number[]): void => {
+    if (Array.isArray(c)) {
+      if (typeof c[0] === 'number' && typeof c[1] === 'number') { acc[0] = Math.min(acc[0], c[0]); acc[1] = Math.min(acc[1], c[1]); acc[2] = Math.max(acc[2], c[0]); acc[3] = Math.max(acc[3], c[1]) }
+      else for (const x of c) walk(x, acc)
+    }
+  }
+  const feats = (fc?.features ?? []).map((f) => {
+    const acc = [Infinity, Infinity, -Infinity, -Infinity]
+    walk(f.geometry?.coordinates, acc)
+    if (!isFinite(acc[0])) return null
+    return { type: 'Feature', geometry: { type: 'Point', coordinates: [(acc[0] + acc[2]) / 2, (acc[1] + acc[3]) / 2] }, properties: f.properties ?? {} }
+  }).filter(Boolean)
+  return { type: 'FeatureCollection', features: feats }
+}
+
 // M83 A1 — emprise réelle de l'île = union des bbox de communes servies par /communes (ST_Extent du
 // parcellaire). Repli sur ILE_BOUNDS tant que la donnée n'est pas là (1er frame).
 function ileBounds(communes: { bbox?: number[] }[] | undefined): [number, number, number, number] {
@@ -235,10 +254,13 @@ const OVERLAYS = {
   enp: { paint: { 'fill-color': T_SOMBRE.enp, 'fill-opacity': T_SOMBRE.enpOpacity, 'fill-outline-color': T_SOMBRE.enp } },
   rpg: { paint: { 'fill-color': T_SOMBRE.rpg, 'fill-opacity': T_SOMBRE.rpgOpacity, 'fill-outline-color': T_SOMBRE.rpg } },
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
-  // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
-  // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
-  // Hors mapTheme : 1,34:1 mesuré sur la terre claire (AUDIT_M105B) — conforme dans les deux thèmes.
-  parc: { paint: { 'fill-color': '#8B5A2B', 'fill-opacity': 0.22 } },
+  // P10 : Parc national en MARRON/terre — distinct du menthe des statuts et du vert-clair d'avant.
+  // COUCHES-1 lot 1 (E3) — DEUX assiettes distinctes servies par le subtype : le CŒUR (marron
+  // profond, ~40 % de l'île, inconstructible) et l'AIRE D'ADHÉSION (marron clair, réglementée mais
+  // constructible). Plus un aplat unique indistinct ; deux entrées de légende (cf. Legend.tsx).
+  parc: { paint: {
+    'fill-color': ['match', ['get', 'subtype'], 'coeur', '#6B3E17', 'adhesion', '#C08A54', '#8B5A2B'] as unknown as maplibregl.ExpressionSpecification,
+    'fill-opacity': ['match', ['get', 'subtype'], 'coeur', 0.34, 'adhesion', 0.16, 0.22] as unknown as maplibregl.ExpressionSpecification } },
   ppr: { paint: { 'fill-color': T_SOMBRE.ppr, 'fill-opacity': T_SOMBRE.pprOpacity } },
   // M137-U — ZNIEFF (contrainte patrimoine naturel) : aplat vert olive, distinct du Parc (marron) et du PPR (rouge).
   znieff: { paint: { 'fill-color': T_SOMBRE.znieff, 'fill-opacity': T_SOMBRE.znieffOpacity, 'fill-outline-color': T_SOMBRE.znieff } },
@@ -370,6 +392,7 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-rpg', 'fill-color', t.rpg); set('ov-rpg', 'fill-opacity', t.rpgOpacity); set('ov-rpg', 'fill-outline-color', t.rpg)
   // SOURCES-1 lot 3 — sols et bruit : teinte + opacité suivent le thème.
   set('ov-sis', 'fill-color', t.sis); set('ov-sis', 'fill-opacity', t.sisOpacity); set('ov-sis', 'fill-outline-color', t.sis)
+  set('ov-sis-pt', 'circle-color', t.sis)   // COUCHES-1 lot 1 (E2) — points SIS suivent le thème
   set('ov-casias', 'circle-color', t.casias); set('ov-casias-fill', 'fill-color', t.casias); set('ov-casias-fill', 'fill-outline-color', t.casias)
   set('ov-bruit_route', 'fill-color', bruitColorExpr(t)); set('ov-bruit_route', 'fill-opacity', t.bruitOpacity); set('ov-bruit_route', 'fill-outline-color', bruitColorExpr(t))
   set('ov-bruit_carte', 'fill-color', t.bruitCarte); set('ov-bruit_carte', 'fill-opacity', t.bruitCarteOpacity); set('ov-bruit_carte', 'fill-outline-color', t.bruitCarte)
@@ -1015,6 +1038,14 @@ export function MapView() {
         filter: ['==', ['geometry-type'], 'Point'],
         paint: { 'circle-color': T_SOMBRE.casias, 'circle-radius': 4, 'circle-opacity': 0.85,
                  'circle-stroke-color': '#00000066', 'circle-stroke-width': 1 } })
+      // COUCHES-1 lot 1 (E2) — SIS : les 4 périmètres (0,6–1,4 ha) sont INVISIBLES en aplat seul à
+      // l'échelle île (la couche s'allumait sans rien montrer). On les REMONTE EN POINTS au centroïde
+      // (même doctrine que CASIAS) — visibles à toute échelle ; l'aplat ov-sis reste au zoom parcelle.
+      m.addSource('ov-sis-pt', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-sis-pt', type: 'circle', source: 'ov-sis-pt', layout: { visibility: 'none' },
+        paint: { 'circle-color': T_SOMBRE.sis,
+                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 5, 14, 8] as unknown as maplibregl.ExpressionSpecification,
+                 'circle-opacity': 0.9, 'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': 1.4 } })
       // RETOURS-13 R5 — TCSP : trait PLEIN ÉPAIS pour les tronçons EN SITE PROPRE (la voie dédiée
       // se lit d'un coup) ; trait FIN TIRETÉ pour les simples couloirs bus (dits, jamais confondus) ;
       // STATIONS dérivées en disques (le drapeau < 800 m se mesure à la station, pas au tracé).
@@ -1460,6 +1491,8 @@ export function MapView() {
       ['dpf', dpfQ], ['zone_humide', zhQ], ['enp', enpQ], ['rpg', rpgQ],   // SOURCES-1 lot 2 — nature et eau
       ['sis', sisQ], ['casias', casiasQ], ['bruit_route', bruitQ], ['bruit_carte', bruitCarteQ]]   // SOURCES-1 lot 3 — sols et bruit
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
+    // COUCHES-1 lot 1 (E2) — points SIS (centroïdes) alimentés en plus de l'aplat.
+    if (sisQ.data) (m.getSource('ov-sis-pt') as maplibregl.GeoJSONSource | undefined)?.setData(centroidsFC(sisQ.data as never) as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
     if (equipBpe.data) {
       (m.getSource('ov-equip-bpe') as maplibregl.GeoJSONSource | undefined)?.setData(equipBpe.data as never)
@@ -1668,6 +1701,7 @@ export function MapView() {
     m.setLayoutProperty('ov-rpg', 'visibility', vis(layers.rpg))
     // SOURCES-1 lot 3 — sols et bruit
     m.setLayoutProperty('ov-sis', 'visibility', vis(layers.sis))
+    m.setLayoutProperty('ov-sis-pt', 'visibility', vis(layers.sis))
     m.setLayoutProperty('ov-casias', 'visibility', vis(layers.casias))
     m.setLayoutProperty('ov-casias-fill', 'visibility', vis(layers.casias))
     m.setLayoutProperty('ov-bruit_route', 'visibility', vis(layers.bruit_route))

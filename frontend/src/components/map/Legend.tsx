@@ -144,6 +144,17 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     note: 'Inventaire du patrimoine naturel (INPN/MNHN, 2025). Type I : secteur à fort intérêt, plus sensible ; type II : grand ensemble naturel. Contrainte (étude d\'impact, risque de recours), pas une interdiction. N\'entre pas dans le classement.',
     body: <div data-legend-znieff className="flex items-center gap-2"><span className="h-2.5 w-4 rounded-sm border" style={{ background: tTheme.znieff, opacity: tTheme.znieffOpacity + 0.35, borderColor: tTheme.znieff }} /><span className="text-[11px] text-txt">ZNIEFF — type I &amp; type II</span></div>,
   })
+  // COUCHES-1 lot 1 (E3 + A1) — Parc national : légende ABSENTE jusqu'ici, et le cœur (contrainte
+  // la plus structurante de l'île) était fondu dans un aplat marron unique. Deux entrées distinctes :
+  // le CŒUR (inconstructible) et l'AIRE D'ADHÉSION (réglementée mais constructible).
+  if (layers.parc) groupes.push({
+    id: 'parc', titre: 'Parc national',
+    note: 'Parc national de La Réunion (INPN). Le CŒUR (~40 % de l\'île) est inconstructible (autorisation du Parc requise, hors exceptions étroites) ; l\'AIRE D\'ADHÉSION est constructible mais soumise à la charte du Parc. Contrainte majeure — le zonage PLU s\'y superpose.',
+    body: <div data-legend-parc className="flex flex-col gap-0.5">
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: '#6B3E17', opacity: 0.7, borderColor: '#6B3E17' }} /><span className="text-[11px] text-txt">Cœur — inconstructible</span></span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: '#C08A54', opacity: 0.55, borderColor: '#C08A54' }} /><span className="text-[11px] text-txt">Aire d’adhésion — réglementée</span></span>
+    </div>,
+  })
   if (layers.equipements_bpe) groupes.push({
     id: 'bpe', titre: 'Équipements (INSEE BPE)',
     note: 'Base Permanente des Équipements (INSEE, 2025), par domaine. Source distincte d\'OpenStreetMap — jamais fusionnée. Cliquez un domaine pour l\'afficher ou le masquer.',
