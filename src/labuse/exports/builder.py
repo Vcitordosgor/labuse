@@ -13,7 +13,8 @@ from datetime import date
 
 from ..registre.valeur import Valeur
 from . import archive, numeros
-from .blocs import identite
+from .blocs import (autour, bilan, commune, identite, marche, potentiel, reseaux, risques,
+                    sources, zonage)
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, page_html, render_pdf
 
@@ -22,20 +23,23 @@ MODELE_VERSION = "2.0"
 #: libellé et sous-titre de chaque document (page de garde).
 _LABEL = {
     "dossier": ("Dossier parcelle", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
+    "flash": ("Rapport Flash", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
     "resume": ("Fiche parcelle — résumé", ""),
     "financier": ("Bilan de l'opération", ""),
     "apporteur": ("Brief apporteur", ""),
 }
 
-_FOOT = {
-    "dossier": ("Document d'information établi à partir de données publiques. Ne remplace ni un "
-                "certificat d'urbanisme, ni une étude de faisabilité réglementaire, ni un conseil "
-                "juridique. Données LABUSE au {au}."),
-}
+_FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. Ne remplace ni un "
+                 "certificat d'urbanisme, ni une étude de faisabilité réglementaire, ni un conseil "
+                 "juridique. Données LABUSE au {au}.")
+_FOOT = {"dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER}
 
-#: composition de chaque document = la suite ordonnée des blocs. Le lot 1 pose le Dossier partiel.
+#: composition de chaque document = la suite ordonnée des blocs (catalogue EXPORTS-SOURCES).
+#: Le Dossier = 10 sections ; le Flash = le Dossier SANS la section 9 (bilan), même builder.
+_DOSSIER = [identite, zonage, potentiel, risques, marche, reseaux, autour, commune, bilan, sources]
 DOCUMENTS: dict[str, list] = {
-    "dossier": [identite],
+    "dossier": _DOSSIER,
+    "flash": [b for b in _DOSSIER if b is not bilan],
 }
 
 

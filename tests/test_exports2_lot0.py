@@ -37,11 +37,17 @@ def test_les_quinze_ids_existent_et_sont_declares():
 
 def test_en_attente_jusqu_au_builder():
     """Lot 0.4 : créés en_attente — le chantier qui les apporte est nommé, et AUCUN robinet ne
-    les sert encore (sinon verifier() casserait la règle en_attente)."""
+    les sert encore. Exception levée au lot 2 : `prix_achat_historique_eur` (D-a) est désormais
+    servi par le Dossier (en_attente levée, déclaré au robinet)."""
     sers = {cid for r in ROBINETS.values() for cid in r.chiffres}
     for cid in IDS_FINANCIER:
+        if cid == "prix_achat_historique_eur":
+            continue      # servi par le Dossier (lot 2)
         assert DONNEES[cid].en_attente, f"{cid} : doit être en_attente tant qu'aucun robinet ne le sert"
         assert cid not in sers, f"{cid} : en_attente mais déjà servi par un robinet"
+    # D-a : levée d'attente au lot 2 — servi et déclaré au robinet Dossier.
+    assert not DONNEES["prix_achat_historique_eur"].en_attente
+    assert "prix_achat_historique_eur" in sers
 
 
 def test_le_bilan_travaille_ht():

@@ -313,9 +313,16 @@ ROBINETS: dict[str, Robinet] = {
  "notif_radar_alerte": _r("notification", "Radar — alerte de veille (Brevo ID 13)", None,
     "template Brevo 13 (PRENOM·VEILLE·NB_BIENS·CRITERES·CARTES·LIEN_RADAR·LIEN_VEILLE)", "mail", chiffres=("n_biens_veille",)),
  "pdf_flash": _r("pdf", "Rapport Flash", None,
-    "/flash/telecharger (TEMPLATE_VERSION 1.4, WeasyPrint)", "pdf", chiffres=("tier_opportunite", "prix_terrain_secteur_eur_m2", "population_zone",)),
+    "/flash/telecharger (builder exports EXPORTS-2, sans §9)", "pdf",
+    chiffres=("tier_opportunite", "prix_terrain_secteur_eur_m2", "population_zone",)),
+ # EXPORTS-2 lot 2 — le Dossier passe au builder exports ; il porte D-a (prix_achat_historique_eur,
+ # en_attente levée). Les sources servies voyagent par les pieds de section (réservoirs lus) et la
+ # recette golden (recette_exports1) ; la déclaration exhaustive des ids au robinet est différée
+ # au lot 8 (bascule des routes) pour ne pas créer de couples sonde silencieux (V5c).
  "pdf_dossier_expert": _r("pdf", "Dossier parcelle", None,
-    "/dossier/{idu}.pdf (quota mensuel)", "pdf", chiffres=("tier_opportunite", "potentiel_verdict", "sdp_residuelle_m2", "surface_vendable_m2",)),
+    "/dossier/{idu}.pdf (builder exports EXPORTS-2)", "pdf",
+    chiffres=("tier_opportunite", "potentiel_verdict", "sdp_residuelle_m2", "surface_vendable_m2",
+              "prix_achat_historique_eur",)),
  "pdf_banquier": _r("pdf", "Dossier banquier", None,
     "/dossier-banquier/{idu}.pdf", "pdf", chiffres=("charge_fonciere_eur", "prix_terrain_secteur_eur_m2", "prix_neuf_observe_eur_m2", "mixite_clause", "bilan_ca_eur", "bilan_cout_construction_eur", "bilan_vrd_eur", "bilan_marge_eur", "bilan_frais_eur",)),
  "pdf_pre_dossier_pc": _r("pdf", "Pré-dossier PC (ZIP CERFA 13406*17)", None,

@@ -110,11 +110,14 @@ def test_archive_aller_retour(tmp_path):
 
 # ── bloc identité : « non chiffré » vs pastille, aucun mot interdit ──────────────────────────
 
-def test_bloc_identite_non_chiffre_et_pastille():
+def test_bloc_identite_omet_les_lignes_absentes():
+    # Décision Vic lot 2 : donnée absente → ligne OMISE (aucun ◌, pas de « non chiffré » ici).
     vals = {"surface_parcelle_m2": _V("surface_parcelle_m2", 742)}  # adresse et proprio absents
     html = identite.rendu(vals)
     assert "742 m²".replace(" ", " ") in html or "742" in html
-    assert "non chiffré" in html          # adresse/propriétaire non servis
+    assert "non chiffré" not in html      # ligne absente OMISE, pas « non chiffré »
+    assert "Adresse" not in html and "Propriétaire" not in html
+    assert "◌" not in html
     assert 'class="chip s"' in html       # la surface porte sa pastille
     assert "1. Identité et situation" in html
 

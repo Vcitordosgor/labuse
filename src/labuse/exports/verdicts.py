@@ -39,6 +39,41 @@ def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
     return None
 
 
+def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
+    """Section 3 — conclut sur le potentiel à partir du bloc potentiel (moteur). Boussole :
+    jamais un faux constructible ; une cause de non-constructibilité prime sur la saturation."""
+    p = _val(valeurs, "potentiel_verdict")
+    if not isinstance(p, dict):
+        return None
+    cause, libelle = p.get("cause"), p.get("libelle")
+    sdp, pct, niveau = p.get("sdp_residuelle_m2"), p.get("pct_consomme"), p.get("niveau")
+    if cause:
+        # la cause de non-constructibilité PRIME sur toute sous-densité mesurée (jamais un faux
+        # constructible) — on n'imprime pas le libellé brut du modèle qui dirait « fort potentiel ».
+        fam = _val(valeurs, "zone_plu_famille")
+        z = f" (zone {fam})" if fam else ""
+        return (f"Terrain non constructible{z} : le potentiel de construction est nul par la règle "
+                f"de zonage.", "warn", "")
+    if niveau == "nul" or (sdp is not None and float(sdp) <= 0):
+        pct_txt = f" ({pct} %)" if pct else ""
+        return (f"Parcelle bâtie et saturée : la surface de plancher autorisée est déjà "
+                f"consommée{pct_txt}. La valeur est dans la réhabilitation du bâti ou dans sa "
+                f"reconstruction.", "warn", "")
+    if libelle:
+        return (f"Potentiel de construction : {libelle}.", "", "")
+    return None
+
+
+def verdict_reseaux(valeurs: dict[str, Valeur]) -> Verdict | None:
+    """Section 6 — la viabilisation (faisceau d'indices). Confirmée/probable → bonne nouvelle."""
+    v = _val(valeurs, "viabilisation_verdict")
+    if not isinstance(v, dict) or not v.get("libelle"):
+        return None
+    ton = "" if v.get("band") in ("confirmee", "probable") else "neutral"
+    return (f"{v['libelle']} — aucun tracé de réseau n'est relevé : à confirmer auprès des "
+            f"gestionnaires, via une DT-DICT.", ton, "")
+
+
 def rendu_verdict(v: Verdict | None) -> str:
     """Le fragment HTML d'un verdict, ou '' si la section n'a rien à conclure."""
     if v is None:

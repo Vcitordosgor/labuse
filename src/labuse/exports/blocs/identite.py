@@ -1,37 +1,39 @@
-"""EXPORTS-2 — bloc « 1. Identité et situation ». Exemplaire du lot 1 : il ne lit QUE des Valeur
-du registre, pose la pastille de nature de chacune, et son pied de section vient des réservoirs
-lus. Aucun calcul, aucune requête. Une donnée non servie s'imprime « non chiffré » (jamais un zéro,
-jamais un défaut silencieux). Le lot 2 complètera cette section (forme, propriétaire nominatif,
-historique, contiguës) ; le lot 1 en pose la mécanique.
-"""
+"""Bloc « 1. Identité et situation ». Lit des Valeur du registre, pose la nature de chacune,
+pied depuis les réservoirs lus. Ligne absente → OMISE (aucun ◌)."""
 from __future__ import annotations
 
-from ..nature import chip
-from ..pieds import pied_section
-from ..registre_fmt import fmt_m2
-from ..rendu import ligne_kv, section, table_kv
-from ...registre.valeur import Valeur
+from ..lignes import ligne, pied
+from ..registre_fmt import fmt_eur, fmt_m2
+from ..rendu import section, table_kv
 
-#: les ids que ce bloc lit (union déclarée : sert la collecte et le pied).
-IDS = ("surface_parcelle_m2", "adresse_ban", "type_proprietaire")
-
-_NON_CHIFFRE = '<span class="none">non chiffré</span>'
+IDS = ("surface_parcelle_m2", "adresse_ban", "type_proprietaire", "pente_deg",
+       "prix_achat_historique_eur", "coproprietes_liste")
 
 
-def _ligne(valeurs: dict[str, Valeur], cle: str, cid: str, rendu_valeur) -> str:
-    """Une ligne : la Valeur si servie (avec sa pastille), sinon « non chiffré » (sans pastille —
-    aucun chiffre imprimé sans id du registre)."""
-    v = valeurs.get(cid)
-    if v is None or v.valeur in (None, ""):
-        return ligne_kv(cle, _NON_CHIFFRE, "")
-    return ligne_kv(cle, rendu_valeur(v.valeur), chip(v))
+def _pente(v):
+    return f"{str(v).replace('.', ',')}° (pente moyenne)"
 
 
-def rendu(valeurs: dict[str, Valeur]) -> str:
-    lignes = [
-        _ligne(valeurs, "Contenance cadastrale", "surface_parcelle_m2", fmt_m2),
-        _ligne(valeurs, "Adresse", "adresse_ban", lambda a: str(a)),
-        _ligne(valeurs, "Propriétaire", "type_proprietaire", lambda t: str(t)),
-    ]
-    lus = [valeurs[c] for c in IDS if c in valeurs]
-    return section("1. Identité et situation", table_kv(lignes) + pied_section(lus))
+def _achat(v):
+    # D-a : dict {valeur, date, …} — dernière mutation DVF sur la parcelle
+    d = v.get("date") or v.get("date_mutation")
+    return fmt_eur(v["valeur"]) + (f" — mutation du {d}" if d else "")
+
+
+def _copro(v):
+    n = len(v) if isinstance(v, list) else v
+    return f"Bâti en copropriété ({n} lot(s)) — la vente porte sur des lots, pas sur la parcelle"
+
+
+def rendu(valeurs) -> str:
+    lignes = [x for x in [
+        ligne(valeurs, "Contenance cadastrale", "surface_parcelle_m2", fmt_m2),
+        ligne(valeurs, "Adresse", "adresse_ban", str),
+        ligne(valeurs, "Propriétaire", "type_proprietaire", str),
+        ligne(valeurs, "Pente", "pente_deg", _pente),
+        ligne(valeurs, "Prix d'achat de la parcelle", "prix_achat_historique_eur", _achat),
+        ligne(valeurs, "Copropriété", "coproprietes_liste", _copro),
+    ] if x]
+    if not lignes:
+        return ""      # aucune donnée servie → section omise (aucun ◌)
+    return section("1. Identité et situation", table_kv(lignes) + pied(valeurs, IDS))

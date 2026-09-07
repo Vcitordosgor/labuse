@@ -88,13 +88,14 @@ def generer(idu: str, outdir: Path) -> dict:
 
         from labuse.db import session_scope
         from labuse.exports import builder
-        with session_scope() as s:
-            builder.generer_pdf(s, idu, "dossier", fiche=fiche, jour=_date(2026, 9, 5),
-                                chemin_pdf=str(d / "dossier2.pdf"))
-        if (d / "dossier2.json").exists():
-            ok(f"{idu}/dossier2 (EXPORTS-2) : rendu + archive JSON")
-        else:
-            ko(f"{idu}/dossier2 : archive JSON absente (1.6)")
+        for doc, nom in (("dossier", "dossier2"), ("flash", "flash2")):
+            with session_scope() as s:
+                builder.generer_pdf(s, idu, doc, fiche=fiche, jour=_date(2026, 9, 5),
+                                    chemin_pdf=str(d / f"{nom}.pdf"))
+            if (d / f"{nom}.json").exists():
+                ok(f"{idu}/{nom} (EXPORTS-2) : rendu + archive JSON")
+            else:
+                ko(f"{idu}/{nom} : archive JSON absente (1.6)")
     except Exception as exc:  # noqa: BLE001
         ko(f"{idu}/dossier2 (EXPORTS-2) : {exc}")
     for f in d.glob("*.pdf"):
@@ -116,6 +117,10 @@ def verifier_temoin(idu: str, d: Path, fiche: dict) -> None:
             if mot in t:
                 MOTS_TROUVES.append(f"{idu}/{doc} : « {mot} »")
                 ko(f"{idu}/{doc} : mot interdit « {mot} »")
+    # EXPORTS-2 — aucun ◌ dans un document rendu (bloc non branché = absent, jamais un exemple)
+    for doc, t in txts.items():
+        if "◌" in t:
+            ko(f"{idu}/{doc} : caractère ◌ présent (bloc non branché imprimé avec un exemple)")
     # « Non ICPE » : toléré UNIQUEMENT dans le tableau ICPE (ligne portant une distance en m)
     for doc, t in txts.items():
         for line in t.splitlines():
