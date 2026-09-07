@@ -952,7 +952,9 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/marche_service.py:filtre_ventes",
     reservoirs=("dvf",), portee="live"),
  "bilan_ca_eur": C("Chiffre d'affaires (bilan)", "€", "parcelle",
-    "CA = surface vendable × prix de sortie neuf observé (bilan à rebours)",
+    "CA HT total = surface vendable × prix de sortie ÷ (1 + taux de TVA du régime saisi) "
+    "(bilan à rebours) — part libre au prix de sortie, part sociale au prix de vente au bailleur ; "
+    "décision Vic 07/09 : le bilan travaille HT",
     moteur="bilan_promoteur", calcul="moteur",
     fonction="src/labuse/faisabilite/bilan.py:compute_bilan (ca)",
     reservoirs=("dvf",), portee="live"),
@@ -994,6 +996,115 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/faisabilite/bilan.py (dérivable de compute_calculette)",
     reservoirs=(), portee="live",
     en_attente="maquettes d'exports — servie au chantier EXPORTS (Financier)"),
+ # ═══════════════ EXPORTS-2 lot 0.4 — les chiffres du Financier ═══════════════
+ # Créés en_attente : le builder d'exports (lots 1/5) les câble et lève l'attente ; tant
+ # qu'aucun robinet ne les sert, verifier() reste vert. Bilan à rebours HT (décision Vic
+ # 07/09), bornes de charge foncière, sensibilités, sorties dérivées, fait foncier (D-a).
+ "bilan_frais_acquisition_eur": C("Frais d'acquisition (bilan)", "€", "parcelle",
+    "frais d'acquisition = pourcentage saisi (7 % proposé) appliqué au prix d'achat retenu "
+    "(notaire, mutation) + commission d'apporteur saisie — poste distinct de la charge foncière",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — frais d'acquisition, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "bilan_honoraires_techniques_eur": C("Honoraires techniques (bilan)", "€", "parcelle",
+    "honoraires techniques (maîtrise d'œuvre, BET, contrôle technique) = pourcentage saisi "
+    "appliqué au coût de construction — distinct de la marge et des frais financiers",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — honoraires techniques, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "bilan_stationnement_eur": C("Stationnement (bilan)", "€", "parcelle",
+    "coût du stationnement = nombre de places × coût par place saisi selon le type (sol, "
+    "sous-sol ou silo) — le sous-sol et le silo coûtent davantage que le sol",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — stationnement, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "bilan_aleas_eur": C("Aléas (bilan)", "€", "parcelle",
+    "provision pour aléas = pourcentage saisi appliqué au coût de construction (imprévus de "
+    "chantier) — poste du bilan à rebours",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — aléas, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "bilan_depollution_eur": C("Dépollution et étude de sol (bilan)", "€", "parcelle",
+    "poste dépollution et étude de sol — saisi par le client (aucun référentiel public ne le "
+    "chiffre) ; laissé vide, il s'imprime « non chiffré », jamais un zéro",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — dépollution, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "bilan_portage_eur": C("Portage financier (bilan)", "€", "parcelle",
+    "coût de portage = durée de portage saisie (mois) × taux saisi sur le foncier et les "
+    "études, ou forfait si le client n'a pas saisi de taux",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — portage, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "redevance_archeologie_eur": C("Redevance d'archéologie préventive (bilan)", "€", "parcelle",
+    "redevance d'archéologie préventive = surface de plancher créée × taux légal (art. L524-7 "
+    "du Code du patrimoine), assiette au-delà du seuil d'exonération",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — redevance archéologie, à câbler)",
+    reservoirs=(), portee="live",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "charge_fonciere_basse_eur": C("Charge foncière — borne basse", "€", "parcelle",
+    "borne basse de la charge foncière supportable : coût de construction en haut de fourchette "
+    "combiné au prix de sortie en bas — jamais un point seul (lot 5.3)",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — borne basse de charge, à câbler)",
+    reservoirs=(), portee="live",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "charge_fonciere_haute_eur": C("Charge foncière — borne haute", "€", "parcelle",
+    "borne haute de la charge foncière supportable : coût de construction en bas de fourchette "
+    "combiné au prix de sortie en haut — jamais un point seul (lot 5.3)",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — borne haute de charge, à câbler)",
+    reservoirs=(), portee="live",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "sensibilite_prix_sortie": C("Sensibilité au prix de sortie", "%", "parcelle",
+    "variation de la charge foncière pour ±5 % de prix de sortie — second axe du tableau de "
+    "sensibilité double 3×3 (avec sensibilite_cout_construction), lot 5.3",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — sensibilité prix de sortie, à câbler)",
+    reservoirs=(), portee="live",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "seuil_rentabilite_eur": C("Seuil de rentabilité (prix d'achat)", "€", "parcelle",
+    "prix d'achat du foncier qui atteint exactement la marge visée saisie — le point mort de "
+    "l'opération (lot 5.3)",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — seuil de rentabilité, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "prix_revient_eur_m2": C("Prix de revient au m²", "€/m²", "parcelle",
+    "prix de revient = (foncier retenu + tous les coûts) ÷ surface vendable, en €/m² habitable "
+    "vendable (lot 5.3)",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — prix de revient, à câbler)",
+    reservoirs=(), portee="projet",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "prix_achat_historique_eur": C("Prix d'achat historique de la parcelle", "€", "parcelle",
+    "dernier prix d'acquisition de la parcelle elle-même (mutation DVF sur l'IDU) avec sa date "
+    "— fait foncier D-a ; « non disponible » si aucune mutation DVF n'est rattachée à la parcelle",
+    moteur="marche_service", calcul="moteur",
+    fonction="src/labuse/marche_service.py (EXPORTS-2 lot 2 — prix d'achat historique D-a, à câbler)",
+    reservoirs=("dvf",), portee="live",
+    en_attente="EXPORTS-2 — servi au chantier du Dossier (lot 2)"),
+ "mixite_seuil_m2": C("Mixité sociale — seuil de déclenchement", "m²", "parcelle",
+    "seuil de surface de plancher au-delà duquel la clause de mixité sociale s'applique (source "
+    "règlement de zone si déclarée, sinon Estimé) — distinct du quota et du déclenchement",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — seuil de mixité, à câbler)",
+    reservoirs=("gpu_plu_api_carto",), portee="live",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+ "mixite_quota_pct": C("Mixité sociale — quota de logements aidés", "%", "parcelle",
+    "part de logements aidés imposée par la clause de mixité au-delà du seuil (source règlement "
+    "de zone si déclarée, sinon Estimé) — distinct du seuil et du déclenchement",
+    moteur="bilan_promoteur", calcul="moteur",
+    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — quota de mixité, à câbler)",
+    reservoirs=("gpu_plu_api_carto",), portee="live",
+    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
  # FICHE-1 lot 1 — tiroir « Le bien » : le bâti EXISTANT servi à la fiche (était en_attente
  # « maquettes d'exports »). Producteur unique bati.le_bien_block (aucun calcul au front).
  "emprise_batie_m2": C("Emprise bâtie", "m²", "parcelle",
