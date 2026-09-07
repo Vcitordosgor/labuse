@@ -13,8 +13,8 @@ from datetime import date
 
 from ..registre.valeur import Valeur
 from . import archive, numeros
-from .blocs import (autour, bilan, commune, identite, marche, potentiel, reseaux, risques,
-                    sources, zonage)
+from .blocs import (autour, bilan, commune, identite, marche, potentiel, reseaux, resume,
+                    risques, sources, zonage)
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, page_html, render_pdf
 
@@ -32,14 +32,20 @@ _LABEL = {
 _FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. Ne remplace ni un "
                  "certificat d'urbanisme, ni une étude de faisabilité réglementaire, ni un conseil "
                  "juridique. Données LABUSE au {au}.")
-_FOOT = {"dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER}
+_FOOT = {
+    "dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER,
+    "resume": ("Résumé du Dossier parcelle. Document d'information établi sur des données "
+               "publiques ; ne remplace pas un certificat d'urbanisme. Données LABUSE au {au}."),
+}
 
 #: composition de chaque document = la suite ordonnée des blocs (catalogue EXPORTS-SOURCES).
 #: Le Dossier = 10 sections ; le Flash = le Dossier SANS la section 9 (bilan), même builder.
+#: Le Résumé = les mêmes ids en sélection courte (un module compact, 3 pages).
 _DOSSIER = [identite, zonage, potentiel, risques, marche, reseaux, autour, commune, bilan, sources]
 DOCUMENTS: dict[str, list] = {
     "dossier": _DOSSIER,
     "flash": [b for b in _DOSSIER if b is not bilan],
+    "resume": [resume],
 }
 
 
@@ -51,8 +57,35 @@ class ResultatDoc:
     cartouche: Cartouche
 
 
+#: documents « au fil » (pas de page de garde pleine) : en-tête compact, comme les maquettes
+#: Résumé et Apporteur.
+_COVER_COMPACTE = {"resume", "apporteur"}
+
+
+def _entete_compacte(document: str, idu: str, fiche: dict, numero: str, jour: date,
+                     valeurs: dict[str, Valeur]) -> str:
+    """En-tête compact (Résumé / Apporteur) : marque + adresse + une ligne d'identité. Pas de
+    page de garde, pas de cartouche-tableau (l'IDU entier vit dans cette ligne et au @page)."""
+    label, _ = _LABEL.get(document, (document, ""))
+    adresse = fiche.get("adresse") or ""
+    surf = valeurs.get("surface_parcelle_m2")
+    zone = valeurs.get("zone_plu_famille")
+    bits = [esc(idu)]
+    if surf is not None:
+        bits.append(fmt_m2(surf.valeur))
+    if zone is not None:
+        bits.append(f"zone {esc(zone.valeur)}")
+    bits += [esc(numero), f"{jour:%d/%m/%Y}"]
+    return (f'<div class="brand"><span class="wordmark">LABUSE</span>'
+            f'<span class="kind">{esc(label)}</span></div>'
+            f'<h1>{esc(adresse or label)}</h1>'
+            f'<p class="idu">{" · ".join(bits)}</p>')
+
+
 def _cover(document: str, idu: str, fiche: dict, numero: str, jour: date,
            valeurs: dict[str, Valeur]) -> str:
+    if document in _COVER_COMPACTE:
+        return _entete_compacte(document, idu, fiche, numero, jour, valeurs)
     label, subtitle = _LABEL.get(document, (document, ""))
     adresse = fiche.get("adresse") or ""
     commune = fiche.get("commune") or ""
