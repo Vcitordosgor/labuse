@@ -1223,6 +1223,43 @@ def ingest_zonage_abc_cmd() -> None:
         typer.echo(f"  filtre zonage_abc : {v.verdict}")
 
 
+@app.command("ingest-dfi")
+def ingest_dfi_cmd(
+    rattacher: bool = typer.Option(True, help="Rejouer le rattachement des permis orphelins par la filiation."),
+) -> None:
+    """SOURCES-1 lot 6 — filiation officielle des parcelles (DFI DGFiP, parquet distant filtré
+    974 via duckdb). Purge + réinsertion, puis rejeu des permis orphelins (mère disparue →
+    filles actuelles), puis filtre."""
+    from .ingestion import dfi as dfi_mod
+    dfi_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = dfi_mod.ingest_dfi(s)
+        s.commit()
+    typer.echo(f"✓ DFI : {res['liens']} liens mère→fille · {res['communes']} communes · "
+               f"{res['date_min']} → {res['date_max']}.")
+    if rattacher:
+        with session_scope() as s:
+            r = dfi_mod.rattacher_permis_par_filiation(s)
+            s.commit()
+        typer.echo(f"  permis orphelins : {r['rattaches']} rattachés par la filiation "
+                   f"({r['avant']} → {r['restants']} sans géométrie).")
+    _jouer_filtre_apres_ingestion("dfi", "ingest-dfi")
+
+
+@app.command("ingest-iris-rp")
+def ingest_iris_rp_cmd() -> None:
+    """SOURCES-1 lot 6 — recensement INSEE par IRIS (bases 2022 logement + population,
+    344 IRIS 974 attendus). Upsert iris_rp, puis filtre."""
+    from .ingestion import iris_rp as iris_mod
+    iris_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = iris_mod.ingest_iris_rp(s)
+        s.commit()
+    typer.echo(f"✓ IRIS RP2022 : {res['iris']} IRIS · {res['communes']} communes · "
+               f"{res['sans_pop']} sans volet population.")
+    _jouer_filtre_apres_ingestion("iris_rp", "ingest-iris-rp")
+
+
 def _jouer_filtre_apres_ingestion(label: str, job: str) -> None:
     """SOURCES-1 lot 5 — rejoue le filtre d'une source après son ingestion (facteur commun)."""
     from . import circuit_journal, filtres

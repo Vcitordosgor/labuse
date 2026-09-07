@@ -63,6 +63,9 @@ FICHE_PARCELLE_CLES: dict[str, tuple[str, ...] | tuple[str, str]] = {
     "calculette": ("cout_construction_saisi_eur_m2", "marge_frais_saisie_pct",
                    "prix_demande_saisi_eur", "ecart_prix_demande_pct"),
     "_trace": ("interne", "le tampon lui-même (?trace=1, admin)"),
+    # SOURCES-1 lot 6 — filiation DFI + quartier INSEE
+    "filiation": ("filiation_parcelle",),
+    "iris_quartier": ("iris_quartier",),
     # SOURCES-1 lot 1 — bloc « Dispositifs et périmètres » (ER, EBC, DPU, PEB, SUP)
     "dispositifs": ("dispositifs_parcelle", "er_emplacement_reserve", "ebc_classe",
                     "dpu_perimetre", "peb_zone"),

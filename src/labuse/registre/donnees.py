@@ -1231,6 +1231,29 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/api/app.py:_sols_block",
     reservoirs=("georisques_sis", "georisques_casias",), portee="live", type="liste",
     table="spatial_layers (kind=sol_pollue)"),
+ # ══ SOURCES-1 lot 6 — le foncier et les gens ══
+ "filiation_parcelle": C("Historique cadastral (filiation DFI)", "liste", "parcelle",
+    "la généalogie OFFICIELLE de la parcelle : d'où elle vient (mères), ce qu'elle est "
+    "devenue (filles), nature et date de chaque événement (DFI DGFiP) — passe-plat trié ; "
+    "absence NORMALE (informatisation 1980-90+, aménagements fonciers exclus) ; contrôle "
+    "croisé avec le cadastre d'époque (géométrie), jamais un conflit",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/dfi.py:filiation_parcelle",
+    reservoirs=("dgfip_dfi",), portee="live", type="liste", table="dfi_filiation"),
+ "iris_quartier": C("Quartier INSEE (IRIS)", "liste", "parcelle",
+    "le quartier INSEE de la parcelle (IRIS, contours géographie 2024) : logements, vacance, "
+    "âge du bâti (part ≤ 1990), taille des ménages (NPER_RP/RP), part 60 ans et +, part "
+    "locataires/HLM — RP2022, maille IRIS DITE (affine la commune, ne la remplace pas)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/iris_rp.py:stats_iris (iris_de_parcelle)",
+    reservoirs=("insee_rp_iris", "contours_iris",), portee="live", type="liste",
+    table="iris_rp"),
+ "iris_commune_quartiers": C("Quartiers de la commune (IRIS)", "liste", "commune",
+    "l'affinage par quartier de la vérité communale : n IRIS, vacance min/médiane/max par "
+    "IRIS (RP2022) — commune_insee_logement reste la vérité communale",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/iris_rp.py:quartiers_commune",
+    reservoirs=("insee_rp_iris",), portee="live", type="liste", table="iris_rp"),
 }
 
 #: 1.1 — le type des déclarations « auto » est dérivé de l'unité (les entrées historiques de

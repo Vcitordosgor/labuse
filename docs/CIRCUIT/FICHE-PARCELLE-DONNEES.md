@@ -34,6 +34,24 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | `peb_zone` | classe — domaine : A, B, C, D, hors | Plan d'exposition au bruit (PEB) | peb_dgac (Roland-Garros B/C/D (GPU) ; Pierrefonds non publié) | passe-plat · src/labuse/api/app.py:_dispositifs_block (peb) — table lue : spatial_layers (kind=peb) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
 | | | *zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est — Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU (couverture partielle dite)* | | | | | |
 
+## Historique cadastral (filiation DFI)
+
+*Robinet `fiche_parcelle_filiation` — route `/parcels/{idu} (clé filiation)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `filiation_parcelle` | liste | Historique cadastral (filiation DFI) | dgfip_dfi (situation 19/06/2026 — 409 623 liens 974 (1989→2025)) | passe-plat · src/labuse/ingestion/dfi.py:filiation_parcelle — table lue : dfi_filiation | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *la généalogie OFFICIELLE de la parcelle : d'où elle vient (mères), ce qu'elle est devenue (filles), nature et date de chaque événement (DFI DGFiP) — passe-plat trié ; absence NORMALE (informatisation 1980-90+, aménagements fonciers exclus) ; contrôle croisé avec le cadastre d'époque (géométrie), jamais un conflit* | | | | | |
+
+## Quartier INSEE (Autour)
+
+*Robinet `fiche_parcelle_quartier` — route `/parcels/{idu} (clé iris_quartier)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `iris_quartier` | liste | Quartier INSEE (IRIS) | insee_rp_iris (RP2022 — parution 16/10/2025 (géographie 01/01/2024)), contours_iris (Contours IRIS — géographie 2024 (IGN/INSEE)) | passe-plat · src/labuse/ingestion/iris_rp.py:stats_iris (iris_de_parcelle) — table lue : iris_rp | live | servie (possiblement vide, dit) · non calculée | outil « Étude de zone » |
+| | | *le quartier INSEE de la parcelle (IRIS, contours géographie 2024) : logements, vacance, âge du bâti (part ≤ 1990), taille des ménages (NPER_RP/RP), part 60 ans et +, part locataires/HLM — RP2022, maille IRIS DITE (affine la commune, ne la remplace pas)* | | | | | |
+
 ## Fibre (Réseaux et accès)
 
 *Robinet `fiche_parcelle_fibre` — route `/parcels/{idu} (clé fibre)`*

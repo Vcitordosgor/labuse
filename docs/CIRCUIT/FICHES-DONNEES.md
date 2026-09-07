@@ -13,6 +13,15 @@
 | `azi_tri_commune` | liste | AZI / TRI de la commune | georisques_azi_tri (GASPAR azi+tri par commune (07/09/2026)) | passe-plat · src/labuse/ingestion/azi_tri.py:azi_tri_commune — table lue : azi_communes | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *atlas des zones inondables et TRI couvrant la commune (GASPAR : libellé, risques, date) — fait documentaire ; la géométrie d'aléa reste servie par georisque_alea* | | | | | |
 
+## Quartiers (IRIS)
+
+*Robinet `fiche_commune_quartiers` — route `/communes/{commune} (population.quartiers)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `iris_commune_quartiers` | liste | Quartiers de la commune (IRIS) | insee_rp_iris (RP2022 — parution 16/10/2025 (géographie 01/01/2024)) | passe-plat · src/labuse/ingestion/iris_rp.py:quartiers_commune — table lue : iris_rp | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *l'affinage par quartier de la vérité communale : n IRIS, vacance min/médiane/max par IRIS (RP2022) — commune_insee_logement reste la vérité communale* | | | | | |
+
 ## Zonage A/B/C (logement)
 
 *Robinet `fiche_commune_zonage_abc` — route `/communes/{commune} (clé zonage_abc)`*

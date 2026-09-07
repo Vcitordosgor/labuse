@@ -532,6 +532,15 @@ SEED: list[dict] = [
     {"name": "Loyers DHUP — carte des loyers (annonces)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/",
      "selecteur": "last_update"},
+    # ── SOURCES-1 lot 6 — le foncier et les gens ──
+    {"name": "DFI — documents de filiation informatisés (DGFiP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/agregation-des-fichiers-de-documents-de-filiation-informatises-dfi-des-parcelles/",
+     "selecteur": "last_update"},
+    # INSEE : les bases IRIS ne sont pas sur data.gouv — la page du sommaire insee.fr porte le
+    # millésime (« Logement en 2022 ») : un nouveau millésime publie une nouvelle page-titre.
+    {"name": "INSEE RP2022 — bases IRIS (logement, population)", "methode": "page",
+     "url": "https://www.insee.fr/fr/statistiques/8647012",
+     "selecteur": r"Logement en (20\d{2})"},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin

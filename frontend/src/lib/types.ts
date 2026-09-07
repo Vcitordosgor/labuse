@@ -486,6 +486,30 @@ export interface Fiche {
     casias: { nom: string | null; subtype: string; statut: string | null; distance_m: number; sur_place: boolean; fiche_risque: string | null } | null
     casias_statut: 'sur_place' | 'proche_100m' | 'hors'
   } | null
+  // SOURCES-1 lot 6 — historique cadastral OFFICIEL (filiation DFI, DGFiP)
+  filiation?: {
+    meres: { idu: string; nature: string | null; date: string | null }[] | null
+    filles: { idu: string; nature: string | null; date: string | null }[] | null
+    division_recente: boolean
+    source: string
+  } | null
+  // SOURCES-1 lot 6 — le quartier INSEE (IRIS) de la parcelle (RP2022, maille dite)
+  iris_quartier?: {
+    iris: string
+    nom: string | null
+    millesime: string
+    logements: number | null
+    vacants: number | null
+    menages: number | null
+    habitants: number | null
+    vacance_pct: number | null
+    part_bati_avant_1990_pct: number | null
+    taille_menages: number | null
+    part_60_plus_pct: number | null
+    part_locataires_pct: number | null
+    part_hlm_pct: number | null
+    source: string
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

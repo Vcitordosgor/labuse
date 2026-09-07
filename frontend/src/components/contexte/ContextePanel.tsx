@@ -573,6 +573,12 @@ export function ContextePanel() {
                   {d.population.habitants != null && <RowT lbl="Habitants · ménages" val={`${fmt(d.population.habitants)} · ${fmt(d.population.menages)}`} />}
                   {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
+                  {/* SOURCES-1 lot 6 — l'affinage par QUARTIER (IRIS RP2022) : la vacance n'est
+                      pas uniforme dans la commune ; maille dite, la vérité communale reste INSEE RP. */}
+                  {d.population.quartiers && (
+                    <RowT lbl={`Par quartier (${d.population.quartiers.n_iris} IRIS)`}
+                      val={`vacance ${fmtDec(d.population.quartiers.vacance_min_pct)} → ${fmtDec(d.population.quartiers.vacance_max_pct)} % (méd. ${fmtDec(d.population.quartiers.vacance_mediane_pct)} %)`} />
+                  )}
                 </div>
                 {d.marche && (
                   <div className="flex flex-col gap-2.5">

@@ -157,3 +157,10 @@ commandes:
   - motif: "Coût de construction (EPTB SDES*"
     label: cout_construction
     argv: ["labuse", "ingest-cout-construction"]
+  # ── SOURCES-1 lot 6 — le foncier et les gens ──
+  - motif: "DFI — documents de filiation*"
+    label: dfi
+    argv: ["labuse", "ingest-dfi"]
+  - motif: "INSEE RP2022 — bases IRIS*"
+    label: iris_rp
+    argv: ["labuse", "ingest-iris-rp"]

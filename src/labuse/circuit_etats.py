@@ -195,6 +195,9 @@ NOM_VERS_SLUG = {
     'Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)': 'loyers_oll',
     'Loyers DHUP — carte des loyers (annonces)': 'loyers_dhup',
     'Coût de construction (EPTB SDES + choix LABUSE)': 'cout_construction_sdes',
+    # SOURCES-1 lot 6 — le foncier et les gens :
+    'DFI — documents de filiation informatisés (DGFiP)': 'dgfip_dfi',
+    'INSEE RP2022 — bases IRIS (logement, population)': 'insee_rp_iris',
     # SOURCES-1 lot 4 — cadre régional :
     "SAR — schéma d'aménagement régional (Région/DEAL)": 'sar_region',
     'DVF Réunion (Région, data.regionreunion.com)': 'region_dvf',

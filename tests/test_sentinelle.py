@@ -277,7 +277,8 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # DVF Région (raison : hub ODS déjà surveillé, jeu figé — échantillon producteur).
     # SOURCES-1 lot 5 — +6 : Arcep/REI/ORT/OLL/DHUP au SEED (api), coût de construction
     # en RAPPELS_MANUELS (EPTB = publication annuelle sans millésime machine).
-    assert len(noms) == 96
+    # SOURCES-1 lot 6 — +2 : DFI (SEED api data.gouv) + bases IRIS RP2022 (SEED page insee.fr).
+    assert len(noms) == 98
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

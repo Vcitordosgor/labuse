@@ -244,6 +244,9 @@ export interface ContexteCommune {
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
+    // SOURCES-1 lot 6 — l'affinage par quartier (IRIS RP2022), maille dite
+    quartiers?: { n_iris: number; vacance_min_pct: number; vacance_max_pct: number
+      vacance_mediane_pct: number; source: string } | null
   }
   plu_statut: {
     statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null

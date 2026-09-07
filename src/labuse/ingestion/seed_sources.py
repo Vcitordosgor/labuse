@@ -1048,6 +1048,38 @@ SOURCES: list[dict] = [
                          "en table sourcée, valeurs inchangées (aucun bilan ne bouge). Le "
                          "« jeu CDC » du mandat est INTROUVABLE (dit au compte-rendu). "
                          "`labuse ingest-cout-construction`."),
+    # ── SOURCES-1 lot 6 — le foncier et les gens ──
+    dict(name="DFI — documents de filiation informatisés (DGFiP)", category="cadastre",
+         provider="DGFiP (open data — agrégation des fichiers DFI)",
+         access_type="téléchargement/parquet", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="situation 19/06/2026 — 409 623 liens 974 (1989→2025)",
+         documentation_url="https://www.data.gouv.fr/datasets/agregation-des-fichiers-de-documents-de-filiation-informatises-dfi-des-parcelles",
+         endpoint_url="https://dataeng-open.s3.rbx.io.cloud.ovh.net/dfi/dfi.parquet",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGFiP — documents de filiation informatisés des parcelles ».",
+         technical_notes="SOURCES-1 lot 6 — réservoir dgfip_dfi : table dfi_filiation "
+                         "(mère→fille, nature, date). VÉRIFIÉ 07/09/2026 : parquet national "
+                         "199 Mo lu À DISTANCE (duckdb/httpfs, filtre code_departement=974 — "
+                         "jamais les 3,5 Go du CSV), 409 623 liens, 24 communes, "
+                         "1989-12-06 → 2025-12-29, 6 natures. Pièges DITS : couvre "
+                         "l'informatisation 1980-90+ seulement, aménagements fonciers exclus. "
+                         "Rattache les permis orphelins (mère disparue → filles terminales) — "
+                         "CONTRÔLE croisé avec le cadastre d'époque, pas un conflit. "
+                         "`labuse ingest-dfi`. Trimestriel."),
+    dict(name="INSEE RP2022 — bases IRIS (logement, population)", category="attractivite",
+         provider="INSEE (recensement de la population, bases infra-communales)",
+         access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="RP2022 — parution 16/10/2025 (géographie 01/01/2024)",
+         documentation_url="https://www.insee.fr/fr/statistiques/8647012",
+         endpoint_url="https://www.insee.fr/fr/statistiques/fichier/8647012/base-ic-logement-2022_csv.zip",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : INSEE — recensement de la population 2022, bases infra-communales ».",
+         technical_notes="SOURCES-1 lot 6 — réservoir insee_rp_iris : table iris_rp (344 IRIS "
+                         "974, mêmes contours que la géographie 2024 déjà servie). Deux bases "
+                         "lues : logement (vacants, âge du bâti ACH, statut d'occupation, "
+                         "ménages) + population (tranches d'âge). Dérivées documentées "
+                         "(regles/iris_quartier.py) : vacance, part bâti ≤ 1990, taille des "
+                         "ménages, part 60+. L'IRIS AFFINE la commune, il ne la remplace pas "
+                         "(commune_insee_logement reste la vérité communale). "
+                         "`labuse ingest-iris-rp`. Annuel."),
 ]
 
 
@@ -1312,6 +1344,9 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)": ("job_sur_clic", 365, "declaree"),
     "Loyers DHUP — carte des loyers (annonces)": ("depot_manuel", 365, "proposee"),
     "Coût de construction (EPTB SDES + choix LABUSE)": ("job_sur_clic", 365, "proposee"),
+    # ── SOURCES-1 lot 6 — le foncier et les gens ──
+    "DFI — documents de filiation informatisés (DGFiP)": ("job_sur_clic", 100, "declaree"),
+    "INSEE RP2022 — bases IRIS (logement, population)": ("job_sur_clic", 365, "declaree"),
 }
 
 

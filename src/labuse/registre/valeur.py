@@ -62,6 +62,9 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "loyers_oll": "Loyers OLL%",
     "loyers_dhup": "Loyers DHUP%",
     "cout_construction_sdes": "Coût de construction%",
+    # SOURCES-1 lot 6 — le foncier et les gens
+    "dgfip_dfi": "DFI — documents de filiation%",
+    "insee_rp_iris": "INSEE RP2022 — bases IRIS%",
     # SOURCES-1 lot 4
     "sar_region": "SAR — schéma d'aménagement régional%",
     "region_dvf": "DVF Réunion (Région%",

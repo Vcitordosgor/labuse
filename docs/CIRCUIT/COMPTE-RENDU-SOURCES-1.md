@@ -200,6 +200,33 @@ Cinq sources. **Verrous : 16/16 verts** après le lot. Toutes les URL testées R
 - **Coût de construction** : l'EPTB 2024 Réunion EXISTE et a été LU (« coût moyen 145 500 € en 2024, −4 % sur un an », 96 m² ≈ 1 516 €/m² habitable — cité dans `regles/cout_construction_ref.py`) mais mesure la MAISON INDIVIDUELLE, pas la promotion en SDP → la fourchette 2 300-2 800 €/m² SDP reste un choix LABUSE, désormais en table SOURCÉE (`cout_construction_ref`, ligne servie) lue par `Hypotheses.charger` avec repli constantes. **Écart bilan sur les 4 témoins : 0 par construction** (valeurs servies = anciennes constantes — le mandat voulait la constante SOURCÉE, pas un changement de chiffrage). Le « jeu CDC » du mandat est INTROUVABLE (aucun jeu identifiable — dit).
 - **Sondes réelles** : 5 `api` data.gouv OK (Arcep 2026-06-11, REI 2026-05-11, ORT 2025-05-14, OLL 2026-08-05 — via api/2, le JSON api/1 à 520 ressources dépassait la coupe de lecture, piège documenté —, DHUP 2024-12-23) + 1 rappel annuel (EPTB). Filtres joués : rei/oll/cout **ok**, ort/arcep **avertissements** (écarts réels dits).
 
+## Lot 6 — Le foncier et les gens (clos)
+
+Deux sources entrées par la porte du Circuit. **Verrous : 16/16 verts** après le lot.
+
+### Ce qui est entré
+
+| Source (data_sources) | Réservoir | Données | État |
+|---|---|---|---|
+| DFI — documents de filiation informatisés (DGFiP) | `dgfip_dfi` (table `dfi_filiation`) | **409 623 liens mère→fille**, 24 communes, 1989-12-06 → 2025-12-29, 156 787 parcelles mères | servie |
+| INSEE RP2022 — bases IRIS (logement, population) | `insee_rp_iris` (table `iris_rp`) | **344 IRIS / 24 communes**, 0 sans volet population — vacants, âge du bâti (ACH), statuts d'occupation, ménages, tranches d'âge | servie |
+
+- **DFI, découverte de canal** : l'API ODS data.economie du jeu est VIDE (total_count = 0, vérifié) — la vraie diffusion est le fichier agrégé data.gouv (CSV national 3,5 Go / parquet 199 Mo, situation 19/06/2026). Lecture DISTANTE du parquet via duckdb/httpfs filtrée `code_departement='974'` : rien des 3,5 Go téléchargé.
+- **Deux codes AMONT légitimes** dans la filiation (pas des IDU difformes) : fille `PDP` = passage au domaine public (5 032), mère `EDNC` = issue du non-cadastré (1 797) — servis ÉTIQUETÉS en fiche, jamais joints à `parcels` ; le filtre les compte à part (1,7 % des liens) et ne bloque que le reste (0 mesuré).
+- **Rejeu des permis orphelins par la filiation officielle (mandat)** : l'état de départ n'était plus les 2 894 de RETOURS-14 mais **1 887** sans géométrie (le canal géométrique « cadastre d'époque » + BD PARCELLAIRE 2008 de RETOURS-21 était passé depuis). La filiation DFI (mère disparue → filles TERMINALES, descente récursive ≤ 8 niveaux, point = `ST_PointOnSurface(ST_Union(filles))`) en rattache **985 : 1 887 → 902 restants** (52,2 % du reliquat récupéré). Les 902 restants : parcelles hors informatisation DFI (avant 1980-90), aménagements fonciers exclus, ou mères elles-mêmes jamais cadastrées — état réel, dit. Provenance tracée (`raw.geoloc = « filiation DFI (mère → filles, DGFiP) »`, filles listées, `origine_redecoupee` dès 2 filles). Preuve : permis 97441820E0003 (Sainte-Marie) posé sur BI0356 → filles BI0368/369/370.
+- **IRIS RP2022** : bases infra-communales officielles insee.fr (parution 16/10/2025, géographie 01/01/2024 = LA MÊME que les Contours IRIS déjà servis — contrôle bloquant « chaque IRIS adossé à un contour » : 0 écart). Dérivées à un seul point de calcul (fiche de règle) : vacance, part bâti ≤ 1990, taille des ménages (NPER_RP/RP), part 60+, part locataires/HLM.
+
+### Servi
+
+- **Fiche parcelle** : « Historique cadastral (filiation officielle) » dans Le bien (mères/filles datées + natures + drapeau division récente ≥ 2023 ; contrôle croisé avec le cadastre d'époque DIT) ; « Le quartier INSEE » dans Autour (vacance, âge du bâti, ménages, 60+, HLM — maille IRIS DITE). Preuve réelle : 97410000BH0103 (Saint-Benoît) → filles BH0450/451 du 05/08/2024, division récente ; IRIS « La Confiance-Chemin de Ceinture », vacance 20,0 %, bâti ≤ 1990 : 28,1 %, 2,83 pers./ménage.
+- **Fiche commune** : bloc Population + « Par quartier (n IRIS) : vacance min → max (méd.) » — l'IRIS AFFINE, `commune_insee_logement` reste la vérité communale.
+- **Étude de zone** : overlay `iris` de `population_zone` (n IRIS intersectés, vacance, part bâti ≤ 1990) — complète Filosofi, ne le remplace pas.
+- **Variables candidates scoring NOTÉES (banc K0, conversation Scoring)** : `division_recente` (DFI — signal de mouvement foncier), vacance IRIS, âge du bâti IRIS. Rien au modèle sans banc.
+
+### La mécanique (un commit)
+
+Catalogue 107 sources (+2) · vanne `dfi`/`iris_rp` · CLI `ingest-dfi` (avec rejeu permis + filtre) et `ingest-iris-rp` · filtres riches joués (**dfi ok** après la leçon PDP/EDNC, **iris_rp ok**) · sondes RÉELLES : DFI api data.gouv (`2026-06-19` lu), IRIS page insee.fr (millésime `2022` lu — pas de data.gouv pour les bases IC) · registre : `filiation_parcelle`, `iris_quartier`, `iris_commune_quartiers` + robinets `fiche_parcelle_filiation`/`fiche_parcelle_quartier`/`fiche_commune_quartiers` + `iris_quartier` déclaré NON_SONDES (un seul producteur, fiche + zone) · `tables.py`, `NOM_VERS_SLUG`, `reservoirs.csv`, `valeur.py` · fiches de règle `regles/filiation_parcelle.py` (choix rattachement) et `regles/iris_quartier.py` (dérivées + dénominateurs INSEE) · tests `tests/test_sources1_lot6.py` + compteurs figés (MODE_ET_CADENCE 105→107, sentinelle 96→98).
+
 ## Décisions prises en autonomie
 
 - Étape 0 : `main` local étant extrait dans un autre worktree, la branche part de `origin/main` (strictement identique, `ea6fd161`).
@@ -229,5 +256,10 @@ Cinq sources. **Verrous : 16/16 verts** après le lot. Toutes les URL testées R
 - Lot 5 · coût de construction : l'EPTB (maison individuelle, habitable) et la promotion (SDP) sont des segments INCOMPARABLES — l'EPTB entre en CONTEXTE sourcé, le choix promotion 2 300-2 800 reste servi (valeurs inchangées : aucun bilan ne bouge, écart témoins = 0). Le « jeu CDC » du mandat, introuvable, est dit.
 - Lot 5 · ORT : l'écart producteur (Saint-Louis attendu ACV, absent de la table DGALN) est SERVI comme un écart (filtre avertissant), pas corrigé à la main ; Denormandie = phrase d'état sur la condition communale, aucun calcul d'avantage sans le périmètre conventionné.
 - Lot 5 · Arcep : seul le FttH (IPE) est servi — les technos déclaratives (4GF/CU/SAT) sont ingérées côté éligibilité mais non affichées ; distance à l'immeuble TOUJOURS dite, jamais un booléen nu.
+
+- Lot 6 · filtre DFI : le premier passage a mis la source en quarantaine sur « 6 829 IDU difformes » — c'étaient les codes amont PDP/EDNC (légitimes). Le contrôle a été corrigé (bloquant hors codes amont seulement, part des codes mesurée à part) et la leçon est écrite : un code producteur n'est pas une difformité.
+- Lot 6 · rattachement des permis : la filiation DFI ne se joue QUE sur les permis encore sans géométrie après le canal géométrique (cadastre d'époque premier — sa géométrie est exacte là où elle existe) ; l'écart entre canaux est un contrôle croisé, pas un conflit.
+- Lot 6 · sonde IRIS : les bases infra-communales INSEE n'existent pas sur data.gouv — sonde `page` sur le sommaire insee.fr (regex millésime « Logement en (20\d{2}) »), à défaut d'un `last_update` machine.
+- Lot 6 · duckdb : lecture distante du parquet DFI via duckdb/httpfs (déjà en dépendance pyproject depuis ZONE-DONNÉES) — jamais le CSV national de 3,5 Go.
 
 *(chapitres suivants à venir)*

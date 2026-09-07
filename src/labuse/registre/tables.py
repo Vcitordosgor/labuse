@@ -99,6 +99,11 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                               "json, loyers.py) — repli de l'OLL, aucun réservoir en base"),
     "cout_construction_sdes": Rt(("cout_construction_ref",),
                                  millesime="EPTB 2024 (contexte) ; choix promotion servi"),
+    # ── SOURCES-1 lot 6 — le foncier et les gens ────────────────────────────────────
+    "dgfip_dfi": Rt(("dfi_filiation",),
+                    millesime="situation 19/06/2026 — 409 623 liens 974 (1989→2025)"),
+    "insee_rp_iris": Rt(("iris_rp",),
+                        millesime="RP2022 — parution 16/10/2025 (géographie 01/01/2024)"),
     "georisques_azi_tri": Rt(("azi_communes",),
                              millesime="GASPAR azi+tri par commune (07/09/2026)"),
     # ── SOURCES-1 lot 3 — les sols et le bruit ──────────────────────────────────────

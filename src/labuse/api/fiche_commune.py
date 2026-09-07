@@ -125,7 +125,15 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
     # CIRCUIT-2 lot 1.6 — le taux de vacance est calculé par le moteur nommé `commune_compteurs`
     # (id registre vacance_pct) : même arithmétique, un seul chemin.
     from ..registre.moteurs.commune import vacance_pct
+    # SOURCES-1 lot 6 — l'affinage par QUARTIER (IRIS RP2022) : n IRIS, vacance min/méd/max.
+    # Maille DITE ; commune_insee_logement reste la vérité communale. None si non ingéré.
+    quartiers = None
+    if insee and db.execute(text(
+            "SELECT 1 FROM information_schema.tables WHERE table_name = 'iris_rp'")).first():
+        from ..ingestion.iris_rp import quartiers_commune
+        quartiers = quartiers_commune(db, insee)
     return {
+        "quartiers": quartiers,
         "habitants": int(demo["hab"]) if demo.get("hab") is not None else None,
         "menages": int(demo["men"]) if demo.get("men") is not None else None,
         "niveau_vie_moyen_eur": int(demo["niveau_vie_moyen"]) if demo.get("niveau_vie_moyen") is not None else None,

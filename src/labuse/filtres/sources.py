@@ -957,3 +957,82 @@ _ajout(_f(
     source="loyers_dhup", libelle="Loyers DHUP (carte des loyers, repli)",
     source_motif="Loyers DHUP%", portee_run=False, a_job=False,
     propres=[_dhup_fichier_ok()]))
+
+
+# ══════════════════════════ SOURCES-1 lot 6 — le foncier et les gens ══════════════════════════
+# Mesures 07/09/2026 : DFI 974 = 409 623 liens mère→fille, 24 communes, dates 1989→2025 ;
+# IRIS RP2022 = 344 IRIS (24 communes), vacants/âge du bâti/ménages/tranches d'âge.
+
+# ── DFI (réservoir dgfip_dfi, label vanne `dfi`) ──
+_ajout(_f(
+    source="dfi", libelle="DFI — filiation des parcelles (DGFiP)",
+    table="dfi_filiation", cle=("id",), insee_col="insee",
+    date_cols=("date_validation",), source_motif="DFI — documents de filiation%",
+    portee_run=False,
+    propres=[
+        # les IDU reconstruits font 14 caractères (insee 5 + préfixe 3 + parcelle 6) — SAUF
+        # deux codes AMONT légitimes, mesurés au 07/09 : fille 'PDP' (passage au domaine
+        # public, 5 032) et mère 'EDNC' (issue d'un ensemble non cadastré, 1 797). Ils sont
+        # SERVIS étiquetés (fiche), jamais joints à parcels. Bloquant sur le reste seul.
+        c.compte_mauvais(
+            "d_dfi_idu_forme", "distribution", "bloquant",
+            "IDU mère/fille au format LABUSE (14 c) ou code amont connu (PDP, EDNC)",
+            "0 lien difforme hors codes amont (mesuré 0 au 07/09 — 5 032 PDP + 1 797 EDNC dits)",
+            "(length(idu_mere) <> 14 AND substr(idu_mere, 9) <> 'EDNC') "
+            "OR (length(idu_fille) <> 14 AND substr(idu_fille, 9) <> 'PDP')"),
+        c.part_max(
+            "d_dfi_codes_amont", "distribution", "avertissant",
+            "Part des liens à code amont (PDP/EDNC)",
+            "≤ 3 % (mesuré 1,7 % au 07/09 — 6 829/409 623)",
+            "substr(idu_mere, 9) = 'EDNC' OR substr(idu_fille, 9) = 'PDP'", 3.0),
+        # un lien mère = fille est un non-événement (aucun observé) — l'état réel, visible.
+        c.compte_mauvais(
+            "d_dfi_auto_lien", "distribution", "avertissant",
+            "Liens mère = fille (auto-référence)",
+            "0 attendu (mesuré 0 au 07/09)",
+            "idu_mere = idu_fille"),
+        # la filiation ne couvre que l'informatisation (1980-90+) — une date hors plage dit un
+        # amont qui a changé de forme.
+        c.compte_mauvais(
+            "d_dfi_dates", "plage", "avertissant",
+            "Dates de validation dans la plage de l'informatisation",
+            "0 lien avant 1980 (mesuré : min 1989-12-06 au 07/09)",
+            "date_validation < DATE '1980-01-01'"),
+    ]))
+
+# ── Recensement IRIS (réservoir insee_rp_iris, label vanne `iris_rp`) ──
+def _iris_couverture_contours() -> Controle:
+    """Chaque IRIS de la table est adossé à un contour servi (kind iris_insee) — sinon la
+    donnée quartier n'est joignable à aucune parcelle (l'affinage serait muet)."""
+    def m(db, f: Filtre, version: str):
+        n = int(db.execute(text(
+            "SELECT count(*) FROM iris_rp r WHERE NOT EXISTS ("
+            "  SELECT 1 FROM spatial_layers sl WHERE sl.kind = 'iris_insee' "
+            "  AND sl.subtype = r.iris)")).scalar() or 0)
+        d = {"iris_sans_contour": n}
+        return ok("0", d) if n == 0 else ko(str(n), d)
+    return Controle("d_iris_contours", "completude", "bloquant",
+                    "Chaque IRIS adossé à un contour servi",
+                    "0 IRIS sans contour (géographie 2024 des deux côtés — mesuré 0 au 07/09)", m)
+
+
+_ajout(_f(
+    source="iris_rp", libelle="INSEE RP2022 — bases IRIS",
+    table="iris_rp", cle=("iris",), insee_col="insee",
+    source_motif="INSEE RP2022 — bases IRIS%", portee_run=False,
+    propres=[
+        _iris_couverture_contours(),
+        # vacance ∈ [0 ; 100] par construction (LOGVAC ≤ LOG) — une ligne hors plage dit un
+        # amont difforme : bloquant.
+        c.compte_mauvais(
+            "d_iris_vacance_plage", "plage", "bloquant",
+            "Vacance dans [0 ; 100] %",
+            "0 IRIS avec LOGVAC > LOG (mesuré 0 au 07/09)",
+            "logvac IS NOT NULL AND log IS NOT NULL AND logvac > log"),
+        # volet population absent (bases séparées) — l'état réel, visible.
+        c.part_max(
+            "d_iris_sans_pop", "completude", "avertissant",
+            "Part des IRIS sans volet population",
+            "≤ 5 % (mesuré 0 au 07/09 — les deux bases couvrent les mêmes IRIS)",
+            "pop IS NULL", 5.0),
+    ]))

@@ -3677,6 +3677,12 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # dites), site CASIAS/instruction le plus proche (≤ 100 m) — mêmes règles que la
         # cascade sol_pollue. None si couche non ingérée.
         "sols": _sols_block(db, idu),
+        # SOURCES-1 lot 6 — historique cadastral OFFICIEL (filiation DFI) : mères/filles datées.
+        # None si la parcelle n'apparaît dans aucun DFI (absence normale, dite au front).
+        "filiation": _filiation_block(db, idu),
+        # SOURCES-1 lot 6 — le quartier INSEE (IRIS) de la parcelle : vacance, âge du bâti,
+        # taille des ménages, 60+ — maille IRIS DITE (affine la commune). None si non ingéré.
+        "iris_quartier": _iris_quartier_block(db, idu),
         # SOURCES-1 lot 1 — « Dispositifs et périmètres » : ER (part), EBC (part), DPU, zone PEB,
         # SUP par catégorie — intersections live des couches servies, mêmes familles/typepsc que
         # la cascade (source unique cascade_rules.yaml). None si aucune couche ingérée.
@@ -3700,6 +3706,33 @@ JOIN spatial_layers sl
 WHERE p.idu = :idu
 ORDER BY ST_Distance(p.geom_2975, sl.geom_2975)
 """)
+
+
+def _table_presente(db: Session, table: str) -> bool:
+    """SOURCES-1 lot 6 — existence de table SANS exception : un try/except + rollback au
+    milieu d'une requête détruirait les fixtures non committées (tests) et l'état de la
+    transaction — on interroge information_schema, jamais l'erreur."""
+    return bool(db.execute(text(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = :t"),
+        {"t": table}).first())
+
+
+def _filiation_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 6 — passe-plat de la filiation DFI (ingestion/dfi.py). Table absente
+    (source non ingérée) → None, jamais un 500."""
+    if not _table_presente(db, "dfi_filiation"):
+        return None
+    from ..ingestion.dfi import filiation_parcelle
+    return filiation_parcelle(db, idu)
+
+
+def _iris_quartier_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 6 — le quartier INSEE (IRIS) de la parcelle (ingestion/iris_rp.py)."""
+    if not _table_presente(db, "iris_rp"):
+        return None
+    from ..ingestion.iris_rp import iris_de_parcelle, stats_iris
+    code = iris_de_parcelle(db, idu)
+    return stats_iris(db, code) if code else None
 
 
 def _sols_block(db: Session, idu: str) -> dict | None:
