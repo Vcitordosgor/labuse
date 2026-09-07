@@ -118,27 +118,38 @@ et testé ; le câblage React reste à poser).
 
 ---
 
-## Lot 3 — La page Comptes branchée — PARTIEL (backend), front à faire
+## Lot 3 — La page Comptes branchée — LARGEMENT FAIT (reste : refonte visuelle)
 
-**Fait (backend)** : `POST /admin/licences/{id}/mail` passe désormais **par la file** avec les **params
-réels du compte** (constructeur `_params_licence` : PRENOM/EMAIL, LIEN_SOUSCRIPTION, LIEN_PAIEMENT,
-FIN_ESSAI en heure Réunion, JAMAIS_CONNECTE dérivé de `dernier_login_at`, **LIEN_RESET réel** généré via
-`comptes.demander_reset` pour le 14, DATE_HEURE). Trois preuves par geste : entrée `mail_queue` (état
-réel) · ligne `evenements_compte` avec `[vic:…]` · réponse `{envoye, etat, mail_id, message_id}` (jamais
-« envoyé » par optimisme). `licence_mails` (ledger d'onboarding) marqué **seulement** si `recu`.
+**Fait (envoi par la file)** : `POST /admin/licences/{id}/mail` passe **par la file** avec les **params
+réels du compte** (`_params_licence` : PRENOM, LIEN_INVITATION réel pour 4/6, LIEN_SOUSCRIPTION,
+LIEN_PAIEMENT, FIN_ESSAI heure Réunion, JAMAIS_CONNECTE, **LIEN_RESET réel** pour 14, DATE_HEURE). Trois
+preuves par geste : entrée `mail_queue` (état réel) · ligne `evenements_compte` `[vic:…]` · réponse
+`{envoye, etat, mail_id, message_id}` (jamais « envoyé » par optimisme). `licence_mails` marqué seulement
+si `recu`.
 
-**Reste (documenté, non fait)** :
-- **Colonne « À faire » calculée depuis l'état** : la logique existe déjà côté front
-  (`Licences.tsx` `prochaineAction()`), à relier à la file (un programmé annoncé = déjà une entrée
-  `en_attente` visible). Le bug « essai expiré propose encore bienvenue » est à corriger dans ce calcul.
-- **Un seul compteur de licences actives** (12 vs 9) : divergence localisée —
-  `registre/moteurs/plateforme.comptes_actifs` = `COUNT(*) WHERE statut='actif'` (inclut les essais),
-  tandis que le front `Licences.tsx` `pastille()` classe un essai en `essai`, pas `actif`. **À unifier**
-  sur une définition unique lue par rail + Pilotage + page.
-- **Comptes de test masqués** (`[CT-TEST]`, `@labuse.test`) derrière un chip « N masqués », exclus des
-  chiffres : à poser (filtre unique côté back).
-- **403 admin** : déjà vrai (`exiger_admin` → 403 propre pour un compte client, jamais 500 ni la page) —
-  vérifié par la carte d'audit (§Lot 4). Test à deux comptes à ajouter.
+**Fait (compteur unique, 12 vs 9)** : `comptes.licences_actives(conn)` = LE compteur unique (payantes :
+statut 'actif', PAS un essai en cours, PAS interne/test). Lu par **Pilotage** (`admin_pilotage`,
+remplace `comptes_actifs`) ET la **page** (`admin_licences` sert `compteurs.licences_actives`). Le
+compteur métier `comptes_actifs` (registre `n_comptes_actifs`, témoin) est **inchangé**.
+
+**Fait (comptes de test masqués)** : convention `[CT-TEST]` / `@labuse.test` / plan interne
+(`compte_est_test`, prédicat SQL unique). `admin_licences` sert `est_test` par ligne + `compteurs.masques`.
+Le front les **exclut des chiffres et de la liste**, chip « N masqués (test) ».
+
+**Fait (« À faire » depuis l'état)** : `prochaineAction()` corrigé — un compte **suspendu ne propose plus
+« bienvenue »** (bug constaté) : essai expiré → « prolonger/convertir », suspension manuelle → « rétablir ».
+résilié → rien.
+
+**Fait (403 admin)** : déjà vrai (`exiger_admin` → 403 propre, jamais 500 ni la page).
+
+Tests : `test_compte2_comptes.py` (compteur unique + masking + `comptes_actifs` inchangé). Front `tsc`
+vert.
+
+**Reste** :
+- **Refonte visuelle** de la page selon `docs/maquettes/maquette-dashboard-v1.html` : barre de
+  **recherche** + **segments**, et **fiche à onglets** (les onglets Activité/Facturation/IA relèvent du
+  Lot 7). L'écran actuel (liste + fiche continue AD4) reste fonctionnel entre-temps.
+- **Test 403 à deux comptes** à graver.
 - Webhook Stripe `past_due` → template 9 : **pas de webhook** en prod (Stripe lu en lecture seule) — à
   créer (Lot 3/8).
 

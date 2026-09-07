@@ -1311,6 +1311,7 @@ export const postAdminDegeler = (sujet: string) =>
 export interface AdminLicence {
   id: number; nom: string; email: string | null; plan: string; statut: string; created_at: string | null
   essai_expire_at: string | null
+  est_test?: boolean   // COMPTE-2 (Lot 3) — compte de test/interne : masqué des chiffres client
   stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
   mails: Record<string, { statut: string; sent_at: string | null }>
   rappels: string[]
@@ -1324,6 +1325,8 @@ export interface AdminLicences {
   brevo: { api: boolean; templates: Record<string, boolean> }
   // ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
   mail_libelles: Record<string, string>
+  // COMPTE-2 (Lot 3) — compteurs SERVIS par le backend (source unique) : licences actives + masqués.
+  compteurs?: { licences_actives: number; masques: number; visibles: number }
   partage_seuil: number
 }
 // ADMIN-1 (AD4) — aperçu du mail réel (template Brevo rendu avec les variables du compte) avant Envoyer.

@@ -263,7 +263,11 @@ def admin_pilotage(request: Request) -> dict:
     # (ids registre n_comptes_actifs, ia_cout_eur) : ce robinet ne calcule plus, il appelle.
     from ..registre.moteurs.plateforme import comptes_actifs, conso_ia_mois
     with engine().begin() as c:
-        licences_actives = comptes_actifs(c)
+        # COMPTE-2 (Lot 3) — compteur UNIQUE de licences actives (payantes), la MÊME source que la page
+        # Comptes et le rail (fin du 12 vs 9 : comptes_actifs comptait aussi essais/interne/test).
+        from ..comptes import licences_actives as _licences_actives
+        licences_actives = _licences_actives(c)
+        _ = comptes_actifs  # (métier « comptes au statut actif » — conservé pour le registre)
         # actifs 24 h = un login OU un capteur d'usage dans les dernières 24 h (par compte)
         actifs_24h = c.execute(text(
             "SELECT COUNT(*) FROM ("
@@ -503,12 +507,15 @@ def admin_licences(request: Request) -> dict:
     from ..db import session_scope
     with session_scope() as _s:
         partage = {p["compte_id"]: p for p in sessions_actives_par_compte(_s)}
+    from ..comptes import compte_est_test, licences_actives as _licences_actives
     out = []
     for k in comptes:
         mails = mails_par_compte.get(k["id"], {})
         pg = partage.get(k["id"])
         out.append({
             "id": k["id"], "nom": k["nom"], "email": k["email"], "plan": k["plan"],
+            # COMPTE-2 (Lot 3) — comptes de test/interne : le front les masque derrière « N masqués ».
+            "est_test": compte_est_test(k["nom"], k["email"]) or k["plan"] == "interne",
             "statut": k["statut"], "created_at": k["created_at"].isoformat() if k["created_at"] else None,
             "essai_expire_at": k["essai_expire_at"].isoformat() if k["essai_expire_at"] else None,
             "stripe": abos_par_cust.get(k["stripe_customer_id"]),
@@ -526,10 +533,17 @@ def admin_licences(request: Request) -> dict:
             },
         })
     from ..brevo import LIBELLES as _MAIL_LIBELLES
+    with engine().begin() as c:
+        actives = _licences_actives(c)            # compteur UNIQUE (même source que le rail/Pilotage)
+    n_masques = sum(1 for l in out if l["est_test"])
     return {"licences": out, "stripe_configure": bool(stripe.get("configure")),
             "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration(),
             # ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
             "mail_libelles": dict(_MAIL_LIBELLES),
+            # COMPTE-2 (Lot 3) — compteurs SERVIS (le front n'en recompte plus) : licences actives =
+            # source unique ; masques = comptes de test/interne cachés des chiffres.
+            "compteurs": {"licences_actives": actives, "masques": n_masques,
+                          "visibles": sum(1 for l in out if not l["est_test"])},
             "partage_seuil": int(config.get_settings().sessions_signal_seuil)}
 
 

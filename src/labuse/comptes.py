@@ -149,6 +149,36 @@ def _norm_email(email: str) -> str:
     return email.strip().lower()
 
 
+# ── COMPTE-2 (Lot 3) — comptes de TEST & compteur UNIQUE de licences actives ──
+#: convention de recette (mandat) : nom préfixé « [CT-TEST] » et/ou e-mail « @labuse.test ».
+PREFIXE_TEST = "[CT-TEST]"
+DOMAINE_TEST = "@labuse.test"
+
+#: prédicat SQL « compte de test/interne à MASQUER des chiffres client » — source UNIQUE, réutilisée
+#: par le compteur, la liste et le Pilotage (alias de table `c` pour comptes).
+_MASQUE_SQL = (
+    "(c.plan = 'interne'"
+    f" OR c.nom ILIKE '{PREFIXE_TEST}%'"
+    f" OR EXISTS (SELECT 1 FROM utilisateurs u WHERE u.compte_id = c.id"
+    f"            AND lower(u.email) LIKE '%{DOMAINE_TEST}'))")
+
+
+def compte_est_test(nom: str | None, email: str | None) -> bool:
+    """Un compte de recette / interne (masqué des chiffres client)."""
+    return ((nom or "").startswith(PREFIXE_TEST)
+            or (email or "").strip().lower().endswith(DOMAINE_TEST))
+
+
+def licences_actives(conn) -> int:
+    """COMPTE-2 (Lot 3) — LE compteur unique de « licences actives » (payantes), lu par le rail, le
+    Pilotage et la page Comptes (fin du 12 vs 9). Une licence active = compte au statut 'actif', qui
+    n'est PAS un essai en cours (essai_expire_at NULL), ni un compte interne/de test. Un seul endroit.
+    Accepte une Session OU une Connection (les tables existent déjà à ces points d'appel)."""
+    return int(conn.execute(text(
+        "SELECT COUNT(*) FROM comptes c WHERE c.statut = 'actif'"
+        " AND c.essai_expire_at IS NULL AND NOT " + _MASQUE_SQL)).scalar() or 0)
+
+
 def _sha(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 

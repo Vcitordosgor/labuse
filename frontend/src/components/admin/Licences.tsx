@@ -44,6 +44,18 @@ interface Action { court: string; titre: string; sous: string; mk?: string }
 function prochaineAction(l: AdminLicence): Action | null {
   const sent = (k: string) => l.mails[k]?.statut === 'envoye'
   const rappel = (needle: string) => l.rappels.some((r) => r.includes(needle))
+  // COMPTE-2 (Lot 3) — un compte SUSPENDU ne propose jamais « mail de bienvenue » (bug constaté) :
+  // un essai expiré (suspendu + échéance passée) → prolonger/convertir ; suspension manuelle → rétablir.
+  if (l.statut === 'suspendu') {
+    const h = essaiHeuresRestantes(l)
+    if (l.essai_expire_at && h != null && h <= 0) {
+      return { court: 'essai expiré', titre: "Prolonger l'essai ou convertir en abonnement",
+               sous: "l'essai est arrivé à échéance — proposez l'abonnement", mk: 'souscription' }
+    }
+    return { court: 'à rétablir', titre: "Rétablir l'accès",
+             sous: "compte suspendu — l'accès est rendu au rétablissement" }
+  }
+  if (l.statut === 'resilie') return null
   if (l.statut === 'invite' && !sent('souscription') && !sent('onboarding1')) {
     return { court: 'invitation à envoyer', titre: "Envoyer l'invitation / le lien de souscription",
              sous: "le compte est créé mais l'accès n'a pas encore été transmis au client", mk: 'souscription' }
@@ -273,25 +285,31 @@ export function LicencesSection() {
   if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
   const prixIntegral = offres.data?.integral.eur_mois
   const libelles = d.mail_libelles ?? {}
-  const par = (p: Pastille) => d.licences.filter((l) => pastille(l) === p)
+  // COMPTE-2 (Lot 3) — les comptes de test/interne sont MASQUÉS des chiffres et de la liste (chip « N
+  // masqués »), et le compteur de licences actives vient du BACKEND (source unique, fin du 12 vs 9).
+  const masques = d.compteurs?.masques ?? d.licences.filter((l) => l.est_test).length
+  const clientes = d.licences.filter((l) => !l.est_test)
+  const actives = d.compteurs?.licences_actives ?? clientes.filter((l) => pastille(l) === 'actif').length
+  const par = (p: Pastille) => clientes.filter((l) => pastille(l) === p)
   const compteurs = { actif: par('actif').length, essai: par('essai').length, invite: par('invite').length, susp: par('susp').length }
-  const mrr = d.licences.filter((l) => l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing')
+  const mrr = clientes.filter((l) => l.stripe?.statut === 'active' || l.stripe?.statut === 'trialing')
     .reduce((s, l) => s + (l.stripe?.montant_eur_mois ?? 0), 0)
-  const visibles = filtre === 'tous' ? d.licences : d.licences.filter((l) => pastille(l) === filtre)
-  const selectionne = d.licences.find((l) => l.id === sel) ?? visibles[0] ?? d.licences[0]
+  const visibles = filtre === 'tous' ? clientes : clientes.filter((l) => pastille(l) === filtre)
+  const selectionne = clientes.find((l) => l.id === sel) ?? visibles[0] ?? clientes[0]
   const orphelins = d.rapprochement && !d.rapprochement.indisponible
     ? [...d.rapprochement.comptes_sans_abo.map((o) => `Compte app « ${o.nom} » sans abonnement Stripe actif`),
        ...d.rapprochement.abos_sans_compte.map((o) => `Abonnement Stripe ${o.email ?? o.customer_id} sans compte app lié`)]
     : []
   const CHIPS: [Filtre, string, number][] = [
-    ['tous', 'Tous', d.licences.length], ['actif', 'Actifs', compteurs.actif], ['essai', 'Essai', compteurs.essai],
+    ['tous', 'Tous', clientes.length], ['actif', 'Actifs', compteurs.actif], ['essai', 'Essai', compteurs.essai],
     ['invite', 'Invités', compteurs.invite], ['susp', 'Suspendus', compteurs.susp],
   ]
   return (
     <>
       <div className="mb-3 font-display text-[15px] text-txt-hi">
-        {d.licences.length} compte{d.licences.length > 1 ? 's' : ''} · {compteurs.actif} licence{compteurs.actif > 1 ? 's' : ''} active{compteurs.actif > 1 ? 's' : ''}
+        {clientes.length} compte{clientes.length > 1 ? 's' : ''} · {actives} licence{actives > 1 ? 's' : ''} active{actives > 1 ? 's' : ''}
         {mrr > 0 && <> · {mrr.toLocaleString('fr-FR')} € / mois</>}
+        {masques > 0 && <span className="ml-2 text-[11px] text-txt-dim">· {masques} masqué{masques > 1 ? 's' : ''} (test)</span>}
       </div>
       {!d.brevo.api && (
         <div className="mb-3.5 rounded-lg border border-amber/30 bg-amber/5 px-4 py-2.5 text-xs text-amber">
