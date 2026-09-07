@@ -1,13 +1,15 @@
 /**
- * Outil « Successions » — OUTILS-MUSCLER-1 Lot A. Sert le tag radar patrimonial
- * `parcel_veille_succession` (Score V v1.3) : personne morale à SIREN confirmé dont le dirigeant
- * le plus âgé a ≥ 70 ans, ou SCI dormante (≥ 20 ans, sans mise à jour RNE depuis ≥ 5 ans).
+ * Outil « Successions à venir » — OUTILS-MUSCLER-1 Lot A (renommé 1B pt 1). Sert le tag radar
+ * patrimonial `parcel_veille_succession` (Score V v1.3) : personne morale à SIREN confirmé dont le
+ * dirigeant le plus âgé a ≥ 70 ans, ou SCI dormante (≥ 20 ans, sans mise à jour RNE depuis ≥ 5 ans).
  * DOCTRINE (A0-successions-donnee.md) : une succession PROBABLE (horizon 3-7 ans) — l'écran ne dit
  * JAMAIS « en succession » (aucun acte, aucun décès constaté). Pas de date par parcelle : le signal
  * est daté du calcul (bandeau + tiroir). Aucun badge de score (l'analyse n'a pas été demandée),
  * aucun export, aucun calcul métier au front (/modules/successions sert tout).
  * Patrons SOCLE : sélecteur CommuneScope (choix explicite), cartes empilées (Solaire piscines),
- * sélection + ponts Courrier/Comparer, « Assembler → » (Lot B), pagination 200, tiroir méthode.
+ * pagination 200, tiroir méthode. La sélection sert le pont Courrier (déplacé en pied, 1B pt 6).
+ * OUTILS-MUSCLER-1B : ponts « Assembler → » (pt 2) et « Comparer » (pt 3) retirés de cet écran ;
+ * mentions du tri (pt 4) et du filtre (pt 5) masquées, tri et filtre inchangés.
  */
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -44,12 +46,9 @@ function Motif({ it }: { it: SuccessionItem }) {
 export function Successions() {
   const select = useApp((s) => s.select)
   const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
-  const setParcelPrefill = useApp((s) => s.setParcelPrefill)
   const setModule = useApp((s) => s.setModule)
-  const addToCompare = useApp((s) => s.addToCompare)
-  const openCompare = useApp((s) => s.openCompare)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)
-  const RETOUR_SUCCESSIONS = { module: 'successions', label: 'Successions' } as const
+  const RETOUR_SUCCESSIONS = { module: 'successions', label: 'Successions à venir' } as const
 
   const [commune, setCommune] = useState<string | null>(null)   // Toute l'île par défaut
   const [sdpMin, setSdpMin] = useState(0)
@@ -79,7 +78,7 @@ export function Successions() {
       </div>
 
       {/* entrée : périmètre EXPLICITE (Toute l'île par défaut) + filtre résiduel minimum */}
-      <CommuneScope commune={commune} onChange={(c) => { setCommune(c); setSel(new Set()) }} />
+      <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); setSel(new Set()) }} />
       <label className="flex items-center gap-2 text-[11px] text-txt-mut">
         Résiduel minimum
         <select data-successions-sdp-min value={sdpMin}
@@ -109,27 +108,13 @@ export function Successions() {
             {commune ? ` — ${commune}` : ' — toute l’île'}
           </div>
 
-          {/* gestes sur la sélection : ponts Courrier (fil de retour) + Comparer (cap 3 côté Comparer) */}
-          <div className="flex flex-wrap items-center gap-2">
-            <button data-successions-courrier disabled={sel.size === 0}
-              onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour(RETOUR_SUCCESSIONS) }}
-              className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
-              ✉ Préparer les courriers ({sel.size}) →
-            </button>
-            <button data-successions-comparer disabled={sel.size === 0}
-              onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour(RETOUR_SUCCESSIONS) }}
-              className="rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
-              Comparer ({Math.min(sel.size, 3)}) →
-            </button>
-            {sel.size > 3 && <span className="text-[10px] text-txt-dim">Comparer se limite à 3 parcelles.</span>}
-          </div>
-
-          {/* cartes empilées (patron Solaire piscines), tri serveur = résiduel SDP décroissant */}
+          {/* case « tout sélectionner » — la sélection sert le pont Courrier déplacé en pied (1B pt 6).
+              Le tri serveur reste résiduel SDP décroissant ; seule l'étiquette du tri est retirée (1B pt 4). */}
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">
             <input type="checkbox" aria-label="Tout sélectionner" className="h-3 w-3 accent-mint"
               checked={items.length > 0 && items.every((i) => sel.has(i.idu))}
               onChange={(e) => setSel(e.target.checked ? new Set(items.map((i) => i.idu)) : new Set())} />
-            <span>Triées par résiduel SDP décroissant</span>
+            <span>Tout sélectionner</span>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {items.map((it) => (
@@ -160,10 +145,6 @@ export function Successions() {
                       : <span className="italic text-txt-dim">particulier — non nommé</span>}
                   </span>
                   <Motif it={it} />
-                  {/* pont Lot B : la parcelle devient le départ de l'Assemblage (voisines proposées) */}
-                  <button data-successions-assembler onClick={(e) => { e.stopPropagation(); setParcelPrefill(it.idu); setModule('assemblage'); pushOutilRetour(RETOUR_SUCCESSIONS) }}
-                    title="Ouvrir l'Assemblage avec cette parcelle en départ — ses voisines contiguës sont proposées"
-                    className="shrink-0 text-[10px] font-medium text-mint hover:underline">Assembler →</button>
                 </div>
               </div>
             ))}
@@ -174,8 +155,10 @@ export function Successions() {
         </>
       )}
 
-      {/* tiroir « Détail et méthode » — rédigé d'après A0 : ce que dit le signal, ce qu'il ne dit pas */}
-      <details data-successions-methode className="shrink-0 text-xs">
+      {/* pied de panneau : tiroir « Détail et méthode » (gauche) et pont Courrier (droite, même ligne —
+          1B pt 6). `items-start` maintient le bouton sur la ligne du résumé quand le tiroir s'ouvre. */}
+      <div className="flex shrink-0 items-start justify-between gap-2">
+      <details data-successions-methode className="min-w-0 flex-1 text-xs">
         <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
         <div className="flex flex-col gap-1 text-[10.5px] leading-snug text-txt-dim">
           <p><b className="text-txt-mut">Le signal.</b> Le propriétaire est une personne morale à SIREN confirmé (jamais un
@@ -190,6 +173,12 @@ export function Successions() {
           {meta?.source && <p className="text-[9.5px]">{meta.source}</p>}
         </div>
       </details>
+        <button data-successions-courrier disabled={sel.size === 0}
+          onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour(RETOUR_SUCCESSIONS) }}
+          className="mt-1.5 shrink-0 rounded-lg border border-mint/50 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-40">
+          ✉ Préparer les courriers ({sel.size}) →
+        </button>
+      </div>
     </div>
   )
 }
