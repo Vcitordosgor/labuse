@@ -162,7 +162,9 @@ def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
     monkeypatch.delenv("BREVO_API_KEY", raising=False)   # REVUE · R7 — repli sans préfixe aussi retiré
     from labuse import config
     config.get_settings.cache_clear()
-    r = client.post(f"/admin/licences/{compte_test}/mail", json={"key": "onboarding1"}).json()
+    # COMPTE-2 : « retablissement » n'attend que PRENOM (toujours dérivable) → on teste bien le chemin
+    # « Brevo non configuré », pas la garde fail-closed des params (cf. test dédié mailfile).
+    r = client.post(f"/admin/licences/{compte_test}/mail", json={"key": "retablissement"}).json()
     assert r["ok"] is True and r["envoye"] is False and "BREVO_API_KEY" in r["raison"]
     # clé de template inconnue → 422 (contrat)
     assert client.post(f"/admin/licences/{compte_test}/mail", json={"key": "zzz"}).status_code == 422
@@ -464,10 +466,17 @@ def test_licences_mail_libelles_renommes(client):
     assert lib["onboarding3"] == "Dernier rappel J+10"
 
 
-def test_mail_apercu_honnete_si_non_configure(client, engine):
-    """ADMIN-1 (AD4) — l'aperçu d'un mail ne lève JAMAIS : Brevo non configuré (cas des tests) →
-    {configure:false, raison, libelle nommé}. Template inconnu → 422."""
-    from labuse import comptes
+def test_mail_apercu_honnete_si_non_configure(client, engine, monkeypatch):
+    """ADMIN-1 (AD4) — l'aperçu d'un mail ne lève JAMAIS : Brevo non configuré →
+    {configure:false, raison, libelle nommé}. Template inconnu → 422.
+
+    COMPTE-2 : l'aperçu lit désormais /v3/smtp/templates/{id} (l'ancienne route 404 masquait ce test).
+    On RETIRE la clé pour tester réellement le mode « non configuré » (sinon l'aperçu rendrait le vrai
+    template avec la clé du .env)."""
+    monkeypatch.delenv("LABUSE_BREVO_API_KEY", raising=False)
+    monkeypatch.delenv("BREVO_API_KEY", raising=False)
+    from labuse import comptes, config
+    config.get_settings.cache_clear()
     from labuse.db import session_scope
     with session_scope() as s:
         try:

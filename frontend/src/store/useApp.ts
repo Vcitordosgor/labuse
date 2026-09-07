@@ -346,6 +346,9 @@ interface AppState {
   setFicheTiroir: (idu: string, tiroir: string | null) => void
   layers: LayerToggles
   toggleLayer: (k: keyof LayerToggles) => void
+  // COMPTE-2 (Lot 6) — hydrate le fond + les couches depuis les préférences EN BASE du compte (à
+  // l'ouverture, y compris sur un autre poste). N'écrit que des valeurs connues (jamais de clé pirate).
+  appliquerPrefsCarte: (p: { basemap?: string | null; couches?: Record<string, boolean> | null }) => void
   // M137-V — filtre par domaine de la couche « Équipements (INSEE BPE) » : codes A..G visibles.
   // Défaut = tous. Sans lui, à l'échelle île les ~16 k services (A) noient les autres domaines.
   bpeDomains: string[]
@@ -709,6 +712,22 @@ export const useApp = create<AppState>((set) => ({
     const next = { ...s.layers, [k]: !s.layers[k] }
     if (k === 'zonage_parcelle' && next.zonage_parcelle) next.parcelles = true
     return { layers: next }
+  }),
+  // COMPTE-2 (Lot 6) — applique les préférences EN BASE : fond validé (liste blanche) + couches connues
+  // uniquement (on ignore toute clé inconnue et toute valeur non booléenne).
+  appliquerPrefsCarte: (p) => set((s) => {
+    const out: Partial<{ basemap: Basemap; layers: LayerToggles }> = {}
+    if (p.basemap && (['dark', 'clair', 'plan', 'ortho'] as string[]).includes(p.basemap)) {
+      out.basemap = p.basemap as Basemap
+    }
+    if (p.couches) {
+      const next = { ...s.layers }
+      for (const k of Object.keys(s.layers) as (keyof LayerToggles)[]) {
+        if (typeof p.couches[k as string] === 'boolean') next[k] = p.couches[k as string]
+      }
+      out.layers = next
+    }
+    return out
   }),
   // M137-V — un domaine BPE ne peut jamais tomber à zéro visible : décocher le dernier les rallume tous.
   bpeDomains: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],

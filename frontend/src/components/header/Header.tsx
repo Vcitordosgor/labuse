@@ -744,6 +744,10 @@ function SignalerButton() {
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   const setToast = useApp((s) => s.setToast)
+  // COMPTE-2 (Lot 7) — contexte capturé au clic : outil courant + IDU si on est sur une fiche.
+  const view = useApp((s) => s.view)
+  const moduleCourant = useApp((s) => s.module)
+  const selectedIdu = useApp((s) => s.selectedIdu)
   // Échap ferme le panneau (cohérence app — G6) ; le brouillon reste (fermeture ≠ abandon).
   useEffect(() => {
     if (!open) return
@@ -755,7 +759,17 @@ function SignalerButton() {
     if (msg.trim().length < 3 || busy) return
     setBusy(true)
     try {
-      await postRetour({ type, message: msg.trim() })
+      // contexte : outil (module ouvert sinon vue), page (vue), IDU si fiche ouverte, navigateur, écran.
+      const ecran = typeof window !== 'undefined' ? `${window.innerWidth}×${window.innerHeight}` : undefined
+      await postRetour({
+        type, message: msg.trim(),
+        idu: selectedIdu ?? undefined,
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        page: view,
+        outil: moduleCourant ?? view,
+        navigateur: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+        ecran,
+      })
       setToast('Merci — votre retour est transmis.')
       setOpen(false)
       setMsg('')

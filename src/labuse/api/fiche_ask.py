@@ -289,6 +289,20 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
                 "sources": ["config/calibrage/defisc_2026.yaml (dispositifs couverts)"],
                 "non_couvert": True}
 
+    # 3bis. PLAFOND IA EN EUROS (COMPTE-2 Lot 5) — la barre de fiche coûte de l'IA et doit RESPECTER
+    # le budget 2 €/jour/compte comme /ask et les missions (sinon un compte au plafond continuerait à
+    # dépenser ici). Point unique `dashboard.depassement_budget_eur` (jour Réunion, éditable au
+    # dashboard, relu à chaque question). dev_mode / pilote (compte None) : pas de blocage euros ici,
+    # la garde par fiche (20/jour) reste. Aucun appel modèle si dépassé → aucune dépense de plus.
+    from .. import config as _config
+    if not _config.get_settings().dev_mode:
+        from .dashboard import depassement_budget_eur
+        from .tenant import current_compte
+        d = depassement_budget_eur(current_compte(request))
+        if d:
+            return {"budget_atteint": True, "texte": d["detail"], "sources": [],
+                    "budget_eur": d.get("budget_eur"), "depense_eur": d.get("depense_eur")}
+
     # 3. CONTEXTE AUTORISÉ (liste blanche) — rien hors catalogue n'est envoyé au modèle
     facts, deeplinks = _ask_context(db, idu)
     ctx = core.build_context(facts, allowed_fields=_allowed_fields(facts))

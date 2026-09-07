@@ -55,6 +55,11 @@ def ensure_tables(engine) -> None:
         # pour un lien cliquable vers la fiche dans Produit (le bandeau global reste sans contexte).
         c.execute(text("ALTER TABLE retours ADD COLUMN IF NOT EXISTS idu varchar(14)"))
         c.execute(text("ALTER TABLE retours ADD COLUMN IF NOT EXISTS section varchar(64)"))
+        # COMPTE-2 (Lot 7) — CONTEXTE du « Signaler » global : page/URL/outil/navigateur/écran (l'horodatage
+        # = ts). Débogue sans aller-retour : Vic voit où le client était quand il a signalé.
+        for col, typ in (("url", "text"), ("page", "varchar(64)"), ("outil", "varchar(48)"),
+                         ("navigateur", "varchar(200)"), ("ecran", "varchar(24)")):
+            c.execute(text(f"ALTER TABLE retours ADD COLUMN IF NOT EXISTS {col} {typ}"))
         # ia_budget (D1) — attribution du coût IA au compte : colonne sur le ledger EXISTANT ia_log
         # (créé par ai.core._log_cost) ; ALTER d'abord au cas où la table précède cette colonne.
         c.execute(text(
@@ -76,6 +81,9 @@ def ensure_tables(engine) -> None:
     # FLUX-1 (F2.3) — le journal des bascules de run (qui, quand, de quel run vers lequel).
     from ..bascule_flux import ensure_tables as _bascule_ens
     _bascule_ens(engine)
+    # COMPTE-2 (Lot 2) — la file d'attente des mails (mail_queue).
+    from ..mailfile import ensure_tables as _mailfile_ens
+    _mailfile_ens(engine)
 
 
 # ───────────────────────── capteurs côté CLIENT ─────────────────────────
@@ -101,36 +109,63 @@ def usage_event(body: UsageIn, request: Request) -> dict:
 
 class RetourIn(BaseModel):
     # RETOURS-11F M11 — quatre types (Bug / Idée / Question / Donnée). « donnee » vient de la fiche et
-    # porte alors l'IDU + la section ; les trois autres viennent du bandeau global (sans contexte).
+    # porte alors l'IDU + la section ; les trois autres viennent du bandeau global.
     type: str = Field(pattern="^(bug|idee|question|donnee)$")
     message: str = Field(min_length=3, max_length=2000)
     idu: str | None = None
     section: str | None = None
+    # COMPTE-2 (Lot 7) — CONTEXTE capturé par le « Signaler » global (page/URL/outil/navigateur/écran).
+    url: str | None = None
+    page: str | None = None
+    outil: str | None = None
+    navigateur: str | None = None
+    ecran: str | None = None
 
 
 @router.post("/retours")
 def creer_retour(body: RetourIn, request: Request) -> dict:
-    """Bouton « Signaler » (app cliente) : bug/idée/question/donnée + message. Un retour « donnée »
-    venu de la fiche porte l'IDU et la section d'origine (lien cliquable vers la fiche dans Produit)."""
+    """Bouton « Signaler » global (app cliente) : bug/idée/question/donnée + message + CONTEXTE
+    (page/URL/outil/IDU/navigateur/écran, horodatage = ts). Arrive dans Produit, compte au Pilotage,
+    notifie Vic (cloche + mail à contactlabuse@gmail.com). Le retour n'est JAMAIS perdu si la notif rate."""
     from ..db import engine
     cid = getattr(request.state, "compte_id", None)
     idu = (body.idu or "").strip()[:14] or None
     section = (body.section or "").strip()[:64] or None
+    ctx = {"url": (body.url or "").strip()[:2000] or None, "page": (body.page or "").strip()[:64] or None,
+           "outil": (body.outil or "").strip()[:48] or None,
+           "navigateur": (body.navigateur or "").strip()[:200] or None,
+           "ecran": (body.ecran or "").strip()[:24] or None}
     with engine().begin() as c:
         rid = c.execute(text(
-            "INSERT INTO retours (compte_id, type, message, idu, section) "
-            "VALUES (:c, :t, :m, :idu, :sec) RETURNING id"),
-            {"c": cid, "t": body.type, "m": body.message.strip(), "idu": idu, "sec": section}).scalar_one()
+            "INSERT INTO retours (compte_id, type, message, idu, section, url, page, outil, navigateur, ecran)"
+            " VALUES (:c, :t, :m, :idu, :sec, :url, :page, :outil, :nav, :ecran) RETURNING id"),
+            {"c": cid, "t": body.type, "m": body.message.strip(), "idu": idu, "sec": section,
+             "url": ctx["url"], "page": ctx["page"], "outil": ctx["outil"], "nav": ctx["navigateur"],
+             "ecran": ctx["ecran"]}).scalar_one()
     # cloche admin best-effort (patron courrier_demande) — l'échec de la notif ne perd jamais le retour
+    ctx_ligne = " · ".join(x for x in (ctx["outil"], ctx["page"], (f"parcelle {idu}" if idu else None)) if x)
     try:
         from ..db import session_scope
         from .events import creer_notification
         with session_scope() as s:
             creer_notification(s, kind="systeme", compte_id=None, source="Retour",
                                titre=f"Nouveau retour client ({body.type})",
-                               detail=body.message[:280], lien=(f"#idu={idu}" if idu else "/admin"),
+                               detail=(body.message[:240] + (f" — {ctx_ligne}" if ctx_ligne else "")),
+                               lien=(f"#idu={idu}" if idu else "/admin"),
                                dedup=f"retour:{rid}", permanent=True)
     except Exception:  # noqa: BLE001
+        pass
+    # COMPTE-2 (Lot 7) — mail à Vic (contactlabuse@gmail.com) : notification interne (transport SMTP,
+    # jamais un template client). Best-effort : sans SMTP configuré, journalisé (rien de prétendu).
+    try:
+        from ..mail import send_email_async
+        corps = (f"Nouveau retour client ({body.type}).\n\n{body.message.strip()}\n\n"
+                 f"Contexte : {ctx_ligne or '—'}\nURL : {ctx['url'] or '—'}\n"
+                 f"Navigateur : {ctx['navigateur'] or '—'} · Écran : {ctx['ecran'] or '—'}\n\n"
+                 f"→ Produit : {get_settings().public_base_url or ''}/socle/#admin")
+        send_email_async("contactlabuse@gmail.com", f"[LABUSE] retour client ({body.type})", corps,
+                         contexte="Retour")
+    except Exception:  # noqa: BLE001 — la trace mail est secondaire ; le retour est déjà enregistré
         pass
     return {"ok": True, "id": rid}
 
@@ -260,7 +295,11 @@ def admin_pilotage(request: Request) -> dict:
     # (ids registre n_comptes_actifs, ia_cout_eur) : ce robinet ne calcule plus, il appelle.
     from ..registre.moteurs.plateforme import comptes_actifs, conso_ia_mois
     with engine().begin() as c:
-        licences_actives = comptes_actifs(c)
+        # COMPTE-2 (Lot 3) — compteur UNIQUE de licences actives (payantes), la MÊME source que la page
+        # Comptes et le rail (fin du 12 vs 9 : comptes_actifs comptait aussi essais/interne/test).
+        from ..comptes import licences_actives as _licences_actives
+        licences_actives = _licences_actives(c)
+        _ = comptes_actifs  # (métier « comptes au statut actif » — conservé pour le registre)
         # actifs 24 h = un login OU un capteur d'usage dans les dernières 24 h (par compte)
         actifs_24h = c.execute(text(
             "SELECT COUNT(*) FROM ("
@@ -474,7 +513,7 @@ def admin_licences(request: Request) -> dict:
     with engine().begin() as c:
         comptes = [dict(r) for r in c.execute(text(
             "SELECT k.id, k.nom, k.plan, k.statut, k.sieges, k.created_at, k.updated_at,"
-            "       k.stripe_customer_id, k.copilote_quota_jour, k.essai_expire_at,"
+            "       k.stripe_customer_id, k.copilote_quota_jour, k.copilote_budget_eur, k.essai_expire_at,"
             "       (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
             "         ORDER BY u.id LIMIT 1) AS email,"
             "       (SELECT MAX(u.dernier_login_at) FROM utilisateurs u WHERE u.compte_id = k.id)"
@@ -489,6 +528,14 @@ def admin_licences(request: Request) -> dict:
         nl_rows = c.execute(text(
             "SELECT sujet, n FROM usage_compteurs WHERE jour = CURRENT_DATE AND kind = 'nl'"
         )).mappings().all()
+        # COMPTE-2 (Lot 3) — dépense IA du JOUR (Réunion) par compte, en EUROS (le plafond est en €,
+        # pas en appels) : une seule requête groupée (pas de N+1). Sert à corriger le « 0 / 80 ».
+        ia_rows = c.execute(text(
+            "SELECT compte_id, COALESCE(SUM(cout_eur), 0) AS eur FROM ia_log"
+            " WHERE compte_id IS NOT NULL AND (ts AT TIME ZONE 'Indian/Reunion')::date"
+            "       = (now() AT TIME ZONE 'Indian/Reunion')::date GROUP BY compte_id")).mappings().all()
+    ia_jour = {r["compte_id"]: float(r["eur"]) for r in ia_rows}
+    _budget_defaut = float(config.get_settings().copilote_budget_eur_defaut)
     mails_par_compte: dict[int, dict] = {}
     for m in mails_rows:
         mails_par_compte.setdefault(m["compte_id"], {})[m["mail_key"]] = {
@@ -500,12 +547,15 @@ def admin_licences(request: Request) -> dict:
     from ..db import session_scope
     with session_scope() as _s:
         partage = {p["compte_id"]: p for p in sessions_actives_par_compte(_s)}
+    from ..comptes import compte_est_test, licences_actives as _licences_actives
     out = []
     for k in comptes:
         mails = mails_par_compte.get(k["id"], {})
         pg = partage.get(k["id"])
         out.append({
             "id": k["id"], "nom": k["nom"], "email": k["email"], "plan": k["plan"],
+            # COMPTE-2 (Lot 3) — comptes de test/interne : le front les masque derrière « N masqués ».
+            "est_test": compte_est_test(k["nom"], k["email"]) or k["plan"] == "interne",
             "statut": k["statut"], "created_at": k["created_at"].isoformat() if k["created_at"] else None,
             "essai_expire_at": k["essai_expire_at"].isoformat() if k["essai_expire_at"] else None,
             "stripe": abos_par_cust.get(k["stripe_customer_id"]),
@@ -520,13 +570,25 @@ def admin_licences(request: Request) -> dict:
                 "derniere_connexion": k["derniere_connexion"].isoformat() if k["derniere_connexion"] else None,
                 "copilote_jour": nl.get(f"c:{k['id']}", 0),
                 "copilote_quota": k["copilote_quota_jour"] or defaut_quota,
+                # COMPTE-2 (Lot 3) — le plafond IA est en EUROS : on sert la dépense € du jour et le
+                # budget € (le front affiche « 0,42 € / 2,00 € », plus le trompeur « 0 / 80 »).
+                "ia_depense_eur": round(ia_jour.get(k["id"], 0.0), 4),
+                "ia_budget_eur": round(float(k["copilote_budget_eur"]) if k["copilote_budget_eur"] is not None
+                                       else _budget_defaut, 2),
             },
         })
     from ..brevo import LIBELLES as _MAIL_LIBELLES
+    with engine().begin() as c:
+        actives = _licences_actives(c)            # compteur UNIQUE (même source que le rail/Pilotage)
+    n_masques = sum(1 for l in out if l["est_test"])
     return {"licences": out, "stripe_configure": bool(stripe.get("configure")),
             "rapprochement": stripe.get("rapprochement"), "brevo": etat_configuration(),
             # ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
             "mail_libelles": dict(_MAIL_LIBELLES),
+            # COMPTE-2 (Lot 3) — compteurs SERVIS (le front n'en recompte plus) : licences actives =
+            # source unique ; masques = comptes de test/interne cachés des chiffres.
+            "compteurs": {"licences_actives": actives, "masques": n_masques,
+                          "visibles": sum(1 for l in out if not l["est_test"])},
             "partage_seuil": int(config.get_settings().sessions_signal_seuil)}
 
 
@@ -660,60 +722,183 @@ def admin_licence_retablir(compte_id: int, request: Request) -> dict:
     return {"ok": True, "statut": "actif"}
 
 
+@router.post("/admin/licences/{compte_id}/deconnecter")
+def admin_licence_deconnecter(compte_id: int, request: Request) -> dict:
+    """COMPTE-2 (Lot 4) — déconnexion à distance : ferme toutes les sessions du compte (poste partagé,
+    départ d'un client) SANS le suspendre. Trois preuves : sessions supprimées (n), audit
+    `compte_deconnecte_distance`, chip « déconnecté » côté écran."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..comptes import deconnecter_compte
+    from ..db import session_scope
+    with session_scope() as s:
+        n = deconnecter_compte(s, compte_id, motif=f"dashboard:{getattr(request.state, 'admin_email', 'admin')}")
+    return {"ok": True, "sessions_fermees": n}
+
+
 class MailIn(BaseModel):
     key: str = Field(min_length=2, max_length=24)
+    # COMPTE-2 (Lot 3) — surcharges de params fournies par le geste (motif de résiliation, réponse à
+    # un signalement, ancienne/nouvelle adresse…). Fusionnées PAR-DESSUS les params dérivés du compte.
+    params: dict | None = None
+
+
+def _fmt_reunion(dt) -> str | None:
+    """Horodatage en heure Réunion (Indian/Reunion), format client français."""
+    if dt is None:
+        return None
+    from datetime import timezone as _tz
+    from zoneinfo import ZoneInfo
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_tz.utc)
+    d = dt.astimezone(ZoneInfo("Indian/Reunion"))
+    return d.strftime("le %d/%m/%Y à %Hh%M (heure Réunion)")
+
+
+def _prenom(nom: str | None, email: str) -> str:
+    base = (nom or "").strip()
+    if base and "@" not in base:
+        return base.split()[0]
+    return "client"
+
+
+def _params_licence(db, key: str, row, override: dict | None = None) -> dict:
+    """COMPTE-2 (Lot 3) — assemble les params RÉELS du compte pour le template `key`. Les variables
+    propres au geste (dates, réponse) arrivent en `override`. MDP_PROVISOIRE n'est PAS fabriqué :
+    l'onboarding LABUSE se fait par lien d'invitation (jamais un mot de passe envoyé) — la garde
+    fail-closed de la file refusera alors l'envoi, visiblement, plutôt que d'envoyer un {{...}} brut."""
+    from ..config import get_settings
+    base = (get_settings().public_base_url or "https://app.labuse.immo").rstrip("/")
+    email = row["email"]
+    p: dict = {"PRENOM": _prenom(row.get("nom"), email), "EMAIL": email}
+    if key in ("essai", "onboarding1"):
+        # COMPTE-2 (décision Vic) : LIEN d'invitation (jamais un mot de passe). Pour un compte encore
+        # « invite », on (re)génère un token frais → lien ; sinon (déjà actif) repli sur /login.
+        lien = f"{base}/login"
+        if db is not None:
+            try:
+                from .. import comptes as _comptes
+                lien = _comptes.creer_invitation(db, email, nom=row.get("nom"))["lien"]
+            except Exception:  # noqa: BLE001 — compte déjà actif / sans invite : repli login
+                lien = f"{base}/login"
+        p["LIEN_INVITATION"] = lien
+        if key == "essai":
+            p["FIN_ESSAI"] = _fmt_reunion(row.get("essai_expire_at")) or "à l'échéance de votre essai"
+    elif key == "souscription":
+        p["LIEN_SOUSCRIPTION"] = f"{base}/souscrire"
+    elif key in ("relance_carte", "suspension"):
+        p["LIEN_PAIEMENT"] = f"{base}/facturation"
+    elif key == "onboarding2":
+        p["JAMAIS_CONNECTE"] = row.get("dernier_login_at") is None
+    elif key == "mdp_oublie":
+        from .. import comptes as _comptes
+        r = _comptes.demander_reset(db, email) if db is not None else None
+        p["LIEN_RESET"] = (r or {}).get("lien") or f"{base}/reset"
+        p["VALIDITE"] = "1 heure"
+    elif key == "mdp_modifie":
+        from datetime import datetime, timezone
+        p["DATE_HEURE"] = _fmt_reunion(datetime.now(timezone.utc))
+    return {**p, **(override or {})}
 
 
 @router.post("/admin/licences/{compte_id}/mail")
 def admin_licence_mail(compte_id: int, body: MailIn, request: Request) -> dict:
-    """Envoi MANUEL d'un template Brevo au titulaire (onboarding 1/2/3, souscription, relance…).
-    Non configuré → {envoye:false, raison} — le bouton du dashboard l'affiche, rien de silencieux.
-    Statut + date STOCKÉS (licence_mails) quand l'envoi part."""
+    """COMPTE-2 (Lot 2/3) — envoi MANUEL d'un template au titulaire, PAR LA FILE (`mail_queue`) :
+    trois preuves — une entrée dans la file (état réel), une ligne de journal qui nomme QUI (l'admin),
+    l'écran qui change. JAMAIS « envoyé » par optimisme (RV-013). Non configuré / param manquant →
+    l'état de la file le dit. `licence_mails` (ledger d'onboarding) n'est marqué QUE si le mail est reçu."""
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
-    from ..brevo import LIBELLES              # LIBELLES = données d'affichage (pas un transport)
-    from ..mail import envoyer_template       # CONNEXIONS-2 Lot 9.1 (KO-12) — envoi via la façade unique
-    from ..db import engine
-    if body.key not in LIBELLES:
+    from .. import brevo, mailfile
+    from ..db import engine, session_scope
+    if brevo.template(body.key) is None:
         raise HTTPException(422, f"Template inconnu « {body.key} ».")
     with engine().begin() as c:
         row = c.execute(text(
-            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
-            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
-            {"c": compte_id}).mappings().first()
+            "SELECT k.nom, k.essai_expire_at,"
+            " (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1) AS email,"
+            " (SELECT u.dernier_login_at FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1)"
+            "   AS dernier_login_at"
+            " FROM comptes k WHERE k.id = :c"), {"c": compte_id}).mappings().first()
     if not row or not row["email"]:
         raise HTTPException(404, "Compte introuvable ou sans utilisateur.")
-    res = envoyer_template(row["email"], body.key, params={"nom": row["nom"]})
-    if res.get("envoye"):
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    with session_scope() as db:
+        params = _params_licence(db, body.key, row, body.params)
+    r = mailfile.envoyer_mail(engine(), key=body.key, to=row["email"], params=params,
+                              compte_id=compte_id, demandeur=qui)
+    if r.get("etat") == "recu":
         with engine().begin() as c:
             c.execute(text(
                 "INSERT INTO licence_mails (compte_id, mail_key, statut) VALUES (:c, :k, 'envoye')"
                 " ON CONFLICT (compte_id, mail_key)"
                 " DO UPDATE SET statut = 'envoye', sent_at = now()"),
                 {"c": compte_id, "k": body.key})
-    return {"ok": True, **res}
+    envoye = r.get("etat") == "recu"
+    return {"ok": True, "envoye": envoye, "etat": r.get("etat"), "mail_id": r.get("id"),
+            "message_id": r.get("message_id"), "raison": r.get("erreur")}
 
 
 @router.get("/admin/licences/{compte_id}/mail/{key}/apercu")
 def admin_licence_mail_apercu(compte_id: int, key: str, request: Request) -> dict:
-    """ADMIN-1 (AD4) — APERÇU du mail réel (template Brevo rendu avec les variables du compte) AVANT
-    « Envoyer ». Non configuré → aperçu honnête (raison + variables qui SERAIENT injectées)."""
+    """APERÇU = rendu RÉEL du template avec les params du compte (jamais un texte codé en dur).
+    Le même aperçu sert avant l'envoi (« aperçu ») et après (« voir le rendu » depuis la file)."""
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
-    from ..brevo import LIBELLES, apercu_template
-    from ..db import engine
-    if key not in LIBELLES:
+    from .. import brevo
+    from ..db import engine, session_scope
+    if brevo.template(key) is None:
         raise HTTPException(422, f"Template inconnu « {key} ».")
     with engine().begin() as c:
         row = c.execute(text(
-            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
-            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
-            {"c": compte_id}).mappings().first()
+            "SELECT k.nom, k.essai_expire_at,"
+            " (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1) AS email,"
+            " (SELECT u.dernier_login_at FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1)"
+            "   AS dernier_login_at"
+            " FROM comptes k WHERE k.id = :c"), {"c": compte_id}).mappings().first()
     if not row:
         raise HTTPException(404, "Compte introuvable.")
-    return apercu_template(key, params={"nom": row["nom"], "email": row["email"]})
+    # aperçu : on NE génère PAS de vrai token reset (db=None) — un lien indicatif suffit à la relecture.
+    params = _params_licence(None, key, row)
+    return brevo.apercu_template(key, params=params)
+
+
+# ───────── COMPTE-2 · Lot 2 — la FILE mail_queue, là où l'envoi se voit ─────────
+@router.get("/admin/mails")
+def admin_mails(request: Request, filtre: str = "tous", compte_id: int | None = None,
+                limite: int = 200) -> dict:
+    """La file complète (page Courrier → Mails). filtre : en_attente | partis | echecs | tous.
+    `compte_id` : la file d'un seul compte (fiche → onglet Activité)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    return {"lignes": mailfile.lister(engine(), filtre=filtre, compte_id=compte_id, limite=limite),
+            "compteurs": mailfile.compteurs(engine())}
+
+
+@router.post("/admin/mails/{mail_id}/rejouer")
+def admin_mail_rejouer(mail_id: int, request: Request) -> dict:
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    r = mailfile.rejouer(engine(), mail_id, demandeur=qui)
+    return {"ok": True, "etat": r.get("etat"), "ligne": r}
+
+
+@router.post("/admin/mails/{mail_id}/annuler")
+def admin_mail_annuler(mail_id: int, request: Request) -> dict:
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    r = mailfile.annuler(engine(), mail_id, demandeur=qui)
+    return {"ok": True, "etat": r.get("etat"), "ligne": r}
 
 
 # ───────────────────────── D5 — IA (section mauve) ─────────────────────────
@@ -1480,7 +1665,8 @@ def admin_produit(request: Request, jours: int = 30) -> dict:
     with engine().begin() as c:
         usage = usage_par_outil(c, jours)
         retours = [dict(r) for r in c.execute(text(
-            "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section, k.nom AS compte"
+            "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section,"
+            " r.url, r.page, r.outil, r.navigateur, r.ecran, k.nom AS compte, r.compte_id"
             " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"
             " ORDER BY r.ts DESC LIMIT 200")).mappings()]
     for r in retours:
@@ -1507,6 +1693,51 @@ def admin_retour_statut(retour_id: int, body: RetourStatutIn, request: Request) 
     if not n:
         raise HTTPException(404, "Retour introuvable.")
     return {"ok": True, "statut": body.statut}
+
+
+class RetourRepondreIn(BaseModel):
+    reponse: str = Field(min_length=1, max_length=4000)
+
+
+@router.post("/admin/retours/{retour_id}/repondre")
+def admin_retour_repondre(retour_id: int, body: RetourRepondreIn, request: Request) -> dict:
+    """COMPTE-2 (Lot 7) — RÉPONSE à un signalement par le TEMPLATE 19 (retour_traite), envoyé PAR LA
+    FILE au client (PRENOM/SON_MESSAGE/REPONSE). Le retour passe « répondu » SEULEMENT si le mail est
+    reçu par Brevo (jamais « répondu » par optimisme). Un retour anonyme (sans compte) ne peut être
+    répondu par mail → 422 explicite."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    with engine().begin() as c:
+        r = c.execute(text("SELECT compte_id, message FROM retours WHERE id = :i"),
+                      {"i": retour_id}).mappings().first()
+    if not r:
+        raise HTTPException(404, "Retour introuvable.")
+    if not r["compte_id"]:
+        raise HTTPException(422, "Retour anonyme (sans compte) — aucune adresse pour répondre.")
+    with engine().begin() as c:
+        row = c.execute(text(
+            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
+            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
+            {"c": r["compte_id"]}).mappings().first()
+    if not row or not row["email"]:
+        raise HTTPException(404, "Compte du retour introuvable ou sans utilisateur.")
+    nom = row["nom"] or ""
+    prenom = nom.split()[0] if nom and "@" not in nom else "client"
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    res = mailfile.envoyer_mail(engine(), key="retour_traite", to=row["email"], compte_id=r["compte_id"],
+                               demandeur=qui,
+                               params={"PRENOM": prenom, "SON_MESSAGE": (r["message"] or "")[:1000],
+                                       "REPONSE": body.reponse.strip()})
+    envoye = res.get("etat") == "recu"
+    if envoye:
+        with engine().begin() as c:
+            c.execute(text("UPDATE retours SET statut = 'repondu', updated_at = now() WHERE id = :i"),
+                      {"i": retour_id})
+    return {"ok": True, "envoye": envoye, "etat": res.get("etat"), "mail_id": res.get("id"),
+            "statut": "repondu" if envoye else None, "raison": res.get("erreur")}
 
 
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────
@@ -1610,10 +1841,28 @@ def consomme_copilote_aujourdhui(compte_id: int) -> int:
         return 0
 
 
+def depassement_budget_eur(compte_id: int | None) -> dict | None:
+    """COMPTE-2 (Lot 5) — la garde EN EUROS, SANS effet de bord (ne touche aucun compteur). Rend un
+    `detail` prêt pour un 429 si la dépense IA du jour (jour Réunion) atteint le budget du compte,
+    sinon None. `compte_id is None` (pilote/anonyme) → None : ces surfaces ont leur propre garde en
+    appels. C'est LE point unique du plafond 2 €/jour/compte, appelable par TOUTE surface IA (fiche
+    incluse) — le blocage est réel, pas seulement journalisé."""
+    if compte_id is None:
+        return None
+    budget = budget_eur_du_compte(compte_id)
+    depense = depense_eur_aujourdhui(compte_id)
+    if depense >= budget:
+        return {"detail": f"Plafond IA du jour atteint ({_fmt_eur(budget)}/jour). "
+                          f"Il se renouvelle à minuit (heure Réunion).",
+                "budget_eur": round(budget, 2), "depense_eur": round(depense, 4),
+                "gel_jusqua": "minuit", "budget_atteint": True}
+    return None
+
+
 def etat_plafond_ia(compte_id: int | None, sujet: str, jour_iso: str, *, nl_defaut: int) -> dict | None:
     """RETOURS-8 (R3) — LA garde unique du plafond IA, partagée par /ia, /ask et les missions lourdes.
     Incrémente TOUJOURS le compteur d'appels (mention « appels » de la tuile), puis :
-      · compte connecté → plafond en EUROS : dépense du jour ≥ budget € → dépassement ;
+      · compte connecté → plafond en EUROS (`depassement_budget_eur`) : dépense ≥ budget → dépassement ;
       · sans compte (pilote/anonyme) → plafond historique en APPELS (nl_defaut).
     Rend None si tout va bien, sinon un `detail` prêt à servir en 429 (mêmes clés qu'avant + budget)."""
     from .protection import compteur_incr_et_lire
@@ -1623,12 +1872,7 @@ def etat_plafond_ia(compte_id: int | None, sujet: str, jour_iso: str, *, nl_defa
             return {"detail": f"Quota d'analyses IA atteint ({nl_defaut}/jour). Reprend à minuit.",
                     "quota": nl_defaut, "gel_jusqua": "minuit"}
         return None
-    budget = budget_eur_du_compte(compte_id)
-    depense = depense_eur_aujourdhui(compte_id)
-    if depense >= budget:
-        return {"detail": f"Plafond IA du jour atteint ({_fmt_eur(budget)}/jour). Reprend à minuit.",
-                "budget_eur": round(budget, 2), "depense_eur": round(depense, 4), "gel_jusqua": "minuit"}
-    return None
+    return depassement_budget_eur(compte_id)
 
 
 # ═════════════════ DESTINATIONS-1 (X5.3) — calibration destinations par commune ═════════════════

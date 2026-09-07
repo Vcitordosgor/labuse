@@ -1249,7 +1249,11 @@ export interface Moi { mode: 'compte' | 'local'; plan: string; plan_label: strin
 export const getMoi = () => j<Moi>('/moi')
 // DASHBOARD-V1 · D1 — bouton « Signaler » (en-tête) : bug/idée/question → table retours
 // (statuts suivis au dashboard admin).
-export const postRetour = (body: { type: 'bug' | 'idee' | 'question'; message: string }) =>
+// COMPTE-2 (Lot 7) — « Signaler » global : le contexte (url/page/outil/idu/navigateur/écran) part avec.
+export const postRetour = (body: {
+  type: 'bug' | 'idee' | 'question' | 'donnee'; message: string
+  idu?: string; section?: string; url?: string; page?: string; outil?: string; navigateur?: string; ecran?: string
+}) =>
   j<{ ok: boolean; id: number }>('/retours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
 // ── DASHBOARD-V1 — Tour de contrôle (admin) ──
@@ -1311,11 +1315,14 @@ export const postAdminDegeler = (sujet: string) =>
 export interface AdminLicence {
   id: number; nom: string; email: string | null; plan: string; statut: string; created_at: string | null
   essai_expire_at: string | null
+  est_test?: boolean   // COMPTE-2 (Lot 3) — compte de test/interne : masqué des chiffres client
   stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
   mails: Record<string, { statut: string; sent_at: string | null }>
   rappels: string[]
   partage: { sessions: number; ips: number; probable: boolean } | null   // A5 — sessions simultanées (informatif)
-  kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number }
+  kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number
+    // COMPTE-2 (Lot 3) — le plafond IA est en EUROS : dépense € du jour + budget € (corrige « 0 / 80 »).
+    ia_depense_eur?: number; ia_budget_eur?: number }
 }
 export interface AdminLicences {
   licences: AdminLicence[]
@@ -1324,6 +1331,8 @@ export interface AdminLicences {
   brevo: { api: boolean; templates: Record<string, boolean> }
   // ADMIN-1 (AD4) — libellés servis des mails (fini « Mail 1/2/3 »), source unique = brevo.LIBELLES.
   mail_libelles: Record<string, string>
+  // COMPTE-2 (Lot 3) — compteurs SERVIS par le backend (source unique) : licences actives + masqués.
+  compteurs?: { licences_actives: number; masques: number; visibles: number }
   partage_seuil: number
 }
 // ADMIN-1 (AD4) — aperçu du mail réel (template Brevo rendu avec les variables du compte) avant Envoyer.
@@ -1373,8 +1382,25 @@ export const postAdminSuspendre = (compteId: number) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/suspendre`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminRetablir = (compteId: number) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/retablir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+// COMPTE-2 (Lot 4) — déconnexion à distance : ferme toutes les sessions du compte (poste partagé).
+export const postAdminDeconnecter = (compteId: number) =>
+  j<{ ok: boolean; sessions_fermees: number }>(`/admin/licences/${compteId}/deconnecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminLicenceMail = (compteId: number, key: string) =>
   j<{ ok: boolean; envoye: boolean; raison?: string }>(`/admin/licences/${compteId}/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) })
+// COMPTE-2 (Lot 2/3) — la file mail_queue d'un compte (onglet Activité / Facturation de la fiche).
+export interface MailLigne {
+  id: number; mail_key: string; template_nom: string | null; destinataire: string
+  etat: string; etat_libelle: string; demandeur: string; tentatives: number
+  message_id: string | null; erreur: string | null; cree_at: string | null; parti_at: string | null
+  params: Record<string, unknown>
+}
+export const getAdminMails = (compteId: number) =>
+  j<{ lignes: MailLigne[]; compteurs: unknown }>(`/admin/mails?compte_id=${compteId}`)
+// COMPTE-2 (Lot 6) — mémoire du compte : préférences de carte (fond + couches) en base (survivent au poste).
+export const getPrefsCarte = () =>
+  j<{ basemap: string | null; couches: Record<string, boolean> | null }>('/moi/prefs-carte')
+export const postPrefsCarte = (body: { basemap?: string; couches?: Record<string, boolean> }) =>
+  j<{ ok: boolean }>('/moi/prefs-carte', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // D5 — IA
 export interface AdminIa {
   mois: { cout_eur: number; appels: number; cout_moyen_question: number | null }

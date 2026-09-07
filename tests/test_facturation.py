@@ -17,6 +17,14 @@ from labuse.facturation import ConfigError, traiter_webhook
 SECRET = "whsec_test_premier_euro"
 
 
+@pytest.fixture(autouse=True)
+def _no_real_mail(monkeypatch):
+    """COMPTE-2 — le webhook `invoice.payment_failed` enfile désormais la relance carte (template 9)
+    par la file : on mocke le transport Brevo pour qu'AUCUN vrai e-mail ne parte de la suite."""
+    monkeypatch.setattr("labuse.brevo.envoyer_template",
+                        lambda to, key, params: {"envoye": True, "message_id": "<test>"})
+
+
 @pytest.fixture()
 def db(monkeypatch):
     monkeypatch.setattr(get_settings(), "stripe_webhook_secret", SECRET)
@@ -49,6 +57,40 @@ def test_webhook_sans_secret_refuse(db, monkeypatch):
     monkeypatch.setattr(get_settings(), "stripe_webhook_secret", None)
     with pytest.raises(ConfigError):
         traiter_webhook(db, b"{}", "t=1,v1=x")
+
+
+def test_webhook_past_due_enfile_relance_template_9(db):
+    """COMPTE-2 (Lot 3) — carte refusée : le webhook enfile la relance (template 9 relance_carte) par la
+    file, attribuée au compte, avec LIEN_PAIEMENT. Un rejeu du MÊME invoice ne renvoie pas (dédup)."""
+    from labuse import mailfile
+    from labuse.db import engine as _engine
+    mailfile.ensure_tables(_engine())
+    email = f"pastdue-{uuid.uuid4().hex[:8]}@exemple.test"
+    cus = f"cus_{uuid.uuid4().hex[:10]}"
+    inv = comptes.creer_invitation(db, email)
+    cid = inv["compte_id"]
+    with _engine().begin() as c:
+        c.execute(text("DELETE FROM mail_queue WHERE compte_id = :c"), {"c": cid})
+    body, sig = _signe(_evt("checkout.session.completed",
+                            {"client_reference_id": str(cid), "customer": cus, "subscription": "sub_x"}))
+    traiter_webhook(db, body, sig)
+    invoice_id = f"in_{uuid.uuid4().hex[:10]}"
+    body, sig = _signe(_evt("invoice.payment_failed",
+                            {"id": invoice_id, "customer": cus,
+                             "hosted_invoice_url": "https://pay.stripe.test/x"}))
+    assert traiter_webhook(db, body, sig)["action"] == "paiement_requis"
+    rows = mailfile.lister(_engine(), filtre="tous", compte_id=cid)
+    m9 = [r for r in rows if r["mail_key"] == "relance_carte"]
+    assert m9, "la relance carte (template 9) doit être enfilée"
+    assert m9[0]["params"].get("LIEN_PAIEMENT") == "https://pay.stripe.test/x"
+    assert m9[0]["demandeur"] == "job:stripe-webhook"
+    # rejeu du MÊME invoice (nouvel event id, même facture) → pas de second mail (dédup par invoice)
+    body, sig = _signe(_evt("invoice.payment_failed",
+                            {"id": invoice_id, "customer": cus,
+                             "hosted_invoice_url": "https://pay.stripe.test/x"}))
+    traiter_webhook(db, body, sig)
+    rows2 = [r for r in mailfile.lister(_engine(), filtre="tous", compte_id=cid) if r["mail_key"] == "relance_carte"]
+    assert len(rows2) == 1, "un seul mail de relance par facture (dédup longue fenêtre)"
 
 
 def test_cycle_stripe_complet(db):

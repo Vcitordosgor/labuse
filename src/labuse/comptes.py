@@ -142,11 +142,72 @@ def ensure_tables(db: Session) -> None:
             code_hash text NOT NULL,
             utilise_at timestamptz
         )"""))
+    # COMPTE-2 (Lot 6) — MÉMOIRE DU COMPTE : préférences de carte (fond + couches actives) REMONTÉES
+    # en base pour SURVIVRE au changement de poste (avant : localStorage seulement → perdues). Une ligne
+    # par compte, JSON pour les couches (souple). Cascade avec le compte (effacement RGPD).
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS prefs_carte (
+            compte_id int PRIMARY KEY REFERENCES comptes(id) ON DELETE CASCADE,
+            basemap text,
+            couches jsonb,
+            updated_at timestamptz NOT NULL DEFAULT now()
+        )"""))
+    db.commit()
+
+
+def lire_prefs_carte(db: Session, compte_id: int | None) -> dict | None:
+    """COMPTE-2 (Lot 6) — préférences de carte du compte ({basemap, couches}) ou None (jamais posées /
+    pilote). Lues à l'ouverture de l'app pour rouvrir la carte comme le client l'avait laissée."""
+    if compte_id is None:
+        return None
+    r = db.execute(text("SELECT basemap, couches FROM prefs_carte WHERE compte_id = :c"),
+                   {"c": compte_id}).mappings().first()
+    return {"basemap": r["basemap"], "couches": r["couches"]} if r else None
+
+
+def ecrire_prefs_carte(db: Session, compte_id: int, basemap: str | None, couches: dict | None) -> None:
+    """COMPTE-2 (Lot 6) — enregistre (upsert) le fond de carte et les couches actives du compte."""
+    import json
+    db.execute(text(
+        "INSERT INTO prefs_carte (compte_id, basemap, couches) VALUES (:c, :b, CAST(:j AS jsonb))"
+        " ON CONFLICT (compte_id) DO UPDATE SET basemap = :b, couches = CAST(:j AS jsonb),"
+        " updated_at = now()"),
+        {"c": compte_id, "b": basemap, "j": json.dumps(couches) if couches is not None else None})
     db.commit()
 
 
 def _norm_email(email: str) -> str:
     return email.strip().lower()
+
+
+# ── COMPTE-2 (Lot 3) — comptes de TEST & compteur UNIQUE de licences actives ──
+#: convention de recette (mandat) : nom préfixé « [CT-TEST] » et/ou e-mail « @labuse.test ».
+PREFIXE_TEST = "[CT-TEST]"
+DOMAINE_TEST = "@labuse.test"
+
+#: prédicat SQL « compte de test/interne à MASQUER des chiffres client » — source UNIQUE, réutilisée
+#: par le compteur, la liste et le Pilotage (alias de table `c` pour comptes).
+_MASQUE_SQL = (
+    "(c.plan = 'interne'"
+    f" OR c.nom ILIKE '{PREFIXE_TEST}%'"
+    f" OR EXISTS (SELECT 1 FROM utilisateurs u WHERE u.compte_id = c.id"
+    f"            AND lower(u.email) LIKE '%{DOMAINE_TEST}'))")
+
+
+def compte_est_test(nom: str | None, email: str | None) -> bool:
+    """Un compte de recette / interne (masqué des chiffres client)."""
+    return ((nom or "").startswith(PREFIXE_TEST)
+            or (email or "").strip().lower().endswith(DOMAINE_TEST))
+
+
+def licences_actives(conn) -> int:
+    """COMPTE-2 (Lot 3) — LE compteur unique de « licences actives » (payantes), lu par le rail, le
+    Pilotage et la page Comptes (fin du 12 vs 9). Une licence active = compte au statut 'actif', qui
+    n'est PAS un essai en cours (essai_expire_at NULL), ni un compte interne/de test. Un seul endroit.
+    Accepte une Session OU une Connection (les tables existent déjà à ces points d'appel)."""
+    return int(conn.execute(text(
+        "SELECT COUNT(*) FROM comptes c WHERE c.statut = 'actif'"
+        " AND c.essai_expire_at IS NULL AND NOT " + _MASQUE_SQL)).scalar() or 0)
 
 
 def _sha(token: str) -> str:
@@ -445,8 +506,9 @@ def demander_reset(db: Session, email: str, minutes: int = 60) -> dict | None:
     """Token de reset (lien signé, expirant). None si l'email n'existe pas — l'APPELANT ne
     doit JAMAIS différencier sa réponse (anti-énumération)."""
     email = _norm_email(email)
-    u = db.execute(text("SELECT id, compte_id FROM utilisateurs WHERE email = :e"
-                        " AND statut = 'actif'"), {"e": email}).mappings().first()
+    u = db.execute(text(
+        "SELECT u.id, u.compte_id, c.nom FROM utilisateurs u JOIN comptes c ON c.id = u.compte_id"
+        " WHERE u.email = :e AND u.statut = 'actif'"), {"e": email}).mappings().first()
     if not u:
         return None
     tok = _token()
@@ -455,7 +517,23 @@ def demander_reset(db: Session, email: str, minutes: int = 60) -> dict | None:
                {"h": _sha(tok), "x": datetime.now(timezone.utc) + timedelta(minutes=minutes),
                 "i": u["id"]})
     audit(db, "reset_demande", u["compte_id"], u["id"]); db.commit()
-    return {"email": email, "lien": f"{get_settings().public_base_url}/reset?token={tok}"}
+    # COMPTE-2 (Lot 4) — compte_id + nom joints pour envoyer le template 14 par la file (PRENOM/LIEN/VALIDITE).
+    return {"email": email, "lien": f"{get_settings().public_base_url}/reset?token={tok}",
+            "compte_id": int(u["compte_id"]), "nom": u["nom"]}
+
+
+def compte_du_reset_token(db: Session, token: str) -> dict | None:
+    """COMPTE-2 (Lot 4) — lecture NON consommante des infos du porteur d'un token de reset VALIDE
+    (email, compte_id, nom) pour envoyer le template 15 « mot de passe modifié » APRÈS application.
+    Ne modifie rien (le token est consommé par `appliquer_reset`)."""
+    token = (token or "").strip()
+    if not token:
+        return None
+    r = db.execute(text(
+        "SELECT u.compte_id, u.email, c.nom FROM utilisateurs u JOIN comptes c ON c.id = u.compte_id"
+        " WHERE u.reset_token_hash = :h AND u.reset_expire_at > now() AND u.statut = 'actif'"),
+        {"h": _sha(token)}).mappings().first()
+    return dict(r) if r else None
 
 
 def appliquer_reset(db: Session, token: str, password: str) -> bool:
@@ -595,6 +673,16 @@ def suspendre_compte(db: Session, compte_id: int, motif: str = "manuel") -> None
     db.execute(text("DELETE FROM sessions_auth WHERE utilisateur_id IN"
                     " (SELECT id FROM utilisateurs WHERE compte_id = :c)"), {"c": compte_id})
     audit(db, "compte_suspendu", compte_id, None, motif); db.commit()
+
+
+def deconnecter_compte(db: Session, compte_id: int, motif: str = "admin") -> int:
+    """COMPTE-2 (Lot 4) — DÉCONNEXION À DISTANCE : ferme TOUTES les sessions du compte (poste partagé,
+    départ d'un client) SANS suspendre le compte (il pourra se reconnecter). Renvoie le nombre de
+    sessions coupées. Geste réservé à l'admin (endpoint gardé)."""
+    n = db.execute(text("DELETE FROM sessions_auth WHERE utilisateur_id IN"
+                        " (SELECT id FROM utilisateurs WHERE compte_id = :c)"), {"c": compte_id}).rowcount
+    audit(db, "compte_deconnecte_distance", compte_id, None, motif); db.commit()
+    return int(n or 0)
 
 
 def reactiver_compte(db: Session, compte_id: int, motif: str = "manuel") -> None:

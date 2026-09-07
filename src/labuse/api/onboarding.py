@@ -377,18 +377,21 @@ def reset_page(token: str = ""):
 <script src="/parcours.js" defer></script>"""))
 
 
-def _envoyer_reset_email(email: str, lien: str) -> None:
-    """M18-A6 → M21-B1 — POINT D'ENVOI du lien de réinitialisation, désormais BRANCHÉ sur le
-    transport SMTP unique (`labuse.mail`). Envoi en tâche de fond (ne bloque pas la requête, pas de
-    fuite de timing sur l'existence du compte). Sans SMTP configuré, `send_email` journalise le mail
-    (lien inclus, = file d'attente dev) et ne prétend rien. Le token n'est jamais logué en clair
-    hors de ce cas dev."""
-    from ..emails import reset_password
-    from ..mail import send_email_async
+def _prenom_de(nom: str | None, email: str) -> str:
+    base = (nom or "").strip()
+    return base.split()[0] if base and "@" not in base else "client"
 
-    sujet, corps = reset_password(lien)
-    send_email_async(email, sujet, corps)
-    log.info("[RESET-EMAIL] envoi déclenché → %s", email)
+
+def _envoyer_reset_email(email: str, lien: str, compte_id: int | None = None,
+                         nom: str | None = None) -> None:
+    """COMPTE-2 (Lot 4) — POINT D'ENVOI du lien de réinitialisation, désormais par le TEMPLATE 14
+    (`mdp_oublie`) via la FILE (`mail.envoyer_mail`) : trace visible, jamais un envoi silencieux. Non
+    configuré → l'entrée dit « non parti » (le token n'est logué en clair nulle part). Envoi attribué au
+    compte, demandeur « client » (le titulaire a cliqué « mot de passe oublié »)."""
+    from ..mail import envoyer_mail
+    envoyer_mail(key="mdp_oublie", to=email, compte_id=compte_id, demandeur="client",
+                 params={"PRENOM": _prenom_de(nom, email), "LIEN_RESET": lien, "VALIDITE": "1 heure"})
+    log.info("[RESET-EMAIL] template 14 enfilé → compte %s", compte_id)
 
 
 @router.post("/reset-demande", include_in_schema=False)
@@ -405,14 +408,16 @@ async def reset_demande(request: Request, db: Session = Depends(get_db)):
             res = demander_reset(db, email)
             if res:
                 db.commit()
-                _envoyer_reset_email(res["email"], res["lien"])
+                _envoyer_reset_email(res["email"], res["lien"],
+                                     compte_id=res.get("compte_id"), nom=res.get("nom"))
         except Exception:  # noqa: BLE001 — jamais bloquer, jamais révéler l'existence du compte
             pass
     # État HONNÊTE (boussole) : le message dépend de l'état du TRANSPORT (pas de l'existence du
     # compte — anti-énumération). SMTP branché → on annonce l'envoi (conditionnel « si un compte
     # existe ») ; SMTP absent (dev) → on ne prétend PAS qu'un e-mail est parti.
-    from ..mail import mail_configured
-    if mail_configured():
+    # COMPTE-2 (Lot 4) — le reset part par Brevo (template 14) : le message honnête suit la config BREVO.
+    from ..brevo import etat_configuration
+    if etat_configuration().get("api"):
         corps = """<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
 <h1>Vérifiez votre boîte mail</h1><p class="sub">un lien valable 1 heure vient d'être envoyé</p>
 <p style="font-size:13px;line-height:1.6">Si un compte est associé à cette adresse, un e-mail de
@@ -432,10 +437,12 @@ actif sur cet environnement</b> — votre contact LABUSE peut vous le transmettr
 async def reset_submit(request: Request, db: Session = Depends(get_db)):
     from urllib.parse import parse_qs
 
-    from ..comptes import appliquer_reset
+    from ..comptes import appliquer_reset, compte_du_reset_token
     q = parse_qs((await request.body()).decode("utf-8", "replace"))
+    token = (q.get("token") or [""])[0]
+    infos = compte_du_reset_token(db, token)   # lu AVANT consommation (pour le template 15)
     try:
-        ok = appliquer_reset(db, (q.get("token") or [""])[0], (q.get("password") or [""])[0])
+        ok = appliquer_reset(db, token, (q.get("password") or [""])[0])
     except ValueError as e:
         return HTMLResponse(_page("mot de passe", f"<h1>Refusé</h1><p class='sous'>{html.escape(str(e))}</p>"),
                             status_code=400)
@@ -443,6 +450,20 @@ async def reset_submit(request: Request, db: Session = Depends(get_db)):
         return HTMLResponse(_page("lien expiré", "<h1>Lien expiré</h1><p class='sous'>"
                                   "demandez un nouveau lien</p><p style='text-align:center'>"
                                   "<a href='/reset'>mot de passe oublié</a></p>"), status_code=400)
+    # COMPTE-2 (Lot 4) — confirmation « mot de passe modifié » (template 15) par la file, best-effort :
+    # une confirmation qui ne part pas ne bloque JAMAIS un reset réussi (sécurité avant tout).
+    if infos:
+        try:
+            from datetime import datetime, timezone
+            from zoneinfo import ZoneInfo
+            from ..mail import envoyer_mail
+            dh = datetime.now(timezone.utc).astimezone(ZoneInfo("Indian/Reunion")).strftime(
+                "le %d/%m/%Y à %Hh%M (heure Réunion)")
+            envoyer_mail(key="mdp_modifie", to=infos["email"], compte_id=infos["compte_id"],
+                         demandeur="client",
+                         params={"PRENOM": _prenom_de(infos.get("nom"), infos["email"]), "DATE_HEURE": dh})
+        except Exception:  # noqa: BLE001 — la confirmation est secondaire ; le reset a réussi
+            log.warning("[RESET] confirmation template 15 non enfilée")
     return HTMLResponse(_page("mot de passe changé", """
 <h1>Mot de passe changé</h1><p class="sous">toutes les sessions ont été fermées</p>
 <p style="text-align:center;margin-top:18px"><a href="/login" class="pill">Se connecter →</a></p>"""))
@@ -931,3 +952,28 @@ def moi_marque_get(request: Request, db: Session = Depends(get_db)) -> dict:
     if row and row["logo"]:
         out["logo_data_uri"] = f"data:{row['logo_mime']};base64," + _b64.b64encode(row["logo"]).decode()
     return out
+
+
+# ── COMPTE-2 (Lot 6) — MÉMOIRE DU COMPTE : préférences de carte (fond + couches) remontées en base ──
+@router.get("/moi/prefs-carte", include_in_schema=False)
+def moi_prefs_carte_get(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Préférences de carte du compte (fond + couches actives) pour rouvrir la carte comme le client
+    l'avait laissée — MÊME sur un autre poste (avant : localStorage, perdues au changement de poste)."""
+    from ..comptes import lire_prefs_carte
+    cid = _compte_session(request, db)
+    return lire_prefs_carte(db, cid) or {"basemap": None, "couches": None}
+
+
+@router.post("/moi/prefs-carte", include_in_schema=False)
+def moi_prefs_carte_set(payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Enregistre le fond de carte et les couches actives du compte (upsert). Best-effort côté client :
+    un enregistrement qui rate ne casse jamais la carte (le front continue en session)."""
+    from ..comptes import ecrire_prefs_carte
+    cid = _compte_session(request, db)
+    basemap = payload.get("basemap")
+    basemap = str(basemap)[:16] if basemap else None
+    couches = payload.get("couches")
+    if not isinstance(couches, dict):
+        couches = None
+    ecrire_prefs_carte(db, cid, basemap, couches)
+    return {"ok": True}

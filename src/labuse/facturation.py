@@ -423,7 +423,28 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
                         " WHERE id = :c AND statut = 'actif'"), {"c": cid})
         audit(db, "stripe_paiement_echec", cid, None)
         db.commit()
-        action = "paiement_requis"   # relances = Stripe ; l'app affiche le bandeau (pas d'email maison)
+        # COMPTE-2 (Lot 3) — CARTE REFUSÉE : relance PAR LA FILE (template 9 relance_carte), une seule
+        # par facture (dédup par invoice sur une longue fenêtre : Stripe rejoue le même invoice sur
+        # plusieurs jours), journal via le demandeur. Best-effort : un envoi qui ne part pas ne casse
+        # jamais le webhook (Stripe rejouerait tout l'event).
+        try:
+            row = db.execute(text(
+                "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
+                " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
+                {"c": cid}).mappings().first()
+            if row and row["email"]:
+                from .mail import envoyer_mail
+                base = (get_settings().public_base_url or "https://app.labuse.immo").rstrip("/")
+                nom = row["nom"] or ""
+                prenom = nom.split()[0] if nom and "@" not in nom else "client"
+                lien = obj.get("hosted_invoice_url") or f"{base}/facturation"
+                envoyer_mail(key="relance_carte", to=row["email"], compte_id=cid,
+                             demandeur="job:stripe-webhook",
+                             params={"PRENOM": prenom, "LIEN_PAIEMENT": lien},
+                             dedup=f"past_due:{obj.get('id') or cid}", fenetre_doublon_s=30 * 86400)
+        except Exception:  # noqa: BLE001 — la relance est best-effort ; l'état paiement_requis est posé
+            log.warning("webhook past_due : relance carte (template 9) non enfilée pour compte %s", cid)
+        action = "paiement_requis"   # relances = Stripe ; PLUS la relance LABUSE (template 9) par la file
     elif t == "customer.subscription.deleted" and cid:
         suspendre_compte(db, cid, "subscription.deleted")
         action = "suspension"
