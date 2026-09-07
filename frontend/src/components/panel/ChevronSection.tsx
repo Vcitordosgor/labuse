@@ -8,8 +8,10 @@
 // tous les fonds (avant, à 70 % d'opacité elle disparaissait sur certaines surfaces claires/orthophoto).
 const BOITE = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-line-2 bg-surface-2/50 text-txt-dim transition-colors duration-quick'
 
-// Chevron de section repliable — seule la FLÈCHE tourne (fermé → gauche, ouvert → bas,
-// patron M55-A/C), la boîte reste stable. Le hover suit l'entête entière (via `group`).
+// Chevron de section repliable — seule la FLÈCHE tourne, la boîte reste stable. Le hover suit
+// l'entête entière (via `group`). COUCHES-1 lot 2 (A4) : la flèche reste VERTICALE dans les deux
+// états (fermé → bas ⌄, ouvert → haut ⌃, rotation 180°) — plus de chevron LATÉRAL (gauche) quand
+// une section est repliée, qui donnait l'illusion de deux composants d'accordéon différents.
 // M55-H point 1 : le glyphe texte « ⌄ » portait un biais optique (ancré sur la ligne de
 // base, jamais vraiment centré une fois pivoté) → chevron DESSINÉ (SVG symétrique, centré
 // géométriquement = centré optiquement dans les deux états, trait arrondi).
@@ -23,7 +25,7 @@ export function ChevronSection({ open }: { open: boolean }) {
     <span aria-hidden="true"
       className={`chev-boite ${BOITE} group-hover:bg-surface-3 group-hover:text-txt-hi`}>
       <svg viewBox="0 0 12 12"
-        className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${open ? '' : 'rotate-90'}`}>
+        className={`h-3 w-3 transition-transform duration-soft ease-cockpit ${open ? 'rotate-180' : ''}`}>
         <polyline points="2.75,4.25 6,7.75 9.25,4.25" fill="none" stroke="currentColor"
           strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>

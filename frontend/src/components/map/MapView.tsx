@@ -263,7 +263,12 @@ const OVERLAYS = {
     'fill-opacity': ['match', ['get', 'subtype'], 'coeur', 0.34, 'adhesion', 0.16, 0.22] as unknown as maplibregl.ExpressionSpecification } },
   ppr: { paint: { 'fill-color': T_SOMBRE.ppr, 'fill-opacity': T_SOMBRE.pprOpacity } },
   // M137-U — ZNIEFF (contrainte patrimoine naturel) : aplat vert olive, distinct du Parc (marron) et du PPR (rouge).
-  znieff: { paint: { 'fill-color': T_SOMBRE.znieff, 'fill-opacity': T_SOMBRE.znieffOpacity, 'fill-outline-color': T_SOMBRE.znieff } },
+  // COUCHES-1 lot 2 (A5) — ZNIEFF type I (secteur à fort intérêt, plus sensible) rendu en aplat plus
+  // DENSE ; type II (grand ensemble naturel) plus léger. Deux portées juridiques → deux intensités,
+  // deux entrées de légende (avant : un seul swatch pour les deux).
+  znieff: { paint: { 'fill-color': T_SOMBRE.znieff,
+    'fill-opacity': ['match', ['get', 'subtype'], 'type II', Math.max(0.06, T_SOMBRE.znieffOpacity - 0.14), T_SOMBRE.znieffOpacity] as unknown as maplibregl.ExpressionSpecification,
+    'fill-outline-color': T_SOMBRE.znieff } },
   // M55-A-bis : chartreuse/lime = le seul creux franc de la palette (or ~45°, verts ~148°),
   // tranche fort sur fond sombre, hors du violet RÉSERVÉ aux résultats de recherche.
   anru: { paint: { 'fill-color': T_SOMBRE.anru, 'fill-opacity': T_SOMBRE.anruOpacity } },
@@ -822,9 +827,12 @@ export function MapView() {
       useApp.getState().setMapPeint({
         parcelles: parcVis,
         equipements: layers.equipements && z >= 12,
-        // RETOURS-11 C1 — la légende du zonage suit l'aplat RÉELLEMENT peint (zonageFill au bon zoom),
-        // indépendamment de la couche « Limites parcelles ».
-        zonage: zonageFill && (!ile || z >= 10),
+        // RETOURS-11 C1 — la légende du zonage suit l'aplat RÉELLEMENT peint. COUCHES-1 lot 2 (A1) :
+        // l'aplat zonage est servi par la tuile vectorielle dès z8 (ovmvt-zonage, minzoom 8), donc il
+        // PEINT toute l'île en vue d'ensemble — la légende doit alors s'afficher. `zonageFill` encode
+        // déjà « peint ? » (à l'île, exige que la tuile porte le zonage) ; le garde z≥10 masquait à tort
+        // la légende de la couche vitrine pendant qu'elle peignait l'île (constat A1).
+        zonage: zonageFill,
       })
     }
     upd()
