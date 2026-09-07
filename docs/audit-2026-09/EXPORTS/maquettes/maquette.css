@@ -1,0 +1,156 @@
+/* LABUSE — exports v2 — feuille commune (WeasyPrint 69)
+   DA v3 : vert mint = sourcé / structure · ambre = Projet (saisi par le client) · mauve = IA seule (aucune ici)
+   Une famille de caractères ; chiffres tabulaires ; ragged left ; rien en capitales. */
+
+:root {
+  --ink: #1C2320;
+  --muted: #6B746E;
+  --line: #D8DED9;
+  --paper: #FFFFFF;
+  --mint: #4ADE80;
+  --mint-ink: #146B47;
+  --mint-bg: #EDFAF2;
+  --amber: #B45309;
+  --amber-bg: #FDF1D8;
+  --mauve: #6D28D9;
+  --blue: #1D4ED8;
+  --blue-bg: #E8EEFF;
+  --rose: #B42318;
+  --rose-bg: #FDEBE9;
+  --grey-bg: #F3F5F3;
+}
+
+@page {
+  size: A4;
+  margin: 17mm 16mm 19mm 16mm;
+  @top-left { content: string(doc-title); font: 8pt "Inter", "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
+  @top-right { content: string(doc-ref); font: 8pt "IBM Plex Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
+  @bottom-left { content: string(doc-foot); font: 7.2pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; width: 150mm; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
+}
+@page :first { @top-left { content: none } @top-right { content: none } }
+
+html { font-size: 10pt; }
+body {
+  font-family: "Inter", "Inter", "DejaVu Sans", sans-serif;
+  color: var(--ink);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.doc-title { string-set: doc-title content(); }
+.doc-ref   { string-set: doc-ref content(); }
+.doc-foot  { string-set: doc-foot content(); }
+
+/* --- page de garde ------------------------------------------------------ */
+.cover { page-break-after: always; }
+.brand { display: flex; align-items: baseline; gap: 10pt; margin-bottom: 26pt; }
+.brand .wordmark { font-weight: 700; letter-spacing: .02em; font-size: 13pt; color: var(--mint-ink); }
+.brand .kind { color: var(--muted); font-size: 9pt; }
+h1 { font-size: 24pt; line-height: 1.15; font-weight: 700; margin: 0 0 4pt; letter-spacing: -.01em; }
+.subtitle { font-size: 11pt; color: var(--muted); margin: 0 0 18pt; }
+.address { font-size: 14pt; margin: 0 0 2pt; }
+.idu { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 9.5pt; color: var(--muted); margin-bottom: 16pt; }
+.cover-map { height: 92mm; border: 1px solid var(--line); border-radius: 3pt; background:
+  #f1f4f1; position: relative; margin-bottom: 8pt; }
+.cover-map .parcel { position: absolute; left: 44%; top: 42%; width: 14%; height: 12%; border: 2.5px solid var(--mint-ink); background: rgba(74,222,128,.25); transform: rotate(-38deg); }
+.cover-map .cap { position: absolute; right: 8pt; bottom: 6pt; font-size: 7.5pt; color: var(--muted); }
+.cover-map .north { position: absolute; right: 8pt; top: 6pt; font-size: 8pt; color: var(--muted); border: 1px solid var(--line); padding: 1pt 4pt; background: #fff; }
+.cover-map .scale { position: absolute; left: 8pt; bottom: 8pt; font-size: 7.5pt; color: var(--muted); border-bottom: 2px solid var(--ink); padding-bottom: 2pt; width: 60pt; }
+.cartouche { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 6pt; }
+.cartouche td { padding: 4pt 0; border-bottom: 1px solid var(--line); }
+.cartouche td:first-child { color: var(--muted); width: 42%; }
+.cartouche td:last-child { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; }
+.notice { font-size: 8.5pt; color: var(--muted); border-left: 2px solid var(--line); padding-left: 8pt; margin-top: 14pt; }
+.summary { margin-top: 10pt; }
+.summary li { margin: 2pt 0; }
+
+/* --- sections ---------------------------------------------------------- */
+h2 { font-size: 15pt; font-weight: 700; margin: 22pt 0 8pt; padding-left: 10pt; border-left: 4px solid var(--mint); page-break-after: avoid; }
+h3 { font-size: 10.5pt; font-weight: 600; margin: 14pt 0 5pt; page-break-after: avoid; }
+section { page-break-inside: auto; }
+.keep { page-break-inside: avoid; }
+p { margin: 0 0 6pt; }
+
+/* le verdict : l'élément mémorable — une phrase, en tête de section, qui conclut */
+.verdict { font-size: 12.5pt; line-height: 1.35; color: var(--mint-ink); background: var(--mint-bg); padding: 9pt 12pt; border-radius: 3pt; margin: 0 0 10pt; page-break-inside: avoid; }
+.verdict.warn { color: var(--rose); background: var(--rose-bg); }
+.verdict.neutral { color: var(--ink); background: var(--grey-bg); }
+.verdict small { display: block; font-size: 8.5pt; color: var(--muted); margin-top: 3pt; font-weight: 400; }
+
+/* tuiles de synthèse : 3 chiffres, pas plus */
+.tiles { display: flex; gap: 8pt; margin: 8pt 0 12pt; }
+.tile { flex: 1; border: 1px solid var(--line); border-radius: 3pt; padding: 8pt 10pt; page-break-inside: avoid; }
+.tile .v { font-size: 17pt; font-weight: 700; line-height: 1.1; }
+.tile .l { font-size: 8.5pt; color: var(--muted); margin-top: 2pt; }
+
+/* tableaux clé / valeur / nature */
+table.kv { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.5pt; }
+table.kv td, table.kv th { padding: 4.5pt 6pt 4.5pt 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.kv th { text-align: left; font-weight: 600; font-size: 8.5pt; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
+table.kv td.k { width: 36%; color: var(--muted); }
+table.kv td.n { width: 60pt; text-align: right; padding-right: 0; }
+table.kv tr { page-break-inside: avoid; }
+table.kv td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* nature de la donnée */
+.chip { display: inline-block; font-size: 7.5pt; line-height: 1; padding: 3pt 5pt; border-radius: 2pt; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.chip.s { border-color: var(--mint); color: var(--mint-ink); background: var(--mint-bg); }
+.chip.e { }
+.chip.d { }
+.chip.d::before { content: "ƒ "; }
+.chip.p { border-color: var(--amber); color: var(--amber); background: var(--amber-bg); }
+.chip.ia { border-color: var(--mauve); color: var(--mauve); }
+
+/* blocs Projet (saisi par le client) */
+.projet { border: 1px solid var(--amber); background: var(--amber-bg); border-radius: 3pt; padding: 8pt 11pt; margin: 8pt 0 12pt; page-break-inside: avoid; }
+.projet .t { font-weight: 600; color: var(--amber); font-size: 9pt; margin-bottom: 4pt; }
+.projet table.kv td { border-bottom-color: #f0dcae; }
+
+/* encarts */
+.aside { border: 1px solid var(--line); background: var(--grey-bg); border-radius: 3pt; padding: 8pt 11pt; margin: 8pt 0 12pt; font-size: 9pt; page-break-inside: avoid; }
+.aside.blue { background: var(--blue-bg); border-color: #b9c8ff; }
+.aside.rose { background: var(--rose-bg); border-color: #f0b3ac; }
+.none { font-size: 9pt; color: var(--muted); }
+.note { font-size: 8.3pt; color: var(--muted); margin: 2pt 0 8pt; }
+.legend { font-size: 8.3pt; color: var(--muted); margin-top: 4pt; }
+
+/* nuage de ventes (schéma) */
+.cloud { border: 1px solid var(--line); border-radius: 3pt; padding: 10pt 12pt 6pt; margin: 6pt 0 8pt; page-break-inside: avoid; }
+.cloud .axis { position: relative; height: 22pt; border-bottom: 1px solid var(--line); }
+.cloud .dot { position: absolute; bottom: 4pt; width: 6pt; height: 6pt; border-radius: 50%; background: var(--mint-ink); }
+.cloud .dot.x { background: #c7cdc8; }
+.cloud .med { position: absolute; bottom: 0; width: 2px; height: 22pt; background: var(--ink); }
+.cloud .lab { display: flex; justify-content: space-between; font-size: 7.5pt; color: var(--muted); margin-top: 3pt; }
+
+/* carte / image */
+.figure { height: 62mm; border: 1px solid var(--line); border-radius: 3pt; background: #f1f4f1; position: relative; margin: 6pt 0 4pt; page-break-inside: avoid; }
+.figure .cap { position: absolute; right: 8pt; bottom: 6pt; font-size: 7.5pt; color: var(--muted); }
+.figure .parcel { position: absolute; left: 46%; top: 44%; width: 10%; height: 12%; border: 2px solid var(--mint-ink); background: rgba(74,222,128,.25); transform: rotate(-38deg); }
+
+/* formulaire (Apporteur) */
+.q { page-break-inside: avoid; margin: 0 0 9pt; }
+.q .l { font-size: 9.5pt; margin-bottom: 3pt; }
+.q .l small { color: var(--muted); }
+.line { border-bottom: 1px solid var(--ink); height: 13pt; margin: 3pt 0; }
+.line.tall { height: 26pt; }
+.boxes { font-size: 9pt; }
+.boxes span { display: inline-block; margin-right: 12pt; }
+.boxes span::before { content: ""; display: inline-block; width: 9pt; height: 9pt; border: 1px solid var(--ink); vertical-align: -1pt; margin-right: 4pt; border-radius: 1.5pt; }
+.confidential { border: 1.5px solid var(--ink); padding: 6pt 10pt; font-size: 9pt; font-weight: 600; margin-bottom: 14pt; }
+
+/* sensibilité */
+table.sens td.bar { width: 45%; }
+.bar span { display: inline-block; height: 8pt; background: var(--mint); vertical-align: middle; border-radius: 1pt; }
+.bar span.neg { background: var(--rose); }
+
+/* glossaire */
+dl.gloss { font-size: 9pt; columns: 2; column-gap: 18pt; }
+dl.gloss dt { font-weight: 600; break-after: avoid; }
+dl.gloss dd { margin: 0 0 6pt; color: var(--muted); }
+
+/* deux colonnes */
+.cols { display: flex; gap: 14pt; }
+.cols > * { flex: 1; }
+
+.pb { page-break-before: always; }
