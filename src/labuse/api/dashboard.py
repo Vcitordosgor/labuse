@@ -55,6 +55,11 @@ def ensure_tables(engine) -> None:
         # pour un lien cliquable vers la fiche dans Produit (le bandeau global reste sans contexte).
         c.execute(text("ALTER TABLE retours ADD COLUMN IF NOT EXISTS idu varchar(14)"))
         c.execute(text("ALTER TABLE retours ADD COLUMN IF NOT EXISTS section varchar(64)"))
+        # COMPTE-2 (Lot 7) — CONTEXTE du « Signaler » global : page/URL/outil/navigateur/écran (l'horodatage
+        # = ts). Débogue sans aller-retour : Vic voit où le client était quand il a signalé.
+        for col, typ in (("url", "text"), ("page", "varchar(64)"), ("outil", "varchar(48)"),
+                         ("navigateur", "varchar(200)"), ("ecran", "varchar(24)")):
+            c.execute(text(f"ALTER TABLE retours ADD COLUMN IF NOT EXISTS {col} {typ}"))
         # ia_budget (D1) — attribution du coût IA au compte : colonne sur le ledger EXISTANT ia_log
         # (créé par ai.core._log_cost) ; ALTER d'abord au cas où la table précède cette colonne.
         c.execute(text(
@@ -104,36 +109,63 @@ def usage_event(body: UsageIn, request: Request) -> dict:
 
 class RetourIn(BaseModel):
     # RETOURS-11F M11 — quatre types (Bug / Idée / Question / Donnée). « donnee » vient de la fiche et
-    # porte alors l'IDU + la section ; les trois autres viennent du bandeau global (sans contexte).
+    # porte alors l'IDU + la section ; les trois autres viennent du bandeau global.
     type: str = Field(pattern="^(bug|idee|question|donnee)$")
     message: str = Field(min_length=3, max_length=2000)
     idu: str | None = None
     section: str | None = None
+    # COMPTE-2 (Lot 7) — CONTEXTE capturé par le « Signaler » global (page/URL/outil/navigateur/écran).
+    url: str | None = None
+    page: str | None = None
+    outil: str | None = None
+    navigateur: str | None = None
+    ecran: str | None = None
 
 
 @router.post("/retours")
 def creer_retour(body: RetourIn, request: Request) -> dict:
-    """Bouton « Signaler » (app cliente) : bug/idée/question/donnée + message. Un retour « donnée »
-    venu de la fiche porte l'IDU et la section d'origine (lien cliquable vers la fiche dans Produit)."""
+    """Bouton « Signaler » global (app cliente) : bug/idée/question/donnée + message + CONTEXTE
+    (page/URL/outil/IDU/navigateur/écran, horodatage = ts). Arrive dans Produit, compte au Pilotage,
+    notifie Vic (cloche + mail à contactlabuse@gmail.com). Le retour n'est JAMAIS perdu si la notif rate."""
     from ..db import engine
     cid = getattr(request.state, "compte_id", None)
     idu = (body.idu or "").strip()[:14] or None
     section = (body.section or "").strip()[:64] or None
+    ctx = {"url": (body.url or "").strip()[:2000] or None, "page": (body.page or "").strip()[:64] or None,
+           "outil": (body.outil or "").strip()[:48] or None,
+           "navigateur": (body.navigateur or "").strip()[:200] or None,
+           "ecran": (body.ecran or "").strip()[:24] or None}
     with engine().begin() as c:
         rid = c.execute(text(
-            "INSERT INTO retours (compte_id, type, message, idu, section) "
-            "VALUES (:c, :t, :m, :idu, :sec) RETURNING id"),
-            {"c": cid, "t": body.type, "m": body.message.strip(), "idu": idu, "sec": section}).scalar_one()
+            "INSERT INTO retours (compte_id, type, message, idu, section, url, page, outil, navigateur, ecran)"
+            " VALUES (:c, :t, :m, :idu, :sec, :url, :page, :outil, :nav, :ecran) RETURNING id"),
+            {"c": cid, "t": body.type, "m": body.message.strip(), "idu": idu, "sec": section,
+             "url": ctx["url"], "page": ctx["page"], "outil": ctx["outil"], "nav": ctx["navigateur"],
+             "ecran": ctx["ecran"]}).scalar_one()
     # cloche admin best-effort (patron courrier_demande) — l'échec de la notif ne perd jamais le retour
+    ctx_ligne = " · ".join(x for x in (ctx["outil"], ctx["page"], (f"parcelle {idu}" if idu else None)) if x)
     try:
         from ..db import session_scope
         from .events import creer_notification
         with session_scope() as s:
             creer_notification(s, kind="systeme", compte_id=None, source="Retour",
                                titre=f"Nouveau retour client ({body.type})",
-                               detail=body.message[:280], lien=(f"#idu={idu}" if idu else "/admin"),
+                               detail=(body.message[:240] + (f" — {ctx_ligne}" if ctx_ligne else "")),
+                               lien=(f"#idu={idu}" if idu else "/admin"),
                                dedup=f"retour:{rid}", permanent=True)
     except Exception:  # noqa: BLE001
+        pass
+    # COMPTE-2 (Lot 7) — mail à Vic (contactlabuse@gmail.com) : notification interne (transport SMTP,
+    # jamais un template client). Best-effort : sans SMTP configuré, journalisé (rien de prétendu).
+    try:
+        from ..mail import send_email_async
+        corps = (f"Nouveau retour client ({body.type}).\n\n{body.message.strip()}\n\n"
+                 f"Contexte : {ctx_ligne or '—'}\nURL : {ctx['url'] or '—'}\n"
+                 f"Navigateur : {ctx['navigateur'] or '—'} · Écran : {ctx['ecran'] or '—'}\n\n"
+                 f"→ Produit : {get_settings().public_base_url or ''}/socle/#admin")
+        send_email_async("contactlabuse@gmail.com", f"[LABUSE] retour client ({body.type})", corps,
+                         contexte="Retour")
+    except Exception:  # noqa: BLE001 — la trace mail est secondaire ; le retour est déjà enregistré
         pass
     return {"ok": True, "id": rid}
 
@@ -1633,7 +1665,8 @@ def admin_produit(request: Request, jours: int = 30) -> dict:
     with engine().begin() as c:
         usage = usage_par_outil(c, jours)
         retours = [dict(r) for r in c.execute(text(
-            "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section, k.nom AS compte"
+            "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section,"
+            " r.url, r.page, r.outil, r.navigateur, r.ecran, k.nom AS compte, r.compte_id"
             " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"
             " ORDER BY r.ts DESC LIMIT 200")).mappings()]
     for r in retours:
@@ -1660,6 +1693,51 @@ def admin_retour_statut(retour_id: int, body: RetourStatutIn, request: Request) 
     if not n:
         raise HTTPException(404, "Retour introuvable.")
     return {"ok": True, "statut": body.statut}
+
+
+class RetourRepondreIn(BaseModel):
+    reponse: str = Field(min_length=1, max_length=4000)
+
+
+@router.post("/admin/retours/{retour_id}/repondre")
+def admin_retour_repondre(retour_id: int, body: RetourRepondreIn, request: Request) -> dict:
+    """COMPTE-2 (Lot 7) — RÉPONSE à un signalement par le TEMPLATE 19 (retour_traite), envoyé PAR LA
+    FILE au client (PRENOM/SON_MESSAGE/REPONSE). Le retour passe « répondu » SEULEMENT si le mail est
+    reçu par Brevo (jamais « répondu » par optimisme). Un retour anonyme (sans compte) ne peut être
+    répondu par mail → 422 explicite."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    with engine().begin() as c:
+        r = c.execute(text("SELECT compte_id, message FROM retours WHERE id = :i"),
+                      {"i": retour_id}).mappings().first()
+    if not r:
+        raise HTTPException(404, "Retour introuvable.")
+    if not r["compte_id"]:
+        raise HTTPException(422, "Retour anonyme (sans compte) — aucune adresse pour répondre.")
+    with engine().begin() as c:
+        row = c.execute(text(
+            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
+            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
+            {"c": r["compte_id"]}).mappings().first()
+    if not row or not row["email"]:
+        raise HTTPException(404, "Compte du retour introuvable ou sans utilisateur.")
+    nom = row["nom"] or ""
+    prenom = nom.split()[0] if nom and "@" not in nom else "client"
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    res = mailfile.envoyer_mail(engine(), key="retour_traite", to=row["email"], compte_id=r["compte_id"],
+                               demandeur=qui,
+                               params={"PRENOM": prenom, "SON_MESSAGE": (r["message"] or "")[:1000],
+                                       "REPONSE": body.reponse.strip()})
+    envoye = res.get("etat") == "recu"
+    if envoye:
+        with engine().begin() as c:
+            c.execute(text("UPDATE retours SET statut = 'repondu', updated_at = now() WHERE id = :i"),
+                      {"i": retour_id})
+    return {"ok": True, "envoye": envoye, "etat": res.get("etat"), "mail_id": res.get("id"),
+            "statut": "repondu" if envoye else None, "raison": res.get("erreur")}
 
 
 # ───────────────────────── quota Copilote PAR LICENCE ─────────────────────────

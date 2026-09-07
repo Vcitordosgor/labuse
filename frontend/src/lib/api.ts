@@ -1249,7 +1249,11 @@ export interface Moi { mode: 'compte' | 'local'; plan: string; plan_label: strin
 export const getMoi = () => j<Moi>('/moi')
 // DASHBOARD-V1 · D1 — bouton « Signaler » (en-tête) : bug/idée/question → table retours
 // (statuts suivis au dashboard admin).
-export const postRetour = (body: { type: 'bug' | 'idee' | 'question'; message: string }) =>
+// COMPTE-2 (Lot 7) — « Signaler » global : le contexte (url/page/outil/idu/navigateur/écran) part avec.
+export const postRetour = (body: {
+  type: 'bug' | 'idee' | 'question' | 'donnee'; message: string
+  idu?: string; section?: string; url?: string; page?: string; outil?: string; navigateur?: string; ecran?: string
+}) =>
   j<{ ok: boolean; id: number }>('/retours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
 // ── DASHBOARD-V1 — Tour de contrôle (admin) ──

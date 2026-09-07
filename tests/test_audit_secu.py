@@ -840,6 +840,83 @@ def _login_admin(client: TestClient, email: str) -> TestClient:
     return client
 
 
+def test_admin_403_a_deux_comptes(app_client):
+    """COMPTE-2 (Lot 3) — un compte CLIENT sur /admin/* → 403 PROPRE (jamais la page, jamais 500) ;
+    un compte ADMIN → 200. ADMIN_EMAILS = Vic seul (le rôle 'admin' ouvre la porte)."""
+    ec, ea = f"cli-{uuid.uuid4().hex[:8]}@x.test", f"adm-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ec); _compte_actif(ea)
+    try:
+        cc = TestClient(app_client.app, base_url="https://testserver"); _login(cc, ec)   # client (titulaire)
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login_admin(ca, ea)  # admin
+        for route in ("/admin/licences", "/admin/pilotage", "/admin/mails", "/admin/ia", "/admin/produit"):
+            r = cc.get(route)
+            assert r.status_code == 403, f"client sur {route} : attendu 403, reçu {r.status_code}"
+        # l'admin, lui, passe (au moins la page Comptes)
+        assert ca.get("/admin/licences").status_code == 200
+        # écriture admin depuis un client → 403 aussi (jamais un effet de bord)
+        assert cc.post("/admin/licences/1/mail", json={"key": "retablissement"}).status_code == 403
+    finally:
+        _purge(ec, ea)
+
+
+def test_signaler_global_capture_le_contexte(app_client):
+    """COMPTE-2 (Lot 7) — le « Signaler » global enregistre le CONTEXTE (url/page/outil/idu/navigateur/
+    écran) avec le retour, attribué au compte connecté."""
+    from labuse.api.dashboard import ensure_tables as _dash_ens
+    from labuse.db import engine as _engine
+    _dash_ens(_engine())                      # colonnes contexte retours (ALTER idempotent)
+    e = f"sig-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(e)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver"); _login(c, e)
+        r = c.post("/retours", json={"type": "bug", "message": "la surface résiduelle est fausse",
+                                     "idu": "974110000AB012", "url": "https://app.labuse.immo/socle/#x",
+                                     "page": "cartes", "outil": "scoreur-adresse",
+                                     "navigateur": "Mozilla/5.0 Test", "ecran": "1440×900"})
+        assert r.status_code == 200, r.text
+        with session_scope() as s:
+            row = s.execute(text("SELECT compte_id, outil, idu, navigateur, ecran, url, page"
+                                 " FROM retours WHERE id = :i"), {"i": r.json()["id"]}).mappings().first()
+        assert row["compte_id"] == cid and row["outil"] == "scoreur-adresse"
+        assert row["idu"] == "974110000AB012" and row["ecran"] == "1440×900"
+        assert row["navigateur"] == "Mozilla/5.0 Test" and row["page"] == "cartes"
+    finally:
+        _purge(e)
+
+
+def test_retour_reponse_template_19_passe_repondu(app_client, monkeypatch):
+    """COMPTE-2 (Lot 7) — répondre à un signalement envoie le template 19 par la file et passe le
+    retour « répondu ». Un retour anonyme (sans compte) → 422 (pas d'adresse)."""
+    monkeypatch.setattr("labuse.brevo.envoyer_template",
+                        lambda to, key, params: {"envoye": True, "message_id": "<r19>"})
+    from labuse import mailfile
+    from labuse.api.dashboard import ensure_tables as _dash_ens
+    from labuse.db import engine as _engine
+    mailfile.ensure_tables(_engine()); _dash_ens(_engine())
+    ec, ea = f"rr-{uuid.uuid4().hex[:8]}@x.test", f"adm-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(ec); _compte_actif(ea)
+    try:
+        cc = TestClient(app_client.app, base_url="https://testserver"); _login(cc, ec)
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login_admin(ca, ea)
+        rid = cc.post("/retours", json={"type": "question", "message": "comment exporter ?"}).json()["id"]
+        rep = ca.post(f"/admin/retours/{rid}/repondre", json={"reponse": "Via le bouton Exporter en haut."})
+        assert rep.status_code == 200, rep.text
+        assert rep.json()["envoye"] is True and rep.json()["statut"] == "repondu"
+        with session_scope() as s:
+            assert s.execute(text("SELECT statut FROM retours WHERE id = :i"), {"i": rid}).scalar() == "repondu"
+            # le template 19 a bien été enfilé pour ce compte
+            k = s.execute(text("SELECT mail_key FROM mail_queue WHERE compte_id = :c ORDER BY id DESC LIMIT 1"),
+                          {"c": cid}).scalar()
+        assert k == "retour_traite"
+        # retour anonyme (compte_id NULL) → 422
+        with session_scope() as s:
+            anon = s.execute(text("INSERT INTO retours (type, message) VALUES ('bug','x anon') RETURNING id")).scalar()
+            s.commit()
+        assert ca.post(f"/admin/retours/{anon}/repondre", json={"reponse": "ok"}).status_code == 422
+    finally:
+        _purge(ec, ea)
+
+
 def test_idor_partners_share_et_profiles(app_client):
     """M-K P2-45 : share_list est SCOPÉ au compte (B ne voit pas les tokens de A pour une même
     parcelle — un token = accès public en lecture) ; POST /partners/profiles est GELÉ admin
