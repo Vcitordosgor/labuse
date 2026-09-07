@@ -163,7 +163,25 @@ page « Mon compte ».
 
 ---
 
-## Lot 5 — Dissociation des comptes — AUDIT (cloison déjà en place ; UN vrai trou)
+## Lot 5 — Plafond IA 2 €/jour BLOQUANT ✅ (+ audit isolation)
+
+**Fait** (`584c96b9` suivant) : le plafond en euros était déjà **bloquant** sur `/ask`, `/ia` (recherche
+NL) et les missions lourdes (garde `etat_plafond_ia` → 429, `depense_eur ≥ budget`, jour Réunion). Le
+**vrai trou** était **`fiche_ask`** (`/parcels/{idu}/ask`) : il n'appliquait qu'un quota par fiche
+(20/jour), pas le budget euros — un compte au plafond continuait à dépenser là (le coût était pourtant
+journalisé). Corrigé :
+- Point UNIQUE `dashboard.depassement_budget_eur(compte_id)` — check euros pur, sans effet de bord (jour
+  Réunion, budget éditable au dashboard `copilote_budget_eur`, relu à CHAQUE question). `etat_plafond_ia`
+  délègue à cette garde.
+- **`fiche_ask` gate** : avant tout appel modèle, si dépassé → réponse « budget atteint, renouvellement à
+  minuit », **zéro appel modèle** (zéro dépense de plus). Cache et réponses déterministes (défisc) restent.
+- Message client clair : « Budget IA du jour atteint (2,00 €/jour). Il se renouvelle à minuit (heure
+  Réunion). »
+- **Preuve à deux comptes** (`test_compte2_plafond_ia.py`, 5) : A dépense 2,10 € → **bloqué** ; B (0 €)
+  → **continue** ; relever le plafond de A → la question suivante **passe** (relu) ; pilote/anonyme non
+  bloqué en euros ; `fiche_ask` court-circuité au plafond sans appel modèle.
+
+**Audit isolation** (reste bon, non modifié) :
 
 - **Tables `compte_id`** : cloison via `api/tenant.py` (`SCOPED_TABLES` + `ensure_scoping` : `compte_id`
   + FK `ON DELETE CASCADE` + index). Couvre projets, pipeline/CRM, saved_searches/filters, signalements,
@@ -175,12 +193,11 @@ page « Mon compte ».
 - **Copilote** : outils SQL **paramétrés**, lisent la donnée **globale/publique** seulement (pas les
   objets d'autres comptes) ; historique/mémoire scindés par `compte_id`. Prompt adversarial : pas de
   chemin de fuite constaté (à graver en test).
-- **Plafond IA 2 €/jour par compte** : **c'est le trou**. Le coût est **journalisé** par compte
-  (`ia_log`, `ai/core.poser_compte`) mais **PAS bloqué** en temps réel — un dépassement est enregistré,
-  jamais refusé, et il n'y a pas de remise à zéro minuit **Réunion** appliquée à un plafond. À
-  **implémenter** (garde unique lue avant chaque question, reset minuit Réunion).
+- **Plafond IA 2 €/jour** : **traité ci-dessus** (bloquant, point unique, fiche incluse).
 - **Global assumé** : référentiels, sources, communes, annonces Radar, event_log `compte_id IS NULL`
   (marché) — légitime.
+- **Reste** : la matrice endpoint × geste exhaustive à graver en test (le patron est bon, la couverture
+  de test est à compléter).
 
 ---
 

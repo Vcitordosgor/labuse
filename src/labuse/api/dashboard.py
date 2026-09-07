@@ -1722,10 +1722,28 @@ def consomme_copilote_aujourdhui(compte_id: int) -> int:
         return 0
 
 
+def depassement_budget_eur(compte_id: int | None) -> dict | None:
+    """COMPTE-2 (Lot 5) — la garde EN EUROS, SANS effet de bord (ne touche aucun compteur). Rend un
+    `detail` prêt pour un 429 si la dépense IA du jour (jour Réunion) atteint le budget du compte,
+    sinon None. `compte_id is None` (pilote/anonyme) → None : ces surfaces ont leur propre garde en
+    appels. C'est LE point unique du plafond 2 €/jour/compte, appelable par TOUTE surface IA (fiche
+    incluse) — le blocage est réel, pas seulement journalisé."""
+    if compte_id is None:
+        return None
+    budget = budget_eur_du_compte(compte_id)
+    depense = depense_eur_aujourdhui(compte_id)
+    if depense >= budget:
+        return {"detail": f"Budget IA du jour atteint ({_fmt_eur(budget)}/jour). "
+                          f"Il se renouvelle à minuit (heure Réunion).",
+                "budget_eur": round(budget, 2), "depense_eur": round(depense, 4),
+                "gel_jusqua": "minuit", "budget_atteint": True}
+    return None
+
+
 def etat_plafond_ia(compte_id: int | None, sujet: str, jour_iso: str, *, nl_defaut: int) -> dict | None:
     """RETOURS-8 (R3) — LA garde unique du plafond IA, partagée par /ia, /ask et les missions lourdes.
     Incrémente TOUJOURS le compteur d'appels (mention « appels » de la tuile), puis :
-      · compte connecté → plafond en EUROS : dépense du jour ≥ budget € → dépassement ;
+      · compte connecté → plafond en EUROS (`depassement_budget_eur`) : dépense ≥ budget → dépassement ;
       · sans compte (pilote/anonyme) → plafond historique en APPELS (nl_defaut).
     Rend None si tout va bien, sinon un `detail` prêt à servir en 429 (mêmes clés qu'avant + budget)."""
     from .protection import compteur_incr_et_lire
@@ -1735,12 +1753,7 @@ def etat_plafond_ia(compte_id: int | None, sujet: str, jour_iso: str, *, nl_defa
             return {"detail": f"Quota d'analyses IA atteint ({nl_defaut}/jour). Reprend à minuit.",
                     "quota": nl_defaut, "gel_jusqua": "minuit"}
         return None
-    budget = budget_eur_du_compte(compte_id)
-    depense = depense_eur_aujourdhui(compte_id)
-    if depense >= budget:
-        return {"detail": f"Plafond IA du jour atteint ({_fmt_eur(budget)}/jour). Reprend à minuit.",
-                "budget_eur": round(budget, 2), "depense_eur": round(depense, 4), "gel_jusqua": "minuit"}
-    return None
+    return depassement_budget_eur(compte_id)
 
 
 # ═════════════════ DESTINATIONS-1 (X5.3) — calibration destinations par commune ═════════════════
