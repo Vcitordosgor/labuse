@@ -44,6 +44,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
 import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
+import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d'un même propriétaire PM
 import { TierBadge } from './TierBadge'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 
@@ -81,7 +82,7 @@ function Row({ idu, right, sub, fiche, hoverFull }: { idu: string; right: React.
 const fmt = fmtInt
 
 /** Pousse résultats sur la carte (surlignage violet + géométries propres) — et nettoie en sortie. */
-function useModuleMap(idus: string[], extra: unknown | null, deps: unknown[]) {
+export function useModuleMap(idus: string[], extra: unknown | null, deps: unknown[]) {
   const setModuleMap = useApp((s) => s.setModuleMap)
   useEffect(() => {
     setModuleMap({ idus, extra })
@@ -134,8 +135,10 @@ function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchin
   )
 }
 
-/** M15-G — sélecteur de périmètre EXPLICITE : l'outil n'hérite plus du filtre commune global. */
-export function CommuneScope({ commune, onChange }: { commune: string | null; onChange: (c: string | null) => void }) {
+/** M15-G — sélecteur de périmètre EXPLICITE : l'outil n'hérite plus du filtre commune global.
+ *  `noteFiltre` (défaut vrai) affiche la mention « choisi ici — pas hérité du filtre global » ;
+ *  Successions à venir la masque (OUTILS-MUSCLER-1B pt 5) — le comportement du filtre est inchangé. */
+export function CommuneScope({ commune, onChange, noteFiltre = true }: { commune: string | null; onChange: (c: string | null) => void; noteFiltre?: boolean }) {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   return (
     <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-txt-mut">
@@ -145,7 +148,7 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
         <option value="">Toute l'île</option>
         {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
       </select>
-      <span className="text-[10px] text-txt-dim">choisi ici — pas hérité du filtre global</span>
+      {noteFiltre && <span className="text-[10px] text-txt-dim">choisi ici — pas hérité du filtre global</span>}
     </label>
   )
 }
@@ -1681,6 +1684,10 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   // OUTILS-MUSCLER-1 Lot A — « Successions » (parcel_veille_succession, succession PROBABLE jamais
   // « en succession »). Ponts : Courrier/Comparer sur sélection, « Assembler → » par carte (Lot B).
   successions: Successions,
+  // OUTILS-MUSCLER-3 — « Blocs fonciers » : les assiettes CONTIGUËS d'un même propriétaire PM
+  // (parcel_blocs, batch blocs-build). PM seulement (particuliers hors périmètre). Ponts : Courrier
+  // (sélection), Scan patrimoine (SIREN) et Assembler (les IDU du bloc) par carte.
+  'blocs-fonciers': Blocs,
   // ÉTUDE DE ZONE Z4 — l'outil de chalandise (isochrones IGN + INSEE/SIRENE/BPE).
   'etude-zone': EtudeZone,
   // FUSION « Étudier un bien » (Vic 21/08/2026) : les DEUX clés résolvent le MÊME composant fusionné

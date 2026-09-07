@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getParcelGeojson, getParcelsGeojson, parcelAt } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
+import { HistoireFrise } from './HistoireFrise'
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
 
@@ -179,6 +180,9 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   }, [split])
 
   return (
+    // OUTILS-MUSCLER-2 C1 — le comparateur (inchangé : mêmes curseurs, mêmes libellés) prend la
+    // hauteur restante ; la FRISE DES FAITS se pose DESSOUS quand une parcelle est désignée.
+    <div className="flex min-w-0 flex-1 flex-col">
     <div
       className="relative min-w-0 flex-1 select-none"
       onMouseMove={(e) => {
@@ -224,6 +228,8 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
           </span>
         </div>
       )}
+    </div>
+    {pinIdu && <HistoireFrise idu={pinIdu} />}
     </div>
   )
 }

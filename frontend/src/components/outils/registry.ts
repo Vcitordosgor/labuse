@@ -104,7 +104,12 @@ export const MODULES: ModuleDef[] = [
   // parcel_veille_succession) servi en outil. La desc ne dit JAMAIS « est en succession » (A0 :
   // aucun acte, aucun décès constaté — dirigeant ≥ 70 ans ou SCI dormante, horizon 3-7 ans).
   { key: 'successions', num: 'M28', group: 'agir',
-    label: 'Successions', desc: 'Le foncier dont le propriétaire approche une succession.' },
+    label: 'Successions à venir', desc: 'Le foncier dont le propriétaire approche une succession.' },
+  // OUTILS-MUSCLER-3 — « Blocs fonciers » : les parcelles contiguës d'un même propriétaire personne
+  // morale (SIREN), regroupées en assiette, sur toute l'île. Sert `parcel_blocs` (batch blocs-build) ;
+  // PM seulement (particuliers hors périmètre, dit à l'écran). Aucun badge de score, aucun export.
+  { key: 'blocs-fonciers', num: 'M29', group: 'agir', descSmall: true,
+    label: 'Blocs fonciers', desc: 'Les assiettes d’un même propriétaire, sur toute l’île.' },
 
   // ── 3. Lire le marché et le territoire ──
   // M137-Z — outil « Communes » : fusion de Marché (MU1) · Comparateur (O6) · Vélocité (M05) ·

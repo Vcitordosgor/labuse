@@ -321,6 +321,168 @@ def assemblage_voisines(idu: str, db: Session = Depends(get_db)) -> dict:
             "items": items}
 
 
+# ──────────── OUTILS-MUSCLER-2 — HISTOIRE DE LA PARCELLE (la frise des faits) ────────────
+# DOCTRINE (mandat B2) : des FAITS datés, jamais un récit — aucune corrélation entre familles,
+# aucun « la parcelle a été valorisée ». Chaque fait porte sa source et la MAILLE RÉELLE de sa
+# date (jour / année / millésime) : une année seule s'affiche « 2024 », jamais « 01/01/2024 ».
+# Familles (Lot A, les 4 retenues) : ventes DVF (jour), permis Sit@del (autorisation jour,
+# dépôt 83 % année, DAACT jour), propriétaire PM (MILLÉSIME — écart constaté entre deux
+# situations au 1ᵉʳ janvier, jamais une date), découpes DFI (jour). Privacy : PM nommée,
+# particulier jamais nommé (les sources propriétaire sont PM-only par construction).
+
+_HISTOIRE_SOURCES = {
+    "vente": "DVF (DGFiP) — ventes actées",
+    "permis": "Sit@del (SDES) — autorisations d'urbanisme",
+    "proprietaire": "DGFiP — parcelles des personnes morales (millésimes annuels)",
+    "decoupe": "DFI — documents de filiation informatisés (DGFiP)",
+}
+# Cap d'affichage des listes mère/fille d'une découpe (un remaniement peut lier 789 parcelles à
+# une seule) — le TOTAL est toujours servi (n_parcelles), seule la liste est bornée, dit au front.
+_HISTOIRE_CAP_FILIATION = 12
+
+
+def _histoire_date(d, faits_annee_seule: bool = False) -> tuple[str | None, str, int | None]:
+    """(date_servie, maille, annee) — convention Sit@del (FIX-4/A3) : un 01/01 est une année
+    seule (la source ne publie que l'année) → « 2024 », maille 'annee'."""
+    if d is None:
+        return None, "jour", None
+    if faits_annee_seule and (d.month, d.day) == (1, 1):
+        return str(d.year), "annee", d.year
+    return d.isoformat(), "jour", d.year
+
+
+@router.get("/histoire/{idu}")
+def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Les faits DATÉS de la parcelle, toutes familles, du plus récent au plus ancien (B1).
+    Parcelle sans fait : réponse vide explicite, jamais une erreur (B3). Aucune lecture
+    run-scopée (aucun score servi ici) ; aucune écriture."""
+    from .app import _check_idu
+    _check_idu(idu)
+    idu = idu.strip().upper()
+    if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
+        raise HTTPException(404, "Parcelle inconnue")
+    faits: list[dict] = []
+
+    # ── 1. VENTES — vivante (2021→) + archives (2014→2020, non-ORM, 0 recouvrement vérifié).
+    # UNE ligne par MUTATION (idiome FIX-4/B3, scoreur.py) : DISTINCT ON (id_mutation) garde le
+    # local principal (le plus bâti) — sinon une vente Maison+Dépendance s'afficherait deux fois.
+    has_histo = bool(db.execute(text("SELECT to_regclass('dvf_mutations_histo') IS NOT NULL")).scalar())
+    histo_union = ("UNION ALL SELECT id_mutation, date_mutation, valeur_fonciere, surface_reelle_bati, "
+                   "surface_terrain, type_local, nature_mutation FROM dvf_mutations_histo "
+                   "WHERE id_parcelle = :i" if has_histo else "")
+    for r in db.execute(text(f"""
+        SELECT DISTINCT ON (id_mutation) id_mutation, date_mutation, valeur_fonciere,
+               surface_reelle_bati, surface_terrain, type_local, nature_mutation
+        FROM (SELECT id_mutation, date_mutation, valeur_fonciere, surface_reelle_bati,
+                     surface_terrain, type_local, nature_mutation
+              FROM dvf_mutations_parcelle WHERE id_parcelle = :i {histo_union}) u
+        ORDER BY id_mutation, surface_reelle_bati DESC NULLS LAST"""),
+        {"i": idu}).mappings().all():
+        date, maille, annee = _histoire_date(r["date_mutation"])
+        faits.append({
+            "famille": "vente", "date": date, "maille": maille, "annee": annee,
+            "libelle": f"{r['nature_mutation'] or 'Mutation'}{' — ' + r['type_local'] if r['type_local'] else ''}",
+            "chiffres": {
+                # valeur de la MUTATION entière (elle peut couvrir plusieurs parcelles) — dit tel quel.
+                "prix_eur": float(r["valeur_fonciere"]) if r["valeur_fonciere"] is not None else None,
+                "surface_bati_m2": round(r["surface_reelle_bati"]) if r["surface_reelle_bati"] else None,
+                "surface_terrain_m2": round(r["surface_terrain"]) if r["surface_terrain"] else None,
+                "statut": "Sourcé",
+            },
+            "source": _HISTOIRE_SOURCES["vente"],
+        })
+
+    # ── 2. PERMIS — un fait PAR ÉVÉNEMENT DATÉ du permis (dépôt / autorisation / DAACT), chacun à
+    # sa maille réelle. Libellés d'état : les mêmes que l'outil Permis (_ETAT_LABELS, jamais le code brut).
+    for r in db.execute(text("""
+        SELECT permit_id, type, date::date AS d_autorisation, date_depot,
+               NULLIF(raw->>'daact', '')::date AS d_daact,
+               NULLIF(raw->>'nb_lgt', '') AS nb_lgt, NULLIF(raw->>'surf_hab', '') AS surf_hab
+        FROM sitadel_permits WHERE idu_codes ? :i ORDER BY date"""),
+        {"i": idu}).mappings().all():
+        chiffres = {
+            "nb_logements": int(float(r["nb_lgt"])) if r["nb_lgt"] else None,
+            "surf_hab_m2": round(float(r["surf_hab"])) if r["surf_hab"] else None,
+            "statut": "Sourcé",
+        }
+        commun = {"famille": "permis", "permit_id": r["permit_id"], "type_permis": r["type"],
+                  "chiffres": chiffres, "source": _HISTOIRE_SOURCES["permis"]}
+        if r["date_depot"]:
+            date, maille, annee = _histoire_date(r["date_depot"], faits_annee_seule=True)
+            faits.append({**commun, "date": date, "maille": maille, "annee": annee,
+                          "libelle": f"Permis {r['type']} déposé"})
+        if r["d_autorisation"]:
+            date, maille, annee = _histoire_date(r["d_autorisation"])
+            faits.append({**commun, "date": date, "maille": maille, "annee": annee,
+                          "libelle": f"Permis {r['type']} autorisé"})
+        if r["d_daact"]:
+            date, maille, annee = _histoire_date(r["d_daact"])
+            faits.append({**commun, "date": date, "maille": maille, "annee": annee,
+                          "libelle": "Travaux achevés (DAACT)"})
+
+    # ── 3. PROPRIÉTAIRE PM — le lecteur UNIQUE existant (proprietaire_historique.historique) :
+    # un changement est un CONSTAT entre deux millésimes, maille = millésime (jamais une date).
+    from ..proprietaire_historique import historique
+    hist = historique(db, idu)
+    for ch in (hist or {}).get("changements", []):
+        faits.append({
+            "famille": "proprietaire", "date": None, "maille": "millesime",
+            "annee": ch["a_millesime"],
+            "de_millesime": ch["de_millesime"], "a_millesime": ch["a_millesime"],
+            "libelle": "Changement de propriétaire (personne morale)",
+            "avant": {"siren": ch["siren_avant"], "denomination": ch["denomination_avant"]},
+            "apres": {"siren": ch["siren_apres"], "denomination": ch["denomination_apres"]},
+            "chiffres": {"statut": "Sourcé"},
+            "source": _HISTOIRE_SOURCES["proprietaire"],
+        })
+
+    # ── 4. DÉCOUPES — dfi_filiation (non-ORM, premier service de la table). Regroupées par
+    # (date, nature, sens) : un remaniement lie des centaines de parcelles → UNE ligne par acte,
+    # liste bornée (cap dit), total toujours servi.
+    if bool(db.execute(text("SELECT to_regclass('dfi_filiation') IS NOT NULL")).scalar()):
+        for r in db.execute(text("""
+            SELECT date_validation, nature, (idu_fille = :i) AS en_fille,
+                   count(*) AS n,
+                   (array_agg(DISTINCT CASE WHEN idu_fille = :i THEN idu_mere ELSE idu_fille END))[1:%d] AS autres
+            FROM dfi_filiation WHERE idu_fille = :i OR idu_mere = :i
+            GROUP BY date_validation, nature, (idu_fille = :i)
+            ORDER BY date_validation""" % _HISTOIRE_CAP_FILIATION),
+            {"i": idu}).mappings().all():
+            date, maille, annee = _histoire_date(r["date_validation"])
+            nature = r["nature"] or "document de filiation"
+            faits.append({
+                "famille": "decoupe", "date": date, "maille": maille, "annee": annee,
+                "libelle": (f"Parcelle issue d'un {nature}" if r["en_fille"]
+                            else f"{nature.capitalize()} — parcelle d'origine"),
+                "parcelles_liees": list(r["autres"] or []),
+                "n_parcelles_liees": int(r["n"]),
+                "chiffres": {"statut": "Sourcé"},
+                "source": _HISTOIRE_SOURCES["decoupe"],
+            })
+
+    # tri : plus récent d'abord (année de la maille ; à année égale, le jour connu passe après
+    # l'année seule pour rester stable — l'écran empile de toute façon les faits d'une même année).
+    faits.sort(key=lambda f: (f["annee"] or 0, f["date"] or ""), reverse=True)
+
+    # ── C6 — millésimes des sources servies (lus des données, même honnêteté que l'app).
+    maj_dvf = db.execute(text("SELECT max(date_mutation) FROM dvf_mutations_parcelle")).scalar()
+    maj_sit = db.execute(text("SELECT max(date::date) FROM sitadel_permits")).scalar()
+    mil_ff = db.execute(text("SELECT max(millesime) FROM pm_proprietaires_millesimes")).scalar()
+    maj_dfi = (db.execute(text("SELECT max(date_validation) FROM dfi_filiation")).scalar()
+               if bool(db.execute(text("SELECT to_regclass('dfi_filiation') IS NOT NULL")).scalar()) else None)
+    return {
+        "idu": idu, "n": len(faits), "faits": faits,
+        "cap_filiation": _HISTOIRE_CAP_FILIATION,
+        "sources": [
+            {"cle": "dvf", "nom": "DVF (DGFiP)", "maj": maj_dvf.isoformat() if maj_dvf else None},
+            {"cle": "sitadel", "nom": "Sit@del (SDES)", "maj": maj_sit.isoformat() if maj_sit else None},
+            {"cle": "ff", "nom": "Fichiers fonciers PM (DGFiP)",
+             "maj": f"millésimes 2019→{mil_ff}" if mil_ff else None},
+            {"cle": "dfi", "nom": "DFI (DGFiP)", "maj": maj_dfi.isoformat() if maj_dfi else None},
+        ],
+    }
+
+
 # ───────────────────────── M17 — SIMULATEUR ZAN ─────────────────────────
 
 # Point 41 — RÈGLE D'OR : distinction Sourcé (observé) / Estimé (dérivé) stricte, caveat systématique.

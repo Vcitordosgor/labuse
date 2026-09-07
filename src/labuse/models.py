@@ -29,7 +29,7 @@ from sqlalchemy import (
 from sqlalchemy import (
     Enum as SAEnum,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from . import enums
@@ -392,6 +392,60 @@ class PmProprietaireMillesime(Base):
     siren: Mapped[str | None] = mapped_column(String(20))
     url_source: Mapped[str | None] = mapped_column(Text)
     date_import: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+# ─────────────────────── parcel_blocs (OUTILS-MUSCLER-3) ───────────────────────
+
+class ParcelBloc(Base):
+    """Un BLOC foncier = les parcelles cadastrales CONTIGUËS (ST_DWithin 0,5 m) d'un MÊME
+    propriétaire personne morale (SIREN). Produit dérivé, reconstruit en bloc par le batch
+    `labuse blocs-build` (idempotent : DELETE + rebuild). Uniquement des PM : les particuliers
+    n'ont pas d'identité stable d'une parcelle à l'autre → hors périmètre.
+
+    `bloc_key` = `siren:min(idu)` — clé DÉTERMINISTE (stable tant que la composition ne bouge
+    pas). Le résiduel SDP est AGRÉGÉ (somme des résiduels par parcelle) depuis la vue servie
+    `parcel_residuel` — statut Estimé ; `sdp_couverture` = combien de parcelles avaient une valeur.
+    """
+
+    __tablename__ = "parcel_blocs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    bloc_key: Mapped[str] = mapped_column(Text, unique=True, index=True)
+    siren: Mapped[str] = mapped_column(String(20), index=True)
+    denomination: Mapped[str | None] = mapped_column(String(200))
+    n_parcelles: Mapped[int] = mapped_column(Integer)
+    surface_totale_m2: Mapped[int] = mapped_column(Integer)
+    communes: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    sdp_residuelle_m2: Mapped[int] = mapped_column(Integer, default=0)
+    sdp_couverture: Mapped[int] = mapped_column(Integer, default=0)  # nb parcelles avec résiduel connu
+    zonages: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    # Propriétaire de droit public (commune, État, collectivité, établissement public, SEM…) —
+    # classé par `proprietaire_type.classify_dgfip` (groupe + forme juridique de la source), JAMAIS
+    # une liste de SIREN/noms en dur. L'outil écarte les publics par défaut.
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, index=True,
+                                            server_default=text("false"))
+    residuel_run_seq: Mapped[int | None] = mapped_column(Integer)    # run résiduel servi épinglé
+    built_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    membres: Mapped[list[ParcelBlocMembre]] = relationship(
+        back_populates="bloc", cascade="all, delete-orphan")
+
+
+class ParcelBlocMembre(Base):
+    """Une parcelle appartenant à un bloc (le détail servi à l'écran : IDU + surface + zone)."""
+
+    __tablename__ = "parcel_bloc_membres"
+
+    bloc_id: Mapped[int] = mapped_column(
+        ForeignKey("parcel_blocs.id", ondelete="CASCADE"), primary_key=True)
+    idu: Mapped[str] = mapped_column(String(14), primary_key=True)
+    parcel_id: Mapped[int] = mapped_column(Integer, index=True)
+    surface_m2: Mapped[int | None] = mapped_column(Integer)
+    commune: Mapped[str | None] = mapped_column(String(64))
+    zone: Mapped[str | None] = mapped_column(Text)
+    sdp_residuelle_m2: Mapped[int | None] = mapped_column(Integer)   # résiduel de CETTE parcelle (Estimé)
+
+    bloc: Mapped[ParcelBloc] = relationship(back_populates="membres")
 
 
 # ─────────────────────── source_checks (VUES item 4, 12/07/2026) ───────────────────────

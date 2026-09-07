@@ -713,6 +713,37 @@ def flux_run_cmd(
                f"({time.time() - t0:.0f}s total). NON servi — bascule manuelle.")
 
 
+@app.command("blocs-build")
+def blocs_build_cmd() -> None:
+    """OUTILS-MUSCLER-3 — reconstruit `parcel_blocs` : les assiettes contiguës d'un même
+    propriétaire PM (SIREN) sur toute l'île. Idempotent (DELETE + rebuild atomique), journalisé
+    comme un run. NE S'EXÉCUTE PAS tout seul — c'est Vic qui le lance (doctrine d'injection sur
+    clic humain). Règles : contiguïté 0,5 m, même SIREN, parcelles cadastrales, ≥ 2 parcelles."""
+    import os
+    import time
+
+    from . import blocs, run_progress
+
+    label = "blocs-build"
+    t0 = time.time()
+    run_progress.start(label, pid=os.getpid(), kind="batch", total=3,
+                       log=f"/tmp/labuse-{label}.log")
+    try:
+        with session_scope() as s:
+            def _cb(phase: str, done: int, total: int) -> None:
+                run_progress.progress(label, phase=phase, done=done, total=total,
+                                      pct=round(done / total * 100))
+            stats = blocs.build_blocs(s, progress_cb=_cb)
+            s.commit()
+        run_progress.finish(label, n_parcelles=stats["n_membres"])
+        typer.echo(
+            f"✓ BLOCS-BUILD : {stats['n_blocs']} blocs, {stats['n_membres']} parcelles "
+            f"(résiduel run_seq {stats['residuel_run_seq']}, {time.time() - t0:.0f}s).")
+    except Exception as exc:  # noqa: BLE001 — trace l'échec dans l'état du run puis remonte.
+        run_progress.abandon(label, error=str(exc))
+        raise
+
+
 #: M80 — tables run-scoped connues qui portent une colonne run_id/run_label (découvertes en base au
 #: lancement ; cette liste sert de repli/documentation). Le cycle de vie d'un run est ATOMIQUE :
 #: un run se crée et se PURGE dans TOUTES ces tables ensemble (défaut #1 du RAPPORT_M80).
