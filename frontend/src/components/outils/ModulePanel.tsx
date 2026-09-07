@@ -134,8 +134,10 @@ function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchin
   )
 }
 
-/** M15-G — sélecteur de périmètre EXPLICITE : l'outil n'hérite plus du filtre commune global. */
-export function CommuneScope({ commune, onChange }: { commune: string | null; onChange: (c: string | null) => void }) {
+/** M15-G — sélecteur de périmètre EXPLICITE : l'outil n'hérite plus du filtre commune global.
+ *  `noteFiltre` (défaut vrai) affiche la mention « choisi ici — pas hérité du filtre global » ;
+ *  Successions à venir la masque (OUTILS-MUSCLER-1B pt 5) — le comportement du filtre est inchangé. */
+export function CommuneScope({ commune, onChange, noteFiltre = true }: { commune: string | null; onChange: (c: string | null) => void; noteFiltre?: boolean }) {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   return (
     <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-txt-mut">
@@ -145,7 +147,7 @@ export function CommuneScope({ commune, onChange }: { commune: string | null; on
         <option value="">Toute l'île</option>
         {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
       </select>
-      <span className="text-[10px] text-txt-dim">choisi ici — pas hérité du filtre global</span>
+      {noteFiltre && <span className="text-[10px] text-txt-dim">choisi ici — pas hérité du filtre global</span>}
     </label>
   )
 }

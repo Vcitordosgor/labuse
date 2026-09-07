@@ -145,8 +145,9 @@ export function M16() {
     queryKey: ['asm-voisines', r], queryFn: () => getAssemblageVoisines(r), staleTime: 60_000, retry: false })) })
   // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
   // partagé, consommation-puis-reset) ; l'utilisateur agrège les contiguës au clic-carte.
-  // OUTILS-MUSCLER-1 B2 — la porte (fiche, Successions « Assembler → ») fait AUSSI de la parcelle le
-  // départ : ses voisines contiguës sont proposées dès l'ouverture.
+  // OUTILS-MUSCLER-1 B2 — la porte (fiche) fait AUSSI de la parcelle le départ : ses voisines
+  // contiguës sont proposées dès l'ouverture. (1B pt 2 : le pont « Assembler → » de Successions
+  // à venir a été retiré ; la fiche reste la source de parcelPrefill.)
   useEffect(() => {
     if (parcelPrefill) { setMsel([parcelPrefill]); setRings([parcelPrefill]); setParcelPrefill(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
