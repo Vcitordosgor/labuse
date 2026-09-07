@@ -1761,7 +1761,7 @@ def depassement_budget_eur(compte_id: int | None) -> dict | None:
     budget = budget_eur_du_compte(compte_id)
     depense = depense_eur_aujourdhui(compte_id)
     if depense >= budget:
-        return {"detail": f"Budget IA du jour atteint ({_fmt_eur(budget)}/jour). "
+        return {"detail": f"Plafond IA du jour atteint ({_fmt_eur(budget)}/jour). "
                           f"Il se renouvelle à minuit (heure Réunion).",
                 "budget_eur": round(budget, 2), "depense_eur": round(depense, 4),
                 "gel_jusqua": "minuit", "budget_atteint": True}
