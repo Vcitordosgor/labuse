@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 from . import models
 from .assemblage import ADJ_BUFFER_M  # 0,5 m — contact cadastral, constante unique
 from .faisabilite import residuel_runs
+from .proprietaire_type import classify_dgfip  # classification juridique UNIQUE de l'app
 
 MIN_PARCELLES = 2
 
@@ -36,6 +37,9 @@ def ensure_schema(session: Session) -> None:
     bind = session.get_bind()
     models.ParcelBloc.__table__.create(bind, checkfirst=True)
     models.ParcelBlocMembre.__table__.create(bind, checkfirst=True)
+    # ALTER idempotent : la colonne is_public a pu être ajoutée après un premier build.
+    session.execute(text("ALTER TABLE parcel_blocs ADD COLUMN IF NOT EXISTS is_public boolean "
+                         "NOT NULL DEFAULT false"))
 
 
 class _UnionFind:
@@ -104,9 +108,12 @@ def compute_blocs(session: Session) -> list[dict]:
         "SELECT idu, COALESCE(zone_lib, zone_fam) FROM parcel_zone_plu WHERE idu = ANY(:idus)"),
         {"idus": member_idus}).all()) if member_idus else {}
     sirens = list({by_pid[m[0]]["siren"] for m in blocs_pids})
-    denom = dict(session.execute(text(
-        "SELECT siren, max(denomination) FROM parcelle_personne_morale "
-        "WHERE siren = ANY(:s) GROUP BY siren"), {"s": sirens}).all()) if sirens else {}
+    # Identité juridique par SIREN (groupe DGFiP + forme + dénomination) — sert la dénomination ET
+    # la classification public/privé (classify_dgfip). Un SIREN a une identité homogène → max() OK.
+    ident = {r["siren"]: r for r in session.execute(text(
+        "SELECT siren, max(groupe) AS groupe, max(forme_juridique) AS forme, "
+        "max(denomination) AS denomination FROM parcelle_personne_morale "
+        "WHERE siren = ANY(:s) GROUP BY siren"), {"s": sirens}).mappings().all()} if sirens else {}
 
     # 3 — agrégation par bloc.
     out: list[dict] = []
@@ -119,10 +126,13 @@ def compute_blocs(session: Session) -> list[dict]:
         sdp_par = {pid: resid.get(pid) for pid in pids}
         sdp_total = sum(v for v in sdp_par.values() if v is not None)
         couverture = sum(1 for v in sdp_par.values() if v is not None)
+        info = ident.get(siren) or {}
+        cls = classify_dgfip(info.get("groupe"), info.get("forme"), info.get("denomination"))
         out.append({
             "bloc_key": f"{siren}:{min_idu}",
             "siren": siren,
-            "denomination": denom.get(siren),
+            "denomination": info.get("denomination"),
+            "is_public": bool(cls["public"]),
             "n_parcelles": len(members),
             "surface_totale_m2": sum(m["surface"] or 0 for m in members),
             "communes": communes,

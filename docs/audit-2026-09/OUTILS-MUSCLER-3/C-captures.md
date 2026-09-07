@@ -45,6 +45,22 @@ sur la carte tant que le détail est ouvert (mécanisme `useModuleMap`, IDU des 
 > « Aucun bloc de deux parcelles ou plus à **Cilaos** (surface ≥ 50 000 m²) (résiduel ≥ 5 000 m²)
 > (≥ 11 parcelles) au 07/09/2026. » — jamais de zéros, le périmètre et la date sont nommés.
 
+## Propriétaires publics écartés par défaut (ajout)
+
+Classification par la **catégorie juridique de la source** (`proprietaire_type.classify_dgfip` :
+groupe DGFiP + forme juridique — commune, État, collectivité, établissement public/EPF, SEM), **jamais
+une liste de SIREN/noms en dur**. Île entière : **6 361 privés servis, 4 864 publics écartés**.
+
+Preuve DOM (le screenshot expire sur le canvas WebGL — garde-fou → preuve DOM) :
+- Case `Inclure les propriétaires publics` présente, **décochée par défaut**.
+- Bandeau par défaut :
+  > « **6 361** blocs · signal propriétaires PM DGFiP (millésime 2025) au 07/09/2026 — toute l'île ·
+  > **4 864 propriétaires publics écartés** »
+- Case cochée → bandeau « **11 225** blocs … » (mention « écartés » retirée), 200 lignes.
+- Endpoint réel : défaut `total=6361, n_publics=4864, inclure_publics=false` ; `inclure_publics=true`
+  → `total=11225`. Premier privé servi : **CBO TERRITORIA** (`is_public=false`) ; classés publics :
+  COMMUNE DE…, ETS PUBLIC FONCIER DE LA REUNION, SEM d'aménagement.
+
 ## Perf (mesurée sur la même base, endpoint réel)
 | Périmètre | Liste (page 200) | Total | Détail |
 |---|---|---|---|

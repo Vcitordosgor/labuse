@@ -128,13 +128,14 @@ export function Blocs() {
   const [surfMin, setSurfMin] = useState(0)
   const [sdpMin, setSdpMin] = useState(0)
   const [nMin, setNMin] = useState(2)
+  const [inclurePublics, setInclurePublics] = useState(false)   // publics écartés par défaut
   const [openId, setOpenId] = useState<number | null>(null)
   const [sel, setSel] = useState<Set<number>>(new Set())   // blocs cochés (par bloc_id)
 
   const reset = () => { setSel(new Set()); setOpenId(null) }
   const q = useInfiniteQuery({
-    queryKey: ['blocs', commune, surfMin, sdpMin, nMin],
-    queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, pageParam),
+    queryKey: ['blocs', commune, surfMin, sdpMin, nMin, inclurePublics],
+    queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, inclurePublics, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => { const n = pages.reduce((s, p) => s + p.items.length, 0); return n < last.total ? n : undefined },
   })
@@ -179,6 +180,16 @@ export function Blocs() {
           </select>
         </label>
       </div>
+      {/* Propriétaires publics (commune, État, collectivité, EP, SEM — catégorie juridique de la
+          source) écartés par défaut ; la case les rétablit. */}
+      <label className="flex items-center gap-2 text-[11px] text-txt-mut">
+        <input type="checkbox" data-blocs-inclure-publics className="h-3 w-3 accent-mint"
+          checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }} />
+        Inclure les propriétaires publics
+        <Tip tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
+          <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
+        </Tip>
+      </label>
 
       {q.isLoading && <Loading label="Blocs…" />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
@@ -189,6 +200,9 @@ export function Blocs() {
           {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}
           {surfMin ? ` (surface ≥ ${fmtInt(surfMin)} m²)` : ''}{sdpMin ? ` (résiduel ≥ ${fmtInt(sdpMin)} m²)` : ''}
           {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}{meta.maj ? ` au ${meta.maj}` : ''}.
+          {!inclurePublics && meta.n_publics > 0 && (
+            <> {fmtInt(meta.n_publics)} propriétaire{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''} (cochez « inclure les propriétaires publics » pour les voir).</>
+          )}
         </p>
       )}
       {meta && total > 0 && (
@@ -198,6 +212,9 @@ export function Blocs() {
             <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} ·
             signal <b className="text-txt">propriétaires PM DGFiP</b>{meta.millesime ? ` (millésime ${meta.millesime})` : ''}
             {meta.maj ? ` au ${meta.maj}` : ''}{commune ? ` — ${commune}` : ' — toute l’île'}
+            {!inclurePublics && meta.n_publics > 0 && (
+              <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} propriétaire{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''}</span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-txt-dim">

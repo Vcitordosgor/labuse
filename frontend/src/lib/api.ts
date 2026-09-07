@@ -887,10 +887,13 @@ export interface BlocItem {
   n_parcelles: number; surface_totale_m2: number; communes: string[]
   sdp_residuelle_m2: number; sdp_couverture: number   // couverture = nb parcelles au résiduel connu
   zonages: string[]
+  is_public: boolean        // propriétaire de droit public (classify_dgfip) — écarté par défaut
   idu_repr: string | null   // IDU représentatif (min) — résout le propriétaire pour le pont Courrier
 }
 export interface BlocsResp {
   total: number; n: number; items: BlocItem[]
+  n_publics: number          // blocs publics écartés (mêmes filtres) — dit au bandeau
+  inclure_publics: boolean
   maj: string | null; millesime: string | number | null
   source: string; avertissement: string
 }
@@ -900,11 +903,12 @@ export interface BlocMembre {
 }
 export interface BlocDetail extends BlocItem { membres: BlocMembre[] }
 export const BLOCS_PAGE = 200
-export const getBlocs = (communeNom?: string | null, surfaceMin = 0, sdpMin = 0, nMin = 2, offset = 0) =>
+export const getBlocs = (communeNom?: string | null, surfaceMin = 0, sdpMin = 0, nMin = 2,
+                         inclurePublics = false, offset = 0) =>
   j<BlocsResp>(`/modules/blocs?limit=${BLOCS_PAGE}&n_min=${nMin}`
     + `${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}`
     + `${surfaceMin ? `&surface_min=${surfaceMin}` : ''}${sdpMin ? `&sdp_min=${sdpMin}` : ''}`
-    + `${offset ? `&offset=${offset}` : ''}`)
+    + `${inclurePublics ? '&inclure_publics=true' : ''}${offset ? `&offset=${offset}` : ''}`)
 export const getBlocDetail = (blocId: number) => j<BlocDetail>(`/modules/blocs/${blocId}`)
 
 // ── OUTILS-MUSCLER-2 — histoire de la parcelle (frise des faits sous le comparateur d'orthos).

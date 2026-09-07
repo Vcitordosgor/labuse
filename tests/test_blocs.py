@@ -31,10 +31,11 @@ def _p(db, idu, wkt, surf, commune="Blocville", zone=None):
     return pid
 
 
-def _pm(db, idu, siren, denom="SCI TEST"):
+def _pm(db, idu, siren, denom="SCI TEST", groupe=None, forme=None):
     db.execute(text(
-        "INSERT INTO parcelle_personne_morale (idu, siren, denomination) VALUES (:i,:s,:d)"),
-        {"i": idu, "s": siren, "d": denom})
+        "INSERT INTO parcelle_personne_morale (idu, siren, denomination, groupe, forme_juridique) "
+        "VALUES (:i,:s,:d,:g,:f)"),
+        {"i": idu, "s": siren, "d": denom, "g": groupe, "f": forme})
 
 
 def _served_residuel(db, residuels: dict[int, int], seq: int = 1) -> None:
@@ -168,6 +169,35 @@ def test_endpoint_liste_et_detail(db_session):
     with pytest.raises(HTTPException) as e:
         modules.bloc_detail(bloc_id=999999, db=db_session)
     assert e.value.status_code == 404
+
+
+def test_proprietaires_publics_ecartes_par_defaut(db_session):
+    """Un bloc de propriétaire PUBLIC (commune, groupe DGFiP 4) est écarté par défaut ; la case
+    `inclure_publics` le rétablit ; le bandeau compte les écartés. Classé par catégorie juridique."""
+    from labuse.api import modules
+
+    # bloc PRIVÉ (SCI, groupe 0) et bloc PUBLIC (commune, groupe 4), chacun 2 parcelles contiguës.
+    pa = _p(db_session, "BLOC00070", _A, 600); pb = _p(db_session, "BLOC00071", _B, 600)
+    _pm(db_session, "BLOC00070", "S0070", "SCI PRIVEE"); _pm(db_session, "BLOC00071", "S0070", "SCI PRIVEE")
+    pc = _p(db_session, "BLOC00080", _LOIN, 600)
+    pd = _p(db_session, "BLOC00081", "POLYGON((55.7003 -21.30,55.7006 -21.30,55.7006 -21.2997,55.7003 -21.2997,55.7003 -21.30))", 600)
+    _pm(db_session, "BLOC00080", "S0080", "COMMUNE DE TEST", groupe=4)
+    _pm(db_session, "BLOC00081", "S0080", "COMMUNE DE TEST", groupe=4)
+    _served_residuel(db_session, {pa: 100, pb: 100, pc: 50, pd: 50})
+    blocs.build_blocs(db_session)
+
+    # is_public bien posé : commune=public, SCI=privé.
+    pub = dict(db_session.execute(text("SELECT siren, is_public FROM parcel_blocs")).all())
+    assert pub == {"S0070": False, "S0080": True}
+
+    kw = dict(commune=None, surface_min=0, sdp_min=0, n_min=2, limit=200, offset=0)
+    # par défaut : le public est écarté, le bandeau le compte.
+    d = modules.blocs_liste(inclure_publics=False, db=db_session, **kw)
+    assert d["total"] == 1 and d["n_publics"] == 1 and d["inclure_publics"] is False
+    assert [i["siren"] for i in d["items"]] == ["S0070"]
+    # inclure_publics : les deux reviennent.
+    d2 = modules.blocs_liste(inclure_publics=True, db=db_session, **kw)
+    assert d2["total"] == 2 and {i["siren"] for i in d2["items"]} == {"S0070", "S0080"}
 
 
 def test_idempotent(db_session):

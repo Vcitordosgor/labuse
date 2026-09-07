@@ -1020,11 +1020,14 @@ def blocs_liste(commune: str | None = None,
                 surface_min: int = Query(0, ge=0),
                 sdp_min: int = Query(0, ge=0),
                 n_min: int = Query(2, ge=2),
+                inclure_publics: bool = Query(False),
                 limit: int = Query(200, ge=1, le=500), offset: int = Query(0, ge=0),
                 db: Session = Depends(get_db)) -> dict:
     """Blocs triés par SDP résiduelle agrégée décroissante (Estimé — somme des résiduels servis).
     Surface/zonage/communes Sourcés (cadastre, PLU). Filtres à paliers (surface totale, résiduel,
-    nombre de parcelles). Le millésime des propriétaires PM et la date du calcul voyagent au bandeau."""
+    nombre de parcelles). Les propriétaires de droit public (commune, État, collectivité, EPF/EP,
+    SEM — classés par la catégorie juridique de la source, `classify_dgfip`, jamais une liste en dur)
+    sont ÉCARTÉS par défaut ; `inclure_publics=true` les rétablit. Le bandeau dit combien sont écartés."""
     if not db.execute(text("SELECT to_regclass('parcel_blocs') IS NOT NULL")).scalar():
         raise HTTPException(503, "blocs non calculés (table absente — lancer `labuse blocs-build`).")
     where = ("WHERE n_parcelles >= :nmin"
@@ -1032,12 +1035,16 @@ def blocs_liste(commune: str | None = None,
              + (" AND surface_totale_m2 >= :surfmin" if surface_min else "")
              + (" AND sdp_residuelle_m2 >= :sdpmin" if sdp_min else ""))
     params = {"nmin": n_min, "c": commune, "surfmin": surface_min, "sdpmin": sdp_min}
-    total = int(db.execute(text(f"SELECT count(*) FROM parcel_blocs {where}"), params).scalar() or 0)
+    where_f = where + ("" if inclure_publics else " AND is_public = false")
+    total = int(db.execute(text(f"SELECT count(*) FROM parcel_blocs {where_f}"), params).scalar() or 0)
+    # Combien de blocs publics correspondraient aux mêmes filtres (le bandeau dit combien sont écartés).
+    n_publics = int(db.execute(text(
+        f"SELECT count(*) FROM parcel_blocs {where} AND is_public = true"), params).scalar() or 0)
     rows = db.execute(text(f"""
         SELECT b.id AS bloc_id, b.siren, b.denomination, b.n_parcelles, b.surface_totale_m2,
-               b.communes, b.sdp_residuelle_m2, b.sdp_couverture, b.zonages,
+               b.communes, b.sdp_residuelle_m2, b.sdp_couverture, b.zonages, b.is_public,
                (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
-        FROM parcel_blocs b {where}
+        FROM parcel_blocs b {where_f}
         ORDER BY b.sdp_residuelle_m2 DESC, b.id
         LIMIT :lim OFFSET :off"""),
         {**params, "lim": limit, "off": offset}).mappings().all()
@@ -1047,12 +1054,14 @@ def blocs_liste(commune: str | None = None,
         "SELECT max(millesime) FROM parcelle_personne_morale WHERE millesime IS NOT NULL")).scalar()
     maj = db.execute(text("SELECT to_char(max(built_at), 'DD/MM/YYYY') FROM parcel_blocs")).scalar()
     return {"total": total, "n": len(items), "items": items,
+            "n_publics": n_publics, "inclure_publics": inclure_publics,
             "maj": maj, "millesime": millesime,
             "source": "Fichiers des personnes morales (DGFiP) · contiguïté cadastrale (PostGIS)",
             "avertissement": ("Les parcelles CONTIGUËS d'un même propriétaire personne morale (SIREN), "
                               "regroupées en une assiette. Uniquement des personnes morales : les "
-                              "particuliers n'ont pas d'identité stable d'une parcelle à l'autre. La SDP "
-                              "résiduelle est Estimée (enveloppe de la fiche), sommée sur le bloc.")}
+                              "particuliers n'ont pas d'identité stable d'une parcelle à l'autre. Les "
+                              "propriétaires de droit public sont écartés par défaut. La SDP résiduelle "
+                              "est Estimée (enveloppe de la fiche), sommée sur le bloc.")}
 
 
 @router.get("/blocs/{bloc_id}")

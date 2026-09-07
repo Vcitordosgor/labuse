@@ -419,6 +419,11 @@ class ParcelBloc(Base):
     sdp_residuelle_m2: Mapped[int] = mapped_column(Integer, default=0)
     sdp_couverture: Mapped[int] = mapped_column(Integer, default=0)  # nb parcelles avec résiduel connu
     zonages: Mapped[list[str]] = mapped_column(ARRAY(Text))
+    # Propriétaire de droit public (commune, État, collectivité, établissement public, SEM…) —
+    # classé par `proprietaire_type.classify_dgfip` (groupe + forme juridique de la source), JAMAIS
+    # une liste de SIREN/noms en dur. L'outil écarte les publics par défaut.
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, index=True,
+                                            server_default=text("false"))
     residuel_run_seq: Mapped[int | None] = mapped_column(Integer)    # run résiduel servi épinglé
     built_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
