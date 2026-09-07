@@ -30,7 +30,12 @@ def db(monkeypatch):
 @pytest.fixture
 def parcelle():
     """Parcelle DÉDIÉE (créée puis supprimée) pour tester la génération Flash sans dépendre
-    des données de la base de test ni la polluer."""
+    des données de la base de test ni la polluer.
+
+    EXPORTS-2 lot 8 : le Flash est servi par le BUILDER UNIQUE, construit sur la fiche d'analyse
+    (`parcel_fiche`). Une parcelle absente du run servi est inconnue de l'analyse (404) : on seede
+    donc AUSSI sa ligne `dryrun_parcel_evaluations` pour le run courant."""
+    from labuse import runs
     idu = f"974990FL{uuid.uuid4().hex[:6].upper()}"
     wkt = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
     with session_scope() as s:
@@ -39,9 +44,17 @@ def parcelle():
             " centroid, bbox) VALUES (:i,'X','ZZ','1', ST_GeomFromText(:w,4326),"
             " ST_Transform(ST_GeomFromText(:w,4326),2975), 800,"
             " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
-            {"i": idu, "w": wkt}); s.commit()
+            {"i": idu, "w": wkt})
+        s.execute(text(
+            "INSERT INTO dryrun_parcel_evaluations "
+            "(run_label, parcel_id, completeness_score, opportunity_score, status, created_at) "
+            "SELECT :run, p.id, 50, 10, 'analysee', now() FROM parcels p WHERE p.idu = :i"),
+            {"run": runs.current(), "i": idu})
+        s.commit()
     yield idu
     with session_scope() as s:
+        s.execute(text("DELETE FROM dryrun_parcel_evaluations d USING parcels p "
+                       "WHERE d.parcel_id = p.id AND p.idu = :i"), {"i": idu})
         s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu}); s.commit()
 
 

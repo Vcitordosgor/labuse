@@ -1,12 +1,19 @@
 """M73 §2 — TEST DE NON-CONTRADICTION (exigence centrale du mandat).
 
-Génère les QUATRE documents (premium, dossier, banquier, fiche écran) sur les parcelles
-de recette et ÉCHOUE si une valeur commune diffère entre deux documents, ou si un jeton de
-contradiction / libellé technique brut atteint le papier. C'est la garantie que le problème
-(RAPPORT_M73 : double rail de cascade, aléas côte à côte, PPR divergent) ne revient pas.
+EXPORTS-2 lot 8 — les documents sont désormais les CINQ servis par le BUILDER UNIQUE : Dossier,
+Résumé, Financier, Apporteur (+ la fiche écran). On les génère sur les parcelles de recette et on
+ÉCHOUE si une valeur commune diverge entre deux documents, ou si un jeton de contradiction / libellé
+technique brut atteint le papier. C'est la garantie que le problème (RAPPORT_M73 : double rail de
+cascade, aléas côte à côte, PPR divergent) ne revient pas. La cohérence est maintenant STRUCTURELLE
+(registre : un id = une valeur) ; ce test la vérifie de bout en bout sur le papier.
+
+Le jeu de documents est DÉLIBÉRÉMENT étagé : le Dossier est complet (tout critère servi y figure) ;
+le Résumé, le Financier et l'Apporteur sont volontairement partiels. La non-contradiction (accord
+là où deux documents se recoupent, aucun jeton technique) vaut pour TOUS ; l'exhaustivité des
+critères servis n'est exigée que du Dossier.
 
 Intégration lourde (weasyprint + cascade servie) : nécessite la base servie. `skip` propre si
-l'environnement ne peut pas générer (module Flash / DB absents), jamais un faux échec.
+l'environnement ne peut pas générer (DB / run servi absents), jamais un faux échec.
 """
 from __future__ import annotations
 
@@ -55,22 +62,26 @@ def _pdf_text(content: bytes) -> str:
 
 
 def _docs(client, idu: str) -> dict[str, str]:
-    """Texte des 4 documents. Skip la parcelle si un endpoint clé échoue (env). M93 — one-pager retiré."""
+    """Texte des documents du builder unique + la fiche écran. Skip la parcelle si un endpoint clé
+    échoue (env). EXPORTS-2 lot 8 : Dossier · Résumé · Financier · Apporteur (routes directes, pas
+    les anciennes redirections)."""
     fiche = client.get(f"/parcels/{idu}", params={"source": RUN})
     if fiche.status_code != 200:
         pytest.skip(f"{idu} : fiche indisponible ({fiche.status_code})")
-    prem = client.get(f"/parcels/{idu}/export.pdf", params={"source": RUN})
-    dos = client.get(f"/dossier/{idu}.pdf")
-    client.post(f"/dossier-banquier/{idu}/prepare")            # amorce le cache (async)
-    banq = client.get(f"/dossier-banquier/{idu}.pdf")          # GET direct = synchrone
-    for name, r in (("premium", prem), ("dossier", dos), ("banquier", banq)):
+    dossier = client.get(f"/dossier/{idu}.pdf")
+    resume = client.get(f"/resume/{idu}.pdf")
+    financier = client.get(f"/financier/{idu}.pdf")
+    apporteur = client.get(f"/apporteur/{idu}.pdf")
+    for name, r in (("dossier", dossier), ("resume", resume),
+                    ("financier", financier), ("apporteur", apporteur)):
         if r.status_code != 200:
             pytest.skip(f"{idu} : {name} indisponible ({r.status_code})")
     return {
         "fiche": _fiche_rendu(fiche.json()),
-        "premium": _pdf_text(prem.content),
-        "dossier": _pdf_text(dos.content),
-        "banquier": _pdf_text(banq.content),
+        "dossier": _pdf_text(dossier.content),
+        "resume": _pdf_text(resume.content),
+        "financier": _pdf_text(financier.content),
+        "apporteur": _pdf_text(apporteur.content),
     }
 
 
@@ -120,8 +131,10 @@ def test_ppr_regime_coherent(client, idu):
     """Le régime PPR réglementaire ne cohabite jamais avec « intersection marginale » (déjà couvert
     par INTERDITS) et « zone rouge » est cohérent : si un doc l'exclut, aucun autre ne l'ignore."""
     docs = _docs(client, idu)
-    rouge = {name: ("zone rouge" in txt.lower()) for name, txt in docs.items()}
-    # premium & fiche & dossier & banquier doivent s'accorder sur la présence du régime rouge
+    rouge = {name: ("zone rouge" in txt.lower()) for name, txt in docs.items() if "zone rouge" in txt.lower()
+             or name in ("fiche", "dossier", "resume")}
+    # les documents qui PARLENT du risque (fiche, Dossier, Résumé) doivent s'accorder sur le régime rouge ;
+    # le Financier (bilan) et l'Apporteur (teaser) ne le mentionnent pas → hors périmètre de cohérence PPR.
     vals = set(rouge.values())
     assert len(vals) == 1, f"{idu} : « PPR zone rouge » présent dans certains docs seulement : {rouge}"
 
@@ -133,9 +146,10 @@ def test_anc_et_rehab_dans_tous_les_documents(client, idu):
     document est une divergence de fond : ce test la fait ÉCHOUER, il ne la laisse pas dormir jusqu'au
     prochain audit (la réhab a dormi de M59 à M73-C exactement comme ça). Les blocs ne se masquent
     jamais (un zéro n'est pas une absence) → « Assainissement » et « Réhabilitation » sont attendus
-    dans les QUATRE documents."""
+    dans le DOSSIER (document complet). EXPORTS-2 lot 8 : le Résumé/Financier/Apporteur sont étagés
+    (partiels par construction) — l'exhaustivité des critères servis n'est exigée que du Dossier."""
     docs = _docs(client, idu)
-    for name in ("premium", "dossier", "banquier"):
+    for name in ("dossier",):
         texte = docs[name].lower()
         assert "assainissement" in texte, f"{name} : bloc ASSAINISSEMENT absent (critère servi à l'écran)"
         assert "réhabilitation" in texte, f"{name} : bloc RÉHABILITATION absent (critère servi à l'écran)"

@@ -84,31 +84,21 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
                           f"({s.dossier_quota_mois}/mois, plan Essentiel).",
                 **plans.refus("dossier_illimite")})
 
+    # EXPORTS-2 lot 8 — le Dossier est servi par le BUILDER UNIQUE (src/labuse/exports), plus le
+    # gabarit Flash. Mention d'attribution du compte imprimée sur chaque page (M73 C6/C7).
+    from ..exports import builder
+    from ..exports.rendu import render_pdf
+    from .app import parcel_fiche
+    from .tenant import current_compte
     try:
-        from labuse.flash.report import render_report_html
-    except ImportError:
-        raise HTTPException(501, detail=(
-            "Le générateur de rapports (module Flash) n'est pas déployé sur cette "
-            "instance — fonctionnalité active au merge de feat/module-flash."))
-
-    ref = f"DP-{date.today():%Y%m%d}-{idu[-4:]}"
-    try:
-        from ..marque import charger as _charger_marque
-        html = render_report_html(db, idu, order_ref=ref, with_map=carte, marque=_charger_marque(db, request),
-                                  produit="Dossier parcelle",
-                                  produit_sous_titre="DOSSIER PARCELLE")   # M73 C7 : « usage interne » retiré (doc client)
+        fiche = parcel_fiche(idu, db=db, request=request)
     except ValueError as exc:                    # parcelle inconnue
         raise HTTPException(404, str(exc))
-    # Mention d'attribution imprimée sur CHAQUE page (position:fixed en WeasyPrint).
-    # M73 C6 : marque blanche non résolue → ne pas imprimer « pour Pilote LABUSE » (valeur par défaut).
+    res = builder.construire(db, idu, "dossier", fiche=fiche, compte_id=current_compte(request))
     _pour = "" if (s.raison_sociale or "").strip() in ("", "Pilote LABUSE") else f" pour {s.raison_sociale}"
-    mention = (f'<div style="position:fixed; bottom:2mm; right:0; font-size:7pt;'
-               f' color:#5F6C65; font-family: Inter, sans-serif;">'
-               f'Généré via LABUSE{_pour}</div>')
-    html = html.replace("</body>", mention + "</body>")
-
-    from weasyprint import HTML
-    pdf = HTML(string=html).write_pdf()
+    mention = (f'<div style="position:fixed;bottom:2mm;right:0;font-size:7pt;color:#5F6C65;'
+               f'font-family:Inter,sans-serif;">Généré via LABUSE{_pour}</div>')
+    pdf = render_pdf(res.html.replace("</body>", mention + "</body>"))
 
     from .protection import _aujourdhui
     db.execute(text(
@@ -116,7 +106,7 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
         "VALUES (:j, :s, 'dossier', 1) "
         "ON CONFLICT (jour, sujet, kind) DO UPDATE SET n = usage_compteurs.n + 1"),
         {"j": _aujourdhui(), "s": sujet})
-    log.info("dossier parcelle %s généré (%s)", idu, ref)
+    log.info("dossier parcelle %s généré (%s)", idu, res.numero)
     return Response(content=pdf, media_type="application/pdf",
                     headers={"Content-Disposition":
                              f'inline; filename="dossier_labuse_{idu}.pdf"'})

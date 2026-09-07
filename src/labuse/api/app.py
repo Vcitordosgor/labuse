@@ -4956,89 +4956,16 @@ def etude_zone_entreprises(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> d
     return entreprises_zone(db, geom)
 
 
-@app.post("/outils/etude-zone/export.pdf")
-def etude_zone_pdf(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> Response:
-    """Rapport PDF de l'étude de zone (maquette écran 3). Rejoue l'agrégat puis rend la page A4.
-    Zone indisponible → 422 (pas de rapport sur une zone qu'on n'a pas su tracer)."""
-    data = etude_zone(inp, db=db)
-    if not data.get("zone_disponible"):
-        raise HTTPException(422, "zone atteignable indisponible — aucun rapport à exporter")
-    from .pdf_zone import render_zone_pdf
-    pdf = render_zone_pdf(data, titre=inp.titre)
-    return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": "inline; filename=etude-zone.pdf"})
+# EXPORTS-2 lot 8 — l'export PDF de l'étude de zone (chaîne pdf_zone, FPDF, citait MOBPRO) est
+# retiré : l'étude de zone vit désormais dans la section 7 du Dossier (builder exports).
 
 
 @app.get("/parcels/{idu}/export.pdf")
-def parcel_export_pdf(idu: str, source: str | None = None,
-                      cout_construction_m2: float | None = Query(None, ge=500, le=8000),
-                      marge_frais_pct: float | None = Query(None, ge=0, le=60),
-                      prix_demande_eur: float | None = Query(None, ge=0, le=500_000_000),
-                      db: Session = Depends(get_db)) -> Response:
-    """Export PDF de la fiche premium (Brique 3) — design system, fiche complète tracée.
-
-    A6 (mandat bilan-calculette) : si les hypothèses de la calculette sont passées, le PDF porte
-    la CHARGE FONCIÈRE « selon vos hypothèses » (recalculée par le moteur, jamais un faux chiffre)."""
-    from .pdf_premium import render_fiche_pdf
-    fiche = _q_v2_fiche(db, idu, run_label=source or runs.current())
-    # M125-B : adresse UNIFIÉE — `_q_v2_fiche` a déjà posé `fiche["adresse"]` (résolveur unique de
-    # l'écran, `_ban_adresse`). On ne pose plus de 2e résolveur `adresse_ban` (source de divergence).
-    # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
-    fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
-    # EXPORTS-1 (1.3) : la synthèse marché (sector_price PARCELLE, n + rayon effectif + période)
-    # est DÉJÀ servie par `_q_v2_fiche` (mêmes clés écran/PDF — le test doré compare dessus).
-    # Repli sur la tendance commune (M-U) quand l'échantillon parcellaire est insuffisant.
-    if not fiche.get("marche_synthese"):
-        try:
-            from .marche_bloc import bloc_condense
-            _mc = {l["cle"]: l["phrase"] for l in
-                   bloc_condense(db, fiche["commune"], ["tendance_12m"])}
-            fiche["marche_synthese"] = _mc.get("tendance_12m")
-        except Exception:  # noqa: BLE001
-            pass
-    # M54-AB C7 : pente CLIENT = RGE ALTI (parcel_terrain), ° ET %, MÊME source que dossier/flash.
-    try:
-        from ..pente_fmt import pente_texte
-        _pd = db.execute(text("SELECT pente_moy_deg FROM parcel_terrain WHERE idu = :i"),
-                         {"i": idu}).scalar()
-        if _pd is not None:
-            fiche["pente_terrain"] = pente_texte(float(_pd))
-    except Exception:  # noqa: BLE001
-        pass
-    fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
-    # M73-E Volet B — comparables DVF du premium via le point d'appel UNIQUE (jamais un appel DVF
-    # direct). Chaque vente porte date/distance/surface/prix ; n et rayon dits ; liste possiblement vide.
-    from .. import marche_service
-    fiche["comparables"] = marche_service.comparables(db, idu)
-    # M73-F — plan de situation ORTHO : composite via build_situation_map (point d'appel UNIQUE, jamais
-    # un fournisseur de tuiles en direct). Un échec de carte NE CASSE PAS le PDF (dict ok/echec). Le
-    # millésime ortho est LU depuis data_sources (source unique, jamais en dur).
-    from .plan_situation import plan_ortho
-    from ..flash.report import storage_dir
-    _gj = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
-    fiche["plan_situation"] = plan_ortho(_gj, storage_dir() / "tiles")
-    fiche["ortho_millesime"] = db.execute(text(
-        "SELECT source_millesime FROM data_sources WHERE name = 'BD ORTHO 20 cm (IGN)'")).scalar()
-    if cout_construction_m2 is not None and marge_frais_pct is not None:
-        fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
-    # CIRCUIT-2 lot 6 — la fiche premium attache AUSSI ses objets Valeur (origine portée ;
-    # saisies client en portée `projet`, tampon « saisi par le client le … »).
-    try:
-        from ..registre.valeur import valeurs_pour
-        _brutes = {"surface_parcelle_m2": fiche.get("surface_m2"),
-                   "prix_sortie_bati_eur_m2": fiche.get("marche_synthese"),
-                   "adresse_ban": fiche.get("adresse")}
-        if fiche.get("calculette"):
-            _brutes["cout_construction_saisi_eur_m2"] = cout_construction_m2
-            _brutes["marge_frais_saisie_pct"] = marge_frais_pct
-            _brutes["prix_demande_saisi_eur"] = prix_demande_eur
-        fiche["_valeurs_registre"] = valeurs_pour(
-            db, {k: v for k, v in _brutes.items() if v is not None})
-    except Exception:  # noqa: BLE001 — le tampon ne casse jamais un export
-        fiche["_valeurs_registre"] = {}
-    return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
-                    # M124-A4 — nom de fichier {IDU}-labuse.pdf (IDU d'abord : tri/recherche par parcelle).
-                    headers={"Content-Disposition": f'inline; filename="{idu}-labuse.pdf"'})
+def parcel_export_pdf(idu: str, db: Session = Depends(get_db)) -> Response:
+    """EXPORTS-2 lot 8 — l'export PDF de la fiche (ex-fiche premium) est REMPLACÉ par le Résumé
+    (builder exports, sans métadonnées Producer). Redirection vers /resume/{idu}.pdf."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(f"/resume/{idu}.pdf", status_code=308)
 
 
 def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:
@@ -5948,8 +5875,9 @@ def parcel_explain(idu: str, db: Session = Depends(get_db)) -> dict:
 @app.get("/parcels/{idu}/export")
 def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"),
                  db: Session = Depends(get_db)):
-    """Export fiche : Markdown (md) ou HTML détaillé (html). M93 — le one-pager (format
-    `onepager`) a été retiré : quatre documents cohérents (dossier/banquier/argumentaire/premium)."""
+    """Export fiche : Markdown (md) ou HTML détaillé (html). Surface DONNÉES (cloisonnée par
+    compte via `_build_fiche`) — distincte des documents PDF (builder exports). EXPORTS-2 lot 8
+    ne touche PAS cet export : seul l'export PDF (`/export.pdf`) est redirigé vers le Résumé."""
     from fastapi.responses import HTMLResponse, PlainTextResponse
 
     from .export import fiche_html, fiche_markdown
@@ -6861,15 +6789,13 @@ from .modules import router as _modules_router  # noqa: E402
 from .moteurs import router as _moteurs_router  # noqa: E402
 from .partners import router as _partners_router  # noqa: E402
 from .pre_dossier import router as _pre_dossier_router  # noqa: E402
-from .banquier import router as _banquier_router  # noqa: E402  (O1 — dossier banquier PDF)
-from .lettre_zonage import router as _lettre_zonage_router  # noqa: E402  (M22-B — lettre de zonage PDF)
+from .documents import router as _documents_router  # noqa: E402  (EXPORTS-2 lot 8 — les 5 documents)
 from .scoreur import router as _scoreur_router  # noqa: E402  (O2 — scoreur d'adresse inversé)
 from .anti_fiche import router as _anti_fiche_router  # noqa: E402  (O3 — anti-fiche « pourquoi pas »)
 from .traducteur import router as _traducteur_router  # noqa: E402  (O4 — traducteur de règlement PLU)
 from .servitudes import router as _servitudes_router  # noqa: E402  (O5 — servitudes invisibles)
 from .comparateur import router as _comparateur_router  # noqa: E402  (O6 — comparateur de communes)
 from .carnet import router as _carnet_router  # noqa: E402  (O7 — carnet de secteur)
-from .argumentaire import router as _argumentaire_router  # noqa: E402  (M22-C — argumentaire de négociation PDF)
 from .onboarding import router as _onboarding_router  # noqa: E402  (PREMIER EURO — onboarding + légal + webhook)
 from .rarete import router as _rarete_router  # noqa: E402  (O9 — pipeline de rareté)
 from .ops import router as _ops_router  # noqa: E402  (P4 — /healthz/crons)
@@ -6908,15 +6834,13 @@ app.include_router(_vefa_router)
 app.include_router(_courrier_router)
 app.include_router(_dossier_router)
 app.include_router(_pre_dossier_router)
-app.include_router(_banquier_router)
-app.include_router(_lettre_zonage_router)
+app.include_router(_documents_router)   # EXPORTS-2 lot 8 — Financier/Apporteur/Résumé + redirections
 app.include_router(_scoreur_router)
 app.include_router(_anti_fiche_router)
 app.include_router(_traducteur_router)
 app.include_router(_servitudes_router)
 app.include_router(_comparateur_router)
 app.include_router(_carnet_router)
-app.include_router(_argumentaire_router)
 app.include_router(_onboarding_router)
 app.include_router(_rarete_router)
 app.include_router(_ops_router)

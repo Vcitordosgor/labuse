@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -57,48 +56,54 @@ def ok(msg: str) -> None:
 
 
 def generer(idu: str, outdir: Path) -> dict:
-    """Les 6 exports + fiche.json par les vraies routes (même chemin que l'audit)."""
+    """EXPORTS-2 lot 8 — les CINQ documents + fiche.json des témoins. Les anciennes chaînes
+    (fiche.pdf / dossier-banquier / argumentaire / Flash legacy) sont ÉTEINTES : tout passe par
+    le BUILDER UNIQUE. Dossier · Résumé · Financier · Apporteur sont rendus PAR LES VRAIES ROUTES
+    (ce que reçoit le client) ; le Flash (pas de route GET publique — fulfillment payant) est rendu
+    par le builder, chemin identique à `facturation._flash_fulfill`. L'archive JSON (point 1.6) est
+    vérifiée pour les cinq via `builder.generer_pdf` dans un sous-dossier `archives/`."""
+    from datetime import date as _date
+
     from fastapi.testclient import TestClient
     from labuse.api.app import app
-    from labuse.flash.report import generate_flash_report
+    from labuse.db import session_scope
+    from labuse.exports import builder
     c = TestClient(app)
     d = outdir / idu
     d.mkdir(parents=True, exist_ok=True)
     fiche = c.get(f"/parcels/{idu}").json()
     (d / "fiche.json").write_text(json.dumps(fiche, ensure_ascii=False, indent=1))
-    for name, url in (("fiche.pdf", f"/parcels/{idu}/export.pdf"),
-                      ("dossier.pdf", f"/dossier/{idu}.pdf"),
-                      ("banquier.pdf", f"/dossier-banquier/{idu}.pdf"),
-                      ("argumentaire.pdf", f"/argumentaire/{idu}.pdf")):
+    # 1) les 4 documents servis par une route → le PDF EXACT que le client télécharge.
+    for name, url in (("dossier.pdf", f"/dossier/{idu}.pdf?carte=false"),
+                      ("resume.pdf", f"/resume/{idu}.pdf"),
+                      ("financier.pdf", f"/financier/{idu}.pdf"),
+                      ("apporteur.pdf", f"/apporteur/{idu}.pdf")):
         r = c.get(url)
         if r.status_code != 200:
             ko(f"{idu}/{name} : HTTP {r.status_code}")
             continue
         (d / name).write_bytes(r.content)
+    # 2) le Flash par le builder (même chemin que la facturation).
+    arch = d / "archives"
+    arch.mkdir(exist_ok=True)
     try:
-        p = generate_flash_report(idu, order_ref=f"RECETTE-{idu[-6:]}", force=True)
-        shutil.copy(p, d / "flash.pdf")
+        with session_scope() as s:
+            builder.generer_pdf(s, idu, "flash", fiche=fiche, jour=_date(2026, 9, 5),
+                                chemin_pdf=str(d / "flash.pdf"))
     except Exception as exc:  # noqa: BLE001
         ko(f"{idu}/flash.pdf : {exc}")
-    # EXPORTS-2 — le nouveau builder : le Dossier (partiel au lot 1 : garde + section 1) rendu
-    # sur les témoins, avec son archive JSON à côté (1.6). Le pdftotext ci-dessous l'extrait →
-    # le contrôle « mots interdits » le couvre comme les autres. La chaîne grossit aux lots 2-7.
-    try:
-        from datetime import date as _date
-
-        from labuse.db import session_scope
-        from labuse.exports import builder
-        for doc, nom in (("dossier", "dossier2"), ("flash", "flash2"), ("resume", "resume2"),
-                         ("financier", "financier2"), ("apporteur", "apporteur2")):
+    # 3) archive JSON (1.6) — vérifiée pour les CINQ documents, sans écraser les PDF client.
+    for doc in ("dossier", "resume", "financier", "apporteur", "flash"):
+        try:
             with session_scope() as s:
                 builder.generer_pdf(s, idu, doc, fiche=fiche, jour=_date(2026, 9, 5),
-                                    chemin_pdf=str(d / f"{nom}.pdf"))
-            if (d / f"{nom}.json").exists():
-                ok(f"{idu}/{nom} (EXPORTS-2) : rendu + archive JSON")
+                                    chemin_pdf=str(arch / f"{doc}.pdf"))
+            if (arch / f"{doc}.json").exists():
+                ok(f"{idu}/{doc} : rendu + archive JSON")
             else:
-                ko(f"{idu}/{nom} : archive JSON absente (1.6)")
-    except Exception as exc:  # noqa: BLE001
-        ko(f"{idu}/dossier2 (EXPORTS-2) : {exc}")
+                ko(f"{idu}/{doc} : archive JSON absente (1.6)")
+        except Exception as exc:  # noqa: BLE001
+            ko(f"{idu}/{doc} : {exc}")
     for f in d.glob("*.pdf"):
         subprocess.run(["pdftotext", "-layout", str(f), str(f.with_suffix(".txt"))], check=True)
     return fiche

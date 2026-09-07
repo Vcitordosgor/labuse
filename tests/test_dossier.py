@@ -39,17 +39,30 @@ def test_pdf_parcelle_inconnue_ou_generateur_absent(client):
 
 
 def test_pdf_genere_avec_mention(client, engine):
-    """Parcelle seedée → PDF < 30 s, mention « Généré via LABUSE pour … », quota décompté."""
+    """Parcelle seedée → PDF < 30 s, mention « Généré via LABUSE pour … », quota décompté.
+
+    EXPORTS-2 lot 8 : le Dossier est servi par le BUILDER UNIQUE, construit sur la fiche
+    d'analyse (`parcel_fiche`). Une parcelle sans évaluation dans le run servi est inconnue de
+    l'analyse (404 honnête) : on seede donc AUSSI sa ligne `dryrun_parcel_evaluations`."""
     pytest.importorskip("labuse.flash")
+    from labuse import runs
+    run = runs.current()
     poly = ("POLYGON((55.4495 -21.3005, 55.4505 -21.3005, 55.4505 -21.2995,"
             " 55.4495 -21.2995, 55.4495 -21.3005))")
     with engine.begin() as c:
+        c.execute(text("DELETE FROM dryrun_parcel_evaluations d USING parcels p "
+                       "WHERE d.parcel_id = p.id AND p.idu = '97416000ZZ0042'"))
         c.execute(text("DELETE FROM parcels WHERE idu = '97416000ZZ0042'"))
         c.execute(text(
             f"""INSERT INTO parcels (idu, commune, section, numero, surface_m2, geom, geom_2975)
                 VALUES ('97416000ZZ0042', 'Saint-Pierre', 'ZZ', '0042', 11000,
                         ST_GeomFromText('{poly}', 4326),
                         ST_Transform(ST_GeomFromText('{poly}', 4326), 2975))"""))
+        c.execute(text(
+            "INSERT INTO dryrun_parcel_evaluations "
+            "(run_label, parcel_id, completeness_score, opportunity_score, status, created_at) "
+            "SELECT :run, p.id, 50, 10, 'analysee', now() FROM parcels p "
+            "WHERE p.idu = '97416000ZZ0042'"), {"run": run})
     try:
         r = client.get("/dossier/97416000ZZ0042.pdf?carte=false")
         assert r.status_code == 200
@@ -58,6 +71,8 @@ def test_pdf_genere_avec_mention(client, engine):
         assert st["utilises_mois"] >= 1
     finally:
         with engine.begin() as c:
+            c.execute(text("DELETE FROM dryrun_parcel_evaluations d USING parcels p "
+                           "WHERE d.parcel_id = p.id AND p.idu = '97416000ZZ0042'"))
             c.execute(text("DELETE FROM parcels WHERE idu = '97416000ZZ0042'"))
 
 

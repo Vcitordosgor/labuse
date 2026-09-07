@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, pdfUrl, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createProjet, getDossierStatut, getExplain, getFaisabilite, getFiche, getMoi, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -573,7 +573,8 @@ export function Fiche({ idu }: { idu: string }) {
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
-  const calculette = useApp((s) => s.calculette)   // A6 : hypothèses courantes → reflétées dans le PDF
+  // EXPORTS-2 lot 8 — `calculette` ne pilote plus le PDF/Argumentaire (retirés) ; le Financier lit
+  // le questionnaire persisté. La calculette de la fiche reste (store), sans sélecteur ici.
   // Échap ferme la fiche — sauf si le drawer source est ouvert (il consomme Échap en premier)
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -1344,9 +1345,8 @@ export function Fiche({ idu }: { idu: string }) {
                 <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
                   sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
                   onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') }} />
-                <PorteOutil ico="✉" data="lettre-zonage" titre="Lettre de vérification de zonage"
-                  sous={reglesZone ? `PDF de vérification de zonage — zone ${reglesZone} de cette parcelle` : 'PDF de vérification de zonage'}
-                  onClick={() => window.open(`/lettre-zonage/${idu}.pdf`, '_blank', 'noopener')} />
+                {/* EXPORTS-2 lot 8 — « Lettre de vérification de zonage » supprimée (décision Vic
+                    07/09) : la section 2 du Dossier couvre le zonage entièrement. */}
                 {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
                     L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
                 <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
@@ -1633,20 +1633,19 @@ export function Fiche({ idu }: { idu: string }) {
                   (PDF, Dossier, Financier, Pré-dossier…) sont conservées. */}
               <div className="sec"><span>EXPORTS</span><i /></div>
               {/* RETOURS-9 (Q8.3) — deux lignes de trois : PDF · Dossier · Finance / Argumentaire · Courrier · Pré-dossier PC. */}
+              {/* EXPORTS-2 lot 8 — les CINQ documents servis par le builder unique, dans l'ordre :
+                  Dossier · Résumé · Financier · Apporteur · Pré-dossier PC. Plus aucun bouton PDF /
+                  Banquier / Argumentaire / Projet / Lettre de zonage. (Courrier reste, hors documents.) */}
               <GrilleOutils cols={3}>
-                <OutilCase nom="PDF" href={pdfUrl(idu, calculette)} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}
-                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>} />
                 <DossierTile idu={idu} />
+                <OutilCase nom="Résumé" data-resume href={`/resume/${idu}.pdf`} title="Résumé de la parcelle (PDF, 3 pages)"
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></svg>} />
                 <BanquierButton idu={idu} />
-                {/* RETOURS-8 (R7) — Cadastre a QUITTÉ les Exports : il vit désormais en tête de fiche
-                    (trio Maps · Cadastre · Pages jaunes à côté de l'IDU). */}
-                <OutilCase nom="Argumentaire" data-argumentaire title="Argumentaire de négociation (PDF) — avec les hypothèses de la calculette"
-                  href={`/argumentaire/${idu}.pdf${calculette ? `?cout_construction_m2=${calculette.cout_construction_m2}&marge_frais_pct=${calculette.marge_frais_pct}${calculette.vrd_m2 != null ? `&vrd_m2=${calculette.vrd_m2}` : ''}${calculette.prix_demande_eur ? `&prix_demande_eur=${calculette.prix_demande_eur}` : ''}` : ''}`}
+                <OutilCase nom="Apporteur" data-apporteur href={`/apporteur/${idu}.pdf`} title="Brief apporteur — questionnaire remplissable (PDF)"
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>} />
-                {/* RETOURS-8 (R7) — Maps a QUITTÉ les Exports : il vit en tête de fiche (trio près de l'IDU). */}
+                <PreDossierTile idu={idu} />
                 <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} title={CLIENT.fiche.export.courrierTip}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
-                <PreDossierTile idu={idu} />
               </GrilleOutils>
               {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
                   (elle recréait une page Outils bis). Chaque outil est désormais une PORTE

@@ -1,7 +1,7 @@
-"""CIRCUIT-2 lot 6 — les exports sur le registre : les builders PDF reçoivent des objets
-`Valeur` (origine portée : run, millésimes, couverture, état), le prix du neuf des PDF est
-l'OBSERVÉ (jamais l'id VEFA à l'acte réservé au scoring — arbitrage Q3), les cartes des PDF
-lisent leur millésime de data_sources (jamais en dur)."""
+"""CIRCUIT-2 lot 6 (mis à jour EXPORTS-2 lot 8) — les exports sur le registre : le BUILDER UNIQUE
+`src/labuse/exports/` reçoit des objets `Valeur` (origine portée : run, millésimes, couverture,
+état), le prix du neuf des PDF est l'OBSERVÉ (jamais l'id VEFA à l'acte réservé au scoring —
+arbitrage Q3), les millésimes des sources sont LUS de la fiche (data_sources), jamais en dur."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,12 +14,12 @@ pytestmark = pytest.mark.db
 
 RACINE = Path(__file__).resolve().parents[1]
 
-#: tous les builders d'exports client (Dossier, banquier/Financier, argumentaire, Flash,
-#: pré-dossier PC, étude de zone, premium)
-BUILDERS = ["src/labuse/api/briques_pdf.py", "src/labuse/api/pdf_premium.py",
-            "src/labuse/api/argumentaire.py", "src/labuse/api/pre_dossier.py",
-            "src/labuse/api/pdf_zone.py", "src/labuse/flash/data.py",
-            "src/labuse/flash/report.py", "src/labuse/api/banquier.py"]
+#: EXPORTS-2 lot 8 — les anciennes chaînes (briques_pdf, banquier, argumentaire, pdf_zone,
+#: pdf_projet) sont éteintes. Tous les documents client (Dossier · Résumé · Financier · Apporteur ·
+#: Pré-dossier PC · Flash) sont désormais servis par le BUILDER UNIQUE `src/labuse/exports/`.
+BUILDERS = sorted(str(p.relative_to(RACINE))
+                  for p in (RACINE / "src/labuse/exports").rglob("*.py")
+                  if "__pycache__" not in p.parts)
 
 
 def test_valeurs_pour_construit_des_valeurs_tamponnees(db_session):
@@ -48,16 +48,19 @@ def test_prix_neuf_des_pdf_jamais_l_acte():
 
 
 def test_collectes_attachent_les_valeurs_registre():
-    """Les deux collectes financières (briques Dossier/banquier + fiche premium) attachent
-    `_valeurs_registre` (objets Valeur) — la mise en page reste inchangée."""
-    briques = (RACINE / "src/labuse/api/briques_pdf.py").read_text()
-    assert "_valeurs_registre" in briques and "valeurs_pour" in briques
-    app = (RACINE / "src/labuse/api/app.py").read_text()
-    assert app.count("_valeurs_registre") >= 2
+    """EXPORTS-2 lot 8 : la collecte du builder unique n'assemble QUE des objets `Valeur`
+    tamponnés (`valeurs_pour`) — les blocs ne reçoivent ni calcul ni requête, seulement des
+    Valeur. La mise en page (blocs/*.py) lit ces Valeur, jamais la base."""
+    collecte = (RACINE / "src/labuse/exports/collecte.py").read_text()
+    assert "valeurs_pour" in collecte, "la collecte doit tamponner via le registre"
+    assert "dict[str, Valeur]" in collecte, "la collecte rend {id → Valeur}, rien d'autre"
 
 
-def test_cartes_des_pdf_millesime_depuis_data_sources():
-    """M73-F + lot 6 : le millésime ortho des cartes PDF est LU de data_sources (source
-    unique), jamais une année en dur dans le builder."""
-    app = (RACINE / "src/labuse/api/app.py").read_text()
-    assert "SELECT source_millesime FROM data_sources WHERE name = 'BD ORTHO 20 cm (IGN)'" in app
+def test_sources_des_pdf_millesime_depuis_la_fiche():
+    """EXPORTS-2 lot 8 : le bloc « Sources et millésimes » LIT les millésimes des sources
+    réellement servies (data_sources de la fiche) — jamais une année en dur dans le builder."""
+    src = (RACINE / "src/labuse/exports/blocs/sources.py").read_text()
+    assert "s['millesime']" in src or 's["millesime"]' in src, "le millésime vient de la source servie"
+    # aucune année ortho gravée dans le bloc
+    import re
+    assert not re.search(r"\b(19|20)\d{2}\b", src), "aucun millésime en dur dans le bloc Sources"

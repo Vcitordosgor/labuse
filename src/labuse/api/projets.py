@@ -1553,20 +1553,12 @@ def _shortlist_pdf(db: Session, p: models.Projet) -> dict:
 
 @router.get("/{pid}/export.pdf")
 def projet_export_pdf(pid: int, request: Request, db: Session = Depends(get_db)):
-    """Dossier PROJET en PDF — document de PRÉSENTATION. M130-2 : sert la SHORTLIST FIGÉE du projet
-    (jamais un recalcul live), datée par son figeage ; aucun verdict/rang/score ; chaque parcelle
-    porte de la DONNÉE (SDP estimée, hauteurs calibrées, zone). Mécanique fpdf2 existante."""
-    from fastapi.responses import Response
-
-    from .pdf_projet import render_projet_pdf
-    p = _projet_or_404(db, pid, current_compte(request))   # SEC-IDOR : export borné au compte
-    shortlist = _shortlist_pdf(db, p)
-    pdf = render_projet_pdf(_projet_dict(p), shortlist)
-    slug = "".join(c if c.isalnum() else "-" for c in (p.nom or "projet")).strip("-").lower()[:48]
-    # M130-2 §5.3 — nommage doctrine : projet-{id}-{slug}-labuse.pdf (id stable = pas de collision)
-    return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition":
-                             f'inline; filename="projet-{pid}-{slug or "projet"}-labuse.pdf"'})
+    """EXPORTS-2 lot 8 (décision Vic 07/09) — le PDF Projet (chaîne FPDF pdf_projet) est RETIRÉ :
+    le document Financier, par parcelle, le remplace. On borne l'accès au compte (SEC-IDOR) puis on
+    dit honnêtement que le document par parcelle a pris le relais."""
+    _projet_or_404(db, pid, current_compte(request))       # SEC-IDOR : 404 hors compte
+    raise HTTPException(410, detail="Le PDF Projet est retiré ; le document « Financier », établi "
+                        "par parcelle depuis vos hypothèses, le remplace.")
 
 
 @router.get("/{pid}/export.csv")
