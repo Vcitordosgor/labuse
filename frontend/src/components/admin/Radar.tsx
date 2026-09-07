@@ -1,35 +1,32 @@
-// RADAR (pige) · P1 V3 — page admin « Radar », pensée MOBILE (Vic saisit depuis son téléphone).
-// Quatre zones : Saisie du jour · File d'extraction · Re-vérification (2 niveaux) · Check quotidien.
-// Doctrine : on n'affiche JAMAIS l'annonce (ni photo, ni titre, ni texte) — des FAITS + le lien
-// sortant. Le mauve est réservé aux champs IA « à vérifier » (sous le seuil de confiance).
+// RADAR (pige) · DASHBOARD-2 (Lot 4) — page admin « Radar », grammaire de la maquette v1 : une seule
+// page qui descend. Dépôt HTML en drop zone + bilan du DERNIER dépôt · « À faire » (à valider · à
+// re-vérifier, listes dépliables) · « Le flux » (en vie · rattachées · copros non servies · paires DVF ·
+// drapeau dépôt agence). Le chemin par CAPTURES D'ÉCRAN est RETIRÉ (répertoire /srv en lecture seule,
+// remplacé par le dépôt HTML). Doctrine intacte : on n'affiche jamais l'annonce — des FAITS + le lien.
+// Un seul compteur « en vie » (RadarCheck.flux.en_vie), le même qu'au Pilotage.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   getRadarCheck, getRadarDepotAgenceEtat, getRadarExtraction, getRadarReverif,
-  postRadarDepotAgenceToggle, radarDeposer, radarDeposerHtml,
-  radarPrix, radarRattacherHumain, radarRetiree, radarToujoursEnLigne, radarValider,
-  type RadarBrouillon, type RadarDepotHtml, type RadarReverif,
+  postRadarDepotAgenceToggle, radarDeposerHtml, radarPrix, radarRattacherHumain,
+  radarRetiree, radarToujoursEnLigne, radarValider,
+  type RadarBrouillon, type RadarCheck, type RadarDepotHtml, type RadarReverif,
 } from '../../lib/api'
-import { Lbl, Chip } from './AdminView'
+import { Chip, Panel, PHead } from './AdminView'
 
 const NIV: Record<string, { label: string; tone: 'ok' | 'warn' | 'off' }> = {
   source: { label: 'Sourcé', tone: 'ok' }, estime: { label: 'Estimé', tone: 'warn' },
   absent: { label: 'Non rattachée', tone: 'off' },
 }
 const fmtEur = (v: number | null) => (v == null ? '—' : v.toLocaleString('fr-FR') + ' €')
-
-async function fileToB64(f: File): Promise<string> {
-  const buf = await f.arrayBuffer()
-  let s = ''
-  const b = new Uint8Array(buf)
-  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i])
-  return btoa(s)
+const fmtReu = (iso?: string | null) => {
+  if (!iso) return '—'
+  try {
+    return new Intl.DateTimeFormat('fr-FR', { timeZone: 'Indian/Reunion', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)).replace(',', '')
+  } catch { return '—' }
 }
 
-// ── Zone 0 — RADAR-HTML (Lot 1) : DÉPÔT D'UNE PAGE DE RÉSULTATS (remplace la capture + vision) ──
-// Vic enregistre la page de résultats du portail (Cmd+S, « page web complète ») et la dépose ici. Le
-// serveur parse le bloc structuré __NEXT_DATA__ : idempotent par annonce (re-dépôt = MAJ, jamais
-// doublon), échec BRUYANT si la structure a changé. Aucune requête portail — on lit un fichier déposé.
+// ── Dépôt du jour : la page de résultats HTML (remplace la capture + vision) ──
 function DepotHtml({ onDepose }: { onDepose: () => void }) {
   const [busy, setBusy] = useState(false)
   const [rap, setRap] = useState<RadarDepotHtml | null>(null)
@@ -46,126 +43,59 @@ function DepotHtml({ onDepose }: { onDepose: () => void }) {
     } finally { setBusy(false) }
   }
   return (
-    <section className="rounded-xl border border-mint/40 bg-mint/5 p-4">
-      <div className="mb-1 flex items-center gap-2">
-        <Lbl>Dépôt du jour — page de résultats (HTML)</Lbl>
-        <Chip tone="ok">nouveau</Chip>
-      </div>
-      <p className="mb-3 text-[11.5px] leading-relaxed text-txt-mut">
-        Enregistrer la page de résultats du portail (<b>⌘S → « page web complète »</b>), puis la déposer.
-        Toutes les annonces de la page sont lues d’un coup ; re-déposer la même page ne crée aucun doublon.
+    <section className="flex flex-col rounded-xl border border-dashed border-line-3 bg-surface-2 p-5 text-center">
+      <b className="text-[13.5px] font-medium text-txt-hi">Déposer la page de résultats du jour</b>
+      <p className="mt-1.5 text-[11.5px] leading-relaxed text-txt-mut">
+        <b>⌘S → « page web complète »</b> sur le portail, puis glisser le <span className="font-mono">.html</span> ici.
+        Toutes les annonces de la page sont lues d’un coup, sans doublon.
       </p>
-      <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-mint/50 bg-mint/10 px-3 py-2 text-[12px] font-medium text-mint hover:bg-mint/20 ${busy ? 'pointer-events-none opacity-60' : ''}`}>
+      <label className={`mx-auto mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-mint px-3.5 py-2 text-[12px] font-medium text-mint-on hover:brightness-110 ${busy ? 'pointer-events-none opacity-60' : ''}`}>
         <input data-radar-depot-html type="file" accept=".html,.htm,text/html" className="hidden"
                onChange={(e) => deposer(e.target.files)} />
-        {busy ? 'Lecture de la page…' : '+ Déposer une page de résultats (.html)'}
+        {busy ? 'Lecture de la page…' : 'Choisir un fichier'}
       </label>
       {rap && !rap.ok && (
-        <div data-radar-depot-erreur className="mt-3 rounded-lg border border-st-ecartee/50 bg-st-ecartee/10 px-3 py-2 text-[11.5px] leading-relaxed text-st-ecartee">
-          {/* RADAR-RECETTE-1 D4 — un échec d'ÉCRITURE disque se dit comme tel (chemin nommé par le
-              serveur), jamais « réseau ou serveur ». Le conseil « page web complète » ne vaut que pour
-              une structure illisible (next_data). */}
+        <div data-radar-depot-erreur className="mt-3 rounded-lg border border-st-ecartee/50 bg-st-ecartee/10 px-3 py-2 text-left text-[11.5px] leading-relaxed text-st-ecartee">
           <b>{rap.erreur === 'stockage' ? 'Archivage impossible' : 'Dépôt refusé'}</b> — {rap.motif || 'structure inattendue'}.
           {rap.erreur !== 'stockage' && <> La page doit être enregistrée en « page web complète » ;</>} rien n’a été enregistré.
         </div>
       )}
       {rap && rap.ok && (
-        <div data-radar-depot-ok className="mt-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11.5px] text-txt">
+        <div data-radar-depot-ok className="mt-3 rounded-lg border border-line-2 bg-surface-1 px-3 py-2.5 text-left text-[11.5px] text-txt">
           <b>{rap.nb_annonces} annonces lues</b> — {rap.nb_nouvelles} nouvelle{(rap.nb_nouvelles ?? 0) > 1 ? 's' : ''},
           {' '}{rap.nb_maj} mise{(rap.nb_maj ?? 0) > 1 ? 's' : ''} à jour
-          {(rap.nb_a_qualifier ?? 0) > 0 && <>, <span className="text-st-attention">{rap.nb_a_qualifier} à qualifier</span></>}
-          {(rap.nb_hors_perimetre ?? 0) > 0 && <>, {rap.nb_hors_perimetre} hors périmètre</>}.
-          {rap.etats && (
-            <div className="mt-1 flex flex-wrap gap-1.5 text-[10.5px] text-txt-mut">
-              <span>rattachement :</span>
-              {Object.entries(rap.etats).map(([k, v]) => (
-                <span key={k} className="rounded bg-surface-3 px-1.5 py-0.5">{k.replace('_', ' ')} {v}</span>
-              ))}
-            </div>
-          )}
+          {(rap.nb_a_qualifier ?? 0) > 0 && <>, <span className="text-st-attention">{rap.nb_a_qualifier} à qualifier</span></>}.
         </div>
       )}
     </section>
   )
 }
 
-// ── Zone 1 — Saisie du jour : dropzone + un lien par capture (chemin HISTORIQUE, remplacé par le HTML) ──
-// RETOURS-1 R7 (Vic) — le dépôt doit marcher POUR DE VRAI : label visible au-dessus du champ lien
-// (plus un placeholder gris seul), focus automatique dès qu'une capture est ajoutée, bordure
-// d'erreur + message clair si Déposer sans lien, bouton qui réagit (« Dépôt… »), et un échec
-// réseau/serveur qui S'AFFICHE (l'ancien code ne catchait pas → validation muette).
-function Saisie({ onDepose }: { onDepose: () => void }) {
-  const [lignes, setLignes] = useState<{ file: File; lien: string; retour?: string; erreur?: boolean }[]>([])
-  const [busyIdx, setBusyIdx] = useState<number | null>(null)
-  const ajouter = (files: FileList | null) => {
-    if (!files) return
-    setLignes((l) => [...l, ...Array.from(files).map((file) => ({ file, lien: '' }))])
-  }
-  const deposer = async (i: number) => {
-    const ln = lignes[i]
-    if (!ln.lien.trim()) {
-      maj(i, { retour: 'Collez le lien de l’annonce — il est obligatoire pour déposer.', erreur: true })
-      return
-    }
-    setBusyIdx(i)
-    try {
-      const b64 = await fileToB64(ln.file)
-      const r = await radarDeposer(ln.lien.trim(), b64, ln.file.type || 'image/jpeg')
-      const ok = r.statut === 'a_valider'
-      const retour = ok ? '✓ en file d’extraction'
-        : r.statut === 'doublon_url' ? `déjà connue (bien #${r.bien_id}) — mise à jour du prix proposée`
-        : r.statut === 'rejet_commune' ? `rejet : ${r.motif}`
-        : `échec : ${r.motif ?? 'extraction'}`
-      maj(i, { retour, erreur: !ok && r.statut !== 'doublon_url' })
-      onDepose()
-    } catch {
-      // échec réseau/serveur : il DOIT se voir (avant : promesse rejetée en silence)
-      maj(i, { retour: 'Échec réseau ou serveur — rien n’a été déposé, réessayez.', erreur: true })
-    } finally { setBusyIdx(null) }
-  }
-  const maj = (i: number, patch: Partial<{ lien: string; retour: string; erreur: boolean }>) =>
-    setLignes((l) => l.map((x, k) => (k === i ? { ...x, ...patch } : x)))
-
+// ── Bilan du DERNIER dépôt (persistant, table pige_depots) ──
+function DernierDepot({ dep }: { dep: RadarCheck['dernier_depot'] }) {
+  const L = ({ k, v }: { k: string; v: React.ReactNode }) => (
+    <div className="flex items-center justify-between border-b border-line py-1.5 text-[12.5px] last:border-b-0">
+      <span className="text-txt-mut">{k}</span><span className="font-mono text-txt">{v}</span>
+    </div>
+  )
   return (
-    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
-      <Lbl>1 · Saisie du jour</Lbl>
-      <label className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-line-3 px-4 py-6 text-sm text-txt-mut hover:border-mint/40">
-        <input data-radar-fichier type="file" accept="image/*" multiple className="hidden"
-          onChange={(e) => ajouter(e.target.files)} />
-        + Ajouter des captures (galerie)
-      </label>
-      <div className="mt-3 flex flex-col gap-2">
-        {lignes.map((ln, i) => (
-          <div key={i} data-radar-ligne className="rounded-lg border border-line-2 bg-surface-1 p-2.5">
-            <div className="mb-1 truncate font-mono text-[11px] text-txt-dim">{ln.file.name}</div>
-            <label className="label-caps mb-1 block text-[9.5px] text-txt-mut">Lien de l’annonce *</label>
-            <div className="flex flex-col gap-1.5 sm:flex-row">
-              <input data-radar-lien value={ln.lien}
-                autoFocus={i === lignes.length - 1}
-                onChange={(e) => maj(i, { lien: e.target.value, erreur: false })}
-                placeholder="https://www.leboncoin.fr/…"
-                aria-invalid={ln.erreur || undefined}
-                className={`min-w-0 flex-1 rounded-md border bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:outline-none ${
-                  ln.erreur ? 'border-st-ecartee' : 'border-line-2 focus:border-mint'}`} />
-              <button data-radar-deposer disabled={busyIdx != null} onClick={() => deposer(i)}
-                className="rounded-md bg-mint px-3 py-1.5 text-[12px] font-medium text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-50">
-                {busyIdx === i ? 'Dépôt…' : 'Déposer'}
-              </button>
-            </div>
-            {ln.retour && (
-              <div data-radar-retour className={`mt-1 text-[11px] ${
-                ln.erreur ? 'text-st-ecartee' : ln.retour.startsWith('✓') ? 'text-mint' : 'text-txt-mut'}`}>
-                {ln.retour}
-              </div>
-            )}
-          </div>
-        ))}
+    <Panel className="mb-0">
+      <PHead>Dernier dépôt {dep?.date_depot ? <span className="ml-auto normal-case tracking-normal text-txt-mut">{fmtReu(dep.date_depot)}</span> : null}</PHead>
+      <div className="px-4 py-2">
+        {!dep ? <div className="py-4 text-center text-[12px] text-txt-dim">Aucun dépôt encore — déposez une page à gauche.</div> : (
+          <>
+            <L k="Annonces dans la page" v={dep.nb_annonces ?? '—'} />
+            <L k="Nouvelles" v={dep.nb_nouvelles ?? '—'} />
+            <L k="Mises à jour" v={dep.nb_maj ?? '—'} />
+            <L k="À qualifier" v={dep.nb_a_qualifier ?? 0} />
+          </>
+        )}
       </div>
-    </section>
+    </Panel>
   )
 }
 
-// ── Zone 2 — File d'extraction : fiche pré-remplie, champs à vérifier en mauve, Valider ──
+// ── À valider : fiche pré-remplie, champs à vérifier en mauve, Valider ──
 function Champ({ nom, valeur, aVerifier }: { nom: string; valeur: React.ReactNode; aVerifier: boolean }) {
   return (
     <div className={`rounded-md px-2 py-1 text-[12px] ${aVerifier ? 'border border-cp-ia/40 bg-cp-ia-bg/50 text-cp-ia' : 'text-txt'}`}>
@@ -210,25 +140,18 @@ function Extraction() {
     qc.invalidateQueries({ queryKey: ['radar-check'] })
   }
   return (
-    <div>
-      {data?.n === 0 && <div className="py-4 text-center text-[12px] text-txt-dim">file vidée ✓</div>}
-      <div className="flex flex-col gap-2">
-        {data?.file.map((b) => <BrouillonCard key={b.bien_id} b={b} onValide={() => valider(b.bien_id)} />)}
-      </div>
+    <div className="flex flex-col gap-2">
+      {data?.n === 0 && <div className="py-3 text-center text-[12px] text-txt-dim">file d’extraction vidée ✓</div>}
+      {data?.file.map((b) => <BrouillonCard key={b.bien_id} b={b} onValide={() => valider(b.bien_id)} />)}
     </div>
   )
 }
 
-// ── Zone 3 — Re-vérification (ADMIN-1 AD9) : GROUPÉE PAR COMMUNE, la plus ancienne d'abord ──
-// Boutons par ligne INCHANGÉS (Toujours en ligne / Prix modifié / Retirée) — aucune mécanique réécrite.
-// Compteur « N vérifiées aujourd'hui » = RadarCheck.reverif_du_jour (chiffre réel, jamais fabriqué).
+// ── Re-vérification : groupée par commune, la plus ancienne d'abord ──
 function joursDepuis(iso: string | null): number {
-  if (!iso) return Number.POSITIVE_INFINITY   // jamais contrôlée = la plus ancienne
+  if (!iso) return Number.POSITIVE_INFINITY
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
 }
-// S5 — le back expose `non_rattachee` (idu IS NULL) pour trier « à rattacher d'abord » + chip.
-// RETOURS-10 (T1) — sur une NON RATTACHÉE à confiance forte, un bouton « Rattacher » (1 clic humain) fait
-// le rattachement automatique proposé ; plus d'écran d'instruction. Confiance faible → aucune tâche.
 function LigneReverif({ r, onInval }: { r: RadarReverif; onInval: () => void }) {
   const [ratt, setRatt] = useState(false)
   const rattacher = () => {
@@ -264,218 +187,142 @@ function LigneReverif({ r, onInval }: { r: RadarReverif; onInval: () => void }) 
 function Reverif() {
   const qc = useQueryClient()
   const { data } = useQuery({ queryKey: ['radar-reverif'], queryFn: getRadarReverif })
-  const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
   const inval = () => { qc.invalidateQueries({ queryKey: ['radar-reverif'] }); qc.invalidateQueries({ queryKey: ['radar-check'] }) }
   const items = data?.file ?? []
-  // regroupement par commune, chaque item porte son ancienneté ; on garde le plus ancien contrôle du groupe.
   const parCommune = new Map<string, RadarReverif[]>()
-  for (const r of items) {
-    const arr = parCommune.get(r.commune) ?? []
-    arr.push(r)
-    parCommune.set(r.commune, arr)
-  }
+  for (const r of items) { const arr = parCommune.get(r.commune) ?? []; arr.push(r); parCommune.set(r.commune, arr) }
   const groupes = [...parCommune.entries()].map(([commune, rows]) => {
-    // S5 — dans chaque commune, les NON RATTACHÉES d'abord (« à rattacher d'abord »), puis le plus ancien contrôle.
     rows.sort((a, b) => Number(!!b.non_rattachee) - Number(!!a.non_rattachee)
       || joursDepuis(b.date_derniere_confirmation) - joursDepuis(a.date_derniere_confirmation))
     const nonRatt = rows.filter((r) => r.non_rattachee).length
     return { commune, rows, nonRatt, plusAncien: joursDepuis(rows[0].date_derniere_confirmation) }
-  }).sort((a, b) => (b.nonRatt > 0 ? 1 : 0) - (a.nonRatt > 0 ? 1 : 0)   // communes avec des non rattachées en tête
-    || b.plusAncien - a.plusAncien)
+  }).sort((a, b) => (b.nonRatt > 0 ? 1 : 0) - (a.nonRatt > 0 ? 1 : 0) || b.plusAncien - a.plusAncien)
   const ageLabel = (j: number) => (j === Number.POSITIVE_INFINITY ? 'jamais contrôlé' : `plus ancien contrôle : ${j} j`)
   return (
-    <div>
-      {items.length === 0 && <div className="py-4 text-center text-[12px] text-txt-dim">file de re-vérification vidée ✓</div>}
-      <div className="flex flex-col gap-3">
-        {groupes.map((g) => (
-          <div key={g.commune}>
-            <div className="flex items-center gap-2 border-b border-line-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.1em] text-txt-dim">
-              <span className="text-txt">{g.commune}</span> · {g.rows.length}
-              {g.nonRatt > 0 && <span className="normal-case tracking-normal text-amber">· {g.nonRatt} à rattacher</span>}
-              <span className="ml-auto normal-case tracking-normal">{ageLabel(g.plusAncien)}</span>
-            </div>
-            <div className="flex flex-col divide-y divide-line-2">
-              {g.rows.map((r) => <LigneReverif key={r.bien_id} r={r} onInval={inval} />)}
-            </div>
+    <div className="flex flex-col gap-3">
+      {items.length === 0 && <div className="py-3 text-center text-[12px] text-txt-dim">file de re-vérification vidée ✓</div>}
+      {groupes.map((g) => (
+        <div key={g.commune}>
+          <div className="flex items-center gap-2 border-b border-line-2 pb-1 font-mono text-[10.5px] uppercase tracking-[0.1em] text-txt-dim">
+            <span className="text-txt">{g.commune}</span> · {g.rows.length}
+            {g.nonRatt > 0 && <span className="normal-case tracking-normal text-amber">· {g.nonRatt} à rattacher</span>}
+            <span className="ml-auto normal-case tracking-normal">{ageLabel(g.plusAncien)}</span>
           </div>
-        ))}
-      </div>
-      <div className="mt-3 border-t border-line-2 pt-2 text-[11px] text-txt-mut">
-        {items.length} annonce{items.length > 1 ? 's' : ''} à re-vérifier · <b className="text-txt">{check.data?.reverif_du_jour ?? 0}</b> vérifiée{(check.data?.reverif_du_jour ?? 0) > 1 ? 's' : ''} aujourd’hui
-      </div>
-    </div>
-  )
-}
-
-// ── Zone 4 — Arbre de check quotidien (le rituel ≤ 15 min) ──
-function Check() {
-  const { data } = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
-  const item = (ok: boolean, txt: string) => (
-    <div className="flex items-center gap-2 py-1 text-[12.5px] text-txt">
-      <span className={ok ? 'text-mint' : 'text-txt-dim'}>{ok ? '✓' : '○'}</span>{txt}
-    </div>
-  )
-  return (
-    <section className="rounded-xl border border-line-2 bg-surface-2 p-4">
-      <Lbl>4 · Check quotidien <span className="text-txt-dim">— cible ≤ {data?.cible_minutes ?? 15} min</span></Lbl>
-      {item((data?.file_extraction ?? 1) === 0, 'file d’extraction vidée')}
-      {item((data?.signalements_en_attente ?? 0) === 0, 'signalements clients traités')}
-      {item(!data?.intake_vide_48h, 'saisie récente (< 48 h)')}
-      <div className="mt-2 flex flex-wrap gap-2 border-t border-line-2 pt-2 text-[11px] text-txt-mut">
-        <Chip>nouveautés {data?.compteurs.nouveautes ?? 0}</Chip>
-        <Chip>en vente longue {data?.compteurs.en_vente_longue ?? 0}</Chip>
-        <Chip tone={((data?.compteurs.baisses ?? 0) > 0) ? 'warn' : 'off'}>baisses {data?.compteurs.baisses ?? 0}</Chip>
-      </div>
-      {data?.intake_vide_48h && (
-        <div className="mt-2 rounded-md border border-amber/30 bg-amber/5 px-3 py-2 text-[11.5px] text-amber">
-          Aucune saisie depuis 48 h — un petit tour sur les portails quand vous avez cinq minutes.
+          <div className="flex flex-col divide-y divide-line-2">
+            {g.rows.map((r) => <LigneReverif key={r.bien_id} r={r} onInval={inval} />)}
+          </div>
         </div>
-      )}
-    </section>
-  )
-}
-
-// ADMIN-1 (AD9) — les signalements clients sont désormais servis par la page PRODUIT (table
-// signalements unifiée, filtres compte/statut) : retirés d'ici pour éviter le doublon. La mécanique
-// (getAdminSignalements / postAdminSignalementStatut) est inchangée, seul l'emplacement change.
-
-// RV2-V1 — bandeau d'alerte EN TÊTE : si le répertoire de captures n'est pas accessible en écriture,
-// le dépôt échouera. On le dit AVANT le premier dépôt, avec le chemin fautif nommé (pas de crash).
-function CapturesAlerte() {
-  const { data } = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
-  if (data == null || data.captures_dir_ok) return null
-  return (
-    <div data-radar-captures-alerte className="rounded-xl border border-st-ecartee/50 bg-st-ecartee/10 px-4 py-3 text-[12px] leading-relaxed text-st-ecartee">
-      <b>Dépôt de captures indisponible</b> — le répertoire privé n’est pas accessible en écriture :
-      <div className="mt-1 break-all font-mono text-[11px] text-txt">{data.captures_dir}</div>
-      <div className="mt-1 text-txt-mut">Un dépôt échouera tant que ce n’est pas corrigé. Créer le
-        répertoire et donner les droits à l’utilisateur de l’app (procédure : docs/PIGE/EXPLOITATION.md § captures).</div>
+      ))}
     </div>
   )
 }
 
-// CONNEXIONS-2 Lot 7.1 (N2) — TOGGLE « dépôt agence » : le drapeau (parcours « Publier une annonce »)
-// se règle ICI, plus dans l'env. Bascule → visible immédiatement (réglage base relu à chaud). Défaut = fermé.
-function DepotAgenceToggle() {
-  const qc = useQueryClient()
-  const etat = useQuery({ queryKey: ['depot-agence-etat'], queryFn: getRadarDepotAgenceEtat })
-  const tog = useMutation({
-    mutationFn: (actif: boolean) => postRadarDepotAgenceToggle(actif),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['depot-agence-etat'] }) },
-  })
-  const actif = etat.data?.actif
+// ── petite ligne « À faire » dépliable ──
+function AFaire({ n, titre, phrase, ouvert, onToggle, children }: {
+  n: number; titre: string; phrase?: string; ouvert: boolean; onToggle: () => void; children: React.ReactNode
+}) {
+  const actif = n > 0
   return (
-    <section className="flex flex-wrap items-center gap-3 rounded-xl border border-line-2 bg-surface-2/50 px-4 py-3">
-      <Lbl>Dépôt agence — « Publier une annonce »</Lbl>
-      <Chip tone={actif ? 'ok' : 'off'}>{actif ? 'ouvert' : 'fermé'}</Chip>
-      <button data-depot-toggle disabled={tog.isPending || actif === undefined}
-        onClick={() => { if (window.confirm(actif
-          ? 'Fermer le dépôt agence ? Les clients ne verront plus le parcours ni les dépôts agence.'
-          : 'Ouvrir le dépôt agence aux clients ? (question Hoguet — n’ouvrir qu’avec l’accord avocat.)')) tog.mutate(!actif) }}
-        className="ml-auto rounded-md border border-line-2 px-2.5 py-1 text-[11.5px] text-txt-dim hover:border-mint hover:text-mint">
-        {actif ? 'Fermer' : 'Ouvrir'}
+    <div className={`rounded-lg border ${actif ? 'border-amber/40' : 'border-line'} bg-surface-2`}>
+      <button onClick={() => actif && onToggle()} disabled={!actif}
+        className={`grid w-full grid-cols-[44px_1fr_auto] items-center gap-3.5 px-3.5 py-2.5 text-left ${actif ? '' : 'cursor-default'}`}>
+        <div className={`text-right font-mono text-[20px] font-medium ${actif ? 'text-amber' : 'text-txt-dim'}`}>{n}</div>
+        <div className="text-[13.5px] text-txt">{titre}{phrase && <small className="block text-[12px] text-txt-mut">{phrase}</small>}</div>
+        <span className={`text-[13px] ${actif ? 'text-mint' : 'text-txt-dim'}`}>{actif ? (ouvert ? 'replier' : 'traiter →') : '—'}</span>
       </button>
-    </section>
+      {actif && ouvert && <div className="border-t border-line px-3.5 py-2.5">{children}</div>}
+    </div>
   )
 }
 
-// ── ADMIN-1 (AD9) — bandeau descriptif qui se replie après première lecture (état mémorisé) ──
+// ── bandeau descriptif repliable (mémoire locale) ──
 function Bandeau() {
   const [lu, setLu] = useState(() => { try { return localStorage.getItem('radar-bandeau-lu') === '1' } catch { return false } })
-  if (lu) return (
-    <button onClick={() => setLu(false)} className="self-start text-[11px] text-txt-dim hover:text-txt">ⓘ à propos du Radar</button>
-  )
-  const replier = () => { try { localStorage.setItem('radar-bandeau-lu', '1') } catch { /* localStorage indispo */ } ; setLu(true) }
+  if (lu) return <button onClick={() => setLu(false)} className="self-start text-[11px] text-txt-dim hover:text-txt">ⓘ à propos du Radar</button>
+  const replier = () => { try { localStorage.setItem('radar-bandeau-lu', '1') } catch { /* indispo */ } ; setLu(true) }
   return (
     <div className="rounded-xl border border-line-2 bg-surface-2/50 px-4 py-3 text-[12.5px] leading-relaxed text-txt-mut">
       <p>Faits extraits d’annonces publiques + lien vers la source. Aucune photo ni texte d’annonce n’est
-        stocké ni affiché — les pages déposées restent des documents de travail privés.</p>
+        stocké ni affiché. Le chemin par captures d’écran est retiré (répertoire /srv en lecture seule) —
+        remplacé par le dépôt HTML.</p>
       <button onClick={replier} className="mt-2 text-[11px] text-mint hover:underline">J’ai lu — replier</button>
     </div>
   )
 }
 
-// RETOURS-8 (R5) — le panneau « Déposer » (dépôt HTML + toggle agence + saisie historique repliée).
-function DeposerPanel() {
+export function RadarSection() {
   const qc = useQueryClient()
+  const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck, refetchInterval: 120_000 })
+  const agence = useQuery({ queryKey: ['depot-agence-etat'], queryFn: getRadarDepotAgenceEtat })
+  const togAgence = useMutation({
+    mutationFn: (actif: boolean) => postRadarDepotAgenceToggle(actif),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['depot-agence-etat'] }),
+  })
+  const [ouvert, setOuvert] = useState<'valider' | 'reverifier' | null>(null)
   const onDepose = () => {
     qc.invalidateQueries({ queryKey: ['radar-extraction'] })
     qc.invalidateQueries({ queryKey: ['radar-check'] })
   }
-  return (
-    <div className="flex flex-col gap-3">
-      <DepotAgenceToggle />
-      <DepotHtml onDepose={onDepose} />
-      {/* SECTEUR-2b (U2) — chemin de capture HISTORIQUE (remplacé par le dépôt HTML), replié. */}
-      <details className="rounded-xl border border-line-2 bg-surface-2/50">
-        <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-txt-dim">
-          Saisie par capture d’écran (chemin historique — remplacé par le dépôt HTML)
-        </summary>
-        <div className="p-3 pt-0">
-          <CapturesAlerte />
-          <Saisie onDepose={onDepose} />
-        </div>
-      </details>
-    </div>
-  )
-}
-
-// RETOURS-8 (R5) — la pige EN ONGLETS (maquette section 1) : des chiffres en tête disent où en est la
-// pige, puis un onglet par tâche (on n'empile plus, on ne descend plus). L'onglet ouvert par défaut est
-// le PREMIER qui a du travail. Le dépôt HTML est un onglet comme les autres.
-// RETOURS-10 (T1) — l'onglet « À rattacher » (instruction humaine des candidates) est retiré : le
-// rattachement à confiance forte se fait désormais d'un clic dans la re-vérification.
-type RadarTab = 'deposer' | 'valider' | 'reverifier' | 'check'
-
-export function RadarSection() {
-  const check = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck })
   const d = check.data
-  const enVie = d?.annonces_en_vie ?? 0
+  const flux = d?.flux
   const aValider = d?.file_extraction ?? 0
   const reverifDues = d?.reverif_dues ?? 0
   const reverifJour = d?.reverif_du_jour ?? 0
-  // onglet par défaut = le premier qui a du travail (À valider → Re-vérifier → Déposer).
-  const defaut: RadarTab = aValider > 0 ? 'valider'
-    : reverifDues > 0 ? 'reverifier' : 'deposer'
-  const [tab, setTab] = useState<RadarTab | null>(null)
-  const actif = tab ?? defaut
+  const actifAgence = agence.data?.actif
 
-  const Kpi = ({ n, sub, tone }: { n: React.ReactNode; sub: string; tone?: 'a' | 'g' }) => (
-    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-      <div className={`text-[17px] font-bold ${tone === 'a' ? 'text-amber' : tone === 'g' ? 'text-mint' : 'text-txt-hi'}`}>{n}</div>
-      <div className="text-[10.5px] text-txt-mut">{sub}</div>
-    </div>
-  )
-  // RETOURS-9 (Q9) — onglet Radar ACTIF = plein vert, encre sombre (pas un simple soulignement).
-  const Onglet = ({ k, children, n, tone }: { k: RadarTab; children: React.ReactNode; n?: number; tone?: 'a' }) => (
-    <button data-radar-onglet={k} onClick={() => setTab(k)} aria-pressed={actif === k}
-      className={`mb-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] transition-colors duration-quick ${
-        actif === k ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
-      {children}{n != null && <b className={`ml-1 ${actif === k ? 'text-mint-ink' : n > 0 && tone === 'a' ? 'text-amber' : 'text-txt-dim'}`}>{n}</b>}
+  const KpiFlux = ({ n, sub, tone, onClick, title }: { n: React.ReactNode; sub: string; tone?: 'g'; onClick?: () => void; title?: string }) => (
+    <button type="button" onClick={onClick} disabled={!onClick} title={title}
+      className={`flex flex-col items-start rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-left ${onClick ? 'hover:border-line-2' : 'cursor-default'}`}>
+      <div className={`text-[19px] font-bold ${tone === 'g' ? 'text-mint' : 'text-txt-hi'}`}>{n}</div>
+      <div className="mt-0.5 text-[10.5px] text-txt-mut">{sub}</div>
     </button>
   )
+
   return (
     <div className="flex flex-col gap-4">
       <Bandeau />
-      {/* RETOURS-10 (T1) — TROIS chiffres en tête : annonces en vie · à valider · re-vérifiées/dues.
-          Le « à rattacher » disparaît (plus d'instruction). Le compteur « rattachées N / M » reste,
-          lui, sur Circuit et Pilotage. */}
-      <div className="grid grid-cols-3 gap-2">
-        <Kpi n={enVie} sub="annonces en vie" />
-        <Kpi n={aValider} sub="à valider (file d’extraction)" tone="g" />
-        <Kpi n={<>{reverifJour} <span className="text-[11px] text-txt-dim">/ {reverifDues} dues</span></>} sub="re-vérifiées aujourd’hui" />
+
+      {/* Section 1 — dépôt du jour + bilan du dernier dépôt */}
+      <div className="grid grid-cols-2 gap-3.5 max-[1100px]:grid-cols-1">
+        <DepotHtml onDepose={onDepose} />
+        <DernierDepot dep={d?.dernier_depot ?? null} />
       </div>
-      {/* les onglets : une tâche = un onglet, on n'empile plus. */}
-      <div className="flex gap-5 overflow-x-auto border-b border-line">
-        <Onglet k="deposer">Déposer</Onglet>
-        <Onglet k="valider" n={aValider} tone="a">À valider</Onglet>
-        <Onglet k="reverifier" n={reverifDues} tone="a">Re-vérifier</Onglet>
-        <Onglet k="check">Check du jour</Onglet>
+
+      {/* Section 2 — À faire (à valider · à re-vérifier), listes dépliables */}
+      <div>
+        <h2 className="mb-2 mt-2 font-mono text-[11px] uppercase tracking-[0.18em] text-txt-dim">À faire</h2>
+        <div className="flex flex-col gap-1.5">
+          <AFaire n={aValider} titre="annonces à valider (extraction)"
+            ouvert={ouvert === 'valider'} onToggle={() => setOuvert((o) => o === 'valider' ? null : 'valider')}>
+            <Extraction />
+          </AFaire>
+          <AFaire n={reverifDues} titre="liens à re-vérifier aujourd’hui"
+            phrase={reverifDues === 0 ? 'rien à re-vérifier — prochaine vague plus tard' : undefined}
+            ouvert={ouvert === 'reverifier'} onToggle={() => setOuvert((o) => o === 'reverifier' ? null : 'reverifier')}>
+            <Reverif />
+          </AFaire>
+        </div>
       </div>
-      {actif === 'deposer' && <DeposerPanel />}
-      {actif === 'valider' && <Extraction />}
-      {actif === 'reverifier' && <Reverif />}
-      {actif === 'check' && <Check />}
+
+      {/* Section 3 — Le flux */}
+      <div>
+        <h2 className="mb-2 mt-2 font-mono text-[11px] uppercase tracking-[0.18em] text-txt-dim">Le flux</h2>
+        <div className="grid grid-cols-5 gap-2 max-[1100px]:grid-cols-2">
+          <KpiFlux n={flux?.en_vie ?? '—'} sub="annonces en vie" tone="g" />
+          <KpiFlux n={flux ? `${flux.rattachees} / ${flux.biens}` : '—'} sub="rattachées à une parcelle" />
+          <KpiFlux n={flux?.copros_non_servies ?? '—'} sub="copropriétés non servies" title="Collectées mais jamais servies au client (est_copro)" />
+          <KpiFlux n={flux?.paires ?? '—'} sub="paires DVF (vendue)" />
+          <KpiFlux n={actifAgence == null ? '—' : actifAgence ? 'ouvert' : 'fermé'} sub="dépôt agence"
+            onClick={() => { if (actifAgence === undefined) return; if (window.confirm(actifAgence
+              ? 'Fermer le dépôt agence ? Les clients ne verront plus le parcours ni les dépôts agence.'
+              : 'Ouvrir le dépôt agence aux clients ? (question Hoguet — n’ouvrir qu’avec l’accord avocat.)')) togAgence.mutate(!actifAgence) }}
+            title="Drapeau « Publier une annonce » (parcours agence), lu en base — cliquer pour ouvrir/fermer" />
+        </div>
+        <p className="mt-2 text-[11px] text-txt-mut">
+          <b className="text-txt">{reverifJour}</b> vérifiée{reverifJour > 1 ? 's' : ''} aujourd’hui ·
+          un seul compteur « en vie », le même qu’au Pilotage. Le chemin par captures d’écran est retiré.
+        </p>
+      </div>
     </div>
   )
 }

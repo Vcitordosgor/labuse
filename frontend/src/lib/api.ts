@@ -1843,6 +1843,10 @@ export interface RadarCheck {
   intake_vide_48h: boolean; derniere_saisie: string | null
   // RV2-V1 — état du répertoire de captures (écriture) : le défaut prod se voit AVANT le 1er dépôt.
   captures_dir_ok: boolean; captures_dir: string
+  // DASHBOARD-2 (Lot 4) — bilan du dernier dépôt (persistant) + « Le flux ».
+  dernier_depot: { date_depot: string | null; nom_fichier: string | null; nb_annonces: number | null
+    nb_nouvelles: number | null; nb_maj: number | null; nb_a_qualifier: number | null } | null
+  flux: { en_vie: number; biens: number; rattachees: number; paires: number; copros_non_servies: number }
 }
 export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
   j<RadarProposition>('/admin/radar/deposer', {

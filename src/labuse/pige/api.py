@@ -233,6 +233,27 @@ def radar_check(request: Request) -> dict:
         # non traités — plus l'event_log du jour seul. L'admin les voit et les traite au dashboard.
         signalements = q("SELECT count(*) FROM signalements WHERE statut = 'nouveau'")
         derniere = c.execute(text("SELECT max(date_saisie) FROM pige_annonces")).scalar()
+        # DASHBOARD-2 (Lot 4) — bilan du DERNIER dépôt (persistant, table pige_depots) : ce qui est
+        # RÉELLEMENT stocké par dépôt (date, annonces lues, nouvelles, mises à jour, à qualifier).
+        # La variante, les baisses de prix et le digest ne sont pas stockés par dépôt → non inventés.
+        dep = c.execute(text(
+            "SELECT date_depot, nom_fichier, nb_annonces, nb_nouvelles, nb_maj, nb_a_qualifier "
+            "FROM pige_depots ORDER BY date_depot DESC LIMIT 1")).mappings().first()
+        dernier_depot = None if not dep else {
+            "date_depot": dep["date_depot"].isoformat() if dep["date_depot"] else None,
+            "nom_fichier": dep["nom_fichier"], "nb_annonces": dep["nb_annonces"],
+            "nb_nouvelles": dep["nb_nouvelles"], "nb_maj": dep["nb_maj"], "nb_a_qualifier": dep["nb_a_qualifier"],
+        }
+        # DASHBOARD-2 (Lot 4) — « Le flux » : rattachées / total biens / paires DVF / copros non servies.
+        # rattachées & paires lisent la MÊME source que Pilotage/Circuit (pige_biens) — compteur unique.
+        biens = q("SELECT count(*) FROM pige_biens")
+        flux = {
+            "en_vie": annonces_en_vie,
+            "biens": biens,
+            "rattachees": q("SELECT count(*) FROM pige_biens WHERE idu IS NOT NULL"),
+            "paires": q("SELECT count(*) FROM pige_biens WHERE statut = 'vendue'"),
+            "copros_non_servies": q("SELECT count(*) FROM pige_biens WHERE est_copro = true"),
+        }
     from datetime import datetime, timedelta, timezone
     vide_48h = derniere is None or derniere < datetime.now(tz=timezone.utc) - timedelta(hours=48)
     # RV2-V1 — état du répertoire de captures (écriture) exposé à l'admin : le défaut prod se voit
@@ -253,6 +274,9 @@ def radar_check(request: Request) -> dict:
         "derniere_saisie": derniere.isoformat() if derniere else None,
         "captures_dir_ok": cap_ok,
         "captures_dir": cap_detail,
+        # DASHBOARD-2 (Lot 4) — bilan du dernier dépôt + « Le flux ».
+        "dernier_depot": dernier_depot,
+        "flux": flux,
     }
 
 # ══════════════ RADAR P3 · C1 — endpoints CLIENT (lecture : faits + lien, jamais le contenu) ══════════════
