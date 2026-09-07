@@ -1361,12 +1361,20 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
             "ALTER TABLE spatial_layers ADD COLUMN IF NOT EXISTS geom_simple geometry",
             # kinds SERVIS PAR LA CARTE seulement (miroir de _MAP_LAYER_KINDS hors points OSM/BPE —
             # les points se simplifient à la volée sans coût) : jamais les 800 k bâtiments cascade.
+            # COUCHES-1 lot 6 (F) — la liste PRÉCÉDAIT SOURCES-1 : les couches ajoutées depuis
+            # (droit des sols, nature/eau, sols, bruit) simplifiaient À LA VOLÉE à chaque requête
+            # (leçon des aléas NON généralisée, constat F). Ajoutées ici → matérialisées une fois.
+            # Les POINTS (amenite/amenite_bpe, casias points) restent hors liste (rien à simplifier).
             f"UPDATE spatial_layers SET geom_simple = ST_SimplifyPreserveTopology(geom, 0.0002) "
             f"WHERE geom_simple IS NULL AND geom IS NOT NULL{scope} AND kind IN ("
             "'plu_gpu_zone','ppr','parc_national','anru','cinquante_pas','georisque_alea',"
             "'transport_ligne','transport_arret','pole_echange','telepherique','ligne_ht',"
             "'axe_structurant','qpv','tva_primo','zfang','frr','znieff','vefa_neuf',"
-            "'ligne_mt','tcsp_troncon','tcsp_station')",
+            "'ligne_mt','tcsp_troncon','tcsp_station','tcsp_zone',"
+            # SOURCES-1 : droit des sols (ER/EBC = plu_gpu_prescription, DPU, PEB, SUP), nature et
+            # eau (zones humides, ENP = ens, RPG = safer, DPF), sols (SIS/CASIAS = sol_pollue), bruit.
+            "'plu_gpu_prescription','dpu','peb','sup','dpf','zone_humide','ens','safer',"
+            "'sol_pollue','bruit_route','bruit_carte')",
         ]
     ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",

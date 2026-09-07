@@ -29,6 +29,11 @@ function writeLeg(v: { open: boolean; groupes: Record<string, boolean> }) {
   try { localStorage.setItem(LEG_LS, JSON.stringify(v)) } catch { /* indisponible : la légende reste fonctionnelle */ }
 }
 
+// COUCHES-1 lot 2 (A2) — « Légende · N couches » compte les COUCHES DE DONNÉES réellement actives,
+// pas le fond structurel ni les modes de peinture. Sans cette exclusion le compteur restait bloqué
+// (limites + communes + trame parcelles toujours vrais) — d'où le « 4 » figé du constat A2.
+const BASE_FOND = new Set(['limites', 'communes', 'parcelles', 'couleurs_verdict', 'renouv'])
+
 /** SECTEUR-1 (S4) — chaque groupe de la légende est un accordéon. La note de SOURCE passe dans le « i »
  *  du groupe (« DEAL Réunion… »), jamais dans le corps de la légende. */
 function Groupe({ titre, note, open, onToggle, children }: {
@@ -70,8 +75,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const critereDerive = (polesQ.data?.features.find((f) => (f.properties as { subtype?: string; critere?: string }).critere)
     ?.properties as { critere?: string } | undefined)?.critere ?? 'arrêt desservi par de nombreuses lignes (dérivé GTFS)'
   const htQ = useQuery({ queryKey: ['layer', 'ligne_ht'], queryFn: () => getMapLayer('ligne_ht'), enabled: layers.lignes_ht })
-  const qpvQ = useQuery({ queryKey: ['layer', 'qpv', commune], queryFn: () => getMapLayer('qpv'), enabled: layers.qpv })
-  const anruQ = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
+  // COUCHES-1 lot 2 (A7) — qpvQ/anruQ retirés : ils ne servaient qu'au millésime inline du libellé,
+  // désormais porté par le « i » de la couche (menu, /map/couches-info) — plus deux requêtes pour rien.
   const tTheme = MAP_THEME[basemap === 'clair' ? 'clair' : 'sombre']
   const mill = (q: { data?: unknown }) => (q.data as { millesime_integration?: string } | undefined)?.millesime_integration
   const srcMill = (q: { data?: unknown }) => (q.data as { source_millesime?: string } | undefined)?.source_millesime
@@ -89,8 +94,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const zonagePeint = peint.zonage
   const equipPeint = peint.equipements
   const dispoActif = layers.qpv || layers.tva_primo || layers.anru || layers.zfang || layers.frr
-  // SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP)
-  const contraintesActif = layers.er || layers.ebc || layers.dpu || layers.peb || layers.sup || layers.bruit_route || layers.bruit_carte
+  // SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP).
+  // COUCHES-1 lot 2 (A1) — `dpf` (ravines et reculs) AJOUTÉ à l'activation : sa ligne de légende
+  // vit dans ce groupe mais `dpf` en était absent → allumée seule, la couche « Ravines et reculs »
+  // n'avait AUCUNE légende (constat A1).
+  const contraintesActif = layers.er || layers.ebc || layers.dpu || layers.peb || layers.sup || layers.dpf || layers.bruit_route || layers.bruit_carte
 
   // SECTEUR-1 (S4) — les GROUPES actifs, dans l'ordre. Seuls ceux des couches actives apparaissent.
   const groupes: { id: string; titre: ReactNode; note?: string; body: ReactNode }[] = []
@@ -139,10 +147,35 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     note: 'Réserve des 50 pas géométriques — bande de 81,20 m depuis le rivage (spécifique outre-mer).',
     body: <div data-legend-50pas className="flex items-center gap-2"><span className="h-0.5 w-4 rounded" style={{ background: CINQUANTE_PAS_COLOR }} /><span className="text-[11px] text-txt">50 pas géométriques</span></div>,
   })
+  // COUCHES-1 lot 2 (A5) — ZNIEFF servie en DEUX entrées : type I (fort intérêt, plus sensible,
+  // aplat dense) et type II (grand ensemble naturel, aplat léger) — deux portées juridiques, avant
+  // fondues sous un swatch unique.
   if (layers.znieff) groupes.push({
-    id: 'znieff', titre: 'ZNIEFF — type I & II',
+    id: 'znieff', titre: 'ZNIEFF — patrimoine naturel',
     note: 'Inventaire du patrimoine naturel (INPN/MNHN, 2025). Type I : secteur à fort intérêt, plus sensible ; type II : grand ensemble naturel. Contrainte (étude d\'impact, risque de recours), pas une interdiction. N\'entre pas dans le classement.',
-    body: <div data-legend-znieff className="flex items-center gap-2"><span className="h-2.5 w-4 rounded-sm border" style={{ background: tTheme.znieff, opacity: tTheme.znieffOpacity + 0.35, borderColor: tTheme.znieff }} /><span className="text-[11px] text-txt">ZNIEFF — type I &amp; type II</span></div>,
+    body: <div data-legend-znieff className="flex flex-col gap-0.5 text-[11px] text-txt">
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.znieff, opacity: tTheme.znieffOpacity + 0.35, borderColor: tTheme.znieff }} />Type I — fort intérêt (plus sensible)</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.znieff, opacity: tTheme.znieffOpacity + 0.12, borderColor: tTheme.znieff }} />Type II — grand ensemble naturel</span>
+    </div>,
+  })
+  // COUCHES-1 lot 2 (A1) — PPR multirisque : légende ABSENTE jusqu'ici (la couche peignait un aplat
+  // rouge sans rien dire). Aplat réglementaire multirisque insécable ; zone d'interdiction OU de
+  // prescription (le détail sort au clic).
+  if (layers.ppr) groupes.push({
+    id: 'ppr', titre: 'PPR multirisque',
+    note: 'Plan de prévention des risques (DEAL Réunion) — zonage réglementaire OPPOSABLE, multirisque (inondation, mouvement de terrain, etc. réunis en un seul document). Zone rouge = interdiction ; zone bleue = prescription (construction sous conditions). La catégorie exacte sort au clic. Distinct de la carte d\'aléas (exposition ≠ règle).',
+    body: <div data-legend-ppr className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.ppr, opacity: (tTheme.pprOpacity ?? 0.3) + 0.4, borderColor: tTheme.ppr }} /><span className="text-[11px] text-txt">PPR — interdiction ou prescription (au clic)</span></div>,
+  })
+  // COUCHES-1 lot 1 (E3 + A1) — Parc national : légende ABSENTE jusqu'ici, et le cœur (contrainte
+  // la plus structurante de l'île) était fondu dans un aplat marron unique. Deux entrées distinctes :
+  // le CŒUR (inconstructible) et l'AIRE D'ADHÉSION (réglementée mais constructible).
+  if (layers.parc) groupes.push({
+    id: 'parc', titre: 'Parc national',
+    note: 'Parc national de La Réunion (INPN). Le CŒUR (~40 % de l\'île) est inconstructible (autorisation du Parc requise, hors exceptions étroites) ; l\'AIRE D\'ADHÉSION est constructible mais soumise à la charte du Parc. Contrainte majeure — le zonage PLU s\'y superpose.',
+    body: <div data-legend-parc className="flex flex-col gap-0.5">
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: '#6B3E17', opacity: 0.7, borderColor: '#6B3E17' }} /><span className="text-[11px] text-txt">Cœur — inconstructible</span></span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: '#C08A54', opacity: 0.55, borderColor: '#C08A54' }} /><span className="text-[11px] text-txt">Aire d’adhésion — réglementée</span></span>
+    </div>,
   })
   if (layers.equipements_bpe) groupes.push({
     id: 'bpe', titre: 'Équipements (INSEE BPE)',
@@ -168,7 +201,10 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       const sub = k === 'alea_inondation' ? 'inondation' : 'mouvement_terrain'
       const ramp = (k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp) as unknown as Record<string, string>
       const ORDRE = ['faible', 'moyen', 'fort', 'eleve', 'tres_eleve'] as const
-      const LAB: Record<string, string> = { faible: 'faible', moyen: 'moyen', fort: 'fort', eleve: 'élevé', tres_eleve: 'très élevé' }
+      // COUCHES-1 lot 5 (D5) — VOCABULAIRE DE GRAVITÉ ALIGNÉ entre les deux aléas : faible / moyen /
+      // élevé / très élevé (le synonyme « fort » de l'inondation devient « élevé »). Chaque aléa
+      // n'affiche que ses crans réellement servis ; la classe la plus grave reste ROUGE (doctrine R6).
+      const LAB: Record<string, string> = { faible: 'faible', moyen: 'moyen', fort: 'élevé', eleve: 'élevé', tres_eleve: 'très élevé' }
       const servies = new Set((aleaQ.data?.features ?? [])
         .filter((f) => (f.properties as { subtype?: string }).subtype === sub)
         .map((f) => String((f.properties as { classe?: string; niveau?: string }).classe
@@ -205,8 +241,10 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     id: 'ht', titre: 'Lignes électriques (HTA / HTB)',
     note: `HTA (moyenne tension ~15-20 kV, distribution) : EDF Réunion open data, LO 2.0, géométrie ~02/2020 republiée 16/10/2025 — tracé indicatif (sécurité publique), jamais une DT-DICT. HTB (63/90 kV, transport) : BD TOPO IGN (aérien, tension indiquée)${fmtFraich(htQ)}. Contrainte potentielle (servitudes, reculs) — à vérifier auprès d'EDF SEI.`,
     body: <div data-legend-ht className="flex flex-col gap-1 text-[11px] text-txt">
+      {/* COUCHES-1 lot 5 (D2) — HTB argent (trait épais) vs HTA ardoise-bleu (trait fin mais VISIBLE,
+          h-[2px]) : avant deux swatchs quasi blancs indistincts. */}
       <span className="flex items-center gap-2"><span className="h-[3px] w-4 rounded" style={{ background: tTheme.ht }} />haute tension HTB — trait épais tireté (BD TOPO IGN)</span>
-      <span className="flex items-center gap-2"><span className="h-px w-4 rounded" style={{ background: tTheme.mt }} />moyenne tension HTA — trait fin (EDF Réunion open data)</span>
+      <span className="flex items-center gap-2"><span className="h-[2px] w-4 rounded" style={{ background: tTheme.mt }} />moyenne tension HTA — trait fin (EDF Réunion open data)</span>
     </div>,
   })
   // RETOURS-14 S8 — « Stationnement allégé » : légende à TROIS entrées (zone · station · voie).
@@ -215,7 +253,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     note: 'Sur une parcelle à moins de 800 m d’une station de transport en commun en site propre (rayon à vol d’oiseau — la pastille fait 1,6 km de large), le PLU ne peut pas exiger plus d’une place de stationnement par logement (0,5 pour le logement social), si la desserte est de qualité. Moins de parking = plus de surface vendable, bilan plus léger. Un simple couloir bus ne compte pas. Source : code de l’urbanisme, art. L151-34 à 36 (loi 2025-1129) ; voies et stations relevées dans OpenStreetMap ; en travaux / en projet (Réunion Express, débat public jusqu’au 26/11/2026) : aucun tracé public, rien n’est dessiné à la main.',
     body: <div data-legend-tcsp className="flex flex-col gap-1 text-[11px] text-txt">
       <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tcsp, opacity: 0.45, borderColor: tTheme.tcsp }} />zone 800 m — parcelles au stationnement allégé</span>
-      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border border-[#0A0F0C]" style={{ background: tTheme.tcsp }} />station en service</span>
+      <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full border-2" style={{ borderColor: tTheme.tcsp }} />station en service (anneau autour de l’arrêt)</span>
       <span className="flex items-center gap-2"><span className="h-1 w-4 rounded" style={{ background: tTheme.tcsp }} />voie en site propre</span>
     </div>,
   })
@@ -265,11 +303,15 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   })
   if (dispoActif) groupes.push({
     id: 'dispositifs', titre: 'Dispositifs et périmètres',
-    note: 'ZFANG / FRR : maille COMMUNE entière (pas un périmètre fin). Bande TVA : périmètre dérivé des QPV (Estimé).',
+    // COUCHES-1 lot 2 (A7) — millésime et mention « dérivé » RETIRÉS des libellés : ils vivaient sur
+    // 2 couches (QPV/NPNRU « ingéré le… ») et 1 (TVA « dérivé ») seulement. Règle unique : le corps
+    // dit CE QUE C'EST, le « i » de chaque couche dit d'où ça vient, son millésime et sa dérivation
+    // (note ci-dessous + info-bulle du menu, /map/couches-info). La fraîcheur = millésime amont : Lot 7.
+    note: 'ZFANG / FRR : maille COMMUNE entière (pas un périmètre fin). Bande TVA réduite primo-accédant : périmètre DÉRIVÉ (buffer 500 m des QPV, estimé). Millésime de chaque couche : dans son « i ».',
     body: <div data-legend-dispositifs className="flex flex-col gap-1.5 text-[11px] text-txt">
-      {layers.qpv && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.qpv, opacity: tTheme.qpvOpacity + 0.35, borderColor: tTheme.qpv }} />QPV — quartier prioritaire{fmtFraich(qpvQ)}</span>}
-      {layers.tva_primo && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tvaPrimo, opacity: tTheme.tvaPrimoOpacity + 0.35, borderColor: tTheme.tvaPrimo }} /><span>TVA réduite primo-accédant (QPV + 500 m) — <i className="text-txt-dim">dérivé</i></span></span>}
-      {layers.anru && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.anru, opacity: tTheme.anruOpacity + 0.35, borderColor: tTheme.anru }} />NPNRU / ANRU{fmtFraich(anruQ)}</span>}
+      {layers.qpv && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.qpv, opacity: tTheme.qpvOpacity + 0.35, borderColor: tTheme.qpv }} />QPV — quartier prioritaire</span>}
+      {layers.tva_primo && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.tvaPrimo, opacity: tTheme.tvaPrimoOpacity + 0.35, borderColor: tTheme.tvaPrimo }} />TVA réduite primo-accédant (QPV + 500 m)</span>}
+      {layers.anru && <span className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.anru, opacity: tTheme.anruOpacity + 0.35, borderColor: tTheme.anru }} />NPNRU / ANRU</span>}
       {layers.zfang && <><span data-legend-zfang-renforce className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.zfangRenforce, borderColor: tTheme.zfangRenforce }} />ZFANG renforcée — 6 communes de l’Est</span><span data-legend-zfang-standard className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.zfangStandard, borderColor: tTheme.zfangStandard, backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />ZFANG standard — 18 communes</span></>}
       {layers.frr && <><span data-legend-frr-totalite className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ background: tTheme.frrTotalite, borderColor: tTheme.frrTotalite }} />FRR totalité — 3 communes</span><span data-legend-frr-partie className="flex items-center gap-2"><span className="h-2.5 w-4 shrink-0 rounded-sm border" style={{ backgroundColor: tTheme.frrPartie, borderColor: tTheme.frrPartie, backgroundImage: 'repeating-linear-gradient(-45deg, rgba(0,0,0,.35) 0 1.5px, transparent 1.5px 4px)' }} />FRR en partie — 20 communes</span></>}
     </div>,
@@ -297,8 +339,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   })
   if (equipPeint) groupes.push({
     id: 'equip', titre: 'Équipements (OSM)',
+    // COUCHES-1 lot 2 (A6) — le « i » manquait sur ce seul groupe. Source + nature dites comme ailleurs.
+    note: 'Équipements et lieux d\'intérêt relevés dans OpenStreetMap (© les contributeurs OSM, ODbL) — mis à jour en continu. Complémentaire de la base INSEE BPE (référentiel statistique annuel) : OSM porte des objets que la BPE ignore (marché forain, crèche, gendarmerie…).',
     body: <div data-legend-equip className="flex flex-col gap-0.5 text-[11px]">{EQUIP_META.map((e) => (
-      <span key={e.key} className="flex items-center gap-1.5 text-txt-mut"><span className="text-[13px] leading-none">{e.emoji}</span>{e.label}</span>
+      // COUCHES-1 lot 5 (D6) — pastille COLORÉE (anneau blanc = source OSM), plus d'emoji. La couleur dit la catégorie.
+      <span key={e.key} className="flex items-center gap-1.5 text-txt-mut"><span className="h-2.5 w-2.5 shrink-0 rounded-full border" style={{ background: e.color, borderColor: '#FFFFFF' }} />{e.label}</span>
     ))}</div>,
   })
 
@@ -309,8 +354,9 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const grpOpen = (id: string, i: number) => leg.groupes[id] ?? (i === 0)
   const toggleGrp = (id: string) => set({ ...leg, groupes: { ...leg.groupes, [id]: !grpOpen(id, groupes.findIndex((g) => g.id === id)) } })
 
-  // « N couches » = les couches ACTIVES à l'écran (ce que Vic voit cocher), pas le nombre de groupes.
-  const nCouches = Object.values(layers).filter(Boolean).length
+  // « N couches » = les couches de données ACTIVES à l'écran (ce que Vic voit cocher), pas le nombre
+  // de groupes ni le fond structurel (cf. BASE_FOND — correctif A2).
+  const nCouches = Object.entries(layers).filter(([k, v]) => v && !BASE_FOND.has(k)).length
   const shell = inline ? 'rounded-xl bg-surface-2' : 'floating absolute bottom-4 right-4 hidden sm:block'
   return (
     <div data-legend className={`${shell} w-[240px]`}>
@@ -320,7 +366,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         <ChevronSection open={leg.open} />
       </button>
       {leg.open && (
-        <div data-legend-corps className="max-h-[35vh] overflow-y-auto border-t border-line px-3.5 py-2">
+        <div data-legend-corps className="max-h-[min(70vh,34rem)] overflow-y-auto overscroll-contain border-t border-line px-3.5 py-2">
           {groupes.map((g, i) => (
             <Groupe key={g.id} titre={g.titre} note={g.note} open={grpOpen(g.id, i)} onToggle={() => toggleGrp(g.id)}>{g.body}</Groupe>
           ))}

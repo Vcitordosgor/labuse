@@ -704,6 +704,10 @@ export interface ReglementZone {
   approbation?: string | null
   edition?: string | null
   idurba?: string | null
+  // COUCHES-1 lot 3 (item 12 / B4) — part de la SURFACE de la parcelle couverte par cette zone
+  // (0-1). Sert l'affichage « à cheval » : quand plusieurs zones, on montre leurs surfaces réelles
+  // au lieu de la seule zone dominante (le backend `_reglement_plu_block` la renvoyait déjà).
+  part?: number | null
   articles: { regle: string; reference: string; page_imprimee: number | null; url: string | null }[]
   // RETOURS-11F3 F4 — les règles clés de la zone AVEC leurs valeurs (hauteur, emprise, reculs,
   // pleine terre, stationnement). etat : chiffre | texte | absent (« non réglementé ») | a_verifier.

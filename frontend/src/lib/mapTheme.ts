@@ -147,8 +147,8 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zonageOpacity: 0.10,
     zonageContourW: 0,
     ppr: '#E8695A',
-    pprOpacity: 0.14,
-    pprContourW: 0,
+    pprOpacity: 0.24,        // COUCHES-1 lot 5 (D3) — 0,14 → 0,24 : le PPR était quasi invisible
+    pprContourW: 1,          // COUCHES-1 lot 5 (D3) — contour ajouté (le seul aplat sans liseré)
     znieff: '#8F9E4B', znieffOpacity: 0.20,                 // vert olive (contrainte naturelle)
     bpe: '#5AA9E8',                                          // bleu — cercles BPE, distinct des icônes OSM
     anru: '#C6E82E',
@@ -167,8 +167,10 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaTrameOpacity: 0.4,
     // C3 — teintes vives sur fond sombre, franchement distinctes (bleu→orange→rouge / beige→marron→rouge)
     aleaInondationRamp: { faible: '#4EA8F0', moyen: '#F0913D', fort: '#E8564A' },
-    aleaMvtRamp: { faible: '#D9C08A', moyen: '#B5732E', eleve: '#F0913D', tres_eleve: '#E8564A', fort: '#E8564A' },
-    aleaFillOpacity: 0.45,
+    // COUCHES-1 lot 5 (D2) — rampe 4 crans FRANCHEMENT distincts (avant beige/brun se confondaient) :
+    // or pâle → ambre → orange → rouge. La classe la plus grave reste ROUGE (doctrine R6).
+    aleaMvtRamp: { faible: '#F2D98A', moyen: '#E8A33D', eleve: '#E8721F', tres_eleve: '#E8564A', fort: '#E8564A' },
+    aleaFillOpacity: 0.36,      // COUCHES-1 lot 5 (D4) — 0,45 → 0,36 : le mvt de terrain écrasait l'île
     transportReseaux: {
       'Car Jaune': '#E3B93C',   // or — 9,46 sur fond sombre (≠ #F5C518 Pages Jaunes, moins saturé)
       'Citalis': '#E87BB0',     // rose — 6,62
@@ -181,34 +183,43 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     transportDefaut: '#E87BB0',
     pole: '#FF6DB3',            // M137-X — magenta vif : les pôles RESSORTENT sur l'axe gris — 8,9
     axe: '#8FA6C4',             // bleu-gris — 7,06
-    ht: '#B9C4C0',              // 9,83 sur fond sombre
-    mt: '#7FA0A8',              // R4 — gris-sarcelle (HTA, tireté court fin)
+    ht: '#B9C4C0',              // 9,83 sur fond sombre (HTB argent)
+    mt: '#6E86C4',              // COUCHES-1 lot 5 (D2) — HTA passe en ARDOISE-BLEU (ex gris-sarcelle) :
+                                //   HTB argent vs HTA bleu = franchement distinctes (avant : deux gris ~blancs)
     tcsp: '#3FE0C8',             // C2 — turquoise vif structurant (fond sombre)
     // M134 dispositifs (sombre = tints vifs, tous > 5:1 sur fond sombre)
     qpv: '#E8934A', qpvOpacity: 0.28,                     // orange (opérationnel)
     tvaPrimo: '#56C5D0', tvaPrimoOpacity: 0.24,           // cyan (fiscal, dérivé)
     // M137-Y — 4 états, 4 couleurs (aplat @0,24) — contrastes M105-B mesurés sur fond sombre :
     zfangRenforce: '#3E74F0', zfangStandard: '#C6B08A',   // bleu roi 1,33 · sable 1,62
-    frrTotalite: '#17B26A', frrPartie: '#9B6BE0',         // émeraude 1,48 · améthyste 1,37
-    dispoFillOpacity: 0.24,
+    // COUCHES-1 lot 5 (D1) — FRR totalité était VERT (émeraude) sur fond vert : passé en SARCELLE
+    // profond, franchement distinct des verts (parc/EBC/ENP) et de l'améthyste FRR-partie.
+    frrTotalite: '#1AA3B8', frrPartie: '#9B6BE0',         // sarcelle · améthyste
+    dispoFillOpacity: 0.16,     // COUCHES-1 lot 5 (D4) — 0,24 → 0,16 : ZFANG/FRR écrasaient l'île
     // SOURCES-1 lot 1 — contraintes du droit des sols (tints vifs, fond sombre)
     er: '#D4A017', erOpacity: 0.30,                       // or foncé — emprise grevée (ER)
-    ebc: '#38A169', ebcOpacity: 0.28,                     // vert forêt — boisement classé
-    dpu: '#6B8FD4', dpuOpacity: 0.22,                     // bleu moyen — préemption (transaction)
+    // COUCHES-1 lot 5 (D1) — EBC était vert forêt, en camaïeu avec le mint du zonage (même famille
+    // Urbanisme) : passé en forêt PROFOND/bleuté, nettement plus sombre que le mint vitrine + contour.
+    ebc: '#1B7A4A', ebcOpacity: 0.30,                     // vert forêt profond — boisement classé
+    dpu: '#6B8FD4', dpuOpacity: 0.30,                     // COUCHES-1 lot 5 (D3) — 0,22 → 0,30 (DPU invisible)
     pebRamp: { a: '#E8564A', b: '#F0913D', c: '#E3C13C', d: '#9AA0A6' },
     pebOpacity: 0.28,
-    sup: '#C05884', supOpacity: 0.24,                     // framboise — servitudes SUP
+    sup: '#C05884', supOpacity: 0.16,                     // COUCHES-1 lot 5 (D4) — 0,24 → 0,16 (SUP magenta écrasait tout)
     // SOURCES-1 lot 2 — nature et eau (fond sombre)
     dpf: '#4FC3E8',                                       // trait d'eau vif — DPF (ligne)
     zoneHumide: '#2E9E8F', zoneHumideOpacity: 0.30,       // sarcelle — zones humides
-    enp: '#1E8F4E', enpOpacity: 0.26,                     // vert profond — espaces protégés
+    // COUCHES-1 lot 5 (D1) — ENP était VERT profond, en camaïeu avec parc/EBC/ZNIEFF. Passé en
+    // INDIGO-VIOLET profond : une protection réglementaire forte, franchement hors de la famille verte.
+    enp: '#6A4CC2', enpOpacity: 0.28,                     // indigo — espaces naturels protégés (rédhibitoire)
     rpg: '#C9B458', rpgOpacity: 0.22,                     // paille — cultures déclarées
     // SOURCES-1 lot 3 — sols et bruit (fond sombre)
     sis: '#A0522D', sisOpacity: 0.34,                     // brun sol — SIS (4 périmètres)
     casias: '#D9973B',                                    // ocre — sites CASIAS (points)
-    bruitRamp: { cat1: '#8E4DD1', cat2: '#9B6BD6', cat3: '#A98BD9', cat4: '#B8A8DC', cat5: '#C9C2DE' },
+    // COUCHES-1 lot 5 (D2) — les deux paliers servis (cat 1-2 / cat 3-5) plus séparés : violet
+    // PROFOND (le plus sévère, bandes 250-300 m) → lavande CLAIRE (le moindre). Gradient lisible.
+    bruitRamp: { cat1: '#7A2FC7', cat2: '#9B6BD6', cat3: '#A98BD9', cat4: '#C9BCE6', cat5: '#DAD2EE' },
     bruitOpacity: 0.26,                                   // violet gradué — classement sonore
-    bruitCarte: '#B03A6B', bruitCarteOpacity: 0.22,       // prune — dépassements CBS
+    bruitCarte: '#B03A6B', bruitCarteOpacity: 0.30,       // COUCHES-1 lot 5 (D3) — 0,22 → 0,30 (CBS quasi invisible)
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -217,7 +228,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zonageOpacity: 0.22,
     zonageContourW: 1,
     ppr: '#D14432',            // rouge profond — aplat @0,20 → 1,31 ✓ ; contour 4,09 ✓
-    pprOpacity: 0.20,
+    pprOpacity: 0.28,          // COUCHES-1 lot 5 (D3) — 0,20 → 0,28 (PPR quasi invisible)
     pprContourW: 1,
     znieff: '#6E7A2E', znieffOpacity: 0.24,                 // vert olive foncé (contrainte naturelle)
     bpe: '#2E77C2',                                          // bleu foncé — cercles BPE (mode clair)
@@ -237,7 +248,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     aleaTrameOpacity: 0.5,
     // C3 — teintes profondes sur terre claire, franchement distinctes (bleu→orange→rouge / beige→marron→rouge)
     aleaInondationRamp: { faible: '#2563EB', moyen: '#D97706', fort: '#DC2626' },
-    aleaMvtRamp: { faible: '#B08A4A', moyen: '#7A430E', eleve: '#D97706', tres_eleve: '#B91C1C', fort: '#B91C1C' },
+    aleaMvtRamp: { faible: '#C79A3A', moyen: '#C77A16', eleve: '#B85A0A', tres_eleve: '#B91C1C', fort: '#B91C1C' },   // COUCHES-1 lot 5 (D2) — 4 crans distincts
     aleaFillOpacity: 0.55,
     transportReseaux: {
       'Car Jaune': '#8A6D08',   // or profond — 4,39 sur terre claire
@@ -251,8 +262,8 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     transportDefaut: '#B01E63',
     pole: '#C21F7E',            // M137-X — magenta profond : ressort sur l'axe et l'ortho claire — 5,6
     axe: '#33506B',             // bleu-gris profond — 7,50
-    ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓
-    mt: '#28606E',              // R4 — sarcelle profond (HTA)
+    ht: '#3F4A47',              // 8,22 terre / 5,29 masse ✓ (HTB anthracite)
+    mt: '#3A4E8C',              // COUCHES-1 lot 5 (D2) — HTA ardoise-bleu profond (distinct de l'HTB)
     tcsp: '#0E8F7E',             // C2 — turquoise profond structurant (terre claire)
     // M134 dispositifs (clair = teintes profondes, mesurées sur terre #F4F2EC)
     qpv: '#C25E1B', qpvOpacity: 0.28,                     // orange — aplat 1,40 ✓ ; contour 3,82 ✓
@@ -260,27 +271,27 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     // M137-Y — clair : le SABLE est FONCÉ (#8A7A52) pour passer M105-B sur l'ortho (le clair #C6B08A
     // échouait à 1,12) — « version plus foncée du même sable, pas un retour au chaud ».
     zfangRenforce: '#2A54C8', zfangStandard: '#8A7A52',   // bleu roi 1,43 · sable foncé 1,31
-    frrTotalite: '#0C8A50', frrPartie: '#6E3FB5',         // émeraude 1,35 · améthyste 1,44
-    dispoFillOpacity: 0.24,
+    frrTotalite: '#147A8C', frrPartie: '#6E3FB5',         // COUCHES-1 lot 5 (D1) — sarcelle (ex-émeraude vert) · améthyste
+    dispoFillOpacity: 0.18,     // COUCHES-1 lot 5 (D4) — 0,24 → 0,18 (ZFANG/FRR écrasaient l'île)
     // SOURCES-1 lot 1 — contraintes du droit des sols (teintes profondes, terre claire)
     er: '#8A6D08', erOpacity: 0.30,                       // or profond
-    ebc: '#1E6B43', ebcOpacity: 0.28,                     // vert forêt profond
-    dpu: '#2D4FA0', dpuOpacity: 0.22,                     // bleu profond
+    ebc: '#14603A', ebcOpacity: 0.30,                     // COUCHES-1 lot 5 (D1) — forêt profond (hors camaïeu mint)
+    dpu: '#2D4FA0', dpuOpacity: 0.30,                     // COUCHES-1 lot 5 (D3) — 0,22 → 0,30 (DPU invisible)
     pebRamp: { a: '#B91C1C', b: '#D97706', c: '#A8720F', d: '#6B7280' },
     pebOpacity: 0.30,
-    sup: '#8E2F5C', supOpacity: 0.24,                     // framboise profonde
+    sup: '#8E2F5C', supOpacity: 0.18,                     // COUCHES-1 lot 5 (D4) — 0,24 → 0,18 (SUP écrasait tout)
 
     // SOURCES-1 lot 2 — nature et eau (thème clair : mêmes teintes assombries)
     dpf: '#1A7FA8',
     zoneHumide: '#1F7A6E', zoneHumideOpacity: 0.30,
-    enp: '#136B39', enpOpacity: 0.26,
+    enp: '#4A32A0', enpOpacity: 0.28,                     // COUCHES-1 lot 5 (D1) — indigo profond (ex-vert)
     rpg: '#8F7E2E', rpgOpacity: 0.22,
     // SOURCES-1 lot 3 — sols et bruit (thème clair : mêmes teintes assombries)
     sis: '#7A3C1E', sisOpacity: 0.34,
     casias: '#A66E1F',
-    bruitRamp: { cat1: '#6B32A8', cat2: '#7A4AB5', cat3: '#8A66BE', cat4: '#9A85C4', cat5: '#ABA0C9' },
+    bruitRamp: { cat1: '#5A1E9E', cat2: '#7A4AB5', cat3: '#8A66BE', cat4: '#B0A0D4', cat5: '#C4BADE' },   // COUCHES-1 lot 5 (D2) — paliers plus séparés
     bruitOpacity: 0.28,
-    bruitCarte: '#8A2450', bruitCarteOpacity: 0.24,
+    bruitCarte: '#8A2450', bruitCarteOpacity: 0.32,      // COUCHES-1 lot 5 (D3) — 0,24 → 0,32 (CBS invisible)
   },
 }
 
