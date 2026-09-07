@@ -211,15 +211,33 @@ def demandes_de(db, compte_id: int | None) -> list[dict]:
 
 def demandes_admin(db, statut: str | None = None) -> list[dict]:
     """Vue admin (Vic) : toutes les demandes, filtrable par statut. D8 (Tour de contrôle) :
-    + nom du client (jointure comptes, LEFT — compte NULL = pilote) et parcelles (pour le PDF)."""
+    + nom du client (jointure comptes, LEFT — compte NULL = pilote) et parcelles (pour le PDF).
+    DASHBOARD-2 (Lot 3) : + `proprietaire` = NOMBRE de personnes morales propriétaires des parcelles
+    de la demande (table `parcelle_personne_morale`, DGFiP public). JAMAIS une identité de particulier :
+    on ne renvoie qu'un COMPTE de PM (« 1 personne morale ») ; un propriétaire particulier → None (« — »)."""
     where = "WHERE d.corps IS NOT NULL" + (" AND d.statut = :s" if statut else "")
-    return [{**dict(r), "statut": normaliser_statut(r["statut"])}
-            for r in db.execute(text(
+    # `plan` du compte pour masquer les demandes de test/interne côté admin (Lot 3, règle §14).
+    pm_ok = db.execute(text("SELECT to_regclass('parcelle_personne_morale')")).scalar() is not None
+    pm_sub = (
+        ", (SELECT count(DISTINCT pm.denomination) FROM parcelle_personne_morale pm"
+        "   WHERE pm.idu IN (SELECT jsonb_array_elements_text("
+        "     CASE WHEN jsonb_typeof(d.parcelles)='array' THEN d.parcelles ELSE '[]'::jsonb END))) AS n_pm"
+    ) if pm_ok else ", 0 AS n_pm"
+    rows = db.execute(text(
         f"SELECT d.id, d.ts, d.compte_id, d.n, d.communes, d.modele, d.corps, d.statut,"
-        f"       d.updated_at, d.parcelles, d.pipeline_entry_id, d.projet_id, k.nom AS client"
+        f"       d.updated_at, d.parcelles, d.pipeline_entry_id, d.projet_id, k.nom AS client,"
+        f"       k.plan AS compte_plan{pm_sub}"
         f" FROM courrier_demandes d LEFT JOIN comptes k ON k.id = d.compte_id"
         f" {where} ORDER BY d.ts DESC LIMIT 300"),
-        ({"s": normaliser_statut(statut)} if statut else {})).mappings()]
+        ({"s": normaliser_statut(statut)} if statut else {})).mappings()
+    out = []
+    for r in rows:
+        n_pm = int(r["n_pm"] or 0)
+        prop = f"{n_pm} personne{'s' if n_pm > 1 else ''} morale{'s' if n_pm > 1 else ''}" if n_pm else None
+        d = {**dict(r), "statut": normaliser_statut(r["statut"]), "proprietaire": prop}
+        d.pop("n_pm", None)
+        out.append(d)
+    return out
 
 
 def set_statut_demande(db, demande_id: int, statut: str, *, compte_id: int | None = None,
@@ -245,6 +263,20 @@ def set_statut_demande(db, demande_id: int, statut: str, *, compte_id: int | Non
     if not r:
         raise ValueError("demande introuvable")
     return dict(r)
+
+
+def marquer_deposes(db) -> list[dict]:
+    """DASHBOARD-2 (Lot 3) — « Marquer les N déposés » en bloc : toutes les demandes encore À DÉPOSER
+    (statut canonique 'demande', alias legacy inclus) passent à 'depose'. Retourne les lignes touchées
+    (id, compte_id, n, communes) pour journaliser + prévenir chaque client. Idempotent : rien à déposer
+    → liste vide."""
+    legacy = [k for k, v in STATUT_ALIAS.items() if v == "demande"]
+    rows = db.execute(text(
+        "UPDATE courrier_demandes SET statut = 'depose', updated_at = now() "
+        "WHERE corps IS NOT NULL AND statut = ANY(:src) "
+        "RETURNING id, compte_id, n, communes"),
+        {"src": ["demande", *legacy]}).mappings().all()
+    return [dict(r) for r in rows]
 
 
 def kpi_dashboard(db) -> dict:

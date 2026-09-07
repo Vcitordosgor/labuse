@@ -1612,11 +1612,17 @@ export interface AdminDemandeCourrier {
   parcelles: string[] | null; client: string | null
   // ADMIN-1 (AD8) — lien vers la piste CRM d'origine (et le projet), nullable.
   pipeline_entry_id: number | null; projet_id: number | null
+  // DASHBOARD-2 (Lot 3) — propriétaire = nombre de personnes morales (jamais un particulier) ;
+  // compte_plan = 'interne' pour les comptes de test/pilote (masqués par défaut).
+  proprietaire?: string | null; compte_plan?: string | null
 }
 export const getAdminCourrierDemandes = () =>
   j<{ demandes: AdminDemandeCourrier[]; statuts: string[]; statut_libelles: Record<string, string> }>('/courrier/admin/demandes')
 export const postAdminCourrierStatut = (id: number, statut: string) =>
   j<{ ok: boolean }>(`/courrier/admin/demandes/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+// DASHBOARD-2 (Lot 3) — « Marquer les N déposés » en bloc.
+export const postAdminCourrierDeposerTout = () =>
+  j<{ ok: boolean; deposes: number }>('/courrier/admin/demandes/deposer-tout', { method: 'POST' })
 export const urlCourrierPdf = '/courrier/pdf'
 
 // ── Moteurs (Vague 4) ──
