@@ -5,7 +5,7 @@
 // (Indian/Reunion), jamais l'heure serveur brute (dette fuseau connue, mandat D3).
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getAdminCircuit, getAdminPilotage, getMoi, getRadarCheck, postAdminDegeler, type AdminPilotage } from '../../lib/api'
+import { getAdminCircuit, getAdminPilotage, getMoi, getOffres, getRadarCheck, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { LicencesSection } from './Licences'
 import { IaSection } from './Ia'
@@ -111,7 +111,7 @@ function Jauge({ valeur, label, tone, onClick, title }: {
 
 // « À faire, dans l'ordre » — une ligne = chiffre · phrase · verbe. `tone` r (ce qui cloche, rouge),
 // a (à faire, ambre), ok (rien, grisé). Le tri (poids) place ce qui cloche d'abord (Pilotage).
-type Todo = { cle: string; n: number; titre: string; phrase?: string; verbe: string; cible: AdminSection; tone: 'r' | 'a' | 'ok'; poids: number }
+type Todo = { cle: string; n: number | string; titre: string; phrase?: string; verbe: string; cible: AdminSection; tone: 'r' | 'a' | 'ok'; poids: number }
 function TodoLigne({ t, go }: { t: Todo; go: (s: AdminSection) => void }) {
   const kcol = t.tone === 'r' ? 'text-coral' : t.tone === 'ok' ? 'text-txt-dim' : 'text-amber'
   const bord = t.tone === 'r' ? 'border-coral/40' : 'border-line'
@@ -210,6 +210,8 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   // compteur unique : le Pilotage lit les MÊMES endpoints que les pages Données (Circuit) et Radar.
   const circuit = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 120_000 })
   const radarChk = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck, refetchInterval: 120_000 })
+  // Argent = MRR (récurrent contractuel = licences × prix intégral) ; l'encaissé du mois passe en légende.
+  const offres = useQuery({ queryKey: ['offres'], queryFn: getOffres, staleTime: 3_600_000 })
   const degeler = async (sujet: string) => {
     setDegel(sujet)
     try { await postAdminDegeler(sujet); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) } finally { setDegel(null) }
@@ -230,45 +232,57 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   // Produit = file unique des retours (signalements fiche/annonce + « Signaler ») ouverts — cf. Lot 5.
   const produitOuverts = (data.a_faire?.signalements_ouverts ?? 0) + retoursTot
   const iaMois = data.ia_mois?.cout_eur ?? 0
-  // Système : santé serveur (heal + sonde endpoints). Les échecs d'envoi du jour (mail_queue) viendront
-  // du raccord COMPTE-2 (Lot 2) — non encore mergé : la jauge dit la santé serveur en attendant.
-  const santeFails = (data.sante?.en_echec?.length ?? 0) + (data.sante?.endpoints?.filter((e) => !e.ok).length ?? 0)
   const clientsAToucher = data.a_faire?.essais_24h ?? 0
   const horlogeManquant = (data.horloge?.attendus ?? 0) - (data.horloge?.poses ?? 0)
   const verrousCasses = data.verrous && data.verrous.ok != null && data.verrous.sur != null ? data.verrous.sur - data.verrous.ok : 0
+  const moisNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
+  // Argent = MRR récurrent = licences actives × prix intégral (le vrai « par mois », pas l'encaissé
+  // qui reste à 0 tant que Stripe n'encaisse rien) ; repli sur le MRR Stripe si le prix est indisponible.
+  const prixIntegral = offres.data?.integral?.eur_mois ?? null
+  const mrr = prixIntegral != null ? data.licences_actives * prixIntegral : (data.traction?.mrr_eur ?? null)
+
+  // ── « À faire, dans l'ordre » : ce qui CLOCHE (rouge) d'abord — c'est AUSSI la source de la jauge
+  //    Système (un seul calcul) — puis les tâches par urgence. Les lignes à ZÉRO ne sont pas des tâches. ──
+  const rouges: Todo[] = []
+  if (horlogeManquant > 0) rouges.push({ cle: 'horloge', n: horlogeManquant, titre: 'Poser les horloges sur le VPS',
+    phrase: `${data.horloge?.poses ?? 0} posées / ${data.horloge?.attendus ?? 0} attendues — le wrapper des crons n'a jamais été déployé`, verbe: "Voir l'horloge", cible: 'cron', tone: 'r', poids: 100 })
+  if (verrousCasses > 0) rouges.push({ cle: 'verrous', n: verrousCasses, titre: 'Réparer les verrous de cohérence',
+    phrase: 'le Circuit ne dit plus la même chose partout', verbe: 'Ouvrir Données', cible: 'donnees', tone: 'r', poids: 95 })
+  if (echecs > 0) rouges.push({ cle: 'paiement', n: echecs, titre: `Régler ${echecs} paiement${echecs > 1 ? 's' : ''} en échec`,
+    phrase: clientEchec ? (clientEchec.nom_stripe ?? clientEchec.email ?? clientEchec.customer_id ?? undefined) : undefined, verbe: 'Voir la licence', cible: 'licences', tone: 'r', poids: 90 })
+  if (['rouge', 'absent', 'non_configure'].includes(data.backup?.etat)) rouges.push({ cle: 'backup', n: '!',
+    titre: data.backup.etat === 'non_configure' ? 'Configurer la sauvegarde' : data.backup.etat === 'absent' ? 'Configurer la sauvegarde' : 'Rattraper la sauvegarde en retard',
+    phrase: data.backup.etat === 'rouge' ? undefined : 'aucun dump connu — la base n\'est pas sauvegardée', verbe: "Voir l'horloge", cible: 'cron', tone: 'r', poids: 85 })
+  // alertes système ouvertes = les lignes rouges (même calcul, jamais un chiffre à part).
+  const nSysteme = rouges.length
+
+  const taches: Todo[] = []
+  if (clientsAToucher > 0) taches.push({ cle: 'comptes', n: clientsAToucher, titre: 'Toucher les clients',
+    phrase: 'essai(s) qui expire(nt) sous 24 h', verbe: 'Ouvrir Comptes', cible: 'licences', tone: 'a', poids: 80 })
+  if ((circuitTotal ?? 0) > 0) taches.push({ cle: 'circuit', n: circuitTotal as number, titre: 'Regarder le circuit', verbe: 'Ouvrir Données', cible: 'donnees', tone: 'a', poids: 70 })
+  if (aDeposer > 0) taches.push({ cle: 'courrier', n: aDeposer, titre: 'Déposer les courriers', verbe: 'Ouvrir Courrier', cible: 'courrier', tone: 'a', poids: 60 })
+  if (produitOuverts > 0) taches.push({ cle: 'produit', n: produitOuverts, titre: 'Traiter les retours clients', verbe: 'Ouvrir Produit', cible: 'produit', tone: 'a', poids: 50 })
+  if (reverifDues > 0) taches.push({ cle: 'radar', n: reverifDues, titre: 'Re-vérifier des annonces', verbe: 'Ouvrir Radar', cible: 'radar', tone: 'a', poids: 40 })
+  const aFaire = [...rouges, ...taches].sort((a, b) => b.poids - a.poids)
 
   const jauges: { valeur: React.ReactNode; label: string; tone: JaugeTone; cible?: AdminSection; title?: string }[] = [
-    { valeur: st.configure ? <>{fmtEur(caCourant)} <span className="text-base font-medium text-txt-mut">€</span></> : '—',
-      label: 'Argent · encaissé ce mois', tone: !st.configure ? 'off' : echecs > 0 ? 'err' : caCourant > 0 ? 'ok' : 'warn',
-      cible: 'licences', title: st.configure ? undefined : (st.raison ?? 'Stripe non configuré') },
-    { valeur: data.licences_actives, label: 'Clients · licences actives', tone: 'ok', cible: 'licences' },
+    // Argent : MRR en grand, encaissé du mois en légende (une jauge à 0 permanent ne sert à rien).
+    { valeur: mrr != null ? <>{fmtEur(mrr)} <span className="text-base font-medium text-txt-mut">€</span></> : '—',
+      label: `Argent · par mois · ${st.configure ? fmtEur(caCourant) + ' € encaissé en ' + moisNom : 'Stripe non configuré'}`, tone: 'ok',
+      cible: 'licences', title: prixIntegral != null ? `MRR = ${data.licences_actives} licences × ${fmtEur(prixIntegral)} €/mois` : undefined },
+    // Clients : plus « licences actives » (redondant avec Argent) → « licences · N à toucher ».
+    { valeur: data.licences_actives, label: `Clients · licences · ${clientsAToucher} à toucher`, tone: 'ok', cible: 'licences' },
     { valeur: circuitTotal ?? '—', label: 'Circuit · à regarder', tone: circuitTotal == null ? 'off' : circuitTotal > 0 ? 'warn' : 'ok', cible: 'donnees' },
     { valeur: aDeposer, label: 'Courrier · à déposer', tone: aDeposer > 0 ? 'warn' : 'ok', cible: 'courrier' },
     { valeur: enVie ?? '—', label: 'Radar · annonces en vie', tone: enVie == null ? 'off' : 'ok', cible: 'radar' },
     { valeur: produitOuverts, label: 'Produit · retours ouverts', tone: produitOuverts > 0 ? 'warn' : 'ok', cible: 'produit' },
     { valeur: <>{fmtEur(iaMois, 2)} <span className="text-base font-medium text-txt-mut">€</span></>, label: 'IA · conso du mois', tone: 'ok', cible: 'ia' },
-    { valeur: santeFails, label: 'Système · alertes', tone: santeFails > 0 ? 'err' : 'ok', cible: 'cron',
-      title: 'Santé serveur (heal + sonde endpoints). Les échecs d’envoi du jour (mail_queue) arriveront avec COMPTE-2.' },
+    // Système : le NOMBRE d'alertes ouvertes réelles (= lignes rouges), rouge dès qu'il y en a.
+    { valeur: nSysteme, label: 'Système · alertes ouvertes', tone: nSysteme > 0 ? 'err' : 'ok', cible: 'cron' },
   ]
-
-  // ── « À faire, dans l'ordre » : ce qui cloche (rouge) d'abord, puis par urgence réelle ──
-  const todos: Todo[] = []
-  if (horlogeManquant > 0) todos.push({ cle: 'horloge', n: horlogeManquant, titre: 'horloges manquantes sur le VPS',
-    phrase: `${data.horloge?.poses ?? 0} posés / ${data.horloge?.attendus ?? 0} attendus — le wrapper des crons reste à déployer`, verbe: "Voir l'horloge", cible: 'cron', tone: 'r', poids: 100 })
-  if (verrousCasses > 0) todos.push({ cle: 'verrous', n: verrousCasses, titre: 'verrous de cohérence cassés',
-    phrase: 'le Circuit ne dit plus la même chose partout', verbe: 'Ouvrir Données', cible: 'donnees', tone: 'r', poids: 95 })
-  if (echecs > 0) todos.push({ cle: 'paiement', n: echecs, titre: `paiement${echecs > 1 ? 's' : ''} en échec`,
-    phrase: clientEchec ? (clientEchec.nom_stripe ?? clientEchec.email ?? clientEchec.customer_id ?? undefined) : undefined, verbe: 'Voir la licence', cible: 'licences', tone: 'r', poids: 90 })
-  if (['rouge', 'absent', 'non_configure'].includes(data.backup?.etat)) todos.push({ cle: 'backup', n: 1,
-    titre: data.backup.etat === 'non_configure' ? 'sauvegarde non configurée' : data.backup.etat === 'absent' ? 'aucune sauvegarde trouvée' : 'sauvegarde en retard',
-    verbe: "Voir l'horloge", cible: 'cron', tone: 'r', poids: 85 })
-  todos.push({ cle: 'comptes', n: clientsAToucher, titre: 'clients à toucher',
-    phrase: clientsAToucher > 0 ? "essai(s) qui expire(nt) sous 24 h" : undefined, verbe: 'Ouvrir Comptes', cible: 'licences', tone: clientsAToucher > 0 ? 'a' : 'ok', poids: clientsAToucher > 0 ? 80 : 10 })
-  todos.push({ cle: 'circuit', n: circuitTotal ?? 0, titre: 'choses à regarder sur le circuit', verbe: 'Ouvrir Données', cible: 'donnees', tone: (circuitTotal ?? 0) > 0 ? 'a' : 'ok', poids: (circuitTotal ?? 0) > 0 ? 70 : 10 })
-  todos.push({ cle: 'courrier', n: aDeposer, titre: 'courriers à déposer', verbe: 'Ouvrir Courrier', cible: 'courrier', tone: aDeposer > 0 ? 'a' : 'ok', poids: aDeposer > 0 ? 60 : 10 })
-  todos.push({ cle: 'produit', n: produitOuverts, titre: 'retours clients non traités', verbe: 'Ouvrir Produit', cible: 'produit', tone: produitOuverts > 0 ? 'a' : 'ok', poids: produitOuverts > 0 ? 50 : 10 })
-  todos.push({ cle: 'radar', n: reverifDues, titre: 'annonces à re-vérifier', phrase: reverifDues === 0 ? 'dépôt du jour à faire quand tu peux' : undefined, verbe: 'Ouvrir Radar', cible: 'radar', tone: reverifDues > 0 ? 'a' : 'ok', poids: reverifDues > 0 ? 40 : 10 })
-  todos.sort((a, b) => b.poids - a.poids)
+  // Jauges triées par URGENCE : rouge, puis ambre, puis vert ; à état égal, l'ordre de la maquette.
+  const tonePrio: Record<JaugeTone, number> = { err: 0, warn: 1, ok: 2, off: 2 }
+  const jaugesTriees = jauges.map((g, i) => ({ g, i })).sort((a, b) => (tonePrio[a.g.tone] - tonePrio[b.g.tone]) || (a.i - b.i)).map((x) => x.g)
 
   // ── journal : gels (sécurité) + fil (event_log système), fusionnés, triés récents d'abord ──
   const items: JournalItem[] = [
@@ -280,9 +294,9 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
 
   return (
     <>
-      {/* 8 jauges sur deux rangées — un grand nombre + une étiquette, rien d'autre. */}
+      {/* 8 jauges — un grand nombre + une étiquette. Triées par urgence : rouge, ambre, vert. */}
       <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
-        {jauges.map((g) => (
+        {jaugesTriees.map((g) => (
           <Jauge key={g.label} valeur={g.valeur} label={g.label} tone={g.tone} title={g.title}
             onClick={g.cible ? () => go(g.cible!) : undefined} />
         ))}
@@ -290,8 +304,11 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
 
       <H2>À faire, dans l'ordre</H2>
       <div className="grid gap-1.5">
-        {todos.map((t) => <TodoLigne key={t.cle} t={t} go={go} />)}
+        {aFaire.length
+          ? aFaire.map((t) => <TodoLigne key={t.cle} t={t} go={go} />)
+          : <div className="rounded-lg border border-line bg-surface-2 px-3.5 py-3 text-[13px] text-txt-mut">Rien à faire aujourd'hui — tout est à jour.</div>}
       </div>
+      <p className="mt-2 text-[10.5px] text-txt-dim">Les lignes à zéro ne s'affichent pas — une ligne à zéro n'est pas une tâche.</p>
 
       <H2>Journal</H2>
       <Journal items={items} degel={degel} degeler={degeler} go={go} />
@@ -444,8 +461,13 @@ export function AdminView() {
             <h1 className="font-display text-2xl font-semibold tracking-tight text-txt-hi">{SECTIONS.find((s) => s.key === section)?.label ?? (section === 'cron' ? 'Horloge' : '')}</h1>
             <span className="text-[13px] text-txt-dim">{SOUS_TITRES[section]}</span>
             <span className="ml-auto flex items-center gap-2">
-              {/* DASHBOARD-2 (Lot 1) — Stripe est lu d'un cache : on le dit, et on ne ment pas s'il date. */}
-              {section === 'pilotage' && d?.stripe.maj && <Chip tone={Date.now() - new Date(d.stripe.maj).getTime() > 3_600_000 ? 'warn' : 'off'}>Stripe : cache {fmtReu(d.stripe.maj)}</Chip>}
+              {/* DASHBOARD-2 recette §5 — les chiffres du Pilotage sont en direct ; SEUL Stripe est
+                  daté d'un cache. On affiche la vraie date du cache en heure Réunion (fmtReu). */}
+              {section === 'pilotage' && d?.stripe.maj && (
+                <Chip tone={Date.now() - new Date(d.stripe.maj).getTime() > 3_600_000 ? 'warn' : 'off'}>
+                  chiffres à l'instant · Stripe daté du {fmtReu(d.stripe.maj)}
+                </Chip>
+              )}
             </span>
           </header>
           {section === 'ia' && (

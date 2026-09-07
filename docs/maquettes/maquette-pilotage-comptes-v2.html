@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>LABUSE — Pilotage & Comptes v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B100D;--surf:#121815;--surf2:#161D19;--line:#1A211D;--card:#1E2622;--btn:#263029;
+--txt:#E6ECE8;--mut:#97A39B;--lab:#7C8A82;--dim:#5C6862;
+--mint:#4ADE80;--mintbg:#12291D;--amber:#E0A94F;--amberbg:#2A2113;--coral:#E2726A;--coralbg:#2B1715;--iris:#8B7BD8;--ink:#071009;--jaune:#F5C518;
+--mono:'JetBrains Mono',monospace;--sans:Inter,system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 var(--sans);height:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}a{color:inherit}
+.app{display:grid;grid-template-columns:200px 1fr;height:100vh}
+.rail{border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.logo{padding:0 10px 14px;font-weight:700}.logo b{color:var(--mint)}
+.logo small{display:block;font-weight:500;color:var(--dim);font-size:11px;letter-spacing:.08em;margin-top:2px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:var(--mut);font-weight:500;font-size:13.5px;width:100%;text-align:left}
+.nav:hover,.nav.on{background:var(--mint);color:var(--ink)}
+.nav .n{margin-left:auto;font:500 11px var(--mono);background:var(--surf2);color:var(--mut);padding:1px 7px;border-radius:20px}
+.nav.on .n,.nav:hover .n{background:rgba(7,16,9,.25);color:var(--ink)}
+.rail .sp{flex:1}
+.sante{padding:10px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--mut);display:grid;gap:5px}
+.sante div{display:flex;justify-content:space-between}.sante b{font:500 11.5px var(--mono);color:var(--txt)}
+.sante .p{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;background:var(--mint)}
+.sante .p.r{background:var(--coral)}.sante .p.a{background:var(--amber)}
+main{overflow:auto;padding:26px 34px 60px}
+.page{display:none}.page.on{display:block}
+h1{margin:0;font-size:22px;font-weight:600}
+.q{color:var(--mut);font-size:14px}
+h2{font-size:12px;font-weight:600;color:var(--lab);letter-spacing:.06em;text-transform:uppercase;margin:26px 0 10px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{font-size:11.5px;font-weight:500;padding:2px 9px;border-radius:20px;border:1px solid var(--btn);color:var(--mut);white-space:nowrap}
+.chip.m{background:var(--mintbg);color:var(--mint);border-color:transparent}
+.chip.a{background:var(--amberbg);color:var(--amber);border-color:transparent}
+.chip.r{background:var(--coralbg);color:var(--coral);border-color:transparent}
+.chip.g{background:var(--surf2);color:var(--dim);border-color:transparent}
+.btn{border:1px solid var(--mint);color:var(--mint);padding:6px 13px;border-radius:9px;font-weight:500;font-size:13px}
+.btn:hover{background:var(--mint);color:var(--ink)}
+.btn.full{background:var(--mint);color:var(--ink)}
+.btn.q{border-color:var(--btn);color:var(--mut)}.btn.q:hover{background:var(--surf2);color:var(--txt)}
+.btn.sm{padding:4px 10px;font-size:12.5px;border-radius:7px}
+/* jauges */
+.cock{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.g,.todo .l,.todo .t{text-align:left}
+.g{background:var(--surf);border:1px solid var(--card);border-left:3px solid var(--mint);border-radius:12px;padding:16px 18px;display:grid;gap:4px;text-align:left;cursor:pointer}
+.g.a{border-left-color:var(--amber)}.g.r{border-left-color:var(--coral)}.g.i{border-left-color:var(--iris)}.g.z{border-left-color:var(--btn)}
+.g:hover{background:var(--mint)}.g:hover *{color:var(--ink)!important}
+.g b{font:500 40px/1 var(--mono);letter-spacing:-.02em}
+.g b i{font-style:normal;font-size:20px;color:var(--mut);margin-left:2px}
+.g.a b{color:var(--amber)}.g.r b{color:var(--coral)}.g.i b{color:var(--iris)}.g.z b{color:var(--dim)}
+.g small{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--lab)}
+.g em{font-style:normal;font-size:12.5px;color:var(--mut)}
+/* à faire */
+.todo{display:grid;gap:6px}
+.todo .l{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:14px;padding:11px 16px;background:var(--surf);border:1px solid var(--card);border-radius:9px}
+.todo .l.r{border-color:var(--coral)}
+.todo .k{font:500 19px var(--mono);color:var(--amber);text-align:right}
+.todo .l.r .k{color:var(--coral)}
+.todo .t small{display:block;color:var(--mut);font-size:12.5px}
+.todo .v{color:var(--mint);font-weight:500;font-size:13px}
+/* journal */
+.jr{display:grid;grid-template-columns:96px 84px 1fr auto;gap:12px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
+.jr .w{font:12px var(--mono);color:var(--dim)}.jr .f{font-size:11.5px;color:var(--mut)}
+.card{background:var(--surf);border:1px solid var(--card);border-radius:12px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.filters .f{padding:4px 11px;border-radius:20px;border:1px solid var(--btn);color:var(--mut);font-size:12.5px;cursor:pointer}
+.filters .f.on{background:var(--mint);color:var(--ink);border-color:var(--mint);font-weight:500}
+.filters .f:hover{background:var(--mint);color:var(--ink)}
+/* comptes */
+.seg{display:flex;border:1px solid var(--btn);border-radius:9px;overflow:hidden}
+.seg span{padding:6px 13px;font-size:13px;color:var(--mut);border-right:1px solid var(--btn);cursor:pointer}
+.seg span:last-child{border-right:0}.seg span.on{background:var(--mint);color:var(--ink);font-weight:500}
+.seg span:hover{background:var(--mint);color:var(--ink)}
+.seg i{font-style:normal;font-family:var(--mono);font-size:11px;opacity:.7;margin-left:5px}
+.search{margin-left:auto;width:250px;background:var(--surf);border:1px solid var(--btn);color:var(--txt);border-radius:9px;padding:7px 12px;font:13px var(--sans)}
+.cl{border:1px solid var(--card);border-radius:12px;background:var(--surf);overflow:hidden}
+.ch,.cr{display:grid;grid-template-columns:38px 1.7fr .8fr .9fr .55fr 1fr auto;gap:14px;align-items:center;padding:0 16px}
+.ch{height:36px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--lab);border-bottom:1px solid var(--card)}
+.cr{height:58px;border-bottom:1px solid var(--line);font-size:13.5px;cursor:pointer}
+.cr:hover{background:var(--mint)}.cr:hover *{color:var(--ink)!important}
+.cr:hover .chip{border-color:var(--ink);background:transparent}
+.cr b{font-weight:500}.cr small{display:block;color:var(--mut);font-size:12px}
+.ch .r,.cr .r{text-align:right;font-family:var(--mono);font-size:12.5px}.ch .r{font-family:var(--sans)}
+.cf{display:flex;justify-content:space-between;padding:12px 16px;font-size:12.5px;color:var(--mut)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--mintbg);color:var(--mint);display:grid;place-items:center;font:600 11.5px var(--sans)}
+.av.a{background:var(--amberbg);color:var(--amber)}.av.g{background:var(--surf2);color:var(--dim)}
+.link{color:var(--jaune);font-weight:500;font-size:12.5px;text-decoration:none}
+.note{font-size:12.5px;color:var(--mut);margin-top:10px}
+.dim{color:var(--dim)}
+</style></head><body>
+<div class="app">
+<aside class="rail">
+  <div class="logo">LA<b>BUSE</b><small>TOUR DE CONTRÔLE</small></div>
+  <button class="nav on" data-p="pilotage">◉ Pilotage<span class="n">2</span></button>
+  <button class="nav" data-p="comptes">▣ Comptes<span class="n">3</span></button>
+  <button class="nav">☰ Données<span class="n">8</span></button>
+  <button class="nav">✉ Courrier<span class="n">24</span></button>
+  <button class="nav">◎ Radar</button>
+  <button class="nav">◫ Produit<span class="n">2</span></button>
+  <button class="nav">✦ IA</button>
+  <button class="nav">☎ Contacts</button>
+  <div class="sp"></div>
+  <div class="sante">
+    <div><span><span class="p"></span>Serveur</span><b>OK</b></div>
+    <div><span><span class="p"></span>Run servi</span><b>q_v11_m137</b></div>
+    <div><span><span class="p r"></span>Sauvegarde</span><b>aucune</b></div>
+    <div><span><span class="p r"></span>Horloge</span><b>0 / 23</b></div>
+    <div><span><span class="p"></span>Verrous</span><b>16 / 16</b></div>
+  </div>
+</aside>
+<main>
+
+<!-- PILOTAGE -->
+<section class="page on" id="p-pilotage">
+  <div class="row" style="justify-content:space-between;margin-bottom:18px">
+    <div class="row" style="gap:14px"><h1>Pilotage</h1><span class="q">lundi 7 septembre · 22:47</span></div>
+    <span class="chip g">chiffres à l'instant · Stripe daté du 07/09 00:47</span>
+  </div>
+
+  <div class="cock">
+    <button class="g r"><b>2</b><small>Système</small><em>alertes ouvertes</em></button>
+    <button class="g a"><b>24</b><small>Courrier</small><em>à déposer</em></button>
+    <button class="g a"><b>8</b><small>Circuit</small><em>à regarder</em></button>
+    <button class="g a"><b>2</b><small>Produit</small><em>retours non traités</em></button>
+    <button class="g"><b>9</b><small>Clients</small><em>licences actives · 0 à toucher</em></button>
+    <button class="g"><b>3 141 <i>€</i></b><small>Argent</small><em>par mois · 0 € encaissé en septembre</em></button>
+    <button class="g"><b>109</b><small>Radar</small><em>annonces en vie</em></button>
+    <button class="g i"><b>1,05 <i>€</i></b><small>IA</small><em>en septembre</em></button>
+  </div>
+
+  <h2>À faire, dans l'ordre</h2>
+  <div class="todo">
+    <div class="l r"><div class="k">23</div><div class="t">Poser les horloges sur le VPS<small>0 posées / 23 attendues — le wrapper des crons n'a jamais été déployé</small></div><div class="v">Voir l'horloge →</div></div>
+    <div class="l r"><div class="k">!</div><div class="t">Configurer la sauvegarde<small>aucun dump connu — la base n'est pas sauvegardée</small></div><div class="v">Voir l'horloge →</div></div>
+    <div class="l"><div class="k">24</div><div class="t">Déposer les courriers<small>la plus ancienne demande a 8 jours</small></div><div class="v">Ouvrir Courrier →</div></div>
+    <div class="l"><div class="k">8</div><div class="t">Regarder le circuit</div><div class="v">Ouvrir Données →</div></div>
+    <div class="l"><div class="k">2</div><div class="t">Traiter les retours clients<small>le plus ancien : 26/08</small></div><div class="v">Ouvrir Produit →</div></div>
+  </div>
+  <div class="note">Rien à faire côté clients ni côté Radar aujourd'hui — les lignes à zéro ne s'affichent pas.</div>
+
+  <h2>Journal</h2>
+  <div class="filters"><span class="f on">Tout</span><span class="f">Circuit</span><span class="f">Comptes</span><span class="f">Courrier</span><span class="f">Radar</span><span class="f">Système</span></div>
+  <div class="card" style="padding:2px 4px">
+    <div class="jr"><span class="w">05/09 21:42</span><span class="f">circuit</span><span>Passage de recette — 6 gestes ▸</span><span class="w">Vic</span></div>
+    <div class="jr"><span class="w">04/09 13:37</span><span class="f">circuit</span><span>Retour au run q_v11_m137</span><span class="w">Vic</span></div>
+    <div class="jr"><span class="w">30/08 21:02</span><span class="f">courrier</span><span>Kampus Réunion demande 1 courrier — Saint-Denis</span><a class="link" href="#">Traiter</a></div>
+    <div class="jr"><span class="w">27/08 10:57</span><span class="f">courrier</span><span>Demandes n°40 et n°41 déposées puis envoyées</span><span class="w">Vic</span></div>
+    <div class="jr"><span class="w"></span><span class="f"></span><span class="dim" style="font-size:12.5px">Voir plus — 20 / 143</span><span></span></div>
+  </div>
+</section>
+
+<!-- COMPTES -->
+<section class="page" id="p-comptes">
+  <div class="row" style="justify-content:space-between;margin-bottom:16px">
+    <div class="row" style="gap:14px"><h1>Comptes</h1><span class="q">9 licences actives · 3 141 € par mois</span></div>
+    <div class="row"><button class="btn q">+ Essai 48 h</button><button class="btn full">+ Client</button></div>
+  </div>
+
+  <div class="row" style="margin-bottom:14px;gap:16px">
+    <div class="seg"><span class="on">À toucher <i>3</i></span><span>Actifs <i>9</i></span><span>Essais <i>1</i></span><span>Invités <i>2</i></span><span>Suspendus <i>0</i></span><span>Tous <i>12</i></span></div>
+    <input class="search" placeholder="Nom, e-mail, SIREN…">
+  </div>
+
+  <div class="cl">
+    <div class="ch"><span></span><span>Client</span><span>Plan</span><span>Dernière visite</span><span class="r">MRR</span><span>À faire</span><span></span></div>
+    <div class="cr"><span class="av a">RO</span><span><b>Recette Onb</b><small>reprise@exemple.test</small></span><span><span class="chip a">Essai expiré</span></span><span class="dim">jamais</span><span class="r dim">—</span><span>Prolonger ou convertir</span><span><button class="btn full sm">Prolonger 48 h</button></span></div>
+    <div class="cr"><span class="av">KR</span><span><b>Kampus Réunion</b><small>kampusreunion@gmail.com</small></span><span><span class="chip m">Intégral</span></span><span>il y a 3 j</span><span class="r">349 €</span><span>Relance J+3</span><span><button class="btn sm">Envoyer</button></span></div>
+    <div class="cr"><span class="av g">RT</span><span><b>Rideau Test</b><small>invité le 31/08 — jamais activé</small></span><span><span class="chip g">Invité</span></span><span class="dim">jamais</span><span class="r dim">—</span><span>Renvoyer l'invitation</span><span><button class="btn sm">Renvoyer</button></span></div>
+    <div class="cr"><span class="av">CT</span><span><b>CBO Territoria</b><small>Promoteur · depuis le 28/08</small></span><span><span class="chip m">Intégral</span></span><span>hier</span><span class="r">349 €</span><span class="dim">—</span><span></span></div>
+    <div class="cr"><span class="av">AS</span><span><b>Agence Sud Immo</b><small>Agence · depuis le 29/08</small></span><span><span class="chip m">Intégral</span></span><span>il y a 2 j</span><span class="r">349 €</span><span class="dim">—</span><span></span></div>
+    <div class="cr"><span class="av">CH</span><span><b>Cabinet Hoarau</b><small>Notaire · depuis le 01/09</small></span><span><span class="chip m">Intégral</span></span><span>hier</span><span class="r">349 €</span><span class="dim">—</span><span></span></div>
+    <div class="cr"><span class="av">SM</span><span><b>SHLMR</b><small>Bailleur · depuis le 02/09</small></span><span><span class="chip m">Intégral</span></span><span>aujourd'hui</span><span class="r">349 €</span><span class="dim">—</span><span></span></div>
+    <div class="cf"><span>12 clients · 9 licences · 3 141 € par mois</span><span><a class="link" href="#">20 comptes de test masqués</a> · <a class="link" href="#">3 comptes sans abonnement Stripe</a></span></div>
+  </div>
+
+  <div class="note">Les comptes <span class="mono">@labuse.local</span>, <span class="mono">@ex.test</span>, <span class="mono">@example.com</span> et les comptes admin ne comptent dans aucun chiffre. Le rapprochement Stripe n'est plus un pavé : c'est le lien en bas à droite, qui ouvre la liste filtrée.</div>
+</section>
+
+</main></div>
+<script>
+document.querySelectorAll('.nav[data-p]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');document.getElementById('p-'+b.dataset.p).classList.add('on');
+}));
+</script>
+</body></html>

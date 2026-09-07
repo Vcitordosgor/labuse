@@ -121,14 +121,16 @@ def test_piscines_corrections_excluses(engine):
 
 @pytest.mark.db
 def test_comptes_actifs(engine):
+    # DASHBOARD-2 recette : les LICENCES actives = comptes 'actif' NON internes (test/admin exclus).
     from labuse.registre.moteurs.plateforme import comptes_actifs
     with engine.begin() as c:
         avant = comptes_actifs(c)
-        c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('C4 Témoin actif', 'interne', 'actif')"))
-        c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('C4 Témoin suspendu', 'interne', 'suspendu')"))
+        c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('C4 Témoin client', 'integral', 'actif')"))
+        c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('C4 Témoin interne', 'interne', 'actif')"))
+        c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('C4 Témoin suspendu', 'integral', 'suspendu')"))
         apres = comptes_actifs(c)
         c.execute(text("DELETE FROM comptes WHERE nom LIKE 'C4 Témoin%'"))
-    assert apres == avant + 1                  # seul le statut 'actif' compte
+    assert apres == avant + 1        # seul le client 'actif' compte — ni l'interne, ni le suspendu
 
 
 @pytest.mark.db
