@@ -155,22 +155,25 @@ vert.
 
 ---
 
-## Lot 4 — Connexion, session, mot de passe — AUDIT (socle déjà solide)
-
-État constaté (cartographie complète, `comptes.py` + `api/auth.py` + `api/onboarding.py`) :
+## Lot 4 — Connexion, session, mot de passe — LARGEMENT FAIT
 
 | Exigence | État | Détail |
 |---|---|---|
-| Reset bout-en-bout | ⚠ partiel | routes OK, **GET non consommant**, token haché SHA-256, exp 60 min, usage unique, anti-énumération. **Mais** e-mail = **texte SMTP**, pas le **template 14**. **Template 15** (mdp modifié) **absent**. |
-| Token invitation | ✅ | GET non consommant, **trim ONBOARDING-1** en place, réutilisé/inconnu → page « lien plus valide » (404 propre), jamais 500. |
-| `/login` messages | ✅ | même message email inconnu / mauvais mot de passe ; rate-limit 5→verrou 15 min ; verrou visible. |
-| Session | ✅ | cookie `labuse_session` HttpOnly + Secure (hors local) + SameSite=lax, durée 12 h déclarée, hash en base, **invalidation serveur** au logout. |
-| Déconnexion à distance | ❌ | **absente** (seul le logout du poste courant invalide sa session). À créer (fiche admin). |
+| Reset → **template 14** | ✅ | `_envoyer_reset_email` envoie le **template 14** (`mdp_oublie`) par la FILE (PRENOM/LIEN_RESET/VALIDITE), attribué au compte, demandeur « client ». Fin du texte SMTP. Message honnête suit la config **Brevo**. |
+| **Template 15** (mdp modifié) | ✅ | envoyé après un reset réussi (`mdp_modifie`, PRENOM + DATE_HEURE heure Réunion), best-effort (une confirmation qui ne part pas ne bloque jamais le reset). |
+| GET non consommant | ✅ | inchangé (token lu, jamais consommé au GET) ; `compte_du_reset_token` = lecture NON consommante (pour le 15), le token n'est consommé que par `appliquer_reset` (usage unique, testé). |
+| Token invitation | ✅ | GET non consommant, **trim ONBOARDING-1**, réutilisé/inconnu → page « lien plus valide » (404 propre). |
+| `/login` messages | ✅ | même message email inconnu / mauvais mot de passe ; rate-limit 5 → verrou 15 min visible. |
+| Session | ✅ | cookie `labuse_session` HttpOnly + Secure (hors local) + SameSite=lax, 12 h déclarée, hash en base, invalidation serveur au logout. |
+| **Déconnexion à distance** | ✅ | `comptes.deconnecter_compte` + `POST /admin/licences/{id}/deconnecter` (ferme toutes les sessions du compte SANS suspendre) + bouton « Déconnecter partout » dans la fiche (chip « N sessions fermées »). |
 | Secrets en logs | ✅ | argon2id, tokens/mots de passe jamais en clair. |
-| Page « Mon compte » client | ⚠ | existe en **menu déroulant** (`Header.tsx` + `/moi`), **pas une page** dédiée. |
+| Page « Mon compte » client | ⚠ (fonctionnel) | présent en **menu déroulant** (`Header.tsx` + `/moi`) : email, statut, échéance, changer le mot de passe (→ /reset → template 15), se déconnecter. Une **page dédiée** reste optionnelle (fonctions déjà couvertes). |
 
-**À faire** : brancher 14/15 par la file, GET non consommant confirmé par test, déconnexion à distance,
-page « Mon compte ».
+Tests : `test_compte2_reset.py` (template 14 enfilé, token non consommant, reset consomme, déconnexion
+à distance ferme les sessions). Front `tsc` vert.
+
+**Reste** : page « Mon compte » dédiée (optionnel) ; le « Réinitialiser le mot de passe » depuis la fiche
+admin (mandat Lot 3) marche déjà via le bouton mail `mdp_oublie` (LIEN_RESET réel généré).
 
 ---
 

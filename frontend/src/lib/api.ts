@@ -1376,6 +1376,9 @@ export const postAdminSuspendre = (compteId: number) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/suspendre`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminRetablir = (compteId: number) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/retablir`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+// COMPTE-2 (Lot 4) — déconnexion à distance : ferme toutes les sessions du compte (poste partagé).
+export const postAdminDeconnecter = (compteId: number) =>
+  j<{ ok: boolean; sessions_fermees: number }>(`/admin/licences/${compteId}/deconnecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminLicenceMail = (compteId: number, key: string) =>
   j<{ ok: boolean; envoye: boolean; raison?: string }>(`/admin/licences/${compteId}/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) })
 // D5 — IA

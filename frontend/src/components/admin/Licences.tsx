@@ -8,7 +8,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   getAdminLicences, getAdminMailApercu, getOffres, postAdminLicenceCreer, postAdminLicenceCreerEssai,
-  postAdminLicenceMail, postAdminRetablir, postAdminSuspendre, type AdminLicence, type AdminLicences,
+  postAdminLicenceMail, postAdminRetablir, postAdminSuspendre, postAdminDeconnecter,
+  type AdminLicence, type AdminLicences,
 } from '../../lib/api'
 import { ActBtn, Panel } from './AdminView'
 
@@ -185,6 +186,12 @@ function Fiche({ l, libelles, stripeConfigure }: { l: AdminLicence; libelles: Re
   })
   const susp = useMutation({ mutationFn: () => postAdminSuspendre(l.id), onSuccess: refresh })
   const retab = useMutation({ mutationFn: () => postAdminRetablir(l.id), onSuccess: refresh })
+  // COMPTE-2 (Lot 4) — déconnexion à distance (poste partagé) : ferme les sessions, ne suspend pas.
+  const [decoMsg, setDecoMsg] = useState<string | null>(null)
+  const deco = useMutation({
+    mutationFn: () => postAdminDeconnecter(l.id),
+    onSuccess: (r) => { setDecoMsg(`${r.sessions_fermees} session${r.sessions_fermees > 1 ? 's' : ''} fermée${r.sessions_fermees > 1 ? 's' : ''}`); refresh() },
+  })
   const suspendu = l.statut === 'suspendu'
   const act = prochaineAction(l)
   const sent = (k: string) => l.mails[k]?.statut === 'envoye'
@@ -269,6 +276,12 @@ function Fiche({ l, libelles, stripeConfigure }: { l: AdminLicence; libelles: Re
         {suspendu
           ? <ActBtn onClick={() => retab.mutate()} disabled={retab.isPending}>Rétablir l'accès</ActBtn>
           : <button onClick={suspendre} disabled={susp.isPending} className="shrink-0 rounded-md border border-coral/40 px-2.5 py-1 text-[12px] text-coral disabled:opacity-40">Suspendre le compte</button>}
+      </div>
+
+      {/* DÉCONNEXION À DISTANCE (COMPTE-2 Lot 4) — poste partagé, départ d'un client. Ne suspend pas. */}
+      <div className="mt-2.5 flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2.5 text-[12px] text-txt-dim">
+        <span>Déconnexion à distance — ferme toutes les sessions ouvertes du client (il pourra se reconnecter).{decoMsg && <b className="ml-2 text-mint">{decoMsg}</b>}</span>
+        <button onClick={() => deco.mutate()} disabled={deco.isPending} className="shrink-0 rounded-md border border-line px-2.5 py-1 text-[12px] text-txt-hi disabled:opacity-40">Déconnecter partout</button>
       </div>
     </div>
   )

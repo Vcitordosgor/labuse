@@ -677,6 +677,20 @@ def admin_licence_retablir(compte_id: int, request: Request) -> dict:
     return {"ok": True, "statut": "actif"}
 
 
+@router.post("/admin/licences/{compte_id}/deconnecter")
+def admin_licence_deconnecter(compte_id: int, request: Request) -> dict:
+    """COMPTE-2 (Lot 4) — déconnexion à distance : ferme toutes les sessions du compte (poste partagé,
+    départ d'un client) SANS le suspendre. Trois preuves : sessions supprimées (n), audit
+    `compte_deconnecte_distance`, chip « déconnecté » côté écran."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..comptes import deconnecter_compte
+    from ..db import session_scope
+    with session_scope() as s:
+        n = deconnecter_compte(s, compte_id, motif=f"dashboard:{getattr(request.state, 'admin_email', 'admin')}")
+    return {"ok": True, "sessions_fermees": n}
+
+
 class MailIn(BaseModel):
     key: str = Field(min_length=2, max_length=24)
     # COMPTE-2 (Lot 3) — surcharges de params fournies par le geste (motif de résiliation, réponse à
