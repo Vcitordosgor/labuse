@@ -267,11 +267,20 @@ def test_source_relance_sans_commande_404(client, engine):
 
 
 def test_produit_usage_et_statut_retour(client, engine):
-    """D7 — usage par outil agrégé + statut de retour éditable (nouveau→traité→répondu)."""
-    client.post("/usage/event", json={"kind": "outil", "outil": "courrier"})
+    """D7 · DASHBOARD-2 Lot 5 — usage par outil CLIENTS SEULEMENT + statut de retour éditable.
+    L'usage attribué à un compte client apparaît ; l'usage sans compte (admin/anonyme) est EXCLU."""
+    from sqlalchemy import text
+    with engine.begin() as c:
+        cid = c.execute(text(
+            "INSERT INTO comptes (nom, plan, statut) VALUES ('Client Produit', 'integral', 'actif') RETURNING id"
+        )).scalar()
+        c.execute(text("INSERT INTO usage_events (compte_id, kind, outil) VALUES (:c, 'outil', 'courrier')"), {"c": cid})
+    # usage sans compte (admin/anonyme) — ne DOIT PAS compter côté « clients seulement »
+    client.post("/usage/event", json={"kind": "outil", "outil": "__admin_seul__"})
     rid = client.post("/retours", json={"type": "idee", "message": "Les DPE sur la carte ?"}).json()["id"]
     d = client.get("/admin/produit").json()
     assert any(u["outil"] == "courrier" for u in d["usage"])
+    assert not any(u["outil"] == "__admin_seul__" for u in d["usage"])
     r = next(x for x in d["retours"] if x["id"] == rid)
     assert r["statut"] == "nouveau"
     assert client.post(f"/admin/retours/{rid}/statut", json={"statut": "traite"}).json()["statut"] == "traite"

@@ -186,7 +186,7 @@ def admin_signalements(request: Request, statut: str | None = None) -> dict:
         rows = [dict(r) for r in c.execute(text(
             "SELECT s.id, s.type, s.parcelle_id, s.bien_id, s.type_erreur, s.champ, s.commentaire,"
             "       s.utilisateur, s.statut, s.created_at, s.traite_at, s.compte_id,"
-            "       k.nom AS compte_nom"
+            "       k.nom AS compte_nom, k.plan AS compte_plan"
             "  FROM signalements s LEFT JOIN comptes k ON k.id = s.compte_id"
             f"{where} ORDER BY s.created_at DESC LIMIT 500"), {"s": statut}).mappings()]
         n_ouverts = int(c.execute(text(
@@ -388,16 +388,21 @@ def admin_pilotage(request: Request) -> dict:
         af_essais_24h = int(c.execute(text(
             "SELECT COUNT(*) FROM comptes WHERE statut = 'actif' AND essai_expire_at IS NOT NULL"
             " AND essai_expire_at > now() AND essai_expire_at < now() + interval '24 hours'")).scalar() or 0)
+        # DASHBOARD-2 (Lot 5) — CLIENTS SEULEMENT : on JOIN comptes et on écarte le plan 'interne'
+        # (et implicitement les compte_id NULL = pilote). Le même nombre est servi au Pilotage, à la
+        # jauge Produit et à la file « Retours » de la page Produit (tests masqués partout).
         af_signalements = 0
         if c.execute(text("SELECT to_regclass('signalements')")).scalar():
             af_signalements = int(c.execute(text(
-                "SELECT COUNT(*) FROM signalements WHERE statut = 'nouveau'")).scalar() or 0)
+                "SELECT COUNT(*) FROM signalements s JOIN comptes k ON k.id = s.compte_id"
+                " WHERE s.statut = 'nouveau' AND k.plan <> 'interne'")).scalar() or 0)
         # A4 — ventilation PAR TYPE des retours clients « Signaler » (bug/idée/question/donnée) encore
-        # ouverts (statut nouveau). Lu de la table `retours` — sert le mini-compteur du Pilotage.
+        # ouverts (statut nouveau), clients seulement. Lu de la table `retours`.
         retours_par_type: dict[str, int] = {}
         if c.execute(text("SELECT to_regclass('retours')")).scalar():
             retours_par_type = {r[0]: int(r[1]) for r in c.execute(text(
-                "SELECT type, COUNT(*) FROM retours WHERE statut = 'nouveau' GROUP BY type"))}
+                "SELECT r.type, COUNT(*) FROM retours r JOIN comptes k ON k.id = r.compte_id"
+                " WHERE r.statut = 'nouveau' AND k.plan <> 'interne' GROUP BY r.type"))}
         veilles_7j = 0
         if c.execute(text("SELECT to_regclass('alertes')")).scalar():
             veilles_7j = int(c.execute(text(
@@ -1701,7 +1706,8 @@ def admin_produit(request: Request, jours: int = 30) -> dict:
         usage = usage_par_outil(c, jours)
         retours = [dict(r) for r in c.execute(text(
             "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section,"
-            " r.url, r.page, r.outil, r.navigateur, r.ecran, k.nom AS compte, r.compte_id"
+            " r.url, r.page, r.outil, r.navigateur, r.ecran, k.nom AS compte, r.compte_id,"
+            " k.plan AS compte_plan"
             " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"
             " ORDER BY r.ts DESC LIMIT 200")).mappings()]
     for r in retours:

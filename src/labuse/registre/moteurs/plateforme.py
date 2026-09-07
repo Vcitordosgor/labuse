@@ -77,11 +77,15 @@ def conso_ia_30j(c) -> dict:
 
 def usage_par_outil(c, jours: int) -> list[dict]:
     """usage_outil_n — compte d'événements d'usage par outil sur la fenêtre choisie (7/30/90 j).
-    Extraction de api/dashboard.py:admin_produit."""
+    Extraction de api/dashboard.py:admin_produit.
+    DASHBOARD-2 (Lot 5) — CLIENTS SEULEMENT : les ouvertures faites depuis un compte interne / de test
+    (comptes.plan = 'interne') ou sans compte (pilote/admin) sont EXCLUES — c'est l'usage réel du produit."""
     return [dict(r) for r in c.execute(text(
-        "SELECT outil, COUNT(*) AS n FROM usage_events"
-        " WHERE kind = 'outil' AND outil IS NOT NULL AND ts > now() - make_interval(days => :j)"
-        " GROUP BY outil ORDER BY COUNT(*) DESC"), {"j": jours}).mappings()]
+        "SELECT ue.outil, COUNT(*) AS n FROM usage_events ue"
+        " JOIN comptes k ON k.id = ue.compte_id"
+        " WHERE ue.kind = 'outil' AND ue.outil IS NOT NULL AND k.plan <> 'interne'"
+        "   AND ue.ts > now() - make_interval(days => :j)"
+        " GROUP BY ue.outil ORDER BY COUNT(*) DESC"), {"j": jours}).mappings()]
 
 
 def notifications_non_lues(db, cid: int | None, *, cloche_filter_sql: str = "") -> int:

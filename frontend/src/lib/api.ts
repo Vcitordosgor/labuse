@@ -1429,6 +1429,7 @@ export interface Signalement {
   type_erreur: string; champ: string | null; commentaire: string | null; utilisateur: string | null
   statut: 'nouveau' | 'traite'; created_at: string | null; traite_at: string | null
   compte_id: number | null; compte_nom: string | null
+  compte_plan?: string | null   // DASHBOARD-2 (Lot 5) — 'interne' = compte de test, masqué par défaut
   fiche_lien: string | null   // RETOURS-11F M11 — lien cliquable vers la fiche d'origine (signalement fiche)
 }
 export const getAdminSignalements = (statut?: 'nouveau' | 'traite') =>
@@ -1598,7 +1599,7 @@ export const postAdminFluxBascule = (run: string) =>
 // D7 — Produit
 export interface AdminProduit {
   usage: Array<{ outil: string; n: number }>
-  retours: Array<{ id: number; ts: string | null; type: string; message: string; statut: string; compte: string | null; idu?: string | null; section?: string | null; fiche_lien?: string | null }>
+  retours: Array<{ id: number; ts: string | null; type: string; message: string; statut: string; compte: string | null; compte_plan?: string | null; idu?: string | null; section?: string | null; fiche_lien?: string | null }>
   jours?: number
 }
 // ADMIN-1 (AD7) — période au choix : 7 / 30 / 90 j (défaut 30).
