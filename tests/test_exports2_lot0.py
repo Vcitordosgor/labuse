@@ -36,18 +36,17 @@ def test_les_quinze_ids_existent_et_sont_declares():
 
 
 def test_en_attente_jusqu_au_builder():
-    """Lot 0.4 : créés en_attente — le chantier qui les apporte est nommé, et AUCUN robinet ne
-    les sert encore. Exception levée au lot 2 : `prix_achat_historique_eur` (D-a) est désormais
-    servi par le Dossier (en_attente levée, déclaré au robinet)."""
+    """Lot 0.4 : créés en_attente ; l'attente est LEVÉE au fil des documents qui les servent —
+    lot 2 : `prix_achat_historique_eur` (D-a, Dossier) ; lot 5 : les postes du bilan à rebours
+    (Financier). Restent en_attente : la mixité seuil/quota (chantier ultérieur)."""
     sers = {cid for r in ROBINETS.values() for cid in r.chiffres}
+    encore_en_attente = {"mixite_seuil_m2", "mixite_quota_pct"}
     for cid in IDS_FINANCIER:
-        if cid == "prix_achat_historique_eur":
-            continue      # servi par le Dossier (lot 2)
-        assert DONNEES[cid].en_attente, f"{cid} : doit être en_attente tant qu'aucun robinet ne le sert"
-        assert cid not in sers, f"{cid} : en_attente mais déjà servi par un robinet"
-    # D-a : levée d'attente au lot 2 — servi et déclaré au robinet Dossier.
-    assert not DONNEES["prix_achat_historique_eur"].en_attente
-    assert "prix_achat_historique_eur" in sers
+        if cid in encore_en_attente:
+            assert DONNEES[cid].en_attente and cid not in sers, f"{cid} : doit rester en_attente"
+        else:
+            assert not DONNEES[cid].en_attente, f"{cid} : servi → en_attente doit être levée"
+            assert cid in sers, f"{cid} : servi mais absent des robinets"
 
 
 def test_le_bilan_travaille_ht():

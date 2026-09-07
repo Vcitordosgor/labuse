@@ -88,7 +88,8 @@ def generer(idu: str, outdir: Path) -> dict:
 
         from labuse.db import session_scope
         from labuse.exports import builder
-        for doc, nom in (("dossier", "dossier2"), ("flash", "flash2"), ("resume", "resume2")):
+        for doc, nom in (("dossier", "dossier2"), ("flash", "flash2"), ("resume", "resume2"),
+                         ("financier", "financier2")):
             with session_scope() as s:
                 builder.generer_pdf(s, idu, doc, fiche=fiche, jour=_date(2026, 9, 5),
                                     chemin_pdf=str(d / f"{nom}.pdf"))

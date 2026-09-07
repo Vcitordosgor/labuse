@@ -331,6 +331,16 @@ ROBINETS: dict[str, Robinet] = {
     "/pdf (courrier)", "pdf", chiffres=("zone_plu_famille", "zonage_plu_couche",)),
  "pdf_argumentaire": _r("pdf", "Argumentaire", None,
     "/argumentaire", "pdf", chiffres=("prix_terrain_secteur_eur_m2",)),
+ # EXPORTS-2 lot 5 — le Financier (builder exports) sert les postes du bilan à rebours (en_attente
+ # levée). Les postes déjà servis par le Banquier (bilan_ca/cout/vrd/marge/frais, charge_fonciere_eur,
+ # mixite_clause, ecart_prix_demande_pct) restent à pdf_banquier jusqu'au lot 8 (bascule, V5c).
+ "pdf_financier": _r("pdf", "Financier", None,
+    "/financier/{idu}.pdf (builder exports, questionnaire)", "pdf", chiffres=(
+        "bilan_frais_acquisition_eur", "bilan_honoraires_techniques_eur", "bilan_stationnement_eur",
+        "bilan_aleas_eur", "bilan_depollution_eur", "bilan_portage_eur", "redevance_archeologie_eur",
+        "bilan_demolition_eur", "charge_fonciere_basse_eur", "charge_fonciere_haute_eur",
+        "sensibilite_cout_construction", "sensibilite_prix_sortie", "seuil_rentabilite_eur",
+        "prix_revient_eur_m2",)),
  # EXPORTS-2 lot 4 — l'écran questionnaire du Financier (4 écrans) sert ses saisies client
  # (les 4 saisies déjà servies par la calculette — prix_demande/cout_construction/démolition/
  # dépollution — restent à leurs robinets ; on ne les redéclare pas ici, V5c).

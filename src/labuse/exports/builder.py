@@ -13,8 +13,8 @@ from datetime import date
 
 from ..registre.valeur import Valeur
 from . import archive, numeros
-from .blocs import (autour, bilan, commune, identite, marche, potentiel, reseaux, resume,
-                    risques, sources, zonage)
+from .blocs import (autour, bilan, commune, financier, identite, marche, potentiel, reseaux,
+                    resume, risques, sources, zonage)
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, page_html, render_pdf
 
@@ -36,6 +36,9 @@ _FOOT = {
     "dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER,
     "resume": ("Résumé du Dossier parcelle. Document d'information établi sur des données "
                "publiques ; ne remplace pas un certificat d'urbanisme. Données LABUSE au {au}."),
+    "financier": ("Bilan indicatif établi sur des données publiques et sur les hypothèses saisies "
+                  "par le porteur (en ambre). Ni un prix, ni une promesse, ni un conseil. Il ne "
+                  "remplace pas un bilan promoteur professionnel. Données LABUSE au {au}."),
 }
 
 #: composition de chaque document = la suite ordonnée des blocs (catalogue EXPORTS-SOURCES).
@@ -46,6 +49,7 @@ DOCUMENTS: dict[str, list] = {
     "dossier": _DOSSIER,
     "flash": [b for b in _DOSSIER if b is not bilan],
     "resume": [resume],
+    "financier": [financier],
 }
 
 
@@ -58,8 +62,8 @@ class ResultatDoc:
 
 
 #: documents « au fil » (pas de page de garde pleine) : en-tête compact, comme les maquettes
-#: Résumé et Apporteur.
-_COVER_COMPACTE = {"resume", "apporteur"}
+#: Résumé, Financier (le document, la page formulaire étant l'écran de l'app) et Apporteur.
+_COVER_COMPACTE = {"resume", "apporteur", "financier"}
 
 
 def _entete_compacte(document: str, idu: str, fiche: dict, numero: str, jour: date,
@@ -115,9 +119,53 @@ def _cover(document: str, idu: str, fiche: dict, numero: str, jour: date,
     )
 
 
+#: surface vendable moyenne par logement selon la typologie saisie (hypothèse déclarée, repli du
+#: programme quand le potentiel ne chiffre pas de reconstruction — le programme reste piloté par
+#: les logements visés du client).
+_TYPOLOGIE_SURFACE = {"T1": 30, "T2": 45, "T3": 65, "T4": 85, "T5": 105, "STUDIO": 25}
+
+
+def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dict:
+    """Charge le questionnaire, résout les hypothèses (avec pré-remplissages sourcés) et calcule le
+    bilan HT. Le programme vient du potentiel (reconstruction) ou, à défaut, des logements visés ×
+    surface de la typologie."""
+    from .. import financier_questionnaire as qf
+    from . import financier_bilan as fb
+    etat = qf.charger(db, idu, compte_id)
+    prefill = qf.prefill(fiche)
+    resolved = qf.resoudre(etat["reponses"], prefill)
+    rv = lambda fid: (resolved.get(fid) or {}).get("valeur")  # noqa: E731
+    hyp = {
+        "prix_sortie": rv("prix_sortie_saisi_eur_m2"), "prix_bailleur": rv("prix_vente_bailleur_saisi_eur_m2"),
+        "cout": rv("cout_construction_saisi_eur_m2"), "honoraires_pct": rv("honoraires_techniques_saisi_pct"),
+        "vrd_m2": rv("vrd_saisi_eur_m2"), "cout_place": rv("cout_place_stationnement_saisi_eur"),
+        "aleas_pct": rv("aleas_saisi_pct"), "marge_pct": rv("marge_visee_saisi_pct"),
+        "frais_acq_pct": rv("frais_acquisition_saisi_pct"), "prix_demande": rv("prix_demande_saisi_eur"),
+        "demolition": rv("bilan_demolition_eur"), "depollution": rv("bilan_depollution_eur"),
+        "taxe": rv("taxe_amenagement_saisi_eur"), "duree_portage": rv("duree_portage_saisi_mois"),
+        "taux_apport": rv("taux_apport_saisi_pct"), "part_sociale_pct": rv("part_sociale_saisi_pct") or 0,
+    }
+    pot = fiche.get("potentiel_transformation") or {}
+    cap = pot.get("capacite_estimee")
+    program = {
+        "surface_terrain": fiche.get("surface_m2"),
+        "logements": rv("logements_vises_saisi") or (cap if (cap and not isinstance(cap, bool)) else None),
+        "surface_vendable": pot.get("surface_vendable_m2"),
+        "surface_plancher": pot.get("surface_plancher_m2"),
+    }
+    if not program["surface_vendable"] and program["logements"]:
+        typo = str(rv("typologie_moyenne_saisi") or "T3").upper().strip()
+        surf = _TYPOLOGIE_SURFACE.get(typo, 60)
+        program["surface_vendable"] = program["logements"] * surf
+        program["surface_plancher"] = program["surface_vendable"] / 0.8
+    return {"bilan": fb.calculer(program, hyp), "resolved": resolved, "prefill": prefill,
+            "complet": etat["complet"], "existe": etat["existe"], "program": program}
+
+
 def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
-               jour: date | None = None) -> ResultatDoc:
-    """Assemble le HTML complet d'un document et les Valeur lues (pour l'archive)."""
+               jour: date | None = None, compte_id: int | None = None) -> ResultatDoc:
+    """Assemble le HTML complet d'un document et les Valeur lues (pour l'archive). Pour le Financier,
+    `compte_id` sert à charger le questionnaire persisté du porteur."""
     from .collecte import collecte
     if document not in DOCUMENTS:
         raise ValueError(f"document inconnu : {document!r} (câblé : {sorted(DOCUMENTS)})")
@@ -127,24 +175,27 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     blocs = DOCUMENTS[document]
     ids = sorted({cid for b in blocs for cid in b.IDS})
     valeurs = collecte(db, idu, ids, fiche=f)
+    ctx = _financier_contexte(db, idu, f, compte_id) if document == "financier" else None
     label, _ = _LABEL.get(document, (document, ""))
     adresse = f.get("adresse") or ""
     au = f.get("donnees_labuse_au") or f"{j:%d/%m/%Y}"
     cart = Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
-        doc_foot=_FOOT.get(document, ("Document d'information LABUSE. Données au {au}.",))[0].format(au=au),
+        doc_foot=_FOOT.get(document, "Document d'information LABUSE. Données au {au}.").format(au=au),
     )
-    corps = _cover(document, idu, f, numero, j, valeurs) + "".join(b.rendu(valeurs) for b in blocs)
+    corps = _cover(document, idu, f, numero, j, valeurs)
+    for b in blocs:
+        corps += b.rendu(valeurs, ctx) if document == "financier" else b.rendu(valeurs)
     html = page_html(label, cart, corps)
     return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart)
 
 
 def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
-                jour: date | None = None, chemin_pdf=None):
+                jour: date | None = None, chemin_pdf=None, compte_id: int | None = None):
     """Rend le PDF d'un document et, si `chemin_pdf` est donné, écrit le PDF + son archive JSON
     (reproductibilité — lot 1.6). Rend (bytes_pdf, ResultatDoc)."""
-    res = construire(db, idu, document, fiche=fiche, jour=jour)
+    res = construire(db, idu, document, fiche=fiche, jour=jour, compte_id=compte_id)
     pdf = render_pdf(res.html)
     if chemin_pdf is not None:
         from pathlib import Path
