@@ -698,12 +698,23 @@ def _params_licence(db, key: str, row, override: dict | None = None) -> dict:
     base = (get_settings().public_base_url or "https://app.labuse.immo").rstrip("/")
     email = row["email"]
     p: dict = {"PRENOM": _prenom(row.get("nom"), email), "EMAIL": email}
-    if key == "souscription":
+    if key in ("essai", "onboarding1"):
+        # COMPTE-2 (décision Vic) : LIEN d'invitation (jamais un mot de passe). Pour un compte encore
+        # « invite », on (re)génère un token frais → lien ; sinon (déjà actif) repli sur /login.
+        lien = f"{base}/login"
+        if db is not None:
+            try:
+                from .. import comptes as _comptes
+                lien = _comptes.creer_invitation(db, email, nom=row.get("nom"))["lien"]
+            except Exception:  # noqa: BLE001 — compte déjà actif / sans invite : repli login
+                lien = f"{base}/login"
+        p["LIEN_INVITATION"] = lien
+        if key == "essai":
+            p["FIN_ESSAI"] = _fmt_reunion(row.get("essai_expire_at")) or "à l'échéance de votre essai"
+    elif key == "souscription":
         p["LIEN_SOUSCRIPTION"] = f"{base}/souscrire"
     elif key in ("relance_carte", "suspension"):
         p["LIEN_PAIEMENT"] = f"{base}/facturation"
-    elif key == "essai":
-        p["FIN_ESSAI"] = _fmt_reunion(row.get("essai_expire_at")) or "à l'échéance de votre essai"
     elif key == "onboarding2":
         p["JAMAIS_CONNECTE"] = row.get("dernier_login_at") is None
     elif key == "mdp_oublie":

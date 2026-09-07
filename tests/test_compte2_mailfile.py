@@ -28,7 +28,7 @@ def eng(engine):
 
 # params COMPLETS par clé (la garde fail-closed refuse un template incomplet — cf. test dédié).
 _FULL = {
-    "onboarding1":    {"PRENOM": "Vic", "EMAIL": "a@labuse.test", "MDP_PROVISOIRE": "x"},
+    "onboarding1":    {"PRENOM": "Vic", "EMAIL": "a@labuse.test", "LIEN_INVITATION": "https://x"},
     "onboarding2":    {"PRENOM": "Vic"},
     "onboarding3":    {"PRENOM": "Vic"},
     "suspension":     {"PRENOM": "Vic", "LIEN_PAIEMENT": "https://x"},
@@ -144,8 +144,8 @@ def test_journal_nomme_le_demandeur(eng, monkeypatch):
 
 
 def test_garde_params_manquants_ne_part_jamais(eng, monkeypatch):
-    # onboarding1 attend PRENOM/EMAIL/MDP_PROVISOIRE ; on en fournit deux → la file REFUSE de partir
-    # (jamais un « {{ params.MDP_PROVISOIRE }} » brut chez le client), sans même appeler le transport.
+    # onboarding1 attend PRENOM/EMAIL/LIEN_INVITATION ; on en fournit deux → la file REFUSE de partir
+    # (jamais un « {{ params.LIEN_INVITATION }} » brut chez le client), sans même appeler le transport.
     appele = {"n": 0}
 
     def _spy(*a, **k):
@@ -157,7 +157,7 @@ def test_garde_params_manquants_ne_part_jamais(eng, monkeypatch):
                               compte_id=9, demandeur="vic")
     assert appele["n"] == 0                       # transport jamais appelé
     assert r["etat"] == "en_attente" and r["parti_at"] is None
-    assert "MDP_PROVISOIRE" in (r["erreur"] or "")
+    assert "LIEN_INVITATION" in (r["erreur"] or "")
 
 
 def test_filtres_et_compteurs(eng, monkeypatch):

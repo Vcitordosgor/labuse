@@ -25,16 +25,18 @@ les 16 par la file et imprime les message-id. **Preuve de substitution obtenue e
 Lot 2) : les 16 rendus via l'API Brevo, **0 `{{ params.X }}` brut, 0 bloc `{% %}` visible, « Bonjour , »
 absent, expéditeur unique `victor@labuse.immo`**.
 
-### B. Onboarding : lien d'invitation vs mot de passe provisoire (templates 4 & 6)
-Les templates **4 (ESSAI)** et **6 (BIENVENUE)** attendent `MDP_PROVISOIRE`. Or LABUSE onboarde
-aujourd'hui **par lien d'invitation** (`comptes.creer_invitation` → `/invitation?token=…`, le client pose
-son mot de passe via le lien signé, la CGV s'accepte là) : **il n'existe pas de mot de passe provisoire**,
-et en envoyer un serait une régression de sécurité. Deux issues possibles :
-1. garder le lien d'invitation et **changer le param Brevo** de 4/6 en `LIEN_INVITATION` (geste Brevo) ;
-2. basculer l'onboarding sur un **mot de passe provisoire** (changement de flux auth).
+### B. Onboarding — TRANCHÉ : lien d'invitation (templates 4 & 6) ✅
+Décision Vic : **garder le lien d'invitation**, changer le param Brevo de 4/6 de `MDP_PROVISOIRE` en
+**`LIEN_INVITATION`** (jamais un mot de passe envoyé — le flux sécurisé actuel est conservé). Côté code
+(fait) : `brevo.REGISTRE` attend `LIEN_INVITATION` pour 4/6, et `_params_licence` **génère un vrai lien
+d'invitation** (token frais via `comptes.creer_invitation` pour un compte « invite », sinon repli
+`/login`).
 
-En attendant, la **garde fail-closed** de la file REFUSE d'envoyer 4/6 sans `MDP_PROVISOIRE` (visible
-dans la file, jamais un `{{ … }}` brut chez le client). Tous les autres templates s'envoient normalement.
+**Dépendance d'ordre (à respecter au déploiement)** : le param Brevo de 4/6 doit passer à
+`{{ params.LIEN_INVITATION }}` **avant** d'activer l'envoi de 4/6. Tant que le template Brevo porte encore
+`MDP_PROVISOIRE`, `verifier_templates()` signale 4/6 (`params_manquants=[LIEN_INVITATION]`) — **signal
+utile, aucun envoi live cassé** (4/6 ne sont pas encore câblés à un déclencheur). Le test de recette
+`local` tolère explicitement cet écart attendu (et lui seul).
 
 ---
 
