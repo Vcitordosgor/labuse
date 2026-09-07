@@ -371,6 +371,19 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
     for (const id of ['parcels-base', 'parcels-fill']) mv(id, 'parcels-limites')
     for (const id of ['ile-base', 'ile-fill']) mv(id, 'ile-limites')
   }
+  // COUCHES-1 lot 4 — ORDRES D'EMPILEMENT DÉCLARÉS (constat C4/C2 : des couches se recouvraient
+  // au hasard de l'ordre de création). L'ancre = première limite présente ; mv(id, ancre) place la
+  // couche juste SOUS l'ancre, dans l'ordre d'appel → la première citée finit la plus basse.
+  const _ancre = ['parcels-limites', 'ile-limites', 'communes-bounds'].find((id) => m.getLayer(id))
+  if (_ancre) {
+    // C4 — famille nature : la couche qui CONTIENT (la plus large) dessous, la plus spécifique dessus :
+    // parc ⊃ ZNIEFF ⊃ ENP ⊃ zones humides. Le liseré du parc reste au-dessus de son propre aplat.
+    for (const id of ['ov-parc', 'ov-parc-line', 'ov-znieff', 'ov-enp', 'ov-zone_humide']) mv(id, _ancre)
+    // C2 — points de transport : pôle d'échange (rôle le plus large) dessous, station TCSP au milieu,
+    // ARRÊT au-dessus. Combinés à la station en ANNEAU (halo), un même point physique se lit comme UN
+    // objet enrichi (anneaux emboîtés + pastille), plus trois pastilles concurrentes superposées.
+    for (const id of ['ov-pole', 'ov-tcsp-st', 'ov-trans-arret']) mv(id, _ancre)
+  }
   for (const id of ['ov-zonage', 'ovmvt-zonage']) { set(id, 'fill-color', zonageFillExpr(t)); set(id, 'fill-opacity', t.zonageOpacity) }
   for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', zonageFillExpr(t)); set(id, 'line-width', t.zonageContourW) }
   for (const id of ['ov-ppr', 'ovmvt-ppr']) { set(id, 'fill-color', t.ppr); set(id, 'fill-opacity', t.pprOpacity) }
@@ -430,8 +443,8 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   set('ov-tcsp', 'line-color', t.tcsp)
   set('ov-tcsp-zone-parcelles', 'fill-color', t.tcsp)
   set('ov-tcsp-zone-rayon', 'line-color', t.tcsp)
-  set('ov-tcsp-st', 'circle-color', t.tcsp)
-  set('ov-tcsp-st', 'circle-stroke-color', clair ? '#FFFFFF' : '#0A0F0C')
+  set('ov-tcsp-st', 'circle-color', 'rgba(0,0,0,0)')   // COUCHES-1 lot 4 (C2) — station en ANNEAU (halo), sans disque plein
+  set('ov-tcsp-st', 'circle-stroke-color', t.tcsp)
 
   // ═══ RETOURS-11 C4 — VARIANT LISIBILITÉ « fond photo/clair » (Plan & Ortho) ═══
   // Ce bloc s'exécute EN DERNIER : il écrase, pour les seuls fonds photo, les propriétés posées
@@ -1069,10 +1082,14 @@ export function MapView() {
       m.addLayer({ id: 'ov-tcsp', type: 'line', source: 'ov-tcsp', layout: { visibility: 'none', 'line-cap': 'round' },
         filter: ['==', ['get', 'subtype'], 'site_propre'] as never,
         paint: { 'line-color': T_SOMBRE.tcsp, 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 2.5, 13, 4, 16, 6] as unknown as maplibregl.ExpressionSpecification, 'line-opacity': 0.95 } })
+      // COUCHES-1 lot 4 (C2) — la station TCSP est un ANNEAU (halo), pas un disque plein : une station
+      // est dérivée d'un arrêt GTFS (≤ 60 m) donc CO-LOCALISÉE avec la couche « Transport public ». En
+      // anneau, elle ENTOURE l'arrêt (rayon un cran plus grand) → un seul objet lisible au lieu de deux
+      // pastilles concurrentes. Le fill transparent laisse voir l'arrêt dessous.
       m.addLayer({ id: 'ov-tcsp-st', type: 'circle', source: 'ov-tcsp-st', layout: { visibility: 'none' },
-        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3.5, 14, 6, 17, 9] as unknown as maplibregl.ExpressionSpecification,
-                 'circle-color': T_SOMBRE.tcsp, 'circle-opacity': 0.95,
-                 'circle-stroke-color': '#0A0F0C', 'circle-stroke-width': 1.4 } })
+        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8.5, 17, 12] as unknown as maplibregl.ExpressionSpecification,
+                 'circle-color': 'rgba(0,0,0,0)',
+                 'circle-stroke-color': T_SOMBRE.tcsp, 'circle-stroke-width': 2.2, 'circle-stroke-opacity': 0.95 } })
       // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
       // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
       m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
