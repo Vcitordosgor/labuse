@@ -879,6 +879,36 @@ export interface VoisinesResp {
 export const getAssemblageVoisines = (idu: string) =>
   j<VoisinesResp>(`/moteurs/assemblage/voisines?idu=${encodeURIComponent(idu)}`)
 
+// ── OUTILS-MUSCLER-2 — histoire de la parcelle (frise des faits sous le comparateur d'orthos).
+// Des FAITS datés, jamais un récit (B2) ; chaque fait porte sa source et la MAILLE RÉELLE de sa
+// date : 'jour' (ISO), 'annee' (« 2024 », jamais « 01/01/2024 »), 'millesime' (écart constaté
+// entre deux situations au 1ᵉʳ janvier — propriétaire PM, jamais une date de vente).
+export interface HistoireFait {
+  famille: 'vente' | 'permis' | 'proprietaire' | 'decoupe'
+  date: string | null                  // ISO jour, ou « YYYY » (maille annee), ou null (millesime)
+  maille: 'jour' | 'annee' | 'millesime'
+  annee: number | null                 // position sur la frise
+  libelle: string
+  chiffres: { prix_eur?: number | null; surface_bati_m2?: number | null; surface_terrain_m2?: number | null
+    nb_logements?: number | null; surf_hab_m2?: number | null; statut: string }
+  source: string
+  // famille permis — pont « Permis sur ce permis »
+  permit_id?: string; type_permis?: string
+  // famille proprietaire — PM nommées (jamais un particulier), pont Scan patrimoine
+  de_millesime?: number; a_millesime?: number
+  avant?: { siren: string | null; denomination: string | null }
+  apres?: { siren: string | null; denomination: string | null }
+  // famille decoupe — liste bornée au cap (total toujours dit)
+  parcelles_liees?: string[]; n_parcelles_liees?: number
+}
+export interface HistoireResp {
+  idu: string; n: number; faits: HistoireFait[]
+  cap_filiation: number
+  sources: { cle: string; nom: string; maj: string | null }[]   // bandeau C6 (millésimes servis)
+}
+export const getHistoire = (idu: string) =>
+  j<HistoireResp>(`/moteurs/histoire/${encodeURIComponent(idu)}`)
+
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {
