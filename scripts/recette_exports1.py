@@ -80,6 +80,23 @@ def generer(idu: str, outdir: Path) -> dict:
         shutil.copy(p, d / "flash.pdf")
     except Exception as exc:  # noqa: BLE001
         ko(f"{idu}/flash.pdf : {exc}")
+    # EXPORTS-2 — le nouveau builder : le Dossier (partiel au lot 1 : garde + section 1) rendu
+    # sur les témoins, avec son archive JSON à côté (1.6). Le pdftotext ci-dessous l'extrait →
+    # le contrôle « mots interdits » le couvre comme les autres. La chaîne grossit aux lots 2-7.
+    try:
+        from datetime import date as _date
+
+        from labuse.db import session_scope
+        from labuse.exports import builder
+        with session_scope() as s:
+            builder.generer_pdf(s, idu, "dossier", fiche=fiche, jour=_date(2026, 9, 5),
+                                chemin_pdf=str(d / "dossier2.pdf"))
+        if (d / "dossier2.json").exists():
+            ok(f"{idu}/dossier2 (EXPORTS-2) : rendu + archive JSON")
+        else:
+            ko(f"{idu}/dossier2 : archive JSON absente (1.6)")
+    except Exception as exc:  # noqa: BLE001
+        ko(f"{idu}/dossier2 (EXPORTS-2) : {exc}")
     for f in d.glob("*.pdf"):
         subprocess.run(["pdftotext", "-layout", str(f), str(f.with_suffix(".txt"))], check=True)
     return fiche
