@@ -17,9 +17,10 @@ PREFIXE = {
 
 
 def numero_rapport(document: str, idu: str, jour: date | None = None) -> str:
-    """Numéro unique. `document` ∈ PREFIXE ; `jour` par défaut aujourd'hui (injectable pour test
-    et reproductibilité)."""
+    """Numéro de rapport, format court des anciens documents : `<préfixe>-<AAAAMMJJ>-<4 derniers
+    chiffres de l'IDU>` (lisible en pied de page ; l'IDU ENTIER vit dans le cartouche @page —
+    doc_ref — et sur la page de garde). `document` ∈ PREFIXE ; `jour` injectable (test/repro)."""
     if document not in PREFIXE:
         raise ValueError(f"document inconnu : {document!r} (attendu {sorted(PREFIXE)})")
     j = jour or date.today()
-    return f"{PREFIXE[document]}-{j:%Y%m%d}-{idu}"
+    return f"{PREFIXE[document]}-{j:%Y%m%d}-{idu[-4:]}"

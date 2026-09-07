@@ -45,12 +45,27 @@ def test_chip_html_et_derive():
     assert 'class="chip d"' in d and "dérivé" in d
 
 
+def test_chip_projet_sort_en_ambre():
+    """DA v3 — la couleur ne porte du sens QUE pour `projet` : ambre = saisi par le client.
+    Un id de portée projet sort en pastille `p` (ambre), jamais `e`/`s`, et theme.css lie
+    `.chip.p` à --amber."""
+    from pathlib import Path
+    c = nature.chip(_V("prix_demande_saisi_eur", 650000))
+    assert 'class="chip p"' in c and "projet" in c
+    assert 'class="chip e"' not in c and 'class="chip s"' not in c
+    css = (Path(__file__).resolve().parents[1] / "src/labuse/exports/theme.css").read_text()
+    import re as _re
+    bloc = _re.search(r"\.chip\.p\s*\{[^}]*\}", css)
+    assert bloc and "--amber" in bloc.group(0), "theme.css : .chip.p doit être en --amber"
+
+
 # ── 1.6 numéro de rapport ───────────────────────────────────────────────────────────────────
 
-def test_numero_rapport_forme_et_unicite():
+def test_numero_rapport_forme_courte():
+    # format court des anciens documents : 4 derniers chiffres de l'IDU (l'IDU entier est au cartouche)
     n = numeros.numero_rapport("dossier", "97415000BO0852", date(2026, 9, 5))
-    assert n == "DP-20260905-97415000BO0852"
-    assert numeros.numero_rapport("financier", "X", date(2026, 9, 5)).startswith("FI-")
+    assert n == "DP-20260905-0852"
+    assert numeros.numero_rapport("financier", "97401000AD0554", date(2026, 9, 5)) == "FI-20260905-0554"
     assert numeros.numero_rapport("resume", "X", date(2026, 9, 5)).startswith("RE-")
     with pytest.raises(ValueError):
         numeros.numero_rapport("inconnu", "X")
@@ -129,9 +144,11 @@ def test_builder_construit_dossier_partiel():
     fiche = {"surface_m2": 742, "adresse": "103 Chaussée Royale, Saint-Paul",
              "commune": "Saint-Paul", "proprietaire_moral": True}
     res = builder.construire(_FakeDB(), "97415000BO0852", "dossier", fiche=fiche, jour=date(2026, 9, 5))
-    assert res.numero == "DP-20260905-97415000BO0852"
+    assert res.numero == "DP-20260905-0852"
     assert "Dossier parcelle" in res.html and "1. Identité et situation" in res.html
     assert "surface_parcelle_m2" in res.valeurs
     assert "<html" in res.html and "theme.css" in res.html
-    # cartouche @page alimenté
+    # cartouche @page : n° court, mais l'IDU ENTIER y vit (doc_ref) et sur la page de garde
     assert res.cartouche.doc_ref.endswith(res.numero)
+    assert "97415000BO0852" in res.cartouche.doc_ref
+    assert "97415000BO0852" in res.html
