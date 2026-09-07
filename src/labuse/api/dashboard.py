@@ -959,25 +959,26 @@ def admin_ia(request: Request) -> dict:
         _c30 = conso_ia_30j(c)
         jours, par_licence, cout_7j = _c30["jours"], _c30["par_licence"], _c30["cout_7j"]
         quotas = [dict(r) for r in c.execute(text(
-            "SELECT id, nom, copilote_quota_jour, copilote_budget_eur FROM comptes"
+            "SELECT id, nom, plan, copilote_quota_jour, copilote_budget_eur FROM comptes"
             " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
-    # RETOURS-8 (R3) — le plafond est désormais en EUROS/jour par compte. Pour chaque licence :
-    # le budget € effectif (override ou défaut), la dépense du jour en €, le nombre d'appels (mention
-    # secondaire), et l'équivalent « ≈ N questions » au coût moyen réel du compte.
-    _budget_defaut = float(config.get_settings().copilote_budget_eur_defaut)
-    for q in quotas:
-        b = float(q["copilote_budget_eur"]) if q["copilote_budget_eur"] is not None else _budget_defaut
-        cmoy = cout_moyen_appel(int(q["id"]))
-        q["budget_eur"] = round(b, 2)
-        q["depense_eur"] = round(depense_eur_aujourdhui(int(q["id"])), 4)
-        q["equiv_questions"] = int(b / cmoy) if cmoy > 0 else None
-        q["appels_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
     from datetime import date
     import calendar
     today = date.today()
     jours_restants = calendar.monthrange(today.year, today.month)[1] - today.day
     projection = float(mois["cout"]) + (cout_7j / 7.0) * jours_restants
     appels = int(mois["appels"])
+    # DASHBOARD-2 (Lot 6) — UNE SEULE formule pour « ≈ N questions » : budget € ÷ coût moyen d'UNE
+    # question (le MÊME `cout_unitaire` que le repère « coût moyen / question »). Fini l'incohérence
+    # « 2 € ≈ 335 questions » (qui venait d'un coût moyen PAR COMPTE) vs « 0,008 € » affiché (= 250).
+    cout_unitaire = (float(mois["cout"]) / appels) if appels else float(
+        config.get_settings().copilote_cout_moyen_defaut)
+    _budget_defaut = float(config.get_settings().copilote_budget_eur_defaut)
+    for q in quotas:
+        b = float(q["copilote_budget_eur"]) if q["copilote_budget_eur"] is not None else _budget_defaut
+        q["budget_eur"] = round(b, 2)
+        q["depense_eur"] = round(depense_eur_aujourdhui(int(q["id"])), 4)
+        q["equiv_questions"] = int(round(b / cout_unitaire)) if cout_unitaire > 0 else None
+        q["appels_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
     for r in jours:
         r["jour"] = r["jour"].isoformat()
         r["cout"] = float(r["cout"])
@@ -988,10 +989,6 @@ def admin_ia(request: Request) -> dict:
     # source que celle réellement appelée (model_for), donc ce tableau EST la vérité servie.
     from .. import ai_models
     surfaces = ai_models.surfaces_table()
-    # RETOURS-8 (R3) — coût unitaire d'UNE question : le coût moyen réel (mois), repli sur le plancher
-    # config (0,008 €). Affiché « 0,008 € / question » (plus « pour 1 000 questions »).
-    cout_unitaire = (float(mois["cout"]) / appels) if appels else float(
-        config.get_settings().copilote_cout_moyen_defaut)
     return {
         "mois": {"cout_eur": float(mois["cout"]), "appels": appels,
                  "cout_moyen_question": (float(mois["cout"]) / appels) if appels else None},

@@ -1416,7 +1416,7 @@ export interface AdminIa {
   budget_defaut_eur: number
   // RETOURS-8 (R3) — par compte : budget €/jour, dépense du jour en €, équivalent « ≈ N questions »,
   // nombre d'appels du jour (mention secondaire).
-  quotas: Array<{ id: number; nom: string; copilote_budget_eur: number | null; budget_eur: number
+  quotas: Array<{ id: number; nom: string; plan?: string | null; copilote_budget_eur: number | null; budget_eur: number
     depense_eur: number; equiv_questions: number | null; appels_aujourdhui: number }>
   // RETOURS-7 Z7 — quel modèle sert chaque surface IA (lu depuis la config, jamais un nom en dur)
   modeles_par_surface: Array<{ kind: string; label: string; model: string }>
