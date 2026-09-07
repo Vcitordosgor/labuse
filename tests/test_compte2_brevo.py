@@ -74,6 +74,41 @@ def test_flags_conditionnels_hors_params():
         assert not (set(brevo.REGISTRE[key].flags) & set(brevo.REGISTRE[key].params))
 
 
+def test_evaluer_conditions_offline():
+    ev = brevo._evaluer_conditions
+    assert ev("a{% if params.RENVOI %}RENVOI{% endif %}b", {"RENVOI": True}) == "aRENVOIb"
+    assert ev("a{% if params.RENVOI %}RENVOI{% endif %}b", {"RENVOI": False}) == "ab"
+    assert ev("{% if params.JAMAIS_CONNECTE %}jamais{% else %}déjà{% endif %}",
+              {"JAMAIS_CONNECTE": True}) == "jamais"
+    assert ev("{% if params.JAMAIS_CONNECTE %}jamais{% else %}déjà{% endif %}",
+              {"JAMAIS_CONNECTE": False}) == "déjà"
+    # param absent = falsy → branche else (ou vide)
+    assert ev("x{% if params.NB %}y{% endif %}", {}) == "x"
+
+
+@pytest.mark.local
+def test_apercu_seize_rendus_sans_reste_brut():
+    """Recette réelle (`pytest -m local`) : les 16 templates rendus avec des params représentatifs —
+    zéro « {{ params.X }} » brut, zéro bloc {% %} visible, aucun « Bonjour , » vide."""
+    import re
+    if not (os.environ.get("BREVO_API_KEY") or os.environ.get("LABUSE_BREVO_API_KEY")):
+        pytest.skip("BREVO_API_KEY absente")
+    ech = {"PRENOM": "Victor", "EMAIL": "v@labuse.test", "MDP_PROVISOIRE": "x", "FIN_ESSAI": "le 12/09",
+           "LIEN_SOUSCRIPTION": "https://x", "LIEN_PAIEMENT": "https://x", "LIEN_RESET": "https://x",
+           "LIEN_PDF": "https://x", "VALIDITE": "1 heure", "DATE_HEURE": "le 07/09", "DATE": "jeudi",
+           "DATE_FIN_ACCES": "le 30/09", "NB_BIENS": 7, "CARTES": "<p>x</p>", "VEILLE": "v",
+           "CRITERES": "c", "IDU": "974 AB", "COMMUNE": "Saint-Paul", "ANCIEN_EMAIL": "a@x",
+           "NOUVEL_EMAIL": "b@x", "SON_MESSAGE": "m", "REPONSE": "r", "RENVOI": False,
+           "JAMAIS_CONNECTE": True}
+    for key in brevo.REGISTRE:
+        a = brevo.apercu_template(key, ech)
+        assert a.get("configure"), f"{key}: {a.get('raison')}"
+        blob = a["subject"] + " " + a["html"]
+        assert not re.search(r"\{\{\s*params\.", blob), f"{key}: reste brut"
+        assert not re.search(r"\{%[^%]*%\}", blob), f"{key}: bloc conditionnel visible"
+        assert "Bonjour ," not in blob
+
+
 @pytest.mark.local
 def test_verification_api_brevo_reelle():
     """CIRCUIT-P3 — joué à la main avec la vraie clé (`pytest -m local`). Confirme, côté Brevo :

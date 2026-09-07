@@ -214,6 +214,26 @@ def verifier_templates(timeout: float = 30.0) -> dict:
     return out
 
 
+def _evaluer_conditions(txt: str, params: dict) -> str:
+    """Évalue les blocs simples {% if params.X %}A{% else %}B{% endif %} (else optionnel) à partir des
+    params — pour que l'aperçu RESSEMBLE au rendu Brevo (server-side). Un seul niveau, non imbriqué :
+    suffisant pour ces templates ; le vrai rendu reste celui de Brevo. Fonction pure (testable offline)."""
+    import re
+    motif = re.compile(
+        r"\{%\s*if\s+(?:params\.)?([A-Za-z0-9_]+)\s*%\}(.*?)"
+        r"(?:\{%\s*else\s*%\}(.*?))?\{%\s*endif\s*%\}", re.S)
+
+    def _rep(m):
+        cle, si, sinon = m.group(1), m.group(2), (m.group(3) or "")
+        v = params.get(cle)
+        return si if (v not in (None, False, "", 0, "0")) else sinon
+    for _ in range(3):                        # quelques passes pour des blocs consécutifs
+        txt, n = motif.subn(_rep, txt)
+        if not n:
+            break
+    return txt
+
+
 def apercu_template(key: str, params: dict | None = None) -> dict:
     """APERÇU du mail réel : lit le template chez Brevo (GET /v3/smtp/templates/{id}) et substitue
     naïvement les variables du compte ({{ params.x }} / {{params.x}}). Ne lève JAMAIS : non configuré /
@@ -241,8 +261,10 @@ def apercu_template(key: str, params: dict | None = None) -> dict:
         html = data.get("htmlContent") or ""
 
         def _sub(txt: str) -> str:
+            txt = _evaluer_conditions(txt, params)
             for k, v in params.items():
-                txt = re.sub(r"\{\{\s*(?:params\.)?" + re.escape(k) + r"\s*\}\}", str(v), txt)
+                # tolère un filtre Jinja optionnel : {{ params.X }} comme {{ params.X | safe }}.
+                txt = re.sub(r"\{\{\s*(?:params\.)?" + re.escape(k) + r"\s*(?:\|[^}]*)?\}\}", str(v), txt)
             return txt
         return {"configure": True, "key": key, "libelle": t.libelle,
                 "params": params, "subject": _sub(subject), "html": _sub(html)}

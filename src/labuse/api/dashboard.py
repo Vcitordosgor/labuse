@@ -76,6 +76,9 @@ def ensure_tables(engine) -> None:
     # FLUX-1 (F2.3) — le journal des bascules de run (qui, quand, de quel run vers lequel).
     from ..bascule_flux import ensure_tables as _bascule_ens
     _bascule_ens(engine)
+    # COMPTE-2 (Lot 2) — la file d'attente des mails (mail_queue).
+    from ..mailfile import ensure_tables as _mailfile_ens
+    _mailfile_ens(engine)
 
 
 # ───────────────────────── capteurs côté CLIENT ─────────────────────────
@@ -662,58 +665,156 @@ def admin_licence_retablir(compte_id: int, request: Request) -> dict:
 
 class MailIn(BaseModel):
     key: str = Field(min_length=2, max_length=24)
+    # COMPTE-2 (Lot 3) — surcharges de params fournies par le geste (motif de résiliation, réponse à
+    # un signalement, ancienne/nouvelle adresse…). Fusionnées PAR-DESSUS les params dérivés du compte.
+    params: dict | None = None
+
+
+def _fmt_reunion(dt) -> str | None:
+    """Horodatage en heure Réunion (Indian/Reunion), format client français."""
+    if dt is None:
+        return None
+    from datetime import timezone as _tz
+    from zoneinfo import ZoneInfo
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_tz.utc)
+    d = dt.astimezone(ZoneInfo("Indian/Reunion"))
+    return d.strftime("le %d/%m/%Y à %Hh%M (heure Réunion)")
+
+
+def _prenom(nom: str | None, email: str) -> str:
+    base = (nom or "").strip()
+    if base and "@" not in base:
+        return base.split()[0]
+    return "client"
+
+
+def _params_licence(db, key: str, row, override: dict | None = None) -> dict:
+    """COMPTE-2 (Lot 3) — assemble les params RÉELS du compte pour le template `key`. Les variables
+    propres au geste (dates, réponse) arrivent en `override`. MDP_PROVISOIRE n'est PAS fabriqué :
+    l'onboarding LABUSE se fait par lien d'invitation (jamais un mot de passe envoyé) — la garde
+    fail-closed de la file refusera alors l'envoi, visiblement, plutôt que d'envoyer un {{...}} brut."""
+    from ..config import get_settings
+    base = (get_settings().public_base_url or "https://app.labuse.immo").rstrip("/")
+    email = row["email"]
+    p: dict = {"PRENOM": _prenom(row.get("nom"), email), "EMAIL": email}
+    if key == "souscription":
+        p["LIEN_SOUSCRIPTION"] = f"{base}/souscrire"
+    elif key in ("relance_carte", "suspension"):
+        p["LIEN_PAIEMENT"] = f"{base}/facturation"
+    elif key == "essai":
+        p["FIN_ESSAI"] = _fmt_reunion(row.get("essai_expire_at")) or "à l'échéance de votre essai"
+    elif key == "onboarding2":
+        p["JAMAIS_CONNECTE"] = row.get("dernier_login_at") is None
+    elif key == "mdp_oublie":
+        from .. import comptes as _comptes
+        r = _comptes.demander_reset(db, email) if db is not None else None
+        p["LIEN_RESET"] = (r or {}).get("lien") or f"{base}/reset"
+        p["VALIDITE"] = "1 heure"
+    elif key == "mdp_modifie":
+        from datetime import datetime, timezone
+        p["DATE_HEURE"] = _fmt_reunion(datetime.now(timezone.utc))
+    return {**p, **(override or {})}
 
 
 @router.post("/admin/licences/{compte_id}/mail")
 def admin_licence_mail(compte_id: int, body: MailIn, request: Request) -> dict:
-    """Envoi MANUEL d'un template Brevo au titulaire (onboarding 1/2/3, souscription, relance…).
-    Non configuré → {envoye:false, raison} — le bouton du dashboard l'affiche, rien de silencieux.
-    Statut + date STOCKÉS (licence_mails) quand l'envoi part."""
+    """COMPTE-2 (Lot 2/3) — envoi MANUEL d'un template au titulaire, PAR LA FILE (`mail_queue`) :
+    trois preuves — une entrée dans la file (état réel), une ligne de journal qui nomme QUI (l'admin),
+    l'écran qui change. JAMAIS « envoyé » par optimisme (RV-013). Non configuré / param manquant →
+    l'état de la file le dit. `licence_mails` (ledger d'onboarding) n'est marqué QUE si le mail est reçu."""
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
-    from ..brevo import LIBELLES              # LIBELLES = données d'affichage (pas un transport)
-    from ..mail import envoyer_template       # CONNEXIONS-2 Lot 9.1 (KO-12) — envoi via la façade unique
-    from ..db import engine
-    if body.key not in LIBELLES:
+    from .. import brevo, mailfile
+    from ..db import engine, session_scope
+    if brevo.template(body.key) is None:
         raise HTTPException(422, f"Template inconnu « {body.key} ».")
     with engine().begin() as c:
         row = c.execute(text(
-            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
-            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
-            {"c": compte_id}).mappings().first()
+            "SELECT k.nom, k.essai_expire_at,"
+            " (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1) AS email,"
+            " (SELECT u.dernier_login_at FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1)"
+            "   AS dernier_login_at"
+            " FROM comptes k WHERE k.id = :c"), {"c": compte_id}).mappings().first()
     if not row or not row["email"]:
         raise HTTPException(404, "Compte introuvable ou sans utilisateur.")
-    res = envoyer_template(row["email"], body.key, params={"nom": row["nom"]})
-    if res.get("envoye"):
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    with session_scope() as db:
+        params = _params_licence(db, body.key, row, body.params)
+    r = mailfile.envoyer_mail(engine(), key=body.key, to=row["email"], params=params,
+                              compte_id=compte_id, demandeur=qui)
+    if r.get("etat") == "recu":
         with engine().begin() as c:
             c.execute(text(
                 "INSERT INTO licence_mails (compte_id, mail_key, statut) VALUES (:c, :k, 'envoye')"
                 " ON CONFLICT (compte_id, mail_key)"
                 " DO UPDATE SET statut = 'envoye', sent_at = now()"),
                 {"c": compte_id, "k": body.key})
-    return {"ok": True, **res}
+    envoye = r.get("etat") == "recu"
+    return {"ok": True, "envoye": envoye, "etat": r.get("etat"), "mail_id": r.get("id"),
+            "message_id": r.get("message_id"), "raison": r.get("erreur")}
 
 
 @router.get("/admin/licences/{compte_id}/mail/{key}/apercu")
 def admin_licence_mail_apercu(compte_id: int, key: str, request: Request) -> dict:
-    """ADMIN-1 (AD4) — APERÇU du mail réel (template Brevo rendu avec les variables du compte) AVANT
-    « Envoyer ». Non configuré → aperçu honnête (raison + variables qui SERAIENT injectées)."""
+    """APERÇU = rendu RÉEL du template avec les params du compte (jamais un texte codé en dur).
+    Le même aperçu sert avant l'envoi (« aperçu ») et après (« voir le rendu » depuis la file)."""
     from fastapi import HTTPException
     from .auth import exiger_admin
     exiger_admin(request)
-    from ..brevo import LIBELLES, apercu_template
-    from ..db import engine
-    if key not in LIBELLES:
+    from .. import brevo
+    from ..db import engine, session_scope
+    if brevo.template(key) is None:
         raise HTTPException(422, f"Template inconnu « {key} ».")
     with engine().begin() as c:
         row = c.execute(text(
-            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
-            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
-            {"c": compte_id}).mappings().first()
+            "SELECT k.nom, k.essai_expire_at,"
+            " (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1) AS email,"
+            " (SELECT u.dernier_login_at FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1)"
+            "   AS dernier_login_at"
+            " FROM comptes k WHERE k.id = :c"), {"c": compte_id}).mappings().first()
     if not row:
         raise HTTPException(404, "Compte introuvable.")
-    return apercu_template(key, params={"nom": row["nom"], "email": row["email"]})
+    # aperçu : on NE génère PAS de vrai token reset (db=None) — un lien indicatif suffit à la relecture.
+    params = _params_licence(None, key, row)
+    return brevo.apercu_template(key, params=params)
+
+
+# ───────── COMPTE-2 · Lot 2 — la FILE mail_queue, là où l'envoi se voit ─────────
+@router.get("/admin/mails")
+def admin_mails(request: Request, filtre: str = "tous", compte_id: int | None = None,
+                limite: int = 200) -> dict:
+    """La file complète (page Courrier → Mails). filtre : en_attente | partis | echecs | tous.
+    `compte_id` : la file d'un seul compte (fiche → onglet Activité)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    return {"lignes": mailfile.lister(engine(), filtre=filtre, compte_id=compte_id, limite=limite),
+            "compteurs": mailfile.compteurs(engine())}
+
+
+@router.post("/admin/mails/{mail_id}/rejouer")
+def admin_mail_rejouer(mail_id: int, request: Request) -> dict:
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    r = mailfile.rejouer(engine(), mail_id, demandeur=qui)
+    return {"ok": True, "etat": r.get("etat"), "ligne": r}
+
+
+@router.post("/admin/mails/{mail_id}/annuler")
+def admin_mail_annuler(mail_id: int, request: Request) -> dict:
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import mailfile
+    from ..db import engine
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    r = mailfile.annuler(engine(), mail_id, demandeur=qui)
+    return {"ok": True, "etat": r.get("etat"), "ligne": r}
 
 
 # ───────────────────────── D5 — IA (section mauve) ─────────────────────────

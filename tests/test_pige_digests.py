@@ -141,7 +141,12 @@ def test_cle_brevo_lue_depuis_l_environnement(monkeypatch):
     assert brevo._api_key() == "xkeysib-TEST", "la clé du .env est bien lue par le code"
 
 
-def test_echec_envoi_bruyant(seed):
+def test_echec_envoi_bruyant(seed, monkeypatch):
+    # COMPTE-2 Lot 1 — les templates Radar (12/13) ont désormais un ID CANONIQUE : sans mock, l'envoi
+    # PARTIRAIT réellement (clé du .env présente). On force l'échec au transport pour un test déterministe
+    # (et pour ne JAMAIS émettre un vrai mail depuis la suite).
+    monkeypatch.setattr(digests.mail, "envoyer_template",
+                        lambda to, key, params: {"envoye": False, "raison": "Brevo a refusé (HTTP 500)."})
     with session_scope() as db:
         r = digests.envoyer(db, base_url="https://app.labuse.immo", dry_run=False)
     assert r["echecs"] >= 1 and r["envoyes"] == 0
