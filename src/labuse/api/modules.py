@@ -1010,6 +1010,70 @@ def successions_liste(commune: str | None = None,
                               "constaté. Aucune date par parcelle : le signal est daté du calcul.")}
 
 
+# ── OUTILS-MUSCLER-3 — outil « Blocs fonciers ». Sert la table `parcel_blocs` (bâtie par le batch
+# `labuse blocs-build`) : les assiettes CONTIGUËS d'un même propriétaire personne morale (SIREN),
+# sur toute l'île. Uniquement des PM (le propriétaire est NOMMÉ par construction) ; les particuliers
+# sont hors périmètre (pas d'identité stable). Aucun calcul métier ici : le batch a tout produit.
+
+@router.get("/blocs")
+def blocs_liste(commune: str | None = None,
+                surface_min: int = Query(0, ge=0),
+                sdp_min: int = Query(0, ge=0),
+                n_min: int = Query(2, ge=2),
+                limit: int = Query(200, ge=1, le=500), offset: int = Query(0, ge=0),
+                db: Session = Depends(get_db)) -> dict:
+    """Blocs triés par SDP résiduelle agrégée décroissante (Estimé — somme des résiduels servis).
+    Surface/zonage/communes Sourcés (cadastre, PLU). Filtres à paliers (surface totale, résiduel,
+    nombre de parcelles). Le millésime des propriétaires PM et la date du calcul voyagent au bandeau."""
+    if not db.execute(text("SELECT to_regclass('parcel_blocs') IS NOT NULL")).scalar():
+        raise HTTPException(503, "blocs non calculés (table absente — lancer `labuse blocs-build`).")
+    where = ("WHERE n_parcelles >= :nmin"
+             + (" AND :c = ANY(communes)" if commune else "")
+             + (" AND surface_totale_m2 >= :surfmin" if surface_min else "")
+             + (" AND sdp_residuelle_m2 >= :sdpmin" if sdp_min else ""))
+    params = {"nmin": n_min, "c": commune, "surfmin": surface_min, "sdpmin": sdp_min}
+    total = int(db.execute(text(f"SELECT count(*) FROM parcel_blocs {where}"), params).scalar() or 0)
+    rows = db.execute(text(f"""
+        SELECT b.id AS bloc_id, b.siren, b.denomination, b.n_parcelles, b.surface_totale_m2,
+               b.communes, b.sdp_residuelle_m2, b.sdp_couverture, b.zonages,
+               (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
+        FROM parcel_blocs b {where}
+        ORDER BY b.sdp_residuelle_m2 DESC, b.id
+        LIMIT :lim OFFSET :off"""),
+        {**params, "lim": limit, "off": offset}).mappings().all()
+    items = [dict(r) for r in rows]
+    # Bandeau : source + millésime des propriétaires PM (jamais en dur) + date du calcul du batch.
+    millesime = db.execute(text(
+        "SELECT max(millesime) FROM parcelle_personne_morale WHERE millesime IS NOT NULL")).scalar()
+    maj = db.execute(text("SELECT to_char(max(built_at), 'DD/MM/YYYY') FROM parcel_blocs")).scalar()
+    return {"total": total, "n": len(items), "items": items,
+            "maj": maj, "millesime": millesime,
+            "source": "Fichiers des personnes morales (DGFiP) · contiguïté cadastrale (PostGIS)",
+            "avertissement": ("Les parcelles CONTIGUËS d'un même propriétaire personne morale (SIREN), "
+                              "regroupées en une assiette. Uniquement des personnes morales : les "
+                              "particuliers n'ont pas d'identité stable d'une parcelle à l'autre. La SDP "
+                              "résiduelle est Estimée (enveloppe de la fiche), sommée sur le bloc.")}
+
+
+@router.get("/blocs/{bloc_id}")
+def bloc_detail(bloc_id: int, db: Session = Depends(get_db)) -> dict:
+    """Le détail d'un bloc : ses parcelles (IDU, surface, commune, zone, résiduel). Les IDU servent
+    aussi à dessiner l'emprise du bloc sur la carte (mise en surbrillance, mécanisme moduleMap)."""
+    if not db.execute(text("SELECT to_regclass('parcel_blocs') IS NOT NULL")).scalar():
+        raise HTTPException(503, "blocs non calculés (table absente).")
+    head = db.execute(text(
+        "SELECT id AS bloc_id, siren, denomination, n_parcelles, surface_totale_m2, communes, "
+        "sdp_residuelle_m2, sdp_couverture, zonages FROM parcel_blocs WHERE id = :id"),
+        {"id": bloc_id}).mappings().first()
+    if head is None:
+        raise HTTPException(404, "bloc introuvable.")
+    membres = db.execute(text(
+        "SELECT idu, surface_m2, commune, zone, sdp_residuelle_m2 FROM parcel_bloc_membres "
+        "WHERE bloc_id = :id ORDER BY sdp_residuelle_m2 DESC NULLS LAST, idu"),
+        {"id": bloc_id}).mappings().all()
+    return {**dict(head), "membres": [dict(m) for m in membres]}
+
+
 # RETOURS-11F M12 — bande de CONFIANCE par piscine. La détection retient déjà juge FLAIR ≥ 0,30 ×
 # probe ≥ 0,50, mais `piscine_confiance` va de 0,44 à 1,0 (mesuré). On sert « haute » (≥ 0,80,
 # 7 821 piscines) par défaut ; la bascule « inclure les incertaines » ajoute la bande « moyenne »

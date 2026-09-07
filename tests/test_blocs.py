@@ -133,6 +133,43 @@ def test_non_contigues_meme_siren_non_regroupees(db_session):
     assert db_session.execute(text("SELECT count(*) FROM parcel_blocs")).scalar() == 0
 
 
+def test_endpoint_liste_et_detail(db_session):
+    """L'endpoint /modules/blocs sert la liste (bandeau, filtres) et /modules/blocs/{id} le détail."""
+    from fastapi import HTTPException
+
+    from labuse.api import modules
+
+    a = _p(db_session, "BLOC00060", _A, 700, commune="Blocville", zone="UA")
+    b = _p(db_session, "BLOC00061", _B, 500, commune="Blocville", zone="UB")
+    _pm(db_session, "BLOC00060", "S0060", "SCI OMEGA")
+    _pm(db_session, "BLOC00061", "S0060", "SCI OMEGA")
+    _served_residuel(db_session, {a: 400, b: 100})
+    blocs.build_blocs(db_session)
+
+    r = modules.blocs_liste(commune=None, surface_min=0, sdp_min=0, n_min=2,
+                            limit=200, offset=0, db=db_session)
+    assert r["total"] == 1 and r["n"] == 1
+    it = r["items"][0]
+    assert it["denomination"] == "SCI OMEGA" and it["siren"] == "S0060"
+    assert it["n_parcelles"] == 2 and it["surface_totale_m2"] == 1200
+    assert it["sdp_residuelle_m2"] == 500 and it["idu_repr"] == "BLOC00060"
+    assert r["millesime"] is None or isinstance(r["millesime"], str)  # bandeau : source + millésime
+
+    # filtre à paliers : un seuil résiduel trop haut écrème le bloc
+    assert modules.blocs_liste(commune=None, surface_min=0, sdp_min=1000, n_min=2,
+                               limit=200, offset=0, db=db_session)["total"] == 0
+    # filtre nombre de parcelles
+    assert modules.blocs_liste(commune=None, surface_min=0, sdp_min=0, n_min=3,
+                               limit=200, offset=0, db=db_session)["total"] == 0
+
+    d = modules.bloc_detail(bloc_id=it["bloc_id"], db=db_session)
+    assert [m["idu"] for m in d["membres"]] == ["BLOC00060", "BLOC00061"]  # tri résiduel desc
+    assert d["membres"][0]["sdp_residuelle_m2"] == 400
+    with pytest.raises(HTTPException) as e:
+        modules.bloc_detail(bloc_id=999999, db=db_session)
+    assert e.value.status_code == 404
+
+
 def test_idempotent(db_session):
     """Rejouer le batch produit le MÊME contenu (DELETE + rebuild, bloc_key déterministe)."""
     a = _p(db_session, "BLOC00050", _A, 600, zone="UA")
