@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useIsFetching } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
@@ -737,6 +737,11 @@ export function MapView() {
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
   const [tilesLoading, setTilesLoading] = useState(false)   // P5 : chargement des tuiles
+  // COUCHES-2 point 2 — ÉTAT DE CHARGEMENT D'UNE COUCHE : quand on allume un overlay, sa requête
+  // (queryKey ['layer', …]) est en vol ; sans témoin l'écran restait MUET jusqu'à l'arrivée des
+  // données (geom_simple a réduit l'attente, pas supprimé le geste). On compte les requêtes de
+  // couche en cours → un bandeau « Chargement de la couche… » tant qu'au moins une charge.
+  const layersFetching = useIsFetching({ queryKey: ['layer'] })
 
   // M55-D stage 9 (responsive) : le CONTENEUR carte change de taille sans resize fenêtre (largeur
   // du panneau en clamp(), sections qui s'ouvrent) → ResizeObserver recale MapLibre à chaud.
@@ -2230,9 +2235,10 @@ export function MapView() {
       <Legend />
       <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
-      {(geo.isFetching || tilesLoading) && (
-        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">
-          <Loading big label={geo.isFetching ? 'Chargement des parcelles' : 'Chargement de la carte'} />
+      {(geo.isFetching || tilesLoading || layersFetching > 0) && (
+        <div data-carte-loading className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">
+          {/* COUCHES-2 point 2 — priorité au message le plus précis : parcelles > couche > carte. */}
+          <Loading big label={geo.isFetching ? 'Chargement des parcelles' : layersFetching > 0 ? 'Chargement de la couche…' : 'Chargement de la carte'} />
         </div>
       )}
       {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}
@@ -2250,8 +2256,16 @@ export function MapView() {
         </div>
       )}
       {!tool && (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut shadow-elev-1">
-          {ile && lowZoom ? 'Zoomez ou cliquez une commune pour voir ses parcelles' : 'Cliquez une parcelle pour ouvrir sa fiche'}
+        <div data-carte-banner className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut shadow-elev-1">
+          {/* COUCHES-2 point 1 — le bandeau ne CONTREDIT plus la carte : quand le zonage PLU peint déjà
+              l'aperçu d'ensemble par famille à l'échelle île (zonageFill), il ne dit plus « zoomez pour
+              voir les parcelles » (elles sont peintes) mais annonce l'aperçu + le geste pour le DÉTAIL.
+              Sans aperçu peint (couche éteinte), le message d'origine reste (rien n'est peint → zoomer). */}
+          {ile && lowZoom
+            ? (zonageFill
+              ? 'Vue d’ensemble par zone PLU — zoomez ou cliquez une commune pour le détail parcelle'
+              : 'Zoomez ou cliquez une commune pour voir ses parcelles')
+            : 'Cliquez une parcelle pour ouvrir sa fiche'}
         </div>
       )}
       {/* RETOURS-1 R8 (Vic) : la pastille « Carte à jour au JJ/MM/AAAA » est RETIRÉE. Seul
