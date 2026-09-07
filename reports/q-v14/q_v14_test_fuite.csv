@@ -1,0 +1,2 @@
+annee_testee,voisinage_egal_source_tronquee,pc_pm_stable_ajout_annee_future,ventes_pm_secteur_stable_ajout_annee_future,nu_asof_note,fuite_detectee
+2025,True,True,True,"reconstruit l'état physique bâti/nu (permis/mutations datées), jamais la cible L2-F — aucune colonne de label lue",False
