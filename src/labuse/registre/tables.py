@@ -300,6 +300,12 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "module_division": "module division",
     "division_or_candidates": "division (candidats or)",
     "division_or_revue_snapshot": "division (photo de revue)",
+    # SOURCES-1 (merge origin/main) : la feature « Blocs fonciers » (OUTILS-MUSCLER-3) est
+    # désormais mergée — ses deux tables, calculées par le batch `blocs-build`
+    # (blocs.build_blocs : composantes connexes par SIREN sur le cadastre PM), sont un
+    # artefact fabriqué (comme division_or_candidates), plus un « résidu » de branche.
+    "parcel_blocs": "blocs fonciers (blocs-build)",
+    "parcel_bloc_membres": "blocs fonciers — membres (blocs-build)",
     "parcel_au_statut": "statut AU (builder)",
     "parcel_zone_plu": "zonage parcelle (builder GPU)",
     "parcel_terrain": "terrain (pente/ortho builders)",
@@ -440,12 +446,9 @@ RATTACHEMENTS_A_DECIDER: dict[str, str] = {}
 #: Action proposée pour les orphelines CONNUES (curation CIRCUIT-5 — la purge reste le geste
 #: de Vic, `labuse tables purger --apply`). Une orpheline hors de ce dict = « à décider ».
 ACTIONS_PROPOSEES: dict[str, str] = {
-    # SOURCES-1 lot 8 — résidu de la feature OUTILS-MUSCLER-1 (assemblage de voisines
-    # contiguës), NON MERGÉE : son worktree partage la base locale `labuse` et y a laissé ces
-    # deux tables. Aucun code de main ni de SOURCES-1 ne les lit. Vérifier (pas de DROP tant que
-    # la feature peut merger) — elles n'ont rien à voir avec ce mandat.
-    "parcel_blocs": "vérifier (résidu OUTILS-MUSCLER-1 non mergée — worktree partageant la DB locale)",
-    "parcel_bloc_membres": "vérifier (résidu OUTILS-MUSCLER-1 non mergée — worktree partageant la DB locale)",
+    # (SOURCES-1 : parcel_blocs / parcel_bloc_membres étaient ici en « résidu de branche non
+    # mergée » ; OUTILS-MUSCLER-3 étant désormais mergée, elles sont classées en TABLES_FABRIQUEES
+    # — ce ne sont plus des orphelines.)
     "_lota_grave_parcels": "purger (photo de travail LOT A)",
     "algo2_prop_features": "purger (features d'essai algo2)",
     "backup_sp_ppr_avant_littoral": "purger (backup PPR avant littoral — Saint-Pierre)",
