@@ -200,11 +200,25 @@ retour` et `regles/test_compteurs_simples::test_usage_par_outil` — l'usage par
 attribuent maintenant l'usage à un compte client et vérifient l'exclusion de l'anonyme).
 `tests/test_dashboard2_cloture.py` (6) est vert.
 
-## Captures
+## Captures / vérification live
 
-L'environnement est **headless** et l'admin exige la pile complète (API + Vite + base + auth admin +
-données semées, ~2 min de démarrage). Le contrat visé par les captures — « les 8 chiffres se
-retrouvent à l'identique » — est prouvé de façon **déterministe et durable** par le test de clôture
-ci-dessus (plus fiable qu'un pixel). Captures navigateur : **non produites** dans cet environnement,
-faute de pile lançable de façon reproductible ici — à réaliser au prochain démarrage local devant
-l'écran (Playwright, cadrage maquette), page par page.
+L'app a bien été **lancée sur la base réelle `labuse`** (uvicorn `:8000` + Vite `:5173`, `#admin=1`,
+viewport 1440 px) et **chaque page vérifiée en direct**. Les **captures PNG** butent sur la limite
+dure de 5 s du pont Playwright-MCP (polices chargées puis encodage > 5 s — limite de l'environnement,
+pas de l'app) ; à la place, le **contenu rendu a été extrait du DOM** — preuve plus directe du contrat
+« un chiffre = une fonction » (les chiffres, pas les pixels). Détail dans
+`docs/DASHBOARD/VERIFICATION-LIVE.md`. Points saillants avec données réelles :
+
+- **Pilotage** : 8 jauges (Clients 12 · Circuit 8 · Courrier 24 · Radar 109 · Produit 2 · IA 1,05 € …)
+  ; rail Serveur OK · Run q_v11_m137 · Backup non configuré · **Horloge 0/23** · **Verrous 16/16** ;
+  **les compteurs de nav ÉGALENT les jauges à l'écran** (Comptes 12, Données 8, Courrier 24, Produit 2).
+- **Courrier** : colonnes maquette exactes, chips `À déposer 24 · … · Envoyé 2`, bouton « Marquer les
+  24 déposés », vocabulaire unifié.
+- **Radar** : 109 en vie ; « chemin par captures d'écran retiré » affiché.
+- **Produit** : une file « Retours » (donnée · bug · idée · question).
+- **IA** : 5 repères, mois nommé « septembre », coût moyen 0,008 € (= 250 questions pour 2 €, plus de
+  « 335 »), plafond filtré (Clients/Avec conso/Tous), modèles repliés.
+- **Contacts** : 24 cartes de communes (grille) ; **Destinations** absente du rail, lien depuis Données.
+
+Reste : les **captures PNG au cadrage** (bloquées par la limite du pont ici) — à produire au prochain
+démarrage local devant l'écran.
