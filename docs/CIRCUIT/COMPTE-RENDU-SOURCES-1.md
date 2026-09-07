@@ -3,6 +3,39 @@
 Branche `feat/sources-1` depuis `origin/main` (`ea6fd161`, FICHE-1 mergé). Un chapitre par lot.
 Reprise : « continue SOURCES-1 depuis docs/CIRCUIT/COMPTE-RENDU-SOURCES-1.md » — repartir au premier lot non clos.
 
+## SYNTHÈSE FINALE — les vingt-deux sources (mandat clos)
+
+| # | Source (mandat) | Réservoir | État final |
+|---|---|---|---|
+| 1 | Emplacements réservés (GPU) | `gpu_prescriptions_er` | **servie** (2 250 + 6 rescue ; cascade ER ≥ 50 % rédhibitoire) |
+| 2 | Espaces boisés classés (GPU) | `gpu_prescriptions_ebc` | **servie** (1 782 ; ≥ 80 % rédhibitoire, assiette soustraite) |
+| 3 | Droit de préemption urbain | `dpu_perimetres` | **servie, partielle DITE** (202 périmètres, 4/24 — 20 communes non publiées listées, demande) |
+| 4 | PEB Roland-Garros / Pierrefonds | `peb_dgac` | **servie, partielle DITE** (R-Garros A/B/C/D ; Pierrefonds non publié au GPU) |
+| 5 | Zonage A/B/C (DHUP) | `zonage_abc_dhup` | **servie** (24/24 : 4 A, 20 B1, arrêté 23/06/2026) |
+| 6 | SUP du GPU (inventaire catégoriel) | `sup_gpu` + sonde | **servie + sondée** (9 en vigueur ; T5/PT1/PT2 restreintes ; AS1 non publiée, armée) |
+| 7 | ZPPA (Atlas des patrimoines) | `zppa_culture` | **a_faire** (Atlas injoignable — rappel 180 j) |
+| 8 | Espaces naturels protégés INPN | `inpn` + `enp_complements_deal` | **servie** (réserves/APB rédhibitoires ; Réserve marine récupérée ; ENS Département → demande) |
+| 9 | Ravines DPF/DPE | `deal_dpf_dpe` | **servie** (DPF officiel 275 tronçons, marchepied 3,25 m rédhibitoire ; DPE non diffusé → demande DEAL) |
+| 10 | Zones humides DEAL | `deal_zones_humides` | **servie** (3 122 entités, 5 inventaires, secteurs dits) |
+| 11 | AZI / TRI (Géorisques) | `georisques_azi_tri` | **servie** (fait par commune : 30 AZI + 9 TRI ; géométrie = doublon de l'aléa servi, non dupliquée) |
+| 12 | RPG (IGN/ASP) | `rpg_proxy_ign` | **servie** (code_cultu 100 %, canne 12 464 ; zone A × canne ≥ 50 % rédhibitoire) |
+| 13 | SIS (Géorisques) | `georisques_sis` | **servie** (4 SIS 974, vigilance forte, L556-2 + L125-7 cités) |
+| 14 | CASIAS (Géorisques) | `georisques_casias` | **servie** (453 sites + 56 instructions, « pas une pollution avérée ») |
+| 15 | Classement sonore (DEAL/Cerema) | `bruit_itt_cerema` + `deal_bruit_cartes` | **servie** (1 004 secteurs réglementaires + 6 zones de dépassement CBS) |
+| 16 | SAR (Région/DEAL) | `sar_region` | **a_faire** (couche officielle introuvable en vecteur — 4 canaux fouillés ; proxy D2 conservé, divergence servie ; SAR 2050 à la sentinelle → demande Région) |
+| 17 | DVF Région | `region_dvf` | **contrôle** (échantillon producteur du filtre DVF : écarts −3,1 %/−1,9 %/+1,5 % ; jeu figé mi-2021) |
+| 18 | Potentiel foncier Région | `potentiel_foncier_ods` | **contrôle** (convergence 44,6 % des parcelles d'îlots en tiers hauts, comparaison permanente au filtre) |
+| 19 | Fibre Arcep | `arcep_fibre` | **servie** (330 051 immeubles 2026_T1, 97,5 % FttH) |
+| 20 | Taux TFPB REI (DGFiP) | `dgfip_rei` | **servie** (24/24, colonnes tracées : 29,55 → 68,40 %) |
+| 21 | ACV/PVD/ORT (ANCT/DGALN) | `anct_ort` | **servie** (19 communes, 13 ORT ; écart producteur DIT : Saint-Louis absent de la table DGALN ; Denormandie servie) |
+| 22 | Loyers DHUP + OLL | `loyers_dhup` + `loyers_oll` | **servie** (OLL 2024 canonique 16/24 mono-zone, DHUP repli motivé) |
+| + | Coût de construction (EPTB SDES) | `cout_construction_sdes` | **servie** (table sourcée remplace la constante, EPTB 2024 cité, écart témoins 0) |
+| + | Recensement IRIS (INSEE RP2022) | `insee_rp_iris` | **servie** (344 IRIS : vacance, âge bâti, ménages — fiche/commune/étude de zone) |
+| + | DFI (DGFiP) | `dgfip_dfi` | **servie** (409 623 liens ; **985 permis orphelins rattachés, 1 887 → 902**) |
+| + | Chantiers lot 7 (7 lignes) | — | **a_faire, demandes prêtes** (`DEMANDE-REGION-EPCI.md`) ; Cerema ×3 sous convention ; BDNB retirée |
+
+Verrous 16/16 verts (`--complet` : 0 cassé, 0 à décider) · pytest 2 77x verts / 4 échecs pré-existants · tsc 0 · vitest 187 · run candidat `q_v13_sources1` produit (note ci-dessous), **jamais basculé**.
+
 ## Étape 0 — départ (clos)
 
 - `feat/sources-1` créée depuis `origin/main` (la branche locale `main` est extraite dans un autre worktree ; `origin/main` était à jour, FICHE-1 mergé).
@@ -284,6 +317,86 @@ AGORAH, LiDAR régional, republication du DVF Région figé).
 `tests/test_sources1_lot7.py` (5 tests : retrait avec veille vivante, chantiers avec organisme,
 convention Cerema, demande committée, pont/carte) ; compteurs figés 107→116 (MODE_ET_CADENCE)
 et 98→107 (noms du catalogue code).
+
+## Lot 8 — Ce que ça déclenche (clos)
+
+### Les filtres, joués sur leur première version (07/09/2026)
+
+| verdict | filtres |
+|---|---|
+| **ok** (14) | zonage_abc · sup_gpu · deal_dpf · zones_humides · enp_complements · rpg_ign · bruit_itt_cerema · bruit_cartes · potentiel_foncier_region · dgfip_rei · loyers_dhup · loyers_oll · cout_construction · dfi · iris_rp |
+| **avertissements** (10) | gpu_prescriptions_er (6 ER hors code, rescue) · gpu_prescriptions_ebc · dpu (4/24) · peb (1/2 aérodromes) · azi_tri (2 communes sans document) · georisques_sis · georisques_casias (part sans emprise) · arcep_fibre · anct_ort (Saint-Louis absent chez le producteur) · dvf (échantillon Région figé mi-2021) |
+| quarantaine | **aucune** |
+
+Les avertissements sont l'état RÉEL des couvertures partielles — dits, jamais des zéros. Les sources servies sont sur le Circuit (`/admin/flux` : 23 des 24 marqueurs testés) ; ZPPA et les 7 chantiers vivent au Catalogue avec leur raison (hors vitrine, verrou V2b).
+
+### Ce qui existe chez les producteurs (recherches réelles du 07/09/2026)
+
+- **SAR 2050** : planning officiel Région — projet finalisé et présenté **début du 2ᵉ semestre 2026**, transmission aux personnes publiques associées puis **enquête publique en 2027** (sar.regionreunion.com, CIREST 20/05/2026). Le rappel sentinelle 180 j est bien calibré.
+- **Ravines DPE** : rien de diffusé (page DEAL toujours « en cours de mise à jour ») — la demande DEAL reste le seul canal.
+- **Zones humides** : projet national de **prélococalisation des milieux humides DROM lancé en 2024** (réunions mi-parcours océan Indien **septembre 2025**, PatriNat) ; le RPDZH publie des inventaires effectifs depuis **juin 2026** — à surveiller pour un 4ᵉ inventaire 974.
+- **Classement sonore** : arrêtés 14-15/12/2023 en vigueur ; révision réglementaire au minimum tous les 5 ans → **prochaine ~2028**.
+- **OLL** : **publication détaillée du 10/07/2025** (AGORAH) déjà exploitée au lot 5 ; **micro-données accessibles via le CASD** (source « ADIL Réunion / AGORAH » déposée) — une piste concrète pour la demande AGORAH/ADIL, notée dans DEMANDE-REGION-EPCI.md.
+
+### Registre, verrous, seuils
+
+- `labuse registre fiche parcelle` + `fiche autres` régénérés : **0 « source absente »** dans les deux documents (les 5 réglementaires de FICHE-1 lot 7 sont toutes servies ; les vrais absents — ZPPA, chantiers — n'ont pas de donnée déclarée, c'est le catalogue qui les porte).
+- `labuse circuit verrous --complet` : **16/16 verts, 0 à décider** (204 données, 76 tables de réservoir).
+- `CHOIX-LABUSE.md` : **11 seuils SOURCES-1 ajoutés** avec leurs références (ER 50, EBC 80 + assiette, PEB A/B ≥ 2 % L112-10, DPU vigilance, marchepied 3,25 m L2131-2, réserves/APB, RPG canne 50, SIS L556-2/L125-7, SUP AC2/AS1, OLL canonique, coût de construction) — total 60 choix écrits.
+
+### Le run candidat `q_v13_sources1` — produit, jamais basculé
+
+**Deux bugs latents attrapés par le premier passage du run — corrigés à la racine :**
+
+1. **`spatial_layers_sub` périmé** : le cache pré-subdivisé de la cascade (prime, ×64) n'était
+   JAMAIS reconstruit après une ingestion. Le premier passage du run a évalué AVEUGLE aux couches
+   entrées par SOURCES-1 (peb, dpu, zone_humide, compléments ENP : PASS partout — alors que la
+   base réelle intersecte 798 parcelles en PEB C, 129 919 en DPU, 8 642 en zones humides).
+   Correctif : `flux-run` reconstruit le cache AVANT la cascade (`ensure_spatial_layers_sub
+   force=True`, quelques minutes amorties) ; run purgé et RECALCULÉ en entier sur cache frais.
+2. **`division-or` en sous-processus cassé** : `pompe calculer` lançait `python -m labuse.cli
+   division-or` — une commande TARDIVE invisible par ce chemin (garde `__main__` en milieu de
+   fichier) → exit 2 systématique. Correctif : invocation de l'app complète via `-c`.
+
+Le run candidat **`q_v13_sources1`** est produit EN ENTIER (24/24 communes, 431 663 parcelles,
+cascade + scoring/tiers), **jamais servi** — `q_v11_m137` reste le run servi, aucun verrou de
+bascule touché. Recette scoring inchangée (m36 servie) : le run ne change QUE la cascade (les
+nouveaux motifs SOURCES-1), pas le modèle P.
+
+**Ce qui change vs le run servi `q_v11_m137`** (mesuré sur les 431 663 parcelles) :
+
+- **7 931 parcelles changent de statut** (1,8 %). Solde par statut : écartées 145 882 → **150 260**
+  (+4 378), à-creuser 268 110 → 263 676 (−4 434), opportunités 17 671 → **17 727** (+56).
+  L'effet net est un resserrement : les nouvelles servitudes opposables retirent des parcelles
+  du gisement « à creuser », très peu d'opportunités bougent.
+- **Nouveaux RÉDHIBITOIRES par couche** (absents du run servi) : prescriptions PLU **17 001**
+  (dont **EBC ≥ 80 % : 11 871** et **ER ≥ 50 % : 5 130** — la réversion de M129 P1.1), **DPF
+  marchepied 3,25 m : 10 335**, RPG/agricole 6 612, espaces protégés (réserves/APB) 1 100,
+  **PEB zones A/B : 441**.
+- **Nouvelles VIGILANCES servies** : SUP par catégorie 188 692, prescriptions PLU 163 899,
+  **DPU 111 875**, RPG 66 181, sites/sols (SIS/CASIAS) 10 507, **PEB C/D 3 880**, **zones
+  humides 2 972**, ENP hors réserve 1 536.
+
+**Note de version** (registre `bascule_flux.note_version`) et rapport candidat produits par la
+pompe ; la division d'or du label a été rejouée à part (deux SIGTERM externes ont interrompu la
+pompe — arrêt Postgres puis arrêt de la machine ; le run est résumable et a été repris à chaque
+fois sans perte, cascade et scoring persistés par lots).
+
+### Captures (docs/CIRCUIT/RECETTE-SOURCES-1/)
+
+- `fiche-97402000AE0048-er-ebc-sup.png` — Bras-Panon, tiroir « Dispositifs et périmètres » ouvert : ER 5 %, EBC 4,5 %, DPU « non déterminée — non publié par la commune », SUP PM1.
+- `fiche-97411000BM0004-peb-dpu.png` — Saint-Denis : PEB zone B + DPU servi.
+- `fiche-97409000AY1303-zone-humide.png` — Saint-André, parcelle en zone humide (l'effet cascade porte sur le run candidat, la fiche montre l'état servi).
+- `carte-contraintes-nature.png` — les familles « Contraintes » et « Nature » : 9 couches neuves activées (ER, EBC, DPU, PEB, SUP, DPF, zones humides, ENP, RPG).
+- `circuit-reservoirs-neufs.png` — la page Données/Circuit avec les réservoirs neufs.
+- Serveurs locaux : API du worktree sur :8001 + vite :5174 (les ports 8000/5173 étaient tenus par une AUTRE session — labuse-s1b — laissée intacte) ; `vite.config.ts` accepte désormais `LABUSE_API_DEV` pour pointer l'API de dev.
+
+## Ce qui reste à Vic
+
+1. **Lire la note de version du run candidat `q_v13_sources1`** (ci-dessus + page Données/Mise à jour) et **basculer depuis la page** s'il convient — rien n'a été basculé, `q_v11_m137` reste servi.
+2. **Envoyer `docs/CIRCUIT/DEMANDE-REGION-EPCI.md`** (Région, 5 EPCI, Département, AGORAH/ADIL — piste CASD pour les micro-données OLL —, DEAL, les 20 communes sans DPU au GPU).
+3. **Lire les seuils dans `docs/CIRCUIT/CHOIX-LABUSE.md`** (11 lignes SOURCES-1, marquées vic/cc — dont la réversion de M129 P1.1 sur l'ER).
+4. **Engager la convention Cerema par une collectivité mandante** (FF/LOVAC/DV3F — LOVAC inaccessible en propre à un éditeur privé).
 
 ## Décisions prises en autonomie
 

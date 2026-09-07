@@ -440,6 +440,12 @@ RATTACHEMENTS_A_DECIDER: dict[str, str] = {}
 #: Action proposée pour les orphelines CONNUES (curation CIRCUIT-5 — la purge reste le geste
 #: de Vic, `labuse tables purger --apply`). Une orpheline hors de ce dict = « à décider ».
 ACTIONS_PROPOSEES: dict[str, str] = {
+    # SOURCES-1 lot 8 — résidu de la feature OUTILS-MUSCLER-1 (assemblage de voisines
+    # contiguës), NON MERGÉE : son worktree partage la base locale `labuse` et y a laissé ces
+    # deux tables. Aucun code de main ni de SOURCES-1 ne les lit. Vérifier (pas de DROP tant que
+    # la feature peut merger) — elles n'ont rien à voir avec ce mandat.
+    "parcel_blocs": "vérifier (résidu OUTILS-MUSCLER-1 non mergée — worktree partageant la DB locale)",
+    "parcel_bloc_membres": "vérifier (résidu OUTILS-MUSCLER-1 non mergée — worktree partageant la DB locale)",
     "_lota_grave_parcels": "purger (photo de travail LOT A)",
     "algo2_prop_features": "purger (features d'essai algo2)",
     "backup_sp_ppr_avant_littoral": "purger (backup PPR avant littoral — Saint-Pierre)",

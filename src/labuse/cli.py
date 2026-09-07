@@ -662,6 +662,13 @@ def flux_run_cmd(
     from .scoring.p_v2.pipeline import run_score_v2
 
     t0 = time.time()
+    # SOURCES-1 lot 8 — BUG LATENT corrigé : le cache pré-subdivisé `spatial_layers_sub`
+    # (prime de la cascade) n'était JAMAIS reconstruit après une ingestion — un run lancé
+    # après l'entrée de couches neuves (peb, dpu, zone_humide…) les évaluait AVEUGLE
+    # (PASS partout, constaté sur le premier passage de q_v13_sources1). Un run reconstruit
+    # désormais le cache AVANT la cascade (quelques minutes, amorties sur des heures de run).
+    n_sub = models.ensure_spatial_layers_sub(engine(), force=True)
+    typer.echo(f"  cache spatial_layers_sub reconstruit : {n_sub} pièces")
     # DONNEES-2 (B3) — le run écrit sa PROGRESSION dans un fichier lu par l'API (barre + %, étape 2).
     # `total` = 24 communes (cascade) + 1 pas de scoring. L'API a pu ouvrir l'état au lancement ; on le
     # (ré)ouvre ici avec NOTRE pid (celui du process détaché) — c'est celui que « Arrêter » signalera.
@@ -2607,8 +2614,10 @@ def viabilisation_cmd(
                f"{res['duree_s']}s")
 
 
-if __name__ == "__main__":
-    app()
+# SOURCES-1 lot 8 — le garde __main__ vivait ICI (milieu de fichier) : sous `python -m labuse.cli`,
+# `app()` s'exécutait EN PLEIN IMPORT, avant la définition des commandes suivantes (division-or,
+# registre, circuit, pompe…) → « No such command » (exit 2), pompe cassée à l'étape division d'or.
+# Le garde est déplacé en FIN de fichier (le point d'entrée `labuse` du pyproject n'a jamais souffert).
 
 
 @app.command("detect-events")
@@ -4132,7 +4141,13 @@ def pompe_calculer_cmd(
     #    détaché-en-avant avec l'override d'env (le même mécanisme que les tests), jamais le servi.
     if not sans_division:
         env = {**os.environ, "LABUSE_SERVED_RUN": label}
-        subprocess.run([sys.executable, "-m", "labuse.cli", "division-or", "--all"],
+        # SOURCES-1 lot 8 — BUG LATENT corrigé : `python -m labuse.cli division-or` tombait en
+        # « No such command » (exit 2) car le garde __main__ est en MILIEU de fichier (les
+        # commandes tardives — dont division-or — ne sont pas encore enregistrées par ce
+        # chemin). On invoque l'app COMPLÈTE via -c, mêmes env/override, même détachement.
+        subprocess.run([sys.executable, "-c",
+                        "from labuse.cli import app; import sys; "
+                        "sys.argv = ['labuse', 'division-or', '--all']; app()"],
                        env=env, check=True)
     # 4) résiduel : candidat SEULEMENT si ses entrées ont bougé (sinon reporté à la bascule).
     with session_scope() as s:
@@ -4449,3 +4464,7 @@ def tables_purger_cmd(
                                     {"deplacees": deplacees, "schema": "poubelle"})
         s.commit()
     typer.echo(f"✓ {len(deplacees)} table(s) déplacée(s) vers le schéma poubelle (aucun DROP).")
+
+
+if __name__ == "__main__":
+    app()
