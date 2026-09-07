@@ -10,6 +10,7 @@ import { Trace } from '../../lib/trace'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
+import { FinancierQuestionnaire } from './FinancierQuestionnaire'
 import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
 import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
 import { PourquoiPasTab } from './PourquoiPas'
@@ -1763,40 +1764,17 @@ function PreDossierTile({ idu }: { idu: string }) {
  *  (le PDF pesait 9,3 s bloquants), sonde /statut toutes les 1,5 s, puis « prêt — ouvrir »
  *  (cache serveur : ouverture ~ms). Erreur : message court + réessai. Si le cache est déjà
  *  chaud, le premier clic ouvre directement (même geste utilisateur → pas de popup bloquée). */
+// EXPORTS-2 lot 4 — le bouton « Financier » ouvre le QUESTIONNAIRE (4 écrans) ; le questionnaire
+// rempli alimente le document Financier (le bouton bascule sur le document au lot 8).
 function BanquierButton({ idu }: { idu: string }) {
-  const [etat, setEtat] = useState<'idle' | 'encours' | 'pret' | 'erreur'>('idle')
-  const timer = useRef<number | null>(null)
-  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
-  useEffect(() => { setEtat('idle'); if (timer.current) window.clearTimeout(timer.current) }, [idu])
-  const url = `/dossier-banquier/${idu}.pdf`
-  const poll = async () => {
-    try {
-      const r = await fetch(`/dossier-banquier/${idu}/statut`)
-      const d = await r.json()
-      if (d.etat === 'pret') { setEtat('pret'); return }
-      if (d.etat === 'erreur') { setEtat('erreur'); return }
-    } catch { setEtat('erreur'); return }
-    timer.current = window.setTimeout(poll, 1500)
-  }
-  const lancer = async () => {
-    try {
-      const r = await fetch(`/dossier-banquier/${idu}/prepare`, { method: 'POST' })
-      const d = await r.json()
-      if (d.etat === 'pret') { window.open(url, '_blank', 'noreferrer'); setEtat('pret'); return }
-      setEtat('encours'); timer.current = window.setTimeout(poll, 1500)
-    } catch { setEtat('erreur') }
-  }
-  // C6 · « Financier » (ex-Banquier) — rendu en tuile .exp (DA-FICHE-v6).
+  const [open, setOpen] = useState(false)
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /></svg>
-  if (etat === 'pret') return (
-    <OutilCase nom={CLIENT.fiche.export.banquierPret} ic={icon} href={url} title="Note de financement prête — ouvrir le PDF" />
-  )
-  if (etat === 'encours') return (
-    <OutilCase nom={CLIENT.fiche.export.banquierEnCours} ic={icon} disabled title="Préparation en cours…" />
-  )
   return (
-    <OutilCase nom={etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.finance} ic={icon}
-      onClick={lancer} data-banquier-btn title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip} />
+    <>
+      <OutilCase nom={CLIENT.fiche.export.finance} ic={icon} onClick={() => setOpen(true)}
+        data-banquier-btn title={CLIENT.fiche.export.banquierTip} />
+      {open && <FinancierQuestionnaire idu={idu} onClose={() => setOpen(false)} />}
+    </>
   )
 }
 
