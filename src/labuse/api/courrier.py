@@ -251,6 +251,34 @@ def courrier_admin_statut(demande_id: int, body: StatutIn, request: Request,
     return {"ok": True, **d}
 
 
+@router.post("/admin/demandes/deposer-tout")
+def courrier_admin_deposer_tout(request: Request, db: Session = Depends(get_db)) -> dict:
+    """DASHBOARD-2 (Lot 3) — « Marquer les N déposés » en bloc. Toutes les demandes À DÉPOSER passent
+    à « déposé » d'un geste. Chaque transition est JOURNALISÉE (une ligne de synthèse au fil Pilotage)
+    et NOTIFIÉE à chaque client concerné (cloche) — même preuve que le geste unitaire, en masse."""
+    from . import auth
+    auth.exiger_admin(request)
+    touchees = courrier.marquer_deposes(db)
+    db.commit()
+    if not touchees:
+        return {"ok": True, "deposes": 0}
+    try:
+        from .events import creer_notification
+        creer_notification(db, kind="systeme", compte_id=None, source="Courrier",
+                           titre=f"{len(touchees)} demande(s) marquée(s) « Déposé » en bloc",
+                           detail=", ".join(sorted({t["communes"] for t in touchees if t.get("communes")})) or None,
+                           dedup=None)
+        # une cloche par client concerné (il voit le même statut de son côté)
+        for cid in sorted({t["compte_id"] for t in touchees if t.get("compte_id") is not None}):
+            creer_notification(db, kind="systeme", compte_id=cid, source="Courrier",
+                               titre="Votre demande de courrier est passée à « Déposé »",
+                               detail=None, dedup=f"courrier:depose-bloc:{cid}")
+        db.commit()
+    except Exception:  # noqa: BLE001 — la trace est best-effort, le dépôt est déjà fait
+        db.rollback()
+    return {"ok": True, "deposes": len(touchees)}
+
+
 class PdfIn(BaseModel):
     idu: str | None = None
     motif: str = "standard"

@@ -103,29 +103,31 @@ export function ContactsSection() {
 
   return (
     <div data-admin-contacts className="flex flex-col gap-4 text-[12.5px]">
-      <div className="grid grid-cols-[260px_1fr] gap-3.5 max-[900px]:grid-cols-1">
-        {/* colonne gauche : les communes, badge = nombre de contacts NOMMÉS */}
-        <div data-contacts-liste className="flex flex-col gap-1">
-          {communes.map((m) => {
-            const n = m.contacts?.length ?? 0
-            const on = choisie?.insee === m.insee
-            return (
-              <button key={m.insee} type="button" onClick={() => setInsee(m.insee ?? null)}
-                data-contacts-item={m.commune}
-                className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-[12.5px] transition-colors duration-quick ${
-                  on ? 'border-mint bg-mint/[0.06] text-txt-hi' : 'border-line bg-surface-2 text-txt hover:border-line-2'}`}>
-                <span className="min-w-0 truncate">{m.commune}</span>
-                {n > 0 && <span className="ml-2 shrink-0 rounded-full bg-mint/12 px-1.5 text-[10.5px] text-mint">{n}</span>}
-              </button>
-            )
-          })}
-          {!communes.length && <div className="py-4 text-center text-xs text-txt-dim">Aucune commune.</div>}
-        </div>
-
-        {/* panneau droit : la commune choisie */}
-        {choisie ? <PanneauCommune key={choisie.insee} m={choisie} />
-          : <div className="rounded-xl border border-line bg-surface-2 p-4 text-xs text-txt-dim">Choisissez une commune à gauche.</div>}
+      {/* DASHBOARD-2 (Lot 7) — GRILLE des communes (standard · N contacts nommés), maquette v1.
+          Un clic ouvre le détail juste dessous. */}
+      <div data-contacts-liste className="grid grid-cols-4 gap-2 max-[1100px]:grid-cols-2">
+        {communes.map((m) => {
+          const n = m.contacts?.length ?? 0
+          const on = choisie?.insee === m.insee
+          return (
+            <button key={m.insee} type="button" onClick={() => setInsee(m.insee ?? null)}
+              data-contacts-item={m.commune}
+              className={`flex flex-col gap-0.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-quick ${
+                on ? 'border-mint bg-mint/[0.06] text-txt-hi' : 'border-line bg-surface-2 text-txt hover:border-line-2'}`}>
+              <span className="min-w-0 truncate text-[13px] font-medium">{m.commune}</span>
+              <span className="truncate text-[11px] text-txt-mut">
+                {m.telephone ? m.telephone : 'standard'}
+                {' · '}{n > 0 ? `${n} contact${n > 1 ? 's' : ''} nommé${n > 1 ? 's' : ''}` : 'standard seul'}
+              </span>
+            </button>
+          )
+        })}
+        {!communes.length && <div className="col-span-full py-4 text-center text-xs text-txt-dim">Aucune commune.</div>}
       </div>
+
+      {/* détail de la commune choisie, sous la grille */}
+      {choisie ? <PanneauCommune key={choisie.insee} m={choisie} />
+        : <div className="rounded-xl border border-line bg-surface-2 p-4 text-xs text-txt-dim">Choisissez une commune ci-dessus.</div>}
 
       {/* EPCI (secondaire, conservé) */}
       <section className="mt-2">

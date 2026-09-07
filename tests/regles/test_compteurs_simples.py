@@ -121,6 +121,8 @@ def test_piscines_corrections_excluses(engine):
 
 @pytest.mark.db
 def test_comptes_actifs(engine):
+    # comptes_actifs = compteur métier « comptes au statut actif » (registre/témoin), inchangé.
+    # (Le compteur unique des LICENCES actives payantes est comptes.licences_actives — COMPTE-2.)
     from labuse.registre.moteurs.plateforme import comptes_actifs
     with engine.begin() as c:
         avant = comptes_actifs(c)
@@ -150,18 +152,25 @@ def test_conso_ia_somme(engine):
 
 @pytest.mark.db
 def test_usage_par_outil(engine):
+    # DASHBOARD-2 (Lot 5) — usage par outil = CLIENTS SEULEMENT : l'usage attribué à un compte client
+    # (plan != 'interne') est compté ; l'usage sans compte (admin/anonyme) est EXCLU.
     from labuse.api.dashboard import ensure_tables as _dash_ens
     from labuse.registre.moteurs.plateforme import usage_par_outil
     _dash_ens(engine)
     with engine.begin() as c:
         c.execute(text("DELETE FROM usage_events WHERE outil = 'c4-outil-temoin'"))
+        cid = c.execute(text(
+            "INSERT INTO comptes (nom, plan, statut) VALUES ('Client C4', 'integral', 'actif') RETURNING id"
+        )).scalar()
         for _ in range(3):
-            c.execute(text("INSERT INTO usage_events (kind, outil, ts) VALUES"
-                           " ('outil', 'c4-outil-temoin', now())"))
+            c.execute(text("INSERT INTO usage_events (compte_id, kind, outil, ts) VALUES"
+                           " (:c, 'outil', 'c4-outil-temoin', now())"), {"c": cid})
+        # un usage SANS compte (admin/anonyme) — ne doit PAS compter
+        c.execute(text("INSERT INTO usage_events (kind, outil, ts) VALUES ('outil', 'c4-outil-temoin', now())"))
         out = usage_par_outil(c, jours=7)
         c.execute(text("DELETE FROM usage_events WHERE outil = 'c4-outil-temoin'"))
     ligne = next((r for r in out if r["outil"] == "c4-outil-temoin"), None)
-    assert ligne and int(ligne["n"]) == 3
+    assert ligne and int(ligne["n"]) == 3   # les 3 du client, pas l'anonyme
 
 
 @pytest.mark.db

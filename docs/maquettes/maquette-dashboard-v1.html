@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LABUSE — Tour de contrôle · maquette v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B100D;--surf:#121815;--surf2:#161D19;--line:#1A211D;--line-card:#1E2622;--line-btn:#263029;
+  --txt:#E6ECE8;--txt-mut:#97A39B;--lab:#7C8A82;--txt-dim:#5C6862;
+  --mint:#4ADE80;--mint-bg:#12291D;--mint-on:#06301A;--ink:#071009;
+  --amber:#E0A94F;--amber-bg:#2A2113;--coral:#E2726A;--coral-bg:#2B1715;
+  --iris:#8B7BD8;--iris-bg:#16121F;--iris-line:#2E2545;--jaune:#F5C518;--blue:#8FB4F0;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;--sans:Inter,system-ui,sans-serif;
+  --r:12px;--r-sm:8px;--r-pill:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 var(--sans);height:100%}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.app{display:grid;grid-template-columns:200px 1fr;height:100vh}
+/* rail */
+.rail{border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.logo{padding:0 10px 14px;font-weight:700;letter-spacing:.02em}.logo b{color:var(--mint)}
+.logo small{display:block;font-weight:500;color:var(--txt-dim);font-size:11px;letter-spacing:.08em;margin-top:2px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:var(--txt-mut);font-weight:500;font-size:13.5px;width:100%;text-align:left}
+.nav span.i{width:16px;text-align:center;opacity:.85}
+.nav:hover{background:var(--mint);color:var(--ink)}
+.nav.on{background:var(--mint);color:var(--ink)}
+.nav .n{margin-left:auto;font:500 11px var(--mono);background:var(--surf2);color:var(--txt-mut);padding:1px 7px;border-radius:var(--r-pill)}
+.nav.on .n{background:rgba(7,16,9,.25);color:var(--ink)}
+.nav:hover .n{background:rgba(7,16,9,.25);color:var(--ink)}
+.rail .sp{flex:1}
+.sante{margin-top:10px;padding:10px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--txt-mut);display:grid;gap:5px}
+.sante div{display:flex;justify-content:space-between;gap:8px}.sante b{font-weight:500;color:var(--txt);font-family:var(--mono);font-size:11.5px}
+.sante .p{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;background:var(--mint)}
+.sante .p.a{background:var(--amber)}.sante .p.r{background:var(--coral)}
+.rail .out{margin:8px 12px 0;font-size:12.5px;color:var(--mint);text-decoration:none}
+/* main */
+main{overflow:auto;padding:26px 36px 60px}
+.page{display:none;max-width:1120px}.page.on{display:block}
+h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}
+h1 + .q{margin:4px 0 22px;color:var(--txt-mut);font-size:14px}
+h2{font-size:12.5px;font-weight:600;color:var(--lab);margin:26px 0 10px;letter-spacing:.01em}
+h2:first-of-type{margin-top:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.card{background:var(--surf);border:1px solid var(--line-card);border-radius:var(--r);padding:14px 16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+/* à faire list — the shared grammar */
+.todo{display:grid;gap:6px}
+.todo .l{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:14px;padding:10px 14px;background:var(--surf);border:1px solid var(--line-card);border-radius:var(--r-sm)}
+.todo .l .k{font:500 20px var(--mono);color:var(--amber);text-align:right}
+.todo .l.ok .k{color:var(--txt-dim)}.todo .l.r .k{color:var(--coral)}
+.todo .l .t{font-size:14px}.todo .l .t small{display:block;color:var(--txt-mut);font-size:12.5px}
+.todo .l .v{color:var(--mint);font-weight:500;font-size:13px;white-space:nowrap}
+.todo .l.ok .v{color:var(--txt-dim)}
+.todo .empty{padding:12px 14px;color:var(--txt-dim);border:1px dashed var(--line-btn);border-radius:var(--r-sm);font-size:13px}
+/* chips / btns */
+.chip{font-size:11.5px;font-weight:500;padding:2px 9px;border-radius:var(--r-pill);border:1px solid var(--line-btn);color:var(--txt-mut);white-space:nowrap}
+.chip.m{background:var(--mint-bg);color:var(--mint);border-color:transparent}
+.chip.a{background:var(--amber-bg);color:var(--amber);border-color:transparent}
+.chip.r{background:var(--coral-bg);color:var(--coral);border-color:transparent}
+.chip.i{background:var(--iris-bg);color:var(--iris);border-color:var(--iris-line)}
+.chip.g{background:var(--surf2);color:var(--txt-dim);border-color:transparent}
+.btn{border:1px solid var(--mint);color:var(--mint);padding:6px 13px;border-radius:9px;font-weight:500;font-size:13px}
+.btn:hover{background:var(--mint);color:var(--ink)}
+.btn.full{background:var(--mint);color:var(--ink)}.btn.full:hover{filter:brightness(1.08)}
+.btn.q{border-color:var(--line-btn);color:var(--txt-mut)}.btn.q:hover{background:var(--surf2);color:var(--txt)}
+.btn.warn{border-color:var(--coral);color:var(--coral)}.btn.warn:hover{background:var(--coral);color:var(--ink)}
+.btn.ia{border-color:var(--iris);color:var(--iris)}.btn.ia:hover{background:var(--iris);color:#140e22}
+.btn.sm{padding:3px 9px;font-size:12px;border-radius:7px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.filters .f{padding:4px 11px;border-radius:var(--r-pill);border:1px solid var(--line-btn);color:var(--txt-mut);font-size:12.5px}
+.filters .f.on{background:var(--mint);color:var(--ink);border-color:var(--mint);font-weight:500}
+.filters .f:hover{background:var(--mint);color:var(--ink)}
+.filters .f i{font-style:normal;font-family:var(--mono);font-size:11px;opacity:.75;margin-left:5px}
+.filters .f.last{margin-left:auto}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--lab);font-weight:500;font-size:12px;padding:6px 10px;border-bottom:1px solid var(--line-card)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:hover td{background:var(--surf2)}
+td.mono,.mono{font-family:var(--mono);font-size:12.5px}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+td .sub{display:block;color:var(--txt-mut);font-size:12px}
+.link{color:var(--jaune);font-weight:500;font-size:12.5px;text-decoration:none}
+.siren{color:var(--blue);text-decoration:underline}
+/* big numbers, used sparingly */
+.kpi{display:flex;gap:28px;padding:14px 18px;background:var(--surf);border:1px solid var(--line-card);border-radius:var(--r);flex-wrap:wrap}
+.kpi div{display:grid;gap:2px}.kpi b{font:500 24px var(--mono);letter-spacing:-.02em}
+.kpi small{color:var(--txt-mut);font-size:12px}.kpi .sep{width:1px;background:var(--line-card);align-self:stretch}
+/* two columns for Comptes */
+.split{display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start}
+.list{display:grid;gap:4px}
+.list .c{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 12px;border-radius:var(--r-sm);border:1px solid transparent}
+.list .c:hover{background:var(--mint);color:var(--ink)}
+.list .c.on{background:var(--surf);border-color:var(--mint)}
+.list .c .n{font-weight:500;font-size:13.5px}.list .c .e{font-size:12px;color:var(--txt-mut)}
+.list .c:hover .e{color:var(--ink);opacity:.8}
+.list .c .flag{font-size:11.5px;color:var(--amber);white-space:nowrap}
+.list .c:hover .flag{color:var(--ink)}
+/* parcours */
+.steps{display:grid;gap:0}
+.steps .s{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:start;padding:9px 0;border-bottom:1px solid var(--line)}
+.steps .s:last-child{border-bottom:0}
+.steps .d{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-btn);display:grid;place-items:center;font-size:11px;margin-top:1px}
+.steps .s.done .d{background:var(--mint);border-color:var(--mint);color:var(--ink)}
+.steps .s.now .d{border-color:var(--amber);color:var(--amber)}
+.steps .s .t{font-size:13.5px}.steps .s .t small{display:block;color:var(--txt-mut);font-size:12px}
+.steps .s .w{font:12px var(--mono);color:var(--txt-dim);white-space:nowrap}
+.act{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--amber);border-radius:var(--r);background:var(--amber-bg)}
+.act .t{font-weight:500}.act .t small{display:block;font-weight:400;color:var(--txt-mut);font-size:12.5px}
+/* bars */
+.bars{display:grid;gap:5px}
+.bars .b{display:grid;grid-template-columns:190px 1fr 56px;gap:10px;align-items:center;font-size:13px}
+.bars .b .bar{height:8px;background:var(--surf2);border-radius:4px;overflow:hidden}
+.bars .b .bar i{display:block;height:100%;background:var(--mint)}
+.bars .b .n{text-align:right;font-family:var(--mono);font-size:12px;color:var(--txt-mut)}
+.bars .b.dim{color:var(--txt-dim)}.bars .b.dim .bar i{background:var(--line-btn)}
+.spark{height:54px;display:flex;align-items:flex-end;gap:2px}
+.spark i{flex:1;background:var(--iris);opacity:.85;border-radius:2px 2px 0 0}
+/* journal */
+.jr{display:grid;grid-template-columns:78px 92px 1fr auto;gap:12px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px;align-items:center}
+.jr .w{font:12px var(--mono);color:var(--txt-dim)}
+.jr .f{font-size:11.5px;color:var(--txt-mut)}
+.jr .more{color:var(--txt-mut);font-size:12px;cursor:pointer}
+.jr.fold{color:var(--txt-mut)}
+.drop{border:1.5px dashed var(--line-btn);border-radius:var(--r);padding:22px;text-align:center;color:var(--txt-mut)}
+.drop b{display:block;color:var(--txt);font-weight:500;margin-bottom:4px}
+.note{font-size:12.5px;color:var(--txt-mut);margin-top:8px}
+.ia h1{color:var(--iris)}
+.ia .kpi b{color:var(--iris)}
+.ia .btn{border-color:var(--iris);color:var(--iris)}.ia .btn:hover{background:var(--iris);color:#140e22}
+.ia .filters .f.on,.ia .filters .f:hover{background:var(--iris);border-color:var(--iris);color:#140e22}
+.ia .bars .b .bar i{background:var(--iris)}
+input.pl{width:64px;background:var(--surf2);border:1px solid var(--line-btn);color:var(--txt);border-radius:6px;padding:3px 7px;font:12.5px var(--mono);text-align:right}
+.communes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.communes .k{padding:10px 12px;border:1px solid var(--line-card);border-radius:var(--r-sm);background:var(--surf);font-size:13px;display:grid;gap:2px}
+.communes .k:hover{background:var(--mint);color:var(--ink)}
+.communes .k small{color:var(--txt-mut);font-size:11.5px}.communes .k:hover small{color:var(--ink);opacity:.8}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="rail">
+  <div class="logo">LA<b>BUSE</b><small>TOUR DE CONTRÔLE</small></div>
+  <button class="nav on" data-p="pilotage"><span class="i">◉</span>Pilotage</button>
+  <button class="nav" data-p="comptes"><span class="i">▣</span>Comptes<span class="n">5</span></button>
+  <button class="nav" data-p="donnees"><span class="i">☰</span>Données<span class="n">9</span></button>
+  <button class="nav" data-p="courrier"><span class="i">✉</span>Courrier<span class="n">24</span></button>
+  <button class="nav" data-p="radar"><span class="i">◎</span>Radar</button>
+  <button class="nav" data-p="produit"><span class="i">◫</span>Produit<span class="n">2</span></button>
+  <button class="nav" data-p="ia"><span class="i">✦</span>IA</button>
+  <button class="nav" data-p="contacts"><span class="i">☎</span>Contacts</button>
+  <div class="sp"></div>
+  <div class="sante">
+    <div><span><span class="p"></span>Serveur</span><b>OK</b></div>
+    <div><span><span class="p"></span>Run servi</span><b>q_v11_m137</b></div>
+    <div><span><span class="p"></span>Backup</span><b>05/09 09:30</b></div>
+    <div><span><span class="p a"></span>Horloge</span><b>11 / 20</b></div>
+    <div><span><span class="p"></span>Verrous</span><b>16 / 16</b></div>
+  </div>
+  <a class="out" href="#">Ouvrir l'app cliente →</a>
+</aside>
+
+<main>
+
+<!-- ============ PILOTAGE ============ -->
+<section class="page on" id="p-pilotage">
+  <h1>Pilotage</h1>
+  <div class="q">comment va LABUSE ce matin ? — 5 choses à faire, 1 chose qui cloche</div>
+
+  <h2>À faire aujourd'hui</h2>
+  <div class="todo">
+    <div class="l"><div class="k">9</div><div class="t">choses à regarder sur le circuit<small>1 source a une nouvelle version · 1 réservoir en quarantaine · 7 robinets à vérifier</small></div><div class="v">Ouvrir Données →</div></div>
+    <div class="l"><div class="k">24</div><div class="t">courriers à déposer<small>dont 2 demandés par un client il y a 8 jours</small></div><div class="v">Ouvrir Courrier →</div></div>
+    <div class="l"><div class="k">3</div><div class="t">clients à toucher<small>1 essai expire demain · 2 relances J+3 dues</small></div><div class="v">Ouvrir Comptes →</div></div>
+    <div class="l"><div class="k">2</div><div class="t">retours clients non traités<small>tous deux depuis la fiche parcelle · le plus ancien : 26/08</small></div><div class="v">Ouvrir Produit →</div></div>
+    <div class="l"><div class="k">0</div><div class="t">annonces à re-vérifier<small>dépôt du jour pas encore fait</small></div><div class="v">Ouvrir Radar →</div></div>
+  </div>
+
+  <h2>Ce qui cloche</h2>
+  <div class="todo">
+    <div class="l r"><div class="k">9</div><div class="t">horloges manquantes sur le VPS<small>le wrapper des crons n'a jamais été posé — 11 legacy tournent, 20 attendus · déploiement à faire devant l'écran</small></div><div class="v">Voir l'horloge →</div></div>
+  </div>
+
+  <h2>Argent</h2>
+  <div class="kpi">
+    <div><b>0 €</b><small>encaissé ce mois · Stripe</small></div>
+    <div class="sep"></div>
+    <div><b>9</b><small>licences actives — le même 9 que Comptes</small></div>
+    <div class="sep"></div>
+    <div><b>3 141 €</b><small>MRR = 9 × 349 €</small></div>
+    <div class="sep"></div>
+    <div><b>0</b><small>paiements en échec</small></div>
+    <div class="sep"></div>
+    <div><b>1</b><small>essai 48 h en cours</small></div>
+  </div>
+
+  <h2>Journal</h2>
+  <div class="filters">
+    <span class="f on">Tout</span><span class="f">Circuit</span><span class="f">Comptes</span><span class="f">Courrier</span><span class="f">Radar</span><span class="f">Système</span>
+  </div>
+  <div class="card" style="padding:4px 6px">
+    <div class="jr fold"><span class="w">05/09 21:42</span><span class="f">circuit</span><span>Passage de recette Circuit — 6 gestes (injection BODACC, run, bascule, retour) <span class="more">▸ déplier</span></span><span class="w">par Vic</span></div>
+    <div class="jr"><span class="w">04/09 13:37</span><span class="f">circuit</span><span>Retour au run q_v11_m137</span><span class="w">par Vic</span></div>
+    <div class="jr"><span class="w">30/08 21:02</span><span class="f">courrier</span><span>Un client demande l'envoi de 1 courrier — Saint-Denis</span><a class="link" href="#">Traiter</a></div>
+    <div class="jr"><span class="w">27/08 10:57</span><span class="f">courrier</span><span>Demandes n°40 et n°41 imprimées puis postées</span><span class="w">par Vic</span></div>
+    <div class="jr fold"><span class="w">26/08 20:2x</span><span class="f">courrier</span><span>5 demandes d'envoi de 5 courriers chacune (Saint-Denis, Saint-Pierre, Saint-Leu, Saint-Joseph, Saint-Paul) <span class="more">▸ déplier</span></span><span class="w">LABUSE (admin)</span></div>
+    <div class="jr"><span class="w"></span><span class="f"></span><span class="more">Voir plus — 20 / 143 chargés</span><span></span></div>
+  </div>
+</section>
+
+<!-- ============ COMPTES ============ -->
+<section class="page" id="p-comptes">
+  <h1>Comptes</h1>
+  <div class="q">que dois-je faire pour ce client, maintenant ? — 9 licences actives · 1 essai · 3 clients à toucher</div>
+
+  <div class="todo" style="margin-bottom:22px">
+    <div class="l"><div class="k">1</div><div class="t">essai qui expire sous 24 h — Stéphanie Payet (promoteur)<small>usage 7 j : 2 h 10 · 14 fiches · 6 outils · Copilote 0,84 €</small></div><div class="v">Proposer l'abonnement →</div></div>
+    <div class="l"><div class="k">2</div><div class="t">relances J+3 dues<small>Kampus Réunion · Recette Onb</small></div><div class="v">Envoyer les 2 →</div></div>
+    <div class="l ok"><div class="k">0</div><div class="t">carte refusée</div><div class="v">rien à faire</div></div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px">
+    <button class="btn full">+ Nouveau client</button>
+    <button class="btn">+ Essai 48 h</button>
+    <span class="chip g">20 comptes de test masqués</span>
+    <a class="link" href="#" style="margin-left:auto">12 comptes sans abonnement Stripe →</a>
+  </div>
+
+  <div class="split">
+    <div>
+      <div class="filters">
+        <span class="f on">Actifs <i>9</i></span><span class="f">Essai <i>1</i></span><span class="f">Invités <i>1</i></span><span class="f">Suspendus <i>1</i></span><span class="f last">Tous <i>12</i></span>
+      </div>
+      <div class="list">
+        <div class="c on"><div><div class="n">Stéphanie Payet</div><div class="e">promoteur · essai</div></div><div class="flag">⚑ expire demain</div></div>
+        <div class="c"><div><div class="n">Kampus Réunion</div><div class="e">kampusreunion@gmail.com</div></div><div class="flag">⚑ relance J+3</div></div>
+        <div class="c"><div><div class="n">Recette Onb</div><div class="e">reprise@exemple.test</div></div><div class="flag">⚑ relance J+3</div></div>
+        <div class="c"><div><div class="n">CBO Territoria</div><div class="e">active · depuis le 28/08</div></div><div></div></div>
+        <div class="c"><div><div class="n">Agence Sud Immo</div><div class="e">active · depuis le 29/08</div></div><div></div></div>
+        <div class="c"><div><div class="n">Cabinet Hoarau</div><div class="e">active · depuis le 01/09</div></div><div></div></div>
+        <div class="c"><div><div class="n">…</div><div class="e">6 autres actives, sans action</div></div><div></div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;gap:12px">
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div><div style="font-size:17px;font-weight:600">Stéphanie Payet</div><div class="mono" style="color:var(--txt-mut)">s.payet@promoteur.re · compte créé le 04/09 · 2FA non</div></div>
+          <span class="chip a">Essai · expire le 08/09 à 10:15</span>
+        </div>
+      </div>
+
+      <div class="act">
+        <div class="t">Prochaine action — proposer l'abonnement<small>mail « dernier rappel » avec le lien Stripe · elle a déjà utilisé 6 outils</small></div>
+        <div class="row"><button class="btn q sm">aperçu</button><button class="btn full">Envoyer →</button><button class="btn">Prolonger 48 h</button></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h2>Parcours</h2>
+          <div class="steps">
+            <div class="s done"><div class="d">✓</div><div class="t">Invitation envoyée<small>Brevo n°4 · ouverte le 04/09</small></div><div class="w">04/09 09:52</div></div>
+            <div class="s done"><div class="d">✓</div><div class="t">Compte créé — essai 48 h</div><div class="w">04/09 10:15</div></div>
+            <div class="s done"><div class="d">✓</div><div class="t">Mail de bienvenue<small>Brevo n°6</small></div><div class="w">04/09 10:16</div></div>
+            <div class="s now"><div class="d">●</div><div class="t">Proposer l'abonnement<small>dernier rappel + lien Stripe</small></div><div class="w">à faire</div></div>
+            <div class="s"><div class="d"></div><div class="t">Abonnement Stripe<small>la licence passe « active » au premier paiement</small></div><div class="w">—</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Usage sur 7 jours</h2>
+          <table>
+            <tr><td>Dernière connexion</td><td class="num">hier 17:40</td></tr>
+            <tr><td>Temps dans l'app</td><td class="num">2 h 10</td></tr>
+            <tr><td>Fiches parcelle ouvertes</td><td class="num">14</td></tr>
+            <tr><td>Outils utilisés</td><td class="num">6 — Étudier un bien, Faisabilité, PLU…</td></tr>
+            <tr><td>Copilote aujourd'hui</td><td class="num">0,84 € / 2,00 €</td></tr>
+            <tr><td>Sessions simultanées vues</td><td class="num">1</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h2>Stripe</h2>
+          <table>
+            <tr><td>Client Stripe</td><td class="num"><a class="link" href="#">cus_… ↗</a></td></tr>
+            <tr><td>Abonnement</td><td class="num">aucun (essai)</td></tr>
+            <tr><td>Dernier paiement</td><td class="num">—</td></tr>
+            <tr><td>Carte</td><td class="num">—</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h2>Autres gestes</h2>
+          <div class="row">
+            <button class="btn q sm">Convertir en licence</button>
+            <button class="btn q sm">Plafond IA : 2,00 €/j</button>
+            <button class="btn q sm">Renvoyer l'invitation</button>
+            <button class="btn warn sm">Suspendre</button>
+          </div>
+          <div class="note">La suspension est toujours manuelle. La résiliation aussi : le client écrit, tu résilies ici avec le motif.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DONNEES (lien) ============ -->
+<section class="page" id="p-donnees">
+  <h1>Données</h1>
+  <div class="q">c'est la page Circuit (maquette v8, déjà en prod) — inchangée dans ce mandat</div>
+  <div class="card">Résumé · Circuit · Journal — « 9 choses à regarder ». Destinations n'est plus une page : c'est le détail du réservoir <span class="mono">plu_destinations</span> dans le Circuit.</div>
+</section>
+
+<!-- ============ COURRIER ============ -->
+<section class="page" id="p-courrier">
+  <h1>Courrier</h1>
+  <div class="q">24 courriers à déposer · 2 envoyés en attente de réponse · 0 clos ce mois</div>
+
+  <div class="filters">
+    <span class="f on">À déposer <i>24</i></span><span class="f">Déposés <i>0</i></span><span class="f">Envoyés <i>2</i></span><span class="f">Répondus <i>0</i></span><span class="f">Sans réponse <i>0</i></span><span class="f last">Tous <i>26</i></span>
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <span class="chip g">15 demandes de test masquées</span>
+    <button class="btn sm" style="margin-left:auto">Marquer les 24 déposés</button>
+  </div>
+  <div class="card" style="padding:0 6px">
+    <table>
+      <tr><th>Client</th><th>Parcelle</th><th>Propriétaire</th><th>Demandé le</th><th>Piste CRM</th><th>Statut</th><th></th></tr>
+      <tr><td>Kampus Réunion</td><td class="mono">BZ1065 · Saint-Denis</td><td>1 personne morale</td><td class="mono">30/08 21:02</td><td><a class="link" href="#">piste #12 ↗</a></td><td><span class="chip a">à déposer</span></td><td><button class="btn q sm">aperçu</button> <button class="btn sm">Déposé</button></td></tr>
+      <tr><td>Kampus Réunion</td><td class="mono">BZ1065 · Saint-Denis</td><td>1 personne morale</td><td class="mono">30/08 18:18</td><td><a class="link" href="#">piste #12 ↗</a></td><td><span class="chip a">à déposer</span></td><td><button class="btn q sm">aperçu</button> <button class="btn sm">Déposé</button></td></tr>
+      <tr><td>CBO Territoria</td><td class="mono">AV2297 · Saint-Leu</td><td>—</td><td class="mono">26/08 20:24</td><td>—</td><td><span class="chip a">à déposer</span></td><td><button class="btn q sm">aperçu</button> <button class="btn sm">Déposé</button></td></tr>
+      <tr><td>CBO Territoria</td><td class="mono">CP0462 · Saint-Joseph</td><td>—</td><td class="mono">26/08 20:23</td><td>—</td><td><span class="chip a">à déposer</span></td><td><button class="btn q sm">aperçu</button> <button class="btn sm">Déposé</button></td></tr>
+      <tr><td>Agence Sud Immo</td><td class="mono">BH0826 · Saint-André</td><td>—</td><td class="mono">26/08 15:30</td><td><a class="link" href="#">piste #95 ↗</a></td><td><span class="chip m">envoyé le 27/08</span></td><td><button class="btn sm">Répondu</button> <button class="btn q sm">Sans réponse</button></td></tr>
+      <tr><td colspan="7" style="color:var(--txt-dim);font-size:12.5px">Voir plus — 5 / 24 chargés</td></tr>
+    </table>
+  </div>
+  <div class="note">Un seul vocabulaire de statut, partagé avec le client, le CRM et le journal : à déposer → déposé → envoyé → répondu / sans réponse. « Imprimé » et « posté » disparaissent.</div>
+</section>
+
+<!-- ============ RADAR ============ -->
+<section class="page" id="p-radar">
+  <h1>Radar</h1>
+  <div class="q">109 annonces en vie · dépôt du jour pas encore fait · 0 à re-vérifier</div>
+
+  <div class="grid2">
+    <div class="drop"><b>Déposer la page de résultats du jour</b>Cmd+S « page web complète » sur Leboncoin, puis glisser le .html ici. Toutes les annonces de la page sont lues d'un coup, sans doublon.<div style="margin-top:12px"><button class="btn full">Choisir un fichier</button></div></div>
+    <div class="card">
+      <h2>Dernier dépôt — 05/09 18:02</h2>
+      <table>
+        <tr><td>Variante lue</td><td class="num">A (riche)</td></tr>
+        <tr><td>Annonces dans la page</td><td class="num">35</td></tr>
+        <tr><td>Nouvelles</td><td class="num">1</td></tr>
+        <tr><td>Republiées / baisses de prix</td><td class="num">31 / 3</td></tr>
+        <tr><td>Rattachées à une parcelle</td><td class="num">2</td></tr>
+        <tr><td>Digest du soir</td><td class="num">parti à 18:30 — 9 clients</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2>À faire</h2>
+  <div class="todo">
+    <div class="l ok"><div class="k">0</div><div class="t">annonces à valider (extraction incertaine)</div><div class="v">—</div></div>
+    <div class="l ok"><div class="k">0</div><div class="t">liens à re-vérifier aujourd'hui<small>prochaine vague : 12 annonces le 09/09</small></div><div class="v">—</div></div>
+  </div>
+
+  <h2>Le flux</h2>
+  <div class="kpi">
+    <div><b>109</b><small>en vie</small></div><div class="sep"></div>
+    <div><b>7</b><small>rattachées à une parcelle</small></div><div class="sep"></div>
+    <div><b>38</b><small>copropriétés embasées, non servies</small></div><div class="sep"></div>
+    <div><b>0</b><small>paires DVF (vendue)</small></div><div class="sep"></div>
+    <div><b>fermé</b><small>dépôt agence <a class="link" href="#">ouvrir</a></small></div>
+  </div>
+  <div class="note">Le chemin par captures d'écran est retiré (répertoire /srv en lecture seule, remplacé par le dépôt HTML depuis le 29/08).</div>
+</section>
+
+<!-- ============ PRODUIT ============ -->
+<section class="page" id="p-produit">
+  <h1>Produit</h1>
+  <div class="q">ce que les clients utilisent · ce qu'ils nous disent — 2 retours à traiter</div>
+
+  <h2>Retours</h2>
+  <div class="filters">
+    <span class="f on">Nouveaux <i>2</i></span><span class="f">Traités <i>3</i></span><span class="f last">Tous <i>5</i></span>
+    <span class="chip g">18 retours de test masqués</span>
+  </div>
+  <div class="card" style="padding:0 6px">
+    <table>
+      <tr><th>Date</th><th>Client</th><th>Type</th><th>Où</th><th>Message</th><th></th></tr>
+      <tr><td class="mono">26/08</td><td>Kampus Réunion</td><td><span class="chip a">donnée</span></td><td><a class="link" href="#">fiche BZ1065 · zonage</a></td><td>« la zone affichée est UB, le PLU dit UBa »</td><td><button class="btn sm">Traité</button></td></tr>
+      <tr><td class="mono">26/08</td><td>Kampus Réunion</td><td><span class="chip i">idée</span></td><td>app</td><td>« un export PDF de la liste d'un projet »</td><td><button class="btn sm">Traité</button></td></tr>
+    </table>
+  </div>
+  <div class="note">Une seule file : le « Signaler » de la fiche (donnée), de l'annonce et du haut de l'app (bug · idée · question). Le même 2 qu'au Pilotage.</div>
+
+  <h2>Usage par outil — clients seulement</h2>
+  <div class="filters"><span class="f">7 j</span><span class="f on">30 j</span><span class="f">90 j</span></div>
+  <div class="card">
+    <div class="bars">
+      <div class="b"><span>Carte / fiches</span><div class="bar"><i style="width:100%"></i></div><span class="n">1 053</span></div>
+      <div class="b"><span>Radar</span><div class="bar"><i style="width:11%"></i></div><span class="n">123</span></div>
+      <div class="b"><span>Permis</span><div class="bar"><i style="width:7.5%"></i></div><span class="n">79</span></div>
+      <div class="b"><span>Communes</span><div class="bar"><i style="width:7%"></i></div><span class="n">75</span></div>
+      <div class="b"><span>Projets</span><div class="bar"><i style="width:5%"></i></div><span class="n">55</span></div>
+      <div class="b"><span>Veille</span><div class="bar"><i style="width:4%"></i></div><span class="n">43</span></div>
+      <div class="b"><span>Prospection solaire</span><div class="bar"><i style="width:4%"></i></div><span class="n">41</span></div>
+      <div class="b"><span>PLU</span><div class="bar"><i style="width:4%"></i></div><span class="n">40</span></div>
+      <div class="b"><span>Étudier un bien</span><div class="bar"><i style="width:3.6%"></i></div><span class="n">38</span></div>
+      <div class="b"><span>Scan patrimoine</span><div class="bar"><i style="width:3.4%"></i></div><span class="n">36</span></div>
+      <div class="b"><span>Étude de zone</span><div class="bar"><i style="width:3.3%"></i></div><span class="n">35</span></div>
+      <div class="b"><span>Copilote</span><div class="bar"><i style="width:3%"></i></div><span class="n">31</span></div>
+      <div class="b dim"><span>Mon secteur</span><div class="bar"><i style="width:1%"></i></div><span class="n">11</span></div>
+      <div class="b dim"><span>Pièges et risques</span><div class="bar"><i style="width:1.1%"></i></div><span class="n">12</span></div>
+      <div class="b dim"><span>Assemblage</span><div class="bar"><i style="width:1.4%"></i></div><span class="n">15</span></div>
+    </div>
+    <div class="note">Voir les 21 outils ▸ · noms = ceux du menu Outils, l'admin et les événements internes sont exclus · jamais ouverts sur 30 j : aucun</div>
+  </div>
+</section>
+
+<!-- ============ IA ============ -->
+<section class="page ia" id="p-ia">
+  <h1>IA</h1>
+  <div class="q">ce que ça coûte, qui consomme, quel modèle sert où</div>
+
+  <div class="kpi">
+    <div><b>1,05 €</b><small>septembre · 133 questions</small></div><div class="sep"></div>
+    <div><b>≈ 5 €</b><small>projection fin de mois</small></div><div class="sep"></div>
+    <div><b>0,008 €</b><small>par question, en moyenne</small></div><div class="sep"></div>
+    <div><b>2,00 €</b><small>plafond par compte et par jour</small></div><div class="sep"></div>
+    <div><b>—</b><small>crédit Anthropic (non exposé) <a class="link" href="#">recharger ↗</a></small></div>
+  </div>
+
+  <div class="grid2" style="margin-top:12px">
+    <div class="card">
+      <h2>Par jour · 30 jours</h2>
+      <div class="spark"><i style="height:10%"></i><i style="height:14%"></i><i style="height:6%"></i><i style="height:22%"></i><i style="height:9%"></i><i style="height:12%"></i><i style="height:4%"></i><i style="height:18%"></i><i style="height:26%"></i><i style="height:8%"></i><i style="height:11%"></i><i style="height:7%"></i><i style="height:30%"></i><i style="height:9%"></i><i style="height:12%"></i><i style="height:5%"></i><i style="height:15%"></i><i style="height:100%"></i><i style="height:14%"></i><i style="height:8%"></i><i style="height:10%"></i><i style="height:6%"></i><i style="height:12%"></i><i style="height:9%"></i><i style="height:17%"></i><i style="height:11%"></i><i style="height:7%"></i><i style="height:13%"></i><i style="height:10%"></i><i style="height:4%"></i></div>
+      <div class="note">Le pic du 25/08 = grand oral du Copilote (40 questions, admin). Un pic sur un client = à regarder.</div>
+    </div>
+    <div class="card">
+      <h2>Par compte · 30 jours</h2>
+      <div class="bars">
+        <div class="b"><span>Vic (admin)</span><div class="bar"><i style="width:100%"></i></div><span class="n">28,22 €</span></div>
+        <div class="b"><span>Stéphanie Payet</span><div class="bar"><i style="width:9%"></i></div><span class="n">2,41 €</span></div>
+        <div class="b"><span>Kampus Réunion</span><div class="bar"><i style="width:3%"></i></div><span class="n">0,80 €</span></div>
+        <div class="b dim"><span>9 autres comptes</span><div class="bar"><i style="width:1%"></i></div><span class="n">0,00 €</span></div>
+      </div>
+      <div class="note">Un client qui monte = candidat à un forfait supérieur.</div>
+    </div>
+  </div>
+
+  <h2>Plafond par compte</h2>
+  <div class="filters"><span class="f on">Clients <i>12</i></span><span class="f">Avec conso <i>3</i></span><span class="f last">Tous, tests compris <i>32</i></span></div>
+  <div class="card" style="padding:0 6px">
+    <table>
+      <tr><th>Compte</th><th class="num">Aujourd'hui</th><th class="num">30 j</th><th class="num">Plafond €/jour</th><th></th></tr>
+      <tr><td>Stéphanie Payet <span class="sub">essai</span></td><td class="num">0,84 €</td><td class="num">2,41 €</td><td class="num"><input class="pl" value="2,00"></td><td><button class="btn sm">Enregistrer</button></td></tr>
+      <tr><td>Kampus Réunion</td><td class="num">0,00 €</td><td class="num">0,80 €</td><td class="num"><input class="pl" value="2,00"></td><td></td></tr>
+      <tr><td>CBO Territoria</td><td class="num">0,00 €</td><td class="num">0,00 €</td><td class="num"><input class="pl" placeholder="défaut"></td><td></td></tr>
+      <tr><td colspan="5" style="color:var(--txt-dim);font-size:12.5px">Voir plus — 3 / 12 chargés · vide = défaut 2,00 € · lu par la question suivante du compte</td></tr>
+    </table>
+  </div>
+
+  <h2>Modèle par surface</h2>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>22 surfaces · <span class="mono">claude-sonnet-4-6</span> ×16 · <span class="mono">claude-haiku-4-5</span> ×6 · source unique <span class="mono">ai_models.py</span></div>
+      <span class="more" style="color:var(--iris);font-size:12.5px;cursor:pointer">▸ voir la liste</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACTS ============ -->
+<section class="page" id="p-contacts">
+  <h1>Contacts</h1>
+  <div class="q">le carnet des 24 communes — standard officiel + tes contacts nommés, visibles sur la fiche commune de tous les clients</div>
+  <div class="communes">
+    <div class="k">Saint-Denis<small>02 62 40 04 04 · 3 contacts nommés</small></div>
+    <div class="k">Saint-Paul<small>02 62 45 80 00 · 2 contacts</small></div>
+    <div class="k">Saint-Pierre<small>02 62 35 32 00 · 1 contact</small></div>
+    <div class="k">Le Tampon<small>02 62 57 86 86 · 1 contact</small></div>
+    <div class="k">Saint-Louis<small>standard seul</small></div>
+    <div class="k">Saint-André<small>standard seul</small></div>
+    <div class="k">Sainte-Marie<small>standard seul</small></div>
+    <div class="k">Saint-Benoît<small>standard seul</small></div>
+    <div class="k">Le Port<small>standard seul</small></div>
+    <div class="k">La Possession<small>standard seul</small></div>
+    <div class="k">Saint-Joseph<small>standard seul</small></div>
+    <div class="k">Saint-Leu<small>standard seul</small></div>
+    <div class="k">…<small>12 autres communes</small></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card">
+      <h2>Saint-Denis</h2>
+      <table>
+        <tr><td>Mairie · standard</td><td class="num">02 62 40 04 04 <span class="sub">service-public.fr</span></td></tr>
+        <tr><td>Service urbanisme</td><td class="num">non porté par service-public.fr — <a class="link" href="#">ajouter</a></td></tr>
+        <tr><td>M. Grondin · instructeur ADS</td><td class="num">06 92 … <span class="sub">ajouté par toi le 02/09</span></td></tr>
+        <tr><td>CINOR · PLUi</td><td class="num">02 62 … </td></tr>
+      </table>
+      <div class="row" style="margin-top:10px"><button class="btn sm">+ Ajouter un contact</button></div>
+    </div>
+    <div class="card">
+      <h2>EPCI et État</h2>
+      <table>
+        <tr><td>CINOR</td><td class="sub">Saint-Denis, Sainte-Marie, Sainte-Suzanne</td></tr>
+        <tr><td>CIREST</td><td class="sub">6 communes de l'Est</td></tr>
+        <tr><td>TCO</td><td class="sub">5 communes de l'Ouest</td></tr>
+        <tr><td>CIVIS · CASUD</td><td class="sub">Sud</td></tr>
+        <tr><td>DEAL · ADIL</td><td class="sub">standard et site</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+<script>
+document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');document.getElementById('p-'+b.dataset.p).classList.add('on');
+  document.querySelector('main').scrollTop=0;
+}));
+</script>
+</body>
+</html>

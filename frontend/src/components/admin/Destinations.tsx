@@ -1,7 +1,6 @@
-// DESTINATIONS-1 (X5.3) — page « Destinations » : UNE page pour la question « sur quelles communes
-// le verdict destination est-il calibré ? ». Tableau commune × état (calibrée le JJ/MM + millésime /
-// à relire / RNU / non calibrée), lien vers le règlement LU, compteurs en tête. Lecture seule —
-// la calibration elle-même vit dans config/plu_destinations (module unique plu.destinations).
+// DESTINATIONS-1 (X5.3) · DASHBOARD-2 (Lot 7) — la calibration destinations n'est PLUS une page du
+// rail : c'est le DÉTAIL du réservoir `plu_destinations` du Circuit, ouvert par un lien depuis Données.
+// Même contenu (tableau commune × état de calibration + compteurs + lien règlement), lecture seule.
 import { useQuery } from '@tanstack/react-query'
 import { getAdminDestinations, type AdminDestinationsCommune } from '../../lib/api'
 import { Chip, Panel, PHead } from './AdminView'
@@ -31,13 +30,21 @@ function Compteur({ n, label, tone }: { n: number; label: string; tone: 'ok' | '
   )
 }
 
-export function DestinationsSection() {
+export function DestinationsDetail({ onBack }: { onBack?: () => void }) {
   const q = useQuery({ queryKey: ['admin-destinations'], queryFn: getAdminDestinations })
   const d = q.data
   if (q.isError) return <div className="py-10 text-center text-xs text-st-ecartee">Indisponible — réessayez.</div>
   if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
   return (
     <>
+      {onBack && (
+        <div className="mb-3 flex items-center gap-3">
+          <button onClick={onBack} className="text-[13px] text-mint hover:underline">← Retour au circuit</button>
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-txt-dim">réservoir plu_destinations</span>
+        </div>
+      )}
+      <h2 className="mb-1 font-display text-xl font-semibold text-txt-hi">Calibration des destinations</h2>
+      <p className="mb-4 text-[13px] text-txt-dim">le verdict destination est-il calibré, commune par commune ?</p>
       {/* compteurs en tête — l'état du chantier de calibration, d'un coup d'œil */}
       <div className="mb-3.5 grid grid-cols-4 gap-3.5 max-[1100px]:grid-cols-2">
         <Compteur n={d.compte.calibree} label="calibrée(s)" tone="ok" />

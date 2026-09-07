@@ -60,7 +60,9 @@ const AV_CLS: Record<Pastille, string> = {
 }
 
 interface Action { court: string; titre: string; sous: string; mk?: string }
-function prochaineAction(l: AdminLicence): Action | null {
+// DASHBOARD-2 Lot 2 — exportée pour que la jauge Clients du Pilotage lise EXACTEMENT le même
+// « à toucher » que le segment par défaut de cette page (une seule fonction, même donnée).
+export function prochaineAction(l: AdminLicence): Action | null {
   const sent = (k: string) => l.mails[k]?.statut === 'envoye'
   const rappel = (needle: string) => l.rappels.some((r) => r.includes(needle))
   // carte refusée : priorité (avant tout onboarding) — relance par le template 9.

@@ -186,7 +186,7 @@ def admin_signalements(request: Request, statut: str | None = None) -> dict:
         rows = [dict(r) for r in c.execute(text(
             "SELECT s.id, s.type, s.parcelle_id, s.bien_id, s.type_erreur, s.champ, s.commentaire,"
             "       s.utilisateur, s.statut, s.created_at, s.traite_at, s.compte_id,"
-            "       k.nom AS compte_nom"
+            "       k.nom AS compte_nom, k.plan AS compte_plan"
             "  FROM signalements s LEFT JOIN comptes k ON k.id = s.compte_id"
             f"{where} ORDER BY s.created_at DESC LIMIT 500"), {"s": statut}).mappings()]
         n_ouverts = int(c.execute(text(
@@ -281,6 +281,37 @@ def _age_backup() -> dict:
         return {"etat": "absent", "chemin": rep, "age_jours": None}
 
 
+def _horloge() -> dict:
+    """DASHBOARD-2 (Lot 1) — LED rail « Horloge » : jobs posés / attendus. `attendus` = tous les jobs
+    du registre `labuse.jobs.JOBS` ; `posés` = ceux qui ont DÉJÀ tourné ici (fichier d'état présent
+    avec une fin). Un écart (posés < attendus) est « ce qui cloche » sur ce serveur — le wrapper des
+    crons pas encore déployé. Lecture seule (fichiers d'état), jamais de sonde coûteuse."""
+    try:
+        from .. import jobs as _jobs
+        attendus = len(_jobs.JOBS)
+        poses = sum(1 for nom in _jobs.JOBS if (_jobs.lire_etat(nom) or {}).get("fin"))
+        return {"poses": poses, "attendus": attendus}
+    except Exception:  # noqa: BLE001 — la LED dit « — », jamais un 500
+        return {"poses": None, "attendus": None}
+
+
+def _verrous() -> dict:
+    """DASHBOARD-2 (Lot 1) — LED rail « Verrous » : n / 16. Les seize verrous de cohérence du Circuit
+    (`circuit_verrous.VERROUS`) ; `ok` = seize moins les cassés au DERNIER passage journalisé
+    (`synthese_pour_page`, coût page — jamais rejoué ici). Jamais joué → ok = None (« — »)."""
+    try:
+        from .. import circuit_verrous as _cv
+        from ..db import session_scope as _ss
+        sur = len(_cv.VERROUS)
+        with _ss() as _s:
+            synth = _cv.synthese_pour_page(_s)
+        if synth.get("jamais_joues"):
+            return {"ok": None, "sur": sur}
+        return {"ok": sur - len(synth.get("casses") or []), "sur": sur}
+    except Exception:  # noqa: BLE001 — la LED dit « — », jamais un 500
+        return {"ok": None, "sur": None}
+
+
 @router.get("/admin/pilotage")
 def admin_pilotage(request: Request) -> dict:
     """L'état de LABUSE en cinq secondes (héros + tuiles + LED du rail). AUCUN chiffre métier
@@ -357,16 +388,21 @@ def admin_pilotage(request: Request) -> dict:
         af_essais_24h = int(c.execute(text(
             "SELECT COUNT(*) FROM comptes WHERE statut = 'actif' AND essai_expire_at IS NOT NULL"
             " AND essai_expire_at > now() AND essai_expire_at < now() + interval '24 hours'")).scalar() or 0)
+        # DASHBOARD-2 (Lot 5) — CLIENTS SEULEMENT : on JOIN comptes et on écarte le plan 'interne'
+        # (et implicitement les compte_id NULL = pilote). Le même nombre est servi au Pilotage, à la
+        # jauge Produit et à la file « Retours » de la page Produit (tests masqués partout).
         af_signalements = 0
         if c.execute(text("SELECT to_regclass('signalements')")).scalar():
             af_signalements = int(c.execute(text(
-                "SELECT COUNT(*) FROM signalements WHERE statut = 'nouveau'")).scalar() or 0)
+                "SELECT COUNT(*) FROM signalements s JOIN comptes k ON k.id = s.compte_id"
+                " WHERE s.statut = 'nouveau' AND k.plan <> 'interne'")).scalar() or 0)
         # A4 — ventilation PAR TYPE des retours clients « Signaler » (bug/idée/question/donnée) encore
-        # ouverts (statut nouveau). Lu de la table `retours` — sert le mini-compteur du Pilotage.
+        # ouverts (statut nouveau), clients seulement. Lu de la table `retours`.
         retours_par_type: dict[str, int] = {}
         if c.execute(text("SELECT to_regclass('retours')")).scalar():
             retours_par_type = {r[0]: int(r[1]) for r in c.execute(text(
-                "SELECT type, COUNT(*) FROM retours WHERE statut = 'nouveau' GROUP BY type"))}
+                "SELECT r.type, COUNT(*) FROM retours r JOIN comptes k ON k.id = r.compte_id"
+                " WHERE r.statut = 'nouveau' AND k.plan <> 'interne' GROUP BY r.type"))}
         veilles_7j = 0
         if c.execute(text("SELECT to_regclass('alertes')")).scalar():
             veilles_7j = int(c.execute(text(
@@ -412,6 +448,15 @@ def admin_pilotage(request: Request) -> dict:
     except Exception:  # noqa: BLE001 — la tuile Santé ne casse jamais la page
         pass
 
+    # DASHBOARD-2 (Lot 2) — échecs d'envoi du jour (mail_queue) pour la jauge Système. La fonction est
+    # fournie par COMPTE-2 (mailfile.echecs_du_jour) : une seule source. Zéro échec = 0 (rien de plus).
+    mail_echecs_jour = 0
+    try:
+        from .. import mailfile
+        mail_echecs_jour = int(mailfile.echecs_du_jour(engine()))
+    except Exception:  # noqa: BLE001 — la jauge Système ne casse jamais la page Pilotage
+        mail_echecs_jour = 0
+
     for r in fil:
         r["ts"] = r["ts"].isoformat() if r["ts"] else None
     for g in gels:
@@ -420,9 +465,14 @@ def admin_pilotage(request: Request) -> dict:
         "stripe": stripe,
         "radar": radar_tuile,   # FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
         "licences_actives": licences_actives,
+        "mail_echecs_jour": mail_echecs_jour,   # DASHBOARD-2 Lot 2 — jauge Système
         "actifs_24h": actifs_24h,
         "ia_mois": {"cout_eur": float(ia["cout"]), "appels": int(ia["appels"])},
         "backup": _age_backup(),
+        # DASHBOARD-2 (Lot 1) — deux LED de rail supplémentaires : Horloge (jobs posés / attendus)
+        # et Verrous (n / 16). Lues, jamais recalculées à chaud.
+        "horloge": _horloge(),
+        "verrous": _verrous(),
         "sante": sante,
         "courrier": courrier_kpi,   # CONNEXIONS-2 Lot 4 — {a_deposer, en_cours, clos}
         # SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul, seuil TERRAIN-1 : 200)
@@ -919,25 +969,26 @@ def admin_ia(request: Request) -> dict:
         _c30 = conso_ia_30j(c)
         jours, par_licence, cout_7j = _c30["jours"], _c30["par_licence"], _c30["cout_7j"]
         quotas = [dict(r) for r in c.execute(text(
-            "SELECT id, nom, copilote_quota_jour, copilote_budget_eur FROM comptes"
+            "SELECT id, nom, plan, copilote_quota_jour, copilote_budget_eur FROM comptes"
             " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
-    # RETOURS-8 (R3) — le plafond est désormais en EUROS/jour par compte. Pour chaque licence :
-    # le budget € effectif (override ou défaut), la dépense du jour en €, le nombre d'appels (mention
-    # secondaire), et l'équivalent « ≈ N questions » au coût moyen réel du compte.
-    _budget_defaut = float(config.get_settings().copilote_budget_eur_defaut)
-    for q in quotas:
-        b = float(q["copilote_budget_eur"]) if q["copilote_budget_eur"] is not None else _budget_defaut
-        cmoy = cout_moyen_appel(int(q["id"]))
-        q["budget_eur"] = round(b, 2)
-        q["depense_eur"] = round(depense_eur_aujourdhui(int(q["id"])), 4)
-        q["equiv_questions"] = int(b / cmoy) if cmoy > 0 else None
-        q["appels_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
     from datetime import date
     import calendar
     today = date.today()
     jours_restants = calendar.monthrange(today.year, today.month)[1] - today.day
     projection = float(mois["cout"]) + (cout_7j / 7.0) * jours_restants
     appels = int(mois["appels"])
+    # DASHBOARD-2 (Lot 6) — UNE SEULE formule pour « ≈ N questions » : budget € ÷ coût moyen d'UNE
+    # question (le MÊME `cout_unitaire` que le repère « coût moyen / question »). Fini l'incohérence
+    # « 2 € ≈ 335 questions » (qui venait d'un coût moyen PAR COMPTE) vs « 0,008 € » affiché (= 250).
+    cout_unitaire = (float(mois["cout"]) / appels) if appels else float(
+        config.get_settings().copilote_cout_moyen_defaut)
+    _budget_defaut = float(config.get_settings().copilote_budget_eur_defaut)
+    for q in quotas:
+        b = float(q["copilote_budget_eur"]) if q["copilote_budget_eur"] is not None else _budget_defaut
+        q["budget_eur"] = round(b, 2)
+        q["depense_eur"] = round(depense_eur_aujourdhui(int(q["id"])), 4)
+        q["equiv_questions"] = int(round(b / cout_unitaire)) if cout_unitaire > 0 else None
+        q["appels_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
     for r in jours:
         r["jour"] = r["jour"].isoformat()
         r["cout"] = float(r["cout"])
@@ -948,10 +999,6 @@ def admin_ia(request: Request) -> dict:
     # source que celle réellement appelée (model_for), donc ce tableau EST la vérité servie.
     from .. import ai_models
     surfaces = ai_models.surfaces_table()
-    # RETOURS-8 (R3) — coût unitaire d'UNE question : le coût moyen réel (mois), repli sur le plancher
-    # config (0,008 €). Affiché « 0,008 € / question » (plus « pour 1 000 questions »).
-    cout_unitaire = (float(mois["cout"]) / appels) if appels else float(
-        config.get_settings().copilote_cout_moyen_defaut)
     return {
         "mois": {"cout_eur": float(mois["cout"]), "appels": appels,
                  "cout_moyen_question": (float(mois["cout"]) / appels) if appels else None},
@@ -1666,7 +1713,8 @@ def admin_produit(request: Request, jours: int = 30) -> dict:
         usage = usage_par_outil(c, jours)
         retours = [dict(r) for r in c.execute(text(
             "SELECT r.id, r.ts, r.type, r.message, r.statut, r.idu, r.section,"
-            " r.url, r.page, r.outil, r.navigateur, r.ecran, k.nom AS compte, r.compte_id"
+            " r.url, r.page, r.outil, r.navigateur, r.ecran, k.nom AS compte, r.compte_id,"
+            " k.plan AS compte_plan"
             " FROM retours r LEFT JOIN comptes k ON k.id = r.compte_id"
             " ORDER BY r.ts DESC LIMIT 200")).mappings()]
     for r in retours:

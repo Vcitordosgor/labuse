@@ -4,7 +4,7 @@
 // Note honnête : le solde Anthropic n'est pas exposé par l'API — conso trackée localement.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getAdminIa, postAdminLicenceQuota } from '../../lib/api'
+import { getAdminIa, postAdminLicenceQuota, type AdminIa } from '../../lib/api'
 import { ActBtn, Chip, Lbl, Panel, PHead } from './AdminView'
 
 const eur = (v?: number | null, dec = 2) =>
@@ -39,44 +39,57 @@ function BudgetEdit({ id, budget, defaut }: { id: number; budget: number | null;
 
 export function IaSection() {
   const q = useQuery({ queryKey: ['admin-ia'], queryFn: getAdminIa, refetchInterval: 120_000 })
+  // DASHBOARD-2 (Lot 6) — filtre de la table plafond : clients / avec conso / tous (tests compris).
+  const [fPlafond, setFPlafond] = useState<'clients' | 'conso' | 'tous'>('clients')
+  // DASHBOARD-2 (Lot 6) — la liste « modèle par surface » est REPLIÉE par défaut (résumé + voir la liste).
+  const [voirModeles, setVoirModeles] = useState(false)
   const d = q.data
   if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
   const maxJour = Math.max(...d.jours.map((x) => x.cout), 0.0001)
   const maxLic = Math.max(...d.par_licence.map((x) => x.cout), 0.0001)
   // ADMIN-1 AD6.2 — 30 jours (appels) + coût 30 j par compte, joints depuis par_licence.
   const lic30 = new Map(d.par_licence.map((x) => [x.compte_id, x] as const))
+  // DASHBOARD-2 (Lot 6) — fenêtres NOMMÉES : le mois courant en toutes lettres, « 30 j » partout.
+  const moisNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
+  // filtres de la table plafond (compteurs + liste filtrée).
+  const estClient = (k: AdminIa['quotas'][number]) => k.plan !== 'interne'
+  const aConso = (k: AdminIa['quotas'][number]) => ((lic30.get(k.id)?.cout ?? 0) > 0) || k.depense_eur > 0
+  const cptClients = d.quotas.filter(estClient).length
+  const cptConso = d.quotas.filter(aConso).length
+  const quotasVus = fPlafond === 'clients' ? d.quotas.filter(estClient)
+    : fPlafond === 'conso' ? d.quotas.filter(aConso) : d.quotas
   return (
     <>
-      <div className="mb-3.5 flex justify-end">
-        <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noreferrer"
-          className="rounded-lg border border-cp-ia-border bg-cp-ia-bg/50 px-3 py-1.5 text-xs font-medium text-cp-ia hover:brightness-125">
-          Recharger le crédit ↗
-        </a>
-      </div>
-      <div className="grid grid-cols-4 gap-3.5 max-[1100px]:grid-cols-2">
+      {/* DASHBOARD-2 (Lot 6) — CINQ repères : mois · projection · coût moyen · plafond défaut · crédit. */}
+      <div className="grid grid-cols-5 gap-3 max-[1100px]:grid-cols-2">
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Conso du mois</Lbl>
+          <Lbl>{moisNom}</Lbl>
           <div className="font-display text-2xl font-semibold text-cp-ia">{eur(d.mois.cout_eur)}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">≈ {d.mois.appels.toLocaleString('fr-FR')} appels servis</div>
-        </div>
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Coût unitaire</Lbl>
-          {/* RETOURS-8 (R3) — « 0,008 € / question » seulement (plus « pour 1 000 questions »). */}
-          <div className="font-display text-2xl font-semibold text-cp-ia">
-            {`${eurUne(d.cout_unitaire_question_eur)} / question`}
-          </div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">coût moyen réel (ledger ia_log, mois courant)</div>
-        </div>
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Plafond défaut / jour</Lbl>
-          {/* RETOURS-8 (R3) — le plafond par défaut est en EUROS/jour. */}
-          <div className="font-display text-2xl font-semibold text-txt-hi">{eur(d.budget_defaut_eur)}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">défaut — plafond € par compte modifiable ci-dessous</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">{d.mois.appels.toLocaleString('fr-FR')} questions servies</div>
         </div>
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Projection fin de mois</Lbl>
           <div className="font-display text-2xl font-semibold text-cp-ia">≈ {eur(d.projection_fin_mois_eur, 0)}</div>
           <div className="mt-1 text-[11.5px] text-txt-mut">au rythme des 7 derniers jours</div>
+        </div>
+        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
+          <Lbl>Coût moyen</Lbl>
+          {/* Une SEULE formule : c'est ce coût qui donne le « ≈ N questions » de la table ci-dessous. */}
+          <div className="font-display text-2xl font-semibold text-cp-ia">{eurUne(d.cout_unitaire_question_eur)}</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">par question ({moisNom}, ledger ia_log)</div>
+        </div>
+        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
+          <Lbl>Plafond défaut / jour</Lbl>
+          <div className="font-display text-2xl font-semibold text-txt-hi">{eur(d.budget_defaut_eur)}</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">par compte, modifiable ci-dessous</div>
+        </div>
+        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
+          <Lbl>Crédit Anthropic</Lbl>
+          <div className="font-display text-2xl font-semibold text-txt-mut">—</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">
+            non exposé par l'API ·{' '}
+            <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noreferrer" className="text-cp-ia hover:underline">recharger ↗</a>
+          </div>
         </div>
       </div>
 
@@ -124,6 +137,11 @@ export function IaSection() {
       <Panel className="mt-3.5">
         <PHead>
           Plafond quotidien par compte <Chip tone="ia">recherche NL + Copilote /ask + missions</Chip>
+          <span className="ml-auto flex flex-wrap items-center gap-1.5">
+            <Chip tone={fPlafond === 'clients' ? 'ia' : 'off'} onClick={() => setFPlafond('clients')}>Clients {cptClients}</Chip>
+            <Chip tone={fPlafond === 'conso' ? 'ia' : 'off'} onClick={() => setFPlafond('conso')}>Avec conso {cptConso}</Chip>
+            <Chip tone={fPlafond === 'tous' ? 'ia' : 'off'} onClick={() => setFPlafond('tous')}>Tous, tests compris {d.quotas.length}</Chip>
+          </span>
         </PHead>
         <table className="w-full text-[13px]">
           <thead>
@@ -136,7 +154,7 @@ export function IaSection() {
             </tr>
           </thead>
           <tbody>
-            {d.quotas.map((k) => {
+            {quotasVus.map((k) => {
               const l = lic30.get(k.id)
               return (
                 <tr key={k.id} className="border-b border-line last:border-b-0 hover:bg-surface-3">
@@ -162,20 +180,35 @@ export function IaSection() {
       </Panel>
 
       {/* RETOURS-7 Z7 — QUEL MODÈLE SERT CHAQUE SURFACE IA. Lu depuis la config (registre unique
-          ai_models.SURFACES + override env), jamais un nom en dur : ce tableau EST la vérité servie. */}
+          ai_models.SURFACES + override env), jamais un nom en dur : ce tableau EST la vérité servie.
+          DASHBOARD-2 (Lot 6) — REPLIÉ par défaut : un résumé (N surfaces · modèle ×count) + voir la liste. */}
       <Panel className="mt-3.5">
-        <PHead>Modèle par surface IA <Chip tone="ia">config — ai_models.SURFACES</Chip></PHead>
-        <table className="w-full text-[13px]">
-          <tbody>
-            {d.modeles_par_surface.map((s) => (
-              <tr key={s.kind} data-ia-surface={s.kind} className="border-b border-line last:border-b-0 hover:bg-surface-3">
-                <td className="px-4 py-2.5 text-txt">{s.label}</td>
-                <td className="px-4 py-2.5 text-right font-mono text-xs text-cp-ia">{s.model}</td>
-                <td className="px-4 py-2.5 text-right font-mono text-[10.5px] text-txt-dim">{s.kind}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <PHead>Modèle par surface IA <Chip tone="ia">config — ai_models.py</Chip></PHead>
+        <div className="flex items-center justify-between gap-3 px-4 py-3 text-[12.5px]">
+          <div className="text-txt-mut">
+            {d.modeles_par_surface.length} surface{d.modeles_par_surface.length > 1 ? 's' : ''}
+            {Object.entries(d.modeles_par_surface.reduce<Record<string, number>>((acc, s) => { acc[s.model] = (acc[s.model] ?? 0) + 1; return acc }, {}))
+              .sort((a, b) => b[1] - a[1])
+              .map(([m, n]) => <span key={m}> · <span className="font-mono text-cp-ia">{m}</span> ×{n}</span>)}
+            {' '}· source unique <span className="font-mono">ai_models.py</span>
+          </div>
+          <button onClick={() => setVoirModeles((v) => !v)} className="whitespace-nowrap text-[12.5px] text-cp-ia hover:underline">
+            {voirModeles ? 'replier' : '▸ voir la liste'}
+          </button>
+        </div>
+        {voirModeles && (
+          <table className="w-full border-t border-line text-[13px]">
+            <tbody>
+              {d.modeles_par_surface.map((s) => (
+                <tr key={s.kind} data-ia-surface={s.kind} className="border-b border-line last:border-b-0 hover:bg-surface-3">
+                  <td className="px-4 py-2.5 text-txt">{s.label}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-cp-ia">{s.model}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-[10.5px] text-txt-dim">{s.kind}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
           Un seul point de configuration du modèle par usage (défaut au registre, override
           <span className="font-mono"> LABUSE_IA_MODELE_&lt;KIND&gt;</span>). Aucun nom de modèle codé en dur ailleurs.

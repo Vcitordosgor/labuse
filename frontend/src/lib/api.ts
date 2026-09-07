@@ -1273,9 +1273,13 @@ export interface AdminPilotage {
   stripe: StripeApercu
   licences_actives: number
   actifs_24h: number
+  mail_echecs_jour?: number   // DASHBOARD-2 (Lot 2) — échecs d'envoi du jour (mail_queue), jauge Système
   ia_mois: { cout_eur: number; appels: number }
   // RETOURS-8 (R10) — « non_configure » (répertoire absent) distinct d'« absent » (vide) ; + fichier/taille.
   backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent' | 'non_configure'; chemin: string; age_jours: number | null; mtime?: string; fichier?: string; taille_mo?: number }
+  // DASHBOARD-2 (Lot 1) — LED rail : Horloge (jobs posés / attendus) et Verrous (ok / 16). null = « — ».
+  horloge?: { poses: number | null; attendus: number | null }
+  verrous?: { ok: number | null; sur: number | null }
   // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
   sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
   courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
@@ -1413,7 +1417,7 @@ export interface AdminIa {
   budget_defaut_eur: number
   // RETOURS-8 (R3) — par compte : budget €/jour, dépense du jour en €, équivalent « ≈ N questions »,
   // nombre d'appels du jour (mention secondaire).
-  quotas: Array<{ id: number; nom: string; copilote_budget_eur: number | null; budget_eur: number
+  quotas: Array<{ id: number; nom: string; plan?: string | null; copilote_budget_eur: number | null; budget_eur: number
     depense_eur: number; equiv_questions: number | null; appels_aujourdhui: number }>
   // RETOURS-7 Z7 — quel modèle sert chaque surface IA (lu depuis la config, jamais un nom en dur)
   modeles_par_surface: Array<{ kind: string; label: string; model: string }>
@@ -1426,6 +1430,7 @@ export interface Signalement {
   type_erreur: string; champ: string | null; commentaire: string | null; utilisateur: string | null
   statut: 'nouveau' | 'traite'; created_at: string | null; traite_at: string | null
   compte_id: number | null; compte_nom: string | null
+  compte_plan?: string | null   // DASHBOARD-2 (Lot 5) — 'interne' = compte de test, masqué par défaut
   fiche_lien: string | null   // RETOURS-11F M11 — lien cliquable vers la fiche d'origine (signalement fiche)
 }
 export const getAdminSignalements = (statut?: 'nouveau' | 'traite') =>
@@ -1595,7 +1600,7 @@ export const postAdminFluxBascule = (run: string) =>
 // D7 — Produit
 export interface AdminProduit {
   usage: Array<{ outil: string; n: number }>
-  retours: Array<{ id: number; ts: string | null; type: string; message: string; statut: string; compte: string | null; idu?: string | null; section?: string | null; fiche_lien?: string | null }>
+  retours: Array<{ id: number; ts: string | null; type: string; message: string; statut: string; compte: string | null; compte_plan?: string | null; idu?: string | null; section?: string | null; fiche_lien?: string | null }>
   jours?: number
 }
 // ADMIN-1 (AD7) — période au choix : 7 / 30 / 90 j (défaut 30).
@@ -1609,11 +1614,17 @@ export interface AdminDemandeCourrier {
   parcelles: string[] | null; client: string | null
   // ADMIN-1 (AD8) — lien vers la piste CRM d'origine (et le projet), nullable.
   pipeline_entry_id: number | null; projet_id: number | null
+  // DASHBOARD-2 (Lot 3) — propriétaire = nombre de personnes morales (jamais un particulier) ;
+  // compte_plan = 'interne' pour les comptes de test/pilote (masqués par défaut).
+  proprietaire?: string | null; compte_plan?: string | null
 }
 export const getAdminCourrierDemandes = () =>
   j<{ demandes: AdminDemandeCourrier[]; statuts: string[]; statut_libelles: Record<string, string> }>('/courrier/admin/demandes')
 export const postAdminCourrierStatut = (id: number, statut: string) =>
   j<{ ok: boolean }>(`/courrier/admin/demandes/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+// DASHBOARD-2 (Lot 3) — « Marquer les N déposés » en bloc.
+export const postAdminCourrierDeposerTout = () =>
+  j<{ ok: boolean; deposes: number }>('/courrier/admin/demandes/deposer-tout', { method: 'POST' })
 export const urlCourrierPdf = '/courrier/pdf'
 
 // ── Moteurs (Vague 4) ──
@@ -1834,6 +1845,10 @@ export interface RadarCheck {
   intake_vide_48h: boolean; derniere_saisie: string | null
   // RV2-V1 — état du répertoire de captures (écriture) : le défaut prod se voit AVANT le 1er dépôt.
   captures_dir_ok: boolean; captures_dir: string
+  // DASHBOARD-2 (Lot 4) — bilan du dernier dépôt (persistant) + « Le flux ».
+  dernier_depot: { date_depot: string | null; nom_fichier: string | null; nb_annonces: number | null
+    nb_nouvelles: number | null; nb_maj: number | null; nb_a_qualifier: number | null } | null
+  flux: { en_vie: number; biens: number; rattachees: number; paires: number; copros_non_servies: number }
 }
 export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
   j<RadarProposition>('/admin/radar/deposer', {

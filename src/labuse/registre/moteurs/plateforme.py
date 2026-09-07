@@ -42,8 +42,11 @@ def bascules_tiers_hauts(db, run_courant: str | None, run_precedent: str | None)
 
 
 def comptes_actifs(c) -> int:
-    """n_comptes_actifs — count comptes au statut actif (tuile Pilotage). Extraction de
-    api/dashboard.py:admin_pilotage."""
+    """n_comptes_actifs — count comptes au statut actif (registre/témoin métier). Extraction de
+    api/dashboard.py:admin_pilotage.
+    NB DASHBOARD-2 : le COMPTEUR UNIQUE de « licences actives » (payantes : hors essai/interne/test),
+    lu par la jauge Clients, le rail et la page Comptes, est `comptes.licences_actives` (livré par
+    COMPTE-2). Cette fonction-ci reste le compteur métier « comptes au statut actif », inchangée."""
     return int(c.execute(text("SELECT COUNT(*) FROM comptes WHERE statut = 'actif'")).scalar() or 0)
 
 
@@ -77,11 +80,15 @@ def conso_ia_30j(c) -> dict:
 
 def usage_par_outil(c, jours: int) -> list[dict]:
     """usage_outil_n — compte d'événements d'usage par outil sur la fenêtre choisie (7/30/90 j).
-    Extraction de api/dashboard.py:admin_produit."""
+    Extraction de api/dashboard.py:admin_produit.
+    DASHBOARD-2 (Lot 5) — CLIENTS SEULEMENT : les ouvertures faites depuis un compte interne / de test
+    (comptes.plan = 'interne') ou sans compte (pilote/admin) sont EXCLUES — c'est l'usage réel du produit."""
     return [dict(r) for r in c.execute(text(
-        "SELECT outil, COUNT(*) AS n FROM usage_events"
-        " WHERE kind = 'outil' AND outil IS NOT NULL AND ts > now() - make_interval(days => :j)"
-        " GROUP BY outil ORDER BY COUNT(*) DESC"), {"j": jours}).mappings()]
+        "SELECT ue.outil, COUNT(*) AS n FROM usage_events ue"
+        " JOIN comptes k ON k.id = ue.compte_id"
+        " WHERE ue.kind = 'outil' AND ue.outil IS NOT NULL AND k.plan <> 'interne'"
+        "   AND ue.ts > now() - make_interval(days => :j)"
+        " GROUP BY ue.outil ORDER BY COUNT(*) DESC"), {"j": jours}).mappings()]
 
 
 def notifications_non_lues(db, cid: int | None, *, cloche_filter_sql: str = "") -> int:
