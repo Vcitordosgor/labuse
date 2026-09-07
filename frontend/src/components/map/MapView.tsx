@@ -207,9 +207,33 @@ const vefaColorExpr = ['match', ['get', 'subtype'],
   '#3B4046'] as unknown as maplibregl.ExpressionSpecification
 // opacité : aplat lisible pour les tranches peintes, plus discret pour le gris sous-seuil (la hachure porte).
 const vefaOpacityExpr = ['match', ['get', 'subtype'], 'sous_seuil', 0.28, 0.55] as unknown as maplibregl.ExpressionSpecification
+// SOURCES-1 lot 1 — PEB : la COULEUR dit la zone (A rouge → D gris), expression data-driven par
+// subtype (comme vefa). Une zone inconnue prend le gris D (le back n'ingère que a/b/c/d, garde filtre).
+const pebColorExpr = (t: MapTokens) => ['match', ['get', 'subtype'],
+  'a', t.pebRamp.a, 'b', t.pebRamp.b, 'c', t.pebRamp.c, 'd', t.pebRamp.d,
+  t.pebRamp.d] as unknown as maplibregl.ExpressionSpecification
+// SOURCES-1 lot 3 — classement sonore : violet gradué par catégorie (1 = grands axes, plus sombre).
+const bruitColorExpr = (t: MapTokens) => ['match', ['get', 'subtype'],
+  'cat1', t.bruitRamp.cat1, 'cat2', t.bruitRamp.cat2, 'cat3', t.bruitRamp.cat3,
+  'cat4', t.bruitRamp.cat4, 'cat5', t.bruitRamp.cat5,
+  t.bruitRamp.cat3] as unknown as maplibregl.ExpressionSpecification
 const OVERLAYS = {
   // SECTEUR-2b (U1) — prix du neuf VEFA (aplat commune) : teinte par tranche + gris pour sous_seuil.
   vefa_neuf: { paint: { 'fill-color': vefaColorExpr, 'fill-outline-color': '#0b0f14', 'fill-opacity': vefaOpacityExpr } },
+  // SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP), aplat + contour teinte.
+  er: { paint: { 'fill-color': T_SOMBRE.er, 'fill-opacity': T_SOMBRE.erOpacity, 'fill-outline-color': T_SOMBRE.er } },
+  ebc: { paint: { 'fill-color': T_SOMBRE.ebc, 'fill-opacity': T_SOMBRE.ebcOpacity, 'fill-outline-color': T_SOMBRE.ebc } },
+  dpu: { paint: { 'fill-color': T_SOMBRE.dpu, 'fill-opacity': T_SOMBRE.dpuOpacity, 'fill-outline-color': T_SOMBRE.dpu } },
+  peb: { paint: { 'fill-color': pebColorExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.pebOpacity, 'fill-outline-color': pebColorExpr(T_SOMBRE) } },
+  sup: { paint: { 'fill-color': T_SOMBRE.sup, 'fill-opacity': T_SOMBRE.supOpacity, 'fill-outline-color': T_SOMBRE.sup } },
+  // SOURCES-1 lot 2 — nature et eau (aplats ; le DPF est une LIGNE, couche dédiée ov-dpf).
+  zone_humide: { paint: { 'fill-color': T_SOMBRE.zoneHumide, 'fill-opacity': T_SOMBRE.zoneHumideOpacity, 'fill-outline-color': T_SOMBRE.zoneHumide } },
+  // SOURCES-1 lot 3 — sols (SIS aplat, CASIAS points via couche circle dédiée) et bruit.
+  sis: { paint: { 'fill-color': T_SOMBRE.sis, 'fill-opacity': T_SOMBRE.sisOpacity, 'fill-outline-color': T_SOMBRE.sis } },
+  bruit_route: { paint: { 'fill-color': bruitColorExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.bruitOpacity, 'fill-outline-color': bruitColorExpr(T_SOMBRE) } },
+  bruit_carte: { paint: { 'fill-color': T_SOMBRE.bruitCarte, 'fill-opacity': T_SOMBRE.bruitCarteOpacity, 'fill-outline-color': T_SOMBRE.bruitCarte } },
+  enp: { paint: { 'fill-color': T_SOMBRE.enp, 'fill-opacity': T_SOMBRE.enpOpacity, 'fill-outline-color': T_SOMBRE.enp } },
+  rpg: { paint: { 'fill-color': T_SOMBRE.rpg, 'fill-opacity': T_SOMBRE.rpgOpacity, 'fill-outline-color': T_SOMBRE.rpg } },
   zonage: { paint: { 'fill-color': zonageFillExpr(T_SOMBRE), 'fill-opacity': T_SOMBRE.zonageOpacity } },
   // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
   // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
@@ -233,6 +257,8 @@ const OVERLAYS = {
   frr: { paint: { 'fill-color': dispoColorExpr(T_SOMBRE, 'frr'), 'fill-outline-color': dispoColorExpr(T_SOMBRE, 'frr'), 'fill-opacity': T_SOMBRE.dispoFillOpacity } },
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
+
+
 
 // ═══ FOND-SOMBRE — le Sombre n'a PLUS de raster (CARTO clé requise → retiré, décision Vic) ═══
 // Le rendu Sombre est reproduit aux teintes EFFECTIVEMENT MESURÉES à l'écran avant retrait
@@ -331,6 +357,22 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
   // M137-X — aplat plein (une opacité) + hachure sur l'état « fort » ; le motif suit le thème.
   set('ov-zfang', 'fill-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-outline-color', dispoColorExpr(t, 'zfang')); set('ov-zfang', 'fill-opacity', t.dispoFillOpacity)
   set('ov-frr', 'fill-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-outline-color', dispoColorExpr(t, 'frr')); set('ov-frr', 'fill-opacity', t.dispoFillOpacity)
+  // SOURCES-1 lot 1 — contraintes du droit des sols : teinte + opacité suivent le thème.
+  set('ov-er', 'fill-color', t.er); set('ov-er', 'fill-opacity', t.erOpacity); set('ov-er', 'fill-outline-color', t.er)
+  set('ov-ebc', 'fill-color', t.ebc); set('ov-ebc', 'fill-opacity', t.ebcOpacity); set('ov-ebc', 'fill-outline-color', t.ebc)
+  set('ov-dpu', 'fill-color', t.dpu); set('ov-dpu', 'fill-opacity', t.dpuOpacity); set('ov-dpu', 'fill-outline-color', t.dpu)
+  set('ov-peb', 'fill-color', pebColorExpr(t)); set('ov-peb', 'fill-opacity', t.pebOpacity); set('ov-peb', 'fill-outline-color', pebColorExpr(t))
+  set('ov-sup', 'fill-color', t.sup); set('ov-sup', 'fill-opacity', t.supOpacity); set('ov-sup', 'fill-outline-color', t.sup)
+  // SOURCES-1 lot 2 — nature et eau : teinte + opacité suivent le thème.
+  set('ov-dpf', 'line-color', t.dpf)
+  set('ov-zone_humide', 'fill-color', t.zoneHumide); set('ov-zone_humide', 'fill-opacity', t.zoneHumideOpacity); set('ov-zone_humide', 'fill-outline-color', t.zoneHumide)
+  set('ov-enp', 'fill-color', t.enp); set('ov-enp', 'fill-opacity', t.enpOpacity); set('ov-enp', 'fill-outline-color', t.enp)
+  set('ov-rpg', 'fill-color', t.rpg); set('ov-rpg', 'fill-opacity', t.rpgOpacity); set('ov-rpg', 'fill-outline-color', t.rpg)
+  // SOURCES-1 lot 3 — sols et bruit : teinte + opacité suivent le thème.
+  set('ov-sis', 'fill-color', t.sis); set('ov-sis', 'fill-opacity', t.sisOpacity); set('ov-sis', 'fill-outline-color', t.sis)
+  set('ov-casias', 'circle-color', t.casias); set('ov-casias-fill', 'fill-color', t.casias); set('ov-casias-fill', 'fill-outline-color', t.casias)
+  set('ov-bruit_route', 'fill-color', bruitColorExpr(t)); set('ov-bruit_route', 'fill-opacity', t.bruitOpacity); set('ov-bruit_route', 'fill-outline-color', bruitColorExpr(t))
+  set('ov-bruit_carte', 'fill-color', t.bruitCarte); set('ov-bruit_carte', 'fill-opacity', t.bruitCarteOpacity); set('ov-bruit_carte', 'fill-outline-color', t.bruitCarte)
   for (const [src, , tok] of DISPO_TRAMES) {
     set(`${src}-trame`, 'fill-pattern', `trame-${tok}-${clair ? 'clair' : 'sombre'}`)
     set(`${src}-trame`, 'fill-opacity', t.aleaTrameOpacity)
@@ -658,6 +700,25 @@ export function MapView() {
   const frr = useQuery({ queryKey: ['layer', 'frr', commune], queryFn: () => getMapLayer('frr'), enabled: layers.frr })
   // SECTEUR-2 (T4) — prix du neuf VEFA (aplat commune), choropleth par tranche.
   const vefaNeuf = useQuery({ queryKey: ['layer', 'vefa_neuf', commune], queryFn: () => getMapLayer('vefa_neuf'), enabled: layers.vefa_neuf })
+  // SOURCES-1 lot 1 — contraintes du droit des sols. er/ebc = kinds VIRTUELS résolus côté back
+  // (plu_gpu_prescription filtré typepsc 05/01) ; dpu par commune ; peb/sup légers, servis île.
+  const erQ = useQuery({ queryKey: ['layer', 'er', commune], queryFn: () => getMapLayer('er', 10_000), enabled: layers.er })
+  const ebcQ = useQuery({ queryKey: ['layer', 'ebc', commune], queryFn: () => getMapLayer('ebc', 10_000), enabled: layers.ebc })
+  const dpuQ = useQuery({ queryKey: ['layer', 'dpu', commune], queryFn: () => getMapLayer('dpu'), enabled: layers.dpu })
+  const pebQ = useQuery({ queryKey: ['layer', 'peb', commune], queryFn: () => getMapLayer('peb'), enabled: layers.peb })
+  const supQ = useQuery({ queryKey: ['layer', 'sup', commune], queryFn: () => getMapLayer('sup'), enabled: layers.sup })
+  // SOURCES-1 lot 2 — nature et eau. dpf/zone_humide/enp = couches d'île (commune NULL) ;
+  // rpg = kind virtuel (safer, 38 460 déclarations) par commune, plafond relevé.
+  const dpfQ = useQuery({ queryKey: ['layer', 'dpf'], queryFn: () => getMapLayer('dpf'), enabled: layers.dpf })
+  const zhQ = useQuery({ queryKey: ['layer', 'zone_humide'], queryFn: () => getMapLayer('zone_humide', 10_000), enabled: layers.zone_humide })
+  const enpQ = useQuery({ queryKey: ['layer', 'enp'], queryFn: () => getMapLayer('enp'), enabled: layers.enp })
+  const rpgQ = useQuery({ queryKey: ['layer', 'rpg', commune], queryFn: () => getMapLayer('rpg', 40_000), enabled: layers.rpg })
+  // SOURCES-1 lot 3 — sols et bruit. sis/casias = kinds virtuels (sol_pollue filtré) ;
+  // bruit_route par commune (1 004 bandes) ; bruit_carte = couche d'île (6 entités).
+  const sisQ = useQuery({ queryKey: ['layer', 'sis'], queryFn: () => getMapLayer('sis'), enabled: layers.sis })
+  const casiasQ = useQuery({ queryKey: ['layer', 'casias'], queryFn: () => getMapLayer('casias', 10_000), enabled: layers.casias })
+  const bruitQ = useQuery({ queryKey: ['layer', 'bruit_route', commune], queryFn: () => getMapLayer('bruit_route', 10_000), enabled: layers.bruit_route })
+  const bruitCarteQ = useQuery({ queryKey: ['layer', 'bruit_carte'], queryFn: () => getMapLayer('bruit_carte'), enabled: layers.bruit_carte })
   // M55-E : la couche équipements COMPLÈTE (limit 20000 = plafond endpoint ; 15 214 en base,
   // 271 Ko gzippé) — le défaut 6000 tronquait 61 % des marqueurs en mode île (centre de
   // Saint-Denis vide, Hauts couverts : l'ordre des lignes décidait des survivants).
@@ -941,6 +1002,19 @@ export function MapView() {
       // HTB mais tireté COURT et FIN (la forme et la valeur les séparent), teinte gris-sarcelle.
       m.addLayer({ id: 'ov-mt', type: 'line', source: 'ov-mt', layout: { visibility: 'none' },
         paint: { 'line-color': T_SOMBRE.mt, 'line-width': 1.1, 'line-dasharray': [2, 1.6], 'line-opacity': 0.85 } })
+      // SOURCES-1 lot 2 — DPF : trait d'eau PLEIN (domaine public fluvial, marchepied 3,25 m).
+      m.addSource('ov-dpf', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-dpf', type: 'line', source: 'ov-dpf', layout: { visibility: 'none' },
+        paint: { 'line-color': T_SOMBRE.dpf, 'line-width': 2.0, 'line-opacity': 0.9 } })
+      // SOURCES-1 lot 3 — CASIAS : 480 sites en POINT (cercles) + 29 emprises (aplat), même source.
+      m.addSource('ov-casias', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-casias-fill', type: 'fill', source: 'ov-casias', layout: { visibility: 'none' },
+        filter: ['==', ['geometry-type'], 'Polygon'],
+        paint: { 'fill-color': T_SOMBRE.casias, 'fill-opacity': 0.24, 'fill-outline-color': T_SOMBRE.casias } })
+      m.addLayer({ id: 'ov-casias', type: 'circle', source: 'ov-casias', layout: { visibility: 'none' },
+        filter: ['==', ['geometry-type'], 'Point'],
+        paint: { 'circle-color': T_SOMBRE.casias, 'circle-radius': 4, 'circle-opacity': 0.85,
+                 'circle-stroke-color': '#00000066', 'circle-stroke-width': 1 } })
       // RETOURS-13 R5 — TCSP : trait PLEIN ÉPAIS pour les tronçons EN SITE PROPRE (la voie dédiée
       // se lit d'un coup) ; trait FIN TIRETÉ pour les simples couloirs bus (dits, jamais confondus) ;
       // STATIONS dérivées en disques (le drapeau < 800 m se mesure à la station, pas au tracé).
@@ -1381,7 +1455,10 @@ export function MapView() {
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['znieff', znieff], ['anru', anru], ['alea', alea],
       ['trans-ligne', transLignes], ['trans-arret', transArrets], ['pole', poles], ['tele', tele], ['axe', axes], ['ht', lignesHt], ['mt', lignesMt], ['tcsp', tcspTroncons], ['tcsp-st', tcspStations], ['tcsp-zone', tcspZone],
-      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf]]   // M134 dispositifs · M137-U znieff · T4 vefa
+      ['qpv', qpv], ['tva_primo', tvaPrimo], ['zfang', zfang], ['frr', frr], ['vefa_neuf', vefaNeuf],   // M134 dispositifs · M137-U znieff · T4 vefa
+      ['er', erQ], ['ebc', ebcQ], ['dpu', dpuQ], ['peb', pebQ], ['sup', supQ],   // SOURCES-1 lot 1 — droit des sols
+      ['dpf', dpfQ], ['zone_humide', zhQ], ['enp', enpQ], ['rpg', rpgQ],   // SOURCES-1 lot 2 — nature et eau
+      ['sis', sisQ], ['casias', casiasQ], ['bruit_route', bruitQ], ['bruit_carte', bruitCarteQ]]   // SOURCES-1 lot 3 — sols et bruit
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
     // M137-U — équipements BPE (points, source dédiée) : bind comme les OSM.
     if (equipBpe.data) {
@@ -1417,6 +1494,27 @@ export function MapView() {
       useApp.getState().setToast(commune ? `Aucune bande TVA réduite (QPV + 500 m) sur ${commune}.`
                                          : 'Aucune bande TVA réduite (QPV + 500 m) sur ce cadrage.')
     }
+    // SOURCES-1 lot 1 — couches activées mais vides : le dire, avec la BONNE raison (règle 3 du
+    // mandat : une commune qui n'a pas publié n'est pas un zéro — le DPU est dit « non publié »).
+    if (layers.dpu && dpuQ.data && dpuQ.data.features.length === 0) {
+      useApp.getState().setToast(commune
+        ? `Aucun périmètre DPU publié au Géoportail de l'urbanisme pour ${commune} — non publié par la commune, pas forcément inexistant.`
+        : 'Aucun périmètre DPU publié au GPU sur ce cadrage.')
+    }
+    if (layers.peb && pebQ.data && pebQ.data.features.length === 0) {
+      useApp.getState().setToast('Aucune zone PEB sur ce cadrage — Roland-Garros est servi (annexes GPU) ; le PEB de Pierrefonds n’est pas publié au GPU.')
+    }
+    if (layers.er && erQ.data && erQ.data.features.length === 0) {
+      useApp.getState().setToast(commune ? `Aucun emplacement réservé publié au GPU sur ${commune}.`
+                                         : 'Aucun emplacement réservé sur ce cadrage.')
+    }
+    if (layers.zone_humide && zhQ.data && zhQ.data.features.length === 0) {
+      useApp.getState().setToast('Aucune zone humide inventoriée sur ce cadrage — les inventaires DEAL couvrent des SECTEURS (2003→2019) : l’absence d’inventaire n’est pas une preuve d’absence.')
+    }
+    if (layers.ebc && ebcQ.data && ebcQ.data.features.length === 0) {
+      useApp.getState().setToast(commune ? `Aucun espace boisé classé publié au GPU sur ${commune}.`
+                                         : 'Aucun espace boisé classé sur ce cadrage.')
+    }
     // M6.1 item 2 : 50 pas — servis île entière (commune NULL en base) ; en mode commune,
     // même pattern honnête que l'ANRU : commune SANS littoral → toast, jamais un silence.
     // M-RENOUV : calque Renouvellement — si le serveur tronque (top rangs), le DIRE (toast),
@@ -1439,7 +1537,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, znieff.data, anru.data, alea.data, transLignes.data, transArrets.data, poles.data, tele.data, axes.data, lignesHt.data, lignesMt.data, tcspTroncons.data, tcspStations.data, tcspZone.data, equip.data, equipBpe.data, cinquantePas.data, renouv.data, qpv.data, tvaPrimo.data, zfang.data, frr.data, vefaNeuf.data, erQ.data, ebcQ.data, dpuQ.data, pebQ.data, supQ.data, dpfQ.data, zhQ.data, enpQ.data, rpgQ.data, sisQ.data, casiasQ.data, bruitQ.data, bruitCarteQ.data, layers.qpv, layers.tva_primo, layers.cinquante_pas, layers.renouv, layers.vefa_neuf, layers.er, layers.ebc, layers.dpu, layers.peb, layers.sup, layers.dpf, layers.zone_humide, layers.enp, layers.rpg, layers.sis, layers.casias, layers.bruit_route, layers.bruit_carte, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -1557,6 +1655,23 @@ export function MapView() {
     m.setLayoutProperty('ov-frr-trame', 'visibility', vis(layers.frr))       // M137-Y — hachure FRR en partie (moindre)
     m.setLayoutProperty('ov-vefa_neuf', 'visibility', vis(layers.vefa_neuf)) // SECTEUR-2 (T4) — prix du neuf VEFA
     m.setLayoutProperty('ov-vefa_neuf-trame', 'visibility', vis(layers.vefa_neuf)) // U1 — hachure sous-seuil
+    // SOURCES-1 lot 1 — contraintes du droit des sols
+    m.setLayoutProperty('ov-er', 'visibility', vis(layers.er))
+    m.setLayoutProperty('ov-ebc', 'visibility', vis(layers.ebc))
+    m.setLayoutProperty('ov-dpu', 'visibility', vis(layers.dpu))
+    m.setLayoutProperty('ov-peb', 'visibility', vis(layers.peb))
+    m.setLayoutProperty('ov-sup', 'visibility', vis(layers.sup))
+    // SOURCES-1 lot 2 — nature et eau
+    m.setLayoutProperty('ov-dpf', 'visibility', vis(layers.dpf))
+    m.setLayoutProperty('ov-zone_humide', 'visibility', vis(layers.zone_humide))
+    m.setLayoutProperty('ov-enp', 'visibility', vis(layers.enp))
+    m.setLayoutProperty('ov-rpg', 'visibility', vis(layers.rpg))
+    // SOURCES-1 lot 3 — sols et bruit
+    m.setLayoutProperty('ov-sis', 'visibility', vis(layers.sis))
+    m.setLayoutProperty('ov-casias', 'visibility', vis(layers.casias))
+    m.setLayoutProperty('ov-casias-fill', 'visibility', vis(layers.casias))
+    m.setLayoutProperty('ov-bruit_route', 'visibility', vis(layers.bruit_route))
+    m.setLayoutProperty('ov-bruit_carte', 'visibility', vis(layers.bruit_carte))
     // M106 P1 : les deux couches d'aléa (aplat + contour suivent leur toggle — R7 : plus de trame)
     for (const [id, on] of [['ov-alea-inond', layers.alea_inondation], ['ov-alea-mvt', layers.alea_mvt]] as const) {
       m.setLayoutProperty(id, 'visibility', vis(on))

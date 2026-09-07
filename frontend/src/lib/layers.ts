@@ -18,6 +18,14 @@ export const LAYER_LABEL: Record<string, string> = {
   foret_publique: 'Forêt publique',
   cinquante_pas: '50 pas géométriques',
   sup: 'Servitudes (SUP)',
+  // SOURCES-1 lot 2 — nature et eau
+  dpf: 'Ravines et reculs (DPF)',
+  zone_humide: 'Zones humides',
+  enp: 'Espaces naturels protégés',
+  rpg: 'Cultures déclarées (RPG)',
+  sis: 'Secteurs d’information sur les sols',
+  casias: 'Anciens sites industriels (CASIAS)',
+  bruit_carte: 'Cartes de bruit — dépassements',
   // risques
   risques: 'Risques PPR',
   sol_pollue: 'Sols pollués',
@@ -30,7 +38,7 @@ export const LAYER_LABEL: Record<string, string> = {
   abf: 'ABF / Monuments',
   ens: 'Espace protégé réglementaire (INPN)',
   eau: 'Eau',
-  bruit_route: 'Bruit routier',
+  bruit_route: 'Classement sonore (bruit routier)',
   // marché
   dvf: 'Marché DVF',
   sitadel: 'Permis SITADEL',
@@ -124,6 +132,35 @@ export const LAYER_INFO: Record<string, string> = {
   // le dit). En mode analyse (couche décochée), la palette suit le résultat courant.
   couleurs_verdict:
     'Les couleurs du classement LABUSE (Priorité → Écartée) sur TOUTES les parcelles de l’île, indépendamment des filtres actifs. En mode analyse, la carte ne colore que le résultat courant — cochez cette couche pour voir le classement entier.',
+  // SOURCES-1 lot 1 — contraintes du droit des sols. Chaque « i » : ce que montre la couche ·
+  // sa source et son millésime · sa fabrication · OPPOSABLE ou non · sa couverture réelle.
+  er:
+    'Les emplacements réservés des PLU : des emprises gelées au profit d’un projet public (voirie, équipement, logement social) — le propriétaire ne peut pas y construire son propre projet tant que la réserve vit. Servitude OPPOSABLE du PLU. Source : prescriptions des documents d’urbanisme déposés au Géoportail de l’urbanisme (code CNIG 05), millésime = le PLU de chaque commune. Dans l’analyse LABUSE : vigilance dès qu’un ER touche la parcelle, rédhibitoire au-delà de 50 % de recouvrement ; la surface réservée est déduite de l’emprise constructible.',
+  ebc:
+    'Les espaces boisés classés des PLU : toute construction et tout défrichement y sont interdits (article L113-1 du code de l’urbanisme) — le classement protège le boisement. Servitude OPPOSABLE du PLU. Source : prescriptions du Géoportail de l’urbanisme (code CNIG 01), millésime = le PLU de chaque commune. Dans l’analyse LABUSE : vigilance dès qu’un EBC touche la parcelle, rédhibitoire au-delà de 80 % ; la part boisée classée est soustraite de l’assiette du potentiel constructible.',
+  dpu:
+    'Les périmètres du droit de préemption urbain : à la vente, la commune peut s’y substituer à l’acquéreur (déclaration d’intention d’aliéner, ~2 mois). OPPOSABLE à la TRANSACTION — pas à la constructibilité : on peut y construire, mais la vente peut être préemptée. Source : informations des PLU déposées au Géoportail de l’urbanisme (code CNIG 04), millésime = le PLU de chaque commune. Couverture PARTIELLE et dite : une commune absente de la couche n’a pas publié son DPU au GPU — ce n’est pas une preuve d’absence de DPU.',
+  peb:
+    'Les zones A, B, C et D des plans d’exposition au bruit des aérodromes (couleur du rouge A au gris D). OPPOSABLE : en zones A et B les constructions d’habitation sont interdites, en zone C elles sont encadrées avec isolement acoustique renforcé, la zone D est d’information (article L112-10 du code de l’urbanisme). Source : PEB approuvés (DGAC), republiés par les annexes des PLU au Géoportail de l’urbanisme. Couverture partielle DITE : Roland-Garros est servi ; le PEB de Pierrefonds n’est pas publié au GPU — son absence à l’écran n’est pas une preuve.',
+  sup:
+    'Les assiettes des servitudes d’utilité publique publiées pour La Réunion sur le Géoportail de l’urbanisme, par catégorie : AC1 monuments historiques, AC2 sites classés et inscrits, AC4, PM1/PM2/PM3 (risques, installations classées), EL10 (parc national). OPPOSABLES. Trois catégories sont publiées mais restreintes au téléchargement par leur gestionnaire (T5 dégagement aéronautique, PT1/PT2 radioélectriques) et AS1 (protection des captages d’eau) n’est pas publiée pour le 974 — LABUSE surveille leur publication, rien n’est inventé. Millésime : document SUP de chaque gestionnaire (AAAAMMJJ).',
+  // SOURCES-1 lot 2 — la nature et l'eau.
+  dpf:
+    'Le domaine public fluvial de La Réunion : 275 tronçons de cours d’eau et 6 plans d’eau domaniaux (arrêté préfectoral n°06-3077/SG/DRCTV du 21 août 2006). Le lit est inaliénable et les propriétés riveraines sont grevées d’une servitude de marchepied de 3,25 m (article L2131-2 CGPPP) — OPPOSABLE, rédhibitoire dans l’analyse LABUSE ; la bande de 10 m du code forestier (R.174-2) reste portée par la couche des ravines. Source : DEAL Réunion, WFS Carmen (DEAL_REUNION_2020). Le domaine privé de l’État (~1 700 km d’affluents) n’est pas diffusé — demandé à la DEAL.',
+  zone_humide:
+    'Les zones humides inventoriées par la DEAL : cartographie d’habitats 2011, inventaires 2009 (et espaces fonctionnels), 2003, zones humides de basse altitude 2019. INVENTAIRES PAR SECTEURS : l’absence d’inventaire n’est pas une preuve d’absence, et un habitat de zone humide n’est pas la délimitation réglementaire — indication FORTE (loi sur l’eau, éviter-réduire-compenser : souvent rédhibitoire à l’instruction). Source : DEAL Réunion, WFS Carmen. Dans l’analyse LABUSE : vigilance forte.',
+  enp:
+    'Les espaces naturels protégés, un type par teinte d’entité : réserves naturelles (dont la Réserve marine et l’Étang Saint-Paul zoné), arrêtés de protection de biotope, réserves biologiques, terrains du Conservatoire du littoral, site Ramsar, sites classés et inscrits. OPPOSABLES (sauf Ramsar : engagement international, indication). Sources : INPN/patrinat (espaces protégés) + DEAL Carmen (Ramsar, sites, réserves zonées — dont la Réserve marine absente du jeu INPN). Dans l’analyse LABUSE : réserves et APB rédhibitoires, conservatoire vigilance, sites portés par la servitude AC2.',
+  rpg:
+    'Les parcelles agricoles déclarées à la PAC (registre parcellaire graphique, proxy IGN — 38 460 déclarations, canne à sucre dominante). INDICATION d’usage, pas une servitude : la déclaration dit ce qui est cultivé, pas ce qui est constructible. Source : RPG (IGN/ASP), millésime RPG.LATEST. Dans l’analyse LABUSE : en zone A du PLU, une sole cannière exploitée (≥ 50 % déclaré canne) est rédhibitoire ; une zone A sans déclaration est signalée « friche possible » (à vérifier sur le terrain).',
+  sis:
+    'Les secteurs d’information sur les sols (SIS) — 4 périmètres réglementaires au 974 (Le Port, Saint-Benoît, Saint-Louis, Sainte-Marie). OPPOSABLE : étude de sols obligatoire au changement d’usage (article L556-2 du code de l’environnement) et information ÉCRITE de l’acheteur ou du locataire obligatoire à la vente/location (article L125-7). Source : Géorisques (BRGM/MTE), canal sites et sols pollués — millésime de la dernière ingestion.',
+  casias:
+    'Les anciens sites industriels et activités de service (CASIAS, ex-BASIAS) : 453 sites + 56 instructions en cours au 974, pour l’essentiel des POINTS géocodés (l’emprise exacte n’est pas diffusée). C’est un INVENTAIRE HISTORIQUE — pas une pollution avérée : il dit « une activité potentiellement polluante a existé ici ». Source : Géorisques (BRGM/MTE). LABUSE signale un site à moins de 100 m de la parcelle.',
+  bruit_route:
+    'Le classement sonore des infrastructures de transports terrestres : les BANDES des secteurs affectés par le bruit, matérialisées par la largeur réglementaire de chaque axe (10 à 300 m selon la catégorie 1-5 — article R571-32 du code de l’environnement). OPPOSABLE : isolement acoustique renforcé obligatoire pour construire dans la bande. Source : Cerema (flux Cartagène, étude 2022), classement EN VIGUEUR par arrêtés préfectoraux des 14-15 décembre 2023.',
+  bruit_carte:
+    'Les cartes de bruit stratégiques (directive 2002/49/CE, échéance 2022) : les zones où les valeurs limites sont DÉPASSÉES (Lden 68 dB(A) jour, Ln 62 dB(A) nuit) le long des routes nationales, départementales et communales. INDICATION d’exposition — ce n’est PAS le classement sonore réglementaire (couche dédiée) et ce n’est pas opposable à un permis. Source : DEAL Réunion (WFS Carmen).',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

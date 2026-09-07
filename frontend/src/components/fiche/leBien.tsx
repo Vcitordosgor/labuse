@@ -82,6 +82,30 @@ export function LeBienSection({ f }: { f: Fiche; idu: string }) {
           )}
         </div>
         <FactNote>Bâti existant — {b.source_bati}. Information de fiche, jamais un signal de classement.</FactNote>
+        {/* SOURCES-1 lot 6 — historique cadastral OFFICIEL (filiation DFI). Absence normale
+            (informatisation 1980-90+) : le bloc est simplement omis, jamais un zéro. */}
+        {f.filiation && (
+          <div data-le-bien-filiation>
+            <div className="mt-2 mb-1 text-[11px] uppercase tracking-wide opacity-60">
+              Historique cadastral (filiation officielle)
+            </div>
+            {f.filiation.meres?.map((m) => (
+              <FactRow key={`m-${m.idu}-${m.date}`} label="Issue de"
+                value={<>{m.idu}{m.date ? <small> · {m.date}</small> : null}
+                  {m.nature ? <small> · {m.nature}</small> : null}</>} />
+            ))}
+            {f.filiation.filles?.map((x) => (
+              <FactRow key={`f-${x.idu}-${x.date}`} label="A donné"
+                value={<>{x.idu}{x.date ? <small> · {x.date}</small> : null}
+                  {x.nature ? <small> · {x.nature}</small> : null}</>} />
+            ))}
+            {f.filiation.division_recente && (
+              <FactNote>Division récente (événement ≥ 2023) — signal de mouvement foncier.</FactNote>
+            )}
+            <FactNote>{f.filiation.source}. Contrôle croisé avec le cadastre d'époque
+              (géométrie) — deux canaux, jamais un conflit.</FactNote>
+          </div>
+        )}
       </div>
     </RefDrawer>
   )

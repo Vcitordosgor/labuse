@@ -662,6 +662,13 @@ def flux_run_cmd(
     from .scoring.p_v2.pipeline import run_score_v2
 
     t0 = time.time()
+    # SOURCES-1 lot 8 — BUG LATENT corrigé : le cache pré-subdivisé `spatial_layers_sub`
+    # (prime de la cascade) n'était JAMAIS reconstruit après une ingestion — un run lancé
+    # après l'entrée de couches neuves (peb, dpu, zone_humide…) les évaluait AVEUGLE
+    # (PASS partout, constaté sur le premier passage de q_v13_sources1). Un run reconstruit
+    # désormais le cache AVANT la cascade (quelques minutes, amorties sur des heures de run).
+    n_sub = models.ensure_spatial_layers_sub(engine(), force=True)
+    typer.echo(f"  cache spatial_layers_sub reconstruit : {n_sub} pièces")
     # DONNEES-2 (B3) — le run écrit sa PROGRESSION dans un fichier lu par l'API (barre + %, étape 2).
     # `total` = 24 communes (cascade) + 1 pas de scoring. L'API a pu ouvrir l'état au lancement ; on le
     # (ré)ouvre ici avec NOTRE pid (celui du process détaché) — c'est celui que « Arrêter » signalera.
@@ -1191,6 +1198,272 @@ def ingest_catnat_cmd(
                                         {"verdict": v.verdict})
             s.commit()
         typer.echo(f"  filtre catnat : {v.verdict}")
+
+
+@app.command("ingest-gpu-infos")
+def ingest_gpu_infos_cmd() -> None:
+    """SOURCES-1 lot 1 — DPU (typeinf 04, par commune) et PEB (typeinf 27, zones A/B/C/D, île)
+    depuis les informations du GPU (API Carto info-surf). Purge kinds dpu/peb, réingère,
+    liste les communes SANS DPU publié, rejoue les filtres des deux sources."""
+    from . import models
+    from .ingestion import gpu_infos
+    with session_scope() as s:
+        sid_dpu = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                            {"n": gpu_infos.SOURCE_DPU}).scalar()
+        sid_peb = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                            {"n": gpu_infos.SOURCE_PEB}).scalar()
+        res = gpu_infos.ingest_gpu_infos(s, source_id_dpu=sid_dpu, source_id_peb=sid_peb)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ DPU : {res['dpu']} périmètre(s) sur {len(res['dpu_communes'])} commune(s) ; "
+               f"PEB : {res['peb']} zone(s) {res['peb_zones']}.")
+    if res["dpu_non_publie"]:
+        typer.echo(f"  DPU non publié au GPU ({len(res['dpu_non_publie'])} communes) : "
+                   + ", ".join(res["dpu_non_publie"]))
+    if res.get("peb_illisibles"):
+        typer.echo(f"  ⚠ PEB : {res['peb_illisibles']} zone(s) illisible(s) écartée(s)")
+    from . import circuit_journal, filtres
+    for label in ("dpu", "peb"):
+        f = filtres.get_filtre(label)
+        if f is not None:
+            with session_scope() as s:
+                v = filtres.jouer(s, f)
+                circuit_journal.journaliser(s, "filtre", label, "ingest-gpu-infos",
+                                            "refuse" if v.verdict == "quarantaine" else "ok",
+                                            {"verdict": v.verdict})
+                s.commit()
+            typer.echo(f"  filtre {label} : {v.verdict}")
+
+
+@app.command("ingest-zonage-abc")
+def ingest_zonage_abc_cmd() -> None:
+    """SOURCES-1 lot 1 — zonage A/B/C des communes (arrêté DHUP, CSV data.gouv). Upsert
+    commune_zonage_abc (24 communes attendues), rejoue le filtre."""
+    from .ingestion import zonage_abc as abc_mod
+    abc_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = abc_mod.ingest_zonage_abc(s)
+        s.commit()
+    typer.echo(f"✓ Zonage ABC : {res['n']} commune(s) {res['zones']}.")
+    if res["manquantes"]:
+        typer.echo(f"  ⚠ absentes du CSV national : {', '.join(res['manquantes'])}")
+    if res["hors_domaine"]:
+        typer.echo(f"  ⚠ zones hors domaine écartées : {res['hors_domaine']}")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("zonage_abc")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "zonage_abc", "ingest-zonage-abc",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre zonage_abc : {v.verdict}")
+
+
+@app.command("ingest-dfi")
+def ingest_dfi_cmd(
+    rattacher: bool = typer.Option(True, help="Rejouer le rattachement des permis orphelins par la filiation."),
+) -> None:
+    """SOURCES-1 lot 6 — filiation officielle des parcelles (DFI DGFiP, parquet distant filtré
+    974 via duckdb). Purge + réinsertion, puis rejeu des permis orphelins (mère disparue →
+    filles actuelles), puis filtre."""
+    from .ingestion import dfi as dfi_mod
+    dfi_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = dfi_mod.ingest_dfi(s)
+        s.commit()
+    typer.echo(f"✓ DFI : {res['liens']} liens mère→fille · {res['communes']} communes · "
+               f"{res['date_min']} → {res['date_max']}.")
+    if rattacher:
+        with session_scope() as s:
+            r = dfi_mod.rattacher_permis_par_filiation(s)
+            s.commit()
+        typer.echo(f"  permis orphelins : {r['rattaches']} rattachés par la filiation "
+                   f"({r['avant']} → {r['restants']} sans géométrie).")
+    _jouer_filtre_apres_ingestion("dfi", "ingest-dfi")
+
+
+@app.command("ingest-iris-rp")
+def ingest_iris_rp_cmd() -> None:
+    """SOURCES-1 lot 6 — recensement INSEE par IRIS (bases 2022 logement + population,
+    344 IRIS 974 attendus). Upsert iris_rp, puis filtre."""
+    from .ingestion import iris_rp as iris_mod
+    iris_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = iris_mod.ingest_iris_rp(s)
+        s.commit()
+    typer.echo(f"✓ IRIS RP2022 : {res['iris']} IRIS · {res['communes']} communes · "
+               f"{res['sans_pop']} sans volet population.")
+    _jouer_filtre_apres_ingestion("iris_rp", "ingest-iris-rp")
+
+
+def _jouer_filtre_apres_ingestion(label: str, job: str) -> None:
+    """SOURCES-1 lot 5 — rejoue le filtre d'une source après son ingestion (facteur commun)."""
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre(label)
+    if f is None:
+        return
+    with session_scope() as s:
+        v = filtres.jouer(s, f)
+        circuit_journal.journaliser(s, "filtre", label, job,
+                                    "refuse" if v.verdict == "quarantaine" else "ok",
+                                    {"verdict": v.verdict})
+        s.commit()
+    typer.echo(f"  filtre {label} : {v.verdict}")
+
+
+@app.command("ingest-arcep")
+def ingest_arcep_cmd() -> None:
+    """SOURCES-1 lot 5 — fibre Arcep (immeuble, découpage départemental 974, dernier
+    trimestre). Table arcep_immeubles, FttH + opérateurs, rejoue le filtre."""
+    from .ingestion import arcep_fibre
+    arcep_fibre.ensure_tables(engine())
+    with session_scope() as s:
+        res = arcep_fibre.ingest_arcep(s)
+        s.commit()
+    typer.echo(f"✓ Arcep : {res['immeubles']} immeubles, {res['ftth']} raccordables FttH "
+               f"({res['pct_ftth']} %), opérateurs {', '.join(res['operateurs'])}.")
+    _jouer_filtre_apres_ingestion("arcep_fibre", "ingest-arcep")
+
+
+@app.command("ingest-rei")
+def ingest_rei_cmd() -> None:
+    """SOURCES-1 lot 5 — taux de taxe foncière REI (DGFiP, annuel). Table commune_rei
+    (TFPB commune/EPCI, TEOM), rejoue le filtre."""
+    from .ingestion import rei as rei_mod
+    rei_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = rei_mod.ingest_rei(s)
+        s.commit()
+    typer.echo(f"✓ REI : {res['n']} commune(s).")
+    if res["manquantes"]:
+        typer.echo(f"  ⚠ manquantes : {', '.join(res['manquantes'])}")
+    if res["hors_bornes"]:
+        typer.echo(f"  ⚠ taux hors bornes écartés : {res['hors_bornes']}")
+    _jouer_filtre_apres_ingestion("dgfip_rei", "ingest-rei")
+
+
+@app.command("ingest-ort")
+def ingest_ort_cmd() -> None:
+    """SOURCES-1 lot 5 — ACV/PVD/ORT (DGALN, table grist complète). Table commune_ort,
+    contrôle de l'attendu ACV, rejoue le filtre."""
+    from .ingestion import ort as ort_mod
+    ort_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = ort_mod.ingest_ort(s)
+        s.commit()
+    typer.echo(f"✓ ORT : {res['n']} commune(s) 974, {res['signees']} convention(s) signée(s) ; "
+               f"ACV {res['acv']} ; PVD {len(res['pvd'])} communes.")
+    if res["ecart_attendu"]:
+        typer.echo(f"  ⚠ écart vs attendu (fiche 10) : {res['ecart_attendu']}")
+    _jouer_filtre_apres_ingestion("anct_ort", "ingest-ort")
+
+
+@app.command("ingest-oll")
+def ingest_oll_cmd() -> None:
+    """SOURCES-1 lot 5 — loyers OLL (ADIL 974/AGORAH, agrégats ouverts par zone). Tables
+    oll_zonage + oll_loyers, rejoue le filtre."""
+    from .ingestion import oll_loyers
+    oll_loyers.ensure_tables(engine())
+    with session_scope() as s:
+        res = oll_loyers.ingest_oll(s)
+        s.commit()
+    typer.echo(f"✓ OLL : {res['lignes']} agrégats, {res['zonage']} lignes de zonage, médiane "
+               f"agglo {res['mediane_agglo']} €/m², {res['communes_mono_zone']} communes mono-zone.")
+    _jouer_filtre_apres_ingestion("loyers_oll", "ingest-oll")
+
+
+@app.command("ingest-cout-construction")
+def ingest_cout_construction_cmd() -> None:
+    """SOURCES-1 lot 5 — références de coût de construction (table sourcée lue par
+    Hypotheses.charger, repli constantes). Rejoue le filtre."""
+    from .ingestion import cout_construction
+    cout_construction.ensure_tables(engine())
+    with session_scope() as s:
+        res = cout_construction.ingest_cout_construction(s)
+        s.commit()
+    typer.echo(f"✓ Coût construction : {res['n']} ligne(s) de référence, servie {res['servie']} €/m² SDP.")
+    _jouer_filtre_apres_ingestion("cout_construction", "ingest-cout-construction")
+
+
+@app.command("ingest-deal-carmen")
+def ingest_deal_carmen_cmd() -> None:
+    """SOURCES-1 lot 2 — couches DEAL Carmen (WFS DEAL_REUNION_2020) : ravines DPF (kind dpf),
+    zones humides (kind zone_humide), Ramsar + sites classés/inscrits (kind ens, subtypes du
+    module). GML → ogr2ogr → spatial_layers, purge ciblée, filtres rejoués."""
+    from . import models
+    from .ingestion import deal_carmen
+    with session_scope() as s:
+        sids = {n: s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                             {"n": n}).scalar()
+                for n in (deal_carmen.SOURCE_DPF, deal_carmen.SOURCE_ZH,
+                          deal_carmen.SOURCE_ENP_C)}
+        res = deal_carmen.ingest_deal_carmen(s, source_ids=sids)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ DEAL Carmen : {sum(res.values())} entité(s) — {res}")
+    from . import circuit_journal, filtres
+    for label in ("deal_dpf", "zones_humides", "enp_complements"):
+        f = filtres.get_filtre(label)
+        if f is not None:
+            with session_scope() as s:
+                v = filtres.jouer(s, f)
+                circuit_journal.journaliser(s, "filtre", label, "ingest-deal-carmen",
+                                            "refuse" if v.verdict == "quarantaine" else "ok",
+                                            {"verdict": v.verdict})
+                s.commit()
+            typer.echo(f"  filtre {label} : {v.verdict}")
+
+
+@app.command("ingest-bruit-cartes")
+def ingest_bruit_cartes_cmd() -> None:
+    """SOURCES-1 lot 3 — cartes de bruit stratégiques DEAL (WFS Carmen, type c = dépassements
+    Lden/Ln) → kind bruit_carte. ≠ classement sonore réglementaire (kind bruit_route)."""
+    from . import models
+    from .ingestion import bruit_cartes
+    with session_scope() as s:
+        sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                        {"n": bruit_cartes.SOURCE_NAME}).scalar()
+        res = bruit_cartes.ingest_bruit_cartes(s, source_id=sid)
+        s.commit()
+    models.ensure_geom_2975(engine())
+    typer.echo(f"✓ CBS : {sum(res.values())} entité(s) — {res}")
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("bruit_cartes")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "bruit_cartes", "ingest-bruit-cartes",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre bruit_cartes : {v.verdict}")
+
+
+@app.command("ingest-azi-tri")
+def ingest_azi_tri_cmd() -> None:
+    """SOURCES-1 lot 2 — AZI/TRI par commune (Géorisques GASPAR) → azi_communes (fait
+    documentaire ; la géométrie d'aléa inondation reste servie par georisque_alea)."""
+    from .ingestion import azi_tri as azi_mod
+    azi_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = azi_mod.ingest_azi_tri(s)
+        s.commit()
+    typer.echo(f"✓ AZI/TRI : {res['azi']} AZI ({res['communes_azi']} communes), "
+               f"{res['tri']} TRI ({res['communes_tri']} communes).")
+    if res["communes_sans_document"]:
+        typer.echo("  sans AZI ni TRI : " + ", ".join(res["communes_sans_document"]))
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre("azi_tri")
+    if f is not None:
+        with session_scope() as s:
+            v = filtres.jouer(s, f)
+            circuit_journal.journaliser(s, "filtre", "azi_tri", "ingest-azi-tri",
+                                        "refuse" if v.verdict == "quarantaine" else "ok",
+                                        {"verdict": v.verdict})
+            s.commit()
+        typer.echo(f"  filtre azi_tri : {v.verdict}")
 
 
 @app.command("ingest-georisques")
@@ -2372,8 +2645,10 @@ def viabilisation_cmd(
                f"{res['duree_s']}s")
 
 
-if __name__ == "__main__":
-    app()
+# SOURCES-1 lot 8 — le garde __main__ vivait ICI (milieu de fichier) : sous `python -m labuse.cli`,
+# `app()` s'exécutait EN PLEIN IMPORT, avant la définition des commandes suivantes (division-or,
+# registre, circuit, pompe…) → « No such command » (exit 2), pompe cassée à l'étape division d'or.
+# Le garde est déplacé en FIN de fichier (le point d'entrée `labuse` du pyproject n'a jamais souffert).
 
 
 @app.command("detect-events")
@@ -3897,7 +4172,13 @@ def pompe_calculer_cmd(
     #    détaché-en-avant avec l'override d'env (le même mécanisme que les tests), jamais le servi.
     if not sans_division:
         env = {**os.environ, "LABUSE_SERVED_RUN": label}
-        subprocess.run([sys.executable, "-m", "labuse.cli", "division-or", "--all"],
+        # SOURCES-1 lot 8 — BUG LATENT corrigé : `python -m labuse.cli division-or` tombait en
+        # « No such command » (exit 2) car le garde __main__ est en MILIEU de fichier (les
+        # commandes tardives — dont division-or — ne sont pas encore enregistrées par ce
+        # chemin). On invoque l'app COMPLÈTE via -c, mêmes env/override, même détachement.
+        subprocess.run([sys.executable, "-c",
+                        "from labuse.cli import app; import sys; "
+                        "sys.argv = ['labuse', 'division-or', '--all']; app()"],
                        env=env, check=True)
     # 4) résiduel : candidat SEULEMENT si ses entrées ont bougé (sinon reporté à la bascule).
     with session_scope() as s:
@@ -4214,3 +4495,7 @@ def tables_purger_cmd(
                                     {"deplacees": deplacees, "schema": "poubelle"})
         s.commit()
     typer.echo(f"✓ {len(deplacees)} table(s) déplacée(s) vers le schéma poubelle (aucun DROP).")
+
+
+if __name__ == "__main__":
+    app()

@@ -48,6 +48,37 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "annuaire_service_public": "Annuaire de l'administration%",
     "rnic_anah": "RNIC — copropriétés%",
     "parc_national_inpn": "Parc National de La Réunion%",
+    # SOURCES-1 lot 1 — droit des sols
+    "gpu_prescriptions_er": "GPU — emplacements réservés%",
+    "gpu_prescriptions_ebc": "GPU — espaces boisés%",
+    "dpu_perimetres": "GPU — droit de préemption%",
+    "peb_dgac": "PEB — plans d'exposition%",
+    "zonage_abc_dhup": "Zonage ABC des communes%",
+    "zppa_culture": "ZPPA — zones de présomption%",
+    # SOURCES-1 lot 5 — la valeur
+    "arcep_fibre": "Fibre Arcep%",
+    "dgfip_rei": "Taux de taxe foncière%",
+    "anct_ort": "ACV / PVD / ORT%",
+    "loyers_oll": "Loyers OLL%",
+    "loyers_dhup": "Loyers DHUP%",
+    "cout_construction_sdes": "Coût de construction%",
+    # SOURCES-1 lot 6 — le foncier et les gens
+    "dgfip_dfi": "DFI — documents de filiation%",
+    "insee_rp_iris": "INSEE RP2022 — bases IRIS%",
+    # SOURCES-1 lot 4
+    "sar_region": "SAR — schéma d'aménagement régional%",
+    "region_dvf": "DVF Réunion (Région%",
+    # SOURCES-1 lot 3 — sols et bruit
+    "georisques_sis": "Géorisques — secteurs d'information%",
+    "georisques_casias": "Géorisques — CASIAS%",
+    "deal_bruit_cartes": "DEAL — cartes de bruit%",
+    # SOURCES-1 lot 2 — nature et eau
+    "deal_dpf_dpe": "Ravines — domaine public fluvial%",
+    "deal_zones_humides": "Zones humides — inventaires DEAL%",
+    "enp_complements_deal": "Espaces protégés complémentaires%",
+    "georisques_azi_tri": "AZI / TRI — inondation%",
+    "rpg_proxy_ign": "RPG — déclarations agricoles%",
+    "inpn_espaces_proteges": "INPN / patrinat%",
 }
 
 

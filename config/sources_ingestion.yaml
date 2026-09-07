@@ -114,3 +114,53 @@ commandes:
   - motif: "Trafic RN (Région Réunion — SIR)"
     label: trafic_rn
     argv: ["labuse", "ingest-trafic-rn"]
+  # ── SOURCES-1 lot 1 — droit des sols ──
+  - motif: "GPU — droit de préemption urbain*"
+    label: dpu
+    argv: ["labuse", "ingest-gpu-infos"]
+  - motif: "PEB — plans d'exposition au bruit*"
+    label: peb
+    argv: ["labuse", "ingest-gpu-infos"]
+  - motif: "Zonage ABC des communes (DHUP)"
+    label: zonage_abc
+    argv: ["labuse", "ingest-zonage-abc"]
+  # ── SOURCES-1 lot 2 — nature et eau ──
+  - motif: "Ravines — domaine public fluvial*"
+    label: deal_dpf
+    argv: ["labuse", "ingest-deal-carmen"]
+  - motif: "Zones humides — inventaires DEAL*"
+    label: zones_humides
+    argv: ["labuse", "ingest-deal-carmen"]
+  - motif: "Espaces protégés complémentaires*"
+    label: enp_complements
+    argv: ["labuse", "ingest-deal-carmen"]
+  - motif: "AZI / TRI — inondation*"
+    label: azi_tri
+    argv: ["labuse", "ingest-azi-tri"]
+  # ── SOURCES-1 lot 3 — sols et bruit ──
+  - motif: "DEAL — cartes de bruit stratégiques*"
+    label: bruit_cartes
+    argv: ["labuse", "ingest-bruit-cartes"]
+  # ── SOURCES-1 lot 5 — la valeur ──
+  - motif: "Fibre Arcep — Ma connexion internet*"
+    label: arcep_fibre
+    argv: ["labuse", "ingest-arcep"]
+  - motif: "Taux de taxe foncière — fichier REI*"
+    label: dgfip_rei
+    argv: ["labuse", "ingest-rei"]
+  - motif: "ACV / PVD / ORT*"
+    label: anct_ort
+    argv: ["labuse", "ingest-ort"]
+  - motif: "Loyers OLL — ADIL*"
+    label: loyers_oll
+    argv: ["labuse", "ingest-oll"]
+  - motif: "Coût de construction (EPTB SDES*"
+    label: cout_construction
+    argv: ["labuse", "ingest-cout-construction"]
+  # ── SOURCES-1 lot 6 — le foncier et les gens ──
+  - motif: "DFI — documents de filiation*"
+    label: dfi
+    argv: ["labuse", "ingest-dfi"]
+  - motif: "INSEE RP2022 — bases IRIS*"
+    label: iris_rp
+    argv: ["labuse", "ingest-iris-rp"]

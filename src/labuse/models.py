@@ -1814,7 +1814,21 @@ def ensure_spatial_layers_sub(engine, force: bool = False) -> int:
 
     with engine.begin() as c:
         if not force and c.execute(_t("SELECT to_regclass('spatial_layers_sub') IS NOT NULL")).scalar():
-            return int(c.execute(_t("SELECT count(*) FROM spatial_layers_sub")).scalar())
+            # SOURCES-1 lot 8 — GARDE DE PÉREMPTION : le cache figé rendait les kinds ingérés
+            # APRÈS sa construction INVISIBLES à la cascade (peb/dpu/zone_humide absents →
+            # PASS « hors zone » sur toute l'île, contradiction géométrique prouvée sur
+            # 97411000BM0004). Un cache est PÉRIMÉ dès qu'une entité de spatial_layers lui est
+            # postérieure (id > max lid) ou qu'une sienne a disparu (purge/réingestion) — on le
+            # reconstruit alors d'office. Test de fraîcheur ~10 ms (index PK), reconstruction
+            # quelques minutes : jamais une couche fantôme dans un run.
+            stale = c.execute(_t(
+                "SELECT EXISTS (SELECT 1 FROM spatial_layers sl WHERE sl.kind <> 'batiment' "
+                "                AND sl.id > COALESCE((SELECT max(lid) FROM spatial_layers_sub), 0)) "
+                "    OR EXISTS (SELECT 1 FROM spatial_layers_sub s "
+                "               WHERE NOT EXISTS (SELECT 1 FROM spatial_layers sl WHERE sl.id = s.lid))"
+            )).scalar()
+            if not stale:
+                return int(c.execute(_t("SELECT count(*) FROM spatial_layers_sub")).scalar())
         c.execute(_t("DROP TABLE IF EXISTS spatial_layers_sub"))
         c.execute(_t(
             "CREATE TABLE spatial_layers_sub AS "

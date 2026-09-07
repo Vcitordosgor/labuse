@@ -181,6 +181,44 @@ NOM_VERS_SLUG = {
     'RNIC — registre national des copropriétés (Anah)': 'rnic_anah',
     'RPLS — répertoire des logements locatifs sociaux (SDES)': 'rpls_sdes',
     "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": 'enaf_cerema',
+    # SOURCES-1 lot 1 — droit des sols :
+    'GPU — emplacements réservés (prescriptions CNIG)': 'gpu_prescriptions_er',
+    'GPU — espaces boisés classés (prescriptions CNIG)': 'gpu_prescriptions_ebc',
+    'GPU — droit de préemption urbain (info-surf)': 'dpu_perimetres',
+    "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": 'peb_dgac',
+    'Zonage ABC des communes (DHUP)': 'zonage_abc_dhup',
+    'ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)': 'zppa_culture',
+    # SOURCES-1 lot 5 — la valeur :
+    'Fibre Arcep — Ma connexion internet (immeuble)': 'arcep_fibre',
+    'Taux de taxe foncière — fichier REI (DGFiP)': 'dgfip_rei',
+    'ACV / PVD / ORT (DGALN — liste des communes)': 'anct_ort',
+    'Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)': 'loyers_oll',
+    'Loyers DHUP — carte des loyers (annonces)': 'loyers_dhup',
+    'Coût de construction (EPTB SDES + choix LABUSE)': 'cout_construction_sdes',
+    # SOURCES-1 lot 6 — le foncier et les gens :
+    'DFI — documents de filiation informatisés (DGFiP)': 'dgfip_dfi',
+    'INSEE RP2022 — bases IRIS (logement, population)': 'insee_rp_iris',
+    # SOURCES-1 lot 4 — cadre régional :
+    "SAR — schéma d'aménagement régional (Région/DEAL)": 'sar_region',
+    'DVF Réunion (Région, data.regionreunion.com)': 'region_dvf',
+    # SOURCES-1 lot 3 — sols et bruit :
+    "Géorisques — secteurs d'information sur les sols (SIS)": 'georisques_sis',
+    'Géorisques — CASIAS (anciens sites industriels)': 'georisques_casias',
+    'DEAL — cartes de bruit stratégiques (CBS)': 'deal_bruit_cartes',
+    # SOURCES-1 lot 2 — nature et eau :
+    'Ravines — domaine public fluvial (DEAL Carmen)': 'deal_dpf_dpe',
+    'Zones humides — inventaires DEAL (Carmen)': 'deal_zones_humides',
+    'Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)': 'enp_complements_deal',
+    'AZI / TRI — inondation (Géorisques GASPAR)': 'georisques_azi_tri',
+    # SOURCES-1 lot 7 — chantiers (en attente de demande) + Cerema (convention) :
+    "Zonages d'assainissement SIG complets (EPCI / régies)": 'assainissement_sig_epci',
+    'Inventaires ZAE (EPCI — loi Climat et résilience)': 'zae_epci',
+    'Périmètres de ZAC (EPCI / communes / EPF Réunion)': 'zac_perimetres',
+    'OPAH / PIG (Anah / EPCI)': 'opah_pig',
+    'Périmètres ORT infra-communaux (EPCI)': 'ort_perimetres_epci',
+    'ENS du Département (Conseil départemental)': 'ens_departement',
+    'Micro-données OLL (ADIL / AGORAH)': 'oll_microdonnees',
+    'DV3F (Cerema)': 'dv3f',
 }
 
 def slug_reservoir(nom: str | None) -> str | None:

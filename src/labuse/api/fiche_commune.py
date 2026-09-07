@@ -80,12 +80,23 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     parc = db.execute(text(
         "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
         "AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"), {"c": commune}).scalar()
+    # SOURCES-1 lot 2 — le fait AZI/TRI de la commune (GASPAR, table azi_communes) : quels
+    # documents inondation couvrent la commune. None si la source n'est pas ingérée.
+    azi_tri = None
+    if insee:
+        try:
+            from ..ingestion.azi_tri import azi_tri_commune
+            azi_tri = azi_tri_commune(db, insee)
+        except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
+            db.rollback()
+            azi_tri = None
     return {
         "ppr_pct": _pct_layer("ppr"),
         "mouvement_terrain_pct": _pct_layer("mvt"),
         "catnat_arretes": int(catnat),
         "parc_national": bool(parc),
-        "source": "Géorisques (PPR, mouvement de terrain) · GASPAR (arrêtés CatNat) · BD TOPO (Parc National).",
+        "azi_tri": azi_tri,
+        "source": "Géorisques (PPR, mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
     }
 
 
@@ -114,7 +125,15 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
     # CIRCUIT-2 lot 1.6 — le taux de vacance est calculé par le moteur nommé `commune_compteurs`
     # (id registre vacance_pct) : même arithmétique, un seul chemin.
     from ..registre.moteurs.commune import vacance_pct
+    # SOURCES-1 lot 6 — l'affinage par QUARTIER (IRIS RP2022) : n IRIS, vacance min/méd/max.
+    # Maille DITE ; commune_insee_logement reste la vérité communale. None si non ingéré.
+    quartiers = None
+    if insee and db.execute(text(
+            "SELECT 1 FROM information_schema.tables WHERE table_name = 'iris_rp'")).first():
+        from ..ingestion.iris_rp import quartiers_commune
+        quartiers = quartiers_commune(db, insee)
     return {
+        "quartiers": quartiers,
         "habitants": int(demo["hab"]) if demo.get("hab") is not None else None,
         "menages": int(demo["men"]) if demo.get("men") is not None else None,
         "niveau_vie_moyen_eur": int(demo["niveau_vie_moyen"]) if demo.get("niveau_vie_moyen") is not None else None,
@@ -207,6 +226,46 @@ def loyer(db: Session, commune: str) -> dict | None:
             "source": lg.get("etiquette") or lg.get("source") or "DHUP (carte des loyers)"}
 
 
+def fiscalite(db: Session, insee: str | None) -> dict | None:
+    """SOURCES-1 lot 5 — taux fonciers de la commune (REI DGFiP) : TFPB commune + EPCI, TEOM.
+    Passe-plat sourcé + daté ; None si non ingéré (jamais un taux inventé)."""
+    if not insee:
+        return None
+    from ..ingestion.rei import rei_commune
+    r = rei_commune(db, insee)
+    if r is None:
+        return None
+    return {"tfpb_commune_pct": r["tfpb_commune_pct"], "tfpb_epci_pct": r["tfpb_epci_pct"],
+            "teom_pct": r["teom_pct"], "millesime": r["millesime"],
+            "source": "DGFiP — fichier REI (impositions primitives)"}
+
+
+def ort(db: Session, insee: str | None) -> dict | None:
+    """SOURCES-1 lot 5 — statut ACV/PVD/ORT + condition communale Denormandie (table DGALN).
+    None si non ingéré ; « hors » est un état servi (table peuplée, commune hors dispositif)."""
+    if not insee:
+        return None
+    from ..ingestion.ort import ort_commune
+    o = ort_commune(db, insee)
+    if o is None:
+        return None
+    o["source"] = "DGALN — communes ORT (table vivante) ; périmètres conventionnés non publiés"
+    return o
+
+
+def zonage_abc(db: Session, insee: str | None) -> dict | None:
+    """SOURCES-1 lot 1 — zone A/B/C de la commune (arrêté DHUP, passe-plat sourcé + daté).
+    None si non ingérée (jamais devinée) — le front dit « non déterminée »."""
+    if not insee:
+        return None
+    from ..ingestion.zonage_abc import zonage_commune
+    z = zonage_commune(db, insee)
+    if z is None:
+        return None
+    return {"zone": z["zone"], "millesime": z["millesime"],
+            "source": "DHUP — zonage ABC (arrêté du 1er août 2014 modifié, D. 304-1 CCH)"}
+
+
 # ───────────────────────────── C6 — les compteurs des passerelles ─────────────────────────────
 def outils_counters(db: Session, commune: str, insee: str | None,
                     blocs: dict) -> dict:
@@ -243,8 +302,9 @@ log = logging.getLogger("labuse.fiche_commune")
 # le bloc concerné SANS casser la fiche entière (« introuvable = null, jamais un zéro menteur »).
 _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
+    "zonage_abc": None, "fiscalite": None, "ort": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
-                "parc_national": False, "source": "Géorisques · GASPAR · BD TOPO"},
+                "parc_national": False, "azi_tri": None, "source": "Géorisques · GASPAR · BD TOPO"},
     "population": {"habitants": None, "menages": None, "niveau_vie_moyen_eur": None,
                    "logements": None, "vacants": None, "vacance_pct": None,
                    "source": "INSEE Filosofi · INSEE RP"},
@@ -280,6 +340,11 @@ def build(db: Session, commune: str, insee: str | None) -> dict:
         "permis": _safe(db, "permis", lambda: permis_bloc(db, commune)),
         "densifiables": _safe(db, "densifiables", lambda: densifiables(db, commune)),
         "loyer": _safe(db, "loyer", lambda: loyer(db, commune)),
+        # SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté.
+        "zonage_abc": _safe(db, "zonage_abc", lambda: zonage_abc(db, insee)),
+        # SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie).
+        "fiscalite": _safe(db, "fiscalite", lambda: fiscalite(db, insee)),
+        "ort": _safe(db, "ort", lambda: ort(db, insee)),
     }
     blocs["outils"] = _safe(db, "outils", lambda: outils_counters(db, commune, insee, blocs))
     return blocs

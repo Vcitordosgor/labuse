@@ -2185,6 +2185,9 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "permis_bloc": blocs["permis"],             # C5 — construire ici + permis au point mort
             "densifiables": blocs["densifiables"],      # C5 — gisement de densification
             "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
+            "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
+            "fiscalite": blocs["fiscalite"],            # SOURCES-1 lot 5 — taux TFPB/TEOM (REI)
+            "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)
             "outils": blocs["outils"],                  # C6 — compteurs des passerelles
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
@@ -3670,6 +3673,189 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # FICHE-1 lot 6 — les annonces Radar RATTACHÉES à la parcelle (validées), datées, avec prix
         # demandé, statut (en cours / retirée / vendue), lien fiche annonce + écart demandé/acté.
         "radar_annonces": _radar_annonces_block(db, idu),
+        # SOURCES-1 lot 3 — « Sols » : périmètre SIS intersecté (obligations L556-2/L125-7
+        # dites), site CASIAS/instruction le plus proche (≤ 100 m) — mêmes règles que la
+        # cascade sol_pollue. None si couche non ingérée.
+        "sols": _sols_block(db, idu),
+        # SOURCES-1 lot 6 — historique cadastral OFFICIEL (filiation DFI) : mères/filles datées.
+        # None si la parcelle n'apparaît dans aucun DFI (absence normale, dite au front).
+        "filiation": _filiation_block(db, idu),
+        # SOURCES-1 lot 6 — le quartier INSEE (IRIS) de la parcelle : vacance, âge du bâti,
+        # taille des ménages, 60+ — maille IRIS DITE (affine la commune). None si non ingéré.
+        "iris_quartier": _iris_quartier_block(db, idu),
+        # SOURCES-1 lot 1 — « Dispositifs et périmètres » : ER (part), EBC (part), DPU, zone PEB,
+        # SUP par catégorie — intersections live des couches servies, mêmes familles/typepsc que
+        # la cascade (source unique cascade_rules.yaml). None si aucune couche ingérée.
+        "dispositifs": _dispositifs_block(db, idu),
+        # SOURCES-1 lot 5 — fibre Arcep : immeuble le plus proche (≤ 100 m), raccordable FttH +
+        # opérateurs, DISTANCE DITE. None si la source n'est pas ingérée (le front omet la ligne).
+        "fibre": _fibre_block(db, idu),
+    }
+
+
+_SOLS_SQL = text("""
+SELECT sl.subtype, coalesce(sl.attrs->>'statut', '') AS statut, sl.name,
+       sl.attrs->>'identifiant_ssp' AS identifiant_ssp,
+       sl.attrs->>'fiche_risque' AS fiche_risque,
+       ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
+         / NULLIF(ST_Area(p.geom_2975), 0) AS part,
+       ST_Distance(p.geom_2975, sl.geom_2975) AS dist
+FROM parcels p
+JOIN spatial_layers sl
+  ON sl.kind = 'sol_pollue' AND ST_DWithin(p.geom_2975, sl.geom_2975, 100)
+WHERE p.idu = :idu
+ORDER BY ST_Distance(p.geom_2975, sl.geom_2975)
+""")
+
+
+def _table_presente(db: Session, table: str) -> bool:
+    """SOURCES-1 lot 6 — existence de table SANS exception : un try/except + rollback au
+    milieu d'une requête détruirait les fixtures non committées (tests) et l'état de la
+    transaction — on interroge information_schema, jamais l'erreur."""
+    return bool(db.execute(text(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = :t"),
+        {"t": table}).first())
+
+
+def _filiation_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 6 — passe-plat de la filiation DFI (ingestion/dfi.py). Table absente
+    (source non ingérée) → None, jamais un 500."""
+    if not _table_presente(db, "dfi_filiation"):
+        return None
+    from ..ingestion.dfi import filiation_parcelle
+    return filiation_parcelle(db, idu)
+
+
+def _iris_quartier_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 6 — le quartier INSEE (IRIS) de la parcelle (ingestion/iris_rp.py)."""
+    if not _table_presente(db, "iris_rp"):
+        return None
+    from ..ingestion.iris_rp import iris_de_parcelle, stats_iris
+    code = iris_de_parcelle(db, idu)
+    return stats_iris(db, code) if code else None
+
+
+def _sols_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 3 — l'état des sols de la parcelle (registre `sols_parcelle`).
+
+    SIS : périmètre intersecté → obligations DITES (étude de sols au changement d'usage
+    L556-2 CE, information écrite de l'acheteur/locataire L125-7 CE). CASIAS/instruction :
+    le site le plus proche ≤ 100 m (même rayon que la cascade sol_pollue) — inventaire
+    historique, pas une pollution avérée. None si le kind n'est pas ingéré."""
+    present = db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE kind = 'sol_pollue')")).scalar()
+    if not present:
+        return None
+    rows = db.execute(_SOLS_SQL, {"idu": idu}).mappings().all()
+    sis = None
+    casias = None
+    for r in rows:
+        if r["subtype"] == "sis" and float(r["part"] or 0) > 0 and sis is None:
+            sis = {"nom": r["name"], "part_pct": round(float(r["part"]) * 100, 1),
+                   "identifiant_ssp": r["identifiant_ssp"], "fiche_risque": r["fiche_risque"]}
+        elif r["subtype"] in ("casias", "instruction") and casias is None:
+            d = float(r["dist"] or 0)
+            casias = {"nom": r["name"], "subtype": r["subtype"],
+                      "statut": r["statut"] or None, "distance_m": round(d),
+                      "sur_place": d < 0.5, "fiche_risque": r["fiche_risque"]}
+    return {"sis": sis, "sis_classe": "dans" if sis else "hors",
+            "casias": casias,
+            "casias_statut": ("sur_place" if casias and casias["sur_place"] else
+                              "proche_100m" if casias else "hors")}
+
+
+def _fibre_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 5 — raccordabilité FttH (Arcep) de l'immeuble le plus proche. Passe-plat
+    de arcep_fibre.fibre_parcelle ; None si table absente (source non ingérée)."""
+    try:
+        from ..ingestion.arcep_fibre import fibre_parcelle
+        return fibre_parcelle(db, idu)
+    except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
+        db.rollback()
+        return None
+
+
+_DISPOSITIFS_SQL = text("""
+SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
+       sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
+       ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
+         / NULLIF(ST_Area(p.geom_2975), 0) AS part
+FROM parcels p
+JOIN spatial_layers sl
+  ON ST_Intersects(p.geom_2975, sl.geom_2975)
+ AND (sl.kind IN ('dpu', 'peb', 'sup')
+      OR (sl.kind = 'plu_gpu_prescription' AND sl.subtype IN ('01', '05')))
+WHERE p.idu = :idu
+""")
+
+
+def _dispositifs_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols, à la parcelle.
+
+    ER (part de parcelle, seuil cascade 50 %), EBC (part, seuil 80 %, part soustraite de
+    l'assiette du potentiel), DPU (simple/renforcé — « non déterminée — non publié par la
+    commune » si la commune n'a rien au GPU), zone PEB (A/B/C/D — couverture partielle dite),
+    SUP par catégorie. Intersections LIVE des couches servies (registre `dispositifs_parcelle`),
+    mêmes familles/typepsc que la cascade. None si aucune des couches n'est ingérée."""
+    rows = db.execute(_DISPOSITIFS_SQL, {"idu": idu}).mappings().all()
+    kinds_presents = {k for (k,) in db.execute(text(
+        "SELECT DISTINCT kind FROM spatial_layers "
+        "WHERE kind IN ('dpu', 'peb', 'sup', 'plu_gpu_prescription')")).all()}
+    if not kinds_presents:
+        return None
+    er: list[dict] = []
+    ebc: list[dict] = []
+    sup: list[dict] = []
+    dpu: dict | None = None
+    peb: dict | None = None
+    for r in rows:
+        part = round(float(r["part"] or 0.0) * 100, 1)
+        if r["kind"] == "plu_gpu_prescription":
+            if part < 0.1:
+                continue
+            item = {"libelle": r["libelle"], "part_pct": part}
+            (er if r["subtype"] == "05" else ebc).append(item)
+        elif r["kind"] == "dpu":
+            renforce = (r["subtype"] == "dpu_renforce")
+            if dpu is None or renforce:
+                dpu = {"statut": "renforce" if renforce else "simple", "libelle": r["libelle"]}
+        elif r["kind"] == "peb":
+            z = (r["peb_zone"] or (r["subtype"] or "").upper())
+            # zone la plus contraignante si multi-zones (A < B < C < D)
+            if peb is None or z < peb["zone"]:
+                peb = {"zone": z, "libelle": r["libelle"], "part_pct": part}
+        elif r["kind"] == "sup":
+            sup.append({"categorie": (r["subtype"] or "?").upper(),
+                        "libelle": r["nomsuplitt"] or r["libelle"], "part_pct": part})
+    # DPU : distinguer « hors périmètre publié » de « commune non publiée » (règle 3 du mandat).
+    dpu_etat: dict
+    if dpu is not None:
+        dpu_etat = {"etat": "servi", **dpu}
+    else:
+        commune_a_publie = bool(db.execute(text(
+            "SELECT 1 FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+            "WHERE sl.kind = 'dpu' AND sl.commune = p.commune LIMIT 1"), {"idu": idu}).first())
+        dpu_etat = ({"etat": "hors"} if commune_a_publie else
+                    {"etat": "non_determinee",
+                     "detail": "non publié par la commune (GPU) — périmètre DPU non diffusé"})
+    er.sort(key=lambda x: -x["part_pct"])
+    ebc.sort(key=lambda x: -x["part_pct"])
+    sup.sort(key=lambda x: (x["categorie"], -x["part_pct"]))
+    # dédoublonnage SUP (une assiette peut être subdivisée en plusieurs entités)
+    sup_vus: set[tuple] = set()
+    sup = [s for s in sup
+           if (cle := (s["categorie"], s["libelle"])) not in sup_vus and not sup_vus.add(cle)]
+    return {
+        "er": er or None,
+        "ebc": ebc or None,
+        "dpu": dpu_etat,
+        "peb": ({"zone": peb["zone"], "part_pct": peb["part_pct"], "libelle": peb["libelle"]}
+                if peb else
+                ({"zone": "hors",
+                  "detail": "Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU"}
+                 if "peb" in kinds_presents else
+                 {"zone": "non_determinee", "detail": "PEB non ingéré"})),
+        "sup": sup or None,
     }
 
 
@@ -4683,6 +4869,23 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
         srcs = ["INSEE Filosofi 2021", "BPE 2025", "DVF", "Radar LABUSE", "isochrones IGN"]
         if conc.get("couverture") == "servie" or out.get("emplois_couverture") == "servie":
             srcs.insert(1, "SIRENE (établissements actifs)")
+        # SOURCES-1 lot 5 — part des immeubles raccordables FttH dans la zone (Arcep).
+        # None si la source n'est pas ingérée (la ligne est omise, jamais un zéro).
+        try:
+            zg = out.get("geom") or geom
+            if zg is not None:
+                r = db.execute(text(
+                    "SELECT count(*) AS n, count(*) FILTER (WHERE ftth) AS n_ftth "
+                    "FROM arcep_immeubles WHERE ST_Intersects(geom, "
+                    "ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326))"),
+                    {"g": json.dumps(zg)}).mappings().first()
+                if r and r["n"]:
+                    out["fibre"] = {"immeubles": int(r["n"]), "ftth": int(r["n_ftth"]),
+                                    "pct_ftth": round(100.0 * r["n_ftth"] / r["n"], 1),
+                                    "source": "Arcep — Ma connexion internet (2026_T1)"}
+                    srcs.append("Arcep (fibre)")
+        except Exception:  # noqa: BLE001 — table absente = source non ingérée
+            db.rollback()
         out["note"] = (" · ".join(srcs) + " — temps hors trafic. Des faits sourcés, "
                        "aucune prévision de chiffre d'affaires.")
     return out
@@ -4852,7 +5055,33 @@ _MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "
                     # autour des stations + union des parcelles couvertes, calculés par ingest_tcsp).
                     "tcsp_zone",
                     # RETOURS-13 R4 — moyenne tension EDF (HTA aérien/souterrain, open data retrouvé).
-                    "ligne_mt"}
+                    "ligne_mt",
+                    # SOURCES-1 lot 1 — droit des sols : DPU (typeinf 04), PEB (typeinf 27, zones
+                    # A-D en subtype), SUP (assiettes par catégorie en subtype). ER/EBC sont servis
+                    # par les KINDS VIRTUELS 'er'/'ebc' (plu_gpu_prescription filtré par famille,
+                    # cf. _VIRTUAL_MAP_KINDS) — jamais un kind stocké de plus pour la même donnée.
+                    "dpu", "peb", "sup",
+                    # SOURCES-1 lot 2 — nature et eau : DPF (marchepied), zones humides.
+                    "dpf", "zone_humide",
+                    # SOURCES-1 lot 3 — classement sonore (bandes sect_bruit réglementaires) et
+                    # cartes de bruit stratégiques (dépassements Lden/Ln — ≠ classement). SIS et
+                    # CASIAS sont servis par les kinds VIRTUELS 'sis'/'casias' (sol_pollue filtré).
+                    "bruit_route", "bruit_carte"}
+
+# SOURCES-1 lot 1 — kinds VIRTUELS de la carte : une clé front → le kind stocké + un filtre
+# subtype. ER = typepsc 05 (les 6 ER de Saint-Louis codés « 02 » sont captés par la cascade via
+# le rescue libellé ; la couche affiche le standard CNIG, l'écart est dit au filtre) ; EBC = 01.
+# Lot 2 : enp = kind ens entier (tous types) ; rpg = kind safer (cultures déclarées) —
+# subtypes None = pas de filtre, le kind stocké entier.
+_VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...] | None]] = {
+    "er": ("plu_gpu_prescription", ("05",)),
+    "ebc": ("plu_gpu_prescription", ("01",)),
+    "enp": ("ens", None),
+    "rpg": ("safer", None),
+    # Lot 3 : sols — périmètres SIS et sites CASIAS/instructions du kind sol_pollue.
+    "sis": ("sol_pollue", ("sis",)),
+    "casias": ("sol_pollue", ("casias", "instruction")),
+}
 
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
@@ -4911,7 +5140,11 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     """Couches carte (zonage PLU, PPR, Parc national) — géométries simplifiées pour l'overlay.
 
     Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
-    if kind not in _MAP_LAYER_KINDS:
+    # SOURCES-1 lot 1 — kinds virtuels (er/ebc) : kind stocké + filtre subtype, même chemin.
+    subtypes: tuple[str, ...] | None = None
+    if kind in _VIRTUAL_MAP_KINDS:
+        kind, subtypes = _VIRTUAL_MAP_KINDS[kind]
+    elif kind not in _MAP_LAYER_KINDS:
         raise HTTPException(422, f"kind inconnu : {kind}")
     # RETOURS-13 R5 — la couche synthétique BAOBAB (tcsp_axe) est retirée : le TCSP est désormais
     # servi par les kinds STOCKÉS tcsp_troncon/tcsp_station (ingestion transport_reseaux.ingest_tcsp).
@@ -4931,12 +5164,16 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                   sl.attrs->'lignes_noms' AS lignes_noms, sl.attrs->>'reseau' AS reseau,
                   sl.attrs->>'critere' AS critere, sl.attrs->>'concordance' AS concordance,
                   sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
+                  -- SOURCES-1 lot 2 : code culture RPG (couche « Cultures déclarées »)
+                  sl.attrs->>'code_cultu' AS code_cultu,
                   -- RETOURS-14 S6 : géométrie simplifiée MATÉRIALISÉE (geom_simple, entretenue par
                   -- ensure_geom_2975) — la simplification à la volée coûtait ~11 s sur les aléas et
                   -- la couche restait muette au premier clic. Repli à la volée si non peuplée.
                   ST_AsGeoJSON(COALESCE(sl.geom_simple, ST_SimplifyPreserveTopology(sl.geom, 0.0002))) AS g
            FROM spatial_layers sl
            WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
+             -- SOURCES-1 lot 1 : filtre subtype des kinds virtuels (er/ebc), NULL ailleurs
+             AND (CAST(:st AS text[]) IS NULL OR sl.subtype = ANY(:st))
              -- M137-V : FILTRE D'AFFICHAGE SEUL — les arrêts de bus OSM (kind 'amenite', subtype
              -- 'tcsp') sont à 93 % un doublon visible de la couche GTFS dédiée « Transport public ».
              -- On les MASQUE de la couche Équipements, on NE SUPPRIME AUCUNE LIGNE : le modèle lit
@@ -4948,7 +5185,7 @@ def map_layers_geojson(kind: str, commune: str | None = None,
              AND NOT (sl.kind = 'amenite' AND sl.subtype = 'sport'
                       AND NOT (COALESCE(sl.name, '') ~* :sport_keep AND COALESCE(sl.name, '') !~* :sport_drop))
            LIMIT :lim"""),
-        {"k": kind, "c": commune, "lim": limit,
+        {"k": kind, "c": commune, "lim": limit, "st": list(subtypes) if subtypes else None,
          "sport_keep": _SPORT_KEEP_RE, "sport_drop": _SPORT_DROP_RE}).mappings().all()
     # M106 : `niveau` (aléa), `critere`/`concordance` (pôles dérivés — le seuil vient de la config,
     # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.
@@ -4960,7 +5197,7 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                              "lignes_noms": r["lignes_noms"], "reseau": r["reseau"],
                              "critere": r["critere"],
                              "concordance": r["concordance"], "tension": r["tension"],
-                             "nature": r["nature"]}}
+                             "nature": r["nature"], "code_cultu": r["code_cultu"]}}
              for r in rows if r["g"]]
     # M106 : millésime SERVI, jamais en dur (doctrine M86). FIX-COUCHES P3 : on distingue désormais
     # deux dates — le MILLÉSIME AMONT (data_sources.source_millesime, la vraie fraîcheur de la donnée,

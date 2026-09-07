@@ -62,6 +62,25 @@ export function ReseauxSection({ f, idu }: { f: Fiche; idu: string }) {
         {/* caractéristiques du terrain (piscine / pente) — informatif. */}
         <EquipementsBadges idu={idu} />
 
+        {/* SOURCES-1 lot 5 — fibre Arcep : immeuble le plus proche, DISTANCE DITE, jamais un
+            booléen nu ; bloc omis si la source n'est pas ingérée (f.fibre absent). */}
+        {f.fibre && (
+          <div data-bloc-fibre className="flex flex-col gap-0.5">
+            <GroupLabel>Fibre (Arcep)</GroupLabel>
+            {f.fibre.etat === 'servi' ? (
+              <p className="text-[11.5px] leading-snug text-txt">
+                Immeuble Arcep à ~{f.fibre.distance_m} m :{' '}
+                {f.fibre.ftth
+                  ? <><b className="text-txt-hi">raccordable FttH</b>{f.fibre.operateurs && f.fibre.operateurs.length > 0 ? ` (${f.fibre.operateurs.join(', ')})` : ''}</>
+                  : <b className="text-txt-hi">non raccordable FttH à ce jour</b>}
+                <span className="text-txt-dim"> — Arcep, Ma connexion internet ({f.fibre.millesime}).</span>
+              </p>
+            ) : (
+              <p className="text-[11.5px] text-txt-dim">{f.fibre.detail} — Arcep ({f.fibre.millesime}).</p>
+            )}
+          </div>
+        )}
+
         {/* ① ACCÈS — un verdict + transport le plus proche. RETOURS-20 Z1·02 : sous-titre → kicker. */}
         <div data-bloc-acces>
           <GroupLabel>Accès</GroupLabel>

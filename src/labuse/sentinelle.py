@@ -497,6 +497,50 @@ SEED: list[dict] = [
     {"name": "Géorisques — sites et sols pollués", "methode": "temoin",
      "url": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97411&page=1&page_size=200",
      "url2": "https://www.georisques.gouv.fr/api/v1/ssp?code_insee=97410&page=1&page_size=200", "selecteur": None},
+    # ── SOURCES-1 lot 1 — la SONDE CATÉGORIELLE des SUP 974 : l'API JSON du service de
+    # téléchargement du GPU (le même service que le flux Atom, qui n'est pas filtrable par
+    # territoire) rend les documents SUP du département — catégorie, gestionnaire, millésime
+    # AAAAMMJJ, statut. Une publication (ex. AS1 captages, absente au 06/09/2026), un retrait
+    # ou un nouveau millésime change l'empreinte → « la donnée amont a changé ».
+    {"name": "SUP — assiettes GPU (API Carto)", "methode": "temoin",
+     "url": "https://www.geoportail-urbanisme.gouv.fr/api/document?documentType%5B%5D=SUP&grid=974",
+     "selecteur": None},
+    # ── SOURCES-1 lot 1 — zonage ABC : jeu data.gouv DHUP (arrêté national) → last_update.
+    {"name": "Zonage ABC des communes (DHUP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/liste-des-communes-selon-le-zonage-abc/",
+     "selecteur": "last_update"},
+    # ── SOURCES-1 lot 2 — AZI/TRI : même famille que les témoins Géorisques (deux chef-lieux).
+    {"name": "AZI / TRI — inondation (Géorisques GASPAR)", "methode": "temoin",
+     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/azi?code_insee=97411&page=1&page_size=100",
+     "url2": "https://www.georisques.gouv.fr/api/v1/gaspar/azi?code_insee=97410&page=1&page_size=100",
+     "selecteur": None},
+    # ── SOURCES-1 lot 5 — la valeur : jeux data.gouv à last_update (famille api). ──
+    {"name": "Fibre Arcep — Ma connexion internet (immeuble)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/ma-connexion-internet/",
+     "selecteur": "last_update"},
+    {"name": "Taux de taxe foncière — fichier REI (DGFiP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/impots-locaux-fichier-de-recensement-des-elements-dimposition-a-la-fiscalite-directe-locale-rei-4/",
+     "selecteur": "last_update"},
+    {"name": "ACV / PVD / ORT (DGALN — liste des communes)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/liste-des-communes-couvertes-par-des-operations-de-revitalisation-de-territoire/",
+     "selecteur": "last_update"},
+    # OLL : le JSON api/1 du jeu (520 ressources) dépasse la coupe de lecture de la sonde
+    # (« réponse non-JSON » mesuré) → api/2, payload léger (3,9 ko), même last_update.
+    {"name": "Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/2/datasets/56fd90e8c751df174ac485cb/",
+     "selecteur": "last_update"},
+    {"name": "Loyers DHUP — carte des loyers (annonces)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/",
+     "selecteur": "last_update"},
+    # ── SOURCES-1 lot 6 — le foncier et les gens ──
+    {"name": "DFI — documents de filiation informatisés (DGFiP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/agregation-des-fichiers-de-documents-de-filiation-informatises-dfi-des-parcelles/",
+     "selecteur": "last_update"},
+    # INSEE : les bases IRIS ne sont pas sur data.gouv — la page du sommaire insee.fr porte le
+    # millésime (« Logement en 2022 ») : un nouveau millésime publie une nouvelle page-titre.
+    {"name": "INSEE RP2022 — bases IRIS (logement, population)", "methode": "page",
+     "url": "https://www.insee.fr/fr/statistiques/8647012",
+     "selecteur": r"Logement en (20\d{2})"},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
@@ -513,7 +557,40 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Urbanisme PLU/GPU (API Carto)": "API Carto GPU interrogée par géométrie à l'usage. Y3 : le point d'entrée `/municipality` ne porte aucun millésime (gid/insee/is_rnu seulement), `/document` exige une géométrie, aucun jeu data.gouv « documents GPU » à `last_update` ; un témoin par parcelle détecterait un changement de PLU commune par commune, mais LABUSE interroge le GPU EN DIRECT (aucun snapshot ingéré à réinjecter).",
     "GPU — zonages d'assainissement": "API Carto GPU par géométrie (mêmes limites que « Urbanisme PLU/GPU » : pas de millésime global, interrogé en direct sans snapshot ingéré).",
     "GPU — zonages d'assainissement (info-surf typeinf 19)": "Doublon du GPU assainissement (canal info-surf) — même amont, non re-surveillé.",
-    "SUP — assiettes GPU (API Carto)": "API Carto GPU (assiette-sup-s) par géométrie — pas de millésime global lisible ; interrogé en direct.",
+    # SOURCES-1 lot 1 — les SUP ont désormais leur sonde catégorielle (SEED, temoin sur l'API
+    # documents du GPU grid=974) ; la raison d'absence est retirée.
+    "GPU — emplacements réservés (prescriptions CNIG)": "Prescriptions servies par le canal GPU existant (API Carto par commune, millésime = idurba du PLU) — même amont que « Urbanisme PLU/GPU (API Carto) », non re-surveillé (une republication de PLU se voit à la re-ingestion des prescriptions de la commune).",
+    "GPU — espaces boisés classés (prescriptions CNIG)": "Même canal que les emplacements réservés (prescriptions GPU par commune) — même amont que « Urbanisme PLU/GPU (API Carto) », non re-surveillé.",
+    "GPU — droit de préemption urbain (info-surf)": "Informations GPU (typeinf 04) interrogées par géométrie via API Carto — pas de millésime global (millésime = idurba par commune) ; réingéré par `labuse ingest-gpu-infos` (cadence semestrielle proposée), communes non publiées listées au rapport d'ingestion.",
+    "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": "Republication GPU (typeinf 27) des PEB approuvés — pas de flux DGAC versionné pour le 974 (vérifié data.gouv 06/09/2026) ; réingéré par `labuse ingest-gpu-infos`, couverture partielle dite (Pierrefonds non publié au GPU).",
+    # SOURCES-1 lot 2 — WFS Carmen (nœud 29) : ni ETag ni Last-Modified sur GetCapabilities
+    # (vérifié 07/09/2026), capabilities XML (le témoin sentinelle exige du JSON) — réingestion
+    # à la demande (`labuse ingest-deal-carmen`), fraîcheur lue sur la page Circuit.
+    "Ravines — domaine public fluvial (DEAL Carmen)": "WFS Carmen sans en-tête de version (ni ETag ni Last-Modified, vérifié 07/09/2026) ; le DPF est un arrêté de 2006, stable — réingéré à la demande, fraîcheur au Circuit.",
+    "Zones humides — inventaires DEAL (Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) ; inventaires 2003→2019 par secteurs — réingérés à la demande, fraîcheur au Circuit.",
+    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)": "WFS Carmen sans en-tête de version (vérifié 07/09/2026) — réingéré à la demande avec les zones humides.",
+    # SOURCES-1 lot 3 — sols et bruit :
+    "Géorisques — secteurs d'information sur les sols (SIS)": "Réservoir logique sur le canal SSP (kind sol_pollue, subtype sis) — même amont que « Géorisques — sites et sols pollués », déjà sondé en témoin bi-commune (97411+97410) ; pas de seconde sonde sur le même flux.",
+    "Géorisques — CASIAS (anciens sites industriels)": "Réservoir logique sur le canal SSP (subtypes casias/instruction) — même amont que « Géorisques — sites et sols pollués », témoin bi-commune existant.",
+    "DEAL — cartes de bruit stratégiques (CBS)": "WFS Carmen sans en-tête de version (même service que les couches DEAL lot 2, vérifié 07/09/2026) ; CBS = échéance quinquennale (directive 2002/49/CE) — réingéré à la demande (`labuse ingest-bruit-cartes`), fraîcheur au Circuit.",
+    "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",
+    # SOURCES-1 lot 4 — cadre régional :
+    "Coût de construction (EPTB SDES + choix LABUSE)": "L'EPTB est une PUBLICATION annuelle (pages DREAL/SDES sans millésime machine exploitable — vérifié 07/09/2026) ; rappel annuel de relecture posé (RAPPELS_MANUELS), la table cout_construction_ref est mise à jour à la main après lecture.",
+    "SAR — schéma d'aménagement régional (Région/DEAL)": "Couche SIG officielle NON diffusée (Carmen 29, Lizmap DEAL, Sextant — WMS image seule —, ODS Région : 0 vecteur au 07/09/2026) ; demandée à la Région (lot 7). Rappel périodique 180 j (RAPPELS_MANUELS) : re-chercher la couche + suivre la révision SAR 2050.",
+    "DVF Réunion (Région, data.regionreunion.com)": "Jeu FIGÉ chez le producteur (2014→mi-2021, vérifié 07/09/2026) servant d'échantillon producteur du filtre DVF — le hub ODS Région est déjà surveillé par la sonde témoin de son catalogue (total_count) ; une republication du jeu s'y verrait.",
+    # ── SOURCES-1 lot 7 — chantiers « en attente de demande » : rien à sonder tant que la
+    # donnée n'est pas remise ; la demande est prête (docs/CIRCUIT/DEMANDE-REGION-EPCI.md).
+    "Zonages d'assainissement SIG complets (EPCI / régies)": "CHANTIER — en attente de la remise par les 5 EPCI/régies (aucun flux à sonder) ; la demande formelle est prête (DEMANDE-REGION-EPCI.md). Le canal GPU existant (4/24) garde sa propre surveillance.",
+    "Inventaires ZAE (EPCI — loi Climat et résilience)": "CHANTIER — en attente de la remise par les 5 EPCI (publication non centralisée, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "Périmètres de ZAC (EPCI / communes / EPF Réunion)": "CHANTIER — en attente de la remise (pas d'open data 974 fiable, jeu CNIG ZAC sans le 974 — rapport fiche 17) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "OPAH / PIG (Anah / EPCI)": "CHANTIER — en attente des conventions EPCI/Anah (la carto Anah localise sans polygone, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "Périmètres ORT infra-communaux (EPCI)": "CHANTIER — en attente des annexes de conventions ORT (EPCI) ; l'éligibilité COMMUNALE est servie et surveillée par la sonde anct_ort (lot 5) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "ENS du Département (Conseil départemental)": "CHANTIER — en attente de la remise par le Conseil départemental (non diffusés en open data, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "Micro-données OLL (ADIL / AGORAH)": "CHANTIER — micro-données conventionnées (jamais en flux ouvert) ; les agrégats par zone sont servis et surveillés (loyers_oll, lot 5) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    # ── SOURCES-1 lot 7 — Cerema sous convention : les actualités Datafoncier n'ont pas de
+    # millésime machine stable ; la convention passe par une collectivité mandante (geste Vic).
+    "LOVAC (logements vacants)": "SOUS CONVENTION — détail réservé aux collectivités et à leurs prestataires (fiche 19) ; rien à sonder sans accès. Relecture à la convention ; en attendant, la vacance INSEE RP par IRIS est servie (lot 6).",
+    "DV3F (Cerema)": "SOUS CONVENTION — même demande que les Fichiers fonciers (une convention pour les trois) ; rien à sonder sans accès. En attendant : DVF ouvert + échantillon producteur Région (lot 4).",
     "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
     "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
     "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",
@@ -560,6 +637,18 @@ RAPPELS_MANUELS: list[dict] = [
     {"name": "VRD / assainissement (SPANC)", "cadence_jours": 365, "convention_echeance": None},
     {"name": "Fichiers fonciers (Cerema)", "cadence_jours": 365, "convention_echeance": None},
     {"name": "Office de l'eau Réunion — Chroniques de l'eau", "cadence_jours": 365, "convention_echeance": None},
+    # SOURCES-1 lot 1 — re-tester l'Atlas des patrimoines (ZPPA 974) : injoignable au 06/09/2026.
+    {"name": "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
+     "cadence_jours": 180, "convention_echeance": None},
+    # SOURCES-1 lot 4 — SAR : re-chercher la couche SIG officielle (demandée à la Région) et
+    # suivre la révision SAR 2050 (engagée — fiche 3 du rapport ; page DEAL sans millésime
+    # exploitable pour une sonde page, vérifié 07/09/2026).
+    {"name": "SAR — schéma d'aménagement régional (Région/DEAL)",
+     "cadence_jours": 180, "convention_echeance": None},
+    # SOURCES-1 lot 5 — coût de construction : l'EPTB est une PUBLICATION annuelle (pages
+    # DREAL/SDES sans millésime machine exploitable) → rappel annuel de relecture.
+    {"name": "Coût de construction (EPTB SDES + choix LABUSE)",
+     "cadence_jours": 365, "convention_echeance": None},
 ]
 
 

@@ -69,6 +69,9 @@ class _Row:
     full_area = 600.0
     uau_area = None
     er_area = 0.0
+    # SOURCES-1 lot 1 — colonnes EBC de _EMPRISE (part soustraite de l'assiette)
+    ebc_area = 0.0
+    greve_area = 0.0
 
 
 class _Res:

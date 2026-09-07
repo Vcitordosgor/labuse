@@ -42,12 +42,83 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                           millesime="PCI vecteur Etalab — millésimes 2019→2025 (cadastre d'époque)"),
     "dgfip_parcelles_pm": Rt(("parcelle_personne_morale", "pm_proprietaires_millesimes"),
                              millesime="Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)"),
-    "fichiers_fonciers_cerema": Rt((), note="manuel — convention DGFiP non instruite, aucune table"),
+    "fichiers_fonciers_cerema": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — une demande Cerema "
+                                              "couvre FF + LOVAC + DV3F ; aucune table tant qu'elle "
+                                              "n'est pas instruite (geste Vic : collectivité mandante)"),
     # ── urbanisme ───────────────────────────────────────────────────────────────────
     "gpu_plu_api_carto": Rt(("spatial_layers", "plu_reglement_extrait"),
                             couches=("plu_gpu_zone", "plu_gpu_prescription"),
                             millesime="GPU/PLU par commune (révisions — détail en fiche)"),
-    "sup_gpu": Rt(("spatial_layers",), couches=("sup",), millesime="assiettes SUP GPU (API Carto)"),
+    "sup_gpu": Rt(("spatial_layers",), couches=("sup",),
+                  millesime="assiettes SUP GPU (API Carto) — inventaire catégoriel 974 sondé "
+                            "(9 en vigueur ; T5/PT1/PT2 restreintes ; AS1 non publiée)"),
+    # ── SOURCES-1 lot 1 — droit des sols ────────────────────────────────────────────
+    "gpu_prescriptions_er": Rt(("spatial_layers",), couches=("plu_gpu_prescription",),
+                               millesime="GPU — prescriptions typepsc 05 (idurba par commune)",
+                               note="réservoir LOGIQUE sur la famille ER du kind plu_gpu_prescription "
+                                    "(typepsc 05 + rescue libellé — même canal que gpu_plu_api_carto)"),
+    "gpu_prescriptions_ebc": Rt(("spatial_layers",), couches=("plu_gpu_prescription",),
+                                millesime="GPU — prescriptions typepsc 01 (idurba par commune)",
+                                note="réservoir LOGIQUE sur les EBC (typepsc 01) du kind "
+                                     "plu_gpu_prescription — même canal que gpu_plu_api_carto"),
+    "dpu_perimetres": Rt(("spatial_layers",), couches=("dpu",),
+                         millesime="GPU typeinf 04 — 4/24 communes publiées (06/09/2026)"),
+    "peb_dgac": Rt(("spatial_layers",), couches=("peb",),
+                   millesime="Roland-Garros A/B/C/D (annexes GPU) ; Pierrefonds non publié"),
+    "zonage_abc_dhup": Rt(("commune_zonage_abc",),
+                          millesime="arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)"),
+    "zppa_culture": Rt((), note="aucune donnée — Atlas des patrimoines injoignable au 06/09/2026, "
+                                "rappel sentinelle 180 j (SOURCES-1 lot 1)"),
+    # ── SOURCES-1 lot 4 — le cadre régional ────────────────────────────────────────
+    "sar_region": Rt(("spatial_layers",), couches=("sar",),
+                     millesime="PROXY vocations (Potentiel foncier Région) — SAR officiel non diffusé",
+                     note="réservoir LOGIQUE sur le proxy kind sar (doctrine D2 : zéro effet, "
+                          "divergence en warning) — couche SIG officielle demandée à la Région "
+                          "(lot 7), rappel sentinelle 180 j (SOURCES-1 lot 4)"),
+    "region_dvf": Rt((), note="aucune donnée servie — échantillon producteur du filtre DVF "
+                              "(filtres/echantillons/dvf.json, fenêtres 2019-2020 ; jeu Région "
+                              "figé à mi-2021, SOURCES-1 lot 4)"),
+    # ── SOURCES-1 lot 2 — la nature et l'eau ────────────────────────────────────────
+    "deal_dpf_dpe": Rt(("spatial_layers",), couches=("dpf",),
+                       millesime="DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans",
+                       note="le DPE (domaine privé de l'État) n'est pas diffusé — demande DEAL (lot 7)"),
+    "deal_zones_humides": Rt(("spatial_layers",), couches=("zone_humide",),
+                             millesime="inventaires DEAL 2003/2009/2011/2019 par secteurs"),
+    "enp_complements_deal": Rt(("spatial_layers",), couches=("ens",),
+                               millesime="Ramsar 1 · sites classés/inscrits 7 · RN 3 (Carmen 07/09/2026)",
+                               note="complète le kind ens de l'INPN (subtypes ramsar/site_classe/"
+                                    "site_inscrit/reserve_naturelle — purge par subtype)"),
+    # ── SOURCES-1 lot 5 — la valeur ────────────────────────────────────────────────
+    "arcep_fibre": Rt(("arcep_immeubles",),
+                      millesime="Arcep 2026_T1 — 330 051 immeubles 974 (FttH + opérateurs)"),
+    "dgfip_rei": Rt(("commune_rei",),
+                    millesime="REI 2025 (impositions primitives) — 24/24 communes"),
+    "anct_ort": Rt(("commune_ort",),
+                   millesime="table DGALN vivante — 19 communes 974 (07/09/2026)"),
+    "loyers_oll": Rt(("oll_loyers", "oll_zonage"),
+                     millesime="OLL 2024 Île de La Réunion (6 zones + agglo, IRIS→zone)"),
+    "loyers_dhup": Rt((), note="extrait embarqué versionné (data/carte_loyers_reunion_2025."
+                              "json, loyers.py) — repli de l'OLL, aucun réservoir en base"),
+    "cout_construction_sdes": Rt(("cout_construction_ref",),
+                                 millesime="EPTB 2024 (contexte) ; choix promotion servi"),
+    # ── SOURCES-1 lot 6 — le foncier et les gens ────────────────────────────────────
+    "dgfip_dfi": Rt(("dfi_filiation",),
+                    millesime="situation 19/06/2026 — 409 623 liens 974 (1989→2025)"),
+    "insee_rp_iris": Rt(("iris_rp",),
+                        millesime="RP2022 — parution 16/10/2025 (géographie 01/01/2024)"),
+    "georisques_azi_tri": Rt(("azi_communes",),
+                             millesime="GASPAR azi+tri par commune (07/09/2026)"),
+    # ── SOURCES-1 lot 3 — les sols et le bruit ──────────────────────────────────────
+    "georisques_sis": Rt(("spatial_layers",), couches=("sol_pollue",),
+                         millesime="4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026",
+                         note="réservoir LOGIQUE sur le subtype sis du kind sol_pollue "
+                              "(même canal que georisques_ssp)"),
+    "georisques_casias": Rt(("spatial_layers",), couches=("sol_pollue",),
+                            millesime="453 CASIAS + 56 instructions (canal SSP, 07/09/2026)",
+                            note="réservoir LOGIQUE sur les subtypes casias/instruction du kind "
+                                 "sol_pollue (même canal que georisques_ssp)"),
+    "deal_bruit_cartes": Rt(("spatial_layers",), couches=("bruit_carte",),
+                            millesime="CBS 2022 — dépassements Lden/Ln (type c, RN/RD/VC)"),
     "sudocuh": Rt(("sudocuh_procedures",), millesime="Sudocuh — état au 31/12/2024"),
     "sitadel": Rt(("sitadel_permits", "via_permits_geo"), millesime="2026-07"),
     "qpv_2024": Rt(("spatial_layers",), couches=("qpv",), millesime="génération 2024"),
@@ -141,7 +212,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "potentiel_foncier_region": Rt(("spatial_layers",), couches=("potentiel_foncier", "sar")),
     "potentiel_foncier_ods": Rt(("spatial_layers",), couches=("potentiel_foncier",)),
     "rpg_proxy_ign": Rt(("spatial_layers",), couches=("safer",),
-                        millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée"),
+                        millesime="proxy RPG (IGN) — RPG.LATEST, année non pinnée",
+                        note="SOURCES-1 lot 2 : code_cultu servi (CSA canne 12 464/38 460) — "
+                             "couche carte « Cultures déclarées » + cascade zone A/canne"),
     # ── adresses / réseaux / transport ─────────────────────────────────────────────
     "ban": Rt(("adresses", "adresse_parcelles")),
     "osm_overpass": Rt(("parcel_amenites", "spatial_layers"), couches=("amenite", "osm_faux_positif"),
@@ -167,7 +240,21 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "bdnb": Rt((), note="amont métropole seule — 974 absent (constat mesuré)"),
     "reunion_express_cndp": Rt((), note="hypothèses de tracé au débat public — rien d'ingéré"),
     "ecln": Rt((), note="métropole seule, N/A DOM"),
-    "lovac": Rt((), note="convention dédiée non instruite"),
+    "lovac": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — LOVAC détail RÉSERVÉ aux collectivités "
+                          "et à leurs prestataires (fiche 19) ; en attendant, vacance INSEE RP par IRIS (lot 6)"),
+    "dv3f": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — même convention que les Fichiers fonciers ; "
+                        "en attendant, DVF ouvert + échantillon producteur Région (lot 4)"),
+    # ── SOURCES-1 lot 7 — chantiers en attente de demande (aucune table tant que rien n'est remis) ──
+    "assainissement_sig_epci": Rt((), note="CHANTIER — zonages SIG des 20 communes hors GPU, demande aux "
+                                           "5 EPCI/régies (DEMANDE-REGION-EPCI.md)"),
+    "zae_epci": Rt((), note="CHANTIER — inventaires ZAE des 5 EPCI (L.318-8-2 CU), demande prête"),
+    "zac_perimetres": Rt((), note="CHANTIER — périmètres de ZAC (EPCI/communes/EPFR), demande prête"),
+    "opah_pig": Rt((), note="CHANTIER — périmètres OPAH/PIG (Anah/EPCI), demande prête"),
+    "ort_perimetres_epci": Rt((), note="CHANTIER — périmètres ORT infra-communaux (EPCI), demande prête ; "
+                                       "l'éligibilité communale est servie (anct_ort, lot 5)"),
+    "ens_departement": Rt((), note="CHANTIER — ENS et préemption ENS du Département, demande prête"),
+    "oll_microdonnees": Rt((), note="CHANTIER — micro-données OLL (convention ADIL/AGORAH), demande prête ; "
+                                    "agrégats par zone servis (loyers_oll, lot 5)"),
 }
 
 #: Tables FABRIQUÉES par la pompe (cascade, scoring, builders) : produits du calcul dérivés
@@ -213,6 +300,12 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "module_division": "module division",
     "division_or_candidates": "division (candidats or)",
     "division_or_revue_snapshot": "division (photo de revue)",
+    # SOURCES-1 (merge origin/main) : la feature « Blocs fonciers » (OUTILS-MUSCLER-3) est
+    # désormais mergée — ses deux tables, calculées par le batch `blocs-build`
+    # (blocs.build_blocs : composantes connexes par SIREN sur le cadastre PM), sont un
+    # artefact fabriqué (comme division_or_candidates), plus un « résidu » de branche.
+    "parcel_blocs": "blocs fonciers (blocs-build)",
+    "parcel_bloc_membres": "blocs fonciers — membres (blocs-build)",
     "parcel_au_statut": "statut AU (builder)",
     "parcel_zone_plu": "zonage parcelle (builder GPU)",
     "parcel_terrain": "terrain (pente/ortho builders)",
@@ -353,6 +446,9 @@ RATTACHEMENTS_A_DECIDER: dict[str, str] = {}
 #: Action proposée pour les orphelines CONNUES (curation CIRCUIT-5 — la purge reste le geste
 #: de Vic, `labuse tables purger --apply`). Une orpheline hors de ce dict = « à décider ».
 ACTIONS_PROPOSEES: dict[str, str] = {
+    # (SOURCES-1 : parcel_blocs / parcel_bloc_membres étaient ici en « résidu de branche non
+    # mergée » ; OUTILS-MUSCLER-3 étant désormais mergée, elles sont classées en TABLES_FABRIQUEES
+    # — ce ne sont plus des orphelines.)
     "_lota_grave_parcels": "purger (photo de travail LOT A)",
     "algo2_prop_features": "purger (features d'essai algo2)",
     "backup_sp_ppr_avant_littoral": "purger (backup PPR avant littoral — Saint-Pierre)",

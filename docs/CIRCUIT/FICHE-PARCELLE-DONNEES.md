@@ -1,8 +1,65 @@
 # FICHE PARCELLE — donnée par donnée
 
-*Généré du registre le 2026-09-06 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
+*Généré du registre le 2026-09-07 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
 
 Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient (source et millésime servis), par quel chemin (moteur nommé ou passe-plat), sa portée (`run` = change à la bascule · `live` = à l'injection · `projet` = saisie du client), ses états possibles, et où ailleurs elle s'affiche.
+
+## Sols (SIS / CASIAS)
+
+*Robinet `fiche_parcelle_sols` — route `/parcels/{idu} (clé sols)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `sols_parcelle` | liste | Sols (SIS/CASIAS, parcelle) | georisques_sis (4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026), georisques_casias (453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026) | passe-plat · src/labuse/api/app.py:_sols_block — table lue : spatial_layers (kind=sol_pollue) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *l'état des sols de la parcelle : périmètre SIS intersecté, site CASIAS/instruction le plus proche (≤ 100 m) — intersections live des couches servies, mêmes règles que la cascade sol_pollue* | | | | | |
+| `sis_classe` | classe — domaine : dans, hors | Secteur d'information sur les sols (SIS) | georisques_sis (4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026) | passe-plat · src/labuse/api/app.py:_sols_block (sis) — table lue : spatial_layers (kind=sol_pollue, subtype=sis) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle dans un périmètre SIS (étude de sols obligatoire au changement d'usage L556-2 CE ; information écrite de l'acheteur/locataire obligatoire L125-7 CE)* | | | | | |
+| `casias_statut` | classe — domaine : sur_place, proche_100m, hors | Ancien site industriel (CASIAS) | georisques_casias (453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026) | passe-plat · src/labuse/api/app.py:_sols_block (casias) — table lue : spatial_layers (kind=sol_pollue, subtypes casias/instruction) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *site CASIAS/instruction sur la parcelle ou à moins de 100 m — inventaire historique, pas une pollution avérée (le libellé le dit)* | | | | | |
+
+## Dispositifs et périmètres (droit des sols)
+
+*Robinet `fiche_parcelle_droit_sols` — route `/parcels/{idu} (clé dispositifs)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `dispositifs_parcelle` | liste | Dispositifs et périmètres (parcelle) | gpu_prescriptions_er (GPU — prescriptions typepsc 05 (idurba par commune)), gpu_prescriptions_ebc (GPU — prescriptions typepsc 01 (idurba par commune)), dpu_perimetres (GPU typeinf 04 — partiel, non-publiées listées), peb_dgac (Roland-Garros B/C/D (GPU) ; Pierrefonds non publié), sup_gpu | passe-plat · src/labuse/api/app.py:_dispositifs_block — table lue : spatial_layers (kinds plu_gpu_prescription/dpu/peb/sup) | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *liste des dispositifs du droit des sols touchant la parcelle (ER avec part, EBC avec part, DPU, zone PEB, SUP par catégorie) — intersections live des couches servies, mêmes seuils que la cascade (source unique cascade_rules.yaml)* | | | | | |
+| `er_emplacement_reserve` | classe — domaine : grevee, non_grevee | Emplacement réservé (ER) | gpu_prescriptions_er (GPU — prescriptions typepsc 05 (idurba par commune)) | passe-plat · src/labuse/api/app.py:_dispositifs_block (er) — table lue : spatial_layers (kind=plu_gpu_prescription, famille ER) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle grevée d'un emplacement réservé du PLU (destination, part de la parcelle) — famille ER = typepsc 05 + rescue/veto libellé (source unique cascade_rules)* | | | | | |
+| `ebc_classe` | classe — domaine : intersecte, hors | Espace boisé classé (EBC) | gpu_prescriptions_ebc (GPU — prescriptions typepsc 01 (idurba par commune)) | passe-plat · src/labuse/api/app.py:_dispositifs_block (ebc) — table lue : spatial_layers (kind=plu_gpu_prescription, typepsc 01) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle intersecte-t-elle un espace boisé classé du PLU (part de la parcelle ; part soustraite de l'assiette du bloc potentiel — L113-1 CU)* | | | | | |
+| `dpu_perimetre` | classe — domaine : simple, renforce, hors, non_publie | Droit de préemption urbain (DPU) | dpu_perimetres (GPU typeinf 04 — partiel, non-publiées listées) | passe-plat · src/labuse/api/app.py:_dispositifs_block (dpu) — table lue : spatial_layers (kind=dpu) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle dans un périmètre de préemption publié (DPU simple/renforcé) — les communes sans DPU publié au GPU sont « non déterminée — non publié par la commune »* | | | | | |
+| `peb_zone` | classe — domaine : A, B, C, D, hors | Plan d'exposition au bruit (PEB) | peb_dgac (Roland-Garros B/C/D (GPU) ; Pierrefonds non publié) | passe-plat · src/labuse/api/app.py:_dispositifs_block (peb) — table lue : spatial_layers (kind=peb) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est — Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU (couverture partielle dite)* | | | | | |
+
+## Historique cadastral (filiation DFI)
+
+*Robinet `fiche_parcelle_filiation` — route `/parcels/{idu} (clé filiation)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `filiation_parcelle` | liste | Historique cadastral (filiation DFI) | dgfip_dfi (situation 19/06/2026 — 409 623 liens 974 (1989→2025)) | passe-plat · src/labuse/ingestion/dfi.py:filiation_parcelle — table lue : dfi_filiation | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *la généalogie OFFICIELLE de la parcelle : d'où elle vient (mères), ce qu'elle est devenue (filles), nature et date de chaque événement (DFI DGFiP) — passe-plat trié ; absence NORMALE (informatisation 1980-90+, aménagements fonciers exclus) ; contrôle croisé avec le cadastre d'époque (géométrie), jamais un conflit* | | | | | |
+
+## Quartier INSEE (Autour)
+
+*Robinet `fiche_parcelle_quartier` — route `/parcels/{idu} (clé iris_quartier)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `iris_quartier` | liste | Quartier INSEE (IRIS) | insee_rp_iris (RP2022 — parution 16/10/2025 (géographie 01/01/2024)), contours_iris (Contours IRIS — géographie 2024 (IGN/INSEE)) | passe-plat · src/labuse/ingestion/iris_rp.py:stats_iris (iris_de_parcelle) — table lue : iris_rp | live | servie (possiblement vide, dit) · non calculée | outil « Étude de zone » |
+| | | *le quartier INSEE de la parcelle (IRIS, contours géographie 2024) : logements, vacance, âge du bâti (part ≤ 1990), taille des ménages (NPER_RP/RP), part 60 ans et +, part locataires/HLM — RP2022, maille IRIS DITE (affine la commune, ne la remplace pas)* | | | | | |
+
+## Fibre (Réseaux et accès)
+
+*Robinet `fiche_parcelle_fibre` — route `/parcels/{idu} (clé fibre)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `fibre_parcelle` | classe — domaine : raccordable, non_raccordable, aucun_immeuble | Fibre (raccordable FttH) | arcep_fibre (2026_T1 — 330 051 immeubles 974 (découpage départemental)) | passe-plat · src/labuse/ingestion/arcep_fibre.py:fibre_parcelle — table lue : arcep_immeubles | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *raccordabilité FttH de l'immeuble Arcep le plus proche de la parcelle (≤ 100 m, DISTANCE DITE — jamais un booléen nu) + opérateurs présents ; « aucun immeuble » est un état, pas un zéro* | | | | | |
 
 ## En-tête (adresse, géométrie)
 
@@ -104,6 +161,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *compte des couches cascade en SOFT_FLAG/HARD_EXCLUDE* | | | | | |
 | `aleas_parcelle_liste` | liste | Aléas de la parcelle | deal_ppr (PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)), georisques_api | moteur `cascade` · src/labuse/api/app.py:_aleas_block (lignes servies layer='risques') | run | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
 | | | *liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et risques* | | | | | |
+| `sar_divergence` | texte | Divergence SAR (indication) | sar_region (couche SIG officielle NON diffusée (recherche 07/09/2026)) | moteur `cascade` · src/labuse/cascade/layers/phase1.py:SarLayer | run | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *warning « zone PLU U/AU ∩ vocation naturelle/agricole du proxy de vocations Région » — indication non opposable (le SAR officiel n'est pas diffusé en vecteur), jamais un malus* | | | | | |
 
 ## Marché et secteur
 

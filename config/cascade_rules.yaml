@@ -119,7 +119,16 @@ layers:
       # DÉCISION 3.a : recouvrement ER (en % de la parcelle) à partir duquel la parcelle est
       # exclue (emprise majoritairement grevée) ; en deçà → SOFT_FLAG + surface ER déduite de
       # l'emprise constructible dans la pré-faisabilité.
+      # SOURCES-1 lot 1 (mandat 06/09/2026) : l'ER ≥ 50 % REDEVIENT RÉDHIBITOIRE (« ER →
+      # VIGILANCE, RÉDHIBITOIRE au-delà de 50 % ») — annule M129 P1.1 (soft fort) ; le motif
+      # rappelle que la servitude est LEVABLE (à réévaluer si l'ER est abandonné). Fiche de
+      # règle : regles/dispositifs_droit_sols.py.
       er_hard_exclude_pct: 50                 # NON CALIBRÉ (défaut directive, jamais validé par une mesure — M129 P1.4)
+      # SOURCES-1 lot 1 : EBC → VIGILANCE dès non nul (inchangé), RÉDHIBITOIRE au-delà de ce
+      # recouvrement (l'emprise boisée interdit toute construction, L113-1 CU) ; la part EBC est
+      # SOUSTRAITE de l'assiette du bloc potentiel (pré-faisabilité, portée run). Seuil = choix
+      # LABUSE (regles/dispositifs_droit_sols.py), jamais validé par une mesure.
+      ebc_hard_exclude_pct: 80
 
   - name: safer
     phase: 1
@@ -128,6 +137,14 @@ layers:
       spatial_kind: safer
       severity: moyen
       detail: "Parcelle déclarée agricole au RPG (déclarations PAC) — usage agricole, à vérifier au PLU."
+      # SOURCES-1 lot 2 (mandat RPG) : en ZONE A du PLU, une parcelle cultivée en CANNE
+      # (code RPG CSA, couverture ≥ seuil) → RÉDHIBITOIRE (sole cannière exploitée — aucune
+      # perspective de mutation) ; une zone A ABSENTE du RPG → VIGILANCE « friche possible »
+      # (signal, pas une preuve). Seuil = choix LABUSE (regles/rpg_cultures.py), non calibré.
+      plu_kind: plu_gpu_zone
+      zone_a_prefixes: [A]
+      canne_codes: [CSA]
+      canne_hard_pct: 50
 
   - name: risques
     phase: 1
@@ -162,7 +179,10 @@ layers:
     enabled: true
     params:
       spatial_kind: ravine
-      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer NON CALIBRÉ (défaut Vic 10 m — M129 P1.4) :
+      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer NON CALIBRÉ (défaut Vic 10 m — M129 P1.4).
+      # SOURCES-1 lot 2 : la bande de 10 m rejoint l'interdiction de défricher/exploiter du
+      # code forestier (R.174-2, ravines à pente > 27°) — le RÉDHIBITOIRE du marchepied
+      # 3,25 m sur le DPF officiel est porté par la couche `dpf` (DEAL Carmen), pas ici.
       buffer_m: 10
       severity: moyen
       # 2.C — quand une SURFACE en eau existe (ravine large), on mesure au BORD (berge), plus proche
@@ -171,6 +191,24 @@ layers:
       # rayon de garde du précalcul batch (doit être ≥ buffer_m ; couvre un réglage à la hausse) :
       search_cap_m: 60
 
+  - name: dpf             # SOURCES-1 lot 2 : domaine public fluvial (DEAL Carmen, kind dpf)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: dpf
+      # L2131-2 CGPPP : servitude de marchepied de 3,25 m le long du DPF → RÉDHIBITOIRE
+      # (bande inconstructible, passage public). La bande de 10 m (R.174-2 code forestier)
+      # reste portée par la couche `ravine` (BD TOPO, TOUTES les ravines) — anti-double-compte.
+      # Fiche : regles/dpf_recul.py.
+      marchepied_m: 3.25
+      search_cap_m: 60
+  - name: zone_humide     # SOURCES-1 lot 2 : inventaires DEAL par secteurs (kind zone_humide)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: zone_humide
+      # VIGILANCE FORTE, jamais une exclusion seule (inventaires partiels, habitats ≠
+      # réglementaire) — loi sur l'eau / ERC. Fiche : regles/zones_humides_vigilance.py.
   - name: trait_de_cote
     phase: 1
     enabled: true
@@ -221,6 +259,16 @@ layers:
       spatial_kind: ens
       severity: moyen
       detail: "Espace protégé réglementaire (réserve / APB / conservatoire…) — restriction."
+      # SOURCES-1 lot 2 (mandat) : RÉDHIBITOIRE en réserves naturelles et APB (le cœur de
+      # parc est déjà HARD via la couche parc_national) ; VIGILANCE ailleurs. Les sites
+      # classés/inscrits sont INFO ×0 (anti-double-compte : SUP AC2 les porte en fort,
+      # lot 1) ; Ramsar = indication internationale → faible. Fiche : regles/enp_protections.py.
+      hard_subtypes: [réserve_naturelle_nationale, reserve_naturelle, réserve_biologique, apb]
+      severites:
+        conservatoire_du_littoral: moyen
+        ramsar: faible
+        site_classe: info
+        site_inscrit: info
 
   - name: ocs_ge
     phase: 1
@@ -307,8 +355,12 @@ layers:
       spatial_kind: sol_pollue
       proximite_m: 100          # LOT 2 data-gap : CASIAS sur la parcelle ou < 100 m (etait 50)
       severity: faible          # CASIAS/instruction : malus leger
-      severity_sis: moyen       # LOT 2 : parcelle DANS un perimetre SIS -> malus Stage 1 moyen
-      detail: "Site pollué recensé (CASIAS/instruction) à proximité — étude de sol à prévoir, coût de dépollution potentiel."
+      # SOURCES-1 lot 3 (mandat) : parcelle DANS un périmètre SIS → VIGILANCE FORTE (étude de
+      # sols obligatoire au changement d'usage L556-2 + information de l'acheteur L125-7 CE —
+      # motifs cités par la couche). Fiche de règle : regles/sis_information_sols.py.
+      severity_sis: fort
+      # SOURCES-1 lot 3 : le motif CASIAS dit « inventaire historique, pas une pollution avérée ».
+      detail: "Ancien site industriel recensé (CASIAS/instruction) à proximité — inventaire historique, pas une pollution avérée ; étude de sol à prévoir en cas de projet sensible."
   - name: sup             # LOT 4 data-gap : assiettes de servitudes d'utilité publique (GPU)
     phase: 1
     enabled: true
@@ -316,6 +368,28 @@ layers:
       spatial_kind: sup
       # severites par categorie codees dans SUP_SEVERITES (etage1.py) : t5 fort, t4/t7/i4/i1/i3
       # moyen, defaut faible ; pm*/ac1/ac2/el10 = info x0 (anti-double-compte risques/abf/parc)
+  - name: peb             # SOURCES-1 lot 1 : plans d'exposition au bruit (DGAC via annexes GPU)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: peb
+      # L112-10 CU : zones A et B = constructions d'habitation interdites (hors exceptions
+      # étroites) → RÉDHIBITOIRE ; zones C et D = autorisées sous conditions (isolation
+      # renforcée, D = information) → VIGILANCE graduée. Fiche : regles/peb_zone.py.
+      hard_zones: [a, b]
+      flag_zones: { c: moyen, d: faible }
+      # part de parcelle en zone A/B en deçà de laquelle l'intersection est un liseré
+      # (information, pas d'exclusion) — même doctrine que ppr_red_marginal_pct :
+      hard_min_pct: 2
+  - name: dpu             # SOURCES-1 lot 1 : droit de préemption urbain (GPU info-surf 04)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: dpu
+      # VIGILANCE seulement (mandat) : la préemption pèse sur la TRANSACTION (délais, prix),
+      # jamais sur la constructibilité — flag faible, renforcé si DPU renforcé.
+      severity: faible
+      severity_renforce: moyen
   - name: bruit_route     # LOT 3 data-gap : secteurs affectes par le bruit (classement sonore Cerema)
     phase: 1
     enabled: true

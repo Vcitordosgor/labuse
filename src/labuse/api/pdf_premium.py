@@ -693,6 +693,76 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                    else "Hors enveloppe urbanisée (PAU) — estimation." if rnu.get("dans_pau") is False else None),
                   rnu.get("avertissement_pau")])
 
+    # ── SOURCES-1 lot 1 — DISPOSITIFS ET PÉRIMÈTRES du droit des sols (même bloc que la fiche
+    #    écran : _dispositifs_block — ER avec part, EBC avec part, DPU typé, zone PEB, SUP). Chaque
+    #    absence est TYPÉE (« non déterminée — non publié par la commune »), jamais un zéro.
+    dispo = fiche.get("dispositifs")
+    if dispo:
+        lignes = []
+        for e in (dispo.get("er") or []):
+            lignes.append(f"Emplacement réservé : {e.get('libelle') or 'ER'} — "
+                          f"{e.get('part_pct')} % de la parcelle"
+                          + (" (emprise majoritairement grevée)" if (e.get("part_pct") or 0) >= 50 else "")
+                          + " ; surface déduite de l'emprise constructible.")
+        for e in (dispo.get("ebc") or []):
+            lignes.append(f"Espace boisé classé : {e.get('libelle') or 'EBC'} — "
+                          f"{e.get('part_pct')} % de la parcelle ; construction interdite sur "
+                          "l'emprise boisée (art. L113-1 CU), part soustraite de l'assiette du potentiel.")
+        dpu = dispo.get("dpu") or {}
+        if dpu.get("etat") == "servi":
+            lignes.append(("Droit de préemption urbain RENFORCÉ" if dpu.get("statut") == "renforce"
+                           else "Droit de préemption urbain")
+                          + " — la commune peut préempter à la vente (DIA, ~2 mois).")
+        elif dpu.get("etat") == "hors":
+            lignes.append("DPU : hors périmètre de préemption publié.")
+        elif dpu.get("etat") == "non_determinee":
+            lignes.append(f"DPU : non déterminé — {dpu.get('detail')}.")
+        peb = dispo.get("peb") or {}
+        if peb.get("zone") in ("A", "B", "C", "D"):
+            effet = ("constructions d'habitation interdites" if peb["zone"] in ("A", "B")
+                     else "isolement acoustique renforcé obligatoire" if peb["zone"] == "C"
+                     else "zone d'information sur le bruit")
+            lignes.append(f"Plan d'exposition au bruit : zone {peb['zone']} — {effet} "
+                          "(art. L112-10 CU).")
+        elif peb.get("zone") == "hors":
+            lignes.append("PEB : hors zones publiées"
+                          + (f" — {peb['detail']}" if peb.get("detail") else "") + ".")
+        for s_ in (dispo.get("sup") or []):
+            lignes.append(f"Servitude {s_.get('categorie')} : {s_.get('libelle') or 'servitude'}.")
+        if lignes:
+            _section(pdf, "DISPOSITIFS ET PÉRIMÈTRES (DROIT DES SOLS)", lignes,
+                     source="Géoportail de l'urbanisme (prescriptions et informations des PLU) · "
+                            "PEB DGAC via annexes GPU — millésime : PLU de la commune")
+
+    # ── SOURCES-1 lot 5 — FIBRE (Arcep) : même bloc que la fiche écran (_fibre_block),
+    #    distance dite, jamais un booléen nu ; omis si la source n'est pas ingérée.
+    fibre = fiche.get("fibre")
+    if fibre and fibre.get("etat") == "servi":
+        _section(pdf, "FIBRE (RÉSEAUX)",
+                 [("Raccordable FttH" if fibre.get("ftth") else "Non raccordable FttH à ce jour")
+                  + f" — immeuble Arcep à ~{fibre.get('distance_m')} m"
+                  + (f" ({', '.join(fibre.get('operateurs') or [])})" if fibre.get("ftth") else "")
+                  + "."],
+                 source=f"Arcep — Ma connexion internet ({fibre.get('millesime')})")
+
+    # ── SOURCES-1 lot 3 — SOLS (SIS / CASIAS) : même bloc que la fiche écran (_sols_block).
+    sols = fiche.get("sols")
+    if sols and (sols.get("sis") or sols.get("casias")):
+        lignes = []
+        sis = sols.get("sis")
+        if sis:
+            lignes.append(f"Secteur d'information sur les sols : {sis.get('nom') or 'SIS'} — "
+                          f"{sis.get('part_pct')} % de la parcelle ; étude de sols obligatoire au "
+                          "changement d'usage (L556-2 CE) et information ÉCRITE de l'acheteur ou du "
+                          "locataire obligatoire à la vente/location (L125-7 CE).")
+        cas = sols.get("casias")
+        if cas:
+            ou = "sur la parcelle" if cas.get("sur_place") else f"à {cas.get('distance_m')} m"
+            lignes.append(f"Ancien site industriel (CASIAS) : {cas.get('nom') or 'site'} — {ou}. "
+                          "Inventaire historique, pas une pollution avérée.")
+        _section(pdf, "SOLS (SIS / CASIAS)", lignes,
+                 source="Géorisques (BRGM/MTE) — sites et sols pollués, SIS et CASIAS")
+
     tf = fiche.get("territoire_fiscal")
     if tf:
         lignes, zf, frr = [], tf.get("zfang") or {}, tf.get("frr") or {}

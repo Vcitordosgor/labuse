@@ -16,6 +16,10 @@ from ..context import EvalContext, ParcelRef
 
 SRC_FRICHE = "Cartofriches (Cerema)"
 SRC_SOLP = "Géorisques — sites et sols pollués"
+# SOURCES-1 lot 3 — SIS et CASIAS ont leur ligne data_sources PROPRE (réservoirs logiques
+# georisques_sis / georisques_casias sur le kind sol_pollue, canal SSP) :
+SRC_SIS = "Géorisques — secteurs d'information sur les sols (SIS)"
+SRC_CASIAS = "Géorisques — CASIAS (anciens sites industriels)"
 SRC_CAVITE = "Géorisques — cavités souterraines"
 SRC_ICPE = "Géorisques — ICPE"
 SRC_MVT = "Géorisques — mouvements de terrain"
@@ -79,7 +83,9 @@ class SolPollueLayer(_NearestFlagLayer):
          (héritage vague B, rayon élargi 50 → 100 m par le mandat)."""
 
     name = "sol_pollue"
-    src = SRC_SOLP
+    # SOURCES-1 lot 3 : la branche proximité (2) concerne les sites CASIAS/instruction —
+    # sa source nommée est la ligne CASIAS ; la branche SIS (1) cite SRC_SIS.
+    src = SRC_CASIAS
 
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
@@ -90,11 +96,15 @@ class SolPollueLayer(_NearestFlagLayer):
                if (i.subtype or "") == "sis" and i.coverage > 0]
         if sis:
             i = max(sis, key=lambda x: x.coverage)
+            # SOURCES-1 lot 3 : VIGILANCE FORTE + l'obligation d'INFORMATION DE L'ACHETEUR est
+            # DITE (L125-7 CE — le vendeur/bailleur informe par écrit l'acquéreur/locataire).
             return _trace(soft_flag(
                 self.name,
-                f"Parcelle dans un périmètre SIS ({i.name or 'secteur pollué'}) — coût de "
-                "dépollution potentiel, étude de sol obligatoire à la mutation (L.556-2 CE).",
-                Severity(params.get("severity_sis", "moyen")), source=self.src),
+                f"Parcelle dans un secteur d'information sur les sols ({i.name or 'SIS'}) — "
+                "étude de sols obligatoire au changement d'usage (L556-2 CE) et information "
+                "écrite de l'acheteur ou du locataire OBLIGATOIRE à la vente/location "
+                "(L125-7 CE).",
+                Severity(params.get("severity_sis", "fort")), source=SRC_SIS),
                 "spatial_layers", i.id)
         # 2) site CASIAS / instruction ≤ proximite_m (100 m)
         return super().evaluate(parcel, ctx, params)
@@ -110,7 +120,15 @@ SUP_SEVERITES = {
     "i4": "moyen",                                       # lignes électriques HT/THT
     "i1": "moyen", "i1bis": "moyen", "i3": "moyen",      # hydrocarbures / gaz
     "pm1": "info", "pm2": "info", "pm3": "info",         # PPR — déjà scoré (risques)
-    "ac1": "info", "ac2": "info",                        # MH / sites — déjà scoré (abf)
+    "ac1": "info",                                       # MH — déjà scoré (abf)
+    # SOURCES-1 lot 1 (mandat) : AC2 sites classés/inscrits → VIGILANCE FORTE (l'ancien
+    # « info ×0, déjà scoré abf » confondait Mérimée-MH et sites classés — deux régimes) ;
+    # PT1/PT2 radioélectriques → VIGILANCE (moyen) ; AS1 captages → FORT en attendant la
+    # publication (non publiée au 974 le 06/09/2026 — le périmètre IMMÉDIAT sera RÉDHIBITOIRE
+    # à la première version réelle, cf. regles/sup_categories.py).
+    "ac2": "fort",
+    "pt1": "moyen", "pt2": "moyen",
+    "as1": "fort",
     "el10": "info",                                      # parc national — déjà scoré
 }
 SUP_DEFAUT = "faible"

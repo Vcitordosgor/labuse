@@ -42,6 +42,36 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
 
       {/* QUI VIT LÀ — socio-éco secteur (Filosofi Sourcé + parc social) rapatrié de Marché, + isochrone. */}
       {f.marche_secteur && <MarcheSecteurBlock ms={f.marche_secteur} />}
+
+      {/* SOURCES-1 lot 6 — le QUARTIER INSEE (IRIS, RP2022) : vacance, âge du bâti, ménages.
+          Maille DITE (quartier IRIS — affine la commune, ne la remplace pas). Absent = omis. */}
+      {f.iris_quartier && (
+        <div data-iris-quartier>
+          <GroupLabel>Le quartier INSEE{f.iris_quartier.nom ? ` — ${f.iris_quartier.nom}` : ''}</GroupLabel>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11.5px] text-txt-mut">
+            {f.iris_quartier.logements != null && (
+              <span><span className="text-txt tnum">{fmtInt(f.iris_quartier.logements)}</span> logements</span>
+            )}
+            {f.iris_quartier.vacance_pct != null && (
+              <span>vacance <span className="text-txt tnum">{String(f.iris_quartier.vacance_pct).replace('.', ',')} %</span></span>
+            )}
+            {f.iris_quartier.part_bati_avant_1990_pct != null && (
+              <span>bâti d'avant 1990 <span className="text-txt tnum">{String(f.iris_quartier.part_bati_avant_1990_pct).replace('.', ',')} %</span></span>
+            )}
+            {f.iris_quartier.taille_menages != null && (
+              <span><span className="text-txt tnum">{String(f.iris_quartier.taille_menages).replace('.', ',')}</span> pers./ménage</span>
+            )}
+            {f.iris_quartier.part_60_plus_pct != null && (
+              <span>60 ans et + <span className="text-txt tnum">{String(f.iris_quartier.part_60_plus_pct).replace('.', ',')} %</span></span>
+            )}
+            {f.iris_quartier.part_hlm_pct != null && (
+              <span>HLM <span className="text-txt tnum">{String(f.iris_quartier.part_hlm_pct).replace('.', ',')} %</span></span>
+            )}
+          </div>
+          <FactNote>{f.iris_quartier.source} — {f.iris_quartier.millesime}. Maille quartier (IRIS) :
+            affine la commune, ne la remplace pas.</FactNote>
+        </div>
+      )}
       <AutourZoneBlock idu={idu} />
 
       {/* PERMIS À PROXIMITÉ — UN tableau cliquable (rapatrié de Réseaux, F0). */}

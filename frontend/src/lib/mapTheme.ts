@@ -105,6 +105,38 @@ export type MapTokens = {
   frrTotalite: string     // émeraude (avantageux, aplat plein)
   frrPartie: string       // améthyste
   dispoFillOpacity: number
+  /** SOURCES-1 lot 1 — contraintes du droit des sols (ER / EBC / DPU / PEB / SUP).
+   *  ER or foncé (emprise grevée), EBC vert forêt (boisement, ≠ mint des statuts),
+   *  DPU bleu moyen (transaction), SUP framboise (≠ améthyste FRR). PEB gradué par
+   *  zone : A rouge (interdite) → B orange → C jaune-ocre → D gris (information). */
+  er: string
+  erOpacity: number
+  ebc: string
+  ebcOpacity: number
+  dpu: string
+  dpuOpacity: number
+  pebRamp: { a: string; b: string; c: string; d: string }
+  pebOpacity: number
+  sup: string
+  supOpacity: number
+  /** SOURCES-1 lot 2 — nature et eau : DPF (trait d'eau), zones humides (sarcelle),
+   *  ENP (vert profond ≠ parc marron), RPG (paille — sole agricole). */
+  dpf: string
+  zoneHumide: string
+  zoneHumideOpacity: number
+  enp: string
+  enpOpacity: number
+  rpg: string
+  rpgOpacity: number
+  /** SOURCES-1 lot 3 — sols (SIS brun, CASIAS ocre point) et bruit (classement violet
+   *  gradué par catégorie, cartes de bruit prune). */
+  sis: string
+  sisOpacity: number
+  casias: string
+  bruitRamp: { cat1: string; cat2: string; cat3: string; cat4: string; cat5: string }
+  bruitOpacity: number
+  bruitCarte: string
+  bruitCarteOpacity: number
 }
 
 export const MAP_THEME: Record<MapThemeName, MapTokens> = {
@@ -159,6 +191,24 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zfangRenforce: '#3E74F0', zfangStandard: '#C6B08A',   // bleu roi 1,33 · sable 1,62
     frrTotalite: '#17B26A', frrPartie: '#9B6BE0',         // émeraude 1,48 · améthyste 1,37
     dispoFillOpacity: 0.24,
+    // SOURCES-1 lot 1 — contraintes du droit des sols (tints vifs, fond sombre)
+    er: '#D4A017', erOpacity: 0.30,                       // or foncé — emprise grevée (ER)
+    ebc: '#38A169', ebcOpacity: 0.28,                     // vert forêt — boisement classé
+    dpu: '#6B8FD4', dpuOpacity: 0.22,                     // bleu moyen — préemption (transaction)
+    pebRamp: { a: '#E8564A', b: '#F0913D', c: '#E3C13C', d: '#9AA0A6' },
+    pebOpacity: 0.28,
+    sup: '#C05884', supOpacity: 0.24,                     // framboise — servitudes SUP
+    // SOURCES-1 lot 2 — nature et eau (fond sombre)
+    dpf: '#4FC3E8',                                       // trait d'eau vif — DPF (ligne)
+    zoneHumide: '#2E9E8F', zoneHumideOpacity: 0.30,       // sarcelle — zones humides
+    enp: '#1E8F4E', enpOpacity: 0.26,                     // vert profond — espaces protégés
+    rpg: '#C9B458', rpgOpacity: 0.22,                     // paille — cultures déclarées
+    // SOURCES-1 lot 3 — sols et bruit (fond sombre)
+    sis: '#A0522D', sisOpacity: 0.34,                     // brun sol — SIS (4 périmètres)
+    casias: '#D9973B',                                    // ocre — sites CASIAS (points)
+    bruitRamp: { cat1: '#8E4DD1', cat2: '#9B6BD6', cat3: '#A98BD9', cat4: '#B8A8DC', cat5: '#C9C2DE' },
+    bruitOpacity: 0.26,                                   // violet gradué — classement sonore
+    bruitCarte: '#B03A6B', bruitCarteOpacity: 0.22,       // prune — dépassements CBS
   },
   // Colonne CLAIR = les valeurs arbitrées M105-B (mêmes teintes, assombries/saturées).
   clair: {
@@ -212,6 +262,25 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     zfangRenforce: '#2A54C8', zfangStandard: '#8A7A52',   // bleu roi 1,43 · sable foncé 1,31
     frrTotalite: '#0C8A50', frrPartie: '#6E3FB5',         // émeraude 1,35 · améthyste 1,44
     dispoFillOpacity: 0.24,
+    // SOURCES-1 lot 1 — contraintes du droit des sols (teintes profondes, terre claire)
+    er: '#8A6D08', erOpacity: 0.30,                       // or profond
+    ebc: '#1E6B43', ebcOpacity: 0.28,                     // vert forêt profond
+    dpu: '#2D4FA0', dpuOpacity: 0.22,                     // bleu profond
+    pebRamp: { a: '#B91C1C', b: '#D97706', c: '#A8720F', d: '#6B7280' },
+    pebOpacity: 0.30,
+    sup: '#8E2F5C', supOpacity: 0.24,                     // framboise profonde
+
+    // SOURCES-1 lot 2 — nature et eau (thème clair : mêmes teintes assombries)
+    dpf: '#1A7FA8',
+    zoneHumide: '#1F7A6E', zoneHumideOpacity: 0.30,
+    enp: '#136B39', enpOpacity: 0.26,
+    rpg: '#8F7E2E', rpgOpacity: 0.22,
+    // SOURCES-1 lot 3 — sols et bruit (thème clair : mêmes teintes assombries)
+    sis: '#7A3C1E', sisOpacity: 0.34,
+    casias: '#A66E1F',
+    bruitRamp: { cat1: '#6B32A8', cat2: '#7A4AB5', cat3: '#8A66BE', cat4: '#9A85C4', cat5: '#ABA0C9' },
+    bruitOpacity: 0.28,
+    bruitCarte: '#8A2450', bruitCarteOpacity: 0.24,
   },
 }
 

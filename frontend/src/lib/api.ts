@@ -240,10 +240,13 @@ export interface ContexteCommune {
     prix_demande_median_eur_m2: number | null; prix_demande_n: number | null
     ecart_demande_acte_pct: number | null; prix_acte_eur_m2: number | null; source: string
   } | null
-  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; parc_national: boolean; source: string }
+  risques: { ppr_pct: number | null; mouvement_terrain_pct: number | null; catnat_arretes: number; parc_national: boolean; azi_tri?: { azi: { libelle?: string }[]; tri: { libelle?: string }[]; detail?: string } | null; source: string }
   population: {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
+    // SOURCES-1 lot 6 — l'affinage par quartier (IRIS RP2022), maille dite
+    quartiers?: { n_iris: number; vacance_min_pct: number; vacance_max_pct: number
+      vacance_mediane_pct: number; source: string } | null
   }
   plu_statut: {
     statut: string; libelle: string | null; procedure?: string | null; date_reglement: string | null
@@ -255,6 +258,14 @@ export interface ContexteCommune {
   }
   densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
   loyer: { median_eur_m2: number; type: string | null; source: string } | null
+  // SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté. null = non ingéré.
+  zonage_abc: { zone: string; millesime: string; source: string } | null
+  // SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie)
+  fiscalite: { tfpb_commune_pct: number | null; tfpb_epci_pct: number | null
+    teom_pct: number | null; millesime: string; source: string } | null
+  ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string
+    ort_signee: boolean; date_signature?: string | null
+    denormandie: string; millesime?: string; source?: string } | null
   outils: {
     permis_en_cours: number; permis_point_mort: number; densifiables: number
     radar_biens: number; scan_pm: number; solaire_piscines: number

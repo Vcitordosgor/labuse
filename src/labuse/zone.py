@@ -181,8 +181,30 @@ def population_zone(session: Session, geom_geojson: dict) -> dict:
             {"zone": json.dumps(geom_geojson)}).mappings().first()
         n_imp, n_car_rev = int(imp["n_imp"]), int(imp["n_tot"])
     majorite_imputee = bool(n_imp is not None and n_car_rev and n_imp > n_car_rev / 2)
+    # SOURCES-1 lot 6 — l'overlay QUARTIERS (IRIS RP2022) de la zone : vacance et âge du bâti
+    # des IRIS intersectés (maille IRIS DITE — complète Filosofi, ne le remplace pas).
+    iris_zone = None
+    has_iris = session.execute(text(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'iris_rp'")).first()
+    if has_iris:
+        rz = session.execute(text(
+            f"""SELECT count(*) AS n_iris,
+                  round(100.0 * sum(i.logvac) / NULLIF(sum(i.log), 0), 1)  AS vacance_pct,
+                  round(100.0 * sum(i.ach_1919 + i.ach_1945 + i.ach_1970 + i.ach_1990)
+                        / NULLIF(sum(i.ach_tot), 0), 1)                     AS part_bati_avant_1990_pct
+                FROM iris_rp i
+                JOIN spatial_layers sl ON sl.kind = 'iris_insee' AND sl.subtype = i.iris
+                WHERE ST_Intersects(sl.geom_2975, {_zone2975()})"""),
+            {"zone": json.dumps(geom_geojson)}).mappings().first()
+        if rz and rz["n_iris"]:
+            iris_zone = {"n_iris": int(rz["n_iris"]),
+                         "vacance_pct": float(rz["vacance_pct"]) if rz["vacance_pct"] is not None else None,
+                         "part_bati_avant_1990_pct": (float(rz["part_bati_avant_1990_pct"])
+                                                      if rz["part_bati_avant_1990_pct"] is not None else None),
+                         "source": "INSEE RP2022 par IRIS (quartiers intersectés)"}
     return {
         "inhabitee": False,
+        "iris": iris_zone,
         "habitants": int(r["habitants"]),
         "menages": int(r["menages"]),
         "revenu_median_eur": int(r["revenu_median_eur"]) if r["revenu_median_eur"] is not None else None,

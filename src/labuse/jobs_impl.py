@@ -414,8 +414,12 @@ def sentinelle_dvf_cadastre(ctx: JobContext) -> None:
     db = ctx.db
     alertes = []
     for nom in ("DVF", "cadastre"):
+        # SOURCES-1 lot 4 : « DVF Réunion (Région…) » matche aussi %DVF% — l'heuristique
+        # historique visait LA ligne à échéance datée ; on préfère une ligne portant
+        # prochain_millesime_at (comportement d'origine conservé, job supersédé/test-only).
         r = db.execute(text("SELECT source_millesime, prochain_millesime_at FROM data_sources "
-                            "WHERE name ILIKE :n ORDER BY updated_at DESC LIMIT 1"),
+                            "WHERE name ILIKE :n "
+                            "ORDER BY (prochain_millesime_at IS NULL), updated_at DESC LIMIT 1"),
                        {"n": f"%{nom}%"}).mappings().first()
         # prochain_millesime_at est un DATE : comparer à une DATE (l'ancien code comparait à un datetime
         # → TypeError latent dès qu'une source portait cette date ; corrigé ici, la reprise le rend sain).

@@ -158,6 +158,9 @@ SOURCES: list[dict] = [
                          "dedup à passer (dette BACKLOG). ✓ intégré auto : régime forestier ; toponyme « domaniale » "
                          "→ HARD_EXCLUDE, sinon flag fort."),
     dict(name="Potentiel foncier Région (Région ODS)", category="urbanisme", provider="Région Réunion / AGORAH",
+         # SOURCES-1 lot 4 — millésime déclaré (levait le seul KO u_millesime du filtre neuf) :
+         # le jeu ODS n'est pas versionné chez le producteur, l'étiquette le dit.
+         source_millesime="îlots non urbanisés — estimation Région (ODS, non versionné)",
          access_type="import", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://peigeo.re", endpoint_url=None,
          legal_notes="Licence à confirmer (jeu Région ODS « potentiel foncier » — audit M6 §1.11 R8). Proxy de vocation INDICATIF ; ce n'est pas le zonage régional officiel (introuvable en open data), aucune portée réglementaire ni hiérarchie sur le PLU.",
@@ -423,7 +426,10 @@ SOURCES: list[dict] = [
          access_type="import", status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
          documentation_url="https://datafoncier.cerema.fr", endpoint_url=None,
          legal_notes="NON INTÉGRÉ — aucune donnée ingérée. Acte d'engagement DGALN/DGFiP/Cerema : usage limité aux finalités déclarées, DÉMARCHAGE COMMERCIAL INTERDIT, rediffusion interdite → incompatible avec la prospection LABUSE (audit M6 §1.11 R1 : à trancher AVANT toute signature de convention). Version anonymisée : physiques masquées (_X_), morales complètes → RGPD-safe.",
-         technical_notes="M74 A : RESTE manuel (mesuré, PAS requalifiée). La couche cascade 'proprietaire' qui la "
+         source_millesime="convention non instruite (FF 2024 au portail Cerema)",
+         technical_notes="SOUS CONVENTION (SOURCES-1 lot 7) — une seule demande Cerema couvre FF + "
+                         "LOVAC + DV3F (délai médian 27 j ; collectivité mandante requise, geste Vic). "
+                         "M74 A : RESTE manuel (mesuré, PAS requalifiée). La couche cascade 'proprietaire' qui la "
                          "cite renvoie 100 % UNKNOWN (parcel_source_results VIDE — convention non branchée). Les "
                          "82 701 liens parcelle↔personne morale du produit viennent en réalité de « DGFiP — parcelles "
                          "des personnes morales » (open data, ligne distincte), PAS de cette source conventionnée. "
@@ -740,6 +746,436 @@ SOURCES: list[dict] = [
          documentation_url="https://artificialisation.developpement-durable.gouv.fr/les-donnees/donnees-de-consommation-despaces",
          legal_notes="Licence Ouverte — attribution : « Source : Cerema — portail national de l'artificialisation des sols ».",
          technical_notes="Table `commune_conso_enaf` (consommation d'espaces NAF par commune, période 2021-2024). Lue par la pression ZAN et l'enveloppe ZAN restante (fiche commune, comparateur). Millésime annuel."),
+    # ── SOURCES-1 lot 1 — les prescriptions et périmètres du droit des sols ──
+    # Deux réservoirs LOGIQUES sur la même table servie par le canal GPU existant (API Carto
+    # prescriptions, réservoir gpu_plu_api_carto) : les codes CNIG typepsc VÉRIFIÉS dans les
+    # données des 24 communes (06/09/2026) sont 05 = emplacement réservé (2 250 + 6 ER réels
+    # codés « 02 » à Saint-Louis, rescue M8a) et 01 = espace boisé classé (1 782).
+    dict(name="GPU — emplacements réservés (prescriptions CNIG)", category="urbanisme",
+         provider="IGN / Géoportail de l'urbanisme (prescriptions des PLU)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU — prescriptions typepsc 05 (idurba par commune)",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/prescription-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), prescriptions des documents d'urbanisme ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir gpu_prescriptions_er sur spatial_layers "
+                         "kind='plu_gpu_prescription' (famille ER : typepsc 05 + rescue/veto libellé, "
+                         "source unique cascade_rules.yaml). Rempli par le canal GPU existant "
+                         "(prescriptions par commune). Cascade : VIGILANCE, RÉDHIBITOIRE ≥ 50 % "
+                         "(seuil regles/), surface ER déduite de l'emprise (pré-faisabilité)."),
+    dict(name="GPU — espaces boisés classés (prescriptions CNIG)", category="urbanisme",
+         provider="IGN / Géoportail de l'urbanisme (prescriptions des PLU)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU — prescriptions typepsc 01 (idurba par commune)",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/prescription-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), prescriptions des documents d'urbanisme ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir gpu_prescriptions_ebc sur spatial_layers "
+                         "kind='plu_gpu_prescription' (typepsc 01, Art. L113-1 CU). Rempli par le "
+                         "canal GPU existant. Cascade : VIGILANCE dès non nul, RÉDHIBITOIRE ≥ 80 % "
+                         "(seuil regles/), part EBC SOUSTRAITE de l'assiette du bloc potentiel."),
+    dict(name="GPU — droit de préemption urbain (info-surf)", category="urbanisme",
+         provider="IGN / Géoportail de l'urbanisme (informations des PLU)",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GPU typeinf 04 — partiel, non-publiées listées",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/info-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : Géoportail de l'urbanisme (IGN), informations des documents d'urbanisme ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir dpu_perimetres : spatial_layers kind='dpu' "
+                         "(typeinf CNIG 04, subtype dpu/dpu_renforce), attribution stricte par "
+                         "partition DU_<insee>. `labuse ingest-gpu-infos`. Une commune sans typeinf 04 "
+                         "n'a PAS publié son DPU au GPU (état « non publié », listée au rapport "
+                         "d'ingestion pour la demande de Vic aux communes/SIG communaux). Cascade : "
+                         "VIGILANCE (la préemption pèse sur la transaction, pas sur la constructibilité)."),
+    dict(name="PEB — plans d'exposition au bruit (DGAC via annexes GPU)", category="risques",
+         provider="DGAC / DEAL (PEB approuvés) — republication annexes GPU",
+         access_type="REST/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="Roland-Garros B/C/D (GPU) ; Pierrefonds non publié",
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/info-surf",
+         legal_notes="Licence Ouverte (GPU) — attribution : « Source : DGAC (plans d'exposition au bruit), via le Géoportail de l'urbanisme ». Référence : art. L112-10 du code de l'urbanisme.",
+         technical_notes="SOURCES-1 lot 1 — réservoir peb_dgac : spatial_layers kind='peb' "
+                         "(typeinf CNIG 27, zone A/B/C/D dans txt, dédoublonné à l'île). VÉRIFIÉ "
+                         "06/09/2026 : Roland-Garros servi en B/C/D par les annexes GPU des communes "
+                         "concernées ; Pierrefonds ABSENT du GPU (0 typeinf 27 sur la bbox de "
+                         "Saint-Pierre) — couverture partielle DITE, aucune géométrie inventée. "
+                         "`labuse ingest-gpu-infos`. Cascade : zones A/B RÉDHIBITOIRES, C/D VIGILANCE "
+                         "(L112-10 CU)."),
+    dict(name="Zonage ABC des communes (DHUP)", category="logement",
+         provider="DHUP / Ministère de la Transition écologique (arrêté national)",
+         access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)",
+         documentation_url="https://www.data.gouv.fr/datasets/liste-des-communes-selon-le-zonage-abc",
+         endpoint_url="https://static.data.gouv.fr/resources/liste-des-communes-selon-le-zonage-abc/20260703-091314/liste-ensemble-des-communes-zonage-abc-en-vigueur-26-juin-2026.csv",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DHUP — zonage ABC (arrêté du 1er août 2014 modifié, art. D. 304-1 CCH) ».",
+         technical_notes="SOURCES-1 lot 1 — réservoir zonage_abc_dhup : table commune_zonage_abc "
+                         "(classe par commune, passe-plat de l'arrêté). VÉRIFIÉ 06/09/2026 : 24/24 "
+                         "communes (A : Les Avirons, L'Étang-Salé, Saint-Leu, Saint-Paul ; B1 : les "
+                         "20 autres). `labuse ingest-zonage-abc`. Pas de couche carte, pas de cascade "
+                         "(régime d'aides, pas de constructibilité)."),
+    # ── SOURCES-1 lot 2 — la nature et l'eau ──
+    dict(name="Ravines — domaine public fluvial (DEAL Carmen)", category="risques",
+         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
+         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/domaine-public-fluvial-dpf-et-domaine-prive-de-l-a285.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — domaine public fluvial (arrêté préfectoral n°06-3077/SG/DRCTV du 21/08/2006) ».",
+         technical_notes="SOURCES-1 lot 2 — réservoir deal_dpf_dpe : spatial_layers kind='dpf' "
+                         "(cours_eau 275, plan_eau 6), couches Cours_d_eau_DPF + Plan_d_eau_DPF du "
+                         "WFS Carmen 29 (GML EPSG:2975 → ogr2ogr, vérifié live 07/09/2026 — la "
+                         "fiche Sextant du rapport n'offre AUCUNE distribution, WMS de "
+                         "visualisation seul). `labuse ingest-deal-carmen`. Cascade : marchepied "
+                         "3,25 m RÉDHIBITOIRE (L2131-2 CGPPP), bande 10 m = vigilance (portée par "
+                         "la couche ravine BD TOPO, anti-double-compte). Le DPE (domaine privé de "
+                         "l'État, ~1 700 km) n'est PAS diffusé sur ce WFS — demande DEAL (lot 7)."),
+    dict(name="Zones humides — inventaires DEAL (Carmen)", category="environnement",
+         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
+         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="inventaires 2003/2009/2011/2019 par secteurs (partiels)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/les-cartographies-d-habitats-a320.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — inventaires des zones humides ».",
+         technical_notes="SOURCES-1 lot 2 — réservoir deal_zones_humides : spatial_layers "
+                         "kind='zone_humide' (habitats_2011 1 507 · inventaire_2009 187 · "
+                         "espace_fonctionnel_2009 30 · inventaire_2003 49 · basse_altitude_2019 "
+                         "1 349 — vérifié live 07/09/2026). Couverture PAR SECTEURS dite, jamais "
+                         "une preuve d'absence (habitats ≠ zones humides réglementaires). "
+                         "`labuse ingest-deal-carmen`. Cascade : VIGILANCE forte (loi sur l'eau, "
+                         "séquence ERC)."),
+    dict(name="Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)",
+         category="environnement",
+         provider="DEAL Réunion (Carmen, nœud 29 — DEAL_REUNION_2020)",
+         access_type="WFS/GML", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="Ramsar 1 · sites classés/inscrits 7 · RN 3 (07/09/2026)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/informations-geographiques-r104.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion (Carmen) — Ramsar, sites classés et inscrits, réserves naturelles ».",
+         technical_notes="SOURCES-1 lot 2 — complète l'ENP INPN (kind='ens') avec les types "
+                         "absents du jeu INPN local : ramsar (Étang Saint-Paul), site_classe/"
+                         "site_inscrit (7, attribut Type), reserve_naturelle (RNN zonée A/B + "
+                         "RÉSERVE MARINE, absente du jeu INPN local — chevauche l'entité RNN INPN "
+                         "sur l'Étang, dit). Purge par SUBTYPE seulement, les subtypes INPN "
+                         "restent. Forêts de protection = SUP A7 : NON publiée pour le 974 "
+                         "(inventaire GPU sondé, lot 1). Cascade : réserves/APB RÉDHIBITOIRES, "
+                         "sites = info ×0 (anti-double-compte SUP AC2), ramsar = vigilance."),
+    dict(name="AZI / TRI — inondation (Géorisques GASPAR)", category="risques",
+         provider="BRGM / Géorisques (GASPAR)",
+         access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="GASPAR azi+tri par commune (07/09/2026)",
+         rate_limit="~1000 req/min/IP",
+         documentation_url="https://www.georisques.gouv.fr/doc-api",
+         endpoint_url="https://www.georisques.gouv.fr/api/v1/gaspar/azi",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — GASPAR ».",
+         technical_notes="SOURCES-1 lot 2 — réservoir georisques_azi_tri : table azi_communes "
+                         "(FAIT documentaire par commune — ex. 97411 : AZI « La Montagne » 2004, "
+                         "TRI Saint-Denis/Sainte-Marie 2013, vérifié live 07/09/2026). La "
+                         "GÉOMÉTRIE d'aléa inondation n'est PAS ré-ingérée : l'ALEA_INONDATION "
+                         "Carmen (75) est un doublon vérifié de georisque_alea/inondation (76, "
+                         "DEAL Lizmap) déjà servi par la couche cascade risques. "
+                         "`labuse ingest-azi-tri`."),
+    dict(name="ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
+         category="patrimoine", provider="Ministère de la Culture / DAC de La Réunion",
+         access_type="WFS/shp", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="aucune donnée — Atlas injoignable (06/09/2026)",
+         documentation_url="https://www.culture.gouv.fr/regions/dac-de-la-reunion/la-direction-des-affaires-culturelles-de-la-reunion/patrimoine-architecture-environnement/archeologie/Zones-de-presomption-de-prescription-archeologique-ZPPA",
+         endpoint_url="https://atlas.patrimoines.culture.fr/",
+         legal_notes="Licence : libre sous mention de la source et de la date (Atlas des patrimoines). Une ZPPA n'est PAS une servitude — indication (saisine préfet, diagnostic archéologique).",
+         technical_notes="SOURCES-1 lot 1 — réservoir zppa_culture ATTENDU : atlas.patrimoines."
+                         "culture.fr injoignable au test du 06/09/2026 (timeout, aucune réponse HTTP) "
+                         "et aucun jeu national/974 sur data.gouv (recherche du 06/09/2026 : couches "
+                         "locales hors 974 seulement). Couverture 974 à confirmer AU TÉLÉCHARGEMENT "
+                         "quand l'Atlas répond — la sentinelle surveille la page DAC. Rien d'ingéré, "
+                         "rien d'inventé ; couche + fiche + VIGILANCE brancheront à la première "
+                         "version réelle."),
+    # ── SOURCES-1 lot 3 — les sols et le bruit ──
+    # SIS et CASIAS : réservoirs LOGIQUES sur le kind sol_pollue (subtypes sis/casias), déjà
+    # rempli par le canal Géorisques SSP existant (/api/v1/ssp groupe sis+casias+instructions,
+    # ingest-georisques) — pas de table dupliquée, l'anti-doublon est la doctrine (cf. ER/EBC).
+    dict(name="Géorisques — secteurs d'information sur les sols (SIS)", category="risques",
+         provider="BRGM / MTE (Géorisques — infosols)", access_type="REST",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="4 SIS 974 (MultiPolygon) — canal SSP, vu 07/09/2026",
+         documentation_url="https://www.georisques.gouv.fr/donnees/bases-de-donnees/secteurs-dinformations-sur-les-sols-sis",
+         endpoint_url="https://www.georisques.gouv.fr/api/v1/ssp",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — SIS ». "
+                     "Obligation d'information de l'acquéreur/locataire : art. L125-7 du code de l'environnement.",
+         technical_notes="SOURCES-1 lot 3 — réservoir georisques_sis : spatial_layers "
+                         "kind='sol_pollue' subtype='sis' (périmètres réglementaires MultiPolygon, "
+                         "4 au 974 : Le Port, Saint-Benoît, Saint-Louis, Sainte-Marie). Rempli par "
+                         "le canal SSP existant (labuse ingest-georisques). Cascade : VIGILANCE "
+                         "FORTE (étude de sols au changement d'usage L556-2, information de "
+                         "l'acheteur L125-7 — motifs cités). Couche carte kind virtuel 'sis'."),
+    dict(name="Géorisques — CASIAS (anciens sites industriels)", category="risques",
+         provider="BRGM / MTE (Géorisques — CASIAS, ex-BASIAS)", access_type="REST",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026",
+         documentation_url="https://www.georisques.gouv.fr/donnees/bases-de-donnees/inventaire-historique-de-sites-industriels-et-activites-de-service",
+         endpoint_url="https://www.georisques.gouv.fr/api/v1/ssp",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — CASIAS ». "
+                     "Un site CASIAS est un INVENTAIRE HISTORIQUE, pas une pollution avérée.",
+         technical_notes="SOURCES-1 lot 3 — réservoir georisques_casias : spatial_layers "
+                         "kind='sol_pollue' subtypes 'casias' (453) + 'instruction' (56), rempli "
+                         "par le canal SSP existant. Cascade : VIGILANCE (faible, ≤ 100 m) — le "
+                         "motif dit « inventaire historique, pas une pollution avérée ». Couche "
+                         "carte kind virtuel 'casias'."),
+    dict(name="DEAL — cartes de bruit stratégiques (CBS)", category="risques",
+         provider="DEAL Réunion (directive 2002/49/CE, échéance 4)", access_type="WFS/GML",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="CBS 2022 — 6 zones de dépassement Lden/Ln (RN/RD/VC)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/8-consultation-des-donnees-a62.html",
+         endpoint_url="http://ws.carmen.developpement-durable.gouv.fr/WFS/29/Cartes_bruit_strategiques",
+         legal_notes="Licence Ouverte — attribution : « Source : DEAL Réunion — cartes de bruit stratégiques ».",
+         technical_notes="SOURCES-1 lot 3 — réservoir deal_bruit_cartes : spatial_layers "
+                         "kind='bruit_carte' (type c = dépassements des valeurs limites Lden 68 / "
+                         "Ln 62 dB(A), 6 entités). ≠ classement sonore réglementaire (kind "
+                         "bruit_route, arrêtés 14-15/12/2023) — les type b (secteurs affectés) ne "
+                         "sont PAS ingérés (doublon vérifié des bandes sect_bruit Cerema), les "
+                         "type a (isophones) écartés (exposition, pas d'effet réglementaire). "
+                         "`labuse ingest-bruit-cartes`."),
+    # ── SOURCES-1 lot 4 — le cadre régional ──
+    dict(name="SAR — schéma d'aménagement régional (Région/DEAL)", category="urbanisme",
+         provider="Région Réunion (élaboration) / État (décret 22/11/2011)",
+         access_type="WMS (image seule)", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="couche SIG officielle NON diffusée (recherche 07/09/2026)",
+         documentation_url="https://www.reunion.developpement-durable.gouv.fr/schema-d-amenagement-regional-sar-r76.html",
+         endpoint_url="https://sextant.ifremer.fr/services/wms/polmar_reunion",
+         legal_notes="SAR approuvé par décret en Conseil d'État du 22/11/2011. NON OPPOSABLE aux "
+                     "tiers ni aux autorisations (sauf dispositions valant SMVM) — indication, "
+                     "jamais une règle (règle 5 du mandat SOURCES-1).",
+         technical_notes="SOURCES-1 lot 4 — réservoir sar_region : la couche SIG officielle du SAR "
+                         "(ENR littoral, coupures d'urbanisation, continuités, zones préférentielles "
+                         "d'urbanisation, espaces agricoles) n'est diffusée NULLE PART en vecteur au "
+                         "07/09/2026 : Carmen 29 (187 couches lues) = 0 couche SAR ; Lizmap DEAL "
+                         "(5 dépôts) = 0 projet SAR ; Sextant = WMS IMAGE seulement "
+                         "(DCE_POLMAR_RUN_ERLAP_SAR2010_P + extrait TCO GIML, pas de WFS) ; ODS "
+                         "Région (283 jeux scannés) = 0. En attendant : réservoir LOGIQUE sur le "
+                         "PROXY de vocations (kind sar, Potentiel foncier Région — doctrine D2 : "
+                         "zéro pouvoir d'exclusion, warning de divergence), écart DIT à la couche. "
+                         "Couche officielle DEMANDÉE à la Région (lot 7) ; SAR 2050 au rappel "
+                         "sentinelle (révision en cours)."),
+    dict(name="DVF Réunion (Région, data.regionreunion.com)", category="marche",
+         provider="Région Réunion (Opendatasoft) — DV3F public",
+         access_type="REST/JSON (ODS v2.1)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="jeu figé 2014→mi-2021 (54 449 mutations) — contrôle producteur",
+         documentation_url="https://data.regionreunion.com/explore/dataset/demande-de-valeurs-foncierespublic/",
+         endpoint_url="https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records",
+         legal_notes="Licence Ouverte / ODbL (portail Région) — attribution : « Source : Région "
+                     "Réunion — demandes de valeurs foncières (DV3F) ».",
+         technical_notes="SOURCES-1 lot 4 — réservoir region_dvf : AUCUNE donnée servie (mandat). "
+                         "Le jeu Région entre comme ÉCHANTILLON PRODUCTEUR du filtre DVF "
+                         "(filtres/echantillons/dvf.json) : comptes de mutations par fenêtre "
+                         "commune×année comparés aux nôtres (2019 : 8 224 Région vs 7 969 LABUSE "
+                         "−3,1 % ; 2020 : 7 886 vs 7 733 −1,9 % ; Saint-Paul 2020 : 1 108 vs "
+                         "1 125 +1,5 % — périmètres DV3F/géo-DVF proches, mesuré 07/09/2026). "
+                         "Jeu FIGÉ à mi-2021 chez le producteur (fenêtres 2019-2020 seules "
+                         "comparables)."),
+    # ── SOURCES-1 lot 5 — la valeur ──
+    dict(name="Fibre Arcep — Ma connexion internet (immeuble)", category="reseaux",
+         provider="Arcep (Ma connexion internet)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="2026_T1 — 330 051 immeubles 974 (découpage départemental)",
+         documentation_url="https://www.data.gouv.fr/datasets/ma-connexion-internet",
+         endpoint_url="https://data.arcep.fr/fixe/maconnexioninternet/base_imb/last/departement/base_imb_974.csv.gz",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Arcep — Ma connexion internet ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir arcep_fibre : table arcep_immeubles "
+                         "(FttH + opérateurs par immeuble, EPSG:3857→4326/2975). VÉRIFIÉ "
+                         "07/09/2026 : base_imb_974 (13,8 Mo) + eligibilite actuel_974 "
+                         "(13,2 Mo, 2,86 M lignes). Seul le FttH est servi (IPE fiable) — les "
+                         "autres technos sont déclaratives (fiche 12). `labuse ingest-arcep`, "
+                         "trimestriel. Fiche « Réseaux et accès » : immeuble le plus proche, "
+                         "distance DITE."),
+    dict(name="Taux de taxe foncière — fichier REI (DGFiP)", category="fiscalite",
+         provider="DGFiP (recensement des éléments d'imposition)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="REI 2025 (impositions primitives) — 24/24 communes",
+         documentation_url="https://www.data.gouv.fr/datasets/impots-locaux-fichier-de-recensement-des-elements-dimposition-a-la-fiscalite-directe-locale-rei-4",
+         endpoint_url="https://data.economie.gouv.fr/api/v2/catalog/datasets/impots-locaux-fichier-de-recensement-des-elements-dimposition-a-la-fiscalite-dir/attachments/rei_2025_fichier_notice_tracezip",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGFiP — fichier REI ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir dgfip_rei : table commune_rei. Colonnes "
+                         "retenues via la TRACE officielle (lue) : E12 taux TFPB commune "
+                         "(29,55→68,40 % mesurés), E32 taux EPCI, F22 taux TEOM plein. ⚠ la "
+                         "taxe d'aménagement n'y est PAS (source CIRCUIT-3). `labuse "
+                         "ingest-rei`, annuel."),
+    dict(name="ACV / PVD / ORT (DGALN — liste des communes)", category="dispositifs",
+         provider="DGALN / ANCT (table grist data.gouv)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="table DGALN vivante — 19 communes 974, 13 ORT signées",
+         documentation_url="https://www.data.gouv.fr/datasets/liste-des-communes-couvertes-par-des-operations-de-revitalisation-de-territoire",
+         endpoint_url="https://grist.numerique.gouv.fr/o/dgaln/api/docs/j4i9oKD3jzFtgEUuM9sXnL/download/csv?tableId=BDD",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGALN — communes couvertes par une ORT ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir anct_ort : table commune_ort (statut "
+                         "acv/pvd/autre, ORT signée, date). ⚠ PIÈGE mesuré : l'export "
+                         "data.gouv « viewSection » est FILTRÉ (78 lignes) — l'export "
+                         "tableId=BDD rend la table COMPLÈTE (2 440). ⚠ ÉCART vs fiche 10 : "
+                         "Saint-Louis (attendu ACV) ABSENT de la table — contrôle au filtre. "
+                         "Périmètres infra-communaux non publiés (demande EPCI, lot 7). "
+                         "Denormandie : condition communale dite. `labuse ingest-ort`."),
+    dict(name="Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)", category="marche",
+         provider="ADIL 974 / AGORAH — réseau OLL (Anil)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="OLL 2024 — Île de La Réunion (L9740, 6 zones + agglo)",
+         documentation_url="https://www.data.gouv.fr/datasets/resultats-des-observatoires-locaux-des-loyers-par-agglomeration",
+         endpoint_url="https://www.observatoires-des-loyers.org/datagouv/2024/Base_OP_2024_L9740.zip",
+         legal_notes="Licence Ouverte (réseau OLL/Anil) — attribution : « Source : réseau des "
+                     "observatoires locaux des loyers — ADIL de La Réunion / AGORAH ». "
+                     "Micro-données restreintes (non demandées) — agrégats ouverts seuls.",
+         technical_notes="SOURCES-1 lot 5 — réservoir loyers_oll : oll_loyers + oll_zonage "
+                         "(IRIS→zone). Loyers OBSERVÉS (≠ annonces DHUP), médiane agglo "
+                         "10,9 €/m² (= plaquette fiche 15, contrôlé). SOURCE CANONIQUE de "
+                         "loyer_median_eur_m2 quand la commune tient dans UNE zone (16/24) ; "
+                         "DHUP en repli, maille DITE. `labuse ingest-oll`, annuel."),
+    dict(name="Loyers DHUP — carte des loyers (annonces)", category="marche",
+         provider="DHUP / MTE (carte des loyers, data.gouv)", access_type="fichier embarqué",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="carte des loyers 2025 (extrait 974 versionné, offline)",
+         documentation_url="https://www.data.gouv.fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DHUP — carte des loyers ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir loyers_dhup : la source EXISTAIT "
+                         "(data/carte_loyers_reunion_2025.json embarqué, loyers.py) sans ligne "
+                         "au catalogue — mise d'équerre. Loyers d'ANNONCE par commune : REPLI "
+                         "de l'OLL (communes multi-zones, 8/24). Aucun job (extrait versionné, "
+                         "mis à jour au commit)."),
+    dict(name="Coût de construction (EPTB SDES + choix LABUSE)", category="fiscalite",
+         provider="SDES (EPTB) · choix LABUSE (promotion)", access_type="import",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="EPTB 2024 (contexte) ; choix promotion 2300-2800 €/m² SDP",
+         documentation_url="https://dreal.statistiques.developpement-durable.gouv.fr/eptb/2024/la_reunion/index.html",
+         legal_notes="Licence Ouverte (SDES) — attribution : « Source : SDES — enquête sur le prix des terrains à bâtir (EPTB) ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir cout_construction_sdes : table "
+                         "cout_construction_ref lue par Hypotheses.charger (repli constantes). "
+                         "EPTB 2024 Réunion LU 07/09/2026 : maison individuelle 145 500 € / "
+                         "96 m² ≈ 1 516 €/m² habitable (−4 % sur un an) = CONTEXTE (segment ≠ "
+                         "promotion). La fourchette promotion 2 300-2 800 €/m² SDP RESTE un "
+                         "choix LABUSE (coûts de revient promoteurs non publiés) — désormais "
+                         "en table sourcée, valeurs inchangées (aucun bilan ne bouge). Le "
+                         "« jeu CDC » du mandat est INTROUVABLE (dit au compte-rendu). "
+                         "`labuse ingest-cout-construction`."),
+    # ── SOURCES-1 lot 6 — le foncier et les gens ──
+    dict(name="DFI — documents de filiation informatisés (DGFiP)", category="cadastre",
+         provider="DGFiP (open data — agrégation des fichiers DFI)",
+         access_type="téléchargement/parquet", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="situation 19/06/2026 — 409 623 liens 974 (1989→2025)",
+         documentation_url="https://www.data.gouv.fr/datasets/agregation-des-fichiers-de-documents-de-filiation-informatises-dfi-des-parcelles",
+         endpoint_url="https://dataeng-open.s3.rbx.io.cloud.ovh.net/dfi/dfi.parquet",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGFiP — documents de filiation informatisés des parcelles ».",
+         technical_notes="SOURCES-1 lot 6 — réservoir dgfip_dfi : table dfi_filiation "
+                         "(mère→fille, nature, date). VÉRIFIÉ 07/09/2026 : parquet national "
+                         "199 Mo lu À DISTANCE (duckdb/httpfs, filtre code_departement=974 — "
+                         "jamais les 3,5 Go du CSV), 409 623 liens, 24 communes, "
+                         "1989-12-06 → 2025-12-29, 6 natures. Pièges DITS : couvre "
+                         "l'informatisation 1980-90+ seulement, aménagements fonciers exclus. "
+                         "Rattache les permis orphelins (mère disparue → filles terminales) — "
+                         "CONTRÔLE croisé avec le cadastre d'époque, pas un conflit. "
+                         "`labuse ingest-dfi`. Trimestriel."),
+    dict(name="INSEE RP2022 — bases IRIS (logement, population)", category="attractivite",
+         provider="INSEE (recensement de la population, bases infra-communales)",
+         access_type="téléchargement/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="RP2022 — parution 16/10/2025 (géographie 01/01/2024)",
+         documentation_url="https://www.insee.fr/fr/statistiques/8647012",
+         endpoint_url="https://www.insee.fr/fr/statistiques/fichier/8647012/base-ic-logement-2022_csv.zip",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : INSEE — recensement de la population 2022, bases infra-communales ».",
+         technical_notes="SOURCES-1 lot 6 — réservoir insee_rp_iris : table iris_rp (344 IRIS "
+                         "974, mêmes contours que la géographie 2024 déjà servie). Deux bases "
+                         "lues : logement (vacants, âge du bâti ACH, statut d'occupation, "
+                         "ménages) + population (tranches d'âge). Dérivées documentées "
+                         "(regles/iris_quartier.py) : vacance, part bâti ≤ 1990, taille des "
+                         "ménages, part 60+. L'IRIS AFFINE la commune, il ne la remplace pas "
+                         "(commune_insee_logement reste la vérité communale). "
+                         "`labuse ingest-iris-rp`. Annuel."),
+    # ══ SOURCES-1 lot 7 — CE QUI ATTEND UNE DEMANDE (chantiers nommés) ══
+    # L'enum n'a pas de statut « chantier » : ces lignes entrent en A_FAIRE avec l'organisme à
+    # solliciter en tête des technical_notes (décision lot 7 — le Circuit les montre comme des
+    # sources à connecter, la demande est prête dans docs/CIRCUIT/DEMANDE-REGION-EPCI.md).
+    dict(name="Zonages d'assainissement SIG complets (EPCI / régies)", category="reseaux",
+         provider="CINOR / TCO / CIVIS / CASUD / CIREST (et régies)", access_type="SIG/vecteur",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande aux EPCI (GPU : 4/24)",
+         documentation_url="https://www.civis.re/index.php/telechargements-dac",
+         legal_notes="Documents publics (zonages d'assainissement approuvés) — licence à préciser à la remise.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux 5 EPCI : les zonages SIG des "
+                         "20 communes absentes du GPU (l'existant gpu_zonage_assainissement "
+                         "couvre 4/24). Décisif : hors zone collective, l'ANC impose surface et "
+                         "sol filtrant. Format souhaité : vecteur (GPKG/shp) + délibérations."),
+    dict(name="Inventaires ZAE (EPCI — loi Climat et résilience)", category="economie",
+         provider="CINOR / TCO / CIVIS / CASUD / CIREST", access_type="tableur/SIG",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande aux EPCI (L.318-8-2 CU)",
+         documentation_url="https://www.cerema.fr/fr/actualites/inventaires-zones-activite-economique-zae",
+         legal_notes="Inventaires obligatoires (L.318-8-2 CU, révision ≤ 6 ans) — publication due par les EPCI.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux 5 EPCI : état parcellaire des "
+                         "ZAE (unités foncières, occupants, vacance). Le foncier économique n'est "
+                         "pas couvert par LABUSE. ⚠ données propriétaires (RGPD) à cadrer."),
+    dict(name="Périmètres de ZAC (EPCI / communes / EPF Réunion)", category="urbanisme",
+         provider="EPCI / communes / EPF Réunion", access_type="SIG/vecteur",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (pas d'open data 974 fiable)",
+         documentation_url="https://peigeo.re/index.php/cartostat/visualiseurs-thematiques/acquisition-retrocession-epfr/",
+         legal_notes="Actes de création/réalisation des ZAC — publics ; standard CNIG ZAC quand il existe.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande EPCI/communes/EPFR : périmètres de "
+                         "ZAC en vigueur (concurrence, lots à venir, prix de sortie). Le jeu "
+                         "data.gouv CNIG ZAC ne couvre pas le 974 (rapport fiche 17) ; les "
+                         "acquisitions EPFR de PEIGEO ne sont PAS un référentiel ZAC."),
+    dict(name="OPAH / PIG (Anah / EPCI)", category="logement",
+         provider="Anah / EPCI (conventions d'opérations programmées)", access_type="SIG ou conventions",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (pas de périmètre polygone ouvert)",
+         documentation_url="https://www.anah.gouv.fr/collectivites/support/cartographie",
+         legal_notes="Conventions Anah/EPCI publiques — périmètres exacts dans les conventions (PDF).",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux EPCI/Anah : périmètres exacts "
+                         "des OPAH/PIG actifs (ex. PILHI CIREST). Signal fort pour Densifier "
+                         "l'existant (aides Anah). La carto Anah localise à la commune, sans polygone."),
+    dict(name="Périmètres ORT infra-communaux (EPCI)", category="logement",
+         provider="EPCI (conventions ORT préfectorales)", access_type="SIG ou conventions",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (éligibilité communale servie)",
+         documentation_url="https://www.data.gouv.fr/datasets/liste-des-communes-couvertes-par-des-operations-de-revitalisation-de-territoire",
+         legal_notes="Conventions ORT publiques (préfecture/EPCI) — périmètres infra-communaux en annexe.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux EPCI : les périmètres "
+                         "INFRA-COMMUNAUX des conventions ORT (le Denormandie se joue au "
+                         "périmètre, pas à la commune — l'éligibilité communale est servie "
+                         "depuis anct_ort, lot 5)."),
+    dict(name="ENS du Département (Conseil départemental)", category="environnement",
+         provider="Conseil départemental de La Réunion", access_type="SIG/vecteur",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (non diffusés en open data)",
+         documentation_url="https://www.departement974.fr",
+         legal_notes="Espaces naturels sensibles (droit de préemption ENS du Département) — communication à demander.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande au Département : périmètres des "
+                         "ENS et zones de préemption ENS (le typeinf 03 du GPU en montre des "
+                         "traces éparses, jamais l'inventaire). L'INPN ne porte pas les ENS "
+                         "départementaux (fiche 4 du rapport)."),
+    dict(name="Micro-données OLL (ADIL / AGORAH)", category="logement",
+         provider="ADIL de La Réunion / AGORAH (observatoire local des loyers)", access_type="convention",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (agrégats par zone servis)",
+         documentation_url="https://www.observatoires-des-loyers.org",
+         legal_notes="Micro-données restreintes (réseau OLL) — accès conventionné ; agrégats ouverts déjà servis.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande ADIL/AGORAH : micro-données OLL "
+                         "(loyer par type/surface/époque à maille fine). L'agrégé par zone 2024 "
+                         "est servi (loyers_oll, canonique du loyer médian) — les micro-données "
+                         "affineraient les 8 communes multi-zones restées au repli DHUP."),
+    # ══ SOURCES-1 lot 7 — CEREMA (convention unique FF + LOVAC + DV3F) ══
+    # L'enum n'a pas de statut « sous_convention » : les trois lignes restent MANUEL (hors
+    # automatisation, cf. docstring du module) avec la convention DITE en tête des notes.
+    dict(name="LOVAC (logements vacants)", category="logement",
+         provider="Cerema / DGFiP (LOVAC)", access_type="convention",
+         status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
+         source_millesime="convention non instruite (millésime 2025 publié)",
+         documentation_url="https://datafoncier.cerema.fr/actualites/millesime-2025-lovac-disponible",
+         legal_notes="LOVAC détail RÉSERVÉ aux collectivités, services de l'État, Anah et leurs prestataires désignés — un éditeur privé n'y a pas accès en propre.",
+         technical_notes="SOUS CONVENTION (SOURCES-1 lot 7) — accès uniquement comme PRESTATAIRE "
+                         "d'une collectivité mandante (fiche 19 du rapport). En attendant : "
+                         "vacance INSEE RP par IRIS (servie, lot 6)."),
+    dict(name="DV3F (Cerema)", category="marche",
+         provider="Cerema (DVF enrichi des Fichiers fonciers)", access_type="convention",
+         status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
+         source_millesime="convention non instruite (DV3F 2024-2 disponible)",
+         documentation_url="https://datafoncier.cerema.fr",
+         legal_notes="CGU restreintes — même convention que les Fichiers fonciers (une demande pour les trois).",
+         technical_notes="SOUS CONVENTION (SOURCES-1 lot 7) — DVF enrichi (typologie fine, "
+                         "acheteurs/vendeurs). En attendant : DVF ouvert + échantillon producteur "
+                         "Région (lot 4)."),
 ]
 
 
@@ -829,6 +1265,13 @@ RETRAITS: dict[str, str] = {
     "MOBPRO (mobilités domicile-travail, INSEE)":
         "abandonnée par ZONE-DONNÉES (emplois de zone = tranches d'effectif SIRENE) ; lecteur "
         "zone.emplois_communes sans appelant (code mort) — table conservée, plus rien de servi",
+    # SOURCES-1 lot 7 — BDNB retirée de la VITRINE, pas du chantier : l'ingestion (bdnb.py),
+    # le banc K0 (l3_bdnb.py), le CRON re-sonde et la veille sentinelle (data.gouv last_update)
+    # restent en place — le retrait tombera de lui-même au premier millésime couvrant le 974.
+    "BDNB":
+        "ne couvre pas le 974 au millésime courant (2026-02-a métropole seule — 0 ligne 974 sur "
+        "22,3 M vérifiées, SCORING-3 L3) ; veille sentinelle + CRON re-sonde CONSERVÉS pour le "
+        "prochain millésime",
 }
 
 HUBS: tuple[str, ...] = (
@@ -976,6 +1419,47 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "RNIC — registre national des copropriétés (Anah)": ("one_shot", 365, "proposee"),
     "RPLS — répertoire des logements locatifs sociaux (SDES)": ("one_shot", 365, "proposee"),
     "Consommation d'espaces NAF (Cerema — portail de l'artificialisation)": ("one_shot", 365, "proposee"),
+    # ── SOURCES-1 lot 1 — droit des sols ──
+    "GPU — emplacements réservés (prescriptions CNIG)": ("en_direct", None, "sans_objet"),
+    "GPU — espaces boisés classés (prescriptions CNIG)": ("en_direct", None, "sans_objet"),
+    "GPU — droit de préemption urbain (info-surf)": ("job_sur_clic", 190, "proposee"),
+    "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": ("job_sur_clic", 365, "proposee"),
+    "Zonage ABC des communes (DHUP)": ("job_sur_clic", 365, "declaree"),
+    "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)":
+        ("absente", None, "sans_objet"),
+    # ── SOURCES-1 lot 2 — nature et eau ──
+    "Ravines — domaine public fluvial (DEAL Carmen)": ("job_sur_clic", 365, "proposee"),
+    "Zones humides — inventaires DEAL (Carmen)": ("job_sur_clic", 365, "proposee"),
+    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)":
+        ("job_sur_clic", 365, "proposee"),
+    "AZI / TRI — inondation (Géorisques GASPAR)": ("job_sur_clic", 365, "proposee"),
+    # ── SOURCES-1 lot 3 — sols et bruit ──
+    "Géorisques — secteurs d'information sur les sols (SIS)": ("en_direct", None, "sans_objet"),
+    "Géorisques — CASIAS (anciens sites industriels)": ("en_direct", None, "sans_objet"),
+    "DEAL — cartes de bruit stratégiques (CBS)": ("job_sur_clic", 365, "proposee"),
+    # ── SOURCES-1 lot 4 — cadre régional ──
+    "SAR — schéma d'aménagement régional (Région/DEAL)": ("absente", None, "sans_objet"),
+    "DVF Réunion (Région, data.regionreunion.com)": ("en_direct", None, "sans_objet"),
+    # ── SOURCES-1 lot 5 — la valeur ──
+    "Fibre Arcep — Ma connexion internet (immeuble)": ("job_sur_clic", 100, "declaree"),
+    "Taux de taxe foncière — fichier REI (DGFiP)": ("job_sur_clic", 365, "declaree"),
+    "ACV / PVD / ORT (DGALN — liste des communes)": ("job_sur_clic", 365, "proposee"),
+    "Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)": ("job_sur_clic", 365, "declaree"),
+    "Loyers DHUP — carte des loyers (annonces)": ("depot_manuel", 365, "proposee"),
+    "Coût de construction (EPTB SDES + choix LABUSE)": ("job_sur_clic", 365, "proposee"),
+    # ── SOURCES-1 lot 6 — le foncier et les gens ──
+    "DFI — documents de filiation informatisés (DGFiP)": ("job_sur_clic", 100, "declaree"),
+    "INSEE RP2022 — bases IRIS (logement, population)": ("job_sur_clic", 365, "declaree"),
+    # ── SOURCES-1 lot 7 — chantiers (en attente de demande) + Cerema (convention) ──
+    "Zonages d'assainissement SIG complets (EPCI / régies)": ("absente", None, "sans_objet"),
+    "Inventaires ZAE (EPCI — loi Climat et résilience)": ("absente", None, "sans_objet"),
+    "Périmètres de ZAC (EPCI / communes / EPF Réunion)": ("absente", None, "sans_objet"),
+    "OPAH / PIG (Anah / EPCI)": ("absente", None, "sans_objet"),
+    "Périmètres ORT infra-communaux (EPCI)": ("absente", None, "sans_objet"),
+    "ENS du Département (Conseil départemental)": ("absente", None, "sans_objet"),
+    "Micro-données OLL (ADIL / AGORAH)": ("absente", None, "sans_objet"),
+    "LOVAC (logements vacants)": ("absente", None, "sans_objet"),
+    "DV3F (Cerema)": ("absente", None, "sans_objet"),
 }
 
 

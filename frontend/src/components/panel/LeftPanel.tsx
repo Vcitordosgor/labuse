@@ -149,6 +149,22 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'frr', label: 'FRR — France Ruralités Revitalisation' },
   // SECTEUR-2 (T4) — prix du logement neuf (VEFA acté), aplat commune choropleth.
   { key: 'vefa_neuf', label: 'Prix du logement neuf (VEFA)' },
+  // SOURCES-1 lot 1 — contraintes du droit des sols. Jamais un sigle nu : chaque libellé développe.
+  { key: 'er', label: 'Emplacements réservés' },
+  { key: 'ebc', label: 'Espaces boisés classés' },
+  { key: 'dpu', label: 'Droit de préemption (DPU)' },
+  { key: 'peb', label: 'Plan d’exposition au bruit (PEB)' },
+  { key: 'sup', label: 'Servitudes d’utilité publique (SUP)' },
+  // SOURCES-1 lot 2 — la nature et l'eau.
+  { key: 'dpf', label: 'Ravines et reculs (DPF)' },
+  { key: 'zone_humide', label: 'Zones humides' },
+  { key: 'enp', label: 'Espaces naturels protégés' },
+  { key: 'rpg', label: 'Cultures déclarées (RPG)' },
+  // SOURCES-1 lot 3 — les sols et le bruit.
+  { key: 'sis', label: 'Secteurs d’information sur les sols' },
+  { key: 'casias', label: 'Anciens sites industriels (CASIAS)' },
+  { key: 'bruit_route', label: 'Classement sonore (bruit routier)' },
+  { key: 'bruit_carte', label: 'Cartes de bruit — dépassements' },
 ]
 
 // M56-C · DA §5 — les couches groupées par FAMILLES silencieuses (une .gcard par famille,
@@ -161,7 +177,13 @@ const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
   { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
   // RETOURS-11 C2 (g) — les ÉQUIPEMENTS ne sont pas des risques : ils quittent « Risques et protections »
   // pour leur propre famille (OSM + INSEE BPE, étiquetés par source).
-  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas'] },
+  // SOURCES-1 lot 3 — les sols (SIS, CASIAS) rejoignent les risques.
+  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas', 'sis', 'casias'] },
+  // SOURCES-1 lot 1 — les contraintes du droit des sols (servitudes et périmètres opposables du
+  // PLU/GPU), entre les zonages et les risques : ER, EBC, DPU, PEB, SUP.
+  { famille: 'Contraintes', keys: ['er', 'ebc', 'dpu', 'peb', 'sup', 'dpf', 'bruit_route', 'bruit_carte'] },
+  // SOURCES-1 lot 2 — la nature et l'eau (protections et usages du sol vivant).
+  { famille: 'Nature', keys: ['zone_humide', 'enp', 'rpg'] },
   { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
   // RETOURS-13 R3 — la famille s'appelle « Réseaux » (demande Vic) : transport public, arrêts,
   // TCSP, axes, HTB, HTA — chaque entrée avec son « i » (source, millésime, couverture).

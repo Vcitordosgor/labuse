@@ -84,7 +84,9 @@ def test_regles_externes_conformes_portent_extrait_date():
         if f.verdict in ("conforme", "partiel"):
             r = f.reference
             assert r is not None and r.extrait.strip() and r.version.strip(), f.donnees
-            assert r.lu_le == "2026-09-06"
+            # CIRCUIT-4 : passage initial du 06/09 ; SOURCES-1 lot 1 lit ses références
+            # au fil des lots — toute lecture est DATÉE, jamais antidatée.
+            assert r.lu_le >= "2026-09-06", f.donnees
         if f.verdict == "ecart":
             assert (f.ecart or "").strip(), f.donnees
 

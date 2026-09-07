@@ -451,3 +451,588 @@ _ajout(_f(
             "0 tronçon à TMJA ≤ 0 (mesuré au 05/09)",
             "tmja IS NOT NULL AND tmja <= 0"),
     ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 1 — droit des sols ══════════════════════════
+# Mesures 06/09/2026 (base servie) : plu_gpu_prescription typepsc 05 = 2 250 ER (+6 ER réels
+# codés « 02 » à Saint-Louis, rescue M8a), typepsc 01 = 1 782 EBC. DPU/PEB : ingérés par
+# `labuse ingest-gpu-infos` (info-surf GPU, typeinf 04/27). ABC : 24/24 communes (4 A, 20 B1).
+
+def _communes_couvertes(cid: str, libelle: str, seuil_txt: str, kind: str,
+                        subtype_in: tuple[str, ...] | None = None,
+                        attendu: int = 24, bloquant: bool = False) -> Controle:
+    """Combien des 24 communes ont AU MOINS une entité de ce kind (et subtypes) — l'état réel de
+    publication, les manquantes LISTÉES (jamais un zéro silencieux)."""
+    def m(db, f: Filtre, version: str):
+        w = "kind = :k" + (" AND subtype = ANY(:st)" if subtype_in else "")
+        p: dict = {"k": kind}
+        if subtype_in:
+            p["st"] = list(subtype_in)
+        rows = db.execute(text(
+            f"SELECT DISTINCT commune FROM spatial_layers WHERE {w} "
+            "AND commune IS NOT NULL"), p).scalars().all()
+        from ..ingestion.run_all import REUNION_COMMUNES
+        toutes = {nom for _, nom in REUNION_COMMUNES}
+        vues = {r for r in rows if r in toutes}
+        manquantes = sorted(toutes - vues)
+        d = {"communes_couvertes": len(vues), "attendues": attendu, "manquantes": manquantes}
+        return ok(f"{len(vues)}/{attendu}", d) if len(vues) >= attendu else \
+            ko(f"{len(vues)}/{attendu}", d)
+    return Controle(cid, "completude", "bloquant" if bloquant else "avertissant",
+                    libelle, seuil_txt, m)
+
+
+# ── Emplacements réservés (réservoir gpu_prescriptions_er) ──
+def _er_hors_code() -> Controle:
+    """La famille ER réelle inclut le rescue par libellé (codes hétérogènes entre communes, M8a) —
+    ce contrôle mesure les ER RECONNAISSABLES codés HORS 05 (hors du `where` du filtre, exprès) :
+    l'état réel, visible, jamais bloquant (le rescue de la cascade les capte)."""
+    def m(db, f: Filtre, version: str):
+        n = int(db.execute(text(
+            "SELECT count(*) FROM spatial_layers WHERE kind = 'plu_gpu_prescription' "
+            "AND subtype <> '05' "
+            "AND (attrs->>'libelle') ~* '(emp[al]{1,4}cement\\s*r[ée]serv)'")).scalar() or 0)
+        d = {"n_hors_code": n, "attendu_0609": 6}
+        return ok(str(n), d) if n <= 6 else ko(str(n), d)
+    return Controle("d_er_hors_code", "distribution", "avertissant",
+                    "ER reconnaissables codés hors typepsc 05",
+                    "≤ 6 (Saint-Louis, codes « 02 » — rescue M8a, mesuré 6 au 06/09)", m)
+
+
+_ajout(_f(
+    source="gpu_prescriptions_er", libelle="GPU — emplacements réservés",
+    table="spatial_layers", where="kind = 'plu_gpu_prescription' AND subtype = '05'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="GPU — emplacements réservés%", portee_run=True, a_job=False,
+    propres=[
+        _er_hors_code(),
+        _communes_couvertes(
+            "d_er_communes", "Communes avec ≥ 1 emplacement réservé publié",
+            "état réel de publication GPU (manquantes listées — l'absence peut être réelle)",
+            "plu_gpu_prescription", ("05",)),
+    ]))
+
+# ── Espaces boisés classés (réservoir gpu_prescriptions_ebc) ──
+_ajout(_f(
+    source="gpu_prescriptions_ebc", libelle="GPU — espaces boisés classés",
+    table="spatial_layers", where="kind = 'plu_gpu_prescription' AND subtype = '01'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="GPU — espaces boisés%", portee_run=True, a_job=False,
+    propres=[
+        # un « EBC » sans libellé reconnaissable est servi tel quel mais compté (état réel).
+        c.part_max(
+            "d_ebc_libelle", "completude", "avertissant",
+            "Part des EBC sans libellé boisé reconnaissable",
+            "≤ 10 % (libellés « EBC / espace boisé » mesurés dominants au 06/09)",
+            "(attrs->>'libelle') IS NULL OR (attrs->>'libelle') !~* '(bois|EBC)'", 10.0),
+        _communes_couvertes(
+            "d_ebc_communes", "Communes avec ≥ 1 EBC publié",
+            "état réel de publication GPU (manquantes listées — l'absence peut être réelle)",
+            "plu_gpu_prescription", ("01",)),
+    ]))
+
+# ── Droit de préemption urbain (réservoir dpu_perimetres, label vanne `dpu`) ──
+_ajout(_f(
+    source="dpu", libelle="GPU — droit de préemption urbain",
+    table="spatial_layers", where="kind = 'dpu'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="GPU — droit de préemption%", portee_run=True,
+    propres=[
+        c.domaine("d_dpu_subtypes", "subtype", ("dpu", "dpu_renforce"), "bloquant",
+                  "Sous-types DPU connus", "dpu | dpu_renforce (fixés à l'ingestion)"),
+        # une commune sans DPU au GPU n'a pas publié — listée pour la demande de Vic
+        # (SIG communaux), jamais un zéro silencieux.
+        _communes_couvertes(
+            "d_dpu_communes", "Communes avec DPU publié au GPU",
+            "état réel (communes non publiées listées pour la demande aux SIG communaux)",
+            "dpu"),
+    ]))
+
+# ── PEB (réservoir peb_dgac, label vanne `peb`) — couche d'ÎLE (commune = NULL) ──
+def _peb_aerodromes() -> Controle:
+    """Roland-Garros ET Pierrefonds attendus À TERME ; au 06/09/2026 seul Roland-Garros est
+    republié au GPU (Pierrefonds absent, vérifié) — l'écart est l'état réel, listé."""
+    def m(db, f: Filtre, version: str):
+        libs = db.execute(text(
+            "SELECT DISTINCT lower(coalesce(attrs->>'libelle', name)) FROM spatial_layers "
+            "WHERE kind = 'peb'")).scalars().all()
+        rg = any("roland" in (x or "") for x in libs)
+        pf = any("pierrefonds" in (x or "") for x in libs)
+        d = {"roland_garros": rg, "pierrefonds": pf,
+             "note": "Pierrefonds NON publié au GPU (vérifié 06/09/2026)" if not pf else None}
+        return ok("2/2", d) if (rg and pf) else ko(("1/2" if rg or pf else "0/2"), d)
+    return Controle("d_peb_aerodromes", "completude", "avertissant",
+                    "Aérodromes couverts (Roland-Garros, Pierrefonds)",
+                    "2/2 à terme — 1/2 au 06/09/2026 (Pierrefonds non publié au GPU)", m)
+
+
+_ajout(_f(
+    source="peb", libelle="PEB — plans d'exposition au bruit",
+    table="spatial_layers", where="kind = 'peb'",
+    cle=("id",), geom_col="geom",
+    source_motif="PEB — plans d'exposition%", portee_run=True,
+    propres=[
+        c.domaine("d_peb_zones", "subtype", ("a", "b", "c", "d"), "bloquant",
+                  "Zones PEB lisibles (A/B/C/D)",
+                  "zones du L112-10 CU seulement — une zone illisible est écartée à l'ingestion, jamais devinée"),
+        _peb_aerodromes(),
+    ]))
+
+# ── Zonage ABC (réservoir zonage_abc_dhup, label vanne `zonage_abc`) ──
+_ajout(_f(
+    source="zonage_abc", libelle="Zonage ABC des communes (DHUP)",
+    table="commune_zonage_abc", cle=("insee",), insee_col="insee",
+    source_motif="Zonage ABC%", portee_run=False,
+    propres=[
+        c.domaine("d_abc_domaine", "zone", ("Abis", "A", "B1", "B2", "C"), "bloquant",
+                  "Domaine des classes ABC", "classes de l'arrêté D. 304-1 CCH seulement"),
+        c.couverture("d_abc_couverture", "completude", "bloquant",
+                     "Les 24 communes classées", "24/24 (arrêté national — mesuré 24/24 au 06/09)",
+                     "zone IS NOT NULL", 100.0),
+    ]))
+
+# ── SUP — assiettes GPU (label vanne `sup_gpu`) : filtre riche (l'inventaire catégoriel
+# amont vit dans la sonde sentinelle ; ici, l'état de la table servie) ──
+_ajout(_f(
+    source="sup_gpu", libelle="SUP — assiettes GPU (API Carto)",
+    table="spatial_layers", where="kind = 'sup'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="SUP — assiettes%", portee_run=True,
+    propres=[
+        # domaine OUVERT (une nouvelle catégorie publiée doit ENTRER, pas être bloquée) — le
+        # contrôle liste ce qui est en base hors des catégories déjà vues au 06/09 : visible.
+        c.compte_mauvais(
+            "d_sup_geo", "completude", "avertissant",
+            "Assiettes sans genre géométrique tracé",
+            "0 assiette sans attrs.geo (s|l|p) — mesuré 0 au 06/09",
+            "(attrs->>'geo') IS NULL OR (attrs->>'geo') NOT IN ('s','l','p')"),
+        _communes_couvertes(
+            "d_sup_communes", "Communes avec ≥ 1 assiette SUP",
+            "état réel (la publication SUP est inégale par catégorie et par commune — fiche 1 du rapport)",
+            "sup"),
+    ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 2 — la nature et l'eau ══════════════════════════
+# Mesures 07/09/2026 (WFS Carmen DEAL_REUNION_2020, GML EPSG:2975 → ogr2ogr) : DPF 275
+# tronçons + 6 plans d'eau · zones humides 5 inventaires (1 507 + 187 + 30 + 49 + 1 349) ·
+# ENP compléments (Ramsar 1, sites 7, RN 3 dont réserve marine) · AZI/TRI GASPAR par commune.
+
+_ajout(_f(
+    source="deal_dpf", libelle="Ravines — domaine public fluvial (DEAL Carmen)",
+    table="spatial_layers", where="kind = 'dpf'",
+    cle=("id",), geom_col="geom",
+    source_motif="Ravines — domaine public fluvial%", portee_run=True,
+    propres=[
+        c.domaine("d_dpf_subtypes", "subtype", ("cours_eau", "plan_eau"), "bloquant",
+                  "Sous-types DPF connus", "cours_eau | plan_eau (fixés à l'ingestion)"),
+        c.couverture("d_dpf_toponymes", "completude", "avertissant",
+                     "Part des tronçons DPF avec toponyme",
+                     "≥ 80 % (mesuré ~93 % au 07/09 — Rivière du Mât, Bras de la Plaine…)",
+                     "(attrs->>'toponyme') IS NOT NULL", 80.0),
+    ]))
+
+_ajout(_f(
+    source="zones_humides", libelle="Zones humides — inventaires DEAL",
+    table="spatial_layers", where="kind = 'zone_humide'",
+    cle=("id",), geom_col="geom",
+    source_motif="Zones humides — inventaires DEAL%", portee_run=True,
+    propres=[
+        c.domaine("d_zh_inventaires", "subtype",
+                  ("habitats_2011", "inventaire_2009", "espace_fonctionnel_2009",
+                   "inventaire_2003", "basse_altitude_2019"), "bloquant",
+                  "Inventaires DEAL connus",
+                  "les 5 inventaires par secteurs (2003→2019) — la couverture partielle est DITE"),
+    ]))
+
+_ajout(_f(
+    source="enp_complements", libelle="Espaces protégés complémentaires (DEAL Carmen)",
+    table="spatial_layers",
+    where="kind = 'ens' AND subtype IN ('ramsar','site_classe','site_inscrit','reserve_naturelle')",
+    cle=("id",), geom_col="geom",
+    source_motif="Espaces protégés complémentaires%", portee_run=True,
+    propres=[
+        # la réserve marine DOIT être là (absente du jeu INPN local — c'est LE gain du canal)
+        c.compte_mauvais(
+            "d_enp_reserve_marine", "completude", "bloquant",
+            "Réserve marine présente",
+            "≥ 1 entité « Réserve Nationale Marine » (le gain vérifié du canal Carmen)",
+            "NOT EXISTS (SELECT 1 FROM spatial_layers s2 WHERE s2.kind = 'ens' "
+            "AND s2.subtype = 'reserve_naturelle' AND s2.name ILIKE '%marine%')",
+            extra_where="id = (SELECT min(id) FROM spatial_layers WHERE kind = 'ens')"),
+    ]))
+
+_ajout(_f(
+    source="azi_tri", libelle="AZI / TRI — inondation (GASPAR)",
+    table="azi_communes", cle=("insee", "type_doc", "code_national"), insee_col="insee",
+    source_motif="AZI / TRI — inondation%", portee_run=False,
+    propres=[
+        c.domaine("d_azi_types", "type_doc", ("azi", "tri"), "bloquant",
+                  "Types de document connus", "azi | tri (GASPAR)"),
+        # l'AZI/TRI ne couvre PAS les 24 communes (état réel GASPAR) — les non couvertes
+        # sont listées à l'ingestion, jamais un zéro silencieux.
+        c.couverture("d_azi_libelles", "completude", "avertissant",
+                     "Part des documents avec libellé",
+                     "≥ 90 % (GASPAR sert le libellé — mesuré au 07/09)",
+                     "libelle IS NOT NULL AND libelle <> ''", 90.0),
+    ]))
+
+# RPG : la source existe (en_direct, proxy IGN) — filtre riche sur la table servie.
+_ajout(_f(
+    source="rpg_ign", libelle="RPG — déclarations agricoles (couche servie)",
+    table="spatial_layers", where="kind = 'safer'",
+    cle=("id",), commune_nom_col="commune", geom_col="geom",
+    source_motif="RPG — déclarations agricoles%", portee_run=True, a_job=False,
+    propres=[
+        # le code culture est LE gain du lot 2 (cascade zone A/canne) : jamais nul.
+        c.couverture("d_rpg_code_cultu", "completude", "bloquant",
+                     "Part des déclarations avec code culture",
+                     "100 % (mesuré 38 460/38 460 au 07/09 — CSA 12 464)",
+                     "(attrs->>'code_cultu') IS NOT NULL", 99.0),
+    ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 3 — les sols et le bruit ══════════════════════════
+# Mesures 07/09/2026 : sol_pollue = 4 SIS (MultiPolygon, id_sis présent 3/4), 453 CASIAS
+# (435 points + 18 emprises) + 56 instructions ; bruit_route = 1 004 bandes cat1-5 ;
+# bruit_carte = 6 zones de dépassement (type c, RN/RD/VC × Lden/Ln).
+
+# ── SIS (réservoir logique georisques_sis sur sol_pollue/sis) ──
+_ajout(_f(
+    source="georisques_sis", libelle="Géorisques — SIS",
+    table="spatial_layers", where="kind = 'sol_pollue' AND subtype = 'sis'",
+    cle=("id",), geom_col="geom",
+    source_motif="Géorisques — secteurs d'information%", portee_run=True, a_job=False,
+    propres=[
+        # un SIS est un PÉRIMÈTRE réglementaire : une géométrie ponctuelle serait une anomalie.
+        c.compte_mauvais(
+            "d_sis_polygone", "distribution", "bloquant",
+            "SIS non surfacique",
+            "0 SIS ponctuel/linéaire (périmètre réglementaire — mesuré 0/4 au 07/09)",
+            "ST_Dimension(geom) <> 2"),
+        # id_sis officiel absent sur 1/4 (Le Port, fiche infosols sans identifiant) — état réel.
+        c.compte_mauvais(
+            "d_sis_id", "completude", "avertissant",
+            "SIS sans identifiant officiel (id_sis)",
+            "≤ 1 (mesuré 1/4 au 07/09 — fiche infosols sans id_sis)",
+            "(attrs->>'id_sis') IS NULL OR (attrs->>'id_sis') = ''"),
+    ]))
+
+# ── CASIAS (réservoir logique georisques_casias sur sol_pollue/casias+instruction) ──
+_ajout(_f(
+    source="georisques_casias", libelle="Géorisques — CASIAS",
+    table="spatial_layers", where="kind = 'sol_pollue' AND subtype IN ('casias', 'instruction')",
+    cle=("id",), geom_col="geom",
+    source_motif="Géorisques — CASIAS%", portee_run=True, a_job=False,
+    propres=[
+        # l'identifiant SSP trace chaque site vers sa fiche Géorisques — jamais nul.
+        c.couverture("d_casias_identifiant", "completude", "bloquant",
+                     "Part des sites avec identifiant SSP",
+                     "≥ 99 % (mesuré 509/509 au 07/09)",
+                     "(attrs->>'identifiant_ssp') IS NOT NULL", 99.0),
+        # la part d'emprises réelles (vs points géocodés) est DITE — état réel, pas un seuil.
+        c.part_max("d_casias_points", "distribution", "avertissant",
+                   "Part des sites en point géocodé (sans emprise)",
+                   "≤ 97 % (mesuré ~94 % au 07/09 — 480 points / 29 emprises)",
+                   "ST_Dimension(geom) < 2", 97.0),
+    ]))
+
+# ── Classement sonore (réservoir bruit_itt_cerema — filtre riche, label vanne existant) ──
+# NB : pas de commune_nom_col — le flux Cerema porte SES libellés (majuscules sans accents,
+# « SAINT JOSEPH »/« SAINT-JOSEPH ») ; le rattachement aux 24 se lit par insee_comm (contrôle propre).
+_ajout(_f(
+    source="bruit_itt_cerema", libelle="Classement sonore ITT (Cerema)",
+    table="spatial_layers", where="kind = 'bruit_route'",
+    cle=("id",), geom_col="geom",
+    source_motif="Classement sonore ITT%", portee_run=True, a_job=False,
+    propres=[
+        c.domaine("d_bruit_categories", "subtype", ("cat1", "cat2", "cat3", "cat4", "cat5"),
+                  "bloquant", "Catégories du classement (1-5)",
+                  "catégories de l'arrêté seulement (R571-32 CE)"),
+        # chaque bande est matérialisée par la largeur réglementaire sect_bruit_m (> 0).
+        c.compte_mauvais(
+            "d_bruit_bande", "plage", "bloquant",
+            "Bande sans largeur réglementaire",
+            "0 bande sans sect_bruit_m > 0 (mesuré 0/1 004 au 07/09)",
+            "COALESCE((attrs->>'sect_bruit_m')::float, 0) <= 0"),
+        # code INSEE 974xx présent sur chaque bande (rattachement commune du flux).
+        c.couverture("d_bruit_insee", "rattachement", "bloquant",
+                     "Part des bandes rattachées à une commune (insee_comm)",
+                     "≥ 99 % (mesuré 1 004/1 004 au 07/09)",
+                     "(attrs->>'insee_comm') LIKE '974%'", 99.0),
+    ]))
+
+# ── Cartes de bruit stratégiques (réservoir deal_bruit_cartes, label vanne bruit_cartes) ──
+_ajout(_f(
+    source="bruit_cartes", libelle="DEAL — cartes de bruit stratégiques (CBS)",
+    table="spatial_layers", where="kind = 'bruit_carte'",
+    cle=("id",), geom_col="geom",
+    source_motif="DEAL — cartes de bruit%", portee_run=False,
+    propres=[
+        c.domaine("d_cbs_subtypes", "subtype",
+                  ("rn_lden", "rn_ln", "rd_lden", "rd_ln", "vc_lden", "vc_ln"),
+                  "bloquant", "Couches type c (dépassements Lden/Ln, RN/RD/VC)",
+                  "6 sous-couches fixées à l'ingestion — type b/a jamais servies (doublon/exposition)"),
+    ]))
+
+
+# ══════════════════════════ SOURCES-1 lot 4 — le cadre régional ══════════════════════════
+# Le potentiel foncier Région (îlots non urbanisés — ESTIMATION du producteur, jamais servie
+# comme donnée LABUSE) devient un CONTRÔLE DE COMPARAISON avec notre analyse : la part des
+# parcelles couvertes par un îlot que NOTRE run servi juge « à potentiel » (tiers hauts).
+# Mesuré au 07/09/2026 (run q_v11_m137) : 15 776 parcelles dans 2 453 îlots (2 607 ha) ;
+# 7 043 en tiers hauts (44,6 %) ; 277 de nos 1 478 brûlantes/chaudes en îlot (18,7 % — notre
+# tête valorise AUSSI la densification du bâti, hors du champ « îlots non urbanisés »).
+def _potentiel_region_recouvrement() -> Controle:
+    def m(db, f: Filtre, version: str):
+        from .cadre import _table_existe
+        if not _table_existe(db, "parcel_p_score_v2"):
+            return skip("parcel_p_score_v2 absente (pas de run servi en base)")
+        run = db.execute(text(
+            "SELECT run_id FROM parcel_p_score_v2 GROUP BY run_id ORDER BY count(*) DESC LIMIT 1"
+        )).scalar()
+        if not run:
+            return skip("aucun run de score en base")
+        row = db.execute(text("""
+            WITH dans AS (
+              SELECT DISTINCT p.id, s.tier
+              FROM parcels p
+              JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
+              JOIN spatial_layers il ON il.kind = 'potentiel_foncier'
+                AND ST_Intersects(p.geom_2975, il.geom_2975))
+            SELECT count(*) AS total,
+                   count(*) FILTER (WHERE tier IN ('brulante','chaude','a_creuser')) AS hauts
+            FROM dans"""), {"run": run}).mappings().first()
+        total = int(row["total"] or 0)
+        hauts = int(row["hauts"] or 0)
+        pct = round(100.0 * hauts / total, 1) if total else None
+        d = {"run": run, "parcelles_dans_ilots": total, "tiers_hauts": hauts, "pct_hauts": pct,
+             "mesure_0709": {"total": 15776, "hauts": 7043, "pct": 44.6}}
+        if total == 0:
+            return ko("0 parcelle dans les îlots", d)
+        # avertit si la convergence s'effondre (< 25 % — moitié de la mesure de référence) :
+        return ok(f"{pct} % de tiers hauts dans les îlots", d) if (pct or 0) >= 25.0 else \
+            ko(f"{pct} %", d)
+    return Controle("d_potfoncier_convergence", "referentiel", "avertissant",
+                    "Convergence îlots Région ↔ analyse LABUSE",
+                    "≥ 25 % des parcelles en îlot jugées à potentiel par le run servi "
+                    "(mesuré 44,6 % au 07/09/2026 — seuil = moitié de la référence)", m)
+
+
+_ajout(_f(
+    source="potentiel_foncier_region", libelle="Potentiel foncier Région (contrôle de comparaison)",
+    table="spatial_layers", where="kind = 'potentiel_foncier'",
+    cle=("id",), geom_col="geom",
+    source_motif="Potentiel foncier Région%", portee_run=False, a_job=False,
+    propres=[_potentiel_region_recouvrement()]))
+
+
+# ══════════════════════════ SOURCES-1 lot 5 — la valeur ══════════════════════════
+# Mesures 07/09/2026 : Arcep 330 051 immeubles / part FttH mesurée à l'ingestion ; REI 24/24
+# (E12 29,55→68,40 %) ; ORT 19 communes (écart : Saint-Louis attendu ACV absent) ; OLL médiane
+# agglo 10,9 €/m² (= plaquette), 16 communes mono-zone ; coût construction 1 ligne servie.
+
+def _ort_acv_manquantes() -> Controle:
+    """Les 5 ACV attendues (fiche 10) contrôlées CONTRE la table réelle — manquantes listées.
+    Mesuré au 07/09/2026 : Saint-Louis (97414) ABSENT de la table DGALN (écart producteur)."""
+    def m(db, f: Filtre, version: str):
+        from ..ingestion.ort import ACV_ATTENDUES
+        acv = {i for (i,) in db.execute(text(
+            "SELECT insee FROM commune_ort WHERE statut = 'acv'")).all()}
+        manquantes = sorted(f"{nom} ({insee})" for insee, nom in ACV_ATTENDUES.items()
+                            if insee not in acv)
+        d = {"attendues": sorted(ACV_ATTENDUES.values()), "manquantes": manquantes}
+        return ok("5/5", d) if not manquantes else ko(f"{5-len(manquantes)}/5", d)
+    return Controle("d_ort_acv_attendues", "completude", "avertissant",
+                    "ACV attendues présentes (fiche 10)",
+                    "5/5 à terme — 4/5 au 07/09/2026 (Saint-Louis absent de la table DGALN)", m)
+
+
+def _oll_mediane_plaquette() -> Controle:
+    """La médiane agglomération servie = la plaquette AGORAH (fiche 15 : 10,90 €/m²) —
+    un écart dit une rupture de méthode ou un mauvais parsing."""
+    def m(db, f: Filtre, version: str):
+        v = db.execute(text(
+            "SELECT loyer_median FROM oll_loyers WHERE zone = 0 AND type_habitat = 'tous' "
+            "AND pieces = 'tous' ORDER BY annee DESC LIMIT 1")).scalar()
+        d = {"mediane_agglo": float(v) if v is not None else None, "plaquette": 10.9}
+        return ok(str(v), d) if v is not None and abs(float(v) - 10.9) < 0.05 else ko(str(v), d)
+    return Controle("d_oll_mediane_plaquette", "distribution", "bloquant",
+                    "Médiane agglomération = plaquette AGORAH",
+                    "10,9 €/m² (fiche 15 — mesuré identique au 07/09)", m)
+
+
+def _oll_zonage_couverture() -> Controle:
+    """Les 24 communes présentes au zonage IRIS→zone (couverture départementale de l'OLL)."""
+    def m(db, f: Filtre, version: str):
+        n = db.execute(text("SELECT count(DISTINCT insee) FROM oll_zonage")).scalar() or 0
+        mono = db.execute(text(
+            "SELECT count(*) FROM (SELECT insee FROM oll_zonage GROUP BY insee "
+            "HAVING count(DISTINCT zone) = 1) x")).scalar() or 0
+        d = {"communes": int(n), "mono_zone": int(mono)}
+        return ok(f"{n}/24", d) if n >= 24 else ko(f"{n}/24", d)
+    return Controle("d_oll_zonage", "completude", "bloquant",
+                    "Zonage OLL : les 24 communes couvertes",
+                    "24/24 (observatoire départemental — mesuré 24/24, 16 mono-zone au 07/09)", m)
+
+
+def _dhup_fichier_ok() -> Controle:
+    """Le fichier embarqué DHUP (repli) est lisible et couvre les 24 communes."""
+    def m(db, f: Filtre, version: str):
+        from ..loyers import load
+        n = len(load().get("communes", []))
+        d = {"communes": n, "fichier": "data/carte_loyers_reunion_2025.json"}
+        return ok(f"{n}/24", d) if n >= 24 else ko(f"{n}/24", d)
+    return Controle("d_dhup_fichier", "completude", "bloquant",
+                    "Extrait DHUP embarqué lisible (24 communes)",
+                    "24/24 dans l'extrait versionné (repli de l'OLL)", m)
+
+
+_ajout(_f(
+    source="arcep_fibre", libelle="Fibre Arcep (immeubles)",
+    table="arcep_immeubles", cle=("imb_id",), insee_col="insee", geom_col="geom",
+    source_motif="Fibre Arcep%", portee_run=False,
+    propres=[
+        c.couverture("d_arcep_ftth", "completude", "avertissant",
+                     "Part des immeubles raccordables FttH",
+                     "≥ 50 % (l'état réel du déploiement, jamais bloquant — mesuré à l'ingestion)",
+                     "ftth", 50.0),
+        c.compte_mauvais("d_arcep_ops_vides", "completude", "avertissant",
+                         "Raccordables sans opérateur listé",
+                         "0 immeuble ftth=true sans opérateur (incohérence d'agrégation)",
+                         "ftth AND cardinality(operateurs_ftth) = 0"),
+    ]))
+
+_ajout(_f(
+    source="dgfip_rei", libelle="Taux de taxe foncière (REI)",
+    table="commune_rei", cle=("insee",), insee_col="insee",
+    source_motif="Taux de taxe foncière%", portee_run=False,
+    propres=[
+        c.couverture("d_rei_couverture", "completude", "bloquant",
+                     "Les 24 communes avec un taux TFPB",
+                     "24/24 (fichier national — mesuré 24/24 au 07/09)",
+                     "tfpb_commune_pct IS NOT NULL", 100.0),
+        c.compte_mauvais("d_rei_bornes", "plage", "bloquant",
+                         "Taux dans [0 ; 100] %",
+                         "0 taux hors bornes (écartés à l'ingestion + listés)",
+                         "tfpb_commune_pct < 0 OR tfpb_commune_pct > 100 "
+                         "OR teom_pct < 0 OR teom_pct > 100"),
+    ]))
+
+_ajout(_f(
+    source="anct_ort", libelle="ACV / PVD / ORT (DGALN)",
+    table="commune_ort", cle=("insee",), insee_col="insee",
+    source_motif="ACV / PVD / ORT%", portee_run=False,
+    propres=[
+        c.domaine("d_ort_statuts", "statut", ("acv", "pvd", "autre"), "bloquant",
+                  "Domaine des statuts", "acv | pvd | autre (fixés à l'ingestion)"),
+        _ort_acv_manquantes(),
+    ]))
+
+_ajout(_f(
+    source="loyers_oll", libelle="Loyers OLL (ADIL 974 / AGORAH)",
+    table="oll_loyers", cle=("annee", "zone", "type_habitat", "pieces"),
+    source_motif="Loyers OLL%", portee_run=False,
+    propres=[
+        c.domaine("d_oll_zones", "zone::text", tuple(str(z) for z in range(0, 7)), "bloquant",
+                  "Zones OLL connues", "0 (agglo) + zones 1-6 du zonage L9740"),
+        _oll_mediane_plaquette(),
+        _oll_zonage_couverture(),
+    ]))
+
+_ajout(_f(
+    source="cout_construction", libelle="Coût de construction (références)",
+    table="cout_construction_ref", cle=("id",),
+    source_motif="Coût de construction%", portee_run=False,
+    propres=[
+        c.couverture("d_cout_servi", "completude", "bloquant",
+                     "Une ligne SERVIE au bilan",
+                     "la ligne labuse_promotion (2 300-2 800 €/m² SDP) — 1 servie sur 2 lignes",
+                     "servi AND cout_bas_eur_m2 IS NOT NULL AND cout_haut_eur_m2 IS NOT NULL",
+                     50.0),
+    ]))
+
+# Loyers DHUP (fichier embarqué, pas de table) : filtre sur le fichier versionné.
+_ajout(_f(
+    source="loyers_dhup", libelle="Loyers DHUP (carte des loyers, repli)",
+    source_motif="Loyers DHUP%", portee_run=False, a_job=False,
+    propres=[_dhup_fichier_ok()]))
+
+
+# ══════════════════════════ SOURCES-1 lot 6 — le foncier et les gens ══════════════════════════
+# Mesures 07/09/2026 : DFI 974 = 409 623 liens mère→fille, 24 communes, dates 1989→2025 ;
+# IRIS RP2022 = 344 IRIS (24 communes), vacants/âge du bâti/ménages/tranches d'âge.
+
+# ── DFI (réservoir dgfip_dfi, label vanne `dfi`) ──
+_ajout(_f(
+    source="dfi", libelle="DFI — filiation des parcelles (DGFiP)",
+    table="dfi_filiation", cle=("id",), insee_col="insee",
+    date_cols=("date_validation",), source_motif="DFI — documents de filiation%",
+    portee_run=False,
+    propres=[
+        # les IDU reconstruits font 14 caractères (insee 5 + préfixe 3 + parcelle 6) — SAUF
+        # deux codes AMONT légitimes, mesurés au 07/09 : fille 'PDP' (passage au domaine
+        # public, 5 032) et mère 'EDNC' (issue d'un ensemble non cadastré, 1 797). Ils sont
+        # SERVIS étiquetés (fiche), jamais joints à parcels. Bloquant sur le reste seul.
+        c.compte_mauvais(
+            "d_dfi_idu_forme", "distribution", "bloquant",
+            "IDU mère/fille au format LABUSE (14 c) ou code amont connu (PDP, EDNC)",
+            "0 lien difforme hors codes amont (mesuré 0 au 07/09 — 5 032 PDP + 1 797 EDNC dits)",
+            "(length(idu_mere) <> 14 AND substr(idu_mere, 9) <> 'EDNC') "
+            "OR (length(idu_fille) <> 14 AND substr(idu_fille, 9) <> 'PDP')"),
+        c.part_max(
+            "d_dfi_codes_amont", "distribution", "avertissant",
+            "Part des liens à code amont (PDP/EDNC)",
+            "≤ 3 % (mesuré 1,7 % au 07/09 — 6 829/409 623)",
+            "substr(idu_mere, 9) = 'EDNC' OR substr(idu_fille, 9) = 'PDP'", 3.0),
+        # un lien mère = fille est un non-événement (aucun observé) — l'état réel, visible.
+        c.compte_mauvais(
+            "d_dfi_auto_lien", "distribution", "avertissant",
+            "Liens mère = fille (auto-référence)",
+            "0 attendu (mesuré 0 au 07/09)",
+            "idu_mere = idu_fille"),
+        # la filiation ne couvre que l'informatisation (1980-90+) — une date hors plage dit un
+        # amont qui a changé de forme.
+        c.compte_mauvais(
+            "d_dfi_dates", "plage", "avertissant",
+            "Dates de validation dans la plage de l'informatisation",
+            "0 lien avant 1980 (mesuré : min 1989-12-06 au 07/09)",
+            "date_validation < DATE '1980-01-01'"),
+    ]))
+
+# ── Recensement IRIS (réservoir insee_rp_iris, label vanne `iris_rp`) ──
+def _iris_couverture_contours() -> Controle:
+    """Chaque IRIS de la table est adossé à un contour servi (kind iris_insee) — sinon la
+    donnée quartier n'est joignable à aucune parcelle (l'affinage serait muet)."""
+    def m(db, f: Filtre, version: str):
+        n = int(db.execute(text(
+            "SELECT count(*) FROM iris_rp r WHERE NOT EXISTS ("
+            "  SELECT 1 FROM spatial_layers sl WHERE sl.kind = 'iris_insee' "
+            "  AND sl.subtype = r.iris)")).scalar() or 0)
+        d = {"iris_sans_contour": n}
+        return ok("0", d) if n == 0 else ko(str(n), d)
+    return Controle("d_iris_contours", "completude", "bloquant",
+                    "Chaque IRIS adossé à un contour servi",
+                    "0 IRIS sans contour (géographie 2024 des deux côtés — mesuré 0 au 07/09)", m)
+
+
+_ajout(_f(
+    source="iris_rp", libelle="INSEE RP2022 — bases IRIS",
+    table="iris_rp", cle=("iris",), insee_col="insee",
+    source_motif="INSEE RP2022 — bases IRIS%", portee_run=False,
+    propres=[
+        _iris_couverture_contours(),
+        # vacance ∈ [0 ; 100] par construction (LOGVAC ≤ LOG) — une ligne hors plage dit un
+        # amont difforme : bloquant.
+        c.compte_mauvais(
+            "d_iris_vacance_plage", "plage", "bloquant",
+            "Vacance dans [0 ; 100] %",
+            "0 IRIS avec LOGVAC > LOG (mesuré 0 au 07/09)",
+            "logvac IS NOT NULL AND log IS NOT NULL AND logvac > log"),
+        # volet population absent (bases séparées) — l'état réel, visible.
+        c.part_max(
+            "d_iris_sans_pop", "completude", "avertissant",
+            "Part des IRIS sans volet population",
+            "≤ 5 % (mesuré 0 au 07/09 — les deux bases couvrent les mêmes IRIS)",
+            "pop IS NULL", 5.0),
+    ]))

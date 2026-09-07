@@ -9,7 +9,7 @@ const SERVED_RUN = readFileSync(new URL('../config/served_run.txt', import.meta.
   .split('\n').map((l) => l.trim()).find((l) => l && !l.startsWith('#')) ?? ''
 
 // API FastAPI (labuse api) proxifiée en dev. En prod, FastAPI sert dist/ à la même origine.
-const API = 'http://127.0.0.1:8000'
+const API = process.env.LABUSE_API_DEV ?? 'http://127.0.0.1:8000'
 // F6 (M12) : le proxy dev doit couvrir TOUTES les routes métier — sinon /projets (chercher-plus,
 // ajouter, kanban…) et /ia, /crm, /pipeline, /modules… tombent en 404 en `npm run dev` et « rien
 // ne se passe » au clic. En prod FastAPI sert dist/ à la même origine (aucun proxy), donc sans effet.

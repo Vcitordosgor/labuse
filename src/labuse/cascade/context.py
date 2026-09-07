@@ -161,6 +161,12 @@ class EvalContext:
         if rp.get("enabled", True) is not False and rp.get("spatial_kind"):
             near_cap = float(rp.get("search_cap_m", 60))
             near_kinds = [rp["spatial_kind"]] + list(rp.get("berge_kinds", []))
+            # SOURCES-1 lot 2 — la couche `dpf` (marchepied 3,25 m, DEAL Carmen) consomme la
+            # même mécanique de distance : son kind rejoint le batch (cap partagé ≥ ses seuils).
+            dpf = self._layer_params("dpf")
+            if dpf.get("spatial_kind"):
+                near_kinds.append(dpf["spatial_kind"])
+                near_cap = max(near_cap, float(dpf.get("search_cap_m", 60)))
             for k in near_kinds:
                 for pid, dist in self.session.execute(
                     text(

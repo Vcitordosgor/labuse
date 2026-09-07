@@ -413,6 +413,11 @@ SONDE_COUVRE: dict[str, tuple[str, ...]] = {
 #: raison (un couple silencieux = verrou V5c cassé, jamais un « non couvert »). Raison par
 #: chiffre (elle vaut pour tous ses couples non couverts).
 NON_SONDES: dict[str, str] = {
+    # SOURCES-1 lot 6 — le quartier IRIS est servi fiche + étude de zone par le MÊME module
+    # (ingestion/iris_rp.py : stats_iris / overlay zone) — un seul producteur, passe-plat de
+    # la table iris_rp ; la comparaison robinet à robinet est sans objet (aucun recalcul).
+    "iris_quartier": "fiche (Autour) + étude de zone lisent le MÊME producteur "
+                     "(ingestion/iris_rp.py, passe-plat iris_rp) — un seul chemin machine",
     "tier_opportunite": "reconstruit à la bascule (portée run) — vérité tenue par le golden servi "
                         "(qa/golden_check, GOLDEN-REGEN) sur les 119 parcelles",
     "run_label_servi": "pointeur du manifeste — tenu par V3a (tuiles = run servi) et le golden",

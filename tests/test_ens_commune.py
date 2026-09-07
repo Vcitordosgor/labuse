@@ -22,6 +22,9 @@ class _Ctx:
     def intersections(self, pid, kind):
         class _I:
             coverage = self._cov
+            # SOURCES-1 lot 2 : EnsLayer lit subtype/name (verdict par type de protection)
+            subtype = "conservatoire_du_littoral"
+            name = "Espace protégé"
         return [_I()] if self._cov > 0 else []
 
 

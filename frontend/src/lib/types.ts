@@ -459,6 +459,57 @@ export interface Fiche {
       ppr: { document: string; approbation: string | null }[] | null
     }[]
   } | null
+  // SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols (ER, EBC, DPU, PEB, SUP).
+  // null → aucune couche ingérée (le front omet le bloc). Chaque absence est TYPÉE (jamais un zéro).
+  // SOURCES-1 lot 5 — fibre Arcep (immeuble le plus proche, distance dite)
+  fibre?: {
+    etat: 'servi' | 'aucun_immeuble'
+    ftth?: boolean
+    operateurs?: string[]
+    distance_m?: number
+    adresse?: string | null
+    detail?: string
+    millesime: string
+  } | null
+  dispositifs?: {
+    er: { libelle: string; part_pct: number }[] | null
+    ebc: { libelle: string; part_pct: number }[] | null
+    dpu: { etat: 'servi'; statut: 'simple' | 'renforce'; libelle?: string | null }
+       | { etat: 'hors' } | { etat: 'non_determinee'; detail: string }
+    peb: { zone: string; part_pct?: number; libelle?: string | null; detail?: string }
+    sup: { categorie: string; libelle: string | null; part_pct: number }[] | null
+  } | null
+  // SOURCES-1 lot 3 — « Sols » (SIS / CASIAS), producteur _sols_block. null = couche non ingérée.
+  sols?: {
+    sis: { nom: string | null; part_pct: number; identifiant_ssp: string | null; fiche_risque: string | null } | null
+    sis_classe: 'dans' | 'hors'
+    casias: { nom: string | null; subtype: string; statut: string | null; distance_m: number; sur_place: boolean; fiche_risque: string | null } | null
+    casias_statut: 'sur_place' | 'proche_100m' | 'hors'
+  } | null
+  // SOURCES-1 lot 6 — historique cadastral OFFICIEL (filiation DFI, DGFiP)
+  filiation?: {
+    meres: { idu: string; nature: string | null; date: string | null }[] | null
+    filles: { idu: string; nature: string | null; date: string | null }[] | null
+    division_recente: boolean
+    source: string
+  } | null
+  // SOURCES-1 lot 6 — le quartier INSEE (IRIS) de la parcelle (RP2022, maille dite)
+  iris_quartier?: {
+    iris: string
+    nom: string | null
+    millesime: string
+    logements: number | null
+    vacants: number | null
+    menages: number | null
+    habitants: number | null
+    vacance_pct: number | null
+    part_bati_avant_1990_pct: number | null
+    taille_menages: number | null
+    part_60_plus_pct: number | null
+    part_locataires_pct: number | null
+    part_hlm_pct: number | null
+    source: string
+  } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

@@ -140,6 +140,14 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("abf_merimee", "deal_ppr", "georisques_api", "znieff_inpn",), portee="run"),
  # FICHE-1 lot 3 — le DÉTAIL des aléas (nature/niveau/part/réf. PPR), dérivé des mêmes lignes
  # servies que « Pièges et risques » (cascade arbitrée, point de vérité unique M73).
+ # SOURCES-1 lot 4 — la divergence SAR (proxy de vocations) servie dans les vigilances de la
+ # fiche (warning PASS de la couche cascade sar, doctrine D2 — jamais un malus).
+ "sar_divergence": C("Divergence SAR (indication)", "verdict", "parcelle",
+    "warning « zone PLU U/AU ∩ vocation naturelle/agricole du proxy de vocations Région » — "
+    "indication non opposable (le SAR officiel n'est pas diffusé en vecteur), jamais un malus",
+    moteur="cascade", calcul="moteur",
+    fonction="src/labuse/cascade/layers/phase1.py:SarLayer",
+    reservoirs=("sar_region",), portee="run", type="texte"),
  "aleas_parcelle_liste": C("Aléas de la parcelle", "liste", "parcelle",
     "liste des aléas touchant la parcelle (nature, niveau, part concernée, référence de l'arrêté "
     "PPR pour un aléa réglementaire) — dérivée de la cascade servie, accord garanti avec Pièges et "
@@ -397,9 +405,12 @@ DONNEES: dict[str, Donnee] = {
     moteur="marche_service", calcul="moteur", fonction="src/labuse/faisabilite/marche_commune.py:ligne2_terrain_zone",
     reservoirs=("dvf", "gpu_plu_api_carto",), portee="live"),
  "loyer_median_eur_m2": C("Loyer médian", "€/m²", "commune",
-    "estimation locative loyers.py — entrées à confirmer (DOUTE)",
-    moteur="loyers", calcul="moteur", fonction="src/labuse/api/fiche_commune.py (loyer)",
-    reservoirs=(), portee="live"),
+    "SOURCES-1 lot 5 — bascule CANONIQUE/REPLI : loyer OBSERVÉ de la zone OLL (ADIL 974/"
+    "AGORAH) quand la commune tient dans UNE zone (16/24) ; sinon loyer d'ANNONCE DHUP "
+    "(carte des loyers, extrait embarqué) avec le motif dit — étiquette de source honnête",
+    moteur="loyers", calcul="moteur",
+    fonction="src/labuse/faisabilite/marche_commune.py:ligne9_loyer (bascule OLL/DHUP)",
+    reservoirs=("loyers_oll", "loyers_dhup",), portee="live"),
  "n_parcelles_commune": C("N parcelles", "nombre", "commune",
     "count parcels par commune",
     moteur="commune_compteurs", calcul="moteur",
@@ -1020,44 +1031,229 @@ DONNEES: dict[str, Donnee] = {
     moteur="solaire", calcul="moteur",
     fonction="src/labuse/solaire_toiture.py:analyse_toiture (cache toiture_lidar, lecture fiche)",
     reservoirs=("lidar_hd_mnh",), portee="live"),
- # réglementaires nouvelles : DÉCLARÉES ici, réservoirs à ingérer (CIRCUIT-3 lot 6 → SOURCES-1).
- # FICHE-1 lot 7 — état « non calculée — source absente », source ATTENDUE nommée : elles
- # apparaîtront dès l'ingestion (l'en_attente est levée) et Vic voit le trou d'ici là.
+ # ══ SOURCES-1 lot 1 — les réglementaires du droit des sols SERVIES (en_attente levée) ══
+ # Déclarées par FICHE-1 lot 7 (« non calculée — source absente ») ; les réservoirs sont
+ # ingérés, les données servies au bloc fiche « Dispositifs et périmètres » (_dispositifs_block).
  "er_emplacement_reserve": C("Emplacement réservé (ER)", "classe", "parcelle",
-    "la parcelle est-elle grevée d'un emplacement réservé du PLU (destination, bénéficiaire)",
-    moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU prescriptions)",
-    reservoirs=(), portee="live", type="classe",
-    domaine=("grevee", "non_grevee"), domaine_source="prescriptions surfaciques du GPU",
-    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
-               "prescriptions surfaciques du GPU (emplacements réservés, API Carto)"),
+    "la parcelle est-elle grevée d'un emplacement réservé du PLU (destination, part de la "
+    "parcelle) — famille ER = typepsc 05 + rescue/veto libellé (source unique cascade_rules)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_dispositifs_block (er)",
+    reservoirs=("gpu_prescriptions_er",), portee="live", type="classe",
+    table="spatial_layers (kind=plu_gpu_prescription, famille ER)",
+    domaine=("grevee", "non_grevee"), domaine_source="prescriptions surfaciques du GPU"),
  "ebc_classe": C("Espace boisé classé (EBC)", "classe", "parcelle",
-    "la parcelle intersecte-t-elle un espace boisé classé du PLU",
-    moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU prescriptions)",
-    reservoirs=(), portee="live", type="classe",
-    domaine=("intersecte", "hors"), domaine_source="prescriptions surfaciques du GPU",
-    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
-               "prescriptions surfaciques du GPU (espaces boisés classés, API Carto)"),
+    "la parcelle intersecte-t-elle un espace boisé classé du PLU (part de la parcelle ; part "
+    "soustraite de l'assiette du bloc potentiel — L113-1 CU)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_dispositifs_block (ebc)",
+    reservoirs=("gpu_prescriptions_ebc",), portee="live", type="classe",
+    table="spatial_layers (kind=plu_gpu_prescription, typepsc 01)",
+    domaine=("intersecte", "hors"), domaine_source="prescriptions surfaciques du GPU"),
  "dpu_perimetre": C("Droit de préemption urbain (DPU)", "classe", "parcelle",
-    "la parcelle est-elle dans un périmètre de préemption (DPU simple/renforcé)",
-    moteur=None, calcul="passe_plat", fonction="(réservoir à venir — GPU / délibérations)",
-    reservoirs=(), portee="live", type="classe",
-    domaine=("simple", "renforce", "hors"), domaine_source="périmètres DPU (GPU/délibérations)",
-    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend les "
-               "périmètres DPU (GPU / délibérations communales)"),
+    "la parcelle est-elle dans un périmètre de préemption publié (DPU simple/renforcé) — les "
+    "communes sans DPU publié au GPU sont « non déterminée — non publié par la commune »",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_dispositifs_block (dpu)",
+    reservoirs=("dpu_perimetres",), portee="live", type="classe",
+    table="spatial_layers (kind=dpu)",
+    domaine=("simple", "renforce", "hors", "non_publie"),
+    domaine_source="informations surfaciques du GPU (typeinf 04)"),
  "peb_zone": C("Plan d'exposition au bruit (PEB)", "classe", "parcelle",
-    "zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est",
-    moteur=None, calcul="passe_plat", fonction="(réservoir à venir — PEB Roland-Garros/Pierrefonds)",
-    reservoirs=(), portee="live", type="classe",
-    domaine=("A", "B", "C", "D", "hors"), domaine_source="zones du PEB (arrêté préfectoral)",
-    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend le PEB "
-               "de Roland-Garros / Pierrefonds (arrêté préfectoral)"),
+    "zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est — Roland-Garros servi (annexes "
+    "GPU) ; Pierrefonds non publié au GPU (couverture partielle dite)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_dispositifs_block (peb)",
+    reservoirs=("peb_dgac",), portee="live", type="classe",
+    table="spatial_layers (kind=peb)",
+    domaine=("A", "B", "C", "D", "hors"), domaine_source="zones du PEB (arrêté préfectoral)"),
  "zonage_abc_logement": C("Zonage A/B/C (logement)", "classe", "commune",
-    "zone A/B/C du dispositif d'investissement locatif pour la commune",
-    moteur=None, calcul="passe_plat", fonction="(réservoir à venir — arrêté zonage ABC)",
-    reservoirs=(), portee="live", type="classe",
-    domaine=("A", "B1", "B2", "C"), domaine_source="arrêté de zonage A/B/C (logement)",
-    en_attente="CIRCUIT-3 lot 6 → SOURCES-1 : non calculée — source absente ; attend l'arrêté "
-               "de zonage A/B/C (logement locatif)"),
+    "zone A/B/C du dispositif d'investissement locatif pour la commune (arrêté du 23/06/2026, "
+    "en vigueur 26/06/2026 — passe-plat, jamais recalculé)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/zonage_abc.py:zonage_commune",
+    reservoirs=("zonage_abc_dhup",), portee="live", type="classe",
+    table="commune_zonage_abc",
+    domaine=("Abis", "A", "B1", "B2", "C"),
+    domaine_source="arrêté de zonage A/B/C (D. 304-1 CCH, 23/06/2026)"),
+ # ── SOURCES-1 lot 1 — les couches carte du droit des sols ──
+ "er_couche": C("Emplacements réservés (couche)", "couche", "commune",
+    "emplacements réservés des PLU (prescriptions GPU typepsc 05) — emprise grevée au profit "
+    "d'un projet public",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (plu_gpu_prescription/05)",
+    reservoirs=("gpu_prescriptions_er",), portee="live",
+    type="couche", table="spatial_layers (kind=plu_gpu_prescription, subtype=05)", fabrication="requete"),
+ "ebc_couche": C("Espaces boisés classés (couche)", "couche", "commune",
+    "espaces boisés classés des PLU (prescriptions GPU typepsc 01) — toute construction "
+    "interdite sur l'emprise boisée (L113-1 CU)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (plu_gpu_prescription/01)",
+    reservoirs=("gpu_prescriptions_ebc",), portee="live",
+    type="couche", table="spatial_layers (kind=plu_gpu_prescription, subtype=01)", fabrication="requete"),
+ "dpu_couche": C("Droit de préemption urbain (couche)", "couche", "commune",
+    "périmètres de préemption urbaine publiés au GPU (typeinf 04) — communes non publiées "
+    "listées à la source",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (dpu)",
+    reservoirs=("dpu_perimetres",), portee="live",
+    type="couche", table="spatial_layers (kind=dpu)", fabrication="requete"),
+ "peb_couche": C("Plan d'exposition au bruit (couche)", "couche", "global",
+    "zones A/B/C/D des PEB republiés au GPU (Roland-Garros ; Pierrefonds non publié)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (peb)",
+    reservoirs=("peb_dgac",), portee="live",
+    type="couche", table="spatial_layers (kind=peb)", fabrication="requete"),
+ "sup_couche": C("Servitudes d'utilité publique (couche)", "couche", "commune",
+    "assiettes des SUP publiées pour le 974, une sous-couche par catégorie (AC1, AC2, AC3, "
+    "AC4, PM1, PM2, PM3, EL10 en base ; T5/PT1/PT2 publiées mais restreintes au "
+    "téléchargement ; AS1 et les autres non publiées — inventaire sondé)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (sup)",
+    reservoirs=("sup_gpu",), portee="live",
+    type="couche", table="spatial_layers (kind=sup, subtype=catégorie)", fabrication="requete"),
+ # ── SOURCES-1 lot 2 — la nature et l'eau ──
+ "dpf_couche": C("Ravines et reculs — DPF (couche)", "couche", "global",
+    "domaine public fluvial DEAL (275 tronçons + 6 plans d'eau, arrêté 06-3077 du 21/08/2006) "
+    "— servitude de marchepied 3,25 m rédhibitoire (L2131-2 CGPPP)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (dpf)",
+    reservoirs=("deal_dpf_dpe",), portee="live",
+    type="couche", table="spatial_layers (kind=dpf)", fabrication="requete"),
+ "zone_humide_couche": C("Zones humides (couche)", "couche", "global",
+    "inventaires DEAL par secteurs (2003, 2009 + espaces fonctionnels, habitats 2011, basse "
+    "altitude 2019) — couverture partielle dite, l'absence n'est pas une preuve",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (zone_humide)",
+    reservoirs=("deal_zones_humides",), portee="live",
+    type="couche", table="spatial_layers (kind=zone_humide)", fabrication="requete"),
+ "enp_couche": C("Espaces naturels protégés (couche)", "couche", "global",
+    "ENP par type (réserves naturelles dont marine, APB, conservatoire du littoral, réserves "
+    "biologiques, Ramsar, sites classés/inscrits) — INPN + compléments DEAL Carmen",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (ens)",
+    reservoirs=("inpn_espaces_proteges", "enp_complements_deal",), portee="live",
+    type="couche", table="spatial_layers (kind=ens, subtype=type)", fabrication="requete"),
+ "rpg_couche": C("Cultures déclarées — RPG (couche)", "couche", "commune",
+    "déclarations agricoles RPG (38 460, code culture — canne CSA dominante) ; en zone A : "
+    "canne ≥ 50 % rédhibitoire, absence de déclaration = friche possible (vigilance)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (safer)",
+    reservoirs=("rpg_proxy_ign",), portee="live",
+    type="couche", table="spatial_layers (kind=safer)", fabrication="requete"),
+ "azi_tri_commune": C("AZI / TRI de la commune", "liste", "commune",
+    "atlas des zones inondables et TRI couvrant la commune (GASPAR : libellé, risques, date) "
+    "— fait documentaire ; la géométrie d'aléa reste servie par georisque_alea",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/azi_tri.py:azi_tri_commune",
+    reservoirs=("georisques_azi_tri",), portee="live", type="liste",
+    table="azi_communes"),
+ "dispositifs_parcelle": C("Dispositifs et périmètres (parcelle)", "liste", "parcelle",
+    "liste des dispositifs du droit des sols touchant la parcelle (ER avec part, EBC avec "
+    "part, DPU, zone PEB, SUP par catégorie) — intersections live des couches servies, mêmes "
+    "seuils que la cascade (source unique cascade_rules.yaml)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_dispositifs_block",
+    reservoirs=("gpu_prescriptions_er", "gpu_prescriptions_ebc", "dpu_perimetres",
+                "peb_dgac", "sup_gpu",), portee="live", type="liste",
+    table="spatial_layers (kinds plu_gpu_prescription/dpu/peb/sup)"),
+ # ══ SOURCES-1 lot 5 — la valeur ══
+ "fibre_parcelle": C("Fibre (raccordable FttH)", "classe", "parcelle",
+    "raccordabilité FttH de l'immeuble Arcep le plus proche de la parcelle (≤ 100 m, "
+    "DISTANCE DITE — jamais un booléen nu) + opérateurs présents ; « aucun immeuble » est "
+    "un état, pas un zéro",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/arcep_fibre.py:fibre_parcelle",
+    reservoirs=("arcep_fibre",), portee="live", type="classe",
+    table="arcep_immeubles",
+    domaine=("raccordable", "non_raccordable", "aucun_immeuble"),
+    domaine_source="éligibilité FttH Arcep (Ma connexion internet, IPE)"),
+ "tfpb_taux_pct": C("Taxe foncière (taux TFPB)", "%", "commune",
+    "taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — "
+    "impositions primitives, passe-plat du fichier DGFiP",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/rei.py:rei_commune",
+    reservoirs=("dgfip_rei",), portee="live", table="commune_rei"),
+ "ort_statut": C("ACV / PVD / ORT", "classe", "commune",
+    "statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT "
+    "signée (date) + condition communale Denormandie DITE (le périmètre conventionné "
+    "n'est pas publié)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/ort.py:ort_commune",
+    reservoirs=("anct_ort",), portee="live", type="classe", table="commune_ort",
+    domaine=("acv", "pvd", "autre", "hors"),
+    domaine_source="table DGALN des communes ORT (flags ACV/PVD)"),
+ "cout_construction_ref_eur_m2": C("Coût de construction (référence)", "€/m²", "global",
+    "fourchette de coût de construction SERVIE au bilan promoteur (ligne labuse_promotion "
+    "de cout_construction_ref, 2 300-2 800 €/m² SDP — choix LABUSE sourcé, contexte EPTB "
+    "2024 en table) ; lue par Hypotheses.charger, repli constantes",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/faisabilite/engine.py:_couts_construction_reference",
+    reservoirs=("cout_construction_sdes",), portee="live", table="cout_construction_ref"),
+ # ══ SOURCES-1 lot 3 — les sols et le bruit ══
+ "sis_classe": C("Secteur d'information sur les sols (SIS)", "classe", "parcelle",
+    "la parcelle est-elle dans un périmètre SIS (étude de sols obligatoire au changement "
+    "d'usage L556-2 CE ; information écrite de l'acheteur/locataire obligatoire L125-7 CE)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_sols_block (sis)",
+    reservoirs=("georisques_sis",), portee="live", type="classe",
+    table="spatial_layers (kind=sol_pollue, subtype=sis)",
+    domaine=("dans", "hors"), domaine_source="périmètres SIS Géorisques (L125-6 CE)"),
+ "casias_statut": C("Ancien site industriel (CASIAS)", "classe", "parcelle",
+    "site CASIAS/instruction sur la parcelle ou à moins de 100 m — inventaire historique, "
+    "pas une pollution avérée (le libellé le dit)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_sols_block (casias)",
+    reservoirs=("georisques_casias",), portee="live", type="classe",
+    table="spatial_layers (kind=sol_pollue, subtypes casias/instruction)",
+    domaine=("sur_place", "proche_100m", "hors"),
+    domaine_source="CASIAS/instructions Géorisques (canal SSP)"),
+ "sis_couche": C("Secteurs d'information sur les sols (couche)", "couche", "commune",
+    "périmètres SIS réglementaires (4 au 974 : Le Port, Saint-Benoît, Saint-Louis, "
+    "Sainte-Marie)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (sol_pollue/sis)",
+    reservoirs=("georisques_sis",), portee="live",
+    type="couche", table="spatial_layers (kind=sol_pollue, subtype=sis)", fabrication="requete"),
+ "casias_couche": C("Anciens sites industriels (couche)", "couche", "commune",
+    "sites CASIAS et instructions en cours (inventaire historique, pas une pollution avérée)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (sol_pollue/casias)",
+    reservoirs=("georisques_casias",), portee="live",
+    type="couche", table="spatial_layers (kind=sol_pollue, subtypes casias/instruction)",
+    fabrication="requete"),
+ "bruit_couche": C("Classement sonore (couche)", "couche", "commune",
+    "bandes des secteurs affectés par le bruit (largeur réglementaire sect_bruit par axe, "
+    "catégories 1-5 — arrêtés préfectoraux des 14-15/12/2023, R571-32 CE)",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (bruit_route)",
+    reservoirs=("bruit_itt_cerema",), portee="live",
+    type="couche", table="spatial_layers (kind=bruit_route)", fabrication="requete"),
+ "bruit_carte_couche": C("Cartes de bruit — dépassements (couche)", "couche", "global",
+    "zones de dépassement des valeurs limites Lden 68 / Ln 62 dB(A) des cartes de bruit "
+    "stratégiques 2022 (RN/RD/VC) — ≠ classement sonore réglementaire",
+    moteur=None, calcul="passe_plat", fonction="src/labuse/api/app.py:map_layers_geojson (bruit_carte)",
+    reservoirs=("deal_bruit_cartes",), portee="live",
+    type="couche", table="spatial_layers (kind=bruit_carte)", fabrication="requete"),
+ "sols_parcelle": C("Sols (SIS/CASIAS, parcelle)", "liste", "parcelle",
+    "l'état des sols de la parcelle : périmètre SIS intersecté, site CASIAS/instruction le "
+    "plus proche (≤ 100 m) — intersections live des couches servies, mêmes règles que la "
+    "cascade sol_pollue",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_sols_block",
+    reservoirs=("georisques_sis", "georisques_casias",), portee="live", type="liste",
+    table="spatial_layers (kind=sol_pollue)"),
+ # ══ SOURCES-1 lot 6 — le foncier et les gens ══
+ "filiation_parcelle": C("Historique cadastral (filiation DFI)", "liste", "parcelle",
+    "la généalogie OFFICIELLE de la parcelle : d'où elle vient (mères), ce qu'elle est "
+    "devenue (filles), nature et date de chaque événement (DFI DGFiP) — passe-plat trié ; "
+    "absence NORMALE (informatisation 1980-90+, aménagements fonciers exclus) ; contrôle "
+    "croisé avec le cadastre d'époque (géométrie), jamais un conflit",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/dfi.py:filiation_parcelle",
+    reservoirs=("dgfip_dfi",), portee="live", type="liste", table="dfi_filiation"),
+ "iris_quartier": C("Quartier INSEE (IRIS)", "liste", "parcelle",
+    "le quartier INSEE de la parcelle (IRIS, contours géographie 2024) : logements, vacance, "
+    "âge du bâti (part ≤ 1990), taille des ménages (NPER_RP/RP), part 60 ans et +, part "
+    "locataires/HLM — RP2022, maille IRIS DITE (affine la commune, ne la remplace pas)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/iris_rp.py:stats_iris (iris_de_parcelle)",
+    reservoirs=("insee_rp_iris", "contours_iris",), portee="live", type="liste",
+    table="iris_rp"),
+ "iris_commune_quartiers": C("Quartiers de la commune (IRIS)", "liste", "commune",
+    "l'affinage par quartier de la vérité communale : n IRIS, vacance min/médiane/max par "
+    "IRIS (RP2022) — commune_insee_logement reste la vérité communale",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/iris_rp.py:quartiers_commune",
+    reservoirs=("insee_rp_iris",), portee="live", type="liste", table="iris_rp"),
 }
 
 #: 1.1 — le type des déclarations « auto » est dérivé de l'unité (les entrées historiques de

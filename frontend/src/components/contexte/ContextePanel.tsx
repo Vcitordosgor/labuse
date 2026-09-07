@@ -463,6 +463,47 @@ export function ContextePanel() {
                 </LigneCarte>
               )}
 
+              {/* SOURCES-1 lot 1 — zonage A/B/C (DHUP) : la classe logement de la commune,
+                  passe-plat sourcé + daté ; absente → « non déterminée », jamais devinée. */}
+              <LigneCarte id="zonage-abc" chiffre="zonage_abc_logement" ic="◈" titre="Zonage logement (ABC)"
+                sous={d.zonage_abc ? d.zonage_abc.millesime : 'non déterminée'}
+                val={d.zonage_abc ? `zone ${d.zonage_abc.zone}` : null}>
+                <div className="flex flex-col gap-0.5 text-[12px]">
+                  {d.zonage_abc
+                    ? <RowT lbl="Classe de la commune" val={`zone ${d.zonage_abc.zone}`} strong />
+                    : <p className="text-[12px] text-txt-dim">Non déterminée — zonage ABC non ingéré.</p>}
+                </div>
+                {d.zonage_abc && <Source nom={d.zonage_abc.source} />}
+              </LigneCarte>
+
+              {/* SOURCES-1 lot 5 — taux fonciers (REI DGFiP) : passe-plat sourcé + daté. */}
+              {d.fiscalite && (
+                <LigneCarte id="fiscalite" chiffre="tfpb_taux_pct" ic="₣" titre="Taxe foncière (taux)"
+                  sous={d.fiscalite.millesime}
+                  val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : null}>
+                  <div className="flex flex-col gap-0.5 text-[12px]">
+                    <RowT lbl="TFPB commune" val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : '—'} strong />
+                    <RowT lbl="TFPB intercommunalité" val={d.fiscalite.tfpb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpb_epci_pct)} %` : '—'} />
+                    <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
+                  </div>
+                  <Source nom={d.fiscalite.source} />
+                </LigneCarte>
+              )}
+
+              {/* SOURCES-1 lot 5 — ACV/PVD/ORT + condition communale Denormandie (état, jamais
+                  un calcul d'avantage — le périmètre conventionné n'est pas publié). */}
+              {d.ort && d.ort.statut !== 'hors' && (
+                <LigneCarte id="ort" chiffre="ort_statut" ic="◎" titre="Revitalisation (ACV / PVD / ORT)"
+                  sous={d.ort.ort_signee ? `convention ORT signée${d.ort.date_signature ? ` le ${d.ort.date_signature}` : ''}` : 'convention ORT non signée'}
+                  val={d.ort.statut === 'acv' ? 'ACV' : d.ort.statut === 'pvd' ? 'PVD' : 'ORT'}>
+                  <div className="flex flex-col gap-0.5 text-[12px]">
+                    <RowT lbl="Dispositif" val={d.ort.statut === 'acv' ? 'Action Cœur de Ville' : d.ort.statut === 'pvd' ? 'Petites Villes de Demain' : 'ORT (autre commune signataire)'} strong />
+                    <p className="text-[11.5px] text-txt-dim">Denormandie : {d.ort.denormandie}</p>
+                  </div>
+                  {d.ort.source && <Source nom={d.ort.source} />}
+                </LigneCarte>
+              )}
+
               {/* ── LE TERRITOIRE ── */}
               <GroupeLabel>Le territoire</GroupeLabel>
 
@@ -512,6 +553,14 @@ export function ContextePanel() {
                   <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
                   <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
                   <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
+                  {/* SOURCES-1 lot 2 — le fait AZI/TRI (GASPAR) : quels documents inondation couvrent la commune */}
+                  {d.risques.azi_tri && (d.risques.azi_tri.azi?.length || d.risques.azi_tri.tri?.length) ? (
+                    <RowT lbl="Inondation (AZI / TRI)"
+                      val={[...(d.risques.azi_tri.azi ?? []).map((x: { libelle?: string }) => `AZI ${x.libelle ?? ''}`),
+                            ...(d.risques.azi_tri.tri ?? []).map((x: { libelle?: string }) => `TRI ${x.libelle ?? ''}`)].join(' · ')} />
+                  ) : d.risques.azi_tri ? (
+                    <RowT lbl="Inondation (AZI / TRI)" val="aucun document recensé (GASPAR)" />
+                  ) : null}
                   <RowT lbl="Aire d'adhésion Parc National" val={d.risques.parc_national ? 'oui' : 'non'} />
                 </div>
                 <Source nom={d.risques.source} />
@@ -524,6 +573,12 @@ export function ContextePanel() {
                   {d.population.habitants != null && <RowT lbl="Habitants · ménages" val={`${fmt(d.population.habitants)} · ${fmt(d.population.menages)}`} />}
                   {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
+                  {/* SOURCES-1 lot 6 — l'affinage par QUARTIER (IRIS RP2022) : la vacance n'est
+                      pas uniforme dans la commune ; maille dite, la vérité communale reste INSEE RP. */}
+                  {d.population.quartiers && (
+                    <RowT lbl={`Par quartier (${d.population.quartiers.n_iris} IRIS)`}
+                      val={`vacance ${fmtDec(d.population.quartiers.vacance_min_pct)} → ${fmtDec(d.population.quartiers.vacance_max_pct)} % (méd. ${fmtDec(d.population.quartiers.vacance_mediane_pct)} %)`} />
+                  )}
                 </div>
                 {d.marche && (
                   <div className="flex flex-col gap-2.5">
