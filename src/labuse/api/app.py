@@ -6221,6 +6221,55 @@ def set_bilan_param(body: BilanParamIn, request: Request, db: Session = Depends(
     return {"ok": True, "secteur": body.secteur, "param": body.param, "value": body.value}
 
 
+# ── EXPORTS-2 lot 4 — le questionnaire du Financier (4 écrans, persisté par compte+IDU) ──
+class QuestionnaireFinancierIn(BaseModel):
+    reponses: dict = {}
+    projet_id: int | None = None
+
+
+@app.get("/financier/{idu}/questionnaire")
+def financier_questionnaire_get(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Le questionnaire du Financier (cloison compte) : réponses persistées, pré-remplissages
+    SOURCÉS (règle 1 — un pré-remplissage sans source n'est pas émis), structure des 4 écrans,
+    et si le questionnaire est complet (régime de TVA obligatoire, règle 3)."""
+    from .. import financier_questionnaire as qf
+    from ..registre.donnees import CHIFFRES
+    from .tenant import current_compte
+    cid = current_compte(request)
+    etat = qf.charger(db, idu, cid)
+    try:
+        fiche = parcel_fiche(idu, db=db, request=request)
+    except Exception:  # noqa: BLE001 — pas de fiche → seuls les pré-remplissages constants
+        fiche = {}
+    prefill = qf.prefill(fiche)
+
+    def _champ(fid: str) -> dict:
+        c = CHIFFRES.get(fid)
+        return {"id": fid, "libelle": c.libelle if c else fid, "unite": c.unite if c else "",
+                "type": c.type if c else "texte",
+                "domaine": list(c.domaine) if c and c.domaine else None,
+                "obligatoire": fid in qf.OBLIGATOIRES,
+                "prefill": prefill.get(fid)}  # {valeur, source} ou None (jamais une valeur sans source)
+
+    ecrans = [{"titre": t, "champs": [_champ(fid) for fid in ids]} for t, ids in qf.ECRANS]
+    return {"idu": idu, "reponses": etat["reponses"], "complet": etat["complet"],
+            "existe": etat["existe"], "ecrans": ecrans,
+            "tva_explication": qf.TVA_EXPLICATION, "champs_obligatoires": sorted(qf.OBLIGATOIRES)}
+
+
+@app.put("/financier/{idu}/questionnaire")
+def financier_questionnaire_put(idu: str, body: QuestionnaireFinancierIn, request: Request,
+                                db: Session = Depends(get_db)) -> dict:
+    """Enregistre le questionnaire (cloison compte). Un champ à null = VIDÉ (règle 2, jamais un
+    retour silencieux au défaut). `complet` recalculé (régime de TVA obligatoire, règle 3)."""
+    from .. import financier_questionnaire as qf
+    from .tenant import current_compte
+    cid = current_compte(request)
+    res = qf.enregistrer(db, idu, cid, body.reponses, body.projet_id)
+    db.commit()
+    return {"idu": idu, **res}
+
+
 @app.get("/compare")
 def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des virgules"),
             db: Session = Depends(get_db)) -> dict:

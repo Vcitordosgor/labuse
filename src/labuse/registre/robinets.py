@@ -331,6 +331,17 @@ ROBINETS: dict[str, Robinet] = {
     "/pdf (courrier)", "pdf", chiffres=("zone_plu_famille", "zonage_plu_couche",)),
  "pdf_argumentaire": _r("pdf", "Argumentaire", None,
     "/argumentaire", "pdf", chiffres=("prix_terrain_secteur_eur_m2",)),
+ # EXPORTS-2 lot 4 — l'écran questionnaire du Financier (4 écrans) sert ses saisies client
+ # (les 4 saisies déjà servies par la calculette — prix_demande/cout_construction/démolition/
+ # dépollution — restent à leurs robinets ; on ne les redéclare pas ici, V5c).
+ "ecran_questionnaire_financier": _r("page_client", "Questionnaire du Financier (4 écrans)", None,
+    "/financier/{idu}/questionnaire (GET/PUT)", "json_puis_js", chiffres=(
+        "scenario_saisi", "logements_vises_saisi", "typologie_moyenne_saisi", "part_sociale_saisi_pct",
+        "stationnement_type_saisi", "prix_refuse_saisi_eur", "frais_acquisition_saisi_pct",
+        "commission_apporteur_saisi_eur", "honoraires_techniques_saisi_pct", "vrd_saisi_eur_m2",
+        "cout_place_stationnement_saisi_eur", "aleas_saisi_pct", "taxe_amenagement_saisi_eur",
+        "prix_sortie_saisi_eur_m2", "prix_vente_bailleur_saisi_eur_m2", "marge_visee_saisi_pct",
+        "regime_tva_saisi", "duree_portage_saisi_mois", "apport_saisi_eur", "taux_apport_saisi_pct",)),
  "page_accueil_chiffres": _r("page_client", "Accueil — bloc chiffres", None,
     "/accueil/chiffres (cache 1 h)", "json_puis_js", chiffres=("n_parcelles_ile", "n_sources", "run_label_servi",)),
  "page_accueil_semaine": _r("page_client", "Accueil — cette semaine", None,
