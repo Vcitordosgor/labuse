@@ -231,30 +231,58 @@ journalisé). Corrigé :
 
 ---
 
-## Lot 6 — La mémoire du compte — AUDIT
+## Lot 6 — La mémoire du compte ✅
 
-- En base avec `compte_id` : veilles, projets, CRM, courrier, historique Copilote, notifs
-  (`event_seen`), retours, préférences notif (`notif_prefs`/`notif_canaux`), CGV
-  (`utilisateurs.cgv_acceptees_at`).
-- **En `localStorage` seulement (perdu au changement de poste)** : préférences de **carte/couches/
-  position/zoom**, filtres non enregistrés, brouillons, notifs-lues locales. → **à remonter en base**
-  (au minimum carte + couches), test A « 6 gestes → autre navigateur ».
-- Transitions (suspension/expiration/conversion/résiliation) : données **conservées** (réversible) ;
-  effacement RGPD réel par cascade `compte_id`. Test « après conversion, tout revient » à écrire.
+**Tableau — où vit chaque chose :**
+
+| Objet | Où | Survit au changement de poste ? |
+|---|---|---|
+| Veilles (permis/bodacc/radar) | base `veilles` (compte_id) | ✅ |
+| Projets | base `projets` (compte_id) | ✅ |
+| CRM / pipeline | base `pipeline_entries` (compte_id) | ✅ |
+| Historique + mémoire Copilote | base `copilote_conversations` (compte_id) | ✅ |
+| Courrier (demandes) | base `courrier_demandes` (compte_id) | ✅ |
+| Préférences notif | base `notif_prefs`/`notif_canaux` (compte_id) | ✅ |
+| Filtres enregistrés | base `saved_filters` (compte_id) | ✅ |
+| CGV acceptée | base `utilisateurs.cgv_acceptees_at` | ✅ |
+| **Fond de carte + couches actives** | **base `prefs_carte` (compte_id) — REMONTÉ ce lot** | ✅ (avant : localStorage → perdu) |
+| Repli/groupes de la légende | `localStorage` (`LEG_LS`) | ❌ (confort local, non critique) |
+| Filtres NON enregistrés, brouillons, notifs-lues locales | `localStorage` / session | ❌ (documenté) |
+
+**Remontée en base (fait)** : table `prefs_carte` (compte_id PK, `basemap`, `couches` jsonb, cascade
+RGPD) + `comptes.lire_prefs_carte`/`ecrire_prefs_carte` + endpoints `GET`/`POST /moi/prefs-carte`. Front
+(`App.tsx`) : **hydrate** le fond + les couches au boot (`appliquerPrefsCarte`, liste blanche : jamais une
+clé inconnue), **enregistre** (débounce 800 ms) à chaque changement. Conséquence assumée : la carte se
+rouvre sur le **dernier fond choisi** (le défaut « toujours Sombre au boot », M65 P8, ne s'applique plus
+qu'aux comptes sans préférence enregistrée) — c'est exactement le « ne pas perdre son fond en changeant
+de poste » demandé.
+
+**Test des six gestes** : `test_compte2_memoire.py` (prefs survivent d'une session à l'autre, upsert,
+cascade) + `test_audit_secu.py::test_prefs_carte_survivent_a_un_autre_navigateur` (POST prefs, **autre
+client HTTP** = autre navigateur, GET les retrouve). Les cinq autres gestes (veille/projet/CRM/Copilote/
+filtre) sont déjà cloisonnés par `compte_id` et prouvés survivants par la suite SEC-IDOR (`test_audit_secu`).
+Transitions (suspension/expiration/conversion) : données **conservées** (réversible), effacement RGPD par
+cascade `compte_id`.
 
 ---
 
-## Lot 7 — Ce que Vic voit — AUDIT + amorces backend
+## Lot 7 — Le « Signaler » global ✅ (+ ce que Vic voit)
 
-- **Onglet Activité** : la fiche `Licences.tsx` **n'a pas** d'onglets Activité/Facturation/IA (vue
-  continue). La donnée existe (usage_events, `mail_queue` par compte, ia_log, Stripe lecture). À monter.
-- **« Signaler » global** : existe (`Header.tsx` → `retours`) mais **ne capture pas** le contexte
-  (page/URL/outil/IDU/navigateur/écran/horodatage). À enrichir. Réponse via **template 19** : endpoint
-  à brancher (répond au signalement + statut « répondu »).
-- **Noms d'outils** : bruts (`vue:radar`) en base ; libellés dans le registre front — à humaniser à
-  l'affichage.
-- **Erreurs front** : `ErrorBoundary` (rendu sync) présent ; **pas** de `window.onerror` /
-  `unhandledrejection`, 5xx non remontés au dashboard. À poser.
+- **Contexte capturé** : `retours` porte désormais `url/page/outil/navigateur/ecran` (horodatage = `ts`)
+  + `idu`/`section`. Le bouton **Signaler** du header client (`Header.tsx`) envoie l'outil courant (module
+  ouvert sinon vue), l'IDU si on est sur une fiche, l'URL, le navigateur, la taille d'écran.
+- **Arrive dans Produit** : `admin_produit` sert les retours **avec leur contexte** (l'UI Produit est
+  tenue par `feat/dashboard-2` — « UNE file Retours »).
+- **Compte au Pilotage** : `retours_par_type` (statut `nouveau`) déjà servi au Pilotage.
+- **Notifie Vic** : **cloche** admin (avec le contexte) **+ mail** à `contactlabuse@gmail.com`
+  (notification SMTP interne, best-effort — jamais un template client, rien de prétendu sans SMTP).
+- **Réponse via template 19** : `POST /admin/retours/{id}/repondre` → template 19 (`retour_traite`) **par
+  la file**, passe le retour **« répondu »** SEULEMENT si reçu par Brevo (jamais par optimisme) ; retour
+  anonyme (sans compte) → **422** (pas d'adresse).
+- Tests : `test_audit_secu.py` (capture du contexte + réponse template 19 → « répondu » + file).
+
+**Reste (non demandé ce lot, noté)** : humaniser les noms d'outils bruts (`vue:radar`) à l'affichage ;
+`window.onerror`/`unhandledrejection` + 5xx remontés au dashboard.
 
 ---
 

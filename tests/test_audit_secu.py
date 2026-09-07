@@ -859,6 +859,22 @@ def test_admin_403_a_deux_comptes(app_client):
         _purge(ec, ea)
 
 
+def test_prefs_carte_survivent_a_un_autre_navigateur(app_client):
+    """COMPTE-2 (Lot 6) — le client règle son fond de carte + couches, puis se reconnecte dans un AUTRE
+    navigateur (client HTTP neuf, aucun localStorage partagé) → il les retrouve (base, pas localStorage)."""
+    e = f"mem-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(e)
+    try:
+        c1 = TestClient(app_client.app, base_url="https://testserver"); _login(c1, e)
+        r = c1.post("/moi/prefs-carte", json={"basemap": "ortho", "couches": {"zonage": True, "parcelles": True}})
+        assert r.status_code == 200, r.text
+        c2 = TestClient(app_client.app, base_url="https://testserver"); _login(c2, e)   # autre navigateur
+        p = c2.get("/moi/prefs-carte").json()
+        assert p["basemap"] == "ortho" and p["couches"]["zonage"] is True
+    finally:
+        _purge(e)
+
+
 def test_signaler_global_capture_le_contexte(app_client):
     """COMPTE-2 (Lot 7) — le « Signaler » global enregistre le CONTEXTE (url/page/outil/idu/navigateur/
     écran) avec le retour, attribué au compte connecté."""

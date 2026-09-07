@@ -142,6 +142,37 @@ def ensure_tables(db: Session) -> None:
             code_hash text NOT NULL,
             utilise_at timestamptz
         )"""))
+    # COMPTE-2 (Lot 6) — MÉMOIRE DU COMPTE : préférences de carte (fond + couches actives) REMONTÉES
+    # en base pour SURVIVRE au changement de poste (avant : localStorage seulement → perdues). Une ligne
+    # par compte, JSON pour les couches (souple). Cascade avec le compte (effacement RGPD).
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS prefs_carte (
+            compte_id int PRIMARY KEY REFERENCES comptes(id) ON DELETE CASCADE,
+            basemap text,
+            couches jsonb,
+            updated_at timestamptz NOT NULL DEFAULT now()
+        )"""))
+    db.commit()
+
+
+def lire_prefs_carte(db: Session, compte_id: int | None) -> dict | None:
+    """COMPTE-2 (Lot 6) — préférences de carte du compte ({basemap, couches}) ou None (jamais posées /
+    pilote). Lues à l'ouverture de l'app pour rouvrir la carte comme le client l'avait laissée."""
+    if compte_id is None:
+        return None
+    r = db.execute(text("SELECT basemap, couches FROM prefs_carte WHERE compte_id = :c"),
+                   {"c": compte_id}).mappings().first()
+    return {"basemap": r["basemap"], "couches": r["couches"]} if r else None
+
+
+def ecrire_prefs_carte(db: Session, compte_id: int, basemap: str | None, couches: dict | None) -> None:
+    """COMPTE-2 (Lot 6) — enregistre (upsert) le fond de carte et les couches actives du compte."""
+    import json
+    db.execute(text(
+        "INSERT INTO prefs_carte (compte_id, basemap, couches) VALUES (:c, :b, CAST(:j AS jsonb))"
+        " ON CONFLICT (compte_id) DO UPDATE SET basemap = :b, couches = CAST(:j AS jsonb),"
+        " updated_at = now()"),
+        {"c": compte_id, "b": basemap, "j": json.dumps(couches) if couches is not None else None})
     db.commit()
 
 

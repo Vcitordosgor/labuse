@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { createProjet, projetPdfUrl } from './lib/api'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { createProjet, getPrefsCarte, postPrefsCarte, projetPdfUrl } from './lib/api'
 import { AvisIA } from './components/AvisIA'
 import { Fiche } from './components/fiche/Fiche'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
@@ -275,6 +275,27 @@ export default function App() {
   useEffect(() => { startHeartbeat() }, [])
   useEffect(() => { if (module) signalOutil(module) }, [module])
   useEffect(() => { signalOutil(`vue:${view}`) }, [view])
+
+  // COMPTE-2 (Lot 6) — MÉMOIRE DU COMPTE : le fond de carte + les couches actives vivent EN BASE (plus
+  // seulement en localStorage) → on les retrouve en changeant de poste. Hydratation au boot, puis
+  // enregistrement (débounce) à chaque changement. Best-effort : non connecté / erreur = on continue.
+  const basemap = useApp((s) => s.basemap)
+  const layers = useApp((s) => s.layers)
+  const appliquerPrefsCarte = useApp((s) => s.appliquerPrefsCarte)
+  const prefsCarteReady = useRef(false)
+  useEffect(() => {
+    let annule = false
+    getPrefsCarte()
+      .then((p) => { if (!annule) appliquerPrefsCarte(p) })
+      .catch(() => { /* non connecté / indisponible : la carte reste en session */ })
+      .finally(() => { if (!annule) prefsCarteReady.current = true })
+    return () => { annule = true }
+  }, [appliquerPrefsCarte])
+  useEffect(() => {
+    if (!prefsCarteReady.current) return              // pas avant l'hydratation (sinon on écrase la base)
+    const t = setTimeout(() => { postPrefsCarte({ basemap, couches: layers as unknown as Record<string, boolean> }).catch(() => {}) }, 800)
+    return () => clearTimeout(t)
+  }, [basemap, layers])
 
   // URL partageable : filtres + zone + commune sérialisés dans le hash (#f=…&c=…). Lecture au
   // chargement, écriture à chaque changement (replaceState : pas de pollution de l'historique).

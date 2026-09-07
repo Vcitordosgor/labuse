@@ -1396,6 +1396,11 @@ export interface MailLigne {
 }
 export const getAdminMails = (compteId: number) =>
   j<{ lignes: MailLigne[]; compteurs: unknown }>(`/admin/mails?compte_id=${compteId}`)
+// COMPTE-2 (Lot 6) — mémoire du compte : préférences de carte (fond + couches) en base (survivent au poste).
+export const getPrefsCarte = () =>
+  j<{ basemap: string | null; couches: Record<string, boolean> | null }>('/moi/prefs-carte')
+export const postPrefsCarte = (body: { basemap?: string; couches?: Record<string, boolean> }) =>
+  j<{ ok: boolean }>('/moi/prefs-carte', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // D5 — IA
 export interface AdminIa {
   mois: { cout_eur: number; appels: number; cout_moyen_question: number | null }

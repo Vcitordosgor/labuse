@@ -952,3 +952,28 @@ def moi_marque_get(request: Request, db: Session = Depends(get_db)) -> dict:
     if row and row["logo"]:
         out["logo_data_uri"] = f"data:{row['logo_mime']};base64," + _b64.b64encode(row["logo"]).decode()
     return out
+
+
+# ── COMPTE-2 (Lot 6) — MÉMOIRE DU COMPTE : préférences de carte (fond + couches) remontées en base ──
+@router.get("/moi/prefs-carte", include_in_schema=False)
+def moi_prefs_carte_get(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Préférences de carte du compte (fond + couches actives) pour rouvrir la carte comme le client
+    l'avait laissée — MÊME sur un autre poste (avant : localStorage, perdues au changement de poste)."""
+    from ..comptes import lire_prefs_carte
+    cid = _compte_session(request, db)
+    return lire_prefs_carte(db, cid) or {"basemap": None, "couches": None}
+
+
+@router.post("/moi/prefs-carte", include_in_schema=False)
+def moi_prefs_carte_set(payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Enregistre le fond de carte et les couches actives du compte (upsert). Best-effort côté client :
+    un enregistrement qui rate ne casse jamais la carte (le front continue en session)."""
+    from ..comptes import ecrire_prefs_carte
+    cid = _compte_session(request, db)
+    basemap = payload.get("basemap")
+    basemap = str(basemap)[:16] if basemap else None
+    couches = payload.get("couches")
+    if not isinstance(couches, dict):
+        couches = None
+    ecrire_prefs_carte(db, cid, basemap, couches)
+    return {"ok": True}
