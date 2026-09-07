@@ -506,6 +506,11 @@ const EQUIP_CATS = EQUIP_META.map((e) => e.key)
 // M55-A item 4 : libellé CLIENT d'une catégorie d'équipement (« École », « Commerce »…) —
 // la même source que la légende (EQUIP_META), pour ne jamais exposer la clé technique au clic.
 const EQUIP_LABEL: Record<string, string> = Object.fromEntries(EQUIP_META.map((e) => [e.key, e.label]))
+// COUCHES-1 lot 5 (D6) + lot 4 (C1) — équipements OSM en PASTILLE COLORÉE (plus d'emoji, corps
+// étranger à la DA) : la catégorie se lit à la COULEUR (EQUIP_META), la source au CONTOUR (OSM =
+// anneau BLANC ; INSEE BPE = anneau sombre). Un seul langage visuel — deux couches de points colorés.
+const equipColorExpr = ['match', ['get', 'subtype'],
+  ...EQUIP_META.flatMap((e) => [e.key, e.color]), '#9AA0A6'] as unknown as maplibregl.ExpressionSpecification
 
 // M55-A item 4 : centroïde (approx) de la parcelle SÉLECTIONNÉE, si elle est rendue à l'écran —
 // pour afficher « à ~N m de la parcelle sélectionnée » dans la bulle d'un équipement. Renvoie
@@ -592,24 +597,6 @@ const ALEA_COUCHES = [
   { id: 'ov-alea-inond', sub: 'inondation', token: 'aleaInondation', ramp: 'aleaInondationRamp' },
   { id: 'ov-alea-mvt', sub: 'mouvement_terrain', token: 'aleaMvt', ramp: 'aleaMvtRamp' },
 ] as const
-
-function makeEquipIcons(m: maplibregl.Map) {
-  const S = 46
-  for (const { key, emoji, color } of EQUIP_META) {
-    if (m.hasImage(`equip-${key}`)) continue
-    const cv = document.createElement('canvas')
-    cv.width = cv.height = S
-    const ctx = cv.getContext('2d')
-    if (!ctx) continue
-    ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2 - 3, 0, Math.PI * 2)
-    ctx.fillStyle = color; ctx.globalAlpha = 0.95; ctx.fill()
-    ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.strokeStyle = '#06130C'; ctx.stroke()
-    ctx.font = `${Math.round(S * 0.5)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui`
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText(emoji, S / 2, S / 2 + 1)
-    m.addImage(`equip-${key}`, ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
-  }
-}
 
 // RETOURS-11F3 avenant R10 — la GOUTTE D'EAU des piscines, rendue en ICÔNE CANVAS (addImage) et non
 // en `text-field:'💧'` : un emoji en text-field dépend des glyphes du style (souvent ABSENTS pour les
@@ -1377,7 +1364,6 @@ export function MapView() {
 
       // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
       // d'icônes par milliers à l'écran), clic = nom de l'équipement
-      makeEquipIcons(m)
       makePiscineIcon(m)   // R10 — la goutte des piscines en icône canvas (voir makePiscineIcon)
       m.addSource('ov-equip', { type: 'geojson', data: EMPTY_FC as never })
       // M12 C3 — les pastilles d'équipement GROSSISSENT quand on zoome (elles rétrécissaient) :
@@ -1388,23 +1374,28 @@ export function MapView() {
       // M14 B2 (QA-63, reprise M13-D3/QA-49) : icônes ×1,5 — rampe M12 (0,30/0,55/0,85/1,3)
       // multipliée par 1,5 → 0,45/0,825/1,275/1,95. Aucune autre taille ne l'écrase (seule
       // définition d'icon-size pour ov-equip ; le bitmap addImage garde son pixelRatio).
-      m.addLayer({ id: 'ov-equip', type: 'symbol', source: 'ov-equip', minzoom: 12,
-        layout: { visibility: 'none',
-                  'icon-image': ['concat', 'equip-', ['get', 'subtype']] as never,
-                  'icon-size': ['interpolate', ['linear'], ['zoom'],
-                    12, 0.45, 15, 0.825, 17, 1.275, 20, 1.95] as never,
-                  'icon-allow-overlap': true } })
-      // M137-U — équipements INSEE BPE : CERCLES BLEUS (pas d'icônes) → visuellement distincts d'OSM,
-      // aucun doublon à l'écran quand les deux couches sont actives. Source et couche dédiées.
+      // COUCHES-1 lot 5 (D6) / lot 4 (C1) — OSM en PASTILLE COLORÉE (cercle), plus d'emoji. Catégorie
+      // = couleur (equipColorExpr) ; source OSM = anneau BLANC (la BPE porte un anneau sombre). Même
+      // langage visuel que la BPE, la seule différence est le contour → plus de « pastilles emoji vs
+      // points colorés ». Rampe de rayon croissante jusqu'à z20 (lisibilité au travail sur parcelle).
+      m.addLayer({ id: 'ov-equip', type: 'circle', source: 'ov-equip', minzoom: 12,
+        layout: { visibility: 'none' },
+        paint: { 'circle-color': equipColorExpr, 'circle-opacity': 0.92,
+                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3.2, 16, 5.5, 20, 8.5] as unknown as maplibregl.ExpressionSpecification,
+                 'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 1.4, 'circle-stroke-opacity': 0.9 } })
+      // M137-U — équipements INSEE BPE : cercles colorés par domaine, ANNEAU SOMBRE → distincts d'OSM
+      // (anneau blanc) sans changer de langage visuel. Source et couche dédiées.
       m.addSource('ov-equip-bpe', { type: 'geojson', data: EMPTY_FC as never })
       // M137-V — couleur par DOMAINE (A..G) via match sur le subtype (data-driven, comme zfang/frr).
       const bpeColor = ['match', ['get', 'subtype'],
         ...BPE_DOM.flatMap((d) => [d.code, d.color]), T_SOMBRE.bpe] as never
       m.addLayer({ id: 'ov-equip-bpe', type: 'circle', source: 'ov-equip-bpe', minzoom: 12,
         layout: { visibility: 'none' },
-        paint: { 'circle-color': bpeColor, 'circle-opacity': 0.85,
-                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 2.2, 16, 4, 20, 6],
-                 'circle-stroke-color': '#0d1420', 'circle-stroke-width': 0.8 } })
+        paint: { 'circle-color': bpeColor, 'circle-opacity': 0.9,
+                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3.2, 16, 5.5, 20, 8.5],
+                 // COUCHES-1 lot 4 (C1) — anneau SOMBRE (OSM porte un anneau blanc) : même taille, même
+                 // forme, la source se lit au contour. Rayon aligné sur OSM pour un langage unique.
+                 'circle-stroke-color': '#0d1420', 'circle-stroke-width': 1.4 } })
       // M55-A item 4 : les équipements RÉAGISSENT au clic — bulle sobre (nom + catégorie CLIENT,
       // et distance à la parcelle sélectionnée si pertinent). `preventDefault()` empêche le clic
       // d'ouvrir AUSSI la fiche de la parcelle sous l'icône (les handlers parcels-fill / clic

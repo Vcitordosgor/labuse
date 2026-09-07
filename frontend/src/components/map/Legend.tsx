@@ -201,7 +201,10 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       const sub = k === 'alea_inondation' ? 'inondation' : 'mouvement_terrain'
       const ramp = (k === 'alea_inondation' ? tTheme.aleaInondationRamp : tTheme.aleaMvtRamp) as unknown as Record<string, string>
       const ORDRE = ['faible', 'moyen', 'fort', 'eleve', 'tres_eleve'] as const
-      const LAB: Record<string, string> = { faible: 'faible', moyen: 'moyen', fort: 'fort', eleve: 'élevé', tres_eleve: 'très élevé' }
+      // COUCHES-1 lot 5 (D5) — VOCABULAIRE DE GRAVITÉ ALIGNÉ entre les deux aléas : faible / moyen /
+      // élevé / très élevé (le synonyme « fort » de l'inondation devient « élevé »). Chaque aléa
+      // n'affiche que ses crans réellement servis ; la classe la plus grave reste ROUGE (doctrine R6).
+      const LAB: Record<string, string> = { faible: 'faible', moyen: 'moyen', fort: 'élevé', eleve: 'élevé', tres_eleve: 'très élevé' }
       const servies = new Set((aleaQ.data?.features ?? [])
         .filter((f) => (f.properties as { subtype?: string }).subtype === sub)
         .map((f) => String((f.properties as { classe?: string; niveau?: string }).classe
@@ -238,8 +241,10 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     id: 'ht', titre: 'Lignes électriques (HTA / HTB)',
     note: `HTA (moyenne tension ~15-20 kV, distribution) : EDF Réunion open data, LO 2.0, géométrie ~02/2020 republiée 16/10/2025 — tracé indicatif (sécurité publique), jamais une DT-DICT. HTB (63/90 kV, transport) : BD TOPO IGN (aérien, tension indiquée)${fmtFraich(htQ)}. Contrainte potentielle (servitudes, reculs) — à vérifier auprès d'EDF SEI.`,
     body: <div data-legend-ht className="flex flex-col gap-1 text-[11px] text-txt">
+      {/* COUCHES-1 lot 5 (D2) — HTB argent (trait épais) vs HTA ardoise-bleu (trait fin mais VISIBLE,
+          h-[2px]) : avant deux swatchs quasi blancs indistincts. */}
       <span className="flex items-center gap-2"><span className="h-[3px] w-4 rounded" style={{ background: tTheme.ht }} />haute tension HTB — trait épais tireté (BD TOPO IGN)</span>
-      <span className="flex items-center gap-2"><span className="h-px w-4 rounded" style={{ background: tTheme.mt }} />moyenne tension HTA — trait fin (EDF Réunion open data)</span>
+      <span className="flex items-center gap-2"><span className="h-[2px] w-4 rounded" style={{ background: tTheme.mt }} />moyenne tension HTA — trait fin (EDF Réunion open data)</span>
     </div>,
   })
   // RETOURS-14 S8 — « Stationnement allégé » : légende à TROIS entrées (zone · station · voie).
@@ -337,7 +342,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
     // COUCHES-1 lot 2 (A6) — le « i » manquait sur ce seul groupe. Source + nature dites comme ailleurs.
     note: 'Équipements et lieux d\'intérêt relevés dans OpenStreetMap (© les contributeurs OSM, ODbL) — mis à jour en continu. Complémentaire de la base INSEE BPE (référentiel statistique annuel) : OSM porte des objets que la BPE ignore (marché forain, crèche, gendarmerie…).',
     body: <div data-legend-equip className="flex flex-col gap-0.5 text-[11px]">{EQUIP_META.map((e) => (
-      <span key={e.key} className="flex items-center gap-1.5 text-txt-mut"><span className="text-[13px] leading-none">{e.emoji}</span>{e.label}</span>
+      // COUCHES-1 lot 5 (D6) — pastille COLORÉE (anneau blanc = source OSM), plus d'emoji. La couleur dit la catégorie.
+      <span key={e.key} className="flex items-center gap-1.5 text-txt-mut"><span className="h-2.5 w-2.5 shrink-0 rounded-full border" style={{ background: e.color, borderColor: '#FFFFFF' }} />{e.label}</span>
     ))}</div>,
   })
 
