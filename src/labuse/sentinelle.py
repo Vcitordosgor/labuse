@@ -514,6 +514,24 @@ SEED: list[dict] = [
      "url": "https://www.georisques.gouv.fr/api/v1/gaspar/azi?code_insee=97411&page=1&page_size=100",
      "url2": "https://www.georisques.gouv.fr/api/v1/gaspar/azi?code_insee=97410&page=1&page_size=100",
      "selecteur": None},
+    # ── SOURCES-1 lot 5 — la valeur : jeux data.gouv à last_update (famille api). ──
+    {"name": "Fibre Arcep — Ma connexion internet (immeuble)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/ma-connexion-internet/",
+     "selecteur": "last_update"},
+    {"name": "Taux de taxe foncière — fichier REI (DGFiP)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/impots-locaux-fichier-de-recensement-des-elements-dimposition-a-la-fiscalite-directe-locale-rei-4/",
+     "selecteur": "last_update"},
+    {"name": "ACV / PVD / ORT (DGALN — liste des communes)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/liste-des-communes-couvertes-par-des-operations-de-revitalisation-de-territoire/",
+     "selecteur": "last_update"},
+    # OLL : le JSON api/1 du jeu (520 ressources) dépasse la coupe de lecture de la sonde
+    # (« réponse non-JSON » mesuré) → api/2, payload léger (3,9 ko), même last_update.
+    {"name": "Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/2/datasets/56fd90e8c751df174ac485cb/",
+     "selecteur": "last_update"},
+    {"name": "Loyers DHUP — carte des loyers (annonces)", "methode": "api",
+     "url": "https://www.data.gouv.fr/api/1/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024/",
+     "selecteur": "last_update"},
 ]
 
 #: SENTINELLE-2 (X3.3) — les sources NON surveillées gardent un état EXPLICITE au panneau admin
@@ -548,6 +566,7 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "DEAL — cartes de bruit stratégiques (CBS)": "WFS Carmen sans en-tête de version (même service que les couches DEAL lot 2, vérifié 07/09/2026) ; CBS = échéance quinquennale (directive 2002/49/CE) — réingéré à la demande (`labuse ingest-bruit-cartes`), fraîcheur au Circuit.",
     "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)": "Atlas des patrimoines INJOIGNABLE au test du 06/09/2026 (timeout) et aucun jeu national/974 sur data.gouv ; page DAC de La Réunion sans millésime exploitable — rappel périodique posé (RAPPELS_MANUELS) pour re-tester l'Atlas.",
     # SOURCES-1 lot 4 — cadre régional :
+    "Coût de construction (EPTB SDES + choix LABUSE)": "L'EPTB est une PUBLICATION annuelle (pages DREAL/SDES sans millésime machine exploitable — vérifié 07/09/2026) ; rappel annuel de relecture posé (RAPPELS_MANUELS), la table cout_construction_ref est mise à jour à la main après lecture.",
     "SAR — schéma d'aménagement régional (Région/DEAL)": "Couche SIG officielle NON diffusée (Carmen 29, Lizmap DEAL, Sextant — WMS image seule —, ODS Région : 0 vecteur au 07/09/2026) ; demandée à la Région (lot 7). Rappel périodique 180 j (RAPPELS_MANUELS) : re-chercher la couche + suivre la révision SAR 2050.",
     "DVF Réunion (Région, data.regionreunion.com)": "Jeu FIGÉ chez le producteur (2014→mi-2021, vérifié 07/09/2026) servant d'échantillon producteur du filtre DVF — le hub ODS Région est déjà surveillé par la sonde témoin de son catalogue (total_count) ; une republication du jeu s'y verrait.",
     "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
@@ -604,6 +623,10 @@ RAPPELS_MANUELS: list[dict] = [
     # exploitable pour une sonde page, vérifié 07/09/2026).
     {"name": "SAR — schéma d'aménagement régional (Région/DEAL)",
      "cadence_jours": 180, "convention_echeance": None},
+    # SOURCES-1 lot 5 — coût de construction : l'EPTB est une PUBLICATION annuelle (pages
+    # DREAL/SDES sans millésime machine exploitable) → rappel annuel de relecture.
+    {"name": "Coût de construction (EPTB SDES + choix LABUSE)",
+     "cadence_jours": 365, "convention_echeance": None},
 ]
 
 

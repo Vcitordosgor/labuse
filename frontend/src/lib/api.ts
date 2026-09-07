@@ -257,6 +257,12 @@ export interface ContexteCommune {
   loyer: { median_eur_m2: number; type: string | null; source: string } | null
   // SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté. null = non ingéré.
   zonage_abc: { zone: string; millesime: string; source: string } | null
+  // SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie)
+  fiscalite: { tfpb_commune_pct: number | null; tfpb_epci_pct: number | null
+    teom_pct: number | null; millesime: string; source: string } | null
+  ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string
+    ort_signee: boolean; date_signature?: string | null
+    denormandie: string; millesime?: string; source?: string } | null
   outils: {
     permis_en_cours: number; permis_point_mort: number; densifiables: number
     radar_biens: number; scan_pm: number; solaire_piscines: number

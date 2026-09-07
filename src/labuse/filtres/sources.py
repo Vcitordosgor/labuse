@@ -825,3 +825,135 @@ _ajout(_f(
     cle=("id",), geom_col="geom",
     source_motif="Potentiel foncier Région%", portee_run=False, a_job=False,
     propres=[_potentiel_region_recouvrement()]))
+
+
+# ══════════════════════════ SOURCES-1 lot 5 — la valeur ══════════════════════════
+# Mesures 07/09/2026 : Arcep 330 051 immeubles / part FttH mesurée à l'ingestion ; REI 24/24
+# (E12 29,55→68,40 %) ; ORT 19 communes (écart : Saint-Louis attendu ACV absent) ; OLL médiane
+# agglo 10,9 €/m² (= plaquette), 16 communes mono-zone ; coût construction 1 ligne servie.
+
+def _ort_acv_manquantes() -> Controle:
+    """Les 5 ACV attendues (fiche 10) contrôlées CONTRE la table réelle — manquantes listées.
+    Mesuré au 07/09/2026 : Saint-Louis (97414) ABSENT de la table DGALN (écart producteur)."""
+    def m(db, f: Filtre, version: str):
+        from ..ingestion.ort import ACV_ATTENDUES
+        acv = {i for (i,) in db.execute(text(
+            "SELECT insee FROM commune_ort WHERE statut = 'acv'")).all()}
+        manquantes = sorted(f"{nom} ({insee})" for insee, nom in ACV_ATTENDUES.items()
+                            if insee not in acv)
+        d = {"attendues": sorted(ACV_ATTENDUES.values()), "manquantes": manquantes}
+        return ok("5/5", d) if not manquantes else ko(f"{5-len(manquantes)}/5", d)
+    return Controle("d_ort_acv_attendues", "completude", "avertissant",
+                    "ACV attendues présentes (fiche 10)",
+                    "5/5 à terme — 4/5 au 07/09/2026 (Saint-Louis absent de la table DGALN)", m)
+
+
+def _oll_mediane_plaquette() -> Controle:
+    """La médiane agglomération servie = la plaquette AGORAH (fiche 15 : 10,90 €/m²) —
+    un écart dit une rupture de méthode ou un mauvais parsing."""
+    def m(db, f: Filtre, version: str):
+        v = db.execute(text(
+            "SELECT loyer_median FROM oll_loyers WHERE zone = 0 AND type_habitat = 'tous' "
+            "AND pieces = 'tous' ORDER BY annee DESC LIMIT 1")).scalar()
+        d = {"mediane_agglo": float(v) if v is not None else None, "plaquette": 10.9}
+        return ok(str(v), d) if v is not None and abs(float(v) - 10.9) < 0.05 else ko(str(v), d)
+    return Controle("d_oll_mediane_plaquette", "distribution", "bloquant",
+                    "Médiane agglomération = plaquette AGORAH",
+                    "10,9 €/m² (fiche 15 — mesuré identique au 07/09)", m)
+
+
+def _oll_zonage_couverture() -> Controle:
+    """Les 24 communes présentes au zonage IRIS→zone (couverture départementale de l'OLL)."""
+    def m(db, f: Filtre, version: str):
+        n = db.execute(text("SELECT count(DISTINCT insee) FROM oll_zonage")).scalar() or 0
+        mono = db.execute(text(
+            "SELECT count(*) FROM (SELECT insee FROM oll_zonage GROUP BY insee "
+            "HAVING count(DISTINCT zone) = 1) x")).scalar() or 0
+        d = {"communes": int(n), "mono_zone": int(mono)}
+        return ok(f"{n}/24", d) if n >= 24 else ko(f"{n}/24", d)
+    return Controle("d_oll_zonage", "completude", "bloquant",
+                    "Zonage OLL : les 24 communes couvertes",
+                    "24/24 (observatoire départemental — mesuré 24/24, 16 mono-zone au 07/09)", m)
+
+
+def _dhup_fichier_ok() -> Controle:
+    """Le fichier embarqué DHUP (repli) est lisible et couvre les 24 communes."""
+    def m(db, f: Filtre, version: str):
+        from ..loyers import load
+        n = len(load().get("communes", []))
+        d = {"communes": n, "fichier": "data/carte_loyers_reunion_2025.json"}
+        return ok(f"{n}/24", d) if n >= 24 else ko(f"{n}/24", d)
+    return Controle("d_dhup_fichier", "completude", "bloquant",
+                    "Extrait DHUP embarqué lisible (24 communes)",
+                    "24/24 dans l'extrait versionné (repli de l'OLL)", m)
+
+
+_ajout(_f(
+    source="arcep_fibre", libelle="Fibre Arcep (immeubles)",
+    table="arcep_immeubles", cle=("imb_id",), insee_col="insee", geom_col="geom",
+    source_motif="Fibre Arcep%", portee_run=False,
+    propres=[
+        c.couverture("d_arcep_ftth", "completude", "avertissant",
+                     "Part des immeubles raccordables FttH",
+                     "≥ 50 % (l'état réel du déploiement, jamais bloquant — mesuré à l'ingestion)",
+                     "ftth", 50.0),
+        c.compte_mauvais("d_arcep_ops_vides", "completude", "avertissant",
+                         "Raccordables sans opérateur listé",
+                         "0 immeuble ftth=true sans opérateur (incohérence d'agrégation)",
+                         "ftth AND cardinality(operateurs_ftth) = 0"),
+    ]))
+
+_ajout(_f(
+    source="dgfip_rei", libelle="Taux de taxe foncière (REI)",
+    table="commune_rei", cle=("insee",), insee_col="insee",
+    source_motif="Taux de taxe foncière%", portee_run=False,
+    propres=[
+        c.couverture("d_rei_couverture", "completude", "bloquant",
+                     "Les 24 communes avec un taux TFPB",
+                     "24/24 (fichier national — mesuré 24/24 au 07/09)",
+                     "tfpb_commune_pct IS NOT NULL", 100.0),
+        c.compte_mauvais("d_rei_bornes", "plage", "bloquant",
+                         "Taux dans [0 ; 100] %",
+                         "0 taux hors bornes (écartés à l'ingestion + listés)",
+                         "tfpb_commune_pct < 0 OR tfpb_commune_pct > 100 "
+                         "OR teom_pct < 0 OR teom_pct > 100"),
+    ]))
+
+_ajout(_f(
+    source="anct_ort", libelle="ACV / PVD / ORT (DGALN)",
+    table="commune_ort", cle=("insee",), insee_col="insee",
+    source_motif="ACV / PVD / ORT%", portee_run=False,
+    propres=[
+        c.domaine("d_ort_statuts", "statut", ("acv", "pvd", "autre"), "bloquant",
+                  "Domaine des statuts", "acv | pvd | autre (fixés à l'ingestion)"),
+        _ort_acv_manquantes(),
+    ]))
+
+_ajout(_f(
+    source="loyers_oll", libelle="Loyers OLL (ADIL 974 / AGORAH)",
+    table="oll_loyers", cle=("annee", "zone", "type_habitat", "pieces"),
+    source_motif="Loyers OLL%", portee_run=False,
+    propres=[
+        c.domaine("d_oll_zones", "zone::text", tuple(str(z) for z in range(0, 7)), "bloquant",
+                  "Zones OLL connues", "0 (agglo) + zones 1-6 du zonage L9740"),
+        _oll_mediane_plaquette(),
+        _oll_zonage_couverture(),
+    ]))
+
+_ajout(_f(
+    source="cout_construction", libelle="Coût de construction (références)",
+    table="cout_construction_ref", cle=("id",),
+    source_motif="Coût de construction%", portee_run=False,
+    propres=[
+        c.couverture("d_cout_servi", "completude", "bloquant",
+                     "Une ligne SERVIE au bilan",
+                     "la ligne labuse_promotion (2 300-2 800 €/m² SDP) — 1 servie sur 2 lignes",
+                     "servi AND cout_bas_eur_m2 IS NOT NULL AND cout_haut_eur_m2 IS NOT NULL",
+                     50.0),
+    ]))
+
+# Loyers DHUP (fichier embarqué, pas de table) : filtre sur le fichier versionné.
+_ajout(_f(
+    source="loyers_dhup", libelle="Loyers DHUP (carte des loyers, repli)",
+    source_motif="Loyers DHUP%", portee_run=False, a_job=False,
+    propres=[_dhup_fichier_ok()]))

@@ -55,6 +55,13 @@ _RESERVOIR_NAME_ILIKE: dict[str, str] = {
     "peb_dgac": "PEB — plans d'exposition%",
     "zonage_abc_dhup": "Zonage ABC des communes%",
     "zppa_culture": "ZPPA — zones de présomption%",
+    # SOURCES-1 lot 5 — la valeur
+    "arcep_fibre": "Fibre Arcep%",
+    "dgfip_rei": "Taux de taxe foncière%",
+    "anct_ort": "ACV / PVD / ORT%",
+    "loyers_oll": "Loyers OLL%",
+    "loyers_dhup": "Loyers DHUP%",
+    "cout_construction_sdes": "Coût de construction%",
     # SOURCES-1 lot 4
     "sar_region": "SAR — schéma d'aménagement régional%",
     "region_dvf": "DVF Réunion (Région%",

@@ -218,6 +218,33 @@ def loyer(db: Session, commune: str) -> dict | None:
             "source": lg.get("etiquette") or lg.get("source") or "DHUP (carte des loyers)"}
 
 
+def fiscalite(db: Session, insee: str | None) -> dict | None:
+    """SOURCES-1 lot 5 — taux fonciers de la commune (REI DGFiP) : TFPB commune + EPCI, TEOM.
+    Passe-plat sourcé + daté ; None si non ingéré (jamais un taux inventé)."""
+    if not insee:
+        return None
+    from ..ingestion.rei import rei_commune
+    r = rei_commune(db, insee)
+    if r is None:
+        return None
+    return {"tfpb_commune_pct": r["tfpb_commune_pct"], "tfpb_epci_pct": r["tfpb_epci_pct"],
+            "teom_pct": r["teom_pct"], "millesime": r["millesime"],
+            "source": "DGFiP — fichier REI (impositions primitives)"}
+
+
+def ort(db: Session, insee: str | None) -> dict | None:
+    """SOURCES-1 lot 5 — statut ACV/PVD/ORT + condition communale Denormandie (table DGALN).
+    None si non ingéré ; « hors » est un état servi (table peuplée, commune hors dispositif)."""
+    if not insee:
+        return None
+    from ..ingestion.ort import ort_commune
+    o = ort_commune(db, insee)
+    if o is None:
+        return None
+    o["source"] = "DGALN — communes ORT (table vivante) ; périmètres conventionnés non publiés"
+    return o
+
+
 def zonage_abc(db: Session, insee: str | None) -> dict | None:
     """SOURCES-1 lot 1 — zone A/B/C de la commune (arrêté DHUP, passe-plat sourcé + daté).
     None si non ingérée (jamais devinée) — le front dit « non déterminée »."""
@@ -267,7 +294,7 @@ log = logging.getLogger("labuse.fiche_commune")
 # le bloc concerné SANS casser la fiche entière (« introuvable = null, jamais un zéro menteur »).
 _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
-    "zonage_abc": None,
+    "zonage_abc": None, "fiscalite": None, "ort": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "parc_national": False, "azi_tri": None, "source": "Géorisques · GASPAR · BD TOPO"},
     "population": {"habitants": None, "menages": None, "niveau_vie_moyen_eur": None,
@@ -307,6 +334,9 @@ def build(db: Session, commune: str, insee: str | None) -> dict:
         "loyer": _safe(db, "loyer", lambda: loyer(db, commune)),
         # SOURCES-1 lot 1 — zonage A/B/C (DHUP, arrêté national) : passe-plat sourcé + daté.
         "zonage_abc": _safe(db, "zonage_abc", lambda: zonage_abc(db, insee)),
+        # SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie).
+        "fiscalite": _safe(db, "fiscalite", lambda: fiscalite(db, insee)),
+        "ort": _safe(db, "ort", lambda: ort(db, insee)),
     }
     blocs["outils"] = _safe(db, "outils", lambda: outils_counters(db, commune, insee, blocs))
     return blocs

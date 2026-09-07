@@ -2186,6 +2186,8 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "densifiables": blocs["densifiables"],      # C5 — gisement de densification
             "loyer": blocs["loyer"],                    # C5 — loyer médian SOURCÉ
             "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
+            "fiscalite": blocs["fiscalite"],            # SOURCES-1 lot 5 — taux TFPB/TEOM (REI)
+            "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)
             "outils": blocs["outils"],                  # C6 — compteurs des passerelles
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
@@ -3679,6 +3681,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # SUP par catégorie — intersections live des couches servies, mêmes familles/typepsc que
         # la cascade (source unique cascade_rules.yaml). None si aucune couche ingérée.
         "dispositifs": _dispositifs_block(db, idu),
+        # SOURCES-1 lot 5 — fibre Arcep : immeuble le plus proche (≤ 100 m), raccordable FttH +
+        # opérateurs, DISTANCE DITE. None si la source n'est pas ingérée (le front omet la ligne).
+        "fibre": _fibre_block(db, idu),
     }
 
 
@@ -3724,6 +3729,17 @@ def _sols_block(db: Session, idu: str) -> dict | None:
             "casias": casias,
             "casias_statut": ("sur_place" if casias and casias["sur_place"] else
                               "proche_100m" if casias else "hors")}
+
+
+def _fibre_block(db: Session, idu: str) -> dict | None:
+    """SOURCES-1 lot 5 — raccordabilité FttH (Arcep) de l'immeuble le plus proche. Passe-plat
+    de arcep_fibre.fibre_parcelle ; None si table absente (source non ingérée)."""
+    try:
+        from ..ingestion.arcep_fibre import fibre_parcelle
+        return fibre_parcelle(db, idu)
+    except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
+        db.rollback()
+        return None
 
 
 _DISPOSITIFS_SQL = text("""
@@ -4820,6 +4836,23 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
         srcs = ["INSEE Filosofi 2021", "BPE 2025", "DVF", "Radar LABUSE", "isochrones IGN"]
         if conc.get("couverture") == "servie" or out.get("emplois_couverture") == "servie":
             srcs.insert(1, "SIRENE (établissements actifs)")
+        # SOURCES-1 lot 5 — part des immeubles raccordables FttH dans la zone (Arcep).
+        # None si la source n'est pas ingérée (la ligne est omise, jamais un zéro).
+        try:
+            zg = out.get("geom") or geom
+            if zg is not None:
+                r = db.execute(text(
+                    "SELECT count(*) AS n, count(*) FILTER (WHERE ftth) AS n_ftth "
+                    "FROM arcep_immeubles WHERE ST_Intersects(geom, "
+                    "ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326))"),
+                    {"g": json.dumps(zg)}).mappings().first()
+                if r and r["n"]:
+                    out["fibre"] = {"immeubles": int(r["n"]), "ftth": int(r["n_ftth"]),
+                                    "pct_ftth": round(100.0 * r["n_ftth"] / r["n"], 1),
+                                    "source": "Arcep — Ma connexion internet (2026_T1)"}
+                    srcs.append("Arcep (fibre)")
+        except Exception:  # noqa: BLE001 — table absente = source non ingérée
+            db.rollback()
         out["note"] = (" · ".join(srcs) + " — temps hors trafic. Des faits sourcés, "
                        "aucune prévision de chiffre d'affaires.")
     return out

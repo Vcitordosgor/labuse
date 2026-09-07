@@ -34,6 +34,15 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | `peb_zone` | classe — domaine : A, B, C, D, hors | Plan d'exposition au bruit (PEB) | peb_dgac (Roland-Garros B/C/D (GPU) ; Pierrefonds non publié) | passe-plat · src/labuse/api/app.py:_dispositifs_block (peb) — table lue : spatial_layers (kind=peb) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
 | | | *zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est — Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU (couverture partielle dite)* | | | | | |
 
+## Fibre (Réseaux et accès)
+
+*Robinet `fiche_parcelle_fibre` — route `/parcels/{idu} (clé fibre)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `fibre_parcelle` | classe — domaine : raccordable, non_raccordable, aucun_immeuble | Fibre (raccordable FttH) | arcep_fibre (2026_T1 — 330 051 immeubles 974 (découpage départemental)) | passe-plat · src/labuse/ingestion/arcep_fibre.py:fibre_parcelle — table lue : arcep_immeubles | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *raccordabilité FttH de l'immeuble Arcep le plus proche de la parcelle (≤ 100 m, DISTANCE DITE — jamais un booléen nu) + opérateurs présents ; « aucun immeuble » est un état, pas un zéro* | | | | | |
+
 ## En-tête (adresse, géométrie)
 
 *Robinet `fiche_parcelle_entete` — route `/parcels/{idu}`*

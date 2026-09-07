@@ -304,8 +304,25 @@ def ligne8_pression_dpe(db: Session, commune: str) -> dict:
 
 
 def ligne9_loyer(db: Session, commune: str) -> dict:
+    """SOURCES-1 lot 5 — bascule CANONIQUE/REPLI (règle CIRCUIT-4 loyer_median_eur_m2) :
+    l'OLL (ADIL 974/AGORAH, loyers OBSERVÉS) est la source canonique quand la commune tient
+    dans UNE zone OLL (16/24, mesuré) ; sinon repli DHUP (loyers d'ANNONCE) avec le motif dit
+    — le détail OLL par zone reste servi à la parcelle. Étiquette toujours honnête."""
     from ..loyers import get_loyers, source as _loyers_source
     insee = db.execute(text("SELECT left(min(idu),5) FROM parcels WHERE commune = :c"), {"c": commune}).scalar()
+    try:
+        from ..ingestion.oll_loyers import oll_commune
+        oll = oll_commune(db, insee) if insee else None
+    except Exception:  # noqa: BLE001 — table absente = source non ingérée, repli DHUP
+        db.rollback()
+        oll = None
+    if oll is not None:
+        return _ligne("loyer_median", "LOYER",
+                      valeurs={"loyer_eur_m2": oll["loyer_median_eur_m2"], "type": "tous types",
+                               "zone_oll": oll["zone"], "n_obs": oll["n_obs"]},
+                      source="OLL — ADIL Réunion / AGORAH (loyers observés)",
+                      date_amont=str(oll["annee"]), fiabilite="bonne",
+                      etiquette=f"Sourcé · OLL {oll['annee']} (zone {oll['zone']})")
     rec = get_loyers(insee=insee, commune=commune)
     # GB-021 — le millésime DHUP vit dans le bloc `source()`, PAS dans l'enregistrement commune
     # (`get_loyers` ne renvoie ni `millesime`) → l'ancien `rec.get("millesime")` était toujours None,
@@ -319,7 +336,9 @@ def ligne9_loyer(db: Session, commune: str) -> dict:
                       motif="commune hors dataset loyers DHUP")
     return _ligne("loyer_median", "LOYER",
                   valeurs={"loyer_eur_m2": seg["loyer_m2"], "type": "appartement" if rec.get("appartement") else "maison"},
-                  source="DHUP (carte des loyers)", date_amont=mil,
+                  source="DHUP (carte des loyers) — repli (commune sur plusieurs zones OLL "
+                         "ou OLL non ingéré ; détail OLL par zone à la parcelle)",
+                  date_amont=mil,
                   fiabilite=seg.get("fiabilite", "moyenne"),
                   etiquette=f"Sourcé · DHUP {mil}" if mil else "Sourcé · DHUP")
 

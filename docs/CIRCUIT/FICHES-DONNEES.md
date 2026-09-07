@@ -22,6 +22,24 @@
 | `zonage_abc_logement` | classe — domaine : Abis, A, B1, B2, C | Zonage A/B/C (logement) | zonage_abc_dhup (arrêté 23/06/2026 en vigueur 26/06 — 24/24 (4 A, 20 B1)) | passe-plat · src/labuse/ingestion/zonage_abc.py:zonage_commune — table lue : commune_zonage_abc | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
 | | | *zone A/B/C du dispositif d'investissement locatif pour la commune (arrêté du 23/06/2026, en vigueur 26/06/2026 — passe-plat, jamais recalculé)* | | | | | |
 
+## Taxe foncière (REI)
+
+*Robinet `fiche_commune_fiscalite` — route `/communes/{commune} (clé fiscalite)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `tfpb_taux_pct` | nombre | Taxe foncière (taux TFPB) | dgfip_rei (REI 2025 (impositions primitives) — 24/24 communes) | passe-plat · src/labuse/ingestion/rei.py:rei_commune — table lue : commune_rei | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — impositions primitives, passe-plat du fichier DGFiP* | | | | | |
+
+## ACV / PVD / ORT — Denormandie
+
+*Robinet `fiche_commune_ort` — route `/communes/{commune} (clé ort)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `ort_statut` | classe — domaine : acv, pvd, autre, hors | ACV / PVD / ORT | anct_ort (table DGALN vivante — 19 communes 974, 13 ORT signées) | passe-plat · src/labuse/ingestion/ort.py:ort_commune — table lue : commune_ort | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT signée (date) + condition communale Denormandie DITE (le périmètre conventionné n'est pas publié)* | | | | | |
+
 ## Règles d'urbanisme
 
 *Robinet `fiche_commune_regles_urbanisme` — route `/communes/{c}/contexte`*
@@ -114,8 +132,8 @@
 
 | id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
 |---|---|---|---|---|---|---|---|
-| `loyer_median_eur_m2` | nombre | Loyer médian | interne (aucun réservoir) | moteur `loyers` · src/labuse/api/fiche_commune.py (loyer) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
-| | | *estimation locative loyers.py — entrées à confirmer (DOUTE)* | | | | | |
+| `loyer_median_eur_m2` | nombre | Loyer médian | loyers_oll (OLL 2024 — Île de La Réunion (L9740, 6 zones + agglo)), loyers_dhup (carte des loyers 2025 (extrait 974 versionné, offline)) | moteur `loyers` · src/labuse/faisabilite/marche_commune.py:ligne9_loyer (bascule OLL/DHUP) | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
+| | | *SOURCES-1 lot 5 — bascule CANONIQUE/REPLI : loyer OBSERVÉ de la zone OLL (ADIL 974/AGORAH) quand la commune tient dans UNE zone (16/24) ; sinon loyer d'ANNONCE DHUP (carte des loyers, extrait embarqué) avec le motif dit — étiquette de source honnête* | | | | | |
 
 ## Foncier repéré
 

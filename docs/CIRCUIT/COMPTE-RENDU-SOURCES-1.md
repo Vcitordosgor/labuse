@@ -176,6 +176,30 @@ Mesuré le 07/09/2026 sur le run servi (2 453 îlots, 2 607 ha) : **15 776 parce
 - Registre : donnée `sar_divergence` (moteur cascade, robinet Risques de la fiche), fiche de règle `sar_indication` ; carte table→réservoir, pont NOM_VERS_SLUG, reservoirs.csv (95 lignes).
 - Tests : `tests/test_sources1_lot4.py` (7) ; compteurs figés 97→99 (MODE_ET_CADENCE) et 88→90 (sentinelle).
 
+## Lot 5 — La valeur (clos)
+
+Cinq sources. **Verrous : 16/16 verts** après le lot. Toutes les URL testées RÉELLEMENT (07/09/2026).
+
+### Ce qui est entré
+
+| Source | Réservoir | Données | État |
+|---|---|---|---|
+| Fibre Arcep (immeuble) | `arcep_fibre` (table `arcep_immeubles`) | **330 051 immeubles 974, 321 739 raccordables FttH (97,5 %)**, opérateurs FRTE/MIAS/MILK/SRR/ZEOP, millésime 2026_T1 | servie |
+| Taux TFPB — REI (DGFiP) | `dgfip_rei` (table `commune_rei`) | 24/24 — TFPB commune (E12 : 29,55 % Les Avirons → 68,40 % Saint-Louis), TFPB EPCI (E32), TEOM (F22) | servie |
+| ACV/PVD/ORT (DGALN) | `anct_ort` (table `commune_ort`) | 19 communes, 13 ORT signées ; ACV : Le Port, Saint-André, Saint-Joseph, Saint-Pierre ; PVD : 11 | servie ; **écart producteur DIT** |
+| Loyers OLL (ADIL/AGORAH) | `loyers_oll` (`oll_loyers` + `oll_zonage` IRIS→zone) | 245 agrégats, 6 zones + agglo, **médiane agglo 10,9 €/m² = plaquette** (contrôle bloquant) ; 16 communes mono-zone | servie, **CANONIQUE** |
+| Loyers DHUP (annonces) | `loyers_dhup` (extrait embarqué 2025) | source EXISTANTE mise d'équerre (ligne catalogue + sonde + filtre) | servie, **REPLI** |
+| Coût de construction | `cout_construction_sdes` (table `cout_construction_ref`) | ligne servie 2 300-2 800 €/m² SDP (choix) + ligne contexte EPTB 2024 | servie |
+
+### Les points saillants
+
+- **Arcep** : découpage DÉPARTEMENTAL découvert (`base_imb/last/departement/base_imb_974.csv.gz`, 13,8 Mo + éligibilité 13,2 Mo/2,86 M lignes) — pas besoin du national. Seul le FttH est servi (IPE fiable, fiche 12). Fiche « Réseaux et accès » : immeuble le plus proche + DISTANCE DITE (preuve : 97411000BM0004 → FttH, 4 opérateurs, 66 m) ; Étude de zone : part raccordable de la zone ; PDF Dossier. 26 immeubles hors emprise au filtre (avertissant, l'état réel).
+- **REI** : colonnes identifiées par la TRACE officielle (lue, citée dans `regles/rei_taux.py`) : E12/E32/F22 — jamais devinées parmi les 1 043. La taxe d'aménagement n'y est pas (dit).
+- **ORT — ÉCART PRODUCTEUR MESURÉ** : la fiche 10 attendait 5 ACV (avec **Saint-Louis**) ; la table DGALN n'en porte que 4 — **Saint-Louis (97414) est ABSENT de la table**. Écart contrôlé au filtre (avertissant), jamais corrigé en silence. Piège documenté : l'export data.gouv « viewSection » est FILTRÉ (78 lignes) ; l'export `tableId=BDD` rend les 2 440. Denormandie : condition COMMUNALE seule servie (les périmètres conventionnés ne sont pas publiés — demande EPCI, lot 7).
+- **Loyers — bascule canonique/repli** (règle CIRCUIT-4 réécrite, `regles/loyer_median_eur_m2.py`) : OLL = loyers OBSERVÉS par zone ; le « secteur » = la zone OLL ; une commune mono-zone (16/24) est servie OLL, une multi-zone (8/24 : Saint-Denis 6 zones…) reste DHUP avec motif — aucune moyenne inter-zones inventée ; détail par zone servi à la parcelle (IRIS→zone). **Preuve live** : Bras-Panon → « Sourcé · OLL 2024 (zone 5) » 10,3 €/m² (2 006 obs) ; Saint-Denis → « Sourcé · DHUP 2025 » avec motif de repli. Piège encodage documenté (Base_OP latin-1, zonage UTF-8 BOM).
+- **Coût de construction** : l'EPTB 2024 Réunion EXISTE et a été LU (« coût moyen 145 500 € en 2024, −4 % sur un an », 96 m² ≈ 1 516 €/m² habitable — cité dans `regles/cout_construction_ref.py`) mais mesure la MAISON INDIVIDUELLE, pas la promotion en SDP → la fourchette 2 300-2 800 €/m² SDP reste un choix LABUSE, désormais en table SOURCÉE (`cout_construction_ref`, ligne servie) lue par `Hypotheses.charger` avec repli constantes. **Écart bilan sur les 4 témoins : 0 par construction** (valeurs servies = anciennes constantes — le mandat voulait la constante SOURCÉE, pas un changement de chiffrage). Le « jeu CDC » du mandat est INTROUVABLE (aucun jeu identifiable — dit).
+- **Sondes réelles** : 5 `api` data.gouv OK (Arcep 2026-06-11, REI 2026-05-11, ORT 2025-05-14, OLL 2026-08-05 — via api/2, le JSON api/1 à 520 ressources dépassait la coupe de lecture, piège documenté —, DHUP 2024-12-23) + 1 rappel annuel (EPTB). Filtres joués : rei/oll/cout **ok**, ort/arcep **avertissements** (écarts réels dits).
+
 ## Décisions prises en autonomie
 
 - Étape 0 : `main` local étant extrait dans un autre worktree, la branche part de `origin/main` (strictement identique, `ea6fd161`).
@@ -200,5 +224,10 @@ Mesuré le 07/09/2026 sur le run servi (2 453 îlots, 2 607 ha) : **15 776 parce
 - Lot 4 · DVF Région : appariement par mutation impossible (ids md5 producteur) → échantillon producteur AGRÉGÉ par fenêtres commune×année, limité aux années pleines du jeu figé (2019-2020) ; tolérance 5 % (écarts de périmètre DV3F/géo-DVF mesurés 1,5-3,1 %).
 - Lot 4 · potentiel foncier : la comparaison est un CONTRÔLE avertissant (plancher 25 % = moitié de la convergence mesurée 44,6 %) — jamais une quarantaine : une divergence avec une ESTIMATION du producteur ne bloque pas nos données.
 - Lot 4 · pas de nouvelle donnée servie (mandat) : ni le DVF Région ni le potentiel foncier n'alimentent une fiche/couche/cascade — contrôles seulement.
+
+- Lot 5 · loyers : le « secteur » de la bascule OLL/DHUP = la ZONE OLL (maille publiée) ; une commune multi-zones n'a pas de valeur communale OLL publiée → repli DHUP dit, jamais une moyenne de zones fabriquée.
+- Lot 5 · coût de construction : l'EPTB (maison individuelle, habitable) et la promotion (SDP) sont des segments INCOMPARABLES — l'EPTB entre en CONTEXTE sourcé, le choix promotion 2 300-2 800 reste servi (valeurs inchangées : aucun bilan ne bouge, écart témoins = 0). Le « jeu CDC » du mandat, introuvable, est dit.
+- Lot 5 · ORT : l'écart producteur (Saint-Louis attendu ACV, absent de la table DGALN) est SERVI comme un écart (filtre avertissant), pas corrigé à la main ; Denormandie = phrase d'état sur la condition communale, aucun calcul d'avantage sans le périmètre conventionné.
+- Lot 5 · Arcep : seul le FttH (IPE) est servi — les technos déclaratives (4GF/CU/SAT) sont ingérées côté éligibilité mais non affichées ; distance à l'immeuble TOUJOURS dite, jamais un booléen nu.
 
 *(chapitres suivants à venir)*

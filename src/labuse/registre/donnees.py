@@ -405,9 +405,12 @@ DONNEES: dict[str, Donnee] = {
     moteur="marche_service", calcul="moteur", fonction="src/labuse/faisabilite/marche_commune.py:ligne2_terrain_zone",
     reservoirs=("dvf", "gpu_plu_api_carto",), portee="live"),
  "loyer_median_eur_m2": C("Loyer médian", "€/m²", "commune",
-    "estimation locative loyers.py — entrées à confirmer (DOUTE)",
-    moteur="loyers", calcul="moteur", fonction="src/labuse/api/fiche_commune.py (loyer)",
-    reservoirs=(), portee="live"),
+    "SOURCES-1 lot 5 — bascule CANONIQUE/REPLI : loyer OBSERVÉ de la zone OLL (ADIL 974/"
+    "AGORAH) quand la commune tient dans UNE zone (16/24) ; sinon loyer d'ANNONCE DHUP "
+    "(carte des loyers, extrait embarqué) avec le motif dit — étiquette de source honnête",
+    moteur="loyers", calcul="moteur",
+    fonction="src/labuse/faisabilite/marche_commune.py:ligne9_loyer (bascule OLL/DHUP)",
+    reservoirs=("loyers_oll", "loyers_dhup",), portee="live"),
  "n_parcelles_commune": C("N parcelles", "nombre", "commune",
     "count parcels par commune",
     moteur="commune_compteurs", calcul="moteur",
@@ -1145,6 +1148,39 @@ DONNEES: dict[str, Donnee] = {
     reservoirs=("gpu_prescriptions_er", "gpu_prescriptions_ebc", "dpu_perimetres",
                 "peb_dgac", "sup_gpu",), portee="live", type="liste",
     table="spatial_layers (kinds plu_gpu_prescription/dpu/peb/sup)"),
+ # ══ SOURCES-1 lot 5 — la valeur ══
+ "fibre_parcelle": C("Fibre (raccordable FttH)", "classe", "parcelle",
+    "raccordabilité FttH de l'immeuble Arcep le plus proche de la parcelle (≤ 100 m, "
+    "DISTANCE DITE — jamais un booléen nu) + opérateurs présents ; « aucun immeuble » est "
+    "un état, pas un zéro",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/arcep_fibre.py:fibre_parcelle",
+    reservoirs=("arcep_fibre",), portee="live", type="classe",
+    table="arcep_immeubles",
+    domaine=("raccordable", "non_raccordable", "aucun_immeuble"),
+    domaine_source="éligibilité FttH Arcep (Ma connexion internet, IPE)"),
+ "tfpb_taux_pct": C("Taxe foncière (taux TFPB)", "%", "commune",
+    "taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — "
+    "impositions primitives, passe-plat du fichier DGFiP",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/rei.py:rei_commune",
+    reservoirs=("dgfip_rei",), portee="live", table="commune_rei"),
+ "ort_statut": C("ACV / PVD / ORT", "classe", "commune",
+    "statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT "
+    "signée (date) + condition communale Denormandie DITE (le périmètre conventionné "
+    "n'est pas publié)",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/ingestion/ort.py:ort_commune",
+    reservoirs=("anct_ort",), portee="live", type="classe", table="commune_ort",
+    domaine=("acv", "pvd", "autre", "hors"),
+    domaine_source="table DGALN des communes ORT (flags ACV/PVD)"),
+ "cout_construction_ref_eur_m2": C("Coût de construction (référence)", "€/m²", "global",
+    "fourchette de coût de construction SERVIE au bilan promoteur (ligne labuse_promotion "
+    "de cout_construction_ref, 2 300-2 800 €/m² SDP — choix LABUSE sourcé, contexte EPTB "
+    "2024 en table) ; lue par Hypotheses.charger, repli constantes",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/faisabilite/engine.py:_couts_construction_reference",
+    reservoirs=("cout_construction_sdes",), portee="live", table="cout_construction_ref"),
  # ══ SOURCES-1 lot 3 — les sols et le bruit ══
  "sis_classe": C("Secteur d'information sur les sols (SIS)", "classe", "parcelle",
     "la parcelle est-elle dans un périmètre SIS (étude de sols obligatoire au changement "

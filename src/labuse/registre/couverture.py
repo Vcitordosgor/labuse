@@ -66,6 +66,8 @@ FICHE_PARCELLE_CLES: dict[str, tuple[str, ...] | tuple[str, str]] = {
     # SOURCES-1 lot 1 — bloc « Dispositifs et périmètres » (ER, EBC, DPU, PEB, SUP)
     "dispositifs": ("dispositifs_parcelle", "er_emplacement_reserve", "ebc_classe",
                     "dpu_perimetre", "peb_zone"),
+    # SOURCES-1 lot 5 — fibre Arcep (Réseaux et accès)
+    "fibre": ("fibre_parcelle",),
     # SOURCES-1 lot 3 — bloc « Sols » (SIS, CASIAS)
     "sols": ("sols_parcelle", "sis_classe", "casias_statut"),
 }

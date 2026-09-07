@@ -734,6 +734,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                      source="Géoportail de l'urbanisme (prescriptions et informations des PLU) · "
                             "PEB DGAC via annexes GPU — millésime : PLU de la commune")
 
+    # ── SOURCES-1 lot 5 — FIBRE (Arcep) : même bloc que la fiche écran (_fibre_block),
+    #    distance dite, jamais un booléen nu ; omis si la source n'est pas ingérée.
+    fibre = fiche.get("fibre")
+    if fibre and fibre.get("etat") == "servi":
+        _section(pdf, "FIBRE (RÉSEAUX)",
+                 [("Raccordable FttH" if fibre.get("ftth") else "Non raccordable FttH à ce jour")
+                  + f" — immeuble Arcep à ~{fibre.get('distance_m')} m"
+                  + (f" ({', '.join(fibre.get('operateurs') or [])})" if fibre.get("ftth") else "")
+                  + "."],
+                 source=f"Arcep — Ma connexion internet ({fibre.get('millesime')})")
+
     # ── SOURCES-1 lot 3 — SOLS (SIS / CASIAS) : même bloc que la fiche écran (_sols_block).
     sols = fiche.get("sols")
     if sols and (sols.get("sis") or sols.get("casias")):

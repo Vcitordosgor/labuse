@@ -275,7 +275,9 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # SOURCES-1 lot 3 — +3 raisons (SIS/CASIAS canal SSP, CBS Carmen sans en-tête).
     # SOURCES-1 lot 4 — +2 : SAR (rappel 180 j, couche officielle non diffusée + SAR 2050) et
     # DVF Région (raison : hub ODS déjà surveillé, jeu figé — échantillon producteur).
-    assert len(noms) == 90
+    # SOURCES-1 lot 5 — +6 : Arcep/REI/ORT/OLL/DHUP au SEED (api), coût de construction
+    # en RAPPELS_MANUELS (EPTB = publication annuelle sans millésime machine).
+    assert len(noms) == 96
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

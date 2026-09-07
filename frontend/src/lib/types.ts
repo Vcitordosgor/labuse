@@ -461,6 +461,16 @@ export interface Fiche {
   } | null
   // SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols (ER, EBC, DPU, PEB, SUP).
   // null → aucune couche ingérée (le front omet le bloc). Chaque absence est TYPÉE (jamais un zéro).
+  // SOURCES-1 lot 5 — fibre Arcep (immeuble le plus proche, distance dite)
+  fibre?: {
+    etat: 'servi' | 'aucun_immeuble'
+    ftth?: boolean
+    operateurs?: string[]
+    distance_m?: number
+    adresse?: string | null
+    detail?: string
+    millesime: string
+  } | null
   dispositifs?: {
     er: { libelle: string; part_pct: number }[] | null
     ebc: { libelle: string; part_pct: number }[] | null

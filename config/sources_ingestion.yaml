@@ -141,3 +141,19 @@ commandes:
   - motif: "DEAL — cartes de bruit stratégiques*"
     label: bruit_cartes
     argv: ["labuse", "ingest-bruit-cartes"]
+  # ── SOURCES-1 lot 5 — la valeur ──
+  - motif: "Fibre Arcep — Ma connexion internet*"
+    label: arcep_fibre
+    argv: ["labuse", "ingest-arcep"]
+  - motif: "Taux de taxe foncière — fichier REI*"
+    label: dgfip_rei
+    argv: ["labuse", "ingest-rei"]
+  - motif: "ACV / PVD / ORT*"
+    label: anct_ort
+    argv: ["labuse", "ingest-ort"]
+  - motif: "Loyers OLL — ADIL*"
+    label: loyers_oll
+    argv: ["labuse", "ingest-oll"]
+  - motif: "Coût de construction (EPTB SDES*"
+    label: cout_construction
+    argv: ["labuse", "ingest-cout-construction"]

@@ -188,6 +188,13 @@ NOM_VERS_SLUG = {
     "PEB — plans d'exposition au bruit (DGAC via annexes GPU)": 'peb_dgac',
     'Zonage ABC des communes (DHUP)': 'zonage_abc_dhup',
     'ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)': 'zppa_culture',
+    # SOURCES-1 lot 5 — la valeur :
+    'Fibre Arcep — Ma connexion internet (immeuble)': 'arcep_fibre',
+    'Taux de taxe foncière — fichier REI (DGFiP)': 'dgfip_rei',
+    'ACV / PVD / ORT (DGALN — liste des communes)': 'anct_ort',
+    'Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)': 'loyers_oll',
+    'Loyers DHUP — carte des loyers (annonces)': 'loyers_dhup',
+    'Coût de construction (EPTB SDES + choix LABUSE)': 'cout_construction_sdes',
     # SOURCES-1 lot 4 — cadre régional :
     "SAR — schéma d'aménagement régional (Région/DEAL)": 'sar_region',
     'DVF Réunion (Région, data.regionreunion.com)': 'region_dvf',

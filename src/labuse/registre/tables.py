@@ -86,6 +86,19 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                                millesime="Ramsar 1 · sites classés/inscrits 7 · RN 3 (Carmen 07/09/2026)",
                                note="complète le kind ens de l'INPN (subtypes ramsar/site_classe/"
                                     "site_inscrit/reserve_naturelle — purge par subtype)"),
+    # ── SOURCES-1 lot 5 — la valeur ────────────────────────────────────────────────
+    "arcep_fibre": Rt(("arcep_immeubles",),
+                      millesime="Arcep 2026_T1 — 330 051 immeubles 974 (FttH + opérateurs)"),
+    "dgfip_rei": Rt(("commune_rei",),
+                    millesime="REI 2025 (impositions primitives) — 24/24 communes"),
+    "anct_ort": Rt(("commune_ort",),
+                   millesime="table DGALN vivante — 19 communes 974 (07/09/2026)"),
+    "loyers_oll": Rt(("oll_loyers", "oll_zonage"),
+                     millesime="OLL 2024 Île de La Réunion (6 zones + agglo, IRIS→zone)"),
+    "loyers_dhup": Rt((), note="extrait embarqué versionné (data/carte_loyers_reunion_2025."
+                              "json, loyers.py) — repli de l'OLL, aucun réservoir en base"),
+    "cout_construction_sdes": Rt(("cout_construction_ref",),
+                                 millesime="EPTB 2024 (contexte) ; choix promotion servi"),
     "georisques_azi_tri": Rt(("azi_communes",),
                              millesime="GASPAR azi+tri par commune (07/09/2026)"),
     # ── SOURCES-1 lot 3 — les sols et le bruit ──────────────────────────────────────

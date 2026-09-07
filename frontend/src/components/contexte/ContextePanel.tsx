@@ -476,6 +476,34 @@ export function ContextePanel() {
                 {d.zonage_abc && <Source nom={d.zonage_abc.source} />}
               </LigneCarte>
 
+              {/* SOURCES-1 lot 5 — taux fonciers (REI DGFiP) : passe-plat sourcé + daté. */}
+              {d.fiscalite && (
+                <LigneCarte id="fiscalite" chiffre="tfpb_taux_pct" ic="₣" titre="Taxe foncière (taux)"
+                  sous={d.fiscalite.millesime}
+                  val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : null}>
+                  <div className="flex flex-col gap-0.5 text-[12px]">
+                    <RowT lbl="TFPB commune" val={d.fiscalite.tfpb_commune_pct != null ? `${fmtDec(d.fiscalite.tfpb_commune_pct)} %` : '—'} strong />
+                    <RowT lbl="TFPB intercommunalité" val={d.fiscalite.tfpb_epci_pct != null ? `${fmtDec(d.fiscalite.tfpb_epci_pct)} %` : '—'} />
+                    <RowT lbl="TEOM (taux plein)" val={d.fiscalite.teom_pct != null ? `${fmtDec(d.fiscalite.teom_pct)} %` : '—'} />
+                  </div>
+                  <Source nom={d.fiscalite.source} />
+                </LigneCarte>
+              )}
+
+              {/* SOURCES-1 lot 5 — ACV/PVD/ORT + condition communale Denormandie (état, jamais
+                  un calcul d'avantage — le périmètre conventionné n'est pas publié). */}
+              {d.ort && d.ort.statut !== 'hors' && (
+                <LigneCarte id="ort" chiffre="ort_statut" ic="◎" titre="Revitalisation (ACV / PVD / ORT)"
+                  sous={d.ort.ort_signee ? `convention ORT signée${d.ort.date_signature ? ` le ${d.ort.date_signature}` : ''}` : 'convention ORT non signée'}
+                  val={d.ort.statut === 'acv' ? 'ACV' : d.ort.statut === 'pvd' ? 'PVD' : 'ORT'}>
+                  <div className="flex flex-col gap-0.5 text-[12px]">
+                    <RowT lbl="Dispositif" val={d.ort.statut === 'acv' ? 'Action Cœur de Ville' : d.ort.statut === 'pvd' ? 'Petites Villes de Demain' : 'ORT (autre commune signataire)'} strong />
+                    <p className="text-[11.5px] text-txt-dim">Denormandie : {d.ort.denormandie}</p>
+                  </div>
+                  {d.ort.source && <Source nom={d.ort.source} />}
+                </LigneCarte>
+              )}
+
               {/* ── LE TERRITOIRE ── */}
               <GroupeLabel>Le territoire</GroupeLabel>
 

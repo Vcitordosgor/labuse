@@ -1223,6 +1223,95 @@ def ingest_zonage_abc_cmd() -> None:
         typer.echo(f"  filtre zonage_abc : {v.verdict}")
 
 
+def _jouer_filtre_apres_ingestion(label: str, job: str) -> None:
+    """SOURCES-1 lot 5 — rejoue le filtre d'une source après son ingestion (facteur commun)."""
+    from . import circuit_journal, filtres
+    f = filtres.get_filtre(label)
+    if f is None:
+        return
+    with session_scope() as s:
+        v = filtres.jouer(s, f)
+        circuit_journal.journaliser(s, "filtre", label, job,
+                                    "refuse" if v.verdict == "quarantaine" else "ok",
+                                    {"verdict": v.verdict})
+        s.commit()
+    typer.echo(f"  filtre {label} : {v.verdict}")
+
+
+@app.command("ingest-arcep")
+def ingest_arcep_cmd() -> None:
+    """SOURCES-1 lot 5 — fibre Arcep (immeuble, découpage départemental 974, dernier
+    trimestre). Table arcep_immeubles, FttH + opérateurs, rejoue le filtre."""
+    from .ingestion import arcep_fibre
+    arcep_fibre.ensure_tables(engine())
+    with session_scope() as s:
+        res = arcep_fibre.ingest_arcep(s)
+        s.commit()
+    typer.echo(f"✓ Arcep : {res['immeubles']} immeubles, {res['ftth']} raccordables FttH "
+               f"({res['pct_ftth']} %), opérateurs {', '.join(res['operateurs'])}.")
+    _jouer_filtre_apres_ingestion("arcep_fibre", "ingest-arcep")
+
+
+@app.command("ingest-rei")
+def ingest_rei_cmd() -> None:
+    """SOURCES-1 lot 5 — taux de taxe foncière REI (DGFiP, annuel). Table commune_rei
+    (TFPB commune/EPCI, TEOM), rejoue le filtre."""
+    from .ingestion import rei as rei_mod
+    rei_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = rei_mod.ingest_rei(s)
+        s.commit()
+    typer.echo(f"✓ REI : {res['n']} commune(s).")
+    if res["manquantes"]:
+        typer.echo(f"  ⚠ manquantes : {', '.join(res['manquantes'])}")
+    if res["hors_bornes"]:
+        typer.echo(f"  ⚠ taux hors bornes écartés : {res['hors_bornes']}")
+    _jouer_filtre_apres_ingestion("dgfip_rei", "ingest-rei")
+
+
+@app.command("ingest-ort")
+def ingest_ort_cmd() -> None:
+    """SOURCES-1 lot 5 — ACV/PVD/ORT (DGALN, table grist complète). Table commune_ort,
+    contrôle de l'attendu ACV, rejoue le filtre."""
+    from .ingestion import ort as ort_mod
+    ort_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = ort_mod.ingest_ort(s)
+        s.commit()
+    typer.echo(f"✓ ORT : {res['n']} commune(s) 974, {res['signees']} convention(s) signée(s) ; "
+               f"ACV {res['acv']} ; PVD {len(res['pvd'])} communes.")
+    if res["ecart_attendu"]:
+        typer.echo(f"  ⚠ écart vs attendu (fiche 10) : {res['ecart_attendu']}")
+    _jouer_filtre_apres_ingestion("anct_ort", "ingest-ort")
+
+
+@app.command("ingest-oll")
+def ingest_oll_cmd() -> None:
+    """SOURCES-1 lot 5 — loyers OLL (ADIL 974/AGORAH, agrégats ouverts par zone). Tables
+    oll_zonage + oll_loyers, rejoue le filtre."""
+    from .ingestion import oll_loyers
+    oll_loyers.ensure_tables(engine())
+    with session_scope() as s:
+        res = oll_loyers.ingest_oll(s)
+        s.commit()
+    typer.echo(f"✓ OLL : {res['lignes']} agrégats, {res['zonage']} lignes de zonage, médiane "
+               f"agglo {res['mediane_agglo']} €/m², {res['communes_mono_zone']} communes mono-zone.")
+    _jouer_filtre_apres_ingestion("loyers_oll", "ingest-oll")
+
+
+@app.command("ingest-cout-construction")
+def ingest_cout_construction_cmd() -> None:
+    """SOURCES-1 lot 5 — références de coût de construction (table sourcée lue par
+    Hypotheses.charger, repli constantes). Rejoue le filtre."""
+    from .ingestion import cout_construction
+    cout_construction.ensure_tables(engine())
+    with session_scope() as s:
+        res = cout_construction.ingest_cout_construction(s)
+        s.commit()
+    typer.echo(f"✓ Coût construction : {res['n']} ligne(s) de référence, servie {res['servie']} €/m² SDP.")
+    _jouer_filtre_apres_ingestion("cout_construction", "ingest-cout-construction")
+
+
 @app.command("ingest-deal-carmen")
 def ingest_deal_carmen_cmd() -> None:
     """SOURCES-1 lot 2 — couches DEAL Carmen (WFS DEAL_REUNION_2020) : ravines DPF (kind dpf),

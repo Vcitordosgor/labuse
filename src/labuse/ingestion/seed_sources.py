@@ -967,6 +967,87 @@ SOURCES: list[dict] = [
                          "1 125 +1,5 % — périmètres DV3F/géo-DVF proches, mesuré 07/09/2026). "
                          "Jeu FIGÉ à mi-2021 chez le producteur (fenêtres 2019-2020 seules "
                          "comparables)."),
+    # ── SOURCES-1 lot 5 — la valeur ──
+    dict(name="Fibre Arcep — Ma connexion internet (immeuble)", category="reseaux",
+         provider="Arcep (Ma connexion internet)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="2026_T1 — 330 051 immeubles 974 (découpage départemental)",
+         documentation_url="https://www.data.gouv.fr/datasets/ma-connexion-internet",
+         endpoint_url="https://data.arcep.fr/fixe/maconnexioninternet/base_imb/last/departement/base_imb_974.csv.gz",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Arcep — Ma connexion internet ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir arcep_fibre : table arcep_immeubles "
+                         "(FttH + opérateurs par immeuble, EPSG:3857→4326/2975). VÉRIFIÉ "
+                         "07/09/2026 : base_imb_974 (13,8 Mo) + eligibilite actuel_974 "
+                         "(13,2 Mo, 2,86 M lignes). Seul le FttH est servi (IPE fiable) — les "
+                         "autres technos sont déclaratives (fiche 12). `labuse ingest-arcep`, "
+                         "trimestriel. Fiche « Réseaux et accès » : immeuble le plus proche, "
+                         "distance DITE."),
+    dict(name="Taux de taxe foncière — fichier REI (DGFiP)", category="fiscalite",
+         provider="DGFiP (recensement des éléments d'imposition)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="REI 2025 (impositions primitives) — 24/24 communes",
+         documentation_url="https://www.data.gouv.fr/datasets/impots-locaux-fichier-de-recensement-des-elements-dimposition-a-la-fiscalite-directe-locale-rei-4",
+         endpoint_url="https://data.economie.gouv.fr/api/v2/catalog/datasets/impots-locaux-fichier-de-recensement-des-elements-dimposition-a-la-fiscalite-dir/attachments/rei_2025_fichier_notice_tracezip",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGFiP — fichier REI ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir dgfip_rei : table commune_rei. Colonnes "
+                         "retenues via la TRACE officielle (lue) : E12 taux TFPB commune "
+                         "(29,55→68,40 % mesurés), E32 taux EPCI, F22 taux TEOM plein. ⚠ la "
+                         "taxe d'aménagement n'y est PAS (source CIRCUIT-3). `labuse "
+                         "ingest-rei`, annuel."),
+    dict(name="ACV / PVD / ORT (DGALN — liste des communes)", category="dispositifs",
+         provider="DGALN / ANCT (table grist data.gouv)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="table DGALN vivante — 19 communes 974, 13 ORT signées",
+         documentation_url="https://www.data.gouv.fr/datasets/liste-des-communes-couvertes-par-des-operations-de-revitalisation-de-territoire",
+         endpoint_url="https://grist.numerique.gouv.fr/o/dgaln/api/docs/j4i9oKD3jzFtgEUuM9sXnL/download/csv?tableId=BDD",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGALN — communes couvertes par une ORT ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir anct_ort : table commune_ort (statut "
+                         "acv/pvd/autre, ORT signée, date). ⚠ PIÈGE mesuré : l'export "
+                         "data.gouv « viewSection » est FILTRÉ (78 lignes) — l'export "
+                         "tableId=BDD rend la table COMPLÈTE (2 440). ⚠ ÉCART vs fiche 10 : "
+                         "Saint-Louis (attendu ACV) ABSENT de la table — contrôle au filtre. "
+                         "Périmètres infra-communaux non publiés (demande EPCI, lot 7). "
+                         "Denormandie : condition communale dite. `labuse ingest-ort`."),
+    dict(name="Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)", category="marche",
+         provider="ADIL 974 / AGORAH — réseau OLL (Anil)", access_type="téléchargement/CSV",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="OLL 2024 — Île de La Réunion (L9740, 6 zones + agglo)",
+         documentation_url="https://www.data.gouv.fr/datasets/resultats-des-observatoires-locaux-des-loyers-par-agglomeration",
+         endpoint_url="https://www.observatoires-des-loyers.org/datagouv/2024/Base_OP_2024_L9740.zip",
+         legal_notes="Licence Ouverte (réseau OLL/Anil) — attribution : « Source : réseau des "
+                     "observatoires locaux des loyers — ADIL de La Réunion / AGORAH ». "
+                     "Micro-données restreintes (non demandées) — agrégats ouverts seuls.",
+         technical_notes="SOURCES-1 lot 5 — réservoir loyers_oll : oll_loyers + oll_zonage "
+                         "(IRIS→zone). Loyers OBSERVÉS (≠ annonces DHUP), médiane agglo "
+                         "10,9 €/m² (= plaquette fiche 15, contrôlé). SOURCE CANONIQUE de "
+                         "loyer_median_eur_m2 quand la commune tient dans UNE zone (16/24) ; "
+                         "DHUP en repli, maille DITE. `labuse ingest-oll`, annuel."),
+    dict(name="Loyers DHUP — carte des loyers (annonces)", category="marche",
+         provider="DHUP / MTE (carte des loyers, data.gouv)", access_type="fichier embarqué",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="carte des loyers 2025 (extrait 974 versionné, offline)",
+         documentation_url="https://www.data.gouv.fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2024",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DHUP — carte des loyers ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir loyers_dhup : la source EXISTAIT "
+                         "(data/carte_loyers_reunion_2025.json embarqué, loyers.py) sans ligne "
+                         "au catalogue — mise d'équerre. Loyers d'ANNONCE par commune : REPLI "
+                         "de l'OLL (communes multi-zones, 8/24). Aucun job (extrait versionné, "
+                         "mis à jour au commit)."),
+    dict(name="Coût de construction (EPTB SDES + choix LABUSE)", category="fiscalite",
+         provider="SDES (EPTB) · choix LABUSE (promotion)", access_type="import",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="EPTB 2024 (contexte) ; choix promotion 2300-2800 €/m² SDP",
+         documentation_url="https://dreal.statistiques.developpement-durable.gouv.fr/eptb/2024/la_reunion/index.html",
+         legal_notes="Licence Ouverte (SDES) — attribution : « Source : SDES — enquête sur le prix des terrains à bâtir (EPTB) ».",
+         technical_notes="SOURCES-1 lot 5 — réservoir cout_construction_sdes : table "
+                         "cout_construction_ref lue par Hypotheses.charger (repli constantes). "
+                         "EPTB 2024 Réunion LU 07/09/2026 : maison individuelle 145 500 € / "
+                         "96 m² ≈ 1 516 €/m² habitable (−4 % sur un an) = CONTEXTE (segment ≠ "
+                         "promotion). La fourchette promotion 2 300-2 800 €/m² SDP RESTE un "
+                         "choix LABUSE (coûts de revient promoteurs non publiés) — désormais "
+                         "en table sourcée, valeurs inchangées (aucun bilan ne bouge). Le "
+                         "« jeu CDC » du mandat est INTROUVABLE (dit au compte-rendu). "
+                         "`labuse ingest-cout-construction`."),
 ]
 
 
@@ -1224,6 +1305,13 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     # ── SOURCES-1 lot 4 — cadre régional ──
     "SAR — schéma d'aménagement régional (Région/DEAL)": ("absente", None, "sans_objet"),
     "DVF Réunion (Région, data.regionreunion.com)": ("en_direct", None, "sans_objet"),
+    # ── SOURCES-1 lot 5 — la valeur ──
+    "Fibre Arcep — Ma connexion internet (immeuble)": ("job_sur_clic", 100, "declaree"),
+    "Taux de taxe foncière — fichier REI (DGFiP)": ("job_sur_clic", 365, "declaree"),
+    "ACV / PVD / ORT (DGALN — liste des communes)": ("job_sur_clic", 365, "proposee"),
+    "Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)": ("job_sur_clic", 365, "declaree"),
+    "Loyers DHUP — carte des loyers (annonces)": ("depot_manuel", 365, "proposee"),
+    "Coût de construction (EPTB SDES + choix LABUSE)": ("job_sur_clic", 365, "proposee"),
 }
 
 

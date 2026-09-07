@@ -116,7 +116,8 @@ def test_modes_cadences_declares(db_session):
     # 90 → 94 : SOURCES-1 lot 2, la nature et l'eau (DPF, zones humides, ENP compléments, AZI/TRI).
     # 94 → 97 : SOURCES-1 lot 3 (SIS, CASIAS, CBS).
     # 97 → 99 : SOURCES-1 lot 4 (SAR a_faire, DVF Région contrôle producteur).
-    assert len(MODE_ET_CADENCE) == 99
+    # 99 → 105 : SOURCES-1 lot 5, les six de la valeur (Arcep, REI, ORT, OLL, DHUP, coût).
+    assert len(MODE_ET_CADENCE) == 105
     modes = {m for m, _, _ in MODE_ET_CADENCE.values()}
     assert modes <= {"job_sur_clic", "cron_mensuel", "depot_manuel", "one_shot", "en_direct", "absente"}
     statuts = {s for _, _, s in MODE_ET_CADENCE.values()}

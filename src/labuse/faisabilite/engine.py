@@ -25,6 +25,28 @@ SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → 
 # YAML Saint-Paul (emprunt à la commune la mieux calibrée = faux « générique »).
 HE_DEFAUT_GENERIQUE_M = 9.0
 
+# SOURCES-1 lot 5 — cache module de la fourchette de coût SOURCÉE (cout_construction_ref).
+# None = pas encore lu ; (None,) = lu, table absente/vide (repli constantes du dataclass).
+_COUTS_REF_CACHE: tuple | None = None
+
+
+def _couts_construction_reference() -> tuple[float, float, str] | None:
+    """(bas, haut, millésime) de la ligne SERVIE de `cout_construction_ref`, lue UNE fois par
+    process (la table ne bouge qu'à l'ingestion). Toute erreur (pas de base, table absente)
+    → None : les défauts du dataclass restent le repli — jamais un bilan cassé."""
+    global _COUTS_REF_CACHE  # noqa: PLW0603 — cache module assumé (une lecture par process)
+    if _COUTS_REF_CACHE is not None:
+        return _COUTS_REF_CACHE[0] if _COUTS_REF_CACHE else None
+    try:
+        from ..db import session_scope
+        from ..ingestion.cout_construction import couts_servis
+        with session_scope() as s:
+            ref = couts_servis(s)
+    except Exception:  # noqa: BLE001 — environnement sans base : repli constantes
+        ref = None
+    _COUTS_REF_CACHE = (ref,) if ref is not None else ()
+    return ref
+
 
 @dataclass
 class Hypotheses:
@@ -100,6 +122,14 @@ class Hypotheses:
         # M-PLU-REF — BASE île-générique (source neutre `hypotheses_ile.yaml`), PUIS override commune
         # (commune-spécifique + toute valeur calibrée par la commune). Valeurs identiques aux défauts →
         # AUCUN calcul ne bouge (correction de chemin, golden = baseline).
+        # SOURCES-1 lot 5 — la fourchette de coût de construction SORT du code : lue de la
+        # table sourcée `cout_construction_ref` (ligne servie « labuse_promotion », valeurs
+        # identiques 2300/2800 → aucun calcul ne bouge), REPLI silencieux sur les défauts du
+        # dataclass si la table est absente/vide (tests sans base, environnements neufs) ;
+        # un YAML de commune qui calibre ces coûts garde la main (appliqué APRÈS).
+        ref = _couts_construction_reference()
+        if ref is not None:
+            out.cout_construction_m2_bas, out.cout_construction_m2_haut = ref[0], ref[1]
         for k, v in {**_hypotheses_ile(), **h}.items():
             if hasattr(out, k) and isinstance(v, (int, float)):
                 setattr(out, k, float(v))
