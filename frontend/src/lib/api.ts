@@ -1273,6 +1273,7 @@ export interface AdminPilotage {
   stripe: StripeApercu
   licences_actives: number
   actifs_24h: number
+  mail_echecs_jour?: number   // DASHBOARD-2 (Lot 2) — échecs d'envoi du jour (mail_queue), jauge Système
   ia_mois: { cout_eur: number; appels: number }
   // RETOURS-8 (R10) — « non_configure » (répertoire absent) distinct d'« absent » (vide) ; + fichier/taille.
   backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent' | 'non_configure'; chemin: string; age_jours: number | null; mtime?: string; fichier?: string; taille_mo?: number }

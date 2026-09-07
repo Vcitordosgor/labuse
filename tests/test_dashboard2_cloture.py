@@ -48,23 +48,22 @@ def test_rail_horloge_et_verrous_presents(client):
 
 
 def test_clients_le_meme_9(client, engine):
-    """Recette §2 — la jauge « Clients » lit la SEULE fonction `comptes_actifs` (compteur unique lu
-    aussi par le rail et — à brancher côté COMPTE-2 — la page Comptes) ; les comptes ADMIN (interne)
-    et de TEST (e-mail placeholder) ne comptent PAS. On prouve : (a) la jauge == la fonction ;
-    (b) un compte interne actif et un compte à e-mail de test n'augmentent pas le compte."""
-    from labuse.registre.moteurs.plateforme import comptes_actifs
-    _seed_client(engine)  # un client réel de plus (sans e-mail placeholder)
+    """Lot 2 §3 — UNE fonction, TROIS lectures. Le compteur unique de licences actives payantes
+    (comptes.licences_actives, livré par COMPTE-2) est lu à l'IDENTIQUE par le Pilotage (jauge/rail)
+    ET la page Comptes (compteurs.licences_actives). Les comptes ADMIN (interne) et de TEST
+    ([CT-TEST] / @labuse.test) ne comptent nulle part."""
+    from labuse.comptes import licences_actives
+    _seed_client(engine)  # un client payant de plus (actif, pas d'essai)
     pil = client.get("/admin/pilotage").json()["licences_actives"]
+    page = client.get("/admin/licences").json().get("compteurs", {}).get("licences_actives")
     with engine.begin() as c:
-        direct = comptes_actifs(c)
-    assert pil == direct                      # (a) la jauge EST la fonction unique
+        direct = licences_actives(c)
+    assert pil == direct == page              # jauge == fonction == page (compteur unique)
     with engine.begin() as c:
         c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('Interne Cloture', 'interne', 'actif')"))
-        tid = c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('Test Cloture', 'integral', 'actif') RETURNING id")).scalar()
-        c.execute(text("INSERT INTO utilisateurs (compte_id, email, role, statut, hash) "
-                       "VALUES (:c, 'qa@labuse.local', 'titulaire', 'actif', 'x')"), {"c": tid})
+        c.execute(text("INSERT INTO comptes (nom, plan, statut) VALUES ('[CT-TEST] Cloture', 'integral', 'actif')"))
     pil2 = client.get("/admin/pilotage").json()["licences_actives"]
-    assert pil2 == pil                        # (b) ni l'interne ni le compte de test ne comptent
+    assert pil2 == pil                        # ni l'interne ni le compte de test n'augmentent le compte
 
 
 def test_courrier_a_deposer_le_meme(client, engine):

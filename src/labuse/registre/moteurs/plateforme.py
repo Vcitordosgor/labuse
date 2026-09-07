@@ -41,21 +41,13 @@ def bascules_tiers_hauts(db, run_courant: str | None, run_precedent: str | None)
         return None
 
 
-#: DASHBOARD-2 recette §2 — domaines d'e-mail de TEST : un compte dont l'utilisateur porte un de ces
-#: domaines ne compte dans aucun chiffre (comme les comptes admin plan='interne'). Liste = mandat §14.
-_DOMAINES_TEST = ("labuse.local", "labuse.test", "exemple.test", "ex.test", "example.com", "test.com")
-
-
 def comptes_actifs(c) -> int:
-    """n_comptes_actifs — count des LICENCES actives (tuile Pilotage, rail, page Comptes : COMPTEUR
-    UNIQUE, une fonction lue par les trois). DASHBOARD-2 recette §2 : les comptes de TEST (e-mail en
-    domaine placeholder) et d'ADMIN (plan = 'interne') ne comptent PAS — seuls les clients facturables.
-    ⚠ La page Comptes (livrée par COMPTE-2) DOIT lire cette même fonction pour que les trois coïncident."""
-    return int(c.execute(text(
-        "SELECT COUNT(*) FROM comptes k WHERE k.statut = 'actif' AND k.plan IS DISTINCT FROM 'interne'"
-        "   AND NOT EXISTS (SELECT 1 FROM utilisateurs u WHERE u.compte_id = k.id"
-        "                     AND split_part(lower(u.email), '@', 2) = ANY(:doms))"
-    ), {"doms": list(_DOMAINES_TEST)}).scalar() or 0)
+    """n_comptes_actifs — count comptes au statut actif (registre/témoin métier). Extraction de
+    api/dashboard.py:admin_pilotage.
+    NB DASHBOARD-2 : le COMPTEUR UNIQUE de « licences actives » (payantes : hors essai/interne/test),
+    lu par la jauge Clients, le rail et la page Comptes, est `comptes.licences_actives` (livré par
+    COMPTE-2). Cette fonction-ci reste le compteur métier « comptes au statut actif », inchangée."""
+    return int(c.execute(text("SELECT COUNT(*) FROM comptes WHERE statut = 'actif'")).scalar() or 0)
 
 
 def conso_ia_mois(c) -> dict:

@@ -448,6 +448,15 @@ def admin_pilotage(request: Request) -> dict:
     except Exception:  # noqa: BLE001 — la tuile Santé ne casse jamais la page
         pass
 
+    # DASHBOARD-2 (Lot 2) — échecs d'envoi du jour (mail_queue) pour la jauge Système. La fonction est
+    # fournie par COMPTE-2 (mailfile.echecs_du_jour) : une seule source. Zéro échec = 0 (rien de plus).
+    mail_echecs_jour = 0
+    try:
+        from .. import mailfile
+        mail_echecs_jour = int(mailfile.echecs_du_jour(engine()))
+    except Exception:  # noqa: BLE001 — la jauge Système ne casse jamais la page Pilotage
+        mail_echecs_jour = 0
+
     for r in fil:
         r["ts"] = r["ts"].isoformat() if r["ts"] else None
     for g in gels:
@@ -456,6 +465,7 @@ def admin_pilotage(request: Request) -> dict:
         "stripe": stripe,
         "radar": radar_tuile,   # FLUX-1 F3.5 — tuile « la donnée qui s'accumule »
         "licences_actives": licences_actives,
+        "mail_echecs_jour": mail_echecs_jour,   # DASHBOARD-2 Lot 2 — jauge Système
         "actifs_24h": actifs_24h,
         "ia_mois": {"cout_eur": float(ia["cout"]), "appels": int(ia["appels"])},
         "backup": _age_backup(),

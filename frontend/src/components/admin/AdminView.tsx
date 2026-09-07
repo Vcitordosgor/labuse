@@ -5,9 +5,9 @@
 // (Indian/Reunion), jamais l'heure serveur brute (dette fuseau connue, mandat D3).
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getAdminCircuit, getAdminPilotage, getMoi, getOffres, getRadarCheck, postAdminDegeler, type AdminPilotage } from '../../lib/api'
+import { getAdminCircuit, getAdminLicences, getAdminPilotage, getMoi, getOffres, getRadarCheck, postAdminDegeler, type AdminPilotage } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { LicencesSection } from './Licences'
+import { LicencesSection, prochaineAction } from './Licences'
 import { IaSection } from './Ia'
 import { DonneesSection } from './Donnees'
 import { ProduitSection } from './Produit'
@@ -212,6 +212,9 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   const radarChk = useQuery({ queryKey: ['radar-check'], queryFn: getRadarCheck, refetchInterval: 120_000 })
   // Argent = MRR (récurrent contractuel = licences × prix intégral) ; l'encaissé du mois passe en légende.
   const offres = useQuery({ queryKey: ['offres'], queryFn: getOffres, staleTime: 3_600_000 })
+  // Lot 2 §1 — la jauge Clients affiche « à toucher » : le MÊME endpoint que la page Comptes, lu avec
+  // la MÊME fonction (prochaineAction) que son segment par défaut → même nombre, une seule fonction.
+  const licencesQ = useQuery({ queryKey: ['admin-licences'], queryFn: getAdminLicences, refetchInterval: 120_000 })
   const degeler = async (sujet: string) => {
     setDegel(sujet)
     try { await postAdminDegeler(sujet); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) } finally { setDegel(null) }
@@ -232,7 +235,12 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   // Produit = file unique des retours (signalements fiche/annonce + « Signaler ») ouverts — cf. Lot 5.
   const produitOuverts = (data.a_faire?.signalements_ouverts ?? 0) + retoursTot
   const iaMois = data.ia_mois?.cout_eur ?? 0
-  const clientsAToucher = data.a_faire?.essais_24h ?? 0
+  // « à toucher » = clients (hors test) ayant une action en attente — même filtre + même fonction que
+  // le segment « À toucher » (défaut) de la page Comptes (COMPTE-2). licences_actives reste le compteur
+  // unique (comptes.licences_actives), lu par le rail et l'Argent.
+  const licencesActives = data.licences_actives
+  const aToucher = (licencesQ.data?.licences ?? []).filter((l) => !l.est_test && prochaineAction(l) != null).length
+  const mailEchecs = data.mail_echecs_jour ?? 0
   const horlogeManquant = (data.horloge?.attendus ?? 0) - (data.horloge?.poses ?? 0)
   const verrousCasses = data.verrous && data.verrous.ok != null && data.verrous.sur != null ? data.verrous.sur - data.verrous.ok : 0
   const moisNom = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date())
@@ -253,12 +261,16 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   if (['rouge', 'absent', 'non_configure'].includes(data.backup?.etat)) rouges.push({ cle: 'backup', n: '!',
     titre: data.backup.etat === 'non_configure' ? 'Configurer la sauvegarde' : data.backup.etat === 'absent' ? 'Configurer la sauvegarde' : 'Rattraper la sauvegarde en retard',
     phrase: data.backup.etat === 'rouge' ? undefined : 'aucun dump connu — la base n\'est pas sauvegardée', verbe: "Voir l'horloge", cible: 'cron', tone: 'r', poids: 85 })
-  // alertes système ouvertes = les lignes rouges (même calcul, jamais un chiffre à part).
+  // Lot 2 §2 — les échecs d'envoi du jour (mail_queue) sont une alerte système (rejouables d'un clic).
+  if (mailEchecs > 0) rouges.push({ cle: 'mail', n: mailEchecs, titre: `Rejouer ${mailEchecs} échec${mailEchecs > 1 ? 's' : ''} d'envoi de mail`,
+    phrase: 'file mail_queue — la raison est lisible, rejouable d\'un clic', verbe: 'Ouvrir Comptes', cible: 'licences', tone: 'r', poids: 88 })
+  // alertes système ouvertes = les lignes rouges (même calcul, jamais un chiffre à part) : ce qui cloche
+  // sur le serveur + les échecs d'envoi du jour.
   const nSysteme = rouges.length
 
   const taches: Todo[] = []
-  if (clientsAToucher > 0) taches.push({ cle: 'comptes', n: clientsAToucher, titre: 'Toucher les clients',
-    phrase: 'essai(s) qui expire(nt) sous 24 h', verbe: 'Ouvrir Comptes', cible: 'licences', tone: 'a', poids: 80 })
+  if (aToucher > 0) taches.push({ cle: 'comptes', n: aToucher, titre: 'Toucher les clients',
+    phrase: 'client(s) avec une action en attente', verbe: 'Ouvrir Comptes', cible: 'licences', tone: 'a', poids: 80 })
   if ((circuitTotal ?? 0) > 0) taches.push({ cle: 'circuit', n: circuitTotal as number, titre: 'Regarder le circuit', verbe: 'Ouvrir Données', cible: 'donnees', tone: 'a', poids: 70 })
   if (aDeposer > 0) taches.push({ cle: 'courrier', n: aDeposer, titre: 'Déposer les courriers', verbe: 'Ouvrir Courrier', cible: 'courrier', tone: 'a', poids: 60 })
   if (produitOuverts > 0) taches.push({ cle: 'produit', n: produitOuverts, titre: 'Traiter les retours clients', verbe: 'Ouvrir Produit', cible: 'produit', tone: 'a', poids: 50 })
@@ -270,8 +282,10 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
     { valeur: mrr != null ? <>{fmtEur(mrr)} <span className="text-base font-medium text-txt-mut">€</span></> : '—',
       label: `Argent · par mois · ${st.configure ? fmtEur(caCourant) + ' € encaissé en ' + moisNom : 'Stripe non configuré'}`, tone: 'ok',
       cible: 'licences', title: prixIntegral != null ? `MRR = ${data.licences_actives} licences × ${fmtEur(prixIntegral)} €/mois` : undefined },
-    // Clients : plus « licences actives » (redondant avec Argent) → « licences · N à toucher ».
-    { valeur: data.licences_actives, label: `Clients · licences · ${clientsAToucher} à toucher`, tone: 'ok', cible: 'licences' },
+    // Clients : Lot 2 §1 — la jauge affiche le « à toucher » (segment par défaut de la page Comptes),
+    // pas le nombre de licences ; le compteur de licences vit sur le rail, la page et l'Argent.
+    { valeur: aToucher, label: `Clients · à toucher · ${licencesActives} active${licencesActives > 1 ? 's' : ''}`,
+      tone: aToucher > 0 ? 'warn' : 'ok', cible: 'licences' },
     { valeur: circuitTotal ?? '—', label: 'Circuit · à regarder', tone: circuitTotal == null ? 'off' : circuitTotal > 0 ? 'warn' : 'ok', cible: 'donnees' },
     { valeur: aDeposer, label: 'Courrier · à déposer', tone: aDeposer > 0 ? 'warn' : 'ok', cible: 'courrier' },
     { valeur: enVie ?? '—', label: 'Radar · annonces en vie', tone: enVie == null ? 'off' : 'ok', cible: 'radar' },
