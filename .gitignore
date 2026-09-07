@@ -147,5 +147,5 @@ data/reglements-plu/
 frontend/*.d.ts
 
 # SCORING-4 — caches régénérables (dataset enrichi + spatial), lourds
-reports/q-v14/enrichi_2017_2026.parquet
+reports/q-v14/enrichi_2017_2026.pkl
 reports/score-v2-arene/cache/

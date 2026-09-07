@@ -40,7 +40,7 @@ CACHE = ROOT / "reports/score-v2-arene/cache"
 YEARS = tuple(range(2017, 2027))
 QDIR = ROOT / "reports/q-v14"
 QDIR.mkdir(parents=True, exist_ok=True)
-ENRICHI = QDIR / "enrichi_2017_2026.parquet"
+ENRICHI = QDIR / "enrichi_2017_2026.pkl"  # pickle : pas de dépendance pyarrow
 
 #: seuil du garde-fou du mandat : « si l'ECE se dégrade de plus de 0,01 sur un
 #: segment, la variable responsable sort ».
@@ -55,12 +55,12 @@ def _charger_enrichi(eng, force: bool = False) -> pd.DataFrame:
     """Le dataset 2017-2026 enrichi par la recette q_v14 (cache parquet — Étape 1)."""
     if ENRICHI.exists() and not force:
         log(f"chargement du cache enrichi {ENRICHI.name}…")
-        return pd.read_parquet(ENRICHI)
+        return pd.read_pickle(ENRICHI)
     log("chargement 2017-2026 (dataset ext)…")
     df = protocole.load_range(eng, YEARS)
     log("enrichissement recette q_v14 (q_v12 voisinage + 5 variables as-of)…")
     df = qv14.enrichir(eng, df, YEARS, cache_dir=CACHE)
-    df.to_parquet(ENRICHI)
+    df.to_pickle(ENRICHI)
     log(f"cache écrit : {ENRICHI} ({len(df)} lignes)")
     return df
 
@@ -269,6 +269,74 @@ def note_de_version(row_base, row_qv12, row_q, row_24, avec_ventes_pm, degrade) 
     return "\n".join(lignes)
 
 
+#: le protocole du walk-forward de l'artefact SERVI (m36, FREEZE) — pour comparer
+#: q_v14 sur le même terrain : 6 plis, RR@1158 hors copro.
+WF_FOLDS = (2020, 2021, 2022, 2023, 2024, 2025)
+RR_K = 1158
+M36_WF = "walk-forward m36 servi : RR@1158 6,9-11,0 (hors copro 6,7-9,4), fold 2025 = 6,73"
+
+
+def walk() -> None:
+    """Étape 3 — walk-forward 6 plis (comme l'artefact servi), RR@1158 hors copro.
+    Chaque pli T : fit q_v14 sur train ≤ T-2, isotonique T-1, test T. On mesure
+    aussi q_v12 sur les mêmes plis (ce qui vient du modèle vs des données)."""
+    from labuse.scoring.p_model import evaluate as ev
+    eng = engine()
+    df = _charger_enrichi(eng)
+    copro = qv14.copro_de(eng, df)
+    seg_all = qv14.segmenter(df, copro)
+    n14, s14, i14 = qv14.features_qv14(avec_ventes_pm=_ventes_pm_retenue())
+    n12, s12, i12 = qv12.features_qv12()
+
+    rows = []
+    for T in WF_FOLDS:
+        maskT = (df.annee == T).to_numpy()
+        yT = df.loc[maskT, "label"].astype(float)
+        elig = maskT & df["label"].notna().to_numpy()
+        if not elig.any():
+            continue
+        horsT = ~copro[maskT]
+        segT = seg_all[maskT].reset_index(drop=True)
+        testT = df[maskT].reset_index(drop=True)
+        rec = {"pli_test": T, "n_test": int(maskT.sum()),
+               "n_positifs": int(np.nansum(yT.to_numpy()))}
+        for tag, (names, specs, inter) in (("q_v14", (n14, s14, i14)),
+                                           ("q_v12", (n12, s12, i12))):
+            fit_fn = qv14.fit_qv14 if tag == "q_v14" else qv12.fit_qv12
+            m = fit_fn(df, seg_all, names, specs, inter,
+                       train_max=T - 2, cal_year=T - 1)
+            p = m.predict_proba(testT, segT)
+            y = testT["label"].astype(float).to_numpy()
+            ok = horsT & ~np.isnan(y)
+            rec[f"rr@{RR_K}_{tag}"] = round(float(
+                ev.rr_at_k(y[ok].astype(int), p[ok], RR_K, seed=974)["rr"]), 3)
+        rows.append(rec)
+        log(f"pli {T} : q_v14 RR@{RR_K}={rec[f'rr@{RR_K}_q_v14']} · "
+            f"q_v12={rec[f'rr@{RR_K}_q_v12']} (n={rec['n_test']})")
+
+    out = pd.DataFrame(rows)
+    out.to_csv(QDIR / "q_v14_walkforward.csv", index=False)
+    rr14 = out[f"rr@{RR_K}_q_v14"]
+    resume = {"reference_m36": M36_WF,
+              "q_v14_rr_min": float(rr14.min()), "q_v14_rr_max": float(rr14.max()),
+              "q_v14_rr_median": float(rr14.median()),
+              "q_v12_rr_min": float(out[f"rr@{RR_K}_q_v12"].min()),
+              "q_v12_rr_max": float(out[f"rr@{RR_K}_q_v12"].max()),
+              "plis": WF_FOLDS}
+    (QDIR / "q_v14_walkforward_resume.json").write_text(
+        json.dumps(resume, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(out.to_string(index=False))
+    print("\n" + json.dumps(resume, indent=2, ensure_ascii=False))
+
+
+def _ventes_pm_retenue() -> bool:
+    """Lit dans le manifeste gelé si ventes_pm_secteur_36m a été retenue (garde-fou)."""
+    if qv14.QV14_FREEZE.exists():
+        return bool(json.loads(qv14.QV14_FREEZE.read_text())
+                    .get("ventes_pm_secteur_36m_retenue", True))
+    return True
+
+
 def test_fuite(eng, annee: int = 2025) -> dict:
     """Test de fuite sur le code recette (mêmes requêtes que le pipeline réel).
 
@@ -384,5 +452,5 @@ def verif() -> None:
 
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "fit"
-    {"cache": cache, "fit": fit, "fuite": lambda: test_fuite(engine()),
+    {"cache": cache, "fit": fit, "walk": walk, "fuite": lambda: test_fuite(engine()),
      "churn": churn, "verif": verif}[cmd]()
