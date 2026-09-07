@@ -281,6 +281,37 @@ def _age_backup() -> dict:
         return {"etat": "absent", "chemin": rep, "age_jours": None}
 
 
+def _horloge() -> dict:
+    """DASHBOARD-2 (Lot 1) — LED rail « Horloge » : jobs posés / attendus. `attendus` = tous les jobs
+    du registre `labuse.jobs.JOBS` ; `posés` = ceux qui ont DÉJÀ tourné ici (fichier d'état présent
+    avec une fin). Un écart (posés < attendus) est « ce qui cloche » sur ce serveur — le wrapper des
+    crons pas encore déployé. Lecture seule (fichiers d'état), jamais de sonde coûteuse."""
+    try:
+        from .. import jobs as _jobs
+        attendus = len(_jobs.JOBS)
+        poses = sum(1 for nom in _jobs.JOBS if (_jobs.lire_etat(nom) or {}).get("fin"))
+        return {"poses": poses, "attendus": attendus}
+    except Exception:  # noqa: BLE001 — la LED dit « — », jamais un 500
+        return {"poses": None, "attendus": None}
+
+
+def _verrous() -> dict:
+    """DASHBOARD-2 (Lot 1) — LED rail « Verrous » : n / 16. Les seize verrous de cohérence du Circuit
+    (`circuit_verrous.VERROUS`) ; `ok` = seize moins les cassés au DERNIER passage journalisé
+    (`synthese_pour_page`, coût page — jamais rejoué ici). Jamais joué → ok = None (« — »)."""
+    try:
+        from .. import circuit_verrous as _cv
+        from ..db import session_scope as _ss
+        sur = len(_cv.VERROUS)
+        with _ss() as _s:
+            synth = _cv.synthese_pour_page(_s)
+        if synth.get("jamais_joues"):
+            return {"ok": None, "sur": sur}
+        return {"ok": sur - len(synth.get("casses") or []), "sur": sur}
+    except Exception:  # noqa: BLE001 — la LED dit « — », jamais un 500
+        return {"ok": None, "sur": None}
+
+
 @router.get("/admin/pilotage")
 def admin_pilotage(request: Request) -> dict:
     """L'état de LABUSE en cinq secondes (héros + tuiles + LED du rail). AUCUN chiffre métier
@@ -423,6 +454,10 @@ def admin_pilotage(request: Request) -> dict:
         "actifs_24h": actifs_24h,
         "ia_mois": {"cout_eur": float(ia["cout"]), "appels": int(ia["appels"])},
         "backup": _age_backup(),
+        # DASHBOARD-2 (Lot 1) — deux LED de rail supplémentaires : Horloge (jobs posés / attendus)
+        # et Verrous (n / 16). Lues, jamais recalculées à chaud.
+        "horloge": _horloge(),
+        "verrous": _verrous(),
         "sante": sante,
         "courrier": courrier_kpi,   # CONNEXIONS-2 Lot 4 — {a_deposer, en_cours, clos}
         # SCORING-3 (L5.3) — étiquettes de retour terrain posées (7 j + cumul, seuil TERRAIN-1 : 200)

@@ -1276,6 +1276,9 @@ export interface AdminPilotage {
   ia_mois: { cout_eur: number; appels: number }
   // RETOURS-8 (R10) — « non_configure » (répertoire absent) distinct d'« absent » (vide) ; + fichier/taille.
   backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent' | 'non_configure'; chemin: string; age_jours: number | null; mtime?: string; fichier?: string; taille_mo?: number }
+  // DASHBOARD-2 (Lot 1) — LED rail : Horloge (jobs posés / attendus) et Verrous (ok / 16). null = « — ».
+  horloge?: { poses: number | null; attendus: number | null }
+  verrous?: { ok: number | null; sur: number | null }
   // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
   sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
   courrier: { a_deposer: number; en_cours: number; clos: number }   // CONNEXIONS-2 Lot 4 — KPI courriers
