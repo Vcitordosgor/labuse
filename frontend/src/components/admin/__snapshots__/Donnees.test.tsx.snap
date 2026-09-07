@@ -2,10 +2,28 @@
 
 exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 <div
-  class="cxp"
+  class="flex flex-col gap-3"
 >
-  <style>
-    
+  <div
+    class="text-[13px]"
+  >
+    <button
+      class="text-mint hover:underline"
+    >
+      Calibration des destinations — le détail du réservoir 
+      <span
+        class="font-mono"
+      >
+        plu_destinations
+      </span>
+       →
+    </button>
+  </div>
+  <div
+    class="cxp"
+  >
+    <style>
+      
 .cxp{--bg:#0f1512;--panel:#141b17;--panel-2:#1a221d;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.16);
  --text:#e7ece8;--muted:#94a099;--faint:#66716a;--mint:#4ADE80;--ink:#0b1a10;--mint-soft:rgba(74,222,128,.10);
  --mauve:#c084fc;--jaune:#facc15;--ambre:#f5b942;--rouge:#f87171;--gris:#6f7a73;
@@ -139,11 +157,12 @@ exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 .cxp :focus-visible{outline:2px solid var(--jaune);outline-offset:2px}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} }
 
-  </style>
-  <div
-    class="muted"
-  >
-    Circuit — chargement…
+    </style>
+    <div
+      class="muted"
+    >
+      Circuit — chargement…
+    </div>
   </div>
 </div>
 `;

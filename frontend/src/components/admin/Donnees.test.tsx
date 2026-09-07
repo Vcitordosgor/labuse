@@ -1,6 +1,6 @@
-// CIRCUIT-P2 (lot 1.4) — la page « Données » n'a plus qu'UN composant racine : le Circuit. Ce test
-// garde la régression du ménage — plus d'enrobage (bandeau « Mes données sont-elles à jour ? »,
-// onglet Catalogue, paragraphes « Qui fait quoi »), juste le conteneur `.cxp` du Circuit.
+// CIRCUIT-P2 (lot 1.4) · DASHBOARD-2 (Lot 7) — la page « Données » = le Circuit + UN lien vers le
+// détail du réservoir plu_destinations (calibration des destinations, qui a quitté le rail). Pas
+// d'enrobage legacy (bandeau « Mes données sont-elles à jour ? », onglet Catalogue, « Qui fait quoi »).
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
@@ -22,14 +22,15 @@ describe('CIRCUIT-P2 lot 1 — la page Données EST le Circuit', () => {
     return render(<QueryClientProvider client={qc}><DonneesSection /></QueryClientProvider>)
   }
 
-  it('un seul composant racine, le Circuit (.cxp), sans enrobage', () => {
+  it('le Circuit (.cxp) + le lien Destinations, sans enrobage legacy', () => {
     const { container } = wrap()
-    const root = container.firstChild as HTMLElement
-    expect(root).toBeTruthy()
-    expect(root.className).toContain('cxp')       // le conteneur du Circuit, rien d'autre
+    // le conteneur du Circuit est présent (rien n'a remplacé le Circuit)
+    expect(container.querySelector('.cxp')).toBeTruthy()
     const txt = container.textContent || ''
+    // DASHBOARD-2 Lot 7 — le lien vers le détail du réservoir plu_destinations
+    expect(txt).toContain('Calibration des destinations')
+    // plus d'enrobage legacy
     expect(txt).not.toContain('Mes données sont-elles à jour')
-    expect(txt).not.toContain('Catalogue')
     expect(txt).not.toContain('Qui fait quoi')
   })
 

@@ -14,7 +14,6 @@ import { ProduitSection } from './Produit'
 import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { ContactsSection } from './Contacts'
-import { DestinationsSection } from './Destinations'
 import { CronSection } from './Cron'
 
 // ADMIN-1 (AD2) — « sources »/« flux » ne sont plus des sections de menu : elles sont FUSIONNÉES
@@ -30,8 +29,10 @@ export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'destina
 // CIRCUIT-P2 (lot 1.2) — le CRON a quitté « Données » : c'est de nouveau une page à part
 // (`/admin/cron`, CronSection inchangée), son lien vit dans Pilotage. Les vieux deep-links
 // sources/flux atterrissent toujours sur « donnees » (= le Circuit).
+// DASHBOARD-2 (Lot 7) — « destinations » a quitté le rail : les vieux deep-links atterrissent sur
+// « donnees » (le Circuit), où sa calibration vit désormais (détail du réservoir plu_destinations).
 const _rediriger = (s: AdminSection): AdminSection =>
-  s === 'sources' || s === 'flux' ? 'donnees' : s === 'programmes' ? 'pilotage' : s
+  s === 'sources' || s === 'flux' || s === 'destinations' ? 'donnees' : s === 'programmes' ? 'pilotage' : s
 
 // ── helpers d'affichage ──
 const fmtReu = (iso?: string | null, avecHeure = true) => {
@@ -327,7 +328,6 @@ const SOUS_TITRES: Partial<Record<AdminSection, string>> = {
   ia: 'consommation, plafonds par compte, registre modèle',
   donnees: 'le circuit de la donnée : d’où elle vient, où elle va, ce qui cloche',
   cron: 'les jobs planifiés — dernier passage, prochain, lancer maintenant',
-  destinations: 'le verdict destination est-il calibré, commune par commune ?',
   produit: 'ce qui est utilisé · ce que les clients demandent',
   courrier: 'les demandes d’envoi — la page qui manquait',
   radar: 'la pige d’annonces — déposer, valider, re-vérifier',
@@ -458,7 +458,6 @@ export function AdminView() {
           {section === 'ia' && <IaSection />}
           {section === 'donnees' && <DonneesSection />}
           {section === 'cron' && <CronSection />}
-          {section === 'destinations' && <DestinationsSection />}
           {section === 'produit' && <ProduitSection />}
           {section === 'courrier' && <CourrierSection />}
           {section === 'radar' && <RadarSection />}
