@@ -481,7 +481,7 @@ def admin_licences(request: Request) -> dict:
     with engine().begin() as c:
         comptes = [dict(r) for r in c.execute(text(
             "SELECT k.id, k.nom, k.plan, k.statut, k.sieges, k.created_at, k.updated_at,"
-            "       k.stripe_customer_id, k.copilote_quota_jour, k.essai_expire_at,"
+            "       k.stripe_customer_id, k.copilote_quota_jour, k.copilote_budget_eur, k.essai_expire_at,"
             "       (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
             "         ORDER BY u.id LIMIT 1) AS email,"
             "       (SELECT MAX(u.dernier_login_at) FROM utilisateurs u WHERE u.compte_id = k.id)"
@@ -496,6 +496,14 @@ def admin_licences(request: Request) -> dict:
         nl_rows = c.execute(text(
             "SELECT sujet, n FROM usage_compteurs WHERE jour = CURRENT_DATE AND kind = 'nl'"
         )).mappings().all()
+        # COMPTE-2 (Lot 3) — dépense IA du JOUR (Réunion) par compte, en EUROS (le plafond est en €,
+        # pas en appels) : une seule requête groupée (pas de N+1). Sert à corriger le « 0 / 80 ».
+        ia_rows = c.execute(text(
+            "SELECT compte_id, COALESCE(SUM(cout_eur), 0) AS eur FROM ia_log"
+            " WHERE compte_id IS NOT NULL AND (ts AT TIME ZONE 'Indian/Reunion')::date"
+            "       = (now() AT TIME ZONE 'Indian/Reunion')::date GROUP BY compte_id")).mappings().all()
+    ia_jour = {r["compte_id"]: float(r["eur"]) for r in ia_rows}
+    _budget_defaut = float(config.get_settings().copilote_budget_eur_defaut)
     mails_par_compte: dict[int, dict] = {}
     for m in mails_rows:
         mails_par_compte.setdefault(m["compte_id"], {})[m["mail_key"]] = {
@@ -530,6 +538,11 @@ def admin_licences(request: Request) -> dict:
                 "derniere_connexion": k["derniere_connexion"].isoformat() if k["derniere_connexion"] else None,
                 "copilote_jour": nl.get(f"c:{k['id']}", 0),
                 "copilote_quota": k["copilote_quota_jour"] or defaut_quota,
+                # COMPTE-2 (Lot 3) — le plafond IA est en EUROS : on sert la dépense € du jour et le
+                # budget € (le front affiche « 0,42 € / 2,00 € », plus le trompeur « 0 / 80 »).
+                "ia_depense_eur": round(ia_jour.get(k["id"], 0.0), 4),
+                "ia_budget_eur": round(float(k["copilote_budget_eur"]) if k["copilote_budget_eur"] is not None
+                                       else _budget_defaut, 2),
             },
         })
     from ..brevo import LIBELLES as _MAIL_LIBELLES

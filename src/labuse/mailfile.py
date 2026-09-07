@@ -171,12 +171,15 @@ def _tenter_depart(engine, mail_id: int) -> dict:
 
 def envoyer_mail(engine, *, key: str, to: str, params: dict | None = None,
                  compte_id: int | None = None, demandeur: str = "systeme",
-                 prevu_at: datetime | None = None, dedup: str | None = None) -> dict:
+                 prevu_at: datetime | None = None, dedup: str | None = None,
+                 fenetre_doublon_s: int = FENETRE_DOUBLON_S) -> dict:
     """POINT D'ENVOI UNIQUE (façade `mail.envoyer_mail`) : enfile, puis — si l'envoi est immédiat
     (`prevu_at` absent ou déjà passé) — déclenche le départ tout de suite. Un programmé (J+3, J+10,
-    digest) reste `en_attente` avec sa date prévue ; un worker/clic le fera partir. Renvoie la ligne."""
+    digest) reste `en_attente` avec sa date prévue ; un worker/clic le fera partir. Renvoie la ligne.
+    `fenetre_doublon_s` : fenêtre anti-doublon (ex. relance carte = plusieurs jours, Stripe rejoue)."""
     ligne = enfiler(engine, key=key, to=to, params=params, compte_id=compte_id,
-                    demandeur=demandeur, prevu_at=prevu_at, dedup=dedup)
+                    demandeur=demandeur, prevu_at=prevu_at, dedup=dedup,
+                    fenetre_doublon_s=fenetre_doublon_s)
     if ligne.get("doublon"):
         return ligne
     immediate = prevu_at is None or prevu_at <= _now()

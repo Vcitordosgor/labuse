@@ -158,13 +158,15 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
 
 def envoyer_mail(engine=None, *, key: str, to: str, params: dict | None = None,
                  compte_id: int | None = None, demandeur: str = "systeme",
-                 prevu_at=None, dedup: str | None = None) -> dict:
+                 prevu_at=None, dedup: str | None = None, fenetre_doublon_s: int | None = None) -> dict:
     """COMPTE-2 · Lot 2 — POINT D'ENVOI UNIQUE du cycle de vie client. Enfile dans `mail_queue`,
     déclenche le départ immédiat (ou laisse le programmé en attente), journalise QUI l'a demandé et
-    renvoie l'état RÉEL (jamais « envoyé » par optimisme, RV-013). Délègue à `mailfile`."""
+    renvoie l'état RÉEL (jamais « envoyé » par optimisme, RV-013). Délègue à `mailfile`.
+    `fenetre_doublon_s` : fenêtre anti-doublon sur mesure (ex. relance carte : plusieurs jours)."""
     from . import mailfile
     if engine is None:
         from .db import engine as _engine
         engine = _engine()
+    kw = {} if fenetre_doublon_s is None else {"fenetre_doublon_s": fenetre_doublon_s}
     return mailfile.envoyer_mail(engine, key=key, to=to, params=params, compte_id=compte_id,
-                                 demandeur=demandeur, prevu_at=prevu_at, dedup=dedup)
+                                 demandeur=demandeur, prevu_at=prevu_at, dedup=dedup, **kw)

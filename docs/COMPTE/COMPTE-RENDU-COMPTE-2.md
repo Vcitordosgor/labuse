@@ -145,13 +145,29 @@ résilié → rien.
 Tests : `test_compte2_comptes.py` (compteur unique + masking + `comptes_actifs` inchangé). Front `tsc`
 vert.
 
-**Reste** :
-- **Refonte visuelle** de la page selon `docs/maquettes/maquette-dashboard-v1.html` : barre de
-  **recherche** + **segments**, et **fiche à onglets** (les onglets Activité/Facturation/IA relèvent du
-  Lot 7). L'écran actuel (liste + fiche continue AD4) reste fonctionnel entre-temps.
-- **Test 403 à deux comptes** à graver.
-- Webhook Stripe `past_due` → template 9 : **pas de webhook** en prod (Stripe lu en lecture seule) — à
-  créer (Lot 3/8).
+**Fait (refonte visuelle v2, maquette `maquette-pilotage-comptes-v2.html`)** :
+- Liste = **segments** (À toucher par défaut / Actifs / Essais / Invités / Suspendus / Tous, avec
+  compteurs) + **recherche** (nom/e-mail). Une ligne = initiales · nom + sous-ligne · plan (chip) ·
+  dernière visite (relatif) · MRR · **À faire calculé** · un bouton (verbe contextuel).
+- Le **rapprochement Stripe** n'est plus un pavé : c'est un **lien en pied de liste** (« N comptes sans
+  abonnement Stripe » + « N comptes de test masqués »).
+- La fiche est une **vraie page** : « ← Comptes » + **onglets Aperçu / Activité / Facturation / IA**.
+  Aperçu = à-faire + parcours daté + suspension + déconnexion ; Activité = les mails de ce compte
+  (file, avec « qui ») ; Facturation = Stripe (statut/montant/lien `cus_`) + mails de facturation ;
+  IA = **dépense €/budget € du jour** (barre) — le trompeur « 0 / 80 » (appels) est **corrigé** en euros.
+- Front `tsc` vert.
+
+**Fait (webhook Stripe `past_due` → carte refusée)** :
+- `facturation.traiter_webhook` (`invoice.payment_failed`) enfile désormais la **relance carte
+  (template 9)** par la file (LIEN_PAIEMENT = `hosted_invoice_url` sinon `/facturation`), demandeur
+  `job:stripe-webhook`, **dédup par facture** sur 30 jours (Stripe rejoue le même invoice) + journal.
+- Badge **« Carte refusée »** dans la liste + ligne « À faire » (dérivés de `stripe.statut==past_due`
+  ou `statut==paiement_requis`), priorité en tête des actions.
+- Test `test_facturation.py::test_webhook_past_due_enfile_relance_template_9` (+ mock transport
+  module-level : aucune suite n'émet de vrai mail).
+
+**Reste** : **test 403 à deux comptes** à graver ; vérification visuelle live (l'app worktree met
+70-140 s à démarrer, capture MCP flaky) — à l'œil avant merge.
 
 ---
 

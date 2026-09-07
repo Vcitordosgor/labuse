@@ -1316,7 +1316,9 @@ export interface AdminLicence {
   mails: Record<string, { statut: string; sent_at: string | null }>
   rappels: string[]
   partage: { sessions: number; ips: number; probable: boolean } | null   // A5 — sessions simultanées (informatif)
-  kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number }
+  kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number
+    // COMPTE-2 (Lot 3) — le plafond IA est en EUROS : dépense € du jour + budget € (corrige « 0 / 80 »).
+    ia_depense_eur?: number; ia_budget_eur?: number }
 }
 export interface AdminLicences {
   licences: AdminLicence[]
@@ -1381,6 +1383,15 @@ export const postAdminDeconnecter = (compteId: number) =>
   j<{ ok: boolean; sessions_fermees: number }>(`/admin/licences/${compteId}/deconnecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminLicenceMail = (compteId: number, key: string) =>
   j<{ ok: boolean; envoye: boolean; raison?: string }>(`/admin/licences/${compteId}/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) })
+// COMPTE-2 (Lot 2/3) — la file mail_queue d'un compte (onglet Activité / Facturation de la fiche).
+export interface MailLigne {
+  id: number; mail_key: string; template_nom: string | null; destinataire: string
+  etat: string; etat_libelle: string; demandeur: string; tentatives: number
+  message_id: string | null; erreur: string | null; cree_at: string | null; parti_at: string | null
+  params: Record<string, unknown>
+}
+export const getAdminMails = (compteId: number) =>
+  j<{ lignes: MailLigne[]; compteurs: unknown }>(`/admin/mails?compte_id=${compteId}`)
 // D5 — IA
 export interface AdminIa {
   mois: { cout_eur: number; appels: number; cout_moyen_question: number | null }
