@@ -162,6 +162,11 @@ def reglement_block(zones: list[dict], commune: str | None) -> dict | None:
             continue
         ref = resolve_reglement(commune, code, z.get("idurba"))
         if ref:
+            # COUCHES-1 lot 3 (item 12 / B4) — propager la PART de surface (aire intersection / aire
+            # parcelle) à la fiche : elle sert l'affichage « à cheval » (plusieurs zones + leur surface
+            # respective). `zones` est trié part DESC → le premier code vu porte sa part réelle.
+            if z.get("part") is not None:
+                ref["part"] = z.get("part")
             seen[code] = ref
     if not seen:
         return None

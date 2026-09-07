@@ -119,7 +119,11 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   // RETOURS-11 C5 (03/09) — REMPLACE la décision 31/08 (sous-option) : la couche officielle BRUTE du
   // GPU (document opposable) redevient une couche de PREMIER NIVEAU, indépendante, au même retrait que
   // les autres, avec sa légende. La clé de store `zonage` est inchangée (MapView/Legend l'écoutent déjà).
-  { key: 'zonage', label: 'Limites officielles PLU (GPU brut)' },
+  // COUCHES-1 lot 3 (B4/item 12) — « Limites officielles du PLU » : couche de raison ~1 parcelle
+  // sur 10 (9,93 % à cheval sur ≥2 zones, mesuré sur le run servi, seuil anti-liseré 10 %). Retirée
+  // du premier niveau → SOUS-OPTION MANUELLE de la couche calibrée (LAYER_SUBOPTIONS). « GPU brut »
+  // passe au « i » (B3 : le titre dit ce que c'est, le « i » dit d'où ça vient).
+  { key: 'zonage', label: 'Limites officielles du PLU' },
   { key: 'ppr', label: 'PPR multirisque' },
   // M106 P1 : les aléas DEAL séparés — la séparation inondation/mouvement de terrain n'existe
   // PAS dans le zonage réglementaire PPR (document multirisque) ; elle vit dans la carte d'aléas.
@@ -140,7 +144,8 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'transport', label: 'Transport public (lignes et arrêts)' },
   { key: 'tcsp', label: 'Stationnement allégé — TCSP (art. L151-36)' },
   { key: 'axes', label: 'Axes structurants' },
-  { key: 'lignes_ht', label: 'Lignes électriques (HTA / HTB)' },
+  // COUCHES-1 lot 3 (B3) — source hors du titre : « HTA / HTB » (et EDF/BD TOPO) vivent dans le « i ».
+  { key: 'lignes_ht', label: 'Lignes électriques' },
   // M134 — couche « Dispositifs et périmètres ». Jamais un sigle nu : chaque libellé développe.
   { key: 'qpv', label: 'QPV — quartier prioritaire' },
   { key: 'tva_primo', label: 'TVA réduite primo-accédant (QPV + 500 m)' },
@@ -171,29 +176,32 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 // micro-label au-dessus). L'ordre des couches et les libellés sont INCHANGÉS ; seul le
 // regroupement visuel est ajouté. M62-P1 (g) : la famille « L'analyse LABUSE » (couleurs_verdict +
 // renouv) est retirée ; les 10 clés restantes sont couvertes une et une seule fois.
+// COUCHES-1 lot 3 (item 10 · taxonomie §3) — 7 catégories homogènes remplacent les 9 en-têtes
+// hétérogènes (où une couche = sa propre catégorie). Le regroupement suit la NATURE de la couche
+// (constat B2 : les aléas sont des risques, EBC/ER/DPU/SUP sont de l'urbanisme, RPG est un usage du
+// sol, DPF/50 pas de la domanialité) — plus « Contraintes » fourre-tout. « Le fond » (limites,
+// communes) reste à part : c'est le socle cartographique, pas une catégorie de données.
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
-  { famille: 'Le fond', keys: ['limites', 'communes'] },   // R2 : 'parcelles' retirée (décision par capture)
-  // RETOURS-11 C5 — `zonage` (GPU brut) redevient une couche de premier niveau, à côté de la calibrée.
-  { famille: 'Les zonages', keys: ['zonage_parcelle', 'zonage'] },
-  // RETOURS-11 C2 (g) — les ÉQUIPEMENTS ne sont pas des risques : ils quittent « Risques et protections »
-  // pour leur propre famille (OSM + INSEE BPE, étiquetés par source).
-  // SOURCES-1 lot 3 — les sols (SIS, CASIAS) rejoignent les risques.
-  { famille: 'Risques et protections', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'parc', 'znieff', 'cinquante_pas', 'sis', 'casias'] },
-  // SOURCES-1 lot 1 — les contraintes du droit des sols (servitudes et périmètres opposables du
-  // PLU/GPU), entre les zonages et les risques : ER, EBC, DPU, PEB, SUP.
-  { famille: 'Contraintes', keys: ['er', 'ebc', 'dpu', 'peb', 'sup', 'dpf', 'bruit_route', 'bruit_carte'] },
-  // SOURCES-1 lot 2 — la nature et l'eau (protections et usages du sol vivant).
-  { famille: 'Nature', keys: ['zone_humide', 'enp', 'rpg'] },
-  { famille: 'Équipements', keys: ['equipements', 'equipements_bpe'] },
-  // RETOURS-13 R3 — la famille s'appelle « Réseaux » (demande Vic) : transport public, arrêts,
-  // TCSP, axes, HTB, HTA — chaque entrée avec son « i » (source, millésime, couverture).
-  { famille: 'Réseaux', keys: ['transport', 'tcsp', 'axes', 'lignes_ht'] },
-  // M134 — Dispositifs et périmètres : opérationnels (QPV + sa bande TVA, NPNRU/ANRU) puis
-  // fiscaux à la maille COMMUNE (ZFANG, FRR). L'ANRU quitte « Risques » pour ici (un seul endroit).
-  { famille: 'Dispositifs et périmètres', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr'] },
-  // SECTEUR-2 (T4) — le marché (prix du neuf VEFA, aplat commune).
-  { famille: 'Le marché', keys: ['vefa_neuf'] },
+  { famille: 'Le fond', keys: ['limites', 'communes'] },
+  // Urbanisme : le zonage calibré (+ sa sous-option « limites officielles ») et les règles du PLU.
+  { famille: 'Urbanisme', keys: ['zonage_parcelle', 'ebc', 'er', 'dpu', 'sup'] },
+  { famille: 'Risques et nuisances', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'peb', 'bruit_route', 'bruit_carte', 'sis', 'casias'] },
+  { famille: 'Nature et protections', keys: ['parc', 'znieff', 'enp', 'zone_humide'] },
+  { famille: 'Eau et domanialité', keys: ['dpf', 'cinquante_pas'] },
+  { famille: 'Usage du sol', keys: ['rpg'] },
+  { famille: 'Réseaux, mobilité et équipements', keys: ['transport', 'tcsp', 'axes', 'lignes_ht', 'equipements_bpe', 'equipements'] },
+  // Dispositifs et marché : QPV (+ sa sous-option TVA réduite), NPNRU/ANRU, ZFANG/FRR, prix du neuf.
+  { famille: 'Dispositifs et marché', keys: ['qpv', 'anru', 'zfang', 'frr', 'vefa_neuf'] },
 ]
+
+// COUCHES-1 lot 3 (item 12) + lot 4 (item 15) — SOUS-OPTIONS : une couche rattachée à une autre,
+// rendue indentée sous son parent (bascule manuelle indépendante). `zonage` (limites officielles PLU,
+// raison 1 fois sur 10 — B4) sous la couche calibrée ; `tva_primo` (buffer 500 m dérivé des QPV — C3)
+// sous QPV. Elles NE sont plus des entrées de premier niveau.
+const LAYER_SUBOPTIONS: Partial<Record<keyof LayerToggles, (keyof LayerToggles)[]>> = {
+  zonage_parcelle: ['zonage'],
+  qpv: ['tva_primo'],
+}
 const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 
 // M12 C2 — pastille « i » d'une couche : au survol OU au clic, l'explication CLIENT (LAYER_INFO,
@@ -211,6 +219,44 @@ function LayerInfoPill({ info }: { info: string }) {
         i
       </span>
     </Tip>
+  )
+}
+
+// COUCHES-1 lot 3 — UNE ligne de couche (parent ou sous-option). `sub` : indentée + trait de
+// rattachement, bascule manuelle indépendante. Le libellé + le « i » (LAYER_INFO + source/fabrication
+// de /map/couches-info) sont identiques au patron d'origine — seule la mise en retrait change.
+function LayerRow({ layers, toggleLayer, couchesInfo, lkey, sub }: {
+  layers: LayerToggles
+  toggleLayer: (k: keyof LayerToggles) => void
+  couchesInfo: Record<string, { source: string; fabrication?: string }>
+  lkey: keyof LayerToggles
+  sub?: boolean
+}) {
+  const on = layers[lkey]
+  const meta = couchesInfo[lkey]
+  const info = (LAYER_INFO[lkey] ?? '')
+    + (meta ? `\n\nSource : ${meta.source}${meta.fabrication ? ` · ${meta.fabrication}` : ''}` : '')
+  const label = LAYER_LABEL[lkey] ?? lkey
+  return (
+    <div className={`flex items-center justify-between gap-2 px-3 py-2.5 ${sub ? 'pl-8' : ''}`}>
+      <button
+        data-layer={lkey}
+        data-layer-sub={sub ? true : undefined}
+        onClick={() => toggleLayer(lkey)}
+        className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
+      >
+        {sub && <span aria-hidden className="-ml-3 mr-0.5 text-[10px] leading-none text-txt-dim">↳</span>}
+        <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-3'}`}>
+          {on && (
+            <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
+              <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06301A" strokeWidth="1.8" />
+            </svg>
+          )}
+        </span>
+        <span className={`${sub ? 'text-[11px]' : 'text-xs'} ${on ? 'text-txt-hi' : 'text-[#97A39B]'}`}>{label}</span>
+      </button>
+      <LayerInfoPill info={info} />
+    </div>
   )
 }
 
@@ -274,29 +320,14 @@ function LayersSection({ open, onToggle, fill, closable }: {
                 <p className="layer-cat mb-1.5 block">{famille}</p>
                 <div className="gcard">
                   {keys.map((key) => {
-                    const on = layers[key]
-                    const meta = couchesInfo[key]
-                    const info = (LAYER_INFO[key] ?? '')
-                      + (meta ? `\n\nSource : ${meta.source}${meta.fabrication ? ` · ${meta.fabrication}` : ''}` : '')
-                    const label = LAYER_LABEL[key] ?? key
+                    // COUCHES-1 lot 3/4 — une couche + ses éventuelles sous-options (indentées).
+                    const subs = LAYER_SUBOPTIONS[key] ?? []
                     return (
-                      <div key={key} className="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5 last:border-b-0">
-                        <button
-                          data-layer={key}
-                          // RETOURS-11 C5 — `zonage` (GPU brut) est une couche indépendante : bascule simple.
-                          onClick={() => toggleLayer(key)}
-                          className="flex min-h-[24px] flex-1 items-center gap-3 text-left transition-colors duration-quick"
-                        >
-                          <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-3'}`}>
-                            {on && (
-                              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
-                                <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06301A" strokeWidth="1.8" />
-                              </svg>
-                            )}
-                          </span>
-                          <span className={`text-xs ${on ? 'text-txt-hi' : 'text-[#97A39B]'}`}>{label}</span>
-                        </button>
-                        <LayerInfoPill info={info} />
+                      <div key={key} className="border-b border-line last:border-b-0">
+                        <LayerRow layers={layers} toggleLayer={toggleLayer} couchesInfo={couchesInfo} lkey={key} />
+                        {subs.map((sk) => (
+                          <LayerRow key={sk} layers={layers} toggleLayer={toggleLayer} couchesInfo={couchesInfo} lkey={sk} sub />
+                        ))}
                       </div>
                     )
                   })}

@@ -123,20 +123,40 @@ function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   // on reste par zone (repli honnête).
   const notes = rp.zones.map((z) => z.note).filter(Boolean) as string[]
   const noteCommune = notes.length === rp.zones.length && notes.every((n) => n === notes[0]) ? notes[0] : null
+  // COUCHES-1 lot 3 (item 12 / B4) — parcelle À CHEVAL sur plusieurs zones du PLU (~1 sur 10 : 9,93 %
+  // du run servi). La couche « par parcelle » n'affiche que la zone DOMINANTE — sur ces parcelles elle
+  // ment. La fiche dit ici la vérité : toutes les zones et leur SURFACE respective. Le tracé officiel
+  // se visualise via la sous-option carte « Limites officielles du PLU ».
+  const partsConnues = rp.zones.filter((z) => typeof z.part === 'number')
+  const aCheval = partsConnues.length >= 2 && (partsConnues[0].part ?? 1) < 0.9
+  const pct = (p?: number | null) => (typeof p === 'number' ? `${Math.round(p * 100)} %` : null)
   return (
     // RETOURS-20 Z2/Z3 — la boîte « RÈGLEMENT PLU » (card-elev) disparaît : chaque zone est un
     // KICKER « Règlement — zone X » (renvoi « voir l'article » à droite) suivi de LIGNES DE FAIT
     // (libellé · valeur mono à droite · renvoi d'article ↗ sous la ligne). Données inchangées :
     // mêmes règles, mêmes valeurs, « non réglementé » / « à vérifier » dits et jamais comblés.
     <div data-reglement-plu>
+      {aCheval && (
+        <div data-plu-a-cheval className="mb-2 rounded-md border border-amber/40 bg-amber/10 px-2.5 py-1.5 text-[11px] text-txt">
+          <b>Parcelle à cheval sur {partsConnues.length} zones du PLU.</b> La colorisation « par parcelle »
+          n’affiche que la zone dominante — voici la surface réelle de chacune :
+          <span className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+            {partsConnues.map((z, i) => (
+              <span key={i} className="tabular-nums">{z.zone} <span className="text-txt-hi">{pct(z.part)}</span></span>
+            ))}
+          </span>
+          <span className="mt-1 block text-txt-dim">Tracé officiel : couche « Limites officielles du PLU » (sous-option du zonage sur la carte).</span>
+        </div>
+      )}
       {rp.zones.map((z, i) => (
         <div key={i}>
           {/* Z1·02 — kicker : le titre porte la zone (Trace = classe CIRCUIT-2) ; le renvoi d'article
-              va dans le slot droit (Z1·04, lien mono ↗). M76 pt5 : « Annuaire PLU » reste une porte. */}
+              va dans le slot droit (Z1·04, lien mono ↗). M76 pt5 : « Annuaire PLU » reste une porte.
+              COUCHES-1 lot 3 — quand à cheval, la part de surface de la zone est rappelée au kicker. */}
           <GroupLabel right={z.url
             ? <a data-plu-link className="f-ref" href={z.url} target="_blank" rel="noreferrer">{z.calibree ? 'voir l’article' : 'voir le règlement'}</a>
             : undefined}>
-            Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>
+            Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>{aCheval && pct(z.part) ? <span className="text-txt-dim"> · {pct(z.part)} de la parcelle</span> : null}
           </GroupLabel>
           {/* RETOURS-11F3 F4 — les règles de la zone AVEC leurs valeurs (hauteur, emprise, reculs…),
               chacune avec son article/page cliquable. Z1·03 : ligne de fait ; valeur « non réglementé »
