@@ -578,6 +578,19 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Coût de construction (EPTB SDES + choix LABUSE)": "L'EPTB est une PUBLICATION annuelle (pages DREAL/SDES sans millésime machine exploitable — vérifié 07/09/2026) ; rappel annuel de relecture posé (RAPPELS_MANUELS), la table cout_construction_ref est mise à jour à la main après lecture.",
     "SAR — schéma d'aménagement régional (Région/DEAL)": "Couche SIG officielle NON diffusée (Carmen 29, Lizmap DEAL, Sextant — WMS image seule —, ODS Région : 0 vecteur au 07/09/2026) ; demandée à la Région (lot 7). Rappel périodique 180 j (RAPPELS_MANUELS) : re-chercher la couche + suivre la révision SAR 2050.",
     "DVF Réunion (Région, data.regionreunion.com)": "Jeu FIGÉ chez le producteur (2014→mi-2021, vérifié 07/09/2026) servant d'échantillon producteur du filtre DVF — le hub ODS Région est déjà surveillé par la sonde témoin de son catalogue (total_count) ; une republication du jeu s'y verrait.",
+    # ── SOURCES-1 lot 7 — chantiers « en attente de demande » : rien à sonder tant que la
+    # donnée n'est pas remise ; la demande est prête (docs/CIRCUIT/DEMANDE-REGION-EPCI.md).
+    "Zonages d'assainissement SIG complets (EPCI / régies)": "CHANTIER — en attente de la remise par les 5 EPCI/régies (aucun flux à sonder) ; la demande formelle est prête (DEMANDE-REGION-EPCI.md). Le canal GPU existant (4/24) garde sa propre surveillance.",
+    "Inventaires ZAE (EPCI — loi Climat et résilience)": "CHANTIER — en attente de la remise par les 5 EPCI (publication non centralisée, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "Périmètres de ZAC (EPCI / communes / EPF Réunion)": "CHANTIER — en attente de la remise (pas d'open data 974 fiable, jeu CNIG ZAC sans le 974 — rapport fiche 17) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "OPAH / PIG (Anah / EPCI)": "CHANTIER — en attente des conventions EPCI/Anah (la carto Anah localise sans polygone, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "Périmètres ORT infra-communaux (EPCI)": "CHANTIER — en attente des annexes de conventions ORT (EPCI) ; l'éligibilité COMMUNALE est servie et surveillée par la sonde anct_ort (lot 5) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "ENS du Département (Conseil départemental)": "CHANTIER — en attente de la remise par le Conseil départemental (non diffusés en open data, aucun flux à sonder) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    "Micro-données OLL (ADIL / AGORAH)": "CHANTIER — micro-données conventionnées (jamais en flux ouvert) ; les agrégats par zone sont servis et surveillés (loyers_oll, lot 5) ; demande prête (DEMANDE-REGION-EPCI.md).",
+    # ── SOURCES-1 lot 7 — Cerema sous convention : les actualités Datafoncier n'ont pas de
+    # millésime machine stable ; la convention passe par une collectivité mandante (geste Vic).
+    "LOVAC (logements vacants)": "SOUS CONVENTION — détail réservé aux collectivités et à leurs prestataires (fiche 19) ; rien à sonder sans accès. Relecture à la convention ; en attendant, la vacance INSEE RP par IRIS est servie (lot 6).",
+    "DV3F (Cerema)": "SOUS CONVENTION — même demande que les Fichiers fonciers (une convention pour les trois) ; rien à sonder sans accès. En attendant : DVF ouvert + échantillon producteur Région (lot 4).",
     "Recherche d'entreprises (DINUM)": "Y3 : requête témoin `?departement=974` testée → `total_results` plafonné à 10000 (non exploitable) ; agrégat Sirene/RNE en direct, déjà couvert par la veille SIRENE (data.gouv).",
     "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
     "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",

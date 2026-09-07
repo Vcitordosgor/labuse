@@ -426,7 +426,10 @@ SOURCES: list[dict] = [
          access_type="import", status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
          documentation_url="https://datafoncier.cerema.fr", endpoint_url=None,
          legal_notes="NON INTÉGRÉ — aucune donnée ingérée. Acte d'engagement DGALN/DGFiP/Cerema : usage limité aux finalités déclarées, DÉMARCHAGE COMMERCIAL INTERDIT, rediffusion interdite → incompatible avec la prospection LABUSE (audit M6 §1.11 R1 : à trancher AVANT toute signature de convention). Version anonymisée : physiques masquées (_X_), morales complètes → RGPD-safe.",
-         technical_notes="M74 A : RESTE manuel (mesuré, PAS requalifiée). La couche cascade 'proprietaire' qui la "
+         source_millesime="convention non instruite (FF 2024 au portail Cerema)",
+         technical_notes="SOUS CONVENTION (SOURCES-1 lot 7) — une seule demande Cerema couvre FF + "
+                         "LOVAC + DV3F (délai médian 27 j ; collectivité mandante requise, geste Vic). "
+                         "M74 A : RESTE manuel (mesuré, PAS requalifiée). La couche cascade 'proprietaire' qui la "
                          "cite renvoie 100 % UNKNOWN (parcel_source_results VIDE — convention non branchée). Les "
                          "82 701 liens parcelle↔personne morale du produit viennent en réalité de « DGFiP — parcelles "
                          "des personnes morales » (open data, ligne distincte), PAS de cette source conventionnée. "
@@ -1080,6 +1083,99 @@ SOURCES: list[dict] = [
                          "ménages, part 60+. L'IRIS AFFINE la commune, il ne la remplace pas "
                          "(commune_insee_logement reste la vérité communale). "
                          "`labuse ingest-iris-rp`. Annuel."),
+    # ══ SOURCES-1 lot 7 — CE QUI ATTEND UNE DEMANDE (chantiers nommés) ══
+    # L'enum n'a pas de statut « chantier » : ces lignes entrent en A_FAIRE avec l'organisme à
+    # solliciter en tête des technical_notes (décision lot 7 — le Circuit les montre comme des
+    # sources à connecter, la demande est prête dans docs/CIRCUIT/DEMANDE-REGION-EPCI.md).
+    dict(name="Zonages d'assainissement SIG complets (EPCI / régies)", category="reseaux",
+         provider="CINOR / TCO / CIVIS / CASUD / CIREST (et régies)", access_type="SIG/vecteur",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande aux EPCI (GPU : 4/24)",
+         documentation_url="https://www.civis.re/index.php/telechargements-dac",
+         legal_notes="Documents publics (zonages d'assainissement approuvés) — licence à préciser à la remise.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux 5 EPCI : les zonages SIG des "
+                         "20 communes absentes du GPU (l'existant gpu_zonage_assainissement "
+                         "couvre 4/24). Décisif : hors zone collective, l'ANC impose surface et "
+                         "sol filtrant. Format souhaité : vecteur (GPKG/shp) + délibérations."),
+    dict(name="Inventaires ZAE (EPCI — loi Climat et résilience)", category="economie",
+         provider="CINOR / TCO / CIVIS / CASUD / CIREST", access_type="tableur/SIG",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande aux EPCI (L.318-8-2 CU)",
+         documentation_url="https://www.cerema.fr/fr/actualites/inventaires-zones-activite-economique-zae",
+         legal_notes="Inventaires obligatoires (L.318-8-2 CU, révision ≤ 6 ans) — publication due par les EPCI.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux 5 EPCI : état parcellaire des "
+                         "ZAE (unités foncières, occupants, vacance). Le foncier économique n'est "
+                         "pas couvert par LABUSE. ⚠ données propriétaires (RGPD) à cadrer."),
+    dict(name="Périmètres de ZAC (EPCI / communes / EPF Réunion)", category="urbanisme",
+         provider="EPCI / communes / EPF Réunion", access_type="SIG/vecteur",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (pas d'open data 974 fiable)",
+         documentation_url="https://peigeo.re/index.php/cartostat/visualiseurs-thematiques/acquisition-retrocession-epfr/",
+         legal_notes="Actes de création/réalisation des ZAC — publics ; standard CNIG ZAC quand il existe.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande EPCI/communes/EPFR : périmètres de "
+                         "ZAC en vigueur (concurrence, lots à venir, prix de sortie). Le jeu "
+                         "data.gouv CNIG ZAC ne couvre pas le 974 (rapport fiche 17) ; les "
+                         "acquisitions EPFR de PEIGEO ne sont PAS un référentiel ZAC."),
+    dict(name="OPAH / PIG (Anah / EPCI)", category="logement",
+         provider="Anah / EPCI (conventions d'opérations programmées)", access_type="SIG ou conventions",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (pas de périmètre polygone ouvert)",
+         documentation_url="https://www.anah.gouv.fr/collectivites/support/cartographie",
+         legal_notes="Conventions Anah/EPCI publiques — périmètres exacts dans les conventions (PDF).",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux EPCI/Anah : périmètres exacts "
+                         "des OPAH/PIG actifs (ex. PILHI CIREST). Signal fort pour Densifier "
+                         "l'existant (aides Anah). La carto Anah localise à la commune, sans polygone."),
+    dict(name="Périmètres ORT infra-communaux (EPCI)", category="logement",
+         provider="EPCI (conventions ORT préfectorales)", access_type="SIG ou conventions",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (éligibilité communale servie)",
+         documentation_url="https://www.data.gouv.fr/datasets/liste-des-communes-couvertes-par-des-operations-de-revitalisation-de-territoire",
+         legal_notes="Conventions ORT publiques (préfecture/EPCI) — périmètres infra-communaux en annexe.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande aux EPCI : les périmètres "
+                         "INFRA-COMMUNAUX des conventions ORT (le Denormandie se joue au "
+                         "périmètre, pas à la commune — l'éligibilité communale est servie "
+                         "depuis anct_ort, lot 5)."),
+    dict(name="ENS du Département (Conseil départemental)", category="environnement",
+         provider="Conseil départemental de La Réunion", access_type="SIG/vecteur",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (non diffusés en open data)",
+         documentation_url="https://www.departement974.fr",
+         legal_notes="Espaces naturels sensibles (droit de préemption ENS du Département) — communication à demander.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande au Département : périmètres des "
+                         "ENS et zones de préemption ENS (le typeinf 03 du GPU en montre des "
+                         "traces éparses, jamais l'inventaire). L'INPN ne porte pas les ENS "
+                         "départementaux (fiche 4 du rapport)."),
+    dict(name="Micro-données OLL (ADIL / AGORAH)", category="logement",
+         provider="ADIL de La Réunion / AGORAH (observatoire local des loyers)", access_type="convention",
+         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         source_millesime="en attente de la demande (agrégats par zone servis)",
+         documentation_url="https://www.observatoires-des-loyers.org",
+         legal_notes="Micro-données restreintes (réseau OLL) — accès conventionné ; agrégats ouverts déjà servis.",
+         technical_notes="CHANTIER (SOURCES-1 lot 7) — demande ADIL/AGORAH : micro-données OLL "
+                         "(loyer par type/surface/époque à maille fine). L'agrégé par zone 2024 "
+                         "est servi (loyers_oll, canonique du loyer médian) — les micro-données "
+                         "affineraient les 8 communes multi-zones restées au repli DHUP."),
+    # ══ SOURCES-1 lot 7 — CEREMA (convention unique FF + LOVAC + DV3F) ══
+    # L'enum n'a pas de statut « sous_convention » : les trois lignes restent MANUEL (hors
+    # automatisation, cf. docstring du module) avec la convention DITE en tête des notes.
+    dict(name="LOVAC (logements vacants)", category="logement",
+         provider="Cerema / DGFiP (LOVAC)", access_type="convention",
+         status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
+         source_millesime="convention non instruite (millésime 2025 publié)",
+         documentation_url="https://datafoncier.cerema.fr/actualites/millesime-2025-lovac-disponible",
+         legal_notes="LOVAC détail RÉSERVÉ aux collectivités, services de l'État, Anah et leurs prestataires désignés — un éditeur privé n'y a pas accès en propre.",
+         technical_notes="SOUS CONVENTION (SOURCES-1 lot 7) — accès uniquement comme PRESTATAIRE "
+                         "d'une collectivité mandante (fiche 19 du rapport). En attendant : "
+                         "vacance INSEE RP par IRIS (servie, lot 6)."),
+    dict(name="DV3F (Cerema)", category="marche",
+         provider="Cerema (DVF enrichi des Fichiers fonciers)", access_type="convention",
+         status=S.MANUEL, reliability_level=R.SOUS_CONVENTION,
+         source_millesime="convention non instruite (DV3F 2024-2 disponible)",
+         documentation_url="https://datafoncier.cerema.fr",
+         legal_notes="CGU restreintes — même convention que les Fichiers fonciers (une demande pour les trois).",
+         technical_notes="SOUS CONVENTION (SOURCES-1 lot 7) — DVF enrichi (typologie fine, "
+                         "acheteurs/vendeurs). En attendant : DVF ouvert + échantillon producteur "
+                         "Région (lot 4)."),
 ]
 
 
@@ -1169,6 +1265,13 @@ RETRAITS: dict[str, str] = {
     "MOBPRO (mobilités domicile-travail, INSEE)":
         "abandonnée par ZONE-DONNÉES (emplois de zone = tranches d'effectif SIRENE) ; lecteur "
         "zone.emplois_communes sans appelant (code mort) — table conservée, plus rien de servi",
+    # SOURCES-1 lot 7 — BDNB retirée de la VITRINE, pas du chantier : l'ingestion (bdnb.py),
+    # le banc K0 (l3_bdnb.py), le CRON re-sonde et la veille sentinelle (data.gouv last_update)
+    # restent en place — le retrait tombera de lui-même au premier millésime couvrant le 974.
+    "BDNB":
+        "ne couvre pas le 974 au millésime courant (2026-02-a métropole seule — 0 ligne 974 sur "
+        "22,3 M vérifiées, SCORING-3 L3) ; veille sentinelle + CRON re-sonde CONSERVÉS pour le "
+        "prochain millésime",
 }
 
 HUBS: tuple[str, ...] = (
@@ -1347,6 +1450,16 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     # ── SOURCES-1 lot 6 — le foncier et les gens ──
     "DFI — documents de filiation informatisés (DGFiP)": ("job_sur_clic", 100, "declaree"),
     "INSEE RP2022 — bases IRIS (logement, population)": ("job_sur_clic", 365, "declaree"),
+    # ── SOURCES-1 lot 7 — chantiers (en attente de demande) + Cerema (convention) ──
+    "Zonages d'assainissement SIG complets (EPCI / régies)": ("absente", None, "sans_objet"),
+    "Inventaires ZAE (EPCI — loi Climat et résilience)": ("absente", None, "sans_objet"),
+    "Périmètres de ZAC (EPCI / communes / EPF Réunion)": ("absente", None, "sans_objet"),
+    "OPAH / PIG (Anah / EPCI)": ("absente", None, "sans_objet"),
+    "Périmètres ORT infra-communaux (EPCI)": ("absente", None, "sans_objet"),
+    "ENS du Département (Conseil départemental)": ("absente", None, "sans_objet"),
+    "Micro-données OLL (ADIL / AGORAH)": ("absente", None, "sans_objet"),
+    "LOVAC (logements vacants)": ("absente", None, "sans_objet"),
+    "DV3F (Cerema)": ("absente", None, "sans_objet"),
 }
 
 

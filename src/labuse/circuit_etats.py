@@ -210,6 +210,15 @@ NOM_VERS_SLUG = {
     'Zones humides — inventaires DEAL (Carmen)': 'deal_zones_humides',
     'Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)': 'enp_complements_deal',
     'AZI / TRI — inondation (Géorisques GASPAR)': 'georisques_azi_tri',
+    # SOURCES-1 lot 7 — chantiers (en attente de demande) + Cerema (convention) :
+    "Zonages d'assainissement SIG complets (EPCI / régies)": 'assainissement_sig_epci',
+    'Inventaires ZAE (EPCI — loi Climat et résilience)': 'zae_epci',
+    'Périmètres de ZAC (EPCI / communes / EPF Réunion)': 'zac_perimetres',
+    'OPAH / PIG (Anah / EPCI)': 'opah_pig',
+    'Périmètres ORT infra-communaux (EPCI)': 'ort_perimetres_epci',
+    'ENS du Département (Conseil départemental)': 'ens_departement',
+    'Micro-données OLL (ADIL / AGORAH)': 'oll_microdonnees',
+    'DV3F (Cerema)': 'dv3f',
 }
 
 def slug_reservoir(nom: str | None) -> str | None:

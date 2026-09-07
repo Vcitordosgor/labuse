@@ -42,7 +42,9 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                           millesime="PCI vecteur Etalab — millésimes 2019→2025 (cadastre d'époque)"),
     "dgfip_parcelles_pm": Rt(("parcelle_personne_morale", "pm_proprietaires_millesimes"),
                              millesime="Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)"),
-    "fichiers_fonciers_cerema": Rt((), note="manuel — convention DGFiP non instruite, aucune table"),
+    "fichiers_fonciers_cerema": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — une demande Cerema "
+                                              "couvre FF + LOVAC + DV3F ; aucune table tant qu'elle "
+                                              "n'est pas instruite (geste Vic : collectivité mandante)"),
     # ── urbanisme ───────────────────────────────────────────────────────────────────
     "gpu_plu_api_carto": Rt(("spatial_layers", "plu_reglement_extrait"),
                             couches=("plu_gpu_zone", "plu_gpu_prescription"),
@@ -238,7 +240,21 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
     "bdnb": Rt((), note="amont métropole seule — 974 absent (constat mesuré)"),
     "reunion_express_cndp": Rt((), note="hypothèses de tracé au débat public — rien d'ingéré"),
     "ecln": Rt((), note="métropole seule, N/A DOM"),
-    "lovac": Rt((), note="convention dédiée non instruite"),
+    "lovac": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — LOVAC détail RÉSERVÉ aux collectivités "
+                          "et à leurs prestataires (fiche 19) ; en attendant, vacance INSEE RP par IRIS (lot 6)"),
+    "dv3f": Rt((), note="SOUS CONVENTION (SOURCES-1 lot 7) — même convention que les Fichiers fonciers ; "
+                        "en attendant, DVF ouvert + échantillon producteur Région (lot 4)"),
+    # ── SOURCES-1 lot 7 — chantiers en attente de demande (aucune table tant que rien n'est remis) ──
+    "assainissement_sig_epci": Rt((), note="CHANTIER — zonages SIG des 20 communes hors GPU, demande aux "
+                                           "5 EPCI/régies (DEMANDE-REGION-EPCI.md)"),
+    "zae_epci": Rt((), note="CHANTIER — inventaires ZAE des 5 EPCI (L.318-8-2 CU), demande prête"),
+    "zac_perimetres": Rt((), note="CHANTIER — périmètres de ZAC (EPCI/communes/EPFR), demande prête"),
+    "opah_pig": Rt((), note="CHANTIER — périmètres OPAH/PIG (Anah/EPCI), demande prête"),
+    "ort_perimetres_epci": Rt((), note="CHANTIER — périmètres ORT infra-communaux (EPCI), demande prête ; "
+                                       "l'éligibilité communale est servie (anct_ort, lot 5)"),
+    "ens_departement": Rt((), note="CHANTIER — ENS et préemption ENS du Département, demande prête"),
+    "oll_microdonnees": Rt((), note="CHANTIER — micro-données OLL (convention ADIL/AGORAH), demande prête ; "
+                                    "agrégats par zone servis (loyers_oll, lot 5)"),
 }
 
 #: Tables FABRIQUÉES par la pompe (cascade, scoring, builders) : produits du calcul dérivés

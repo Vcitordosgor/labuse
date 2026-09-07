@@ -278,7 +278,9 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # SOURCES-1 lot 5 — +6 : Arcep/REI/ORT/OLL/DHUP au SEED (api), coût de construction
     # en RAPPELS_MANUELS (EPTB = publication annuelle sans millésime machine).
     # SOURCES-1 lot 6 — +2 : DFI (SEED api data.gouv) + bases IRIS RP2022 (SEED page insee.fr).
-    assert len(noms) == 98
+    # SOURCES-1 lot 7 — +9 : 7 chantiers « en attente de demande » + LOVAC + DV3F (RAISONS) ;
+    # les Fichiers fonciers existaient déjà (entrée M74 enrichie de la convention, pas doublée).
+    assert len(noms) == 107
 
 
 def test_raison_non_surveillee_ne_rend_jamais_un_blanc():

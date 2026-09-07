@@ -51,7 +51,7 @@ Sept sources entrées par la porte du Circuit. **Verrous : 16/16 verts** après 
 |---|---|---|---|
 | GPU — emplacements réservés (prescriptions CNIG) | `gpu_prescriptions_er` (logique, sur `plu_gpu_prescription` typepsc 05 + rescue) | 2 250 ER + 6 rescue | servie |
 | GPU — espaces boisés classés (prescriptions CNIG) | `gpu_prescriptions_ebc` (typepsc 01) | 1 782 EBC | servie |
-| GPU — droit de préemption urbain (info-surf) | `dpu_perimetres` (kind `dpu`) | **202 périmètres, 4/24 communes** (Saint-Denis, Sainte-Marie, Saint-Benoît…) | servie, partielle DITE |
+| GPU — droit de préemption urbain (info-surf) | `dpu_perimetres` (kind `dpu`) | **202 périmètres, 4/24 communes** (Le Tampon, Saint-Denis, Saint-Paul, Sainte-Marie) | servie, partielle DITE |
 | PEB (DGAC via annexes GPU) | `peb_dgac` (kind `peb`) | **4 zones A/B/C/D Roland-Garros** (dédoublonnées île) ; 3 entités sans lettre écartées | servie, partielle DITE |
 | Zonage ABC (DHUP) | `zonage_abc_dhup` (table `commune_zonage_abc`) | 24/24 — A : Les Avirons, L'Étang-Salé, Saint-Leu, Saint-Paul ; B1 : les 20 autres | servie |
 | SUP — assiettes GPU (existante, mise d'équerre) | `sup_gpu` + **sonde catégorielle** | inventaire 9 catégories en vigueur | servie |
@@ -227,6 +227,64 @@ Deux sources entrées par la porte du Circuit. **Verrous : 16/16 verts** après 
 
 Catalogue 107 sources (+2) · vanne `dfi`/`iris_rp` · CLI `ingest-dfi` (avec rejeu permis + filtre) et `ingest-iris-rp` · filtres riches joués (**dfi ok** après la leçon PDP/EDNC, **iris_rp ok**) · sondes RÉELLES : DFI api data.gouv (`2026-06-19` lu), IRIS page insee.fr (millésime `2022` lu — pas de data.gouv pour les bases IC) · registre : `filiation_parcelle`, `iris_quartier`, `iris_commune_quartiers` + robinets `fiche_parcelle_filiation`/`fiche_parcelle_quartier`/`fiche_commune_quartiers` + `iris_quartier` déclaré NON_SONDES (un seul producteur, fiche + zone) · `tables.py`, `NOM_VERS_SLUG`, `reservoirs.csv`, `valeur.py` · fiches de règle `regles/filiation_parcelle.py` (choix rattachement) et `regles/iris_quartier.py` (dérivées + dénominateurs INSEE) · tests `tests/test_sources1_lot6.py` + compteurs figés (MODE_ET_CADENCE 105→107, sentinelle 96→98).
 
+## Lot 7 — Le catalogue mis d'équerre (clos)
+
+Aucune donnée nouvelle : le catalogue dit désormais l'état VRAI de tout ce qui manque encore.
+**Verrous : 16/16 verts** après le lot. Catalogue en base : **116 lignes** (107 au code + alias/legacy).
+
+### BDNB retirée de la vitrine
+
+`BDNB` passe `a_faire` → **`retiree`** par le mécanisme RETRAITS existant (comme EDF SEI/MOBPRO),
+raison : « ne couvre pas le 974 au millésime courant (2026-02-a métropole seule — 0 ligne 974
+sur 22,3 M vérifiées, SCORING-3 L3) ». **Rien de détruit** : l'ingestion (`bdnb.py`), le banc K0
+(`l3_bdnb.py`), le CRON re-sonde et la **sonde sentinelle data.gouv restent actifs** (vérifié en
+base : `source_veille` methode=api, actif=true) — le retrait tombera de lui-même au premier
+millésime couvrant le 974.
+
+### Sept chantiers nommés (en attente de demande)
+
+Une ligne `data_sources` chacune — statut **`a_faire`** (l'enum n'a pas de statut « chantier »,
+décision), organisme à solliciter en tête des notes, mode `absente`, raison de non-surveillance
+« CHANTIER — en attente de la demande », slug + carte + réservoir posés (aucune table tant que
+rien n'est remis) :
+
+| Chantier | À solliciter |
+|---|---|
+| Zonages d'assainissement SIG complets (20 communes hors GPU) | 5 EPCI / régies |
+| Inventaires ZAE (L.318-8-2 CU) | 5 EPCI |
+| Périmètres de ZAC | EPCI / communes / EPF Réunion |
+| OPAH / PIG (périmètres exacts) | Anah / EPCI |
+| Périmètres ORT infra-communaux (Denormandie au périmètre) | EPCI |
+| ENS + zones de préemption ENS | Conseil départemental |
+| Micro-données OLL | ADIL / AGORAH |
+
+### Cerema — une convention pour trois
+
+`Fichiers fonciers (Cerema)` (entrée M74 EXISTANTE enrichie — pas doublée), **`LOVAC`** et
+**`DV3F`** (lignes neuves) : statut `manuel` + fiabilité **`SOUS_CONVENTION`** (l'enum
+ReliabilityLevel l'a ; DataSourceStatus n'a pas de statut convention — décision), avec la note
+du mandat : **« LOVAC réservé aux collectivités et à leurs prestataires »** (un éditeur privé
+n'y a pas accès en propre — passer par une collectivité mandante, geste Vic). En attendant :
+DVF ouvert + MAJIC PM + DFI (servis), vacance INSEE RP par IRIS (lot 6), échantillon
+producteur Région (lot 4).
+
+### DEMANDE-REGION-EPCI.md
+
+`docs/CIRCUIT/DEMANDE-REGION-EPCI.md` prêt à envoyer, par destinataire (Région, les 5 EPCI,
+Département, AGORAH/ADIL, DEAL, communes) — chaque demande avec l'usage LABUSE concret et le
+format souhaité. Les listes REPRENNENT ce que les lots ont mesuré : les 20 communes sans DPU au
+GPU (lot 1 — au passage, la liste des 4 publiantes est CORRIGÉE : Le Tampon, Saint-Denis,
+Saint-Paul, Sainte-Marie, mesurée en base), le DPE des ravines non diffusé (lot 2), la couche
+SAR officielle introuvable + SAR 2050 (lot 4), les périmètres ORT infra-communaux (lot 5), et
+la section 4 de SOURCES-CANDIDATES.md (SIG PEIGEO, cadastre solaire, TCSP, observatoires
+AGORAH, LiDAR régional, republication du DVF Région figé).
+
+### Gardes
+
+`tests/test_sources1_lot7.py` (5 tests : retrait avec veille vivante, chantiers avec organisme,
+convention Cerema, demande committée, pont/carte) ; compteurs figés 107→116 (MODE_ET_CADENCE)
+et 98→107 (noms du catalogue code).
+
 ## Décisions prises en autonomie
 
 - Étape 0 : `main` local étant extrait dans un autre worktree, la branche part de `origin/main` (strictement identique, `ea6fd161`).
@@ -261,5 +319,10 @@ Catalogue 107 sources (+2) · vanne `dfi`/`iris_rp` · CLI `ingest-dfi` (avec re
 - Lot 6 · rattachement des permis : la filiation DFI ne se joue QUE sur les permis encore sans géométrie après le canal géométrique (cadastre d'époque premier — sa géométrie est exacte là où elle existe) ; l'écart entre canaux est un contrôle croisé, pas un conflit.
 - Lot 6 · sonde IRIS : les bases infra-communales INSEE n'existent pas sur data.gouv — sonde `page` sur le sommaire insee.fr (regex millésime « Logement en (20\d{2}) »), à défaut d'un `last_update` machine.
 - Lot 6 · duckdb : lecture distante du parquet DFI via duckdb/httpfs (déjà en dépendance pyproject depuis ZONE-DONNÉES) — jamais le CSV national de 3,5 Go.
+
+- Lot 7 · statut « chantier » : l'enum DataSourceStatus n'en a pas — les chantiers entrent en `a_faire` avec « CHANTIER (SOURCES-1 lot 7) » en tête des notes et l'organisme à solliciter ; pas de statut inventé en base.
+- Lot 7 · statut « convention » : DataSourceStatus n'a pas `sous_convention` mais ReliabilityLevel OUI — les trois lignes Cerema restent `manuel` (hors automatisation) avec fiabilité `SOUS_CONVENTION`.
+- Lot 7 · « Fichiers fonciers (Cerema) » existait déjà au catalogue code (entrée M74, riche des interdits de l'acte d'engagement) — enrichie de la convention lot 7, jamais doublée (un doublon de nom = deux vérités).
+- Lot 7 · BDNB : retrait par le mécanisme RETRAITS existant, ingestion/banc K0/CRON/sonde CONSERVÉS — la vitrine dit « retirée », le chantier reste armé pour le prochain millésime.
 
 *(chapitres suivants à venir)*
