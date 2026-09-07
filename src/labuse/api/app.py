@@ -5083,6 +5083,15 @@ _VIRTUAL_MAP_KINDS: dict[str, tuple[str, tuple[str, ...] | None]] = {
     "casias": ("sol_pollue", ("casias", "instruction")),
 }
 
+# COUCHES-1 lot 7 (G1) — couches (kinds STOCKÉS) dont le clic mérite un popup RICHE : la source
+# porte des champs à valeur métier non exposés (SUP type/acte/gestionnaire, ER/EBC prescription,
+# CASIAS nom/activité/état, ZNIEFF n°/nom, PPR/aléa document/prescription, DPU/PEB libellé). On joint
+# `attrs` complet à la géométrie POUR CES KINDS SEULEMENT (petits volumes — jamais les semis de points).
+_RICH_POPUP_KINDS: frozenset[str] = frozenset({
+    "sup", "plu_gpu_prescription", "sol_pollue", "znieff", "ppr", "georisque_alea",
+    "dpu", "peb", "ens", "zone_humide", "dpf",
+})
+
 # M137-W — resserrement d'AFFICHAGE de la couche sport OSM (subtype 'sport'). On ne garde à l'écran
 # que ce qui compte pour du foncier : stade, gymnase, piscine, complexe sportif. Le tag OSM `leisure`
 # n'ayant PAS été stocké (seul le nom l'est), le tri se fait par NOM : ~5 100 terrains sans nom
@@ -5166,6 +5175,10 @@ def map_layers_geojson(kind: str, commune: str | None = None,
                   sl.attrs->>'tension' AS tension, sl.attrs->>'nature' AS nature,
                   -- SOURCES-1 lot 2 : code culture RPG (couche « Cultures déclarées »)
                   sl.attrs->>'code_cultu' AS code_cultu,
+                  -- COUCHES-1 lot 7 (G1) — attrs COMPLET pour les couches à popup riche : le clic
+                  -- exposait « catégorie » seule alors que la source porte type/acte/gestionnaire (SUP),
+                  -- bénéficiaire/destination (ER), nom/activité/état (CASIAS), n°/nom (ZNIEFF), etc.
+                  sl.attrs AS attrs,
                   -- RETOURS-14 S6 : géométrie simplifiée MATÉRIALISÉE (geom_simple, entretenue par
                   -- ensure_geom_2975) — la simplification à la volée coûtait ~11 s sur les aléas et
                   -- la couche restait muette au premier clic. Repli à la volée si non peuplée.
@@ -5191,13 +5204,18 @@ def map_layers_geojson(kind: str, commune: str | None = None,
     # jamais en dur à l'écran) et `tension` (HT) voyagent avec la géométrie — null ailleurs.
     # RETOURS-13 : + `classe` (R6, classe d'affichage des aléas — le degré réel, jamais écrasé),
     # `etat` (R5, tcsp en_service), `lignes_noms`/`reseau` (R9, bulle d'arrêt : nom + lignes + réseau).
+    # COUCHES-1 lot 7 (G1) — `attrs` complet joint SEULEMENT pour les couches à popup riche (petites :
+    # SUP 417, ER/EBC 10 490, CASIAS 513, ZNIEFF 162, PPR 164, aléas 993, DPU 202, PEB 4…) — jamais
+    # pour les gros semis de points (amenite/BPE) où il alourdirait la charge pour rien.
+    _rich = kind in _RICH_POPUP_KINDS
     feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
               "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"],
                              "niveau": r["niveau"], "classe": r["classe"], "etat": r["etat"],
                              "lignes_noms": r["lignes_noms"], "reseau": r["reseau"],
                              "critere": r["critere"],
                              "concordance": r["concordance"], "tension": r["tension"],
-                             "nature": r["nature"], "code_cultu": r["code_cultu"]}}
+                             "nature": r["nature"], "code_cultu": r["code_cultu"],
+                             **({"attrs": r["attrs"]} if _rich else {})}}
              for r in rows if r["g"]]
     # M106 : millésime SERVI, jamais en dur (doctrine M86). FIX-COUCHES P3 : on distingue désormais
     # deux dates — le MILLÉSIME AMONT (data_sources.source_millesime, la vraie fraîcheur de la donnée,

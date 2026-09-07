@@ -506,6 +506,54 @@ const EQUIP_CATS = EQUIP_META.map((e) => e.key)
 // M55-A item 4 : libellé CLIENT d'une catégorie d'équipement (« École », « Commerce »…) —
 // la même source que la légende (EQUIP_META), pour ne jamais exposer la clé technique au clic.
 const EQUIP_LABEL: Record<string, string> = Object.fromEntries(EQUIP_META.map((e) => [e.key, e.label]))
+// COUCHES-1 lot 7 (G1) — POPUPS RICHES par couche. Le clic n'exposait que « catégorie » (ou rien)
+// alors que la source porte des champs à valeur métier. Chaque entrée lit properties.attrs (jsonb
+// joint par l'API pour les couches à popup riche) ; libellés CLIENT, jamais la clé technique ; les
+// champs vides sont omis (jamais « — » vide), un `link:true` devient un lien cliquable.
+type PopupField = { key: string; label: string; link?: boolean }
+const OVERLAY_POPUP: Record<string, { titre: string; fields: PopupField[] }> = {
+  'ov-sup': { titre: 'Servitude d’utilité publique', fields: [
+    { key: 'nomsuplitt', label: 'Type' }, { key: 'typeass', label: 'Catégorie d’assiette' },
+    { key: 'nomass', label: 'Assiette' }, { key: 'urlreg', label: 'Acte / règlement', link: true } ] },
+  'ov-er': { titre: 'Emplacement réservé', fields: [
+    { key: 'txt', label: 'Destination / bénéficiaire' }, { key: 'libelle', label: 'Libellé' },
+    { key: 'url_source', label: 'Document', link: true } ] },
+  'ov-ebc': { titre: 'Espace boisé classé', fields: [
+    { key: 'txt', label: 'Prescription' }, { key: 'libelle', label: 'Libellé' },
+    { key: 'url_source', label: 'Règlement', link: true } ] },
+  'ov-dpu': { titre: 'Droit de préemption urbain', fields: [
+    { key: 'libelle', label: 'Type' }, { key: 'txt', label: 'Précision' } ] },
+  'ov-casias': { titre: 'Ancien site industriel (CASIAS)', fields: [
+    { key: 'statut', label: 'État du dossier' }, { key: 'adresse', label: 'Adresse' },
+    { key: 'superficie', label: 'Superficie' }, { key: 'identifiant_casias', label: 'Identifiant' } ] },
+  'ov-sis-pt': { titre: 'Secteur d’information sur les sols', fields: [
+    { key: 'statut', label: 'Statut' }, { key: 'adresse', label: 'Adresse' },
+    { key: 'id_sis', label: 'Identifiant SIS' }, { key: 'fiche_risque', label: 'Fiche', link: true } ] },
+  'ov-znieff': { titre: 'ZNIEFF', fields: [
+    { key: 'id_mnhn', label: 'Numéro national' }, { key: 'type', label: 'Type' },
+    { key: 'gestionnaire', label: 'Gestionnaire' }, { key: 'url_fiche', label: 'Fiche INPN', link: true } ] },
+  'ov-ppr': { titre: 'PPR multirisque', fields: [
+    { key: 'risque', label: 'Risque' }, { key: 'document', label: 'Document' },
+    { key: 'approbation', label: 'Approuvé le' }, { key: 'statut', label: 'Statut' } ] },
+  'ov-alea-inond': { titre: 'Aléa inondation', fields: [
+    { key: 'degre', label: 'Degré' }, { key: 'risque', label: 'Risque' }, { key: 'document', label: 'Document' } ] },
+  'ov-alea-mvt': { titre: 'Aléa mouvement de terrain', fields: [
+    { key: 'degre', label: 'Degré' }, { key: 'risque', label: 'Risque' }, { key: 'document', label: 'Document' } ] },
+  'ov-enp': { titre: 'Espace naturel protégé', fields: [
+    { key: 'type', label: 'Type' }, { key: 'surface_ha', label: 'Surface (ha)' } ] },
+  'ov-zone_humide': { titre: 'Zone humide', fields: [
+    { key: 'nature', label: 'Nature' }, { key: 'typename', label: 'Inventaire' } ] },
+  'ov-dpf': { titre: 'Ravine / domaine public fluvial', fields: [
+    { key: 'toponyme', label: 'Toponyme' }, { key: 'typologie', label: 'Type' }, { key: 'classe', label: 'Classe' } ] },
+}
+// attrs voyage en jsonb : MapLibre peut le sérialiser en chaîne selon la source — on parse au besoin.
+function attrsOf(p: Record<string, unknown>): Record<string, unknown> {
+  const a = p.attrs
+  if (a && typeof a === 'object') return a as Record<string, unknown>
+  if (typeof a === 'string') { try { return JSON.parse(a) } catch { return {} } }
+  return {}
+}
+
 // COUCHES-1 lot 5 (D6) + lot 4 (C1) — équipements OSM en PASTILLE COLORÉE (plus d'emoji, corps
 // étranger à la DA) : la catégorie se lit à la COULEUR (EQUIP_META), la source au CONTOUR (OSM =
 // anneau BLANC ; INSEE BPE = anneau sombre). Un seul langage visuel — deux couches de points colorés.
@@ -1478,6 +1526,38 @@ export function MapView() {
       // ne semble jamais figée pendant le fetch. `idle` = tout rendu, plus rien en attente.
       m.on('dataloading', () => setTilesLoading(true))
       m.on('idle', () => setTilesLoading(false))
+
+      // COUCHES-1 lot 7 (G1) — popups RICHES : chaque couche listée expose au clic les champs à
+      // valeur métier de sa source (SUP type/acte/gestionnaire, ER destination/bénéficiaire, CASIAS
+      // état/adresse, ZNIEFF n°/nom, PPR document/prescription…). Avant : 30+ couches muettes au clic.
+      for (const [layerId, spec] of Object.entries(OVERLAY_POPUP)) {
+        if (!m.getLayer(layerId)) continue
+        m.on('click', layerId, (e) => {
+          const f = e.features?.[0]
+          if (!f) return
+          const p = f.properties as Record<string, unknown>
+          const a = attrsOf(p)
+          const rows = spec.fields
+            .map((fd) => ({ fd, v: a[fd.key] }))
+            .filter((x) => x.v !== null && x.v !== undefined && String(x.v).trim() !== '')
+          const titre = String(p.name ?? '').trim() || spec.titre
+          const sousTitre = String(p.name ?? '').trim() ? spec.titre : ''
+          let html = `<div style="${POPUP_BOX_CSS}"><div style="font-weight:600">${escHtml(titre)}</div>`
+          if (sousTitre) html += `<div style="color:#96A69C;font-size:11px">${escHtml(sousTitre)}</div>`
+          for (const { fd, v } of rows) {
+            const val = fd.link
+              ? `<a href="${escHtml(v)}" target="_blank" rel="noreferrer" style="color:#5CE6A1">ouvrir ↗</a>`
+              : escHtml(v)
+            html += `<div style="margin-top:3px"><span style="color:#96A69C">${escHtml(fd.label)} : </span>${val}</div>`
+          }
+          if (!rows.length) html += `<div style="margin-top:3px;color:#96A69C">Détail non renseigné à la source.</div>`
+          html += '</div>'
+          new maplibregl.Popup({ closeButton: true, maxWidth: '320px' }).setLngLat(e.lngLat).setHTML(html).addTo(m)
+          ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
+        })
+        m.on('mouseenter', layerId, () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
+        m.on('mouseleave', layerId, () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
+      }
 
       ready.current = true
       setMapReady(true)
