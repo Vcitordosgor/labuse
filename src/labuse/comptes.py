@@ -184,20 +184,43 @@ def _norm_email(email: str) -> str:
 #: convention de recette (mandat) : nom préfixé « [CT-TEST] » et/ou e-mail « @labuse.test ».
 PREFIXE_TEST = "[CT-TEST]"
 DOMAINE_TEST = "@labuse.test"
+#: DASHBOARD-2 Lot 2 (recette) — filtre ÉLARGI : les comptes de recette/démo utilisent aussi ces
+#: domaines (mandat §14 + placeholders), l'alias Gmail « +test@ », et des noms « … Test »/« Recette ».
+DOMAINES_TEST = ("labuse.test", "labuse.local", "exemple.test", "ex.test",
+                 "example.com", "example.org", "example.net", "test.com")
+_DOMS_IN = "(" + ", ".join(f"'{d}'" for d in DOMAINES_TEST) + ")"
+#: un compte a-t-il un e-mail RÉEL (ni domaine de test, ni alias +test) ? Les motifs de NOM (« test »,
+#: « recette ») ne masquent QUE les comptes SANS e-mail réel — un vrai client au nom malheureux
+#: (ex. nom « ton-email@test.com » avec un Gmail réel) reste compté.
+_A_UN_EMAIL_REEL = (
+    "EXISTS (SELECT 1 FROM utilisateurs u WHERE u.compte_id = c.id AND u.email IS NOT NULL"
+    f" AND split_part(lower(u.email), '@', 2) NOT IN {_DOMS_IN}"
+    " AND lower(u.email) NOT LIKE '%+test@%')")
 
 #: prédicat SQL « compte de test/interne à MASQUER des chiffres client » — source UNIQUE, réutilisée
 #: par le compteur, la liste et le Pilotage (alias de table `c` pour comptes).
 _MASQUE_SQL = (
     "(c.plan = 'interne'"
     f" OR c.nom ILIKE '{PREFIXE_TEST}%'"
-    f" OR EXISTS (SELECT 1 FROM utilisateurs u WHERE u.compte_id = c.id"
-    f"            AND lower(u.email) LIKE '%{DOMAINE_TEST}'))")
+    " OR EXISTS (SELECT 1 FROM utilisateurs u WHERE u.compte_id = c.id"
+    f"            AND (split_part(lower(u.email), '@', 2) IN {_DOMS_IN}"
+    "                 OR lower(u.email) LIKE '%+test@%'))"
+    f" OR ((c.nom ILIKE '%test%' OR c.nom ILIKE '%recette%') AND NOT {_A_UN_EMAIL_REEL}))")
 
 
 def compte_est_test(nom: str | None, email: str | None) -> bool:
-    """Un compte de recette / interne (masqué des chiffres client)."""
-    return ((nom or "").startswith(PREFIXE_TEST)
-            or (email or "").strip().lower().endswith(DOMAINE_TEST))
+    """Un compte de recette / interne (masqué des chiffres client). DASHBOARD-2 Lot 2 : domaines de
+    test élargis (mandat §14) + alias Gmail « +test » + noms « …Test »/« Recette » — ces derniers
+    UNIQUEMENT quand le compte n'a pas d'e-mail réel (un vrai client au nom malheureux reste compté)."""
+    n = (nom or "").strip()
+    e = (email or "").strip().lower()
+    if n.startswith(PREFIXE_TEST):
+        return True
+    dom = e.rsplit("@", 1)[-1] if "@" in e else ""
+    if dom in DOMAINES_TEST or "+test@" in e:
+        return True
+    email_reel = bool(e) and dom not in DOMAINES_TEST and "+test@" not in e
+    return (not email_reel) and ("test" in n.lower() or "recette" in n.lower())
 
 
 def licences_actives(conn) -> int:

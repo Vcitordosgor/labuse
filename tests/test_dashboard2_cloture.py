@@ -66,6 +66,23 @@ def test_clients_le_meme_9(client, engine):
     assert pil2 == pil                        # ni l'interne ni le compte de test n'augmentent le compte
 
 
+def test_filtre_test_elargi():
+    """DASHBOARD-2 Lot 2 (recette « 18 à toucher pour 2 licences ») — le filtre de comptes de test
+    ÉLARGI attrape ce qu'il manquait : domaines @exemple.test / @example.com / @labuse.local, alias
+    Gmail « +test », noms « …Test » / « Recette » (sans e-mail réel) ; il NE masque PAS un vrai client
+    dont le NOM contient « test » mais dont l'e-mail est réel."""
+    from labuse.comptes import compte_est_test
+    assert compte_est_test("demo-e1", "demo-e1@exemple.test")
+    assert compte_est_test("checkout-preuve", "checkout-preuve@example.com")
+    assert compte_est_test("LABUSE (admin)", "gb-test-ae@labuse.local")
+    assert compte_est_test("Compte de test Vic (impayé)", "kampusreunion+test@gmail.com")
+    assert compte_est_test("Essai Test", None)           # nom « Test », sans e-mail
+    assert compte_est_test("Recette Onb", None)          # nom « Recette », sans e-mail
+    # PROTÉGÉS — vrais comptes, même nom malheureux : e-mail réel → comptés
+    assert not compte_est_test("ton-email@test.com", "kampusreunion@gmail.com")
+    assert not compte_est_test("Promoteur SA", "contact@promoteur.re")
+
+
 def test_courrier_a_deposer_le_meme(client, engine):
     """Jauge « Courrier » = pilotage.courrier.a_deposer = nb de demandes « à déposer » de la page."""
     cid = _seed_client(engine)

@@ -50,3 +50,23 @@ sinon il aurait cassé la garde `comptes_actifs inchangé` de COMPTE-2. La jauge
 `test_compte2_comptes` + `test_compte2_mailfile`, `test_comptes_actifs` (témoin restauré),
 `test_dashboard` 22/1 (1 échec pré-existant `test_ia_log_attribue_au_compte`, FK de seed, confirmé
 sans rapport). Rien d'autre touché que le Lot 2 (+ résolution de rebase). Rail/CSS non modifiés.
+
+## Suivi recette — « 18 à toucher pour 2 licences »
+
+Ouvert le segment : les 18 étaient **des comptes de test/recette que le filtre ne rattrapait pas**,
+pas de vrais invités. Le filtre COMPTE-2 ne cachait que `[CT-TEST]` / `@labuse.test` / plan interne ;
+or ces comptes utilisent **`@exemple.test` (×6), `@labuse.local`, `@example.com`**, l'alias Gmail
+**`+test`**, et des noms **« … Test »**, **« Recette Onb »**, **« Compte de test Vic »**.
+
+**Filtre élargi** (`comptes.compte_est_test` / `_MASQUE_SQL`, la source UNIQUE) : domaines de test du
+mandat §14 + alias `+test@` + noms `%test%`/`%recette%`. Les motifs de NOM ne masquent QUE les comptes
+**sans e-mail réel** — protection d'un vrai client au nom malheureux : ton compte réel
+`kampusreunion@gmail.com` a le nom placeholder « ton-email@test.com » et **reste compté**.
+
+Résultat sur la base réelle : **licences actives 2 → 1** (ton seul vrai compte), **masqués 31**,
+`/admin/pilotage.licences_actives (1) == /admin/licences.compteurs.licences_actives (1)`. Test de
+garde `test_dashboard2_cloture::test_filtre_test_elargi`.
+
+À noter (côté toi, pas un bug filtre) : ton compte réel `kampusreunion@gmail.com` porte le nom
+**« ton-email@test.com »** — un nom par défaut jamais renseigné. Il reste compté (e-mail réel), mais
+tu voudras peut-être le renommer.
