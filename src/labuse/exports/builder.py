@@ -13,8 +13,8 @@ from datetime import date
 
 from ..registre.valeur import Valeur
 from . import archive, numeros
-from .blocs import (autour, bilan, commune, financier, identite, marche, potentiel, reseaux,
-                    resume, risques, sources, zonage)
+from .blocs import (apporteur, autour, bilan, commune, financier, identite, marche, potentiel,
+                    reseaux, resume, risques, sources, zonage)
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, page_html, render_pdf
 
@@ -39,6 +39,8 @@ _FOOT = {
     "financier": ("Bilan indicatif établi sur des données publiques et sur les hypothèses saisies "
                   "par le porteur (en ambre). Ni un prix, ni une promesse, ni un conseil. Il ne "
                   "remplace pas un bilan promoteur professionnel. Données LABUSE au {au}."),
+    "apporteur": ("Document confidentiel remis par l'émetteur à son apporteur d'affaires. Ne pas "
+                  "transmettre au propriétaire. Ne vaut pas mandat. Données publiques LABUSE au {au}."),
 }
 
 #: composition de chaque document = la suite ordonnée des blocs (catalogue EXPORTS-SOURCES).
@@ -50,7 +52,12 @@ DOCUMENTS: dict[str, list] = {
     "flash": [b for b in _DOSSIER if b is not bilan],
     "resume": [resume],
     "financier": [financier],
+    "apporteur": [apporteur],
 }
+
+#: documents servis avec un contexte (au-delà des Valeur) : Financier (questionnaire+bilan),
+#: Apporteur (émetteur, dates, blocs adaptatifs). Le bloc reçoit rendu(valeurs, ctx).
+_AVEC_CONTEXTE = {"financier", "apporteur"}
 
 
 @dataclass(frozen=True)
@@ -61,9 +68,10 @@ class ResultatDoc:
     cartouche: Cartouche
 
 
-#: documents « au fil » (pas de page de garde pleine) : en-tête compact, comme les maquettes
-#: Résumé, Financier (le document, la page formulaire étant l'écran de l'app) et Apporteur.
-_COVER_COMPACTE = {"resume", "apporteur", "financier"}
+#: documents « au fil » (pas de page de garde pleine) : en-tête compact (Résumé, Financier).
+#: L'Apporteur rend son propre en-tête (confidentiel + « Un terrain à sonder ») → aucun en-tête ici.
+_COVER_COMPACTE = {"resume", "financier"}
+_COVER_AUCUNE = {"apporteur"}
 
 
 def _entete_compacte(document: str, idu: str, fiche: dict, numero: str, jour: date,
@@ -88,6 +96,8 @@ def _entete_compacte(document: str, idu: str, fiche: dict, numero: str, jour: da
 
 def _cover(document: str, idu: str, fiche: dict, numero: str, jour: date,
            valeurs: dict[str, Valeur]) -> str:
+    if document in _COVER_AUCUNE:
+        return ""      # le bloc rend son propre en-tête (Apporteur)
     if document in _COVER_COMPACTE:
         return _entete_compacte(document, idu, fiche, numero, jour, valeurs)
     label, subtitle = _LABEL.get(document, (document, ""))
@@ -162,6 +172,39 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
             "complet": etat["complet"], "existe": etat["existe"], "program": program}
 
 
+def _emetteur(db, compte_id: int | None) -> dict | None:
+    """L'émetteur du brief = le compte de l'utilisateur (non modifiable). Best-effort : si la
+    colonne n'existe pas sur cette base, on rend None (l'Apporteur imprime « (votre compte) »)."""
+    if not compte_id:
+        return None
+    from sqlalchemy import text
+    try:
+        row = db.execute(text("SELECT raison_sociale, email FROM comptes WHERE id = :i"),
+                         {"i": compte_id}).mappings().first()
+        if row:
+            return {"raison": row.get("raison_sociale"), "contact": row.get("email")}
+    except Exception:  # noqa: BLE001
+        pass
+    return None
+
+
+def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | None) -> dict:
+    """Contexte de l'Apporteur : émetteur (compte), dates d'émission/validité (90 j), et les
+    drapeaux des blocs adaptatifs (bâti / personne morale / usage industriel proche)."""
+    import json
+    from datetime import timedelta
+    lb = fiche.get("le_bien") or {}
+    pm = fiche.get("proprietaire_moral")
+    industriel = "ICPE" in json.dumps(fiche.get("lines") or [], ensure_ascii=False)
+    return {
+        "idu": idu, "adresse": fiche.get("adresse") or "", "emetteur": _emetteur(db, compte_id),
+        "emission": f"{jour:%d/%m/%Y}", "validite": f"{jour + timedelta(days=90):%d/%m/%Y}",
+        "is_bati": bool(lb.get("nb_batiments") or lb.get("emprise_batie_m2")),
+        "is_pm": isinstance(pm, dict) and bool(pm),
+        "industriel_proche": industriel,
+    }
+
+
 def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
                jour: date | None = None, compte_id: int | None = None) -> ResultatDoc:
     """Assemble le HTML complet d'un document et les Valeur lues (pour l'archive). Pour le Financier,
@@ -175,7 +218,11 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     blocs = DOCUMENTS[document]
     ids = sorted({cid for b in blocs for cid in b.IDS})
     valeurs = collecte(db, idu, ids, fiche=f)
-    ctx = _financier_contexte(db, idu, f, compte_id) if document == "financier" else None
+    ctx = None
+    if document == "financier":
+        ctx = _financier_contexte(db, idu, f, compte_id)
+    elif document == "apporteur":
+        ctx = _apporteur_contexte(db, idu, f, j, compte_id)
     label, _ = _LABEL.get(document, (document, ""))
     adresse = f.get("adresse") or ""
     au = f.get("donnees_labuse_au") or f"{j:%d/%m/%Y}"
@@ -186,7 +233,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     )
     corps = _cover(document, idu, f, numero, j, valeurs)
     for b in blocs:
-        corps += b.rendu(valeurs, ctx) if document == "financier" else b.rendu(valeurs)
+        corps += b.rendu(valeurs, ctx) if document in _AVEC_CONTEXTE else b.rendu(valeurs)
     html = page_html(label, cart, corps)
     return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart)
 
@@ -196,7 +243,7 @@ def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None =
     """Rend le PDF d'un document et, si `chemin_pdf` est donné, écrit le PDF + son archive JSON
     (reproductibilité — lot 1.6). Rend (bytes_pdf, ResultatDoc)."""
     res = construire(db, idu, document, fiche=fiche, jour=jour, compte_id=compte_id)
-    pdf = render_pdf(res.html)
+    pdf = render_pdf(res.html, forms=(document == "apporteur"))
     if chemin_pdf is not None:
         from pathlib import Path
         Path(chemin_pdf).write_bytes(pdf)

@@ -97,7 +97,9 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
             f'{_spans_cartouche(cartouche)}{corps_html}</body></html>')
 
 
-def render_pdf(page_html_str: str) -> bytes:
-    """HTML complet → PDF (WeasyPrint 69). base_url = le paquet exports (theme.css relative)."""
+def render_pdf(page_html_str: str, *, forms: bool = False) -> bytes:
+    """HTML complet → PDF (WeasyPrint 69). base_url = le paquet exports (theme.css relative).
+    `forms=True` : les <input>/<textarea> du gabarit deviennent des champs remplissables PDF
+    (Apporteur — lot 6)."""
     from weasyprint import HTML  # import paresseux : pango requis au rendu seulement
-    return HTML(string=page_html_str, base_url=str(_PKG)).write_pdf()
+    return HTML(string=page_html_str, base_url=str(_PKG)).write_pdf(pdf_forms=forms)
