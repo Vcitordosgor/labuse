@@ -42,18 +42,17 @@ class Template:
 #: Table de correspondance UNIQUE (COMPTE-2 Lot 1). Clés stables = valeurs `licence_mails.mail_key`.
 #: Les 16 templates du cycle de vie (4→19) sont refaits le 07/09 sur un gabarit unique chez Brevo.
 REGISTRE: dict[str, Template] = {
-    # COMPTE-2 (décision Vic) : onboarding par LIEN d'invitation (jamais un mot de passe envoyé) →
-    # 4 & 6 attendent LIEN_INVITATION, pas MDP_PROVISOIRE. Dépend d'un changement de param côté Brevo
-    # (voir compte-rendu) : tant que le template Brevo porte encore MDP_PROVISOIRE, verifier_templates
-    # le signale (params_manquants=[LIEN_INVITATION]) — signal utile, pas un envoi cassé (rien de live).
+    # COMPTE-2 (décision Vic, appliquée côté Brevo le 07/09) : onboarding par LIEN d'invitation (le client
+    # choisit son mot de passe en arrivant, jamais un mot de passe envoyé) → 4 & 6 portent LIEN_INVITATION,
+    # sans MDP_PROVISOIRE ni EMAIL (la ligne « votre identifiant » du bloc mot-de-passe a disparu).
     "essai":          Template(4,  "LABUSE-E-ESSAI-48H",    "Essai 48 h",
-                               ("PRENOM", "EMAIL", "LIEN_INVITATION", "FIN_ESSAI"), ("RENVOI",),
+                               ("PRENOM", "LIEN_INVITATION", "FIN_ESSAI"), ("RENVOI",),
                                "brevo_tpl_essai"),
     "souscription":   Template(5,  "LABUSE-0-SOUSCRIPTION",  "Lien de souscription",
                                ("PRENOM", "LIEN_SOUSCRIPTION"), ("RENVOI",),
                                "brevo_tpl_souscription"),
     "onboarding1":    Template(6,  "LABUSE-1-BIENVENUE",     "Mail de bienvenue",
-                               ("PRENOM", "EMAIL", "LIEN_INVITATION"), (),
+                               ("PRENOM", "LIEN_INVITATION"), (),
                                "brevo_tpl_onboarding_1"),
     "onboarding2":    Template(7,  "LABUSE-2-METHODE",       "Relance J+3",
                                ("PRENOM",), ("JAMAIS_CONNECTE",),
