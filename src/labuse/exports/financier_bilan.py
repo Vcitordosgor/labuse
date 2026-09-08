@@ -28,8 +28,16 @@ from __future__ import annotations
 TAUX_TVA_DEFAUT = 0.085                     # La Réunion, logement neuf (mandat 5.1)
 RAP_EUR_M2 = 0.68                           # redevance d'archéologie préventive (RELECTURE §5.2)
 PORTAGE_FORFAIT_PCT = 3.0                   # forfait si le client n'a pas saisi de taux
-COUT_FOURCHETTE = (2300.0, 2800.0)          # EPTB 2024 / dataset CDC (bas, haut) — pour les bornes
 PRIX_SORTIE_VAR = 0.05                      # ±5 % pour la sensibilité au prix de sortie
+
+
+def _cout_fourchette() -> tuple[float, float]:
+    """Fourchette de coût de construction (bas, haut) DÉRIVÉE de la source unique
+    (`hypotheses_faisabilite` du YAML — mandat hypothèses bilan, décision Vic 28/07/2026) : plus
+    jamais une constante autonome ici (une fourchette dupliquée = re-création du bug 2100)."""
+    from ..faisabilite.engine import Hypotheses
+    h = Hypotheses.charger()
+    return float(h.cout_construction_m2_bas), float(h.cout_construction_m2_haut)
 
 
 def _f(v):
@@ -126,7 +134,7 @@ def calculer(prog: dict, hyp: dict) -> dict:
     charge_centrale = _charge(prog, h, cout, prix_sortie)
 
     # 3 bornes : coût haut × sortie bas (basse) · coût bas × sortie haut (haute) · retenue (centrale)
-    cb, ch = COUT_FOURCHETTE
+    cb, ch = _cout_fourchette()
     ps_bas = prix_sortie * (1 - PRIX_SORTIE_VAR) if prix_sortie is not None else None
     ps_haut = prix_sortie * (1 + PRIX_SORTIE_VAR) if prix_sortie is not None else None
     charge = {

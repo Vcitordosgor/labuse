@@ -44,6 +44,15 @@ TVA_EXPLICATION = (
     "expert-comptable."
 )
 
+def _cout_construction_median() -> int:
+    """Défaut de coût de construction DÉRIVÉ de la source unique (`hypotheses_faisabilite` du YAML
+    — mandat hypothèses bilan, décision Vic 28/07/2026) : milieu de la fourchette auditée. Plus
+    jamais une constante autonome ici (un coût dupliqué = re-création du bug 2100)."""
+    from .faisabilite.engine import Hypotheses
+    h = Hypotheses.charger()
+    return round((h.cout_construction_m2_bas + h.cout_construction_m2_haut) / 2)
+
+
 #: pré-remplissages À SOURCE CONSTANTE (règle 1 : jamais une valeur sans sa source).
 _PREFILL_CONST: dict[str, tuple] = {
     "frais_acquisition_saisi_pct": (7, "usage standard : notaire et droits de mutation (7 à 8 %)"),
@@ -51,7 +60,8 @@ _PREFILL_CONST: dict[str, tuple] = {
     "aleas_saisi_pct": (4, "usage chantier : provision pour aléas (3 à 5 %)"),
     "marge_visee_saisi_pct": (9, "usage promoteur : marge cible sur le chiffre d'affaires"),
     "cout_construction_saisi_eur_m2": (
-        2550, "médiane régionale 2021-2025, EPTB 2024 / dataset CDC (2 300 à 2 800 €/m²)"),
+        _cout_construction_median(),
+        "médiane régionale 2021-2025, EPTB 2024 / dataset CDC (2 300 à 2 800 €/m²)"),
     "vrd_saisi_eur_m2": (90, "base VRD des hypothèses LABUSE, modulée par la viabilisation"),
     "duree_portage_saisi_mois": (29, "délai d'instruction médian (~9 mois) + 20 mois de chantier"),
 }
