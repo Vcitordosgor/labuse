@@ -246,14 +246,16 @@ export function SourcesPage() {
           <input data-sources-search value={q} onChange={(e) => setQ(e.target.value)}
             placeholder="Chercher une source, un producteur…"
             className="min-w-[200px] flex-[1_1_240px] rounded-lg border border-line bg-surface-2 px-3 py-2 text-[13px] text-txt placeholder:text-txt-dim focus:border-line-2 focus:outline-none" />
+          {/* RECETTE-1 R37 — arrondi aligné sur la DA (rounded-lg, comme la barre de recherche et les
+              cartes), au lieu du rounded-full qu'on ne retrouvait nulle part ailleurs. */}
           <button data-sources-chip="toutes" aria-pressed={theme == null} onClick={() => { setTheme(null); setThemeOuvert(false) }}
-            className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
+            className={`rounded-lg border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
               theme == null ? 'border-mint bg-mint text-mint-ink' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
             Toutes <span className="ml-1.5 font-mono text-[11px] opacity-70">{nTotal}</span>
           </button>
           <div className="relative">
             <button data-sources-theme-toggle aria-expanded={themeOuvert} onClick={() => setThemeOuvert((o) => !o)}
-              className={`rounded-full border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
+              className={`rounded-lg border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
                 theme != null ? 'border-mint bg-mint text-mint-ink' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
               {theme != null ? `Thème : ${theme}` : 'Filtrer par thème'} {themeOuvert ? '▴' : '▾'}
             </button>

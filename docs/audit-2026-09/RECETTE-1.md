@@ -237,5 +237,23 @@ Le panneau des couches est 100 % piloté par deux tableaux (`LeftPanel.tsx`). **
 
 ---
 
-## LOT 9 & 10 — à faire
-*(non entamés)*
+## LOT 9 — Détails visuels  *(commit 9)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R37 | Pilule « Toutes N » — arrondi hors DA | **corrigé** | `SourcesPage.tsx` (`rounded-full`→`rounded-lg`) |
+| R38 | Case « Piscine » sur deux lignes | **corrigé** (interprété) | `TaxeAmenagement.tsx` (label `min-h` 2 lignes) |
+| R39 | Étiquette commune « Sainte-Suzanne » chevauche | **corrigé** | `MapView.tsx` (OFFSETS) |
+| R40 | « i » sur « Score densif. » | **corrigé** | `Renouvellement.tsx` (Tip + « i ») |
+
+**R37** — les deux pilules « Toutes {n} » et « Filtrer par thème » passaient de `rounded-full` (le seul de l'app) à **`rounded-lg`**, arrondi de la barre de recherche voisine et des cartes.
+**R38** — la case « Piscine » (`NumField`, label court) est dans une grille 2 colonnes où ses voisines « Panneaux PV au sol » / « Stationnement ext. » tiennent sur **deux lignes**. Le label réserve désormais **2 lignes** (`min-h-[2.1em]`) → les champs s'alignent et « Piscine » tient sur deux lignes. *(Interprétation la plus plausible ; à valider aux pixels si Vic visait une autre « case ».)*
+**R39** — les étiquettes de communes sont des marqueurs HTML avec décalages pixels manuels (`OFFSETS`, `MapView.tsx`). « Sainte-Suzanne » remontée (`y` −6 → **−22**) et « Saint-André » descendue (`[0, 12]`) pour dégager les deux.
+**R40** — « Score densif. » porte un **« i »** (pastille, `<Tip>`) qui explique le calcul : *« Score 0–100… rang percentile dans le segment sur 3 critères pondérés — capacité résiduelle nette (47 %), assiette (29 %), rotation du bâti (24 %). Estimé. »* (source : `renouvellement.py` + `config/renouvellement.yaml`). Le `title` natif redondant est retiré (cohérent R28).
+
+**Vérifs Lot 9** : `tsc` 0 ; `vitest` **194/194**.
+
+---
+
+## LOT 10 — à faire
+*(non entamé)*

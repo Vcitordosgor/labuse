@@ -24,7 +24,9 @@ function NumField({ label, value, onChange, unit, placeholder, hint, dataAttr }:
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="label-caps text-[9.5px] text-txt-dim">{label}</span>
+      {/* RECETTE-1 R38 — la case « Piscine » (label court) réserve DEUX lignes comme ses voisines
+          « Panneaux PV au sol » / « Stationnement ext. » : les champs de la grille 2 colonnes s'alignent. */}
+      <span className="label-caps flex min-h-[2.1em] items-start text-[9.5px] leading-tight text-txt-dim">{label}</span>
       <span className="flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 focus-within:border-mint">
         <input
           data-taxe-field={dataAttr}

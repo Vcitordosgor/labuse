@@ -225,7 +225,15 @@ export function DensifierTablePanel() {
                   {/* RECETTE-1 R8 — colonne « Classement » (pastille de palier, scoring q_v14) RETIRÉE :
                       le classement ne s'affiche que dans « Demander à LABUSE » et la fiche. Reste le
                       « Score densif. », métrique PROPRE à cet outil (parcel_renouvellement, 0-100). */}
-                  <th className="px-2 py-1.5 text-right" title="Score de densification 0-100 (potentiel de renouvellement) — métrique propre à cet outil.">Score densif.</th>
+                  {/* RECETTE-1 R40 — « i » à côté de « Score densif. » expliquant son calcul (le native
+                      title redondant est retiré, cf. R28). */}
+                  <th className="px-2 py-1.5 text-right">
+                    <span className="inline-flex items-center gap-1">Score densif.
+                      <Tip tip="Score 0–100 de potentiel de densification (métrique propre à cet outil, ≠ classement). Heuristique déterministe : rang percentile de la parcelle DANS son segment, sur 3 critères pondérés — capacité résiduelle nette des contraintes (47 %), taille de l'assiette (29 %), rotation du bâti du secteur (24 %). Estimé, pas une expertise.">
+                        <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+                      </Tip>
+                    </span>
+                  </th>
                   {/* RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine) :
                       c'est ELLE qui pilote le score de densification. La SDP brute est en infobulle. */}
                   <th className="px-2 py-1.5 text-right" title="SDP résiduelle NETTE des contraintes physiques (PPR zone rouge, pente > 30 %, ravine). C'est la capacité réellement mobilisable — et ce qui classe la parcelle.">SDP nette</th>

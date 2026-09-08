@@ -1945,8 +1945,11 @@ export function MapView() {
       aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
     }
     // anti-chevauchement (côte Nord dense) : décalages pixels manuels, consignés
+    // RECETTE-1 R39 — « Sainte-Suzanne » chevauchait « Saint-André » : on la REMONTE (y plus négatif,
+    // -6 → -22) et on descend légèrement Saint-André pour dégager les deux étiquettes.
     const OFFSETS: Record<string, [number, number]> = {
-      'Saint-Denis': [-14, -10], 'Sainte-Marie': [16, 8], 'Sainte-Suzanne': [26, -6],
+      'Saint-Denis': [-14, -10], 'Sainte-Marie': [16, 8], 'Sainte-Suzanne': [26, -22],
+      'Saint-André': [0, 12],
       'Le Port': [-18, -4], 'La Possession': [10, 12],
     }
     for (const c of communes.data) {
