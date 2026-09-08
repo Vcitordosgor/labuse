@@ -160,7 +160,7 @@ def test_rules_summary_micro_opportunite_pousse_assemblage():
 
 def test_rules_summary_a_creuser_reste_prudent():
     md = rules_summary(_facts("a_creuser", completude=35, silent=["PPR", "pente"]))
-    assert "Neutre" in md                                      # M137 — chip court servi
+    assert "Sans signal" in md                                 # PALIERS-1 — vocabulaire unique
     assert "PPR" in md and "pente" in md                       # données manquantes citées
     # M36 Lot B : plus de « complétude N/100 » — la fiabilité se dit par les sources muettes
     assert "2 source(s) muette(s)" in md and "/100" not in md.split("**Fiabilité**")[1]
@@ -179,7 +179,7 @@ def test_rules_summary_declassee_bati():
     md = rules_summary(_facts("declasse_bati_sature", label="Peu de potentiel",
                               motif="bâtie saturée — ratio 72 %",
                               bati=("deja_bati", "Parcelle déjà bâtie", 72)))
-    assert "Faible" in md                                      # M137 — chip court servi
+    assert "Sans signal" in md                                 # PALIERS-1 — déclassement = motif, palier « Sans signal »
     assert "déjà bâtie" in md.lower() or "saturée" in md       # occupation réelle citée
     assert "72 %" in md
 

@@ -87,15 +87,17 @@ const statusLineExpr = (clair: boolean): maplibregl.ExpressionSpecification => !
   'case', ETAGE0, ECARTEE_COLOR,
   ['match', TIER_V2,
     ...Object.entries(ALL_TIER_META).flatMap(([k, mt]) => [k,
-      k === 'brulante' ? MAP_THEME.clair.contourBrulante
-        : k === 'chaude' ? MAP_THEME.clair.contourChaude
+      // PALIERS-1 — priorite/a_suivre (codes v2 q_v14) colorés comme brulante/chaude (codes servis)
+      k === 'brulante' || k === 'priorite' ? MAP_THEME.clair.contourBrulante
+        : k === 'chaude' || k === 'a_suivre' ? MAP_THEME.clair.contourChaude
           : k === 'ecartee' ? ECARTEE_COLOR : mt.color]),
     LEGACY_COLOR],
 ] as unknown as maplibregl.ExpressionSpecification
 // liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0). M48 (F4) : la branche de repli
 // `status` (matrice morte) est retirée — le liseré suit le tier v2 servi.
 const PROMUES_FILTER: maplibregl.FilterSpecification = [
-  'all', ['in', TIER_V2, ['literal', ['brulante', 'chaude']]], ['!', ETAGE0],
+  // PALIERS-1 — les DEUX vocabulaires : servi (brulante/chaude) + q_v14 (priorite/a_suivre)
+  'all', ['in', TIER_V2, ['literal', ['brulante', 'chaude', 'priorite', 'a_suivre']]], ['!', ETAGE0],
 ] as unknown as maplibregl.FilterSpecification
 
 // M6.1 item 1 — couche « Zonage PLU (parcelles) » : le REMPLISSAGE passe en couleur par
@@ -1159,7 +1161,7 @@ export function MapView() {
       // v1.3 a disparu : un seul monde visible, le v2.
       m.addLayer({
         id: 'parcels-brulantes', type: 'line', source: 'parcels',
-        filter: ['all', ['==', TIER_V2, 'brulante'], ['!', ETAGE0]] as never,
+        filter: ['all', ['in', TIER_V2, ['literal', ['brulante', 'priorite']]], ['!', ETAGE0]] as never,
         paint: { 'line-color': T_SOMBRE.lisereBrulantes, 'line-width': 1.8, 'line-opacity': 0.95 },
       })
       // M55-F point 4 (décision Vic) : les étiquettes « #rang » ont QUITTÉ la carte — la
@@ -1887,7 +1889,7 @@ export function MapView() {
     if (m.getLayer('parcels-brulantes')) {
       m.setLayoutProperty('parcels-brulantes', 'visibility', vis(!ile && opinion))
       m.setFilter('parcels-brulantes', ['all',
-        ['==', TIER_V2, 'brulante'], ['!', ETAGE0], exprPalette] as never)
+        ['in', TIER_V2, ['literal', ['brulante', 'priorite']]], ['!', ETAGE0], exprPalette] as never)
     }
     // M64-P1 (A) : `basemap` dans les deps — au changement de thème, cet effet (seul à connaître le
     // mode zonage/opinion/factuel/neutre) se ré-exécute et RE-POSE la bonne fill-color des parcelles.

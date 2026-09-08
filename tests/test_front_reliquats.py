@@ -119,13 +119,14 @@ def test_r3_tooltip_jauge_completude():
 
 
 def test_m135_echelle_action():
-    # M135 — l'échelle SERVIE est une échelle d'ACTION (chip court `label`), plus jamais
-    # « brûlante/chaude/à creuser/potentiel long terme » servis comme label de tier.
-    assert "brulante: { label: 'Priorité'" in STATUS
-    assert "chaude: { label: 'À suivre'" in STATUS
-    assert "reserve_fonciere: { label: 'Long terme'" in STATUS
-    assert "a_creuser: { label: 'Neutre'" in STATUS
-    for mot in ("label: 'Brûlante'", "label: 'Chaude'", "label: 'À creuser'", "label: 'Potentiel long terme'"):
+    # PALIERS-1 — l'échelle SERVIE est UN vocabulaire d'action à quatre valeurs (PALIER_META),
+    # plus jamais « Long terme / Neutre / Faible », ni « brûlante / chaude / à creuser » comme label.
+    assert "priorite: { label: 'Priorité'" in STATUS
+    assert "a_suivre: { label: 'À suivre'" in STATUS
+    assert "sans_signal: { label: 'Sans signal'" in STATUS
+    assert "ecartee: { label: 'Écartée'" in STATUS
+    for mot in ("label: 'Long terme'", "label: 'Neutre'", "label: 'Faible'",
+                "label: 'Brûlante'", "label: 'Chaude'", "label: 'À creuser'"):
         assert mot not in STATUS, f"ancien libellé servi : {mot}"
 
 
@@ -271,28 +272,32 @@ def test_r5_api_helpers():
 
 
 def test_m135_tiers_front_back_alignes():
-    """M135 — le mapping des tiers vit à UN endroit canonique (backend tiers_client) ; le front
-    status.ts le reflète EXACTEMENT (TS/Python ne partagent pas un littéral → ce test est le
-    garde-fou anti-dérive). Chip court `label` + libellé `long`, pour chaque tier v2."""
+    """PALIERS-1 — le mapping des paliers vit à UN endroit canonique (backend tiers_client) ; le
+    front status.ts le reflète EXACTEMENT (TS/Python ne partagent pas un littéral → garde-fou
+    anti-dérive). Domaine = 4 valeurs (PALIER_META) + correspondance lecture des anciens codes."""
     import re
-    from labuse.scoring.tiers_client import TIERS_CLIENT
+    from labuse.scoring.tiers_client import PALIERS_CLIENT, CORRESPONDANCE_LEGACY
     status = (ROOT / "frontend/src/lib/status.ts").read_text(encoding="utf-8")
-    # scoper au bloc TIER_V2_META (la matrice STATUT_META porte aussi une clé `chaude`)
-    blk = status.split("export const TIER_V2_META", 1)[1].split("LEGEND_V2_ORDER", 1)[0]
-    dblk = status.split("export const TIER_DECLASSE_META", 1)[1].split("DECLASSE_ORDER", 1)[0]
+    # 1) le domaine canonique (PALIER_META) : les 4 codes, chip `label` + libellé `long`, identiques.
+    blk = status.split("export const PALIER_META", 1)[1].split("export const CORRESPONDANCE_LEGACY", 1)[0]
 
     def meta(code: str, src: str) -> tuple[str, str]:
         m = re.search(rf"\b{code}: {{ label: '([^']*)', long: '([^']*)'", src)
-        assert m, f"tier {code} introuvable (format label/long)"
+        assert m, f"palier {code} introuvable (format label/long)"
         return m.group(1), m.group(2)
 
-    for code in ("brulante", "chaude", "reserve_fonciere", "a_creuser", "ecartee"):
+    for code in ("priorite", "a_suivre", "sans_signal", "ecartee"):
         court, lng = meta(code, blk)
-        assert (court, lng) == TIERS_CLIENT[code], (
-            f"DÉRIVE front/back sur {code} : front={court!r}/{lng!r} ≠ back={TIERS_CLIENT[code]}")
-    # la famille declasse_* collapse sur « Faible / Peu de potentiel » des deux côtés
-    dc, dl = meta("declasse_bati_sature", dblk)
-    assert (dc, dl) == TIERS_CLIENT["declasse_bati_sature"] == ("Faible", "Peu de potentiel")
+        assert (court, lng) == PALIERS_CLIENT[code], (
+            f"DÉRIVE front/back sur {code} : front={court!r}/{lng!r} ≠ back={PALIERS_CLIENT[code]}")
+
+    # 2) la correspondance lecture des anciens codes est la MÊME des deux côtés (aucune valeur
+    #    « Long terme / Neutre / Faible » ne survit : tout projette sur les 4 paliers).
+    lblk = status.split("export const CORRESPONDANCE_LEGACY", 1)[1].split("export function codePalier", 1)[0]
+    for legacy, canon in CORRESPONDANCE_LEGACY.items():
+        m = re.search(rf"\b{legacy}: '([^']*)'", lblk)
+        assert m and m.group(1) == canon, (
+            f"DÉRIVE correspondance legacy sur {legacy} : front={m and m.group(1)!r} ≠ back={canon!r}")
 
 
 def test_m135_fraction_sql_egale_python():

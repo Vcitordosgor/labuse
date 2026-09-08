@@ -185,8 +185,8 @@ def _confiance_label(score) -> str:
 
 
 def _action_defaut(status: str | None) -> str:
-    if status in ("brulante", "chaude"):
+    if status in ("brulante", "chaude", "priorite", "a_suivre"):  # PALIERS-1 : deux vocabulaires
         return "Sécuriser le foncier : qualifier le terrain et approcher le propriétaire"
-    if status in ("a_creuser", "reserve_fonciere"):
+    if status in ("a_creuser", "reserve_fonciere", "sans_signal"):
         return "Instruire les contraintes avant d'engager une démarche"
     return "À vérifier avant tout engagement"

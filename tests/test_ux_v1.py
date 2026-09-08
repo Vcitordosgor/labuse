@@ -44,10 +44,11 @@ def test_source_pour_run_rattache_les_runs_au_catalogue():
 @pytest.mark.parametrize(
     ("q", "attendu"),
     [
-        # M5.1 : le stub NL émet les TIERS v2 (« brûlante » = tier v2 ; « à surveiller »
-        # n'existe plus → réserve foncière) — plus jamais `statuts` (matrice, deprecated).
-        ("les chaudes de Saint-Pierre", {"commune": "Saint-Pierre", "tiers": ["chaude"]}),
-        ("les brûlantes de Saint-Paul", {"commune": "Saint-Paul", "tiers": ["brulante"]}),
+        # M5.1 : le stub NL émet les TIERS v2 — plus jamais `statuts` (matrice, deprecated).
+        # PALIERS-1 : la tête matche les DEUX vocabulaires (chaude↔a_suivre, brulante↔priorite)
+        # pour que la recherche serve Priorité/À suivre quel que soit le run.
+        ("les chaudes de Saint-Pierre", {"commune": "Saint-Pierre", "tiers": ["chaude", "a_suivre"]}),
+        ("les brûlantes de Saint-Paul", {"commune": "Saint-Paul", "tiers": ["brulante", "priorite"]}),
         ("à surveiller avec pollution", {"tiers": ["reserve_fonciere"], "flags": ["sol_pollue"]}),
     ],
 )

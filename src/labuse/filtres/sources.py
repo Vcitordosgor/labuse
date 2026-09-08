@@ -801,7 +801,7 @@ def _potentiel_region_recouvrement() -> Controle:
               JOIN spatial_layers il ON il.kind = 'potentiel_foncier'
                 AND ST_Intersects(p.geom_2975, il.geom_2975))
             SELECT count(*) AS total,
-                   count(*) FILTER (WHERE tier IN ('brulante','chaude','a_creuser')) AS hauts
+                   count(*) FILTER (WHERE tier IN ('brulante','chaude','a_creuser','priorite','a_suivre','sans_signal')) AS hauts
             FROM dans"""), {"run": run}).mappings().first()
         total = int(row["total"] or 0)
         hauts = int(row["hauts"] or 0)

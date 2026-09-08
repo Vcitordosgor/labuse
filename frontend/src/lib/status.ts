@@ -13,7 +13,7 @@ import type { Statut } from './types'
 export const STATUT_META: Record<Statut, { label: string; long: string; color: string }> = {
   chaude: { label: 'Priorité', long: 'À contacter en priorité', color: '#5CE6A1' },
   a_surveiller: { label: 'À suivre', long: 'À suivre de près', color: '#4ADE96' },
-  a_creuser: { label: 'Neutre', long: 'Sans signal particulier', color: '#E8B44C' },
+  a_creuser: { label: 'Sans signal', long: 'Sans signal de vente à court terme', color: '#E8B44C' },
   ecartee: { label: 'Écartée', long: 'Écartée — motif en fiche', color: '#E8695A' },
   exclue: { label: 'Écartée', long: 'Écartée — motif en fiche', color: '#6B7A72' },
 }
@@ -21,51 +21,75 @@ export const STATUT_META: Record<Statut, { label: string; long: string; color: s
 // Ordre d'affichage de la légende (les 4 statuts de la matrice).
 export const LEGEND_ORDER: Statut[] = ['chaude', 'a_surveiller', 'a_creuser', 'ecartee']
 
-// ── Scoring v2 (M5, P×C) — tiers et verdict effectif ─────────────────────────
-// Palette gravée au lot 4 (bloc « Pourquoi ce score ») : source de vérité UNIQUE ici.
-export type TierV2 = 'brulante' | 'chaude' | 'a_creuser' | 'reserve_fonciere' | 'ecartee'
-// M135 — `label` = chip COURT (écran), `long` = libellé long (« i », fiche). Couleurs INCHANGÉES.
-export const TIER_V2_META: Record<TierV2, { label: string; long: string; color: string }> = {
-  brulante: { label: 'Priorité', long: 'À contacter en priorité', color: '#E8695A' },
-  chaude: { label: 'À suivre', long: 'À suivre de près', color: '#E8B44C' },
-  a_creuser: { label: 'Neutre', long: 'Sans signal particulier', color: '#8FA69A' },
-  reserve_fonciere: { label: 'Long terme', long: 'À revoir dans 1-2 ans', color: '#6FA8DC' },
+// ── PALIERS-1 — UN SEUL VOCABULAIRE : quatre paliers, aucune autre valeur ─────
+// Le domaine de tier_opportunite est Priorité / À suivre / Sans signal / Écartée. Plus de
+// brûlante / chaude / réserve / à creuser / déclassé, ni « Long terme / Neutre / Faible ».
+// MÊME mapping que le backend src/labuse/scoring/tiers_client.py (test anti-dérive).
+export type Palier = 'priorite' | 'a_suivre' | 'sans_signal' | 'ecartee'
+// `label` = chip COURT (écran), `long` = libellé long (« i », fiche).
+export const PALIER_META: Record<Palier, { label: string; long: string; color: string }> = {
+  priorite: { label: 'Priorité', long: 'À contacter en priorité', color: '#E8695A' },
+  a_suivre: { label: 'À suivre', long: 'À suivre de près', color: '#E8B44C' },
+  sans_signal: { label: 'Sans signal', long: 'Sans signal de vente à court terme', color: '#8FA69A' },
   ecartee: { label: 'Écartée', long: 'Écartée — motif en fiche', color: '#4A5A52' },
 }
-export const LEGEND_V2_ORDER: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
+// CORRESPONDANCE EN LECTURE des anciens codes (runs jamais réécrits) → palier canonique.
+export const CORRESPONDANCE_LEGACY: Record<string, Palier> = {
+  brulante: 'priorite', chaude: 'a_suivre',
+  a_creuser: 'sans_signal', reserve_fonciere: 'sans_signal',
+  declasse_bati_sature: 'sans_signal', declasse_non_constructible: 'sans_signal',
+  declasse_bati_revele: 'sans_signal', declasse_zone_fermee: 'sans_signal',
+  declasse_au_statut_inconnu: 'sans_signal', declasse_au_fermee: 'sans_signal',
+  exclue: 'ecartee',
+}
+// le CODE canonique d'un tier (nouveau ou ancien) — le seul point qui connaît les anciens codes.
+export function codePalier(raw: string | null | undefined): Palier | null {
+  if (!raw) return null
+  if (raw in PALIER_META) return raw as Palier
+  return CORRESPONDANCE_LEGACY[raw] ?? null
+}
 
-// M30 item 3 (« tout montrer ») : les tiers de DÉCLASSEMENT deviennent atteignables au
-// filtre, avec un libellé MOTIVÉ (avant : absents du popover, verdict replié sur le statut
-// legacy muet). Type DISTINCT de TierV2 : les compteurs/entonnoir n'agrègent que les 5
-// tiers servables — la vue par défaut ne change pas. Ordre = volumétrie servie décroissante.
+// PALIERS-1 — les codes STOCKÉS possibles : les 4 paliers (runs v2) OU les codes par rang des
+// ANCIENS runs (jamais réécrits). Le PLOMBERIE (filtres, compteurs) tolère les deux ; l'AFFICHAGE
+// résout toujours vers le vocabulaire unique via TIER_V2_META / codePalier / verdictMeta.
+export type LegacyTier = 'brulante' | 'chaude' | 'a_creuser' | 'reserve_fonciere' | 'exclue'
+export type TierV2 = Palier | LegacyTier | TierDeclasse
+// TIER_V2_META résout TOUT code (nouveau ou ancien) vers son palier canonique, pour que les
+// consommateurs (Legend, TierBadge, fiche…) lisent le même vocabulaire quel que soit le run servi.
+export const TIER_V2_META: Record<string, { label: string; long: string; color: string }> = {
+  ...PALIER_META,
+  ...Object.fromEntries(
+    Object.entries(CORRESPONDANCE_LEGACY).map(([code, canon]) => [code, PALIER_META[canon]]),
+  ),
+}
+export const LEGEND_V2_ORDER: Palier[] = ['priorite', 'a_suivre', 'sans_signal', 'ecartee']
+
+// PALIERS-1 — les ex-tiers de DÉCLASSEMENT (bâti saturé, zone fermée, AU…) ne sont plus des
+// paliers : ce sont des MOTIFS (affichés en fiche, filtrables), la parcelle GARDE son palier de
+// probabilité (Sans signal ici, ou Priorité/À suivre selon p). On conserve les CODES pour le
+// filtre par motif ; leur libellé de palier est « Sans signal » (un seul vocabulaire).
 export type TierDeclasse =
   | 'declasse_bati_sature' | 'declasse_non_constructible' | 'declasse_bati_revele'
   | 'declasse_zone_fermee' | 'declasse_au_statut_inconnu' | 'declasse_au_fermee'
-export type FilterTier = TierV2 | TierDeclasse
-const DECLASSE_COLOR = '#8C7468'   // terre éteinte — hors palette thermique, jamais « priorité »
-// M135 — la famille declasse_* (« potentiel épuisé ») collapse sur UN niveau d'action « Faible » ;
-// le MOTIF fin (inconstructible, bâti révélé, zone fermée…) et l'état du bâti vivent en fiche et
-// sur le badge d'état du bien (M131). Codes techniques declasse_* INCHANGÉS.
+export type FilterTier = TierV2
 export const TIER_DECLASSE_META: Record<TierDeclasse, { label: string; long: string; color: string }> = {
-  declasse_bati_sature: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
-  declasse_non_constructible: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
-  declasse_bati_revele: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
-  declasse_zone_fermee: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
-  declasse_au_statut_inconnu: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
-  declasse_au_fermee: { label: 'Faible', long: 'Peu de potentiel', color: DECLASSE_COLOR },
+  declasse_bati_sature: { ...PALIER_META.sans_signal },
+  declasse_non_constructible: { ...PALIER_META.sans_signal },
+  declasse_bati_revele: { ...PALIER_META.sans_signal },
+  declasse_zone_fermee: { ...PALIER_META.sans_signal },
+  declasse_au_statut_inconnu: { ...PALIER_META.sans_signal },
+  declasse_au_fermee: { ...PALIER_META.sans_signal },
 }
 export const DECLASSE_ORDER = Object.keys(TIER_DECLASSE_META) as TierDeclasse[]
 export const ALL_TIER_META: Record<string, { label: string; color: string }> =
   { ...TIER_V2_META, ...TIER_DECLASSE_META }
 
-// M137 — le CHIP servi d'un palier de la légende (« i » des paliers), y compris le groupe
-// « declassees » (→ « Faible »). SOURCE UNIQUE : les mêmes META que les cartes/chips. Le « i »
-// préfixe l'explication avec CE mot → le client relie la définition au chip qu'il voit partout.
-// Un seul vocabulaire servi, celui des chips (le libellé long ne vit que dans l'explication).
+// Le CHIP d'un palier de la légende (« i » des paliers) — résout tout code vers le vocabulaire
+// unique. Le groupe « declassees » n'est plus un palier : son chip est « Sans signal ».
 export function tierChipLabel(key: string): string {
-  if (key === 'declassees') return TIER_DECLASSE_META.declasse_bati_sature.label
-  const m = TIER_V2_META[key as TierV2]
-  return m ? m.label : key
+  if (key === 'declassees') return PALIER_META.sans_signal.label
+  const code = codePalier(key)
+  return code ? PALIER_META[code].label : key
 }
 
 // Correctif M5 (verdict d'en-tête) — règle UNIQUE, partout où un verdict s'affiche :
@@ -105,15 +129,13 @@ export function verdictMeta(
   etage0?: boolean | number | null,
 ): { label: string; long: string; color: string; v2: boolean; tier: TierV2 | null } {
   if (etage0) return { ...STATUT_META.ecartee, v2: false, tier: null }
-  const t = tierV2 as TierV2 | null | undefined
-  if (t && TIER_V2_META[t]) {
-    // tier v2 « ecartee » = étage 0 vu du pipeline v2 → rendu écartée legacy (règle 1)
-    if (t === 'ecartee') return { ...STATUT_META.ecartee, v2: true, tier: t }
-    return { ...TIER_V2_META[t], v2: true, tier: t }
+  // PALIERS-1 — tout code (nouveau OU ancien) est résolu vers son palier canonique (les 4 valeurs).
+  const code = codePalier(tierV2)
+  if (code) {
+    // palier « ecartee » = étage 0 → rendu écartée legacy (couleur/teinte historique)
+    if (code === 'ecartee') return { ...STATUT_META.ecartee, v2: true, tier: code }
+    return { ...PALIER_META[code], v2: true, tier: code }
   }
-  // M30 item 3 : tier de DÉCLASSEMENT servi → verdict motivé (avant : repli legacy muet)
-  const d = tierV2 ? TIER_DECLASSE_META[tierV2 as TierDeclasse] : undefined
-  if (d) return { ...d, v2: true, tier: null }
   // M-Q P2-69 : repli sur la matrice legacy (éteinte M37). Sur le parc servi, TOUTES les parcelles
   // portent un tier v2 → ce repli ne s'arme jamais. S'il s'armait (parc sans run v2), il ne doit
   // JAMAIS se faire passer pour un verdict servi : libellé DISTINCT + couleur NEUTRE (modèle
@@ -133,6 +155,8 @@ export function effectiveTier(
   etage0?: boolean | number | null,
 ): TierV2 | null {
   if (etage0) return 'ecartee'
+  // Renvoie le code STOCKÉ (ancien ou nouveau) pour la plomberie compteurs/filtres ; l'AFFICHAGE
+  // le résout vers le vocabulaire unique (TIER_V2_META[t].label). 'ecartee' commun aux deux.
   const t = tierV2 as TierV2 | null | undefined
   return t && TIER_V2_META[t] ? t : null
 }

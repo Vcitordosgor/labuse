@@ -30,7 +30,8 @@ from sqlalchemy.orm import Session
 from .. import runs  # S3 : run servi relu à la requête
 
 #: Ordre de service des tiers du run servi (champion P) — les écartées ne sont jamais criblées.
-_TIERS_SERVIS = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
+_TIERS_SERVIS = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
+                 "priorite", "a_suivre", "sans_signal")  # PALIERS-1 : deux vocabulaires
 
 #: Marge d'arrondi du filtre géométrique : le moteur ARRONDIT sa SDP au m² — comparer le
 #: majorant à (cible − 1) absorbe le cas limite (8 faux négatifs à SDP = 420 pile sans elle).

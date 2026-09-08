@@ -4,7 +4,7 @@ import { getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } f
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { ALL_TIER_META, effectiveTier, etatBienMeta, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { ALL_TIER_META, effectiveTier, etatBienMeta, TIER_V2_META, verdictMeta } from '../../lib/status'
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
@@ -177,10 +177,11 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
 const GROUPE_ORDER = (p: Pick<ParcelProps, 'etage0' | 'tier_v2'>): number => {
   if (p.etage0) return 6
   const t = p.tier_v2 ?? ''
-  if (t === 'brulante') return 0
-  if (t === 'chaude') return 1
+  // PALIERS-1 — les DEUX vocabulaires : servi (brulante/chaude/…) + q_v14 (priorite/a_suivre/sans_signal)
+  if (t === 'brulante' || t === 'priorite') return 0
+  if (t === 'chaude' || t === 'a_suivre') return 1
   if (t === 'reserve_fonciere') return 2
-  if (t === 'a_creuser') return 3
+  if (t === 'a_creuser' || t === 'sans_signal') return 3
   if (t.startsWith('declasse')) return 4
   return 5
 }
@@ -212,8 +213,11 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
 // verdicts declasse_* (source unique ALL_TIER_META, jamais un littéral recopié).
 const EPUISE_COLOR = ALL_TIER_META['declasse_bati_sature'].color
 
-const TIER_ZERO: Record<TierV2 | 'all', number> = {
+// Compteurs par tier — clés = codes du run servi (anciens codes aujourd'hui ; les 4 paliers
+// après bascule q_v14). Record<string> tolère les deux ; l'affichage résout les libellés.
+const TIER_ZERO: Record<string, number> = {
   all: 0, brulante: 0, chaude: 0, reserve_fonciere: 0, a_creuser: 0, ecartee: 0,
+  priorite: 0, a_suivre: 0, sans_signal: 0,
 }
 
 export function ResultsSection() {
@@ -286,7 +290,7 @@ export function ResultsSection() {
                a_creuser: t.a_creuser, ecartee: t.ecartee }
     }
     // fallback client (mode commune, réponse serveur pas encore là) — jamais un vide
-    const c: Record<TierV2 | 'all', number> = { ...TIER_ZERO }
+    const c: Record<string, number> = { ...TIER_ZERO }
     for (const p of props) {
       if (!matchScope(p, filters, zone)) continue
       const t = effectiveTier(p.tier_v2, p.etage0)

@@ -35,7 +35,8 @@ def _distribution(db, run_id: str) -> dict:
         {"r": run_id}).mappings().all()
     d = {r["tier"]: int(r["n"]) for r in rows}
     d["_total"] = sum(v for k, v in d.items() if not k.startswith("_"))
-    d["_promues"] = d.get("brulante", 0) + d.get("chaude", 0)
+    d["_promues"] = (d.get("brulante", 0) + d.get("chaude", 0)
+                     + d.get("priorite", 0) + d.get("a_suivre", 0))  # PALIERS-1 : deux vocabulaires
     if d["_total"] > 0:  # ne mémoïse qu'un run RÉEL (un run vide/inconnu peut se remplir ensuite)
         _DISTRIB_CACHE[run_id] = d
     return d

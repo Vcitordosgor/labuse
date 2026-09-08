@@ -28,7 +28,7 @@ _SQL_INDICATEURS = """
 WITH base AS (SELECT DISTINCT left(idu, 5) AS insee, commune FROM parcels),
 stock AS (
   SELECT left(s.parcelle_id, 5) AS insee,
-         count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS n
+         count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) AS n
   FROM parcel_p_score_v2 s WHERE s.run_id = :run GROUP BY 1),
 velo AS (
   SELECT commune, percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois) AS mois, count(*) AS n

@@ -25,7 +25,7 @@ type Liste = { run_id: string; n: number; items: Item[]; note?: string; avertiss
 
 const TABS = [
   { key: 'brulantes', label: 'Priorité' },
-  { key: 'reserve', label: 'Long terme' },
+  { key: 'reserve', label: 'Réserve foncière' },   // PALIERS-1 : marqueur de capacité, plus « Long terme »
   { key: 'top', label: 'Classement' },   // M15 E1 : « Top P » (jargon) → « Classement »
 ] as const
 
@@ -57,7 +57,7 @@ export function ScoringV2Module() {
         Le <b className="text-txt">classement</b> des parcelles par <b className="text-txt">probabilité
         de vente</b> sous 1 an. La <b className="text-mint">fraction</b> (« 1/5 ») dit la chance qu’une
         vente intervienne dans l’année ; sous 1/50, un tiret « — » (<b>peu probable</b>). <b>Priorité</b> =
-        à contacter d’abord ; <b>Long terme</b> = fort potentiel mais vente peu probable à court terme ;
+        à contacter d’abord ; <b>Réserve foncière</b> = forte capacité constructible résiduelle (marqueur, pas un palier) ;
         <b>Classement</b> = toutes, par ordre de priorité.
       </div>
       <div className="flex items-center gap-1">

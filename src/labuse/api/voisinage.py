@@ -58,6 +58,8 @@ def compute_voisinage(session: Session, parcel_id: int,
         ORDER BY (s.tier = ANY(:servables)) DESC,
                  CASE s.tier WHEN 'brulante' THEN 0 WHEN 'chaude' THEN 1
                              WHEN 'reserve_fonciere' THEN 2 WHEN 'a_creuser' THEN 3
+                             WHEN 'priorite' THEN 0 WHEN 'a_suivre' THEN 1
+                             WHEN 'sans_signal' THEN 3
                              ELSE 9 END,
                  s.rang ASC NULLS LAST, n.surface_m2 DESC NULLS LAST
         LIMIT :lim

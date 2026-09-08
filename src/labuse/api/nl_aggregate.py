@@ -37,7 +37,8 @@ _TIERS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r"potentiel\s*long\s*terme|r[ée]serve\s*fonci|surveill", re.I), "reserve_fonciere", "potentiel long terme"),
     (re.compile(r"[àa]\s*creuser", re.I), "a_creuser", "à creuser"),
 ]
-_ALL_TIERS = ["brulante", "chaude", "reserve_fonciere", "a_creuser"]
+_ALL_TIERS = ["brulante", "chaude", "reserve_fonciere", "a_creuser",
+              "priorite", "a_suivre", "sans_signal"]  # PALIERS-1 : deux vocabulaires
 
 # base identique au builder de liste/stats (étage 0 dur du run servi prime)
 _E0 = "(d.status IN ('exclue', 'faux_positif_probable'))"

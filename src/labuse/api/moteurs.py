@@ -591,7 +591,7 @@ def zan(db: Session = Depends(get_db)) -> dict:
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'ocs_ge' AND cr.weight_applied > 0
-          AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
+          AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'priorite', 'a_suivre', 'sans_signal')
         ORDER BY d.opportunity_score DESC LIMIT 400"""), {"run": runs.current(), "v2run": _v2run(db)}).mappings().all()
     return {
         "bandeau": ("Signal parcelle robuste (OCS-GE + friches + zonage) + consommation ENAF OBSERVÉE "

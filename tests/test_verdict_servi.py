@@ -138,7 +138,9 @@ def test_declassee_reste_declassee_avec_motif(db_session):
     _seed(db_session)
     v = verdict_servi(db_session, "97499000VS0003")
     assert v["statut"] == "declasse_bati_sature"
-    assert v["label"] == "Faible"                       # M137 — chip court servi
+    # PALIERS-1 — le déclassement devient un MOTIF : la parcelle garde son palier (ici « Sans
+    # signal » via la correspondance lecture), et `declasse`/`motif` restent servis.
+    assert v["label"] == "Sans signal"
     assert v["servable"] is False and v["declasse"] is True
     assert "saturée" in v["motif"]                      # motif du filtre, jamais remonté
 
@@ -189,4 +191,7 @@ def test_sql_exists_servable_ne_retient_que_les_tiers_actifs(db_session):
         {"vs_run": Q_A_RUN_LABEL}).scalars().all()
     assert rows == ["97499000VS0001", "97499000VS0002", "97499000VS0004", "97499000VS0005"]
     # ni la déclassée (VS0003), ni l'écartée (VS0006)
-    assert set(TIERS_SERVABLES) == {"brulante", "chaude", "reserve_fonciere", "a_creuser"}
+    # PALIERS-1 — servables : anciens codes par rang + codes de la politique v2 (un run ne porte
+    # qu'un vocabulaire ; l'autre liste ne matche aucune ligne). Écartée jamais servable.
+    assert set(TIERS_SERVABLES) == {"brulante", "chaude", "reserve_fonciere", "a_creuser",
+                                    "priorite", "a_suivre", "sans_signal"}

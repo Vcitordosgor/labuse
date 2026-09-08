@@ -226,7 +226,8 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-_TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
+_TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
+                       "priorite", "a_suivre", "sans_signal")  # PALIERS-1 : deux vocabulaires
 
 
 @router.get("/patrimoine")
@@ -1398,7 +1399,7 @@ def bailleur(commune: str = Query(..., min_length=1), db: Session = Depends(get_
         JOIN spatial_layers q ON q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975)
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN commune_contexte_sru cs ON cs.commune = p.commune
-        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'priorite', 'a_suivre', 'sans_signal')
         ORDER BY (cs.statut = 'carencee') DESC NULLS LAST, COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
         {"c": commune, "run": runs.current(), "v2run": _v2run(db)}).mappings().all()
     true_total = len(rows) if len(rows) < 500 else int(db.execute(text(
@@ -1406,7 +1407,7 @@ def bailleur(commune: str = Query(..., min_length=1), db: Session = Depends(get_
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-             AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')
+             AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'priorite', 'a_suivre', 'sans_signal')
              AND EXISTS (SELECT 1 FROM spatial_layers q WHERE q.kind = 'qpv'
                          AND ST_Intersects(p.geom_2975, q.geom_2975))"""),
         {"c": commune, "run": runs.current(), "v2run": _v2run(db)}).scalar() or 0)
@@ -2000,7 +2001,7 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
         -- « U » de la sortie cascade — resolve_zone n'a de hauteur calibrée que sur la sous-zone fine.
         LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
-          AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser')"""),
+          AND s2.tier IN ('brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'priorite', 'a_suivre', 'sans_signal')"""),
         {"sdp": sdp_min, "run": runs.current(), "c": body.commune, "v2run": _v2run(db),
          "smin": sdp_min * 0.4}).mappings().all()
     hcache: dict = {}   # (zone, commune) → (hauteur éligibilité, niveaux_max, estimée, signature calcul)

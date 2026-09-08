@@ -1473,7 +1473,7 @@ def _q_v2_where(run_label: str,
         cl = [x.strip() for x in constructibilite.split(",") if x.strip()]
         sub = []
         if "constructible" in cl:
-            sub.append("(s2.tier IN ('brulante','chaude','reserve_fonciere','a_creuser') AND NOT " + _ETAGE0_SQL + ")")
+            sub.append("(s2.tier IN ('brulante','chaude','reserve_fonciere','a_creuser','priorite','a_suivre','sans_signal') AND NOT " + _ETAGE0_SQL + ")")
         if "au_conditionnelle" in cl:
             sub.append("s2.tier IN ('declasse_au_fermee','declasse_au_statut_inconnu')")
         if "fermee" in cl:
@@ -1838,10 +1838,10 @@ def _communes_data(db: Session, source: str) -> list[dict]:
             SELECT p.commune,
                    substring(min(p.idu) from 1 for 5)                       AS insee,
                    count(*)                                                 AS parcelles,
-                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS chaudes,
-                   count(DISTINCT pm.siren) FILTER (WHERE s.tier IN ('brulante', 'chaude')
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) AS chaudes,
+                   count(DISTINCT pm.siren) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
                          AND pm.siren IS NOT NULL)                          AS dossiers,
-                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
                          AND pm.siren IS NULL)                              AS chaudes_sans_identite,
                    count(s.parcelle_id)                                     AS evaluees,
                    ST_XMin(ST_Extent(p.geom)) AS x1, ST_YMin(ST_Extent(p.geom)) AS y1,
@@ -1916,7 +1916,7 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     stock = db.execute(text(
         "SELECT count(*) n, coalesce(sum(p.surface_m2), 0) m2 FROM parcel_p_score_v2 s "
         "JOIN parcels p ON p.idu = s.parcelle_id WHERE p.commune = :c AND s.run_id = :r "
-        "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": runs.current()}).mappings().first()
+        "AND s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')"), {"c": commune, "r": runs.current()}).mappings().first()
     return {
         "n_parcelles": int(n_parcelles),
         "surface_ha": int(surface_ha) if surface_ha is not None else None,
@@ -2322,8 +2322,8 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    {_ETAGE0_SQL} AS etage0,
                    CASE WHEN {_ETAGE0_SQL} THEN 5
-                        WHEN s2.tier = 'brulante' THEN 0 WHEN s2.tier = 'chaude' THEN 1
-                        WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier = 'a_creuser' THEN 3
+                        WHEN s2.tier IN ('brulante', 'priorite') THEN 0 WHEN s2.tier IN ('chaude', 'a_suivre') THEN 1
+                        WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier IN ('a_creuser', 'sans_signal') THEN 3
                         ELSE 4 END AS ord
             FROM parcels p
             LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -2849,7 +2849,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
                    JOIN parcels p2 ON p2.id = d2.parcel_id
                    JOIN parcel_p_score_v2 s22 ON s22.parcelle_id = p2.idu AND s22.run_id = :v2run
                    JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
-                   WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude')
+                   WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
                      AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
@@ -2946,15 +2946,16 @@ _Q_V2_ORDERS_PAGE = {
 # M55-H point 5 (décision Vic) — GROUPEMENT PAR TIER : la liste d'analyse se groupe
 # brûlantes → chaudes → potentiel long terme → à creuser → potentiel épuisé (declasse_*) ;
 # le tri choisi s'applique DANS chaque groupe (l'ORDER BY est préfixé par ce CASE).
+# PALIERS-1 — les DEUX vocabulaires triés pareil : servi (par rang) + q_v14 (paliers v2).
 _TIER_GROUPE_SQL = (
     "CASE WHEN (d.status IN ('exclue', 'faux_positif_probable')) THEN 6 "
-    "WHEN s2.tier = 'brulante' THEN 0 WHEN s2.tier = 'chaude' THEN 1 "
-    "WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier = 'a_creuser' THEN 3 "
+    "WHEN s2.tier IN ('brulante', 'priorite') THEN 0 WHEN s2.tier IN ('chaude', 'a_suivre') THEN 1 "
+    "WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier IN ('a_creuser', 'sans_signal') THEN 3 "
     "WHEN s2.tier LIKE 'declasse%' THEN 4 ELSE 5 END")
 _TIER_GROUPE_PAGE_SQL = (
     "CASE WHEN pg.etage0 THEN 6 "
-    "WHEN pg.tier_v2 = 'brulante' THEN 0 WHEN pg.tier_v2 = 'chaude' THEN 1 "
-    "WHEN pg.tier_v2 = 'reserve_fonciere' THEN 2 WHEN pg.tier_v2 = 'a_creuser' THEN 3 "
+    "WHEN pg.tier_v2 IN ('brulante', 'priorite') THEN 0 WHEN pg.tier_v2 IN ('chaude', 'a_suivre') THEN 1 "
+    "WHEN pg.tier_v2 = 'reserve_fonciere' THEN 2 WHEN pg.tier_v2 IN ('a_creuser', 'sans_signal') THEN 3 "
     "WHEN pg.tier_v2 LIKE 'declasse%' THEN 4 ELSE 5 END")
 
 # M131 P3 — ÉTAT DU BIEN (affichage pur du FAIT M125/M129-D, aucun recalcul) : partition
@@ -3079,7 +3080,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             JOIN parcels p2 ON p2.id = d2.parcel_id
             JOIN parcel_p_score_v2 s22 ON s22.parcelle_id = p2.idu AND s22.run_id = :v2run
             JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
-            WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude')
+            WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
               AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
               AND pm2.siren IS NOT NULL
             GROUP BY pm2.siren HAVING count(*) > 1
@@ -3231,12 +3232,13 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     row = db.execute(text(
         f"""
         SELECT count(*) AS total,
-               count(*) FILTER (WHERE {eff} = 'brulante')          AS t_brulante,
-               count(*) FILTER (WHERE {eff} = 'chaude')            AS t_chaude,
+               count(*) FILTER (WHERE {eff} IN ('brulante', 'priorite')) AS t_brulante,
+               count(*) FILTER (WHERE {eff} IN ('chaude', 'a_suivre'))   AS t_chaude,
                count(*) FILTER (WHERE {eff} = 'reserve_fonciere')  AS t_reserve,
                count(*) FILTER (WHERE {eff} = 'a_creuser')         AS t_a_creuser,
+               count(*) FILTER (WHERE {eff} = 'sans_signal')       AS t_sans_signal,
                count(*) FILTER (WHERE {eff} = 'ecartee')           AS t_ecartee,
-               count(*) FILTER (WHERE {eff} IN ('brulante', 'chaude') AND EXISTS (
+               count(*) FILTER (WHERE {eff} IN ('brulante', 'chaude', 'priorite', 'a_suivre') AND EXISTS (
                    SELECT 1 FROM dryrun_cascade_results ev WHERE ev.parcel_id = d.parcel_id
                      AND ev.run_label = :run AND ev.evenement = 'rouge')) AS opportunites_evenement
         FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
@@ -3255,7 +3257,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         JOIN parcels p ON p.id = d.parcel_id
         {join_v2}
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-        WHERE d.run_label = :run AND {eff} IN ('brulante', 'chaude')
+        WHERE d.run_label = :run AND {eff} IN ('brulante', 'chaude', 'priorite', 'a_suivre')
           AND (CAST(:c AS text) IS NULL OR p.commune = :c)
           {extra_where} {sliver}
         """), params).mappings().one()
@@ -3263,7 +3265,11 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         "total": int(row["total"] or 0),
         "tiers": {"brulante": int(row["t_brulante"] or 0), "chaude": int(row["t_chaude"] or 0),
                   "reserve_fonciere": int(row["t_reserve"] or 0),
-                  "a_creuser": int(row["t_a_creuser"] or 0), "ecartee": int(row["t_ecartee"] or 0)},
+                  "a_creuser": int(row["t_a_creuser"] or 0),
+                  # PALIERS-1 — comptes canoniques : brulante/chaude AGRÈGENT déjà priorite/a_suivre
+                  # (deux vocabulaires) ; sans_signal (runs v2) fondu avec réserve+à creuser à l'affichage.
+                  "sans_signal": int(row["t_sans_signal"] or 0),
+                  "ecartee": int(row["t_ecartee"] or 0)},
         "opportunites": int(row["t_brulante"] or 0) + int(row["t_chaude"] or 0),
         "opportunites_evenement": int(row["opportunites_evenement"] or 0),
         "dossiers_opportunites": int(dossiers["dossiers"] or 0),
@@ -3306,7 +3312,7 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
     # GARDE `left()=:s` comme filtre d'EXACTITUDE (collation-immune) : la valeur servie est IDENTIQUE
     # (vérifiée à l'octet sur plusieurs sections), seul le plan change. `'ÿ'` = borne haute > tout idu ASCII.
     n = db.execute(text(
-        "SELECT count(*) FILTER (WHERE tier IN ('brulante', 'chaude')) "
+        "SELECT count(*) FILTER (WHERE tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) "
         "FROM parcel_p_score_v2 "
         "WHERE run_id = :run AND parcelle_id >= :s AND parcelle_id < :s || 'ÿ' "
         "  AND left(parcelle_id, 10) = :s"),

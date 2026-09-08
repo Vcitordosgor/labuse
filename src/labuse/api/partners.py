@@ -149,7 +149,7 @@ def match_compatibilite(idu: str, db: Session = Depends(get_db)) -> dict:
     # M-C (F3) : `statut` = TIER SERVI (s2.tier). L'ancien test ("chaude","a_surveiller") ratait
     # les BRÛLANTES (tier le plus chaud) et testait "a_surveiller" — valeur de la MATRICE MORTE,
     # jamais un tier → branche inerte. Le signal marché doit couvrir brulante + chaude.
-    chaude = p["statut"] in ("brulante", "chaude")
+    chaude = p["statut"] in ("brulante", "chaude", "priorite", "a_suivre")  # PALIERS-1
     out = []
     for mp in profs:
         s_ok = ((mp["surface_min"] is None or surf >= mp["surface_min"])

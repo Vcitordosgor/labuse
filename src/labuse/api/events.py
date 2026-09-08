@@ -30,11 +30,13 @@ from .. import runs
 # mapping canonique tiers_client.court() (chips : Priorité / À suivre / Long terme / Neutre / Faible /
 # Écartée). Les clés internes (brulante, chaude) restent en base, jamais servies.
 from ..scoring.tiers_client import court as _tier_court   # noqa: E402
-_TIERS_PRIORITE = ("brulante", "chaude")
+_TIERS_PRIORITE = ("brulante", "chaude", "priorite", "a_suivre")  # PALIERS-1 : deux vocabulaires
 _TIER_RANG = {"brulante": 0, "chaude": 1, "reserve_fonciere": 2, "a_creuser": 3,
               "declasse_bati_revele": 4, "declasse_bati_sature": 5, "declasse_non_constructible": 6,
               "declasse_zone_fermee": 7, "declasse_au_statut_inconnu": 8, "declasse_au_fermee": 9,
-              "ecartee": 10}
+              "ecartee": 10,
+              # PALIERS-1 — codes canoniques : priorite=brulante, a_suivre=chaude, sans_signal=a_creuser
+              "priorite": 0, "a_suivre": 1, "sans_signal": 3}
 
 
 def _monte(de: str | None, vers: str | None) -> bool:
@@ -653,7 +655,7 @@ def seed_demo(db: Session) -> dict:
     db.execute(text(f"""
         INSERT INTO parcel_p_score_v2 (run_id, tier, {_cols})
         SELECT 'q_v2_demo', 'a_creuser', {_cols} FROM parcel_p_score_v2
-        WHERE run_id = :run AND tier = 'chaude' AND NOT copro
+        WHERE run_id = :run AND tier IN ('chaude', 'a_suivre') AND NOT copro
         ORDER BY rang DESC LIMIT 3"""), {"run": runs.current()})
     out = detect_events(db, runs.current(), "q_v2_demo", demo=True)
     db.flush()
@@ -1077,7 +1079,7 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
         JOIN parcels p ON p.idu = s.parcelle_id
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE s.run_id = :run AND s.tier IN ('brulante', 'chaude')
+        WHERE s.run_id = :run AND s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
         ORDER BY s.rang NULLS LAST LIMIT 5"""), {"run": runs.current()}).mappings().all()
     return {"evenements": [dict(r) for r in events], "marche_resume": marche_resume,
             "top_chaudes": [dict(r) for r in top]}

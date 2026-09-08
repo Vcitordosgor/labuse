@@ -37,7 +37,7 @@ def run_monitor(session: Session, snapshot_label: str | None = None) -> dict:
 
     top = pd.read_sql(text("""
         SELECT parcelle_id, statut FROM score_snapshot_parcelles
-        WHERE snapshot_id = :s AND statut IN ('chaude', 'brulante')"""),
+        WHERE snapshot_id = :s AND statut IN ('chaude', 'brulante', 'a_suivre', 'priorite')"""),
         session.connection(), params={"s": sid})
 
     # événements post-gel (mutations L2-F re-matérialisées au dernier score-v2)
@@ -77,11 +77,11 @@ def run_monitor(session: Session, snapshot_label: str | None = None) -> dict:
     if len(runs) == 2:
         cur = set(pd.read_sql(text(
             "SELECT parcelle_id FROM parcel_p_score_v2 WHERE run_id = :r "
-            "AND tier IN ('chaude','brulante')"), session.connection(),
+            "AND tier IN ('chaude','brulante','a_suivre','priorite')"), session.connection(),
             params={"r": runs[0]})["parcelle_id"])
         prv = set(pd.read_sql(text(
             "SELECT parcelle_id FROM parcel_p_score_v2 WHERE run_id = :r "
-            "AND tier IN ('chaude','brulante')"), session.connection(),
+            "AND tier IN ('chaude','brulante','a_suivre','priorite')"), session.connection(),
             params={"r": runs[1]})["parcelle_id"])
         churn = {"sortants": len(prv - cur), "entrants": len(cur - prv),
                  "churn_pct": round(len(prv - cur) / max(len(prv), 1) * 100, 1)}

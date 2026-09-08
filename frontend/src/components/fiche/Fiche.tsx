@@ -637,6 +637,10 @@ export function Fiche({ idu }: { idu: string }) {
   // seulement si le signal dépasse la moyenne (×N ≥ 2) — l'écartée simple ×1,3 reste sobre.
   const multBase = f?.score_v2?.mult_base ?? null
   const signalEcarte = !!(f?.score_v2 && verdict && verdict.tier == null && (multBase ?? 0) >= 2)
+  // PALIERS-1 — le ×N (rapport à la moyenne de la commune) s'affiche À CÔTÉ de Priorité et À
+  // suivre SEULEMENT (rang + réglette de position). « Sans signal » n'a pas de ×N à l'écran ;
+  // le cas écartée-à-signal-fort (M52, « signal brut ») reste, il est cadré à part.
+  const montreMultiple = verdict?.tier === 'priorite' || verdict?.tier === 'a_suivre'
   const motifEcart = verdict?.label.includes(' — ') ? verdict.label.split(' — ').slice(1).join(' — ') : ecarteeMotif
   // M52 L2 — hiérarchie : l'essentiel (droit du sol + économie) s'ouvre à l'arrivée pour un tier
   // SERVABLE (verdict.tier ≠ null : brûlante/chaude/à-creuser/réserve). L'écartée simple n'ouvre
@@ -912,7 +916,7 @@ export function Fiche({ idu }: { idu: string }) {
                 <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)' }}>VERDICT LABUSE</p>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 5, flexWrap: 'wrap' }}>
                   <span data-badge-verdict style={{ fontSize: 23, fontWeight: 500, color: verdict.color, lineHeight: 1 }}>{verdict.label}</span>
-                  {v2Pilote && f.score_v2?.rang != null && (verdict.tier === 'brulante' || verdict.tier === 'chaude') && (
+                  {v2Pilote && f.score_v2?.rang != null && montreMultiple && (
                     <span style={{ fontSize: 12, color: 'var(--lab)' }}>rang {f.score_v2.rang}</span>
                   )}
                   {verdictEcartee && (
@@ -947,7 +951,9 @@ export function Fiche({ idu }: { idu: string }) {
                 aucun calcul. Pas de note /100, pas d'étoiles (doctrine). */}
             {f.score_v2 && (
               <div style={{ margin: '12px 0 0' }}>
-                {f.score_v2.verbal?.reglette_pct != null && (
+                {/* PALIERS-1 — la réglette de position (×N vs moyenne commune) : Priorité / À suivre
+                    seulement (+ le cas écartée-signal-brut). « Sans signal » ne l'affiche pas. */}
+                {f.score_v2.verbal?.reglette_pct != null && (montreMultiple || signalEcarte) && (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: 'var(--txt-off)', marginBottom: 3 }}>
                       <span>moyenne</span><span>très forte</span>
@@ -968,13 +974,13 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.score_v2.verbal?.frequence && (
                   <p data-freq style={{ margin: '9px 0 0', fontSize: 11, color: 'var(--txt-dim)', borderLeft: '3px solid #5fd0a8', paddingLeft: 8 }}>
                     {f.score_v2.verbal.frequence.sous_moyenne
-                      ? <>Fréquence de vente en dessous de la moyenne de l’île (potentiel de plus long terme).</>
+                      ? <>Fréquence de vente en dessous de la moyenne de l’île (à horizon plus lointain).</>
                       : <>Parmi les parcelles de ce niveau, environ <b>{f.score_v2.verbal.frequence.sur_100} sur 100</b> ont été vendues en {f.score_v2.verbal.frequence.fenetre}, contre ~{f.score_v2.verbal.frequence.base_sur_100} sur 100 en moyenne.</>}
                     <span title={f.score_v2.verbal.frequence.source_dite} style={{ marginLeft: 4, cursor: 'help', borderBottom: '1px dotted #5f7568' }}>ⓘ</span>
                   </p>
                 )}
                 {(f.score_v2.pourquoi?.length ?? 0) > 0 && (
-                  <details data-pourquoi style={{ marginTop: 8 }} open={verdict.tier === 'brulante' || verdict.tier === 'chaude' || signalEcarte}>
+                  <details data-pourquoi style={{ marginTop: 8 }} open={montreMultiple || signalEcarte}>
                     <summary style={{ cursor: 'pointer', fontSize: 11.5, color: '#a78bfa', fontWeight: 600 }}>{signalEcarte ? 'Pourquoi ce signal (avant l’écart)' : 'Pourquoi ce score'}</summary>
                     <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none' }}>
                       {f.score_v2.pourquoi!.slice(0, 5).map((c, i) => (

@@ -24,8 +24,12 @@ from sqlalchemy.orm import Session
 
 from . import runs
 
-#: tiers actifs (servables) — même liste que le front (LEGEND_V2_ORDER).
-TIERS_SERVABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
+#: tiers actifs (servables). Anciens runs (codes par rang) : brulante/chaude/reserve/a_creuser.
+#: PALIERS-1 — runs à politique v2 : Priorité/À suivre/Sans signal (tout sauf Écartée ; une
+#: déclassée GARDE son palier, elle reste servable — le motif dit « pas de projet »). Un run
+#: ne porte qu'UN vocabulaire, l'autre liste ne matche aucune ligne (inoffensive).
+TIERS_SERVABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
+                   "priorite", "a_suivre", "sans_signal")
 
 # M135 — les libellés client des tiers viennent du MAPPING CANONIQUE UNIQUE (tiers_client).
 # M137 — TIER_LABELS = le CHIP COURT (« Priorité », « À suivre »…), le mot SERVI PARTOUT : chips,
@@ -150,7 +154,11 @@ def _traduire(idu: str, row, run: str) -> dict:
     """Ligne SQL → verdict. Pur (testable sans DB via un mapping-like)."""
     tier = row["tier"]
     servable = tier in TIERS_SERVABLES
-    declasse = bool(tier and tier.startswith("declasse_"))
+    # PALIERS-1 — le déclassement est un MOTIF (plus un palier) : il se lit des CACHES
+    # (parcel_filtre_bati), pas du code de tier. Anciens runs : le code declasse_* reste ;
+    # runs v2 : la parcelle est Sans signal/Priorité mais toujours « bâtie saturée » au cache.
+    bati_sature = row["fb_decision"] == "saturee"
+    declasse = bool((tier and tier.startswith("declasse_")) or bati_sature)
     # Badge M28 : bâtie marginale/ancienne DIVISIBLE servie (étage 3 du filtre bâti).
     badge = bool(servable and row["fb_decision"] == "divisible")
     badge_lib = None
@@ -168,7 +176,7 @@ def _traduire(idu: str, row, run: str) -> dict:
     motif = None
     if ex_present:
         motif = row["ex_motif_client"] or MOTIF_CLIENT_FALLBACK
-    elif tier == "declasse_bati_sature":
+    elif tier == "declasse_bati_sature" or bati_sature:
         motif = row["fb_motif"]
     return {
         # M135 — le label du tier suit l'ÉCHELLE D'ACTION (tiers_client) ; l'état du bâti

@@ -35,7 +35,7 @@ _SQL = """
 WITH stock AS (
   SELECT left(p.idu,5) AS insee, sum(p.surface_m2)/10000.0 AS ha
   FROM parcels p JOIN parcel_p_score_v2 v ON v.parcelle_id = p.idu
-  WHERE v.run_id = :run AND v.tier IN ('brulante','chaude') GROUP BY 1)
+  WHERE v.run_id = :run AND v.tier IN ('brulante','chaude','priorite','a_suivre') GROUP BY 1)
 SELECT e.insee, e.commune,
   e.conso_2021_2024_m2 / 3.0 / 10000.0 AS conso_ha_an,
   e.conso_2011_2021_m2 * 0.5 / 10000.0 AS budget_zan_ha,

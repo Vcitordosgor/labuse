@@ -119,13 +119,12 @@ export const CLIENT = {
     // cartes, fiche, PDF), PUIS son explication. `defTiers[key]` = l'explication (« libellé long :
     // sens ») ; le CHIP est préfixé au rendu (tierChipLabel, source unique status.ts) → le client
     // relie le « Priorité » qu'il voit sur les cartes à sa définition. Nombres/couleurs inchangés.
+    // PALIERS-1 — les quatre paliers, en probabilité de vente sous 12 mois (hors copropriété).
     defTiers: {
-      brulante: 'à contacter en priorité : la plus forte probabilité de vente sous 1 an, tête du classement.',
-      chaude: 'à suivre de près : forte probabilité de vente sous 1 an, juste derrière la priorité.',
-      reserve_fonciere: 'à revoir dans 1-2 ans : prometteuse, mais à horizon plus lointain.',
-      a_creuser: 'sans signal particulier : rien de marquant pour l’instant.',
-      declassees: 'peu de potentiel : analysée et conservée ; motif et état du bien en fiche.',
-      ecartee: 'exclusion légale ou physique : motif consultable en fiche.',
+      priorite: 'à contacter en priorité : au moins une chance sur cinq de vente sous 12 mois.',
+      a_suivre: 'à suivre de près : environ une chance sur dix de vente sous 12 mois.',
+      sans_signal: 'sans signal de vente à court terme : moins d’une chance sur dix.',
+      ecartee: 'écartée : exclusion légale ou physique — motif consultable en fiche.',
     } as Record<string, string>,
   },
   // ── M-U · bloc « Marché » par commune (Agent Prix). Libellés client sobres (LOI-3). ──
@@ -157,8 +156,8 @@ export const CLIENT = {
 
   // ── M55-H point 10 · le « i » de la ventilation — les TROIS familles, une phrase chacune ──
   ventilation: {
-    familles: 'Servables — les 4 tiers d’opportunité (Priorité, À suivre, Long terme, Neutre). '
-      + 'Potentiel épuisé — analysée, verdict motivé (le potentiel résiduel ne paie plus l’opération standard) ; les chiffres sont en fiche. '
+    familles: 'Les paliers d’opportunité (chances de vente sous 12 mois) : Priorité, À suivre, Sans signal. '
+      + 'Les motifs (bâti saturé, zone fermée…) et la réserve foncière sont des marqueurs de fiche, pas des paliers. '
       + 'Écartées — exclusions légales et physiques, motifs consultables.',
   },
 

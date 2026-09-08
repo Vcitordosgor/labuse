@@ -130,9 +130,12 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
 // INCLUS (doctrine « tout montrer », M30). Écartée = l'exclusion dure (étage 0). Les deux réunis
 // = la trame entière (le cadastre analysé). Réconcilie le compteur avec « 431 663 analysées ».
 const TIERS_ANALYSE = [
+  // PALIERS-1 — les DEUX vocabulaires : servi (codes par rang) + q_v14 (paliers v2). Un run ne
+  // porte qu'un vocabulaire ; l'autre ne matche aucune ligne. L'écartée reste hors univers analysé.
   'brulante', 'chaude', 'reserve_fonciere', 'a_creuser',
   'declasse_bati_sature', 'declasse_non_constructible', 'declasse_bati_revele',
   'declasse_zone_fermee', 'declasse_au_statut_inconnu', 'declasse_au_fermee',
+  'priorite', 'a_suivre', 'sans_signal',
 ]
 const tiersParam = (f: Filters): Record<string, string> =>
   f.analyseLabuse
