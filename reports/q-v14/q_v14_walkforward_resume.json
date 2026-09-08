@@ -1,0 +1,16 @@
+{
+  "reference_m36": "walk-forward m36 servi : RR@1158 6,9-11,0 (hors copro 6,7-9,4), fold 2025 = 6,73",
+  "q_v14_rr_min": 8.336,
+  "q_v14_rr_max": 10.818,
+  "q_v14_rr_median": 9.5085,
+  "q_v12_rr_min": 7.354,
+  "q_v12_rr_max": 10.117,
+  "plis": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ]
+}
