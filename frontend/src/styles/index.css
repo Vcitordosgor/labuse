@@ -148,6 +148,11 @@
   @media (hover:hover) and (pointer:fine) {
     .hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
     .hover-fill:hover * { color:var(--ink) !important; }
+    /* RECETTE-2 (S15) — quand .hover-fill est posé sur une LIGNE DE TABLEAU (<tr>, ex. Densifier),
+       le fond en DÉGRADÉ ne peint pas sur le <tr> (modèle de rendu des tables : un <tr> ne dessine
+       pas de background-image). Résultat : le texte passait en encre sombre SANS aplat vert →
+       « survol vert absent ». On reporte le dégradé sur ses cellules, qui, elles, le rendent. */
+    tr.hover-fill:hover > td { background:var(--fill-mint); }
     /* RETOURS-6 U2 — carré d'icône des cartes de la fiche commune : sur l'aplat plein, on l'éclaircit
        (ink translucide) pour que le glyphe (passé en encre sombre par la règle ci-dessus) reste lisible. */
     .hover-fill:hover .lc-ic { background:rgba(7,16,9,.14); border-color:rgba(7,16,9,.22); }

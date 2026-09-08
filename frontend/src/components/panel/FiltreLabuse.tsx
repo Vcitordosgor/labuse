@@ -196,8 +196,9 @@ export function ZoneSelector() {
                 {zq.data ? `${nf.format(f.n)} parcelles · ${f.zones.length} zones` : '…'}
                 {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}
               </span>
+              {/* RECETTE-2 (S17) — fermé → droite (▸, -90°) ; ouvert → bas (▾, sans rotation). */}
               <svg viewBox="0 0 12 12" aria-hidden="true"
-                className={`h-3 w-3 shrink-0 text-txt-dim transition-transform duration-quick ${ouverte ? 'rotate-180' : ''}`}>
+                className={`h-3 w-3 shrink-0 text-txt-dim transition-transform duration-quick ${ouverte ? '' : '-rotate-90'}`}>
                 <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>

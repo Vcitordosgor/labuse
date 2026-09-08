@@ -64,7 +64,9 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <p className="text-[11px] text-txt-mut">Deux métiers, deux entrées.</p>
-      <Carte k="piscines" ic="💧" titre="Piscines" desc="Pisciniste — parcelles avec piscine détectée : rénovation, couverture, entretien" />
+      {/* RECETTE-2 (S16) — description RACCOURCIE : elle débordait sur 3 lignes (la carte
+          Ensoleillement en fait 2) ; le titre « Piscines » + l'icône disent déjà le sujet. */}
+      <Carte k="piscines" ic="💧" titre="Piscines" desc="Pisciniste — rénovation, couverture, entretien" />
       <Carte k="ensoleillement" ic="☀️" titre="Ensoleillement" desc="Installateur PV — potentiel, orientation, toiture" />
       <p className="mt-auto text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
     </div>
