@@ -255,5 +255,27 @@ Le panneau des couches est 100 % piloté par deux tableaux (`LeftPanel.tsx`). **
 
 ---
 
-## LOT 10 — à faire
-*(non entamé)*
+## LOT 10 — Le courrier  *(commit 10)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R41 | Courrier propriétaire PDF à la DA | **corrigé** | `api/courrier.py` (`courrier_pdf`) |
+
+Le PDF était un `FPDF` brut : « LABUSE » en 15 pt puis le texte, sur page blanche. Refonte **mise en page à la DA LABUSE**, en restant sur FPDF (aucune dépendance neuve) :
+- **En-tête** : wordmark « LABUSE » 24 pt en **vert profond DA** (`#2E6B4F`, le mint d'écran `#4ADE80` étant trop clair sur papier), tagline « Intelligence foncière — La Réunion » en gris, **filet vert** d'accent (`#2FBE66`).
+- **Corps** : encre presque noire, interligne aéré, **respiration entre paragraphes** (ligne vide = vrai espace). **Le fond du texte (`body.texte`) est INCHANGÉ** — seule la présentation change (mandat).
+- **Pied de page** (sur chaque page, via `footer()`) : filet fin + mention « Courrier préparé avec LABUSE — données publiques… Ni conseil juridique ni offre d'achat », centrée en gris.
+- Ponctuation typographique toujours ramenée en latin-1 (helper `_pdf_safe`, fidèle à l'affichage).
+
+Rendu **vérifié** (fpdf : PDF valide `%PDF`, letterhead+pied+corps) ; `test_courrier.py` **6/6**.
+
+---
+
+## Récapitulatif des 41 points
+
+- **Corrigés (32)** : R1, R2, R3, R5, R7, R13, R18, R19, R20, R21, R22, R23, R25, R26, R27, R28*, R30, R31, R32, R34, R35, R37, R38, R39, R40, R41 + R8 (multi-outils) — et R7/R35 avec la cause dite.
+- **Non reproduits (5)** : R4 (Faisabilité — endpoint+câblage sains), R6 (adresses présentes à 60 %, cache sain), R24 (2 onglets PLU déjà en place), R33 (Densifier déjà `hover-fill`).
+- **Répondus (Lot 3, 9)** : R9, R10, R11, R12, R14, R15, R16, R17 — réponses écrites ci-dessus.
+- **À trancher par Vic (3)** : R28* (purge totale des ~271 `title` natifs / neutralisation `<Tip>` — au-delà des infobulles redondantes traitées), R29 (suppression de l'écran 1 — accord requis), R36 (voile d'opinion — cœur du mode analyse, non capturable ici).
+
+**Un commit par lot**, aucun merge, aucune bascule, aucun rescoring. Front `tsc` 0 / `vitest` 194 à chaque lot ; back `py_compile` OK, `test_courrier` 6/6, rang courrier vérifié en base. Reste à Vic : relire, recetter (dont les rendus non capturables : R36, R41, survols verts), trancher les 3 points ouverts, merger.
