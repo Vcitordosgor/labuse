@@ -1,5 +1,9 @@
 {
   "n_parcelles_changent_de_palier": 9236,
   "montees_vers_Priorite": 88,
-  "dont_portees_par_permis_pro": 87
+  "dont_portees_par_permis_pro": 87,
+  "montees_par_palier_servi": {
+    "À suivre": 61,
+    "Neutre": 27
+  }
 }

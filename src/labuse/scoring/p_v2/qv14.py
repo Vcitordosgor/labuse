@@ -107,8 +107,8 @@ SPECS_QV14 = [SPEC_NU_ASOF, SPEC_PCT_BATI_ASOF, SPEC_PC_PM, SPEC_ANC_PLU, SPEC_V
 #: libellés français des variables neuves (top-5 lisible de la fiche « Analyse LABUSE »).
 LIBELLES_QV14 = {
     **qv12.LIBELLES_QV12,
-    "nu_constructible_asof": "état bâti/nu reconstruit à la date",
-    "pct_bati_secteur_asof": "part de parcelles bâties du secteur (à la date)",
+    "nu_constructible_asof": "terrain nu constructible",
+    "pct_bati_secteur_asof": "secteur peu bâti",
     "pc_pm_sur_parcelle_pp_36m": "un professionnel a déposé un permis sur cette "
                                  "parcelle détenue par un particulier",
     "anciennete_plu_annees": "ancienneté du PLU de la commune",

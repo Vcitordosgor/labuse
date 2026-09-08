@@ -259,7 +259,8 @@ def note_de_version(row_base, row_qv12, row_q, row_24, avec_ventes_pm, degrade) 
         f"PM {g(row_q,'ece_personne_morale'):.4f}, copro {g(row_q,'ece_copropriete'):.4f}) ;",
         f"- segments dont l'ECE se dégrade de plus de 0,01 vs q_v12 : {degrade or 'aucun'} ;",
         f"- churn top-1158 vs le run servi : {g(row_q,'churn_top1158_vs_servi'):.1%} "
-        "(la garde de churn liste les sorties de Priorité au compte-rendu) ;",
+        "(la garde de churn liste les sorties de la TÊTE — Priorité + À suivre — au "
+        "compte-rendu ; Priorité seule n'a que 111 parcelles) ;",
         f"- horizon 24 mois (test 2024) : AUC {g(row_24,'auc_global'):.3f}, "
         f"préc@100 méd {g(row_24,'prec@100_commune_mediane'):.3f} — colonne stockée.",
         "",
@@ -385,12 +386,16 @@ def test_fuite(eng, annee: int = 2025) -> dict:
 
 # ─────────────────────────── après le run réel ───────────────────────────
 
-PRIORITE_TIERS = ("chaude", "brulante")
+#: la TÊTE servie = brûlante + chaude, c.-à-d. Priorité + À suivre réunies (1 478
+#: parcelles), PAS « Priorité » seule (111 brûlantes). Le nom corrige l'amalgame du
+#: rapport SCORING-4 : « 608 sorties de Priorité » était faux — 608 = sorties de la
+#: TÊTE ; Priorité (brûlante) n'en compte que 111 (PALIERS-1 Lot A0, point 1).
+TETE_TIERS = ("chaude", "brulante")
 
 
 def churn() -> None:
-    """La garde de churn : top-1158 q_v14 vs servi + les 50 premières sorties de
-    Priorité avec la raison. Lit les DEUX runs stockés (le run réel)."""
+    """La garde de churn : top-1158 q_v14 vs servi + les 50 premières sorties de la
+    TÊTE servie (Priorité + À suivre) avec la raison. Lit les DEUX runs stockés."""
     eng = engine()
     servi = pd.read_sql(
         f"SELECT parcelle_id AS idu, p_raw, rang, tier, top5_contributions "
@@ -400,18 +405,22 @@ def churn() -> None:
         "FROM parcel_p_score_v2 WHERE run_id = 'q_v14' AND NOT copro", eng)
     top_s = set(servi.nsmallest(1158, "rang")["idu"])
     top_c = set(cand.nsmallest(1158, "rang")["idu"])
-    churn_1158 = 1.0 - len(top_s & top_c) / 1158
-    prio_s = servi[servi["tier"].isin(PRIORITE_TIERS)]
-    prio_c = set(cand[cand["tier"].isin(PRIORITE_TIERS)]["idu"])
-    sorties = prio_s[~prio_s["idu"].isin(prio_c)].sort_values("rang")
-    log(f"churn top-1158 : {churn_1158:.1%} ; Priorité servie {len(prio_s)}, "
-        f"candidate {len(prio_c)}, sorties {len(sorties)}")
+    n_recouvre = len(top_s & top_c)
+    churn_1158 = 1.0 - n_recouvre / 1158
+    n_sorties_top1158 = 1158 - n_recouvre       # sorties du top-1158 par rang
+    tete_s = servi[servi["tier"].isin(TETE_TIERS)]
+    tete_c = set(cand[cand["tier"].isin(TETE_TIERS)]["idu"])
+    sorties = tete_s[~tete_s["idu"].isin(tete_c)].sort_values("rang")
+    log(f"churn top-1158 : {churn_1158:.1%} ({n_sorties_top1158} sorties du "
+        f"top-1158) ; tête servie (Priorité+À suivre) {len(tete_s)}, candidate "
+        f"{len(tete_c)}, sorties de tête {len(sorties)}")
     resume = {"churn_top1158_vs_servi": round(churn_1158, 4),
-              "n_priorite_servi": int(len(prio_s)),
-              "n_priorite_candidat": int(len(prio_c)),
-              "n_sorties_priorite": int(len(sorties))}
+              "n_sorties_top1158": int(n_sorties_top1158),
+              "n_tete_servie": int(len(tete_s)),
+              "n_tete_candidat": int(len(tete_c)),
+              "n_sorties_tete": int(len(sorties))}
     sorties.head(50)[["idu", "rang", "tier"]].to_csv(
-        QDIR / "q_v14_sorties_priorite.csv", index=False)
+        QDIR / "q_v14_sorties_tete.csv", index=False)
     pd.DataFrame([resume]).to_csv(QDIR / "q_v14_churn.csv", index=False)
     print(json.dumps(resume, indent=2, ensure_ascii=False))
 
@@ -450,7 +459,23 @@ def verif() -> None:
     assert verdict["ecart_median"] < 1e-6, "écart médian ≥ 1e-6 — à expliquer"
 
 
+def note() -> None:
+    """Recompose NOTE-DE-VERSION-q_v14.md depuis k0_table.csv + le manifeste GELÉ,
+    SANS re-fit (le modèle est gelé, aucun rescoring). Utilisé quand seul le TEXTE
+    de la note change (PALIERS-1 A0, point 1 : libellé du churn corrigé)."""
+    table = pd.read_csv(protocole.OUT / "k0_table.csv").set_index("candidat")
+    freeze = json.loads((QDIR / "FREEZE-q_v14.json").read_text())
+    rows = {c: table.loc[c].to_dict() for c in
+            ("ligne_de_base", "q_v12", "q_v14", "q_v14_24m_test2024")}
+    avec_ventes_pm = bool(freeze.get("ventes_pm_secteur_36m_retenue", True))
+    degrade = freeze.get("garde_fou_ece", {}).get("segments_degrades_final") or {}
+    txt = note_de_version(rows["ligne_de_base"], rows["q_v12"], rows["q_v14"],
+                          rows["q_v14_24m_test2024"], avec_ventes_pm, degrade)
+    (QDIR / "NOTE-DE-VERSION-q_v14.md").write_text(txt + "\n", encoding="utf-8")
+    print(txt)
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "fit"
     {"cache": cache, "fit": fit, "walk": walk, "fuite": lambda: test_fuite(engine()),
-     "churn": churn, "verif": verif}[cmd]()
+     "churn": churn, "verif": verif, "note": note}[cmd]()

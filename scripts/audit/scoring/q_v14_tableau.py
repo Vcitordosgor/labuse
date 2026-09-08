@@ -28,6 +28,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _common import engine, ROOT, SERVED_RUN  # noqa: E402
 from labuse.scoring.tiers_client import court  # noqa: E402
+from labuse.scoring.p_v2.qv14 import LIBELLES_QV14  # noqa: E402  (libellés à jour)
 
 QDIR = ROOT / "reports/q-v14"
 SAINT_PAUL = "97415"
@@ -129,13 +130,18 @@ def paliers(eng) -> None:
 
 
 def _raisons_fr(top5_json) -> list[str]:
-    """Les 3 premières contributions POSITIVES en français (libellés du run)."""
+    """Les 3 premières contributions POSITIVES en français.
+
+    Le libellé est relu de LIBELLES_QV14 par clé de feature (jamais du `libelle`
+    gelé au run) : les corrections de libellé PALIERS-1 A0 (« terrain nu
+    constructible », « secteur peu bâti ») s'affichent sans rescoring."""
     items = top5_json or []
     out = []
     for e in items:
         if e.get("signe") == "-" or e.get("log_hazard", 0) <= 0:
             continue
-        out.append(f"{e['libelle']} (+{e['log_hazard']:.2f})")
+        lib = LIBELLES_QV14.get(e.get("feature"), e.get("libelle"))
+        out.append(f"{lib} (+{e['log_hazard']:.2f})")
         if len(out) == 3:
             break
     while len(out) < 3:
@@ -144,8 +150,14 @@ def _raisons_fr(top5_json) -> list[str]:
 
 
 def top50(eng) -> None:
-    """Les 50 premières Priorité (brûlante) du candidat q_v14, chacune avec ses
-    trois raisons en français, face à son rang/palier dans le servi."""
+    """Les 50 premières parcelles PAR RANG (p le plus fort) du candidat q_v14, chacune
+    avec ses trois raisons en français, face à son rang/palier dans le servi.
+
+    NB (PALIERS-1 A0, point 2) : c'est une liste PAR RANG, pas « les 50 premières
+    Priorité ». Un rang de tête peut être DÉCLASSÉ (bâti saturé, etc.) : la colonne
+    `palier_q_v14` le montre — ex. 97416000CS0269 (rang 3, p 0,60) reste « Faible »
+    car la garde bâti saturé tient. C'est le cas exact que PALIERS-1 corrige (le
+    déclassement devient un MOTIF, la parcelle garde son palier de probabilité)."""
     cand = pd.read_sql(
         "SELECT parcelle_id AS idu, rang, p_raw, tier, top5_contributions "
         "FROM parcel_p_score_v2 WHERE run_id = 'q_v14' AND NOT copro "
@@ -163,6 +175,7 @@ def top50(eng) -> None:
         rows.append({
             "rang_q_v14": int(r["rang"]), "idu": r["idu"],
             "p_q_v14": round(float(r["p_raw"]), 5),
+            "palier_q_v14": court(r["tier"]) or r["tier"],
             "rang_servi": int(s["rang_servi"]) if s is not None and pd.notna(s["rang_servi"]) else None,
             "palier_servi": court(s["tier_servi"]) or s["tier_servi"] if s is not None else "absent",
             "raison_1": raisons[0], "raison_2": raisons[1], "raison_3": raisons[2],
@@ -170,10 +183,13 @@ def top50(eng) -> None:
     out = pd.DataFrame(rows)
     out.to_csv(QDIR / "tableau5_top50.csv", index=False)
     print(out.head(15).to_string(index=False))
+    n_decl = int((out["palier_q_v14"] == "Faible").sum())
     n_pcpm = out[["raison_1", "raison_2", "raison_3"]].apply(
         lambda r: any("professionnel a déposé" in str(x) for x in r), axis=1).sum()
-    print(f"\n… {n_pcpm}/50 des premières Priorité q_v14 citent « un professionnel a "
+    print(f"\n… {n_pcpm}/50 des 50 premières par rang citent « un professionnel a "
           "déposé un permis sur cette parcelle détenue par un particulier ».")
+    print(f"… {n_decl}/50 sont DÉCLASSÉES (palier « Faible ») malgré un p de tête — "
+          "gardées hors Priorité par la garde actuelle (cas corrigé par PALIERS-1).")
 
 
 def migration(eng) -> None:
@@ -205,10 +221,17 @@ def migration(eng) -> None:
                    and e.get("log_hazard", 0) > 0 for e in (t5 or []))
     montees = m[(m["palier_q_v14"] == "Priorité") & (m["palier_servi"] != "Priorité")].copy()
     montees["porte_permis_pro"] = montees["top5_contributions"].map(a_pcpm)
+    # détail GRANULAIRE des montées par palier servi (PALIERS-1 A0, point 2) : la
+    # matrice repliée montre « autre/à creuser » ; ici on tranche — zéro depuis Faible
+    # (les déclassées ne montent PAS en Priorité, la garde de tête tient).
+    par_palier = (montees["palier_servi"].value_counts()
+                  .rename_axis("palier_servi").reset_index(name="n"))
     resume = {
         "n_parcelles_changent_de_palier": int(len(change)),
         "montees_vers_Priorite": int(len(montees)),
         "dont_portees_par_permis_pro": int(montees["porte_permis_pro"].sum()),
+        "montees_par_palier_servi": {str(r.palier_servi): int(r.n)
+                                     for r in par_palier.itertuples()},
     }
     montees[montees["porte_permis_pro"]][["idu", "palier_servi"]].to_csv(
         QDIR / "tableau5_montees_permis_pro.csv", index=False)

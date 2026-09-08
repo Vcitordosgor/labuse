@@ -11,7 +11,7 @@ Les chiffres (banc K0, année vierge 2025 : train ≤2023, cal 2024) :
 - AUC global : servi 0.613 · q_v12 0.620 · q_v14 0.626 (nu 0.664, PM 0.669) ;
 - ECE global q_v14 : 0.0020 (bâti 0.0018, nu 0.0058, PM 0.0045, copro 0.0140) ;
 - segments dont l'ECE se dégrade de plus de 0,01 vs q_v12 : aucun ;
-- churn top-1158 vs le run servi : 51.3% (la garde de churn liste les sorties de Priorité au compte-rendu) ;
+- churn top-1158 vs le run servi : 51.3% (la garde de churn liste les sorties de la TÊTE — Priorité + À suivre — au compte-rendu ; Priorité seule n'a que 111 parcelles) ;
 - horizon 24 mois (test 2024) : AUC 0.642, préc@100 méd 0.110 — colonne stockée.
 
 Rien de servi ne change tant que la bascule n'est pas faite : `q_v11_m137` reste le run servi. La bascule est un geste manuel (`golden promote`), réversible.

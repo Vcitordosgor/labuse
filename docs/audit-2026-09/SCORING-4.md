@@ -139,15 +139,30 @@ récent (2025), `q_v14` (8,38) dépasse `q_v12` (7,35) et le servi m36 (6,73).
 | `q_v14` | île | 92 | 1 114 | 5 997 |
 | `q_v14` | Saint-Paul | 13 | 181 | 826 |
 
+*Réserve foncière 8 789 → 5 997 (corrigé PALIERS-1 A0, point 3)* : la réserve est un
+bucket **relatif** — top-décile de SDP résiduelle **ET** p sous la médiane du run —, donc
+q_v14 la recompose : en classant plus haut ces parcelles à forte capacité, il en fait
+passer 3 083 (sur les 3 116 qui quittent la réserve) **au-dessus de sa médiane p**, où la
+condition « p sous la médiane » ne tient plus ; 254 de plus sont écartées par la cascade
+élargie — d'où la baisse nette.
+
 *Précision par palier* : la précision réelle des paliers 2026 est par nature future
 (ventes à 12 mois inconnues). La précision **mesurée** est celle du banc K0 (année
 vierge 2025) : Priorité 13,7 % (servi) → **30,5 %** (`q_v14`) — le grand gain, porté
 par le signal « permis d'un pro ». La tête `q_v14` est plus resserrée (92 brûlantes vs
 111) : le modèle concentre la priorité sur des parcelles mieux étayées.
 
-### Les 50 premières Priorité de `q_v14` face au servi
+### Les 50 premières PAR RANG de `q_v14` face au servi
 
-`reports/q-v14/tableau5_top50.csv` — chacune avec ses trois raisons en français.
+*(corrigé PALIERS-1 A0, point 2 : cette liste est triée **par rang** — le p le plus
+fort —, pas « les 50 premières Priorité ». Un rang de tête peut être **déclassé** :
+13 des 50 sont « Faible » (bâti saturé, etc.), gardées hors Priorité par la garde
+actuelle malgré un p de tête — ex. 97416000CS0269, rang 3, p 0,60. C'est exactement
+le cas que PALIERS-1 corrige : le déclassement devient un motif, la parcelle garde son
+palier de probabilité.)*
+
+`reports/q-v14/tableau5_top50.csv` — chacune avec ses trois raisons en français, sa
+colonne `palier_q_v14` (visible : les 13 « Faible ») et son palier servi.
 Extrait (rang q_v14 · IDU · rang servi · palier servi · raisons) :
 
 | # | IDU | rang servi | palier servi | 3 raisons (FR) |
@@ -156,19 +171,21 @@ Extrait (rang q_v14 · IDU · rang servi · palier servi · raisons) :
 | 3 | 97416000CS0269 | 193 | Faible | ancienneté du dernier permis · **permis d'un pro** · piscine détectée |
 | 8 | 97416000HN1803 | 1732 | À suivre | ancienneté du dernier permis · **permis d'un pro** · croisement mutation × permis |
 
-**27 des 50 premières Priorité** citent explicitement « un professionnel a déposé un
+**27 des 50 premières par rang** citent explicitement « un professionnel a déposé un
 permis sur cette parcelle détenue par un particulier » : c'est le signal de
-SCORING-DONNÉES-1 qui fait remonter des parcelles que le servi classait « Faible » ou
-« À suivre ».
+SCORING-DONNÉES-1 qui fait remonter des parcelles que le servi classait plus bas.
 
 ### Combien changent de palier — et lesquelles montent grâce au « permis d'un pro »
 
 - **9 236 parcelles changent de palier** entre le servi et `q_v14`.
-- **88 montent en Priorité** (depuis À suivre / à creuser / Faible) — dont **87 sont
-  portées par le signal « permis d'un pro »** (`pc_pm_sur_parcelle_pp_36m` positif dans
-  leur top-5). C'est l'apport concret, lisible, du candidat.
+- **88 montent en Priorité** — **61 depuis À suivre, 27 depuis Neutre (a_creuser),
+  jamais depuis une déclassée** (corrigé PALIERS-1 A0 : la garde de tête tient, une
+  déclassée ne monte pas en Priorité même à p fort) — dont **87 sont portées par le
+  signal « permis d'un pro »** (`pc_pm_sur_parcelle_pp_36m` positif dans leur top-5).
 - Matrice de migration (servi → `q_v14`) : 84 Priorité→À suivre, 61 À suivre→Priorité,
-  27 « à creuser »→Priorité — la tête est réordonnée, pas gonflée.
+  27 Neutre→Priorité — la tête est réordonnée, pas gonflée. *La matrice replie Faible/
+  Neutre/Long terme dans « autre/à creuser » ; le détail granulaire (`montees_par_palier_
+  servi` dans `tableau5_migration.json`) confirme : zéro montée depuis une déclassée.*
 
 ### Ce qui a été écarté et pourquoi
 
@@ -198,8 +215,8 @@ dictionnaire servi par le pipeline (`recette=q_v14`). Vérifié **dans le run r�
 le top-5 stocké de la 1ʳᵉ brûlante affiche « un professionnel a déposé un permis sur
 cette parcelle détenue par un particulier (+0,89) ». Une bascule afficherait donc des
 phrases, jamais des noms de colonnes. Libellés :
-- `nu_constructible_asof` → « état bâti/nu reconstruit à la date » ;
-- `pct_bati_secteur_asof` → « part de parcelles bâties du secteur (à la date) » ;
+- `nu_constructible_asof` → « terrain nu constructible » ;   <!-- corrigé PALIERS-1 A0 -->
+- `pct_bati_secteur_asof` → « secteur peu bâti » ;   <!-- corrigé PALIERS-1 A0 -->
 - `pc_pm_sur_parcelle_pp_36m` → « un professionnel a déposé un permis sur cette parcelle détenue par un particulier » ;
 - `anciennete_plu_annees` → « ancienneté du PLU de la commune » ;
 - `ventes_pm_secteur_36m` → « part des ventes du secteur parties à des sociétés ».
@@ -209,8 +226,10 @@ phrases, jamais des noms de colonnes. Libellés :
 `reports/q-v14/NOTE-DE-VERSION-q_v14.md` (composée depuis les chiffres K0, jamais à la
 main). En résumé : montent — la précision de tête (Priorité ×2,2), l'AUC, la calibration
 PM ; descendent — rien de servi tant que Vic ne bascule pas ; churn de tête annoncé
-franchement : **51,9 %** du top-1158 tourne vs le servi (608 sorties de Priorité), effet
-combiné du nouveau modèle ET des 4 378 exclusions neuves.
+franchement : **51,9 %** du top-1158 tourne vs le servi (**601 sorties du top-1158** par
+rang ; **608 sorties de la tête servie** Priorité + À suivre = 1 478 — *pas* « de
+Priorité », qui n'a que 111 parcelles ; corrigé PALIERS-1 A0), effet combiné du nouveau
+modèle ET des 4 378 exclusions neuves.
 
 ---
 
