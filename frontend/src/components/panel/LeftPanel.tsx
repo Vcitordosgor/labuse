@@ -177,27 +177,24 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
 // (constat B2 : les aléas sont des risques, EBC/ER/DPU/SUP sont de l'urbanisme, RPG est un usage du
 // sol, DPF/50 pas de la domanialité) — plus « Contraintes » fourre-tout. « Le fond » (limites,
 // communes) reste à part : c'est le socle cartographique, pas une catégorie de données.
+// RECETTE-1 R20 — huit familles, ordre et contenu FIXÉS par le mandat. RECETTE-1 R19 — plus AUCUNE
+// sous-couche : « Limites officielles du PLU » (zonage) et « TVA réduite primo-accédant » (tva_primo)
+// deviennent des couches normales, au même niveau que les autres (voir LAYER_SUBOPTIONS vidé plus bas).
 const LAYER_FAMILIES: { famille: string; keys: (keyof LayerToggles)[] }[] = [
-  { famille: 'Le fond', keys: ['limites', 'communes'] },
-  // Urbanisme : le zonage calibré (+ sa sous-option « limites officielles ») et les règles du PLU.
-  { famille: 'Urbanisme', keys: ['zonage_parcelle', 'ebc', 'er', 'dpu', 'sup'] },
+  { famille: 'Repères', keys: ['limites', 'communes'] },
+  { famille: 'Urbanisme', keys: ['zonage_parcelle', 'zonage', 'ebc', 'er', 'dpu', 'sup'] },
   { famille: 'Risques et nuisances', keys: ['ppr', 'alea_inondation', 'alea_mvt', 'peb', 'bruit_route', 'bruit_carte', 'sis', 'casias'] },
   { famille: 'Nature et protections', keys: ['parc', 'znieff', 'enp', 'zone_humide'] },
-  { famille: 'Eau et domanialité', keys: ['dpf', 'cinquante_pas'] },
+  { famille: 'Domanialité', keys: ['dpf', 'cinquante_pas'] },
   { famille: 'Usage du sol', keys: ['rpg'] },
   { famille: 'Réseaux, mobilité et équipements', keys: ['transport', 'tcsp', 'axes', 'lignes_ht', 'equipements_bpe', 'equipements'] },
-  // Dispositifs et marché : QPV (+ sa sous-option TVA réduite), NPNRU/ANRU, ZFANG/FRR, prix du neuf.
-  { famille: 'Dispositifs et marché', keys: ['qpv', 'anru', 'zfang', 'frr', 'vefa_neuf'] },
+  { famille: 'Dispositifs et marché', keys: ['qpv', 'tva_primo', 'anru', 'zfang', 'frr', 'vefa_neuf'] },
 ]
 
-// COUCHES-1 lot 3 (item 12) + lot 4 (item 15) — SOUS-OPTIONS : une couche rattachée à une autre,
-// rendue indentée sous son parent (bascule manuelle indépendante). `zonage` (limites officielles PLU,
-// raison 1 fois sur 10 — B4) sous la couche calibrée ; `tva_primo` (buffer 500 m dérivé des QPV — C3)
-// sous QPV. Elles NE sont plus des entrées de premier niveau.
-const LAYER_SUBOPTIONS: Partial<Record<keyof LayerToggles, (keyof LayerToggles)[]>> = {
-  zonage_parcelle: ['zonage'],
-  qpv: ['tva_primo'],
-}
+// RECETTE-1 R19 — « Aucune sous-couche » : la table des sous-options est VIDÉE. `zonage` et `tva_primo`
+// sont désormais des couches de premier niveau (rangées dans Urbanisme et Dispositifs et marché
+// ci-dessus). La mécanique de rendu (`LAYER_SUBOPTIONS[key] ?? []`) reste, inerte.
+const LAYER_SUBOPTIONS: Partial<Record<keyof LayerToggles, (keyof LayerToggles)[]>> = {}
 const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) => [l.key, l.label]))
 
 // M12 C2 — pastille « i » d'une couche : au survol OU au clic, l'explication CLIENT (LAYER_INFO,

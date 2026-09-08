@@ -155,5 +155,16 @@ Le menu est rendu à plat par `Rail.tsx:232` (`MODULES.filter((m) => !m.hidden)`
 
 ---
 
-## LOT 5 à 10 — à faire
+## LOT 5 — Couches de la carte  *(commit 5)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R19 | Aucune sous-couche | **corrigé** | `LeftPanel.tsx` — `LAYER_SUBOPTIONS = {}` |
+| R20 | 8 familles, ordre et contenu | **corrigé** | `LeftPanel.tsx` — `LAYER_FAMILIES` réécrit |
+
+Le panneau des couches est 100 % piloté par deux tableaux (`LeftPanel.tsx`). **R19** : `LAYER_SUBOPTIONS` vidé — « Limites officielles du PLU » (`zonage`) et « TVA réduite primo-accédant » (`tva_primo`) ne sont plus imbriquées ; elles deviennent des couches normales, placées dans « Urbanisme » et « Dispositifs et marché ». **R20** : `LAYER_FAMILIES` réécrit aux 8 intitulés exacts et dans l'ordre du mandat (`Le fond`→**Repères**, `Eau et domanialité`→**Domanialité** ; `zonage` inséré dans Urbanisme après le calibré ; `tva_primo` dans Dispositifs après QPV ; les 6 autres familles inchangées). Les 33 couches sont couvertes 1:1, rien perdu ni inventé. La légende bas-droite (`Legend.tsx`, dynamique) traite déjà ces deux couches indépendamment — aucune retouche. `tsc` 0 ; `layersCoquilles.test` vert.
+
+---
+
+## LOT 6 à 10 — à faire
 *(non entamés)*
