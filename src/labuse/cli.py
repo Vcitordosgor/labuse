@@ -4231,8 +4231,16 @@ def golden_promote_cmd(run: str = typer.Argument(..., help="Label du run candida
         s.commit()
     if r.get("ok"):
         typer.echo(f"✓ Run servi = {run} (ancien : {r.get('ancien')}, sens : {r.get('sens')}).")
+        # BASCULE-1 (Lot B) — le chemin RÉEL écrit + l'arbre concerné + la valeur RELUE qui fait foi.
+        typer.echo(f"  manifeste (fait foi) : {r.get('manifeste_path')}")
+        typer.echo(f"  arbre servi          : {r.get('arbre')}")
+        typer.echo(f"  runs.current() relu  : {r.get('current_apres')}")
     else:
-        typer.echo(f"✗ Bascule refusée : {r.get('motif')}")
+        # verifie is False = la bascule s'est annoncée mais runs.current() n'a pas changé (démasqué).
+        typer.echo(f"✗ Bascule {'NON confirmée' if r.get('verifie') is False else 'refusée'} : {r.get('motif')}")
+        if r.get("manifeste_path"):
+            typer.echo(f"  écrit : {r.get('manifeste_path')} (arbre {r.get('arbre')}) — "
+                       f"fait foi : runs.current() = {r.get('current_apres')}")
         raise typer.Exit(1)
 
 

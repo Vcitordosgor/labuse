@@ -249,6 +249,21 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
             pass
     runs.invalidate()                   # DONNEES-2 (B4) — servi ET précédent relus au prochain appel
 
+    # BASCULE-1 (Lot B) — LA COMMANDE NE PEUT PLUS MENTIR : le manifeste (le point de vérité) vient
+    # d'être écrit ; on RELIT runs.current() et on ne confirme QUE si la valeur relue est bien le run
+    # demandé. Un écrit qui ne prend pas effet (vue dérivée seule, manifeste ignoré, mauvais arbre)
+    # est démasqué ICI — AVANT tout journal de succès. On expose le chemin réel écrit et l'arbre
+    # concerné, pour que l'écart worktree / install éditable soit visible à l'œil (Lot C).
+    manifeste_path = str(_manifeste.chemin())
+    arbre = str(_manifeste.chemin().resolve().parents[1])
+    current_apres = runs.current()
+    if current_apres != nouveau_run:
+        return {"ok": False, "verifie": False, "nouveau": nouveau_run, "ancien": ancien,
+                "current_apres": current_apres, "manifeste_path": manifeste_path, "arbre": arbre,
+                "motif": (f"bascule NON confirmée : le manifeste demande « {nouveau_run} » mais "
+                          f"runs.current() relit « {current_apres} ». Écrit : {manifeste_path} — c'est "
+                          f"CE fichier (arbre {arbre}) qui fait foi. Rien n'a basculé pour les clients.")}
+
     caches = purger_caches_run()
     # CIRCUIT-1 lot 2.7 — le cache spatial des isochrones se purge AUSSI à la bascule (en plus du
     # TTL 30 j lu par zone.isochrone) : après un geste qui change le servi, plus aucune géométrie
@@ -284,10 +299,11 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
-    return {"ok": True, "ancien": ancien, "nouveau": nouveau_run, "caches_purges": caches,
-            "sens": sens, "coherence": coherence,
-            "note": "Effective immédiatement (served_run.txt relu à la requête). Les tables servies "
-                    "run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}
+    return {"ok": True, "verifie": True, "ancien": ancien, "nouveau": nouveau_run,
+            "current_apres": current_apres, "manifeste_path": manifeste_path, "arbre": arbre,
+            "caches_purges": caches, "sens": sens, "coherence": coherence,
+            "note": "Effective immédiatement (manifeste relu à la requête, confirmé par runs.current()). "
+                    "Les tables servies run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}
 
 
 # ═══════════════ CIRCUIT-1 lot 3.3 — la NOTE DE VERSION (registre) + garde résiduel ═══════════════
