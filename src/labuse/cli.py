@@ -1344,6 +1344,24 @@ def ingest_rei_cmd() -> None:
     _jouer_filtre_apres_ingestion("dgfip_rei", "ingest-rei")
 
 
+@app.command("ingest-taxe-amenagement")
+def ingest_taxe_amenagement_cmd() -> None:
+    """TAXE-AMÉNAGEMENT-1 lot A — taux communaux de taxe d'aménagement (DGFiP, jeu DELTA).
+    Remplit taxe_amenagement_taux (24 communes attendues), rejoue le filtre."""
+    from .ingestion import taxe_amenagement_delta as ta_mod
+    with session_scope() as s:
+        res = ta_mod.ingest_taxe_amenagement(s)
+        s.commit()
+    typer.echo(f"✓ Taxe d'aménagement : {res['n']}/24 commune(s) avec un taux communal public.")
+    if res.get("taux_departemental_pct") is not None:
+        typer.echo(f"  · part départementale confirmée par DELTA : {res['taux_departemental_pct']} %.")
+    if res["manquantes"]:
+        typer.echo(f"  ⚠ manquantes : {', '.join(res['manquantes'])}")
+    if res["hors_bornes"]:
+        typer.echo(f"  ⚠ taux hors bornes écartés : {res['hors_bornes']}")
+    _jouer_filtre_apres_ingestion("taxe_amenagement", "ingest-taxe-amenagement")
+
+
 @app.command("ingest-ort")
 def ingest_ort_cmd() -> None:
     """SOURCES-1 lot 5 — ACV/PVD/ORT (DGALN, table grist complète). Table commune_ort,

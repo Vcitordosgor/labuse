@@ -148,6 +148,10 @@ commandes:
   - motif: "Taux de taxe foncière — fichier REI*"
     label: dgfip_rei
     argv: ["labuse", "ingest-rei"]
+  # ── TAXE-AMÉNAGEMENT-1 lot A — taux communaux de taxe d'aménagement (jeu ouvert DGFiP DELTA).
+  - motif: "Taxe d'aménagement — taux communaux*"
+    label: taxe_amenagement
+    argv: ["labuse", "ingest-taxe-amenagement"]
   - motif: "ACV / PVD / ORT*"
     label: anct_ort
     argv: ["labuse", "ingest-ort"]

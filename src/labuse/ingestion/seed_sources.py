@@ -80,17 +80,25 @@ SOURCES: list[dict] = [
          endpoint_url="https://www.georisques.gouv.fr/api/v1/gaspar/catnat",
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) — GASPAR ».",
          technical_notes="✓ live 974 : 426 arrêtés sur 24 communes (paginé PAGE_SIZE=100). Avant CIRCUIT-3 : 239 (tronqué à 10/commune, ingestion retirée)."),
-    # CIRCUIT-3 lot 6.2 — taux communaux de taxe d'aménagement (source publique : délibérations /
-    # base DGFiP). Table seedée VIDE (doctrine « aucun taux inventé ») ; les taux viennent de la
-    # source officielle. La calculette utilise le taux public dès qu'il existe (n'exige plus le saisi).
+    # CIRCUIT-3 lot 6.2 → TAXE-AMÉNAGEMENT-1 lot A — taux communaux de taxe d'aménagement.
+    # SOURCE AUTOMATIQUE trouvée (08/09/2026) : jeu ouvert DGFiP « delta_deliberation_tam_17_01_23 »
+    # (application DELTA, data.economie.gouv.fr). La table n'est plus vide : 24/24 communes ingérées,
+    # taux réels (1 à 5 %) avec leur date d'effet. La calculette utilise le taux public dès qu'il existe.
     dict(name="Taxe d'aménagement — taux communaux (délibérations)", category="fiscalite",
-         provider="Communes / DGFiP", access_type="délibérations / CSV",
-         status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
-         source_millesime="taux à ingérer de la source officielle — 0/24 (06/09/2026)",
-         documentation_url="https://www.collectivites-locales.gouv.fr/finances-locales/taxe-damenagement",
-         endpoint_url="https://www.collectivites-locales.gouv.fr/finances-locales/taxe-damenagement",
-         legal_notes="Délibérations communales / base publique DGFiP — taux communaux de la part locale de la TA.",
-         technical_notes="CIRCUIT-3 lot 6.2 : table taxe_amenagement_taux prête (mécanisme livré). Rates À VALIDER — aucun taux inventé."),
+         provider="DGFiP (application DELTA)", access_type="REST/JSON (Opendatasoft)",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         source_millesime="DGFiP DELTA — 24/24 communes en vigueur (08/09/2026)",
+         documentation_url="https://data.economie.gouv.fr/explore/dataset/delta_deliberation_tam_17_01_23/",
+         endpoint_url="https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/delta_deliberation_tam_17_01_23/records",
+         legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : DGFiP — éléments de taxation "
+                     "de la taxe d'aménagement votés par les collectivités (application DELTA), via "
+                     "data.economie.gouv.fr ». Taux communaux de la part locale de la TA, tels que délibérés.",
+         technical_notes="TAXE-AMÉNAGEMENT-1 lot A : la TA n'est PAS dans le REI (source distincte). Jeu DELTA "
+                         "publié 2×/an (fin janvier + octobre). Ingestion `labuse ingest-taxe-amenagement` : "
+                         "grain PARCELLE quand la commune sectorise → on retient la ligne zone=Communale SANS "
+                         "parcelle, en vigueur (date_fin null), DEFINITIF ; upsert par INSEE (974+2 chiffres). "
+                         "Mesuré 08/09/2026 : 24/24 (1 %→5 %). Part départementale 2,5 % CONFIRMÉE par le jeu "
+                         "(zone=Départementale). Table taxe_amenagement_taux. Aucun taux inventé."),
     dict(name="Géorisques — sites et sols pollués", category="risques", provider="BRGM / Géorisques",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="~1000 req/min/IP",
          documentation_url="https://www.georisques.gouv.fr/doc-api",
@@ -1412,7 +1420,9 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Réunion Express — hypothèses de tracé (débat public CNDP)": ("absente", None, "sans_objet"),
     # CIRCUIT-5 lot 2.3 — attrapées par verifier_catalogue() (entrées sans mode ni cadence) :
     "CatNat (arrêtés GASPAR / Géorisques)": ("job_sur_clic", 190, "proposee"),
-    "Taxe d'aménagement — taux communaux (délibérations)": ("depot_manuel", 365, "proposee"),
+    # TAXE-AMÉNAGEMENT-1 lot A — source auto (DELTA DGFiP), réingérée à la demande comme CatNat ;
+    # DELTA publie 2×/an → cadence semestrielle (~200 j) ; contrôlée par le filtre `taxe_amenagement`.
+    "Taxe d'aménagement — taux communaux (délibérations)": ("job_sur_clic", 200, "proposee"),
     "Cadastre d'époque (Etalab / PCI vecteur DGFiP)": ("one_shot", 365, "proposee"),
     # CIRCUIT-5b lot 1 — les quatre « à rattacher » entrent au catalogue avec leur cadence :
     "Annuaire de l'administration (service-public.fr / DILA)": ("cron_mensuel", 35, "proposee"),
