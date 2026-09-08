@@ -282,9 +282,9 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     if current_apres != nouveau_run:
         return {"ok": False, "verifie": False, "nouveau": nouveau_run, "ancien": ancien,
                 "current_apres": current_apres, "manifeste_path": manifeste_path, "arbre": arbre,
-                "motif": (f"bascule NON confirmée : le manifeste demande « {nouveau_run} » mais "
-                          f"runs.current() relit « {current_apres} ». Écrit : {manifeste_path} — c'est "
-                          f"CE fichier (arbre {arbre}) qui fait foi. Rien n'a basculé pour les clients.")}
+                "motif": (f"le manifeste demande « {nouveau_run} » mais runs.current() relit "
+                          f"« {current_apres} ». Écrit : {manifeste_path} — c'est CE fichier "
+                          f"(arbre {arbre}) qui fait foi. Rien n'a basculé pour les clients.")}
 
     caches = purger_caches_run()
     # CIRCUIT-1 lot 2.7 — le cache spatial des isochrones se purge AUSSI à la bascule (en plus du
