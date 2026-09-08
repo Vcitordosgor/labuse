@@ -20,6 +20,28 @@ from sqlalchemy.orm import Session
 
 _RUN_PRECEDENT_FILE = Path(__file__).resolve().parents[2] / "config" / "run_precedent.txt"
 
+
+def avertissement_arbre() -> str | None:
+    """BASCULE-1 (Lot C) — l'ÉCART D'ARBRE. `labuse` est installé en ÉDITABLE sur UN checkout ; une
+    commande lancée depuis un AUTRE worktree git écrit le manifeste dans le checkout d'INSTALLATION
+    (là où vit le module), pas dans le cwd. On ne répare pas la résolution de chemin (risque hors
+    mandat) : on AVERTIT AVANT d'agir. Rend None quand le cwd est dans l'arbre d'installation."""
+    import os
+
+    from . import manifeste as _manifeste
+    install = _manifeste.chemin().resolve().parents[1]      # racine du checkout où vit le module
+    try:
+        cwd = Path(os.getcwd()).resolve()
+    except OSError:
+        return None
+    if cwd == install or install in cwd.parents:
+        return None                                          # cwd DANS l'arbre d'installation : rien à dire
+    return (f"⚠ ARBRE : `labuse` est installé en éditable sur {install}.\n"
+            f"  Vous lancez depuis {cwd} (un autre dossier / worktree git).\n"
+            f"  La bascule écrira le manifeste dans l'arbre d'INSTALLATION, PAS ici — "
+            f"vérifiez que c'est bien l'arbre servi avant de continuer.")
+
+
 # RETOURS-10 (T2) — cache des écarts (candidat, servi) → immuable (runs append-only). Vidé à la bascule
 # (le run servi change) par `_ECART_CACHE.clear()` dans le chemin de bascule ; sinon borné (~12 runs).
 _ECART_CACHE: dict[tuple[str, str], dict] = {}

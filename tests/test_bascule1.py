@@ -106,3 +106,20 @@ def test_bascule_refuse_de_mentir_si_runs_current_ne_change_pas(db_session, basc
     assert res["manifeste_path"].endswith("served_manifest.json"), "elle dit CE qui a été écrit"
     # et le run servi n'a effectivement pas bougé (aucun mensonge, aucun effet de bord annoncé).
     assert runs.current() == "q_old"
+
+
+def test_avertissement_arbre_signale_l_ecart_worktree(tmp_path, monkeypatch):
+    """BASCULE-1 (Lot C) — l'avertissement est SILENCIEUX quand le cwd est dans l'arbre d'install,
+    et PARLE (⚠ ARBRE) quand on lance depuis un autre dossier / worktree git."""
+    install = tmp_path / "labuse"
+    (install / "config").mkdir(parents=True)
+    monkeypatch.setattr(manifeste, "_FICHIER", install / "config" / "served_manifest.json")
+
+    monkeypatch.chdir(install)                       # dans l'arbre d'installation
+    assert bascule_flux.avertissement_arbre() is None
+
+    autre = tmp_path / "labuse-worktree"
+    autre.mkdir()
+    monkeypatch.chdir(autre)                          # un AUTRE arbre
+    avert = bascule_flux.avertissement_arbre()
+    assert avert is not None and "ARBRE" in avert and str(install) in avert

@@ -4216,6 +4216,11 @@ def golden_promote_cmd(run: str = typer.Argument(..., help="Label du run candida
     (le point de vérité), relit `runs.current()` et ne confirme QUE si la valeur a réellement changé.
     Il n'existe plus de second chemin qui ne toucherait que la vue dérivée `served_run.txt`."""
     from . import bascule_flux, circuit_journal, filtres
+    # BASCULE-1 (Lot C) — l'écart d'arbre : lancée depuis un autre worktree que le checkout où
+    # `labuse` est installé en éditable, la bascule écrit là-bas, pas ici. On avertit AVANT d'agir.
+    avert = bascule_flux.avertissement_arbre()
+    if avert:
+        typer.echo(avert)
     with session_scope() as s:
         blocages = filtres.garde_pompe(s)
         if blocages:

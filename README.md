@@ -95,6 +95,11 @@ labuse api      # uvicorn sur http://localhost:8000 (docs : /docs)
 pytest
 ```
 
+> ⚠ **Worktree & install éditable** : `pip install -e` fige le chemin du checkout. Une commande de
+> bascule (`labuse golden promote <run>` = alias de `bascule_flux.basculer()`) lancée depuis un AUTRE
+> worktree git écrit le manifeste dans le checkout d'INSTALLATION, pas dans le cwd — elle l'avertit
+> avant d'agir (BASCULE-1 Lot C). Réinstalle en éditable depuis le worktree pour servir depuis lui.
+
 ## Structure
 
 ```
