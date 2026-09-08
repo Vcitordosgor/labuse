@@ -157,59 +157,68 @@ recalculer.** Seule remarque : la sonde pourrait le classer explicitement en « 
 
 ---
 
-## Lot B — ce qui a été recalculé
+## Lot B — ce qui a été recalculé (arbitrage Vic : voie (a) — C2 puis C1, puis build-mvt, AUCUN rejeu)
 
-**RIEN pour l'instant.** Conformément à la consigne (« rends compte avant tout recalcul — je veux lire le
-diagnostic avant que tu touches à quoi que ce soit »), aucun recalcul n'a été lancé. Ce qui est proposé,
-en attente de ton feu vert :
+Après lecture du diagnostic, Vic a tranché : **on n'a PAS rejoué la cascade** (ni le modèle P). On a
+appris la réutilisation d'étage 0 à la couche de service (C1), puis matérialisé les annexes par
+**`build-mvt` sur q_v14** (mesuré ~2 min, base réelle `labuse`). Après C1, chaque table LIT la cascade
+RÉELLE (empruntée à `q_v13_sources1`) tout en STAMPANT le run servi `q_v14` :
 
-1. **`build-mvt` sur q_v14** (~2-3 min) — guérit **`parcel_flags`** et **`score_e`** proprement (tous deux
-   indépendants de la cascade). **⚠ mais il recalculerait aussi `parcel_renouvellement`, qui deviendrait
-   VIDE** (dépend de la cascade absente). Donc **build-mvt ne peut pas être lancé tel quel** sans vider
-   l'outil renouvellement — il faut d'abord trancher la racine (cascade).
-2. **La cascade (racine)** — rejeu = **heures** + touche soit le modèle P (`flux-run`, interdit) soit
-   dépasse 1 h (`dryrun-evaluate` × 24). **STOP par le mandat** → arbitrage requis (voir Lot C).
+| Table | Avant | Après build-mvt | Statut sonde |
+|---|---|---|---|
+| `mvt_parcels` (carte) | q_v11_m137 | **q_v14** (431 663) | ✓ |
+| `parcel_flags` | q_v11_m137 (2 208 373) | **q_v14** (2 322 429) | ✓ OK |
+| `parcel_renouvellement` | q_v11_m137 (67 260) | **q_v14** (67 260) — **PAS vide** (C1 lit la cascade empruntée) | ✓ OK |
+| `score_e` | q_v13_sources1 (285 781) | **q_v14** (281 403) | ✓ OK |
+| `dryrun_*` (cascade) | pas de q_v14 (empruntée) | inchangée — **empruntée EXPLICITEMENT** (manifeste `cascade_run`) | ✓ présente (431 663) |
+| `division_or_candidates` | q_v13_sources1 + q_v10_m129 | inchangée — **exception légitime** | ⚠ toléré |
 
-**Décision à prendre avant Lot B** (c'est le vrai objet de « rends compte avant recalcul ») : voir Lot C.
+## Lot C — que ça ne se reproduise pas (IMPLÉMENTÉ : C2 puis C1)
 
----
+**C2 — la bascule ne peut plus servir un run sans cascade** (`bascule_flux._run_complet`, commit
+`ea3772d2`). Le trou : `SELECT 1 … LIMIT 1` sur 0 ligne rendait `None` comme une table absente → « toléré
+hors production ». On distingue désormais l'ABSENCE de table (indéterminé) du VIDE pour ce run (refus).
+C'était le **second faux positif de la journée** dans ce code. Garde `test_run_scoré_sans_cascade_est_refusé`.
 
-## Lot C — que ça ne se reproduise pas (proposition, non implémentée)
+**C1 — la couche de service connaît l'étage 0 emprunté** (commits `98e0cd80` + `54f43374`). Le manifeste
+porte un champ **explicite** `cascade_run` (jamais un défaut implicite deviné — exigence Vic) : la bascule
+l'écrit et le VÉRIFIE en base (`resoudre_cascade_run` : cascade propre au run, ou étage 0 emprunté lu dans
+`params` (`etage0_run`/`prev_run`) et confirmé ; refus si introuvable). `runs.cascade()` le relit à la
+requête. Tous les lecteurs de cascade (fiche + 4 documents, carte, autocomplete, renouvellement,
+`build-mvt`, moteurs, modules, projets, copilote, events, nl, partners, solaire) et les gardes
+(`_run_complet`, `check_coherence_run_fiche`) résolvent `q_v14 → q_v13_sources1` — **sans dupliquer 17,6 M
+lignes**, no-op pour tout run à cascade propre (zéro changement prod/tests). Les `:run` mixtes
+cascade+score ont été séparés (`:run` cascade, `:v2run` score).
 
-Le mandat demande le « geste juste » : soit la bascule refuse tant que les annexes ne suivent pas, soit
-elle liste ce qui reste. La racine ici n'est pas « on a oublié de recalculer » — c'est que **q_v14 réutilise
-volontairement l'étage 0 d'un autre run, et la couche de service ne le sait pas**. Deux corrections, à
-arbitrer :
-
-**C1 — Enseigner la réutilisation d'étage-0 à la couche de service (recommandé).** Ajouter au manifeste
-un champ `cascade_run` (défaut = `scoring_run`), écrit par la bascule à partir de `p_score_v2_runs.params`
-(`prev_run`/`LABUSE_ETAGE0_RUN`). Les lecteurs de cascade (`served_cascade_lines`, `renouvellement.build`,
-carte, anti-fiche, moteurs) résoudraient `q_v14 → q_v13_sources1` **sans dupliquer 17,6 M lignes**. C'est
-l'exact miroir, côté service, de ce que `LABUSE_ETAGE0_RUN` fait côté scoring. **Avantage** : cohérent,
-gratuit en calcul. **Inconvénient** : change plusieurs lecteurs (revue à faire) — donc **proposé, pas
-implémenté**.
-
-**C2 — Boucher le trou de `_run_complet`** (à faire quoi qu'il arrive, `bascule_flux.py:110-111`) :
-distinguer « table absente » (`to_regclass IS NULL`) de « 0 ligne pour ce run » (`SELECT count`). Sans
-ça, la bascule continuera de laisser passer des runs sans cascade « tolérés hors production » — c'est ce
-qui a servi q_v14 en local sans crier. Coût : quelques lignes. **Puis** faire dire à la bascule, avant de
-confirmer, la liste des tables annexes qui NE suivent PAS encore (flags/renouv/score_e) **avec la commande
-exacte** (`labuse build-mvt`) — l'inverse de l'avertissement muet actuel.
-
-**C3 (secondaire)** — la sonde pourrait, comme pour `division_or`, classer une cascade **réutilisée
-déclarée** en « toléré (étage 0 réutilisé de X) » plutôt qu'en écart, une fois C1 en place.
-
-**Recommandation** : **C2 d'abord** (bouche un vrai trou de sécurité de bascule, petit), puis **C1** si Vic
-valide l'approche « alias d'étage 0 côté service » ; alors **build-mvt** guérit flags + score_e + renouv
-d'un coup, sans jamais rejouer la cascade ni le modèle. Sans C1, le seul chemin pour servir q_v14
-proprement aux clients serait un rejeu de cascade de plusieurs heures (déconseillé, redondant).
+**SONDE NOCTURNE (exigence Vic)** — `coherence_flux.verifier` check 7 : « la cascade servie EXISTE
+ENCORE ». Le `cascade_run` servi doit avoir des lignes ; sinon écart bruyant. **Un run servi ne peut plus
+pointer vers une cascade purgée** — à la bascule (C1/C2) comme chaque nuit. Garde
+`test_run_emprunteur_de_cascade_est_accepté_et_résolu`.
 
 ---
 
-## Ce qui reste et pourquoi
+## Re-vérification après build-mvt (exigence Vic « montre-moi les avertissements restants »)
 
-- **flags + score_e** : prêts à guérir par `build-mvt` (minutes) — **en attente** parce que le même geste
-  viderait renouvellement tant que la cascade n'est pas tranchée.
-- **renouvellement** : bloqué par la racine (cascade).
-- **cascade** : rejeu > 1 h et/ou rescoring interdit → **STOP, arbitrage Vic** (C1 évite le rejeu).
-- **division_or** : rien à faire (exception légitime).
+**Sonde `coherence_flux.verifier` → `ok global = True` (7/7)** :
+- ✓ 20 surfaces lisent le run courant (q_v14) — run fiche cohérent (v2 q_v14 + cascade empruntée q_v13_sources1)
+- ✓ Tier identique fiche/Projets/Scan · ✓ Date de valeur · ✓ Exports = écran · ✓ Endpoints vivants
+- ✓ **Cascade servie présente : q_v13_sources1 (empruntée par q_v14) — 431 663 lignes**
+- ✓ Aucune lecture de table obsolète — toléré (revue par commune) : division_or_candidates
+
+**Avertissements de promote restants** :
+- `parcel_flags` / `parcel_renouvellement` / `score_e` → **OK** (q_v14).
+- `division_or_candidates` → **⚠ PÉRIMÉE mais TOLÉRÉE** (workflow de revue par commune, `EXPOSE=False`) —
+  **seul avertissement restant, et il est légitime** (rien à recalculer ; cf. lot A §5).
+
+**Il ne reste aucun écart réel** : les cinq entrées du mandat sont soldées (trois recalculées et alignées
+sur q_v14, la cascade empruntée EXPLICITEMENT + surveillée, `division_or` tolérée). `test_tuiles_mvt_…`
+passe sur la base réelle.
+
+## Notes / limites
+- Deux couches `spatial_layers` restent ORPHELINES de source (`tcsp_zone`, `vefa_neuf`) — signalé par
+  `check_sources_declarees` au build, **pré-existant et hors périmètre** des 5 tables.
+- `entonnoir_motifs` (cache de motifs du funnel, hors des 5 tables) reste run-scopé sur le scoring : sous
+  un run emprunteur ses motifs seraient vides. Adjacent, non traité (hors mandat) — à signaler si repris.
+- Interdits respectés : aucun merge, aucun rescoring du modèle P, aucune bascule (q_v14 reste servi en
+  local), aucun rejeu de cascade. `config/served_manifest.json` local complété du champ
+  `cascade_run: q_v13_sources1` (état de service LOCAL, non commité — comme les autres pointeurs).
