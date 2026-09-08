@@ -11,7 +11,7 @@ import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
 import { CLIENT } from '../../lib/strings'
-import { TIER_DECLASSE_META, TIER_V2_META, tierChipLabel } from '../../lib/status'
+import { LEGEND_V2_ORDER, TIER_V2_META, tierChipLabel } from '../../lib/status'
 
 // M55-J point 5 : COQUILLE de modale partagée (overlay + Échap + croix) — deux contenus
 // distincts s'y logent : « classement » (la méthode) et « scoring » (le sens des paliers).
@@ -59,14 +59,10 @@ export function AlgoExplainer({ onClose }: { onClose: () => void }) {
 // tooltips de la carte d'analyse) : une définition de palier, un seul endroit. Les couleurs
 // viennent de la palette unique (status.ts). Les 6 tiers de déclassement sont regroupés sous
 // « Potentiel épuisé » (comme la ventilation).
-const SCORING_PALIERS: { key: string; color: string }[] = [
-  { key: 'brulante', color: TIER_V2_META.brulante.color },
-  { key: 'chaude', color: TIER_V2_META.chaude.color },
-  { key: 'reserve_fonciere', color: TIER_V2_META.reserve_fonciere.color },
-  { key: 'a_creuser', color: TIER_V2_META.a_creuser.color },
-  { key: 'declassees', color: TIER_DECLASSE_META.declasse_bati_sature.color },
-  { key: 'ecartee', color: TIER_V2_META.ecartee.color },
-]
+// PALIERS-1 — le « i » des paliers montre LE vocabulaire unique : les quatre paliers, aucun autre.
+const SCORING_PALIERS: { key: string; color: string }[] = LEGEND_V2_ORDER.map((key) => ({
+  key, color: TIER_V2_META[key].color,
+}))
 export function ScoringExplainer({ onClose }: { onClose: () => void }) {
   return (
     <Modale id="scoring" titre={CLIENT.algo.scoringTitre} onClose={onClose}>
@@ -426,7 +422,7 @@ function VerdictHero() {
             </button>
             <button data-scoring-open onClick={() => setAlgoModale('scoring')}
               className="flex-1 whitespace-nowrap rounded-ctl border border-mint/40 px-1.5 py-0.5 text-[10px] font-medium text-mint hover:bg-mint/10"
-              title="Le sens des paliers : Priorité, À suivre, Long terme, Neutre, Faible, Écartée">
+              title="Le sens des paliers : Priorité, À suivre, Sans signal, Écartée">
               {CLIENT.algo.boutonScoring}
             </button>
           </div>

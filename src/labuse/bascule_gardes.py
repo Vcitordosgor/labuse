@@ -707,24 +707,32 @@ def check_coherence_run_fiche(session=None) -> dict:
     le label servi présent côté cascade mais ABSENT de `p_score_v2_runs` — le verdict de fiche retombe
     SILENCIEUSEMENT sur le repli legacy (`_score_v2_run_id` → None → tier NULL). Cette garde CRIE au lieu
     de compter sur la chance. Bruyante, NON bloquante (régime check_fraicheur).
-    Statuts : OK / V2_ABSENT / CASCADE_ABSENT / LES_DEUX_ABSENTS."""
+    Statuts : OK / V2_ABSENT / CASCADE_ABSENT / LES_DEUX_ABSENTS.
+
+    COHÉRENCE-RUN-1 (C1) — la cascade est vérifiée au RUN DE CASCADE SERVI (`runs.cascade()`), qui peut
+    être EMPRUNTÉ (q_v14 → q_v13_sources1) ; le score v2 au run scoring (`runs.current()`). Sans ça, la
+    garde criait CASCADE_ABSENT pour un run emprunteur alors que les lecteurs (C1) servent bien la
+    cascade empruntée — un faux positif de plus dans ce code. On confronte donc chaque pointeur à SON run."""
     from labuse import runs
     servi = runs.current()
+    cascade_run = runs.cascade()
     out: dict[str, object] = {}
 
-    def _present(conn, table: str, col: str) -> bool | None:
+    def _present(conn, table: str, col: str, run: str) -> bool | None:
         if not conn.execute(text(f"SELECT to_regclass('{table}')")).scalar():
             return None   # table absente = indéterminé
         return bool(conn.execute(
-            text(f"SELECT 1 FROM {table} WHERE {col} = :r LIMIT 1"), {"r": servi}).scalar())
+            text(f"SELECT 1 FROM {table} WHERE {col} = :r LIMIT 1"), {"r": run}).scalar())
+
+    emprunt = "" if cascade_run == servi else f" (cascade empruntée « {cascade_run} »)"
 
     def _run(conn):
-        casc = _present(conn, "dryrun_parcel_evaluations", "run_label")
-        v2 = _present(conn, "p_score_v2_runs", "run_id")
-        out.update(cascade=casc, v2=v2)
+        casc = _present(conn, "dryrun_parcel_evaluations", "run_label", cascade_run)
+        v2 = _present(conn, "p_score_v2_runs", "run_id", servi)
+        out.update(cascade=casc, v2=v2, cascade_run=cascade_run)
         if casc and v2:
             out["statut"] = "OK"
-            print(f"{_ts()} ✓ run fiche cohérent : « {servi} » présent en cascade ET en v2.", flush=True)
+            print(f"{_ts()} ✓ run fiche cohérent : « {servi} » présent en v2 ET cascade{emprunt}.", flush=True)
         elif casc and v2 is False:
             out["statut"] = "V2_ABSENT"
             print(f"{_ts()} ⚠ run fiche [V2_ABSENT] — « {servi} » servi en cascade mais ABSENT de "
@@ -732,8 +740,8 @@ def check_coherence_run_fiche(session=None) -> dict:
                   f"Rejouer `labuse score-v2` sous ce label. NON bloquant.", flush=True)
         elif v2 and casc is False:
             out["statut"] = "CASCADE_ABSENT"
-            print(f"{_ts()} ⚠ run fiche [CASCADE_ABSENT] — « {servi} » en v2 mais absent de "
-                  f"dryrun_parcel_evaluations. NON bloquant.", flush=True)
+            print(f"{_ts()} ⚠ run fiche [CASCADE_ABSENT] — « {servi} » en v2 mais cascade « {cascade_run} » "
+                  f"absente de dryrun_parcel_evaluations. NON bloquant.", flush=True)
         elif casc is False and v2 is False:
             out["statut"] = "LES_DEUX_ABSENTS"
             print(f"{_ts()} ⚠ run fiche [LES_DEUX_ABSENTS] — « {servi} » introuvable des deux côtés.", flush=True)

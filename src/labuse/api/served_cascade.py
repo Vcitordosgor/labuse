@@ -28,8 +28,12 @@ def served_cascade_lines(db: Session, idu: str, run: str | None = None) -> list[
 
     Colonnes : layer_name, result, severity, weight_applied, detail, source, source_table,
     source_id, evenement. Liste vide si la parcelle n'est pas dans le run servi.
+
+    COHÉRENCE-RUN-1 (C1) : le run par défaut est le run de CASCADE servi (`runs.cascade()`), pas le
+    scoring — identiques sauf pour un run qui réutilise l'étage 0 d'un autre (q_v14 → q_v13_sources1).
+    Sans ça, la fiche et les 4 documents servaient une cascade VIDE sous un tel run (constat lot A).
     """
-    run = run or runs.current()
+    run = run or runs.cascade()
     rows = db.execute(text(
         """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
                   ds.name AS source, cr.source_table, cr.source_id, cr.evenement

@@ -66,11 +66,11 @@ def liste_secteurs(db: Session = Depends(get_db),
 def _liste_secteurs(db: Session, commune: str | None, limit: int) -> dict:
     rows = db.execute(text(
         """SELECT left(s.parcelle_id, 10) AS secteur, p.commune,
-                  count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS opportunites,
-                  count(*) FILTER (WHERE s.tier = 'brulante') AS brulantes
+                  count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) AS opportunites,
+                  count(*) FILTER (WHERE s.tier IN ('brulante', 'priorite')) AS brulantes
            FROM parcel_p_score_v2 s JOIN parcels p ON p.idu = s.parcelle_id
            WHERE s.run_id = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
-           GROUP BY 1, 2 HAVING count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) > 0
+           GROUP BY 1, 2 HAVING count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) > 0
            ORDER BY opportunites DESC, brulantes DESC LIMIT :lim"""),
         {"run": runs.current(), "c": commune, "lim": limit}).mappings().all()
     return {"secteurs": [dict(r) for r in rows], "n": len(rows), "note": POST_M7}
@@ -137,7 +137,8 @@ def _carnet(secteur: str, db: Session) -> dict:
     return {
         "secteur": secteur, "commune": commune, "section": secteur[8:10], "insee": insee,
         "stock": {"total": sum(tiers.values()), "par_tier": tiers,
-                  "opportunites": tiers.get("brulante", 0) + tiers.get("chaude", 0)},
+                  "opportunites": (tiers.get("brulante", 0) + tiers.get("chaude", 0)
+                                   + tiers.get("priorite", 0) + tiers.get("a_suivre", 0))},
         "prix": {"dvf": prix or None, "sortie_neuf": (dict(neuf) if neuf else None), "source": "DVF (Sourcé)"},
         "signaux": signaux, "permis_24_mois": permis,
         "zan": (dict(zan) if zan else None),

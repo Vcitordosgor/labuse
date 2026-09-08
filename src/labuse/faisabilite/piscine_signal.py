@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from ..config import load_yaml_config
 
-_TIERS_DEFAUT = ("brulante", "chaude")
+_TIERS_DEFAUT = ("brulante", "chaude", "priorite", "a_suivre")  # PALIERS-1 : deux vocabulaires
 
 
 def _config() -> dict:

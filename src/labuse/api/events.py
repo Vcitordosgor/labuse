@@ -30,11 +30,13 @@ from .. import runs
 # mapping canonique tiers_client.court() (chips : Priorité / À suivre / Long terme / Neutre / Faible /
 # Écartée). Les clés internes (brulante, chaude) restent en base, jamais servies.
 from ..scoring.tiers_client import court as _tier_court   # noqa: E402
-_TIERS_PRIORITE = ("brulante", "chaude")
+_TIERS_PRIORITE = ("brulante", "chaude", "priorite", "a_suivre")  # PALIERS-1 : deux vocabulaires
 _TIER_RANG = {"brulante": 0, "chaude": 1, "reserve_fonciere": 2, "a_creuser": 3,
               "declasse_bati_revele": 4, "declasse_bati_sature": 5, "declasse_non_constructible": 6,
               "declasse_zone_fermee": 7, "declasse_au_statut_inconnu": 8, "declasse_au_fermee": 9,
-              "ecartee": 10}
+              "ecartee": 10,
+              # PALIERS-1 — codes canoniques : priorite=brulante, a_suivre=chaude, sans_signal=a_creuser
+              "priorite": 0, "a_suivre": 1, "sans_signal": 3}
 
 
 def _monte(de: str | None, vers: str | None) -> bool:
@@ -653,7 +655,7 @@ def seed_demo(db: Session) -> dict:
     db.execute(text(f"""
         INSERT INTO parcel_p_score_v2 (run_id, tier, {_cols})
         SELECT 'q_v2_demo', 'a_creuser', {_cols} FROM parcel_p_score_v2
-        WHERE run_id = :run AND tier = 'chaude' AND NOT copro
+        WHERE run_id = :run AND tier IN ('chaude', 'a_suivre') AND NOT copro
         ORDER BY rang DESC LIMIT 3"""), {"run": runs.current()})
     out = detect_events(db, runs.current(), "q_v2_demo", demo=True)
     db.flush()
@@ -714,7 +716,7 @@ def list_events(request: Request, unread_only: bool = False,
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE {_visible('e')} {f"AND NOT {_seen('e')}" if unread_only else ""}{cf}
         ORDER BY {_seen('e')} ASC, e.ts DESC, e.id DESC LIMIT :lim OFFSET :off"""),
-        {"lim": limit, "off": max(0, offset), "run": runs.current(), "cid": cid, "market": mk}).mappings().all()
+        {"lim": limit, "off": max(0, offset), "run": runs.cascade(), "cid": cid, "market": mk}).mappings().all()  # C1
     # CIRCUIT-2 lot 1.6 — le compteur de non-lues est calculé par le moteur nommé
     # `plateforme_compteurs` (id registre n_notifications) : ce robinet ne calcule plus, il appelle.
     from ..registre.moteurs.plateforme import notifications_non_lues
@@ -1055,7 +1057,7 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
           AND e.envoi_statut IS DISTINCT FROM 'rattrapage'   -- M137-M : le rattrapage vit à la cloche, jamais au digest/mail
         ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
                  e.ts DESC NULLS LAST LIMIT 20"""),
-        {"run": runs.current(), "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()
+        {"run": runs.cascade(), "cid": cid, "perso": list(_PERSO_KINDS), "jours": jours}).mappings().all()  # C1 cascade
     # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
     # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
     communes = _mes_communes(db, cid)
@@ -1075,10 +1077,11 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
                r.sdp_residuelle_m2, s.tier
         FROM parcel_p_score_v2 s
         JOIN parcels p ON p.idu = s.parcelle_id
-        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :cascade
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE s.run_id = :run AND s.tier IN ('brulante', 'chaude')
-        ORDER BY s.rang NULLS LAST LIMIT 5"""), {"run": runs.current()}).mappings().all()
+        WHERE s.run_id = :run AND s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
+        ORDER BY s.rang NULLS LAST LIMIT 5"""),
+        {"run": runs.current(), "cascade": runs.cascade()}).mappings().all()  # C1 : score vs cascade
     return {"evenements": [dict(r) for r in events], "marche_resume": marche_resume,
             "top_chaudes": [dict(r) for r in top]}
 

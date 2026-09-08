@@ -1474,7 +1474,7 @@ def _q_v2_where(run_label: str,
         cl = [x.strip() for x in constructibilite.split(",") if x.strip()]
         sub = []
         if "constructible" in cl:
-            sub.append("(s2.tier IN ('brulante','chaude','reserve_fonciere','a_creuser') AND NOT " + _ETAGE0_SQL + ")")
+            sub.append("(s2.tier IN ('brulante','chaude','reserve_fonciere','a_creuser','priorite','a_suivre','sans_signal') AND NOT " + _ETAGE0_SQL + ")")
         if "au_conditionnelle" in cl:
             sub.append("s2.tier IN ('declasse_au_fermee','declasse_au_statut_inconnu')")
         if "fermee" in cl:
@@ -1855,10 +1855,10 @@ def _communes_data(db: Session, source: str) -> list[dict]:
             SELECT p.commune,
                    substring(min(p.idu) from 1 for 5)                       AS insee,
                    count(*)                                                 AS parcelles,
-                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS chaudes,
-                   count(DISTINCT pm.siren) FILTER (WHERE s.tier IN ('brulante', 'chaude')
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) AS chaudes,
+                   count(DISTINCT pm.siren) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
                          AND pm.siren IS NOT NULL)                          AS dossiers,
-                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')
+                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
                          AND pm.siren IS NULL)                              AS chaudes_sans_identite,
                    count(s.parcelle_id)                                     AS evaluees,
                    ST_XMin(ST_Extent(p.geom)) AS x1, ST_YMin(ST_Extent(p.geom)) AS y1,
@@ -1933,7 +1933,7 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     stock = db.execute(text(
         "SELECT count(*) n, coalesce(sum(p.surface_m2), 0) m2 FROM parcel_p_score_v2 s "
         "JOIN parcels p ON p.idu = s.parcelle_id WHERE p.commune = :c AND s.run_id = :r "
-        "AND s.tier IN ('brulante', 'chaude')"), {"c": commune, "r": runs.current()}).mappings().first()
+        "AND s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')"), {"c": commune, "r": runs.current()}).mappings().first()
     return {
         "n_parcelles": int(n_parcelles),
         "surface_ha": int(surface_ha) if surface_ha is not None else None,
@@ -2324,7 +2324,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     l'ordre (brûlante → chaude → réserve → à creuser → écartée, puis rang).
     M6 2a (§1.8) : l'adresse BAN accompagne chaque résultat — jointure APRÈS le LIMIT
     (sous-requête paginée), jamais un lookup par parcelle scannée."""
-    source = source or runs.current()
+    source = source or runs.cascade()   # C1 : :run alimente la cascade (d.run_label) ; v2run = score v2
     needle = q.strip().upper().replace(" ", "")
     ban_ok = _ban_ready(db)
     ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
@@ -2340,8 +2340,8 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    {_ETAGE0_SQL} AS etage0,
                    CASE WHEN {_ETAGE0_SQL} THEN 5
-                        WHEN s2.tier = 'brulante' THEN 0 WHEN s2.tier = 'chaude' THEN 1
-                        WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier = 'a_creuser' THEN 3
+                        WHEN s2.tier IN ('brulante', 'priorite') THEN 0 WHEN s2.tier IN ('chaude', 'a_suivre') THEN 1
+                        WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier IN ('a_creuser', 'sans_signal') THEN 3
                         ELSE 4 END AS ord
             FROM parcels p
             LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -2627,11 +2627,23 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
     `config/served_run.txt`) → toujours le scoring premium v2 (`dryrun_parcel_evaluations`),
     tier servi. Le fallback legacy `parcel_evaluations.status` (rail éteint M37) est SUPPRIMÉ —
     un seul chemin, une seule vérité. Le front envoyait déjà `?source=…` via le helper `q()`."""
-    return _q_v2_geojson(db, commune, limit, run_label=source or runs.current())
+    return _q_v2_geojson(db, commune, limit, run_label=source or runs.cascade())  # C1 : run cascade
 
 
 #: statuts de la matrice premium v2 (dryrun) — source de vérité du Socle V1.
 _Q_V2_STATUTS = ("chaude", "a_surveiller", "a_creuser", "ecartee", "exclue")
+
+
+def _cascade_run(db: Session, run_label: str | None = None) -> str:
+    """COHÉRENCE-RUN-1 (C1) — le run dont LIRE la cascade (dryrun_*) pour un run demandé. Le front
+    envoie `?source=<run servi>` (scoring) ; ce run peut RÉUTILISER l'étage 0 d'un autre (q_v14 →
+    q_v13_sources1). On résout donc TOUJOURS (pas seulement quand `run_label is None`) : sinon la
+    cascade passée en clair par l'URL court-circuitait l'alias et servait 0 ligne. Égal au run
+    demandé pour tout run qui possède sa propre cascade (cas normal)."""
+    from ..bascule_flux import resoudre_cascade_run
+    rl = run_label or runs.current()
+    resolu, _ = resoudre_cascade_run(db, rl)
+    return resolu or rl
 
 
 def _score_v2_run_id(db: Session) -> str | None:
@@ -2799,9 +2811,13 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
     Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
     l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées.
     M6 2a (§1.8) : l'adresse BAN entre dans les properties (cartes de résultats mode commune) —
-    lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo)."""
-    if run_label is None:
-        run_label = runs.current()
+    lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo).
+
+    COHÉRENCE-RUN-1 (C1) : ici `:run` alimente la CASCADE (dryrun d.run_label / cascade_results) et
+    `:v2run` le score v2 — deux params SÉPARÉS. Le run de cascade par défaut est `runs.cascade()`
+    (= scoring sauf run à étage 0 emprunté, q_v14 → q_v13_sources1) ; sinon la carte perdait ses
+    flags/événements sous un tel run (constat lot A)."""
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     # M6.2 perf (#1) : adresse BAN via la table matérialisée `parcel_adresse` (LEFT JOIN PK
     # indexé) quand elle existe — sinon repli sur le LATERAL par-parcelle (~5,4 s pour 21k en
     # commune). Les deux produisent la MÊME adresse (DISTINCT ON = même ORDER BY que le lateral).
@@ -2867,7 +2883,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
                    JOIN parcels p2 ON p2.id = d2.parcel_id
                    JOIN parcel_p_score_v2 s22 ON s22.parcelle_id = p2.idu AND s22.run_id = :v2run
                    JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
-                   WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude')
+                   WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
                      AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
@@ -2964,15 +2980,16 @@ _Q_V2_ORDERS_PAGE = {
 # M55-H point 5 (décision Vic) — GROUPEMENT PAR TIER : la liste d'analyse se groupe
 # brûlantes → chaudes → potentiel long terme → à creuser → potentiel épuisé (declasse_*) ;
 # le tri choisi s'applique DANS chaque groupe (l'ORDER BY est préfixé par ce CASE).
+# PALIERS-1 — les DEUX vocabulaires triés pareil : servi (par rang) + q_v14 (paliers v2).
 _TIER_GROUPE_SQL = (
     "CASE WHEN (d.status IN ('exclue', 'faux_positif_probable')) THEN 6 "
-    "WHEN s2.tier = 'brulante' THEN 0 WHEN s2.tier = 'chaude' THEN 1 "
-    "WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier = 'a_creuser' THEN 3 "
+    "WHEN s2.tier IN ('brulante', 'priorite') THEN 0 WHEN s2.tier IN ('chaude', 'a_suivre') THEN 1 "
+    "WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier IN ('a_creuser', 'sans_signal') THEN 3 "
     "WHEN s2.tier LIKE 'declasse%' THEN 4 ELSE 5 END")
 _TIER_GROUPE_PAGE_SQL = (
     "CASE WHEN pg.etage0 THEN 6 "
-    "WHEN pg.tier_v2 = 'brulante' THEN 0 WHEN pg.tier_v2 = 'chaude' THEN 1 "
-    "WHEN pg.tier_v2 = 'reserve_fonciere' THEN 2 WHEN pg.tier_v2 = 'a_creuser' THEN 3 "
+    "WHEN pg.tier_v2 IN ('brulante', 'priorite') THEN 0 WHEN pg.tier_v2 IN ('chaude', 'a_suivre') THEN 1 "
+    "WHEN pg.tier_v2 = 'reserve_fonciere' THEN 2 WHEN pg.tier_v2 IN ('a_creuser', 'sans_signal') THEN 3 "
     "WHEN pg.tier_v2 LIKE 'declasse%' THEN 4 ELSE 5 END")
 
 # M131 P3 — ÉTAT DU BIEN (affichage pur du FAIT M125/M129-D, aucun recalcul) : partition
@@ -2995,8 +3012,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
 
     M55-H point 5 : `groupes=True` préfixe l'ORDER BY par l'ordre des tiers (groupement) —
     le tri choisi devient secondaire, DANS chaque groupe."""
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     sort_key = sort if (sort or "rang") in _Q_V2_ORDERS else "rang"
     order = _Q_V2_ORDERS[sort_key or "rang"]
     if groupes:
@@ -3097,7 +3113,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
             JOIN parcels p2 ON p2.id = d2.parcel_id
             JOIN parcel_p_score_v2 s22 ON s22.parcelle_id = p2.idu AND s22.run_id = :v2run
             JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
-            WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude')
+            WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
               AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
               AND pm2.siren IS NOT NULL
             GROUP BY pm2.siren HAVING count(*) > 1
@@ -3231,8 +3247,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     DOSSIERS (unité de prospection) : parmi les OPPORTUNITÉS v2, propriétaires uniques
     identifiés — clé = SIREN (personnes morales, DGFiP). Limite consignée : les personnes
     physiques n'ont pas d'identité en base (doctrine) → « sans identité »."""
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     params = {"c": commune, "run": run_label, "v2run": _score_v2_run_id(db),
               **(extra_params or {})}
     # FIX-FILTRES F2 — quand demandé (compteur du panneau /filtre), on ALIGNE le COMPTE sur la LISTE :
@@ -3249,12 +3264,13 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     row = db.execute(text(
         f"""
         SELECT count(*) AS total,
-               count(*) FILTER (WHERE {eff} = 'brulante')          AS t_brulante,
-               count(*) FILTER (WHERE {eff} = 'chaude')            AS t_chaude,
+               count(*) FILTER (WHERE {eff} IN ('brulante', 'priorite')) AS t_brulante,
+               count(*) FILTER (WHERE {eff} IN ('chaude', 'a_suivre'))   AS t_chaude,
                count(*) FILTER (WHERE {eff} = 'reserve_fonciere')  AS t_reserve,
                count(*) FILTER (WHERE {eff} = 'a_creuser')         AS t_a_creuser,
+               count(*) FILTER (WHERE {eff} = 'sans_signal')       AS t_sans_signal,
                count(*) FILTER (WHERE {eff} = 'ecartee')           AS t_ecartee,
-               count(*) FILTER (WHERE {eff} IN ('brulante', 'chaude') AND EXISTS (
+               count(*) FILTER (WHERE {eff} IN ('brulante', 'chaude', 'priorite', 'a_suivre') AND EXISTS (
                    SELECT 1 FROM dryrun_cascade_results ev WHERE ev.parcel_id = d.parcel_id
                      AND ev.run_label = :run AND ev.evenement = 'rouge')) AS opportunites_evenement
         FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
@@ -3273,7 +3289,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         JOIN parcels p ON p.id = d.parcel_id
         {join_v2}
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-        WHERE d.run_label = :run AND {eff} IN ('brulante', 'chaude')
+        WHERE d.run_label = :run AND {eff} IN ('brulante', 'chaude', 'priorite', 'a_suivre')
           AND (CAST(:c AS text) IS NULL OR p.commune = :c)
           {extra_where} {sliver}
         """), params).mappings().one()
@@ -3281,7 +3297,11 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         "total": int(row["total"] or 0),
         "tiers": {"brulante": int(row["t_brulante"] or 0), "chaude": int(row["t_chaude"] or 0),
                   "reserve_fonciere": int(row["t_reserve"] or 0),
-                  "a_creuser": int(row["t_a_creuser"] or 0), "ecartee": int(row["t_ecartee"] or 0)},
+                  "a_creuser": int(row["t_a_creuser"] or 0),
+                  # PALIERS-1 — comptes canoniques : brulante/chaude AGRÈGENT déjà priorite/a_suivre
+                  # (deux vocabulaires) ; sans_signal (runs v2) fondu avec réserve+à creuser à l'affichage.
+                  "sans_signal": int(row["t_sans_signal"] or 0),
+                  "ecartee": int(row["t_ecartee"] or 0)},
         "opportunites": int(row["t_brulante"] or 0) + int(row["t_chaude"] or 0),
         "opportunites_evenement": int(row["opportunites_evenement"] or 0),
         "dossiers_opportunites": int(dossiers["dossiers"] or 0),
@@ -3324,7 +3344,7 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
     # GARDE `left()=:s` comme filtre d'EXACTITUDE (collation-immune) : la valeur servie est IDENTIQUE
     # (vérifiée à l'octet sur plusieurs sections), seul le plan change. `'ÿ'` = borne haute > tout idu ASCII.
     n = db.execute(text(
-        "SELECT count(*) FILTER (WHERE tier IN ('brulante', 'chaude')) "
+        "SELECT count(*) FILTER (WHERE tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')) "
         "FROM parcel_p_score_v2 "
         "WHERE run_id = :run AND parcelle_id >= :s AND parcelle_id < :s || 'ÿ' "
         "  AND left(parcelle_id, 10) = :s"),
@@ -3335,8 +3355,7 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
 def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     head = db.execute(text(
         """SELECT p.id, p.idu, p.commune, p.surface_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
@@ -6538,8 +6557,7 @@ def _proprietaire_public(db: Session, idu: str) -> dict:
 
 
 def _premium_head(db: Session, parcel_id: int, run_label: str | None = None) -> dict | None:
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     r = db.execute(text(
         "SELECT d.status AS status, d.completeness_score, "  # M129-B : matrice morte
         "       (d.status IN ('exclue', 'faux_positif_probable')) AS etage0, "

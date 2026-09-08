@@ -126,7 +126,7 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
         "verdict": {"statut": v.get("status"),
                     "libelle": v.get("label"),
                     # M36 Lot C (Q3) : rang cité sur brûlante/chaude uniquement
-                    "rang_servi": v.get("rang") if v.get("status") in ("brulante", "chaude") else None,
+                    "rang_servi": v.get("rang") if v.get("status") in ("brulante", "chaude", "priorite", "a_suivre") else None,
                     "badge_division": v.get("badge_division_libelle"),
                     "motif_servi": v.get("motif"),
                     "micro_opportunite": v.get("micro_opportunite"),
@@ -190,7 +190,7 @@ _STATUT_PHRASE["non_evaluee"] = "Non évaluée au run servi"
 
 def _statut_phrase(statut: str | None, libelle: str | None) -> str:
     if statut and statut.startswith("declasse_"):
-        return _tier_court(statut) or "Faible"
+        return _tier_court(statut) or "Sans signal"
     return _STATUT_PHRASE.get(statut, "Statut non évalué")
 
 
@@ -224,7 +224,7 @@ def rules_summary(facts: dict) -> str:
 
     # 1. Potentiel
     pot = _statut_phrase(statut, v.get("libelle"))
-    if v.get("rang_servi") and statut in ("brulante", "chaude"):
+    if v.get("rang_servi") and statut in ("brulante", "chaude", "priorite", "a_suivre"):
         pot += f" · rang {v['rang_servi']}"
     if v.get("badge_division"):
         pot += f" · {v['badge_division']}"

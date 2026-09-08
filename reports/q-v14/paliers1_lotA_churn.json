@@ -1,0 +1,12 @@
+{
+  "Priorité": {
+    "n_2024": 171,
+    "churn_annuel_sans_anti_churn": 0.7953,
+    "churn_annuel_avec_anti_churn": 0.7778
+  },
+  "À suivre": {
+    "n_2024": 602,
+    "churn_annuel_sans_anti_churn": 0.7973,
+    "churn_annuel_avec_anti_churn": 0.7907
+  }
+}

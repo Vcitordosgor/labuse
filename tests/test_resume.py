@@ -70,8 +70,9 @@ def test_resume_declassee_bati_sature():
     verdict = _verdict("declasse_bati_sature",
                        motif="bâtie saturée — ratio 55 % (emprise 440 m²)")
     r = build_resume(verdict, [], None, {})
-    assert r["statut_label"] == "Faible"   # M137 — chip court servi
-    assert "déclassée" in r["synthese"].lower() and "saturée" in r["synthese"]
+    # PALIERS-1 — le déclassement est un MOTIF : palier « Sans signal » + le motif dit.
+    assert r["statut_label"] == "Sans signal"
+    assert "motif" in r["synthese"].lower() and "saturée" in r["synthese"]
     _no_forbidden(r)
 
 
@@ -80,9 +81,9 @@ def test_resume_a_creuser_ppr():
     cascade = [{"layer_name": "risques", "result": "SOFT_FLAG", "severity": "fort",
                 "detail": "Périmètre PPR inondation — servitude approuvée"}]
     r = build_resume(verdict, cascade, None, {"has_manual_contact": False})
-    assert r["statut_label"] == "Neutre"   # M137 — chip court servi
+    assert r["statut_label"] == "Sans signal"   # PALIERS-1 — vocabulaire unique
     assert any("PPR" in v for v in r["vigilance"])
-    assert "à creuser" in r["synthese"].lower()
+    assert "sans signal" in r["synthese"].lower()
     _no_forbidden(r)
 
 

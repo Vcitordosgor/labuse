@@ -146,8 +146,13 @@ def liste(tier: str | None = Query(None),
     if not include_copro:
         where.append("NOT s.copro")
     if tier:
-        where.append("s.tier = :tier")
-        params["tier"] = tier
+        # PALIERS-1 — un tier de tête matche les DEUX vocabulaires (brulante↔priorite,
+        # chaude↔a_suivre) : la vue « Brûlantes » sert Priorité quel que soit le run.
+        _equiv = {"brulante": "priorite", "priorite": "brulante",
+                  "chaude": "a_suivre", "a_suivre": "chaude"}
+        tiers = [tier] + ([_equiv[tier]] if tier in _equiv else [])
+        where.append("s.tier = ANY(:tiers)")
+        params["tiers"] = tiers
     if commune:
         where.append("left(s.parcelle_id, 5) = :com")
         params["com"] = commune

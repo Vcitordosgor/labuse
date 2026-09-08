@@ -138,7 +138,8 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         <button data-secteur-opp
           onClick={() => {
             const st = useApp.getState()
-            st.setFilters({ ...EMPTY_FILTERS, communes: [f.commune!], tiers: ['brulante', 'chaude'] })
+            // PALIERS-1 — les DEUX vocabulaires (servi + q_v14) : Priorité + À suivre du secteur
+            st.setFilters({ ...EMPTY_FILTERS, communes: [f.commune!], tiers: ['brulante', 'chaude', 'priorite', 'a_suivre'] })
             st.setCommune(f.commune!)
             if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 })
             st.setView('cartes'); select(null)

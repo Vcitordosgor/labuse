@@ -42,13 +42,18 @@ def test_backend_sert_le_chip_court_partout():
 def test_verdict_servi_label_est_le_court():
     # Le point de traduction UNIQUE (verdict_servi) sert le chip court — la fiche, le PDF et la
     # page de partage lisent tous score_v2.label = ce label.
+    # PALIERS-1 — un seul vocabulaire : Priorité / À suivre / Sans signal / Écartée. Les anciens
+    # codes (runs jamais réécrits) projettent sur ces quatre valeurs via la correspondance lecture.
     from labuse.verdict_servi import TIER_LABELS
-    assert TIER_LABELS["brulante"] == "Priorité"
-    assert TIER_LABELS["chaude"] == "À suivre"
-    assert TIER_LABELS["reserve_fonciere"] == "Long terme"
-    assert TIER_LABELS["a_creuser"] == "Neutre"
-    assert TIER_LABELS["declasse_bati_sature"] == "Faible"
+    assert TIER_LABELS["priorite"] == "Priorité"
+    assert TIER_LABELS["a_suivre"] == "À suivre"
+    assert TIER_LABELS["sans_signal"] == "Sans signal"
     assert TIER_LABELS["ecartee"] == "Écartée"
+    assert TIER_LABELS["brulante"] == "Priorité"          # ancien code → correspondance lecture
+    assert TIER_LABELS["chaude"] == "À suivre"
+    assert TIER_LABELS["reserve_fonciere"] == "Sans signal"
+    assert TIER_LABELS["a_creuser"] == "Sans signal"
+    assert TIER_LABELS["declasse_bati_sature"] == "Sans signal"
 
 
 def test_legende_i_montre_le_chip_dabord():
@@ -58,9 +63,10 @@ def test_legende_i_montre_le_chip_dabord():
     strings = (ROOT / "frontend/src/lib/strings.ts").read_text(encoding="utf-8")
     leftpanel = (ROOT / "frontend/src/components/panel/LeftPanel.tsx").read_text(encoding="utf-8")
 
-    # 1) la source unique du chip de légende existe (dérivée des META servies, groupe declassees inclus)
+    # 1) la source unique du chip de légende existe ; le groupe « declassees » n'est plus un palier
+    #    (PALIERS-1) : son chip est « Sans signal » (PALIER_META.sans_signal.label).
     assert "export function tierChipLabel" in status
-    assert "declassees" in status and "TIER_DECLASSE_META.declasse_bati_sature.label" in status
+    assert "declassees" in status and "PALIER_META.sans_signal.label" in status
 
     # 2) le « i » (LeftPanel) rend le chip AVANT la définition
     assert "tierChipLabel(key)" in leftpanel

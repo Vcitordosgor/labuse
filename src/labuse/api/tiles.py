@@ -131,6 +131,13 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
     (le script d'extension île le fait) ; idempotent, ~1-2 min pour 431k parcelles."""
     if run_label is None:
         run_label = runs.current()
+    # COHÉRENCE-RUN-1 (C1) — la carte EMBARQUE le tier v2 du run servi (`:v2run` = run_label) MAIS
+    # l'étage 0 / flags / événements viennent de la CASCADE, qui peut être empruntée (q_v14 →
+    # q_v13_sources1). Sans ça, le JOIN sur `dryrun_parcel_evaluations` (run_label = q_v14, 0 ligne)
+    # bâtissait une `mvt_parcels` VIDE (constat lot A). On LIT donc la cascade au run résolu.
+    from ..bascule_flux import resoudre_cascade_run
+    cascade_run, _ = resoudre_cascade_run(db, run_label)
+    cascade_run = cascade_run or run_label
     # M6.1 : le zonage PLU par parcelle est un prérequis des tuiles — construit une seule fois
     # (long) puis réutilisé tel quel à chaque rebuild (le zonage ne bouge pas avec les runs).
     # FIX-C6 (GB-049 étendu) — le heal crée un STUB VIDE de parcel_zone_plu (pour qu'une base
@@ -180,7 +187,7 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
                    WHERE run_label = :run AND (result = 'SOFT_FLAG'
                          OR (layer_name = 'abf' AND result = 'UNKNOWN'))
                    GROUP BY parcel_id) fl ON fl.parcel_id = p.id
-    """), {"run": run_label, "v2run": v2run})
+    """), {"run": cascade_run, "v2run": v2run})  # C1 : :run = cascade (étage 0/flags), :v2run = score
     db.execute(text("CREATE INDEX mvt_parcels_gix ON mvt_parcels USING GIST (geom_3857)"))
     # M-L : index `mvt_parcels_status` SUPPRIMÉ — la colonne `status` n'est plus bakée depuis M48
     # (vestige d'avant M48 ; ce CREATE INDEX aurait levé au rebuild). Aucun index de remplacement :
@@ -203,26 +210,32 @@ def build_parcel_flags_table(db: Session, run_label: str | None = None) -> dict:
     REFUS bruyant (rollback + RuntimeError). Jamais une 2e vérité qui dérive en silence. Idempotent."""
     if run_label is None:
         run_label = runs.current()
+    # COHÉRENCE-RUN-1 (C1) — parcel_flags est STAMPÉ du run servi (`:stamp`, ce que les lecteurs
+    # filtrent) mais LIT la cascade au run résolu (`:cascade`, éventuellement emprunté q_v14 →
+    # q_v13_sources1). Sans ça, un rebuild sur un run emprunteur écrivait 0 flag (constat lot A).
+    from ..bascule_flux import resoudre_cascade_run
+    cascade_run, _ = resoudre_cascade_run(db, run_label)
+    cascade_run = cascade_run or run_label
     import time as _time
     t0 = _time.perf_counter()
     db.execute(text("DROP TABLE IF EXISTS parcel_flags"))
     db.execute(text("""
         CREATE TABLE parcel_flags AS
-        SELECT DISTINCT CAST(:run AS varchar) AS run_label, parcel_id, layer_name
+        SELECT DISTINCT CAST(:stamp AS varchar) AS run_label, parcel_id, layer_name
         FROM dryrun_cascade_results
-        WHERE run_label = :run
+        WHERE run_label = :cascade
           AND (result = 'SOFT_FLAG' OR (layer_name = 'abf' AND result = 'UNKNOWN'))
-    """), {"run": run_label})
+    """), {"stamp": run_label, "cascade": cascade_run})
     db.execute(text("CREATE INDEX parcel_flags_probe ON parcel_flags (run_label, layer_name, parcel_id)"))
     db.execute(text("ANALYZE parcel_flags"))
-    # ── GARDE DE COHÉRENCE : par couche, parcel_flags == source (DISTINCT parcelle) ──
+    # ── GARDE DE COHÉRENCE : par couche, parcel_flags (STAMP) == source cascade (DISTINCT parcelle) ──
     src = dict(db.execute(text(
         "SELECT layer_name, count(DISTINCT parcel_id) FROM dryrun_cascade_results "
-        "WHERE run_label=:run AND (result='SOFT_FLAG' OR (layer_name='abf' AND result='UNKNOWN')) "
-        "GROUP BY 1"), {"run": run_label}).all())
+        "WHERE run_label=:cascade AND (result='SOFT_FLAG' OR (layer_name='abf' AND result='UNKNOWN')) "
+        "GROUP BY 1"), {"cascade": cascade_run}).all())
     got = dict(db.execute(text(
-        "SELECT layer_name, count(*) FROM parcel_flags WHERE run_label=:run GROUP BY 1"),
-        {"run": run_label}).all())
+        "SELECT layer_name, count(*) FROM parcel_flags WHERE run_label=:stamp GROUP BY 1"),
+        {"stamp": run_label}).all())
     ecarts = {k: (src.get(k), got.get(k)) for k in set(src) | set(got) if src.get(k) != got.get(k)}
     if ecarts:
         db.rollback()

@@ -10,3 +10,19 @@ fraction:
   # Sous ce seuil de probabilité (= sous le plus petit palier), on n'affiche pas de fraction
   # ridicule : un tiret « — » et « peu probable ». 1/50 = 0,02.
   seuil_bas_p: 0.02
+
+# PALIERS-1 (décision Vic 08/09/2026) — LES PALIERS D'OPPORTUNITÉ, en probabilité ABSOLUE
+# de vente sous 12 mois, HORS COPROPRIÉTÉ. Seuils EN CONFIG (jamais en dur) — statuts.assign_paliers
+# les lit ici. Domaine : Priorité / À suivre / Sans signal / Écartée (aucun autre).
+paliers:
+  entree_priorite: 0.20    # p ≥ 0,20            → Priorité   (une chance sur cinq)
+  entree_a_suivre: 0.10    # 0,10 ≤ p < 0,20     → À suivre    (une chance sur dix)
+  # p < 0,10                                     → Sans signal
+  # (Écartée = cascade étage 0, prime sur tout — inchangée)
+  # Anti-churn SIMPLE (pas d'autre hystérésis) : au re-score, une parcelle ne DESCEND que si
+  # sa p passe SOUS le seuil de sortie ; l'entrée reste stricte (0,20 / 0,10).
+  sortie_priorite: 0.18    # reste Priorité tant que p ≥ 0,18
+  sortie_a_suivre: 0.09    # reste À suivre tant que p ≥ 0,09
+  # Réserve foncière = DRAPEAU indépendant du palier (plus un tier) : SDP résiduelle dans le
+  # décile supérieur (quantile 0,90 des SDP résiduelles > 0). Proposé là où « Long terme » existait.
+  reserve_quantile: 0.90

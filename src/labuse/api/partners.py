@@ -149,7 +149,7 @@ def match_compatibilite(idu: str, db: Session = Depends(get_db)) -> dict:
     # M-C (F3) : `statut` = TIER SERVI (s2.tier). L'ancien test ("chaude","a_surveiller") ratait
     # les BRÛLANTES (tier le plus chaud) et testait "a_surveiller" — valeur de la MATRICE MORTE,
     # jamais un tier → branche inerte. Le signal marché doit couvrir brulante + chaude.
-    chaude = p["statut"] in ("brulante", "chaude")
+    chaude = p["statut"] in ("brulante", "chaude", "priorite", "a_suivre")  # PALIERS-1
     out = []
     for mp in profs:
         s_ok = ((mp["surface_min"] is None or surf >= mp["surface_min"])
@@ -510,7 +510,7 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
         WHERE p.commune = :c AND d.opportunity_score >= :q
           AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
         ORDER BY d.opportunity_score DESC LIMIT :lim OFFSET :off"""),
-        {"run": runs.current(), "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
+        {"run": runs.cascade(), "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset, "demo": demo,
             # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).
             "mention": (f"Démonstration LABUSE — données RÉELLES, commune {_DEMO_COMMUNE}, "

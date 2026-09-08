@@ -37,7 +37,8 @@ _TIERS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r"potentiel\s*long\s*terme|r[ée]serve\s*fonci|surveill", re.I), "reserve_fonciere", "potentiel long terme"),
     (re.compile(r"[àa]\s*creuser", re.I), "a_creuser", "à creuser"),
 ]
-_ALL_TIERS = ["brulante", "chaude", "reserve_fonciere", "a_creuser"]
+_ALL_TIERS = ["brulante", "chaude", "reserve_fonciere", "a_creuser",
+              "priorite", "a_suivre", "sans_signal"]  # PALIERS-1 : deux vocabulaires
 
 # base identique au builder de liste/stats (étage 0 dur du run servi prime)
 _E0 = "(d.status IN ('exclue', 'faux_positif_probable'))"
@@ -76,7 +77,9 @@ def _run_params(db: Session) -> dict:
         raise RuntimeError(
             f"run servi « {run} » absent de p_score_v2_runs — agrégats /ia/search "
             "indisponibles ; lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
-    return {"run": run, "v2run": run}
+    # COHÉRENCE-RUN-1 (C1) : `:run` alimente la CASCADE (`_BASE` d.run_label) → runs.cascade() ;
+    # `:v2run` le score v2 → run servi. Identiques sauf run à étage 0 emprunté (q_v14 → q_v13_sources1).
+    return {"run": runs.cascade(), "v2run": run}
 
 
 def _detect_tiers(low: str) -> list[tuple[str, str]]:

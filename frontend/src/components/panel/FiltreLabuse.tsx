@@ -670,27 +670,20 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             {phraseRetenues === 0 ? (
               <p data-phrase-zero className="mt-1 text-[12.5px] font-medium leading-snug text-st-creuser">{CLIENT.revelation.phraseZero}</p>
             ) : (
-              /* Ventilation COMPLÈTE (4 tiers + déclassées = retenues) puis écartées (étage 0) —
-                 l'arithmétique boucle : retenues + écartées = analysé (point 2). */
+              /* PALIERS-1 — ventilation sur LE vocabulaire unique : Priorité / À suivre / Sans
+                 signal (réserve foncière, à-creuser et déclassées fondus — plus « Long terme /
+                 Neutre / Faible »). Puis écartées (étage 0). retenues + écartées = analysé. */
               <p className="mt-1 text-[13px] leading-relaxed text-txt">
                 <b className="text-[16px] text-mint tabular-nums">{phraseRetenues == null ? '…' : nf.format(phraseRetenues)}</b> retenues
                 {t && phraseRetenues != null && (
                   <> — dont{' '}
-                    {/* M137 — mêmes nombres ; le tooltip s'ouvre sur le chip visible (defTip). */}
-                    <Tip side="top" tip={defTip('brulante')}>
+                    {/* le tooltip s'ouvre sur le chip visible (defTip, codes canoniques). */}
+                    <Tip side="top" tip={defTip('priorite')}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{pl(t.brulante, 'priorité')}</b></Tip>,{' '}
-                    <Tip side="top" tip={defTip('chaude')}>
+                    <Tip side="top" tip={defTip('a_suivre')}>
                       <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.chaude)} à suivre</b></Tip>,{' '}
-                    <Tip side="top" tip={defTip('reserve_fonciere')}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere)} long terme</b></Tip>,{' '}
-                    <Tip side="top" tip={defTip('a_creuser')}>
-                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.a_creuser)} neutre</b></Tip>
-                    {declassees > 0 && (
-                      <>,{' '}
-                        <Tip side="top" tip={defTip('declassees')}>
-                          <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{CLIENT.revelation.ventDeclassees(declassees)}</b></Tip>
-                      </>
-                    )}
+                    <Tip side="top" tip={defTip('sans_signal')}>
+                      <b className="cursor-help tabular-nums underline decoration-dotted decoration-txt-dim underline-offset-2">{nf.format(t.reserve_fonciere + t.a_creuser + Math.max(0, declassees))} sans signal</b></Tip>
                   </>
                 )}
                 {ecartees != null && ecartees > 0 && (

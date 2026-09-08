@@ -20,6 +20,28 @@ from sqlalchemy.orm import Session
 
 _RUN_PRECEDENT_FILE = Path(__file__).resolve().parents[2] / "config" / "run_precedent.txt"
 
+
+def avertissement_arbre() -> str | None:
+    """BASCULE-1 (Lot C) — l'ÉCART D'ARBRE. `labuse` est installé en ÉDITABLE sur UN checkout ; une
+    commande lancée depuis un AUTRE worktree git écrit le manifeste dans le checkout d'INSTALLATION
+    (là où vit le module), pas dans le cwd. On ne répare pas la résolution de chemin (risque hors
+    mandat) : on AVERTIT AVANT d'agir. Rend None quand le cwd est dans l'arbre d'installation."""
+    import os
+
+    from . import manifeste as _manifeste
+    install = _manifeste.chemin().resolve().parents[1]      # racine du checkout où vit le module
+    try:
+        cwd = Path(os.getcwd()).resolve()
+    except OSError:
+        return None
+    if cwd == install or install in cwd.parents:
+        return None                                          # cwd DANS l'arbre d'installation : rien à dire
+    return (f"⚠ ARBRE : `labuse` est installé en éditable sur {install}.\n"
+            f"  Vous lancez depuis {cwd} (un autre dossier / worktree git).\n"
+            f"  La bascule écrira le manifeste dans l'arbre d'INSTALLATION, PAS ici — "
+            f"vérifiez que c'est bien l'arbre servi avant de continuer.")
+
+
 # RETOURS-10 (T2) — cache des écarts (candidat, servi) → immuable (runs append-only). Vidé à la bascule
 # (le run servi change) par `_ECART_CACHE.clear()` dans le chemin de bascule ; sinon borné (~12 runs).
 _ECART_CACHE: dict[tuple[str, str], dict] = {}
@@ -74,22 +96,60 @@ def ensure_tables(engine) -> None:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_bascule_journal_ts ON run_bascule_journal(ts DESC)"))
 
 
+def _cascade_a_des_lignes(db: Session, run: str) -> bool:
+    """Le run a-t-il au moins une ligne de cascade (dryrun_parcel_evaluations) ? (VIDE ≠ absente.)"""
+    return bool(db.execute(text(
+        "SELECT 1 FROM dryrun_parcel_evaluations WHERE run_label = :r LIMIT 1"), {"r": run}).scalar())
+
+
+def resoudre_cascade_run(db: Session, scoring_run: str) -> tuple[str | None, str]:
+    """COHÉRENCE-RUN-1 (C1) — de quel run `scoring_run` tire-t-il sa CASCADE (étage 0) ?
+      · s'il a SA PROPRE cascade → lui-même (cas normal) ;
+      · sinon (run EMPRUNTEUR, ex. q_v14 scoré avec `LABUSE_ETAGE0_RUN=q_v13_sources1`) → le run
+        réutilisé, lu EXPLICITEMENT dans `p_score_v2_runs.params` (`etage0_run` sinon `prev_run`),
+        et VÉRIFIÉ en base : il doit avoir des lignes de cascade. Un run servi ne doit JAMAIS
+        pointer vers une cascade purgée/absente → renvoie `(None, motif)` dans ce cas (refus).
+    Table de cascade absente (base de test/install neuve) → tolérée (renvoie scoring_run, indéterminé)."""
+    if not db.execute(text("SELECT to_regclass('dryrun_parcel_evaluations')")).scalar():
+        return scoring_run, "cascade non vérifiable (table absente) — toléré hors production."
+    if _cascade_a_des_lignes(db, scoring_run):
+        return scoring_run, "cascade propre au run."
+    params = db.execute(text(
+        "SELECT params FROM p_score_v2_runs WHERE run_id = :r"), {"r": scoring_run}).scalar()
+    emprunte = None
+    if params:
+        import json as _json
+        p = params if isinstance(params, dict) else _json.loads(params)
+        emprunte = p.get("etage0_run") or p.get("prev_run")
+    if emprunte and _cascade_a_des_lignes(db, emprunte):
+        return emprunte, f"cascade empruntée à « {emprunte} » (étage 0 réutilisé)."
+    return None, (f"run « {scoring_run} » sans cascade propre et sans étage 0 réutilisable en base "
+                  f"(candidat « {emprunte or '∅'} » absent de dryrun_parcel_evaluations) — bascule refusée.")
+
+
 def _run_complet(db: Session, run: str) -> tuple[bool, str]:
     """Le run est-il SERVABLE ? Présent en score v2 (`p_score_v2_runs`) ET en cascade
     (`dryrun_parcel_evaluations`) — sinon la fiche retomberait en repli legacy silencieux
-    (cf. `bascule_gardes.check_coherence_run_fiche`). Refus BRUYANT sinon."""
+    (cf. `bascule_gardes.check_coherence_run_fiche`). Refus BRUYANT sinon.
+
+    COHÉRENCE-RUN-1 (C2) — SECOND FAUX POSITIF de la journée dans ce code (le premier : BASCULE-1,
+    `golden promote` qui n'écrivait que la vue dérivée). Ici la garde CROYAIT vérifier la cascade
+    mais ne le faisait pas : `SELECT 1 … LIMIT 1` sur 0 ligne rend `None`, EXACTEMENT comme une
+    table absente → la branche « cascade non vérifiable (table absente) — toléré hors production »
+    avalait le cas « table PRÉSENTE, 0 ligne pour ce run ». C'est par ce trou que `q_v14` (scoré
+    mais sans cascade propre) a été promu en local sans un cri. On distingue désormais l'ABSENCE de
+    table (indéterminé, toléré) du VIDE pour ce run (refus)."""
     v2 = db.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"), {"r": run}).scalar()
-    casc = None
-    if db.execute(text("SELECT to_regclass('dryrun_parcel_evaluations')")).scalar():
-        casc = db.execute(text(
-            "SELECT 1 FROM dryrun_parcel_evaluations WHERE run_label = :r LIMIT 1"), {"r": run}).scalar()
     if not v2:
         return False, f"run « {run} » absent de p_score_v2_runs (non scoré) — bascule refusée."
-    if casc is None:
-        return True, "cascade non vérifiable (table absente) — toléré hors production."
-    if not casc:
-        return False, f"run « {run} » absent de la cascade (dryrun_parcel_evaluations) — bascule refusée."
-    return True, "run complet (score v2 + cascade)."
+    # COHÉRENCE-RUN-1 (C1) — la cascade peut être PROPRE au run OU empruntée à un étage 0 réutilisé
+    # (q_v14 → q_v13_sources1). `resoudre_cascade_run` distingue « table absente » (indéterminé,
+    # toléré) de « 0 ligne ET aucun emprunt valide » (refus, cf. C2) et de « emprunt vérifié en
+    # base » (accepté). Un run servi ne peut donc jamais pointer vers une cascade absente.
+    cascade_run, motif = resoudre_cascade_run(db, run)
+    if cascade_run is None:
+        return False, motif
+    return True, f"run complet (score v2 + cascade — {motif})"
 
 
 def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
@@ -231,14 +291,23 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     m_avant = _manifeste.lire() or _manifeste.construire_depuis_pointeurs(db)
     if nouveau_run == ancien_precedent and m_avant.get("precedent"):
         cible = dict(m_avant["precedent"])            # retour arrière : le manifeste entier
+        cible.setdefault("cascade_run", cible.get("scoring_run"))  # compat manifeste pré-C1
     else:
-        cible = {"scoring_run": nouveau_run, "mvt_run": nouveau_run, "division_run": nouveau_run,
+        # COHÉRENCE-RUN-1 (C1) — le run de CASCADE servi est écrit EXPLICITEMENT (jamais deviné à
+        # la lecture) : propre au run, ou l'étage 0 réutilisé (q_v14 → q_v13_sources1), vérifié en
+        # base par `resoudre_cascade_run`. Le run est déjà « complet » (garde ci-dessus), donc la
+        # résolution ne peut plus rendre None ; le repli scoring_run ne sert que si la table de
+        # cascade est absente (base de test).
+        cascade_run, _ = resoudre_cascade_run(db, nouveau_run)
+        cible = {"scoring_run": nouveau_run, "cascade_run": cascade_run or nouveau_run,
+                 "mvt_run": nouveau_run, "division_run": nouveau_run,
                  "residuel_run_seq": m_avant.get("residuel_run_seq")}
     from datetime import datetime as _dt, timezone as _tz
     nouveau_manifeste = {**cible,
                          "promoted_at": _dt.now(tz=_tz.utc).isoformat(), "par": par[:120],
-                         "precedent": {k: m_avant.get(k) for k in
-                                       ("scoring_run", "residuel_run_seq", "mvt_run", "division_run")}}
+                         "precedent": {**{k: m_avant.get(k) for k in
+                                       ("scoring_run", "residuel_run_seq", "mvt_run", "division_run")},
+                                       "cascade_run": m_avant.get("cascade_run") or m_avant.get("scoring_run")}}
     _manifeste.ecrire(nouveau_manifeste)
     # vue dérivée résiduel : is_served suit le manifeste (jamais un autre chemin — lot 3.1).
     if nouveau_manifeste.get("residuel_run_seq") is not None:
@@ -248,6 +317,21 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
         except Exception:  # noqa: BLE001 — chaîne résiduel absente (base de test) : la vue suit plus tard
             pass
     runs.invalidate()                   # DONNEES-2 (B4) — servi ET précédent relus au prochain appel
+
+    # BASCULE-1 (Lot B) — LA COMMANDE NE PEUT PLUS MENTIR : le manifeste (le point de vérité) vient
+    # d'être écrit ; on RELIT runs.current() et on ne confirme QUE si la valeur relue est bien le run
+    # demandé. Un écrit qui ne prend pas effet (vue dérivée seule, manifeste ignoré, mauvais arbre)
+    # est démasqué ICI — AVANT tout journal de succès. On expose le chemin réel écrit et l'arbre
+    # concerné, pour que l'écart worktree / install éditable soit visible à l'œil (Lot C).
+    manifeste_path = str(_manifeste.chemin())
+    arbre = str(_manifeste.chemin().resolve().parents[1])
+    current_apres = runs.current()
+    if current_apres != nouveau_run:
+        return {"ok": False, "verifie": False, "nouveau": nouveau_run, "ancien": ancien,
+                "current_apres": current_apres, "manifeste_path": manifeste_path, "arbre": arbre,
+                "motif": (f"le manifeste demande « {nouveau_run} » mais runs.current() relit "
+                          f"« {current_apres} ». Écrit : {manifeste_path} — c'est CE fichier "
+                          f"(arbre {arbre}) qui fait foi. Rien n'a basculé pour les clients.")}
 
     caches = purger_caches_run()
     # CIRCUIT-1 lot 2.7 — le cache spatial des isochrones se purge AUSSI à la bascule (en plus du
@@ -284,10 +368,11 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
-    return {"ok": True, "ancien": ancien, "nouveau": nouveau_run, "caches_purges": caches,
-            "sens": sens, "coherence": coherence,
-            "note": "Effective immédiatement (served_run.txt relu à la requête). Les tables servies "
-                    "run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}
+    return {"ok": True, "verifie": True, "ancien": ancien, "nouveau": nouveau_run,
+            "current_apres": current_apres, "manifeste_path": manifeste_path, "arbre": arbre,
+            "caches_purges": caches, "sens": sens, "coherence": coherence,
+            "note": "Effective immédiatement (manifeste relu à la requête, confirmé par runs.current()). "
+                    "Les tables servies run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}
 
 
 # ═══════════════ CIRCUIT-1 lot 3.3 — la NOTE DE VERSION (registre) + garde résiduel ═══════════════

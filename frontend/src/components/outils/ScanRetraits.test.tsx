@@ -37,7 +37,7 @@ describe('SCAN — deux retraits', () => {
 
   it('les lignes portent le classement CANONIQUE (TierBadge), pas de badge « priorité »', async () => {
     const { container } = renderM02()
-    await waitFor(() => expect(screen.getByText('Neutre')).toBeTruthy())   // classement canonique
+    await waitFor(() => expect(screen.getByText('Sans signal')).toBeTruthy())   // PALIERS-1 : vocabulaire unique
     expect(container.textContent?.toLowerCase()).not.toContain('priorité')
   })
 })

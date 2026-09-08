@@ -4211,10 +4211,16 @@ app.add_typer(golden_app, name="golden")
 
 @golden_app.command("promote")
 def golden_promote_cmd(run: str = typer.Argument(..., help="Label du run candidat à servir")) -> None:
-    """LA BASCULE — un geste de Vic. Fait du run candidat le run SERVI aux clients. Aucune bascule
-    automatique n'existe : le classement ne change que par cette commande (ou le bouton admin équivalent)."""
-    from . import circuit_journal, filtres
-    from .golden_ops import promote
+    """LA BASCULE — un geste de Vic. BASCULE-1 : cette commande n'est plus qu'un ALIAS de l'unique
+    chemin de bascule `bascule_flux.basculer()` (le même que le bouton admin) — elle écrit le MANIFESTE
+    (le point de vérité), relit `runs.current()` et ne confirme QUE si la valeur a réellement changé.
+    Il n'existe plus de second chemin qui ne toucherait que la vue dérivée `served_run.txt`."""
+    from . import bascule_flux, circuit_journal, filtres
+    # BASCULE-1 (Lot C) — l'écart d'arbre : lancée depuis un autre worktree que le checkout où
+    # `labuse` est installé en éditable, la bascule écrit là-bas, pas ici. On avertit AVANT d'agir.
+    avert = bascule_flux.avertissement_arbre()
+    if avert:
+        typer.echo(avert)
     with session_scope() as s:
         blocages = filtres.garde_pompe(s)
         if blocages:
@@ -4226,11 +4232,20 @@ def golden_promote_cmd(run: str = typer.Argument(..., help="Label du run candida
             typer.echo("✗ Bascule refusée : une source à portée `run` a une version servie en "
                        "quarantaine (corrige la source ou « servir quand même » sur la page Circuit).")
             raise typer.Exit(1)
-    r = promote(run)
+        r = bascule_flux.basculer(s, run, par="cli")
+        s.commit()
     if r.get("ok"):
-        typer.echo(f"✓ Run servi = {run} (ancien : {r.get('ancien')}). Golden re-gravé sur le servi.")
+        typer.echo(f"✓ Run servi = {run} (ancien : {r.get('ancien')}, sens : {r.get('sens')}).")
+        # BASCULE-1 (Lot B) — le chemin RÉEL écrit + l'arbre concerné + la valeur RELUE qui fait foi.
+        typer.echo(f"  manifeste (fait foi) : {r.get('manifeste_path')}")
+        typer.echo(f"  arbre servi          : {r.get('arbre')}")
+        typer.echo(f"  runs.current() relu  : {r.get('current_apres')}")
     else:
-        typer.echo(f"✗ Bascule refusée : {r.get('motif')}")
+        # verifie is False = la bascule s'est annoncée mais runs.current() n'a pas changé (démasqué).
+        typer.echo(f"✗ Bascule {'NON confirmée' if r.get('verifie') is False else 'refusée'} : {r.get('motif')}")
+        if r.get("manifeste_path"):
+            typer.echo(f"  écrit : {r.get('manifeste_path')} (arbre {r.get('arbre')}) — "
+                       f"fait foi : runs.current() = {r.get('current_apres')}")
         raise typer.Exit(1)
 
 

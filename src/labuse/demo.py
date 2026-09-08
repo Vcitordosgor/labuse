@@ -113,7 +113,7 @@ def seed_demo_pipeline(session: Session, commune: str = "Saint-Paul") -> int:
             """SELECT p.id FROM parcels p
                LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
                WHERE p.commune = :c AND p.id <> ALL(:got)
-               ORDER BY (s.tier IN ('brulante','chaude')) DESC NULLS LAST, p.idu LIMIT :n"""),
+               ORDER BY (s.tier IN ('brulante','chaude','priorite','a_suivre')) DESC NULLS LAST, p.idu LIMIT :n"""),
             {"c": commune, "got": list(pids) or [0], "n": len(_SEED_PIPELINE) - len(pids),
              "run": runs.current()}).scalars().all()
         pids = list(pids) + list(extra)
@@ -172,7 +172,7 @@ def healthcheck(session: Session, commune: str = "Saint-Paul") -> dict:
     bad = scal("""
         WITH opp AS (SELECT p.id, p.geom_2975, ST_Area(p.geom_2975) a FROM parcels p
           JOIN parcel_p_score_v2 s ON s.parcelle_id=p.idu AND s.run_id=:run
-          WHERE p.commune=:c AND s.tier IN ('brulante','chaude')
+          WHERE p.commune=:c AND s.tier IN ('brulante','chaude','priorite','a_suivre')
           ORDER BY s.rang ASC NULLS LAST, ST_Area(p.geom_2975) DESC LIMIT 20)
         SELECT count(*) FROM opp o WHERE o.a < 100
            OR EXISTS (SELECT 1 FROM spatial_layers s WHERE s.kind='osm_faux_positif' AND s.commune=:c

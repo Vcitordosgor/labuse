@@ -77,7 +77,7 @@ def test_flux_adresse_verdict_et_prix(db_session, monkeypatch):
 
     out = scoreur.scoreur_adresse(scoreur.ScoreurIn(q="1 rue test", prix_demande_eur=80000), s)
     assert out["ok"] and out["idu"] == idu
-    assert out["verdict"]["tier"] == "a_creuser" and out["verdict"]["libelle"] == "Neutre"  # M137 chip court
+    assert out["verdict"]["tier"] == "a_creuser" and out["verdict"]["libelle"] == "Sans signal"  # PALIERS-1
     # M128-5-§2 : la marge score_e (barème sectoriel, méthode divergente) n'est plus servie au tiers.
     assert "score_e" not in out
     # M128-6-§1 : le prix saisi est confronté à la charge DOCUMENTS (compute_bilan), servie seulement

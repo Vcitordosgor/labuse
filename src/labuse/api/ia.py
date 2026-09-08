@@ -226,12 +226,12 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
         hits.append(f"commune {commune}")
     # M5.1 : les mots du verdict pointent vers les TIERS v2 (« brûlante » = tier v2 ;
     # « à surveiller » n'existe plus — l'équivalent capacité est la réserve foncière)
-    if re.search(r"br[ûu]lant", low):
-        f["tiers"].append("brulante")
-        hits.append("brûlantes v2")
-    if re.search(r"chaude", low):
-        f["tiers"].append("chaude")
-        hits.append("chaudes v2")
+    if re.search(r"br[ûu]lant|priorit", low):
+        f["tiers"] += ["brulante", "priorite"]  # PALIERS-1 : deux vocabulaires (tête = Priorité)
+        hits.append("prioritaires")
+    if re.search(r"chaude|[àa]\s*suivre", low):
+        f["tiers"] += ["chaude", "a_suivre"]
+        hits.append("à suivre")
     if re.search(r"potentiel\s*long\s*terme|r[ée]serve\s*fonci|surveill", low):  # M45 : nouveau libellé + hérité
         f["tiers"].append("reserve_fonciere")
         hits.append("potentiel long terme")

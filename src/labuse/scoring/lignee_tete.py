@@ -49,8 +49,8 @@ def build_parcel_entree_tete(session, run_servi: str = "q_v8_calibre") -> dict:
             JOIN parcel_p_score_v2 a ON a.parcelle_id = b.parcelle_id AND a.run_id = :avant
             JOIN parcel_p_score_v2 srv ON srv.parcelle_id = b.parcelle_id AND srv.run_id = :servi
             WHERE b.run_id = :apres
-              AND b.tier IN ('brulante','chaude') AND a.tier NOT IN ('brulante','chaude')
-              AND srv.tier IN ('brulante','chaude')
+              AND b.tier IN ('brulante','chaude','priorite','a_suivre') AND a.tier NOT IN ('brulante','chaude','priorite','a_suivre')
+              AND srv.tier IN ('brulante','chaude','priorite','a_suivre')
             ON CONFLICT (idu) DO UPDATE SET entree_le=EXCLUDED.entree_le, geste=EXCLUDED.geste,
               nature=EXCLUDED.nature, contrib_d_avant=EXCLUDED.contrib_d_avant,
               contrib_d_apres=EXCLUDED.contrib_d_apres, computed_at=now()"""),

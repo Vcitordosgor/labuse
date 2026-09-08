@@ -169,8 +169,10 @@ def a_reverifier(registre: dict | None = None, today=None) -> list[dict]:
     return sorted(out, key=lambda x: (x["age_jours"] is not None, x["age_jours"] or 0), reverse=True)
 
 
-#: tiers où un permis pourrait être demandé → concernés par le sursis (si armé)
-_TIERS_SURSIS = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
+#: tiers où un permis pourrait être demandé → concernés par le sursis (si armé). Anciens codes
+#: + codes politique v2 (PALIERS-1) : un run ne porte qu'un vocabulaire, l'autre ne matche rien.
+_TIERS_SURSIS = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
+                 "priorite", "a_suivre", "sans_signal")
 #: déclassées « zone fermée / AU » → concernées par la veille AU (ouverture à terme)
 _TIERS_VEILLE_AU = ("declasse_zone_fermee", "declasse_au_fermee", "declasse_au_statut_inconnu")
 

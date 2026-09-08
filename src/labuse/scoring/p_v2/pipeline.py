@@ -248,17 +248,24 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     est CALCULÉ par ce même pipeline, jamais basculé automatiquement."""
     t0 = time.time()
     freeze_qv12: dict = {}
-    if recette == "q_v12":
-        from . import qv12 as _qv12
-        m12_qv12, m24_qv12, freeze_qv12 = _qv12.verify_artifacts()
+    _rec = None                      # module recette candidate (qv12 | qv14), sinon None
+    if recette in ("q_v12", "q_v14"):
+        # SCORING-4 — q_v14 reprend TOUTE la mécanique q_v12 (fit global + iso par
+        # segment) ; seule sa liste de features change (variables as-of en plus).
+        if recette == "q_v12":
+            from . import qv12 as _rec
+            model_version = _rec.QV12_VERSION
+        else:
+            from . import qv14 as _rec
+            model_version = _rec.QV14_VERSION
+        m12_qv12, m24_qv12, freeze_qv12 = _rec.verify_artifacts()
         sha = freeze_qv12["sha256_12m"]
-        model_version = _qv12.QV12_VERSION
         model = m12_qv12.base       # encoder/coefs de la recette (top 5 lisibles)
     elif recette == "m36":
         model, sha = verify_artifact()
         model_version = MODEL_VERSION
     else:
-        raise RuntimeError(f"recette inconnue : {recette!r} (attendu m36 | q_v12)")
+        raise RuntimeError(f"recette inconnue : {recette!r} (attendu m36 | q_v12 | q_v14)")
     annee = annee or date.today().year
     run_id = run_id or f"{model_version}-{date.today().isoformat()}"
 
@@ -286,15 +293,14 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     df["copro"] = df["copro"].fillna(False).astype(bool)
 
     p24 = None
-    if recette == "q_v12":
-        # SCORING-3 (L1) — features candidates de la recette (censoring + résiduel
-        # lu à 100 % + voisinage as-of), calculées par le MÊME code que l'arène
-        # (qv12.enrichir). Pas de recalage d'intercept : la calibration est
-        # l'isotonique PAR SEGMENT (2024), exactement ce que l'arène a mesuré.
-        from . import qv12 as _qv12
+    if recette in ("q_v12", "q_v14"):
+        # SCORING-3/4 — features candidates de la recette (censoring + résiduel lu
+        # à 100 % + voisinage as-of ; q_v14 : + variables as-of SCORING-DONNÉES-1),
+        # calculées par le MÊME code que l'arène (_rec.enrichir). Pas de recalage
+        # d'intercept : la calibration est l'isotonique PAR SEGMENT (2024).
         last_labeled = None
-        df = _qv12.enrichir(session.connection(), df, (annee,))
-        seg = _qv12.segmenter(df, df["copro"].to_numpy())
+        df = _rec.enrichir(session.connection(), df, (annee,))
+        seg = _rec.segmenter(df, df["copro"].to_numpy())
         p = m12_qv12.predict_proba(df, seg)
         contrib = m12_qv12.contributions(df)
         # horizon 24 mois : calculé et STOCKÉ (p_24m), rien d'affiché — sortie
@@ -473,10 +479,19 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     params = calibre_brulante(chaudes, params)
     tier = assign_tiers(work, params, prev_aligned)
 
+    # PALIERS-1 (Lot B) — pour la recette q_v14 SEULEMENT, le palier v2 REMPLACE le tier
+    # par rang : fonction PURE de p (seuils en config/scoring_client.yaml), déclassements →
+    # motifs (statuts.motifs_parcelle), réserve → drapeau (statuts.reserve_fonciere).
+    # p_raw INTACT ; rang/contributions conservés (tri, ×N). Le servi (m36) et q_v12 gardent
+    # le tier par rang — golden intact. Anti-churn hors ligne (recompute) ; ici entrée stricte.
+    if recette == "q_v14":
+        from .statuts import assign_paliers
+        tier = assign_paliers(work, None, None)
+
     libelles = None
-    if recette == "q_v12":
-        from . import qv12 as _qv12
-        libelles = {**LIBELLES, **_qv12.LIBELLES_QV12}
+    if recette in ("q_v12", "q_v14"):
+        lib_extra = _rec.LIBELLES_QV12 if recette == "q_v12" else _rec.LIBELLES_QV14
+        libelles = {**LIBELLES, **lib_extra}
     top5 = top5_lisibles(model, contrib, df, libelles=libelles)
 
     event_dates = pd.to_datetime(df["event_date"], errors="coerce")
@@ -545,9 +560,9 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # métriques K0 (2025) et SA NOTE DE VERSION (composée depuis les chiffres,
     # lue depuis Données › Circuit › Basculer). Le manifeste de gel fait foi.
     extra_recette: dict = {}
-    if recette == "q_v12":
+    if recette in ("q_v12", "q_v14"):
         extra_recette = {
-            "recette": "q_v12",
+            "recette": recette,
             "protocole": freeze_qv12.get("protocole_12m"),
             "protocole_24m": freeze_qv12.get("protocole_24m"),
             "calibration": "isotonique par segment (2024) — pas de recalage d'intercept",
@@ -602,7 +617,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # doctrine que l'ICD : best-effort SIGNALÉ, jamais avalé.
     potentiel_stats: dict | None = None
     potentiel_error: str | None = None
-    if recette == "q_v12":
+    if recette in ("q_v12", "q_v14"):
         try:
             from .potentiel import backfill_run as _potentiel_backfill
             potentiel_stats = _potentiel_backfill(session, run_id)

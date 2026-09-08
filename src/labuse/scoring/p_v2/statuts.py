@@ -185,3 +185,143 @@ def calibre_n_entree(rangs_c_ok: pd.Series, cible: int = 1150) -> int:
     if len(r) <= cible:
         return int(r[-1]) if len(r) else cible
     return int(r[cible - 1])
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PALIERS-1 (décision Vic 08/09/2026) — LA POLITIQUE v2 : trois paliers VRAIS en
+# probabilité ABSOLUE de vente sous 12 mois, un seul vocabulaire.
+#
+# Le palier ne dépend PLUS du rang ni de la capacité : c'est une fonction pure de p
+# (hors copropriété). Ce qui déclassait la tête (bâti saturé, zone fermée, AU fermée,
+# non constructible, bâti révélé) devient un MOTIF (statuts.motifs_parcelle) — la
+# parcelle GARDE son palier de probabilité. La réserve foncière devient un DRAPEAU
+# (statuts.reserve_fonciere) indépendant du palier. La copropriété reste HORS palier
+# (motif « copropriété »). p_raw INTACT : on ne recalcule QUE l'étiquette de palier.
+# ══════════════════════════════════════════════════════════════════════════════
+
+#: LE domaine de `tier_opportunite` — quatre valeurs, aucune autre (PALIERS-1 Lot C).
+PALIER_PRIORITE = "priorite"
+PALIER_A_SUIVRE = "a_suivre"
+PALIER_SANS_SIGNAL = "sans_signal"
+PALIER_ECARTEE = "ecartee"
+PALIERS = (PALIER_PRIORITE, PALIER_A_SUIVRE, PALIER_SANS_SIGNAL, PALIER_ECARTEE)
+
+#: motif « hors palier » de la copropriété (jamais un palier — un drapeau de fiche).
+MOTIF_COPROPRIETE = "copropriete"
+#: les motifs de déclassement (ex-tiers declasse_*) — désormais des MOTIFS, jamais des
+#: paliers. La parcelle garde son palier de probabilité ; le motif dit « pas de projet ».
+MOTIFS_DECLASSEMENT = (DECLASSE_BATI_SATURE, DECLASSE_ZONE_FERMEE, DECLASSE_AU_FERMEE,
+                       DECLASSE_NON_CONSTRUCTIBLE, DECLASSE_BATI_REVELE,
+                       DECLASSE_AU_STATUT_INCONNU)
+
+
+@dataclass(frozen=True)
+class PaliersConfig:
+    """Seuils EN CONFIG (config/scoring_client.yaml → `paliers`). Jamais en dur."""
+    entree_priorite: float = 0.20
+    entree_a_suivre: float = 0.10
+    sortie_priorite: float = 0.18      # anti-churn : reste Priorité tant que p ≥ ce seuil
+    sortie_a_suivre: float = 0.09      # anti-churn : reste À suivre tant que p ≥ ce seuil
+    reserve_quantile: float = 0.90     # réserve foncière = décile supérieur de SDP résiduelle
+
+
+def charger_paliers_config() -> PaliersConfig:
+    """La config des paliers, lue une fois du YAML (source unique des seuils)."""
+    from ...config import load_yaml_config
+    c = load_yaml_config("scoring_client").get("paliers", {})
+    d = PaliersConfig()
+    return PaliersConfig(
+        entree_priorite=float(c.get("entree_priorite", d.entree_priorite)),
+        entree_a_suivre=float(c.get("entree_a_suivre", d.entree_a_suivre)),
+        sortie_priorite=float(c.get("sortie_priorite", d.sortie_priorite)),
+        sortie_a_suivre=float(c.get("sortie_a_suivre", d.sortie_a_suivre)),
+        reserve_quantile=float(c.get("reserve_quantile", d.reserve_quantile)))
+
+
+def _palier_base(p: pd.Series, cfg: PaliersConfig) -> pd.Series:
+    """Le palier d'ENTRÉE strict (sans anti-churn) : Priorité / À suivre / Sans signal."""
+    return pd.Series(np.where(p >= cfg.entree_priorite, PALIER_PRIORITE,
+                     np.where(p >= cfg.entree_a_suivre, PALIER_A_SUIVRE,
+                              PALIER_SANS_SIGNAL)), index=p.index)
+
+
+def assign_paliers(df: pd.DataFrame, cfg: PaliersConfig | None = None,
+                   prev_palier: pd.Series | None = None) -> pd.Series:
+    """Le palier v2 par parcelle — fonction PURE de p (hors copropriété), sans DB.
+
+    Colonnes requises : `p` (proba calibrée = p_raw), `ecartee_etage0` (bool).
+    `prev_palier` : paliers v2 du run précédent (index aligné) → anti-churn ; None =
+    premier calcul (entrée stricte). L'Écartée (cascade étage 0) prime sur tout.
+
+    Anti-churn SIMPLE (mandat) : l'ENTRÉE est stricte (≥ 0,20 / ≥ 0,10) ; une parcelle
+    ne DESCEND d'un palier que si sa p passe SOUS le seuil de sortie (0,18 / 0,09).
+    La promotion est immédiate ; seule la descente est tamponnée, un cran à la fois.
+    """
+    cfg = cfg or charger_paliers_config()
+    p = pd.to_numeric(df["p"], errors="coerce")
+    tier = _palier_base(p, cfg)
+
+    if prev_palier is not None:
+        prev = prev_palier.reindex(df.index)
+        # maintien À suivre : était en tête (Priorité/À suivre) et p ≥ sortie_a_suivre
+        maintien_suivre = prev.isin([PALIER_PRIORITE, PALIER_A_SUIVRE]) & (p >= cfg.sortie_a_suivre)
+        tier = tier.mask(maintien_suivre & (tier == PALIER_SANS_SIGNAL), PALIER_A_SUIVRE)
+        # maintien Priorité : était Priorité et p ≥ sortie_priorite
+        maintien_prio = (prev == PALIER_PRIORITE) & (p >= cfg.sortie_priorite)
+        tier = tier.mask(maintien_prio & (tier == PALIER_A_SUIVRE), PALIER_PRIORITE)
+
+    ecartee = df["ecartee_etage0"].fillna(False).astype(bool) if "ecartee_etage0" in df.columns \
+        else pd.Series(False, index=df.index)
+    tier = tier.mask(ecartee, PALIER_ECARTEE)
+    return tier
+
+
+def motifs_parcelle(df: pd.DataFrame) -> pd.Series:
+    """Les MOTIFS d'une parcelle (liste, ordre du plus spécifique au plus général),
+    dérivés des mêmes caches que le pipeline — JAMAIS un palier. Copropriété d'abord
+    (hors palier), puis les déclassements. Colonnes optionnelles : `copro`,
+    `declasse_cause`, `au_statut`, `bati_revele`, `bati_sature`. Absentes = aucun motif.
+    """
+    n = len(df)
+    def col(name, default=None):
+        return df[name] if name in df.columns else pd.Series([default] * n, index=df.index)
+    copro = col("copro", False).fillna(False).astype(bool)
+    dc = col("declasse_cause")
+    au = col("au_statut")
+    br = col("bati_revele", False).fillna(False).astype(bool)
+    bs = col("bati_sature", False).fillna(False).astype(bool)
+
+    def motifs_of(i):
+        out = []
+        if bool(copro.iloc[i]):
+            out.append(MOTIF_COPROPRIETE)
+        # déclassements, ordre : le plus spécifique prime (zone/inconstructible > AU > bâti)
+        if dc.iloc[i] == DECLASSE_ZONE_FERMEE:
+            out.append(DECLASSE_ZONE_FERMEE)
+        elif dc.iloc[i] == DECLASSE_NON_CONSTRUCTIBLE:
+            out.append(DECLASSE_NON_CONSTRUCTIBLE)
+        elif au.iloc[i] == DECLASSE_AU_FERMEE:
+            out.append(DECLASSE_AU_FERMEE)
+        elif au.iloc[i] in (DECLASSE_AU_STATUT_INCONNU, "générique"):
+            out.append(DECLASSE_AU_STATUT_INCONNU)
+        elif bool(br.iloc[i]):
+            out.append(DECLASSE_BATI_REVELE)
+        elif bool(bs.iloc[i]):
+            out.append(DECLASSE_BATI_SATURE)
+        return out
+
+    return pd.Series([motifs_of(i) for i in range(n)], index=df.index)
+
+
+def reserve_fonciere(df: pd.DataFrame, cfg: PaliersConfig | None = None,
+                     seuil_c: float | None = None) -> pd.Series:
+    """DRAPEAU réserve foncière (bool) — SDP résiduelle dans le décile supérieur.
+    Indépendant du palier (plus un tier). `seuil_c` : le quantile déjà calculé (trace
+    du run) ; sinon calculé sur les SDP > 0 de `df`. Colonne requise : sdp_residuelle_m2.
+    """
+    cfg = cfg or charger_paliers_config()
+    sdp = pd.to_numeric(df["sdp_residuelle_m2"], errors="coerce").fillna(0)
+    if seuil_c is None:
+        pos = sdp[sdp > 0]
+        seuil_c = float(pos.quantile(cfg.reserve_quantile)) if len(pos) else np.inf
+    return sdp >= seuil_c

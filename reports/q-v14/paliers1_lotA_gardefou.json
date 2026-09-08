@@ -1,0 +1,7 @@
+{
+  "garde_fou_seuil": 0.2,
+  "precision_priorite_sans_declassements_ile": 0.3445,
+  "effectif_priorite_sans_declassements_ile": 119,
+  "n_evalue": 119,
+  "DECLENCHE": false
+}

@@ -38,7 +38,7 @@ def fiche_markdown(fiche: dict) -> str:
         "",
         f"- **Statut :** {_verdict_label(v)}"
         # M36 Lot C (Q3) : rang affiché sur brûlante/chaude UNIQUEMENT
-        + (f" (rang {v['rang']})" if v.get("rang") and v.get("tier") in ("brulante", "chaude") else "")
+        + (f" (rang {v['rang']})" if v.get("rang") and v.get("tier") in ("brulante", "chaude", "priorite", "a_suivre") else "")
         + ("  ·  **micro-opportunité** (≤ 500 m²)" if v.get("micro_opportunite") else ""),
         # M36 Lot B : scores Opportunité/Complétude RETIRÉS de l'affichage client (décorrélés
         # du tier / quasi-constants — arbitrage Vic M35 D2/D3). Calcul conservé en interne.
@@ -148,7 +148,7 @@ def fiche_markdown(fiche: dict) -> str:
         lines += ["| Parcelle | Tier servi | Rang | Zone PLU | Surface |", "|---|---|---|---|---|"]
         for v in vz["voisines"]:
             lines.append(f"| {v['idu']} | {TIER_LABELS.get(v.get('status'), v.get('status') or '—')} | "
-                         f"{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude') else '—'} | "
+                         f"{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude', 'priorite', 'a_suivre') else '—'} | "
                          f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_m2'))} |")
         lines += ["", "_Adjacence géométrique uniquement — propriétaires, accords et faisabilité d'un "
                   "assemblage restent à vérifier._", ""]
@@ -270,7 +270,7 @@ def fiche_html(fiche: dict) -> str:
         rows_vz = "".join(
             f"<tr><td>{html.escape(v['idu'])}</td>"
             f"<td>{html.escape(TIER_LABELS.get(v.get('status'), v.get('status') or '—'))}</td>"
-            f"<td>{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude') else '—'}</td>"
+            f"<td>{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude', 'priorite', 'a_suivre') else '—'}</td>"
             f"<td>{html.escape(v.get('plu_zone') or '—')}</td>"
             f"<td>{_m2(v.get('surface_m2'))}</td></tr>"
             for v in vz["voisines"])
@@ -312,7 +312,7 @@ def fiche_html(fiche: dict) -> str:
    <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
    <strong>Section/№ :</strong> {html.escape((p.get('section') or '—'))} {html.escape(p.get('numero') or '')}</p>
 <h2>Verdict</h2>
-<p><span class="badge">{html.escape(_verdict_label(v))}</span>{f" <span class='src'>rang {v['rang']}</span>" if v.get('rang') and v.get('tier') in ('brulante', 'chaude') else ''}{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
+<p><span class="badge">{html.escape(_verdict_label(v))}</span>{f" <span class='src'>rang {v['rang']}</span>" if v.get('rang') and v.get('tier') in ('brulante', 'chaude', 'priorite', 'a_suivre') else ''}{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
 {f'<p class="micro-note">{html.escape(v["badge_division_libelle"])}</p>' if v.get('badge_division_libelle') else ''}
 {f'<p class="disc">Motif ({"registre servi" if v.get("exception_registre") else "filtre servi"}) : {html.escape(v["motif"])}</p>' if v.get('motif') else ''}
 {'<p class="micro-note">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en assemblage ou micro-opération.</p>' if v.get('micro_opportunite') else ''}

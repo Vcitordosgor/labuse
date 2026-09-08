@@ -21,7 +21,7 @@ from ..verdict_servi import TIER_LABELS
 MICRO_OPPORTUNITE_MAX_M2 = 500.0
 
 #: tiers hauts — l'équivalent de l'ancienne « opportunité » pour les nuances d'affichage.
-_TIERS_HAUTS = ("brulante", "chaude")
+_TIERS_HAUTS = ("brulante", "chaude", "priorite", "a_suivre")  # PALIERS-1 : deux vocabulaires
 
 
 def is_micro_opportunite(status: str | None, surface_m2: float | None) -> bool:
@@ -148,14 +148,16 @@ def _synthese(status: str, positifs: list[str], vigilance: list[str],
             phrase += f". À vérifier avant de démarcher : {' ; '.join(vigilance)}"
         return phrase + "."
     if status == "a_creuser":
-        base = "Parcelle à creuser : potentiel présent"
+        # PALIERS-1 — « à creuser » (Neutre) sort du vocabulaire : palier « Sans signal ».
+        base = f"Parcelle {lbl} : potentiel présent"
         if motif:  # exception du registre servi (ex. piscine) — motif tracé, prioritaire
             return f"{base} ; au registre servi : {_clean(motif)}."
         return (f"{base} ; à lever d'abord : {' ; '.join(vigilance)}." if vigilance
                 else f"{base}, à confirmer.")
     if status and status.startswith("declasse_"):
+        # PALIERS-1 — le déclassement est un MOTIF, plus un palier : on dit le palier PUIS le motif.
         m = _clean(motif) if motif else lbl.split("— ", 1)[-1]
-        return f"Parcelle déclassée : {m}."
+        return f"Parcelle {lbl} — motif : {m}."
     if status == "ecartee":
         hard = next((c["detail"] for c in cascade if c.get("result") == "HARD_EXCLUDE"), None)
         return f"Parcelle écartée : {_clean(hard) or (vigilance[0] if vigilance else 'contrainte rédhibitoire')}."

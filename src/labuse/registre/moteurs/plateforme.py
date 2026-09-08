@@ -33,8 +33,8 @@ def bascules_tiers_hauts(db, run_courant: str | None, run_precedent: str | None)
         v = db.execute(text(
             "SELECT count(*) FROM parcel_p_score_v2 a "
             "JOIN parcel_p_score_v2 b ON b.parcelle_id = a.parcelle_id AND b.run_id = :cur "
-            "WHERE a.run_id = :prev AND b.tier IN ('brulante','chaude') "
-            "  AND (a.tier IS NULL OR a.tier NOT IN ('brulante','chaude'))",
+            "WHERE a.run_id = :prev AND b.tier IN ('brulante','chaude','priorite','a_suivre') "
+            "  AND (a.tier IS NULL OR a.tier NOT IN ('brulante','chaude','priorite','a_suivre'))",
         ), {"cur": run_courant, "prev": run_precedent}).scalar()
         return int(v) if v is not None else None
     except Exception:  # noqa: BLE001 — un chiffre indisponible = null, jamais une invention

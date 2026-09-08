@@ -1,0 +1,15 @@
+,q_v11_m137 (servi),q_v12 (modèle seul),q_v13_sources1 (données seules),q_v14 (les deux)
+AUC K0 (2025),0.613,0.62,0.613,0.626
+préc@100 méd K0,0.06,0.08,0.06,0.08
+lift décile K0,2.06,2.27,2.06,2.27
+Priorité préc K0,0.137,0.076,0.137,0.305
+ECE global K0,0.0013,0.0022,0.0013,0.002
+ECE PM K0,0.0063,0.0049,0.0063,0.0045
+— run 2026 —,,,,
+brûlante (Priorité),111,92,96,92
+chaude (À suivre),1367,1133,1173,1114
+réserve foncière,8789,6471,9150,5997
+à creuser,136841,139412,136689,136618
+cascade disponible (exclusions),145882,145882,150260,150260
+écartées servies par le run,145882,145882,145882,150260
+modèle K0 = ,ligne_de_base,q_v12,ligne_de_base,q_v14
