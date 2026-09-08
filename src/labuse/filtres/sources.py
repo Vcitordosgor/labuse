@@ -416,9 +416,9 @@ _ajout(_f(
 
 
 # ─────────────────────── Taxe d'aménagement — taux communaux publics (SOURCES-1 lot 6.2) ───────────────────────
-# Le taux communal de TA vient des délibérations (source publique). La table est seedée VIDE
-# (doctrine « aucun taux inventé ») — le contrôle mesure la COUVERTURE : combien des 24 communes
-# ont un taux public. Aujourd'hui 0/24 (les taux sont à ingérer de la source officielle).
+# TAXE-AMÉNAGEMENT-1 lot A — le taux communal de TA vient désormais du jeu ouvert DGFiP DELTA
+# (`labuse ingest-taxe-amenagement`). Le contrôle mesure la COUVERTURE : combien des 24 communes
+# ont un taux public. Mesuré 08/09/2026 : 24/24.
 def _ta_couverture() -> Controle:
     def m(db, f: Filtre, version: str):
         from .cadre import _table_existe
@@ -429,15 +429,15 @@ def _ta_couverture() -> Controle:
         return ok(f"{n}/24", d) if n >= 24 else ko(f"{n}/24", d)
     return Controle("d_taux_public_couverture", "completude", "avertissant",
                     "Couverture des taux communaux publics",
-                    "24/24 communes avec un taux public (aujourd'hui 0 — à ingérer de la source officielle)",
+                    "24/24 communes avec un taux public (source DGFiP DELTA)",
                     m)
 
 
-# NB : pas de `table` déclarée — une table de taux VIDE est l'état PENDING attendu (doctrine « aucun
-# taux inventé »), pas une quarantaine. La couverture est mesurée par le contrôle propre seul.
+# NB : pas de `table` déclarée — la couverture (X/24) est mesurée par le contrôle propre seul ;
+# une table encore vide resterait l'état PENDING attendu (doctrine « aucun taux inventé »).
 _ajout(_f(
     source="taxe_amenagement", libelle="Taxe d'aménagement — taux communaux publics",
-    source_motif="Taxe d'aménagement — taux%", portee_run=False, a_job=False,
+    source_motif="Taxe d'aménagement — taux%", portee_run=False, a_job=True,
     propres=[_ta_couverture()]))
 
 

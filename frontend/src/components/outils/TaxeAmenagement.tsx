@@ -275,6 +275,18 @@ export function TaxeAmenagement() {
                 {r.part_communale_eur != null ? fmtEur(r.part_communale_eur) : <span className="text-txt-dim">taux non renseigné, saisissez-le ci-dessus</span>}
               </span>
             </div>
+            {/* TAXE-AMÉNAGEMENT-1 lot C — taux communal public : millésime affiché (délibération en
+                vigueur, source datée) + alerte si non rafraîchi depuis plus d'un an. */}
+            {r.taux_communal_source === 'public' && r.taux_communal_millesime && (
+              <p data-taxe-millesime className="text-[9.5px] leading-snug text-txt-dim">
+                {r.taux_communal_millesime}
+                {r.taux_communal_perime && (
+                  <span data-taxe-perime className="ml-1 font-medium text-st-creuser">
+                    ⚠ taux non rafraîchi depuis plus d'un an — à réingérer
+                  </span>
+                )}
+              </p>
+            )}
             <div className="flex items-center justify-between gap-2">
               <span className="text-txt-mut">
                 Part départementale <span className="text-txt-dim">({r.taux_departemental_pct} %{!r.part_departementale_confirmee ? ', à confirmer' : ''})</span>

@@ -2615,7 +2615,10 @@ def taxe_amenagement(
         stationnement_ext_places=stationnement_ext_places, eoliennes_mats=eoliennes_mats,
         taux_communal_pct=taux_communal_pct, taux_departemental_pct=taux_departemental_pct,
         taux_communal_public_pct=(pub or {}).get("part_communale_pct"),
-        taux_communal_public_source=(pub or {}).get("source"))
+        taux_communal_public_source=(pub or {}).get("source"),
+        taux_communal_public_millesime=(pub or {}).get("millesime"),
+        taux_communal_public_delib_date=(pub or {}).get("delib_date"),
+        taux_communal_public_perime=(pub or {}).get("perime"))
 
 
 @app.get("/map/parcels.geojson")
@@ -3976,6 +3979,9 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         surface_taxable_m2=float(plancher),
         taux_communal_public_pct=(pub["part_communale_pct"] if pub else None),
         taux_communal_public_source=(pub["source"] if pub else None),
+        taux_communal_public_millesime=(pub["millesime"] if pub else None),
+        taux_communal_public_delib_date=(pub["delib_date"] if pub else None),
+        taux_communal_public_perime=(pub["perime"] if pub else None),
     )
     return {
         "assiette_m2": round(float(plancher)),
@@ -3985,6 +3991,9 @@ def _taxe_amenagement_block(db: Session, idu: str, parcel_id: int) -> dict | Non
         "part_departementale_eur": res["part_departementale_eur"],
         "taux_communal_pct": res["taux_communal_pct"],
         "taux_communal_source": res["taux_communal_source"],      # 'public' | None
+        # TAXE-AMÉNAGEMENT-1 lot C — millésime + fraîcheur du taux public.
+        "taux_communal_millesime": res["taux_communal_millesime"],
+        "taux_communal_perime": res["taux_communal_perime"],
         "taux_departemental_pct": res["taux_departemental_pct"],
         "taux_departemental_confirme": res["part_departementale_confirmee"],
         "taux_communal_manquant": res["taux_communal_manquant"],
