@@ -33,6 +33,10 @@ ANNEE = 2026
 
 def main() -> None:
     os.environ["LABUSE_ETAGE0_RUN"] = ETAGE0  # cascade réutilisée, jamais rejouée
+    # base locale : rôle openclaw (comme le harnais _common) — le défaut config
+    # (rôle « labuse ») n'existe pas en local.
+    os.environ.setdefault(
+        "LABUSE_DATABASE_URL", "postgresql+psycopg://openclaw@localhost:5432/labuse")
     from labuse.db import session_scope
     from labuse.scoring.p_v2.pipeline import run_score_v2
 
