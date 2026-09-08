@@ -166,5 +166,26 @@ Le panneau des couches est 100 % piloté par deux tableaux (`LeftPanel.tsx`). **
 
 ---
 
-## LOT 6 à 10 — à faire
+## LOT 6 — Architecture de deux outils  *(commit 6)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R21 | Blocs fonciers — 2 temps + clic ligne = fiche | **corrigé** | `Blocs.tsx` |
+| R22 | Piscine — rien avant « Voir les parcelles » | **corrigé** | `ProspectionSolaire.tsx` (`ModePiscines`) |
+| R23 | Piscine — retirer Courrier + Comparer | **corrigé** | idem |
+| R24 | PLU — deux onglets | **non reproduit** (déjà en place) | `ProcedureChangement.tsx:37,60-68` |
+
+**R21** — Blocs fonciers en deux temps : ajout d'un état `montre` + `filtresOuverts`. Les filtres (CommuneScope + paliers + « inclure publics ») sont désormais dans un `<details>` **accordéon** ; le bouton **« Voir les parcelles »** (`data-blocs-voir`) déclenche la requête (`enabled: montre`) et **replie l'accordéon**. Le bouton **« Voir la fiche »** de chaque parcelle du bloc est supprimé : la **ligne entière est cliquable** (`role="button"`, Enter/Espace, `select(idu)`). Pas de défilement horizontal (cartes empilées, `truncate`/`min-w-0` déjà en place).
+
+**R22** — Outil Piscine : les requêtes agrégat + listing passent en `enabled: montre` ; tout le résultat (compteur, bouton carte, listing) est masqué tant que **« Voir les parcelles »** (`data-piscines-voir`) n'est pas cliqué — les textes **naissent au clic**.
+
+**R23** — Outil Piscine : « Préparer les courriers » et « Comparer » retirés, **avec la sélection de lignes** (cases « tout sélectionner » + par ligne + état `sel` + ponts) qui ne servait qu'à eux. Cliquer une ligne ouvre toujours la fiche. Imports/hooks devenus inutiles retirés.
+
+**R24** — non reproduit : les deux onglets « Par parcelle » et « Simuler l'ouverture » **existent déjà** (`ProcedureChangement.tsx`, refonte OUTILS-FIX-2 C1) — tab bar `role="tablist"`, contenu de chaque onglet gaté par `tab`. Rien à faire.
+
+**Vérifs Lot 6** : `tsc` 0 ; `vitest` **194/194** (3 tests Piscine adaptés à R22/R23).
+
+---
+
+## LOT 7 à 10 — à faire
 *(non entamés)*
