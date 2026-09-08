@@ -12,10 +12,13 @@ declarer(FicheRegle(
         "100 premiers m² d'une résidence principale et sur les logements aidés ; exonération de "
         "plein droit des surfaces < 5 m². Taxe = assiette × (taux communal + taux départemental) — "
         "le taux communal est SAISI (ou lu de taxe_amenagement_taux si une délibération publique "
-        "est en base), JAMAIS un défaut : sans taux, pas de total. Taux départemental plafond "
-        "légal 2,5 %, étiqueté « à confirmer ». Détail ligne par ligne, vérifiable."),
-    entrees=("config/taxe_amenagement.yaml (millésime 2026, source service-public A15416, relevé "
-             "2026-08-28)", "taxe_amenagement_taux (délibérations publiques)", "saisies client"),
+        "est en base), JAMAIS un défaut : sans taux, pas de total. TAXE-AMÉNAGEMENT-1 : les taux "
+        "communaux sont désormais INGÉRÉS du jeu ouvert DGFiP/DELTA (24/24, avec date d'effet et "
+        "millésime affiché) ; taux départemental 974 = 2,5 % CONFIRMÉ par la même source. Détail "
+        "ligne par ligne, vérifiable."),
+    entrees=("config/taxe_amenagement.yaml (valeurs forfaitaires millésime 2026, source service-public "
+             "A15416, relevé 2026-08-28)", "taxe_amenagement_taux (taux communaux DGFiP/DELTA, jeu "
+             "delta_deliberation_tam_17_01_23)", "saisies client"),
     classe="regle_externe",
     fonction="src/labuse/taxe_amenagement.py:calculer",
     verdict="conforme",

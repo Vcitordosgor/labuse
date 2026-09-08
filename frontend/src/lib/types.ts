@@ -445,6 +445,7 @@ export interface Fiche {
     assiette_m2: number; assiette_eur: number; total_eur: number | null
     part_communale_eur: number | null; part_departementale_eur: number | null
     taux_communal_pct: number | null; taux_communal_source: string | null
+    taux_communal_millesime?: string | null; taux_communal_perime?: boolean | null
     taux_departemental_pct: number | null; taux_departemental_confirme: boolean
     taux_communal_manquant: boolean; message_taux_communal: string | null
     annee: string | number; source: string; url: string; scenario: string

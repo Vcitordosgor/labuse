@@ -71,3 +71,48 @@ def test_source_datee_et_sourcee(db_session):
     src = db_session.execute(text(
         "SELECT source FROM taxe_amenagement_taux WHERE insee='97411'")).scalar()
     assert "DELTA" in src and ta.DATASET in src
+
+
+# ─────────────────────────── Lot C — millésime affiché + fraîcheur ───────────────────────────
+from datetime import date  # noqa: E402
+
+from labuse.taxe_amenagement import calculer, config, taux_communal_public  # noqa: E402
+
+
+def test_millesime_expose_et_frais(db_session):
+    ta.ingest_taxe_amenagement(db_session, records_communaux=[_rec("11", 3.0, effet="2022-01-01")])
+    pub = taux_communal_public(db_session, "97411")   # relevé aujourd'hui → frais
+    assert "en vigueur depuis le 01/01/2022" in pub["millesime"]
+    assert "DGFiP/DELTA" in pub["millesime"]
+    assert pub["delib_date"] == "2022-01-01"
+    assert pub["perime"] is False
+
+
+def test_alerte_taux_perime_apres_un_an(db_session):
+    ta.ingest_taxe_amenagement(db_session, records_communaux=[_rec("11", 3.0)])
+    # même relevé, mais on regarde depuis « deux ans plus tard » → périmé.
+    pub = taux_communal_public(db_session, "97411", today=date(2028, 9, 8))
+    assert pub["perime"] is True
+
+
+def test_millesime_seulement_pour_le_taux_public():
+    # taux SAISI → pas de millésime public exposé (on ne prête pas une date au chiffre du client).
+    saisi = calculer(surface_taxable_m2=100, taux_communal_pct=4.0,
+                     taux_communal_public_millesime="X", taux_communal_public_perime=True)
+    assert saisi["taux_communal_source"] == "saisi"
+    assert saisi["taux_communal_millesime"] is None
+    assert saisi["taux_communal_perime"] is None
+    # taux PUBLIC → millésime + fraîcheur propagés.
+    pub = calculer(surface_taxable_m2=100, taux_communal_public_pct=3.0,
+                   taux_communal_public_millesime="Taux communal … source DGFiP/DELTA",
+                   taux_communal_public_delib_date="2022-01-01", taux_communal_public_perime=False)
+    assert pub["taux_communal_source"] == "public"
+    assert "DGFiP/DELTA" in pub["taux_communal_millesime"]
+    assert pub["taux_communal_perime"] is False
+
+
+def test_part_departementale_confirmee_par_delta():
+    c = config()
+    assert c["taux"]["part_departementale_confirmee_974"] is True
+    res = calculer(surface_taxable_m2=100, taux_communal_pct=3.0)
+    assert res["part_departementale_confirmee"] is True

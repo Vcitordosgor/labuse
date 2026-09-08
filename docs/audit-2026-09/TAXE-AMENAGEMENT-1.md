@@ -97,25 +97,52 @@ taxe/calculette existants restent verts ; 72 tests seed/circuit/sentinelle/sourc
 
 ---
 
-## Lot B — saisie manuelle : SANS OBJET
-Le mandat conditionne le Lot B à l'absence de source automatique (« à défaut »). **Une source
-existe et couvre 24/24 → le Lot B n'a pas lieu d'être.** Aucun fichier de saisie manuelle n'est
-créé (il ferait doublon avec une source officielle qui se met à jour toute seule). *À décider par
-Vic : confirmer qu'on ne monte pas de canal de saisie manuelle en parallèle.*
+## Lot B — saisie manuelle : SANS OBJET ✅ (décision Vic 08/09/2026)
+Le mandat conditionne le Lot B à l'absence de source automatique (« à défaut »). Une source existe
+et couvre 24/24 → **Vic confirme qu'on ne monte AUCUN canal de saisie manuelle en parallèle** (il
+ferait doublon avec une source officielle qui se met à jour seule). Aucun fichier de saisie créé.
 
 ---
 
-## Lot C — la fraîcheur : À FAIRE (lot suivant)
-- Millésime affiché **partout où le taux apparaît** (« taux communal 5 %, délibération en vigueur
-  au 01/01/2022, source DGFiP/DELTA »).
-- Alerte quand un taux date de plus d'un an (modèle des autres sources périmées).
-- La ligne de sonde `X/24` existe déjà (24/24 vert) — reste à la remonter au tableau de bord.
+## Lot C — la fraîcheur ✅ FAIT (commit dédié)
+
+### Millésime affiché partout où le taux apparaît
+`taux_communal_public()` est devenu la **source unique** du millésime et de la fraîcheur : il renvoie
+`delib_date` (date d'effet), `maj_at` (notre relevé), un `millesime` humain (« Taux communal en
+vigueur depuis le 01/01/2022 — source DGFiP/DELTA, relevé le 08/09/2026 ») et un drapeau `perime`.
+`calculer()` les propage **pour le taux public seulement** (on ne prête pas une date au chiffre saisi
+par le client). Affiché sur :
+- **l'outil dédié** (`TaxeAmenagement.tsx`) : ligne millésime sous la part communale ;
+- **la fiche** (`constructibilite.tsx`) : `FactNote` millésime sous le taux communal ;
+- **les exports** (Dossier / Flash / Résumé / pré-dossier, via le bloc `commune.py`) : millésime
+  accolé au montant.
+
+### Alerte « taux > 1 an »
+Repère = **notre date d'ingestion** (`maj_at`), pas la date de délibération (un taux voté en 2022 et
+jamais redélibéré reste le taux courant ; ce qui vieillit, c'est notre relevé de DELTA). Au-delà de
+365 j → `perime=True` → mention ambre « ⚠ non rafraîchi depuis plus d'un an, à réingérer » sur l'outil
+et la fiche. Au niveau de la SOURCE, la cadence de veille CIRCUIT (200 j, DELTA publie 2×/an) la fait
+passer « périmée » sur la page Circuit comme les autres sources.
+
+### Couverture X/24 visible au tableau de bord
+- La sonde `taxe_amenagement` affiche **« 24/24 » (verte)** — « Couverture des taux communaux publics ».
+- Le millésime de la source (`etats_sources`) porte littéralement **« DGFiP DELTA — 24/24 communes
+  en vigueur »** → la couverture est lisible sur le tableau de bord des sources.
+
+### Part départementale confirmée
+Décision Vic : bascule faite ici. `config/taxe_amenagement.yaml`
+`part_departementale_confirmee_974: false → true` — le 2,5 % du 974 est **confirmé par DELTA**
+(ligne `zone_application=Départementale`). La fiche et l'outil n'affichent plus « à confirmer ».
+*Le champ de saisie du Financier reste (décision Vic) : le taux connu est proposé à côté, jamais imposé.*
+
+### Tests Lot C
+`test_taxe_amenagement_delta.py` +4 (millésime exposé, périmé après 1 an, millésime réservé au taux
+public, départemental confirmé) ; test existant `test_departemental_plafond_non_confirme` renommé et
+retourné (`test_departemental_confirme_par_delta`). tsc 0 / vitest 194 / 63 exports / 56 circuit-sources.
 
 ---
 
 ## Ce qu'il reste côté Vic
-1. **Décision Lot B** : confirmer qu'aucune saisie manuelle parallèle n'est montée (source auto suffit).
-2. **Part départementale** : DELTA confirme 2,5 %. Faut-il basculer le YAML de « à confirmer » à
-   « confirmée par DELTA » ? (touche le total servi au banquier — laissé au Lot C / à ton aval).
-3. **Feu vert pour le Lot C** (millésime affiché + alerte fraîcheur).
-4. Merge / bascule : réservés à Vic (rien poussé, rien mergé).
+1. **Merge / bascule** : réservés à Vic (rien poussé, rien mergé) — deux commits sur `feat/taxe-amenagement-1`.
+2. Le job d'ingestion peut être ajouté au cron du VPS (`labuse ingest-taxe-amenagement`, ~2×/an
+   après les publications DELTA de janvier et octobre).

@@ -55,6 +55,13 @@ function TaxeAmenagementBlock({ t }: { t: NonNullable<Fiche['taxe_amenagement']>
         <FactRow label="Taux communal" value={<>{t.taux_communal_pct} <small>%</small></>}
           src={t.taux_communal_source === 'public' ? 'délibération communale (public)' : undefined} />
       )}
+      {/* TAXE-AMÉNAGEMENT-1 lot C — millésime du taux public + alerte fraîcheur (> 1 an). */}
+      {t.taux_communal_source === 'public' && t.taux_communal_millesime && (
+        <FactNote>
+          {t.taux_communal_millesime}
+          {t.taux_communal_perime && ' — ⚠ non rafraîchi depuis plus d’un an, à réingérer'}
+        </FactNote>
+      )}
       <FactRow label="Taux départemental"
         value={t.taux_departemental_pct != null ? <>{t.taux_departemental_pct} <small>%</small></> : '—'}
         src={t.taux_departemental_confirme ? 'confirmé' : 'plafond légal 2,5 % — à confirmer'} />

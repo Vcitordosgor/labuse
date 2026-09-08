@@ -472,6 +472,11 @@ export interface TaxeResult {
   total_eur: number | null
   taux_communal_manquant: boolean
   message_taux_communal: string | null
+  // TAXE-AMÉNAGEMENT-1 lot C — millésime + fraîcheur du taux communal public (null si saisi/absent).
+  taux_communal_source?: 'public' | 'saisi' | null
+  taux_communal_millesime?: string | null
+  taux_communal_delib_date?: string | null
+  taux_communal_perime?: boolean | null
 }
 export interface TaxeParams {
   surface_taxable_m2: number

@@ -41,14 +41,13 @@ forfaits:
   stationnement_ext_place: 2928   # par emplacement (aire extérieure)
   stationnement_ext_place_max_delib: 5857   # plafond porté sur délibération de la collectivité
 
-# TAUX. La part communale n'est PAS uniforme et vient des DÉLIBÉRATIONS communales : elle n'est ni en
-# base ni devinable → l'outil la fait SAISIR (jamais de défaut silencieux). La part départementale est
-# plafonnée à 2,5 % ; le taux exact 974 n'a pas été confirmé par une source officielle (le taux réel
-# vient d'une délibération du conseil départemental) → on sert le PLAFOND légal, clairement étiqueté et
-# modifiable, jamais présenté comme un taux confirmé.
+# TAUX. La part communale n'est PAS uniforme et vient des DÉLIBÉRATIONS communales — désormais
+# INGÉRÉE du jeu ouvert DGFiP DELTA (taxe_amenagement_taux, 24/24). La part départementale est
+# plafonnée à 2,5 % ; TAXE-AMÉNAGEMENT-1 (08/09/2026) — le taux 974 = 2,5 % est CONFIRMÉ par la même
+# source DELTA (ligne zone_application=Départementale). On le sert donc en taux CONFIRMÉ, modifiable.
 taux:
   part_communale_plafond_pct: 5        # 1 à 5 % (jusqu'à 20 % en secteur à équiper — délibération)
-  part_communale_defaut: null          # AUCUN défaut : saisie obligatoire par commune
+  part_communale_defaut: null          # AUCUN défaut : saisie obligatoire (ou taux public ingéré)
   part_departementale_plafond_pct: 2.5
-  part_departementale_defaut: 2.5      # PLAFOND légal servi par défaut, étiqueté « à confirmer », modifiable
-  part_departementale_confirmee_974: false
+  part_departementale_defaut: 2.5      # taux 974 servi par défaut, CONFIRMÉ par DELTA, modifiable
+  part_departementale_confirmee_974: true   # confirmé par DGFiP/DELTA (délibération départementale, 2,5 %)

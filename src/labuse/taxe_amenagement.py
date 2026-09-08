@@ -14,9 +14,29 @@ Résultat DÉTAILLÉ ligne par ligne : un promoteur doit pouvoir vérifier chaqu
 """
 from __future__ import annotations
 
+from datetime import date, datetime
+
 from sqlalchemy import text
 
 from .config import load_yaml_config
+
+# TAXE-AMÉNAGEMENT-1 lot C — un taux public non rafraîchi depuis plus d'un an est signalé
+# (les taux se votent avant le 1er juillet pour l'année suivante ; DELTA republie 2×/an). Le
+# repère est notre date d'INGESTION (maj_at) — un taux voté en 2022 et jamais redélibéré reste
+# le taux courant ; ce qui peut vieillir, c'est notre relevé de la source.
+_PERIME_JOURS = 365
+
+
+def _fr_date(d) -> str | None:
+    """JJ/MM/AAAA à partir d'un date/datetime/ISO — None si absent."""
+    if d is None:
+        return None
+    if isinstance(d, str):
+        try:
+            d = date.fromisoformat(d[:10])
+        except ValueError:
+            return d
+    return d.strftime("%d/%m/%Y")
 
 # CIRCUIT-3 lot 6.2 — table des taux COMMUNAUX PUBLICS de taxe d'aménagement (délibérations /
 # base publique DGFiP). Seedée VIDE : la doctrine « aucun taux inventé » interdit de deviner un
@@ -38,20 +58,39 @@ def ensure_taux_table(engine) -> None:
         c.execute(text(_TAUX_DDL))
 
 
-def taux_communal_public(db, insee: str | None) -> dict | None:
-    """Le taux communal PUBLIC d'une commune (part_communale_pct + source), ou None si inconnu."""
+def taux_communal_public(db, insee: str | None, *, today: date | None = None) -> dict | None:
+    """Le taux communal PUBLIC d'une commune, ou None si inconnu.
+
+    TAXE-AMÉNAGEMENT-1 lot C — SOURCE UNIQUE du millésime et de la fraîcheur : renvoie aussi
+    `delib_date` (date d'effet), `maj_at` (notre relevé), un `millesime` humain affichable partout,
+    et `perime` (True si non rafraîchi depuis plus d'un an). Toutes les surfaces lisent d'ici."""
     if not insee:
         return None
     try:
         row = db.execute(text(
-            "SELECT part_communale_pct, source, delib_date FROM taxe_amenagement_taux "
+            "SELECT part_communale_pct, source, delib_date, maj_at FROM taxe_amenagement_taux "
             "WHERE insee = :i"), {"i": str(insee)[:5]}).first()
     except Exception:  # table absente en environnement partiel
         return None
     if not row:
         return None
+    delib = row[2]
+    maj = row[3]
+    maj_d = maj.date() if isinstance(maj, datetime) else maj
+    ref = today or date.today()
+    perime = bool(maj_d is not None and (ref - maj_d).days > _PERIME_JOURS)
+    depuis = _fr_date(delib)
+    releve = _fr_date(maj_d)
+    millesime = "Taux communal"
+    if depuis:
+        millesime += f" en vigueur depuis le {depuis}"
+    millesime += " — source DGFiP/DELTA"
+    if releve:
+        millesime += f", relevé le {releve}"
     return {"part_communale_pct": float(row[0]), "source": row[1],
-            "delib_date": row[2].isoformat() if row[2] else None}
+            "delib_date": delib.isoformat() if delib else None,
+            "maj_at": maj_d.isoformat() if maj_d else None,
+            "millesime": millesime, "perime": perime}
 
 
 def config() -> dict:
@@ -76,6 +115,9 @@ def calculer(
     taux_departemental_pct: float | None = None,
     taux_communal_public_pct: float | None = None,
     taux_communal_public_source: str | None = None,
+    taux_communal_public_millesime: str | None = None,
+    taux_communal_public_delib_date: str | None = None,
+    taux_communal_public_perime: bool | None = None,
 ) -> dict:
     """Renvoie le détail LIGNE PAR LIGNE + total (None si le taux communal manque)."""
     cfg = config()
@@ -171,6 +213,13 @@ def calculer(
         "taux_communal_source": taux_source,             # 'public' | 'saisi' | None
         "taux_communal_public_pct": taux_communal_public_pct,
         "taux_communal_public_source": taux_communal_public_source,
+        # TAXE-AMÉNAGEMENT-1 lot C — millésime affiché + drapeau fraîcheur (taux public seulement).
+        "taux_communal_millesime": (taux_communal_public_millesime
+                                    if taux_source == "public" else None),
+        "taux_communal_delib_date": (taux_communal_public_delib_date
+                                     if taux_source == "public" else None),
+        "taux_communal_perime": (bool(taux_communal_public_perime)
+                                 if taux_source == "public" else None),
         "ecart_saisi_public_pct": ecart_saisi_public,    # contrôle de qualité (lot 6.2)
         "message_taux_communal": (None if not taux_manquant else
             "Taux communal non renseigné pour cette commune — saisissez-le "

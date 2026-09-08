@@ -76,10 +76,12 @@ def test_detail_ligne_par_ligne_et_forfaits():
     assert r["total_eur"] == round((r["part_communale_eur"] or 0) + (r["part_departementale_eur"] or 0), 2)
 
 
-def test_departemental_plafond_non_confirme():
+def test_departemental_confirme_par_delta():
+    # TAXE-AMÉNAGEMENT-1 (08/09/2026) — le taux départemental 2,5 % du 974 est désormais CONFIRMÉ
+    # par la source DGFiP/DELTA (ligne zone_application=Départementale), plus « à confirmer ».
     r = calculer(surface_taxable_m2=50, taux_communal_pct=2.0)
-    assert r["taux_departemental_pct"] == 2.5            # plafond légal servi
-    assert r["part_departementale_confirmee"] is False   # étiqueté « à confirmer », jamais un taux confirmé
+    assert r["taux_departemental_pct"] == 2.5            # taux 974 servi
+    assert r["part_departementale_confirmee"] is True    # confirmé par DELTA
 
 
 def test_endpoint_calcule_et_config(client):
