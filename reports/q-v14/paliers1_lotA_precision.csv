@@ -1,0 +1,9 @@
+zone,palier,variante,effectif,n_evalue,precision_reelle
+île,Priorité,sans déclassements (règle neuve),119,119,0.3445
+île,Priorité,avec déclassements (règle ancienne),50,50,0.42
+île,À suivre,sans déclassements (règle neuve),416,416,0.1274
+île,À suivre,avec déclassements (règle ancienne),239,239,0.1423
+Saint-Paul (97415),Priorité,sans déclassements (règle neuve),11,11,0.2727
+Saint-Paul (97415),Priorité,avec déclassements (règle ancienne),6,6,0.3333
+Saint-Paul (97415),À suivre,sans déclassements (règle neuve),62,62,0.1129
+Saint-Paul (97415),À suivre,avec déclassements (règle ancienne),38,38,0.1053

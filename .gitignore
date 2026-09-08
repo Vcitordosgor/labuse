@@ -148,4 +148,5 @@ frontend/*.d.ts
 
 # SCORING-4 — caches régénérables (dataset enrichi + spatial), lourds
 reports/q-v14/enrichi_2017_2026.pkl
+reports/q-v14/paliers1_enrichi_2024_2025.pkl
 reports/score-v2-arene/cache/
