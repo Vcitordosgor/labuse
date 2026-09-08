@@ -2,11 +2,14 @@
 
 Après une ingestion réussie qui nourrit le scoring, on calcule un run CANDIDAT (jamais servi) et on le
 COMPARE au run servi : parcelles promues, distribution des tiers, dérive en %. La BASCULE — faire du
-candidat le run servi — est un geste explicite (`labuse golden promote <run>` ou le bouton admin). Aucune
-bascule automatique : le classement servi aux clients ne change que par décision de Vic.
+candidat le run servi — est un geste explicite passant par l'UNIQUE chemin `bascule_flux.basculer()`
+(page Circuit / bouton admin, ou l'alias `labuse golden promote <run>`). Aucune bascule automatique :
+le classement servi aux clients ne change que par décision de Vic.
 
-`config/served_run.txt` est le POINT DE VÉRITÉ UNIQUE du run servi (backend + bundle front le lisent).
-`promote` le réécrit ; `candidat` ne fait que LIRE — il ne touche jamais le servi (ni le golden).
+BASCULE-1 : le POINT DE VÉRITÉ du run servi est le MANIFESTE `config/served_manifest.json` (lu en
+premier par `runs.current()`). `config/served_run.txt` n'en est qu'une VUE DÉRIVÉE ; `promote` l'écrit
+mais n'est plus un chemin de bascule (voir `basculer()`). `candidat` ne fait que LIRE — il ne touche
+jamais le servi (ni le golden).
 """
 from __future__ import annotations
 
@@ -119,16 +122,20 @@ def rapport_candidat(dry_run: bool = True) -> dict:
 
 
 def promote(run: str) -> dict:
-    """LA BASCULE — réécrit config/served_run.txt (le run servi). Valide que le run existe avant. Geste
-    manuel : aucune bascule automatique n'appelle cette fonction. L'ancien run est retourné (traçabilité)."""
+    """Écrit la VUE DÉRIVÉE `config/served_run.txt`. BASCULE-1 : ce n'est PLUS un chemin de bascule —
+    depuis CIRCUIT, `runs.current()` lit le MANIFESTE (`served_manifest.json`) qui fait foi, et
+    `served_run.txt` n'en est qu'une vue. Appelée UNIQUEMENT par `bascule_flux.basculer()` (l'unique
+    geste), qui écrit ENSUITE le manifeste et relit `runs.current()` pour confirmer. Valide l'existence
+    du run avant. L'ancien run est retourné (traçabilité)."""
     with session_scope() as db:
         connus = {r[0] for r in db.execute(text("SELECT DISTINCT run_id FROM parcel_p_score_v2")).all()}
     if run not in connus:
         return {"ok": False, "motif": f"run inconnu (aucune parcelle scorée pour {run})"}
     from . import runs
     ancien = runs.current()
-    entete = ("# config/served_run.txt — POINT DE VÉRITÉ UNIQUE du run servi (backend + front).\n"
-              "# Bascule via `labuse golden promote <run>` (geste de Vic). Une seule valeur active.\n")
+    entete = ("# config/served_run.txt — VUE DÉRIVÉE du run servi (le point de vérité est\n"
+              "# config/served_manifest.json). Bascule : `bascule_flux.basculer()` (page Circuit /\n"
+              "# bouton admin, ou l'alias `labuse golden promote <run>`). Écrit par la bascule seule.\n")
     _SERVED_FILE.write_text(entete + run + "\n", encoding="utf-8")
     runs.invalidate()   # SUITE-1 S3 — bascule EFFECTIVE À CHAUD : la prochaine lecture relit le pointeur.
     return {"ok": True, "ancien": ancien, "nouveau": run}
