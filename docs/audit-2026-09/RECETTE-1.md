@@ -86,5 +86,64 @@ La « lenteur » perçue correspond donc soit au **démarrage à froid de l'API 
 
 ---
 
-## LOT 3 à 10 — à faire
+## LOT 3 — Vérifications de données (réponses)  *(commit 3)*
+
+| # | Point | État | Résumé |
+|---|-------|------|--------|
+| R9 | CBO Territoria — 1 833 parcelles / 245 logements | **répondu** | les deux vrais, univers distincts ; 1 flottement signalé |
+| R10 | PLU simuler — seulement AUc→U / AUs→U | **répondu** | réalité des règlements (data-driven) ; cible « U » en dur (choix) |
+| R11 | Rechercher dans le PLU — commune sélectionnée ? | **répondu** | oui, filtré par `insee` ; corpus par commune |
+| R12 | Fraîcheur des dates de source | **répondu** | majorité vivante ; liste des figées ci-dessous |
+| R13 | Numérotation courrier propre au compte ? | **corrigé (signalé)** | était GLOBAL (bug) → rang par compte |
+| R14 | Sources SOURCES-1 branchées à la fiche | **répondu** | blocs branchés ; DPF/zones humides/ENP/RPG orphelins du corps fiche |
+| R15 | Outils utilisant SOURCES-1 (Pièges & risques) | **répondu** | sous-consommé : `_KINDS` à étendre + cascade non basculée |
+| R16 | Remonter le temps — existe ? | **répondu** | oui, complet (`/moteurs/histoire`, 4 familles) |
+| R17 | Info classement / Info scoring à jour ? | **répondu (à corriger par Vic)** | scoring à jour ; classement cite l'ancien modèle q_v8 |
+
+### R9 — CBO Territoria (SIREN 452038805)
+Les **deux chiffres sont vrais**, ce sont **deux univers différents**, aucun n'est faux.
+- **1 833 parcelles détenues** = `/modules/patrimoine` (`modules.py:394`, INNER JOIN `parcelle_personne_morale` × `parcels`). Recompte DB : 1 871 lignes au fichier foncier DGFiP (millésime 2025), dont **1 833 géolocalisées** dans `parcels` (38 idu orphelins de géométrie).
+- **245 logements depuis 2013** = veille-promoteurs `/frise` `n_logements` (`veille_promoteurs.py:250`), somme des `nb_lgt` des permis Sit@del (`sitadel_permits`) portés sur des parcelles du SIREN. Recompte DB : **110 permis, 245 logements**, dépôts 2013→2026 (2013 = début du flux Sit@del). Exact.
+- **Écart expliqué** : 1 833 = *stock foncier possédé aujourd'hui* ; 245 = *flux de logements autorisés sur 13 ans*. Un foncier peut détenir des milliers de parcelles (réserves, nu) et n'avoir bâti que sur une fraction ; les opérations livrées puis revendues sortent du compte.
+- ⚠ **À signaler** : double définition du compte parcelles — `/modules/patrimoine` affiche **1 833** (inner join), mais `/promoteur/{siren}/acquisitions` et `/frise` comptent **1 871** (`count(*)`). Deux onglets du même outil donnent deux totaux. Non corrigé (hors périmètre R9 = vérifier les chiffres).
+
+### R10 — PLU · simuler un changement
+**Réalité des règlements, pas une limite du code** (pour la zone de départ). Les zones candidates viennent des données réelles : `/moteurs/simulplu/zones` (`moteurs.py:46-53`) fait `SELECT subtype … WHERE kind='plu_gpu_zone' AND subtype LIKE 'AU%'`. Le GPU des 24 communes ne contient que **3** sous-types AU : `AUc` (21 communes), `AUs` (19), `AU` nu (2 : Saint-André, Saint-Leu). L'outil propose bien `AU` là où il existe — si seuls AUc/AUs ont été vus, c'est que Saint-André/Saint-Leu n'ont pas été testées. **Nuance** : la zone d'**arrivée « U » est codée en dur** (`moteurs.py:67`) — la simulation ne modélise que l'ouverture vers U, jamais une autre cible. Choix de périmètre assumé (« V1 : une commune, un zonage »), pas un bug.
+
+### R11 — Rechercher dans le PLU
+**Oui, les extraits proviennent bien de la commune sélectionnée.** `/modules/plu-annuaire/search` reçoit `insee` et l'applique en SQL (`plu_ingest.py:162-178`, clause `insee = :insee`). Corpus `plu_reglement_extrait` par commune (3 258 extraits, 21 communes, aucun texte générique partagé). Preuve : « hauteur » sans filtre = 653 extraits/21 communes ; avec `insee=97411` = 54 (une commune). L'UI impose de choisir une commune avant que la barre n'apparaisse. **Réserve mineure** : l'API autorise une recherche île-entière si `insee` absent (chemin non atteignable par l'UI).
+
+### R12 — Fraîcheur des dates de source
+**La majorité des dates sont VIVANTES** (lues d'un champ API / colonne DB `millesime`, `source_millesime`, `derniere_donnee`, `maj` : page Sources, légendes `Legend.fmtFraich`, blocs fiche marché/fibre/risques/quartier/PM, outils Radar/Secteur/PLU/Successions/Blocs/Densifier…). **Endroits FIGÉS** (littéraux, ne bougeront PAS à une réingestion) :
+- **Famille CoSIA « 2025 » — 5 endroits** : `bati.py:200` (fiche « Le bien »), `faisabilite/bati_revele.py:29`, `ingestion/cosia.py:36` (écrit en base → fige à l'ingest), `ingestion/fraicheur.py:127`, front `fiche/leBien.tsx:39`. **Le plus sensible** (à éditer en 5 points à la prochaine campagne CoSIA).
+- **`proprietaire_historique.py:23`** `_MILLESIME_SERVI = 2025` → « situation au 1ᵉʳ janvier 2025 » : constante, pas un `max(millesime)` de `pm_proprietaires_millesimes`.
+- **Front `lib/layers.ts` + `Legend.tsx`** : dates en prose des descriptions de couches (QPV 2024, BPE 2025, ZNIEFF 2025, EDF « ~02/2020 republiée 16/10/2025 », Cerema 2022/2023, CBS 2022…). Une partie sont des **références réglementaires** (décrets ZFANG/FRR dans `territory_fiscal.py:30,33`) → figées **par nature**.
+- **`TaxeAmenagement.tsx:133`** « Valeurs 2026 » (le reste du tip est vivant) ; **`strings.ts:173,201,328`** « ventes 2017-2025 » (explications du score).
+*(Réponse = liste ; non corrigé — c'est une vérification.)*
+
+### R13 — Numérotation des demandes de courrier → **GLOBAL (bug), corrigé**
+Le numéro montré (« Demande n° 44 ») était le **`id` PK, séquence GLOBALE à tous les comptes** (`courrier.py` RETURNING id ; front `ModulePanel.tsx:1388/1408`). Un client voyait donc son 1ᵉʳ courrier numéroté « 44 » → **fuite du volume total de la plateforme** + numéros non contigus. La lecture restait cloisonnée par `compte_id` (pas d'accès croisé), c'était un défaut d'affichage.
+**Corrigé** : back expose un **rang propre au compte** (`courrier.py` `_rang_compte()` + `row_number() OVER (ORDER BY id)` dans `demandes_de`), front affiche `rang_compte ?? id` (`ModulePanel.tsx`). Le `id` PK reste la clé technique (admin, notifs). Vérifié en base : compte 31 → n° 1..5 (au lieu des ids 30..34). Tests `CourrierService.test.tsx` bascule sur « n° 3, pas n° 42 ».
+
+### R14 — SOURCES-1 et la fiche parcelle
+**Branchées** (lecture LIVE, rendues au front) : `dispositifs` (ER/EBC, DPU, PEB, SUP — `app.py:3829+`→`constructibilite.tsx:711`), `sols` (SIS/CASIAS — `risques.tsx:29`), `fibre` Arcep, `filiation` DFI, `iris_quartier` RP2022 ; côté commune/Financier : zonage A/B/C, TFPB REI, ORT, loyers OLL, coût construction SDES. **Orphelines du CORPS de la fiche parcelle** : **DPF (ravines), zones humides, ENP, RPG** — présentes sur la CARTE seulement ; elles n'apparaîtraient au bloc `aleas` que via la cascade servie, or le run servi `q_v11_m137` est **antérieur à SOURCES-1**. Trou réel jusqu'à bascule d'un run SOURCES-1.
+
+### R15 — SOURCES-1 et les outils (Pièges & risques)
+Les autres outils (Scan, Radar, Successions, Blocs, Solaire) sont orthogonaux (rien à consommer). **« Pièges et risques » sous-consomme**, à deux titres :
+1. `servitudes-invisibles` (LIVE `spatial_layers`) crible SIS/CASIAS + SUP, mais son dictionnaire `_KINDS` (`servitudes.py:28`) **n'a pas été étendu** aux nouveaux kinds : `peb` a été **retiré** (l.25), et `dpu`, `dpf`, `zone_humide`, `ens`/ENP, `plu_gpu_prescription` (ER/EBC) manquent. **Gap corrigeable sans run** — signalé, non corrigé (choix produit : décider quels kinds remonter).
+2. le crible `duediligence` et `faisabilite` lisent la **cascade servie** (`runs.cascade()`=`q_v11_m137`) → aucun motif SOURCES-1 tant qu'un run SOURCES-1 n'est pas basculé (geste Vic, conforme au « jamais basculé »).
+
+### R16 — Remonter le temps
+**Existe et est complet.** Back `GET /moteurs/histoire/{idu}` (`moteurs.py:354`), front `HistoireFrise.tsx` sous le comparateur d'orthos de « Remonter le temps » (`TimeMachine.tsx:232`). **4 familles de faits datés** : Vente (`dvf_mutations_parcelle`), Permis (`sitadel_permits`, dépôt à la maille année), Propriétaire PM (`pm_proprietaires_millesimes`, maille millésime), Découpe (`dfi_filiation`). Millésimes servis en pied, état vide honnête. Rien ne manque.
+
+### R17 — Info classement / Info scoring (écran d'analyse)
+Les deux textes sont dans `LeftPanel.tsx` (`AlgoExplainer`/`ScoringExplainer`), contenus dans `strings.ts`. **Run réellement servi = `q_v11_m137`** (`served_manifest.json`), q_v14 **non** basculé.
+- **« Info scoring » (paliers) = À JOUR** ✅ : rend les 4 paliers `priorite`/`a_suivre`/`sans_signal`/`ecartee` (`status.ts:65`, `strings.ts:123-128`), classification en probabilité absolue, vocabulaire PALIERS-1. Aucun terme ancien.
+- **« Info classement » (méthode) = PÉRIMÉ** ⚠ : la section « Comment » (`strings.ts:319-323`) dit « le modèle a appris … **année 2023, vérifié sur les ventes 2024** » et le code s'ancre sur **`q_v8_calibre`** (12/08/2026) — soit **deux générations avant le run servi**. À corriger, MAIS le libellé correct dépend du run que Vic servira (q_v11_m137 aujourd'hui, q_v14 visé par le mandat) : je **ne réécris pas** une fenêtre d'entraînement non vérifiable, et le garde-fou interdit la bascule. **À traiter par Vic en même temps que la bascule** (signalé, non corrigé).
+
+**Vérifs Lot 3** : `py_compile courrier.py` OK ; `tsc` 0 ; tests courrier/scan verts ; rang par compte vérifié en base.
+
+---
+
+## LOT 4 à 10 — à faire
 *(non entamés)*

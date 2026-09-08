@@ -1221,7 +1221,7 @@ export function M09() {
   const [rattach, setRattach] = useState<{ pipeline_entry_id: number; projet_id: number | null } | null>(null)
   const [modele, setModele] = useState('standard')
   const [corps, setCorps] = useState(TEMPLATES[0].corps)
-  const [demande, setDemande] = useState<{ id: number; statut: string; n: number; communes: string | null } | null>(null)
+  const [demande, setDemande] = useState<{ id: number; rang_compte?: number; statut: string; n: number; communes: string | null } | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pdfErr, setPdfErr] = useState<string | null>(null)
 
@@ -1381,11 +1381,12 @@ export function M09() {
               className="rounded-lg bg-mint py-2 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
               {envoyer.isPending ? 'Envoi de la demande…' : "Demander l'envoi à LABUSE"}</button>
           ) : (
-            // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base, identique côté admin)
-            // et renvoie vers le suivi. AUCUN état interne (imprimé/posté) côté client : décision Vic —
-            // moins de surface, moins de bugs. Le suivi vit dans « Projets → Mes courriers ».
+            // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE et renvoie vers le suivi. AUCUN
+            // état interne (imprimé/posté) côté client : décision Vic — moins de surface, moins de bugs.
+            // RECETTE-1 R13 — le numéro montré est le rang PROPRE AU COMPTE (1, 2, 3…), plus le `id`
+            // PK global (qui fuitait le volume plateforme : « n° 44 » au 1ᵉʳ courrier). Repli sur id.
             <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande n° {demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
+              <b className="text-mint">✓ Demande n° {demande.rang_compte ?? demande.id} transmise.</b> LABUSE vous rappelle sous 24 h ouvrées avec le tarif —
               impression, mise sous pli, affranchissement et suivi compris.
               <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
             </div>
@@ -1405,7 +1406,7 @@ export function M09() {
               <p className="label-caps text-[9px]">Vos demandes</p>
               {demandes.data!.demandes.slice(0, 5).map((d) => (
                 <div key={d.id} className="flex items-baseline justify-between gap-2 text-[10.5px]">
-                  <span className="min-w-0 truncate text-txt-mut">n° {d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
+                  <span className="min-w-0 truncate text-txt-mut">n° {d.rang_compte ?? d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
                   <span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{String(d.ts).slice(0, 10)}</span>
                 </div>
               ))}

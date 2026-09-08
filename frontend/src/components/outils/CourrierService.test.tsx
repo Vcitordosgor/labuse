@@ -8,7 +8,9 @@ import { M09 } from './ModulePanel'
 // LABUSE. OUTILS-1 A4/B6 : la confirmation porte le N° de demande + renvoi « Mes courriers », SANS
 // état interne d'exécution (le cycle imprimé/posté reste à la Tour de contrôle admin).
 const FICHE = { commune: 'Saint-Denis', surface_m2: 1625 }
-const DEMANDE = { ok: true, id: 42, ts: 't', n: 1, communes: 'Saint-Denis ×1', statut: 'demande' }
+// RECETTE-1 R13 — le back renvoie `rang_compte` (rang PROPRE AU COMPTE) ; l'id 42 est la PK globale
+// qui ne doit PLUS être montrée au client (elle fuitait le volume plateforme).
+const DEMANDE = { ok: true, id: 42, rang_compte: 3, ts: 't', n: 1, communes: 'Saint-Denis ×1', statut: 'demande' }
 
 function mockFetch() {
   global.fetch = vi.fn(async (url: string, init?: RequestInit) => {
@@ -51,8 +53,9 @@ describe('COURRIER — service d\'envoi (3 étapes)', () => {
     // ③ demander l'envoi
     fireEvent.click(document.querySelector('[data-courrier-demander]')!)
     await waitFor(() => expect(document.querySelector('[data-courrier-confirm]')).toBeTruthy())
-    // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE (= id en base) et renvoie vers le suivi.
-    expect(screen.getByText(/Demande n° 42 transmise/)).toBeTruthy()
+    // RECETTE-1 R13 — la confirmation porte le rang PROPRE AU COMPTE (n° 3), PAS le id PK global (42).
+    expect(screen.getByText(/Demande n° 3 transmise/)).toBeTruthy()
+    expect(screen.queryByText(/n° 42/)).toBeNull()
     expect(screen.getByText(/Mes courriers/)).toBeTruthy()
     // AUCUN état interne (imprimé/posté) ni timeline côté client.
     expect(screen.queryByText('Imprimé')).toBeNull()

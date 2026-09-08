@@ -1164,13 +1164,14 @@ export const courrierPdf = async (idu: string | null, motif: string, texte: stri
 export interface CourrierDemande {
   id: number; ts: string; n: number; communes: string | null; modele: string | null
   statut: string; updated_at: string
+  rang_compte?: number   // RECETTE-1 R13 — rang PROPRE AU COMPTE (affiché au client, pas le id PK global)
   // CONNEXIONS-2 Lot 4 (KO-6) — rattachement à la piste/projet d'origine
   pipeline_entry_id?: number | null; projet_id?: number | null
 }
 // CONNEXIONS-2 Lot 4 — la demande peut naître d'une piste (pipeline_entry_id) / d'un projet (sans ressaisie).
 export const postCourrierDemande = (parcelles: string[], corps: string, modele: string | null, communes: string | null,
                                     rattach?: { pipeline_entry_id?: number | null; projet_id?: number | null }) =>
-  j<{ ok: boolean; id: number; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
+  j<{ ok: boolean; id: number; rang_compte?: number; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ parcelles, corps, modele, communes, ...(rattach ?? {}) }) })
 export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/courrier/demandes')
