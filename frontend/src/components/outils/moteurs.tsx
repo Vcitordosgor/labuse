@@ -602,7 +602,7 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         <span className="flex items-center gap-1">Ancien bâti {tendance(d.tendance_ancien_pct)}</span>
         <span className="flex items-center gap-1">Terrain nu {tendance(d.tendance_terrain_pct)}</span>
         <span className="flex items-center gap-1">Permis {tendance(d.tendance_permis_pct)}</span>
-        <Tip tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
+        <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
     </div>
@@ -633,7 +633,7 @@ export function M18() {
       </div>
       {nr && (
         <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)
-          <Tip tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
+          <Tip garder tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
         </p>
       )}
       {/* RETOURS-12 O10 — les 3 séries (ancien · terrain · permis) fusionnées en UN VRAI TABLEAU,

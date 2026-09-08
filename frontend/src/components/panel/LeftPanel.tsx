@@ -202,7 +202,7 @@ const LAYER_LABEL: Record<string, string> = Object.fromEntries(LAYERS.map((l) =>
 function LayerInfoPill({ info }: { info: string }) {
   if (!info) return null
   return (
-    <Tip side="top" tip={info} className="shrink-0">
+    <Tip garder side="top" tip={info} className="shrink-0">
       <span
         role="button"
         tabIndex={0}

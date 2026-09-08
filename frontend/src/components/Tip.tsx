@@ -13,7 +13,7 @@ import type { ReactNode } from 'react'
  *  bord de l'écran (bascule haut↔bas, recentrage horizontal borné). Largeur max 260 px.
  *  Elle N'EST montée QUE lorsqu'elle est ouverte ET hors du flux parent (portal) → elle ne gonfle
  *  plus le scrollWidth d'aucun conteneur (le bug de scroll horizontal M13-C reste corrigé). */
-export function Tip({ tip, children, side = 'top', className = '', block = false, hoverDelayMs = 0 }: {
+type TipProps = {
   tip: ReactNode
   children: ReactNode
   side?: 'top' | 'bottom'
@@ -21,7 +21,23 @@ export function Tip({ tip, children, side = 'top', className = '', block = false
   block?: boolean                       // true = wrapper display:flex (lignes entières)
   hoverDelayMs?: number                 // M62-P1 (c) : délai d'apparition AU SURVOL (0 = immédiat, défaut) ;
                                         // le focus clavier et le tap/clic restent IMMÉDIATS (jamais retardés).
-}) {
+  garder?: boolean                      // RECETTE-2 (S10) : n'affiche la bulle QUE si `garder` (contrôle
+                                        // carte OU déclencheur fonctionnel icône-seule « i »).
+}
+
+/** RECETTE-2 (S10, R28 tranché par Vic) — les infobulles au survol sont RETIRÉES PARTOUT, sauf deux
+ *  cas qui passent `garder` : (a) les contrôles de la carte (couches, légende, outils carte) ; (b) les
+ *  déclencheurs FONCTIONNELS icône-seule sans libellé (pastilles « i », pastille d'état) — la bulle EST
+ *  leur seul contenu. Sans `garder`, le composant ne rend que ses enfants (le wrapper `block`/`className`
+ *  est conservé pour ne rien déplacer), aucune bulle. La bulle complète vit dans TipBulle. */
+export function Tip(props: TipProps) {
+  if (!props.garder) {
+    return <span className={`${props.block ? 'flex' : 'inline-flex'} ${props.className ?? ''}`}>{props.children}</span>
+  }
+  return <TipBulle {...props} />
+}
+
+function TipBulle({ tip, children, side = 'top', className = '', block = false, hoverDelayMs = 0 }: TipProps) {
   const [open, setOpen] = useState(false)
   const hoverTimer = useRef<number | null>(null)
   const clearHover = () => { if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null } }

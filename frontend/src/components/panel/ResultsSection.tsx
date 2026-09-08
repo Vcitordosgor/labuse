@@ -360,7 +360,7 @@ export function ResultsSection() {
         <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="flex h-[15px] shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-txt-dim">Trier
             {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
-            <Tip side="top" tip={CLIENT.tri.lunettes}>
+            <Tip garder side="top" tip={CLIENT.tri.lunettes}>
               <span data-tri-info role="button" tabIndex={0} aria-label="Comprendre les deux tris"
                 className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>
@@ -417,7 +417,7 @@ export function ResultsSection() {
                 mention redondante). « (dans la zone) » conservé : un polygone dessiné n'est
                 pas visible autrement dans le panneau, c'est un signal distinct, non redondant. */}
             {zone && <span className="text-txt-dim"> (dans la zone)</span>}
-            <Tip side="top" tip={CLIENT.ventilation.familles} className="ml-1.5 inline-flex align-middle">
+            <Tip garder side="top" tip={CLIENT.ventilation.familles} className="ml-1.5 inline-flex align-middle">
               <span data-ventilation-info role="button" tabIndex={0} aria-label="Comprendre les trois familles"
                 className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>

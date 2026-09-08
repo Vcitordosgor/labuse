@@ -252,7 +252,7 @@ export function SignalChip({ k }: { k: string }) {
           ? filters.signaux.filter((x) => x !== k) : [...filters.signaux, k]) as never)}>
         {CLIENT.signaux.labels[k]}
       </Chip>
-      <Tip side="top" tip={CLIENT.signaux.infos[k]}>
+      <Tip garder side="top" tip={CLIENT.signaux.infos[k]}>
         <span role="button" tabIndex={0} aria-label={`En savoir plus : ${CLIENT.signaux.labels[k]}`}
           className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
       </Tip>
@@ -265,7 +265,7 @@ export function SignalChip({ k }: { k: string }) {
 export function TitreSection({ titre, info, cls = '' }: { titre: string; info: string; cls?: string }) {
   return (
     <p className={`label-caps flex items-center gap-1.5 text-txt-mut ${cls}`}>{titre}
-      <Tip side="top" tip={info}>
+      <Tip garder side="top" tip={info}>
         <span role="button" tabIndex={0} aria-label={`En savoir plus : ${titre}`}
           className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
       </Tip>

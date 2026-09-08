@@ -63,7 +63,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, etiquettes, onEtiq
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           {reminderDue && (
-            <Tip tip={e.reminder_date === todayISO ? 'Relance due aujourd’hui' : 'Relance échue'}>
+            <Tip garder tip={e.reminder_date === todayISO ? 'Relance due aujourd’hui' : 'Relance échue'}>
               <span className="flex shrink-0 items-center gap-1 text-[10px] font-medium text-amber" aria-label="Relance échue ou due aujourd’hui">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber" aria-hidden />
                 {e.reminder_date!.slice(8, 10)}/{e.reminder_date!.slice(5, 7)}

@@ -110,7 +110,7 @@ export function MapToolbar() {
           <div key={t.key} className="relative">
             {/* M62-P1 (c) : infobulle DA (Tip) à ~150 ms au survol, IMMÉDIATE au focus/clic —
                 remplace le `title` natif (délai navigateur ~500 ms, jugé trop long). */}
-            <Tip side="top" hoverDelayMs={150} tip={`${t.label} — ${t.hint}`}>
+            <Tip garder side="top" hoverDelayMs={150} tip={`${t.label} — ${t.hint}`}>
               <button
                 onClick={() => setTool(tool === t.key ? null : t.key)}
                 /* RETOURS-9 (Q9) — outil de carte actif = plein vert, encre sombre. */

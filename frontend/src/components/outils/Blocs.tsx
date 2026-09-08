@@ -162,7 +162,7 @@ export function Blocs() {
         Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> regroupées en une
         assiette — ce qu'un promoteur ne voit pas parcelle par parcelle. <b className="text-txt">Personnes
         morales seulement</b> (SIREN) : les particuliers n'ont pas d'identité stable d'une parcelle à l'autre.
-        <Tip tip="Un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au même SIREN (fichiers des personnes morales, DGFiP). Les particuliers sont hors périmètre : aucun regroupement par nom approché.">
+        <Tip garder tip="Un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au même SIREN (fichiers des personnes morales, DGFiP). Les particuliers sont hors périmètre : aucun regroupement par nom approché.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </div>
@@ -203,7 +203,7 @@ export function Blocs() {
         <input type="checkbox" data-blocs-inclure-publics className="h-3 w-3 accent-mint"
           checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }} />
         Inclure les propriétaires publics
-        <Tip tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
+        <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
           <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </label>

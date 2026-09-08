@@ -300,15 +300,16 @@ export const CLIENT = {
     // jamais visible côté client (la date reste côté admin/ops).
     boutonAlt: ['Comment LABUSE classe', 'Sur quoi repose ce classement ?'],
     titre: 'Comment LABUSE classe les parcelles',
-    // M55-G point 6 — version RESSERRÉE (trame Vic), chaque fait MESURÉ contre le modèle servi
-    // q_v8_calibre (12/08/2026, preuves au rapport M55-G) :
-    //  · entraînement : ventes réelles 2023, vérifié sur 2024 (train.py m3-p-model, FREEZE.json) ;
-    //  · signaux appris (features.py) : âge de détention (tenure_bin), permis (permis_bin), état
-    //    du bâti (friche/végétation/emprise), contraintes PLU, marché du secteur (DVF) — les
-    //    anciens « procédures / succession / dirigeant » sont des signaux du Score V, PAS des
-    //    features du modèle P → retirés (« dirigeant » : avis avocat P2-34 en attente, jamais
-    //    dans la liste publique) ; « divisions / changements d'usage » non encodés → retirés ;
-    //  · ×N : AUCUN plafond codé — max MESURÉ ×64,36 (3 parcelles / 431 663), un sommet, pas un cap.
+    // RECETTE-2 (S13) — texte RÉÉCRIT pour le run servi q_v14 (reports/q-v14/FREEZE-q_v14.json,
+    // gel 08/09/2026). Ne plus citer q_v8. Faits du FREEZE :
+    //  · entraînement : mutations JUSQU'EN 2023 ; calibration sur 2024 ; vérifié sur l'année 2025
+    //    tenue à l'écart de l'apprentissage (banc K0, année vierge) ;
+    //  · méthode : régression sur 35 variables + calibration ISOTONIQUE PAR SEGMENT (2024) ;
+    //    AUC global 0,626 (nu 0,664 · PM 0,669), ECE 0,0020 ;
+    //  · signaux appris : âge de détention, permis (dont « permis d'un pro sur une parcelle de
+    //    particulier »), état bâti/nu et part bâtie du secteur (Sitadel + DVF), ventes du secteur
+    //    parties à des sociétés, ancienneté du PLU, contraintes d'urbanisme, marché du secteur ;
+    //  · ×N : aucun plafond codé (le classement sert une probabilité, arrondie à un palier humain).
     corps: [
       {
         h: 'Ce que mesure le classement',
@@ -317,15 +318,17 @@ export const CLIENT = {
       },
       {
         h: 'Comment',
-        p: 'Le modèle a appris sur les ventes réelles de La Réunion (année 2023, vérifié sur ' +
-          'les ventes 2024) : il a repéré les motifs qui précèdent une vente (âge de détention, ' +
-          'permis, état du bâti, marché du secteur, règles PLU…) et les cherche sur les ' +
-          'parcelles d’aujourd’hui.',
+        p: 'Le modèle a appris sur les ventes réelles de La Réunion — les mutations jusqu’en 2023, ' +
+          'calibré sur l’année 2024 et vérifié sur l’année 2025 tenue à l’écart de l’apprentissage. ' +
+          'Il repère les motifs qui précèdent une vente (âge de détention, permis, état bâti ou nu, ' +
+          'part bâtie et ventes du secteur, ancienneté du PLU, règles d’urbanisme, marché du secteur…) ' +
+          'et les cherche sur les parcelles d’aujourd’hui. La probabilité est recalibrée par segment ' +
+          'pour rester juste sur chaque type de bien.',
       },
       {
         h: 'La probabilité en fraction',
         p: '« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — ' +
-          'la probabilité calibrée sur les ventes réelles 2017-2025, arrondie à un palier humain ' +
+          'la probabilité, recalibrée par segment sur les ventes réelles, arrondie à un palier humain ' +
           '(1/2, 1/3, 1/4, 1/5, 1/10, 1/20, 1/50). Sous 1/50, un tiret « — » (peu probable).',
       },
       {

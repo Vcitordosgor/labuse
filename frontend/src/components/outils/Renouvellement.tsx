@@ -65,7 +65,7 @@ export function RenouvellementModule() {
         surélévations : une parcelle <b className="text-txt">en zone constructible, déjà bâtie</b>, dont
         la <b className="text-txt">SDP résiduelle</b> dépasse le seuil de surface constructible et
         représente une <b className="text-txt">part significative de la SDP autorisée</b>.
-        <Tip tip="Parcelles déjà bâties en zone U/AU dont la capacité résiduelle > 100 m² (ou surface ≥ 600 m²), hors copropriété et hors foncier public. Score = heuristique déterministe (percent_rank : SDP résiduelle · assiette · rotation du bâti). Estimé — règles PLU calibrées, pas une expertise.">
+        <Tip garder tip="Parcelles déjà bâties en zone U/AU dont la capacité résiduelle > 100 m² (ou surface ≥ 600 m²), hors copropriété et hors foncier public. Score = heuristique déterministe (percent_rank : SDP résiduelle · assiette · rotation du bâti). Estimé — règles PLU calibrées, pas une expertise.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </div>
@@ -229,7 +229,7 @@ export function DensifierTablePanel() {
                       title redondant est retiré, cf. R28). */}
                   <th className="px-2 py-1.5 text-right">
                     <span className="inline-flex items-center gap-1">Score densif.
-                      <Tip tip="Score 0–100 de potentiel de densification (métrique propre à cet outil, ≠ classement). Heuristique déterministe : rang percentile de la parcelle DANS son segment, sur 3 critères pondérés — capacité résiduelle nette des contraintes (47 %), taille de l'assiette (29 %), rotation du bâti du secteur (24 %). Estimé, pas une expertise.">
+                      <Tip garder tip="Score 0–100 de potentiel de densification (métrique propre à cet outil, ≠ classement). Heuristique déterministe : rang percentile de la parcelle DANS son segment, sur 3 critères pondérés — capacité résiduelle nette des contraintes (47 %), taille de l'assiette (29 %), rotation du bâti du secteur (24 %). Estimé, pas une expertise.">
                         <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
                       </Tip>
                     </span>
