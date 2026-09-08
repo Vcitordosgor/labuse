@@ -1,0 +1,2 @@
+variable,n_batie_2026_vendue_nue,n_achevement_posterieur_vente,n_autorisation_posterieure_vente,pct_confirmes_sitadel,preuve
+date d'achèvement/autorisation Sitadel vs vente,14637,4344,1530,35.2,"m10_permit_delais.date_achevement, p_model_permits.date_autorisation"

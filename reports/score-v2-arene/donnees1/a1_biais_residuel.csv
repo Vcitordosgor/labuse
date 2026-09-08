@@ -1,0 +1,2 @@
+variable,n_flip_nue_puis_batie,n_flip_sdp_v2_zero,n_flip_sdp_v2_pos,note,preuve
+"sdp_residuelle_m2 / sous_densite (moteur M125, état 2026)",14637,8866,5664,le résiduel est calculé APRÈS la construction : la parcelle a appris « peu de droits restants » alors qu'elle était nue au moment de la vente,parcel_residuel.sdp_residuelle_m2 (statique)

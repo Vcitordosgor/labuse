@@ -1,0 +1,2 @@
+parcelles_dvf_brut,parcelles_ext_mut_all,brut_hors_ext,ext_hors_brut,parcelles_avec_mutation_dans_frame,parcelles_frame,tenure_informative_pct,verdict
+76371,76371,0,0,73907,431663,17.1,p_model_ext_mut_all = union INTÉGRALE histo 2014-2020 + parcellaire 2021+ (0 parcelle d'écart dans les deux sens) ; la tenure censurée K1c de la recette q_v12 consomme DÉJÀ toute la profondeur en base — le % informatif profond EST le % actuel. Aucune table DVF plus ancienne que 2014 n'existe en base → rien de nouveau à mesurer au K0.
