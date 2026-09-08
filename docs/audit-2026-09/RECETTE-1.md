@@ -145,5 +145,15 @@ Les deux textes sont dans `LeftPanel.tsx` (`AlgoExplainer`/`ScoringExplainer`), 
 
 ---
 
-## LOT 4 à 10 — à faire
+## LOT 4 — Ordre du menu Outils  *(commit 4)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R18 | Ordonner le menu Outils | **corrigé** | `registry.ts` — `MODULES` réordonné |
+
+Le menu est rendu à plat par `Rail.tsx:232` (`MODULES.filter((m) => !m.hidden)`), donc l'ordre du menu = l'ordre du tableau `MODULES`. Réordonné exactement selon le mandat : **1 PLU · 2 Permis · 3 Commune · 4 Étudier un bien · 5 Scan patrimoine · 6 Assemblage · 7 Comparer des parcelles · 8 Pièges et risques · 9 Étude de zone · 10 Remonter le temps · 11 Faisabilité · 12 Taxe d'aménagement · 13 Prospection solaire · 14 Densifier l'existant · 15 Blocs fonciers · 16 Successions à venir · 17 Courrier propriétaire.** Les 5 clés `hidden` (alias résolvants : calculette, mon-secteur, veille-promoteurs, barometre, promesses) sont conservées près de l'outil qui les résout — sans effet sur le menu. Aucun champ d'objet modifié (seul l'ordre). `tsc` 0.
+
+---
+
+## LOT 5 à 10 — à faire
 *(non entamés)*
