@@ -214,5 +214,28 @@ Le panneau des couches est 100 % piloté par deux tableaux (`LeftPanel.tsx`). **
 
 ---
 
-## LOT 8 à 10 — à faire
+## LOT 8 — Interactions et animation  *(commit 8)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R30 | Survol vert — cartes Veille | **corrigé** | `SurveillancePanel.tsx` (`hover-fill`) |
+| R31 | Survol vert — liste des sources | **corrigé** | `SourcesPage.tsx` (`hover-fill`) |
+| R32 | Survol vert — listing parcelles | **corrigé** | `ResultsSection.tsx` (`hover-fill` sur les 2 cartes) |
+| R33 | Survol vert — Densifier | **non reproduit** (déjà `hover-fill`) | `Renouvellement.tsx:245` |
+| R34 | Flèches d'accordéon inversées | **corrigé** | `ChevronSection.tsx:28`, `primitives.tsx:117` |
+| R35 | Latence d'allumage d'un bouton | **corrigé** (cause dite) | `FiltreLabuse.tsx:714/718` |
+| R36 | Filtre gris sur la carte au clic « Voir les parcelles » | **diagnostiqué — à valider Vic** | `MapView.tsx` (voile d'opinion) |
+
+**R30/R31/R32** — la classe canonique du « survol vert opaque » est `.hover-fill` (`styles/index.css`). Ajoutée aux cartes Veille (Le foncier / Les annonces), aux lignes de la page Données (à la place du lavis blanc), et aux deux cartes du listing de parcelles (`ResultCard`). ⚠ Sur les cartes d'analyse, `.hover-fill` force les enfants en encre sombre au survol : les puces colorées s'aplatissent le temps du survol (transitoire, conforme aux autres lignes hover-fill de l'app).
+**R33** — les lignes de Densifier portent DÉJÀ `hover-fill` : rien à faire.
+**R34** — deux accordéons pointaient vers le HAUT à l'ouverture : `ChevronSection` (SVG, app-wide : Couches/Filtres/tiroirs/Legend) passe à **ouvert = pas de rotation (bas ⌄)**, fermé = 180° ; `RefDrawer` (tiroirs de fiche) passe de `⌃` à **`⌄`** à l'ouverture. Les accordéons déjà en `▾/▸` étaient corrects.
+**R35** — **cause = latence de données**, pas un bug de rendu : les boutons « Voir N » / « Demander à LABUSE » avaient `opacity-70` tant que `liveLoading` (débounce 400 ms + aller-retour du compteur) → ils paraissaient « éteints » puis s'allumaient. Le lien opacité↔`liveLoading` est retiré des deux boutons (ils sont actionnables quel que soit le compteur) ; l'état « en cours » ne teinte plus que le NOMBRE.
+
+**R36** — **diagnostiqué, non modifié (à trancher par Vic).** Il n'y a **aucun overlay/scrim DOM** ni filtre CSS gris sur la carte du parcours principal (vérifié). Le « filtre gris » au clic « Voir les parcelles » est le **voile d'opinion** : en mode analyse (`opinion`), la table `STATUS_OPACITY` (`MapView.tsx:66`) estompe les parcelles non prioritaires (`ecartee` → 0,04) — sur fond sombre, la carte paraît grisée. C'est **le mécanisme même de mise en avant** des priorités (les retirer = supprimer la surbrillance d'analyse ; en relever le plancher = réafficher les écartées, ce qui change le sens produit). Comme (a) ce rendu WebGL n'est **pas capturable** dans cet environnement (garde-fou « capture avant/après ») et (b) le geste touche le cœur du mode analyse, je **ne tranche pas seul**. Proposition à valider : soit opacité uniforme en mode opinion (la carte ne grise plus, le tier reste porté par la couleur), soit relever le plancher `ecartee`. **Décision Vic.**
+
+**Vérifs Lot 8** : `tsc` 0 ; `vitest` **194/194**.
+
+---
+
+## LOT 9 & 10 — à faire
 *(non entamés)*

@@ -710,12 +710,16 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
              franc (fond + bordure visibles) AU-DESSUS, primaire dominant (plus haut, flèche
              dessinée — même patron que « Commencer »). La carte ne bouge QU'AU geste. ── */
           <div data-appel className="flex flex-col gap-2">
+            {/* RECETTE-1 R35 — les boutons ne DÉPENDENT plus de `liveLoading` pour leur couleur/opacité :
+                ils sont actionnables quel que soit le compteur en cours de calcul (le débounce 400 ms +
+                l'aller-retour donnaient l'illusion d'un bouton « éteint » qui s'allume après coup). L'état
+                « en cours » n'est plus signalé que sur le NOMBRE (compteur), pas sur les boutons. */}
             <button data-voir-factuel onClick={voirFactuel}
-              className={`w-full rounded-lg border border-line-2 bg-surface-3/60 py-2.5 text-[12.5px] font-medium text-txt transition-colors duration-quick hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              className="w-full rounded-lg border border-line-2 bg-surface-3/60 py-2.5 text-[12.5px] font-medium text-txt transition-colors duration-quick hover:border-txt-dim/50 hover:bg-surface-3 hover:text-txt-hi">
               {CLIENT.revelation.voirN(live ?? 431_663)}
             </button>
             <button data-analyser-btn onClick={lancer}
-              className={`group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink transition-[filter,transform,opacity] duration-soft hover:brightness-105 active:translate-y-[1px] active:brightness-95 ${liveLoading ? 'opacity-70' : 'opacity-100'}`}>
+              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-mint py-3 font-display text-[13.5px] font-bold text-mint-ink transition-[filter,transform] duration-soft hover:brightness-105 active:translate-y-[1px] active:brightness-95">
               <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
               <svg viewBox="0 0 16 16" aria-hidden="true"
                 className="h-[13px] w-[13px] transition-transform duration-quick group-hover:translate-x-0.5">

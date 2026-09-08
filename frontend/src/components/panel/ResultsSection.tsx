@@ -38,9 +38,10 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
   // reste complète (verdict inclus) — rien n'est caché, rien n'est imposé.
   if (factual) {
     return (
+      // RECETTE-1 R32 — survol vert opaque (hover-fill) sur les lignes du listing, comme le reste de l'app.
       <button onClick={() => select(p.idu)}
-        className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
-          on ? 'border-mint' : 'border-line-2 hover:border-mint/60'}`}>
+        className={`hover-fill relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
+          on ? 'border-mint' : 'border-line-2'}`}>
         <div className="min-w-0 flex-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
           <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
@@ -54,8 +55,8 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
   return (
     <button
       onClick={() => select(p.idu)}
-      className={`relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${
-        on ? 'border-mint' : 'border-line-2 hover:border-mint/60'}`}
+      className={`hover-fill relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${
+        on ? 'border-mint' : 'border-line-2'}`}
     >
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">

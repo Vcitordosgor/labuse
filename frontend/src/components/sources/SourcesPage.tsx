@@ -60,8 +60,9 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const prod = [s.provider, lic].filter(Boolean)
 
   return (
+    // RECETTE-1 R31 — survol vert opaque (hover-fill) comme le reste de l'app, au lieu du lavis blanc.
     <div ref={ref} data-source-row
-      className={`grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 hover:bg-white/[0.018] md:grid-cols-[14px_1fr_190px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
+      className={`hover-fill grid grid-cols-[14px_1fr_20px] items-center gap-x-3.5 gap-y-1.5 border-b border-line px-4 py-3 last:border-b-0 md:grid-cols-[14px_1fr_190px_20px] ${focused ? 'bg-mint/[0.06]' : ''}`}>
       {/* RETOURS-8 (R2) — pastille JAMAIS rouge : mint (à jour) ou mint atténué (mise à jour en cours).
           Le client ne doit jamais croire que LABUSE est en retard. */}
       <span className="h-[7px] w-[7px] shrink-0 rounded-full"
