@@ -374,8 +374,7 @@ function PipelineButton({ idu }: { idu: string }) {
         disabled={!!inPipe || add.isPending}
         aria-disabled={!!inPipe}
         className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : open ? 'act-cmp' : 'act-mint hover-fill'}`}
-        title={inPipe ? CLIENT.fiche.crmDedansTip : CLIENT.fiche.crmAjouterTip}
-      >
+      > {/* RECETTE-1 R28 — infobulle au survol retirée (le bouton porte déjà son libellé) */}
         {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
       </button>
       {open && !inPipe && (
@@ -1638,13 +1637,14 @@ export function Fiche({ idu }: { idu: string }) {
                   Banquier / Argumentaire / Projet / Lettre de zonage. (Courrier reste, hors documents.) */}
               <GrilleOutils cols={3}>
                 <DossierTile idu={idu} />
-                <OutilCase nom="Résumé" data-resume href={`/resume/${idu}.pdf`} title="Résumé de la parcelle (PDF, 3 pages)"
+                {/* RECETTE-1 R28 — infobulles au survol retirées des tuiles d'export (le nom suffit). */}
+                <OutilCase nom="Résumé" data-resume href={`/resume/${idu}.pdf`}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></svg>} />
                 <BanquierButton idu={idu} />
-                <OutilCase nom="Apporteur" data-apporteur href={`/apporteur/${idu}.pdf`} title="Brief apporteur — questionnaire remplissable (PDF)"
+                <OutilCase nom="Apporteur" data-apporteur href={`/apporteur/${idu}.pdf`}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>} />
                 <PreDossierTile idu={idu} />
-                <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} title={CLIENT.fiche.export.courrierTip}
+                <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
               </GrilleOutils>
               {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE

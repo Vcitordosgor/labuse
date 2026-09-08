@@ -120,7 +120,7 @@ export function Successions() {
             {items.map((it) => (
               <div key={it.idu} data-successions-row
                 className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5"
-                title="Ouvrir la fiche de la parcelle" onClick={() => select(it.idu)}>
+                onClick={() => select(it.idu)}>{/* RECETTE-1 R28 — infobulle « Ouvrir la fiche » retirée */}
                 <div className="flex items-center gap-2">
                   <input type="checkbox" data-successions-sel className="h-3 w-3 shrink-0 accent-mint"
                     checked={sel.has(it.idu)} onClick={(e) => e.stopPropagation()}

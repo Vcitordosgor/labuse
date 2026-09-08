@@ -381,11 +381,8 @@ export function ResultsSection() {
               )
             })}
           </div>
-          {/* M69 A — état du groupement : dit que la liste est groupée par tier quand le tri par
-              défaut (Probabilité de vente) est actif (lève le malentendu « pourquoi non monotone »). */}
-          {groupes && (
-            <span data-tri-groupe className="basis-full text-[10px] leading-tight text-txt-dim">Liste {CLIENT.tri.groupe}</span>
-          )}
+          {/* RECETTE-1 R25 — la ligne « Liste groupée par priorité d'action … · trier par Surface »
+              est RETIRÉE (demande Vic). Le groupement reste actif ; on ne l'explique plus par ce texte. */}
         </div>
       </div>
 

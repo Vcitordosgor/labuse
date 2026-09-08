@@ -187,5 +187,32 @@ Le panneau des couches est 100 % piloté par deux tableaux (`LeftPanel.tsx`). **
 
 ---
 
-## LOT 7 à 10 — à faire
+## LOT 7 — Textes à retirer  *(commit 7)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R25 | Retirer « Liste groupée par priorité… trier par Surface » | **corrigé** | `ResultsSection.tsx` (bloc `data-tri-groupe` retiré) |
+| R26 | Retirer « · 3 PROCÉDURES EN COURS » | **corrigé** | `PluAnnuaire.tsx:67` |
+| R27 | Retirer l'encadré « Envoi automatique indisponible… » | **corrigé** | `ModulePanel.tsx` (carte d'état gated `disponible`) |
+| R28 | Retirer les infobulles au survol | **corrigé (ciblé + limite dite)** | voir ci-dessous |
+| R29 | Analyse LABUSE écran 1 : redondant avec écran 2 ? | **répondu** (ne pas supprimer) | voir ci-dessous |
+
+**R25** — le bloc `{groupes && <span data-tri-groupe>Liste …</span>}` est retiré ; le groupement par palier reste actif, on ne l'explique plus par ce texte.
+**R26** — le fragment `· {n} procédure(s) en cours` du bandeau annuaire PLU est retiré (le « N PLU en vigueur (…) » reste).
+**R27** — la carte d'état du Courrier ne s'affiche **que** quand le service est disponible (elle porte alors le plafond du jour) ; l'encadré « Envoi automatique indisponible — L'envoi postal n'est pas encore disponible » ne s'affiche plus jamais.
+
+**R28** — Infobulles au survol. Deux mécanismes coexistent : le natif `title=` (~271 attributs) et le composant maison `<Tip>` (44, bulle stylée). J'ai appliqué la règle du mandat aux **infobulles redondantes sur les contrôles déjà étiquetés** (là où le libellé du bouton/tuile/ligne suffit) — exactement la catégorie des exemples cités :
+- `+ CRM` (`Fiche.tsx:377`, « Ajouter au CRM (suivi de prospection) ») ;
+- tuiles d'export **Résumé** (« … PDF, 3 pages »), **Apporteur**, **Courrier** (`Fiche.tsx:1641/1644/1647`) ;
+- lignes « Ouvrir la fiche de la parcelle » (`Successions.tsx:123` ; `Blocs.tsx` déjà fait au R21).
+
+**Conservés, avec motif** (ne sont pas des « bandeaux explicatifs redondants ») : les `<Tip>` d'information volontaire (définitions des paliers, méthode, sources — et le nouveau « i » de R40) ; les `title` **fonctionnels** (liens à icône seule Cadastre/Maps = nom accessible ; tuiles désactivées dont le `title` dit *pourquoi* ; `title` qui montre la valeur complète d'un texte tronqué). **Limite dite** : une purge de la totalité des ~271 `title` natifs (dont beaucoup fonctionnels/accessibilité) et/ou la neutralisation globale de `<Tip>` dépasse le geste « retirer les infobulles redondantes » et changerait de l'information voulue — **à confirmer par Vic** s'il veut aller jusque-là.
+
+**R29** — Analyse LABUSE, écran 1 (« LABUSE a analysé les N parcelles… »). Écran 2 (zone résultats) reprend **toute la partie quantitative** (le code le dit : mêmes nombres, source unique `getFiltre`) et montre une ventilation **plus riche** (5 paliers vs 3) + la barre empilée + le compteur `N/total`. Écran 1 n'est donc **pas** 100 % redondant : il porte en propre (a) le rappel « Selon vos critères (…) », (b) le cadrage « … de {périmètre} », (c) le **CTA « Voir les parcelles »** qui fait la bascule révélation→liste. **Réponse** : le supprimer ferait perdre le rappel des critères et le geste de bascule ; si Vic veut le supprimer, il faudrait reporter ces trois éléments sur l'écran 2. **Non supprimé** (accord Vic requis, cf. mandat).
+
+**Vérifs Lot 7** : `tsc` 0 ; `vitest` **194/194**.
+
+---
+
+## LOT 8 à 10 — à faire
 *(non entamés)*

@@ -1296,13 +1296,15 @@ export function M09() {
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + rédaction), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
         de propriétaire particulier.</Banner>
-      {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie. */}
-      {statut.data && (
+      {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie.
+          RECETTE-1 R27 — l'encadré « Envoi automatique indisponible — L'envoi postal n'est pas encore
+          disponible » est RETIRÉ : la carte d'état ne s'affiche QUE quand le service est disponible
+          (elle porte alors le plafond du jour). Rien à l'écran quand l'envoi n'est pas encore ouvert. */}
+      {statut.data?.disponible && (
         <div data-courrier-etat className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px]">
           <span className="flex items-center gap-1.5">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statut.data.disponible ? 'bg-mint' : 'bg-st-creuser'}`} />
-            <span className={statut.data.disponible ? 'text-mint' : 'text-st-creuser'}>{statut.data.disponible ? 'Service d’envoi disponible' : 'Envoi automatique indisponible'}</span>
-            {!statut.data.disponible && statut.data.raison && <span className="text-txt-dim">— {statut.data.raison}</span>}
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
+            <span className="text-mint">Service d’envoi disponible</span>
           </span>
           {statut.data.plafond_jour != null && (
             <span data-courrier-plafond className="whitespace-nowrap text-txt-mut">Plafond du jour : <b className="tnum text-txt">{statut.data.reste_jour}</b>/{statut.data.plafond_jour} restant{(statut.data.reste_jour ?? 0) > 1 ? 's' : ''}</span>

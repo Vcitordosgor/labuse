@@ -64,7 +64,7 @@ export function PluAnnuaire() {
                   vigueur mais non servi par le GPU) au lieu d'un « 21 disponibles » faux. */}
               <p className="mb-0.5 px-0.5 font-mono text-[9px] uppercase tracking-[.14em] text-txt-dim">
                 {communes.data.n_plu_vigueur ?? communes.data.servables} PLU en vigueur ({communes.data.n_communes} communes{communes.data.n_rnu > 0 && <>, {communes.data.n_rnu} au RNU</>})
-                {communes.data.n_procedures > 0 && <> · {communes.data.n_procedures} procédure{communes.data.n_procedures > 1 ? 's' : ''} en cours</>}
+                {/* RECETTE-1 R26 — « · N procédures en cours » RETIRÉ de ce bandeau (demande Vic). */}
               </p>
               {(communes.data.non_servis?.length ?? 0) > 0 && (
                 <p data-plu-trous className="mb-1.5 px-0.5 text-[9.5px] leading-snug text-cp-amber">
