@@ -182,6 +182,39 @@ def test_run_incomplet_refuse_la_bascule(db_session):
     assert ok is False and "absent" in motif.lower()
 
 
+def test_run_scoré_sans_cascade_est_refusé(db_session):
+    """COHÉRENCE-RUN-1 (C2) — LE FAUX POSITIF : un run PRÉSENT en score v2 mais dont la table de
+    cascade EXISTE et n'a AUCUNE ligne pour lui doit être REFUSÉ (avant le fix, `SELECT 1 … LIMIT 1`
+    rendait `None` comme une table absente → la bascule le déclarait « complet, toléré hors production »
+    et servait un run sans cascade — c'est ainsi que q_v14 est passé). La table dryrun_parcel_evaluations
+    existe bien dans la base de test (create_all)."""
+    run = "run_scoré_sans_cascade_" + uuid.uuid4().hex[:6]
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256) VALUES (:r, 'test', 'x')"),
+        {"r": run})
+    ok, motif = bascule_flux._run_complet(db_session, run)
+    assert ok is False, "un run scoré SANS cascade doit être refusé (le faux positif C2)"
+    assert "cascade" in motif.lower() and "aucune ligne" in motif.lower()
+
+
+def test_run_scoré_avec_cascade_est_accepté(db_session):
+    """L'autre côté du fix : le MÊME run, dès qu'il a au moins une ligne de cascade, est accepté —
+    on ne durcit pas au-delà du trou corrigé."""
+    run = "run_complet_" + uuid.uuid4().hex[:6]
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256) VALUES (:r, 'test', 'x')"),
+        {"r": run})
+    pid = db_session.execute(text(
+        "INSERT INTO parcels (idu, commune, geom) "
+        "VALUES (:i, '97415', ST_GeomFromText('POINT(55.5 -21.0)', 4326)) RETURNING id"),
+        {"i": "TEST" + uuid.uuid4().hex[:10]}).scalar()
+    db_session.execute(text(
+        "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
+        "opportunity_score, status) VALUES (:r, :p, 0, 0, 'exclue')"), {"r": run, "p": pid})
+    ok, motif = bascule_flux._run_complet(db_session, run)
+    assert ok is True and "complet" in motif.lower()
+
+
 def test_journal_bascule_ensure_et_vide(engine, db_session):
     bascule_flux.ensure_tables(engine)
     assert bascule_flux.derniere_bascule(db_session) is None   # aucune bascule encore

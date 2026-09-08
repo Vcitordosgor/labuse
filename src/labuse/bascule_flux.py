@@ -99,18 +99,29 @@ def ensure_tables(engine) -> None:
 def _run_complet(db: Session, run: str) -> tuple[bool, str]:
     """Le run est-il SERVABLE ? Présent en score v2 (`p_score_v2_runs`) ET en cascade
     (`dryrun_parcel_evaluations`) — sinon la fiche retomberait en repli legacy silencieux
-    (cf. `bascule_gardes.check_coherence_run_fiche`). Refus BRUYANT sinon."""
+    (cf. `bascule_gardes.check_coherence_run_fiche`). Refus BRUYANT sinon.
+
+    COHÉRENCE-RUN-1 (C2) — SECOND FAUX POSITIF de la journée dans ce code (le premier : BASCULE-1,
+    `golden promote` qui n'écrivait que la vue dérivée). Ici la garde CROYAIT vérifier la cascade
+    mais ne le faisait pas : `SELECT 1 … LIMIT 1` sur 0 ligne rend `None`, EXACTEMENT comme une
+    table absente → la branche « cascade non vérifiable (table absente) — toléré hors production »
+    avalait le cas « table PRÉSENTE, 0 ligne pour ce run ». C'est par ce trou que `q_v14` (scoré
+    mais sans cascade propre) a été promu en local sans un cri. On distingue désormais l'ABSENCE de
+    table (indéterminé, toléré) du VIDE pour ce run (refus)."""
     v2 = db.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"), {"r": run}).scalar()
-    casc = None
-    if db.execute(text("SELECT to_regclass('dryrun_parcel_evaluations')")).scalar():
-        casc = db.execute(text(
-            "SELECT 1 FROM dryrun_parcel_evaluations WHERE run_label = :r LIMIT 1"), {"r": run}).scalar()
     if not v2:
         return False, f"run « {run} » absent de p_score_v2_runs (non scoré) — bascule refusée."
-    if casc is None:
+    # ABSENCE de table (base de test / install neuve) ≠ VIDE pour ce run : le `to_regclass` seul
+    # tranche « table absente », le `SELECT 1` tranche « 0 ligne pour ce run ». Ne JAMAIS confondre
+    # les deux `None` (celui d'une table qui n'existe pas, celui d'une requête sans ligne).
+    table_existe = bool(db.execute(text("SELECT to_regclass('dryrun_parcel_evaluations')")).scalar())
+    if not table_existe:
         return True, "cascade non vérifiable (table absente) — toléré hors production."
-    if not casc:
-        return False, f"run « {run} » absent de la cascade (dryrun_parcel_evaluations) — bascule refusée."
+    a_des_lignes = db.execute(text(
+        "SELECT 1 FROM dryrun_parcel_evaluations WHERE run_label = :r LIMIT 1"), {"r": run}).scalar()
+    if not a_des_lignes:
+        return False, (f"run « {run} » absent de la cascade (dryrun_parcel_evaluations existe mais "
+                       f"n'a aucune ligne pour ce run) — bascule refusée.")
     return True, "run complet (score v2 + cascade)."
 
 
