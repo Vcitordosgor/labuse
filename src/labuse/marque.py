@@ -87,7 +87,7 @@ def bloc_html(marque: dict | None) -> str:
     rien de configuré. Toujours accompagné de la mention LABUSE (A3)."""
     if not marque:
         return ""
-    from .api.briques_pdf import esc
+    from html import escape as esc      # EXPORTS-2 lot 8 : ex-briques_pdf.esc (chaîne supprimée)
     lignes = []
     if marque.get("logo_data_uri"):
         lignes.append(f"<img src='{marque['logo_data_uri']}' alt='' "

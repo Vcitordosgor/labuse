@@ -67,8 +67,7 @@ def purger_caches_run() -> list[str]:
     _try("rnu (_entries)", _rnu.clear_cache)
     from .api import projets as _projets
     _try("projets (_COMPTEUR_CACHE)", lambda: _projets._COMPTEUR_CACHE.clear())
-    from .api import banquier as _banquier
-    _try("banquier (_PDF_CACHE)", lambda: _banquier._PDF_CACHE.clear())
+    # EXPORTS-2 lot 8 — chaîne banquier (_PDF_CACHE) supprimée ; le builder exports rend à la volée.
     from .api import accueil as _accueil
     _try("accueil (chiffres/contexte/fraîcheur)", lambda: (
         _accueil._cache.update(at=0.0, data=None),

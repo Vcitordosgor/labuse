@@ -208,8 +208,17 @@ def _flash_fulfill(db: Session, session_id: str, email: str | None) -> None:
                     " WHERE id = :i"), {"e": email, "i": row["id"]})
     db.commit()
     try:
-        from .flash.report import generate_flash_report
-        pdf = generate_flash_report(row["idu"], order_ref=f"FL{row['id']:06d}", db=db)
+        # EXPORTS-2 lot 8 — la LIVRAISON Flash bascule sur le Dossier SANS la section 9 (builder
+        # exports) ; le paiement (flash_commandes, token, /flash/telecharger) est inchangé.
+        from .api.app import parcel_fiche as _parcel_fiche
+        from .exports import builder as _exp_builder
+        from .exports.rendu import render_pdf as _exp_render
+        from .flash.report import storage_dir as _flash_storage
+        fiche = _parcel_fiche(row["idu"], db=db)
+        res = _exp_builder.construire(db, row["idu"], "flash", fiche=fiche)
+        _flash_storage().mkdir(parents=True, exist_ok=True)
+        pdf = _flash_storage() / f"FL{row['id']:06d}-{row['idu']}.pdf"
+        pdf.write_bytes(_exp_render(res.html))
         # génération faite ; l'expiration (30 j) est figée ICI. Le TOKEN de téléchargement
         # n'est PAS émis dans le thread : il est frappé à la demande par flash_statut (le
         # retour Checkout, ré-ouvrable). Rien en mémoire process → multi-worker sûr.

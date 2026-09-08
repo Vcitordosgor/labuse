@@ -63,6 +63,30 @@ PIECES_PCMI = [
 ]
 
 
+def _scenario(db: Session, idu: str) -> dict:
+    """P1 — le CERFA et la liste de pièces suivent le SCÉNARIO du potentiel : un collectif (≥ 3
+    logements estimés) relève du CERFA 13409 (pièces PC1-PC8), une maison individuelle du CERFA
+    13406 (pièces PCMI). À défaut de scénario chiffré : maison individuelle, ANNONCÉE. Le fichier
+    13409 n'est pas vendorisé — pour un collectif, le pack l'annonce et renvoie à service-public."""
+    cap = None
+    try:
+        # session SÉPARÉE : la fiche peut lever (bug pré-existant round(double precision)) ; on ne
+        # laisse jamais son erreur avorter la transaction du pré-dossier.
+        from ..db import session_scope
+        from .app import parcel_fiche
+        with session_scope() as s2:
+            pot = (parcel_fiche(idu, db=s2) or {}).get("potentiel_transformation") or {}
+        c = pot.get("capacite_estimee")
+        if c and not isinstance(c, bool):
+            cap = int(c)
+    except Exception:  # noqa: BLE001 — pas de potentiel → repli maison individuelle
+        pass
+    collectif = cap is not None and cap >= 3
+    return {"collectif": collectif, "logements": cap,
+            "cerfa": "13409" if collectif else "13406",
+            "type": "collectif" if collectif else "maison individuelle"}
+
+
 def _commune_de(commune: str) -> str:
     """M129-2 H.1 — « commune de X » avec l'article contracté : Le Tampon → du Tampon, Les Avirons →
     des Avirons ; La/L' (féminin, élidé) → « de La… » / « de L'… » sans contraction."""
@@ -150,8 +174,10 @@ _PAGE_CSS = """
 body {{ font-family: sans-serif; color: #28322D; font-size: 10pt; }}
 h1 {{ font-size: 15pt; color: #111814; border-bottom: 1.4pt solid #1E9E58;
      padding-bottom: 2mm; }}
+h1, h2 {{ page-break-after: avoid; }}   /* P6 — keep-with-next : jamais un titre orphelin */
 h2 {{ font-size: 11.5pt; color: #111814; }}
 table {{ width: 100%; border-collapse: collapse; }}
+tr {{ page-break-inside: avoid; }}      /* P6 — une ligne ne se coupe plus sur deux pages */
 td, th {{ border-bottom: 0.5pt solid #D8E2DC; padding: 1.6mm 2mm 1.6mm 0;
          text-align: left; font-size: 9pt; vertical-align: top; }}
 th {{ color: #5F6C65; text-transform: uppercase; font-size: 7pt;
@@ -171,9 +197,12 @@ def _html_pdf(html_body: str, titre: str) -> bytes:
     return HTML(string=doc).write_pdf()
 
 
-def _regles_et_pieces(db: Session, idu: str) -> bytes:
-    """Fiche des règles du zonage (PLU calibré) + servitudes connues + pièces PCMI."""
+def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
+    """Fiche des règles du zonage (PLU calibré) + servitudes connues + pièces PCMI. La fiche gagne
+    les destinations autorisées, la taxe d'aménagement et la redevance d'archéologie (ce que le
+    pétitionnaire découvre après le dépôt)."""
     from ..flash.data import collect_report_data
+    scen = scen or {"cerfa": CERFA_VERSION, "type": "maison individuelle", "collectif": False}
     data = collect_report_data(db, idu)
     ident, pat, risq = data["identite"], data["patrimoine"], data["risques"]
     zones = "".join(f"<tr><td>{z['libelle'] or z['classe']}</td><td>{z['pct']} %</td>"
@@ -233,6 +262,36 @@ def _regles_et_pieces(db: Session, idu: str) -> bytes:
                               "(art. L112-10 CU)")
     serv_html = "".join(f"<li>{s}</li>" for s in servitudes) or \
                 "<li>Aucune servitude connue dans les couches analysées.</li>"
+    # destinations autorisées + fiscalité (TA, redevance d'archéologie) — depuis la fiche parcelle.
+    extra = ""
+    try:
+        from ..db import session_scope
+        from .app import parcel_fiche
+        with session_scope() as s2:      # session séparée (bug pré-existant round dans la fiche)
+            f = parcel_fiche(idu, db=s2) or {}
+        z0 = ((f.get("reglement_plu") or {}).get("zones") or [{}])[0]
+        d = z0.get("destinations") or {}
+        if d.get("autorisees"):
+            extra += f"<h2>Destinations autorisées</h2><p>{' · '.join(d['autorisees'][:8])}."
+            if d.get("interdites"):
+                extra += f" Interdites : {' · '.join(d['interdites'])}."
+            cdac = d.get("commerce_cdac") or {}
+            if cdac.get("seuil_m2"):
+                extra += f" CDAC au-delà de {cdac['seuil_m2']} m² de surface de vente."
+            extra += "</p>"
+        ta = f.get("taxe_amenagement") or {}
+        if ta.get("assiette_m2"):
+            rap = round(0.68 * float(ta["assiette_m2"]))
+            ta_txt = (f"~{int(ta['total_eur'])} € (assiette {ta['assiette_m2']} m²)" if ta.get("total_eur")
+                      else f"taux communal non renseigné — assiette {ta['assiette_m2']} m², part "
+                      f"départementale ~{int(ta.get('part_departementale_eur') or 0)} €")
+            extra += (f"<h2>Fiscalité de l'opération</h2><table>"
+                      f"<tr><td>Taxe d'aménagement</td><td>{ta_txt}</td></tr>"
+                      f"<tr><td>Redevance d'archéologie préventive</td><td>~{rap} € "
+                      f"(0,68 €/m² × {ta['assiette_m2']} m² de surface créée, art. L524-7 du Code du "
+                      f"patrimoine)</td></tr></table>")
+    except Exception:  # noqa: BLE001 — enrichissement optionnel, ne casse pas la fiche
+        pass
     pieces = "".join(f"<tr><td>{c}</td><td>{lib}</td><td>{etat}</td></tr>"
                      for c, lib, etat in PIECES_PCMI)
     body = (f"<h2>Zonage du document d'urbanisme</h2>"
@@ -242,8 +301,12 @@ def _regles_et_pieces(db: Session, idu: str) -> bytes:
                f"servitudes) peuvent modifier ces valeurs.</p>" if regles else "")
             + (f"<h2>Prescriptions graphiques</h2><ul>{presc}</ul>" if presc else "")
             + f"<h2>Servitudes et périmètres connus</h2><ul>{serv_html}</ul>"
-            f"<h2>Pièces à joindre (CERFA {CERFA_VERSION}, maison individuelle)</h2>"
-            f"<table><tr><th>Code</th><th>Pièce</th><th>État</th></tr>{pieces}</table>")
+            + extra
+            + f"<h2>Pièces à joindre (CERFA {scen['cerfa']}, {scen['type']})</h2>"
+            + (f"<p class='note'>Scénario retenu : collectif → dépôt sur CERFA 13409 (pièces PC1 à "
+               f"PC8), à récupérer sur service-public.gouv.fr. Le bordereau ci-dessous est celui de "
+               f"la maison individuelle (13406).</p>" if scen.get("collectif") else "")
+            + f"<table><tr><th>Code</th><th>Pièce</th><th>État</th></tr>{pieces}</table>")
     return _html_pdf(body, f"Règles du zonage — parcelle {idu}")
 
 
@@ -458,8 +521,11 @@ def _pcmi2(db: Session, parcelle: dict) -> bytes:
     dims = _terrain_dims(db, idu)
     pgj = db.execute(text("SELECT ST_AsGeoJSON(geom_2975, 2) FROM parcels WHERE idu = :i"),
                      {"i": idu}).scalar()
+    # P4 — les bâtiments RESTENT DISTINCTS (ST_Collect, pas ST_Union) : la fiche dit 2 bâtiments,
+    # le plan de masse en montre 2 (CollectionExtract=3 ne garde que les polygones).
     bgj = db.execute(text(
-        """SELECT ST_AsGeoJSON(ST_Union(ST_Intersection(sl.geom_2975, p.geom_2975)), 2)
+        """SELECT ST_AsGeoJSON(ST_CollectionExtract(
+                    ST_Collect(ST_Intersection(sl.geom_2975, p.geom_2975)), 3), 2)
            FROM spatial_layers sl JOIN parcels p ON ST_Intersects(sl.geom_2975, p.geom_2975)
            WHERE sl.kind = 'batiment' AND p.idu = :i"""), {"i": idu}).scalar()
     pr = _rings_2975(pgj)
@@ -524,7 +590,8 @@ def _pcmi2(db: Session, parcelle: dict) -> bytes:
         pdf.set_xy(20, oy + draw_h + 16)
         pdf.set_font("inter", size=7.5)
         pdf.set_text_color(95, 108, 101)
-        pdf.cell(0, 4, f"Échelle ~1/{denom} (contour cadastral 2975). Bâti existant en gris (BD TOPO).",
+        pdf.cell(0, 4, f"Échelle ~1/{denom} — contour cadastral (IGN), bâti existant en gris (BD TOPO). "
+                 f"Emprise du terrain {int(round(w_m))} × {int(round(h_m))} m.",
                  new_x="LMARGIN", new_y="NEXT")
         pdf.set_y(oy + draw_h + 22)
     else:
@@ -555,9 +622,11 @@ def _pcmi2(db: Session, parcelle: dict) -> bytes:
     return bytes(pdf.output())
 
 
-def _pcmi4(db: Session, idu: str, parcelle: dict) -> bytes:
+def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None) -> bytes:
     """C (PCMI4) — notice décrivant le TERRAIN, pré-rédigée (partie projet laissée vide).
-    Chaque affirmation porte sa source ; aucun verdict, aucune appréciation (doctrine)."""
+    Chaque affirmation porte sa source ; aucun verdict, aucune appréciation (doctrine). P3 : la
+    notice reprend l'adresse, le PPR (zone bleue), le bruit, les servitudes (SUP/PM1), l'ABF —
+    ce que l'instructeur vérifie — avec des sources publiques nommées (DEAL, Cerema, Mérimée)."""
     from ..flash.data import collect_report_data
     data = collect_report_data(db, idu)
     ident = data.get("identite") or {}
@@ -597,6 +666,38 @@ def _pcmi4(db: Session, idu: str, parcelle: dict) -> bytes:
         lignes.append(("Assainissement",
                        anc.get("phrase") or f"{anc['libelle']}.",
                        anc.get("source") or "assainissement (LABUSE)"))
+    # P3 — adresse, PPR, bruit, ABF, servitudes : ce que l'instructeur attend, sources nommées.
+    if adr:
+        voie = " ".join(str(x) for x in (adr.get("numero"), adr.get("rep"), adr.get("voie")) if x)
+        cp = adr.get("code_postal")
+        lignes.insert(1, ("Adresse du terrain",
+                          f"{voie}{f', {cp}' if cp else ''} (rattachement automatique BAN, à vérifier "
+                          "par le pétitionnaire).", "Base Adresse Nationale"))
+    for it in (data.get("risques") or {}).get("couches", []):
+        lab = (it.get("label") or "").lower()
+        if any(k in lab for k in ("ppr", "inond", "bleue", "mouvement")):
+            lignes.append(("Risque naturel (PPR)",
+                           f"{it['label']} : {it.get('detail') or 'parcelle concernée'}. Les "
+                           "prescriptions du règlement PPR (niveau de plancher, fondations) sont à "
+                           "intégrer au projet.", "DEAL Réunion — PPR (Géorisques)"))
+        elif any(k in lab for k in ("bruit", "sonore")):
+            lignes.append(("Bruit",
+                           f"{it['label']} : {it.get('detail') or ''} Isolement acoustique renforcé "
+                           "obligatoire en catégorie élevée (art. R.571-32 du Code de l'environnement).",
+                           "Cerema — classement sonore des infrastructures"))
+    if (data.get("patrimoine") or {}).get("abf"):
+        noms = ", ".join(m.get("name") or "monument" for m in data["patrimoine"]["abf"])
+        lignes.append(("Abords de monument historique",
+                       f"Parcelle dans les abords de : {noms}. Avis de l'architecte des Bâtiments de "
+                       "France probable, délai d'instruction majoré.", "Mérimée (Ministère de la Culture)"))
+    try:
+        from .app import _dispositifs_block
+        for e in ((_dispositifs_block(db, idu) or {}).get("sup") or []):
+            lignes.append(("Servitude d'utilité publique",
+                           f"{e.get('categorie') or 'SUP'} — {e.get('libelle') or 'servitude'} "
+                           f"({e.get('part_pct')} % de la parcelle).", "Servitudes d'utilité publique (GPU)"))
+    except Exception:  # noqa: BLE001
+        pass
     rows = "".join(
         f"<tr><td style='width:26%'><b>{titre}</b></td><td>{txt}<div class='src'>Source : {src}</div></td></tr>"
         for titre, txt, src in lignes) or "<tr><td colspan='2'>Données terrain non disponibles.</td></tr>"
@@ -784,10 +885,12 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
     porte_export(request, db)
 
     parcelle = dict(p)
+    adr = dict(adresse) if adresse else None
+    scen = _scenario(db, idu)          # P1 — maison individuelle / collectif
     # M129 E — nommage aligné sur la doctrine {IDU}-labuse (pack multi-pièces : préfixe commun +
     # suffixe de pièce explicite). Le ZIP lui-même : {IDU}-labuse-predossier-pc.zip.
     pfx = f"{idu}-labuse"
-    cerfa = _cerfa_prerempli(parcelle, dict(adresse) if adresse else None)   # None si INDISPONIBLE
+    cerfa = _cerfa_prerempli(parcelle, adr)   # None si INDISPONIBLE
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         if cerfa is not None:
@@ -795,23 +898,23 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
         for nom, gen in (
             (f"{pfx}-PCMI1-plan-situation.pdf", lambda: _pcmi1(parcelle)),
             (f"{pfx}-PCMI2-plan-masse-existant.pdf", lambda: _pcmi2(db, parcelle)),
-            (f"{pfx}-PCMI4-notice-terrain.pdf", lambda: _pcmi4(db, idu, parcelle)),
+            (f"{pfx}-PCMI4-notice-terrain.pdf", lambda: _pcmi4(db, idu, parcelle, adr)),
             (f"{pfx}-PCMI7-8-prises-de-vue.pdf", lambda: _pcmi78(db, parcelle)),
-            (f"{pfx}-regles-zonage.pdf", lambda: _regles_et_pieces(db, idu)),
+            (f"{pfx}-regles-zonage.pdf", lambda: _regles_et_pieces(db, idu, scen)),
         ):
             try:
                 z.writestr(nom, gen())
             except Exception as exc:  # noqa: BLE001 — une pièce en échec ne casse jamais le pack
                 log.warning("pré-dossier %s : pièce %s en échec (%s)", idu, nom, exc)
         z.writestr(zipfile.ZipInfo(f"{pfx}-LISEZMOI.txt"),
-                   _lisezmoi(idu, parcelle["commune"], adresse is not None, cerfa is not None),
+                   _lisezmoi(idu, parcelle["commune"], adresse is not None, cerfa is not None, scen),
                    compress_type=zipfile.ZIP_STORED)   # non compressé : libellé vérifiable tel quel
     log.info("pré-dossier PC %s généré", idu)
     return Response(buf.getvalue(), media_type="application/zip",
                     headers={"Content-Disposition": f'attachment; filename="{pfx}-predossier-pc.zip"'})
 
 
-def _lisezmoi(idu: str, commune: str, adresse_ok: bool, cerfa_ok: bool) -> str:
+def _lisezmoi(idu: str, commune: str, adresse_ok: bool, cerfa_ok: bool, scen: dict | None = None) -> str:
     """M129 E — LISEZMOI fusionné : libellé préparatoire, millésime CERFA daté (§2), superficie non
     servie (§1), qualification adresse BAN (§3), checklist PCMI cohérente avec le pack réel, nommage."""
     cerfa_ligne = (f"CERFA {CERFA_VERSION} — version vérifiée le {CERFA_VERIFIE_LE} sur "
@@ -826,11 +929,20 @@ def _lisezmoi(idu: str, commune: str, adresse_ok: bool, cerfa_ok: bool) -> str:
            if adresse_ok else "Aucune adresse BAN rattachée — à renseigner par le porteur.")
     check = "\n".join(f"  [{('X' if e.startswith(('FOURNIE', 'PARTIELLE')) else ' ')}] {c} — {lib} : {e}"
                       for c, lib, e in PIECES_PCMI)
+    scen = scen or {"type": "maison individuelle", "collectif": False}
+    collectif_ligne = ""
+    if scen.get("collectif"):
+        n = scen.get("logements")
+        collectif_ligne = (
+            f"\nSCÉNARIO RETENU : COLLECTIF{f' (~{n} logements)' if n else ''}. Un collectif relève du "
+            f"CERFA 13409 (pièces PC1 à PC8), à récupérer sur service-public.gouv.fr. Le CERFA 13406 "
+            f"fourni ci-dessus NE VAUT QUE pour une maison individuelle : il est joint à titre "
+            f"préparatoire, il ne remplace pas le 13409.\n")
     return (
-        f"PRÉ-DOSSIER PERMIS DE CONSTRUIRE (maison individuelle) — parcelle {idu} ({commune})\n"
+        f"PRÉ-DOSSIER PERMIS DE CONSTRUIRE ({scen['type']}) — parcelle {idu} ({commune})\n"
         f"{'=' * 78}\n\n"
         f"{LIBELLE}\n\n"
-        f"CERFA\n-----\n{cerfa_ligne}\n"
+        f"CERFA\n-----\n{cerfa_ligne}\n{collectif_ligne}"
         f"Doctrine : LABUSE ne sert jamais un CERFA dont le millésime n'est pas confirmé.\n\n"
         f"SUPERFICIE (non servie — arbitrage)\n-----------------------------------\n"
         f"La superficie du terrain n'est PAS pré-remplie : le CERFA fait CERTIFIER cette valeur par le\n"

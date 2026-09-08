@@ -242,13 +242,9 @@ def test_c1_banquier_et_calculette_memes_totaux():
     assert banquier.charge_fonciere == calculette["charge_fonciere"]
 
 
-def test_c1_encadre_hypotheses_identique_en_forme():
-    """L'encadré « Hypothèses de calcul » est LA MÊME brique dans tous les documents —
-    à hypothèses égales, HTML strictement identique."""
-    from labuse.api.briques_pdf import hypotheses_encadre
-    assert hypotheses_encadre(2500, 21) == hypotheses_encadre(2500.0, 21.0)
-    html = hypotheses_encadre(2500, 21)
-    assert "Hypothèses de calcul" in html and "2500" in html and "21" in html
+# EXPORTS-2 lot 8 — `test_c1_encadre_hypotheses_identique_en_forme` retiré : l'encadré
+# « Hypothèses de calcul » vivait dans `briques_pdf` (ancienne chaîne éteinte). La cohérence
+# inter-documents est désormais STRUCTURELLE (registre : un id = une valeur, un seul builder).
 
 
 # ── Endpoint /faisabilite/{idu}/charge — « ne lève pas » (cas honnête calculable:false) ──

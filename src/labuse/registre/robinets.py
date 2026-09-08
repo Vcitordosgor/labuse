@@ -313,9 +313,16 @@ ROBINETS: dict[str, Robinet] = {
  "notif_radar_alerte": _r("notification", "Radar — alerte de veille (Brevo ID 13)", None,
     "template Brevo 13 (PRENOM·VEILLE·NB_BIENS·CRITERES·CARTES·LIEN_RADAR·LIEN_VEILLE)", "mail", chiffres=("n_biens_veille",)),
  "pdf_flash": _r("pdf", "Rapport Flash", None,
-    "/flash/telecharger (TEMPLATE_VERSION 1.4, WeasyPrint)", "pdf", chiffres=("tier_opportunite", "prix_terrain_secteur_eur_m2", "population_zone",)),
+    "/flash/telecharger (builder exports EXPORTS-2, sans §9)", "pdf",
+    chiffres=("tier_opportunite", "prix_terrain_secteur_eur_m2", "population_zone",)),
+ # EXPORTS-2 lot 2 — le Dossier passe au builder exports ; il porte D-a (prix_achat_historique_eur,
+ # en_attente levée). Les sources servies voyagent par les pieds de section (réservoirs lus) et la
+ # recette golden (recette_exports1) ; la déclaration exhaustive des ids au robinet est différée
+ # au lot 8 (bascule des routes) pour ne pas créer de couples sonde silencieux (V5c).
  "pdf_dossier_expert": _r("pdf", "Dossier parcelle", None,
-    "/dossier/{idu}.pdf (quota mensuel)", "pdf", chiffres=("tier_opportunite", "potentiel_verdict", "sdp_residuelle_m2", "surface_vendable_m2",)),
+    "/dossier/{idu}.pdf (builder exports EXPORTS-2)", "pdf",
+    chiffres=("tier_opportunite", "potentiel_verdict", "sdp_residuelle_m2", "surface_vendable_m2",
+              "prix_achat_historique_eur",)),
  "pdf_banquier": _r("pdf", "Dossier banquier", None,
     "/dossier-banquier/{idu}.pdf", "pdf", chiffres=("charge_fonciere_eur", "prix_terrain_secteur_eur_m2", "prix_neuf_observe_eur_m2", "mixite_clause", "bilan_ca_eur", "bilan_cout_construction_eur", "bilan_vrd_eur", "bilan_marge_eur", "bilan_frais_eur",)),
  "pdf_pre_dossier_pc": _r("pdf", "Pré-dossier PC (ZIP CERFA 13406*17)", None,
@@ -324,6 +331,27 @@ ROBINETS: dict[str, Robinet] = {
     "/pdf (courrier)", "pdf", chiffres=("zone_plu_famille", "zonage_plu_couche",)),
  "pdf_argumentaire": _r("pdf", "Argumentaire", None,
     "/argumentaire", "pdf", chiffres=("prix_terrain_secteur_eur_m2",)),
+ # EXPORTS-2 lot 5 — le Financier (builder exports) sert les postes du bilan à rebours (en_attente
+ # levée). Les postes déjà servis par le Banquier (bilan_ca/cout/vrd/marge/frais, charge_fonciere_eur,
+ # mixite_clause, ecart_prix_demande_pct) restent à pdf_banquier jusqu'au lot 8 (bascule, V5c).
+ "pdf_financier": _r("pdf", "Financier", None,
+    "/financier/{idu}.pdf (builder exports, questionnaire)", "pdf", chiffres=(
+        "bilan_frais_acquisition_eur", "bilan_honoraires_techniques_eur", "bilan_stationnement_eur",
+        "bilan_aleas_eur", "bilan_depollution_eur", "bilan_portage_eur", "redevance_archeologie_eur",
+        "bilan_demolition_eur", "charge_fonciere_basse_eur", "charge_fonciere_haute_eur",
+        "sensibilite_cout_construction", "sensibilite_prix_sortie", "seuil_rentabilite_eur",
+        "prix_revient_eur_m2",)),
+ # EXPORTS-2 lot 4 — l'écran questionnaire du Financier (4 écrans) sert ses saisies client
+ # (les 4 saisies déjà servies par la calculette — prix_demande/cout_construction/démolition/
+ # dépollution — restent à leurs robinets ; on ne les redéclare pas ici, V5c).
+ "ecran_questionnaire_financier": _r("page_client", "Questionnaire du Financier (4 écrans)", None,
+    "/financier/{idu}/questionnaire (GET/PUT)", "json_puis_js", chiffres=(
+        "scenario_saisi", "logements_vises_saisi", "typologie_moyenne_saisi", "part_sociale_saisi_pct",
+        "stationnement_type_saisi", "prix_refuse_saisi_eur", "frais_acquisition_saisi_pct",
+        "commission_apporteur_saisi_eur", "honoraires_techniques_saisi_pct", "vrd_saisi_eur_m2",
+        "cout_place_stationnement_saisi_eur", "aleas_saisi_pct", "taxe_amenagement_saisi_eur",
+        "prix_sortie_saisi_eur_m2", "prix_vente_bailleur_saisi_eur_m2", "marge_visee_saisi_pct",
+        "regime_tva_saisi", "duree_portage_saisi_mois", "apport_saisi_eur", "taux_apport_saisi_pct",)),
  "page_accueil_chiffres": _r("page_client", "Accueil — bloc chiffres", None,
     "/accueil/chiffres (cache 1 h)", "json_puis_js", chiffres=("n_parcelles_ile", "n_sources", "run_label_servi",)),
  "page_accueil_semaine": _r("page_client", "Accueil — cette semaine", None,

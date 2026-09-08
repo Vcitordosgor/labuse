@@ -100,6 +100,14 @@ reports/**/DOSSIER-*.pdf
 
 # Prospection — extraits nominatifs (RNE/DGFiP) : JAMAIS en git (mandat deposants-actifs)
 exports/
+# EXPORTS-2 — mais le PAQUET SOURCE et la RÉFÉRENCE du mandat ne sont pas des extraits
+# nominatifs : ils sont suivis (la règle `exports/` ci-dessus visait les extraits de prospection).
+!src/labuse/exports/
+!src/labuse/exports/**
+!docs/audit-2026-09/EXPORTS/
+!docs/audit-2026-09/EXPORTS/**
+# ...mais pas les bytecodes régénérables sous le paquet source.
+src/labuse/exports/**/__pycache__/
 
 # Harnais de captures Playwright (P5) — les PNG ne vont jamais en git
 qa/captures/out/

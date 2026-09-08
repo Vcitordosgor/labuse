@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Financier — 97415000BO0852</title>
+<link rel="stylesheet" href="maquette.css"></head>
+<body>
+
+<!-- ====================== PAGE 0 : LE FORMULAIRE (écran de l'app, pas une page du PDF) ====================== -->
+<div class="cover">
+  <div class="brand"><span class="wordmark">LABUSE</span><span class="kind">Avant le document — le formulaire dans l'app</span></div>
+  <span class="doc-title" style="display:none">LABUSE — Financier · 103 Chaussée Royale, Saint-Paul</span>
+  <span class="doc-ref" style="display:none">97415000BO0852 · FI-20260905-0852</span>
+  <span class="doc-foot" style="display:none">Bilan indicatif établi sur des données publiques et sur les hypothèses saisies par le porteur (en ambre). Ni un prix, ni une promesse, ni un conseil. Données LABUSE au 05/09/2026.</span>
+
+  <h1>Votre opération sur cette parcelle</h1>
+  <p class="subtitle">Six champs. Tout est pré-rempli avec la valeur du secteur ; vous corrigez ce que vous savez. Le bilan est calculé avec vos chiffres, pas avec les nôtres.</p>
+
+  <div class="projet">
+    <div class="t">Ce que vous saisissez — chaque valeur sera imprimée en ambre dans le document</div>
+    <table class="kv">
+      <tr><td class="k">Scénario</td><td><span class="boxes"><span>Reconstruction après démolition</span><span>Réhabilitation du bâti existant</span></span><br><span class="note">Proposé : reconstruction — le bâti consomme déjà toute la surface autorisée.</span></td></tr>
+      <tr><td class="k">Prix demandé par le vendeur</td><td><strong>650 000 €</strong> <span class="note">— à saisir, LABUSE ne le connaît pas</span></td></tr>
+      <tr><td class="k">Coût de construction</td><td><strong>2 550 €/m²</strong> de surface de plancher <span class="note">— proposé : prix de revient médian du collectif à La Réunion 2021-2025, fourchette 2 304 à 2 842 €/m² (EPTB 2024, dataset CDC)</span></td></tr>
+      <tr><td class="k">Marge, honoraires et frais</td><td><strong>24 %</strong> du chiffre d'affaires <span class="note">— proposé : marge 9 %, honoraires 12 %, frais financiers 3 %</span></td></tr>
+      <tr><td class="k">Prix de sortie</td><td><strong>4 730 €/m²</strong> habitable <span class="note">— proposé : neuf observé sur le secteur, 54 ventes de moins de 3 ans ; l'ancien est à 3 811 €/m²</span></td></tr>
+      <tr><td class="k">Démolition</td><td><strong>60 000 €</strong> <span class="note">— à saisir ; aucun référentiel public ne la chiffre. Laissez vide : « non chiffrée »</span></td></tr>
+    </table>
+  </div>
+  <p class="note">Les VRD (90 €/m² de terrain, modulés par la viabilisation) et la taxe d'aménagement (taux communal) sont calculés par LABUSE et restent modifiables.</p>
+  <p class="note">Maquette du 05/09/2026. Cette page représente l'écran de saisie, elle n'est pas dans le PDF. Les lignes marquées ◌ viennent de blocs pas encore branchés.</p>
+</div>
+
+<!-- ====================== LE DOCUMENT ====================== -->
+<div class="brand"><span class="wordmark">LABUSE</span><span class="kind">Financier</span></div>
+<h1>Bilan de l'opération</h1>
+<p class="address">103 Chaussée Royale, 97460 Saint-Paul</p>
+<p class="idu">97415000BO0852 · 742 m² · zone U1a · FI-20260905-0852 · 05/09/2026</p>
+
+<div class="verdict warn">Au prix demandé de 650 000 €, cette opération ne tient pas : elle supporte au mieux 92 000 € de foncier, soit 124 €/m² de terrain, quand le marché du terrain nu est à 768 €/m². Elle ne peut payer ni le prix demandé, ni le prix du marché.
+<small>Scénario : reconstruction après démolition, 7 à 9 logements. Hypothèses du porteur en ambre ci-dessous ; la sensibilité au coût de construction est en page 2.</small></div>
+
+<div class="tiles">
+  <div class="tile"><div class="v">92 k€</div><div class="l">charge foncière supportable, scénario central</div></div>
+  <div class="tile"><div class="v">−140 → 287 k€</div><div class="l">plancher et plafond selon le coût de construction</div></div>
+  <div class="tile"><div class="v">−558 k€</div><div class="l">écart entre le prix demandé et ce que l'opération supporte</div></div>
+</div>
+
+<div class="projet keep">
+  <div class="t">Hypothèses du porteur</div>
+  <table class="kv">
+    <tr><td class="k">Scénario</td><td>Reconstruction après démolition du bâti existant (540 m², 2 bâtiments)</td><td class="n"><span class="chip p">projet</span></td></tr>
+    <tr><td class="k">Prix demandé</td><td>650 000 € (876 €/m² de terrain)</td><td class="n"><span class="chip p">projet</span></td></tr>
+    <tr><td class="k">Coût de construction</td><td>2 550 €/m² de plancher — médiane régionale, fourchette 2 304 à 2 842</td><td class="n"><span class="chip p">projet</span></td></tr>
+    <tr><td class="k">Marge, honoraires, frais</td><td>24 % du chiffre d'affaires</td><td class="n"><span class="chip p">projet</span></td></tr>
+    <tr><td class="k">Prix de sortie</td><td>4 730 €/m² habitable — neuf observé, 54 ventes</td><td class="n"><span class="chip p">projet</span></td></tr>
+    <tr><td class="k">Démolition</td><td>60 000 €</td><td class="n"><span class="chip p">projet</span></td></tr>
+  </table>
+</div>
+
+<h2>Le programme</h2>
+<table class="kv">
+  <tr><td class="k">Surface de plancher</td><td>~794 m² — 4 niveaux (R+3) sur ~198 m² d'emprise</td><td class="n"><span class="chip e">estimé</span></td></tr>
+  <tr><td class="k">Surface habitable vendable</td><td>~635 m² (80 % du plancher)</td><td class="n"><span class="chip e">estimé</span></td></tr>
+  <tr><td class="k">Logements</td><td>7 à 9, stationnement au sol — 8 retenus pour le bilan (79 m² en moyenne)</td><td class="n"><span class="chip e">estimé</span></td></tr>
+  <tr><td class="k">Mixité sociale</td><td>Secteur de mixité : quota au-delà de ◌ 800 m² de plancher — programme à 794 m² : non déclenché, à confirmer au règlement</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Ce qui a réduit la capacité</td><td>Plafond de densité de 120 logements par hectare ; aucun autre facteur sur cette parcelle</td><td class="n"><span class="chip e">estimé</span></td></tr>
+</table>
+<p class="note">Programme repris de la section 3 du Dossier parcelle — même moteur, mêmes chiffres.</p>
+
+<h2>Le bilan à rebours</h2>
+<table class="kv">
+  <tr><th>Poste</th><th style="text-align:right">Montant</th><th></th></tr>
+  <tr><td class="k">Chiffre d'affaires</td><td class="num">3 004 k€ — 635 m² × 4 730 €/m²</td><td class="n"><span class="chip p">projet</span></td></tr>
+  <tr><td class="k">Coût de construction</td><td class="num">−2 025 k€ — 794 m² × 2 550 €/m²</td><td class="n"><span class="chip p">projet</span></td></tr>
+  <tr><td class="k">Marge, honoraires, frais</td><td class="num">−721 k€ — 24 % du chiffre d'affaires</td><td class="n"><span class="chip p">projet</span></td></tr>
+  <tr><td class="k">VRD et viabilisation</td><td class="num">−67 k€ — 90 €/m² de terrain, raccordement simple</td><td class="n"><span class="chip e">estimé</span></td></tr>
+  <tr><td class="k">Taxe d'aménagement</td><td class="num">◌ −39 k€ — taux communal 5 %</td><td class="n"><span class="chip e">estimé</span></td></tr>
+  <tr><td class="k">Démolition</td><td class="num">−60 k€</td><td class="n"><span class="chip p">projet</span></td></tr>
+  <tr><td class="k"><strong>Charge foncière supportable</strong></td><td class="num"><strong>92 k€ — 124 €/m² de terrain</strong></td><td class="n"><span class="chip e">estimé</span></td></tr>
+</table>
+
+<h3>Ce que le coût de construction change</h3>
+<p class="note">La fourchette tient à une seule hypothèse. Chaque ligne reprend le bilan ci-dessus avec un autre coût.</p>
+<table class="kv sens">
+  <tr><th>Coût de construction</th><th>Charge foncière</th><th></th></tr>
+  <tr><td class="k">2 304 €/m² — bas de la fourchette régionale</td><td class="num">287 k€ · 387 €/m²</td><td class="bar"><span style="width:100%"></span></td></tr>
+  <tr><td class="k">2 550 €/m² — votre hypothèse</td><td class="num">92 k€ · 124 €/m²</td><td class="bar"><span style="width:32%"></span></td></tr>
+  <tr><td class="k">2 842 €/m² — haut de la fourchette</td><td class="num">−140 k€ — l'opération ne dégage rien pour le terrain</td><td class="bar"><span class="neg" style="width:49%"></span></td></tr>
+</table>
+<p class="note">Chaque baisse de 5 % du prix de sortie retire environ 114 k€ à la charge foncière ; chaque hausse de 5 % en ajoute autant.</p>
+
+<h2>Face au prix demandé</h2>
+<table class="kv">
+  <tr><td class="k">Prix demandé</td><td class="num">650 k€ — 876 €/m² de terrain</td><td class="n"><span class="chip p">projet</span></td></tr>
+  <tr><td class="k">Ce que l'opération supporte</td><td class="num">92 k€ — 124 €/m²</td><td class="n"><span class="chip e">estimé</span></td></tr>
+  <tr><td class="k">Écart</td><td class="num"><strong>−558 k€</strong></td><td class="n"><span class="chip d">dérivé</span></td></tr>
+  <tr><td class="k">Marge résiduelle au prix demandé</td><td class="num">163 k€, soit 5,4 % du chiffre d'affaires — pour un objectif de 24 %</td><td class="n"><span class="chip d">dérivé</span></td></tr>
+  <tr><td class="k">Terrain nu au prix du marché</td><td class="num">~570 k€ — 768 €/m², 12 ventes de terrains dans le secteur</td><td class="n"><span class="chip d">dérivé</span></td></tr>
+  <tr><td class="k">Ce que le bâti existant justifie en réhabilitation</td><td class="num">~3 650 k€ hors terrain</td><td class="n"><span class="chip e">estimé</span></td></tr>
+</table>
+<div class="aside keep"><strong>Lecture.</strong> Le prix demandé est cohérent avec le marché du terrain nu (570 k€), pas avec une reconstruction. Sur cette parcelle, la valeur est dans le bâti : le scénario de réhabilitation mérite d'être chiffré avant toute offre.</div>
+
+<h2>Le marché en regard</h2>
+<table class="kv">
+  <tr><td class="k">Ancien, appartement</td><td>3 811 €/m² — 24 ventes à moins de 500 m, 2022-2025 (quartiles 3 151 et 4 810)</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Neuf observé</td><td>4 730 €/m² — 54 ventes de moins de 3 ans, secteur</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Loyers</td><td>◌ 14,2 €/m² par mois pour un appartement — Saint-Paul, 2025</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Tendance de la commune</td><td>−4,2 % sur 12 mois (218 ventes contre 583 sur les 12 mois précédents)</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Offre engagée</td><td>525 logements autorisés sur la commune en 12 mois ; 18 permis à moins de 500 m en 24 mois, dont un de 8 logements</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Délai d'instruction</td><td>9 mois en médiane — minimum optimiste, les refus ne sont pas comptés</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+</table>
+<div class="cloud">
+  <div class="axis">
+    <div class="dot x" style="left:2%"></div><div class="dot" style="left:9%"></div><div class="dot" style="left:14%"></div><div class="dot" style="left:15%"></div><div class="dot" style="left:19%"></div><div class="dot" style="left:22%"></div><div class="dot" style="left:23%"></div><div class="dot" style="left:26%"></div><div class="dot" style="left:27%"></div><div class="dot" style="left:29%"></div><div class="dot" style="left:30%"></div><div class="dot" style="left:31%"></div>
+    <div class="med" style="left:31%"></div>
+    <div class="dot" style="left:33%"></div><div class="dot" style="left:36%"></div><div class="dot" style="left:38%"></div><div class="dot" style="left:41%"></div><div class="dot" style="left:44%"></div><div class="dot" style="left:47%"></div><div class="dot" style="left:52%"></div><div class="dot" style="left:55%"></div><div class="dot" style="left:60%"></div><div class="dot" style="left:64%"></div><div class="dot" style="left:71%"></div><div class="dot" style="left:78%"></div><div class="dot x" style="left:97%"></div>
+  </div>
+  <div class="lab"><span>1 569 €/m²</span><span>médiane 3 811 €/m²</span><span>10 135 €/m²</span></div>
+  <p class="legend">Les 24 ventes retenues pour le prix de l'ancien, et les 2 écartées en gris. Aucune vente n'est fabriquée ni lissée.</p>
+</div>
+
+<h2>Points de vigilance non chiffrés</h2>
+<p class="note">Coûts ou délais possibles pour tout acquéreur de cette parcelle. Aucun montant n'est avancé : chacun relève d'un devis ou d'une étude.</p>
+<table class="kv">
+  <tr><td class="k">Zone bleue PPR</td><td>Prescriptions de construction (niveau de plancher, fondations) — surcoût à chiffrer par le maître d'œuvre</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Bruit routier, catégorie 1</td><td>Isolement acoustique renforcé obligatoire</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Abords de monument historique</td><td>◌ Avis de l'architecte des Bâtiments de France — délai majoré, contraintes d'aspect</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Eaux pluviales</td><td>Rétention ou infiltration à la parcelle imposée</td><td class="n"><span class="chip s">sourcé</span></td></tr>
+  <tr><td class="k">Bâti existant</td><td>Occupation, baux, diagnostics amiante et plomb : inconnus de LABUSE</td><td class="n"></td></tr>
+</table>
+
+<h3>Ce que ce document n'établit pas</h3>
+<table class="kv">
+  <tr><td class="k">Plan de financement, apport, taux</td><td>Établissement prêteur</td></tr>
+  <tr><td class="k">Valeur vénale</td><td>Avis de valeur — notaire, expert</td></tr>
+  <tr><td class="k">Coûts de démolition et de dépollution réels</td><td>Devis d'entreprise</td></tr>
+  <tr><td class="k">Constructibilité définitive</td><td>Certificat d'urbanisme</td></tr>
+</table>
+<p class="note">Bilan indicatif : données publiques (cadastre, DVF, Sitadel, PLU) et hypothèses saisies par le porteur. Il ne remplace ni un bilan promoteur professionnel, ni une étude de faisabilité, ni une expertise. Ventes jusqu'au 10/08/2026 · permis jusqu'au 31/07/2026 · modèle 2.0.</p>
+
+</body></html>

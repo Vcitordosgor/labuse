@@ -2,11 +2,13 @@
 from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
-    donnees=("mixite_clause",),
+    donnees=("mixite_clause", "mixite_seuil_m2", "mixite_quota_pct"),
     formule_codee=(
         "Déclenchement si SDP projetée ≥ seuil du règlement OU logements ≥ seuil OU terrain > seuil "
         "— seuils LUS de la calibration du règlement de la zone (YAML par commune), jamais des "
-        "constantes nationales. Verdict affiché avec la source d'article."),
+        "constantes nationales. Le seuil de déclenchement (mixite_seuil_m2, en m² de SDP) et le "
+        "quota de logements aidés au-delà du seuil (mixite_quota_pct) sont eux aussi lus du même "
+        "règlement calibré. Verdict affiché avec la source d'article."),
     entrees=("config/plu_<commune>.yaml (seuils Art. 2 calibrés, article et page cités)",
              "SDP/logements du scénario"),
     classe="regle_externe",

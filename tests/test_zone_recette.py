@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from labuse import zone as Z
-from labuse.api.app import app, etude_zone, etude_zone_pdf, EtudeZoneIn
+from labuse.api.app import app, etude_zone, EtudeZoneIn
 from labuse.db import session_scope
 
 pytestmark = pytest.mark.db
@@ -34,29 +34,10 @@ def _seed_parcel_polygone(s, idu, demi=0.001):
         {"i": idu, "w": wkt})
 
 
-def test_pdf_rendu_depuis_l_agregat(monkeypatch):
-    monkeypatch.setattr(Z, "fetch_isochrone", lambda lon, lat, minutes, mode, *, client: _carre(0.03))
-    idu = "ZONETEST000010"
-    with session_scope() as s:
-        _seed_parcel_polygone(s, idu)
-        resp = etude_zone_pdf(EtudeZoneIn(idu=idu, minutes=10, mode="voiture", titre="12 rue de la Gare"), db=s)
-        s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
-        s.execute(text("DELETE FROM zone_isochrone_cache WHERE cache_key LIKE 'voiture|%'"))
-    assert resp.media_type == "application/pdf"
-    assert bytes(resp.body).startswith(b"%PDF"), "un vrai PDF est rendu"
-
-
-def test_pdf_zone_indisponible_pas_de_rapport(monkeypatch):
-    def _boom(lon, lat, minutes, mode, *, client):
-        raise RuntimeError("IGN down")
-    monkeypatch.setattr(Z, "fetch_isochrone", _boom)
-    idu = "ZONETEST000011"
-    with session_scope() as s:
-        _seed_parcel_polygone(s, idu)
-        with pytest.raises(Exception) as exc:   # HTTPException 422 — pas de PDF sur une zone non tracée
-            etude_zone_pdf(EtudeZoneIn(idu=idu, minutes=10, mode="voiture"), db=s)
-        s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
-    assert "422" in str(exc.value) or "indisponible" in str(exc.value).lower()
+# EXPORTS-2 lot 8 — `test_pdf_rendu_depuis_l_agregat` et `test_pdf_zone_indisponible_pas_de_rapport`
+# retirés : l'export PDF « étude de zone » (pdf_zone) est éteint. L'outil étude-de-zone reste un
+# outil D'ÉCRAN (endpoint données `etude_zone`), dont l'agrégat et la dignité en absence de
+# concurrent restent couverts ci-dessous.
 
 
 def test_naf_sans_concurrent_reste_digne(monkeypatch):

@@ -2135,3 +2135,24 @@ export const getAdminCircuitCompteur = () => j<any>('/admin/circuit/compteur')
 export const getAdminCircuitReservoir = (id: number) => j<any>(`/admin/circuit/reservoir/${id}`)
 export const getAdminCircuitRobinet = (id: string) => j<any>(`/admin/circuit/robinet/${encodeURIComponent(id)}`)
 export const getAdminCircuitPompe = () => j<any>('/admin/circuit/pompe')
+
+// EXPORTS-2 lot 4 — le questionnaire du Financier (4 écrans, saisies persistées par compte+IDU).
+export interface QChampPrefill { valeur: unknown; source: string }
+export interface QChamp {
+  id: string; libelle: string; unite: string; type: string
+  domaine: string[] | null; obligatoire: boolean; prefill: QChampPrefill | null
+}
+export interface QEcran { titre: string; champs: QChamp[] }
+export interface QuestionnaireFinancier {
+  idu: string; reponses: Record<string, unknown>; complet: boolean; existe: boolean
+  ecrans: QEcran[]; tva_explication: string; champs_obligatoires: string[]
+}
+export const getFinancierQuestionnaire = (idu: string) =>
+  j<QuestionnaireFinancier>(`/financier/${encodeURIComponent(idu)}/questionnaire`)
+export const putFinancierQuestionnaire = (
+  idu: string, reponses: Record<string, unknown>, projet_id?: number | null,
+) =>
+  j<{ idu: string; reponses: Record<string, unknown>; complet: boolean; existe: boolean }>(
+    `/financier/${encodeURIComponent(idu)}/questionnaire`,
+    { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reponses, ...(projet_id != null ? { projet_id } : {}) }) })

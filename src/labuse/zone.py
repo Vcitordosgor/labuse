@@ -189,9 +189,9 @@ def population_zone(session: Session, geom_geojson: dict) -> dict:
     if has_iris:
         rz = session.execute(text(
             f"""SELECT count(*) AS n_iris,
-                  round(100.0 * sum(i.logvac) / NULLIF(sum(i.log), 0), 1)  AS vacance_pct,
-                  round(100.0 * sum(i.ach_1919 + i.ach_1945 + i.ach_1970 + i.ach_1990)
-                        / NULLIF(sum(i.ach_tot), 0), 1)                     AS part_bati_avant_1990_pct
+                  round((100.0 * sum(i.logvac) / NULLIF(sum(i.log), 0))::numeric, 1)  AS vacance_pct,
+                  round((100.0 * sum(i.ach_1919 + i.ach_1945 + i.ach_1970 + i.ach_1990)
+                        / NULLIF(sum(i.ach_tot), 0))::numeric, 1)           AS part_bati_avant_1990_pct
                 FROM iris_rp i
                 JOIN spatial_layers sl ON sl.kind = 'iris_insee' AND sl.subtype = i.iris
                 WHERE ST_Intersects(sl.geom_2975, {_zone2975()})"""),
