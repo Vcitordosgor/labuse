@@ -13,6 +13,6 @@ declarer(FicheRegle(
     verdict="choix_assume",
     choix=("Le fait affiché est la dernière mutation DVF SUR la parcelle elle-même (pas le secteur) "
            "— un fait public sourcé et daté, jamais complété par une estimation quand il manque."),
-    exemple_temoin=None,
+    exemple_temoin="tests/regles/test_prix_achat_historique.py::test_passe_plat_dvf_de_la_parcelle",
     verifie_le="2026-09-08",
 ))
