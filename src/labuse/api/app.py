@@ -1323,7 +1323,8 @@ def _q_v2_where(run_label: str,
                 droits_residuels: str | None = None,
                 pm_denom: str | None = None, pm_siren: str | None = None,
                 pm_forme: str | None = None, pm_ape: str | None = None,
-                pm_dirig_min: int | None = None, pm_dirig_max: int | None = None) -> tuple[str, dict]:
+                pm_dirig_min: int | None = None, pm_dirig_max: int | None = None,
+                zfang: str | None = None, frr: str | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -1633,6 +1634,18 @@ def _q_v2_where(run_label: str,
         conds.append("EXISTS (SELECT 1 FROM anru_quartiers aq WHERE aq.commune = p.commune)")
     if adresse_absente:   # veille : adresse BAN absente (dite « Absente (BAN) »)
         conds.append("NOT EXISTS (SELECT 1 FROM adresse_parcelles ap0 WHERE ap0.idu = p.idu)")
+    # COUCHES-2 point 4 — filtre par STATUT ZFANG / FRR de la commune. SOURCE UNIQUE : la table
+    # territoire_fiscal_commune (la même qui peint la carte via dispositifs.py et qui alimente la
+    # fiche commune via attributs_commune) — jamais un recalcul géométrique. Jointure par l'INSEE
+    # (5 premiers caractères de l'IDU). Statuts ZFANG {renforce, standard}, FRR {totalite, partie, hors}.
+    if zfang:
+        conds.append("EXISTS (SELECT 1 FROM territoire_fiscal_commune tfc WHERE tfc.insee = left(p.idu, 5)"
+                     " AND tfc.zfang_regime = ANY(CAST(:f_zfang AS text[])))")
+        params["f_zfang"] = [x.strip() for x in zfang.split(",") if x.strip()]
+    if frr:
+        conds.append("EXISTS (SELECT 1 FROM territoire_fiscal_commune tfc WHERE tfc.insee = left(p.idu, 5)"
+                     " AND tfc.frr_classement = ANY(CAST(:f_frr AS text[])))")
+        params["f_frr"] = [x.strip() for x in frr.split(",") if x.strip()]
     # ── M45-B (Lot 1) — tiroir ÉCONOMIE (câblage sur données existantes ; étiquettes Sourcé/Estimé) ──
     if budget_max is not None:
         # « Mon budget » : prix d'achat max admissible (charge foncière SUPPORTABLE, M22-A) ≤ budget.
@@ -1750,6 +1763,9 @@ class FiltreCriteres:
     pm_ape: str | None = None
     pm_dirig_min: int | None = None
     pm_dirig_max: int | None = None
+    # COUCHES-2 point 4 — statut ZFANG (renforce/standard) et FRR (totalite/partie/hors), CSV.
+    zfang: str | None = None
+    frr: str | None = None
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.surface_min, self.surface_max,
@@ -1766,7 +1782,8 @@ class FiltreCriteres:
                            signaux=self.signaux,
                            droits_residuels=self.droits_residuels,
                            pm_denom=self.pm_denom, pm_siren=self.pm_siren, pm_forme=self.pm_forme,
-                           pm_ape=self.pm_ape, pm_dirig_min=self.pm_dirig_min, pm_dirig_max=self.pm_dirig_max)
+                           pm_ape=self.pm_ape, pm_dirig_min=self.pm_dirig_min, pm_dirig_max=self.pm_dirig_max,
+                           zfang=self.zfang, frr=self.frr)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.surface_min,
@@ -1781,7 +1798,7 @@ class FiltreCriteres:
                 self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
                 self.signaux, self.droits_residuels,
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
-                self.pm_dirig_min, self.pm_dirig_max)
+                self.pm_dirig_min, self.pm_dirig_max, self.zfang, self.frr)
 
 
 @app.get("/parcels")
@@ -2188,6 +2205,7 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "zonage_abc": blocs["zonage_abc"],          # SOURCES-1 lot 1 — zone A/B/C (DHUP)
             "fiscalite": blocs["fiscalite"],            # SOURCES-1 lot 5 — taux TFPB/TEOM (REI)
             "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)
+            "zfang_frr": blocs["zfang_frr"],            # COUCHES-2 point 4 — ZFANG/FRR (source unique territoire_fiscal)
             "outils": blocs["outils"],                  # C6 — compteurs des passerelles
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE

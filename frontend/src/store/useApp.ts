@@ -101,6 +101,10 @@ export interface Filters {
   copro: string[]                    // avec / sans (RNIC)
   npnru: boolean
   adresseAbsente: boolean
+  // COUCHES-2 point 4 — statut ZFANG (renforce/standard) et FRR (totalite/partie/hors) de la commune
+  // de la parcelle. Multi-sélection ; source unique territoire_fiscal (carte + fiche + filtre).
+  zfangRegime: string[]
+  frrClassement: string[]
   // M45-B (Lot 1) — tiroir Économie
   budgetMax: number | null           // prix d'achat max admissible ≤ budget (Mon budget)
   chargeMin: number | null
@@ -133,6 +137,7 @@ export const EMPTY_FILTERS: Filters = {
   analyseLabuse: false,   // M55-D stage 4 : interrupteur « regard LABUSE » ÉTEINT par défaut (tri factuel)
   sousDensite: false, multMin: null, rangMax: null, renouvellement: false,
   proprietaireType: [], droitsResiduels: [], etatSociete: [], copro: [], npnru: false, adresseAbsente: false,
+  zfangRegime: [], frrClassement: [],
   budgetMax: null, chargeMin: null, chargeMax: null, prixMarcheMin: null, prixMarcheMax: null,
   marcheFiable: false, caMin: null, modeBRentable: false,
   signaux: [],

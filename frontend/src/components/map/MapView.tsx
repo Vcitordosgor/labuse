@@ -383,6 +383,13 @@ function applyClairMode(m: maplibregl.Map, basemap: string) {
     // ARRÊT au-dessus. Combinés à la station en ANNEAU (halo), un même point physique se lit comme UN
     // objet enrichi (anneaux emboîtés + pastille), plus trois pastilles concurrentes superposées.
     for (const id of ['ov-pole', 'ov-tcsp-st', 'ov-trans-arret']) mv(id, _ancre)
+    // COUCHES-2 point 4 — ZFANG/FRR sont des aplats COMMUNE : ils passent TOUT EN BAS de la pile
+    // vectorielle, sous les limites de communes (ancre la plus basse, présente en vue île ET commune).
+    // Ainsi le parcellaire (base + cadastre) ET les limites de communes restent au-dessus ; combiné à
+    // l'opacité très basse (0,10/0,12), tout reste lisible quand la couche est allumée. UN seul move
+    // par couche (deux ancres se relayaient et remontaient la couche au-dessus des limites).
+    const _bas = ['communes-bounds', 'parcels-base', 'ile-base'].find((id) => m.getLayer(id))
+    if (_bas) for (const id of ['ov-zfang', 'ov-zfang-trame', 'ov-frr', 'ov-frr-trame']) mv(id, _bas)
   }
   for (const id of ['ov-zonage', 'ovmvt-zonage']) { set(id, 'fill-color', zonageFillExpr(t)); set(id, 'fill-opacity', t.zonageOpacity) }
   for (const id of ['ov-zonage-line', 'ovmvt-zonage-line']) { set(id, 'line-color', zonageFillExpr(t)); set(id, 'line-width', t.zonageContourW) }

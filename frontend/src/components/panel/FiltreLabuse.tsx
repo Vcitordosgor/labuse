@@ -531,6 +531,16 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               emprise inconnue en base). La clause SQL ne bouge pas (partition complète et défendable). */}
           <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Terrain nu » = aucune emprise bâtie ≥ 5 % détectée (bâti non mesuré compris) ; la fiabilité est précisée en fiche.</p>
         </div>
+        {/* COUCHES-2 point 4 — filtre par STATUT ZFANG / FRR de la commune. SOURCE UNIQUE
+            (territoire_fiscal) : le même statut peint la carte et s'affiche sur la fiche commune. */}
+        <div>
+          <p className="label-caps text-txt-dim">ZFANG — zone franche</p>
+          <div className="mt-1"><ChipGroup field="zfangRegime" options={[{ k: 'renforce', l: 'Renforcée' }, { k: 'standard', l: 'Standard' }]} /></div>
+        </div>
+        <div>
+          <p className="label-caps text-txt-dim">FRR — ruralités</p>
+          <div className="mt-1"><ChipGroup field="frrClassement" options={[{ k: 'totalite', l: 'Totalité' }, { k: 'partie', l: 'En partie' }, { k: 'hors', l: 'Hors dispositif' }]} /></div>
+        </div>
       </div>
       {/* M55-D stage 7 (décision Vic) : « Contraintes de secteur » a QUITTÉ le panneau Filtres —
           les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont

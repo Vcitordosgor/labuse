@@ -253,6 +253,20 @@ def ort(db: Session, insee: str | None) -> dict | None:
     return o
 
 
+def zfang_frr(db: Session, insee: str | None) -> dict | None:
+    """COUCHES-2 point 4 — ZFANG / FRR de la commune. UNE SEULE SOURCE : territoire_fiscal.
+    attributs_commune (la même donnée qui peint la carte via dispositifs.py et qui filtre les
+    parcelles). Deux lignes : régime ZFANG (renforcé/standard) et classement FRR (totalité/en
+    partie/hors). None si la table n'est pas peuplée."""
+    if not insee:
+        return None
+    from ..territoire_fiscal import attributs_commune
+    a = attributs_commune(db, insee)
+    if a is None:
+        return None
+    return {"zfang": a["zfang"], "frr": a["frr"], "avertissement": a.get("avertissement")}
+
+
 def zonage_abc(db: Session, insee: str | None) -> dict | None:
     """SOURCES-1 lot 1 — zone A/B/C de la commune (arrêté DHUP, passe-plat sourcé + daté).
     None si non ingérée (jamais devinée) — le front dit « non déterminée »."""
@@ -302,7 +316,7 @@ log = logging.getLogger("labuse.fiche_commune")
 # le bloc concerné SANS casser la fiche entière (« introuvable = null, jamais un zéro menteur »).
 _FALLBACK = {
     "comparable": None, "marche_annonces": None, "densifiables": None, "loyer": None,
-    "zonage_abc": None, "fiscalite": None, "ort": None,
+    "zonage_abc": None, "fiscalite": None, "ort": None, "zfang_frr": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "parc_national": False, "azi_tri": None, "source": "Géorisques · GASPAR · BD TOPO"},
     "population": {"habitants": None, "menages": None, "niveau_vie_moyen_eur": None,
@@ -345,6 +359,8 @@ def build(db: Session, commune: str, insee: str | None) -> dict:
         # SOURCES-1 lot 5 — taux fonciers (REI) + ACV/PVD/ORT (Denormandie).
         "fiscalite": _safe(db, "fiscalite", lambda: fiscalite(db, insee)),
         "ort": _safe(db, "ort", lambda: ort(db, insee)),
+        # COUCHES-2 point 4 — ZFANG / FRR (territoire_fiscal, source unique : carte + fiche + filtre).
+        "zfang_frr": _safe(db, "zfang_frr", lambda: zfang_frr(db, insee)),
     }
     blocs["outils"] = _safe(db, "outils", lambda: outils_counters(db, commune, insee, blocs))
     return blocs
