@@ -195,7 +195,10 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     // COUCHES-1 lot 5 (D1) — FRR totalité était VERT (émeraude) sur fond vert : passé en SARCELLE
     // profond, franchement distinct des verts (parc/EBC/ENP) et de l'améthyste FRR-partie.
     frrTotalite: '#1AA3B8', frrPartie: '#9B6BE0',         // sarcelle · améthyste
-    dispoFillOpacity: 0.16,     // COUCHES-1 lot 5 (D4) — 0,24 → 0,16 : ZFANG/FRR écrasaient l'île
+    // COUCHES-2 point 4 — opacité TRÈS BASSE (0,10) : ZFANG/FRR sont des aplats COMMUNE ; le
+    // parcellaire et les limites de communes doivent rester lisibles DESSOUS quand la couche est
+    // allumée. (Étaient 0,24 → 0,16 au Lot 5 ; abaissés encore ici, + empilement sous le parcellaire.)
+    dispoFillOpacity: 0.10,
     // SOURCES-1 lot 1 — contraintes du droit des sols (tints vifs, fond sombre)
     er: '#D4A017', erOpacity: 0.30,                       // or foncé — emprise grevée (ER)
     // COUCHES-1 lot 5 (D1) — EBC était vert forêt, en camaïeu avec le mint du zonage (même famille
@@ -272,7 +275,7 @@ export const MAP_THEME: Record<MapThemeName, MapTokens> = {
     // échouait à 1,12) — « version plus foncée du même sable, pas un retour au chaud ».
     zfangRenforce: '#2A54C8', zfangStandard: '#8A7A52',   // bleu roi 1,43 · sable foncé 1,31
     frrTotalite: '#147A8C', frrPartie: '#6E3FB5',         // COUCHES-1 lot 5 (D1) — sarcelle (ex-émeraude vert) · améthyste
-    dispoFillOpacity: 0.18,     // COUCHES-1 lot 5 (D4) — 0,24 → 0,18 (ZFANG/FRR écrasaient l'île)
+    dispoFillOpacity: 0.12,     // COUCHES-2 point 4 — opacité très basse (parcellaire + communes lisibles dessous)
     // SOURCES-1 lot 1 — contraintes du droit des sols (teintes profondes, terre claire)
     er: '#8A6D08', erOpacity: 0.30,                       // or profond
     ebc: '#14603A', ebcOpacity: 0.30,                     // COUCHES-1 lot 5 (D1) — forêt profond (hors camaïeu mint)

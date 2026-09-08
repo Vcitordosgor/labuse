@@ -504,6 +504,22 @@ export function ContextePanel() {
                 </LigneCarte>
               )}
 
+              {/* COUCHES-2 point 4 — ZFANG / FRR : une ligne chacun avec son STATUT EXACT. Source
+                  UNIQUE (territoire_fiscal) — le même statut peint la carte et filtre les parcelles. */}
+              {d.zfang_frr && (
+                <LigneCarte id="zfang-frr" ic="◧" titre="ZFANG / FRR (dispositifs fiscaux)"
+                  sous={d.zfang_frr.zfang.regime === 'renforce' ? 'zone franche renforcée' : 'zone franche standard'}
+                  val={d.zfang_frr.zfang.regime === 'renforce' ? 'ZFANG renforcée' : 'ZFANG standard'}>
+                  <div className="flex flex-col gap-1 text-[12px]">
+                    <RowT lbl="ZFANG" val={d.zfang_frr.zfang.regime === 'renforce' ? 'Régime renforcé' : 'Régime standard'} strong />
+                    <RowT lbl="FRR" val={d.zfang_frr.frr.classement === 'totalite' ? 'Classée en totalité'
+                      : d.zfang_frr.frr.classement === 'partie' ? 'Classée en partie (les Hauts)' : 'Hors dispositif'} strong />
+                    <p className="text-[11.5px] text-txt-dim">{d.zfang_frr.frr.libelle}</p>
+                  </div>
+                  <Source nom={`ZFANG : ${d.zfang_frr.zfang.source_ref} · FRR : ${d.zfang_frr.frr.source_ref}`} />
+                </LigneCarte>
+              )}
+
               {/* ── LE TERRITOIRE ── */}
               <GroupeLabel>Le territoire</GroupeLabel>
 

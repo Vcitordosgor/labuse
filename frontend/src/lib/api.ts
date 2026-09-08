@@ -96,6 +96,9 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.copro.length ? { copro: f.copro.join(',') } : {}),
   ...(f.npnru ? { npnru: 'true' } : {}),
   ...(f.adresseAbsente ? { adresse_absente: 'true' } : {}),
+  // COUCHES-2 point 4 — statut ZFANG / FRR (source unique territoire_fiscal, cf. carte + fiche commune).
+  ...(f.zfangRegime?.length ? { zfang: f.zfangRegime.join(',') } : {}),
+  ...(f.frrClassement?.length ? { frr: f.frrClassement.join(',') } : {}),
   // M45-B (L1) — tiroir Économie
   ...(f.budgetMax != null ? { budget_max: f.budgetMax } : {}),
   ...(f.chargeMin != null ? { charge_min: f.chargeMin } : {}),
@@ -266,6 +269,14 @@ export interface ContexteCommune {
   ort: { statut: 'acv' | 'pvd' | 'autre' | 'hors'; commune?: string
     ort_signee: boolean; date_signature?: string | null
     denormandie: string; millesime?: string; source?: string } | null
+  // COUCHES-2 point 4 — ZFANG / FRR (source unique territoire_fiscal, la même qui peint la carte
+  // et qui filtre les parcelles). regime ZFANG : renforce | standard ; classement FRR : totalite |
+  // partie | hors.
+  zfang_frr: {
+    zfang: { regime: 'renforce' | 'standard'; libelle: string; source_ref: string; lien: string }
+    frr: { classement: 'totalite' | 'partie' | 'hors'; libelle: string; source_ref: string; lien: string }
+    avertissement?: string | null
+  } | null
   outils: {
     permis_en_cours: number; permis_point_mort: number; densifiables: number
     radar_biens: number; scan_pm: number; solaire_piscines: number
