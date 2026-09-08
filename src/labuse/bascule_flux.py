@@ -96,6 +96,37 @@ def ensure_tables(engine) -> None:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_bascule_journal_ts ON run_bascule_journal(ts DESC)"))
 
 
+def _cascade_a_des_lignes(db: Session, run: str) -> bool:
+    """Le run a-t-il au moins une ligne de cascade (dryrun_parcel_evaluations) ? (VIDE ≠ absente.)"""
+    return bool(db.execute(text(
+        "SELECT 1 FROM dryrun_parcel_evaluations WHERE run_label = :r LIMIT 1"), {"r": run}).scalar())
+
+
+def resoudre_cascade_run(db: Session, scoring_run: str) -> tuple[str | None, str]:
+    """COHÉRENCE-RUN-1 (C1) — de quel run `scoring_run` tire-t-il sa CASCADE (étage 0) ?
+      · s'il a SA PROPRE cascade → lui-même (cas normal) ;
+      · sinon (run EMPRUNTEUR, ex. q_v14 scoré avec `LABUSE_ETAGE0_RUN=q_v13_sources1`) → le run
+        réutilisé, lu EXPLICITEMENT dans `p_score_v2_runs.params` (`etage0_run` sinon `prev_run`),
+        et VÉRIFIÉ en base : il doit avoir des lignes de cascade. Un run servi ne doit JAMAIS
+        pointer vers une cascade purgée/absente → renvoie `(None, motif)` dans ce cas (refus).
+    Table de cascade absente (base de test/install neuve) → tolérée (renvoie scoring_run, indéterminé)."""
+    if not db.execute(text("SELECT to_regclass('dryrun_parcel_evaluations')")).scalar():
+        return scoring_run, "cascade non vérifiable (table absente) — toléré hors production."
+    if _cascade_a_des_lignes(db, scoring_run):
+        return scoring_run, "cascade propre au run."
+    params = db.execute(text(
+        "SELECT params FROM p_score_v2_runs WHERE run_id = :r"), {"r": scoring_run}).scalar()
+    emprunte = None
+    if params:
+        import json as _json
+        p = params if isinstance(params, dict) else _json.loads(params)
+        emprunte = p.get("etage0_run") or p.get("prev_run")
+    if emprunte and _cascade_a_des_lignes(db, emprunte):
+        return emprunte, f"cascade empruntée à « {emprunte} » (étage 0 réutilisé)."
+    return None, (f"run « {scoring_run} » sans cascade propre et sans étage 0 réutilisable en base "
+                  f"(candidat « {emprunte or '∅'} » absent de dryrun_parcel_evaluations) — bascule refusée.")
+
+
 def _run_complet(db: Session, run: str) -> tuple[bool, str]:
     """Le run est-il SERVABLE ? Présent en score v2 (`p_score_v2_runs`) ET en cascade
     (`dryrun_parcel_evaluations`) — sinon la fiche retomberait en repli legacy silencieux
@@ -111,18 +142,14 @@ def _run_complet(db: Session, run: str) -> tuple[bool, str]:
     v2 = db.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"), {"r": run}).scalar()
     if not v2:
         return False, f"run « {run} » absent de p_score_v2_runs (non scoré) — bascule refusée."
-    # ABSENCE de table (base de test / install neuve) ≠ VIDE pour ce run : le `to_regclass` seul
-    # tranche « table absente », le `SELECT 1` tranche « 0 ligne pour ce run ». Ne JAMAIS confondre
-    # les deux `None` (celui d'une table qui n'existe pas, celui d'une requête sans ligne).
-    table_existe = bool(db.execute(text("SELECT to_regclass('dryrun_parcel_evaluations')")).scalar())
-    if not table_existe:
-        return True, "cascade non vérifiable (table absente) — toléré hors production."
-    a_des_lignes = db.execute(text(
-        "SELECT 1 FROM dryrun_parcel_evaluations WHERE run_label = :r LIMIT 1"), {"r": run}).scalar()
-    if not a_des_lignes:
-        return False, (f"run « {run} » absent de la cascade (dryrun_parcel_evaluations existe mais "
-                       f"n'a aucune ligne pour ce run) — bascule refusée.")
-    return True, "run complet (score v2 + cascade)."
+    # COHÉRENCE-RUN-1 (C1) — la cascade peut être PROPRE au run OU empruntée à un étage 0 réutilisé
+    # (q_v14 → q_v13_sources1). `resoudre_cascade_run` distingue « table absente » (indéterminé,
+    # toléré) de « 0 ligne ET aucun emprunt valide » (refus, cf. C2) et de « emprunt vérifié en
+    # base » (accepté). Un run servi ne peut donc jamais pointer vers une cascade absente.
+    cascade_run, motif = resoudre_cascade_run(db, run)
+    if cascade_run is None:
+        return False, motif
+    return True, f"run complet (score v2 + cascade — {motif})"
 
 
 def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
@@ -264,14 +291,23 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     m_avant = _manifeste.lire() or _manifeste.construire_depuis_pointeurs(db)
     if nouveau_run == ancien_precedent and m_avant.get("precedent"):
         cible = dict(m_avant["precedent"])            # retour arrière : le manifeste entier
+        cible.setdefault("cascade_run", cible.get("scoring_run"))  # compat manifeste pré-C1
     else:
-        cible = {"scoring_run": nouveau_run, "mvt_run": nouveau_run, "division_run": nouveau_run,
+        # COHÉRENCE-RUN-1 (C1) — le run de CASCADE servi est écrit EXPLICITEMENT (jamais deviné à
+        # la lecture) : propre au run, ou l'étage 0 réutilisé (q_v14 → q_v13_sources1), vérifié en
+        # base par `resoudre_cascade_run`. Le run est déjà « complet » (garde ci-dessus), donc la
+        # résolution ne peut plus rendre None ; le repli scoring_run ne sert que si la table de
+        # cascade est absente (base de test).
+        cascade_run, _ = resoudre_cascade_run(db, nouveau_run)
+        cible = {"scoring_run": nouveau_run, "cascade_run": cascade_run or nouveau_run,
+                 "mvt_run": nouveau_run, "division_run": nouveau_run,
                  "residuel_run_seq": m_avant.get("residuel_run_seq")}
     from datetime import datetime as _dt, timezone as _tz
     nouveau_manifeste = {**cible,
                          "promoted_at": _dt.now(tz=_tz.utc).isoformat(), "par": par[:120],
-                         "precedent": {k: m_avant.get(k) for k in
-                                       ("scoring_run", "residuel_run_seq", "mvt_run", "division_run")}}
+                         "precedent": {**{k: m_avant.get(k) for k in
+                                       ("scoring_run", "residuel_run_seq", "mvt_run", "division_run")},
+                                       "cascade_run": m_avant.get("cascade_run") or m_avant.get("scoring_run")}}
     _manifeste.ecrire(nouveau_manifeste)
     # vue dérivée résiduel : is_served suit le manifeste (jamais un autre chemin — lot 3.1).
     if nouveau_manifeste.get("residuel_run_seq") is not None:

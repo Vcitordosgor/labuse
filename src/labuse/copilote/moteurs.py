@@ -123,22 +123,22 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
                -- M-I : PPR rouge GRADUÉ. La cascade n'ÉCARTE (HARD_EXCLUDE) plus que le rouge
                -- >= 50 % de surface → `ppr_rouge` (exclusion) ne cible plus que ces parcelles.
                EXISTS (SELECT 1 FROM dryrun_cascade_results r
-                       WHERE r.run_label = :run AND r.parcel_id = p.id AND r.layer_name = 'risques'
+                       WHERE r.run_label = :cascade AND r.parcel_id = p.id AND r.layer_name = 'risques'
                          AND r.result = 'HARD_EXCLUDE' AND r.detail ILIKE '%ppr%') AS ppr_rouge,
                -- Palier 2–50 % : SERVI mais sous vigilance forte (flag, jamais filtré) → surfacé.
                EXISTS (SELECT 1 FROM dryrun_cascade_results r
-                       WHERE r.run_label = :run AND r.parcel_id = p.id AND r.layer_name = 'risques'
+                       WHERE r.run_label = :cascade AND r.parcel_id = p.id AND r.layer_name = 'risques'
                          AND r.result = 'SOFT_FLAG' AND r.detail ILIKE '%PPR zone rouge sur%') AS ppr_partiel,
                EXISTS (SELECT 1 FROM dryrun_cascade_results r
-                       WHERE r.run_label = :run AND r.parcel_id = p.id AND r.layer_name = 'abf'
+                       WHERE r.run_label = :cascade AND r.parcel_id = p.id AND r.layer_name = 'abf'
                          AND r.result = 'SOFT_FLAG') AS abf
         FROM parcels p
         JOIN parcel_p_score_v2 v ON v.parcelle_id = p.idu AND v.run_id = :run
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
         WHERE p.commune = ANY(:communes) AND v.tier = ANY(:tiers)
         ORDER BY array_position(CAST(:tiers AS varchar[]), v.tier), v.rang NULLS LAST, p.idu
-        """), {"run": runs.current(), "communes": brief["communes"],
-               "tiers": list(_TIERS_SERVIS)}).mappings().all()
+        """), {"run": runs.current(), "cascade": runs.cascade(),  # C1 : cascade (étage 0) ≠ score v2
+               "communes": brief["communes"], "tiers": list(_TIERS_SERVIS)}).mappings().all()
 
     n0 = len(rows)
     etapes: dict[str, dict] = {}
@@ -346,7 +346,7 @@ def risques(db: Session, brief: dict, dossier: Dossier) -> StepResult:
         "SELECT parcel_id, layer_name, result, severity, detail FROM dryrun_cascade_results "
         "WHERE run_label = :run AND parcel_id = ANY(:ids) AND layer_name = ANY(:layers) "
         "  AND result IN ('SOFT_FLAG', 'HARD_EXCLUDE')"),
-        {"run": runs.current(), "ids": ids, "layers": list(_LAYERS_RISQUES)}).mappings().all()
+        {"run": runs.cascade(), "ids": ids, "layers": list(_LAYERS_RISQUES)}).mappings().all()  # C1 cascade
     par_parcelle: dict[int, list[dict]] = {}
     for r in rows:
         par_parcelle.setdefault(r["parcel_id"], []).append(

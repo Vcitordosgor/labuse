@@ -297,7 +297,7 @@ def compute_flag_abf(session: Session) -> int:
         )
         UPDATE parcel_solar ps SET flag_abf = abf.in_abf, updated_at = now()
         FROM abf WHERE abf.idu = ps.idu
-    """), {"run": runs.current()}).rowcount
+    """), {"run": runs.cascade()}).rowcount  # C1 cascade (abf)
     session.commit()
     return n
 

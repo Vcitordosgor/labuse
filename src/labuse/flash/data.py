@@ -147,7 +147,7 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
     # libellé de zone (A/U/RNU…) et la part de recouvrement restent lus en direct dans spatial_layers
     # (détail d'affichage non porté par le servi).
     from ..api.served_cascade import served_cascade_lines, served_group
-    zline = next((l for l in served_group(served_cascade_lines(db, idu, runs.current()), "regles")
+    zline = next((l for l in served_group(served_cascade_lines(db, idu), "regles")
                   if l["layer_name"] == "zonage_plu_gpu"), None)
     if zline:
         _zdet = nettoyer_libelle_client(zline["layer_name"], zline["detail"])
@@ -268,7 +268,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             """SELECT (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
                FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
                WHERE p.idu = :idu AND d.run_label = :run"""),
-            {"idu": idu, "run": runs.current()}).mappings().first()
+            {"idu": idu, "run": runs.cascade()}).mappings().first()  # C1 : run de CASCADE (étage 0)
         # M-P (P2-67) : la grille matrice Q/A (out["score"], seuils scoring_matrice) est RETIRÉE du
         # Flash — document VENDU 79 €, l'acheteur n'a aucun contexte pour arbitrer un second verdict
         # issu d'un rail éteint (M37). Un seul verdict : le tier v2 (out["verdict_v2"]) ci-dessous.
@@ -377,7 +377,7 @@ def _risques(db: Session, idu: str, avail: set[str]) -> dict | None:
     # PPR réglementaire sans « intersection marginale < 10 % », libellés FR propres. Fini les
     # 3 niveaux d'aléa côte à côte lus en direct dans spatial_layers.
     from ..api.served_cascade import served_cascade_lines, served_group
-    lines = served_group(served_cascade_lines(db, idu, runs.current()), "risques")
+    lines = served_group(served_cascade_lines(db, idu), "risques")
     items = []
     for l in lines:
         if l["layer_name"] not in _RISQUE_LAYERS:
@@ -420,7 +420,7 @@ def _patrimoine(db: Session, idu: str, avail: set[str]) -> dict | None:
     # ST_Distance à un tampon 500 m → fini le « 0 m » (distance-à-tampon). La couche ABF = tampons
     # + endpoint décommissionné M74 : on ne re-source pas, on cesse d'afficher une distance-à-tampon.
     from ..api.served_cascade import served_cascade_lines, served_group
-    abf_raw = next((l["detail"] for l in served_group(served_cascade_lines(db, idu, runs.current()), "risques")
+    abf_raw = next((l["detail"] for l in served_group(served_cascade_lines(db, idu), "risques")
                     if l["layer_name"] == "abf" and l["result"] in ("HARD_EXCLUDE", "SOFT_FLAG",
                                                                      "UNKNOWN")), None)
     abf_note = nettoyer_libelle_client("abf", abf_raw) if abf_raw else None

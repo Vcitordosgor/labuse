@@ -194,7 +194,7 @@ def test_run_scoré_sans_cascade_est_refusé(db_session):
         {"r": run})
     ok, motif = bascule_flux._run_complet(db_session, run)
     assert ok is False, "un run scoré SANS cascade doit être refusé (le faux positif C2)"
-    assert "cascade" in motif.lower() and "aucune ligne" in motif.lower()
+    assert "cascade" in motif.lower() and "refus" in motif.lower()
 
 
 def test_run_scoré_avec_cascade_est_accepté(db_session):
@@ -213,6 +213,37 @@ def test_run_scoré_avec_cascade_est_accepté(db_session):
         "opportunity_score, status) VALUES (:r, :p, 0, 0, 'exclue')"), {"r": run, "p": pid})
     ok, motif = bascule_flux._run_complet(db_session, run)
     assert ok is True and "complet" in motif.lower()
+
+
+def test_run_emprunteur_de_cascade_est_accepté_et_résolu(db_session):
+    """COHÉRENCE-RUN-1 (C1) — un run EMPRUNTEUR (scoré sans cascade propre, mais dont
+    `params.prev_run`/`etage0_run` pointe un run qui A une cascade en base, ex. q_v14 → q_v13_sources1)
+    est ACCEPTÉ, et `resoudre_cascade_run` renvoie le run emprunté. C'est ce qui permet aux lecteurs
+    (via runs.cascade()) de servir la bonne cascade sans dupliquer 17,6 M lignes."""
+    import json
+    source = "run_cascade_source_" + uuid.uuid4().hex[:6]
+    emprunteur = "run_emprunteur_" + uuid.uuid4().hex[:6]
+    # le run SOURCE a une cascade réelle (une parcelle) ; l'emprunteur n'en a aucune.
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256) VALUES (:r, 'test', 'x')"),
+        {"r": source})
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params) "
+        "VALUES (:r, 'test', 'x', CAST(:p AS jsonb))"),
+        {"r": emprunteur, "p": json.dumps({"prev_run": source})})
+    pid = db_session.execute(text(
+        "INSERT INTO parcels (idu, commune, geom) "
+        "VALUES (:i, '97415', ST_GeomFromText('POINT(55.5 -21.0)', 4326)) RETURNING id"),
+        {"i": "TEST" + uuid.uuid4().hex[:10]}).scalar()
+    db_session.execute(text(
+        "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
+        "opportunity_score, status) VALUES (:r, :p, 0, 0, 'exclue')"), {"r": source, "p": pid})
+    # résolution : l'emprunteur pointe vers la cascade du run source.
+    cascade_run, motif = bascule_flux.resoudre_cascade_run(db_session, emprunteur)
+    assert cascade_run == source and "empruntée" in motif.lower()
+    # et la bascule l'accepte (cascade trouvée, quoique empruntée).
+    ok, motif2 = bascule_flux._run_complet(db_session, emprunteur)
+    assert ok is True and source in motif2
 
 
 def test_journal_bascule_ensure_et_vide(engine, db_session):

@@ -135,7 +135,7 @@ _FUNNEL_SQL = {
     "1_bati_fait": """
         SELECT count(DISTINCT cr.parcel_id)
         FROM dryrun_cascade_results cr
-        WHERE cr.run_label = :run AND cr.layer_name = 'bati'
+        WHERE cr.run_label = :cascade AND cr.layer_name = 'bati'
           AND cr.result = 'SOFT_FLAG' AND ({code}) IS NOT NULL
     """,
     "2_zone_u_au": """
@@ -158,7 +158,7 @@ _FUNNEL_SQL = {
 _BATI_BASE = """
     SELECT DISTINCT cr.parcel_id
     FROM dryrun_cascade_results cr
-    WHERE cr.run_label = :run AND cr.layer_name = 'bati'
+    WHERE cr.run_label = :cascade AND cr.layer_name = 'bati'
       AND cr.result = 'SOFT_FLAG' AND ({code}) IS NOT NULL
 """.replace("{code}", _CODE_CASE)
 
@@ -167,7 +167,7 @@ WITH bati_x AS (
     SELECT DISTINCT ON (p.idu) p.idu, {code} AS code
     FROM dryrun_cascade_results cr
     JOIN parcels p ON p.id = cr.parcel_id
-    WHERE cr.run_label = :run AND cr.layer_name = 'bati'
+    WHERE cr.run_label = :cascade AND cr.layer_name = 'bati'
       AND cr.result = 'SOFT_FLAG' AND ({code}) IS NOT NULL
     ORDER BY p.idu, cr.id DESC
 ),
@@ -175,7 +175,7 @@ public_x AS (
     SELECT DISTINCT p.idu
     FROM dryrun_cascade_results cr
     JOIN parcels p ON p.id = cr.parcel_id
-    WHERE cr.run_label = :run AND cr.layer_name = 'foncier_public'
+    WHERE cr.run_label = :cascade AND cr.layer_name = 'foncier_public'
       AND cr.result = 'SOFT_FLAG'
 ),
 -- RETOURS-11F M9 — contraintes NON constructibles servies par le run (jamais inventées) :
@@ -186,17 +186,17 @@ ppr_x AS (
            max((regexp_match(cr.detail, '([0-9]+) % de la surface'))[1]::int) AS pct_rouge
     FROM dryrun_cascade_results cr
     JOIN parcels p ON p.id = cr.parcel_id
-    WHERE cr.run_label = :run AND cr.layer_name = 'risques'
+    WHERE cr.run_label = :cascade AND cr.layer_name = 'risques'
       AND cr.result = 'HARD_EXCLUDE' AND cr.detail LIKE '%PPR zone rouge%'
     GROUP BY p.idu
 ),
 ravine_x AS (
     SELECT DISTINCT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id
-    WHERE cr.run_label = :run AND cr.layer_name = 'ravine' AND cr.result = 'SOFT_FLAG'
+    WHERE cr.run_label = :cascade AND cr.layer_name = 'ravine' AND cr.result = 'SOFT_FLAG'
 ),
 mvt_x AS (
     SELECT DISTINCT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id
-    WHERE cr.run_label = :run AND cr.layer_name = 'mvt' AND cr.result = 'SOFT_FLAG'
+    WHERE cr.run_label = :cascade AND cr.layer_name = 'mvt' AND cr.result = 'SOFT_FLAG'
 ),
 seg AS (
     SELECT b.idu, b.code, left(b.idu, 5) AS commune, d.zone_plu,
@@ -278,6 +278,12 @@ def build(session: Session, *, run_label: str | None = None,
     """Reconstruit `parcel_renouvellement` (rebuild complet, idempotent) et renvoie
     l'entonnoir chiffré. LECTURE SEULE des sources ; ne touche jamais les runs servis."""
     run = run_label or runs.current()
+    # COHÉRENCE-RUN-1 (C1) — le segment STAMPE le run scoring (`:run`) mais LIT l'étage 0 depuis la
+    # cascade RÉELLE du run, qui peut être empruntée (q_v14 → q_v13_sources1). Sans ça, un rebuild
+    # sur un run emprunteur lisait 0 ligne de cascade et écrivait un segment VIDE (constat lot A).
+    from .bascule_flux import resoudre_cascade_run
+    cascade, _motif_cascade = resoudre_cascade_run(session, run)
+    cascade = cascade or run
     cfg = load_config()
     seuils, poids = cfg["seuils"], cfg["poids"]
 
@@ -287,7 +293,7 @@ def build(session: Session, *, run_label: str | None = None,
         raise RuntimeError("p_model_ext_dataset absent/vide — lancer `labuse score-v2` d'abord "
                            "(le segment lit l'as-of du dataset servi, il n'invente rien).")
 
-    params = {"run": run, "annee": int(annee),
+    params = {"run": run, "cascade": cascade, "annee": int(annee),
               "sdp_min": seuils["sdp_min_m2"], "surf_min": seuils["surface_min_m2"]}
 
     # ── entonnoir (mesuré AVANT l'écriture, sur les mêmes définitions) ────────────
@@ -299,8 +305,9 @@ def build(session: Session, *, run_label: str | None = None,
     # c'est un « segment Renouvellement à 0 » qui a servi une carte vide à la recette).
     if funnel["1_bati_fait"] == 0:
         raise RuntimeError(
-            f"Renouvellement : base « bâti (fait) » VIDE sur le run {run} — prédicat mort ou run "
-            "non calculé. Rien n'est écrit (un 0 silencieux a déjà servi une carte vide, M129-D).")
+            f"Renouvellement : base « bâti (fait) » VIDE sur la cascade {cascade} (run stampé {run}) "
+            "— prédicat mort ou cascade non calculée. Rien n'est écrit (un 0 silencieux a déjà servi "
+            "une carte vide, M129-D).")
     for step in ("2_zone_u_au", "3_capacite"):
         funnel[step] = int(session.execute(text(
             _FUNNEL_SQL[step].replace("{base}", _BATI_BASE)), params).scalar() or 0)

@@ -510,7 +510,7 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
         WHERE p.commune = :c AND d.opportunity_score >= :q
           AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
         ORDER BY d.opportunity_score DESC LIMIT :lim OFFSET :off"""),
-        {"run": runs.current(), "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
+        {"run": runs.cascade(), "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset, "demo": demo,
             # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).
             "mention": (f"Démonstration LABUSE — données RÉELLES, commune {_DEMO_COMMUNE}, "

@@ -117,5 +117,27 @@ def verifier(db: Session, run: str | None = None) -> dict:
     except Exception as e:  # noqa: BLE001
         checks.append(_ligne("Endpoints métier vivants (sonde santé)", False, f"{type(e).__name__}: {e}"[:160]))
 
+    # 7 — COHÉRENCE-RUN-1 (C1) : la CASCADE servie EXISTE ENCORE. Un run peut réutiliser l'étage 0
+    # d'un autre (q_v14 → q_v13_sources1, `manifeste.cascade_run`) ; ce run emprunté ne doit JAMAIS
+    # être purgé sous le run servi (exigence Vic : « un run servi ne doit jamais pointer vers une
+    # cascade purgée »). On vérifie que le run de cascade servi a des lignes dans
+    # `dryrun_parcel_evaluations`. Table absente (base de test) = indéterminé, jamais un faux écart.
+    try:
+        cascade_run = runs.cascade() or servi
+        if not db.execute(text("SELECT to_regclass('dryrun_parcel_evaluations')")).scalar():
+            checks.append(_ligne(f"Cascade servie présente ({cascade_run})", True,
+                                 "table dryrun_parcel_evaluations absente — garde non applicable"))
+        else:
+            n = db.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label = :r"),
+                           {"r": cascade_run}).scalar() or 0
+            emprunt = "" if cascade_run == servi else f" (empruntée par le run servi {servi})"
+            checks.append(_ligne(
+                f"Cascade servie présente : {cascade_run}{emprunt}", n > 0,
+                f"{n} lignes de cascade" if n > 0 else
+                f"AUCUNE ligne de cascade pour « {cascade_run} » — le run servi pointe vers une "
+                f"cascade absente/purgée. Rejouer la cascade ou corriger cascade_run du manifeste."))
+    except Exception as e:  # noqa: BLE001
+        checks.append(_ligne("Cascade servie présente", False, f"{type(e).__name__}: {e}"[:160]))
+
     return {"ok": all(c["ok"] for c in checks), "run": servi, "n_surfaces": n_surfaces,
             "verifie_le": datetime.now(timezone.utc).isoformat(), "checks": checks}

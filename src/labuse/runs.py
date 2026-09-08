@@ -68,6 +68,23 @@ def current() -> str:
     return val
 
 
+def cascade() -> str:
+    """COHÉRENCE-RUN-1 (C1) — le run dont on LIT la cascade servie (étage 0), relu à la requête.
+    Égal à `current()` pour tout run qui possède sa propre cascade (le cas normal — donc aucun
+    changement de comportement pour les runs de production/test). DIFFÈRE uniquement pour un run
+    qui RÉUTILISE l'étage 0 d'un autre (ex. q_v14 → q_v13_sources1) : la bascule a alors inscrit
+    `cascade_run` dans le manifeste (explicite, vérifié). Tous les lecteurs de cascade (fiche/
+    documents via `served_cascade`, carte, moteurs, renouvellement…) passent par ici pour ne
+    jamais interroger `dryrun_*` sur un run qui n'y a aucune ligne. L'override DEV `LABUSE_SERVED_RUN`
+    reste prioritaire (via `manifeste.cascade_run`)."""
+    from . import manifeste as _manifeste
+    if _manifeste.chemin().parent == _SERVED_FILE.parent:
+        val = _manifeste.cascade_run()
+        if val:
+            return val
+    return current()
+
+
 def precedent() -> str:
     """DONNEES-2 (B4) — le run servi PRÉCÉDENT (cible du retour arrière), relu À LA REQUÊTE de
     config/run_precedent.txt (cache court, comme `current()`). L'override DEV `LABUSE_RUN_PRECEDENT`

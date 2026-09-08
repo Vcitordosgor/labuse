@@ -2306,7 +2306,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     l'ordre (brûlante → chaude → réserve → à creuser → écartée, puis rang).
     M6 2a (§1.8) : l'adresse BAN accompagne chaque résultat — jointure APRÈS le LIMIT
     (sous-requête paginée), jamais un lookup par parcelle scannée."""
-    source = source or runs.current()
+    source = source or runs.cascade()   # C1 : :run alimente la cascade (d.run_label) ; v2run = score v2
     needle = q.strip().upper().replace(" ", "")
     ban_ok = _ban_ready(db)
     ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
@@ -2609,11 +2609,23 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
     `config/served_run.txt`) → toujours le scoring premium v2 (`dryrun_parcel_evaluations`),
     tier servi. Le fallback legacy `parcel_evaluations.status` (rail éteint M37) est SUPPRIMÉ —
     un seul chemin, une seule vérité. Le front envoyait déjà `?source=…` via le helper `q()`."""
-    return _q_v2_geojson(db, commune, limit, run_label=source or runs.current())
+    return _q_v2_geojson(db, commune, limit, run_label=source or runs.cascade())  # C1 : run cascade
 
 
 #: statuts de la matrice premium v2 (dryrun) — source de vérité du Socle V1.
 _Q_V2_STATUTS = ("chaude", "a_surveiller", "a_creuser", "ecartee", "exclue")
+
+
+def _cascade_run(db: Session, run_label: str | None = None) -> str:
+    """COHÉRENCE-RUN-1 (C1) — le run dont LIRE la cascade (dryrun_*) pour un run demandé. Le front
+    envoie `?source=<run servi>` (scoring) ; ce run peut RÉUTILISER l'étage 0 d'un autre (q_v14 →
+    q_v13_sources1). On résout donc TOUJOURS (pas seulement quand `run_label is None`) : sinon la
+    cascade passée en clair par l'URL court-circuitait l'alias et servait 0 ligne. Égal au run
+    demandé pour tout run qui possède sa propre cascade (cas normal)."""
+    from ..bascule_flux import resoudre_cascade_run
+    rl = run_label or runs.current()
+    resolu, _ = resoudre_cascade_run(db, rl)
+    return resolu or rl
 
 
 def _score_v2_run_id(db: Session) -> str | None:
@@ -2781,9 +2793,13 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
     Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
     l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées.
     M6 2a (§1.8) : l'adresse BAN entre dans les properties (cartes de résultats mode commune) —
-    lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo)."""
-    if run_label is None:
-        run_label = runs.current()
+    lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo).
+
+    COHÉRENCE-RUN-1 (C1) : ici `:run` alimente la CASCADE (dryrun d.run_label / cascade_results) et
+    `:v2run` le score v2 — deux params SÉPARÉS. Le run de cascade par défaut est `runs.cascade()`
+    (= scoring sauf run à étage 0 emprunté, q_v14 → q_v13_sources1) ; sinon la carte perdait ses
+    flags/événements sous un tel run (constat lot A)."""
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     # M6.2 perf (#1) : adresse BAN via la table matérialisée `parcel_adresse` (LEFT JOIN PK
     # indexé) quand elle existe — sinon repli sur le LATERAL par-parcelle (~5,4 s pour 21k en
     # commune). Les deux produisent la MÊME adresse (DISTINCT ON = même ORDER BY que le lateral).
@@ -2978,8 +2994,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
 
     M55-H point 5 : `groupes=True` préfixe l'ORDER BY par l'ordre des tiers (groupement) —
     le tri choisi devient secondaire, DANS chaque groupe."""
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     sort_key = sort if (sort or "rang") in _Q_V2_ORDERS else "rang"
     order = _Q_V2_ORDERS[sort_key or "rang"]
     if groupes:
@@ -3214,8 +3229,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     DOSSIERS (unité de prospection) : parmi les OPPORTUNITÉS v2, propriétaires uniques
     identifiés — clé = SIREN (personnes morales, DGFiP). Limite consignée : les personnes
     physiques n'ont pas d'identité en base (doctrine) → « sans identité »."""
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     params = {"c": commune, "run": run_label, "v2run": _score_v2_run_id(db),
               **(extra_params or {})}
     # FIX-FILTRES F2 — quand demandé (compteur du panneau /filtre), on ALIGNE le COMPTE sur la LISTE :
@@ -3323,8 +3337,7 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
 def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     head = db.execute(text(
         """SELECT p.id, p.idu, p.commune, p.surface_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
@@ -6526,8 +6539,7 @@ def _proprietaire_public(db: Session, idu: str) -> dict:
 
 
 def _premium_head(db: Session, parcel_id: int, run_label: str | None = None) -> dict | None:
-    if run_label is None:
-        run_label = runs.current()
+    run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     r = db.execute(text(
         "SELECT d.status AS status, d.completeness_score, "  # M129-B : matrice morte
         "       (d.status IN ('exclue', 'faux_positif_probable')) AS etage0, "

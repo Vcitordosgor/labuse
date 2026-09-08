@@ -26,7 +26,8 @@ _FICHIER = Path(__file__).resolve().parents[2] / "config" / "served_manifest.jso
 _CACHE_TTL_S = 3.0
 _cache: dict = {"val": None, "at": 0.0}
 
-CHAMPS = ("scoring_run", "residuel_run_seq", "mvt_run", "division_run", "promoted_at", "par")
+CHAMPS = ("scoring_run", "cascade_run", "residuel_run_seq", "mvt_run", "division_run",
+          "promoted_at", "par")
 
 
 def chemin() -> Path:
@@ -107,5 +108,23 @@ def division_run() -> str | None:
     m = lire()
     if m and m.get("division_run"):
         return m["division_run"]
+    from . import runs
+    return runs.current()
+
+
+def cascade_run() -> str | None:
+    """COHÉRENCE-RUN-1 (C1) — le run dont provient la CASCADE servie (étage 0 : écartées,
+    évaluations, résultats par couche). Un run peut RÉUTILISER l'étage 0 d'un autre run (le
+    scoring via `LABUSE_ETAGE0_RUN`, ex. q_v14 sur q_v13_sources1) : au SERVICE, les lecteurs de
+    cascade doivent alors résoudre CE run-là, pas le scoring. La valeur est EXPLICITE dans le
+    manifeste (la bascule l'écrit, vérifiée en base) — jamais un défaut implicite deviné à la
+    lecture (exigence Vic). Repli = scoring courant (`runs.current()`) tant que le manifeste ne le
+    porte pas : correct pour tout run qui possède sa propre cascade (cascade_run == scoring_run).
+    L'override DEV `LABUSE_SERVED_RUN` reste prioritaire (même doctrine que division_run/current)."""
+    if os.environ.get("LABUSE_SERVED_RUN"):
+        return os.environ["LABUSE_SERVED_RUN"]
+    m = lire()
+    if m and m.get("cascade_run"):
+        return m["cascade_run"]
     from . import runs
     return runs.current()
