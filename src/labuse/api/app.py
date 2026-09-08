@@ -5413,7 +5413,13 @@ def renouvellement_liste(commune: str | None = None,
     from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
     cap = _renouv_liste_cap()
     eff = cap if not limit else min(limit, cap)   # plafond EN CONFIG, jamais muet (cf. `cap` servi)
-    orders = {"score": "r.renouv_score DESC, r.idu",
+    # RECETTE-1 R7 : le tri par défaut « score » lisait `renouv_score DESC, r.idu` — SANS index →
+    # Parallel Seq Scan + top-N sort des 67 260 lignes du run À CHAQUE page (coût croissant avec
+    # l'OFFSET). Or `rang_segment` EST bâti comme rank() OVER (ORDER BY score DESC, idu) (cf.
+    # renouvellement.py) : trier par `r.rang_segment` (indexé `ix_renouv_rang`) donne l'ordre
+    # STRICTEMENT IDENTIQUE (idu unique ⇒ bijection) via Index Scan (mesuré 18 ms → 3,4 ms au fond
+    # de liste, sortie vérifiée identique). Aucun changement de schéma, aucune ligne réordonnée.
+    orders = {"score": "r.rang_segment",
               "sdp": "r.sdp_residuelle_m2 DESC NULLS LAST, r.idu",
               "surface": "r.surface_m2 DESC NULLS LAST, r.idu",
               "rang_commune": "r.commune, r.rang_commune"}

@@ -72,6 +72,13 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // (l'export répondait 200 à :8000 mais 404 en dev). ⚠ TRAIN 8 Caddy : à router aussi.
   '/argumentaire', '/lettre-zonage', '/pipeline-rarete', '/ortho', '/shortlist',
   '/audit', '/feedback', '/readyz', '/protection',
+  // RECETTE-1 R1/R2/R3 : les TROIS documents servis par le builder EXPORTS-2 (routes racine
+  // `/resume/{idu}.pdf`, `/apporteur/{idu}.pdf`, `/financier/{idu}.pdf` + `/financier/{idu}/
+  // questionnaire`) MANQUAIENT au proxy dev → en `npm run dev` le lien PDF sortait de la base
+  // '/socle/' (« public base URL of /socle/ ») et le questionnaire tombait sur vite (« Impossible
+  // de charger le questionnaire »). MÊME famille que /dossier, /pre-dossier (M70), /argumentaire.
+  // Prod OK (FastAPI même origine). ⚠ TRAIN 8 Caddy : à router aussi.
+  '/resume', '/apporteur', '/financier',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
