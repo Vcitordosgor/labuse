@@ -418,8 +418,9 @@ NON_SONDES: dict[str, str] = {
     # la table iris_rp ; la comparaison robinet à robinet est sans objet (aucun recalcul).
     "iris_quartier": "fiche (Autour) + étude de zone lisent le MÊME producteur "
                      "(ingestion/iris_rp.py, passe-plat iris_rp) — un seul chemin machine",
-    "tier_opportunite": "reconstruit à la bascule (portée run) — vérité tenue par le golden servi "
-                        "(qa/golden_check, GOLDEN-REGEN) sur les 119 parcelles",
+    "tier_opportunite": "run SERVI (codes par rang) : tenu par le golden (qa/golden_check, 119 "
+                        "parcelles) ; run à politique v2 (PALIERS-1) : SONDÉ par 4.7 — domaine ⊆ "
+                        "4 valeurs + cohérence palier↔p_raw (seuils config)",
     "run_label_servi": "pointeur du manifeste — tenu par V3a (tuiles = run servi) et le golden",
     "prix_neuf_vefa_acte_eur_m2": "scission 0-bis mesurée par verifier_scission_neuf (grain "
                                   "score_e) — la comparaison robinet à robinet viendra avec "
@@ -624,6 +625,39 @@ def verifier_categorielle(db) -> dict:
                     {"c": "verdict_couche", "r": "couche_verdict",
                      "t": f"tuiles fabriquées pour {run_mvt}", "a": f"run servi {run_servi}",
                      "m": "build-mvt (reconstruction détachée pas encore passée)"})
+    except Exception:  # noqa: BLE001
+        db.rollback()
+    # ── 4.7 PALIERS (PALIERS-1) : domaine tier_opportunite ⊆ {priorite, a_suivre,
+    #    sans_signal, ecartee} ET cohérence palier ↔ p_raw selon les seuils EN CONFIG.
+    #    Contrôle des QUATRE valeurs pour tout run à politique v2 (celui qui n'utilise plus
+    #    les codes par rang). Invariants tenables AVEC l'anti-churn (bornes de SORTIE) :
+    #      priorite ⇒ p_raw ≥ sortie_priorite ; a_suivre ⇒ sortie_a_suivre ≤ p_raw < entree_priorite ;
+    #      sans_signal ⇒ p_raw < entree_a_suivre. Écartée : p ignorée (cascade). ──
+    try:
+        from .scoring.p_v2.statuts import charger_paliers_config, PALIERS
+        cfg = charger_paliers_config()
+        runs_v2 = [r[0] for r in db.execute(text(
+            "SELECT run_id FROM parcel_p_score_v2 GROUP BY run_id "
+            "HAVING bool_and(tier = ANY(:dom)) AND bool_or(tier IN ('priorite','sans_signal'))"),
+            {"dom": list(PALIERS)}).all()]
+        for run_id in runs_v2:
+            mesures += 1
+            n_bad = db.execute(text(
+                "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r AND ("
+                "  (tier = 'priorite'    AND p_raw <  :sp) OR"
+                "  (tier = 'a_suivre'    AND (p_raw < :sa OR p_raw >= :ep)) OR"
+                "  (tier = 'sans_signal' AND p_raw >= :ea))"),
+                {"r": run_id, "sp": cfg.sortie_priorite, "sa": cfg.sortie_a_suivre,
+                 "ep": cfg.entree_priorite, "ea": cfg.entree_a_suivre}).scalar() or 0
+            n_hors = db.execute(text(
+                "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r "
+                "AND NOT (tier = ANY(:dom))"), {"r": run_id, "dom": list(PALIERS)}).scalar() or 0
+            if n_bad or n_hors:
+                trouves.append((
+                    "tier_opportunite", run_id, "parcel_p_score_v2.tier (palier stocké)",
+                    f"{n_bad} incohérents p_raw + {n_hors} hors domaine",
+                    "statuts.assign_paliers (seuils config)", "0 attendu",
+                    "table", "classe"))
     except Exception:  # noqa: BLE001
         db.rollback()
     ensure(db)   # un rollback interne peut avoir annulé le DDL posé dans la même transaction

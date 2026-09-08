@@ -479,6 +479,15 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     params = calibre_brulante(chaudes, params)
     tier = assign_tiers(work, params, prev_aligned)
 
+    # PALIERS-1 (Lot B) — pour la recette q_v14 SEULEMENT, le palier v2 REMPLACE le tier
+    # par rang : fonction PURE de p (seuils en config/scoring_client.yaml), déclassements →
+    # motifs (statuts.motifs_parcelle), réserve → drapeau (statuts.reserve_fonciere).
+    # p_raw INTACT ; rang/contributions conservés (tri, ×N). Le servi (m36) et q_v12 gardent
+    # le tier par rang — golden intact. Anti-churn hors ligne (recompute) ; ici entrée stricte.
+    if recette == "q_v14":
+        from .statuts import assign_paliers
+        tier = assign_paliers(work, None, None)
+
     libelles = None
     if recette in ("q_v12", "q_v14"):
         lib_extra = _rec.LIBELLES_QV12 if recette == "q_v12" else _rec.LIBELLES_QV14

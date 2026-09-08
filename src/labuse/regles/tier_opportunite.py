@@ -7,11 +7,18 @@ declarer(FicheRegle(
         "Modèle m36-l2f-2026 (scoring/p_v2) : WoE binning (min_count 200, monotonie PAV) + "
         "régression logistique (C=5.0, L2, seed 974), calibration ISOTONIQUE sur 2025, recalage "
         "d'intercept seul à chaque run (coefficients et binning INTACTS ; re-train = décision "
-        "humaine annuelle) ; artifact GELÉ sha256 (le pipeline REFUSE un mismatch) → tiers "
-        "brûlante/chaude/à_creuser/réserve/écartée par paliers ; rang = ordre dans le tier ; "
-        "stock = count(brûlante+chaude) par commune ; la couche verdict = aplat des tiers du run "
-        "servi. PAS de formule officielle : la justesse est la VALIDATION (walk-forward + golden "
-        "119 parcelles + garde de bascule)."),
+        "humaine annuelle) ; artifact GELÉ sha256 (le pipeline REFUSE un mismatch) → p_raw calibré. "
+        "PALIERS-1 (Vic 08/09/2026) — LE PALIER est une fonction PURE de p_raw (hors copropriété), "
+        "en probabilité ABSOLUE de vente sous 12 mois, seuils EN CONFIG (config/scoring_client.yaml "
+        "→ paliers ; statuts.assign_paliers) : Priorité p≥0,20 · À suivre 0,10≤p<0,20 · Sans signal "
+        "p<0,10 · Écartée = cascade étage 0. Anti-churn simple : ne descend que sous 0,18 (Priorité) "
+        "/ 0,09 (À suivre). Les ex-déclassements (bâti saturé, zone fermée, AU fermée, non "
+        "constructible, bâti révélé) deviennent des MOTIFS (statuts.motifs_parcelle), la réserve "
+        "foncière un DRAPEAU (SDP résiduelle décile sup, statuts.reserve_fonciere) — plus des tiers. "
+        "Le run SERVI (m36, codes par rang) reste tenu par le golden ; un run à politique v2 (q_v14) "
+        "est SONDÉ (sonde_circuit 4.7 : domaine ⊆ 4 valeurs + cohérence palier↔p_raw). PAS de "
+        "formule officielle : la justesse est la VALIDATION (walk-forward + golden 119 + garde-fou "
+        "précision de tête ≥ 20 % au K0)."),
     entrees=("p_model_* (cosia, sitadel, dvf, filosofi, bd_topo)", "parcel_v_score", "parcel_residuel"),
     classe="modele",
     fonction="src/labuse/scoring/p_v2/pipeline.py:run_score_v2",
