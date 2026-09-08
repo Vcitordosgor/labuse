@@ -94,7 +94,11 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         : <span className="col-[3/4] row-start-1 md:col-[4/5] md:row-auto" />}
 
       {/* producteur · licence (lien vers le texte de licence — audit §1.11) */}
-      <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4]">
+      {/* RECETTE-2 (S26) — sur large, FORCÉ en rangée 1 (`md:row-start-1`) : sans ça, comme il vient
+          APRÈS le lien ↗ (col 4) dans le DOM, l'auto-placement non-dense de la grille le renvoyait en
+          rangée 2 → le nom (gauche) s'affichait en haut et le producteur (droite) en bas de la cellule.
+          Il partage désormais la rangée du nom, les deux alignés (items-center) sur la même ligne. */}
+      <span className="col-[2/-1] min-w-0 truncate text-[12px] text-txt-dim md:col-[3/4] md:row-start-1">
         {s.provider}{s.provider && prod.length > 1 ? ' · ' : ''}
         {s.license_url
           ? <a data-source-licence href={s.license_url} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title="Texte de la licence">{lic}</a>
@@ -254,10 +258,12 @@ export function SourcesPage() {
             Toutes <span className="ml-1.5 font-mono text-[11px] opacity-70">{nTotal}</span>
           </button>
           <div className="relative">
+            {/* RECETTE-2 (S25) — liseré VERT autour du bouton (border-mint) + animation VERTE au survol
+                (hover-fill) + flèche vers le BAS quand la liste est ouverte (▾), vers la droite fermée (▸). */}
             <button data-sources-theme-toggle aria-expanded={themeOuvert} onClick={() => setThemeOuvert((o) => !o)}
-              className={`rounded-lg border px-3 py-1.5 text-[12.5px] transition-colors duration-quick ${
-                theme != null ? 'border-mint bg-mint text-mint-ink' : 'border-line text-txt-mut hover:border-line-2 hover:text-txt'}`}>
-              {theme != null ? `Thème : ${theme}` : 'Filtrer par thème'} {themeOuvert ? '▴' : '▾'}
+              className={`rounded-lg border px-3 py-1.5 text-[12.5px] ${
+                theme != null ? 'border-mint bg-mint text-mint-ink' : 'border-mint/60 text-txt hover-fill'}`}>
+              {theme != null ? `Thème : ${theme}` : 'Filtrer par thème'} {themeOuvert ? '▾' : '▸'}
             </button>
             {themeOuvert && (
               <div data-sources-themes className="absolute left-0 top-10 z-10 max-h-[60vh] w-64 overflow-y-auto rounded-lg border border-line bg-surface-1 p-1.5 shadow-lg">

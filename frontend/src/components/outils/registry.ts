@@ -115,7 +115,8 @@ export const MODULES: ModuleDef[] = [
 
   // 13. Prospection solaire — M26 : toits exposés + piscines (parcel_solar/PVGIS, gelé 11/07/2026).
   { key: 'prospection-solaire', num: 'M26', group: 'agir',
-    label: 'Prospection solaire', desc: 'Les toits bien exposés, les piscines à équiper.' },
+    /* RECETTE-2 (S27) — accroche SANS point final (décision Vic). */
+    label: 'Prospection solaire', desc: 'Les toits bien exposés, les piscines à équiper' },
 
   // 14. Densifier l'existant — §5 : clé interne `renouvellement` inchangée (URL/QA/tests/endpoint/table).
   { key: 'renouvellement', num: 'MR1', group: 'marche',
