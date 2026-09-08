@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, getProjets, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
@@ -79,10 +79,8 @@ export function Omnibox() {
   // projet du compte · commune · adresse. Nom et SIREN ouvrent Scan patrimoine à l'ÉTAT 2 (propriétaire
   // posé, via setM02Prefill) ; un projet ouvre le projet (setOpenProjet). La résolution propriétaire
   // RÉUTILISE la recherche self-contained de Scan patrimoine (modPatrimoineSearch) — pas une 4e impl.
-  const { select, setView, setCommune, commune, setToast, setM02Prefill, setModule, setOpenProjet } = useApp()
-  const qc = useQueryClient()
+  const { select, setView, commune, setToast, setM02Prefill, setModule } = useApp()
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
-  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const ouvrirScan = (siren: string) => { setM02Prefill(siren); setModule('patrimoine') }
   // M55-B point 3 : la recherche « lancée » (loupe ou Entrée sans suggestion) doit se VOIR —
   // spinner sobre dans le bouton pendant la résolution ; l'état vide reste le toast honnête.
@@ -121,7 +119,6 @@ export function Omnibox() {
     setSearching(true)
     try {
       const val = raw.trim()
-      const low = val.toLowerCase()
       const dg = val.replace(/\s+/g, '')
 
       // 1. IDU explicite → fiche
@@ -163,22 +160,11 @@ export function Omnibox() {
         if (owners[0]) { ouvrirScan(owners[0].siren); return }
       }
 
-      // 4. PROJET du compte (nom exact puis contient) → ouvre le projet
-      const projets = await qc.fetchQuery({ queryKey: ['projets'], queryFn: getProjets }).catch(() => [])
-      const proj = projets.find((p) => p.nom.toLowerCase() === low)
-        ?? (val.length >= 3 ? projets.find((p) => p.nom.toLowerCase().includes(low)) : undefined)
-      if (proj) { setOpenProjet({ id: proj.id, nom: proj.nom }); return }
+      // RECETTE-2 S5 (décision Vic) — « commune » et « nom de projet » RETIRÉS des formats
+      // acceptés de la barre : ni annoncés (placeholder/suggestions), ni résolus ici. Le
+      // sélecteur de communes du bandeau (« Toute l'île ») reste le chemin pour cadrer une commune.
 
-      // 5. COMMUNE (exacte ou préfixe) → périmètre. Robuste au timing : si la liste n'est pas encore en
-      // cache (recherche juste après le chargement), on la résout à la demande (même query key).
-      if (!/\d/.test(val)) {
-        const comList = communes.data ?? await qc.fetchQuery({ queryKey: ['communes'], queryFn: getCommunes }).catch(() => [])
-        const c = comList.find((x) => x.commune.toLowerCase() === low)
-          ?? (val.length >= 3 ? comList.find((x) => x.commune.toLowerCase().startsWith(low)) : undefined)
-        if (c) { setCommune(c.commune); setView('cartes'); return }
-      }
-
-      // 6. IDU partiel / recherche parcelle
+      // IDU partiel / recherche parcelle
       const qn = val.toUpperCase().replace(/\s+/g, '')
       const hit = geo.data?.features.find((f) => {
         const idu = String(f.properties?.idu ?? '').toUpperCase()
@@ -193,7 +179,7 @@ export function Omnibox() {
         const feats = await banAutocomplete(val).catch(() => [])
         if (feats[0]) { await onPickAddress({ label: feats[0].label, lon: feats[0].lon, lat: feats[0].lat, idu: feats[0].idu }); return }
       }
-      setToast(`Aucun résultat (IDU, SIREN, propriétaire, projet, commune ou adresse) pour « ${val} »`)
+      setToast(`Aucun résultat (IDU, SIREN, propriétaire ou adresse) pour « ${val} »`)
     } finally {
       setSearching(false)
     }
@@ -227,16 +213,14 @@ export function Omnibox() {
         data-omnibox
         onSelect={onPickAddress}
         onEnterRaw={onEnterRaw}
-        // RETOURS-16 V5 — l'omnibox propose les SIX grammaires à la frappe (suggest unifié) ;
-        // les types étendus atterrissent chacun chez eux (commune → périmètre, SIREN/propriétaire
-        // → Scan patrimoine état 2, projet → ouverture du projet).
-        grammaires={['adresse', 'cadastre', 'proprietaire', 'siren', 'commune', 'projet']}
+        // RECETTE-2 S5 (décision Vic) — l'omnibox propose les grammaires QUI ATTERRISSENT :
+        // adresse, référence cadastrale, propriétaire (PM) et SIREN. « commune » et « projet »
+        // sont retirés des formats acceptés (le cadrage commune passe par le sélecteur du bandeau).
+        grammaires={['adresse', 'cadastre', 'proprietaire', 'siren']}
         onPick={(it) => {
-          if (it.type === 'commune' && it.commune) { setCommune(it.commune); setView('cartes') }
-          else if ((it.type === 'siren' || it.type === 'proprietaire') && it.siren) ouvrirScan(it.siren)
-          else if (it.type === 'projet' && it.projet_id != null) setOpenProjet({ id: it.projet_id, nom: it.label })
+          if ((it.type === 'siren' || it.type === 'proprietaire') && it.siren) ouvrirScan(it.siren)
         }}
-        placeholder="Rechercher : IDU, SIREN, propriétaire, projet, adresse…"
+        placeholder="Rechercher : IDU, SIREN, propriétaire, adresse…"
         className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
       />
     </div>

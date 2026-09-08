@@ -6179,7 +6179,9 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
 
     def _champ(fid: str) -> dict:
         c = CHIFFRES.get(fid)
-        return {"id": fid, "libelle": c.libelle if c else fid, "unite": c.unite if c else "",
+        # RECETTE-2 (S3) — libellé CLIENT en français clair ; repli sur le libellé registre.
+        libelle = qf.LIBELLES_CLIENT.get(fid) or (c.libelle if c else fid)
+        return {"id": fid, "libelle": libelle, "unite": c.unite if c else "",
                 "type": c.type if c else "texte",
                 "domaine": list(c.domaine) if c and c.domaine else None,
                 "obligatoire": fid in qf.OBLIGATOIRES,

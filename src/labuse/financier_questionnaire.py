@@ -17,18 +17,50 @@ import json
 from sqlalchemy import text
 
 # ── les 4 écrans : (titre, [ids de champ du registre]) ───────────────────────────────────────
+# RECETTE-2 (S3, décision Vic) — on ne garde QUE les questions dont la réponse change le
+# document. QUATRE champs RETIRÉS car leur valeur n'apparaît nulle part dans le bilan : le TYPE de
+# stationnement (le bilan chiffre un coût par place, jamais le type), le « prix déjà refusé »
+# (purement informatif), la « commission d'apporteur » (aucun poste du bilan ne la porte), et
+# l'« apport » (le document renvoie explicitement le plan de financement à l'établissement prêteur).
 ECRANS: list[tuple[str, tuple[str, ...]]] = [
     ("Votre projet", ("scenario_saisi", "logements_vises_saisi", "typologie_moyenne_saisi",
-                      "part_sociale_saisi_pct", "stationnement_type_saisi")),
-    ("Le foncier", ("prix_demande_saisi_eur", "prix_refuse_saisi_eur", "frais_acquisition_saisi_pct",
-                    "commission_apporteur_saisi_eur", "bilan_demolition_eur", "bilan_depollution_eur")),
+                      "part_sociale_saisi_pct")),
+    ("Le foncier", ("prix_demande_saisi_eur", "frais_acquisition_saisi_pct",
+                    "bilan_demolition_eur", "bilan_depollution_eur")),
     ("Vos coûts", ("cout_construction_saisi_eur_m2", "honoraires_techniques_saisi_pct",
                    "vrd_saisi_eur_m2", "cout_place_stationnement_saisi_eur", "aleas_saisi_pct",
                    "taxe_amenagement_saisi_eur")),
     ("Vos conditions", ("prix_sortie_saisi_eur_m2", "prix_vente_bailleur_saisi_eur_m2",
                         "marge_visee_saisi_pct", "regime_tva_saisi", "duree_portage_saisi_mois",
-                        "apport_saisi_eur", "taux_apport_saisi_pct")),
+                        "taux_apport_saisi_pct")),
 ]
+
+# RECETTE-2 (S3) — LIBELLÉS CLIENT du questionnaire, en français clair (les libellés du registre
+# portent des suffixes de traçabilité « (saisi) / (bilan) / (saisi, %) » — jargon interne à ne
+# jamais montrer au porteur). L'unité est ajoutée par le front (« (€/m²) »…) : le libellé ne la
+# répète pas. Un id absent de cette carte retombe sur le libellé registre (garde).
+LIBELLES_CLIENT: dict[str, str] = {
+    "scenario_saisi": "Scénario du projet",
+    "logements_vises_saisi": "Nombre de logements visés",
+    "typologie_moyenne_saisi": "Typologie moyenne (T2, T3…)",
+    "part_sociale_saisi_pct": "Part de logement social ou intermédiaire",
+    "prix_demande_saisi_eur": "Prix demandé pour le terrain",
+    "frais_acquisition_saisi_pct": "Frais d'acquisition (notaire, droits)",
+    "bilan_demolition_eur": "Coût de démolition",
+    "bilan_depollution_eur": "Dépollution et étude de sol",
+    "cout_construction_saisi_eur_m2": "Coût de construction",
+    "honoraires_techniques_saisi_pct": "Honoraires techniques (architecte, bureaux d'études)",
+    "vrd_saisi_eur_m2": "VRD et raccordements",
+    "cout_place_stationnement_saisi_eur": "Coût par place de stationnement",
+    "aleas_saisi_pct": "Provision pour aléas",
+    "taxe_amenagement_saisi_eur": "Taxe d'aménagement",
+    "prix_sortie_saisi_eur_m2": "Prix de vente prévu des logements",
+    "prix_vente_bailleur_saisi_eur_m2": "Prix de vente au bailleur social",
+    "marge_visee_saisi_pct": "Marge visée",
+    "regime_tva_saisi": "Régime de TVA",
+    "duree_portage_saisi_mois": "Durée de portage",
+    "taux_apport_saisi_pct": "Taux d'emprunt",
+}
 
 #: tous les ids de champ, dans l'ordre des écrans.
 CHAMPS: tuple[str, ...] = tuple(cid for _, ids in ECRANS for cid in ids)

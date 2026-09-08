@@ -1,6 +1,7 @@
 // CONNEXIONS-2 Lot 8 (C1) — la barre du bandeau résout IDU · SIREN/SIRET · nom de propriétaire ·
-// projet du compte · commune · adresse. Nom & SIREN ouvrent Scan patrimoine à l'ÉTAT 2 (propriétaire
-// posé) ; un projet ouvre le projet. Échoue sur l'ancien code (SIREN/nom/projet → toast « rien trouvé »).
+// adresse. Nom & SIREN ouvrent Scan patrimoine à l'ÉTAT 2 (propriétaire posé).
+// RECETTE-2 (S5, décision Vic) — « commune » et « nom de projet » sont RETIRÉS des formats acceptés :
+// les taper ne pose plus le périmètre ni n'ouvre le projet (le cadrage commune passe par le sélecteur).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -56,17 +57,20 @@ describe('CONNEXIONS-2 Lot 8 — omnibox multi-type', () => {
     expect(useApp.getState().m02Prefill).toBe('123456789')
   })
 
-  it('un nom de PROJET ouvre le projet', async () => {
+  it('un nom de PROJET n\'ouvre PLUS le projet (S5 — format retiré)', async () => {
     const { container } = renderOmnibox()
     await chercher(container, 'Mon projet test')
-    await waitFor(() => expect(useApp.getState().openProjet?.id).toBe(7))
+    // laisse le pipeline retomber (owner vide → adresse vide → toast) puis vérifie l'absence de résolution projet
+    await new Promise((r) => setTimeout(r, 50))
+    expect(useApp.getState().openProjet).toBeNull()
     expect(useApp.getState().module).toBeNull()
   })
 
-  it('une COMMUNE pose le périmètre (pas Scan patrimoine)', async () => {
+  it('une COMMUNE ne pose PLUS le périmètre (S5 — format retiré)', async () => {
     const { container } = renderOmnibox()
     await chercher(container, 'Saint-Paul')
-    await waitFor(() => expect(useApp.getState().filters.communes).toContain('Saint-Paul'))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(useApp.getState().filters.communes).not.toContain('Saint-Paul')
     expect(useApp.getState().module).toBeNull()
   })
 })
