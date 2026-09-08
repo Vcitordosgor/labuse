@@ -7,11 +7,17 @@ case « propriétaire joignable ». Émetteur = compte de l'utilisateur, non mod
 from __future__ import annotations
 
 from ..lignes import a, val
-from ..registre_fmt import fmt_eur, fmt_m, fmt_m2
+from ..registre_fmt import fmt_eur, fmt_eur_m2, fmt_m, fmt_m2
 from ..rendu import aside, esc, ligne_kv, table_kv
 
-IDS = ("surface_parcelle_m2", "zone_plu_famille", "emprise_batie_m2", "hauteur_bati_m",
-       "n_batiments", "type_proprietaire", "prix_achat_historique_eur", "distance_arret_m")
+# RECETTE-2 (S7) — un apporteur doit avoir la parcelle EN MAIN : au-delà de surface/zone/bâti, on
+# ajoute la SDP résiduelle + capacité, les contraintes (aléas, prescriptions ER/EBC/DPU, PEB) et le
+# prix de secteur (terrain nu + ancien). Ces ids existent déjà au catalogue (mêmes que le Résumé).
+IDS = ("surface_parcelle_m2", "zone_plu_famille", "statut_plu", "emprise_batie_m2", "hauteur_bati_m",
+       "n_batiments", "type_proprietaire", "prix_achat_historique_eur", "distance_arret_m",
+       "sdp_residuelle_m2", "capacite_logements", "aleas_parcelle_liste",
+       "er_emplacement_reserve", "ebc_classe", "dpu_perimetre", "peb_zone",
+       "prix_terrain_secteur_eur_m2", "prix_sortie_bati_eur_m2")
 
 # `appearance:auto` : les <input>/<textarea> deviennent des CHAMPS REMPLISSABLES avec
 # render_pdf(forms=True) sur les builds WeasyPrint qui émettent les widgets AcroForm ; sinon ils
@@ -46,14 +52,56 @@ def _sur_place(valeurs) -> str:
     return " · ".join(bits) or "terrain a priori nu"
 
 
+def _contraintes(valeurs) -> str:
+    """Une ligne « Contraintes » : aléas + prescriptions (ER/EBC/DPU) + zone de bruit (PEB). Vide → ''."""
+    bits: list[str] = []
+    liste = val(valeurs, "aleas_parcelle_liste") or []
+    natures = [x.get("nature") or x.get("libelle") for x in liste
+               if isinstance(x, dict) and (x.get("nature") or x.get("libelle"))]
+    bits += list(dict.fromkeys(natures))
+    if a(valeurs, "dpu_perimetre"):
+        bits.append("préemption (DPU)")
+    if a(valeurs, "er_emplacement_reserve"):
+        bits.append("emplacement réservé")
+    if a(valeurs, "ebc_classe"):
+        bits.append("espace boisé classé")
+    peb = val(valeurs, "peb_zone")
+    if peb:
+        bits.append(f"bruit d'aéroport (PEB {esc(str(peb))})" if not isinstance(peb, dict)
+                    else f"bruit d'aéroport (PEB {esc(str(peb.get('zone') or peb.get('libelle') or ''))})")
+    return " · ".join(b for b in bits if b)
+
+
 def _coup_d_oeil(valeurs, ctx) -> str:
     lignes = []
     if a(valeurs, "surface_parcelle_m2"):
         lignes.append(ligne_kv("Surface", fmt_m2(val(valeurs, "surface_parcelle_m2")), ""))
     if a(valeurs, "zone_plu_famille"):
-        lignes.append(ligne_kv("Zone", esc(f"{val(valeurs, 'zone_plu_famille')} — urbaine, constructible")
-                               if str(val(valeurs, "zone_plu_famille")).upper() in ("U", "AU") else esc(str(val(valeurs, "zone_plu_famille"))), ""))
+        plu = val(valeurs, "statut_plu")
+        suite = (" — " + esc(plu["libelle"])) if isinstance(plu, dict) and plu.get("libelle") else (
+            " — urbaine, constructible" if str(val(valeurs, "zone_plu_famille")).upper() in ("U", "AU") else "")
+        lignes.append(ligne_kv("Zone", esc(str(val(valeurs, "zone_plu_famille"))) + suite, ""))
     lignes.append(ligne_kv("Sur place", esc(_sur_place(valeurs)), ""))
+    # RECETTE-2 (S7) — SDP résiduelle + capacité : ce que l'apporteur peut annoncer comme potentiel.
+    if a(valeurs, "sdp_residuelle_m2"):
+        cap = f" · ~{esc(str(val(valeurs, 'capacite_logements')))} logements" if a(valeurs, "capacite_logements") else ""
+        lignes.append(ligne_kv("Potentiel", f"{fmt_m2(val(valeurs, 'sdp_residuelle_m2'))} de plancher résiduel{cap}", ""))
+    elif a(valeurs, "capacite_logements"):
+        lignes.append(ligne_kv("Potentiel", esc(f"~{val(valeurs, 'capacite_logements')} logements"), ""))
+    # RECETTE-2 (S7) — contraintes en une ligne (jamais un vide : ligne omise si rien).
+    contr = _contraintes(valeurs)
+    if contr:
+        lignes.append(ligne_kv("Contraintes", contr, ""))
+    # RECETTE-2 (S7) — prix de secteur : terrain nu et/ou ancien bâti (repères de négociation).
+    prix_bits = []
+    tn = val(valeurs, "prix_terrain_secteur_eur_m2")
+    if isinstance(tn, dict) and tn.get("prix_m2"):
+        prix_bits.append(f"terrain nu {fmt_eur_m2(tn['prix_m2'])}")
+    anc = val(valeurs, "prix_sortie_bati_eur_m2")
+    if isinstance(anc, dict) and anc.get("median"):
+        prix_bits.append(f"ancien {fmt_eur_m2(anc['median'])}")
+    if prix_bits:
+        lignes.append(ligne_kv("Prix de secteur", esc(" · ".join(prix_bits)), ""))
     if a(valeurs, "type_proprietaire"):
         lignes.append(ligne_kv("Propriétaire", esc(str(val(valeurs, "type_proprietaire")).split(" (SIREN")[0]), ""))
     prox = val(valeurs, "distance_arret_m")
@@ -70,30 +118,31 @@ def rendu(valeurs, ctx=None) -> str:
     ctx = ctx or {}
     idu = ctx.get("idu", "")
     adresse = ctx.get("adresse", "")
-    em = ctx.get("emetteur") or {}
     is_bati = ctx.get("is_bati", False)
     is_pm = ctx.get("is_pm", False)
     industriel = ctx.get("industriel_proche", False)
 
+    # RECETTE-2 (S7) — la date d'émission / validité (90 j) passe en TÊTE, discrète : c'est une
+    # métadonnée du brief, pas de l'identité de l'émetteur.
+    emis = ""
+    if ctx.get("emission"):
+        emis = (f'<p class="idu">Émis le {esc(ctx["emission"])}'
+                + (f" — valable 90 jours (jusqu'au {esc(ctx['validite'])})" if ctx.get("validite") else "")
+                + '</p>')
     h = ('<div class="confidential">Confidentiel — ne pas transmettre au propriétaire ni à des '
          'tiers.</div>'
          '<div class="brand"><span class="wordmark">LABUSE</span>'
          '<span class="kind">Brief apporteur</span></div>'
          '<h1>Un terrain à sonder</h1>'
          + (f'<p class="address">{esc(adresse)}</p>' if adresse else "")
-         + f'<p class="idu">{esc(idu)}</p>')
+         + f'<p class="idu">{esc(idu)}</p>'
+         + emis)
     # A-a — mention de non-mandat
     h += aside("<strong>Ce document ne vaut pas mandat.</strong> Vous n'êtes pas habilité à "
                "négocier, à faire une offre ni à engager l'émetteur.", "rose")
     h += "<h3>La parcelle en un coup d'œil</h3>" + _coup_d_oeil(valeurs, ctx)
-
-    # qui envoie — émetteur (compte, non modifiable) + date d'émission et validité (A-b)
-    em_lignes = [ligne_kv("Émetteur", esc(em.get("raison") or "(votre compte)"), ""),
-                 ligne_kv("Contact", esc(em.get("contact") or "—"), "")]
-    if ctx.get("emission"):
-        em_lignes.append(ligne_kv("Émis le", esc(ctx["emission"])
-                                  + (f" — valable jusqu'au {esc(ctx['validite'])} (90 jours)" if ctx.get("validite") else ""), ""))
-    h += "<h3>Qui vous envoie ce brief</h3>" + table_kv(em_lignes)
+    # RECETTE-2 (S7) — la section « Qui vous envoie ce brief » (émetteur/contact) est RETIRÉE
+    # (décision Vic). L'émetteur reste l'auteur du document, il n'a pas à se présenter dedans.
     h += ('<p class="note">Ce brief contient ce qui est public sur la parcelle. Ce qui manque, '
           'vous seul pouvez l\'obtenir : c\'est l\'objet des pages suivantes.</p>')
 

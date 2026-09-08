@@ -42,12 +42,30 @@ def _ctx(**kw):
     return base
 
 
-def test_confidentiel_non_mandat_et_emetteur():
+def test_confidentiel_non_mandat_et_emission():
     html = apporteur.rendu(_valeurs(), _ctx())
     assert "Confidentiel" in html and "Un terrain à sonder" in html
     assert "ne vaut pas mandat" in html                       # A-a
-    assert "Groupe Océan Promotion" in html                   # émetteur = compte
-    assert "90 jours" in html and "04/12/2026" in html        # A-b validité
+    # RECETTE-2 (S7) — la section « Qui vous envoie ce brief » est RETIRÉE (décision Vic) : ni
+    # titre, ni raison sociale de l'émetteur, ni ligne « Contact ». La date d'émission + validité
+    # 90 jours SURVIT, déplacée en tête (métadonnée du brief, pas identité de l'émetteur).
+    assert "Qui vous envoie" not in html
+    assert "Groupe Océan Promotion" not in html
+    assert "Émis le" in html and "90 jours" in html and "04/12/2026" in html
+
+
+def test_parcelle_enrichie_s7():
+    # RECETTE-2 (S7) — l'apporteur a la parcelle EN MAIN : contraintes + prix de secteur en plus.
+    v = _valeurs()
+    v["aleas_parcelle_liste"] = _V("aleas_parcelle_liste", [{"nature": "Mouvement de terrain"}])
+    v["dpu_perimetre"] = _V("dpu_perimetre", True)
+    v["prix_terrain_secteur_eur_m2"] = _V("prix_terrain_secteur_eur_m2", {"prix_m2": 320})
+    v["sdp_residuelle_m2"] = _V("sdp_residuelle_m2", 1200)
+    v["capacite_logements"] = _V("capacite_logements", 14)
+    html = apporteur.rendu(v, _ctx())
+    assert "Contraintes" in html and "Mouvement de terrain" in html and "préemption (DPU)" in html
+    assert "Prix de secteur" in html and "terrain nu" in html
+    assert "Potentiel" in html and "plancher résiduel" in html
 
 
 def test_champs_remplissables():
@@ -73,9 +91,12 @@ def test_industriel_proche_adapte_la_question_du_sol():
     assert "établissement classé" in avec
 
 
-def test_emetteur_absent_place_holder():
+def test_section_emetteur_retiree_s7():
+    # RECETTE-2 (S7) — même sans émetteur au contexte, aucune section « qui vous envoie » ni
+    # placeholder « (votre compte) » : la section entière a disparu.
     html = apporteur.rendu(_valeurs(), _ctx(emetteur=None))
-    assert "(votre compte)" in html
+    assert "(votre compte)" not in html
+    assert "Qui vous envoie" not in html
 
 
 def test_da_present_si_mutation():

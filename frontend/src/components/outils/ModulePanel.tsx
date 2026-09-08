@@ -1198,6 +1198,30 @@ const TEMPLATES: { key: string; label: string; corps: string }[] = [
   { key: 'libre', label: 'Libre', corps: '' },
 ]
 type Dest = { idu: string; commune: string; surface: number | null }
+
+// RECETTE-2 (S8) — substitution PURE d'un gabarit de courrier, exportée pour être verrouillée par test.
+// RÈGLE : un champ vide ne s'imprime JAMAIS (ni « — », ni « (—) », ni « à — ») dans une lettre qui part
+// dans une boîte aux lettres. Commune/surface absente → le SEGMENT entier disparaît, la phrase se
+// reformule sans lui. Les gabarits restent lisibles à l'écriture (aucun marqueur).
+export function remplirGabaritCourrier(tpl: string, parcelleCourt: string, commune: string, surfaceTxt: string): string {
+  const rep = (s: string, a: string, b: string) => s.split(a).join(b)
+  let s = rep(tpl, '{parcelle}', parcelleCourt)
+  s = rep(s, ' ({surface})', surfaceTxt ? ` (${surfaceTxt})` : '')
+  s = rep(s, '({surface})', surfaceTxt ? `(${surfaceTxt})` : '')
+  s = rep(s, '{surface}', surfaceTxt)
+  if (commune) {
+    s = rep(s, '{commune}', commune)
+  } else {
+    for (const pat of [', située à {commune}', ', à {commune}', ' située à {commune}', ' à {commune}', '{commune}'])
+      s = rep(s, pat, '')
+  }
+  return s
+    .replace(/\(\s*\)/g, '')
+    .replace(/ {2,}/g, ' ')
+    .replace(/ +([,.])/g, '$1')
+    .replace(/,\s*,/g, ',')
+    .replace(/ +\n/g, '\n')
+}
 // OUTILS-1 A4/B6 — les états internes (Demandé → Imprimé → Posté) ne sont PLUS exposés côté client
 // (décision Vic : le suivi d'exécution reste chez LABUSE). La timeline client a été retirée ; l'admin
 // (Tour de contrôle) garde le cycle complet.
@@ -1261,12 +1285,9 @@ export function M09() {
     setModele(k)
     setCorps(TEMPLATES.find((t) => t.key === k)?.corps ?? '')
   }
-  // substitution des variables (split/join = pas de dépendance à String.replaceAll / target ≥ es2021).
-  const rep = (s: string, a: string, b: string) => s.split(a).join(b)
-  const remplir = (tpl: string, d: Dest) => rep(rep(rep(tpl,
-    '{parcelle}', iduCourt(d.idu)),
-    '{commune}', d.commune || '—'),
-    '{surface}', d.surface != null ? `${fmtInt(d.surface)} m²` : '—')
+  // RECETTE-2 (S8) — substitution par la fonction pure (jamais de champ vide imprimé).
+  const remplir = (tpl: string, d: Dest) =>
+    remplirGabaritCourrier(tpl, iduCourt(d.idu), d.commune, d.surface != null ? `${fmtInt(d.surface)} m²` : '')
   const recapCommunes = () => {
     const c: Record<string, number> = {}
     dest.forEach((d) => { const k = d.commune || '—'; c[k] = (c[k] || 0) + 1 })
