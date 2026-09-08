@@ -128,6 +128,17 @@ table.kv td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .figure .cap { position: absolute; right: 8pt; bottom: 6pt; font-size: 7.5pt; color: var(--muted); }
 .figure .parcel { position: absolute; left: 46%; top: 44%; width: 10%; height: 12%; border: 2px solid var(--mint-ink); background: rgba(74,222,128,.25); transform: rotate(-38deg); }
 
+/* Brief apporteur (RECETTE-3 T1) — date d'émission, plan de situation, questionnaire */
+.emis { font-size: 8.5pt; color: var(--muted); margin: -10pt 0 14pt; }
+.plan { margin: 10pt 0 4pt; border: 1px solid var(--line); border-radius: 3pt; overflow: hidden; page-break-inside: avoid; }
+.plan img { display: block; width: 100%; height: auto; }
+.plan .ph { height: 56mm; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 8.5pt; background: repeating-linear-gradient(45deg,#fafbfa,#fafbfa 9px,#f2f5f2 9px,#f2f5f2 18px); }
+.plan .cap { font-size: 7.5pt; color: var(--muted); padding: 3pt 8pt; border-top: 1px solid var(--line); }
+.cle { display: inline-block; font-size: 6.8pt; font-weight: 700; letter-spacing: .04em; color: var(--mint-ink); border: 1px solid var(--mint-ink); border-radius: 2pt; padding: 0 3pt; margin-right: 5pt; vertical-align: 1.5pt; }
+.aide { font-size: 8.5pt; color: var(--muted); margin: 0 0 9pt; line-height: 1.45; }
+.duo { display: flex; gap: 12pt; }
+.duo > * { flex: 1; }
+
 /* formulaire (Apporteur) */
 .q { page-break-inside: avoid; margin: 0 0 9pt; }
 .q .l { font-size: 9.5pt; margin-bottom: 3pt; }

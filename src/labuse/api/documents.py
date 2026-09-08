@@ -63,9 +63,9 @@ def apporteur_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> 
     return rendre_document(db, idu, request, "apporteur", forms=True, marque=False)
 
 
-@router.get("/resume/{idu}.pdf")
-def resume_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
-    return rendre_document(db, idu, request, "resume")
+# RECETTE-3 (T2, décision Vic) — le document Résumé est SUPPRIMÉ : sa route /resume/{idu}.pdf
+# n'existe plus (aucun autre document ne l'appelait ; l'ex-redirection export.pdf pointe désormais
+# vers le Dossier). Reste Dossier · Financier · Apporteur (+ Flash via facturation, Pré-dossier ZIP).
 
 
 # ── redirections des routes anciennes → le document équivalent (Banquier + Argumentaire → Financier).

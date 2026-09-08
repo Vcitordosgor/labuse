@@ -191,6 +191,11 @@ export const CLIENT = {
     // honnêtement ce qu'il trie (la probabilité apprise, ex æquo départagés par la qualité).
     rang: 'Probabilité de vente sous 1 an',
     surface: 'Surface',
+    // RECETTE-3 (T3, décision Vic) — tri par défaut du listing FACTUEL : les parcelles adressées
+    // d'abord, puis celles où il reste le plus à bâtir (l'ancien défaut « surface » remontait des
+    // emprises géantes sans adresse ni intérêt pour un promoteur ou un agent).
+    potentiel: 'Potentiel',
+    potentielTip: 'Les parcelles adressées d’abord, puis celles où il reste le plus de plancher à bâtir — au lieu des plus grandes emprises (souvent sans adresse ni intérêt)',
     rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur dix ans de ventes réelles, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
     // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les

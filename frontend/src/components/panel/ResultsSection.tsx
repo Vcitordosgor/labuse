@@ -172,6 +172,13 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
   { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
   { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
+// RECETTE-3 (T3, décision Vic) — le listing FACTUEL : « Potentiel » par défaut (adressées d'abord,
+// puis SDP résiduelle) au lieu de « Surface » (qui remontait des emprises géantes sans adresse) ;
+// Surface reste disponible en second (inversible).
+const FACTUAL_SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
+  { key: 'potentiel', label: CLIENT.tri.potentiel, tip: CLIENT.tri.potentielTip },
+  { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
+]
 
 // M55-H point 5 (décision Vic) — ordre des GROUPES de la liste d'analyse (identique au CASE
 // SQL du serveur) : 4 tiers d'opportunité, puis potentiel épuisé (declasse_*), puis écartées.
@@ -191,13 +198,23 @@ const GROUPE_ORDER = (p: Pick<ParcelProps, 'etage0' | 'tier_v2'>): number => {
 // n'est appliqué QUE si `groupes` (tri « Probabilité de vente »/rang en mode analyse) ; les tris
 // de COLONNE (Surface ↓/↑) s'appliquent GLOBALEMENT → ordre monotone garanti sur tout le jeu.
 // Même sémantique que le serveur (_q_v2_list) : un seul comportement de tri, client et serveur.
-export type SortableRow = Pick<ParcelProps, 'etage0' | 'tier_v2' | 'mult_v2' | 'surface_m2' | 'rang_v2'> & { commune?: string }
+export type SortableRow = Pick<ParcelProps, 'etage0' | 'tier_v2' | 'mult_v2' | 'surface_m2' | 'rang_v2'>
+  & { commune?: string; adresse?: string | null; sdp_residuelle_m2?: number | null }
 export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupes: boolean): T[] {
   return rows.slice().sort((a, b) => {
     if (groupes) {
       const ga = GROUPE_ORDER(a)
       const gb = GROUPE_ORDER(b)
       if (ga !== gb) return ga - gb
+    }
+    // RECETTE-3 (T3) — « Potentiel » (défaut factuel) : adressées d'abord, puis SDP résiduelle, puis
+    // surface. Même sémantique que le serveur (_Q_V2_ORDERS['potentiel']) — le geojson porte adresse+SDP.
+    if (sort === 'potentiel') {
+      const aa = a.adresse ? 1 : 0, ba = b.adresse ? 1 : 0
+      if (aa !== ba) return ba - aa
+      const as = a.sdp_residuelle_m2 ?? 0, bs = b.sdp_residuelle_m2 ?? 0
+      if (as !== bs) return bs - as
+      return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
     }
     if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
     if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
@@ -214,6 +231,27 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
 // verdicts declasse_* (source unique ALL_TIER_META, jamais un littéral recopié).
 const EPUISE_COLOR = ALL_TIER_META['declasse_bati_sature'].color
 
+// RECETTE-3 (T4, décision Vic) — les QUATRE SEGMENTS du listing d'analyse, dans CET ordre. Chaque
+// parcelle garde son palier (chips ResultCard) ; la segmentation est une SECONDE lecture, par nature
+// du bien. Un pro qui a déposé un permis PRIME sur l'état du bien (segment 1).
+type SegKey = 'permis_pro' | 'terrain_nu' | 'bati_densifier' | 'reste'
+const SEGMENTS: { key: SegKey; label: string; hint: string }[] = [
+  { key: 'permis_pro', label: 'Un professionnel a déposé un permis',
+    hint: 'Un promoteur ou une société a obtenu un permis de construire sur cette parcelle de particulier (moins de 3 ans) — le signal le plus fort du modèle.' },
+  { key: 'terrain_nu', label: 'Terrain nu constructible',
+    hint: 'Rien de bâti (emprise < 5 %) et de la surface de plancher à bâtir.' },
+  { key: 'bati_densifier', label: 'Bâti à densifier',
+    hint: 'Déjà occupé, mais il reste de la surface de plancher constructible.' },
+  { key: 'reste', label: 'Le reste',
+    hint: 'Bâti au maximum ou sans potentiel résiduel identifié.' },
+]
+export function segmentOf(p: Pick<ParcelProps, 'permis_pro' | 'etat_bien'>): SegKey {
+  if (p.permis_pro) return 'permis_pro'
+  if (p.etat_bien === 'nu') return 'terrain_nu'
+  if (p.etat_bien === 'bati_encore') return 'bati_densifier'
+  return 'reste'
+}
+
 // Compteurs par tier — clés = codes du run servi (anciens codes aujourd'hui ; les 4 paliers
 // après bascule q_v14). Record<string> tolère les deux ; l'affichage résout les libellés.
 const TIER_ZERO: Record<string, number> = {
@@ -227,11 +265,15 @@ export function ResultsSection() {
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Mode FACTUEL (analyse OFF) : liste neutre, tri Surface seul, aucune ventilation d'opinion.
   const analyse = filters.analyseLabuse
-  // Tri par défaut (M5.1) : RANG P croissant — ×N / surface en options (analyse) ;
-  // factuel : Surface seul (les deux tris d'opinion sont retirés de ce mode).
-  const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'surface')
-  const sorts = analyse ? SORTS : SORTS.filter((s) => s.key === 'surface')
-  useEffect(() => { setSort(analyse ? 'rang' : 'surface') }, [analyse])
+  // Tri par défaut : analyse = RANG P (groupé par tier) ; factuel = POTENTIEL (RECETTE-3 T3,
+  // décision Vic) — adressées d'abord puis SDP résiduelle, au lieu de Surface qui remontait des
+  // emprises géantes sans adresse. Surface reste en second (inversible) dans les deux modes.
+  const [sort, setSort] = useState<SortKey>(analyse ? 'rang' : 'potentiel')
+  const sorts = analyse ? SORTS : FACTUAL_SORTS
+  useEffect(() => { setSort(analyse ? 'rang' : 'potentiel') }, [analyse])
+  // RECETTE-3 (T4) — état repli des 4 segments (analyse) : « le reste » replié par défaut.
+  const [openSeg, setOpenSeg] = useState<Record<SegKey, boolean>>({
+    permis_pro: true, terrain_nu: true, bati_densifier: true, reste: false })
   // M69 A — GROUPEMENT PAR TIER : appliqué UNIQUEMENT pour le tri par défaut « Probabilité de
   // vente » (rang) en mode analyse (M55-H p5). Un tri de COLONNE (Surface) doit produire un ordre
   // GLOBAL monotone → on lève le groupement. Ce booléen pilote client ET serveur (un seul point).
@@ -480,7 +522,38 @@ export function ResultsSection() {
               } />
           </div>
         )}
-        {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} factual={!analyse} />)}
+        {/* RECETTE-3 (T4) — mode ANALYSE : la liste est organisée en 4 SEGMENTS repliables (ordre
+            fixe), le compte de chacun servi par /filtre (segments, exact hors étage 0). Chaque carte
+            garde son palier. Mode FACTUEL : liste plate (neutre). */}
+        {!loading && !error && (analyse ? (
+          SEGMENTS.map((seg) => {
+            const rows = shown.filter((p) => segmentOf(p) === seg.key)
+            const total = uni.data?.segments?.[seg.key] ?? rows.length
+            const open = openSeg[seg.key]
+            return (
+              <div key={seg.key} className="shrink-0">
+                <button data-segment={seg.key} onClick={() => setOpenSeg((s) => ({ ...s, [seg.key]: !s[seg.key] }))}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
+                      className={`shrink-0 text-txt-dim transition-transform ${open ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+                    <Tip tip={seg.hint} className="min-w-0"><span className="truncate text-[12px] font-medium text-txt">{seg.label}</span></Tip>
+                  </span>
+                  <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(total)}</span>
+                </button>
+                {open && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    {rows.length === 0
+                      ? <p className="px-3 py-1.5 text-[10.5px] text-txt-dim">{total > 0 ? 'Chargez plus de résultats pour voir ces parcelles →' : 'Aucune parcelle dans ce segment.'}</p>
+                      : rows.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
+                  </div>
+                )}
+              </div>
+            )
+          })
+        ) : (
+          shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} factual={true} />)
+        ))}
       </div>
 
       <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line py-3">

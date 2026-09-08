@@ -49,18 +49,36 @@ def test_znieff_couverte_et_type_distingue():
     assert "type II" in d2 and "Grand Étang" in d2
 
 
-def test_peb_retire_des_couvertes_et_passe_en_non_couvert():
-    # M137-T — couvert-vide corrigé : `peb` déclaré couvert mais 0 ligne en base = faux RAS sur le
-    # bruit aérien. Retiré des couvertes, listé en NON COUVERT avec les autres manques de l'audit.
-    assert "peb" not in sv._KINDS
+def test_peb_remis_dans_les_couvertes():
+    # RECETTE-3 (T5, décision Vic) — RENVERSE M137-T : la couche `peb` est désormais peuplée
+    # (aéroport Roland Garros, zones A/B/C/D en base) → REMISE dans _KINDS et RETIRÉE du NON COUVERT.
+    assert "peb" in sv._KINDS
     joined = " · ".join(sv.NON_COUVERT)
-    for attendu in ("Exposition au Bruit", "Procédures PLU", "Canalisations", "hors GPU"):
+    assert "Exposition au Bruit" not in joined              # servi → sorti du NON COUVERT
+    for attendu in ("Procédures PLU", "Canalisations", "hors GPU"):
         assert attendu in joined
     # LOT3 (OUTILS-FINALE) — RNIC copro RETIRÉ du NON COUVERT : il EST ingéré (rnic_coproprietes) et
     # surfacé (CoproprietesBlock). L'y laisser était un faux « non couvert » (comme ZNIEFF avant M137-U).
     assert not any("Copropriété" in x or "RNIC" in x for x in sv.NON_COUVERT)
     # SUP : chiffre honnête (8 familles présentes sur 417) ; l'ancien « ~17 familles » (faux) a disparu.
     assert "8 familles" in joined and "417" in joined and "17 familles" not in joined
+
+
+def test_recette3_nouveaux_kinds_couverts_et_decodes():
+    # RECETTE-3 (T5) — les six couches rajoutées sont dans _KINDS et décodées en effet concret.
+    for k in ("dpu", "dpf", "zone_humide", "ens", "plu_gpu_prescription", "peb"):
+        assert k in sv._KINDS
+    assert "préemption" in sv._detail("dpu", "dpu", "DPU", None).lower()
+    assert "renforcé" in sv._detail("dpu", "dpu_renforce", None, None).lower()
+    assert "recul" in sv._detail("dpf", "cours_eau", "Ravine Vincendo", None).lower()
+    assert "Zone humide" in sv._detail("zone_humide", "habitats_2011", "bassin", None)
+    assert "Espace naturel protégé" in sv._detail("ens", "reserve_naturelle", "Etang de Saint-Paul", None)
+    # plu_gpu_prescription : seuls 01 (EBC) et 05 (ER) sont des pièges ; les autres typepsc filtrés au rendu.
+    assert "boisé classé" in sv._detail("plu_gpu_prescription", "01", "Espaces Boisés Classés", None).lower()
+    assert "Emplacement réservé" in sv._detail("plu_gpu_prescription", "05", None, {"libelle": "Emplacement réservé"})
+    assert sv._PRESCRIPTION_PIEGE == {"01", "05"}
+    # PEB décodé par zone (attrs.zone prioritaire sur subtype).
+    assert "Zone C" in sv._detail("peb", "c", "PEB Roland Garros", {"zone": "C"})
 
 
 # ───────────────────────── flux DB ─────────────────────────
@@ -107,7 +125,8 @@ def test_duediligence_reporte_non_couvert_sur_le_lot(db_session):
     s.flush()
     out = modules.duediligence(modules.DueDiligenceIn(refs=idu), s)
     assert out["non_couvert"] == sv.NON_COUVERT
-    assert any("Exposition au Bruit" in x for x in out["non_couvert"])   # PEB dit, jamais silencieux
+    # RECETTE-3 (T5) — le PEB est désormais servi (kind), le manque témoin devient les canalisations.
+    assert any("Canalisations" in x for x in out["non_couvert"])        # manque dit, jamais silencieux
     it = out["items"][0]
     assert "q_score" not in it and "a_score" not in it                  # vestige mort retiré du SELECT
 

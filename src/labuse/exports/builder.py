@@ -14,7 +14,7 @@ from datetime import date
 from ..registre.valeur import Valeur
 from . import archive, numeros
 from .blocs import (apporteur, autour, bilan, commune, financier, identite, marche, potentiel,
-                    reseaux, resume, risques, sources, zonage)
+                    reseaux, risques, sources, zonage)
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, page_html, render_pdf
 
@@ -24,7 +24,6 @@ MODELE_VERSION = "2.0"
 _LABEL = {
     "dossier": ("Dossier parcelle", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
     "flash": ("Rapport Flash", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
-    "resume": ("Fiche parcelle — résumé", ""),
     "financier": ("Bilan de l'opération", ""),
     "apporteur": ("Brief apporteur", ""),
 }
@@ -34,8 +33,6 @@ _FOOT_DOSSIER = ("Document d'information établi à partir de données publiques
                  "juridique. Données LABUSE au {au}.")
 _FOOT = {
     "dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER,
-    "resume": ("Résumé du Dossier parcelle. Document d'information établi sur des données "
-               "publiques ; ne remplace pas un certificat d'urbanisme. Données LABUSE au {au}."),
     "financier": ("Bilan indicatif établi sur des données publiques et sur les hypothèses saisies "
                   "par le porteur (en ambre). Ni un prix, ni une promesse, ni un conseil. Il ne "
                   "remplace pas un bilan promoteur professionnel. Données LABUSE au {au}."),
@@ -45,12 +42,11 @@ _FOOT = {
 
 #: composition de chaque document = la suite ordonnée des blocs (catalogue EXPORTS-SOURCES).
 #: Le Dossier = 10 sections ; le Flash = le Dossier SANS la section 9 (bilan), même builder.
-#: Le Résumé = les mêmes ids en sélection courte (un module compact, 3 pages).
+#: RECETTE-3 (T2, décision Vic) — le document Résumé est SUPPRIMÉ (route, builder, bloc, bouton).
 _DOSSIER = [identite, zonage, potentiel, risques, marche, reseaux, autour, commune, bilan, sources]
 DOCUMENTS: dict[str, list] = {
     "dossier": _DOSSIER,
     "flash": [b for b in _DOSSIER if b is not bilan],
-    "resume": [resume],
     "financier": [financier],
     "apporteur": [apporteur],
 }
@@ -70,7 +66,7 @@ class ResultatDoc:
 
 #: documents « au fil » (pas de page de garde pleine) : en-tête compact (Résumé, Financier).
 #: L'Apporteur rend son propre en-tête (confidentiel + « Un terrain à sonder ») → aucun en-tête ici.
-_COVER_COMPACTE = {"resume", "financier"}
+_COVER_COMPACTE = {"financier"}
 _COVER_AUCUNE = {"apporteur"}
 
 
@@ -188,20 +184,80 @@ def _emetteur(db, compte_id: int | None) -> dict | None:
     return None
 
 
+def _ref_courte(idu: str) -> str:
+    """Référence cadastrale courte lisible (« CY 0044 ») depuis l'IDU (section + numéro)."""
+    return f"{idu[8:10]} {idu[10:14]}" if len(idu) >= 14 else idu
+
+
+def _apporteur_voisines(db, idu: str) -> dict:
+    """RECETTE-3 (T1) — parcelles voisines du MÊME propriétaire (feature Blocs fonciers) : pour la
+    ligne « À côté » du coup d'œil ET l'overlay du plan de situation. Vide si la parcelle n'est
+    dans aucun bloc (propriétaire non morale, parcelle isolée…)."""
+    from sqlalchemy import text
+    try:
+        rows = db.execute(text(
+            """WITH b AS (SELECT bloc_id FROM parcel_bloc_membres WHERE idu = :idu LIMIT 1)
+               SELECT m.idu, m.surface_m2 FROM parcel_bloc_membres m JOIN b ON b.bloc_id = m.bloc_id
+               WHERE m.idu <> :idu ORDER BY m.surface_m2 DESC NULLS LAST, m.idu"""),
+            {"idu": idu}).mappings().all()
+    except Exception:  # noqa: BLE001 — table absente / base de test : pas de voisines, jamais d'erreur
+        return {"n": 0, "membres": [], "surface_totale_m2": None}
+    membres = [{"idu": r["idu"], "ref": _ref_courte(r["idu"]),
+                "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None} for r in rows]
+    total = sum(m["surface_m2"] or 0 for m in membres) or None
+    return {"n": len(membres), "membres": membres, "surface_totale_m2": total}
+
+
+def _apporteur_plan(db, idu: str, voisines: dict) -> dict | None:
+    """RECETTE-3 (T1) — plan de situation : ortho IGN + contour de la parcelle (mint) et overlay des
+    voisines du même propriétaire. Réutilise `plan_ortho` (point d'appel unique des tuiles). Réseau
+    indisponible / parcelle sans géométrie → None (le brief imprime un cadre neutre, jamais d'erreur)."""
+    from sqlalchemy import text
+    try:
+        gj = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+    except Exception:  # noqa: BLE001
+        return None
+    if not gj:
+        return None
+    extra = None
+    ids = [m["idu"] for m in (voisines or {}).get("membres", [])]
+    if ids:
+        try:
+            extra = db.execute(text("SELECT ST_AsGeoJSON(ST_Collect(geom)) FROM parcels WHERE idu = ANY(:ids)"),
+                               {"ids": ids}).scalar()
+        except Exception:  # noqa: BLE001
+            extra = None
+    try:
+        from ..api.plan_situation import plan_ortho
+        from ..flash.report import storage_dir
+        res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", extra_geojson=extra, zoom_delta=-1)
+    except Exception:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur du document
+        return None
+    if not res.get("ok"):
+        return None
+    import base64
+    return {"img": "data:image/jpeg;base64," + base64.b64encode(res["jpeg"]).decode(),
+            "attribution": res.get("attribution")}
+
+
 def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | None) -> dict:
-    """Contexte de l'Apporteur : émetteur (compte), dates d'émission/validité (90 j), et les
-    drapeaux des blocs adaptatifs (bâti / personne morale / usage industriel proche)."""
+    """Contexte de l'Apporteur : émetteur (compte), dates d'émission/validité (90 j), les drapeaux
+    des blocs adaptatifs (bâti / personne morale / usage industriel proche), les voisines du même
+    propriétaire et le plan de situation (RECETTE-3 T1)."""
     import json
     from datetime import timedelta
     lb = fiche.get("le_bien") or {}
     pm = fiche.get("proprietaire_moral")
     industriel = "ICPE" in json.dumps(fiche.get("lines") or [], ensure_ascii=False)
+    voisines = _apporteur_voisines(db, idu)
     return {
         "idu": idu, "adresse": fiche.get("adresse") or "", "emetteur": _emetteur(db, compte_id),
         "emission": f"{jour:%d/%m/%Y}", "validite": f"{jour + timedelta(days=90):%d/%m/%Y}",
         "is_bati": bool(lb.get("nb_batiments") or lb.get("emprise_batie_m2")),
         "is_pm": isinstance(pm, dict) and bool(pm),
         "industriel_proche": industriel,
+        "voisines": voisines,
+        "plan": _apporteur_plan(db, idu, voisines),
     }
 
 

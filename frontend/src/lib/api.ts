@@ -149,6 +149,8 @@ export interface FiltreReponse {
   compte: number
   total: number
   tiers: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
+  // RECETTE-3 (T4) — comptes des 4 segments du listing d'analyse (hors étage 0, ordre fixe).
+  segments?: { permis_pro: number; terrain_nu: number; bati_densifier: number; reste: number }
   opportunites: number
   opportunites_evenement: number
   dossiers_opportunites: number
@@ -187,7 +189,8 @@ export const getZonageZones = (communes: string[]) =>
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
 // M55-H point 4 : 'surface_asc' = le sens inverse du tri Surface (re-clic sur la pill)
-export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune'
+// RECETTE-3 (T3) : 'potentiel' = tri par défaut du listing FACTUEL (adressées, puis SDP résiduelle).
+export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')

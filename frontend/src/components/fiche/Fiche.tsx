@@ -1632,14 +1632,13 @@ export function Fiche({ idu }: { idu: string }) {
                   (PDF, Dossier, Financier, Pré-dossier…) sont conservées. */}
               <div className="sec"><span>EXPORTS</span><i /></div>
               {/* RETOURS-9 (Q8.3) — deux lignes de trois : PDF · Dossier · Finance / Argumentaire · Courrier · Pré-dossier PC. */}
-              {/* EXPORTS-2 lot 8 — les CINQ documents servis par le builder unique, dans l'ordre :
-                  Dossier · Résumé · Financier · Apporteur · Pré-dossier PC. Plus aucun bouton PDF /
-                  Banquier / Argumentaire / Projet / Lettre de zonage. (Courrier reste, hors documents.) */}
+              {/* EXPORTS-2 lot 8 — les documents servis par le builder unique, dans l'ordre :
+                  Dossier · Financier · Apporteur · Pré-dossier PC. Plus aucun bouton PDF /
+                  Banquier / Argumentaire / Projet / Lettre de zonage. (Courrier reste, hors documents.)
+                  RECETTE-3 (T2, décision Vic) — le bouton « Résumé » est SUPPRIMÉ (document retiré). */}
               <GrilleOutils cols={3}>
                 <DossierTile idu={idu} />
                 {/* RECETTE-1 R28 — infobulles au survol retirées des tuiles d'export (le nom suffit). */}
-                <OutilCase nom="Résumé" data-resume href={`/resume/${idu}.pdf`}
-                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></svg>} />
                 <BanquierButton idu={idu} />
                 <OutilCase nom="Apporteur" data-apporteur href={`/apporteur/${idu}.pdf`}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>} />

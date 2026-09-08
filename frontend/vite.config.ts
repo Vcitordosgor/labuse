@@ -78,7 +78,7 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // '/socle/' (« public base URL of /socle/ ») et le questionnaire tombait sur vite (« Impossible
   // de charger le questionnaire »). MÊME famille que /dossier, /pre-dossier (M70), /argumentaire.
   // Prod OK (FastAPI même origine). ⚠ TRAIN 8 Caddy : à router aussi.
-  '/resume', '/apporteur', '/financier',
+  '/apporteur', '/financier',   // RECETTE-3 (T2) : '/resume' retiré (document Résumé supprimé)
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
