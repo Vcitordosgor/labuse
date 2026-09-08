@@ -15,7 +15,6 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getFiche, getRenouvListe, RENOUV_PAGE } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
-import { verdictMeta } from '../../lib/status'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
@@ -223,11 +222,10 @@ export function DensifierTablePanel() {
                       onChange={(e) => setSel(e.target.checked ? new Set(visibles.map((i) => i.idu)) : new Set())} />
                   </th>
                   <th className="px-2 py-1.5">Parcelle</th>
-                  {/* LOT12a — DEUX grandeurs DISTINCTES, étiquetées : le Classement est le tier canonique
-                      (parcel_p_score_v2, même partout) ; le Score est la note de densification (0-100,
-                      parcel_renouvellement). Le score n'EST PAS le tier. */}
-                  <th className="px-2 py-1.5" title="Classement canonique — le tier de la parcelle (même que la fiche et la carte). Différent du score de densification.">Classement</th>
-                  <th className="px-2 py-1.5 text-right" title="Score de densification 0-100 (potentiel de renouvellement) — une grandeur DIFFÉRENTE du classement.">Score densif.</th>
+                  {/* RECETTE-1 R8 — colonne « Classement » (pastille de palier, scoring q_v14) RETIRÉE :
+                      le classement ne s'affiche que dans « Demander à LABUSE » et la fiche. Reste le
+                      « Score densif. », métrique PROPRE à cet outil (parcel_renouvellement, 0-100). */}
+                  <th className="px-2 py-1.5 text-right" title="Score de densification 0-100 (potentiel de renouvellement) — métrique propre à cet outil.">Score densif.</th>
                   {/* RETOURS-11F M9 — capacité NETTE des contraintes (PPR rouge, pente > 30 %, ravine) :
                       c'est ELLE qui pilote le score de densification. La SDP brute est en infobulle. */}
                   <th className="px-2 py-1.5 text-right" title="SDP résiduelle NETTE des contraintes physiques (PPR zone rouge, pente > 30 %, ravine). C'est la capacité réellement mobilisable — et ce qui classe la parcelle.">SDP nette</th>
@@ -253,11 +251,7 @@ export function DensifierTablePanel() {
                         onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
                     </td>
                     <td className="px-2 py-1.5 font-mono text-txt">{it.idu}</td>
-                    <td className="px-2 py-1.5">
-                      {(() => { const v = verdictMeta(null, it.tier_v2, it.etage0); return (
-                        <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ background: `${v.color}22`, color: v.color }}>{v.label}</span>
-                      ) })()}
-                    </td>
+                    {/* RECETTE-1 R8 — cellule « Classement » (pastille de palier) retirée (cf. en-tête). */}
                     <td className="px-2 py-1.5 text-right font-medium" style={{ color: TOKENS.renouv }}>{it.renouv_score}</td>
                     {/* SDP NETTE + puce « −N % » quand une contrainte a été déduite (brute en infobulle) */}
                     <td className="px-2 py-1.5 text-right text-txt-mut" title={it.contrainte_pct ? `SDP brute ${fmtM2(it.sdp_residuelle_m2)} — ${it.contrainte_pct} % déduits (PPR rouge, pente > 30 %, ravine)` : undefined}>

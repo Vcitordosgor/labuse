@@ -60,7 +60,8 @@ function Banner({ children }: { children: React.ReactNode }) {
 
 // RETOURS-5 T4.5 — `hoverFull` : survol PLEIN (dégradé vert, encre sombre) sur les lignes de parcelles du
 // Scan patrimoine, sans changer le survol léger des autres outils qui réutilisent Row.
-function Row({ idu, right, sub, fiche, hoverFull }: { idu: string; right: React.ReactNode; sub?: string; fiche?: [string, string][]; hoverFull?: boolean }) {
+// RECETTE-1 R8 — `right` (pastille de palier) devient FACULTATIF : les outils ne l'affichent plus.
+function Row({ idu, right, sub, fiche, hoverFull }: { idu: string; right?: React.ReactNode; sub?: string; fiche?: [string, string][]; hoverFull?: boolean }) {
   const { select, moduleFiche, setModuleFiche, module } = useApp()
   return (
     <button
@@ -351,9 +352,9 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                 <input type="checkbox" data-scan-parc-sel className="h-3 w-3 shrink-0 accent-mint" checked={sel.has(idu)}
                   onChange={() => setSel((s) => { const n = new Set(s); n.has(idu) ? n.delete(idu) : n.add(idu); return n })} />
                 <div className="min-w-0 flex-1">
+                {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée du Scan patrimoine. */}
                 <Row idu={idu} hoverFull
                   sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
-                  right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={null} />}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
                 </div>
@@ -1559,8 +1560,8 @@ export function M10() {
               return (
               <div key={k} data-diligence-item className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m²`}
-                    right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />} />
+                  {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de Pièges & risques. */}
+                  <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m²`} />
                 </div>
                 {/* Point 42 : score de risque consolidé (déterministe) */}
                 <div className="mt-1.5 flex items-center gap-2 text-[11px]">

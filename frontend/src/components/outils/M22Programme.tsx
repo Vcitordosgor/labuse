@@ -9,7 +9,6 @@ import { CommuneScope } from './ModulePanel'
 import { Tip } from '../Tip'
 import { DestinationBadge, DestinationSelect, useDestinationsRef } from './DestinationSelect'
 import { ParcelPicker } from './ParcelPicker'
-import { TierBadge } from './TierBadge'
 
 /** M22 · FAISABILITÉ — 2 entrées (M15-C) :
  *  · « Par critères » (SENS 2) : on décrit un programme, LABUSE propose les parcelles qui matchent.
@@ -225,11 +224,10 @@ export function M22() {
                         )}
                       </div>
                     </div>
+                    {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'outil
+                        Faisabilité ; seule reste la marge de capacité (métrique de faisabilité). */}
                     <div className="shrink-0 text-right">
                       <div className="num-key text-sm text-mint">×{i.marge_capacite}</div>
-                      <div>
-                        <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
-                      </div>
                     </div>
                     </button>
                   </div>

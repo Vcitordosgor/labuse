@@ -54,5 +54,37 @@ La « lenteur » perçue correspond donc soit au **démarrage à froid de l'API 
 
 ---
 
-## LOT 2 à 10 — à faire
-*(non entamés — le mandat demande de rendre compte après le Lot 1)*
+## LOT 2 — Doctrine du scoring  *(commit 2)*
+
+| # | Point | État | Preuve |
+|---|-------|------|--------|
+| R8 | Le scoring ne s'affiche que sur demande | **corrigé** | pastilles retirées de 7 outils (liste ci-dessous) |
+
+**Règle appliquée.** La pastille de palier (Priorité / À suivre / Sans signal / Écartée = `TierBadge` / `verdictMeta`) et tout classement issu de q_v14 ne restent que dans **deux** endroits :
+1. le parcours « Demander à LABUSE » = la liste d'analyse (`ResultsSection.tsx:34`, affichée seulement en mode analyse ; le mode factuel était déjà neutre) ;
+2. la **fiche parcelle** (`Fiche.tsx:627`, bloc verdict + `ScoreV2Block`).
+
+**Endroits nettoyés (pastille retirée) :**
+| Outil | Fichier:ligne (avant) | Ce qui a été retiré |
+|-------|----------------------|---------------------|
+| Étudier un bien | `EtudierBien.tsx:141` | pastille « Classement » de l'en-tête (le classement reste en fiche, au clic) |
+| Faisabilité | `M22Programme.tsx:231` | `TierBadge` de chaque ligne (la marge de capacité `×N` reste — métrique de faisabilité) |
+| Scan patrimoine | `ModulePanel.tsx:356` | `right={<TierBadge/>}` des lignes |
+| Assemblage | `moteurs.tsx:401` | `TierBadge` des lignes de voisines |
+| Simulateur ZAN | `moteurs.tsx:548` | `TierBadge` des parcelles alignées ZAN |
+| Pièges & risques | `ModulePanel.tsx:1563` | `right={<TierBadge/>}` du crible |
+| Densifier l'existant | `Renouvellement.tsx:228+257` | colonne **« Classement »** (en-tête + cellule) ; « Score densif. » et « Rang commune » **restent** (métriques propres à l'outil, cf. R40) |
+
+`Row` (ModulePanel) : prop `right` rendue **facultative** (les outils ne la passent plus).
+
+**Non touché, avec motif :**
+- **Blocs fonciers** : n'affichait déjà aucune pastille (rien à retirer).
+- **`ParcoursTinder.tsx:169`** : `setParcours` n'a **aucun appelant** dans le code → surface **inatteignable** (ne rend jamais rien à un client). Laissée en l'état ; à décider par Vic (parcours de tri d'un projet).
+- **`ModulePanel.tsx:1025` (M06 « Mode bailleur »)** : outil **dormant**, retiré du menu le 20/08/2026 (non câblé). Pas une surface visible.
+
+**Vérifs Lot 2** : `tsc --noEmit` exit 0 ; `vitest run` **194/194** (deux tests basculés en « la pastille est ABSENTE » : `ScanRetraits.test.tsx`, `DensifierTable.test.tsx`).
+
+---
+
+## LOT 3 à 10 — à faire
+*(non entamés)*
