@@ -1906,7 +1906,11 @@ export function MapView() {
       : resultIdus
         ? (['all', expr, ['in', ['get', 'idu'], ['literal', resultIdus]]] as unknown as maplibregl.FilterSpecification)
         : expr
-    const baseVisible = !zonageFill && opinion && !!resultIdus && !layers.couleurs_verdict
+    // RECETTE-8 W9 (A1) — plus de GRIS DE FOND sous les parcelles hors sélection en mode Analyse.
+    // La trame neutre (#22302A/0,28) peignait « le reste » d'un gris sale : une parcelle doit
+    // porter la COULEUR DE SON PALIER ou RIEN, jamais un gris. Les parcelles hors sélection restent
+    // délimitées par leurs contours (couche « Limites parcelles ») et sélectionnables — sans voile.
+    const baseVisible = false
     m.setLayoutProperty('parcels-base', 'visibility', vis(baseVisible && layers.parcelles && !ile))
     m.setLayoutProperty('ile-base', 'visibility', vis(baseVisible && layers.parcelles && ile))
     for (const fill of ['parcels-fill', 'ile-fill']) {
