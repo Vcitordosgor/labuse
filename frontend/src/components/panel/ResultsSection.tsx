@@ -4,7 +4,7 @@ import { getCommunes, getFiltre, getParcelsGeojson, getResults, type SortKey } f
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { ALL_TIER_META, effectiveTier, etatBienMeta, PALIER_META, TIER_V2_META, verdictMeta } from '../../lib/status'
+import { ALL_TIER_META, effectiveTier, etatBienMeta, PALIER_META, verdictMeta } from '../../lib/status'
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
 import { Tip } from '../Tip'
@@ -384,7 +384,6 @@ export function ResultsSection() {
   // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
-  const promus = counts.all || 1
   // M55-K point 1 : `nFilters` et la var locale `opportunites` sont retirés avec la ligne de
   // synthèse (0-caller). Le tooltip de la ventilation lit toujours `uni.data.opportunites`.
   // M55-H point 10 — l'arithmétique de la Révélation, ICI AUSSI (source unique getFiltre) :
@@ -466,6 +465,13 @@ export function ResultsSection() {
             <span className="font-medium" style={{ color: PALIER_META.priorite.color }}>{fmt(counts.brulante)}</span> {PALIER_META.priorite.label.toLowerCase()} ·{' '}
             <span className="font-medium" style={{ color: PALIER_META.a_suivre.color }}>{fmt(counts.chaude)}</span> {PALIER_META.a_suivre.label.toLowerCase()} ·{' '}
             <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(counts.reserve_fonciere + counts.a_creuser + epuise)}</span> {PALIER_META.sans_signal.label.toLowerCase()}
+            {/* RECETTE-7 (A2) — le « potentiel épuisé » (bâti saturé) n'est PAS « sans signal » : c'est
+                un état CONNU. On le SURFACE distinctement (dérivé, sans créer de palier de scoring → pas
+                de rescoring, cf. rapport). Le mot « faible » de RECETTE-6 était hors registre PALIERS-1 ;
+                « potentiel épuisé » est le vrai concept (declasse_bati_sature). */}
+            {epuise > 0 && (
+              <span className="text-txt-dim"> (dont <span className="font-medium" style={{ color: PALIER_META.sans_signal.color }}>{fmt(epuise)}</span> à potentiel épuisé)</span>
+            )}
             {ecartees != null && (
               <> · <span className="font-medium" style={{ color: PALIER_META.ecartee.color }}>{fmt(ecartees)}</span> {PALIER_META.ecartee.label.toLowerCase()}</>
             )}
@@ -481,12 +487,23 @@ export function ResultsSection() {
           {/* M55-G point 5 (décision Vic) : la ligne « soit N parcelles avec dossier propriétaire ·
               N personnes physiques » a QUITTÉ la zone résultats — l'info vit en fiche (tiroir
               Propriétaire), rien n'est perdu. Champs API (opportunites_avec_dossier…) inchangés. */}
-          <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
-            <span style={{ background: TIER_V2_META.brulante.color, width: `${(counts.brulante / promus) * 100}%` }} />
-            <span style={{ background: TIER_V2_META.chaude.color, width: `${(counts.chaude / promus) * 100}%` }} />
-            <span style={{ background: TIER_V2_META.reserve_fonciere.color, width: `${(counts.reserve_fonciere / promus) * 100}%` }} />
-            <span style={{ background: TIER_V2_META.a_creuser.color, width: `${(counts.a_creuser / promus) * 100}%` }} />
-          </div>
+          {/* RECETTE-7 (A3) — la barre reprend les COULEURS DES PALIERS (rouge priorité · orange à
+              suivre · pâle sans signal · sombre écartées), proportionnelle au TOTAL analysé — plus
+              une barre uniforme et pâle. Elle suit EXACTEMENT la ventilation ci-dessus (même
+              groupement : sans signal = réserve + à creuser + potentiel épuisé) ; couleurs PALIER_META. */}
+          {(() => {
+            const sansSignal = counts.reserve_fonciere + counts.a_creuser + epuise
+            const tot = Math.max(1, counts.brulante + counts.chaude + sansSignal + (ecartees ?? 0))
+            const seg = (n: number, color: string) => <span style={{ background: color, width: `${(n / tot) * 100}%` }} />
+            return (
+              <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
+                {seg(counts.brulante, PALIER_META.priorite.color)}
+                {seg(counts.chaude, PALIER_META.a_suivre.color)}
+                {seg(sansSignal, PALIER_META.sans_signal.color)}
+                {seg(ecartees ?? 0, PALIER_META.ecartee.color)}
+              </div>
+            )
+          })()}
         </>
       )}
 
@@ -536,21 +553,15 @@ export function ResultsSection() {
               } />
           </div>
         )}
-        {/* RECETTE-6 (B1, décision Vic) — case « Voir tout » en DERNIÈRE position À DROITE du groupe :
-            cochée, elle ouvre les quatre segments ; décochée, elle les referme. */}
-        {!loading && !error && analyse && (
-          <label className="flex shrink-0 cursor-pointer items-center justify-end gap-1.5 pr-0.5 text-[11px] text-txt-dim hover:text-txt">
-            <span>Voir tout</span>
-            <input type="checkbox" data-segments-voir-tout className="accent-mint"
-              checked={SEGMENTS.every((s) => openSeg[s.key])}
-              onChange={(e) => setOpenSeg(Object.fromEntries(SEGMENTS.map((s) => [s.key, e.target.checked])) as Record<SegKey, boolean>)} />
-          </label>
-        )}
         {/* RECETTE-3 (T4) — mode ANALYSE : la liste est organisée en 4 SEGMENTS repliables (ordre
             fixe), le compte de chacun servi par /filtre (segments, exact hors étage 0). Chaque carte
-            garde son palier. Mode FACTUEL : liste plate (neutre). */}
+            garde son palier. Mode FACTUEL : liste plate (neutre).
+            RECETTE-7 (A4) — la case « Voir tout » flottante est REMPLACÉE par une carte « Tout » en
+            DERNIÈRE position de la liste des segments (même forme, même traitement, son compte à
+            droite) : la cliquer ouvre/referme les quatre segments. */}
         {!loading && !error && (analyse ? (
-          SEGMENTS.map((seg) => {
+          <>
+          {SEGMENTS.map((seg) => {
             const rows = shown.filter((p) => segmentOf(p) === seg.key)
             const total = uni.data?.segments?.[seg.key] ?? rows.length
             const open = openSeg[seg.key]
@@ -574,7 +585,27 @@ export function ResultsSection() {
                 )}
               </div>
             )
-          })
+          })}
+          {/* RECETTE-7 (A4) — la carte « Tout » en dernière position (même forme que les 4 segments,
+              son compte à droite) : la cliquer ouvre/referme les quatre segments. Remplace la case
+              « Voir tout » flottante. */}
+          {(() => {
+            const allOpen = SEGMENTS.every((s) => openSeg[s.key])
+            const toutTotal = SEGMENTS.reduce((a, s) => a + (uni.data?.segments?.[s.key] ?? 0), 0) || shown.length
+            return (
+              <button data-segment="tout"
+                onClick={() => setOpenSeg(Object.fromEntries(SEGMENTS.map((s) => [s.key, !allOpen])) as Record<SegKey, boolean>)}
+                className="flex w-full shrink-0 items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-left hover:border-mint/50">
+                <span className="flex min-w-0 items-center gap-2">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"
+                    className={`shrink-0 text-txt-dim transition-transform ${allOpen ? 'rotate-90' : ''}`}><path d="m9 18 6-6-6-6" /></svg>
+                  <span className="truncate text-[12px] font-medium text-txt">Tout</span>
+                </span>
+                <span className="shrink-0 tnum text-[11px] text-txt-dim">{fmt(toutTotal)}</span>
+              </button>
+            )
+          })()}
+          </>
         ) : (
           shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} factual={true} />)
         ))}

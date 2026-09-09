@@ -145,7 +145,65 @@ Deux fiches corrigées dans `registre/donnees.py` :
 
 # LOT A — Carte et segments
 
+**Note de vérification.** Les points VISUELS de ce lot (A1/A5) demandent une capture au navigateur ;
+les serveurs de dev (`:5173`/`:8000`) sont squattés par d'autres worktrees et je ne tue QUE mes propres
+process (garde SIGTERM). Les changements de code sont vérifiés par `tsc` (0) + `vitest` (202) ; les
+captures au cadrage de Vic restent à faire sur un poste où les ports sont libres.
+
+- **A2 🔴 (paliers) — FAIT (non-rescoring) + ARBITRAGE.** Le registre de scoring PALIERS-1
+  (`scoring/p_v2/statuts.py:PALIERS`, `PALIER_META`) a EXACTEMENT **4 paliers**
+  (priorite/a_suivre/sans_signal/ecartee) — « faible » n'y est PAS. RECETTE-6 (B3) avait retiré le mot
+  « faible » (à juste titre : hors vocabulaire PALIERS-1, c'était le libellé en dur de « potentiel
+  épuisé »). **Ré-ajouter un palier « faible » = un nouveau seuil sur p_raw = un RESCORING**, interdit
+  par le garde-fou. Je ne l'ai donc pas fait. **Le vrai défaut** que le mandat pointe est réel :
+  RECETTE-6 avait FONDU les 280 658 « potentiel épuisé » (bâti saturé — un état CONNU) sous « sans
+  signal ». Fix SANS rescoring : la ventilation SURFACE désormais « (dont N à potentiel épuisé) » —
+  `epuise` est déjà dérivé (retenues − 4 tiers), aucun seuil touché. Le « doublon » (réserve + à creuser
+  = deux « sans signal ») reste corrigé. **Le doublement à suivre 631→1 367 : aucun seuil déplacé** par
+  RECETTE-6 (B3 ne touchait QUE l'affichage — commit `d632e6ae`) ; le changement de compte est une
+  re-bucketisation d'affichage, pas un rescoring. **Flag Vic** : si un palier « faible » distinct est
+  VRAIMENT voulu, c'est une décision de registre de scoring (nouveau seuil dans `statuts.py`) = un
+  rescoring à trancher explicitement.
+- **A3 (barre de répartition) — FAIT.** La barre reprend les COULEURS DES PALIERS (rouge priorité ·
+  orange à suivre · pâle sans signal · sombre écartées), proportionnelle au TOTAL, alignée sur la
+  ventilation (couleurs `PALIER_META`) — plus la barre uniforme et pâle qui suivait `reserve_fonciere`/
+  `a_creuser` (tous deux résolus en `sans_signal` pâle).
+- **A4 (« Voir tout » → carte « Tout ») — FAIT.** La case à cocher flottante est retirée ; une carte
+  « Tout » ferme la liste des segments (même forme, son compte à droite), la cliquer ouvre/referme les
+  quatre segments.
+- **A6 (pastille « Toute l'île ») — FAIT.** La pastille ronde avant « Toute l'île » (`Header.tsx`) est
+  retirée.
+- **A1 (le gris = les parcelles hors sélection) — NON FAIT, diagnostiqué.** RECETTE-6 (A2) a traité une
+  surcouche ; le mandat dit que le gris vient des parcelles hors sélection peintes en gris sale. Le
+  correctif vit dans `MapView.tsx` (peinture des parcelles en mode Analyse) : une parcelle doit porter la
+  couleur de son palier ou RIEN, jamais un gris de fond. Changement de style de couche à faire + capture
+  pleine île + commune — reporté faute de vérification visuelle possible ici.
+- **A5 (comptes par commune + `i`) — NON FAIT, à vérifier après A2.** Vérifier les comptes Saint-Pierre
+  (11/127/31 441/10 725) une fois A2 servi ; si ça tient, écrire dans le `i` pourquoi l'immense majorité
+  d'une commune n'a aucun signal. Lecture-seule + rédaction, à faire sur un poste avec les ports libres.
+
 # LOT B — Fiche parcelle
+
+- **B3 (« SDP restante » libellé tronqué) — FAIT.** `.stat-s` (index.css) ne coupe plus
+  (« pas de potentiel résid… ») : passage à la ligne (2 lignes max, sans coupure de mot). Décision
+  respectée : on garde **SDP restante**, pas Exposition (elle viendra à la fin du lot D via le MNT).
+- **B4 (respiration + CRM/+ Projet ↔ 6 boutons) — FAIT.** Un espace de 10 px sépare la rangée d'actions
+  de la grille des 6 boutons (`Fiche.tsx`).
+- **B1 (les `i` de la tête de fiche) — NON FAIT, diagnostiqué.** Les six tuiles rendent bien un `<Tip>`
+  avec `c.i` (`Fiche.tsx:878-883`) ; le mandat dit qu'aucun ne fonctionne (E1 de RECETTE-6 n'a branché
+  que le questionnaire Financier). À vérifier au navigateur : soit `Tip` ne se déclenche pas dans la
+  tête (z-index/overflow de la carte d'en-tête), soit l'`i` n'est pas câblé sur toutes les tuiles.
+  Correctif probable = même mécanisme fiable que le questionnaire (popover positionné), à valider
+  visuellement — reporté (ports occupés).
+- **B2 (tête collée au défilement) — NON FAIT, diagnostiqué.** Architecture M68 P1a : `<aside flex-col>`
+  = bandeaux `shrink-0` + carte d'en-tête (wrapper FIXE) + corps `overflow-y-auto flex-1`. Pour que la
+  tête défile AVEC le reste, il faut fusionner la carte d'en-tête DANS le conteneur défilant (un seul
+  `overflow-y-auto`). Changement structurel du layout de la fiche — je ne le livre pas à l'aveugle (risque
+  de casser la mise en page, vérification visuelle indispensable). Fix précis ci-dessus, à appliquer+voir.
+- **B5 (contour blanc de la parcelle, Remonter le temps) — NON FAIT, diagnostiqué.** Le contour blanc de
+  la parcelle a disparu des deux millésimes du curseur temporel. Le correctif vit dans l'outil « Remonter
+  le temps » (couche de contour de la parcelle sur les deux fonds d'époque) — rétablir le contour des deux
+  côtés du curseur. Visuel, reporté.
 
 # LOT C — Financier
 

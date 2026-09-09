@@ -444,7 +444,9 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .fiche-v6 .stat-v { font-size:13px; color:var(--txt-hi); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fiche-v6 .stat-v.vide { color:var(--txt-faint); font-weight:400; }
 .fiche-v6 .stat-v.neuf { color:var(--mint); }
-.fiche-v6 .stat-s { font-size:9px; color:var(--txt-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* RECETTE-7 (B3) — le sous-titre (« pas de potentiel résiduel ») ne se COUPE plus (« pas de
+   potentiel résid… ») : il passe à la ligne (2 lignes max, sans coupure de mot). */
+.fiche-v6 .stat-s { font-size:9px; color:var(--txt-faint); margin-top:2px; line-height:1.25; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 /* RECETTE-5 (V5) — les ÉTIQUETTES passent SOUS la grille (contraintes / type de propriétaire /
    voisines du même propriétaire), plus dans le bloc d'identité. */
 .fiche-v6 .head-badges { display:flex; flex-wrap:wrap; gap:6px; padding:11px 14px; border-top:0.5px solid var(--line); }
